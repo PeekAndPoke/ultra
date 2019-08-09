@@ -1,0 +1,10 @@
+# ignore IntelliJ project files the are not user specific
+/*.iml
+/.idea/workspace.xml
+/.idea/tasks.xml
+/.idea/misc.xml
+dataSources.ids
+datasources.xml
+
+.gradle
+**/build/
