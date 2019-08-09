@@ -8,3 +8,4 @@ datasources.xml
 
 .gradle
 **/build/
+.kotlintest

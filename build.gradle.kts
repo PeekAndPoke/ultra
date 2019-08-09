@@ -1,5 +1,6 @@
 
 plugins {
+    idea
     `build-scan`
     kotlin("jvm") version "1.3.41"
 }
@@ -10,8 +11,6 @@ repositories {
 }
 
 dependencies {
-    api(rootProject.project("proto:package_a"))
-    api(rootProject.project("proto:package_b"))
     api(kotlin("stdlib-jdk8"))
 }
 

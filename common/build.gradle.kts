@@ -71,9 +71,6 @@ bintray {
         repo = "maven"
         name = "io.ultra.${project.name}"
         userOrg = "peekandpoke"
-//        websiteUrl = ""
-//        githubRepo = ""
-//        vcsUrl = ""
         description = "Common helpers und utils"
         setLabels("kotlin")
         setLicenses("MIT")

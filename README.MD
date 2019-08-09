@@ -1,4 +1,12 @@
-Documents I read in order:
+
+
+## Maven publish with bintray
+
+> ./gradlew build :meta:bintrayUpload -PbintrayUser=peekandpoke -PbintrayApiKey=
+
+## Long road to maven publish
+
+Documents I read to get publishing working:
 
 1. Setting up the project with gradle kotlin dsl
 
