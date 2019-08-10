@@ -1,4 +1,4 @@
-package io.ultra.common
+package de.peekandpoke.ultra.common
 
 /**
  * Puts the string "with" before and after the string

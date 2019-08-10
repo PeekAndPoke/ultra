@@ -99,7 +99,7 @@ bintray {
     setPublications("default")
     pkg(delegateClosureOf<BintrayExtension.PackageConfig> {
         repo = "maven"
-        name = "io.ultra.${project.name}"
+        name = "de.peekandpoke.ultra.${project.name}"
         userOrg = "peekandpoke"
         description = "Common helpers und utils"
         setLabels("kotlin")

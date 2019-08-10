@@ -1,9 +1,9 @@
-package io.ultra.meta
+package de.peekandpoke.ultra.meta
 
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asTypeName
-import io.ultra.common.ucFirst
+import de.peekandpoke.ultra.common.ucFirst
 import me.eugeniomarletti.kotlin.processing.KotlinProcessingEnvironment
 import javax.annotation.processing.ProcessingEnvironment
 import javax.lang.model.element.*

@@ -1,4 +1,4 @@
-package io.ultra.common
+package de.peekandpoke.ultra.common
 
 import java.math.BigInteger
 import java.security.MessageDigest

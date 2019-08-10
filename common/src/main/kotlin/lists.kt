@@ -1,4 +1,4 @@
-package io.ultra.common
+package de.peekandpoke.ultra.common
 
 fun <T> Collection<T>.containsAny(vararg element: T) = element.any { it in this }
 

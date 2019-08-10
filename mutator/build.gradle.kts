@@ -1,9 +1,12 @@
+@file:Suppress("PropertyName")
+
 import com.jfrog.bintray.gradle.BintrayExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     `maven-publish`
     kotlin("jvm")
+    kotlin("kapt")
     id("org.jetbrains.dokka") version "0.9.18"
     id("com.jfrog.bintray") version "1.8.4"
 }
@@ -14,15 +17,39 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
+val kotlin_metadata_version: String by project
+val google_auto_version: String by project
+val kotlinpoet_version: String by project
+val logback_version: String by project
+
 dependencies {
+    api(rootProject.project("meta"))
+
     api(kotlin("stdlib-jdk8"))
+    api(kotlin("reflect"))
+
+    implementation("ch.qos.logback:logback-classic:$logback_version")
+
+    implementation("org.atteo.classindex:classindex:3.4")
+    implementation("org.javassist:javassist:3.25.0-GA")
+
+    kapt("org.atteo.classindex:classindex:3.4")
+
+    kaptTest("com.google.auto.service:auto-service:$google_auto_version")
+    kaptTest(rootProject.project(":mutator"))
+
+    testImplementation("ch.qos.logback:logback-classic:$logback_version")
+    testImplementation("io.kotlintest:kotlintest-runner-junit5:3.3.2")
+}
+
+val test by tasks.getting(Test::class) {
+    useJUnitPlatform { }
 }
 
 repositories {
     mavenCentral()
     jcenter()
 }
-
 
 configure<JavaPluginConvention> {
     sourceCompatibility = JavaVersion.VERSION_1_8

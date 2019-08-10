@@ -14,7 +14,6 @@ dependencies {
     api(kotlin("stdlib-jdk8"))
 }
 
-
 buildScan {
     termsOfServiceUrl = "https://gradle.com/terms-of-service"
     termsOfServiceAgree = "yes"
