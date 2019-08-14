@@ -2,9 +2,10 @@ package de.peekandpoke.ultra.mutator.e2e
 
 import io.kotlintest.DisplayName
 import io.kotlintest.assertSoftly
+import io.kotlintest.matchers.types.shouldBeSameInstanceAs
+import io.kotlintest.matchers.types.shouldNotBeSameInstanceAs
 import io.kotlintest.matchers.withClue
 import io.kotlintest.shouldBe
-import io.kotlintest.shouldNotBe
 import io.kotlintest.specs.StringSpec
 
 @DisplayName("E2E - ListOfScalarNullablesMutationsSpec")
@@ -14,7 +15,10 @@ class ListOfScalarNullablesMutationsSpec : StringSpec({
 
     "Mutating a list of nullable ints by removing elements via removeWhere" {
 
-        val source = ListOfNullableInts(values = listOf(1, 2, null, 3))
+        val data = listOf(1, 2, null, 3)
+        val dataCopy = data.toList()
+
+        val source = ListOfNullableInts(values = data)
 
         val result = source.mutate {
             values.removeWhere { this != null && this > 1 }
@@ -23,8 +27,9 @@ class ListOfScalarNullablesMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -35,7 +40,10 @@ class ListOfScalarNullablesMutationsSpec : StringSpec({
 
     "Mutating a list of nullable ints by removing elements via retainWhere" {
 
-        val source = ListOfNullableInts(values = listOf(1, 2, null, 3))
+        val data = listOf(1, 2, null, 3)
+        val dataCopy = data.toList()
+
+        val source = ListOfNullableInts(values = data)
 
         val result = source.mutate {
             values.retainWhere { this != null && this > 1 }
@@ -44,8 +52,9 @@ class ListOfScalarNullablesMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {

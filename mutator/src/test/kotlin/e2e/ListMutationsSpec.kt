@@ -2,9 +2,10 @@ package de.peekandpoke.ultra.mutator.e2e
 
 import io.kotlintest.DisplayName
 import io.kotlintest.assertSoftly
+import io.kotlintest.matchers.types.shouldBeSameInstanceAs
+import io.kotlintest.matchers.types.shouldNotBeSameInstanceAs
 import io.kotlintest.matchers.withClue
 import io.kotlintest.shouldBe
-import io.kotlintest.shouldNotBe
 import io.kotlintest.specs.StringSpec
 
 @DisplayName("E2E - ListMutationsSpec")
@@ -35,7 +36,9 @@ class ListMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("When all mutations are not changing any value, the source object must be returned") {
-                (source === result) shouldBe true
+                source shouldBeSameInstanceAs result
+                source.addresses shouldBeSameInstanceAs result.addresses
+                source.addresses[0] shouldBeSameInstanceAs address1
             }
         }
     }
@@ -66,12 +69,13 @@ class ListMutationsSpec : StringSpec({
 
     "Mutating properties of elements in a list" {
 
-        val source = ListOfAddresses(
-            addresses = listOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = listOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toList()
+
+        val source = ListOfAddresses(addresses = data)
 
         val result = source.mutate {
 
@@ -81,16 +85,17 @@ class ListMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("First list element must be modified") {
-                source.addresses[0] shouldNotBe result.addresses[0]
+                source.addresses[0] shouldNotBeSameInstanceAs result.addresses[0]
             }
 
             withClue("Second list element must stay the same") {
-                source.addresses[1] shouldBe result.addresses[1]
+                source.addresses[1] shouldBeSameInstanceAs result.addresses[1]
             }
 
             withClue("Result must be modified properly") {
@@ -102,12 +107,13 @@ class ListMutationsSpec : StringSpec({
 
     "Mutating all elements in a list via forEach" {
 
-        val source = ListOfAddresses(
-            addresses = listOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = listOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toList()
+
+        val source = ListOfAddresses(addresses = data)
 
         val result = source.mutate {
 
@@ -119,8 +125,9 @@ class ListMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -132,12 +139,13 @@ class ListMutationsSpec : StringSpec({
 
     "Mutating all elements in a list via multiple forEach loops" {
 
-        val source = ListOfAddresses(
-            addresses = listOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = listOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toList()
+
+        val source = ListOfAddresses(addresses = data)
 
         val result = source.mutate {
 
@@ -153,8 +161,9 @@ class ListMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -166,12 +175,13 @@ class ListMutationsSpec : StringSpec({
 
     "Mutating some elements in a list via filter and forEach" {
 
-        val source = ListOfAddresses(
-            addresses = listOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = listOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toList()
+
+        val source = ListOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses
@@ -181,9 +191,15 @@ class ListMutationsSpec : StringSpec({
 
         assertSoftly {
 
-            withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+            withClue("Sources object must NOT be modified") {
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
+            }
+
+            withClue("Only children passing the filter must be modified") {
+                source shouldNotBeSameInstanceAs result
+                source.addresses[1] shouldBeSameInstanceAs result.addresses[1]
             }
 
             withClue("Result must be modified properly") {
@@ -195,12 +211,13 @@ class ListMutationsSpec : StringSpec({
 
     "Mutating a list by adding elements via push" {
 
-        val source = ListOfAddresses(
-            addresses = listOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = listOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toList()
+
+        val source = ListOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses.push(
@@ -211,9 +228,10 @@ class ListMutationsSpec : StringSpec({
 
         assertSoftly {
 
-            withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+            withClue("Source objects must NOT be modified") {
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -229,12 +247,13 @@ class ListMutationsSpec : StringSpec({
 
     "Mutating a list by removing elements via pop" {
 
-        val source = ListOfAddresses(
-            addresses = listOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = listOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toList()
+
+        val source = ListOfAddresses(addresses = data)
 
         lateinit var popped: Address
 
@@ -244,9 +263,10 @@ class ListMutationsSpec : StringSpec({
 
         assertSoftly {
 
-            withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+            withClue("Source objects must NOT be modified") {
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("The last entry must be popped correctly") {
@@ -263,12 +283,13 @@ class ListMutationsSpec : StringSpec({
 
     "Mutating a list by adding elements via unshift" {
 
-        val source = ListOfAddresses(
-            addresses = listOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = listOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toList()
+
+        val source = ListOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses.unshift(
@@ -280,8 +301,9 @@ class ListMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -297,12 +319,13 @@ class ListMutationsSpec : StringSpec({
 
     "Mutating a list by removing elements via shift" {
 
-        val source = ListOfAddresses(
-            addresses = listOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = listOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toList()
+
+        val source = ListOfAddresses(addresses = data)
 
         lateinit var shifted: Address
 
@@ -313,8 +336,9 @@ class ListMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("The first entry must be shifted correctly") {
@@ -331,12 +355,13 @@ class ListMutationsSpec : StringSpec({
 
     "Mutating a list by replacing a whole list" {
 
-        val source = ListOfAddresses(
-            addresses = listOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = listOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toList()
+
+        val source = ListOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses += listOf(
@@ -347,8 +372,9 @@ class ListMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -361,12 +387,13 @@ class ListMutationsSpec : StringSpec({
 
     "Mutating a list by clearing it via clear" {
 
-        val source = ListOfAddresses(
-            addresses = listOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = listOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toList()
+
+        val source = ListOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses.clear()
@@ -375,8 +402,9 @@ class ListMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -387,12 +415,13 @@ class ListMutationsSpec : StringSpec({
 
     "Mutating a list by removing elements via filter" {
 
-        val source = ListOfAddresses(
-            addresses = listOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = listOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toList()
+
+        val source = ListOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses += addresses.filter { it.city == "Leipzig" }
@@ -401,8 +430,9 @@ class ListMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -415,12 +445,13 @@ class ListMutationsSpec : StringSpec({
 
     "Mutating a list by removing elements via removeWhere" {
 
-        val source = ListOfAddresses(
-            addresses = listOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = listOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toList()
+
+        val source = ListOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses.removeWhere { city == "Leipzig" }
@@ -429,8 +460,9 @@ class ListMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -443,13 +475,14 @@ class ListMutationsSpec : StringSpec({
 
     "Mutating a list by removing elements via retainWhere" {
 
-        val source = ListOfAddresses(
-            addresses = listOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109"),
-                Address("Bonn", "53111")
-            )
+        val data = listOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109"),
+            Address("Bonn", "53111")
         )
+        val dataCopy = data.toList()
+
+        val source = ListOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses.retainWhere { city.startsWith("B") }
@@ -458,8 +491,9 @@ class ListMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -473,13 +507,14 @@ class ListMutationsSpec : StringSpec({
 
     "Mutating a list by removing elements via remove" {
 
-        val source = ListOfAddresses(
-            addresses = listOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109"),
-                Address("Bonn", "53111")
-            )
+        val data = listOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109"),
+            Address("Bonn", "53111")
         )
+        val dataCopy = data.toList()
+
+        val source = ListOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses.remove(
@@ -491,8 +526,9 @@ class ListMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -505,13 +541,14 @@ class ListMutationsSpec : StringSpec({
 
     "Mutating a list by removing elements via removeAt" {
 
-        val source = ListOfAddresses(
-            addresses = listOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109"),
-                Address("Bonn", "53111")
-            )
+        val data = listOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109"),
+            Address("Bonn", "53111")
         )
+        val dataCopy = data.toList()
+
+        val source = ListOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses.removeAt(1)
@@ -520,8 +557,9 @@ class ListMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {

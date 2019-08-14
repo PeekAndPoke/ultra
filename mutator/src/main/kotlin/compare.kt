@@ -9,9 +9,17 @@ infix fun <X> X.isNotSameAs(other: X) = when {
 
     other == null -> true
 
-    (this as Any)::class == String::class -> this != other
+    else -> {
 
-    (this as Any)::class.javaPrimitiveType != null -> this != other
+        val cls = (this as Any)::class
 
-    else -> this !== other
+        when {
+
+            cls == String::class -> this != other
+
+            cls.javaPrimitiveType != null -> this != other
+
+            else -> this !== other
+        }
+    }
 }

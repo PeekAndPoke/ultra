@@ -2,9 +2,10 @@ package de.peekandpoke.ultra.mutator.e2e
 
 import io.kotlintest.DisplayName
 import io.kotlintest.assertSoftly
+import io.kotlintest.matchers.types.shouldBeSameInstanceAs
+import io.kotlintest.matchers.types.shouldNotBeSameInstanceAs
 import io.kotlintest.matchers.withClue
 import io.kotlintest.shouldBe
-import io.kotlintest.shouldNotBe
 import io.kotlintest.specs.StringSpec
 
 @DisplayName("E2E - ListOfScalarsMutationsSpec")
@@ -14,7 +15,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of bools by removing elements via removeWhere" {
 
-        val source = ListOfBools(values = listOf(true, false, true))
+        val data = listOf(true, false, true)
+        val dataCopy = data.toList()
+
+        val source = ListOfBools(values = data)
 
         val result = source.mutate {
             values.removeWhere { this }
@@ -23,8 +27,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -35,7 +40,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of bools by removing elements via retainWhere" {
 
-        val source = ListOfBools(values = listOf(true, false, true))
+        val data = listOf(true, false, true)
+        val dataCopy = data.toList()
+
+        val source = ListOfBools(values = data)
 
         val result = source.mutate {
             values.retainWhere { this }
@@ -44,8 +52,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -58,7 +67,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of chars by removing elements via removeWhere" {
 
-        val source = ListOfChars(values = listOf('A', 'B', 'C'))
+        val data = listOf('A', 'B', 'C')
+        val dataCopy = data.toList()
+
+        val source = ListOfChars(values = data)
 
         val result = source.mutate {
             values.removeWhere { this > 'A' }
@@ -67,8 +79,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -79,7 +92,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of chars by removing elements via retainWhere" {
 
-        val source = ListOfChars(values = listOf('A', 'B', 'C'))
+        val data = listOf('A', 'B', 'C')
+        val dataCopy = data.toList()
+
+        val source = ListOfChars(values = data)
 
         val result = source.mutate {
             values.retainWhere { this > 'A' }
@@ -88,8 +104,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -102,7 +119,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of bytes by removing elements via removeWhere" {
 
-        val source = ListOfBytes(values = listOf(1, 2, 3))
+        val data = listOf<Byte>(1, 2, 3)
+        val dataCopy = data.toList()
+
+        val source = ListOfBytes(values = data)
 
         val result = source.mutate {
             values.removeWhere { this > 1 }
@@ -111,8 +131,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -123,7 +144,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of bytes by removing elements via retainWhere" {
 
-        val source = ListOfBytes(values = listOf(1, 2, 3))
+        val data = listOf<Byte>(1, 2, 3)
+        val dataCopy = data.toList()
+
+        val source = ListOfBytes(values = data)
 
         val result = source.mutate {
             values.retainWhere { this > 1 }
@@ -132,8 +156,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -146,7 +171,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of shorts by removing elements via removeWhere" {
 
-        val source = ListOfShorts(values = listOf(1, 2, 3))
+        val data = listOf<Short>(1, 2, 3)
+        val dataCopy = data.toList()
+
+        val source = ListOfShorts(values = data)
 
         val result = source.mutate {
             values.removeWhere { this > 1 }
@@ -155,8 +183,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -167,7 +196,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of shorts by removing elements via retainWhere" {
 
-        val source = ListOfShorts(values = listOf(1, 2, 3))
+        val data = listOf<Short>(1, 2, 3)
+        val dataCopy = data.toList()
+
+        val source = ListOfShorts(values = data)
 
         val result = source.mutate {
             values.retainWhere { this > 1 }
@@ -176,8 +208,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -190,7 +223,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of ints by removing elements via removeWhere" {
 
-        val source = ListOfInts(values = listOf(1, 2, 3))
+        val data = listOf(1, 2, 3)
+        val dataCopy = data.toList()
+
+        val source = ListOfInts(values = data)
 
         val result = source.mutate {
             values.removeWhere { this > 1 }
@@ -199,8 +235,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -211,7 +248,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of ints by removing elements via retainWhere" {
 
-        val source = ListOfInts(values = listOf(1, 2, 3))
+        val data = listOf(1, 2, 3)
+        val dataCopy = data.toList()
+
+        val source = ListOfInts(values = data)
 
         val result = source.mutate {
             values.retainWhere { this > 1 }
@@ -220,8 +260,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -234,7 +275,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of longs by removing elements via removeWhere" {
 
-        val source = ListOfLongs(values = listOf(1, 2, 3))
+        val data = listOf<Long>(1, 2, 3)
+        val dataCopy = data.toList()
+
+        val source = ListOfLongs(values = data)
 
         val result = source.mutate {
             values.removeWhere { this > 1 }
@@ -243,8 +287,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -255,7 +300,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of longs by removing elements via retainWhere" {
 
-        val source = ListOfLongs(values = listOf(1, 2, 3))
+        val data = listOf<Long>(1, 2, 3)
+        val dataCopy = data.toList()
+
+        val source = ListOfLongs(values = data)
 
         val result = source.mutate {
             values.retainWhere { this > 1 }
@@ -264,8 +312,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -278,7 +327,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of floats by removing elements via removeWhere" {
 
-        val source = ListOfFloats(values = listOf(1.1f, 2.2f, 3.3f))
+        val data = listOf(1.1f, 2.2f, 3.3f)
+        val dataCopy = data.toList()
+
+        val source = ListOfFloats(values = data)
 
         val result = source.mutate {
             values.removeWhere { this > 1.1f }
@@ -287,8 +339,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -299,7 +352,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of floats by removing elements via retainWhere" {
 
-        val source = ListOfFloats(values = listOf(1.1f, 2.2f, 3.3f))
+        val data = listOf(1.1f, 2.2f, 3.3f)
+        val dataCopy = data.toList()
+
+        val source = ListOfFloats(values = data)
 
         val result = source.mutate {
             values.retainWhere { this > 1.1f }
@@ -308,8 +364,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -322,7 +379,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of doubles by removing elements via removeWhere" {
 
-        val source = ListOfDoubles(values = listOf(1.1, 2.2, 3.3))
+        val data = listOf(1.1, 2.2, 3.3)
+        val dataCopy = data.toList()
+
+        val source = ListOfDoubles(values = data)
 
         val result = source.mutate {
             values.removeWhere { this > 1.1 }
@@ -331,8 +391,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -343,7 +404,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of doubles by removing elements via retainWhere" {
 
-        val source = ListOfDoubles(values = listOf(1.1, 2.2, 3.3))
+        val data = listOf(1.1, 2.2, 3.3)
+        val dataCopy = data.toList()
+
+        val source = ListOfDoubles(values = data)
 
         val result = source.mutate {
             values.retainWhere { this > 1.1 }
@@ -352,8 +416,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -366,7 +431,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of strings by removing elements via removeWhere" {
 
-        val source = ListOfStrings(values = listOf("Berlin", "Leipzig"))
+        val data = listOf("Berlin", "Leipzig")
+        val dataCopy = data.toList()
+
+        val source = ListOfStrings(values = data)
 
         val result = source.mutate {
             values.removeWhere { startsWith("L") }
@@ -375,8 +443,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -387,7 +456,10 @@ class ListOfScalarsMutationsSpec : StringSpec({
 
     "Mutating a list of strings by removing elements via retainWhere" {
 
-        val source = ListOfStrings(values = listOf("Berlin", "Leipzig"))
+        val data = listOf("Berlin", "Leipzig")
+        val dataCopy = data.toList()
+
+        val source = ListOfStrings(values = data)
 
         val result = source.mutate {
             values.retainWhere { startsWith("L") }
@@ -396,8 +468,9 @@ class ListOfScalarsMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.values shouldNotBe result.values
+                source shouldNotBeSameInstanceAs result
+                source.values shouldBe dataCopy
+                source.values shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -405,6 +478,4 @@ class ListOfScalarsMutationsSpec : StringSpec({
             }
         }
     }
-
-
 })

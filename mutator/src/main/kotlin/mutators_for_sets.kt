@@ -102,27 +102,27 @@ open class SetMutator<T, M>(
 
 internal class MutableSetWrapper<X>(inner: MutableSet<X>) : MutableSet<X> {
 
-    @Volatile private var _inner = inner
+    private var _inner = inner
 
-    @Volatile private var primed = false
+    private var primed = false
 
     override fun toString() = _inner.toString()
 
-    override fun equals(other: Any?) = _inner == other
+    override fun equals(other: Any?) = repair { _inner == other }
 
-    override fun hashCode() = _inner.hashCode()
+    override fun hashCode() = repair { _inner.hashCode() }
 
     override val size: Int get() = _inner.size
 
-    //// Ops that need reparations //////////////////////////////////////////////////////////
+    //// Safe operations ////////////////////////////////////////////////////////////////////
 
-    override fun iterator() = repair { _inner.iterator() }
+    override fun iterator() = _inner.iterator()
 
-    override fun contains(element: X) = repair { _inner.contains(element) }
+    override fun contains(element: X) = _inner.contains(element)
 
-    override fun containsAll(elements: Collection<X>) = repair { _inner.containsAll(elements) }
+    override fun containsAll(elements: Collection<X>) = _inner.containsAll(elements)
 
-    override fun isEmpty() = repair { _inner.isEmpty() }
+    override fun isEmpty() = _inner.isEmpty()
 
     //// Ops that prime reparations /////////////////////////////////////////////////////////
 

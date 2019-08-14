@@ -2,9 +2,10 @@ package de.peekandpoke.ultra.mutator.e2e
 
 import io.kotlintest.DisplayName
 import io.kotlintest.assertSoftly
+import io.kotlintest.matchers.types.shouldBeSameInstanceAs
+import io.kotlintest.matchers.types.shouldNotBeSameInstanceAs
 import io.kotlintest.matchers.withClue
 import io.kotlintest.shouldBe
-import io.kotlintest.shouldNotBe
 import io.kotlintest.specs.StringSpec
 
 @DisplayName("E2E - SetMutationsSpec")
@@ -16,6 +17,9 @@ class SetMutationsSpec : StringSpec({
             addresses = setOf()
         )
 
+        val address1 = Address("Berlin", "10115")
+        val address2 = Address("Leipzig", "04109")
+
         source.mutate {
 
             assertSoftly {
@@ -23,24 +27,47 @@ class SetMutationsSpec : StringSpec({
                 addresses.isEmpty() shouldBe true
 
                 addresses.add(
-                    Address("Berlin", "10115"),
-                    Address("Leipzig", "04109")
+                    address1,
+                    address2
                 )
 
                 addresses.size shouldBe 2
                 addresses.isEmpty() shouldBe false
+
+                addresses.add(
+                    address1
+                )
+
+                addresses.size shouldBe 2
+                addresses.isEmpty() shouldBe false
+
+                addresses.remove(address1)
+
+                addresses.size shouldBe 1
+                addresses.isEmpty() shouldBe false
+
+                addresses.remove(address1)
+
+                addresses.size shouldBe 1
+                addresses.isEmpty() shouldBe false
+
+                addresses.remove(address2)
+
+                addresses.size shouldBe 0
+                addresses.isEmpty() shouldBe true
             }
         }
     }
 
     "Mutating all objects in a set via forEach" {
 
-        val source = SetOfAddresses(
-            addresses = setOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = setOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toSet()
+
+        val source = SetOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses.forEach {
@@ -51,28 +78,37 @@ class SetMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
 
-                result.addresses shouldBe setOf(
+                val expected = setOf(
                     Address("Berlin-x", "10115"),
                     Address("Leipzig-x", "04109")
                 )
+
+                println(result.addresses::class)
+                println(result.addresses)
+                println(expected::class)
+                println(expected)
+
+                result.addresses shouldBe expected
             }
         }
     }
 
     "Mutating some objects in a set via filter and forEach" {
 
-        val source = SetOfAddresses(
-            addresses = setOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = setOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toSet()
+
+        val source = SetOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses
@@ -85,8 +121,9 @@ class SetMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -100,12 +137,13 @@ class SetMutationsSpec : StringSpec({
 
     "Mutating an object by replacing a whole set" {
 
-        val source = SetOfAddresses(
-            addresses = setOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = setOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toSet()
+
+        val source = SetOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses += setOf(
@@ -116,8 +154,9 @@ class SetMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -130,12 +169,13 @@ class SetMutationsSpec : StringSpec({
 
     "Mutating a set by clearing it via clear" {
 
-        val source = SetOfAddresses(
-            addresses = setOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = setOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toSet()
+
+        val source = SetOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses.clear()
@@ -144,8 +184,9 @@ class SetMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -156,12 +197,13 @@ class SetMutationsSpec : StringSpec({
 
     "Mutating a set by removing elements via filter" {
 
-        val source = SetOfAddresses(
-            addresses = setOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = setOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toSet()
+
+        val source = SetOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses += addresses.filter { it.city == "Leipzig" }
@@ -170,8 +212,9 @@ class SetMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -184,12 +227,13 @@ class SetMutationsSpec : StringSpec({
 
     "Mutating a set by adding elements via add" {
 
-        val source = SetOfAddresses(
-            addresses = setOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = setOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toSet()
+
+        val source = SetOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses.add(
@@ -201,8 +245,9 @@ class SetMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -216,15 +261,16 @@ class SetMutationsSpec : StringSpec({
         }
     }
 
-    "Mutating a set by removing elements via add remove" {
+    "Mutating a set by removing elements by hash code via add remove" {
 
-        val source = SetOfAddresses(
-            addresses = setOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109"),
-                Address("Chemnitz", "09111")
-            )
+        val data = setOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109"),
+            Address("Chemnitz", "09111")
         )
+        val dataCopy = data.toSet()
+
+        val source = SetOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses.remove(
@@ -236,8 +282,46 @@ class SetMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
+            }
+
+            withClue("Result must be modified properly") {
+                result.addresses shouldBe setOf(
+                    Address("Berlin", "10115")
+                )
+            }
+        }
+    }
+
+    "Mutating a set by removing elements by instance code via add remove" {
+
+        val address2 = Address("Leipzig", "04109")
+        val address3 = Address("Chemnitz", "09111")
+
+        val data = setOf(
+            Address("Berlin", "10115"),
+            address2,
+            address3
+        )
+        val dataCopy = data.toSet()
+
+        val source = SetOfAddresses(addresses = data)
+
+        val result = source.mutate {
+            addresses.remove(
+                address2,
+                address3
+            )
+        }
+
+        assertSoftly {
+
+            withClue("Source object must NOT be modified") {
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -250,12 +334,13 @@ class SetMutationsSpec : StringSpec({
 
     "Mutating a set by removing elements via removeWhere" {
 
-        val source = SetOfAddresses(
-            addresses = setOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109")
-            )
+        val data = setOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109")
         )
+        val dataCopy = data.toSet()
+
+        val source = SetOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses.removeWhere { city == "Leipzig" }
@@ -264,8 +349,9 @@ class SetMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -278,13 +364,14 @@ class SetMutationsSpec : StringSpec({
 
     "Mutating a set by removing elements via retainWhere" {
 
-        val source = SetOfAddresses(
-            addresses = setOf(
-                Address("Berlin", "10115"),
-                Address("Leipzig", "04109"),
-                Address("Bonn", "53111")
-            )
+        val data = setOf(
+            Address("Berlin", "10115"),
+            Address("Leipzig", "04109"),
+            Address("Bonn", "53111")
         )
+        val dataCopy = data.toSet()
+
+        val source = SetOfAddresses(addresses = data)
 
         val result = source.mutate {
             addresses.retainWhere { city.startsWith("B") }
@@ -293,8 +380,9 @@ class SetMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-                source.addresses shouldNotBe result.addresses
+                source shouldNotBeSameInstanceAs result
+                source.addresses shouldBe dataCopy
+                source.addresses shouldBeSameInstanceAs data
             }
 
             withClue("Result must be modified properly") {
@@ -305,5 +393,4 @@ class SetMutationsSpec : StringSpec({
             }
         }
     }
-
 })

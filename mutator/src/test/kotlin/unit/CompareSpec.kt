@@ -37,6 +37,13 @@ class CompareSpec : StringSpec({
         Sample("Null vs String", null, "null", false),
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // NaN
+        Sample("NaN - Double.NaN vs Double.NaN", Double.NaN, Double.NaN, true),
+        Sample("NaN - Double.NaN vs Float.NaN", Double.NaN, Float.NaN, false),
+        Sample("NaN - Double.NaN vs 0.0", Double.NaN, 0.0, false),
+        Sample("NaN - Float.NaN vs 0.0f", Float.NaN, 0.0f, false),
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // data classes
         Sample("Data-class vs Same instance", sameInstance, sameInstance, true),
         Sample("Data-class vs Other instance", X("SAME"), X("SAME"), false),
@@ -47,10 +54,13 @@ class CompareSpec : StringSpec({
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // strings
+        Sample("String vs String", "", "", true),
+        Sample("String vs String", "a", "", false),
         Sample("String vs String", "S-1", "S-1", true),
         Sample("String vs String", "S-1", "S-2", false),
 
         // string vs others
+        Sample("String vs Null", "", null, false),
         Sample("String vs Null", "S-1", null, false),
         Sample("String vs Boolean", "true", true, false),
         Sample("String vs Char", "S", 'S', false),

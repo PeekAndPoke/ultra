@@ -2,9 +2,10 @@ package de.peekandpoke.ultra.mutator.e2e
 
 import io.kotlintest.DisplayName
 import io.kotlintest.assertSoftly
+import io.kotlintest.matchers.types.shouldBeSameInstanceAs
+import io.kotlintest.matchers.types.shouldNotBeSameInstanceAs
 import io.kotlintest.matchers.withClue
 import io.kotlintest.shouldBe
-import io.kotlintest.shouldNotBe
 import io.kotlintest.specs.StringSpec
 import kotlin.reflect.KMutableProperty0
 
@@ -26,7 +27,7 @@ class AnyMutationsSpec : StringSpec({
         assertSoftly {
 
             withClue("When all mutations are not changing any value, the source object must be returned") {
-                (source === result) shouldBe true
+                source shouldBeSameInstanceAs result
             }
         }
     }
@@ -41,7 +42,7 @@ class AnyMutationsSpec : StringSpec({
 
         assertSoftly {
 
-            source shouldNotBe result
+            source shouldNotBeSameInstanceAs result
 
             withClue("Source object must NOT be modified") {
                 source.anObject shouldBe 0
@@ -58,13 +59,12 @@ class AnyMutationsSpec : StringSpec({
         val source = WithAnyObject(anObject = 0)
 
         val result = source.mutate {
-            @Suppress("RemoveExplicitTypeArguments")
-            setProp<Any>(::anObject, "changed")
+            setProp(::anObject, "changed")
         }
 
         assertSoftly {
 
-            source shouldNotBe result
+            source shouldNotBeSameInstanceAs result
 
             withClue("Source object must NOT be modified") {
                 source.anObject shouldBe 0

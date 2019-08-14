@@ -5,7 +5,7 @@ typealias OnModify<T> = (newValue: T) -> Unit
 interface Mutator<I : Any> {
     fun getResult(): I
 
-    fun isModified() : Boolean
+    fun isModified(): Boolean
 }
 
 abstract class MutatorBase<I : Any, R : I>(private val input: I, protected val onModify: OnModify<I>) : Mutator<I> {
@@ -29,18 +29,18 @@ abstract class MutatorBase<I : Any, R : I>(private val input: I, protected val o
 
     protected fun getMutableResult(): R {
 
-        mutableResult?.let { return it }
-
-        return replaceResult(
+        return mutableResult ?: replaceResult(
             copy(input)
         )
     }
 
-    private fun replaceResult(new: R): R = new.apply {
+    private fun replaceResult(new: R): R {
 
         mutableResult = new
 
         onModify(new)
+
+        return new
     }
 }
 

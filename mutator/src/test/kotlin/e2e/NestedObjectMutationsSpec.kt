@@ -12,7 +12,11 @@ class NestedObjectMutationsSpec : StringSpec({
 
     "Mutating properties of root object only" {
 
-        val source = Company("Corp", Person("Sam", 25, Address("Berlin", "10115")))
+        val source = Company("Corp",
+            Person("Sam", 25,
+                Address("Berlin", "10115")
+            )
+        )
 
         val result = source.mutate {
 
@@ -37,7 +41,11 @@ class NestedObjectMutationsSpec : StringSpec({
 
     "Mutating properties of a nested object" {
 
-        val source = Company("Corp", Person("Sam", 25, Address("Berlin", "10115")))
+        val source = Company("Corp",
+            Person("Sam", 25,
+                Address("Berlin", "10115")
+            )
+        )
 
         val result = source.mutate {
 
@@ -68,7 +76,11 @@ class NestedObjectMutationsSpec : StringSpec({
 
     "Mutating an object by replacing a nested object" {
 
-        val source = Company("Corp", Person("Sam", 25, Address("Berlin", "10115")))
+        val source = Company("Corp",
+            Person("Sam", 25,
+                Address("Berlin", "10115")
+            )
+        )
 
         val result = source.mutate {
             boss.address += Address("Leipzig", "04109")
