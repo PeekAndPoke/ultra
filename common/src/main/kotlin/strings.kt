@@ -31,7 +31,18 @@ fun String.lcFirst(): String {
 fun String.startsWithAny(vararg prefix: String) = prefix.any { startsWith(it) }
 
 /**
+ * Returns 'true' when the string starts with any of the given prefixes
+ */
+@JvmName("startsWithAnyArray")
+fun String.startsWithAny(prefixes: Array<out String>) = prefixes.any { startsWith(it) }
+
+/**
  * Returns 'true' when the string does NOT start with any of the given prefixes
  */
-fun String.startsWithNone(vararg prefix: String) = !startsWithAny(*prefix)
+fun String.startsWithNone(vararg prefix: String) = !startsWithAny(prefix)
 
+/**
+ * Returns 'true' when the string does NOT start with any of the given prefixes
+ */
+@JvmName("startsWithNoneArray")
+fun String.startsWithNone(prefixes: Array<out String>) = !startsWithAny(prefixes)

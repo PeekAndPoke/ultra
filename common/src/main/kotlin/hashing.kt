@@ -12,9 +12,12 @@ fun ByteArray.base64(): String = Base64.getEncoder().encodeToString(this)
 fun ByteArray.md5(): String {
     val md = MessageDigest.getInstance("MD5")
 
+    val radix = 16
+    val md5Length = 32
+
     return BigInteger(1, md.digest(this))
-        .toString(16)
-        .padStart(32, '0')
+        .toString(radix)
+        .padStart(md5Length, '0')
 }
 
 /**
