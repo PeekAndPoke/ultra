@@ -2,6 +2,9 @@ package de.peekandpoke.ultra.common
 
 fun <T> Collection<T>.containsAny(vararg element: T) = element.any { it in this }
 
+@JvmName("containsAnyArray")
+fun <T> Collection<T>.containsAny(elements: Array<out T>) = elements.any { it in this }
+
 fun <T> MutableList<T>.push(vararg element: T) : MutableList<T> = apply { addAll(element) }
 
 fun <T> MutableList<T>.pop() : T? = if (size > 0) removeAt(size - 1) else null

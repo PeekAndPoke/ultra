@@ -57,7 +57,7 @@ open class SetMutator<T, M>(
      */
     fun remove(vararg element: T) = apply {
 
-        if (getResult().containsAny(*element)) {
+        if (getResult().containsAny(element)) {
             getMutableResult().removeAll(element)
         }
     }
