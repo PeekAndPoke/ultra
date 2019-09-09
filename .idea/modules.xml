@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/root.iml" filepath="$PROJECT_DIR$/.idea/modules/root.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/root.common.iml" filepath="$PROJECT_DIR$/.idea/modules/common/root.common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/root.common.main.iml" filepath="$PROJECT_DIR$/.idea/modules/common/root.common.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/root.common.test.iml" filepath="$PROJECT_DIR$/.idea/modules/common/root.common.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/root.main.iml" filepath="$PROJECT_DIR$/.idea/modules/root.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/meta/root.meta.iml" filepath="$PROJECT_DIR$/.idea/modules/meta/root.meta.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/meta/root.meta.main.iml" filepath="$PROJECT_DIR$/.idea/modules/meta/root.meta.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/meta/root.meta.test.iml" filepath="$PROJECT_DIR$/.idea/modules/meta/root.meta.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mutator/root.mutator.iml" filepath="$PROJECT_DIR$/.idea/modules/mutator/root.mutator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mutator/root.mutator.main.iml" filepath="$PROJECT_DIR$/.idea/modules/mutator/root.mutator.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mutator/root.mutator.test.iml" filepath="$PROJECT_DIR$/.idea/modules/mutator/root.mutator.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/root.test.iml" filepath="$PROJECT_DIR$/.idea/modules/root.test.iml" />
+    </modules>
+  </component>
+</project>

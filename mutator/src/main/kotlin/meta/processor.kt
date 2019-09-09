@@ -12,6 +12,7 @@ import javax.lang.model.SourceVersion
 import javax.lang.model.element.TypeElement
 
 
+@Suppress("unused")
 @AutoService(Processor::class)
 open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtils {
 
@@ -79,24 +80,8 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
         val packageName = className.packageName
         val simpleName = className.simpleName
 
-        val codeBlocks = mutableListOf<String>()
-
-        codeBlocks.add(
-            """
-                @file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
-
-                package $packageName
-
-                import de.peekandpoke.ultra.mutator.*
-
-                fun $simpleName.mutate(mutation: ${simpleName}Mutator.() -> Unit) = mutator().apply(mutation).getResult()
-
-                fun $simpleName.mutator(onModify: OnModify<$simpleName> = {}) = ${simpleName}Mutator(this, onModify)
-
-                class ${simpleName}Mutator(target: $simpleName, onModify: OnModify<$simpleName> = {}) : DataClassMutator<$simpleName>(target, onModify) {
-
-            """.trimIndent()
-        )
+        val fieldBlocks = mutableListOf<String>()
+        val imports = mutableSetOf("de.peekandpoke.ultra.mutator.*")
 
         element.variables
             // filter delegated properties (e.g. by lazy)
@@ -105,24 +90,30 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
             .filter { element.hasPublicGetterFor(it) }
             .forEach {
 
+                val type = it.asTypeName()
                 val prop = it.simpleName
 
-                codeBlocks.add("    //// $prop ".padEnd(120, '/') + System.lineSeparator())
+                fieldBlocks.add("    //// $prop ".padEnd(120, '/') + System.lineSeparator())
 
                 logNote("  '$prop' of type ${it.fqn}")
 
                 when {
-                    renderers.canHandle(it.asTypeName()) ->
-                        codeBlocks.add(
+                    renderers.canHandle(type) -> {
+                        // add all imports
+                        imports.addAll(renderers.getImports(type))
+
+                        // add the code block
+                        fieldBlocks.add(
                             renderers.render(it).prependIndent("    ")
                         )
+                    }
 
                     else -> {
                         val message = "There is no known way to mutate the property $element::$prop of type ${it.fqn} yet ... sorry!"
 
                         logWarning("  .. $message")
 
-                        codeBlocks.add(
+                        fieldBlocks.add(
                             """
                                 @Deprecated("$message", level = DeprecationLevel.ERROR)
                                 val $prop: Any? = null
@@ -133,13 +124,44 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
                 }
             }
 
-        codeBlocks.add(
+        val contentBlocks = listOf(
+            // file header
+            """
+                @file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
+
+                package $packageName
+
+            """.trimIndent(),
+
+            // imports
+            imports.sorted().joinToString("\n") { "import $it" },
+
+            // extension functions
+            """
+
+                fun $simpleName.mutate(mutation: ${simpleName}Mutator.() -> Unit) = 
+                    mutator().apply(mutation).getResult()
+
+                fun $simpleName.mutator(onModify: OnModify<$simpleName> = {}) = 
+                    ${simpleName}Mutator(this, onModify)
+
+                class ${simpleName}Mutator(
+                    target: $simpleName, 
+                    onModify: OnModify<$simpleName> = {}
+                ) : DataClassMutator<$simpleName>(target, onModify) {
+
+            """.trimIndent(),
+
+            // fields
+            *fieldBlocks.toTypedArray(),
+
+            // closing mutator class
             """
                 }
             """.trimIndent()
         )
 
-        val content = codeBlocks.joinToString(System.lineSeparator())
+        val content = contentBlocks.joinToString(System.lineSeparator())
 
         val dir = File("$generatedDir/${className.packageName.replace('.', '/')}").also { it.mkdirs() }
         val file = File(dir, "${className.simpleName}${"$$"}mutator.kt")

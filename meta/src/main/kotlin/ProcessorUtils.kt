@@ -61,6 +61,12 @@ interface ProcessorUtils : KotlinProcessingEnvironment {
 
     val TypeName.fqn get() = this.toString()
 
+    val TypeName.packageName get(): String {
+        val parts = fqn.split(".")
+
+        return parts.take(parts.size - 1).joinToString(".")
+    }
+
     val TypeName.isPrimitiveType get() = fqn.isPrimitiveType
 
     val TypeName.isStringType get() = fqn.isStringType

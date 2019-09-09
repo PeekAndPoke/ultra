@@ -1,6 +1,18 @@
 package de.peekandpoke.ultra.mutator.e2e
 
 import de.peekandpoke.ultra.mutator.Mutable
+import de.peekandpoke.ultra.mutator.e2e.package1.FirstInPackage1
+import de.peekandpoke.ultra.mutator.e2e.package1.SecondInPackage1
+import de.peekandpoke.ultra.mutator.e2e.package2.FirstInPackage2
+import de.peekandpoke.ultra.mutator.e2e.package2.SecondInPackage2
+
+@Mutable
+data class ReferencingOtherPackages(
+    val firstIn1: FirstInPackage1,
+    val secondIn1: SecondInPackage1?,
+    val firstIn2: FirstInPackage2,
+    val secondIn2: SecondInPackage2?
+)
 
 @Mutable
 data class WithScalars(

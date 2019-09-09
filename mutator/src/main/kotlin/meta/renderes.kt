@@ -17,6 +17,11 @@ interface CodeRenderer {
     fun canHandle(type: TypeName): Boolean
 
     /**
+     * Returns a list of imports, that need to be added to the generated code
+     */
+    fun getImports(type: TypeName): List<String>
+
+    /**
      * Renders all code-blocks for the given VariableElement
      */
     fun render(elem: VariableElement): String
@@ -33,6 +38,8 @@ abstract class CodeRendererBase(
     override val logPrefix: String,
     override val processingEnv: ProcessingEnvironment
 ) : CodeRenderer, ProcessorUtils {
+
+    override fun getImports(type: TypeName) = listOf<String>()
 
     protected val Int.asParam get() = "it$this"
 
@@ -66,6 +73,11 @@ class CodeRenderers(
      * Returns 'true' when one of the children returns true for the given VariableElement.
      */
     override fun canHandle(type: TypeName) = match(type) != null
+
+    /**
+     * Returns a list of imports, that need to be added to the generated code
+     */
+    override fun getImports(type: TypeName) = match(type)!!.getImports(type)
 
     /**
      * Returns the code for the first matching child renderer
@@ -254,6 +266,7 @@ class DataClassCodeRenderer(logPrefix: String, env: ProcessingEnvironment) : Cod
                 )
                 // TODO: check if the type has a "copy" method
 
+    override fun getImports(type: TypeName) = listOf("${type.packageName}.mutator")
 
     override fun render(elem: VariableElement): String {
 

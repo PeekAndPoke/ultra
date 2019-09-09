@@ -4,10 +4,18 @@
     <bytecodeTargetLevel>
       <module name="common.main" target="1.8" />
       <module name="common.test" target="1.8" />
+      <module name="root.common.main" target="1.8" />
+      <module name="root.common.test" target="1.8" />
+      <module name="root.main" target="1.8" />
+      <module name="root.meta.main" target="1.8" />
+      <module name="root.meta.test" target="1.8" />
+      <module name="root.mutator.main" target="1.8" />
+      <module name="root.mutator.test" target="1.8" />
       <module name="root.proto.package_a.main" target="1.8" />
       <module name="root.proto.package_a.test" target="1.8" />
       <module name="root.proto.package_b.main" target="1.8" />
       <module name="root.proto.package_b.test" target="1.8" />
+      <module name="root.test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

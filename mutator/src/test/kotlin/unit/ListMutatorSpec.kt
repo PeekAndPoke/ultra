@@ -595,7 +595,7 @@ class ListMutatorSpec : StringSpec({
 
             try {
                 subject[100] = SomeDataClass("third", 3)
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
             }
 
             (source === subject.getResult()) shouldBe true
