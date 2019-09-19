@@ -7,21 +7,17 @@ import de.peekandpoke.ultra.mutator.e2e.package2.FirstInPackage2
 import de.peekandpoke.ultra.mutator.e2e.package2.SecondInPackage2
 import java.util.*
 
-
 @Mutable
-data class Generic<T>(
-    val value: T,
-    val other: SecondInPackage2 = SecondInPackage2("second")
+data class Generic<T, X>(
+    val one: T,
+    val two: X
 )
 
 @Mutable
 data class GenericTypeInAction(
-    val generic: Generic<FirstInPackage1>
+    val generic1: Generic<FirstInPackage1, FirstInPackage2>,
+    val generic2: Generic<FirstInPackage2, Generic<FirstInPackage1, FirstInPackage2>>
 )
-
-//val x = GenericTypeInAction(Generic(FirstInPackage1("first"))).mutate {
-//    generic.value.name = "changed"
-//}
 
 @Mutable
 data class ReferencingOtherPackages(

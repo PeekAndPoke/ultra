@@ -1,15 +1,17 @@
 package de.peekandpoke.ultra.mutator.meta
 
 import com.google.auto.service.AutoService
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.asClassName
 import de.peekandpoke.ultra.common.startsWithNone
 import de.peekandpoke.ultra.meta.ProcessorUtils
 import de.peekandpoke.ultra.mutator.Mutable
+import de.peekandpoke.ultra.mutator.meta.rendering.*
 import me.eugeniomarletti.kotlin.processing.KotlinAbstractProcessor
 import java.io.File
 import javax.annotation.processing.Processor
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.SourceVersion
+import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
 
 
@@ -23,13 +25,12 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
 
         // TODO: check for collections
 
-        CodeRenderers(logPrefix, env) { root ->
+        PropertyRenderers(logPrefix, env) { root ->
             listOf(
-                PrimitiveOrStringOrAnyTypeCodeRenderer(logPrefix, env),
-                ListAndSetCodeRenderer(root, logPrefix, env),
-                MapCodeRenderer(root, logPrefix, env),
-                DataClassCodeRenderer(logPrefix, env)
-//                GenericDataClassCodeRenderer(logPrefix, env)
+                PrimitiveOrStringOrAnyTypePropertyRenderer(logPrefix, env),
+                ListAndSetPropertyRenderer(root, logPrefix, env),
+                MapPropertyRenderer(root, logPrefix, env),
+                DataClassPropertyRenderer(logPrefix, env)
             )
         }
     }
@@ -66,12 +67,7 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
         val blacklisted = arrayOf("java.", "javax.", "javafx.", "kotlin.")
 
         // Black list some packages
-        fun List<TypeElement>.blacklist() = asSequence()
-            .distinct()
-            .filter { it.fqn.startsWithNone(blacklisted) }
-            .toList()
-
-        fun List<ParameterizedTypeName>.blacklist() = asSequence()
+        fun <T : Element> List<T>.blacklist() = asSequence()
             .distinct()
             .filter { it.fqn.startsWithNone(blacklisted) }
             .toList()
@@ -80,22 +76,10 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
 
         logNote("all types (nested): $all")
 
-
-        val allGenericTypesUsed = all.map { element ->
-            element.variables
-                .map { it.asTypeName() }
-                .filterIsInstance<ParameterizedTypeName>()
-                .blacklist()
-        }.fold(mutableMapOf<ClassName, MutableSet<ParameterizedTypeName>>()) { acc, elements ->
-            elements.forEach { element ->
-                acc.getOrPut(element.rawType) { mutableSetOf() }.add(element)
-            }
-            // return the acc
-            acc
-        }
+        val allGenericTypesUsed = all.fold(GenericUsages(logPrefix, env)) { acc, type -> acc.add(type) }
 
         logNote("all generic types used")
-        logNote(allGenericTypesUsed.toString())
+        logNote(allGenericTypesUsed.registry.toString())
 
         return Context(all, allGenericTypesUsed)
     }
@@ -104,114 +88,12 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
 
         logNote("Found type ${element.simpleName} in ${element.asClassName().packageName}")
 
-        val className = element.asClassName()
-        val typeName = element.asTypeName()
-        val packageName = className.packageName
-        val simpleName = className.simpleName
+        val content = DataClassRenderer(logPrefix, env, element, context, renderers).render()
 
-        val typeParams = when (typeName) {
-            is ParameterizedTypeName ->
-                "<" + typeName.typeArguments.mapIndexed { idx, _ -> "P${idx}" }.joinToString(", ") + ">"
+        val info = element.info
 
-            else -> ""
-        }
-
-        val fieldBlocks = mutableListOf<String>()
-        val extensionBlock = mutableListOf<String>()
-        val imports = mutableSetOf("de.peekandpoke.ultra.mutator.*")
-
-        element.variables
-            // filter delegated properties (e.g. by lazy)
-            .filter { !it.simpleName.contains("${"$"}delegate") }
-            // we only look at public properties
-            .filter { element.hasPublicGetterFor(it) }
-            .forEach {
-
-                val type = it.asTypeName()
-                val prop = it.simpleName
-
-                fieldBlocks.add("    //// $prop ".padEnd(120, '/'))
-                fieldBlocks.add("    // -> of type      ${it.fqn}")
-                fieldBlocks.add("    // -> reflected by ${type::class.java}")
-
-                when {
-                    type is TypeVariableName -> {
-                        fieldBlocks.add(
-                            "    // type variables will be rendered as extension properties"
-                        )
-                        fieldBlocks.add("")
-
-
-                    }
-
-                    // parameterized types are treated differently
-                    renderers.canHandle(type) -> {
-                        // add all imports
-                        imports.addAll(renderers.getImports(type))
-
-                        fieldBlocks.add(
-                            renderers.render(it).prependIndent("    ")
-                        )
-                    }
-
-                    else -> {
-                        val message =
-                            "There is no known way to mutate the property $element::$prop of type ${it.fqn} yet ... sorry!"
-
-                        logWarning("  .. $message")
-
-                        fieldBlocks.add(
-                            """
-                                @Deprecated("$message", level = DeprecationLevel.ERROR)
-                                val $prop: Any? = null
-
-                            """.trimIndent().prependIndent("    ")
-                        )
-                    }
-                }
-            }
-
-        val contentBlocks = listOf(
-            // file header
-            """
-                @file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
-
-                package $packageName
-
-            """.trimIndent(),
-
-            // imports
-            imports.sorted().joinToString("\n") { "import $it" },
-
-            // extension functions
-            """
-
-                fun $typeParams $simpleName$typeParams.mutate(mutation: ${simpleName}Mutator$typeParams.() -> Unit) = 
-                    mutator().apply(mutation).getResult()
-
-                fun $typeParams $simpleName$typeParams.mutator(onModify: OnModify<$simpleName$typeParams> = {}) = 
-                    ${simpleName}Mutator(this, onModify)
-
-                class ${simpleName}Mutator$typeParams(
-                    target: $simpleName$typeParams, 
-                    onModify: OnModify<$simpleName$typeParams> = {}
-                ) : DataClassMutator<$simpleName$typeParams>(target, onModify) {
-
-            """.trimIndent(),
-
-            // fields
-            *fieldBlocks.toTypedArray(),
-
-            // closing mutator class
-            """
-                }
-            """.trimIndent()
-        )
-
-        val content = contentBlocks.joinToString(System.lineSeparator())
-
-        val dir = File("$generatedDir/${className.packageName.replace('.', '/')}").also { it.mkdirs() }
-        val file = File(dir, "${className.simpleName}${"$$"}mutator.kt")
+        val dir = File("$generatedDir/${info.packageName.replace('.', '/')}").also { it.mkdirs() }
+        val file = File(dir, "${info.simpleName}${"$$"}mutator.kt")
 
         file.writeText(content)
     }

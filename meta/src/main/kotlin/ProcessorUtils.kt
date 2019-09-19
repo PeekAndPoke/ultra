@@ -84,7 +84,6 @@ interface ProcessorUtils : KotlinProcessingEnvironment {
 
     val TypeMirror.fqn get() = asTypeName().toString()
 
-
     /**
      * Get all variables of a type element
      */
