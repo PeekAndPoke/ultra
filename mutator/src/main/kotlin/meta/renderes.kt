@@ -2,7 +2,7 @@ package de.peekandpoke.ultra.mutator.meta
 
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.TypeName
-import de.peekandpoke.ultra.common.startsWithNone
+import de.peekandpoke.ultra.common.startsWithAny
 import de.peekandpoke.ultra.meta.ProcessorUtils
 import javax.annotation.processing.ProcessingEnvironment
 import javax.lang.model.element.VariableElement
@@ -48,6 +48,15 @@ abstract class CodeRendererBase(
     protected fun String.indent(amount: Int, pattern: String = "    ") = lineSequence()
         .mapIndexed { idx, str -> if (idx == 0) str else str.prependIndent(pattern.repeat(amount)) }
         .joinToString(System.lineSeparator())
+
+    val TypeName.isBlackListed
+        get() = fqn.startsWithAny(
+            "java.",                // exclude java std lib
+            "javax.",               // exclude javax std lib
+            "javafx.",              // exclude javafx
+            "kotlin.",              // exclude kotlin std lib
+            "com.google.common."    // exclude google guava
+        )
 }
 
 /**
@@ -96,7 +105,8 @@ class CodeRenderers(
 /**
  * Renderer for primitive types and Strings
  */
-class PrimitiveOrStringOrAnyTypeCodeRenderer(logPrefix: String, env: ProcessingEnvironment) : CodeRendererBase(logPrefix, env) {
+class PrimitiveOrStringOrAnyTypeCodeRenderer(logPrefix: String, env: ProcessingEnvironment) :
+    CodeRendererBase(logPrefix, env) {
 
     override fun canHandle(type: TypeName) = type.isPrimitiveType || type.isStringType || type.isAnyType
 
@@ -251,20 +261,18 @@ class MapCodeRenderer(
     }
 }
 
+/**
+ * Here we handle non parameterized data classes
+ */
 class DataClassCodeRenderer(logPrefix: String, env: ProcessingEnvironment) : CodeRendererBase(logPrefix, env) {
 
     override fun canHandle(type: TypeName) =
-        // we cannot handle generic types at the moment
-        type !is ParameterizedTypeName &&
+        // exclude blank name (probably a generic type like T)
+        type.packageName.isNotEmpty() &&
                 // we also exclude some packages completely
-                type.fqn.startsWithNone(
-                    "java.",                // exclude java std lib
-                    "javax.",               // exclude javax std lib
-                    "javafx.",              // exclude javafx
-                    "kotlin.",              // exclude kotlin std lib
-                    "com.google.common."    // exclude google guava
-                )
-                // TODO: check if the type has a "copy" method
+                !type.isBlackListed
+
+    // TODO: check if the type has a "copy" method
 
     override fun getImports(type: TypeName) = listOf("${type.packageName}.mutator")
 

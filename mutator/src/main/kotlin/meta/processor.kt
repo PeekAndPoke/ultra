@@ -1,7 +1,8 @@
 package de.peekandpoke.ultra.mutator.meta
 
 import com.google.auto.service.AutoService
-import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.*
+import de.peekandpoke.ultra.common.startsWithNone
 import de.peekandpoke.ultra.meta.ProcessorUtils
 import de.peekandpoke.ultra.mutator.Mutable
 import me.eugeniomarletti.kotlin.processing.KotlinAbstractProcessor
@@ -28,6 +29,7 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
                 ListAndSetCodeRenderer(root, logPrefix, env),
                 MapCodeRenderer(root, logPrefix, env),
                 DataClassCodeRenderer(logPrefix, env)
+//                GenericDataClassCodeRenderer(logPrefix, env)
             )
         }
     }
@@ -40,12 +42,17 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
 
     override fun process(annotations: Set<TypeElement>, roundEnv: RoundEnvironment): Boolean {
 
-        generateMutatorFiles(roundEnv)
+        buildContext(roundEnv).apply {
+            types.forEach {
+                // generate code for all the relevant types
+                buildMutatorFileFor(it, this)
+            }
+        }
 
         return true
     }
 
-    private fun generateMutatorFiles(roundEnv: RoundEnvironment) {
+    private fun buildContext(roundEnv: RoundEnvironment): Context {
         // Find all types that have a Karango Annotation
         val elems = roundEnv
             .getElementsAnnotatedWith(Mutable::class.java)
@@ -56,31 +63,61 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
             elems.map { it.getReferencedTypesRecursive().map { tm -> typeUtils.asElement(tm) } }.flatten().distinct()
         )
 
-        val all = pool.asSequence().filterIsInstance<TypeElement>()
-            // Black list some packages
-            .filter { !it.fqn.startsWith("java.") }
-            .filter { !it.fqn.startsWith("javax.") }
-            .filter { !it.fqn.startsWith("javafx.") }
-            .filter { !it.fqn.startsWith("kotlin.") }
+        val blacklisted = arrayOf("java.", "javax.", "javafx.", "kotlin.")
+
+        // Black list some packages
+        fun List<TypeElement>.blacklist() = asSequence()
             .distinct()
-            .filter { renderers.canHandle(it.asTypeName()) }
+            .filter { it.fqn.startsWithNone(blacklisted) }
             .toList()
+
+        fun List<ParameterizedTypeName>.blacklist() = asSequence()
+            .distinct()
+            .filter { it.fqn.startsWithNone(blacklisted) }
+            .toList()
+
+        val all: List<TypeElement> = pool.filterIsInstance<TypeElement>().blacklist()
 
         logNote("all types (nested): $all")
 
-        // generate code for all the relevant types
-        all.forEach { buildMutatorFileFor(it) }
+
+        val allGenericTypesUsed = all.map { element ->
+            element.variables
+                .map { it.asTypeName() }
+                .filterIsInstance<ParameterizedTypeName>()
+                .blacklist()
+        }.fold(mutableMapOf<ClassName, MutableSet<ParameterizedTypeName>>()) { acc, elements ->
+            elements.forEach { element ->
+                acc.getOrPut(element.rawType) { mutableSetOf() }.add(element)
+            }
+            // return the acc
+            acc
+        }
+
+        logNote("all generic types used")
+        logNote(allGenericTypesUsed.toString())
+
+        return Context(all, allGenericTypesUsed)
     }
 
-    private fun buildMutatorFileFor(element: TypeElement) {
+    private fun buildMutatorFileFor(element: TypeElement, context: Context) {
 
         logNote("Found type ${element.simpleName} in ${element.asClassName().packageName}")
 
         val className = element.asClassName()
+        val typeName = element.asTypeName()
         val packageName = className.packageName
         val simpleName = className.simpleName
 
+        val typeParams = when (typeName) {
+            is ParameterizedTypeName ->
+                "<" + typeName.typeArguments.mapIndexed { idx, _ -> "P${idx}" }.joinToString(", ") + ">"
+
+            else -> ""
+        }
+
         val fieldBlocks = mutableListOf<String>()
+        val extensionBlock = mutableListOf<String>()
         val imports = mutableSetOf("de.peekandpoke.ultra.mutator.*")
 
         element.variables
@@ -93,23 +130,33 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
                 val type = it.asTypeName()
                 val prop = it.simpleName
 
-                fieldBlocks.add("    //// $prop ".padEnd(120, '/') + System.lineSeparator())
-
-                logNote("  '$prop' of type ${it.fqn}")
+                fieldBlocks.add("    //// $prop ".padEnd(120, '/'))
+                fieldBlocks.add("    // -> of type      ${it.fqn}")
+                fieldBlocks.add("    // -> reflected by ${type::class.java}")
 
                 when {
+                    type is TypeVariableName -> {
+                        fieldBlocks.add(
+                            "    // type variables will be rendered as extension properties"
+                        )
+                        fieldBlocks.add("")
+
+
+                    }
+
+                    // parameterized types are treated differently
                     renderers.canHandle(type) -> {
                         // add all imports
                         imports.addAll(renderers.getImports(type))
 
-                        // add the code block
                         fieldBlocks.add(
                             renderers.render(it).prependIndent("    ")
                         )
                     }
 
                     else -> {
-                        val message = "There is no known way to mutate the property $element::$prop of type ${it.fqn} yet ... sorry!"
+                        val message =
+                            "There is no known way to mutate the property $element::$prop of type ${it.fqn} yet ... sorry!"
 
                         logWarning("  .. $message")
 
@@ -139,16 +186,16 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
             // extension functions
             """
 
-                fun $simpleName.mutate(mutation: ${simpleName}Mutator.() -> Unit) = 
+                fun $typeParams $simpleName$typeParams.mutate(mutation: ${simpleName}Mutator$typeParams.() -> Unit) = 
                     mutator().apply(mutation).getResult()
 
-                fun $simpleName.mutator(onModify: OnModify<$simpleName> = {}) = 
+                fun $typeParams $simpleName$typeParams.mutator(onModify: OnModify<$simpleName$typeParams> = {}) = 
                     ${simpleName}Mutator(this, onModify)
 
-                class ${simpleName}Mutator(
-                    target: $simpleName, 
-                    onModify: OnModify<$simpleName> = {}
-                ) : DataClassMutator<$simpleName>(target, onModify) {
+                class ${simpleName}Mutator$typeParams(
+                    target: $simpleName$typeParams, 
+                    onModify: OnModify<$simpleName$typeParams> = {}
+                ) : DataClassMutator<$simpleName$typeParams>(target, onModify) {
 
             """.trimIndent(),
 
