@@ -2,13 +2,16 @@ package de.peekandpoke.ultra.mutator.meta
 
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.asClassName
+import de.peekandpoke.ultra.common.startsWithNone
 import de.peekandpoke.ultra.meta.ProcessorUtils
 import de.peekandpoke.ultra.mutator.Mutable
+import de.peekandpoke.ultra.mutator.meta.rendering.*
 import me.eugeniomarletti.kotlin.processing.KotlinAbstractProcessor
 import java.io.File
 import javax.annotation.processing.Processor
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.SourceVersion
+import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
 
 
@@ -22,12 +25,12 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
 
         // TODO: check for collections
 
-        CodeRenderers(logPrefix, env) { root ->
+        PropertyRenderers(logPrefix, env) { root ->
             listOf(
-                PrimitiveOrStringOrAnyTypeCodeRenderer(logPrefix, env),
-                ListAndSetCodeRenderer(root, logPrefix, env),
-                MapCodeRenderer(root, logPrefix, env),
-                DataClassCodeRenderer(logPrefix, env)
+                PrimitiveOrStringOrAnyTypePropertyRenderer(logPrefix, env),
+                ListAndSetPropertyRenderer(root, logPrefix, env),
+                MapPropertyRenderer(root, logPrefix, env),
+                DataClassPropertyRenderer(logPrefix, env)
             )
         }
     }
@@ -40,12 +43,17 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
 
     override fun process(annotations: Set<TypeElement>, roundEnv: RoundEnvironment): Boolean {
 
-        generateMutatorFiles(roundEnv)
+        buildContext(roundEnv).apply {
+            types.forEach {
+                // generate code for all the relevant types
+                buildMutatorFileFor(it, this)
+            }
+        }
 
         return true
     }
 
-    private fun generateMutatorFiles(roundEnv: RoundEnvironment) {
+    private fun buildContext(roundEnv: RoundEnvironment): Context {
         // Find all types that have a Karango Annotation
         val elems = roundEnv
             .getElementsAnnotatedWith(Mutable::class.java)
@@ -56,115 +64,36 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
             elems.map { it.getReferencedTypesRecursive().map { tm -> typeUtils.asElement(tm) } }.flatten().distinct()
         )
 
-        val all = pool.asSequence().filterIsInstance<TypeElement>()
-            // Black list some packages
-            .filter { !it.fqn.startsWith("java.") }
-            .filter { !it.fqn.startsWith("javax.") }
-            .filter { !it.fqn.startsWith("javafx.") }
-            .filter { !it.fqn.startsWith("kotlin.") }
+        val blacklisted = arrayOf("java.", "javax.", "javafx.", "kotlin.")
+
+        // Black list some packages
+        fun <T : Element> List<T>.blacklist() = asSequence()
             .distinct()
-            .filter { renderers.canHandle(it.asTypeName()) }
+            .filter { it.fqn.startsWithNone(blacklisted) }
             .toList()
+
+        val all: List<TypeElement> = pool.filterIsInstance<TypeElement>().blacklist()
 
         logNote("all types (nested): $all")
 
-        // generate code for all the relevant types
-        all.forEach { buildMutatorFileFor(it) }
+        val allGenericTypesUsed = all.fold(GenericUsages(logPrefix, env)) { acc, type -> acc.add(type) }
+
+        logNote("all generic types used")
+        logNote(allGenericTypesUsed.registry.toString())
+
+        return Context(all, allGenericTypesUsed)
     }
 
-    private fun buildMutatorFileFor(element: TypeElement) {
+    private fun buildMutatorFileFor(element: TypeElement, context: Context) {
 
         logNote("Found type ${element.simpleName} in ${element.asClassName().packageName}")
 
-        val className = element.asClassName()
-        val packageName = className.packageName
-        val simpleName = className.simpleName
+        val content = DataClassRenderer(logPrefix, env, element, context, renderers).render()
 
-        val fieldBlocks = mutableListOf<String>()
-        val imports = mutableSetOf("de.peekandpoke.ultra.mutator.*")
+        val info = element.info
 
-        element.variables
-            // filter delegated properties (e.g. by lazy)
-            .filter { !it.simpleName.contains("${"$"}delegate") }
-            // we only look at public properties
-            .filter { element.hasPublicGetterFor(it) }
-            .forEach {
-
-                val type = it.asTypeName()
-                val prop = it.simpleName
-
-                fieldBlocks.add("    //// $prop ".padEnd(120, '/') + System.lineSeparator())
-
-                logNote("  '$prop' of type ${it.fqn}")
-
-                when {
-                    renderers.canHandle(type) -> {
-                        // add all imports
-                        imports.addAll(renderers.getImports(type))
-
-                        // add the code block
-                        fieldBlocks.add(
-                            renderers.render(it).prependIndent("    ")
-                        )
-                    }
-
-                    else -> {
-                        val message = "There is no known way to mutate the property $element::$prop of type ${it.fqn} yet ... sorry!"
-
-                        logWarning("  .. $message")
-
-                        fieldBlocks.add(
-                            """
-                                @Deprecated("$message", level = DeprecationLevel.ERROR)
-                                val $prop: Any? = null
-
-                            """.trimIndent().prependIndent("    ")
-                        )
-                    }
-                }
-            }
-
-        val contentBlocks = listOf(
-            // file header
-            """
-                @file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
-
-                package $packageName
-
-            """.trimIndent(),
-
-            // imports
-            imports.sorted().joinToString("\n") { "import $it" },
-
-            // extension functions
-            """
-
-                fun $simpleName.mutate(mutation: ${simpleName}Mutator.() -> Unit) = 
-                    mutator().apply(mutation).getResult()
-
-                fun $simpleName.mutator(onModify: OnModify<$simpleName> = {}) = 
-                    ${simpleName}Mutator(this, onModify)
-
-                class ${simpleName}Mutator(
-                    target: $simpleName, 
-                    onModify: OnModify<$simpleName> = {}
-                ) : DataClassMutator<$simpleName>(target, onModify) {
-
-            """.trimIndent(),
-
-            // fields
-            *fieldBlocks.toTypedArray(),
-
-            // closing mutator class
-            """
-                }
-            """.trimIndent()
-        )
-
-        val content = contentBlocks.joinToString(System.lineSeparator())
-
-        val dir = File("$generatedDir/${className.packageName.replace('.', '/')}").also { it.mkdirs() }
-        val file = File(dir, "${className.simpleName}${"$$"}mutator.kt")
+        val dir = File("$generatedDir/${info.packageName.replace('.', '/')}").also { it.mkdirs() }
+        val file = File(dir, "${info.simpleName}${"$$"}mutator.kt")
 
         file.writeText(content)
     }

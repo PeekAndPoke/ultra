@@ -62,9 +62,16 @@ interface ProcessorUtils : KotlinProcessingEnvironment {
     val TypeName.fqn get() = this.toString()
 
     val TypeName.packageName get(): String {
-        val parts = fqn.split(".")
 
-        return parts.take(parts.size - 1).joinToString(".")
+        return when (this) {
+            is ParameterizedTypeName -> this.rawType.packageName
+
+            else -> {
+                val parts = fqn.split(".")
+
+                 parts.take(parts.size - 1).joinToString(".")
+            }
+        }
     }
 
     val TypeName.isPrimitiveType get() = fqn.isPrimitiveType
@@ -76,7 +83,6 @@ interface ProcessorUtils : KotlinProcessingEnvironment {
     fun TypeName.asKotlinClassName() = fqn.asKotlinClassName()
 
     val TypeMirror.fqn get() = asTypeName().toString()
-
 
     /**
      * Get all variables of a type element

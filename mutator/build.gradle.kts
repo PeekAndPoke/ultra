@@ -51,6 +51,10 @@ repositories {
     jcenter()
 }
 
+kapt {
+    useBuildCache = false
+}
+
 configure<JavaPluginConvention> {
     sourceCompatibility = JavaVersion.VERSION_1_8
 }

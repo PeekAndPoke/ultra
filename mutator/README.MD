@@ -2,6 +2,10 @@
 
 ## TODO
 
+- ( ) TESTS: all java.time.* must be treated like primitive types
+- ( ) create FallbackRenderer that accepts everything, like primitive renderer (with comment "sorry no better way known" message in generated code)
+
+
 ### Support for different collection libraries
 
 - https://github.com/hrldcpr/pcollections

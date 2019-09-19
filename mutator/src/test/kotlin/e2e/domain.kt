@@ -5,6 +5,19 @@ import de.peekandpoke.ultra.mutator.e2e.package1.FirstInPackage1
 import de.peekandpoke.ultra.mutator.e2e.package1.SecondInPackage1
 import de.peekandpoke.ultra.mutator.e2e.package2.FirstInPackage2
 import de.peekandpoke.ultra.mutator.e2e.package2.SecondInPackage2
+import java.util.*
+
+@Mutable
+data class Generic<T, X>(
+    val one: T,
+    val two: X
+)
+
+@Mutable
+data class GenericTypeInAction(
+    val generic1: Generic<FirstInPackage1, FirstInPackage2>,
+    val generic2: Generic<FirstInPackage2, Generic<FirstInPackage1, FirstInPackage2>>
+)
 
 @Mutable
 data class ReferencingOtherPackages(
@@ -12,6 +25,11 @@ data class ReferencingOtherPackages(
     val secondIn1: SecondInPackage1?,
     val firstIn2: FirstInPackage2,
     val secondIn2: SecondInPackage2?
+)
+
+@Mutable
+data class WithDate(
+    val date: Date
 )
 
 @Mutable
