@@ -1,3 +1,3 @@
 package de.peekandpoke.ultra.kontainer
 
-fun container() = "Hello"
+fun kontainer(builder: KontainerBuilder.() -> Unit): KontainerBlueprint = KontainerBuilder(builder).build()

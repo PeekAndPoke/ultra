@@ -21,6 +21,12 @@ val kotlin_metadata_version: String by project
 val google_auto_version: String by project
 val kotlinpoet_version: String by project
 val logback_version: String by project
+val kotlintest_version: String by project
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
 
 dependencies {
     api(rootProject.project("meta"))
@@ -31,24 +37,19 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logback_version")
 
     implementation("org.atteo.classindex:classindex:3.4")
-    implementation("org.javassist:javassist:3.25.0-GA")
-
     kapt("org.atteo.classindex:classindex:3.4")
+
+    implementation("org.javassist:javassist:3.25.0-GA")
 
     kaptTest("com.google.auto.service:auto-service:$google_auto_version")
     kaptTest(rootProject.project(":mutator"))
 
     testImplementation("ch.qos.logback:logback-classic:$logback_version")
-    testImplementation("io.kotlintest:kotlintest-runner-junit5:3.3.2")
+    testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")
 }
 
 val test by tasks.getting(Test::class) {
     useJUnitPlatform { }
-}
-
-repositories {
-    mavenCentral()
-    jcenter()
 }
 
 kapt {

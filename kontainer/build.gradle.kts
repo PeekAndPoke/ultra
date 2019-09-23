@@ -16,15 +16,25 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
-dependencies {
-    api(kotlin("stdlib-jdk8"))
-}
+val logback_version: String by project
+val kotlintest_version: String by project
 
 repositories {
     mavenCentral()
     jcenter()
 }
 
+dependencies {
+    api(kotlin("stdlib-jdk8"))
+    api(kotlin("reflect"))
+
+    testImplementation("ch.qos.logback:logback-classic:$logback_version")
+    testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")
+}
+
+val test by tasks.getting(Test::class) {
+    useJUnitPlatform { }
+}
 
 configure<JavaPluginConvention> {
     sourceCompatibility = JavaVersion.VERSION_1_8
