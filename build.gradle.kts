@@ -15,7 +15,6 @@ plugins {
     idea
     `build-scan`
     kotlin("jvm") version "1.3.50"
-//    id("com.vanniktech.code.quality.tools") version "0.18.0"
 }
 
 repositories {

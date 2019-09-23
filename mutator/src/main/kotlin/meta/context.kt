@@ -27,11 +27,11 @@ class GenericUsages(
 
     private fun add(variables: List<VariableElement>) = apply {
 
-        variables.forEach { variable ->
-            registry.getOrPut((variable.asTypeName() as ParameterizedTypeName).rawType) {
-                mutableSetOf()
-            }.add(variable.asType().asTypeName() as ParameterizedTypeName)
-        }
+        variables
+            .map { it.asTypeName() }.filterIsInstance<ParameterizedTypeName>()
+            .forEach { type ->
+                registry.getOrPut(type.rawType) { mutableSetOf() }.add(type)
+            }
     }
 
     private val blacklisted = arrayOf("java.", "javax.", "javafx.", "kotlin.")

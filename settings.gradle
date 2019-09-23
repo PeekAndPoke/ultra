@@ -2,6 +2,7 @@ rootProject.name = 'root'
 
 include(
         ":common",
+        ":kontainer",
         ":meta",
         ":mutator"
 )

@@ -6,6 +6,9 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/root.common.iml" filepath="$PROJECT_DIR$/.idea/modules/common/root.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/root.common.main.iml" filepath="$PROJECT_DIR$/.idea/modules/common/root.common.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/root.common.test.iml" filepath="$PROJECT_DIR$/.idea/modules/common/root.common.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/kontainer/root.kontainer.iml" filepath="$PROJECT_DIR$/.idea/modules/kontainer/root.kontainer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/kontainer/root.kontainer.main.iml" filepath="$PROJECT_DIR$/.idea/modules/kontainer/root.kontainer.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/kontainer/root.kontainer.test.iml" filepath="$PROJECT_DIR$/.idea/modules/kontainer/root.kontainer.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/root.main.iml" filepath="$PROJECT_DIR$/.idea/modules/root.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/meta/root.meta.iml" filepath="$PROJECT_DIR$/.idea/modules/meta/root.meta.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/meta/root.meta.main.iml" filepath="$PROJECT_DIR$/.idea/modules/meta/root.meta.main.iml" />

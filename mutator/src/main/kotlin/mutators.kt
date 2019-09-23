@@ -2,7 +2,7 @@ package de.peekandpoke.ultra.mutator
 
 typealias OnModify<T> = (newValue: T) -> Unit
 
-interface Mutator<I : Any> {
+interface Mutator<I> {
 
     /**
      * Get the original input value that the mutator is working on
@@ -20,7 +20,7 @@ interface Mutator<I : Any> {
     fun isModified(): Boolean
 }
 
-abstract class MutatorBase<I : Any, R : I>(
+abstract class MutatorBase<I, R : I>(
 
     private val inputValue: I,
     protected val onModify: OnModify<I>
