@@ -12,7 +12,7 @@ import io.kotlintest.shouldThrow
 import io.kotlintest.specs.StringSpec
 
 
-class GlobalSingletonsOnlySpec : StringSpec({
+class GeneralInjectionSpec : StringSpec({
 
     "Creating an empty container" {
 
@@ -76,23 +76,6 @@ class GlobalSingletonsOnlySpec : StringSpec({
 
             error.message shouldContain
                     "Parameter 'another' misses a dependency to '${AnotherSimpleService::class.qualifiedName}'"
-        }
-    }
-
-    "Creating a container with an ambiguous dependency" {
-
-        val blueprint = kontainer {
-            singleton<InjectingAmbiguous>()
-            singleton<AmbiguousImplOne>()
-            singleton<AmbiguousImplTwo>()
-        }
-
-        assertSoftly {
-            val error = shouldThrow<KontainerInconsistent> {
-                blueprint.useWith()
-            }
-
-            error.message shouldContain "Parameter 'ambiguous' is ambiguous"
         }
     }
 

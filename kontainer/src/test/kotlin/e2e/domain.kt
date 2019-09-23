@@ -39,4 +39,8 @@ class AmbiguousImplTwo : Ambiguous
 
 data class InjectingAmbiguous(val ambiguous: Ambiguous)
 
+data class InjectingAllAmbiguous(val all: List<Ambiguous>)
+
 data class InjectingSomethingWeird(val weird: Map<String, String>)
+
+data class LazilyInjecting(val lazy: Lazy<SimpleService>)

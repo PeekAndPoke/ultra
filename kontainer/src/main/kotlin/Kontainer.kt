@@ -31,6 +31,15 @@ data class Kontainer(
     }
 
     /**
+     * Get all services that are a super type of the given class
+     */
+    fun <T : Any> getAll(cls: KClass<T>): List<T> {
+
+        @Suppress("UNCHECKED_CAST")
+        return superTypeLookup.getAllCandidatesFor(cls).map { get(it) as T }
+    }
+
+    /**
      * Get a provider for the given service class
      */
     inline fun <reified T : Any> getProvider(): ServiceProvider = getProvider(T::class)
