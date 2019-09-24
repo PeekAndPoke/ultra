@@ -5,7 +5,7 @@ import kotlin.reflect.KParameter
 
 fun kontainer(builder: KontainerBuilder.() -> Unit): KontainerBlueprint = KontainerBuilder(builder).build()
 
-data class ServiceDefinition internal constructor(
+data class ServiceDefinition(
     val produces: KClass<*>,
     val type: InjectionType,
     val producer: Producer? = null
@@ -16,7 +16,7 @@ enum class InjectionType {
     Dynamic
 }
 
-data class Producer internal constructor(
+data class Producer(
     val signature: List<KParameter>,
     val creator: (Array<Any>) -> Any
 )

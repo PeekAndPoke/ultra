@@ -4,7 +4,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.reflect
 
-class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit) {
+class KontainerBuilder(builder: KontainerBuilder.() -> Unit) {
 
     private val config = mutableMapOf<String, Any>()
 

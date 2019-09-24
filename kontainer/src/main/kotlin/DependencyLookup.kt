@@ -6,7 +6,7 @@ import kotlin.reflect.full.primaryConstructor
 /**
  * A lookup for finding out which classes are injected into which
  */
-class DependencyLookup internal constructor(classes: Set<KClass<*>>) {
+class DependencyLookup(classes: Set<KClass<*>>) {
 
     /**
      * The lookup map built by the init method

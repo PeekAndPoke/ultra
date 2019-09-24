@@ -65,7 +65,7 @@ interface ParameterProvider {
     /**
      * Provider for configuration values
      */
-    data class ForConfigValue internal constructor(private val parameter: KParameter) : ParameterProvider {
+    data class ForConfigValue(private val parameter: KParameter) : ParameterProvider {
 
         private val paramCls by lazy { parameter.type.classifier as KClass<*> }
 
@@ -84,7 +84,7 @@ interface ParameterProvider {
     /**
      * Base for single service providers
      */
-    abstract class ForServiceBase internal constructor(private val parameter: KParameter) {
+    abstract class ForServiceBase(private val parameter: KParameter) {
 
         abstract val paramCls: KClass<*>
 
@@ -111,7 +111,7 @@ interface ParameterProvider {
     /**
      * Provider for a single object
      */
-    class ForService internal constructor(parameter: KParameter) : ForServiceBase(parameter), ParameterProvider {
+    class ForService(parameter: KParameter) : ForServiceBase(parameter), ParameterProvider {
 
         override val paramCls by lazy { parameter.type.classifier as KClass<*> }
 
@@ -121,7 +121,7 @@ interface ParameterProvider {
     /**
      * Provider for a lazy service
      */
-    class ForLazyService internal constructor(parameter: KParameter) : ForServiceBase(parameter), ParameterProvider {
+    class ForLazyService(parameter: KParameter) : ForServiceBase(parameter), ParameterProvider {
 
         override val paramCls by lazy { parameter.type.arguments[0].type!!.classifier as KClass<*> }
 
@@ -131,7 +131,7 @@ interface ParameterProvider {
     /**
      * Provider for list of services
      */
-    data class ForListOfServices internal constructor(private val parameter: KParameter) : ParameterProvider {
+    data class ForListOfServices(private val parameter: KParameter) : ParameterProvider {
 
         override fun provide(container: Kontainer): List<Any> = container.getAll(
             parameter.type.arguments[0].type!!.classifier as KClass<*>
@@ -146,7 +146,7 @@ interface ParameterProvider {
     /**
      * Fallback that always produces an error
      */
-    data class UnknownInjection internal constructor(private val parameter: KParameter) : ParameterProvider {
+    data class UnknownInjection(private val parameter: KParameter) : ParameterProvider {
 
         private val paramCls = parameter.type.classifier as KClass<*>
 
