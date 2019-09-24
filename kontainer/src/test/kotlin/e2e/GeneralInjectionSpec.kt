@@ -55,6 +55,19 @@ class GeneralInjectionSpec : StringSpec({
         }
     }
 
+    "Container with a singleton service (existing instance)" {
+
+        val subject = kontainer {
+            instance(SimpleService())
+        }.useWith()
+
+        assertSoftly {
+
+            subject.get<SimpleService>()::class shouldBe SimpleService::class
+            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.GlobalSingleton
+        }
+    }
+
     "Container with multiple singleton services" {
 
         val subject = kontainer {

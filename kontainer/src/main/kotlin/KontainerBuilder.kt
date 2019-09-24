@@ -16,7 +16,11 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         builder(this)
     }
 
-    fun build(): KontainerBlueprint = KontainerBlueprint(config.toMap(), definitions, definitionLocations)
+    fun buildKontainer(): KontainerBlueprint =
+        KontainerBlueprint(config.toMap(), definitions.toMap(), definitionLocations.toMap())
+
+    fun buildModule(): KontainerModule =
+        KontainerModule(config.toMap(), definitions.toMap(), definitionLocations.toMap())
 
     // adding services ///////////////////////////////////////////////////////////////////////////////////////
 
@@ -27,6 +31,15 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         definitionLocations[def.produces] = Throwable().stackTrace.first {
             it.className != KontainerBuilder::class.qualifiedName
         }
+    }
+
+    /**
+     * Imports a module
+     */
+    fun module(module: KontainerModule) = apply {
+        config.putAll(module.config)
+        definitions.putAll(module.definitions)
+        definitionLocations.putAll(module.definitionLocations)
     }
 
     /**
@@ -65,6 +78,16 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * Defines a dynamic service
      */
     inline fun <reified T : Any> dynamic() = dynamic(T::class)
+
+    /**
+     * Register an already existing object as a service
+     */
+    fun <T : Any> instance(instance: T) = add(
+
+        ServiceDefinition(instance::class, InjectionType.Singleton,
+            Producer(listOf()) { instance }
+        )
+    )
 
     /**
      * Create a singleton via a factory method with one injected parameter

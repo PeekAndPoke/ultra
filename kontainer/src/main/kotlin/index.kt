@@ -3,7 +3,23 @@ package de.peekandpoke.ultra.kontainer
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 
-fun kontainer(builder: KontainerBuilder.() -> Unit): KontainerBlueprint = KontainerBuilder(builder).build()
+/**
+ * Creates a kontainer
+ */
+fun kontainer(builder: KontainerBuilder.() -> Unit): KontainerBlueprint =
+    KontainerBuilder(builder).buildKontainer()
+
+/**
+ * Creates a kontainer module
+ */
+fun module(builder: KontainerBuilder.() -> Unit): KontainerModule =
+    KontainerBuilder(builder).buildModule()
+
+data class KontainerModule internal constructor(
+    val config: Map<String, Any>,
+    val definitions: Map<KClass<*>, ServiceDefinition>,
+    val definitionLocations: Map<KClass<*>, StackTraceElement>
+)
 
 data class ServiceDefinition internal constructor(
     val produces: KClass<*>,
