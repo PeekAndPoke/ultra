@@ -32,7 +32,7 @@ interface ServiceProvider {
     /**
      * Provides an already existing object as a service
      */
-    data class ForInstance(override val type: Type, private val instance: Any) : ServiceProvider {
+    data class ForInstance internal constructor(override val type: Type, private val instance: Any) : ServiceProvider {
 
         /**
          * Simply returns the [instance]
@@ -52,7 +52,7 @@ interface ServiceProvider {
      *
      * The [paramProviders] create the parameters passed to [creator]
      */
-    data class ForSingleton(
+    data class ForSingleton internal constructor(
         override val type: Type,
         val creator: (Array<Any>) -> Any,
         val paramProviders: List<ParameterProvider>

@@ -2,7 +2,7 @@ package de.peekandpoke.ultra.kontainer
 
 import kotlin.reflect.KClass
 
-data class KontainerBlueprint(
+data class KontainerBlueprint internal constructor(
     val config: Map<String, Any>,
     val definitions: Map<KClass<*>, ServiceDefinition>,
     val definitionLocations: Map<KClass<*>, StackTraceElement>

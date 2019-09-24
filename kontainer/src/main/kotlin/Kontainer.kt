@@ -5,7 +5,7 @@ import kotlin.reflect.KClass
 /**
  * The container
  */
-data class Kontainer(
+data class Kontainer internal constructor(
     val superTypeLookup: TypeLookup.ForSuperTypes,
     val config: Map<String, Any>,
     val providers: Map<KClass<*>, ServiceProvider>
