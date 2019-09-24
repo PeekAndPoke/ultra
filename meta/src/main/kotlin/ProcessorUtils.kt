@@ -30,15 +30,20 @@ interface ProcessorUtils : KotlinProcessingEnvironment {
 
     ////  REFLECTION  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    fun String.asKotlinClassName(): String = this
-        .replace("/", "")
-        .replace("kotlin.jvm.functions", "kotlin")
-        .replace("java.lang.Throwable", "kotlin.Throwable")
-        .replace("java.lang.", "kotlin.")
-        .replace("java.util.", "kotlin.collections.")
-        .replace("kotlin.Integer", "kotlin.Int")
-        .replace("kotlin.Character", "kotlin.Char")
-        .replace("kotlin.Object", "kotlin.Any")
+    fun String.asKotlinClassName(): String = when {
+
+        this == "java.util.Date" -> this
+
+        else -> this
+            .replace("/", "")
+            .replace("kotlin.jvm.functions", "kotlin")
+            .replace("java.lang.Throwable", "kotlin.Throwable")
+            .replace("java.lang.", "kotlin.")
+            .replace("java.util.", "kotlin.collections.")
+            .replace("kotlin.Integer", "kotlin.Int")
+            .replace("kotlin.Character", "kotlin.Char")
+            .replace("kotlin.Object", "kotlin.Any")
+    }
 
     val String.isPrimitiveType
         get() = when (asKotlinClassName()) {

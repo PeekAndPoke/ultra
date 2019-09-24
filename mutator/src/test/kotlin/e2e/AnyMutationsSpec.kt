@@ -7,6 +7,7 @@ import io.kotlintest.matchers.types.shouldNotBeSameInstanceAs
 import io.kotlintest.matchers.withClue
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.StringSpec
+import java.time.LocalDate
 import kotlin.reflect.KMutableProperty0
 
 @DisplayName("E2E - AnyMutationsSpec")
@@ -72,6 +73,50 @@ class AnyMutationsSpec : StringSpec({
 
             withClue("Result must be modified properly") {
                 result.anObject shouldBe "changed"
+            }
+        }
+    }
+
+    "Mutating one 'Date' property by assignment" {
+
+        val source = WithDate(date = LocalDate.MIN)
+
+        val result = source.mutate {
+            date = LocalDate.MAX
+        }
+
+        assertSoftly {
+
+            source shouldNotBeSameInstanceAs result
+
+            withClue("Source object must NOT be modified") {
+                source.date shouldBe LocalDate.MIN
+            }
+
+            withClue("Result must be modified properly") {
+                result.date shouldBe LocalDate.MAX
+            }
+        }
+    }
+
+    "Mutating one 'Date' property via reflection" {
+
+        val source = WithDate(date = LocalDate.MIN)
+
+        val result = source.mutate {
+            setProp(::date, LocalDate.MAX)
+        }
+
+        assertSoftly {
+
+            source shouldNotBeSameInstanceAs result
+
+            withClue("Source object must NOT be modified") {
+                source.date shouldBe LocalDate.MIN
+            }
+
+            withClue("Result must be modified properly") {
+                result.date shouldBe LocalDate.MAX
             }
         }
     }

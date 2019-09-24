@@ -5,7 +5,7 @@ import de.peekandpoke.ultra.mutator.e2e.package1.FirstInPackage1
 import de.peekandpoke.ultra.mutator.e2e.package1.SecondInPackage1
 import de.peekandpoke.ultra.mutator.e2e.package2.FirstInPackage2
 import de.peekandpoke.ultra.mutator.e2e.package2.SecondInPackage2
-import java.util.*
+import java.time.LocalDate
 
 @Mutable
 data class Generic<T, X>(
@@ -29,7 +29,7 @@ data class ReferencingOtherPackages(
 
 @Mutable
 data class WithDate(
-    val date: Date
+    val date: LocalDate
 )
 
 @Mutable

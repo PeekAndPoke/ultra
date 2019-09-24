@@ -60,9 +60,17 @@ class DataClassRenderer(
                 val type = it.asTypeName()
                 val prop = it.simpleName
 
-                fieldBlocks.add("    //// $prop ".padEnd(120, '/'))
-                fieldBlocks.add("    // -> of type      ${it.fqn}")
-                fieldBlocks.add("    // -> reflected by ${type::class.java}")
+                fieldBlocks.add(
+                    """
+                    /**
+                     * Mutator for field [${info.receiverStr}.$prop]
+                     *
+                     * Info:
+                     *   - type:         ${it.fqn}
+                     *   - reflected by: ${type::class.qualifiedName}
+                     */ 
+                """.trimIndent().prependIndent("    ")
+                )
 
                 when {
                     // parameterized types are treated differently

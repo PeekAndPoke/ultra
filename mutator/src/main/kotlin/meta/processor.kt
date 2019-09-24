@@ -27,10 +27,11 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
 
         PropertyRenderers(logPrefix, env) { root ->
             listOf(
-                PrimitiveOrStringOrAnyTypePropertyRenderer(logPrefix, env),
                 ListAndSetPropertyRenderer(root, logPrefix, env),
                 MapPropertyRenderer(root, logPrefix, env),
-                DataClassPropertyRenderer(logPrefix, env)
+                DataClassPropertyRenderer(logPrefix, env),
+                // Fallback for primitive types, String, Any, and all others that or not support yet
+                PureGetterSetterRenderer(logPrefix, env)
             )
         }
     }

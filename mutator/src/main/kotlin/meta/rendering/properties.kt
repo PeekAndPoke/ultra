@@ -103,21 +103,28 @@ class PropertyRenderers(
 /**
  * Renderer for primitive types and Strings
  */
-class PrimitiveOrStringOrAnyTypePropertyRenderer(logPrefix: String, env: ProcessingEnvironment) :
+class PureGetterSetterRenderer(logPrefix: String, env: ProcessingEnvironment) :
     PropertyRendererBase(logPrefix, env) {
 
-    override fun canHandle(type: TypeName) = type.isPrimitiveType || type.isStringType || type.isAnyType
+    override fun canHandle(type: TypeName) = true
 
     override fun render(property: VariableElement): String {
 
         val cls = property.asKotlinClassName() + if (property.isNullable) "?" else ""
         val prop = property.simpleName
+        val type = property.asTypeName()
+
+        val hint = when {
+            type.isPrimitiveType || type.isStringType || type.isAnyType -> "\n"
+
+            else -> "// Currently there is no better way to mutate a '$type' ... sorry!\n"
+        }
 
         return """
             var $prop: $cls
                 get() = getResult().$prop
                 set(v) = modify(getResult()::$prop, getResult().$prop, v)
-
+                $hint
         """.trimIndent()
     }
 
