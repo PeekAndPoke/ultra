@@ -1,5 +1,7 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
+import de.peekandpoke.ultra.kontainer.ConfigAllInjecting
+import de.peekandpoke.ultra.kontainer.ConfigIntInjecting
 import de.peekandpoke.ultra.kontainer.KontainerInconsistent
 import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotlintest.assertSoftly

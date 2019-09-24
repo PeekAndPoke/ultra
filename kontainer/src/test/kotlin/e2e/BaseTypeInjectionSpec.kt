@@ -1,7 +1,6 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.KontainerInconsistent
-import de.peekandpoke.ultra.kontainer.kontainer
+import de.peekandpoke.ultra.kontainer.*
 import io.kotlintest.assertSoftly
 import io.kotlintest.matchers.string.shouldContain
 import io.kotlintest.shouldBe
@@ -39,6 +38,28 @@ class BaseTypeInjectionSpec : StringSpec({
             }
 
             error.message shouldContain "Parameter 'ambiguous' is ambiguous"
+        }
+    }
+
+    "Creating a container with a service that injects all services of a base type" {
+
+        val subject = kontainer {
+            singleton<InjectingAllAmbiguous>()
+            singleton<AmbiguousImplOne>()
+            singleton<AmbiguousImplTwo>()
+
+            singleton<SimpleService>()
+            singleton<AnotherSimpleService>()
+        }.useWith()
+
+        assertSoftly {
+
+            subject.get<InjectingAllAmbiguous>()::class shouldBe InjectingAllAmbiguous::class
+
+            val implOne = subject.get<AmbiguousImplOne>()
+            val implTwo = subject.get<AmbiguousImplTwo>()
+
+            subject.get<InjectingAllAmbiguous>().all shouldBe listOf(implOne, implTwo)
         }
     }
 })

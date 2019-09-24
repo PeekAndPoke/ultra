@@ -1,13 +1,15 @@
 package de.peekandpoke.ultra.kontainer
 
-import kotlin.reflect.KClass
-import kotlin.reflect.KFunction
-import kotlin.reflect.full.primaryConstructor
-
 /**
  * Base for all service providers
  */
 interface ServiceProvider {
+
+    enum class Type {
+        GlobalSingleton,
+        SemiDynamic,
+        Dynamic
+    }
 
     /**
      * The type of the service that is created
@@ -27,17 +29,10 @@ interface ServiceProvider {
      */
     fun validate(container: Kontainer): List<String>
 
-
-    enum class Type {
-        GlobalSingleton,
-        SemiDynamic,
-        Dynamic
-    }
-
     /**
      * Provides an already existing object as a service
      */
-    data class ForInstance(override val type: Type, private val instance: Any) : ServiceProvider {
+    data class ForInstance internal constructor(override val type: Type, private val instance: Any) : ServiceProvider {
 
         /**
          * Simply returns the [instance]
@@ -53,23 +48,21 @@ interface ServiceProvider {
     /**
      * Provides a singleton service
      *
-     * The [owner] is the type containing the creator function [creator]
+     * The [creator] is the function that will create the service
      *
      * The [paramProviders] create the parameters passed to [creator]
      */
-    data class ForSingleton constructor(
+    data class ForSingleton internal constructor(
         override val type: Type,
-        val owner: KClass<*>,
-        val creator: KFunction<Any>,
+        val creator: (Array<Any>) -> Any,
         val paramProviders: List<ParameterProvider>
     ) : ServiceProvider {
 
         companion object {
-            fun of(type: Type, cls: KClass<*>) = ForSingleton(
+            fun of(type: Type, definition: ServiceDefinition) = ForSingleton(
                 type,
-                cls,
-                cls.primaryConstructor!!,
-                cls.primaryConstructor!!.parameters.map { ParameterProvider.of(it) }
+                definition.producer!!.creator,
+                definition.producer.signature.map { ParameterProvider.of(it) }
             )
         }
 
@@ -90,8 +83,8 @@ interface ServiceProvider {
         /**
          * Creates a new instance
          */
-        private fun create(container: Kontainer): Any = creator.call(
-            *paramProviders.map { it.provide(container) }.toTypedArray()
+        private fun create(container: Kontainer): Any = creator(
+            paramProviders.map { it.provide(container) }.toTypedArray()
         )
     }
 }

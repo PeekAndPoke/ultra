@@ -1,4 +1,6 @@
-package de.peekandpoke.ultra.kontainer.e2e
+package de.peekandpoke.ultra.kontainer
+
+interface MyService
 
 data class ConfigIntInjecting(val configInt: Int)
 

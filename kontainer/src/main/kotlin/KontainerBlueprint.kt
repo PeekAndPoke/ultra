@@ -2,7 +2,11 @@ package de.peekandpoke.ultra.kontainer
 
 import kotlin.reflect.KClass
 
-data class KontainerBlueprint(val config: Map<String, Any>, val classes: Map<KClass<*>, InjectionType>) {
+data class KontainerBlueprint internal constructor(
+    val config: Map<String, Any>,
+    val definitions: Map<KClass<*>, ServiceDefinition>,
+    val definitionLocations: Map<KClass<*>, StackTraceElement>
+) {
 
     /**
      * Counts how often times the blueprint was used
@@ -12,7 +16,7 @@ data class KontainerBlueprint(val config: Map<String, Any>, val classes: Map<KCl
     /**
      * A set of all classes that need to passed to [useWith]
      */
-    private val mandatoryDynamics = classes.filterValues { it == InjectionType.Dynamic }.keys
+    private val mandatoryDynamics = definitions.filterValues { it.type == InjectionType.Dynamic }.keys
 
     /**
      * A lookup for finding the base types of mandatory dynamic services from given super types
@@ -27,12 +31,12 @@ data class KontainerBlueprint(val config: Map<String, Any>, val classes: Map<KCl
     /**
      * Dependency lookup for figuring out which service depends on which other services
      */
-    private val dependencyLookUp = DependencyLookup(classes.keys)
+    private val dependencyLookUp = DependencyLookup(definitions.keys)
 
     /**
      * Base type lookup for finding all candidate services by a given super type
      */
-    private val superTypeLookup = TypeLookup.ForSuperTypes(classes.keys)
+    private val superTypeLookup = TypeLookup.ForSuperTypes(definitions.keys)
 
     /**
      * Semi dynamic services
@@ -40,16 +44,19 @@ data class KontainerBlueprint(val config: Map<String, Any>, val classes: Map<KCl
      * These are services that where initially defined as singletons, but which inject dynamic services.
      * Or which inject services that themselves inject dynamic services etc...
      */
-    private val semiDynamics: Set<KClass<*>> = dependencyLookUp.getAllDependents(mandatoryDynamics)
+    private val semiDynamics: Map<KClass<*>, ServiceDefinition> =
+        dependencyLookUp.getAllDependents(mandatoryDynamics).map {
+            it to definitions.getValue(it)
+        }.toMap()
 
     /**
      * Global services are the services that have no dependency to any of the dynamic services
      */
-    private val globalSingletons: Map<KClass<*>, ServiceProvider> = classes
+    private val globalSingletons: Map<KClass<*>, ServiceProvider> = definitions
         .filterKeys { !mandatoryDynamics.contains(it) }
         .filterKeys { !semiDynamics.contains(it) }
-        .mapValues { (k, _) ->
-            ServiceProvider.ForSingleton.of(ServiceProvider.Type.GlobalSingleton, k)
+        .mapValues { (_, v) ->
+            ServiceProvider.ForSingleton.of(ServiceProvider.Type.GlobalSingleton, v)
         }
 
     /**
@@ -90,8 +97,8 @@ data class KontainerBlueprint(val config: Map<String, Any>, val classes: Map<KCl
             config,
             globalSingletons
                 // add singleton providers for all semi dynamic services
-                .plus(semiDynamics.map {
-                    it to ServiceProvider.ForSingleton.of(ServiceProvider.Type.SemiDynamic, it)
+                .plus(semiDynamics.map { (k, v) ->
+                    k to ServiceProvider.ForSingleton.of(ServiceProvider.Type.SemiDynamic, v)
                 })
                 // add providers for dynamic services
                 .plus(dynamicsProviders)
@@ -111,7 +118,9 @@ data class KontainerBlueprint(val config: Map<String, Any>, val classes: Map<KCl
             .filterValues { it.isNotEmpty() }
             .toList()
             .mapIndexed { serviceIdx, (cls, errors) ->
-                "${serviceIdx + 1}. Service '${cls.qualifiedName}'\n" + errors.joinToString("\n") { "    -> $it" }
+                "${serviceIdx + 1}. Service '${cls.qualifiedName}' " +
+                        "(defined at ${definitionLocations[cls] ?: "n/a"})\n" +
+                        errors.joinToString("\n") { "    -> $it" }
             }
 
         if (errors.isNotEmpty()) {

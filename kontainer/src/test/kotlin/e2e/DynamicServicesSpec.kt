@@ -1,9 +1,6 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.KontainerInconsistent
-import de.peekandpoke.ultra.kontainer.MyService
-import de.peekandpoke.ultra.kontainer.ServiceProvider
-import de.peekandpoke.ultra.kontainer.kontainer
+import de.peekandpoke.ultra.kontainer.*
 import io.kotlintest.assertSoftly
 import io.kotlintest.matchers.string.shouldContain
 import io.kotlintest.shouldBe
@@ -109,7 +106,10 @@ class DynamicServicesSpec : StringSpec({
             dynamic<AnotherSimpleService>()
         }
 
-        val subject = blueprint.useWith(SimpleService(), AnotherSimpleService())
+        val subject = blueprint.useWith(
+            SimpleService(),
+            AnotherSimpleService()
+        )
 
         assertSoftly {
 
@@ -124,5 +124,4 @@ class DynamicServicesSpec : StringSpec({
             subject.getProvider<AnotherSimpleService>().type shouldBe ServiceProvider.Type.Dynamic
         }
     }
-
 })

@@ -5,9 +5,7 @@ import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.StringSpec
 
-internal interface MyService
-
-class SuperTypeLookupSpec : StringSpec({
+class TypeLookupForSuperTypesSpec : StringSpec({
 
     open class MyServiceImplOne : MyService
 

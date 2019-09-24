@@ -1,6 +1,8 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
+import de.peekandpoke.ultra.kontainer.LazilyInjecting
 import de.peekandpoke.ultra.kontainer.LazyImpl
+import de.peekandpoke.ultra.kontainer.SimpleService
 import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotlintest.assertSoftly
 import io.kotlintest.shouldBe

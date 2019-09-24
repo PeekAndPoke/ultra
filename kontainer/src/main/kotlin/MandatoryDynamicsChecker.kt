@@ -7,7 +7,7 @@ import kotlin.reflect.KClass
  *
  * For each set of classes passed to [validate] the result is cached for future reuse.
  */
-data class MandatoryDynamicsChecker(val mandatory: Set<KClass<*>>) {
+data class MandatoryDynamicsChecker internal constructor(val mandatory: Set<KClass<*>>) {
 
     /**
      * Internal cache

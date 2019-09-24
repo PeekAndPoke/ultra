@@ -1,3 +1,15 @@
+import de.peekandpoke.ultra.kontainer.kontainer
+
+
+data class MyService(val conf: Int)
+
 fun main() {
-    println("hello there!")
+
+    println("Playground")
+
+    kontainer {
+
+        singleton(MyService::class)
+
+    }.useWith()
 }

@@ -1,9 +1,6 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.KontainerInconsistent
-import de.peekandpoke.ultra.kontainer.ServiceNotFound
-import de.peekandpoke.ultra.kontainer.ServiceProvider
-import de.peekandpoke.ultra.kontainer.kontainer
+import de.peekandpoke.ultra.kontainer.*
 import io.kotlintest.assertSoftly
 import io.kotlintest.matchers.string.shouldContain
 import io.kotlintest.shouldBe
@@ -32,7 +29,7 @@ class GeneralInjectionSpec : StringSpec({
         }
     }
 
-    "Creating a container with a singleton service" {
+    "Container with a singleton service" {
 
         val subject = kontainer {
             singleton<SimpleService>()
@@ -43,10 +40,22 @@ class GeneralInjectionSpec : StringSpec({
             subject.get<SimpleService>()::class shouldBe SimpleService::class
             subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.GlobalSingleton
         }
-
     }
 
-    "Creating a container with multiple singleton services" {
+    "Container with a singleton service (::class style)" {
+
+        val subject = kontainer {
+            singleton(SimpleService::class)
+        }.useWith()
+
+        assertSoftly {
+
+            subject.get<SimpleService>()::class shouldBe SimpleService::class
+            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.GlobalSingleton
+        }
+    }
+
+    "Container with multiple singleton services" {
 
         val subject = kontainer {
             singleton<SimpleService>()
@@ -62,7 +71,7 @@ class GeneralInjectionSpec : StringSpec({
         }
     }
 
-    "Creating a container with missing dependencies" {
+    "Container with services that have missing dependencies" {
 
         val blueprint = kontainer {
             singleton<SimpleService>()
@@ -79,7 +88,7 @@ class GeneralInjectionSpec : StringSpec({
         }
     }
 
-    "Creating a container with a dependency that is not know how to handle" {
+    "Container with a dependency that is not know how to handle" {
 
         val blueprint = kontainer {
             singleton<InjectingSomethingWeird>()
@@ -94,7 +103,7 @@ class GeneralInjectionSpec : StringSpec({
         }
     }
 
-    "Creating a container with singletons that inject other singletons" {
+    "Container with singletons that inject other singletons" {
 
         val subject = kontainer {
             singleton<SimpleService>()
