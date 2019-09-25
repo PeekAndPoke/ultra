@@ -72,13 +72,19 @@ data class Kontainer internal constructor(
 
     fun dump(): String {
 
+        val maxServiceNameLength = providers.map { (k, _) -> (k.qualifiedName ?: "").length }.max() ?: 0
+
+        val maxTypeLength = ServiceProvider.Type.values().map { it.toString().length }.max() ?: 0
+
         val services = providers.map { (k, v) ->
-            "${(k.qualifiedName ?: "n/a").padEnd(50)} | " +
-                    "${v.type.toString().padEnd(20)} | " +
+            "${(k.qualifiedName ?: "n/a").padEnd(maxServiceNameLength)} | " +
+                    "${v.type.toString().padEnd(maxTypeLength)} | " +
                     if (v.isCreated) "created" else "NOT created"
         }
 
-        val configs = config.map { (k, v) -> "${k.padEnd(20)} | $v (${v::class.qualifiedName})" }
+        val maxConfigLength = config.map { (k, _) -> k.length }.max() ?: 0
+
+        val configs = config.map { (k, v) -> "${k.padEnd(maxConfigLength)} | $v (${v::class.qualifiedName})" }
             .joinToString("\n")
 
         return "Kontainer dump:\n\n" +
