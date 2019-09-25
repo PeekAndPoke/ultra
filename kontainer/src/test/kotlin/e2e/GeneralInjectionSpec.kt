@@ -112,7 +112,7 @@ class GeneralInjectionSpec : StringSpec({
                 blueprint.useWith()
             }
 
-            error.message shouldContain "Parameter 'weird' has no known way to inject a"
+            error.message shouldContain "Parameter 'weird' misses a dependency to 'kotlin.collections.Map'"
         }
     }
 

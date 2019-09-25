@@ -35,17 +35,17 @@ interface ParameterProvider {
                 // Config values: primitive types or strings are config values
                 isPrimitive(paramCls) -> ForConfigValue(parameter)
 
-                // Service: when there are no type parameters we have a usual service class
-                isServiceType(paramCls) -> ForService(parameter)
-
-                // List<T>: injects all super types of T
-                isListType(parameter.type) -> ForListOfServices(parameter)
-
                 // Lazy<List<T>>: lazily injects all super types of T
                 isLazyListType(parameter.type) -> ForLazyListOfServices(parameter)
 
                 // Lazy<T>: lazily inject a service
                 isLazyServiceType(parameter.type) -> ForLazyService(parameter)
+
+                // List<T>: injects all super types of T
+                isListType(parameter.type) -> ForListOfServices(parameter)
+
+                // Service: when there are no type parameters we have a usual service class
+                isServiceType(paramCls) -> ForService(parameter)
 
                 // otherwise we cannot handle it
                 else -> UnknownInjection(parameter)
