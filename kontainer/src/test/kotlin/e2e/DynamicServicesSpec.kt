@@ -3,8 +3,9 @@ package de.peekandpoke.ultra.kontainer.e2e
 import de.peekandpoke.ultra.kontainer.*
 import io.kotlintest.assertSoftly
 import io.kotlintest.matchers.string.shouldContain
+import io.kotlintest.matchers.types.shouldBeSameInstanceAs
+import io.kotlintest.matchers.types.shouldNotBeSameInstanceAs
 import io.kotlintest.shouldBe
-import io.kotlintest.shouldNotBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.StringSpec
 
@@ -50,7 +51,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic(DynamicService(100))
+            dynamic { DynamicService(100) }
         }
 
         val subject = blueprint.useWith()
@@ -64,12 +65,29 @@ class DynamicServicesSpec : StringSpec({
         }
     }
 
+    "Providing a dynamic service with default must create a new instance for each container" {
+
+        data class DynamicService(val value: Int)
+
+        val blueprint = kontainer {
+            dynamic { DynamicService(100) }
+        }
+
+        val subjectOne = blueprint.useWith()
+
+        val subjectTwo = blueprint.useWith()
+
+        assertSoftly {
+            subjectOne.get<DynamicService>() shouldNotBeSameInstanceAs subjectTwo.get<DynamicService>()
+        }
+    }
+
     "Providing a dynamic service with default and overriding it in useWith()" {
 
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic(DynamicService(100))
+            dynamic { DynamicService(100) }
         }
 
         val subject = blueprint.useWith(DynamicService(200))
@@ -89,7 +107,7 @@ class DynamicServicesSpec : StringSpec({
         class DerivedService(value: Int) : DynamicService(value)
 
         val blueprint = kontainer {
-            dynamic(DynamicService(100))
+            dynamic { DynamicService(100) }
         }
 
         val subject = blueprint.useWith(DerivedService(200))
@@ -126,6 +144,8 @@ class DynamicServicesSpec : StringSpec({
 
         val blueprint = kontainer {
             dynamic<SimpleService>()
+            singleton<AnotherSimpleService>()
+            singleton<InjectingService>()
         }
 
         val first = blueprint.useWith(
@@ -139,11 +159,17 @@ class DynamicServicesSpec : StringSpec({
         second.get<SimpleService>().inc()
 
         assertSoftly {
-            first.get<SimpleService>()::class shouldNotBe second.get<SimpleService>()
+            // dynamic service must be re-created
+            first.get<SimpleService>() shouldNotBeSameInstanceAs second.get<SimpleService>()
 
             first.get<SimpleService>().get() shouldBe 1
-
             second.get<SimpleService>().get() shouldBe 1
+
+            // semi-dynamic service must be re-created
+            first.get<InjectingService>() shouldNotBeSameInstanceAs second.get<InjectingService>()
+
+            // singleton service must NOT be re-created
+            first.get<AnotherSimpleService>() shouldBeSameInstanceAs second.get<AnotherSimpleService>()
         }
     }
 
