@@ -124,4 +124,77 @@ class DynamicServicesSpec : StringSpec({
             subject.getProvider<AnotherSimpleService>().type shouldBe ServiceProvider.Type.Dynamic
         }
     }
+
+    "Singletons become semi-dynamic when injecting dynamic services by base type" {
+
+        abstract class Base
+        class Impl : Base()
+
+        data class Injecting(val service: Base)
+
+        val subject = kontainer {
+
+            dynamic<Impl>()
+
+            singleton<Injecting>()
+
+        }.useWith(Impl())
+
+        assertSoftly {
+
+            subject.getProvider<Impl>().type shouldBe ServiceProvider.Type.Dynamic
+
+            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
+        }
+    }
+
+    "Singletons become semi-dynamic when injecting dynamic services lazily" {
+
+        abstract class Base
+        class Impl : Base()
+
+        data class Injecting(val service: Lazy<Base>)
+
+        val subject = kontainer {
+
+            dynamic<Impl>()
+
+            singleton<Injecting>()
+
+        }.useWith(Impl())
+
+        assertSoftly {
+
+            subject.getProvider<Impl>().type shouldBe ServiceProvider.Type.Dynamic
+
+            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
+        }
+    }
+
+    "Singletons become semi-dynamic when injecting all by base type, where at least one is dynamic" {
+
+        abstract class Base
+        class ImplOne : Base()
+        class ImplTwo : Base()
+
+        data class Injecting(val all: List<Base>)
+
+        val subject = kontainer {
+
+            singleton<Injecting>()
+
+            singleton<ImplOne>()
+            dynamic<ImplTwo>()
+
+        }.useWith(ImplTwo())
+
+        assertSoftly {
+
+            subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.GlobalSingleton
+
+            subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.Dynamic
+
+            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
+        }
+    }
 })

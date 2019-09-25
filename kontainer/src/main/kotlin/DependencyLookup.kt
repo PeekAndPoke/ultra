@@ -6,10 +6,16 @@ import kotlin.reflect.full.primaryConstructor
 /**
  * A lookup for finding out which classes are injected into which
  */
-class DependencyLookup internal constructor(classes: Set<KClass<*>>) {
+class DependencyLookup internal constructor(
+    superTypeLookUp: TypeLookup.ForSuperTypes,
+    classes: Set<KClass<*>>
+) {
 
     /**
      * The lookup map built by the init method
+     *
+     * Map Key:   A service that other services might inject
+     * Map Value: A set of services that directly inject the key service
      */
     private val dependencies: Map<KClass<*>, Set<KClass<*>>>
 
@@ -19,13 +25,35 @@ class DependencyLookup internal constructor(classes: Set<KClass<*>>) {
          */
         val tmp = mutableMapOf<KClass<*>, MutableSet<KClass<*>>>()
 
+        fun MutableMap<KClass<*>, MutableSet<KClass<*>>>.add(master: KClass<*>, dependsOn: KClass<*>) =
+            getOrPut(master) { mutableSetOf() }.add(dependsOn)
+
         /**
          * Records the injected types of the given cls
          */
         val record = { cls: KClass<*> ->
             if (cls.primaryConstructor != null) {
-                cls.primaryConstructor!!.parameters.forEach {
-                    tmp.getOrPut(it.type.classifier as KClass<*>) { mutableSetOf() }.add(cls)
+                cls.primaryConstructor!!.parameters.forEach { parameter ->
+
+                    val paramCls = parameter.type.classifier as KClass<*>
+
+                    val candidates = when {
+                        // default service type
+                        isServiceType(paramCls) -> superTypeLookUp.getAllCandidatesFor(paramCls)
+
+                        // list of lazy types
+                        isListType(parameter.type) || isLazyType(parameter.type) -> {
+                            val inner = parameter.type.arguments[0].type!!.classifier as KClass<*>
+
+                            superTypeLookUp.getAllCandidatesFor(inner)
+                        }
+
+                        else -> setOf()
+                    }
+
+                    candidates.forEach { superType ->
+                        tmp.add(superType, cls)
+                    }
                 }
             }
         }

@@ -29,14 +29,14 @@ data class KontainerBlueprint internal constructor(
     private val mandatoryDynamicsChecker = MandatoryDynamicsChecker(mandatoryDynamics)
 
     /**
-     * Dependency lookup for figuring out which service depends on which other services
-     */
-    private val dependencyLookUp = DependencyLookup(definitions.keys)
-
-    /**
      * Base type lookup for finding all candidate services by a given super type
      */
     private val superTypeLookup = TypeLookup.ForSuperTypes(definitions.keys)
+
+    /**
+     * Dependency lookup for figuring out which service depends on which other services
+     */
+    private val dependencyLookUp = DependencyLookup(superTypeLookup, definitions.keys)
 
     /**
      * Semi dynamic services

@@ -72,12 +72,18 @@ data class Kontainer internal constructor(
 
     fun dump(): String {
 
-        val items = providers.map { (k, v) ->
-            "${(k.qualifiedName ?: "n/a").padEnd(20)} " +
-                    "type = ${v.type.toString().padEnd(20)} " +
-                    "created: ${v.isCreated}"
+        val services = providers.map { (k, v) ->
+            "${(k.qualifiedName ?: "n/a").padEnd(50)} | " +
+                    "${v.type.toString().padEnd(20)} | " +
+                    if (v.isCreated) "created" else "NOT created"
         }
 
-        return items.joinToString("\n")
+        val configs = config.map { (k, v) -> "${k.padEnd(20)} | $v (${v::class.qualifiedName})" }
+            .joinToString("\n")
+
+        return "Kontainer dump:\n\n" +
+                services.joinToString("\n") + "\n\n" +
+                "Config values\n\n" +
+                configs
     }
 }

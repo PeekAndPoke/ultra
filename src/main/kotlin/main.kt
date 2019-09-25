@@ -27,6 +27,8 @@ fun main() {
         MyInjected(123)
     )
 
+    k.get<MyInjectInject>()
+
     println(k.dump())
 
 }
