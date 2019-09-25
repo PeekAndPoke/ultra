@@ -11,7 +11,7 @@ data class Kontainer internal constructor(
     val providers: Map<KClass<*>, ServiceProvider>
 ) {
 
-    // getting services ////////////////////////////////////////////////////////////////////////////////////////////////////
+    // getting services ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Get all service classes that would satisfy the given [cls]
@@ -55,7 +55,7 @@ data class Kontainer internal constructor(
         return providers.getValue(baseClass)
     }
 
-    // getting parameters //////////////////////////////////////////////////////////////////////////////////////////////////
+    // getting parameters //////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Check if there is a config value with the given [id] that is of the given [type]
@@ -66,5 +66,18 @@ data class Kontainer internal constructor(
      * Get a config value by its [id]
      */
     @Suppress("UNCHECKED_CAST")
-    fun <T> getConfig(id: String) = config[id] as T
+    fun <T> getConfig(id: String): T = config[id] as T
+
+    // debug ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    fun dump(): String {
+
+        val items = providers.map { (k, v) ->
+            "${(k.qualifiedName ?: "n/a").padEnd(20)} " +
+                    "type = ${v.type.toString().padEnd(20)} " +
+                    "created: ${v.isCreated}"
+        }
+
+        return items.joinToString("\n")
+    }
 }

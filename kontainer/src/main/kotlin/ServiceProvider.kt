@@ -17,6 +17,11 @@ interface ServiceProvider {
     val type: Type
 
     /**
+     * True when the service is already created
+     */
+    val isCreated: Boolean
+
+    /**
      * Provides the service instance
      */
     fun provide(container: Kontainer): Any
@@ -33,6 +38,11 @@ interface ServiceProvider {
      * Provides an already existing object as a service
      */
     data class ForInstance internal constructor(override val type: Type, private val instance: Any) : ServiceProvider {
+
+        /**
+         * Always true
+         */
+        override val isCreated: Boolean = true
 
         /**
          * Simply returns the [instance]
@@ -65,6 +75,11 @@ interface ServiceProvider {
                 definition.producer.signature.map { ParameterProvider.of(it) }
             )
         }
+
+        /**
+         * True when the service instance was created
+         */
+        override val isCreated: Boolean get() = instance != null
 
         private var instance: Any? = null
 
