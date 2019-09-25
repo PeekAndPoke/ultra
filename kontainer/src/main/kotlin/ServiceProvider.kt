@@ -1,5 +1,7 @@
 package de.peekandpoke.ultra.kontainer
 
+import java.time.Instant
+
 /**
  * Base for all service providers
  */
@@ -20,7 +22,7 @@ interface ServiceProvider {
     /**
      * True when the service is already created
      */
-    val isCreated: Boolean
+    val createdAt: Instant?
 
     /**
      * Provides the service instance
@@ -43,7 +45,7 @@ interface ServiceProvider {
         /**
          * Always true
          */
-        override val isCreated: Boolean = true
+        override val createdAt: Instant = Instant.now()
 
         /**
          * Simply returns the [instance]
@@ -80,14 +82,17 @@ interface ServiceProvider {
         /**
          * True when the service instance was created
          */
-        override val isCreated: Boolean get() = instance != null
+        override var createdAt: Instant? = null
 
         private var instance: Any? = null
 
         /**
          * Get or create the instance of the service
          */
-        override fun provide(container: Kontainer): Any = instance ?: create(container).apply { instance = this }
+        override fun provide(container: Kontainer): Any = instance ?: create(container).apply {
+            createdAt = Instant.now()
+            instance = this
+        }
 
         /**
          * Validates that all parameters can be provided

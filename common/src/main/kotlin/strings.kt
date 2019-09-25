@@ -1,5 +1,7 @@
 package de.peekandpoke.ultra.common
 
+import java.net.URLEncoder
+
 /**
  * Puts the string "with" before and after the string
  */
@@ -46,3 +48,14 @@ fun String.startsWithNone(vararg prefix: String) = !startsWithAny(prefix)
  */
 @JvmName("startsWithNoneArray")
 fun String.startsWithNone(prefixes: Array<out String>) = !startsWithAny(prefixes)
+
+/**
+ * Appends url parameters the string
+ */
+fun String.toUri(queryParams: Map<String, String>) = when {
+    queryParams.isEmpty() -> this
+
+    else -> "$this?" + queryParams
+        .map { (k, v) -> "${URLEncoder.encode(k, "UTF-8")}=${URLEncoder.encode(v, "UTF-8")}" }
+        .joinToString("&")
+}

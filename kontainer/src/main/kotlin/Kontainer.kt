@@ -79,7 +79,7 @@ data class Kontainer internal constructor(
         val services = providers.map { (k, v) ->
             "${(k.qualifiedName ?: "n/a").padEnd(maxServiceNameLength)} | " +
                     "${v.type.toString().padEnd(maxTypeLength)} | " +
-                    if (v.isCreated) "created" else "NOT created"
+                    if (v.createdAt != null) v.createdAt.toString() else "not created"
         }
 
         val maxConfigLength = config.map { (k, _) -> k.length }.max() ?: 0
