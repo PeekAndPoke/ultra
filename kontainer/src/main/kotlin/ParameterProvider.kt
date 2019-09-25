@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.kontainer
 
+import de.peekandpoke.ultra.common.SimpleLazy
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 
@@ -37,11 +38,14 @@ interface ParameterProvider {
                 // Service: when there are no type parameters we have a usual service class
                 isServiceType(paramCls) -> ForService(parameter)
 
-                // List<T>: injects are super types of T
+                // List<T>: injects all super types of T
                 isListType(parameter.type) -> ForListOfServices(parameter)
 
+                // Lazy<List<T>>: lazily injects all super types of T
+                isLazyListType(parameter.type) -> ForLazyListOfServices(parameter)
+
                 // Lazy<T>: lazily inject a service
-                isLazyType(parameter.type) -> ForLazyService(parameter)
+                isLazyServiceType(parameter.type) -> ForLazyService(parameter)
 
                 // otherwise we cannot handle it
                 else -> UnknownInjection(parameter)
@@ -106,28 +110,55 @@ interface ParameterProvider {
     }
 
     /**
+     * Provider for list of services
+     */
+    data class ForListOfServices internal constructor(private val parameter: KParameter) : ParameterProvider {
+
+        /**
+         * Get the type parameter of the list
+         */
+        private val innerType = getInnerClass(parameter.type)
+
+        /**
+         * Provides a list with all super types
+         */
+        override fun provide(container: Kontainer): List<Any> = container.getAll(innerType)
+
+        /**
+         * Always valid.
+         */
+        override fun validate(container: Kontainer): List<String> = listOf()
+    }
+
+    /**
+     * Provider for a lazy list of services
+     */
+    class ForLazyListOfServices internal constructor(parameter: KParameter) : ParameterProvider {
+
+        /**
+         * Get the type parameter of the list within the lazy
+         */
+        private val innerType = getInnerInnerClass(parameter.type)
+
+        /**
+         * Provides a lazy list with all super types
+         */
+        override fun provide(container: Kontainer): Lazy<List<Any>> = SimpleLazy { container.getAll(innerType) }
+
+        /**
+         * Always valid.
+         */
+        override fun validate(container: Kontainer): List<String> = listOf()
+    }
+
+    /**
      * Provider for a lazy service
      */
     class ForLazyService internal constructor(parameter: KParameter) : ForServiceBase(parameter), ParameterProvider {
 
         override val paramCls by lazy { parameter.type.arguments[0].type!!.classifier as KClass<*> }
 
-        override fun provide(container: Kontainer) = LazyImpl { container.get(paramCls) }
-    }
-
-    /**
-     * Provider for list of services
-     */
-    data class ForListOfServices internal constructor(private val parameter: KParameter) : ParameterProvider {
-
-        override fun provide(container: Kontainer): List<Any> = container.getAll(
-            parameter.type.arguments[0].type!!.classifier as KClass<*>
-        )
-
-        /**
-         * Will always succeed.
-         */
-        override fun validate(container: Kontainer): List<String> = listOf()
+        override fun provide(container: Kontainer) = SimpleLazy { container.get(paramCls) }
     }
 
     /**

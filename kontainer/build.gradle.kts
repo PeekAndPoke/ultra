@@ -28,6 +28,8 @@ dependencies {
     api(kotlin("stdlib-jdk8"))
     api(kotlin("reflect"))
 
+    compile(project(":common"))
+
     testImplementation("ch.qos.logback:logback-classic:$logback_version")
     testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")
 }

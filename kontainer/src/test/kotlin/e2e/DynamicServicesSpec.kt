@@ -197,4 +197,31 @@ class DynamicServicesSpec : StringSpec({
             subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
         }
     }
+
+    "Singletons become semi-dynamic when lazily injecting all by base type, where at least one is dynamic" {
+
+        abstract class Base
+        class ImplOne : Base()
+        class ImplTwo : Base()
+
+        data class Injecting(val all: Lazy<List<Base>>)
+
+        val subject = kontainer {
+
+            singleton<Injecting>()
+
+            singleton<ImplOne>()
+            dynamic<ImplTwo>()
+
+        }.useWith(ImplTwo())
+
+        assertSoftly {
+
+            subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.GlobalSingleton
+
+            subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.Dynamic
+
+            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
+        }
+    }
 })

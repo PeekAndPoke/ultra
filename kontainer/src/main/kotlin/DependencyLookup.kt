@@ -42,8 +42,15 @@ class DependencyLookup internal constructor(
                         isServiceType(paramCls) -> superTypeLookUp.getAllCandidatesFor(paramCls)
 
                         // list of lazy types
-                        isListType(parameter.type) || isLazyType(parameter.type) -> {
-                            val inner = parameter.type.arguments[0].type!!.classifier as KClass<*>
+                        isListType(parameter.type) || isLazyServiceType(parameter.type) -> {
+                            val inner = getInnerClass(parameter.type)
+
+                            superTypeLookUp.getAllCandidatesFor(inner)
+                        }
+
+                        // lazy list of types
+                        isLazyListType(parameter.type) -> {
+                            val inner = getInnerInnerClass(parameter.type)
 
                             superTypeLookUp.getAllCandidatesFor(inner)
                         }

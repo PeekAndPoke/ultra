@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.kontainer
+package de.peekandpoke.ultra.common
 
-class LazyImpl<T> internal constructor(provider: () -> T) : Lazy<T> {
+class SimpleLazy<T>(provider: () -> T) : Lazy<T> {
 
     override val value: T by lazy {
         initialized = true

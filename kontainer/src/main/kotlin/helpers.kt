@@ -10,5 +10,14 @@ internal fun isServiceType(cls: KClass<*>) = !isPrimitive(cls) && cls.typeParame
 internal fun isListType(type: KType) =
     type.classifier == List::class && isServiceType(type.arguments[0].type!!.classifier as KClass<*>)
 
-internal fun isLazyType(type: KType) =
+internal fun isLazyServiceType(type: KType) =
     type.classifier == Lazy::class && isServiceType(type.arguments[0].type!!.classifier as KClass<*>)
+
+internal fun isLazyListType(type: KType) =
+    type.classifier == Lazy::class && isListType(type.arguments[0].type!!)
+
+internal fun getInnerClass(type: KType) =
+    type.arguments[0].type!!.classifier as KClass<*>
+
+internal fun getInnerInnerClass(type: KType) =
+    type.arguments[0].type!!.arguments[0].type!!.classifier!! as KClass<*>
