@@ -45,6 +45,64 @@ class DynamicServicesSpec : StringSpec({
         }
     }
 
+    "Providing a dynamic service with default" {
+
+        data class DynamicService(val value: Int)
+
+        val blueprint = kontainer {
+            dynamic(DynamicService(100))
+        }
+
+        val subject = blueprint.useWith()
+
+        assertSoftly {
+
+            subject.get<DynamicService>()::class shouldBe DynamicService::class
+            subject.getProvider<DynamicService>().type shouldBe ServiceProvider.Type.DynamicDefault
+
+            subject.get<DynamicService>().value shouldBe 100
+        }
+    }
+
+    "Providing a dynamic service with default and overriding it in useWith()" {
+
+        data class DynamicService(val value: Int)
+
+        val blueprint = kontainer {
+            dynamic(DynamicService(100))
+        }
+
+        val subject = blueprint.useWith(DynamicService(200))
+
+        assertSoftly {
+
+            subject.get<DynamicService>()::class shouldBe DynamicService::class
+            subject.getProvider<DynamicService>().type shouldBe ServiceProvider.Type.Dynamic
+
+            subject.get<DynamicService>().value shouldBe 200
+        }
+    }
+
+    "Providing a dynamic service with default and overriding it in useWith() with a super type" {
+
+        open class DynamicService(val value: Int)
+        class DerivedService(value: Int) : DynamicService(value)
+
+        val blueprint = kontainer {
+            dynamic(DynamicService(100))
+        }
+
+        val subject = blueprint.useWith(DerivedService(200))
+
+        assertSoftly {
+
+            subject.get<DynamicService>()::class shouldBe DerivedService::class
+            subject.getProvider<DynamicService>().type shouldBe ServiceProvider.Type.Dynamic
+
+            subject.get<DynamicService>().value shouldBe 200
+        }
+    }
+
     "Providing a dynamic service by super type" {
 
         val blueprint = kontainer {

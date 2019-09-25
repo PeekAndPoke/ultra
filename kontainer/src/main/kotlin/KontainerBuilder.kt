@@ -80,11 +80,24 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     inline fun <reified T : Any> dynamic() = dynamic(T::class)
 
     /**
+     * Defines a dynamic service while providing a default
+     */
+    fun <T : Any> dynamic(cls: KClass<T>, default: T) = add(
+        ServiceDefinition(cls, InjectionType.Dynamic, Producer(listOf()) { default })
+    )
+
+    /**
+     * Defines a dynamic service while providing a default
+     */
+    inline fun <reified T : Any> dynamic(default: T) = dynamic(T::class, default)
+
+    /**
      * Register an already existing object as a service
      */
     fun <T : Any> instance(instance: T) = add(
-
-        ServiceDefinition(instance::class, InjectionType.Singleton,
+        ServiceDefinition(
+            instance::class,
+            InjectionType.Singleton,
             Producer(listOf()) { instance }
         )
     )

@@ -14,14 +14,30 @@ data class KontainerBlueprint internal constructor(
     private var usages = 0
 
     /**
-     * A set of all classes that need to passed to [useWith]
+     * A set of all dynamic services
      */
-    private val mandatoryDynamics = definitions.filterValues { it.type == InjectionType.Dynamic }.keys
+    private val dynamics = definitions.filterValues { it.type == InjectionType.Dynamic }.keys
 
     /**
-     * A lookup for finding the base types of mandatory dynamic services from given super types
+     * A set of all dynamics that have a default value
      */
-    private val mandatoryDynamicsBaseTypeLookUp = TypeLookup.ForBaseTypes(mandatoryDynamics)
+    private val optionalDynamics = definitions.filterValues {
+        // optional dynamic do have a default provided (hence a producer is present)
+        it.type == InjectionType.Dynamic && it.producer != null
+    }
+
+    /**
+     * A set of all services which need to be passed to [useWith]
+     */
+    private val mandatoryDynamics = definitions.filterValues {
+        // mandatory dynamic do not have a default provided (hence no producer)
+        it.type == InjectionType.Dynamic && it.producer == null
+    }.keys
+
+    /**
+     * A lookup for finding the base types of dynamic services from given super types
+     */
+    private val dynamicsBaseTypeLookUp = TypeLookup.ForBaseTypes(dynamics)
 
     /**
      * Used to check whether all mandatory services are passed to [useWith]
@@ -45,7 +61,7 @@ data class KontainerBlueprint internal constructor(
      * Or which inject services that themselves inject dynamic services etc...
      */
     private val semiDynamics: Map<KClass<*>, ServiceDefinition> =
-        dependencyLookUp.getAllDependents(mandatoryDynamics).map {
+        dependencyLookUp.getAllDependents(dynamics).map {
             it to definitions.getValue(it)
         }.toMap()
 
@@ -53,7 +69,7 @@ data class KontainerBlueprint internal constructor(
      * Global services are the services that have no dependency to any of the dynamic services
      */
     private val globalSingletons: Map<KClass<*>, ServiceProvider> = definitions
-        .filterKeys { !mandatoryDynamics.contains(it) }
+        .filterKeys { !dynamics.contains(it) }
         .filterKeys { !semiDynamics.contains(it) }
         .mapValues { (_, v) ->
             ServiceProvider.ForSingleton.of(ServiceProvider.Type.GlobalSingleton, v)
@@ -80,7 +96,7 @@ data class KontainerBlueprint internal constructor(
 
         return instantiate(
             dynamics.map {
-                mandatoryDynamicsBaseTypeLookUp.getDistinctFor(it::class) to ServiceProvider.ForInstance(
+                dynamicsBaseTypeLookUp.getDistinctFor(it::class) to ServiceProvider.ForInstance(
                     ServiceProvider.Type.Dynamic,
                     it
                 )
@@ -99,6 +115,9 @@ data class KontainerBlueprint internal constructor(
                 // add singleton providers for all semi dynamic services
                 .plus(semiDynamics.map { (k, v) ->
                     k to ServiceProvider.ForSingleton.of(ServiceProvider.Type.SemiDynamic, v)
+                })
+                .plus(optionalDynamics.map { (k, v) ->
+                    k to ServiceProvider.ForSingleton.of(ServiceProvider.Type.DynamicDefault, v)
                 })
                 // add providers for dynamic services
                 .plus(dynamicsProviders)

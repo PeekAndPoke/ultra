@@ -8,7 +8,8 @@ interface ServiceProvider {
     enum class Type {
         GlobalSingleton,
         SemiDynamic,
-        Dynamic
+        Dynamic,
+        DynamicDefault,
     }
 
     /**
