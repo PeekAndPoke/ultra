@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.kontainer
 
+import de.peekandpoke.ultra.common.Lookup
 import de.peekandpoke.ultra.common.SimpleLazy
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
@@ -43,6 +44,9 @@ interface ParameterProvider {
 
                 // List<T>: injects all super types of T
                 isListType(parameter.type) -> ForListOfServices(parameter)
+
+                // Lookup<T>: injects all super types of T as a lookup
+                isLookupType(parameter.type) -> ForLookupOfServices(parameter)
 
                 // Service: when there are no type parameters we have a usual service class
                 isServiceType(paramCls) -> ForService(parameter)
@@ -123,6 +127,27 @@ interface ParameterProvider {
          * Provides a list with all super types
          */
         override fun provide(container: Kontainer): List<Any> = container.getAll(innerType)
+
+        /**
+         * Always valid.
+         */
+        override fun validate(container: Kontainer): List<String> = listOf()
+    }
+
+    /**
+     * Provider for a lookup of services
+     */
+    data class ForLookupOfServices internal constructor(private val parameter: KParameter) : ParameterProvider {
+
+        /**
+         * Get the type parameter of the list
+         */
+        private val innerType = getInnerClass(parameter.type)
+
+        /**
+         * Provides a list with all super types
+         */
+        override fun provide(container: Kontainer): Lookup<out Any> = container.getLookup(innerType)
 
         /**
          * Always valid.

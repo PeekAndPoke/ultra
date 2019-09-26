@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.kontainer
 
+import de.peekandpoke.ultra.common.Lookup
 import kotlin.reflect.KClass
 
 /**
@@ -37,6 +38,21 @@ data class Kontainer internal constructor(
 
         @Suppress("UNCHECKED_CAST")
         return superTypeLookup.getAllCandidatesFor(cls).map { get(it) as T }
+    }
+
+    /**
+     * Get all services that are a super type of the given class as a [Lookup]
+     */
+    fun <T : Any> getLookup(cls: KClass<T>): Lookup<T> {
+
+        // TODO: have a cache for the lookups
+
+        @Suppress("UNCHECKED_CAST")
+        val map = superTypeLookup.getAllCandidatesFor(cls)
+            .map { it as KClass<out T> to { get(it) } }
+            .toMap()
+
+        return LazyServiceLookup(this, map)
     }
 
     /**

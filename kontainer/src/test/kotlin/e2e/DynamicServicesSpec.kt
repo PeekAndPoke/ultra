@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
+import de.peekandpoke.ultra.common.Lookup
 import de.peekandpoke.ultra.kontainer.*
 import io.kotlintest.assertSoftly
 import io.kotlintest.matchers.string.shouldContain
@@ -255,7 +256,7 @@ class DynamicServicesSpec : StringSpec({
         }
     }
 
-    "Singletons become semi-dynamic when injecting all by base type, where at least one is dynamic" {
+    "Singletons become semi-dynamic when injecting a list, where at least one in the list is dynamic" {
 
         abstract class Base
         class ImplOne : Base()
@@ -282,13 +283,40 @@ class DynamicServicesSpec : StringSpec({
         }
     }
 
-    "Singletons become semi-dynamic when lazily injecting all by base type, where at least one is dynamic" {
+    "Singletons become semi-dynamic when lazily injecting a list, where at least one in the list is dynamic" {
 
         abstract class Base
         class ImplOne : Base()
         class ImplTwo : Base()
 
         data class Injecting(val all: Lazy<List<Base>>)
+
+        val subject = kontainer {
+
+            singleton<Injecting>()
+
+            singleton<ImplOne>()
+            dynamic<ImplTwo>()
+
+        }.useWith(ImplTwo())
+
+        assertSoftly {
+
+            subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.GlobalSingleton
+
+            subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.Dynamic
+
+            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
+        }
+    }
+
+    "Singletons become semi-dynamic when injecting a lookup, where at least one in the lookup is dynamic" {
+
+        abstract class Base
+        class ImplOne : Base()
+        class ImplTwo : Base()
+
+        data class Injecting(val all: Lookup<Base>)
 
         val subject = kontainer {
 
