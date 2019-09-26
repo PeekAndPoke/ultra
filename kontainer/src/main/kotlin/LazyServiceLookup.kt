@@ -10,18 +10,18 @@ class LazyServiceLookup<T : Any>(
 
 ) : Lookup<T> {
 
-    private val internalLookup = mutableMapOf<KClass<out T>, T>()
+    private val internalLookup = mutableMapOf<KClass<out T>, T?>()
 
     fun reset(kontainer: Kontainer) = LazyServiceLookup(kontainer, map)
 
     override fun <X : T> has(cls: KClass<X>): Boolean = map.contains(cls)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <X : T> get(cls: KClass<X>): X = internalLookup.getOrPut(cls) {
-        map.getValue(cls).invoke()
-    } as X
+    override fun <X : T> get(cls: KClass<X>): X? = internalLookup.getOrPut(cls) {
+        map[cls]?.invoke()
+    } as X?
 
     override fun all(): List<T> {
-        return map.keys.map { get(it) }
+        return map.keys.map { get(it)!! }
     }
 }
