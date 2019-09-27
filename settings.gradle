@@ -1,6 +1,10 @@
 rootProject.name = 'root'
 
 include(
+        // project that imports all child projects
+        ":ultra",
+
+        // child projects
         ":common",
         ":kontainer",
         ":meta",

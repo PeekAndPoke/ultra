@@ -17,35 +17,15 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
-val kotlin_metadata_version: String by project
-val google_auto_version: String by project
-val kotlinpoet_version: String by project
-val logback_version: String by project
-
 dependencies {
-    api(rootProject.project("common"))
 
-    api(kotlin("stdlib-jdk8"))
-    api(kotlin("reflect"))
+    // add all child projects
+    compile(project(":common"))
+    compile(project(":meta"))
+    compile(project(":kontainer"))
 
-    ////  code generation  //////////////////////////////////////////////////////////////////////////////////////
-
-    compile ("me.eugeniomarletti.kotlin.metadata:kotlin-metadata:$kotlin_metadata_version") {
-        exclude(group = "me.eugeniomarletti.kotlin.metadata", module= "kotlin-compiler-lite")
-    }
-
-    compile( "com.squareup:kotlinpoet:$kotlinpoet_version")
-    compile( "com.google.auto.service:auto-service:$google_auto_version")
-
-    kapt("org.atteo.classindex:classindex:3.4")
-    kapt("com.google.auto.service:auto-service:$google_auto_version")
-
-    ////  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    kaptTest("com.google.auto.service:auto-service:$google_auto_version")
-
-    testCompile( "ch.qos.logback:logback-classic:$logback_version")
-    testImplementation( "io.kotlintest:kotlintest-runner-junit5:3.2.1")
+    compile(project(":mutator"))
+    kapt(project(":mutator"))
 }
 
 repositories {
@@ -98,7 +78,7 @@ bintray {
     setPublications("default")
     pkg(delegateClosureOf<BintrayExtension.PackageConfig> {
         repo = "maven"
-        name = "de.peekandpoke.ultra.${project.name}"
+        name = "de.peekandpoke.ultra"
         userOrg = "peekandpoke"
         description = "Common helpers und utils"
         setLabels("kotlin")

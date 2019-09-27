@@ -13,6 +13,7 @@
             <option value="$PROJECT_DIR$/kontainer" />
             <option value="$PROJECT_DIR$/meta" />
             <option value="$PROJECT_DIR$/mutator" />
+            <option value="$PROJECT_DIR$/ultra" />
           </set>
         </option>
         <option name="useAutoImport" value="true" />

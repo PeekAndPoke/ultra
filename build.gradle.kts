@@ -26,7 +26,11 @@ repositories {
 dependencies {
     api(kotlin("stdlib-jdk8"))
 
-    api(project(":kontainer"))
+    // add all child projects
+    compile(project(":common"))
+    compile(project(":meta"))
+    compile(project(":kontainer"))
+    compile(project(":mutator"))
 }
 
 tasks {
