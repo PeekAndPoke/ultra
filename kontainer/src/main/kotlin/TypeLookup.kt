@@ -40,12 +40,12 @@ abstract class TypeLookup {
      */
     data class ForBaseTypes(val baseTypes: Set<KClass<*>>) : TypeLookup() {
 
-        private val lookup = mutableMapOf<KClass<*>, Set<KClass<*>>>()
+        private val cache = mutableMapOf<KClass<*>, Set<KClass<*>>>()
 
         /**
          * Gets all [baseTypes] that are base types of the given super [type]
          */
-        override fun getAllCandidatesFor(type: KClass<*>): Set<KClass<*>> = lookup.getOrPut(type) {
+        override fun getAllCandidatesFor(type: KClass<*>): Set<KClass<*>> = cache.getOrPut(type) {
             baseTypes.filter { baseType ->
                 baseType.java.isAssignableFrom(type.java)
             }.toSet()
@@ -59,15 +59,29 @@ abstract class TypeLookup {
      */
     data class ForSuperTypes(val superTypes: Set<KClass<*>>) : TypeLookup() {
 
-        private val lookup = mutableMapOf<KClass<*>, Set<KClass<*>>>()
+        private val candidatesCache = mutableMapOf<KClass<*>, Set<KClass<*>>>()
+
+        private val lookupCache = mutableMapOf<KClass<*>, LazyServiceLookupBlueprint<*>>()
 
         /**
-         * Gets all [superTypes] that are base types of the given base [type]
+         * Gets all [superTypes] for the given base [type]
          */
-        override fun getAllCandidatesFor(type: KClass<*>): Set<KClass<*>> = lookup.getOrPut(type) {
+        override fun getAllCandidatesFor(type: KClass<*>): Set<KClass<*>> = candidatesCache.getOrPut(type) {
             superTypes.filter { superType ->
                 type.java.isAssignableFrom(superType.java)
             }.toSet()
+        }
+
+        /**
+         * Get all [superTypes] for the given base [type] as a [LazyServiceLookupBlueprint]
+         */
+        fun getLookupBlueprint(type: KClass<*>): LazyServiceLookupBlueprint<*> = lookupCache.getOrPut(type) {
+
+            val map = getAllCandidatesFor(type)
+                .map { it to { container: Kontainer -> container.get(it) } }
+                .toMap()
+
+            LazyServiceLookupBlueprint(map)
         }
     }
 }

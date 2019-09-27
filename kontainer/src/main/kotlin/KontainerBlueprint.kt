@@ -42,7 +42,7 @@ data class KontainerBlueprint internal constructor(
     /**
      * Used to check whether all mandatory services are passed to [useWith]
      */
-    private val mandatoryDynamicsChecker = MandatoryDynamicsChecker(mandatoryDynamics)
+    private val mandatoryDynamicsChecker = MandatoryDynamicsChecker(mandatoryDynamics, dynamics)
 
     /**
      * Base type lookup for finding all candidate services by a given super type
@@ -85,13 +85,24 @@ data class KontainerBlueprint internal constructor(
             validate()
         }
 
-        mandatoryDynamicsChecker.validate(dynamics.map { it::class }.toSet()).apply {
-            if (isNotEmpty()) {
-                throw KontainerInconsistent(
-                    "Cannot create Kontainer! Some mandatory dynamic services are missing: " +
-                            map { it.qualifiedName }.joinToString(", ")
-                )
-            }
+        val dynamicClasses = dynamics.map { it::class }.toSet()
+
+        val missingDynamics = mandatoryDynamicsChecker.getMissing(dynamicClasses)
+
+        if (missingDynamics.isNotEmpty()) {
+            throw KontainerInconsistent(
+                "Some dynamics were not provided: " +
+                        missingDynamics.map { it.qualifiedName }.joinToString(", ")
+            )
+        }
+
+        val unexpectedDynamics = mandatoryDynamicsChecker.getUnexpected(dynamicClasses)
+
+        if (unexpectedDynamics.isNotEmpty()) {
+            throw KontainerInconsistent(
+                "Unexpected dynamics were provided: " +
+                        unexpectedDynamics.map { it.qualifiedName }.joinToString(", ")
+            )
         }
 
         return instantiate(

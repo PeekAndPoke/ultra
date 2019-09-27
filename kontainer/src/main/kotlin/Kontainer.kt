@@ -45,14 +45,8 @@ data class Kontainer internal constructor(
      */
     fun <T : Any> getLookup(cls: KClass<T>): Lookup<T> {
 
-        // TODO: have a cache for the lookups
-
         @Suppress("UNCHECKED_CAST")
-        val map = superTypeLookup.getAllCandidatesFor(cls)
-            .map { it as KClass<out T> to { get(it) } }
-            .toMap()
-
-        return LazyServiceLookup(this, map)
+        return superTypeLookup.getLookupBlueprint(cls).with(this) as Lookup<T>
     }
 
     /**

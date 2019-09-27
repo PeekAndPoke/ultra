@@ -12,7 +12,7 @@ import io.kotlintest.specs.StringSpec
 
 class DynamicServicesSpec : StringSpec({
 
-    "Missing a dynamic service with creating the container" {
+    "Missing a dynamic service when creating the container" {
 
         val blueprint = kontainer {
             dynamic<MyService>()
@@ -23,8 +23,29 @@ class DynamicServicesSpec : StringSpec({
                 blueprint.useWith()
             }
 
-            error.message shouldContain "Some mandatory dynamic services are missing"
+            error.message shouldContain "Some dynamics were not provided: "
             error.message shouldContain MyService::class.qualifiedName!!
+        }
+    }
+
+    "Providing an unexpected instance when creating the container" {
+
+        data class DynamicService(val value: Int)
+
+        val blueprint = kontainer {
+            dynamic(DynamicService::class)
+        }
+
+        assertSoftly {
+            val error = shouldThrow<KontainerInconsistent> {
+                blueprint.useWith(
+                    SimpleService(),
+                    DynamicService(100)
+                )
+            }
+
+            error.message shouldContain "Unexpected dynamics were provided: "
+            error.message shouldContain SimpleService::class.qualifiedName!!
         }
     }
 
@@ -47,6 +68,53 @@ class DynamicServicesSpec : StringSpec({
         }
     }
 
+    "Providing a dynamic service and getting it multiple times from the SAME container" {
+
+        val blueprint = kontainer {
+            dynamic<SimpleService>()
+        }
+
+        val subject = blueprint.useWith(
+            SimpleService()
+        )
+
+        val first = subject.get<SimpleService>()
+        val second = subject.get<SimpleService>()
+
+        assertSoftly {
+
+            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Dynamic
+
+            first::class shouldBe SimpleService::class
+            first.get() shouldBe 0
+
+            first shouldBeSameInstanceAs second
+        }
+    }
+
+    "Providing a dynamic service and getting it multiple times from DIFFERENT container" {
+
+        val blueprint = kontainer {
+            dynamic<SimpleService>()
+        }
+
+        val containerOne = blueprint.useWith(
+            SimpleService()
+        )
+
+        val first = containerOne.get<SimpleService>()
+
+        val containerTwo = blueprint.useWith(
+            SimpleService()
+        )
+
+        val second = containerTwo.get<SimpleService>()
+
+        assertSoftly {
+            first shouldNotBeSameInstanceAs second
+        }
+    }
+
     "Providing a dynamic service with default" {
 
         data class DynamicService(val value: Int)
@@ -66,7 +134,25 @@ class DynamicServicesSpec : StringSpec({
         }
     }
 
-    "Providing a dynamic service with default must create a new instance for each container" {
+    "Providing a dynamic service with default and getting it multiple times from the SAME containers" {
+
+        data class DynamicService(val value: Int)
+
+        val blueprint = kontainer {
+            dynamic { DynamicService(100) }
+        }
+
+        val subject = blueprint.useWith()
+
+        val first = subject.get<DynamicService>()
+        val second = subject.get<DynamicService>()
+
+        assertSoftly {
+            first shouldBeSameInstanceAs second
+        }
+    }
+
+    "Providing a dynamic service with default and getting it multiple times from DIFFERENT containers" {
 
         data class DynamicService(val value: Int)
 
@@ -75,11 +161,13 @@ class DynamicServicesSpec : StringSpec({
         }
 
         val subjectOne = blueprint.useWith()
+        val first = subjectOne.get<DynamicService>()
 
         val subjectTwo = blueprint.useWith()
+        val second = subjectTwo.get<DynamicService>()
 
         assertSoftly {
-            subjectOne.get<DynamicService>() shouldNotBeSameInstanceAs subjectTwo.get<DynamicService>()
+            first shouldNotBeSameInstanceAs second
         }
     }
 
@@ -93,16 +181,21 @@ class DynamicServicesSpec : StringSpec({
 
         val subject = blueprint.useWith(DynamicService(200))
 
+        val first = subject.get<DynamicService>()
+        val second = subject.get<DynamicService>()
+
         assertSoftly {
 
-            subject.get<DynamicService>()::class shouldBe DynamicService::class
             subject.getProvider<DynamicService>().type shouldBe ServiceProvider.Type.Dynamic
 
-            subject.get<DynamicService>().value shouldBe 200
+            first::class shouldBe DynamicService::class
+            first.value shouldBe 200
+
+            first shouldBeSameInstanceAs second
         }
     }
 
-    "Providing a dynamic service with default and overriding it in useWith() with a super type" {
+    "Providing a dynamic service with default and overriding it with a super type when creating the container" {
 
         open class DynamicService(val value: Int)
         class DerivedService(value: Int) : DynamicService(value)
@@ -113,64 +206,17 @@ class DynamicServicesSpec : StringSpec({
 
         val subject = blueprint.useWith(DerivedService(200))
 
+        val first = subject.get<DynamicService>()
+        val second = subject.get<DynamicService>()
+
         assertSoftly {
 
-            subject.get<DynamicService>()::class shouldBe DerivedService::class
             subject.getProvider<DynamicService>().type shouldBe ServiceProvider.Type.Dynamic
 
-            subject.get<DynamicService>().value shouldBe 200
-        }
-    }
+            first::class shouldBe DerivedService::class
+            first.value shouldBe 200
 
-    "Providing a dynamic service by super type" {
-
-        val blueprint = kontainer {
-            dynamic<SimpleService>()
-        }
-
-        val subject = blueprint.useWith(
-            SuperSimpleService()
-        )
-
-        assertSoftly {
-
-            subject.get<SimpleService>()::class shouldBe SuperSimpleService::class
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Dynamic
-
-            subject.get<SimpleService>().get() shouldBe 0
-        }
-    }
-
-    "Dynamic services must be re-created for each container instance" {
-
-        val blueprint = kontainer {
-            dynamic<SimpleService>()
-            singleton<AnotherSimpleService>()
-            singleton<InjectingService>()
-        }
-
-        val first = blueprint.useWith(
-            SuperSimpleService()
-        )
-        first.get<SimpleService>().inc()
-
-        val second = blueprint.useWith(
-            SuperSimpleService()
-        )
-        second.get<SimpleService>().inc()
-
-        assertSoftly {
-            // dynamic service must be re-created
-            first.get<SimpleService>() shouldNotBeSameInstanceAs second.get<SimpleService>()
-
-            first.get<SimpleService>().get() shouldBe 1
-            second.get<SimpleService>().get() shouldBe 1
-
-            // semi-dynamic service must be re-created
-            first.get<InjectingService>() shouldNotBeSameInstanceAs second.get<InjectingService>()
-
-            // singleton service must NOT be re-created
-            first.get<AnotherSimpleService>() shouldBeSameInstanceAs second.get<AnotherSimpleService>()
+            first shouldBeSameInstanceAs second
         }
     }
 
@@ -256,6 +302,28 @@ class DynamicServicesSpec : StringSpec({
         }
     }
 
+    "Singletons do not become semi-dynamic when injecting non dynamic services lazily" {
+
+        abstract class Base
+        class Impl : Base()
+
+        data class Injecting(val service: Lazy<Base>)
+
+        val subject = kontainer {
+
+            singleton<Impl>()
+            singleton<Injecting>()
+
+        }.useWith()
+
+        assertSoftly {
+
+            subject.getProvider<Impl>().type shouldBe ServiceProvider.Type.GlobalSingleton
+
+            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.GlobalSingleton
+        }
+    }
+
     "Singletons become semi-dynamic when injecting a list, where at least one in the list is dynamic" {
 
         abstract class Base
@@ -280,6 +348,33 @@ class DynamicServicesSpec : StringSpec({
             subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.Dynamic
 
             subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
+        }
+    }
+
+    "Singletons do not become semi-dynamic when injecting a list, where none in the list is dynamic" {
+
+        abstract class Base
+        class ImplOne : Base()
+        class ImplTwo : Base()
+
+        data class Injecting(val all: List<Base>)
+
+        val subject = kontainer {
+
+            singleton<Injecting>()
+
+            singleton<ImplOne>()
+            singleton<ImplTwo>()
+
+        }.useWith()
+
+        assertSoftly {
+
+            subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.GlobalSingleton
+
+            subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.GlobalSingleton
+
+            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.GlobalSingleton
         }
     }
 
@@ -310,7 +405,73 @@ class DynamicServicesSpec : StringSpec({
         }
     }
 
+    "Singletons do not become semi-dynamic when lazily injecting a list, where none in the list is dynamic" {
+
+        abstract class Base
+        class ImplOne : Base()
+        class ImplTwo : Base()
+
+        data class Injecting(val all: Lazy<List<Base>>)
+
+        val subject = kontainer {
+
+            singleton<Injecting>()
+
+            singleton<ImplOne>()
+            singleton<ImplTwo>()
+
+        }.useWith()
+
+        assertSoftly {
+
+            subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.GlobalSingleton
+
+            subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.GlobalSingleton
+
+            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.GlobalSingleton
+        }
+    }
+
     "Singletons become semi-dynamic when injecting a lookup, where at least one in the lookup is dynamic" {
+
+        abstract class Base
+        class ImplOne : Base()
+        class ImplTwo : Base()
+
+        data class Injecting(val all: Lookup<Base>)
+
+        val blueprint = kontainer {
+
+            singleton<Injecting>()
+
+            singleton<ImplOne>()
+            dynamic<ImplTwo>()
+
+        }
+
+        val subjectOne = blueprint.useWith(ImplTwo())
+        val first = subjectOne.get<Injecting>()
+
+        val subjectTwo = blueprint.useWith(ImplTwo())
+        val second = subjectTwo.get<Injecting>()
+
+        assertSoftly {
+
+            subjectOne.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            // ImplOne must be the same instance in both containers as it is a GlobalSingleton
+            first.all.get(ImplOne::class) shouldBeSameInstanceAs second.all.get(ImplOne::class)
+
+            subjectOne.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.Dynamic
+            // ImplTwo must NOT be the same instance in both containers as it is a Dynamic
+            first.all.get(ImplTwo::class) shouldNotBeSameInstanceAs second.all.get(ImplTwo::class)
+
+            subjectOne.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
+            // Injecting must NOT be the same instance in both containers as it is a SemiDynamic
+            first shouldNotBeSameInstanceAs second
+        }
+    }
+
+    "Singletons do not become semi-dynamic when injecting a lookup, where none in the lookup is dynamic" {
 
         abstract class Base
         class ImplOne : Base()
@@ -323,17 +484,17 @@ class DynamicServicesSpec : StringSpec({
             singleton<Injecting>()
 
             singleton<ImplOne>()
-            dynamic<ImplTwo>()
+            singleton<ImplTwo>()
 
-        }.useWith(ImplTwo())
+        }.useWith()
 
         assertSoftly {
 
             subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.GlobalSingleton
 
-            subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.Dynamic
+            subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.GlobalSingleton
 
-            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
+            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.GlobalSingleton
         }
     }
 })
