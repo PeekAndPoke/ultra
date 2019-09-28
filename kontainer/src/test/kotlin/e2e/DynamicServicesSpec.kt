@@ -244,7 +244,7 @@ class DynamicServicesSpec : StringSpec({
 
         assertSoftly {
 
-            subject.getProvider<SomeIndependentService>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<SomeIndependentService>().type shouldBe ServiceProvider.Type.Singleton
 
             subject.getProvider<DeeperInjectingService>().type shouldBe ServiceProvider.Type.SemiDynamic
 
@@ -318,9 +318,9 @@ class DynamicServicesSpec : StringSpec({
 
         assertSoftly {
 
-            subject.getProvider<Impl>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<Impl>().type shouldBe ServiceProvider.Type.Singleton
 
-            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.Singleton
         }
     }
 
@@ -343,7 +343,7 @@ class DynamicServicesSpec : StringSpec({
 
         assertSoftly {
 
-            subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.Singleton
 
             subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.Dynamic
 
@@ -370,11 +370,11 @@ class DynamicServicesSpec : StringSpec({
 
         assertSoftly {
 
-            subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.Singleton
 
-            subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.Singleton
 
-            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.Singleton
         }
     }
 
@@ -397,7 +397,7 @@ class DynamicServicesSpec : StringSpec({
 
         assertSoftly {
 
-            subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.Singleton
 
             subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.Dynamic
 
@@ -424,11 +424,11 @@ class DynamicServicesSpec : StringSpec({
 
         assertSoftly {
 
-            subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.Singleton
 
-            subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.Singleton
 
-            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.Singleton
         }
     }
 
@@ -457,7 +457,7 @@ class DynamicServicesSpec : StringSpec({
 
         assertSoftly {
 
-            subjectOne.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subjectOne.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.Singleton
             // ImplOne must be the same instance in both containers as it is a GlobalSingleton
             first.all.get(ImplOne::class) shouldBeSameInstanceAs second.all.get(ImplOne::class)
 
@@ -490,11 +490,11 @@ class DynamicServicesSpec : StringSpec({
 
         assertSoftly {
 
-            subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.Singleton
 
-            subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.Singleton
 
-            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.Singleton
         }
     }
 })

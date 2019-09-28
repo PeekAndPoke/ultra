@@ -72,7 +72,7 @@ data class KontainerBlueprint internal constructor(
         .filterKeys { !dynamics.contains(it) }
         .filterKeys { !semiDynamics.contains(it) }
         .mapValues { (_, v) ->
-            ServiceProvider.ForSingleton.of(ServiceProvider.Type.GlobalSingleton, v)
+            ServiceProvider.ForSingleton.of(ServiceProvider.Type.Singleton, v)
         }
 
     /**

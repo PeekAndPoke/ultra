@@ -57,7 +57,7 @@ class SingletonFactoriesSpec : StringSpec({
         assertSoftly {
 
             subject.get<ConfigIntInjecting>()::class shouldBe ConfigIntInjecting::class
-            subject.getProvider<ConfigIntInjecting>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<ConfigIntInjecting>().type shouldBe ServiceProvider.Type.Singleton
 
             subject.get<ConfigIntInjecting>().configInt shouldBe 1
         }

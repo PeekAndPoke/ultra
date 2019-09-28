@@ -8,7 +8,8 @@ import java.time.Instant
 interface ServiceProvider {
 
     enum class Type {
-        GlobalSingleton,
+        Kontainer,
+        Singleton,
         SemiDynamic,
         Dynamic,
         DynamicDefault,
@@ -27,7 +28,7 @@ interface ServiceProvider {
     /**
      * Provides the service instance
      */
-    fun provide(container: Kontainer): Any
+    fun provide(kontainer: Kontainer): Any
 
     /**
      * Validates that a service can be provided.
@@ -35,7 +36,7 @@ interface ServiceProvider {
      * When all is well an empty list is returned.
      * Otherwise a list of error strings is returned.
      */
-    fun validate(container: Kontainer): List<String>
+    fun validate(kontainer: Kontainer): List<String>
 
     /**
      * Provides an already existing object as a service
@@ -50,12 +51,12 @@ interface ServiceProvider {
         /**
          * Simply returns the [instance]
          */
-        override fun provide(container: Kontainer) = instance
+        override fun provide(kontainer: Kontainer) = instance
 
         /**
          * Always valid
          */
-        override fun validate(container: Kontainer) = listOf<String>()
+        override fun validate(kontainer: Kontainer) = listOf<String>()
     }
 
     /**
@@ -67,7 +68,7 @@ interface ServiceProvider {
      */
     data class ForSingleton internal constructor(
         override val type: Type,
-        val creator: (Array<Any>) -> Any,
+        val creator: (kontainer: Kontainer, params: Array<Any>) -> Any,
         val paramProviders: List<ParameterProvider>
     ) : ServiceProvider {
 
@@ -89,7 +90,7 @@ interface ServiceProvider {
         /**
          * Get or create the instance of the service
          */
-        override fun provide(container: Kontainer): Any = instance ?: create(container).apply {
+        override fun provide(kontainer: Kontainer): Any = instance ?: create(kontainer).apply {
             createdAt = Instant.now()
             instance = this
         }
@@ -97,15 +98,16 @@ interface ServiceProvider {
         /**
          * Validates that all parameters can be provided
          */
-        override fun validate(container: Kontainer) = paramProviders.flatMap {
-            it.validate(container)
+        override fun validate(kontainer: Kontainer) = paramProviders.flatMap {
+            it.validate(kontainer)
         }
 
         /**
          * Creates a new instance
          */
-        private fun create(container: Kontainer): Any = creator(
-            paramProviders.map { it.provide(container) }.toTypedArray()
+        private fun create(kontainer: Kontainer): Any = creator(
+            kontainer,
+            paramProviders.map { it.provide(kontainer) }.toTypedArray()
         )
     }
 }

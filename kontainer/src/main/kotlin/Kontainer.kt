@@ -6,10 +6,10 @@ import kotlin.reflect.KClass
 /**
  * The container
  */
-data class Kontainer internal constructor(
-    val superTypeLookup: TypeLookup.ForSuperTypes,
-    val config: Map<String, Any>,
-    val providers: Map<KClass<*>, ServiceProvider>
+class Kontainer internal constructor(
+    private val superTypeLookup: TypeLookup.ForSuperTypes,
+    private val config: Map<String, Any>,
+    internal val providers: Map<KClass<*>, ServiceProvider>
 ) {
 
     // getting services ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28,14 +28,14 @@ data class Kontainer internal constructor(
      * Get a service for the given class
      */
     fun <T : Any> get(cls: KClass<T>): T {
-        @Suppress("UNCHECKED_CAST") return getProvider(cls).provide(this) as T
+        @Suppress("UNCHECKED_CAST")
+        return getProvider(cls).provide(this) as T
     }
 
     /**
      * Get all services that are a super type of the given class
      */
     fun <T : Any> getAll(cls: KClass<T>): List<T> {
-
         @Suppress("UNCHECKED_CAST")
         return superTypeLookup.getAllCandidatesFor(cls).map { get(it) as T }
     }

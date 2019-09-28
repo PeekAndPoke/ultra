@@ -8,7 +8,13 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
 
     private val config = mutableMapOf<String, Any>()
 
-    private val definitions = mutableMapOf<KClass<*>, ServiceDefinition>()
+    private val definitions = mutableMapOf<KClass<*>, ServiceDefinition>(
+        Kontainer::class to ServiceDefinition(
+            Kontainer::class,
+            InjectionType.Dynamic,
+            Producer(listOf()) { kontainer, _ -> kontainer }
+        )
+    )
 
     private val definitionLocations = mutableMapOf<KClass<*>, StackTraceElement>()
 
@@ -16,10 +22,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         builder(this)
     }
 
-    fun buildKontainer(): KontainerBlueprint =
+    internal fun buildBlueprint(): KontainerBlueprint =
         KontainerBlueprint(config.toMap(), definitions.toMap(), definitionLocations.toMap())
 
-    fun buildModule(): KontainerModule =
+    internal fun buildModule(): KontainerModule =
         KontainerModule(config.toMap(), definitions.toMap(), definitionLocations.toMap())
 
     // adding services ///////////////////////////////////////////////////////////////////////////////////////
@@ -55,7 +61,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
             ServiceDefinition(
                 cls,
                 InjectionType.Singleton,
-                Producer(cls.primaryConstructor!!.parameters) { params ->
+                Producer(cls.primaryConstructor!!.parameters) { _, params ->
                     cls.primaryConstructor!!.call(*params)
                 }
             )
@@ -83,7 +89,11 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * Defines a dynamic service while providing a default
      */
     fun <T : Any> dynamic(cls: KClass<T>, default: () -> T) = add(
-        ServiceDefinition(cls, InjectionType.Dynamic, Producer(listOf()) { default() })
+        ServiceDefinition(
+            cls,
+            InjectionType.Dynamic,
+            Producer(listOf()) { _, _ -> default() }
+        )
     )
 
     /**
@@ -98,7 +108,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         ServiceDefinition(
             instance::class,
             InjectionType.Singleton,
-            Producer(listOf()) { instance }
+            Producer(listOf()) { _, _ -> instance }
         )
     )
 
@@ -106,10 +116,11 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * Create a singleton via a factory method with one injected parameter
      */
     fun <T : Any, P1> singleton(cls: KClass<T>, factory: (P1) -> T) = add(
-
-        ServiceDefinition(cls, InjectionType.Singleton,
-            Producer(factory.reflect()!!.parameters) { (p1) ->
-                @Suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST")
+        ServiceDefinition(
+            cls,
+            InjectionType.Singleton,
+            Producer(factory.reflect()!!.parameters) { _, (p1) ->
                 factory.invoke(p1 as P1)
             }
         )
@@ -124,10 +135,11 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * Create a singleton via a factory method with two injected parameters
      */
     fun <T : Any, P1, P2> singleton(cls: KClass<T>, factory: (P1, P2) -> T) = add(
-
-        ServiceDefinition(cls, InjectionType.Singleton,
-            Producer(factory.reflect()!!.parameters) { (p1, p2) ->
-                @Suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST")
+        ServiceDefinition(
+            cls,
+            InjectionType.Singleton,
+            Producer(factory.reflect()!!.parameters) { _, (p1, p2) ->
                 factory.invoke(p1 as P1, p2 as P2)
             }
         )
@@ -142,10 +154,11 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * Create a singleton via a factory method with three injected parameters
      */
     fun <T : Any, P1, P2, P3> singleton(cls: KClass<T>, factory: (P1, P2, P3) -> T) = add(
-
-        ServiceDefinition(cls, InjectionType.Singleton,
-            Producer(factory.reflect()!!.parameters) { (p1, p2, p3) ->
-                @Suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST")
+        ServiceDefinition(
+            cls,
+            InjectionType.Singleton,
+            Producer(factory.reflect()!!.parameters) { _, (p1, p2, p3) ->
                 factory.invoke(p1 as P1, p2 as P2, p3 as P3)
             }
         )
@@ -162,10 +175,11 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * Create a singleton via a factory method with four injected parameters
      */
     fun <T : Any, P1, P2, P3, P4> singleton(cls: KClass<T>, factory: (P1, P2, P3, P4) -> T) = add(
-
-        ServiceDefinition(cls, InjectionType.Singleton,
-            Producer(factory.reflect()!!.parameters) { (p1, p2, p3, p4) ->
-                @Suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST")
+        ServiceDefinition(
+            cls,
+            InjectionType.Singleton,
+            Producer(factory.reflect()!!.parameters) { _, (p1, p2, p3, p4) ->
                 factory.invoke(p1 as P1, p2 as P2, p3 as P3, p4 as P4)
             }
         )
@@ -181,10 +195,11 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * Create a singleton via a factory method with five injected parameters
      */
     fun <T : Any, P1, P2, P3, P4, P5> singleton(cls: KClass<T>, factory: (P1, P2, P3, P4, P5) -> T) = add(
-
-        ServiceDefinition(cls, InjectionType.Singleton,
-            Producer(factory.reflect()!!.parameters) { (p1, p2, p3, p4, p5) ->
-                @Suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST")
+        ServiceDefinition(
+            cls,
+            InjectionType.Singleton,
+            Producer(factory.reflect()!!.parameters) { _, (p1, p2, p3, p4, p5) ->
                 factory.invoke(p1 as P1, p2 as P2, p3 as P3, p4 as P4, p5 as P5)
             }
         )
@@ -200,10 +215,11 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * Create a singleton via a factory method with six injected parameters
      */
     fun <T : Any, P1, P2, P3, P4, P5, P6> singleton(cls: KClass<T>, factory: (P1, P2, P3, P4, P5, P6) -> T) = add(
-
-        ServiceDefinition(cls, InjectionType.Singleton,
-            Producer(factory.reflect()!!.parameters) { p ->
-                @Suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST")
+        ServiceDefinition(
+            cls,
+            InjectionType.Singleton,
+            Producer(factory.reflect()!!.parameters) { _, p ->
                 factory.invoke(p[0] as P1, p[1] as P2, p[2] as P3, p[3] as P4, p[4] as P5, p[5] as P6)
             }
         )
@@ -222,10 +238,11 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     fun <T : Any, P1, P2, P3, P4, P5, P6, P7> singleton(
         cls: KClass<T>, factory: (P1, P2, P3, P4, P5, P6, P7) -> T
     ) = add(
-
-        ServiceDefinition(cls, InjectionType.Singleton,
-            Producer(factory.reflect()!!.parameters) { p ->
-                @Suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST")
+        ServiceDefinition(
+            cls,
+            InjectionType.Singleton,
+            Producer(factory.reflect()!!.parameters) { _, p ->
                 factory.invoke(p[0] as P1, p[1] as P2, p[2] as P3, p[3] as P4, p[4] as P5, p[5] as P6, p[6] as P7)
             }
         )

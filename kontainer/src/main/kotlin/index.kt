@@ -7,7 +7,7 @@ import kotlin.reflect.KParameter
  * Creates a kontainer
  */
 fun kontainer(builder: KontainerBuilder.() -> Unit): KontainerBlueprint =
-    KontainerBuilder(builder).buildKontainer()
+    KontainerBuilder(builder).buildBlueprint()
 
 /**
  * Creates a kontainer module
@@ -34,5 +34,5 @@ enum class InjectionType {
 
 data class Producer internal constructor(
     val signature: List<KParameter>,
-    val creator: (Array<Any>) -> Any
+    val creator: (kontainer: Kontainer, params: Array<Any>) -> Any
 )

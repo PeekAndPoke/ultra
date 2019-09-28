@@ -3,6 +3,8 @@ package de.peekandpoke.ultra.kontainer.e2e
 import de.peekandpoke.ultra.kontainer.*
 import io.kotlintest.assertSoftly
 import io.kotlintest.matchers.string.shouldContain
+import io.kotlintest.matchers.types.shouldBeSameInstanceAs
+import io.kotlintest.matchers.types.shouldNotBeSameInstanceAs
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldNotBe
 import io.kotlintest.shouldThrow
@@ -38,7 +40,7 @@ class GeneralInjectionSpec : StringSpec({
         assertSoftly {
 
             subject.get<SimpleService>()::class shouldBe SimpleService::class
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Singleton
         }
     }
 
@@ -51,7 +53,7 @@ class GeneralInjectionSpec : StringSpec({
         assertSoftly {
 
             subject.get<SimpleService>()::class shouldBe SimpleService::class
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Singleton
         }
     }
 
@@ -64,7 +66,7 @@ class GeneralInjectionSpec : StringSpec({
         assertSoftly {
 
             subject.get<SimpleService>()::class shouldBe SimpleService::class
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Singleton
         }
     }
 
@@ -77,10 +79,10 @@ class GeneralInjectionSpec : StringSpec({
 
         assertSoftly {
             subject.get<SimpleService>()::class shouldBe SimpleService::class
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Singleton
 
             subject.get<AnotherSimpleService>()::class shouldBe AnotherSimpleService::class
-            subject.getProvider<AnotherSimpleService>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<AnotherSimpleService>().type shouldBe ServiceProvider.Type.Singleton
         }
     }
 
@@ -128,19 +130,19 @@ class GeneralInjectionSpec : StringSpec({
 
         assertSoftly {
             subject.get<SimpleService>()::class shouldBe SimpleService::class
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Singleton
 
             subject.get<AnotherSimpleService>()::class shouldBe AnotherSimpleService::class
-            subject.getProvider<AnotherSimpleService>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<AnotherSimpleService>().type shouldBe ServiceProvider.Type.Singleton
 
             subject.get<InjectingService>()::class shouldBe InjectingService::class
-            subject.getProvider<InjectingService>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<InjectingService>().type shouldBe ServiceProvider.Type.Singleton
 
             subject.get<AnotherInjectingService>()::class shouldBe AnotherInjectingService::class
-            subject.getProvider<AnotherInjectingService>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<AnotherInjectingService>().type shouldBe ServiceProvider.Type.Singleton
 
             subject.get<DeeperInjectingService>()::class shouldBe DeeperInjectingService::class
-            subject.getProvider<DeeperInjectingService>().type shouldBe ServiceProvider.Type.GlobalSingleton
+            subject.getProvider<DeeperInjectingService>().type shouldBe ServiceProvider.Type.Singleton
         }
     }
 
@@ -172,4 +174,30 @@ class GeneralInjectionSpec : StringSpec({
             first.get<InjectingService>() shouldBe second.get<InjectingService>()
         }
     }
+
+    "The 'Kontainer' itself is always available" {
+
+        class MyService(val kontainer: Kontainer)
+
+        val blueprint = kontainer {
+            singleton(MyService::class)
+        }
+
+        val subjectOne = blueprint.useWith()
+        val subjectTwo = blueprint.useWith()
+
+        assertSoftly {
+
+            subjectOne.get(Kontainer::class) shouldBeSameInstanceAs subjectOne
+            subjectOne.getProvider(Kontainer::class).type shouldBe ServiceProvider.Type.DynamicDefault
+            subjectOne.get(MyService::class).kontainer shouldBeSameInstanceAs subjectOne
+
+            subjectTwo.get(Kontainer::class) shouldBeSameInstanceAs subjectTwo
+            subjectTwo.getProvider(Kontainer::class).type shouldBe ServiceProvider.Type.DynamicDefault
+            subjectTwo.get(MyService::class).kontainer shouldBeSameInstanceAs subjectTwo
+
+            subjectOne.get(Kontainer::class) shouldNotBeSameInstanceAs subjectTwo.get(Kontainer::class)
+        }
+    }
+
 })
