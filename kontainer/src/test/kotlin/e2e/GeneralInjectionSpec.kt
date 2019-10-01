@@ -57,7 +57,7 @@ class GeneralInjectionSpec : StringSpec({
         }
     }
 
-    "Container with a singleton service (existing instance)" {
+    "Container with a singleton service from existing instance" {
 
         val subject = kontainer {
             instance(SimpleService())
@@ -65,7 +65,28 @@ class GeneralInjectionSpec : StringSpec({
 
         assertSoftly {
 
+            subject.get<SimpleService>() shouldBeSameInstanceAs subject.get(SimpleService::class)
+
             subject.get<SimpleService>()::class shouldBe SimpleService::class
+            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Singleton
+        }
+    }
+
+    "Container with a singleton service from existing instance registered with base class" {
+
+        val subject = kontainer {
+            instance(SimpleService::class, SuperSimpleService())
+        }.useWith()
+
+        assertSoftly {
+
+            shouldThrow<ServiceNotFound> {
+                subject.get<SuperSimpleService>()
+            }
+
+            subject.get<SimpleService>() shouldBeSameInstanceAs subject.get(SimpleService::class)
+
+            subject.get<SimpleService>()::class shouldBe SuperSimpleService::class
             subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Singleton
         }
     }

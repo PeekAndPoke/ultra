@@ -8,8 +8,8 @@ import java.time.Instant
 interface ServiceProvider {
 
     enum class Type {
-        Kontainer,
         Singleton,
+        Prototype,
         SemiDynamic,
         Dynamic,
         DynamicDefault,
@@ -93,6 +93,60 @@ interface ServiceProvider {
         override fun provide(kontainer: Kontainer): Any = instance ?: create(kontainer).apply {
             createdAt = Instant.now()
             instance = this
+        }
+
+        /**
+         * Validates that all parameters can be provided
+         */
+        override fun validate(kontainer: Kontainer) = paramProviders.flatMap {
+            it.validate(kontainer)
+        }
+
+        /**
+         * Creates a new instance
+         */
+        private fun create(kontainer: Kontainer): Any = creator(
+            kontainer,
+            paramProviders.map { it.provide(kontainer) }.toTypedArray()
+        )
+    }
+
+    /**
+     * Provides a prototype service
+     *
+     * Each call to [provide] will create a new instance.
+     *
+     * The [creator] is the function that will create the service
+     *
+     * The [paramProviders] create the parameters passed to [creator]
+     */
+    data class ForPrototype internal constructor(
+        val creator: (kontainer: Kontainer, params: Array<Any>) -> Any,
+        val paramProviders: List<ParameterProvider>
+    ) : ServiceProvider {
+
+        companion object {
+            fun of(definition: ServiceDefinition) = ForPrototype(
+                definition.producer!!.creator,
+                definition.producer.signature.map { ParameterProvider.of(it) }
+            )
+        }
+
+        /**
+         * The type is always prototype
+         */
+        override val type: Type = Type.Prototype
+
+        /**
+         * True when the service instance was created
+         */
+        override var createdAt: Instant? = null
+
+        /**
+         * Get or create the instance of the service
+         */
+        override fun provide(kontainer: Kontainer): Any = create(kontainer).apply {
+            createdAt = Instant.now()
         }
 
         /**

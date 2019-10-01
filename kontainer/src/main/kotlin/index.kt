@@ -29,6 +29,7 @@ data class ServiceDefinition internal constructor(
 
 enum class InjectionType {
     Singleton,
+    Prototype,
     Dynamic
 }
 

@@ -2,7 +2,9 @@ package de.peekandpoke.ultra.kontainer
 
 interface MyService
 
-data class ConfigIntInjecting(val configInt: Int)
+abstract class ConfigIntInjectingBase
+
+data class ConfigIntInjecting(val configInt: Int) : ConfigIntInjectingBase()
 
 data class ConfigAllInjecting(
     val int: Int,

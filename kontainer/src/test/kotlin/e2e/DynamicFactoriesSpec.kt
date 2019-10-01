@@ -8,7 +8,7 @@ import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.StringSpec
 
-class SingletonFactoriesSpec : StringSpec({
+class DynamicFactoriesSpec : StringSpec({
 
     abstract class Base {
         abstract val value: Int
@@ -33,7 +33,7 @@ class SingletonFactoriesSpec : StringSpec({
 
             subject.get<Base>()::class shouldBe Config::class
             subject.get<Config>()::class shouldBe Config::class
-            subject.getProvider<Config>().type shouldBe ServiceProvider.Type.Singleton
+            subject.getProvider<Config>().type shouldBe ServiceProvider.Type.DynamicDefault
 
             subject.get<Config>().value shouldBe value
         }
@@ -49,17 +49,18 @@ class SingletonFactoriesSpec : StringSpec({
             subject.get<Base>() shouldBeSameInstanceAs subject.get<Base>()
 
             subject.get<Base>()::class shouldBe Config::class
-            subject.getProvider<Base>().type shouldBe ServiceProvider.Type.Singleton
+            subject.getProvider<Base>().type shouldBe ServiceProvider.Type.DynamicDefault
 
             subject.get<Base>().value shouldBe value
         }
     }
 
-    "Singleton factory that has missing dependencies" {
+    "Dynamic factory that has missing dependencies" {
 
         val blueprint = kontainer {
             singleton<SimpleService>()
-            singleton(InjectingService::class) { simple: SimpleService, another: AnotherSimpleService ->
+
+            dynamic(InjectingService::class) { simple: SimpleService, another: AnotherSimpleService ->
                 InjectingService(simple, another)
             }
         }
@@ -77,13 +78,13 @@ class SingletonFactoriesSpec : StringSpec({
         }
     }
 
-    "Singleton factory with two dependencies" {
+    "Dynamic factory with two dependencies" {
 
         val subject = kontainer {
             singleton<SimpleService>()
             singleton<AnotherSimpleService>()
 
-            singleton(InjectingService::class) { simple: SimpleService, another: AnotherSimpleService ->
+            dynamic(InjectingService::class) { simple: SimpleService, another: AnotherSimpleService ->
                 InjectingService(simple, another)
             }
         }.useWith()
@@ -93,129 +94,129 @@ class SingletonFactoriesSpec : StringSpec({
         }
     }
 
-    "Singleton factory with zero params" {
+    "Dynamic factory with zero params" {
 
         val subject = kontainer {
-            singleton0 { Config(0) }
+            dynamic0 { Config(0) }
         }.useWith()
 
         validateWithoutBase(subject, 0)
     }
 
-    "Singleton factory with zero params defined with bas class" {
+    "Dynamic factory with zero params defined with bas class" {
 
         val subject = kontainer {
-            singleton0(Base::class) { Config(0) }
+            dynamic0(Base::class) { Config(0) }
         }.useWith()
 
         validateWithBase(subject, 0)
     }
 
-    "Singleton factory with one param" {
+    "Dynamic factory with one param" {
 
         val subject = kontainer {
             module(configs)
 
-            singleton { c1: Int -> Config(c1) }
+            dynamic { c1: Int -> Config(c1) }
         }.useWith()
 
         validateWithoutBase(subject, 1)
     }
 
-    "Singleton factory with one param defined with base class" {
+    "Dynamic factory with one param defined with base class" {
 
         val subject = kontainer {
             module(configs)
 
-            singleton(Base::class) { c1: Int -> Config(c1) }
+            dynamic(Base::class) { c1: Int -> Config(c1) }
         }.useWith()
 
         validateWithBase(subject, 1)
     }
 
-    "Singleton factory with two config params" {
+    "Dynamic factory with two config params" {
 
         val subject = kontainer {
             module(configs)
 
-            singleton { c1: Int, c2: Int -> Config(c1 + c2) }
+            dynamic { c1: Int, c2: Int -> Config(c1 + c2) }
         }.useWith()
 
         validateWithoutBase(subject, 11)
     }
 
-    "Singleton factory with two config params defined with base class" {
+    "Dynamic factory with two config params defined with base class" {
 
         val subject = kontainer {
             module(configs)
 
-            singleton(Base::class) { c1: Int, c2: Int -> Config(c1 + c2) }
+            dynamic(Base::class) { c1: Int, c2: Int -> Config(c1 + c2) }
         }.useWith()
 
         validateWithBase(subject, 11)
     }
 
-    "Singleton factory with three config params" {
+    "Dynamic factory with three config params" {
 
         val subject = kontainer {
             module(configs)
 
-            singleton { c1: Int, c2: Int, c3: Int -> Config(c1 + c2 + c3) }
+            dynamic { c1: Int, c2: Int, c3: Int -> Config(c1 + c2 + c3) }
         }.useWith()
 
         validateWithoutBase(subject, 111)
     }
 
-    "Singleton factory with three config params defined with base class" {
+    "Dynamic factory with three config params defined with base class" {
 
         val subject = kontainer {
             module(configs)
 
-            singleton(Base::class) { c1: Int, c2: Int, c3: Int -> Config(c1 + c2 + c3) }
+            dynamic(Base::class) { c1: Int, c2: Int, c3: Int -> Config(c1 + c2 + c3) }
         }.useWith()
 
         validateWithBase(subject, 111)
     }
 
-    "Singleton factory with four config params" {
+    "Dynamic factory with four config params" {
 
         val subject = kontainer {
             module(configs)
 
-            singleton { c1: Int, c2: Int, c3: Int, c4: Int -> Config(c1 + c2 + c3 + c4) }
+            dynamic { c1: Int, c2: Int, c3: Int, c4: Int -> Config(c1 + c2 + c3 + c4) }
         }.useWith()
 
         validateWithoutBase(subject, 1111)
     }
 
-    "Singleton factory with four config params defined with base class" {
+    "Dynamic factory with four config params defined with base class" {
 
         val subject = kontainer {
             module(configs)
 
-            singleton(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int -> Config(c1 + c2 + c3 + c4) }
+            dynamic(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int -> Config(c1 + c2 + c3 + c4) }
         }.useWith()
 
         validateWithBase(subject, 1111)
     }
 
-    "Singleton factory with five config params" {
+    "Dynamic factory with five config params" {
 
         val subject = kontainer {
             module(configs)
 
-            singleton { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int -> Config(c1 + c2 + c3 + c4 + c5) }
+            dynamic { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int -> Config(c1 + c2 + c3 + c4 + c5) }
         }.useWith()
 
         validateWithoutBase(subject, 11111)
     }
 
-    "Singleton factory with five config params defined with base class" {
+    "Dynamic factory with five config params defined with base class" {
 
         val subject = kontainer {
             module(configs)
 
-            singleton(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int ->
+            dynamic(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int ->
                 Config(c1 + c2 + c3 + c4 + c5)
             }
         }.useWith()
@@ -223,12 +224,12 @@ class SingletonFactoriesSpec : StringSpec({
         validateWithBase(subject, 11111)
     }
 
-    "Singleton factory with six config params" {
+    "Dynamic factory with six config params" {
 
         val subject = kontainer {
             module(configs)
 
-            singleton { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int ->
+            dynamic { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int ->
                 Config(c1 + c2 + c3 + c4 + c5 + c6)
             }
         }.useWith()
@@ -236,12 +237,12 @@ class SingletonFactoriesSpec : StringSpec({
         validateWithoutBase(subject, 111111)
     }
 
-    "Singleton factory with six config params defined with base class" {
+    "Dynamic factory with six config params defined with base class" {
 
         val subject = kontainer {
             module(configs)
 
-            singleton(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int ->
+            dynamic(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int ->
                 Config(c1 + c2 + c3 + c4 + c5 + c6)
             }
         }.useWith()
@@ -249,12 +250,12 @@ class SingletonFactoriesSpec : StringSpec({
         validateWithBase(subject, 111111)
     }
 
-    "Singleton factory with seven config params" {
+    "Dynamic factory with seven config params" {
 
         val subject = kontainer {
             module(configs)
 
-            singleton { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
+            dynamic { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
                 Config(c1 + c2 + c3 + c4 + c5 + c6 + c7)
             }
         }.useWith()
@@ -262,12 +263,12 @@ class SingletonFactoriesSpec : StringSpec({
         validateWithoutBase(subject, 1111111)
     }
 
-    "Singleton factory with seven config params defined with base class" {
+    "Dynamic factory with seven config params defined with base class" {
 
         val subject = kontainer {
             module(configs)
 
-            singleton(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
+            dynamic(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
                 Config(c1 + c2 + c3 + c4 + c5 + c6 + c7)
             }
         }.useWith()

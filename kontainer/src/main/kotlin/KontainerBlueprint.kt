@@ -22,7 +22,7 @@ data class KontainerBlueprint internal constructor(
      * A set of all dynamics that have a default value
      */
     private val optionalDynamics = definitions.filterValues {
-        // optional dynamic do have a default provided (hence a producer is present)
+        // optional dynamic services do have a default provided (hence a producer is present)
         it.type == InjectionType.Dynamic && it.producer != null
     }
 
@@ -30,7 +30,7 @@ data class KontainerBlueprint internal constructor(
      * A set of all services which need to be passed to [useWith]
      */
     private val mandatoryDynamics = definitions.filterValues {
-        // mandatory dynamic do not have a default provided (hence no producer)
+        // mandatory dynamic services do not have a default provided (hence no producer)
         it.type == InjectionType.Dynamic && it.producer == null
     }.keys
 
@@ -66,14 +66,24 @@ data class KontainerBlueprint internal constructor(
         }.toMap()
 
     /**
-     * Global services are the services that have no dependency to any of the dynamic services
+     * Collect Prototype services
      */
-    private val globalSingletons: Map<KClass<*>, ServiceProvider> = definitions
+    private val prototypes: Map<KClass<*>, ServiceProvider.ForPrototype> = definitions
+        .filterValues { it.type == InjectionType.Prototype }
+        .mapValues { (_, v) -> ServiceProvider.ForPrototype.of(v) }
+
+    /**
+     * Collect Singletons services/
+     *
+     * These are the services that
+     * - have no transitive dependency to any of the dynamic services
+     * - are no prototype services
+     */
+    private val singletons: Map<KClass<*>, ServiceProvider.ForSingleton> = definitions
         .filterKeys { !dynamics.contains(it) }
         .filterKeys { !semiDynamics.contains(it) }
-        .mapValues { (_, v) ->
-            ServiceProvider.ForSingleton.of(ServiceProvider.Type.Singleton, v)
-        }
+        .filterKeys { !prototypes.contains(it) }
+        .mapValues { (_, v) -> ServiceProvider.ForSingleton.of(ServiceProvider.Type.Singleton, v) }
 
     /**
      * Creates a kontainer instance with the given dynamic services.
@@ -122,11 +132,15 @@ data class KontainerBlueprint internal constructor(
         return Kontainer(
             superTypeLookup,
             config,
-            globalSingletons
-                // add singleton providers for all semi dynamic services
+            // all singletons
+            singletons
+                // add providers for prototype services
+                .plus(prototypes)
+                // create new providers for all semi dynamic services
                 .plus(semiDynamics.map { (k, v) ->
                     k to ServiceProvider.ForSingleton.of(ServiceProvider.Type.SemiDynamic, v)
                 })
+                // create new providers for all optional dynamic services
                 .plus(optionalDynamics.map { (k, v) ->
                     k to ServiceProvider.ForSingleton.of(ServiceProvider.Type.DynamicDefault, v)
                 })
