@@ -10,28 +10,27 @@ abstract class TypeLookup {
     abstract fun getAllCandidatesFor(type: KClass<*>): Set<KClass<*>>
 
     /**
-     * Gets a a distinct super type for the given [baseType]
+     * Gets a distinct candidate for the given [type]
      *
      * If there is no super type or more than one found, a [ServiceNotFound] is thrown.
      */
-    fun getDistinctFor(baseType: KClass<*>): KClass<*> {
+    fun getDistinctFor(type: KClass<*>): KClass<*> {
 
-        val candidates = getAllCandidatesFor(baseType)
+        val candidates = getAllCandidatesFor(type)
 
         if (candidates.isEmpty()) {
-            throw ServiceNotFound("Service ${baseType.qualifiedName} was not found")
+            throw ServiceNotFound("Service ${type.qualifiedName} was not found")
         }
 
         if (candidates.size > 1) {
             throw ServiceAmbiguous(
-                "Service ${baseType.qualifiedName} is ambiguous. It has multiple candidate: "
+                "Service ${type.qualifiedName} is ambiguous. It has multiple candidates: "
                         + candidates.map { it.qualifiedName }.joinToString(", ")
             )
         }
 
         return candidates.first()
     }
-
 
     /**
      * Helper class for finding [baseTypes] of a given super type
@@ -82,6 +81,14 @@ abstract class TypeLookup {
                 .toMap()
 
             LazyServiceLookupBlueprint(map)
+        }
+
+        /**
+         * Get a distinct super type of the given [type] or null if there is none or multiple candidates
+         */
+        fun <T : Any> getDistinctForOrNull(type: KClass<T>): KClass<T>? {
+            @Suppress("UNCHECKED_CAST")
+            return getAllCandidatesFor(type).firstOrNull() as KClass<T>?
         }
     }
 }

@@ -139,7 +139,7 @@ class GeneralInjectionSpec : StringSpec({
         }
     }
 
-    "Container with singletons that inject other singletons" {
+    "Container with singletons that injects other singletons" {
 
         val subject = kontainer {
             singleton<SimpleService>()

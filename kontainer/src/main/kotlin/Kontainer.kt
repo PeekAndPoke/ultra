@@ -33,6 +33,19 @@ class Kontainer internal constructor(
     }
 
     /**
+     * Get a service for the given [cls], and when it is present run the [block] on it.
+     *
+     * When the service is not present null is returned.
+     * Otherwise the result of the [block] is returned.
+     */
+    fun <T : Any, R> use(cls: KClass<T>, block: T.() -> R?): R? {
+
+        val type = superTypeLookup.getDistinctForOrNull(cls) ?: return null
+
+        return get(type).block()
+    }
+
+    /**
      * Get all services that are a super type of the given class
      */
     fun <T : Any> getAll(cls: KClass<T>): List<T> {
@@ -58,11 +71,10 @@ class Kontainer internal constructor(
      * Get a provider for the given service class
      */
     fun <T : Any> getProvider(cls: KClass<T>): ServiceProvider {
-        // We can safely assume that there is a exactly one base type around, as the container validation
-        // must have found missing or ambiguous services already.
-        val baseClass = superTypeLookup.getDistinctFor(cls)
 
-        return providers.getValue(baseClass)
+        val type = superTypeLookup.getDistinctFor(cls)
+
+        return providers.getValue(type)
     }
 
     // getting parameters //////////////////////////////////////////////////////////////////////////////////////////////
