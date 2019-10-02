@@ -120,22 +120,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      *
      * The service can by injected by the type [SRV] and its base types
      */
-    fun <SRV : Any> singleton(srv: KClass<SRV>) = apply {
-
-        if (srv.java.isInterface || srv.isAbstract) {
-            throw InvalidClassProvided("A singleton service cannot be an interface or abstract class")
-        }
-
-        add(
-            ServiceDefinition(
-                srv,
-                InjectionType.Singleton,
-                Producer(srv.primaryConstructor!!.parameters) { _, params ->
-                    srv.primaryConstructor!!.call(*params)
-                }
-            )
-        )
-    }
+    fun <SRV : Any> singleton(srv: KClass<SRV>) = singleton(srv, srv)
 
     /**
      * Registers a singleton service
@@ -143,6 +128,28 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      */
     inline fun <reified SRV : Any> singleton() = singleton(SRV::class)
+
+    /**
+     * Registers a singleton service
+     *
+     * The service can by injected by the type [SRV] and its base types
+     */
+    fun <SRV : Any, IMPL : SRV> singleton(srv: KClass<SRV>, impl: KClass<IMPL>) = apply {
+
+        if (impl.java.isInterface || impl.isAbstract) {
+            throw InvalidClassProvided("A singleton service cannot be an interface or abstract class")
+        }
+
+        add(
+            ServiceDefinition(
+                srv,
+                InjectionType.Singleton,
+                Producer(impl.primaryConstructor!!.parameters) { _, params ->
+                    impl.primaryConstructor!!.call(*params)
+                }
+            )
+        )
+    }
 
     /**
      * Create a singleton via a factory method with zero injected parameters
@@ -372,22 +379,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      *
      * The service can be injected by the type [SRV] or its base types
      */
-    fun <SRV : Any> prototype(srv: KClass<SRV>) = apply {
-
-        if (srv.java.isInterface || srv.isAbstract) {
-            throw InvalidClassProvided("A prototype service cannot be an interface or abstract class")
-        }
-
-        add(
-            ServiceDefinition(
-                srv,
-                InjectionType.Prototype,
-                Producer(srv.primaryConstructor!!.parameters) { _, params ->
-                    srv.primaryConstructor!!.call(*params)
-                }
-            )
-        )
-    }
+    fun <SRV : Any> prototype(srv: KClass<SRV>) = prototype(srv, srv)
 
     /**
      * Registers a prototype service
@@ -657,10 +649,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     inline fun <reified SRV : Any> dynamic() = dynamic(SRV::class)
 
     /**
-     * Registers a dynamic service
+     * Registers a dynamic service [SRV] with a default implementation [IMPL]
      *
      * The service can be injected by the type [SRV] and its base types.
-     * The actual implementation is registered with type [IMPL]
+     * The actual default implementation is registered with type [IMPL].
      */
     fun <SRV : Any, IMPL : SRV> dynamic(srv: KClass<SRV>, impl: KClass<IMPL>) = apply {
 
