@@ -13,7 +13,7 @@ interface ParameterProvider {
     /**
      * Provides the parameter value
      */
-    fun provide(container: Kontainer): Any
+    fun provide(container: Kontainer): Any?
 
     /**
      * Validates that a parameter can be provided
@@ -79,38 +79,48 @@ interface ParameterProvider {
     /**
      * Base for single service providers
      */
-    abstract class ForServiceBase internal constructor(private val parameter: KParameter) {
+    abstract class ForServiceBase internal constructor(private val parameter: KParameter) : ParameterProvider {
 
         abstract val paramCls: KClass<*>
 
         private val paramName by lazy { parameter.name!! }
 
-        fun validate(container: Kontainer) = container.getCandidates(paramCls).let {
+        override fun validate(container: Kontainer) = when {
 
-            when {
-                // When there is exactly one candidate everything is fine
-                it.size == 1 -> listOf()
+            parameter.type.isMarkedNullable -> listOf()
 
-                // When there is no candidate then we cannot satisfy the dependency
-                it.isEmpty() -> listOf("Parameter '${paramName}' misses a dependency to '${paramCls.qualifiedName}'")
+            else -> container.getCandidates(paramCls).let {
 
-                // When there is more than one candidate we cannot distinctly satisfy the dependency
-                else -> listOf(
-                    "Parameter '${paramName}' is ambiguous. The following services collide: " +
-                            it.map { c -> c.qualifiedName }.joinToString(", ")
-                )
+                when {
+                    // When there is exactly one candidate everything is fine
+                    it.size == 1 -> listOf()
+
+                    // When there is no candidate then we cannot satisfy the dependency
+                    it.isEmpty() -> listOf("Parameter '${paramName}' misses a dependency to '${paramCls.qualifiedName}'")
+
+                    // When there is more than one candidate we cannot distinctly satisfy the dependency
+                    else -> listOf(
+                        "Parameter '${paramName}' is ambiguous. The following services collide: " +
+                                it.map { c -> c.qualifiedName }.joinToString(", ")
+                    )
+                }
             }
+        }
+
+        override fun provide(container: Kontainer) = when {
+
+            parameter.type.isMarkedNullable -> container.getOrNull(paramCls)
+
+            else -> container.get(paramCls)
         }
     }
 
     /**
      * Provider for a single object
      */
-    class ForService internal constructor(parameter: KParameter) : ForServiceBase(parameter), ParameterProvider {
+    class ForService internal constructor(parameter: KParameter) : ForServiceBase(parameter) {
 
         override val paramCls by lazy { parameter.type.classifier as KClass<*> }
-
-        override fun provide(container: Kontainer) = container.get(paramCls)
     }
 
     /**
@@ -183,7 +193,7 @@ interface ParameterProvider {
 
         override val paramCls by lazy { parameter.type.arguments[0].type!!.classifier as KClass<*> }
 
-        override fun provide(container: Kontainer) = SimpleLazy { container.get(paramCls) }
+        override fun provide(container: Kontainer) = super.provide(container)?.let { SimpleLazy { it } }
     }
 
     /**

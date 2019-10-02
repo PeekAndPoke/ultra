@@ -68,7 +68,7 @@ interface ServiceProvider {
      */
     data class ForSingleton internal constructor(
         override val type: Type,
-        val creator: (kontainer: Kontainer, params: Array<Any>) -> Any,
+        val creator: (kontainer: Kontainer, params: Array<Any?>) -> Any,
         val paramProviders: List<ParameterProvider>
     ) : ServiceProvider {
 
@@ -121,7 +121,7 @@ interface ServiceProvider {
      * The [paramProviders] create the parameters passed to [creator]
      */
     data class ForPrototype internal constructor(
-        val creator: (kontainer: Kontainer, params: Array<Any>) -> Any,
+        val creator: (kontainer: Kontainer, params: Array<Any?>) -> Any,
         val paramProviders: List<ParameterProvider>
     ) : ServiceProvider {
 

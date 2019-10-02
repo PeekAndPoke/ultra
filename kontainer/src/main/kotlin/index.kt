@@ -35,5 +35,5 @@ enum class InjectionType {
 
 data class Producer internal constructor(
     val signature: List<KParameter>,
-    val creator: (kontainer: Kontainer, params: Array<Any>) -> Any
+    val creator: (kontainer: Kontainer, params: Array<Any?>) -> Any
 )

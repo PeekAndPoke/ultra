@@ -33,6 +33,16 @@ class Kontainer internal constructor(
     }
 
     /**
+     * Get a service for the given [cls] or null if no service can be provided
+     */
+    fun <T : Any> getOrNull(cls: KClass<T>): T? {
+
+        val type = superTypeLookup.getDistinctForOrNull(cls) ?: return null
+
+        return get(type)
+    }
+
+    /**
      * Get a service for the given [cls], and when it is present run the [block] on it.
      *
      * When the service is not present null is returned.
