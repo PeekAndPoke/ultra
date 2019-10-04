@@ -49,7 +49,8 @@ class PrototypeFactoriesSpec : StringSpec({
 
         val blueprint = kontainer {
             singleton<SimpleService>()
-            prototype(InjectingService::class) { simple: SimpleService, another: AnotherSimpleService ->
+
+            prototype { simple: SimpleService, another: AnotherSimpleService ->
                 InjectingService(simple, another)
             }
         }

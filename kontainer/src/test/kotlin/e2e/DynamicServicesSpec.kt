@@ -12,19 +12,17 @@ import io.kotlintest.specs.StringSpec
 
 class DynamicServicesSpec : StringSpec({
 
-    "Missing a dynamic service when creating the container" {
-
-        val blueprint = kontainer {
-            dynamic<MyService>()
-        }
+    "Defining a dynamic service by interface without default must fail" {
 
         assertSoftly {
-            val error = shouldThrow<KontainerInconsistent> {
-                blueprint.useWith()
+
+            val error = shouldThrow<InvalidClassProvided> {
+                kontainer {
+                    dynamic<MyService>()
+                }
             }
 
-            error.message shouldContain "Some dynamics were not provided: "
-            error.message shouldContain MyService::class.qualifiedName!!
+            error.message shouldContain "A service cannot be an interface or abstract class"
         }
     }
 
@@ -33,6 +31,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
+            config("value", 1)
             dynamic(DynamicService::class)
         }
 

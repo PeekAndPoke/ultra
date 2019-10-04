@@ -75,7 +75,7 @@ interface ServiceProvider {
         companion object {
             fun of(type: Type, definition: ServiceDefinition) = ForSingleton(
                 type,
-                definition.producer!!.creator,
+                definition.producer.creator,
                 definition.producer.signature.map { ParameterProvider.of(it) }
             )
         }
@@ -127,7 +127,7 @@ interface ServiceProvider {
 
         companion object {
             fun of(definition: ServiceDefinition) = ForPrototype(
-                definition.producer!!.creator,
+                definition.producer.creator,
                 definition.producer.signature.map { ParameterProvider.of(it) }
             )
         }

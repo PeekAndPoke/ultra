@@ -14,35 +14,24 @@ data class KontainerBlueprint internal constructor(
     private var usages = 0
 
     /**
-     * A set of all dynamic services
+     * A set of all dynamic service definition
      */
-    private val dynamics = definitions.filterValues { it.type == InjectionType.Dynamic }.keys
+    private val dynamics = definitions.filterValues { it.type == InjectionType.Dynamic }
 
     /**
-     * A set of all dynamics that have a default value
+     * A set of all dynamic service classes
      */
-    private val optionalDynamics = definitions.filterValues {
-        // optional dynamic services do have a default provided (hence a producer is present)
-        it.type == InjectionType.Dynamic && it.producer != null
-    }
-
-    /**
-     * A set of all services which need to be passed to [useWith]
-     */
-    private val mandatoryDynamics = definitions.filterValues {
-        // mandatory dynamic services do not have a default provided (hence no producer)
-        it.type == InjectionType.Dynamic && it.producer == null
-    }.keys
+    private val dynamicsClasses = dynamics.keys
 
     /**
      * A lookup for finding the base types of dynamic services from given super types
      */
-    private val dynamicsBaseTypeLookUp = TypeLookup.ForBaseTypes(dynamics)
+    private val dynamicsBaseTypeLookUp = TypeLookup.ForBaseTypes(dynamicsClasses)
 
     /**
-     * Used to check whether all mandatory services are passed to [useWith]
+     * Used to check whether unexpected instances are passed to [useWith]
      */
-    private val mandatoryDynamicsChecker = MandatoryDynamicsChecker(mandatoryDynamics, dynamics)
+    private val dynamicsChecker = DynamicsChecker(dynamicsClasses)
 
     /**
      * Base type lookup for finding all candidate services by a given super type
@@ -61,9 +50,9 @@ data class KontainerBlueprint internal constructor(
      * Or which inject services that themselves inject dynamic services etc...
      */
     private val semiDynamics: Map<KClass<*>, ServiceDefinition> =
-        dependencyLookUp.getAllDependents(dynamics).map {
-            it to definitions.getValue(it)
-        }.toMap()
+        dependencyLookUp.getAllDependents(dynamicsClasses)
+            .map { it to definitions.getValue(it) }
+            .toMap()
 
     /**
      * Collect Prototype services
@@ -95,18 +84,9 @@ data class KontainerBlueprint internal constructor(
             validate()
         }
 
-        val dynamicClasses = dynamics.map { it::class }.toSet()
+        val givenClasses = dynamics.map { it::class }.toSet()
 
-        val missingDynamics = mandatoryDynamicsChecker.getMissing(dynamicClasses)
-
-        if (missingDynamics.isNotEmpty()) {
-            throw KontainerInconsistent(
-                "Some dynamics were not provided: " +
-                        missingDynamics.map { it.qualifiedName }.joinToString(", ")
-            )
-        }
-
-        val unexpectedDynamics = mandatoryDynamicsChecker.getUnexpected(dynamicClasses)
+        val unexpectedDynamics = dynamicsChecker.getUnexpected(givenClasses)
 
         if (unexpectedDynamics.isNotEmpty()) {
             throw KontainerInconsistent(
@@ -128,7 +108,7 @@ data class KontainerBlueprint internal constructor(
     /**
      * Creates a new kontainer
      */
-    private fun instantiate(dynamicsProviders: List<Pair<KClass<*>, ServiceProvider>>): Kontainer {
+    private fun instantiate(overwrittenDynamics: List<Pair<KClass<*>, ServiceProvider>>): Kontainer {
         return Kontainer(
             superTypeLookup,
             config,
@@ -140,21 +120,19 @@ data class KontainerBlueprint internal constructor(
                 .plus(semiDynamics.map { (k, v) ->
                     k to ServiceProvider.ForSingleton.of(ServiceProvider.Type.SemiDynamic, v)
                 })
-                // create new providers for all optional dynamic services
-                .plus(optionalDynamics.map { (k, v) ->
+                // create new providers for all dynamic services
+                .plus(dynamics.map { (k, v) ->
                     k to ServiceProvider.ForSingleton.of(ServiceProvider.Type.DynamicDefault, v)
                 })
-                // add providers for dynamic services
-                .plus(dynamicsProviders)
+                // add providers for all overwritten dynamic services
+                .plus(overwrittenDynamics)
         )
     }
 
     private fun validate() {
 
-        // create a container with dummy entries for the mandatory dynamic services
-        val container = instantiate(
-            mandatoryDynamics.map { it to ServiceProvider.ForInstance(ServiceProvider.Type.Dynamic, it) }
-        )
+        // create a container with no overwritten dynamic services
+        val container = instantiate(listOf())
 
         // validate all service providers
         val errors = container.providers

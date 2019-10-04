@@ -5,14 +5,9 @@ import kotlin.reflect.KClass
 /**
  * Helper class to validate the correctness of mandatory services provided to a KontainerBlueprint.
  *
- * For each set of classes passed to [getMissing] the result is cached for future reuse.
- *
  * For each set of classes passed to [getUnexpected] the result is cached for future reuse.
  */
-data class MandatoryDynamicsChecker internal constructor(
-    val mandatoryDynamics: Set<KClass<*>>,
-    val allDynamics: Set<KClass<*>>
-) {
+data class DynamicsChecker internal constructor(val dynamics: Set<KClass<*>>) {
 
     /**
      * Internal cache
@@ -29,24 +24,7 @@ data class MandatoryDynamicsChecker internal constructor(
     private val unexpectedLookUp = mutableMapOf<Set<KClass<*>>, Set<KClass<*>>>()
 
     /**
-     * Checks if [given] contains all [mandatoryDynamics]
-     *
-     * If all is well an empty set is returned.
-     * Otherwise the set will contain all classes that are missing.
-     */
-    fun getMissing(given: Set<KClass<*>>): Set<KClass<*>> {
-
-        return missingLookUp.getOrPut(given) {
-            mandatoryDynamics.filter { mandatory ->
-                given.none { givenClass ->
-                    mandatory.java.isAssignableFrom(givenClass.java)
-                }
-            }.toSet()
-        }
-    }
-
-    /**
-     * Checks if all [given] are contained in all [allDynamics]
+     * Checks if all [given] are contained in all [dynamics]
      *
      * If all is well an empty set is returned.
      * Otherwise the set will contain all classes that are not expected.
@@ -55,7 +33,7 @@ data class MandatoryDynamicsChecker internal constructor(
 
         return unexpectedLookUp.getOrPut(given) {
             given.filter { givenClass ->
-                allDynamics.none { dynamic ->
+                dynamics.none { dynamic ->
                     dynamic.java.isAssignableFrom(givenClass.java)
                 }
             }.toSet()

@@ -60,7 +60,7 @@ class DynamicFactoriesSpec : StringSpec({
         val blueprint = kontainer {
             singleton<SimpleService>()
 
-            dynamic(InjectingService::class) { simple: SimpleService, another: AnotherSimpleService ->
+            dynamic { simple: SimpleService, another: AnotherSimpleService ->
                 InjectingService(simple, another)
             }
         }

@@ -32,6 +32,7 @@ class DependencyLookup internal constructor(
          * Records the injected types of the given cls
          */
         val record = { cls: KClass<*> ->
+
             if (cls.primaryConstructor != null) {
                 cls.primaryConstructor!!.parameters.forEach { parameter ->
 
