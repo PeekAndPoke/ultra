@@ -2,11 +2,13 @@ package de.peekandpoke.ultra.kontainer
 
 import kotlin.reflect.KClass
 
-data class KontainerBlueprint internal constructor(
-    val config: Map<String, Any>,
-    val definitions: Map<KClass<*>, ServiceDefinition>,
-    val definitionLocations: Map<KClass<*>, StackTraceElement>
+class KontainerBlueprint internal constructor(
+    internal val config: Map<String, Any>,
+    private val definitions: Map<KClass<*>, ServiceDefinition>,
+    private val definitionLocations: Map<KClass<*>, StackTraceElement>
 ) {
+
+    val tracker = KontainerTracker()
 
     /**
      * Counts how often times the blueprint was used
@@ -36,7 +38,7 @@ data class KontainerBlueprint internal constructor(
     /**
      * Base type lookup for finding all candidate services by a given super type
      */
-    private val superTypeLookup = TypeLookup.ForSuperTypes(definitions.keys)
+    internal val superTypeLookup = TypeLookup.ForSuperTypes(definitions.keys)
 
     /**
      * Dependency lookup for figuring out which service depends on which other services
@@ -109,9 +111,9 @@ data class KontainerBlueprint internal constructor(
      * Creates a new kontainer
      */
     private fun instantiate(overwrittenDynamics: List<Pair<KClass<*>, ServiceProvider>>): Kontainer {
+
         return Kontainer(
-            superTypeLookup,
-            config,
+            this,
             // all singletons
             singletons
                 // add providers for prototype services
@@ -126,7 +128,11 @@ data class KontainerBlueprint internal constructor(
                 })
                 // add providers for all overwritten dynamic services
                 .plus(overwrittenDynamics)
-        )
+
+        ).apply {
+            // Track the Kontainer
+            tracker.track(this)
+        }
     }
 
     private fun validate() {

@@ -41,6 +41,11 @@ data class Producer internal constructor(
 ) {
 
     companion object {
+
+        fun forKontainer() = Producer(listOf()) { kontainer, _ -> kontainer }
+
+        fun forKontainerBlueprint() = Producer(listOf()) { kontainer, _ -> kontainer.blueprint }
+
         fun forInstance(instance: Any) = Producer(listOf()) { _, _ -> instance }
 
         fun forClass(cls: KClass<*>): Producer {

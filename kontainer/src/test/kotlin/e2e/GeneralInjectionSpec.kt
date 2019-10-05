@@ -221,4 +221,26 @@ class GeneralInjectionSpec : StringSpec({
         }
     }
 
+    "The 'KontainerBlueprint' is always available" {
+
+        class MyService(val blueprint: KontainerBlueprint)
+
+        val blueprint = kontainer {
+            singleton(MyService::class)
+        }
+
+        val subjectOne = blueprint.useWith()
+        val subjectTwo = blueprint.useWith()
+
+        assertSoftly {
+
+            subjectOne.get(KontainerBlueprint::class) shouldBeSameInstanceAs blueprint
+            subjectOne.getProvider(KontainerBlueprint::class).type shouldBe ServiceProvider.Type.Singleton
+            subjectOne.get(MyService::class).blueprint shouldBeSameInstanceAs blueprint
+
+            subjectTwo.get(KontainerBlueprint::class) shouldBeSameInstanceAs blueprint
+            subjectTwo.getProvider(KontainerBlueprint::class).type shouldBe ServiceProvider.Type.Singleton
+            subjectTwo.get(MyService::class).blueprint shouldBeSameInstanceAs blueprint
+        }
+    }
 })

@@ -23,12 +23,20 @@ fun main() {
 
         dynamic<MyInjected>()
 
-    }.useWith(
-        MyInjected(123)
-    )
+    }
 
-    k.get<MyInjectInject>()
+    repeat(100000) {
+        k.useWith().apply {
+            dump()
 
-    println(k.dump())
+            Thread.sleep(100)
+
+//            Runtime.getRuntime().gc()
+
+            println("===================================================================")
+            println(k.tracker.getNumAlive())
+            println(k.tracker.getNumAlive(20))
+        }
+    }
 
 }

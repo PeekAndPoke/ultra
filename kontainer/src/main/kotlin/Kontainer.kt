@@ -7,8 +7,7 @@ import kotlin.reflect.KClass
  * The container
  */
 class Kontainer internal constructor(
-    private val superTypeLookup: TypeLookup.ForSuperTypes,
-    private val config: Map<String, Any>,
+    internal val blueprint: KontainerBlueprint,
     internal val providers: Map<KClass<*>, ServiceProvider>
 ) {
 
@@ -17,7 +16,7 @@ class Kontainer internal constructor(
     /**
      * Get all service classes that would satisfy the given [cls]
      */
-    fun <T : Any> getCandidates(cls: KClass<T>): Set<KClass<*>> = superTypeLookup.getAllCandidatesFor(cls)
+    fun <T : Any> getCandidates(cls: KClass<T>): Set<KClass<*>> = blueprint.superTypeLookup.getAllCandidatesFor(cls)
 
     /**
      * Get a service for the given class
@@ -37,7 +36,7 @@ class Kontainer internal constructor(
      */
     fun <T : Any> getOrNull(cls: KClass<T>): T? {
 
-        val type = superTypeLookup.getDistinctForOrNull(cls) ?: return null
+        val type = blueprint.superTypeLookup.getDistinctForOrNull(cls) ?: return null
 
         return get(type)
     }
@@ -50,7 +49,7 @@ class Kontainer internal constructor(
      */
     fun <T : Any, R> use(cls: KClass<T>, block: T.() -> R?): R? {
 
-        val type = superTypeLookup.getDistinctForOrNull(cls) ?: return null
+        val type = blueprint.superTypeLookup.getDistinctForOrNull(cls) ?: return null
 
         return get(type).block()
     }
@@ -60,7 +59,7 @@ class Kontainer internal constructor(
      */
     fun <T : Any> getAll(cls: KClass<T>): List<T> {
         @Suppress("UNCHECKED_CAST")
-        return superTypeLookup.getAllCandidatesFor(cls).map { get(it) as T }
+        return blueprint.superTypeLookup.getAllCandidatesFor(cls).map { get(it) as T }
     }
 
     /**
@@ -69,7 +68,7 @@ class Kontainer internal constructor(
     fun <T : Any> getLookup(cls: KClass<T>): Lookup<T> {
 
         @Suppress("UNCHECKED_CAST")
-        return superTypeLookup.getLookupBlueprint(cls).with(this) as Lookup<T>
+        return blueprint.superTypeLookup.getLookupBlueprint(cls).with(this) as Lookup<T>
     }
 
     /**
@@ -82,7 +81,7 @@ class Kontainer internal constructor(
      */
     fun <T : Any> getProvider(cls: KClass<T>): ServiceProvider {
 
-        val type = superTypeLookup.getDistinctFor(cls)
+        val type = blueprint.superTypeLookup.getDistinctFor(cls)
 
         return providers.getValue(type)
     }
@@ -92,13 +91,13 @@ class Kontainer internal constructor(
     /**
      * Check if there is a config value with the given [id] that is of the given [type]
      */
-    fun hasConfig(id: String, type: KClass<*>) = config[id].let { it != null && it::class == type }
+    fun hasConfig(id: String, type: KClass<*>) = blueprint.config[id].let { it != null && it::class == type }
 
     /**
      * Get a config value by its [id]
      */
     @Suppress("UNCHECKED_CAST")
-    fun <T> getConfig(id: String): T = config[id] as T
+    fun <T> getConfig(id: String): T = blueprint.config[id] as T
 
     // debug ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -114,9 +113,10 @@ class Kontainer internal constructor(
                     if (v.createdAt != null) v.createdAt.toString() else "not created"
         }
 
-        val maxConfigLength = config.map { (k, _) -> k.length }.max() ?: 0
+        val maxConfigLength = blueprint.config.map { (k, _) -> k.length }.max() ?: 0
 
-        val configs = config.map { (k, v) -> "${k.padEnd(maxConfigLength)} | $v (${v::class.qualifiedName})" }
+        val configs = blueprint.config
+            .map { (k, v) -> "${k.padEnd(maxConfigLength)} | $v (${v::class.qualifiedName})" }
             .joinToString("\n")
 
         return "Kontainer dump:\n\n" +

@@ -6,18 +6,18 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
 
     private val config = mutableMapOf<String, Any>()
 
-    private val definitions = mutableMapOf<KClass<*>, ServiceDefinition>(
-        Kontainer::class to ServiceDefinition(
-            Kontainer::class,
-            InjectionType.Dynamic,
-            Producer(listOf()) { kontainer, _ -> kontainer }
-        )
-    )
+    private val definitions = mutableMapOf<KClass<*>, ServiceDefinition>()
 
     private val definitionLocations = mutableMapOf<KClass<*>, StackTraceElement>()
 
     init {
         builder(this)
+
+        // The container is always present (dynamic as it changes with every new Kontainer instance)
+        addDynamic(Kontainer::class, Producer.forKontainer())
+
+        // The blueprint is always present (singleton as it always stays the same)
+        addSingleton(KontainerBlueprint::class, Producer.forKontainerBlueprint())
     }
 
     internal fun buildBlueprint(): KontainerBlueprint =
