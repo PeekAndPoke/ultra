@@ -77,6 +77,22 @@ class KontainerBlueprint internal constructor(
         .mapValues { (_, v) -> ServiceProvider.ForSingleton.of(ServiceProvider.Type.Singleton, v) }
 
     /**
+     * Extends the current blueprint with everything in [builder] and returns a new [KontainerBlueprint]
+     *
+     * TODO: test me
+     */
+    fun extend(builder: KontainerBuilder.() -> Unit): KontainerBlueprint {
+
+        val result = KontainerBuilder(builder).buildBlueprint()
+
+        return KontainerBlueprint(
+            config.plus(result.config),
+            definitions.plus(result.definitions),
+            definitionLocations.plus(result.definitionLocations)
+        )
+    }
+
+    /**
      * Creates a kontainer instance with the given dynamic services.
      */
     fun useWith(vararg dynamics: Any): Kontainer {
