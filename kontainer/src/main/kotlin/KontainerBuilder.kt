@@ -23,9 +23,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     internal fun buildBlueprint(): KontainerBlueprint =
         KontainerBlueprint(config.toMap(), definitions.toMap(), definitionLocations.toMap())
 
-    internal fun buildModule(): KontainerModule =
-        KontainerModule(config.toMap(), definitions.toMap(), definitionLocations.toMap())
-
     private fun add(def: ServiceDefinition) = apply {
         definitions[def.produces] = def
 
@@ -93,9 +90,14 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * Imports a module
      */
     fun module(module: KontainerModule) = apply {
-        config.putAll(module.config)
-        definitions.putAll(module.definitions)
-        definitionLocations.putAll(module.definitionLocations)
+        module.apply(this)
+    }
+
+    /**
+     * Imports a parameterized module
+     */
+    fun <P> module(module: ParameterizedKontainerModule<P>, param: P) = apply {
+        module.apply(this, param)
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

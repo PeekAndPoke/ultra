@@ -14,14 +14,31 @@ fun kontainer(builder: KontainerBuilder.() -> Unit): KontainerBlueprint =
 /**
  * Creates a kontainer module
  */
-fun module(builder: KontainerBuilder.() -> Unit): KontainerModule =
-    KontainerBuilder(builder).buildModule()
+fun module(builder: KontainerBuilder.() -> Unit) = KontainerModule(builder)
 
-data class KontainerModule internal constructor(
-    val config: Map<String, Any>,
-    val definitions: Map<KClass<*>, ServiceDefinition>,
-    val definitionLocations: Map<KClass<*>, StackTraceElement>
-)
+/**
+ * Creates a parameterized kontainer module
+ */
+fun <P> module(builder: KontainerBuilder.(P) -> Unit) = ParameterizedKontainerModule(builder)
+
+/**
+ * Kontainer module
+ */
+class KontainerModule(private val module: KontainerBuilder.() -> Unit) {
+    fun apply(builder: KontainerBuilder) {
+        builder.module()
+    }
+}
+
+/**
+ * Parameterized Kontainer module
+ */
+class ParameterizedKontainerModule<P>(private val module: KontainerBuilder.(P) -> Unit) {
+    fun apply(builder: KontainerBuilder, param: P) {
+        builder.module(param)
+    }
+}
+
 
 data class ServiceDefinition internal constructor(
     val produces: KClass<*>,

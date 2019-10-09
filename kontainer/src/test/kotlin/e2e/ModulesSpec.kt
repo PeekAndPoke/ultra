@@ -41,4 +41,20 @@ class ModulesSpec : StringSpec({
         }
     }
 
+    "Creating and using a parameterized module" {
+
+        data class MyService(val value: Int)
+
+        val mod = module { config: Int ->
+            instance(MyService(config))
+        }
+
+        val subject = kontainer {
+            module(mod, 100)
+        }.useWith()
+
+        assertSoftly {
+            subject.get(MyService::class).value shouldBe 100
+        }
+    }
 })

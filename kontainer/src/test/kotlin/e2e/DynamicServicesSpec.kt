@@ -67,6 +67,27 @@ class DynamicServicesSpec : StringSpec({
         }
     }
 
+    "Providing a dynamic service with base class and impl class" {
+
+        abstract class MyBase
+        class MyImpl : MyBase()
+
+        val blueprint = kontainer {
+            dynamic(MyBase::class, MyImpl::class)
+        }
+
+        val subject = blueprint.useWith()
+
+        assertSoftly {
+
+            shouldThrow<ServiceNotFound> {
+                subject.get(MyImpl::class)
+            }
+
+            subject.get<MyBase>()::class shouldBe MyImpl::class
+        }
+    }
+
     "Providing a dynamic service and getting it multiple times from the SAME container" {
 
         val blueprint = kontainer {
