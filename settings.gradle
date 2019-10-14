@@ -8,5 +8,6 @@ include(
         ":common",
         ":kontainer",
         ":meta",
-        ":mutator"
+        ":mutator",
+        ":security"
 )

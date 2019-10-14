@@ -17,21 +17,33 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
-dependencies {
-
-    // add all child projects
-    compile(project(":common"))
-    compile(project(":meta"))
-    compile(project(":kontainer"))
-    compile(project(":security"))
-
-    compile(project(":mutator"))
-    kapt(project(":mutator"))
-}
+val kotlin_metadata_version: String by project
+val google_auto_version: String by project
+val kotlinpoet_version: String by project
+val logback_version: String by project
+val kotlintest_version: String by project
 
 repositories {
     mavenCentral()
     jcenter()
+}
+
+dependencies {
+    api(rootProject.project("meta"))
+
+    api(kotlin("stdlib-jdk8"))
+    api(kotlin("reflect"))
+
+    testImplementation("ch.qos.logback:logback-classic:$logback_version")
+    testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")
+}
+
+val test by tasks.getting(Test::class) {
+    useJUnitPlatform { }
+}
+
+kapt {
+    useBuildCache = false
 }
 
 configure<JavaPluginConvention> {
@@ -79,7 +91,7 @@ bintray {
     setPublications("default")
     pkg(delegateClosureOf<BintrayExtension.PackageConfig> {
         repo = "maven"
-        name = "de.peekandpoke.ultra"
+        name = "de.peekandpoke.ultra.${project.name}"
         userOrg = "peekandpoke"
         description = "Common helpers und utils"
         setLabels("kotlin")

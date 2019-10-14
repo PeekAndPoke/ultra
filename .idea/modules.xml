@@ -16,6 +16,9 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mutator/root.mutator.iml" filepath="$PROJECT_DIR$/.idea/modules/mutator/root.mutator.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mutator/root.mutator.main.iml" filepath="$PROJECT_DIR$/.idea/modules/mutator/root.mutator.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mutator/root.mutator.test.iml" filepath="$PROJECT_DIR$/.idea/modules/mutator/root.mutator.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/security/root.security.iml" filepath="$PROJECT_DIR$/.idea/modules/security/root.security.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/security/root.security.main.iml" filepath="$PROJECT_DIR$/.idea/modules/security/root.security.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/security/root.security.test.iml" filepath="$PROJECT_DIR$/.idea/modules/security/root.security.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/root.test.iml" filepath="$PROJECT_DIR$/.idea/modules/root.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ultra/root.ultra.iml" filepath="$PROJECT_DIR$/.idea/modules/ultra/root.ultra.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ultra/root.ultra.main.iml" filepath="$PROJECT_DIR$/.idea/modules/ultra/root.ultra.main.iml" />

@@ -1,13 +1,24 @@
 package de.peekandpoke.ultra.common
 
 import java.math.BigInteger
+import java.nio.charset.Charset
 import java.security.MessageDigest
 import java.util.*
 
 /**
  * Encodes the byte array as a base64 string
  */
-fun ByteArray.base64(): String = Base64.getEncoder().encodeToString(this)
+fun ByteArray.toBase64(): String = Base64.getEncoder().encodeToString(this)
+
+/**
+ * Encodes the string as base64 string
+ */
+fun String.toBase64(charset: Charset = Charsets.UTF_8): String = toByteArray(charset).toBase64()
+
+/**
+ * Decodes the base64 string
+ */
+fun String.fromBase64(): ByteArray = Base64.getDecoder().decode(this)
 
 fun ByteArray.md5(): String {
     val md = MessageDigest.getInstance("MD5")
