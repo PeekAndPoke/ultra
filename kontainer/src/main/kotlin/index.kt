@@ -40,7 +40,7 @@ class ParameterizedKontainerModule<P>(private val module: KontainerBuilder.(P) -
 }
 
 
-data class ServiceDefinition internal constructor(
+class ServiceDefinition internal constructor(
     val produces: KClass<*>,
     val type: InjectionType,
     val producer: Producer
@@ -52,10 +52,11 @@ enum class InjectionType {
     Dynamic
 }
 
-data class Producer internal constructor(
-    val signature: List<KParameter>,
+class Producer internal constructor(
+    signature: List<KParameter>,
     val creator: (kontainer: Kontainer, params: Array<Any?>) -> Any
 ) {
+    val paramProviders = signature.map { ParameterProvider.of(it) }
 
     companion object {
 

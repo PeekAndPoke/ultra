@@ -67,10 +67,6 @@ interface ServiceProvider {
         val definition: ServiceDefinition
     ) : ServiceProvider {
 
-        private val paramProviders by lazy {
-            definition.producer.signature.map { ParameterProvider.of(it) }
-        }
-
         /**
          * True when the service instance was created
          */
@@ -89,7 +85,7 @@ interface ServiceProvider {
         /**
          * Validates that all parameters can be provided
          */
-        override fun validate(kontainer: Kontainer) = paramProviders.flatMap {
+        override fun validate(kontainer: Kontainer) = definition.producer.paramProviders.flatMap {
             it.validate(kontainer)
         }
 
@@ -98,7 +94,7 @@ interface ServiceProvider {
          */
         private fun create(context: InjectionContext): Any = definition.producer.creator(
             context.kontainer,
-            paramProviders.map {
+            definition.producer.paramProviders.map {
                 it.provide(
                     context.next(definition.produces)
                 )
@@ -114,10 +110,6 @@ interface ServiceProvider {
     data class ForPrototype internal constructor(
         val definition: ServiceDefinition
     ) : ServiceProvider {
-
-        private val paramProviders by lazy {
-            definition.producer.signature.map { ParameterProvider.of(it) }
-        }
 
         /**
          * The type is always prototype
@@ -139,7 +131,7 @@ interface ServiceProvider {
         /**
          * Validates that all parameters can be provided
          */
-        override fun validate(kontainer: Kontainer) = paramProviders.flatMap {
+        override fun validate(kontainer: Kontainer) = definition.producer.paramProviders.flatMap {
             it.validate(kontainer)
         }
 
@@ -148,7 +140,7 @@ interface ServiceProvider {
          */
         private fun create(context: InjectionContext): Any = definition.producer.creator(
             context.kontainer,
-            paramProviders.map {
+            definition.producer.paramProviders.map {
                 it.provide(
                     context.next(definition.produces)
                 )
