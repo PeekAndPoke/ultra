@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
+import de.peekandpoke.ultra.common.SimpleLazy
 import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotlintest.assertSoftly
 import io.kotlintest.shouldBe
@@ -72,7 +73,7 @@ class OptionalsSpec : StringSpec({
     "Injecting a missing service lazily that is marked as nullable" {
 
         class Service
-        class Injecting(val service: Lazy<Service>?)
+        class Injecting(val service: Lazy<Service?>)
 
         val subject = kontainer {
             singleton(Injecting::class)
@@ -81,7 +82,8 @@ class OptionalsSpec : StringSpec({
         assertSoftly {
             val injecting = subject.get(Injecting::class)
 
-            injecting.service shouldBe null
+            injecting.service::class shouldBe SimpleLazy::class
+            injecting.service.value shouldBe null
         }
     }
 

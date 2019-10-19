@@ -13,7 +13,7 @@ interface ParameterProvider {
     /**
      * Provides the parameter value
      */
-    fun provide(container: Kontainer): Any?
+    fun provide(context: InjectionContext): Any?
 
     /**
      * Validates that a parameter can be provided
@@ -21,7 +21,7 @@ interface ParameterProvider {
      * When all is well an empty list is returned.
      * Otherwise a list of error strings is returned.
      */
-    fun validate(container: Kontainer): List<String>
+    fun validate(kontainer: Kontainer): List<String>
 
     companion object Factory {
 
@@ -35,6 +35,9 @@ interface ParameterProvider {
             return when {
                 // Config values: primitive types or strings are config values
                 isPrimitive(paramCls) -> ForConfigValue(parameter)
+
+                // InjectionContext: inject the InjectionContext
+                isInjectionContext(paramCls) -> ForInjectionContext()
 
                 // Lazy<List<T>>: lazily injects all super types of T
                 isLazyListType(parameter.type) -> ForLazyListOfServices(parameter)
@@ -66,14 +69,30 @@ interface ParameterProvider {
 
         private val paramName by lazy { parameter.name!! }
 
-        override fun provide(container: Kontainer) = container.getConfig<Any>(paramName)
+        override fun provide(context: InjectionContext) = context.getConfig<Any>(paramName)
 
-        override fun validate(container: Kontainer) = when {
+        override fun validate(kontainer: Kontainer) = when {
 
-            container.hasConfig(paramName, paramCls) -> listOf()
+            kontainer.hasConfig(paramName, paramCls) -> listOf()
 
             else -> listOf("Parameter '${paramName}' misses a config value '${paramName}' of type ${paramCls.qualifiedName}")
         }
+    }
+
+    /**
+     * Provider for the injection context
+     */
+    class ForInjectionContext internal constructor() : ParameterProvider {
+
+        /**
+         * Injects the context
+         */
+        override fun provide(context: InjectionContext) = context
+
+        /**
+         * Always valid
+         */
+        override fun validate(kontainer: Kontainer): List<String> = listOf()
     }
 
     /**
@@ -85,11 +104,11 @@ interface ParameterProvider {
 
         private val paramName by lazy { parameter.name!! }
 
-        override fun validate(container: Kontainer) = when {
+        override fun validate(kontainer: Kontainer) = when {
 
             parameter.type.isMarkedNullable -> listOf()
 
-            else -> container.getCandidates(paramCls).let {
+            else -> kontainer.getCandidates(paramCls).let {
 
                 when {
                     // When there is exactly one candidate everything is fine
@@ -107,11 +126,11 @@ interface ParameterProvider {
             }
         }
 
-        override fun provide(container: Kontainer) = when {
+        override fun provide(context: InjectionContext) = when {
 
-            parameter.type.isMarkedNullable -> container.getOrNull(paramCls)
+            parameter.type.isMarkedNullable -> context.getOrNull(paramCls)
 
-            else -> container.get(paramCls)
+            else -> context.get(paramCls)
         }
     }
 
@@ -136,12 +155,12 @@ interface ParameterProvider {
         /**
          * Provides a list with all super types
          */
-        override fun provide(container: Kontainer): List<Any> = container.getAll(innerType)
+        override fun provide(context: InjectionContext): List<Any> = context.getAll(innerType)
 
         /**
          * Always valid.
          */
-        override fun validate(container: Kontainer): List<String> = listOf()
+        override fun validate(kontainer: Kontainer): List<String> = listOf()
     }
 
     /**
@@ -157,12 +176,12 @@ interface ParameterProvider {
         /**
          * Provides a list with all super types
          */
-        override fun provide(container: Kontainer): Lookup<out Any> = container.getLookup(innerType)
+        override fun provide(context: InjectionContext): Lookup<out Any> = context.getLookup(innerType)
 
         /**
          * Always valid.
          */
-        override fun validate(container: Kontainer): List<String> = listOf()
+        override fun validate(kontainer: Kontainer): List<String> = listOf()
     }
 
     /**
@@ -178,22 +197,50 @@ interface ParameterProvider {
         /**
          * Provides a lazy list with all super types
          */
-        override fun provide(container: Kontainer): Lazy<List<Any>> = SimpleLazy { container.getAll(innerType) }
+        override fun provide(context: InjectionContext): Lazy<List<Any>> = SimpleLazy { context.getAll(innerType) }
 
         /**
          * Always valid.
          */
-        override fun validate(container: Kontainer): List<String> = listOf()
+        override fun validate(kontainer: Kontainer): List<String> = listOf()
     }
 
     /**
      * Provider for a lazy service
      */
-    class ForLazyService internal constructor(parameter: KParameter) : ForServiceBase(parameter), ParameterProvider {
+    class ForLazyService internal constructor(parameter: KParameter) : ParameterProvider {
 
-        override val paramCls by lazy { parameter.type.arguments[0].type!!.classifier as KClass<*> }
+        private val innerType = parameter.type.arguments[0].type!!
 
-        override fun provide(container: Kontainer) = super.provide(container)?.let { SimpleLazy { it } }
+        private val innerCls = innerType.classifier as KClass<*>
+
+        private val paramName = parameter.name
+
+        override fun provide(context: InjectionContext) = SimpleLazy { context.getOrNull(innerCls) }
+
+        override fun validate(kontainer: Kontainer) = when {
+
+            innerType.isMarkedNullable -> listOf()
+
+            else -> kontainer.getCandidates(innerCls).let {
+
+                when {
+                    // When there is exactly one candidate everything is fine
+                    it.size == 1 -> listOf()
+
+                    // When there is no candidate then we cannot satisfy the dependency
+                    it.isEmpty() -> listOf(
+                        "Parameter '${paramName}' misses a lazy dependency to '${innerCls.qualifiedName}'"
+                    )
+
+                    // When there is more than one candidate we cannot distinctly satisfy the dependency
+                    else -> listOf(
+                        "Parameter '${paramName}' is ambiguous. The following services collide: " +
+                                it.map { c -> c.qualifiedName }.joinToString(", ")
+                    )
+                }
+            }
+        }
     }
 
     /**
@@ -205,8 +252,8 @@ interface ParameterProvider {
 
         private val error = "Parameter '${parameter.name}' has no known way to inject a '${paramCls.qualifiedName}'"
 
-        override fun provide(container: Kontainer) = error(error)
+        override fun provide(context: InjectionContext) = error(error)
 
-        override fun validate(container: Kontainer) = listOf(error)
+        override fun validate(kontainer: Kontainer) = listOf(error)
     }
 }

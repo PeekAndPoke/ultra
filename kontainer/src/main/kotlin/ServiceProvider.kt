@@ -28,7 +28,7 @@ interface ServiceProvider {
     /**
      * Provides the service instance
      */
-    fun provide(kontainer: Kontainer): Any
+    fun provide(context: InjectionContext): Any
 
     /**
      * Validates that a service can be provided.
@@ -51,7 +51,7 @@ interface ServiceProvider {
         /**
          * Simply returns the [instance]
          */
-        override fun provide(kontainer: Kontainer) = instance
+        override fun provide(context: InjectionContext) = instance
 
         /**
          * Always valid
@@ -61,23 +61,14 @@ interface ServiceProvider {
 
     /**
      * Provides a singleton service
-     *
-     * The [creator] is the function that will create the service
-     *
-     * The [paramProviders] create the parameters passed to [creator]
      */
     data class ForSingleton internal constructor(
         override val type: Type,
-        val creator: (kontainer: Kontainer, params: Array<Any?>) -> Any,
-        val paramProviders: List<ParameterProvider>
+        val definition: ServiceDefinition
     ) : ServiceProvider {
 
-        companion object {
-            fun of(type: Type, definition: ServiceDefinition) = ForSingleton(
-                type,
-                definition.producer.creator,
-                definition.producer.signature.map { ParameterProvider.of(it) }
-            )
+        private val paramProviders by lazy {
+            definition.producer.signature.map { ParameterProvider.of(it) }
         }
 
         /**
@@ -90,7 +81,7 @@ interface ServiceProvider {
         /**
          * Get or create the instance of the service
          */
-        override fun provide(kontainer: Kontainer): Any = instance ?: create(kontainer).apply {
+        override fun provide(context: InjectionContext): Any = instance ?: create(context).apply {
             createdAt = Instant.now()
             instance = this
         }
@@ -105,9 +96,13 @@ interface ServiceProvider {
         /**
          * Creates a new instance
          */
-        private fun create(kontainer: Kontainer): Any = creator(
-            kontainer,
-            paramProviders.map { it.provide(kontainer) }.toTypedArray()
+        private fun create(context: InjectionContext): Any = definition.producer.creator(
+            context.kontainer,
+            paramProviders.map {
+                it.provide(
+                    context.next(definition.produces)
+                )
+            }.toTypedArray()
         )
     }
 
@@ -115,21 +110,13 @@ interface ServiceProvider {
      * Provides a prototype service
      *
      * Each call to [provide] will create a new instance.
-     *
-     * The [creator] is the function that will create the service
-     *
-     * The [paramProviders] create the parameters passed to [creator]
      */
     data class ForPrototype internal constructor(
-        val creator: (kontainer: Kontainer, params: Array<Any?>) -> Any,
-        val paramProviders: List<ParameterProvider>
+        val definition: ServiceDefinition
     ) : ServiceProvider {
 
-        companion object {
-            fun of(definition: ServiceDefinition) = ForPrototype(
-                definition.producer.creator,
-                definition.producer.signature.map { ParameterProvider.of(it) }
-            )
+        private val paramProviders by lazy {
+            definition.producer.signature.map { ParameterProvider.of(it) }
         }
 
         /**
@@ -145,7 +132,7 @@ interface ServiceProvider {
         /**
          * Get or create the instance of the service
          */
-        override fun provide(kontainer: Kontainer): Any = create(kontainer).apply {
+        override fun provide(context: InjectionContext): Any = create(context).apply {
             createdAt = Instant.now()
         }
 
@@ -159,9 +146,13 @@ interface ServiceProvider {
         /**
          * Creates a new instance
          */
-        private fun create(kontainer: Kontainer): Any = creator(
-            kontainer,
-            paramProviders.map { it.provide(kontainer) }.toTypedArray()
+        private fun create(context: InjectionContext): Any = definition.producer.creator(
+            context.kontainer,
+            paramProviders.map {
+                it.provide(
+                    context.next(definition.produces)
+                )
+            }.toTypedArray()
         )
     }
 }

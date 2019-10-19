@@ -77,7 +77,7 @@ abstract class TypeLookup {
         fun getLookupBlueprint(type: KClass<*>): LazyServiceLookupBlueprint<*> = lookupCache.getOrPut(type) {
 
             val map = getAllCandidatesFor(type)
-                .map { it to { container: Kontainer -> container.get(it) } }
+                .map { it to { context: InjectionContext -> context.get(it) } }
                 .toMap()
 
             LazyServiceLookupBlueprint(map)

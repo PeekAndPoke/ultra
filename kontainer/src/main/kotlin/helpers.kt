@@ -6,6 +6,8 @@ import kotlin.reflect.KType
 
 internal fun isPrimitive(cls: KClass<*>) = cls.java.isPrimitive || cls == String::class
 
+internal fun isInjectionContext(cls: KClass<*>) = cls == InjectionContext::class
+
 internal fun isServiceType(cls: KClass<*>) = !isPrimitive(cls)
 
 internal fun isListType(type: KType) =

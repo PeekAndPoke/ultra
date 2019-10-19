@@ -11,6 +11,8 @@ class Kontainer internal constructor(
     internal val providers: Map<KClass<*>, ServiceProvider>
 ) {
 
+    private val rootContext = InjectionContext(this, Kontainer::class, Kontainer::class)
+
     // getting services ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -26,20 +28,12 @@ class Kontainer internal constructor(
     /**
      * Get a service for the given class
      */
-    fun <T : Any> get(cls: KClass<T>): T {
-        @Suppress("UNCHECKED_CAST")
-        return getProvider(cls).provide(this) as T
-    }
+    fun <T : Any> get(cls: KClass<T>): T = get(cls, rootContext)
 
     /**
      * Get a service for the given [cls] or null if no service can be provided
      */
-    fun <T : Any> getOrNull(cls: KClass<T>): T? {
-
-        val type = blueprint.superTypeLookup.getDistinctForOrNull(cls) ?: return null
-
-        return get(type)
-    }
+    fun <T : Any> getOrNull(cls: KClass<T>): T? = getOrNull(cls, rootContext)
 
     /**
      * Get a service for the given [cls], and when it is present run the [block] on it.
@@ -57,19 +51,12 @@ class Kontainer internal constructor(
     /**
      * Get all services that are a super type of the given class
      */
-    fun <T : Any> getAll(cls: KClass<T>): List<T> {
-        @Suppress("UNCHECKED_CAST")
-        return blueprint.superTypeLookup.getAllCandidatesFor(cls).map { get(it) as T }
-    }
+    fun <T : Any> getAll(cls: KClass<T>): List<T> = getAll(cls, rootContext)
 
     /**
      * Get all services that are a super type of the given class as a [Lookup]
      */
-    fun <T : Any> getLookup(cls: KClass<T>): Lookup<T> {
-
-        @Suppress("UNCHECKED_CAST")
-        return blueprint.superTypeLookup.getLookupBlueprint(cls).with(this) as Lookup<T>
-    }
+    fun <T : Any> getLookup(cls: KClass<T>): Lookup<T> = getLookup(cls, rootContext)
 
     /**
      * Get a provider for the given service class
@@ -123,5 +110,39 @@ class Kontainer internal constructor(
                 services.joinToString("\n") + "\n\n" +
                 "Config values\n\n" +
                 configs
+    }
+
+    // internal helpers ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    internal fun <T : Any> get(service: KClass<T>, context: InjectionContext): T {
+        @Suppress("UNCHECKED_CAST")
+        return getProvider(service).provide(context) as T
+    }
+
+    /**
+     * Get a service for the given [cls] or null if no service can be provided
+     */
+    internal fun <T : Any> getOrNull(cls: KClass<T>, context: InjectionContext): T? {
+
+        val type = blueprint.superTypeLookup.getDistinctForOrNull(cls) ?: return null
+
+        return get(type, context)
+    }
+
+    /**
+     * Get all services that are a super type of the given class
+     */
+    internal fun <T : Any> getAll(cls: KClass<T>, context: InjectionContext): List<T> {
+        @Suppress("UNCHECKED_CAST")
+        return blueprint.superTypeLookup.getAllCandidatesFor(cls).map { get(it, context) as T }
+    }
+
+    /**
+     * Get all services that are a super type of the given class as a [Lookup]
+     */
+    internal fun <T : Any> getLookup(cls: KClass<T>, context: InjectionContext): Lookup<T> {
+
+        @Suppress("UNCHECKED_CAST")
+        return blueprint.superTypeLookup.getLookupBlueprint(cls).with(context) as Lookup<T>
     }
 }

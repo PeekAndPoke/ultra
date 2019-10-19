@@ -61,7 +61,7 @@ class KontainerBlueprint internal constructor(
      */
     private val prototypes: Map<KClass<*>, ServiceProvider.ForPrototype> = definitions
         .filterValues { it.type == InjectionType.Prototype }
-        .mapValues { (_, v) -> ServiceProvider.ForPrototype.of(v) }
+        .mapValues { (_, v) -> ServiceProvider.ForPrototype(v) }
 
     /**
      * Collect Singletons services/
@@ -74,7 +74,7 @@ class KontainerBlueprint internal constructor(
         .filterKeys { !dynamics.contains(it) }
         .filterKeys { !semiDynamics.contains(it) }
         .filterKeys { !prototypes.contains(it) }
-        .mapValues { (_, v) -> ServiceProvider.ForSingleton.of(ServiceProvider.Type.Singleton, v) }
+        .mapValues { (_, v) -> ServiceProvider.ForSingleton(ServiceProvider.Type.Singleton, v) }
 
     /**
      * Extends the current blueprint with everything in [builder] and returns a new [KontainerBlueprint]
@@ -136,11 +136,11 @@ class KontainerBlueprint internal constructor(
                 .plus(prototypes)
                 // create new providers for all semi dynamic services
                 .plus(semiDynamics.map { (k, v) ->
-                    k to ServiceProvider.ForSingleton.of(ServiceProvider.Type.SemiDynamic, v)
+                    k to ServiceProvider.ForSingleton(ServiceProvider.Type.SemiDynamic, v)
                 })
                 // create new providers for all dynamic services
                 .plus(dynamics.map { (k, v) ->
-                    k to ServiceProvider.ForSingleton.of(ServiceProvider.Type.DynamicDefault, v)
+                    k to ServiceProvider.ForSingleton(ServiceProvider.Type.DynamicDefault, v)
                 })
                 // add providers for all overwritten dynamic services
                 .plus(overwrittenDynamics)
