@@ -34,14 +34,8 @@ dependencies {
     api(kotlin("stdlib-jdk8"))
     api(kotlin("reflect"))
 
-    implementation("ch.qos.logback:logback-classic:$logback_version")
+    kapt("com.google.auto.service:auto-service:$google_auto_version")
 
-    implementation("org.atteo.classindex:classindex:3.4")
-    kapt("org.atteo.classindex:classindex:3.4")
-
-    implementation("org.javassist:javassist:3.25.0-GA")
-
-    kaptTest("com.google.auto.service:auto-service:$google_auto_version")
     kaptTest(rootProject.project(":mutator"))
 
     testImplementation("ch.qos.logback:logback-classic:$logback_version")

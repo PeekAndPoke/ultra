@@ -50,7 +50,7 @@ open class ListMutator<T, M>(
     /**
      * Add an element at the end of the list
      */
-    fun push(vararg element: T) = apply { getMutableResult().push(*element) }
+    fun push(vararg element: T) = apply { getMutableResult().push(element) }
 
     /**
      * Removes the last element from the list and returns it
@@ -60,7 +60,7 @@ open class ListMutator<T, M>(
     /**
      * Add an element at the beginning of the list
      */
-    fun unshift(vararg element: T) = apply { getMutableResult().unshift(*element) }
+    fun unshift(vararg element: T) = apply { getMutableResult().unshift(element) }
 
     /**
      * Removes the first element from the list and returns it
@@ -72,7 +72,7 @@ open class ListMutator<T, M>(
      */
     fun remove(vararg element: T) = apply {
 
-        if (getResult().containsAny(*element)) {
+        if (getResult().containsAny(element)) {
             getMutableResult().removeAll(element)
         }
     }
