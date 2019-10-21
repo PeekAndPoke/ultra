@@ -3,7 +3,7 @@ package de.peekandpoke.ultra.kontainer
 import java.time.Instant
 
 /**
- * Base for all service providers
+ * Service providers create instances of services
  */
 interface ServiceProvider {
 

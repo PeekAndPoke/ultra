@@ -4,7 +4,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
 
 /**
- * A lookup for finding out which classes are injected into which
+ * A lookup for mapping service class to service classes that they request for injection.
  */
 class DependencyLookup internal constructor(
     superTypeLookUp: TypeLookup.ForSuperTypes,
@@ -12,10 +12,12 @@ class DependencyLookup internal constructor(
 ) {
 
     /**
-     * The lookup map built by the init method
+     * The lookup map
      *
-     * Map Key:   A service that other services might inject
-     * Map Value: A set of services that directly inject the key service
+     * It is built by the init method.
+     *
+     * Map Key:   A service class that other services might inject
+     * Map Value: A set of services class that directly inject the key service
      */
     private val dependencies: Map<KClass<*>, Set<KClass<*>>>
 
@@ -41,21 +43,14 @@ class DependencyLookup internal constructor(
 
                     val candidates = when {
                         // lazy list of types
-                        isLazyListType(type) -> {
-                            val inner = getInnerInnerClass(type)
-
-                            superTypeLookUp.getAllCandidatesFor(inner)
-                        }
+                        type.isLazyListType() -> superTypeLookUp.getAllCandidatesFor(type.getInnerInnerClass())
 
                         // list of lazy types
-                        isListType(type) || isLazyServiceType(type) || isLookupType(type) -> {
-                            val inner = getInnerClass(type)
-
-                            superTypeLookUp.getAllCandidatesFor(inner)
-                        }
+                        type.isListType() || type.isLazyServiceType() || type.isLookupType() ->
+                            superTypeLookUp.getAllCandidatesFor(type.getInnerClass())
 
                         // default service type
-                        isServiceType(paramCls) -> superTypeLookUp.getAllCandidatesFor(paramCls)
+                        paramCls.isServiceType() -> superTypeLookUp.getAllCandidatesFor(paramCls)
 
                         else -> setOf()
                     }

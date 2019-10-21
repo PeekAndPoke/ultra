@@ -3,18 +3,11 @@ package de.peekandpoke.ultra.kontainer
 import kotlin.reflect.KClass
 
 /**
- * Helper class to validate the correctness of mandatory services provided to a KontainerBlueprint.
+ * Helper class to validate the correctness instances passed [KontainerBlueprint.useWith].
  *
  * For each set of classes passed to [getUnexpected] the result is cached for future reuse.
  */
 data class DynamicsChecker internal constructor(val dynamics: Set<KClass<*>>) {
-
-    /**
-     * Internal cache
-     *
-     * A set of classes will have the same hash for the same classes, so we can do some caching here
-     */
-    private val missingLookUp = mutableMapOf<Set<KClass<*>>, Set<KClass<*>>>()
 
     /**
      * Internal cache
@@ -33,9 +26,7 @@ data class DynamicsChecker internal constructor(val dynamics: Set<KClass<*>>) {
 
         return unexpectedLookUp.getOrPut(given) {
             given.filter { givenClass ->
-                dynamics.none { dynamic ->
-                    dynamic.java.isAssignableFrom(givenClass.java)
-                }
+                dynamics.none { dynamic -> dynamic.java.isAssignableFrom(givenClass.java) }
             }.toSet()
         }
     }

@@ -10,7 +10,9 @@ class Kontainer internal constructor(
     internal val blueprint: KontainerBlueprint,
     internal val providers: Map<KClass<*>, ServiceProvider>
 ) {
-
+    /**
+     * The root context is used, when services are directly requested from the Kontainer
+     */
     private val rootContext = InjectionContext(this, Kontainer::class, Kontainer::class)
 
     // getting services ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,23 +116,26 @@ class Kontainer internal constructor(
 
     // internal helpers ////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /**
+     * Internally gets a [service] for the given [context]
+     */
     internal fun <T : Any> get(service: KClass<T>, context: InjectionContext): T {
         @Suppress("UNCHECKED_CAST")
         return getProvider(service).provide(context) as T
     }
 
     /**
-     * Get a service for the given [cls] or null if no service can be provided
+     * Internally gets a [service] or null for the given [context]
      */
-    internal fun <T : Any> getOrNull(cls: KClass<T>, context: InjectionContext): T? {
+    internal fun <T : Any> getOrNull(service: KClass<T>, context: InjectionContext): T? {
 
-        val type = blueprint.superTypeLookup.getDistinctForOrNull(cls) ?: return null
+        val type = blueprint.superTypeLookup.getDistinctForOrNull(service) ?: return null
 
         return get(type, context)
     }
 
     /**
-     * Get all services that are a super type of the given class
+     * Internally gets all super type services of [cls] as a [List]
      */
     internal fun <T : Any> getAll(cls: KClass<T>, context: InjectionContext): List<T> {
         @Suppress("UNCHECKED_CAST")
@@ -138,10 +143,9 @@ class Kontainer internal constructor(
     }
 
     /**
-     * Get all services that are a super type of the given class as a [Lookup]
+     * Internally gets all super type services of [cls] as a [Lookup]
      */
     internal fun <T : Any> getLookup(cls: KClass<T>, context: InjectionContext): Lookup<T> {
-
         @Suppress("UNCHECKED_CAST")
         return blueprint.superTypeLookup.getLookupBlueprint(cls).with(context) as Lookup<T>
     }

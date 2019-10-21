@@ -3,6 +3,11 @@ package de.peekandpoke.ultra.kontainer
 import java.time.Instant
 import java.util.*
 
+/**
+ * Keeps track of instantiated kontainers and services
+ *
+ * TODO: also keep track of services... to find leak, where services are not disposed
+ */
 class KontainerTracker {
 
     private val instances = WeakHashMap<Kontainer, Instant>()

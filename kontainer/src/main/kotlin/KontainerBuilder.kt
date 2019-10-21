@@ -14,10 +14,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         builder(this)
 
         // The container is always present (dynamic as it changes with every new Kontainer instance)
-        addDynamic(Kontainer::class, Producer.forKontainer())
+        addDynamic(Kontainer::class, ServiceProducer.forKontainer())
 
         // The blueprint is always present (singleton as it always stays the same)
-        addSingleton(KontainerBlueprint::class, Producer.forKontainerBlueprint())
+        addSingleton(KontainerBlueprint::class, ServiceProducer.forKontainerBlueprint())
     }
 
     internal fun buildBlueprint(): KontainerBlueprint =
@@ -35,17 +35,17 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     /**
      * Add a service with the given parameters
      */
-    private fun <T : Any> add(srv: KClass<T>, type: InjectionType, producer: Producer) = add(
+    private fun <T : Any> add(srv: KClass<T>, type: InjectionType, producer: ServiceProducer) = add(
         ServiceDefinition(srv, type, producer)
     )
 
-    private fun <T : Any> addSingleton(srv: KClass<T>, producer: Producer) =
+    private fun <T : Any> addSingleton(srv: KClass<T>, producer: ServiceProducer) =
         add(srv, InjectionType.Singleton, producer)
 
-    private fun <T : Any> addPrototype(srv: KClass<T>, producer: Producer) =
+    private fun <T : Any> addPrototype(srv: KClass<T>, producer: ServiceProducer) =
         add(srv, InjectionType.Prototype, producer)
 
-    private fun <T : Any> addDynamic(srv: KClass<T>, producer: Producer) =
+    private fun <T : Any> addDynamic(srv: KClass<T>, producer: ServiceProducer) =
         add(srv, InjectionType.Dynamic, producer)
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -110,7 +110,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      */
     fun <SRV : Any> instance(instance: SRV) =
-        addSingleton(instance::class, Producer.forInstance(instance))
+        addSingleton(instance::class, ServiceProducer.forInstance(instance))
 
     /**
      * Register an already existing [instance] as a service
@@ -119,7 +119,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual implementation will have the type [IMPL]
      */
     fun <SRV : Any, IMPL : SRV> instance(srv: KClass<SRV>, instance: IMPL) =
-        addSingleton(srv, Producer.forInstance(instance))
+        addSingleton(srv, ServiceProducer.forInstance(instance))
 
     /**
      * Registers a singleton service
@@ -141,7 +141,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      */
     fun <SRV : Any, IMPL : SRV> singleton(srv: KClass<SRV>, impl: KClass<IMPL>) =
-        addSingleton(srv, Producer.forClass(impl))
+        addSingleton(srv, ServiceProducer.forClass(impl))
 
     /**
      * Create a singleton via a factory method with zero injected parameters
@@ -150,7 +150,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual implementation will have the type [IMPL]
      */
     fun <SRV : Any, IMPL : SRV> singleton0(srv: KClass<SRV>, factory: () -> IMPL) =
-        addSingleton(srv, Producer.forFactory(factory))
+        addSingleton(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Create a singleton via a factory method with zero injected parameters
@@ -168,7 +168,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual implementation will have the type [IMPL]
      */
     fun <SRV : Any, IMPL : SRV, P1> singleton(srv: KClass<SRV>, factory: (P1) -> IMPL) =
-        addSingleton(srv, Producer.forFactory(factory))
+        addSingleton(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Create a singleton via a factory method with one injected parameter
@@ -186,7 +186,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual implementation will have the type [IMPL]
      */
     fun <SRV : Any, IMPL : SRV, P1, P2> singleton(srv: KClass<SRV>, factory: (P1, P2) -> IMPL) =
-        addSingleton(srv, Producer.forFactory(factory))
+        addSingleton(srv, ServiceProducer.forFactory(factory))
 
 
     /**
@@ -205,7 +205,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual implementation will have the type [IMPL]
      */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3> singleton(srv: KClass<SRV>, factory: (P1, P2, P3) -> IMPL) =
-        addSingleton(srv, Producer.forFactory(factory))
+        addSingleton(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Create a singleton via a factory method with three injected parameters
@@ -223,7 +223,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual implementation will have the type [IMPL]
      */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4> singleton(srv: KClass<SRV>, factory: (P1, P2, P3, P4) -> IMPL) =
-        addSingleton(srv, Producer.forFactory(factory))
+        addSingleton(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Create a singleton via a factory method with four injected parameters
@@ -242,7 +242,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5> singleton(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5) -> IMPL
-    ) = addSingleton(srv, Producer.forFactory(factory))
+    ) = addSingleton(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Create a singleton via a factory method with five injected parameters
@@ -262,7 +262,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6> singleton(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6) -> IMPL
-    ) = addSingleton(srv, Producer.forFactory(factory))
+    ) = addSingleton(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Create a singleton via a factory method with six injected parameters
@@ -282,7 +282,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7> singleton(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7) -> IMPL
-    ) = addSingleton(srv, Producer.forFactory(factory))
+    ) = addSingleton(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Create a singleton via a factory method with seven injected parameters
@@ -320,7 +320,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual implementation will have the type [IMPL]
      */
     fun <SRV : Any, IMPL : SRV> prototype(srv: KClass<SRV>, impl: KClass<IMPL>) =
-        addPrototype(srv, Producer.forClass(impl))
+        addPrototype(srv, ServiceProducer.forClass(impl))
 
     /**
      * Registers a prototype via a factory method with zero injected parameter
@@ -329,7 +329,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual implementation will have the type [IMPL]
      */
     fun <SRV : Any, IMPL : SRV> prototype0(srv: KClass<SRV>, factory: () -> IMPL) =
-        addPrototype(srv, Producer.forFactory(factory))
+        addPrototype(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Registers a prototype via a factory method with zero injected parameter
@@ -347,7 +347,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual implementation will have the type [IMPL]
      */
     fun <SRV : Any, IMPL : SRV, P1> prototype(srv: KClass<SRV>, factory: (P1) -> IMPL) =
-        addPrototype(srv, Producer.forFactory(factory))
+        addPrototype(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Registers a prototype via a factory method with one injected parameter
@@ -365,7 +365,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual implementation will have the type [IMPL]
      */
     fun <SRV : Any, IMPL : SRV, P1, P2> prototype(srv: KClass<SRV>, factory: (P1, P2) -> IMPL) =
-        addPrototype(srv, Producer.forFactory(factory))
+        addPrototype(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Registers a prototype via a factory method with two injected parameter
@@ -383,7 +383,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual implementation will have the type [IMPL]
      */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3> prototype(srv: KClass<SRV>, factory: (P1, P2, P3) -> IMPL) =
-        addPrototype(srv, Producer.forFactory(factory))
+        addPrototype(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Registers a prototype via a factory method with three injected parameter
@@ -401,7 +401,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual implementation will have the type [IMPL]
      */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4> prototype(srv: KClass<SRV>, factory: (P1, P2, P3, P4) -> IMPL) =
-        addPrototype(srv, Producer.forFactory(factory))
+        addPrototype(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Registers a prototype via a factory method with four injected parameter
@@ -420,7 +420,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5> prototype(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5) -> IMPL
-    ) = addPrototype(srv, Producer.forFactory(factory))
+    ) = addPrototype(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Registers a prototype via a factory method with five injected parameter
@@ -440,7 +440,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6> prototype(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6) -> IMPL
-    ) = addPrototype(srv, Producer.forFactory(factory))
+    ) = addPrototype(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Registers a prototype via a factory method with six injected parameter
@@ -460,7 +460,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7> prototype(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7) -> IMPL
-    ) = addPrototype(srv, Producer.forFactory(factory))
+    ) = addPrototype(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Registers a prototype via a factory method with seven injected parameter
@@ -497,7 +497,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual default implementation is registered with type [IMPL].
      */
     fun <SRV : Any, IMPL : SRV> dynamic(srv: KClass<SRV>, impl: KClass<IMPL>) =
-        addDynamic(srv, Producer.forClass(impl))
+        addDynamic(srv, ServiceProducer.forClass(impl))
 
     /**
      * Registers a dynamic service via a factory method with zero injected parameter
@@ -506,7 +506,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual implementation is registered with type [IMPL]
      */
     fun <SRV : Any, IMPL : SRV> dynamic0(srv: KClass<SRV>, factory: () -> IMPL) =
-        addDynamic(srv, Producer.forFactory(factory))
+        addDynamic(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Registers a dynamic service via a factory method with zero injected parameter
@@ -524,7 +524,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual implementation is registered with type [IMPL]
      */
     fun <SRV : Any, IMPL : SRV, P1> dynamic(srv: KClass<SRV>, factory: (P1) -> IMPL) =
-        addDynamic(srv, Producer.forFactory(factory))
+        addDynamic(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Registers a dynamic service via a factory method with one injected parameter
@@ -542,7 +542,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual implementation is registered with type [IMPL]
      */
     fun <SRV : Any, IMPL : SRV, P1, P2> dynamic(srv: KClass<SRV>, factory: (P1, P2) -> IMPL) =
-        addDynamic(srv, Producer.forFactory(factory))
+        addDynamic(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Registers a dynamic service via a factory method with two injected parameters
@@ -560,7 +560,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual implementation is registered with type [IMPL]
      */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3> dynamic(srv: KClass<SRV>, factory: (P1, P2, P3) -> IMPL) =
-        addDynamic(srv, Producer.forFactory(factory))
+        addDynamic(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Registers a dynamic service via a factory method with three injected parameters
@@ -578,7 +578,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The actual implementation is registered with type [IMPL]
      */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4> dynamic(srv: KClass<SRV>, factory: (P1, P2, P3, P4) -> IMPL) =
-        addDynamic(srv, Producer.forFactory(factory))
+        addDynamic(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Registers a dynamic service via a factory method with four injected parameters
@@ -597,7 +597,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5> dynamic(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5) -> IMPL
-    ) = addDynamic(srv, Producer.forFactory(factory))
+    ) = addDynamic(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Registers a dynamic service via a factory method with five injected parameters
@@ -617,7 +617,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6> dynamic(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6) -> IMPL
-    ) = addDynamic(srv, Producer.forFactory(factory))
+    ) = addDynamic(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Registers a dynamic service via a factory method with six injected parameters
@@ -637,7 +637,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7> dynamic(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7) -> IMPL
-    ) = addDynamic(srv, Producer.forFactory(factory))
+    ) = addDynamic(srv, ServiceProducer.forFactory(factory))
 
     /**
      * Registers a dynamic service via a factory method with seven injected parameters

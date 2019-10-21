@@ -2,6 +2,9 @@ package de.peekandpoke.ultra.kontainer
 
 import kotlin.reflect.KClass
 
+/**
+ * The Kontainer blueprint is built by the [KontainerBuilder]
+ */
 class KontainerBlueprint internal constructor(
     internal val config: Map<String, Any>,
     private val definitions: Map<KClass<*>, ServiceDefinition>,

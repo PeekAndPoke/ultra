@@ -4,26 +4,53 @@ import de.peekandpoke.ultra.common.Lookup
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 
-internal fun isPrimitive(cls: KClass<*>) = cls.java.isPrimitive || cls == String::class
+/**
+ * Checks if the class is primitive or a string
+ */
+internal fun KClass<*>.isPrimitiveOrString() = java.isPrimitive || this == String::class
 
-internal fun isInjectionContext(cls: KClass<*>) = cls == InjectionContext::class
+/**
+ * Checks if the class is the [InjectionContext] type
+ */
+internal fun KClass<*>.isInjectionContext() = this == InjectionContext::class
 
-internal fun isServiceType(cls: KClass<*>) = !isPrimitive(cls)
+/**
+ * Checks if the class is suitable as a service
+ */
+internal fun KClass<*>.isServiceType() = !isPrimitiveOrString()
 
-internal fun isListType(type: KType) =
-    type.classifier == List::class && isServiceType(type.arguments[0].type!!.classifier as KClass<*>)
+/**
+ * Checks if the type is a [List] and if the inner type is suitable as service
+ */
+internal fun KType.isListType() =
+    classifier == List::class && getInnerClass().isServiceType()
 
-internal fun isLookupType(type: KType) =
-    type.classifier == Lookup::class && isServiceType(type.arguments[0].type!!.classifier as KClass<*>)
+/**
+ * Checks if the type is a [Lookup] and if the inner type is suitable as service
+ */
+internal fun KType.isLookupType() =
+    classifier == Lookup::class && getInnerClass().isServiceType()
 
-internal fun isLazyServiceType(type: KType) =
-    type.classifier == Lazy::class && isServiceType(type.arguments[0].type!!.classifier as KClass<*>)
+/**
+ * Checks if the type is a [Lazy] and if the inner type is suitable as service
+ */
+internal fun KType.isLazyServiceType() =
+    classifier == Lazy::class && getInnerClass().isServiceType()
 
-internal fun isLazyListType(type: KType) =
-    type.classifier == Lazy::class && isListType(type.arguments[0].type!!)
+/**
+ * Checks if the type is [Lazy] and if the inner type is suitable as a list of services
+ */
+internal fun KType.isLazyListType() =
+    classifier == Lazy::class && arguments[0].type!!.isListType()
 
-internal fun getInnerClass(type: KType) =
-    type.arguments[0].type!!.classifier as KClass<*>
+/**
+ * Gets the first type parameter as class
+ */
+internal fun KType.getInnerClass() =
+    arguments[0].type!!.classifier as KClass<*>
 
-internal fun getInnerInnerClass(type: KType) =
-    type.arguments[0].type!!.arguments[0].type!!.classifier!! as KClass<*>
+/**
+ * Gets the first type parameter of the first type parameter as class
+ */
+internal fun KType.getInnerInnerClass() =
+    arguments[0].type!!.arguments[0].type!!.classifier!! as KClass<*>

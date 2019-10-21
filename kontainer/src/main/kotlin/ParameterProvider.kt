@@ -34,25 +34,25 @@ interface ParameterProvider {
 
             return when {
                 // Config values: primitive types or strings are config values
-                isPrimitive(paramCls) -> ForConfigValue(parameter)
+                paramCls.isPrimitiveOrString() -> ForConfigValue(parameter)
 
                 // InjectionContext: inject the InjectionContext
-                isInjectionContext(paramCls) -> ForInjectionContext()
+                paramCls.isInjectionContext() -> ForInjectionContext()
 
                 // Lazy<List<T>>: lazily injects all super types of T
-                isLazyListType(parameter.type) -> ForLazyListOfServices(parameter)
+                parameter.type.isLazyListType() -> ForLazyListOfServices(parameter)
 
                 // Lazy<T>: lazily inject a service
-                isLazyServiceType(parameter.type) -> ForLazyService(parameter)
+                parameter.type.isLazyServiceType() -> ForLazyService(parameter)
 
                 // List<T>: injects all super types of T
-                isListType(parameter.type) -> ForListOfServices(parameter)
+                parameter.type.isListType() -> ForListOfServices(parameter)
 
                 // Lookup<T>: injects all super types of T as a lookup
-                isLookupType(parameter.type) -> ForLookupOfServices(parameter)
+                parameter.type.isLookupType() -> ForLookupOfServices(parameter)
 
                 // Service: when there are no type parameters we have a usual service class
-                isServiceType(paramCls) -> ForService(parameter)
+                paramCls.isServiceType() -> ForService(parameter)
 
                 // otherwise we cannot handle it
                 else -> UnknownInjection(parameter)
@@ -150,7 +150,7 @@ interface ParameterProvider {
         /**
          * Get the type parameter of the list
          */
-        private val innerType = getInnerClass(parameter.type)
+        private val innerType = parameter.type.getInnerClass()
 
         /**
          * Provides a list with all super types
@@ -171,7 +171,7 @@ interface ParameterProvider {
         /**
          * Get the type parameter of the list
          */
-        private val innerType = getInnerClass(parameter.type)
+        private val innerType = parameter.type.getInnerClass()
 
         /**
          * Provides a list with all super types
@@ -192,7 +192,7 @@ interface ParameterProvider {
         /**
          * Get the type parameter of the list within the lazy
          */
-        private val innerType = getInnerInnerClass(parameter.type)
+        private val innerType = parameter.type.getInnerInnerClass()
 
         /**
          * Provides a lazy list with all super types

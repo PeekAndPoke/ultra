@@ -2,6 +2,9 @@ package de.peekandpoke.ultra.kontainer
 
 import kotlin.reflect.KClass
 
+/**
+ * Helpers for looking up base and super types.
+ */
 abstract class TypeLookup {
 
     /**
@@ -39,16 +42,20 @@ abstract class TypeLookup {
      */
     data class ForBaseTypes(val baseTypes: Set<KClass<*>>) : TypeLookup() {
 
+        /**
+         * Internal cache map from classes to their base types
+         */
         private val cache = mutableMapOf<KClass<*>, Set<KClass<*>>>()
 
         /**
          * Gets all [baseTypes] that are base types of the given super [type]
          */
-        override fun getAllCandidatesFor(type: KClass<*>): Set<KClass<*>> = cache.getOrPut(type) {
-            baseTypes.filter { baseType ->
-                baseType.java.isAssignableFrom(type.java)
-            }.toSet()
-        }
+        override fun getAllCandidatesFor(type: KClass<*>): Set<KClass<*>> =
+            cache.getOrPut(type) {
+                baseTypes.filter { baseType ->
+                    baseType.java.isAssignableFrom(type.java)
+                }.toSet()
+            }
     }
 
     /**
@@ -58,30 +65,38 @@ abstract class TypeLookup {
      */
     data class ForSuperTypes(val superTypes: Set<KClass<*>>) : TypeLookup() {
 
+        /**
+         * Internal cache map from classes to their super types
+         */
         private val candidatesCache = mutableMapOf<KClass<*>, Set<KClass<*>>>()
 
-        private val lookupCache = mutableMapOf<KClass<*>, LazyServiceLookupBlueprint<*>>()
+        /**
+         * Internal cache map from classes to [LazyServiceLookupBlueprint]
+         */
+        private val lookupBlueprintCache = mutableMapOf<KClass<*>, LazyServiceLookupBlueprint<*>>()
 
         /**
          * Gets all [superTypes] for the given base [type]
          */
-        override fun getAllCandidatesFor(type: KClass<*>): Set<KClass<*>> = candidatesCache.getOrPut(type) {
-            superTypes.filter { superType ->
-                type.java.isAssignableFrom(superType.java)
-            }.toSet()
-        }
+        override fun getAllCandidatesFor(type: KClass<*>): Set<KClass<*>> =
+            candidatesCache.getOrPut(type) {
+                superTypes
+                    .filter { superType -> type.java.isAssignableFrom(superType.java) }
+                    .toSet()
+            }
 
         /**
          * Get all [superTypes] for the given base [type] as a [LazyServiceLookupBlueprint]
          */
-        fun getLookupBlueprint(type: KClass<*>): LazyServiceLookupBlueprint<*> = lookupCache.getOrPut(type) {
+        fun getLookupBlueprint(type: KClass<*>): LazyServiceLookupBlueprint<*> =
+            lookupBlueprintCache.getOrPut(type) {
 
-            val map = getAllCandidatesFor(type)
-                .map { it to { context: InjectionContext -> context.get(it) } }
-                .toMap()
+                val map = getAllCandidatesFor(type)
+                    .map { it to { context: InjectionContext -> context.get(it) } }
+                    .toMap()
 
-            LazyServiceLookupBlueprint(map)
-        }
+                LazyServiceLookupBlueprint(map)
+            }
 
         /**
          * Get a distinct super type of the given [type] or null if there is none or multiple candidates
