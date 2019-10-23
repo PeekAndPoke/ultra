@@ -49,6 +49,13 @@ class KontainerBlueprint internal constructor(
     private val dependencyLookUp = DependencyLookup(superTypeLookup, definitions.keys)
 
     /**
+     * Collect Prototype services
+     */
+    private val prototypes: Map<KClass<*>, ServiceProvider.ForPrototype> = definitions
+        .filterValues { it.type == InjectionType.Prototype }
+        .mapValues { (_, v) -> ServiceProvider.ForPrototype(v) }
+
+    /**
      * Semi dynamic services
      *
      * These are services that where initially defined as singletons, but which inject dynamic services.
@@ -56,15 +63,11 @@ class KontainerBlueprint internal constructor(
      */
     private val semiDynamics: Map<KClass<*>, ServiceDefinition> =
         dependencyLookUp.getAllDependents(dynamicsClasses)
+            // prototype cannot be "downgraded" to be dynamic singletons
+            // TODO: write unit-test that ensures the above statement
+            .filter { !prototypes.contains(it) }
             .map { it to definitions.getValue(it) }
             .toMap()
-
-    /**
-     * Collect Prototype services
-     */
-    private val prototypes: Map<KClass<*>, ServiceProvider.ForPrototype> = definitions
-        .filterValues { it.type == InjectionType.Prototype }
-        .mapValues { (_, v) -> ServiceProvider.ForPrototype(v) }
 
     /**
      * Collect Singletons services/
