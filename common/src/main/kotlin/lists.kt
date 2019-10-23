@@ -5,6 +5,9 @@ fun <T> Collection<T>.containsAny(vararg elements: T) = containsAny(elements)
 @JvmName("containsAnyArray")
 fun <T> Collection<T>.containsAny(elements: Array<out T>) = elements.any { it in this }
 
+@JvmName("containsAnyList")
+fun <T> Collection<T>.containsAny(elements: List<T>) = elements.any { it in this }
+
 fun <T> MutableList<T>.push(vararg elements: T): MutableList<T> = push(elements)
 
 @JvmName("pushArray")
