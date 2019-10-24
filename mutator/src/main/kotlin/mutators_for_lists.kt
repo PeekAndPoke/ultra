@@ -61,28 +61,24 @@ open class ListMutator<T, M>(
     /**
      * Returns true if the list contains the given [element]
      */
-    override fun contains(element: M) =
-        getResult().contains(backwardMapper(element))
+    override fun contains(element: M) = contains(backwardMapper(element))
 
     /**
      * Returns true if the list constains all of the given [elements]
      */
-    override fun containsAll(elements: Collection<M>) =
-        getResult().containsAll(elements.map(backwardMapper))
+    override fun containsAll(elements: Collection<M>) = containsAll(elements.map(backwardMapper))
 
     /**
      * Returns the index of the first occurrence of the specified element in the list, or -1 if the specified
      * element is not contained in the list.
      */
-    override fun indexOf(element: M) =
-        getResult().indexOf(backwardMapper(element))
+    override fun indexOf(element: M) = indexOf(backwardMapper(element))
 
     /**
      * Returns the index of the last occurrence of the specified element in the list, or -1 if the specified
      * element is not contained in the list.
      */
-    override fun lastIndexOf(element: M) =
-        getResult().lastIndexOf(backwardMapper(element))
+    override fun lastIndexOf(element: M) = lastIndexOf(backwardMapper(element))
 
     /**
      * Clears the whole list
@@ -114,14 +110,12 @@ open class ListMutator<T, M>(
      *
      * @return `true` because the list is always modified as the result of this operation.
      */
-    override fun add(element: M) =
-        getMutableResult().add(backwardMapper(element))
+    override fun add(element: M) = add(backwardMapper(element))
 
     /**
      * Inserts an element into the list at the specified [index].
      */
-    override fun add(index: Int, element: M) =
-        getMutableResult().add(index, backwardMapper(element))
+    override fun add(index: Int, element: M) = add(index, backwardMapper(element))
 
     /**
      * Adds all of the elements of the specified collection to the end of this list.
@@ -130,24 +124,14 @@ open class ListMutator<T, M>(
      *
      * @return `true` if the list was changed as the result of the operation.
      */
-    override fun addAll(elements: Collection<M>) = when {
-
-        elements.isEmpty() -> false
-
-        else -> getMutableResult().addAll(elements.map(backwardMapper))
-    }
+    override fun addAll(elements: Collection<M>) = addAll(elements.map(backwardMapper))
 
     /**
      * Inserts all of the elements of the specified collection [elements] into this list at the specified [index].
      *
      * @return `true` if the list was changed as the result of the operation.
      */
-    override fun addAll(index: Int, elements: Collection<M>) = when {
-
-        elements.isEmpty() -> false
-
-        else -> getMutableResult().addAll(index, elements.map(backwardMapper))
-    }
+    override fun addAll(index: Int, elements: Collection<M>) = addAll(index, elements.map(backwardMapper))
 
     /**
      * Removes the given element
@@ -171,15 +155,83 @@ open class ListMutator<T, M>(
      * Removes all given [elements]
      */
     override fun removeAll(elements: Collection<M>) =
-        remove(elements.map(backwardMapper))
+        removeAll(elements.map(backwardMapper))
 
     /**
      * Retains all given [elements]
      */
     override fun retainAll(elements: Collection<M>) =
-        retain(elements.map(backwardMapper))
+        retainAll(elements.map(backwardMapper))
 
     //// additional functionality ////////////////////////////////////////////////////////////////////
+
+    /**
+     * Returns true if the list contains the given [element]
+     */
+    @JvmName("contains_T")
+    fun contains(element: T) = getResult().contains(element)
+
+    /**
+     * Returns true if the list contains all of the given [elements]
+     */
+    @JvmName("containsAll_T")
+    fun containsAll(elements: Collection<T>) = getResult().containsAll(elements)
+
+    /**
+     * Returns the index of the first occurrence of the specified element in the list, or -1 if the specified
+     * element is not contained in the list.
+     */
+    @JvmName("indexOf_T")
+    fun indexOf(element: T) = getResult().indexOf(element)
+
+    /**
+     * Returns the index of the last occurrence of the specified element in the list, or -1 if the specified
+     * element is not contained in the list.
+     */
+    @JvmName("lastIndexOf_T")
+    fun lastIndexOf(element: T) = getResult().lastIndexOf(element)
+
+    /**
+     * Adds the specified element to the end of this list.
+     *
+     * @return `true` because the list is always modified as the result of this operation.
+     */
+    @JvmName("add_T")
+    fun add(element: T) = getMutableResult().add(element)
+
+    /**
+     * Inserts an element into the list at the specified [index].
+     */
+    @JvmName("add_T")
+    fun add(index: Int, element: T) = getMutableResult().add(index, element)
+
+    /**
+     * Adds all of the elements of the specified collection to the end of this list.
+     *
+     * The elements are appended in the order they appear in the [elements] collection.
+     *
+     * @return `true` if the list was changed as the result of the operation.
+     */
+    @JvmName("addAll_T")
+    fun addAll(elements: Collection<T>) = when {
+
+        elements.isEmpty() -> false
+
+        else -> getMutableResult().addAll(elements)
+    }
+
+    /**
+     * Inserts all of the elements of the specified collection [elements] into this list at the specified [index].
+     *
+     * @return `true` if the list was changed as the result of the operation.
+     */
+    @JvmName("addAll_T")
+    fun addAll(index: Int, elements: Collection<T>) = when {
+
+        elements.isEmpty() -> false
+
+        else -> getMutableResult().addAll(index, elements)
+    }
 
     /**
      * Add an element at the end of the list
@@ -206,23 +258,19 @@ open class ListMutator<T, M>(
      *
      * @return 'true' when the list has been modified
      */
-    fun remove(vararg element: T) = remove(element.toList())
+    fun remove(vararg element: T) = removeAll(element.toList())
 
     /**
      * Removes the specified [elements] from the list
      *
      * @return 'true' when the list has been modified
      */
-    fun remove(elements: List<T>): Boolean {
+    @JvmName("removeAll_T")
+    fun removeAll(elements: Collection<T>): Boolean = when {
 
-        if (getResult().containsAny(elements)) {
+        getResult().containsAny(elements) -> getMutableResult().removeAll(elements)
 
-            getMutableResult().removeAll(elements)
-
-            return true
-        }
-
-        return false
+        else -> false
     }
 
     /**
@@ -235,23 +283,20 @@ open class ListMutator<T, M>(
      *
      * @return 'true' when the list has been modified
      */
-    fun retain(vararg element: T) = retain(element.toList())
+    fun retain(vararg element: T) = retainAll(element.toList())
 
     /**
      * Retains the given [elements]s in the list
      *
      * @return 'true' when the list has been modified
      */
-    fun retain(elements: List<T>): Boolean {
+    @JvmName("retainAll_T")
+    fun retainAll(elements: Collection<T>): Boolean = when {
 
-        if (getResult().size != elements.size || !getResult().containsAll(elements)) {
+        getResult().size != elements.size ||
+                !getResult().containsAll(elements) -> getMutableResult().retainAll(elements)
 
-            getMutableResult().retainAll(elements)
-
-            return true
-        }
-
-        return false
+        else -> false
     }
 
     /**

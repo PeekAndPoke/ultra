@@ -204,7 +204,7 @@ class ListMutatorSpec : StringSpec({
 
         assertSoftly {
 
-            subject.containsAll(listOf()) shouldBe true
+            subject.containsAll(listOf<SomeDataClassMutator>()) shouldBe true
 
             subject.containsAll(
                 listOf(
@@ -479,7 +479,7 @@ class ListMutatorSpec : StringSpec({
 
         assertSoftly {
 
-            subject.addAll(listOf())
+            subject.addAll(listOf<SomeDataClassMutator>())
 
             source shouldBeSameInstanceAs subject.getResult()
 
@@ -531,7 +531,7 @@ class ListMutatorSpec : StringSpec({
 
         assertSoftly {
 
-            subject.addAll(0, listOf())
+            subject.addAll(0, listOf<SomeDataClassMutator>())
 
             source shouldBeSameInstanceAs subject.getResult()
 
@@ -683,7 +683,7 @@ class ListMutatorSpec : StringSpec({
 
         val subject = ListMutator(source, { modifications++ }, { it, mod -> it.mutator(mod) }, { it.getResult() })
 
-        subject.removeAll(listOf())
+        subject.removeAll(listOf<SomeDataClassMutator>())
 
         subject.removeAll(
             listOf(
@@ -833,6 +833,274 @@ class ListMutatorSpec : StringSpec({
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //  additional functionality implementation
     ////
+
+    "contains(T): must not trigger mutation" {
+
+        val source = listOf(
+            SomeDataClass("a", 1),
+            SomeDataClass("b", 2)
+        )
+
+        var modifications = 0
+
+        val subject = ListMutator(source, { modifications++ }, { it, mod -> it.mutator(mod) }, { it.getResult() })
+
+        assertSoftly {
+
+            subject.contains(SomeDataClass("x", 10)) shouldBe false
+
+            subject.contains(SomeDataClass("a", 1)) shouldBe true
+
+            source shouldBeSameInstanceAs subject.getResult()
+
+            modifications shouldBe 0
+        }
+    }
+
+    "containsAll(T): must not trigger mutation" {
+
+        val source = listOf(
+            SomeDataClass("a", 1),
+            SomeDataClass("b", 2)
+        )
+
+        var modifications = 0
+
+        val subject = ListMutator(source, { modifications++ }, { it, mod -> it.mutator(mod) }, { it.getResult() })
+
+        assertSoftly {
+
+            subject.containsAll(listOf<SomeDataClass>()) shouldBe true
+
+            subject.containsAll(
+                listOf(
+                    SomeDataClass("a", 1)
+                )
+            ) shouldBe true
+
+            subject.containsAll(
+                listOf(
+                    SomeDataClass("a", 1),
+                    SomeDataClass("x", 10)
+                )
+            ) shouldBe false
+
+            subject.containsAll(
+                listOf(
+                    SomeDataClass("a", 1),
+                    SomeDataClass("b", 2)
+                )
+            ) shouldBe true
+
+            source shouldBeSameInstanceAs subject.getResult()
+
+            modifications shouldBe 0
+        }
+    }
+
+    "indexOf(T): must not trigger mutation" {
+
+        val source = listOf(
+            SomeDataClass("a", 1),
+            SomeDataClass("b", 2)
+        )
+
+        var modifications = 0
+
+        val subject = ListMutator(source, { modifications++ }, { it, mod -> it.mutator(mod) }, { it.getResult() })
+
+        assertSoftly {
+
+            subject.indexOf(SomeDataClass("x", 10)) shouldBe -1
+
+            subject.indexOf(SomeDataClass("a", 1)) shouldBe 0
+
+            source shouldBeSameInstanceAs subject.getResult()
+
+            modifications shouldBe 0
+        }
+    }
+
+    "lastIndexOf(T): must not trigger mutation" {
+
+        val source = listOf(
+            SomeDataClass("a", 1),
+            SomeDataClass("b", 2),
+            SomeDataClass("a", 1)
+        )
+
+        var modifications = 0
+
+        val subject = ListMutator(source, { modifications++ }, { it, mod -> it.mutator(mod) }, { it.getResult() })
+
+        assertSoftly {
+
+            subject.lastIndexOf(SomeDataClass("x", 10)) shouldBe -1
+
+            subject.lastIndexOf(SomeDataClass("a", 1)) shouldBe 2
+
+            source shouldBeSameInstanceAs subject.getResult()
+
+            modifications shouldBe 0
+        }
+    }
+
+    "add(T): adding a element at the end must work" {
+        val source = listOf(
+            SomeDataClass("first", 1),
+            SomeDataClass("second", 2)
+        )
+
+        var modifications = 0
+
+        val subject = ListMutator(source, { modifications++ }, { it, mod -> it.mutator(mod) }, { it.getResult() })
+
+        assertSoftly {
+
+            subject.add(SomeDataClass("third", 3))
+
+            source shouldNotBeSameInstanceAs subject.getResult()
+
+            modifications shouldBe 1
+
+            subject.getResult() shouldBe listOf(
+                SomeDataClass("first", 1),
+                SomeDataClass("second", 2),
+                SomeDataClass("third", 3)
+            )
+        }
+    }
+
+    "add(T): adding an element at an index must work" {
+        val source = listOf(
+            SomeDataClass("first", 1),
+            SomeDataClass("second", 2)
+        )
+
+        var modifications = 0
+
+        val subject = ListMutator(source, { modifications++ }, { it, mod -> it.mutator(mod) }, { it.getResult() })
+
+        assertSoftly {
+
+            subject.add(1, SomeDataClass("third", 3))
+
+            source shouldNotBeSameInstanceAs subject.getResult()
+
+            modifications shouldBe 1
+
+            subject.getResult() shouldBe listOf(
+                SomeDataClass("first", 1),
+                SomeDataClass("third", 3),
+                SomeDataClass("second", 2)
+            )
+        }
+    }
+
+    "addAll(T): adding an empty list of elements at the end must not trigger mutation" {
+
+        val source = listOf(
+            SomeDataClass("first", 1),
+            SomeDataClass("second", 2)
+        )
+
+        var modifications = 0
+
+        val subject = ListMutator(source, { modifications++ }, { it, mod -> it.mutator(mod) }, { it.getResult() })
+
+        assertSoftly {
+
+            subject.addAll(listOf<SomeDataClass>())
+
+            source shouldBeSameInstanceAs subject.getResult()
+
+            modifications shouldBe 0
+        }
+    }
+
+    "addAll(T): adding a non-empty list or elements at the end" {
+
+        val source = listOf(
+            SomeDataClass("first", 1),
+            SomeDataClass("second", 2)
+        )
+
+        var modifications = 0
+
+        val subject = ListMutator(source, { modifications++ }, { it, mod -> it.mutator(mod) }, { it.getResult() })
+
+        assertSoftly {
+
+            subject.addAll(
+                listOf(
+                    SomeDataClass("third", 3)
+                )
+            )
+
+            source shouldNotBeSameInstanceAs subject.getResult()
+
+            modifications shouldBe 1
+
+            subject.getResult() shouldBe listOf(
+                SomeDataClass("first", 1),
+                SomeDataClass("second", 2),
+                SomeDataClass("third", 3)
+            )
+        }
+    }
+
+    "addAll(T): adding an empty list of elements at an index must not trigger mutation" {
+
+        val source = listOf(
+            SomeDataClass("first", 1),
+            SomeDataClass("second", 2)
+        )
+
+        var modifications = 0
+
+        val subject = ListMutator(source, { modifications++ }, { it, mod -> it.mutator(mod) }, { it.getResult() })
+
+        assertSoftly {
+
+            subject.addAll(0, listOf<SomeDataClass>())
+
+            source shouldBeSameInstanceAs subject.getResult()
+
+            modifications shouldBe 0
+        }
+    }
+
+    "addAll(T): adding a non-empty list of elements at an index" {
+
+        val source = listOf(
+            SomeDataClass("first", 1),
+            SomeDataClass("second", 2)
+        )
+
+        var modifications = 0
+
+        val subject = ListMutator(source, { modifications++ }, { it, mod -> it.mutator(mod) }, { it.getResult() })
+
+        assertSoftly {
+
+            subject.addAll(
+                0,
+                listOf(
+                    SomeDataClass("third", 3)
+                )
+            )
+
+            source shouldNotBeSameInstanceAs subject.getResult()
+
+            modifications shouldBe 1
+
+            subject.getResult() shouldBe listOf(
+                SomeDataClass("third", 3),
+                SomeDataClass("first", 1),
+                SomeDataClass("second", 2)
+            )
+        }
+    }
 
     "push(T): pushing an element must trigger mutation" {
 
@@ -1037,7 +1305,7 @@ class ListMutatorSpec : StringSpec({
         }
     }
 
-    "remove(List<T>): removing multiple elements that are in the list must trigger mutation" {
+    "removeAll(Collection<T>): removing multiple elements that are in the list must trigger mutation" {
 
         val source = listOf(
             SomeDataClass("first", 1),
@@ -1048,7 +1316,7 @@ class ListMutatorSpec : StringSpec({
 
         val subject = ListMutator(source, { modifications++ }, { it, mod -> Wrapper(it, mod) }, { it.value })
 
-        subject.remove(
+        subject.removeAll(
             listOf(
                 SomeDataClass("first", 1),
                 SomeDataClass("third", 3)
@@ -1124,7 +1392,7 @@ class ListMutatorSpec : StringSpec({
         }
     }
 
-    "retain(List<T>): retaining none of the elements that are in the list must trigger mutation" {
+    "retainAll(Collection<T>): retaining none of the elements that are in the list must trigger mutation" {
 
         val source = listOf(
             SomeDataClass("first", 1),
@@ -1135,7 +1403,7 @@ class ListMutatorSpec : StringSpec({
 
         val subject = ListMutator(source, { modifications++ }, { it, mod -> it.mutator(mod) }, { it.getResult() })
 
-        subject.retain(
+        subject.retainAll(
             listOf(
                 SomeDataClass("third", 3),
                 SomeDataClass("fourth", 4)
