@@ -2,10 +2,16 @@ package de.peekandpoke.ultra.mutator
 
 import de.peekandpoke.ultra.common.containsAny
 
+/**
+ * Creates a [SetMutator] for this Set
+ */
 fun <T, M> Set<T>.mutator(
 
+    /** onModify callback */
     onModify: OnModify<Set<T>>,
+    /** The backwardMapper maps any mutator [M] back to its value [T] */
     backwardMapper: (M) -> T,
+    /** The forwardMapper maps any [T] to is mutator [M] */
     forwardMapper: (T, OnModify<T>) -> M
 
 ): SetMutator<T, M> {
@@ -15,9 +21,13 @@ fun <T, M> Set<T>.mutator(
 
 open class SetMutator<T, M>(
 
+    /** the input value, the original set */
     original: Set<T>,
+    /** onModify callback */
     onModify: OnModify<Set<T>>,
+    /** The forwardMapper maps any [T] to is mutator [M] */
     private val forwardMapper: (T, OnModify<T>) -> M,
+    /** The backwardMapper maps any mutator [M] back to its value [T] */
     private val backwardMapper: (M) -> T
 
 ) : MutatorBase<Set<T>, MutableSet<T>>(original, onModify), Iterable<M> {

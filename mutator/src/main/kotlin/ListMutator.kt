@@ -2,10 +2,16 @@ package de.peekandpoke.ultra.mutator
 
 import de.peekandpoke.ultra.common.*
 
+/**
+ * Creates a [ListMutator] for this List
+ */
 fun <T, M> List<T>.mutator(
 
+    /** onModify callback */
     onModify: OnModify<List<T>>,
+    /** The backwardMapper maps any mutator [M] back to its value [T] */
     backwardMapper: (M) -> T,
+    /** The forwardMapper maps any [T] to is mutator [M] */
     forwardMapper: (T, OnModify<T>) -> M
 
 ): ListMutator<T, M> {
@@ -13,11 +19,18 @@ fun <T, M> List<T>.mutator(
     return ListMutator(this, onModify, forwardMapper, backwardMapper)
 }
 
-open class ListMutator<T, M>(
+/**
+ * Mutator implementation for lists
+ */
+class ListMutator<T, M>(
 
+    /** the input value, the original list */
     original: List<T>,
+    /** onModify callback */
     onModify: OnModify<List<T>>,
+    /** The forwardMapper maps any [T] to is mutator [M] */
     private val forwardMapper: (T, OnModify<T>) -> M,
+    /** The backwardMapper maps any mutator [M] back to its value [T] */
     private val backwardMapper: (M) -> T
 
 ) : MutatorBase<List<T>, MutableList<T>>(original, onModify), MutableList<M> {
@@ -32,6 +45,9 @@ open class ListMutator<T, M>(
      */
     override fun copy(input: List<T>) = input.toMutableList()
 
+    /**
+     * Returns an iterator over all elements mapped to [M]
+     */
     override fun iterator(): MutableIterator<M> = It(getResult(), forwardMapper)
 
     override fun listIterator(): MutableListIterator<M> {
@@ -339,21 +355,24 @@ open class ListMutator<T, M>(
     ) : MutableIterator<M> {
 
         private var pos = 0
+        private var current: T? = null
 
         override fun hasNext() = pos < list.size
 
         override fun next(): M {
 
             val idx = pos++
-            val current = list[idx]
 
-            return mapper(current) { set(idx, it) }
+            return list[idx].run {
+                // remember the current element, so we can use it for remove()
+                current = this
+                // return the current element mapped to a mutator with onModify callback
+                mapper(this) { set(idx, it) }
+            }
         }
 
         override fun remove() {
-            if (pos > 0) {
-                removeAt(pos - 1)
-            }
+            current?.apply { remove(this) }
         }
     }
 }
