@@ -19,7 +19,10 @@ fun <T, M> Set<T>.mutator(
     return SetMutator(this, onModify, forwardMapper, backwardMapper)
 }
 
-open class SetMutator<T, M>(
+/**
+ * Mutator implementation for sets
+ */
+class SetMutator<T, M>(
 
     /** the input value, the original set */
     original: Set<T>,
