@@ -66,33 +66,13 @@ class SetMutator<T, M>(
 
     /**
      * Returns true if the set contains the given [element]
-     *
-     * TODO: tests
      */
     override fun contains(element: M) = contains(backwardMapper(element))
 
     /**
-     * Returns true if the set contains the given [element]
-     *
-     * TODO: tests, move down
-     */
-    @JvmName("contains_T")
-    fun contains(element: T) = getResult().contains(element)
-
-    /**
      * Returns true if the set contains all of the given [elements]
-     *
-     * TODO: tests
      */
     override fun containsAll(elements: Collection<M>) = containsAll(elements.map(backwardMapper))
-
-    /**
-     * Returns true if the set contains all of the given [elements]
-     *
-     * TODO: tests, move down
-     */
-    @JvmName("containsAll_T")
-    fun containsAll(elements: Collection<T>) = getResult().containsAll(elements)
 
     /**
      * Clears the whole list
@@ -106,25 +86,19 @@ class SetMutator<T, M>(
     /**
      * Adds the specified element to the set.
      *
-     * TODO: tests
-     *
      * @return `true` if the element has been added, `false` if the element is already contained in the set.
      */
     override fun add(element: M) = add(backwardMapper(element))
 
     /**
-     * Adds [elements] to the set
-     *
-     * TODO: tests
+     * Adds all [elements] to the set
      *
      * @return 'true if any of the elements has been added, 'false' if all elements are already contained in the set.
      */
-    override fun addAll(elements: Collection<M>) = add(elements.map(backwardMapper))
+    override fun addAll(elements: Collection<M>) = addAll(elements.map(backwardMapper))
 
     /**
      * Removes an [element] from the set
-     *
-     * TODO: tests
      *
      * @return 'true' of the element was removed from the set
      */
@@ -133,16 +107,12 @@ class SetMutator<T, M>(
     /**
      * Removes the specified [elements] from the list
      *
-     * TODO: tests
-     *
      * @return 'true' when the list has been modified
      */
     override fun removeAll(elements: Collection<M>) = removeAll(elements.map(backwardMapper))
 
     /**
      * Retains all of the given [elements]
-     *
-     * TODO: tests
      *
      * @return 'true' when the list has been modified
      */
@@ -153,20 +123,31 @@ class SetMutator<T, M>(
     /////
 
     /**
+     * Returns true if the set contains the given [element]
+     */
+    @JvmName("contains_T")
+    fun contains(element: T) = getResult().contains(element)
+
+    /**
+     * Returns true if the set contains all of the given [elements]
+     */
+    @JvmName("containsAll_T")
+    fun containsAll(elements: Collection<T>) = getResult().containsAll(elements)
+
+    /**
      * Adds [element]s to the set
      *
      * @return 'true if any of the elements has been added, 'false' if all elements are already contained in the set.
      */
-    fun add(vararg element: T) = add(element.toList())
+    fun add(vararg element: T) = addAll(element.toList())
 
     /**
      * Adds [elements] to the set
      *
-     * TODO: tests
-     *
      * @return 'true if any of the elements has been added, 'false' if all elements are already contained in the set.
      */
-    fun add(elements: Collection<T>): Boolean = when {
+    @JvmName("addAll_T")
+    fun addAll(elements: Collection<T>): Boolean = when {
 
         getResult().containsAll(elements) -> false
 
@@ -181,8 +162,6 @@ class SetMutator<T, M>(
     /**
      * Removes the specified [elements] from the list
      *
-     * TODO: tests
-     *
      * @return 'true' when the list has been modified
      */
     @JvmName("removeAll_T")
@@ -196,16 +175,12 @@ class SetMutator<T, M>(
     /**
      * Retains the given [element]s in the list
      *
-     * TODO: tests
-     *
      * @return 'true' when the list has been modified
      */
     fun retain(vararg element: T) = retainAll(element.toList())
 
     /**
      * Retains the given [elements]s in the list
-     *
-     * TODO: tests
      *
      * @return 'true' when the list has been modified
      */
@@ -240,7 +215,7 @@ class SetMutator<T, M>(
      */
     internal inner class It(set: Set<T>, private val mapper: (T, OnModify<T>) -> M) : MutableIterator<M> {
 
-        private val inner = set.toList().iterator()
+        private val inner = set.iterator()
         private var current: T? = null
 
         override fun hasNext() = inner.hasNext()
