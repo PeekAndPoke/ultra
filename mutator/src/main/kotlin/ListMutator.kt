@@ -36,7 +36,7 @@ class ListMutator<T, M>(
 ) : MutatorBase<List<T>, MutableList<T>>(original, onModify), MutableList<M> {
 
     /**
-     * Replaces the whole lists
+     * Replaces the whole list
      */
     operator fun plusAssign(value: List<M>) = plusAssign(value.map(backwardMapper))
 
@@ -62,7 +62,9 @@ class ListMutator<T, M>(
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    //// MutableList<M> implementation ////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //  MutableList<M> implementation
+    /////
 
     /**
      * Returns the size of the list
@@ -80,7 +82,7 @@ class ListMutator<T, M>(
     override fun contains(element: M) = contains(backwardMapper(element))
 
     /**
-     * Returns true if the list constains all of the given [elements]
+     * Returns true if the list contains all of the given [elements]
      */
     override fun containsAll(elements: Collection<M>) = containsAll(elements.map(backwardMapper))
 
@@ -154,8 +156,7 @@ class ListMutator<T, M>(
      *
      * @return true when the element has been removed from the list
      */
-    override fun remove(element: M) =
-        remove(backwardMapper(element))
+    override fun remove(element: M) = remove(backwardMapper(element))
 
     /**
      * Removes an element at the specified [index] from the list.
@@ -164,22 +165,21 @@ class ListMutator<T, M>(
      *
      * @return the element that has been removed.
      */
-    override fun removeAt(index: Int) =
-        forwardMapper(getMutableResult().removeAt(index)) {}
+    override fun removeAt(index: Int) = forwardMapper(getMutableResult().removeAt(index)) {}
 
     /**
-     * Removes all given [elements]
+     * Removes all of the given [elements]
      */
-    override fun removeAll(elements: Collection<M>) =
-        removeAll(elements.map(backwardMapper))
+    override fun removeAll(elements: Collection<M>) = removeAll(elements.map(backwardMapper))
 
     /**
-     * Retains all given [elements]
+     * Retains all of the given [elements]
      */
-    override fun retainAll(elements: Collection<M>) =
-        retainAll(elements.map(backwardMapper))
+    override fun retainAll(elements: Collection<M>) = retainAll(elements.map(backwardMapper))
 
-    //// additional functionality ////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //  additional functionality
+    /////
 
     /**
      * Returns true if the list contains the given [element]

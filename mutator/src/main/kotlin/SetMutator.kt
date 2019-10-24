@@ -33,46 +33,189 @@ class SetMutator<T, M>(
     /** The backwardMapper maps any mutator [M] back to its value [T] */
     private val backwardMapper: (M) -> T
 
-) : MutatorBase<Set<T>, MutableSet<T>>(original, onModify), Iterable<M> {
+) : MutatorBase<Set<T>, MutableSet<T>>(original, onModify), MutableSet<M> {
 
+    /**
+     * Replaces the whole list
+     */
     operator fun plusAssign(value: List<M>) = plusAssign(value.map(backwardMapper).toSet())
 
+    /**
+     * Creates a mutable copy of the given [input]
+     */
     override fun copy(input: Set<T>): MutableSet<T> = MutableSetWrapper(input.toMutableSet())
 
-    override fun iterator(): Iterator<M> = It(getResult(), forwardMapper)
+    /**
+     * Returns an iterator over all elements mapped to [M]
+     */
+    override fun iterator(): MutableIterator<M> = It(getResult(), forwardMapper)
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //  MutableSet<M> implementation
+    /////
 
     /**
      * Returns the size of the list
      */
-    val size get() = getResult().size
+    override val size get() = getResult().size
 
     /**
      * Returns true when the list is empty
      */
-    fun isEmpty() = getResult().isEmpty()
+    override fun isEmpty() = getResult().isEmpty()
+
+    /**
+     * Returns true if the set contains the given [element]
+     *
+     * TODO: tests
+     */
+    override fun contains(element: M) = contains(backwardMapper(element))
+
+    /**
+     * Returns true if the set contains the given [element]
+     *
+     * TODO: tests, move down
+     */
+    @JvmName("contains_T")
+    fun contains(element: T) = getResult().contains(element)
+
+    /**
+     * Returns true if the set contains all of the given [elements]
+     *
+     * TODO: tests
+     */
+    override fun containsAll(elements: Collection<M>) = containsAll(elements.map(backwardMapper))
+
+    /**
+     * Returns true if the set contains all of the given [elements]
+     *
+     * TODO: tests, move down
+     */
+    @JvmName("containsAll_T")
+    fun containsAll(elements: Collection<T>) = getResult().containsAll(elements)
 
     /**
      * Clears the whole list
      */
-    fun clear() = apply {
+    override fun clear() {
         if (size > 0) {
             getMutableResult().clear()
         }
     }
 
     /**
-     * Adds elements to the set
+     * Adds the specified element to the set.
+     *
+     * TODO: tests
+     *
+     * @return `true` if the element has been added, `false` if the element is already contained in the set.
      */
-    fun add(vararg element: T) = apply { getMutableResult().addAll(element) }
+    override fun add(element: M) = add(backwardMapper(element))
+
+    /**
+     * Adds [elements] to the set
+     *
+     * TODO: tests
+     *
+     * @return 'true if any of the elements has been added, 'false' if all elements are already contained in the set.
+     */
+    override fun addAll(elements: Collection<M>) = add(elements.map(backwardMapper))
+
+    /**
+     * Removes an [element] from the set
+     *
+     * TODO: tests
+     *
+     * @return 'true' of the element was removed from the set
+     */
+    override fun remove(element: M) = remove(backwardMapper(element))
+
+    /**
+     * Removes the specified [elements] from the list
+     *
+     * TODO: tests
+     *
+     * @return 'true' when the list has been modified
+     */
+    override fun removeAll(elements: Collection<M>) = removeAll(elements.map(backwardMapper))
+
+    /**
+     * Retains all of the given [elements]
+     *
+     * TODO: tests
+     *
+     * @return 'true' when the list has been modified
+     */
+    override fun retainAll(elements: Collection<M>) = retainAll(elements.map(backwardMapper))
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //  additional implementation
+    /////
+
+    /**
+     * Adds [element]s to the set
+     *
+     * @return 'true if any of the elements has been added, 'false' if all elements are already contained in the set.
+     */
+    fun add(vararg element: T) = add(element.toList())
+
+    /**
+     * Adds [elements] to the set
+     *
+     * TODO: tests
+     *
+     * @return 'true if any of the elements has been added, 'false' if all elements are already contained in the set.
+     */
+    fun add(elements: Collection<T>): Boolean = when {
+
+        getResult().containsAll(elements) -> false
+
+        else -> getMutableResult().addAll(elements)
+    }
 
     /**
      * Removes elements from the set
      */
-    fun remove(vararg element: T) = apply {
+    fun remove(vararg element: T) = removeAll(element.toList())
 
-        if (getResult().containsAny(element)) {
-            getMutableResult().removeAll(element)
-        }
+    /**
+     * Removes the specified [elements] from the list
+     *
+     * TODO: tests
+     *
+     * @return 'true' when the list has been modified
+     */
+    @JvmName("removeAll_T")
+    fun removeAll(elements: Collection<T>): Boolean = when {
+
+        getResult().containsAny(elements) -> getMutableResult().removeAll(elements)
+
+        else -> false
+    }
+
+    /**
+     * Retains the given [element]s in the list
+     *
+     * TODO: tests
+     *
+     * @return 'true' when the list has been modified
+     */
+    fun retain(vararg element: T) = retainAll(element.toList())
+
+    /**
+     * Retains the given [elements]s in the list
+     *
+     * TODO: tests
+     *
+     * @return 'true' when the list has been modified
+     */
+    @JvmName("retainAll_T")
+    fun retainAll(elements: Collection<T>): Boolean = when {
+
+        getResult().size != elements.size ||
+                !getResult().containsAll(elements) -> getMutableResult().retainAll(elements)
+
+        else -> false
     }
 
     /**
@@ -95,20 +238,28 @@ class SetMutator<T, M>(
     /**
      * Iterator impl
      */
-    internal inner class It(set: Set<T>, private val mapper: (T, OnModify<T>) -> M) : Iterator<M> {
+    internal inner class It(set: Set<T>, private val mapper: (T, OnModify<T>) -> M) : MutableIterator<M> {
 
         private val inner = set.toList().iterator()
+        private var current: T? = null
 
         override fun hasNext() = inner.hasNext()
 
         override fun next(): M {
 
-            val current = inner.next()
-
-            return mapper(current) {
-                remove(current)
-                add(it)
+            return inner.next().run {
+                // remember the current element, so we can use it for remove()
+                current = this
+                // return the current element mapped to a mutator with onModify callback
+                mapper(this) {
+                    remove(this)
+                    add(it)
+                }
             }
+        }
+
+        override fun remove() {
+            current?.apply { remove(this) }
         }
     }
 }
