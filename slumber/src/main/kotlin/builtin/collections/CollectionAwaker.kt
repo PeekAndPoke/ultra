@@ -27,22 +27,22 @@ class CollectionAwaker(
 
     private val itemAwaker = config.getAwaker(innerType)
 
-    override fun awake(data: Any?, context: Awaker.Context): Any? {
+    override fun awake(data: Any?): Any? {
 
         if (data is Array<*>) {
-            return awakeInternal(data.toList(), context)
+            return awakeInternal(data.toList())
         }
 
         if (data is Iterable<*>) {
-            return awakeInternal(data, context)
+            return awakeInternal(data)
         }
 
         return null
     }
 
-    private fun awakeInternal(data: Iterable<*>, context: Awaker.Context): Any? {
+    private fun awakeInternal(data: Iterable<*>): Any? {
 
-        val intermediate = data.map { itemAwaker.awake(it, context) }
+        val intermediate = data.map { itemAwaker.awake(it) }
 
         if (innerType.isMarkedNullable) {
             return intermediate.creator()

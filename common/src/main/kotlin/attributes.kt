@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.common
 
-data class TypedKey<T>(val name: String = "")
+@Suppress("unused")
+class TypedKey<T>(val name: String = "")
 
 data class TypedAttributes internal constructor(val entries: Map<TypedKey<*>, Any>) {
 

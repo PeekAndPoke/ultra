@@ -7,7 +7,7 @@ import java.time.LocalDateTime
 
 object LocalDateTimeCodec : Awaker, Slumberer {
 
-    override fun awake(data: Any?, context: Awaker.Context): LocalDateTime? {
+    override fun awake(data: Any?): LocalDateTime? {
 
         if (data !is Map<*, *>) {
             return null

@@ -36,7 +36,7 @@ class DataClassAwaker(type: KType, config: Config) : Awaker {
     private val nullables: Map<KParameter, Any?> =
         ctor.parameters.filter { it.type.isMarkedNullable }.map { it to null }.toMap()
 
-    override fun awake(data: Any?, context: Awaker.Context): Any? {
+    override fun awake(data: Any?): Any? {
 
         // Do we have some data that we can work with?
         if (data !is Map<*, *>) {
@@ -54,7 +54,7 @@ class DataClassAwaker(type: KType, config: Config) : Awaker {
             // Do we have data for param ?
             if (data.contains(param.name)) {
                 // Get the value and awake it
-                val bit = awaker.awake(data[param.name], context)
+                val bit = awaker.awake(data[param.name])
 
                 // can we use the bit ?
                 if (bit != null || param.type.isMarkedNullable) {

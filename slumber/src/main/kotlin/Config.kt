@@ -17,7 +17,10 @@ class Config(modules: List<SlumberModule> = listOf()) {
     fun getAwaker(type: KType): Awaker {
 
         return awakerLookup.getOrPut(type) {
-            modules.mapNotNull { it.getAwaker(type, this) }.firstOrNull()
+            modules
+                .asSequence()
+                .mapNotNull { it.getAwaker(type, this) }
+                .firstOrNull()
         }
             ?: error("There is no known way to awake the type '$type'")
     }
@@ -34,7 +37,10 @@ class Config(modules: List<SlumberModule> = listOf()) {
     fun getSlumberer(type: KType): Slumberer {
 
         return slumbererLookUp.getOrPut(type) {
-            modules.mapNotNull { it.getSlumberer(type, this) }.firstOrNull()
+            modules
+                .asSequence()
+                .mapNotNull { it.getSlumberer(type, this) }
+                .firstOrNull()
         }
             ?: error("There is no known way to slumber the type '$type'")
     }

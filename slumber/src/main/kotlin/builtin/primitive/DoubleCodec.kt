@@ -5,7 +5,7 @@ import de.peekandpoke.ultra.slumber.Slumberer
 
 object DoubleCodec : Awaker, Slumberer {
 
-    override fun awake(data: Any?, context: Awaker.Context) = map(data)
+    override fun awake(data: Any?) = map(data)
 
     override fun slumber(data: Any?) = map(data)
 

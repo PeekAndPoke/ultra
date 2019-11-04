@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.slumber
 
-import de.peekandpoke.ultra.common.TypedAttributes
 import de.peekandpoke.ultra.slumber.builtin.BuiltInModule
 import de.peekandpoke.ultra.slumber.builtin.DateTimeModule
 import kotlin.reflect.KClass
@@ -21,21 +20,19 @@ open class Codec(private val config: Config) {
         )
     }
 
-    fun <T : Any> awake(type: KClass<T>, data: Any?, attributes: TypedAttributes = TypedAttributes.empty): T {
+    fun <T : Any> awake(type: KClass<T>, data: Any?): T {
 
         val kType = type.createType(
             type.typeParameters.map { KTypeProjection.invariant(it.upperBounds[0]) }
         )
 
-        return awake(kType, data, attributes)
+        return awake(kType, data)
     }
 
-    fun <T> awake(type: KType, data: Any?, attributes: TypedAttributes = TypedAttributes.empty): T {
-
-        val context = Awaker.Context(attributes)
+    fun <T> awake(type: KType, data: Any?): T {
 
         @Suppress("UNCHECKED_CAST")
-        return config.getAwaker(type).awake(data, context) as T?
+        return config.getAwaker(type).awake(data) as T?
             ?: throw AwakerException("Could not awake '${type}'")
     }
 
