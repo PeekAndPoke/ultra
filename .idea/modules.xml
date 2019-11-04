@@ -19,6 +19,9 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/security/root.security.iml" filepath="$PROJECT_DIR$/.idea/modules/security/root.security.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/security/root.security.main.iml" filepath="$PROJECT_DIR$/.idea/modules/security/root.security.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/security/root.security.test.iml" filepath="$PROJECT_DIR$/.idea/modules/security/root.security.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/slumber/root.slumber.iml" filepath="$PROJECT_DIR$/.idea/modules/slumber/root.slumber.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/slumber/root.slumber.main.iml" filepath="$PROJECT_DIR$/.idea/modules/slumber/root.slumber.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/slumber/root.slumber.test.iml" filepath="$PROJECT_DIR$/.idea/modules/slumber/root.slumber.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/root.test.iml" filepath="$PROJECT_DIR$/.idea/modules/root.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ultra/root.ultra.iml" filepath="$PROJECT_DIR$/.idea/modules/ultra/root.ultra.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ultra/root.ultra.main.iml" filepath="$PROJECT_DIR$/.idea/modules/ultra/root.ultra.main.iml" />

@@ -19,6 +19,8 @@
       <module name="root.proto.package_b.test" target="1.8" />
       <module name="root.security.main" target="1.8" />
       <module name="root.security.test" target="1.8" />
+      <module name="root.slumber.main" target="1.8" />
+      <module name="root.slumber.test" target="1.8" />
       <module name="root.test" target="1.8" />
       <module name="root.ultra.main" target="1.8" />
       <module name="root.ultra.test" target="1.8" />

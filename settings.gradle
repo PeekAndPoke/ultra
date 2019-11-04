@@ -9,5 +9,6 @@ include(
         ":kontainer",
         ":meta",
         ":mutator",
-        ":security"
+        ":security",
+        ":slumber",
 )

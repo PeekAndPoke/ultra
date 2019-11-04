@@ -2,6 +2,9 @@ package de.peekandpoke.ultra.mutator
 
 typealias OnModify<T> = (newValue: T) -> Unit
 
+/**
+ * Base interface for all mutators
+ */
 interface Mutator<I> {
 
     /**
@@ -22,12 +25,15 @@ interface Mutator<I> {
 
 /**
  * Base implementation for all mutators
+ *
+ * @param inputValue The value that the mutator is working on
+ * @param onModify   A callback that will be invoked when the [inputValue] is replaced or modified
  */
 abstract class MutatorBase<I, R : I>(
-    /** The value that the mutator is working on */
+
     private val inputValue: I,
-    /** A callback that will be invoked when the [inputValue] is replaced or modified */
     protected val onModify: OnModify<I>
+
 ) : Mutator<I> {
 
     /**
