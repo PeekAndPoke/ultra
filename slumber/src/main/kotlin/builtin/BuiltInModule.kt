@@ -43,7 +43,7 @@ class BuiltInModule : SlumberModule {
                 cls == MutableSet::class -> CollectionAwaker.forMutableSet(type.arguments[0].type!!, config)
 
                 // Data classes
-                cls.isData -> return DataClassAwaker(cls, config)
+                cls.isData -> DataClassAwaker(cls, config)
 
                 else -> null
             }
@@ -76,7 +76,7 @@ class BuiltInModule : SlumberModule {
                 Iterable::class.java.isAssignableFrom(cls.java) -> CollectionSlumberer(type.arguments[0].type!!, config)
 
                 // Data classes
-                cls.isData -> return DataClassSlumberer(cls, config)
+                cls.isData -> DataClassSlumberer(cls, config)
 
                 else -> null
             }
