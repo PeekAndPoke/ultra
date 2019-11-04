@@ -9,16 +9,12 @@ object LongCodec : Awaker, Slumberer {
 
     override fun slumber(data: Any?) = map(data)
 
-    private fun map(data: Any?): Long? {
+    private fun map(data: Any?): Long? = when (data) {
 
-        if (data is Number) {
-            return data.toLong()
-        }
+        is Number -> data.toLong()
 
-        if (data is String) {
-            return data.toLongOrNull()
-        }
+        is String -> data.toLongOrNull()
 
-        return null
+        else -> null
     }
 }

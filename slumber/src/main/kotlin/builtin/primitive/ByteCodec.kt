@@ -9,16 +9,12 @@ object ByteCodec : Awaker, Slumberer {
 
     override fun slumber(data: Any?) = map(data)
 
-    private fun map(data: Any?): Byte? {
+    private fun map(data: Any?): Byte? = when (data) {
 
-        if (data is Number) {
-            return data.toByte()
-        }
+        is Number -> data.toByte()
 
-        if (data is String) {
-            return data.toByteOrNull()
-        }
+        is String -> data.toByteOrNull()
 
-        return null
+        else -> null
     }
 }

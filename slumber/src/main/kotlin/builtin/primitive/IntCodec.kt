@@ -9,16 +9,12 @@ object IntCodec : Awaker, Slumberer {
 
     override fun slumber(data: Any?) = map(data)
 
-    private fun map(data: Any?): Int? {
+    private fun map(data: Any?): Int? = when (data) {
 
-        if (data is Number) {
-            return data.toInt()
-        }
+        is Number -> data.toInt()
 
-        if (data is String) {
-            return data.toIntOrNull()
-        }
+        is String -> data.toIntOrNull()
 
-        return null
+        else -> null
     }
 }

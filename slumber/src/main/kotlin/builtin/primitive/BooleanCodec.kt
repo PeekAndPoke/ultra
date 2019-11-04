@@ -9,20 +9,14 @@ object BooleanCodec : Awaker, Slumberer {
 
     override fun slumber(data: Any?) = map(data)
 
-    private fun map(data: Any?): Boolean? {
+    private fun map(data: Any?): Boolean? = when (data) {
 
-        if (data is Boolean) {
-            return data
-        }
+        is Boolean -> data
 
-        if (data is Number) {
-            return data.toInt() == 0
-        }
+        is Number -> data.toInt() != 0
 
-        if (data is String) {
-            return data.toBoolean()
-        }
+        is String -> data.toBoolean()
 
-        return null
+        else -> null
     }
 }

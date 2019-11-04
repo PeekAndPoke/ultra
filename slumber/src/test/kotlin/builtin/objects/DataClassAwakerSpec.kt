@@ -2,7 +2,7 @@ package de.peekandpoke.ultra.slumber.builtin.objects
 
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.Shared
+import de.peekandpoke.ultra.slumber.Config
 import io.kotlintest.assertSoftly
 import io.kotlintest.matchers.withClue
 import io.kotlintest.shouldBe
@@ -15,7 +15,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val str: String, val int: Int)
 
-        val codec = Codec(Shared())
+        val codec = Codec(Config())
 
         val result = codec.awake(DataClass::class, mapOf("str" to "hello", "int" to 1))
 
@@ -26,7 +26,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val str: String)
 
-        val codec = Codec(Shared())
+        val codec = Codec(Config())
 
         val result = codec.awake(DataClass::class, mapOf("str" to "hello"))
 
@@ -37,7 +37,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val str: String?)
 
-        val codec = Codec(Shared())
+        val codec = Codec(Config())
 
         assertSoftly {
 
@@ -69,7 +69,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val str: String = "default")
 
-        val codec = Codec(Shared())
+        val codec = Codec(Config())
 
         assertSoftly {
             withClue("A given value must overwrite the default value") {
@@ -104,7 +104,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val inner: Inner)
 
-        val codec = Codec(Shared())
+        val codec = Codec(Config())
 
         val result = codec.awake(DataClass::class, mapOf("inner" to mapOf("str" to "hello")))
 
@@ -115,7 +115,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val strings: Iterable<String>)
 
-        val codec = Codec(Shared())
+        val codec = Codec(Config())
 
         assertSoftly {
             codec.awake(DataClass::class, mapOf("strings" to listOf("hello", "you"))) shouldBe
@@ -130,7 +130,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val strings: List<String>)
 
-        val codec = Codec(Shared())
+        val codec = Codec(Config())
 
         assertSoftly {
             codec.awake(DataClass::class, mapOf("strings" to listOf("hello", "you"))) shouldBe
@@ -145,7 +145,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val strings: List<String>)
 
-        val codec = Codec(Shared())
+        val codec = Codec(Config())
 
         assertSoftly {
             codec.awake(DataClass::class, mapOf("strings" to listOf("hello", null))) shouldBe
@@ -157,7 +157,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val strings: MutableList<String>)
 
-        val codec = Codec(Shared())
+        val codec = Codec(Config())
 
         assertSoftly {
             codec.awake(DataClass::class, mapOf("strings" to listOf("hello", "you"))) shouldBe
@@ -172,7 +172,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val strings: Set<String>)
 
-        val codec = Codec(Shared())
+        val codec = Codec(Config())
 
         assertSoftly {
             codec.awake(DataClass::class, mapOf("strings" to listOf("hello", "you"))) shouldBe
@@ -187,7 +187,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val strings: MutableSet<String>)
 
-        val codec = Codec(Shared())
+        val codec = Codec(Config())
 
         assertSoftly {
             codec.awake(DataClass::class, mapOf("strings" to listOf("hello", "you"))) shouldBe

@@ -9,16 +9,12 @@ object StringCodec : Awaker, Slumberer {
 
     override fun slumber(data: Any?) = map(data)
 
-    private fun map(data: Any?): String? {
+    private fun map(data: Any?): String? = when {
 
-        if (data is String) {
-            return data
-        }
+        data is String -> data
 
-        if (data != null && data::class.java.isPrimitive) {
-            return data.toString()
-        }
+        data != null && data::class.java.isPrimitive -> data.toString()
 
-        return null
+        else -> null
     }
 }

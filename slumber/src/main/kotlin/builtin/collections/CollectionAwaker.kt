@@ -1,31 +1,31 @@
 package de.peekandpoke.ultra.slumber.builtin.collections
 
 import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.Shared
+import de.peekandpoke.ultra.slumber.Config
 import kotlin.reflect.KType
 
 class CollectionAwaker(
     private val innerType: KType,
-    shared: Shared,
+    config: Config,
     private val creator: List<*>.() -> Any
 ) : Awaker {
 
     companion object {
 
-        fun forList(innerType: KType, shared: Shared) =
-            CollectionAwaker(innerType, shared) { toList() }
+        fun forList(innerType: KType, config: Config) =
+            CollectionAwaker(innerType, config) { toList() }
 
-        fun forMutableList(innerType: KType, shared: Shared) =
-            CollectionAwaker(innerType, shared) { toMutableList() }
+        fun forMutableList(innerType: KType, config: Config) =
+            CollectionAwaker(innerType, config) { toMutableList() }
 
-        fun forSet(innerType: KType, shared: Shared) =
-            CollectionAwaker(innerType, shared) { toSet() }
+        fun forSet(innerType: KType, config: Config) =
+            CollectionAwaker(innerType, config) { toSet() }
 
-        fun forMutableSet(innerType: KType, shared: Shared) =
-            CollectionAwaker(innerType, shared) { toMutableSet() }
+        fun forMutableSet(innerType: KType, config: Config) =
+            CollectionAwaker(innerType, config) { toMutableSet() }
     }
 
-    private val itemAwaker = shared.getAwaker(innerType)
+    private val itemAwaker = config.getAwaker(innerType)
 
     override fun awake(data: Any?): Any? {
 

@@ -1,19 +1,19 @@
 package de.peekandpoke.ultra.slumber.builtin.objects
 
 import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.Shared
+import de.peekandpoke.ultra.slumber.Config
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.primaryConstructor
 
-class DataClassAwaker(cls: KClass<*>, shared: Shared) : Awaker {
+class DataClassAwaker(cls: KClass<*>, config: Config) : Awaker {
 
     private val fqn = cls.qualifiedName
 
     private val ctor = cls.primaryConstructor!!
 
     private val ctorParams2Awakers =
-        ctor.parameters.map { it to shared.getAwaker(it.type) }
+        ctor.parameters.map { it to config.getAwaker(it.type) }
 
     private val nullables: Map<KParameter, Any?> =
         ctor.parameters.filter { it.type.isMarkedNullable }.map { it to null }.toMap()

@@ -9,16 +9,12 @@ object DoubleCodec : Awaker, Slumberer {
 
     override fun slumber(data: Any?) = map(data)
 
-    private fun map(data: Any?): Double? {
+    private fun map(data: Any?): Double? = when (data) {
 
-        if (data is Number) {
-            return data.toDouble()
-        }
+        is Number -> data.toDouble()
 
-        if (data is String) {
-            return data.toDoubleOrNull()
-        }
+        is String -> data.toDoubleOrNull()
 
-        return null
+        else -> null
     }
 }

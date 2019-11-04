@@ -17,14 +17,14 @@ object ZonedDateTimeCodec : Awaker, Slumberer {
         val ts = data[TS]
         val timezone = data[TIMEZONE]
 
-        if (ts !is Number || timezone !is String) {
-            return null
-        }
+        return when {
+            ts is Number && timezone is String -> ZonedDateTime.ofInstant(
+                Instant.ofEpochMilli(ts.toLong()),
+                ZoneId.of(timezone)
+            )
 
-        return ZonedDateTime.ofInstant(
-            Instant.ofEpochMilli(ts.toLong()),
-            ZoneId.of(timezone)
-        )
+            else -> null
+        }
     }
 
     override fun slumber(data: Any?): Map<String, Any>? {

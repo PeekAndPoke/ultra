@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin
 
 import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.Shared
+import de.peekandpoke.ultra.slumber.Config
 import de.peekandpoke.ultra.slumber.SlumberModule
 import de.peekandpoke.ultra.slumber.Slumberer
 import de.peekandpoke.ultra.slumber.builtin.datetime.InstantCodec
@@ -14,7 +14,7 @@ import kotlin.reflect.KType
 
 class DateTimeModule : SlumberModule {
 
-    override fun getAwaker(type: KType, shared: Shared): Awaker? {
+    override fun getAwaker(type: KType, config: Config): Awaker? {
         return when (type) {
             LocalDateTime::class -> LocalDateTimeCodec
             Instant::class -> InstantCodec
@@ -23,7 +23,7 @@ class DateTimeModule : SlumberModule {
         }
     }
 
-    override fun getSlumberer(type: KType, shared: Shared): Slumberer? {
+    override fun getSlumberer(type: KType, config: Config): Slumberer? {
         return when (type) {
             LocalDateTime::class -> LocalDateTimeCodec
             Instant::class -> InstantCodec

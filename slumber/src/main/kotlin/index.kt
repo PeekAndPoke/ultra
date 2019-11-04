@@ -4,8 +4,8 @@ import kotlin.reflect.KType
 
 interface SlumberModule {
 
-    fun getAwaker(type: KType, shared: Shared): Awaker?
+    fun getAwaker(type: KType, config: Config): Awaker?
 
-    fun getSlumberer(type: KType, shared: Shared): Slumberer?
+    fun getSlumberer(type: KType, config: Config): Slumberer?
 }
 

@@ -9,16 +9,12 @@ object CharCodec : Awaker, Slumberer {
 
     override fun slumber(data: Any?) = map(data)
 
-    private fun map(data: Any?): Char? {
+    private fun map(data: Any?): Char? = when {
 
-        if (data is Char) {
-            return data
-        }
+        data is Char -> data
 
-        if (data is String && data.length > 0) {
-            return data[0]
-        }
+        data is String && data.length > 0 -> data[0]
 
-        return null
+        else -> null
     }
 }

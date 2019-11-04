@@ -12,13 +12,10 @@ object InstantCodec : Awaker, Slumberer {
             return null
         }
 
-        val ts = data[TS]
-
-        if (ts !is Number) {
-            return null
+        return when (val ts = data[TS]) {
+            is Number -> Instant.ofEpochMilli(ts.toLong())
+            else -> null
         }
-
-        return Instant.ofEpochMilli(ts.toLong())
     }
 
     override fun slumber(data: Any?): Map<String, Any>? {

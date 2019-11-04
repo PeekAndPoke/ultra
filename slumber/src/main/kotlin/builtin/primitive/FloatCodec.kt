@@ -9,16 +9,12 @@ object FloatCodec : Awaker, Slumberer {
 
     override fun slumber(data: Any?) = map(data)
 
-    private fun map(data: Any?): Float? {
+    private fun map(data: Any?): Float? = when (data) {
 
-        if (data is Number) {
-            return data.toFloat()
-        }
+        is Number -> data.toFloat()
 
-        if (data is String) {
-            return data.toFloatOrNull()
-        }
+        is String -> data.toFloatOrNull()
 
-        return null
+        else -> null
     }
 }

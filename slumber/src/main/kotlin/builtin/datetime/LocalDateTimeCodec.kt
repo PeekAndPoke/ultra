@@ -13,13 +13,10 @@ object LocalDateTimeCodec : Awaker, Slumberer {
             return null
         }
 
-        val ts = data[TS]
-
-        if (ts !is Number) {
-            return null
+        return when (val ts = data[TS]) {
+            is Number -> LocalDateTime.ofInstant(Instant.ofEpochMilli(ts.toLong()), utc)
+            else -> null
         }
-
-        return LocalDateTime.ofInstant(Instant.ofEpochMilli(ts.toLong()), utc)
     }
 
     override fun slumber(data: Any?): Map<String, Any>? {

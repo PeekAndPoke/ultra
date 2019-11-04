@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin
 
 import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.Shared
+import de.peekandpoke.ultra.slumber.Config
 import de.peekandpoke.ultra.slumber.SlumberModule
 import de.peekandpoke.ultra.slumber.Slumberer
 import de.peekandpoke.ultra.slumber.builtin.collections.CollectionAwaker
@@ -14,7 +14,7 @@ import kotlin.reflect.KType
 
 class BuiltInModule : SlumberModule {
 
-    override fun getAwaker(type: KType, shared: Shared): Awaker? {
+    override fun getAwaker(type: KType, config: Config): Awaker? {
 
         val cls = type.classifier
 
@@ -35,15 +35,15 @@ class BuiltInModule : SlumberModule {
                 cls == String::class -> StringCodec
 
                 // Lists
-                cls == Iterable::class -> CollectionAwaker.forList(type.arguments[0].type!!, shared)
-                cls == List::class -> CollectionAwaker.forList(type.arguments[0].type!!, shared)
-                cls == MutableList::class -> CollectionAwaker.forMutableList(type.arguments[0].type!!, shared)
+                cls == Iterable::class -> CollectionAwaker.forList(type.arguments[0].type!!, config)
+                cls == List::class -> CollectionAwaker.forList(type.arguments[0].type!!, config)
+                cls == MutableList::class -> CollectionAwaker.forMutableList(type.arguments[0].type!!, config)
 
-                cls == Set::class -> CollectionAwaker.forSet(type.arguments[0].type!!, shared)
-                cls == MutableSet::class -> CollectionAwaker.forMutableSet(type.arguments[0].type!!, shared)
+                cls == Set::class -> CollectionAwaker.forSet(type.arguments[0].type!!, config)
+                cls == MutableSet::class -> CollectionAwaker.forMutableSet(type.arguments[0].type!!, config)
 
                 // Data classes
-                cls.isData -> return DataClassAwaker(cls, shared)
+                cls.isData -> return DataClassAwaker(cls, config)
 
                 else -> null
             }
@@ -52,7 +52,7 @@ class BuiltInModule : SlumberModule {
         return null
     }
 
-    override fun getSlumberer(type: KType, shared: Shared): Slumberer? {
+    override fun getSlumberer(type: KType, config: Config): Slumberer? {
 
         val cls = type.classifier
 
@@ -73,10 +73,10 @@ class BuiltInModule : SlumberModule {
                 cls == String::class -> StringCodec
 
                 // Lists, Set, Collections
-                Iterable::class.java.isAssignableFrom(cls.java) -> CollectionSlumberer(type.arguments[0].type!!, shared)
+                Iterable::class.java.isAssignableFrom(cls.java) -> CollectionSlumberer(type.arguments[0].type!!, config)
 
                 // Data classes
-                cls.isData -> return DataClassSlumberer(cls, shared)
+                cls.isData -> return DataClassSlumberer(cls, config)
 
                 else -> null
             }

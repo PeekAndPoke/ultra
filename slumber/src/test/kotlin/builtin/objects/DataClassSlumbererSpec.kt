@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin.objects
 
 import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.Shared
+import de.peekandpoke.ultra.slumber.Config
 import io.kotlintest.assertSoftly
 import io.kotlintest.matchers.withClue
 import io.kotlintest.shouldBe
@@ -13,7 +13,7 @@ class DataClassSlumbererSpec : StringSpec({
 
         data class DataClass(val str: String, val int: Int)
 
-        val codec = Codec(Shared())
+        val codec = Codec(Config())
 
         val result = codec.slumber(DataClass("hello", 1))
 
@@ -24,7 +24,7 @@ class DataClassSlumbererSpec : StringSpec({
 
         data class DataClass(val str: String)
 
-        val codec = Codec(Shared())
+        val codec = Codec(Config())
 
         val result = codec.slumber(DataClass("hello"))
 
@@ -35,7 +35,7 @@ class DataClassSlumbererSpec : StringSpec({
 
         data class DataClass(val str: String?)
 
-        val codec = Codec(Shared())
+        val codec = Codec(Config())
 
         assertSoftly {
 
@@ -55,7 +55,7 @@ class DataClassSlumbererSpec : StringSpec({
 
         data class DataClass(val inner: Inner)
 
-        val codec = Codec(Shared())
+        val codec = Codec(Config())
 
         val result = codec.slumber(DataClass(Inner("hello")))
 
@@ -66,7 +66,7 @@ class DataClassSlumbererSpec : StringSpec({
 
         data class DataClass(val strings: Iterable<String>)
 
-        val codec = Codec(Shared())
+        val codec = Codec(Config())
 
         assertSoftly {
             codec.slumber(DataClass(listOf("hello", "you"))) shouldBe mapOf("strings" to listOf("hello", "you"))

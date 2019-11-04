@@ -9,16 +9,12 @@ object ShortCodec : Awaker, Slumberer {
 
     override fun slumber(data: Any?) = map(data)
 
-    private fun map(data: Any?): Short? {
+    private fun map(data: Any?): Short? = when (data) {
 
-        if (data is Number) {
-            return data.toShort()
-        }
+        is Number -> data.toShort()
 
-        if (data is String) {
-            return data.toShortOrNull()
-        }
+        is String -> data.toShortOrNull()
 
-        return null
+        else -> null
     }
 }
