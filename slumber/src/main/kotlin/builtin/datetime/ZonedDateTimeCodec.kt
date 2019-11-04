@@ -8,7 +8,7 @@ import java.time.ZonedDateTime
 
 object ZonedDateTimeCodec : Awaker, Slumberer {
 
-    override fun awake(data: Any?): ZonedDateTime? {
+    override fun awake(data: Any?, context: Awaker.Context): ZonedDateTime? {
 
         if (data !is Map<*, *>) {
             return null

@@ -8,6 +8,8 @@ import io.kotlintest.matchers.withClue
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.StringSpec
+import kotlin.reflect.KTypeProjection
+import kotlin.reflect.full.createType
 
 class DataClassAwakerSpec : StringSpec({
 
@@ -195,6 +197,58 @@ class DataClassAwakerSpec : StringSpec({
 
             codec.awake(DataClass::class, mapOf("strings" to arrayOf("hello", "you"))) shouldBe
                     DataClass(mutableSetOf("hello", "you"))
+        }
+    }
+
+    "Awaking a data class with one generic parameter" {
+
+        data class DataClass<T>(val generic: T)
+
+        val codec = Codec.default
+
+        val stringType = DataClass::class.createType(
+            listOf(KTypeProjection.invariant(String::class.createType()))
+        )
+
+        val intType = DataClass::class.createType(
+            listOf(KTypeProjection.invariant(Int::class.createType()))
+        )
+
+        assertSoftly {
+            codec.awake<Any>(stringType, mapOf("generic" to "hello")) shouldBe DataClass("hello")
+
+            codec.awake<Any>(intType, mapOf("generic" to 100)) shouldBe DataClass(100)
+        }
+    }
+
+    "Awaking a data class with two generic parameter" {
+
+        data class DataClass<F, S>(val first: F, val second: S)
+
+        val codec = Codec.default
+
+        val stringIntType = DataClass::class.createType(
+            listOf(
+                KTypeProjection.invariant(String::class.createType()),
+                KTypeProjection.invariant(Int::class.createType())
+            )
+        )
+
+        val intStringType = DataClass::class.createType(
+            listOf(
+                KTypeProjection.invariant(Int::class.createType()),
+                KTypeProjection.invariant(String::class.createType())
+            )
+        )
+
+        assertSoftly {
+            codec.awake<Any>(
+                stringIntType, mapOf("first" to "hello", "second" to 100)
+            ) shouldBe DataClass("hello", 100)
+
+            codec.awake<Any>(
+                intStringType, mapOf("first" to 100, "second" to "hello")
+            ) shouldBe DataClass(100, "hello")
         }
     }
 })

@@ -4,21 +4,39 @@ import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.Config
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
+import kotlin.reflect.KType
+import kotlin.reflect.KTypeParameter
 import kotlin.reflect.full.primaryConstructor
 
-class DataClassAwaker(cls: KClass<*>, config: Config) : Awaker {
+class DataClassAwaker(type: KType, config: Config) : Awaker {
+
+    private val cls = type.classifier as KClass<*>
 
     private val fqn = cls.qualifiedName
 
     private val ctor = cls.primaryConstructor!!
 
     private val ctorParams2Awakers =
-        ctor.parameters.map { it to config.getAwaker(it.type) }
+        ctor.parameters.map {
+
+            val parameterType = when {
+                it.type.classifier is KTypeParameter -> {
+                    // which type parameter do we have?
+                    val index = cls.typeParameters.indexOf(it.type.classifier as KTypeParameter)
+                    // get the real type of the type parameter
+                    type.arguments[index].type!!
+                }
+
+                else -> it.type
+            }
+
+            it to config.getAwaker(parameterType)
+        }
 
     private val nullables: Map<KParameter, Any?> =
         ctor.parameters.filter { it.type.isMarkedNullable }.map { it to null }.toMap()
 
-    override fun awake(data: Any?): Any? {
+    override fun awake(data: Any?, context: Awaker.Context): Any? {
 
         // Do we have some data that we can work with?
         if (data !is Map<*, *>) {
@@ -36,11 +54,11 @@ class DataClassAwaker(cls: KClass<*>, config: Config) : Awaker {
             // Do we have data for param ?
             if (data.contains(param.name)) {
                 // Get the value and awake it
-                val bit = awaker.awake(data[param.name])
+                val bit = awaker.awake(data[param.name], context)
 
                 // can we use the bit ?
                 if (bit != null || param.type.isMarkedNullable) {
-                    params[param] = awaker.awake(data[param.name])
+                    params[param] = bit
                 } else {
                     missingParams.add(param.name ?: "n/a")
                 }

@@ -6,6 +6,9 @@ import de.peekandpoke.ultra.slumber.SlumberModule
 import de.peekandpoke.ultra.slumber.Slumberer
 import de.peekandpoke.ultra.slumber.builtin.collections.CollectionAwaker
 import de.peekandpoke.ultra.slumber.builtin.collections.CollectionSlumberer
+import de.peekandpoke.ultra.slumber.builtin.collections.MapSlumberer
+import de.peekandpoke.ultra.slumber.builtin.objects.AnyAwaker
+import de.peekandpoke.ultra.slumber.builtin.objects.AnySlumberer
 import de.peekandpoke.ultra.slumber.builtin.objects.DataClassAwaker
 import de.peekandpoke.ultra.slumber.builtin.objects.DataClassSlumberer
 import de.peekandpoke.ultra.slumber.builtin.primitive.*
@@ -21,6 +24,9 @@ class BuiltInModule : SlumberModule {
         if (cls is KClass<*>) {
 
             return when {
+                // Any type
+                cls == Any::class -> AnyAwaker
+
                 // Primitive types
                 cls == Boolean::class -> BooleanCodec
                 cls == Byte::class -> ByteCodec
@@ -43,7 +49,7 @@ class BuiltInModule : SlumberModule {
                 cls == MutableSet::class -> CollectionAwaker.forMutableSet(type.arguments[0].type!!, config)
 
                 // Data classes
-                cls.isData -> DataClassAwaker(cls, config)
+                cls.isData -> DataClassAwaker(type, config)
 
                 else -> null
             }
@@ -59,6 +65,8 @@ class BuiltInModule : SlumberModule {
         if (cls is KClass<*>) {
 
             return when {
+                // Any type
+                cls == Any::class -> AnySlumberer(config)
                 // Primitive types
                 cls == Boolean::class -> BooleanCodec
                 cls == Byte::class -> ByteCodec
@@ -73,7 +81,11 @@ class BuiltInModule : SlumberModule {
                 cls == String::class -> StringCodec
 
                 // Lists, Set, Collections
-                Iterable::class.java.isAssignableFrom(cls.java) -> CollectionSlumberer(type.arguments[0].type!!, config)
+                Iterable::class.java.isAssignableFrom(cls.java) ->
+                    CollectionSlumberer(type.arguments[0].type!!, config)
+
+                Map::class.java.isAssignableFrom(cls.java) ->
+                    MapSlumberer(type.arguments[0].type!!, type.arguments[1].type!!, config)
 
                 // Data classes
                 cls.isData -> DataClassSlumberer(cls, config)

@@ -15,7 +15,7 @@ import kotlin.reflect.KType
 class DateTimeModule : SlumberModule {
 
     override fun getAwaker(type: KType, config: Config): Awaker? {
-        return when (type) {
+        return when (type.classifier) {
             LocalDateTime::class -> LocalDateTimeCodec
             Instant::class -> InstantCodec
             ZonedDateTime::class -> ZonedDateTimeCodec
@@ -24,7 +24,7 @@ class DateTimeModule : SlumberModule {
     }
 
     override fun getSlumberer(type: KType, config: Config): Slumberer? {
-        return when (type) {
+        return when (type.classifier) {
             LocalDateTime::class -> LocalDateTimeCodec
             Instant::class -> InstantCodec
             ZonedDateTime::class -> ZonedDateTimeCodec

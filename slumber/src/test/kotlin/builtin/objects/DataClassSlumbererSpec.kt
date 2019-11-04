@@ -72,4 +72,36 @@ class DataClassSlumbererSpec : StringSpec({
             codec.slumber(DataClass(listOf("hello", "you"))) shouldBe mapOf("strings" to listOf("hello", "you"))
         }
     }
+
+    "Slumbering a data class with a Iterable<String> and a Iterable<Any> parameter" {
+
+        data class DataClass(val strings: Iterable<String>, val ints: Iterable<Any>)
+
+        val codec = Codec(Config())
+
+        assertSoftly {
+            codec.slumber(
+                DataClass(listOf("hello", "you"), listOf(1, 2, 3))
+            ) shouldBe mapOf(
+                "strings" to listOf("hello", "you"),
+                "ints" to listOf(1, 2, 3)
+            )
+        }
+    }
+
+    "Slumbering a data class with a Map<String, Int> and a Map<Int, Any> parameter" {
+
+        data class DataClass(val strings: Map<String, Int>, val ints: Map<Int, Any?>)
+
+        val codec = Codec(Config())
+
+        assertSoftly {
+            codec.slumber(
+                DataClass(mapOf("hello" to 1, "you" to 2), mapOf(1 to null, 2 to "a", 3 to 10))
+            ) shouldBe mapOf(
+                "strings" to mapOf("hello" to 1, "you" to 2),
+                "ints" to mapOf(1 to null, 2 to "a", 3 to 10)
+            )
+        }
+    }
 })
