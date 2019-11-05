@@ -1,42 +1,52 @@
 package de.peekandpoke.ultra.slumber.builtin.objects
 
 import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.Config
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeParameter
+import kotlin.reflect.full.createType
 import kotlin.reflect.full.primaryConstructor
 
-class DataClassAwaker(type: KType, config: Config) : Awaker {
+class DataClassAwaker(private val rootType: KType) : Awaker {
 
-    private val cls = type.classifier as KClass<*>
+    /** Raw cls of the rootType */
+    private val cls = rootType.classifier as KClass<*>
 
-    private val fqn = cls.qualifiedName
-
+    /** The ctor is always present for a data class */
     private val ctor = cls.primaryConstructor!!
 
-    private val ctorParams2Awakers =
-        ctor.parameters.map {
+    /** Map of ctor parameters to their reified types */
+    private val ctorParams2Types = ctor.parameters.map { it to reifyType(it.type) }
 
-            val parameterType = when {
-                it.type.classifier is KTypeParameter -> {
-                    // which type parameter do we have?
-                    val index = cls.typeParameters.indexOf(it.type.classifier as KTypeParameter)
-                    // get the real type of the type parameter
-                    type.arguments[index].type!!
-                }
+    private fun reifyType(type: KType): KType = when (val classifier = type.classifier) {
 
-                else -> it.type
-            }
-
-            it to config.getAwaker(parameterType)
+        // Do we have a type parameter here?
+        is KTypeParameter -> {
+            // Which type parameter do we have?
+            val index = cls.typeParameters.indexOf(classifier)
+            // Get the real type from the rootType
+            rootType.arguments[index].type ?: Any::class.createType()
         }
+
+        // Do we have a class?
+        is KClass<*> -> {
+            // Let's reify all of the classes type parameters as well
+            classifier.createType(
+                type.arguments.map {
+                    it.copy(type = reifyType(it.type ?: Any::class.createType()))
+                }
+            )
+        }
+
+        // Otherwise we take the type as is
+        else -> type
+    }
 
     private val nullables: Map<KParameter, Any?> =
         ctor.parameters.filter { it.type.isMarkedNullable }.map { it to null }.toMap()
 
-    override fun awake(data: Any?): Any? {
+    override fun awake(data: Any?, context: Awaker.Context): Any? {
 
         // Do we have some data that we can work with?
         if (data !is Map<*, *>) {
@@ -49,12 +59,12 @@ class DataClassAwaker(type: KType, config: Config) : Awaker {
         val missingParams = mutableListOf<String>()
 
         // We go through all the parameters of the primary ctor
-        ctorParams2Awakers.forEach { (param, awaker) ->
+        ctorParams2Types.forEach { (param, type) ->
 
             // Do we have data for param ?
             if (data.contains(param.name)) {
                 // Get the value and awake it
-                val bit = awaker.awake(data[param.name])
+                val bit = context.awakeOrNull(type, data[param.name])
 
                 // can we use the bit ?
                 if (bit != null || param.type.isMarkedNullable) {
@@ -73,11 +83,11 @@ class DataClassAwaker(type: KType, config: Config) : Awaker {
             }
         }
 
-        // When we have all the parameters we need, we can call the ctor?
-        if (missingParams.isEmpty()) {
-            return ctor.callBy(params)
+        return when {
+            // When we have all the parameters we need, we can call the ctor.
+            missingParams.isEmpty() -> ctor.callBy(params)
+            // Otherwise we have to return null
+            else -> null
         }
-
-        return null
     }
 }

@@ -5,9 +5,9 @@ import de.peekandpoke.ultra.slumber.Slumberer
 
 object ShortCodec : Awaker, Slumberer {
 
-    override fun awake(data: Any?) = map(data)
+    override fun awake(data: Any?, context: Awaker.Context) = map(data)
 
-    override fun slumber(data: Any?) = map(data)
+    override fun slumber(data: Any?, context: Slumberer.Context) = map(data)
 
     private fun map(data: Any?): Short? = when (data) {
 

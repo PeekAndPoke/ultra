@@ -1,31 +1,33 @@
 package de.peekandpoke.ultra.slumber.builtin
 
 import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.Config
 import de.peekandpoke.ultra.slumber.SlumberModule
 import de.peekandpoke.ultra.slumber.Slumberer
 import de.peekandpoke.ultra.slumber.builtin.collections.CollectionAwaker
 import de.peekandpoke.ultra.slumber.builtin.collections.CollectionSlumberer
+import de.peekandpoke.ultra.slumber.builtin.collections.MapAwaker
 import de.peekandpoke.ultra.slumber.builtin.collections.MapSlumberer
-import de.peekandpoke.ultra.slumber.builtin.objects.AnyAwaker
-import de.peekandpoke.ultra.slumber.builtin.objects.AnySlumberer
+import de.peekandpoke.ultra.slumber.builtin.objects.AnyCodec
 import de.peekandpoke.ultra.slumber.builtin.objects.DataClassAwaker
 import de.peekandpoke.ultra.slumber.builtin.objects.DataClassSlumberer
+import de.peekandpoke.ultra.slumber.builtin.objects.NothingCodec
 import de.peekandpoke.ultra.slumber.builtin.primitive.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 
-class BuiltInModule : SlumberModule {
+object BuiltInModule : SlumberModule {
 
-    override fun getAwaker(type: KType, config: Config): Awaker? {
+    override fun getAwaker(type: KType): Awaker? {
 
         val cls = type.classifier
 
         if (cls is KClass<*>) {
 
             return when {
+                // Null or Nothing
+                cls in listOf(Nothing::class, Unit::class) -> NothingCodec
                 // Any type
-                cls == Any::class -> AnyAwaker
+                cls == Any::class -> AnyCodec
 
                 // Primitive types
                 cls == Boolean::class -> BooleanCodec
@@ -41,15 +43,21 @@ class BuiltInModule : SlumberModule {
                 cls == String::class -> StringCodec
 
                 // Lists
-                cls == Iterable::class -> CollectionAwaker.forList(type.arguments[0].type!!, config)
-                cls == List::class -> CollectionAwaker.forList(type.arguments[0].type!!, config)
-                cls == MutableList::class -> CollectionAwaker.forMutableList(type.arguments[0].type!!, config)
+                cls == Iterable::class || cls == List::class ->
+                    CollectionAwaker.forList(type.arguments[0].type!!)
+                cls == MutableList::class ->
+                    CollectionAwaker.forMutableList(type.arguments[0].type!!)
+                cls == Set::class ->
+                    CollectionAwaker.forSet(type.arguments[0].type!!)
+                cls == MutableSet::class ->
+                    CollectionAwaker.forMutableSet(type.arguments[0].type!!)
 
-                cls == Set::class -> CollectionAwaker.forSet(type.arguments[0].type!!, config)
-                cls == MutableSet::class -> CollectionAwaker.forMutableSet(type.arguments[0].type!!, config)
+                // Maps
+                cls == Map::class ->
+                    MapAwaker(type.arguments[0].type!!, type.arguments[1].type!!)
 
                 // Data classes
-                cls.isData -> DataClassAwaker(type, config)
+                cls.isData -> DataClassAwaker(type)
 
                 else -> null
             }
@@ -58,15 +66,17 @@ class BuiltInModule : SlumberModule {
         return null
     }
 
-    override fun getSlumberer(type: KType, config: Config): Slumberer? {
+    override fun getSlumberer(type: KType): Slumberer? {
 
         val cls = type.classifier
 
         if (cls is KClass<*>) {
 
             return when {
+                // Null or Nothing
+                cls in listOf(Nothing::class, Unit::class) -> NothingCodec
                 // Any type
-                cls == Any::class -> AnySlumberer(config)
+                cls == Any::class -> AnyCodec
                 // Primitive types
                 cls == Boolean::class -> BooleanCodec
                 cls == Byte::class -> ByteCodec
@@ -80,15 +90,14 @@ class BuiltInModule : SlumberModule {
                 // Strings
                 cls == String::class -> StringCodec
 
-                // Lists, Set, Collections
-                Iterable::class.java.isAssignableFrom(cls.java) ->
-                    CollectionSlumberer(type.arguments[0].type!!, config)
+                // Iterables
+                Iterable::class.java.isAssignableFrom(cls.java) -> CollectionSlumberer
 
-                Map::class.java.isAssignableFrom(cls.java) ->
-                    MapSlumberer(type.arguments[0].type!!, type.arguments[1].type!!, config)
+                // Maps
+                Map::class.java.isAssignableFrom(cls.java) -> MapSlumberer
 
                 // Data classes
-                cls.isData -> DataClassSlumberer(cls, config)
+                cls.isData -> DataClassSlumberer(cls)
 
                 else -> null
             }

@@ -5,9 +5,9 @@ import de.peekandpoke.ultra.slumber.Slumberer
 
 object BooleanCodec : Awaker, Slumberer {
 
-    override fun awake(data: Any?) = map(data)
+    override fun awake(data: Any?, context: Awaker.Context) = map(data)
 
-    override fun slumber(data: Any?) = map(data)
+    override fun slumber(data: Any?, context: Slumberer.Context) = map(data)
 
     private fun map(data: Any?): Boolean? = when (data) {
 
@@ -15,7 +15,11 @@ object BooleanCodec : Awaker, Slumberer {
 
         is Number -> data.toInt() != 0
 
-        is String -> data.toBoolean()
+        is String -> data.toBoolean() || when (data.toIntOrNull()) {
+            null -> false
+            0 -> false
+            else -> true
+        }
 
         else -> null
     }

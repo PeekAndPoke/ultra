@@ -1,14 +1,8 @@
 package de.peekandpoke.ultra.slumber
 
-import de.peekandpoke.ultra.slumber.builtin.BuiltInModule
-import kotlin.reflect.KClass
 import kotlin.reflect.KType
-import kotlin.reflect.KTypeProjection
-import kotlin.reflect.full.createType
 
-class Config(modules: List<SlumberModule> = listOf()) {
-
-    private val modules = modules.plus(BuiltInModule())
+class Config(private val modules: List<SlumberModule> = listOf()) {
 
     private val awakerLookup = mutableMapOf<KType, Awaker?>()
 
@@ -19,19 +13,10 @@ class Config(modules: List<SlumberModule> = listOf()) {
         return awakerLookup.getOrPut(type) {
             modules
                 .asSequence()
-                .mapNotNull { it.getAwaker(type, this) }
+                .mapNotNull { it.getAwaker(type) }
                 .firstOrNull()
         }
             ?: error("There is no known way to awake the type '$type'")
-    }
-
-    fun getSlumberer(type: KClass<*>): Slumberer {
-        // TODO: we can cache this
-        return getSlumberer(
-            type.createType(
-                type.typeParameters.map { KTypeProjection.invariant(it.upperBounds[0]) }
-            )
-        )
     }
 
     fun getSlumberer(type: KType): Slumberer {
@@ -39,7 +24,7 @@ class Config(modules: List<SlumberModule> = listOf()) {
         return slumbererLookUp.getOrPut(type) {
             modules
                 .asSequence()
-                .mapNotNull { it.getSlumberer(type, this) }
+                .mapNotNull { it.getSlumberer(type) }
                 .firstOrNull()
         }
             ?: error("There is no known way to slumber the type '$type'")

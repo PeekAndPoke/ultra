@@ -6,7 +6,7 @@ import java.time.Instant
 
 object InstantCodec : Awaker, Slumberer {
 
-    override fun awake(data: Any?): Instant? {
+    override fun awake(data: Any?, context: Awaker.Context): Instant? {
 
         if (data !is Map<*, *>) {
             return null
@@ -18,7 +18,7 @@ object InstantCodec : Awaker, Slumberer {
         }
     }
 
-    override fun slumber(data: Any?): Map<String, Any>? {
+    override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {
 
         if (data !is Instant) {
             return null

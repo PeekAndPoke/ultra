@@ -1,48 +1,40 @@
 package de.peekandpoke.ultra.slumber.builtin.collections
 
 import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.Config
 import kotlin.reflect.KType
 
 class CollectionAwaker(
     private val innerType: KType,
-    config: Config,
     private val creator: List<*>.() -> Any
 ) : Awaker {
 
     companion object {
 
-        fun forList(innerType: KType, config: Config) =
-            CollectionAwaker(innerType, config) { toList() }
+        fun forList(innerType: KType) =
+            CollectionAwaker(innerType) { toList() }
 
-        fun forMutableList(innerType: KType, config: Config) =
-            CollectionAwaker(innerType, config) { toMutableList() }
+        fun forMutableList(innerType: KType) =
+            CollectionAwaker(innerType) { toMutableList() }
 
-        fun forSet(innerType: KType, config: Config) =
-            CollectionAwaker(innerType, config) { toSet() }
+        fun forSet(innerType: KType) =
+            CollectionAwaker(innerType) { toSet() }
 
-        fun forMutableSet(innerType: KType, config: Config) =
-            CollectionAwaker(innerType, config) { toMutableSet() }
+        fun forMutableSet(innerType: KType) =
+            CollectionAwaker(innerType) { toMutableSet() }
     }
 
-    private val itemAwaker = config.getAwaker(innerType)
+    override fun awake(data: Any?, context: Awaker.Context): Any? = when (data) {
 
-    override fun awake(data: Any?): Any? {
+        is Array<*> -> awakeInternal(data.toList(), context)
 
-        if (data is Array<*>) {
-            return awakeInternal(data.toList())
-        }
+        is Iterable<*> -> awakeInternal(data, context)
 
-        if (data is Iterable<*>) {
-            return awakeInternal(data)
-        }
-
-        return null
+        else -> null
     }
 
-    private fun awakeInternal(data: Iterable<*>): Any? {
+    private fun awakeInternal(data: Iterable<*>, context: Awaker.Context): Any? {
 
-        val intermediate = data.map { itemAwaker.awake(it) }
+        val intermediate = data.map { context.awakeOrNull(innerType, it) }
 
         if (innerType.isMarkedNullable) {
             return intermediate.creator()

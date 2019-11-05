@@ -22,11 +22,11 @@ dependencies {
     // add all child projects
     compile(project(":common"))
     compile(project(":meta"))
-    compile(project(":kontainer"))
-    compile(project(":security"))
-
     compile(project(":mutator"))
     kapt(project(":mutator"))
+    compile(project(":kontainer"))
+    compile(project(":security"))
+    compile(project(":slumber"))
 }
 
 repositories {

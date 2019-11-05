@@ -1,7 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin.objects
 
 import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.Config
 import io.kotlintest.assertSoftly
 import io.kotlintest.matchers.withClue
 import io.kotlintest.shouldBe
@@ -13,7 +12,7 @@ class DataClassSlumbererSpec : StringSpec({
 
         data class DataClass(val str: String, val int: Int)
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         val result = codec.slumber(DataClass("hello", 1))
 
@@ -24,7 +23,7 @@ class DataClassSlumbererSpec : StringSpec({
 
         data class DataClass(val str: String)
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         val result = codec.slumber(DataClass("hello"))
 
@@ -35,7 +34,7 @@ class DataClassSlumbererSpec : StringSpec({
 
         data class DataClass(val str: String?)
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         assertSoftly {
 
@@ -55,7 +54,7 @@ class DataClassSlumbererSpec : StringSpec({
 
         data class DataClass(val inner: Inner)
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         val result = codec.slumber(DataClass(Inner("hello")))
 
@@ -66,7 +65,7 @@ class DataClassSlumbererSpec : StringSpec({
 
         data class DataClass(val strings: Iterable<String>)
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         assertSoftly {
             codec.slumber(DataClass(listOf("hello", "you"))) shouldBe mapOf("strings" to listOf("hello", "you"))
@@ -77,7 +76,7 @@ class DataClassSlumbererSpec : StringSpec({
 
         data class DataClass(val strings: Iterable<String>, val ints: Iterable<Any>)
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         assertSoftly {
             codec.slumber(
@@ -93,7 +92,7 @@ class DataClassSlumbererSpec : StringSpec({
 
         data class DataClass(val strings: Map<String, Int>, val ints: Map<Int, Any?>)
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         assertSoftly {
             codec.slumber(

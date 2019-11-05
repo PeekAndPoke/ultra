@@ -2,7 +2,6 @@ package de.peekandpoke.ultra.slumber.builtin.objects
 
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.Config
 import io.kotlintest.assertSoftly
 import io.kotlintest.matchers.withClue
 import io.kotlintest.shouldBe
@@ -17,7 +16,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val str: String, val int: Int)
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         val result = codec.awake(DataClass::class, mapOf("str" to "hello", "int" to 1))
 
@@ -28,7 +27,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val str: String)
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         val result = codec.awake(DataClass::class, mapOf("str" to "hello"))
 
@@ -39,7 +38,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val str: String?)
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         assertSoftly {
 
@@ -71,7 +70,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val str: String = "default")
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         assertSoftly {
             withClue("A given value must overwrite the default value") {
@@ -106,7 +105,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val inner: Inner)
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         val result = codec.awake(DataClass::class, mapOf("inner" to mapOf("str" to "hello")))
 
@@ -117,7 +116,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val strings: Iterable<String>)
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         assertSoftly {
             codec.awake(DataClass::class, mapOf("strings" to listOf("hello", "you"))) shouldBe
@@ -132,7 +131,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val strings: List<String>)
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         assertSoftly {
             codec.awake(DataClass::class, mapOf("strings" to listOf("hello", "you"))) shouldBe
@@ -147,7 +146,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val strings: List<String>)
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         assertSoftly {
             codec.awake(DataClass::class, mapOf("strings" to listOf("hello", null))) shouldBe
@@ -159,7 +158,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val strings: MutableList<String>)
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         assertSoftly {
             codec.awake(DataClass::class, mapOf("strings" to listOf("hello", "you"))) shouldBe
@@ -174,7 +173,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val strings: Set<String>)
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         assertSoftly {
             codec.awake(DataClass::class, mapOf("strings" to listOf("hello", "you"))) shouldBe
@@ -189,7 +188,7 @@ class DataClassAwakerSpec : StringSpec({
 
         data class DataClass(val strings: MutableSet<String>)
 
-        val codec = Codec(Config())
+        val codec = Codec.default
 
         assertSoftly {
             codec.awake(DataClass::class, mapOf("strings" to listOf("hello", "you"))) shouldBe
@@ -249,6 +248,37 @@ class DataClassAwakerSpec : StringSpec({
             codec.awake<Any>(
                 intStringType, mapOf("first" to 100, "second" to "hello")
             ) shouldBe DataClass(100, "hello")
+        }
+    }
+
+    "Awaking a data class with two generic parameter forwarded to a Map" {
+
+        data class DataClass<F, S>(val map: Map<F, S>)
+
+        val codec = Codec.default
+
+        val stringIntType = DataClass::class.createType(
+            listOf(
+                KTypeProjection.invariant(String::class.createType()),
+                KTypeProjection.invariant(Int::class.createType())
+            )
+        )
+
+        val intStringType = DataClass::class.createType(
+            listOf(
+                KTypeProjection.invariant(Int::class.createType()),
+                KTypeProjection.invariant(String::class.createType())
+            )
+        )
+
+        assertSoftly {
+            codec.awake<Any>(
+                stringIntType, mapOf("map" to mapOf("hello" to 1, "you" to 2))
+            ) shouldBe DataClass(mapOf("hello" to 1, "you" to 2))
+
+            codec.awake<Any>(
+                intStringType, mapOf("map" to mapOf(1 to "hello", 2 to "you"))
+            ) shouldBe DataClass(mapOf(1 to "hello", 2 to "you"))
         }
     }
 })
