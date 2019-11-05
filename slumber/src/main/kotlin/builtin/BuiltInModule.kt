@@ -30,6 +30,7 @@ object BuiltInModule : SlumberModule {
                 cls == Any::class -> AnyCodec
 
                 // Primitive types
+                cls == Number::class -> NumberCodec
                 cls == Boolean::class -> BooleanCodec
                 cls == Byte::class -> ByteCodec
                 cls == Char::class -> CharCodec
