@@ -34,12 +34,8 @@ class CollectionAwaker(
 
     private fun awakeInternal(data: Iterable<*>, context: Awaker.Context): Any? {
 
-        val intermediate = data.map { context.awakeOrNull(innerType, it) }
-
-        if (innerType.isMarkedNullable) {
-            return intermediate.creator()
-        }
-
-        return intermediate.filterNotNull().creator()
+        return data
+            .mapIndexed { idx, item -> context.stepInto(idx.toString()).awakeOrNull(innerType, item) }
+            .creator()
     }
 }

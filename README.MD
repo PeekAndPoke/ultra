@@ -4,3 +4,14 @@
 
 
 
+
+# TODOs:
+
+( ) Kontainer: avoid that services definitions are downgraded
+  ( ) invalid: Prototype -> Singleton | Dynamic
+  ( ) invalid: Dynamic -> Singleton
+  ( ) invalid: Singleton | Dynamic -> Prototype  
+
+
+( ) Slumber
+  ( ) Full java time support 

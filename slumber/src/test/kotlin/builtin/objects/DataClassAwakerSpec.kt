@@ -3,6 +3,7 @@ package de.peekandpoke.ultra.slumber.builtin.objects
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Codec
 import io.kotlintest.assertSoftly
+import io.kotlintest.matchers.string.shouldContain
 import io.kotlintest.matchers.withClue
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
@@ -142,15 +143,18 @@ class DataClassAwakerSpec : StringSpec({
         }
     }
 
-    "Awaking a data class with one List<String> parameter mixin in nulls" {
+    "Awaking a data class with one List<String> parameter mixing in nulls" {
 
         data class DataClass(val strings: List<String>)
 
         val codec = Codec.default
 
         assertSoftly {
-            codec.awake(DataClass::class, mapOf("strings" to listOf("hello", null))) shouldBe
-                    DataClass(listOf("hello"))
+            val exception = shouldThrow<AwakerException> {
+                codec.awake(DataClass::class, mapOf("strings" to listOf("hello", null)))
+            }
+
+            exception.message shouldContain "root.strings.1"
         }
     }
 

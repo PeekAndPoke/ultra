@@ -35,7 +35,8 @@ class DataClassAwaker(private val rootType: KType) : Awaker {
             classifier.createType(
                 type.arguments.map {
                     it.copy(type = reifyType(it.type ?: Any::class.createType()))
-                }
+                },
+                type.isMarkedNullable
             )
         }
 
@@ -61,16 +62,18 @@ class DataClassAwaker(private val rootType: KType) : Awaker {
         // We go through all the parameters of the primary ctor
         ctorParams2Types.forEach { (param, type) ->
 
+            val paramName = param.name ?: "n/a"
+
             // Do we have data for param ?
             if (data.contains(param.name)) {
                 // Get the value and awake it
-                val bit = context.awakeOrNull(type, data[param.name])
+                val bit = context.stepInto(paramName).awakeOrNull(type, data[paramName])
 
                 // can we use the bit ?
                 if (bit != null || param.type.isMarkedNullable) {
                     params[param] = bit
                 } else {
-                    missingParams.add(param.name ?: "n/a")
+                    missingParams.add(paramName)
                 }
 
                 // Yes so let's awake it and put it into the params
@@ -78,7 +81,7 @@ class DataClassAwaker(private val rootType: KType) : Awaker {
                 // Last chance: is the parameter optional or nullable ?
                 if (!param.isOptional && !param.type.isMarkedNullable) {
                     // No, so we have problem and cannot awake the data class
-                    missingParams.add(param.name ?: "n/a")
+                    missingParams.add(paramName)
                 }
             }
         }

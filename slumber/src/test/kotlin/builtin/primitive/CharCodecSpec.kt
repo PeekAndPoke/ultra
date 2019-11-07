@@ -1,55 +1,36 @@
 package de.peekandpoke.ultra.slumber.builtin.primitive
 
-import de.peekandpoke.ultra.slumber.Codec
-import io.kotlintest.assertSoftly
-import io.kotlintest.matchers.withClue
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import de.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
+import de.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
 import io.kotlintest.tables.row
 
-class CharCodecSpec : StringSpec({
+class CharAwakerSpec : AwakerSpecHelper(
+    cls = Char::class, nonNullSamples = nonNull, nullableSamples = nullable
+)
 
-    val codec = Codec.default
+class CharSlumberSpec : SlumbererSpecHelper(
+    cls = Char::class, nonNullSamples = nonNull, nullableSamples = nullable
+)
 
-    @Suppress("BooleanLiteralArgument")
-    val samples = listOf(
-        row('a', 'a'),
-        row('b', 'b'),
-        row("true", 't'),
-        row("FALSE", 'F'),
-        row("stuff", 's'),
+/**
+ * Samples that map properly. These must be converted correctly to Char and to Char?
+ */
+private val nonNull = listOf(
+    row('a', 'a'),
+    row('b', 'b'),
+    row("true", 't'),
+    row("FALSE", 'F'),
+    row("stuff", 's')
+)
 
-        row(null, null),
-        row(false, null),
-        row(true, null),
-        row("", null),
-        row(emptyList<Any>(), null),
-        row(emptyMap<Any, Any>(), null)
-    )
-
-    samples.forEach { (input, expected) ->
-
-        val inputClass = when {
-            input != null -> input::class.qualifiedName
-            else -> "null"
-        }
-
-        "Awaking a Char from '$input' ($inputClass) should result in '$expected'" {
-
-            assertSoftly {
-                withClue("Using Codec.default must work") {
-                    codec.awakeOrNull(Char::class, input) shouldBe expected
-                }
-            }
-        }
-
-        "Slumbering a Boolean from '$input' ($inputClass) should result in '$expected'" {
-
-            assertSoftly {
-                withClue("Using Codec.default must work") {
-                    codec.slumber(Char::class, input) shouldBe expected
-                }
-            }
-        }
-    }
-})
+/**
+ * Samples that map to null. Converting to Char must throw. Converting to Char? must not throw.
+ */
+private val nullable = listOf(
+    null,
+    false,
+    true,
+    "",
+    emptyList<Any>(),
+    emptyMap<Any, Any>()
+)

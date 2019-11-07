@@ -7,10 +7,7 @@ import de.peekandpoke.ultra.slumber.builtin.collections.CollectionAwaker
 import de.peekandpoke.ultra.slumber.builtin.collections.CollectionSlumberer
 import de.peekandpoke.ultra.slumber.builtin.collections.MapAwaker
 import de.peekandpoke.ultra.slumber.builtin.collections.MapSlumberer
-import de.peekandpoke.ultra.slumber.builtin.objects.AnyCodec
-import de.peekandpoke.ultra.slumber.builtin.objects.DataClassAwaker
-import de.peekandpoke.ultra.slumber.builtin.objects.DataClassSlumberer
-import de.peekandpoke.ultra.slumber.builtin.objects.NothingCodec
+import de.peekandpoke.ultra.slumber.builtin.objects.*
 import de.peekandpoke.ultra.slumber.builtin.primitive.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
@@ -25,23 +22,34 @@ object BuiltInModule : SlumberModule {
 
             return when {
                 // Null or Nothing
-                cls in listOf(Nothing::class, Unit::class) -> NothingCodec
+                cls in listOf(Nothing::class, Unit::class) -> NullCodec
                 // Any type
-                cls == Any::class -> AnyCodec
+                cls == Any::class ->
+                    if (type.isMarkedNullable) NullableAnyAwaker else NonNullAnyAwaker
 
                 // Primitive types
-                cls == Number::class -> NumberCodec
-                cls == Boolean::class -> BooleanCodec
-                cls == Byte::class -> ByteCodec
-                cls == Char::class -> CharCodec
-                cls == Double::class -> DoubleCodec
-                cls == Float::class -> FloatCodec
-                cls == Int::class -> IntCodec
-                cls == Long::class -> LongCodec
-                cls == Short::class -> ShortCodec
+                cls == Number::class ->
+                    if (type.isMarkedNullable) NullableNumberAwaker else NonNullNumberAwaker
+                cls == Boolean::class ->
+                    if (type.isMarkedNullable) NullableBooleanAwaker else NonNullBooleanAwaker
+                cls == Byte::class ->
+                    if (type.isMarkedNullable) NullableByteAwaker else NonNullByteAwaker
+                cls == Char::class ->
+                    if (type.isMarkedNullable) NullableCharAwaker else NonNullCharAwaker
+                cls == Double::class ->
+                    if (type.isMarkedNullable) NullableDoubleAwaker else NonNullDoubleAwaker
+                cls == Float::class ->
+                    if (type.isMarkedNullable) NullableFloatAwaker else NonNullFloatAwaker
+                cls == Int::class ->
+                    if (type.isMarkedNullable) NullableIntAwaker else NonNullIntAwaker
+                cls == Long::class ->
+                    if (type.isMarkedNullable) NullableLongAwaker else NonNullLongAwaker
+                cls == Short::class ->
+                    if (type.isMarkedNullable) NullableShortAwaker else NonNullShortAwaker
 
                 // Strings
-                cls == String::class -> StringCodec
+                cls == String::class ->
+                    if (type.isMarkedNullable) NullableStringAwaker else NonNullStringAwaker
 
                 // Lists
                 cls == Iterable::class || cls == List::class ->
@@ -75,21 +83,33 @@ object BuiltInModule : SlumberModule {
 
             return when {
                 // Null or Nothing
-                cls in listOf(Nothing::class, Unit::class) -> NothingCodec
+                cls in listOf(Nothing::class, Unit::class) -> NullCodec
                 // Any type
-                cls == Any::class -> AnyCodec
+                cls == Any::class ->
+                    if (type.isMarkedNullable) NullableAnySlumberer else NonNullAnySlumberer
                 // Primitive types
-                cls == Boolean::class -> BooleanCodec
-                cls == Byte::class -> ByteCodec
-                cls == Char::class -> CharCodec
-                cls == Double::class -> DoubleCodec
-                cls == Float::class -> FloatCodec
-                cls == Int::class -> IntCodec
-                cls == Long::class -> LongCodec
-                cls == Short::class -> ShortCodec
+                cls == Number::class ->
+                    if (type.isMarkedNullable) NullableNumberSlumberer else NonNullNumberSlumberer
+                cls == Boolean::class ->
+                    if (type.isMarkedNullable) NullableBooleanSlumberer else NonNullBooleanSlumberer
+                cls == Byte::class ->
+                    if (type.isMarkedNullable) NullableByteSlumberer else NonNullByteSlumberer
+                cls == Char::class ->
+                    if (type.isMarkedNullable) NullableCharSlumberer else NonNullCharSlumberer
+                cls == Double::class ->
+                    if (type.isMarkedNullable) NullableDoubleSlumberer else NonNullDoubleSlumberer
+                cls == Float::class ->
+                    if (type.isMarkedNullable) NullableFloatSlumberer else NonNullFloatSlumberer
+                cls == Int::class ->
+                    if (type.isMarkedNullable) NullableIntSlumberer else NonNullIntSlumberer
+                cls == Long::class ->
+                    if (type.isMarkedNullable) NullableLongSlumberer else NonNullLongSlumberer
+                cls == Short::class ->
+                    if (type.isMarkedNullable) NullableShortSlumberer else NonNullShortSlumberer
 
                 // Strings
-                cls == String::class -> StringCodec
+                cls == String::class ->
+                    if (type.isMarkedNullable) NullableStringSlumberer else NonNullStringSlumberer
 
                 // Iterables
                 Iterable::class.java.isAssignableFrom(cls.java) -> CollectionSlumberer

@@ -25,11 +25,11 @@ open class Codec(
     }
 
     open val awakerContext by lazy {
-        Awaker.Context(this, attributes)
+        Awaker.Context(this, attributes, "root")
     }
 
     open val slumbererContext by lazy {
-        Slumberer.Context(this, attributes)
+        Slumberer.Context(this, attributes, "root")
     }
 
     private val kTypeCache = mutableMapOf<KClass<*>, KType>()
@@ -47,8 +47,10 @@ open class Codec(
         return awakeOrNull(type.kType(), data) as T?
     }
 
-    fun awakeOrNull(type: KType, data: Any?): Any? {
-        return getAwaker(type).awake(data, awakerContext)
+    fun awakeOrNull(type: KType, data: Any?): Any? = awakeOrNull(type, data, awakerContext)
+
+    internal fun awakeOrNull(type: KType, data: Any?, context: Awaker.Context): Any? {
+        return getAwaker(type).awake(data, context)
     }
 
     fun getAwaker(type: KType): Awaker = config.getAwaker(type)
@@ -64,8 +66,12 @@ open class Codec(
     }
 
     fun <T : Any> slumber(targetType: KClass<T>, data: Any?): T? {
+        return slumber(targetType.kType(), data)
+    }
+
+    fun <T : Any> slumber(targetType: KType, data: Any?): T? {
         @Suppress("UNCHECKED_CAST")
-        return config.getSlumberer(targetType.kType()).slumber(data, slumbererContext) as T?
+        return config.getSlumberer(targetType).slumber(data, slumbererContext) as T?
     }
 
     /**

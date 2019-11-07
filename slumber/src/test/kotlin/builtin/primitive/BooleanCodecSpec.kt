@@ -1,61 +1,45 @@
 package de.peekandpoke.ultra.slumber.builtin.primitive
 
-import de.peekandpoke.ultra.slumber.Codec
-import io.kotlintest.assertSoftly
-import io.kotlintest.matchers.withClue
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import de.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
+import de.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
 import io.kotlintest.tables.row
 
-class BooleanCodecSpec : StringSpec({
+class BooleanAwakerSpec : AwakerSpecHelper(
+    cls = Boolean::class, nonNullSamples = nonNull, nullableSamples = nullable
+)
 
-    val codec = Codec.default
+class BooleanSlumberSpec : SlumbererSpecHelper(
+    cls = Boolean::class, nonNullSamples = nonNull, nullableSamples = nullable
+)
+
+/**
+ * Samples that map properly. These must be converted correctly to Boolean and to Boolean?
+ */
+private val nonNull = listOf(
+    @Suppress("BooleanLiteralArgument")
+    row(true, true),
+    row(1, true),
+    row(2, true),
+    row(1.1, true),
+    row("true", true),
+    row("1", true),
+    row("2", true),
 
     @Suppress("BooleanLiteralArgument")
-    val samples = listOf(
-        row(true, true),
-        row(1, true),
-        row(2, true),
-        row(1.1, true),
-        row("true", true),
-        row("1", true),
-        row("2", true),
+    row(false, false),
+    row(0, false),
+    row(0.9999, false),
+    row("0", false),
+    row("false", false),
+    row("stuff", false)
+)
 
-        row(false, false),
-        row(0, false),
-        row(0.9999, false),
-        row("0", false),
-        row("false", false),
-        row("stuff", false),
+/**
+ * Samples that map to null. Converting to Boolean must throw. Converting to Boolean? must not throw.
+ */
+private val nullable = listOf(
+    null,
+    emptyList<Any>(),
+    emptyMap<Any, Any>()
+)
 
-        row(null, null),
-        row(emptyList<Any>(), null),
-        row(emptyMap<Any, Any>(), null)
-    )
-
-    samples.forEach { (input, expected) ->
-
-        val inputClass = when {
-            input != null -> input::class.qualifiedName
-            else -> "null"
-        }
-
-        "Awaking a Boolean from '$input' ($inputClass) should result in '$expected'" {
-
-            assertSoftly {
-                withClue("Using Codec.default must work") {
-                    codec.awakeOrNull(Boolean::class, input) shouldBe expected
-                }
-            }
-        }
-
-        "Slumbering a Boolean from '$input' ($inputClass) should result in '$expected'" {
-
-            assertSoftly {
-                withClue("Using Codec.default must work") {
-                    codec.slumber(Boolean::class, input) shouldBe expected
-                }
-            }
-        }
-    }
-})

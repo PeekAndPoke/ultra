@@ -3,7 +3,7 @@ package de.peekandpoke.ultra.slumber.builtin.objects
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.Slumberer
 
-object NothingCodec : Awaker, Slumberer {
+object NullCodec : Awaker, Slumberer {
 
     override fun awake(data: Any?, context: Awaker.Context): Any? = null
 
