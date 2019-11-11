@@ -134,24 +134,30 @@ class KontainerBlueprint internal constructor(
      */
     private fun instantiate(overwrittenDynamics: List<Pair<KClass<*>, ServiceProvider>>): Kontainer {
 
-        return Kontainer(
-            this,
-            // all singletons
-            singletons
-                // add providers for prototype services
-                .plus(prototypes)
-                // create new providers for all semi dynamic services
-                .plus(semiDynamics.map { (k, v) ->
-                    k to ServiceProvider.ForSingleton(ServiceProvider.Type.SemiDynamic, v)
-                })
-                // create new providers for all dynamic services
-                .plus(dynamics.map { (k, v) ->
-                    k to ServiceProvider.ForSingleton(ServiceProvider.Type.DynamicDefault, v)
-                })
-                // add providers for all overwritten dynamic services
-                .plus(overwrittenDynamics)
+        val map = HashMap<KClass<*>, ServiceProvider>(
+            singletons.size +
+                    prototypes.size +
+                    semiDynamics.size +
+                    dynamics.size +
+                    overwrittenDynamics.size
+        )
 
-        ).apply {
+        // put all singletons
+        map.putAll(singletons)
+        // add providers for prototype services
+        map.putAll(prototypes)
+        // create new providers for all semi dynamic services
+        map.putAll(semiDynamics.map { (k, v) ->
+            k to ServiceProvider.ForSingleton(ServiceProvider.Type.SemiDynamic, v)
+        })
+        // create new providers for all dynamic services
+        map.putAll(dynamics.map { (k, v) ->
+            k to ServiceProvider.ForSingleton(ServiceProvider.Type.DynamicDefault, v)
+        })
+        // add providers for all overwritten dynamic services
+        map.putAll(overwrittenDynamics)
+
+        return Kontainer(this, map).apply {
             // Track the Kontainer
             tracker.track(this)
         }
