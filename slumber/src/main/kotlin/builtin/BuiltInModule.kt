@@ -9,6 +9,7 @@ import de.peekandpoke.ultra.slumber.builtin.collections.MapAwaker
 import de.peekandpoke.ultra.slumber.builtin.collections.MapSlumberer
 import de.peekandpoke.ultra.slumber.builtin.objects.*
 import de.peekandpoke.ultra.slumber.builtin.primitive.*
+import java.io.Serializable
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 
@@ -85,7 +86,7 @@ object BuiltInModule : SlumberModule {
                 // Null or Nothing
                 cls in listOf(Nothing::class, Unit::class) -> NullCodec
                 // Any type
-                cls == Any::class ->
+                cls in listOf(Any::class, Serializable::class) ->
                     if (type.isMarkedNullable) NullableAnySlumberer else NonNullAnySlumberer
                 // Primitive types
                 cls == Number::class ->

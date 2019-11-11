@@ -18,6 +18,7 @@ version = VERSION_NAME
 
 val logback_version: String by project
 val kotlintest_version: String by project
+val kotlinx_coroutines_version: String by project
 
 repositories {
     mavenCentral()
@@ -27,6 +28,8 @@ repositories {
 dependencies {
     api(kotlin("stdlib-jdk8"))
     api(kotlin("reflect"))
+
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version")
 
     compile(project(":common"))
 
