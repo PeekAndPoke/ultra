@@ -2,20 +2,14 @@ package de.peekandpoke.ultra.slumber.builtin.primitive
 
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.Slumberer
-import de.peekandpoke.ultra.slumber.builtin.NonNullAwaker
-import de.peekandpoke.ultra.slumber.builtin.NonNullSlumberer
 
-object NullableFloatAwaker : Awaker {
+object FloatAwaker : Awaker {
     override fun awake(data: Any?, context: Awaker.Context) = map(data)
 }
 
-object NonNullFloatAwaker : NonNullAwaker(NullableFloatAwaker)
-
-object NullableFloatSlumberer : Slumberer {
+object FloatSlumberer : Slumberer {
     override fun slumber(data: Any?, context: Slumberer.Context) = map(data)
 }
-
-object NonNullFloatSlumberer : NonNullSlumberer(NullableFloatSlumberer)
 
 private fun map(data: Any?): Float? = when (data) {
 

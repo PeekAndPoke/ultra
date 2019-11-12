@@ -26,49 +26,38 @@ object BuiltInModule : SlumberModule {
                 cls in listOf(Nothing::class, Unit::class) -> NullCodec
 
                 // Any type
-                cls in listOf(Any::class, Serializable::class) ->
-                    if (type.isMarkedNullable) NullableAnyAwaker else NonNullAnyAwaker
+                cls in listOf(Any::class, Serializable::class) -> type.wrapIfNonNull(AnyAwaker)
 
                 // Primitive types
-                cls == Number::class ->
-                    if (type.isMarkedNullable) NullableNumberAwaker else NonNullNumberAwaker
-                cls == Boolean::class ->
-                    if (type.isMarkedNullable) NullableBooleanAwaker else NonNullBooleanAwaker
-                cls == Byte::class ->
-                    if (type.isMarkedNullable) NullableByteAwaker else NonNullByteAwaker
-                cls == Char::class ->
-                    if (type.isMarkedNullable) NullableCharAwaker else NonNullCharAwaker
-                cls == Double::class ->
-                    if (type.isMarkedNullable) NullableDoubleAwaker else NonNullDoubleAwaker
-                cls == Float::class ->
-                    if (type.isMarkedNullable) NullableFloatAwaker else NonNullFloatAwaker
-                cls == Int::class ->
-                    if (type.isMarkedNullable) NullableIntAwaker else NonNullIntAwaker
-                cls == Long::class ->
-                    if (type.isMarkedNullable) NullableLongAwaker else NonNullLongAwaker
-                cls == Short::class ->
-                    if (type.isMarkedNullable) NullableShortAwaker else NonNullShortAwaker
+                cls == Number::class -> type.wrapIfNonNull(NumberAwaker)
+                cls == Boolean::class -> type.wrapIfNonNull(BooleanAwaker)
+                cls == Byte::class -> type.wrapIfNonNull(ByteAwaker)
+                cls == Char::class -> type.wrapIfNonNull(CharAwaker)
+                cls == Double::class -> type.wrapIfNonNull(DoubleAwaker)
+                cls == Float::class -> type.wrapIfNonNull(FloatAwaker)
+                cls == Int::class -> type.wrapIfNonNull(IntAwaker)
+                cls == Long::class -> type.wrapIfNonNull(LongAwaker)
+                cls == Short::class -> type.wrapIfNonNull(ShortAwaker)
 
                 // Strings
-                cls == String::class ->
-                    if (type.isMarkedNullable) NullableStringAwaker else NonNullStringAwaker
+                cls == String::class -> type.wrapIfNonNull(StringAwaker)
 
                 // Lists
-                cls == Iterable::class || cls == List::class -> CollectionAwaker.forList(type)
+                cls == Iterable::class || cls == List::class ->
+                    type.wrapIfNonNull(CollectionAwaker.forList(type.arguments[0].type!!))
                 cls == MutableList::class ->
-                    CollectionAwaker.forMutableList(type.arguments[0].type!!)
+                    type.wrapIfNonNull(CollectionAwaker.forMutableList(type.arguments[0].type!!))
                 cls == Set::class ->
-                    CollectionAwaker.forSet(type.arguments[0].type!!)
+                    type.wrapIfNonNull(CollectionAwaker.forSet(type.arguments[0].type!!))
                 cls == MutableSet::class ->
-                    CollectionAwaker.forMutableSet(type.arguments[0].type!!)
+                    type.wrapIfNonNull(CollectionAwaker.forMutableSet(type.arguments[0].type!!))
 
                 // Maps
                 cls == Map::class ->
                     MapAwaker(type.arguments[0].type!!, type.arguments[1].type!!)
 
                 // Data classes
-                cls.isData ->
-                    if (type.isMarkedNullable) DataClassAwaker(type) else NonNullAwaker(DataClassAwaker(type))
+                cls.isData -> type.wrapIfNonNull(DataClassAwaker(type))
 
                 else -> null
             }
@@ -88,43 +77,30 @@ object BuiltInModule : SlumberModule {
                 cls in listOf(Nothing::class, Unit::class) -> NullCodec
 
                 // Any, Object or Serializable type
-                cls in listOf(Any::class, Serializable::class) ->
-                    if (type.isMarkedNullable) NullableAnySlumberer else NonNullAnySlumberer
+                cls in listOf(Any::class, Serializable::class) -> type.wrapIfNonNull(AnySlumberer)
 
                 // Primitive types
-                cls == Number::class ->
-                    if (type.isMarkedNullable) NullableNumberSlumberer else NonNullNumberSlumberer
-                cls == Boolean::class ->
-                    if (type.isMarkedNullable) NullableBooleanSlumberer else NonNullBooleanSlumberer
-                cls == Byte::class ->
-                    if (type.isMarkedNullable) NullableByteSlumberer else NonNullByteSlumberer
-                cls == Char::class ->
-                    if (type.isMarkedNullable) NullableCharSlumberer else NonNullCharSlumberer
-                cls == Double::class ->
-                    if (type.isMarkedNullable) NullableDoubleSlumberer else NonNullDoubleSlumberer
-                cls == Float::class ->
-                    if (type.isMarkedNullable) NullableFloatSlumberer else NonNullFloatSlumberer
-                cls == Int::class ->
-                    if (type.isMarkedNullable) NullableIntSlumberer else NonNullIntSlumberer
-                cls == Long::class ->
-                    if (type.isMarkedNullable) NullableLongSlumberer else NonNullLongSlumberer
-                cls == Short::class ->
-                    if (type.isMarkedNullable) NullableShortSlumberer else NonNullShortSlumberer
+                cls == Number::class -> type.wrapIfNonNull(NumberSlumberer)
+                cls == Boolean::class -> type.wrapIfNonNull(BooleanSlumberer)
+                cls == Byte::class -> type.wrapIfNonNull(ByteSlumberer)
+                cls == Char::class -> type.wrapIfNonNull(CharSlumberer)
+                cls == Double::class -> type.wrapIfNonNull(DoubleSlumberer)
+                cls == Float::class -> type.wrapIfNonNull(FloatSlumberer)
+                cls == Int::class -> type.wrapIfNonNull(IntSlumberer)
+                cls == Long::class -> type.wrapIfNonNull(LongSlumberer)
+                cls == Short::class -> type.wrapIfNonNull(ShortSlumberer)
 
                 // Strings
-                cls == String::class ->
-                    if (type.isMarkedNullable) NullableStringSlumberer else NonNullStringSlumberer
+                cls == String::class -> type.wrapIfNonNull(StringSlumberer)
 
                 // Iterables
-                Iterable::class.java.isAssignableFrom(cls.java) ->
-                    if (type.isMarkedNullable) CollectionSlumberer else NonNullSlumberer(CollectionSlumberer)
+                Iterable::class.java.isAssignableFrom(cls.java) -> type.wrapIfNonNull(CollectionSlumberer)
 
                 // Maps
                 Map::class.java.isAssignableFrom(cls.java) -> MapSlumberer
 
                 // Data classes
-                cls.isData ->
-                    if (type.isMarkedNullable) DataClassSlumberer(cls) else NonNullSlumberer(DataClassSlumberer(cls))
+                cls.isData -> type.wrapIfNonNull(DataClassSlumberer(cls))
 
                 else -> null
             }
