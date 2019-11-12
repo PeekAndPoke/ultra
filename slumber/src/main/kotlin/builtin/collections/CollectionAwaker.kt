@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin.collections
 
 import de.peekandpoke.ultra.slumber.Awaker
+import de.peekandpoke.ultra.slumber.builtin.NonNullAwaker
 import kotlin.reflect.KType
 
 class CollectionAwaker(
@@ -10,8 +11,9 @@ class CollectionAwaker(
 
     companion object {
 
-        fun forList(innerType: KType) =
-            CollectionAwaker(innerType) { toList() }
+        fun forList(type: KType) = CollectionAwaker(type.arguments[0].type!!) { toList() }.let {
+            if (type.isMarkedNullable) it else NonNullAwaker(it)
+        }
 
         fun forMutableList(innerType: KType) =
             CollectionAwaker(innerType) { toMutableList() }
@@ -35,7 +37,7 @@ class CollectionAwaker(
     private fun awakeInternal(data: Iterable<*>, context: Awaker.Context): Any? {
 
         return data
-            .mapIndexed { idx, item -> context.stepInto(idx.toString()).awakeOrNull(innerType, item) }
+            .mapIndexed { idx, item -> context.stepInto(idx.toString()).awake(innerType, item) }
             .creator()
     }
 }

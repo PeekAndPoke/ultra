@@ -1,25 +1,24 @@
 package de.peekandpoke.ultra.slumber.builtin
 
-import de.peekandpoke.ultra.slumber.AwakerException
+import de.peekandpoke.ultra.common.TypeRef
 import de.peekandpoke.ultra.slumber.Codec
+import de.peekandpoke.ultra.slumber.SlumbererException
 import io.kotlintest.assertSoftly
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.StringSpec
 import io.kotlintest.tables.Row2
-import kotlin.reflect.KClass
-import kotlin.reflect.full.createType
 
 abstract class SlumbererSpecHelper(
-    cls: KClass<*>,
+    type: TypeRef<*>,
     nonNullSamples: List<Row2<*, *>>,
     nullableSamples: List<*>
 ) : StringSpec({
 
-    val clsName = cls.qualifiedName
+    val clsName = type.type.toString()
 
-    val nullableType = cls.createType(listOf(), true)
-    val nonNullType = cls.createType(listOf(), false)
+    val nonNullType = type.type
+    val nullableType = type.nullable.type
 
     val codec = Codec.default
 
@@ -33,7 +32,7 @@ abstract class SlumbererSpecHelper(
         "Slumbering a $clsName from '$input' ($inputClass) should result in '$expected'" {
 
             assertSoftly {
-                codec.slumber<Any>(nonNullType, input) shouldBe expected
+                codec.slumber(nonNullType, input) shouldBe expected
             }
         }
     }
@@ -48,7 +47,7 @@ abstract class SlumbererSpecHelper(
         "Slumbering '$input' ($inputClass) into a $clsName? should result in '$expected'" {
 
             assertSoftly {
-                codec.slumber<Any>(nullableType, input) shouldBe expected
+                codec.slumber(nullableType, input) shouldBe expected
             }
         }
     }
@@ -63,7 +62,7 @@ abstract class SlumbererSpecHelper(
         "Slumbering a $clsName from '$input' ($inputClass) should throw" {
 
             assertSoftly {
-                shouldThrow<AwakerException> {
+                shouldThrow<SlumbererException> {
                     codec.slumber(nonNullType, input)
                 }
             }
@@ -80,7 +79,7 @@ abstract class SlumbererSpecHelper(
         "Slumbering '$input' ($inputClass) into a $clsName? from should result in 'null'" {
 
             assertSoftly {
-                codec.slumber<Any>(nullableType, input) shouldBe null
+                codec.slumber(nullableType, input) shouldBe null
             }
         }
     }

@@ -24,6 +24,19 @@ class DataClassAwakerSpec : StringSpec({
         result shouldBe DataClass("hello", 1)
     }
 
+    "Awaking a nullable data class with two parameters" {
+
+        data class DataClass(val str: String, val int: Int)
+
+        val codec = Codec.default
+
+        val type = DataClass::class.createType(nullable = true)
+
+        val result = codec.awake(type, mapOf("str" to "hello", "int" to 1))
+
+        result shouldBe DataClass("hello", 1)
+    }
+
     "Awaking a data class with one String parameter" {
 
         data class DataClass(val str: String)
@@ -63,6 +76,36 @@ class DataClassAwakerSpec : StringSpec({
                 shouldThrow<AwakerException> {
                     codec.awake(DataClass::class, "invalid")
                 }
+            }
+        }
+    }
+
+    "Awaking a nullable data class with one String? parameter" {
+
+        data class DataClass(val str: String?)
+
+        val codec = Codec.default
+
+        val type = DataClass::class.createType(nullable = true)
+
+        assertSoftly {
+
+            withClue("A given value must be set") {
+                codec.awake(type, mapOf("str" to "hello")) shouldBe DataClass("hello")
+            }
+
+            withClue("A given null value must be set") {
+                codec.awake(type, mapOf("str" to null)) shouldBe DataClass(null)
+            }
+
+            withClue("A missing value must be used like null") {
+                codec.awake(type, emptyMap<String, Any>()) shouldBe DataClass(null)
+            }
+
+            withClue("Any data that is not a Map is not acceptable even when all fields are nullable") {
+                codec.awake(type, null) shouldBe null
+
+                codec.awake(type, "invalid") shouldBe null
             }
         }
     }
@@ -218,9 +261,9 @@ class DataClassAwakerSpec : StringSpec({
         )
 
         assertSoftly {
-            codec.awake<Any>(stringType, mapOf("generic" to "hello")) shouldBe DataClass("hello")
+            codec.awake(stringType, mapOf("generic" to "hello")) shouldBe DataClass("hello")
 
-            codec.awake<Any>(intType, mapOf("generic" to 100)) shouldBe DataClass(100)
+            codec.awake(intType, mapOf("generic" to 100)) shouldBe DataClass(100)
         }
     }
 
@@ -245,11 +288,11 @@ class DataClassAwakerSpec : StringSpec({
         )
 
         assertSoftly {
-            codec.awake<Any>(
+            codec.awake(
                 stringIntType, mapOf("first" to "hello", "second" to 100)
             ) shouldBe DataClass("hello", 100)
 
-            codec.awake<Any>(
+            codec.awake(
                 intStringType, mapOf("first" to 100, "second" to "hello")
             ) shouldBe DataClass(100, "hello")
         }
@@ -276,11 +319,11 @@ class DataClassAwakerSpec : StringSpec({
         )
 
         assertSoftly {
-            codec.awake<Any>(
+            codec.awake(
                 stringIntType, mapOf("map" to mapOf("hello" to 1, "you" to 2))
             ) shouldBe DataClass(mapOf("hello" to 1, "you" to 2))
 
-            codec.awake<Any>(
+            codec.awake(
                 intStringType, mapOf("map" to mapOf(1 to "hello", 2 to "you"))
             ) shouldBe DataClass(mapOf(1 to "hello", 2 to "you"))
         }

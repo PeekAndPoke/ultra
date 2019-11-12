@@ -1,10 +1,13 @@
 package de.peekandpoke.ultra.slumber.builtin.objects
 
 import de.peekandpoke.ultra.slumber.Codec
+import de.peekandpoke.ultra.slumber.SlumbererException
 import io.kotlintest.assertSoftly
 import io.kotlintest.matchers.withClue
 import io.kotlintest.shouldBe
+import io.kotlintest.shouldThrow
 import io.kotlintest.specs.StringSpec
+import kotlin.reflect.full.createType
 
 class DataClassSlumbererSpec : StringSpec({
 
@@ -101,6 +104,32 @@ class DataClassSlumbererSpec : StringSpec({
                 "strings" to mapOf("hello" to 1, "you" to 2),
                 "ints" to mapOf(1 to null, 2 to "a", 3 to 10)
             )
+        }
+    }
+
+    "Slumbering 'null' as a data class must throw" {
+
+        data class DataClass(val int: Int)
+
+        val codec = Codec.default
+
+        assertSoftly {
+            shouldThrow<SlumbererException> {
+                codec.slumber(DataClass::class, null)
+            }
+        }
+    }
+
+    "Slumbering 'null' as a nullable data class must work" {
+
+        data class DataClass(val int: Int)
+
+        val codec = Codec.default
+
+        val type = DataClass::class.createType(nullable = true)
+
+        assertSoftly {
+            codec.slumber(type, null) shouldBe null
         }
     }
 })

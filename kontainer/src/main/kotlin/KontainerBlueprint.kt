@@ -147,13 +147,13 @@ class KontainerBlueprint internal constructor(
         // add providers for prototype services
         map.putAll(prototypes)
         // create new providers for all semi dynamic services
-        map.putAll(semiDynamics.map { (k, v) ->
-            k to ServiceProvider.ForSingleton(ServiceProvider.Type.SemiDynamic, v)
-        })
+        semiDynamics.forEach { (k, v) ->
+            map[k] = ServiceProvider.ForSingleton(ServiceProvider.Type.SemiDynamic, v)
+        }
         // create new providers for all dynamic services
-        map.putAll(dynamics.map { (k, v) ->
-            k to ServiceProvider.ForSingleton(ServiceProvider.Type.DynamicDefault, v)
-        })
+        dynamics.forEach { (k, v) ->
+            map[k] = ServiceProvider.ForSingleton(ServiceProvider.Type.DynamicDefault, v)
+        }
         // add providers for all overwritten dynamic services
         map.putAll(overwrittenDynamics)
 

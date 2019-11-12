@@ -24,8 +24,9 @@ object BuiltInModule : SlumberModule {
             return when {
                 // Null or Nothing
                 cls in listOf(Nothing::class, Unit::class) -> NullCodec
+
                 // Any type
-                cls == Any::class ->
+                cls in listOf(Any::class, Serializable::class) ->
                     if (type.isMarkedNullable) NullableAnyAwaker else NonNullAnyAwaker
 
                 // Primitive types
@@ -53,8 +54,7 @@ object BuiltInModule : SlumberModule {
                     if (type.isMarkedNullable) NullableStringAwaker else NonNullStringAwaker
 
                 // Lists
-                cls == Iterable::class || cls == List::class ->
-                    CollectionAwaker.forList(type.arguments[0].type!!)
+                cls == Iterable::class || cls == List::class -> CollectionAwaker.forList(type)
                 cls == MutableList::class ->
                     CollectionAwaker.forMutableList(type.arguments[0].type!!)
                 cls == Set::class ->
@@ -67,7 +67,8 @@ object BuiltInModule : SlumberModule {
                     MapAwaker(type.arguments[0].type!!, type.arguments[1].type!!)
 
                 // Data classes
-                cls.isData -> DataClassAwaker(type)
+                cls.isData ->
+                    if (type.isMarkedNullable) DataClassAwaker(type) else NonNullAwaker(DataClassAwaker(type))
 
                 else -> null
             }
@@ -85,9 +86,11 @@ object BuiltInModule : SlumberModule {
             return when {
                 // Null or Nothing
                 cls in listOf(Nothing::class, Unit::class) -> NullCodec
-                // Any type
+
+                // Any, Object or Serializable type
                 cls in listOf(Any::class, Serializable::class) ->
                     if (type.isMarkedNullable) NullableAnySlumberer else NonNullAnySlumberer
+
                 // Primitive types
                 cls == Number::class ->
                     if (type.isMarkedNullable) NullableNumberSlumberer else NonNullNumberSlumberer
@@ -113,13 +116,15 @@ object BuiltInModule : SlumberModule {
                     if (type.isMarkedNullable) NullableStringSlumberer else NonNullStringSlumberer
 
                 // Iterables
-                Iterable::class.java.isAssignableFrom(cls.java) -> CollectionSlumberer
+                Iterable::class.java.isAssignableFrom(cls.java) ->
+                    if (type.isMarkedNullable) CollectionSlumberer else NonNullSlumberer(CollectionSlumberer)
 
                 // Maps
                 Map::class.java.isAssignableFrom(cls.java) -> MapSlumberer
 
                 // Data classes
-                cls.isData -> DataClassSlumberer(cls)
+                cls.isData ->
+                    if (type.isMarkedNullable) DataClassSlumberer(cls) else NonNullSlumberer(DataClassSlumberer(cls))
 
                 else -> null
             }

@@ -1,15 +1,16 @@
 package de.peekandpoke.ultra.slumber.builtin.primitive
 
+import de.peekandpoke.ultra.common.TypeRef
 import de.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
 import de.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
 import io.kotlintest.tables.row
 
 class ByteAwakerSpec : AwakerSpecHelper(
-    cls = Byte::class, nonNullSamples = nonNull, nullableSamples = nullable
+    type = TypeRef.Byte, nonNullSamples = nonNull, nullableSamples = nullable
 )
 
 class ByteSlumberSpec : SlumbererSpecHelper(
-    cls = Byte::class, nonNullSamples = nonNull, nullableSamples = nullable
+    type = TypeRef.Byte, nonNullSamples = nonNull, nullableSamples = nullable
 )
 
 /**

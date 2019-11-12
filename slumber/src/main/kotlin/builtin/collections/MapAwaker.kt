@@ -15,7 +15,7 @@ class MapAwaker(
         }
 
         return data
-            .map { (k, v) -> context.awakeOrNull(keyType, k) to context.awakeOrNull(valueType, v) }
+            .map { (k, v) -> context.awake(keyType, k) to context.awake(valueType, v) }
             .toMap()
     }
 }

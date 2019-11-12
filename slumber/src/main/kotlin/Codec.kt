@@ -34,26 +34,16 @@ open class Codec(
 
     private val kTypeCache = mutableMapOf<KClass<*>, KType>()
 
-    fun <T : Any> awake(type: KClass<T>, data: Any?): T = awake(type.kType(), data)
-
-    fun <T> awake(type: KType, data: Any?): T {
-        @Suppress("UNCHECKED_CAST")
-        return awakeOrNull(type, data) as T?
-            ?: throw AwakerException("Could not awake '${type}'")
-    }
-
-    fun <T : Any> awakeOrNull(type: KClass<T>, data: Any?): T? {
-        @Suppress("UNCHECKED_CAST")
-        return awakeOrNull(type.kType(), data) as T?
-    }
-
-    fun awakeOrNull(type: KType, data: Any?): Any? = awakeOrNull(type, data, awakerContext)
-
-    internal fun awakeOrNull(type: KType, data: Any?, context: Awaker.Context): Any? {
-        return getAwaker(type).awake(data, context)
-    }
-
     fun getAwaker(type: KType): Awaker = config.getAwaker(type)
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T : Any> awake(type: KClass<T>, data: Any?): T = awake(type.kType(), data) as T
+
+    fun awake(type: KType, data: Any?): Any? =
+        awake(type, data, awakerContext)
+
+    internal fun awake(type: KType, data: Any?, context: Awaker.Context): Any? =
+        getAwaker(type).awake(data, context)
 
     fun slumber(data: Any?): Any? {
 
@@ -66,12 +56,12 @@ open class Codec(
     }
 
     fun <T : Any> slumber(targetType: KClass<T>, data: Any?): T? {
-        return slumber(targetType.kType(), data)
+        @Suppress("UNCHECKED_CAST")
+        return slumber(targetType.kType(), data) as T?
     }
 
-    fun <T : Any> slumber(targetType: KType, data: Any?): T? {
-        @Suppress("UNCHECKED_CAST")
-        return config.getSlumberer(targetType).slumber(data, slumbererContext) as T?
+    fun slumber(targetType: KType, data: Any?): Any? {
+        return config.getSlumberer(targetType).slumber(data, slumbererContext)
     }
 
     /**

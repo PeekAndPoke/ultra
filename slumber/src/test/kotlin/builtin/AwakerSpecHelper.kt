@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin
 
+import de.peekandpoke.ultra.common.TypeRef
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Codec
 import io.kotlintest.assertSoftly
@@ -7,19 +8,17 @@ import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.StringSpec
 import io.kotlintest.tables.Row2
-import kotlin.reflect.KClass
-import kotlin.reflect.full.createType
 
 abstract class AwakerSpecHelper(
-    cls: KClass<*>,
+    type: TypeRef<*>,
     nonNullSamples: List<Row2<*, *>>,
     nullableSamples: List<*>
 ) : StringSpec({
 
-    val clsName = cls.qualifiedName
+    val clsName = type.type.toString()
 
-    val nullableType = cls.createType(listOf(), true)
-    val nonNullType = cls.createType(listOf(), false)
+    val nonNullType = type.type
+    val nullableType = type.nullable.type
 
     val codec = Codec.default
 
@@ -33,7 +32,7 @@ abstract class AwakerSpecHelper(
         "Awaking a $clsName from '$input' ($inputClass) should result in '$expected'" {
 
             assertSoftly {
-                codec.awakeOrNull(nonNullType, input) shouldBe expected
+                codec.awake(nonNullType, input) shouldBe expected
             }
         }
     }
@@ -48,7 +47,7 @@ abstract class AwakerSpecHelper(
         "Awaking a $clsName? from '$input' ($inputClass) should result in '$expected'" {
 
             assertSoftly {
-                codec.awakeOrNull(nullableType, input) shouldBe expected
+                codec.awake(nullableType, input) shouldBe expected
             }
         }
     }
@@ -64,7 +63,7 @@ abstract class AwakerSpecHelper(
 
             assertSoftly {
                 shouldThrow<AwakerException> {
-                    codec.awakeOrNull(nonNullType, input)
+                    codec.awake(nonNullType, input)
                 }
             }
         }
@@ -80,7 +79,7 @@ abstract class AwakerSpecHelper(
         "Awaking a $clsName? from '$input' ($inputClass) should result in 'null'" {
 
             assertSoftly {
-                codec.awakeOrNull(nullableType, input) shouldBe null
+                codec.awake(nullableType, input) shouldBe null
             }
         }
     }

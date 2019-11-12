@@ -67,7 +67,7 @@ class DataClassAwaker(private val rootType: KType) : Awaker {
             // Do we have data for param ?
             if (data.contains(param.name)) {
                 // Get the value and awake it
-                val bit = context.stepInto(paramName).awakeOrNull(type, data[paramName])
+                val bit = context.stepInto(paramName).awake(type, data[paramName])
 
                 // can we use the bit ?
                 if (bit != null || param.type.isMarkedNullable) {

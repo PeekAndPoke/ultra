@@ -9,7 +9,7 @@ interface Awaker {
 
         fun stepInto(step: String) = copy(path = "${path}.$step")
 
-        fun awakeOrNull(type: KType, data: Any?) = codec.awakeOrNull(type, data, this)
+        fun awake(type: KType, data: Any?): Any? = codec.awake(type, data, this)
 
         fun reportNullError(): Nothing = throw AwakerException(
             "Value at path '$path' must no be null"

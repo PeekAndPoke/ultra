@@ -4,12 +4,14 @@ import de.peekandpoke.ultra.slumber.Slumberer
 
 object CollectionSlumberer : Slumberer {
 
-    override fun slumber(data: Any?, context: Slumberer.Context): Any? {
+    override fun slumber(data: Any?, context: Slumberer.Context): Any? = when (data) {
 
-        if (data !is Iterable<*>) {
-            return null
-        }
+        is Iterable<*> -> map(data, context)
 
-        return data.map { context.slumber(it) }
+        is Array<*> -> map(data.toList(), context)
+
+        else -> null
     }
+
+    private fun map(data: Iterable<*>, context: Slumberer.Context) = data.map { context.slumber(it) }
 }

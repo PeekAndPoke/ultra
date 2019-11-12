@@ -10,7 +10,7 @@ interface Slumberer {
 
         fun slumber(data: Any?) = codec.slumber(data)
 
-        fun reportNullError(): Nothing = throw AwakerException(
+        fun reportNullError(): Nothing = throw SlumbererException(
             "Value at path '$path' must no be null"
         )
     }
