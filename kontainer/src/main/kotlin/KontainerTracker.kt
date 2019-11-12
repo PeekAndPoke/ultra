@@ -28,13 +28,11 @@ class KontainerTracker {
         instances.toMap()
     }
 
-    fun getAlive(olderThanSec: Int): Map<Kontainer, Instant> = synchronized(lock) {
-        Instant.now().let { now ->
-            instances.filterValues { now.epochSecond - it.epochSecond > olderThanSec }
-        }
+    fun getAlive(olderThanSec: Int): Map<Kontainer, Instant> = Instant.now().let { now ->
+        getAlive().filterValues { now.epochSecond - it.epochSecond > olderThanSec }
     }
 
-    fun getNumAlive(): Int = instances.size
+    fun getNumAlive(): Int = getAlive().size
 
     fun getNumAlive(olderThanSec: Int): Int = getAlive(olderThanSec).size
 }
