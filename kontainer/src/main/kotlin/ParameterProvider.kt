@@ -65,9 +65,9 @@ interface ParameterProvider {
      */
     data class ForConfigValue internal constructor(private val parameter: KParameter) : ParameterProvider {
 
-        private val paramCls by lazy { parameter.type.classifier as KClass<*> }
+        private val paramCls = parameter.type.classifier as KClass<*>
 
-        private val paramName by lazy { parameter.name!! }
+        private val paramName = parameter.name ?: "n/a"
 
         override fun provide(context: InjectionContext) = context.getConfig<Any>(paramName)
 
@@ -102,7 +102,7 @@ interface ParameterProvider {
 
         abstract val paramCls: KClass<*>
 
-        private val paramName by lazy { parameter.name!! }
+        private val paramName = parameter.name ?: "n/a"
 
         override fun validate(kontainer: Kontainer) = when {
 
@@ -139,7 +139,7 @@ interface ParameterProvider {
      */
     class ForService internal constructor(parameter: KParameter) : ForServiceBase(parameter) {
 
-        override val paramCls by lazy { parameter.type.classifier as KClass<*> }
+        override val paramCls = parameter.type.classifier as KClass<*>
     }
 
     /**
