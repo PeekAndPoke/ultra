@@ -31,7 +31,9 @@ class CollectionAwaker(
     private fun awakeInternal(data: Iterable<*>, context: Awaker.Context): Any? {
 
         return data
-            .mapIndexed { idx, item -> context.stepInto(idx.toString()).awake(innerType, item) }
+            .mapIndexed { idx, item ->
+                context.stepInto(idx.toString()).awake(innerType, item)
+            }
             .creator()
     }
 }

@@ -1,8 +1,9 @@
 package de.peekandpoke.ultra.slumber.builtin.collections
 
 import de.peekandpoke.ultra.slumber.Slumberer
+import kotlin.reflect.KType
 
-object CollectionSlumberer : Slumberer {
+class CollectionSlumberer(private val innerType: KType) : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Any? = when (data) {
 
@@ -13,5 +14,7 @@ object CollectionSlumberer : Slumberer {
         else -> null
     }
 
-    private fun map(data: Iterable<*>, context: Slumberer.Context) = data.map { context.slumber(it) }
+    private fun map(data: Iterable<*>, context: Slumberer.Context) = data.mapIndexed { idx, it ->
+        context.stepInto(idx.toString()).slumber(innerType, it)
+    }
 }

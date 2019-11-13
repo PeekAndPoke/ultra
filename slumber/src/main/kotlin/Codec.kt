@@ -37,7 +37,7 @@ open class Codec(
     fun getAwaker(type: KType): Awaker = config.getAwaker(type)
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : Any> awake(type: KClass<T>, data: Any?): T = awake(type.kType(), data) as T
+    fun <T : Any> awake(type: KClass<T>, data: Any?): T? = awake(type.kType(), data) as T?
 
     fun awake(type: KType, data: Any?): Any? =
         awake(type, data, awakerContext)

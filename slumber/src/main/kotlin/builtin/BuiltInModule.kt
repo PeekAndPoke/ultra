@@ -94,7 +94,8 @@ object BuiltInModule : SlumberModule {
                 cls == String::class -> type.wrapIfNonNull(StringSlumberer)
 
                 // Iterables
-                Iterable::class.java.isAssignableFrom(cls.java) -> type.wrapIfNonNull(CollectionSlumberer)
+                Iterable::class.java.isAssignableFrom(cls.java) ->
+                    type.wrapIfNonNull(CollectionSlumberer(type.arguments[0].type!!))
 
                 // Maps
                 Map::class.java.isAssignableFrom(cls.java) -> MapSlumberer
