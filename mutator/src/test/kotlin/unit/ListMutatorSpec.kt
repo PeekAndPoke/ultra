@@ -354,9 +354,10 @@ class ListMutatorSpec : StringSpec({
 
         assertSoftly {
 
-            try {
-                subject[100] = SomeDataClass("third", 3).mutator()
-            } catch (e: Throwable) {
+            shouldThrow<IndexOutOfBoundsException> {
+                apply {
+                    subject[100] = SomeDataClass("third", 3).mutator()
+                }
             }
 
             (source === subject.getResult()) shouldBe true

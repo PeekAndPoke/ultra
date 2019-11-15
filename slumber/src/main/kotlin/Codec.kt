@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.slumber
 
 import de.peekandpoke.ultra.common.TypedAttributes
+import de.peekandpoke.ultra.common.kType
 import de.peekandpoke.ultra.slumber.builtin.BuiltInModule
 import de.peekandpoke.ultra.slumber.builtin.DateTimeModule
 import kotlin.reflect.KClass
@@ -37,6 +38,8 @@ open class Codec(
     fun getAwaker(type: KType): Awaker = config.getAwaker(type)
 
     fun <T : Any> awake(type: KClass<T>, data: Any?): T? = awake(type, data, awakerContext)
+
+    inline fun <reified T> awake(data: Any?): T? = awake(kType<T>().type, data, awakerContext) as T?
 
     @Suppress("UNCHECKED_CAST")
     fun <T : Any> awake(type: KClass<T>, data: Any?, context: Awaker.Context): T? =

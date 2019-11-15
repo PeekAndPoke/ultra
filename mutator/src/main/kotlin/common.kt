@@ -1,5 +1,7 @@
 package de.peekandpoke.ultra.mutator
 
+typealias OnModify<T> = (newValue: T) -> Unit
+
 infix fun <X> X.isSameAs(other: X) = !isNotSameAs(other)
 
 @Suppress("USELESS_CAST")
