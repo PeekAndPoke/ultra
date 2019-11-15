@@ -294,4 +294,22 @@ class TypeRefSpec : StringSpec({
             result.type.arguments[0].type!!.isMarkedNullable shouldBe true
         }
     }
+
+    "Creating a TypeRef from a KClass" {
+
+        assertSoftly {
+            List::class.kType() shouldBe kListType<Any>()
+            @Suppress("RemoveExplicitTypeArguments")
+            Int::class.kType() shouldBe kType<Int>()
+        }
+    }
+
+    "Creating a TypeRef from a Java Class" {
+
+        assertSoftly {
+            List::class.java.kType() shouldBe kListType<Any>()
+            @Suppress("RemoveExplicitTypeArguments")
+            Int::class.java.kType() shouldBe kType<Int>()
+        }
+    }
 })

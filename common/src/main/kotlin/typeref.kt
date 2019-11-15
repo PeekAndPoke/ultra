@@ -47,6 +47,9 @@ data class TypeRef<T>(val type: KType) {
         val StringNull = kType<String?>()
     }
 
+    /**
+     * Converts to a nullable type
+     */
     val nullable: TypeRef<T?> by lazy(LazyThreadSafetyMode.NONE) {
         TypeRef<T?>(
             type.classifier!!.createType(
@@ -56,6 +59,9 @@ data class TypeRef<T>(val type: KType) {
         )
     }
 
+    /**
+     * Wraps the current type as a [List] type
+     */
     val list: TypeRef<List<T>> by lazy(LazyThreadSafetyMode.NONE) {
         TypeRef<List<T>>(
             List::class.createType(
@@ -114,6 +120,9 @@ data class TypeRef<T>(val type: KType) {
         TypeRef<Any>(type.arguments[0].type!!)
     }
 
+    /**
+     * Internal cache used by [wrapWith]
+     */
     private val wrapCache = mutableMapOf<KClass<*>, TypeRef<*>>()
 }
 
@@ -148,18 +157,20 @@ inline fun <reified T : Any?> kType(): TypeRef<T> {
 }
 
 /**
- * Creates a [TypeRef] from the given class
+ * Creates a [TypeRef] from the given [Class]
  */
-fun <T : Any> Class<T>.kType(): TypeRef<T> {
+fun <T : Any> Class<T>.kType(): TypeRef<T> = kotlin.kType()
 
-    val cls = kotlin
-
-    if (cls.typeParameters.isNotEmpty()) {
-        error("Cannot create a KType for a generic class. Use the helper functions like kListType(), kMapType(), kGenericType() instead")
-    }
-
-    return TypeRef(cls.createType())
-}
+/**
+ * Creates a [TypeRef] from the given [KClass]
+ */
+fun <T : Any> KClass<T>.kType(): TypeRef<T> = TypeRef(
+    createType(
+        arguments = typeParameters.map {
+            KTypeProjection.invariant(Any::class.createType())
+        }
+    )
+)
 
 /**
  * Creates a [TypeRef] for a List type of the given type
@@ -256,6 +267,5 @@ abstract class TypeReference<T> protected constructor() : Comparable<TypeReferen
         is WildcardType -> this.upperBounds[0].toClass()
         else -> Class.forName(this.typeName).kotlin
     }
-
 }
 

@@ -18,4 +18,11 @@ fun <R, T : Function<R>> T.nthParamName(n: Int): String {
     }
 }
 
+/**
+ * Internal cache for parameter names.
+ *
+ * Due to internal details of the kotlin runtime get parameter names from closure is expensive.
+ *
+ * Used by [nthParamName]
+ */
 internal val NthParamNameCache = mutableMapOf<Pair<KClass<*>, Int>, String>()

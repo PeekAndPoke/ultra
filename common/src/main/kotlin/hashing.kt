@@ -6,6 +6,30 @@ import java.security.MessageDigest
 import java.util.*
 
 /**
+ * Character lookup for [toHex]
+ */
+private val hexArray = "0123456789abcdef".toCharArray()
+
+/**
+ * Converts the ByteArray into a hex string
+ */
+fun ByteArray.toHex(): String {
+
+    val hexChars = CharArray(size * 2)
+
+    forEachIndexed { idx, byte ->
+
+        @Suppress("EXPERIMENTAL_API_USAGE")
+        val v = byte.toUByte().toInt()
+
+        hexChars[idx * 2] = hexArray[v ushr 4]
+        hexChars[idx * 2 + 1] = hexArray[v and 0x0F]
+    }
+
+    return String(hexChars)
+}
+
+/**
  * Encodes the byte array as a base64 string
  */
 fun ByteArray.toBase64(): String = Base64.getEncoder().encodeToString(this)
@@ -20,6 +44,9 @@ fun String.toBase64(charset: Charset = Charsets.UTF_8): String = toByteArray(cha
  */
 fun String.fromBase64(): ByteArray = Base64.getDecoder().decode(this)
 
+/**
+ * Calculates the md5 hash for the ByteArray
+ */
 fun ByteArray.md5(): String {
     val md = MessageDigest.getInstance("MD5")
 
