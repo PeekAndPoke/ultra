@@ -98,15 +98,27 @@ interface ParameterProvider {
     /**
      * Base for single service providers
      */
-    abstract class ForServiceBase internal constructor(private val parameter: KParameter) : ParameterProvider {
+    class ForService internal constructor(parameter: KParameter) : ParameterProvider {
 
-        abstract val paramCls: KClass<*>
+        private val paramCls = parameter.type.classifier as KClass<*>
+
+        private val isNullable = parameter.type.isMarkedNullable
 
         private val paramName = parameter.name ?: "n/a"
 
+        /**
+         * Provides the service
+         *
+         * NOTICE: we always use context.getOrNull(). Validity is checked in [validate]
+         */
+        override fun provide(context: InjectionContext) = context.getOrNull(paramCls)
+
+        /**
+         * Validates if the service can be provided by the container
+         */
         override fun validate(kontainer: Kontainer) = when {
 
-            parameter.type.isMarkedNullable -> listOf()
+            isNullable -> listOf()
 
             else -> kontainer.getCandidates(paramCls).let {
 
@@ -125,21 +137,6 @@ interface ParameterProvider {
                 }
             }
         }
-
-        override fun provide(context: InjectionContext) = when {
-
-            parameter.type.isMarkedNullable -> context.getOrNull(paramCls)
-
-            else -> context.get(paramCls)
-        }
-    }
-
-    /**
-     * Provider for a single object
-     */
-    class ForService internal constructor(parameter: KParameter) : ForServiceBase(parameter) {
-
-        override val paramCls = parameter.type.classifier as KClass<*>
     }
 
     /**

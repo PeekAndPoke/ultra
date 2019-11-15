@@ -4,7 +4,7 @@ import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.Slumberer
 import java.time.Instant
 
-object InstantCodec : Awaker, Slumberer {
+object InstantAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): Instant? {
 
@@ -17,6 +17,9 @@ object InstantCodec : Awaker, Slumberer {
             else -> null
         }
     }
+}
+
+object InstantSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {
 

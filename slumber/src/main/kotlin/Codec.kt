@@ -36,13 +36,16 @@ open class Codec(
 
     fun getAwaker(type: KType): Awaker = config.getAwaker(type)
 
+    fun <T : Any> awake(type: KClass<T>, data: Any?): T? = awake(type, data, awakerContext)
+
     @Suppress("UNCHECKED_CAST")
-    fun <T : Any> awake(type: KClass<T>, data: Any?): T? = awake(type.kType(), data) as T?
+    fun <T : Any> awake(type: KClass<T>, data: Any?, context: Awaker.Context): T? =
+        awake(type.kType(), data, context) as T?
 
     fun awake(type: KType, data: Any?): Any? =
         awake(type, data, awakerContext)
 
-    internal fun awake(type: KType, data: Any?, context: Awaker.Context): Any? =
+    fun awake(type: KType, data: Any?, context: Awaker.Context): Any? =
         getAwaker(type).awake(data, context)
 
     fun slumber(data: Any?): Any? {

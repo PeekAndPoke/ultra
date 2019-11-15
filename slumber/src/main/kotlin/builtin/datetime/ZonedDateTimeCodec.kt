@@ -6,7 +6,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
-object ZonedDateTimeCodec : Awaker, Slumberer {
+object ZonedDateTimeAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): ZonedDateTime? {
 
@@ -26,6 +26,9 @@ object ZonedDateTimeCodec : Awaker, Slumberer {
             else -> null
         }
     }
+}
+
+object ZonedDateTimeSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {
 

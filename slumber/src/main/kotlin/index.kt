@@ -1,7 +1,5 @@
 package de.peekandpoke.ultra.slumber
 
-import de.peekandpoke.ultra.slumber.builtin.NonNullAwaker
-import de.peekandpoke.ultra.slumber.builtin.NonNullSlumberer
 import kotlin.reflect.KType
 
 interface SlumberModule {

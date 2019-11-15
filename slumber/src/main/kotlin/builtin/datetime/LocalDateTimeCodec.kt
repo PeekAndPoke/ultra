@@ -5,7 +5,7 @@ import de.peekandpoke.ultra.slumber.Slumberer
 import java.time.Instant
 import java.time.LocalDateTime
 
-object LocalDateTimeCodec : Awaker, Slumberer {
+object LocalDateTimeAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): LocalDateTime? {
 
@@ -18,6 +18,9 @@ object LocalDateTimeCodec : Awaker, Slumberer {
             else -> null
         }
     }
+}
+
+object LocalDateTimeSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {
 

@@ -7,7 +7,11 @@ import de.peekandpoke.ultra.slumber.builtin.collections.CollectionAwaker
 import de.peekandpoke.ultra.slumber.builtin.collections.CollectionSlumberer
 import de.peekandpoke.ultra.slumber.builtin.collections.MapAwaker
 import de.peekandpoke.ultra.slumber.builtin.collections.MapSlumberer
-import de.peekandpoke.ultra.slumber.builtin.objects.*
+import de.peekandpoke.ultra.slumber.builtin.objects.AnyAwaker
+import de.peekandpoke.ultra.slumber.builtin.objects.AnySlumberer
+import de.peekandpoke.ultra.slumber.builtin.objects.DataClassCodec
+import de.peekandpoke.ultra.slumber.builtin.objects.NullCodec
+import de.peekandpoke.ultra.slumber.builtin.polymorphism.Polymorphic
 import de.peekandpoke.ultra.slumber.builtin.primitive.*
 import java.io.Serializable
 import kotlin.reflect.KClass
@@ -43,22 +47,21 @@ object BuiltInModule : SlumberModule {
                 cls == String::class -> type.wrapIfNonNull(StringAwaker)
 
                 // Lists
-                cls == Iterable::class || cls == List::class ->
-                    type.wrapIfNonNull(CollectionAwaker.forList(type.arguments[0].type!!))
-                cls == MutableList::class ->
-                    type.wrapIfNonNull(CollectionAwaker.forMutableList(type.arguments[0].type!!))
-                cls == Set::class ->
-                    type.wrapIfNonNull(CollectionAwaker.forSet(type.arguments[0].type!!))
-                cls == MutableSet::class ->
-                    type.wrapIfNonNull(CollectionAwaker.forMutableSet(type.arguments[0].type!!))
+                cls == Iterable::class || cls == List::class -> type.wrapIfNonNull(CollectionAwaker.forList(type))
+                cls == MutableList::class -> type.wrapIfNonNull(CollectionAwaker.forMutableList(type))
+                cls == Set::class -> type.wrapIfNonNull(CollectionAwaker.forSet(type))
+                cls == MutableSet::class -> type.wrapIfNonNull(CollectionAwaker.forMutableSet(type))
 
                 // Maps
-                cls == Map::class ->
-                    MapAwaker(type.arguments[0].type!!, type.arguments[1].type!!)
+                cls == Map::class -> type.wrapIfNonNull(MapAwaker.forMap(type))
+                cls == MutableMap::class -> type.wrapIfNonNull(MapAwaker.forMutableMap(type))
 
+                // Polymorphic classes
+                Polymorphic.supports(cls) -> type.wrapIfNonNull(Polymorphic.createAwaker(cls))
                 // Data classes
-                cls.isData -> type.wrapIfNonNull(DataClassAwaker(type))
+                cls.isData -> type.wrapIfNonNull(DataClassCodec(type) as Awaker)
 
+                // Type cannot be handled by this module
                 else -> null
             }
         }
@@ -69,6 +72,7 @@ object BuiltInModule : SlumberModule {
     override fun getSlumberer(type: KType): Slumberer? {
 
         val cls = type.classifier
+        val args = type.arguments
 
         if (cls is KClass<*>) {
 
@@ -95,13 +99,16 @@ object BuiltInModule : SlumberModule {
 
                 // Iterables
                 Iterable::class.java.isAssignableFrom(cls.java) ->
-                    type.wrapIfNonNull(CollectionSlumberer(type.arguments[0].type!!))
+                    type.wrapIfNonNull(CollectionSlumberer(args[0].type!!))
 
                 // Maps
-                Map::class.java.isAssignableFrom(cls.java) -> MapSlumberer
+                Map::class.java.isAssignableFrom(cls.java) ->
+                    type.wrapIfNonNull(MapSlumberer(args[0].type!!, args[1].type!!))
 
+                // Polymorphic classes
+                Polymorphic.supports(cls) -> type.wrapIfNonNull(Polymorphic.createSlumberer(cls))
                 // Data classes
-                cls.isData -> type.wrapIfNonNull(DataClassSlumberer(cls))
+                cls.isData -> type.wrapIfNonNull(DataClassCodec(type) as Slumberer)
 
                 else -> null
             }

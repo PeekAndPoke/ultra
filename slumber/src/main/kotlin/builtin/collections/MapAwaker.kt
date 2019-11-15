@@ -5,8 +5,17 @@ import kotlin.reflect.KType
 
 class MapAwaker(
     private val keyType: KType,
-    private val valueType: KType
+    private val valueType: KType,
+    private val creator: List<Pair<*, *>>.() -> Map<*, *>
 ) : Awaker {
+
+    companion object {
+        fun forMap(type: KType) =
+            MapAwaker(type.arguments[0].type!!, type.arguments[1].type!!) { toMap() }
+
+        fun forMutableMap(type: KType) =
+            MapAwaker(type.arguments[0].type!!, type.arguments[1].type!!) { toMap().toMutableMap() }
+    }
 
     override fun awake(data: Any?, context: Awaker.Context): Any? {
 
@@ -15,7 +24,10 @@ class MapAwaker(
         }
 
         return data
-            .map { (k, v) -> context.awake(keyType, k) to context.awake(valueType, v) }
-            .toMap()
+            .map { (k, v) ->
+                context.stepInto("$k[KEY]").awake(keyType, k) to
+                        context.stepInto("$k[VAL]").awake(valueType, v)
+            }
+            .creator()
     }
 }

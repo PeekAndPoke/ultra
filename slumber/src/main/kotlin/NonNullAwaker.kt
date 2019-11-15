@@ -1,6 +1,4 @@
-package de.peekandpoke.ultra.slumber.builtin
-
-import de.peekandpoke.ultra.slumber.Awaker
+package de.peekandpoke.ultra.slumber
 
 open class NonNullAwaker(private val inner: Awaker) : Awaker {
 

@@ -10,13 +10,13 @@ class CollectionAwaker(
 
     companion object {
 
-        fun forList(innerType: KType) = CollectionAwaker(innerType) { toList() }
+        fun forList(type: KType) = CollectionAwaker(type.arguments[0].type!!) { toList() }
 
-        fun forMutableList(innerType: KType) = CollectionAwaker(innerType) { toMutableList() }
+        fun forMutableList(type: KType) = CollectionAwaker(type.arguments[0].type!!) { toMutableList() }
 
-        fun forSet(innerType: KType) = CollectionAwaker(innerType) { toSet() }
+        fun forSet(type: KType) = CollectionAwaker(type.arguments[0].type!!) { toSet() }
 
-        fun forMutableSet(innerType: KType) = CollectionAwaker(innerType) { toMutableSet() }
+        fun forMutableSet(type: KType) = CollectionAwaker(type.arguments[0].type!!) { toMutableSet() }
     }
 
     override fun awake(data: Any?, context: Awaker.Context): Any? = when (data) {

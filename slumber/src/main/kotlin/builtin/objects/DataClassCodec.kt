@@ -1,14 +1,17 @@
 package de.peekandpoke.ultra.slumber.builtin.objects
 
 import de.peekandpoke.ultra.slumber.Awaker
+import de.peekandpoke.ultra.slumber.Slumberer
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeParameter
 import kotlin.reflect.full.createType
+import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.jvm.javaField
 
-class DataClassAwaker(private val rootType: KType) : Awaker {
+class DataClassCodec(private val rootType: KType) : Awaker, Slumberer {
 
     /** Raw cls of the rootType */
     private val cls = rootType.classifier as KClass<*>
@@ -19,6 +22,17 @@ class DataClassAwaker(private val rootType: KType) : Awaker {
     /** Map of ctor parameters to their reified types */
     private val ctorParams2Types = ctor.parameters.map { it to reifyType(it.type) }
 
+    /** Map of properties corresponding to the ctor param to their reified types */
+    private val properties2Types = ctorParams2Types.map { (param, type) ->
+        cls.declaredMemberProperties
+            .mapNotNull { it.javaField }
+            .first { it.name == param.name }
+            .apply { isAccessible = true } to type
+    }
+
+    /**
+     * Internal helper for reifying generic types of properties of the class
+     */
     private fun reifyType(type: KType): KType = when (val classifier = type.classifier) {
 
         // Do we have a type parameter here?
@@ -92,5 +106,14 @@ class DataClassAwaker(private val rootType: KType) : Awaker {
             // Otherwise we have to return null
             else -> null
         }
+    }
+
+    override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any?>? = when {
+
+        data != null -> properties2Types.map { (prop, type) ->
+            prop.name to context.slumber(type, prop.get(data))
+        }.toMap()
+
+        else -> null
     }
 }
