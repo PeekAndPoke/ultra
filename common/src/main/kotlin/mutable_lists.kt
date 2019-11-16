@@ -1,23 +1,6 @@
 package de.peekandpoke.ultra.common
 
 /**
- * Returns 'true' if the collection contains any of the given [elements]
- */
-fun <T> Collection<T>.containsAny(vararg elements: T): Boolean = containsAny(elements)
-
-/**
- * Returns 'true' if the collection contains any of the given [elements]
- */
-@JvmName("containsAnyArray")
-fun <T> Collection<T>.containsAny(elements: Array<out T>): Boolean = elements.any { it in this }
-
-/**
- * Returns 'true' if the collection contains any of the given [elements]
- */
-@JvmName("containsAnyCollection")
-fun <T> Collection<T>.containsAny(elements: Collection<T>): Boolean = elements.any { it in this }
-
-/**
  * Adds the given [elements] to the end of the [MutableList]
  *
  * @return the same instance

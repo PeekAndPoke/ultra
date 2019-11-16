@@ -4,7 +4,9 @@ package de.peekandpoke.ultra.common
  * Defines a typed key to be used with [TypedAttributes]
  */
 @Suppress("unused")
-class TypedKey<T>(val name: String = "")
+class TypedKey<T>(val name: String = "") {
+    override fun toString() = name
+}
 
 /**
  * Map of [TypedKey] to values
@@ -16,6 +18,11 @@ data class TypedAttributes internal constructor(val entries: Map<TypedKey<*>, An
          * Empty instance
          */
         val empty = TypedAttributes(emptyMap())
+
+        /**
+         * Builder method
+         */
+        operator fun invoke(builder: Builder.() -> Unit) = of(builder)
 
         /**
          * Builder method
@@ -42,6 +49,11 @@ data class TypedAttributes internal constructor(val entries: Map<TypedKey<*>, An
          */
         fun build() = TypedAttributes(entries.toMap())
     }
+
+    /**
+     * Gets the number of entries
+     */
+    val size = entries.size
 
     /**
      * Gets an entry by [key] or null if nothing is there

@@ -6,7 +6,7 @@ import kotlin.reflect.jvm.reflect
 /**
  * Gets the name of the n'th parameter
  *
- * Notice: the first parameter has index 1
+ * Notice: the first parameter has index 0
  */
 fun <R, T : Function<R>> T.nthParamName(n: Int): String {
 

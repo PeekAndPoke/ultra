@@ -1,12 +1,15 @@
 fun main() {
 
-    println("hi!")
-
+//    val inline = Inline("Hello!")
+//
+//    println(inline)
+//
+//    println(inline.x)
+//
+//    println(inline::class)
+//
+//
+//    inline::class.starProjectedType
 }
 
-interface Y
-interface Z
-
-class X {
-    companion object YImpl : Y
-}
+//inline class Inline(val x: String)
