@@ -28,8 +28,19 @@ data class ReferencingOtherPackages(
 )
 
 @Mutable
+data class WithNestedClass(val nested: InnerClass) {
+    @Mutable
+    data class InnerClass(val text: String)
+}
+
+@Mutable
 data class WithDate(
     val date: LocalDate
+)
+
+@Mutable
+data class WithListOfDates(
+    val dates: List<LocalDate>
 )
 
 @Mutable

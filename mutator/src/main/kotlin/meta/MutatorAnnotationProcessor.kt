@@ -12,6 +12,7 @@ import javax.annotation.processing.Processor
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.Element
+import javax.lang.model.element.ElementKind
 import javax.lang.model.element.TypeElement
 
 
@@ -73,7 +74,10 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
             .filter { it.fqn.startsWithNone(blacklisted) }
             .toList()
 
-        val all: List<TypeElement> = pool.filterIsInstance<TypeElement>().blacklist()
+        val all: List<TypeElement> = pool
+            .filterIsInstance<TypeElement>()
+            .filter { it.kind == ElementKind.CLASS }
+            .blacklist()
 
         logNote("all types (nested): $all")
 

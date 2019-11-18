@@ -7,6 +7,7 @@ import io.kotlintest.matchers.types.shouldNotBeSameInstanceAs
 import io.kotlintest.matchers.withClue
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.StringSpec
+import java.time.LocalDate
 
 @DisplayName("E2E - ListMutationsSpec")
 class ListMutationsSpec : StringSpec({
@@ -24,7 +25,7 @@ class ListMutationsSpec : StringSpec({
 
         val result = source.mutate {
             // setting the same object must not trigger mutation
-            addresses[0] = address1
+            addresses.setAt(0, address1)
 
             // iteration must no trigger mutation on its own
             addresses.forEach {
@@ -570,4 +571,27 @@ class ListMutationsSpec : StringSpec({
             }
         }
     }
+
+    "Mutating a list of unsupported types 'List<LocalDate>'" {
+
+        val source = WithListOfDates(dates = listOf(LocalDate.MIN))
+
+        val result = source.mutate {
+            dates[0] = LocalDate.MAX
+        }
+
+        assertSoftly {
+
+            source shouldNotBeSameInstanceAs result
+
+            withClue("Source object must NOT be modified") {
+                source.dates[0] shouldBe LocalDate.MIN
+            }
+
+            withClue("Result must be modified properly") {
+                result.dates[0] shouldBe LocalDate.MAX
+            }
+        }
+    }
+
 })

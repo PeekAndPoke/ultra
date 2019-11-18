@@ -2,6 +2,7 @@ package de.peekandpoke.ultra.mutator.meta
 
 import com.squareup.kotlinpoet.*
 import de.peekandpoke.ultra.common.startsWithNone
+import de.peekandpoke.ultra.common.unshift
 import de.peekandpoke.ultra.meta.ProcessorUtils
 import javax.annotation.processing.ProcessingEnvironment
 import javax.lang.model.element.Element
@@ -65,7 +66,17 @@ data class FullTypeInfo(val className: ClassName, val typeName: TypeName) {
     }
 
     val receiverStr by lazy {
-        "$simpleName$typeParamsStr"
+
+        // We have to take care of any enclosing classes
+        val all = mutableListOf(simpleName)
+        var cls = className
+
+        while (cls.enclosingClassName() != null) {
+            all.unshift(cls.enclosingClassName()!!.simpleName)
+            cls = cls.enclosingClassName()!!
+        }
+
+        "${all.joinToString(".")}$typeParamsStr"
     }
 
     val mutatorClassStr by lazy {

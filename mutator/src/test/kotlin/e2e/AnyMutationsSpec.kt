@@ -77,7 +77,7 @@ class AnyMutationsSpec : StringSpec({
         }
     }
 
-    "Mutating one 'Date' property by assignment" {
+    "Mutating one 'LocalDate' property by assignment" {
 
         val source = WithDate(date = LocalDate.MIN)
 
@@ -99,7 +99,7 @@ class AnyMutationsSpec : StringSpec({
         }
     }
 
-    "Mutating one 'Date' property via reflection" {
+    "Mutating one 'LocalDate' property via reflection" {
 
         val source = WithDate(date = LocalDate.MIN)
 

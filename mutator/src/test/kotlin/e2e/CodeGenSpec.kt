@@ -11,7 +11,7 @@ import io.kotlintest.specs.StringSpec
 @DisplayName("E2E - CodeGenSpec")
 class CodeGenSpec : StringSpec({
 
-    "Mutator code for classes referencing classes in other packages" {
+    "Generated code must contain imports to referenced classes in other packages" {
 
         val source = ReferencingOtherPackages(
             firstIn1 = FirstInPackage1("firstIn1"),
@@ -31,6 +31,23 @@ class CodeGenSpec : StringSpec({
             result.firstIn1.name shouldBe "firstIn1 modified"
 
             result.firstIn2 shouldNotBe null
+        }
+    }
+
+    "Generated code must contain correct imports for nested classes" {
+
+        val source = WithNestedClass(
+            nested = WithNestedClass.InnerClass(
+                text = "hello"
+            )
+        )
+
+        val result = source.mutate {
+            nested.text = "bye"
+        }
+
+        assertSoftly {
+            result.nested.text shouldBe "bye"
         }
     }
 })

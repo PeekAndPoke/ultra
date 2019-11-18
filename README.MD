@@ -15,3 +15,6 @@
 
 ( ) Slumber
   ( ) Full java time support 
+
+( ) Mutator
+  ( ) support for nested classes

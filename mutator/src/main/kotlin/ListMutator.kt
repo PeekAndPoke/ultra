@@ -111,7 +111,7 @@ class ListMutator<T, M>(
      * Get the element at the given index
      */
     override operator fun get(index: Int) =
-        forwardMapper(getResult()[index]) { set(index, it) }
+        forwardMapper(getResult()[index]) { setAt(index, it) }
 
     /**
      * Replaces the element at the specified position in this list with the specified element.
@@ -121,7 +121,7 @@ class ListMutator<T, M>(
      * @return The element previously at the specified position
      */
     override operator fun set(index: Int, element: M) =
-        forwardMapper(set(index, backwardMapper(element))) {}
+        forwardMapper(setAt(index, backwardMapper(element))) {}
 
     /**
      * Adds the specified element to the end of this list.
@@ -331,8 +331,7 @@ class ListMutator<T, M>(
     /**
      * Set the element at the given index
      */
-    @JvmName("set_T")
-    operator fun set(index: Int, element: T): T {
+    fun setAt(index: Int, element: T): T {
 
         val current = getResult()[index]
 
@@ -367,7 +366,7 @@ class ListMutator<T, M>(
                 // remember the current element, so we can use it for remove()
                 current = this
                 // return the current element mapped to a mutator with onModify callback
-                mapper(this) { set(idx, it) }
+                mapper(this) { setAt(idx, it) }
             }
         }
 

@@ -5,7 +5,10 @@ import com.squareup.kotlinpoet.TypeName
 import de.peekandpoke.ultra.common.startsWithAny
 import de.peekandpoke.ultra.meta.ProcessorUtils
 import javax.annotation.processing.ProcessingEnvironment
+import javax.lang.model.element.Element
+import javax.lang.model.element.ElementKind
 import javax.lang.model.element.VariableElement
+import javax.lang.model.type.DeclaredType
 
 interface PropertyRenderer {
 
@@ -17,7 +20,7 @@ interface PropertyRenderer {
     /**
      * Returns a list of imports, that need to be added to the generated code
      */
-    fun getImports(type: TypeName): List<String>
+    fun getImports(type: VariableElement): List<String>
 
     /**
      * Renders all code-blocks for the given VariableElement
@@ -37,7 +40,7 @@ abstract class PropertyRendererBase(
     processingEnv: ProcessingEnvironment
 ) : RendererBase(logPrefix, processingEnv), PropertyRenderer {
 
-    override fun getImports(type: TypeName) = listOf<String>()
+    override fun getImports(type: VariableElement) = listOf<String>()
 
     protected val Int.asParam get() = "it$this"
 
@@ -84,7 +87,7 @@ class PropertyRenderers(
     /**
      * Returns a list of imports, that need to be added to the generated code
      */
-    override fun getImports(type: TypeName) = match(type)!!.getImports(type)
+    override fun getImports(type: VariableElement) = match(type.asTypeName())!!.getImports(type)
 
     /**
      * Returns the code for the first matching child renderer
@@ -279,7 +282,17 @@ class DataClassPropertyRenderer(logPrefix: String, env: ProcessingEnvironment) :
 
     // TODO: check if the type has a "copy" method
 
-    override fun getImports(type: TypeName) = listOf("${type.packageName}.mutator")
+    override fun getImports(type: VariableElement): List<String> {
+
+        // we need to find the outer-most class in order to generate correct imports
+        var outer: Element = (type.asType() as DeclaredType).asElement()
+
+        while (outer.enclosingElement != null && outer.enclosingElement.kind == ElementKind.CLASS) {
+            outer = outer.enclosingElement
+        }
+
+        return listOf("${outer.asTypeName().packageName}.mutator")
+    }
 
     override fun render(property: VariableElement): String {
 

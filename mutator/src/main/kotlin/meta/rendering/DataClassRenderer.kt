@@ -8,6 +8,7 @@ import de.peekandpoke.ultra.mutator.meta.Context
 import de.peekandpoke.ultra.mutator.meta.info
 import javax.annotation.processing.ProcessingEnvironment
 import javax.lang.model.element.TypeElement
+import javax.lang.model.element.VariableElement
 
 class DataClassRenderer(
 
@@ -23,7 +24,7 @@ class DataClassRenderer(
 
     private val fieldBlocks = mutableListOf<String>()
 
-    private val goodVariables = element.variables
+    private val goodVariables: List<VariableElement> = element.variables
         // filter delegated properties (e.g. by lazy)
         .filter { !it.simpleName.contains("${"$"}delegate") }
         // we only look at public properties
@@ -55,10 +56,11 @@ class DataClassRenderer(
             .filter { !it.simpleName.contains("${"$"}delegate") }
             // we only look at public properties
             .filter { element.hasPublicGetterFor(it) }
-            .forEach {
+            .forEach { variableElement ->
 
-                val type = it.asTypeName()
-                val prop = it.simpleName
+                val fqn = variableElement.fqn
+                val type = variableElement.asTypeName()
+                val prop = variableElement.simpleName
 
                 fieldBlocks.add(
                     """
@@ -66,7 +68,7 @@ class DataClassRenderer(
                      * Mutator for field [${info.receiverStr}.$prop]
                      *
                      * Info:
-                     *   - type:         ${it.fqn}
+                     *   - type:         $fqn
                      *   - reflected by: ${type::class.qualifiedName}
                      */ 
                 """.trimIndent().prependIndent("    ")
@@ -76,16 +78,16 @@ class DataClassRenderer(
                     // parameterized types are treated differently
                     renderers.canHandle(type) -> {
                         // add all imports
-                        imports.addAll(renderers.getImports(type))
+                        imports.addAll(renderers.getImports(variableElement))
 
                         fieldBlocks.add(
-                            renderers.render(it).prependIndent("    ")
+                            renderers.render(variableElement).prependIndent("    ")
                         )
                     }
 
                     else -> {
                         val message =
-                            "There is no known way to mutate the property $element::$prop of type ${it.fqn} yet ... sorry!"
+                            "There is no known way to mutate the property $element::$prop of type $fqn yet ... sorry!"
 
                         logWarning("  .. $message")
 

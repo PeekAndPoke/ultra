@@ -1538,7 +1538,7 @@ class ListMutatorSpec : StringSpec({
 
             shouldThrow<IndexOutOfBoundsException> {
                 apply {
-                    subject[100] = SomeDataClass("third", 3)
+                    subject.setAt(100, SomeDataClass("third", 3))
                 }
             }
 
@@ -1563,7 +1563,7 @@ class ListMutatorSpec : StringSpec({
 
         assertSoftly {
 
-            subject[0] = first
+            subject.setAt(0, first)
 
             (source === subject.getResult()) shouldBe true
 
@@ -1584,7 +1584,7 @@ class ListMutatorSpec : StringSpec({
 
         assertSoftly {
 
-            subject[0] = SomeDataClass("third", 3)
+            subject.setAt(0, SomeDataClass("third", 3))
 
             (source === subject.getResult()) shouldBe false
 
