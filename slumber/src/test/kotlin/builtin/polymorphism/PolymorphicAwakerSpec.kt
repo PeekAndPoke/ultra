@@ -18,7 +18,7 @@ class PolymorphicAwakerSpec : StringSpec({
         val result = codec.awake(
             PureBase::class,
             mapOf(
-                "_type" to "A",
+                "_type" to PureBase.A::class.qualifiedName,
                 "text" to "hello"
             )
         )
@@ -35,7 +35,7 @@ class PolymorphicAwakerSpec : StringSpec({
         val result = codec.awake(
             PureBase::class,
             mapOf(
-                "_type" to "B",
+                "_type" to PureBase.B::class.qualifiedName,
                 "number" to "100"
             )
         )
@@ -85,11 +85,11 @@ class PolymorphicAwakerSpec : StringSpec({
             kListType<CustomDiscriminator>().type,
             listOf(
                 mapOf(
-                    "_" to "A",
+                    "_" to CustomDiscriminator.A::class.qualifiedName,
                     "text" to "hello"
                 ),
                 mapOf(
-                    "_" to "B",
+                    "_" to CustomDiscriminator.B::class.qualifiedName,
                     "number" to 100
                 )
             )
@@ -217,7 +217,7 @@ class PolymorphicAwakerSpec : StringSpec({
         val result = codec.awake(
             AnnotatedBase::class,
             mapOf(
-                "_type" to "A",
+                "_type" to AnnotatedBase.A::class.qualifiedName,
                 "text" to "hello"
             )
         )
@@ -254,21 +254,19 @@ class PolymorphicAwakerSpec : StringSpec({
             kType<NestedRoot>().list.type,
             listOf(
                 mapOf(
-                    "_type" to "DeeperA",
+                    "_type" to NestedRoot.NestedA.DeeperA::class.qualifiedName,
                     "text" to "DeeperA"
                 ),
                 mapOf(
-                    "_type" to "DeeperB",
+                    "_type" to NestedRoot.NestedA.DeeperB::class.qualifiedName,
                     "text" to "DeeperB"
                 ),
                 mapOf(
-                    "_type" to "NestedB",
+                    "_type" to NestedRoot.NestedB::class.qualifiedName,
                     "text" to "NestedB"
                 )
             )
         )
-
-        println(Polymorphic.getChildren(NestedRoot::class))
 
         assertSoftly {
             result shouldBe listOf(
@@ -283,41 +281,47 @@ class PolymorphicAwakerSpec : StringSpec({
 
     "Awaking a data class that contains polymorphics - one" {
 
-        data class DataClass(val single: PureBase, val list: List<PureBase>, val map: Map<String, PureBase>)
+        data class DataClass(
+            val single: AnnotedChildrenBase,
+            val list: List<AnnotedChildrenBase>,
+            val map: Map<String, AnnotedChildrenBase>
+        )
 
         val codec = Codec.default
+
+        println(PureBase.B::class.qualifiedName)
 
         val result = codec.awake(
             DataClass::class,
             mapOf(
-                "single" to mapOf("_type" to "B", "number" to 100),
+                "single" to mapOf("_type" to "Child_B", "number" to 100),
                 "list" to listOf(
-                    mapOf("_type" to "A", "text" to "hello"),
-                    mapOf("_type" to "B", "number" to 200)
+                    mapOf("_type" to "Child_A", "text" to "hello"),
+                    mapOf("_type" to "Child_B", "number" to 200)
                 ),
                 "map" to mapOf(
                     "A" to mapOf(
-                        "_type" to "A", "text" to "again"
+                        "_type" to "Child_A", "text" to "again"
                     )
                 )
             )
         )
 
         result shouldBe DataClass(
-            single = PureBase.B(100),
+            single = AnnotedChildrenBase.B(100),
             list = listOf(
-                PureBase.A("hello"),
-                PureBase.B(200)
+                AnnotedChildrenBase.A("hello"),
+                AnnotedChildrenBase.B(200)
             ),
             map = mapOf(
-                "A" to PureBase.A("again")
+                "A" to AnnotedChildrenBase.A("again")
             )
         )
     }
 
     "Awaking a data class that contains polymorphics - two" {
 
-        data class DataClass(val lists: List<List<PureBase>>)
+        data class DataClass(val lists: List<List<AnnotedChildrenBase>>)
 
         val codec = Codec.default
 
@@ -326,12 +330,12 @@ class PolymorphicAwakerSpec : StringSpec({
             mapOf(
                 "lists" to listOf(
                     listOf(
-                        mapOf("_type" to "A", "text" to "hello"),
-                        mapOf("_type" to "B", "number" to 100)
+                        mapOf("_type" to "Child_A", "text" to "hello"),
+                        mapOf("_type" to "Child_B", "number" to 100)
                     ),
                     listOf(
-                        mapOf("_type" to "B", "number" to 200),
-                        mapOf("_type" to "A", "text" to "again")
+                        mapOf("_type" to "Child_B", "number" to 200),
+                        mapOf("_type" to "Child_A", "text" to "again")
                     )
                 )
             )
@@ -340,12 +344,12 @@ class PolymorphicAwakerSpec : StringSpec({
         result shouldBe DataClass(
             lists = listOf(
                 listOf(
-                    PureBase.A("hello"),
-                    PureBase.B(100)
+                    AnnotedChildrenBase.A("hello"),
+                    AnnotedChildrenBase.B(100)
                 ),
                 listOf(
-                    PureBase.B(200),
-                    PureBase.A("again")
+                    AnnotedChildrenBase.B(200),
+                    AnnotedChildrenBase.A("again")
                 )
             )
         )

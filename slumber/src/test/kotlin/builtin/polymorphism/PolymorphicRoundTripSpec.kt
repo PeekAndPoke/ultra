@@ -32,14 +32,14 @@ class PolymorphicRoundTripSpec : StringSpec({
             result shouldBe source
 
             slumbered shouldBe mapOf(
-                "single" to mapOf("_type" to "B", "number" to 100),
+                "single" to mapOf("_type" to PureBase.B::class.qualifiedName, "number" to 100),
                 "list" to listOf(
-                    mapOf("_type" to "A", "text" to "hello"),
-                    mapOf("_type" to "B", "number" to 200)
+                    mapOf("_type" to PureBase.A::class.qualifiedName, "text" to "hello"),
+                    mapOf("_type" to PureBase.B::class.qualifiedName, "number" to 200)
                 ),
                 "map" to mapOf(
                     "A" to mapOf(
-                        "_type" to "A", "text" to "again"
+                        "_type" to PureBase.A::class.qualifiedName, "text" to "again"
                     )
                 )
             )
@@ -75,12 +75,12 @@ class PolymorphicRoundTripSpec : StringSpec({
             slumbered shouldBe mapOf(
                 "lists" to listOf(
                     listOf(
-                        mapOf("_type" to "A", "text" to "hello"),
-                        mapOf("_type" to "B", "number" to 100)
+                        mapOf("_type" to PureBase.A::class.qualifiedName, "text" to "hello"),
+                        mapOf("_type" to PureBase.B::class.qualifiedName, "number" to 100)
                     ),
                     listOf(
-                        mapOf("_type" to "B", "number" to 200),
-                        mapOf("_type" to "A", "text" to "again")
+                        mapOf("_type" to PureBase.B::class.qualifiedName, "number" to 200),
+                        mapOf("_type" to PureBase.A::class.qualifiedName, "text" to "again")
                     )
                 )
             )

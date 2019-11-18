@@ -2,6 +2,7 @@ package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
 import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObjectInstance
+import kotlin.reflect.jvm.jvmName
 
 interface Polymorphic {
 
@@ -121,7 +122,7 @@ interface Polymorphic {
          */
         fun KClass<*>.getType(): String = when (val companion = companionObjectInstance) {
             is Child -> companion.identifier
-            else -> simpleName ?: toString()
+            else -> qualifiedName ?: jvmName
         }
     }
 }

@@ -38,11 +38,11 @@ class PolymorphicSlumbererSpec : StringSpec({
         assertSoftly {
             result shouldBe listOf(
                 mapOf(
-                    "_type" to "A",
+                    "_type" to PureBase.A::class.qualifiedName,
                     "text" to "hello"
                 ),
                 mapOf(
-                    "_type" to "B",
+                    "_type" to PureBase.B::class.qualifiedName,
                     "number" to 100
                 )
             )
@@ -63,11 +63,11 @@ class PolymorphicSlumbererSpec : StringSpec({
         assertSoftly {
             result shouldBe mapOf(
                 "A" to mapOf(
-                    "_type" to "A",
+                    "_type" to PureBase.A::class.qualifiedName,
                     "text" to "hello"
                 ),
                 "B" to mapOf(
-                    "_type" to "B",
+                    "_type" to PureBase.B::class.qualifiedName,
                     "number" to 100
                 )
             )
@@ -90,11 +90,11 @@ class PolymorphicSlumbererSpec : StringSpec({
         assertSoftly {
             result shouldBe listOf(
                 mapOf(
-                    "_" to "A",
+                    "_" to CustomDiscriminator.A::class.qualifiedName,
                     "text" to "hello"
                 ),
                 mapOf(
-                    "_" to "B",
+                    "_" to CustomDiscriminator.B::class.qualifiedName,
                     "number" to 100
                 )
             )
@@ -144,7 +144,7 @@ class PolymorphicSlumbererSpec : StringSpec({
         assertSoftly {
             result shouldBe listOf(
                 mapOf(
-                    "_type" to "A",
+                    "_type" to AnnotatedBase.A::class.qualifiedName,
                     "text" to "hello"
                 ),
                 mapOf(
