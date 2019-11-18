@@ -34,6 +34,12 @@ data class WithNestedClass(val nested: InnerClass) {
 }
 
 @Mutable
+data class WithNestedClass2(val nested: InnerClass) {
+    @Mutable
+    data class InnerClass(val text2: String)
+}
+
+@Mutable
 data class WithDate(
     val date: LocalDate
 )

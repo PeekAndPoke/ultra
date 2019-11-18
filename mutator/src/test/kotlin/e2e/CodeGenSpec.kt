@@ -36,18 +36,23 @@ class CodeGenSpec : StringSpec({
 
     "Generated code must contain correct imports for nested classes" {
 
-        val source = WithNestedClass(
-            nested = WithNestedClass.InnerClass(
-                text = "hello"
-            )
-        )
+        // We have to also make sure that two inner classes in the same package and with the same
+        // name, will get their Mutators and imports generated correctly
 
-        val result = source.mutate {
+        val source1 = WithNestedClass(nested = WithNestedClass.InnerClass(text = "hello"))
+        val source2 = WithNestedClass2(nested = WithNestedClass2.InnerClass(text2 = "hello"))
+
+        val result1 = source1.mutate {
             nested.text = "bye"
         }
 
+        val result2 = source2.mutate {
+            nested.text2 = "bye"
+        }
+
         assertSoftly {
-            result.nested.text shouldBe "bye"
+            result1.nested.text shouldBe "bye"
+            result2.nested.text2 shouldBe "bye"
         }
     }
 })

@@ -52,9 +52,22 @@ val ParameterizedTypeName.info get() = FullTypeInfo(this.rawType, this)
 
 data class FullTypeInfo(val className: ClassName, val typeName: TypeName) {
 
-    val fqn = typeName.toString()
-    val packageName get() = className.packageName
-    val simpleName get() = className.simpleName
+    val packageName = className.packageName
+
+    val simpleName = className.simpleName
+
+    val nestedClasses by lazy {
+
+        val all = mutableListOf(simpleName)
+        var cls = className
+
+        while (cls.enclosingClassName() != null) {
+            all.unshift(cls.enclosingClassName()!!.simpleName)
+            cls = cls.enclosingClassName()!!
+        }
+
+        all
+    }
 
     val typeParamsStr by lazy {
         when (typeName) {
@@ -66,24 +79,14 @@ data class FullTypeInfo(val className: ClassName, val typeName: TypeName) {
     }
 
     val receiverStr by lazy {
-
-        // We have to take care of any enclosing classes
-        val all = mutableListOf(simpleName)
-        var cls = className
-
-        while (cls.enclosingClassName() != null) {
-            all.unshift(cls.enclosingClassName()!!.simpleName)
-            cls = cls.enclosingClassName()!!
-        }
-
-        "${all.joinToString(".")}$typeParamsStr"
+        "${nestedClasses.joinToString(".")}$typeParamsStr"
     }
 
     val mutatorClassStr by lazy {
-        "${simpleName}Mutator$typeParamsStr"
+        "${nestedClasses.joinToString("_")}Mutator$typeParamsStr"
     }
 
     fun mutatorClass(typeParams: ParameterizedTypeName): String {
-        return "${simpleName}Mutator<${typeParams.typeArguments.joinToString(", ")}>"
+        return "${nestedClasses.joinToString(".")}Mutator<${typeParams.typeArguments.joinToString(", ")}>"
     }
 }

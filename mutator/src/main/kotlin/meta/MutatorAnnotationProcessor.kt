@@ -98,7 +98,7 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
         val info = element.info
 
         val dir = File("$generatedDir/${info.packageName.replace('.', '/')}").also { it.mkdirs() }
-        val file = File(dir, "${info.simpleName}${"$$"}mutator.kt")
+        val file = File(dir, "${info.nestedClasses.joinToString("_")}${"$$"}mutator.kt")
 
         file.writeText(content)
     }
