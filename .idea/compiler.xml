@@ -24,6 +24,22 @@
       <module name="root.test" target="1.8" />
       <module name="root.ultra.main" target="1.8" />
       <module name="root.ultra.test" target="1.8" />
+      <module name="ultra.common.main" target="1.8" />
+      <module name="ultra.common.test" target="1.8" />
+      <module name="ultra.kontainer.main" target="1.8" />
+      <module name="ultra.kontainer.test" target="1.8" />
+      <module name="ultra.main" target="1.8" />
+      <module name="ultra.meta.main" target="1.8" />
+      <module name="ultra.meta.test" target="1.8" />
+      <module name="ultra.mutator.main" target="1.8" />
+      <module name="ultra.mutator.test" target="1.8" />
+      <module name="ultra.security.main" target="1.8" />
+      <module name="ultra.security.test" target="1.8" />
+      <module name="ultra.slumber.main" target="1.8" />
+      <module name="ultra.slumber.test" target="1.8" />
+      <module name="ultra.test" target="1.8" />
+      <module name="ultra.ultra.main" target="1.8" />
+      <module name="ultra.ultra.test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

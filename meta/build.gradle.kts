@@ -21,6 +21,8 @@ val kotlin_metadata_version: String by project
 val google_auto_version: String by project
 val kotlinpoet_version: String by project
 val logback_version: String by project
+val kotlintest_version: String by project
+val classindex_version: String by project
 
 dependencies {
     api(rootProject.project("common"))
@@ -30,22 +32,22 @@ dependencies {
 
     ////  code generation  //////////////////////////////////////////////////////////////////////////////////////
 
-    compile ("me.eugeniomarletti.kotlin.metadata:kotlin-metadata:$kotlin_metadata_version") {
-        exclude(group = "me.eugeniomarletti.kotlin.metadata", module= "kotlin-compiler-lite")
+    compile("me.eugeniomarletti.kotlin.metadata:kotlin-metadata:$kotlin_metadata_version") {
+        exclude(group = "me.eugeniomarletti.kotlin.metadata")
     }
 
-    compile( "com.squareup:kotlinpoet:$kotlinpoet_version")
-    compile( "com.google.auto.service:auto-service:$google_auto_version")
+    compile("com.squareup:kotlinpoet:$kotlinpoet_version")
+    compile("com.google.auto.service:auto-service:$google_auto_version")
 
-    kapt("org.atteo.classindex:classindex:3.4")
+    kapt("org.atteo.classindex:classindex:$classindex_version")
     kapt("com.google.auto.service:auto-service:$google_auto_version")
 
     ////  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
 
     kaptTest("com.google.auto.service:auto-service:$google_auto_version")
 
-    testCompile( "ch.qos.logback:logback-classic:$logback_version")
-    testImplementation( "io.kotlintest:kotlintest-runner-junit5:3.2.1")
+    testCompile("ch.qos.logback:logback-classic:$logback_version")
+    testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")
 }
 
 repositories {

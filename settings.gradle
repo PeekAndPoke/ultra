@@ -1,4 +1,18 @@
-rootProject.name = 'root'
+// See: https://github.com/CycloneDX/cyclonedx-gradle-plugin
+pluginManagement {
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.toString() == 'org.cyclonedx.bom') {
+                useModule('org.cyclonedx:cyclonedx-gradle-plugin:1.1.1')
+            }
+        }
+    }
+//    repositories {
+//        mavenCentral()
+//    }
+}
+
+rootProject.name = 'ultra'
 
 include(
         // project that imports all child projects
@@ -12,3 +26,4 @@ include(
         ":security",
         ":slumber",
 )
+
