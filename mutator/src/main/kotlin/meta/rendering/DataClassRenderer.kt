@@ -5,7 +5,6 @@ import com.squareup.kotlinpoet.ParameterizedTypeName
 import de.peekandpoke.ultra.meta.ProcessorUtils
 import de.peekandpoke.ultra.meta.model.MType
 import de.peekandpoke.ultra.meta.model.MVariable
-import de.peekandpoke.ultra.mutator.meta.RenderHelper
 
 class DataClassRenderer(
 
@@ -15,7 +14,7 @@ class DataClassRenderer(
 
 ) : ProcessorUtils {
 
-    private val helper = RenderHelper(type)
+    private val helper = TypeRenderHelper(type)
 
     private val fieldBlocks = mutableListOf<String>()
 

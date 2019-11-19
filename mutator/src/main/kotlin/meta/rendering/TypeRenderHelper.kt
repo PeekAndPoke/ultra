@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.mutator.meta
+package de.peekandpoke.ultra.mutator.meta.rendering
 
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import de.peekandpoke.ultra.meta.model.MType
@@ -6,7 +6,7 @@ import de.peekandpoke.ultra.meta.model.MType
 /**
  * Helper for rendering code for the given [type]
  */
-data class RenderHelper(val type: MType) {
+data class TypeRenderHelper(val type: MType) {
 
     /**
      * Generic type params, like: "<P1>" or "<P1, P2>"

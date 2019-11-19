@@ -41,5 +41,5 @@ abstract class KotlinProcessor(private val logPrefix: String) : AbstractProcesso
      *
      * If `null`, then this processor is probably not being run through kapt.
      */
-    val generatedDir: File? get() = options[kaptGeneratedOption]?.let(::File)
+    val generatedDir: File? get() = options[KaptGeneratedOption]?.let(::File)
 }
