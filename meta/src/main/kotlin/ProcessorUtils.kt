@@ -4,29 +4,49 @@ import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asTypeName
 import de.peekandpoke.ultra.common.ucFirst
-import me.eugeniomarletti.kotlin.processing.KotlinProcessingEnvironment
+import java.util.*
+import javax.annotation.processing.Filer
+import javax.annotation.processing.Messager
 import javax.annotation.processing.ProcessingEnvironment
+import javax.lang.model.SourceVersion
 import javax.lang.model.element.*
 import javax.lang.model.type.DeclaredType
 import javax.lang.model.type.TypeMirror
+import javax.lang.model.util.Elements
+import javax.lang.model.util.Types
 import javax.tools.Diagnostic
 
 @Suppress("unused")
-interface ProcessorUtils : KotlinProcessingEnvironment {
+interface ProcessorUtils {
 
-    val logPrefix: String
+    class Context(val logPrefix: String, val env: ProcessingEnvironment)
 
-    val env: ProcessingEnvironment get() = processingEnv
+    val ctx: Context
 
-    fun logNote(str: String) = messager.printMessage(Diagnostic.Kind.NOTE, "$logPrefix $str")
+    val env: ProcessingEnvironment get() = ctx.env
 
-    fun logWarning(str: String) = messager.printMessage(Diagnostic.Kind.WARNING, "$logPrefix $str")
+    val options: Map<String, String> get() = ctx.env.options
+    val messager: Messager get() = ctx.env.messager
+    val filer: Filer get() = ctx.env.filer
+    val elementUtils: Elements get() = ctx.env.elementUtils
+    val typeUtils: Types get() = ctx.env.typeUtils
+    val sourceVersion: SourceVersion get() = ctx.env.sourceVersion
+    val locale: Locale get() = ctx.env.locale
 
-    fun logError(str: String) = messager.printMessage(Diagnostic.Kind.ERROR, "$logPrefix $str")
+    fun logNote(str: String) =
+        messager.printMessage(Diagnostic.Kind.NOTE, "${ctx.logPrefix} $str")
 
-    fun logMandatoryWarning(str: String) = messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING, "$logPrefix $str")
+    fun logWarning(str: String) =
+        messager.printMessage(Diagnostic.Kind.WARNING, "${ctx.logPrefix} $str")
 
-    fun logOther(str: String) = messager.printMessage(Diagnostic.Kind.OTHER, "$logPrefix $str")
+    fun logError(str: String) =
+        messager.printMessage(Diagnostic.Kind.ERROR, "${ctx.logPrefix} $str")
+
+    fun logMandatoryWarning(str: String) =
+        messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING, "${ctx.logPrefix} $str")
+
+    fun logOther(str: String) =
+        messager.printMessage(Diagnostic.Kind.OTHER, "${ctx.logPrefix} $str")
 
     ////  REFLECTION  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -66,18 +86,19 @@ interface ProcessorUtils : KotlinProcessingEnvironment {
 
     val TypeName.fqn get() = this.toString()
 
-    val TypeName.packageName get(): String {
+    val TypeName.packageName
+        get(): String {
 
-        return when (this) {
-            is ParameterizedTypeName -> this.rawType.packageName
+            return when (this) {
+                is ParameterizedTypeName -> this.rawType.packageName
 
-            else -> {
-                val parts = fqn.split(".")
+                else -> {
+                    val parts = fqn.split(".")
 
-                 parts.take(parts.size - 1).joinToString(".")
+                    parts.take(parts.size - 1).joinToString(".")
+                }
             }
         }
-    }
 
     val TypeName.isPrimitiveType get() = fqn.isPrimitiveType
 
@@ -102,10 +123,10 @@ interface ProcessorUtils : KotlinProcessingEnvironment {
             .filterIsInstance<ExecutableElement>()
 
     fun TypeElement.hasPublicGetterFor(v: VariableElement) =
-            methods.any {
-                it.simpleName.toString() == "get${v.simpleName.toString().ucFirst()}" &&
-                        it.modifiers.contains(Modifier.PUBLIC)
-            }
+        methods.any {
+            it.simpleName.toString() == "get${v.simpleName.toString().ucFirst()}" &&
+                    it.modifiers.contains(Modifier.PUBLIC)
+        }
 
     val Element.fqn get() = asType().fqn
 

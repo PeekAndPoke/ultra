@@ -1,38 +1,37 @@
 package de.peekandpoke.ultra.mutator.meta
 
 import com.google.auto.service.AutoService
-import com.squareup.kotlinpoet.asClassName
 import de.peekandpoke.ultra.common.startsWithNone
-import de.peekandpoke.ultra.meta.ProcessorUtils
+import de.peekandpoke.ultra.meta.KotlinProcessor
+import de.peekandpoke.ultra.meta.model.MType
+import de.peekandpoke.ultra.meta.model.Model
 import de.peekandpoke.ultra.mutator.Mutable
 import de.peekandpoke.ultra.mutator.meta.rendering.*
-import me.eugeniomarletti.kotlin.processing.KotlinAbstractProcessor
 import java.io.File
 import javax.annotation.processing.Processor
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.Element
-import javax.lang.model.element.ElementKind
 import javax.lang.model.element.TypeElement
-
 
 @Suppress("unused")
 @AutoService(Processor::class)
-open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtils {
-
-    override val logPrefix: String = "[Mutator] "
+open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
 
     private val renderers by lazy {
 
         // TODO: check for collections
 
-        PropertyRenderers(logPrefix, env) { root ->
+        PropertyRenderers(ctx) { root ->
             listOf(
-                ListAndSetPropertyRenderer(root, logPrefix, env),
-                MapPropertyRenderer(root, logPrefix, env),
-                DataClassPropertyRenderer(logPrefix, env),
+                // Lists and Sets
+                ListAndSetPropertyRenderer(ctx, root),
+                // Maps
+                MapPropertyRenderer(ctx, root),
+                // Data classes
+                DataClassPropertyRenderer(ctx),
                 // Fallback for primitive types, String, Any, and all others that or not support yet
-                PureGetterSetterRenderer(logPrefix, env)
+                PureGetterSetterRenderer(ctx)
             )
         }
     }
@@ -45,18 +44,7 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
 
     override fun process(annotations: Set<TypeElement>, roundEnv: RoundEnvironment): Boolean {
 
-        buildContext(roundEnv).apply {
-            types.forEach {
-                // generate code for all the relevant types
-                buildMutatorFileFor(it, this)
-            }
-        }
-
-        return true
-    }
-
-    private fun buildContext(roundEnv: RoundEnvironment): Context {
-        // Find all types that have a Karango Annotation
+        // Find all types that have a Mutable Annotation
         val elems = roundEnv
             .getElementsAnnotatedWith(Mutable::class.java)
             .filterIsInstance<TypeElement>()
@@ -76,29 +64,81 @@ open class MutatorAnnotationProcessor : KotlinAbstractProcessor(), ProcessorUtil
 
         val all: List<TypeElement> = pool
             .filterIsInstance<TypeElement>()
-            .filter { it.kind == ElementKind.CLASS }
             .blacklist()
 
         logNote("all types (nested): $all")
 
-        val allGenericTypesUsed = all.fold(GenericUsages(logPrefix, env)) { acc, type -> acc.add(type) }
+        val model = Model.Builder(ctx).build(all)
 
-        logNote("all generic types used")
-        logNote(allGenericTypesUsed.registry.toString())
+        model.types.forEach {
+            buildMutatorFileFor(it)
+        }
 
-        return Context(all, allGenericTypesUsed)
+//        buildContext(roundEnv).apply {
+//            types.forEach {
+//                // generate code for all the relevant types
+//                buildMutatorFileFor(it, this)
+//            }
+//        }
+
+        return true
     }
 
-    private fun buildMutatorFileFor(element: TypeElement, context: Context) {
+//    private fun buildContext(roundEnv: RoundEnvironment): Context {
+//        // Find all types that have a Mutable Annotation
+//        val elems = roundEnv
+//            .getElementsAnnotatedWith(Mutable::class.java)
+//            .filterIsInstance<TypeElement>()
+//
+//        // Find all the types that are referenced by these types and add them to the pool
+//        val pool = elems.plus(
+//            elems.map { it.getReferencedTypesRecursive().map { tm -> typeUtils.asElement(tm) } }.flatten().distinct()
+//        )
+//
+//        val blacklisted = arrayOf("java.", "javax.", "javafx.", "kotlin.")
+//
+//        // Black list some packages
+//        fun <T : Element> List<T>.blacklist() = asSequence()
+//            .distinct()
+//            .filter { it.fqn.startsWithNone(blacklisted) }
+//            .toList()
+//
+//        val all: List<TypeElement> = pool
+//            .filterIsInstance<TypeElement>()
+//            .blacklist()
+//
+//        logNote("all types (nested): $all")
+//
+//        val allGenericTypesUsed = all.fold(GenericUsages(logPrefix, env)) { acc, type -> acc.add(type) }
+//
+//        logNote("all generic types used")
+//        logNote(allGenericTypesUsed.registry.toString())
+//
+//        return Context(all, allGenericTypesUsed)
+//    }
 
-        logNote("Found type ${element.simpleName} in ${element.asClassName().packageName}")
+//    private fun buildMutatorFileFor(element: TypeElement, context: Context) {
+//
+//        logNote("Found type ${element.simpleName} in ${element.asClassName().packageName}")
+//
+//        val content = DataClassRenderer(logPrefix, env, element, context, renderers).render()
+//
+//        val info = element.info
+//
+//        val dir = File("$generatedDir/${info.packageName.replace('.', '/')}").also { it.mkdirs() }
+//        val file = File(dir, "${info.nestedClasses.joinToString("_")}${"$$"}mutator.kt")
+//
+//        file.writeText(content)
+//    }
 
-        val content = DataClassRenderer(logPrefix, env, element, context, renderers).render()
+    private fun buildMutatorFileFor(element: MType) {
 
-        val info = element.info
+        logNote("Found type ${element.simpleName} in ${element.packageName}")
 
-        val dir = File("$generatedDir/${info.packageName.replace('.', '/')}").also { it.mkdirs() }
-        val file = File(dir, "${info.nestedClasses.joinToString("_")}${"$$"}mutator.kt")
+        val content = DataClassRenderer(ctx, element, renderers).render()
+
+        val dir = File("$generatedDir/${element.packageName.replace('.', '/')}").also { it.mkdirs() }
+        val file = File(dir, "${element.nestedFileName}${"$$"}mutator.kt")
 
         file.writeText(content)
     }

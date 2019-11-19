@@ -1,92 +1,52 @@
 package de.peekandpoke.ultra.mutator.meta
 
-import com.squareup.kotlinpoet.*
-import de.peekandpoke.ultra.common.startsWithNone
-import de.peekandpoke.ultra.common.unshift
-import de.peekandpoke.ultra.meta.ProcessorUtils
-import javax.annotation.processing.ProcessingEnvironment
-import javax.lang.model.element.Element
-import javax.lang.model.element.TypeElement
-import javax.lang.model.element.VariableElement
+import com.squareup.kotlinpoet.ParameterizedTypeName
+import de.peekandpoke.ultra.meta.model.MType
 
-class GenericUsages(
+/**
+ * Helper for rendering code for the given [type]
+ */
+data class RenderHelper(val type: MType) {
 
-    override val logPrefix: String,
-    override val processingEnv: ProcessingEnvironment
+    /**
+     * Generic type params, like: "<P1>" or "<P1, P2>"
+     */
+    val generics: String = when (val typeName = type.typeName) {
 
-) : ProcessorUtils {
+        is ParameterizedTypeName ->
+            "<" + typeName.typeArguments.mapIndexed { idx, _ -> "P${idx}" }.joinToString(", ") + "> "
 
-    val registry = mutableMapOf<ClassName, MutableSet<ParameterizedTypeName>>()
-
-    fun get(cls: ClassName): Set<ParameterizedTypeName> {
-        return registry[cls] ?: setOf()
+        else -> ""
     }
 
-    fun add(type: TypeElement) = apply {
-        add(type.variables.blacklist().filter { it.asTypeName() is ParameterizedTypeName })
-    }
+    /**
+     * Receiver name for extension properties like
+     *
+     * MtType.mutate()
+     *
+     * or
+     *
+     * MyGeneric<String>.mutate()
+     */
+    val receiverName: String = "${type.nestedName}$generics"
 
-    private fun add(variables: List<VariableElement>) = apply {
+    /**
+     * Mutator class name (including generic parameters, when the type is generic) like
+     *
+     * MyTypeMutator
+     *
+     * or
+     *
+     * MuGenericMutator<P1, P2>
+     *
+     * @see generics
+     */
+    val mutatorClassName: String = "${type.nestedFileName}Mutator$generics"
 
-        variables
-            .map { it.asTypeName() }.filterIsInstance<ParameterizedTypeName>()
-            .forEach { type ->
-                registry.getOrPut(type.rawType) { mutableSetOf() }.add(type)
-            }
-    }
-
-    private val blacklisted = arrayOf("java.", "javax.", "javafx.", "kotlin.")
-
-    // Black list some packages
-    private fun <T : Element> List<T>.blacklist() = asSequence()
-        .distinct()
-        .filter { it.fqn.startsWithNone(blacklisted) }
-        .toList()
-}
-
-data class Context(val types: List<TypeElement>, val genericsUsages: GenericUsages)
-
-val TypeElement.info get() = FullTypeInfo(this.asClassName(), this.asType().asTypeName())
-
-val ParameterizedTypeName.info get() = FullTypeInfo(this.rawType, this)
-
-data class FullTypeInfo(val className: ClassName, val typeName: TypeName) {
-
-    val packageName = className.packageName
-
-    val simpleName = className.simpleName
-
-    val nestedClasses by lazy {
-
-        val all = mutableListOf(simpleName)
-        var cls = className
-
-        while (cls.enclosingClassName() != null) {
-            all.unshift(cls.enclosingClassName()!!.simpleName)
-            cls = cls.enclosingClassName()!!
-        }
-
-        all
-    }
-
-    val typeParamsStr by lazy {
-        when (typeName) {
-            is ParameterizedTypeName ->
-                "<" + typeName.typeArguments.mapIndexed { idx, _ -> "P${idx}" }.joinToString(", ") + ">"
-
-            else -> ""
-        }
-    }
-
-    val receiverStr by lazy {
-        "${nestedClasses.joinToString(".")}$typeParamsStr"
-    }
-
-    val mutatorClassStr by lazy {
-        "${nestedClasses.joinToString("_")}Mutator$typeParamsStr"
-    }
-
+    /**
+     * Return a fully parameterized Mutator class name e.g. MyTypeMutator<String>
+     */
     fun mutatorClass(typeParams: ParameterizedTypeName): String {
-        return "${nestedClasses.joinToString(".")}Mutator<${typeParams.typeArguments.joinToString(", ")}>"
+        return "${type.nestedName}Mutator<${typeParams.typeArguments.joinToString(", ")}>"
     }
 }

@@ -2,39 +2,34 @@ package de.peekandpoke.ultra.mutator.meta.rendering
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName
-import com.squareup.kotlinpoet.TypeVariableName
-import com.squareup.kotlinpoet.asClassName
-import de.peekandpoke.ultra.mutator.meta.Context
-import de.peekandpoke.ultra.mutator.meta.info
-import javax.annotation.processing.ProcessingEnvironment
-import javax.lang.model.element.TypeElement
-import javax.lang.model.element.VariableElement
+import de.peekandpoke.ultra.meta.ProcessorUtils
+import de.peekandpoke.ultra.meta.model.MType
+import de.peekandpoke.ultra.meta.model.MVariable
+import de.peekandpoke.ultra.mutator.meta.RenderHelper
 
 class DataClassRenderer(
 
-    logPrefix: String,
-    processingEnv: ProcessingEnvironment,
-    private val element: TypeElement,
-    context: Context,
+    override val ctx: ProcessorUtils.Context,
+    private val type: MType,
     private val renderers: PropertyRenderers
 
-) : RendererBase(logPrefix, processingEnv) {
+) : ProcessorUtils {
 
-    private val info = element.info
+    private val helper = RenderHelper(type)
 
     private val fieldBlocks = mutableListOf<String>()
 
-    private val goodVariables: List<VariableElement> = element.variables
+    private val goodVariables: List<MVariable> = type.variables
         // filter delegated properties (e.g. by lazy)
-        .filter { !it.simpleName.contains("${"$"}delegate") }
+        .filter { !it.isDelegate }
         // we only look at public properties
-        .filter { element.hasPublicGetterFor(it) }
+        .filter { type.hasPublicGetterFor(it) }
 
-    private val genericUsages = context.genericsUsages.get(element.asClassName())
+    private val genericUsages = type.genericUsages
 
-    private val nonGenericVariables = goodVariables.filter { it.asTypeName() !is TypeVariableName }
+    private val nonGenericVariables = goodVariables.filter { !it.isGeneric }
 
-    private val genericVariables = goodVariables.filter { it.asTypeName() is TypeVariableName }
+    private val genericVariables = goodVariables.filter { it.isGeneric }
 
     private val imports = mutableSetOf(
         "de.peekandpoke.ultra.mutator.*",
@@ -51,21 +46,22 @@ class DataClassRenderer(
     )
 
     private val rendered by lazy {
+
         nonGenericVariables
             // filter delegated properties (e.g. by lazy)
             .filter { !it.simpleName.contains("${"$"}delegate") }
             // we only look at public properties
-            .filter { element.hasPublicGetterFor(it) }
-            .forEach { variableElement ->
+            .filter { type.hasPublicGetterFor(it) }
+            .forEach { variable ->
 
-                val fqn = variableElement.fqn
-                val type = variableElement.asTypeName()
-                val prop = variableElement.simpleName
+                val fqn = variable.fqn
+                val type = variable.typeName
+                val prop = variable.simpleName
 
                 fieldBlocks.add(
                     """
                     /**
-                     * Mutator for field [${info.receiverStr}.$prop]
+                     * Mutator for field [${helper.receiverName}.$prop]
                      *
                      * Info:
                      *   - type:         $fqn
@@ -78,16 +74,16 @@ class DataClassRenderer(
                     // parameterized types are treated differently
                     renderers.canHandle(type) -> {
                         // add all imports
-                        imports.addAll(renderers.getImports(variableElement))
+                        imports.addAll(renderers.getImports(variable))
 
                         fieldBlocks.add(
-                            renderers.render(variableElement).prependIndent("    ")
+                            renderers.render(variable).prependIndent("    ")
                         )
                     }
 
                     else -> {
                         val message =
-                            "There is no known way to mutate the property $element::$prop of type $fqn yet ... sorry!"
+                            "There is no known way to mutate the property ${this.type}::$prop of type $fqn yet ... sorry!"
 
                         logWarning("  .. $message")
 
@@ -107,7 +103,7 @@ class DataClassRenderer(
             """
                 @file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
 
-                package ${info.packageName}
+                package ${type.packageName}
 
             """.trimIndent(),
 
@@ -117,17 +113,17 @@ class DataClassRenderer(
             // extension functions
             """
 
-                fun ${info.typeParamsStr} ${info.receiverStr}.mutate(mutation: ${info.mutatorClassStr}.() -> Unit) = 
+                fun ${helper.generics}${helper.receiverName}.mutate(mutation: ${helper.mutatorClassName}.() -> Unit) = 
                     mutator().apply(mutation).getResult()
 
-                fun ${info.typeParamsStr} ${info.receiverStr}.mutator(onModify: OnModify<${info.receiverStr}> = {}) = 
-                    ${info.mutatorClassStr}(this, onModify)
+                fun ${helper.generics}${helper.receiverName}.mutator(onModify: OnModify<${helper.receiverName}> = {}) = 
+                    ${helper.mutatorClassName}(this, onModify)
 
-                class ${info.mutatorClassStr}(
-                    target: ${info.receiverStr}, 
-                    onModify: OnModify<${info.receiverStr}> = {}
-                ) : DataClassMutator<${info.receiverStr}>(target, onModify) {
-
+                class ${helper.mutatorClassName}(
+                    target: ${helper.receiverName}, 
+                    onModify: OnModify<${helper.receiverName}> = {}
+                ) : DataClassMutator<${helper.receiverName}>(target, onModify) {
+                
             """.trimIndent(),
 
             // fields
@@ -151,7 +147,7 @@ class DataClassRenderer(
 
                 contentBlocks.add(
                     """
-                        val ${info.mutatorClass(usage)}.$varName get() = 
+                        val ${helper.mutatorClass(usage)}.$varName get() = 
                             getResult().$varName.mutator { modify(getResult()::$varName, getResult().$varName, it) }
                                                  
                     """.trimIndent()

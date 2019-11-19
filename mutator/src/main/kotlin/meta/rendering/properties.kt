@@ -4,10 +4,9 @@ import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.TypeName
 import de.peekandpoke.ultra.common.startsWithAny
 import de.peekandpoke.ultra.meta.ProcessorUtils
-import javax.annotation.processing.ProcessingEnvironment
+import de.peekandpoke.ultra.meta.model.MVariable
 import javax.lang.model.element.Element
 import javax.lang.model.element.ElementKind
-import javax.lang.model.element.VariableElement
 import javax.lang.model.type.DeclaredType
 
 interface PropertyRenderer {
@@ -20,12 +19,12 @@ interface PropertyRenderer {
     /**
      * Returns a list of imports, that need to be added to the generated code
      */
-    fun getImports(type: VariableElement): List<String>
+    fun getImports(variable: MVariable): List<String>
 
     /**
      * Renders all code-blocks for the given VariableElement
      */
-    fun render(property: VariableElement): String
+    fun render(variable: MVariable): String
 
     fun renderForwardMapper(type: TypeName, depth: Int): String
 
@@ -36,11 +35,10 @@ interface PropertyRenderer {
  * Abstract base class providing all the tools from the ProcessorUtils
  */
 abstract class PropertyRendererBase(
-    logPrefix: String,
-    processingEnv: ProcessingEnvironment
-) : RendererBase(logPrefix, processingEnv), PropertyRenderer {
+    override val ctx: ProcessorUtils.Context
+) : PropertyRenderer, ProcessorUtils {
 
-    override fun getImports(type: VariableElement) = listOf<String>()
+    override fun getImports(variable: MVariable) = listOf<String>()
 
     protected val Int.asParam get() = "it$this"
 
@@ -69,11 +67,10 @@ abstract class PropertyRendererBase(
  */
 class PropertyRenderers(
 
-    logPrefix: String,
-    env: ProcessingEnvironment,
+    ctx: ProcessorUtils.Context,
     private val provider: (PropertyRenderers) -> List<PropertyRenderer>
 
-) : PropertyRendererBase(logPrefix, env), ProcessorUtils {
+) : PropertyRendererBase(ctx), ProcessorUtils {
 
     private val children by lazy { provider(this) }
 
@@ -87,12 +84,12 @@ class PropertyRenderers(
     /**
      * Returns a list of imports, that need to be added to the generated code
      */
-    override fun getImports(type: VariableElement) = match(type.asTypeName())!!.getImports(type)
+    override fun getImports(variable: MVariable) = match(variable.typeName)!!.getImports(variable)
 
     /**
      * Returns the code for the first matching child renderer
      */
-    override fun render(property: VariableElement) = match(property.asTypeName())!!.render(property)
+    override fun render(variable: MVariable) = match(variable.typeName)!!.render(variable)
 
     override fun renderForwardMapper(type: TypeName, depth: Int) = match(type)!!.renderForwardMapper(type, depth)
 
@@ -106,19 +103,18 @@ class PropertyRenderers(
 /**
  * Renderer for primitive types and Strings
  */
-class PureGetterSetterRenderer(logPrefix: String, env: ProcessingEnvironment) :
-    PropertyRendererBase(logPrefix, env) {
+class PureGetterSetterRenderer(ctx: ProcessorUtils.Context) : PropertyRendererBase(ctx) {
 
     override fun canHandle(type: TypeName) = true
 
-    override fun render(property: VariableElement): String {
+    override fun render(variable: MVariable): String {
 
-        val cls = property.asKotlinClassName() + if (property.isNullable) "?" else ""
-        val prop = property.simpleName
-        val type = property.asTypeName()
+        val cls = variable.kotlinClass + if (variable.isNullable) "?" else ""
+        val prop = variable.simpleName
+        val type = variable.typeName
 
         val hint = when {
-            type.isPrimitiveType || type.isStringType || type.isAnyType -> "\n"
+            type.isPrimitiveType || type.isStringType || type.isAnyType -> ""
 
             else -> "// Currently there is no better way to mutate a '$type' ... sorry!\n"
         }
@@ -147,10 +143,9 @@ class PureGetterSetterRenderer(logPrefix: String, env: ProcessingEnvironment) :
 }
 
 class ListAndSetPropertyRenderer(
-    private val root: PropertyRenderers,
-    logPrefix: String,
-    env: ProcessingEnvironment
-) : PropertyRendererBase(logPrefix, env) {
+    ctx: ProcessorUtils.Context,
+    private val root: PropertyRenderers
+) : PropertyRendererBase(ctx) {
 
     private val supported = listOf(
         "java.util.List",
@@ -163,10 +158,10 @@ class ListAndSetPropertyRenderer(
             // and the contained type must be supported as well
             && type.typeArguments.all { root.canHandle(it) }
 
-    override fun render(property: VariableElement): String {
+    override fun render(variable: MVariable): String {
 
-        val prop = property.simpleName
-        val type = property.asTypeName() as ParameterizedTypeName
+        val prop = variable.simpleName
+        val type = variable.typeName as ParameterizedTypeName
         val typeParam = type.typeArguments[0]
 
         return """
@@ -207,10 +202,9 @@ class ListAndSetPropertyRenderer(
 }
 
 class MapPropertyRenderer(
-    private val root: PropertyRenderers,
-    logPrefix: String,
-    env: ProcessingEnvironment
-) : PropertyRendererBase(logPrefix, env) {
+    ctx: ProcessorUtils.Context,
+    private val root: PropertyRenderers
+) : PropertyRendererBase(ctx) {
 
     private val supported = listOf(
         "java.util.Map"
@@ -224,10 +218,10 @@ class MapPropertyRenderer(
             // and the value part must be handled as well
             && root.canHandle(type.typeArguments[1])
 
-    override fun render(property: VariableElement): String {
+    override fun render(variable: MVariable): String {
 
-        val prop = property.simpleName
-        val type = property.asTypeName() as ParameterizedTypeName
+        val prop = variable.simpleName
+        val type = variable.typeName as ParameterizedTypeName
 
         val p1 = type.typeArguments[1]
 
@@ -272,7 +266,7 @@ class MapPropertyRenderer(
 /**
  * Here we handle non parameterized data classes
  */
-class DataClassPropertyRenderer(logPrefix: String, env: ProcessingEnvironment) : PropertyRendererBase(logPrefix, env) {
+class DataClassPropertyRenderer(ctx: ProcessorUtils.Context) : PropertyRendererBase(ctx) {
 
     override fun canHandle(type: TypeName) =
         // exclude blank name (probably a generic type like T)
@@ -282,10 +276,10 @@ class DataClassPropertyRenderer(logPrefix: String, env: ProcessingEnvironment) :
 
     // TODO: check if the type has a "copy" method
 
-    override fun getImports(type: VariableElement): List<String> {
+    override fun getImports(variable: MVariable): List<String> {
 
         // we need to find the outer-most class in order to generate correct imports
-        var outer: Element = (type.asType() as DeclaredType).asElement()
+        var outer: Element = (variable.element.asType() as DeclaredType).asElement()
 
         while (outer.enclosingElement != null && outer.enclosingElement.kind == ElementKind.CLASS) {
             outer = outer.enclosingElement
@@ -294,11 +288,11 @@ class DataClassPropertyRenderer(logPrefix: String, env: ProcessingEnvironment) :
         return listOf("${outer.asTypeName().packageName}.mutator")
     }
 
-    override fun render(property: VariableElement): String {
+    override fun render(variable: MVariable): String {
 
-        val nullable = if (property.isNullable) "?" else ""
+        val nullable = if (variable.isNullable) "?" else ""
 
-        val prop = property.simpleName
+        val prop = variable.simpleName
 
         return """
             val $prop by lazy { getResult().$prop$nullable.mutator { modify(getResult()::$prop, getResult().$prop, it) } }

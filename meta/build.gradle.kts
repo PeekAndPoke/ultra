@@ -22,7 +22,8 @@ val google_auto_version: String by project
 val kotlinpoet_version: String by project
 val logback_version: String by project
 val kotlintest_version: String by project
-val classindex_version: String by project
+val kotlincompiletesting_version: String by project
+val diffutils_version: String by project
 
 dependencies {
     api(rootProject.project("common"))
@@ -32,14 +33,11 @@ dependencies {
 
     ////  code generation  //////////////////////////////////////////////////////////////////////////////////////
 
-    compile("me.eugeniomarletti.kotlin.metadata:kotlin-metadata:$kotlin_metadata_version") {
-        exclude(group = "me.eugeniomarletti.kotlin.metadata")
-    }
+    compile("com.github.tschuchortdev:kotlin-compile-testing:$kotlincompiletesting_version")
+    compile("com.github.wumpz:diffutils:$diffutils_version")
 
     compile("com.squareup:kotlinpoet:$kotlinpoet_version")
     compile("com.google.auto.service:auto-service:$google_auto_version")
-
-    kapt("org.atteo.classindex:classindex:$classindex_version")
     kapt("com.google.auto.service:auto-service:$google_auto_version")
 
     ////  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
