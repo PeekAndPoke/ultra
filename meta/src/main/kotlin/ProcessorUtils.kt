@@ -3,11 +3,13 @@ package de.peekandpoke.ultra.meta
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asTypeName
+import de.peekandpoke.ultra.common.startsWithNone
 import de.peekandpoke.ultra.common.ucFirst
 import java.util.*
 import javax.annotation.processing.Filer
 import javax.annotation.processing.Messager
 import javax.annotation.processing.ProcessingEnvironment
+import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.*
 import javax.lang.model.type.DeclaredType
@@ -15,6 +17,7 @@ import javax.lang.model.type.TypeMirror
 import javax.lang.model.util.Elements
 import javax.lang.model.util.Types
 import javax.tools.Diagnostic
+import kotlin.reflect.KClass
 
 @Suppress("unused")
 interface ProcessorUtils {
@@ -215,9 +218,49 @@ interface ProcessorUtils {
         return result
     }
 
-    ////  KOTLIN COMPAT  /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////  KOTLIN COMPAT  ///////////////////////////////////////////////////////////////////////////////////////////////
 
     fun Element.asKotlinClassName(): String = asType().asTypeName().toString().asKotlinClassName()
 
     fun ParameterizedTypeName.asRawKotlinClassName(): String = rawType.canonicalName.asKotlinClassName()
+
+    ////  Type search  /////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Finds all [TypeElement]s that carry the given annotation
+     */
+    fun <T : Annotation> RoundEnvironment.findAllTypeWithAnnotation(cls: KClass<T>): List<TypeElement> =
+        getElementsAnnotatedWith(cls.java).filterIsInstance<TypeElement>()
+
+    /**
+     * Adds all recursively referenced [TypeElement]s
+     */
+    fun List<TypeElement>.plusReferencedTypesRecursive(): List<TypeElement> = plus(
+        flatMap {
+            it.getReferencedTypesRecursive()
+                .map { tm -> typeUtils.asElement(tm) }
+                .filterIsInstance<TypeElement>()
+        }
+    ).distinct()
+
+    /**
+     * Blacklists all types, where the fqn starts with any entry of the given [blacklist]
+     */
+    fun <T : Element> List<T>.blacklist(blacklist: List<String>): List<T> = asSequence()
+        .distinct()
+        .filter { it.fqn.startsWithNone(blacklist) }
+        .toList()
+
+    /**
+     * Applies a default black list.
+     *
+     * Filters out all platform packages:
+     * - java.*
+     * - javax.*
+     * - javafx.*
+     * - kotlin.*
+     */
+    fun <T : Element> List<T>.defaultBlacklist(): List<T> = blacklist(
+        listOf("java.", "javax.", "javafx.", "kotlin.")
+    )
 }

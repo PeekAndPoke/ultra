@@ -1,7 +1,6 @@
 package de.peekandpoke.ultra.mutator.meta
 
 import com.google.auto.service.AutoService
-import de.peekandpoke.ultra.common.startsWithNone
 import de.peekandpoke.ultra.meta.KotlinProcessor
 import de.peekandpoke.ultra.meta.model.MType
 import de.peekandpoke.ultra.meta.model.Model
@@ -11,7 +10,6 @@ import java.io.File
 import javax.annotation.processing.Processor
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.SourceVersion
-import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
 
 @Suppress("unused")
@@ -19,8 +17,6 @@ import javax.lang.model.element.TypeElement
 open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
 
     private val renderers by lazy {
-
-        // TODO: check for collections
 
         PropertyRenderers(ctx) { root ->
             listOf(
@@ -44,92 +40,21 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
 
     override fun process(annotations: Set<TypeElement>, roundEnv: RoundEnvironment): Boolean {
 
-        // Find all types that have a Mutable Annotation
-        val elems = roundEnv
-            .getElementsAnnotatedWith(Mutable::class.java)
-            .filterIsInstance<TypeElement>()
+        val types = roundEnv
+            .findAllTypeWithAnnotation(Mutable::class)
+            .plusReferencedTypesRecursive()
+            .defaultBlacklist()
 
-        // Find all the types that are referenced by these types and add them to the pool
-        val pool = elems.plus(
-            elems.map { it.getReferencedTypesRecursive().map { tm -> typeUtils.asElement(tm) } }.flatten().distinct()
-        )
+        logNote("all types (with recursively referenced): $types")
 
-        val blacklisted = arrayOf("java.", "javax.", "javafx.", "kotlin.")
-
-        // Black list some packages
-        fun <T : Element> List<T>.blacklist() = asSequence()
-            .distinct()
-            .filter { it.fqn.startsWithNone(blacklisted) }
-            .toList()
-
-        val all: List<TypeElement> = pool
-            .filterIsInstance<TypeElement>()
-            .blacklist()
-
-        logNote("all types (nested): $all")
-
-        val model = Model.Builder(ctx).build(all)
+        val model = Model.Builder(ctx).build(types)
 
         model.types.forEach {
             buildMutatorFileFor(it)
         }
 
-//        buildContext(roundEnv).apply {
-//            types.forEach {
-//                // generate code for all the relevant types
-//                buildMutatorFileFor(it, this)
-//            }
-//        }
-
         return true
     }
-
-//    private fun buildContext(roundEnv: RoundEnvironment): Context {
-//        // Find all types that have a Mutable Annotation
-//        val elems = roundEnv
-//            .getElementsAnnotatedWith(Mutable::class.java)
-//            .filterIsInstance<TypeElement>()
-//
-//        // Find all the types that are referenced by these types and add them to the pool
-//        val pool = elems.plus(
-//            elems.map { it.getReferencedTypesRecursive().map { tm -> typeUtils.asElement(tm) } }.flatten().distinct()
-//        )
-//
-//        val blacklisted = arrayOf("java.", "javax.", "javafx.", "kotlin.")
-//
-//        // Black list some packages
-//        fun <T : Element> List<T>.blacklist() = asSequence()
-//            .distinct()
-//            .filter { it.fqn.startsWithNone(blacklisted) }
-//            .toList()
-//
-//        val all: List<TypeElement> = pool
-//            .filterIsInstance<TypeElement>()
-//            .blacklist()
-//
-//        logNote("all types (nested): $all")
-//
-//        val allGenericTypesUsed = all.fold(GenericUsages(logPrefix, env)) { acc, type -> acc.add(type) }
-//
-//        logNote("all generic types used")
-//        logNote(allGenericTypesUsed.registry.toString())
-//
-//        return Context(all, allGenericTypesUsed)
-//    }
-
-//    private fun buildMutatorFileFor(element: TypeElement, context: Context) {
-//
-//        logNote("Found type ${element.simpleName} in ${element.asClassName().packageName}")
-//
-//        val content = DataClassRenderer(logPrefix, env, element, context, renderers).render()
-//
-//        val info = element.info
-//
-//        val dir = File("$generatedDir/${info.packageName.replace('.', '/')}").also { it.mkdirs() }
-//        val file = File(dir, "${info.nestedClasses.joinToString("_")}${"$$"}mutator.kt")
-//
-//        file.writeText(content)
-//    }
 
     private fun buildMutatorFileFor(element: MType) {
 
