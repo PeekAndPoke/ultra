@@ -1,7 +1,6 @@
 package de.peekandpoke.ultra.kontainer
 
 import de.peekandpoke.ultra.common.Lookup
-import de.peekandpoke.ultra.common.SimpleLazy
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 
@@ -194,7 +193,7 @@ interface ParameterProvider {
         /**
          * Provides a lazy list with all super types
          */
-        override fun provide(context: InjectionContext): Lazy<List<Any>> = SimpleLazy { context.getAll(innerType) }
+        override fun provide(context: InjectionContext): Lazy<List<Any>> = lazy { context.getAll(innerType) }
 
         /**
          * Always valid.
@@ -213,7 +212,7 @@ interface ParameterProvider {
 
         private val paramName = parameter.name
 
-        override fun provide(context: InjectionContext) = SimpleLazy { context.getOrNull(innerCls) }
+        override fun provide(context: InjectionContext): Lazy<Any?> = lazy { context.getOrNull(innerCls) }
 
         override fun validate(kontainer: Kontainer) = when {
 

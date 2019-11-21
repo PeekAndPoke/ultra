@@ -20,6 +20,11 @@ data class GenericTypeInAction(
 )
 
 @Mutable
+data class GenericTypeInActionWithPrimitives(
+    val generic: Generic<String, Int>
+)
+
+@Mutable
 data class ReferencingOtherPackages(
     val firstIn1: FirstInPackage1,
     val secondIn1: SecondInPackage1?,

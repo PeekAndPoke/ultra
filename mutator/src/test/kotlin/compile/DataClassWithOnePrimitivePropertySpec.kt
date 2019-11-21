@@ -54,7 +54,7 @@ class DataClassWithOnePrimitivePropertySpec : StringSpec({
                          *   - type:         java.lang.String
                          *   - reflected by: com.squareup.kotlinpoet.ClassName
                          */ 
-                        var text: kotlin.String
+                        var text
                             get() = getResult().text
                             set(v) = modify(getResult()::text, getResult().text, v)
                      

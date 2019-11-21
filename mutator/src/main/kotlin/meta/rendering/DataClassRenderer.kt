@@ -1,7 +1,6 @@
 package de.peekandpoke.ultra.mutator.meta.rendering
 
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.ParameterizedTypeName
+import de.peekandpoke.ultra.meta.KotlinPrinter
 import de.peekandpoke.ultra.meta.ProcessorUtils
 import de.peekandpoke.ultra.meta.model.MType
 import de.peekandpoke.ultra.meta.model.MVariable
@@ -9,153 +8,78 @@ import de.peekandpoke.ultra.meta.model.MVariable
 class DataClassRenderer(
 
     override val ctx: ProcessorUtils.Context,
-    private val type: MType,
+    private val classType: MType,
     private val renderers: PropertyRenderers
 
 ) : ProcessorUtils {
 
-    private val helper = TypeRenderHelper(type)
-
-    private val fieldBlocks = mutableListOf<String>()
-
-    private val goodVariables: List<MVariable> = type.variables
+    private fun List<MVariable>.filtered(): List<MVariable> =
         // filter delegated properties (e.g. by lazy)
-        .filter { !it.isDelegate }
-        // we only look at public properties
-        .filter { type.hasPublicGetterFor(it) }
-
-    private val genericUsages = type.genericUsages
-
-    private val nonGenericVariables = goodVariables.filter { !it.isGeneric }
-
-    private val genericVariables = goodVariables.filter { it.isGeneric }
-
-    private val imports = mutableSetOf(
-        "de.peekandpoke.ultra.mutator.*",
-        *genericUsages
-            .flatMap { it.typeArguments }.mapNotNull {
-                when (it) {
-                    is ParameterizedTypeName -> it.rawType.packageName + ".mutator"
-
-                    is ClassName -> it.packageName + ".mutator"
-
-                    else -> null
-                }
-            }.toTypedArray()
-    )
-
-    private val rendered by lazy {
-
-        nonGenericVariables
-            // filter delegated properties (e.g. by lazy)
-            .filter { !it.simpleName.contains("${"$"}delegate") }
+        filter { !it.isDelegate }
             // we only look at public properties
-            .filter { type.hasPublicGetterFor(it) }
-            .forEach { variable ->
+            .filter { classType.hasPublicGetterFor(it) }
 
-                val fqn = variable.fqn
-                val type = variable.typeName
-                val prop = variable.simpleName
+    private fun KotlinPrinter.renderFor(target: MType, mutatorClassName: String) {
 
-                fieldBlocks.add(
-                    """
-                    /**
-                     * Mutator for field [${helper.receiverName}.$prop]
-                     *
-                     * Info:
-                     *   - type:         $fqn
-                     *   - reflected by: ${type::class.qualifiedName}
-                     */ 
-                """.trimIndent().prependIndent("    ")
-                )
+        val jvmName = mutatorClassName.replace("[^0-9a-zA-Z]+".toRegex(), "")
 
-                when {
-                    // parameterized types are treated differently
-                    renderers.canHandle(type) -> {
-                        // add all imports
-                        imports.addAll(renderers.getImports(variable))
+        val imported = target.import()
 
-                        fieldBlocks.add(
-                            renderers.render(variable).prependIndent("    ")
-                        )
-                    }
-
-                    else -> {
-                        val message =
-                            "There is no known way to mutate the property ${this.type}::$prop of type $fqn yet ... sorry!"
-
-                        logWarning("  .. $message")
-
-                        fieldBlocks.add(
-                            """
-                                @Deprecated("$message", level = DeprecationLevel.ERROR)
-                                val $prop: Any? = null
-
-                            """.trimIndent().prependIndent("    ")
-                        )
-                    }
-                }
-            }
-
-        val contentBlocks = mutableListOf(
-            // file header
+        appendBlock(
             """
-                @file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
-
-                package ${type.packageName}
-
-            """.trimIndent(),
-
-            // imports
-            imports.sorted().joinToString("\n") { "import $it" },
-
-            // extension functions
-            """
-
-                fun ${helper.generics}${helper.receiverName}.mutate(mutation: ${helper.mutatorClassName}.() -> Unit) = 
+                @JvmName("mutate${jvmName}")
+                fun ${imported}.mutate(mutation: ${mutatorClassName}.() -> Unit) = 
                     mutator().apply(mutation).getResult()
 
-                fun ${helper.generics}${helper.receiverName}.mutator(onModify: OnModify<${helper.receiverName}> = {}) = 
-                    ${helper.mutatorClassName}(this, onModify)
+                @JvmName("mutator${jvmName}")
+                fun ${imported}.mutator(onModify: OnModify<${imported}> = {}) = 
+                    ${mutatorClassName}(this, onModify)
 
-                class ${helper.mutatorClassName}(
-                    target: ${helper.receiverName}, 
-                    onModify: OnModify<${helper.receiverName}> = {}
-                ) : DataClassMutator<${helper.receiverName}>(target, onModify) {
-                
-            """.trimIndent(),
-
-            // fields
-            *fieldBlocks.toTypedArray(),
-
-            // closing mutator class
-            """
-                }
+                class ${mutatorClassName}(
+                    target: ${imported}, 
+                    onModify: OnModify<${imported}> = {}
+                ) : DataClassMutator<${imported}>(target, onModify) {
                 
             """.trimIndent()
         )
 
-        genericVariables.forEach { variable ->
+        indent {
 
-            val varName = variable.simpleName
+            target.variables.filtered().forEach { variable ->
 
-            contentBlocks.add("///////////////////////////////////////////////////////////////////////////////////////")
-            contentBlocks.add("// ${variable.simpleName} generics")
+                val type = variable.typeName
+                val prop = variable.simpleName
 
-            genericUsages.forEach { usage ->
-
-                contentBlocks.add(
+                appendBlock(
                     """
-                        val ${helper.mutatorClass(usage)}.$varName get() = 
-                            getResult().$varName.mutator { modify(getResult()::$varName, getResult().$varName, it) }
-                                                 
+                        /**
+                         * Mutator for field [${imported}.$prop]
+                         *
+                         * Info:
+                         *   - type:         [${variable.typeName.import()}]
+                         *   - reflected by: [${type::class.qualifiedName}]
+                         */ 
                     """.trimIndent()
                 )
+
+                renderers.run {
+                    renderProperty(variable.typeName, variable.simpleName)
+                }
             }
         }
 
-        return@lazy contentBlocks.joinToString(System.lineSeparator())
+        append("}").newline()
     }
 
-    fun render() = rendered
+    fun render(printer: KotlinPrinter) = with(printer) {
+
+        when {
+            !classType.isParameterized ->
+                renderFor(classType, classType.nestedFileName + "Mutator")
+
+            else -> classType.genericUsages.forEachIndexed { idx, type ->
+                renderFor(type, type.simpleName + "Mutator_" + idx)
+            }
+        }
+    }
 }

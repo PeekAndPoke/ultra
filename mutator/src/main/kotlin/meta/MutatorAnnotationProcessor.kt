@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.mutator.meta
 
 import com.google.auto.service.AutoService
+import de.peekandpoke.ultra.meta.KotlinPrinter
 import de.peekandpoke.ultra.meta.KotlinProcessor
 import de.peekandpoke.ultra.meta.model.MType
 import de.peekandpoke.ultra.meta.model.Model
@@ -18,16 +19,14 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
 
     private val renderers by lazy {
 
-        PropertyRenderers(ctx) { root ->
+        PropertyRenderers(ctx, PureGetterSetterRenderer(ctx)) { root ->
             listOf(
                 // Lists and Sets
                 ListAndSetPropertyRenderer(ctx, root),
                 // Maps
                 MapPropertyRenderer(ctx, root),
                 // Data classes
-                DataClassPropertyRenderer(ctx),
-                // Fallback for primitive types, String, Any, and all others that or not support yet
-                PureGetterSetterRenderer(ctx)
+                DataClassPropertyRenderer(ctx)
             )
         }
     }
@@ -39,6 +38,10 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
     )
 
     override fun process(annotations: Set<TypeElement>, roundEnv: RoundEnvironment): Boolean {
+
+        if (roundEnv.processingOver()) {
+            return true
+        }
 
         val types = roundEnv
             .findAllTypeWithAnnotation(Mutable::class)
@@ -60,11 +63,21 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
 
         logNote("Found type ${element.simpleName} in ${element.packageName}")
 
-        val content = DataClassRenderer(ctx, element, renderers).render()
+        val printer = KotlinPrinter(
+            element.packageName,
+            listOf(
+                "@file:Suppress(\"UNUSED_ANONYMOUS_PARAMETER\")"
+            ),
+            listOf(
+                "de.peekandpoke.ultra.mutator.*"
+            )
+        )
+
+        DataClassRenderer(ctx, element, renderers).render(printer)
 
         val dir = File("$generatedDir/${element.packageName.replace('.', '/')}").also { it.mkdirs() }
         val file = File(dir, "${element.nestedFileName}${"$$"}mutator.kt")
 
-        file.writeText(content)
+        file.writeText(printer.toString())
     }
 }

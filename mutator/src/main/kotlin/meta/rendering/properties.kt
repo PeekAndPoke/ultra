@@ -2,14 +2,10 @@ package de.peekandpoke.ultra.mutator.meta.rendering
 
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.TypeName
-import de.peekandpoke.ultra.common.startsWithAny
+import de.peekandpoke.ultra.meta.KotlinPrinter
 import de.peekandpoke.ultra.meta.ProcessorUtils
-import de.peekandpoke.ultra.meta.model.MVariable
-import javax.lang.model.element.Element
-import javax.lang.model.element.ElementKind
-import javax.lang.model.type.DeclaredType
 
-interface PropertyRenderer {
+interface PropertyRenderer : ProcessorUtils {
 
     /**
      * Returns 'true' when the renderer can handle the given VariableElement
@@ -17,45 +13,17 @@ interface PropertyRenderer {
     fun canHandle(type: TypeName): Boolean
 
     /**
-     * Returns a list of imports, that need to be added to the generated code
+     * Renders code-blocks for a property
      */
-    fun getImports(variable: MVariable): List<String>
+    fun KotlinPrinter.renderProperty(type: TypeName, name: String)
 
-    /**
-     * Renders all code-blocks for the given VariableElement
-     */
-    fun render(variable: MVariable): String
+    fun KotlinPrinter.renderForwardMapper(type: TypeName, depth: Int)
 
-    fun renderForwardMapper(type: TypeName, depth: Int): String
+    fun KotlinPrinter.renderBackwardMapper(type: TypeName, depth: Int)
 
-    fun renderBackwardMapper(type: TypeName, depth: Int): String
-}
+    val Int.asParam get() = "it$this"
 
-/**
- * Abstract base class providing all the tools from the ProcessorUtils
- */
-abstract class PropertyRendererBase(
-    override val ctx: ProcessorUtils.Context
-) : PropertyRenderer, ProcessorUtils {
-
-    override fun getImports(variable: MVariable) = listOf<String>()
-
-    protected val Int.asParam get() = "it$this"
-
-    protected val Int.asOnModify get() = "on$this"
-
-    protected fun String.indent(amount: Int, pattern: String = "    ") = lineSequence()
-        .mapIndexed { idx, str -> if (idx == 0) str else str.prependIndent(pattern.repeat(amount)) }
-        .joinToString(System.lineSeparator())
-
-    val TypeName.isBlackListed
-        get() = fqn.startsWithAny(
-            "java.",                // exclude java std lib
-            "javax.",               // exclude javax std lib
-            "javafx.",              // exclude javafx
-            "kotlin.",              // exclude kotlin std lib
-            "com.google.common."    // exclude google guava
-        )
+    val Int.asOnModify get() = "on$this"
 }
 
 /**
@@ -67,51 +35,57 @@ abstract class PropertyRendererBase(
  */
 class PropertyRenderers(
 
-    ctx: ProcessorUtils.Context,
+    override val ctx: ProcessorUtils.Context,
+    private val fallback: PropertyRenderer,
     private val provider: (PropertyRenderers) -> List<PropertyRenderer>
 
-) : PropertyRendererBase(ctx), ProcessorUtils {
+) : PropertyRenderer {
 
     private val children by lazy { provider(this) }
 
-    private val cache = mutableMapOf<String, PropertyRenderer?>()
+    private val cache = mutableMapOf<TypeName, PropertyRenderer>()
 
     /**
-     * Returns 'true' when one of the children returns true for the given VariableElement.
+     * We can always handle any type, since we have a fallback
      */
-    override fun canHandle(type: TypeName) = match(type) != null
-
-    /**
-     * Returns a list of imports, that need to be added to the generated code
-     */
-    override fun getImports(variable: MVariable) = match(variable.typeName)!!.getImports(variable)
+    override fun canHandle(type: TypeName): Boolean = true
 
     /**
      * Returns the code for the first matching child renderer
      */
-    override fun render(variable: MVariable) = match(variable.typeName)!!.render(variable)
+    override fun KotlinPrinter.renderProperty(type: TypeName, name: String) =
+        match(type).run { renderProperty(type, name) }
 
-    override fun renderForwardMapper(type: TypeName, depth: Int) = match(type)!!.renderForwardMapper(type, depth)
+    /**
+     * TODO: comment
+     */
+    override fun KotlinPrinter.renderForwardMapper(type: TypeName, depth: Int) =
+        match(type).run { renderForwardMapper(type, depth) }
 
-    override fun renderBackwardMapper(type: TypeName, depth: Int) = match(type)!!.renderBackwardMapper(type, depth)
+    /**
+     * TODO: comment
+     */
+    override fun KotlinPrinter.renderBackwardMapper(type: TypeName, depth: Int) =
+        match(type).run { renderBackwardMapper(type, depth) }
 
-    private fun match(type: TypeName) = cache.getOrPut(type.fqn) {
-        children.firstOrNull { it.canHandle(type) }
+    /**
+     * Get the [PropertyRenderer] for the given [TypeName]
+     */
+    private fun match(type: TypeName) = cache.getOrPut(type) {
+        children.firstOrNull { it.canHandle(type) } ?: fallback
     }
 }
 
 /**
  * Renderer for primitive types and Strings
  */
-class PureGetterSetterRenderer(ctx: ProcessorUtils.Context) : PropertyRendererBase(ctx) {
+class PureGetterSetterRenderer(
+    override val ctx: ProcessorUtils.Context
+) : PropertyRenderer {
 
     override fun canHandle(type: TypeName) = true
 
-    override fun render(variable: MVariable): String {
-
-        val cls = variable.kotlinClass + if (variable.isNullable) "?" else ""
-        val prop = variable.simpleName
-        val type = variable.typeName
+    override fun KotlinPrinter.renderProperty(type: TypeName, name: String) {
 
         val hint = when {
             type.isPrimitiveType || type.isStringType || type.isAnyType -> ""
@@ -119,33 +93,75 @@ class PureGetterSetterRenderer(ctx: ProcessorUtils.Context) : PropertyRendererBa
             else -> "// Currently there is no better way to mutate a '$type' ... sorry!\n"
         }
 
-        return """
-            var $prop: $cls
-                get() = getResult().$prop
-                set(v) = modify(getResult()::$prop, getResult().$prop, v)
-                $hint
-        """.trimIndent()
+        appendBlock(
+            """
+                var $name
+                    get() = getResult().$name
+                    set(v) = modify(getResult()::$name, getResult().$name, v)
+                    $hint
+            """.trimIndent()
+        )
+
+        newline()
     }
 
-    override fun renderForwardMapper(type: TypeName, depth: Int): String {
-
-        return """
-            ${depth.asParam}
-        """.trimIndent()
+    override fun KotlinPrinter.renderForwardMapper(type: TypeName, depth: Int) {
+        append(depth.asParam)
     }
 
-    override fun renderBackwardMapper(type: TypeName, depth: Int): String {
+    override fun KotlinPrinter.renderBackwardMapper(type: TypeName, depth: Int) {
+        append(depth.asParam)
+    }
+}
 
-        return """
-            ${depth.asParam}
-        """.trimIndent()
+abstract class CollectionPropertyRendererBase(
+    override val ctx: ProcessorUtils.Context,
+    protected val root: PropertyRenderers
+) : PropertyRenderer {
+
+    protected fun KotlinPrinter.internalRenderProperty(name: String, typeParam: TypeName) {
+
+        appendLine("val $name by lazy {").indent {
+            appendLine("getResult().$name.mutator(").indent {
+                appendLine("{ modify(getResult()::$name, getResult().$name, it) },")
+
+                append("{ ${1.asParam} -> ")
+                root.run { renderBackwardMapper(typeParam, 1) }
+                appendLine(" },")
+
+                appendLine("{ ${1.asParam}, ${1.asOnModify} -> ").indent {
+                    root.run { renderForwardMapper(typeParam, 1) }
+                    newline()
+                }
+                appendLine("}")
+            }
+            appendLine(")")
+        }
+        appendLine("}")
+    }
+
+    fun KotlinPrinter.internalRenderForwardMapper(type: TypeName, depth: Int) {
+
+        val plus1 = depth + 1
+
+        append("${depth.asParam}.mutator(${depth.asOnModify}, { ${plus1.asParam} -> ")
+        root.run { renderBackwardMapper(type, plus1) }
+        appendLine(" }) { ${plus1.asParam}, ${plus1.asOnModify} -> ").indent {
+            root.run { renderForwardMapper(type, plus1) }
+            newline()
+        }
+        append("}")
+    }
+
+    fun KotlinPrinter.internalRenderBackwardMapper(depth: Int) {
+        append("${depth.asParam}.getResult()")
     }
 }
 
 class ListAndSetPropertyRenderer(
     ctx: ProcessorUtils.Context,
-    private val root: PropertyRenderers
-) : PropertyRendererBase(ctx) {
+    root: PropertyRenderers
+) : CollectionPropertyRendererBase(ctx, root) {
 
     private val supported = listOf(
         "java.util.List",
@@ -158,53 +174,26 @@ class ListAndSetPropertyRenderer(
             // and the contained type must be supported as well
             && type.typeArguments.all { root.canHandle(it) }
 
-    override fun render(variable: MVariable): String {
+    override fun KotlinPrinter.renderProperty(type: TypeName, name: String) {
 
-        val prop = variable.simpleName
-        val type = variable.typeName as ParameterizedTypeName
-        val typeParam = type.typeArguments[0]
-
-        return """
-            val $prop by lazy {
-                getResult().$prop.mutator(
-                    { modify(getResult()::$prop, getResult().$prop, it) },
-                    { ${1.asParam} -> ${root.renderBackwardMapper(typeParam, 1)} },
-                    { ${1.asParam}, ${1.asOnModify} ->
-                        ${root.renderForwardMapper(typeParam, 1).indent(6)}
-                    }
-                )
-            }
-
-        """.trimIndent()
+        internalRenderProperty(name, (type as ParameterizedTypeName).typeArguments[0])
     }
 
-    override fun renderForwardMapper(type: TypeName, depth: Int): String {
+    override fun KotlinPrinter.renderForwardMapper(type: TypeName, depth: Int) {
 
-        val typeParam = (type as ParameterizedTypeName).typeArguments[0]
-        val plus1 = depth + 1
-
-        return """
-            ${depth.asParam}.mutator(${depth.asOnModify}, { ${plus1.asParam} -> ${root.renderBackwardMapper(
-            typeParam,
-            plus1
-        )} }) { ${plus1.asParam}, ${plus1.asOnModify} ->
-                ${root.renderForwardMapper(typeParam, plus1).indent(4)}
-            }
-        """.trimIndent()
+        internalRenderForwardMapper((type as ParameterizedTypeName).typeArguments[0], depth)
     }
 
-    override fun renderBackwardMapper(type: TypeName, depth: Int): String {
+    override fun KotlinPrinter.renderBackwardMapper(type: TypeName, depth: Int) {
 
-        return """
-            ${depth.asParam}.getResult()
-        """.trimIndent()
+        internalRenderBackwardMapper(depth)
     }
 }
 
 class MapPropertyRenderer(
     ctx: ProcessorUtils.Context,
-    private val root: PropertyRenderers
-) : PropertyRendererBase(ctx) {
+    root: PropertyRenderers
+) : CollectionPropertyRendererBase(ctx, root) {
 
     private val supported = listOf(
         "java.util.Map"
@@ -218,99 +207,57 @@ class MapPropertyRenderer(
             // and the value part must be handled as well
             && root.canHandle(type.typeArguments[1])
 
-    override fun render(variable: MVariable): String {
+    override fun KotlinPrinter.renderProperty(type: TypeName, name: String) {
 
-        val prop = variable.simpleName
-        val type = variable.typeName as ParameterizedTypeName
-
-        val p1 = type.typeArguments[1]
-
-        return """
-            val $prop by lazy {
-                getResult().$prop.mutator(
-                    { modify(getResult()::$prop, getResult().$prop, it) },
-                    { ${1.asParam} -> ${root.renderBackwardMapper(p1, 1)} },
-                    { ${1.asParam}, ${1.asOnModify} ->
-                        ${root.renderForwardMapper(p1, 1).indent(6)}
-                    }
-                )
-            }
-
-        """.trimIndent()
+        internalRenderProperty(name, (type as ParameterizedTypeName).typeArguments[1])
     }
 
-    override fun renderForwardMapper(type: TypeName, depth: Int): String {
+    override fun KotlinPrinter.renderForwardMapper(type: TypeName, depth: Int) {
 
-        val p1 = (type as ParameterizedTypeName).typeArguments[1]
-
-        val plus1 = depth + 1
-
-        return """
-            ${depth.asParam}.mutator(${depth.asOnModify}, { ${plus1.asParam} -> ${root.renderBackwardMapper(
-            p1,
-            plus1
-        )} }) { ${plus1.asParam}, ${plus1.asOnModify} ->
-                ${root.renderForwardMapper(p1, plus1).indent(4)}
-            }
-        """.trimIndent()
+        internalRenderForwardMapper((type as ParameterizedTypeName).typeArguments[1], depth)
     }
 
-    override fun renderBackwardMapper(type: TypeName, depth: Int): String {
+    override fun KotlinPrinter.renderBackwardMapper(type: TypeName, depth: Int) {
 
-        return """
-            ${depth.asParam}.getResult()
-        """.trimIndent()
+        return internalRenderBackwardMapper(depth)
     }
 }
 
 /**
  * Here we handle non parameterized data classes
  */
-class DataClassPropertyRenderer(ctx: ProcessorUtils.Context) : PropertyRendererBase(ctx) {
+class DataClassPropertyRenderer(
+    override val ctx: ProcessorUtils.Context
+) : PropertyRenderer {
 
+    // TODO: check if the type has a "copy" method
     override fun canHandle(type: TypeName) =
         // exclude blank name (probably a generic type like T)
         type.packageName.isNotEmpty() &&
                 // we also exclude some packages completely
                 !type.isBlackListed
 
-    // TODO: check if the type has a "copy" method
+    override fun KotlinPrinter.renderProperty(type: TypeName, name: String) {
 
-    override fun getImports(variable: MVariable): List<String> {
+        val nullable = if (type.isNullable) "?" else ""
 
-        // we need to find the outer-most class in order to generate correct imports
-        var outer: Element = (variable.element.asType() as DeclaredType).asElement()
-
-        while (outer.enclosingElement != null && outer.enclosingElement.kind == ElementKind.CLASS) {
-            outer = outer.enclosingElement
-        }
-
-        return listOf("${outer.asTypeName().packageName}.mutator")
+        appendBlock(
+            """
+                val $name by lazy { 
+                    getResult().$name$nullable.mutator { modify(getResult()::$name, getResult().$name, it) } 
+                }
+    
+            """.trimIndent()
+        )
     }
 
-    override fun render(variable: MVariable): String {
+    override fun KotlinPrinter.renderForwardMapper(type: TypeName, depth: Int) {
 
-        val nullable = if (variable.isNullable) "?" else ""
-
-        val prop = variable.simpleName
-
-        return """
-            val $prop by lazy { getResult().$prop$nullable.mutator { modify(getResult()::$prop, getResult().$prop, it) } }
-
-        """.trimIndent()
+        append("${depth.asParam}.mutator(${depth.asOnModify})")
     }
 
-    override fun renderForwardMapper(type: TypeName, depth: Int): String {
+    override fun KotlinPrinter.renderBackwardMapper(type: TypeName, depth: Int) {
 
-        return """
-            ${depth.asParam}.mutator(${depth.asOnModify})
-        """.trimIndent()
-    }
-
-    override fun renderBackwardMapper(type: TypeName, depth: Int): String {
-
-        return """
-            ${depth.asParam}.getResult()
-        """.trimIndent()
+        append("${depth.asParam}.getResult()")
     }
 }

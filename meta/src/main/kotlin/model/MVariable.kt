@@ -1,19 +1,28 @@
 package de.peekandpoke.ultra.meta.model
 
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeVariableName
-import com.squareup.kotlinpoet.asTypeName
 import de.peekandpoke.ultra.meta.ProcessorUtils
+import javax.lang.model.element.TypeElement
 import javax.lang.model.element.VariableElement
+import javax.lang.model.type.DeclaredType
 
 data class MVariable(
     override val ctx: ProcessorUtils.Context,
-    val element: VariableElement
+    val element: VariableElement,
+    val typeName: TypeName
 ) : ProcessorUtils {
-    val fqn = element.fqn
 
-    val typeName = element.asType().asTypeName()
+    val type: TypeElement? = when (val elemType = element.asType()) {
 
-    val kotlinClass = fqn.asKotlinClassName()
+        is DeclaredType -> elemType.asElement() as? TypeElement
+
+        else -> null
+    }
+
+    val javaFqn = typeName.fqn
+
+    val kotlinFqn = javaFqn.asKotlinClassName()
 
     val isDelegate = element.simpleName.contains("${"$"}delegate")
 

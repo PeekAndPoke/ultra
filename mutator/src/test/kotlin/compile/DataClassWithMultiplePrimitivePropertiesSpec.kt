@@ -60,7 +60,7 @@ class DataClassWithMultiplePrimitivePropertiesSpec : StringSpec({
                          *   - type:         java.lang.String
                          *   - reflected by: com.squareup.kotlinpoet.ClassName
                          */ 
-                        var text: kotlin.String
+                        var text
                             get() = getResult().text
                             set(v) = modify(getResult()::text, getResult().text, v)
 
@@ -71,7 +71,7 @@ class DataClassWithMultiplePrimitivePropertiesSpec : StringSpec({
                          *   - type:         kotlin.Int
                          *   - reflected by: com.squareup.kotlinpoet.ClassName
                          */ 
-                        var num: kotlin.Int
+                        var num
                             get() = getResult().num
                             set(v) = modify(getResult()::num, getResult().num, v)
 
@@ -82,7 +82,7 @@ class DataClassWithMultiplePrimitivePropertiesSpec : StringSpec({
                          *   - type:         java.time.LocalDateTime
                          *   - reflected by: com.squareup.kotlinpoet.ClassName
                          */ 
-                        var date: java.time.LocalDateTime
+                        var date
                             get() = getResult().date
                             set(v) = modify(getResult()::date, getResult().date, v)
                             // Currently there is no better way to mutate a 'java.time.LocalDateTime' ... sorry!

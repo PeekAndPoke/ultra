@@ -8,7 +8,7 @@ import io.kotlintest.specs.StringSpec
 
 class GenericClasses : StringSpec({
 
-    "Mutating a class that references a generic class" {
+    "Mutating a class that references a generic class (objects)" {
 
         val source = GenericTypeInAction(
             generic1 = Generic(
@@ -42,6 +42,26 @@ class GenericClasses : StringSpec({
 
             result.generic2.two.one.name shouldBe "four!"
             result.generic2.two.two.name shouldBe "five!"
+        }
+    }
+
+    "Mutating a class that references a generic class (primitives)" {
+
+        val source = GenericTypeInActionWithPrimitives(
+            generic = Generic(
+                one = "one",
+                two = 2
+            )
+        )
+
+        val result = source.mutate {
+            generic.one += "!"
+            generic.two += 1
+        }
+
+        assertSoftly {
+            result.generic.one shouldBe "one!"
+            result.generic.two shouldBe 3
         }
     }
 })

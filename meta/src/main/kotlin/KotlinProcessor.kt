@@ -15,8 +15,11 @@ import javax.lang.model.element.TypeElement
 abstract class KotlinProcessor(private val logPrefix: String) : AbstractProcessor(), ProcessorUtils {
 
     override fun getSupportedOptions(): Set<String> = super.getSupportedOptions()
+
     override fun getSupportedSourceVersion(): SourceVersion = super.getSupportedSourceVersion()
+
     override fun getSupportedAnnotationTypes(): Set<String> = super.getSupportedAnnotationTypes()
+
     override fun init(processingEnv: ProcessingEnvironment) = super.init(processingEnv)
 
     override fun getCompletions(
@@ -34,7 +37,7 @@ abstract class KotlinProcessor(private val logPrefix: String) : AbstractProcesso
      *
      * NOTICE: this MUST be a getter, otherwise super.processingEnv is not initialized
      */
-    override val ctx get() = ProcessorUtils.Context(logPrefix, super.processingEnv)
+    override val ctx get() = ProcessorUtils.SimpleContext(logPrefix, super.processingEnv)
 
     /**
      * Returns the directory where generated Kotlin sources should be placed in order to be compiled.

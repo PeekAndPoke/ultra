@@ -1,8 +1,10 @@
 package de.peekandpoke.ultra.meta
 
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asTypeName
+import de.peekandpoke.ultra.common.startsWithAny
 import de.peekandpoke.ultra.common.startsWithNone
 import de.peekandpoke.ultra.common.ucFirst
 import java.util.*
@@ -22,7 +24,15 @@ import kotlin.reflect.KClass
 @Suppress("unused")
 interface ProcessorUtils {
 
-    class Context(val logPrefix: String, val env: ProcessingEnvironment)
+    interface Context {
+        val logPrefix: String
+        val env: ProcessingEnvironment
+    }
+
+    class SimpleContext(
+        override val logPrefix: String,
+        override val env: ProcessingEnvironment
+    ) : Context
 
     val ctx: Context
 
@@ -95,6 +105,8 @@ interface ProcessorUtils {
             return when (this) {
                 is ParameterizedTypeName -> this.rawType.packageName
 
+                is ClassName -> this.packageName
+
                 else -> {
                     val parts = fqn.split(".")
 
@@ -139,7 +151,7 @@ interface ProcessorUtils {
 
     val Element.isNullable get() = getAnnotation(org.jetbrains.annotations.Nullable::class.java) != null
 
-    fun Element.asTypeName() = asType().asTypeName()
+    fun Element.asTypeName() = asType().asTypeName().copy(nullable = isNullable)
 
     /**
      * Get all types, that are directly or recursively used within the given Element
@@ -259,8 +271,24 @@ interface ProcessorUtils {
      * - javax.*
      * - javafx.*
      * - kotlin.*
+     * - com.google.common.* ... Guava
      */
     fun <T : Element> List<T>.defaultBlacklist(): List<T> = blacklist(
-        listOf("java.", "javax.", "javafx.", "kotlin.")
+        listOf(
+            "java.",
+            "javax.",
+            "javafx.",
+            "kotlin.",
+            "com.google.common."
+        )
     )
+
+    val TypeName.isBlackListed
+        get() = fqn.startsWithAny(
+            "java.",                // exclude java std lib
+            "javax.",               // exclude javax std lib
+            "javafx.",              // exclude javafx
+            "kotlin.",              // exclude kotlin std lib
+            "com.google.common."    // exclude google guava
+        )
 }

@@ -42,13 +42,16 @@ data class CompileTest internal constructor(
     /**
      * Compiles and checks expectations
      */
-    fun run() {
+    fun run(): KotlinCompilation.Result {
 
         // compile all sources
         val compiled: KotlinCompilation.Result = KotlinCompilation().apply {
             sources = sourcesFiles
             annotationProcessors = processors
             inheritClassPath = true
+
+//            workingDir = File("tmp/Kotlin-Compilation/${LocalDateTime.now()}").absoluteFile.ensureDirectory()
+
         }.compile()
 
         // check expectations
@@ -60,6 +63,8 @@ data class CompileTest internal constructor(
                 errors.joinToString("\n")
             )
         }
+
+        return compiled
     }
 
     /**
@@ -170,7 +175,8 @@ data class CompileTest internal constructor(
                     """.trimIndent() + diff.deltas.joinToString("\n") + """
                         
                         
-                        File: $output
+                        File: 
+                        $output
                          
                     """.trimIndent()
 

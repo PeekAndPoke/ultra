@@ -16,16 +16,16 @@ class Model internal constructor(
 
             val genericUsages = types.fold(GenericUsages(ctx)) { acc, type -> acc.add(type) }
 
-            return Model(
-                types.map { type ->
+            fun TypeElement.toMType(): MType = MType(
+                ctx,
+                this,
+                this.asTypeName(),
+                { genericUsages.get(asClassName()) },
+                variables.map { MVariable(ctx, it, it.asTypeName()) }
+            )
 
-                    MType(
-                        ctx,
-                        type,
-                        genericUsages.get(type.asClassName()),
-                        type.variables.map { MVariable(ctx, it) }
-                    )
-                }
+            return Model(
+                types.map { it.toMType() }
             )
         }
     }

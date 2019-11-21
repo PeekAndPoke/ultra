@@ -10,3 +10,5 @@ datasources.xml
 .gradle
 **/build/
 .kotlintest
+/tmp
+**/tmp
