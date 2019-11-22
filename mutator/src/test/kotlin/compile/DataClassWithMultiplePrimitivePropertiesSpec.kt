@@ -41,10 +41,14 @@ class DataClassWithMultiplePrimitivePropertiesSpec : StringSpec({
                     package mutator.compile
                     
                     import de.peekandpoke.ultra.mutator.*
+                    import java.time.LocalDateTime
                     
+                    
+                    @JvmName("mutateKTestMutator")
                     fun KTest.mutate(mutation: KTestMutator.() -> Unit) = 
                         mutator().apply(mutation).getResult()
                     
+                    @JvmName("mutatorKTestMutator")
                     fun KTest.mutator(onModify: OnModify<KTest> = {}) = 
                         KTestMutator(this, onModify)
                     
@@ -52,40 +56,40 @@ class DataClassWithMultiplePrimitivePropertiesSpec : StringSpec({
                         target: KTest, 
                         onModify: OnModify<KTest> = {}
                     ) : DataClassMutator<KTest>(target, onModify) {
-
+                    
                         /**
                          * Mutator for field [KTest.text]
                          *
                          * Info:
-                         *   - type:         java.lang.String
-                         *   - reflected by: com.squareup.kotlinpoet.ClassName
+                         *   - type:         [String]
+                         *   - reflected by: [com.squareup.kotlinpoet.ClassName]
                          */ 
                         var text
                             get() = getResult().text
                             set(v) = modify(getResult()::text, getResult().text, v)
-
+                    
                         /**
                          * Mutator for field [KTest.num]
                          *
                          * Info:
-                         *   - type:         kotlin.Int
-                         *   - reflected by: com.squareup.kotlinpoet.ClassName
+                         *   - type:         [Int]
+                         *   - reflected by: [com.squareup.kotlinpoet.ClassName]
                          */ 
                         var num
                             get() = getResult().num
                             set(v) = modify(getResult()::num, getResult().num, v)
-
+                    
                         /**
                          * Mutator for field [KTest.date]
                          *
                          * Info:
-                         *   - type:         java.time.LocalDateTime
-                         *   - reflected by: com.squareup.kotlinpoet.ClassName
+                         *   - type:         [LocalDateTime]
+                         *   - reflected by: [com.squareup.kotlinpoet.ClassName]
                          */ 
+                        // Currently there is no better way to mutate a 'java.time.LocalDateTime' ... sorry!
                         var date
                             get() = getResult().date
                             set(v) = modify(getResult()::date, getResult().date, v)
-                            // Currently there is no better way to mutate a 'java.time.LocalDateTime' ... sorry!
                     
                     }
                     

@@ -36,9 +36,12 @@ class DataClassWithOnePrimitivePropertySpec : StringSpec({
                     
                     import de.peekandpoke.ultra.mutator.*
                     
+                    
+                    @JvmName("mutateKTestMutator")
                     fun KTest.mutate(mutation: KTestMutator.() -> Unit) = 
                         mutator().apply(mutation).getResult()
                     
+                    @JvmName("mutatorKTestMutator")
                     fun KTest.mutator(onModify: OnModify<KTest> = {}) = 
                         KTestMutator(this, onModify)
                     
@@ -46,18 +49,18 @@ class DataClassWithOnePrimitivePropertySpec : StringSpec({
                         target: KTest, 
                         onModify: OnModify<KTest> = {}
                     ) : DataClassMutator<KTest>(target, onModify) {
-
+                    
                         /**
                          * Mutator for field [KTest.text]
                          *
                          * Info:
-                         *   - type:         java.lang.String
-                         *   - reflected by: com.squareup.kotlinpoet.ClassName
+                         *   - type:         [String]
+                         *   - reflected by: [com.squareup.kotlinpoet.ClassName]
                          */ 
                         var text
                             get() = getResult().text
                             set(v) = modify(getResult()::text, getResult().text, v)
-                     
+                    
                     }
                     
                 """.trimIndent()

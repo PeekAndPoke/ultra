@@ -48,20 +48,24 @@ class GenericClasses : StringSpec({
     "Mutating a class that references a generic class (primitives)" {
 
         val source = GenericTypeInActionWithPrimitives(
-            generic = Generic(
-                one = "one",
-                two = 2
-            )
+            generic = Generic(one = "one", two = 2),
+            generic2 = Generic(one = "one", two = listOf(1, 2, 3, 4))
         )
 
         val result = source.mutate {
             generic.one += "!"
             generic.two += 1
+
+            generic2.one += "!!"
+            generic2.two.retainWhere { this % 2 != 0 }
         }
 
         assertSoftly {
             result.generic.one shouldBe "one!"
             result.generic.two shouldBe 3
+
+            result.generic2.one shouldBe "one!!"
+            result.generic2.two shouldBe listOf(1, 3)
         }
     }
 })

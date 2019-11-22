@@ -41,9 +41,12 @@ class DataClassWithListPropertySpec : StringSpec({
                     
                     import de.peekandpoke.ultra.mutator.*
                     
+                    
+                    @JvmName("mutateStringListMutator")
                     fun StringList.mutate(mutation: StringListMutator.() -> Unit) = 
                         mutator().apply(mutation).getResult()
                     
+                    @JvmName("mutatorStringListMutator")
                     fun StringList.mutator(onModify: OnModify<StringList> = {}) = 
                         StringListMutator(this, onModify)
                     
@@ -51,24 +54,23 @@ class DataClassWithListPropertySpec : StringSpec({
                         target: StringList, 
                         onModify: OnModify<StringList> = {}
                     ) : DataClassMutator<StringList>(target, onModify) {
-
+                    
                         /**
                          * Mutator for field [StringList.value]
                          *
                          * Info:
-                         *   - type:         java.util.List<java.lang.String>
-                         *   - reflected by: com.squareup.kotlinpoet.ParameterizedTypeName
+                         *   - type:         [List<String>]
+                         *   - reflected by: [com.squareup.kotlinpoet.ParameterizedTypeName]
                          */ 
                         val value by lazy {
                             getResult().value.mutator(
                                 { modify(getResult()::value, getResult().value, it) },
                                 { it1 -> it1 },
-                                { it1, on1 ->
+                                { it1, on1 -> 
                                     it1
                                 }
                             )
                         }
-                     
                     }
                     
                 """.trimIndent()
@@ -83,9 +85,12 @@ class DataClassWithListPropertySpec : StringSpec({
                     
                     import de.peekandpoke.ultra.mutator.*
                     
+                    
+                    @JvmName("mutateDataObjectListMutator")
                     fun DataObjectList.mutate(mutation: DataObjectListMutator.() -> Unit) = 
                         mutator().apply(mutation).getResult()
                     
+                    @JvmName("mutatorDataObjectListMutator")
                     fun DataObjectList.mutator(onModify: OnModify<DataObjectList> = {}) = 
                         DataObjectListMutator(this, onModify)
                     
@@ -98,19 +103,18 @@ class DataClassWithListPropertySpec : StringSpec({
                          * Mutator for field [DataObjectList.value]
                          *
                          * Info:
-                         *   - type:         java.util.List<mutator.compile.DataObject>
-                         *   - reflected by: com.squareup.kotlinpoet.ParameterizedTypeName
+                         *   - type:         [List<DataObject>]
+                         *   - reflected by: [com.squareup.kotlinpoet.ParameterizedTypeName]
                          */ 
                         val value by lazy {
                             getResult().value.mutator(
                                 { modify(getResult()::value, getResult().value, it) },
                                 { it1 -> it1.getResult() },
-                                { it1, on1 ->
+                                { it1, on1 -> 
                                     it1.mutator(on1)
                                 }
                             )
                         }
-                        
                     }
                     
                 """.trimIndent()

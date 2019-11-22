@@ -61,7 +61,7 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
 
     private fun buildMutatorFileFor(element: MType) {
 
-        logNote("Found type ${element.simpleName} in ${element.packageName}")
+        logNote("Found type ${element.className.simpleNames} in ${element.packageName}")
 
         val printer = KotlinPrinter(
             element.packageName,
@@ -76,7 +76,7 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
         DataClassRenderer(ctx, element, renderers).render(printer)
 
         val dir = File("$generatedDir/${element.packageName.replace('.', '/')}").also { it.mkdirs() }
-        val file = File(dir, "${element.nestedFileName}${"$$"}mutator.kt")
+        val file = File(dir, "${element.joinSimpleNames("$$")}${"$$"}mutator.kt")
 
         file.writeText(printer.toString())
     }

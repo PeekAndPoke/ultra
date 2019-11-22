@@ -33,14 +33,11 @@ class GenericUsages(override val ctx: ProcessorUtils.Context) : ProcessorUtils {
 
                 val parameterized = it.asTypeName() as ParameterizedTypeName
 
-                val elem = (it.asType() as DeclaredType).asElement() as TypeElement
 
-                val typeParams = elem.typeParameters
-
-                val vars = elem.variables
+                val variableType = (it.asType() as DeclaredType).asElement() as TypeElement
 
                 fun typeIdx(typeVar: TypeVariableName) =
-                    elem.typeParameters.indexOfFirst { it.simpleName.toString() == typeVar.name }
+                    variableType.typeParameters.indexOfFirst { it.simpleName.toString() == typeVar.name }
 
                 fun reify(type: TypeName): TypeName = when (type) {
 
@@ -56,14 +53,14 @@ class GenericUsages(override val ctx: ProcessorUtils.Context) : ProcessorUtils {
                     else -> type
                 }
 
-
-                val reifiedVars = elem.variables.map {
+                val reifiedVars = variableType.variables.map {
                     MVariable(ctx, it, reify(it.asTypeName()))
                 }
 
+
                 MType(
                     ctx,
-                    elem,
+                    variableType,
                     it.asTypeName(),
                     { emptySet() },
                     reifiedVars
@@ -72,6 +69,10 @@ class GenericUsages(override val ctx: ProcessorUtils.Context) : ProcessorUtils {
             .forEach { type ->
                 registry.getOrPut(type.className) { mutableSetOf() }.add(type)
             }
+    }
+
+    private fun map(type: TypeElement, parameterized: ParameterizedTypeName) {
+
     }
 
     private val blacklisted = arrayOf("java.", "javax.", "javafx.", "kotlin.")

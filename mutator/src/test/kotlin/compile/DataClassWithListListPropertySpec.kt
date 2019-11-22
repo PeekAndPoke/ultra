@@ -40,7 +40,6 @@ class DataClassWithListListPropertySpec : StringSpec({
                     package mutator.compile
                     
                     import de.peekandpoke.ultra.mutator.*
-                    import mutator.compile.*
                     
                     
                     @JvmName("mutateStringListsMutator")
@@ -88,7 +87,6 @@ class DataClassWithListListPropertySpec : StringSpec({
                     package mutator.compile
                     
                     import de.peekandpoke.ultra.mutator.*
-                    import mutator.compile.*
                     
                     
                     @JvmName("mutateDataObjectListsMutator")

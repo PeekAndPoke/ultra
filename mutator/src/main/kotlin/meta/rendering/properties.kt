@@ -41,8 +41,14 @@ class PropertyRenderers(
 
 ) : PropertyRenderer {
 
+    /**
+     * All property renderers
+     */
     private val children by lazy { provider(this) }
 
+    /**
+     * Internal lookup from [TypeName] to [PropertyRenderer]
+     */
     private val cache = mutableMapOf<TypeName, PropertyRenderer>()
 
     /**
@@ -87,18 +93,17 @@ class PureGetterSetterRenderer(
 
     override fun KotlinPrinter.renderProperty(type: TypeName, name: String) {
 
-        val hint = when {
-            type.isPrimitiveType || type.isStringType || type.isAnyType -> ""
-
-            else -> "// Currently there is no better way to mutate a '$type' ... sorry!\n"
+        if (!type.isPrimitiveType && !type.isStringType && !type.isAnyType) {
+            block(
+                "// Currently there is no better way to mutate a '$type' ... sorry!"
+            )
         }
 
-        appendBlock(
+        block(
             """
                 var $name
                     get() = getResult().$name
                     set(v) = modify(getResult()::$name, getResult().$name, v)
-                    $hint
             """.trimIndent()
         )
 
@@ -121,23 +126,23 @@ abstract class CollectionPropertyRendererBase(
 
     protected fun KotlinPrinter.internalRenderProperty(name: String, typeParam: TypeName) {
 
-        appendLine("val $name by lazy {").indent {
-            appendLine("getResult().$name.mutator(").indent {
-                appendLine("{ modify(getResult()::$name, getResult().$name, it) },")
+        line("val $name by lazy {").indent {
+            line("getResult().$name.mutator(").indent {
+                line("{ modify(getResult()::$name, getResult().$name, it) },")
 
                 append("{ ${1.asParam} -> ")
                 root.run { renderBackwardMapper(typeParam, 1) }
-                appendLine(" },")
+                line(" },")
 
-                appendLine("{ ${1.asParam}, ${1.asOnModify} -> ").indent {
+                line("{ ${1.asParam}, ${1.asOnModify} -> ").indent {
                     root.run { renderForwardMapper(typeParam, 1) }
                     newline()
                 }
-                appendLine("}")
+                line("}")
             }
-            appendLine(")")
+            line(")")
         }
-        appendLine("}")
+        line("}")
     }
 
     fun KotlinPrinter.internalRenderForwardMapper(type: TypeName, depth: Int) {
@@ -146,7 +151,7 @@ abstract class CollectionPropertyRendererBase(
 
         append("${depth.asParam}.mutator(${depth.asOnModify}, { ${plus1.asParam} -> ")
         root.run { renderBackwardMapper(type, plus1) }
-        appendLine(" }) { ${plus1.asParam}, ${plus1.asOnModify} -> ").indent {
+        line(" }) { ${plus1.asParam}, ${plus1.asOnModify} -> ").indent {
             root.run { renderForwardMapper(type, plus1) }
             newline()
         }
@@ -241,10 +246,10 @@ class DataClassPropertyRenderer(
 
         val nullable = if (type.isNullable) "?" else ""
 
-        appendBlock(
+        block(
             """
                 val $name by lazy { 
-                    getResult().$name$nullable.mutator { modify(getResult()::$name, getResult().$name, it) } 
+                    getResult().$name$nullable.${type.import("mutator")} { modify(getResult()::$name, getResult().$name, it) } 
                 }
     
             """.trimIndent()
@@ -253,7 +258,7 @@ class DataClassPropertyRenderer(
 
     override fun KotlinPrinter.renderForwardMapper(type: TypeName, depth: Int) {
 
-        append("${depth.asParam}.mutator(${depth.asOnModify})")
+        append("${depth.asParam}.${type.import("mutator")}(${depth.asOnModify})")
     }
 
     override fun KotlinPrinter.renderBackwardMapper(type: TypeName, depth: Int) {

@@ -25,7 +25,7 @@ class DataClassRenderer(
 
         val imported = target.import()
 
-        appendBlock(
+        block(
             """
                 @JvmName("mutate${jvmName}")
                 fun ${imported}.mutate(mutation: ${mutatorClassName}.() -> Unit) = 
@@ -50,7 +50,7 @@ class DataClassRenderer(
                 val type = variable.typeName
                 val prop = variable.simpleName
 
-                appendBlock(
+                block(
                     """
                         /**
                          * Mutator for field [${imported}.$prop]
@@ -75,11 +75,22 @@ class DataClassRenderer(
 
         when {
             !classType.isParameterized ->
-                renderFor(classType, classType.nestedFileName + "Mutator")
+                renderFor(classType, classType.joinSimpleNames() + "Mutator")
 
-            else -> classType.genericUsages.forEachIndexed { idx, type ->
-                renderFor(type, type.simpleName + "Mutator_" + idx)
-            }
+            else ->
+                classType.genericUsages.forEachIndexed { idx, type ->
+
+                    val mutatorClassName = type.joinSimpleNames() + "Mutator_" + idx
+
+                    divider()
+                    line("// Mutator for ${type.import()} -> $mutatorClassName")
+                    divider()
+                    newline()
+
+                    renderFor(type, mutatorClassName)
+
+                    newline()
+                }
         }
     }
 }
