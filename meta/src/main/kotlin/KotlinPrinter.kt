@@ -15,47 +15,47 @@ class KotlinPrinter(
     class Imports(private val codePackageName: String, defaultImports: List<String>) {
 
         private val imports = defaultImports.toMutableSet()
-        private val importCache = mutableMapOf<TypeName, String>()
 
         val all get() = imports.toSet()
 
-        fun import(type: TypeName): String = importCache.getOrPut(type) {
+        fun import(type: TypeName): String = when (type) {
 
-            return when (type) {
+            is ClassName -> type.toKotlin.run {
 
-                is ClassName -> type.toKotlin.run {
+                val joinedSimpleNames = simpleNames.joinToString(".")
 
-                    val joinedSimpleNames = simpleNames.joinToString(".")
-
-                    // There is no need to import:
-                    // - classes in the same package as the generated class
-                    // - kotlin std lib classes
-                    if (packageName in listOf(codePackageName, "kotlin", "kotlin.collections")) {
-                        return@run joinedSimpleNames
-                    }
-
-                    // We need to make sure that there are no conflicting imports
-                    @Suppress("MoveVariableDeclarationIntoWhen")
-                    val conflicts = imports.any { it.split(".").last() == simpleNames.first() }
-
-                    return@run when (conflicts) {
-                        true -> canonicalName
-
-                        false -> {
-                            imports.add("$packageName.${simpleNames[0]}")
-
-                            joinedSimpleNames
-                        }
-                    }
+                // There is no need to import:
+                // - classes in the same package as the generated class
+                // - kotlin std lib classes
+                if (packageName in listOf(codePackageName, "kotlin", "kotlin.collections")) {
+                    return@run joinedSimpleNames
                 }
 
-                is ParameterizedTypeName -> {
-                    "${import(type.rawType)}<${type.typeArguments.joinToString(", ") { import(it) }}>"
+                val possibleImport = "$packageName.${simpleNames[0]}"
+
+                // We need to make sure that there are no conflicting imports
+                val conflicts = imports.any {
+                    it != possibleImport && it.split(".").last() == simpleNames.first()
                 }
 
-                else -> toString()
+                return@run when (conflicts) {
+                    true -> canonicalName
+
+                    false -> {
+                        imports.add(possibleImport)
+
+                        joinedSimpleNames
+                    }
+                }
             }
+
+            is ParameterizedTypeName -> {
+                "${import(type.rawType)}<${type.typeArguments.joinToString(", ") { import(it) }}>"
+            }
+
+            else -> toString()
         }
+
 
         /**
          * Imports a top level function

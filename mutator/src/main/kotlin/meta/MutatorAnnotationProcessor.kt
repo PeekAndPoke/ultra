@@ -4,7 +4,7 @@ import com.google.auto.service.AutoService
 import de.peekandpoke.ultra.meta.KotlinPrinter
 import de.peekandpoke.ultra.meta.KotlinProcessor
 import de.peekandpoke.ultra.meta.model.MType
-import de.peekandpoke.ultra.meta.model.Model
+import de.peekandpoke.ultra.meta.model.model
 import de.peekandpoke.ultra.mutator.Mutable
 import de.peekandpoke.ultra.mutator.meta.rendering.*
 import java.io.File
@@ -50,9 +50,7 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
 
         logNote("all types (with recursively referenced): $types")
 
-        val model = Model.Builder(ctx).build(types)
-
-        model.types.forEach {
+        model(types).forEach {
             buildMutatorFileFor(it)
         }
 

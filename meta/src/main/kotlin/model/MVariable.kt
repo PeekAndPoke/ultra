@@ -2,16 +2,15 @@ package de.peekandpoke.ultra.meta.model
 
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeVariableName
-import de.peekandpoke.ultra.meta.ProcessorUtils
 import javax.lang.model.element.TypeElement
 import javax.lang.model.element.VariableElement
 import javax.lang.model.type.DeclaredType
 
-data class MVariable(
-    override val ctx: ProcessorUtils.Context,
+class MVariable(
+    model: Model,
     val element: VariableElement,
     val typeName: TypeName
-) : ProcessorUtils {
+) : MBase(model) {
 
     val type: TypeElement? = when (val elemType = element.asType()) {
 

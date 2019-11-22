@@ -1,33 +1,29 @@
 package de.peekandpoke.ultra.meta.model
 
-import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.ClassName
 import de.peekandpoke.ultra.meta.GenericUsages
 import de.peekandpoke.ultra.meta.ProcessorUtils
 import javax.lang.model.element.TypeElement
 
-class Model internal constructor(
-    val types: List<MType>
-) {
+fun ProcessorUtils.model(types: List<TypeElement>) = Model(ctx, types)
 
-    class Builder(override val ctx: ProcessorUtils.Context) :
-        ProcessorUtils {
+class Model(
+    override val ctx: ProcessorUtils.Context,
+    types: List<TypeElement>
+) : ProcessorUtils, Iterable<MType> {
 
-        fun build(types: List<TypeElement>): Model {
+    val types = types.map { it.toMType() }
 
-            val genericUsages = types.fold(GenericUsages(ctx)) { acc, type -> acc.add(type) }
+    private val genericUsages = types.fold(GenericUsages(this)) { acc, type -> acc.add(type) }
 
-            fun TypeElement.toMType(): MType = MType(
-                ctx,
-                this,
-                this.asTypeName(),
-                { genericUsages.get(asClassName()) },
-                variables.map { MVariable(ctx, it, it.asTypeName()) }
-            )
+    fun getGenericUsages(className: ClassName) = genericUsages.get(className)
 
-            return Model(
-                types.map { it.toMType() }
-            )
-        }
-    }
+    private fun TypeElement.toMType(): MType = MType(
+        this@Model,
+        this,
+        this.asTypeName()
+    )
 
+    override fun iterator(): Iterator<MType> = types.iterator()
 }
+
