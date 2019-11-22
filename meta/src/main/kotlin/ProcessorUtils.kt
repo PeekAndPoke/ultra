@@ -34,6 +34,15 @@ interface ProcessorUtils {
         override val env: ProcessingEnvironment
     ) : Context
 
+    val defaultPackageBlackList
+        get() = listOf(
+            "java.",                // exclude java std lib
+            "javax.",               // exclude javax std lib
+            "javafx.",              // exclude javafx
+            "kotlin.",              // exclude kotlin std lib
+            "com.google.common."    // exclude google guava
+        )
+
     val ctx: Context
 
     val env: ProcessingEnvironment get() = ctx.env
@@ -273,22 +282,7 @@ interface ProcessorUtils {
      * - kotlin.*
      * - com.google.common.* ... Guava
      */
-    fun <T : Element> List<T>.defaultBlacklist(): List<T> = blacklist(
-        listOf(
-            "java.",
-            "javax.",
-            "javafx.",
-            "kotlin.",
-            "com.google.common."
-        )
-    )
+    fun <T : Element> List<T>.defaultBlacklist(): List<T> = blacklist(defaultPackageBlackList)
 
-    val TypeName.isBlackListed
-        get() = fqn.startsWithAny(
-            "java.",                // exclude java std lib
-            "javax.",               // exclude javax std lib
-            "javafx.",              // exclude javafx
-            "kotlin.",              // exclude kotlin std lib
-            "com.google.common."    // exclude google guava
-        )
+    val TypeName.isBlackListed get() = fqn.startsWithAny(defaultPackageBlackList)
 }

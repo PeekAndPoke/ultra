@@ -68,4 +68,36 @@ class GenericClasses : StringSpec({
             result.generic2.two shouldBe listOf(1, 3)
         }
     }
+
+    "Mutating a class that references a generic class within another generic" {
+
+        val source = GenericTypeInActionWithContainers(
+            generic = listOf(
+                Generic(one = "one" as Any, two = 2)
+            ),
+            generic2 = mapOf(
+                "first" to Generic(one = "one", two = listOf(1, 2, 3, 4) as Any)
+            )
+        )
+
+        val result = source.mutate {
+            with(generic[0]) {
+                one = "a"
+                two += 1
+            }
+
+            with(generic2["first"]!!) {
+                one += "!!"
+                two = "b"
+            }
+        }
+
+        assertSoftly {
+            result.generic[0].one shouldBe "a"
+            result.generic[0].two shouldBe 3
+
+            result.generic2["first"]?.one shouldBe "one!!"
+            result.generic2["first"]?.two shouldBe "b"
+        }
+    }
 })

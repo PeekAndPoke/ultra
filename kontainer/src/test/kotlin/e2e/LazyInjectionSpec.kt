@@ -1,7 +1,6 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
 import de.peekandpoke.ultra.common.Lookup
-import de.peekandpoke.ultra.common.SimpleLazy
 import de.peekandpoke.ultra.kontainer.LazilyInjecting
 import de.peekandpoke.ultra.kontainer.LazyServiceLookup
 import de.peekandpoke.ultra.kontainer.SimpleService
@@ -22,9 +21,6 @@ class LazyInjectionSpec : StringSpec({
         subject.get<SimpleService>().inc()
 
         assertSoftly {
-
-            subject.get<LazilyInjecting>().lazy::class shouldBe SimpleLazy::class
-
             subject.get<LazilyInjecting>().lazy.value.get() shouldBe 1
         }
     }
@@ -45,8 +41,6 @@ class LazyInjectionSpec : StringSpec({
         }.useWith()
 
         assertSoftly {
-            subject.get(Injecting::class).all::class shouldBe SimpleLazy::class
-
             subject.get(Injecting::class).all.value.map { it::class } shouldBe listOf(ImplOne::class, ImplTwo::class)
         }
     }

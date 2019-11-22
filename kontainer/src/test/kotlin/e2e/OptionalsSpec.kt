@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.common.SimpleLazy
 import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotlintest.assertSoftly
 import io.kotlintest.shouldBe
@@ -82,7 +81,6 @@ class OptionalsSpec : StringSpec({
         assertSoftly {
             val injecting = subject.get(Injecting::class)
 
-            injecting.service::class shouldBe SimpleLazy::class
             injecting.service.value shouldBe null
         }
     }

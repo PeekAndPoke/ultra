@@ -14,9 +14,22 @@ class MType(
     val typeName: TypeName
 ) : MBase(model) {
 
+    override fun equals(other: Any?) = (other is MType)
+            && other.type == type
+            && other.typeName.toString() == typeName.toString()
+
+    override fun hashCode(): Int {
+        var hash = 7
+        hash = 31 * hash + type.hashCode()
+        hash = 31 * hash + typeName.toString().hashCode()
+        return hash
+    }
+
     val isParameterized = typeName is ParameterizedTypeName
 
     val className = type.asClassName()
+
+    val fqn = className.fqn
 
     val packageName = className.packageName
 

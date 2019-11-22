@@ -25,11 +25,11 @@ data class GenericTypeInActionWithPrimitives(
     val generic2: Generic<String, List<Int>>
 )
 
-//@Mutable
-//data class GenericTypeInActionWithContainers(
-//    val generic1: List<Generic<Any, Int>>,
-//    val generic2: Map<String, Generic<FirstInPackage1, FirstInPackage2>>
-//)
+@Mutable
+data class GenericTypeInActionWithContainers(
+    val generic: List<Generic<Any, Int>>,
+    val generic2: Map<String, Generic<String, Any>>
+)
 
 @Mutable
 data class ReferencingOtherPackages(
