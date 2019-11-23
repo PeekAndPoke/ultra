@@ -148,7 +148,9 @@ inline fun <reified T : Any?> kType(): TypeRef<T> {
     val cls = T::class
 
     if (cls.typeParameters.isNotEmpty()) {
-        val tr = object : TypeReference<T>() {}
+        val tr = object : TypeReference<T>(
+            cls.java.classLoader ?: Thread.currentThread().contextClassLoader
+        ) {}
 
         return TypeRef(tr.toKType())
     }
@@ -204,7 +206,9 @@ inline fun <reified KEY, reified VAL> kMutableMapType(): TypeRef<Map<KEY, VAL>> 
 /**
  * Taken from Jackson 2.9.9
  */
-abstract class TypeReference<T> protected constructor() : Comparable<TypeReference<T>> {
+abstract class TypeReference<T> protected constructor(
+    private val classLoader: ClassLoader
+) : Comparable<TypeReference<T>> {
 
     private val type: Type
 
@@ -263,9 +267,15 @@ abstract class TypeReference<T> protected constructor() : Comparable<TypeReferen
      * Internal helper for creating a [KClass] from the a [Type]
      */
     private fun Type.toClass(): KClass<*> = when (this) {
-        is ParameterizedType -> Class.forName(this.rawType.typeName).kotlin
+        is ParameterizedType -> classForName(this.rawType.typeName)
         is WildcardType -> this.upperBounds[0].toClass()
-        else -> Class.forName(this.typeName).kotlin
+        else -> classForName(this.typeName)
     }
+
+    /**
+     * Loads a class for the given [fqn] with the given [classLoader]
+     */
+    private fun classForName(fqn: String): KClass<*> =
+        Class.forName(fqn, true, classLoader).kotlin
 }
 
