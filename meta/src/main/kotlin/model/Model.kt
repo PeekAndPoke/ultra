@@ -14,7 +14,7 @@ class Model(
 
     val types = types.map { it.toMType() }
 
-    private val genericUsages = types.fold(GenericUsages(this)) { acc, type -> acc.add(type) }
+    private val genericUsages = GenericUsages(this, types)
 
     fun getGenericUsages(className: ClassName) = genericUsages.get(className)
 

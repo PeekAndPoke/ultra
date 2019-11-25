@@ -284,5 +284,7 @@ interface ProcessorUtils {
      */
     fun <T : Element> List<T>.defaultBlacklist(): List<T> = blacklist(defaultPackageBlackList)
 
+    val TypeMirror.isBlackListed get() = fqn.startsWithAny(defaultPackageBlackList)
+
     val TypeName.isBlackListed get() = fqn.startsWithAny(defaultPackageBlackList)
 }

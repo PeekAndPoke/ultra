@@ -14,15 +14,28 @@ fun main() {
                 
                 import ${Mutable::class.qualifiedName}
                 
-                @Mutable
-                data class GenericTypeInAction(
-                    val generic: Generic<Type>,
-                    val genInt: Generic<Int>
-                )
+//                @Mutable
+//                data class GenericTypeInAction(
+//                    val generic: Generic<Type>,
+//                    val genInt: Generic<Int>
+//                )
+//
+//                data class Generic<T>(val value: T)
+//                
+//                data class Type(val value: String)
 
-                data class Generic<T>(val value: T)
+                @Mutable
+                data class GenericTypeInActionWithContainers(
+                    val generic: List<Generic<Any, Int>>,
+                    val generic2: Map<String, Generic<String, Any>>
+                )
                 
-                data class Type(val value: String)
+                @Mutable
+                data class Generic<T, X>(
+                    val one: T,
+                    val two: X
+                )
+                
                 
             """.trimIndent()
         )
