@@ -64,17 +64,27 @@ interface ParameterProvider {
      */
     data class ForConfigValue internal constructor(private val parameter: KParameter) : ParameterProvider {
 
+        /** The type of the config value to be injected */
         private val paramCls = parameter.type.classifier as KClass<*>
 
+        /** The name of the parameter for which the config value is to be injected */
         private val paramName = parameter.name ?: "n/a"
 
+        /**
+         * Provides the config value
+         */
         override fun provide(context: InjectionContext) = context.getConfig<Any>(paramName)
 
+        /**
+         * Returns 'true" when a requested injection can be fulfilled.
+         */
         override fun validate(kontainer: Kontainer) = when {
 
             kontainer.hasConfig(paramName, paramCls) -> listOf()
 
-            else -> listOf("Parameter '${paramName}' misses a config value '${paramName}' of type ${paramCls.qualifiedName}")
+            else -> listOf(
+                "Parameter '${paramName}' misses a config value '${paramName}' of type ${paramCls.qualifiedName}"
+            )
         }
     }
 
@@ -99,10 +109,13 @@ interface ParameterProvider {
      */
     class ForService internal constructor(parameter: KParameter) : ParameterProvider {
 
+        /** The class of the service to be injected */
         private val paramCls = parameter.type.classifier as KClass<*>
 
+        /** 'true" when the parameter is nullable, meaning that the service is optional */
         private val isNullable = parameter.type.isMarkedNullable
 
+        /** The name of the parameter for which the service is to be injected */
         private val paramName = parameter.name ?: "n/a"
 
         /**
@@ -206,19 +219,31 @@ interface ParameterProvider {
      */
     class ForLazyService internal constructor(parameter: KParameter) : ParameterProvider {
 
+        /** The type wrapped within the Lazy */
         private val innerType = parameter.type.arguments[0].type!!
 
-        private val innerCls = innerType.classifier as KClass<*>
+        /** The class of the service to be injected */
+        private val paramCls = innerType.classifier as KClass<*>
 
-        private val paramName = parameter.name
+        /** 'true" when the parameter is nullable, meaning that the service is optional */
+        private val isNullable = innerType.isMarkedNullable
 
-        override fun provide(context: InjectionContext): Lazy<Any?> = lazy { context.getOrNull(innerCls) }
+        /** The name of the parameter for which the service is to be injected */
+        private val paramName = parameter.name ?: "n/a"
 
+        /**
+         * Provides the service wrapped as a Lazy
+         */
+        override fun provide(context: InjectionContext): Lazy<Any?> = lazy { context.getOrNull(paramCls) }
+
+        /**
+         * Validates if the service can be provided by the container
+         */
         override fun validate(kontainer: Kontainer) = when {
 
-            innerType.isMarkedNullable -> listOf()
+            isNullable -> listOf()
 
-            else -> kontainer.getCandidates(innerCls).let {
+            else -> kontainer.getCandidates(paramCls).let {
 
                 when {
                     // When there is exactly one candidate everything is fine
@@ -226,7 +251,7 @@ interface ParameterProvider {
 
                     // When there is no candidate then we cannot satisfy the dependency
                     it.isEmpty() -> listOf(
-                        "Parameter '${paramName}' misses a lazy dependency to '${innerCls.qualifiedName}'"
+                        "Parameter '${paramName}' misses a lazy dependency to '${paramCls.qualifiedName}'"
                     )
 
                     // When there is more than one candidate we cannot distinctly satisfy the dependency
@@ -244,12 +269,20 @@ interface ParameterProvider {
      */
     data class UnknownInjection internal constructor(private val parameter: KParameter) : ParameterProvider {
 
+        /** The class of the service to be injected */
         private val paramCls = parameter.type.classifier as KClass<*>
 
+        /** The error that will be raised by [provide] and [validate] */
         private val error = "Parameter '${parameter.name}' has no known way to inject a '${paramCls.qualifiedName}'"
 
-        override fun provide(context: InjectionContext) = error(error)
+        /**
+         * Will always raise a [KontainerInconsistent]
+         */
+        override fun provide(context: InjectionContext) = throw KontainerInconsistent(error)
 
+        /**
+         * Will always return an error
+         */
         override fun validate(kontainer: Kontainer) = listOf(error)
     }
 }
