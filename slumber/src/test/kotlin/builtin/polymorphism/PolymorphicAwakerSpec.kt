@@ -277,6 +277,51 @@ class PolymorphicAwakerSpec : StringSpec({
         }
     }
 
+    //// Using ClassIndex  /////////////////////////////////////////////////////////////////////////////////////
+
+    "Awaking children using ClassIndex - childTypes using indexSubClasses must be correct" {
+
+        assertSoftly {
+            ParentWithClassIndex.childTypes shouldBe setOf(
+                ParentWithClassIndex.Sub1::class,
+                ParentWithClassIndex.Sub1.Deeper1::class,
+                ParentWithClassIndex.Sub1.Deeper2::class,
+                ParentWithClassIndex.Sub2::class
+            )
+        }
+    }
+
+    "Awaking children of deeper hierarchies using ClassIndex" {
+
+        val codec = Codec.default
+
+        val result = codec.awake(
+            kType<ParentWithClassIndex>().list.type,
+            listOf(
+                mapOf(
+                    "_type" to ParentWithClassIndex.Sub1.Deeper1::class.qualifiedName,
+                    "text" to "Deeper1"
+                ),
+                mapOf(
+                    "_type" to ParentWithClassIndex.Sub1.Deeper2::class.qualifiedName,
+                    "text" to "Deeper2"
+                ),
+                mapOf(
+                    "_type" to ParentWithClassIndex.Sub2::class.qualifiedName,
+                    "text" to "Sub2"
+                )
+            )
+        )
+
+        assertSoftly {
+            result shouldBe listOf(
+                ParentWithClassIndex.Sub1.Deeper1("Deeper1"),
+                ParentWithClassIndex.Sub1.Deeper2("Deeper2"),
+                ParentWithClassIndex.Sub2("Sub2")
+            )
+        }
+    }
+
     ////  Complex examples  ////////////////////////////////////////////////////////////////////////////////////////////
 
     "Awaking a data class that contains polymorphics - one" {

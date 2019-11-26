@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     `maven-publish`
     kotlin("jvm")
+    kotlin("kapt")
     id("org.jetbrains.dokka") version "0.9.18"
     id("com.jfrog.bintray") version "1.8.4"
 }
@@ -17,6 +18,7 @@ group = GROUP
 version = VERSION_NAME
 
 val logback_version: String by project
+val classindex_version: String by project
 val kotlintest_version: String by project
 
 repositories {
@@ -30,8 +32,14 @@ dependencies {
 
     compile(project(":common"))
 
+    compile("org.atteo.classindex:classindex:$classindex_version")
+    kapt("org.atteo.classindex:classindex:$classindex_version")
+
+    // Testing
     testImplementation("ch.qos.logback:logback-classic:$logback_version")
     testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")
+
+    kaptTest("org.atteo.classindex:classindex:$classindex_version")
 }
 
 val test by tasks.getting(Test::class) {

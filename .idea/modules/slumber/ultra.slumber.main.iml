@@ -8,7 +8,7 @@
         </compilerSettings>
         <compilerArguments>
           <option name="destination" value="$MODULE_DIR$/../../../slumber/build/classes/kotlin/main" />
-          <option name="classpath" value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.3.60/5cb6bf19bab36ab9d10b216356e869250c686a09/kotlin-stdlib-jdk8-1.3.60.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-reflect/1.3.60/56dc1da0b87932ae08941153c917bd19947e08bc/kotlin-reflect-1.3.60.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.3.60/a42a01c0338795930e0a7d8f9d19acafdd1c50ee/kotlin-stdlib-jdk7-1.3.60.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.3.60/984644b61450add3bcef8cf20f948fec458b420d/kotlin-stdlib-1.3.60.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.3.60/538bd29b2d5a7d278a7188f89c3b84183fa37f75/kotlin-stdlib-common-1.3.60.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar" />
+          <option name="classpath" value="$MODULE_DIR$/../../../common/build/libs/common-0.0.100.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.3.60/5cb6bf19bab36ab9d10b216356e869250c686a09/kotlin-stdlib-jdk8-1.3.60.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-reflect/1.3.60/56dc1da0b87932ae08941153c917bd19947e08bc/kotlin-reflect-1.3.60.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.atteo.classindex/classindex/3.8/10cc212a312d712fed3f4d0fe74fa9a98abd86df/classindex-3.8.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.3.60/a42a01c0338795930e0a7d8f9d19acafdd1c50ee/kotlin-stdlib-jdk7-1.3.60.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.3.60/984644b61450add3bcef8cf20f948fec458b420d/kotlin-stdlib-1.3.60.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.3.60/538bd29b2d5a7d278a7188f89c3b84183fa37f75/kotlin-stdlib-common-1.3.60.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar" />
           <option name="noStdlib" value="true" />
           <option name="noReflect" value="true" />
           <option name="moduleName" value="slumber" />
@@ -20,6 +20,10 @@
           </option>
           <option name="pluginClasspaths">
             <array>
+              <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.intellij.deps/trove4j/1.0.20181211/216c2e14b070f334479d800987affe4054cd563f/trove4j-1.0.20181211.jar" />
+              <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/1.3.60/311cbfb1c09cae8e88fac9d0efde12a791a9f134/kotlin-compiler-embeddable-1.3.60.jar" />
+              <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-daemon-embeddable/1.3.60/e6e6c13f0253a82398e0d902e6e89747300f478f/kotlin-daemon-embeddable-1.3.60.jar" />
+              <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-reflect/1.3.60/56dc1da0b87932ae08941153c917bd19947e08bc/kotlin-reflect-1.3.60.jar" />
               <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-script-runtime/1.3.60/eb1f56fb1b58a8dc481a6e5beeb73931d80d08be/kotlin-script-runtime-1.3.60.jar" />
               <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-scripting-common/1.3.60/ee36ca0f743c6b57cb9255b1159ef8e3a20b25b8/kotlin-scripting-common-1.3.60.jar" />
               <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-scripting-jvm/1.3.60/48fe2731234b882d44554a6b9dd8b364a0a85914/kotlin-scripting-jvm-1.3.60.jar" />
@@ -39,14 +43,28 @@
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
     <output url="file://$MODULE_DIR$/../../../slumber/build/classes/java/main" />
     <exclude-output />
+    <content url="file://$MODULE_DIR$/../../../slumber/build/generated/source/kapt/main" />
+    <content url="file://$MODULE_DIR$/../../../slumber/build/generated/source/kaptKotlin/main">
+      <sourceFolder url="file://$MODULE_DIR$/../../../slumber/build/generated/source/kaptKotlin/main" isTestSource="false" generated="true" />
+    </content>
     <content url="file://$MODULE_DIR$/../../../slumber/src/main">
       <sourceFolder url="file://$MODULE_DIR$/../../../slumber/src/main/kotlin" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="ultra.common.main" />
+    <orderEntry type="module-library">
+      <library name="Gradle: kaptGeneratedClasses">
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/../../../slumber/build/tmp/kapt3/classes/main" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.60" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-reflect:1.3.60" level="project" />
+    <orderEntry type="library" name="Gradle: org.atteo.classindex:classindex:3.8" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.3.60" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib:1.3.60" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:1.3.60" level="project" />

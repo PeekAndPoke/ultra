@@ -1,5 +1,8 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
+import org.atteo.classindex.IndexSubclasses
+import kotlin.reflect.KClass
+
 sealed class PureBase {
 
     data class A(val text: String) : PureBase()
@@ -51,7 +54,7 @@ sealed class AnnotedChildrenBase {
 open class AnnotatedBase {
 
     companion object : Polymorphic.Parent {
-        override val childTypes = listOf(A::class, B::class)
+        override val childTypes = setOf(A::class, B::class)
     }
 
     data class A(val text: String) : AnnotatedBase()
@@ -73,4 +76,20 @@ sealed class NestedRoot {
     }
 
     data class NestedB(val text: String) : NestedRoot()
+}
+
+@IndexSubclasses
+open class ParentWithClassIndex {
+
+    companion object : Polymorphic.Parent {
+        override val childTypes: Set<KClass<*>>
+            get() = ParentWithClassIndex::class.indexedSubClasses
+    }
+
+    sealed class Sub1 : ParentWithClassIndex() {
+        data class Deeper1(val text: String) : Sub1()
+        data class Deeper2(val text: String) : Sub1()
+    }
+
+    data class Sub2(val text: String) : ParentWithClassIndex()
 }

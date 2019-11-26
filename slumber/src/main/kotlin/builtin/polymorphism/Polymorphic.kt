@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
+import org.atteo.classindex.ClassIndex
 import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.reflect.jvm.jvmName
@@ -11,7 +12,12 @@ interface Polymorphic {
 
         val defaultType get(): KClass<*>? = null
 
-        val childTypes get(): List<KClass<*>> = emptyList()
+        val childTypes get(): Set<KClass<*>> = emptySet()
+
+        val <T : Any> KClass<T>.indexedSubClasses
+            get(): Set<KClass<out T>> {
+                return ClassIndex.getSubclasses(java, java.classLoader).map { it.kotlin }.toSet()
+            }
     }
 
     interface Child {
@@ -104,7 +110,7 @@ interface Polymorphic {
 
             val annotated = when (val companion = cls.companionObjectInstance) {
                 is Parent -> companion.childTypes
-                else -> emptyList()
+                else -> emptySet()
             }
 
             return annotated
