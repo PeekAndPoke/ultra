@@ -16,6 +16,7 @@ import de.peekandpoke.ultra.slumber.builtin.primitive.*
 import java.io.Serializable
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
+import kotlin.reflect.full.primaryConstructor
 
 object BuiltInModule : SlumberModule {
 
@@ -60,6 +61,9 @@ object BuiltInModule : SlumberModule {
                 Polymorphic.supports(cls) -> type.wrapIfNonNull(Polymorphic.createAwaker(cls))
                 // Data classes
                 cls.isData -> type.wrapIfNonNull(DataClassCodec(type) as Awaker)
+                // No param ctor
+                cls.primaryConstructor != null && cls.primaryConstructor!!.parameters.isEmpty()
+                -> type.wrapIfNonNull(DataClassCodec(type) as Awaker)
 
                 // Type cannot be handled by this module
                 else -> null
@@ -109,6 +113,9 @@ object BuiltInModule : SlumberModule {
                 Polymorphic.supports(cls) -> type.wrapIfNonNull(Polymorphic.createSlumberer(cls))
                 // Data classes
                 cls.isData -> type.wrapIfNonNull(DataClassCodec(type) as Slumberer)
+                // No param ctor
+                cls.primaryConstructor != null && cls.primaryConstructor!!.parameters.isEmpty()
+                -> type.wrapIfNonNull(DataClassCodec(type) as Slumberer)
 
                 else -> null
             }
