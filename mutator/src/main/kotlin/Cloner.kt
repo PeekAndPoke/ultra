@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.mutator
 
+import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.declaredFunctions
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
@@ -11,7 +12,10 @@ object Cloner {
 
         val cls = subject::class
 
-        when {
+        val primaryCtr = cls.primaryConstructor
+
+        return when {
+            // Data class
             cls.isData -> {
 
                 // TODO: cache the first part, where the information is gathered
@@ -32,10 +36,16 @@ object Cloner {
                 val copy = cls.declaredFunctions.first { it.name == "copy" }
 
                 @Suppress("UNCHECKED_CAST")
-                return copy.call(subject, *fields.toTypedArray()) as T
+                copy.call(subject, *fields.toTypedArray()) as T
             }
 
-            else -> throw Exception("Cannot clone object of type ${subject::class}")
+            // No arg primary constructor
+            primaryCtr != null && primaryCtr.parameters.isEmpty() -> cls.createInstance()
+
+            // TODO: more specific exception
+            else -> throw Exception(
+                "Cannot clone type '${subject::class}'. It is not a data class and has no no-arg constructor!"
+            )
         }
     }
 }
