@@ -7,10 +7,7 @@ import de.peekandpoke.ultra.slumber.builtin.collections.CollectionAwaker
 import de.peekandpoke.ultra.slumber.builtin.collections.CollectionSlumberer
 import de.peekandpoke.ultra.slumber.builtin.collections.MapAwaker
 import de.peekandpoke.ultra.slumber.builtin.collections.MapSlumberer
-import de.peekandpoke.ultra.slumber.builtin.objects.AnyAwaker
-import de.peekandpoke.ultra.slumber.builtin.objects.AnySlumberer
-import de.peekandpoke.ultra.slumber.builtin.objects.DataClassCodec
-import de.peekandpoke.ultra.slumber.builtin.objects.NullCodec
+import de.peekandpoke.ultra.slumber.builtin.objects.*
 import de.peekandpoke.ultra.slumber.builtin.polymorphism.Polymorphic
 import de.peekandpoke.ultra.slumber.builtin.primitive.*
 import java.io.Serializable
@@ -56,6 +53,9 @@ object BuiltInModule : SlumberModule {
                 // Maps
                 cls == Map::class -> type.wrapIfNonNull(MapAwaker.forMap(type))
                 cls == MutableMap::class -> type.wrapIfNonNull(MapAwaker.forMutableMap(type))
+
+                // Enum
+                cls.java.isEnum -> type.wrapIfNonNull(EnumCodec(type) as Awaker)
 
                 // Polymorphic classes
                 Polymorphic.supports(cls) -> type.wrapIfNonNull(Polymorphic.createAwaker(cls))
@@ -108,6 +108,9 @@ object BuiltInModule : SlumberModule {
                 // Maps
                 Map::class.java.isAssignableFrom(cls.java) ->
                     type.wrapIfNonNull(MapSlumberer(args[0].type!!, args[1].type!!))
+
+                // Enum
+                cls.java.isEnum -> type.wrapIfNonNull(EnumCodec(type) as Slumberer)
 
                 // Polymorphic classes
                 Polymorphic.supports(cls) -> type.wrapIfNonNull(Polymorphic.createSlumberer(cls))
