@@ -142,3 +142,11 @@ data class ListOfDoubles(val values: List<Double>)
 
 @Mutable
 data class ListOfStrings(val values: List<String>)
+
+enum class SimpleEnum {
+    First,
+    Second
+}
+
+@Mutable
+data class WithSimpleEnum(val enumValue: SimpleEnum = SimpleEnum.First)

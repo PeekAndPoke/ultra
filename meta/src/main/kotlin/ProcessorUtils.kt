@@ -132,6 +132,9 @@ interface ProcessorUtils {
 
     fun TypeName.asKotlinClassName() = fqn.asKotlinClassName()
 
+    val TypeName.isEnum: Boolean
+        get() = elementUtils.getTypeElement(toString())?.superclass.toString().startsWith("java.lang.Enum<")
+
     val TypeMirror.fqn get() = asTypeName().toString()
 
     /**

@@ -19,6 +19,8 @@ class MVariable(
         else -> null
     }
 
+    val isEnum = typeName.isEnum
+
     val javaFqn = typeName.fqn
 
     val kotlinFqn = javaFqn.asKotlinClassName()

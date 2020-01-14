@@ -239,6 +239,8 @@ class DataClassPropertyRenderer(
     override fun canHandle(type: TypeName) =
         // exclude blank name (probably a generic type like T)
         type.packageName.isNotEmpty() &&
+                // we exclude enum classes
+                !type.isEnum &&
                 // we also exclude some packages completely
                 !type.isBlackListed
 
