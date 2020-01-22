@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin
 
+import de.peekandpoke.ultra.common.kType
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.SlumberModule
 import de.peekandpoke.ultra.slumber.Slumberer
@@ -107,7 +108,13 @@ object BuiltInModule : SlumberModule {
 
                 // Maps
                 Map::class.java.isAssignableFrom(cls.java) ->
-                    type.wrapIfNonNull(MapSlumberer(args[0].type!!, args[1].type!!))
+                    type.wrapIfNonNull(
+                        when (args.size) {
+                            2 -> MapSlumberer(args[0].type!!, args[1].type!!)
+
+                            else -> MapSlumberer(kType<String>().type, kType<Any>().type)
+                        }
+                    )
 
                 // Enum
                 cls.java.isEnum -> type.wrapIfNonNull(EnumCodec(type) as Slumberer)
