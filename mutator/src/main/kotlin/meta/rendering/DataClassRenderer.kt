@@ -29,7 +29,7 @@ class DataClassRenderer(
             """
                 @JvmName("mutate${jvmName}")
                 fun ${imported}.mutate(mutation: ${mutatorClassName}.() -> Unit) = 
-                    mutator().apply(mutation).getResult()
+                    mutator({ x: $imported -> Unit }).apply(mutation).getResult()
 
                 @JvmName("mutator${jvmName}")
                 fun ${imported}.mutator(onModify: OnModify<${imported}> = {}) = 

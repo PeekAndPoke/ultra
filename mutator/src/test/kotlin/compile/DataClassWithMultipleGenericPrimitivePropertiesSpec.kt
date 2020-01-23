@@ -47,7 +47,7 @@ class DataClassWithMultipleGenericPrimitivePropertiesSpec : StringSpec({
                     
                     @JvmName("mutateGenericUserMutator")
                     fun GenericUser.mutate(mutation: GenericUserMutator.() -> Unit) = 
-                        mutator().apply(mutation).getResult()
+                        mutator({ x: GenericUser -> Unit }).apply(mutation).getResult()
                     
                     @JvmName("mutatorGenericUserMutator")
                     fun GenericUser.mutator(onModify: OnModify<GenericUser> = {}) = 
@@ -129,7 +129,7 @@ class DataClassWithMultipleGenericPrimitivePropertiesSpec : StringSpec({
                     
                     @JvmName("mutateGenericMutator0")
                     fun Generic<Int>.mutate(mutation: GenericMutator_0.() -> Unit) = 
-                        mutator().apply(mutation).getResult()
+                        mutator({ x: Generic<Int> -> Unit }).apply(mutation).getResult()
                     
                     @JvmName("mutatorGenericMutator0")
                     fun Generic<Int>.mutator(onModify: OnModify<Generic<Int>> = {}) = 
@@ -159,7 +159,7 @@ class DataClassWithMultipleGenericPrimitivePropertiesSpec : StringSpec({
                     
                     @JvmName("mutateGenericMutator1")
                     fun Generic<String>.mutate(mutation: GenericMutator_1.() -> Unit) = 
-                        mutator().apply(mutation).getResult()
+                        mutator({ x: Generic<String> -> Unit }).apply(mutation).getResult()
                     
                     @JvmName("mutatorGenericMutator1")
                     fun Generic<String>.mutator(onModify: OnModify<Generic<String>> = {}) = 
@@ -189,7 +189,7 @@ class DataClassWithMultipleGenericPrimitivePropertiesSpec : StringSpec({
                     
                     @JvmName("mutateGenericMutator2")
                     fun Generic<List<Int>>.mutate(mutation: GenericMutator_2.() -> Unit) = 
-                        mutator().apply(mutation).getResult()
+                        mutator({ x: Generic<List<Int>> -> Unit }).apply(mutation).getResult()
                     
                     @JvmName("mutatorGenericMutator2")
                     fun Generic<List<Int>>.mutator(onModify: OnModify<Generic<List<Int>>> = {}) = 

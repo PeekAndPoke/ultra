@@ -48,7 +48,7 @@ class DataClassWithPassedThroughGenericParameterSpec : StringSpec({
                     
                     @JvmName("mutateContainerMutator")
                     fun Container.mutate(mutation: ContainerMutator.() -> Unit) = 
-                        mutator().apply(mutation).getResult()
+                        mutator({ x: Container -> Unit }).apply(mutation).getResult()
                     
                     @JvmName("mutatorContainerMutator")
                     fun Container.mutator(onModify: OnModify<Container> = {}) = 
@@ -91,7 +91,7 @@ class DataClassWithPassedThroughGenericParameterSpec : StringSpec({
                     
                     @JvmName("mutatePassThroughMutator0")
                     fun PassThrough<Int>.mutate(mutation: PassThroughMutator_0.() -> Unit) = 
-                        mutator().apply(mutation).getResult()
+                        mutator({ x: PassThrough<Int> -> Unit }).apply(mutation).getResult()
                     
                     @JvmName("mutatorPassThroughMutator0")
                     fun PassThrough<Int>.mutator(onModify: OnModify<PassThrough<Int>> = {}) = 
@@ -145,7 +145,7 @@ class DataClassWithPassedThroughGenericParameterSpec : StringSpec({
                     
                     @JvmName("mutateGenericMutator0")
                     fun Generic<String, Int>.mutate(mutation: GenericMutator_0.() -> Unit) = 
-                        mutator().apply(mutation).getResult()
+                        mutator({ x: Generic<String, Int> -> Unit }).apply(mutation).getResult()
                     
                     @JvmName("mutatorGenericMutator0")
                     fun Generic<String, Int>.mutator(onModify: OnModify<Generic<String, Int>> = {}) = 
@@ -186,7 +186,7 @@ class DataClassWithPassedThroughGenericParameterSpec : StringSpec({
                     
                     @JvmName("mutateGenericMutator1")
                     fun Generic<Int, Int>.mutate(mutation: GenericMutator_1.() -> Unit) = 
-                        mutator().apply(mutation).getResult()
+                        mutator({ x: Generic<Int, Int> -> Unit }).apply(mutation).getResult()
                     
                     @JvmName("mutatorGenericMutator1")
                     fun Generic<Int, Int>.mutator(onModify: OnModify<Generic<Int, Int>> = {}) = 

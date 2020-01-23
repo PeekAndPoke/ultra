@@ -39,7 +39,7 @@ class DataClassWithMapPropertySpec : StringSpec({
                     
                     @JvmName("mutateKTestMutator")
                     fun KTest.mutate(mutation: KTestMutator.() -> Unit) = 
-                        mutator().apply(mutation).getResult()
+                        mutator({ x: KTest -> Unit }).apply(mutation).getResult()
                     
                     @JvmName("mutatorKTestMutator")
                     fun KTest.mutator(onModify: OnModify<KTest> = {}) = 

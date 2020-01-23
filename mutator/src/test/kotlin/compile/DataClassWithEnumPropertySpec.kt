@@ -44,7 +44,7 @@ class DataClassWithEnumPropertySpec : StringSpec({
                     
                     @JvmName("mutateWithEnumMutator")
                     fun WithEnum.mutate(mutation: WithEnumMutator.() -> Unit) = 
-                        mutator().apply(mutation).getResult()
+                        mutator({ x: WithEnum -> Unit }).apply(mutation).getResult()
                     
                     @JvmName("mutatorWithEnumMutator")
                     fun WithEnum.mutator(onModify: OnModify<WithEnum> = {}) = 

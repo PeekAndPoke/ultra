@@ -42,7 +42,7 @@ class DataClassWithOneGenericPrimitivePropertySpec : StringSpec({
                     
                     @JvmName("mutateGenericUserMutator")
                     fun GenericUser.mutate(mutation: GenericUserMutator.() -> Unit) = 
-                        mutator().apply(mutation).getResult()
+                        mutator({ x: GenericUser -> Unit }).apply(mutation).getResult()
                     
                     @JvmName("mutatorGenericUserMutator")
                     fun GenericUser.mutator(onModify: OnModify<GenericUser> = {}) = 
@@ -86,7 +86,7 @@ class DataClassWithOneGenericPrimitivePropertySpec : StringSpec({
                     
                     @JvmName("mutateGenericMutator0")
                     fun Generic<Int>.mutate(mutation: GenericMutator_0.() -> Unit) = 
-                        mutator().apply(mutation).getResult()
+                        mutator({ x: Generic<Int> -> Unit }).apply(mutation).getResult()
                     
                     @JvmName("mutatorGenericMutator0")
                     fun Generic<Int>.mutator(onModify: OnModify<Generic<Int>> = {}) = 

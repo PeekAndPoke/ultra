@@ -44,7 +44,7 @@ class DataClassWithListPropertySpec : StringSpec({
                     
                     @JvmName("mutateStringListMutator")
                     fun StringList.mutate(mutation: StringListMutator.() -> Unit) = 
-                        mutator().apply(mutation).getResult()
+                        mutator({ x: StringList -> Unit }).apply(mutation).getResult()
                     
                     @JvmName("mutatorStringListMutator")
                     fun StringList.mutator(onModify: OnModify<StringList> = {}) = 
@@ -88,7 +88,7 @@ class DataClassWithListPropertySpec : StringSpec({
                     
                     @JvmName("mutateDataObjectListMutator")
                     fun DataObjectList.mutate(mutation: DataObjectListMutator.() -> Unit) = 
-                        mutator().apply(mutation).getResult()
+                        mutator({ x: DataObjectList -> Unit }).apply(mutation).getResult()
                     
                     @JvmName("mutatorDataObjectListMutator")
                     fun DataObjectList.mutator(onModify: OnModify<DataObjectList> = {}) = 
