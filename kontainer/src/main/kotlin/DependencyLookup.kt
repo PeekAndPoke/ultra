@@ -1,14 +1,13 @@
 package de.peekandpoke.ultra.kontainer
 
 import kotlin.reflect.KClass
-import kotlin.reflect.full.primaryConstructor
 
 /**
  * A lookup for mapping service class to service classes that they request for injection.
  */
 class DependencyLookup internal constructor(
     superTypeLookUp: TypeLookup.ForSuperTypes,
-    classes: Set<KClass<*>>
+    definitions: Map<KClass<*>, ServiceDefinition>
 ) {
 
     /**
@@ -33,36 +32,34 @@ class DependencyLookup internal constructor(
         /**
          * Records the injected types of the given cls
          */
-        val record = { cls: KClass<*> ->
+        val record = { def: ServiceDefinition ->
 
-            if (cls.primaryConstructor != null) {
-                cls.primaryConstructor!!.parameters.forEach { parameter ->
+            def.producer.signature.forEach { parameter ->
 
-                    val type = parameter.type
-                    val paramCls = type.classifier as KClass<*>
+                val type = parameter.type
+                val paramCls = type.classifier as KClass<*>
 
-                    val candidates = when {
-                        // lazy list of types
-                        type.isLazyListType() -> superTypeLookUp.getAllCandidatesFor(type.getInnerInnerClass())
+                val candidates = when {
+                    // lazy list of types
+                    type.isLazyListType() -> superTypeLookUp.getAllCandidatesFor(type.getInnerInnerClass())
 
-                        // list of lazy types
-                        type.isListType() || type.isLazyServiceType() || type.isLookupType() ->
-                            superTypeLookUp.getAllCandidatesFor(type.getInnerClass())
+                    // list of lazy types
+                    type.isListType() || type.isLazyServiceType() || type.isLookupType() ->
+                        superTypeLookUp.getAllCandidatesFor(type.getInnerClass())
 
-                        // default service type
-                        paramCls.isServiceType() -> superTypeLookUp.getAllCandidatesFor(paramCls)
+                    // default service type
+                    paramCls.isServiceType() -> superTypeLookUp.getAllCandidatesFor(paramCls)
 
-                        else -> setOf()
-                    }
+                    else -> setOf()
+                }
 
-                    candidates.forEach { superType ->
-                        tmp.add(superType, cls)
-                    }
+                candidates.forEach { superType ->
+                    tmp.add(superType, def.produces)
                 }
             }
         }
 
-        classes.forEach { record(it) }
+        definitions.values.forEach { record(it) }
 
         dependencies = tmp
     }

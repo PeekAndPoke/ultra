@@ -46,7 +46,7 @@ class KontainerBlueprint internal constructor(
     /**
      * Dependency lookup for figuring out which service depends on which other services
      */
-    private val dependencyLookUp = DependencyLookup(superTypeLookup, definitions.keys)
+    private val dependencyLookUp = DependencyLookup(superTypeLookup, definitions)
 
     /**
      * Collect Prototype services

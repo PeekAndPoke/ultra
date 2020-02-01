@@ -48,7 +48,7 @@ class DynamicServicesSpec : StringSpec({
         }
     }
 
-    "Providing a dynamic service" {
+    "Providing a dynamic service when creating he kontainer" {
 
         val blueprint = kontainer {
             dynamic<SimpleService>()
@@ -296,6 +296,58 @@ class DynamicServicesSpec : StringSpec({
             subject.getProvider<Impl>().type shouldBe ServiceProvider.Type.Dynamic
 
             subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
+        }
+    }
+
+    "Singletons become semi-dynamic when injecting dynamic services that is defined with base type" {
+
+        abstract class Base
+        class Impl : Base()
+
+        data class Injecting(val service: Base)
+
+        val subject = kontainer {
+
+            dynamic(Base::class, Impl::class)
+
+            singleton<Injecting>()
+
+        }.useWith(Impl())
+
+        assertSoftly {
+
+            subject.getProvider<Base>().type shouldBe ServiceProvider.Type.Dynamic
+
+            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
+        }
+    }
+
+    "Singletons become semi-dynamic when injecting dynamic services through builder method" {
+
+        abstract class Base {
+            val value = 10
+        }
+
+        class Impl : Base()
+
+        data class Injecting(val value: Int)
+
+        val subject = kontainer {
+
+            dynamic(Base::class, Impl::class)
+
+            singleton { base: Base ->
+                Injecting(base.value)
+            }
+
+        }.useWith(Impl())
+
+        assertSoftly {
+
+            subject.getProvider<Base>().type shouldBe ServiceProvider.Type.Dynamic
+
+            subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
+            subject.get<Injecting>().value shouldBe 10
         }
     }
 
