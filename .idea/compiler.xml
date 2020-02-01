@@ -28,6 +28,8 @@
       <module name="ultra.common.test" target="1.8" />
       <module name="ultra.kontainer.main" target="1.8" />
       <module name="ultra.kontainer.test" target="1.8" />
+      <module name="ultra.logging.main" target="1.8" />
+      <module name="ultra.logging.test" target="1.8" />
       <module name="ultra.main" target="11" />
       <module name="ultra.meta.main" target="1.8" />
       <module name="ultra.meta.test" target="1.8" />

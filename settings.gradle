@@ -21,6 +21,7 @@ include(
         // child projects
         ":common",
         ":kontainer",
+        ":logging",
         ":meta",
         ":mutator",
         ":security",

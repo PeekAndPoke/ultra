@@ -9,6 +9,9 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/kontainer/ultra.kontainer.iml" filepath="$PROJECT_DIR$/.idea/modules/kontainer/ultra.kontainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/kontainer/ultra.kontainer.main.iml" filepath="$PROJECT_DIR$/.idea/modules/kontainer/ultra.kontainer.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/kontainer/ultra.kontainer.test.iml" filepath="$PROJECT_DIR$/.idea/modules/kontainer/ultra.kontainer.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/logging/ultra.logging.iml" filepath="$PROJECT_DIR$/.idea/modules/logging/ultra.logging.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/logging/ultra.logging.main.iml" filepath="$PROJECT_DIR$/.idea/modules/logging/ultra.logging.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/logging/ultra.logging.test.iml" filepath="$PROJECT_DIR$/.idea/modules/logging/ultra.logging.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ultra.main.iml" filepath="$PROJECT_DIR$/.idea/modules/ultra.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/meta/ultra.meta.iml" filepath="$PROJECT_DIR$/.idea/modules/meta/ultra.meta.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/meta/ultra.meta.main.iml" filepath="$PROJECT_DIR$/.idea/modules/meta/ultra.meta.main.iml" />

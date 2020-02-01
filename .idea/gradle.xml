@@ -11,6 +11,7 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/common" />
             <option value="$PROJECT_DIR$/kontainer" />
+            <option value="$PROJECT_DIR$/logging" />
             <option value="$PROJECT_DIR$/meta" />
             <option value="$PROJECT_DIR$/mutator" />
             <option value="$PROJECT_DIR$/security" />
