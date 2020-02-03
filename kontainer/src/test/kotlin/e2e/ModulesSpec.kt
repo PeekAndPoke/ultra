@@ -57,4 +57,38 @@ class ModulesSpec : StringSpec({
             subject.get(MyService::class).value shouldBe 100
         }
     }
+
+    "Creating and using a parameterized module with two parameters" {
+
+        data class MyService(val value: Int)
+
+        val mod = module { config1: Int, config2: Int ->
+            instance(MyService(config1 + config2))
+        }
+
+        val subject = kontainer {
+            module(mod, 100, 200)
+        }.useWith()
+
+        assertSoftly {
+            subject.get(MyService::class).value shouldBe 300
+        }
+    }
+
+    "Creating and using a parameterized module with three parameters" {
+
+        data class MyService(val value: Int)
+
+        val mod = module { config1: Int, config2: Int, config3: Int ->
+            instance(MyService(config1 + config2 + config3))
+        }
+
+        val subject = kontainer {
+            module(mod, 100, 200, 300)
+        }.useWith()
+
+        assertSoftly {
+            subject.get(MyService::class).value shouldBe 600
+        }
+    }
 })

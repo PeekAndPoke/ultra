@@ -100,6 +100,20 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         module.apply(this, param)
     }
 
+    /**
+     * Imports a parameterized module
+     */
+    fun <P1, P2> module(module: ParameterizedKontainerModule2<P1, P2>, p1: P1, p2: P2) = apply {
+        module.apply(this, p1, p2)
+    }
+
+    /**
+     * Imports a parameterized module
+     */
+    fun <P1, P2, P3> module(module: ParameterizedKontainerModule3<P1, P2, P3>, p1: P1, p2: P2, p3: P3) = apply {
+        module.apply(this, p1, p2, p3)
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Singleton Services
     /////

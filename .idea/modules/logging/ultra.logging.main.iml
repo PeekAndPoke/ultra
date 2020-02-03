@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id=":kontainer:main" external.linked.project.path="$MODULE_DIR$/../../../kontainer" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="de.peekandpoke.ultra" external.system.module.type="sourceSet" external.system.module.version="0.0.112" type="JAVA_MODULE" version="4">
+<module external.linked.project.id=":logging:main" external.linked.project.path="$MODULE_DIR$/../../../logging" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="de.peekandpoke.ultra" external.system.module.type="sourceSet" external.system.module.version="0.0.112" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="3" platform="JVM 1.8" allPlatforms="JVM [1.8]" useProjectSettings="false">
@@ -7,11 +7,11 @@
           <option name="additionalArguments" value="-Xallow-no-source-files" />
         </compilerSettings>
         <compilerArguments>
-          <option name="destination" value="$MODULE_DIR$/../../../kontainer/build/classes/kotlin/main" />
-          <option name="classpath" value="$MODULE_DIR$/../../../common/build/libs/common-0.0.112.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.3.60/5cb6bf19bab36ab9d10b216356e869250c686a09/kotlin-stdlib-jdk8-1.3.60.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-reflect/1.3.60/56dc1da0b87932ae08941153c917bd19947e08bc/kotlin-reflect-1.3.60.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-core/1.3.3/5bac48cf5828e9b006f3b1ef6e37d2a70c2e7321/kotlinx-coroutines-core-1.3.3.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.3.60/a42a01c0338795930e0a7d8f9d19acafdd1c50ee/kotlin-stdlib-jdk7-1.3.60.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.3.61/4702105e97f7396ae41b113fdbdc180ec1eb1e36/kotlin-stdlib-1.3.61.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.3.61/65abb71d5afb850b68be03987b08e2c864ca3110/kotlin-stdlib-common-1.3.61.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar" />
+          <option name="destination" value="$MODULE_DIR$/../../../logging/build/classes/kotlin/main" />
+          <option name="classpath" value="$MODULE_DIR$/../../../kontainer/build/libs/kontainer-0.0.112.jar:/opt/dev/peekandpoke/ultra/common/build/libs/common-0.0.112.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.3.60/5cb6bf19bab36ab9d10b216356e869250c686a09/kotlin-stdlib-jdk8-1.3.60.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-reflect/1.3.60/56dc1da0b87932ae08941153c917bd19947e08bc/kotlin-reflect-1.3.60.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-core/1.3.3/5bac48cf5828e9b006f3b1ef6e37d2a70c2e7321/kotlinx-coroutines-core-1.3.3.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/1.7.30/b5a4b6d16ab13e34a88fae84c35cd5d68cac922c/slf4j-api-1.7.30.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.3.60/a42a01c0338795930e0a7d8f9d19acafdd1c50ee/kotlin-stdlib-jdk7-1.3.60.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.3.61/4702105e97f7396ae41b113fdbdc180ec1eb1e36/kotlin-stdlib-1.3.61.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.3.61/65abb71d5afb850b68be03987b08e2c864ca3110/kotlin-stdlib-common-1.3.61.jar:/home/gerk/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar" />
           <option name="noStdlib" value="true" />
           <option name="noReflect" value="true" />
-          <option name="moduleName" value="kontainer" />
+          <option name="moduleName" value="logging" />
           <option name="jvmTarget" value="1.8" />
           <option name="languageVersion" value="1.3" />
           <option name="apiVersion" value="1.3" />
@@ -37,17 +37,19 @@
     </facet>
   </component>
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
-    <output url="file://$MODULE_DIR$/../../../kontainer/build/classes/java/main" />
+    <output url="file://$MODULE_DIR$/../../../logging/build/classes/java/main" />
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../../../kontainer/src/main">
-      <sourceFolder url="file://$MODULE_DIR$/../../../kontainer/src/main/kotlin" isTestSource="false" />
+    <content url="file://$MODULE_DIR$/../../../logging/src/main">
+      <sourceFolder url="file://$MODULE_DIR$/../../../logging/src/main/kotlin" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="ultra.kontainer.main" />
     <orderEntry type="module" module-name="ultra.common.main" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.60" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-reflect:1.3.60" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.3" level="project" />
+    <orderEntry type="library" name="Gradle: org.slf4j:slf4j-api:1.7.30" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.3.60" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib:1.3.61" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:1.3.61" level="project" />
