@@ -13,7 +13,8 @@ class ReifiedKType(val type: KType) {
     /**
      * Raw cls of the [type]
      */
-    val cls = type.classifier as KClass<*>
+    @Suppress("UNCHECKED_CAST")
+    val cls = type.classifier as KClass<Any>
 
     /**
      * The ctor is always present for a data class
@@ -45,7 +46,7 @@ class ReifiedKType(val type: KType) {
             // Which type parameter do we have?
             val index = cls.typeParameters.indexOf(classifier)
             // Get the real type from the rootType
-            type.arguments[index].type ?: Any::class.createType()
+            type.arguments[index].type ?: TypeRef.Any.type
         }
 
         // Do we have a class?
@@ -53,7 +54,7 @@ class ReifiedKType(val type: KType) {
             // Let's reify all of the classes type parameters as well
             classifier.createType(
                 subject.arguments.map {
-                    it.copy(type = reifyType(it.type ?: Any::class.createType()))
+                    it.copy(type = reifyType(it.type ?: TypeRef.Any.type))
                 },
                 subject.isMarkedNullable
             )
