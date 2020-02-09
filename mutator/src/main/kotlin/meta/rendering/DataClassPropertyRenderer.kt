@@ -30,14 +30,14 @@ class DataClassPropertyRenderer(
 
         val mutatorField = "`$name@mutator`"
 
-        val typeImported = type.mutatorFqn
+        val mutatorType = type.mutatorFqn
 
         block(
             """
                 /**
                  * Backing field for [$name]
                  */
-                private var $mutatorField : $typeImported? = null
+                private var $mutatorField : $mutatorType? = null
                  
             """.trimIndent()
         )
@@ -46,11 +46,15 @@ class DataClassPropertyRenderer(
 
         block(
             """
-                val $name
+                var $name : $mutatorType$nullable
                     get() = $mutatorField ?: getResult().$name$nullable.${type.import("mutator")} { 
                         modify(getResult()::$name, getResult().$name, it) 
                     }.apply {
                         $mutatorField = this
+                    }
+                    set(value) {
+                        $mutatorField = null
+                        modify(getResult()::$name, getResult().$name, value$nullable.getResult()) 
                     }
     
             """.trimIndent()

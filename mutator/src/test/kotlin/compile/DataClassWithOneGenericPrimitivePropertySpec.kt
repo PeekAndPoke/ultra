@@ -65,11 +65,15 @@ class DataClassWithOneGenericPrimitivePropertySpec : StringSpec({
                          *   - type:         [Generic<Int>]
                          *   - reflected by: [com.squareup.kotlinpoet.ParameterizedTypeName]
                          */ 
-                        val value
+                        var value : mutator.compile.GenericMutator_7ca16fdb07368b3c8b6342a44d2011b8
                             get() = `value@mutator` ?: getResult().value.mutator { 
                                 modify(getResult()::value, getResult().value, it) 
                             }.apply {
                                 `value@mutator` = this
+                            }
+                            set(value) {
+                                `value@mutator` = null
+                                modify(getResult()::value, getResult().value, value.getResult()) 
                             }
                         
                     }
