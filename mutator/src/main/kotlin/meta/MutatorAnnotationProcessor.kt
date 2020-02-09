@@ -19,7 +19,10 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
 
     private val renderers by lazy {
 
-        PropertyRenderers(ctx, PureGetterSetterRenderer(ctx)) { root ->
+        PropertyRenderers(
+            ctx,
+            PureGetterSetterRenderer(ctx)
+        ) { root ->
             listOf(
                 // Lists and Sets
                 ListAndSetPropertyRenderer(ctx, root),

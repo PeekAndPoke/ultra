@@ -100,4 +100,66 @@ class NestedObjectMutationsSpec : StringSpec({
             }
         }
     }
+
+    "Mutating an object by replacing a property mutator directly" {
+
+        val source = Company(
+            "Corp",
+            Person(
+                "Sam", 25,
+                Address("Berlin", "10115")
+            )
+        )
+
+        val result = source.mutate {
+            // First we fully replace the "address"
+            boss.address = Address("Leipzig", "04109").mutator()
+        }
+
+        assertSoftly {
+
+            withClue("Source object must NOT be modified") {
+                source shouldNotBe result
+            }
+
+            withClue("Result must be modified properly") {
+                result.boss shouldNotBe source.boss
+
+                result.boss.address shouldNotBe source.boss.address
+                result.boss.address shouldBe Address("Leipzig", "04109")
+            }
+        }
+    }
+
+    "Mutating an object by replacing a property mutator directly (and modifying it again)" {
+
+        val source = Company(
+            "Corp",
+            Person(
+                "Sam", 25,
+                Address("Berlin", "10115")
+            )
+        )
+
+        val result = source.mutate {
+            // First we fully replace the "address"
+            boss.address = Address("Leipzig", "04109").mutator()
+            // Then we modify the property again
+            boss.address.zip = "04110"
+        }
+
+        assertSoftly {
+
+            withClue("Source object must NOT be modified") {
+                source shouldNotBe result
+            }
+
+            withClue("Result must be modified properly") {
+                result.boss shouldNotBe source.boss
+
+                result.boss.address shouldNotBe source.boss.address
+                result.boss.address shouldBe Address("Leipzig", "04110")
+            }
+        }
+    }
 })

@@ -107,18 +107,18 @@ class DataClassWithListOfGenericPropertySpec : StringSpec({
                     
                     
                     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                    // Mutator for Generic<Int> -> GenericMutator_0
+                    // Mutator for Generic<Int> -> GenericMutator_7ca16fdb07368b3c8b6342a44d2011b8
                     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                     
-                    @JvmName("mutateGenericMutator0")
-                    fun Generic<Int>.mutate(mutation: GenericMutator_0.() -> Unit) = 
+                    @JvmName("mutateGenericMutator7ca16fdb07368b3c8b6342a44d2011b8")
+                    fun Generic<Int>.mutate(mutation: GenericMutator_7ca16fdb07368b3c8b6342a44d2011b8.() -> Unit) = 
                         mutator({ x: Generic<Int> -> Unit }).apply(mutation).getResult()
                     
-                    @JvmName("mutatorGenericMutator0")
+                    @JvmName("mutatorGenericMutator7ca16fdb07368b3c8b6342a44d2011b8")
                     fun Generic<Int>.mutator(onModify: OnModify<Generic<Int>> = {}) = 
-                        GenericMutator_0(this, onModify)
+                        GenericMutator_7ca16fdb07368b3c8b6342a44d2011b8(this, onModify)
                     
-                    class GenericMutator_0(
+                    class GenericMutator_7ca16fdb07368b3c8b6342a44d2011b8(
                         target: Generic<Int>, 
                         onModify: OnModify<Generic<Int>> = {}
                     ) : DataClassMutator<Generic<Int>>(target, onModify) {

@@ -86,7 +86,6 @@ class DataClassWithMultiplePrimitivePropertiesSpec : StringSpec({
                          *   - type:         [LocalDateTime]
                          *   - reflected by: [com.squareup.kotlinpoet.ClassName]
                          */ 
-                        // Currently there is no better way to mutate a 'java.time.LocalDateTime' ... sorry!
                         var date
                             get() = getResult().date
                             set(v) = modify(getResult()::date, getResult().date, v)

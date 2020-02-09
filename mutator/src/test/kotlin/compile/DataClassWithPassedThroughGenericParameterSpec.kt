@@ -60,15 +60,27 @@ class DataClassWithPassedThroughGenericParameterSpec : StringSpec({
                     ) : DataClassMutator<Container>(target, onModify) {
                     
                         /**
+                         * Backing field for [value]
+                         */
+                        private var `value@mutator` : mutator.compile.PassThroughMutator_7ca16fdb07368b3c8b6342a44d2011b8? = null
+                        
+                        /**
                          * Mutator for field [Container.value]
                          *
                          * Info:
                          *   - type:         [PassThrough<Int>]
                          *   - reflected by: [com.squareup.kotlinpoet.ParameterizedTypeName]
                          */ 
-                        val value by lazy { 
-                            getResult().value.mutator { modify(getResult()::value, getResult().value, it) } 
-                        }
+                        var value : mutator.compile.PassThroughMutator_7ca16fdb07368b3c8b6342a44d2011b8
+                            get() = `value@mutator` ?: getResult().value.mutator { 
+                                modify(getResult()::value, getResult().value, it) 
+                            }.apply {
+                                `value@mutator` = this
+                            }
+                            set(value) {
+                                `value@mutator` = null
+                                modify(getResult()::value, getResult().value, value.getResult()) 
+                            }
                         
                     }
 
@@ -86,22 +98,27 @@ class DataClassWithPassedThroughGenericParameterSpec : StringSpec({
                     
                     
                     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                    // Mutator for PassThrough<Int> -> PassThroughMutator_0
+                    // Mutator for PassThrough<Int> -> PassThroughMutator_7ca16fdb07368b3c8b6342a44d2011b8
                     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                     
-                    @JvmName("mutatePassThroughMutator0")
-                    fun PassThrough<Int>.mutate(mutation: PassThroughMutator_0.() -> Unit) = 
+                    @JvmName("mutatePassThroughMutator7ca16fdb07368b3c8b6342a44d2011b8")
+                    fun PassThrough<Int>.mutate(mutation: PassThroughMutator_7ca16fdb07368b3c8b6342a44d2011b8.() -> Unit) = 
                         mutator({ x: PassThrough<Int> -> Unit }).apply(mutation).getResult()
                     
-                    @JvmName("mutatorPassThroughMutator0")
+                    @JvmName("mutatorPassThroughMutator7ca16fdb07368b3c8b6342a44d2011b8")
                     fun PassThrough<Int>.mutator(onModify: OnModify<PassThrough<Int>> = {}) = 
-                        PassThroughMutator_0(this, onModify)
+                        PassThroughMutator_7ca16fdb07368b3c8b6342a44d2011b8(this, onModify)
                     
-                    class PassThroughMutator_0(
+                    class PassThroughMutator_7ca16fdb07368b3c8b6342a44d2011b8(
                         target: PassThrough<Int>, 
                         onModify: OnModify<PassThrough<Int>> = {}
                     ) : DataClassMutator<PassThrough<Int>>(target, onModify) {
                     
+                        /**
+                         * Backing field for [v1]
+                         */
+                        private var `v1@mutator` : mutator.compile.GenericMutator_a54cb119eaef222dc57bc6466b84e12f? = null
+                        
                         /**
                          * Mutator for field [PassThrough<Int>.v1]
                          *
@@ -109,9 +126,21 @@ class DataClassWithPassedThroughGenericParameterSpec : StringSpec({
                          *   - type:         [Generic<String, Int>]
                          *   - reflected by: [com.squareup.kotlinpoet.ParameterizedTypeName]
                          */ 
-                        val v1 by lazy { 
-                            getResult().v1.mutator { modify(getResult()::v1, getResult().v1, it) } 
-                        }
+                        var v1 : mutator.compile.GenericMutator_a54cb119eaef222dc57bc6466b84e12f
+                            get() = `v1@mutator` ?: getResult().v1.mutator { 
+                                modify(getResult()::v1, getResult().v1, it) 
+                            }.apply {
+                                `v1@mutator` = this
+                            }
+                            set(value) {
+                                `v1@mutator` = null
+                                modify(getResult()::v1, getResult().v1, value.getResult()) 
+                            }
+                        
+                        /**
+                         * Backing field for [v2]
+                         */
+                        private var `v2@mutator` : mutator.compile.GenericMutator_c90bcd8073a7379b80d8bcb3a7b95bdc? = null
                         
                         /**
                          * Mutator for field [PassThrough<Int>.v2]
@@ -120,9 +149,16 @@ class DataClassWithPassedThroughGenericParameterSpec : StringSpec({
                          *   - type:         [Generic<Int, Int>]
                          *   - reflected by: [com.squareup.kotlinpoet.ParameterizedTypeName]
                          */ 
-                        val v2 by lazy { 
-                            getResult().v2.mutator { modify(getResult()::v2, getResult().v2, it) } 
-                        }
+                        var v2 : mutator.compile.GenericMutator_c90bcd8073a7379b80d8bcb3a7b95bdc
+                            get() = `v2@mutator` ?: getResult().v2.mutator { 
+                                modify(getResult()::v2, getResult().v2, it) 
+                            }.apply {
+                                `v2@mutator` = this
+                            }
+                            set(value) {
+                                `v2@mutator` = null
+                                modify(getResult()::v2, getResult().v2, value.getResult()) 
+                            }
                         
                     }
 
@@ -140,18 +176,18 @@ class DataClassWithPassedThroughGenericParameterSpec : StringSpec({
                     
                     
                     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                    // Mutator for Generic<String, Int> -> GenericMutator_0
+                    // Mutator for Generic<String, Int> -> GenericMutator_a54cb119eaef222dc57bc6466b84e12f
                     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                     
-                    @JvmName("mutateGenericMutator0")
-                    fun Generic<String, Int>.mutate(mutation: GenericMutator_0.() -> Unit) = 
+                    @JvmName("mutateGenericMutatora54cb119eaef222dc57bc6466b84e12f")
+                    fun Generic<String, Int>.mutate(mutation: GenericMutator_a54cb119eaef222dc57bc6466b84e12f.() -> Unit) = 
                         mutator({ x: Generic<String, Int> -> Unit }).apply(mutation).getResult()
                     
-                    @JvmName("mutatorGenericMutator0")
+                    @JvmName("mutatorGenericMutatora54cb119eaef222dc57bc6466b84e12f")
                     fun Generic<String, Int>.mutator(onModify: OnModify<Generic<String, Int>> = {}) = 
-                        GenericMutator_0(this, onModify)
+                        GenericMutator_a54cb119eaef222dc57bc6466b84e12f(this, onModify)
                     
-                    class GenericMutator_0(
+                    class GenericMutator_a54cb119eaef222dc57bc6466b84e12f(
                         target: Generic<String, Int>, 
                         onModify: OnModify<Generic<String, Int>> = {}
                     ) : DataClassMutator<Generic<String, Int>>(target, onModify) {
@@ -181,18 +217,18 @@ class DataClassWithPassedThroughGenericParameterSpec : StringSpec({
                     }
                     
                     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                    // Mutator for Generic<Int, Int> -> GenericMutator_1
+                    // Mutator for Generic<Int, Int> -> GenericMutator_c90bcd8073a7379b80d8bcb3a7b95bdc
                     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                     
-                    @JvmName("mutateGenericMutator1")
-                    fun Generic<Int, Int>.mutate(mutation: GenericMutator_1.() -> Unit) = 
+                    @JvmName("mutateGenericMutatorc90bcd8073a7379b80d8bcb3a7b95bdc")
+                    fun Generic<Int, Int>.mutate(mutation: GenericMutator_c90bcd8073a7379b80d8bcb3a7b95bdc.() -> Unit) = 
                         mutator({ x: Generic<Int, Int> -> Unit }).apply(mutation).getResult()
                     
-                    @JvmName("mutatorGenericMutator1")
+                    @JvmName("mutatorGenericMutatorc90bcd8073a7379b80d8bcb3a7b95bdc")
                     fun Generic<Int, Int>.mutator(onModify: OnModify<Generic<Int, Int>> = {}) = 
-                        GenericMutator_1(this, onModify)
+                        GenericMutator_c90bcd8073a7379b80d8bcb3a7b95bdc(this, onModify)
                     
-                    class GenericMutator_1(
+                    class GenericMutator_c90bcd8073a7379b80d8bcb3a7b95bdc(
                         target: Generic<Int, Int>, 
                         onModify: OnModify<Generic<Int, Int>> = {}
                     ) : DataClassMutator<Generic<Int, Int>>(target, onModify) {

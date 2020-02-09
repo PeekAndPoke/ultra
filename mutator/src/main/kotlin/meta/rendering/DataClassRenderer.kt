@@ -46,24 +46,8 @@ class DataClassRenderer(
         indent {
 
             target.variables.filtered().forEach { variable ->
-
-                val type = variable.typeName
-                val prop = variable.simpleName
-
-                block(
-                    """
-                        /**
-                         * Mutator for field [${imported}.$prop]
-                         *
-                         * Info:
-                         *   - type:         [${variable.typeName.import()}]
-                         *   - reflected by: [${type::class.qualifiedName}]
-                         */ 
-                    """.trimIndent()
-                )
-
                 renderers.run {
-                    renderProperty(variable.typeName, variable.simpleName)
+                    renderProperty(variable)
                 }
             }
         }
@@ -75,12 +59,12 @@ class DataClassRenderer(
 
         when {
             !classType.isParameterized ->
-                renderFor(classType, classType.joinSimpleNames() + "Mutator")
+                renderFor(classType, classType.mutatorClassName)
 
             else ->
-                classType.genericUsages.forEachIndexed { idx, type ->
+                classType.genericUsages.forEach { type ->
 
-                    val mutatorClassName = type.joinSimpleNames() + "Mutator_" + idx
+                    val mutatorClassName = type.mutatorClassName
 
                     divider()
                     line("// Mutator for ${type.import()} -> $mutatorClassName")
