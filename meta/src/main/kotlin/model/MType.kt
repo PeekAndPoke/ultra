@@ -38,10 +38,10 @@ class MType(
     val variables: List<MVariable> by lazy {
         when (typeName) {
             is ParameterizedTypeName ->
-                type.variables.map { MVariable(model, it, typeName.reify(it.asTypeName())) }
+                type.variables.map { MVariable(model, this, it, typeName.reify(it.asTypeName())) }
 
             else ->
-                type.variables.map { MVariable(model, it, it.asTypeName()) }
+                type.variables.map { MVariable(model, this, it, it.asTypeName()) }
         }
     }
 

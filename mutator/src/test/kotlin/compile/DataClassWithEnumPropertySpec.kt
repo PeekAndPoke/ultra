@@ -62,7 +62,6 @@ class DataClassWithEnumPropertySpec : StringSpec({
                          *   - type:         [MyEnum]
                          *   - reflected by: [com.squareup.kotlinpoet.ClassName]
                          */ 
-                        // Currently there is no better way to mutate a 'mutator.compile.MyEnum' ... sorry!
                         var value
                             get() = getResult().value
                             set(v) = modify(getResult()::value, getResult().value, v)

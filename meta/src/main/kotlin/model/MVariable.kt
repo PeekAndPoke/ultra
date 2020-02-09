@@ -8,6 +8,7 @@ import javax.lang.model.type.DeclaredType
 
 class MVariable(
     model: Model,
+    val parent: MType,
     val element: VariableElement,
     val typeName: TypeName
 ) : MBase(model) {
