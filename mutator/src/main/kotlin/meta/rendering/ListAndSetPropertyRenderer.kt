@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.mutator.meta.rendering
 
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.TypeName
 import de.peekandpoke.ultra.meta.KotlinPrinter
@@ -22,7 +23,27 @@ class ListAndSetPropertyRenderer(
             // and the contained type must be supported as well
             && type.typeArguments.all { root.canHandle(it) }
 
-    override fun KotlinPrinter.renderProperty(variable: MVariable) {
+    override fun KotlinPrinter.renderPropertyDeclaration(variable: MVariable) {
+
+        val type = variable.typeName
+        val name = variable.simpleName
+
+        val typeParam = (type as ParameterizedTypeName).typeArguments[0]
+
+        // TODO: check the type cast
+        val mutatorImported = (typeParam as ClassName).toMutatorClassName().import()
+
+        renderVariableComment(variable)
+
+        block(
+            """
+                var $name: ListMutator<${typeParam.import()}, $mutatorImported>
+                
+            """.trimIndent()
+        )
+    }
+
+    override fun KotlinPrinter.renderPropertyImplementation(variable: MVariable) {
 
         val type = variable.typeName
         val name = variable.simpleName

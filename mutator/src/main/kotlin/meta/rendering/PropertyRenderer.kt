@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.mutator.meta.rendering
 
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.TypeName
 import de.peekandpoke.ultra.meta.KotlinPrinter
 import de.peekandpoke.ultra.meta.ProcessorUtils
@@ -13,9 +14,14 @@ interface PropertyRenderer : ProcessorUtils {
     fun canHandle(type: TypeName): Boolean
 
     /**
-     * Renders code-blocks for a property
+     * Renders the code that declares a property
      */
-    fun KotlinPrinter.renderProperty(variable: MVariable)
+    fun KotlinPrinter.renderPropertyDeclaration(variable: MVariable)
+
+    /**
+     * Renders the code that implements a property
+     */
+    fun KotlinPrinter.renderPropertyImplementation(variable: MVariable)
 
     fun KotlinPrinter.renderForwardMapper(type: TypeName, depth: Int)
 
@@ -42,6 +48,10 @@ interface PropertyRenderer : ProcessorUtils {
                  */ 
             """.trimIndent()
         )
-
     }
+
+    fun ClassName.toMutatorClassName() = ClassName(
+        packageName = packageName,
+        simpleNames = simpleNames.dropLast(1).plus("I${simpleNames.last()}")
+    )
 }

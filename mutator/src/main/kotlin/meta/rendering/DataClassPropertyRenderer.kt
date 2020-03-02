@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.mutator.meta.rendering
 
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.TypeName
 import de.peekandpoke.ultra.meta.KotlinPrinter
 import de.peekandpoke.ultra.meta.ProcessorUtils
@@ -16,28 +17,48 @@ class DataClassPropertyRenderer(
     override fun canHandle(type: TypeName) =
         // exclude blank name (probably a generic type like T)
         type.packageName.isNotEmpty() &&
+                // we look for a ClassName
+                type is ClassName &&
                 // we exclude enum classes
                 !type.isEnum &&
                 // we also exclude some packages completely
                 !type.isBlackListed
 
-    override fun KotlinPrinter.renderProperty(variable: MVariable) {
+    override fun KotlinPrinter.renderPropertyDeclaration(variable: MVariable) {
 
-        val type = variable.typeName
+        val type = variable.typeName as ClassName
+        val name = variable.simpleName
+
+        val nullable = if (type.isNullable) "?" else ""
+
+        val mutatorImported = type.toMutatorClassName().import()
+
+        renderVariableComment(variable)
+
+        block(
+            """
+                var $name : $mutatorImported$nullable
+    
+            """.trimIndent()
+        )
+    }
+
+    override fun KotlinPrinter.renderPropertyImplementation(variable: MVariable) {
+
+        val type = variable.typeName as ClassName
         val name = variable.simpleName
 
         val nullable = if (type.isNullable) "?" else ""
 
         val mutatorField = "`$name@mutator`"
-
-        val mutatorType = type.mutatorFqn
+        val mutatorImported = type.toMutatorClassName().import()
 
         block(
             """
                 /**
                  * Backing field for [$name]
                  */
-                private var $mutatorField : $mutatorType? = null
+                private var $mutatorField : $mutatorImported? = null
                  
             """.trimIndent()
         )
@@ -46,7 +67,7 @@ class DataClassPropertyRenderer(
 
         block(
             """
-                var $name : $mutatorType$nullable
+                override var $name : $mutatorImported$nullable
                     get() = $mutatorField ?: getResult().$name$nullable.${type.import("mutator")} { 
                         modify(getResult()::$name, getResult().$name, it) 
                     }.apply {

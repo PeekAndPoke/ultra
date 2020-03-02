@@ -21,6 +21,8 @@ class DataClassRenderer(
 
     private fun KotlinPrinter.renderFor(target: MType, mutatorClassName: String) {
 
+        val interfaceName = "I${mutatorClassName}"
+
         val jvmName = mutatorClassName.replace("[^0-9a-zA-Z]+".toRegex(), "")
 
         val imported = target.import()
@@ -28,28 +30,43 @@ class DataClassRenderer(
         block(
             """
                 @JvmName("mutate${jvmName}")
-                fun ${imported}.mutate(mutation: ${mutatorClassName}.() -> Unit) = 
+                fun ${imported}.mutate(mutation: ${interfaceName}.() -> Unit) = 
                     mutator({ x: $imported -> Unit }).apply(mutation).getResult()
 
                 @JvmName("mutator${jvmName}")
-                fun ${imported}.mutator(onModify: OnModify<${imported}> = {}) = 
+                fun ${imported}.mutator(onModify: OnModify<${imported}> = {}): $interfaceName = 
                     ${mutatorClassName}(this, onModify)
 
-                class ${mutatorClassName}(
-                    target: ${imported}, 
-                    onModify: OnModify<${imported}> = {}
-                ) : DataClassMutator<${imported}>(target, onModify) {
+            """.trimIndent()
+        )
+
+        ////  Render the interface of the mutator class  ///////////////////////////////////////////////////////////////
+        block(
+            """
+                interface $interfaceName : Mutator<${imported}> {
                 
             """.trimIndent()
         )
 
         indent {
+            target.variables.filtered().forEach { renderers.run { renderPropertyDeclaration(it) } }
+        }
 
-            target.variables.filtered().forEach { variable ->
-                renderers.run {
-                    renderProperty(variable)
-                }
-            }
+        append("}").newline().newline()
+
+        ////  Render the mutator class  ////////////////////////////////////////////////////////////////////////////////
+        block(
+            """
+                class ${mutatorClassName}(
+                    target: ${imported}, 
+                    onModify: OnModify<${imported}> = {}
+                ) : DataClassMutator<${imported}>(target, onModify), $interfaceName {
+                
+            """.trimIndent()
+        )
+
+        indent {
+            target.variables.filtered().forEach { renderers.run { renderPropertyImplementation(it) } }
         }
 
         append("}").newline()

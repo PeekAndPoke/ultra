@@ -257,13 +257,37 @@ interface ProcessorUtils {
         getElementsAnnotatedWith(cls.java).filterIsInstance<TypeElement>()
 
     /**
-     * Adds all recursively referenced [TypeElement]s
+     * Adds all referenced [TypeElement]s by walking through all members recursively
      */
     fun List<TypeElement>.plusReferencedTypesRecursive(): List<TypeElement> = plus(
         flatMap {
             it.getReferencedTypesRecursive()
                 .map { tm -> typeUtils.asElement(tm) }
                 .filterIsInstance<TypeElement>()
+        }
+    ).distinct()
+
+    /**
+     * Returns all supertypes (direct and indirect) of the [TypeElement] recursively
+     */
+    fun TypeElement.getAllSuperTypes(): List<TypeElement> {
+
+        val superTypes = typeUtils.directSupertypes(this.asType())
+
+        return superTypes
+            .map { typeUtils.asElement(it) }
+            .filterIsInstance<TypeElement>()
+            .flatMap {
+                listOf(it).plus(it.getAllSuperTypes())
+            }
+    }
+
+    /**
+     * Adds all supertypes (direct and indirect) to the list of [TypeElement]
+     */
+    fun List<TypeElement>.plusAllSuperTypes(): List<TypeElement> = plus(
+        flatMap {
+            it.getAllSuperTypes()
         }
     ).distinct()
 

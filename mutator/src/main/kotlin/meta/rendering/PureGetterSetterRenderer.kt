@@ -14,7 +14,7 @@ class PureGetterSetterRenderer(
 
     override fun canHandle(type: TypeName) = true
 
-    override fun KotlinPrinter.renderProperty(variable: MVariable) {
+    override fun KotlinPrinter.renderPropertyDeclaration(variable: MVariable) {
 
         val name = variable.simpleName
 
@@ -23,6 +23,21 @@ class PureGetterSetterRenderer(
         block(
             """
                 var $name
+            """.trimIndent()
+        )
+
+        newline()
+    }
+
+    override fun KotlinPrinter.renderPropertyImplementation(variable: MVariable) {
+
+        val name = variable.simpleName
+
+        renderVariableComment(variable)
+
+        block(
+            """
+                override var $name
                     get() = getResult().$name
                     set(v) = modify(getResult()::$name, getResult().$name, v)
             """.trimIndent()

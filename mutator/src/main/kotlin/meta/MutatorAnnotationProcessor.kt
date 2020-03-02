@@ -49,9 +49,11 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
         val types = roundEnv
             .findAllTypeWithAnnotation(Mutable::class)
             .plusReferencedTypesRecursive()
+            .plusAllSuperTypes()
             .defaultBlacklist()
+            .distinct()
 
-        logNote("all types (with recursively referenced): $types")
+        logNote("all types (with recursively referenced, with supertypes): $types")
 
         model(types).forEach {
             buildMutatorFileFor(it)

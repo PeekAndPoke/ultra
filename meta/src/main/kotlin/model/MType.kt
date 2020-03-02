@@ -25,6 +25,17 @@ class MType(
         return hash
     }
 
+    val directSuperTypes: List<MType> = typeUtils.directSupertypes(type.asType())
+        .map { typeUtils.asElement(it) }
+        .filterIsInstance<TypeElement>()
+        .map {
+            MType(
+                model = model,
+                type = it,
+                typeName = it.asTypeName()
+            )
+        }
+
     val isParameterized = typeName is ParameterizedTypeName
 
     val className = type.asClassName()
