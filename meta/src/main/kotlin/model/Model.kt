@@ -24,6 +24,12 @@ class Model(
         this.asTypeName()
     )
 
+    fun getDirectChildTypes(parent: MType): List<MType> {
+        return types.filter {
+            it.directSuperTypes.any { superType -> superType == parent }
+        }
+    }
+
     override fun iterator(): Iterator<MType> = types.iterator()
 }
 

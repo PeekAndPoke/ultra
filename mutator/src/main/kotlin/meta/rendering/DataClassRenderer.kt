@@ -29,15 +29,17 @@ class DataClassRenderer(
         // Import the target type
         val imported = target.import()
 
+        // get all super interfaces
+        val superMutators = target.directSuperTypes
+            .filter { it.isInterface }
+            .map { it.mutatorClassName.import() }
+            .sorted()
+
         block(
             """
                 @JvmName("mutate${jvmName}")
                 fun ${imported}.mutate(mutation: ${mutatorClassShort}.() -> Unit) = 
                     mutator({ x: $imported -> Unit }).apply(mutation).getResult()
-
-                @JvmName("mutator${jvmName}")
-                fun ${imported}.mutator(onModify: OnModify<${imported}> = {}): $mutatorClassShort = 
-                    ${mutatorClassShort}(this, onModify)
 
             """.trimIndent()
         )
@@ -45,9 +47,43 @@ class DataClassRenderer(
         when (target.isInterface) {
             ////  Render an interface of a mutator  ////////////////////////////////////////////////////////////////////
             true -> {
+
+                val childImports = target.directChildTypes.map { it.import() }.sorted()
+
                 block(
                     """
-                        interface $mutatorClassShort : Mutator<${imported}>
+                        @JvmName("mutator${jvmName}")
+                        fun ${imported}.mutator(onModify: OnModify<${imported}> = {}): $mutatorClassShort = when(this) {
+                    """.trimIndent()
+                )
+
+                indent {
+                    childImports.forEach {
+                        block(
+                            """
+                                is $it -> (this as $it).mutator(onModify)
+                            """.trimIndent()
+                        )
+                    }
+
+                    block(
+                        """
+                            else -> error("Unknown child type ${"$"}{this::class}")
+                        """.trimIndent()
+                    )
+                }
+
+                // create a template string from the super interfaces
+                val superImportsStr = when (superMutators.isEmpty()) {
+                    true -> ""
+                    else -> ", ${superMutators.joinToString(", ")} "
+                }
+
+                block(
+                    """
+                        }
+                        
+                        interface $mutatorClassShort : Mutator<${imported}>$superImportsStr
                         
                     """.trimIndent()
                 )
@@ -57,12 +93,22 @@ class DataClassRenderer(
             ////  Render a mutator class  //////////////////////////////////////////////////////////////////////////////
             false -> {
 
+                // create a template string from the super interfaces
+                val superImportsStr = when (superMutators.isEmpty()) {
+                    true -> ""
+                    else -> ": ${superMutators.joinToString(", ")} "
+                }
+
                 block(
                     """
+                        @JvmName("mutator${jvmName}")
+                        fun ${imported}.mutator(onModify: OnModify<${imported}> = {}): $mutatorClassShort = 
+                            ${mutatorClassShort}(this, onModify)
+        
                         class ${mutatorClassShort}(
                             target: ${imported}, 
                             onModify: OnModify<${imported}> = {}
-                        ) : DataClassMutator<${imported}>(target, onModify) {
+                        ) : DataClassMutator<${imported}>(target, onModify) $superImportsStr{
                         
                     """.trimIndent()
                 )

@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.mutator.meta.rendering
 
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.TypeName
 import de.peekandpoke.ultra.meta.KotlinPrinter
 import de.peekandpoke.ultra.meta.ProcessorUtils
@@ -17,8 +18,8 @@ class DataClassPropertyRenderer(
     override fun canHandle(type: TypeName) =
         // exclude blank name (probably a generic type like T)
         type.packageName.isNotEmpty() &&
-                // we look for a ClassName
-                type is ClassName &&
+                // we look for a ClassName or ParameterizedTypeName
+                (type is ClassName || type is ParameterizedTypeName) &&
                 // we exclude enum classes
                 !type.isEnum &&
                 // we also exclude some packages completely
@@ -26,13 +27,13 @@ class DataClassPropertyRenderer(
 
     override fun KotlinPrinter.renderPropertyImplementation(variable: MVariable) {
 
-        val type = variable.typeName as ClassName
+        val type = variable.typeName
         val name = variable.simpleName
 
         val nullable = if (type.isNullable) "?" else ""
 
         val mutatorField = "`$name@mutator`"
-        val mutatorImported = type.import()
+        val mutatorImported = type.mutatorClassName.import()
 
         block(
             """

@@ -26,16 +26,22 @@ class MType(
         return hash
     }
 
-    val directSuperTypes: List<MType> = typeUtils.directSupertypes(type.asType())
-        .map { typeUtils.asElement(it) }
-        .filterIsInstance<TypeElement>()
-        .map {
-            MType(
-                model = model,
-                type = it,
-                typeName = it.asTypeName()
-            )
-        }
+    val directSuperTypes: List<MType> by lazy {
+        typeUtils.directSupertypes(type.asType())
+            .map { typeUtils.asElement(it) }
+            .filterIsInstance<TypeElement>()
+            .map {
+                MType(
+                    model = model,
+                    type = it,
+                    typeName = it.asTypeName()
+                )
+            }
+    }
+
+    val directChildTypes: List<MType> by lazy {
+        model.getDirectChildTypes(this)
+    }
 
     val isInterface: Boolean = type.kind == ElementKind.INTERFACE
 

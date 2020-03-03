@@ -17,13 +17,23 @@ val TypeName.mutatorClassName: ClassName
 
             ClassName(
                 packageName = raw.packageName,
-                simpleNames = raw.simpleNames.dropLast(1).plus(raw.simpleNames.last() + "Mutator_$hash")
+                simpleNames = listOf(
+                    raw.simpleNames
+                        .dropLast(1)
+                        .plus(raw.simpleNames.last() + "Mutator_$hash")
+                        .joinToString("_")
+                )
             )
         }
 
         is ClassName -> ClassName(
             packageName = tn.packageName,
-            simpleNames = tn.simpleNames.dropLast(1).plus(tn.simpleNames.last() + "Mutator")
+            simpleNames = listOf(
+                tn.simpleNames
+                    .dropLast(1)
+                    .plus(tn.simpleNames.last() + "Mutator")
+                    .joinToString("_")
+            )
         )
 
         else -> error("Cannot create mutator class name for '${tn}'")

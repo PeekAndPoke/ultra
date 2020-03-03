@@ -62,15 +62,12 @@ class DataClassesImplementingSameInterfaceSpec : StringSpec({
                         mutator({ x: KRoot -> Unit }).apply(mutation).getResult()
 
                     @JvmName("mutatorKRootMutator")
-                    fun KRoot.mutator(onModify: OnModify<KRoot> = {}) =
-                        KRootMutator(this, onModify)
-
-                    class KRootMutator(
-                        target: KRoot,
-                        onModify: OnModify<KRoot> = {}
-                    ) : DataClassMutator<KRoot>(target, onModify) {
-
+                    fun KRoot.mutator(onModify: OnModify<KRoot> = {}): KRootMutator = when(this) {
+                        is KBase -> (this as KBase).mutator(onModify)
+                        else -> error("Unknown child type ${"$"}{this::class}")
                     }
+
+                    interface KRootMutator : Mutator<KRoot>
 
                 """.trimIndent()
             )
@@ -91,15 +88,39 @@ class DataClassesImplementingSameInterfaceSpec : StringSpec({
                         mutator({ x: KBase -> Unit }).apply(mutation).getResult()
 
                     @JvmName("mutatorKBaseMutator")
-                    fun KBase.mutator(onModify: OnModify<KBase> = {}) =
-                        KBaseMutator(this, onModify)
-
-                    class KBaseMutator(
-                        target: KBase,
-                        onModify: OnModify<KBase> = {}
-                    ) : DataClassMutator<KBase>(target, onModify) {
-
+                    fun KBase.mutator(onModify: OnModify<KBase> = {}): KBaseMutator = when(this) {
+                        is KChildOne -> (this as KChildOne).mutator(onModify)
+                        is KChildTwo -> (this as KChildTwo).mutator(onModify)
+                        else -> error("Unknown child type ${"$"}{this::class}")
                     }
+
+                    interface KBaseMutator : Mutator<KBase>, KRootMutator
+
+                """.trimIndent()
+            )
+
+            expectFileToMatch(
+                "KChildOne${"$$"}mutator.kt",
+                """
+                    @file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
+
+                    package mutator.compile
+
+                    import de.peekandpoke.ultra.mutator.*
+
+
+                    @JvmName("mutateKBaseMutator")
+                    fun KBase.mutate(mutation: KBaseMutator.() -> Unit) =
+                        mutator({ x: KBase -> Unit }).apply(mutation).getResult()
+
+                    @JvmName("mutatorKBaseMutator")
+                    fun KBase.mutator(onModify: OnModify<KBase> = {}): KBaseMutator = when(this) {
+                        is KChildOne -> (this as KChildOne).mutator(onModify)
+                        is KChildTwo -> (this as KChildTwo).mutator(onModify)
+                        else -> error("Unknown child type ${"$"}{this::class}")
+                    }
+
+                    interface KBaseMutator : Mutator<KBase>, KRootMutator
 
                 """.trimIndent()
             )
