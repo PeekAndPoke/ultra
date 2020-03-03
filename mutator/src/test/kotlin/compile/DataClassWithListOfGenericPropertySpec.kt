@@ -24,7 +24,7 @@ class DataClassWithListOfGenericPropertySpec : StringSpec({
                     @Mutable
                     data class GenericUser(
                         val intList: List<Generic<Int>>,
-                        val intListList: List<List<Generic<Int>>
+                        val intListList: List<List<Generic<Int>>>
                     )
 
                     @Mutable

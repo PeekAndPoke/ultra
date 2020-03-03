@@ -35,6 +35,12 @@ class DataClassRenderer(
             .map { it.mutatorClassName.import() }
             .sorted()
 
+        // create a template string from the super interfaces
+        val superExtendsStr = when (superMutators.isEmpty()) {
+            true -> ""
+            else -> "${superMutators.joinToString(", ")} "
+        }
+
         block(
             """
                 @JvmName("mutate${jvmName}")
@@ -61,7 +67,7 @@ class DataClassRenderer(
                     childImports.forEach {
                         block(
                             """
-                                is $it -> (this as $it).mutator(onModify)
+                                is $it -> mutator(onModify as OnModify<$it>)
                             """.trimIndent()
                         )
                     }
@@ -73,17 +79,13 @@ class DataClassRenderer(
                     )
                 }
 
-                // create a template string from the super interfaces
-                val superImportsStr = when (superMutators.isEmpty()) {
-                    true -> ""
-                    else -> ", ${superMutators.joinToString(", ")} "
-                }
-
                 block(
                     """
                         }
                         
-                        interface $mutatorClassShort : Mutator<${imported}>$superImportsStr
+                        interface $mutatorClassShort ${if (superExtendsStr.isNotEmpty()) ": $superExtendsStr" else ""} {
+                            fun getResult() : $imported 
+                        }
                         
                     """.trimIndent()
                 )
@@ -92,23 +94,16 @@ class DataClassRenderer(
 
             ////  Render a mutator class  //////////////////////////////////////////////////////////////////////////////
             false -> {
-
-                // create a template string from the super interfaces
-                val superImportsStr = when (superMutators.isEmpty()) {
-                    true -> ""
-                    else -> ": ${superMutators.joinToString(", ")} "
-                }
-
                 block(
                     """
                         @JvmName("mutator${jvmName}")
-                        fun ${imported}.mutator(onModify: OnModify<${imported}> = {}): $mutatorClassShort = 
+                        fun ${imported}.mutator(onModify: OnModify<${imported}> = {}) = 
                             ${mutatorClassShort}(this, onModify)
         
                         class ${mutatorClassShort}(
                             target: ${imported}, 
                             onModify: OnModify<${imported}> = {}
-                        ) : DataClassMutator<${imported}>(target, onModify) $superImportsStr{
+                        ) : DataClassMutator<${imported}>(target, onModify)${if (superExtendsStr.isNotEmpty()) ", $superExtendsStr" else ""} {
                         
                     """.trimIndent()
                 )
@@ -134,7 +129,7 @@ class DataClassRenderer(
                     val mutatorClassName = type.mutatorClassName
 
                     divider()
-                    line("// Mutator for ${type.import()} -> $mutatorClassName")
+                    line("// Mutator for ${type.import()} -> ${mutatorClassName.simpleNames.joinToString("_")}")
                     divider()
                     newline()
 
