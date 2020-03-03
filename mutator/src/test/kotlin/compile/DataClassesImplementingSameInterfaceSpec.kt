@@ -62,12 +62,14 @@ class DataClassesImplementingSameInterfaceSpec : StringSpec({
                         mutator({ x: KRoot -> Unit }).apply(mutation).getResult()
 
                     @JvmName("mutatorKRootMutator")
-                    fun KRoot.mutator(onModify: OnModify<KRoot> = {}): KRootMutator = when(this) {
-                        is KBase -> (this as KBase).mutator(onModify)
+                    fun KRoot.mutator(onModify: OnModify<KRoot> = {}): KRootMutator = when (this) {
+                        is KBase -> mutator(onModify as OnModify<KBase>)
                         else -> error("Unknown child type ${"$"}{this::class}")
                     }
 
-                    interface KRootMutator : Mutator<KRoot>
+                    interface KRootMutator {
+                        fun getResult(): KRoot
+                    }
 
                 """.trimIndent()
             )
@@ -88,13 +90,15 @@ class DataClassesImplementingSameInterfaceSpec : StringSpec({
                         mutator({ x: KBase -> Unit }).apply(mutation).getResult()
 
                     @JvmName("mutatorKBaseMutator")
-                    fun KBase.mutator(onModify: OnModify<KBase> = {}): KBaseMutator = when(this) {
-                        is KChildOne -> (this as KChildOne).mutator(onModify)
-                        is KChildTwo -> (this as KChildTwo).mutator(onModify)
+                    fun KBase.mutator(onModify: OnModify<KBase> = {}): KBaseMutator = when (this) {
+                        is KChildOne -> mutator(onModify as OnModify<KChildOne>)
+                        is KChildTwo -> mutator(onModify as OnModify<KChildTwo>)
                         else -> error("Unknown child type ${"$"}{this::class}")
                     }
 
-                    interface KBaseMutator : Mutator<KBase>, KRootMutator
+                    interface KBaseMutator : KRootMutator {
+                        fun getResult(): KBase
+                    }
 
                 """.trimIndent()
             )
@@ -103,24 +107,120 @@ class DataClassesImplementingSameInterfaceSpec : StringSpec({
                 "KChildOne${"$$"}mutator.kt",
                 """
                     @file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
-
+                    
                     package mutator.compile
-
+                    
                     import de.peekandpoke.ultra.mutator.*
-
-
-                    @JvmName("mutateKBaseMutator")
-                    fun KBase.mutate(mutation: KBaseMutator.() -> Unit) =
-                        mutator({ x: KBase -> Unit }).apply(mutation).getResult()
-
-                    @JvmName("mutatorKBaseMutator")
-                    fun KBase.mutator(onModify: OnModify<KBase> = {}): KBaseMutator = when(this) {
-                        is KChildOne -> (this as KChildOne).mutator(onModify)
-                        is KChildTwo -> (this as KChildTwo).mutator(onModify)
-                        else -> error("Unknown child type ${"$"}{this::class}")
+                    
+                    
+                    @JvmName("mutateKChildOneMutator")
+                    fun KChildOne.mutate(mutation: KChildOneMutator.() -> Unit) = 
+                        mutator({ x: KChildOne -> Unit }).apply(mutation).getResult()
+                    
+                    @JvmName("mutatorKChildOneMutator")
+                    fun KChildOne.mutator(onModify: OnModify<KChildOne> = {}) = 
+                        KChildOneMutator(this, onModify)
+                    
+                    class KChildOneMutator(
+                        target: KChildOne, 
+                        onModify: OnModify<KChildOne> = {}
+                    ) : DataClassMutator<KChildOne>(target, onModify), KBaseMutator  {
+                    
+                        /**
+                         * Mutator for field [KChildOne.root]
+                         *
+                         * Info:
+                         *   - type:         [Int]
+                         *   - reflected by: [com.squareup.kotlinpoet.ClassName]
+                         */ 
+                        var root
+                            get() = getResult().root
+                            set(v) = modify(getResult()::root, getResult().root, v)
+                    
+                        /**
+                         * Mutator for field [KChildOne.base]
+                         *
+                         * Info:
+                         *   - type:         [String]
+                         *   - reflected by: [com.squareup.kotlinpoet.ClassName]
+                         */ 
+                        var base
+                            get() = getResult().base
+                            set(v) = modify(getResult()::base, getResult().base, v)
+                    
+                        /**
+                         * Mutator for field [KChildOne.myFieldOne]
+                         *
+                         * Info:
+                         *   - type:         [Number]
+                         *   - reflected by: [com.squareup.kotlinpoet.ClassName]
+                         */ 
+                        var myFieldOne
+                            get() = getResult().myFieldOne
+                            set(v) = modify(getResult()::myFieldOne, getResult().myFieldOne, v)
+                    
                     }
 
-                    interface KBaseMutator : Mutator<KBase>, KRootMutator
+                """.trimIndent()
+            )
+
+            expectFileToMatch(
+                "KChildTwo${"$$"}mutator.kt",
+                """
+                    @file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
+                    
+                    package mutator.compile
+                    
+                    import de.peekandpoke.ultra.mutator.*
+                    
+                    
+                    @JvmName("mutateKChildTwoMutator")
+                    fun KChildTwo.mutate(mutation: KChildTwoMutator.() -> Unit) = 
+                        mutator({ x: KChildTwo -> Unit }).apply(mutation).getResult()
+                    
+                    @JvmName("mutatorKChildTwoMutator")
+                    fun KChildTwo.mutator(onModify: OnModify<KChildTwo> = {}) = 
+                        KChildTwoMutator(this, onModify)
+                    
+                    class KChildTwoMutator(
+                        target: KChildTwo, 
+                        onModify: OnModify<KChildTwo> = {}
+                    ) : DataClassMutator<KChildTwo>(target, onModify), KBaseMutator  {
+                    
+                        /**
+                         * Mutator for field [KChildTwo.root]
+                         *
+                         * Info:
+                         *   - type:         [Int]
+                         *   - reflected by: [com.squareup.kotlinpoet.ClassName]
+                         */ 
+                        var root
+                            get() = getResult().root
+                            set(v) = modify(getResult()::root, getResult().root, v)
+                    
+                        /**
+                         * Mutator for field [KChildTwo.base]
+                         *
+                         * Info:
+                         *   - type:         [String]
+                         *   - reflected by: [com.squareup.kotlinpoet.ClassName]
+                         */ 
+                        var base
+                            get() = getResult().base
+                            set(v) = modify(getResult()::base, getResult().base, v)
+                    
+                        /**
+                         * Mutator for field [KChildTwo.myFieldTwo]
+                         *
+                         * Info:
+                         *   - type:         [Number]
+                         *   - reflected by: [com.squareup.kotlinpoet.ClassName]
+                         */ 
+                        var myFieldTwo
+                            get() = getResult().myFieldTwo
+                            set(v) = modify(getResult()::myFieldTwo, getResult().myFieldTwo, v)
+                    
+                    }
 
                 """.trimIndent()
             )

@@ -59,7 +59,7 @@ class DataClassRenderer(
                 block(
                     """
                         @JvmName("mutator${jvmName}")
-                        fun ${imported}.mutator(onModify: OnModify<${imported}> = {}): $mutatorClassShort = when(this) {
+                        fun ${imported}.mutator(onModify: OnModify<${imported}> = {}): $mutatorClassShort = when (this) {
                     """.trimIndent()
                 )
 
@@ -83,8 +83,8 @@ class DataClassRenderer(
                     """
                         }
                         
-                        interface $mutatorClassShort ${if (superExtendsStr.isNotEmpty()) ": $superExtendsStr" else ""} {
-                            fun getResult() : $imported 
+                        interface $mutatorClassShort ${if (superExtendsStr.isNotEmpty()) ": $superExtendsStr" else ""}{
+                            fun getResult(): $imported 
                         }
                         
                     """.trimIndent()
@@ -129,7 +129,7 @@ class DataClassRenderer(
                     val mutatorClassName = type.mutatorClassName
 
                     divider()
-                    line("// Mutator for ${type.import()} -> ${mutatorClassName.simpleNames.joinToString("_")}")
+                    line("// Mutator for ${type.import()} -> ${mutatorClassName.import()}")
                     divider()
                     newline()
 
