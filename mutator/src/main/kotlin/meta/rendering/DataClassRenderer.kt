@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.mutator.meta.rendering
 
+import com.squareup.kotlinpoet.ClassName
 import de.peekandpoke.ultra.meta.KotlinPrinter
 import de.peekandpoke.ultra.meta.ProcessorUtils
 import de.peekandpoke.ultra.meta.model.MType
@@ -19,57 +20,60 @@ class DataClassRenderer(
             // we only look at public properties
             .filter { classType.hasPublicGetterFor(it) }
 
-    private fun KotlinPrinter.renderFor(target: MType, mutatorClassName: String) {
+    private fun KotlinPrinter.renderFor(target: MType, mutatorClassName: ClassName) {
 
-        val interfaceName = "I${mutatorClassName}"
-
-        val jvmName = mutatorClassName.replace("[^0-9a-zA-Z]+".toRegex(), "")
-
+        // Get the short name for the mutator class
+        val mutatorClassShort = mutatorClassName.simpleNames.joinToString("_")
+        // Get the name for @JVMName annotation
+        val jvmName = mutatorClassShort.replace("[^0-9a-zA-Z]+".toRegex(), "")
+        // Import the target type
         val imported = target.import()
 
         block(
             """
                 @JvmName("mutate${jvmName}")
-                fun ${imported}.mutate(mutation: ${interfaceName}.() -> Unit) = 
+                fun ${imported}.mutate(mutation: ${mutatorClassShort}.() -> Unit) = 
                     mutator({ x: $imported -> Unit }).apply(mutation).getResult()
 
                 @JvmName("mutator${jvmName}")
-                fun ${imported}.mutator(onModify: OnModify<${imported}> = {}): $interfaceName = 
-                    ${mutatorClassName}(this, onModify)
+                fun ${imported}.mutator(onModify: OnModify<${imported}> = {}): $mutatorClassShort = 
+                    ${mutatorClassShort}(this, onModify)
 
             """.trimIndent()
         )
 
-        ////  Render the interface of the mutator class  ///////////////////////////////////////////////////////////////
-        block(
-            """
-                interface $interfaceName : Mutator<${imported}> {
-                
-            """.trimIndent()
-        )
+        when (target.isInterface) {
+            ////  Render an interface of a mutator  ////////////////////////////////////////////////////////////////////
+            true -> {
+                block(
+                    """
+                        interface $mutatorClassShort : Mutator<${imported}>
+                        
+                    """.trimIndent()
+                )
+            }
 
-        indent {
-            target.variables.filtered().forEach { renderers.run { renderPropertyDeclaration(it) } }
+
+            ////  Render a mutator class  //////////////////////////////////////////////////////////////////////////////
+            false -> {
+
+                block(
+                    """
+                        class ${mutatorClassShort}(
+                            target: ${imported}, 
+                            onModify: OnModify<${imported}> = {}
+                        ) : DataClassMutator<${imported}>(target, onModify) {
+                        
+                    """.trimIndent()
+                )
+
+                indent {
+                    target.variables.filtered().forEach { renderers.run { renderPropertyImplementation(it) } }
+                }
+
+                append("}").newline()
+            }
         }
-
-        append("}").newline().newline()
-
-        ////  Render the mutator class  ////////////////////////////////////////////////////////////////////////////////
-        block(
-            """
-                class ${mutatorClassName}(
-                    target: ${imported}, 
-                    onModify: OnModify<${imported}> = {}
-                ) : DataClassMutator<${imported}>(target, onModify), $interfaceName {
-                
-            """.trimIndent()
-        )
-
-        indent {
-            target.variables.filtered().forEach { renderers.run { renderPropertyImplementation(it) } }
-        }
-
-        append("}").newline()
     }
 
     fun render(printer: KotlinPrinter) = with(printer) {

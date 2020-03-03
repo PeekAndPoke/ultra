@@ -36,12 +36,6 @@ class PropertyRenderers(
     override fun canHandle(type: TypeName): Boolean = true
 
     /**
-     * Renders the code that declared a property
-     */
-    override fun KotlinPrinter.renderPropertyDeclaration(variable: MVariable) =
-        match(variable.typeName).run { renderPropertyDeclaration(variable) }
-
-    /**
      * Renders the code that implements a property
      */
     override fun KotlinPrinter.renderPropertyImplementation(variable: MVariable) =

@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.mutator.meta.rendering
 
-import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.TypeName
 import de.peekandpoke.ultra.meta.KotlinPrinter
 import de.peekandpoke.ultra.meta.ProcessorUtils
@@ -14,23 +13,37 @@ interface PropertyRenderer : ProcessorUtils {
     fun canHandle(type: TypeName): Boolean
 
     /**
-     * Renders the code that declares a property
-     */
-    fun KotlinPrinter.renderPropertyDeclaration(variable: MVariable)
-
-    /**
-     * Renders the code that implements a property
+     * Renders the code that implements a property in a class
      */
     fun KotlinPrinter.renderPropertyImplementation(variable: MVariable)
 
+    /**
+     * Renders the code that maps a value to its mutator.
+     *
+     * If there is no mutator for the value, e.g. for primitive type, it should render the identity function.
+     */
     fun KotlinPrinter.renderForwardMapper(type: TypeName, depth: Int)
 
+    /**
+     * Renders the code that maps a mutator back to its value
+     *
+     * If there is no mutator for the value, e.g. for primitive type, it should render the identity function.
+     */
     fun KotlinPrinter.renderBackwardMapper(type: TypeName, depth: Int)
 
+    /**
+     * Helper function that converts an Int to a parameter name, e.g. it1, it2, ...
+     */
     val Int.asParam get() = "it$this"
 
+    /**
+     * Helper function that converts an Int to a "onModify" function name, e.g. on1, on2, ...
+     */
     val Int.asOnModify get() = "on$this"
 
+    /**
+     * Helper that renders the comment block for a field inside of a mutator
+     */
     fun KotlinPrinter.renderVariableComment(variable: MVariable) {
 
         val imported = variable.parent.import()
@@ -49,9 +62,4 @@ interface PropertyRenderer : ProcessorUtils {
             """.trimIndent()
         )
     }
-
-    fun ClassName.toMutatorClassName() = ClassName(
-        packageName = packageName,
-        simpleNames = simpleNames.dropLast(1).plus("I${simpleNames.last()}")
-    )
 }

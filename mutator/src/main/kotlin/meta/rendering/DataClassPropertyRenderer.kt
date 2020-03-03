@@ -24,25 +24,6 @@ class DataClassPropertyRenderer(
                 // we also exclude some packages completely
                 !type.isBlackListed
 
-    override fun KotlinPrinter.renderPropertyDeclaration(variable: MVariable) {
-
-        val type = variable.typeName as ClassName
-        val name = variable.simpleName
-
-        val nullable = if (type.isNullable) "?" else ""
-
-        val mutatorImported = type.toMutatorClassName().import()
-
-        renderVariableComment(variable)
-
-        block(
-            """
-                var $name : $mutatorImported$nullable
-    
-            """.trimIndent()
-        )
-    }
-
     override fun KotlinPrinter.renderPropertyImplementation(variable: MVariable) {
 
         val type = variable.typeName as ClassName
@@ -51,7 +32,7 @@ class DataClassPropertyRenderer(
         val nullable = if (type.isNullable) "?" else ""
 
         val mutatorField = "`$name@mutator`"
-        val mutatorImported = type.toMutatorClassName().import()
+        val mutatorImported = type.import()
 
         block(
             """
@@ -67,7 +48,7 @@ class DataClassPropertyRenderer(
 
         block(
             """
-                override var $name : $mutatorImported$nullable
+                var $name : $mutatorImported$nullable
                     get() = $mutatorField ?: getResult().$name$nullable.${type.import("mutator")} { 
                         modify(getResult()::$name, getResult().$name, it) 
                     }.apply {

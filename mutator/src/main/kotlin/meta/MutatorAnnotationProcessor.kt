@@ -24,10 +24,12 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
             PureGetterSetterRenderer(ctx)
         ) { root ->
             listOf(
-                // Lists and Sets
-                ListAndSetPropertyRenderer(ctx, root),
+                // Lists
+                CollectionListPropertyRenderer(ctx, root),
+                // Sets
+                CollectionSetPropertyRenderer(ctx, root),
                 // Maps
-                MapPropertyRenderer(ctx, root),
+                CollectionMapPropertyRenderer(ctx, root),
                 // Data classes
                 DataClassPropertyRenderer(ctx)
             )

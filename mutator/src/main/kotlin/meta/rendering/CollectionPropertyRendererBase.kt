@@ -11,7 +11,7 @@ abstract class CollectionPropertyRendererBase(
 
     protected fun KotlinPrinter.internalRenderProperty(name: String, typeParam: TypeName) {
 
-        line("override val $name by lazy {").indent {
+        line("val $name by lazy {").indent {
             line("getResult().$name.mutator(").indent {
                 line("{ modify(getResult()::$name, getResult().$name, it) },")
 

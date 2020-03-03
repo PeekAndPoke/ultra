@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeVariableName
 import com.squareup.kotlinpoet.asClassName
 import de.peekandpoke.ultra.common.ucFirst
+import javax.lang.model.element.ElementKind
 import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
 
@@ -35,6 +36,8 @@ class MType(
                 typeName = it.asTypeName()
             )
         }
+
+    val isInterface: Boolean = type.kind == ElementKind.INTERFACE
 
     val isParameterized = typeName is ParameterizedTypeName
 
