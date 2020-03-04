@@ -36,10 +36,10 @@ class PropertyRenderers(
     override fun canHandle(type: TypeName): Boolean = true
 
     /**
-     * Returns the code for the first matching child renderer
+     * Renders the code that implements a property
      */
-    override fun KotlinPrinter.renderProperty(variable: MVariable) =
-        match(variable.typeName).run { renderProperty(variable) }
+    override fun KotlinPrinter.renderPropertyImplementation(variable: MVariable) =
+        match(variable.typeName).run { renderPropertyImplementation(variable) }
 
     /**
      * TODO: comment

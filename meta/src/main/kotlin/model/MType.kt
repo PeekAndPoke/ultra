@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeVariableName
 import com.squareup.kotlinpoet.asClassName
 import de.peekandpoke.ultra.common.ucFirst
+import javax.lang.model.element.ElementKind
 import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
 
@@ -24,6 +25,25 @@ class MType(
         hash = 31 * hash + typeName.toString().hashCode()
         return hash
     }
+
+    val directSuperTypes: List<MType> by lazy {
+        typeUtils.directSupertypes(type.asType())
+            .map { typeUtils.asElement(it) }
+            .filterIsInstance<TypeElement>()
+            .map {
+                MType(
+                    model = model,
+                    type = it,
+                    typeName = it.asTypeName()
+                )
+            }
+    }
+
+    val directChildTypes: List<MType> by lazy {
+        model.getDirectChildTypes(this)
+    }
+
+    val isInterface: Boolean = type.kind == ElementKind.INTERFACE
 
     val isParameterized = typeName is ParameterizedTypeName
 

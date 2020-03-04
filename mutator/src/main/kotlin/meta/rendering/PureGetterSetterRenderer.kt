@@ -14,7 +14,7 @@ class PureGetterSetterRenderer(
 
     override fun canHandle(type: TypeName) = true
 
-    override fun KotlinPrinter.renderProperty(variable: MVariable) {
+    override fun KotlinPrinter.renderPropertyImplementation(variable: MVariable) {
 
         val name = variable.simpleName
 

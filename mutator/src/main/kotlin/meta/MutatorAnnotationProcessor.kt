@@ -24,10 +24,12 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
             PureGetterSetterRenderer(ctx)
         ) { root ->
             listOf(
-                // Lists and Sets
-                ListAndSetPropertyRenderer(ctx, root),
+                // Lists
+                CollectionListPropertyRenderer(ctx, root),
+                // Sets
+                CollectionSetPropertyRenderer(ctx, root),
                 // Maps
-                MapPropertyRenderer(ctx, root),
+                CollectionMapPropertyRenderer(ctx, root),
                 // Data classes
                 DataClassPropertyRenderer(ctx)
             )
@@ -49,9 +51,11 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
         val types = roundEnv
             .findAllTypeWithAnnotation(Mutable::class)
             .plusReferencedTypesRecursive()
+            .plusAllSuperTypes()
             .defaultBlacklist()
+            .distinct()
 
-        logNote("all types (with recursively referenced): $types")
+        logNote("all types (with recursively referenced, with supertypes): $types")
 
         model(types).forEach {
             buildMutatorFileFor(it)

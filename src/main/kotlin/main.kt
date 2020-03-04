@@ -21,21 +21,27 @@ fun main() {
 //                )
 //
 //                data class Generic<T>(val value: T)
-//                
+//
 //                data class Type(val value: String)
-
-                @Mutable
-                data class GenericTypeInActionWithContainers(
-                    val generic: List<Generic<Any, Int>>,
-                    val generic2: Map<String, Generic<String, Any>>
-                )
+//
+//                @Mutable
+//                data class GenericTypeInActionWithContainers(
+//                    val generic: List<Generic<Any, Int>>,
+//                    val generic2: Map<String, Generic<String, Any>>
+//                )
+//                
+//                @Mutable
+//                data class Generic<T, X>(
+//                    val one: T,
+//                    val two: X
+//                )
+                
+                interface WithListInterface
                 
                 @Mutable
-                data class Generic<T, X>(
-                    val one: T,
-                    val two: X
-                )
-                
+                data class WithList(
+                    val list: List<String?>?
+                ) : WithListInterface
                 
             """.trimIndent()
         )

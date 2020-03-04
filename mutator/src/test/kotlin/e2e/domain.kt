@@ -150,3 +150,29 @@ enum class SimpleEnum {
 
 @Mutable
 data class WithSimpleEnum(val enumValue: SimpleEnum = SimpleEnum.First)
+
+
+interface TreeRoot {
+    val rootDepth: Float
+}
+
+interface TreeTrunk {
+    val trunkWidth: Float
+}
+
+@Mutable
+data class TreeBranchLeft(
+    override val rootDepth: Float,
+    override val trunkWidth: Float,
+    val branchLength: Float
+) : TreeRoot, TreeTrunk
+
+@Mutable
+data class TreeBranchRight(
+    override val rootDepth: Float,
+    override val trunkWidth: Float,
+    val branchWeight: Float
+) : TreeRoot, TreeTrunk
+
+@Mutable
+data class Meadow(val trees: List<TreeRoot>)

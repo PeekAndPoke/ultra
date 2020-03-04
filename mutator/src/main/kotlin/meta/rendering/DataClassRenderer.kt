@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.mutator.meta.rendering
 
+import com.squareup.kotlinpoet.ClassName
 import de.peekandpoke.ultra.meta.KotlinPrinter
 import de.peekandpoke.ultra.meta.ProcessorUtils
 import de.peekandpoke.ultra.meta.model.MType
@@ -19,40 +20,101 @@ class DataClassRenderer(
             // we only look at public properties
             .filter { classType.hasPublicGetterFor(it) }
 
-    private fun KotlinPrinter.renderFor(target: MType, mutatorClassName: String) {
+    private fun KotlinPrinter.renderFor(target: MType, mutatorClassName: ClassName) {
 
-        val jvmName = mutatorClassName.replace("[^0-9a-zA-Z]+".toRegex(), "")
-
+        // Get the short name for the mutator class
+        val mutatorClassShort = mutatorClassName.simpleNames.joinToString("_")
+        // Get the name for @JVMName annotation
+        val jvmName = mutatorClassShort.replace("[^0-9a-zA-Z]+".toRegex(), "")
+        // Import the target type
         val imported = target.import()
+
+        // get all super interfaces
+        val superMutators = target.directSuperTypes
+            .filter { it.isInterface }
+            .map { it.mutatorClassName.import() }
+            .sorted()
+
+        // create a template string from the super interfaces
+        val superExtendsStr = when (superMutators.isEmpty()) {
+            true -> ""
+            else -> "${superMutators.joinToString(", ")} "
+        }
 
         block(
             """
                 @JvmName("mutate${jvmName}")
-                fun ${imported}.mutate(mutation: ${mutatorClassName}.() -> Unit) = 
+                fun ${imported}.mutate(mutation: ${mutatorClassShort}.() -> Unit) = 
                     mutator({ x: $imported -> Unit }).apply(mutation).getResult()
 
-                @JvmName("mutator${jvmName}")
-                fun ${imported}.mutator(onModify: OnModify<${imported}> = {}) = 
-                    ${mutatorClassName}(this, onModify)
-
-                class ${mutatorClassName}(
-                    target: ${imported}, 
-                    onModify: OnModify<${imported}> = {}
-                ) : DataClassMutator<${imported}>(target, onModify) {
-                
             """.trimIndent()
         )
 
-        indent {
+        when (target.isInterface) {
+            ////  Render an interface of a mutator  ////////////////////////////////////////////////////////////////////
+            true -> {
 
-            target.variables.filtered().forEach { variable ->
-                renderers.run {
-                    renderProperty(variable)
+                val childImports = target.directChildTypes.map { it.import() }.sorted()
+
+                block(
+                    """
+                        @JvmName("mutator${jvmName}")
+                        fun ${imported}.mutator(onModify: OnModify<${imported}> = {}): $mutatorClassShort = when (this) {
+                    """.trimIndent()
+                )
+
+                indent {
+                    childImports.forEach {
+                        block(
+                            """
+                                is $it -> mutator(onModify as OnModify<$it>)
+                            """.trimIndent()
+                        )
+                    }
+
+                    block(
+                        """
+                            else -> error("Unknown child type ${"$"}{this::class}")
+                        """.trimIndent()
+                    )
                 }
+
+                block(
+                    """
+                        }
+                        
+                        interface $mutatorClassShort ${if (superExtendsStr.isNotEmpty()) ": $superExtendsStr" else ""}{
+                            fun getResult(): $imported 
+                        }
+                        
+                    """.trimIndent()
+                )
+            }
+
+
+            ////  Render a mutator class  //////////////////////////////////////////////////////////////////////////////
+            false -> {
+                block(
+                    """
+                        @JvmName("mutator${jvmName}")
+                        fun ${imported}.mutator(onModify: OnModify<${imported}> = {}) = 
+                            ${mutatorClassShort}(this, onModify)
+        
+                        class ${mutatorClassShort}(
+                            target: ${imported}, 
+                            onModify: OnModify<${imported}> = {}
+                        ) : DataClassMutator<${imported}>(target, onModify)${if (superExtendsStr.isNotEmpty()) ", $superExtendsStr" else ""} {
+                        
+                    """.trimIndent()
+                )
+
+                indent {
+                    target.variables.filtered().forEach { renderers.run { renderPropertyImplementation(it) } }
+                }
+
+                append("}").newline()
             }
         }
-
-        append("}").newline()
     }
 
     fun render(printer: KotlinPrinter) = with(printer) {
@@ -67,7 +129,7 @@ class DataClassRenderer(
                     val mutatorClassName = type.mutatorClassName
 
                     divider()
-                    line("// Mutator for ${type.import()} -> $mutatorClassName")
+                    line("// Mutator for ${type.import()} -> ${mutatorClassName.import()}")
                     divider()
                     newline()
 

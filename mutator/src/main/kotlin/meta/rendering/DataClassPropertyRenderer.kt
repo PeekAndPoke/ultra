@@ -1,5 +1,7 @@
 package de.peekandpoke.ultra.mutator.meta.rendering
 
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.TypeName
 import de.peekandpoke.ultra.meta.KotlinPrinter
 import de.peekandpoke.ultra.meta.ProcessorUtils
@@ -16,12 +18,14 @@ class DataClassPropertyRenderer(
     override fun canHandle(type: TypeName) =
         // exclude blank name (probably a generic type like T)
         type.packageName.isNotEmpty() &&
+                // we look for a ClassName or ParameterizedTypeName
+                (type is ClassName || type is ParameterizedTypeName) &&
                 // we exclude enum classes
                 !type.isEnum &&
                 // we also exclude some packages completely
                 !type.isBlackListed
 
-    override fun KotlinPrinter.renderProperty(variable: MVariable) {
+    override fun KotlinPrinter.renderPropertyImplementation(variable: MVariable) {
 
         val type = variable.typeName
         val name = variable.simpleName
@@ -29,15 +33,14 @@ class DataClassPropertyRenderer(
         val nullable = if (type.isNullable) "?" else ""
 
         val mutatorField = "`$name@mutator`"
-
-        val mutatorType = type.mutatorFqn
+        val mutatorImported = type.mutatorClassName.import()
 
         block(
             """
                 /**
                  * Backing field for [$name]
                  */
-                private var $mutatorField : $mutatorType? = null
+                private var $mutatorField : $mutatorImported? = null
                  
             """.trimIndent()
         )
@@ -46,7 +49,7 @@ class DataClassPropertyRenderer(
 
         block(
             """
-                var $name : $mutatorType$nullable
+                var $name : $mutatorImported$nullable
                     get() = $mutatorField ?: getResult().$name$nullable.${type.import("mutator")} { 
                         modify(getResult()::$name, getResult().$name, it) 
                     }.apply {
