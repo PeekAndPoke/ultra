@@ -71,7 +71,7 @@ class DataClassWithMultipleGenericPrimitivePropertiesSpec : StringSpec({
                          *   - reflected by: [com.squareup.kotlinpoet.ParameterizedTypeName]
                          */ 
                         var intVal : GenericMutator_7ca16fdb07368b3c8b6342a44d2011b8
-                            get() = `intVal@mutator` ?: getResult().intVal.mutator { 
+                            get() = `intVal@mutator` ?: getResult().intVal.mutator { it: Generic<Int> -> 
                                 modify(getResult()::intVal, getResult().intVal, it) 
                             }.apply {
                                 `intVal@mutator` = this
@@ -94,7 +94,7 @@ class DataClassWithMultipleGenericPrimitivePropertiesSpec : StringSpec({
                          *   - reflected by: [com.squareup.kotlinpoet.ParameterizedTypeName]
                          */ 
                         var strVal : GenericMutator_42c25be3a5db3f1f8377f4c2db62bfe9
-                            get() = `strVal@mutator` ?: getResult().strVal.mutator { 
+                            get() = `strVal@mutator` ?: getResult().strVal.mutator { it: Generic<String> -> 
                                 modify(getResult()::strVal, getResult().strVal, it) 
                             }.apply {
                                 `strVal@mutator` = this
@@ -117,7 +117,7 @@ class DataClassWithMultipleGenericPrimitivePropertiesSpec : StringSpec({
                          *   - reflected by: [com.squareup.kotlinpoet.ParameterizedTypeName]
                          */ 
                         var intList : GenericMutator_59e9d61229bcf4ec991d2d7262078600
-                            get() = `intList@mutator` ?: getResult().intList.mutator { 
+                            get() = `intList@mutator` ?: getResult().intList.mutator { it: Generic<List<Int>> -> 
                                 modify(getResult()::intList, getResult().intList, it) 
                             }.apply {
                                 `intList@mutator` = this

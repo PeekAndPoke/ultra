@@ -97,7 +97,7 @@ class DataClassesImplementingSameInterfaceSpec : StringSpec({
                     }
 
                     interface KBaseMutator : KRootMutator {
-                        fun getResult(): KBase
+                        override fun getResult(): KBase
                     }
 
                 """.trimIndent()

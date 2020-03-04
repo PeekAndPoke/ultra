@@ -72,7 +72,7 @@ class DataClassWithPassedThroughGenericParameterSpec : StringSpec({
                          *   - reflected by: [com.squareup.kotlinpoet.ParameterizedTypeName]
                          */ 
                         var value : PassThroughMutator_7ca16fdb07368b3c8b6342a44d2011b8
-                            get() = `value@mutator` ?: getResult().value.mutator { 
+                            get() = `value@mutator` ?: getResult().value.mutator { it: PassThrough<Int> -> 
                                 modify(getResult()::value, getResult().value, it) 
                             }.apply {
                                 `value@mutator` = this
@@ -127,7 +127,7 @@ class DataClassWithPassedThroughGenericParameterSpec : StringSpec({
                          *   - reflected by: [com.squareup.kotlinpoet.ParameterizedTypeName]
                          */ 
                         var v1 : GenericMutator_a54cb119eaef222dc57bc6466b84e12f
-                            get() = `v1@mutator` ?: getResult().v1.mutator { 
+                            get() = `v1@mutator` ?: getResult().v1.mutator { it: Generic<String, Int> -> 
                                 modify(getResult()::v1, getResult().v1, it) 
                             }.apply {
                                 `v1@mutator` = this
@@ -150,7 +150,7 @@ class DataClassWithPassedThroughGenericParameterSpec : StringSpec({
                          *   - reflected by: [com.squareup.kotlinpoet.ParameterizedTypeName]
                          */ 
                         var v2 : GenericMutator_c90bcd8073a7379b80d8bcb3a7b95bdc
-                            get() = `v2@mutator` ?: getResult().v2.mutator { 
+                            get() = `v2@mutator` ?: getResult().v2.mutator { it: Generic<Int, Int> -> 
                                 modify(getResult()::v2, getResult().v2, it) 
                             }.apply {
                                 `v2@mutator` = this

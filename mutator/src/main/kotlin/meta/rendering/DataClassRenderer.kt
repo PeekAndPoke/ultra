@@ -82,12 +82,13 @@ class DataClassRenderer(
                     )
                 }
 
+                // TODO: code gen tests for "override"
                 block(
                     """
                         }
                         
                         interface $mutatorClassShort ${if (superExtendsStr.isNotEmpty()) ": $superExtendsStr" else ""}{
-                            fun getResult(): $imported 
+                            ${if (superExtendsStr.isNotEmpty()) "override " else ""}fun getResult(): $imported 
                         }
                         
                     """.trimIndent()

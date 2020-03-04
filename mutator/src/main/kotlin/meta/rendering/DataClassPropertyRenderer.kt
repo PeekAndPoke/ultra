@@ -52,7 +52,7 @@ class DataClassPropertyRenderer(
         block(
             """
                 var $name : $mutatorImported$nullable
-                    get() = $mutatorField ?: getResult().$name$nullable.${mutatorClass.import("mutator")} { 
+                    get() = $mutatorField ?: getResult().$name$nullable.${mutatorClass.import("mutator")} { it: ${type.import()} ->
                         modify(getResult()::$name, getResult().$name, it) 
                     }.apply {
                         $mutatorField = this
