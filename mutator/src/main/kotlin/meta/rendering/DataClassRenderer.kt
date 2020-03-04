@@ -54,8 +54,6 @@ class DataClassRenderer(
             ////  Render an interface of a mutator  ////////////////////////////////////////////////////////////////////
             true -> {
 
-                val childImports = target.directChildTypes.map { it.import() }.sorted()
-
                 block(
                     """
                         @JvmName("mutator${jvmName}")
@@ -64,10 +62,15 @@ class DataClassRenderer(
                 )
 
                 indent {
-                    childImports.forEach {
+                    target.directChildTypes.sortedBy { it.import() }.forEach {
+
+                        val typeImported = it.import()
+                        // TODO: code gen tests for mutator function in different package
+                        val mutatorImported = it.import("mutator")
+
                         block(
                             """
-                                is $it -> mutator(onModify as OnModify<$it>)
+                                is $typeImported -> $mutatorImported(onModify as OnModify<$typeImported>)
                             """.trimIndent()
                         )
                     }

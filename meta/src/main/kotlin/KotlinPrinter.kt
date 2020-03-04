@@ -116,6 +116,11 @@ class KotlinPrinter(
     fun MType.import(): String = typeName.import()
 
     /**
+     * Imports a top level [function], returns the shortened name
+     */
+    fun MType.import(function: String) = typeName.import(function)
+
+    /**
      * Generates a short name for the given [TypeName]
      *
      * Record the proper import for the type. Type arguments will be imported as wll.
@@ -123,7 +128,7 @@ class KotlinPrinter(
     fun TypeName.import(): String = imports.import(this)
 
     /**
-     * Imports a top level function, returns the [function]
+     * Imports a top level [function], returns the shortened name
      */
     fun TypeName.import(function: String): String = imports.import(this, function)
 
