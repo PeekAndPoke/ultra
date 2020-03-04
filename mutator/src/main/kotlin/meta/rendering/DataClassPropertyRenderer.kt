@@ -33,7 +33,8 @@ class DataClassPropertyRenderer(
         val nullable = if (type.isNullable) "?" else ""
 
         val mutatorField = "`$name@mutator`"
-        val mutatorImported = type.mutatorClassName.import()
+        val mutatorClass = type.mutatorClassName
+        val mutatorImported = mutatorClass.import()
 
         block(
             """
@@ -47,10 +48,11 @@ class DataClassPropertyRenderer(
 
         renderVariableComment(variable)
 
+        // TODO: code gen test for "mutator" import from different packages
         block(
             """
                 var $name : $mutatorImported$nullable
-                    get() = $mutatorField ?: getResult().$name$nullable.${type.import("mutator")} { 
+                    get() = $mutatorField ?: getResult().$name$nullable.${mutatorClass.import("mutator")} { 
                         modify(getResult()::$name, getResult().$name, it) 
                     }.apply {
                         $mutatorField = this
