@@ -91,6 +91,28 @@ class Kontainer internal constructor(
 
     // debug ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    fun debugInfo(): KontainerDebugInfo {
+
+        val config = blueprint.config
+            .map { (k, v) -> k to "$v (${v::class.qualifiedName})" }
+            .toMap()
+
+        val services = providers.map { provider ->
+            KontainerDebugInfo.ServiceDebugInfo(
+                id = provider.key.qualifiedName ?: "n/a",
+                type = provider.value.type,
+                instances = provider.value.instances.map { instance ->
+                    KontainerDebugInfo.InstanceDebugInfo(
+                        createdAt = instance.createdAt,
+                        cls = instance.instance::class.qualifiedName ?: "n/a"
+                    )
+                }
+            )
+        }
+
+        return KontainerDebugInfo(config = config, services = services)
+    }
+
     fun dump(): String {
 
         val rows = mutableListOf(
