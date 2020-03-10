@@ -15,15 +15,20 @@ interface ServiceProvider {
         DynamicDefault,
     }
 
+    data class CreatedInstance(
+        val instance: Any,
+        val createdAt: Instant
+    )
+
     /**
      * The type of the service that is created
      */
     val type: Type
 
     /**
-     * True when the service is already created
+     * A list of all instances created by the provider
      */
-    val createdAt: Instant?
+    val instances: List<CreatedInstance>
 
     /**
      * Provides the service instance
@@ -44,9 +49,11 @@ interface ServiceProvider {
     data class ForInstance internal constructor(override val type: Type, private val instance: Any) : ServiceProvider {
 
         /**
-         * Always true
+         * The list of created instance always holds the [instance]
          */
-        override val createdAt: Instant = Instant.now()
+        override val instances = listOf(
+            CreatedInstance(instance, Instant.now())
+        )
 
         /**
          * Simply returns the [instance]
@@ -70,7 +77,7 @@ interface ServiceProvider {
         /**
          * True when the service instance was created
          */
-        override var createdAt: Instant? = null
+        override val instances = mutableListOf<CreatedInstance>()
 
         private var instance: Any? = null
 
@@ -78,8 +85,10 @@ interface ServiceProvider {
          * Get or create the instance of the service
          */
         override fun provide(context: InjectionContext): Any = instance ?: create(context).apply {
-            createdAt = Instant.now()
             instance = this
+            instances.add(
+                CreatedInstance(this, Instant.now())
+            )
         }
 
         /**
@@ -119,13 +128,21 @@ interface ServiceProvider {
         /**
          * True when the service instance was created
          */
-        override var createdAt: Instant? = null
+        override val instances = mutableListOf<CreatedInstance>()
 
         /**
          * Get or create the instance of the service
          */
         override fun provide(context: InjectionContext): Any = create(context).apply {
-            createdAt = Instant.now()
+            instances.add(
+                CreatedInstance(this, Instant.now())
+            )
+
+            // TODO: Prototype producers need to be recreated for each Kontainer, so we can avoid the stuff below
+            // ensure max size
+            if (instances.size > 10) {
+                instances.removeAt(10)
+            }
         }
 
         /**

@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.kontainer
 
 import de.peekandpoke.ultra.common.Lookup
+import de.peekandpoke.ultra.common.maxLineLength
 import kotlin.reflect.KClass
 
 /**
@@ -92,14 +93,28 @@ class Kontainer internal constructor(
 
     fun dump(): String {
 
-        val maxServiceNameLength = providers.map { (k, _) -> (k.qualifiedName ?: "").length }.max() ?: 0
+        val rows = mutableListOf(
+            Triple("Service ID", "Type", "Instances")
+        )
 
-        val maxTypeLength = ServiceProvider.Type.values().map { it.toString().length }.max() ?: 0
+        rows.addAll(
+            providers.map { (k, v) ->
+                Triple(
+                    k.qualifiedName ?: "n/a",
+                    v.type.toString(),
+                    v.instances.joinToString("\n") { "${it.createdAt}: ${it.instance::class.qualifiedName}" }
+                )
+            }
+        )
 
-        val services = providers.map { (k, v) ->
-            "${(k.qualifiedName ?: "n/a").padEnd(maxServiceNameLength)} | " +
-                    "${v.type.toString().padEnd(maxTypeLength)} | " +
-                    if (v.createdAt != null) v.createdAt.toString() else "not created"
+        val lens = Triple(
+            rows.map { it.first.maxLineLength() }.max() ?: 0,
+            rows.map { it.second.maxLineLength() }.max() ?: 0,
+            rows.map { it.third.maxLineLength() }.max() ?: 0
+        )
+
+        val services = rows.map {
+            "${it.first.padEnd(lens.first)} | ${it.second.padEnd(lens.second)} | ${it.third.padEnd(lens.third)}"
         }
 
         val maxConfigLength = blueprint.config.map { (k, _) -> k.length }.max() ?: 0
@@ -108,9 +123,12 @@ class Kontainer internal constructor(
             .map { (k, v) -> "${k.padEnd(maxConfigLength)} | $v (${v::class.qualifiedName})" }
             .joinToString("\n")
 
-        return "Kontainer dump:\n\n" +
-                services.joinToString("\n") + "\n\n" +
-                "Config values\n\n" +
+        return "Kontainer dump:" +
+                "\n\n" +
+                services.joinToString("\n") +
+                "\n\n" +
+                "Config values:" +
+                "\n\n" +
                 configs
     }
 

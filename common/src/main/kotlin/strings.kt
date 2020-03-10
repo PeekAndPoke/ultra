@@ -58,6 +58,14 @@ fun String.startsWithNone(prefixes: Array<out String>) = !startsWithAny(prefixes
 fun String.startsWithNone(prefixes: Collection<String>) = !startsWithAny(prefixes)
 
 /**
+ * Returns the maximal line length of a multiline string.
+ *
+ * The string is first split by the [separator] and then the max length is computed
+ */
+fun String.maxLineLength(separator: String = System.lineSeparator()): Int =
+    split(separator).map { it.length }.max() ?: 0
+
+/**
  * Appends url parameters the string
  */
 fun String.toUri(queryParams: Map<String, String>) = when {
