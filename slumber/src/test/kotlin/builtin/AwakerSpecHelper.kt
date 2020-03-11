@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin
 
-import de.peekandpoke.ultra.common.TypeRef
+import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Codec
 import io.kotlintest.assertSoftly

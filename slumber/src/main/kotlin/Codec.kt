@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.slumber
 
 import de.peekandpoke.ultra.common.TypedAttributes
-import de.peekandpoke.ultra.common.kType
+import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.slumber.builtin.BuiltInModule
 import de.peekandpoke.ultra.slumber.builtin.DateTimeModule
 import kotlin.reflect.KClass

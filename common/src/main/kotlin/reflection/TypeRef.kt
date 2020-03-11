@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.common
+package de.peekandpoke.ultra.common.reflection
 
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
@@ -8,6 +8,13 @@ import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.createType
 
+/**
+ * Creates a type safe representation of the given [KType]
+ *
+ * [TypeRef] is a wrapper around KType. It also carries type information in [T].
+ *
+ * By doing so we can utilize the compiler for checking that reflection types are used correctly.
+ */
 @Suppress("unused")
 data class TypeRef<T>(val type: KType) {
 
@@ -166,13 +173,14 @@ fun <T : Any> Class<T>.kType(): TypeRef<T> = kotlin.kType()
 /**
  * Creates a [TypeRef] from the given [KClass]
  */
-fun <T : Any> KClass<T>.kType(): TypeRef<T> = TypeRef(
-    createType(
-        arguments = typeParameters.map {
-            KTypeProjection.invariant(Any::class.createType())
-        }
+fun <T : Any> KClass<T>.kType(): TypeRef<T> =
+    TypeRef(
+        createType(
+            arguments = typeParameters.map {
+                KTypeProjection.invariant(Any::class.createType())
+            }
+        )
     )
-)
 
 /**
  * Creates a [TypeRef] for a List type of the given type
@@ -182,26 +190,28 @@ inline fun <reified T> kListType(): TypeRef<List<T>> = kType<T>().list
 /**
  * Creates a [TypeRef] for a Map type with the given [KEY] and [VAL] types
  */
-inline fun <reified KEY, reified VAL> kMapType(): TypeRef<Map<KEY, VAL>> = TypeRef(
-    Map::class.createType(
-        arguments = listOf(
-            KTypeProjection.invariant(kType<KEY>().type),
-            KTypeProjection.invariant(kType<VAL>().type)
+inline fun <reified KEY, reified VAL> kMapType(): TypeRef<Map<KEY, VAL>> =
+    TypeRef(
+        Map::class.createType(
+            arguments = listOf(
+                KTypeProjection.invariant(kType<KEY>().type),
+                KTypeProjection.invariant(kType<VAL>().type)
+            )
         )
     )
-)
 
 /**
  * Creates a [TypeRef] for a MutableMap type with the given [KEY] and [VAL] types
  */
-inline fun <reified KEY, reified VAL> kMutableMapType(): TypeRef<Map<KEY, VAL>> = TypeRef(
-    MutableMap::class.createType(
-        arguments = listOf(
-            KTypeProjection.invariant(kType<KEY>().type),
-            KTypeProjection.invariant(kType<VAL>().type)
+inline fun <reified KEY, reified VAL> kMutableMapType(): TypeRef<Map<KEY, VAL>> =
+    TypeRef(
+        MutableMap::class.createType(
+            arguments = listOf(
+                KTypeProjection.invariant(kType<KEY>().type),
+                KTypeProjection.invariant(kType<VAL>().type)
+            )
         )
     )
-)
 
 /**
  * Taken from Jackson 2.9.9

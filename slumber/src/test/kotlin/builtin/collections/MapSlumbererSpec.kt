@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin.collections
 
-import de.peekandpoke.ultra.common.kType
+import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.slumber.Codec
 import io.kotlintest.assertSoftly
 import io.kotlintest.shouldBe

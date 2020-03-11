@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
-import de.peekandpoke.ultra.common.kListType
-import de.peekandpoke.ultra.common.kType
+import de.peekandpoke.ultra.common.reflection.kListType
+import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.slumber.Codec
 import io.kotlintest.assertSoftly
 import io.kotlintest.shouldBe

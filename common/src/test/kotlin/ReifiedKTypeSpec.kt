@@ -1,5 +1,8 @@
 package de.peekandpoke.ultra.common
 
+import de.peekandpoke.ultra.common.reflection.ReifiedKType
+import de.peekandpoke.ultra.common.reflection.TypeRef
+import de.peekandpoke.ultra.common.reflection.kType
 import io.kotlintest.assertSoftly
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.StringSpec
@@ -22,8 +25,10 @@ class ReifiedKTypeSpec : StringSpec({
 
         data class Generic<T>(val value: T)
 
-        val subject1 = ReifiedKType(kType<Generic<Int>>().type)
-        val subject2 = ReifiedKType(kType<Generic<String>>().type)
+        val subject1 =
+            ReifiedKType(kType<Generic<Int>>().type)
+        val subject2 =
+            ReifiedKType(kType<Generic<String>>().type)
 
         assertSoftly {
             subject1.ctorParams2Types[0].first.name shouldBe "value"
@@ -38,7 +43,8 @@ class ReifiedKTypeSpec : StringSpec({
 
         data class Generic<T>(val value: T)
 
-        val subject1 = ReifiedKType(kType<Generic<List<Int>>>().type)
+        val subject1 =
+            ReifiedKType(kType<Generic<List<Int>>>().type)
 
         assertSoftly {
             subject1.ctorParams2Types[0].first.name shouldBe "value"
@@ -52,7 +58,8 @@ class ReifiedKTypeSpec : StringSpec({
 
         data class Generic<T>(val value: Inner<T>)
 
-        val subject1 = ReifiedKType(kType<Generic<Int>>().type)
+        val subject1 =
+            ReifiedKType(kType<Generic<Int>>().type)
 
         assertSoftly {
             subject1.ctorParams2Types[0].first.name shouldBe "value"

@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.common
+package de.peekandpoke.ultra.common.reflection
 
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
@@ -8,6 +8,16 @@ import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.javaField
 
+/**
+ * Creates a reified version of the given [KType]
+ *
+ * What does that mean? What to you get?
+ *
+ * - a map of [ctorParams2Types] where generic type parameters are fully reified.
+ * - a map of [properties2Types] where generic type parameters are fully reified.
+ *
+ * This is very handy e.g. for serialization and de-serialization.
+ */
 class ReifiedKType(val type: KType) {
 
     /**

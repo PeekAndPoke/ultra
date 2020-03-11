@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin
 
-import de.peekandpoke.ultra.common.TypeRef
+import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.SlumberModule
 import de.peekandpoke.ultra.slumber.Slumberer

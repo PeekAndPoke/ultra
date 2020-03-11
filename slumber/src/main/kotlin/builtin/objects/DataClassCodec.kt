@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin.objects
 
-import de.peekandpoke.ultra.common.ReifiedKType
+import de.peekandpoke.ultra.common.reflection.ReifiedKType
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.Slumberer
 import kotlin.reflect.KParameter

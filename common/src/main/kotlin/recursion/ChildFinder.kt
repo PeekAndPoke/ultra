@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.common
+package de.peekandpoke.ultra.common.recursion
 
-import de.peekandpoke.ultra.common.ChildFinder.Companion.find
+import de.peekandpoke.ultra.common.recursion.ChildFinder.Companion.find
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible

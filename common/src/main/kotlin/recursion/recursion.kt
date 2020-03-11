@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.common
+package de.peekandpoke.ultra.common.recursion
 
 /**
  *

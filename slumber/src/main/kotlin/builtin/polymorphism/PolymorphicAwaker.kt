@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
-import de.peekandpoke.ultra.common.TypeRef
+import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.Awaker
 import kotlin.reflect.KClass
 
