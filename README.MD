@@ -8,7 +8,7 @@ Check out the sub-projects. There you will find details, descriptive test cases 
 
 ## ultra::common
 
-[ultra::common](common/ultra::common.md) - helper functions and utilities for:
+[ultra::common](common/ultra::common.md) - Helper functions and utilities for:
 
 - Collections, Lists, Files, Functions
 - Hashing (like MD5, SHA256, ...)
@@ -27,7 +27,7 @@ Read more here: [common/ultra::common.md]()
 
 ## ultra::kontainer
 
-[utlra::kontainer](kontainer/ultra::kontainer.md) - multi stage dependency injection  
+[utlra::kontainer](kontainer/ultra::kontainer.md) - A multi stage dependency injection mechanism  
 
 
 
