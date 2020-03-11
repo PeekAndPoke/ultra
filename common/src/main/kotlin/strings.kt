@@ -61,9 +61,35 @@ fun String.startsWithNone(prefixes: Collection<String>) = !startsWithAny(prefixe
  * Returns the maximal line length of a multiline string.
  *
  * The string is first split by the [separator] and then the max length is computed
+ *
+ * TODO: tests
  */
 fun String.maxLineLength(separator: String = System.lineSeparator()): Int =
     split(separator).map { it.length }.max() ?: 0
+
+/**
+ * Takes [maxLength] of the string and adds the [suffix] if the length is bigger than [maxLength]
+ *
+ * TODO: tests
+ */
+fun String.ellipsis(maxLength: Int = 50, suffix: String = "...") = when (length > maxLength) {
+    true -> "${this.take(maxLength)}$suffix"
+    else -> this
+}
+
+/**
+ * Splits a camel cased word into single words
+ *
+ * TODO: tests
+ */
+fun String.camelCaseSplit() = "(?<=[a-z])(?=[A-Z])".toRegex().split(this)
+
+/**
+ * Splits a camel case word and joins the parts using the divider
+ *
+ * TODO: tests
+ */
+fun String.camelCaseDivide(divider: String = " ") = camelCaseSplit().joinToString(divider)
 
 /**
  * Appends url parameters the string
