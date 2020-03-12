@@ -61,7 +61,7 @@ class DynamicServicesSpec : StringSpec({
         assertSoftly {
 
             subject.get<SimpleService>()::class shouldBe SimpleService::class
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Dynamic
+            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.DynamicOverride
 
             subject.get<SimpleService>().get() shouldBe 0
         }
@@ -103,7 +103,7 @@ class DynamicServicesSpec : StringSpec({
 
         assertSoftly {
 
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Dynamic
+            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.DynamicOverride
 
             first::class shouldBe SimpleService::class
             first.get() shouldBe 0
@@ -148,7 +148,7 @@ class DynamicServicesSpec : StringSpec({
         assertSoftly {
 
             subject.get<DynamicService>()::class shouldBe DynamicService::class
-            subject.getProvider<DynamicService>().type shouldBe ServiceProvider.Type.DynamicDefault
+            subject.getProvider<DynamicService>().type shouldBe ServiceProvider.Type.Dynamic
 
             subject.get<DynamicService>().value shouldBe 100
         }
@@ -206,7 +206,7 @@ class DynamicServicesSpec : StringSpec({
 
         assertSoftly {
 
-            subject.getProvider<DynamicService>().type shouldBe ServiceProvider.Type.Dynamic
+            subject.getProvider<DynamicService>().type shouldBe ServiceProvider.Type.DynamicOverride
 
             first::class shouldBe DynamicService::class
             first.value shouldBe 200
@@ -231,7 +231,7 @@ class DynamicServicesSpec : StringSpec({
 
         assertSoftly {
 
-            subject.getProvider<DynamicService>().type shouldBe ServiceProvider.Type.Dynamic
+            subject.getProvider<DynamicService>().type shouldBe ServiceProvider.Type.DynamicOverride
 
             first::class shouldBe DerivedService::class
             first.value shouldBe 200
@@ -270,9 +270,9 @@ class DynamicServicesSpec : StringSpec({
 
             subject.getProvider<InjectingService>().type shouldBe ServiceProvider.Type.SemiDynamic
 
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Dynamic
+            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.DynamicOverride
 
-            subject.getProvider<AnotherSimpleService>().type shouldBe ServiceProvider.Type.Dynamic
+            subject.getProvider<AnotherSimpleService>().type shouldBe ServiceProvider.Type.DynamicOverride
         }
     }
 
@@ -293,7 +293,7 @@ class DynamicServicesSpec : StringSpec({
 
         assertSoftly {
 
-            subject.getProvider<Impl>().type shouldBe ServiceProvider.Type.Dynamic
+            subject.getProvider<Impl>().type shouldBe ServiceProvider.Type.DynamicOverride
 
             subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
         }
@@ -316,7 +316,7 @@ class DynamicServicesSpec : StringSpec({
 
         assertSoftly {
 
-            subject.getProvider<Base>().type shouldBe ServiceProvider.Type.Dynamic
+            subject.getProvider<Base>().type shouldBe ServiceProvider.Type.DynamicOverride
 
             subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
         }
@@ -344,7 +344,7 @@ class DynamicServicesSpec : StringSpec({
 
         assertSoftly {
 
-            subject.getProvider<Base>().type shouldBe ServiceProvider.Type.Dynamic
+            subject.getProvider<Base>().type shouldBe ServiceProvider.Type.DynamicOverride
 
             subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
             subject.get<Injecting>().value shouldBe 10
@@ -368,7 +368,7 @@ class DynamicServicesSpec : StringSpec({
 
         assertSoftly {
 
-            subject.getProvider<Impl>().type shouldBe ServiceProvider.Type.Dynamic
+            subject.getProvider<Impl>().type shouldBe ServiceProvider.Type.DynamicOverride
 
             subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
         }
@@ -417,7 +417,7 @@ class DynamicServicesSpec : StringSpec({
 
             subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.Singleton
 
-            subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.Dynamic
+            subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.DynamicOverride
 
             subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
         }
@@ -471,7 +471,7 @@ class DynamicServicesSpec : StringSpec({
 
             subject.getProvider<ImplOne>().type shouldBe ServiceProvider.Type.Singleton
 
-            subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.Dynamic
+            subject.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.DynamicOverride
 
             subject.getProvider<Injecting>().type shouldBe ServiceProvider.Type.SemiDynamic
         }
@@ -533,7 +533,7 @@ class DynamicServicesSpec : StringSpec({
             // ImplOne must be the same instance in both containers as it is a GlobalSingleton
             first.all.get(ImplOne::class) shouldBeSameInstanceAs second.all.get(ImplOne::class)
 
-            subjectOne.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.Dynamic
+            subjectOne.getProvider<ImplTwo>().type shouldBe ServiceProvider.Type.DynamicOverride
             // ImplTwo must NOT be the same instance in both containers as it is a Dynamic
             first.all.get(ImplTwo::class) shouldNotBeSameInstanceAs second.all.get(ImplTwo::class)
 

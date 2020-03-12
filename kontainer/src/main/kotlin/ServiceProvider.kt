@@ -7,14 +7,30 @@ import java.time.Instant
  */
 interface ServiceProvider {
 
+    /**
+     * Ways in which services are provided.
+     *
+     * This is mostly used for debugging and testing.
+     */
     enum class Type {
+        /** Pure singleton services are shared across multiple Kontainer instances */
         Singleton,
+        /** Prototype service are instantiate for each injection */
         Prototype,
+        /** Semi Dynamic singletons are not defined as dynamic but inject dynamic services */
         SemiDynamic,
+        /** Dynamic singletons are explicitly defined as dynamic and live only within a single Kontainer instance */
         Dynamic,
-        DynamicDefault,
+        /** Like Dynamic singletons, but these are overriding dynamics while creating a Kontainer from a Blueprint */
+        DynamicOverride,
     }
 
+    /**
+     * Tracks created service instances
+     *
+     * [instance] is the service instance that was create.
+     * [createdAt] is the timestamp, when the instantiation occurred.
+     */
     data class CreatedInstance(
         val instance: Any,
         val createdAt: Instant

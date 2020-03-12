@@ -33,7 +33,7 @@ class DynamicFactoriesSpec : StringSpec({
 
             subject.get<Base>()::class shouldBe Config::class
             subject.get<Config>()::class shouldBe Config::class
-            subject.getProvider<Config>().type shouldBe ServiceProvider.Type.DynamicDefault
+            subject.getProvider<Config>().type shouldBe ServiceProvider.Type.Dynamic
 
             subject.get<Config>().value shouldBe value
         }
@@ -49,7 +49,7 @@ class DynamicFactoriesSpec : StringSpec({
             subject.get<Base>() shouldBeSameInstanceAs subject.get<Base>()
 
             subject.get<Base>()::class shouldBe Config::class
-            subject.getProvider<Base>().type shouldBe ServiceProvider.Type.DynamicDefault
+            subject.getProvider<Base>().type shouldBe ServiceProvider.Type.Dynamic
 
             subject.get<Base>().value shouldBe value
         }

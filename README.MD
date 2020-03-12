@@ -6,6 +6,8 @@ ULTRA is a set of libraries and helpers to enhance your everyday Kotlin coding w
 
 Check out the sub-projects. There you will find details, descriptive test cases and usage examples.
 
+
+
 ## ultra::common
 
 [ultra::common](common/ultra::common.md) - Helper functions and utilities for:
@@ -24,20 +26,50 @@ Check out the sub-projects. There you will find details, descriptive test cases 
 
 Read more here: [common/ultra::common.md]() 
 
-
 ## ultra::kontainer
 
-[utlra::kontainer](kontainer/ultra::kontainer.md) - A multi stage dependency injection mechanism  
+[ultra::kontainer](kontainer/ultra::kontainer.md) - A multi stage dependency injection mechanism  
 
+## ultra::logging
+
+[ultra::logging](logging/ultra::logging.md) - A lean logging framework that integrates with the Kontainer
+
+## ultra::meta
+
+[ultra::meta](meta/ultra::meta.md) - Meta Programming Tools for Kotlin Annotation Processing and code generation
+
+Projects using this:
+- ultra::slumber
+- ultra::vault
+- karango (ArangoDB repositories for ultra::vault)
+
+## ultra::mutator
+
+[ultra::mutator](mutator/ultra::mutator.md) - Mutate the Immutable
+
+Mutator is a kotlin library inspired by [immerjs](https://github.com/immerjs/immer).
+
+- It brings you a powerful for mutating deeply nested immutable data structures.
+- By doing so, it encourages a 100% immutable data design.
+- And therefore you will have far less tricky bugs
+
+## ultra::security
+
+[ultra::security](security/ultra::security.md) - Everyday security features
+
+## ultra::slumber
+
+[ultra::slumber](slumber/ultra::slumber.md) - Object serialization with nullability awareness 
+
+Slumber is aware of the Null safety that is built into Kotlin.
+
+Pure Java serialization libraries like [Jackson](https://github.com/FasterXML/jackson) are not.
+
+Kotlin handles the [Billion Dollar Mistake](https://en.wikipedia.org/wiki/Tony_Hoare#Apologies_and_retractions) 
+very well. And so should your serialization framework! Slumber does it for you. 
 
 
 # TODOs:
-
-( ) Kontainer: avoid that services definitions are downgraded
-  ( ) invalid: Prototype -> Singleton | Dynamic
-  ( ) invalid: Dynamic -> Singleton
-  ( ) invalid: Singleton | Dynamic -> Prototype  
-
 
 ( ) Slumber
   ( ) Full java time support 

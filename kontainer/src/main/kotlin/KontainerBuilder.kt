@@ -10,6 +10,37 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
 
     private val definitionLocations = mutableMapOf<KClass<*>, StackTraceElement>()
 
+    private val injectionTypeUpgrade = InjectionTypeUpgrade()
+
+    class InjectionTypeUpgrade {
+
+        fun adjust(newDef: ServiceDefinition, existingDef: ServiceDefinition?) = when (existingDef) {
+
+            // When there is no existing definition, we can use the new definition as is
+            null -> newDef
+
+            else -> when (existingDef.type) {
+                // When the existing definition is a prototype,
+                InjectionType.Prototype ->
+                    // Then we need to upgrade the new definition to a prototype as well
+                    newDef.withType(InjectionType.Prototype)
+
+                // When the existing definition is a dynamic
+                InjectionType.Dynamic -> when (newDef.type) {
+                    // And the new type is a singleton, Then we need to upgrade it to a dynamic
+                    InjectionType.Singleton -> newDef.withType(InjectionType.Dynamic)
+                    // Otherwise we can use the new definition as is
+                    else -> newDef
+                }
+
+                // When the existing definition is a singleton
+                InjectionType.Singleton ->
+                    // Then we can use it as is
+                    newDef
+            }
+        }
+    }
+
     init {
         builder(this)
 
@@ -20,11 +51,22 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         addSingleton(KontainerBlueprint::class, ServiceProducer.forKontainerBlueprint())
     }
 
-    internal fun buildBlueprint(): KontainerBlueprint =
+    /**
+     * Builds a [KontainerBlueprint] from the current configuration
+     */
+    internal fun build(): KontainerBlueprint =
         KontainerBlueprint(config.toMap(), definitions.toMap(), definitionLocations.toMap())
 
+    /**
+     * Adds a [ServiceDefinition] while also upgrading the injection type
+     */
     private fun add(def: ServiceDefinition) = apply {
-        definitions[def.produces] = def
+
+        // We need to  upgrade the type of the service definition, when necessary
+        val upgrade = injectionTypeUpgrade.adjust(def, definitions[def.produces])
+
+        // We use the upgraded definition
+        definitions[def.produces] = upgrade
 
         // we also record the location from where a service was recorded for better error message
         definitionLocations[def.produces] = Throwable().stackTrace.first {
@@ -39,12 +81,21 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         ServiceDefinition(srv, type, producer)
     )
 
+    /**
+     * Adds a singleton service definition
+     */
     private fun <T : Any> addSingleton(srv: KClass<T>, producer: ServiceProducer) =
         add(srv, InjectionType.Singleton, producer)
 
+    /**
+     * Adds a prototype service definition
+     */
     private fun <T : Any> addPrototype(srv: KClass<T>, producer: ServiceProducer) =
         add(srv, InjectionType.Prototype, producer)
 
+    /**
+     * Adds a dynamic service definition
+     */
     private fun <T : Any> addDynamic(srv: KClass<T>, producer: ServiceProducer) =
         add(srv, InjectionType.Dynamic, producer)
 

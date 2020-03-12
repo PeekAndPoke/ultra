@@ -1,4 +1,4 @@
-# Mutator
+# ultra::mutator
 
 ## TODO
 
@@ -19,6 +19,8 @@
 - like "int", "byte"  etc.
 - In these cases the bytecode for the class is "strange" and the annotation processor will not find the variables
 - Solution would be to look for specific getters "getInt()", "getByte()" ...
+
+- there a are collisions as well between data class properties and companion objects
 
 - OR: at least write something in the docs (Gotchas section)
 

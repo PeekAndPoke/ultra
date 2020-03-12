@@ -223,11 +223,11 @@ class GeneralInjectionSpec : StringSpec({
         assertSoftly {
 
             subjectOne.get(Kontainer::class) shouldBeSameInstanceAs subjectOne
-            subjectOne.getProvider(Kontainer::class).type shouldBe ServiceProvider.Type.DynamicDefault
+            subjectOne.getProvider(Kontainer::class).type shouldBe ServiceProvider.Type.Dynamic
             subjectOne.get(MyService::class).kontainer shouldBeSameInstanceAs subjectOne
 
             subjectTwo.get(Kontainer::class) shouldBeSameInstanceAs subjectTwo
-            subjectTwo.getProvider(Kontainer::class).type shouldBe ServiceProvider.Type.DynamicDefault
+            subjectTwo.getProvider(Kontainer::class).type shouldBe ServiceProvider.Type.Dynamic
             subjectTwo.get(MyService::class).kontainer shouldBeSameInstanceAs subjectTwo
 
             subjectOne.get(Kontainer::class) shouldNotBeSameInstanceAs subjectTwo.get(Kontainer::class)

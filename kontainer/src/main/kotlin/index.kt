@@ -6,7 +6,7 @@ import kotlin.reflect.KClass
  * Creates a kontainer blueprint
  */
 fun kontainer(builder: KontainerBuilder.() -> Unit): KontainerBlueprint =
-    KontainerBuilder(builder).buildBlueprint()
+    KontainerBuilder(builder).build()
 
 /**
  * Creates a kontainer module
@@ -75,7 +75,9 @@ class ServiceDefinition internal constructor(
     val produces: KClass<*>,
     val type: InjectionType,
     val producer: ServiceProducer
-)
+) {
+    fun withType(type: InjectionType) = ServiceDefinition(this.produces, type, this.producer)
+}
 
 /**
  * Type of injection
@@ -83,7 +85,7 @@ class ServiceDefinition internal constructor(
 enum class InjectionType {
     /** A singleton service is shared across multiple kontainer instances */
     Singleton,
-    /** For A prototype service a new instance is created whenever it is requested */
+    /** For a prototype service a new instance is created whenever it is injected */
     Prototype,
     /** A dynamic service is a singleton that only lives within a single kontainer instance */
     Dynamic

@@ -63,8 +63,7 @@ class KontainerBlueprint internal constructor(
      */
     private val semiDynamicDefinitions: Map<KClass<*>, ServiceDefinition> =
         dependencyLookUp.getAllDependents(dynamicsClasses)
-            // prototype cannot be "downgraded" to be dynamic singletons
-            // TODO: write unit-test that ensures the above statement
+            // prototype cannot be "downgraded" to be semi dynamic singletons
             .filter { !prototypeDefinitions.contains(it) }
             .map { it to definitions.getValue(it) }
             .toMap()
@@ -89,7 +88,7 @@ class KontainerBlueprint internal constructor(
      */
     fun extend(builder: KontainerBuilder.() -> Unit): KontainerBlueprint {
 
-        val result = KontainerBuilder(builder).buildBlueprint()
+        val result = KontainerBuilder(builder).build()
 
         return KontainerBlueprint(
             config.plus(result.config),
@@ -122,7 +121,7 @@ class KontainerBlueprint internal constructor(
         return instantiate(
             dynamics.map {
                 dynamicsBaseTypeLookUp.getDistinctFor(it::class) to ServiceProvider.ForInstance(
-                    ServiceProvider.Type.Dynamic,
+                    ServiceProvider.Type.DynamicOverride,
                     it
                 )
             }
@@ -154,7 +153,7 @@ class KontainerBlueprint internal constructor(
 
         // create new providers for all dynamic services
         dynamicDefinitions
-            .forEach { (k, v) -> map[k] = ServiceProvider.ForSingleton(ServiceProvider.Type.DynamicDefault, v) }
+            .forEach { (k, v) -> map[k] = ServiceProvider.ForSingleton(ServiceProvider.Type.Dynamic, v) }
 
         // add providers for all overwritten dynamic services
         map.putAll(overwrittenDynamics)
