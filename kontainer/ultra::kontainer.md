@@ -7,9 +7,9 @@ Kontainer is a multi stage dependency injection mechanism.
 To answer this, let's first have a look at how (to our best knowledge) dependency injection
 is usually implemented in the java world (e.g. in Spring) and compare it with the Kontainer.
 
-| The conventional way                                             | The kontainer way                                                                      |
+| The conventional way                                             | The Kontainer way                                                                      |
 | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| 1. You define your service (via annotations or xml)              | 1. You define your services in pure Kotlin                                             |
+| 1. You define your services (via annotations or xml)             | 1. You define your services in pure Kotlin code                                        |
 | 2. Service types are Singleton and Prototype                     | 2. Services types are Singleton, Prototype and **Dynamic**                             |
 | 3. You define which services are to be injected                  | 3. Injection is done through the primary constructor                                   |    
 | 4. The container does all the auto-wiring.                       | 4. Phase 1: You create a Kontainer Blueprint                                           |
@@ -19,7 +19,7 @@ is usually implemented in the java world (e.g. in Spring) and compare it with th
 | **Pros**                                                         | **Pros**                                                                               |
 |                                                                  |                                                                                        |
 | service needs to be instantiated exactly once                    | **Dynamic** Services are instantiated for each Kontainer instance                      |
-| every service instance is fully re-usable                        | So do services that injected **Dynamic** services directly or indirectly               |
+| every service instance is fully re-usable                        | So do services that injecte **Dynamic** services directly or indirectly                |
 |   -> e.g. for each request                                       | Kontainers and **Dynamic** services can be aware of the **Context** used in            |
 |                                                                  |   -> e.g. the current request                                                          | 
 |                                                                  |   -> e.g. the current user session                                                     | 

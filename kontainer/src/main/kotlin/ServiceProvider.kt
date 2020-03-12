@@ -137,12 +137,6 @@ interface ServiceProvider {
             instances.add(
                 CreatedInstance(this, Instant.now())
             )
-
-            // TODO: Prototype producers need to be recreated for each Kontainer, so we can avoid the stuff below
-            // ensure max size
-            if (instances.size > 10) {
-                instances.removeAt(10)
-            }
         }
 
         /**

@@ -19,14 +19,21 @@ class KontainerBlueprint internal constructor(
     private var usages = 0
 
     /**
-     * A set of all dynamic service definition
+     * Collect dynamic service definitions
      */
-    private val dynamics = definitions.filterValues { it.type == InjectionType.Dynamic }
+    private val dynamicDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
+        .filterValues { it.type == InjectionType.Dynamic }
+
+    /**
+     * Collect Prototype service definitions
+     */
+    private val prototypeDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
+        .filterValues { it.type == InjectionType.Prototype }
 
     /**
      * A set of all dynamic service classes
      */
-    private val dynamicsClasses = dynamics.keys
+    private val dynamicsClasses = dynamicDefinitions.keys
 
     /**
      * A lookup for finding the base types of dynamic services from given super types
@@ -49,23 +56,16 @@ class KontainerBlueprint internal constructor(
     private val dependencyLookUp = DependencyLookup(superTypeLookup, definitions)
 
     /**
-     * Collect Prototype services
-     */
-    private val prototypes: Map<KClass<*>, ServiceProvider.ForPrototype> = definitions
-        .filterValues { it.type == InjectionType.Prototype }
-        .mapValues { (_, v) -> ServiceProvider.ForPrototype(v) }
-
-    /**
      * Semi dynamic services
      *
      * These are services that where initially defined as singletons, but which inject dynamic services.
      * Or which inject services that themselves inject dynamic services etc...
      */
-    private val semiDynamics: Map<KClass<*>, ServiceDefinition> =
+    private val semiDynamicDefinitions: Map<KClass<*>, ServiceDefinition> =
         dependencyLookUp.getAllDependents(dynamicsClasses)
             // prototype cannot be "downgraded" to be dynamic singletons
             // TODO: write unit-test that ensures the above statement
-            .filter { !prototypes.contains(it) }
+            .filter { !prototypeDefinitions.contains(it) }
             .map { it to definitions.getValue(it) }
             .toMap()
 
@@ -77,9 +77,9 @@ class KontainerBlueprint internal constructor(
      * - are no prototype services
      */
     private val singletons: Map<KClass<*>, ServiceProvider.ForSingleton> = definitions
-        .filterKeys { !dynamics.contains(it) }
-        .filterKeys { !semiDynamics.contains(it) }
-        .filterKeys { !prototypes.contains(it) }
+        .filterKeys { !dynamicDefinitions.contains(it) }
+        .filterKeys { !semiDynamicDefinitions.contains(it) }
+        .filterKeys { !prototypeDefinitions.contains(it) }
         .mapValues { (_, v) -> ServiceProvider.ForSingleton(ServiceProvider.Type.Singleton, v) }
 
     /**
@@ -136,24 +136,26 @@ class KontainerBlueprint internal constructor(
 
         val map = HashMap<KClass<*>, ServiceProvider>(
             singletons.size +
-                    prototypes.size +
-                    semiDynamics.size +
-                    dynamics.size +
+                    prototypeDefinitions.size +
+                    dynamicDefinitions.size +
+                    semiDynamicDefinitions.size +
                     overwrittenDynamics.size
         )
 
         // put all singletons
         map.putAll(singletons)
+
         // add providers for prototype services
-        map.putAll(prototypes)
+        map.putAll(prototypeDefinitions.mapValues { (_, v) -> ServiceProvider.ForPrototype(v) })
+
         // create new providers for all semi dynamic services
-        semiDynamics.forEach { (k, v) ->
-            map[k] = ServiceProvider.ForSingleton(ServiceProvider.Type.SemiDynamic, v)
-        }
+        semiDynamicDefinitions
+            .forEach { (k, v) -> map[k] = ServiceProvider.ForSingleton(ServiceProvider.Type.SemiDynamic, v) }
+
         // create new providers for all dynamic services
-        dynamics.forEach { (k, v) ->
-            map[k] = ServiceProvider.ForSingleton(ServiceProvider.Type.DynamicDefault, v)
-        }
+        dynamicDefinitions
+            .forEach { (k, v) -> map[k] = ServiceProvider.ForSingleton(ServiceProvider.Type.DynamicDefault, v) }
+
         // add providers for all overwritten dynamic services
         map.putAll(overwrittenDynamics)
 
