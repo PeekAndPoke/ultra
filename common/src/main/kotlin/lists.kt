@@ -1,58 +1,57 @@
 package de.peekandpoke.ultra.common
 
 /**
- * Replaces the [old] element with the [new] one.
+ * Returns a new List with all occurrences of [old] replaced with [new].
  *
- * If [old] is found a new list instance is returned with the item replaced.
- * Otherwise the same list instance is returned.
- *
- * TODO: tests
+ * The comparison between the elements is done non strict '=='
  */
-fun <E> List<E>.replace(old: E, new: E): List<E> = when (val idx = indexOf(old)) {
-    -1 -> this
-    else -> replaceAt(idx, new)
-}
+fun <E> List<E>.replace(old: E, new: E): List<E> = map { if (it == old) new else it }
 
 /**
- * Replaces the element at [idx] with [element] by creating a new list.
+ * Returns a new List with all occurrences of [old] replaced with [new].
  *
- * TODO: tests
+ * The comparison between the elements is done strict '==='
  */
-fun <E> List<E>.replaceAt(idx: Int, element: E) = toMutableList().apply { set(idx, element) }.toList()
+fun <E> List<E>.replaceStrict(old: E, new: E): List<E> = map { if (it === old) new else it }
 
 /**
- * Removes the [element] from the list.
+ * Returns a new List with the element at [idx] replaced by [element].
  *
- * If the [element] is found a new list without the element is returned.
- * Otherwise the same list instance is returned.
- *
- * TODO: tests
+ * If the index is out of bounds an [IndexOutOfBoundsException] is thrown.
  */
-fun <E> List<E>.remove(element: E) = when (val idx = indexOf(element)) {
-    -1 -> this
-    else -> removeAt(idx) // TODO: remove all occurrences
-}
+fun <E> List<E>.replaceAt(idx: Int, element: E): List<E> = toMutableList().apply { set(idx, element) }.toList()
+
+/**
+ * Returns a new List with all occurrences of [element] removed.
+ *
+ * The comparison between the elements is done non strict '=='
+ */
+fun <E> List<E>.remove(element: E): List<E> = filter { it != element }
+
+/**
+ * Returns a new List with all occurrences of [element] removed.
+ *
+ * The comparison between the elements is done strict '==='
+ */
+fun <E> List<E>.removeStrict(element: E): List<E> = filter { it !== element }
 
 /**
  * Removes the element at [idx] by creating a new list without the element.
- *
- * TODO: tests
  */
 fun <E> List<E>.removeAt(idx: Int) = toMutableList().apply { removeAt(idx) }.toList()
 
 /**
  * Adds the [element] at [idx] by creating a new list with the element added.
- *
- * TODO: tests
  */
 fun <E> List<E>.addAt(idx: Int, element: E) = toMutableList().apply { add(idx, element) }.toList()
 
 /**
  * Swaps the elements at [idx1] and [idx2] by creating a new list.
  *
- * TODO: tests
+ * If idx1 or idx2 is out of bounds, the list is returned as is.
  */
 fun <E> List<E>.swapAt(idx1: Int, idx2: Int): List<E> {
+
 
     if (idx1 < 0 || idx1 >= size || idx2 < 0 || idx2 >= size || idx1 == idx2) {
         return this

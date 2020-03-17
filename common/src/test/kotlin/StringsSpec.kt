@@ -81,6 +81,88 @@ class StringsSpec : StringSpec({
         }
     }
 
+    ////  String.maxLineLength  ////////////////////////////////////////////////////////////////////////////////////////
+
+    listOf(
+        row("", 0),
+        row("a", 1),
+        row(" ", 1),
+        row(" a ", 3),
+        row(
+            """
+                line1
+            """.trimIndent(),
+            5
+        ),
+        row(
+            """
+                line1
+                long line2
+            """.trimIndent(),
+            10
+        )
+    ).forEach { (text, expected) ->
+
+        "String.maxLineLength: '$text' should be $expected" {
+            text.maxLineLength() shouldBe expected
+        }
+    }
+
+    ////  String.ellipsis  /////////////////////////////////////////////////////////////////////////////////////////////
+
+    listOf(
+        row("", 0, ""),
+        row("a", 0, "..."),
+        row("Some Text", 4, "Some...")
+    ).forEach { (text, maxLength, expected) ->
+
+        "String.ellipsis: '$text' maxLength $maxLength should be '$expected'" {
+            text.ellipsis(maxLength) shouldBe expected
+        }
+    }
+
+    "String.ellipsis with custom suffix" {
+        "Some Text".ellipsis(maxLength = 4, suffix = "-") shouldBe "Some-"
+    }
+
+    ////  String.camelCaseSplit  ///////////////////////////////////////////////////////////////////////////////////////
+
+    listOf(
+        row("", listOf("")),
+        row("a", listOf("a")),
+        row("A", listOf("A")),
+        row("a1B1", listOf("a1", "B1")),
+        row("oneTwo", listOf("one", "Two")),
+        row("OneTwo", listOf("One", "Two")),
+        row("One Two", listOf("One Two"))
+    ).forEach { (text, expected) ->
+
+        "String.camelCaseSplit: '$text' should be $expected" {
+            text.camelCaseSplit() shouldBe expected
+        }
+    }
+
+    ////  String.camelCaseDivide  //////////////////////////////////////////////////////////////////////////////////////
+
+    listOf(
+        row("", ""),
+        row("a", "a"),
+        row("A", "A"),
+        row("a1B1", "a1 B1"),
+        row("oneTwo", "one Two"),
+        row("OneTwo", "One Two"),
+        row("One Two", "One Two")
+    ).forEach { (text, expected) ->
+
+        "String.camelCaseDivide: '$text' should be $expected" {
+            text.camelCaseDivide() shouldBe expected
+        }
+    }
+
+    "String.camelCaseDivide: 'oneTwo' with custom divider '-'" {
+        "oneTwo".camelCaseDivide("-") shouldBe "one-Two"
+    }
+
     ////  String.toUri  ////////////////////////////////////////////////////////////////////////////////////////////////
 
     listOf(
