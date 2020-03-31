@@ -11,8 +11,11 @@ class DataClassCodec(rootType: KType) : Awaker, Slumberer {
     /** Raw cls of the rootType */
     private val reified = ReifiedKType(rootType)
 
+    private val ctor = reified.ctor
+
     private val nullables: Map<KParameter, Any?> =
-        reified.ctor.parameters.filter { it.type.isMarkedNullable }.map { it to null }.toMap()
+        ctor?.parameters?.filter { it.type.isMarkedNullable }?.map { it to null }?.toMap()
+            ?: emptyMap()
 
     override fun awake(data: Any?, context: Awaker.Context): Any? {
 
@@ -56,7 +59,7 @@ class DataClassCodec(rootType: KType) : Awaker, Slumberer {
 
         return when {
             // When we have all the parameters we need, we can call the ctor.
-            missingParams.isEmpty() -> reified.ctor.callBy(params)
+            missingParams.isEmpty() && ctor != null -> ctor.callBy(params)
             // Otherwise we have to return null
             else -> null
         }

@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.common.reflection
 
 import kotlin.reflect.KClass
+import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeParameter
 import kotlin.reflect.full.createType
@@ -29,12 +30,14 @@ class ReifiedKType(val type: KType) {
     /**
      * The ctor is always present for a data class
      */
-    val ctor = cls.primaryConstructor!!
+    val ctor = cls.primaryConstructor
 
     /**
      * Map of ctor parameters to their reified types
      */
-    val ctorParams2Types = ctor.parameters.map { it to reifyType(it.type) }
+    val ctorParams2Types: List<Pair<KParameter, KType>> =
+        ctor?.parameters?.map { it to reifyType(it.type) }
+            ?: emptyList()
 
     /**
      * Map of properties corresponding to the ctor param to their reified types

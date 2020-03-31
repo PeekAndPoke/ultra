@@ -55,9 +55,15 @@ data class TypeRef<T>(val type: KType) {
     }
 
     /**
+     * Returns a [ReifiedKType] of this TypeRef
+     */
+    val reified: ReifiedKType by lazy { ReifiedKType(type) }
+
+    /**
      * Converts to a nullable type
      */
     val nullable: TypeRef<T?> by lazy(LazyThreadSafetyMode.NONE) {
+        @Suppress("RemoveExplicitTypeArguments")
         TypeRef<T?>(
             type.classifier!!.createType(
                 arguments = type.arguments,
@@ -70,6 +76,7 @@ data class TypeRef<T>(val type: KType) {
      * Wraps the current type as a [List] type
      */
     val list: TypeRef<List<T>> by lazy(LazyThreadSafetyMode.NONE) {
+        @Suppress("RemoveExplicitTypeArguments")
         TypeRef<List<T>>(
             List::class.createType(
                 arguments = listOf(
@@ -124,6 +131,7 @@ data class TypeRef<T>(val type: KType) {
             error("The current type [$this] must have the classifier List::class")
         }
 
+        @Suppress("RemoveExplicitTypeArguments")
         TypeRef<Any>(type.arguments[0].type!!)
     }
 
