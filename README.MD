@@ -47,9 +47,9 @@ Projects using this:
 
 Mutator is a kotlin library inspired by [immerjs](https://github.com/immerjs/immer).
 
-- It brings you a powerful for mutating deeply nested immutable data structures.
+- It gives you a powerful way for mutating deeply nested immutable data structures.
 - By doing so, it encourages a 100% immutable data design.
-- And therefore you will have far less tricky bugs
+- Therefore you will have far less tricky bugs.
 
 ## ultra::security
 
@@ -59,7 +59,7 @@ Mutator is a kotlin library inspired by [immerjs](https://github.com/immerjs/imm
 
 [ultra::slumber](slumber/ultra::slumber.md) - Object serialization with nullability awareness 
 
-Slumber is aware of the Null safety that is built into Kotlin.
+Slumber is aware of the Null Safety that is built into Kotlin.
 
 Pure Java serialization libraries like [Jackson](https://github.com/FasterXML/jackson) are not.
 
