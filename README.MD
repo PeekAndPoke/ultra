@@ -48,7 +48,8 @@ Projects using this:
 Mutator is a kotlin library inspired by [immerjs](https://github.com/immerjs/immer).
 
 - It gives you a powerful way for mutating deeply nested immutable data structures.
-- By doing so, it encourages a 100% immutable data design.
+- By doing so, it encourages a 100% immutable data design
+- ... and more of functional programming style. 
 - Therefore you will have far less tricky bugs.
 
 ## ultra::security
