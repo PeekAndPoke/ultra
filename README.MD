@@ -24,8 +24,6 @@ Check out the sub-projects. There you will find details, descriptive test cases 
 - random data generation
     - LoremIpsum texts 
 
-Read more here: [common/ultra::common.md]() 
-
 ## ultra::kontainer
 
 [ultra::kontainer](kontainer/ultra::kontainer.md) - A multi stage dependency injection mechanism  
