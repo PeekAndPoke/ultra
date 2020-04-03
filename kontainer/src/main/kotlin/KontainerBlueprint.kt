@@ -98,7 +98,12 @@ class KontainerBlueprint internal constructor(
     }
 
     /**
-     * Creates a kontainer instance with the given dynamic services.
+     * Creates a kontainer instance without overriding any of the dynamic services.
+     */
+    fun create() = useWith()
+
+    /**
+     * Creates a kontainer instance and overrides the given dynamic services.
      */
     fun useWith(vararg dynamics: Any): Kontainer {
 

@@ -37,6 +37,15 @@ dependencies {
     testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")
 }
 
+kotlin {
+    sourceSets {
+        test {
+            kotlin.srcDir("src/examples/kotlin")
+        }
+    }
+}
+
+
 val test by tasks.getting(Test::class) {
     useJUnitPlatform { }
 }
@@ -46,6 +55,13 @@ configure<JavaPluginConvention> {
 }
 
 tasks {
+
+    create("runExamples", JavaExec::class) {
+        main = "de.peekandpoke.ultra.kontainer.examples.IndexKt"
+        classpath = sourceSets.getByName("test").runtimeClasspath
+        standardInput = System.`in`
+    }
+
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
     }
