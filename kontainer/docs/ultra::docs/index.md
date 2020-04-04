@@ -2,8 +2,7 @@
 
 ## TOC
 
-1. The Basics
-
+1. [The Basics](#the-basics)
     1. [Simple Singleton Example](#simple-singleton-example)
     2. [Shared Singleton Services](#shared-singleton-services)
     3. [Singletons vs Dynamic Services](#singletons-vs-dynamic-services)

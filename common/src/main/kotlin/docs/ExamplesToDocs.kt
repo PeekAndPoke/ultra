@@ -47,20 +47,22 @@ class ExamplesToDocs internal constructor(
 
     private fun generateToc() {
 
+        fun String.toAnchor() = toLowerCase().toUri().replace(" ", "-")
+
         builder
             .appendln("## TOC")
             .appendln()
 
         chapters.forEachIndexed { chapterIndex, chapter ->
 
-            builder.appendln("${chapterIndex + 1}. ${chapter.name}").appendln()
+            builder
+                .appendln("${chapterIndex + 1}. [${chapter.title}](#${chapter.title.toAnchor()})")
 
             chapter.examples.forEachIndexed { exampleIndex, example ->
 
                 val title = example.title
-                val dashed = title.toLowerCase().toUri().replace(" ", "-")
 
-                builder.appendln("    ${exampleIndex + 1}. [${title}](#${dashed})")
+                builder.appendln("    ${exampleIndex + 1}. [${title}](#${title.toAnchor()})")
             }
         }
 
@@ -71,7 +73,7 @@ class ExamplesToDocs internal constructor(
 
         chapters.forEach { chapter ->
 
-            builder.appendln("## ${chapter.name}").appendln()
+            builder.appendln("## ${chapter.title}").appendln()
 
             val srcDir = File(sourceLocation, chapter.packageLocation)
 

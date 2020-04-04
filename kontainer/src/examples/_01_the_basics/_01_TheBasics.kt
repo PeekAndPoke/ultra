@@ -5,7 +5,7 @@ import de.peekandpoke.ultra.common.docs.ExampleChapter
 @Suppress("ClassName")
 class _01_TheBasics : ExampleChapter {
 
-    override val name = "The Basics"
+    override val title = "The Basics"
 
     override val packageLocation = "_01_the_basics"
 
