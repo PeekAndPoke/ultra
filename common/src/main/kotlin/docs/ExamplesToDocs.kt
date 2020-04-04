@@ -3,29 +3,71 @@ package de.peekandpoke.ultra.common.docs
 import de.peekandpoke.ultra.common.ensureDirectory
 import java.io.File
 
-class ExamplesToDocs(
+fun examplesToDocs(
+    title: String,
+    chapters: List<ExampleChapter>,
+    sourceLocation: File = File("src/examples"),
+    outputLocation: File = File("docs/ultra::docs")
+) {
+    ExamplesToDocs(
+        title = title,
+        chapters = chapters,
+        sourceLocation = sourceLocation,
+        outputLocation = outputLocation
+    ).run()
+}
+
+class ExamplesToDocs internal constructor(
+    private val title: String,
     private val chapters: List<ExampleChapter>,
-    private val sourceLocation: File = File("src/examples"),
-    private val outputLocation: File = File("docs/ultra::docs")
+    private val sourceLocation: File,
+    private val outputLocation: File
 ) {
 
+    private val builder = StringBuilder()
+
     init {
+        outputLocation.deleteRecursively()
         outputLocation.ensureDirectory()
     }
 
     fun run() {
 
-        val builder = StringBuilder()
+        builder.appendln("# $title").appendln()
 
-        builder.appendln("# Examples").appendln()
+        generateToc()
 
-        chapters.forEach { group ->
+        generateExamples()
 
-            builder.appendln("## ${group.name}").appendln()
+        File(outputLocation, "index.md").apply {
+            writeText(builder.toString())
+        }
+    }
 
-            val srcDir = File(sourceLocation, group.packageLocation)
+    private fun generateToc() {
 
-            group.examples.forEach { example ->
+        builder.appendln("## TOC")
+
+        chapters.forEachIndexed { chapterIndex, chapter ->
+
+            builder.appendln("${chapterIndex}. ${chapter.name}").appendln()
+
+            chapter.examples.forEachIndexed { exampleIndex, example ->
+
+                builder.appendln("    ${exampleIndex}. [${example.title}](#${example.title})")
+            }
+        }
+    }
+
+    private fun generateExamples() {
+
+        chapters.forEach { chapter ->
+
+            builder.appendln("## ${chapter.name}").appendln()
+
+            val srcDir = File(sourceLocation, chapter.packageLocation)
+
+            chapter.examples.forEach { example ->
 
                 val exampleCode = ExampleCodeExtractor.extract(example, srcDir)
 
@@ -47,9 +89,6 @@ class ExamplesToDocs(
                 }
             }
         }
-
-        File(outputLocation, "index.md").apply {
-            writeText(builder.toString())
-        }
     }
+
 }
