@@ -10,8 +10,14 @@ class E01_GetSingletonWithUse : SimpleExample() {
         fun sayHello() = "Hello you!"
     }
 
-    override val title = """
-        Registering and retrieving a singleton service with kontainer.use(...)
+    override val title = "Simple Singleton Example"
+
+    override val description = """
+        This example show how to register and retrieve a simple singleton service.
+        
+        Services can be retrieved by:
+        1. kontainer.get(...)
+        2. kontainer.use(...)
     """.trimIndent()
 
     override fun run() {
@@ -25,10 +31,15 @@ class E01_GetSingletonWithUse : SimpleExample() {
         // 2. we get the kontainer instance
         val kontainer = blueprint.create()
 
-        // 3. we retrieve and use a service
+        // 3. we retrieve by kontainer.use(...)
         kontainer.use(Greeter::class) {
-            println("The service says: ${sayHello()}")
+            println("Kontainer.use() says: ${sayHello()}")
         }
+
+        // 4. we retrieve by kontainer.get(...)
+        println(
+            "Kontainer.get() says: ${kontainer.get(Greeter::class).sayHello()}"
+        )
 
         // !END! //
     }

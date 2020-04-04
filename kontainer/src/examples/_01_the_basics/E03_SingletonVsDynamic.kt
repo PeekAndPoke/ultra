@@ -4,7 +4,7 @@ import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.kontainer
 
 @Suppress("ClassName", "ComplexRedundantLet")
-class E04_SingletonVsDynamic : SimpleExample() {
+class E03_SingletonVsDynamic : SimpleExample() {
 
     class SingletonCounter {
         private var count = 0
@@ -18,7 +18,9 @@ class E04_SingletonVsDynamic : SimpleExample() {
         fun next() = ++count
     }
 
-    override val title = """
+    override val title = "Singletons vs Dynamic Services"
+
+    override val description = """
         This example demonstrates the difference between a singleton and a dynamic service.
 
         Singleton are instantiated only once. They are then shared across all kontainer instances.  

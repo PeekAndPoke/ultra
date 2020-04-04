@@ -2,7 +2,7 @@
 
 ## The Basics
 
-### Registering and retrieving a singleton service with kontainer.use(...)
+### Simple Singleton Example
 ```kotlin
 // 1. we create the kontainer blueprint
 val blueprint = kontainer {
@@ -12,37 +12,23 @@ val blueprint = kontainer {
 // 2. we get the kontainer instance
 val kontainer = blueprint.create()
 
-// 3. we retrieve and use a service
+// 3. we retrieve by kontainer.use(...)
 kontainer.use(Greeter::class) {
-    println("The service says: ${sayHello()}")
-}
-```
-Will output:
-```
-The service says: Hello you!
-```
-
-### Registering and retrieving a singleton service with kontainer.get(...)
-```kotlin
-// 1. we create the kontainer blueprint
-val blueprint = kontainer {
-    singleton(Greeter::class)
+    println("Kontainer.use() says: ${sayHello()}")
 }
 
-// 2. we get the kontainer instance
-val kontainer = blueprint.create()
-
-// 3. we retrieve and use a service
+// 4. we retrieve by kontainer.get(...)
 println(
-    "The service says: ${kontainer.get(Greeter::class).sayHello()}"
+    "Kontainer.get() says: ${kontainer.get(Greeter::class).sayHello()}"
 )
 ```
 Will output:
 ```
-The service says: Hello you!
+Kontainer.use() says: Hello you!
+Kontainer.get() says: Hello you!
 ```
 
-### Re-using a singleton service across multiple kontainer instances 
+### Re-using a singleton service across multiple kontainer instances
 ```kotlin
 // 1. we create the kontainer blueprint
 val blueprint = kontainer {
@@ -69,13 +55,7 @@ Counter: 1
 Counter: 2
 ```
 
-### This example demonstrates the difference between a singleton and a dynamic service.
-
-Singleton are instantiated only once. They are then shared across all kontainer instances.  
-Dynamic services are instantiated for each kontainer instance.
-
-You will see that the **SingletonCounter** is always increasing.  
-The **DynamicCounter** is created for each kontainer instance.
+### Singletons vs Dynamic Services
 ```kotlin
 // 1. we create the kontainer blueprint
 val blueprint = kontainer {

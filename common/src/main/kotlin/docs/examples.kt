@@ -2,6 +2,7 @@ package de.peekandpoke.ultra.common.docs
 
 interface Example {
     val title: String
+    val description: String
 
     fun run()
 

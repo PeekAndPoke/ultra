@@ -11,8 +11,7 @@ class _01_TheBasics : ExampleChapter {
 
     override val examples = listOf(
         E01_GetSingletonWithUse(),
-        E02_GetSingletonWithGet(),
-        E03_SharedSingleton(),
-        E04_SingletonVsDynamic()
+        E02_SharedSingleton(),
+        E03_SingletonVsDynamic()
     )
 }
