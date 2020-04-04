@@ -28,9 +28,9 @@ Check out the sub-projects. There you will find details, descriptive test cases 
 
 [ultra::kontainer](kontainer/ultra::kontainer.md) - A multi stage dependency injection mechanism  
 
-- Read more [here](kontainer/ultra::kontainer.md)
-- Check out the [Examples](kontainer/docs/ultra::docs/index.md)
-- Check out the [Tests](kontainer/src/test/kotlin)
+[READ MORE](kontainer/ultra::kontainer.md) ||
+[EXAMPLES](kontainer/docs/ultra::docs/index.md) ||
+[TESTS](kontainer/src/test/kotlin)
 
 ## ultra::logging
 
