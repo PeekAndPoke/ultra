@@ -50,11 +50,11 @@ class ExamplesToDocs internal constructor(
 
         chapters.forEachIndexed { chapterIndex, chapter ->
 
-            builder.appendln("${chapterIndex}. ${chapter.name}").appendln()
+            builder.appendln("* ${chapter.name}").appendln()
 
             chapter.examples.forEachIndexed { exampleIndex, example ->
 
-                builder.appendln("    ${exampleIndex}. [${example.title}](#${example.title})")
+                builder.appendln("    * [${example.title}](#${example.title})")
             }
         }
     }
