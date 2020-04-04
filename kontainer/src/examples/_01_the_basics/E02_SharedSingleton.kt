@@ -12,7 +12,7 @@ class E02_SharedSingleton : SimpleExample() {
         fun next() = ++count
     }
 
-    override val title = "Re-using a singleton service across multiple kontainer instances"
+    override val title = "Shared Singleton Services"
 
     override val description = """
         This example demonstrates that singleton services are shared across all Kontainers, that where

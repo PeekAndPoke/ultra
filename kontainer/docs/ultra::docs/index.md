@@ -1,11 +1,11 @@
 # Examples for ultra::kontainer
 
 ## TOC
-0. The Basics
+1. The Basics
 
-    0. [Simple Singleton Example](#Simple Singleton Example)
-    1. [Re-using a singleton service across multiple kontainer instances](#Re-using a singleton service across multiple kontainer instances)
-    2. [Singletons vs Dynamic Services](#Singletons vs Dynamic Services)
+    1. [Simple Singleton Example](#simple-singleton-example)
+    2. [Shared Singleton Services](#shared-singleton-services)
+    3. [Singletons vs Dynamic Services](#singletons-vs-dynamic-services)
 ## The Basics
 
 ### Simple Singleton Example
@@ -34,7 +34,7 @@ Kontainer.use() says: Hello you!
 Kontainer.get() says: Hello you!
 ```
 
-### Re-using a singleton service across multiple kontainer instances
+### Shared Singleton Services
 ```kotlin
 // 1. we create the kontainer blueprint
 val blueprint = kontainer {

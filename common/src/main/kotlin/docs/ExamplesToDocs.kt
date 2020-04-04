@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.common.docs
 
 import de.peekandpoke.ultra.common.ensureDirectory
+import de.peekandpoke.ultra.common.toUri
 import java.io.File
 
 fun examplesToDocs(
@@ -50,11 +51,14 @@ class ExamplesToDocs internal constructor(
 
         chapters.forEachIndexed { chapterIndex, chapter ->
 
-            builder.appendln("${chapterIndex}. ${chapter.name}").appendln()
+            builder.appendln("${chapterIndex + 1}. ${chapter.name}").appendln()
 
             chapter.examples.forEachIndexed { exampleIndex, example ->
 
-                builder.appendln("    ${exampleIndex}. [${example.title}](#${example.title})")
+                val title = example.title
+                val dashed = title.toLowerCase().toUri().replace(" ", "-")
+
+                builder.appendln("    ${exampleIndex + 1}. [${title}](#${dashed})")
             }
         }
     }
