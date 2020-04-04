@@ -42,14 +42,13 @@ class E03_SingletonVsDynamic : SimpleExample() {
         blueprint.create().let { kontainer ->
 
             println("First kontainer instance:")
-            println()
 
             // We are getting each service multiple times
             repeat(3) {
-                println(
-                    "SingletonCounter: ${kontainer.get(SingletonCounter::class).next()} -" +
-                            "DynamicCounter: ${kontainer.get(DynamicCounter::class).next()}"
-                )
+                val singleton = kontainer.get(SingletonCounter::class).next()
+                val dynamic = kontainer.get(DynamicCounter::class).next()
+
+                println("singleton: $singleton - dynamic $dynamic")
             }
         }
 
@@ -57,14 +56,13 @@ class E03_SingletonVsDynamic : SimpleExample() {
         blueprint.create().let { kontainer ->
 
             println("Second kontainer instance:")
-            println()
 
             // We are getting each service multiple times
             repeat(3) {
-                println(
-                    "SingletonCounter: ${kontainer.get(SingletonCounter::class).next()} - " +
-                            "DynamicCounter: ${kontainer.get(DynamicCounter::class).next()}"
-                )
+                val singleton = kontainer.get(SingletonCounter::class).next()
+                val dynamic = kontainer.get(DynamicCounter::class).next()
+
+                println("singleton: $singleton - dynamic $dynamic")
             }
         }
 

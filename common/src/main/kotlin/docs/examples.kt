@@ -25,6 +25,10 @@ abstract class SimpleExample : Example {
         builder?.append(message)
     }
 
+    fun println() {
+        println("")
+    }
+
     fun println(message: Any) {
         builder?.appendln(message)
     }

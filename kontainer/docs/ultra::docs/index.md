@@ -123,14 +123,13 @@ val blueprint = kontainer {
 blueprint.create().let { kontainer ->
 
     println("First kontainer instance:")
-    println()
 
     // We are getting each service multiple times
     repeat(3) {
-        println(
-            "SingletonCounter: ${kontainer.get(SingletonCounter::class).next()} -" +
-                    "DynamicCounter: ${kontainer.get(DynamicCounter::class).next()}"
-        )
+        val singleton = kontainer.get(SingletonCounter::class).next()
+        val dynamic = kontainer.get(DynamicCounter::class).next()
+
+        println("singleton: $singleton - dynamic $dynamic")
     }
 }
 
@@ -138,26 +137,25 @@ blueprint.create().let { kontainer ->
 blueprint.create().let { kontainer ->
 
     println("Second kontainer instance:")
-    println()
 
     // We are getting each service multiple times
     repeat(3) {
-        println(
-            "SingletonCounter: ${kontainer.get(SingletonCounter::class).next()} - " +
-                    "DynamicCounter: ${kontainer.get(DynamicCounter::class).next()}"
-        )
+        val singleton = kontainer.get(SingletonCounter::class).next()
+        val dynamic = kontainer.get(DynamicCounter::class).next()
+
+        println("singleton: $singleton - dynamic $dynamic")
     }
 }
 ```
 Will output:
 ```
 First kontainer instance:
-SingletonCounter: 1 -DynamicCounter: 1
-SingletonCounter: 2 -DynamicCounter: 2
-SingletonCounter: 3 -DynamicCounter: 3
+singleton: 1 - dynamic 1
+singleton: 2 - dynamic 2
+singleton: 3 - dynamic 3
 Second kontainer instance:
-SingletonCounter: 4 - DynamicCounter: 1
-SingletonCounter: 5 - DynamicCounter: 2
-SingletonCounter: 6 - DynamicCounter: 3
+singleton: 4 - dynamic 1
+singleton: 5 - dynamic 2
+singleton: 6 - dynamic 3
 ```
 
