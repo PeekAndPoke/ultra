@@ -38,7 +38,7 @@ class E03_SingletonVsDynamic : SimpleExample() {
             dynamic(DynamicCounter::class)
         }
 
-        // 3. We get a kontainer instance and use the singleton
+        // 3. We get a kontainer instance and use the services
         blueprint.create().let { kontainer ->
 
             println("First kontainer instance:")
@@ -52,7 +52,7 @@ class E03_SingletonVsDynamic : SimpleExample() {
             }
         }
 
-        // 4. We get a another kontainer instance and use the singleton
+        // 4. We get a another kontainer instance and use the services
         blueprint.create().let { kontainer ->
 
             println("Second kontainer instance:")
