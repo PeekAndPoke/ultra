@@ -47,7 +47,9 @@ class ExamplesToDocs internal constructor(
 
     private fun generateToc() {
 
-        builder.appendln("## TOC")
+        builder
+            .appendln("## TOC")
+            .appendln()
 
         chapters.forEachIndexed { chapterIndex, chapter ->
 
@@ -61,6 +63,8 @@ class ExamplesToDocs internal constructor(
                 builder.appendln("    ${exampleIndex + 1}. [${title}](#${dashed})")
             }
         }
+
+        builder.appendln()
     }
 
     private fun generateExamples() {
@@ -77,6 +81,9 @@ class ExamplesToDocs internal constructor(
 
                 builder
                     .appendln("### ${example.title}")
+                    .appendln()
+                    .appendln(example.description)
+                    .appendln()
                     .appendln("```kotlin")
                     .appendln(exampleCode ?: "no code available")
                     .appendln("```")
@@ -94,5 +101,4 @@ class ExamplesToDocs internal constructor(
             }
         }
     }
-
 }

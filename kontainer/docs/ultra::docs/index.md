@@ -1,14 +1,23 @@
 # Examples for ultra::kontainer
 
 ## TOC
+
 1. The Basics
 
     1. [Simple Singleton Example](#simple-singleton-example)
     2. [Shared Singleton Services](#shared-singleton-services)
     3. [Singletons vs Dynamic Services](#singletons-vs-dynamic-services)
+
 ## The Basics
 
 ### Simple Singleton Example
+
+This example show how to register and retrieve a simple singleton service.
+
+Services can be retrieved by:
+1. kontainer.get(...)
+2. kontainer.use(...)
+
 ```kotlin
 // 1. We define a service class
 class Greeter {
@@ -23,12 +32,12 @@ val blueprint = kontainer {
 // 3. We get the kontainer instance
 val kontainer = blueprint.create()
 
-// 4. we retrieve by kontainer.use(...)
+// 4. We retrieve our service by kontainer.use(...)
 kontainer.use(Greeter::class) {
     println("Kontainer.use() says: ${sayHello()}")
 }
 
-// 5. we retrieve by kontainer.get(...)
+// 5. We retrieve our service by kontainer.get(...)
 println(
     "Kontainer.get() says: ${kontainer.get(Greeter::class).sayHello()}"
 )
@@ -40,6 +49,10 @@ Kontainer.get() says: Hello you!
 ```
 
 ### Shared Singleton Services
+
+This example demonstrates that singleton services are shared across all kontainers, that where
+created from the same blueprint. 
+
 ```kotlin
 // 1. We define our service
 class Counter {
@@ -73,6 +86,15 @@ Counter: 2
 ```
 
 ### Singletons vs Dynamic Services
+
+This example demonstrates the difference between a singleton and a dynamic service.
+
+Singleton are instantiated only once. They are then shared across all kontainer instances.  
+Dynamic services are instantiated for each kontainer instance.
+
+You will see that the **SingletonCounter** is always increasing.  
+The **DynamicCounter** is created for each kontainer instance.
+
 ```kotlin
 // 1. We define our services
 class SingletonCounter {

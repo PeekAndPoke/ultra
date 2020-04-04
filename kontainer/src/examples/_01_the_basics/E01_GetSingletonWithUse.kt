@@ -32,12 +32,12 @@ class E01_GetSingletonWithUse : SimpleExample() {
         // 3. We get the kontainer instance
         val kontainer = blueprint.create()
 
-        // 4. we retrieve by kontainer.use(...)
+        // 4. We retrieve our service by kontainer.use(...)
         kontainer.use(Greeter::class) {
             println("Kontainer.use() says: ${sayHello()}")
         }
 
-        // 5. we retrieve by kontainer.get(...)
+        // 5. We retrieve our service by kontainer.get(...)
         println(
             "Kontainer.get() says: ${kontainer.get(Greeter::class).sayHello()}"
         )
