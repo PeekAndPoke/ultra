@@ -10,20 +10,25 @@
 
 ### Simple Singleton Example
 ```kotlin
-// 1. we create the kontainer blueprint
+// 1. We define a service class
+class Greeter {
+    fun sayHello() = "Hello you!"
+}
+
+// 2. We create a kontainer blueprint
 val blueprint = kontainer {
     singleton(Greeter::class)
 }
 
-// 2. we get the kontainer instance
+// 3. We get the kontainer instance
 val kontainer = blueprint.create()
 
-// 3. we retrieve by kontainer.use(...)
+// 4. we retrieve by kontainer.use(...)
 kontainer.use(Greeter::class) {
     println("Kontainer.use() says: ${sayHello()}")
 }
 
-// 4. we retrieve by kontainer.get(...)
+// 5. we retrieve by kontainer.get(...)
 println(
     "Kontainer.get() says: ${kontainer.get(Greeter::class).sayHello()}"
 )
@@ -36,19 +41,25 @@ Kontainer.get() says: Hello you!
 
 ### Shared Singleton Services
 ```kotlin
-// 1. we create the kontainer blueprint
+// 1. We define our service
+class Counter {
+    private var count = 0
+    fun next() = ++count
+}
+
+// 2. we create the kontainer blueprint
 val blueprint = kontainer {
     singleton(Counter::class)
 }
 
-// 2. We get a kontainer instance and use the singleton
+// 3. We get a kontainer instance and use the singleton
 blueprint.create().let { kontainer ->
     println(
         "Counter: ${kontainer.get(Counter::class).next()}"
     )
 }
 
-// 3. We get a another kontainer instance and use the singleton
+// 4. We get a another kontainer instance and use the singleton
 blueprint.create().let { kontainer ->
     println(
         "Counter: ${kontainer.get(Counter::class).next()}"
@@ -63,13 +74,24 @@ Counter: 2
 
 ### Singletons vs Dynamic Services
 ```kotlin
-// 1. we create the kontainer blueprint
+// 1. We define our services
+class SingletonCounter {
+    private var count = 0
+    fun next() = ++count
+}
+
+class DynamicCounter {
+    private var count = 0
+    fun next() = ++count
+}
+
+// 2. we create the kontainer blueprint
 val blueprint = kontainer {
     singleton(SingletonCounter::class)
     dynamic(DynamicCounter::class)
 }
 
-// 2. We get a kontainer instance and use the singleton
+// 3. We get a kontainer instance and use the singleton
 blueprint.create().let { kontainer ->
 
     println("First kontainer instance:")
@@ -84,7 +106,7 @@ blueprint.create().let { kontainer ->
     }
 }
 
-// 3. We get a another kontainer instance and use the singleton
+// 4. We get a another kontainer instance and use the singleton
 blueprint.create().let { kontainer ->
 
     println("Second kontainer instance:")

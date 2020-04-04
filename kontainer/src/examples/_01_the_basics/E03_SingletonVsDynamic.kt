@@ -6,18 +6,6 @@ import de.peekandpoke.ultra.kontainer.kontainer
 @Suppress("ClassName", "ComplexRedundantLet")
 class E03_SingletonVsDynamic : SimpleExample() {
 
-    class SingletonCounter {
-        private var count = 0
-
-        fun next() = ++count
-    }
-
-    class DynamicCounter {
-        private var count = 0
-
-        fun next() = ++count
-    }
-
     override val title = "Singletons vs Dynamic Services"
 
     override val description = """
@@ -33,13 +21,24 @@ class E03_SingletonVsDynamic : SimpleExample() {
     override fun run() {
         // !BEGIN! //
 
-        // 1. we create the kontainer blueprint
+        // 1. We define our services
+        class SingletonCounter {
+            private var count = 0
+            fun next() = ++count
+        }
+
+        class DynamicCounter {
+            private var count = 0
+            fun next() = ++count
+        }
+
+        // 2. we create the kontainer blueprint
         val blueprint = kontainer {
             singleton(SingletonCounter::class)
             dynamic(DynamicCounter::class)
         }
 
-        // 2. We get a kontainer instance and use the singleton
+        // 3. We get a kontainer instance and use the singleton
         blueprint.create().let { kontainer ->
 
             println("First kontainer instance:")
@@ -54,7 +53,7 @@ class E03_SingletonVsDynamic : SimpleExample() {
             }
         }
 
-        // 3. We get a another kontainer instance and use the singleton
+        // 4. We get a another kontainer instance and use the singleton
         blueprint.create().let { kontainer ->
 
             println("Second kontainer instance:")
