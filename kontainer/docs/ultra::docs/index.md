@@ -1,11 +1,11 @@
 # Examples for ultra::kontainer
 
 ## TOC
-0. The Basics
+* The Basics
 
-    0. [Simple Singleton Example](#Simple Singleton Example)
-    1. [Re-using a singleton service across multiple kontainer instances](#Re-using a singleton service across multiple kontainer instances)
-    2. [Singletons vs Dynamic Services](#Singletons vs Dynamic Services)
+    * [Simple Singleton Example](#Simple Singleton Example)
+    * [Re-using a singleton service across multiple kontainer instances](#Re-using a singleton service across multiple kontainer instances)
+    * [Singletons vs Dynamic Services](#Singletons vs Dynamic Services)
 ## The Basics
 
 ### Simple Singleton Example
