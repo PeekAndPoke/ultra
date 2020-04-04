@@ -97,64 +97,62 @@ This example demonstrates the difference between a singleton and a dynamic servi
 Singleton are instantiated only once. They are then shared across all kontainer instances.  
 Dynamic services are instantiated for each kontainer instance.
 
-You will see that the **SingletonCounter** is always increasing.  
-The **DynamicCounter** is created for each kontainer instance.
+You will see that:  
+Rhe **SingletonCounter** is globally created once and is always increasing.  
+The **DynamicCounter** is created once for each kontainer instance.  
+The **PrototypeCounter** is created every time it is requested from the kontainer.  
 
 ```kotlin
 // 1. We define our services
-class SingletonCounter {
+abstract class Counter {
     private var count = 0
     fun next() = ++count
 }
 
-class DynamicCounter {
-    private var count = 0
-    fun next() = ++count
-}
+class SingletonCounter: Counter()
+class DynamicCounter : Counter()
+class PrototypeCounter: Counter()
 
-// 2. we create the kontainer blueprint
+// 2. We create the kontainer blueprint
 val blueprint = kontainer {
+    // We register a singleton service
     singleton(SingletonCounter::class)
+    // We register a dynamic service
     dynamic(DynamicCounter::class)
+    // We register a prototype service
+    prototype(PrototypeCounter::class)
 }
 
-// 3. We get a kontainer instance and use the services
-blueprint.create().let { kontainer ->
+// Let's create three kontainer instances
+(1..3).forEach { round ->
 
-    println("First kontainer instance:")
+    println("Round #$round")
+
+    val kontainer = blueprint.create()
 
     // We are getting each service multiple times
     repeat(3) {
         val singleton = kontainer.get(SingletonCounter::class).next()
         val dynamic = kontainer.get(DynamicCounter::class).next()
+        val prototype = kontainer.get(PrototypeCounter::class).next()
 
-        println("singleton: $singleton - dynamic $dynamic")
-    }
-}
-
-// 4. We get a another kontainer instance and use the services
-blueprint.create().let { kontainer ->
-
-    println("Second kontainer instance:")
-
-    // We are getting each service multiple times
-    repeat(3) {
-        val singleton = kontainer.get(SingletonCounter::class).next()
-        val dynamic = kontainer.get(DynamicCounter::class).next()
-
-        println("singleton: $singleton - dynamic $dynamic")
+        println("singleton: $singleton - dynamic $dynamic - prototype: $prototype")
     }
 }
 ```
 Will output:
 ```
-First kontainer instance:
-singleton: 1 - dynamic 1
-singleton: 2 - dynamic 2
-singleton: 3 - dynamic 3
-Second kontainer instance:
-singleton: 4 - dynamic 1
-singleton: 5 - dynamic 2
-singleton: 6 - dynamic 3
+Round #1
+singleton: 1 - dynamic 1 - prototype: 1
+singleton: 2 - dynamic 2 - prototype: 1
+singleton: 3 - dynamic 3 - prototype: 1
+Round #2
+singleton: 4 - dynamic 1 - prototype: 1
+singleton: 5 - dynamic 2 - prototype: 1
+singleton: 6 - dynamic 3 - prototype: 1
+Round #3
+singleton: 7 - dynamic 1 - prototype: 1
+singleton: 8 - dynamic 2 - prototype: 1
+singleton: 9 - dynamic 3 - prototype: 1
 ```
 
