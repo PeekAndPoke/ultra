@@ -2,6 +2,10 @@
 
 Kontainer is a multi stage dependency injection mechanism.
 
+## Examples
+
+Code says more than a thousand words. So let's look at the [Examples](docs/ultra::docs/index.md)!
+
 ## What does "multi stage" mean?
 
 To answer this, let's first have a look at how (to our best knowledge) dependency injection

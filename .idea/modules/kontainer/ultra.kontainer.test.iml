@@ -46,7 +46,7 @@
     <output-test url="file://$MODULE_DIR$/../../../kontainer/build/classes/java/test" />
     <exclude-output />
     <content url="file://$MODULE_DIR$/../../../kontainer/src/examples">
-      <sourceFolder url="file://$MODULE_DIR$/../../../kontainer/src/examples/kotlin" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../kontainer/src/examples" isTestSource="true" />
     </content>
     <content url="file://$MODULE_DIR$/../../../kontainer/src/test">
       <sourceFolder url="file://$MODULE_DIR$/../../../kontainer/src/test/kotlin" isTestSource="true" />

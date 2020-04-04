@@ -1,21 +1,21 @@
-package de.peekandpoke.ultra.kontainer.examples
+package de.peekandpoke.ultra.kontainer.examples._01_the_basics
 
-import de.peekandpoke.ultra.common.examples.Example
+import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.kontainer
 
-class Example001 : Example {
+@Suppress("ClassName")
+class E02_GetSingletonWithGet : SimpleExample() {
 
     class Greeter {
         fun sayHello() = "Hello you!"
     }
 
     override val title = """
-        Registering and retrieving a singleton service with kontainer.use(...)
-        
-        Code: ${codeUrl()}
+        Registering and retrieving a singleton service with kontainer.get(...)
     """.trimIndent()
 
     override fun run() {
+        // !BEGIN! //
 
         // 1. we create the kontainer blueprint
         val blueprint = kontainer {
@@ -26,9 +26,11 @@ class Example001 : Example {
         val kontainer = blueprint.create()
 
         // 3. we retrieve and use a service
-        kontainer.use(Greeter::class) {
-            println(sayHello())
-        }
+        println(
+            "The service says: ${kontainer.get(Greeter::class).sayHello()}"
+        )
+
+        // !END! //
     }
 }
 
