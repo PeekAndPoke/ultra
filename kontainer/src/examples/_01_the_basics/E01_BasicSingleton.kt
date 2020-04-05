@@ -4,12 +4,12 @@ import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.kontainer
 
 @Suppress("ClassName")
-class E01_GetSingletonWithUse : SimpleExample() {
+class E01_BasicSingleton : SimpleExample() {
 
     override val title = "Simple Singleton Example"
 
     override val description = """
-        This example show how to register and retrieve a simple singleton service.
+        This example shows how to register and retrieve a simple singleton service.
         
         Services can be retrieved by:
         1. kontainer.get(...)

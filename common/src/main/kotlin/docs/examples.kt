@@ -22,7 +22,10 @@ abstract class SimpleExample : Example {
     }
 
     fun print(message: Any) {
-        builder?.append(message)
+        when (val b = builder) {
+            null -> kotlin.io.print(message)
+            else -> b.append(message)
+        }
     }
 
     fun println() {
@@ -30,7 +33,10 @@ abstract class SimpleExample : Example {
     }
 
     fun println(message: Any) {
-        builder?.appendln(message)
+        when (val b = builder) {
+            null -> kotlin.io.println(message)
+            else -> b.appendln(message)
+        }
     }
 }
 

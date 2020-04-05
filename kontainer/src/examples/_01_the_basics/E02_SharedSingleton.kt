@@ -9,8 +9,8 @@ class E02_SharedSingleton : SimpleExample() {
     override val title = "Shared Singleton Services"
 
     override val description = """
-        This example demonstrates that singleton services are shared across all kontainers, that where
-        created from the same blueprint. 
+        This example shows that singleton services are shared across all kontainers, 
+        that where created from the same blueprint. 
     """.trimIndent()
 
     override fun run() {
@@ -29,16 +29,12 @@ class E02_SharedSingleton : SimpleExample() {
 
         // 3. We get a kontainer instance and use the singleton
         blueprint.create().let { kontainer ->
-            println(
-                "Counter: ${kontainer.get(Counter::class).next()}"
-            )
+            println("Counter: ${kontainer.get(Counter::class).next()}")
         }
 
         // 4. We get a another kontainer instance and use the singleton
         blueprint.create().let { kontainer ->
-            println(
-                "Counter: ${kontainer.get(Counter::class).next()}"
-            )
+            println("Counter: ${kontainer.get(Counter::class).next()}")
         }
 
         // !END! //

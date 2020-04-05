@@ -45,30 +45,33 @@ class ExamplesToDocs internal constructor(
         }
     }
 
+    /**
+     * Generates the table of contents
+     */
     private fun generateToc() {
 
-        fun String.toAnchor() = toLowerCase().toUri().replace(" ", "-")
-
-        builder
-            .appendln("## TOC")
-            .appendln()
+        builder.appendln("## TOC").appendln()
 
         chapters.forEachIndexed { chapterIndex, chapter ->
 
-            builder
-                .appendln("${chapterIndex + 1}. [${chapter.title}](#${chapter.title.toAnchor()})")
+            chapter.title.let {
+                builder.appendln("${chapterIndex + 1}. [${it}](#${it.toAnchor()})").appendln()
+            }
 
             chapter.examples.forEachIndexed { exampleIndex, example ->
 
-                val title = example.title
-
-                builder.appendln("    ${exampleIndex + 1}. [${title}](#${title.toAnchor()})")
+                example.title.let {
+                    builder.appendln("    ${exampleIndex + 1}. [${it}](#${it.toAnchor()})")
+                }
             }
         }
 
         builder.appendln()
     }
 
+    /**
+     * Generates the docs for all examples
+     */
     private fun generateExamples() {
 
         chapters.forEach { chapter ->
@@ -81,26 +84,35 @@ class ExamplesToDocs internal constructor(
 
                 val exampleCode = ExampleCodeExtractor.extract(example, srcDir)
 
-                builder
-                    .appendln("### ${example.title}")
-                    .appendln()
-                    .appendln(example.description)
-                    .appendln()
-                    .appendln("```kotlin")
-                    .appendln(exampleCode ?: "no code available")
-                    .appendln("```")
+                builder.appendln("### ${example.title}").appendln()
+                    .appendln(example.description).appendln()
+
+                val codeLocation = File(srcDir.relativeTo(outputLocation), "${example::class.simpleName}.kt")
+
+                builder.appendln("@see the [runnable example]($codeLocation)").appendln()
+
+                builder.appendKotlinCode(exampleCode ?: "no code available")
 
                 val output = example.runAndRecordOutput()
 
                 if (output.isNotEmpty()) {
-                    builder
-                        .appendln("Will output:")
-                        .appendln("```")
-                        .appendln(output.trim())
-                        .appendln("```")
-                        .appendln()
+                    builder.appendln("Will output:").appendPlainCode(output.trim())
                 }
             }
         }
+    }
+
+    private fun String.toAnchor() = toLowerCase().toUri().replace(" ", "-")
+
+    private fun StringBuilder.appendKotlinCode(code: String) = apply {
+        appendln("```kotlin")
+        appendln(code)
+        appendln("```")
+    }
+
+    private fun StringBuilder.appendPlainCode(code: String) = apply {
+        appendln("```")
+        appendln(code)
+        appendln("```")
     }
 }
