@@ -3,8 +3,8 @@ package de.peekandpoke.ultra.kontainer.examples._01_the_basics
 import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.kontainer
 
-@Suppress("ClassName")
-class E01_BasicSingleton : SimpleExample() {
+@Suppress("ComplexRedundantLet")
+class BasicSingletonExample : SimpleExample() {
 
     override val title = "Simple Singleton Example"
 

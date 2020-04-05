@@ -10,6 +10,9 @@
 2. [Service Injection](#service-injection)
 
     1. [Basic Injection Example](#basic-injection-example)
+    2. [Factory Method Injection](#factory-method-injection)
+    3. [Injecting a singleton into multiple services](#injecting-a-singleton-into-multiple-services)
+    4. [Injecting a prototype into multiple services](#injecting-a-prototype-into-multiple-services)
 
 ## The Basics
 
@@ -21,7 +24,7 @@ Services can be retrieved by:
 1. kontainer.get(...)
 2. kontainer.use(...)
 
-@see the [runnable example](../../src/examples/_01_the_basics/E01_BasicSingleton.kt)
+@see the [runnable example](../../src/examples/_01_the_basics/BasicSingletonExample.kt)
 
 ```kotlin
 // 1. We define a service class
@@ -63,7 +66,7 @@ Kontainer.get() says: Hello you!
 This example shows that singleton services are shared across all kontainers, 
 that where created from the same blueprint. 
 
-@see the [runnable example](../../src/examples/_01_the_basics/E02_SharedSingleton.kt)
+@see the [runnable example](../../src/examples/_01_the_basics/SharedSingletonExample.kt)
 
 ```kotlin
 // 1. We define our service
@@ -105,7 +108,7 @@ The **SingletonCounter** is globally created once and is always increasing.
 The **DynamicCounter** is created once for each kontainer instance.  
 The **PrototypeCounter** is created every time it is requested from the kontainer.  
 
-@see the [runnable example](../../src/examples/_01_the_basics/E03_SingletonVsDynamicVsPrototype.kt)
+@see the [runnable example](../../src/examples/_01_the_basics/SingletonVsDynamicVsPrototypeExample.kt)
 
 ```kotlin
 // 1. We define our services
@@ -129,7 +132,7 @@ val blueprint = kontainer {
 }
 
 // Let's create three kontainer instances
-(1..3).forEach { round ->
+for (round in 1..3) {
 
     println("Round #$round")
 
@@ -166,9 +169,11 @@ singleton: 9 - dynamic 3 - prototype: 1
 
 This example shows how a service can inject another service.
 
-For simplicity there is only constructor injection. Nothing else.
+For simplicity there are two ways of injection:
+1. Constructor injection.
+2. Factory method injection, which we will see next
 
-@see the [runnable example](../../src/examples/_02_injection/E01_BasicInjection.kt)
+@see the [runnable example](../../src/examples/_02_injection/BasicInjectionExample.kt)
 
 ```kotlin
 // 1. We define a service that will be injected
@@ -199,4 +204,139 @@ Will output:
 ```
 Next: 1
 Next: 2
+```
+### Factory Method Injection
+
+Sometimes pure constructor injection is not enough.  
+
+For example when you have service class that expects other parameters that are not known to the kontainer.
+
+Factory methods are available for singletons, dynamics and prototypes from zero up to seven parameters.
+
+**NOTICE:** There is one quirk! The factory methods with zero parameters are: 
+- singleton0 { ... }
+- prototype0 { ... }
+- dynamic0 { ... }
+
+@see the [runnable example](../../src/examples/_02_injection/FactoryMethodInjectionExample.kt)
+
+```kotlin
+// 1. We define a service that will be injected
+class Counter {
+    private var count = 0
+    fun next() = ++count
+}
+
+// 2. We define a service that injects another service in it's constructor.
+//    But this time this service also expects a second parameter that cannot be provided by the kontainer.
+class MyService(private val counter: Counter, private val offset: Int) {
+    fun next() = counter.next() + offset
+}
+
+// 3. We define the kontainer blueprint
+val blueprint = kontainer {
+    // We define the service using a factory method.
+    // Injection is now only done for all parameters of the factory method.
+    singleton { counter: Counter ->
+        MyService(counter, 100)
+    }
+
+    singleton(Counter::class)
+}
+
+// 3. We get the kontainer instance
+val kontainer = blueprint.create()
+
+// 4. We use the service and access the injected service
+val myService = kontainer.get(MyService::class)
+
+println("Next: " + myService.next())
+println("Next: " + myService.next())
+```
+Will output:
+```
+Next: 101
+Next: 102
+```
+### Injecting a singleton into multiple services
+
+This example shows how one singleton service is injected into multiple services.
+
+@see the [runnable example](../../src/examples/_02_injection/InjectSingletonIntoMultipleServicesExample.kt)
+
+```kotlin
+// 1. We define a service that will be injected
+class Counter {
+    private var count = 0
+    fun next() = ++count
+}
+
+// 2. We define two services that inject the counter service
+class One(val counter: Counter)
+class Two(val counter: Counter)
+
+// 3. We define the kontainer blueprint
+val blueprint = kontainer {
+    // defining the injected service as a singleton
+    singleton(Counter::class)
+    // defining the consuming services
+    singleton(One::class)
+    singleton(Two::class)
+}
+
+// 3. We get the kontainer instance
+val kontainer = blueprint.create()
+
+// 4. We use the services and access the injected service
+val one = kontainer.get(One::class)
+val two = kontainer.get(Two::class)
+
+println("One: " + one.counter.next())
+println("Two: " + two.counter.next())
+```
+Will output:
+```
+One: 1
+Two: 2
+```
+### Injecting a prototype into multiple services
+
+This example shows how a prototype service is injected into multiple services.
+
+@see the [runnable example](../../src/examples/_02_injection/InjectPrototypeIntoMultipleServicesExample.kt)
+
+```kotlin
+// 1. We define a service that will be injected
+class Counter {
+    private var count = 0
+    fun next() = ++count
+}
+
+// 2. We define two services that inject the counter service
+class One(val counter: Counter)
+class Two(val counter: Counter)
+
+// 3. We define the kontainer blueprint
+val blueprint = kontainer {
+    // defining the injected service as a prototype
+    prototype(Counter::class)
+    // defining the consuming services
+    singleton(One::class)
+    singleton(Two::class)
+}
+
+// 3. We get the kontainer instance
+val kontainer = blueprint.create()
+
+// 4. We use the services and access the injected service
+val one = kontainer.get(One::class)
+val two = kontainer.get(Two::class)
+
+println("One: " + one.counter.next())
+println("Two: " + two.counter.next())
+```
+Will output:
+```
+One: 1
+Two: 1
 ```

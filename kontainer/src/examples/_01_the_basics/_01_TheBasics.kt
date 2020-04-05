@@ -10,8 +10,8 @@ class _01_TheBasics : ExampleChapter {
     override val packageLocation = "_01_the_basics"
 
     override val examples = listOf(
-        E01_BasicSingleton(),
-        E02_SharedSingleton(),
-        E03_SingletonVsDynamicVsPrototype()
+        BasicSingletonExample(),
+        SharedSingletonExample(),
+        SingletonVsDynamicVsPrototypeExample()
     )
 }

@@ -3,8 +3,8 @@ package de.peekandpoke.ultra.kontainer.examples._01_the_basics
 import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.kontainer
 
-@Suppress("ClassName", "ComplexRedundantLet")
-class E02_SharedSingleton : SimpleExample() {
+@Suppress("ComplexRedundantLet")
+class SharedSingletonExample : SimpleExample() {
 
     override val title = "Shared Singleton Services"
 

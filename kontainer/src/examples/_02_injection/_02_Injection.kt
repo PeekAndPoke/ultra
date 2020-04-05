@@ -10,6 +10,9 @@ class _02_Injection : ExampleChapter {
     override val packageLocation = "_02_injection"
 
     override val examples = listOf(
-        E01_BasicInjection()
+        BasicInjectionExample(),
+        FactoryMethodInjectionExample(),
+        InjectSingletonIntoMultipleServicesExample(),
+        InjectPrototypeIntoMultipleServicesExample()
     )
 }

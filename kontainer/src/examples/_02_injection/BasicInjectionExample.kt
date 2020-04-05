@@ -3,15 +3,16 @@ package de.peekandpoke.ultra.kontainer.examples._02_injection
 import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.kontainer
 
-@Suppress("ClassName")
-class E01_BasicInjection : SimpleExample() {
+class BasicInjectionExample : SimpleExample() {
 
     override val title = "Basic Injection Example"
 
     override val description = """
         This example shows how a service can inject another service.
         
-        For simplicity there is only constructor injection. Nothing else.
+        For simplicity there are two ways of injection:
+        1. Constructor injection.
+        2. Factory method injection, which we will see next
     """.trimIndent()
 
     override fun run() {

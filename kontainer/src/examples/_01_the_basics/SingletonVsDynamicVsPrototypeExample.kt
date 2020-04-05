@@ -3,8 +3,7 @@ package de.peekandpoke.ultra.kontainer.examples._01_the_basics
 import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.kontainer
 
-@Suppress("ClassName", "ComplexRedundantLet")
-class E03_SingletonVsDynamicVsPrototype : SimpleExample() {
+class SingletonVsDynamicVsPrototypeExample : SimpleExample() {
 
     override val title = "Singletons vs Dynamic vs Prototype"
 
