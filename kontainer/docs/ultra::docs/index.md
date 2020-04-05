@@ -13,6 +13,7 @@
     2. [Factory Method Injection](#factory-method-injection)
     3. [Injecting a singleton into multiple services](#injecting-a-singleton-into-multiple-services)
     4. [Injecting a prototype into multiple services](#injecting-a-prototype-into-multiple-services)
+    5. [Injection By SuperType](#injection-by-supertype)
 
 ## The Basics
 
@@ -24,7 +25,7 @@ Services can be retrieved by:
 1. kontainer.get(...)
 2. kontainer.use(...)
 
-@see the [runnable example](../../src/examples/_01_the_basics/BasicSingletonExample.kt)
+(see the full [example](../../src/examples/_01_the_basics/BasicSingletonExample.kt))
 
 ```kotlin
 // 1. We define a service class
@@ -66,7 +67,7 @@ Kontainer.get() says: Hello you!
 This example shows that singleton services are shared across all kontainers, 
 that where created from the same blueprint. 
 
-@see the [runnable example](../../src/examples/_01_the_basics/SharedSingletonExample.kt)
+(see the full [example](../../src/examples/_01_the_basics/SharedSingletonExample.kt))
 
 ```kotlin
 // 1. We define our service
@@ -108,7 +109,7 @@ The **SingletonCounter** is globally created once and is always increasing.
 The **DynamicCounter** is created once for each kontainer instance.  
 The **PrototypeCounter** is created every time it is requested from the kontainer.  
 
-@see the [runnable example](../../src/examples/_01_the_basics/SingletonVsDynamicVsPrototypeExample.kt)
+(see the full [example](../../src/examples/_01_the_basics/SingletonVsDynamicVsPrototypeExample.kt))
 
 ```kotlin
 // 1. We define our services
@@ -173,28 +174,28 @@ For simplicity there are two ways of injection:
 1. Constructor injection.
 2. Factory method injection, which we will see next
 
-@see the [runnable example](../../src/examples/_02_injection/BasicInjectionExample.kt)
+(see the full [example](../../src/examples/_02_injection/BasicInjectionExample.kt))
 
 ```kotlin
-// 1. We define a service that will be injected
+// We define a service that will be injected
 class Counter {
     private var count = 0
     fun next() = ++count
 }
 
-// 2. We define a service that injects another service in it's constructor
+// We define a service that injects another service in it's constructor
 class MyService(val counter: Counter)
 
-// 3. We define the kontainer blueprint
+// We define the kontainer blueprint
 val blueprint = kontainer {
     singleton(MyService::class)
     singleton(Counter::class)
 }
 
-// 3. We get the kontainer instance
+// We get the kontainer instance
 val kontainer = blueprint.create()
 
-// 4. We use the service and access the injected service
+// We use the service and access the injected service
 val myService = kontainer.get(MyService::class)
 
 println("Next: " + myService.counter.next())
@@ -218,22 +219,22 @@ Factory methods are available for singletons, dynamics and prototypes from zero 
 - prototype0 { ... }
 - dynamic0 { ... }
 
-@see the [runnable example](../../src/examples/_02_injection/FactoryMethodInjectionExample.kt)
+(see the full [example](../../src/examples/_02_injection/FactoryMethodInjectionExample.kt))
 
 ```kotlin
-// 1. We define a service that will be injected
+// We define a service that will be injected
 class Counter {
     private var count = 0
     fun next() = ++count
 }
 
-// 2. We define a service that injects another service in it's constructor.
-//    But this time this service also expects a second parameter that cannot be provided by the kontainer.
+// We define a service that injects another service in it's constructor.
+// But this time this service also expects a second parameter that cannot be provided by the kontainer.
 class MyService(private val counter: Counter, private val offset: Int) {
     fun next() = counter.next() + offset
 }
 
-// 3. We define the kontainer blueprint
+// We define the kontainer blueprint
 val blueprint = kontainer {
     // We define the service using a factory method.
     // Injection is now only done for all parameters of the factory method.
@@ -244,10 +245,10 @@ val blueprint = kontainer {
     singleton(Counter::class)
 }
 
-// 3. We get the kontainer instance
+// We get the kontainer instance
 val kontainer = blueprint.create()
 
-// 4. We use the service and access the injected service
+// We use the service
 val myService = kontainer.get(MyService::class)
 
 println("Next: " + myService.next())
@@ -262,7 +263,7 @@ Next: 102
 
 This example shows how one singleton service is injected into multiple services.
 
-@see the [runnable example](../../src/examples/_02_injection/InjectSingletonIntoMultipleServicesExample.kt)
+(see the full [example](../../src/examples/_02_injection/InjectSingletonIntoMultipleServicesExample.kt))
 
 ```kotlin
 // 1. We define a service that will be injected
@@ -303,7 +304,7 @@ Two: 2
 
 This example shows how a prototype service is injected into multiple services.
 
-@see the [runnable example](../../src/examples/_02_injection/InjectPrototypeIntoMultipleServicesExample.kt)
+(see the full [example](../../src/examples/_02_injection/InjectPrototypeIntoMultipleServicesExample.kt))
 
 ```kotlin
 // 1. We define a service that will be injected
@@ -339,4 +340,42 @@ Will output:
 ```
 One: 1
 Two: 1
+```
+### Injection By SuperType
+
+This example shows how a service can be injected by one of its supertypes.
+
+(see the full [example](../../src/examples/_02_injection/InjectionBySuperTypeExample.kt))
+
+```kotlin
+// We define a service that extends or implements a super type
+interface CounterInterface {
+    fun next(): Int
+}
+
+class Counter : CounterInterface {
+    private var count = 0
+    override fun next() = ++count
+}
+
+// We inject a service by it's interface
+class MyService(val counter: CounterInterface)
+
+// We define the kontainer blueprint
+val blueprint = kontainer {
+    singleton(Counter::class)
+    singleton(MyService::class)
+}
+
+// We get the kontainer instance
+val kontainer = blueprint.create()
+
+// We use the service and access the injected service
+val myService = kontainer.get(MyService::class)
+
+println("Next: " + myService.counter.next())
+```
+Will output:
+```
+Next: 1
 ```

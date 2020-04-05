@@ -15,12 +15,16 @@ interface ServiceProvider {
     enum class Type {
         /** Pure singleton services are shared across multiple Kontainer instances */
         Singleton,
+
         /** Prototype service are instantiate for each injection */
         Prototype,
+
         /** Semi Dynamic singletons are not defined as dynamic but inject dynamic services */
         SemiDynamic,
+
         /** Dynamic singletons are explicitly defined as dynamic and live only within a single Kontainer instance */
         Dynamic,
+
         /** Like Dynamic singletons, but these are overriding dynamics while creating a Kontainer from a Blueprint */
         DynamicOverride,
     }
@@ -62,7 +66,10 @@ interface ServiceProvider {
     /**
      * Provides an already existing object as a service
      */
-    data class ForInstance internal constructor(override val type: Type, private val instance: Any) : ServiceProvider {
+    data class ForInstance internal constructor(
+        override val type: Type,
+        private val instance: Any
+    ) : ServiceProvider {
 
         /**
          * The list of created instance always holds the [instance]

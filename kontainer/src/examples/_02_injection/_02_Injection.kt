@@ -13,6 +13,13 @@ class _02_Injection : ExampleChapter {
         BasicInjectionExample(),
         FactoryMethodInjectionExample(),
         InjectSingletonIntoMultipleServicesExample(),
-        InjectPrototypeIntoMultipleServicesExample()
+        InjectPrototypeIntoMultipleServicesExample(),
+        InjectionBySuperTypeExample()
+        // TODO: Inject one base interface
+        // TODO: Inject all by base interface
+        // TODO: Lazy inject on service
+        // TODO: Lazy injection and breaking cyclic dependencies
+        // TODO: Lazy inject all services
+        // TODO: Lazy inject all services with a LookUp
     )
 }

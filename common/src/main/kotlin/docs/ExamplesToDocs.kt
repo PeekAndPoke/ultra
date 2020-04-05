@@ -89,9 +89,12 @@ class ExamplesToDocs internal constructor(
 
                 val codeLocation = File(srcDir.relativeTo(outputLocation), "${example::class.simpleName}.kt")
 
-                builder.appendln("@see the [runnable example]($codeLocation)").appendln()
+                builder.appendln("(see the full [example]($codeLocation))").appendln()
 
-                builder.appendKotlinCode(exampleCode ?: "no code available")
+                when {
+                    exampleCode.isEmpty() -> builder.appendPlainCode("no code available")
+                    else -> builder.appendKotlinCode(exampleCode)
+                }
 
                 val output = example.runAndRecordOutput()
 

@@ -23,19 +23,19 @@ class FactoryMethodInjectionExample : SimpleExample() {
     override fun run() {
         // !BEGIN! //
 
-        // 1. We define a service that will be injected
+        // We define a service that will be injected
         class Counter {
             private var count = 0
             fun next() = ++count
         }
 
-        // 2. We define a service that injects another service in it's constructor.
-        //    But this time this service also expects a second parameter that cannot be provided by the kontainer.
+        // We define a service that injects another service in it's constructor.
+        // But this time this service also expects a second parameter that cannot be provided by the kontainer.
         class MyService(private val counter: Counter, private val offset: Int) {
             fun next() = counter.next() + offset
         }
 
-        // 3. We define the kontainer blueprint
+        // We define the kontainer blueprint
         val blueprint = kontainer {
             // We define the service using a factory method.
             // Injection is now only done for all parameters of the factory method.
@@ -46,10 +46,10 @@ class FactoryMethodInjectionExample : SimpleExample() {
             singleton(Counter::class)
         }
 
-        // 3. We get the kontainer instance
+        // We get the kontainer instance
         val kontainer = blueprint.create()
 
-        // 4. We use the service and access the injected service
+        // We use the service
         val myService = kontainer.get(MyService::class)
 
         println("Next: " + myService.next())
