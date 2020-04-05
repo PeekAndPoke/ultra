@@ -45,7 +45,7 @@ class E03_SingletonVsDynamicVsPrototype : SimpleExample() {
         }
 
         // Let's create three kontainer instances
-        (1..3).forEach { round ->
+        for (round in 1..3) {
 
             println("Round #$round")
 
