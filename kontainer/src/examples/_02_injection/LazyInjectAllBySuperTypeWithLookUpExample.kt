@@ -6,7 +6,7 @@ import de.peekandpoke.ultra.kontainer.kontainer
 
 class LazyInjectAllBySuperTypeWithLookUpExample : SimpleExample() {
 
-    override val title = "Lazily inject all Services By SuperType with a LookUp"
+    override val title = "Lazily inject all Services By SuperType with a Lookup"
 
     override val description = """
         This example shows how to lazily inject all services of a given super type using a lookup.
@@ -38,7 +38,7 @@ class LazyInjectAllBySuperTypeWithLookUpExample : SimpleExample() {
     override fun run() {
         // !BEGIN! //
 
-        // We inject all Repositories into our service
+        // We inject all Repositories into our service as a Lookup
         class MyService(val repos: Lookup<Repository>)
 
         // We define the kontainer blueprint
