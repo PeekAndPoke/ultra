@@ -39,8 +39,8 @@ class LazyInjectAllBySuperTypeExample : SimpleExample() {
         val blueprint = kontainer {
             singleton(MyService::class)
 
-            singleton(UserRepository::class)
-            singleton(OrderRepository::class)
+            dynamic(UserRepository::class)
+            dynamic(OrderRepository::class)
         }
 
         // We get the kontainer instance

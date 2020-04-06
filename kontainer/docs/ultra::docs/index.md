@@ -18,6 +18,7 @@
     7. [Lazy Injection Example](#lazy-injection-example)
     8. [Breaking Cyclic Dependencies with Lazy Injection](#breaking-cyclic-dependencies-with-lazy-injection)
     9. [Lazily inject all Services By SuperType](#lazily-inject-all-services-by-supertype)
+    10. [Lazily inject all Services By SuperType with a LookUp](#lazily-inject-all-services-by-supertype-with-a-lookup)
 
 ## The Basics
 
@@ -483,7 +484,7 @@ We used the lazily injected service: Here I am!
 ```
 ### Breaking Cyclic Dependencies with Lazy Injection
 
-In some cases we have service that need to injected each other.
+In some cases we have services that need to injected each other.
  
 This cyclic dependency can be broken with lazy injection. 
 
@@ -550,8 +551,8 @@ class MyService(val repos: Lazy<List<Repository>>)
 val blueprint = kontainer {
     singleton(MyService::class)
 
-    singleton(UserRepository::class)
-    singleton(OrderRepository::class)
+    dynamic(UserRepository::class)
+    dynamic(OrderRepository::class)
 }
 
 // We get the kontainer instance
@@ -569,4 +570,70 @@ Will output:
 ```
 users
 orders
+```
+### Lazily inject all Services By SuperType with a LookUp
+
+This example shows how to lazily inject all services of a given super type using a lookup.
+
+What is this good for? 
+
+By using a lazy lookup we can inject many services without instantiating them.  
+We can get individual services from the LookUp by their class.
+
+(see the full [example](../../src/examples/_02_injection/LazyInjectAllBySuperTypeWithLookUpExample.kt))
+
+```kotlin
+// We define an interface for all repositories
+interface Repository {
+    val name: String
+}
+
+// We create some implementations
+class UserRepository : Repository {
+    override val name = "users"
+}
+
+class OrderRepository : Repository {
+    override val name = "orders"
+}
+
+// We inject all Repositories into our service
+class MyService(val repos: Lookup<Repository>)
+
+// We define the kontainer blueprint
+val blueprint = kontainer {
+    singleton(MyService::class)
+
+    dynamic(UserRepository::class)
+    dynamic(OrderRepository::class)
+}
+
+// We get the kontainer instance
+val kontainer = blueprint.create()
+
+// We use the service
+val myService = kontainer.get(MyService::class)
+
+// UserRepository is not yet instantiated
+println("# instance of UserRepository ${kontainer.getProvider(UserRepository::class).instances.size}")
+// We get is from the Lookup
+println(myService.repos.get(UserRepository::class).name)
+// It is now instantiated
+println("# instance of UserRepository ${kontainer.getProvider(UserRepository::class).instances.size}")
+
+// OrderRepository is not yet instantiated
+println("# instance of OrderRepository ${kontainer.getProvider(OrderRepository::class).instances.size}")
+// We get is from the Lookup
+println(myService.repos.get(OrderRepository::class).name)
+// It is now instantiated
+println("# instance of OrderRepository ${kontainer.getProvider(OrderRepository::class).instances.size}")
+```
+Will output:
+```
+# instance of UserRepository 0
+users
+# instance of UserRepository 1
+# instance of OrderRepository 0
+orders
+# instance of OrderRepository 1
 ```

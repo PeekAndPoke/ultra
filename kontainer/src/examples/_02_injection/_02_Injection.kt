@@ -18,8 +18,7 @@ class _02_Injection : ExampleChapter {
         InjectAllBySuperTypeExample(),
         LazyInjectionExample(),
         LazyInjectionCycleBreakerExample(),
-        LazyInjectAllBySuperTypeExample()
-        // TODO: Lazy injection and breaking cyclic dependencies
-        // TODO: Lazy inject all services with a LookUp
+        LazyInjectAllBySuperTypeExample(),
+        LazyInjectAllBySuperTypeWithLookUpExample()
     )
 }

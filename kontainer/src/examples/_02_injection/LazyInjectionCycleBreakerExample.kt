@@ -8,7 +8,7 @@ class LazyInjectionCycleBreakerExample : SimpleExample() {
     override val title = "Breaking Cyclic Dependencies with Lazy Injection"
 
     override val description = """
-        In some cases we have service that need to injected each other.
+        In some cases we have services that need to injected each other.
          
         This cyclic dependency can be broken with lazy injection. 
     """.trimIndent()
