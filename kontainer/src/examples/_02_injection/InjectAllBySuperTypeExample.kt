@@ -8,11 +8,12 @@ class InjectAllBySuperTypeExample : SimpleExample() {
     override val title = "Injection of all Services By SuperType"
 
     override val description = """
-        This example shows how to inject all services that implement or extends a given super type.
+        This example shows how to inject all services that implement or extend a given super type.
         
-        This is very useful when we design systems that can be extended.
+        This is very useful when we design systems for extensibility.
         
-        An example can be that we have a Database service that knows about all Repositories.
+        For Example:  
+        Let's say we have a Database service that injects all registered Repositories.
         Repositories can then even by added by code that is not maintained by us. 
     """.trimIndent()
 
@@ -37,7 +38,7 @@ class InjectAllBySuperTypeExample : SimpleExample() {
     override fun run() {
         // !BEGIN! //
 
-        // We inject a all Repositories into our service
+        // We inject all Repositories into our service
         class MyService(val repos: List<Repository>)
 
         // We define the kontainer blueprint
@@ -51,9 +52,10 @@ class InjectAllBySuperTypeExample : SimpleExample() {
         // We get the kontainer instance
         val kontainer = blueprint.create()
 
-        // We use the service and access the injected service
+        // We use the service
         val myService = kontainer.get(MyService::class)
 
+        // We get all injected Repos
         myService.repos.forEach {
             println(it.name)
         }
