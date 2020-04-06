@@ -18,7 +18,7 @@
     7. [Lazy Injection Example](#lazy-injection-example)
     8. [Breaking Cyclic Dependencies with Lazy Injection](#breaking-cyclic-dependencies-with-lazy-injection)
     9. [Lazily inject all Services By SuperType](#lazily-inject-all-services-by-supertype)
-    10. [Lazily inject all Services By SuperType with a LookUp](#lazily-inject-all-services-by-supertype-with-a-lookup)
+    10. [Lazily inject all Services By SuperType with a Lookup](#lazily-inject-all-services-by-supertype-with-a-lookup)
 
 ## The Basics
 
@@ -571,7 +571,7 @@ Will output:
 users
 orders
 ```
-### Lazily inject all Services By SuperType with a LookUp
+### Lazily inject all Services By SuperType with a Lookup
 
 This example shows how to lazily inject all services of a given super type using a lookup.
 
@@ -597,7 +597,7 @@ class OrderRepository : Repository {
     override val name = "orders"
 }
 
-// We inject all Repositories into our service
+// We inject all Repositories into our service as a Lookup
 class MyService(val repos: Lookup<Repository>)
 
 // We define the kontainer blueprint
@@ -617,23 +617,23 @@ val myService = kontainer.get(MyService::class)
 // UserRepository is not yet instantiated
 println("# instances of UserRepository ${kontainer.getProvider(UserRepository::class).instances.size}")
 // We get is from the Lookup
-println(myService.repos.get(UserRepository::class).name)
+println("Getting it from the Lookup: " + myService.repos.get(UserRepository::class).name)
 // It is now instantiated
 println("# instances of UserRepository ${kontainer.getProvider(UserRepository::class).instances.size}")
 
 // OrderRepository is not yet instantiated
 println("# instances of OrderRepository ${kontainer.getProvider(OrderRepository::class).instances.size}")
 // We get is from the Lookup
-println(myService.repos.get(OrderRepository::class).name)
+println("Getting it from the Lookup: " + myService.repos.get(OrderRepository::class).name)
 // It is now instantiated
 println("# instances of OrderRepository ${kontainer.getProvider(OrderRepository::class).instances.size}")
 ```
 Will output:
 ```
 # instances of UserRepository 0
-users
+Getting it from the Lookup: users
 # instances of UserRepository 1
 # instances of OrderRepository 0
-orders
+Getting it from the Lookup: orders
 # instances of OrderRepository 1
 ```

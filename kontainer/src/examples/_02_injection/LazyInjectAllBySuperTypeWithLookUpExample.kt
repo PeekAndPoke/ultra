@@ -58,14 +58,14 @@ class LazyInjectAllBySuperTypeWithLookUpExample : SimpleExample() {
         // UserRepository is not yet instantiated
         println("# instances of UserRepository ${kontainer.getProvider(UserRepository::class).instances.size}")
         // We get is from the Lookup
-        println(myService.repos.get(UserRepository::class).name)
+        println("Getting it from the Lookup: " + myService.repos.get(UserRepository::class).name)
         // It is now instantiated
         println("# instances of UserRepository ${kontainer.getProvider(UserRepository::class).instances.size}")
 
         // OrderRepository is not yet instantiated
         println("# instances of OrderRepository ${kontainer.getProvider(OrderRepository::class).instances.size}")
         // We get is from the Lookup
-        println(myService.repos.get(OrderRepository::class).name)
+        println("Getting it from the Lookup: " + myService.repos.get(OrderRepository::class).name)
         // It is now instantiated
         println("# instances of OrderRepository ${kontainer.getProvider(OrderRepository::class).instances.size}")
 
