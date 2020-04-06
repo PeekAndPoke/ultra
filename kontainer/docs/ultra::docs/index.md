@@ -615,25 +615,25 @@ val kontainer = blueprint.create()
 val myService = kontainer.get(MyService::class)
 
 // UserRepository is not yet instantiated
-println("# instance of UserRepository ${kontainer.getProvider(UserRepository::class).instances.size}")
+println("# instances of UserRepository ${kontainer.getProvider(UserRepository::class).instances.size}")
 // We get is from the Lookup
 println(myService.repos.get(UserRepository::class).name)
 // It is now instantiated
-println("# instance of UserRepository ${kontainer.getProvider(UserRepository::class).instances.size}")
+println("# instances of UserRepository ${kontainer.getProvider(UserRepository::class).instances.size}")
 
 // OrderRepository is not yet instantiated
-println("# instance of OrderRepository ${kontainer.getProvider(OrderRepository::class).instances.size}")
+println("# instances of OrderRepository ${kontainer.getProvider(OrderRepository::class).instances.size}")
 // We get is from the Lookup
 println(myService.repos.get(OrderRepository::class).name)
 // It is now instantiated
-println("# instance of OrderRepository ${kontainer.getProvider(OrderRepository::class).instances.size}")
+println("# instances of OrderRepository ${kontainer.getProvider(OrderRepository::class).instances.size}")
 ```
 Will output:
 ```
-# instance of UserRepository 0
+# instances of UserRepository 0
 users
-# instance of UserRepository 1
-# instance of OrderRepository 0
+# instances of UserRepository 1
+# instances of OrderRepository 0
 orders
-# instance of OrderRepository 1
+# instances of OrderRepository 1
 ```
