@@ -15,6 +15,7 @@ val chapters = listOf(
     _01_TheBasics(),
     _02_Injection()
     // TODO: kontainer modules
+    // TODO: definition order / overwriting services
     // TODO: dynamic promotion / preventing degradation
     // TODO: meta information / debug
     // TODO: advanced topics / inject Kontainer, Blueprint, InjectionContext

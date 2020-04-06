@@ -16,6 +16,8 @@
     5. [Injection By SuperType](#injection-by-supertype)
     6. [Injection of all Services By SuperType](#injection-of-all-services-by-supertype)
     7. [Lazy Injection Example](#lazy-injection-example)
+    8. [Breaking Cyclic Dependencies with Lazy Injection](#breaking-cyclic-dependencies-with-lazy-injection)
+    9. [Lazily inject all Services By SuperType](#lazily-inject-all-services-by-supertype)
 
 ## The Basics
 
@@ -383,11 +385,12 @@ Next: 1
 ```
 ### Injection of all Services By SuperType
 
-This example shows how to inject all services that implement or extends a given super type.
+This example shows how to inject all services that implement or extend a given super type.
 
-This is very useful when we design systems that can be extended.
+This is very useful when we design systems for extensibility.
 
-An example can be that we have a Database service that knows about all Repositories.
+For Example:  
+Let's say we have a Database service that injects all registered Repositories.
 Repositories can then even by added by code that is not maintained by us. 
 
 (see the full [example](../../src/examples/_02_injection/InjectAllBySuperTypeExample.kt))
@@ -407,7 +410,7 @@ class OrderRepository : Repository {
     override val name = "orders"
 }
 
-// We inject a all Repositories into our service
+// We inject all Repositories into our service
 class MyService(val repos: List<Repository>)
 
 // We define the kontainer blueprint
@@ -421,9 +424,10 @@ val blueprint = kontainer {
 // We get the kontainer instance
 val kontainer = blueprint.create()
 
-// We use the service and access the injected service
+// We use the service
 val myService = kontainer.get(MyService::class)
 
+// We get all injected Repos
 myService.repos.forEach {
     println(it.name)
 }
@@ -476,4 +480,93 @@ We got MyService from the kontainer
 # instances of the LazilyInjected:   0
 We used the lazily injected service: Here I am!
 # instances of the LazilyInjected:   1
+```
+### Breaking Cyclic Dependencies with Lazy Injection
+
+In some cases we have service that need to injected each other.
+ 
+This cyclic dependency can be broken with lazy injection. 
+
+(see the full [example](../../src/examples/_02_injection/LazyInjectionCycleBreakerExample.kt))
+
+```kotlin
+// We define two services that inject each other
+class ServiceOne(private val two: ServiceTwo) {
+    val name = "one"
+    fun sayHello() = "I am ServiceOne and I know '${two.name}'"
+}
+
+class ServiceTwo(private val one: Lazy<ServiceOne>) {
+    val name = "two"
+    fun sayHello() = "I am ServiceTwo and I know '${one.value.name}'"
+}
+
+// We define the kontainer blueprint
+val blueprint = kontainer {
+    singleton(ServiceOne::class)
+    singleton(ServiceTwo::class)
+}
+
+// We get the kontainer instance
+val kontainer = blueprint.create()
+
+// We use both services
+val one = kontainer.get(ServiceOne::class)
+val two = kontainer.get(ServiceOne::class)
+
+println(one.sayHello())
+println(two.sayHello())
+```
+Will output:
+```
+I am ServiceOne and I know 'two'
+I am ServiceOne and I know 'two'
+```
+### Lazily inject all Services By SuperType
+
+This example shows how to lazily inject all services of a given super type.
+
+(see the full [example](../../src/examples/_02_injection/LazyInjectAllBySuperTypeExample.kt))
+
+```kotlin
+// We define an interface for all repositories
+interface Repository {
+    val name: String
+}
+
+// We create some implementations
+class UserRepository : Repository {
+    override val name = "users"
+}
+
+class OrderRepository : Repository {
+    override val name = "orders"
+}
+
+// We inject all Repositories into our service
+class MyService(val repos: Lazy<List<Repository>>)
+
+// We define the kontainer blueprint
+val blueprint = kontainer {
+    singleton(MyService::class)
+
+    singleton(UserRepository::class)
+    singleton(OrderRepository::class)
+}
+
+// We get the kontainer instance
+val kontainer = blueprint.create()
+
+// We use the service
+val myService = kontainer.get(MyService::class)
+
+// We get all injected Repos
+myService.repos.value.forEach {
+    println(it.name)
+}
+```
+Will output:
+```
+users
+orders
 ```
