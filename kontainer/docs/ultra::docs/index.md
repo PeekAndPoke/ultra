@@ -512,7 +512,7 @@ val kontainer = blueprint.create()
 
 // We use both services
 val one = kontainer.get(ServiceOne::class)
-val two = kontainer.get(ServiceOne::class)
+val two = kontainer.get(ServiceTwo::class)
 
 println(one.sayHello())
 println(two.sayHello())
@@ -520,7 +520,7 @@ println(two.sayHello())
 Will output:
 ```
 I am ServiceOne and I know 'two'
-I am ServiceOne and I know 'two'
+I am ServiceTwo and I know 'one'
 ```
 ### Lazily inject all Services By SuperType
 

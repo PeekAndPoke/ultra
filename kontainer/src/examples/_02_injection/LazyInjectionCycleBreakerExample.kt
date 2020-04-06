@@ -43,7 +43,7 @@ class LazyInjectionCycleBreakerExample : SimpleExample() {
 
         // We use both services
         val one = kontainer.get(ServiceOne::class)
-        val two = kontainer.get(ServiceOne::class)
+        val two = kontainer.get(ServiceTwo::class)
 
         println(one.sayHello())
         println(two.sayHello())
