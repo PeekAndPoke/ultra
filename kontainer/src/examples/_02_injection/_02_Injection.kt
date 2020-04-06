@@ -14,7 +14,8 @@ class _02_Injection : ExampleChapter {
         FactoryMethodInjectionExample(),
         InjectSingletonIntoMultipleServicesExample(),
         InjectPrototypeIntoMultipleServicesExample(),
-        InjectionBySuperTypeExample(),
+        InjectBySuperTypeExample(),
+        InjectAllBySuperTypeExample(),
         LazyInjectionExample()
         // TODO: Inject one base interface
         // TODO: Inject all by base interface

@@ -3,7 +3,7 @@ package de.peekandpoke.ultra.kontainer.examples._02_injection
 import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.kontainer
 
-class InjectionBySuperTypeExample : SimpleExample() {
+class InjectBySuperTypeExample : SimpleExample() {
 
     override val title = "Injection By SuperType"
 
