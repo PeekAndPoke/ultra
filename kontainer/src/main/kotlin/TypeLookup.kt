@@ -19,6 +19,7 @@ abstract class TypeLookup {
      */
     fun getDistinctFor(type: KClass<*>): KClass<*> {
 
+        // TODO: we should have the cache layer at this point and not in the subsclasses
         val candidates = getAllCandidatesFor(type)
 
         if (candidates.isEmpty()) {

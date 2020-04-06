@@ -234,7 +234,9 @@ interface ParameterProvider {
         /**
          * Provides the service wrapped as a Lazy
          */
-        override fun provide(context: InjectionContext): Lazy<Any?> = lazy { context.getOrNull(paramCls) }
+        override fun provide(context: InjectionContext): Lazy<Any?> = lazy {
+            context.getOrNull(paramCls)
+        }
 
         /**
          * Validates if the service can be provided by the container

@@ -14,6 +14,7 @@
     3. [Injecting a singleton into multiple services](#injecting-a-singleton-into-multiple-services)
     4. [Injecting a prototype into multiple services](#injecting-a-prototype-into-multiple-services)
     5. [Injection By SuperType](#injection-by-supertype)
+    6. [Lazy Injection Example](#lazy-injection-example)
 
 ## The Basics
 
@@ -378,4 +379,48 @@ println("Next: " + myService.counter.next())
 Will output:
 ```
 Next: 1
+```
+### Lazy Injection Example
+
+This example shows how a to lazily inject a service.
+
+This means that the injected service will only be instantiated when it used for the first time. 
+
+(see the full [example](../../src/examples/_02_injection/LazyInjectionExample.kt))
+
+```kotlin
+// We define a service that will be injected
+class LazilyInjected {
+    fun sayHello() = "Here I am!"
+}
+
+// We define a service that lazily injects another service in it's constructor
+class MyService(private val lazy: Lazy<LazilyInjected>) {
+    fun sayHello() = lazy.value.sayHello()
+}
+
+// We define the kontainer blueprint
+val blueprint = kontainer {
+    singleton(MyService::class)
+    singleton(LazilyInjected::class)
+}
+
+// We get the kontainer instance
+val kontainer = blueprint.create()
+
+// We use the service and access the injected service
+val myService = kontainer.get(MyService::class)
+
+println("We got MyService from the kontainer")
+println("# instances of the LazilyInjected:   ${kontainer.getProvider(LazilyInjected::class).instances.size}")
+
+println("We used the lazily injected service: ${myService.sayHello()}")
+println("# instances of the LazilyInjected:   ${kontainer.getProvider(LazilyInjected::class).instances.size}")
+```
+Will output:
+```
+We got MyService from the kontainer
+# instances of the LazilyInjected:   0
+We used the lazily injected service: Here I am!
+# instances of the LazilyInjected:   1
 ```

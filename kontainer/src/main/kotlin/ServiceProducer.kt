@@ -2,6 +2,7 @@ package de.peekandpoke.ultra.kontainer
 
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
+import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.reflect
 
@@ -45,8 +46,17 @@ class ServiceProducer internal constructor(
                 throw InvalidClassProvided("A service cannot be an interface or abstract class")
             }
 
-            return ServiceProducer(cls.primaryConstructor!!.parameters) { _, params ->
-                cls.primaryConstructor!!.call(*params)
+            val ctor = cls.primaryConstructor!!
+            val ctorParams = ctor.parameters
+
+            return when {
+                ctorParams.isEmpty() -> ServiceProducer(ctorParams) { _, _ ->
+                    cls.createInstance()
+                }
+
+                else -> ServiceProducer(ctor.parameters) { _, params ->
+                    ctor.call(*params)
+                }
             }
         }
 
