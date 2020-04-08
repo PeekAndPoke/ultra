@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.kontainer.examples._02_injection
+package de.peekandpoke.ultra.kontainer.examples._02_injecting_services
 
 import de.peekandpoke.ultra.common.Lookup
 import de.peekandpoke.ultra.common.docs.SimpleExample

@@ -64,9 +64,9 @@ class ExamplesToDocs internal constructor(
                     builder.appendln("    ${exampleIndex + 1}. [${it}](#${it.toAnchor()})")
                 }
             }
-        }
 
-        builder.appendln()
+            builder.appendln()
+        }
     }
 
     /**

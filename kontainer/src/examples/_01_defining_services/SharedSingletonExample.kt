@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.kontainer.examples._01_the_basics
+package de.peekandpoke.ultra.kontainer.examples._01_defining_services
 
 import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.kontainer
@@ -6,7 +6,7 @@ import de.peekandpoke.ultra.kontainer.kontainer
 @Suppress("ComplexRedundantLet")
 class SharedSingletonExample : SimpleExample() {
 
-    override val title = "Shared Singleton Services"
+    override val title = "Singleton are shared"
 
     override val description = """
         This example shows that singleton services are shared across all kontainers, 

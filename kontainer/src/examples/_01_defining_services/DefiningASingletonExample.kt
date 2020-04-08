@@ -1,15 +1,18 @@
-package de.peekandpoke.ultra.kontainer.examples._01_the_basics
+package de.peekandpoke.ultra.kontainer.examples._01_defining_services
 
 import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.kontainer
 
 @Suppress("ComplexRedundantLet")
-class BasicSingletonExample : SimpleExample() {
+class DefiningASingletonExample : SimpleExample() {
 
-    override val title = "Simple Singleton Example"
+    override val title = "Defining a Singleton service"
 
     override val description = """
         This example shows how to register and retrieve a simple singleton service.
+        
+        Singleton services are created only once. They are shared across all kontainer instances that
+        are created from the same kontainer blueprint.
         
         Services can be retrieved by:
         1. kontainer.get(...)

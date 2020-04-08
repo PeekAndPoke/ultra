@@ -1,14 +1,14 @@
-package de.peekandpoke.ultra.kontainer.examples._01_the_basics
+package de.peekandpoke.ultra.kontainer.examples._01_defining_services
 
 import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.kontainer
 
 class SingletonVsDynamicVsPrototypeExample : SimpleExample() {
 
-    override val title = "Singletons vs Dynamic vs Prototype"
+    override val title = "Singletons vs Dynamics vs Prototypes"
 
     override val description = """
-        This example shows the difference between a **singleton**, a **dynamic** and a **prototype** service.
+        This example shows the difference between a **Singleton**, a **Dynamic** and a **Prototype** service.
 
         Singleton are instantiated only once. They are then shared across all kontainer instances.  
         Dynamic services are instantiated for each kontainer instance.

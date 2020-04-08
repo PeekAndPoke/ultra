@@ -2,11 +2,15 @@
 
 ## TOC
 
-1. [The Basics](#the-basics)
+1. [Defining Services](#defining-services)
 
-    1. [Simple Singleton Example](#simple-singleton-example)
-    2. [Shared Singleton Services](#shared-singleton-services)
-    3. [Singletons vs Dynamic vs Prototype](#singletons-vs-dynamic-vs-prototype)
+    1. [Defining a Singleton service](#defining-a-singleton-service)
+    2. [Defining a Dynamic service](#defining-a-dynamic-service)
+    3. [Defining a Prototype service](#defining-a-prototype-service)
+    4. [Defining an existing object as a Singleton service](#defining-an-existing-object-as-a-singleton-service)
+    5. [Singleton are shared](#singleton-are-shared)
+    6. [Singletons vs Dynamics vs Prototypes](#singletons-vs-dynamics-vs-prototypes)
+
 2. [Service Injection](#service-injection)
 
     1. [Basic Injection Example](#basic-injection-example)
@@ -20,17 +24,20 @@
     9. [Lazily inject all Services By SuperType](#lazily-inject-all-services-by-supertype)
     10. [Lazily inject all Services By SuperType with a Lookup](#lazily-inject-all-services-by-supertype-with-a-lookup)
 
-## The Basics
+## Defining Services
 
-### Simple Singleton Example
+### Defining a Singleton service
 
 This example shows how to register and retrieve a simple singleton service.
+
+Singleton services are created only once. They are shared across all kontainer instances that
+are created from the same kontainer blueprint.
 
 Services can be retrieved by:
 1. kontainer.get(...)
 2. kontainer.use(...)
 
-(see the full [example](../../src/examples/_01_the_basics/BasicSingletonExample.kt))
+(see the full [example](../../src/examples/_01_defining_services/DefiningASingletonExample.kt))
 
 ```kotlin
 // 1. We define a service class
@@ -67,12 +74,108 @@ Will output:
 Kontainer.use() says: Hello you!
 Kontainer.get() says: Hello you!
 ```
-### Shared Singleton Services
+### Defining a Dynamic service
+
+This example shows how to register and retrieve a dynamic service.
+
+Dynamic services are somewhere between singletons and prototypes.  
+They are instantiated once for each kontainer instances.
+
+(see the full [example](../../src/examples/_01_defining_services/DefiningADynamicExample.kt))
+
+```kotlin
+// 1. We define a service class
+class Greeter {
+    fun sayHello() = "Hello you!"
+}
+
+// 2. We create a kontainer blueprint
+val blueprint = kontainer {
+    dynamic(Greeter::class)
+}
+
+// 3. We get the kontainer instance
+val kontainer = blueprint.create()
+
+// 4. We can retrieve our service by kontainer.use(...).
+//    And we will have the service as "this" inside of the closure.
+kontainer.use(Greeter::class) {
+    println("Kontainer.use() says: ${sayHello()}")
+}
+```
+Will output:
+```
+Kontainer.use() says: Hello you!
+```
+### Defining a Prototype service
+
+This example shows how to register and retrieve a prototype service.
+
+Prototype services create a new instance whenever they are requested from the kontainer.  
+Be it through direct retrieval from the kontainer or through injection.
+
+(see the full [example](../../src/examples/_01_defining_services/DefiningAPrototypeExample.kt))
+
+```kotlin
+// 1. We define a service class
+class Greeter {
+    fun sayHello() = "Hello you!"
+}
+
+// 2. We create a kontainer blueprint
+val blueprint = kontainer {
+    prototype(Greeter::class)
+}
+
+// 3. We get the kontainer instance
+val kontainer = blueprint.create()
+
+// 4. We can retrieve our service by kontainer.use(...).
+//    And we will have the service as "this" inside of the closure.
+kontainer.use(Greeter::class) {
+    println("Kontainer.use() says: ${sayHello()}")
+}
+```
+Will output:
+```
+Kontainer.use() says: Hello you!
+```
+### Defining an existing object as a Singleton service
+
+This example shows how to register an existing object as a singleton service.
+
+(see the full [example](../../src/examples/_01_defining_services/DefiningAnExistingInstanceExample.kt))
+
+```kotlin
+// 1. Let's say we have some existing object
+object Greeter {
+    fun sayHello() = "Hello you!"
+}
+
+// 2. We create a kontainer blueprint
+val blueprint = kontainer {
+    instance(Greeter)
+}
+
+// 3. We get the kontainer instance
+val kontainer = blueprint.create()
+
+// 4. We can retrieve our service by kontainer.use(...).
+//    And we will have the service as "this" inside of the closure.
+kontainer.use(Greeter::class) {
+    println("Kontainer.use() says: ${sayHello()}")
+}
+```
+Will output:
+```
+Kontainer.use() says: Hello you!
+```
+### Singleton are shared
 
 This example shows that singleton services are shared across all kontainers, 
 that where created from the same blueprint. 
 
-(see the full [example](../../src/examples/_01_the_basics/SharedSingletonExample.kt))
+(see the full [example](../../src/examples/_01_defining_services/SharedSingletonExample.kt))
 
 ```kotlin
 // 1. We define our service
@@ -101,9 +204,9 @@ Will output:
 Counter: 1
 Counter: 2
 ```
-### Singletons vs Dynamic vs Prototype
+### Singletons vs Dynamics vs Prototypes
 
-This example shows the difference between a **singleton**, a **dynamic** and a **prototype** service.
+This example shows the difference between a **Singleton**, a **Dynamic** and a **Prototype** service.
 
 Singleton are instantiated only once. They are then shared across all kontainer instances.  
 Dynamic services are instantiated for each kontainer instance.
@@ -114,7 +217,7 @@ The **SingletonCounter** is globally created once and is always increasing.
 The **DynamicCounter** is created once for each kontainer instance.  
 The **PrototypeCounter** is created every time it is requested from the kontainer.  
 
-(see the full [example](../../src/examples/_01_the_basics/SingletonVsDynamicVsPrototypeExample.kt))
+(see the full [example](../../src/examples/_01_defining_services/SingletonVsDynamicVsPrototypeExample.kt))
 
 ```kotlin
 // 1. We define our services
@@ -179,7 +282,7 @@ For simplicity there are two ways of injection:
 1. Constructor injection.
 2. Factory method injection, which we will see next
 
-(see the full [example](../../src/examples/_02_injection/BasicInjectionExample.kt))
+(see the full [example](../../src/examples/_02_injecting_services/BasicInjectionExample.kt))
 
 ```kotlin
 // We define a service that will be injected
@@ -224,7 +327,7 @@ Factory methods are available for singletons, dynamics and prototypes from zero 
 - prototype0 { ... }
 - dynamic0 { ... }
 
-(see the full [example](../../src/examples/_02_injection/FactoryMethodInjectionExample.kt))
+(see the full [example](../../src/examples/_02_injecting_services/FactoryMethodInjectionExample.kt))
 
 ```kotlin
 // We define a service that will be injected
@@ -268,7 +371,7 @@ Next: 102
 
 This example shows how one singleton service is injected into multiple services.
 
-(see the full [example](../../src/examples/_02_injection/InjectSingletonIntoMultipleServicesExample.kt))
+(see the full [example](../../src/examples/_02_injecting_services/InjectSingletonIntoMultipleServicesExample.kt))
 
 ```kotlin
 // 1. We define a service that will be injected
@@ -309,7 +412,7 @@ Two: 2
 
 This example shows how a prototype service is injected into multiple services.
 
-(see the full [example](../../src/examples/_02_injection/InjectPrototypeIntoMultipleServicesExample.kt))
+(see the full [example](../../src/examples/_02_injecting_services/InjectPrototypeIntoMultipleServicesExample.kt))
 
 ```kotlin
 // 1. We define a service that will be injected
@@ -350,7 +453,7 @@ Two: 1
 
 This example shows how a service can be injected by one of its supertypes.
 
-(see the full [example](../../src/examples/_02_injection/InjectBySuperTypeExample.kt))
+(see the full [example](../../src/examples/_02_injecting_services/InjectBySuperTypeExample.kt))
 
 ```kotlin
 // We define a service that extends or implements a super type
@@ -394,7 +497,7 @@ For Example:
 Let's say we have a Database service that injects all registered Repositories.
 Repositories can then even by added by code that is not maintained by us. 
 
-(see the full [example](../../src/examples/_02_injection/InjectAllBySuperTypeExample.kt))
+(see the full [example](../../src/examples/_02_injecting_services/InjectAllBySuperTypeExample.kt))
 
 ```kotlin
 // We define an interface for all repositories
@@ -444,7 +547,7 @@ This example shows how a to lazily inject a service.
 
 This means that the injected service will only be instantiated when it used for the first time. 
 
-(see the full [example](../../src/examples/_02_injection/LazyInjectionExample.kt))
+(see the full [example](../../src/examples/_02_injecting_services/LazyInjectionExample.kt))
 
 ```kotlin
 // We define a service that will be injected
@@ -488,7 +591,7 @@ In some cases we have services that need to injected each other.
  
 This cyclic dependency can be broken with lazy injection. 
 
-(see the full [example](../../src/examples/_02_injection/LazyInjectionCycleBreakerExample.kt))
+(see the full [example](../../src/examples/_02_injecting_services/LazyInjectionCycleBreakerExample.kt))
 
 ```kotlin
 // We define two services that inject each other
@@ -527,7 +630,7 @@ I am ServiceTwo and I know 'one'
 
 This example shows how to lazily inject all services of a given super type.
 
-(see the full [example](../../src/examples/_02_injection/LazyInjectAllBySuperTypeExample.kt))
+(see the full [example](../../src/examples/_02_injecting_services/LazyInjectAllBySuperTypeExample.kt))
 
 ```kotlin
 // We define an interface for all repositories
@@ -580,7 +683,7 @@ What is this good for?
 By using a lazy lookup we can inject many services without instantiating them.  
 We can get individual services from the LookUp by their class.
 
-(see the full [example](../../src/examples/_02_injection/LazyInjectAllBySuperTypeWithLookUpExample.kt))
+(see the full [example](../../src/examples/_02_injecting_services/LazyInjectAllBySuperTypeWithLookUpExample.kt))
 
 ```kotlin
 // We define an interface for all repositories
