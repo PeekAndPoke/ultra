@@ -6,11 +6,11 @@ import de.peekandpoke.ultra.kontainer.kontainer
 @Suppress("ComplexRedundantLet")
 class SharedSingletonExample : SimpleExample() {
 
-    override val title = "Singleton are shared"
+    override val title = "Singletons are shared"
 
     override val description = """
         This example shows that singleton services are shared across all kontainers, 
-        that where created from the same blueprint. 
+        that are created from the same blueprint. 
     """.trimIndent()
 
     override fun run() {

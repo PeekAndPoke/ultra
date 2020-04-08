@@ -10,8 +10,9 @@ class SingletonVsDynamicVsPrototypeExample : SimpleExample() {
     override val description = """
         This example shows the difference between a **Singleton**, a **Dynamic** and a **Prototype** service.
 
-        Singleton are instantiated only once. They are then shared across all kontainer instances.  
-        Dynamic services are instantiated for each kontainer instance.
+        **Singleton** services are instantiated only once. They are then shared across all kontainer instances.   
+        **Dynamic** services are instantiated for each kontainer instance. 
+        **Prototype** service are instantiated each time they are requested from the kontainer.
 
         You will see that:  
         

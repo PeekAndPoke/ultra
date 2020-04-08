@@ -10,9 +10,9 @@ class BasicInjectionExample : SimpleExample() {
     override val description = """
         This example shows how a service can inject another service.
         
-        For simplicity there are two ways of injection:
+        For simplicity there are only two ways of injection:
         1. Constructor injection.
-        2. Factory method injection, which we will see next
+        2. Factory method injection, which we will see in later examples.
     """.trimIndent()
 
     override fun run() {

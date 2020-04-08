@@ -14,6 +14,7 @@ class _01_DefiningServices : ExampleChapter {
         DefiningADynamicExample(),
         DefiningAPrototypeExample(),
         DefiningAnExistingInstanceExample(),
+        HidingTheConcreteImplementationOfAServiceExample(),
         SharedSingletonExample(),
         SingletonVsDynamicVsPrototypeExample()
         // TODO: register service by a super type

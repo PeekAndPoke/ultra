@@ -8,8 +8,9 @@
     2. [Defining a Dynamic service](#defining-a-dynamic-service)
     3. [Defining a Prototype service](#defining-a-prototype-service)
     4. [Defining an existing object as a Singleton service](#defining-an-existing-object-as-a-singleton-service)
-    5. [Singleton are shared](#singleton-are-shared)
-    6. [Singletons vs Dynamics vs Prototypes](#singletons-vs-dynamics-vs-prototypes)
+    5. [Hiding the concrete implementation of a service](#hiding-the-concrete-implementation-of-a-service)
+    6. [Singletons are shared](#singletons-are-shared)
+    7. [Singletons vs Dynamics vs Prototypes](#singletons-vs-dynamics-vs-prototypes)
 
 2. [Service Injection](#service-injection)
 
@@ -170,10 +171,62 @@ Will output:
 ```
 Kontainer.use() says: Hello you!
 ```
-### Singleton are shared
+### Hiding the concrete implementation of a service
+
+This example shows how to hide the concrete implementation of a service.
+
+The same mechanism is available for all type of service registration:
+- singleton
+- dynamic
+- prototype
+- instance
+- factory methods
+
+(see the full [example](../../src/examples/_01_defining_services/HidingTheConcreteImplementationOfAServiceExample.kt))
+
+```kotlin
+// Let's say we have an interface that defines one of our services
+interface GreeterInterface {
+    fun sayHello(): String
+}
+
+// And we have an implementation
+class Greeter: GreeterInterface {
+    override fun sayHello() = "Hello you!"
+}
+
+// Then we can define the service the following way, which means:
+// The kontainer will only know that there is a service of type GreeterInterface
+val blueprint = kontainer {
+    singleton(GreeterInterface::class, Greeter::class)
+}
+
+// 3. We get the kontainer instance
+val kontainer = blueprint.create()
+
+// We can now retrieve the GreeterInterface service and use it.
+println(
+    "It says: ${kontainer.get(GreeterInterface::class).sayHello()}"
+)
+
+// But when we try to retrieve the concrete implementation we will get an error
+try {
+    println(
+        "It says: ${kontainer.get(Greeter::class).sayHello()}"
+    )
+} catch(e: ServiceNotFound) {
+    println(e)
+}
+```
+Will output:
+```
+It says: Hello you!
+de.peekandpoke.ultra.kontainer.ServiceNotFound: Service de.peekandpoke.ultra.kontainer.examples._01_defining_services.HidingTheConcreteImplementationOfAServiceExample.Greeter was not found
+```
+### Singletons are shared
 
 This example shows that singleton services are shared across all kontainers, 
-that where created from the same blueprint. 
+that are created from the same blueprint. 
 
 (see the full [example](../../src/examples/_01_defining_services/SharedSingletonExample.kt))
 
@@ -208,8 +261,9 @@ Counter: 2
 
 This example shows the difference between a **Singleton**, a **Dynamic** and a **Prototype** service.
 
-Singleton are instantiated only once. They are then shared across all kontainer instances.  
-Dynamic services are instantiated for each kontainer instance.
+**Singleton** services are instantiated only once. They are then shared across all kontainer instances.   
+**Dynamic** services are instantiated for each kontainer instance. 
+**Prototype** service are instantiated each time they are requested from the kontainer.
 
 You will see that:  
 
@@ -278,9 +332,9 @@ singleton: 9 - dynamic 3 - prototype: 1
 
 This example shows how a service can inject another service.
 
-For simplicity there are two ways of injection:
+For simplicity there are only two ways of injection:
 1. Constructor injection.
-2. Factory method injection, which we will see next
+2. Factory method injection, which we will see in later examples.
 
 (see the full [example](../../src/examples/_02_injecting_services/BasicInjectionExample.kt))
 
