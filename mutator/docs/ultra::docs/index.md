@@ -120,33 +120,40 @@ val updated = company.mutate {
 
 println("Initial company")
 println(company)
+println()
 
 println("Updated company")
 println(updated)
+println()
 
 println("'Tom' before the raise")
 println(company.employees[0])
 println("'Tom' after his raise")
 println(updated.employees[0])
 println("Is 'Tom' still the same: " + (company.employees[0] === updated.employees[0]))
+println()
 
 println("'Jerry' before the raise")
 println(company.employees[1])
 println("'Jerry' after the raise - he did not get one")
 println(updated.employees[1])
 println("Is 'Jerry' still the same:" + (company.employees[1] === updated.employees[1]))
+println()
 ```
 Will output:
 ```
 Initial company
 Company(boss=Person(name=Maximus Grandiosus, age=71), employees=[Employee(person=Person(name=Tom, age=35), address=Address(city=Boston), salary=Salary(currency=USD, amount=20000.0)), Employee(person=Person(name=Jerry, age=35), address=Address(city=New York), salary=Salary(currency=USD, amount=17000.0))])
+
 Updated company
 Company(boss=Person(name=Maximus Grandiosus, age=71), employees=[Employee(person=Person(name=Tom, age=35), address=Address(city=Boston), salary=Salary(currency=USD, amount=23000.0)), Employee(person=Person(name=Jerry, age=35), address=Address(city=New York), salary=Salary(currency=USD, amount=17000.0))])
+
 'Tom' before the raise
 Employee(person=Person(name=Tom, age=35), address=Address(city=Boston), salary=Salary(currency=USD, amount=20000.0))
 'Tom' after his raise
 Employee(person=Person(name=Tom, age=35), address=Address(city=Boston), salary=Salary(currency=USD, amount=23000.0))
 Is 'Tom' still the same: false
+
 'Jerry' before the raise
 Employee(person=Person(name=Jerry, age=35), address=Address(city=New York), salary=Salary(currency=USD, amount=17000.0))
 'Jerry' after the raise - he did not get one

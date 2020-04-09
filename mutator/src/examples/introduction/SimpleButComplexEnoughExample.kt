@@ -75,21 +75,25 @@ class SimpleButComplexEnoughExample : SimpleExample() {
 
         println("Initial company")
         println(company)
+        println()
 
         println("Updated company")
         println(updated)
+        println()
 
         println("'Tom' before the raise")
         println(company.employees[0])
         println("'Tom' after his raise")
         println(updated.employees[0])
         println("Is 'Tom' still the same: " + (company.employees[0] === updated.employees[0]))
+        println()
 
         println("'Jerry' before the raise")
         println(company.employees[1])
         println("'Jerry' after the raise - he did not get one")
         println(updated.employees[1])
         println("Is 'Jerry' still the same:" + (company.employees[1] === updated.employees[1]))
+        println()
 
         // !END! //
     }
