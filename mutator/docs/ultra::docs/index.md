@@ -68,14 +68,12 @@ You like immutability for all the benefits is brings.
 But you also hate the amount of code you have to write to change a deeply nested value inside these kinds
 of structures.
 
-Well, here is the solution for you: ultra::mutator.
-
-Let's have a look at some code, shall we?
+Well, here is a solution:
 
 (see the full [example](../../src/examples/introduction/SimpleButComplexEnoughExample.kt))
 
 ```kotlin
-// We have some complex data model.
+// Let's say we have a complex, nested and immutable domain model.
 @Mutable
 data class Company(val boss: Person, val employees: List<Employee>)
 
@@ -91,7 +89,7 @@ data class Address(val city: String)
 @Mutable
 data class Salary(val currency: String, val amount: Float)
 
-// let's create our company
+// Let's create an instance of our top level domain object
 val company = Company(
     boss = Person("Maximus Grandiosus", 71),
     employees = listOf(
@@ -105,11 +103,9 @@ val company = Company(
             address = Address("New York"),
             salary = Salary("USD", 17_000f)
         )
+        // There could be a lot more employees...
     )
 )
-
-println("Initial company")
-println(company)
 
 // Now let's give all people below 40 in Boston a raise of 15%
 val updated = company.mutate {
@@ -117,10 +113,13 @@ val updated = company.mutate {
         .filter { it.person.age < 40 }
         .filter { it.address.city == "Boston" }
         .forEach {
-            // NOTICE we how directly manipulate the field again
+            // Notice how we directly manipulate the field again:
             it.salary.amount *= 1.15f
         }
 }
+
+println("Initial company")
+println(company)
 
 println("Updated company")
 println(updated)
