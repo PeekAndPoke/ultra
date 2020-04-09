@@ -42,8 +42,18 @@ dependencies {
     testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")
 }
 
+kotlin {
+    sourceSets {
+        test {
+            kotlin.srcDir("src/examples")
+        }
+    }
+}
+
 val test by tasks.getting(Test::class) {
     useJUnitPlatform { }
+
+    dependsOn("generateDocs")
 }
 
 kapt {
@@ -55,6 +65,12 @@ configure<JavaPluginConvention> {
 }
 
 tasks {
+
+    create("generateDocs", JavaExec::class) {
+        main = "de.peekandpoke.ultra.mutator.examples.GenerateDocsKt"
+        classpath = sourceSets.getByName("test").runtimeClasspath
+    }
+
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
     }

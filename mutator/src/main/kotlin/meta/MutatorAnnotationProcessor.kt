@@ -50,6 +50,7 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
 
         val types = roundEnv
             .findAllTypeWithAnnotation(Mutable::class)
+            .plusAllEnclosedTypes()
             .plusReferencedTypesRecursive()
             .plusAllSuperTypes()
             .defaultBlacklist()

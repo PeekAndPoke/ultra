@@ -178,8 +178,7 @@ interface ProcessorUtils {
             last = current
 
             current = last
-                .map { it.getReferencedTypes() }
-                .flatten()
+                .flatMap { it.getReferencedTypes() }
                 .distinct()
                 .toMutableSet()
         }
@@ -283,11 +282,31 @@ interface ProcessorUtils {
     }
 
     /**
-     * Adds all supertypes (direct and indirect) to the list of [TypeElement]
+     * Adds all supertypes (direct and indirect) to the list of [TypeElement]s
      */
     fun List<TypeElement>.plusAllSuperTypes(): List<TypeElement> = plus(
         flatMap {
             it.getAllSuperTypes()
+        }
+    ).distinct()
+
+    /**
+     * Returns all enclosed type (direct and indirect) to the list of [TypeElement]s
+     */
+    fun TypeElement.getAllEnclosedTypes(): List<TypeElement> {
+        return enclosedElements
+            .filterIsInstance<TypeElement>()
+            .flatMap {
+                listOf(it).plus(it.getAllEnclosedTypes())
+            }
+    }
+
+    /**
+     * Adds all enclosed type (direct and indirect) to the list of [TypeElement]s
+     */
+    fun List<TypeElement>.plusAllEnclosedTypes(): List<TypeElement> = plus(
+        flatMap {
+            it.getAllEnclosedTypes()
         }
     ).distinct()
 

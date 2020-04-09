@@ -45,7 +45,6 @@ kotlin {
     }
 }
 
-
 val test by tasks.getting(Test::class) {
     useJUnitPlatform { }
 
