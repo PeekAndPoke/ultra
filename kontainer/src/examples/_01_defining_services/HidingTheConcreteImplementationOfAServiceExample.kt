@@ -12,7 +12,7 @@ class HidingTheConcreteImplementationOfAServiceExample : SimpleExample() {
     override val description = """
         This example shows how to hide the concrete implementation of a service.
         
-        The same mechanism is available for all type of service registration:
+        The same mechanism is available for all types of service registration:
         - singleton
         - dynamic
         - prototype
@@ -22,12 +22,12 @@ class HidingTheConcreteImplementationOfAServiceExample : SimpleExample() {
 
     // !BEGIN! //
 
-    // Let's say we have an interface that defines one of our services
+    // Let's say we have an interface that defines one of our services.
     interface GreeterInterface {
         fun sayHello(): String
     }
 
-    // And we have an implementation
+    // And we have an implementation.
     class Greeter : GreeterInterface {
         override fun sayHello() = "Hello you!"
     }
@@ -37,13 +37,12 @@ class HidingTheConcreteImplementationOfAServiceExample : SimpleExample() {
     override fun run() {
         // !BEGIN! //
 
-        // Then we can define the service the following way, which means:
-        // The kontainer will only know that there is a service of type GreeterInterface
         val blueprint = kontainer {
+            // Then we can define the service the following way, which means:
+            // The kontainer will only know that there is a service of type GreeterInterface.
             singleton(GreeterInterface::class, Greeter::class)
         }
 
-        // 3. We get the kontainer instance
         val kontainer = blueprint.create()
 
         // We can now retrieve the GreeterInterface service and use it.
@@ -51,7 +50,7 @@ class HidingTheConcreteImplementationOfAServiceExample : SimpleExample() {
             "It says: ${kontainer.get(GreeterInterface::class).sayHello()}"
         )
 
-        // But when we try to retrieve the concrete implementation we will get an error
+        // But when we try to retrieve the concrete implementation we will get an error.
         try {
             println(
                 "It says: ${kontainer.get(Greeter::class).sayHello()}"
