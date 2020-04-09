@@ -9,6 +9,6 @@ class _Introduction : ExampleChapter {
 
     override val examples = listOf(
         SimpleExample(),
-        SimpleButComplexEnoughExample()
+        MoreComplexExample()
     )
 }

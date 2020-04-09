@@ -4,9 +4,9 @@ import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.mutator.Mutable
 
 @Mutable
-class SimpleButComplexEnoughExample : SimpleExample() {
+class MoreComplexExample : SimpleExample() {
 
-    override val title = "A simple but complex enough example"
+    override val title = "A more complex example"
 
     override val description = """
         Imagine you have some nested immutable data structure with
@@ -92,7 +92,7 @@ class SimpleButComplexEnoughExample : SimpleExample() {
         println(company.employees[1])
         println("'Jerry' after the raise - he did not get one")
         println(updated.employees[1])
-        println("Is 'Jerry' still the same:" + (company.employees[1] === updated.employees[1]))
+        println("Is 'Jerry' still the same: " + (company.employees[1] === updated.employees[1]))
         println()
 
         // !END! //

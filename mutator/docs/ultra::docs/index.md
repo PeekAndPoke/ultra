@@ -5,7 +5,7 @@
 1. [Introduction](#introduction)
 
     1. [A very simple](#a-very-simple)
-    2. [A simple but complex enough example](#a-simple-but-complex-enough-example)
+    2. [A more complex example](#a-more-complex-example)
 
 ## Introduction
 
@@ -57,7 +57,7 @@ Person(name=Angelina, age=36)
 The renamed version:
 Person(name=Brad, age=47)
 ```
-### A simple but complex enough example
+### A more complex example
 
 Imagine you have some nested immutable data structure with
 - data classes
@@ -70,7 +70,7 @@ of structures.
 
 Well, here is a solution:
 
-(see the full [example](../../src/examples/introduction/SimpleButComplexEnoughExample.kt))
+(see the full [example](../../src/examples/introduction/MoreComplexExample.kt))
 
 ```kotlin
 // Let's say we have a complex, nested and immutable domain model.
@@ -137,7 +137,7 @@ println("'Jerry' before the raise")
 println(company.employees[1])
 println("'Jerry' after the raise - he did not get one")
 println(updated.employees[1])
-println("Is 'Jerry' still the same:" + (company.employees[1] === updated.employees[1]))
+println("Is 'Jerry' still the same: " + (company.employees[1] === updated.employees[1]))
 println()
 ```
 Will output:
@@ -158,5 +158,5 @@ Is 'Tom' still the same: false
 Employee(person=Person(name=Jerry, age=35), address=Address(city=New York), salary=Salary(currency=USD, amount=17000.0))
 'Jerry' after the raise - he did not get one
 Employee(person=Person(name=Jerry, age=35), address=Address(city=New York), salary=Salary(currency=USD, amount=17000.0))
-Is 'Jerry' still the same:true
+Is 'Jerry' still the same: true
 ```
