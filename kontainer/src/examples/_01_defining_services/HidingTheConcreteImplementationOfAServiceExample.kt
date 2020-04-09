@@ -53,7 +53,6 @@ class HidingTheConcreteImplementationOfAServiceExample : SimpleExample() {
         // But when we try to retrieve the concrete implementation we will get an error.
         try {
             kontainer.get(Greeter::class)
-
         } catch (e: ServiceNotFound) {
             println(e)
         }

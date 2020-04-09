@@ -32,7 +32,7 @@ class SharedSingletonExample : SimpleExample() {
             println("Counter: ${kontainer.get(Counter::class).next()}")
         }
 
-        // 4. We get a another kontainer instance and use the singleton
+        // 4. We get another kontainer instance and use the singleton
         blueprint.create().let { kontainer ->
             println("Counter: ${kontainer.get(Counter::class).next()}")
         }

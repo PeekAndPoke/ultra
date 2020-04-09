@@ -244,7 +244,7 @@ blueprint.create().let { kontainer ->
     println("Counter: ${kontainer.get(Counter::class).next()}")
 }
 
-// 4. We get a another kontainer instance and use the singleton
+// 4. We get another kontainer instance and use the singleton
 blueprint.create().let { kontainer ->
     println("Counter: ${kontainer.get(Counter::class).next()}")
 }
@@ -258,9 +258,9 @@ Counter: 2
 
 This example shows the difference between a **Singleton**, a **Dynamic** and a **Prototype** service.
 
-**Singleton** services are instantiated only once. They are then shared across all kontainer instances.   
-**Dynamic** services are instantiated for each kontainer instance. 
-**Prototype** service are instantiated each time they are requested from the kontainer.
+**Singleton** services are instantiated only once. They are then shared across all kontainer instances.  
+**Dynamic** services are instantiated for each kontainer instance.  
+**Prototype** service are instantiated each time they are requested from the kontainer.  
 
 You will see that:  
 
