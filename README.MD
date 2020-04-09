@@ -49,7 +49,12 @@ Projects using this:
 
 [ultra::mutator](mutator/ultra::mutator.md) - Mutate the Immutable
 
-Mutator is a kotlin library inspired by [immerjs](https://github.com/immerjs/immer).
+Mutator is a kotlin library inspired by [immerjs](https://github.com/immerjs/immer).  
+It makes the immutable mutable.
+
+[READ MORE](mutator/ultra::mutator.md) ||
+[EXAMPLES](mutator/docs/ultra::docs/index.md) ||
+[TESTS](mutator/src/test/kotlin)
 
 - It gives you a powerful way for mutating deeply nested immutable data structures.
 - By doing so, it encourages a 100% immutable data design

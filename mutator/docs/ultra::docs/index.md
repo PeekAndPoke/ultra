@@ -113,7 +113,7 @@ println(company)
 val updated = company.mutate {
     employees
         .filter { it.person.age < 40 }
-        .filter { it.address.city == "Boston"}
+        .filter { it.address.city == "Boston" }
         .forEach {
             // NOTICE we how directly manipulate the field again
             it.salary.amount *= 1.15f
