@@ -78,10 +78,11 @@ abstract class ExamplesToDocs(
 
             builder.appendln("## ${chapter.title}").appendln()
 
-            val srcDir = sourceLocation.child(this::class.getRelativePackagePath(chapter::class))
-
             chapter.examples.forEach { example ->
 
+                // Getting the directory where the code for this example is in
+                val srcDir = sourceLocation.child(this::class.getRelativePackagePath(example::class))
+                // Extracting the code block from the given example
                 val exampleCode = ExampleCodeExtractor.extract(example, srcDir)
 
                 builder.appendln("### ${example.title}").appendln()
