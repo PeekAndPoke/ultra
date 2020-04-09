@@ -16,33 +16,35 @@ Let us start with a very simple example.
 (see the full [example](../../src/examples/introduction/SimpleExample.kt))
 
 ```kotlin
-// We have a data class that has some fields with the mutator annotation
+// We have a data class that has some fields.
+// We also have the mutator annotation.
 @Mutable
 data class Person(val name: String, val age: Int)
 
-// We create an instance of our data class
+// We create an instance of our data class.
 val angelina = Person("Angelina", 35)
 
-// The mutator annotation generated the extension method "mutate" for us.
-// So we can use it to mutate the object and get the result returned.
+// Through annotation processing we get the "mutate" extension method created.
+// The result of a mutation is a new object, while keeping the old one as it is.
 val olderAngelina = angelina.mutate {
     // Inside of the callback we can directly manipulate properties of the object
     age += 1
 }
 
-// Angela did not change
+// Angela did not change.
 println("The original:")
 println(angelina)
-// But we go the older version through mutation
+// But we go the older version through mutation.
 println("The older version:")
 println(olderAngelina)
 
-// We could also change the name or both
+// We could also change the name or both.
 val noMoreAngela = angelina.mutate {
+    age = 47
     name = "Brad"
 }
 
-// And we get another mutation of the original object
+// And so we got another mutation of the original object.
 println("The renamed version:")
 println(noMoreAngela)
 ```
@@ -53,7 +55,7 @@ Person(name=Angelina, age=35)
 The older version:
 Person(name=Angelina, age=36)
 The renamed version:
-Person(name=Brad, age=35)
+Person(name=Brad, age=47)
 ```
 ### A simple but complex enough example
 
@@ -73,7 +75,7 @@ Let's have a look at some code, shall we?
 (see the full [example](../../src/examples/introduction/SimpleButComplexEnoughExample.kt))
 
 ```kotlin
-// We have some complex data model
+// We have some complex data model.
 @Mutable
 data class Company(val boss: Person, val employees: List<Employee>)
 

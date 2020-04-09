@@ -25,7 +25,7 @@ class SimpleButComplexEnoughExample : SimpleExample() {
 
     // !BEGIN! //
 
-    // We have some complex data model
+    // We have some complex data model.
     @Mutable
     data class Company(val boss: Person, val employees: List<Employee>)
 
