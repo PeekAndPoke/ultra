@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.kontainer.examples._01_defining_services
+package de.peekandpoke.ultra.kontainer.examples.defining_services
 
 import de.peekandpoke.ultra.common.docs.ExampleChapter
 
 @Suppress("ClassName")
-class _01_DefiningServices : ExampleChapter {
+class _DefiningServices : ExampleChapter {
 
     override val title = "Defining Services"
 

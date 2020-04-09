@@ -19,11 +19,12 @@
     3. [Injecting a singleton into multiple services](#injecting-a-singleton-into-multiple-services)
     4. [Injecting a prototype into multiple services](#injecting-a-prototype-into-multiple-services)
     5. [Injection By SuperType](#injection-by-supertype)
-    6. [Injection of all Services By SuperType](#injection-of-all-services-by-supertype)
-    7. [Lazy Injection Example](#lazy-injection-example)
-    8. [Breaking Cyclic Dependencies with Lazy Injection](#breaking-cyclic-dependencies-with-lazy-injection)
-    9. [Lazily inject all Services By SuperType](#lazily-inject-all-services-by-supertype)
-    10. [Lazily inject all Services By SuperType with a Lookup](#lazily-inject-all-services-by-supertype-with-a-lookup)
+    6. [Injection By SuperType can fail due to ambiguity](#injection-by-supertype-can-fail-due-to-ambiguity)
+    7. [Injection of all Services By SuperType](#injection-of-all-services-by-supertype)
+    8. [Lazy Injection Example](#lazy-injection-example)
+    9. [Breaking Cyclic Dependencies with Lazy Injection](#breaking-cyclic-dependencies-with-lazy-injection)
+    10. [Lazily inject all Services By SuperType](#lazily-inject-all-services-by-supertype)
+    11. [Lazily inject all Services By SuperType with a Lookup](#lazily-inject-all-services-by-supertype-with-a-lookup)
 
 ## Defining Services
 
@@ -38,7 +39,7 @@ Services can be retrieved by:
 1. kontainer.get(...)
 2. kontainer.use(...)
 
-(see the full [example](../../src/examples/_01_defining_services/DefiningASingletonExample.kt))
+(see the full [example](../../src/examples/defining_services/DefiningASingletonExample.kt))
 
 ```kotlin
 // 1. We define a service class
@@ -82,7 +83,7 @@ This example shows how to register and retrieve a dynamic service.
 Dynamic services are somewhere between singletons and prototypes.  
 They are instantiated once for each kontainer instances.
 
-(see the full [example](../../src/examples/_01_defining_services/DefiningADynamicExample.kt))
+(see the full [example](../../src/examples/defining_services/DefiningADynamicExample.kt))
 
 ```kotlin
 // 1. We define a service class
@@ -115,7 +116,7 @@ This example shows how to register and retrieve a prototype service.
 Prototype services create a new instance whenever they are requested from the kontainer.  
 Be it through direct retrieval from the kontainer or through injection.
 
-(see the full [example](../../src/examples/_01_defining_services/DefiningAPrototypeExample.kt))
+(see the full [example](../../src/examples/defining_services/DefiningAPrototypeExample.kt))
 
 ```kotlin
 // 1. We define a service class
@@ -145,7 +146,7 @@ Kontainer.use() says: Hello you!
 
 This example shows how to register an existing object as a singleton service.
 
-(see the full [example](../../src/examples/_01_defining_services/DefiningAnExistingInstanceExample.kt))
+(see the full [example](../../src/examples/defining_services/DefiningAnExistingInstanceExample.kt))
 
 ```kotlin
 // 1. Let's say we have some existing object
@@ -182,7 +183,7 @@ The same mechanism is available for all types of service registration:
 - instance
 - factory methods
 
-(see the full [example](../../src/examples/_01_defining_services/HidingTheConcreteImplementationOfAServiceExample.kt))
+(see the full [example](../../src/examples/defining_services/HidingTheConcreteImplementationOfAServiceExample.kt))
 
 ```kotlin
 // Let's say we have an interface that defines one of our services.
@@ -218,14 +219,14 @@ try {
 Will output:
 ```
 It says: Hello you!
-de.peekandpoke.ultra.kontainer.ServiceNotFound: Service de.peekandpoke.ultra.kontainer.examples._01_defining_services.HidingTheConcreteImplementationOfAServiceExample.Greeter was not found
+de.peekandpoke.ultra.kontainer.ServiceNotFound: Service de.peekandpoke.ultra.kontainer.examples.defining_services.HidingTheConcreteImplementationOfAServiceExample.Greeter was not found
 ```
 ### Singletons are shared
 
 This example shows that singleton services are shared across all kontainers, 
 that are created from the same blueprint. 
 
-(see the full [example](../../src/examples/_01_defining_services/SharedSingletonExample.kt))
+(see the full [example](../../src/examples/defining_services/SharedSingletonExample.kt))
 
 ```kotlin
 // 1. We define our service
@@ -268,7 +269,7 @@ The **SingletonCounter** is globally created once and is always increasing.
 The **DynamicCounter** is created once for each kontainer instance.  
 The **PrototypeCounter** is created every time it is requested from the kontainer.  
 
-(see the full [example](../../src/examples/_01_defining_services/SingletonVsDynamicVsPrototypeExample.kt))
+(see the full [example](../../src/examples/defining_services/SingletonVsDynamicVsPrototypeExample.kt))
 
 ```kotlin
 // 1. We define our services
@@ -333,7 +334,7 @@ For simplicity there are only two ways of injection:
 1. Constructor injection.
 2. Factory method injection, which we will see in later examples.
 
-(see the full [example](../../src/examples/_02_injecting_services/BasicInjectionExample.kt))
+(see the full [example](../../src/examples/injecting_services/BasicInjectionExample.kt))
 
 ```kotlin
 // We define a service that will be injected
@@ -379,7 +380,7 @@ Factory methods are available for singletons, dynamics and prototypes from zero 
 - prototype0 { ... }
 - dynamic0 { ... }
 
-(see the full [example](../../src/examples/_02_injecting_services/FactoryMethodInjectionExample.kt))
+(see the full [example](../../src/examples/injecting_services/FactoryMethodInjectionExample.kt))
 
 ```kotlin
 // We define a service that will be injected
@@ -423,7 +424,7 @@ Next: 102
 
 This example shows how one singleton service is injected into multiple services.
 
-(see the full [example](../../src/examples/_02_injecting_services/InjectSingletonIntoMultipleServicesExample.kt))
+(see the full [example](../../src/examples/injecting_services/InjectSingletonIntoMultipleServicesExample.kt))
 
 ```kotlin
 // 1. We define a service that will be injected
@@ -464,7 +465,7 @@ Two: 2
 
 This example shows how a prototype service is injected into multiple services.
 
-(see the full [example](../../src/examples/_02_injecting_services/InjectPrototypeIntoMultipleServicesExample.kt))
+(see the full [example](../../src/examples/injecting_services/InjectPrototypeIntoMultipleServicesExample.kt))
 
 ```kotlin
 // 1. We define a service that will be injected
@@ -505,7 +506,7 @@ Two: 1
 
 This example shows how a service can be injected by one of its supertypes.
 
-(see the full [example](../../src/examples/_02_injecting_services/InjectBySuperTypeExample.kt))
+(see the full [example](../../src/examples/injecting_services/InjectBySuperTypeExample.kt))
 
 ```kotlin
 // We define a service that extends or implements a super type
@@ -539,6 +540,59 @@ Will output:
 ```
 Next: 1
 ```
+### Injection By SuperType can fail due to ambiguity
+
+This example shows that injecting by supertype can fail, when there is an ambiguity.
+
+(see the full [example](../../src/examples/injecting_services/InjectBySuperTypeFailsToAmbiguityExample.kt))
+
+```kotlin
+// We define a supertype
+interface CounterInterface {
+    fun next(): Int
+}
+
+// We create two implementations of the interface
+class CounterOne : CounterInterface {
+    private var count = 0
+    override fun next() = ++count
+}
+
+class CounterTwo : CounterInterface {
+    private var count = 0
+    override fun next() = ++count
+}
+
+// We try to inject the supertype CounterInterface
+class MyService(val counter: CounterInterface)
+
+val blueprint = kontainer {
+    // We register our service
+    singleton(MyService::class)
+    // We register both implementations of the CounterInterface
+    singleton(CounterOne::class)
+    singleton(CounterTwo::class)
+}
+
+// When we try to create a kontainer instance we will get an error
+try {
+    blueprint.create()
+} catch (e: KontainerInconsistent) {
+    println(e)
+}
+```
+Will output:
+```
+de.peekandpoke.ultra.kontainer.KontainerInconsistent: Kontainer is inconsistent!
+
+Problems:
+
+1. Service 'de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.MyService'
+    defined at de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample$run$blueprint$1.invoke(InjectBySuperTypeFailsToAmbiguityExample.kt:44))
+    -> Parameter 'counter' is ambiguous. The following services collide: de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.CounterOne, de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.CounterTwo
+
+Config values:
+```
 ### Injection of all Services By SuperType
 
 This example shows how to inject all services that implement or extend a given super type.
@@ -549,7 +603,7 @@ For Example:
 Let's say we have a Database service that injects all registered Repositories.
 Repositories can then even by added by code that is not maintained by us. 
 
-(see the full [example](../../src/examples/_02_injecting_services/InjectAllBySuperTypeExample.kt))
+(see the full [example](../../src/examples/injecting_services/InjectAllBySuperTypeExample.kt))
 
 ```kotlin
 // We define an interface for all repositories
@@ -599,7 +653,7 @@ This example shows how a to lazily inject a service.
 
 This means that the injected service will only be instantiated when it is used for the first time. 
 
-(see the full [example](../../src/examples/_02_injecting_services/LazyInjectionExample.kt))
+(see the full [example](../../src/examples/injecting_services/LazyInjectionExample.kt))
 
 ```kotlin
 // We define a service that will be injected
@@ -643,7 +697,7 @@ In some cases we have services that need to injected each other.
  
 This cyclic dependency can be broken with lazy injection. 
 
-(see the full [example](../../src/examples/_02_injecting_services/LazyInjectionCycleBreakerExample.kt))
+(see the full [example](../../src/examples/injecting_services/LazyInjectionCycleBreakerExample.kt))
 
 ```kotlin
 // We define two services that inject each other
@@ -682,7 +736,7 @@ I am ServiceTwo and I know 'one'
 
 This example shows how to lazily inject all services of a given super type.
 
-(see the full [example](../../src/examples/_02_injecting_services/LazyInjectAllBySuperTypeExample.kt))
+(see the full [example](../../src/examples/injecting_services/LazyInjectAllBySuperTypeExample.kt))
 
 ```kotlin
 // We define an interface for all repositories
@@ -735,7 +789,7 @@ What is this good for?
 By using a lazy lookup we can inject many services without instantiating them.  
 We can get individual services from the LookUp by their class.
 
-(see the full [example](../../src/examples/_02_injecting_services/LazyInjectAllBySuperTypeWithLookUpExample.kt))
+(see the full [example](../../src/examples/injecting_services/LazyInjectAllBySuperTypeWithLookUpExample.kt))
 
 ```kotlin
 // We define an interface for all repositories

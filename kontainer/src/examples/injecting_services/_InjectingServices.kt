@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.kontainer.examples._02_injecting_services
+package de.peekandpoke.ultra.kontainer.examples.injecting_services
 
 import de.peekandpoke.ultra.common.docs.ExampleChapter
 
 @Suppress("ClassName")
-class _02_InjectingServices : ExampleChapter {
+class _InjectingServices : ExampleChapter {
 
     override val title = "Service Injection"
 
@@ -13,7 +13,7 @@ class _02_InjectingServices : ExampleChapter {
         InjectSingletonIntoMultipleServicesExample(),
         InjectPrototypeIntoMultipleServicesExample(),
         InjectBySuperTypeExample(),
-        // TODO: super type injection fails to ambiguity
+        InjectBySuperTypeFailsToAmbiguityExample(),
         InjectAllBySuperTypeExample(),
         LazyInjectionExample(),
         LazyInjectionCycleBreakerExample(),

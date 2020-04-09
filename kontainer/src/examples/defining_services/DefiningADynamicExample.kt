@@ -1,18 +1,18 @@
-package de.peekandpoke.ultra.kontainer.examples._01_defining_services
+package de.peekandpoke.ultra.kontainer.examples.defining_services
 
 import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.kontainer
 
 @Suppress("ComplexRedundantLet")
-class DefiningAPrototypeExample : SimpleExample() {
+class DefiningADynamicExample : SimpleExample() {
 
-    override val title = "Defining a Prototype service"
+    override val title = "Defining a Dynamic service"
 
     override val description = """
-        This example shows how to register and retrieve a prototype service.
+        This example shows how to register and retrieve a dynamic service.
         
-        Prototype services create a new instance whenever they are requested from the kontainer.  
-        Be it through direct retrieval from the kontainer or through injection.
+        Dynamic services are somewhere between singletons and prototypes.  
+        They are instantiated once for each kontainer instances.
     """.trimIndent()
 
     override fun run() {
@@ -25,7 +25,7 @@ class DefiningAPrototypeExample : SimpleExample() {
 
         // 2. We create a kontainer blueprint
         val blueprint = kontainer {
-            prototype(Greeter::class)
+            dynamic(Greeter::class)
         }
 
         // 3. We get the kontainer instance

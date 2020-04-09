@@ -1,32 +1,31 @@
-package de.peekandpoke.ultra.kontainer.examples._01_defining_services
+package de.peekandpoke.ultra.kontainer.examples.defining_services
 
 import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.kontainer
 
 @Suppress("ComplexRedundantLet")
-class DefiningAnExistingInstanceExample : SimpleExample() {
+class DefiningAPrototypeExample : SimpleExample() {
 
-    override val title = "Defining an existing object as a Singleton service"
+    override val title = "Defining a Prototype service"
 
     override val description = """
-        This example shows how to register an existing object as a singleton service.
+        This example shows how to register and retrieve a prototype service.
+        
+        Prototype services create a new instance whenever they are requested from the kontainer.  
+        Be it through direct retrieval from the kontainer or through injection.
     """.trimIndent()
-
-    // !BEGIN! //
-
-    // 1. Let's say we have some existing object
-    object Greeter {
-        fun sayHello() = "Hello you!"
-    }
-
-    // !END! //
 
     override fun run() {
         // !BEGIN! //
 
+        // 1. We define a service class
+        class Greeter {
+            fun sayHello() = "Hello you!"
+        }
+
         // 2. We create a kontainer blueprint
         val blueprint = kontainer {
-            instance(Greeter)
+            prototype(Greeter::class)
         }
 
         // 3. We get the kontainer instance

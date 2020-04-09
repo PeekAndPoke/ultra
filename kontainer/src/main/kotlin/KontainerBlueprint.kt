@@ -99,11 +99,15 @@ class KontainerBlueprint internal constructor(
 
     /**
      * Creates a kontainer instance without overriding any of the dynamic services.
+     *
+     * @throws KontainerInconsistent when there is a problem with the kontainer configuration
      */
     fun create() = useWith()
 
     /**
      * Creates a kontainer instance and overrides the given dynamic services.
+     *
+     * @throws KontainerInconsistent when there is a problem with the kontainer configuration
      */
     fun useWith(vararg dynamics: Any): Kontainer {
 
@@ -180,8 +184,8 @@ class KontainerBlueprint internal constructor(
             .filterValues { it.isNotEmpty() }
             .toList()
             .mapIndexed { serviceIdx, (cls, errors) ->
-                "${serviceIdx + 1}. Service '${cls.qualifiedName}' " +
-                        "(defined at ${definitionLocations[cls] ?: "n/a"})\n" +
+                "${serviceIdx + 1}. Service '${cls.qualifiedName}'\n" +
+                        "    defined at ${definitionLocations[cls] ?: "n/a"})\n" +
                         errors.joinToString("\n") { "    -> $it" }
             }
 
@@ -191,7 +195,9 @@ class KontainerBlueprint internal constructor(
                     "Problems:\n\n" +
                     errors.joinToString("\n") + "\n\n" +
                     "Config values:\n\n" +
-                    config.map { (k, v) -> "${k.padEnd(10)} => '$v' (${v::class.qualifiedName})" }.joinToString("\n") + "\n"
+                    config.map { (k, v) ->
+                        "${k.padEnd(10)} => '$v' (${v::class.qualifiedName})"
+                    }.joinToString("\n") + "\n"
 
             throw KontainerInconsistent(err)
         }

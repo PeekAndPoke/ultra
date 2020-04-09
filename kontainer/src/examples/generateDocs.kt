@@ -1,8 +1,8 @@
 package de.peekandpoke.ultra.kontainer.examples
 
 import de.peekandpoke.ultra.common.docs.ExamplesToDocs
-import de.peekandpoke.ultra.kontainer.examples._01_defining_services._01_DefiningServices
-import de.peekandpoke.ultra.kontainer.examples._02_injecting_services._02_InjectingServices
+import de.peekandpoke.ultra.kontainer.examples.defining_services._DefiningServices
+import de.peekandpoke.ultra.kontainer.examples.injecting_services._InjectingServices
 
 fun main() {
     val generator = object : ExamplesToDocs(
@@ -14,8 +14,8 @@ fun main() {
 }
 
 val chapters = listOf(
-    _01_DefiningServices(),
-    _02_InjectingServices()
+    _DefiningServices(),
+    _InjectingServices()
     // TODO: kontainer modules
     // TODO: definition order / overwriting services
     // TODO: dynamic promotion / preventing degradation
