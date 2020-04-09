@@ -12,7 +12,7 @@ class SingletonVsDynamicVsPrototypeExample : SimpleExample() {
 
         **Singleton** services are instantiated only once. They are then shared across all kontainer instances.  
         **Dynamic** services are instantiated for each kontainer instance.  
-        **Prototype** service are instantiated each time they are requested from the kontainer.  
+        **Prototype** services are instantiated each time they are requested from the kontainer.  
 
         You will see that:  
         

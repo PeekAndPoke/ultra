@@ -7,14 +7,13 @@ class _02_InjectingServices : ExampleChapter {
 
     override val title = "Service Injection"
 
-    override val packageLocation = "_02_injecting_services"
-
     override val examples = listOf(
         BasicInjectionExample(),
         FactoryMethodInjectionExample(),
         InjectSingletonIntoMultipleServicesExample(),
         InjectPrototypeIntoMultipleServicesExample(),
         InjectBySuperTypeExample(),
+        // TODO: super type injection fails to ambiguity
         InjectAllBySuperTypeExample(),
         LazyInjectionExample(),
         LazyInjectionCycleBreakerExample(),

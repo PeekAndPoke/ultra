@@ -42,6 +42,5 @@ abstract class SimpleExample : Example {
 
 interface ExampleChapter {
     val title: String
-    val packageLocation: String
     val examples: List<Example>
 }

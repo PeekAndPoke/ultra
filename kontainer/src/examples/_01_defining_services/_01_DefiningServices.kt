@@ -7,8 +7,6 @@ class _01_DefiningServices : ExampleChapter {
 
     override val title = "Defining Services"
 
-    override val packageLocation = "_01_defining_services"
-
     override val examples = listOf(
         DefiningASingletonExample(),
         DefiningADynamicExample(),
@@ -17,6 +15,7 @@ class _01_DefiningServices : ExampleChapter {
         HidingTheConcreteImplementationOfAServiceExample(),
         SharedSingletonExample(),
         SingletonVsDynamicVsPrototypeExample()
-        // TODO: register service by a super type
+        // TODO: retrieve a service by super type
+        // TODO: retrieve a service by super type fails due to ambiguity
     )
 }

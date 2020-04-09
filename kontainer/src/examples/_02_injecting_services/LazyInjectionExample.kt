@@ -14,7 +14,7 @@ class LazyInjectionExample : SimpleExample() {
     override val description = """
         This example shows how a to lazily inject a service.
         
-        This means that the injected service will only be instantiated when it used for the first time. 
+        This means that the injected service will only be instantiated when it is used for the first time. 
     """.trimIndent()
 
     override fun run() {

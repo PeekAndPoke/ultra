@@ -1,14 +1,16 @@
 package de.peekandpoke.ultra.kontainer.examples
 
-import de.peekandpoke.ultra.common.docs.examplesToDocs
+import de.peekandpoke.ultra.common.docs.ExamplesToDocs
 import de.peekandpoke.ultra.kontainer.examples._01_defining_services._01_DefiningServices
 import de.peekandpoke.ultra.kontainer.examples._02_injecting_services._02_InjectingServices
 
 fun main() {
-    examplesToDocs(
+    val generator = object : ExamplesToDocs(
         title = "Examples for ultra::kontainer",
         chapters = chapters
-    )
+    ) {}
+
+    generator.run()
 }
 
 val chapters = listOf(

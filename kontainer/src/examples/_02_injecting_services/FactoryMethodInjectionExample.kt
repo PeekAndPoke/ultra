@@ -10,7 +10,8 @@ class FactoryMethodInjectionExample : SimpleExample() {
     override val description = """
         Sometimes pure constructor injection is not enough.  
         
-        For example when you have service class that expects other parameters that are not known to the kontainer.
+        For example when you have a service class expecting constructor parameters 
+        that are not known to the kontainer.
         
         Factory methods are available for singletons, dynamics and prototypes from zero up to seven parameters.
         

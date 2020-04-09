@@ -1,35 +1,35 @@
 package de.peekandpoke.ultra.common.docs
 
-import de.peekandpoke.ultra.common.ensureDirectory
+import de.peekandpoke.ultra.common.child
+import de.peekandpoke.ultra.common.cleanDirectory
+import de.peekandpoke.ultra.common.getRelativePackagePath
 import de.peekandpoke.ultra.common.toUri
 import java.io.File
 
-fun examplesToDocs(
-    title: String,
-    chapters: List<ExampleChapter>,
-    sourceLocation: File = File("src/examples"),
-    outputLocation: File = File("docs/ultra::docs")
-) {
-    ExamplesToDocs(
-        title = title,
-        chapters = chapters,
-        sourceLocation = sourceLocation,
-        outputLocation = outputLocation
-    ).run()
-}
+//fun examplesToDocs(
+//    title: String,
+//    chapters: List<ExampleChapter>,
+//    sourceLocation: File = File("src/examples"),
+//    outputLocation: File = File("docs/ultra::docs")
+//) {
+//    ExamplesToDocs(
+//        title = title,
+//        chapters = chapters,
+//        sourceLocation = sourceLocation,
+//        outputLocation = outputLocation
+//    ).run()
+//}
 
-class ExamplesToDocs internal constructor(
+abstract class ExamplesToDocs(
     private val title: String,
     private val chapters: List<ExampleChapter>,
-    private val sourceLocation: File,
-    private val outputLocation: File
+    private val sourceLocation: File = File("src/examples"),
+    private val outputLocation: File = File("docs/ultra::docs")
 ) {
-
     private val builder = StringBuilder()
 
     init {
-        outputLocation.deleteRecursively()
-        outputLocation.ensureDirectory()
+        outputLocation.cleanDirectory()
     }
 
     fun run() {
@@ -78,7 +78,7 @@ class ExamplesToDocs internal constructor(
 
             builder.appendln("## ${chapter.title}").appendln()
 
-            val srcDir = File(sourceLocation, chapter.packageLocation)
+            val srcDir = sourceLocation.child(this::class.getRelativePackagePath(chapter::class))
 
             chapter.examples.forEach { example ->
 

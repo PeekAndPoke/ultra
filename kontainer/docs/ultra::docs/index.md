@@ -260,7 +260,7 @@ This example shows the difference between a **Singleton**, a **Dynamic** and a *
 
 **Singleton** services are instantiated only once. They are then shared across all kontainer instances.  
 **Dynamic** services are instantiated for each kontainer instance.  
-**Prototype** service are instantiated each time they are requested from the kontainer.  
+**Prototype** services are instantiated each time they are requested from the kontainer.  
 
 You will see that:  
 
@@ -369,7 +369,8 @@ Next: 2
 
 Sometimes pure constructor injection is not enough.  
 
-For example when you have service class that expects other parameters that are not known to the kontainer.
+For example when you have a service class expecting constructor parameters 
+that are not known to the kontainer.
 
 Factory methods are available for singletons, dynamics and prototypes from zero up to seven parameters.
 
@@ -596,7 +597,7 @@ orders
 
 This example shows how a to lazily inject a service.
 
-This means that the injected service will only be instantiated when it used for the first time. 
+This means that the injected service will only be instantiated when it is used for the first time. 
 
 (see the full [example](../../src/examples/_02_injecting_services/LazyInjectionExample.kt))
 

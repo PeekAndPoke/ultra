@@ -7,3 +7,10 @@ fun File.ensureDirectory() = apply {
         mkdirs()
     }
 }
+
+fun File.cleanDirectory() = apply {
+    deleteRecursively()
+    ensureDirectory()
+}
+
+fun File.child(child: File) = File(this, child.path)
