@@ -14,7 +14,7 @@ class MoreComplexExample : SimpleExample() {
         - lists of objects
         - etc.
 
-        This example show how to easily mutate data structure of any depth.   
+        This example shows how to easily mutate data structures of any depth.   
         There is no need for things like:
         - nested copy(copy(copy(...)))
         - or complicated list manipulations
