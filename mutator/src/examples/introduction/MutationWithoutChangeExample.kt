@@ -6,7 +6,7 @@ import de.peekandpoke.ultra.mutator.Mutable
 @Mutable
 class MutationWithoutChangeExample : SimpleExample() {
 
-    override val title = "Mutating an object without changing it."
+    override val title = "Mutating an object without changing it"
 
     override val description = """
         This example shows what happens when we we mutate an object without changing any of it's fields.

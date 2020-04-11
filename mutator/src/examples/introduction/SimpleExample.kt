@@ -6,7 +6,7 @@ import de.peekandpoke.ultra.mutator.Mutable
 @Mutable
 class SimpleExample : SimpleExample() {
 
-    override val title = "A very simple"
+    override val title = "A simple example"
 
     override val description = """
         Let us start with a very simple example.

@@ -106,7 +106,9 @@ abstract class ExamplesToDocs(
         }
     }
 
-    private fun String.toAnchor() = toLowerCase().toUri().replace(" ", "-")
+    private fun String.toAnchor() = toLowerCase().toUri()
+        .replace(" ", "-")
+        .replace(".", "")
 
     private fun StringBuilder.appendKotlinCode(code: String) = apply {
         appendln("```kotlin")

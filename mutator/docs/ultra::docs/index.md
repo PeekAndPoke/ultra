@@ -4,14 +4,14 @@
 
 1. [Introduction](#introduction)
 
-    1. [A very simple](#a-very-simple)
+    1. [A simple example](#a-simple-example)
     2. [A more complex example](#a-more-complex-example)
     3. [Empty Mutation](#empty-mutation)
-    4. [Mutating an object without changing it.](#mutating-an-object-without-changing-it.)
+    4. [Mutating an object without changing it](#mutating-an-object-without-changing-it)
 
 ## Introduction
 
-### A very simple
+### A simple example
 
 Let us start with a very simple example.
 
@@ -204,7 +204,7 @@ Person(name=Angelina, age=35)
 
 It is the exact same object (before === after): true
 ```
-### Mutating an object without changing it.
+### Mutating an object without changing it
 
 This example shows what happens when we we mutate an object without changing any of it's fields.
 
