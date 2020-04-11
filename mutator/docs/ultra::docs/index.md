@@ -16,8 +16,8 @@ Let us start with a very simple example.
 (see the full [example](../../src/examples/introduction/SimpleExample.kt))
 
 ```kotlin
-// We have a data class that has some fields.
-// We also have the mutator annotation.
+// Let's say we have a data class that has some fields.
+// We also annotate the type, so the mutator annotation processing will generate some code for us.
 @Mutable
 data class Person(val name: String, val age: Int)
 
@@ -31,22 +31,22 @@ val olderAngelina = angelina.mutate {
     age += 1
 }
 
-// Angela did not change.
+// Angelina did not change.
 println("The original:")
 println(angelina)
-// But we go the older version through mutation.
+// But we got another version with increased age.
 println("The older version:")
 println(olderAngelina)
 
 // We could also change the name or both.
-val noMoreAngela = angelina.mutate {
+val noMoreAngelina = angelina.mutate {
     age = 47
     name = "Brad"
 }
 
 // And so we got another mutation of the original object.
 println("The renamed version:")
-println(noMoreAngela)
+println(noMoreAngelina)
 ```
 Will output:
 ```
@@ -64,29 +64,27 @@ Imagine you have some nested immutable data structure with
 - lists of objects
 - etc.
 
-You like immutability for all the benefits is brings.  
-But you also hate the amount of code you have to write to change a deeply nested value inside these kinds
-of structures.
+This example also shows, that we only need the @Mutable annotation on the top level type.  
+The annotation processor / code generator will recursively pick up all type that are referenced
+by the top level type.
 
-Well, here is a solution:
 
 (see the full [example](../../src/examples/introduction/MoreComplexExample.kt))
 
 ```kotlin
 // Let's say we have a complex, nested and immutable domain model.
+// We annotate our top level type with the @Mutable annotation.
 @Mutable
 data class Company(val boss: Person, val employees: List<Employee>)
 
-@Mutable
+// All the other types are recursively references by the top level type.
+// So we do not need to annotate them with @Mutable (we still can, but it makes not difference)
 data class Employee(val person: Person, val address: Address, val salary: Salary)
 
-@Mutable
 data class Person(val name: String, val age: Int)
 
-@Mutable
 data class Address(val city: String)
 
-@Mutable
 data class Salary(val currency: String, val amount: Float)
 
 // Let's create an instance of our top level domain object

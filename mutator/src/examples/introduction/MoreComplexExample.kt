@@ -13,30 +13,28 @@ class MoreComplexExample : SimpleExample() {
         - data classes
         - lists of objects
         - etc.
+
+        This example also shows, that we only need the @Mutable annotation on the top level type.  
+        The annotation processor / code generator will recursively pick up all type that are referenced
+        by the top level type.
         
-        You like immutability for all the benefits is brings.  
-        But you also hate the amount of code you have to write to change a deeply nested value inside these kinds
-        of structures.
-        
-        Well, here is a solution:
     """.trimIndent()
 
     // !BEGIN! //
 
     // Let's say we have a complex, nested and immutable domain model.
+    // We annotate our top level type with the @Mutable annotation.
     @Mutable
     data class Company(val boss: Person, val employees: List<Employee>)
 
-    @Mutable
+    // All the other types are recursively references by the top level type.
+    // So we do not need to annotate them with @Mutable (we still can, but it makes not difference)
     data class Employee(val person: Person, val address: Address, val salary: Salary)
 
-    @Mutable
     data class Person(val name: String, val age: Int)
 
-    @Mutable
     data class Address(val city: String)
 
-    @Mutable
     data class Salary(val currency: String, val amount: Float)
 
     // !END! //

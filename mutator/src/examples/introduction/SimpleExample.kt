@@ -14,8 +14,8 @@ class SimpleExample : SimpleExample() {
 
     // !BEGIN! //
 
-    // We have a data class that has some fields.
-    // We also have the mutator annotation.
+    // Let's say we have a data class that has some fields.
+    // We also annotate the type, so the mutator annotation processing will generate some code for us.
     @Mutable
     data class Person(val name: String, val age: Int)
 
@@ -34,22 +34,22 @@ class SimpleExample : SimpleExample() {
             age += 1
         }
 
-        // Angela did not change.
+        // Angelina did not change.
         println("The original:")
         println(angelina)
-        // But we go the older version through mutation.
+        // But we got another version with increased age.
         println("The older version:")
         println(olderAngelina)
 
         // We could also change the name or both.
-        val noMoreAngela = angelina.mutate {
+        val noMoreAngelina = angelina.mutate {
             age = 47
             name = "Brad"
         }
 
         // And so we got another mutation of the original object.
         println("The renamed version:")
-        println(noMoreAngela)
+        println(noMoreAngelina)
 
         // !END! //
     }

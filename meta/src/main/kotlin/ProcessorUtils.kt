@@ -161,7 +161,9 @@ interface ProcessorUtils {
 
     val Element.isStringType get() = fqn.isStringType
 
-    val Element.isNullable get() = getAnnotation(org.jetbrains.annotations.Nullable::class.java) != null
+    fun <T: Annotation> Element.hasAnnotation(cls: KClass<T>) = getAnnotation(cls.java) != null
+
+    val Element.isNullable get() = hasAnnotation(org.jetbrains.annotations.Nullable::class)
 
     fun Element.asTypeName() = asType().asTypeName().copy(nullable = isNullable)
 
@@ -252,7 +254,7 @@ interface ProcessorUtils {
     /**
      * Finds all [TypeElement]s that carry the given annotation
      */
-    fun <T : Annotation> RoundEnvironment.findAllTypeWithAnnotation(cls: KClass<T>): List<TypeElement> =
+    fun <T : Annotation> RoundEnvironment.findAllTypesWithAnnotation(cls: KClass<T>): List<TypeElement> =
         getElementsAnnotatedWith(cls.java).filterIsInstance<TypeElement>()
 
     /**
@@ -293,20 +295,21 @@ interface ProcessorUtils {
     /**
      * Returns all enclosed type (direct and indirect) to the list of [TypeElement]s
      */
-    fun TypeElement.getAllEnclosedTypes(): List<TypeElement> {
+    fun TypeElement.getAllEnclosedTypes(filter: (TypeElement) -> Boolean = { true }): List<TypeElement> {
         return enclosedElements
             .filterIsInstance<TypeElement>()
             .flatMap {
                 listOf(it).plus(it.getAllEnclosedTypes())
             }
+            .filter(filter)
     }
 
     /**
      * Adds all enclosed type (direct and indirect) to the list of [TypeElement]s
      */
-    fun List<TypeElement>.plusAllEnclosedTypes(): List<TypeElement> = plus(
+    fun List<TypeElement>.plusAllEnclosedTypes(filter: (TypeElement) -> Boolean = { true }): List<TypeElement> = plus(
         flatMap {
-            it.getAllEnclosedTypes()
+            it.getAllEnclosedTypes(filter)
         }
     ).distinct()
 

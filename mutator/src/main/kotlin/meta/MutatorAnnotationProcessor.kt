@@ -49,11 +49,17 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
         }
 
         val types = roundEnv
-            .findAllTypeWithAnnotation(Mutable::class)
-            .plusAllEnclosedTypes()
+            // First we get all top level type with the Mutable annotation
+            .findAllTypesWithAnnotation(Mutable::class)
+            // Then we add all enclosed type with the Mutable annotation recursively
+            .plusAllEnclosedTypes { it.hasAnnotation(Mutable::class) }
+            // Then we add all types that are references by the types we have already found
             .plusReferencedTypesRecursive()
+            // We also add all supertypes of tall the types we have already found
             .plusAllSuperTypes()
+            // We apply the default black list
             .defaultBlacklist()
+            // And we make the types distinct
             .distinct()
 
         logNote("all types (with recursively referenced, with supertypes): $types")
