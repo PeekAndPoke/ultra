@@ -6,6 +6,8 @@
 
     1. [A very simple](#a-very-simple)
     2. [A more complex example](#a-more-complex-example)
+    3. [Empty Mutation](#empty-mutation)
+    4. [Mutating an object without changing it.](#mutating-an-object-without-changing-it.)
 
 ## Introduction
 
@@ -162,4 +164,93 @@ Employee(person=Person(name=Jerry, age=35), address=Address(city=New York), sala
 'Jerry' after the raise - he did not get one
 Employee(person=Person(name=Jerry, age=35), address=Address(city=New York), salary=Salary(currency=USD, amount=17000.0))
 Is 'Jerry' still the same: true
+```
+### Empty Mutation
+
+This example shows what happens when we apply a empty mutation.
+
+When we call **mutate** on an object without changing anything, the result will be 
+the exact same object.
+
+(see the full [example](../../src/examples/introduction/EmptyMutationExample.kt))
+
+```kotlin
+@Mutable
+data class Person(val name: String, val age: Int)
+
+val before = Person("Angelina", 35)
+
+// We call mutate but we do not do anything
+val after = before.mutate {
+}
+
+println("Before:")
+println(before)
+println()
+
+println("After:")
+println(after)
+println()
+
+println("It is the exact same object (before === after): " + (before === after))
+```
+Will output:
+```
+Before:
+Person(name=Angelina, age=35)
+
+After:
+Person(name=Angelina, age=35)
+
+It is the exact same object (before === after): true
+```
+### Mutating an object without changing it.
+
+This example shows what happens when we we mutate an object without changing any of it's fields.
+
+When we mutate an object and re-assign fields with the exact same values, this is as if no mutation has
+occurred. This means:
+- the result will be the original object.
+- there is no new object created.
+
+The same behavior is implemented for other kinds of mutations as well, like:
+- List mutation
+- Map mutation
+- ...
+
+Only real changes lead to the creation of object copies.
+
+(see the full [example](../../src/examples/introduction/MutationWithoutChangeExample.kt))
+
+```kotlin
+@Mutable
+data class Person(val name: String, val age: Int)
+
+val before = Person("Angelina", 35)
+
+// We call mutate but we do not do anything
+val after = before.mutate {
+    name = "Angelina"
+    age = 35
+}
+
+println("Before:")
+println(before)
+println()
+
+println("After:")
+println(after)
+println()
+
+println("It is the exact same object (before === after): " + (before === after))
+```
+Will output:
+```
+Before:
+Person(name=Angelina, age=35)
+
+After:
+Person(name=Angelina, age=35)
+
+It is the exact same object (before === after): true
 ```
