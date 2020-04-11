@@ -9,13 +9,18 @@ class MoreComplexExample : SimpleExample() {
     override val title = "A more complex example"
 
     override val description = """
-        Imagine you have some nested immutable data structure with
+        Imagine we have some nested immutable data structure with
         - data classes
         - lists of objects
         - etc.
 
-        This example also shows, that we only need the @Mutable annotation on the top level type.  
-        The annotation processor / code generator will recursively pick up all type that are referenced
+        This example show how to easily mutate data structure of any depth.   
+        There is no need for things like:
+        - nested copy(copy(copy(...)))
+        - or complicated list manipulations
+
+        This example also shows, that we only need to put the @Mutable annotation on the a top level type.  
+        The annotation processor / code generator will recursively pick up all types that are referenced / used
         by the top level type.
         
     """.trimIndent()
