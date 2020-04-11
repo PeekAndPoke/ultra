@@ -38,7 +38,7 @@ class SimpleExample : SimpleExample() {
         println("The original:")
         println(angelina)
         // But we got another version with increased age.
-        println("The older version:")
+        println("The new version with modified age:")
         println(olderAngelina)
 
         // We could also change the name or both.
