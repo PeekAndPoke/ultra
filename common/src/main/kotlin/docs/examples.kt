@@ -42,5 +42,6 @@ abstract class SimpleExample : Example {
 
 interface ExampleChapter {
     val title: String
+    val description: String get() = ""
     val examples: List<Example>
 }

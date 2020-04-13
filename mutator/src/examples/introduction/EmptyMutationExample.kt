@@ -9,7 +9,7 @@ class EmptyMutationExample : SimpleExample() {
     override val title = "Empty Mutation"
 
     override val description = """
-        This example shows what happens when we apply a empty mutation.
+        This example shows what happens when we apply an empty mutation.
         
         When we call **mutate** on an object without changing anything, the result will be 
         the exact same object.

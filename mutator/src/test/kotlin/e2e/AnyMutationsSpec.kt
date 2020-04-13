@@ -15,7 +15,7 @@ class AnyMutationsSpec : StringSpec({
 
     fun <T> setProp(prop: KMutableProperty0<T>, v: T) = prop.set(v)
 
-    "Mutating but not changing any value is treated like no mutation" {
+    "Mutating but not changing an 'Any' value is treated like no mutation" {
 
         val source = WithAnyObject(
             anObject = "string"
@@ -27,7 +27,7 @@ class AnyMutationsSpec : StringSpec({
 
         assertSoftly {
 
-            withClue("When all mutations are not changing any value, the source object must be returned") {
+            withClue("When all mutations are not changing an 'Any' value, the source object must be returned") {
                 source shouldBeSameInstanceAs result
             }
         }

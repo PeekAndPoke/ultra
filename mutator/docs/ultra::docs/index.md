@@ -9,6 +9,10 @@
     3. [Empty Mutation](#empty-mutation)
     4. [Mutating an object without changing it](#mutating-an-object-without-changing-it)
 
+2. [Data Class Mutation](#data-class-mutation)
+
+    1. [Scalar and String properties](#scalar-and-string-properties)
+
 ## Introduction
 
 ### A simple example
@@ -167,7 +171,7 @@ Is 'Jerry' still the same: true
 ```
 ### Empty Mutation
 
-This example shows what happens when we apply a empty mutation.
+This example shows what happens when we apply an empty mutation.
 
 When we call **mutate** on an object without changing anything, the result will be 
 the exact same object.
@@ -206,10 +210,9 @@ It is the exact same object (before === after): true
 ```
 ### Mutating an object without changing it
 
-This example shows what happens when we we mutate an object without changing any of it's fields.
+This example shows what happens when we mutate an object without changing any of it's fields.
 
-When we mutate an object and re-assign fields with the exact same values, this is as if no mutation has
-occurred. This means:
+Re-assign fields with the exact same values, behaves as if no mutation is done. This means:
 - the result will be the original object.
 - there is no new object created.
 
@@ -253,4 +256,122 @@ After:
 Person(name=Angelina, age=35)
 
 It is the exact same object (before === after): true
+```
+## Data Class Mutation
+
+### Scalar and String properties
+
+This examples shows how we can mutate scalar (Int, Boolean, Float, ...) and String properties.
+
+The generated mutator code for our data class looks like this:
+ 
+```kotlin
+        @file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
+
+package de.peekandpoke.ultra.mutator.examples.dataclasses
+
+import de.peekandpoke.ultra.mutator.*
+
+
+@JvmName("mutateExampleClassWithScalarsMutator")
+fun ExampleClassWithScalars.mutate(mutation: ExampleClassWithScalarsMutator.() -> Unit) = 
+    mutator({ x: ExampleClassWithScalars -> Unit }).apply(mutation).getResult()
+
+@JvmName("mutatorExampleClassWithScalarsMutator")
+fun ExampleClassWithScalars.mutator(onModify: OnModify<ExampleClassWithScalars> = {}) = 
+    ExampleClassWithScalarsMutator(this, onModify)
+
+class ExampleClassWithScalarsMutator(
+    target: ExampleClassWithScalars, 
+    onModify: OnModify<ExampleClassWithScalars> = {}
+) : DataClassMutator<ExampleClassWithScalars>(target, onModify) {
+
+    /**
+     * Mutator for field [ExampleClassWithScalars.anInt]
+     *
+     * Info:
+     *   - type:         [Int]
+     *   - reflected by: [com.squareup.kotlinpoet.ClassName]
+     */ 
+    var anInt
+        get() = getResult().anInt
+        set(v) = modify(getResult()::anInt, getResult().anInt, v)
+
+    /**
+     * Mutator for field [ExampleClassWithScalars.aFloat]
+     *
+     * Info:
+     *   - type:         [Float]
+     *   - reflected by: [com.squareup.kotlinpoet.ClassName]
+     */ 
+    var aFloat
+        get() = getResult().aFloat
+        set(v) = modify(getResult()::aFloat, getResult().aFloat, v)
+
+    /**
+     * Mutator for field [ExampleClassWithScalars.aBoolean]
+     *
+     * Info:
+     *   - type:         [Boolean]
+     *   - reflected by: [com.squareup.kotlinpoet.ClassName]
+     */ 
+    var aBoolean
+        get() = getResult().aBoolean
+        set(v) = modify(getResult()::aBoolean, getResult().aBoolean, v)
+
+    /**
+     * Mutator for field [ExampleClassWithScalars.aString]
+     *
+     * Info:
+     *   - type:         [String]
+     *   - reflected by: [com.squareup.kotlinpoet.ClassName]
+     */ 
+    var aString
+        get() = getResult().aString
+        set(v) = modify(getResult()::aString, getResult().aString, v)
+
+}
+
+```
+
+(see the full [example](../../src/examples/dataclasses/ScalarAndStringPropertiesExample.kt))
+
+```kotlin
+// Here is out data class
+@Mutable
+data class ExampleClassWithScalars(
+    val anInt: Int,
+    val aFloat: Float,
+    val aBoolean: Boolean,
+    val aString: String
+)
+
+// We create an instance
+val original = ExampleClassWithScalars(
+    anInt = 10,
+    aFloat = 3.14f,
+    aBoolean = false,
+    aString = "Hello World!"
+)
+
+// Now we can mutate our object
+val result = original.mutate {
+    anInt += 1
+    aFloat = 4.669f
+    aBoolean = !aBoolean
+    aString = "Hey, $aString"
+}
+
+println("The original:")
+println(original)
+
+println("The result:")
+println(result)
+```
+Will output:
+```
+The original:
+ExampleClassWithScalars(anInt=10, aFloat=3.14, aBoolean=false, aString=Hello World!)
+The result:
+ExampleClassWithScalars(anInt=11, aFloat=4.669, aBoolean=true, aString=Hey, Hello World!)
 ```

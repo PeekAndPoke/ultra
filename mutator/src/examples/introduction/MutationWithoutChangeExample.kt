@@ -9,10 +9,9 @@ class MutationWithoutChangeExample : SimpleExample() {
     override val title = "Mutating an object without changing it"
 
     override val description = """
-        This example shows what happens when we we mutate an object without changing any of it's fields.
+        This example shows what happens when we mutate an object without changing any of it's fields.
         
-        When we mutate an object and re-assign fields with the exact same values, this is as if no mutation has
-        occurred. This means:
+        Re-assign fields with the exact same values, behaves as if no mutation is done. This means:
         - the result will be the original object.
         - there is no new object created.
         
