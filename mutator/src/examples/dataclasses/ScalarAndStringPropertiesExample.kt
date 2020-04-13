@@ -20,17 +20,15 @@ class ScalarAndStringPropertiesExample : MutatorExample() {
 
     override val title = "Scalar and String properties"
 
-    private val mutatorCode = ExampleClassWithScalars::class.loadMutatorCode().prependIndent("        ")
+    private val mutatorCode = ExampleClassWithScalars::class.loadMutatorCode()
 
     override val description = """
         This examples shows how we can mutate scalar (Int, Boolean, Float, ...) and String properties.
-        
-        The generated mutator code for our data class looks like this:
-         
-        ```kotlin
-        $mutatorCode
-        ```
     """.trimIndent()
+
+    override val additionalInfo = """
+        The generated mutator code for our data class looks like this:
+    """.trimIndent() + markdownKotlinCode(mutatorCode)
 
     override fun run() {
         // !BEGIN! //

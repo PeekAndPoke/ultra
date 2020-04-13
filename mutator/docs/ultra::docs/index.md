@@ -63,6 +63,7 @@ Person(name=Angelina, age=36)
 The renamed version:
 Person(name=Brad, age=47)
 ```
+
 ### A more complex example
 
 Imagine we have some nested immutable data structure with
@@ -169,6 +170,7 @@ Employee(person=Person(name=Jerry, age=35), address=Address(city=New York), sala
 Employee(person=Person(name=Jerry, age=35), address=Address(city=New York), salary=Salary(currency=USD, amount=17000.0))
 Is 'Jerry' still the same: true
 ```
+
 ### Empty Mutation
 
 This example shows what happens when we apply an empty mutation.
@@ -208,6 +210,7 @@ Person(name=Angelina, age=35)
 
 It is the exact same object (before === after): true
 ```
+
 ### Mutating an object without changing it
 
 This example shows what happens when we mutate an object without changing any of it's fields.
@@ -257,16 +260,62 @@ Person(name=Angelina, age=35)
 
 It is the exact same object (before === after): true
 ```
+
 ## Data Class Mutation
+
+Mutator supports the mutation of data classes.
+
+This chapter shows how to mutate immutable data classes and nested data classes.
 
 ### Scalar and String properties
 
 This examples shows how we can mutate scalar (Int, Boolean, Float, ...) and String properties.
 
-The generated mutator code for our data class looks like this:
- 
+(see the full [example](../../src/examples/dataclasses/ScalarAndStringPropertiesExample.kt))
+
 ```kotlin
-        @file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
+// Here is out data class
+@Mutable
+data class ExampleClassWithScalars(
+    val anInt: Int,
+    val aFloat: Float,
+    val aBoolean: Boolean,
+    val aString: String
+)
+
+// We create an instance
+val original = ExampleClassWithScalars(
+    anInt = 10,
+    aFloat = 3.14f,
+    aBoolean = false,
+    aString = "Hello World!"
+)
+
+// Now we can mutate our object
+val result = original.mutate {
+    anInt += 1
+    aFloat = 4.669f
+    aBoolean = !aBoolean
+    aString = "Hey, $aString"
+}
+
+println("The original:")
+println(original)
+
+println("The result:")
+println(result)
+```
+Will output:
+```
+The original:
+ExampleClassWithScalars(anInt=10, aFloat=3.14, aBoolean=false, aString=Hello World!)
+The result:
+ExampleClassWithScalars(anInt=11, aFloat=4.669, aBoolean=true, aString=Hey, Hello World!)
+```
+
+The generated mutator code for our data class looks like this:
+```kotlin
+@file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
 
 package de.peekandpoke.ultra.mutator.examples.dataclasses
 
@@ -333,45 +382,5 @@ class ExampleClassWithScalarsMutator(
 }
 
 ```
+    
 
-(see the full [example](../../src/examples/dataclasses/ScalarAndStringPropertiesExample.kt))
-
-```kotlin
-// Here is out data class
-@Mutable
-data class ExampleClassWithScalars(
-    val anInt: Int,
-    val aFloat: Float,
-    val aBoolean: Boolean,
-    val aString: String
-)
-
-// We create an instance
-val original = ExampleClassWithScalars(
-    anInt = 10,
-    aFloat = 3.14f,
-    aBoolean = false,
-    aString = "Hello World!"
-)
-
-// Now we can mutate our object
-val result = original.mutate {
-    anInt += 1
-    aFloat = 4.669f
-    aBoolean = !aBoolean
-    aString = "Hey, $aString"
-}
-
-println("The original:")
-println(original)
-
-println("The result:")
-println(result)
-```
-Will output:
-```
-The original:
-ExampleClassWithScalars(anInt=10, aFloat=3.14, aBoolean=false, aString=Hello World!)
-The result:
-ExampleClassWithScalars(anInt=11, aFloat=4.669, aBoolean=true, aString=Hey, Hello World!)
-```

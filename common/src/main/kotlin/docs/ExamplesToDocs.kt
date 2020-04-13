@@ -78,6 +78,10 @@ abstract class ExamplesToDocs(
 
             builder.appendln("## ${chapter.title}").appendln()
 
+            if (chapter.description.isNotEmpty()) {
+                builder.appendln(chapter.description).appendln()
+            }
+
             chapter.examples.forEach { example ->
 
                 // Getting the directory where the code for this example is in
@@ -85,9 +89,12 @@ abstract class ExamplesToDocs(
                 // Extracting the code block from the given example
                 val exampleCode = ExampleCodeExtractor.extract(example, srcDir)
 
+                // Render the title
                 builder.appendln("### ${example.title}").appendln()
-                    .appendln(example.description).appendln()
+                // Render the description
+                builder.appendln(example.description).appendln()
 
+                // Render the link to the code of the example and the example code
                 val codeLocation = File(srcDir.relativeTo(outputLocation), "${example::class.simpleName}.kt")
 
                 builder.appendln("(see the full [example]($codeLocation))").appendln()
@@ -97,10 +104,17 @@ abstract class ExamplesToDocs(
                     else -> builder.appendKotlinCode(exampleCode)
                 }
 
+                // Runs the example and record all console output
                 val output = example.runAndRecordOutput()
 
+                // Render the console output
                 if (output.isNotEmpty()) {
-                    builder.appendln("Will output:").appendPlainCode(output.trim())
+                    builder.appendln("Will output:").appendPlainCode(output.trim()).appendln()
+                }
+
+                // Render addition explanation if the is any
+                if (example.additionalInfo.isNotEmpty()) {
+                    builder.appendln(example.additionalInfo).appendln()
                 }
             }
         }
