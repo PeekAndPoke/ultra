@@ -12,6 +12,7 @@
 2. [Data Class Mutation](#data-class-mutation)
 
     1. [Scalar and String properties](#scalar-and-string-properties)
+    2. [Nullable Scalar and String properties](#nullable-scalar-and-string-properties)
 
 ## Introduction
 
@@ -263,7 +264,7 @@ It is the exact same object (before === after): true
 
 ## Data Class Mutation
 
-Mutator supports the mutation of data classes.
+**ultra::mutator** supports the mutation of data classes.
 
 This chapter shows how to mutate immutable data classes and nested data classes.
 
@@ -370,6 +371,123 @@ class ExampleClassWithScalarsMutator(
 
     /**
      * Mutator for field [ExampleClassWithScalars.aString]
+     *
+     * Info:
+     *   - type:         [String]
+     *   - reflected by: [com.squareup.kotlinpoet.ClassName]
+     */ 
+    var aString
+        get() = getResult().aString
+        set(v) = modify(getResult()::aString, getResult().aString, v)
+
+}
+
+```
+    
+
+### Nullable Scalar and String properties
+
+This examples shows how we can mutate nullable scalar (Int, Boolean, Float, ...) and String properties.
+
+(see the full [example](../../src/examples/dataclasses/NullableScalarAndStringPropertiesExample.kt))
+
+```kotlin
+// Here is out data class
+@Mutable
+data class ExampleClassWithNullableScalars(
+    val anInt: Int?,
+    val aFloat: Float?,
+    val aBoolean: Boolean?,
+    val aString: String?
+)
+
+// We create an instance
+val original = ExampleClassWithNullableScalars(
+    anInt = 10,
+    aFloat = 3.14f,
+    aBoolean = false,
+    aString = "Hello World!"
+)
+
+// Now we can mutate our object
+val result = original.mutate {
+    anInt = null
+    aFloat = null
+    aBoolean = aBoolean ?: true
+    aString = null
+}
+
+println("The original:")
+println(original)
+
+println("The result:")
+println(result)
+```
+Will output:
+```
+The original:
+ExampleClassWithNullableScalars(anInt=10, aFloat=3.14, aBoolean=false, aString=Hello World!)
+The result:
+ExampleClassWithNullableScalars(anInt=null, aFloat=null, aBoolean=false, aString=null)
+```
+
+The generated mutator code for our data class looks like this:
+```kotlin
+@file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
+
+package de.peekandpoke.ultra.mutator.examples.dataclasses
+
+import de.peekandpoke.ultra.mutator.*
+
+
+@JvmName("mutateExampleClassWithNullableScalarsMutator")
+fun ExampleClassWithNullableScalars.mutate(mutation: ExampleClassWithNullableScalarsMutator.() -> Unit) = 
+    mutator({ x: ExampleClassWithNullableScalars -> Unit }).apply(mutation).getResult()
+
+@JvmName("mutatorExampleClassWithNullableScalarsMutator")
+fun ExampleClassWithNullableScalars.mutator(onModify: OnModify<ExampleClassWithNullableScalars> = {}) = 
+    ExampleClassWithNullableScalarsMutator(this, onModify)
+
+class ExampleClassWithNullableScalarsMutator(
+    target: ExampleClassWithNullableScalars, 
+    onModify: OnModify<ExampleClassWithNullableScalars> = {}
+) : DataClassMutator<ExampleClassWithNullableScalars>(target, onModify) {
+
+    /**
+     * Mutator for field [ExampleClassWithNullableScalars.anInt]
+     *
+     * Info:
+     *   - type:         [Int]
+     *   - reflected by: [com.squareup.kotlinpoet.ClassName]
+     */ 
+    var anInt
+        get() = getResult().anInt
+        set(v) = modify(getResult()::anInt, getResult().anInt, v)
+
+    /**
+     * Mutator for field [ExampleClassWithNullableScalars.aFloat]
+     *
+     * Info:
+     *   - type:         [Float]
+     *   - reflected by: [com.squareup.kotlinpoet.ClassName]
+     */ 
+    var aFloat
+        get() = getResult().aFloat
+        set(v) = modify(getResult()::aFloat, getResult().aFloat, v)
+
+    /**
+     * Mutator for field [ExampleClassWithNullableScalars.aBoolean]
+     *
+     * Info:
+     *   - type:         [Boolean]
+     *   - reflected by: [com.squareup.kotlinpoet.ClassName]
+     */ 
+    var aBoolean
+        get() = getResult().aBoolean
+        set(v) = modify(getResult()::aBoolean, getResult().aBoolean, v)
+
+    /**
+     * Mutator for field [ExampleClassWithNullableScalars.aString]
      *
      * Info:
      *   - type:         [String]
