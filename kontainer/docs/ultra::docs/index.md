@@ -76,6 +76,7 @@ Will output:
 Kontainer.use() says: Hello you!
 Kontainer.get() says: Hello you!
 ```
+
 ### Defining a Dynamic service
 
 This example shows how to register and retrieve a dynamic service.
@@ -109,6 +110,7 @@ Will output:
 ```
 Kontainer.use() says: Hello you!
 ```
+
 ### Defining a Prototype service
 
 This example shows how to register and retrieve a prototype service.
@@ -142,6 +144,7 @@ Will output:
 ```
 Kontainer.use() says: Hello you!
 ```
+
 ### Defining an existing object as a Singleton service
 
 This example shows how to register an existing object as a singleton service.
@@ -172,6 +175,7 @@ Will output:
 ```
 Kontainer.use() says: Hello you!
 ```
+
 ### Hiding the concrete implementation of a service
 
 This example shows how to hide the concrete implementation of a service.
@@ -221,6 +225,7 @@ Will output:
 It says: Hello you!
 de.peekandpoke.ultra.kontainer.ServiceNotFound: Service de.peekandpoke.ultra.kontainer.examples.defining_services.HidingTheConcreteImplementationOfAServiceExample.Greeter was not found
 ```
+
 ### Singletons are shared
 
 This example shows that singleton services are shared across all kontainers, 
@@ -255,6 +260,7 @@ Will output:
 Counter: 1
 Counter: 2
 ```
+
 ### Singletons vs Dynamics vs Prototypes
 
 This example shows the difference between a **Singleton**, a **Dynamic** and a **Prototype** service.
@@ -324,6 +330,7 @@ singleton: 7 - dynamic 1 - prototype: 1
 singleton: 8 - dynamic 2 - prototype: 1
 singleton: 9 - dynamic 3 - prototype: 1
 ```
+
 ## Service Injection
 
 ### Basic Injection Example
@@ -366,6 +373,7 @@ Will output:
 Next: 1
 Next: 2
 ```
+
 ### Factory Method Injection
 
 Sometimes pure constructor injection is not enough.  
@@ -420,6 +428,7 @@ Will output:
 Next: 101
 Next: 102
 ```
+
 ### Injecting a singleton into multiple services
 
 This example shows how one singleton service is injected into multiple services.
@@ -461,6 +470,7 @@ Will output:
 One: 1
 Two: 2
 ```
+
 ### Injecting a prototype into multiple services
 
 This example shows how a prototype service is injected into multiple services.
@@ -502,6 +512,7 @@ Will output:
 One: 1
 Two: 1
 ```
+
 ### Injection By SuperType
 
 This example shows how a service can be injected by one of its supertypes.
@@ -540,6 +551,7 @@ Will output:
 ```
 Next: 1
 ```
+
 ### Injection By SuperType can fail due to ambiguity
 
 This example shows that injecting by supertype can fail, when there is an ambiguity.
@@ -593,6 +605,7 @@ Problems:
 
 Config values:
 ```
+
 ### Injection of all Services By SuperType
 
 This example shows how to inject all services that implement or extend a given super type.
@@ -647,6 +660,7 @@ Will output:
 users
 orders
 ```
+
 ### Lazy Injection Example
 
 This example shows how a to lazily inject a service.
@@ -691,6 +705,7 @@ We got MyService from the kontainer
 We used the lazily injected service: Here I am!
 # instances of the LazilyInjected:   1
 ```
+
 ### Breaking Cyclic Dependencies with Lazy Injection
 
 In some cases we have services that need to injected each other.
@@ -732,6 +747,7 @@ Will output:
 I am ServiceOne and I know 'two'
 I am ServiceTwo and I know 'one'
 ```
+
 ### Lazily inject all Services By SuperType
 
 This example shows how to lazily inject all services of a given super type.
@@ -780,6 +796,7 @@ Will output:
 users
 orders
 ```
+
 ### Lazily inject all Services By SuperType with a Lookup
 
 This example shows how to lazily inject all services of a given super type using a lookup.
@@ -846,3 +863,4 @@ Getting it from the Lookup: users
 Getting it from the Lookup: orders
 # instances of OrderRepository 1
 ```
+

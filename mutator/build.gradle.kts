@@ -17,7 +17,6 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
-val kotlin_metadata_version: String by project
 val google_auto_version: String by project
 val kotlinpoet_version: String by project
 val logback_version: String by project
