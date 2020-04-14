@@ -13,6 +13,7 @@
 
     1. [Scalar and String properties](#scalar-and-string-properties)
     2. [Nullable Scalar and String properties](#nullable-scalar-and-string-properties)
+    3. ['Any' properties and unknown types](#'any'-properties-and-unknown-types)
 
 ## Introduction
 
@@ -268,9 +269,15 @@ It is the exact same object (before === after): true
 
 This chapter shows how to mutate immutable data classes and nested data classes.
 
+Notice that inside all the mutate { } closures, we are not working on our objects directly. We rather work on
+wrappers. The code for these wrappers is generated for us, as we put the @Mutable annotation on our classes.
+
 ### Scalar and String properties
 
 This examples shows how we can mutate scalar (Int, Boolean, Float, ...) and String properties.
+
+Notice that inside of the mutate { } closure, we are not working on our objects itself, but rather on
+a wrapper. The code for this wrapper is generated for us, as we put the @Mutable annotation on our class.
 
 (see the full [example](../../src/examples/dataclasses/ScalarAndStringPropertiesExample.kt))
 
@@ -496,6 +503,118 @@ class ExampleClassWithNullableScalarsMutator(
     var aString
         get() = getResult().aString
         set(v) = modify(getResult()::aString, getResult().aString, v)
+
+}
+
+```
+    
+
+### 'Any' properties and unknown types
+
+This examples shows how we can mutate 'Any" properties.  
+It also shows how mutations behave for types of properties that are unknown to Mutator.
+
+In short, the behaviour is exactly the same as with scalar types.
+ 
+When we have a property in your class of type 'Any" or 'Any?' we can read it and re-assign it.
+
+When we have properties of types, for which Mutator does not support any special mutation mechanism, e.g. 
+java.time.LocalDate, we can do the same: read the value and re-assign the value. 
+
+(see the full [example](../../src/examples/dataclasses/AnyPropertiesExample.kt))
+
+```kotlin
+// Here is out data class
+@Mutable
+data class ExampleClassWithAny(
+    val any: Any,
+    val nullableAny: Any?,
+    val aDate: LocalDate
+)
+
+// We create an instance
+val original = ExampleClassWithAny(
+    any = "any",
+    nullableAny = null,
+    aDate = LocalDate.now()
+)
+
+// Now we can mutate our object
+val result = original.mutate {
+    any = 10
+    nullableAny = 4.669f
+    aDate = aDate.plusDays(1)
+}
+
+println("The original:")
+println(original)
+
+println("The result:")
+println(result)
+```
+Will output:
+```
+The original:
+ExampleClassWithAny(any=any, nullableAny=null, aDate=2020-04-14)
+The result:
+ExampleClassWithAny(any=10, nullableAny=4.669, aDate=2020-04-15)
+```
+
+The generated mutator code for our data class looks like this:
+```kotlin
+@file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
+
+package de.peekandpoke.ultra.mutator.examples.dataclasses
+
+import de.peekandpoke.ultra.mutator.*
+import java.time.LocalDate
+
+
+@JvmName("mutateExampleClassWithAnyMutator")
+fun ExampleClassWithAny.mutate(mutation: ExampleClassWithAnyMutator.() -> Unit) = 
+    mutator({ x: ExampleClassWithAny -> Unit }).apply(mutation).getResult()
+
+@JvmName("mutatorExampleClassWithAnyMutator")
+fun ExampleClassWithAny.mutator(onModify: OnModify<ExampleClassWithAny> = {}) = 
+    ExampleClassWithAnyMutator(this, onModify)
+
+class ExampleClassWithAnyMutator(
+    target: ExampleClassWithAny, 
+    onModify: OnModify<ExampleClassWithAny> = {}
+) : DataClassMutator<ExampleClassWithAny>(target, onModify) {
+
+    /**
+     * Mutator for field [ExampleClassWithAny.any]
+     *
+     * Info:
+     *   - type:         [Any]
+     *   - reflected by: [com.squareup.kotlinpoet.ClassName]
+     */ 
+    var any
+        get() = getResult().any
+        set(v) = modify(getResult()::any, getResult().any, v)
+
+    /**
+     * Mutator for field [ExampleClassWithAny.nullableAny]
+     *
+     * Info:
+     *   - type:         [Any]
+     *   - reflected by: [com.squareup.kotlinpoet.ClassName]
+     */ 
+    var nullableAny
+        get() = getResult().nullableAny
+        set(v) = modify(getResult()::nullableAny, getResult().nullableAny, v)
+
+    /**
+     * Mutator for field [ExampleClassWithAny.aDate]
+     *
+     * Info:
+     *   - type:         [LocalDate]
+     *   - reflected by: [com.squareup.kotlinpoet.ClassName]
+     */ 
+    var aDate
+        get() = getResult().aDate
+        set(v) = modify(getResult()::aDate, getResult().aDate, v)
 
 }
 

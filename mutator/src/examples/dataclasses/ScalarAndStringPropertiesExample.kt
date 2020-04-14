@@ -24,6 +24,9 @@ class ScalarAndStringPropertiesExample : MutatorExample() {
 
     override val description = """
         This examples shows how we can mutate scalar (Int, Boolean, Float, ...) and String properties.
+        
+        Notice that inside of the mutate { } closure, we are not working on our objects itself, but rather on
+        a wrapper. The code for this wrapper is generated for us, as we put the @Mutable annotation on our class.
     """.trimIndent()
 
     override val additionalInfo = """
