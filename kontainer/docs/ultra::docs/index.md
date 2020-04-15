@@ -338,13 +338,19 @@ singleton: 9 - dynamic 3 - prototype: 1
 
 ## Defining Modules
 
+Kontainer Modules are a very useful and simple way to group services together.
+ 
+Library developers can use them to bundle up their library and to provide easy ways to:
+- integrate the library into the kontainer of an application
+- document the library and customization options on a high level
+
 ### Defining a simple module
 
 This example shows how to define kontainer modules.
 
 Modules are very useful when we develop libraries.
 
-A user of a library can then simply include module into the kontainer definition.
+A user of a library can then simply include our module into the kontainer definition.
  
 A module can also give a nice high level documentation of what the library does and how to customize it.
 For example there could be some comments in the module code, that explain which service can be 
