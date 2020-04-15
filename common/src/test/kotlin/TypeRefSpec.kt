@@ -11,6 +11,11 @@ class TypeRefSpec : StringSpec({
     "KTypes must contain valid predefined types" {
 
         assertSoftly {
+            TypeRef.Unit.type.classifier shouldBe Unit::class
+            TypeRef.Unit.type.isMarkedNullable shouldBe false
+            TypeRef.UnitNull.type.classifier shouldBe Unit::class
+            TypeRef.UnitNull.type.isMarkedNullable shouldBe true
+
             TypeRef.Any.type.classifier shouldBe Any::class
             TypeRef.Any.type.isMarkedNullable shouldBe false
             TypeRef.AnyNull.type.classifier shouldBe Any::class

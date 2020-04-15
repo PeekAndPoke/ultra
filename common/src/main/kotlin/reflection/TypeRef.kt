@@ -20,6 +20,9 @@ data class TypeRef<T>(val type: KType) {
 
     companion object {
 
+        val Unit = kType<Unit>()
+        val UnitNull = kType<Unit?>()
+
         val Any = kType<Any>()
         val AnyNull = kType<Any?>()
 
