@@ -12,6 +12,7 @@ class _InjectingServices : ExampleChapter {
         FactoryMethodInjectionExample(),
         InjectSingletonIntoMultipleServicesExample(),
         InjectPrototypeIntoMultipleServicesExample(),
+        NullableInjectionExample(),
         InjectBySuperTypeExample(),
         InjectBySuperTypeFailsToAmbiguityExample(),
         InjectAllBySuperTypeExample(),

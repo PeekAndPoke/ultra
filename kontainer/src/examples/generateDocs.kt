@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.kontainer.examples
 
 import de.peekandpoke.ultra.common.docs.ExamplesToDocs
+import de.peekandpoke.ultra.kontainer.examples.defining_modules._DefiningModules
 import de.peekandpoke.ultra.kontainer.examples.defining_services._DefiningServices
 import de.peekandpoke.ultra.kontainer.examples.injecting_services._InjectingServices
 
@@ -15,6 +16,7 @@ fun main() {
 
 val chapters = listOf(
     _DefiningServices(),
+    _DefiningModules(),
     _InjectingServices()
     // TODO: kontainer modules
     // TODO: definition order / overwriting services

@@ -12,19 +12,24 @@
     6. [Singletons are shared](#singletons-are-shared)
     7. [Singletons vs Dynamics vs Prototypes](#singletons-vs-dynamics-vs-prototypes)
 
-2. [Service Injection](#service-injection)
+2. [Defining Modules](#defining-modules)
+
+    1. [Defining a simple module](#defining-a-simple-module)
+
+3. [Service Injection](#service-injection)
 
     1. [Basic Injection Example](#basic-injection-example)
     2. [Factory Method Injection](#factory-method-injection)
     3. [Injecting a singleton into multiple services](#injecting-a-singleton-into-multiple-services)
     4. [Injecting a prototype into multiple services](#injecting-a-prototype-into-multiple-services)
-    5. [Injection By SuperType](#injection-by-supertype)
-    6. [Injection By SuperType can fail due to ambiguity](#injection-by-supertype-can-fail-due-to-ambiguity)
-    7. [Injection of all Services By SuperType](#injection-of-all-services-by-supertype)
-    8. [Lazy Injection Example](#lazy-injection-example)
-    9. [Breaking Cyclic Dependencies with Lazy Injection](#breaking-cyclic-dependencies-with-lazy-injection)
-    10. [Lazily inject all Services By SuperType](#lazily-inject-all-services-by-supertype)
-    11. [Lazily inject all Services By SuperType with a Lookup](#lazily-inject-all-services-by-supertype-with-a-lookup)
+    5. [Nullable Injection](#nullable-injection)
+    6. [Injection By SuperType](#injection-by-supertype)
+    7. [Injection By SuperType can fail due to ambiguity](#injection-by-supertype-can-fail-due-to-ambiguity)
+    8. [Injection of all Services By SuperType](#injection-of-all-services-by-supertype)
+    9. [Lazy Injection Example](#lazy-injection-example)
+    10. [Breaking Cyclic Dependencies with Lazy Injection](#breaking-cyclic-dependencies-with-lazy-injection)
+    11. [Lazily inject all Services By SuperType](#lazily-inject-all-services-by-supertype)
+    12. [Lazily inject all Services By SuperType with a Lookup](#lazily-inject-all-services-by-supertype-with-a-lookup)
 
 ## Defining Services
 
@@ -331,6 +336,79 @@ singleton: 8 - dynamic 2 - prototype: 1
 singleton: 9 - dynamic 3 - prototype: 1
 ```
 
+## Defining Modules
+
+### Defining a simple module
+
+This example shows how to define kontainer modules.
+
+Modules are very useful when we develop libraries.
+
+A user of a library can then simply include module into the kontainer definition.
+ 
+A module can also give a nice high level documentation of what the library does and how to customize it.
+For example there could be some comments in the module code, that explain which service can be 
+overridden to achieve different behaviours of the library.
+
+(see the full [example](../../src/examples/defining_modules/SimpleModuleExample.kt))
+
+```kotlin
+// Let's say we have some services
+
+// A database service
+class Database(val storage: Storage)
+
+// A Storage interface
+interface Storage {
+    val name: String
+}
+
+// And by default we only deliver our module with a FileStorage implementation
+class FileStorage : Storage {
+    override val name = "FileStorage"
+}
+
+// We can now define a kontainer module like this
+val ourModule = module {
+    singleton(Database::class)
+
+    // The storage service can be overridden by the user of the module
+    singleton(Storage::class, FileStorage::class)
+}
+
+// Now we can use the module when defining a kontainer blueprint
+val blueprint = kontainer {
+    module(ourModule)
+}
+
+val kontainer = blueprint.create()
+
+println("Storage service: " + kontainer.get(Database::class).storage.name)
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Let's create another implementation of Storage and override the default service
+class MemoryStorage : Storage {
+    override val name = "MemoryStorage"
+}
+
+val blueprintEx = kontainer {
+    module(ourModule)
+
+    // Here we override the pre-defined Storage implementation
+    singleton(Storage::class, MemoryStorage::class)
+}
+
+val kontainerEx = blueprintEx.create()
+
+println("Storage service now is: " + kontainerEx.get(Database::class).storage.name)
+```
+Will output:
+```
+Storage service: FileStorage
+Storage service now is: MemoryStorage
+```
+
 ## Service Injection
 
 ### Basic Injection Example
@@ -511,6 +589,50 @@ Will output:
 ```
 One: 1
 Two: 1
+```
+
+### Nullable Injection
+
+This example shows how to inject a service only when it is present in the kontainer.
+
+This can be done by marking the injected parameter as nullable.
+
+(see the full [example](../../src/examples/injecting_services/NullableInjectionExample.kt))
+
+```kotlin
+// We define a service that will NOT be registered in the kontainer
+class NotRegisteredInKontainer
+
+// We define a service that injects the other service as nullable
+class FirstService(val injected: NotRegisteredInKontainer?)
+
+// We define another one to demonstrate the same behaviour with a factory method
+class SecondService(val injected: NotRegisteredInKontainer?)
+
+// We define the kontainer blueprint
+val blueprint = kontainer {
+    // We define the first service as a singleton
+    singleton(FirstService::class)
+    // We define the other service with a factory method (notice the nullable closure parameter)
+    singleton { injected: NotRegisteredInKontainer? ->
+        SecondService(injected)
+    }
+}
+
+// We get the kontainer instance
+val kontainer = blueprint.create()
+
+// We use the service and access the injected service
+val firstService = kontainer.get(FirstService::class)
+println("FirstService.injected: " + firstService.injected)
+
+val secondService = kontainer.get(SecondService::class)
+println("SecondService.injected: " + secondService.injected)
+```
+Will output:
+```
+FirstService.injected: null
+SecondService.injected: null
 ```
 
 ### Injection By SuperType
