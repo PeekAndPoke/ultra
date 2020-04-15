@@ -9,15 +9,7 @@ class SimpleModuleExample : SimpleExample() {
     override val title = "Defining a simple module"
 
     override val description = """
-        This example shows how to define kontainer modules.
-        
-        Modules are very useful when we develop libraries.
-        
-        A user of a library can then simply include our module into the kontainer definition.
-         
-        A module can also give a nice high level documentation of what the library does and how to customize it.
-        For example there could be some comments in the module code, that explain which service can be 
-        overridden to achieve different behaviours of the library.
+        This example shows how to define a kontainer module.
     """.trimIndent()
 
     // !BEGIN! //
