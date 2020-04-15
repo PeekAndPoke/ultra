@@ -19,7 +19,8 @@ class ChildFinder<C : Any, T : Any> private constructor(
     private val predicate: (C) -> Boolean
 ) {
     /** A set of nodes that we already visited. Used to break cyclic graphs */
-    private val visited = mutableSetOf<Any>()
+    private val visited = mutableSetOf<Int>()
+
     /** A set of nodes that match the filter criteria */
     private val found = mutableSetOf<Found<C>>()
 
@@ -49,11 +50,15 @@ class ChildFinder<C : Any, T : Any> private constructor(
 
     private fun visit(target: Any?, path: String) {
 
-        if (target == null || visited.contains(target)) {
+        // TODO: We need special tests for this, because data class collide with their own hashcode.
+        //       Still if we have multiple data classes with same hashCode the identityHashCode should be different.
+        val idHashCode = System.identityHashCode(target)
+
+        if (target == null || visited.contains(idHashCode)) {
             return
         }
 
-        visited.add(target)
+        visited.add(idHashCode)
 
         @Suppress("UNCHECKED_CAST")
         if (target::class == searchedClass && predicate(target as C)) {

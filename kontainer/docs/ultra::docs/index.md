@@ -1004,6 +1004,7 @@ A module can take up to three parameters.
 class Service(val sum: Int)
 
 // We can now define a kontainer module with up to three parameters like this
+// The parameters can be of any type. For simplicity of the example we only use Ints here.
 val ourModule = module { a: Int, b: Int, c: Int ->
     instance(Service(a + b + c))
 }
