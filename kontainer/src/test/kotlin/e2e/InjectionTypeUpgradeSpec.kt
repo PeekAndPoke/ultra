@@ -50,7 +50,7 @@ class InjectionTypeUpgradeSpec : StringSpec() {
             }
         }
 
-        "A Dynamic service must be upgraded to a Prototype when it is overridden" {
+        "A Dynamic service must NOT be converted to a Prototype when it is overridden" {
 
             val subject = kontainer {
 
@@ -63,7 +63,7 @@ class InjectionTypeUpgradeSpec : StringSpec() {
             }.useWith()
 
             assertSoftly {
-                subject.getProvider(Service::class).type shouldBe ServiceProvider.Type.Prototype
+                subject.getProvider(Service::class).type shouldBe ServiceProvider.Type.Dynamic
             }
         }
 

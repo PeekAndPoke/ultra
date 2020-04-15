@@ -16,9 +16,8 @@ fun main() {
 
 val chapters = listOf(
     _DefiningServices(),
-    _DefiningModules(),
-    _InjectingServices()
-    // TODO: kontainer modules
+    _InjectingServices(),
+    _DefiningModules()
     // TODO: definition order / overwriting services
     // TODO: dynamic promotion / preventing degradation
     // TODO: meta information / debug

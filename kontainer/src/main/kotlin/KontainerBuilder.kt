@@ -26,12 +26,9 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
                     newDef.withType(InjectionType.Prototype)
 
                 // When the existing definition is a dynamic
-                InjectionType.Dynamic -> when (newDef.type) {
-                    // And the new type is a singleton, Then we need to upgrade it to a dynamic
-                    InjectionType.Singleton -> newDef.withType(InjectionType.Dynamic)
-                    // Otherwise we can use the new definition as is
-                    else -> newDef
-                }
+                InjectionType.Dynamic ->
+                    // Then the type will stay dynamic
+                    newDef.withType(InjectionType.Dynamic)
 
                 // When the existing definition is a singleton
                 InjectionType.Singleton ->

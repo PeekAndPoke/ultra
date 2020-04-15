@@ -24,6 +24,7 @@ class _DefiningModules : ExampleChapter {
     """.trimIndent()
 
     override val examples: List<Example> = listOf(
-        SimpleModuleExample()
+        SimpleModuleExample(),
+        ParameterizedModuleExample()
     )
 }

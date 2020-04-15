@@ -12,11 +12,7 @@
     6. [Singletons are shared](#singletons-are-shared)
     7. [Singletons vs Dynamics vs Prototypes](#singletons-vs-dynamics-vs-prototypes)
 
-2. [Defining Modules](#defining-modules)
-
-    1. [Defining a simple module](#defining-a-simple-module)
-
-3. [Service Injection](#service-injection)
+2. [Service Injection](#service-injection)
 
     1. [Basic Injection Example](#basic-injection-example)
     2. [Factory Method Injection](#factory-method-injection)
@@ -30,6 +26,11 @@
     10. [Breaking Cyclic Dependencies with Lazy Injection](#breaking-cyclic-dependencies-with-lazy-injection)
     11. [Lazily inject all Services By SuperType](#lazily-inject-all-services-by-supertype)
     12. [Lazily inject all Services By SuperType with a Lookup](#lazily-inject-all-services-by-supertype-with-a-lookup)
+
+3. [Defining Modules](#defining-modules)
+
+    1. [Defining a simple module](#defining-a-simple-module)
+    2. [Parameterized modules](#parameterized-modules)
 
 ## Defining Services
 
@@ -334,84 +335,6 @@ Round #3
 singleton: 7 - dynamic 1 - prototype: 1
 singleton: 8 - dynamic 2 - prototype: 1
 singleton: 9 - dynamic 3 - prototype: 1
-```
-
-## Defining Modules
-
-Kontainer Modules are a very useful and simple way to group services together.
-
-Library developers can use them to bundle up their library and to provide easy ways to:
-- integrate the library into the kontainer of an application
-- document the library and customization options on a high level
-
-A user of a kontainer module can then simply include the module into the kontainer definition.
- 
-A module can also give a nice high level documentation of what the library does and how to customize it.
-
-For example there could be some comments in the module definition code, that explain which services can be 
-overridden to achieve different behaviours of the library.
-
-### Defining a simple module
-
-This example shows how to define a kontainer module.
-
-(see the full [example](../../src/examples/defining_modules/SimpleModuleExample.kt))
-
-```kotlin
-// Let's say we have some services
-
-// A database service
-class Database(val storage: Storage)
-
-// A Storage interface
-interface Storage {
-    val name: String
-}
-
-// And by default we only deliver our module with a FileStorage implementation
-class FileStorage : Storage {
-    override val name = "FileStorage"
-}
-
-// We can now define a kontainer module like this
-val ourModule = module {
-    singleton(Database::class)
-
-    // The storage service can be overridden by the user of the module
-    singleton(Storage::class, FileStorage::class)
-}
-
-// Now we can use the module when defining a kontainer blueprint
-val blueprint = kontainer {
-    module(ourModule)
-}
-
-val kontainer = blueprint.create()
-
-println("Storage service: " + kontainer.get(Database::class).storage.name)
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Let's create another implementation of Storage and override the default service
-class MemoryStorage : Storage {
-    override val name = "MemoryStorage"
-}
-
-val blueprintEx = kontainer {
-    module(ourModule)
-
-    // Here we override the pre-defined Storage implementation
-    singleton(Storage::class, MemoryStorage::class)
-}
-
-val kontainerEx = blueprintEx.create()
-
-println("Storage service now is: " + kontainerEx.get(Database::class).storage.name)
-```
-Will output:
-```
-Storage service: FileStorage
-Storage service now is: MemoryStorage
 ```
 
 ## Service Injection
@@ -989,5 +912,113 @@ Getting it from the Lookup: users
 # instances of OrderRepository 0
 Getting it from the Lookup: orders
 # instances of OrderRepository 1
+```
+
+## Defining Modules
+
+Kontainer Modules are a very useful and simple way to group services together.
+
+Library developers can use them to bundle up their library and to provide easy ways to:
+- integrate the library into the kontainer of an application
+- document the library and customization options on a high level
+
+A user of a kontainer module can then simply include the module into the kontainer definition.
+ 
+A module can also give a nice high level documentation of what the library does and how to customize it.
+
+For example there could be some comments in the module definition code, that explain which services can be 
+overridden to achieve different behaviours of the library.
+
+### Defining a simple module
+
+This example shows how to define a kontainer module.
+
+(see the full [example](../../src/examples/defining_modules/SimpleModuleExample.kt))
+
+```kotlin
+// Let's say we have some services
+
+// A database service
+class Database(val storage: Storage)
+
+// A Storage interface
+interface Storage {
+    val name: String
+}
+
+// And by default we only deliver our module with a FileStorage implementation
+class FileStorage : Storage {
+    override val name = "FileStorage"
+}
+
+// We can now define a kontainer module like this
+val ourModule = module {
+    singleton(Database::class)
+
+    // The storage service can be overridden by the user of the module
+    singleton(Storage::class, FileStorage::class)
+}
+
+// Now we can use the module when defining a kontainer blueprint
+val blueprint = kontainer {
+    module(ourModule)
+}
+
+val kontainer = blueprint.create()
+
+println("Storage service: " + kontainer.get(Database::class).storage.name)
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Let's create another implementation of Storage and override the default service
+class MemoryStorage : Storage {
+    override val name = "MemoryStorage"
+}
+
+val blueprintEx = kontainer {
+    module(ourModule)
+
+    // Here we override the pre-defined Storage implementation
+    singleton(Storage::class, MemoryStorage::class)
+}
+
+val kontainerEx = blueprintEx.create()
+
+println("Storage service now is: " + kontainerEx.get(Database::class).storage.name)
+```
+Will output:
+```
+Storage service: FileStorage
+Storage service now is: MemoryStorage
+```
+
+### Parameterized modules
+
+This example shows how to define a parameterized kontainer module.
+
+A module can take up to three parameters.
+
+(see the full [example](../../src/examples/defining_modules/ParameterizedModuleExample.kt))
+
+```kotlin
+class Service(val sum: Int)
+
+// We can now define a kontainer module with up to three parameters like this
+val ourModule = module { a: Int, b: Int, c: Int ->
+    instance(Service(a + b + c))
+}
+
+// Now we can use the module when defining a kontainer blueprint
+val blueprint = kontainer {
+    module(ourModule, 1, 10, 100)
+}
+
+val kontainer = blueprint.create()
+
+println("Sum: " + kontainer.get(Service::class).sum)
+```
+Will output:
+```
+Sum: 111
 ```
 
