@@ -2,9 +2,9 @@ package de.peekandpoke.ultra.security.csrf
 
 import de.peekandpoke.ultra.common.fromBase64
 import de.peekandpoke.ultra.common.toBase64
-import de.peekandpoke.ultra.security.user.AnonymousUserRecordProvider
 import de.peekandpoke.ultra.security.user.StaticUserRecordProvider
 import de.peekandpoke.ultra.security.user.UserRecord
+import de.peekandpoke.ultra.security.user.UserRecordProvider
 import io.kotlintest.assertSoftly
 import io.kotlintest.matchers.string.shouldMatch
 import io.kotlintest.shouldBe
@@ -17,7 +17,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "Token patterns" {
 
         val subject = StatelessCsrfProtection(
-            "secret", 1000, StaticUserRecordProvider(UserRecord("USER", "IP"))
+            "secret", 1000, UserRecordProvider.static(userId = "USER", clientIp = "IP")
         )
 
         val token = subject.createToken("SALT")
@@ -30,7 +30,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "Validating a valid token must work" {
 
         val subject = StatelessCsrfProtection(
-            "secret", 1000, StaticUserRecordProvider(UserRecord("USER", "IP"))
+            "secret", 1000, UserRecordProvider.static(userId = "USER", clientIp = "IP")
         )
 
         val salt = "SALT"
@@ -44,7 +44,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "Validating a valid token must work for anonymous users" {
 
         val subject = StatelessCsrfProtection(
-            "secret", 1000, AnonymousUserRecordProvider()
+            "secret", 1000, UserRecordProvider.anonymous
         )
 
         val salt = "SALT"

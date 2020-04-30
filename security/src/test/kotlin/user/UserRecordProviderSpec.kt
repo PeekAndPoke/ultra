@@ -5,11 +5,11 @@ import io.kotlintest.matchers.types.shouldBeSameInstanceAs
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.StringSpec
 
-class LazyUserRecordProviderSpec : StringSpec({
+class UserRecordProviderSpec : StringSpec({
 
-    "It should provide the user record" {
+    "UserRecordProvider.lazy should provide the UserRecord correctly" {
 
-        val subject = LazyUserRecordProvider {
+        val subject = UserRecordProvider.lazy {
             UserRecord(userId = "id", clientIp = "1.2.3.4")
         }
 
