@@ -1,59 +1,19 @@
-import de.peekandpoke.ultra.meta.compileTest
-import de.peekandpoke.ultra.mutator.Mutable
-import de.peekandpoke.ultra.mutator.meta.MutatorAnnotationProcessor
+import de.peekandpoke.ultra.security.password.PBKDF2PasswordHasher
 
 fun main() {
-    val result = compileTest {
-        processor(MutatorAnnotationProcessor())
 
-        kotlin(
-            "source.kt",
-            """
-                
-                package xyz
-                
-                import ${Mutable::class.qualifiedName}
-                
-//                @Mutable
-//                data class GenericTypeInAction(
-//                    val generic: Generic<Type>,
-//                    val genInt: Generic<Int>
-//                )
-//
-//                data class Generic<T>(val value: T)
-//
-//                data class Type(val value: String)
-//
-//                @Mutable
-//                data class GenericTypeInActionWithContainers(
-//                    val generic: List<Generic<Any, Int>>,
-//                    val generic2: Map<String, Generic<String, Any>>
-//                )
-//                
-//                @Mutable
-//                data class Generic<T, X>(
-//                    val one: T,
-//                    val two: X
-//                )
-                
-                interface WithListInterface
-                
-                @Mutable
-                data class WithList(
-                    val list: List<String?>?
-                ) : WithListInterface
-                
-            """.trimIndent()
-        )
-    }
+    val hasher = PBKDF2PasswordHasher()
 
-    result.sourcesGeneratedByAnnotationProcessor.forEach {
+    val password = "secret"
 
-        println(it.absoluteFile)
-        println("---------------------------------------------------------------------")
-        println(String(it.readBytes()))
+    val hashed = hasher.hash(password)
 
-        println("\n\n")
-    }
+    println(password)
+    println(hashed)
+
+    println("===================================")
+
+    println(hasher.check("secret", hashed))
+
 }
 

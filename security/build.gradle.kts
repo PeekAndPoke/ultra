@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    api(rootProject.project("meta"))
+    api(rootProject.project("kontainer"))
 
     api(kotlin("stdlib-jdk8"))
     api(kotlin("reflect"))
