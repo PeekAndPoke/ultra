@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.security
 
+import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
 import de.peekandpoke.ultra.security.csrf.CsrfProtection
 import de.peekandpoke.ultra.security.csrf.StatelessCsrfProtection
@@ -12,6 +13,9 @@ data class UltraSecurityConfig(
     val csrfSecret: String,
     val csrfTtlMillis: Int
 )
+
+@Suppress("unused")
+fun KontainerBuilder.ultraSecurity(config: UltraSecurityConfig) = module(Ultra_Security, config)
 
 val Ultra_Security = module { config: UltraSecurityConfig ->
 
