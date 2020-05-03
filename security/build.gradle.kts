@@ -17,8 +17,7 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
-val google_auto_version: String by project
-val kotlinpoet_version: String by project
+val io_jsonwebtoken_jjwt_version: String by project
 val logback_version: String by project
 val kotlintest_version: String by project
 
@@ -32,6 +31,10 @@ dependencies {
 
     api(kotlin("stdlib-jdk8"))
     api(kotlin("reflect"))
+
+    api("io.jsonwebtoken:jjwt-api:$io_jsonwebtoken_jjwt_version")
+    implementation("io.jsonwebtoken:jjwt-impl:$io_jsonwebtoken_jjwt_version")
+    implementation("io.jsonwebtoken:jjwt-gson:$io_jsonwebtoken_jjwt_version")
 
     testImplementation("ch.qos.logback:logback-classic:$logback_version")
     testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")
