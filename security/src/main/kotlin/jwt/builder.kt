@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.security.jwt
 
-import io.jsonwebtoken.JwtBuilder
+import com.auth0.jwt.JWTCreator
 import java.util.*
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -10,8 +10,8 @@ import kotlin.time.ExperimentalTime
  */
 
 @ExperimentalTime
-fun JwtBuilder.expiresIn(duration: Duration) = apply {
-    setExpiration(
+fun JWTCreator.Builder.expiresIn(duration: Duration) = apply {
+    withExpiresAt(
         Date(System.currentTimeMillis() + duration.inMilliseconds.toLong())
     )
 }
