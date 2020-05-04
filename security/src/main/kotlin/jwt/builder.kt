@@ -1,17 +1,12 @@
 package de.peekandpoke.ultra.security.jwt
 
 import com.auth0.jwt.JWTCreator
+import de.peekandpoke.ultra.common.plusMinutes
 import java.util.*
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
 /**
- * Set the expiration to [duration] from now on
+ * Set the expiration to [minutes] from now on
  */
-
-@ExperimentalTime
-fun JWTCreator.Builder.expiresIn(duration: Duration) = apply {
-    withExpiresAt(
-        Date(System.currentTimeMillis() + duration.inMilliseconds.toLong())
-    )
+fun JWTCreator.Builder.expiresInMinutes(minutes: Long) = apply {
+    withExpiresAt(Date().plusMinutes(minutes))
 }
