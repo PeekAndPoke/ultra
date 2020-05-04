@@ -21,12 +21,20 @@ dependencies {
 
     // add all child projects
     compile(project(":common"))
+
     compile(project(":meta"))
+
     compile(project(":mutator"))
     kapt(project(":mutator"))
+    kaptTest(project(":mutator"))
+
     compile(project(":kontainer"))
+
     compile(project(":security"))
+
     compile(project(":slumber"))
+    kapt(project(":slumber"))
+    kaptTest(project(":slumber"))
 }
 
 repositories {
