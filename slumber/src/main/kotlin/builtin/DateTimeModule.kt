@@ -7,12 +7,17 @@ import de.peekandpoke.ultra.slumber.builtin.datetime.*
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
+import java.util.*
 import kotlin.reflect.KType
 
 object DateTimeModule : SlumberModule {
 
     override fun getAwaker(type: KType): Awaker? {
         return when (type.classifier) {
+            // Java util
+            Date::class -> type.wrapIfNonNull(DateAwaker)
+
+            // Java time
             LocalDateTime::class -> type.wrapIfNonNull(LocalDateTimeAwaker)
             Instant::class -> type.wrapIfNonNull(InstantAwaker)
             ZonedDateTime::class -> type.wrapIfNonNull(ZonedDateTimeAwaker)
@@ -22,6 +27,10 @@ object DateTimeModule : SlumberModule {
 
     override fun getSlumberer(type: KType): Slumberer? {
         return when (type.classifier) {
+            // Java util
+            Date::class -> type.wrapIfNonNull(DateSlumberer)
+
+            // Java time
             LocalDateTime::class -> type.wrapIfNonNull(LocalDateTimeSlumberer)
             Instant::class -> type.wrapIfNonNull(InstantSlumberer)
             ZonedDateTime::class -> type.wrapIfNonNull(ZonedDateTimeSlumberer)
