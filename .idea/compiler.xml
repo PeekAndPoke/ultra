@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <bytecodeTargetLevel target="11">
+    <bytecodeTargetLevel target="1.8">
       <module name="common.main" target="1.8" />
       <module name="common.test" target="1.8" />
       <module name="root.common.main" target="1.8" />
@@ -24,30 +24,9 @@
       <module name="root.test" target="1.8" />
       <module name="root.ultra.main" target="1.8" />
       <module name="root.ultra.test" target="1.8" />
-      <module name="ultra.common" target="1.8" />
-      <module name="ultra.common.main" target="1.8" />
-      <module name="ultra.common.test" target="1.8" />
-      <module name="ultra.kontainer" target="1.8" />
-      <module name="ultra.kontainer.main" target="1.8" />
-      <module name="ultra.kontainer.test" target="1.8" />
-      <module name="ultra.logging" target="1.8" />
-      <module name="ultra.logging.main" target="1.8" />
-      <module name="ultra.logging.test" target="1.8" />
-      <module name="ultra.meta" target="1.8" />
-      <module name="ultra.meta.main" target="1.8" />
-      <module name="ultra.meta.test" target="1.8" />
-      <module name="ultra.mutator" target="1.8" />
-      <module name="ultra.mutator.main" target="1.8" />
-      <module name="ultra.mutator.test" target="1.8" />
-      <module name="ultra.security" target="1.8" />
-      <module name="ultra.security.main" target="1.8" />
-      <module name="ultra.security.test" target="1.8" />
-      <module name="ultra.slumber" target="1.8" />
-      <module name="ultra.slumber.main" target="1.8" />
-      <module name="ultra.slumber.test" target="1.8" />
-      <module name="ultra.ultra" target="1.8" />
-      <module name="ultra.ultra.main" target="1.8" />
-      <module name="ultra.ultra.test" target="1.8" />
+      <module name="ultra" target="11" />
+      <module name="ultra.main" target="11" />
+      <module name="ultra.test" target="11" />
     </bytecodeTargetLevel>
   </component>
 </project>

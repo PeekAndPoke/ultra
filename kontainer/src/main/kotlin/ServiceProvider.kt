@@ -107,11 +107,11 @@ interface ServiceProvider {
         /**
          * Get or create the instance of the service
          */
-        override fun provide(context: InjectionContext): Any = instance ?: create(context).apply {
-            instance = this
-            instances.add(
-                CreatedInstance(this, Instant.now())
-            )
+        override fun provide(context: InjectionContext): Any = instance ?: synchronized(this) {
+            instance ?: create(context).apply {
+                instance = this
+                instances.add(CreatedInstance(this, Instant.now()))
+            }
         }
 
         /**
@@ -133,6 +133,7 @@ interface ServiceProvider {
             }.toTypedArray()
         )
     }
+
 
     /**
      * Provides a prototype service
@@ -157,9 +158,7 @@ interface ServiceProvider {
          * Get or create the instance of the service
          */
         override fun provide(context: InjectionContext): Any = create(context).apply {
-            instances.add(
-                CreatedInstance(this, Instant.now())
-            )
+            instances.add(CreatedInstance(this, Instant.now()))
         }
 
         /**
