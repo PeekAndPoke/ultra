@@ -157,8 +157,10 @@ interface ServiceProvider {
         /**
          * Get or create the instance of the service
          */
-        override fun provide(context: InjectionContext): Any = create(context).apply {
-            instances.add(CreatedInstance(this, Instant.now()))
+        override fun provide(context: InjectionContext): Any = synchronized(this) {
+            create(context).apply {
+                instances.add(CreatedInstance(this, Instant.now()))
+            }
         }
 
         /**
