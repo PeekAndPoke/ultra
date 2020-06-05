@@ -60,6 +60,13 @@ data class TypedAttributes internal constructor(val entries: Map<TypedKey<*>, An
      */
     operator fun <T : Any> get(key: TypedKey<T>): T? {
         @Suppress("UNCHECKED_CAST")
-        return entries[key] as T
+        return entries[key] as T?
     }
+
+    /**
+     * Adds an entry by [key] and [value] and returns a new instance of [TypedAttributes]
+     */
+    fun <T : Any> plus(key: TypedKey<T>, value: T) = TypedAttributes(
+        entries.plus(key to value)
+    )
 }
