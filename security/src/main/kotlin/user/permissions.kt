@@ -3,9 +3,9 @@ package de.peekandpoke.ultra.security.user
 import de.peekandpoke.ultra.common.containsAny
 
 data class UserPermissions(
-    val groups: List<String> = emptyList(),
-    val roles: List<String> = emptyList(),
-    val permissions: List<String> = emptyList()
+    val groups: Set<String> = emptySet(),
+    val roles: Set<String> = emptySet(),
+    val permissions: Set<String> = emptySet()
 )
 
 /**
