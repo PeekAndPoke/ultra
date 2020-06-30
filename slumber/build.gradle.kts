@@ -20,6 +20,7 @@ version = VERSION_NAME
 val logback_version: String by project
 val classindex_version: String by project
 val kotlintest_version: String by project
+val klock_version: String by project
 
 repositories {
     mavenCentral()
@@ -34,6 +35,9 @@ dependencies {
 
     compile("org.atteo.classindex:classindex:$classindex_version")
     kapt("org.atteo.classindex:classindex:$classindex_version")
+
+    // Multi platform datetime lib Klock
+    api("com.soywiz.korlibs.klock:klock-jvm:$klock_version")
 
     // Testing
     testImplementation("ch.qos.logback:logback-classic:$logback_version")

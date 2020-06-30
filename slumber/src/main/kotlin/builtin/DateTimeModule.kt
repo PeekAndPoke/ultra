@@ -1,5 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin
 
+import com.soywiz.klock.DateTime
+import com.soywiz.klock.DateTimeTz
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.SlumberModule
 import de.peekandpoke.ultra.slumber.Slumberer
@@ -23,6 +25,11 @@ object DateTimeModule : SlumberModule {
             LocalDateTime::class -> type.wrapIfNonNull(LocalDateTimeAwaker)
             Instant::class -> type.wrapIfNonNull(InstantAwaker)
             ZonedDateTime::class -> type.wrapIfNonNull(ZonedDateTimeAwaker)
+
+            // Klock
+            DateTime::class -> type.wrapIfNonNull(KlockDateTimeAwaker)
+            DateTimeTz::class -> type.wrapIfNonNull(KlockDateTimeTzAwaker)
+
             else -> null
         }
     }
@@ -37,6 +44,11 @@ object DateTimeModule : SlumberModule {
             LocalDateTime::class -> type.wrapIfNonNull(LocalDateTimeSlumberer)
             Instant::class -> type.wrapIfNonNull(InstantSlumberer)
             ZonedDateTime::class -> type.wrapIfNonNull(ZonedDateTimeSlumberer)
+
+            // Klock
+            DateTime::class -> type.wrapIfNonNull(KlockDateTimeSlumberer)
+            DateTimeTz::class -> type.wrapIfNonNull(KlockDateTimeTzSlumberer)
+
             else -> null
         }
     }

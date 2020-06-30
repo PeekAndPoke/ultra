@@ -555,9 +555,9 @@ println(result)
 Will output:
 ```
 The original:
-ExampleClassWithAny(any=any, nullableAny=null, aDate=2020-06-30)
+ExampleClassWithAny(any=any, nullableAny=null, aDate=2020-07-01)
 The result:
-ExampleClassWithAny(any=10, nullableAny=4.669, aDate=2020-07-01)
+ExampleClassWithAny(any=10, nullableAny=4.669, aDate=2020-07-02)
 ```
 
 The generated mutator code for our data class looks like this:
