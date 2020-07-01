@@ -24,11 +24,14 @@ object KlockDateSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {
 
-        if (data !is Date) {
-            return null
+        // We need to check for a pure Int value as Date is an inline class
+        val use = when (data) {
+            is Number -> Date(data.toInt())
+            is Date -> data
+            else -> return null
         }
 
-        val dateTime = data.dateTimeDayStart
+        val dateTime = use.dateTimeDayStart
 
         return toMap(
             dateTime.unixMillisLong,

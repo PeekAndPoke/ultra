@@ -23,14 +23,17 @@ object KlockDateTimeSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {
 
-        if (data !is DateTime) {
-            return null
+        // We need to check for a pure Double value as DateTime is an inline class
+        val use = when (data) {
+            is Number -> DateTime(data.toDouble())
+            is DateTime -> data
+            else -> return null
         }
 
         return toMap(
-            data.unixMillisLong,
+            use.unixMillisLong,
             utc,
-            data.toString(klockDateFormat)
+            use.toString(klockDateFormat)
         )
     }
 }
