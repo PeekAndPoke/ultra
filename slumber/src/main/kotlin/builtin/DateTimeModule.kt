@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin
 
+import com.soywiz.klock.Date
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.DateTimeTz
 import de.peekandpoke.ultra.slumber.Awaker
@@ -10,7 +11,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
-import java.util.*
 import kotlin.reflect.KType
 
 object DateTimeModule : SlumberModule {
@@ -18,7 +18,7 @@ object DateTimeModule : SlumberModule {
     override fun getAwaker(type: KType): Awaker? {
         return when (type.classifier) {
             // Java util
-            Date::class -> type.wrapIfNonNull(DateAwaker)
+            java.util.Date::class -> type.wrapIfNonNull(DateAwaker)
 
             // Java time
             LocalDate::class -> type.wrapIfNonNull(LocalDateAwaker)
@@ -27,6 +27,7 @@ object DateTimeModule : SlumberModule {
             ZonedDateTime::class -> type.wrapIfNonNull(ZonedDateTimeAwaker)
 
             // Klock
+            Date::class -> type.wrapIfNonNull(KlockDateAwaker)
             DateTime::class -> type.wrapIfNonNull(KlockDateTimeAwaker)
             DateTimeTz::class -> type.wrapIfNonNull(KlockDateTimeTzAwaker)
 
@@ -37,7 +38,7 @@ object DateTimeModule : SlumberModule {
     override fun getSlumberer(type: KType): Slumberer? {
         return when (type.classifier) {
             // Java util
-            Date::class -> type.wrapIfNonNull(DateSlumberer)
+            java.util.Date::class -> type.wrapIfNonNull(DateSlumberer)
 
             // Java time
             LocalDate::class -> type.wrapIfNonNull(LocalDateSlumberer)
@@ -46,6 +47,7 @@ object DateTimeModule : SlumberModule {
             ZonedDateTime::class -> type.wrapIfNonNull(ZonedDateTimeSlumberer)
 
             // Klock
+            Date::class -> type.wrapIfNonNull(KlockDateSlumberer)
             DateTime::class -> type.wrapIfNonNull(KlockDateTimeSlumberer)
             DateTimeTz::class -> type.wrapIfNonNull(KlockDateTimeTzSlumberer)
 
