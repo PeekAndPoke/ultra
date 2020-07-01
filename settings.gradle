@@ -14,12 +14,15 @@ pluginManagement {
 
 rootProject.name = 'ultra'
 
+enableFeaturePreview("GRADLE_METADATA")
+
 include(
         // project that imports all child projects
         ":ultra",
 
         // child projects
         ":common",
+        ":common-mp",
         ":kontainer",
         ":logging",
         ":meta",

@@ -21,6 +21,7 @@ dependencies {
 
     // add all child projects
     compile(project(":common"))
+    compile(project(":common-mp"))
 
     compile(project(":meta"))
 
@@ -84,7 +85,9 @@ bintray {
     user = stringProperty("bintrayUser")
     key = stringProperty("bintrayApiKey")
     publish = true
+    override = true
     setPublications("default")
+
     pkg(delegateClosureOf<BintrayExtension.PackageConfig> {
         repo = "maven"
         name = "de.peekandpoke.ultra"

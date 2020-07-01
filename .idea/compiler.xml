@@ -25,6 +25,8 @@
       <module name="root.ultra.main" target="1.8" />
       <module name="root.ultra.test" target="1.8" />
       <module name="ultra" target="11" />
+      <module name="ultra.common-mp.jvmMain" target="1.8" />
+      <module name="ultra.common-mp.jvmTest" target="1.8" />
       <module name="ultra.main" target="11" />
       <module name="ultra.test" target="11" />
     </bytecodeTargetLevel>

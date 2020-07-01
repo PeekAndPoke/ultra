@@ -107,7 +107,9 @@ bintray {
     user = stringProperty("bintrayUser")
     key = stringProperty("bintrayApiKey")
     publish = true
+    override = true
     setPublications("default")
+
     pkg(delegateClosureOf<BintrayExtension.PackageConfig> {
         repo = "maven"
         name = "de.peekandpoke.ultra.${project.name}"
