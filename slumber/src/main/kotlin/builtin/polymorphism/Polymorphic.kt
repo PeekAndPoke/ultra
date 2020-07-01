@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
-import org.atteo.classindex.ClassIndex
-import org.atteo.classindex.IndexSubclasses
+import com.github.matfax.klassindex.IndexSubclasses
+import com.github.matfax.klassindex.KlassIndex
 import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.reflect.jvm.jvmName
@@ -49,19 +49,21 @@ interface Polymorphic {
          *
          * @see [Child]
          */
-        val childTypes get(): Set<KClass<*>> = emptySet()
+        val childTypes
+            get(): Set<KClass<*>> = try {
+                this@Parent::class.java.declaringClass.kotlin.indexedSubClasses
+            } catch (e: Throwable) {
+                emptySet()
+            }
 
         /**
-         * A set of sub-classes indexed by [ClassIndex]
+         * A set of sub-classes indexed by [KlassIndex]
          *
          * To make this work, the parent class needs to be annotated with [IndexSubclasses]
          */
         val <T : Any> KClass<T>.indexedSubClasses
             get(): Set<KClass<out T>> {
-
-                val loader = java.classLoader ?: Thread.currentThread().contextClassLoader
-
-                return ClassIndex.getSubclasses(java, loader).map { it.kotlin }.toSet()
+                return KlassIndex.getSubclasses(this).toSet()
             }
     }
 

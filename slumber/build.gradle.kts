@@ -18,13 +18,15 @@ group = GROUP
 version = VERSION_NAME
 
 val logback_version: String by project
-val classindex_version: String by project
+val klassindex_version: String by project
 val kotlintest_version: String by project
 val klock_version: String by project
 
 repositories {
     mavenCentral()
     jcenter()
+    // Repo for KlassIndex (https://github.com/matfax/klassindex)
+    maven("https://jitpack.io")
 }
 
 dependencies {
@@ -33,8 +35,8 @@ dependencies {
 
     compile(project(":common"))
 
-    compile("org.atteo.classindex:classindex:$classindex_version")
-    kapt("org.atteo.classindex:classindex:$classindex_version")
+    compile("com.github.matfax.klassindex:library:$klassindex_version")
+    kapt("com.github.matfax.klassindex:processor:$klassindex_version")
 
     // Multi platform datetime lib Klock
     api("com.soywiz.korlibs.klock:klock-jvm:$klock_version")
@@ -43,7 +45,11 @@ dependencies {
     testImplementation("ch.qos.logback:logback-classic:$logback_version")
     testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")
 
-    kaptTest("org.atteo.classindex:classindex:$classindex_version")
+    kaptTest("com.github.matfax.klassindex:processor:$klassindex_version")
+}
+
+kapt {
+    useBuildCache = true
 }
 
 val test by tasks.getting(Test::class) {

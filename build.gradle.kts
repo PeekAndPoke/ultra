@@ -24,9 +24,13 @@ plugins {
     id("org.cyclonedx.bom")
 }
 
-repositories {
-    mavenCentral()
-    jcenter()
+allprojects {
+    repositories {
+        mavenCentral()
+        jcenter()
+        // Repo for KlassIndex (https://github.com/matfax/klassindex)
+        maven("https://jitpack.io")
+    }
 }
 
 dependencies {
