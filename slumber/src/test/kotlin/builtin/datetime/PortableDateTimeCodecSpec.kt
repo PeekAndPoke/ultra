@@ -1,12 +1,12 @@
 package de.peekandpoke.ultra.slumber.builtin.datetime
 
-import com.soywiz.klock.DateTime
+import de.peekandpoke.common.datetime.PortableDateTime
 import de.peekandpoke.ultra.slumber.Codec
 import io.kotlintest.matchers.types.shouldBeNull
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.StringSpec
 
-class KlockDateTimeCodecSpec : StringSpec({
+class PortableDateTimeCodecSpec : StringSpec({
 
     "Awaking a DateTime from valid data must work" {
 
@@ -16,14 +16,14 @@ class KlockDateTimeCodecSpec : StringSpec({
             "ts" to 282828282_000
         )
 
-        val result = codec.awake(DateTime::class, data)
+        val result = codec.awake(PortableDateTime::class, data)
 
-        result shouldBe DateTime(282828282_000)
+        result shouldBe PortableDateTime(282828282_000)
     }
 
     "Awaking a DateTime child property must work" {
 
-        data class DataClass(val date: DateTime)
+        data class DataClass(val date: PortableDateTime)
 
         val codec = Codec.default
 
@@ -35,7 +35,7 @@ class KlockDateTimeCodecSpec : StringSpec({
 
         val result = codec.awake(DataClass::class, data)
 
-        result shouldBe DataClass(DateTime(282828282_000))
+        result shouldBe DataClass(PortableDateTime(282828282_000))
     }
 
     "Awaking a DateTime from invalid data must return null" {
@@ -44,7 +44,7 @@ class KlockDateTimeCodecSpec : StringSpec({
 
         val data = mapOf<String, String>()
 
-        val result = codec.awake<DateTime?>(data)
+        val result = codec.awake<PortableDateTime?>(data)
 
         result.shouldBeNull()
     }
@@ -53,24 +53,24 @@ class KlockDateTimeCodecSpec : StringSpec({
 
         val codec = Codec.default
 
-        val data = DateTime(282828282_000)
+        val data = PortableDateTime(282828282_000)
 
         val result = codec.slumber(data)
 
         result shouldBe mapOf(
             "ts" to 282828282_000,
             "timezone" to "UTC",
-            "human" to "1978-12-18T11:24:42.000Z"
+            "human" to "1978-12-18T11:24:42Z[UTC]"
         )
     }
 
     "Slumbering a DateTime child property must work" {
 
-        data class DataClass(val date: DateTime)
+        data class DataClass(val date: PortableDateTime)
 
         val codec = Codec.default
 
-        val data = DataClass(DateTime(282828282_000))
+        val data = DataClass(PortableDateTime(282828282_000))
 
         val result = codec.slumber(data)
 
@@ -78,7 +78,7 @@ class KlockDateTimeCodecSpec : StringSpec({
             "date" to mapOf(
                 "ts" to 282828282_000,
                 "timezone" to "UTC",
-                "human" to "1978-12-18T11:24:42.000Z"
+                "human" to "1978-12-18T11:24:42Z[UTC]"
             )
         )
     }

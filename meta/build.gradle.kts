@@ -7,8 +7,8 @@ plugins {
     `maven-publish`
     kotlin("jvm")
     kotlin("kapt")
-    id("org.jetbrains.dokka") version "0.9.18"
-    id("com.jfrog.bintray") version "1.8.4"
+    id("org.jetbrains.dokka")
+    id("com.jfrog.bintray")
 }
 
 val GROUP: String by project

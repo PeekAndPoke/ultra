@@ -7,8 +7,8 @@ plugins {
     `maven-publish`
     kotlin("jvm")
     kotlin("kapt")
-    id("org.jetbrains.dokka") version "0.9.18"
-    id("com.jfrog.bintray") version "1.8.4"
+    id("org.jetbrains.dokka")
+    id("com.jfrog.bintray")
 }
 
 val GROUP: String by project
@@ -21,7 +21,6 @@ dependencies {
 
     // add all child projects
     compile(project(":common"))
-    compile(project(":common-mp"))
 
     compile(project(":meta"))
 
@@ -33,7 +32,7 @@ dependencies {
 
     compile(project(":security"))
 
-    compile(project(":slumber"))
+    compile(project(":slumber", configuration = "default"))
     kapt(project(":slumber"))
     kaptTest(project(":slumber"))
 }

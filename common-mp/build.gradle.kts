@@ -3,11 +3,17 @@
 import com.jfrog.bintray.gradle.BintrayExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+val logback_version: String by project
+val kotlintest_version: String by project
+val kotlinx_serialization_version: String by project
+val klock_version: String by project
+
 plugins {
     `maven-publish`
     kotlin("multiplatform")
-    id("org.jetbrains.dokka") version "0.9.18"
-    id("com.jfrog.bintray") version "1.8.4"
+    id("org.jetbrains.kotlin.plugin.serialization")
+    id("org.jetbrains.dokka")
+    id("com.jfrog.bintray")
 }
 
 val GROUP: String by project
@@ -15,11 +21,6 @@ val VERSION_NAME: String by project
 
 group = GROUP
 version = VERSION_NAME
-
-val logback_version: String by project
-val kotlintest_version: String by project
-val kotlinx_serialization_version: String by project
-val klock_version: String by project
 
 repositories {
     mavenCentral()
@@ -42,8 +43,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
-                api("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$kotlinx_serialization_version")
-                api("com.soywiz.korlibs.klock:klock:$klock_version")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$kotlinx_serialization_version")
             }
         }
 
@@ -56,15 +56,15 @@ kotlin {
 
         js().compilations["main"].defaultSourceSet {
             dependencies {
-                api("org.jetbrains.kotlinx:kotlinx-serialization-runtime-js:$kotlinx_serialization_version")
-                api("com.soywiz.korlibs.klock:klock-js:$klock_version")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-js:$kotlinx_serialization_version")
+                implementation("com.soywiz.korlibs.klock:klock-js:$klock_version")
             }
         }
 
         jvm().compilations["main"].defaultSourceSet {
             dependencies {
-                api("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$kotlinx_serialization_version")
-                api("com.soywiz.korlibs.klock:klock-jvm:$klock_version")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$kotlinx_serialization_version")
+//                implementation("com.soywiz.korlibs.klock:klock-jvm:$klock_version")
             }
         }
     }

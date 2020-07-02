@@ -1,4 +1,4 @@
 package de.peekandpoke.common
 
 @Suppress("MayBeConstant")
-val CommonMp = "Hello CommonMp!"
+val CommonMpJs = "Hello CommonMpJs!"

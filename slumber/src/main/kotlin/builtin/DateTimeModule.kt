@@ -1,8 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin
 
-import com.soywiz.klock.Date
-import com.soywiz.klock.DateTime
-import com.soywiz.klock.DateTimeTz
+import de.peekandpoke.common.datetime.PortableDate
+import de.peekandpoke.common.datetime.PortableDateTime
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.SlumberModule
 import de.peekandpoke.ultra.slumber.Slumberer
@@ -26,10 +25,9 @@ object DateTimeModule : SlumberModule {
             Instant::class -> type.wrapIfNonNull(InstantAwaker)
             ZonedDateTime::class -> type.wrapIfNonNull(ZonedDateTimeAwaker)
 
-            // Klock
-            Date::class -> type.wrapIfNonNull(KlockDateAwaker)
-            DateTime::class -> type.wrapIfNonNull(KlockDateTimeAwaker)
-            DateTimeTz::class -> type.wrapIfNonNull(KlockDateTimeTzAwaker)
+            // Portable Dates
+            PortableDate::class -> type.wrapIfNonNull(PortableDateAwaker)
+            PortableDateTime::class -> type.wrapIfNonNull(PortableDateTimeAwaker)
 
             else -> null
         }
@@ -46,10 +44,9 @@ object DateTimeModule : SlumberModule {
             Instant::class -> type.wrapIfNonNull(InstantSlumberer)
             ZonedDateTime::class -> type.wrapIfNonNull(ZonedDateTimeSlumberer)
 
-            // Klock
-            Date::class -> type.wrapIfNonNull(KlockDateSlumberer)
-            DateTime::class -> type.wrapIfNonNull(KlockDateTimeSlumberer)
-            DateTimeTz::class -> type.wrapIfNonNull(KlockDateTimeTzSlumberer)
+            // Portable Dates
+            PortableDate::class -> type.wrapIfNonNull(PortableDateSlumberer)
+            PortableDateTime::class -> type.wrapIfNonNull(PortableDateTimeSlumberer)
 
             else -> null
         }

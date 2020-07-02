@@ -22,6 +22,10 @@ plugins {
     id("org.owasp.dependencycheck") version "5.3.2"
     // See: https://github.com/CycloneDX/cyclonedx-gradle-plugin
     id("org.cyclonedx.bom")
+
+    id("org.jetbrains.kotlin.plugin.serialization") apply false
+    id("org.jetbrains.dokka") apply false
+    id("com.jfrog.bintray") apply false
 }
 
 allprojects {

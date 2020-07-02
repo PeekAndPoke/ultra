@@ -1,41 +1,37 @@
 package de.peekandpoke.ultra.slumber.builtin.datetime
 
+import de.peekandpoke.common.datetime.PortableDateTime
+import de.peekandpoke.common.datetime.date
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.Slumberer
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
 
-object LocalDateAwaker : Awaker {
+object PortableDateTimeAwaker : Awaker {
 
-    override fun awake(data: Any?, context: Awaker.Context): LocalDate? {
+    override fun awake(data: Any?, context: Awaker.Context): PortableDateTime? {
 
         if (data !is Map<*, *>) {
             return null
         }
 
         return when (val ts = data[TS]) {
-            is Number -> LocalDateTime.ofInstant(
-                Instant.ofEpochMilli(ts.toLong()),
-                utc
-            ).toLocalDate()
+            is Number -> PortableDateTime(ts.toLong())
             else -> null
         }
     }
 }
 
-object LocalDateSlumberer : Slumberer {
+object PortableDateTimeSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {
 
-        if (data !is LocalDate) {
+        if (data !is PortableDateTime) {
             return null
         }
 
-        val zoned = data.atStartOfDay(utc)
+        val zoned = data.date.atZone(utc)
 
         return toMap(
-            zoned.toInstant().toEpochMilli(),
+            data.timestamp,
             utc,
             zoned.toString()
         )

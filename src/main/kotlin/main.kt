@@ -1,11 +1,11 @@
-import com.soywiz.klock.DateTime
+import de.peekandpoke.common.datetime.PortableDate
 import de.peekandpoke.ultra.slumber.Codec
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
 fun main() {
 
-    val d = DateTime(282828282_000)
+    val d = PortableDate(282828282_000)
 
     val codec = Codec.default
 
@@ -14,7 +14,7 @@ fun main() {
     println("Encoded")
     println(encoded)
 
-    val decoded = codec.awake(DateTime::class, encoded)
+    val decoded = codec.awake(PortableDate::class, encoded)
 
     println("decoded")
     println(decoded)
