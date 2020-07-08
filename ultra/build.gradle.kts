@@ -32,7 +32,7 @@ dependencies {
 
     compile(project(":security"))
 
-    compile(project(":slumber", configuration = "default"))
+    compile(project(":slumber"))
     kapt(project(":slumber"))
     kaptTest(project(":slumber"))
 }

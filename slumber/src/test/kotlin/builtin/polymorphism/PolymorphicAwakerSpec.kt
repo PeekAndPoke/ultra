@@ -282,11 +282,11 @@ class PolymorphicAwakerSpec : StringSpec({
     "Awaking children using ClassIndex - childTypes using indexSubClasses must be correct" {
 
         assertSoftly {
-            ParentWithKlassIndex.childTypes shouldBe setOf(
-                ParentWithKlassIndex.Sub1::class,
-                ParentWithKlassIndex.Sub1.Deeper1::class,
-                ParentWithKlassIndex.Sub1.Deeper2::class,
-                ParentWithKlassIndex.Sub2::class
+            ParentWithClassIndex.childTypes shouldBe setOf(
+                ParentWithClassIndex.Sub1::class,
+                ParentWithClassIndex.Sub1.Deeper1::class,
+                ParentWithClassIndex.Sub1.Deeper2::class,
+                ParentWithClassIndex.Sub2::class
             )
         }
     }
@@ -296,18 +296,18 @@ class PolymorphicAwakerSpec : StringSpec({
         val codec = Codec.default
 
         val result = codec.awake(
-            kType<ParentWithKlassIndex>().list.type,
+            kType<ParentWithClassIndex>().list.type,
             listOf(
                 mapOf(
-                    "_type" to ParentWithKlassIndex.Sub1.Deeper1::class.qualifiedName,
+                    "_type" to ParentWithClassIndex.Sub1.Deeper1::class.qualifiedName,
                     "text" to "Deeper1"
                 ),
                 mapOf(
-                    "_type" to ParentWithKlassIndex.Sub1.Deeper2::class.qualifiedName,
+                    "_type" to ParentWithClassIndex.Sub1.Deeper2::class.qualifiedName,
                     "text" to "Deeper2"
                 ),
                 mapOf(
-                    "_type" to ParentWithKlassIndex.Sub2::class.qualifiedName,
+                    "_type" to ParentWithClassIndex.Sub2::class.qualifiedName,
                     "text" to "Sub2"
                 )
             )
@@ -315,9 +315,9 @@ class PolymorphicAwakerSpec : StringSpec({
 
         assertSoftly {
             result shouldBe listOf(
-                ParentWithKlassIndex.Sub1.Deeper1("Deeper1"),
-                ParentWithKlassIndex.Sub1.Deeper2("Deeper2"),
-                ParentWithKlassIndex.Sub2("Sub2")
+                ParentWithClassIndex.Sub1.Deeper1("Deeper1"),
+                ParentWithClassIndex.Sub1.Deeper2("Deeper2"),
+                ParentWithClassIndex.Sub2("Sub2")
             )
         }
     }

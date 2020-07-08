@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
-import com.github.matfax.klassindex.IndexSubclasses
-import com.github.matfax.klassindex.KlassIndex
+import org.atteo.classindex.ClassIndex
+import org.atteo.classindex.IndexSubclasses
 import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.reflect.jvm.jvmName
@@ -57,13 +57,36 @@ interface Polymorphic {
             }
 
         /**
-         * A set of sub-classes indexed by [KlassIndex]
+         * A set of sub-classes indexed by [ClassIndex]
          *
          * To make this work, the parent class needs to be annotated with [IndexSubclasses]
          */
         val <T : Any> KClass<T>.indexedSubClasses
             get(): Set<KClass<out T>> {
-                return KlassIndex.getSubclasses(this).toSet()
+
+                val result = mutableSetOf<KClass<out T>>()
+
+                var t: ((loader: ClassLoader?) -> Unit)? = null
+
+                val tryLoad: (ClassLoader?) -> Unit = { loader: ClassLoader? ->
+                    if (loader != null) {
+                        result.addAll(
+                            ClassIndex.getSubclasses(this.java, loader).map { it.kotlin }
+                        )
+
+                        t!!(loader.parent)
+                    }
+                }
+
+                t = tryLoad
+
+                // With classes class loader
+                tryLoad(java.classLoader)
+
+                // With context class loader
+                tryLoad(Thread.currentThread().contextClassLoader)
+
+                return result
             }
     }
 

@@ -1,4 +1,4 @@
 package de.peekandpoke.common
 
-@Suppress("MayBeConstant")
-val CommonMpJvm = "Hello CommonMpJvm!"
+@Suppress("unused")
+const val CommonMpJvm = "Hello CommonMpJvm!"

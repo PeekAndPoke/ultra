@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
-import com.github.matfax.klassindex.IndexSubclasses
+import org.atteo.classindex.IndexSubclasses
 
 sealed class PureBase {
 
@@ -78,17 +78,17 @@ sealed class NestedRoot {
 }
 
 @IndexSubclasses
-open class ParentWithKlassIndex {
+open class ParentWithClassIndex {
 
     companion object : Polymorphic.Parent {
 //        override val childTypes: Set<KClass<*>>
 //            get() = ParentWithKlassIndex::class.indexedSubClasses
     }
 
-    sealed class Sub1 : ParentWithKlassIndex() {
+    sealed class Sub1 : ParentWithClassIndex() {
         data class Deeper1(val text: String) : Sub1()
         data class Deeper2(val text: String) : Sub1()
     }
 
-    data class Sub2(val text: String) : ParentWithKlassIndex()
+    data class Sub2(val text: String) : ParentWithClassIndex()
 }

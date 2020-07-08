@@ -67,6 +67,14 @@ kotlin {
 //                implementation("com.soywiz.korlibs.klock:klock-jvm:$klock_version")
             }
         }
+
+        jvm().compilations["test"].defaultSourceSet {
+            dependencies {
+                // Testing
+                implementation("ch.qos.logback:logback-classic:$logback_version")
+                implementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")
+            }
+        }
     }
 }
 

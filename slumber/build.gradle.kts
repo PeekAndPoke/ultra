@@ -18,7 +18,7 @@ group = GROUP
 version = VERSION_NAME
 
 val logback_version: String by project
-val klassindex_version: String by project
+val classindex_version: String by project
 val kotlintest_version: String by project
 val klock_version: String by project
 
@@ -36,14 +36,14 @@ dependencies {
     compile(project(":common"))
     compile(project(":common-mp"))
 
-    compile("com.github.matfax.klassindex:library:$klassindex_version")
-    kapt("com.github.matfax.klassindex:processor:$klassindex_version")
+    compile("org.atteo.classindex:classindex:$classindex_version")
+    kapt("org.atteo.classindex:classindex:$classindex_version")
 
     // Testing
     testImplementation("ch.qos.logback:logback-classic:$logback_version")
     testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")
 
-    kaptTest("com.github.matfax.klassindex:processor:$klassindex_version")
+    kaptTest("org.atteo.classindex:classindex:$classindex_version")
 }
 
 kapt {
