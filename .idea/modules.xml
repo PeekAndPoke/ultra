@@ -5,12 +5,12 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ultra.iml" filepath="$PROJECT_DIR$/.idea/modules/ultra.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/ultra.common.iml" filepath="$PROJECT_DIR$/.idea/modules/common/ultra.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.iml" filepath="$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.commonMain.iml" filepath="$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.commonMain.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.commonTest.iml" filepath="$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.commonTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.jsMain.iml" filepath="$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.jsMain.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.jsTest.iml" filepath="$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.jsTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.jvmMain.iml" filepath="$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.jvmMain.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.jvmTest.iml" filepath="$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.jvmTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.commonMain~1.iml" filepath="$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.commonMain~1.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.commonTest~1.iml" filepath="$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.commonTest~1.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.jsMain~1.iml" filepath="$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.jsMain~1.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.jsTest~1.iml" filepath="$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.jsTest~1.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.jvmMain~1.iml" filepath="$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.jvmMain~1.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.jvmTest~1.iml" filepath="$PROJECT_DIR$/.idea/modules/common-mp/ultra.common-mp.jvmTest~1.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/ultra.common.main.iml" filepath="$PROJECT_DIR$/.idea/modules/common/ultra.common.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/ultra.common.test.iml" filepath="$PROJECT_DIR$/.idea/modules/common/ultra.common.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/kontainer/ultra.kontainer.iml" filepath="$PROJECT_DIR$/.idea/modules/kontainer/ultra.kontainer.iml" />
