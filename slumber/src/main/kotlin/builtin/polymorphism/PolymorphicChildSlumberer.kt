@@ -1,12 +1,11 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
 import de.peekandpoke.ultra.slumber.Slumberer
-import kotlin.reflect.KClass
 
-class PolymorphicSlumberer(
+class PolymorphicChildSlumberer(
     private val discriminator: String,
-    private val map: Map<KClass<*>, String>,
-    private val default: KClass<*>?
+    private val identifier: String,
+    private val childSlumberer: Slumberer
 ) : Slumberer {
     override fun slumber(data: Any?, context: Slumberer.Context): Any? {
 
@@ -14,11 +13,8 @@ class PolymorphicSlumberer(
             return null
         }
 
-        // get the type identifier
-        val type = map[data::class]
-
-        return when (val result = context.slumber(data)) {
-            is Map<*, *> -> result.plus(discriminator to type)
+        return when (val result = childSlumberer.slumber(data, context)) {
+            is Map<*, *> -> result.plus(discriminator to identifier)
             else -> result
         }
     }

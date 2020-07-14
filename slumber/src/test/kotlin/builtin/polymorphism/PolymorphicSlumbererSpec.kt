@@ -155,4 +155,19 @@ class PolymorphicSlumbererSpec : StringSpec({
         }
     }
 
+    ////  Direct slumbering of a Polymorphic.Child  /////////////////////////////////////////////////////
+
+    "Directly slumbering a polymorphic child must include the discriminator" {
+
+        val codec = Codec.default
+
+        val data = AnnotatedBase.B(number = 111)
+
+        val result = codec.slumber(data)
+
+        result shouldBe mapOf(
+            "_type" to AnnotatedBase.B.identifier,
+            "number" to 111
+        )
+    }
 })

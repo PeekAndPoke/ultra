@@ -77,7 +77,7 @@ object BuiltInModule : SlumberModule {
                     type.wrapIfNonNull(EnumCodec(type) as Awaker)
 
                 // Polymorphic classes
-                Polymorphic.supports(cls) ->
+                Polymorphic.isPolymorphicParent(cls) ->
                     type.wrapIfNonNull(Polymorphic.createAwaker(cls))
 
                 // Data classes
@@ -157,8 +157,11 @@ object BuiltInModule : SlumberModule {
                     type.wrapIfNonNull(EnumCodec(type) as Slumberer)
 
                 // Polymorphic classes
-                Polymorphic.supports(cls) ->
-                    type.wrapIfNonNull(Polymorphic.createSlumberer(cls))
+                Polymorphic.isPolymorphicParent(cls) ->
+                    type.wrapIfNonNull(Polymorphic.createParentSlumberer(cls))
+
+                Polymorphic.isPolymorphicChild(cls) ->
+                    type.wrapIfNonNull(Polymorphic.createChildSlumberer(type))
 
                 // Data classes
                 cls.isData ->
