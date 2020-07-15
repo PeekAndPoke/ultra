@@ -85,11 +85,11 @@ class PolymorphicAwakerSpec : StringSpec({
             kListType<CustomDiscriminator>().type,
             listOf(
                 mapOf(
-                    "_" to CustomDiscriminator.A::class.qualifiedName,
+                    "_" to CustomDiscriminator.A.identifier,
                     "text" to "hello"
                 ),
                 mapOf(
-                    "_" to CustomDiscriminator.B::class.qualifiedName,
+                    "_" to CustomDiscriminator.B.identifier,
                     "number" to 100
                 )
             )

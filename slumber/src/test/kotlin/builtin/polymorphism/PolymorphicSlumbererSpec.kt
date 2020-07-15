@@ -90,11 +90,11 @@ class PolymorphicSlumbererSpec : StringSpec({
         assertSoftly {
             result shouldBe listOf(
                 mapOf(
-                    "_" to CustomDiscriminator.A::class.qualifiedName,
+                    "_" to CustomDiscriminator.A.identifier,
                     "text" to "hello"
                 ),
                 mapOf(
-                    "_" to CustomDiscriminator.B::class.qualifiedName,
+                    "_" to CustomDiscriminator.B.identifier,
                     "number" to 100
                 )
             )
@@ -167,6 +167,20 @@ class PolymorphicSlumbererSpec : StringSpec({
 
         result shouldBe mapOf(
             "_type" to AnnotatedBase.B.identifier,
+            "number" to 111
+        )
+    }
+
+    "Directly slumbering a polymorphic with custom discriminator child must include the discriminator" {
+
+        val codec = Codec.default
+
+        val data = CustomDiscriminator.B(number = 111)
+
+        val result = codec.slumber(data)
+
+        result shouldBe mapOf(
+            "_" to CustomDiscriminator.B.identifier,
             "number" to 111
         )
     }

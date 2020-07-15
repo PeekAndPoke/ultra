@@ -15,9 +15,17 @@ sealed class CustomDiscriminator {
         override val discriminator = "_"
     }
 
-    data class A(val text: String) : CustomDiscriminator()
+    data class A(val text: String) : CustomDiscriminator() {
+        companion object : Polymorphic.Child {
+            override val identifier = "A"
+        }
+    }
 
-    data class B(val number: Int) : CustomDiscriminator()
+    data class B(val number: Int) : CustomDiscriminator() {
+        companion object : Polymorphic.Child {
+            override val identifier = "B"
+        }
+    }
 }
 
 sealed class BaseWithDefaultType {
@@ -80,10 +88,7 @@ sealed class NestedRoot {
 @IndexSubclasses
 open class ParentWithClassIndex {
 
-    companion object : Polymorphic.Parent {
-//        override val childTypes: Set<KClass<*>>
-//            get() = ParentWithKlassIndex::class.indexedSubClasses
-    }
+    companion object : Polymorphic.Parent
 
     sealed class Sub1 : ParentWithClassIndex() {
         data class Deeper1(val text: String) : Sub1()
