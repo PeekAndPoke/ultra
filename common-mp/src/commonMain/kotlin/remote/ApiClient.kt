@@ -2,6 +2,7 @@ package de.peekandpoke.common.remote
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 
 abstract class ApiClient(private val config: Config) {
@@ -75,10 +76,38 @@ abstract class ApiClient(private val config: Config) {
         decode: Json.(String) -> RESPONSE
     ): Flow<RESPONSE> =
         remote
-            .post(uri = buildUri(uri, params), body = body ?: "{}")
+            .put(uri = buildUri(uri, params), body = body ?: "{}")
             .body { config.codec.decode(it) }
 
     //  HELPERS  ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Helper for encoding an object
+     */
+    infix fun <T> T.encodedBy(serializer: KSerializer<T>): String {
+        return serializer.encode(this)
+    }
+
+    /**
+     * Helper for encoding an object
+     */
+    fun <T> KSerializer<T>.encode(body: T): String {
+        return config.codec.stringify(this, body)
+    }
+
+    /**
+     * Helper for decoding a string into an object
+     */
+    infix fun <T> String.decodedBy(serializer: KSerializer<T>): T {
+        return serializer.decode(this)
+    }
+
+    /**
+     * Helper for decoding a string into an object
+     */
+    fun <T> KSerializer<T>.decode(body: String): T {
+        return config.codec.parse(this, body)
+    }
 
     /**
      * extracts the body from the given [RemoteResponse]
