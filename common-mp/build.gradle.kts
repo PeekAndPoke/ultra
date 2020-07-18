@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 val logback_version: String by project
 val kotlintest_version: String by project
 val kotlinx_serialization_version: String by project
+val kotlinx_coroutines_version: String by project
 val klock_version: String by project
 
 plugins {
@@ -28,7 +29,10 @@ repositories {
 }
 
 kotlin {
-    js()
+    js {
+        browser {}
+    }
+
     jvm {
         val main by compilations.getting {
             kotlinOptions {
@@ -43,7 +47,8 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$kotlinx_serialization_version")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$kotlinx_serialization_version")
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core-common:${kotlinx_coroutines_version}")
             }
         }
 
@@ -56,14 +61,16 @@ kotlin {
 
         js().compilations["main"].defaultSourceSet {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-js:$kotlinx_serialization_version")
-                implementation("com.soywiz.korlibs.klock:klock-js:$klock_version")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-runtime-js:$kotlinx_serialization_version")
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:${kotlinx_coroutines_version}")
+                api("com.soywiz.korlibs.klock:klock-js:$klock_version")
             }
         }
 
         jvm().compilations["main"].defaultSourceSet {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$kotlinx_serialization_version")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$kotlinx_serialization_version")
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlinx_coroutines_version}")
 //                implementation("com.soywiz.korlibs.klock:klock-jvm:$klock_version")
             }
         }

@@ -32,5 +32,8 @@ include(
         ":mutator",
         ":security",
         ":slumber",
+
+        // playground
+        ":z-playground-js"
 )
 

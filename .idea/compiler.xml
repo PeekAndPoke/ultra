@@ -32,6 +32,7 @@
       <module name="ultra.common-mp.jvmTest~1" target="1.8" />
       <module name="ultra.main" target="11" />
       <module name="ultra.test" target="11" />
+      <module name="ultra.z-playground-js" target="11" />
     </bytecodeTargetLevel>
   </component>
 </project>

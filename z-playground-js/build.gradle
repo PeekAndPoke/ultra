@@ -1,0 +1,29 @@
+plugins {
+    id 'org.jetbrains.kotlin.js'
+    id 'org.jetbrains.kotlin.plugin.serialization'
+}
+
+group 'com.thebase.adminapp'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-js")
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-js:$kotlinx_serialization_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:$kotlinx_coroutines_version"
+
+    // project deps
+    compile project(":common-mp")
+}
+
+kotlin.target {
+    useCommonJs()
+
+    browser {
+    }
+}

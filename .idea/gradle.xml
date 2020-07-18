@@ -18,6 +18,7 @@
             <option value="$PROJECT_DIR$/security" />
             <option value="$PROJECT_DIR$/slumber" />
             <option value="$PROJECT_DIR$/ultra" />
+            <option value="$PROJECT_DIR$/z-playground-js" />
           </set>
         </option>
         <option name="useQualifiedModuleNames" value="true" />
