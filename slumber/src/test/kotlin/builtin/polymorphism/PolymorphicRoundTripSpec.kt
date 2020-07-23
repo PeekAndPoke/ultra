@@ -46,7 +46,7 @@ class PolymorphicRoundTripSpec : StringSpec({
         }
     }
 
-    "Slumbering and awaking round trip - two" {
+    "Slumbering and awaking round trip - two - list of list of sealed classes" {
 
         data class DataClass(val lists: List<List<PureBase>>)
 
@@ -86,4 +86,36 @@ class PolymorphicRoundTripSpec : StringSpec({
             )
         }
     }
+
+    "Slumbering and awaking round trip - three - list children using annotations" {
+
+        data class DataClass(val list: List<ParentWithChildrenUsingAnnotation>)
+
+        val codec = Codec.default
+
+        val source = DataClass(
+            list = listOf(
+                ParentWithChildrenUsingAnnotation.Sub.Deeper1("deeper1"),
+                ParentWithChildrenUsingAnnotation.Sub.Deeper2("deeper2"),
+                ParentWithChildrenUsingAnnotation.Sub2("sub2")
+            )
+        )
+
+        val slumbered = codec.slumber(source)
+
+        val result = codec.awake(DataClass::class, slumbered)
+
+        assertSoftly {
+            result shouldBe source
+
+            slumbered shouldBe mapOf(
+                "list" to listOf(
+                    mapOf("_type" to "Sub.Deeper1", "text" to "deeper1"),
+                    mapOf("_type" to "Sub.Deeper2", "text" to "deeper2"),
+                    mapOf("_type" to "Sub2", "text" to "sub2")
+                )
+            )
+        }
+    }
+
 })

@@ -1,6 +1,9 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
 import de.peekandpoke.ultra.slumber.builtin.objects.DataClassCodec
+import de.peekandpoke.ultra.slumber.builtin.polymorphism.Polymorphic.Child
+import de.peekandpoke.ultra.slumber.builtin.polymorphism.Polymorphic.Parent
+import kotlinx.serialization.SerialName
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.allSuperclasses
@@ -95,11 +98,11 @@ interface Polymorphic {
          */
         fun createAwaker(cls: KClass<*>): PolymorphicAwaker {
 
-            val discriminator = PolymorphicParentUtil.getDiscriminator(cls)
+            val discriminator = ParentUtil.getDiscriminator(cls)
 
-            val map = PolymorphicParentUtil.getChildren(cls).map { it.getChildIdentifier() to it }.toMap()
+            val map = ParentUtil.getChildren(cls).map { ChildUtil.getIdentifier(it) to it }.toMap()
 
-            val default = PolymorphicParentUtil.getDefaultType(cls)
+            val default = ParentUtil.getDefaultType(cls)
 
             return PolymorphicAwaker(discriminator, map, default)
         }
@@ -109,11 +112,11 @@ interface Polymorphic {
          */
         fun createParentSlumberer(cls: KClass<*>): PolymorphicParentSlumberer {
 
-            val parent = PolymorphicParentUtil.getParent(cls) ?: cls
+            val parent = ParentUtil.getParent(cls) ?: cls
 
-            val discriminator = PolymorphicParentUtil.getDiscriminator(parent)
+            val discriminator = ParentUtil.getDiscriminator(parent)
 
-            val map = PolymorphicParentUtil.getChildren(parent).map { it to it.getChildIdentifier() }.toMap()
+            val map = ParentUtil.getChildren(parent).map { it to ChildUtil.getIdentifier(it) }.toMap()
 
             return PolymorphicParentSlumberer(discriminator, map)
         }
@@ -122,11 +125,11 @@ interface Polymorphic {
 
             val cls = type.classifier as KClass<*>
 
-            val parent = PolymorphicParentUtil.getParent(cls) ?: cls
+            val parent = ParentUtil.getParent(cls) ?: cls
 
-            val discriminator = PolymorphicParentUtil.getDiscriminator(parent)
+            val discriminator = ParentUtil.getDiscriminator(parent)
 
-            val map = PolymorphicParentUtil.getChildren(parent).map { it to it.getChildIdentifier() }.toMap()
+            val map = ParentUtil.getChildren(parent).map { it to ChildUtil.getIdentifier(it) }.toMap()
 
             return PolymorphicChildSlumberer(
                 discriminator = discriminator,
@@ -152,22 +155,37 @@ interface Polymorphic {
          * - has a companion object of type [Child]
          */
         fun isPolymorphicChild(cls: KClass<*>): Boolean =
-            cls.companionObjectInstance is Child
+            cls.companionObjectInstance is Child ||
+                    cls.annotations.filterIsInstance<SerialName>().isNotEmpty()
+    }
+}
 
-        /**
-         * Get the type identifier of a child class
-         *
-         * First we try to get the identifier from [Child.identifier].
-         * Otherwise we use the simple name of the class
-         */
-        private fun KClass<*>.getChildIdentifier(): String = when (val companion = companionObjectInstance) {
-            is Child -> companion.identifier
-            else -> qualifiedName ?: jvmName
+internal object ChildUtil {
+
+    /**
+     * Get the type identifier of a child class
+     *
+     * First we try to get the identifier from [Child.identifier].
+     * The we look for a [SerialName] annotation.
+     * Otherwise we use the qualified name of the class
+     */
+    fun getIdentifier(cls: KClass<*>) = when (val companion = cls.companionObjectInstance) {
+
+        is Child -> companion.identifier
+
+        else -> {
+
+            val annotation = cls.annotations.filterIsInstance<SerialName>().firstOrNull()
+
+            when {
+                annotation != null -> annotation.value
+                else -> cls.qualifiedName ?: cls.jvmName
+            }
         }
     }
 }
 
-internal object PolymorphicParentUtil {
+internal object ParentUtil {
 
     /**
      * Gets the name of the discriminator field.
@@ -176,7 +194,7 @@ internal object PolymorphicParentUtil {
      * If this is not present the [Polymorphic.defaultDiscriminator] is returned
      */
     fun getDiscriminator(cls: KClass<*>?): String =
-        (cls?.companionObjectInstance as? Polymorphic.Parent)?.discriminator
+        (cls?.companionObjectInstance as? Parent)?.discriminator
             ?: Polymorphic.defaultDiscriminator
 
     /**
@@ -191,7 +209,7 @@ internal object PolymorphicParentUtil {
      */
     fun getDefaultType(cls: KClass<*>?): KClass<*>? = when (val companion = cls?.companionObjectInstance) {
 
-        is Polymorphic.Parent -> companion.defaultType
+        is Parent -> companion.defaultType
 
         else -> null
     }
@@ -209,7 +227,7 @@ internal object PolymorphicParentUtil {
         }
 
         val annotated = when (val companion = cls.companionObjectInstance) {
-            is Polymorphic.Parent -> companion.childTypes
+            is Parent -> companion.childTypes
             else -> emptySet()
         }
 
@@ -229,10 +247,10 @@ internal object PolymorphicParentUtil {
      */
     fun getParent(cls: KClass<*>): KClass<*>? = when (cls.companionObjectInstance) {
 
-        is Polymorphic.Parent -> cls
+        is Parent -> cls
 
-        is Polymorphic.Child -> cls.allSuperclasses
-            .firstOrNull { it.companionObjectInstance is Polymorphic.Parent }
+        is Child -> cls.allSuperclasses
+            .firstOrNull { it.companionObjectInstance is Parent }
 
         else -> null
     }

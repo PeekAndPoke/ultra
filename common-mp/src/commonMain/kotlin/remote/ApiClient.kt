@@ -30,13 +30,13 @@ abstract class ApiClient(private val config: Config) {
     //// GET ////
 
     operator fun <RESPONSE> ApiEndpoint.Get.invoke(
-        vararg params: Pair<String, String>,
+        vararg params: Pair<String, String?>,
         decode: Json.(String) -> RESPONSE
     ): Flow<RESPONSE> =
         invoke(params = params.toMap(), decode = decode)
 
     operator fun <RESPONSE> ApiEndpoint.Get.invoke(
-        params: Map<String, String>,
+        params: Map<String, String?>,
         decode: Json.(String) -> RESPONSE
     ): Flow<RESPONSE> =
         remote
@@ -46,14 +46,14 @@ abstract class ApiClient(private val config: Config) {
     //// POST ////
 
     operator fun <RESPONSE> ApiEndpoint.Post.invoke(
-        vararg params: Pair<String, String>,
+        vararg params: Pair<String, String?>,
         body: String? = null,
         decode: Json.(String) -> RESPONSE
     ): Flow<RESPONSE> =
         invoke(params = params.toMap(), body = body, decode = decode)
 
     operator fun <RESPONSE> ApiEndpoint.Post.invoke(
-        params: Map<String, String>,
+        params: Map<String, String?>,
         body: String?,
         decode: Json.(String) -> RESPONSE
     ): Flow<RESPONSE> =
@@ -64,14 +64,14 @@ abstract class ApiClient(private val config: Config) {
     //// PUT ////
 
     operator fun <RESPONSE> ApiEndpoint.Put.invoke(
-        vararg params: Pair<String, String>,
+        vararg params: Pair<String, String?>,
         body: String? = null,
         decode: Json.(String) -> RESPONSE
     ): Flow<RESPONSE> =
         invoke(params = params.toMap(), body = body, decode = decode)
 
     operator fun <RESPONSE> ApiEndpoint.Put.invoke(
-        params: Map<String, String>,
+        params: Map<String, String?>,
         body: String?,
         decode: Json.(String) -> RESPONSE
     ): Flow<RESPONSE> =
