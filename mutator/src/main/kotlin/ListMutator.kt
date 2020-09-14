@@ -145,11 +145,21 @@ class ListMutator<T, M>(
     override fun addAll(elements: Collection<M>) = addAll(elements.map(backwardMapper))
 
     /**
+     * Helper function to work around clashes of [T] and [M]
+     */
+    fun addAllM(elements: Collection<M>) = addAll(elements)
+
+    /**
      * Inserts all of the elements of the specified collection [elements] into this list at the specified [index].
      *
      * @return `true` if the list was changed as the result of the operation.
      */
     override fun addAll(index: Int, elements: Collection<M>) = addAll(index, elements.map(backwardMapper))
+
+    /**
+     * Helper function to work around clashes of [T] and [M]
+     */
+    fun addAllM(index: Int, elements: Collection<M>) = addAll(index, elements)
 
     /**
      * Removes the given element

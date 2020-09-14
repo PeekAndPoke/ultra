@@ -519,6 +519,37 @@ class ListMutatorSpec : StringSpec({
         }
     }
 
+    "addAllM(M): adding a non-empty list or mutator-elements at the end" {
+
+        val source = listOf(
+            SomeDataClass("first", 1),
+            SomeDataClass("second", 2)
+        )
+
+        var modifications = 0
+
+        val subject = ListMutator(source, { modifications++ }, { it, mod -> it.mutator(mod) }, { it.getResult() })
+
+        assertSoftly {
+
+            subject.addAllM(
+                listOf(
+                    SomeDataClass("third", 3).mutator()
+                )
+            )
+
+            source shouldNotBeSameInstanceAs subject.getResult()
+
+            modifications shouldBe 1
+
+            subject.getResult() shouldBe listOf(
+                SomeDataClass("first", 1),
+                SomeDataClass("second", 2),
+                SomeDataClass("third", 3)
+            )
+        }
+    }
+
     "addAll(M): adding an empty list or mutator-elements at an index must not trigger mutation" {
 
         val source = listOf(
@@ -554,6 +585,38 @@ class ListMutatorSpec : StringSpec({
         assertSoftly {
 
             subject.addAll(
+                0,
+                listOf(
+                    SomeDataClass("third", 3).mutator()
+                )
+            )
+
+            source shouldNotBeSameInstanceAs subject.getResult()
+
+            modifications shouldBe 1
+
+            subject.getResult() shouldBe listOf(
+                SomeDataClass("third", 3),
+                SomeDataClass("first", 1),
+                SomeDataClass("second", 2)
+            )
+        }
+    }
+
+    "addAllM(M): adding a non-empty list or mutator-elements at an index" {
+
+        val source = listOf(
+            SomeDataClass("first", 1),
+            SomeDataClass("second", 2)
+        )
+
+        var modifications = 0
+
+        val subject = ListMutator(source, { modifications++ }, { it, mod -> it.mutator(mod) }, { it.getResult() })
+
+        assertSoftly {
+
+            subject.addAllM(
                 0,
                 listOf(
                     SomeDataClass("third", 3).mutator()

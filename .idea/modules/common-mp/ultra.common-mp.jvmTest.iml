@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id=":common-mp:jvmTest" external.linked.project.path="$MODULE_DIR$/../../../common-mp" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="de.peekandpoke.ultra" external.system.module.type="sourceSet" external.system.module.version="0.5.7" type="JAVA_MODULE" version="4">
+<module external.linked.project.id=":common-mp:jvmTest" external.linked.project.path="$MODULE_DIR$/../../../common-mp" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="de.peekandpoke.ultra" external.system.module.type="sourceSet" external.system.module.version="0.5.13" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="3" platform="JVM 1.8" allPlatforms="JVM [1.8]" useProjectSettings="false" isTestModule="true" externalProjectId=":common-mp">
         <dependsOnModuleNames>:common-mp:commonTest</dependsOnModuleNames>
         <sourceSets>
-          <sourceSet>ultra.common-mp.jvmMain~1</sourceSet>
-          <sourceSet>ultra.common-mp.commonMain~1</sourceSet>
-          <sourceSet>ultra.common-mp.commonTest~1</sourceSet>
+          <sourceSet>ultra.common-mp.jvmMain</sourceSet>
+          <sourceSet>ultra.common-mp.commonTest</sourceSet>
+          <sourceSet>ultra.common-mp.commonMain</sourceSet>
         </sourceSets>
         <newMppModelJpsModuleKind>COMPILATION_AND_SOURCE_SET_HOLDER</newMppModelJpsModuleKind>
-        <externalSystemTestTasks>jvmTest|:common-mp:jvmTest|jvm</externalSystemTestTasks>
+        <externalSystemTestTasks>
+          <externalSystemTestTask>jvmTest|:common-mp:jvmTest|jvm</externalSystemTestTask>
+        </externalSystemTestTasks>
         <compilerSettings>
           <option name="additionalArguments" value="-Xallow-no-source-files" />
         </compilerSettings>
@@ -59,10 +61,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="ultra.common-mp.commonMain~1" scope="TEST" />
-    <orderEntry type="module" module-name="ultra.common-mp.commonTest~1" scope="TEST" production-on-test="" />
-    <orderEntry type="module" module-name="ultra.common-mp.jvmMain~1" scope="TEST" />
-    <orderEntry type="module" module-name="ultra.common-mp.jvmMain~1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="ultra.common-mp.commonMain" scope="TEST" />
+    <orderEntry type="module" module-name="ultra.common-mp.commonTest" scope="TEST" production-on-test="" />
+    <orderEntry type="module" module-name="ultra.common-mp.jvmMain" scope="TEST" />
+    <orderEntry type="module" module-name="ultra.common-mp.jvmMain" scope="RUNTIME" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:0.20.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.3.8" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-test-common:1.3.72" level="project" />
@@ -114,5 +116,5 @@
     <orderEntry type="library" scope="RUNTIME" name="Gradle: net.bytebuddy:byte-buddy:1.9.3" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: net.bytebuddy:byte-buddy-agent:1.9.3" level="project" />
   </component>
-  <component name="TestModuleProperties" production-module="de.peekandpoke.ultra.common-mp.jvmMain" />
+  <component name="TestModuleProperties" production-module="ultra.common-mp.jvmMain" />
 </module>
