@@ -32,18 +32,18 @@ dependencies {
 
     ////  code generation  //////////////////////////////////////////////////////////////////////////////////////
 
-    compile("com.github.tschuchortdev:kotlin-compile-testing:$kotlincompiletesting_version")
-    compile("com.github.wumpz:diffutils:$diffutils_version")
+    api("com.github.tschuchortdev:kotlin-compile-testing:$kotlincompiletesting_version")
+    api("com.github.wumpz:diffutils:$diffutils_version")
 
-    compile("com.squareup:kotlinpoet:$kotlinpoet_version")
-    compile("com.google.auto.service:auto-service:$google_auto_version")
+    api("com.squareup:kotlinpoet:$kotlinpoet_version")
+    api("com.google.auto.service:auto-service:$google_auto_version")
     kapt("com.google.auto.service:auto-service:$google_auto_version")
 
     ////  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
 
     kaptTest("com.google.auto.service:auto-service:$google_auto_version")
 
-    testCompile("ch.qos.logback:logback-classic:$logback_version")
+    testApi("ch.qos.logback:logback-classic:$logback_version")
     testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")
 }
 

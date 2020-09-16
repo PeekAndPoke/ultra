@@ -63,7 +63,7 @@ fun String.startsWithNone(prefixes: Collection<String>) = !startsWithAny(prefixe
  * The string is first split by the [separator] and then the max length is computed
  */
 fun String.maxLineLength(separator: String = System.lineSeparator()): Int =
-    split(separator).map { it.length }.max() ?: 0
+    split(separator).map { it.length }.maxOrNull() ?: 0
 
 /**
  * Takes [maxLength] of the string and adds the [suffix] if the length is bigger than [maxLength]

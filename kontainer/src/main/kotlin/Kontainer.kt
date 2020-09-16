@@ -130,16 +130,16 @@ class Kontainer internal constructor(
         )
 
         val lens = Triple(
-            rows.map { it.first.maxLineLength() }.max() ?: 0,
-            rows.map { it.second.maxLineLength() }.max() ?: 0,
-            rows.map { it.third.maxLineLength() }.max() ?: 0
+            rows.map { it.first.maxLineLength() }.maxOrNull() ?: 0,
+            rows.map { it.second.maxLineLength() }.maxOrNull() ?: 0,
+            rows.map { it.third.maxLineLength() }.maxOrNull() ?: 0
         )
 
         val services = rows.map {
             "${it.first.padEnd(lens.first)} | ${it.second.padEnd(lens.second)} | ${it.third.padEnd(lens.third)}"
         }
 
-        val maxConfigLength = blueprint.config.map { (k, _) -> k.length }.max() ?: 0
+        val maxConfigLength = blueprint.config.map { (k, _) -> k.length }.maxOrNull() ?: 0
 
         val configs = blueprint.config
             .map { (k, v) -> "${k.padEnd(maxConfigLength)} | $v (${v::class.qualifiedName})" }

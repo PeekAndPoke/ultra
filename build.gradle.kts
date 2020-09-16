@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     idea
-    kotlin("jvm") version "1.3.72"
+    kotlin("jvm") version "1.4.10"
 
     // Scans and Security: //////////////////////////////////////////////////////////////////
     // `build-scan`
@@ -41,7 +41,7 @@ dependencies {
     api(kotlin("stdlib-jdk8"))
 
     // add all child projects
-    compile(project(":ultra"))
+    api(project(":ultra"))
 }
 
 tasks {
