@@ -322,37 +322,6 @@ class PolymorphicAwakerSpec : StringSpec({
         }
     }
 
-    "Awaking children of deeper hierarchies using ClassIndex and @SerialName Annotations" {
-
-        val codec = Codec.default
-
-        val result = codec.awake(
-            kType<ParentWithChildrenUsingAnnotation>().list.type,
-            listOf(
-                mapOf(
-                    "_type" to "Sub.Deeper1",
-                    "text" to "Deeper1"
-                ),
-                mapOf(
-                    "_type" to "Sub.Deeper2",
-                    "text" to "Deeper2"
-                ),
-                mapOf(
-                    "_type" to "Sub2",
-                    "text" to "Sub2"
-                )
-            )
-        )
-
-        assertSoftly {
-            result shouldBe listOf(
-                ParentWithChildrenUsingAnnotation.Sub.Deeper1("Deeper1"),
-                ParentWithChildrenUsingAnnotation.Sub.Deeper2("Deeper2"),
-                ParentWithChildrenUsingAnnotation.Sub2("Sub2")
-            )
-        }
-    }
-
     ////  Complex examples  ////////////////////////////////////////////////////////////////////////////////////////////
 
     "Awaking a data class that contains polymorphics - one" {

@@ -15,13 +15,14 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     idea
     kotlin("jvm") version "1.4.10"
+    kotlin("kapt") version "1.4.10"
 
     // Scans and Security: //////////////////////////////////////////////////////////////////
     // `build-scan`
     // See: https://jeremylong.github.io/DependencyCheck/dependency-check-gradle/index.html
-    id("org.owasp.dependencycheck") version "5.3.2"
+//    id("org.owasp.dependencycheck") version "5.3.2"
     // See: https://github.com/CycloneDX/cyclonedx-gradle-plugin
-    id("org.cyclonedx.bom")
+//    id("org.cyclonedx.bom")
 
     id("org.jetbrains.kotlin.plugin.serialization") apply false
     id("org.jetbrains.dokka") apply false

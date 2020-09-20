@@ -3,7 +3,6 @@ package de.peekandpoke.ultra.slumber.builtin.polymorphism
 import de.peekandpoke.ultra.slumber.builtin.objects.DataClassCodec
 import de.peekandpoke.ultra.slumber.builtin.polymorphism.Polymorphic.Child
 import de.peekandpoke.ultra.slumber.builtin.polymorphism.Polymorphic.Parent
-import kotlinx.serialization.SerialName
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.allSuperclasses
@@ -155,8 +154,7 @@ interface Polymorphic {
          * - has a companion object of type [Child]
          */
         fun isPolymorphicChild(cls: KClass<*>): Boolean =
-            cls.companionObjectInstance is Child ||
-                    cls.annotations.filterIsInstance<SerialName>().isNotEmpty()
+            cls.companionObjectInstance is Child
     }
 }
 
@@ -166,22 +164,13 @@ internal object ChildUtil {
      * Get the type identifier of a child class
      *
      * First we try to get the identifier from [Child.identifier].
-     * The we look for a [SerialName] annotation.
      * Otherwise we use the qualified name of the class
      */
     fun getIdentifier(cls: KClass<*>) = when (val companion = cls.companionObjectInstance) {
 
         is Child -> companion.identifier
 
-        else -> {
-
-            val annotation = cls.annotations.filterIsInstance<SerialName>().firstOrNull()
-
-            when {
-                annotation != null -> annotation.value
-                else -> cls.qualifiedName ?: cls.jvmName
-            }
-        }
+        else -> cls.qualifiedName ?: cls.jvmName
     }
 }
 

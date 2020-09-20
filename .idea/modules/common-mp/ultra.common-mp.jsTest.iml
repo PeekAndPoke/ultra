@@ -6,8 +6,8 @@
         <dependsOnModuleNames>:common-mp:commonTest</dependsOnModuleNames>
         <sourceSets>
           <sourceSet>ultra.common-mp.commonTest</sourceSet>
-          <sourceSet>ultra.common-mp.commonMain</sourceSet>
           <sourceSet>ultra.common-mp.jsMain</sourceSet>
+          <sourceSet>ultra.common-mp.commonMain</sourceSet>
         </sourceSets>
         <newMppModelJpsModuleKind>COMPILATION_AND_SOURCE_SET_HOLDER</newMppModelJpsModuleKind>
         <externalSystemTestTasks>
