@@ -5,7 +5,9 @@ import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
 import kotlin.reflect.KClass
 
-class UltraLogManager(private val appenders: List<LogAppender>) {
+class UltraLogManager(appenders: List<LogAppender>) {
+
+    private val appenders = appenders.toMutableList()
 
     fun getLogger(cls: KClass<*>): Log {
         return LogImpl(cls, this)
@@ -20,5 +22,9 @@ class UltraLogManager(private val appenders: List<LogAppender>) {
                 it.append(now, level, message, loggerName)
             }
         }
+    }
+
+    fun add(appender: LogAppender) {
+        appenders.add(appender)
     }
 }
