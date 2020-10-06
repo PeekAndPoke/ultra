@@ -34,7 +34,7 @@ abstract class ExamplesToDocs(
 
     fun run() {
 
-        builder.appendln("# $title").appendln()
+        builder.appendLine("# $title").appendLine()
 
         generateToc()
 
@@ -50,22 +50,22 @@ abstract class ExamplesToDocs(
      */
     private fun generateToc() {
 
-        builder.appendln("## TOC").appendln()
+        builder.appendLine("## TOC").appendLine()
 
         chapters.forEachIndexed { chapterIndex, chapter ->
 
             chapter.title.let {
-                builder.appendln("${chapterIndex + 1}. [${it}](#${it.toAnchor()})").appendln()
+                builder.appendLine("${chapterIndex + 1}. [${it}](#${it.toAnchor()})").appendLine()
             }
 
             chapter.examples.forEachIndexed { exampleIndex, example ->
 
                 example.title.let {
-                    builder.appendln("    ${exampleIndex + 1}. [${it}](#${it.toAnchor()})")
+                    builder.appendLine("    ${exampleIndex + 1}. [${it}](#${it.toAnchor()})")
                 }
             }
 
-            builder.appendln()
+            builder.appendLine()
         }
     }
 
@@ -76,10 +76,10 @@ abstract class ExamplesToDocs(
 
         chapters.forEach { chapter ->
 
-            builder.appendln("## ${chapter.title}").appendln()
+            builder.appendLine("## ${chapter.title}").appendLine()
 
             if (chapter.description.isNotEmpty()) {
-                builder.appendln(chapter.description).appendln()
+                builder.appendLine(chapter.description).appendLine()
             }
 
             chapter.examples.forEach { example ->
@@ -90,14 +90,14 @@ abstract class ExamplesToDocs(
                 val exampleCode = ExampleCodeExtractor.extract(example, srcDir)
 
                 // Render the title
-                builder.appendln("### ${example.title}").appendln()
+                builder.appendLine("### ${example.title}").appendLine()
                 // Render the description
-                builder.appendln(example.description).appendln()
+                builder.appendLine(example.description).appendLine()
 
                 // Render the link to the code of the example and the example code
                 val codeLocation = File(srcDir.relativeTo(outputLocation), "${example::class.simpleName}.kt")
 
-                builder.appendln("(see the full [example]($codeLocation))").appendln()
+                builder.appendLine("(see the full [example]($codeLocation))").appendLine()
 
                 when {
                     exampleCode.isEmpty() -> builder.appendPlainCode("no code available")
@@ -109,12 +109,12 @@ abstract class ExamplesToDocs(
 
                 // Render the console output
                 if (output.isNotEmpty()) {
-                    builder.appendln("Will output:").appendPlainCode(output.trim()).appendln()
+                    builder.appendLine("Will output:").appendPlainCode(output.trim()).appendLine()
                 }
 
                 // Render addition explanation if the is any
                 if (example.additionalInfo.isNotEmpty()) {
-                    builder.appendln(example.additionalInfo).appendln()
+                    builder.appendLine(example.additionalInfo).appendLine()
                 }
             }
         }
@@ -125,14 +125,14 @@ abstract class ExamplesToDocs(
         .replace(".", "")
 
     private fun StringBuilder.appendKotlinCode(code: String) = apply {
-        appendln("```kotlin")
-        appendln(code)
-        appendln("```")
+        appendLine("```kotlin")
+        appendLine(code)
+        appendLine("```")
     }
 
     private fun StringBuilder.appendPlainCode(code: String) = apply {
-        appendln("```")
-        appendln(code)
-        appendln("```")
+        appendLine("```")
+        appendLine(code)
+        appendLine("```")
     }
 }

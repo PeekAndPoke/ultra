@@ -163,7 +163,7 @@ class KotlinPrinter(
     fun block(block: String) = apply {
 
         if (!isNewLine) {
-            builder.appendln()
+            builder.appendLine()
         }
 
         append(
@@ -184,7 +184,7 @@ class KotlinPrinter(
      */
     fun newline() = apply {
 
-        builder.appendln()
+        builder.appendLine()
 
         isNewLine = true
     }

@@ -92,7 +92,7 @@ abstract class ApiClient(private val config: Config) {
      * Helper for encoding an object
      */
     fun <T> KSerializer<T>.encode(body: T): String {
-        return config.codec.stringify(this, body)
+        return config.codec.encodeToString(this, body)
     }
 
     /**
@@ -106,7 +106,7 @@ abstract class ApiClient(private val config: Config) {
      * Helper for decoding a string into an object
      */
     fun <T> KSerializer<T>.decode(body: String): T {
-        return config.codec.parse(this, body)
+        return config.codec.decodeFromString(this, body)
     }
 
     /**

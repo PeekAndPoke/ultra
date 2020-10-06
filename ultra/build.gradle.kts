@@ -20,19 +20,19 @@ version = VERSION_NAME
 dependencies {
 
     // add all child projects
-    compile(project(":common"))
+    api(project(":common"))
 
-    compile(project(":meta"))
+    api(project(":meta"))
 
-    compile(project(":mutator"))
+    api(project(":mutator"))
     kapt(project(":mutator"))
     kaptTest(project(":mutator"))
 
-    compile(project(":kontainer"))
+    api(project(":kontainer"))
 
-    compile(project(":security"))
+    api(project(":security"))
 
-    compile(project(":slumber"))
+    api(project(":slumber"))
     kapt(project(":slumber"))
     kaptTest(project(":slumber"))
 }

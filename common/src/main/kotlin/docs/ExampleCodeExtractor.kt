@@ -30,8 +30,8 @@ object ExampleCodeExtractor {
 
             if (found) {
                 result
-                    .appendln(src.substring(begin + beginPattern.length, end).trimIndent().trim())
-                    .appendln()
+                    .appendLine(src.substring(begin + beginPattern.length, end).trimIndent().trim())
+                    .appendLine()
 
                 idx = end + endPattern.length
             }

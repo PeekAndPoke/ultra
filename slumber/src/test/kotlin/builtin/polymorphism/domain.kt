@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
-import kotlinx.serialization.SerialName
 import org.atteo.classindex.IndexSubclasses
 
 sealed class PureBase {
@@ -97,22 +96,4 @@ open class ParentWithClassIndex {
     }
 
     data class Sub2(val text: String) : ParentWithClassIndex()
-}
-
-@IndexSubclasses
-open class ParentWithChildrenUsingAnnotation {
-
-    companion object : Polymorphic.Parent
-
-    @SerialName("Sub")
-    sealed class Sub : ParentWithChildrenUsingAnnotation() {
-        @SerialName("Sub.Deeper1")
-        data class Deeper1(val text: String) : Sub()
-
-        @SerialName("Sub.Deeper2")
-        data class Deeper2(val text: String) : Sub()
-    }
-
-    @SerialName("Sub2")
-    data class Sub2(val text: String) : ParentWithChildrenUsingAnnotation()
 }

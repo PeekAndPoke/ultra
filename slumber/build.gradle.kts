@@ -33,10 +33,10 @@ dependencies {
     api(kotlin("stdlib-jdk8"))
     api(kotlin("reflect"))
 
-    compile(project(":common"))
-    compile(project(":common-mp"))
+    api(project(":common"))
+    api(project(":common-mp"))
 
-    compile("org.atteo.classindex:classindex:$classindex_version")
+    api("org.atteo.classindex:classindex:$classindex_version")
     kapt("org.atteo.classindex:classindex:$classindex_version")
 
     // Testing
