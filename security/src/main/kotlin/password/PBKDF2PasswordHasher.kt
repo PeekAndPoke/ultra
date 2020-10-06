@@ -23,7 +23,12 @@ class PBKDF2PasswordHasher(
         return calcHash(salt, password)
     }
 
-    override fun check(plaintext: String, hash: String): Boolean {
+    override fun check(plaintext: String?, hash: String?): Boolean {
+
+        if (plaintext == null || hash == null) {
+            return false
+        }
+
         val parts = hash.split("|")
 
         if (parts.size != 3 || parts[0] != algo) {

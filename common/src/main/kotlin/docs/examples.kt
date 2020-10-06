@@ -53,7 +53,7 @@ $code
     fun println(message: Any) {
         when (val b = builder) {
             null -> kotlin.io.println(message)
-            else -> b.appendln(message)
+            else -> b.appendLine(message)
         }
     }
 }

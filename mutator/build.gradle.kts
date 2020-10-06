@@ -28,11 +28,11 @@ repositories {
 }
 
 dependencies {
-    api(rootProject.project("meta"))
 
     api(kotlin("stdlib-jdk8"))
     api(kotlin("reflect"))
 
+    api(rootProject.project("meta"))
     kapt("com.google.auto.service:auto-service:$google_auto_version")
 
     kaptTest(rootProject.project(":mutator"))

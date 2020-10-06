@@ -31,7 +31,7 @@ dependencies {
 
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version")
 
-    compile(project(":common"))
+    api(project(":common"))
 
     testImplementation("ch.qos.logback:logback-classic:$logback_version")
     testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")

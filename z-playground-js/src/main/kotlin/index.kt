@@ -4,18 +4,15 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
 
 fun main() {
 
     val config = ApiClient.Config(
         baseUrl = "https://api.exchangeratesapi.io",
-        codec = Json(
-            configuration = JsonConfiguration.Stable.copy(
-                classDiscriminator = "_type",
-                ignoreUnknownKeys = true
-            )
-        )
+        codec = Json {
+            classDiscriminator = "_type"
+            ignoreUnknownKeys = true
+        }
     )
 
     val client = TestApiClient(config)
