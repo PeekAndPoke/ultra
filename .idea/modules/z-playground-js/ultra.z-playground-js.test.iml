@@ -62,18 +62,26 @@
     <orderEntry type="module" module-name="ultra.common-mp.commonMain" scope="TEST" />
     <orderEntry type="module" module-name="ultra.common-mp.commonMain" scope="TEST" />
     <orderEntry type="module" module-name="ultra.common-mp.commonMain" scope="TEST" />
+    <orderEntry type="module" module-name="ultra.common-mp.commonMain" scope="TEST" />
+    <orderEntry type="module" module-name="ultra.common-mp.commonMain" scope="TEST" />
+    <orderEntry type="module" module-name="ultra.common-mp.commonMain" scope="TEST" />
+    <orderEntry type="module" module-name="ultra.common-mp.commonMain" scope="TEST" />
+    <orderEntry type="module" module-name="ultra.common-mp.commonMain" scope="TEST" />
+    <orderEntry type="module" module-name="ultra.common-mp.commonMain" scope="TEST" />
     <orderEntry type="module" module-name="ultra.z-playground-js.main" scope="TEST" />
     <orderEntry type="module" module-name="ultra.z-playground-js.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="ultra.common-mp.commonMain" scope="TEST" />
     <orderEntry type="module" module-name="ultra.common-mp.jsMain" scope="TEST" />
     <orderEntry type="module" module-name="ultra.common-mp.commonMain" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-js:1.4.10" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: com.soywiz.korlibs.klock:klock-js:1.12.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core-metadata:1.0.0-RC" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: com.soywiz.korlibs.klock:klock-js:1.12.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core-metadata:1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-metadata:1.3.9" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core-js:1.0.0-RC" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core-js:1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.3.9" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json-metadata:1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:1.4.10" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json-js:1.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:atomicfu-js:0.14.4" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="ultra.z-playground-js.main" />

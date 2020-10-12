@@ -26,7 +26,6 @@ repositories {
 }
 
 dependencies {
-    api(kotlin("stdlib-jdk8"))
     api(kotlin("reflect"))
 
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version")

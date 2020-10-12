@@ -28,14 +28,13 @@ repositories {
 }
 
 dependencies {
-
-    api(kotlin("stdlib-jdk8"))
     api(kotlin("reflect"))
 
-    api(rootProject.project("meta"))
+    api(project(":meta"))
+
     kapt("com.google.auto.service:auto-service:$google_auto_version")
 
-    kaptTest(rootProject.project(":mutator"))
+    kaptTest(project(":mutator"))
 
     testImplementation("ch.qos.logback:logback-classic:$logback_version")
     testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")

@@ -39,8 +39,6 @@ allprojects {
 }
 
 dependencies {
-    api(kotlin("stdlib-jdk8"))
-
     // add all child projects
     api(project(":ultra"))
 }

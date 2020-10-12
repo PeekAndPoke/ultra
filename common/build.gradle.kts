@@ -16,6 +16,7 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
+val kotlin_version: String by project
 val logback_version: String by project
 val kotlintest_version: String by project
 
@@ -25,7 +26,6 @@ repositories {
 }
 
 dependencies {
-    api(kotlin("stdlib-jdk8"))
     api(kotlin("reflect"))
 
     testImplementation("ch.qos.logback:logback-classic:$logback_version")

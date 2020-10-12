@@ -27,10 +27,10 @@ repositories {
 }
 
 dependencies {
-    api(rootProject.project("kontainer"))
 
-    api(kotlin("stdlib-jdk8"))
     api(kotlin("reflect"))
+
+    api(project(":kontainer"))
 
     api("com.auth0:java-jwt:$auth0_jwt_version")
 

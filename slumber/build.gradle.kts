@@ -30,7 +30,6 @@ repositories {
 }
 
 dependencies {
-    api(kotlin("stdlib-jdk8"))
     api(kotlin("reflect"))
 
     api(project(":common"))

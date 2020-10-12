@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: com.github.tschuchortdev:kotlin-compile-testing:1.3.1">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.tschuchortdev/kotlin-compile-testing/1.3.1/cd4301ddfb08d9d086cfbee948593334b75e494b/kotlin-compile-testing-1.3.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.tschuchortdev/kotlin-compile-testing/1.3.1/78c07e3065115bcb7055bac20d29844c3734752f/kotlin-compile-testing-1.3.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

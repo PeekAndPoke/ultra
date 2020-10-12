@@ -25,10 +25,9 @@ val kotlincompiletesting_version: String by project
 val diffutils_version: String by project
 
 dependencies {
-    api(rootProject.project("common"))
-
-    api(kotlin("stdlib-jdk8"))
     api(kotlin("reflect"))
+
+    api(project(":common"))
 
     ////  code generation  //////////////////////////////////////////////////////////////////////////////////////
 

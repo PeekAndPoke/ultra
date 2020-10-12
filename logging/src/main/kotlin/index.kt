@@ -30,7 +30,7 @@ fun KontainerBuilder.ultraLogging() = module(Ultra_Logging)
  */
 val Ultra_Logging = module {
 
-    singleton(UltraLogManager::class)
+    dynamic(UltraLogManager::class)
 
     // TODO: we need another injection type: dynamicPrototype.
     //       It must upgrade the injecting service to SemiDynamic.
