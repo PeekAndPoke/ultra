@@ -35,6 +35,7 @@ kotlin {
                 output.libraryTarget = "commonjs2"
             }
         }
+        binaries.executable()
     }
 
     jvm {
