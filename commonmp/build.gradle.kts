@@ -136,8 +136,6 @@ afterEvaluate {
         } else {
             it.artifactId = "${project.name}-${it.name}"
         }
-
-        it.artifactId = "${project.name}-${it.name}"
     }
 }
 
@@ -148,9 +146,7 @@ bintray {
     override = true
 
     setPublications(
-        *publishing.publications
-            .filter { it.name != "kotlinMultiplatform" }
-            .map { it.name }.toTypedArray()
+        *publishing.publications.map { it.name }.toTypedArray()
     )
 
     pkg(delegateClosureOf<BintrayExtension.PackageConfig> {
