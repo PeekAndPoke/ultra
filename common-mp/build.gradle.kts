@@ -30,7 +30,11 @@ repositories {
 
 kotlin {
     js {
-        browser {}
+        browser {
+            webpackTask {
+                output.libraryTarget = "commonjs2"
+            }
+        }
     }
 
     jvm {
