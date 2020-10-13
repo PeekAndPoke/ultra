@@ -10,8 +10,8 @@ val kotlinx_coroutines_version: String by project
 val klock_version: String by project
 
 plugins {
-    `maven-publish`
     kotlin("multiplatform")
+    `maven-publish`
     id("org.jetbrains.kotlin.plugin.serialization")
     id("org.jetbrains.dokka")
     id("com.jfrog.bintray")

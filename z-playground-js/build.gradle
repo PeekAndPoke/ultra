@@ -16,7 +16,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version"
 
     // project deps
-    api project(":common-mp")
+    api project(":commonmp")
 }
 
 kotlin {

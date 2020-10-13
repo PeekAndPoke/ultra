@@ -33,7 +33,7 @@ dependencies {
     api(kotlin("reflect"))
 
     api(project(":common"))
-    api(project(":common-mp"))
+    api(project(":commonmp"))
 
     api("org.atteo.classindex:classindex:$classindex_version")
     kapt("org.atteo.classindex:classindex:$classindex_version")

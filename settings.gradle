@@ -23,7 +23,7 @@ include(
 
         // child projects
         ":common",
-        ":common-mp",
+        ":commonmp",
         ":kontainer",
         ":logging",
         ":meta",
