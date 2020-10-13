@@ -77,13 +77,13 @@ kotlin {
 
         js().compilations["main"].defaultSourceSet {
             dependencies {
-//                api("com.soywiz.korlibs.klock:klock-js:$klock_version")
+                api("com.soywiz.korlibs.klock:klock-js:$klock_version")
             }
         }
 
         jvm().compilations["main"].defaultSourceSet {
             dependencies {
-//                implementation("com.soywiz.korlibs.klock:klock-jvm:$klock_version")
+                implementation("com.soywiz.korlibs.klock:klock-jvm:$klock_version")
             }
         }
 
@@ -131,11 +131,13 @@ afterEvaluate {
 
         it.groupId = group as String
 
-        if (it.name.contains("kotlinMultiplatform")) {
+        if (it.name.contains("metadata")) {
             it.artifactId = project.name
         } else {
             it.artifactId = "${project.name}-${it.name}"
         }
+
+        it.artifactId = "${project.name}-${it.name}"
     }
 }
 
@@ -146,7 +148,9 @@ bintray {
     override = true
 
     setPublications(
-        *publishing.publications.map { it.name }.toTypedArray()
+        *publishing.publications
+            .filter { it.name != "kotlinMultiplatform" }
+            .map { it.name }.toTypedArray()
     )
 
     pkg(delegateClosureOf<BintrayExtension.PackageConfig> {

@@ -1,20 +1,23 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-//buildscript {
-//    repositories {
-//        mavenCentral()
-//        google()
+buildscript {
+    repositories {
+        mavenCentral()
+        google()
 //        gradlePluginPortal() // Required for the Errorprone Gradle Plugin.
-//    }
-//
-//    dependencies {
+    }
+
+    dependencies {
 //        classpath("com.vanniktech:gradle-code-quality-tools-plugin:0.18.0")
-//    }
-//}
+        classpath("com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4")
+    }
+}
 
 plugins {
     idea
     kotlin("jvm") version "1.4.10"
+//    kotlin("js") version "1.4.10"
+//    kotlin("multiplatform") version "1.4.10"
     kotlin("kapt") version "1.4.10"
 
     // Scans and Security: //////////////////////////////////////////////////////////////////
