@@ -62,9 +62,9 @@ kotlin {
 
         val commonMain by getting {
             dependencies {
-                api("org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version")
-                api("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_version")
-                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlinx_coroutines_version}")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_version")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlinx_coroutines_version}")
             }
         }
 
@@ -77,16 +77,12 @@ kotlin {
 
         js().compilations["main"].defaultSourceSet {
             dependencies {
-//                api("org.jetbrains.kotlinx:kotlinx-serialization-runtime-js:$kotlinx_serialization_version")
-//                api("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:${kotlinx_coroutines_version}")
-                api("com.soywiz.korlibs.klock:klock-js:$klock_version")
+//                api("com.soywiz.korlibs.klock:klock-js:$klock_version")
             }
         }
 
         jvm().compilations["main"].defaultSourceSet {
             dependencies {
-//                api("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$kotlinx_serialization_version")
-//                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlinx_coroutines_version}")
 //                implementation("com.soywiz.korlibs.klock:klock-jvm:$klock_version")
             }
         }

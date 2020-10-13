@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id=":common-mp:jsMain" external.linked.project.path="$MODULE_DIR$/../../../common-mp" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="de.peekandpoke.ultra" external.system.module.type="sourceSet" external.system.module.version="0.6.3" type="JAVA_MODULE" version="4">
+<module external.linked.project.id=":commonmp:jsMain" external.linked.project.path="$MODULE_DIR$/../../../commonmp" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="de.peekandpoke.ultra" external.system.module.type="sourceSet" external.system.module.version="0.8.2" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="3" platform="JavaScript " allPlatforms="JS []" useProjectSettings="false" isTestModule="false" externalProjectId=":common-mp">
-        <dependsOnModuleNames>:common-mp:commonMain</dependsOnModuleNames>
+      <configuration version="3" platform="JavaScript " allPlatforms="JS []" useProjectSettings="false" isTestModule="false" externalProjectId=":commonmp">
+        <dependsOnModuleNames>:commonmp:commonMain</dependsOnModuleNames>
         <sourceSets>
-          <sourceSet>ultra.common-mp.commonMain</sourceSet>
+          <sourceSet>ultra.commonmp.commonMain</sourceSet>
         </sourceSets>
         <newMppModelJpsModuleKind>COMPILATION_AND_SOURCE_SET_HOLDER</newMppModelJpsModuleKind>
         <compilerSettings />
         <compilerArguments>
-          <option name="outputFile" value="$MODULE_DIR$/../../../build/js/packages/ultra-common-mp/kotlin/ultra-common-mp.js" />
+          <option name="outputFile" value="$MODULE_DIR$/../../../build/js/packages/ultra-commonmp/kotlin/ultra-commonmp.js" />
           <option name="noStdlib" value="true" />
           <option name="sourceMap" value="true" />
           <option name="metaInfo" value="true" />
@@ -44,15 +44,15 @@
     </facet>
   </component>
   <component name="NewModuleRootManager">
-    <output url="file://$MODULE_DIR$/../../../build/js/packages/ultra-common-mp/kotlin" />
+    <output url="file://$MODULE_DIR$/../../../build/js/packages/ultra-commonmp/kotlin" />
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../../../common-mp/build/externals/ultra-common-mp/src" />
-    <content url="file://$MODULE_DIR$/../../../common-mp/src/jsMain">
-      <sourceFolder url="file://$MODULE_DIR$/../../../common-mp/src/jsMain/kotlin" type="kotlin-source" />
+    <content url="file://$MODULE_DIR$/../../../commonmp/build/externals/ultra-commonmp/src" />
+    <content url="file://$MODULE_DIR$/../../../commonmp/src/jsMain">
+      <sourceFolder url="file://$MODULE_DIR$/../../../commonmp/src/jsMain/kotlin" type="kotlin-source" />
     </content>
     <orderEntry type="jdk" jdkName="Kotlin SDK" jdkType="KotlinSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="ultra.common-mp.commonMain" />
+    <orderEntry type="module" module-name="ultra.commonmp.commonMain" />
     <orderEntry type="library" name="Gradle: com.soywiz.korlibs.klock:klock-js:1.12.1" level="project" />
     <orderEntry type="library" name="Gradle: com.soywiz.korlibs.klock:klock-metadata:1.12.1" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-js:1.4.10" level="project" />
