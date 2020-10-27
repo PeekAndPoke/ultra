@@ -29,7 +29,7 @@ object SerializableDateSerializer : KSerializer<PortableDate> {
             value = V(
                 ts = value.timestamp,
                 timezone = "UTC",
-                human = ""
+                human = value.toIsoString()
             )
         )
     }
@@ -61,7 +61,7 @@ object SerializableDateTimeSerializer : KSerializer<PortableDateTime> {
             value = V(
                 ts = value.timestamp,
                 timezone = "UTC",
-                human = ""
+                human = value.toIsoString()
             )
         )
     }

@@ -13,4 +13,3 @@ data class PortableDate(val timestamp: Long) : Comparable<PortableDate> {
         }
     }
 }
-
