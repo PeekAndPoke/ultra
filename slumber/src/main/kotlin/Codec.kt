@@ -2,8 +2,6 @@ package de.peekandpoke.ultra.slumber
 
 import de.peekandpoke.ultra.common.TypedAttributes
 import de.peekandpoke.ultra.common.reflection.kType
-import de.peekandpoke.ultra.slumber.builtin.BuiltInModule
-import de.peekandpoke.ultra.slumber.builtin.DateTimeModule
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection
@@ -16,12 +14,7 @@ open class Codec(
 
     companion object {
         val default = Codec(
-            Config(
-                listOf(
-                    DateTimeModule,
-                    BuiltInModule
-                )
-            )
+            config = Config.default
         )
     }
 

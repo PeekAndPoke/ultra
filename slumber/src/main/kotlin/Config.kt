@@ -1,8 +1,19 @@
 package de.peekandpoke.ultra.slumber
 
+import de.peekandpoke.ultra.slumber.builtin.BuiltInModule
+import de.peekandpoke.ultra.slumber.builtin.DateTimeModule
 import kotlin.reflect.KType
 
 class Config(private val modules: List<SlumberModule> = listOf()) {
+
+    companion object {
+        val default = Config(
+            modules = listOf(
+                DateTimeModule,
+                BuiltInModule,
+            )
+        )
+    }
 
     private val awakerLookup = mutableMapOf<KType, Awaker?>()
 
