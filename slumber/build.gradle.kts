@@ -21,6 +21,7 @@ val logback_version: String by project
 val classindex_version: String by project
 val kotlintest_version: String by project
 val klock_version: String by project
+val kotlinx_serialization_version: String by project
 
 repositories {
     mavenCentral()
@@ -37,6 +38,8 @@ dependencies {
 
     api("org.atteo.classindex:classindex:$classindex_version")
     kapt("org.atteo.classindex:classindex:$classindex_version")
+
+    api("org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version")
 
     // Testing
     testImplementation("ch.qos.logback:logback-classic:$logback_version")

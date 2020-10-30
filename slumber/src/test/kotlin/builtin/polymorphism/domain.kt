@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
+import kotlinx.serialization.SerialName
 import org.atteo.classindex.IndexSubclasses
 
 sealed class PureBase {
@@ -73,16 +74,16 @@ open class AnnotatedBase {
     }
 }
 
-sealed class NestedRoot {
+sealed class SealedRoot {
 
-    sealed class NestedA : NestedRoot() {
+    sealed class NestedA : SealedRoot() {
 
         data class DeeperA(val text: String) : NestedA()
 
         data class DeeperB(val text: String) : NestedA()
     }
 
-    data class NestedB(val text: String) : NestedRoot()
+    data class NestedB(val text: String) : SealedRoot()
 }
 
 @IndexSubclasses
@@ -96,4 +97,22 @@ open class ParentWithClassIndex {
     }
 
     data class Sub2(val text: String) : ParentWithClassIndex()
+}
+
+@IndexSubclasses
+open class ParentWithChildrenUsingAnnotation {
+
+    companion object : Polymorphic.Parent
+
+    @SerialName("Sub")
+    sealed class Sub : ParentWithChildrenUsingAnnotation() {
+        @SerialName("Sub.Deeper1")
+        data class Deeper1(val text: String) : Sub()
+
+        @SerialName("Sub.Deeper2")
+        data class Deeper2(val text: String) : Sub()
+    }
+
+    @SerialName("Sub2")
+    data class Sub2(val text: String) : ParentWithChildrenUsingAnnotation()
 }

@@ -251,18 +251,18 @@ class PolymorphicAwakerSpec : StringSpec({
         val codec = Codec.default
 
         val result = codec.awake(
-            kType<NestedRoot>().list.type,
+            kType<SealedRoot>().list.type,
             listOf(
                 mapOf(
-                    "_type" to NestedRoot.NestedA.DeeperA::class.qualifiedName,
+                    "_type" to SealedRoot.NestedA.DeeperA::class.qualifiedName,
                     "text" to "DeeperA"
                 ),
                 mapOf(
-                    "_type" to NestedRoot.NestedA.DeeperB::class.qualifiedName,
+                    "_type" to SealedRoot.NestedA.DeeperB::class.qualifiedName,
                     "text" to "DeeperB"
                 ),
                 mapOf(
-                    "_type" to NestedRoot.NestedB::class.qualifiedName,
+                    "_type" to SealedRoot.NestedB::class.qualifiedName,
                     "text" to "NestedB"
                 )
             )
@@ -270,9 +270,9 @@ class PolymorphicAwakerSpec : StringSpec({
 
         assertSoftly {
             result shouldBe listOf(
-                NestedRoot.NestedA.DeeperA("DeeperA"),
-                NestedRoot.NestedA.DeeperB("DeeperB"),
-                NestedRoot.NestedB("NestedB")
+                SealedRoot.NestedA.DeeperA("DeeperA"),
+                SealedRoot.NestedA.DeeperB("DeeperB"),
+                SealedRoot.NestedB("NestedB")
             )
         }
     }
@@ -321,6 +321,38 @@ class PolymorphicAwakerSpec : StringSpec({
             )
         }
     }
+
+    "Awaking children of deeper hierarchies using ClassIndex and @SerialName Annotations" {
+
+        val codec = Codec.default
+
+        val result = codec.awake(
+            kType<ParentWithChildrenUsingAnnotation>().list.type,
+            listOf(
+                mapOf(
+                    "_type" to "Sub.Deeper1",
+                    "text" to "Deeper1"
+                ),
+                mapOf(
+                    "_type" to "Sub.Deeper2",
+                    "text" to "Deeper2"
+                ),
+                mapOf(
+                    "_type" to "Sub2",
+                    "text" to "Sub2"
+                )
+            )
+        )
+
+        assertSoftly {
+            result shouldBe listOf(
+                ParentWithChildrenUsingAnnotation.Sub.Deeper1("Deeper1"),
+                ParentWithChildrenUsingAnnotation.Sub.Deeper2("Deeper2"),
+                ParentWithChildrenUsingAnnotation.Sub2("Sub2")
+            )
+        }
+    }
+
 
     ////  Complex examples  ////////////////////////////////////////////////////////////////////////////////////////////
 

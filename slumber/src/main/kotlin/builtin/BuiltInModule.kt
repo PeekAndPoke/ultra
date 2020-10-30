@@ -9,7 +9,8 @@ import de.peekandpoke.ultra.slumber.builtin.collections.CollectionSlumberer
 import de.peekandpoke.ultra.slumber.builtin.collections.MapAwaker
 import de.peekandpoke.ultra.slumber.builtin.collections.MapSlumberer
 import de.peekandpoke.ultra.slumber.builtin.objects.*
-import de.peekandpoke.ultra.slumber.builtin.polymorphism.Polymorphic
+import de.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicChildUtil
+import de.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicParentUtil
 import de.peekandpoke.ultra.slumber.builtin.primitive.*
 import java.io.Serializable
 import kotlin.reflect.KClass
@@ -77,8 +78,8 @@ object BuiltInModule : SlumberModule {
                     type.wrapIfNonNull(EnumCodec(type) as Awaker)
 
                 // Polymorphic classes
-                Polymorphic.isPolymorphicParent(cls) ->
-                    type.wrapIfNonNull(Polymorphic.createAwaker(cls))
+                PolymorphicParentUtil.isPolymorphicParent(cls) ->
+                    type.wrapIfNonNull(PolymorphicParentUtil.createParentAwaker(cls))
 
                 // Data classes
                 cls.isData ->
@@ -157,11 +158,11 @@ object BuiltInModule : SlumberModule {
                     type.wrapIfNonNull(EnumCodec(type) as Slumberer)
 
                 // Polymorphic classes
-                Polymorphic.isPolymorphicParent(cls) ->
-                    type.wrapIfNonNull(Polymorphic.createParentSlumberer(cls))
+                PolymorphicParentUtil.isPolymorphicParent(cls) ->
+                    type.wrapIfNonNull(PolymorphicParentUtil.createParentSlumberer(cls))
 
-                Polymorphic.isPolymorphicChild(cls) ->
-                    type.wrapIfNonNull(Polymorphic.createChildSlumberer(type))
+                PolymorphicChildUtil.isPolymorphicChild(cls) ->
+                    type.wrapIfNonNull(PolymorphicChildUtil.createChildSlumberer(type))
 
                 // Data classes
                 cls.isData ->

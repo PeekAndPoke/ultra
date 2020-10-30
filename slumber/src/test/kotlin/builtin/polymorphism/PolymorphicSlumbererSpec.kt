@@ -11,14 +11,17 @@ class PolymorphicSlumbererSpec : StringSpec({
 
     ////  Directly slumbering polymorphic children  ////////////////////////////////////////////////////////////////////
 
-    "Slumbering a polymorphic child independently must NOT include the discriminator" {
+    "Slumbering a polymorphic child independently must include the discriminator" {
 
         val codec = Codec.default
 
         val result = codec.slumber(PureBase.A("hello"))
 
         assertSoftly {
-            result shouldBe mapOf("text" to "hello")
+            result shouldBe mapOf(
+                "_type" to PureBase.A::class.qualifiedName,
+                "text" to "hello",
+            )
         }
     }
 
@@ -171,6 +174,20 @@ class PolymorphicSlumbererSpec : StringSpec({
         )
     }
 
+    "Directly slumbering a polymorphic child in a deeper sealed class hierarchy must include the discriminator" {
+
+        val codec = Codec.default
+
+        val data = SealedRoot.NestedA.DeeperA(text = "DeeperA")
+
+        val result = codec.slumber(data)
+
+        result shouldBe mapOf(
+            "_type" to SealedRoot.NestedA.DeeperA::class.qualifiedName,
+            "text" to "DeeperA"
+        )
+    }
+
     "Directly slumbering a polymorphic with custom discriminator child must include the discriminator" {
 
         val codec = Codec.default
@@ -182,6 +199,34 @@ class PolymorphicSlumbererSpec : StringSpec({
         result shouldBe mapOf(
             "_" to CustomDiscriminator.B.identifier,
             "number" to 111
+        )
+    }
+
+    "Directly slumbering a polymorphic within a deeper hierarchy annotated with IndexSubclasses include the discriminator" {
+
+        val codec = Codec.default
+
+        val data = ParentWithClassIndex.Sub1.Deeper1(text = "Deeper1")
+
+        val result = codec.slumber(data)
+
+        result shouldBe mapOf(
+            "_type" to ParentWithClassIndex.Sub1.Deeper1::class.qualifiedName,
+            "text" to "Deeper1"
+        )
+    }
+
+    "Directly slumbering a polymorphic annotated with @SerialName" {
+
+        val codec = Codec.default
+
+        val data = ParentWithChildrenUsingAnnotation.Sub2("Sub2-value")
+
+        val result = codec.slumber(data)
+
+        result shouldBe mapOf(
+            "_type" to "Sub2",
+            "text" to "Sub2-value",
         )
     }
 })

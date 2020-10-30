@@ -7,6 +7,9 @@ class PolymorphicChildSlumberer(
     private val identifier: String,
     private val childSlumberer: Slumberer
 ) : Slumberer {
+
+    private val disc2ident = discriminator to identifier
+
     override fun slumber(data: Any?, context: Slumberer.Context): Any? {
 
         if (data == null) {
@@ -14,7 +17,7 @@ class PolymorphicChildSlumberer(
         }
 
         return when (val result = childSlumberer.slumber(data, context)) {
-            is Map<*, *> -> result.plus(discriminator to identifier)
+            is Map<*, *> -> result.plus(disc2ident)
             else -> result
         }
     }

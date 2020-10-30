@@ -45,8 +45,8 @@
     </content>
     <orderEntry type="jdk" jdkName="Kotlin SDK" jdkType="KotlinSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="ultra.commonmp.jsMain" />
     <orderEntry type="module" module-name="ultra.commonmp.commonMain" />
+    <orderEntry type="module" module-name="ultra.commonmp.jsMain" />
     <orderEntry type="module" module-name="ultra.commonmp.commonMain" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-js:1.4.10" level="project" />
     <orderEntry type="library" name="Gradle: com.soywiz.korlibs.klock:klock-js:1.12.1" level="project" />
