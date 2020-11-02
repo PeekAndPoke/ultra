@@ -3,7 +3,7 @@ package de.peekandpoke.ultra.slumber.builtin.collections
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
 import de.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
-import io.kotlintest.tables.row
+import io.kotest.data.row
 
 /**
  * Samples that map to null. Converting to Byte must throw. Converting must not throw.
@@ -38,7 +38,7 @@ class IntListSlumberSpec : SlumbererSpecHelper(
  */
 private val intListNonNull = listOf(
     row(emptyList<Int>(), emptyList()),
-    row(emptyArray<Int>(), emptyList<Int>()),
+    row(emptyArray<Int>(), emptyList()),
     row(listOf(1, 2), listOf(1, 2)),
     row(listOf(1.1, 2.2), listOf(1, 2)),
     row(listOf("10", 20.toShort()), listOf(10, 20))
@@ -67,7 +67,7 @@ class MutableIntListSlumberSpec : SlumbererSpecHelper(
  */
 private val mutableIntListNonNull = listOf(
     row(emptyList<Int>(), emptyList()),
-    row(emptyArray<Int>(), emptyList<Int>()),
+    row(emptyArray<Int>(), emptyList()),
     row(listOf(1, 2), mutableListOf(1, 2)),
     row(listOf(1.1, 2.2), mutableListOf(1, 2)),
     row(listOf("10", 20.toShort()), mutableListOf(10, 20))

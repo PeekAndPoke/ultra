@@ -4,6 +4,7 @@ import com.jfrog.bintray.gradle.BintrayExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val logback_version: String by project
+val classindex_version: String by project
 val kotlintest_version: String by project
 val kotlinx_serialization_version: String by project
 val kotlinx_coroutines_version: String by project
@@ -70,8 +71,9 @@ kotlin {
 
         val commonTest by getting {
             dependencies {
-                implementation(kotlin("test-common"))
-                implementation(kotlin("test-annotations-common"))
+//                implementation("io.kotest:kotest-assertions-shared:$kotlintest_version")
+//                implementation("io.kotest:kotest-framework-api:$kotlintest_version")
+//                implementation("io.kotest:kotest-runner-junit5:$kotlintest_version")
             }
         }
 
@@ -84,6 +86,7 @@ kotlin {
         jvm().compilations["main"].defaultSourceSet {
             dependencies {
                 implementation("com.soywiz.korlibs.klock:klock-jvm:$klock_version")
+                implementation("org.atteo.classindex:classindex:$classindex_version")
             }
         }
 
@@ -91,12 +94,12 @@ kotlin {
             dependencies {
                 // Testing
                 implementation("ch.qos.logback:logback-classic:$logback_version")
-                implementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")
+                implementation("io.kotest:kotest-assertions-core-jvm:$kotlintest_version")
+                implementation("io.kotest:kotest-runner-junit5-jvm:$kotlintest_version")
             }
         }
     }
 }
-
 
 tasks {
     withType<KotlinCompile> {
@@ -106,6 +109,14 @@ tasks {
     dokka {
         outputFormat = "html"
         outputDirectory = "$buildDir/javadoc"
+    }
+
+    getByName("jvmTest", Test::class) {
+        useJUnitPlatform { }
+    }
+
+    getByName("build") {
+        dependsOn("jvmTest")
     }
 }
 

@@ -1,8 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
+import de.peekandpoke.ultra.slumber.Polymorphic
 import de.peekandpoke.ultra.slumber.builtin.objects.DataClassCodec
-import de.peekandpoke.ultra.slumber.builtin.polymorphism.Polymorphic.Child
-import de.peekandpoke.ultra.slumber.builtin.polymorphism.Polymorphic.Parent
 import kotlinx.serialization.SerialName
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
@@ -10,91 +9,6 @@ import kotlin.reflect.full.allSuperclasses
 import kotlin.reflect.full.allSupertypes
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.reflect.jvm.jvmName
-
-/**
- * Used to apply custom polymorphic settings
- */
-interface Polymorphic {
-
-    /**
-     * Applies custom settings to a polymorphic parent class.
-     *
-     * In order to use, you need to make the companion object of the polymorphic parent implements this interface.
-     *
-     * Example:
-     *
-     * <code>
-     *     class MyParent {
-     *         companion object : Polymorphic.Parent {
-     *             override val discriminator = "_field"
-     *         }
-     *     }
-     * </code>
-     */
-    interface Parent {
-        /**
-         * The name of the data field which acts as the discriminator, defaulting to [defaultDiscriminator]
-         *
-         * The discriminator is used to tell which child class needs to be de-serialized.
-         */
-        val discriminator get(): String = defaultDiscriminator
-
-        /**
-         * The default type for deserialization or null.
-         *
-         * When the discriminator field is missing and the defaultType is set, then an object of the
-         * defaultType will be created on de-serialization.
-         */
-        val defaultType get(): KClass<*>? = null
-
-        /**
-         * A set of child types.
-         *
-         * The identifiers are taken from the child types directly.
-         *
-         * @see [Child]
-         */
-        val childTypes
-            get(): Set<KClass<*>> = try {
-                this@Parent::class.java.declaringClass.kotlin.indexedSubClasses
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                emptySet()
-            }
-    }
-
-    /**
-     * Applies custom settings to a polymorphic child class.
-     *
-     * In order to use, you need to make the companion object of the polymorphic parent implements this interface.
-     *
-     * Example:
-     *
-     * <code>
-     *     class MyChild : MyParent() {
-     *         companion object : Polymorphic.Child {
-     *             override val identifier = "Child"
-     *         }
-     *     }
-     * </code>
-     */
-    interface Child {
-        /**
-         * The identifier is used to decide, which child class is to be de-serialized.
-         *
-         * It will be written into or read from the [Parent.discriminator] field.
-         */
-        val identifier: String
-    }
-
-    companion object {
-
-        /**
-         * Default type discriminator field name
-         */
-        const val defaultDiscriminator: String = "_type"
-    }
-}
 
 internal object PolymorphicChildUtil {
 
@@ -119,23 +33,23 @@ internal object PolymorphicChildUtil {
      * Checks if the given [cls] is a polymorphic child.
      *
      * A class is recognized as a polymorphic child when it:
-     * - has a companion object of type [Child]
+     * - has a companion object of type [Polymorphic.Child]
      */
     fun isPolymorphicChild(cls: KClass<*>): Boolean =
-        cls.companionObjectInstance is Child
+        cls.companionObjectInstance is Polymorphic.Child
                 || cls.allSupertypes.any { (it.classifier as? KClass<*>)?.isSealed ?: false }
                 || cls.annotations.filterIsInstance<SerialName>().isNotEmpty()
 
     /**
      * Get the type identifier of a child class
      *
-     * First we try to get the identifier from [Child.identifier].
+     * First we try to get the identifier from [Polymorphic.Child.identifier].
      * The we look for a [SerialName] annotation.
      * Otherwise we use the qualified name of the class
      */
     fun getIdentifier(cls: KClass<*>) = when (val companion = cls.companionObjectInstance) {
 
-        is Child -> companion.identifier
+        is Polymorphic.Child -> companion.identifier
 
         else -> {
 
@@ -184,10 +98,10 @@ internal object PolymorphicParentUtil {
      *
      * A class is recognized as a polymorphic parent when it either:
      *    1. is a sealed class
-     * or 2. has a companion object of type [Parent]
+     * or 2. has a companion object of type [Polymorphic.Parent]
      */
     fun isPolymorphicParent(cls: KClass<*>): Boolean =
-        cls.isSealed || cls.companionObjectInstance is Parent
+        cls.isSealed || cls.companionObjectInstance is Polymorphic.Parent
 
     /**
      * Gets the name of the discriminator field.
@@ -196,7 +110,7 @@ internal object PolymorphicParentUtil {
      * If this is not present the [Polymorphic.defaultDiscriminator] is returned
      */
     fun getDiscriminator(cls: KClass<*>?): String =
-        (cls?.companionObjectInstance as? Parent)?.discriminator
+        (cls?.companionObjectInstance as? Polymorphic.Parent)?.discriminator
             ?: Polymorphic.defaultDiscriminator
 
     /**
@@ -211,7 +125,7 @@ internal object PolymorphicParentUtil {
      */
     fun getDefaultType(cls: KClass<*>?): KClass<*>? = when (val companion = cls?.companionObjectInstance) {
 
-        is Parent -> companion.defaultType
+        is Polymorphic.Parent -> companion.defaultType
 
         else -> null
     }
@@ -229,7 +143,7 @@ internal object PolymorphicParentUtil {
         }
 
         val annotated = when (val companion = cls.companionObjectInstance) {
-            is Parent -> companion.childTypes
+            is Polymorphic.Parent -> companion.childTypes
             else -> emptySet()
         }
 
@@ -249,8 +163,8 @@ internal object PolymorphicParentUtil {
      */
     fun getParent(cls: KClass<*>): KClass<*>? = when (cls.companionObjectInstance) {
 
-        is Parent -> cls
+        is Polymorphic.Parent -> cls
 
-        else -> cls.allSuperclasses.firstOrNull { it.companionObjectInstance is Parent }
+        else -> cls.allSuperclasses.firstOrNull { it.companionObjectInstance is Polymorphic.Parent }
     }
 }

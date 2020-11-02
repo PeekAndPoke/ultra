@@ -1,9 +1,9 @@
 package de.peekandpoke.ultra.mutator.unit
 
 import de.peekandpoke.ultra.mutator.Cloner
-import io.kotlintest.assertSoftly
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.assertions.assertSoftly
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 
 class ClonerSpec : StringSpec({
 

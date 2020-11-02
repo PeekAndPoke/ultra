@@ -3,9 +3,9 @@ package de.peekandpoke.ultra.common
 import de.peekandpoke.ultra.common.reflection.ReifiedKType
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kType
-import io.kotlintest.assertSoftly
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.assertions.assertSoftly
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 
 class ReifiedKTypeSpec : StringSpec({
 

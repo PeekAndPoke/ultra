@@ -1,13 +1,13 @@
 package de.peekandpoke.ultra.mutator.e2e
 
-import io.kotlintest.DisplayName
-import io.kotlintest.assertSoftly
-import io.kotlintest.matchers.types.shouldBeSameInstanceAs
-import io.kotlintest.matchers.types.shouldNotBeSameInstanceAs
-import io.kotlintest.matchers.withClue
-import io.kotlintest.shouldBe
-import io.kotlintest.shouldNotBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.withClue
+import io.kotest.core.spec.DisplayName
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.types.shouldBeSameInstanceAs
+import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 
 @DisplayName("E2E - MapMutationsSpec")
 class MapMutationsSpec : StringSpec({
@@ -107,30 +107,27 @@ class MapMutationsSpec : StringSpec({
             }
         }
 
-        assertSoftly {
+        withClue("Source object must NOT be modified") {
+            source shouldNotBeSameInstanceAs result
+            source.addresses shouldBe dataCopy
+            source.addresses shouldBeSameInstanceAs data
+        }
 
-            withClue("Source object must NOT be modified") {
-                source shouldNotBeSameInstanceAs result
-                source.addresses shouldBe dataCopy
-                source.addresses shouldBeSameInstanceAs data
-            }
+        withClue("First list element must be modified") {
+            source.addresses["B"] shouldNotBe result.addresses["B"]
+        }
 
-            withClue("First list element must be modified") {
-                source.addresses["B"] shouldNotBe result.addresses["B"]
-            }
+        withClue("Second list element must stay the same") {
+            source.addresses["L"] shouldBe result.addresses["L"]
+            source.addresses["L"] shouldBeSameInstanceAs result.addresses["L"]
+        }
 
-            withClue("Second list element must stay the same") {
-                source.addresses["L"] shouldBe result.addresses["L"]
-                source.addresses["L"] shouldBeSameInstanceAs result.addresses["L"]
-            }
+        withClue("Result must be modified properly") {
 
-            withClue("Result must be modified properly") {
-
-                result.addresses shouldBe mapOf(
-                    "B" to Address("BERLIN", "10115"),
-                    "L" to Address("Leipzig", "04109")
-                )
-            }
+            result.addresses shouldBe mapOf(
+                "B" to Address("BERLIN", "10115"),
+                "L" to Address("Leipzig", "04109")
+            )
         }
     }
 
@@ -148,30 +145,28 @@ class MapMutationsSpec : StringSpec({
             addresses["B"] = Address("Bonn", "53111")
         }
 
-        assertSoftly {
 
-            withClue("Source object must NOT be modified") {
-                source shouldNotBeSameInstanceAs result
-                source.addresses shouldBe dataCopy
-                source.addresses shouldBeSameInstanceAs data
-            }
+        withClue("Source object must NOT be modified") {
+            source shouldNotBeSameInstanceAs result
+            source.addresses shouldBe dataCopy
+            source.addresses shouldBeSameInstanceAs data
+        }
 
-            withClue("First list element must be modified") {
-                source.addresses["B"] shouldNotBe result.addresses["B"]
-            }
+        withClue("First list element must be modified") {
+            source.addresses["B"] shouldNotBe result.addresses["B"]
+        }
 
-            withClue("Second list element must stay the same") {
-                source.addresses["L"] shouldBe result.addresses["L"]
-                source.addresses["L"] shouldBeSameInstanceAs result.addresses["L"]
-            }
+        withClue("Second list element must stay the same") {
+            source.addresses["L"] shouldBe result.addresses["L"]
+            source.addresses["L"] shouldBeSameInstanceAs result.addresses["L"]
+        }
 
-            withClue("Result must be modified properly") {
+        withClue("Result must be modified properly") {
 
-                result.addresses shouldBe mapOf(
-                    "B" to Address("Bonn", "53111"),
-                    "L" to Address("Leipzig", "04109")
-                )
-            }
+            result.addresses shouldBe mapOf(
+                "B" to Address("Bonn", "53111"),
+                "L" to Address("Leipzig", "04109")
+            )
         }
     }
 

@@ -1,9 +1,10 @@
 package de.peekandpoke.ultra.slumber.builtin.datetime
 
-import de.peekandpoke.common.datetime.PortableDateTime
-import de.peekandpoke.common.datetime.date
+import de.peekandpoke.ultra.common.datetime.PortableDateTime
+import de.peekandpoke.ultra.common.datetime.date
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.Slumberer
+import java.time.ZonedDateTime
 
 object PortableDateTimeAwaker : Awaker {
 
@@ -28,7 +29,7 @@ object PortableDateTimeSlumberer : Slumberer {
             return null
         }
 
-        val zoned = data.date.atZone(utc)
+        val zoned: ZonedDateTime = data.date.atZone(utc)
 
         return toMap(
             data.timestamp,

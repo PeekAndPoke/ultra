@@ -1,11 +1,10 @@
 package de.peekandpoke.ultra.mutator.e2e
 
-import io.kotlintest.DisplayName
-import io.kotlintest.assertSoftly
-import io.kotlintest.matchers.withClue
-import io.kotlintest.shouldBe
-import io.kotlintest.shouldNotBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.assertions.withClue
+import io.kotest.core.spec.DisplayName
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import kotlin.reflect.KMutableProperty0
 
 @DisplayName("E2E - ScalarMutationsSpec")
@@ -19,11 +18,8 @@ class ScalarMutationsSpec : StringSpec({
 
         val result = source.mutate { }
 
-        assertSoftly {
-
-            withClue("When nothing was changed the source object must be returned") {
-                (source === result) shouldBe true
-            }
+        withClue("When nothing was changed the source object must be returned") {
+            (source === result) shouldBe true
         }
     }
 
@@ -53,11 +49,8 @@ class ScalarMutationsSpec : StringSpec({
             aBool = true
         }
 
-        assertSoftly {
-
-            withClue("When all mutations are not changing any value, the source object must be returned") {
-                (source === result) shouldBe true
-            }
+        withClue("When all mutations are not changing any value, the source object must be returned") {
+            (source === result) shouldBe true
         }
     }
 
@@ -69,33 +62,30 @@ class ScalarMutationsSpec : StringSpec({
             aString = "changed"
         }
 
-        assertSoftly {
+        source shouldNotBe result
 
-            source shouldNotBe result
+        withClue("Source object must NOT be modified") {
+            source.aString shouldBe "string"
+            source.aChar shouldBe 'c'
+            source.aByte shouldBe 1.toByte()
+            source.aShort shouldBe 1.toShort()
+            source.aInt shouldBe 1
+            source.aLong shouldBe 1L
+            source.aFloat shouldBe 1.0f
+            source.aDouble shouldBe 1.0
+            source.aBool shouldBe true
+        }
 
-            withClue("Source object must NOT be modified") {
-                source.aString shouldBe "string"
-                source.aChar shouldBe 'c'
-                source.aByte shouldBe 1.toByte()
-                source.aShort shouldBe 1.toShort()
-                source.aInt shouldBe 1
-                source.aLong shouldBe 1L
-                source.aFloat shouldBe 1.0f
-                source.aDouble shouldBe 1.0
-                source.aBool shouldBe true
-            }
-
-            withClue("Result must be modified properly") {
-                result.aString shouldBe "changed"
-                result.aChar shouldBe 'c'
-                result.aByte shouldBe 1.toByte()
-                result.aShort shouldBe 1.toShort()
-                result.aInt shouldBe 1
-                result.aLong shouldBe 1L
-                result.aFloat shouldBe 1.0f
-                result.aDouble shouldBe 1.0
-                result.aBool shouldBe true
-            }
+        withClue("Result must be modified properly") {
+            result.aString shouldBe "changed"
+            result.aChar shouldBe 'c'
+            result.aByte shouldBe 1.toByte()
+            result.aShort shouldBe 1.toShort()
+            result.aInt shouldBe 1
+            result.aLong shouldBe 1L
+            result.aFloat shouldBe 1.0f
+            result.aDouble shouldBe 1.0
+            result.aBool shouldBe true
         }
     }
 
@@ -107,17 +97,14 @@ class ScalarMutationsSpec : StringSpec({
             aString = aString.toUpperCase()
         }
 
-        assertSoftly {
+        source shouldNotBe result
 
-            source shouldNotBe result
+        withClue("Source object must NOT be modified") {
+            source.aString shouldBe "string"
+        }
 
-            withClue("Source object must NOT be modified") {
-                source.aString shouldBe "string"
-            }
-
-            withClue("Result must be modified properly") {
-                result.aString shouldBe "STRING"
-            }
+        withClue("Result must be modified properly") {
+            result.aString shouldBe "STRING"
         }
     }
 
@@ -130,21 +117,18 @@ class ScalarMutationsSpec : StringSpec({
             setProp<String>(::aString, "changed")
         }
 
-        assertSoftly {
+        source shouldNotBe result
 
-            source shouldNotBe result
+        withClue("Source object must NOT be modified") {
+            source.aString shouldBe "string"
+        }
 
-            withClue("Source object must NOT be modified") {
-                source.aString shouldBe "string"
-            }
-
-            withClue("Result must be modified properly") {
-                result.aString shouldBe "changed"
-            }
+        withClue("Result must be modified properly") {
+            result.aString shouldBe "changed"
         }
     }
 
-    "Mutating multiple scalar in multiple ways" {
+    "Mutating multiple scalars in multiple ways" {
 
         val source = WithScalars()
 
@@ -161,33 +145,30 @@ class ScalarMutationsSpec : StringSpec({
             setProp<Boolean>(::aBool, false)
         }
 
-        assertSoftly {
+        source shouldNotBe result
 
-            source shouldNotBe result
+        withClue("Source object must NOT be modified") {
+            source.aString shouldBe "string"
+            source.aChar shouldBe 'c'
+            source.aByte shouldBe 1.toByte()
+            source.aShort shouldBe 1.toShort()
+            source.aInt shouldBe 1
+            source.aLong shouldBe 1L
+            source.aFloat shouldBe 1.0f
+            source.aDouble shouldBe 1.0
+            source.aBool shouldBe true
+        }
 
-            withClue("Source object must NOT be modified") {
-                source.aString shouldBe "string"
-                source.aChar shouldBe 'c'
-                source.aByte shouldBe 1.toByte()
-                source.aShort shouldBe 1.toShort()
-                source.aInt shouldBe 1
-                source.aLong shouldBe 1L
-                source.aFloat shouldBe 1.0f
-                source.aDouble shouldBe 1.0
-                source.aBool shouldBe true
-            }
-
-            withClue("Result must be modified properly") {
-                result.aString shouldBe "string plus"
-                result.aChar shouldBe 'd'
-                result.aByte shouldBe 2.toByte()
-                result.aShort shouldBe 3.toShort()
-                result.aInt shouldBe 4
-                result.aLong shouldBe -1L
-                result.aFloat shouldBe 0.5f
-                result.aDouble shouldBe 3.5
-                result.aBool shouldBe false
-            }
+        withClue("Result must be modified properly") {
+            result.aString shouldBe "string plus"
+            result.aChar shouldBe 'd'
+            result.aByte shouldBe 2.toByte()
+            result.aShort shouldBe 3.toShort()
+            result.aInt shouldBe 4
+            result.aLong shouldBe -1L
+            result.aFloat shouldBe 0.5f
+            result.aDouble shouldBe 3.5
+            result.aBool shouldBe false
         }
     }
 })

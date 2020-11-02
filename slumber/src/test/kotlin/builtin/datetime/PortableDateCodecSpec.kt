@@ -1,10 +1,10 @@
 package de.peekandpoke.ultra.slumber.builtin.datetime
 
-import de.peekandpoke.common.datetime.PortableDate
+import de.peekandpoke.ultra.common.datetime.PortableDate
 import de.peekandpoke.ultra.slumber.Codec
-import io.kotlintest.matchers.types.shouldBeNull
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.shouldBe
 
 class PortableDateCodecSpec : StringSpec({
 

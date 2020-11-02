@@ -3,9 +3,8 @@ package de.peekandpoke.ultra.slumber.builtin.polymorphism
 import de.peekandpoke.ultra.common.reflection.kListType
 import de.peekandpoke.ultra.common.reflection.kMapType
 import de.peekandpoke.ultra.slumber.Codec
-import io.kotlintest.assertSoftly
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 
 class PolymorphicSlumbererSpec : StringSpec({
 
@@ -17,12 +16,10 @@ class PolymorphicSlumbererSpec : StringSpec({
 
         val result = codec.slumber(PureBase.A("hello"))
 
-        assertSoftly {
-            result shouldBe mapOf(
-                "_type" to PureBase.A::class.qualifiedName,
-                "text" to "hello",
-            )
-        }
+        result shouldBe mapOf(
+            "_type" to PureBase.A::class.qualifiedName,
+            "text" to "hello",
+        )
     }
 
     ////  pure sealed class and pure sealed children  //////////////////////////////////////////////////////////////////
@@ -38,18 +35,16 @@ class PolymorphicSlumbererSpec : StringSpec({
 
         val result = codec.slumber(kListType<PureBase>().type, data)
 
-        assertSoftly {
-            result shouldBe listOf(
-                mapOf(
-                    "_type" to PureBase.A::class.qualifiedName,
-                    "text" to "hello"
-                ),
-                mapOf(
-                    "_type" to PureBase.B::class.qualifiedName,
-                    "number" to 100
-                )
+        result shouldBe listOf(
+            mapOf(
+                "_type" to PureBase.A::class.qualifiedName,
+                "text" to "hello"
+            ),
+            mapOf(
+                "_type" to PureBase.B::class.qualifiedName,
+                "number" to 100
             )
-        }
+        )
     }
 
     "Slumbering a map of string to sealed class children (PureBase)" {
@@ -63,18 +58,16 @@ class PolymorphicSlumbererSpec : StringSpec({
 
         val result = codec.slumber(kMapType<String, PureBase>().type, data)
 
-        assertSoftly {
-            result shouldBe mapOf(
-                "A" to mapOf(
-                    "_type" to PureBase.A::class.qualifiedName,
-                    "text" to "hello"
-                ),
-                "B" to mapOf(
-                    "_type" to PureBase.B::class.qualifiedName,
-                    "number" to 100
-                )
+        result shouldBe mapOf(
+            "A" to mapOf(
+                "_type" to PureBase.A::class.qualifiedName,
+                "text" to "hello"
+            ),
+            "B" to mapOf(
+                "_type" to PureBase.B::class.qualifiedName,
+                "number" to 100
             )
-        }
+        )
     }
 
     ////  Sealed parent with custom discriminator  /////////////////////////////////////////////////////////////////////
@@ -90,18 +83,16 @@ class PolymorphicSlumbererSpec : StringSpec({
 
         val result = codec.slumber(kListType<CustomDiscriminator>().type, data)
 
-        assertSoftly {
-            result shouldBe listOf(
-                mapOf(
-                    "_" to CustomDiscriminator.A.identifier,
-                    "text" to "hello"
-                ),
-                mapOf(
-                    "_" to CustomDiscriminator.B.identifier,
-                    "number" to 100
-                )
+        result shouldBe listOf(
+            mapOf(
+                "_" to CustomDiscriminator.A.identifier,
+                "text" to "hello"
+            ),
+            mapOf(
+                "_" to CustomDiscriminator.B.identifier,
+                "number" to 100
             )
-        }
+        )
     }
 
     ////  Pure sealed class with annotated children  ///////////////////////////////////////////////////////////////////
@@ -117,18 +108,16 @@ class PolymorphicSlumbererSpec : StringSpec({
 
         val result = codec.slumber(kListType<AnnotedChildrenBase>().type, data)
 
-        assertSoftly {
-            result shouldBe listOf(
-                mapOf(
-                    "_type" to "Child_A",
-                    "text" to "hello"
-                ),
-                mapOf(
-                    "_type" to "Child_B",
-                    "number" to 100
-                )
+        result shouldBe listOf(
+            mapOf(
+                "_type" to "Child_A",
+                "text" to "hello"
+            ),
+            mapOf(
+                "_type" to "Child_B",
+                "number" to 100
             )
-        }
+        )
     }
 
     ////  Non sealed base class annotated with Polymorphic.Parent  /////////////////////////////////////////////////////
@@ -144,18 +133,16 @@ class PolymorphicSlumbererSpec : StringSpec({
 
         val result = codec.slumber(kListType<AnnotatedBase>().type, data)
 
-        assertSoftly {
-            result shouldBe listOf(
-                mapOf(
-                    "_type" to AnnotatedBase.A::class.qualifiedName,
-                    "text" to "hello"
-                ),
-                mapOf(
-                    "_type" to "Child_B",
-                    "number" to 100
-                )
+        result shouldBe listOf(
+            mapOf(
+                "_type" to AnnotatedBase.A::class.qualifiedName,
+                "text" to "hello"
+            ),
+            mapOf(
+                "_type" to "Child_B",
+                "number" to 100
             )
-        }
+        )
     }
 
     ////  Direct slumbering of a Polymorphic.Child  /////////////////////////////////////////////////////

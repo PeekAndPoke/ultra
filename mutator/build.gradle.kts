@@ -37,7 +37,8 @@ dependencies {
     kaptTest(project(":mutator"))
 
     testImplementation("ch.qos.logback:logback-classic:$logback_version")
-    testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")
+    testImplementation("io.kotest:kotest-assertions-core-jvm:$kotlintest_version")
+    testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotlintest_version")
 }
 
 kotlin {

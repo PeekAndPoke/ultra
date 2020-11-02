@@ -1,11 +1,11 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
 import de.peekandpoke.ultra.kontainer.kontainer
-import io.kotlintest.assertSoftly
-import io.kotlintest.matchers.types.shouldNotBeSameInstanceAs
-import io.kotlintest.matchers.withClue
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.withClue
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 
 class BlueprintExtensionSpec : StringSpec({
 

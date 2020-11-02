@@ -1,13 +1,13 @@
 package de.peekandpoke.ultra.mutator.unit
 
 import de.peekandpoke.ultra.mutator.ListMutator
-import io.kotlintest.DisplayName
-import io.kotlintest.assertSoftly
-import io.kotlintest.matchers.types.shouldBeSameInstanceAs
-import io.kotlintest.matchers.types.shouldNotBeSameInstanceAs
-import io.kotlintest.shouldBe
-import io.kotlintest.shouldThrow
-import io.kotlintest.specs.StringSpec
+import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.DisplayName
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeSameInstanceAs
+import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 
 @DisplayName("UNIT - ListMutatorSpec")
 class ListMutatorSpec : StringSpec({

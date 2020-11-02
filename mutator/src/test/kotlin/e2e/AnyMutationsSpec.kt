@@ -1,12 +1,12 @@
 package de.peekandpoke.ultra.mutator.e2e
 
-import io.kotlintest.DisplayName
-import io.kotlintest.assertSoftly
-import io.kotlintest.matchers.types.shouldBeSameInstanceAs
-import io.kotlintest.matchers.types.shouldNotBeSameInstanceAs
-import io.kotlintest.matchers.withClue
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.withClue
+import io.kotest.core.spec.DisplayName
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeSameInstanceAs
+import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 import java.time.LocalDate
 import kotlin.reflect.KMutableProperty0
 

@@ -1,9 +1,8 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
 import de.peekandpoke.ultra.slumber.Codec
-import io.kotlintest.assertSoftly
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 
 class PolymorphicRoundTripSpec : StringSpec({
 
@@ -28,22 +27,20 @@ class PolymorphicRoundTripSpec : StringSpec({
 
         val result = codec.awake(DataClass::class, slumbered)
 
-        assertSoftly {
-            result shouldBe source
+        result shouldBe source
 
-            slumbered shouldBe mapOf(
-                "single" to mapOf("_type" to PureBase.B::class.qualifiedName, "number" to 100),
-                "list" to listOf(
-                    mapOf("_type" to PureBase.A::class.qualifiedName, "text" to "hello"),
-                    mapOf("_type" to PureBase.B::class.qualifiedName, "number" to 200)
-                ),
-                "map" to mapOf(
-                    "A" to mapOf(
-                        "_type" to PureBase.A::class.qualifiedName, "text" to "again"
-                    )
+        slumbered shouldBe mapOf(
+            "single" to mapOf("_type" to PureBase.B::class.qualifiedName, "number" to 100),
+            "list" to listOf(
+                mapOf("_type" to PureBase.A::class.qualifiedName, "text" to "hello"),
+                mapOf("_type" to PureBase.B::class.qualifiedName, "number" to 200)
+            ),
+            "map" to mapOf(
+                "A" to mapOf(
+                    "_type" to PureBase.A::class.qualifiedName, "text" to "again"
                 )
             )
-        }
+        )
     }
 
     "Slumbering and awaking round trip - two - list of list of sealed classes" {
@@ -69,21 +66,19 @@ class PolymorphicRoundTripSpec : StringSpec({
 
         val result = codec.awake(DataClass::class, slumbered)
 
-        assertSoftly {
-            result shouldBe source
+        result shouldBe source
 
-            slumbered shouldBe mapOf(
-                "lists" to listOf(
-                    listOf(
-                        mapOf("_type" to PureBase.A::class.qualifiedName, "text" to "hello"),
-                        mapOf("_type" to PureBase.B::class.qualifiedName, "number" to 100)
-                    ),
-                    listOf(
-                        mapOf("_type" to PureBase.B::class.qualifiedName, "number" to 200),
-                        mapOf("_type" to PureBase.A::class.qualifiedName, "text" to "again")
-                    )
+        slumbered shouldBe mapOf(
+            "lists" to listOf(
+                listOf(
+                    mapOf("_type" to PureBase.A::class.qualifiedName, "text" to "hello"),
+                    mapOf("_type" to PureBase.B::class.qualifiedName, "number" to 100)
+                ),
+                listOf(
+                    mapOf("_type" to PureBase.B::class.qualifiedName, "number" to 200),
+                    mapOf("_type" to PureBase.A::class.qualifiedName, "text" to "again")
                 )
             )
-        }
+        )
     }
 })

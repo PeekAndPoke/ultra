@@ -27,6 +27,7 @@ val diffutils_version: String by project
 dependencies {
     api(kotlin("reflect"))
 
+    api(project(":commonmp"))
     api(project(":common"))
 
     ////  code generation  //////////////////////////////////////////////////////////////////////////////////////
@@ -43,7 +44,8 @@ dependencies {
     kaptTest("com.google.auto.service:auto-service:$google_auto_version")
 
     testApi("ch.qos.logback:logback-classic:$logback_version")
-    testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlintest_version")
+    testImplementation("io.kotest:kotest-assertions-core-jvm:$kotlintest_version")
+    testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotlintest_version")
 }
 
 repositories {

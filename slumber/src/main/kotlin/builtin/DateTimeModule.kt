@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin
 
-import de.peekandpoke.common.datetime.PortableDate
-import de.peekandpoke.common.datetime.PortableDateTime
+import de.peekandpoke.ultra.common.datetime.PortableDate
+import de.peekandpoke.ultra.common.datetime.PortableDateTime
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.SlumberModule
 import de.peekandpoke.ultra.slumber.Slumberer

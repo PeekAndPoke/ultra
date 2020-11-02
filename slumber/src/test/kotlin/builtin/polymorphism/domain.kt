@@ -1,7 +1,10 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
+import de.peekandpoke.ultra.slumber.Polymorphic
+import de.peekandpoke.ultra.slumber.indexedSubClasses
 import kotlinx.serialization.SerialName
 import org.atteo.classindex.IndexSubclasses
+import kotlin.reflect.KClass
 
 sealed class PureBase {
 
@@ -14,6 +17,8 @@ sealed class CustomDiscriminator {
 
     companion object : Polymorphic.Parent {
         override val discriminator = "_"
+
+        override val childTypes: Set<KClass<*>> get() = indexedSubClasses()
     }
 
     data class A(val text: String) : CustomDiscriminator() {
@@ -33,6 +38,8 @@ sealed class BaseWithDefaultType {
 
     companion object : Polymorphic.Parent {
         override val defaultType = A::class
+
+        override val childTypes: Set<KClass<*>> get() = indexedSubClasses()
     }
 
     data class A(val text: String) : BaseWithDefaultType()
@@ -89,7 +96,9 @@ sealed class SealedRoot {
 @IndexSubclasses
 open class ParentWithClassIndex {
 
-    companion object : Polymorphic.Parent
+    companion object : Polymorphic.Parent {
+        override val childTypes: Set<KClass<*>> get() = indexedSubClasses()
+    }
 
     sealed class Sub1 : ParentWithClassIndex() {
         data class Deeper1(val text: String) : Sub1()
@@ -102,7 +111,9 @@ open class ParentWithClassIndex {
 @IndexSubclasses
 open class ParentWithChildrenUsingAnnotation {
 
-    companion object : Polymorphic.Parent
+    companion object : Polymorphic.Parent {
+        override val childTypes: Set<KClass<*>> get() = indexedSubClasses()
+    }
 
     @SerialName("Sub")
     sealed class Sub : ParentWithChildrenUsingAnnotation() {

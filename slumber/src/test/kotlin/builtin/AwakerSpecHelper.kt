@@ -3,11 +3,10 @@ package de.peekandpoke.ultra.slumber.builtin
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Codec
-import io.kotlintest.assertSoftly
-import io.kotlintest.shouldBe
-import io.kotlintest.shouldThrow
-import io.kotlintest.specs.StringSpec
-import io.kotlintest.tables.Row2
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.data.Row2
+import io.kotest.matchers.shouldBe
 
 abstract class AwakerSpecHelper(
     type: TypeRef<*>,
@@ -30,10 +29,7 @@ abstract class AwakerSpecHelper(
         }
 
         "Awaking a $clsName from '$input' ($inputClass) should result in '$expected'" {
-
-            assertSoftly {
-                codec.awake(nonNullType, input) shouldBe expected
-            }
+            codec.awake(nonNullType, input) shouldBe expected
         }
     }
 
@@ -45,10 +41,7 @@ abstract class AwakerSpecHelper(
         }
 
         "Awaking a $clsName? from '$input' ($inputClass) should result in '$expected'" {
-
-            assertSoftly {
-                codec.awake(nullableType, input) shouldBe expected
-            }
+            codec.awake(nullableType, input) shouldBe expected
         }
     }
 
@@ -60,11 +53,8 @@ abstract class AwakerSpecHelper(
         }
 
         "Awaking a $clsName from '$input' ($inputClass) should throw" {
-
-            assertSoftly {
-                shouldThrow<AwakerException> {
-                    codec.awake(nonNullType, input)
-                }
+            shouldThrow<AwakerException> {
+                codec.awake(nonNullType, input)
             }
         }
     }
@@ -77,10 +67,7 @@ abstract class AwakerSpecHelper(
         }
 
         "Awaking a $clsName? from '$input' ($inputClass) should result in 'null'" {
-
-            assertSoftly {
-                codec.awake(nullableType, input) shouldBe null
-            }
+            codec.awake(nullableType, input) shouldBe null
         }
     }
 })

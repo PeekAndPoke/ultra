@@ -3,9 +3,8 @@ package de.peekandpoke.ultra.slumber.builtin.polymorphism
 import de.peekandpoke.ultra.common.reflection.kListType
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.slumber.Codec
-import io.kotlintest.assertSoftly
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 
 class PolymorphicAwakerSpec : StringSpec({
 
@@ -23,9 +22,7 @@ class PolymorphicAwakerSpec : StringSpec({
             )
         )
 
-        assertSoftly {
-            result shouldBe PureBase.A("hello")
-        }
+        result shouldBe PureBase.A("hello")
     }
 
     "Awaking a sealed class (PureBase.B) without using Polymorphic.Child" {
@@ -40,9 +37,7 @@ class PolymorphicAwakerSpec : StringSpec({
             )
         )
 
-        assertSoftly {
-            result shouldBe PureBase.B(100)
-        }
+        result shouldBe PureBase.B(100)
     }
 
     "Awaking a sealed class with '_type' missing in the data must return null" {
@@ -54,9 +49,7 @@ class PolymorphicAwakerSpec : StringSpec({
             mapOf<String, Any>()
         )
 
-        assertSoftly {
-            result shouldBe null
-        }
+        result shouldBe null
     }
 
     "Awaking a sealed class with an invalid type must return null" {
@@ -70,9 +63,7 @@ class PolymorphicAwakerSpec : StringSpec({
             )
         )
 
-        assertSoftly {
-            result shouldBe null
-        }
+        result shouldBe null
     }
 
     ////  Sealed parent with custom discriminator  /////////////////////////////////////////////////////////////////////
@@ -95,12 +86,10 @@ class PolymorphicAwakerSpec : StringSpec({
             )
         )
 
-        assertSoftly {
-            result shouldBe listOf(
-                CustomDiscriminator.A("hello"),
-                CustomDiscriminator.B(100)
-            )
-        }
+        result shouldBe listOf(
+            CustomDiscriminator.A("hello"),
+            CustomDiscriminator.B(100)
+        )
     }
 
     ////  Sealed parent with 'defaultType' configured  /////////////////////////////////////////////////////////////////
@@ -116,9 +105,7 @@ class PolymorphicAwakerSpec : StringSpec({
             )
         )
 
-        assertSoftly {
-            result shouldBe BaseWithDefaultType.A("hello")
-        }
+        result shouldBe BaseWithDefaultType.A("hello")
     }
 
     "Awaking a sealed class with unknown '_type' and 'defaultType' configured must awake the default" {
@@ -133,9 +120,7 @@ class PolymorphicAwakerSpec : StringSpec({
             )
         )
 
-        assertSoftly {
-            result shouldBe BaseWithDefaultType.A("hello")
-        }
+        result shouldBe BaseWithDefaultType.A("hello")
     }
 
     "Awaking a sealed class with 'defaultType' and '_type' (BaseWithDefaultType.A) must work" {
@@ -150,9 +135,7 @@ class PolymorphicAwakerSpec : StringSpec({
             )
         )
 
-        assertSoftly {
-            result shouldBe BaseWithDefaultType.A("hello")
-        }
+        result shouldBe BaseWithDefaultType.A("hello")
     }
 
     "Awaking a sealed class with 'defaultType' and '_type' (BaseWithDefaultType.B) must work" {
@@ -167,9 +150,7 @@ class PolymorphicAwakerSpec : StringSpec({
             )
         )
 
-        assertSoftly {
-            result shouldBe BaseWithDefaultType.B(100)
-        }
+        result shouldBe BaseWithDefaultType.B(100)
     }
 
     ////  Pure sealed class with annotated children  ///////////////////////////////////////////////////////////////////
@@ -186,9 +167,7 @@ class PolymorphicAwakerSpec : StringSpec({
             )
         )
 
-        assertSoftly {
-            result shouldBe AnnotedChildrenBase.A("hello")
-        }
+        result shouldBe AnnotedChildrenBase.A("hello")
     }
 
     "Awaking a sealed class (AnnotedChildrenBase.B) using Polymorphic.Child" {
@@ -203,14 +182,12 @@ class PolymorphicAwakerSpec : StringSpec({
             )
         )
 
-        assertSoftly {
-            result shouldBe AnnotedChildrenBase.B(100)
-        }
+        result shouldBe AnnotedChildrenBase.B(100)
     }
 
     ////  Non sealed base class annotated with Polymorphic.Parent  /////////////////////////////////////////////////////
 
-    "Awaking a non sealed class (AnnotatedBase.A) where the parent is annotated with Polymorphic.Parent" {
+    "Directly Awaking a non sealed class (AnnotatedBase.A) where the parent is annotated with Polymorphic.Parent" {
 
         val codec = Codec.default
 
@@ -222,12 +199,10 @@ class PolymorphicAwakerSpec : StringSpec({
             )
         )
 
-        assertSoftly {
-            result shouldBe AnnotatedBase.A("hello")
-        }
+        result shouldBe AnnotatedBase.A("hello")
     }
 
-    "Awaking a non sealed class (AnnotatedBase.B) where the parent is annotated with Polymorphic.Parent" {
+    "Directly Awaking a non sealed class (AnnotatedBase.B) where the parent is annotated with Polymorphic.Parent" {
 
         val codec = Codec.default
 
@@ -239,9 +214,22 @@ class PolymorphicAwakerSpec : StringSpec({
             )
         )
 
-        assertSoftly {
-            result shouldBe AnnotatedBase.B(100)
-        }
+        result shouldBe AnnotatedBase.B(100)
+    }
+
+    "Directly Awaking a polymorphic annotated with @SerialName" {
+
+        val codec = Codec.default
+
+        val result = codec.awake(
+            ParentWithChildrenUsingAnnotation::class,
+            mapOf(
+                "_type" to "Sub2",
+                "text" to "Sub2-value",
+            ),
+        )
+
+        result shouldBe ParentWithChildrenUsingAnnotation.Sub2("Sub2-value")
     }
 
     //// Deeper class hierarchies  /////////////////////////////////////////////////////////////////////////////////////
@@ -268,27 +256,23 @@ class PolymorphicAwakerSpec : StringSpec({
             )
         )
 
-        assertSoftly {
-            result shouldBe listOf(
-                SealedRoot.NestedA.DeeperA("DeeperA"),
-                SealedRoot.NestedA.DeeperB("DeeperB"),
-                SealedRoot.NestedB("NestedB")
-            )
-        }
+        result shouldBe listOf(
+            SealedRoot.NestedA.DeeperA("DeeperA"),
+            SealedRoot.NestedA.DeeperB("DeeperB"),
+            SealedRoot.NestedB("NestedB")
+        )
     }
 
     //// Using ClassIndex  /////////////////////////////////////////////////////////////////////////////////////
 
     "Awaking children using ClassIndex - childTypes using indexSubClasses must be correct" {
 
-        assertSoftly {
-            ParentWithClassIndex.childTypes shouldBe setOf(
-                ParentWithClassIndex.Sub1::class,
-                ParentWithClassIndex.Sub1.Deeper1::class,
-                ParentWithClassIndex.Sub1.Deeper2::class,
-                ParentWithClassIndex.Sub2::class
-            )
-        }
+        ParentWithClassIndex.childTypes shouldBe setOf(
+            ParentWithClassIndex.Sub1::class,
+            ParentWithClassIndex.Sub1.Deeper1::class,
+            ParentWithClassIndex.Sub1.Deeper2::class,
+            ParentWithClassIndex.Sub2::class
+        )
     }
 
     "Awaking children of deeper hierarchies using ClassIndex" {
@@ -313,13 +297,11 @@ class PolymorphicAwakerSpec : StringSpec({
             )
         )
 
-        assertSoftly {
-            result shouldBe listOf(
-                ParentWithClassIndex.Sub1.Deeper1("Deeper1"),
-                ParentWithClassIndex.Sub1.Deeper2("Deeper2"),
-                ParentWithClassIndex.Sub2("Sub2")
-            )
-        }
+        result shouldBe listOf(
+            ParentWithClassIndex.Sub1.Deeper1("Deeper1"),
+            ParentWithClassIndex.Sub1.Deeper2("Deeper2"),
+            ParentWithClassIndex.Sub2("Sub2")
+        )
     }
 
     "Awaking children of deeper hierarchies using ClassIndex and @SerialName Annotations" {
@@ -344,15 +326,12 @@ class PolymorphicAwakerSpec : StringSpec({
             )
         )
 
-        assertSoftly {
-            result shouldBe listOf(
-                ParentWithChildrenUsingAnnotation.Sub.Deeper1("Deeper1"),
-                ParentWithChildrenUsingAnnotation.Sub.Deeper2("Deeper2"),
-                ParentWithChildrenUsingAnnotation.Sub2("Sub2")
-            )
-        }
+        result shouldBe listOf(
+            ParentWithChildrenUsingAnnotation.Sub.Deeper1("Deeper1"),
+            ParentWithChildrenUsingAnnotation.Sub.Deeper2("Deeper2"),
+            ParentWithChildrenUsingAnnotation.Sub2("Sub2")
+        )
     }
-
 
     ////  Complex examples  ////////////////////////////////////////////////////////////////////////////////////////////
 

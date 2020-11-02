@@ -3,9 +3,9 @@ package de.peekandpoke.ultra.kontainer.e2e
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.ServiceProvider
 import de.peekandpoke.ultra.kontainer.kontainer
-import io.kotlintest.assertSoftly
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.assertions.assertSoftly
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 
 /**
  * See [KontainerBuilder.InjectionTypeUpgrade]

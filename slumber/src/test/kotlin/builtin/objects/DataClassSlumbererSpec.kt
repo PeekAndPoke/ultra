@@ -2,11 +2,10 @@ package de.peekandpoke.ultra.slumber.builtin.objects
 
 import de.peekandpoke.ultra.slumber.Codec
 import de.peekandpoke.ultra.slumber.SlumbererException
-import io.kotlintest.assertSoftly
-import io.kotlintest.matchers.withClue
-import io.kotlintest.shouldBe
-import io.kotlintest.shouldThrow
-import io.kotlintest.specs.StringSpec
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.withClue
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 import kotlin.reflect.full.createType
 
 class DataClassSlumbererSpec : StringSpec({
@@ -39,15 +38,12 @@ class DataClassSlumbererSpec : StringSpec({
 
         val codec = Codec.default
 
-        assertSoftly {
+        withClue("A value must be converted correctly") {
+            codec.slumber(DataClass("hello")) shouldBe mapOf("str" to "hello")
+        }
 
-            withClue("A value must be converted correctly") {
-                codec.slumber(DataClass("hello")) shouldBe mapOf("str" to "hello")
-            }
-
-            withClue("A null value must be converted correctly") {
-                codec.slumber(DataClass(null)) shouldBe mapOf("str" to null)
-            }
+        withClue("A null value must be converted correctly") {
+            codec.slumber(DataClass(null)) shouldBe mapOf("str" to null)
         }
     }
 
@@ -70,9 +66,7 @@ class DataClassSlumbererSpec : StringSpec({
 
         val codec = Codec.default
 
-        assertSoftly {
-            codec.slumber(DataClass(listOf("hello", "you"))) shouldBe mapOf("strings" to listOf("hello", "you"))
-        }
+        codec.slumber(DataClass(listOf("hello", "you"))) shouldBe mapOf("strings" to listOf("hello", "you"))
     }
 
     "Slumbering a data class with a Iterable<String> and a Iterable<Any> parameter" {
@@ -81,14 +75,12 @@ class DataClassSlumbererSpec : StringSpec({
 
         val codec = Codec.default
 
-        assertSoftly {
-            codec.slumber(
-                DataClass(listOf("hello", "you"), listOf(1, 2, 3))
-            ) shouldBe mapOf(
-                "strings" to listOf("hello", "you"),
-                "ints" to listOf(1, 2, 3)
-            )
-        }
+        codec.slumber(
+            DataClass(listOf("hello", "you"), listOf(1, 2, 3))
+        ) shouldBe mapOf(
+            "strings" to listOf("hello", "you"),
+            "ints" to listOf(1, 2, 3)
+        )
     }
 
     "Slumbering a data class with a Map<String, Int> and a Map<Int, Any> parameter" {
@@ -97,14 +89,12 @@ class DataClassSlumbererSpec : StringSpec({
 
         val codec = Codec.default
 
-        assertSoftly {
-            codec.slumber(
-                DataClass(mapOf("hello" to 1, "you" to 2), mapOf(1 to null, 2 to "a", 3 to 10))
-            ) shouldBe mapOf(
-                "strings" to mapOf("hello" to 1, "you" to 2),
-                "ints" to mapOf(1 to null, 2 to "a", 3 to 10)
-            )
-        }
+        codec.slumber(
+            DataClass(mapOf("hello" to 1, "you" to 2), mapOf(1 to null, 2 to "a", 3 to 10))
+        ) shouldBe mapOf(
+            "strings" to mapOf("hello" to 1, "you" to 2),
+            "ints" to mapOf(1 to null, 2 to "a", 3 to 10)
+        )
     }
 
     "Slumbering 'null' as a data class must throw" {
@@ -113,10 +103,8 @@ class DataClassSlumbererSpec : StringSpec({
 
         val codec = Codec.default
 
-        assertSoftly {
-            shouldThrow<SlumbererException> {
-                codec.slumber(DataClass::class, null)
-            }
+        shouldThrow<SlumbererException> {
+            codec.slumber(DataClass::class, null)
         }
     }
 
@@ -128,8 +116,6 @@ class DataClassSlumbererSpec : StringSpec({
 
         val type = DataClass::class.createType(nullable = true)
 
-        assertSoftly {
-            codec.slumber(type, null) shouldBe null
-        }
+        codec.slumber(type, null) shouldBe null
     }
 })

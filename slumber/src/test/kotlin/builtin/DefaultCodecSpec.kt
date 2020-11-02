@@ -1,8 +1,8 @@
 package de.peekandpoke.ultra.slumber.builtin
 
 import de.peekandpoke.ultra.slumber.Codec
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 
 class DefaultCodecSpec : StringSpec({
 

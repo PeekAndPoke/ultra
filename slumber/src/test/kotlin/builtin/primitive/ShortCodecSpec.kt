@@ -3,7 +3,7 @@ package de.peekandpoke.ultra.slumber.builtin.primitive
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
 import de.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
-import io.kotlintest.tables.row
+import io.kotest.data.row
 
 class ShortAwakerSpec : AwakerSpecHelper(
     type = TypeRef.Short, nonNullSamples = nonNull, nullableSamples = nullable

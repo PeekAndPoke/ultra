@@ -4,7 +4,7 @@ import de.peekandpoke.ultra.meta.compileTest
 import de.peekandpoke.ultra.meta.expectFileToMatch
 import de.peekandpoke.ultra.mutator.Mutable
 import de.peekandpoke.ultra.mutator.meta.MutatorAnnotationProcessor
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
 
 class DataClassesImplementingSameInterfaceSpec : StringSpec({
 

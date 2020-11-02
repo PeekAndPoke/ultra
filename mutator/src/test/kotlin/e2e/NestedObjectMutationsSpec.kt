@@ -1,19 +1,20 @@
 package de.peekandpoke.ultra.mutator.e2e
 
-import io.kotlintest.DisplayName
-import io.kotlintest.assertSoftly
-import io.kotlintest.matchers.withClue
-import io.kotlintest.shouldBe
-import io.kotlintest.shouldNotBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.assertions.withClue
+import io.kotest.core.spec.DisplayName
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 
 @DisplayName("E2E - NestedObjectMutationsSpec")
 class NestedObjectMutationsSpec : StringSpec({
 
     "Mutating properties of root object only" {
 
-        val source = Company("Corp",
-            Person("Sam", 25,
+        val source = Company(
+            "Corp",
+            Person(
+                "Sam", 25,
                 Address("Berlin", "10115")
             )
         )
@@ -23,26 +24,25 @@ class NestedObjectMutationsSpec : StringSpec({
             name = name.plus("oration").toUpperCase()
         }
 
-        assertSoftly {
+        withClue("Source object must NOT be modified") {
+            source shouldNotBe result
+        }
 
-            withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-            }
+        withClue("Nested object must stay identical, as it was not modified") {
+            source.boss shouldBe result.boss
+        }
 
-            withClue("Nested object must stay identical, as it was not modified") {
-                source.boss shouldBe result.boss
-            }
-
-            withClue("Result must be modified properly") {
-                result.name shouldBe "CORPORATION"
-            }
+        withClue("Result must be modified properly") {
+            result.name shouldBe "CORPORATION"
         }
     }
 
     "Mutating properties of a nested object" {
 
-        val source = Company("Corp",
-            Person("Sam", 25,
+        val source = Company(
+            "Corp",
+            Person(
+                "Sam", 25,
                 Address("Berlin", "10115")
             )
         )
@@ -57,27 +57,26 @@ class NestedObjectMutationsSpec : StringSpec({
             }
         }
 
-        assertSoftly {
+        withClue("Source object must NOT be modified") {
+            source shouldNotBe result
+        }
 
-            withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-            }
+        withClue("Result must be modified properly") {
+            result.name shouldBe "CORPORATION"
 
-            withClue("Result must be modified properly") {
-                result.name shouldBe "CORPORATION"
+            result.boss shouldNotBe source.boss
 
-                result.boss shouldNotBe source.boss
-
-                result.boss.address shouldNotBe source.boss.address
-                result.boss.address shouldBe Address("Leipzig", "04109")
-            }
+            result.boss.address shouldNotBe source.boss.address
+            result.boss.address shouldBe Address("Leipzig", "04109")
         }
     }
 
     "Mutating an object by replacing a nested object" {
 
-        val source = Company("Corp",
-            Person("Sam", 25,
+        val source = Company(
+            "Corp",
+            Person(
+                "Sam", 25,
                 Address("Berlin", "10115")
             )
         )
@@ -86,18 +85,16 @@ class NestedObjectMutationsSpec : StringSpec({
             boss.address += Address("Leipzig", "04109")
         }
 
-        assertSoftly {
 
-            withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-            }
+        withClue("Source object must NOT be modified") {
+            source shouldNotBe result
+        }
 
-            withClue("Result must be modified properly") {
-                result.boss shouldNotBe source.boss
+        withClue("Result must be modified properly") {
+            result.boss shouldNotBe source.boss
 
-                result.boss.address shouldNotBe source.boss.address
-                result.boss.address shouldBe Address("Leipzig", "04109")
-            }
+            result.boss.address shouldNotBe source.boss.address
+            result.boss.address shouldBe Address("Leipzig", "04109")
         }
     }
 
@@ -116,18 +113,16 @@ class NestedObjectMutationsSpec : StringSpec({
             boss.address = Address("Leipzig", "04109").mutator()
         }
 
-        assertSoftly {
 
-            withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-            }
+        withClue("Source object must NOT be modified") {
+            source shouldNotBe result
+        }
 
-            withClue("Result must be modified properly") {
-                result.boss shouldNotBe source.boss
+        withClue("Result must be modified properly") {
+            result.boss shouldNotBe source.boss
 
-                result.boss.address shouldNotBe source.boss.address
-                result.boss.address shouldBe Address("Leipzig", "04109")
-            }
+            result.boss.address shouldNotBe source.boss.address
+            result.boss.address shouldBe Address("Leipzig", "04109")
         }
     }
 
@@ -148,18 +143,16 @@ class NestedObjectMutationsSpec : StringSpec({
             boss.address.zip = "04110"
         }
 
-        assertSoftly {
 
-            withClue("Source object must NOT be modified") {
-                source shouldNotBe result
-            }
+        withClue("Source object must NOT be modified") {
+            source shouldNotBe result
+        }
 
-            withClue("Result must be modified properly") {
-                result.boss shouldNotBe source.boss
+        withClue("Result must be modified properly") {
+            result.boss shouldNotBe source.boss
 
-                result.boss.address shouldNotBe source.boss.address
-                result.boss.address shouldBe Address("Leipzig", "04110")
-            }
+            result.boss.address shouldNotBe source.boss.address
+            result.boss.address shouldBe Address("Leipzig", "04110")
         }
     }
 })

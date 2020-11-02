@@ -2,11 +2,11 @@ package de.peekandpoke.ultra.mutator.e2e
 
 import de.peekandpoke.ultra.mutator.e2e.package1.FirstInPackage1
 import de.peekandpoke.ultra.mutator.e2e.package2.FirstInPackage2
-import io.kotlintest.DisplayName
-import io.kotlintest.assertSoftly
-import io.kotlintest.shouldBe
-import io.kotlintest.shouldNotBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.assertions.assertSoftly
+import io.kotest.core.spec.DisplayName
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 
 @DisplayName("E2E - CodeGenSpec")
 class CodeGenSpec : StringSpec({

@@ -1,5 +1,5 @@
-import de.peekandpoke.common.remote.ApiClient
-import de.peekandpoke.common.remote.ApiEndpoint
+import de.peekandpoke.ultra.common.remote.ApiClient
+import de.peekandpoke.ultra.common.remote.ApiEndpoint
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch

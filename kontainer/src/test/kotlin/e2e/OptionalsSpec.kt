@@ -1,10 +1,10 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
 import de.peekandpoke.ultra.kontainer.kontainer
-import io.kotlintest.assertSoftly
-import io.kotlintest.shouldBe
-import io.kotlintest.shouldNotBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.assertions.assertSoftly
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 
 class OptionalsSpec : StringSpec({
 

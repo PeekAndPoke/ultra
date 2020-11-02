@@ -4,11 +4,11 @@ import de.peekandpoke.ultra.kontainer.ConfigAllInjecting
 import de.peekandpoke.ultra.kontainer.ConfigIntInjecting
 import de.peekandpoke.ultra.kontainer.KontainerInconsistent
 import de.peekandpoke.ultra.kontainer.kontainer
-import io.kotlintest.assertSoftly
-import io.kotlintest.matchers.string.shouldContain
-import io.kotlintest.shouldBe
-import io.kotlintest.shouldThrow
-import io.kotlintest.specs.StringSpec
+import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 
 class ConfigInjectionSpec : StringSpec({
 

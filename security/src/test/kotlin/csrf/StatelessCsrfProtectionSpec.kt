@@ -5,11 +5,10 @@ import de.peekandpoke.ultra.common.toBase64
 import de.peekandpoke.ultra.security.user.StaticUserRecordProvider
 import de.peekandpoke.ultra.security.user.UserRecord
 import de.peekandpoke.ultra.security.user.UserRecordProvider
-import io.kotlintest.assertSoftly
-import io.kotlintest.matchers.string.shouldMatch
-import io.kotlintest.shouldBe
-import io.kotlintest.shouldNotBe
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldMatch
 import kotlinx.coroutines.delay
 
 class StatelessCsrfProtectionSpec : StringSpec({
@@ -22,9 +21,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
 
         val token = subject.createToken("SALT")
 
-        assertSoftly {
-            String(token.fromBase64()) shouldMatch "[0-9]+#.+"
-        }
+        String(token.fromBase64()) shouldMatch "[0-9]+#.+"
     }
 
     "Validating a valid token must work" {
@@ -36,9 +33,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
         val salt = "SALT"
         val token = subject.createToken(salt)
 
-        assertSoftly {
-            subject.validateToken(salt, token) shouldBe true
-        }
+        subject.validateToken(salt, token) shouldBe true
     }
 
     "Validating a valid token must work for anonymous users" {
@@ -50,9 +45,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
         val salt = "SALT"
         val token = subject.createToken(salt)
 
-        assertSoftly {
-            subject.validateToken(salt, token) shouldBe true
-        }
+        subject.validateToken(salt, token) shouldBe true
     }
 
     "Validating a valid token must not work with a wrong salt" {
@@ -63,9 +56,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
 
         val token = subject.createToken("SALT")
 
-        assertSoftly {
-            subject.validateToken("WRONG", token) shouldBe false
-        }
+        subject.validateToken("WRONG", token) shouldBe false
     }
 
     "Token must depend on the user id" {
@@ -77,9 +68,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
         val salt = "SALT"
         val token = creator.createToken(salt)
 
-        assertSoftly {
-            validator.validateToken(salt, token) shouldBe false
-        }
+        validator.validateToken(salt, token) shouldBe false
     }
 
     "Token must depend on the user ip" {
@@ -91,9 +80,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
         val salt = "SALT"
         val token = creator.createToken(salt)
 
-        assertSoftly {
-            validator.validateToken(salt, token) shouldBe false
-        }
+        validator.validateToken(salt, token) shouldBe false
     }
 
     "The ttl must be part of the tokens hash" {
@@ -107,11 +94,9 @@ class StatelessCsrfProtectionSpec : StringSpec({
 
         val crafted = "${parts[0].toLong() + 1}${creator.glue}${parts[1]}".toBase64()
 
-        assertSoftly {
-            token shouldNotBe crafted
+        token shouldNotBe crafted
 
-            creator.validateToken(salt, crafted) shouldBe false
-        }
+        creator.validateToken(salt, crafted) shouldBe false
     }
 
     "Token must become invalid after the its ttl" {
@@ -121,12 +106,10 @@ class StatelessCsrfProtectionSpec : StringSpec({
         val salt = "SALT"
         val token = creator.createToken(salt)
 
-        assertSoftly {
-            creator.validateToken(salt, token) shouldBe true
+        creator.validateToken(salt, token) shouldBe true
 
-            delay(200)
+        delay(200)
 
-            creator.validateToken(salt, token) shouldBe false
-        }
+        creator.validateToken(salt, token) shouldBe false
     }
 })

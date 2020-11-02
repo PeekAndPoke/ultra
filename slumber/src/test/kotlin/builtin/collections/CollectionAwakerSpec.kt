@@ -3,11 +3,10 @@ package de.peekandpoke.ultra.slumber.builtin.collections
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Codec
-import io.kotlintest.assertSoftly
-import io.kotlintest.matchers.string.shouldContain
-import io.kotlintest.shouldBe
-import io.kotlintest.shouldThrow
-import io.kotlintest.specs.StringSpec
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 
 class CollectionAwakerSpec : StringSpec({
 
@@ -19,10 +18,8 @@ class CollectionAwakerSpec : StringSpec({
 
         val result = subject.awake(listOf("1", 2), codec.awakerContext)!!
 
-        assertSoftly {
-            List::class.java.isAssignableFrom(result::class.java) shouldBe true
-            result shouldBe listOf(1, 2)
-        }
+        List::class.java.isAssignableFrom(result::class.java) shouldBe true
+        result shouldBe listOf(1, 2)
     }
 
     "Awaking a List of nullables must work" {
@@ -33,10 +30,8 @@ class CollectionAwakerSpec : StringSpec({
 
         val result = subject.awake(listOf("1", 2, null), codec.awakerContext)!!
 
-        assertSoftly {
-            List::class.java.isAssignableFrom(result::class.java) shouldBe true
-            result shouldBe listOf(1, 2, null)
-        }
+        List::class.java.isAssignableFrom(result::class.java) shouldBe true
+        result shouldBe listOf(1, 2, null)
     }
 
     "Awaking a List of non-nullables must fail, when a null is found" {
@@ -49,10 +44,8 @@ class CollectionAwakerSpec : StringSpec({
             subject.awake(listOf("1", 2, null), codec.awakerContext)
         }
 
-        assertSoftly {
-            // should contain the error for the correct position
-            error.message shouldContain "root.2"
-        }
+        // should contain the error for the correct position
+        error.message shouldContain "root.2"
     }
 
     "Awaking a List (in a data class) must work" {
@@ -63,10 +56,8 @@ class CollectionAwakerSpec : StringSpec({
 
         val result = codec.awake(DataClass::class, mapOf("items" to listOf("1", 2)))!!
 
-        assertSoftly {
-            List::class.java.isAssignableFrom(result.items::class.java) shouldBe true
-            result.items shouldBe listOf(1, 2)
-        }
+        List::class.java.isAssignableFrom(result.items::class.java) shouldBe true
+        result.items shouldBe listOf(1, 2)
     }
 
     "Awaking a MutableList must work" {
@@ -77,10 +68,8 @@ class CollectionAwakerSpec : StringSpec({
 
         val result = subject.awake(listOf("1", 2), codec.awakerContext)!!
 
-        assertSoftly {
-            MutableList::class.java.isAssignableFrom(result::class.java) shouldBe true
-            result shouldBe listOf(1, 2)
-        }
+        MutableList::class.java.isAssignableFrom(result::class.java) shouldBe true
+        result shouldBe listOf(1, 2)
     }
 
     "Awaking a MutableList of nullables must work" {
@@ -91,10 +80,8 @@ class CollectionAwakerSpec : StringSpec({
 
         val result = subject.awake(listOf("1", 2, null), codec.awakerContext)!!
 
-        assertSoftly {
-            MutableList::class.java.isAssignableFrom(result::class.java) shouldBe true
-            result shouldBe listOf(1, 2, null)
-        }
+        MutableList::class.java.isAssignableFrom(result::class.java) shouldBe true
+        result shouldBe listOf(1, 2, null)
     }
 
     "Awaking a MutableList of non-nullables must fail, when a null is found" {
@@ -107,10 +94,8 @@ class CollectionAwakerSpec : StringSpec({
             subject.awake(listOf("1", 2, null), codec.awakerContext)
         }
 
-        assertSoftly {
-            // should contain the error for the correct position
-            error.message shouldContain "root.2"
-        }
+        // should contain the error for the correct position
+        error.message shouldContain "root.2"
     }
 
     "Awaking a MutableList (in a data class) must work" {
@@ -121,10 +106,8 @@ class CollectionAwakerSpec : StringSpec({
 
         val result = codec.awake(DataClass::class, mapOf("items" to listOf("1", 2)))!!
 
-        assertSoftly {
-            MutableList::class.java.isAssignableFrom(result.items::class.java) shouldBe true
-            result.items shouldBe listOf(1, 2)
-        }
+        MutableList::class.java.isAssignableFrom(result.items::class.java) shouldBe true
+        result.items shouldBe listOf(1, 2)
     }
 
     "Awaking a Set must work" {
@@ -135,10 +118,8 @@ class CollectionAwakerSpec : StringSpec({
 
         val result = subject.awake(listOf("1", 2), codec.awakerContext)!!
 
-        assertSoftly {
-            Set::class.java.isAssignableFrom(result::class.java) shouldBe true
-            result shouldBe setOf(1, 2)
-        }
+        Set::class.java.isAssignableFrom(result::class.java) shouldBe true
+        result shouldBe setOf(1, 2)
     }
 
     "Awaking a Set of nullables must work" {
@@ -149,10 +130,8 @@ class CollectionAwakerSpec : StringSpec({
 
         val result = subject.awake(listOf("1", 2, null), codec.awakerContext)!!
 
-        assertSoftly {
-            Set::class.java.isAssignableFrom(result::class.java) shouldBe true
-            result shouldBe setOf(1, 2, null)
-        }
+        Set::class.java.isAssignableFrom(result::class.java) shouldBe true
+        result shouldBe setOf(1, 2, null)
     }
 
     "Awaking a Set of non-nullables must fail, when a null is found" {
@@ -165,10 +144,8 @@ class CollectionAwakerSpec : StringSpec({
             subject.awake(listOf("1", 2, null), codec.awakerContext)
         }
 
-        assertSoftly {
-            // should contain the error for the correct position
-            error.message shouldContain "root.2"
-        }
+        // should contain the error for the correct position
+        error.message shouldContain "root.2"
     }
 
     "Awaking a Set (in a data class) must work" {
@@ -179,10 +156,8 @@ class CollectionAwakerSpec : StringSpec({
 
         val result = codec.awake(DataClass::class, mapOf("items" to listOf("1", 2)))!!
 
-        assertSoftly {
-            Set::class.java.isAssignableFrom(result.items::class.java) shouldBe true
-            result.items shouldBe setOf(1, 2)
-        }
+        Set::class.java.isAssignableFrom(result.items::class.java) shouldBe true
+        result.items shouldBe setOf(1, 2)
     }
 
     "Awaking a MutableSet must work" {
@@ -193,10 +168,8 @@ class CollectionAwakerSpec : StringSpec({
 
         val result = subject.awake(listOf("1", 2), codec.awakerContext)!!
 
-        assertSoftly {
-            MutableSet::class.java.isAssignableFrom(result::class.java) shouldBe true
-            result shouldBe mutableSetOf(1, 2)
-        }
+        MutableSet::class.java.isAssignableFrom(result::class.java) shouldBe true
+        result shouldBe mutableSetOf(1, 2)
     }
 
     "Awaking a MutableSet of nullables must work" {
@@ -207,10 +180,8 @@ class CollectionAwakerSpec : StringSpec({
 
         val result = subject.awake(listOf("1", 2, null), codec.awakerContext)!!
 
-        assertSoftly {
-            MutableSet::class.java.isAssignableFrom(result::class.java) shouldBe true
-            result shouldBe mutableSetOf(1, 2, null)
-        }
+        MutableSet::class.java.isAssignableFrom(result::class.java) shouldBe true
+        result shouldBe mutableSetOf(1, 2, null)
     }
 
     "Awaking a MutableSet of non-nullables must fail, when a null is found" {
@@ -223,10 +194,8 @@ class CollectionAwakerSpec : StringSpec({
             subject.awake(listOf("1", 2, null), codec.awakerContext)
         }
 
-        assertSoftly {
-            // should contain the error for the correct position
-            error.message shouldContain "root.2"
-        }
+        // should contain the error for the correct position
+        error.message shouldContain "root.2"
     }
 
     "Awaking a MutableSet (in a data class) must work" {
@@ -237,9 +206,7 @@ class CollectionAwakerSpec : StringSpec({
 
         val result = codec.awake(DataClass::class, mapOf("items" to listOf("1", 2)))!!
 
-        assertSoftly {
-            MutableSet::class.java.isAssignableFrom(result.items::class.java) shouldBe true
-            result.items shouldBe setOf(1, 2)
-        }
+        MutableSet::class.java.isAssignableFrom(result.items::class.java) shouldBe true
+        result.items shouldBe setOf(1, 2)
     }
 })
