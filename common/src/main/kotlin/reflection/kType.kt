@@ -1,8 +1,10 @@
 package de.peekandpoke.ultra.common.reflection
 
 import kotlin.reflect.KClass
+import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.createType
+import kotlin.reflect.typeOf
 
 /**
  * Creates a [TypeRef] from the given class [T]
@@ -11,17 +13,22 @@ import kotlin.reflect.full.createType
  */
 inline fun <reified T : Any?> kType(): TypeRef<T> {
 
-    val cls = T::class
+//    val cls = T::class
+//
+//    if (cls.typeParameters.isNotEmpty()) {
+//        val tr = object : TypeReference<T>(
+//            cls.java.classLoader ?: Thread.currentThread().contextClassLoader
+//        ) {}
+//
+//        return TypeRef(tr.toKType())
+//    }
+//
+//    return TypeRef(cls.createType(nullable = null is T))
 
-    if (cls.typeParameters.isNotEmpty()) {
-        val tr = object : TypeReference<T>(
-            cls.java.classLoader ?: Thread.currentThread().contextClassLoader
-        ) {}
+    @OptIn(ExperimentalStdlibApi::class)
+    val type: KType = typeOf<T>()
 
-        return TypeRef(tr.toKType())
-    }
-
-    return TypeRef(cls.createType(nullable = null is T))
+    return TypeRef(type = type)
 }
 
 /**
