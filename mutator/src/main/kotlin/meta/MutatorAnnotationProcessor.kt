@@ -18,9 +18,9 @@ import javax.lang.model.element.TypeElement
 @AutoService(Processor::class)
 open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
 
-    private val renderers by lazy {
+    private fun createRenderers(notMutableTypes: List<TypeElement>): PropertyRenderers {
 
-        PropertyRenderers(
+        return PropertyRenderers(
             ctx,
             PureGetterSetterRenderer(ctx)
         ) { root ->
@@ -32,7 +32,7 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
                 // Maps
                 CollectionMapPropertyRenderer(ctx, root),
                 // Data classes
-                DataClassPropertyRenderer(ctx)
+                DataClassPropertyRenderer(ctx, notMutableTypes.map { it.asTypeName() })
             )
         }
     }
@@ -65,14 +65,24 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
 
         logNote("all types (with recursively referenced, with supertypes): $types")
 
-        model(types).forEach {
-            buildMutatorFileFor(it)
+        // Get all types that are not mutable
+        val notMutableTypes: List<TypeElement> = types.filter { it.hasAnnotation(NotMutable::class) }
+
+        // Get all types that are mutable
+        val mutableTypes: List<TypeElement> = types.minus(notMutableTypes)
+
+        // create the renderers
+        val renderers: PropertyRenderers = createRenderers(notMutableTypes)
+
+        // Create the holistic model and render mutator code files
+        model(mutableTypes).forEach {
+            buildMutatorFileFor(it, renderers)
         }
 
         return true
     }
 
-    private fun buildMutatorFileFor(element: MType) {
+    private fun buildMutatorFileFor(element: MType, renderers: PropertyRenderers) {
 
         if (element.type.hasAnnotation(NotMutable::class)) {
             logNote("Ignoring type ${element.className.simpleNames} in ${element.packageName} with @NotMutable\r\n")
