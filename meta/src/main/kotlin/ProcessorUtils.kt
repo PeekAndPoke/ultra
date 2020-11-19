@@ -234,7 +234,12 @@ interface ProcessorUtils {
                 result.addAll(nested)
 
                 // Take all nested classes as well
-                val enclosedBlackList = listOf("Companion", "INSTANCE", "${'$'}serializer")
+                val enclosedBlackList = listOf(
+                    "Companion", // Kotlin Companion object
+                    "INSTANCE", // Kotlinx/serialization serializer instance
+                    "${'$'}serializer", // Kotlinx/serialization serializer instance
+                    "DefaultImpls", // Kotlin Default implementations for interfaces
+                )
 
                 result.addAll(
                     element.enclosedElements
