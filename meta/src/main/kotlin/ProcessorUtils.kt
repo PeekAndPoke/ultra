@@ -161,7 +161,7 @@ interface ProcessorUtils {
 
     val Element.isStringType get() = fqn.isStringType
 
-    fun <T: Annotation> Element.hasAnnotation(cls: KClass<T>) = getAnnotation(cls.java) != null
+    fun <T : Annotation> Element.hasAnnotation(cls: KClass<T>) = getAnnotation(cls.java) != null
 
     val Element.isNullable get() = hasAnnotation(org.jetbrains.annotations.Nullable::class)
 
@@ -233,8 +233,13 @@ interface ProcessorUtils {
 
                 result.addAll(nested)
 
-                // All look at enclosed types
-                result.addAll(element.getAllEnclosedTypes().map { it.asType() })
+                // Take all nested classes as well
+                result.addAll(
+                    element.enclosedElements
+                        .filterIsInstance<TypeElement>()
+                        .filter { it.kind == ElementKind.CLASS }
+                        .map { it.asType() }
+                )
             }
         }
 
