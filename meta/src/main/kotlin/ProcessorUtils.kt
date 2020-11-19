@@ -172,16 +172,15 @@ interface ProcessorUtils {
      */
     fun Element.getReferencedTypesRecursive(): Set<TypeMirror> {
 
-        var last = mutableSetOf<TypeMirror>()
+        var lastSize = 0
         var current = mutableSetOf(this.asType())
 
-        while (current.size > last.size) {
+        while (current.size > lastSize) {
 
-            last = current
+            lastSize = current.size
 
-            current = last
+            current = current
                 .flatMap { it.getReferencedTypes() }
-                .distinct()
                 .toMutableSet()
         }
 
@@ -231,16 +230,20 @@ interface ProcessorUtils {
                         }
                     }
                     .flatten()
-                    // Black-list of packages that we will not create code for
-                    .filter { !it.fqn.startsWith("java.") }
-                    .filter { !it.fqn.startsWith("javax.") }
-                    .filter { !it.fqn.startsWith("kotlin.") }
 
                 result.addAll(nested)
+
+                // All look at enclosed types
+                result.addAll(element.getAllEnclosedTypes().map { it.asType() })
             }
         }
 
         return result
+            // Black-list of packages that we will not create code for
+            .filter { !it.fqn.startsWith("java.") }
+            .filter { !it.fqn.startsWith("javax.") }
+            .filter { !it.fqn.startsWith("kotlin.") }
+            .toSet()
     }
 
     ////  KOTLIN COMPAT  ///////////////////////////////////////////////////////////////////////////////////////////////
