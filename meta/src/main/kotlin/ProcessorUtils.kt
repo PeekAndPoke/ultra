@@ -234,10 +234,13 @@ interface ProcessorUtils {
                 result.addAll(nested)
 
                 // Take all nested classes as well
+                val enclosedBlackList = listOf("Companion", "INSTANCE", "${'$'}serializer")
+
                 result.addAll(
                     element.enclosedElements
                         .filterIsInstance<TypeElement>()
                         .filter { it.kind == ElementKind.CLASS }
+                        .filter { it.simpleName.toString() !in enclosedBlackList }
                         .map { it.asType() }
                 )
             }
