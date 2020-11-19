@@ -6,6 +6,7 @@ import de.peekandpoke.ultra.meta.KotlinProcessor
 import de.peekandpoke.ultra.meta.model.MType
 import de.peekandpoke.ultra.meta.model.model
 import de.peekandpoke.ultra.mutator.Mutable
+import de.peekandpoke.ultra.mutator.NotMutable
 import de.peekandpoke.ultra.mutator.meta.rendering.*
 import java.io.File
 import javax.annotation.processing.Processor
@@ -73,7 +74,12 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
 
     private fun buildMutatorFileFor(element: MType) {
 
-        logNote("Found type ${element.className.simpleNames} in ${element.packageName}")
+        if (element.type.hasAnnotation(NotMutable::class)) {
+            logNote("Ignoring type ${element.className.simpleNames} in ${element.packageName} with @NotMutable\r\n")
+            return
+        }
+
+        logNote("Found type ${element.className.simpleNames} in ${element.packageName}\r\n")
 
         val printer = KotlinPrinter(
             element.packageName,

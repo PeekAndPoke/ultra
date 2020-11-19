@@ -113,7 +113,9 @@ class DataClassRenderer(
                 )
 
                 indent {
-                    target.variables.filtered().forEach { renderers.run { renderPropertyImplementation(it) } }
+                    target.variables.filtered().forEach {
+                        renderers.run { renderPropertyImplementation(it) }
+                    }
                 }
 
                 append("}").newline()

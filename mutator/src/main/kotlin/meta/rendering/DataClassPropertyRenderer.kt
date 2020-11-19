@@ -6,6 +6,7 @@ import com.squareup.kotlinpoet.TypeName
 import de.peekandpoke.ultra.meta.KotlinPrinter
 import de.peekandpoke.ultra.meta.ProcessorUtils
 import de.peekandpoke.ultra.meta.model.MVariable
+import de.peekandpoke.ultra.mutator.NotMutable
 
 /**
  * Here we handle non parameterized data classes
@@ -23,7 +24,12 @@ class DataClassPropertyRenderer(
                 // we exclude enum classes
                 !type.isEnum &&
                 // we also exclude some packages completely
-                !type.isBlackListed
+                !type.isBlackListed &&
+                // type must not have the @NotMutable annotation
+                ctx.env.elementUtils.getTypeElement(type.fqn)?.let {
+                    !it.hasAnnotation(NotMutable::class)
+                } ?: true
+
 
     override fun KotlinPrinter.renderPropertyImplementation(variable: MVariable) {
 

@@ -20,6 +20,18 @@ fun Builder.expectFileToMatch(file: String, expectedContent: String) =
     expect(CompileTest.ExpectFileToMatch(file, expectedContent))
 
 /**
+ * Adds an expectation that checks that the given file was NOT created
+ */
+fun Builder.expectFileToNotExist(file: String) =
+    expect(CompileTest.ExpectFileToNotExist(file))
+
+/**
+ * Adds an expectation that checks for the exact number of files to be created
+ */
+fun Builder.expectFileCount(count: Int) =
+    expect(CompileTest.ExpectFileCount(count))
+
+/**
  * The compile test runner.
  *
  * Compiles all [sourcesFiles] with the given [processors] (Annotation processors).
@@ -73,8 +85,10 @@ data class CompileTest internal constructor(
     class Builder internal constructor() {
         /** source files */
         private val sourceFiles = mutableListOf<SourceFile>()
+
         /** annotation processors */
         private val processors = mutableListOf<Processor>()
+
         /** expectations */
         private val expectations = mutableListOf<Expectation>()
 
@@ -182,6 +196,41 @@ data class CompileTest internal constructor(
 
                 )
             }
+        }
+    }
+
+    /**
+     * Expectation that checks that the given [file] does NOT exist.
+     */
+    data class ExpectFileToNotExist(val file: String) : Expectation {
+
+        override fun apply(result: KotlinCompilation.Result): List<String> {
+
+            return result.sourcesGeneratedByAnnotationProcessor
+                .filter { it.name == file }
+                .map { "The file '$file' should NOT be created." }
+        }
+    }
+
+    /**
+     * Expectation that checks for the exact number of files to be created
+     */
+    data class ExpectFileCount(val count: Int) : Expectation {
+
+        override fun apply(result: KotlinCompilation.Result): List<String> {
+
+            val actual = result.sourcesGeneratedByAnnotationProcessor.size
+
+            if (actual != count) {
+                return listOf(
+                    "Expected $count files to be created. But actually $actual files where created:",
+                    *result.sourcesGeneratedByAnnotationProcessor
+                        .mapIndexed { index, file -> "${index + 1}. ${file.name}" }
+                        .toTypedArray()
+                )
+            }
+
+            return emptyList()
         }
     }
 }
