@@ -28,10 +28,14 @@ class ClassWithNotMutableAnnotationSpec : StringSpec({
                     @NotMutable
                     data class Immutable(val value: Int)
                     
+                    @NotMutable
+                    data class ImmutableGeneric<T>(val value: T)
+                    
                     @Mutable
                     data class Owner(
                         val num: Int,
                         val notMutable: Immutable,
+                        val notMutableGeneric: ImmutableGeneric<String>,
                     )
 
                 """.trimIndent()
@@ -83,7 +87,18 @@ class ClassWithNotMutableAnnotationSpec : StringSpec({
                         var notMutable
                             get() = getResult().notMutable
                             set(v) = modify(getResult()::notMutable, getResult().notMutable, v)
-                    
+ 
+                        /**
+                         * Mutator for field [Owner.notMutableGeneric]
+                         *
+                         * Info:
+                         *   - type:         [ImmutableGeneric<String>]
+                         *   - reflected by: [com.squareup.kotlinpoet.ParameterizedTypeName]
+                         */ 
+                        var notMutableGeneric
+                            get() = getResult().notMutableGeneric
+                            set(v) = modify(getResult()::notMutableGeneric, getResult().notMutableGeneric, v)
+
                     }                    
                 """.trimIndent()
             )

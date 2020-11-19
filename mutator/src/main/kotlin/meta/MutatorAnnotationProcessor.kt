@@ -32,7 +32,7 @@ open class MutatorAnnotationProcessor : KotlinProcessor("[Mutator]") {
                 // Maps
                 CollectionMapPropertyRenderer(ctx, root),
                 // Data classes
-                DataClassPropertyRenderer(ctx, notMutableTypes.map { it.asTypeName() })
+                DataClassPropertyRenderer(ctx, notMutableTypes)
             )
         }
     }

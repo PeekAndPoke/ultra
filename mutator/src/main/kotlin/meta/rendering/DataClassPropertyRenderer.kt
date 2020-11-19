@@ -6,14 +6,24 @@ import com.squareup.kotlinpoet.TypeName
 import de.peekandpoke.ultra.meta.KotlinPrinter
 import de.peekandpoke.ultra.meta.ProcessorUtils
 import de.peekandpoke.ultra.meta.model.MVariable
+import javax.lang.model.element.TypeElement
 
 /**
  * Here we handle non parameterized data classes
  */
 class DataClassPropertyRenderer(
     override val ctx: ProcessorUtils.Context,
-    private val notMutableTypes: List<TypeName>,
+    notMutableTypes: List<TypeElement>,
 ) : PropertyRenderer {
+
+    private val notMutableTypes = notMutableTypes
+        .map { it.asTypeName() }
+        .map {
+            when (it) {
+                is ParameterizedTypeName -> it.rawType
+                else -> it
+            }
+        }
 
     // TODO: check if the type has a "copy" method
     override fun canHandle(type: TypeName) =
@@ -26,7 +36,12 @@ class DataClassPropertyRenderer(
                 // we also exclude some packages completely
                 !type.isBlackListed &&
                 // type must not have the @NotMutable annotation
-                type !in notMutableTypes
+                when (type) {
+                    is ClassName -> type !in notMutableTypes
+                    is ParameterizedTypeName -> type.rawType !in notMutableTypes
+                    else -> true
+                }
+
 
     override fun KotlinPrinter.renderPropertyImplementation(variable: MVariable) {
 
