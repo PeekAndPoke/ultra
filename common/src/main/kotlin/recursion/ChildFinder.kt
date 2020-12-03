@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.recursion
 
+import de.peekandpoke.ultra.common.prepend
 import de.peekandpoke.ultra.common.recursion.ChildFinder.Companion.find
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
@@ -24,7 +25,14 @@ class ChildFinder<C : Any, T : Any> private constructor(
     /** A set of nodes that match the filter criteria */
     private val found = mutableSetOf<Found<C>>()
 
-    data class Found<C>(val path: String, val item: C)
+    data class Found<C>(val item: C, val path: String, val parents: List<Any>) {
+        /**
+         * Get's the parent at the given [idx] or null
+         */
+        fun parent(idx: Int): Any? {
+            return parents.getOrNull(idx)
+        }
+    }
 
     companion object {
         /**
@@ -43,12 +51,12 @@ class ChildFinder<C : Any, T : Any> private constructor(
         visited.clear()
         found.clear()
 
-        visit(inTarget, "root")
+        visit(inTarget, "root", emptyList())
 
         return found.toList()
     }
 
-    private fun visit(target: Any?, path: String) {
+    private fun visit(target: Any?, path: String, parents: List<Any>) {
 
         // TODO: We need special tests for this, because data class collide with their own hashcode.
         //       Still if we have multiple data classes with same hashCode the identityHashCode should be different.
@@ -62,21 +70,33 @@ class ChildFinder<C : Any, T : Any> private constructor(
 
         @Suppress("UNCHECKED_CAST")
         if (target::class == searchedClass && predicate(target as C)) {
-            found.add(Found(path, target))
+            found.add(
+                Found(
+                    item = target,
+                    path = path,
+                    parents = parents,
+                )
+            )
             return
         }
 
         when (target) {
-            is List<*> -> visitCollection(target, path)
-            is Map<*, *> -> visitCollection(target.values, path)
-            else -> visitObject(target, path)
+            is List<*> -> visitCollection(target, path, parents)
+            is Map<*, *> -> visitCollection(target.values, path, parents)
+            else -> visitObject(target, path, parents)
         }
     }
 
-    private fun visitCollection(collection: Collection<*>, path: String) =
-        collection.forEachIndexed { idx, it -> visit(it, "$path.$idx") }
+    private fun visitCollection(collection: Collection<*>, path: String, parents: List<Any>) {
 
-    private fun visitObject(target: Any, path: String) {
+        val parentsWithCollection = parents.prepend(collection)
+
+        collection.forEachIndexed { idx, it -> visit(it, "$path.$idx", parentsWithCollection) }
+    }
+
+    private fun visitObject(target: Any, path: String, parents: List<Any>) {
+
+        val parentsWithTarget = parents.prepend(target)
 
         val reflect = target::class
 
@@ -90,7 +110,8 @@ class ChildFinder<C : Any, T : Any> private constructor(
             .forEach {
                 visit(
                     target = it.javaField?.apply { it.isAccessible = true }?.get(target),
-                    path = "$path.${it.name}"
+                    path = "$path.${it.name}",
+                    parentsWithTarget
                 )
             }
     }

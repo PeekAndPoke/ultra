@@ -24,7 +24,6 @@
       <module name="root.test" target="1.8" />
       <module name="root.ultra.main" target="1.8" />
       <module name="root.ultra.test" target="1.8" />
-      <module name="ultra" target="11" />
       <module name="ultra.common-mp" target="11" />
       <module name="ultra.common-mp.commonMain" target="1.8" />
       <module name="ultra.common-mp.commonTest" target="1.8" />
@@ -32,16 +31,12 @@
       <module name="ultra.common-mp.jvmMain~1" target="1.8" />
       <module name="ultra.common-mp.jvmTest" target="1.8" />
       <module name="ultra.common-mp.jvmTest~1" target="1.8" />
-      <module name="ultra.commonmp" target="11" />
       <module name="ultra.commonmp.commonMain" target="1.8" />
       <module name="ultra.commonmp.commonTest" target="1.8" />
       <module name="ultra.commonmp.jvmMain" target="1.8" />
       <module name="ultra.commonmp.jvmMain~1" target="1.8" />
       <module name="ultra.commonmp.jvmTest" target="1.8" />
       <module name="ultra.commonmp.jvmTest~1" target="1.8" />
-      <module name="ultra.main" target="11" />
-      <module name="ultra.test" target="11" />
-      <module name="ultra.z-playground-js" target="11" />
     </bytecodeTargetLevel>
   </component>
 </project>

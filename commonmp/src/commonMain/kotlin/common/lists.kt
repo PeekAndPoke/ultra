@@ -46,6 +46,11 @@ fun <E> List<E>.removeAt(idx: Int) = toMutableList().apply { removeAt(idx) }.toL
 fun <E> List<E>.addAt(idx: Int, element: E) = toMutableList().apply { add(idx, element) }.toList()
 
 /**
+ * Adds the [element] at the beginning by creating a new list with the element added.
+ */
+fun <E> List<E>.prepend(element: E) = addAt(0, element)
+
+/**
  * Swaps the elements at [idx1] and [idx2] by creating a new list.
  *
  * If idx1 or idx2 is out of bounds, the list is returned as is.

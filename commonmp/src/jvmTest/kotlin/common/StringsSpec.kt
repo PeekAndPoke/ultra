@@ -128,13 +128,13 @@ class StringsSpec : StringSpec({
     ////  String.camelCaseSplit  ///////////////////////////////////////////////////////////////////////////////////////
 
     listOf(
-        row("", listOf("")),
+        row("", listOf()),
         row("a", listOf("a")),
         row("A", listOf("A")),
         row("a1B1", listOf("a1", "B1")),
         row("oneTwo", listOf("one", "Two")),
         row("OneTwo", listOf("One", "Two")),
-        row("One Two", listOf("One Two"))
+        row("One Two", listOf("One", "Two"))
     ).forEach { (text, expected) ->
 
         "String.camelCaseSplit: '$text' should be $expected" {

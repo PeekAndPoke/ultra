@@ -78,9 +78,42 @@ fun String.ellipsis(maxLength: Int = 50, suffix: String = "...") = when (length 
 /**
  * Splits a camel cased word into single words
  */
-fun String.camelCaseSplit() = camelCaseSplitRegex.split(this)
+fun String.camelCaseSplit(): List<String> {
+
+    val trimmed = trim()
+
+    if (trimmed.isEmpty()) {
+        return emptyList()
+    }
+
+    val result = mutableListOf<String>()
+
+    val aToZCaps = 'A'..'Z'
+
+    var lastStart = 0
+
+
+    for (i in 1 until trimmed.length) {
+        val c = trimmed[i]
+
+        if (c in aToZCaps) {
+            result.add(
+                trimmed.substring(lastStart, i).trim()
+            )
+            lastStart = i
+        }
+    }
+
+    if (lastStart < trimmed.length) {
+        result.add(
+            trimmed.substring(lastStart).trim()
+        )
+    }
+
+    return result
+}
 
 /**
  * Splits a camel case word and joins the parts using the divider
  */
-fun String.camelCaseDivide(divider: String = " ") = camelCaseSplit().joinToString(divider)
+fun String.camelCaseDivide(divider: String = " "): String = camelCaseSplit().joinToString(divider)
