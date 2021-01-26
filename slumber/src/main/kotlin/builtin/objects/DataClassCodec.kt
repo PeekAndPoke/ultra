@@ -5,6 +5,7 @@ import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.Slumberer
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType
+import kotlin.reflect.full.withNullability
 
 class DataClassCodec(rootType: KType) : Awaker, Slumberer {
 
@@ -36,23 +37,32 @@ class DataClassCodec(rootType: KType) : Awaker, Slumberer {
 
             // Do we have data for param ?
             if (data.contains(param.name)) {
-                // Get the value and awake it
-                val bit = context.stepInto(paramName).awake(type, data[paramName])
 
-                // can we use the bit ?
-                if (bit != null || param.type.isMarkedNullable) {
-                    // Yes, we awake it and put it into the params
-                    params[param] = bit
-                } else {
-                    // No, we mark it as a missing parameter
-                    missingParams.add(paramName)
+                val raw = data[paramName]
+
+                // Get the value and awake it
+                val bit = when (param.isOptional) {
+                    false -> context.stepInto(paramName).awake(type, raw)
+                    else -> context.stepInto(paramName).awake(type.withNullability(true), raw)
+                }
+
+                when {
+                    bit != null -> params[param] = bit
+
+                    param.type.isMarkedNullable -> params[param] = null
+
+                    param.isOptional -> { /* do nothing */ }
+
+                    else -> missingParams.add(paramName)
                 }
 
             } else {
-                // Last chance: is the parameter optional or nullable ?
-                if (!param.isOptional && !param.type.isMarkedNullable) {
-                    // No, we have problem and cannot awake the data class
-                    missingParams.add(paramName)
+                when {
+                    param.type.isMarkedNullable -> params[param] = null
+
+                    param.isOptional -> { /* do nothing */ }
+
+                    else -> missingParams.add(paramName)
                 }
             }
         }

@@ -118,10 +118,8 @@ class DataClassAwakerSpec : StringSpec({
             codec.awake(DataClass::class, emptyMap<String, Any>()) shouldBe DataClass("default")
         }
 
-        withClue("Null is not acceptable for non-nullable parameters even when optional") {
-            shouldThrow<AwakerException> {
-                codec.awake(DataClass::class, mapOf("str" to null))
-            }
+        withClue("Null is acceptable for non-nullable parameters when having a default value") {
+            codec.awake(DataClass::class, mapOf("str" to "default"))
         }
 
         withClue("Any data that is not a Map is not acceptable even when all fields are optional") {
@@ -146,6 +144,105 @@ class DataClassAwakerSpec : StringSpec({
         val result = codec.awake(DataClass::class, mapOf("inner" to mapOf("str" to "hello")))
 
         result shouldBe DataClass(Inner("hello"))
+    }
+
+    "Awaking a data class with a mandatory field and no data sent" {
+
+        data class DataClass(val optional: String)
+
+        val codec = Codec.default
+
+        shouldThrow<Throwable> {
+            codec.awake(DataClass::class, mapOf<String, Any>())
+        }
+    }
+
+    "Awaking a data class with a mandatory field and valid data sent" {
+
+        data class DataClass(val optional: String)
+
+        val codec = Codec.default
+
+        val result = codec.awake(DataClass::class, mapOf<String, Any>("optional" to "data"))
+
+        result shouldBe DataClass(optional = "data")
+    }
+
+    "Awaking a data class with a mandatory field and invalid data sent" {
+
+        data class DataClass(val optional: String)
+
+        val codec = Codec.default
+
+        shouldThrow<Throwable> {
+            codec.awake(DataClass::class, mapOf<String, Any>("optional" to emptyList<String>()))
+        }
+    }
+
+    "Awaking a data class with a nullable field and no data sent" {
+
+        data class DataClass(val optional: String?)
+
+        val codec = Codec.default
+
+        val result = codec.awake(DataClass::class, mapOf<String, Any>())
+
+        result shouldBe DataClass(optional = null)
+    }
+
+    "Awaking a data class with a nullable field and some data sent" {
+
+        data class DataClass(val optional: String?)
+
+        val codec = Codec.default
+
+        val result = codec.awake(DataClass::class, mapOf<String, Any>("optional" to "data"))
+
+        result shouldBe DataClass(optional = "data")
+    }
+
+    "Awaking a data class with a nullable field and wrong data sent" {
+
+        data class DataClass(val optional: String?)
+
+        val codec = Codec.default
+
+        val result = codec.awake(DataClass::class, mapOf<String, Any>("optional" to emptyList<String>()))
+
+        result shouldBe DataClass(optional = null)
+    }
+
+    "Awaking a data class with a optional field and no data sent" {
+
+        data class DataClass(val optional: String = "default")
+
+        val codec = Codec.default
+
+        val result = codec.awake(DataClass::class, mapOf<String, Any>())
+
+        result shouldBe DataClass(optional = "default")
+    }
+
+    "Awaking a data class with a optional field and some data sent" {
+
+        data class DataClass(val optional: String = "default")
+
+        val codec = Codec.default
+
+        val result = codec.awake(DataClass::class, mapOf<String, Any>("optional" to "data"))
+
+        result shouldBe DataClass(optional = "data")
+    }
+
+    "Awaking a data class with a optional field and wrong data sent" {
+
+        data class DataClass(val optional: String = "default")
+
+        val codec = Codec.default
+
+        val result = codec.awake(DataClass::class, mapOf<String, Any>("optional" to emptyList<String>()))
+
+        result shouldBe DataClass(optional = "default")
     }
 
     "Awaking a data class with one Iterable<String> parameter" {

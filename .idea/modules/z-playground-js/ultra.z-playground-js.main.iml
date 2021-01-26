@@ -2,7 +2,7 @@
 <module external.linked.project.id=":z-playground-js:main" external.linked.project.path="$MODULE_DIR$/../../../z-playground-js" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="com.thebase.adminapp" external.system.module.type="sourceSet" external.system.module.version="1.0-SNAPSHOT" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="3" platform="JavaScript " allPlatforms="JS []" useProjectSettings="false" isTestModule="false" externalProjectId=":z-playground-js" pureKotlinSourceFolders="$MODULE_DIR$/../../../z-playground-js/src/test/kotlin;/opt/dev/peekandpoke/ultra/z-playground-js/src/main/kotlin;/opt/dev/peekandpoke/ultra/z-playground-js/build/externals/ultra-z-playground-js/src">
+      <configuration version="3" platform="JavaScript " allPlatforms="JS []" useProjectSettings="false" isTestModule="false" externalProjectId=":z-playground-js" pureKotlinSourceFolders="$MODULE_DIR$/../../../z-playground-js/src/test/kotlin;/opt/dev/peekandpoke/ultra/z-playground-js/src/main/kotlin;/opt/dev/peekandpoke/ultra/z-playground-js/build/externals/ultra-z-playground-js/src;/opt/dev/peekandpoke/ultra/z-playground-js/src/main/kotlin;/opt/dev/peekandpoke/ultra/z-playground-js/build/externals/ultra-z-playground-js/src;/opt/dev/peekandpoke/ultra/z-playground-js/src/test/kotlin">
         <newMppModelJpsModuleKind>COMPILATION_AND_SOURCE_SET_HOLDER</newMppModelJpsModuleKind>
         <compilerSettings />
         <compilerArguments>
@@ -20,9 +20,9 @@
           </option>
           <option name="pluginClasspaths">
             <array>
-              <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/1.4.10/c06dc95764119b3188034c644805de9b76148806/kotlin-gradle-plugin-api-1.4.10.jar" />
-              <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.4.10/6229be3465805c99db1142ad75e6c6ddeac0b04c/kotlin-stdlib-common-1.4.10.jar" />
-              <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.4.10/ea29e063d2bbe695be13e9d044dcfb0c7add398e/kotlin-stdlib-1.4.10.jar" />
+              <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/1.4.20/843645982f7178ef388143f20cbd1f12363be366/kotlin-gradle-plugin-api-1.4.20.jar" />
+              <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.4.20/c6761d7805b5312302f2bbd78cda68c976ce0c70/kotlin-stdlib-common-1.4.20.jar" />
+              <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.4.20/9be77b243a362b745e365f286627b8724337009c/kotlin-stdlib-1.4.20.jar" />
               <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar" />
               <option value="$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar" />
             </array>
@@ -44,13 +44,13 @@
       <sourceFolder url="file://$MODULE_DIR$/../../../z-playground-js/src/main/resources" type="kotlin-resource" />
     </content>
     <orderEntry type="jdk" jdkName="Kotlin SDK" jdkType="KotlinSDK" />
-    <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="ultra.commonmp.commonMain" />
+    <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="ultra.commonmp.jsMain" />
     <orderEntry type="module" module-name="ultra.commonmp.commonMain" />
-    <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-js:1.4.10" level="project" />
+    <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-js:1.4.20" level="project" />
     <orderEntry type="library" name="Gradle: com.soywiz.korlibs.klock:klock-js:1.12.1" level="project" />
-    <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:1.4.10" level="project" />
+    <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:1.4.20" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json-metadata:1.0.1" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core-metadata:1.0.1" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json-js:1.0.1" level="project" />

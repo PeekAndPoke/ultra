@@ -79,6 +79,24 @@ abstract class ApiClient(private val config: Config) {
             .put(uri = buildUri(uri, params), body = body ?: "{}")
             .body { config.codec.decode(it) }
 
+    //// DELETE ////
+
+    operator fun <RESPONSE> ApiEndpoint.Delete.invoke(
+        vararg params: Pair<String, String?>,
+        body: String? = null,
+        decode: Json.(String) -> RESPONSE
+    ): Flow<RESPONSE> =
+        invoke(params = params.toMap(), body = body, decode = decode)
+
+    operator fun <RESPONSE> ApiEndpoint.Delete.invoke(
+        params: Map<String, String?>,
+        body: String?,
+        decode: Json.(String) -> RESPONSE
+    ): Flow<RESPONSE> =
+        remote
+            .delete(uri = buildUri(uri, params), body = body ?: "{}")
+            .body { config.codec.decode(it) }
+
     //  HELPERS  ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
