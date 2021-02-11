@@ -81,6 +81,10 @@ object BuiltInModule : SlumberModule {
                 PolymorphicParentUtil.isPolymorphicParent(cls) ->
                     type.wrapIfNonNull(PolymorphicParentUtil.createParentAwaker(cls))
 
+                // Singleton Object instance
+                cls.objectInstance != null ->
+                    type.wrapIfNonNull(ObjectInstanceCodec(cls.objectInstance!!) as Awaker)
+
                 // Data classes
                 cls.isData ->
                     type.wrapIfNonNull(DataClassCodec(type) as Awaker)
@@ -163,6 +167,10 @@ object BuiltInModule : SlumberModule {
 
                 PolymorphicChildUtil.isPolymorphicChild(cls) ->
                     type.wrapIfNonNull(PolymorphicChildUtil.createChildSlumberer(type))
+
+                // Singleton Object instance
+                cls.objectInstance != null ->
+                    type.wrapIfNonNull(ObjectInstanceCodec(cls.objectInstance!!) as Slumberer)
 
                 // Data classes
                 cls.isData ->

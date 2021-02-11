@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: io.kotest:kotest-assertions-api-metadata:4.3.2" type="kotlin.common">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-assertions-api-metadata/4.3.2/734739b28af2e6bf5d2352432c6ab837ed27eed4/kotest-assertions-api-metadata-4.3.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-assertions-api-metadata/4.3.2/e5bce3aa41593d546095c174e92630bbd952cb99/kotest-assertions-api-metadata-4.3.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
