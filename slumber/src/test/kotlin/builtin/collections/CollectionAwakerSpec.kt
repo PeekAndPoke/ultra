@@ -7,6 +7,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.types.shouldBeInstanceOf
 
 class CollectionAwakerSpec : StringSpec({
 
@@ -62,11 +63,13 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a MutableList must work" {
 
-        val subject = CollectionAwaker.forMutableList(TypeRef.Int.list.type)
+        val subject = CollectionAwaker.forList(TypeRef.Int.list.type)
 
         val codec = Codec.default
 
         val result = subject.awake(listOf("1", 2), codec.awakerContext)!!
+
+        result.shouldBeInstanceOf<MutableList<*>>()
 
         MutableList::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe listOf(1, 2)
@@ -74,11 +77,13 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a MutableList of nullables must work" {
 
-        val subject = CollectionAwaker.forMutableList(TypeRef.Int.nullable.list.type)
+        val subject = CollectionAwaker.forList(TypeRef.Int.nullable.list.type)
 
         val codec = Codec.default
 
         val result = subject.awake(listOf("1", 2, null), codec.awakerContext)!!
+
+        result.shouldBeInstanceOf<MutableList<*>>()
 
         MutableList::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe listOf(1, 2, null)
@@ -86,7 +91,7 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a MutableList of non-nullables must fail, when a null is found" {
 
-        val subject = CollectionAwaker.forMutableList(TypeRef.Int.list.type)
+        val subject = CollectionAwaker.forList(TypeRef.Int.list.type)
 
         val codec = Codec.default
 
@@ -100,14 +105,52 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a MutableList (in a data class) must work" {
 
-        data class DataClass(val items: MutableList<Int>)
+        data class DataClass(
+            val items: List<Int>,
+            val mutable: MutableList<Int>
+        )
 
         val codec = Codec.default
 
-        val result = codec.awake(DataClass::class, mapOf("items" to listOf("1", 2)))!!
+        val result = codec.awake(
+            DataClass::class, mapOf(
+                "items" to listOf("1", 2),
+                "mutable" to listOf("3", 4),
+            )
+        )!!
+
+        result.items.shouldBeInstanceOf<List<*>>()
+        result.mutable.shouldBeInstanceOf<MutableList<*>>()
 
         MutableList::class.java.isAssignableFrom(result.items::class.java) shouldBe true
         result.items shouldBe listOf(1, 2)
+
+        result.mutable.apply { add(5) } shouldBe listOf(3, 4, 5)
+    }
+
+    "Awaking an empty MutableList (in a data class) must work" {
+
+        data class DataClass(
+            val items: List<Int>,
+            val mutable: MutableList<Int>
+        )
+
+        val codec = Codec.default
+
+        val result = codec.awake(
+            DataClass::class, mapOf(
+                "items" to listOf("1", 2),
+                "mutable" to listOf(),
+            )
+        )!!
+
+        result.items.shouldBeInstanceOf<List<*>>()
+        result.mutable.shouldBeInstanceOf<MutableList<*>>()
+
+        MutableList::class.java.isAssignableFrom(result.items::class.java) shouldBe true
+        result.items shouldBe listOf(1, 2)
+
+        result.mutable.apply { add(5) } shouldBe listOf(5)
     }
 
     "Awaking a Set must work" {
@@ -162,11 +205,13 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a MutableSet must work" {
 
-        val subject = CollectionAwaker.forMutableSet(TypeRef.Int.list.type)
+        val subject = CollectionAwaker.forSet(TypeRef.Int.list.type)
 
         val codec = Codec.default
 
         val result = subject.awake(listOf("1", 2), codec.awakerContext)!!
+
+        result.shouldBeInstanceOf<MutableSet<*>>()
 
         MutableSet::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe mutableSetOf(1, 2)
@@ -174,11 +219,13 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a MutableSet of nullables must work" {
 
-        val subject = CollectionAwaker.forMutableSet(TypeRef.Int.nullable.list.type)
+        val subject = CollectionAwaker.forSet(TypeRef.Int.nullable.list.type)
 
         val codec = Codec.default
 
         val result = subject.awake(listOf("1", 2, null), codec.awakerContext)!!
+
+        result.shouldBeInstanceOf<MutableSet<*>>()
 
         MutableSet::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe mutableSetOf(1, 2, null)
@@ -186,7 +233,7 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a MutableSet of non-nullables must fail, when a null is found" {
 
-        val subject = CollectionAwaker.forMutableSet(TypeRef.Int.list.type)
+        val subject = CollectionAwaker.forList(TypeRef.Int.list.type)
 
         val codec = Codec.default
 
@@ -205,6 +252,8 @@ class CollectionAwakerSpec : StringSpec({
         val codec = Codec.default
 
         val result = codec.awake(DataClass::class, mapOf("items" to listOf("1", 2)))!!
+
+        result.items.shouldBeInstanceOf<MutableSet<*>>()
 
         MutableSet::class.java.isAssignableFrom(result.items::class.java) shouldBe true
         result.items shouldBe setOf(1, 2)

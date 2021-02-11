@@ -10,25 +10,25 @@ class CollectionAwaker(
 
     companion object {
 
-        fun forList(type: KType) = CollectionAwaker(type.arguments[0].type!!) { toList() }
+        fun forList(type: KType) = CollectionAwaker(type.arguments[0].type!!) {
+            toMutableList()
+        }
 
-        fun forMutableList(type: KType) = CollectionAwaker(type.arguments[0].type!!) { toMutableList() }
-
-        fun forSet(type: KType) = CollectionAwaker(type.arguments[0].type!!) { toSet() }
-
-        fun forMutableSet(type: KType) = CollectionAwaker(type.arguments[0].type!!) { toMutableSet() }
+        fun forSet(type: KType) = CollectionAwaker(type.arguments[0].type!!) {
+            toMutableSet()
+        }
     }
 
     override fun awake(data: Any?, context: Awaker.Context): Any? = when (data) {
 
         is Array<*> -> awakeInternal(data.toList(), context)
 
-        is Iterable<*> -> awakeInternal(data, context)
+        is Iterable<*> -> awakeInternal(data.toList(), context)
 
         else -> null
     }
 
-    private fun awakeInternal(data: Iterable<*>, context: Awaker.Context): Any? {
+    private fun awakeInternal(data: List<*>, context: Awaker.Context): Any {
 
         return data
             .mapIndexed { idx, item ->

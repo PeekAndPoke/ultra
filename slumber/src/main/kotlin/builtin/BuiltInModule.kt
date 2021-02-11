@@ -58,20 +58,16 @@ object BuiltInModule : SlumberModule {
                 cls == String::class -> type.wrapIfNonNull(StringAwaker)
 
                 // Lists
-                cls == Iterable::class || cls == List::class ->
+                cls == Iterable::class || cls == List::class || cls == MutableList::class ->
                     type.wrapIfNonNull(CollectionAwaker.forList(type))
-                cls == MutableList::class ->
-                    type.wrapIfNonNull(CollectionAwaker.forMutableList(type))
-                cls == Set::class ->
+
+                // Sets
+                cls == Set::class || cls == MutableSet::class ->
                     type.wrapIfNonNull(CollectionAwaker.forSet(type))
-                cls == MutableSet::class ->
-                    type.wrapIfNonNull(CollectionAwaker.forMutableSet(type))
 
                 // Maps
-                cls == Map::class ->
+                cls == Map::class || cls == MutableMap::class ->
                     type.wrapIfNonNull(MapAwaker.forMap(type))
-                cls == MutableMap::class ->
-                    type.wrapIfNonNull(MapAwaker.forMutableMap(type))
 
                 // Enum
                 cls.java.isEnum ->

@@ -11,9 +11,6 @@ class MapAwaker(
 
     companion object {
         fun forMap(type: KType) =
-            MapAwaker(type.arguments[0].type!!, type.arguments[1].type!!) { toMap() }
-
-        fun forMutableMap(type: KType) =
             MapAwaker(type.arguments[0].type!!, type.arguments[1].type!!) { toMap().toMutableMap() }
     }
 
