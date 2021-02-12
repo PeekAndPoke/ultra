@@ -14,6 +14,10 @@ fun JWTCreator.Builder.expiresInMinutes(minutes: Long) = apply {
 
 fun JWTCreator.Builder.encode(namespace: String = "permissions", permissions: UserPermissions) = apply {
 
+    if (permissions.isSuperUser) {
+        withClaim("$namespace/superuser", permissions.isSuperUser)
+    }
+
     if (permissions.organisations.isNotEmpty()) {
         withArrayClaim("$namespace/organisations", permissions.organisations.toTypedArray())
     }

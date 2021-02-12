@@ -3,6 +3,7 @@ package de.peekandpoke.ultra.security.user
 import de.peekandpoke.ultra.common.containsAny
 
 data class UserPermissions(
+    val isSuperUser: Boolean = false,
     val organisations: Set<String> = emptySet(),
     val branches: Set<String> = emptySet(),
     val groups: Set<String> = emptySet(),

@@ -7,6 +7,7 @@ import de.peekandpoke.ultra.security.user.UserPermissions
 fun Claim.asStringSet(): Set<String> = asList(String::class.java)?.toSet() ?: emptySet()
 
 fun Payload.extractPermissions(namespace: String = "permissions"): UserPermissions = UserPermissions(
+    isSuperUser = getClaim("$namespace/superuser")?.asBoolean() ?: false,
     organisations = getClaim("$namespace/organisations").asStringSet(),
     branches = getClaim("$namespace/branches").asStringSet(),
     groups = getClaim("$namespace/groups").asStringSet(),
