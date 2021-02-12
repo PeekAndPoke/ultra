@@ -11,6 +11,20 @@ data class UserPermissions(
     val permissions: Set<String> = emptySet()
 ) {
     /**
+     * Merges the permission with the [other] permission.
+     *
+     * NOTE: SuperUser rights will be given if this or the [other] provide it.
+     */
+    infix fun mergedWith(other: UserPermissions) = UserPermissions(
+        isSuperUser = isSuperUser || other.isSuperUser,
+        organisations = organisations.plus(other.organisations),
+        branches = branches.plus(other.branches),
+        groups = groups.plus(other.groups),
+        roles = roles.plus(other.roles),
+        permissions = permissions.plus(other.permissions),
+    )
+
+    /**
      * Return 'true' when the given [organisation] is present
      */
     fun hasOrganisation(organisation: String) = this.organisations.contains(organisation)
