@@ -206,6 +206,33 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         addSingleton(srv, ServiceProducer.forClass(impl))
 
     /**
+     * Create a singleton via a factory method with up to 7 injected parameters
+     *
+     * The service can by injected by the type [SRV] and its base types
+     * The actual implementation will have the type [IMPL]
+     */
+    fun <SRV : Any, IMPL : SRV> singleton(srv: KClass<SRV>, factory: Function<IMPL>) = when (factory) {
+        is Function0<IMPL> ->
+            addSingleton(srv, ServiceProducer.forFactory(factory))
+        is Function1<*, IMPL> ->
+            addSingleton(srv, ServiceProducer.forFactory(factory))
+        is Function2<*, *, IMPL> ->
+            addSingleton(srv, ServiceProducer.forFactory(factory))
+        is Function3<*, *, *, IMPL> ->
+            addSingleton(srv, ServiceProducer.forFactory(factory))
+        is Function4<*, *, *, *, IMPL> ->
+            addSingleton(srv, ServiceProducer.forFactory(factory))
+        is Function5<*, *, *, *, *, IMPL> ->
+            addSingleton(srv, ServiceProducer.forFactory(factory))
+        is Function6<*, *, *, *, *, *, IMPL> ->
+            addSingleton(srv, ServiceProducer.forFactory(factory))
+        is Function7<*, *, *, *, *, *, *, IMPL> ->
+            addSingleton(srv, ServiceProducer.forFactory(factory))
+
+        else -> throw InvalidServiceFactory("Currently only up to 7 injection parameters are supported")
+    }
+
+    /**
      * Create a singleton via a factory method with zero injected parameters
      *
      * The service can by injected by the type [SRV] and its base types

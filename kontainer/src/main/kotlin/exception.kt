@@ -1,9 +1,13 @@
 package de.peekandpoke.ultra.kontainer
 
-class InvalidClassProvided(message: String) : Throwable(message)
+open class KontainerException(message: String) : Throwable(message)
 
-class KontainerInconsistent(message: String) : Throwable(message)
+class InvalidServiceFactory(message: String) : KontainerException(message)
 
-class ServiceNotFound(message: String) : Throwable(message)
+class InvalidClassProvided(message: String) : KontainerException(message)
 
-class ServiceAmbiguous(message: String) : Throwable(message)
+class KontainerInconsistent(message: String) : KontainerException(message)
+
+class ServiceNotFound(message: String) : KontainerException(message)
+
+class ServiceAmbiguous(message: String) : KontainerException(message)

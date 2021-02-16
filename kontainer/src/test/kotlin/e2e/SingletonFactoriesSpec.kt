@@ -274,4 +274,48 @@ class SingletonFactoriesSpec : StringSpec({
 
         validateWithBase(subject, 1111111)
     }
+
+    "Singleton factory with zero config params defined via dynamic function" {
+
+        val subject = kontainer {
+            module(configs)
+
+            val provider: Function<Config> = { Config(0) }
+
+            singleton(Base::class, provider)
+
+        }.useWith()
+
+        validateWithBase(subject, 0)
+    }
+
+    "Singleton factory with one config params defined via dynamic function" {
+
+        val subject = kontainer {
+            module(configs)
+
+            val provider: Function<Config> = { c1: Int -> Config(c1) }
+
+            singleton(Base::class, provider)
+
+        }.useWith()
+
+        validateWithBase(subject, 1)
+    }
+
+    "Singleton factory with seven config params defined via dynamic function" {
+
+        val subject = kontainer {
+            module(configs)
+
+            val provider: Function<Config> = { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
+                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7)
+            }
+
+            singleton(Base::class, provider)
+
+        }.useWith()
+
+        validateWithBase(subject, 1111111)
+    }
 })
