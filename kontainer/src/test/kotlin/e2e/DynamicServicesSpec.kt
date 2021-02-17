@@ -140,7 +140,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic0 { DynamicService(100) }
+            dynamic { DynamicService(100) }
         }
 
         val subject = blueprint.useWith()
@@ -159,7 +159,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic0 { DynamicService(100) }
+            dynamic { DynamicService(100) }
         }
 
         val subject = blueprint.useWith()
@@ -177,7 +177,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic0 { DynamicService(100) }
+            dynamic { DynamicService(100) }
         }
 
         val subjectOne = blueprint.useWith()
@@ -196,7 +196,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic0 { DynamicService(100) }
+            dynamic { DynamicService(100) }
         }
 
         val subject = blueprint.useWith(DynamicService(200))
@@ -221,7 +221,7 @@ class DynamicServicesSpec : StringSpec({
         class DerivedService(value: Int) : DynamicService(value)
 
         val blueprint = kontainer {
-            dynamic0 { DynamicService(100) }
+            dynamic { DynamicService(100) }
         }
 
         val subject = blueprint.useWith(DerivedService(200))

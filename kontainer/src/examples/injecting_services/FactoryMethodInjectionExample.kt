@@ -13,12 +13,8 @@ class FactoryMethodInjectionExample : SimpleExample() {
         For example when you have a service class expecting constructor parameters 
         that are not known to the kontainer.
         
-        Factory methods are available for singletons, dynamics and prototypes from zero up to seven parameters.
+        Factory methods are available for singletons, dynamics and prototypes from zero up to ten parameters.
         
-        **NOTICE:** There is one quirk! The factory methods with zero parameters are: 
-        - singleton0 { ... }
-        - prototype0 { ... }
-        - dynamic0 { ... }
     """.trimIndent()
 
     override fun run() {

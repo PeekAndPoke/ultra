@@ -163,7 +163,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Singleton Services
+    // Singleton Instances
     /////
 
     /**
@@ -182,6 +182,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      */
     fun <SRV : Any, IMPL : SRV> instance(srv: KClass<SRV>, instance: IMPL) =
         addSingleton(srv, ServiceProducer.forInstance(instance))
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Singleton Services
+    /////
 
     /**
      * Registers a singleton service
@@ -206,183 +210,22 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         addSingleton(srv, ServiceProducer.forClass(impl))
 
     /**
-     * Create a singleton via a factory method with up to 7 injected parameters
+     * Create a singleton via a factory method with up to 10 injected parameters
      *
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    fun <SRV : Any, IMPL : SRV> singleton(srv: KClass<SRV>, factory: Function<IMPL>) = when (factory) {
-        is Function0<IMPL> ->
-            addSingleton(srv, ServiceProducer.forFactory(factory))
-        is Function1<*, IMPL> ->
-            addSingleton(srv, ServiceProducer.forFactory(factory))
-        is Function2<*, *, IMPL> ->
-            addSingleton(srv, ServiceProducer.forFactory(factory))
-        is Function3<*, *, *, IMPL> ->
-            addSingleton(srv, ServiceProducer.forFactory(factory))
-        is Function4<*, *, *, *, IMPL> ->
-            addSingleton(srv, ServiceProducer.forFactory(factory))
-        is Function5<*, *, *, *, *, IMPL> ->
-            addSingleton(srv, ServiceProducer.forFactory(factory))
-        is Function6<*, *, *, *, *, *, IMPL> ->
-            addSingleton(srv, ServiceProducer.forFactory(factory))
-        is Function7<*, *, *, *, *, *, *, IMPL> ->
-            addSingleton(srv, ServiceProducer.forFactory(factory))
-
-        else -> throw InvalidServiceFactory("Currently only up to 7 injection parameters are supported")
-    }
-
-    /**
-     * Create a singleton via a factory method with zero injected parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV> singleton0(srv: KClass<SRV>, factory: () -> IMPL) =
+    fun <SRV : Any, IMPL : SRV> singleton(srv: KClass<SRV>, factory: Function<IMPL>) =
         addSingleton(srv, ServiceProducer.forFactory(factory))
 
     /**
-     * Create a singleton via a factory method with zero injected parameters
+     * Create a singleton via a factory method with up to 10 injected parameters
      *
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV> singleton0(noinline factory: () -> IMPL) =
-        singleton0(SRV::class, factory)
-
-    /**
-     * Create a singleton via a factory method with one injected parameter
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1> singleton(srv: KClass<SRV>, factory: (P1) -> IMPL) =
-        addSingleton(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a singleton via a factory method with one injected parameter
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1> singleton(noinline factory: (P1) -> IMPL) =
+    inline fun <reified SRV : Any, IMPL : SRV> singleton(factory: Function<IMPL>) =
         singleton(SRV::class, factory)
-
-    /**
-     * Create a singleton via a factory method with two injected parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2> singleton(srv: KClass<SRV>, factory: (P1, P2) -> IMPL) =
-        addSingleton(srv, ServiceProducer.forFactory(factory))
-
-
-    /**
-     * Create a singleton via a factory method with two injected parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2> singleton(noinline factory: (P1, P2) -> IMPL) =
-        singleton(SRV::class, factory)
-
-    /**
-     * Create a singleton via a factory method with three injected parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2, P3> singleton(srv: KClass<SRV>, factory: (P1, P2, P3) -> IMPL) =
-        addSingleton(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a singleton via a factory method with three injected parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3> singleton(noinline factory: (P1, P2, P3) -> IMPL) =
-        singleton(SRV::class, factory)
-
-    /**
-     * Create a singleton via a factory method with four injected parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4> singleton(srv: KClass<SRV>, factory: (P1, P2, P3, P4) -> IMPL) =
-        addSingleton(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a singleton via a factory method with four injected parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4> singleton(noinline factory: (P1, P2, P3, P4) -> IMPL) =
-        singleton(SRV::class, factory)
-
-    /**
-     * Create a singleton via a factory method with five injected parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5> singleton(
-        srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5) -> IMPL
-    ) = addSingleton(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a singleton via a factory method with five injected parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5> singleton(
-        noinline factory: (P1, P2, P3, P4, P5) -> IMPL
-    ) = singleton(SRV::class, factory)
-
-    /**
-     * Create a singleton via a factory method with six injected parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6> singleton(
-        srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6) -> IMPL
-    ) = addSingleton(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a singleton via a factory method with six injected parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6> singleton(
-        noinline factory: (P1, P2, P3, P4, P5, P6) -> IMPL
-    ) = singleton(SRV::class, factory)
-
-    /**
-     * Create a singleton via a factory method with six injected parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7> singleton(
-        srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7) -> IMPL
-    ) = addSingleton(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a singleton via a factory method with seven injected parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7> singleton(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7) -> IMPL
-    ) = singleton(SRV::class, factory)
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Prototype Services
@@ -412,154 +255,22 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         addPrototype(srv, ServiceProducer.forClass(impl))
 
     /**
-     * Registers a prototype via a factory method with zero injected parameter
+     * Create a Prototype via a factory method with up to 10 injected parameters
      *
-     * The service can be injected by the type [SRV] or its base types.
+     * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    fun <SRV : Any, IMPL : SRV> prototype0(srv: KClass<SRV>, factory: () -> IMPL) =
+    fun <SRV : Any, IMPL : SRV> prototype(srv: KClass<SRV>, factory: Function<IMPL>) =
         addPrototype(srv, ServiceProducer.forFactory(factory))
 
     /**
-     * Registers a prototype via a factory method with zero injected parameter
+     * Create a Prototype via a factory method with up to 10 injected parameters
      *
-     * The service can be injected by the type [SRV] or its base types.
+     * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV> prototype0(noinline factory: () -> IMPL) =
-        prototype0(SRV::class, factory)
-
-    /**
-     * Registers a prototype via a factory method with one injected parameter
-     *
-     * The service can be injected by the type [SRV] or its base types.
-     * The actual implementation will have the type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1> prototype(srv: KClass<SRV>, factory: (P1) -> IMPL) =
-        addPrototype(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Registers a prototype via a factory method with one injected parameter
-     *
-     * The service can be injected by the type [SRV] or its base types.
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1> prototype(noinline factory: (P1) -> IMPL) =
+    inline fun <reified SRV : Any, IMPL : SRV> prototype(factory: Function<IMPL>) =
         prototype(SRV::class, factory)
-
-    /**
-     * Registers a prototype via a factory method with two injected parameter
-     *
-     * The service can be injected by the type [SRV] or its base types.
-     * The actual implementation will have the type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2> prototype(srv: KClass<SRV>, factory: (P1, P2) -> IMPL) =
-        addPrototype(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Registers a prototype via a factory method with two injected parameter
-     *
-     * The service can be injected by the type [SRV] or its base types.
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2> prototype(noinline factory: (P1, P2) -> IMPL) =
-        prototype(SRV::class, factory)
-
-    /**
-     * Registers a prototype via a factory method with three injected parameter
-     *
-     * The service can be injected by the type [SRV] or its base types.
-     * The actual implementation will have the type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2, P3> prototype(srv: KClass<SRV>, factory: (P1, P2, P3) -> IMPL) =
-        addPrototype(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Registers a prototype via a factory method with three injected parameter
-     *
-     * The service can be injected by the type [SRV] or its base types.
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3> prototype(noinline factory: (P1, P2, P3) -> IMPL) =
-        prototype(SRV::class, factory)
-
-    /**
-     * Registers a prototype via a factory method with four injected parameter
-     *
-     * The service can be injected by the type [SRV] or its base types.
-     * The actual implementation will have the type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4> prototype(srv: KClass<SRV>, factory: (P1, P2, P3, P4) -> IMPL) =
-        addPrototype(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Registers a prototype via a factory method with four injected parameter
-     *
-     * The service can be injected by the type [SRV] or its base types.
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4> prototype(noinline factory: (P1, P2, P3, P4) -> IMPL) =
-        prototype(SRV::class, factory)
-
-    /**
-     * Registers a prototype via a factory method with five injected parameter
-     *
-     * The service can be injected by the type [SRV] or its base types.
-     * The actual implementation will have the type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5> prototype(
-        srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5) -> IMPL
-    ) = addPrototype(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Registers a prototype via a factory method with five injected parameter
-     *
-     * The service can be injected by the type [SRV] or its base types.
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5> prototype(
-        noinline factory: (P1, P2, P3, P4, P5) -> IMPL
-    ) = prototype(SRV::class, factory)
-
-    /**
-     * Registers a prototype via a factory method with six injected parameter
-     *
-     * The service can be injected by the type [SRV] or its base types.
-     * The actual implementation will have the type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6> prototype(
-        srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6) -> IMPL
-    ) = addPrototype(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Registers a prototype via a factory method with six injected parameter
-     *
-     * The service can be injected by the type [SRV] or its base types.
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6> prototype(
-        noinline factory: (P1, P2, P3, P4, P5, P6) -> IMPL
-    ) = prototype(SRV::class, factory)
-
-    /**
-     * Registers a prototype via a factory method with seven injected parameter
-     *
-     * The service can be injected by the type [SRV] or its base types.
-     * The actual implementation will have the type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7> prototype(
-        srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7) -> IMPL
-    ) = addPrototype(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Registers a prototype via a factory method with seven injected parameter
-     *
-     * The service can be injected by the type [SRV] or its base types.
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7> prototype(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7) -> IMPL
-    ) = prototype(SRV::class, factory)
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic Services
@@ -589,152 +300,20 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         addDynamic(srv, ServiceProducer.forClass(impl))
 
     /**
-     * Registers a dynamic service via a factory method with zero injected parameter
+     * Create a dynamic singleton via a factory method with up to 10 injected parameters
      *
-     * The service can be injected by the type [SRV] and its base types.
-     * The actual implementation is registered with type [IMPL]
+     * The service can by injected by the type [SRV] and its base types
+     * The actual implementation will have the type [IMPL]
      */
-    fun <SRV : Any, IMPL : SRV> dynamic0(srv: KClass<SRV>, factory: () -> IMPL) =
+    fun <SRV : Any, IMPL : SRV> dynamic(srv: KClass<SRV>, factory: Function<IMPL>) =
         addDynamic(srv, ServiceProducer.forFactory(factory))
 
     /**
-     * Registers a dynamic service via a factory method with zero injected parameter
+     * Create a singleton via a factory method with up to 10 injected parameters
      *
-     * The service can be injected by the type [SRV] and its base types.
-     * The actual implementation is registered with type [IMPL]
+     * The service can by injected by the type [SRV] and its base types
+     * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV> dynamic0(noinline factory: () -> IMPL) =
-        dynamic0(SRV::class, factory)
-
-    /**
-     * Registers a dynamic service via a factory method with one injected parameter
-     *
-     * The service can be injected by the type [SRV] and its base types.
-     * The actual implementation is registered with type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1> dynamic(srv: KClass<SRV>, factory: (P1) -> IMPL) =
-        addDynamic(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Registers a dynamic service via a factory method with one injected parameter
-     *
-     * The service can be injected by the type [SRV] and its base types.
-     * The actual implementation is registered with type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1> dynamic(noinline factory: (P1) -> IMPL) =
+    inline fun <reified SRV : Any, IMPL : SRV> dynamic(factory: Function<IMPL>) =
         dynamic(SRV::class, factory)
-
-    /**
-     * Registers a dynamic service via a factory method with two injected parameters
-     *
-     * The service can be injected by the type [SRV] and its base types.
-     * The actual implementation is registered with type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2> dynamic(srv: KClass<SRV>, factory: (P1, P2) -> IMPL) =
-        addDynamic(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Registers a dynamic service via a factory method with two injected parameters
-     *
-     * The service can be injected by the type [SRV] and its base types.
-     * The actual implementation is registered with type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2> dynamic(noinline factory: (P1, P2) -> IMPL) =
-        dynamic(SRV::class, factory)
-
-    /**
-     * Registers a dynamic service via a factory method with three injected parameters
-     *
-     * The service can be injected by the type [SRV] and its base types.
-     * The actual implementation is registered with type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2, P3> dynamic(srv: KClass<SRV>, factory: (P1, P2, P3) -> IMPL) =
-        addDynamic(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Registers a dynamic service via a factory method with three injected parameters
-     *
-     * The service can be injected by the type [SRV] and its base types.
-     * The actual implementation is registered with type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3> dynamic(noinline factory: (P1, P2, P3) -> IMPL) =
-        dynamic(SRV::class, factory)
-
-    /**
-     * Registers a dynamic service via a factory method with four injected parameters
-     *
-     * The service can be injected by the type [SRV] and its base types.
-     * The actual implementation is registered with type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4> dynamic(srv: KClass<SRV>, factory: (P1, P2, P3, P4) -> IMPL) =
-        addDynamic(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Registers a dynamic service via a factory method with four injected parameters
-     *
-     * The service can be injected by the type [SRV] and its base types.
-     * The actual implementation is registered with type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4> dynamic(noinline factory: (P1, P2, P3, P4) -> IMPL) =
-        dynamic(SRV::class, factory)
-
-    /**
-     * Registers a dynamic service via a factory method with five injected parameters
-     *
-     * The service can be injected by the type [SRV] and its base types.
-     * The actual implementation is registered with type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5> dynamic(
-        srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5) -> IMPL
-    ) = addDynamic(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Registers a dynamic service via a factory method with five injected parameters
-     *
-     * The service can be injected by the type [SRV] and its base types.
-     * The actual implementation is registered with type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5> dynamic(
-        noinline factory: (P1, P2, P3, P4, P5) -> IMPL
-    ) = dynamic(SRV::class, factory)
-
-    /**
-     * Registers a dynamic service via a factory method with six injected parameters
-     *
-     * The service can be injected by the type [SRV] and its base types.
-     * The actual implementation is registered with type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6> dynamic(
-        srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6) -> IMPL
-    ) = addDynamic(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Registers a dynamic service via a factory method with six injected parameters
-     *
-     * The service can be injected by the type [SRV] and its base types.
-     * The actual implementation is registered with type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6> dynamic(
-        noinline factory: (P1, P2, P3, P4, P5, P6) -> IMPL
-    ) = dynamic(SRV::class, factory)
-
-    /**
-     * Registers a dynamic service via a factory method with seven injected parameters
-     *
-     * The service can be injected by the type [SRV] and its base types.
-     * The actual implementation is registered with type [IMPL]
-     */
-    fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7> dynamic(
-        srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7) -> IMPL
-    ) = addDynamic(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Registers a dynamic service via a factory method with seven injected parameters
-     *
-     * The service can be injected by the type [SRV] and its base types.
-     * The actual implementation is registered with type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7> dynamic(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7) -> IMPL
-    ) = dynamic(SRV::class, factory)
 }

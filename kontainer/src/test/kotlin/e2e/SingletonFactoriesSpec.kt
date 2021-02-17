@@ -24,6 +24,9 @@ class SingletonFactoriesSpec : StringSpec({
         config("c5", 10000)
         config("c6", 100000)
         config("c7", 1000000)
+        config("c8", 10000000)
+        config("c9", 100000000)
+        config("c10", 1000000000)
     }
 
     fun validateWithoutBase(subject: Kontainer, value: Int) {
@@ -96,7 +99,7 @@ class SingletonFactoriesSpec : StringSpec({
     "Singleton factory with zero params" {
 
         val subject = kontainer {
-            singleton0 { Config(0) }
+            singleton { Config(0) }
         }.useWith()
 
         validateWithoutBase(subject, 0)
@@ -105,7 +108,7 @@ class SingletonFactoriesSpec : StringSpec({
     "Singleton factory with zero params defined with bas class" {
 
         val subject = kontainer {
-            singleton0(Base::class) { Config(0) }
+            singleton(Base::class) { Config(0) }
         }.useWith()
 
         validateWithBase(subject, 0)
@@ -275,6 +278,84 @@ class SingletonFactoriesSpec : StringSpec({
         validateWithBase(subject, 1111111)
     }
 
+    "Singleton factory with eight config params" {
+
+        val subject = kontainer {
+            module(configs)
+
+            singleton { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int ->
+                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8)
+            }
+        }.useWith()
+
+        validateWithoutBase(subject, 11111111)
+    }
+
+    "Singleton factory with eight config params defined with base class" {
+
+        val subject = kontainer {
+            module(configs)
+
+            singleton(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int ->
+                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8)
+            }
+        }.useWith()
+
+        validateWithBase(subject, 11111111)
+    }
+
+    "Singleton factory with nine config params" {
+
+        val subject = kontainer {
+            module(configs)
+
+            singleton { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int, c9: Int ->
+                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9)
+            }
+        }.useWith()
+
+        validateWithoutBase(subject, 111111111)
+    }
+
+    "Singleton factory with nine config params defined with base class" {
+
+        val subject = kontainer {
+            module(configs)
+
+            singleton(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int, c9: Int ->
+                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9)
+            }
+        }.useWith()
+
+        validateWithBase(subject, 111111111)
+    }
+
+    "Singleton factory with ten config params" {
+
+        val subject = kontainer {
+            module(configs)
+
+            singleton { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int, c9: Int, c10: Int ->
+                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9 + c10)
+            }
+        }.useWith()
+
+        validateWithoutBase(subject, 1111111111)
+    }
+
+    "Singleton factory with ten config params defined with base class" {
+
+        val subject = kontainer {
+            module(configs)
+
+            singleton(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int, c9: Int, c10: Int ->
+                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9 + c10)
+            }
+        }.useWith()
+
+        validateWithBase(subject, 1111111111)
+    }
+
     "Singleton factory with zero config params defined via dynamic function" {
 
         val subject = kontainer {
@@ -317,5 +398,22 @@ class SingletonFactoriesSpec : StringSpec({
         }.useWith()
 
         validateWithBase(subject, 1111111)
+    }
+
+    "Singleton factory with ten config params defined via dynamic function" {
+
+        val subject = kontainer {
+            module(configs)
+
+            val provider: Function<Config> =
+                { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int, c9: Int, c10: Int ->
+                    Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9 + c10)
+                }
+
+            singleton(Base::class, provider)
+
+        }.useWith()
+
+        validateWithBase(subject, 1111111111)
     }
 })

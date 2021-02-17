@@ -89,7 +89,7 @@ class PrototypeFactoriesSpec : StringSpec({
     "Prototype factory with zero params" {
 
         val subject = kontainer {
-            prototype0 { Config(0) }
+            prototype { Config(0) }
         }.useWith()
 
         validateWithoutBase(subject, 0)
@@ -98,7 +98,7 @@ class PrototypeFactoriesSpec : StringSpec({
     "Prototype factory with zero params registered with base class" {
 
         val subject = kontainer {
-            prototype0(Base::class) { Config(0) }
+            prototype(Base::class) { Config(0) }
         }.useWith()
 
         validateWithBase(subject, 0)

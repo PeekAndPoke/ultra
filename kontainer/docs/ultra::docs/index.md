@@ -384,15 +384,9 @@ Next: 2
 
 Sometimes pure constructor injection is not enough.  
 
-For example when you have a service class expecting constructor parameters 
-that are not known to the kontainer.
+For example when you have a service class expecting constructor parameters that are not known to the kontainer.
 
-Factory methods are available for singletons, dynamics and prototypes from zero up to seven parameters.
-
-**NOTICE:** There is one quirk! The factory methods with zero parameters are: 
-- singleton0 { ... }
-- prototype0 { ... }
-- dynamic0 { ... }
+Factory methods are available for singletons, dynamics and prototypes from zero up to ten parameters.
 
 (see the full [example](../../src/examples/injecting_services/FactoryMethodInjectionExample.kt))
 

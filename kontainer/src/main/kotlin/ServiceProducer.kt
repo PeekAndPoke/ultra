@@ -60,6 +60,22 @@ class ServiceProducer internal constructor(
             }
         }
 
+        fun <R : Any> forFactory(factory: Function<R>) = when (factory) {
+            is Function0<R> -> forFactory(factory)
+            is Function1<*, R> -> forFactory(factory)
+            is Function2<*, *, R> -> forFactory(factory)
+            is Function3<*, *, *, R> -> forFactory(factory)
+            is Function4<*, *, *, *, R> -> forFactory(factory)
+            is Function5<*, *, *, *, *, R> -> forFactory(factory)
+            is Function6<*, *, *, *, *, *, R> -> forFactory(factory)
+            is Function7<*, *, *, *, *, *, *, R> -> forFactory(factory)
+            is Function8<*, *, *, *, *, *, *, *, R> -> forFactory(factory)
+            is Function9<*, *, *, *, *, *, *, *, *, R> -> forFactory(factory)
+            is Function10<*, *, *, *, *, *, *, *, *, *, R> -> forFactory(factory)
+
+            else -> throw InvalidServiceFactory("Currently only up to 10 injection parameters are supported")
+        }
+
         /**
          * Creates a producer for a factory method with zero parameters.
          */
@@ -129,6 +145,65 @@ class ServiceProducer internal constructor(
             ServiceProducer(factory.reflect()!!.parameters) { _, p ->
                 @Suppress("UNCHECKED_CAST")
                 factory.invoke(p[0] as P1, p[1] as P2, p[2] as P3, p[3] as P4, p[4] as P5, p[5] as P6, p[6] as P7)
+            }
+
+        /**
+         * Creates a producer for a factory method with eight parameters.
+         */
+        fun <R : Any, P1, P2, P3, P4, P5, P6, P7, P8> forFactory(factory: (P1, P2, P3, P4, P5, P6, P7, P8) -> R) =
+            ServiceProducer(factory.reflect()!!.parameters) { _, p ->
+                @Suppress("UNCHECKED_CAST")
+                factory.invoke(
+                    p[0] as P1,
+                    p[1] as P2,
+                    p[2] as P3,
+                    p[3] as P4,
+                    p[4] as P5,
+                    p[5] as P6,
+                    p[6] as P7,
+                    p[7] as P8,
+                )
+            }
+
+        /**
+         * Creates a producer for a factory method with nine parameters.
+         */
+        fun <R : Any, P1, P2, P3, P4, P5, P6, P7, P8, P9> forFactory(factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9) -> R) =
+            ServiceProducer(factory.reflect()!!.parameters) { _, p ->
+                @Suppress("UNCHECKED_CAST")
+                factory.invoke(
+                    p[0] as P1,
+                    p[1] as P2,
+                    p[2] as P3,
+                    p[3] as P4,
+                    p[4] as P5,
+                    p[5] as P6,
+                    p[6] as P7,
+                    p[7] as P8,
+                    p[8] as P9,
+                )
+            }
+
+        /**
+         * Creates a producer for a factory method with ten parameters.
+         */
+        fun <R : Any, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10> forFactory(
+            factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) -> R
+        ) =
+            ServiceProducer(factory.reflect()!!.parameters) { _, p ->
+                @Suppress("UNCHECKED_CAST")
+                factory.invoke(
+                    p[0] as P1,
+                    p[1] as P2,
+                    p[2] as P3,
+                    p[3] as P4,
+                    p[4] as P5,
+                    p[5] as P6,
+                    p[6] as P7,
+                    p[7] as P8,
+                    p[8] as P9,
+                    p[9] as P10,
+                )
             }
     }
 }
