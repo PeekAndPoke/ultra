@@ -6,5 +6,6 @@ enum class LogLevel(val severity: Int) {
     WARNING(400),
     INFO(300),
     DEBUG(200),
-    TRACE(100)
+    TRACE(100),
+    ALL(0),
 }
