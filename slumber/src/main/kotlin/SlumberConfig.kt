@@ -4,10 +4,10 @@ import de.peekandpoke.ultra.slumber.builtin.BuiltInModule
 import de.peekandpoke.ultra.slumber.builtin.DateTimeModule
 import kotlin.reflect.KType
 
-class Config(private val modules: List<SlumberModule> = listOf()) {
+class SlumberConfig(val modules: List<SlumberModule> = listOf()) {
 
     companion object {
-        val default = Config(
+        val default = SlumberConfig(
             modules = listOf(
                 DateTimeModule,
                 BuiltInModule,
@@ -18,6 +18,18 @@ class Config(private val modules: List<SlumberModule> = listOf()) {
     private val awakerLookup = mutableMapOf<KType, Awaker?>()
 
     private val slumbererLookUp = mutableMapOf<KType, Slumberer?>()
+
+    fun prependModules(vararg module: SlumberModule) = prependModules(module.toList())
+
+    fun prependModules(prepend: List<SlumberModule>) = SlumberConfig(
+        modules = prepend.plus(this.modules)
+    )
+
+    fun appendModules(vararg module: SlumberModule) = appendModules(module.toList())
+
+    fun appendModules(append: List<SlumberModule>) = SlumberConfig(
+        modules = this.modules.plus(append)
+    )
 
     fun getAwaker(type: KType): Awaker {
 

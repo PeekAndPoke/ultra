@@ -8,13 +8,13 @@ import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.createType
 
 open class Codec(
-    private val config: Config,
+    private val config: SlumberConfig,
     private val attributes: TypedAttributes = TypedAttributes.empty
 ) {
 
     companion object {
         val default = Codec(
-            config = Config.default
+            config = SlumberConfig.default
         )
     }
 

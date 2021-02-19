@@ -382,7 +382,7 @@ Next: 2
 
 ### Factory Method Injection
 
-Sometimes pure constructor injection is not enough.  
+Sometimes pure constructor injection is not enough.
 
 For example when you have a service class expecting constructor parameters that are not known to the kontainer.
 

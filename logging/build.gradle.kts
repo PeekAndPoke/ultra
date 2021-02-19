@@ -27,13 +27,13 @@ repositories {
 }
 
 dependencies {
-    api(kotlin("reflect"))
+    implementation(kotlin("reflect"))
 
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version")
-    api("org.slf4j:slf4j-api:$slf4j_version")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version")
+    implementation("org.slf4j:slf4j-api:$slf4j_version")
 
-    api(project(":common"))
-    api(project(":kontainer"))
+    implementation(project(":common"))
+    implementation(project(":kontainer"))
 
     testImplementation("ch.qos.logback:logback-classic:$logback_version")
     testImplementation("io.kotest:kotest-assertions-core-jvm:$kotlintest_version")

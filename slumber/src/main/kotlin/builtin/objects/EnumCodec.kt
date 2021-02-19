@@ -10,9 +10,11 @@ class EnumCodec(type: KType) : Awaker, Slumberer {
     @Suppress("UNCHECKED_CAST")
     private val cls = type.classifier as KClass<*>
 
-    private val enumValues = cls.java.enumConstants
-
-    private val lookUp = mutableMapOf<String, Any?>()
+    /** Lookup for enum values by string */
+    private val lookUp = cls.java.enumConstants
+        .mapNotNull { it as? Enum<*> }
+        .map { it.name to it }
+        .toMap()
 
     override fun awake(data: Any?, context: Awaker.Context): Any? {
 
@@ -20,17 +22,13 @@ class EnumCodec(type: KType) : Awaker, Slumberer {
             return null
         }
 
-        return lookUp.getOrPut(data) {
-            enumValues.firstOrNull { it.toString() == data }
-        }
+        return lookUp[data]
     }
 
     override fun slumber(data: Any?, context: Slumberer.Context): Any? {
-
-        if (data == null) {
-            return null
+        return when (data) {
+            is Enum<*> -> data.name
+            else -> null
         }
-
-        return data.toString()
     }
 }

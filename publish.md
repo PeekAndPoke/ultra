@@ -3,10 +3,10 @@
 ## Maven publish with bintray
 
 All
-> ./gradlew build bintrayUpload -PbintrayUser=peekandpoke -PbintrayApiKey=
+> ./gradlew clean build && ./gradlew --parallel bintrayUpload -PbintrayUser=peekandpoke -PbintrayApiKey=
 
 Single subproject
-> ./gradlew build :SUB-PROJECT:bintrayUpload -PbintrayUser=peekandpoke -PbintrayApiKey=
+> ./gradlew clean build :SUB-PROJECT:bintrayUpload -PbintrayUser=peekandpoke -PbintrayApiKey=
 
 ## Long road to maven publish
 
