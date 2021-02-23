@@ -2,21 +2,10 @@ package de.peekandpoke.ultra.common.datetime
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.Month
+import java.time.*
 
 class SerializerRoundTripSpec : StringSpec() {
-
-    @Serializable
-    data class SerializationSubject(
-        val date: PortableDate,
-        val dateTime: PortableDateTime,
-        val time: PortableTime,
-    )
 
     init {
 
@@ -84,21 +73,25 @@ class SerializerRoundTripSpec : StringSpec() {
             decoded shouldBe source
         }
 
-//        "Serialization must work" {
-//
-//            val start = SerializationSubject(
-//                date = LocalDate.of(2000, Month.JANUARY, 1).portable,
-//                dateTime = LocalDateTime.of(
-//                    LocalDate.of(2000, Month.JANUARY, 1),
-//                    LocalTime.of(12, 0)
-//                ).portable,
-//                time = LocalTime.of(12, 0).portable
-//            )
-//
-//
-//            val encoded = Json.encodeToString(start)
-//
-//        }
+        "Encoding and decoding a PortableTimezone must work" {
 
+            val source = ZoneId.of("UTC").portable
+
+            val encoded = Json.encodeToString(
+                PortableTimezone.serializer(),
+                source
+            )
+
+            encoded shouldBe """
+                "UTC"
+            """.trimIndent()
+
+            val decoded = Json.decodeFromString(
+                PortableTimezone.serializer(),
+                encoded
+            )
+
+            decoded shouldBe source
+        }
     }
 }

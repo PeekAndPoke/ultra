@@ -97,3 +97,21 @@ object PortableTimeSerializer : KSerializer<PortableTime> {
         return PortableTime(v)
     }
 }
+
+@Suppress("EXPERIMENTAL_API_USAGE")
+@Serializer(forClass = PortableTimezone::class)
+object PortableTimezoneSerializer : KSerializer<PortableTimezone> {
+
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("WithCustomDefault", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: PortableTimezone) {
+        encoder.encodeString(value.id)
+    }
+
+    override fun deserialize(decoder: Decoder): PortableTimezone {
+        val v = decoder.decodeString()
+
+        return PortableTimezone(v)
+    }
+}
