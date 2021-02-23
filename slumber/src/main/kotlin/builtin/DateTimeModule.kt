@@ -22,12 +22,19 @@ object DateTimeModule : SlumberModule {
             // Java time
             LocalDate::class ->
                 type.wrapIfNonNull(LocalDateAwaker)
+
             LocalDateTime::class ->
                 type.wrapIfNonNull(LocalDateTimeAwaker)
+
+            LocalTime::class ->
+                type.wrapIfNonNull(LocalTimeAwaker)
+
             Instant::class ->
                 type.wrapIfNonNull(InstantAwaker)
+
             ZonedDateTime::class ->
                 type.wrapIfNonNull(ZonedDateTimeAwaker)
+
             ZoneId::class ->
                 type.wrapIfNonNull(ZoneIdAwaker)
 
@@ -57,6 +64,9 @@ object DateTimeModule : SlumberModule {
 
             cls == LocalDateTime::class ->
                 type.wrapIfNonNull(LocalDateTimeSlumberer)
+
+            cls == LocalTime::class ->
+                type.wrapIfNonNull(LocalTimeSlumberer)
 
             cls == Instant::class ->
                 type.wrapIfNonNull(InstantSlumberer)
