@@ -2,7 +2,7 @@ package de.peekandpoke.ultra.common.datetime
 
 import kotlinx.serialization.Serializable
 
-@Serializable(with = SerializableDateSerializer::class)
+@Serializable(with = PortableDateSerializer::class)
 data class PortableDate(val timestamp: Long) : Comparable<PortableDate> {
 
     override fun compareTo(other: PortableDate): Int {

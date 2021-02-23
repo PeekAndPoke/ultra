@@ -18,7 +18,7 @@ private data class V(
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @Serializer(forClass = PortableDate::class)
-object SerializableDateSerializer : KSerializer<PortableDate> {
+object PortableDateSerializer : KSerializer<PortableDate> {
 
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("WithCustomDefault", PrimitiveKind.STRING)
@@ -43,7 +43,7 @@ object SerializableDateSerializer : KSerializer<PortableDate> {
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @Serializer(forClass = PortableDateTime::class)
-object SerializableDateTimeSerializer : KSerializer<PortableDateTime> {
+object PortableDateTimeSerializer : KSerializer<PortableDateTime> {
 
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("WithCustomDefault", PrimitiveKind.STRING)
@@ -70,5 +70,30 @@ object SerializableDateTimeSerializer : KSerializer<PortableDateTime> {
         val v = decoder.decodeSerializableValue(V.serializer())
 
         return PortableDateTime(v.ts)
+    }
+}
+
+@Suppress("EXPERIMENTAL_API_USAGE")
+@Serializer(forClass = PortableTime::class)
+object PortableTimeSerializer : KSerializer<PortableTime> {
+
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("WithCustomDefault", PrimitiveKind.STRING)
+
+    @Serializable
+    private data class V(
+        val ts: Long,
+        val timezone: String,
+        val human: String
+    )
+
+    override fun serialize(encoder: Encoder, value: PortableTime) {
+        encoder.encodeLong(value.milliSeconds)
+    }
+
+    override fun deserialize(decoder: Decoder): PortableTime {
+        val v = decoder.decodeLong()
+
+        return PortableTime(v)
     }
 }

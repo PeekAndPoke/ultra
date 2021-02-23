@@ -2,5 +2,5 @@ package de.peekandpoke.ultra.common.datetime
 
 import kotlinx.serialization.Serializable
 
-@Serializable(with = SerializableDateTimeSerializer::class)
+@Serializable(with = PortableDateTimeSerializer::class)
 data class PortableDateTime(val timestamp: Long)

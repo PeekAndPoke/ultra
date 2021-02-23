@@ -1,24 +1,13 @@
 package de.peekandpoke.ultra.common.datetime
 
-import java.time.*
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 private val isoFormat: DateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME
 
-internal val utc = ZoneId.of("UTC")
-
-val PortableDate.date
-    get(): LocalDate = LocalDateTime.ofInstant(
-        Instant.ofEpochMilli(timestamp),
-        utc
-    ).toLocalDate()
-
-actual fun PortableDate.toIsoString(): String = date.format(isoFormat)
-
-val LocalDate.portable
-    get(): PortableDate = PortableDate(
-        timestamp = this.atStartOfDay(utc).toInstant().toEpochMilli()
-    )
+fun PortableDateTime.Companion.now(): PortableDateTime = LocalDateTime.now().portable
 
 val PortableDateTime.date
     get(): LocalDateTime = LocalDateTime.ofInstant(
