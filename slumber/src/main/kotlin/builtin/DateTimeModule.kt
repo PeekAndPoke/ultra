@@ -6,47 +6,73 @@ import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.SlumberModule
 import de.peekandpoke.ultra.slumber.Slumberer
 import de.peekandpoke.ultra.slumber.builtin.datetime.*
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZonedDateTime
+import java.time.*
+import kotlin.reflect.KClass
 import kotlin.reflect.KType
+import kotlin.reflect.full.isSuperclassOf
 
 object DateTimeModule : SlumberModule {
 
     override fun getAwaker(type: KType): Awaker? {
         return when (type.classifier) {
             // Java util
-            java.util.Date::class -> type.wrapIfNonNull(DateAwaker)
+            java.util.Date::class ->
+                type.wrapIfNonNull(DateAwaker)
 
             // Java time
-            LocalDate::class -> type.wrapIfNonNull(LocalDateAwaker)
-            LocalDateTime::class -> type.wrapIfNonNull(LocalDateTimeAwaker)
-            Instant::class -> type.wrapIfNonNull(InstantAwaker)
-            ZonedDateTime::class -> type.wrapIfNonNull(ZonedDateTimeAwaker)
+            LocalDate::class ->
+                type.wrapIfNonNull(LocalDateAwaker)
+            LocalDateTime::class ->
+                type.wrapIfNonNull(LocalDateTimeAwaker)
+            Instant::class ->
+                type.wrapIfNonNull(InstantAwaker)
+            ZonedDateTime::class ->
+                type.wrapIfNonNull(ZonedDateTimeAwaker)
+            ZoneId::class ->
+                type.wrapIfNonNull(ZoneIdAwaker)
 
             // Portable Dates
-            PortableDate::class -> type.wrapIfNonNull(PortableDateAwaker)
-            PortableDateTime::class -> type.wrapIfNonNull(PortableDateTimeAwaker)
+            PortableDate::class ->
+                type.wrapIfNonNull(PortableDateAwaker)
+
+            PortableDateTime::class ->
+                type.wrapIfNonNull(PortableDateTimeAwaker)
 
             else -> null
         }
     }
 
     override fun getSlumberer(type: KType): Slumberer? {
-        return when (type.classifier) {
+
+        val cls = type.classifier
+
+        return when {
             // Java util
-            java.util.Date::class -> type.wrapIfNonNull(DateSlumberer)
+            cls == java.util.Date::class ->
+                type.wrapIfNonNull(DateSlumberer)
 
             // Java time
-            LocalDate::class -> type.wrapIfNonNull(LocalDateSlumberer)
-            LocalDateTime::class -> type.wrapIfNonNull(LocalDateTimeSlumberer)
-            Instant::class -> type.wrapIfNonNull(InstantSlumberer)
-            ZonedDateTime::class -> type.wrapIfNonNull(ZonedDateTimeSlumberer)
+            cls == LocalDate::class ->
+                type.wrapIfNonNull(LocalDateSlumberer)
+
+            cls == LocalDateTime::class ->
+                type.wrapIfNonNull(LocalDateTimeSlumberer)
+
+            cls == Instant::class ->
+                type.wrapIfNonNull(InstantSlumberer)
+
+            cls == ZonedDateTime::class ->
+                type.wrapIfNonNull(ZonedDateTimeSlumberer)
+
+            cls is KClass<*> && ZoneId::class.isSuperclassOf(cls) ->
+                type.wrapIfNonNull(ZoneIdSlumberer)
 
             // Portable Dates
-            PortableDate::class -> type.wrapIfNonNull(PortableDateSlumberer)
-            PortableDateTime::class -> type.wrapIfNonNull(PortableDateTimeSlumberer)
+            cls == PortableDate::class ->
+                type.wrapIfNonNull(PortableDateSlumberer)
+
+            cls == PortableDateTime::class ->
+                type.wrapIfNonNull(PortableDateTimeSlumberer)
 
             else -> null
         }
