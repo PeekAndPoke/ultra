@@ -2,6 +2,8 @@ package de.peekandpoke.ultra.slumber.builtin
 
 import de.peekandpoke.ultra.common.datetime.PortableDate
 import de.peekandpoke.ultra.common.datetime.PortableDateTime
+import de.peekandpoke.ultra.common.datetime.PortableTime
+import de.peekandpoke.ultra.common.datetime.PortableTimezone
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.SlumberModule
 import de.peekandpoke.ultra.slumber.Slumberer
@@ -39,11 +41,17 @@ object DateTimeModule : SlumberModule {
                 type.wrapIfNonNull(ZoneIdAwaker)
 
             // Portable Dates
+            PortableTime::class ->
+                type.wrapIfNonNull(PortableTimeAwaker)
+
             PortableDate::class ->
                 type.wrapIfNonNull(PortableDateAwaker)
 
             PortableDateTime::class ->
                 type.wrapIfNonNull(PortableDateTimeAwaker)
+
+            PortableTimezone::class ->
+                type.wrapIfNonNull(PortableTimezoneAwaker)
 
             else -> null
         }
@@ -78,11 +86,17 @@ object DateTimeModule : SlumberModule {
                 type.wrapIfNonNull(ZoneIdSlumberer)
 
             // Portable Dates
+            cls == PortableTime::class ->
+                type.wrapIfNonNull(PortableTimeSlumberer)
+
             cls == PortableDate::class ->
                 type.wrapIfNonNull(PortableDateSlumberer)
 
             cls == PortableDateTime::class ->
                 type.wrapIfNonNull(PortableDateTimeSlumberer)
+
+            cls == PortableTimezone::class ->
+                type.wrapIfNonNull(PortableTimezoneSlumberer)
 
             else -> null
         }
