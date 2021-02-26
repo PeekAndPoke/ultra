@@ -15,10 +15,10 @@ buildscript {
 
 plugins {
     idea
-    kotlin("jvm") version "1.4.20"
-//    kotlin("js") version "1.4.10"
-//    kotlin("multiplatform") version "1.4.10"
-    kotlin("kapt") version "1.4.20"
+    kotlin("jvm") version "1.4.30"
+//    kotlin("js") version "1.4.30"
+//    kotlin("multiplatform") version "1.4.30"
+    kotlin("kapt") version "1.4.30"
 
     // Scans and Security: //////////////////////////////////////////////////////////////////
     // `build-scan`

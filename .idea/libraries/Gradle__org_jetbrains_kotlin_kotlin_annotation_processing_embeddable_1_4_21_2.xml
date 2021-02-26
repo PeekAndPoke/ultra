@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.jetbrains.kotlin:kotlin-annotation-processing-embeddable:1.4.21-2">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-annotation-processing-embeddable/1.4.21-2/35474ad57f1546b21d3d19d39137b9bdc22dbc04/kotlin-annotation-processing-embeddable-1.4.21-2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-annotation-processing-embeddable/1.4.21-2/56a8bd8d5ba756c8752d0bafa2006a405ebd4e90/kotlin-annotation-processing-embeddable-1.4.21-2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -3,6 +3,7 @@ package de.peekandpoke.ultra.slumber.builtin.collections
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
 import de.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
+import io.kotest.data.Row2
 import io.kotest.data.row
 
 /**
@@ -65,7 +66,7 @@ class MutableIntListSlumberSpec : SlumbererSpecHelper(
 /**
  * Samples that map properly. These must be converted correctly.
  */
-private val mutableIntListNonNull = listOf(
+private val mutableIntListNonNull: List<Row2<Any, List<Int>>> = listOf(
     row(emptyList<Int>(), emptyList()),
     row(emptyArray<Int>(), emptyList()),
     row(listOf(1, 2), mutableListOf(1, 2)),
