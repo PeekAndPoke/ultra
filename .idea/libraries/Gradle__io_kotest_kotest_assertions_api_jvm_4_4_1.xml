@@ -6,6 +6,7 @@
     <JAVADOC />
     <SOURCES>
       <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-assertions-api-jvm/4.4.1/c45d7af53369fba14466860bbc58548b70cd9f13/kotest-assertions-api-jvm-4.4.1-sources.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-assertions-api-jvm/4.4.1/c45d7af53369fba14466860bbc58548b70cd9f13/kotest-assertions-api-jvm-4.4.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

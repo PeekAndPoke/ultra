@@ -6,6 +6,7 @@
     <JAVADOC />
     <SOURCES>
       <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-script-util/1.4.30/d5f634d193c3b10fd0de694f453a72578bfb7387/kotlin-script-util-1.4.30-sources.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-script-util/1.4.30/d5f634d193c3b10fd0de694f453a72578bfb7387/kotlin-script-util-1.4.30-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

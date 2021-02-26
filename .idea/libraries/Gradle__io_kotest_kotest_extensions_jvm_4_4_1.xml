@@ -6,6 +6,7 @@
     <JAVADOC />
     <SOURCES>
       <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-extensions-jvm/4.4.1/d5cab8e5bf13355951a5cb86992740b954d562ab/kotest-extensions-jvm-4.4.1-sources.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-extensions-jvm/4.4.1/d5cab8e5bf13355951a5cb86992740b954d562ab/kotest-extensions-jvm-4.4.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -6,6 +6,7 @@
     <JAVADOC />
     <SOURCES>
       <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-framework-discovery-jvm/4.4.1/f019103d04f4e41b513afb23a3cf90e9a64f27c8/kotest-framework-discovery-jvm-4.4.1-sources.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-framework-discovery-jvm/4.4.1/f019103d04f4e41b513afb23a3cf90e9a64f27c8/kotest-framework-discovery-jvm-4.4.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
