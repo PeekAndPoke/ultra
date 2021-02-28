@@ -43,8 +43,8 @@ class DataClassRenderer(
 
         block(
             """
-                @JvmName("mutate${jvmName}")
-                fun ${imported}.mutate(mutation: ${mutatorClassShort}.() -> Unit) = 
+                @JvmName("mutate$jvmName")
+                fun $imported.mutate(mutation: $mutatorClassShort.() -> Unit) = 
                     mutator({ x: $imported -> Unit }).apply(mutation).getResult()
 
             """.trimIndent()
@@ -57,8 +57,8 @@ class DataClassRenderer(
 
                 block(
                     """
-                        @JvmName("mutator${jvmName}")
-                        fun ${imported}.mutator(onModify: OnModify<${imported}> = {}): $mutatorClassShort = when (this) {
+                        @JvmName("mutator$jvmName")
+                        fun $imported.mutator(onModify: OnModify<$imported> = {}): $mutatorClassShort = when (this) {
                     """.trimIndent()
                 )
 
@@ -101,7 +101,7 @@ class DataClassRenderer(
             false -> {
                 block(
                     """
-                        @JvmName("mutator${jvmName}")
+                        @JvmName("mutator$jvmName")
                         fun $imported.mutator(onModify: OnModify<$imported> = {}) = 
                             $mutatorClassShort(this, onModify)
         
