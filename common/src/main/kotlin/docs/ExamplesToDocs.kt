@@ -6,20 +6,6 @@ import de.peekandpoke.ultra.common.getRelativePackagePath
 import de.peekandpoke.ultra.common.toUri
 import java.io.File
 
-//fun examplesToDocs(
-//    title: String,
-//    chapters: List<ExampleChapter>,
-//    sourceLocation: File = File("src/examples"),
-//    outputLocation: File = File("docs/ultra::docs")
-//) {
-//    ExamplesToDocs(
-//        title = title,
-//        chapters = chapters,
-//        sourceLocation = sourceLocation,
-//        outputLocation = outputLocation
-//    ).run()
-//}
-
 abstract class ExamplesToDocs(
     private val title: String,
     private val chapters: List<ExampleChapter>,
@@ -55,13 +41,13 @@ abstract class ExamplesToDocs(
         chapters.forEachIndexed { chapterIndex, chapter ->
 
             chapter.title.let {
-                builder.appendLine("${chapterIndex + 1}. [${it}](#${it.toAnchor()})").appendLine()
+                builder.appendLine("${chapterIndex + 1}. [$it](#${it.toAnchor()})").appendLine()
             }
 
             chapter.examples.forEachIndexed { exampleIndex, example ->
 
                 example.title.let {
-                    builder.appendLine("    ${exampleIndex + 1}. [${it}](#${it.toAnchor()})")
+                    builder.appendLine("    ${exampleIndex + 1}. [$it](#${it.toAnchor()})")
                 }
             }
 

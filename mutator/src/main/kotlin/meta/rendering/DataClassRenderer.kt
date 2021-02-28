@@ -51,7 +51,8 @@ class DataClassRenderer(
         )
 
         when (target.isInterface) {
-            ////  Render an interface of a mutator  ////////////////////////////////////////////////////////////////////
+            //  Render an interface of a mutator  //////////////////////////////////////////////////////////////////////
+
             true -> {
 
                 block(
@@ -95,19 +96,19 @@ class DataClassRenderer(
                 )
             }
 
+            //  Render a mutator class  ////////////////////////////////////////////////////////////////////////////////
 
-            ////  Render a mutator class  //////////////////////////////////////////////////////////////////////////////
             false -> {
                 block(
                     """
                         @JvmName("mutator${jvmName}")
-                        fun ${imported}.mutator(onModify: OnModify<${imported}> = {}) = 
-                            ${mutatorClassShort}(this, onModify)
+                        fun $imported.mutator(onModify: OnModify<$imported> = {}) = 
+                            $mutatorClassShort(this, onModify)
         
-                        class ${mutatorClassShort}(
-                            target: ${imported}, 
-                            onModify: OnModify<${imported}> = {}
-                        ) : DataClassMutator<${imported}>(target, onModify)${if (superExtendsStr.isNotEmpty()) ", $superExtendsStr" else ""} {
+                        class $mutatorClassShort(
+                            target: $imported, 
+                            onModify: OnModify<$imported> = {}
+                        ) : DataClassMutator<$imported>(target, onModify)${if (superExtendsStr.isNotEmpty()) ", $superExtendsStr" else ""} {
                         
                     """.trimIndent()
                 )

@@ -8,7 +8,7 @@ import io.kotest.matchers.shouldBe
 
 class PolymorphicAwakerSpec : StringSpec({
 
-    ////  pure sealed class and pure sealed children  //////////////////////////////////////////////////////////////////
+    //  pure sealed class and pure sealed children  ////////////////////////////////////////////////////////////////////
 
     "Awaking a sealed class (PureBase.A) without using Polymorphic.Child" {
 
@@ -66,7 +66,7 @@ class PolymorphicAwakerSpec : StringSpec({
         result shouldBe null
     }
 
-    ////  Sealed parent with custom discriminator  /////////////////////////////////////////////////////////////////////
+    //  Sealed parent with custom discriminator  ///////////////////////////////////////////////////////////////////////
 
     "Awaking children with a custom discriminator name" {
 
@@ -92,7 +92,7 @@ class PolymorphicAwakerSpec : StringSpec({
         )
     }
 
-    ////  Sealed parent with 'defaultType' configured  /////////////////////////////////////////////////////////////////
+    //  Sealed parent with 'defaultType' configured  ///////////////////////////////////////////////////////////////////
 
     "Awaking a sealed class with '_type' missing and 'defaultType' configured must awake the default" {
 
@@ -153,7 +153,7 @@ class PolymorphicAwakerSpec : StringSpec({
         result shouldBe BaseWithDefaultType.B(100)
     }
 
-    ////  Pure sealed class with annotated children  ///////////////////////////////////////////////////////////////////
+    //  Pure sealed class with annotated children  /////////////////////////////////////////////////////////////////////
 
     "Awaking a sealed class (AnnotedChildrenBase.A) using Polymorphic.Child" {
 
@@ -185,7 +185,7 @@ class PolymorphicAwakerSpec : StringSpec({
         result shouldBe AnnotedChildrenBase.B(100)
     }
 
-    ////  Non sealed base class annotated with Polymorphic.Parent  /////////////////////////////////////////////////////
+    //  Non sealed base class annotated with Polymorphic.Parent  ///////////////////////////////////////////////////////
 
     "Directly Awaking a non sealed class (AnnotatedBase.A) where the parent is annotated with Polymorphic.Parent" {
 
@@ -232,7 +232,7 @@ class PolymorphicAwakerSpec : StringSpec({
         result shouldBe ParentWithChildrenUsingAnnotation.Sub2("Sub2-value")
     }
 
-    //// Deeper class hierarchies  /////////////////////////////////////////////////////////////////////////////////////
+    // Deeper class hierarchies  ///////////////////////////////////////////////////////////////////////////////////////
 
     "Awaking children of deeper sealed class hierarchies" {
 
@@ -263,7 +263,7 @@ class PolymorphicAwakerSpec : StringSpec({
         )
     }
 
-    //// Using ClassIndex  /////////////////////////////////////////////////////////////////////////////////////
+    //  Using ClassIndex  //////////////////////////////////////////////////////////////////////////////////////////////
 
     "Awaking children using ClassIndex - childTypes using indexSubClasses must be correct" {
 
@@ -333,7 +333,7 @@ class PolymorphicAwakerSpec : StringSpec({
         )
     }
 
-    ////  Complex examples  ////////////////////////////////////////////////////////////////////////////////////////////
+    //  Complex examples  //////////////////////////////////////////////////////////////////////////////////////////////
 
     "Awaking a data class that contains polymorphics - one" {
 

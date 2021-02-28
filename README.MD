@@ -10,7 +10,11 @@ Check out the sub-projects. There you will find details, descriptive test cases 
 
 How to:
 
+Description see here:
 https://getstream.io/blog/publishing-libraries-to-mavencentral-2021/
+
+Sonatype JIRA:
+https://issues.sonatype.org/browse/OSSRH-65096
 
 ## ultra::common
 
@@ -20,7 +24,7 @@ https://getstream.io/blog/publishing-libraries-to-mavencentral-2021/
 - Hashing (like MD5, SHA256, ...)
 - Utility Classes and Interfaces
 - Recursive programming
-    - map recursive objects to plain lists
+  - map recursive objects to plain lists
     - find all child objects that match a certain criteria   
 - Reflection
     - type safe type references

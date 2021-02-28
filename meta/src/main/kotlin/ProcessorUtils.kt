@@ -36,11 +36,16 @@ interface ProcessorUtils {
 
     val defaultPackageBlackList
         get() = listOf(
-            "java.",                // exclude java std lib
-            "javax.",               // exclude javax std lib
-            "javafx.",              // exclude javafx
-            "kotlin.",              // exclude kotlin std lib
-            "com.google.common."    // exclude google guava
+            // exclude java std lib
+            "java.",
+            // exclude javax std lib
+            "javax.",
+            // exclude javafx
+            "javafx.",
+            // exclude kotlin std lib
+            "kotlin.",
+            // exclude google guava
+            "com.google.common."
         )
 
     val ctx: Context
@@ -70,7 +75,7 @@ interface ProcessorUtils {
     fun logOther(str: String) =
         messager.printMessage(Diagnostic.Kind.OTHER, "${ctx.logPrefix} $str")
 
-    ////  REFLECTION  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //  REFLECTION  ////////////////////////////////////////////////////////////////////////////////////////////////////
 
     fun String.asKotlinClassName(): String = when {
 
@@ -196,7 +201,7 @@ interface ProcessorUtils {
 
         if (this is DeclaredType) {
 
-//            logNote("DeclaredType $this")
+            // logNote("DeclaredType $this")
 
             // add the type it-self
             result.add(this)
@@ -208,7 +213,7 @@ interface ProcessorUtils {
 
             if (element is TypeElement) {
 
-//                logNote("  .. TypeElement ${this}")
+                // logNote("  .. TypeElement ${this}")
 
                 val nested = element.variables.asSequence()
                     .filter { !it.asType().kind.isPrimitive }
@@ -222,7 +227,7 @@ interface ProcessorUtils {
                                 // add the type it self
                                 add(elType)
 
-//                                logNote("  .. ${v.simpleName} .. DeclaredType $elType")
+                                // logNote("  .. ${v.simpleName} .. DeclaredType $elType")
 
                                 // add all generic type arguments of the type that are declared types
                                 addAll(elType.typeArguments.mapNotNull { (it as? DeclaredType) })
@@ -259,13 +264,13 @@ interface ProcessorUtils {
             .toSet()
     }
 
-    ////  KOTLIN COMPAT  ///////////////////////////////////////////////////////////////////////////////////////////////
+    //  KOTLIN COMPAT  /////////////////////////////////////////////////////////////////////////////////////////////////
 
     fun Element.asKotlinClassName(): String = asType().asTypeName().toString().asKotlinClassName()
 
     fun ParameterizedTypeName.asRawKotlinClassName(): String = rawType.canonicalName.asKotlinClassName()
 
-    ////  Type search  /////////////////////////////////////////////////////////////////////////////////////////////////
+    //  Type search  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Finds all [TypeElement]s that carry the given annotation

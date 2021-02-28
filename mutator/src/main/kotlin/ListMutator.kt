@@ -51,20 +51,20 @@ class ListMutator<T, M>(
     override fun iterator(): MutableIterator<M> = It(getResult(), forwardMapper)
 
     override fun listIterator(): MutableListIterator<M> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        TODO("not implemented")
     }
 
     override fun listIterator(index: Int): MutableListIterator<M> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        TODO("not implemented")
     }
 
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<M> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        TODO("not implemented")
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //  MutableList<M> implementation
-    /////
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // MutableList<M> implementation
+    // //
 
     /**
      * Returns the size of the list
@@ -187,9 +187,9 @@ class ListMutator<T, M>(
      */
     override fun retainAll(elements: Collection<M>) = retainAll(elements.map(backwardMapper))
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //  additional functionality
-    /////
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // additional functionality
+    // //
 
     /**
      * Returns true if the list contains the given [element]
@@ -336,7 +336,6 @@ class ListMutator<T, M>(
             plusAssign(filtered)
         }
     }
-
 
     /**
      * Set the element at the given index

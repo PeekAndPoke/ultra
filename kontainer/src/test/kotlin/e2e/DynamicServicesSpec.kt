@@ -283,13 +283,14 @@ class DynamicServicesSpec : StringSpec({
 
         data class Injecting(val service: Base)
 
-        val subject = kontainer {
+        val blueprint = kontainer {
 
             dynamic<Impl>()
 
             singleton<Injecting>()
+        }
 
-        }.useWith(Impl())
+        val subject = blueprint.useWith(Impl())
 
         assertSoftly {
 
@@ -306,13 +307,14 @@ class DynamicServicesSpec : StringSpec({
 
         data class Injecting(val service: Base)
 
-        val subject = kontainer {
+        val blueprint = kontainer {
 
             dynamic(Base::class, Impl::class)
 
             singleton<Injecting>()
+        }
 
-        }.useWith(Impl())
+        val subject = blueprint.useWith(Impl())
 
         assertSoftly {
 
@@ -332,15 +334,14 @@ class DynamicServicesSpec : StringSpec({
 
         data class Injecting(val value: Int)
 
-        val subject = kontainer {
+        val blueprint = kontainer {
 
             dynamic(Base::class, Impl::class)
 
-            singleton { base: Base ->
-                Injecting(base.value)
-            }
+            singleton { base: Base -> Injecting(base.value) }
+        }
 
-        }.useWith(Impl())
+        val subject = blueprint.useWith(Impl())
 
         assertSoftly {
 
@@ -358,13 +359,14 @@ class DynamicServicesSpec : StringSpec({
 
         data class Injecting(val service: Lazy<Base>)
 
-        val subject = kontainer {
+        val blueprint = kontainer {
 
             dynamic<Impl>()
 
             singleton<Injecting>()
+        }
 
-        }.useWith(Impl())
+        val subject = blueprint.useWith(Impl())
 
         assertSoftly {
 
@@ -381,12 +383,13 @@ class DynamicServicesSpec : StringSpec({
 
         data class Injecting(val service: Lazy<Base>)
 
-        val subject = kontainer {
+        val blueprint = kontainer {
 
             singleton<Impl>()
             singleton<Injecting>()
+        }
 
-        }.useWith()
+        val subject = blueprint.useWith()
 
         assertSoftly {
 
@@ -404,14 +407,15 @@ class DynamicServicesSpec : StringSpec({
 
         data class Injecting(val all: List<Base>)
 
-        val subject = kontainer {
+        val blueprint = kontainer {
 
             singleton<Injecting>()
 
             singleton<ImplOne>()
             dynamic<ImplTwo>()
+        }
 
-        }.useWith(ImplTwo())
+        val subject = blueprint.useWith(ImplTwo())
 
         assertSoftly {
 
@@ -431,14 +435,15 @@ class DynamicServicesSpec : StringSpec({
 
         data class Injecting(val all: List<Base>)
 
-        val subject = kontainer {
+        val blueprint = kontainer {
 
             singleton<Injecting>()
 
             singleton<ImplOne>()
             singleton<ImplTwo>()
+        }
 
-        }.useWith()
+        val subject = blueprint.useWith()
 
         assertSoftly {
 
@@ -458,14 +463,15 @@ class DynamicServicesSpec : StringSpec({
 
         data class Injecting(val all: Lazy<List<Base>>)
 
-        val subject = kontainer {
+        val blueprint = kontainer {
 
             singleton<Injecting>()
 
             singleton<ImplOne>()
             dynamic<ImplTwo>()
+        }
 
-        }.useWith(ImplTwo())
+        val subject = blueprint.useWith(ImplTwo())
 
         assertSoftly {
 
@@ -485,14 +491,15 @@ class DynamicServicesSpec : StringSpec({
 
         data class Injecting(val all: Lazy<List<Base>>)
 
-        val subject = kontainer {
+        val blueprint = kontainer {
 
             singleton<Injecting>()
 
             singleton<ImplOne>()
             singleton<ImplTwo>()
+        }
 
-        }.useWith()
+        val subject = blueprint.useWith()
 
         assertSoftly {
 
@@ -518,7 +525,6 @@ class DynamicServicesSpec : StringSpec({
 
             singleton<ImplOne>()
             dynamic<ImplTwo>()
-
         }
 
         val subjectOne = blueprint.useWith(ImplTwo())
@@ -551,14 +557,15 @@ class DynamicServicesSpec : StringSpec({
 
         data class Injecting(val all: Lookup<Base>)
 
-        val subject = kontainer {
+        val blueprint = kontainer {
 
             singleton<Injecting>()
 
             singleton<ImplOne>()
             singleton<ImplTwo>()
+        }
 
-        }.useWith()
+        val subject = blueprint.useWith()
 
         assertSoftly {
 

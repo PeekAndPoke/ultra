@@ -19,11 +19,11 @@ class CompareSpec : StringSpec({
     @Suppress("BooleanLiteralArgument")
     val examples = listOf(
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // null
+        //  null  //////////////////////////////////////////////////////////////////////////////////////////////////////
+
         Sample("Null vs Null", null, null, true),
 
-        // null vs other
+        //  null vs other
         Sample("Null vs Boolean", null, true, false),
         Sample("Null vs Boolean", null, false, false),
         Sample("Null vs Char", null, 'B', false),
@@ -36,15 +36,15 @@ class CompareSpec : StringSpec({
         Sample("Null vs Unit", null, Unit, false),
         Sample("Null vs String", null, "null", false),
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // NaN
+        //  NaN  ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
         Sample("NaN - Double.NaN vs Double.NaN", Double.NaN, Double.NaN, true),
         Sample("NaN - Double.NaN vs Float.NaN", Double.NaN, Float.NaN, false),
         Sample("NaN - Double.NaN vs 0.0", Double.NaN, 0.0, false),
         Sample("NaN - Float.NaN vs 0.0f", Float.NaN, 0.0f, false),
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // data classes
+        //  data classes  //////////////////////////////////////////////////////////////////////////////////////////////
+
         Sample("Data-class vs Same instance", sameInstance, sameInstance, true),
         Sample("Data-class vs Other instance", X("SAME"), X("SAME"), false),
         Sample("Data-class vs Other instance", X("SAME"), X("NOT-SAME"), false),
@@ -52,8 +52,8 @@ class CompareSpec : StringSpec({
         // data classes vs others
         Sample("Data-class vs Null", X("SAME"), null, false),
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // strings
+        //  string  ////////////////////////////////////////////////////////////////////////////////////////////////////
+
         Sample("String vs String", "", "", true),
         Sample("String vs String", "a", "", false),
         Sample("String vs String", "S-1", "S-1", true),
@@ -72,8 +72,8 @@ class CompareSpec : StringSpec({
         Sample("String vs Double", "A", 65.0, false),
         Sample("String vs Void", "kotlin.Unit", Unit, false),
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // booleans
+        //  booleans  //////////////////////////////////////////////////////////////////////////////////////////////////
+
         Sample("Boolean vs Boolean", true, true, true),
         Sample("Boolean vs Boolean", false, false, true),
         Sample("Boolean vs Boolean", false, true, false),
@@ -101,8 +101,8 @@ class CompareSpec : StringSpec({
         Sample("Boolean vs Void", false, Unit, false),
         Sample("Boolean vs Void", true, Unit, false),
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // chars
+        //  chars  /////////////////////////////////////////////////////////////////////////////////////////////////////
+
         Sample("Char vs Char", 'A', 'A', true),
         Sample("Char vs Char", 'A', 'B', false),
 
@@ -118,8 +118,8 @@ class CompareSpec : StringSpec({
         Sample("Char vs String", '0', "false", false),
         Sample("Char vs Void", '0', Unit, false),
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // byte
+        //  byte  //////////////////////////////////////////////////////////////////////////////////////////////////////
+
         Sample("Byte vs Byte", 0.toByte(), 0.toByte(), true),
         Sample("Byte vs Byte", 1.toByte(), 1.toByte(), true),
         Sample("Byte vs Byte", 0.toByte(), 1.toByte(), false),
@@ -136,8 +136,8 @@ class CompareSpec : StringSpec({
         Sample("Byte vs String", 1.toByte(), "false", false),
         Sample("Byte vs Void", 0.toByte(), Unit, false),
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // short
+        //  short  /////////////////////////////////////////////////////////////////////////////////////////////////////
+
         Sample("Short vs Short", 0.toShort(), 0.toShort(), true),
         Sample("Short vs Short", 1.toShort(), 1.toShort(), true),
         Sample("Short vs Short", 0.toShort(), 1.toShort(), false),
@@ -154,8 +154,8 @@ class CompareSpec : StringSpec({
         Sample("Short vs String", 1.toShort(), "false", false),
         Sample("Short vs Void", 0.toShort(), Unit, false),
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // int
+        //  int  ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
         Sample("Int vs Int", 0, 0, true),
         Sample("Int vs Int", 1, 1, true),
         Sample("Int vs Int", 0, 1, false),
@@ -172,8 +172,8 @@ class CompareSpec : StringSpec({
         Sample("Int vs String", 1, "false", false),
         Sample("Int vs Void", 0, Unit, false),
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // long
+        //  long  //////////////////////////////////////////////////////////////////////////////////////////////////////
+
         Sample("Long vs Long", 0L, 0L, true),
         Sample("Long vs Long", 1L, 1L, true),
         Sample("Long vs Long", 0L, 1L, false),
@@ -190,8 +190,8 @@ class CompareSpec : StringSpec({
         Sample("Long vs String", 1L, "false", false),
         Sample("Long vs Void", 0L, Unit, false),
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // float
+        //  float  /////////////////////////////////////////////////////////////////////////////////////////////////////
+
         Sample("Float vs Float", 0.0f, 0.0f, true),
         Sample("Float vs Float", 1.0f, 1.0f, true),
         Sample("Float vs Float", 0.0f, 1.0f, false),
@@ -208,8 +208,8 @@ class CompareSpec : StringSpec({
         Sample("Float vs String", 1.0f, "false", false),
         Sample("Float vs Void", 0.0f, Unit, false),
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // double
+        //  double  ////////////////////////////////////////////////////////////////////////////////////////////////////
+
         Sample("Double vs Double", 0.0, 0.0, true),
         Sample("Double vs Double", 1.0, 1.0, true),
         Sample("Double vs Double", 0.0, 1.0, false),
@@ -226,8 +226,8 @@ class CompareSpec : StringSpec({
         Sample("Double vs String", 1.0, "false", false),
         Sample("Double vs Void", 0.0, Unit, false),
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // corner cases
+        //  corner cases  //////////////////////////////////////////////////////////////////////////////////////////////
+
         Sample("Unit vs Unit", Unit, Unit, true)
     )
 

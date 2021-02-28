@@ -8,7 +8,7 @@ import io.kotest.matchers.shouldBe
 
 class PolymorphicSlumbererSpec : StringSpec({
 
-    ////  Directly slumbering polymorphic children  ////////////////////////////////////////////////////////////////////
+    //  Directly slumbering polymorphic children  //////////////////////////////////////////////////////////////////////
 
     "Slumbering a polymorphic child independently must include the discriminator" {
 
@@ -22,7 +22,7 @@ class PolymorphicSlumbererSpec : StringSpec({
         )
     }
 
-    ////  pure sealed class and pure sealed children  //////////////////////////////////////////////////////////////////
+    //  pure sealed class and pure sealed children  ////////////////////////////////////////////////////////////////////
 
     "Slumbering a list of sealed class children (PureBase)" {
 
@@ -70,7 +70,7 @@ class PolymorphicSlumbererSpec : StringSpec({
         )
     }
 
-    ////  Sealed parent with custom discriminator  /////////////////////////////////////////////////////////////////////
+    //  Sealed parent with custom discriminator  ///////////////////////////////////////////////////////////////////////
 
     "Slumbering a list of sealed class children (CustomDiscriminator) for parent with custom discriminator" {
 
@@ -95,7 +95,7 @@ class PolymorphicSlumbererSpec : StringSpec({
         )
     }
 
-    ////  Pure sealed class with annotated children  ///////////////////////////////////////////////////////////////////
+    //  Pure sealed class with annotated children  /////////////////////////////////////////////////////////////////////
 
     "Slumbering a list of sealed class children with custom type identifiers (AnnotedChildrenBase)" {
 
@@ -120,7 +120,7 @@ class PolymorphicSlumbererSpec : StringSpec({
         )
     }
 
-    ////  Non sealed base class annotated with Polymorphic.Parent  /////////////////////////////////////////////////////
+    //  Non sealed base class annotated with Polymorphic.Parent  ///////////////////////////////////////////////////////
 
     "Slumbering a list of children of a non sealed parent class (AnnotatedBase)" {
 
@@ -145,7 +145,7 @@ class PolymorphicSlumbererSpec : StringSpec({
         )
     }
 
-    ////  Direct slumbering of a Polymorphic.Child  /////////////////////////////////////////////////////
+    //  Direct slumbering of a Polymorphic.Child  //////////////////////////////////////////////////////////////////////
 
     "Directly slumbering a polymorphic child must include the discriminator" {
 

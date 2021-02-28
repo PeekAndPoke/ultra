@@ -21,7 +21,7 @@ private data class V(
 object PortableDateSerializer : KSerializer<PortableDate> {
 
     override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor(this::class.qualifiedName!!, PrimitiveKind.STRING)
+        PrimitiveSerialDescriptor("PortableDateSerializer", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: PortableDate) {
         encoder.encodeSerializableValue(
@@ -46,7 +46,7 @@ object PortableDateSerializer : KSerializer<PortableDate> {
 object PortableDateTimeSerializer : KSerializer<PortableDateTime> {
 
     override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor(this::class.qualifiedName!!, PrimitiveKind.STRING)
+        PrimitiveSerialDescriptor("PortableDateTimeSerializer", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: PortableDateTime) {
         encoder.encodeSerializableValue(
@@ -71,7 +71,7 @@ object PortableDateTimeSerializer : KSerializer<PortableDateTime> {
 object PortableTimeSerializer : KSerializer<PortableTime> {
 
     override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor(this::class.qualifiedName!!, PrimitiveKind.STRING)
+        PrimitiveSerialDescriptor("PortableTimeSerializer", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: PortableTime) {
         encoder.encodeLong(value.milliSeconds)
@@ -89,7 +89,7 @@ object PortableTimeSerializer : KSerializer<PortableTime> {
 object PortableTimezoneSerializer : KSerializer<PortableTimezone> {
 
     override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor(this::class.qualifiedName!!, PrimitiveKind.STRING)
+        PrimitiveSerialDescriptor("PortableTimezoneSerializer", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: PortableTimezone) {
         encoder.encodeString(value.id)

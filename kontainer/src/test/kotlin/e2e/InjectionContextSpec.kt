@@ -15,11 +15,12 @@ class InjectionContextSpec : StringSpec({
 
         data class MyInjected(val injector: KClass<*>?)
 
-        val subject = kontainer {
+        val blueprint = kontainer {
 
             prototype { context: InjectionContext -> MyInjected(context.requestingClass) }
+        }
 
-        }.useWith()
+        val subject = blueprint.useWith()
 
         assertSoftly {
             subject.get(MyInjected::class).injector shouldBe Kontainer::class
@@ -33,13 +34,14 @@ class InjectionContextSpec : StringSpec({
 
         data class MyInjector(val injected: MyInjected)
 
-        val subject = kontainer {
+        val blueprint = kontainer {
 
             prototype(MyInjector::class)
 
             prototype { context: InjectionContext -> MyInjected(context.requestingClass) }
+        }
 
-        }.useWith()
+        val subject = blueprint.useWith()
 
         assertSoftly {
             subject.get(MyInjected::class).injector shouldBe Kontainer::class
@@ -56,14 +58,15 @@ class InjectionContextSpec : StringSpec({
 
         data class MyOuter(val middle: MyMiddle)
 
-        val subject = kontainer {
+        val blueprint = kontainer {
 
             prototype(MyOuter::class)
             prototype(MyMiddle::class)
 
             prototype { context: InjectionContext -> MyInner(context.requestingClass) }
+        }
 
-        }.useWith()
+        val subject = blueprint.useWith()
 
         assertSoftly {
             subject.get(MyInner::class).injector shouldBe Kontainer::class
@@ -78,13 +81,14 @@ class InjectionContextSpec : StringSpec({
 
         data class MyInjector(val injected: MyInjected?)
 
-        val subject = kontainer {
+        val blueprint = kontainer {
 
             prototype(MyInjector::class)
 
             prototype { context: InjectionContext -> MyInjected(context.requestingClass) }
+        }
 
-        }.useWith()
+        val subject = blueprint.useWith()
 
         assertSoftly {
             subject.get(MyInjected::class).injector shouldBe Kontainer::class
@@ -101,14 +105,15 @@ class InjectionContextSpec : StringSpec({
 
         data class MyInjector(val all: List<MyBase>)
 
-        val subject = kontainer {
+        val blueprint = kontainer {
 
             prototype(MyInjector::class)
 
             prototype { context: InjectionContext -> MyInjectedOne(context.requestingClass) }
             prototype { context: InjectionContext -> MyInjectedTwo(context.requestingClass) }
+        }
 
-        }.useWith()
+        val subject = blueprint.useWith()
 
         assertSoftly {
             subject.get(MyInjectedOne::class).injector shouldBe Kontainer::class
@@ -127,14 +132,16 @@ class InjectionContextSpec : StringSpec({
 
         data class MyInjector(val all: Lookup<MyBase>)
 
-        val subject = kontainer {
+        val blueprint = kontainer {
 
             prototype(MyInjector::class)
 
             prototype { context: InjectionContext -> MyInjectedOne(context.requestingClass) }
             prototype { context: InjectionContext -> MyInjectedTwo(context.requestingClass) }
 
-        }.useWith()
+        }
+
+        val subject = blueprint.useWith()
 
         assertSoftly {
             subject.get(MyInjectedOne::class).injector shouldBe Kontainer::class

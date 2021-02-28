@@ -75,9 +75,7 @@ class ListMutatorSpec : StringSpec({
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //  MutableList<M> implementation
-    ////
+    //  MutableList<M> implementation  /////////////////////////////////////////////////////////////////////////////////
 
     "iterator: getting the iterator must not trigger mutation" {
 
@@ -89,7 +87,6 @@ class ListMutatorSpec : StringSpec({
         var modifications = 0
 
         val subject = ListMutator(source, { modifications++ }, { it, mod -> it.mutator(mod) }, { it.getResult() })
-
 
         assertSoftly {
 
@@ -894,9 +891,7 @@ class ListMutatorSpec : StringSpec({
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //  additional functionality implementation
-    ////
+    //  additional functionality implementation  ///////////////////////////////////////////////////////////////////////
 
     "contains(T): must not trigger mutation" {
 
