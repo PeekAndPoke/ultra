@@ -400,7 +400,16 @@ class SingletonFactoriesSpec : StringSpec({
         val blueprint = kontainer {
             module(configs)
 
-            singleton(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int, c9: Int, c10: Int ->
+            singleton(Base::class) { c1: Int,
+                                     c2: Int,
+                                     c3: Int,
+                                     c4: Int,
+                                     c5: Int,
+                                     c6: Int,
+                                     c7: Int,
+                                     c8: Int,
+                                     c9: Int,
+                                     c10: Int ->
                 Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9 + c10)
             }
         }
@@ -418,7 +427,6 @@ class SingletonFactoriesSpec : StringSpec({
             val provider: Function<Config> = { Config(0) }
 
             singleton(Base::class, provider)
-
         }
 
         val subject = blueprint.useWith()
