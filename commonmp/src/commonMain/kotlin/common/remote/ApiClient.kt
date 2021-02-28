@@ -25,9 +25,9 @@ abstract class ApiClient(private val config: Config) {
     val remote
         get(): RemoteRequest = remote(config.baseUrl, config.requestInterceptors, config.responseInterceptors)
 
-    ////  CALLING ENDPOINTS  ///////////////////////////////////////////////////////////////////////////////////////////
+    //  CALLING ENDPOINTS  /////////////////////////////////////////////////////////////////////////////////////////////
 
-    //// GET ////
+    //  GET  ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     operator fun <RESPONSE> ApiEndpoint.Get.invoke(
         vararg params: Pair<String, String?>,
@@ -43,7 +43,7 @@ abstract class ApiClient(private val config: Config) {
             .get(uri = buildUri(uri, params))
             .body { config.codec.decode(it) }
 
-    //// POST ////
+    //  POST  //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     operator fun <RESPONSE> ApiEndpoint.Post.invoke(
         vararg params: Pair<String, String?>,
@@ -61,7 +61,7 @@ abstract class ApiClient(private val config: Config) {
             .post(uri = buildUri(uri, params), body = body ?: "{}")
             .body { config.codec.decode(it) }
 
-    //// PUT ////
+    //  PUT  ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     operator fun <RESPONSE> ApiEndpoint.Put.invoke(
         vararg params: Pair<String, String?>,
@@ -79,7 +79,7 @@ abstract class ApiClient(private val config: Config) {
             .put(uri = buildUri(uri, params), body = body ?: "{}")
             .body { config.codec.decode(it) }
 
-    //// DELETE ////
+    //  DELETE  ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     operator fun <RESPONSE> ApiEndpoint.Delete.invoke(
         vararg params: Pair<String, String?>,

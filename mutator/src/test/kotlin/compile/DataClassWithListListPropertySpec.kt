@@ -78,7 +78,6 @@ class DataClassWithListListPropertySpec : StringSpec({
                 """.trimIndent()
             )
 
-
             expectFileToMatch(
                 "DataObjectLists${"$$"}mutator.kt",
                 """
