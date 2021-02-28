@@ -35,7 +35,6 @@ object ExampleCodeExtractor {
 
                 idx = end + endPattern.length
             }
-
         } while (found)
 
         return result.toString().trim()

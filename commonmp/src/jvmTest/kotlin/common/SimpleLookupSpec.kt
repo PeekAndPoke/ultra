@@ -33,5 +33,4 @@ class SimpleLookupSpec : StringSpec({
             subject.getOrNull(B::class) shouldBe b
         }
     }
-
 })

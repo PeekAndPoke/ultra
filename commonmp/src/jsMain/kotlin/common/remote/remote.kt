@@ -18,9 +18,6 @@ actual fun remote(
     responseInterceptors
 )
 
-
-// Response
-
 /**
  * extracts the body from the given [Response]
  */

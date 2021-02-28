@@ -16,7 +16,6 @@ class LoggingKontainerModuleSpec : StringSpec() {
 
             val kontainer = bluePrint.useWith()
 
-
             kontainer.get(UltraLogManager::class).shouldBeInstanceOf<UltraLogManager>()
         }
     }

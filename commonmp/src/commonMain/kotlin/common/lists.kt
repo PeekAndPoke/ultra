@@ -57,7 +57,6 @@ fun <E> List<E>.prepend(element: E) = addAt(0, element)
  */
 fun <E> List<E>.swapAt(idx1: Int, idx2: Int): List<E> {
 
-
     if (idx1 < 0 || idx1 >= size || idx2 < 0 || idx2 >= size || idx1 == idx2) {
         return this
     }

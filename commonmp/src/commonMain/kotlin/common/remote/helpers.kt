@@ -35,4 +35,3 @@ fun buildUri(uri: String, params: Map<String, String?> = emptyMap()): String {
         .map { (k, v) -> encodeURIComponent(k) + "=" + encodeURIComponent(v) }
         .joinToString("&")
 }
-

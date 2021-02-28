@@ -13,7 +13,6 @@ class ClassesSpec : StringSpec({
         File("/opt/dev", File("").path)
     )
 
-
     listOf(
         row("", "", File("")),
         row("de", "", File("..")),

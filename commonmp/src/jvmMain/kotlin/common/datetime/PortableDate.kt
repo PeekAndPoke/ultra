@@ -22,4 +22,3 @@ val LocalDate.portable
     get(): PortableDate = PortableDate(
         timestamp = this.atStartOfDay(utc).toInstant().toEpochMilli()
     )
-

@@ -24,7 +24,6 @@ class JwtPermissionsRoundTripSpec : FreeSpec() {
                 permissions = setOf("p1, p2"),
             )
 
-
             val jwt = JWT.create()
                 .encode("testns", permissions)
                 .sign(Algorithm.none())
@@ -50,7 +49,6 @@ class JwtPermissionsRoundTripSpec : FreeSpec() {
                 roles = setOf("r1, r2"),
                 permissions = setOf("p1, p2"),
             )
-
 
             val jwt = JWT.create()
                 .encode("testns", permissions)

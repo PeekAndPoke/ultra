@@ -25,4 +25,3 @@ interface UserRecordProvider {
         override fun invoke(): UserRecord = userRecord
     }
 }
-

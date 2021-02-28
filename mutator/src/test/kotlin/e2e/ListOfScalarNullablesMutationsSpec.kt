@@ -11,7 +11,7 @@ import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 @DisplayName("E2E - ListOfScalarNullablesMutationsSpec")
 class ListOfScalarNullablesMutationsSpec : StringSpec({
 
-    ////  List of nullable ints  //////////////////////////////////////////////////////////////////////
+    //  List of nullable ints  //////////////////////////////////////////////////////////////////////
 
     "Mutating a list of nullable ints by removing elements via removeWhere" {
 

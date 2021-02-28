@@ -43,4 +43,3 @@ private val nullable = listOf(
     emptyList<Any>(),
     emptyMap<Any, Any>()
 )
-

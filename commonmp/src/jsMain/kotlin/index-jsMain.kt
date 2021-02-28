@@ -1,4 +1,4 @@
 package de.peekandpoke.ultra
 
 @Suppress("unused")
-const val CommonMpJs = "Hello CommonMpJs!"
+const val COMMON_MP_JS = "Hello CommonMpJs!"

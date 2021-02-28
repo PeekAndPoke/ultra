@@ -12,4 +12,3 @@ sealed class ApiEndpoint {
 
     data class Delete(override val uri: String) : ApiEndpoint()
 }
-

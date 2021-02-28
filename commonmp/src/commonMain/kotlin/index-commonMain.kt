@@ -1,4 +1,4 @@
 package de.peekandpoke.ultra
 
 @Suppress("unused")
-const val CommonMp = "Hello CommonMp!"
+const val COMMON_MP = "Hello CommonMp!"
