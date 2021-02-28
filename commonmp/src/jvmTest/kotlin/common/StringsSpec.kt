@@ -58,25 +58,25 @@ class StringsSpec : StringSpec({
     //  String.startsWithAny / String.startsWithNone  //////////////////////////////////////////////////////////////////
 
     listOf(
-        row("", listOf(), false),
-        row("", listOf("a"), false),
-        row("a", listOf("b"), false),
-        row("abc", listOf("abc"), true),
-        row("abc", listOf("a", "b", "c"), true),
-        row("abc", listOf("a", "b", "abc"), true)
+        row("", arrayOf(), false),
+        row("", arrayOf("a"), false),
+        row("a", arrayOf("b"), false),
+        row("abc", arrayOf("abc"), true),
+        row("abc", arrayOf("a", "b", "c"), true),
+        row("abc", arrayOf("a", "b", "abc"), true)
     ).forEach { (source, search, expected) ->
 
         "Strings.startsWithAny: '$source' search '$search'" {
 
             assertSoftly {
 
-                source.startsWithAny(*search.toTypedArray()) shouldBe expected
-                source.startsWithAny(search.toTypedArray()) shouldBe expected
+                source.startsWithAny(*search) shouldBe expected
                 source.startsWithAny(search) shouldBe expected
+                source.startsWithAny(search.toList()) shouldBe expected
 
-                source.startsWithNone(*search.toTypedArray()) shouldBe !expected
-                source.startsWithNone(search.toTypedArray()) shouldBe !expected
+                source.startsWithNone(*search) shouldBe !expected
                 source.startsWithNone(search) shouldBe !expected
+                source.startsWithNone(search.toList()) shouldBe !expected
             }
         }
     }
@@ -166,20 +166,20 @@ class StringsSpec : StringSpec({
     //  String.toUri  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     listOf(
-        row("", listOf(), ""),
-        row("uri", listOf(), "uri"),
-        row("uri", listOf("a" to "a"), "uri?a=a"),
-        row("uri", listOf("a" to "a", "b" to "b"), "uri?a=a&b=b"),
-        row("uri?x", listOf(), "uri?x"),
-        row("uri?x", listOf("a" to "a", "b" to "b"), "uri?x&a=a&b=b")
+        row("", arrayOf(), ""),
+        row("uri", arrayOf(), "uri"),
+        row("uri", arrayOf("a" to "a"), "uri?a=a"),
+        row("uri", arrayOf("a" to "a", "b" to "b"), "uri?a=a&b=b"),
+        row("uri?x", arrayOf(), "uri?x"),
+        row("uri?x", arrayOf("a" to "a", "b" to "b"), "uri?x&a=a&b=b")
     ).forEach { (source, params, expected) ->
 
         "String.toUri: '$source' params '$params'" {
 
             assertSoftly {
-                source.toUri(*params.toTypedArray()) shouldBe expected
+                source.toUri(*params) shouldBe expected
                 source.toUri(params.toMap()) shouldBe expected
-                source.toUri(params) shouldBe expected
+                source.toUri(params.toList()) shouldBe expected
             }
         }
     }
