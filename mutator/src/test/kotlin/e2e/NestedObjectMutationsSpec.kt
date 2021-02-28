@@ -85,7 +85,6 @@ class NestedObjectMutationsSpec : StringSpec({
             boss.address += Address("Leipzig", "04109")
         }
 
-
         withClue("Source object must NOT be modified") {
             source shouldNotBe result
         }
@@ -112,7 +111,6 @@ class NestedObjectMutationsSpec : StringSpec({
             // First we fully replace the "address"
             boss.address = Address("Leipzig", "04109").mutator()
         }
-
 
         withClue("Source object must NOT be modified") {
             source shouldNotBe result
@@ -142,7 +140,6 @@ class NestedObjectMutationsSpec : StringSpec({
             // Then we modify the property again
             boss.address.zip = "04110"
         }
-
 
         withClue("Source object must NOT be modified") {
             source shouldNotBe result

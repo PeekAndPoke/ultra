@@ -42,7 +42,6 @@ class DataClassPropertyRenderer(
                     else -> true
                 }
 
-
     override fun KotlinPrinter.renderPropertyImplementation(variable: MVariable) {
 
         val type = variable.typeName

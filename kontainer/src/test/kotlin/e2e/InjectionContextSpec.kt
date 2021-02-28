@@ -25,7 +25,6 @@ class InjectionContextSpec : StringSpec({
         assertSoftly {
             subject.get(MyInjected::class).injector shouldBe Kontainer::class
         }
-
     }
 
     "Using the injection context when injecting a service" {
@@ -138,7 +137,6 @@ class InjectionContextSpec : StringSpec({
 
             prototype { context: InjectionContext -> MyInjectedOne(context.requestingClass) }
             prototype { context: InjectionContext -> MyInjectedTwo(context.requestingClass) }
-
         }
 
         val subject = blueprint.useWith()

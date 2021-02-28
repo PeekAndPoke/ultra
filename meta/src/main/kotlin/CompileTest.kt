@@ -57,14 +57,15 @@ data class CompileTest internal constructor(
     fun run(): KotlinCompilation.Result {
 
         // compile all sources
-        val compiled: KotlinCompilation.Result = KotlinCompilation().apply {
+        val compilation: KotlinCompilation = KotlinCompilation().apply {
             sources = sourcesFiles
             annotationProcessors = processors
             inheritClassPath = true
 
 //            workingDir = File("tmp/Kotlin-Compilation/${LocalDateTime.now()}").absoluteFile.ensureDirectory()
+        }
 
-        }.compile()
+        val compiled: KotlinCompilation.Result = compilation.compile()
 
         // check expectations
         val errors = expectations.flatMap { it.apply(compiled) }
@@ -224,9 +225,10 @@ data class CompileTest internal constructor(
             if (actual != count) {
                 return listOf(
                     "Expected $count files to be created. But actually $actual files where created:",
-                    *result.sourcesGeneratedByAnnotationProcessor
+                ).plus(
+                    result
+                        .sourcesGeneratedByAnnotationProcessor
                         .mapIndexed { index, file -> "${index + 1}. ${file.name}" }
-                        .toTypedArray()
                 )
             }
 
