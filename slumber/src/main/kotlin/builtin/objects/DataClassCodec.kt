@@ -51,16 +51,19 @@ class DataClassCodec(rootType: KType) : Awaker, Slumberer {
 
                     param.type.isMarkedNullable -> params[param] = null
 
-                    param.isOptional -> { /* do nothing */ }
+                    param.isOptional -> { /* do nothing */
+                    }
 
                     else -> missingParams.add(paramName)
                 }
-
-            } else {
+            }
+            // no there is no data for the parameter
+            else {
                 when {
                     param.type.isMarkedNullable -> params[param] = null
 
-                    param.isOptional -> { /* do nothing */ }
+                    param.isOptional -> { /* do nothing */
+                    }
 
                     else -> missingParams.add(paramName)
                 }

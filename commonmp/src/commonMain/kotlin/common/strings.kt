@@ -92,7 +92,6 @@ fun String.camelCaseSplit(): List<String> {
 
     var lastStart = 0
 
-
     for (i in 1 until trimmed.length) {
         val c = trimmed[i]
 

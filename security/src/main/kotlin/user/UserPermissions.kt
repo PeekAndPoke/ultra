@@ -99,5 +99,3 @@ data class UserPermissions(
      */
     fun hasAllPermissions(permissions: Collection<String>) = this.permissions.containsAll(permissions)
 }
-
-

@@ -51,7 +51,7 @@ class ConfigInjectionSpec : StringSpec({
 
     "Injecting all kinds of  config values" {
 
-        val subject = kontainer {
+        val blueprint = kontainer {
             config("int", 1)
             config("long", 2L)
             config("float", 3.0f)
@@ -60,8 +60,9 @@ class ConfigInjectionSpec : StringSpec({
             config("boolean", true)
 
             singleton<ConfigAllInjecting>()
+        }
 
-        }.useWith()
+        val subject = blueprint.useWith()
 
         assertSoftly {
 
