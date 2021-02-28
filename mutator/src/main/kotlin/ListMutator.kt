@@ -1,6 +1,10 @@
 package de.peekandpoke.ultra.mutator
 
-import de.peekandpoke.ultra.common.*
+import de.peekandpoke.ultra.common.containsAny
+import de.peekandpoke.ultra.common.pop
+import de.peekandpoke.ultra.common.push
+import de.peekandpoke.ultra.common.shift
+import de.peekandpoke.ultra.common.unshift
 
 /**
  * Creates a [ListMutator] for this List

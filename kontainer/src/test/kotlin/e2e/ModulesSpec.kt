@@ -1,6 +1,12 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.*
+import de.peekandpoke.ultra.kontainer.AnotherSimpleService
+import de.peekandpoke.ultra.kontainer.ConfigIntInjecting
+import de.peekandpoke.ultra.kontainer.InjectingService
+import de.peekandpoke.ultra.kontainer.KontainerModule
+import de.peekandpoke.ultra.kontainer.SimpleService
+import de.peekandpoke.ultra.kontainer.kontainer
+import de.peekandpoke.ultra.kontainer.module
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe

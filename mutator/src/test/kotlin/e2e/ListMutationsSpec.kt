@@ -593,5 +593,4 @@ class ListMutationsSpec : StringSpec({
             }
         }
     }
-
 })

@@ -50,7 +50,6 @@ class MapMutationsSpec : StringSpec({
             addresses = mapOf()
         )
 
-
         source.mutate {
 
             assertSoftly {
@@ -144,7 +143,6 @@ class MapMutationsSpec : StringSpec({
         val result = source.mutate {
             addresses["B"] = Address("Bonn", "53111")
         }
-
 
         withClue("Source object must NOT be modified") {
             source shouldNotBeSameInstanceAs result
