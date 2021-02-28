@@ -5,4 +5,3 @@ fun main() {
     println(PortableDate(1000) == PortableDate(1000))
     println(PortableDate(1001) > PortableDate(1000))
 }
-

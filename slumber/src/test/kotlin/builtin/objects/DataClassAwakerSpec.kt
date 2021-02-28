@@ -74,7 +74,6 @@ class DataClassAwakerSpec : StringSpec({
                 codec.awake(DataClass::class, "invalid")
             }
         }
-
     }
 
     "Awaking a nullable data class with one String? parameter" {

@@ -30,7 +30,7 @@ dependencies {
     api(project(":commonmp"))
     api(project(":common"))
 
-    ////  code generation  //////////////////////////////////////////////////////////////////////////////////////
+    //  code generation  //////////////////////////////////////////////////////////////////////////////////////
 
     api("com.github.tschuchortdev:kotlin-compile-testing:$kotlincompiletesting_version")
     api("com.github.wumpz:diffutils:$diffutils_version")
@@ -39,7 +39,7 @@ dependencies {
     api("com.google.auto.service:auto-service:$google_auto_version")
     kapt("com.google.auto.service:auto-service:$google_auto_version")
 
-    ////  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
+    //  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
 
     kaptTest("com.google.auto.service:auto-service:$google_auto_version")
 

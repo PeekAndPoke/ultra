@@ -148,7 +148,6 @@ class DataClassWithMultipleGenericPrimitivePropertiesSpec : StringSpec({
                 """.trimIndent()
             )
 
-
             expectFileToMatch(
                 "Generic${"$$"}mutator.kt",
                 """

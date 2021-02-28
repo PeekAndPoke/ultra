@@ -189,7 +189,7 @@ class PolymorphicSlumbererSpec : StringSpec({
         )
     }
 
-    "Directly slumbering a polymorphic within a deeper hierarchy annotated with IndexSubclasses include the discriminator" {
+    "Directly slumbering a polymorphic within a deeper hierarchy with IndexSubclasses must include the discriminator" {
 
         val codec = Codec.default
 

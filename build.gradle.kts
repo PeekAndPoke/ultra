@@ -52,13 +52,15 @@ tasks {
     }
 }
 
-//codeQualityTools {
-//    failEarly = true
-//    xmlReports = true
-//    htmlReports = true
-//    textReports = true
-//
-//    detekt {
-//
-//    }
-//}
+/*
+codeQualityTools {
+    failEarly = true
+    xmlReports = true
+    htmlReports = true
+    textReports = true
+
+    detekt {
+
+    }
+}
+*/
