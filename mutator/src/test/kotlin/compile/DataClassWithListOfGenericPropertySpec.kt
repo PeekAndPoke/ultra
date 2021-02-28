@@ -95,7 +95,6 @@ class DataClassWithListOfGenericPropertySpec : StringSpec({
                 """.trimIndent()
             )
 
-
             expectFileToMatch(
                 "Generic${"$$"}mutator.kt",
                 """

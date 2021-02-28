@@ -70,7 +70,7 @@ class HashingSpec : StringSpec({
         row("äöü", "0a09d7ee1e23c509e5e6846c86823081")
     ).forEach { (input, expected) ->
 
-        "String.md5: '${input}' expects '$expected'" {
+        "String.md5: '$input' expects '$expected'" {
             input.md5() shouldBe expected
         }
     }
@@ -83,7 +83,7 @@ class HashingSpec : StringSpec({
         row("äöü", "bc329dbfa029f66476cb633afcd3136c65c840d0003ef6479583c09e64e2c33e")
     ).forEach { (input, expected) ->
 
-        "String.sha256: '${input}' expects '$expected'" {
+        "String.sha256: '$input' expects '$expected'" {
             input.sha256().toHex() shouldBe expected
         }
     }
@@ -91,12 +91,21 @@ class HashingSpec : StringSpec({
     //  String.sha384  /////////////////////////////////////////////////////////////////////////////////////////////////
 
     listOf(
-        row("", "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b"),
-        row("A", "ad14aaf25020bef2fd4e3eb5ec0c50272cdfd66074b0ed037c9a11254321aac0729985374beeaa5b80a504d048be1864"),
-        row("äöü", "8a224a81de903b7c3e225f930f855205d55e4c3da677a8d9808cd67b9941290637e678489b0843074e4448b048824ee3")
+        row(
+            "",
+            "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b"
+        ),
+        row(
+            "A",
+            "ad14aaf25020bef2fd4e3eb5ec0c50272cdfd66074b0ed037c9a11254321aac0729985374beeaa5b80a504d048be1864"
+        ),
+        row(
+            "äöü",
+            "8a224a81de903b7c3e225f930f855205d55e4c3da677a8d9808cd67b9941290637e678489b0843074e4448b048824ee3"
+        ),
     ).forEach { (input, expected) ->
 
-        "String.sha384: '${input}' expects '$expected'" {
+        "String.sha384: '$input' expects '$expected'" {
             input.sha384().toHex() shouldBe expected
         }
     }

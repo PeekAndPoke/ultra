@@ -116,4 +116,3 @@ class ChildFinder<C : Any, T : Any> private constructor(
             }
     }
 }
-

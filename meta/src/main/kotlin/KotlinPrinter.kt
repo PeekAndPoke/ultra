@@ -56,7 +56,6 @@ class KotlinPrinter(
             else -> toString()
         }
 
-
         /**
          * Imports a top level function
          */
@@ -67,11 +66,14 @@ class KotlinPrinter(
 
                     // We only need to import top level function from other packages
                     if (type.packageName != codePackageName) {
-                        imports.add("${type.packageName}.${function}")
+                        imports.add("${type.packageName}.$function")
                     }
 
                 is ParameterizedTypeName ->
                     import(type.rawType, function)
+
+                else -> { /* noop */
+                }
             }
 
             return function
