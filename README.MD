@@ -6,7 +6,11 @@ ULTRA is a set of libraries and helpers to enhance your everyday Kotlin coding w
 
 Check out the sub-projects. There you will find details, descriptive test cases and usage examples.
 
+## TODO: publish on Maven Central
 
+How to:
+
+https://getstream.io/blog/publishing-libraries-to-mavencentral-2021/
 
 ## ultra::common
 
