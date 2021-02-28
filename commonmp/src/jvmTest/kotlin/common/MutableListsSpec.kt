@@ -8,17 +8,17 @@ import io.kotest.matchers.shouldBe
 class MutableListsSpec : StringSpec({
 
     listOf(
-        row(listOf(), listOf()),
-        row(listOf(1), listOf()),
-        row(listOf(), listOf(1)),
-        row(listOf(1), listOf(2)),
-        row(listOf(1, 2), listOf(3, 4))
+        row(listOf(), arrayOf()),
+        row(listOf(1), arrayOf()),
+        row(listOf(), arrayOf(1)),
+        row(listOf(1), arrayOf(2)),
+        row(listOf(1, 2), arrayOf(3, 4))
     ).forEach { (input, args) ->
 
         "MutableList.push: vararg [$input] push [$args]" {
 
             val mutable = input.toMutableList()
-            val result = mutable.push(*args.toTypedArray())
+            val result = mutable.push(*args)
 
             assertSoftly {
                 result shouldBe mutable
@@ -30,7 +30,7 @@ class MutableListsSpec : StringSpec({
         "MutableList.push: array [$input] push [$args]" {
 
             val mutable = input.toMutableList()
-            val result = mutable.push(args.toTypedArray())
+            val result = mutable.push(args.toList())
 
             assertSoftly {
                 result shouldBe mutable
@@ -42,7 +42,7 @@ class MutableListsSpec : StringSpec({
         "MutableList.push: collection [$input] push [$args]" {
 
             val mutable = input.toMutableList()
-            val result = mutable.push(args)
+            val result = mutable.push(args.toList())
 
             assertSoftly {
                 result shouldBe mutable
@@ -64,17 +64,17 @@ class MutableListsSpec : StringSpec({
     }
 
     listOf(
-        row(listOf(), listOf()),
-        row(listOf(1), listOf()),
-        row(listOf(), listOf(1)),
-        row(listOf(1), listOf(2)),
-        row(listOf(1, 2), listOf(3, 4))
+        row(listOf(), arrayOf()),
+        row(listOf(1), arrayOf()),
+        row(listOf(), arrayOf(1)),
+        row(listOf(1), arrayOf(2)),
+        row(listOf(1, 2), arrayOf(3, 4))
     ).forEach { (input, args) ->
 
         "MutableList.unshift: vararg [$input] push [$args]" {
 
             val mutable = input.toMutableList()
-            val result = mutable.unshift(*args.toTypedArray())
+            val result = mutable.unshift(*args)
 
             assertSoftly {
                 result shouldBe mutable
@@ -86,7 +86,7 @@ class MutableListsSpec : StringSpec({
         "MutableList.unshift: array [$input] push [$args]" {
 
             val mutable = input.toMutableList()
-            val result = mutable.unshift(args.toTypedArray())
+            val result = mutable.unshift(args)
 
             assertSoftly {
                 result shouldBe mutable
@@ -98,7 +98,7 @@ class MutableListsSpec : StringSpec({
         "MutableList.unshift: collection [$input] push [$args]" {
 
             val mutable = input.toMutableList()
-            val result = mutable.unshift(args)
+            val result = mutable.unshift(args.toList())
 
             assertSoftly {
                 result shouldBe mutable
