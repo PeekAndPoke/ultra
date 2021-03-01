@@ -2,19 +2,28 @@
 
 Kontainer is a multi stage dependency injection mechanism.
 
+It ensures that the whole system is consistent at any time.
+
+It supports dynamic services that are especially useful in the context of a server application. Dynamic services can
+carry state and can therefore collect data about a single request. Dynamic services only life for the duration of a
+single request.
+
 ## Examples
 
 Code says more than a thousand words. So let's look at the [Examples](docs/ultra::docs/index.md)!
 
+For more inspiration you can also have a look at the [Test](src/test/kotlin)!
+
 ## What does "multi stage" mean?
 
-To answer this, let's first have a look at how (to our best knowledge) dependency injection
-is usually implemented in the java world (e.g. in Spring) and compare it with the Kontainer.
+To answer this, let's first have a look at how (to our best knowledge) dependency injection is usually implemented in
+the java world (e.g. in Spring) and compare it with the Kontainer.
 
 | The conventional way                                             | The Kontainer way                                                                      |
 | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | 1. You define your services (via annotations or xml)             | 1. You define your services in pure Kotlin code                                        |
-| 2. Service types are Singleton and Prototype                     | 2. Services types are Singleton, Prototype and **Dynamic**                             |
+| 2. Service types are Singleton and Prototype                     | 2. Services types are Singleton, Prototype and **
+Dynamic**                             |
 | 3. You define which services are to be injected                  | 3. Injection is done through the primary constructor                                   |    
 | 4. The container does all the auto-wiring.                       | 4. Phase 1: You create a Kontainer Blueprint                                           |
 | 5. Services can be requested from the container                  | 5. Phase 2: You obtain a Kontainer from the Blueprint                                  |

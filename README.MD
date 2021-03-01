@@ -82,9 +82,12 @@ Slumber is aware of the Null Safety that is built into Kotlin.
 
 Pure Java serialization libraries like [Jackson](https://github.com/FasterXML/jackson) are not.
 
-Kotlin handles the [Billion Dollar Mistake](https://en.wikipedia.org/wiki/Tony_Hoare#Apologies_and_retractions) 
-very well. And so should your serialization framework! Slumber does it for you. 
+Kotlin handles the [Billion Dollar Mistake](https://en.wikipedia.org/wiki/Tony_Hoare#Apologies_and_retractions)
+very well. And so should your serialization framework! Slumber does it for you.
 
+[READ MORE](mutator/ultra::mutator.md) ||
+[EXAMPLES](mutator/docs/ultra::docs/index.md) ||
+[TESTS](mutator/src/test/kotlin)
 
 # TODOs:
 

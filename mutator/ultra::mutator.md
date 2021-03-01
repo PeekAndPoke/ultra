@@ -1,10 +1,26 @@
 # ultra::mutator
 
+Mutator generates code that helps you to mutate nested immutable data structures with hassle of
+
+```
+copy(
+  copy(
+    copy(
+       ... etc
+    )
+  )
+)
+```
+
+It also has handy helper functions for manipulation immutable collections.
+
+## Examples
+
+Code says more than a thousand words. So let's look at the [Examples](docs/ultra::docs/index.md)!
+
+For more inspiration you can also have a look at the [Test](src/test/kotlin)!
+
 ## TODO
-
-- ( ) TESTS: all java.time.* must be treated like primitive types
-- ( ) create FallbackRenderer that accepts everything, like primitive renderer (with comment "sorry no better way known" message in generated code)
-
 
 ### Support for different collection libraries
 
@@ -12,7 +28,6 @@
 - https://github.com/usethesource/capsule
 - https://github.com/andrewoma/dexx
 - https://github.com/GlenKPeterson/Paguro
-
 
 ### fix the problem in the annotation-processor TypeElement.variables when a property has a name collision with java type
  
