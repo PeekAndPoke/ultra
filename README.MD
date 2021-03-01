@@ -49,6 +49,7 @@ https://issues.sonatype.org/browse/OSSRH-65096
 [ultra::meta](meta/ultra::meta.md) - Meta Programming Tools for Kotlin Annotation Processing and code generation
 
 Projects using this:
+
 - ultra::slumber
 - ultra::vault
 - karango (ArangoDB repositories for ultra::vault)
@@ -57,17 +58,17 @@ Projects using this:
 
 [ultra::mutator](mutator/ultra::mutator.md) - Mutate the Immutable!
 
-Mutator is a kotlin library inspired by [immerjs](https://github.com/immerjs/immer).  
-It enables you to manipulate deeply nested immutable data structures.  
-With zero boilerplate code at all and some powerful additional features.   
-
 [READ MORE](mutator/ultra::mutator.md) ||
 [EXAMPLES](mutator/docs/ultra::docs/index.md) ||
 [TESTS](mutator/src/test/kotlin)
 
+Mutator is a kotlin library inspired by [immerjs](https://github.com/immerjs/immer).  
+It enables you to manipulate deeply nested immutable data structures.  
+With zero boilerplate code at all and some powerful additional features.
+
 - It gives you a powerful way for mutating deeply nested immutable data structures.
 - By doing so, it encourages a 100% immutable data design
-- ... and more of functional programming style. 
+- ... and more of functional programming style.
 - Therefore you will have far less tricky bugs.
 
 ## ultra::security
@@ -76,7 +77,11 @@ With zero boilerplate code at all and some powerful additional features.
 
 ## ultra::slumber
 
-[ultra::slumber](slumber/ultra::slumber.md) - Object serialization with nullability awareness 
+[ultra::slumber](slumber/ultra::slumber.md) - Object serialization with nullability awareness
+
+[READ MORE](slumber/ultra::slumber.md) ||
+[EXAMPLES](mutator/docs/ultra::docs/index.md) ||
+[TESTS](mutator/src/test/kotlin)
 
 Slumber is aware of the Null Safety that is built into Kotlin.
 
@@ -84,10 +89,6 @@ Pure Java serialization libraries like [Jackson](https://github.com/FasterXML/ja
 
 Kotlin handles the [Billion Dollar Mistake](https://en.wikipedia.org/wiki/Tony_Hoare#Apologies_and_retractions)
 very well. And so should your serialization framework! Slumber does it for you.
-
-[READ MORE](mutator/ultra::mutator.md) ||
-[EXAMPLES](mutator/docs/ultra::docs/index.md) ||
-[TESTS](mutator/src/test/kotlin)
 
 # TODOs:
 
