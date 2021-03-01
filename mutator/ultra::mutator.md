@@ -22,6 +22,12 @@ For more inspiration you can also have a look at the [Test](src/test/kotlin)!
 
 ## TODO
 
+### Multiplatform support
+
+Check this out:
+
+https://github.com/Foso/MpApt/blob/master/Readme.md
+
 ### Support for different collection libraries
 
 - https://github.com/hrldcpr/pcollections
