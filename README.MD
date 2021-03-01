@@ -1,5 +1,6 @@
 # ULTRA components for Kotlin Servers and Android
 
+[![jCenter](https://img.shields.io/badge/Kotlin-1.4.31-success.svg)](https://kotlinlang.org/docs/releases.html)
 [![CodeFactor](https://www.codefactor.io/repository/github/peekandpoke/ultra/badge)](https://www.codefactor.io/repository/github/peekandpoke/ultra)
 
 ULTRA is a set of libraries and helpers to enhance your everyday Kotlin coding with more power, stability and enjoyment.
