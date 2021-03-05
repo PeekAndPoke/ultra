@@ -7,6 +7,7 @@
 dataSources.ids
 datasources.xml
 
+!buildSrc
 .gradle
 **/build/
 .kotlintest

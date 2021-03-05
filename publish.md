@@ -1,5 +1,30 @@
 # How to publish
 
+After going through this process:  
+https://getstream.io/blog/publishing-libraries-to-mavencentral-2021/
+
+Now we can finally publish to Maven Central.
+
+- https://search.maven.org
+- https://repo1.maven.org/maven2/de/devpeak/ultra/
+
+## Nexus
+
+The nexus is here: https://s01.oss.sonatype.org/
+
+## Video Series
+
+- [How to Publish a Java Library to Maven Central](https://www.youtube.com/watch?v=bxP9IuJbcDQ)
+
+
+- [01 Claim Your Namespace Easy Publishing to Central Repository](https://www.youtube.com/watch?v=MmNg0E_Pr64)
+- [02 Applying for Access to OSS RH Easy Publishing to Central Repository](https://www.youtube.com/watch?v=DXn6JoiYtEM)
+- [03 Requirements and Signing Tips for OSS RH Easy Publishing to Central Repos](https://www.youtube.com/watch?v=C-kIh0Mt6sg)
+- [04 Accessing OSS RH Easy Publishing to Central Repository](https://www.youtube.com/watch?v=_EbFme_5hM8)
+- [05 First Deployments Easy Publishing to Central Repository](https://www.youtube.com/watch?v=ZuuV2cUdrSk)
+- [06 Project Object Model POM Easy Publishing to Central Repository](https://www.youtube.com/watch?v=pFPGPOKgzm0)
+- [07 Javadoc, Sources and Signing Easy Publishing to Central Repository](https://www.youtube.com/watch?v=lsfMxKZWtpM)
+
 ## Maven publish with bintray
 
 All

@@ -1,6 +1,5 @@
 @file:Suppress("PropertyName")
 
-import com.jfrog.bintray.gradle.BintrayExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val logback_version: String by project
@@ -12,10 +11,8 @@ val klock_version: String by project
 
 plugins {
     kotlin("multiplatform")
-    `maven-publish`
     id("org.jetbrains.kotlin.plugin.serialization")
     id("org.jetbrains.dokka")
-    id("com.jfrog.bintray")
 }
 
 val GROUP: String by project
@@ -101,72 +98,61 @@ kotlin {
     }
 }
 
+configure<JavaPluginConvention> {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+}
+
 tasks {
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
     }
 
-    dokka {
-        outputFormat = "html"
-        outputDirectory = "$buildDir/javadoc"
-    }
-
     getByName("jvmTest", Test::class) {
         useJUnitPlatform { }
     }
-
-    getByName("build") {
-        dependsOn("jvmTest")
-    }
 }
 
-val dokkaJar by tasks.creating(Jar::class) {
-    group = JavaBasePlugin.DOCUMENTATION_GROUP
-    archiveClassifier.set("javadoc")
-    from(tasks.dokka)
-}
+apply(from = "./../maven.publish.gradle.kts")
 
-// ////////////////////////////////////////////////////////////////////////////////////////////////////////
+//val mavenCentralRepositoryUsername: String by project
+//val mavenCentralRepositoryPassword: String by project
+
+//afterEvaluate {
 //
-// Publishing see:
-// - https://medium.com/xorum-io/crafting-and-publishing-kotlin-multiplatform-library-to-bintray-cbc00a4f770
-// - https://medium.com/@satis.vishnu/kotlin-multiplatform-library-101-a34e906f58c
+//    project.publishing.publications.filterIsInstance<MavenPublication>().forEach {
 //
-// ////////////////////////////////////////////////////////////////////////////////////////////////////////
+//        it.groupId = group as String
+//
+//        if (it.name.contains("metadata")) {
+//            it.artifactId = project.name
+//        } else {
+//            it.artifactId = "${project.name}-${it.name}"
+//        }
+//    }
+//}
 
-fun stringProperty(s: String) = project.findProperty(s) as String?
-
-afterEvaluate {
-
-    project.publishing.publications.filterIsInstance<MavenPublication>().forEach {
-
-        it.groupId = group as String
-
-        if (it.name.contains("metadata")) {
-            it.artifactId = project.name
-        } else {
-            it.artifactId = "${project.name}-${it.name}"
-        }
-    }
-}
-
-bintray {
-    user = stringProperty("bintrayUser")
-    key = stringProperty("bintrayApiKey")
-    publish = true
-    override = true
-
-    setPublications(
-        *publishing.publications.map { it.name }.toTypedArray()
-    )
-
-    pkg(delegateClosureOf<BintrayExtension.PackageConfig> {
-        repo = "maven"
-        name = "de.peekandpoke.ultra.${project.name}"
-        userOrg = "peekandpoke"
-        description = "Common multi-platform helpers und utils"
-        setLabels("kotlin")
-        setLicenses("MIT")
-        desc = description
-    })
-}
+//publishing {
+//
+//    repositories {
+//
+//        withType<MavenArtifactRepository> {
+//
+//            if (url.host == "oss.sonatype.org") {
+//
+//                val releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+//                val snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+//
+//                url = if (VERSION_NAME.endsWith("SNAPSHOT")) {
+//                    uri(snapshotsRepoUrl)
+//                } else {
+//                    uri(releasesRepoUrl)
+//                }
+//
+//                credentials {
+//                    username = mavenCentralRepositoryUsername
+//                    password = mavenCentralRepositoryPassword
+//                }
+//            }
+//        }
+//    }
+//}

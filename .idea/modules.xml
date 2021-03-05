@@ -3,6 +3,9 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ultra.iml" filepath="$PROJECT_DIR$/.idea/modules/ultra.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ultra.buildSrc.iml" filepath="$PROJECT_DIR$/.idea/modules/ultra.buildSrc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ultra.buildSrc.main.iml" filepath="$PROJECT_DIR$/.idea/modules/ultra.buildSrc.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ultra.buildSrc.test.iml" filepath="$PROJECT_DIR$/.idea/modules/ultra.buildSrc.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/ultra.common.iml" filepath="$PROJECT_DIR$/.idea/modules/common/ultra.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/ultra.common.main.iml" filepath="$PROJECT_DIR$/.idea/modules/common/ultra.common.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/ultra.common.test.iml" filepath="$PROJECT_DIR$/.idea/modules/common/ultra.common.test.iml" />

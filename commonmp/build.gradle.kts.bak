@@ -1,0 +1,236 @@
+@file:Suppress("PropertyName")
+
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+val logback_version: String by project
+val classindex_version: String by project
+val kotlintest_version: String by project
+val kotlinx_serialization_version: String by project
+val kotlinx_coroutines_version: String by project
+val klock_version: String by project
+
+plugins {
+    kotlin("multiplatform")
+    id("org.jetbrains.kotlin.plugin.serialization")
+    id("org.jetbrains.dokka")
+    `maven-publish`
+    signing
+}
+
+val GROUP: String by project
+val VERSION_NAME: String by project
+
+group = GROUP
+version = VERSION_NAME
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+kotlin {
+    js {
+        browser {
+            webpackTask {
+                output.libraryTarget = "commonjs2"
+            }
+        }
+        binaries.executable()
+    }
+
+    jvm {
+        val main by compilations.getting {
+            kotlinOptions {
+                // Setup the Kotlin compiler options for the 'main' compilation:
+                jvmTarget = "1.8"
+            }
+        }
+    }
+
+    // Note that the Kotlin metadata is here, too.
+
+    configure(listOf(targets["metadata"], jvm(), js())) {
+        mavenPublication {
+            val targetPublication = this@mavenPublication
+            tasks.withType<AbstractPublishToMaven>()
+                .matching { it.publication == targetPublication }
+                .all { onlyIf { findProperty("isMainHost") == "true" } }
+        }
+    }
+
+    sourceSets {
+
+        val commonMain by getting {
+            dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_version")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version")
+            }
+        }
+
+        val commonTest by getting {
+            dependencies {
+//                implementation("io.kotest:kotest-assertions-shared:$kotlintest_version")
+//                implementation("io.kotest:kotest-framework-api:$kotlintest_version")
+//                implementation("io.kotest:kotest-runner-junit5:$kotlintest_version")
+            }
+        }
+
+        js().compilations["main"].defaultSourceSet {
+            dependencies {
+                api("com.soywiz.korlibs.klock:klock-js:$klock_version")
+            }
+        }
+
+        jvm().compilations["main"].defaultSourceSet {
+            dependencies {
+                implementation("com.soywiz.korlibs.klock:klock-jvm:$klock_version")
+                implementation("org.atteo.classindex:classindex:$classindex_version")
+            }
+        }
+
+        jvm().compilations["test"].defaultSourceSet {
+            dependencies {
+                // Testing
+                implementation("ch.qos.logback:logback-classic:$logback_version")
+                implementation("io.kotest:kotest-assertions-core-jvm:$kotlintest_version")
+                implementation("io.kotest:kotest-runner-junit5-jvm:$kotlintest_version")
+            }
+        }
+    }
+}
+
+tasks {
+    withType<KotlinCompile> {
+        kotlinOptions.jvmTarget = "1.8"
+    }
+
+    getByName("jvmTest", Test::class) {
+        useJUnitPlatform { }
+    }
+
+    getByName("build") {
+        dependsOn("jvmTest")
+    }
+}
+
+val dokkaJar: Jar by tasks.creating(Jar::class) {
+    group = JavaBasePlugin.DOCUMENTATION_GROUP
+    archiveClassifier.set("javadoc")
+    from(tasks.dokkaHtml)
+}
+
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Publishing see:
+// - https://medium.com/xorum-io/crafting-and-publishing-kotlin-multiplatform-library-to-bintray-cbc00a4f770
+// - https://medium.com/@satis.vishnu/kotlin-multiplatform-library-101-a34e906f58c
+//
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+val POM_NAME: String by project
+val POM_DESCRIPTION: String by project
+val POM_INCEPTION_YEAR: String by project
+
+val POM_URL: String by project
+val POM_SCM_URL: String by project
+val POM_SCM_CONNECTION: String by project
+val POM_SCM_DEV_CONNECTION: String by project
+
+val POM_LICENCE_NAME: String by project
+val POM_LICENCE_URL: String by project
+val POM_LICENCE_DIST: String by project
+
+val POM_DEVELOPER_ID: String by project
+val POM_DEVELOPER_NAME: String by project
+val POM_DEVELOPER_EMAIL: String by project
+val POM_DEVELOPER_URL: String by project
+
+val mavenCentralRepositoryUsername: String by project
+val mavenCentralRepositoryPassword: String by project
+
+afterEvaluate {
+
+    project.publishing.publications.filterIsInstance<MavenPublication>().forEach {
+
+        it.groupId = group as String
+
+        if (it.name.contains("metadata")) {
+            it.artifactId = project.name
+        } else {
+            it.artifactId = "${project.name}-${it.name}"
+        }
+    }
+}
+
+signing {
+    sign(publishing.publications)
+}
+
+publishing {
+    publications {
+        withType<MavenPublication>() {
+            artifact(dokkaJar)
+        }
+    }
+}
+
+publishing {
+    publications {
+        withType<MavenPublication>() {
+            groupId = GROUP
+            version = VERSION_NAME
+            artifactId = project.name
+
+            artifact(dokkaJar)
+
+            pom {
+                name.set(POM_NAME)
+                description.set(POM_DESCRIPTION)
+                url.set(POM_URL)
+
+                licenses {
+                    license {
+                        name.set(POM_LICENCE_NAME)
+                        url.set(POM_LICENCE_URL)
+                        distribution.set(POM_LICENCE_DIST)
+                    }
+                }
+                organization {
+                    name.set(POM_DEVELOPER_NAME)
+                }
+                developers {
+                    developer {
+                        id.set(POM_DEVELOPER_NAME)
+                        name.set(POM_DEVELOPER_NAME)
+                        email.set(POM_DEVELOPER_EMAIL)
+                    }
+                }
+                scm {
+                    connection.set(POM_SCM_URL)
+                    developerConnection.set(POM_SCM_CONNECTION)
+                    url.set(POM_SCM_DEV_CONNECTION)
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            val releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            val snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+
+            url = if (VERSION_NAME.endsWith("SNAPSHOT")) {
+                uri(snapshotsRepoUrl)
+            } else {
+                uri(releasesRepoUrl)
+            }
+
+            credentials {
+                username = mavenCentralRepositoryUsername
+                password = mavenCentralRepositoryPassword
+            }
+        }
+    }
+}
+

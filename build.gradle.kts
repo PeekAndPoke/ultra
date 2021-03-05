@@ -4,20 +4,17 @@ buildscript {
     repositories {
         mavenCentral()
         google()
-//        gradlePluginPortal() // Required for the Errorprone Gradle Plugin.
+//        gradlePluginPortal()
     }
 
     dependencies {
 //        classpath("com.vanniktech:gradle-code-quality-tools-plugin:0.18.0")
-        classpath("com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4")
     }
 }
 
 plugins {
     idea
     kotlin("jvm") version "1.4.31"
-//    kotlin("js") version "1.4.31"
-//    kotlin("multiplatform") version "1.4.31"
     kotlin("kapt") version "1.4.31"
 
     // Scans and Security: //////////////////////////////////////////////////////////////////
@@ -28,8 +25,9 @@ plugins {
 //    id("org.cyclonedx.bom")
 
     id("org.jetbrains.kotlin.plugin.serialization") apply false
-    id("org.jetbrains.dokka") apply false
-    id("com.jfrog.bintray") apply false
+    id("org.jetbrains.dokka") version "1.4.20" apply false
+    id("com.vanniktech.maven.publish") version "0.14.2" apply false
+//    id("com.jfrog.bintray") apply false
 }
 
 allprojects {
