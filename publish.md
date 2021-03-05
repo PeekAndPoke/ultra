@@ -1,8 +1,19 @@
 # How to publish
 
+To publish run this command
+
 ```
 ./gradlew clean build publish -Psigning.password= -PmavenCentralRepositoryPassword=
 ```
+
+For details like
+
+- sonatype user
+- signing key
+
+etc. see [gradle.properties](gradle.properties).
+
+## Some Details
 
 Now we can finally publish to Maven Central.
 

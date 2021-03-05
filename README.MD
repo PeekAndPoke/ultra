@@ -2,6 +2,8 @@
 
 [![jCenter](https://img.shields.io/badge/Kotlin-1.4.31-success.svg)](https://kotlinlang.org/docs/releases.html)
 [![CodeFactor](https://www.codefactor.io/repository/github/peekandpoke/ultra/badge)](https://www.codefactor.io/repository/github/peekandpoke/ultra)
+[![Maven Central](https://shields.io/maven-central/v/de.devpeak.ultra/ultra)](https://search.maven.org/artifact/de.devpeak.ultra/ultra)
+[![Snapshot](https://shields.io/nexus/s/de.devpeak.ultra/ultra?server=https%3A%2F%2Fs01.oss.sonatype.org)](https://s01.oss.sonatype.org/content/repositories/snapshots/de/devpeak/ultra/)
 
 ULTRA is a set of libraries and helpers to enhance your everyday Kotlin coding with more power, stability and enjoyment.
 
