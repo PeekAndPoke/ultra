@@ -7,23 +7,6 @@ ULTRA is a set of libraries and helpers to enhance your everyday Kotlin coding w
 
 Check out the sub-projects. There you will find details, descriptive test cases and usage examples.
 
-## TODO: publish on Maven Central
-
-How to:
-
-Description see here:
-https://getstream.io/blog/publishing-libraries-to-mavencentral-2021/
-
-Sonatype JIRA:
-https://issues.sonatype.org/browse/OSSRH-65096
-https://issues.sonatype.org/browse/OSSRH-65332
-
-More resources:
-
-- https://dev.to/jillesvangurp/publish-kotlin-multiplaform-jars-to-a-private-maven-2bdh
-- https://stackoverflow.com/questions/63176482/publish-kotlin-mpp-metadata-with-gradle-kotlin-dsl
-- https://kotlinfrompython.com/2018/01/18/how-to-publish-artifacts-to-maven-central-via-gradle/
-
 ## ultra::common
 
 [ultra::common](common/ultra::common.md) - Helper functions and utilities for:

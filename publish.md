@@ -10,9 +10,26 @@ Now we can finally publish to Maven Central.
 
 ## Nexus
 
-The nexus is here: https://s01.oss.sonatype.org/
+The nexus is here
 
-## Video Series
+- https://s01.oss.sonatype.org/
+
+## Helpful Resources
+
+### Links that helped
+
+Sonatype JIRA:
+
+- https://issues.sonatype.org/browse/OSSRH-65096
+- https://issues.sonatype.org/browse/OSSRH-65332
+
+Internet:
+
+- https://dev.to/jillesvangurp/publish-kotlin-multiplaform-jars-to-a-private-maven-2bdh
+- https://stackoverflow.com/questions/63176482/publish-kotlin-mpp-metadata-with-gradle-kotlin-dsl
+- https://kotlinfrompython.com/2018/01/18/how-to-publish-artifacts-to-maven-central-via-gradle/
+
+### Video Series
 
 - [How to Publish a Java Library to Maven Central](https://www.youtube.com/watch?v=bxP9IuJbcDQ)
 
