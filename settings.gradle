@@ -1,21 +1,3 @@
-// See: https://github.com/CycloneDX/cyclonedx-gradle-plugin
-pluginManagement {
-    plugins {
-        id "org.jetbrains.kotlin.plugin.serialization" version "1.4.31"
-        id "org.jetbrains.dokka" version "0.9.18"
-        id 'com.jfrog.bintray' version '1.8.5'
-    }
-
-    resolutionStrategy {
-        eachPlugin {
-            if (requested.id.toString() == 'org.cyclonedx.bom') {
-                useModule('org.cyclonedx:cyclonedx-gradle-plugin:1.1.1')
-            }
-        }
-    }
-}
-
-enableFeaturePreview("GRADLE_METADATA")
 
 rootProject.name = 'ultra'
 

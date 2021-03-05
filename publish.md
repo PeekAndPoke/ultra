@@ -1,7 +1,8 @@
 # How to publish
 
-After going through this process:  
-https://getstream.io/blog/publishing-libraries-to-mavencentral-2021/
+```
+./gradlew clean build publish -Psigning.password= -PmavenCentralRepositoryPassword=
+```
 
 Now we can finally publish to Maven Central.
 
@@ -25,6 +26,7 @@ Sonatype JIRA:
 
 Internet:
 
+- https://getstream.io/blog/publishing-libraries-to-mavencentral-2021/
 - https://dev.to/jillesvangurp/publish-kotlin-multiplaform-jars-to-a-private-maven-2bdh
 - https://stackoverflow.com/questions/63176482/publish-kotlin-mpp-metadata-with-gradle-kotlin-dsl
 - https://kotlinfrompython.com/2018/01/18/how-to-publish-artifacts-to-maven-central-via-gradle/

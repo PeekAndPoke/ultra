@@ -23,10 +23,10 @@ configure<PublishingExtension> {
                     uri(releasesRepoUrl)
                 }
 
-                println("renamed maven repo ${name} url from")
-                println(before)
-                println("to")
-                println(url)
+//                println("renamed maven repo ${name} url from")
+//                println(before)
+//                println("to")
+//                println(url)
 
                 credentials {
                     username = mavenCentralRepositoryUsername

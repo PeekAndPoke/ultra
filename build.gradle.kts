@@ -4,7 +4,6 @@ buildscript {
     repositories {
         mavenCentral()
         google()
-//        gradlePluginPortal()
     }
 
     dependencies {
@@ -14,20 +13,12 @@ buildscript {
 
 plugins {
     idea
-    kotlin("jvm") version "1.4.31"
-    kotlin("kapt") version "1.4.31"
+    kotlin("jvm") version Deps.kotlinVersion
+    kotlin("kapt") version Deps.kotlinVersion
 
-    // Scans and Security: //////////////////////////////////////////////////////////////////
-    // `build-scan`
-    // See: https://jeremylong.github.io/DependencyCheck/dependency-check-gradle/index.html
-//    id("org.owasp.dependencycheck") version "5.3.2"
-    // See: https://github.com/CycloneDX/cyclonedx-gradle-plugin
-//    id("org.cyclonedx.bom")
-
-    id("org.jetbrains.kotlin.plugin.serialization") apply false
-    id("org.jetbrains.dokka") version "1.4.20" apply false
-    id("com.vanniktech.maven.publish") version "0.14.2" apply false
-//    id("com.jfrog.bintray") apply false
+    id("org.jetbrains.kotlin.plugin.serialization") version Deps.kotlinVersion apply false
+    id("org.jetbrains.dokka") version Deps.dokkaVersion apply false
+    id("com.vanniktech.maven.publish") version Deps.mavenPublishVersion apply false
 }
 
 allprojects {
