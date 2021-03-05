@@ -1,11 +1,27 @@
 package de.peekandpoke.ultra.security.user
 
+import java.net.InetAddress
+import java.net.UnknownHostException
+
 interface UserRecordProvider {
     operator fun invoke(): UserRecord
 
     @Suppress("MemberVisibilityCanBePrivate")
     companion object {
         val anonymous: UserRecordProvider = static("anonymous", "unknown")
+
+        fun systemUser() = static(
+            UserRecord(
+                userId = "system",
+                clientIp = try {
+                    InetAddress.getLocalHost().canonicalHostName
+                } catch (e: UnknownHostException) {
+                    "unknown"
+                },
+                desc = "system",
+                type = "system",
+            )
+        )
 
         fun static(userId: String, clientIp: String): UserRecordProvider = static(UserRecord(userId, clientIp))
 
