@@ -28,8 +28,8 @@ abstract class TypeLookup {
 
         if (candidates.size > 1) {
             throw ServiceAmbiguous(
-                "Service ${type.qualifiedName} is ambiguous. It has multiple candidates: "
-                        + candidates.map { it.qualifiedName }.joinToString(", ")
+                "Service ${type.qualifiedName} is ambiguous. It has multiple candidates: " +
+                        candidates.map { it.qualifiedName }.joinToString(", ")
             )
         }
 

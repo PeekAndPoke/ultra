@@ -64,4 +64,3 @@ class SingletonVsDynamicVsPrototypeExample : SimpleExample() {
         // !END! //
     }
 }
-

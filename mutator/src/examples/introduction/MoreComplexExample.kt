@@ -101,4 +101,3 @@ class MoreComplexExample : SimpleExample() {
         // !END! //
     }
 }
-

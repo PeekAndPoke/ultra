@@ -15,9 +15,10 @@ class MType(
     val typeName: TypeName
 ) : MBase(model) {
 
-    override fun equals(other: Any?) = (other is MType)
-            && other.type == type
-            && other.typeName.toString() == typeName.toString()
+    override fun equals(other: Any?) =
+        (other is MType) &&
+                other.type == type &&
+                other.typeName.toString() == typeName.toString()
 
     override fun hashCode(): Int {
         var hash = 7

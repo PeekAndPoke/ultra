@@ -83,7 +83,7 @@ interface ParameterProvider {
             kontainer.hasConfig(paramName, paramCls) -> listOf()
 
             else -> listOf(
-                "Parameter '${paramName}' misses a config value '${paramName}' of type ${paramCls.qualifiedName}"
+                "Parameter '$paramName' misses a config value '$paramName' of type ${paramCls.qualifiedName}"
             )
         }
     }
@@ -139,11 +139,13 @@ interface ParameterProvider {
                     it.size == 1 -> listOf()
 
                     // When there is no candidate then we cannot satisfy the dependency
-                    it.isEmpty() -> listOf("Parameter '${paramName}' misses a dependency to '${paramCls.qualifiedName}'")
+                    it.isEmpty() -> listOf(
+                        "Parameter '$paramName' misses a dependency to '${paramCls.qualifiedName}'"
+                    )
 
                     // When there is more than one candidate we cannot distinctly satisfy the dependency
                     else -> listOf(
-                        "Parameter '${paramName}' is ambiguous. The following services collide: " +
+                        "Parameter '$paramName' is ambiguous. The following services collide: " +
                                 it.map { c -> c.qualifiedName }.joinToString(", ")
                     )
                 }
@@ -253,12 +255,12 @@ interface ParameterProvider {
 
                     // When there is no candidate then we cannot satisfy the dependency
                     it.isEmpty() -> listOf(
-                        "Parameter '${paramName}' misses a lazy dependency to '${paramCls.qualifiedName}'"
+                        "Parameter '$paramName' misses a lazy dependency to '${paramCls.qualifiedName}'"
                     )
 
                     // When there is more than one candidate we cannot distinctly satisfy the dependency
                     else -> listOf(
-                        "Parameter '${paramName}' is ambiguous. The following services collide: " +
+                        "Parameter '$paramName' is ambiguous. The following services collide: " +
                                 it.map { c -> c.qualifiedName }.joinToString(", ")
                     )
                 }
