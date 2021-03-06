@@ -11,7 +11,8 @@ Check out the sub-projects. There you will find details, descriptive test cases 
 
 ## ultra::common
 
-[ultra::common](common/ultra::common.md) - Helper functions and utilities for:
+[ultra::common](common/README.MD) - Helper functions and utilities for:  
+[ultra::commonnp](commonmp/README.MD) - Multiplatform helper functions and utilities for:
 
 - Collections, Lists, Files, Functions
 - Hashing (like MD5, SHA256, ...)
@@ -27,19 +28,19 @@ Check out the sub-projects. There you will find details, descriptive test cases 
 
 ## ultra::kontainer
 
-[ultra::kontainer](kontainer/ultra::kontainer.md) - A multi stage dependency injection mechanism  
+[ultra::kontainer](kontainer/README.MD) - A multi stage dependency injection mechanism
 
-[READ MORE](kontainer/ultra::kontainer.md) ||
+[READ MORE](kontainer/README.MD) ||
 [EXAMPLES](kontainer/docs/ultra::docs/index.md) ||
 [TESTS](kontainer/src/test/kotlin)
 
 ## ultra::logging
 
-[ultra::logging](logging/ultra::logging.md) - A lean logging framework that integrates with the Kontainer
+[ultra::logging](logging/README.MD) - A lean logging framework that integrates with the Kontainer
 
 ## ultra::meta
 
-[ultra::meta](meta/ultra::meta.md) - Meta Programming Tools for Kotlin Annotation Processing and code generation
+[ultra::meta](meta/README.MD) - Meta Programming Tools for Kotlin Annotation Processing and code generation
 
 Projects using this:
 
@@ -49,9 +50,9 @@ Projects using this:
 
 ## ultra::mutator
 
-[ultra::mutator](mutator/ultra::mutator.md) - Mutate the Immutable!
+[ultra::mutator](mutator/README.MD) - Mutate the Immutable!
 
-[READ MORE](mutator/ultra::mutator.md) ||
+[READ MORE](mutator/README.MD) ||
 [EXAMPLES](mutator/docs/ultra::docs/index.md) ||
 [TESTS](mutator/src/test/kotlin)
 
@@ -66,13 +67,13 @@ With zero boilerplate code at all and some powerful additional features.
 
 ## ultra::security
 
-[ultra::security](security/ultra::security.md) - Everyday security features
+[ultra::security](security/README.MD) - Everyday security features
 
 ## ultra::slumber
 
-[ultra::slumber](slumber/ultra::slumber.md) - Object serialization with nullability awareness
+[ultra::slumber](slumber/README.MD) - Object serialization with nullability awareness
 
-[READ MORE](slumber/ultra::slumber.md) ||
+[READ MORE](slumber/README.MD) ||
 [EXAMPLES](mutator/docs/ultra::docs/index.md) ||
 [TESTS](mutator/src/test/kotlin)
 
