@@ -431,6 +431,7 @@ naming:
   PackageNaming:
     active: true
     excludes:
+      - "**/examples/**"
       - "**/test/**"
       - "**/androidTest/**"
       - "**/*.Test.kt"
