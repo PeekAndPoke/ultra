@@ -43,6 +43,7 @@ import kotlin.reflect.full.primaryConstructor
 
 object BuiltInModule : SlumberModule {
 
+    @Suppress("Detekt:ComplexMethod")
     override fun getAwaker(type: KType): Awaker? {
 
         val cls = type.classifier
@@ -121,6 +122,7 @@ object BuiltInModule : SlumberModule {
         return null
     }
 
+    @Suppress("Detekt:ComplexMethod")
     override fun getSlumberer(type: KType): Slumberer? {
 
         val cls = type.classifier

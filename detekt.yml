@@ -245,6 +245,10 @@ formatting:
     autoCorrect: true
   NoWildcardImports:
     active: true
+    excludeImports:
+      - 'java.util.*'
+      - 'kotlin.*'
+      - 'org.w3c.fetch.*'
   PackageName:
     active: true
     autoCorrect: true

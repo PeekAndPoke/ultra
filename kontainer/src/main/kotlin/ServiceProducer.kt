@@ -60,6 +60,7 @@ class ServiceProducer internal constructor(
             }
         }
 
+        @Suppress("Detekt:ComplexMethod")
         fun <R : Any> forFactory(factory: Function<R>) = when (factory) {
             is Function0<R> -> forFactory(factory)
             is Function1<*, R> -> forFactory(factory)
