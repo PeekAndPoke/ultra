@@ -134,7 +134,6 @@ interface ServiceProvider {
         )
     }
 
-
     /**
      * Provides a prototype service
      *
@@ -183,5 +182,3 @@ interface ServiceProvider {
         )
     }
 }
-
-

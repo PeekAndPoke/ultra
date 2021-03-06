@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.mutator
 
-
 fun <K, T, M> Map<K, T>.mutator(
 
     onModify: OnModify<Map<K, T>>,
@@ -18,7 +17,6 @@ class MapMutator<K, T, M>(
     onModify: OnModify<Map<K, T>>,
     private val forwardMapper: (T, OnModify<T>) -> M,
     private val backwardMapper: (M) -> T
-
 
 ) : MutatorBase<Map<K, T>, MutableMap<K, T>>(original, onModify), Iterable<Map.Entry<K, M>> {
 

@@ -120,7 +120,6 @@ data class TypeRef<T>(val type: KType) {
         )
     } as TypeRef<W>
 
-
     /**
      * Internal helper val, that does not carry the correct generic type information.
      *
@@ -151,5 +150,3 @@ data class TypeRef<T>(val type: KType) {
 @Suppress("UNCHECKED_CAST")
 val <T> TypeRef<List<T>>.unList: TypeRef<T>
     get() = unlisted as TypeRef<T>
-
-

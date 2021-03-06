@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.mutator
 
-
 /**
  * Base implementation for all mutators
  *
@@ -72,6 +71,3 @@ abstract class MutatorBase<I, R : I>(
         onModify(this)
     }
 }
-
-
-

@@ -23,7 +23,6 @@ private fun map(data: Any?): Byte? = when (data) {
         }
     }
 
-
     is String -> map(data.toDoubleOrNull())
 
     else -> null

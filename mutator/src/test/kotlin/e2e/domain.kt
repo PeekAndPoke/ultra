@@ -151,7 +151,6 @@ enum class SimpleEnum {
 @Mutable
 data class WithSimpleEnum(val enumValue: SimpleEnum = SimpleEnum.First)
 
-
 interface TreeRoot {
     val rootDepth: Float
 }
