@@ -30,7 +30,11 @@ The nexus is here
 
 ### Links that helped
 
-Sonatype JIRA:
+
+Sonatype JIRA "peekandpoke.io":
+- https://issues.sonatype.org/browse/OSSRH-65427
+
+Sonatype JIRA "devpeak.de":
 
 - https://issues.sonatype.org/browse/OSSRH-65096
 - https://issues.sonatype.org/browse/OSSRH-65332
