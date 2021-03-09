@@ -116,7 +116,7 @@
     <orderEntry type="library" scope="RUNTIME" name="Gradle: com.fasterxml.jackson.core:jackson-databind:2.11.0" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: commons-codec:commons-codec:1.14" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: com.soywiz.korlibs.klock:klock-jvm:1.12.1" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.atteo.classindex:classindex:3.10" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.github.matfax.klassindex:library:4.1.0-rc.1" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: com.fasterxml.jackson.core:jackson-annotations:2.11.0" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: com.fasterxml.jackson.core:jackson-core:2.11.0" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.1.0" level="project" />

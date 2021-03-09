@@ -90,7 +90,7 @@
     <orderEntry type="library" name="Gradle: io.kotest:kotest-assertions-api-jvm:4.4.1" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.4.2" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: com.soywiz.korlibs.klock:klock-jvm:1.12.1" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.atteo.classindex:classindex:3.10" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.github.matfax.klassindex:library:4.1.0-rc.1" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.1.0" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.1.0" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: io.mockk:mockk:1.9.3" level="project" />

@@ -3,7 +3,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val logback_version: String by project
-val classindex_version: String by project
+val klass_index_version: String by project
 val kotlintest_version: String by project
 val kotlinx_serialization_version: String by project
 val kotlinx_coroutines_version: String by project
@@ -83,7 +83,7 @@ kotlin {
         jvm().compilations["main"].defaultSourceSet {
             dependencies {
                 implementation("com.soywiz.korlibs.klock:klock-jvm:$klock_version")
-                implementation("org.atteo.classindex:classindex:$classindex_version")
+                implementation(Deps.klassIndexLib)
             }
         }
 

@@ -33,8 +33,7 @@ dependencies {
     api(project(":common"))
     api(project(":commonmp"))
 
-    api("org.atteo.classindex:classindex:$classindex_version")
-    kapt("org.atteo.classindex:classindex:$classindex_version")
+    api(Deps.klassIndexLib)
 
     api("org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version")
 
@@ -43,7 +42,7 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-core-jvm:$kotlintest_version")
     testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotlintest_version")
 
-    kaptTest("org.atteo.classindex:classindex:$classindex_version")
+    kaptTest(Deps.klassIndexProcessor)
 }
 
 kapt {

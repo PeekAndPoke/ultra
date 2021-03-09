@@ -1,9 +1,9 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
+import com.github.matfax.klassindex.IndexSubclasses
 import de.peekandpoke.ultra.slumber.Polymorphic
 import de.peekandpoke.ultra.slumber.indexedSubClasses
 import kotlinx.serialization.SerialName
-import org.atteo.classindex.IndexSubclasses
 import kotlin.reflect.KClass
 
 sealed class PureBase {
@@ -94,29 +94,29 @@ sealed class SealedRoot {
 }
 
 @IndexSubclasses
-open class ParentWithClassIndex {
+open class ParentWithKlassIndex {
 
     companion object : Polymorphic.Parent {
         override val childTypes: Set<KClass<*>> get() = indexedSubClasses()
     }
 
-    sealed class Sub1 : ParentWithClassIndex() {
+    sealed class Sub1 : ParentWithKlassIndex() {
         data class Deeper1(val text: String) : Sub1()
         data class Deeper2(val text: String) : Sub1()
     }
 
-    data class Sub2(val text: String) : ParentWithClassIndex()
+    data class Sub2(val text: String) : ParentWithKlassIndex()
 }
 
 @IndexSubclasses
-open class ParentWithChildrenUsingAnnotation {
+open class ChildrenUsingAnnotation {
 
     companion object : Polymorphic.Parent {
         override val childTypes: Set<KClass<*>> get() = indexedSubClasses()
     }
 
     @SerialName("Sub")
-    sealed class Sub : ParentWithChildrenUsingAnnotation() {
+    sealed class Sub : ChildrenUsingAnnotation() {
         @SerialName("Sub.Deeper1")
         data class Deeper1(val text: String) : Sub()
 
@@ -125,5 +125,5 @@ open class ParentWithChildrenUsingAnnotation {
     }
 
     @SerialName("Sub2")
-    data class Sub2(val text: String) : ParentWithChildrenUsingAnnotation()
+    data class Sub2(val text: String) : ChildrenUsingAnnotation()
 }

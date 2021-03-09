@@ -193,12 +193,12 @@ class PolymorphicSlumbererSpec : StringSpec({
 
         val codec = Codec.default
 
-        val data = ParentWithClassIndex.Sub1.Deeper1(text = "Deeper1")
+        val data = ParentWithKlassIndex.Sub1.Deeper1(text = "Deeper1")
 
         val result = codec.slumber(data)
 
         result shouldBe mapOf(
-            "_type" to ParentWithClassIndex.Sub1.Deeper1::class.qualifiedName,
+            "_type" to ParentWithKlassIndex.Sub1.Deeper1::class.qualifiedName,
             "text" to "Deeper1"
         )
     }
@@ -207,7 +207,7 @@ class PolymorphicSlumbererSpec : StringSpec({
 
         val codec = Codec.default
 
-        val data = ParentWithChildrenUsingAnnotation.Sub2("Sub2-value")
+        val data = ChildrenUsingAnnotation.Sub2("Sub2-value")
 
         val result = codec.slumber(data)
 

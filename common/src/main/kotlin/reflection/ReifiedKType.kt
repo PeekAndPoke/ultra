@@ -46,7 +46,8 @@ class ReifiedKType(val type: KType) {
         cls.declaredMemberProperties
             .mapNotNull { it.javaField }
             .first { it.name == param.name }
-            .apply { isAccessible = true } to type
+            .apply { isAccessible = true }
+            .let { it to type }
     }
 
     /**

@@ -5,9 +5,9 @@
       <configuration version="3" platform="JavaScript " allPlatforms="JS []" useProjectSettings="false" isTestModule="true" externalProjectId=":commonmp" pureKotlinSourceFolders="$MODULE_DIR$/../../../commonmp/src/jsMain/kotlin;/opt/dev/peekandpoke/ultra/commonmp/build/externals/ultra-commonmp/src;/opt/dev/peekandpoke/ultra/commonmp/src/jsTest/kotlin;/opt/dev/peekandpoke/ultra/commonmp/src/jvmMain/kotlin;/opt/dev/peekandpoke/ultra/commonmp/src/jvmTest/kotlin;/opt/dev/peekandpoke/ultra/commonmp/src/commonMain/kotlin">
         <dependsOnModuleNames>:commonmp:commonTest</dependsOnModuleNames>
         <sourceSets>
-          <sourceSet>ultra.commonmp.commonTest</sourceSet>
-          <sourceSet>ultra.commonmp.jsMain</sourceSet>
           <sourceSet>ultra.commonmp.commonMain</sourceSet>
+          <sourceSet>ultra.commonmp.jsMain</sourceSet>
+          <sourceSet>ultra.commonmp.commonTest</sourceSet>
         </sourceSets>
         <newMppModelJpsModuleKind>COMPILATION_AND_SOURCE_SET_HOLDER</newMppModelJpsModuleKind>
         <externalSystemTestTasks>

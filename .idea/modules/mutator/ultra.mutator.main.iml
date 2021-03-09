@@ -96,7 +96,7 @@
     <orderEntry type="library" scope="RUNTIME" name="Gradle: io.github.classgraph:classgraph:4.8.98" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlin:kotlin-annotation-processing-embeddable:1.4.21-2" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: com.soywiz.korlibs.klock:klock-jvm:1.12.1" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.atteo.classindex:classindex:3.10" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.github.matfax.klassindex:library:4.1.0-rc.1" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlin:kotlin-script-runtime:1.4.21-2" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlin:kotlin-daemon-embeddable:1.4.21-2" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.intellij.deps:trove4j:1.0.20181211" level="project" />
