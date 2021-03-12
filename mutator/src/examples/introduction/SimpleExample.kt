@@ -54,4 +54,3 @@ class SimpleExample : SimpleExample() {
         // !END! //
     }
 }
-

@@ -11,7 +11,7 @@ abstract class MutatorExample : SimpleExample() {
         val pack = java.`package`.name.replace(".", File.separator)
         val fileName = "${simpleName}${"$$"}mutator.kt"
 
-        val path = File("build/generated/source/kaptKotlin/test/${pack}/$fileName").absoluteFile
+        val path = File("build/generated/source/kaptKotlin/test/$pack/$fileName").absoluteFile
 
         return path.readText()
     }

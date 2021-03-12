@@ -48,4 +48,3 @@ class InjectBySuperTypeExample : SimpleExample() {
         // !END! //
     }
 }
-

@@ -8,7 +8,7 @@ interface Awaker {
 
     data class Context(val codec: Codec, val attributes: TypedAttributes, val path: String) {
 
-        fun stepInto(step: String) = copy(path = "${path}.$step")
+        fun stepInto(step: String) = copy(path = "$path.$step")
 
         fun <T : Any> awake(type: KClass<T>, data: Any?): T? = codec.awake(type, data, this)
 

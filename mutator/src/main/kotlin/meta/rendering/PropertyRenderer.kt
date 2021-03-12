@@ -53,7 +53,7 @@ interface PropertyRenderer : ProcessorUtils {
         block(
             """
                 /**
-                 * Mutator for field [${imported}.$prop]
+                 * Mutator for field [$imported.$prop]
                  *
                  * Info:
                  *   - type:         [${variable.typeName.import()}]

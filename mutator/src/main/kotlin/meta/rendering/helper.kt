@@ -36,7 +36,7 @@ val TypeName.mutatorClassName: ClassName
             )
         )
 
-        else -> error("Cannot create mutator class name for '${tn}'")
+        else -> error("Cannot create mutator class name for '$tn'")
     }
 
 fun ParameterizedTypeName.hashTypeArguments() = typeArguments.joinToString { it.toString() }.md5()

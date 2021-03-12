@@ -18,4 +18,3 @@ interface SlumberModule {
         false -> NonNullSlumberer(slumberer)
     }
 }
-

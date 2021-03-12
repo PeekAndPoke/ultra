@@ -52,4 +52,3 @@ class LazyInjectionExample : SimpleExample() {
         // !END! //
     }
 }
-

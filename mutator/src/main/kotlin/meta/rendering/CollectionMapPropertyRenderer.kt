@@ -15,13 +15,13 @@ class CollectionMapPropertyRenderer(
         "java.util.Map"
     )
 
-    override fun canHandle(type: TypeName) = type is ParameterizedTypeName
+    override fun canHandle(type: TypeName) = type is ParameterizedTypeName &&
             // is the type supported ?
-            && supported.contains(type.rawType.fqn)
+            supported.contains(type.rawType.fqn) &&
             // The key of the map must be primitive or a string
-            && type.typeArguments[0].let { it.isPrimitiveType || it.isStringType }
+            type.typeArguments[0].let { it.isPrimitiveType || it.isStringType } &&
             // and the value part must be handled as well
-            && root.canHandle(type.typeArguments[1])
+            root.canHandle(type.typeArguments[1])
 
     override fun KotlinPrinter.renderPropertyImplementation(variable: MVariable) {
         // get the type name of the variable

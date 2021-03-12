@@ -5,7 +5,7 @@ import com.soywiz.klock.DateFormat
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.Time
 
-private val isoFormat = DateFormat(IsoFormatString)
+private val isoFormat = DateFormat(ISO_FORMAT)
 
 val PortableDate.date get(): Date = DateTime.fromUnix(timestamp).date
 

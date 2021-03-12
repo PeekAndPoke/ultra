@@ -4,6 +4,7 @@
       <w>appenders</w>
       <w>awaker</w>
       <w>awakers</w>
+      <w>hasher</w>
       <w>kapt</w>
       <w>klock</w>
       <w>kontainer</w>

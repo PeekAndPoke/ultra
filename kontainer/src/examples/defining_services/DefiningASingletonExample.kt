@@ -54,4 +54,3 @@ class DefiningASingletonExample : SimpleExample() {
         // !END! //
     }
 }
-

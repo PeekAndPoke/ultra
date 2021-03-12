@@ -35,7 +35,7 @@ object Cloner {
                 // invoke the copy() method with the values
                 val copy = cls.declaredFunctions.first { it.name == "copy" }
 
-                @Suppress("UNCHECKED_CAST")
+                @Suppress("UNCHECKED_CAST", "Detekt:SpreadOperator")
                 copy.call(subject, *fields.toTypedArray()) as T
             }
 
@@ -43,7 +43,7 @@ object Cloner {
             primaryCtr != null && primaryCtr.parameters.isEmpty() -> cls.createInstance()
 
             // TODO: more specific exception
-            else -> throw Exception(
+            else -> throw CouldNotCloneException(
                 "Cannot clone type '${subject::class}'. It is not a data class and has no no-arg constructor!"
             )
         }

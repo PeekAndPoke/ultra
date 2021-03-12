@@ -44,4 +44,3 @@ class EmptyMutationExample : SimpleExample() {
         // !END! //
     }
 }
-

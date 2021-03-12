@@ -41,4 +41,3 @@ class DefiningAnExistingInstanceExample : SimpleExample() {
         // !END! //
     }
 }
-

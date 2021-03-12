@@ -47,4 +47,3 @@ class InjectSingletonIntoMultipleServicesExample : SimpleExample() {
         // !END! //
     }
 }
-

@@ -32,4 +32,3 @@ class Model(
 
     override fun iterator(): Iterator<MType> = types.iterator()
 }
-

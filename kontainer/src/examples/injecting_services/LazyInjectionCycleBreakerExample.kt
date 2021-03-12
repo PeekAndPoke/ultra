@@ -51,4 +51,3 @@ class LazyInjectionCycleBreakerExample : SimpleExample() {
         // !END! //
     }
 }
-

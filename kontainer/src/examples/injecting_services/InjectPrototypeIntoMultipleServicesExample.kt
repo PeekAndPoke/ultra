@@ -46,4 +46,3 @@ class InjectPrototypeIntoMultipleServicesExample : SimpleExample() {
         // !END! //
     }
 }
-

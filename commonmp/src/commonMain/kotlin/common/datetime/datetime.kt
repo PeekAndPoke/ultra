@@ -1,15 +1,15 @@
 package de.peekandpoke.ultra.common.datetime
 
-internal const val IsoFormatString = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+internal const val ISO_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
 
-const val GenesisTimestamp = -377_736_739_200_000
-const val DoomsdayTimestamp = 253_402_300_800_000
+const val GENESIS_TIMESTAMP = -377_736_739_200_000
+const val DOOMSDAY_TIMESTAMP = 253_402_300_800_000
 
-val Genesis = PortableDate(GenesisTimestamp)
-val Doomsday = PortableDate(DoomsdayTimestamp)
+val Genesis = PortableDate(GENESIS_TIMESTAMP)
+val Doomsday = PortableDate(DOOMSDAY_TIMESTAMP)
 
-val GenesisDateTime = PortableDateTime(GenesisTimestamp)
-val DoomsdayDateTime = PortableDateTime(DoomsdayTimestamp)
+val GenesisDateTime = PortableDateTime(GENESIS_TIMESTAMP)
+val DoomsdayDateTime = PortableDateTime(DOOMSDAY_TIMESTAMP)
 
 expect fun PortableDate.toIsoString(): String
 

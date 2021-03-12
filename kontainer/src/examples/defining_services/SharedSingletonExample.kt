@@ -40,4 +40,3 @@ class SharedSingletonExample : SimpleExample() {
         // !END! //
     }
 }
-

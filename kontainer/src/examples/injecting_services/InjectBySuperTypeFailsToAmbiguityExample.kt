@@ -57,4 +57,3 @@ class InjectBySuperTypeFailsToAmbiguityExample : SimpleExample() {
         // !END! //
     }
 }
-

@@ -7,7 +7,7 @@ interface Slumberer {
 
     data class Context(val codec: Codec, val attributes: TypedAttributes, val path: String) {
 
-        fun stepInto(step: String) = copy(path = "${path}.$step")
+        fun stepInto(step: String) = copy(path = "$path.$step")
 
         fun slumber(data: Any?) = codec.slumber(data)
 

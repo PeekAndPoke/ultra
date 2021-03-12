@@ -18,6 +18,7 @@ class DataClassCodec(rootType: KType) : Awaker, Slumberer {
         ctor?.parameters?.filter { it.type.isMarkedNullable }?.map { it to null }?.toMap()
             ?: emptyMap()
 
+    @Suppress("Detekt:ComplexMethod")
     override fun awake(data: Any?, context: Awaker.Context): Any? {
 
         // Do we have some data that we can work with?

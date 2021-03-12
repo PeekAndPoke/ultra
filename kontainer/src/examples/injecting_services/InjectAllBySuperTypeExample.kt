@@ -63,4 +63,3 @@ class InjectAllBySuperTypeExample : SimpleExample() {
         // !END! //
     }
 }
-

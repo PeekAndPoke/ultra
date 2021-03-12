@@ -22,7 +22,7 @@ class StatelessCsrfProtection(
 
         val signature = sign(salt, ttl)
 
-        return "$ttl$glue${signature}".toBase64()
+        return "$ttl$glue$signature".toBase64()
     }
 
     @Suppress("Detekt:ReturnCount")

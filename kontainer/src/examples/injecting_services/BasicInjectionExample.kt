@@ -45,4 +45,3 @@ class BasicInjectionExample : SimpleExample() {
         // !END! //
     }
 }
-
