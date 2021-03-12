@@ -41,4 +41,3 @@ object NoCachedKlassIndex {
         return result as Set<KClass<T>>
     }
 }
-

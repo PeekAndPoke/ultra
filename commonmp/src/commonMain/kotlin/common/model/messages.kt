@@ -76,7 +76,7 @@ data class Message(
         fun error(text: String) = Message(Type.error, text)
     }
 
-    @Suppress("EnumEntryName")
+    @Suppress("EnumEntryName", "Detekt:EnumNaming")
     enum class Type {
         info,
         warning,

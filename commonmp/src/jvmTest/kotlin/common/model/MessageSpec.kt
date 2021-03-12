@@ -30,7 +30,6 @@ class MessageSpec : FreeSpec() {
             }
         }
 
-
         "Adding messages" - {
 
             "Adding nothing" {
