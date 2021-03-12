@@ -55,6 +55,7 @@ class ServiceProducer internal constructor(
                 }
 
                 else -> ServiceProducer(ctor.parameters) { _, params ->
+                    @Suppress("Detekt:SpreadOperator") // We can't avoid using the spread operator here for now
                     ctor.call(*params)
                 }
             }
