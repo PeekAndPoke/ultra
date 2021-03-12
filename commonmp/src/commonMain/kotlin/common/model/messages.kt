@@ -70,17 +70,17 @@ data class MessageCollection(
 data class Message(
     val type: Type,
     val text: String,
-    val createdAt: PortableDateTime? = null,
+    val ts: PortableDateTime? = null,
 ) {
     companion object {
-        fun info(text: String, createdAt: PortableDateTime? = null) =
-            Message(type = Type.info, text = text, createdAt = createdAt)
+        fun info(text: String, ts: PortableDateTime? = null) =
+            Message(type = Type.info, text = text, ts = ts)
 
         fun warning(text: String, createdAt: PortableDateTime? = null) =
-            Message(type = Type.warning, text = text, createdAt = createdAt)
+            Message(type = Type.warning, text = text, ts = createdAt)
 
         fun error(text: String, createdAt: PortableDateTime? = null) =
-            Message(type = Type.error, text = text, createdAt = createdAt)
+            Message(type = Type.error, text = text, ts = createdAt)
     }
 
     @Suppress("EnumEntryName", "Detekt:EnumNaming")
