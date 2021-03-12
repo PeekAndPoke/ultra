@@ -60,4 +60,3 @@ class HidingTheConcreteImplementationOfAServiceExample : SimpleExample() {
         // !END! //
     }
 }
-

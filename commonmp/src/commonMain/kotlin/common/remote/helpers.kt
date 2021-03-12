@@ -3,6 +3,8 @@ package de.peekandpoke.ultra.common.remote
 external fun encodeURIComponent(value: String): String
 
 /**
+ * TODO: TESTS
+ *
  * Appends all none empty [params] as url parameters to the given [uri]
  */
 fun buildUri(uri: String, params: Map<String, String?> = emptyMap()): String {
@@ -27,11 +29,11 @@ fun buildUri(uri: String, params: Map<String, String?> = emptyMap()): String {
         }
     }
 
-    if (paramsNotInUri.isEmpty()) {
-        return uriReplaced
-    }
+    return when (paramsNotInUri.isEmpty()) {
+        true -> uriReplaced
 
-    return "$uriReplaced?" + paramsNotInUri
-        .map { (k, v) -> encodeURIComponent(k) + "=" + encodeURIComponent(v) }
-        .joinToString("&")
+        else -> "$uriReplaced?" + paramsNotInUri
+            .map { (k, v) -> encodeURIComponent(k) + "=" + encodeURIComponent(v) }
+            .joinToString("&")
+    }
 }

@@ -25,6 +25,7 @@ class StatelessCsrfProtection(
         return "$ttl$glue${signature}".toBase64()
     }
 
+    @Suppress("Detekt:ReturnCount")
     override fun validateToken(salt: String, token: String): Boolean {
 
         val decoded = String(token.fromBase64())

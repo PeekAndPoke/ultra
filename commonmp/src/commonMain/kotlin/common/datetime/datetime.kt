@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
-internal const val isoFormatString = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+internal const val IsoFormatString = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
 
 const val GenesisTimestamp = -377_736_739_200_000
 const val DoomsdayTimestamp = 253_402_300_800_000
