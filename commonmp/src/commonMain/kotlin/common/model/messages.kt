@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.model
 
+import de.peekandpoke.ultra.common.datetime.PortableDateTime
 import kotlinx.serialization.Serializable
 
 typealias Messages = MessageCollection
@@ -68,12 +69,18 @@ data class MessageCollection(
 @Serializable
 data class Message(
     val type: Type,
-    val text: String
+    val text: String,
+    val createdAt: PortableDateTime? = null,
 ) {
     companion object {
-        fun info(text: String) = Message(Type.info, text)
-        fun warning(text: String) = Message(Type.warning, text)
-        fun error(text: String) = Message(Type.error, text)
+        fun info(text: String, createdAt: PortableDateTime? = null) =
+            Message(type = Type.info, text = text, createdAt = createdAt)
+
+        fun warning(text: String, createdAt: PortableDateTime? = null) =
+            Message(type = Type.warning, text = text, createdAt = createdAt)
+
+        fun error(text: String, createdAt: PortableDateTime? = null) =
+            Message(type = Type.error, text = text, createdAt = createdAt)
     }
 
     @Suppress("EnumEntryName", "Detekt:EnumNaming")
