@@ -12,16 +12,17 @@ import de.peekandpoke.ultra.security.user.UserRecordProvider
 @Suppress("unused")
 fun KontainerBuilder.ultraSecurity(config: UltraSecurityConfig) = module(Ultra_Security, config)
 
-val Ultra_Security = module { config: UltraSecurityConfig ->
+val Ultra_Security
+    get() = module { config: UltraSecurityConfig ->
 
-    dynamic(UserRecordProvider::class) { UserRecordProvider.anonymous }
+        dynamic(UserRecordProvider::class) { UserRecordProvider.anonymous }
 
-    dynamic(UserPermissionsProvider::class) { UserPermissionsProvider.anonymous }
+        dynamic(UserPermissionsProvider::class) { UserPermissionsProvider.anonymous }
 
-    // Csrf protection
-    dynamic(CsrfProtection::class) { userRecordProvider: UserRecordProvider ->
-        StatelessCsrfProtection(config.csrfSecret, config.csrfTtlMillis, userRecordProvider)
+        // Csrf protection
+        dynamic(CsrfProtection::class) { userRecordProvider: UserRecordProvider ->
+            StatelessCsrfProtection(config.csrfSecret, config.csrfTtlMillis, userRecordProvider)
+        }
+
+        singleton(PasswordHasher::class) { PBKDF2PasswordHasher() }
     }
-
-    singleton(PasswordHasher::class) { PBKDF2PasswordHasher() }
-}
