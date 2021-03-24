@@ -16,6 +16,8 @@ data class AuditLog(
     data class Entry(
         val userType: String,
         val userId: String,
+        val userDesc: String,
+        val clientIp: String,
         val type: Type,
         val message: String,
         val ts: PortableDateTime,
