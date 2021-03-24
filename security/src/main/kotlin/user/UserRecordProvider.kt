@@ -14,7 +14,7 @@ interface UserRecordProvider {
             UserRecord(
                 userId = "system",
                 clientIp = try {
-                    InetAddress.getLocalHost().canonicalHostName
+                    "${InetAddress.getLocalHost().hostName} ${InetAddress.getLocalHost().hostAddress}"
                 } catch (e: UnknownHostException) {
                     "unknown"
                 },
