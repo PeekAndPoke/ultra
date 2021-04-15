@@ -34,7 +34,12 @@ data class ImageSizes(val defaultSize: CssSize, val sizes: List<Entry>) {
             breakpoints.forEach { max(it, it.px) }
         }
 
+        val mobile100desktop25 = imagesSizes { mobile(100.vw).desktop(25.vw) }
+        val mobile100desktop33 = imagesSizes { mobile(100.vw).desktop(33.vw) }
         val mobile100desktop50 = imagesSizes { mobile(100.vw).desktop(50.vw) }
+        val mobile100desktop66 = imagesSizes { mobile(100.vw).desktop(66.vw) }
+        val mobile100desktop75 = imagesSizes { mobile(100.vw).desktop(75.vw) }
+        val mobile100desktop100 = imagesSizes { mobile(100.vw).desktop(100.vw) }
     }
 
     /**

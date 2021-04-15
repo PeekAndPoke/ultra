@@ -12,6 +12,8 @@ data class AuditLog(
         val empty = AuditLog(emptyList())
     }
 
+    fun last(n: Int) = entries.takeLast(n).sortedByDescending { it.ts.timestamp }
+
     @Serializable
     data class Entry(
         val userType: String,
