@@ -5,7 +5,7 @@ import kotlinx.browser.window
 @Suppress("unused")
 @JsModule("whatwg-fetch")
 @JsNonModule
-external val fetch: dynamic
+external fun fetch()
 
 /**
  * This function does nothing.
@@ -16,6 +16,6 @@ fun polyfillFetch() {
     val win = window.asDynamic()
 
     if (win.fetch == undefined || win.fetch == null) {
-        win.fetch = fetch
+        win.fetch = ::fetch
     }
 }
