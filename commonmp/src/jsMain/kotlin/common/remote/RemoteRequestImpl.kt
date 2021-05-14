@@ -34,6 +34,8 @@ class RemoteRequestImpl(
      */
     private fun execute(url: String, init: RequestInit): Flow<RemoteResponse> = flow {
 
+        polyfillFetch()
+
         val response = window.fetch("$baseUrl/${url.trimStart('/')}", init).await()
 
         val remoteResponse: RemoteResponse = RemoteResponseImpl(
