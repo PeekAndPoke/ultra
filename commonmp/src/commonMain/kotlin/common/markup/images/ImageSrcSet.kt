@@ -22,8 +22,7 @@ data class ImageSrcSet(val url: String, val entries: List<Entry>) {
          * Of the detection fails an empty [ImageSrcSet] is returned.
          */
         fun auto(src: String, sizes: ImageSizes): ImageSrcSet {
-            return CloudinaryImageSrcSetGenerator.generate(src, sizes)
-                ?: of(src)
+            return createSrcSet(src = src, sizes = sizes)
         }
     }
 
