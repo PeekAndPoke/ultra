@@ -12,6 +12,19 @@ data class ImageSrcSet(val url: String, val entries: List<Entry>) {
 
     companion object {
         fun of(url: String) = ImageSrcSet(url, emptyList())
+
+        /**
+         * Generates an [ImageSrcSet] from the given [src] and [sizes].
+         *
+         * Automatically tries to detect the following image hosting providers:
+         * - Cloudinary
+         *
+         * Of the detection fails an empty [ImageSrcSet] is returned.
+         */
+        fun auto(src: String, sizes: ImageSizes): ImageSrcSet {
+            return CloudinaryImageSrcSetGenerator.generate(src, sizes)
+                ?: of(src)
+        }
     }
 
     /**
