@@ -617,6 +617,22 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         addPrototype(srv, ServiceProducer.forClass(impl))
 
     /**
+     * Registers a prototype service with variable number of parameters
+     *
+     * The service can by injected by the type [SRV] and its base types
+     */
+    fun <SRV : Any, IMPL : SRV, FAC : Function<IMPL>> prototype(srv: KClass<SRV>, factory: FAC) =
+        addPrototype(srv, ServiceProducer.forFactory(factory))
+
+    /**
+     * Registers a prototype service with variable number of parameters
+     *
+     * The service can by injected by the type [SRV] and its base types
+     */
+    inline fun <reified SRV : Any, IMPL : SRV, FAC : Function<IMPL>> prototype(factory: FAC) =
+        prototype(SRV::class, factory)
+
+    /**
      * Create a Prototype via a factory method with 0 injected parameters
      *
      * The service can by injected by the type [SRV] and its base types
@@ -1007,6 +1023,22 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      */
     fun <SRV : Any, IMPL : SRV> dynamic(srv: KClass<SRV>, impl: KClass<IMPL>) =
         addDynamic(srv, ServiceProducer.forClass(impl))
+
+    /**
+     * Registers a dynamic service with variable number of parameters
+     *
+     * The service can by injected by the type [SRV] and its base types
+     */
+    fun <SRV : Any, IMPL : SRV, FAC : Function<IMPL>> dynamic(srv: KClass<SRV>, factory: FAC) =
+        addDynamic(srv, ServiceProducer.forFactory(factory))
+
+    /**
+     * Registers a dynamic service with variable number of parameters
+     *
+     * The service can by injected by the type [SRV] and its base types
+     */
+    inline fun <reified SRV : Any, IMPL : SRV, FAC : Function<IMPL>> dynamic(factory: FAC) =
+        dynamic(SRV::class, factory)
 
     /**
      * Create a dynamic singleton via a factory method with 0 injected parameters
