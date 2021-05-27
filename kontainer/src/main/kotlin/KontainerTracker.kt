@@ -16,7 +16,7 @@ class KontainerTracker {
     private val instances = WeakHashMap<Kontainer, Instant>()
 
     fun track(kontainer: Kontainer) {
-        KontainerCoroutineScope.scope.launch {
+        KontainerCoroutineScope.launch {
             synchronized(lock) {
                 instances[kontainer] = Instant.now()
             }
