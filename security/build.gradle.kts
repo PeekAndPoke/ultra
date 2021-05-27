@@ -14,10 +14,6 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
-val auth0_jwt_version: String by project
-val logback_version: String by project
-val kotlintest_version: String by project
-
 repositories {
     mavenCentral()
     jcenter()
@@ -25,15 +21,17 @@ repositories {
 
 dependencies {
 
-    api(kotlin("reflect"))
+    implementation(kotlin("reflect"))
 
     api(project(":kontainer"))
 
-    api("com.auth0:java-jwt:$auth0_jwt_version")
+    api(Deps.auth0_java_jwt)
 
-    testImplementation("ch.qos.logback:logback-classic:$logback_version")
-    testImplementation("io.kotest:kotest-assertions-core-jvm:$kotlintest_version")
-    testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotlintest_version")
+    // Test /////////////////////////////////////////////
+
+    Deps.Test {
+        jvmTestDeps()
+    }
 }
 
 kapt {

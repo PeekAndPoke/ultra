@@ -2,18 +2,18 @@
 
 ## TOC
 
-1. [Introduction](#introduction)
+1. [Introduction](#INTRODUCTION)
 
-    1. [A simple example](#a-simple-example)
-    2. [A more complex example](#a-more-complex-example)
-    3. [Empty Mutation](#empty-mutation)
-    4. [Mutating an object without changing it](#mutating-an-object-without-changing-it)
+    1. [A simple example](#A-SIMPLE-EXAMPLE)
+    2. [A more complex example](#A-MORE-COMPLEX-EXAMPLE)
+    3. [Empty Mutation](#EMPTY-MUTATION)
+    4. [Mutating an object without changing it](#MUTATING-AN-OBJECT-WITHOUT-CHANGING-IT)
 
-2. [Data Class Mutation](#data-class-mutation)
+2. [Data Class Mutation](#DATA-CLASS-MUTATION)
 
-    1. [Scalar and String properties](#scalar-and-string-properties)
-    2. [Nullable Scalar and String properties](#nullable-scalar-and-string-properties)
-    3. ['Any' properties and unknown types](#'any'-properties-and-unknown-types)
+    1. [Scalar and String properties](#SCALAR-AND-STRING-PROPERTIES)
+    2. [Nullable Scalar and String properties](#NULLABLE-SCALAR-AND-STRING-PROPERTIES)
+    3. ['Any' properties and unknown types](#'ANY'-PROPERTIES-AND-UNKNOWN-TYPES)
 
 ## Introduction
 
@@ -555,9 +555,9 @@ println(result)
 Will output:
 ```
 The original:
-ExampleClassWithAny(any=any, nullableAny=null, aDate=2021-05-17)
+ExampleClassWithAny(any=any, nullableAny=null, aDate=2021-05-27)
 The result:
-ExampleClassWithAny(any=10, nullableAny=4.669, aDate=2021-05-18)
+ExampleClassWithAny(any=10, nullableAny=4.669, aDate=2021-05-28)
 ```
 
 The generated mutator code for our data class looks like this:

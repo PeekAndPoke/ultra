@@ -14,35 +14,28 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
-val google_auto_version: String by project
-val kotlinpoet_version: String by project
-val logback_version: String by project
-val kotlintest_version: String by project
-val kotlincompiletesting_version: String by project
-val diffutils_version: String by project
-
 dependencies {
-    api(kotlin("reflect"))
+    implementation(kotlin("reflect"))
 
     api(project(":commonmp"))
     api(project(":common"))
 
     //  code generation  //////////////////////////////////////////////////////////////////////////////////////
 
-    api("com.github.tschuchortdev:kotlin-compile-testing:$kotlincompiletesting_version")
-    api("com.github.wumpz:diffutils:$diffutils_version")
+    api(Deps.kotlin_compiletesting)
+    api(Deps.diffutils)
 
-    api("com.squareup:kotlinpoet:$kotlinpoet_version")
-    api("com.google.auto.service:auto-service:$google_auto_version")
-    kapt("com.google.auto.service:auto-service:$google_auto_version")
+    api(Deps.kotlinpoet)
+    api(Deps.google_auto_service)
+    kapt(Deps.google_auto_service)
 
     //  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    kaptTest("com.google.auto.service:auto-service:$google_auto_version")
+    kaptTest(Deps.google_auto_service)
 
-    testApi("ch.qos.logback:logback-classic:$logback_version")
-    testImplementation("io.kotest:kotest-assertions-core-jvm:$kotlintest_version")
-    testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotlintest_version")
+    Deps.Test {
+        jvmTestDeps()
+    }
 }
 
 repositories {

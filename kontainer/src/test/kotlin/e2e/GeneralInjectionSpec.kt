@@ -71,7 +71,7 @@ class GeneralInjectionSpec : StringSpec({
     "Container with a singleton service (builder style)" {
 
         val subject = kontainer {
-            singleton { SimpleService() }
+            singleton0 { SimpleService() }
         }.useWith()
 
         assertSoftly {

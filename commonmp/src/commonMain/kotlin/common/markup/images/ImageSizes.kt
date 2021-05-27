@@ -75,9 +75,8 @@ data class ImageSizes(val defaultSize: CssSize, val sizes: List<Entry>) {
         VH;
 
         /** Renders the [CssUnit] as lower case string */
-        override fun toString() = super.toString().toLowerCase()
+        override fun toString() = super.toString().lowercase()
     }
-
 
     /**
      * Builder for [ImageSizes]

@@ -21,7 +21,7 @@ class NestedObjectMutationsSpec : StringSpec({
 
         val result = source.mutate {
 
-            name = name.plus("oration").toUpperCase()
+            name = name.plus("oration").uppercase()
         }
 
         withClue("Source object must NOT be modified") {
@@ -49,7 +49,7 @@ class NestedObjectMutationsSpec : StringSpec({
 
         val result = source.mutate {
 
-            name = name.plus("oration").toUpperCase()
+            name = name.plus("oration").uppercase()
 
             boss.address.apply {
                 city = "Leipzig"

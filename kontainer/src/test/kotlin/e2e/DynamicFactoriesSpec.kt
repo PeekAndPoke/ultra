@@ -105,7 +105,7 @@ class DynamicFactoriesSpec : StringSpec({
     "Dynamic factory with zero params" {
 
         val subject = kontainer {
-            dynamic { Config(0) }
+            dynamic0 { Config(0) }
         }.useWith()
 
         validateWithoutBase(subject, 0)
@@ -114,7 +114,7 @@ class DynamicFactoriesSpec : StringSpec({
     "Dynamic factory with zero params defined with bas class" {
 
         val subject = kontainer {
-            dynamic(Base::class) { Config(0) }
+            dynamic0(Base::class) { Config(0) }
         }.useWith()
 
         validateWithBase(subject, 0)

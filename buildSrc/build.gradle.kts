@@ -8,5 +8,8 @@ repositories {
 }
 
 dependencies {
-    gradleApi()
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.10")
+
+    implementation(gradleApi())
+    implementation(gradleKotlinDsl())
 }

@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.common
 
 import kotlin.reflect.KClass
+import kotlin.reflect.jvm.ExperimentalReflectionOnLambdas
 import kotlin.reflect.jvm.reflect
 
 /**
@@ -8,6 +9,7 @@ import kotlin.reflect.jvm.reflect
  *
  * Notice: the first parameter has index 0
  */
+@OptIn(ExperimentalReflectionOnLambdas::class)
 fun <R, T : Function<R>> T.nthParamName(n: Int): String {
 
     // Getting the parameters is quite expensive, so we cache it

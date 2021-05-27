@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.common.markup.images
 
 import io.kotest.core.spec.style.FreeSpec
-import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 
 class CreateSrcSetSpec : FreeSpec() {
@@ -9,9 +9,12 @@ class CreateSrcSetSpec : FreeSpec() {
     init {
         "Undetected image url" {
 
-            val result = createSrcSet("http://www.example.com/image.jpg", ImageSizes.mobile100desktop50)
+            val url = "https://www.example.com/image.jpg"
 
-            result.shouldBeNull()
+            val result = createSrcSet(url, ImageSizes.mobile100desktop50)
+
+            result.url shouldBe url
+            result.entries.shouldBeEmpty()
         }
 
         "Cloudinary" - {

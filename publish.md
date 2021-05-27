@@ -3,7 +3,7 @@
 To publish run this command
 
 ```
-./gradlew clean build publish -Psigning.password= -PmavenCentralRepositoryPassword=
+./gradlew clean build publish -Psigning.password= -PmavenCentralPassword=
 ```
 
 For details like

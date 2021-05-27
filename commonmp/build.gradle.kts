@@ -2,13 +2,6 @@
 
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val logback_version: String by project
-val klass_index_version: String by project
-val kotlintest_version: String by project
-val kotlinx_serialization_version: String by project
-val kotlinx_coroutines_version: String by project
-val klock_version: String by project
-
 plugins {
     kotlin("multiplatform")
     id("org.jetbrains.kotlin.plugin.serialization")
@@ -60,9 +53,9 @@ kotlin {
 
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_version")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version")
+                implementation(Deps.kotlinx_serialization_core)
+                implementation(Deps.kotlinx_serialization_json)
+                implementation(Deps.kotlinx_coroutines_core)
             }
         }
 
@@ -76,24 +69,23 @@ kotlin {
 
         js().compilations["main"].defaultSourceSet {
             dependencies {
-                api("com.soywiz.korlibs.klock:klock-js:$klock_version")
+                api(Deps.korlibs_klock_js)
                 implementation(npm("whatwg-fetch", "3.6.2"))
             }
         }
 
         jvm().compilations["main"].defaultSourceSet {
             dependencies {
-                implementation("com.soywiz.korlibs.klock:klock-jvm:$klock_version")
+                implementation(Deps.korlibs_klock_jvm)
                 implementation(Deps.klassIndexLib)
             }
         }
 
         jvm().compilations["test"].defaultSourceSet {
             dependencies {
-                // Testing
-                implementation("ch.qos.logback:logback-classic:$logback_version")
-                implementation("io.kotest:kotest-assertions-core-jvm:$kotlintest_version")
-                implementation("io.kotest:kotest-runner-junit5-jvm:$kotlintest_version")
+                implementation(Deps.Test.logback_classic)
+                implementation(Deps.Test.kotest_assertions_core_jvm)
+                implementation(Deps.Test.kotest_runner_junit_jvm)
             }
         }
     }

@@ -42,6 +42,9 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.iml" filepath="$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.main.iml" filepath="$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.test.iml" filepath="$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/z-playground-jvm/ultra.z-playground-jvm.iml" filepath="$PROJECT_DIR$/.idea/modules/z-playground-jvm/ultra.z-playground-jvm.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/z-playground-jvm/ultra.z-playground-jvm.main.iml" filepath="$PROJECT_DIR$/.idea/modules/z-playground-jvm/ultra.z-playground-jvm.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/z-playground-jvm/ultra.z-playground-jvm.test.iml" filepath="$PROJECT_DIR$/.idea/modules/z-playground-jvm/ultra.z-playground-jvm.test.iml" />
     </modules>
   </component>
 </project>

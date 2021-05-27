@@ -16,6 +16,7 @@ include(
         ":slumber",
 
         // playground
-        ":z-playground-js"
+        ":z-playground-js",
+        ":z-playground-jvm",
 )
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id=":z-playground-js:test" external.linked.project.path="$MODULE_DIR$/../../../z-playground-js" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="com.thebase.adminapp" external.system.module.type="sourceSet" external.system.module.version="1.0-SNAPSHOT" type="JAVA_MODULE" version="4">
+<module external.linked.project.id=":z-playground-js:test" external.linked.project.path="$MODULE_DIR$/../../../z-playground-js" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="de.peekandpoke.ultra" external.system.module.type="sourceSet" external.system.module.version="1.0-SNAPSHOT" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="3" platform="JavaScript " allPlatforms="JS []" useProjectSettings="false" isTestModule="true" externalProjectId=":z-playground-js" pureKotlinSourceFolders="$MODULE_DIR$/../../../z-playground-js/src/test/kotlin;/opt/dev/peekandpoke/ultra/z-playground-js/src/main/kotlin;/opt/dev/peekandpoke/ultra/z-playground-js/build/externals/ultra-z-playground-js/src;/opt/dev/peekandpoke/ultra/z-playground-js/src/main/kotlin;/opt/dev/peekandpoke/ultra/z-playground-js/build/externals/ultra-z-playground-js/src;/opt/dev/peekandpoke/ultra/z-playground-js/src/test/kotlin">
@@ -19,17 +19,14 @@
           <option name="target" value="v5" />
           <option name="moduleKind" value="commonjs" />
           <option name="main" value="call" />
-          <option name="languageVersion" value="1.4" />
-          <option name="apiVersion" value="1.4" />
+          <option name="languageVersion" value="1.5" />
+          <option name="apiVersion" value="1.5" />
           <option name="pluginOptions">
             <array />
           </option>
           <option name="pluginClasspaths">
             <array>
-              <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/1.4.31/63692dfe4484c4f989319cf3429b357c17f772ae/kotlin-gradle-plugin-api-1.4.31.jar" />
-              <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.4.31/6dd50665802f54ba9bc3f70ecb20227d1bc81323/kotlin-stdlib-common-1.4.31.jar" />
-              <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.4.31/a58e0fb9812a6a93ca24b5da75e4b5a0cb89c957/kotlin-stdlib-1.4.31.jar" />
-              <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar" />
+              <option value="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/1.5.10/df0def48986ef2af0274abbe2171ee8d402b1670/kotlin-gradle-plugin-api-1.5.10.jar" />
               <option value="$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar" />
             </array>
           </option>
@@ -52,16 +49,25 @@
     <orderEntry type="module" module-name="ultra.commonmp.commonMain" scope="TEST" />
     <orderEntry type="module" module-name="ultra.commonmp.jsMain" scope="TEST" />
     <orderEntry type="module" module-name="ultra.commonmp.commonMain" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-js:1.4.31" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json:1.1.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-js:1.5.10" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.1" level="project" />
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/../../../build/js/node_modules/whatwg-fetch/dist/fetch.umd.js" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="library" scope="TEST" name="Gradle: com.soywiz.korlibs.klock:klock-js:1.12.1" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core:1.1.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:1.4.31" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-metadata:1.4.2" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json-js:1.1.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core-js:1.1.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.4.2" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:atomicfu-js:0.14.4" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core:1.2.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:1.5.10" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json-js:1.2.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core-js:1.2.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.5.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:atomicfu-js:0.16.1" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="ultra.z-playground-js.main" />
 </module>

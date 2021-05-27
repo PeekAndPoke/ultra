@@ -3,18 +3,17 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization'
 }
 
-group 'com.thebase.adminapp'
+group 'de.peekandpoke.ultra'
 version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version"
-    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_version"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version"
+    implementation(Deps.kotlinx_serialization_core)
+    implementation(Deps.kotlinx_serialization_json)
+    implementation(Deps.kotlinx_coroutines_core)
 
     // project deps
     api project(":commonmp")

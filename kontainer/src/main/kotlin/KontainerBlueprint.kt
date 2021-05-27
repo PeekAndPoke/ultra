@@ -10,7 +10,6 @@ class KontainerBlueprint internal constructor(
     private val definitions: Map<KClass<*>, ServiceDefinition>,
     private val definitionLocations: Map<KClass<*>, StackTraceElement>
 ) {
-
     val tracker = KontainerTracker()
 
     /**
