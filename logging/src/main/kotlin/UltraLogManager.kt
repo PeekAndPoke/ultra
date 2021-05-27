@@ -1,15 +1,17 @@
 package de.peekandpoke.ultra.logging
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.reflect.KClass
 
 class UltraLogManager(appenders: List<LogAppender>) {
 
     companion object {
-        val scope = CoroutineScope(EmptyCoroutineContext)
+        private val scopeJob = Job()
+        private val scope = CoroutineScope(scopeJob + Dispatchers.Unconfined)
     }
 
     private val appenders = appenders.toMutableList()

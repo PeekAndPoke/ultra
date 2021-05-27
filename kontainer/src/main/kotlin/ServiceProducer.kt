@@ -62,6 +62,29 @@ class ServiceProducer internal constructor(
             }
         }
 
+        @Suppress("Detekt:ComplexMethod")
+        fun <R : Any> forFactory(factory: Function<R>) = when (factory) {
+            is Function0<R> -> forFactory(factory)
+            is Function1<*, R> -> forFactory(factory)
+            is Function2<*, *, R> -> forFactory(factory)
+            is Function3<*, *, *, R> -> forFactory(factory)
+            is Function4<*, *, *, *, R> -> forFactory(factory)
+            is Function5<*, *, *, *, *, R> -> forFactory(factory)
+            is Function6<*, *, *, *, *, *, R> -> forFactory(factory)
+            is Function7<*, *, *, *, *, *, *, R> -> forFactory(factory)
+            is Function8<*, *, *, *, *, *, *, *, R> -> forFactory(factory)
+            is Function9<*, *, *, *, *, *, *, *, *, R> -> forFactory(factory)
+            is Function10<*, *, *, *, *, *, *, *, *, *, R> -> forFactory(factory)
+            is Function11<*, *, *, *, *, *, *, *, *, *, *, R> -> forFactory(factory)
+            is Function12<*, *, *, *, *, *, *, *, *, *, *, *, R> -> forFactory(factory)
+            is Function13<*, *, *, *, *, *, *, *, *, *, *, *, *, R> -> forFactory(factory)
+            is Function14<*, *, *, *, *, *, *, *, *, *, *, *, *, *, R> -> forFactory(factory)
+            is Function15<*, *, *, *, *, *, *, *, *, *, *, *, *, *, *, R> -> forFactory(factory)
+            is Function16<*, *, *, *, *, *, *, *, *, *, *, *, *, *, *, *, R> -> forFactory(factory)
+
+            else -> throw InvalidServiceFactory("Currently only up to 10 injection parameters are supported")
+        }
+
         /**
          * Creates a producer for a factory method with zero parameters.
          */

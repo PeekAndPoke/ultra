@@ -55,7 +55,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-js:1.5.10" level="project" />
-    <orderEntry type="library" name="Gradle: com.soywiz.korlibs.klock:klock-js:1.12.1" level="project" />
+    <orderEntry type="library" name="Gradle: com.soywiz.korlibs.klock:klock-js:2.1.2" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.1" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:1.5.10" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core:1.2.1" level="project" />

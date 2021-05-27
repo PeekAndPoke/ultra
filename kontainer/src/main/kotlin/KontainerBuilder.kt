@@ -210,6 +210,22 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         addSingleton(srv, ServiceProducer.forClass(impl))
 
     /**
+     * Registers a singleton service with variable number of parameters
+     *
+     * The service can by injected by the type [SRV] and its base types
+     */
+    fun <SRV : Any, IMPL : SRV, FAC : Function<IMPL>> singleton(srv: KClass<SRV>, factory: FAC) =
+        addSingleton(srv, ServiceProducer.forFactory(factory))
+
+    /**
+     * Registers a singleton service with variable number of parameters
+     *
+     * The service can by injected by the type [SRV] and its base types
+     */
+    inline fun <reified SRV : Any, IMPL : SRV, FAC : Function<IMPL>> singleton(factory: FAC) =
+        singleton(SRV::class, factory)
+
+    /**
      * Create a singleton via a factory method with 0 injected parameters
      *
      * The service can by injected by the type [SRV] and its base types

@@ -14,7 +14,6 @@ object Deps {
     const val mavenPublishVersion = "0.14.2"
     ////////////////////////////////////////////////////////////////////
 
-
     private const val auth0_java_jwt_version = "3.16.0"
     const val auth0_java_jwt = "com.auth0:java-jwt:$auth0_java_jwt_version"
 
@@ -48,7 +47,7 @@ object Deps {
     const val kotlinx_serialization_json =
         "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_version"
 
-    private const val korlibs_klock_version = "1.12.1"
+    private const val korlibs_klock_version = "2.1.2"
     const val korlibs_klock_js = "com.soywiz.korlibs.klock:klock-js:$korlibs_klock_version"
     const val korlibs_klock_jvm = "com.soywiz.korlibs.klock:klock-jvm:$korlibs_klock_version"
 
