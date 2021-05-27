@@ -32,6 +32,9 @@ class DynamicFactoriesSpec : StringSpec({
         config("c5", 10000)
         config("c6", 100000)
         config("c7", 1000000)
+        config("c8", 10000000)
+        config("c9", 100000000)
+        config("c10", 1000000000)
     }
 
     fun validateWithoutBase(subject: Kontainer, value: Int) {
@@ -105,7 +108,7 @@ class DynamicFactoriesSpec : StringSpec({
     "Dynamic factory with zero params" {
 
         val subject = kontainer {
-            dynamic { Config(0) }
+            dynamic0 { Config(0) }
         }.useWith()
 
         validateWithoutBase(subject, 0)
@@ -114,7 +117,7 @@ class DynamicFactoriesSpec : StringSpec({
     "Dynamic factory with zero params defined with bas class" {
 
         val subject = kontainer {
-            dynamic(Base::class) { Config(0) }
+            dynamic0(Base::class) { Config(0) }
         }.useWith()
 
         validateWithBase(subject, 0)
@@ -283,4 +286,55 @@ class DynamicFactoriesSpec : StringSpec({
 
         validateWithBase(subject, 1111111)
     }
+
+    "Dynamic factory with one config params defined via dynamic function" {
+
+        val blueprint = kontainer {
+            module(configs)
+
+            val provider: Function<Config> = { c1: Int -> Config(c1) }
+
+            dynamic(Base::class, provider)
+        }
+
+        val subject = blueprint.useWith()
+
+        validateWithBase(subject, 1)
+    }
+
+    "Dynamic factory with seven config params defined via dynamic function" {
+
+        val blueprint = kontainer {
+            module(configs)
+
+            val provider: Function<Config> = { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
+                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7)
+            }
+
+            dynamic(Base::class, provider)
+        }
+
+        val subject = blueprint.useWith()
+
+        validateWithBase(subject, 1111111)
+    }
+
+    "Dynamic factory with ten config params defined via dynamic function" {
+
+        val blueprint = kontainer {
+            module(configs)
+
+            val provider: Function<Config> =
+                { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int, c9: Int, c10: Int ->
+                    Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9 + c10)
+                }
+
+            dynamic(Base::class, provider)
+        }
+
+        val subject = blueprint.useWith()
+
+        validateWithBase(subject, 1111111111)
+    }
+
 })

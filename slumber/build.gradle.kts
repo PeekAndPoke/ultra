@@ -14,12 +14,6 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
-val logback_version: String by project
-val classindex_version: String by project
-val kotlintest_version: String by project
-val klock_version: String by project
-val kotlinx_serialization_version: String by project
-
 repositories {
     mavenCentral()
     jcenter()
@@ -28,21 +22,20 @@ repositories {
 }
 
 dependencies {
-    api(kotlin("reflect"))
+    implementation(kotlin("reflect"))
 
     api(project(":common"))
     api(project(":commonmp"))
 
     api(Deps.klassIndexLib)
-
-    api("org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version")
+    api(Deps.kotlinx_serialization_core)
 
     // Testing
-    testImplementation("ch.qos.logback:logback-classic:$logback_version")
-    testImplementation("io.kotest:kotest-assertions-core-jvm:$kotlintest_version")
-    testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotlintest_version")
-
     kaptTest(Deps.klassIndexProcessor)
+
+    Deps.Test {
+        jvmTestDeps()
+    }
 }
 
 kapt {

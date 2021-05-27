@@ -13,11 +13,6 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
-val logback_version: String by project
-val kotlintest_version: String by project
-val kotlinx_coroutines_version: String by project
-val slf4j_version: String by project
-
 repositories {
     mavenCentral()
     jcenter()
@@ -26,15 +21,15 @@ repositories {
 dependencies {
     implementation(kotlin("reflect"))
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version")
-    implementation("org.slf4j:slf4j-api:$slf4j_version")
+    implementation(Deps.kotlinx_coroutines_core)
+    implementation(Deps.slf4j_api)
 
     implementation(project(":common"))
     implementation(project(":kontainer"))
 
-    testImplementation("ch.qos.logback:logback-classic:$logback_version")
-    testImplementation("io.kotest:kotest-assertions-core-jvm:$kotlintest_version")
-    testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotlintest_version")
+    Deps.Test {
+        jvmTestDeps()
+    }
 }
 
 val test by tasks.getting(Test::class) {

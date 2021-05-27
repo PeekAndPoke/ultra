@@ -1,13 +1,13 @@
 package de.peekandpoke.ultra.kontainer
 
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.*
 
 /**
  * Keeps track of instantiated kontainers and services
  *
- * TODO: also keep track of services... to find leak, where services are not disposed
+ * TODO: also keep track of services... to find leaks, where services are not disposed
  */
 class KontainerTracker {
 
@@ -16,8 +16,7 @@ class KontainerTracker {
     private val instances = WeakHashMap<Kontainer, Instant>()
 
     fun track(kontainer: Kontainer) {
-
-        GlobalScope.run {
+        KontainerCoroutineScope.launch {
             synchronized(lock) {
                 instances[kontainer] = Instant.now()
             }

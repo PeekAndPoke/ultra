@@ -102,7 +102,7 @@ class MapMutationsSpec : StringSpec({
 
         val result = source.mutate {
             addresses["B"]?.apply {
-                city = city.toUpperCase()
+                city = city.uppercase()
             }
         }
 

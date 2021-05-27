@@ -109,7 +109,7 @@ class SingletonFactoriesSpec : StringSpec({
     "Singleton factory with zero params" {
 
         val blueprint = kontainer {
-            singleton { Config(0) }
+            singleton0 { Config(0) }
         }
 
         val subject = blueprint.useWith()
@@ -120,7 +120,7 @@ class SingletonFactoriesSpec : StringSpec({
     "Singleton factory with zero params defined with bas class" {
 
         val blueprint = kontainer {
-            singleton(Base::class) { Config(0) }
+            singleton0(Base::class) { Config(0) }
         }
 
         val subject = blueprint.useWith()

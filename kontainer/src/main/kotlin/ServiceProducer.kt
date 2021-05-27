@@ -4,6 +4,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.jvm.ExperimentalReflectionOnLambdas
 import kotlin.reflect.jvm.reflect
 
 /**
@@ -19,8 +20,8 @@ class ServiceProducer internal constructor(
 ) {
     val paramProviders = signature.map { ParameterProvider.of(it) }
 
+    @OptIn(ExperimentalReflectionOnLambdas::class)
     companion object {
-
         /**
          * Creates a producer for the Kontainer itself, making it possible to inject the Kontainer.
          */
@@ -87,7 +88,6 @@ class ServiceProducer internal constructor(
         /**
          * Creates a producer for a factory method with zero parameters.
          */
-        private
         fun <R : Any> forFactory(
             factory: () -> R
         ) =
@@ -98,7 +98,6 @@ class ServiceProducer internal constructor(
         /**
          * Creates a producer for a factory method with one parameter.
          */
-        private
         fun <R : Any, P1> forFactory(
             factory: (P1) -> R
         ) =
@@ -110,7 +109,6 @@ class ServiceProducer internal constructor(
         /**
          * Creates a producer for a factory method with two parameters.
          */
-        private
         fun <R : Any, P1, P2> forFactory(
             factory: (P1, P2) -> R
         ) =
@@ -122,7 +120,6 @@ class ServiceProducer internal constructor(
         /**
          * Creates a producer for a factory method with three parameters.
          */
-        private
         fun <R : Any, P1, P2, P3> forFactory(
             factory: (P1, P2, P3) -> R
         ) =
@@ -134,7 +131,6 @@ class ServiceProducer internal constructor(
         /**
          * Creates a producer for a factory method with four parameters.
          */
-        private
         fun <R : Any, P1, P2, P3, P4> forFactory(
             factory: (P1, P2, P3, P4) -> R
         ) =
@@ -146,7 +142,6 @@ class ServiceProducer internal constructor(
         /**
          * Creates a producer for a factory method with five parameters.
          */
-        private
         fun <R : Any, P1, P2, P3, P4, P5> forFactory(
             factory: (P1, P2, P3, P4, P5) -> R
         ) =
@@ -158,7 +153,6 @@ class ServiceProducer internal constructor(
         /**
          * Creates a producer for a factory method with six parameters.
          */
-        private
         fun <R : Any, P1, P2, P3, P4, P5, P6> forFactory(
             factory: (P1, P2, P3, P4, P5, P6) -> R
         ) =
@@ -170,7 +164,6 @@ class ServiceProducer internal constructor(
         /**
          * Creates a producer for a factory method with seven parameters.
          */
-        private
         fun <R : Any, P1, P2, P3, P4, P5, P6, P7> forFactory(
             factory: (P1, P2, P3, P4, P5, P6, P7) -> R
         ) =
@@ -182,7 +175,6 @@ class ServiceProducer internal constructor(
         /**
          * Creates a producer for a factory method with eight parameters.
          */
-        private
         fun <R : Any, P1, P2, P3, P4, P5, P6, P7, P8> forFactory(
             factory: (P1, P2, P3, P4, P5, P6, P7, P8) -> R
         ) =
@@ -203,7 +195,6 @@ class ServiceProducer internal constructor(
         /**
          * Creates a producer for a factory method with nine parameters.
          */
-        private
         fun <R : Any, P1, P2, P3, P4, P5, P6, P7, P8, P9> forFactory(
             factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9) -> R
         ) =
@@ -225,7 +216,6 @@ class ServiceProducer internal constructor(
         /**
          * Creates a producer for a factory method with ten parameters.
          */
-        private
         fun <R : Any, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10> forFactory(
             factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) -> R
         ) =
@@ -248,7 +238,6 @@ class ServiceProducer internal constructor(
         /**
          * Creates a producer for a factory method with eleven parameters.
          */
-        private
         fun <R : Any, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> forFactory(
             factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11) -> R
         ) =
@@ -272,7 +261,6 @@ class ServiceProducer internal constructor(
         /**
          * Creates a producer for a factory method with twelve parameters.
          */
-        private
         fun <R : Any, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12> forFactory(
             factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12) -> R
         ) =
@@ -297,7 +285,6 @@ class ServiceProducer internal constructor(
         /**
          * Creates a producer for a factory method with thirteen parameters.
          */
-        private
         fun <R : Any, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13> forFactory(
             factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13) -> R
         ) =
@@ -323,7 +310,6 @@ class ServiceProducer internal constructor(
         /**
          * Creates a producer for a factory method with fourteen parameters.
          */
-        private
         fun <R : Any, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14> forFactory(
             factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14) -> R
         ) =
@@ -350,7 +336,6 @@ class ServiceProducer internal constructor(
         /**
          * Creates a producer for a factory method with fifteen parameters.
          */
-        private
         fun <R : Any, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15> forFactory(
             factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15) -> R
         ) =
@@ -378,7 +363,6 @@ class ServiceProducer internal constructor(
         /**
          * Creates a producer for a factory method with sixteen parameters.
          */
-        private
         fun <R : Any, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16> forFactory(
             factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16) -> R
         ) =

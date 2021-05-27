@@ -106,7 +106,7 @@ abstract class ExamplesToDocs(
         }
     }
 
-    private fun String.toAnchor() = toLowerCase().toUri()
+    private fun String.toAnchor() = uppercase().toUri()
         .replace(" ", "-")
         .replace(".", "")
 

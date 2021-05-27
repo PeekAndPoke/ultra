@@ -13,8 +13,8 @@ buildscript {
 
 plugins {
     idea
-    kotlin("jvm") version Deps.kotlinVersion
-    kotlin("kapt") version Deps.kotlinVersion
+    kotlin("jvm")
+    kotlin("kapt")
 
     id("org.jetbrains.kotlin.plugin.serialization") version Deps.kotlinVersion apply false
     id("org.jetbrains.dokka") version Deps.dokkaVersion apply false

@@ -15,14 +15,14 @@ fun KontainerBuilder.ultraSecurity(config: UltraSecurityConfig) = module(Ultra_S
 val Ultra_Security
     get() = module { config: UltraSecurityConfig ->
 
-        dynamic(UserRecordProvider::class) { UserRecordProvider.anonymous }
+        dynamic0(UserRecordProvider::class) { UserRecordProvider.anonymous }
 
-        dynamic(UserPermissionsProvider::class) { UserPermissionsProvider.anonymous }
+        dynamic0(UserPermissionsProvider::class) { UserPermissionsProvider.anonymous }
 
         // Csrf protection
         dynamic(CsrfProtection::class) { userRecordProvider: UserRecordProvider ->
             StatelessCsrfProtection(config.csrfSecret, config.csrfTtlMillis, userRecordProvider)
         }
 
-        singleton(PasswordHasher::class) { PBKDF2PasswordHasher() }
+        singleton0(PasswordHasher::class) { PBKDF2PasswordHasher() }
     }

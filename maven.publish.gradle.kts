@@ -1,6 +1,7 @@
 val VERSION_NAME: String by project
-val mavenCentralRepositoryUsername: String by project
-val mavenCentralRepositoryPassword: String by project
+
+val mavenCentralUsername: String by project
+val mavenCentralPassword: String by project
 
 apply(plugin = "com.vanniktech.maven.publish")
 
@@ -29,8 +30,8 @@ configure<PublishingExtension> {
 //                println(url)
 
                 credentials {
-                    username = mavenCentralRepositoryUsername
-                    password = mavenCentralRepositoryPassword
+                    username = mavenCentralUsername
+                    password = mavenCentralPassword
                 }
             }
         }

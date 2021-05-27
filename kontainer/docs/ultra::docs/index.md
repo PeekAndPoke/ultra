@@ -2,35 +2,35 @@
 
 ## TOC
 
-1. [Defining Services](#defining-services)
+1. [Defining Services](#DEFINING-SERVICES)
 
-    1. [Defining a Singleton service](#defining-a-singleton-service)
-    2. [Defining a Dynamic service](#defining-a-dynamic-service)
-    3. [Defining a Prototype service](#defining-a-prototype-service)
-    4. [Defining an existing object as a Singleton service](#defining-an-existing-object-as-a-singleton-service)
-    5. [Hiding the concrete implementation of a service](#hiding-the-concrete-implementation-of-a-service)
-    6. [Singletons are shared](#singletons-are-shared)
-    7. [Singletons vs Dynamics vs Prototypes](#singletons-vs-dynamics-vs-prototypes)
+    1. [Defining a Singleton service](#DEFINING-A-SINGLETON-SERVICE)
+    2. [Defining a Dynamic service](#DEFINING-A-DYNAMIC-SERVICE)
+    3. [Defining a Prototype service](#DEFINING-A-PROTOTYPE-SERVICE)
+    4. [Defining an existing object as a Singleton service](#DEFINING-AN-EXISTING-OBJECT-AS-A-SINGLETON-SERVICE)
+    5. [Hiding the concrete implementation of a service](#HIDING-THE-CONCRETE-IMPLEMENTATION-OF-A-SERVICE)
+    6. [Singletons are shared](#SINGLETONS-ARE-SHARED)
+    7. [Singletons vs Dynamics vs Prototypes](#SINGLETONS-VS-DYNAMICS-VS-PROTOTYPES)
 
-2. [Service Injection](#service-injection)
+2. [Service Injection](#SERVICE-INJECTION)
 
-    1. [Basic Injection Example](#basic-injection-example)
-    2. [Factory Method Injection](#factory-method-injection)
-    3. [Injecting a singleton into multiple services](#injecting-a-singleton-into-multiple-services)
-    4. [Injecting a prototype into multiple services](#injecting-a-prototype-into-multiple-services)
-    5. [Nullable Injection](#nullable-injection)
-    6. [Injection By SuperType](#injection-by-supertype)
-    7. [Injection By SuperType can fail due to ambiguity](#injection-by-supertype-can-fail-due-to-ambiguity)
-    8. [Injection of all Services By SuperType](#injection-of-all-services-by-supertype)
-    9. [Lazy Injection Example](#lazy-injection-example)
-    10. [Breaking Cyclic Dependencies with Lazy Injection](#breaking-cyclic-dependencies-with-lazy-injection)
-    11. [Lazily inject all Services By SuperType](#lazily-inject-all-services-by-supertype)
-    12. [Lazily inject all Services By SuperType with a Lookup](#lazily-inject-all-services-by-supertype-with-a-lookup)
+    1. [Basic Injection Example](#BASIC-INJECTION-EXAMPLE)
+    2. [Factory Method Injection](#FACTORY-METHOD-INJECTION)
+    3. [Injecting a singleton into multiple services](#INJECTING-A-SINGLETON-INTO-MULTIPLE-SERVICES)
+    4. [Injecting a prototype into multiple services](#INJECTING-A-PROTOTYPE-INTO-MULTIPLE-SERVICES)
+    5. [Nullable Injection](#NULLABLE-INJECTION)
+    6. [Injection By SuperType](#INJECTION-BY-SUPERTYPE)
+    7. [Injection By SuperType can fail due to ambiguity](#INJECTION-BY-SUPERTYPE-CAN-FAIL-DUE-TO-AMBIGUITY)
+    8. [Injection of all Services By SuperType](#INJECTION-OF-ALL-SERVICES-BY-SUPERTYPE)
+    9. [Lazy Injection Example](#LAZY-INJECTION-EXAMPLE)
+    10. [Breaking Cyclic Dependencies with Lazy Injection](#BREAKING-CYCLIC-DEPENDENCIES-WITH-LAZY-INJECTION)
+    11. [Lazily inject all Services By SuperType](#LAZILY-INJECT-ALL-SERVICES-BY-SUPERTYPE)
+    12. [Lazily inject all Services By SuperType with a Lookup](#LAZILY-INJECT-ALL-SERVICES-BY-SUPERTYPE-WITH-A-LOOKUP)
 
-3. [Defining Modules](#defining-modules)
+3. [Defining Modules](#DEFINING-MODULES)
 
-    1. [Defining a simple module](#defining-a-simple-module)
-    2. [Parameterized modules](#parameterized-modules)
+    1. [Defining a simple module](#DEFINING-A-SIMPLE-MODULE)
+    2. [Parameterized modules](#PARAMETERIZED-MODULES)
 
 ## Defining Services
 

@@ -14,7 +14,7 @@ fun String.surround(with: String) = "$with${this}$with"
  */
 fun String.ucFirst(): String = when {
     isEmpty() -> this
-    else -> substring(0, 1).toUpperCase() + substring(1)
+    else -> substring(0, 1).uppercase() + substring(1)
 }
 
 /**
@@ -22,7 +22,7 @@ fun String.ucFirst(): String = when {
  */
 fun String.lcFirst(): String = when {
     isEmpty() -> this
-    else -> substring(0, 1).toLowerCase() + substring(1)
+    else -> substring(0, 1).lowercase() + substring(1)
 }
 
 /**

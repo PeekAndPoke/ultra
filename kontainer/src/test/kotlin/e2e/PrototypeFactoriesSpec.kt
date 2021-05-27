@@ -8,6 +8,7 @@ import de.peekandpoke.ultra.kontainer.ServiceNotFound
 import de.peekandpoke.ultra.kontainer.ServiceProvider
 import de.peekandpoke.ultra.kontainer.SimpleService
 import de.peekandpoke.ultra.kontainer.kontainer
+import de.peekandpoke.ultra.kontainer.module
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
@@ -22,6 +23,19 @@ class PrototypeFactoriesSpec : StringSpec({
     }
 
     data class Config(override val value: Int) : Base()
+
+    val configs = module {
+        config("c1", 1)
+        config("c2", 10)
+        config("c3", 100)
+        config("c4", 1000)
+        config("c5", 10000)
+        config("c6", 100000)
+        config("c7", 1000000)
+        config("c8", 10000000)
+        config("c9", 100000000)
+        config("c10", 1000000000)
+    }
 
     fun validateWithoutBase(subject: Kontainer, value: Int) {
 
@@ -96,7 +110,7 @@ class PrototypeFactoriesSpec : StringSpec({
     "Prototype factory with zero params" {
 
         val subject = kontainer {
-            prototype { Config(0) }
+            prototype0 { Config(0) }
         }.useWith()
 
         validateWithoutBase(subject, 0)
@@ -105,7 +119,7 @@ class PrototypeFactoriesSpec : StringSpec({
     "Prototype factory with zero params registered with base class" {
 
         val subject = kontainer {
-            prototype(Base::class) { Config(0) }
+            prototype0(Base::class) { Config(0) }
         }.useWith()
 
         validateWithBase(subject, 0)
@@ -304,4 +318,56 @@ class PrototypeFactoriesSpec : StringSpec({
 
         validateWithBase(subject, 1111111)
     }
+
+
+    "Prototype factory with one config params defined via dynamic function" {
+
+        val blueprint = kontainer {
+            module(configs)
+
+            val provider: Function<Config> = { c1: Int -> Config(c1) }
+
+            prototype(Base::class, provider)
+        }
+
+        val subject = blueprint.useWith()
+
+        validateWithBase(subject, 1)
+    }
+
+    "Prototype factory with seven config params defined via dynamic function" {
+
+        val blueprint = kontainer {
+            module(configs)
+
+            val provider: Function<Config> = { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
+                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7)
+            }
+
+            prototype(Base::class, provider)
+        }
+
+        val subject = blueprint.useWith()
+
+        validateWithBase(subject, 1111111)
+    }
+
+    "Prototype factory with ten config params defined via dynamic function" {
+
+        val blueprint = kontainer {
+            module(configs)
+
+            val provider: Function<Config> =
+                { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int, c9: Int, c10: Int ->
+                    Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9 + c10)
+                }
+
+            prototype(Base::class, provider)
+        }
+
+        val subject = blueprint.useWith()
+
+        validateWithBase(subject, 1111111111)
+    }
+
 })

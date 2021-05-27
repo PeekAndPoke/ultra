@@ -94,7 +94,7 @@ class ScalarMutationsSpec : StringSpec({
         val source = WithScalars()
 
         val result = source.mutate {
-            aString = aString.toUpperCase()
+            aString = aString.uppercase()
         }
 
         source shouldNotBe result
