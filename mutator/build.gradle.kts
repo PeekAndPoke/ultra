@@ -16,7 +16,6 @@ version = VERSION_NAME
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 dependencies {

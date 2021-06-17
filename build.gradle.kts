@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 buildscript {
     repositories {
         mavenCentral()
-        google()
     }
 
     dependencies {
@@ -24,7 +23,6 @@ plugins {
 allprojects {
     repositories {
         mavenCentral()
-        jcenter()
         // Repo for KlassIndex (https://github.com/matfax/klassindex)
         maven("https://jitpack.io")
     }

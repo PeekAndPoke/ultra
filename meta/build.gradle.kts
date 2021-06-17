@@ -40,7 +40,6 @@ dependencies {
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 configure<JavaPluginConvention> {

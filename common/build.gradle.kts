@@ -18,7 +18,6 @@ val kotlintest_version: String by project
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 dependencies {
