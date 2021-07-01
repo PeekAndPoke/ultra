@@ -14,7 +14,7 @@ object Deps {
     const val mavenPublishVersion = "0.14.2"
     ////////////////////////////////////////////////////////////////////
 
-    private const val auth0_java_jwt_version = "3.16.0"
+    private const val auth0_java_jwt_version = "3.17.0"
     const val auth0_java_jwt = "com.auth0:java-jwt:$auth0_java_jwt_version"
 
     // TODO: check if we can update to 3.x
@@ -30,11 +30,11 @@ object Deps {
     const val klassIndexLib = "com.github.matfax.klassindex:library:$klassIndexVersion"
     const val klassIndexProcessor = "com.github.matfax.klassindex:processor:$klassIndexVersion"
 
-    private const val kotlin_compiletesting_version = "1.4.1"
+    private const val kotlin_compiletesting_version = "1.4.2"
     const val kotlin_compiletesting = "com.github.tschuchortdev:kotlin-compile-testing:$kotlin_compiletesting_version"
 
     // TODO: check 1.6.+ ... there are some breaking changes though
-    private const val kotlinpoet_version = "1.5.0"
+    private const val kotlinpoet_version = "1.9.0"
     const val kotlinpoet = "com.squareup:kotlinpoet:$kotlinpoet_version"
 
     private const val kotlinx_coroutines_version = "1.5.0"

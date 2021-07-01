@@ -43,6 +43,7 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$/../../../z-playground-js/src/test" />
     <orderEntry type="jdk" jdkName="Kotlin SDK" jdkType="KotlinSDK" />
+    <orderEntry type="module" module-name="ultra.commonmp.commonMain" scope="TEST" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="ultra.z-playground-js.main" scope="TEST" />
     <orderEntry type="module" module-name="ultra.z-playground-js.main" scope="RUNTIME" />
