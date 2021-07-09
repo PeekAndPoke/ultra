@@ -75,6 +75,15 @@ class MutableTypedAttributes internal constructor(entries: Map<TypedKey<*>, Any>
     }
 
     /**
+     * Remove an entry by [key]
+     */
+    fun <T> remove(key: TypedKey<T>) {
+        RunSync(entries) {
+            entries.remove(key)
+        }
+    }
+
+    /**
      * Sets an entry by [key] with the given [value] when the [condition] is true.
      *
      * The [condition] is executed with the current value for the [key].
