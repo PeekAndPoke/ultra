@@ -3,13 +3,13 @@ package de.peekandpoke.ultra.common
 /**
  * Map of [TypedKey] to values
  */
-class MutableTypedAttributes internal constructor(entries: Map<TypedKey<*>, Any>) {
+class MutableTypedAttributes internal constructor(entries: Map<TypedKey<*>, Any?> = emptyMap()) {
 
     companion object {
         /**
          * Empty instance
          */
-        val empty = MutableTypedAttributes(emptyMap())
+        fun empty() = MutableTypedAttributes(emptyMap())
 
         /**
          * Builder method
@@ -75,6 +75,11 @@ class MutableTypedAttributes internal constructor(entries: Map<TypedKey<*>, Any>
     }
 
     /**
+     * Returns 'true' when the given key is set even if the value is falsy, like null, false etc.
+     */
+    fun <T> has(key: TypedKey<T>) = entries.containsKey(key)
+
+    /**
      * Remove an entry by [key]
      */
     fun <T> remove(key: TypedKey<T>) {
@@ -101,4 +106,9 @@ class MutableTypedAttributes internal constructor(entries: Map<TypedKey<*>, Any>
             }
         }
     }
+
+    /**
+     * Creates a clone of this instance by shallow cloning the contained [entries]
+     */
+    fun clone() = MutableTypedAttributes(entries = entries.toMap())
 }

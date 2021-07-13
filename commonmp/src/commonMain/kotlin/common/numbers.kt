@@ -15,7 +15,7 @@ fun Number.toFixed(decimals: Int): String {
 
         -1 -> "$str1.".padEnd(str1.length + 1 + decimals, '0')
 
-        else -> str1.padEnd(dot + 1 + decimals, '0')
+        else -> str1.padEnd(dot + 1 + decimals, '0').substring(0, dot + 1 + decimals)
     }
 }
 
