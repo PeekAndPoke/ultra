@@ -50,12 +50,12 @@ class MutableTypedAttributes internal constructor(entries: Map<TypedKey<*>, Any?
     /**
      * Gets the number of entries
      */
-    val size get() = entries.size
+    val size: Int get() = entries.size
 
     /**
      * Converts this to an immutable [TypedAttributes] collection.
      */
-    fun asImmutable() = TypedAttributes(entries.toMap())
+    fun asImmutable(): TypedAttributes = TypedAttributes(entries.toMap())
 
     /**
      * Gets an entry by [key] or null if nothing is there
