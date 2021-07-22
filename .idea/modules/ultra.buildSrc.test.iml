@@ -12,6 +12,7 @@
           <option name="noStdlib" value="true" />
           <option name="noReflect" value="true" />
           <option name="moduleName" value="buildSrc" />
+          <option name="jvmTarget" value="1.8" />
           <option name="friendPaths">
             <array>
               <option value="$MODULE_DIR$/../../buildSrc/build/classes/java/main" />
