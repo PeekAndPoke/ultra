@@ -22,7 +22,7 @@ class InjectionTypeDowngradePreventionSpec : StringSpec() {
             val subject = kontainer {
                 dynamic(Dynamic::class)
                 prototype(Prototype::class)
-            }.useWith()
+            }.create()
 
             assertSoftly {
                 subject.getProvider(Prototype::class).type shouldBe ServiceProvider.Type.Prototype

@@ -8,13 +8,31 @@ import kotlin.reflect.KClass
  * The container
  */
 class Kontainer internal constructor(
-    internal val blueprint: KontainerBlueprint,
-    internal val providers: Map<KClass<*>, ServiceProvider>
+    private val registry: ServiceProviderRegistry,
 ) {
+    /**
+     * The blueprint for this kontainer
+     */
+    val blueprint: KontainerBlueprint = registry.blueprint
+
+    /**
+     * Class to service provider map
+     */
+    val providers: Map<KClass<*>, ServiceProvider> = registry.map
+
     /**
      * The root context is used, when services are directly requested from the Kontainer
      */
-    private val rootContext = InjectionContext(this, Kontainer::class, Kontainer::class)
+    private val rootContext: InjectionContext = InjectionContext(this, Kontainer::class, Kontainer::class)
+
+    // Cloning the kontainer ///////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Create a new fresh instance of this [Kontainer].
+     *
+     * This will reset all dynamic services, just like creating a new kontainer from a [KontainerBlueprint].
+     */
+    fun clone(): Kontainer = registry.newKontainer()
 
     // getting services ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -81,7 +99,9 @@ class Kontainer internal constructor(
     /**
      * Check if there is a config value with the given [id] that is of the given [type]
      */
-    fun hasConfig(id: String, type: KClass<*>) = blueprint.config[id].let { it != null && it::class == type }
+    fun hasConfig(id: String, type: KClass<*>): Boolean {
+        return blueprint.config[id].let { it != null && it::class == type }
+    }
 
     /**
      * Get a config value by its [id]

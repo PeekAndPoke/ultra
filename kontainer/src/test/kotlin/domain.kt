@@ -15,21 +15,27 @@ data class ConfigAllInjecting(
     val boolean: Boolean
 )
 
-open class SimpleService {
-    private var counter = 0
+open class CounterService {
+
+    private var counter: Int = 0
 
     fun get() = counter
+
+    fun set(new: Int) {
+        counter = new
+    }
 
     fun inc() = counter++
 }
 
-class SuperSimpleService : SimpleService()
+class CounterServiceEx01 : CounterService()
+class CounterServiceEx02 : CounterService()
 
 class AnotherSimpleService
 
 class SomeIndependentService
 
-data class InjectingService(val simple: SimpleService, val another: AnotherSimpleService)
+data class InjectingService(val simple: CounterService, val another: AnotherSimpleService)
 
 data class AnotherInjectingService(val other: AnotherSimpleService)
 
@@ -47,4 +53,4 @@ data class InjectingAllAmbiguous(val all: List<Ambiguous>)
 
 data class InjectingSomethingWeird(val weird: Map<String, String>)
 
-data class LazilyInjecting(val lazy: Lazy<SimpleService>)
+data class LazilyInjecting(val lazy: Lazy<CounterService>)

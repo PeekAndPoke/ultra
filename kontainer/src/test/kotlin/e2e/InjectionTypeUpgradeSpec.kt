@@ -25,7 +25,7 @@ class InjectionTypeUpgradeSpec : StringSpec() {
                 dynamic(Service::class)
             }
 
-            val subject = blueprint.useWith()
+            val subject = blueprint.create()
 
             assertSoftly {
                 subject.getProvider(Service::class).type shouldBe ServiceProvider.Type.Dynamic
@@ -41,7 +41,7 @@ class InjectionTypeUpgradeSpec : StringSpec() {
                 prototype(Service::class)
             }
 
-            val subject = blueprint.useWith()
+            val subject = blueprint.create()
 
             assertSoftly {
                 subject.getProvider(Service::class).type shouldBe ServiceProvider.Type.Prototype
@@ -57,7 +57,7 @@ class InjectionTypeUpgradeSpec : StringSpec() {
                 prototype(Service::class)
             }
 
-            val subject = blueprint.useWith()
+            val subject = blueprint.create()
 
             assertSoftly {
                 subject.getProvider(Service::class).type shouldBe ServiceProvider.Type.Dynamic
@@ -73,7 +73,7 @@ class InjectionTypeUpgradeSpec : StringSpec() {
                 singleton(Service::class)
             }
 
-            val subject = blueprint.useWith()
+            val subject = blueprint.create()
 
             assertSoftly {
                 subject.getProvider(Service::class).type shouldBe ServiceProvider.Type.Dynamic
@@ -89,7 +89,7 @@ class InjectionTypeUpgradeSpec : StringSpec() {
                 singleton(Service::class)
             }
 
-            val subject = blueprint.useWith()
+            val subject = blueprint.create()
 
             assertSoftly {
                 subject.getProvider(Service::class).type shouldBe ServiceProvider.Type.Prototype
@@ -105,7 +105,7 @@ class InjectionTypeUpgradeSpec : StringSpec() {
                 dynamic(Service::class)
             }
 
-            val subject = blueprint.useWith()
+            val subject = blueprint.create()
 
             assertSoftly {
                 subject.getProvider(Service::class).type shouldBe ServiceProvider.Type.Prototype

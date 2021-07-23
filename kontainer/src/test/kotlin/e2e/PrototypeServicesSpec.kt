@@ -16,7 +16,7 @@ class PrototypeServicesSpec : StringSpec({
 
         val subject = kontainer {
             prototype(MyPrototype::class)
-        }.useWith()
+        }.create()
 
         val first = subject.get(MyPrototype::class)
         val second = subject.get(MyPrototype::class)
@@ -36,7 +36,7 @@ class PrototypeServicesSpec : StringSpec({
         val subject = kontainer {
             prototype<MyPrototype>()
             singleton(Injecting::class)
-        }.useWith()
+        }.create()
 
         val first = subject.get(Injecting::class)
         val second = subject.get(Injecting::class)
@@ -64,7 +64,7 @@ class PrototypeServicesSpec : StringSpec({
 
         val subject = kontainer {
             prototype(MyService::class, MyServiceImpl::class)
-        }.useWith()
+        }.create()
 
         assertSoftly {
 

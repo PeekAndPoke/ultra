@@ -20,7 +20,7 @@ class InjectionContextSpec : StringSpec({
             prototype { context: InjectionContext -> MyInjected(context.requestingClass) }
         }
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         assertSoftly {
             subject.get(MyInjected::class).injector shouldBe Kontainer::class
@@ -40,7 +40,7 @@ class InjectionContextSpec : StringSpec({
             prototype { context: InjectionContext -> MyInjected(context.requestingClass) }
         }
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         assertSoftly {
             subject.get(MyInjected::class).injector shouldBe Kontainer::class
@@ -65,7 +65,7 @@ class InjectionContextSpec : StringSpec({
             prototype { context: InjectionContext -> MyInner(context.requestingClass) }
         }
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         assertSoftly {
             subject.get(MyInner::class).injector shouldBe Kontainer::class
@@ -87,7 +87,7 @@ class InjectionContextSpec : StringSpec({
             prototype { context: InjectionContext -> MyInjected(context.requestingClass) }
         }
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         assertSoftly {
             subject.get(MyInjected::class).injector shouldBe Kontainer::class
@@ -112,7 +112,7 @@ class InjectionContextSpec : StringSpec({
             prototype { context: InjectionContext -> MyInjectedTwo(context.requestingClass) }
         }
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         assertSoftly {
             subject.get(MyInjectedOne::class).injector shouldBe Kontainer::class
@@ -139,7 +139,7 @@ class InjectionContextSpec : StringSpec({
             prototype { context: InjectionContext -> MyInjectedTwo(context.requestingClass) }
         }
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         assertSoftly {
             subject.get(MyInjectedOne::class).injector shouldBe Kontainer::class

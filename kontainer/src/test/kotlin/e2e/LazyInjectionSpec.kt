@@ -3,7 +3,7 @@ package de.peekandpoke.ultra.kontainer.e2e
 import de.peekandpoke.ultra.common.Lookup
 import de.peekandpoke.ultra.kontainer.LazilyInjecting
 import de.peekandpoke.ultra.kontainer.LazyServiceLookup
-import de.peekandpoke.ultra.kontainer.SimpleService
+import de.peekandpoke.ultra.kontainer.CounterService
 import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
@@ -14,11 +14,11 @@ class LazyInjectionSpec : StringSpec({
     "Injecting a service lazily" {
 
         val subject = kontainer {
-            singleton<SimpleService>()
+            singleton<CounterService>()
             singleton<LazilyInjecting>()
-        }.useWith()
+        }.create()
 
-        subject.get<SimpleService>().inc()
+        subject.get<CounterService>().inc()
 
         assertSoftly {
             subject.get<LazilyInjecting>().lazy.value.get() shouldBe 1
@@ -38,7 +38,7 @@ class LazyInjectionSpec : StringSpec({
             singleton(ImplTwo::class)
 
             singleton(Injecting::class)
-        }.useWith()
+        }.create()
 
         assertSoftly {
             subject.get(Injecting::class).all.value.map { it::class } shouldBe listOf(ImplOne::class, ImplTwo::class)
@@ -58,7 +58,7 @@ class LazyInjectionSpec : StringSpec({
             singleton(ImplTwo::class)
 
             singleton(Injecting::class)
-        }.useWith()
+        }.create()
 
         val implOne = subject.get(ImplOne::class)
         val implTwo = subject.get(ImplTwo::class)

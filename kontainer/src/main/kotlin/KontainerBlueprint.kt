@@ -20,13 +20,13 @@ class KontainerBlueprint internal constructor(
     /**
      * Collect dynamic service definitions
      */
-    private val dynamicDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
+    internal val dynamicDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
         .filterValues { it.type == InjectionType.Dynamic }
 
     /**
      * Collect Prototype service definitions
      */
-    private val prototypeDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
+    internal val prototypeDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
         .filterValues { it.type == InjectionType.Prototype }
 
     /**
@@ -37,10 +37,10 @@ class KontainerBlueprint internal constructor(
     /**
      * A lookup for finding the base types of dynamic services from given super types
      */
-    private val dynamicsBaseTypeLookUp = TypeLookup.ForBaseTypes(dynamicsClasses)
+    internal val dynamicsBaseTypeLookUp = TypeLookup.ForBaseTypes(dynamicsClasses)
 
     /**
-     * Used to check whether unexpected instances are passed to [useWith]
+     * Used to check whether unexpected instances are passed to [create]
      */
     private val dynamicsChecker = DynamicsChecker(dynamicsClasses)
 
@@ -60,12 +60,12 @@ class KontainerBlueprint internal constructor(
      * These are services that where initially defined as singletons, but which inject dynamic services.
      * Or which inject services that themselves inject dynamic services etc...
      */
-    private val semiDynamicDefinitions: Map<KClass<*>, ServiceDefinition> =
+    internal val semiDynamicDefinitions: Map<KClass<*>, ServiceDefinition> =
+        // prototype cannot be "downgraded" to be semi dynamic singletons
         dependencyLookUp.getAllDependents(dynamicsClasses)
             // prototype cannot be "downgraded" to be semi dynamic singletons
             .filter { !prototypeDefinitions.contains(it) }
-            .map { it to definitions.getValue(it) }
-            .toMap()
+            .associateWith { definitions.getValue(it) }
 
     /**
      * Collect Singletons services/
@@ -74,7 +74,7 @@ class KontainerBlueprint internal constructor(
      * - have no transitive dependency to any of the dynamic services
      * - are no prototype services
      */
-    private val singletons: Map<KClass<*>, ServiceProvider.ForSingleton> = definitions
+    internal val singletons: Map<KClass<*>, ServiceProvider.ForSingleton> = definitions
         .filterKeys { !dynamicDefinitions.contains(it) }
         .filterKeys { !semiDynamicDefinitions.contains(it) }
         .filterKeys { !prototypeDefinitions.contains(it) }
@@ -97,27 +97,23 @@ class KontainerBlueprint internal constructor(
     }
 
     /**
-     * Creates a kontainer instance without overriding any of the dynamic services.
-     *
-     * @throws KontainerInconsistent when there is a problem with the kontainer configuration
-     */
-    fun create() = useWith()
-
-    /**
      * Creates a kontainer instance and overrides the given dynamic services.
      *
+     * The parameter [dynamics] can set dynamic overrides
+     *
      * @throws KontainerInconsistent when there is a problem with the kontainer configuration
      */
-    fun useWith(vararg dynamics: Any): Kontainer {
+    fun create(dynamics: DynamicOverrides.Builder.() -> Unit = {}): Kontainer {
 
         // On the first usage we validate the consistency of the container
         if (usages++ == 0) {
+            // Validate the overall consistency
             validate()
         }
 
-        val givenClasses = dynamics.map { it::class }.toSet()
+        val dynamicServices = DynamicOverrides.Builder().apply(dynamics).build()
 
-        val unexpectedDynamics = dynamicsChecker.getUnexpected(givenClasses)
+        val unexpectedDynamics = dynamicsChecker.getUnexpected(dynamicServices.overrides.keys)
 
         if (unexpectedDynamics.isNotEmpty()) {
             throw KontainerInconsistent(
@@ -126,47 +122,17 @@ class KontainerBlueprint internal constructor(
             )
         }
 
-        return instantiate(
-            dynamics.map {
-                dynamicsBaseTypeLookUp.getDistinctFor(it::class) to ServiceProvider.ForInstance(
-                    ServiceProvider.Type.DynamicOverride,
-                    it
-                )
-            }
-        )
+        return instantiate(dynamicServices)
     }
 
     /**
      * Creates a new kontainer
      */
-    private fun instantiate(overwrittenDynamics: List<Pair<KClass<*>, ServiceProvider>>): Kontainer {
+    internal fun instantiate(dynamics: DynamicOverrides): Kontainer {
 
-        val map = HashMap<KClass<*>, ServiceProvider>(
-            singletons.size +
-                    prototypeDefinitions.size +
-                    dynamicDefinitions.size +
-                    semiDynamicDefinitions.size +
-                    overwrittenDynamics.size
-        )
+        val registry = ServiceProviderRegistry(this, dynamics)
 
-        // put all singletons
-        map.putAll(singletons)
-
-        // add providers for prototype services
-        map.putAll(prototypeDefinitions.mapValues { (_, v) -> ServiceProvider.ForPrototype(v) })
-
-        // create new providers for all semi dynamic services
-        semiDynamicDefinitions
-            .forEach { (k, v) -> map[k] = ServiceProvider.ForSingleton(ServiceProvider.Type.SemiDynamic, v) }
-
-        // create new providers for all dynamic services
-        dynamicDefinitions
-            .forEach { (k, v) -> map[k] = ServiceProvider.ForSingleton(ServiceProvider.Type.Dynamic, v) }
-
-        // add providers for all overwritten dynamic services
-        map.putAll(overwrittenDynamics)
-
-        return Kontainer(this, map).apply {
+        return Kontainer(registry).apply {
             // Track the Kontainer
             tracker.track(this)
         }
@@ -174,10 +140,10 @@ class KontainerBlueprint internal constructor(
 
     private fun validate() {
 
-        // create a container with no overwritten dynamic services
-        val container = instantiate(listOf())
+        // Create a container with NO overwritten dynamic services to check to overall consistency
+        val container = instantiate(DynamicOverrides(emptyMap()))
 
-        // validate all service providers
+        // Validate all service providers are consistent
         val errors = container.providers
             .mapValues { (_, v) -> v.validate(container) }
             .filterValues { it.isNotEmpty() }
@@ -189,7 +155,6 @@ class KontainerBlueprint internal constructor(
             }
 
         if (errors.isNotEmpty()) {
-
             val err = "Kontainer is inconsistent!\n\n" +
                     "Problems:\n\n" +
                     errors.joinToString("\n") + "\n\n" +

@@ -16,7 +16,7 @@ class OptionalsSpec : StringSpec({
 
         val subject = kontainer {
             singleton(Service::class)
-        }.useWith()
+        }.create()
 
         assertSoftly {
             subject.use(Service::class) { x * 100 } shouldBe 100 * 100
@@ -29,7 +29,7 @@ class OptionalsSpec : StringSpec({
             val x = 100
         }
 
-        val subject = kontainer {}.useWith()
+        val subject = kontainer {}.create()
 
         assertSoftly {
             subject.use(Service::class) { x * 100 } shouldBe null
@@ -43,7 +43,7 @@ class OptionalsSpec : StringSpec({
 
         val subject = kontainer {
             singleton(Injecting::class)
-        }.useWith()
+        }.create()
 
         assertSoftly {
             val injecting = subject.get(Injecting::class)
@@ -60,7 +60,7 @@ class OptionalsSpec : StringSpec({
         val subject = kontainer {
             singleton(Service::class)
             singleton(Injecting::class)
-        }.useWith()
+        }.create()
 
         assertSoftly {
             val injecting = subject.get(Injecting::class)
@@ -76,7 +76,7 @@ class OptionalsSpec : StringSpec({
 
         val subject = kontainer {
             singleton(Injecting::class)
-        }.useWith()
+        }.create()
 
         assertSoftly {
             val injecting = subject.get(Injecting::class)
@@ -93,7 +93,7 @@ class OptionalsSpec : StringSpec({
         val subject = kontainer {
             singleton(Service::class)
             singleton(Injecting::class)
-        }.useWith()
+        }.create()
 
         assertSoftly {
             val injecting = subject.get(Injecting::class)

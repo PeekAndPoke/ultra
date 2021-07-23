@@ -6,7 +6,7 @@ import de.peekandpoke.ultra.kontainer.AnotherSimpleService
 import de.peekandpoke.ultra.kontainer.InjectingAllAmbiguous
 import de.peekandpoke.ultra.kontainer.InjectingAmbiguous
 import de.peekandpoke.ultra.kontainer.KontainerInconsistent
-import de.peekandpoke.ultra.kontainer.SimpleService
+import de.peekandpoke.ultra.kontainer.CounterService
 import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
@@ -24,7 +24,7 @@ class BaseTypeInjectionSpec : StringSpec({
 
         val subject = kontainer {
             singleton<MyServiceImpl>()
-        }.useWith()
+        }.create()
 
         assertSoftly {
             subject.get<MyService>()::class shouldBe MyServiceImpl::class
@@ -41,7 +41,7 @@ class BaseTypeInjectionSpec : StringSpec({
 
         assertSoftly {
             val error = shouldThrow<KontainerInconsistent> {
-                blueprint.useWith()
+                blueprint.create()
             }
 
             error.message shouldContain "Parameter 'ambiguous' is ambiguous"
@@ -55,9 +55,9 @@ class BaseTypeInjectionSpec : StringSpec({
             singleton<AmbiguousImplOne>()
             singleton<AmbiguousImplTwo>()
 
-            singleton<SimpleService>()
+            singleton<CounterService>()
             singleton<AnotherSimpleService>()
-        }.useWith()
+        }.create()
 
         assertSoftly {
 

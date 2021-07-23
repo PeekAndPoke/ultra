@@ -2,6 +2,9 @@ package de.peekandpoke.ultra.kontainer.e2e
 
 import de.peekandpoke.ultra.kontainer.AnotherInjectingService
 import de.peekandpoke.ultra.kontainer.AnotherSimpleService
+import de.peekandpoke.ultra.kontainer.CounterService
+import de.peekandpoke.ultra.kontainer.CounterServiceEx01
+import de.peekandpoke.ultra.kontainer.CounterServiceEx02
 import de.peekandpoke.ultra.kontainer.DeeperInjectingService
 import de.peekandpoke.ultra.kontainer.InjectingService
 import de.peekandpoke.ultra.kontainer.InjectingSomethingWeird
@@ -10,8 +13,6 @@ import de.peekandpoke.ultra.kontainer.KontainerBlueprint
 import de.peekandpoke.ultra.kontainer.KontainerInconsistent
 import de.peekandpoke.ultra.kontainer.ServiceNotFound
 import de.peekandpoke.ultra.kontainer.ServiceProvider
-import de.peekandpoke.ultra.kontainer.SimpleService
-import de.peekandpoke.ultra.kontainer.SuperSimpleService
 import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
@@ -28,103 +29,103 @@ class GeneralInjectionSpec : StringSpec({
 
         val blueprint = kontainer {}
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         subject shouldNotBe null
     }
 
     "Requesting a singleton that is not registered" {
 
-        val result = kontainer { }.useWith()
+        val result = kontainer { }.create()
 
         shouldThrow<ServiceNotFound> {
-            result.get<SimpleService>()
+            result.get<CounterService>()
         }
     }
 
     "Container with a singleton service" {
 
         val subject = kontainer {
-            singleton<SimpleService>()
-        }.useWith()
+            singleton<CounterService>()
+        }.create()
 
         assertSoftly {
 
-            subject.get<SimpleService>()::class shouldBe SimpleService::class
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Singleton
+            subject.get<CounterService>()::class shouldBe CounterService::class
+            subject.getProvider<CounterService>().type shouldBe ServiceProvider.Type.Singleton
         }
     }
 
     "Container with a singleton service (::class style)" {
 
         val subject = kontainer {
-            singleton(SimpleService::class)
-        }.useWith()
+            singleton(CounterService::class)
+        }.create()
 
         assertSoftly {
 
-            subject.get<SimpleService>()::class shouldBe SimpleService::class
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Singleton
+            subject.get<CounterService>()::class shouldBe CounterService::class
+            subject.getProvider<CounterService>().type shouldBe ServiceProvider.Type.Singleton
         }
     }
 
     "Container with a singleton service (builder style)" {
 
         val subject = kontainer {
-            singleton0 { SimpleService() }
-        }.useWith()
+            singleton0 { CounterService() }
+        }.create()
 
         assertSoftly {
 
-            subject.get<SimpleService>()::class shouldBe SimpleService::class
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Singleton
+            subject.get<CounterService>()::class shouldBe CounterService::class
+            subject.getProvider<CounterService>().type shouldBe ServiceProvider.Type.Singleton
         }
     }
 
     "Container with a singleton service from existing instance" {
 
         val subject = kontainer {
-            instance(SimpleService())
-        }.useWith()
+            instance(CounterService())
+        }.create()
 
         assertSoftly {
 
-            subject.get<SimpleService>() shouldBeSameInstanceAs subject.get(SimpleService::class)
+            subject.get<CounterService>() shouldBeSameInstanceAs subject.get(CounterService::class)
 
-            subject.get<SimpleService>()::class shouldBe SimpleService::class
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Singleton
+            subject.get<CounterService>()::class shouldBe CounterService::class
+            subject.getProvider<CounterService>().type shouldBe ServiceProvider.Type.Singleton
         }
     }
 
     "Container with a singleton service from existing instance registered with base class" {
 
         val subject = kontainer {
-            instance(SimpleService::class, SuperSimpleService())
-        }.useWith()
+            instance(CounterService::class, CounterServiceEx01())
+        }.create()
 
         assertSoftly {
 
             shouldThrow<ServiceNotFound> {
-                subject.get<SuperSimpleService>()
+                subject.get<CounterServiceEx01>()
             }
 
-            subject.get<SimpleService>() shouldBeSameInstanceAs subject.get(SimpleService::class)
+            subject.get<CounterService>() shouldBeSameInstanceAs subject.get(CounterService::class)
 
-            subject.get<SimpleService>()::class shouldBe SuperSimpleService::class
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Singleton
+            subject.get<CounterService>()::class shouldBe CounterServiceEx01::class
+            subject.getProvider<CounterService>().type shouldBe ServiceProvider.Type.Singleton
         }
     }
 
     "Container with multiple singleton services" {
 
         val subject = kontainer {
-            singleton<SimpleService>()
+            singleton<CounterService>()
             singleton<AnotherSimpleService>()
-        }.useWith()
+        }.create()
 
         assertSoftly {
-            subject.get<SimpleService>()::class shouldBe SimpleService::class
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Singleton
+            subject.get<CounterService>()::class shouldBe CounterService::class
+            subject.getProvider<CounterService>().type shouldBe ServiceProvider.Type.Singleton
 
             subject.get<AnotherSimpleService>()::class shouldBe AnotherSimpleService::class
             subject.getProvider<AnotherSimpleService>().type shouldBe ServiceProvider.Type.Singleton
@@ -134,13 +135,13 @@ class GeneralInjectionSpec : StringSpec({
     "Container with services that have missing dependencies" {
 
         val blueprint = kontainer {
-            singleton<SimpleService>()
+            singleton<CounterService>()
             singleton<InjectingService>()
         }
 
         assertSoftly {
             val error = shouldThrow<KontainerInconsistent> {
-                blueprint.useWith()
+                blueprint.create()
             }
 
             error.message shouldContain
@@ -156,7 +157,7 @@ class GeneralInjectionSpec : StringSpec({
 
         assertSoftly {
             val error = shouldThrow<KontainerInconsistent> {
-                blueprint.useWith()
+                blueprint.create()
             }
 
             error.message shouldContain "Parameter 'weird' misses a dependency to 'kotlin.collections.Map'"
@@ -166,16 +167,16 @@ class GeneralInjectionSpec : StringSpec({
     "Container with singletons that injects other singletons" {
 
         val subject = kontainer {
-            singleton<SimpleService>()
+            singleton<CounterService>()
             singleton<AnotherSimpleService>()
             singleton<InjectingService>()
             singleton<AnotherInjectingService>()
             singleton<DeeperInjectingService>()
-        }.useWith()
+        }.create()
 
         assertSoftly {
-            subject.get<SimpleService>()::class shouldBe SimpleService::class
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.Singleton
+            subject.get<CounterService>()::class shouldBe CounterService::class
+            subject.getProvider<CounterService>().type shouldBe ServiceProvider.Type.Singleton
 
             subject.get<AnotherSimpleService>()::class shouldBe AnotherSimpleService::class
             subject.getProvider<AnotherSimpleService>().type shouldBe ServiceProvider.Type.Singleton
@@ -194,29 +195,78 @@ class GeneralInjectionSpec : StringSpec({
     "Reusing a blueprint with global singletons" {
 
         val blueprint = kontainer {
-            singleton<SimpleService>()
+            singleton<CounterService>()
             singleton<AnotherSimpleService>()
             singleton<InjectingService>()
         }
 
-        val first = blueprint.useWith()
-        first.get<SimpleService>().inc()
+        val first = blueprint.create()
+        first.get<CounterService>().inc()
 
-        val second = blueprint.useWith()
-        second.get<SimpleService>().inc()
-        second.get<SimpleService>().inc()
+        val second = blueprint.create()
+        second.get<CounterService>().inc()
+        second.get<CounterService>().inc()
 
         assertSoftly {
             @Suppress("RemoveExplicitTypeArguments")
-            first.get<SimpleService>() shouldBe second.get<SimpleService>()
-            first.get<SimpleService>().get() shouldBe 3
-            second.get<SimpleService>().get() shouldBe 3
+            first.get<CounterService>() shouldBe second.get<CounterService>()
+            first.get<CounterService>().get() shouldBe 3
+            second.get<CounterService>().get() shouldBe 3
 
             @Suppress("RemoveExplicitTypeArguments")
             first.get<AnotherSimpleService>() shouldBe second.get<AnotherSimpleService>()
 
             @Suppress("RemoveExplicitTypeArguments")
             first.get<InjectingService>() shouldBe second.get<InjectingService>()
+        }
+    }
+
+    "Cloning a kontainer with singletons and dynamic services" {
+
+        val blueprint = kontainer {
+            singleton(CounterServiceEx01::class)
+            dynamic(CounterServiceEx02::class)
+        }
+
+        // Get the original kontainer and initialize the dynamic counter with 10
+        // NOTICE that we use the useWith with callback here.
+        //        By Only this is is possible that the cloned Kontainer gets a new instance of [CounterServiceEx02]
+        val original = blueprint.create {
+            with { CounterServiceEx02().apply { set(10) } }
+        }
+
+        // Inc singleton counter
+        original.get(CounterServiceEx01::class).inc()
+        // Inc dynamic counter
+        original.get(CounterServiceEx02::class).inc()
+
+        // Get a clone of the kontainer
+        val clone = original.clone()
+        // Inc singleton counter
+        clone.get(CounterServiceEx01::class).inc()
+        // Inc dynamic counter
+        clone.get(CounterServiceEx02::class).inc()
+
+        assertSoftly {
+            original.get(CounterServiceEx01::class).let {
+                it shouldBeSameInstanceAs clone.get(CounterServiceEx01::class)
+                it.get() shouldBe 2
+            }
+
+            original.get(CounterServiceEx02::class).let {
+                it shouldNotBeSameInstanceAs clone.get(CounterServiceEx02::class)
+                it.get() shouldBe 11
+            }
+
+            clone.get(CounterServiceEx01::class).let {
+                it shouldBeSameInstanceAs original.get(CounterServiceEx01::class)
+                it.get() shouldBe 2
+            }
+
+            clone.get(CounterServiceEx02::class).let {
+                it shouldNotBeSameInstanceAs original.get(CounterServiceEx02::class)
+                it.get() shouldBe 11
+            }
         }
     }
 
@@ -228,8 +278,8 @@ class GeneralInjectionSpec : StringSpec({
             singleton(MyService::class)
         }
 
-        val subjectOne = blueprint.useWith()
-        val subjectTwo = blueprint.useWith()
+        val subjectOne = blueprint.create()
+        val subjectTwo = blueprint.create()
 
         assertSoftly {
 
@@ -253,8 +303,8 @@ class GeneralInjectionSpec : StringSpec({
             singleton(MyService::class)
         }
 
-        val subjectOne = blueprint.useWith()
-        val subjectTwo = blueprint.useWith()
+        val subjectOne = blueprint.create()
+        val subjectTwo = blueprint.create()
 
         assertSoftly {
 

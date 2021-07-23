@@ -4,7 +4,7 @@ import de.peekandpoke.ultra.kontainer.AnotherSimpleService
 import de.peekandpoke.ultra.kontainer.ConfigIntInjecting
 import de.peekandpoke.ultra.kontainer.InjectingService
 import de.peekandpoke.ultra.kontainer.KontainerModule
-import de.peekandpoke.ultra.kontainer.SimpleService
+import de.peekandpoke.ultra.kontainer.CounterService
 import de.peekandpoke.ultra.kontainer.kontainer
 import de.peekandpoke.ultra.kontainer.module
 import io.kotest.assertions.assertSoftly
@@ -16,7 +16,7 @@ class ModulesSpec : StringSpec({
     "Creating a module" {
 
         val subject = module {
-            singleton<SimpleService>()
+            singleton<CounterService>()
         }
 
         subject::class shouldBe KontainerModule::class
@@ -26,7 +26,7 @@ class ModulesSpec : StringSpec({
 
         val moduleOne = module {
             config("configInt", 100)
-            singleton<SimpleService>()
+            singleton<CounterService>()
         }
 
         val moduleTwo = module {
@@ -38,7 +38,7 @@ class ModulesSpec : StringSpec({
             module(moduleTwo)
             singleton<InjectingService>()
             singleton<ConfigIntInjecting>()
-        }.useWith()
+        }.create()
 
         assertSoftly {
             kontainer.get<InjectingService>()::class shouldBe InjectingService::class
@@ -57,7 +57,7 @@ class ModulesSpec : StringSpec({
 
         val subject = kontainer {
             module(mod, 100)
-        }.useWith()
+        }.create()
 
         assertSoftly {
             subject.get(MyService::class).value shouldBe 100
@@ -74,7 +74,7 @@ class ModulesSpec : StringSpec({
 
         val subject = kontainer {
             module(mod, 100, 200)
-        }.useWith()
+        }.create()
 
         assertSoftly {
             subject.get(MyService::class).value shouldBe 300
@@ -91,7 +91,7 @@ class ModulesSpec : StringSpec({
 
         val subject = kontainer {
             module(mod, 100, 200, 300)
-        }.useWith()
+        }.create()
 
         assertSoftly {
             subject.get(MyService::class).value shouldBe 600

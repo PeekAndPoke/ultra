@@ -2,6 +2,7 @@ package de.peekandpoke.ultra.kontainer.e2e
 
 import de.peekandpoke.ultra.common.Lookup
 import de.peekandpoke.ultra.kontainer.AnotherSimpleService
+import de.peekandpoke.ultra.kontainer.CounterService
 import de.peekandpoke.ultra.kontainer.DeeperInjectingService
 import de.peekandpoke.ultra.kontainer.InjectingService
 import de.peekandpoke.ultra.kontainer.InvalidClassProvided
@@ -9,7 +10,6 @@ import de.peekandpoke.ultra.kontainer.KontainerInconsistent
 import de.peekandpoke.ultra.kontainer.MyService
 import de.peekandpoke.ultra.kontainer.ServiceNotFound
 import de.peekandpoke.ultra.kontainer.ServiceProvider
-import de.peekandpoke.ultra.kontainer.SimpleService
 import de.peekandpoke.ultra.kontainer.SomeIndependentService
 import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.assertions.assertSoftly
@@ -47,33 +47,33 @@ class DynamicServicesSpec : StringSpec({
 
         assertSoftly {
             val error = shouldThrow<KontainerInconsistent> {
-                blueprint.useWith(
-                    SimpleService(),
-                    DynamicService(100)
-                )
+                blueprint.create {
+                    with { CounterService() }
+                    with { DynamicService(100) }
+                }
             }
 
             error.message shouldContain "Unexpected dynamics were provided: "
-            error.message shouldContain SimpleService::class.qualifiedName!!
+            error.message shouldContain CounterService::class.qualifiedName!!
         }
     }
 
     "Providing a dynamic service when creating he kontainer" {
 
         val blueprint = kontainer {
-            dynamic<SimpleService>()
+            dynamic<CounterService>()
         }
 
-        val subject = blueprint.useWith(
-            SimpleService()
-        )
+        val subject = blueprint.create {
+            with { CounterService() }
+        }
 
         assertSoftly {
 
-            subject.get<SimpleService>()::class shouldBe SimpleService::class
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.DynamicOverride
+            subject.get<CounterService>()::class shouldBe CounterService::class
+            subject.getProvider<CounterService>().type shouldBe ServiceProvider.Type.DynamicOverride
 
-            subject.get<SimpleService>().get() shouldBe 0
+            subject.get<CounterService>().get() shouldBe 0
         }
     }
 
@@ -86,7 +86,7 @@ class DynamicServicesSpec : StringSpec({
             dynamic(MyBase::class, MyImpl::class)
         }
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         assertSoftly {
 
@@ -101,21 +101,21 @@ class DynamicServicesSpec : StringSpec({
     "Providing a dynamic service and getting it multiple times from the SAME container" {
 
         val blueprint = kontainer {
-            dynamic<SimpleService>()
+            dynamic<CounterService>()
         }
 
-        val subject = blueprint.useWith(
-            SimpleService()
-        )
+        val subject = blueprint.create {
+            with { CounterService() }
+        }
 
-        val first = subject.get<SimpleService>()
-        val second = subject.get<SimpleService>()
+        val first = subject.get<CounterService>()
+        val second = subject.get<CounterService>()
 
         assertSoftly {
 
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.DynamicOverride
+            subject.getProvider<CounterService>().type shouldBe ServiceProvider.Type.DynamicOverride
 
-            first::class shouldBe SimpleService::class
+            first::class shouldBe CounterService::class
             first.get() shouldBe 0
 
             first shouldBeSameInstanceAs second
@@ -125,20 +125,20 @@ class DynamicServicesSpec : StringSpec({
     "Providing a dynamic service and getting it multiple times from DIFFERENT container" {
 
         val blueprint = kontainer {
-            dynamic<SimpleService>()
+            dynamic<CounterService>()
         }
 
-        val containerOne = blueprint.useWith(
-            SimpleService()
-        )
+        val containerOne = blueprint.create {
+            with { CounterService() }
+        }
 
-        val first = containerOne.get<SimpleService>()
+        val first = containerOne.get<CounterService>()
 
-        val containerTwo = blueprint.useWith(
-            SimpleService()
-        )
+        val containerTwo = blueprint.create {
+            with { CounterService() }
+        }
 
-        val second = containerTwo.get<SimpleService>()
+        val second = containerTwo.get<CounterService>()
 
         assertSoftly {
             first shouldNotBeSameInstanceAs second
@@ -153,7 +153,7 @@ class DynamicServicesSpec : StringSpec({
             dynamic0 { DynamicService(100) }
         }
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         assertSoftly {
 
@@ -172,7 +172,7 @@ class DynamicServicesSpec : StringSpec({
             dynamic0 { DynamicService(100) }
         }
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         val first = subject.get<DynamicService>()
         val second = subject.get<DynamicService>()
@@ -190,10 +190,10 @@ class DynamicServicesSpec : StringSpec({
             dynamic0 { DynamicService(100) }
         }
 
-        val subjectOne = blueprint.useWith()
+        val subjectOne = blueprint.create()
         val first = subjectOne.get<DynamicService>()
 
-        val subjectTwo = blueprint.useWith()
+        val subjectTwo = blueprint.create()
         val second = subjectTwo.get<DynamicService>()
 
         assertSoftly {
@@ -201,7 +201,7 @@ class DynamicServicesSpec : StringSpec({
         }
     }
 
-    "Providing a dynamic service with default and overriding it in useWith()" {
+    "Providing a dynamic service with default and overriding it in usewith {  }" {
 
         data class DynamicService(val value: Int)
 
@@ -209,7 +209,9 @@ class DynamicServicesSpec : StringSpec({
             dynamic0 { DynamicService(100) }
         }
 
-        val subject = blueprint.useWith(DynamicService(200))
+        val subject = blueprint.create {
+            with { DynamicService(200) }
+        }
 
         val first = subject.get<DynamicService>()
         val second = subject.get<DynamicService>()
@@ -234,7 +236,36 @@ class DynamicServicesSpec : StringSpec({
             dynamic0 { DynamicService(100) }
         }
 
-        val subject = blueprint.useWith(DerivedService(200))
+        val subject = blueprint.create {
+            with { DerivedService(200) }
+        }
+
+        val first = subject.get<DynamicService>()
+        val second = subject.get<DynamicService>()
+
+        assertSoftly {
+
+            subject.getProvider<DynamicService>().type shouldBe ServiceProvider.Type.DynamicOverride
+
+            first::class shouldBe DerivedService::class
+            first.value shouldBe 200
+
+            first shouldBeSameInstanceAs second
+        }
+    }
+
+    "Providing a dynamic service with default and overriding it with by its base type" {
+
+        open class DynamicService(val value: Int)
+        class DerivedService(value: Int) : DynamicService(value)
+
+        val blueprint = kontainer {
+            dynamic0 { DynamicService(100) }
+        }
+
+        val subject = blueprint.create {
+            with(DynamicService::class) { DerivedService(200) }
+        }
 
         val first = subject.get<DynamicService>()
         val second = subject.get<DynamicService>()
@@ -262,15 +293,15 @@ class DynamicServicesSpec : StringSpec({
             singleton<InjectingService>()
 
             // this one has to be Dynamic
-            dynamic<SimpleService>()
+            dynamic<CounterService>()
             // this one has to be Dynamic
             dynamic<AnotherSimpleService>()
         }
 
-        val subject = blueprint.useWith(
-            SimpleService(),
-            AnotherSimpleService()
-        )
+        val subject = blueprint.create {
+            with { CounterService() }
+            with { AnotherSimpleService() }
+        }
 
         assertSoftly {
 
@@ -280,7 +311,7 @@ class DynamicServicesSpec : StringSpec({
 
             subject.getProvider<InjectingService>().type shouldBe ServiceProvider.Type.SemiDynamic
 
-            subject.getProvider<SimpleService>().type shouldBe ServiceProvider.Type.DynamicOverride
+            subject.getProvider<CounterService>().type shouldBe ServiceProvider.Type.DynamicOverride
 
             subject.getProvider<AnotherSimpleService>().type shouldBe ServiceProvider.Type.DynamicOverride
         }
@@ -300,7 +331,9 @@ class DynamicServicesSpec : StringSpec({
             singleton<Injecting>()
         }
 
-        val subject = blueprint.useWith(Impl())
+        val subject = blueprint.create {
+            with { Impl() }
+        }
 
         assertSoftly {
 
@@ -324,7 +357,9 @@ class DynamicServicesSpec : StringSpec({
             singleton<Injecting>()
         }
 
-        val subject = blueprint.useWith(Impl())
+        val subject = blueprint.create {
+            with { Impl() }
+        }
 
         assertSoftly {
 
@@ -351,7 +386,9 @@ class DynamicServicesSpec : StringSpec({
             singleton { base: Base -> Injecting(base.value) }
         }
 
-        val subject = blueprint.useWith(Impl())
+        val subject = blueprint.create {
+            with { Impl() }
+        }
 
         assertSoftly {
 
@@ -376,7 +413,7 @@ class DynamicServicesSpec : StringSpec({
             singleton<Injecting>()
         }
 
-        val subject = blueprint.useWith(Impl())
+        val subject = blueprint.create { with { Impl() } }
 
         assertSoftly {
 
@@ -394,12 +431,11 @@ class DynamicServicesSpec : StringSpec({
         data class Injecting(val service: Lazy<Base>)
 
         val blueprint = kontainer {
-
             singleton<Impl>()
             singleton<Injecting>()
         }
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         assertSoftly {
 
@@ -425,7 +461,7 @@ class DynamicServicesSpec : StringSpec({
             dynamic<ImplTwo>()
         }
 
-        val subject = blueprint.useWith(ImplTwo())
+        val subject = blueprint.create { with { ImplTwo() } }
 
         assertSoftly {
 
@@ -453,7 +489,7 @@ class DynamicServicesSpec : StringSpec({
             singleton<ImplTwo>()
         }
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         assertSoftly {
 
@@ -481,7 +517,7 @@ class DynamicServicesSpec : StringSpec({
             dynamic<ImplTwo>()
         }
 
-        val subject = blueprint.useWith(ImplTwo())
+        val subject = blueprint.create { with { ImplTwo() } }
 
         assertSoftly {
 
@@ -509,7 +545,7 @@ class DynamicServicesSpec : StringSpec({
             singleton<ImplTwo>()
         }
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         assertSoftly {
 
@@ -537,10 +573,10 @@ class DynamicServicesSpec : StringSpec({
             dynamic<ImplTwo>()
         }
 
-        val subjectOne = blueprint.useWith(ImplTwo())
+        val subjectOne = blueprint.create { with { ImplTwo() } }
         val first = subjectOne.get<Injecting>()
 
-        val subjectTwo = blueprint.useWith(ImplTwo())
+        val subjectTwo = blueprint.create { with { ImplTwo() } }
         val second = subjectTwo.get<Injecting>()
 
         assertSoftly {
@@ -575,7 +611,7 @@ class DynamicServicesSpec : StringSpec({
             singleton<ImplTwo>()
         }
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         assertSoftly {
 

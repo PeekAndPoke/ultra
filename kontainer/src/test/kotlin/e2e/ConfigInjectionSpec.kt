@@ -21,7 +21,7 @@ class ConfigInjectionSpec : StringSpec({
         assertSoftly {
 
             val error = shouldThrow<KontainerInconsistent> {
-                blueprint.useWith()
+                blueprint.create()
             }
 
             error.message shouldContain ConfigIntInjecting::class.qualifiedName!!
@@ -40,7 +40,7 @@ class ConfigInjectionSpec : StringSpec({
         assertSoftly {
 
             val error = shouldThrow<KontainerInconsistent> {
-                blueprint.useWith()
+                blueprint.create()
             }
 
             error.message shouldContain ConfigIntInjecting::class.qualifiedName!!
@@ -62,7 +62,7 @@ class ConfigInjectionSpec : StringSpec({
             singleton<ConfigAllInjecting>()
         }
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         assertSoftly {
 

@@ -3,7 +3,7 @@ package de.peekandpoke.ultra.kontainer
 import kotlin.reflect.KClass
 
 /**
- * Helper class to validate the correctness instances passed [KontainerBlueprint.useWith].
+ * Helper class to validate the correctness instances passed [KontainerBlueprint.create].
  *
  * For each set of classes passed to [getUnexpected] the result is cached for future reuse.
  */

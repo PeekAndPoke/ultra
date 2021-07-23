@@ -6,7 +6,7 @@ import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.kontainer.KontainerInconsistent
 import de.peekandpoke.ultra.kontainer.ServiceNotFound
 import de.peekandpoke.ultra.kontainer.ServiceProvider
-import de.peekandpoke.ultra.kontainer.SimpleService
+import de.peekandpoke.ultra.kontainer.CounterService
 import de.peekandpoke.ultra.kontainer.kontainer
 import de.peekandpoke.ultra.kontainer.module
 import io.kotest.assertions.assertSoftly
@@ -69,16 +69,16 @@ class PrototypeFactoriesSpec : StringSpec({
     "Prototype factory that has missing dependencies" {
 
         val blueprint = kontainer {
-            singleton<SimpleService>()
+            singleton<CounterService>()
 
-            prototype { simple: SimpleService, another: AnotherSimpleService ->
+            prototype { simple: CounterService, another: AnotherSimpleService ->
                 InjectingService(simple, another)
             }
         }
 
         assertSoftly {
             val error = shouldThrow<KontainerInconsistent> {
-                blueprint.useWith()
+                blueprint.create()
             }
 
             error.message shouldContain
@@ -92,13 +92,13 @@ class PrototypeFactoriesSpec : StringSpec({
     "Prototype factory with two dependencies" {
 
         val subject = kontainer {
-            singleton<SimpleService>()
+            singleton<CounterService>()
             singleton<AnotherSimpleService>()
 
-            prototype(InjectingService::class) { simple: SimpleService, another: AnotherSimpleService ->
+            prototype(InjectingService::class) { simple: CounterService, another: AnotherSimpleService ->
                 InjectingService(simple, another)
             }
-        }.useWith()
+        }.create()
 
         assertSoftly {
             subject.get<InjectingService>() shouldNotBeSameInstanceAs subject.get<InjectingService>()
@@ -111,7 +111,7 @@ class PrototypeFactoriesSpec : StringSpec({
 
         val subject = kontainer {
             prototype0 { Config(0) }
-        }.useWith()
+        }.create()
 
         validateWithoutBase(subject, 0)
     }
@@ -120,7 +120,7 @@ class PrototypeFactoriesSpec : StringSpec({
 
         val subject = kontainer {
             prototype0(Base::class) { Config(0) }
-        }.useWith()
+        }.create()
 
         validateWithBase(subject, 0)
     }
@@ -130,7 +130,7 @@ class PrototypeFactoriesSpec : StringSpec({
         val subject = kontainer {
             config("c1", 1)
             prototype { c1: Int -> Config(c1) }
-        }.useWith()
+        }.create()
 
         validateWithoutBase(subject, 1)
     }
@@ -140,7 +140,7 @@ class PrototypeFactoriesSpec : StringSpec({
         val subject = kontainer {
             config("c1", 1)
             prototype(Base::class) { c1: Int -> Config(c1) }
-        }.useWith()
+        }.create()
 
         validateWithBase(subject, 1)
     }
@@ -151,7 +151,7 @@ class PrototypeFactoriesSpec : StringSpec({
             config("c1", 1)
             config("c2", 10)
             prototype { c1: Int, c2: Int -> Config(c1 + c2) }
-        }.useWith()
+        }.create()
 
         validateWithoutBase(subject, 11)
     }
@@ -162,7 +162,7 @@ class PrototypeFactoriesSpec : StringSpec({
             config("c1", 1)
             config("c2", 10)
             prototype(Base::class) { c1: Int, c2: Int -> Config(c1 + c2) }
-        }.useWith()
+        }.create()
 
         validateWithBase(subject, 11)
     }
@@ -174,7 +174,7 @@ class PrototypeFactoriesSpec : StringSpec({
             config("c2", 10)
             config("c3", 100)
             prototype { c1: Int, c2: Int, c3: Int -> Config(c1 + c2 + c3) }
-        }.useWith()
+        }.create()
 
         validateWithoutBase(subject, 111)
     }
@@ -186,7 +186,7 @@ class PrototypeFactoriesSpec : StringSpec({
             config("c2", 10)
             config("c3", 100)
             prototype(Base::class) { c1: Int, c2: Int, c3: Int -> Config(c1 + c2 + c3) }
-        }.useWith()
+        }.create()
 
         validateWithBase(subject, 111)
     }
@@ -199,7 +199,7 @@ class PrototypeFactoriesSpec : StringSpec({
             config("c3", 100)
             config("c4", 1000)
             prototype { c1: Int, c2: Int, c3: Int, c4: Int -> Config(c1 + c2 + c3 + c4) }
-        }.useWith()
+        }.create()
 
         validateWithoutBase(subject, 1111)
     }
@@ -212,7 +212,7 @@ class PrototypeFactoriesSpec : StringSpec({
             config("c3", 100)
             config("c4", 1000)
             prototype(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int -> Config(c1 + c2 + c3 + c4) }
-        }.useWith()
+        }.create()
 
         validateWithBase(subject, 1111)
     }
@@ -228,7 +228,7 @@ class PrototypeFactoriesSpec : StringSpec({
             prototype { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int ->
                 Config(c1 + c2 + c3 + c4 + c5)
             }
-        }.useWith()
+        }.create()
 
         validateWithoutBase(subject, 11111)
     }
@@ -244,7 +244,7 @@ class PrototypeFactoriesSpec : StringSpec({
             prototype(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int ->
                 Config(c1 + c2 + c3 + c4 + c5)
             }
-        }.useWith()
+        }.create()
 
         validateWithBase(subject, 11111)
     }
@@ -261,7 +261,7 @@ class PrototypeFactoriesSpec : StringSpec({
             prototype { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int ->
                 Config(c1 + c2 + c3 + c4 + c5 + c6)
             }
-        }.useWith()
+        }.create()
 
         validateWithoutBase(subject, 111111)
     }
@@ -278,7 +278,7 @@ class PrototypeFactoriesSpec : StringSpec({
             prototype(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int ->
                 Config(c1 + c2 + c3 + c4 + c5 + c6)
             }
-        }.useWith()
+        }.create()
 
         validateWithBase(subject, 111111)
     }
@@ -296,7 +296,7 @@ class PrototypeFactoriesSpec : StringSpec({
             prototype { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
                 Config(c1 + c2 + c3 + c4 + c5 + c6 + c7)
             }
-        }.useWith()
+        }.create()
 
         validateWithoutBase(subject, 1111111)
     }
@@ -314,7 +314,7 @@ class PrototypeFactoriesSpec : StringSpec({
             prototype(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
                 Config(c1 + c2 + c3 + c4 + c5 + c6 + c7)
             }
-        }.useWith()
+        }.create()
 
         validateWithBase(subject, 1111111)
     }
@@ -330,7 +330,7 @@ class PrototypeFactoriesSpec : StringSpec({
             prototype(Base::class, provider)
         }
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         validateWithBase(subject, 1)
     }
@@ -347,7 +347,7 @@ class PrototypeFactoriesSpec : StringSpec({
             prototype(Base::class, provider)
         }
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         validateWithBase(subject, 1111111)
     }
@@ -365,7 +365,7 @@ class PrototypeFactoriesSpec : StringSpec({
             prototype(Base::class, provider)
         }
 
-        val subject = blueprint.useWith()
+        val subject = blueprint.create()
 
         validateWithBase(subject, 1111111111)
     }
