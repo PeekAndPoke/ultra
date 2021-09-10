@@ -1,6 +1,6 @@
 # ULTRA components for Kotlin Servers and Android
 
-[![jCenter](https://img.shields.io/badge/Kotlin-1.5.10-success.svg)](https://kotlinlang.org/docs/releases.html)
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.5.30-success.svg)](https://kotlinlang.org/docs/releases.html)
 [![CodeFactor](https://www.codefactor.io/repository/github/peekandpoke/ultra/badge)](https://www.codefactor.io/repository/github/peekandpoke/ultra)
 [![Maven Central](https://shields.io/maven-central/v/io.peekandpoke.ultra/ultra)](https://search.maven.org/search?q=io.peekandpoke.ultra)
 [![Snapshot](https://shields.io/nexus/s/io.peekandpoke.ultra/ultra?server=https%3A%2F%2Fs01.oss.sonatype.org)](https://s01.oss.sonatype.org/content/repositories/snapshots/io/peekandpoke/ultra/)
@@ -12,7 +12,7 @@ Check out the sub-projects. There you will find details, descriptive test cases 
 ## ultra::common
 
 [ultra::common](common/README.MD) - Helper functions and utilities for:  
-[ultra::commonnp](commonmp/README.MD) - Multiplatform helper functions and utilities for:
+[ultra::commonmp](commonmp/README.MD) - Multiplatform helper functions and utilities for:
 
 - Collections, Lists, Files, Functions
 - Hashing (like MD5, SHA256, ...)

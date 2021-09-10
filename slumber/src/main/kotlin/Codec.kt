@@ -18,11 +18,11 @@ open class Codec(
         )
     }
 
-    open val awakerContext by lazy(LazyThreadSafetyMode.NONE) {
+    open val awakerContext by lazy {
         Awaker.Context(this, attributes, "root")
     }
 
-    open val slumbererContext by lazy(LazyThreadSafetyMode.NONE) {
+    open val slumbererContext by lazy {
         Slumberer.Context(this, attributes, "root")
     }
 

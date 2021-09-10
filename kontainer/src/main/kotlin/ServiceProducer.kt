@@ -20,6 +20,7 @@ class ServiceProducer internal constructor(
 ) {
     val paramProviders = signature.map { ParameterProvider.of(it) }
 
+    @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
     @OptIn(ExperimentalReflectionOnLambdas::class)
     companion object {
         /**
