@@ -17,6 +17,7 @@ fun main() {
 
     val client = TestApiClient(config)
 
+    @Suppress("EXPERIMENTAL_API_USAGE")
     GlobalScope.launch {
         client.latest().collect {
             println("RESPONSE")

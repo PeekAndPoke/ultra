@@ -26,7 +26,7 @@ import javax.lang.model.util.Types
 import javax.tools.Diagnostic
 import kotlin.reflect.KClass
 
-@Suppress("unused")
+@Suppress("unused", "EXPERIMENTAL_API_USAGE")
 interface ProcessorUtils {
 
     interface Context {

@@ -6,7 +6,7 @@ object Deps {
     }
 
     ////////////////////////////////////////////////////////////////////
-    const val kotlinVersion = "1.5.10"
+    const val kotlinVersion = "1.5.30"
     ////////////////////////////////////////////////////////////////////
 
     // Publishing //////////////////////////////////////////////////////
@@ -14,14 +14,15 @@ object Deps {
     const val mavenPublishVersion = "0.14.2"
     ////////////////////////////////////////////////////////////////////
 
-    private const val auth0_java_jwt_version = "3.17.0"
+    private const val auth0_java_jwt_version = "3.18.1"
     const val auth0_java_jwt = "com.auth0:java-jwt:$auth0_java_jwt_version"
 
     // TODO: check if we can update to 3.x
     private const val diffutils_version = "2.2"
     const val diffutils = "com.github.wumpz:diffutils:$diffutils_version"
 
-    const val dokkaVersion = "1.4.32"
+    // org.jetbrains.dokka
+    const val dokkaVersion = "1.5.0"
 
     private const val google_auto_service_version = "1.0"
     const val google_auto_service = "com.google.auto.service:auto-service:$google_auto_service_version"
@@ -30,28 +31,28 @@ object Deps {
     const val klassIndexLib = "com.github.matfax.klassindex:library:$klassIndexVersion"
     const val klassIndexProcessor = "com.github.matfax.klassindex:processor:$klassIndexVersion"
 
-    private const val kotlin_compiletesting_version = "1.4.2"
+    private const val kotlin_compiletesting_version = "1.4.4"
     const val kotlin_compiletesting = "com.github.tschuchortdev:kotlin-compile-testing:$kotlin_compiletesting_version"
 
     // TODO: check 1.6.+ ... there are some breaking changes though
     private const val kotlinpoet_version = "1.9.0"
     const val kotlinpoet = "com.squareup:kotlinpoet:$kotlinpoet_version"
 
-    private const val kotlinx_coroutines_version = "1.5.0"
+    private const val kotlinx_coroutines_version = "1.5.1"
     const val kotlinx_coroutines_core =
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version"
 
-    private const val kotlinx_serialization_version = "1.2.1"
+    private const val kotlinx_serialization_version = "1.3.0-RC"
     const val kotlinx_serialization_core =
         "org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version"
     const val kotlinx_serialization_json =
         "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_version"
 
-    private const val korlibs_klock_version = "2.1.2"
+    private const val korlibs_klock_version = "2.2.2"
     const val korlibs_klock_js = "com.soywiz.korlibs.klock:klock-js:$korlibs_klock_version"
     const val korlibs_klock_jvm = "com.soywiz.korlibs.klock:klock-jvm:$korlibs_klock_version"
 
-    private const val slf4j_version = "1.7.30"
+    private const val slf4j_version = "1.7.32"
     const val slf4j_api = "org.slf4j:slf4j-api:$slf4j_version"
 
     //// NPM dependencies /////////////////////////////////////////////////////////////////////////
@@ -64,10 +65,10 @@ object Deps {
             this.block()
         }
 
-        private const val logback_version = "1.2.3"
+        private const val logback_version = "1.2.5"
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
-        private const val kotest_version = "4.6.0"
+        private const val kotest_version = "4.6.2"
         const val kotest_assertions_core_jvm = "io.kotest:kotest-assertions-core-jvm:$kotest_version"
         const val kotest_runner_junit_jvm = "io.kotest:kotest-runner-junit5-jvm:$kotest_version"
 

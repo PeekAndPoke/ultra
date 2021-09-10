@@ -41,7 +41,6 @@
       <sourceFolder url="file://$MODULE_DIR$/../../../z-playground-js/src/main/resources" type="kotlin-resource" />
     </content>
     <orderEntry type="jdk" jdkName="Kotlin SDK" jdkType="KotlinSDK" />
-    <orderEntry type="module" module-name="ultra.commonmp.commonMain" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="ultra.commonmp.jsMain" />
     <orderEntry type="module" module-name="ultra.commonmp.commonMain" />

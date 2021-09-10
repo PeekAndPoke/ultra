@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id=":commonmp:jsTest" external.linked.project.path="$MODULE_DIR$/../../../commonmp" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="io.peekandpoke.ultra" external.system.module.type="sourceSet" external.system.module.version="0.23.4-SNAPSHOT" type="JAVA_MODULE" version="4">
+<module external.linked.project.id=":commonmp:jsTest" external.linked.project.path="$MODULE_DIR$/../../../commonmp" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="io.peekandpoke.ultra" external.system.module.type="sourceSet" external.system.module.version="0.24.0-SNAPSHOT" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="3" platform="JavaScript " allPlatforms="JS []" useProjectSettings="false" isTestModule="true" externalProjectId=":commonmp" pureKotlinSourceFolders="$MODULE_DIR$/../../../commonmp/src/jsMain/kotlin;/home/gerk/dev/peekandpoke/ultra/commonmp/build/externals/ultra-commonmp/src;/home/gerk/dev/peekandpoke/ultra/commonmp/src/jsTest/kotlin;/home/gerk/dev/peekandpoke/ultra/commonmp/src/jvmMain/kotlin;/home/gerk/dev/peekandpoke/ultra/commonmp/src/jvmTest/kotlin;/home/gerk/dev/peekandpoke/ultra/commonmp/src/commonMain/kotlin">
+      <configuration version="3" platform="JavaScript " allPlatforms="JS []" useProjectSettings="false" isTestModule="true" externalProjectId=":commonmp" pureKotlinSourceFolders="$MODULE_DIR$/../../../commonmp/src/jsMain/kotlin;/home/gerk/dev/peekandpoke/ultra/commonmp/build/externals/ultra-commonmp/src;/home/gerk/dev/peekandpoke/ultra/commonmp/src/jsTest/kotlin;/home/gerk/dev/peekandpoke/ultra/commonmp/src/jvmMain/kotlin;/home/gerk/dev/peekandpoke/ultra/commonmp/src/jvmTest/kotlin">
         <dependsOnModuleNames>:commonmp:commonTest</dependsOnModuleNames>
         <sourceSets>
           <sourceSet>ultra.commonmp.commonTest</sourceSet>

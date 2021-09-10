@@ -27,6 +27,7 @@ class GenericUsages(val model: Model, types: List<TypeElement>) : ProcessorUtils
 
     private fun DeclaredType.isReified() = typeArguments.all { it is DeclaredType }
 
+    @Suppress("EXPERIMENTAL_API_USAGE")
     private fun put(declaredType: DeclaredType) = put(
         MType(
             model = model,

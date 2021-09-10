@@ -9,6 +9,7 @@ import javax.lang.model.element.ElementKind
 import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
 
+@Suppress("unused", "EXPERIMENTAL_API_USAGE")
 class MType(
     model: Model,
     val type: TypeElement,
