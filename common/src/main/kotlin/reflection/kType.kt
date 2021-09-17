@@ -25,6 +25,7 @@ inline fun <reified T : Any?> kType(): TypeRef<T> {
 //
 //    return TypeRef(cls.createType(nullable = null is T))
 
+    @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
     @OptIn(ExperimentalStdlibApi::class)
     val type: KType = typeOf<T>()
 

@@ -31,11 +31,7 @@
       <module name="ultra.common-mp.jvmMain~1" target="1.8" />
       <module name="ultra.common-mp.jvmTest" target="1.8" />
       <module name="ultra.common-mp.jvmTest~1" target="1.8" />
-      <module name="ultra.commonmp.commonMain" target="1.8" />
-      <module name="ultra.commonmp.commonTest" target="1.8" />
-      <module name="ultra.commonmp.jvmMain" target="1.8" />
       <module name="ultra.commonmp.jvmMain~1" target="1.8" />
-      <module name="ultra.commonmp.jvmTest" target="1.8" />
       <module name="ultra.commonmp.jvmTest~1" target="1.8" />
     </bytecodeTargetLevel>
   </component>

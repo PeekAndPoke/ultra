@@ -9,6 +9,7 @@ import kotlin.reflect.jvm.reflect
  *
  * Notice: the first parameter has index 0
  */
+@Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
 @OptIn(ExperimentalReflectionOnLambdas::class)
 fun <R, T : Function<R>> T.nthParamName(n: Int): String {
 

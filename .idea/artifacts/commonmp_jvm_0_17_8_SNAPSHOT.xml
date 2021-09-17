@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="commonmp-jvm-0.17.8-SNAPSHOT">
-    <output-path>$PROJECT_DIR$/commonmp/build/libs</output-path>
-    <root id="archive" name="commonmp-jvm-0.17.8-SNAPSHOT.jar">
-      <element id="module-output" name="ultra.commonmp.jvmMain" />
-    </root>
-  </artifact>
-</component>

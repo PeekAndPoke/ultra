@@ -19,7 +19,7 @@ repositories {
 }
 
 kotlin {
-    js {
+    js(LEGACY) {
         browser {
             webpackTask {
                 output.libraryTarget = "commonjs2"

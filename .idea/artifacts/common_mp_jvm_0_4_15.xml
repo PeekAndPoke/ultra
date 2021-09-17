@@ -1,6 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="common-mp-jvm-0.4.15">
-    <output-path>$PROJECT_DIR$/common-mp/build/libs</output-path>
-    <root id="archive" name="common-mp-jvm-0.4.15.jar" />
-  </artifact>
-</component>
