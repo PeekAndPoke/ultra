@@ -45,46 +45,51 @@ class MutableTypedAttributes internal constructor(entries: Map<TypedKey<*>, Any?
     /**
      * The entries
      */
-    private val entries: MutableMap<TypedKey<*>, Any?> = entries.toMutableMap()
+    private val _entries: MutableMap<TypedKey<*>, Any?> = entries.toMutableMap()
+
+    /**
+     * Gets the stored entries
+     */
+    val entries get(): Map<TypedKey<*>, Any?> = _entries.toMap()
 
     /**
      * Gets the number of entries
      */
-    val size: Int get() = entries.size
+    val size: Int get() = _entries.size
 
     /**
      * Converts this to an immutable [TypedAttributes] collection.
      */
-    fun asImmutable(): TypedAttributes = TypedAttributes(entries.toMap())
+    fun asImmutable(): TypedAttributes = TypedAttributes(_entries.toMap())
 
     /**
      * Gets an entry by [key] or null if nothing is there
      */
     operator fun <T> get(key: TypedKey<T>): T? {
         @Suppress("UNCHECKED_CAST")
-        return entries[key] as T?
+        return _entries[key] as T?
     }
 
     /**
      * Sets an entry by [key] with the given [value]
      */
     operator fun <T> set(key: TypedKey<T>, value: T) {
-        RunSync(entries) {
-            entries[key] = value
+        RunSync(_entries) {
+            _entries[key] = value
         }
     }
 
     /**
      * Returns 'true' when the given key is set even if the value is falsy, like null, false etc.
      */
-    fun <T> has(key: TypedKey<T>) = entries.containsKey(key)
+    fun <T> has(key: TypedKey<T>) = _entries.containsKey(key)
 
     /**
      * Remove an entry by [key]
      */
     fun <T> remove(key: TypedKey<T>) {
-        RunSync(entries) {
-            entries.remove(key)
+        RunSync(_entries) {
+            _entries.remove(key)
         }
     }
 
@@ -96,19 +101,19 @@ class MutableTypedAttributes internal constructor(entries: Map<TypedKey<*>, Any?
      * Returns 'true' if the value was actually updated.
      */
     fun <T> setWhen(key: TypedKey<T>, value: T, condition: (T?) -> Boolean): Boolean {
-        return RunSync(entries) {
+        return RunSync(_entries) {
             val current = get(key)
 
             condition(current).also { result ->
                 if (result) {
-                    entries[key] = value
+                    _entries[key] = value
                 }
             }
         }
     }
 
     /**
-     * Creates a clone of this instance by shallow cloning the contained [entries]
+     * Creates a clone of this instance by shallow cloning the contained [_entries]
      */
-    fun clone() = MutableTypedAttributes(entries = entries.toMap())
+    fun clone() = MutableTypedAttributes(entries = _entries.toMap())
 }

@@ -6,11 +6,23 @@ import kotlin.reflect.KClass
  * The Kontainer blueprint is built by the [KontainerBuilder]
  */
 class KontainerBlueprint internal constructor(
-    internal val config: Map<String, Any>,
+    val config: Config,
+    internal val configValues: Map<String, Any>,
     private val definitions: Map<KClass<*>, ServiceDefinition>,
     private val definitionLocations: Map<KClass<*>, StackTraceElement>
 ) {
-    val tracker = KontainerTracker()
+    data class Config(
+        val trackKontainers: Boolean = false
+    ) {
+        companion object {
+            val default = Config()
+        }
+    }
+
+    val tracker = when (config.trackKontainers) {
+        true -> KontainerTracker.live()
+        else -> KontainerTracker.dummy()
+    }
 
     /**
      * Counts how often times the blueprint was used
@@ -90,9 +102,10 @@ class KontainerBlueprint internal constructor(
         val result = KontainerBuilder(builder).build()
 
         return KontainerBlueprint(
-            config.plus(result.config),
-            definitions.plus(result.definitions),
-            definitionLocations.plus(result.definitionLocations)
+            config = config,
+            configValues = configValues.plus(result.configValues),
+            definitions = definitions.plus(result.definitions),
+            definitionLocations = definitionLocations.plus(result.definitionLocations)
         )
     }
 
@@ -159,7 +172,7 @@ class KontainerBlueprint internal constructor(
                     "Problems:\n\n" +
                     errors.joinToString("\n") + "\n\n" +
                     "Config values:\n\n" +
-                    config.map { (k, v) ->
+                    configValues.map { (k, v) ->
                         "${k.padEnd(10)} => '$v' (${v::class.qualifiedName})"
                     }.joinToString("\n") + "\n"
 

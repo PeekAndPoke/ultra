@@ -6,25 +6,17 @@ package de.peekandpoke.ultra.common
 data class TypedAttributes internal constructor(val entries: Map<TypedKey<*>, Any?>) {
 
     companion object {
-        /**
-         * Empty instance
-         */
+        /** Empty instance */
         val empty = TypedAttributes(emptyMap())
 
-        /**
-         * Builder method
-         */
+        /** Builder method */
         operator fun invoke(builder: Builder.() -> Unit) = of(builder)
 
-        /**
-         * Builder method
-         */
+        /** Builder method */
         fun of(builder: Builder.() -> Unit) = Builder().apply(builder).build()
     }
 
-    /**
-     * Builder for [TypedAttributes]
-     */
+    /** Builder for [TypedAttributes] */
     class Builder {
 
         private val entries = mutableMapOf<TypedKey<*>, Any>()
@@ -48,7 +40,7 @@ data class TypedAttributes internal constructor(val entries: Map<TypedKey<*>, An
     val size: Int = entries.size
 
     /**
-     * Converts this to an immutable [TypedAttributes] collection.
+     * Converts this to a mutable [MutableTypedAttributes] collection.
      */
     fun asMutable(): MutableTypedAttributes = MutableTypedAttributes(entries)
 

@@ -100,20 +100,20 @@ class Kontainer internal constructor(
      * Check if there is a config value with the given [id] that is of the given [type]
      */
     fun hasConfig(id: String, type: KClass<*>): Boolean {
-        return blueprint.config[id].let { it != null && it::class == type }
+        return blueprint.configValues[id].let { it != null && it::class == type }
     }
 
     /**
      * Get a config value by its [id]
      */
     @Suppress("UNCHECKED_CAST")
-    fun <T> getConfig(id: String): T = blueprint.config[id] as T
+    fun <T> getConfig(id: String): T = blueprint.configValues[id] as T
 
     // debug ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     fun debugInfo(): KontainerDebugInfo {
 
-        val config = blueprint.config
+        val config = blueprint.configValues
             .map { (k, v) -> k to "$v (${v::class.qualifiedName})" }
             .toMap()
 
@@ -159,9 +159,9 @@ class Kontainer internal constructor(
             "${it.first.padEnd(lens.first)} | ${it.second.padEnd(lens.second)} | ${it.third.padEnd(lens.third)}"
         }
 
-        val maxConfigLength = blueprint.config.map { (k, _) -> k.length }.maxOrNull() ?: 0
+        val maxConfigLength = blueprint.configValues.map { (k, _) -> k.length }.maxOrNull() ?: 0
 
-        val configs = blueprint.config
+        val configs = blueprint.configValues
             .map { (k, v) -> "${k.padEnd(maxConfigLength)} | $v (${v::class.qualifiedName})" }
             .joinToString("\n")
 

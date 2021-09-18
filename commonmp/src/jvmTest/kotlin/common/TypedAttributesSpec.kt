@@ -30,4 +30,22 @@ class TypedAttributesSpec : StringSpec({
             subject[key3] shouldBe null
         }
     }
+
+    "asMutable() must work properly" {
+        val value1 = LocalDateTime.now()
+        val value2 = ZonedDateTime.now()
+
+        val key1 = TypedKey<LocalDateTime>("local")
+        val key2 = TypedKey<ZonedDateTime>("zoned")
+
+        val subject = TypedAttributes {
+            add(key1, value1)
+            add(key2, value2)
+        }
+
+        val mutable = subject.asMutable()
+
+        subject.size shouldBe mutable.size
+        subject.entries shouldBe mutable.entries
+    }
 })

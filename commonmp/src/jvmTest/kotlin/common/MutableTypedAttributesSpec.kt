@@ -146,4 +146,22 @@ class MutableTypedAttributesSpec : StringSpec({
             cloned[key1] shouldBe 3
         }
     }
+
+    "asImmutable() must work properly" {
+        val value1 = LocalDateTime.now()
+        val value2 = ZonedDateTime.now()
+
+        val key1 = TypedKey<LocalDateTime>("local")
+        val key2 = TypedKey<ZonedDateTime>("zoned")
+
+        val subject = MutableTypedAttributes {
+            add(key1, value1)
+            add(key2, value2)
+        }
+
+        val immutable = subject.asImmutable()
+
+        subject.size shouldBe immutable.size
+        subject.entries shouldBe immutable.entries
+    }
 })

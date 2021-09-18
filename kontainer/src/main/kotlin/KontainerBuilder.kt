@@ -4,7 +4,7 @@ import kotlin.reflect.KClass
 
 class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit) {
 
-    private val config = mutableMapOf<String, Any>()
+    private val configValues = mutableMapOf<String, Any>()
 
     private val definitions = mutableMapOf<KClass<*>, ServiceDefinition>()
 
@@ -51,8 +51,15 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     /**
      * Builds a [KontainerBlueprint] from the current configuration
      */
-    internal fun build(): KontainerBlueprint =
-        KontainerBlueprint(config.toMap(), definitions.toMap(), definitionLocations.toMap())
+    internal fun build(
+        config: KontainerBlueprint.Config = KontainerBlueprint.Config.default
+    ): KontainerBlueprint =
+        KontainerBlueprint(
+            config = config,
+            configValues = configValues.toMap(),
+            definitions = definitions.toMap(),
+            definitionLocations = definitionLocations.toMap()
+        )
 
     /**
      * Adds a [ServiceDefinition] while also upgrading the injection type
@@ -103,32 +110,32 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     /**
      * Sets an injectable config value
      */
-    fun config(id: String, value: Int) = apply { config[id] = value }
+    fun config(id: String, value: Int) = apply { configValues[id] = value }
 
     /**
      * Sets an injectable config value
      */
-    fun config(id: String, value: Long) = apply { config[id] = value }
+    fun config(id: String, value: Long) = apply { configValues[id] = value }
 
     /**
      * Sets an injectable config value
      */
-    fun config(id: String, value: Float) = apply { config[id] = value }
+    fun config(id: String, value: Float) = apply { configValues[id] = value }
 
     /**
      * Sets an injectable config value
      */
-    fun config(id: String, value: Double) = apply { config[id] = value }
+    fun config(id: String, value: Double) = apply { configValues[id] = value }
 
     /**
      * Sets an injectable config value
      */
-    fun config(id: String, value: String) = apply { config[id] = value }
+    fun config(id: String, value: String) = apply { configValues[id] = value }
 
     /**
      * Sets an injectable config value
      */
-    fun config(id: String, value: Boolean) = apply { config[id] = value }
+    fun config(id: String, value: Boolean) = apply { configValues[id] = value }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Modules
