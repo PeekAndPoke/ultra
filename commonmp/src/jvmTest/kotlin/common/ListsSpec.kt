@@ -172,4 +172,45 @@ class ListsSpec : StringSpec({
             source.swapAt(idx1, idx2) shouldBe expected
         }
     }
+
+    //  List.replaceFirstByOrAdd  //////////////////////////////////////////////////////////////////////////////////////
+
+    "List.replaceFirstByOrAdd adding an item that is not yet in the list - data class" {
+
+        data class Data(val id: String, val n: Int)
+
+        val source: List<Data> = listOf(
+            Data(id = "1", n = 1),
+            Data(id = "2", n = 2),
+            Data(id = "3", n = 3),
+        )
+
+        val result = source.replaceFirstByOrAdd(Data(id = "5", n = 100)) { it.n }
+
+        result shouldBe listOf(
+            Data(id = "1", n = 1),
+            Data(id = "2", n = 2),
+            Data(id = "3", n = 3),
+            Data(id = "5", n = 100),
+        )
+    }
+
+    "List.replaceFirstByOrAdd replacing an item in the list - data class" {
+
+        data class Data(val id: String, val n: Int)
+
+        val source: List<Data> = listOf(
+            Data(id = "1", n = 1),
+            Data(id = "2", n = 2),
+            Data(id = "3", n = 3),
+        )
+
+        val result = source.replaceFirstByOrAdd(Data(id = "1", n = 100)) { it.id }
+
+        result shouldBe listOf(
+            Data(id = "1", n = 100),
+            Data(id = "2", n = 2),
+            Data(id = "3", n = 3),
+        )
+    }
 })

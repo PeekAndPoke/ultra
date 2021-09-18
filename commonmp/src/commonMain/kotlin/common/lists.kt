@@ -69,3 +69,18 @@ fun <E> List<E>.swapAt(idx1: Int, idx2: Int): List<E> {
 
     return mutable.toList()
 }
+
+/**
+ * Replaces the first item matched with [new] or adds it to the end of the list.
+ *
+ * All items are mapped by using [compareBy]. the comparison is done non-strict (==).
+ */
+fun <T, X> List<T>.replaceFirstByOrAdd(new: T, compareBy: (T) -> X): List<T> {
+
+    val search = compareBy(new)
+
+    return when (val idx = indexOfFirst { compareBy(it) == search }) {
+        -1 -> plus(new)
+        else -> replaceAt(idx, new)
+    }
+}
