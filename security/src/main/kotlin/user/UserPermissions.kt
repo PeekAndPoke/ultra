@@ -27,47 +27,56 @@ data class UserPermissions(
     /**
      * Return 'true' when the given [organisation] is present
      */
-    fun hasOrganisation(organisation: String) = this.organisations.contains(organisation)
+    fun hasOrganisation(organisation: String) =
+        isSuperUser || this.organisations.contains(organisation)
 
     /**
      * Return 'true' when any of the given [organisations] is present
      */
-    fun hasAnyOrganisation(organisations: Collection<String>) = this.organisations.containsAny(organisations)
+    fun hasAnyOrganisation(organisations: Collection<String>) =
+        isSuperUser || this.organisations.containsAny(organisations)
 
     /**
-     * Return 'true' when all of the given [organisations] are present
+     * Return 'true' when all the given [organisations] are present
      */
-    fun hasAllOrganisations(organisations: Collection<String>) = this.groups.containsAll(organisations)
+    fun hasAllOrganisations(organisations: Collection<String>) =
+        isSuperUser || this.groups.containsAll(organisations)
 
     /**
      * Return 'true' when the given [branch] is present
      */
-    fun hasBranch(branch: String) = this.branches.contains(branch)
+    fun hasBranch(branch: String) =
+        isSuperUser || this.branches.contains(branch)
 
     /**
      * Return 'true' when any of the given [branches] is present
      */
-    fun hasAnyBranch(branches: Collection<String>) = this.branches.containsAny(branches)
+    fun hasAnyBranch(branches: Collection<String>) =
+        isSuperUser || this.branches.containsAny(branches)
 
     /**
-     * Return 'true' when all of the given [branches] are present
+     * Return 'true' when all the given [branches] are present
      */
-    fun hasAllBranches(branches: Collection<String>) = this.branches.containsAll(branches)
+    fun hasAllBranches(branches: Collection<String>) =
+        isSuperUser || this.branches.containsAll(branches)
 
     /**
      * Return 'true' when the given [group] is present
      */
-    fun hasGroup(group: String) = this.groups.contains(group)
+    fun hasGroup(group: String) =
+        isSuperUser || this.groups.contains(group)
 
     /**
      * Return 'true' when any of the given [groups] is present
      */
-    fun hasAnyGroup(groups: Collection<String>) = this.groups.containsAny(groups)
+    fun hasAnyGroup(groups: Collection<String>) =
+        isSuperUser || this.groups.containsAny(groups)
 
     /**
-     * Return 'true' when all of the given [groups] are present
+     * Return 'true' when all the given [groups] are present
      */
-    fun hasAllGroups(groups: Collection<String>) = this.groups.containsAll(groups)
+    fun hasAllGroups(groups: Collection<String>) =
+        isSuperUser || this.groups.containsAll(groups)
 
     /**
      * Return 'true' when the given [role] is present
@@ -77,25 +86,30 @@ data class UserPermissions(
     /**
      * Return 'true' when any of the given [roles] is present
      */
-    fun hasAnyRole(roles: Collection<String>) = this.roles.containsAny(roles)
+    fun hasAnyRole(roles: Collection<String>) =
+        isSuperUser || this.roles.containsAny(roles)
 
     /**
-     * Return 'true' when all of the given [roles] are present
+     * Return 'true' when all the given [roles] are present
      */
-    fun hasAllRoles(roles: Collection<String>) = this.roles.containsAll(roles)
+    fun hasAllRoles(roles: Collection<String>) =
+        isSuperUser || this.roles.containsAll(roles)
 
     /**
      * Return 'true' when the given [permission] is present
      */
-    fun hasPermission(permission: String) = this.permissions.contains(permission)
+    fun hasPermission(permission: String) =
+        isSuperUser || this.permissions.contains(permission)
 
     /**
      * Return 'true' when any of the given [permissions] is present
      */
-    fun hasAnyPermission(permissions: Collection<String>) = this.permissions.containsAny(permissions)
+    fun hasAnyPermission(permissions: Collection<String>) =
+        isSuperUser || this.permissions.containsAny(permissions)
 
     /**
-     * Return 'true' when all of the given [permissions] are present
+     * Return 'true' when all the given [permissions] are present
      */
-    fun hasAllPermissions(permissions: Collection<String>) = this.permissions.containsAll(permissions)
+    fun hasAllPermissions(permissions: Collection<String>) =
+        isSuperUser || this.permissions.containsAll(permissions)
 }
