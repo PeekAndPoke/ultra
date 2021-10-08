@@ -1,5 +1,8 @@
 package de.peekandpoke.ultra.security.user
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class UserRecord(
     val userId: String = "anonymous",
     val clientIp: String = "unknown",
