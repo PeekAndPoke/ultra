@@ -12,3 +12,16 @@ inline fun <reified T : Enum<T>> safeEnumValueOf(value: String?, default: T): T 
         }
     }
 }
+
+inline fun <reified T : Enum<T>> safeEnumValueOrNull(value: String?): T? {
+
+    return when (value) {
+        null -> null
+
+        else -> try {
+            enumValueOf(value) as T
+        } catch (e: RuntimeException) {
+            null
+        }
+    }
+}
