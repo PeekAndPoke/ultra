@@ -68,7 +68,7 @@ kotlin {
 
         js().compilations["main"].defaultSourceSet {
             dependencies {
-                api(Deps.korlibs_klock_js)
+                implementation(Deps.korlibs_klock_js)
                 implementation(npm("whatwg-fetch", "3.6.2"))
             }
         }

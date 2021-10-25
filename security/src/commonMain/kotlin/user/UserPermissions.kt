@@ -39,10 +39,22 @@ data class UserPermissions(
         isSuperUser || this.organisations.containsAny(organisations)
 
     /**
+     * Return 'true' when any of the given [organisations] is present
+     */
+    fun hasAnyOrganisation(vararg organisations: String) =
+        hasAnyOrganisation(organisations.toList())
+
+    /**
      * Return 'true' when all the given [organisations] are present
      */
     fun hasAllOrganisations(organisations: Collection<String>) =
-        isSuperUser || this.groups.containsAll(organisations)
+        isSuperUser || this.organisations.containsAll(organisations)
+
+    /**
+     * Return 'true' when all the given [organisations] are present
+     */
+    fun hasAllOrganisations(vararg organisations: String) =
+        hasAllOrganisations(organisations.toList())
 
     /**
      * Return 'true' when the given [branch] is present
@@ -57,10 +69,22 @@ data class UserPermissions(
         isSuperUser || this.branches.containsAny(branches)
 
     /**
+     * Return 'true' when any of the given [branches] is present
+     */
+    fun hasAnyBranch(vararg branches: String) =
+        hasAnyBranch(branches.toList())
+
+    /**
      * Return 'true' when all the given [branches] are present
      */
     fun hasAllBranches(branches: Collection<String>) =
         isSuperUser || this.branches.containsAll(branches)
+
+    /**
+     * Return 'true' when all the given [branches] are present
+     */
+    fun hasAllBranches(vararg branches: String) =
+        hasAllBranches(branches.toList())
 
     /**
      * Return 'true' when the given [group] is present
@@ -75,10 +99,22 @@ data class UserPermissions(
         isSuperUser || this.groups.containsAny(groups)
 
     /**
+     * Return 'true' when any of the given [groups] is present
+     */
+    fun hasAnyGroup(vararg groups: String) =
+        hasAnyGroup(groups.toList())
+
+    /**
      * Return 'true' when all the given [groups] are present
      */
     fun hasAllGroups(groups: Collection<String>) =
         isSuperUser || this.groups.containsAll(groups)
+
+    /**
+     * Return 'true' when all the given [groups] are present
+     */
+    fun hasAllGroups(vararg groups: String) =
+        hasAllGroups(groups.toList())
 
     /**
      * Return 'true' when the given [role] is present
@@ -92,10 +128,22 @@ data class UserPermissions(
         isSuperUser || this.roles.containsAny(roles)
 
     /**
+     * Return 'true' when any of the given [roles] is present
+     */
+    fun hasAnyRole(vararg roles: String) =
+        hasAnyRole(roles.toList())
+
+    /**
      * Return 'true' when all the given [roles] are present
      */
     fun hasAllRoles(roles: Collection<String>) =
         isSuperUser || this.roles.containsAll(roles)
+
+    /**
+     * Return 'true' when all the given [roles] are present
+     */
+    fun hasAllRoles(vararg roles: String) =
+        hasAllRoles(roles.toList())
 
     /**
      * Return 'true' when the given [permission] is present
@@ -110,8 +158,20 @@ data class UserPermissions(
         isSuperUser || this.permissions.containsAny(permissions)
 
     /**
+     * Return 'true' when any of the given [permissions] is present
+     */
+    fun hasAnyPermission(vararg permissions: String) =
+        hasAnyPermission(permissions.toList())
+
+    /**
      * Return 'true' when all the given [permissions] are present
      */
     fun hasAllPermissions(permissions: Collection<String>) =
         isSuperUser || this.permissions.containsAll(permissions)
+
+    /**
+     * Return 'true' when all the given [permissions] are present
+     */
+    fun hasAllPermissions(vararg permissions: String) =
+        hasAllPermissions(permissions.toList())
 }
