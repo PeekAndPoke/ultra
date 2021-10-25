@@ -29,7 +29,7 @@ class ClassesSpec : StringSpec({
         row("de.peekandpoke.ultra", "com.thebase", File("../../../com/thebase"))
     ).forEachIndexed { idx, (src, target, expected) ->
 
-        "String.getRelativePackagePath #$idx: \"$src\".getRelativePath(\"$target\") should be $expected" {
+        "String.getRelativePackagePath #$idx: \"$src\".getRelativePackagePath(\"$target\") should be '$expected'" {
 
             val result = src.getRelativePackagePath(target)
 

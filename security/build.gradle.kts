@@ -73,7 +73,7 @@ kotlin {
         jvm().compilations["main"].defaultSourceSet {
             dependencies {
                 implementation(kotlin("reflect"))
-                api(project(":kontainer"))
+                implementation(project(":kontainer"))
                 api(Deps.auth0_java_jwt)
             }
         }

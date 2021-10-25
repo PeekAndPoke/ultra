@@ -54,6 +54,8 @@ kotlin {
             dependencies {
                 implementation(Deps.kotlinx_serialization_core)
                 implementation(Deps.kotlinx_coroutines_core)
+
+                api(project(":commonmp"))
             }
         }
 
@@ -78,7 +80,6 @@ kotlin {
                 implementation(Deps.kotlinx_coroutines_core)
                 implementation(Deps.slf4j_api)
 
-                implementation(project(":common"))
                 implementation(project(":kontainer"))
             }
         }

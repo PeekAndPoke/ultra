@@ -21,7 +21,7 @@ repositories {
 }
 
 dependencies {
-    api(kotlin("reflect"))
+    implementation(kotlin("reflect"))
 
     implementation(project(":commonmp"))
 
