@@ -9,6 +9,8 @@ data class UserRecord(
     val desc: String = "n/a",
     val type: String = "n/a",
 ) {
+    fun isAnonymous() = this == anonymous || userId == "anonymous"
+
     companion object {
         val anonymous = UserRecord()
     }

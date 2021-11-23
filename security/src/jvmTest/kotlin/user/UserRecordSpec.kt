@@ -29,5 +29,18 @@ class UserRecordSpec : FreeSpec() {
                 )
             }
         }
+
+        "UserRecord.isAnonymous()" - {
+            "must be correct when the it is the anonymous user" {
+                UserRecord.anonymous.isAnonymous() shouldBe true
+
+                UserRecord(
+                    userId = "anonymous",
+                    clientIp = "__clientIp__",
+                    desc = "__desc__",
+                    type = "__type__",
+                ).isAnonymous() shouldBe true
+            }
+        }
     }
 }
