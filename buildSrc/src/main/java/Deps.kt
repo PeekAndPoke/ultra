@@ -42,7 +42,7 @@ object Deps {
     const val kotlinx_coroutines_core =
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version"
 
-    private const val kotlinx_serialization_version = "1.3.0-RC"
+    private const val kotlinx_serialization_version = "1.3.0"
     const val kotlinx_serialization_core =
         "org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version"
     const val kotlinx_serialization_json =

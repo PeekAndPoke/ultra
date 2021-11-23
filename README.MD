@@ -86,8 +86,36 @@ very well. And so should your serialization framework! Slumber does it for you.
 
 # TODOs:
 
-( ) Slumber
-  ( ) Full java time support 
+- ( ) Remove com.github.matfax.klassindex:library completely
+  - ( ) Replace with own implementation using KSP
 
-( ) Mutator
-  ( ) support better code generation for nested classes
+- ( ) Slumber
+  - ( ) Full java time support
+
+- ( ) Mutator
+  - ( ) support better code generation for nested classes
+
+# Upgrade to Kotlin 1.6.0
+
+## Are dependencies updated?
+
+### Kotlin Deps
+
+- ( ) dokka -> 1.5.31
+  - (/) WAITING for Kotlin 1.6.0
+- ( ) com.github.tschuchortdev:kotlin-compile-testing -> 1.4.6
+  - (X) has Kotlin 1.6.0
+- ( ) com.squareup:kotlinpoet -> 1.10.2
+  - (x) has Kotlin 1.6.0
+- ( ) org.jetbrains.kotlinx:kotlinx-coroutines -> 1.5.2
+  - (/) WAITING for Kotlin 1.6.0 ... meaning waiting for version 1.6.0
+- (X) org.jetbrains.kotlinx:kotlinx-serialization -> 1.3.0
+  - (/) WAITING for Kotlin 1.6.0 ... meaning waiting for future version
+- ( ) com.soywiz.korlibs.klock -> 2.4.8
+  - (/) WAITING for Kotlin 1.6.0 ... meaning waiting for future version
+  - (/) ONLY works when we can use IR compilation for JS
+
+### Java Deps
+
+- ( ) com.auth0:java-jwt -> 3.18.2
+- ( ) com.google.auto.service:auto-service -> 1.0.1

@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 
-abstract class ApiClient(private val config: Config) {
+abstract class ApiClient(val config: Config) {
 
     /**
      * Configuration for the api client.

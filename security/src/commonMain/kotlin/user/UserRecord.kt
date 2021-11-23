@@ -8,4 +8,8 @@ data class UserRecord(
     val clientIp: String = "unknown",
     val desc: String = "n/a",
     val type: String = "n/a",
-)
+) {
+    companion object {
+        val anonymous = UserRecord()
+    }
+}
