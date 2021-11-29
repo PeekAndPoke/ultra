@@ -9,5 +9,11 @@ object NetworkUtils {
     } catch (e: UnknownHostException) {
         default
     }
+
+    fun getLocalhostIp() = try {
+        InetAddress.getLocalHost()?.hostAddress ?: "unknown"
+    } catch (E: UnknownHostException) {
+        "unknown"
+    }
 }
 
