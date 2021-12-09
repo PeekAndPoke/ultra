@@ -1,5 +1,5 @@
 package de.peekandpoke.ultra.common.datetime
 
-import java.time.ZoneId
+import java.time.ZoneOffset
 
-internal val utc = ZoneId.of("UTC")
+internal val utc = ZoneOffset.UTC

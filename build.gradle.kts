@@ -30,7 +30,8 @@ allprojects {
 
 dependencies {
     // add all child projects
-    api(project(":ultra"))
+    api(project(":common"))
+    api(project(":commonmp"))
 }
 
 tasks {

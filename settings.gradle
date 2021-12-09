@@ -2,9 +2,6 @@
 rootProject.name = 'ultra'
 
 include(
-        // project that imports all child projects
-        ":ultra",
-
         // child projects
         ":common",
         ":commonmp",
