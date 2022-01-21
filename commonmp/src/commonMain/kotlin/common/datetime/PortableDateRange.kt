@@ -18,4 +18,15 @@ data class PortableDateRange(
     val isOpen get() = !hasStart || !hasEnd
 
     val isNotOpen get() = !isOpen
+
+    val isValid: Boolean = from < to
+
+    fun contains(date: PortableDate): Boolean {
+        return date >= from && date < to
+    }
+
+    fun contains(other: PortableDateRange): Boolean {
+        return (isValid && other.isValid) &&
+                (from <= other.from && to >= other.to)
+    }
 }
