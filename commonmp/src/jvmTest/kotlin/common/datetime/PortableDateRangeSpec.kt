@@ -83,6 +83,138 @@ class PortableDateRangeSpec : FreeSpec() {
                     invalid.contains(valid) shouldBe false
                 }
             }
+
+            "intersects(other: PortableDateRange)" - {
+
+                "Two valid ranges with a gap in between, do not intersect" {
+
+                    val one = PortableDateRange(
+                        from = now.plusDays(1).portable,
+                        to = now.plusDays(2).portable
+                    )
+                    val two = PortableDateRange(
+                        from = now.plusDays(3).portable,
+                        to = now.plusDays(4).portable
+                    )
+
+                    one.isValid shouldBe true
+                    two.isValid shouldBe true
+
+                    one.intersects(two) shouldBe false
+                    two.intersects(one) shouldBe false
+                }
+
+                "When one range is invalid, they do not intersect" {
+
+                    val valid = PortableDateRange(
+                        from = now.plusDays(1).portable,
+                        to = now.plusDays(2).portable
+                    )
+
+                    val invalid = PortableDateRange(
+                        from = now.plusDays(4).portable,
+                        to = now.plusDays(3).portable
+                    )
+
+                    valid.isValid shouldBe true
+                    invalid.isValid shouldBe false
+
+                    valid.intersects(invalid) shouldBe false
+                    invalid.intersects(valid) shouldBe false
+                }
+
+                "Two valid ranges that are touching back to back do not intersect" {
+
+                    val touch = now.plusDays(1)
+
+                    val one = PortableDateRange(
+                        from = now.portable, to = touch.portable
+                    )
+                    val two = PortableDateRange(
+                        from = touch.portable, to = now.plusDays(2).portable
+                    )
+
+                    one.isValid shouldBe true
+                    two.isValid shouldBe true
+
+                    one.intersects(two) shouldBe false
+                    two.intersects(one) shouldBe false
+                }
+
+                "Two identical valid ranges do intersect" {
+
+                    val range = PortableDateRange(
+                        from = now.portable, to = now.plusDays(1).portable
+                    )
+
+                    range.isValid shouldBe true
+
+                    range.intersects(range) shouldBe true
+                }
+
+                "Two identical invalid ranges do not intersect" {
+
+                    val range = PortableDateRange(
+                        from = now.portable, to = now.minusDays(1).portable
+                    )
+
+                    range.isValid shouldBe false
+
+                    range.intersects(range) shouldBe false
+                }
+
+                "A valid range containing another valid range also intersects with it" {
+
+                    val inner = PortableDateRange(
+                        from = now.plusDays(1).portable, to = now.plusDays(2).portable
+                    )
+                    val outer = PortableDateRange(
+                        from = now.plusDays(0).portable, to = now.plusDays(3).portable
+                    )
+
+                    inner.isValid shouldBe true
+                    outer.isValid shouldBe true
+
+                    inner.intersects(outer) shouldBe true
+                    outer.intersects(inner) shouldBe true
+                }
+
+                "Two valid ranges with the same 'to' intersect" {
+
+                    val end = now.plusDays(2)
+
+                    val one = PortableDateRange(
+                        from = now.plusDays(0).portable, to = end.portable
+                    )
+                    val two = PortableDateRange(
+                        from = now.plusDays(1).portable, to = end.portable
+                    )
+
+                    one.isValid shouldBe true
+                    two.isValid shouldBe true
+
+                    one.intersects(two) shouldBe true
+                    two.intersects(one) shouldBe true
+                }
+
+                "Two valid ranges with the same 'from' intersect" {
+
+                    val from = now
+
+                    val one = PortableDateRange(
+                        from = from.portable, to = now.plusDays(1).portable
+                    )
+                    val two = PortableDateRange(
+                        from = from.portable, to = now.plusDays(2).portable
+                    )
+
+                    one.isValid shouldBe true
+                    two.isValid shouldBe true
+
+                    one.intersects(two) shouldBe true
+                    two.intersects(one) shouldBe true
+                }
+            }
         }
     }
 }
