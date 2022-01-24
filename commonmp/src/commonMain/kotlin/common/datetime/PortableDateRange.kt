@@ -11,15 +11,15 @@ data class PortableDateRange(
         val forever = PortableDateRange(Genesis, Doomsday)
     }
 
-    val hasStart get() = from.timestamp > Genesis.timestamp
+    val hasStart: Boolean get() = from.timestamp > Genesis.timestamp
 
-    val hasEnd get() = to.timestamp < Doomsday.timestamp
+    val hasEnd: Boolean get() = to.timestamp < Doomsday.timestamp
 
-    val isOpen get() = !hasStart || !hasEnd
+    val isOpen: Boolean get() = !hasStart || !hasEnd
 
-    val isNotOpen get() = !isOpen
+    val isNotOpen: Boolean get() = !isOpen
 
-    val isValid: Boolean = from < to
+    val isValid: Boolean get() = from < to
 
     fun contains(date: PortableDate): Boolean {
         return date >= from && date < to
