@@ -21,6 +21,8 @@ data class PortableDateRange(
 
     val isValid: Boolean get() = from < to
 
+    val asPartialDateRange: PartialPortableDateRange get() = PartialPortableDateRange(from = from, to = to)
+
     fun contains(date: PortableDate): Boolean {
         return date >= from && date < to
     }

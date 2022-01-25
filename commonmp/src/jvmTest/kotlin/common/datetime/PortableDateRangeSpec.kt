@@ -33,6 +33,20 @@ class PortableDateRangeSpec : FreeSpec() {
             }
         }
 
+        "Conversion" - {
+
+            "asPartialDateRange" {
+
+                val from = now.portable
+                val to = now.plusDays(1).portable
+
+                val subject = PortableDateRange(from = from, to = to)
+
+                subject.asPartialDateRange shouldBe PartialPortableDateRange(from = from, to = to)
+            }
+
+        }
+
         "Intersection" - {
 
             "contains(other: PortableDate)" - {
