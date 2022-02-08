@@ -6,13 +6,20 @@ import de.peekandpoke.ultra.slumber.Slumberer
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability
+import kotlin.reflect.jvm.javaConstructor
 
 class DataClassCodec(rootType: KType) : Awaker, Slumberer {
 
     /** Raw cls of the rootType */
     private val reified = ReifiedKType(rootType)
 
-    private val ctor = reified.ctor
+    private val ctor = reified.ctor.also {
+        it?.javaConstructor?.let { javaCtor ->
+            if (!javaCtor.isAccessible) {
+                javaCtor.isAccessible = true
+            }
+        }
+    }
 
     private val nullables: Map<KParameter, Any?> =
         ctor?.parameters?.filter { it.type.isMarkedNullable }?.map { it to null }?.toMap()

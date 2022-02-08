@@ -10,7 +10,23 @@ import io.kotest.matchers.string.shouldContain
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.createType
 
+@Suppress("DataClassPrivateConstructor")
+data class DataClassWithPrivateCtor private constructor(val str: String) {
+    companion object {
+        fun of(str: String) = DataClassWithPrivateCtor(str)
+    }
+}
+
 class DataClassAwakerSpec : StringSpec({
+
+    "Awaking a data class with a private primary constructor" {
+
+        val codec = Codec.default
+
+        val result = codec.awake(DataClassWithPrivateCtor::class, mapOf("str" to "hello"))
+
+        result shouldBe DataClassWithPrivateCtor.of("hello")
+    }
 
     "Awaking a data class with two parameters" {
 
