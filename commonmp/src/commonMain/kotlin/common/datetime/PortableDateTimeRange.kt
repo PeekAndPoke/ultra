@@ -8,14 +8,14 @@ data class PortableDateTimeRange(
     val to: PortableDateTime
 ) {
     companion object {
-        val forever = PortableDateTimeRange(GenesisDateTime, DoomsdayDateTime)
+        val forever = PortableDateTimeRange(PortableGenesisDateTime, PortableDoomsdayDateTime)
     }
 
     val isValid: Boolean get() = from < to
 
-    val hasStart: Boolean get() = from.timestamp > Genesis.timestamp
+    val hasStart: Boolean get() = from.timestamp > PortableGenesisDate.timestamp
 
-    val hasEnd: Boolean get() = to.timestamp < Doomsday.timestamp
+    val hasEnd: Boolean get() = to.timestamp < PortableDoomsdayDate.timestamp
 
     fun contains(date: PortableDateTime): Boolean {
         return date >= from && date < to

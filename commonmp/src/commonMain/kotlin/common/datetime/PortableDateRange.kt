@@ -8,12 +8,12 @@ data class PortableDateRange(
     val to: PortableDate
 ) {
     companion object {
-        val forever = PortableDateRange(Genesis, Doomsday)
+        val forever = PortableDateRange(PortableGenesisDate, PortableDoomsdayDate)
     }
 
-    val hasStart: Boolean get() = from.timestamp > Genesis.timestamp
+    val hasStart: Boolean get() = from.timestamp > PortableGenesisDate.timestamp
 
-    val hasEnd: Boolean get() = to.timestamp < Doomsday.timestamp
+    val hasEnd: Boolean get() = to.timestamp < PortableDoomsdayDate.timestamp
 
     val isOpen: Boolean get() = !hasStart || !hasEnd
 
