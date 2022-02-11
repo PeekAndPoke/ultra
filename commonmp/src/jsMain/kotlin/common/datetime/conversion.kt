@@ -19,10 +19,11 @@ actual fun PortableDateTime.toIsoString(): String = date.format(isoFormat)
 
 val Time.portable get(): PortableTime = PortableTime(encoded.millisecondsLong)
 
-val Date.portable get(): PortableDate = portable(Time(12, 0, 0))
+val Date.portable get(): PortableDate = portable(Time(0, 0, 0))
 
-fun Date.portable(time: Time = Time(12, 0, 0)): PortableDate = PortableDate(
+fun Date.portable(time: Time = Time(0, 0, 0)): PortableDate = PortableDate(
     DateTime(this, time).unixMillisLong
 )
 
 val DateTime.portable get(): PortableDateTime = PortableDateTime(unixMillisLong)
+

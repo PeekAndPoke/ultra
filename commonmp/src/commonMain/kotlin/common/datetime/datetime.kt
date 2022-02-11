@@ -5,12 +5,12 @@ internal const val ISO_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
 /**
  * The earliest timestamp used is considered to be '-10000-01-01T00:00:00Z'
  */
-const val GENESIS_TIMESTAMP = -377_736_739_200_000
+const val GENESIS_TIMESTAMP = -377_736_739_200_000L
 
 /**
  * The latest timestamp used is considered to be '+10000-01-01T00:00:00Z'
  */
-const val DOOMSDAY_TIMESTAMP = 253_402_300_800_000
+const val DOOMSDAY_TIMESTAMP = 253_402_300_800_000L
 
 val PortableGenesisDate = PortableDate(GENESIS_TIMESTAMP)
 val PortableDoomsdayDate = PortableDate(DOOMSDAY_TIMESTAMP)
