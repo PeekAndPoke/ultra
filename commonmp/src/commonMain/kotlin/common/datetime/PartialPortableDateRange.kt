@@ -7,9 +7,12 @@ data class PartialPortableDateRange(
     val from: PortableDate?,
     val to: PortableDate?,
 ) {
-    val asValidDateRange: PortableDateRange?
-        get() = when (from != null && to != null) {
-            true -> PortableDateRange(from = from, to = to).takeIf { it.isValid }
-            false -> null
-        }
+    companion object {
+        val empty = PartialPortableDateRange(from = null, to = null)
+    }
+
+    fun asValidDateRange(): PortableDateRange? = when (from != null && to != null) {
+        true -> PortableDateRange(from = from, to = to).takeIf { it.isValid }
+        false -> null
+    }
 }

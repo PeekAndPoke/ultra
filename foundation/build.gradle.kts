@@ -78,8 +78,6 @@ kotlin {
                 implementation(kotlin("reflect"))
 
                 implementation(project(":kontainer"))
-
-                implementation(Deps.slf4j_api)
             }
         }
 
