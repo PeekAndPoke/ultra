@@ -24,32 +24,49 @@ interface Kronos {
 
         override fun timezone(): ZoneId = clock.zone
 
-        override fun instantNow(): Instant = Instant.now(clock)
+        override fun instantNow(): Instant =
+            Instant.now(clock)
 
-        override fun localDateNow(): LocalDate = LocalDate.now(clock)
+        override fun localDateNow(): LocalDate =
+            LocalDate.now(clock)
 
-        override fun localDateTimeNow(): LocalDateTime = LocalDateTime.now(clock)
+        override fun localDateTimeNow(): LocalDateTime =
+            LocalDateTime.now(clock)
 
-        override fun zonedDateTimeNow(): ZonedDateTime = ZonedDateTime.now(clock)
+        override fun zonedDateTimeNow(): ZonedDateTime =
+            ZonedDateTime.now(clock)
 
-        override fun localTimeNow(): LocalTime = LocalTime.now(clock)
+        override fun zonedDateTimeNow(timezone: ZoneId): ZonedDateTime =
+            ZonedDateTime.now(clock).withZoneSameInstant(timezone)
+
+        override fun localTimeNow(): LocalTime =
+            LocalTime.now(clock)
     }
 
     private class AdvancedBy(private val inner: Kronos, private val provider: () -> Duration) : Kronos {
 
         private val duration by lazy { provider() }
 
-        override fun timezone(): ZoneId = inner.timezone()
+        override fun timezone(): ZoneId =
+            inner.timezone()
 
-        override fun instantNow(): Instant = inner.instantNow().plus(duration)
+        override fun instantNow(): Instant =
+            inner.instantNow().plus(duration)
 
-        override fun localDateNow(): LocalDate = inner.localDateNow().plusDays(duration.toDays())
+        override fun localDateNow(): LocalDate =
+            inner.localDateNow().plusDays(duration.toDays())
 
-        override fun localDateTimeNow(): LocalDateTime = inner.localDateTimeNow().plus(duration)
+        override fun localDateTimeNow(): LocalDateTime =
+            inner.localDateTimeNow().plus(duration)
 
-        override fun zonedDateTimeNow(): ZonedDateTime = inner.zonedDateTimeNow().plus(duration)
+        override fun zonedDateTimeNow(): ZonedDateTime =
+            inner.zonedDateTimeNow().plus(duration)
 
-        override fun localTimeNow(): LocalTime = inner.localTimeNow().plus(duration)
+        override fun zonedDateTimeNow(timezone: ZoneId): ZonedDateTime =
+            inner.zonedDateTimeNow(timezone).plus(duration)
+
+        override fun localTimeNow(): LocalTime =
+            inner.localTimeNow().plus(duration)
     }
 
     /**
@@ -83,6 +100,9 @@ interface Kronos {
 
     /** Creates a [ZonedDateTime] for 'now' */
     fun zonedDateTimeNow(): ZonedDateTime
+
+    /** Creates a [ZonedDateTime] for 'now' at the given [timezone] */
+    fun zonedDateTimeNow(timezone: ZoneId): ZonedDateTime
 
     /** Creates a [LocalTime] for 'now' */
     fun localTimeNow(): LocalTime

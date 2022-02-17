@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.foundation.spacetime
 
 import de.peekandpoke.ultra.foundation.timing.Kronos
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
 import java.time.Clock
@@ -9,6 +10,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.Month
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
@@ -45,6 +47,32 @@ class KronosSpec : FreeSpec() {
 
             "zonedDateTimeNow" {
                 subject.zonedDateTimeNow() shouldBe ZonedDateTime.of(fixedDate, fixedTime, fixedZone)
+            }
+
+            "zonedDateTimeNow(timezone)" {
+
+                val zones = ZoneId.getAvailableZoneIds()
+                    .map { ZoneId.of(it) }
+                    .plus(ZoneOffset.UTC)
+
+                val zipped = zones.zip(zones)
+
+                repeat(1000) {
+                    val (first, second) = zipped.random()
+
+                    withClue("epoch timestamp must the same for '$first' and '$second'") {
+                        subject.zonedDateTimeNow(first).toEpochSecond() shouldBe
+                                subject.zonedDateTimeNow(second).toEpochSecond()
+                    }
+                }
+
+                zones.forEach { zone ->
+
+                    withClue("Must work for zone ${zone.id}") {
+                        subject.zonedDateTimeNow(zone) shouldBe
+                                ZonedDateTime.of(fixedDate, fixedTime, fixedZone).withZoneSameInstant(zone)
+                    }
+                }
             }
 
             "localTimeNow" {
@@ -91,6 +119,15 @@ class KronosSpec : FreeSpec() {
                     "zonedDateTimeNow" {
                         subject.zonedDateTimeNow() shouldBe
                                 ZonedDateTime.of(fixedDate, fixedTime, fixedZone).plus(advance)
+                    }
+
+                    "zonedDateTimeNow(timezone)" {
+                        val zone = ZoneId.of("Asia/Singapore")
+
+                        subject.zonedDateTimeNow(zone) shouldBe
+                                ZonedDateTime.of(fixedDate, fixedTime, fixedZone)
+                                    .withZoneSameInstant(zone)
+                                    .plus(advance)
                     }
 
                     "localTimeNow" {
