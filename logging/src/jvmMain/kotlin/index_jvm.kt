@@ -28,15 +28,14 @@ fun KontainerBuilder.ultraLogging() = module(Ultra_Logging)
  * singleton { logger: org.slf4j.Logger -> Slf4jAppender(logger) }
  * </code>
  */
-val Ultra_Logging
-    get() = module {
+val Ultra_Logging = module {
 
-        dynamic(UltraLogManager::class)
+    dynamic(UltraLogManager::class)
 
-        // TODO: we need another injection type: dynamicPrototype.
-        //       It must upgrade the injecting service to SemiDynamic.
-        //       But it must be instantiated like a prototype.
-        prototype(Log::class) { manager: UltraLogManager, context: InjectionContext ->
-            manager.getLogger(context.requestingClass)
-        }
+    // TODO: we need another injection type: dynamicPrototype.
+    //       It must upgrade the injecting service to SemiDynamic.
+    //       But it must be instantiated like a prototype.
+    prototype(Log::class) { manager: UltraLogManager, context: InjectionContext ->
+        manager.getLogger(context.requestingClass)
     }
+}
