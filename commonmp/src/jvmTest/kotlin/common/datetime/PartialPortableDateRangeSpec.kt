@@ -12,20 +12,20 @@ class PartialPortableDateRangeSpec : FreeSpec() {
 
         "Conversion" - {
 
-            "asValidDateRange" - {
+            "asValidDateRange()" - {
 
                 "'from' == null will return null" {
 
                     val subject = PartialPortableDateRange(from = null, to = now.portable)
 
-                    subject.asValidDateRange shouldBe null
+                    subject.asValidDateRange() shouldBe null
                 }
 
                 "'to' == null will return null" {
 
                     val subject = PartialPortableDateRange(from = now.portable, to = null)
 
-                    subject.asValidDateRange shouldBe null
+                    subject.asValidDateRange() shouldBe null
                 }
 
                 "'from' before 'to' will return a PortableDateRange" {
@@ -35,7 +35,7 @@ class PartialPortableDateRangeSpec : FreeSpec() {
 
                     val subject = PartialPortableDateRange(from = from, to = to)
 
-                    subject.asValidDateRange shouldBe PortableDateRange(from = from, to = to)
+                    subject.asValidDateRange() shouldBe PortableDateRange(from = from, to = to)
                 }
 
                 "'from' == 'to' will return null" {
@@ -45,7 +45,7 @@ class PartialPortableDateRangeSpec : FreeSpec() {
 
                     val subject = PartialPortableDateRange(from = from, to = to)
 
-                    subject.asValidDateRange shouldBe null
+                    subject.asValidDateRange() shouldBe null
                 }
             }
         }
