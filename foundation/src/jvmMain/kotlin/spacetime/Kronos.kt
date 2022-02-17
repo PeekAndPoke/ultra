@@ -89,6 +89,12 @@ interface Kronos {
     /** Get the [ZoneOffset] of the internal time source */
     fun timezone(): ZoneId
 
+    /** Get 'now' in epoch millis */
+    fun millisNow(): Long = instantNow().toEpochMilli()
+
+    /** Get 'now' in epoch micros */
+    fun microsNow(): Long = millisNow() * 1000L
+
     /** Creates an [Instant] for 'now' */
     fun instantNow(): Instant
 

@@ -33,6 +33,14 @@ class KronosSpec : FreeSpec() {
                 subject.timezone() shouldBe fixedZone
             }
 
+            "millisNow" {
+                subject.millisNow() shouldBe fixedInstant.toEpochMilli()
+            }
+
+            "microsNow" {
+                subject.microsNow() shouldBe fixedInstant.toEpochMilli() * 1000L
+            }
+
             "instantNow" {
                 subject.instantNow() shouldBe fixedInstant
             }
@@ -101,6 +109,14 @@ class KronosSpec : FreeSpec() {
 
                     "timezone" {
                         subject.timezone() shouldBe fixedZone
+                    }
+
+                    "millisNow" {
+                        subject.millisNow() shouldBe fixedInstant.toEpochMilli() + advance.toMillis()
+                    }
+
+                    "microsNow" {
+                        subject.microsNow() shouldBe (fixedInstant.toEpochMilli() + advance.toMillis()) * 1000L
                     }
 
                     "instantNow" {
