@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.foundation.spacetime
 
-import de.peekandpoke.ultra.foundation.timing.Kronos
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
@@ -150,6 +149,53 @@ class KronosSpec : FreeSpec() {
                         subject.localTimeNow() shouldBe fixedTime.plus(advance)
                     }
                 }
+            }
+        }
+
+        "Kronos.describe" - {
+
+            "Kronos.systemUtc" {
+
+                val subject = Kronos.systemUtc.describe()
+
+                subject shouldBe KronosDescriptor.SystemClock
+            }
+
+            "Kronos.fromClock (not fixed)" {
+                val zone = ZoneId.of("Europe/Berlin")
+                val clock = Clock.system(zone)
+
+                val subject = Kronos.fromClock(clock).describe()
+
+                subject shouldBe KronosDescriptor.SystemClock
+            }
+
+            "Kronos.systemUtc.advancedBy" {
+
+                val duration = Duration.ofSeconds(10)
+
+                val subject = Kronos.systemUtc.advanceBy { duration }.describe()
+
+                subject shouldBe KronosDescriptor.AdvancedBy(
+                    durationMs = duration.toMillis(),
+                    inner = KronosDescriptor.SystemClock
+                )
+            }
+
+            "Kronos.systemUtc.advancedBy.advancedBy" {
+
+                val duration1 = Duration.ofSeconds(10)
+                val duration2 = Duration.ofMinutes(5)
+
+                val subject = Kronos.systemUtc.advanceBy { duration1 }.advanceBy(duration2).describe()
+
+                subject shouldBe KronosDescriptor.AdvancedBy(
+                    durationMs = duration2.toMillis(),
+                    inner = KronosDescriptor.AdvancedBy(
+                        durationMs = duration1.toMillis(),
+                        inner = KronosDescriptor.SystemClock,
+                    )
+                )
             }
         }
     }

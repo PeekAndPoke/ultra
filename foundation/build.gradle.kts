@@ -1,5 +1,6 @@
 @file:Suppress("PropertyName")
 
+import Deps.Test.jsTestDeps
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -69,6 +70,12 @@ kotlin {
 
         js().compilations["main"].defaultSourceSet {
             dependencies {
+            }
+        }
+
+        js().compilations["test"].defaultSourceSet {
+            dependencies {
+                jsTestDeps()
             }
         }
 

@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.foundation
 
-import de.peekandpoke.ultra.foundation.timing.Kronos
+import de.peekandpoke.ultra.foundation.spacetime.Kronos
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
 

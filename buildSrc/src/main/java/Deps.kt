@@ -1,5 +1,8 @@
-import org.gradle.kotlin.dsl.DependencyHandlerScope
 
+import org.gradle.kotlin.dsl.DependencyHandlerScope
+import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
+
+@Suppress("MemberVisibilityCanBePrivate")
 object Deps {
     operator fun invoke(block: Deps.() -> Unit) {
         this.block()
@@ -71,6 +74,16 @@ object Deps {
         private const val kotest_version = "4.6.2"
         const val kotest_assertions_core_jvm = "io.kotest:kotest-assertions-core-jvm:$kotest_version"
         const val kotest_runner_junit_jvm = "io.kotest:kotest-runner-junit5-jvm:$kotest_version"
+
+        const val kotest_assertions_core_js = "io.kotest:kotest-assertions-core-js:$kotest_version"
+        const val kotest_framework_api_js = "io.kotest:kotest-framework-api-js:$kotest_version"
+        const val kotest_framework_engine_js = "io.kotest:kotest-framework-engine-js:$kotest_version"
+
+        fun KotlinDependencyHandler.jsTestDeps() {
+            implementation(kotest_assertions_core_js)
+            implementation(kotest_framework_api_js)
+            implementation(kotest_framework_engine_js)
+        }
 
         fun DependencyHandlerScope.jvmTestDeps() {
             testImplementation(logback_classic)

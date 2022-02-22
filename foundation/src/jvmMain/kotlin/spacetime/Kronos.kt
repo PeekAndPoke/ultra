@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.foundation.timing
+package de.peekandpoke.ultra.foundation.spacetime
 
 import java.time.Clock
 import java.time.Duration
@@ -13,14 +13,14 @@ import java.time.ZonedDateTime
 interface Kronos {
 
     companion object {
-        val systemDefaultZone: Kronos = fromClock(Clock.systemDefaultZone())
-
         val systemUtc: Kronos = fromClock(Clock.systemUTC())
 
-        fun fromClock(clock: Clock): Kronos = FromClock(clock)
+        fun fromClock(clock: Clock): Kronos = SystemClock(clock)
     }
 
-    private class FromClock(private val clock: Clock) : Kronos {
+    private class SystemClock(private val clock: Clock) : Kronos {
+
+        override fun describe(): KronosDescriptor = KronosDescriptor.SystemClock
 
         override fun timezone(): ZoneId = clock.zone
 
@@ -47,6 +47,11 @@ interface Kronos {
 
         private val duration by lazy { provider() }
 
+        override fun describe(): KronosDescriptor = KronosDescriptor.AdvancedBy(
+            durationMs = duration.toMillis(),
+            inner = inner.describe()
+        )
+
         override fun timezone(): ZoneId =
             inner.timezone()
 
@@ -68,6 +73,11 @@ interface Kronos {
         override fun localTimeNow(): LocalTime =
             inner.localTimeNow().plus(duration)
     }
+
+    /**
+     * Returns a description of the kronos
+     */
+    fun describe(): KronosDescriptor
 
     /**
      * Creates a Kronos the manipulates created dates and times.
