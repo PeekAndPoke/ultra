@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.common.model
 
 import kotlinx.serialization.Serializable
+import kotlin.math.ceil
 
 @Serializable
 data class Paged<T>(
@@ -9,7 +10,10 @@ data class Paged<T>(
     val epp: Int,
     val fullItemCount: Long?,
 ) {
-    val fullPageCount: Long? get() = fullItemCount?.let { (it.toDouble() / epp.toDouble()).toLong() + 1 }
+    val fullPageCount: Long?
+        get() = fullItemCount?.let {
+            ceil(it.toDouble() / epp.toDouble()).toLong()
+        }
 
     companion object {
         fun <T> empty() = Paged<T>(items = emptyList(), page = 1, epp = 20, fullItemCount = null)
