@@ -31,7 +31,7 @@ data class TypedAttributes internal constructor(val entries: Map<TypedKey<*>, An
         /**
          * Builds the [TypedAttributes] instance
          */
-        fun build() = TypedAttributes(entries.toMap())
+        internal fun build() = TypedAttributes(entries.toMap())
     }
 
     /**
@@ -53,9 +53,24 @@ data class TypedAttributes internal constructor(val entries: Map<TypedKey<*>, An
     }
 
     /**
-     * Adds an entry by [key] and [value] and returns a new instance of [TypedAttributes]
+     * Adds an entry by [key] and [value].
+     *
+     * Returns a new instance of [TypedAttributes].
      */
     fun <T : Any> plus(key: TypedKey<T>, value: T) = TypedAttributes(
         entries.plus(key to value)
     )
+
+    /**
+     * Adds entries from the [builder].
+     *
+     * Returns a new instance of [TypedAttributes].
+     */
+    fun plus(builder: Builder.() -> Unit): TypedAttributes {
+        val built = of(builder)
+
+        return copy(
+            entries = entries.plus(built.entries)
+        )
+    }
 }
