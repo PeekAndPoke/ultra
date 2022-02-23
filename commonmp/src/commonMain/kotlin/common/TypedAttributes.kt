@@ -62,6 +62,15 @@ data class TypedAttributes internal constructor(val entries: Map<TypedKey<*>, An
     )
 
     /**
+     * Adds all entries from [other].
+     *
+     * Returns a new instance of [TypedAttributes].
+     */
+    fun plus(other: TypedAttributes) = copy(
+        entries = entries.plus(other.entries)
+    )
+
+    /**
      * Adds entries from the [builder].
      *
      * Returns a new instance of [TypedAttributes].

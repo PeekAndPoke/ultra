@@ -54,6 +54,39 @@ class TypedAttributesSpec : FreeSpec() {
         }
 
         "Adding elements" - {
+
+            "using plus(other: TypedAttributes)" {
+                val key1 = TypedKey<Int>("k1")
+                val key2 = TypedKey<Int>("k2")
+                val key3 = TypedKey<Int>("k3")
+
+                val step01 = TypedAttributes.empty
+
+                // Adding nothing
+                val step02 = step01.plus(TypedAttributes.empty)
+
+                step01 shouldBe step02
+
+                // Adding two elements
+                val step03 = step02.plus(TypedAttributes {
+                    add(key1, 1)
+                    add(key2, 2)
+                })
+
+                step03 shouldNotBe step02
+                step03.entries shouldBe mapOf(key1 to 1, key2 to 2)
+
+                // Overriding one element and adding another element
+                val step04 = step03.plus(TypedAttributes {
+                    add(key1, 10)
+                    add(key3, 3)
+                })
+
+                step04 shouldNotBe step03
+
+                step04.entries shouldBe mapOf(key1 to 10, key2 to 2, key3 to 3)
+            }
+
             "using plus(builder)" {
 
                 val key1 = TypedKey<Int>("k1")
