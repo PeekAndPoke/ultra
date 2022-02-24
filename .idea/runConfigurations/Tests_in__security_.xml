@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Tests in 'common-mp' JVM" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="Tests in 'security'" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -10,9 +10,8 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value=":commonmp:jvmTest" />
-          <option value="--tests" />
-          <option value="*" />
+          <option value=":security:clean" />
+          <option value=":security:check" />
         </list>
       </option>
       <option name="vmOptions" value="" />

@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UserPermissions(
+    val isAuthenticated: Boolean = false,
     val isSuperUser: Boolean = false,
     val organisations: Set<String> = emptySet(),
     val branches: Set<String> = emptySet(),
@@ -12,13 +13,24 @@ data class UserPermissions(
     val roles: Set<String> = emptySet(),
     val permissions: Set<String> = emptySet()
 ) {
+    companion object {
+        val anonymous = UserPermissions(
+            isAuthenticated = false,
+        )
+    }
+
     /**
      * Merges the permission with the [other] permission.
      *
-     * NOTE: SuperUser rights will be given if this or the [other] provide it.
+     * NOTICE that the order matters:
+     *
+     * this.mergeWith(other) != other.mergeWith(this)
+     *
+     * The [isAuthenticated] and [isSuperUser] flag will be taken from [other].
      */
     infix fun mergedWith(other: UserPermissions) = UserPermissions(
-        isSuperUser = isSuperUser || other.isSuperUser,
+        isAuthenticated = other.isAuthenticated,
+        isSuperUser = other.isSuperUser,
         organisations = organisations.plus(other.organisations),
         branches = branches.plus(other.branches),
         groups = groups.plus(other.groups),

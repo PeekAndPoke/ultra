@@ -16,6 +16,7 @@ class JwtPermissionsRoundTripSpec : FreeSpec() {
             val namespace = "testns"
 
             val permissions = UserPermissions(
+                isAuthenticated = true,
                 isSuperUser = true,
                 organisations = setOf("o1, o2"),
                 branches = setOf("b1, b2"),
@@ -42,6 +43,7 @@ class JwtPermissionsRoundTripSpec : FreeSpec() {
             val namespace = "testns"
 
             val permissions = UserPermissions(
+                isAuthenticated = true,
                 isSuperUser = false,
                 organisations = setOf("o1, o2"),
                 branches = setOf("b1, b2"),
