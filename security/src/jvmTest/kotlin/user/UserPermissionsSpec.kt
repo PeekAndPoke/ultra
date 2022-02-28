@@ -15,7 +15,6 @@ class UserPermissionsSpec : FreeSpec() {
 
             "anonymous" {
                 UserPermissions.anonymous shouldBe UserPermissions(
-                    isAuthenticated = false,
                     isSuperUser = false,
                     organisations = emptySet(),
                     branches = emptySet(),
@@ -27,7 +26,6 @@ class UserPermissionsSpec : FreeSpec() {
 
             "constructor default" {
                 UserPermissions() shouldBe UserPermissions(
-                    isAuthenticated = false,
                     isSuperUser = false,
                     organisations = emptySet(),
                     branches = emptySet(),
@@ -66,38 +64,6 @@ class UserPermissionsSpec : FreeSpec() {
                 val result = UserPermissions(isSuperUser = false) mergedWith UserPermissions(isSuperUser = true)
 
                 result.isSuperUser shouldBe true
-            }
-
-            "must work for isAuthenticated=false and isAuthenticated=false" {
-
-                val result =
-                    UserPermissions(isAuthenticated = false) mergedWith UserPermissions(isAuthenticated = false)
-
-                result.isAuthenticated shouldBe false
-            }
-
-            "must work for isAuthenticated=true and isAuthenticated=false" {
-
-                val result =
-                    UserPermissions(isAuthenticated = true) mergedWith UserPermissions(isAuthenticated = false)
-
-                result.isAuthenticated shouldBe false
-            }
-
-            "must work for isAuthenticated=true and isAuthenticated=true" {
-
-                val result =
-                    UserPermissions(isAuthenticated = true) mergedWith UserPermissions(isAuthenticated = true)
-
-                result.isAuthenticated shouldBe true
-            }
-
-            "must work for isAuthenticated=false and isAuthenticated=true" {
-
-                val result =
-                    UserPermissions(isAuthenticated = false) mergedWith UserPermissions(isAuthenticated = true)
-
-                result.isAuthenticated shouldBe true
             }
 
             "must work for all other rights" {
