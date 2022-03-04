@@ -34,7 +34,7 @@ class PrototypeServicesSpec : StringSpec({
         class Injecting(val proto: MyPrototype)
 
         val subject = kontainer {
-            prototype<MyPrototype>()
+            prototype(MyPrototype::class)
             singleton(Injecting::class)
         }.create()
 

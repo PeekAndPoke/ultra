@@ -402,18 +402,18 @@ class Counter {
 // We define a service that injects another service in it's constructor.
 // But this time this service also expects a second parameter that cannot be provided by the kontainer.
 class MyService(private val counter: Counter, private val offset: Int) {
-    fun next() = counter.next() + offset
+   fun next() = counter.next() + offset
 }
 
 // We define the kontainer blueprint
 val blueprint = kontainer {
-    // We define the service using a factory method.
-    // Injection is now only done for all parameters of the factory method.
-    singleton { counter: Counter ->
-        MyService(counter, 100)
-    }
+   // We define the service using a factory method.
+   // Injection is now only done for all parameters of the factory method.
+   singleton(MyService::class) { counter: Counter ->
+      MyService(counter, 100)
+   }
 
-    singleton(Counter::class)
+   singleton(Counter::class)
 }
 
 // We get the kontainer instance
@@ -535,12 +535,12 @@ class SecondService(val injected: NotRegisteredInKontainer?)
 
 // We define the kontainer blueprint
 val blueprint = kontainer {
-    // We define the first service as a singleton
-    singleton(FirstService::class)
-    // We define the other service with a factory method (notice the nullable closure parameter)
-    singleton { injected: NotRegisteredInKontainer? ->
-        SecondService(injected)
-    }
+   // We define the first service as a singleton
+   singleton(FirstService::class)
+   // We define the other service with a factory method (notice the nullable closure parameter)
+   singleton(SecondService::class) { injected: NotRegisteredInKontainer? ->
+      SecondService(injected)
+   }
 }
 
 // We get the kontainer instance

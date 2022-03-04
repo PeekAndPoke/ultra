@@ -1,12 +1,12 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
 import de.peekandpoke.ultra.kontainer.AnotherSimpleService
+import de.peekandpoke.ultra.kontainer.CounterService
 import de.peekandpoke.ultra.kontainer.InjectingService
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.kontainer.KontainerInconsistent
 import de.peekandpoke.ultra.kontainer.ServiceNotFound
 import de.peekandpoke.ultra.kontainer.ServiceProvider
-import de.peekandpoke.ultra.kontainer.CounterService
 import de.peekandpoke.ultra.kontainer.kontainer
 import de.peekandpoke.ultra.kontainer.module
 import io.kotest.assertions.assertSoftly
@@ -69,9 +69,9 @@ class PrototypeFactoriesSpec : StringSpec({
     "Prototype factory that has missing dependencies" {
 
         val blueprint = kontainer {
-            singleton<CounterService>()
+            singleton(CounterService::class)
 
-            prototype { simple: CounterService, another: AnotherSimpleService ->
+            prototype(InjectingService::class) { simple: CounterService, another: AnotherSimpleService ->
                 InjectingService(simple, another)
             }
         }
@@ -92,8 +92,8 @@ class PrototypeFactoriesSpec : StringSpec({
     "Prototype factory with two dependencies" {
 
         val subject = kontainer {
-            singleton<CounterService>()
-            singleton<AnotherSimpleService>()
+            singleton(CounterService::class)
+            singleton(AnotherSimpleService::class)
 
             prototype(InjectingService::class) { simple: CounterService, another: AnotherSimpleService ->
                 InjectingService(simple, another)
@@ -110,7 +110,7 @@ class PrototypeFactoriesSpec : StringSpec({
     "Prototype factory with zero params" {
 
         val subject = kontainer {
-            prototype0 { Config(0) }
+            prototype0(Config::class) { Config(0) }
         }.create()
 
         validateWithoutBase(subject, 0)
@@ -129,7 +129,7 @@ class PrototypeFactoriesSpec : StringSpec({
 
         val subject = kontainer {
             config("c1", 1)
-            prototype { c1: Int -> Config(c1) }
+            prototype(Config::class) { c1: Int -> Config(c1) }
         }.create()
 
         validateWithoutBase(subject, 1)
@@ -150,7 +150,7 @@ class PrototypeFactoriesSpec : StringSpec({
         val subject = kontainer {
             config("c1", 1)
             config("c2", 10)
-            prototype { c1: Int, c2: Int -> Config(c1 + c2) }
+            prototype(Config::class) { c1: Int, c2: Int -> Config(c1 + c2) }
         }.create()
 
         validateWithoutBase(subject, 11)
@@ -173,7 +173,7 @@ class PrototypeFactoriesSpec : StringSpec({
             config("c1", 1)
             config("c2", 10)
             config("c3", 100)
-            prototype { c1: Int, c2: Int, c3: Int -> Config(c1 + c2 + c3) }
+            prototype(Config::class) { c1: Int, c2: Int, c3: Int -> Config(c1 + c2 + c3) }
         }.create()
 
         validateWithoutBase(subject, 111)
@@ -198,7 +198,7 @@ class PrototypeFactoriesSpec : StringSpec({
             config("c2", 10)
             config("c3", 100)
             config("c4", 1000)
-            prototype { c1: Int, c2: Int, c3: Int, c4: Int -> Config(c1 + c2 + c3 + c4) }
+            prototype(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int -> Config(c1 + c2 + c3 + c4) }
         }.create()
 
         validateWithoutBase(subject, 1111)
@@ -225,7 +225,7 @@ class PrototypeFactoriesSpec : StringSpec({
             config("c3", 100)
             config("c4", 1000)
             config("c5", 10000)
-            prototype { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int ->
+            prototype(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int ->
                 Config(c1 + c2 + c3 + c4 + c5)
             }
         }.create()
@@ -258,7 +258,7 @@ class PrototypeFactoriesSpec : StringSpec({
             config("c4", 1000)
             config("c5", 10000)
             config("c6", 100000)
-            prototype { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int ->
+            prototype(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int ->
                 Config(c1 + c2 + c3 + c4 + c5 + c6)
             }
         }.create()
@@ -293,7 +293,7 @@ class PrototypeFactoriesSpec : StringSpec({
             config("c5", 10000)
             config("c6", 100000)
             config("c7", 1000000)
-            prototype { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
+            prototype(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
                 Config(c1 + c2 + c3 + c4 + c5 + c6 + c7)
             }
         }.create()

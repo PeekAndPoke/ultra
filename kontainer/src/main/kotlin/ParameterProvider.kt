@@ -18,7 +18,7 @@ interface ParameterProvider {
      * Validates that a parameter can be provided
      *
      * When all is well an empty list is returned.
-     * Otherwise a list of error strings is returned.
+     * Otherwise, a list of error strings is returned.
      */
     fun validate(kontainer: Kontainer): List<String>
 
@@ -53,7 +53,7 @@ interface ParameterProvider {
                 // Service: when there are no type parameters we have a usual service class
                 paramCls.isServiceType() -> ForService(parameter)
 
-                // otherwise we cannot handle it
+                // Otherwise, we cannot handle it
                 else -> UnknownInjection(parameter)
             }
         }

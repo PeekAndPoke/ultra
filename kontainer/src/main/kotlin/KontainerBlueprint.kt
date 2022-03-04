@@ -86,11 +86,30 @@ class KontainerBlueprint internal constructor(
      * - have no transitive dependency to any of the dynamic services
      * - are no prototype services
      */
-    internal val singletons: Map<KClass<*>, ServiceProvider.ForSingleton> = definitions
+    internal val singletonDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
         .filterKeys { !dynamicDefinitions.contains(it) }
         .filterKeys { !semiDynamicDefinitions.contains(it) }
         .filterKeys { !prototypeDefinitions.contains(it) }
-        .mapValues { (_, v) -> ServiceProvider.ForSingleton(ServiceProvider.Type.Singleton, v) }
+
+
+    internal val serviceProviderProviders = mapOf<KClass<*>, ServiceProvider.Provider>()
+        .plus(
+            singletonDefinitions.mapValues { (_, v) ->
+                ServiceProvider.ForGlobalSingleton.Provider(ServiceProvider.Type.Singleton, v)
+            }
+        ).plus(
+            prototypeDefinitions.mapValues { (_, v) ->
+                ServiceProvider.ForPrototype.Provider(v)
+            }
+        ).plus(
+            semiDynamicDefinitions.mapValues { (_, v) ->
+                ServiceProvider.ForDynamicSingleton.Provider(ServiceProvider.Type.SemiDynamic, v)
+            }
+        ).plus(
+            dynamicDefinitions.mapValues { (_, v) ->
+                ServiceProvider.ForDynamicSingleton.Provider(ServiceProvider.Type.Dynamic, v)
+            }
+        )
 
     /**
      * Extends the current blueprint with everything in [builder] and returns a new [KontainerBlueprint]
@@ -143,9 +162,13 @@ class KontainerBlueprint internal constructor(
      */
     internal fun instantiate(dynamics: DynamicOverrides): Kontainer {
 
-        val registry = ServiceProviderRegistry(this, dynamics)
+        val factory = ServiceProviderFactory(
+            blueprint = this,
+            providerProviders = serviceProviderProviders,
+            dynamics = dynamics,
+        )
 
-        return Kontainer(registry).apply {
+        return Kontainer(factory).apply {
             // Track the Kontainer
             tracker.track(this)
         }
@@ -157,7 +180,7 @@ class KontainerBlueprint internal constructor(
         val container = instantiate(DynamicOverrides(emptyMap()))
 
         // Validate all service providers are consistent
-        val errors = container.providers
+        val errors = container.getFactory().getAllProviders()
             .mapValues { (_, v) -> v.validate(container) }
             .filterValues { it.isNotEmpty() }
             .toList()

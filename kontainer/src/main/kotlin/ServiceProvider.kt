@@ -8,6 +8,13 @@ import java.time.Instant
 interface ServiceProvider {
 
     /**
+     * Provides a [ServiceProvider]
+     */
+    interface Provider {
+        fun provide(): ServiceProvider
+    }
+
+    /**
      * Ways in which services are provided.
      *
      * This is mostly used for debugging and testing.
@@ -71,6 +78,15 @@ interface ServiceProvider {
         private val instance: Any
     ) : ServiceProvider {
 
+        class Provider(type: Type, instance: Any) : ServiceProvider.Provider {
+
+            private val provider = ForInstance(type = type, instance = instance)
+
+            override fun provide(): ForInstance {
+                return provider
+            }
+        }
+
         /**
          * The list of created instance always holds the [instance]
          */
@@ -90,12 +106,73 @@ interface ServiceProvider {
     }
 
     /**
-     * Provides a singleton service
+     * Provides a global singleton service
      */
-    data class ForSingleton internal constructor(
+    data class ForGlobalSingleton internal constructor(
         override val type: Type,
         val definition: ServiceDefinition
     ) : ServiceProvider {
+
+        class Provider(type: Type, definition: ServiceDefinition) : ServiceProvider.Provider {
+
+            private val provider = ForGlobalSingleton(type = type, definition = definition)
+
+            override fun provide(): ForGlobalSingleton {
+                return provider
+            }
+        }
+
+        /**
+         * True when the service instance was created
+         */
+        override val instances = mutableListOf<CreatedInstance>()
+
+        private var instance: Any? = null
+
+        /**
+         * Get or create the instance of the service
+         */
+        override fun provide(context: InjectionContext): Any = instance ?: synchronized(this) {
+            instance ?: create(context).apply {
+                instance = this
+                instances.add(CreatedInstance(this, Instant.now()))
+            }
+        }
+
+        /**
+         * Validates that all parameters can be provided
+         */
+        override fun validate(kontainer: Kontainer) = definition.producer.paramProviders.flatMap {
+            it.validate(kontainer)
+        }
+
+        /**
+         * Creates a new instance
+         */
+        private fun create(context: InjectionContext): Any = definition.producer.creator(
+            context.kontainer,
+            definition.producer.paramProviders.map {
+                it.provide(
+                    context.next(definition.produces)
+                )
+            }.toTypedArray()
+        )
+    }
+
+    /**
+     * Provides a global singleton service
+     */
+    data class ForDynamicSingleton internal constructor(
+        override val type: Type,
+        val definition: ServiceDefinition
+    ) : ServiceProvider {
+
+        class Provider(private val type: Type, private val definition: ServiceDefinition) : ServiceProvider.Provider {
+
+            override fun provide(): ForDynamicSingleton {
+                return ForDynamicSingleton(type = type, definition = definition)
+            }
+        }
 
         /**
          * True when the service instance was created
@@ -142,6 +219,13 @@ interface ServiceProvider {
     data class ForPrototype internal constructor(
         val definition: ServiceDefinition
     ) : ServiceProvider {
+
+        class Provider(private val definition: ServiceDefinition) : ServiceProvider.Provider {
+
+            override fun provide(): ForPrototype {
+                return ForPrototype(definition = definition)
+            }
+        }
 
         /**
          * The type is always prototype

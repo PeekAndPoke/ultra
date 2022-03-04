@@ -36,7 +36,7 @@ class FactoryMethodInjectionExample : SimpleExample() {
         val blueprint = kontainer {
             // We define the service using a factory method.
             // Injection is now only done for all parameters of the factory method.
-            singleton { counter: Counter ->
+            singleton(MyService::class) { counter: Counter ->
                 MyService(counter, 100)
             }
 

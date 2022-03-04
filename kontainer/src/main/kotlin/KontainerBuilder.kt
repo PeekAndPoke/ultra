@@ -206,13 +206,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      *
      * The service can by injected by the type [SRV] and its base types
      */
-    inline fun <reified SRV : Any> singleton() = singleton(SRV::class)
-
-    /**
-     * Registers a singleton service
-     *
-     * The service can by injected by the type [SRV] and its base types
-     */
     fun <SRV : Any, IMPL : SRV> singleton(srv: KClass<SRV>, impl: KClass<IMPL>) =
         addSingleton(srv, ServiceProducer.forClass(impl))
 
@@ -225,14 +218,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         addSingleton(srv, ServiceProducer.forFactory(factory))
 
     /**
-     * Registers a singleton service with variable number of parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, FAC : Function<IMPL>> singleton(factory: FAC) =
-        singleton(SRV::class, factory)
-
-    /**
      * Create a singleton via a factory method with 0 injected parameters
      *
      * The service can by injected by the type [SRV] and its base types
@@ -240,15 +225,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      */
     fun <SRV : Any, IMPL : SRV> singleton0(srv: KClass<SRV>, factory: () -> IMPL) =
         addSingleton(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a singleton via a factory method with 0 injected parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV> singleton0(noinline factory: () -> IMPL) =
-        singleton0(SRV::class, factory)
 
     /**
      * Create a singleton via a factory
@@ -265,15 +241,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1> singleton(noinline factory: (P1) -> IMPL) =
-        singleton(SRV::class, factory)
-
-    /**
-     * Create a singleton via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2> singleton(srv: KClass<SRV>, factory: (P1, P2) -> IMPL) =
         addSingleton(srv, ServiceProducer.forFactory(factory))
 
@@ -283,26 +250,8 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2> singleton(noinline factory: (P1, P2) -> IMPL) =
-        singleton(SRV::class, factory)
-
-    /**
-     * Create a singleton via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3> singleton(srv: KClass<SRV>, factory: (P1, P2, P3) -> IMPL) =
         addSingleton(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a singleton via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3> singleton(noinline factory: (P1, P2, P3) -> IMPL) =
-        singleton(SRV::class, factory)
 
     /**
      * Create a singleton via a factory
@@ -321,32 +270,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4> singleton(
-        noinline factory: (P1, P2, P3, P4) -> IMPL
-    ) =
-        singleton(SRV::class, factory)
-
-    /**
-     * Create a singleton via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5> singleton(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5) -> IMPL
     ) =
         addSingleton(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a singleton via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5> singleton(
-        noinline factory: (P1, P2, P3, P4, P5) -> IMPL
-    ) =
-        singleton(SRV::class, factory)
 
     /**
      * Create a singleton via a factory
@@ -365,32 +292,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6> singleton(
-        noinline factory: (P1, P2, P3, P4, P5, P6) -> IMPL
-    ) =
-        singleton(SRV::class, factory)
-
-    /**
-     * Create a singleton via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7> singleton(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7) -> IMPL
     ) =
         addSingleton(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a singleton via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7> singleton(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7) -> IMPL
-    ) =
-        singleton(SRV::class, factory)
 
     /**
      * Create a singleton via a factory
@@ -409,32 +314,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8> singleton(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8) -> IMPL
-    ) =
-        singleton(SRV::class, factory)
-
-    /**
-     * Create a singleton via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9> singleton(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9) -> IMPL
     ) =
         addSingleton(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a singleton via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9> singleton(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9) -> IMPL
-    ) =
-        singleton(SRV::class, factory)
 
     /**
      * Create a singleton via a factory
@@ -453,32 +336,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10> singleton(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) -> IMPL
-    ) =
-        singleton(SRV::class, factory)
-
-    /**
-     * Create a singleton via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> singleton(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11) -> IMPL
     ) =
         addSingleton(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a singleton via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> singleton(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11) -> IMPL
-    ) =
-        singleton(SRV::class, factory)
 
     /**
      * Create a singleton via a factory
@@ -497,32 +358,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12> singleton(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12) -> IMPL
-    ) =
-        singleton(SRV::class, factory)
-
-    /**
-     * Create a singleton via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13> singleton(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13) -> IMPL
     ) =
         addSingleton(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a singleton via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13> singleton(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13) -> IMPL
-    ) =
-        singleton(SRV::class, factory)
 
     /**
      * Create a singleton via a factory
@@ -542,35 +381,11 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV,
-            P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14> singleton(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14) -> IMPL
-    ) =
-        singleton(SRV::class, factory)
-
-    /**
-     * Create a singleton via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV,
             P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15> singleton(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15) -> IMPL
     ) =
         addSingleton(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a singleton via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV,
-            P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15> singleton(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15) -> IMPL
-    ) =
-        singleton(SRV::class, factory)
 
     /**
      * Create a singleton via a factory
@@ -584,18 +399,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     ) =
         addSingleton(srv, ServiceProducer.forFactory(factory))
 
-    /**
-     * Create a singleton via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV,
-            P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16> singleton(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16) -> IMPL
-    ) =
-        singleton(SRV::class, factory)
-
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Prototype Services
     // //
@@ -606,13 +409,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can be injected by the type [SRV] or its base types
      */
     fun <SRV : Any> prototype(srv: KClass<SRV>) = prototype(srv, srv)
-
-    /**
-     * Registers a prototype service
-     *
-     * The service can be injected by the type [SRV] or its base types
-     */
-    inline fun <reified SRV : Any> prototype() = prototype(SRV::class)
 
     /**
      * Registers a prototype service
@@ -632,14 +428,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         addPrototype(srv, ServiceProducer.forFactory(factory))
 
     /**
-     * Registers a prototype service with variable number of parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, FAC : Function<IMPL>> prototype(factory: FAC) =
-        prototype(SRV::class, factory)
-
-    /**
      * Create a Prototype via a factory method with 0 injected parameters
      *
      * The service can by injected by the type [SRV] and its base types
@@ -647,15 +435,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      */
     fun <SRV : Any, IMPL : SRV> prototype0(srv: KClass<SRV>, factory: () -> IMPL) =
         addPrototype(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a Prototype via a factory method with 0 injected parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV> prototype0(noinline factory: () -> IMPL) =
-        prototype0(SRV::class, factory)
 
     /**
      * Create a prototype via a factory
@@ -672,15 +451,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1> prototype(noinline factory: (P1) -> IMPL) =
-        prototype(SRV::class, factory)
-
-    /**
-     * Create a prototype via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2> prototype(srv: KClass<SRV>, factory: (P1, P2) -> IMPL) =
         addPrototype(srv, ServiceProducer.forFactory(factory))
 
@@ -690,26 +460,8 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2> prototype(noinline factory: (P1, P2) -> IMPL) =
-        prototype(SRV::class, factory)
-
-    /**
-     * Create a prototype via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3> prototype(srv: KClass<SRV>, factory: (P1, P2, P3) -> IMPL) =
         addPrototype(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a prototype via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3> prototype(noinline factory: (P1, P2, P3) -> IMPL) =
-        prototype(SRV::class, factory)
 
     /**
      * Create a prototype via a factory
@@ -728,32 +480,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4> prototype(
-        noinline factory: (P1, P2, P3, P4) -> IMPL
-    ) =
-        prototype(SRV::class, factory)
-
-    /**
-     * Create a prototype via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5> prototype(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5) -> IMPL
     ) =
         addPrototype(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a prototype via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5> prototype(
-        noinline factory: (P1, P2, P3, P4, P5) -> IMPL
-    ) =
-        prototype(SRV::class, factory)
 
     /**
      * Create a prototype via a factory
@@ -772,32 +502,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6> prototype(
-        noinline factory: (P1, P2, P3, P4, P5, P6) -> IMPL
-    ) =
-        prototype(SRV::class, factory)
-
-    /**
-     * Create a prototype via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7> prototype(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7) -> IMPL
     ) =
         addPrototype(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a prototype via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7> prototype(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7) -> IMPL
-    ) =
-        prototype(SRV::class, factory)
 
     /**
      * Create a prototype via a factory
@@ -816,32 +524,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8> prototype(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8) -> IMPL
-    ) =
-        prototype(SRV::class, factory)
-
-    /**
-     * Create a prototype via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9> prototype(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9) -> IMPL
     ) =
         addPrototype(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a prototype via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9> prototype(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9) -> IMPL
-    ) =
-        prototype(SRV::class, factory)
 
     /**
      * Create a prototype via a factory
@@ -860,32 +546,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10> prototype(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) -> IMPL
-    ) =
-        prototype(SRV::class, factory)
-
-    /**
-     * Create a prototype via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> prototype(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11) -> IMPL
     ) =
         addPrototype(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a prototype via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> prototype(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11) -> IMPL
-    ) =
-        prototype(SRV::class, factory)
 
     /**
      * Create a prototype via a factory
@@ -904,32 +568,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12> prototype(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12) -> IMPL
-    ) =
-        prototype(SRV::class, factory)
-
-    /**
-     * Create a prototype via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13> prototype(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13) -> IMPL
     ) =
         addPrototype(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a prototype via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13> prototype(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13) -> IMPL
-    ) =
-        prototype(SRV::class, factory)
 
     /**
      * Create a prototype via a factory
@@ -949,35 +591,11 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV,
-            P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14> prototype(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14) -> IMPL
-    ) =
-        prototype(SRV::class, factory)
-
-    /**
-     * Create a prototype via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV,
             P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15> prototype(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15) -> IMPL
     ) =
         addPrototype(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a prototype via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV,
-            P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15> prototype(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15) -> IMPL
-    ) =
-        prototype(SRV::class, factory)
 
     /**
      * Create a prototype via a factory
@@ -991,19 +609,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     ) =
         addPrototype(srv, ServiceProducer.forFactory(factory))
 
-    /**
-     * Create a prototype via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV,
-            P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16> prototype(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16) -> IMPL
-    ) =
-        prototype(SRV::class, factory)
-
-
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic Services
     // //
@@ -1014,13 +619,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can be injected by the type [SRV] and its base types.
      */
     fun <SRV : Any> dynamic(srv: KClass<SRV>) = dynamic(srv, srv)
-
-    /**
-     * Registers a dynamic service
-     *
-     * The service can be injected by the type [SRV] and its base types.
-     */
-    inline fun <reified SRV : Any> dynamic() = dynamic(SRV::class)
 
     /**
      * Registers a dynamic service [SRV] with a default implementation [IMPL]
@@ -1040,14 +638,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         addDynamic(srv, ServiceProducer.forFactory(factory))
 
     /**
-     * Registers a dynamic service with variable number of parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, FAC : Function<IMPL>> dynamic(factory: FAC) =
-        dynamic(SRV::class, factory)
-
-    /**
      * Create a dynamic singleton via a factory method with 0 injected parameters
      *
      * The service can by injected by the type [SRV] and its base types
@@ -1055,15 +645,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      */
     fun <SRV : Any, IMPL : SRV> dynamic0(srv: KClass<SRV>, factory: () -> IMPL) =
         addDynamic(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a singleton via a factory method 0 injected parameters
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV> dynamic0(noinline factory: () -> IMPL) =
-        dynamic0(SRV::class, factory)
 
     /**
      * Create a dynamic service via a factory
@@ -1080,15 +661,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1> dynamic(noinline factory: (P1) -> IMPL) =
-        dynamic(SRV::class, factory)
-
-    /**
-     * Create a dynamic service via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2> dynamic(srv: KClass<SRV>, factory: (P1, P2) -> IMPL) =
         addDynamic(srv, ServiceProducer.forFactory(factory))
 
@@ -1098,26 +670,8 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2> dynamic(noinline factory: (P1, P2) -> IMPL) =
-        dynamic(SRV::class, factory)
-
-    /**
-     * Create a dynamic service via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3> dynamic(srv: KClass<SRV>, factory: (P1, P2, P3) -> IMPL) =
         addDynamic(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a dynamic service via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3> dynamic(noinline factory: (P1, P2, P3) -> IMPL) =
-        dynamic(SRV::class, factory)
 
     /**
      * Create a dynamic service via a factory
@@ -1136,32 +690,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4> dynamic(
-        noinline factory: (P1, P2, P3, P4) -> IMPL
-    ) =
-        dynamic(SRV::class, factory)
-
-    /**
-     * Create a dynamic service via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5> dynamic(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5) -> IMPL
     ) =
         addDynamic(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a dynamic service via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5> dynamic(
-        noinline factory: (P1, P2, P3, P4, P5) -> IMPL
-    ) =
-        dynamic(SRV::class, factory)
 
     /**
      * Create a dynamic service via a factory
@@ -1180,32 +712,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6> dynamic(
-        noinline factory: (P1, P2, P3, P4, P5, P6) -> IMPL
-    ) =
-        dynamic(SRV::class, factory)
-
-    /**
-     * Create a dynamic service via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7> dynamic(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7) -> IMPL
     ) =
         addDynamic(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a dynamic service via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7> dynamic(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7) -> IMPL
-    ) =
-        dynamic(SRV::class, factory)
 
     /**
      * Create a dynamic service via a factory
@@ -1224,32 +734,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8> dynamic(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8) -> IMPL
-    ) =
-        dynamic(SRV::class, factory)
-
-    /**
-     * Create a dynamic service via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9> dynamic(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9) -> IMPL
     ) =
         addDynamic(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a dynamic service via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9> dynamic(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9) -> IMPL
-    ) =
-        dynamic(SRV::class, factory)
 
     /**
      * Create a dynamic service via a factory
@@ -1268,32 +756,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10> dynamic(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) -> IMPL
-    ) =
-        dynamic(SRV::class, factory)
-
-    /**
-     * Create a dynamic service via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> dynamic(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11) -> IMPL
     ) =
         addDynamic(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a dynamic service via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11> dynamic(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11) -> IMPL
-    ) =
-        dynamic(SRV::class, factory)
 
     /**
      * Create a dynamic service via a factory
@@ -1312,32 +778,10 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12> dynamic(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12) -> IMPL
-    ) =
-        dynamic(SRV::class, factory)
-
-    /**
-     * Create a dynamic service via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13> dynamic(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13) -> IMPL
     ) =
         addDynamic(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a dynamic service via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13> dynamic(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13) -> IMPL
-    ) =
-        dynamic(SRV::class, factory)
 
     /**
      * Create a dynamic service via a factory
@@ -1357,18 +801,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV,
-            P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14> dynamic(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14) -> IMPL
-    ) =
-        dynamic(SRV::class, factory)
-
-    /**
-     * Create a dynamic service via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV,
             P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15> dynamic(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15) -> IMPL
@@ -1381,34 +813,9 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    inline fun <reified SRV : Any, IMPL : SRV,
-            P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15> dynamic(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15) -> IMPL
-    ) =
-        dynamic(SRV::class, factory)
-
-    /**
-     * Create a dynamic service via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
     fun <SRV : Any, IMPL : SRV,
             P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16> dynamic(
         srv: KClass<SRV>, factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16) -> IMPL
     ) =
         addDynamic(srv, ServiceProducer.forFactory(factory))
-
-    /**
-     * Create a dynamic service via a factory
-     *
-     * The service can by injected by the type [SRV] and its base types
-     * The actual implementation will have the type [IMPL]
-     */
-    inline fun <reified SRV : Any, IMPL : SRV,
-            P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16> dynamic(
-        noinline factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16) -> IMPL
-    ) =
-        dynamic(SRV::class, factory)
-
 }

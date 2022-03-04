@@ -30,7 +30,7 @@ class NullableInjectionExample : SimpleExample() {
             // We define the first service as a singleton
             singleton(FirstService::class)
             // We define the other service with a factory method (notice the nullable closure parameter)
-            singleton { injected: NotRegisteredInKontainer? ->
+            singleton(SecondService::class) { injected: NotRegisteredInKontainer? ->
                 SecondService(injected)
             }
         }

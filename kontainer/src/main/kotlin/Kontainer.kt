@@ -8,17 +8,12 @@ import kotlin.reflect.KClass
  * The container
  */
 class Kontainer internal constructor(
-    private val registry: ServiceProviderRegistry,
+    private val factory: ServiceProviderFactory,
 ) {
     /**
      * The blueprint for this kontainer
      */
-    val blueprint: KontainerBlueprint = registry.blueprint
-
-    /**
-     * Class to service provider map
-     */
-    val providers: Map<KClass<*>, ServiceProvider> = registry.map
+    val blueprint: KontainerBlueprint = factory.blueprint
 
     /**
      * The root context is used, when services are directly requested from the Kontainer
@@ -32,7 +27,7 @@ class Kontainer internal constructor(
      *
      * This will reset all dynamic services, just like creating a new kontainer from a [KontainerBlueprint].
      */
-    fun clone(): Kontainer = registry.newKontainer()
+    fun clone(): Kontainer = factory.newKontainer()
 
     // getting services ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -91,7 +86,7 @@ class Kontainer internal constructor(
 
         val type = blueprint.superTypeLookup.getDistinctFor(cls)
 
-        return providers.getValue(type)
+        return factory.getProvider(type)
     }
 
     // getting parameters //////////////////////////////////////////////////////////////////////////////////////////////
@@ -111,13 +106,18 @@ class Kontainer internal constructor(
 
     // debug ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /**
+     * Get the underlying [ServiceProviderFactory].
+     */
+    fun getFactory(): ServiceProviderFactory = factory
+
     fun debugInfo(): KontainerDebugInfo {
 
         val config = blueprint.configValues
             .map { (k, v) -> k to "$v (${v::class.qualifiedName})" }
             .toMap()
 
-        val services = providers.map { provider ->
+        val services = factory.getAllProviders().map { provider ->
             KontainerDebugInfo.ServiceDebugInfo(
                 id = provider.key.qualifiedName ?: "n/a",
                 type = provider.value.type,
@@ -140,7 +140,7 @@ class Kontainer internal constructor(
         )
 
         rows.addAll(
-            providers.map { (k, v) ->
+            factory.getAllProviders().map { (k, v) ->
                 Triple(
                     k.qualifiedName ?: "n/a",
                     v.type.toString(),
@@ -150,9 +150,9 @@ class Kontainer internal constructor(
         )
 
         val lens = Triple(
-            rows.map { it.first.maxLineLength() }.maxOrNull() ?: 0,
-            rows.map { it.second.maxLineLength() }.maxOrNull() ?: 0,
-            rows.map { it.third.maxLineLength() }.maxOrNull() ?: 0
+            rows.maxOfOrNull { it.first.maxLineLength() } ?: 0,
+            rows.maxOfOrNull { it.second.maxLineLength() } ?: 0,
+            rows.maxOfOrNull { it.third.maxLineLength() } ?: 0
         )
 
         val services = rows.map {
