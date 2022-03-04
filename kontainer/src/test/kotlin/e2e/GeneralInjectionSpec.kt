@@ -57,7 +57,6 @@ class GeneralInjectionSpec : StringSpec({
 
             withClue("Requesting the same service twice must return the same instance") {
                 subject.get(CounterService::class) shouldBeSameInstanceAs subject.get(CounterService::class)
-
             }
 
             withClue("The service type must be correct") {

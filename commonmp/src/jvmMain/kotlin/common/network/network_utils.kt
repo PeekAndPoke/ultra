@@ -29,9 +29,7 @@ object NetworkUtils {
             }
             .joinToString("")
             .md5()
-
     } catch (e: SocketException) {
         Instant.now().toString().md5()
     }
 }
-

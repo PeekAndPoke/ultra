@@ -319,7 +319,6 @@ class PrototypeFactoriesSpec : StringSpec({
         validateWithBase(subject, 1111111)
     }
 
-
     "Prototype factory with one config params defined via dynamic function" {
 
         val blueprint = kontainer {
@@ -369,5 +368,4 @@ class PrototypeFactoriesSpec : StringSpec({
 
         validateWithBase(subject, 1111111111)
     }
-
 })

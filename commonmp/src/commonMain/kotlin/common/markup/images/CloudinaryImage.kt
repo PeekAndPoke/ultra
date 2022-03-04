@@ -8,7 +8,7 @@ data class CloudinaryImage(
     val rest: List<String>
 ) {
     val url
-        get() : String {
+        get(): String {
 
             val parts: List<String> = listOf(
                 appId,

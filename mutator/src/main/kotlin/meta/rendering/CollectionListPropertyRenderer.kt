@@ -15,11 +15,11 @@ class CollectionListPropertyRenderer(
         "java.util.List"
     )
 
-    override fun canHandle(type: TypeName) = type is ParameterizedTypeName
+    override fun canHandle(type: TypeName) = type is ParameterizedTypeName &&
             // is the type supported?
-            && supported.contains(type.rawType.fqn)
+            supported.contains(type.rawType.fqn) &&
             // and the contained type must be supported as well
-            && type.typeArguments.all { root.canHandle(it) }
+            type.typeArguments.all { root.canHandle(it) }
 
     override fun KotlinPrinter.renderPropertyImplementation(variable: MVariable) {
         // get the type name of the variable

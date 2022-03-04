@@ -91,7 +91,6 @@ class KontainerBlueprint internal constructor(
         .filterKeys { !semiDynamicDefinitions.contains(it) }
         .filterKeys { !prototypeDefinitions.contains(it) }
 
-
     /**
      * All precomputed [ServiceProvider.Provider]s
      */
