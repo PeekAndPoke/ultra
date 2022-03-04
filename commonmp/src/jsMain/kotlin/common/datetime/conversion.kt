@@ -26,4 +26,3 @@ fun Date.portable(time: Time = Time(0, 0, 0)): PortableDate = PortableDate(
 )
 
 val DateTime.portable get(): PortableDateTime = PortableDateTime(unixMillisLong)
-

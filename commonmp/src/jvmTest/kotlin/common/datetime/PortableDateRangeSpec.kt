@@ -44,7 +44,6 @@ class PortableDateRangeSpec : FreeSpec() {
 
                 subject.asPartialDateRange shouldBe PartialPortableDateRange(from = from, to = to)
             }
-
         }
 
         "Intersection" - {

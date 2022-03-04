@@ -42,5 +42,4 @@ class PortableDateTimeSpec : StringSpec({
             PortableDateTime(DOOMSDAY_TIMESTAMP + 1).isDoomsday() shouldBe true
         }
     }
-
 })
