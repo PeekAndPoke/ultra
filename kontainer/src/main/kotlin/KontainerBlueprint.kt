@@ -32,13 +32,13 @@ class KontainerBlueprint internal constructor(
     /**
      * Collect dynamic service definitions
      */
-    internal val dynamicDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
+    private val dynamicDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
         .filterValues { it.type == InjectionType.Dynamic }
 
     /**
      * Collect Prototype service definitions
      */
-    internal val prototypeDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
+    private val prototypeDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
         .filterValues { it.type == InjectionType.Prototype }
 
     /**
@@ -72,7 +72,7 @@ class KontainerBlueprint internal constructor(
      * These are services that where initially defined as singletons, but which inject dynamic services.
      * Or which inject services that themselves inject dynamic services etc...
      */
-    internal val semiDynamicDefinitions: Map<KClass<*>, ServiceDefinition> =
+    private val semiDynamicDefinitions: Map<KClass<*>, ServiceDefinition> =
         // prototype cannot be "downgraded" to be semi dynamic singletons
         dependencyLookUp.getAllDependents(dynamicsClasses)
             // prototype cannot be "downgraded" to be semi dynamic singletons
@@ -86,20 +86,19 @@ class KontainerBlueprint internal constructor(
      * - have no transitive dependency to any of the dynamic services
      * - are no prototype services
      */
-    internal val singletonDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
+    private val singletonDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
         .filterKeys { !dynamicDefinitions.contains(it) }
         .filterKeys { !semiDynamicDefinitions.contains(it) }
         .filterKeys { !prototypeDefinitions.contains(it) }
 
 
-    internal val serviceProviderProviders = mapOf<KClass<*>, ServiceProvider.Provider>()
+    /**
+     * All precomputed [ServiceProvider.Provider]s
+     */
+    private val serviceProviderProviders = mapOf<KClass<*>, ServiceProvider.Provider>()
         .plus(
             singletonDefinitions.mapValues { (_, v) ->
                 ServiceProvider.ForGlobalSingleton.Provider(ServiceProvider.Type.Singleton, v)
-            }
-        ).plus(
-            prototypeDefinitions.mapValues { (_, v) ->
-                ServiceProvider.ForPrototype.Provider(v)
             }
         ).plus(
             semiDynamicDefinitions.mapValues { (_, v) ->
@@ -108,6 +107,10 @@ class KontainerBlueprint internal constructor(
         ).plus(
             dynamicDefinitions.mapValues { (_, v) ->
                 ServiceProvider.ForDynamicSingleton.Provider(ServiceProvider.Type.Dynamic, v)
+            }
+        ).plus(
+            prototypeDefinitions.mapValues { (_, v) ->
+                ServiceProvider.ForPrototype.Provider(v)
             }
         )
 
