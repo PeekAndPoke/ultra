@@ -16,7 +16,7 @@ class SetsSpec : FreeSpec() {
                 row(setOf(1, 2), 2, setOf(1)),
             ).forEach { (subject, input, expected) ->
 
-                "${subject}.toggle($input) should be $expected" {
+                "$subject.toggle($input) should be $expected" {
                     subject.toggle(input) shouldBe expected
                 }
             }

@@ -5,4 +5,3 @@ interface GetAndSet<P> {
 
     operator fun invoke(input: P): P
 }
-

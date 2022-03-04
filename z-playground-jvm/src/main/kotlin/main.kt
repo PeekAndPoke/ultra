@@ -16,5 +16,4 @@ fun main() {
     println(
         Instant.ofEpochMilli(DOOMSDAY_TIMESTAMP)
     )
-
 }

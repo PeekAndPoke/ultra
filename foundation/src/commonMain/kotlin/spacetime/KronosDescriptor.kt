@@ -17,4 +17,3 @@ sealed class KronosDescriptor {
         val inner: KronosDescriptor,
     ) : KronosDescriptor()
 }
-
