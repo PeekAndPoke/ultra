@@ -5,6 +5,7 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 
 class BlueprintExtensionSpec : FreeSpec() {
@@ -45,6 +46,27 @@ class BlueprintExtensionSpec : FreeSpec() {
                     kontainerTwo.get(MyService::class).injects::class shouldBe MyImplTwo::class
                 }
             }
+        }
+
+        "Extended kontainers must share instance singletons" {
+
+            class MyService
+            class MyOtherOne
+            class MyOtherTwo
+
+            val blueprint = kontainer {
+                instance(MyService())
+            }
+
+            val extensionOne = blueprint.extend {
+                singleton(MyOtherOne::class)
+            }.create()
+
+            val extensionTwo = blueprint.extend {
+                singleton(MyOtherTwo::class)
+            }.create()
+
+            extensionOne.get(MyService::class) shouldBeSameInstanceAs extensionTwo.get(MyService::class)
         }
     }
 }

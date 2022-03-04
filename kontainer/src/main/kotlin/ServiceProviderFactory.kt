@@ -12,7 +12,7 @@ class ServiceProviderFactory(
     private val providerProviders: Map<KClass<*>, ServiceProvider.Provider> = providerProviders
         .plus(
             dynamics.overrides.map { (cls, provider) ->
-                blueprint.dynamicsBaseTypeLookUp.getDistinctFor(cls) to ServiceProvider.ForInstance.Provider(
+                blueprint.dynamicsBaseTypeLookUp.getDistinctFor(cls) to ServiceProvider.Provider.forInstance(
                     ServiceProvider.Type.DynamicOverride,
                     provider()
                 )

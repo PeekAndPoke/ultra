@@ -91,22 +91,21 @@ class KontainerBlueprint internal constructor(
         .filterKeys { !semiDynamicDefinitions.contains(it) }
         .filterKeys { !prototypeDefinitions.contains(it) }
 
-
     /**
      * All precomputed [ServiceProvider.Provider]s
      */
     private val serviceProviderProviders = mapOf<KClass<*>, ServiceProvider.Provider>()
         .plus(
             singletonDefinitions.mapValues { (_, v) ->
-                ServiceProvider.ForGlobalSingleton.Provider(ServiceProvider.Type.Singleton, v)
+                ServiceProvider.Provider.forGlobalSingleton(ServiceProvider.Type.Singleton, v)
             }
         ).plus(
             semiDynamicDefinitions.mapValues { (_, v) ->
-                ServiceProvider.ForDynamicSingleton.Provider(ServiceProvider.Type.SemiDynamic, v)
+                ServiceProvider.Provider.forDynamicSingleton(ServiceProvider.Type.SemiDynamic, v)
             }
         ).plus(
             dynamicDefinitions.mapValues { (_, v) ->
-                ServiceProvider.ForDynamicSingleton.Provider(ServiceProvider.Type.Dynamic, v)
+                ServiceProvider.Provider.forDynamicSingleton(ServiceProvider.Type.Dynamic, v)
             }
         ).plus(
             prototypeDefinitions.mapValues { (_, v) ->
@@ -116,8 +115,6 @@ class KontainerBlueprint internal constructor(
 
     /**
      * Extends the current blueprint with everything in [builder] and returns a new [KontainerBlueprint]
-     *
-     * TODO: test me
      */
     fun extend(builder: KontainerBuilder.() -> Unit): KontainerBlueprint {
 

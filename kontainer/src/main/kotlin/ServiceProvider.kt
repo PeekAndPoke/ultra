@@ -11,6 +11,49 @@ interface ServiceProvider {
      * Provides a [ServiceProvider]
      */
     interface Provider {
+
+        companion object {
+            fun forInstance(type: Type, instance: Any): Provider {
+                return ForInstance(type = type, instance = instance)
+            }
+
+            fun forGlobalSingleton(type: Type, definition: ServiceDefinition): Provider {
+                return ForGlobalSingleton(type = type, definition = definition)
+            }
+
+            fun forDynamicSingleton(type: Type, definition: ServiceDefinition): Provider {
+                return ForDynamicSingleton(type = type, definition = definition)
+            }
+        }
+
+        private class ForInstance(type: Type, instance: Any) : Provider {
+
+            private val provider = ServiceProvider.ForInstance(type = type, instance = instance)
+
+            override fun provide(): ServiceProvider.ForInstance {
+                return provider
+            }
+        }
+
+        private class ForGlobalSingleton(type: Type, definition: ServiceDefinition) : Provider {
+
+            private val provider = ForSingleton(type = type, definition = definition)
+
+            override fun provide(): ForSingleton {
+                return provider
+            }
+        }
+
+        private class ForDynamicSingleton(
+            private val type: Type,
+            private val definition: ServiceDefinition
+        ) : Provider {
+
+            override fun provide(): ForSingleton {
+                return ForSingleton(type = type, definition = definition)
+            }
+        }
+
         fun provide(): ServiceProvider
     }
 
@@ -78,15 +121,6 @@ interface ServiceProvider {
         private val instance: Any
     ) : ServiceProvider {
 
-        class Provider(type: Type, instance: Any) : ServiceProvider.Provider {
-
-            private val provider = ForInstance(type = type, instance = instance)
-
-            override fun provide(): ForInstance {
-                return provider
-            }
-        }
-
         /**
          * The list of created instance always holds the [instance]
          */
@@ -108,71 +142,10 @@ interface ServiceProvider {
     /**
      * Provides a global singleton service
      */
-    data class ForGlobalSingleton internal constructor(
+    data class ForSingleton internal constructor(
         override val type: Type,
         val definition: ServiceDefinition
     ) : ServiceProvider {
-
-        class Provider(type: Type, definition: ServiceDefinition) : ServiceProvider.Provider {
-
-            private val provider = ForGlobalSingleton(type = type, definition = definition)
-
-            override fun provide(): ForGlobalSingleton {
-                return provider
-            }
-        }
-
-        /**
-         * True when the service instance was created
-         */
-        override val instances = mutableListOf<CreatedInstance>()
-
-        private var instance: Any? = null
-
-        /**
-         * Get or create the instance of the service
-         */
-        override fun provide(context: InjectionContext): Any = instance ?: synchronized(this) {
-            instance ?: create(context).apply {
-                instance = this
-                instances.add(CreatedInstance(this, Instant.now()))
-            }
-        }
-
-        /**
-         * Validates that all parameters can be provided
-         */
-        override fun validate(kontainer: Kontainer) = definition.producer.paramProviders.flatMap {
-            it.validate(kontainer)
-        }
-
-        /**
-         * Creates a new instance
-         */
-        private fun create(context: InjectionContext): Any = definition.producer.creator(
-            context.kontainer,
-            definition.producer.paramProviders.map {
-                it.provide(
-                    context.next(definition.produces)
-                )
-            }.toTypedArray()
-        )
-    }
-
-    /**
-     * Provides a global singleton service
-     */
-    data class ForDynamicSingleton internal constructor(
-        override val type: Type,
-        val definition: ServiceDefinition
-    ) : ServiceProvider {
-
-        class Provider(private val type: Type, private val definition: ServiceDefinition) : ServiceProvider.Provider {
-
-            override fun provide(): ForDynamicSingleton {
-                return ForDynamicSingleton(type = type, definition = definition)
-            }
-        }
 
         /**
          * True when the service instance was created
