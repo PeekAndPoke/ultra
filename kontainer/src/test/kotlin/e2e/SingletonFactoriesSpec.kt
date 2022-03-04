@@ -133,7 +133,9 @@ class SingletonFactoriesSpec : StringSpec({
         val blueprint = kontainer {
             module(configs)
 
-            singleton(Config::class) { c1: Int -> Config(c1) }
+            singleton(Config::class) { c1: Int ->
+                Config(c1)
+            }
         }
 
         val subject = blueprint.create()
@@ -146,7 +148,9 @@ class SingletonFactoriesSpec : StringSpec({
         val blueprint = kontainer {
             module(configs)
 
-            singleton(Base::class) { c1: Int -> Config(c1) }
+            singleton(Base::class) { c1: Int ->
+                Config(c1)
+            }
         }
 
         val subject = blueprint.create()
@@ -159,7 +163,9 @@ class SingletonFactoriesSpec : StringSpec({
         val blueprint = kontainer {
             module(configs)
 
-            singleton(Config::class) { c1: Int, c2: Int -> Config(c1 + c2) }
+            singleton(Config::class) { c1: Int, c2: Int ->
+                Config(c1 + c2)
+            }
         }
 
         val subject = blueprint.create()
@@ -172,7 +178,9 @@ class SingletonFactoriesSpec : StringSpec({
         val blueprint = kontainer {
             module(configs)
 
-            singleton(Base::class) { c1: Int, c2: Int -> Config(c1 + c2) }
+            singleton(Base::class) { c1: Int, c2: Int ->
+                Config(c1 + c2)
+            }
         }
 
         val subject = blueprint.create()
@@ -185,7 +193,9 @@ class SingletonFactoriesSpec : StringSpec({
         val blueprint = kontainer {
             module(configs)
 
-            singleton(Config::class) { c1: Int, c2: Int, c3: Int -> Config(c1 + c2 + c3) }
+            singleton(Config::class) { c1: Int, c2: Int, c3: Int ->
+                Config(c1 + c2 + c3)
+            }
         }
 
         val subject = blueprint.create()
@@ -198,7 +208,9 @@ class SingletonFactoriesSpec : StringSpec({
         val blueprint = kontainer {
             module(configs)
 
-            singleton(Base::class) { c1: Int, c2: Int, c3: Int -> Config(c1 + c2 + c3) }
+            singleton(Base::class) { c1: Int, c2: Int, c3: Int ->
+                Config(c1 + c2 + c3)
+            }
         }
 
         val subject = blueprint.create()
@@ -211,7 +223,9 @@ class SingletonFactoriesSpec : StringSpec({
         val blueprint = kontainer {
             module(configs)
 
-            singleton(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int -> Config(c1 + c2 + c3 + c4) }
+            singleton(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int ->
+                Config(c1 + c2 + c3 + c4)
+            }
         }
 
         val subject = blueprint.create()
@@ -224,7 +238,9 @@ class SingletonFactoriesSpec : StringSpec({
         val blueprint = kontainer {
             module(configs)
 
-            singleton(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int -> Config(c1 + c2 + c3 + c4) }
+            singleton(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int ->
+                Config(c1 + c2 + c3 + c4)
+            }
         }
 
         val subject = blueprint.create()
@@ -237,7 +253,9 @@ class SingletonFactoriesSpec : StringSpec({
         val blueprint = kontainer {
             module(configs)
 
-            singleton(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int -> Config(c1 + c2 + c3 + c4 + c5) }
+            singleton(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int ->
+                Config(c1 + c2 + c3 + c4 + c5)
+            }
         }
 
         val subject = blueprint.create()
@@ -355,7 +373,8 @@ class SingletonFactoriesSpec : StringSpec({
         val blueprint = kontainer {
             module(configs)
 
-            singleton(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int, c9: Int ->
+            singleton(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int,
+                                       c9: Int ->
                 Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9)
             }
         }
@@ -465,10 +484,10 @@ class SingletonFactoriesSpec : StringSpec({
         val blueprint = kontainer {
             module(configs)
 
-            val provider: Function<Config> =
-                { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int, c9: Int, c10: Int ->
-                    Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9 + c10)
-                }
+            val provider: Function<Config> = { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int,
+                                               c9: Int, c10: Int ->
+                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9 + c10)
+            }
 
             singleton(Base::class, provider)
         }
