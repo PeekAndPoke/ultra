@@ -2,9 +2,9 @@ package de.peekandpoke.ultra.kontainer.e2e
 
 import de.peekandpoke.ultra.kontainer.AnotherSimpleService
 import de.peekandpoke.ultra.kontainer.ConfigIntInjecting
+import de.peekandpoke.ultra.kontainer.CounterService
 import de.peekandpoke.ultra.kontainer.InjectingService
 import de.peekandpoke.ultra.kontainer.KontainerModule
-import de.peekandpoke.ultra.kontainer.CounterService
 import de.peekandpoke.ultra.kontainer.kontainer
 import de.peekandpoke.ultra.kontainer.module
 import io.kotest.assertions.assertSoftly
@@ -16,7 +16,7 @@ class ModulesSpec : StringSpec({
     "Creating a module" {
 
         val subject = module {
-            singleton<CounterService>()
+            singleton(CounterService::class)
         }
 
         subject::class shouldBe KontainerModule::class
@@ -26,18 +26,18 @@ class ModulesSpec : StringSpec({
 
         val moduleOne = module {
             config("configInt", 100)
-            singleton<CounterService>()
+            singleton(CounterService::class)
         }
 
         val moduleTwo = module {
-            singleton<AnotherSimpleService>()
+            singleton(AnotherSimpleService::class)
         }
 
         val kontainer = kontainer {
             module(moduleOne)
             module(moduleTwo)
-            singleton<InjectingService>()
-            singleton<ConfigIntInjecting>()
+            singleton(InjectingService::class)
+            singleton(ConfigIntInjecting::class)
         }.create()
 
         assertSoftly {

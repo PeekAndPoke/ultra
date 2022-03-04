@@ -28,7 +28,7 @@ class DynamicServicesSpec : StringSpec({
 
             val error = shouldThrow<InvalidClassProvided> {
                 kontainer {
-                    dynamic<MyService>()
+                    dynamic(MyService::class)
                 }
             }
 
@@ -61,7 +61,7 @@ class DynamicServicesSpec : StringSpec({
     "Providing a dynamic service when creating he kontainer" {
 
         val blueprint = kontainer {
-            dynamic<CounterService>()
+            dynamic(CounterService::class)
         }
 
         val subject = blueprint.create {
@@ -101,7 +101,7 @@ class DynamicServicesSpec : StringSpec({
     "Providing a dynamic service and getting it multiple times from the SAME container" {
 
         val blueprint = kontainer {
-            dynamic<CounterService>()
+            dynamic(CounterService::class)
         }
 
         val subject = blueprint.create {
@@ -125,7 +125,7 @@ class DynamicServicesSpec : StringSpec({
     "Providing a dynamic service and getting it multiple times from DIFFERENT container" {
 
         val blueprint = kontainer {
-            dynamic<CounterService>()
+            dynamic(CounterService::class)
         }
 
         val containerOne = blueprint.create {
@@ -150,7 +150,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic0 { DynamicService(100) }
+            dynamic0(DynamicService::class) { DynamicService(100) }
         }
 
         val subject = blueprint.create()
@@ -169,7 +169,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic0 { DynamicService(100) }
+            dynamic0(DynamicService::class) { DynamicService(100) }
         }
 
         val subject = blueprint.create()
@@ -187,7 +187,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic0 { DynamicService(100) }
+            dynamic0(DynamicService::class) { DynamicService(100) }
         }
 
         val subjectOne = blueprint.create()
@@ -206,7 +206,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic0 { DynamicService(100) }
+            dynamic0(DynamicService::class) { DynamicService(100) }
         }
 
         val subject = blueprint.create {
@@ -233,7 +233,7 @@ class DynamicServicesSpec : StringSpec({
         class DerivedService(value: Int) : DynamicService(value)
 
         val blueprint = kontainer {
-            dynamic0 { DynamicService(100) }
+            dynamic0(DynamicService::class) { DynamicService(100) }
         }
 
         val subject = blueprint.create {
@@ -260,7 +260,7 @@ class DynamicServicesSpec : StringSpec({
         class DerivedService(value: Int) : DynamicService(value)
 
         val blueprint = kontainer {
-            dynamic0 { DynamicService(100) }
+            dynamic0(DynamicService::class) { DynamicService(100) }
         }
 
         val subject = blueprint.create {
@@ -285,17 +285,17 @@ class DynamicServicesSpec : StringSpec({
 
         val blueprint = kontainer {
             // This one must stay a GlobalSingleton
-            singleton<SomeIndependentService>()
+            singleton(SomeIndependentService::class)
 
             // this one injects InjectingService and has to become SemiDynamic
-            singleton<DeeperInjectingService>()
+            singleton(DeeperInjectingService::class)
             // this one injects InjectingService SimpleService and has to become SemiDynamic
-            singleton<InjectingService>()
+            singleton(InjectingService::class)
 
             // this one has to be Dynamic
-            dynamic<CounterService>()
+            dynamic(CounterService::class)
             // this one has to be Dynamic
-            dynamic<AnotherSimpleService>()
+            dynamic(AnotherSimpleService::class)
         }
 
         val subject = blueprint.create {
@@ -326,9 +326,9 @@ class DynamicServicesSpec : StringSpec({
 
         val blueprint = kontainer {
 
-            dynamic<Impl>()
+            dynamic(Impl::class)
 
-            singleton<Injecting>()
+            singleton(Injecting::class)
         }
 
         val subject = blueprint.create {
@@ -354,7 +354,7 @@ class DynamicServicesSpec : StringSpec({
 
             dynamic(Base::class, Impl::class)
 
-            singleton<Injecting>()
+            singleton(Injecting::class)
         }
 
         val subject = blueprint.create {
@@ -383,7 +383,7 @@ class DynamicServicesSpec : StringSpec({
 
             dynamic(Base::class, Impl::class)
 
-            singleton { base: Base -> Injecting(base.value) }
+            singleton(Injecting::class) { base: Base -> Injecting(base.value) }
         }
 
         val subject = blueprint.create {
@@ -408,9 +408,9 @@ class DynamicServicesSpec : StringSpec({
 
         val blueprint = kontainer {
 
-            dynamic<Impl>()
+            dynamic(Impl::class)
 
-            singleton<Injecting>()
+            singleton(Injecting::class)
         }
 
         val subject = blueprint.create { with { Impl() } }
@@ -431,8 +431,8 @@ class DynamicServicesSpec : StringSpec({
         data class Injecting(val service: Lazy<Base>)
 
         val blueprint = kontainer {
-            singleton<Impl>()
-            singleton<Injecting>()
+            singleton(Impl::class)
+            singleton(Injecting::class)
         }
 
         val subject = blueprint.create()
@@ -454,11 +454,9 @@ class DynamicServicesSpec : StringSpec({
         data class Injecting(val all: List<Base>)
 
         val blueprint = kontainer {
-
-            singleton<Injecting>()
-
-            singleton<ImplOne>()
-            dynamic<ImplTwo>()
+            singleton(Injecting::class)
+            singleton(ImplOne::class)
+            dynamic(ImplTwo::class)
         }
 
         val subject = blueprint.create { with { ImplTwo() } }
@@ -482,11 +480,9 @@ class DynamicServicesSpec : StringSpec({
         data class Injecting(val all: List<Base>)
 
         val blueprint = kontainer {
-
-            singleton<Injecting>()
-
-            singleton<ImplOne>()
-            singleton<ImplTwo>()
+            singleton(Injecting::class)
+            singleton(ImplOne::class)
+            singleton(ImplTwo::class)
         }
 
         val subject = blueprint.create()
@@ -510,11 +506,9 @@ class DynamicServicesSpec : StringSpec({
         data class Injecting(val all: Lazy<List<Base>>)
 
         val blueprint = kontainer {
-
-            singleton<Injecting>()
-
-            singleton<ImplOne>()
-            dynamic<ImplTwo>()
+            singleton(Injecting::class)
+            singleton(ImplOne::class)
+            dynamic(ImplTwo::class)
         }
 
         val subject = blueprint.create { with { ImplTwo() } }
@@ -538,11 +532,9 @@ class DynamicServicesSpec : StringSpec({
         data class Injecting(val all: Lazy<List<Base>>)
 
         val blueprint = kontainer {
-
-            singleton<Injecting>()
-
-            singleton<ImplOne>()
-            singleton<ImplTwo>()
+            singleton(Injecting::class)
+            singleton(ImplOne::class)
+            singleton(ImplTwo::class)
         }
 
         val subject = blueprint.create()
@@ -566,11 +558,9 @@ class DynamicServicesSpec : StringSpec({
         data class Injecting(val all: Lookup<Base>)
 
         val blueprint = kontainer {
-
-            singleton<Injecting>()
-
-            singleton<ImplOne>()
-            dynamic<ImplTwo>()
+            singleton(Injecting::class)
+            singleton(ImplOne::class)
+            dynamic(ImplTwo::class)
         }
 
         val subjectOne = blueprint.create { with { ImplTwo() } }
@@ -604,11 +594,9 @@ class DynamicServicesSpec : StringSpec({
         data class Injecting(val all: Lookup<Base>)
 
         val blueprint = kontainer {
-
-            singleton<Injecting>()
-
-            singleton<ImplOne>()
-            singleton<ImplTwo>()
+            singleton(Injecting::class)
+            singleton(ImplOne::class)
+            singleton(ImplTwo::class)
         }
 
         val subject = blueprint.create()

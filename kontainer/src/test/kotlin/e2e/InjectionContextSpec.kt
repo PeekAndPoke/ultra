@@ -17,7 +17,7 @@ class InjectionContextSpec : StringSpec({
 
         val blueprint = kontainer {
 
-            prototype { context: InjectionContext -> MyInjected(context.requestingClass) }
+            prototype(MyInjected::class) { context: InjectionContext -> MyInjected(context.requestingClass) }
         }
 
         val subject = blueprint.create()
@@ -37,7 +37,7 @@ class InjectionContextSpec : StringSpec({
 
             prototype(MyInjector::class)
 
-            prototype { context: InjectionContext -> MyInjected(context.requestingClass) }
+            prototype(MyInjected::class) { context: InjectionContext -> MyInjected(context.requestingClass) }
         }
 
         val subject = blueprint.create()
@@ -62,7 +62,7 @@ class InjectionContextSpec : StringSpec({
             prototype(MyOuter::class)
             prototype(MyMiddle::class)
 
-            prototype { context: InjectionContext -> MyInner(context.requestingClass) }
+            prototype(MyInner::class) { context: InjectionContext -> MyInner(context.requestingClass) }
         }
 
         val subject = blueprint.create()
@@ -84,7 +84,7 @@ class InjectionContextSpec : StringSpec({
 
             prototype(MyInjector::class)
 
-            prototype { context: InjectionContext -> MyInjected(context.requestingClass) }
+            prototype(MyInjected::class) { context: InjectionContext -> MyInjected(context.requestingClass) }
         }
 
         val subject = blueprint.create()
@@ -108,8 +108,8 @@ class InjectionContextSpec : StringSpec({
 
             prototype(MyInjector::class)
 
-            prototype { context: InjectionContext -> MyInjectedOne(context.requestingClass) }
-            prototype { context: InjectionContext -> MyInjectedTwo(context.requestingClass) }
+            prototype(MyInjectedOne::class) { context: InjectionContext -> MyInjectedOne(context.requestingClass) }
+            prototype(MyInjectedTwo::class) { context: InjectionContext -> MyInjectedTwo(context.requestingClass) }
         }
 
         val subject = blueprint.create()
@@ -135,8 +135,8 @@ class InjectionContextSpec : StringSpec({
 
             prototype(MyInjector::class)
 
-            prototype { context: InjectionContext -> MyInjectedOne(context.requestingClass) }
-            prototype { context: InjectionContext -> MyInjectedTwo(context.requestingClass) }
+            prototype(MyInjectedOne::class) { context: InjectionContext -> MyInjectedOne(context.requestingClass) }
+            prototype(MyInjectedTwo::class) { context: InjectionContext -> MyInjectedTwo(context.requestingClass) }
         }
 
         val subject = blueprint.create()

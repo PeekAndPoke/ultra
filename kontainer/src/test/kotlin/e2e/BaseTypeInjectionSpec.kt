@@ -3,10 +3,10 @@ package de.peekandpoke.ultra.kontainer.e2e
 import de.peekandpoke.ultra.kontainer.AmbiguousImplOne
 import de.peekandpoke.ultra.kontainer.AmbiguousImplTwo
 import de.peekandpoke.ultra.kontainer.AnotherSimpleService
+import de.peekandpoke.ultra.kontainer.CounterService
 import de.peekandpoke.ultra.kontainer.InjectingAllAmbiguous
 import de.peekandpoke.ultra.kontainer.InjectingAmbiguous
 import de.peekandpoke.ultra.kontainer.KontainerInconsistent
-import de.peekandpoke.ultra.kontainer.CounterService
 import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
@@ -23,7 +23,7 @@ class BaseTypeInjectionSpec : StringSpec({
     "Injecting a service by its base class" {
 
         val subject = kontainer {
-            singleton<MyServiceImpl>()
+            singleton(MyServiceImpl::class)
         }.create()
 
         assertSoftly {
@@ -34,9 +34,9 @@ class BaseTypeInjectionSpec : StringSpec({
     "Service with an ambiguous dependency" {
 
         val blueprint = kontainer {
-            singleton<InjectingAmbiguous>()
-            singleton<AmbiguousImplOne>()
-            singleton<AmbiguousImplTwo>()
+            singleton(InjectingAmbiguous::class)
+            singleton(AmbiguousImplOne::class)
+            singleton(AmbiguousImplTwo::class)
         }
 
         assertSoftly {
@@ -51,12 +51,12 @@ class BaseTypeInjectionSpec : StringSpec({
     "Creating a container with a service that injects all services of a base type" {
 
         val subject = kontainer {
-            singleton<InjectingAllAmbiguous>()
-            singleton<AmbiguousImplOne>()
-            singleton<AmbiguousImplTwo>()
+            singleton(InjectingAllAmbiguous::class)
+            singleton(AmbiguousImplOne::class)
+            singleton(AmbiguousImplTwo::class)
 
-            singleton<CounterService>()
-            singleton<AnotherSimpleService>()
+            singleton(CounterService::class)
+            singleton(AnotherSimpleService::class)
         }.create()
 
         assertSoftly {

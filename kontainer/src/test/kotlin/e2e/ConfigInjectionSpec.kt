@@ -15,7 +15,7 @@ class ConfigInjectionSpec : StringSpec({
     "Injecting a missing config value" {
 
         val blueprint = kontainer {
-            singleton<ConfigIntInjecting>()
+            singleton(ConfigIntInjecting::class)
         }
 
         assertSoftly {
@@ -34,7 +34,7 @@ class ConfigInjectionSpec : StringSpec({
 
         val blueprint = kontainer {
             config("configInt", "this is no int")
-            singleton<ConfigIntInjecting>()
+            singleton(ConfigIntInjecting::class)
         }
 
         assertSoftly {
@@ -59,7 +59,7 @@ class ConfigInjectionSpec : StringSpec({
             config("string", "TEXT")
             config("boolean", true)
 
-            singleton<ConfigAllInjecting>()
+            singleton(ConfigAllInjecting::class)
         }
 
         val subject = blueprint.create()

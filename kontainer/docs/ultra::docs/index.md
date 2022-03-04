@@ -409,7 +409,7 @@ class MyService(private val counter: Counter, private val offset: Int) {
 val blueprint = kontainer {
     // We define the service using a factory method.
     // Injection is now only done for all parameters of the factory method.
-    singleton { counter: Counter ->
+    singleton(MyService::class) { counter: Counter ->
         MyService(counter, 100)
     }
 
@@ -538,7 +538,7 @@ val blueprint = kontainer {
     // We define the first service as a singleton
     singleton(FirstService::class)
     // We define the other service with a factory method (notice the nullable closure parameter)
-    singleton { injected: NotRegisteredInKontainer? ->
+    singleton(SecondService::class) { injected: NotRegisteredInKontainer? ->
         SecondService(injected)
     }
 }

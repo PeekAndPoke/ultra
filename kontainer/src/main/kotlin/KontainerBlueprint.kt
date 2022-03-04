@@ -32,13 +32,13 @@ class KontainerBlueprint internal constructor(
     /**
      * Collect dynamic service definitions
      */
-    internal val dynamicDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
+    private val dynamicDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
         .filterValues { it.type == InjectionType.Dynamic }
 
     /**
      * Collect Prototype service definitions
      */
-    internal val prototypeDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
+    private val prototypeDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
         .filterValues { it.type == InjectionType.Prototype }
 
     /**
@@ -72,7 +72,7 @@ class KontainerBlueprint internal constructor(
      * These are services that where initially defined as singletons, but which inject dynamic services.
      * Or which inject services that themselves inject dynamic services etc...
      */
-    internal val semiDynamicDefinitions: Map<KClass<*>, ServiceDefinition> =
+    private val semiDynamicDefinitions: Map<KClass<*>, ServiceDefinition> =
         // prototype cannot be "downgraded" to be semi dynamic singletons
         dependencyLookUp.getAllDependents(dynamicsClasses)
             // prototype cannot be "downgraded" to be semi dynamic singletons
@@ -86,11 +86,33 @@ class KontainerBlueprint internal constructor(
      * - have no transitive dependency to any of the dynamic services
      * - are no prototype services
      */
-    internal val singletons: Map<KClass<*>, ServiceProvider.ForSingleton> = definitions
+    private val singletonDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
         .filterKeys { !dynamicDefinitions.contains(it) }
         .filterKeys { !semiDynamicDefinitions.contains(it) }
         .filterKeys { !prototypeDefinitions.contains(it) }
-        .mapValues { (_, v) -> ServiceProvider.ForSingleton(ServiceProvider.Type.Singleton, v) }
+
+
+    /**
+     * All precomputed [ServiceProvider.Provider]s
+     */
+    private val serviceProviderProviders = mapOf<KClass<*>, ServiceProvider.Provider>()
+        .plus(
+            singletonDefinitions.mapValues { (_, v) ->
+                ServiceProvider.ForGlobalSingleton.Provider(ServiceProvider.Type.Singleton, v)
+            }
+        ).plus(
+            semiDynamicDefinitions.mapValues { (_, v) ->
+                ServiceProvider.ForDynamicSingleton.Provider(ServiceProvider.Type.SemiDynamic, v)
+            }
+        ).plus(
+            dynamicDefinitions.mapValues { (_, v) ->
+                ServiceProvider.ForDynamicSingleton.Provider(ServiceProvider.Type.Dynamic, v)
+            }
+        ).plus(
+            prototypeDefinitions.mapValues { (_, v) ->
+                ServiceProvider.ForPrototype.Provider(v)
+            }
+        )
 
     /**
      * Extends the current blueprint with everything in [builder] and returns a new [KontainerBlueprint]
@@ -143,9 +165,13 @@ class KontainerBlueprint internal constructor(
      */
     internal fun instantiate(dynamics: DynamicOverrides): Kontainer {
 
-        val registry = ServiceProviderRegistry(this, dynamics)
+        val factory = ServiceProviderFactory(
+            blueprint = this,
+            providerProviders = serviceProviderProviders,
+            dynamics = dynamics,
+        )
 
-        return Kontainer(registry).apply {
+        return Kontainer(factory).apply {
             // Track the Kontainer
             tracker.track(this)
         }
@@ -157,7 +183,7 @@ class KontainerBlueprint internal constructor(
         val container = instantiate(DynamicOverrides(emptyMap()))
 
         // Validate all service providers are consistent
-        val errors = container.providers
+        val errors = container.getFactory().getAllProviders()
             .mapValues { (_, v) -> v.validate(container) }
             .filterValues { it.isNotEmpty() }
             .toList()

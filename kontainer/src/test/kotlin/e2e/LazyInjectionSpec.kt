@@ -1,9 +1,9 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
 import de.peekandpoke.ultra.common.Lookup
+import de.peekandpoke.ultra.kontainer.CounterService
 import de.peekandpoke.ultra.kontainer.LazilyInjecting
 import de.peekandpoke.ultra.kontainer.LazyServiceLookup
-import de.peekandpoke.ultra.kontainer.CounterService
 import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
@@ -14,8 +14,8 @@ class LazyInjectionSpec : StringSpec({
     "Injecting a service lazily" {
 
         val subject = kontainer {
-            singleton<CounterService>()
-            singleton<LazilyInjecting>()
+            singleton(CounterService::class)
+            singleton(LazilyInjecting::class)
         }.create()
 
         subject.get<CounterService>().inc()

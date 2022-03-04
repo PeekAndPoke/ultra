@@ -1,12 +1,12 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
 import de.peekandpoke.ultra.kontainer.AnotherSimpleService
+import de.peekandpoke.ultra.kontainer.CounterService
 import de.peekandpoke.ultra.kontainer.InjectingService
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.kontainer.KontainerInconsistent
 import de.peekandpoke.ultra.kontainer.ServiceNotFound
 import de.peekandpoke.ultra.kontainer.ServiceProvider
-import de.peekandpoke.ultra.kontainer.CounterService
 import de.peekandpoke.ultra.kontainer.kontainer
 import de.peekandpoke.ultra.kontainer.module
 import io.kotest.assertions.assertSoftly
@@ -69,9 +69,9 @@ class DynamicFactoriesSpec : StringSpec({
     "Dynamic factory that has missing dependencies" {
 
         val blueprint = kontainer {
-            singleton<CounterService>()
+            singleton(CounterService::class)
 
-            dynamic { simple: CounterService, another: AnotherSimpleService ->
+            dynamic(InjectingService::class) { simple: CounterService, another: AnotherSimpleService ->
                 InjectingService(simple, another)
             }
         }
@@ -92,8 +92,8 @@ class DynamicFactoriesSpec : StringSpec({
     "Dynamic factory with two dependencies" {
 
         val subject = kontainer {
-            singleton<CounterService>()
-            singleton<AnotherSimpleService>()
+            singleton(CounterService::class)
+            singleton(AnotherSimpleService::class)
 
             dynamic(InjectingService::class) { simple: CounterService, another: AnotherSimpleService ->
                 InjectingService(simple, another)
@@ -108,7 +108,7 @@ class DynamicFactoriesSpec : StringSpec({
     "Dynamic factory with zero params" {
 
         val subject = kontainer {
-            dynamic0 { Config(0) }
+            dynamic0(Config::class) { Config(0) }
         }.create()
 
         validateWithoutBase(subject, 0)
@@ -128,7 +128,7 @@ class DynamicFactoriesSpec : StringSpec({
         val subject = kontainer {
             module(configs)
 
-            dynamic { c1: Int -> Config(c1) }
+            dynamic(Config::class) { c1: Int -> Config(c1) }
         }.create()
 
         validateWithoutBase(subject, 1)
@@ -150,7 +150,7 @@ class DynamicFactoriesSpec : StringSpec({
         val subject = kontainer {
             module(configs)
 
-            dynamic { c1: Int, c2: Int -> Config(c1 + c2) }
+            dynamic(Config::class) { c1: Int, c2: Int -> Config(c1 + c2) }
         }.create()
 
         validateWithoutBase(subject, 11)
@@ -172,7 +172,7 @@ class DynamicFactoriesSpec : StringSpec({
         val subject = kontainer {
             module(configs)
 
-            dynamic { c1: Int, c2: Int, c3: Int -> Config(c1 + c2 + c3) }
+            dynamic(Config::class) { c1: Int, c2: Int, c3: Int -> Config(c1 + c2 + c3) }
         }.create()
 
         validateWithoutBase(subject, 111)
@@ -194,7 +194,7 @@ class DynamicFactoriesSpec : StringSpec({
         val subject = kontainer {
             module(configs)
 
-            dynamic { c1: Int, c2: Int, c3: Int, c4: Int -> Config(c1 + c2 + c3 + c4) }
+            dynamic(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int -> Config(c1 + c2 + c3 + c4) }
         }.create()
 
         validateWithoutBase(subject, 1111)
@@ -216,7 +216,7 @@ class DynamicFactoriesSpec : StringSpec({
         val subject = kontainer {
             module(configs)
 
-            dynamic { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int -> Config(c1 + c2 + c3 + c4 + c5) }
+            dynamic(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int -> Config(c1 + c2 + c3 + c4 + c5) }
         }.create()
 
         validateWithoutBase(subject, 11111)
@@ -240,7 +240,7 @@ class DynamicFactoriesSpec : StringSpec({
         val subject = kontainer {
             module(configs)
 
-            dynamic { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int ->
+            dynamic(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int ->
                 Config(c1 + c2 + c3 + c4 + c5 + c6)
             }
         }.create()
@@ -266,7 +266,7 @@ class DynamicFactoriesSpec : StringSpec({
         val subject = kontainer {
             module(configs)
 
-            dynamic { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
+            dynamic(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
                 Config(c1 + c2 + c3 + c4 + c5 + c6 + c7)
             }
         }.create()
