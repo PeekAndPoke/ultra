@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
+import de.peekandpoke.ultra.kontainer.AnotherInjectingService
 import de.peekandpoke.ultra.kontainer.AnotherSimpleService
 import de.peekandpoke.ultra.kontainer.CounterService
 import de.peekandpoke.ultra.kontainer.CounterServiceEx01
@@ -121,6 +122,46 @@ class ServiceProviderFactorySpec : StringSpec({
             withClue("Both container must use the same provider") {
                 first.getFactory().getProvider(CounterService::class) shouldBeSameInstanceAs
                         second.getFactory().getProvider(CounterService::class)
+            }
+        }
+    }
+
+    "Semi Dynamic service providers stay the same instance for a kontainer instance" {
+
+        val blueprint = kontainer {
+            dynamic(AnotherSimpleService::class)
+            singleton(AnotherInjectingService::class)
+        }
+
+        val kontainer = blueprint.create()
+
+        kontainer.getFactory().getProvider(AnotherInjectingService::class) shouldBeSameInstanceAs
+                kontainer.getFactory().getProvider(AnotherInjectingService::class)
+
+        kontainer.getFactory().getProvider(AnotherInjectingService::class).type shouldBe
+                ServiceProvider.Type.SemiDynamic
+    }
+
+    "Semi Dynamic service providers must NOT be shared across kontainer instances" {
+
+        val blueprint = kontainer {
+            dynamic(AnotherSimpleService::class)
+            singleton(AnotherInjectingService::class)
+        }
+
+        val first = blueprint.create()
+        val second = blueprint.create()
+
+        assertSoftly {
+
+            withClue("Initially no providers must be created") {
+                first.getFactory().isProviderCreated(AnotherInjectingService::class) shouldBe false
+                second.getFactory().isProviderCreated(AnotherInjectingService::class) shouldBe false
+            }
+
+            withClue("Both container must use different providers") {
+                first.getFactory().getProvider(AnotherInjectingService::class) shouldNotBeSameInstanceAs
+                        second.getFactory().getProvider(AnotherInjectingService::class)
             }
         }
     }
