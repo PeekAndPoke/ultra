@@ -9,7 +9,7 @@ object Deps {
     }
 
     // //////////////////////////////////////////////////////////////////
-    const val kotlinVersion = "1.5.31"
+    const val kotlinVersion = "1.6.10"
     // //////////////////////////////////////////////////////////////////
 
     // Publishing //////////////////////////////////////////////////////
@@ -17,44 +17,55 @@ object Deps {
     const val mavenPublishVersion = "0.14.2"
     // //////////////////////////////////////////////////////////////////
 
-    private const val auth0_java_jwt_version = "3.18.1"
+    // https://mvnrepository.com/artifact/com.auth0/java-jwt
+    private const val auth0_java_jwt_version = "3.18.3"
     const val auth0_java_jwt = "com.auth0:java-jwt:$auth0_java_jwt_version"
 
     // TODO: check if we can update to 3.x
     private const val diffutils_version = "2.2"
     const val diffutils = "com.github.wumpz:diffutils:$diffutils_version"
 
-    // org.jetbrains.dokka
-    const val dokkaVersion = "1.5.0"
+    // https://mvnrepository.com/artifact/org.jetbrains.dokka/dokka-gradle-plugin
+    // Dokka gradle plugin org.jetbrains.dokka
+    const val dokkaVersion = "1.6.10"
 
-    private const val google_auto_service_version = "1.0"
+    // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
+    private const val google_auto_service_version = "1.0.1"
     const val google_auto_service = "com.google.auto.service:auto-service:$google_auto_service_version"
 
+    // https://jitpack.io/#matfax/klassindex
+    // TODO: remove this library and build out own!
     private const val klassIndexVersion = "4.1.0-rc.1"
     const val klassIndexLib = "com.github.matfax.klassindex:library:$klassIndexVersion"
     const val klassIndexProcessor = "com.github.matfax.klassindex:processor:$klassIndexVersion"
 
-    private const val kotlin_compiletesting_version = "1.4.4"
+    // https://mvnrepository.com/artifact/com.github.tschuchortdev/kotlin-compile-testing
+    private const val kotlin_compiletesting_version = "1.4.7"
     const val kotlin_compiletesting = "com.github.tschuchortdev:kotlin-compile-testing:$kotlin_compiletesting_version"
 
-    // TODO: check 1.6.+ ... there are some breaking changes though
-    private const val kotlinpoet_version = "1.9.0"
+    // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
+    private const val kotlinpoet_version = "1.10.2"
     const val kotlinpoet = "com.squareup:kotlinpoet:$kotlinpoet_version"
 
-    private const val kotlinx_coroutines_version = "1.5.1"
+    // https://kotlinlang.org/docs/releases.html#release-details
+    private const val kotlinx_coroutines_version = "1.6.0"
     const val kotlinx_coroutines_core =
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version"
 
-    private const val kotlinx_serialization_version = "1.3.0"
+    // https://kotlinlang.org/docs/releases.html#release-details
+    private const val kotlinx_serialization_version = "1.3.1"
     const val kotlinx_serialization_core =
         "org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version"
     const val kotlinx_serialization_json =
         "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_version"
 
-    private const val korlibs_klock_version = "2.2.2"
+    // https://mvnrepository.com/artifact/com.soywiz.korlibs.klock/klock
+    private const val korlibs_klock_version = "2.6.1"
+    const val korlibs_klock_common = "com.soywiz.korlibs.klock:klock:$korlibs_klock_version"
     const val korlibs_klock_js = "com.soywiz.korlibs.klock:klock-js:$korlibs_klock_version"
     const val korlibs_klock_jvm = "com.soywiz.korlibs.klock:klock-jvm:$korlibs_klock_version"
 
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
     private const val slf4j_version = "1.7.32"
     const val slf4j_api = "org.slf4j:slf4j-api:$slf4j_version"
 

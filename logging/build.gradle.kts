@@ -19,13 +19,13 @@ repositories {
 }
 
 kotlin {
-    js(LEGACY) {
+    js(IR) {
         browser {
             webpackTask {
                 output.libraryTarget = "commonjs2"
             }
         }
-        binaries.executable()
+//        binaries.executable()
     }
 
     jvm {
