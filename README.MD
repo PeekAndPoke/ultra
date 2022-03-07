@@ -1,9 +1,9 @@
 # ULTRA components for Kotlin Servers and Android
 
-[![Kotlin](https://img.shields.io/badge/Kotlin-1.5.31-success.svg)](https://kotlinlang.org/docs/releases.html)
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.6.10-success.svg)](https://kotlinlang.org/docs/releases.html)
 [![CodeFactor](https://www.codefactor.io/repository/github/peekandpoke/ultra/badge)](https://www.codefactor.io/repository/github/peekandpoke/ultra)
-[![Maven Central](https://shields.io/maven-central/v/io.peekandpoke.ultra/ultra)](https://search.maven.org/search?q=io.peekandpoke.ultra)
-[![Snapshot](https://shields.io/nexus/s/io.peekandpoke.ultra/ultra?server=https%3A%2F%2Fs01.oss.sonatype.org)](https://s01.oss.sonatype.org/content/repositories/snapshots/io/peekandpoke/ultra/)
+[![Maven Central](https://shields.io/maven-central/v/io.peekandpoke.ultra/commonmp)](https://search.maven.org/search?q=io.peekandpoke.ultra)
+[![Snapshot](https://shields.io/nexus/s/io.peekandpoke.ultra/commonmp?server=https%3A%2F%2Fs01.oss.sonatype.org)](https://s01.oss.sonatype.org/content/repositories/snapshots/io/peekandpoke/ultra/)
 
 ULTRA is a set of libraries and helpers to enhance your everyday Kotlin coding with more power, stability and enjoyment.
 
@@ -94,28 +94,4 @@ very well. And so should your serialization framework! Slumber does it for you.
 
 - ( ) Mutator
   - ( ) support better code generation for nested classes
-
-# Upgrade to Kotlin 1.6.0
-
-## Are dependencies updated?
-
-### Kotlin Deps
-
-- ( ) dokka -> 1.5.31
-  - (/) WAITING for Kotlin 1.6.0
-- ( ) com.github.tschuchortdev:kotlin-compile-testing -> 1.4.6
-  - (X) has Kotlin 1.6.0
-- ( ) com.squareup:kotlinpoet -> 1.10.2
-  - (x) has Kotlin 1.6.0
-- ( ) org.jetbrains.kotlinx:kotlinx-coroutines -> 1.5.2
-  - (/) WAITING for Kotlin 1.6.0 ... meaning waiting for version 1.6.0
-- (X) org.jetbrains.kotlinx:kotlinx-serialization -> 1.3.0
-  - (/) WAITING for Kotlin 1.6.0 ... meaning waiting for future version
-- ( ) com.soywiz.korlibs.klock -> 2.4.8
-  - (/) WAITING for Kotlin 1.6.0 ... meaning waiting for future version
-  - (/) ONLY works when we can use IR compilation for JS
-
-### Java Deps
-
-- ( ) com.auth0:java-jwt -> 3.18.2
-- ( ) com.google.auto.service:auto-service -> 1.0.1
+  
