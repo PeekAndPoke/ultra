@@ -14,6 +14,7 @@ import kotlin.reflect.jvm.reflect
  *
  * The [creator] is a function that produces the service instance and expects the correct parameters to do so.
  */
+@Suppress("Detekt:TooManyFunctions")
 class ServiceProducer internal constructor(
     val signature: List<KParameter>,
     val creator: (kontainer: Kontainer, params: Array<Any?>) -> Any

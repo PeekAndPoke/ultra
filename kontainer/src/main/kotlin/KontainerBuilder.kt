@@ -2,6 +2,7 @@ package de.peekandpoke.ultra.kontainer
 
 import kotlin.reflect.KClass
 
+@Suppress("Detekt:TooManyFunctions")
 class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit) {
 
     private val configValues = mutableMapOf<String, Any>()
