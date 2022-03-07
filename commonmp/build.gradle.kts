@@ -19,13 +19,13 @@ repositories {
 }
 
 kotlin {
-    js(LEGACY) {
+    js(IR) {
         browser {
             webpackTask {
                 output.libraryTarget = "commonjs2"
             }
         }
-        binaries.executable()
+//        binaries.executable()
     }
 
     jvm {
@@ -55,6 +55,8 @@ kotlin {
                 implementation(Deps.kotlinx_serialization_core)
                 implementation(Deps.kotlinx_serialization_json)
                 implementation(Deps.kotlinx_coroutines_core)
+
+                api(Deps.korlibs_klock_common)
             }
         }
 
