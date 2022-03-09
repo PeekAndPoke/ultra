@@ -1,7 +1,6 @@
 package de.peekandpoke.ultra.kontainer
 
 import de.peekandpoke.ultra.common.Lookup
-import de.peekandpoke.ultra.common.maxLineLength
 import kotlin.reflect.KClass
 
 /**
@@ -11,6 +10,11 @@ class Kontainer internal constructor(
     private val factory: ServiceProviderFactory,
 ) {
     /**
+     * Tools for debugging the kontainer and more
+     */
+    val tools: KontainerTools = KontainerTools(this)
+
+    /**
      * The blueprint for this kontainer
      */
     val blueprint: KontainerBlueprint = factory.blueprint
@@ -19,6 +23,11 @@ class Kontainer internal constructor(
      * The root context is used, when services are directly requested from the Kontainer
      */
     private val rootContext: InjectionContext = InjectionContext(this, Kontainer::class, Kontainer::class)
+
+    /**
+     * Get the underlying [ServiceProviderFactory].
+     */
+    fun getServiceProviderFactory(): ServiceProviderFactory = factory
 
     // Cloning the kontainer ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -103,88 +112,6 @@ class Kontainer internal constructor(
      */
     @Suppress("UNCHECKED_CAST")
     fun <T> getConfig(id: String): T = blueprint.configValues[id] as T
-
-    // debug ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Get the underlying [ServiceProviderFactory].
-     */
-    fun getFactory(): ServiceProviderFactory = factory
-
-    fun debugInfo(): KontainerDebugInfo {
-
-        val config = blueprint.configValues
-            .map { (k, v) -> k to "$v (${v::class.qualifiedName})" }
-            .toMap()
-
-        fun ServiceDefinition.toInfo(): KontainerDebugInfo.ServiceDefinitionInfo {
-            return KontainerDebugInfo.ServiceDefinitionInfo(
-                createsCls = producer.creates.java.name,
-                injectionType = injectionType,
-                codeLocation = KontainerDebugInfo.ServiceDefinitionInfo.CodeLocation(
-                    stackTrace = codeLocation.stackPrinted
-                ),
-                overwrites = overwrites?.toInfo(),
-            )
-        }
-
-        val services = factory.getAllProviders().map { (cls, provider) ->
-            KontainerDebugInfo.ServiceDebugInfo(
-                cls = cls.java.name,
-                type = provider.type,
-                instances = provider.instances.map { instance ->
-                    KontainerDebugInfo.InstanceDebugInfo(
-                        createdAt = instance.createdAt,
-                        cls = instance.instance::class.java.name,
-                    )
-                },
-                definition = provider.definition.toInfo(),
-            )
-        }
-
-        return KontainerDebugInfo(config = config, services = services)
-    }
-
-    fun dump(): String {
-
-        val rows = mutableListOf(
-            Triple("Service ID", "Type", "Instances")
-        )
-
-        rows.addAll(
-            factory.getAllProviders().map { (k, v) ->
-                Triple(
-                    k.qualifiedName ?: "n/a",
-                    v.type.toString(),
-                    v.instances.joinToString("\n") { "${it.createdAt}: ${it.instance::class.qualifiedName}" }
-                )
-            }
-        )
-
-        val lens = Triple(
-            rows.maxOfOrNull { it.first.maxLineLength() } ?: 0,
-            rows.maxOfOrNull { it.second.maxLineLength() } ?: 0,
-            rows.maxOfOrNull { it.third.maxLineLength() } ?: 0
-        )
-
-        val services = rows.map {
-            "${it.first.padEnd(lens.first)} | ${it.second.padEnd(lens.second)} | ${it.third.padEnd(lens.third)}"
-        }
-
-        val maxConfigLength = blueprint.configValues.map { (k, _) -> k.length }.maxOrNull() ?: 0
-
-        val configs = blueprint.configValues
-            .map { (k, v) -> "${k.padEnd(maxConfigLength)} | $v (${v::class.qualifiedName})" }
-            .joinToString("\n")
-
-        return "Kontainer dump:" +
-                "\n\n" +
-                services.joinToString("\n") +
-                "\n\n" +
-                "Config values:" +
-                "\n\n" +
-                configs
-    }
 
     // internal helpers ////////////////////////////////////////////////////////////////////////////////////////////////
 

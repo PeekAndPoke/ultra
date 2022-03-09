@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.kontainer
 
-interface MyService
+interface MyServiceInterface
 
 abstract class ConfigIntInjectingBase
 

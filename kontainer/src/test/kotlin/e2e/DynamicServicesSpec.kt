@@ -7,7 +7,7 @@ import de.peekandpoke.ultra.kontainer.DeeperInjectingService
 import de.peekandpoke.ultra.kontainer.InjectingService
 import de.peekandpoke.ultra.kontainer.InvalidClassProvided
 import de.peekandpoke.ultra.kontainer.KontainerInconsistent
-import de.peekandpoke.ultra.kontainer.MyService
+import de.peekandpoke.ultra.kontainer.MyServiceInterface
 import de.peekandpoke.ultra.kontainer.ServiceNotFound
 import de.peekandpoke.ultra.kontainer.ServiceProvider
 import de.peekandpoke.ultra.kontainer.SomeIndependentService
@@ -28,7 +28,7 @@ class DynamicServicesSpec : StringSpec({
 
             val error = shouldThrow<InvalidClassProvided> {
                 kontainer {
-                    dynamic(MyService::class)
+                    dynamic(MyServiceInterface::class)
                 }
             }
 

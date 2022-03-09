@@ -178,7 +178,7 @@ class KontainerBlueprint internal constructor(
         val container = instantiate(DynamicOverrides(emptyMap()))
 
         // Validate all service providers are consistent
-        val errors = container.getFactory().getAllProviders()
+        val errors = container.getServiceProviderFactory().getAllProviders()
             .mapValues { (_, provider) -> provider to provider.validate(container) }
             .filterValues { (_, errors) -> errors.isNotEmpty() }
             .toList()

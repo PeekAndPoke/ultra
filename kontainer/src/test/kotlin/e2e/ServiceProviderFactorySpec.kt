@@ -25,7 +25,7 @@ class ServiceProviderFactorySpec : StringSpec({
             dynamic(SomeIndependentService::class)
         }.create()
 
-        val factory = kontainer.getFactory()
+        val factory = kontainer.getServiceProviderFactory()
 
         assertSoftly {
             factory.isProviderCreated(AnotherSimpleService::class) shouldBe false
@@ -60,10 +60,12 @@ class ServiceProviderFactorySpec : StringSpec({
 
         val kontainer = blueprint.create()
 
-        kontainer.getFactory().getProvider(CounterService::class) shouldBeSameInstanceAs
-                kontainer.getFactory().getProvider(CounterService::class)
+        kontainer.getServiceProviderFactory()
+            .getProvider(CounterService::class) shouldBeSameInstanceAs
+                kontainer.getServiceProviderFactory().getProvider(CounterService::class)
 
-        kontainer.getFactory().getProvider(CounterService::class).type shouldBe ServiceProvider.Type.Singleton
+        kontainer.getServiceProviderFactory()
+            .getProvider(CounterService::class).type shouldBe ServiceProvider.Type.Singleton
     }
 
     "Instance service providers must be shared across kontainer instances" {
@@ -78,13 +80,17 @@ class ServiceProviderFactorySpec : StringSpec({
         assertSoftly {
 
             withClue("Initially no providers must be created") {
-                first.getFactory().isProviderCreated(CounterService::class) shouldBe false
-                second.getFactory().isProviderCreated(CounterService::class) shouldBe false
+                first.getServiceProviderFactory()
+                    .isProviderCreated(CounterService::class) shouldBe false
+
+                second.getServiceProviderFactory()
+                    .isProviderCreated(CounterService::class) shouldBe false
             }
 
             withClue("Both container must use the same provider") {
-                first.getFactory().getProvider(CounterService::class) shouldBeSameInstanceAs
-                        second.getFactory().getProvider(CounterService::class)
+                first.getServiceProviderFactory()
+                    .getProvider(CounterService::class) shouldBeSameInstanceAs
+                        second.getServiceProviderFactory().getProvider(CounterService::class)
             }
         }
     }
@@ -97,10 +103,12 @@ class ServiceProviderFactorySpec : StringSpec({
 
         val kontainer = blueprint.create()
 
-        kontainer.getFactory().getProvider(CounterService::class) shouldBeSameInstanceAs
-                kontainer.getFactory().getProvider(CounterService::class)
+        kontainer.getServiceProviderFactory()
+            .getProvider(CounterService::class) shouldBeSameInstanceAs
+                kontainer.getServiceProviderFactory().getProvider(CounterService::class)
 
-        kontainer.getFactory().getProvider(CounterService::class).type shouldBe ServiceProvider.Type.Singleton
+        kontainer.getServiceProviderFactory()
+            .getProvider(CounterService::class).type shouldBe ServiceProvider.Type.Singleton
     }
 
     "Singleton service providers must be shared across kontainer instances" {
@@ -115,13 +123,17 @@ class ServiceProviderFactorySpec : StringSpec({
         assertSoftly {
 
             withClue("Initially no providers must be created") {
-                first.getFactory().isProviderCreated(CounterService::class) shouldBe false
-                second.getFactory().isProviderCreated(CounterService::class) shouldBe false
+                first.getServiceProviderFactory()
+                    .isProviderCreated(CounterService::class) shouldBe false
+
+                second.getServiceProviderFactory()
+                    .isProviderCreated(CounterService::class) shouldBe false
             }
 
             withClue("Both container must use the same provider") {
-                first.getFactory().getProvider(CounterService::class) shouldBeSameInstanceAs
-                        second.getFactory().getProvider(CounterService::class)
+                first.getServiceProviderFactory()
+                    .getProvider(CounterService::class) shouldBeSameInstanceAs
+                        second.getServiceProviderFactory().getProvider(CounterService::class)
             }
         }
     }
@@ -135,10 +147,12 @@ class ServiceProviderFactorySpec : StringSpec({
 
         val kontainer = blueprint.create()
 
-        kontainer.getFactory().getProvider(AnotherInjectingService::class) shouldBeSameInstanceAs
-                kontainer.getFactory().getProvider(AnotherInjectingService::class)
+        kontainer.getServiceProviderFactory()
+            .getProvider(AnotherInjectingService::class) shouldBeSameInstanceAs
+                kontainer.getServiceProviderFactory().getProvider(AnotherInjectingService::class)
 
-        kontainer.getFactory().getProvider(AnotherInjectingService::class).type shouldBe
+        kontainer.getServiceProviderFactory()
+            .getProvider(AnotherInjectingService::class).type shouldBe
                 ServiceProvider.Type.SemiDynamic
     }
 
@@ -155,13 +169,17 @@ class ServiceProviderFactorySpec : StringSpec({
         assertSoftly {
 
             withClue("Initially no providers must be created") {
-                first.getFactory().isProviderCreated(AnotherInjectingService::class) shouldBe false
-                second.getFactory().isProviderCreated(AnotherInjectingService::class) shouldBe false
+                first.getServiceProviderFactory()
+                    .isProviderCreated(AnotherInjectingService::class) shouldBe false
+
+                second.getServiceProviderFactory()
+                    .isProviderCreated(AnotherInjectingService::class) shouldBe false
             }
 
             withClue("Both container must use different providers") {
-                first.getFactory().getProvider(AnotherInjectingService::class) shouldNotBeSameInstanceAs
-                        second.getFactory().getProvider(AnotherInjectingService::class)
+                first.getServiceProviderFactory()
+                    .getProvider(AnotherInjectingService::class) shouldNotBeSameInstanceAs
+                        second.getServiceProviderFactory().getProvider(AnotherInjectingService::class)
             }
         }
     }
@@ -174,10 +192,12 @@ class ServiceProviderFactorySpec : StringSpec({
 
         val kontainer = blueprint.create()
 
-        kontainer.getFactory().getProvider(CounterService::class) shouldBeSameInstanceAs
-                kontainer.getFactory().getProvider(CounterService::class)
+        kontainer.getServiceProviderFactory()
+            .getProvider(CounterService::class) shouldBeSameInstanceAs
+                kontainer.getServiceProviderFactory().getProvider(CounterService::class)
 
-        kontainer.getFactory().getProvider(CounterService::class).type shouldBe ServiceProvider.Type.Dynamic
+        kontainer.getServiceProviderFactory()
+            .getProvider(CounterService::class).type shouldBe ServiceProvider.Type.Dynamic
     }
 
     "Dynamic service providers must NOT be shared across kontainer instances" {
@@ -192,13 +212,16 @@ class ServiceProviderFactorySpec : StringSpec({
         assertSoftly {
 
             withClue("Initially no providers must be created") {
-                first.getFactory().isProviderCreated(CounterService::class) shouldBe false
-                second.getFactory().isProviderCreated(CounterService::class) shouldBe false
+                first.getServiceProviderFactory()
+                    .isProviderCreated(CounterService::class) shouldBe false
+
+                second.getServiceProviderFactory()
+                    .isProviderCreated(CounterService::class) shouldBe false
             }
 
             withClue("Both container must use different providers") {
-                first.getFactory().getProvider(CounterService::class) shouldNotBeSameInstanceAs
-                        second.getFactory().getProvider(CounterService::class)
+                first.getServiceProviderFactory().getProvider(CounterService::class) shouldNotBeSameInstanceAs
+                        second.getServiceProviderFactory().getProvider(CounterService::class)
             }
         }
     }
@@ -213,10 +236,12 @@ class ServiceProviderFactorySpec : StringSpec({
             with { CounterServiceEx01() }
         }
 
-        kontainer.getFactory().getProvider(CounterService::class) shouldBeSameInstanceAs
-                kontainer.getFactory().getProvider(CounterService::class)
+        kontainer.getServiceProviderFactory()
+            .getProvider(CounterService::class) shouldBeSameInstanceAs
+                kontainer.getServiceProviderFactory().getProvider(CounterService::class)
 
-        kontainer.getFactory().getProvider(CounterService::class).type shouldBe ServiceProvider.Type.DynamicOverride
+        kontainer.getServiceProviderFactory()
+            .getProvider(CounterService::class).type shouldBe ServiceProvider.Type.DynamicOverride
 
         kontainer.get(CounterService::class).shouldBeInstanceOf<CounterServiceEx01>()
     }
@@ -238,13 +263,17 @@ class ServiceProviderFactorySpec : StringSpec({
         assertSoftly {
 
             withClue("Initially no providers must be created") {
-                first.getFactory().isProviderCreated(CounterService::class) shouldBe false
-                second.getFactory().isProviderCreated(CounterService::class) shouldBe false
+                first.getServiceProviderFactory()
+                    .isProviderCreated(CounterService::class) shouldBe false
+
+                second.getServiceProviderFactory()
+                    .isProviderCreated(CounterService::class) shouldBe false
             }
 
             withClue("Both container must use different providers") {
-                first.getFactory().getProvider(CounterService::class) shouldNotBeSameInstanceAs
-                        second.getFactory().getProvider(CounterService::class)
+                first.getServiceProviderFactory()
+                    .getProvider(CounterService::class) shouldNotBeSameInstanceAs
+                        second.getServiceProviderFactory().getProvider(CounterService::class)
             }
 
             withClue("The services must be different instances") {

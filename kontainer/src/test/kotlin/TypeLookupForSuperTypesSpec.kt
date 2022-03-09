@@ -7,9 +7,9 @@ import io.kotest.matchers.shouldBe
 
 class TypeLookupForSuperTypesSpec : StringSpec({
 
-    open class MyServiceImplOne : MyService
+    open class MyServiceImplOne : MyServiceInterface
 
-    class MyServiceImplTwo : MyService
+    class MyServiceImplTwo : MyServiceInterface
 
     class MyServiceDerivedFromImplOne : MyServiceImplOne()
 
@@ -20,10 +20,10 @@ class TypeLookupForSuperTypesSpec : StringSpec({
 
         assertSoftly {
             shouldThrow<ServiceNotFound> {
-                subject.getDistinctFor(MyService::class)
+                subject.getDistinctFor(MyServiceInterface::class)
             }
 
-            subject.getAllCandidatesFor(MyService::class) shouldBe setOf()
+            subject.getAllCandidatesFor(MyServiceInterface::class) shouldBe setOf()
         }
     }
 
@@ -54,9 +54,9 @@ class TypeLookupForSuperTypesSpec : StringSpec({
 
         assertSoftly {
 
-            subject.getDistinctFor(MyService::class) shouldBe MyServiceImplOne::class
+            subject.getDistinctFor(MyServiceInterface::class) shouldBe MyServiceImplOne::class
 
-            subject.getAllCandidatesFor(MyService::class) shouldBe setOf(MyServiceImplOne::class)
+            subject.getAllCandidatesFor(MyServiceInterface::class) shouldBe setOf(MyServiceImplOne::class)
         }
     }
 
@@ -73,10 +73,10 @@ class TypeLookupForSuperTypesSpec : StringSpec({
         assertSoftly {
 
             shouldThrow<ServiceAmbiguous> {
-                subject.getDistinctFor(MyService::class)
+                subject.getDistinctFor(MyServiceInterface::class)
             }
 
-            subject.getAllCandidatesFor(MyService::class) shouldBe setOf(
+            subject.getAllCandidatesFor(MyServiceInterface::class) shouldBe setOf(
                 MyServiceImplOne::class,
                 MyServiceImplTwo::class,
                 MyServiceDerivedFromImplOne::class

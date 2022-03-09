@@ -7,7 +7,7 @@ import io.kotest.matchers.shouldBe
 
 class TypeLookupForBaseTypesSpec : StringSpec({
 
-    open class MyServiceImplOne : MyService
+    open class MyServiceImplOne : MyServiceInterface
 
     class SomeOtherService
 
@@ -17,10 +17,10 @@ class TypeLookupForBaseTypesSpec : StringSpec({
 
         assertSoftly {
             shouldThrow<ServiceNotFound> {
-                subject.getDistinctFor(MyService::class)
+                subject.getDistinctFor(MyServiceInterface::class)
             }
 
-            subject.getAllCandidatesFor(MyService::class) shouldBe setOf()
+            subject.getAllCandidatesFor(MyServiceInterface::class) shouldBe setOf()
         }
     }
 
@@ -44,13 +44,13 @@ class TypeLookupForBaseTypesSpec : StringSpec({
 
         val subject = TypeLookup.ForBaseTypes(
             setOf(
-                MyService::class,
+                MyServiceInterface::class,
                 SomeOtherService::class
             )
         )
 
         assertSoftly {
-            subject.getDistinctFor(MyServiceImplOne::class) shouldBe MyService::class
+            subject.getDistinctFor(MyServiceImplOne::class) shouldBe MyServiceInterface::class
 
             subject.getDistinctFor(SomeOtherService::class) shouldBe SomeOtherService::class
         }
