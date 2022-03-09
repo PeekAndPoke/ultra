@@ -10,8 +10,20 @@ data class KontainerDebugInfo(
     data class ServiceDebugInfo(
         val id: String,
         val type: ServiceProvider.Type,
-        val instances: List<InstanceDebugInfo>
+        val definition: ServiceDefinitionInfo,
+        val instances: List<InstanceDebugInfo>,
     )
+
+    data class ServiceDefinitionInfo(
+        val produces: String,
+        val injectionType: InjectionType,
+        val codeLocation: CodeLocation,
+        val overwrites: ServiceDefinitionInfo?,
+    ) {
+        data class CodeLocation(
+            val stackTrace: String,
+        )
+    }
 
     data class InstanceDebugInfo(
         val createdAt: Instant,

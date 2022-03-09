@@ -117,16 +117,28 @@ class Kontainer internal constructor(
             .map { (k, v) -> k to "$v (${v::class.qualifiedName})" }
             .toMap()
 
-        val services = factory.getAllProviders().map { provider ->
+        fun ServiceDefinition.toInfo(): KontainerDebugInfo.ServiceDefinitionInfo {
+            return KontainerDebugInfo.ServiceDefinitionInfo(
+                produces = produces::class.java.name,
+                injectionType = injectionType,
+                codeLocation = KontainerDebugInfo.ServiceDefinitionInfo.CodeLocation(
+                    stackTrace = codeLocation.stackPrinted
+                ),
+                overwrites = overwrites?.toInfo(),
+            )
+        }
+
+        val services = factory.getAllProviders().map { (cls, provider) ->
             KontainerDebugInfo.ServiceDebugInfo(
-                id = provider.key.qualifiedName ?: "n/a",
-                type = provider.value.type,
-                instances = provider.value.instances.map { instance ->
+                id = cls.qualifiedName ?: "n/a",
+                type = provider.type,
+                instances = provider.instances.map { instance ->
                     KontainerDebugInfo.InstanceDebugInfo(
                         createdAt = instance.createdAt,
                         cls = instance.instance::class.qualifiedName ?: "n/a"
                     )
-                }
+                },
+                definition = provider.definition.toInfo(),
             )
         }
 

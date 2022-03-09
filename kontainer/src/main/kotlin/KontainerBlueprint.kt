@@ -32,13 +32,13 @@ class KontainerBlueprint internal constructor(
      * Collect dynamic service definitions
      */
     private val dynamicDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
-        .filterValues { it.type == InjectionType.Dynamic }
+        .filterValues { it.injectionType == InjectionType.Dynamic }
 
     /**
      * Collect Prototype service definitions
      */
     private val prototypeDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
-        .filterValues { it.type == InjectionType.Prototype }
+        .filterValues { it.injectionType == InjectionType.Prototype }
 
     /**
      * A set of all dynamic service classes
@@ -179,11 +179,13 @@ class KontainerBlueprint internal constructor(
 
         // Validate all service providers are consistent
         val errors = container.getFactory().getAllProviders()
-            .mapValues { (_, v) -> v.validate(container) }
-            .filterValues { it.isNotEmpty() }
+            .mapValues { (_, provider) -> provider to provider.validate(container) }
+            .filterValues { (_, errors) -> errors.isNotEmpty() }
             .toList()
-            .mapIndexed { serviceIdx, (cls, errors) ->
-                val codeLocation = container.blueprint.definitions[cls]?.codeLocation?.first()
+            .mapIndexed { serviceIdx, (cls, entry) ->
+
+                val (provider, errors) = entry
+                val codeLocation = provider.definition.codeLocation.first()
 
                 "${serviceIdx + 1}. Service '${cls.qualifiedName}'\n" +
                         "    defined at ${codeLocation ?: "n/a"})\n" +

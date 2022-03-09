@@ -13,8 +13,8 @@ interface ServiceProvider {
     interface Provider {
 
         companion object {
-            fun forInstance(type: Type, instance: Any): Provider {
-                return ForInstance(type = type, instance = instance)
+            fun forInstance(type: Type, definition: ServiceDefinition, instance: Any): Provider {
+                return ForInstance(type = type, definition = definition, instance = instance)
             }
 
             fun forGlobalSingleton(type: Type, definition: ServiceDefinition): Provider {
@@ -26,9 +26,10 @@ interface ServiceProvider {
             }
         }
 
-        private class ForInstance(type: Type, instance: Any) : Provider {
+        private class ForInstance(type: Type, definition: ServiceDefinition, instance: Any) : Provider {
 
-            private val provider = ServiceProvider.ForInstance(type = type, instance = instance)
+            private val provider =
+                ServiceProvider.ForInstance(type = type, definition = definition, instance = instance)
 
             override fun provide(): ServiceProvider.ForInstance {
                 return provider
@@ -91,14 +92,19 @@ interface ServiceProvider {
     )
 
     /**
-     * The type of the service that is created
+     * The type of the service that is created.
      */
     val type: Type
 
     /**
-     * A list of all instances created by the provider
+     * A list of all instances created by the provider.
      */
     val instances: List<CreatedInstance>
+
+    /**
+     * The definition of the service.
+     */
+    val definition: ServiceDefinition
 
     /**
      * Provides the service instance
@@ -118,7 +124,8 @@ interface ServiceProvider {
      */
     data class ForInstance internal constructor(
         override val type: Type,
-        private val instance: Any
+        override val definition: ServiceDefinition,
+        private val instance: Any,
     ) : ServiceProvider {
 
         /**
@@ -144,7 +151,7 @@ interface ServiceProvider {
      */
     data class ForSingleton internal constructor(
         override val type: Type,
-        val definition: ServiceDefinition
+        override val definition: ServiceDefinition
     ) : ServiceProvider {
 
         /**
@@ -190,7 +197,7 @@ interface ServiceProvider {
      * Each call to [provide] will create a new instance.
      */
     data class ForPrototype internal constructor(
-        val definition: ServiceDefinition
+        override val definition: ServiceDefinition
     ) : ServiceProvider {
 
         class Provider(private val definition: ServiceDefinition) : ServiceProvider.Provider {

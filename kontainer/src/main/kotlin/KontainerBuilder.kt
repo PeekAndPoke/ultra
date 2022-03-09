@@ -22,7 +22,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
                 // When there is no existing definition, we can use the new definition as is
                 null -> newDef
 
-                else -> when (existingDef.type) {
+                else -> when (existingDef.injectionType) {
                     // When the existing definition is a prototype,
                     InjectionType.Prototype ->
                         // Then we need to upgrade the new definition to a prototype as well
@@ -83,7 +83,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
 
         val service = ServiceDefinition(
             produces = produces,
-            type = type,
+            injectionType = type,
             producer = producer,
             overwrites = definitions[produces]
         ).withTypeUpgrade()

@@ -12,9 +12,17 @@ class ServiceProviderFactory(
     private val providerProviders: Map<KClass<*>, ServiceProvider.Provider> = providerProviders
         .plus(
             dynamics.overrides.map { (cls, provider) ->
-                blueprint.dynamicsBaseTypeLookUp.getDistinctFor(cls) to ServiceProvider.Provider.forInstance(
-                    ServiceProvider.Type.DynamicOverride,
-                    provider()
+                val baseType = blueprint.dynamicsBaseTypeLookUp.getDistinctFor(cls)
+
+                baseType to ServiceProvider.Provider.forInstance(
+                    type = ServiceProvider.Type.DynamicOverride,
+                    definition = ServiceDefinition(
+                        produces = cls,
+                        injectionType = InjectionType.Dynamic,
+                        producer = ServiceProducer.forFactory(provider),
+                        overwrites = blueprint.definitions[baseType]
+                    ),
+                    instance = provider(),
                 )
             }
         )
@@ -39,7 +47,7 @@ class ServiceProviderFactory(
         providers.contains(cls)
     }
 
-    fun getAllProviders() = synchronized(lock) {
+    fun getAllProviders(): Map<KClass<*>, ServiceProvider> = synchronized(lock) {
 
         providerProviders.mapValues { (cls, provider) ->
             providers.getOrPut(cls) {
