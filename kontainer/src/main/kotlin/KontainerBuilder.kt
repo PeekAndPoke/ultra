@@ -75,38 +75,38 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     /**
      * Add a service with the given parameters
      */
-    private fun <T : Any> add(
-        produces: KClass<T>,
+    private fun <SRV : Any, IMPL : SRV> add(
+        serviceCls: KClass<SRV>,
         type: InjectionType,
-        producer: ServiceProducer,
+        producer: ServiceProducer<IMPL>,
     ): KontainerBuilder = apply {
 
         val service = ServiceDefinition(
-            produces = produces,
+            serviceCls = serviceCls,
             injectionType = type,
             producer = producer,
-            overwrites = definitions[produces]
+            overwrites = definitions[serviceCls]
         ).withTypeUpgrade()
 
-        definitions[service.produces] = service
+        definitions[service.serviceCls] = service
     }
 
     /**
      * Adds a singleton service definition
      */
-    private fun <T : Any> addSingleton(
-        srv: KClass<T>,
-        producer: ServiceProducer,
+    private fun <SRV : Any, IMPL : SRV> addSingleton(
+        serviceCls: KClass<SRV>,
+        producer: ServiceProducer<out IMPL>,
     ): KontainerBuilder {
-        return add(srv, InjectionType.Singleton, producer)
+        return add(serviceCls, InjectionType.Singleton, producer)
     }
 
     /**
      * Adds a prototype service definition
      */
-    private fun <T : Any> addPrototype(
-        srv: KClass<T>,
-        producer: ServiceProducer,
+    private fun <SRV : Any, IMPL : SRV> addPrototype(
+        srv: KClass<SRV>,
+        producer: ServiceProducer<IMPL>,
     ): KontainerBuilder {
         return add(srv, InjectionType.Prototype, producer)
     }
@@ -114,9 +114,9 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     /**
      * Adds a dynamic service definition
      */
-    private fun <T : Any> addDynamic(
-        srv: KClass<T>,
-        producer: ServiceProducer,
+    private fun <SRV : Any, IMPL : SRV> addDynamic(
+        srv: KClass<SRV>,
+        producer: ServiceProducer<IMPL>,
     ): KontainerBuilder {
         return add(srv, InjectionType.Dynamic, producer)
     }
@@ -225,7 +225,11 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     fun <SRV : Any> instance(
         instance: SRV,
     ): KontainerBuilder {
-        return addSingleton(instance::class, ServiceProducer.forInstance(instance))
+        @Suppress("UNCHECKED_CAST")
+        return addSingleton(
+            serviceCls = instance::class as KClass<SRV>,
+            ServiceProducer.forInstance(instance)
+        )
     }
 
     /**

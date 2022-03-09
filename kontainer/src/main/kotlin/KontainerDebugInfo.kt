@@ -8,14 +8,14 @@ data class KontainerDebugInfo(
 ) {
 
     data class ServiceDebugInfo(
-        val id: String,
+        val cls: String,
         val type: ServiceProvider.Type,
         val definition: ServiceDefinitionInfo,
         val instances: List<InstanceDebugInfo>,
     )
 
     data class ServiceDefinitionInfo(
-        val produces: String,
+        val createsCls: String,
         val injectionType: InjectionType,
         val codeLocation: CodeLocation,
         val overwrites: ServiceDefinitionInfo?,

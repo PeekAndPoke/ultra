@@ -5,14 +5,16 @@ import kotlin.reflect.KClass
 /**
  * Defines a service
  *
- * Specifies which class the definitions [produces].
- * Specifies the [injectionType] of the service.
- * The [ServiceProducer] is used to create an instance of the service
+ * [serviceCls] is the base class as which this service is registered.
+ *
+ * [injectionType] is how the service is to be injected.
+ *
+ * [ServiceProducer] is used to create an instance of the service.
  */
 class ServiceDefinition internal constructor(
-    val produces: KClass<*>,
+    val serviceCls: KClass<*>,
     val injectionType: InjectionType,
-    val producer: ServiceProducer,
+    val producer: ServiceProducer<*>,
     val overwrites: ServiceDefinition?,
     val codeLocation: CodeLocation = CodeLocation.create(),
 ) {
@@ -67,7 +69,7 @@ class ServiceDefinition internal constructor(
     }
 
     fun withType(newType: InjectionType) = ServiceDefinition(
-        produces = this.produces,
+        serviceCls = this.serviceCls,
         injectionType = newType,
         producer = this.producer,
         overwrites = this.overwrites,

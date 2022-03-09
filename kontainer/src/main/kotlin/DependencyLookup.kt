@@ -54,7 +54,7 @@ class DependencyLookup internal constructor(
                 }
 
                 candidates.forEach { superType ->
-                    tmp.add(superType, def.produces)
+                    tmp.add(superType, def.serviceCls)
                 }
             }
         }

@@ -119,7 +119,7 @@ class Kontainer internal constructor(
 
         fun ServiceDefinition.toInfo(): KontainerDebugInfo.ServiceDefinitionInfo {
             return KontainerDebugInfo.ServiceDefinitionInfo(
-                produces = produces::class.java.name,
+                createsCls = producer.creates.java.name,
                 injectionType = injectionType,
                 codeLocation = KontainerDebugInfo.ServiceDefinitionInfo.CodeLocation(
                     stackTrace = codeLocation.stackPrinted
@@ -130,12 +130,12 @@ class Kontainer internal constructor(
 
         val services = factory.getAllProviders().map { (cls, provider) ->
             KontainerDebugInfo.ServiceDebugInfo(
-                id = cls.qualifiedName ?: "n/a",
+                cls = cls.java.name,
                 type = provider.type,
                 instances = provider.instances.map { instance ->
                     KontainerDebugInfo.InstanceDebugInfo(
                         createdAt = instance.createdAt,
-                        cls = instance.instance::class.qualifiedName ?: "n/a"
+                        cls = instance.instance::class.java.name,
                     )
                 },
                 definition = provider.definition.toInfo(),

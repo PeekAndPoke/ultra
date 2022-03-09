@@ -17,7 +17,7 @@ class ServiceProviderFactory(
                 baseType to ServiceProvider.Provider.forInstance(
                     type = ServiceProvider.Type.DynamicOverride,
                     definition = ServiceDefinition(
-                        produces = baseType,
+                        serviceCls = cls,
                         injectionType = InjectionType.Dynamic,
                         producer = ServiceProducer.forFactory(provider),
                         overwrites = blueprint.definitions[baseType]

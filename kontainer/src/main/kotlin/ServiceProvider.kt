@@ -185,7 +185,7 @@ interface ServiceProvider {
             context.kontainer,
             definition.producer.paramProviders.map {
                 it.provide(
-                    context.next(definition.produces)
+                    context.next(definition.serviceCls)
                 )
             }.toTypedArray()
         )
@@ -240,7 +240,7 @@ interface ServiceProvider {
             context.kontainer,
             definition.producer.paramProviders.map {
                 it.provide(
-                    context.next(definition.produces)
+                    context.next(definition.serviceCls)
                 )
             }.toTypedArray()
         )
