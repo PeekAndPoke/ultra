@@ -1,7 +1,5 @@
 package de.peekandpoke.ultra.kontainer
 
-import kotlin.reflect.KClass
-
 /**
  * Creates a kontainer blueprint
  */
@@ -64,31 +62,3 @@ class ParameterizedKontainerModule3<P1, P2, P3>(private val module: KontainerBui
     }
 }
 
-/**
- * Defines a service
- *
- * Specifies which class the definitions [produces].
- * Specifies the [type] of the service.
- * The [ServiceProducer] is used to create an instance of the service
- */
-class ServiceDefinition internal constructor(
-    val produces: KClass<*>,
-    val type: InjectionType,
-    val producer: ServiceProducer
-) {
-    fun withType(type: InjectionType) = ServiceDefinition(this.produces, type, this.producer)
-}
-
-/**
- * Type of injection
- */
-enum class InjectionType {
-    /** A singleton service is shared across multiple kontainer instances */
-    Singleton,
-
-    /** For a prototype service a new instance is created whenever it is injected */
-    Prototype,
-
-    /** A dynamic service is a singleton that only lives within a single kontainer instance */
-    Dynamic
-}

@@ -8,8 +8,7 @@ import kotlin.reflect.KClass
 class KontainerBlueprint internal constructor(
     val config: Config,
     internal val configValues: Map<String, Any>,
-    private val definitions: Map<KClass<*>, ServiceDefinition>,
-    private val definitionLocations: Map<KClass<*>, StackTraceElement>
+    internal val definitions: Map<KClass<*>, ServiceDefinition>,
 ) {
     data class Config(
         val trackKontainers: Boolean = false
@@ -124,7 +123,6 @@ class KontainerBlueprint internal constructor(
             config = config,
             configValues = configValues.plus(result.configValues),
             definitions = definitions.plus(result.definitions),
-            definitionLocations = definitionLocations.plus(result.definitionLocations)
         )
     }
 
@@ -185,8 +183,10 @@ class KontainerBlueprint internal constructor(
             .filterValues { it.isNotEmpty() }
             .toList()
             .mapIndexed { serviceIdx, (cls, errors) ->
+                val codeLocation = container.blueprint.definitions[cls]?.codeLocation?.first()
+
                 "${serviceIdx + 1}. Service '${cls.qualifiedName}'\n" +
-                        "    defined at ${definitionLocations[cls] ?: "n/a"})\n" +
+                        "    defined at ${codeLocation ?: "n/a"})\n" +
                         errors.joinToString("\n") { "    -> $it" }
             }
 
