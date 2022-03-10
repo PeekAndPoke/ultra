@@ -3,13 +3,9 @@ package de.peekandpoke.ultra.kontainer
 import de.peekandpoke.ultra.common.Lookup
 import de.peekandpoke.ultra.kontainer.ParameterProvider.ProvisionType.Direct
 import de.peekandpoke.ultra.kontainer.ParameterProvider.ProvisionType.Lazy
-import kotlin.Any
-import kotlin.Lazy
-import kotlin.String
-import kotlin.lazy
-import kotlin.let
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
+import kotlin.Lazy as KotlinLazy
 
 /**
  * ParameterProviders provide parameters needed to instantiate services.
@@ -112,19 +108,17 @@ interface ParameterProvider {
         /**
          * Gets the provision type of the parameter.
          */
-        override fun getProvisionType(): ProvisionType {
-            return ProvisionType.Direct
-        }
+        override fun getProvisionType(): ProvisionType = Direct
 
         /**
          * Provides the config value
          */
-        override fun provide(context: InjectionContext) = context.getConfig<Any>(paramName)
+        override fun provide(context: InjectionContext): Any = context.getConfig(paramName)
 
         /**
          * Returns 'true" when a requested injection can be fulfilled.
          */
-        override fun validate(kontainer: Kontainer) = when {
+        override fun validate(kontainer: Kontainer): List<String> = when {
 
             kontainer.hasConfig(paramName, paramCls) -> listOf()
 
@@ -151,14 +145,12 @@ interface ParameterProvider {
         /**
          * Gets the provision type of the parameter.
          */
-        override fun getProvisionType(): ProvisionType {
-            return ProvisionType.Direct
-        }
+        override fun getProvisionType(): ProvisionType = Direct
 
         /**
          * Injects the context
          */
-        override fun provide(context: InjectionContext) = context
+        override fun provide(context: InjectionContext): InjectionContext = context
 
         /**
          * Always valid
@@ -192,21 +184,19 @@ interface ParameterProvider {
         /**
          * Gets the provision type of the parameter.
          */
-        override fun getProvisionType(): ProvisionType {
-            return ProvisionType.Direct
-        }
+        override fun getProvisionType(): ProvisionType = Direct
 
         /**
          * Provides the service
          *
          * NOTICE: we always use context.getOrNull(). Validity is checked in [validate]
          */
-        override fun provide(context: InjectionContext) = context.getOrNull(paramCls)
+        override fun provide(context: InjectionContext): Any? = context.getOrNull(paramCls)
 
         /**
          * Validates if the service can be provided by the container
          */
-        override fun validate(kontainer: Kontainer) = when {
+        override fun validate(kontainer: Kontainer): List<String> = when {
 
             isNullable -> listOf()
 
@@ -253,9 +243,7 @@ interface ParameterProvider {
         /**
          * Gets the provision type of the parameter.
          */
-        override fun getProvisionType(): ProvisionType {
-            return ProvisionType.Direct
-        }
+        override fun getProvisionType(): ProvisionType = Direct
 
         /**
          * Provides a list with all super types
@@ -290,9 +278,7 @@ interface ParameterProvider {
         /**
          * Gets the provision type of the parameter.
          */
-        override fun getProvisionType(): ProvisionType {
-            return ProvisionType.Lazy
-        }
+        override fun getProvisionType(): ProvisionType = Lazy
 
         /**
          * Provides a list with all super types
@@ -327,14 +313,14 @@ interface ParameterProvider {
         /**
          * Gets the provision type of the parameter.
          */
-        override fun getProvisionType(): ProvisionType {
-            return ProvisionType.Lazy
-        }
+        override fun getProvisionType(): ProvisionType = Lazy
 
         /**
          * Provides a lazy list with all super types
          */
-        override fun provide(context: InjectionContext): Lazy<List<Any>> = lazy { context.getAll(innerType) }
+        override fun provide(context: InjectionContext): KotlinLazy<List<Any>> = lazy {
+            context.getAll(innerType)
+        }
 
         /**
          * Always valid.
@@ -371,21 +357,19 @@ interface ParameterProvider {
         /**
          * Gets the provision type of the parameter.
          */
-        override fun getProvisionType(): ProvisionType {
-            return ProvisionType.Lazy
-        }
+        override fun getProvisionType(): ProvisionType = Lazy
 
         /**
          * Provides the service wrapped as a Lazy
          */
-        override fun provide(context: InjectionContext): Lazy<Any?> = lazy {
+        override fun provide(context: InjectionContext): KotlinLazy<Any?> = lazy {
             context.getOrNull(paramCls)
         }
 
         /**
          * Validates if the service can be provided by the container
          */
-        override fun validate(kontainer: Kontainer) = when {
+        override fun validate(kontainer: Kontainer): List<String> = when {
 
             isNullable -> listOf()
 
@@ -431,18 +415,16 @@ interface ParameterProvider {
         /**
          * Gets the provision type of the parameter.
          */
-        override fun getProvisionType(): ProvisionType {
-            return ProvisionType.Direct
-        }
+        override fun getProvisionType(): ProvisionType = Direct
 
         /**
          * Will always raise a [KontainerInconsistent]
          */
-        override fun provide(context: InjectionContext) = throw KontainerInconsistent(error)
+        override fun provide(context: InjectionContext): Nothing = throw KontainerInconsistent(error)
 
         /**
          * Will always return an error
          */
-        override fun validate(kontainer: Kontainer) = listOf(error)
+        override fun validate(kontainer: Kontainer): List<String> = listOf(error)
     }
 }
