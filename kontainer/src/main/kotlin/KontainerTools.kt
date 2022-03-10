@@ -20,8 +20,13 @@ class KontainerTools internal constructor(
             return DebugInfo.ServiceDefinitionInfo(
                 creates = DebugInfo.ClassInfo.of(producer.creates),
                 injectionType = injectionType,
-                injects = producer.signature.map { param ->
-                    DebugInfo.ParamInfo.of(param)
+                injects = producer.paramProviders.map { provider ->
+                    DebugInfo.ParamInfo(
+                        name = provider.parameter.name ?: "n/a",
+                        classes = provider.getInjectedServiceTypes(blueprint).map {
+                            DebugInfo.ClassInfo.of(it)
+                        },
+                    )
                 },
                 codeLocation = DebugInfo.ServiceDefinitionInfo.CodeLocation(
                     stackTrace = codeLocation.stackPrinted

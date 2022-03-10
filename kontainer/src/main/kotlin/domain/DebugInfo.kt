@@ -4,7 +4,6 @@ import de.peekandpoke.ultra.kontainer.InjectionType
 import de.peekandpoke.ultra.kontainer.ServiceProvider
 import java.time.Instant
 import kotlin.reflect.KClass
-import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 
 data class DebugInfo(
@@ -53,15 +52,8 @@ data class DebugInfo(
     }
 
     @Suppress("DataClassPrivateConstructor")
-    data class ParamInfo private constructor(
+    data class ParamInfo(
         val name: String,
-        val cls: ClassInfo?,
-    ) {
-        companion object {
-            fun of(param: KParameter): ParamInfo = ParamInfo(
-                name = param.name ?: "",
-                cls = ClassInfo.of(param.type)
-            )
-        }
-    }
+        val classes: List<ClassInfo>,
+    )
 }
