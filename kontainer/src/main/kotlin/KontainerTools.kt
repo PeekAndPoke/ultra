@@ -23,6 +23,10 @@ class KontainerTools internal constructor(
                 injects = producer.paramProviders.map { provider ->
                     DebugInfo.ParamInfo(
                         name = provider.parameter.name ?: "n/a",
+                        provisionType = when (provider.getProvisionType()) {
+                            ParameterProvider.ProvisionType.Direct -> DebugInfo.ParamInfo.ProvisionType.Direct
+                            ParameterProvider.ProvisionType.Lazy -> DebugInfo.ParamInfo.ProvisionType.Lazy
+                        },
                         classes = provider.getInjectedServiceTypes(blueprint).map {
                             DebugInfo.ClassInfo.of(it)
                         },

@@ -1,6 +1,13 @@
 package de.peekandpoke.ultra.kontainer
 
 import de.peekandpoke.ultra.common.Lookup
+import de.peekandpoke.ultra.kontainer.ParameterProvider.ProvisionType.Direct
+import de.peekandpoke.ultra.kontainer.ParameterProvider.ProvisionType.Lazy
+import kotlin.Any
+import kotlin.Lazy
+import kotlin.String
+import kotlin.lazy
+import kotlin.let
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 
@@ -44,6 +51,17 @@ interface ParameterProvider {
     }
 
     /**
+     * Defines how a services are provided.
+     *
+     * [Direct] .. the service instances is provided directly.
+     * [Lazy] .. the service instances are provided lazily.
+     */
+    enum class ProvisionType {
+        Direct,
+        Lazy,
+    }
+
+    /**
      * The name of the parameter
      */
     val parameter: KParameter
@@ -52,6 +70,11 @@ interface ParameterProvider {
      * Get the injected services types
      */
     fun getInjectedServiceTypes(blueprint: KontainerBlueprint): Set<KClass<*>>
+
+    /**
+     * Gets the provision type of the parameter.
+     */
+    fun getProvisionType(): ProvisionType
 
     /**
      * Provides the parameter value
@@ -87,6 +110,13 @@ interface ParameterProvider {
         )
 
         /**
+         * Gets the provision type of the parameter.
+         */
+        override fun getProvisionType(): ProvisionType {
+            return ProvisionType.Direct
+        }
+
+        /**
          * Provides the config value
          */
         override fun provide(context: InjectionContext) = context.getConfig<Any>(paramName)
@@ -111,9 +141,19 @@ interface ParameterProvider {
         override val parameter: KParameter,
     ) : ParameterProvider {
 
+        /**
+         * Get the injected services types
+         */
         override fun getInjectedServiceTypes(blueprint: KontainerBlueprint): Set<KClass<*>> = setOf(
             InjectionContext::class,
         )
+
+        /**
+         * Gets the provision type of the parameter.
+         */
+        override fun getProvisionType(): ProvisionType {
+            return ProvisionType.Direct
+        }
 
         /**
          * Injects the context
@@ -148,6 +188,13 @@ interface ParameterProvider {
         override fun getInjectedServiceTypes(blueprint: KontainerBlueprint): Set<KClass<*>> = setOf(
             paramCls,
         )
+
+        /**
+         * Gets the provision type of the parameter.
+         */
+        override fun getProvisionType(): ProvisionType {
+            return ProvisionType.Direct
+        }
 
         /**
          * Provides the service
@@ -204,6 +251,13 @@ interface ParameterProvider {
         }
 
         /**
+         * Gets the provision type of the parameter.
+         */
+        override fun getProvisionType(): ProvisionType {
+            return ProvisionType.Direct
+        }
+
+        /**
          * Provides a list with all super types
          */
         override fun provide(context: InjectionContext): List<Any> = context.getAll(innerType)
@@ -234,6 +288,13 @@ interface ParameterProvider {
         }
 
         /**
+         * Gets the provision type of the parameter.
+         */
+        override fun getProvisionType(): ProvisionType {
+            return ProvisionType.Lazy
+        }
+
+        /**
          * Provides a list with all super types
          */
         override fun provide(context: InjectionContext): Lookup<out Any> = context.getLookup(innerType)
@@ -261,6 +322,13 @@ interface ParameterProvider {
          */
         override fun getInjectedServiceTypes(blueprint: KontainerBlueprint): Set<KClass<*>> {
             return blueprint.superTypeLookup.getAllCandidatesFor(innerType)
+        }
+
+        /**
+         * Gets the provision type of the parameter.
+         */
+        override fun getProvisionType(): ProvisionType {
+            return ProvisionType.Lazy
         }
 
         /**
@@ -299,6 +367,13 @@ interface ParameterProvider {
         override fun getInjectedServiceTypes(blueprint: KontainerBlueprint): Set<KClass<*>> = setOf(
             paramCls,
         )
+
+        /**
+         * Gets the provision type of the parameter.
+         */
+        override fun getProvisionType(): ProvisionType {
+            return ProvisionType.Lazy
+        }
 
         /**
          * Provides the service wrapped as a Lazy
@@ -352,6 +427,13 @@ interface ParameterProvider {
          * Get the injected services types
          */
         override fun getInjectedServiceTypes(blueprint: KontainerBlueprint): Set<KClass<*>> = emptySet()
+
+        /**
+         * Gets the provision type of the parameter.
+         */
+        override fun getProvisionType(): ProvisionType {
+            return ProvisionType.Direct
+        }
 
         /**
          * Will always raise a [KontainerInconsistent]

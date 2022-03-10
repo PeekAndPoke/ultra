@@ -54,6 +54,12 @@ data class DebugInfo(
     @Suppress("DataClassPrivateConstructor")
     data class ParamInfo(
         val name: String,
+        val provisionType: ProvisionType,
         val classes: List<ClassInfo>,
-    )
+    ) {
+        enum class ProvisionType {
+            Direct,
+            Lazy;
+        }
+    }
 }
