@@ -61,4 +61,3 @@ class ParameterizedKontainerModule3<P1, P2, P3>(private val module: KontainerBui
         builder.module(p1, p2, p3)
     }
 }
-

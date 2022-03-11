@@ -6,6 +6,7 @@ import kotlin.reflect.KClass
 /**
  * The container
  */
+@Suppress("Detekt.TooManyFunctions")
 class Kontainer internal constructor(
     private val factory: ServiceProviderFactory,
 ) {

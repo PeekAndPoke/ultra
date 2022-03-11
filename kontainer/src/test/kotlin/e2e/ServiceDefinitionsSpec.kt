@@ -41,7 +41,6 @@ class ServiceDefinitionsSpec : StringSpec() {
 
                 val first = stack.first()
 
-
                 withClue("ClassName of the first stack entry must be correct") {
                     first.className.shouldStartWith(ServiceDefinitionsSpec::class.qualifiedName!!)
                 }
