@@ -1,4 +1,3 @@
-@file:Suppress("Detekt.TooManyFunctions")
 @file:JvmName("StringJvmKt")
 
 package de.peekandpoke.ultra.common
