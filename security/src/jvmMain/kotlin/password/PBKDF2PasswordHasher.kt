@@ -23,7 +23,7 @@ class PBKDF2PasswordHasher(
         return calcHash(salt, password)
     }
 
-    @Suppress("Detekt:ComplexMethod")
+    @Suppress("Detekt:ComplexMethod", "Detekt:ReturnCount")
     override fun check(plaintext: String?, hash: String?): Boolean {
 
         if (plaintext == null || hash == null) {

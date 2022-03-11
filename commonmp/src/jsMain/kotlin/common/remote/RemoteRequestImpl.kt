@@ -6,8 +6,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import org.w3c.fetch.*
+import org.w3c.fetch.Headers
+import org.w3c.fetch.RequestCache
+import org.w3c.fetch.RequestCredentials
+import org.w3c.fetch.RequestInit
+import org.w3c.fetch.RequestMode
+import org.w3c.fetch.RequestRedirect
 
+@Suppress("Detekt.TooManyFunctions")
 class RemoteRequestImpl(
     private val baseUrl: String,
     override val requestInterceptors: List<RequestInterceptor>,

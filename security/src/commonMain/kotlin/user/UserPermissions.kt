@@ -3,6 +3,7 @@ package de.peekandpoke.ultra.security.user
 import de.peekandpoke.ultra.common.containsAny
 import kotlinx.serialization.Serializable
 
+@Suppress("Detekt.TooManyFunctions")
 @Serializable
 data class UserPermissions(
     val isSuperUser: Boolean = false,
@@ -50,7 +51,7 @@ data class UserPermissions(
      * Return 'true' when any of the given [organisations] is present
      */
     fun hasAnyOrganisation(vararg organisations: String) =
-        hasAnyOrganisation(organisations.toList())
+        isSuperUser || hasAnyOrganisation(organisations.toList())
 
     /**
      * Return 'true' when all the given [organisations] are present
@@ -62,7 +63,7 @@ data class UserPermissions(
      * Return 'true' when all the given [organisations] are present
      */
     fun hasAllOrganisations(vararg organisations: String) =
-        hasAllOrganisations(organisations.toList())
+        isSuperUser || hasAllOrganisations(organisations.toList())
 
     /**
      * Return 'true' when the given [branch] is present
@@ -80,7 +81,7 @@ data class UserPermissions(
      * Return 'true' when any of the given [branches] is present
      */
     fun hasAnyBranch(vararg branches: String) =
-        hasAnyBranch(branches.toList())
+        isSuperUser || hasAnyBranch(branches.toList())
 
     /**
      * Return 'true' when all the given [branches] are present
@@ -92,7 +93,7 @@ data class UserPermissions(
      * Return 'true' when all the given [branches] are present
      */
     fun hasAllBranches(vararg branches: String) =
-        hasAllBranches(branches.toList())
+        isSuperUser || hasAllBranches(branches.toList())
 
     /**
      * Return 'true' when the given [group] is present
@@ -110,7 +111,7 @@ data class UserPermissions(
      * Return 'true' when any of the given [groups] is present
      */
     fun hasAnyGroup(vararg groups: String) =
-        hasAnyGroup(groups.toList())
+        isSuperUser || hasAnyGroup(groups.toList())
 
     /**
      * Return 'true' when all the given [groups] are present
@@ -122,7 +123,7 @@ data class UserPermissions(
      * Return 'true' when all the given [groups] are present
      */
     fun hasAllGroups(vararg groups: String) =
-        hasAllGroups(groups.toList())
+        isSuperUser || hasAllGroups(groups.toList())
 
     /**
      * Return 'true' when the given [role] is present
@@ -139,7 +140,7 @@ data class UserPermissions(
      * Return 'true' when any of the given [roles] is present
      */
     fun hasAnyRole(vararg roles: String) =
-        hasAnyRole(roles.toList())
+        isSuperUser || hasAnyRole(roles.toList())
 
     /**
      * Return 'true' when all the given [roles] are present
@@ -151,7 +152,7 @@ data class UserPermissions(
      * Return 'true' when all the given [roles] are present
      */
     fun hasAllRoles(vararg roles: String) =
-        hasAllRoles(roles.toList())
+        isSuperUser || hasAllRoles(roles.toList())
 
     /**
      * Return 'true' when the given [permission] is present
@@ -169,7 +170,7 @@ data class UserPermissions(
      * Return 'true' when any of the given [permissions] is present
      */
     fun hasAnyPermission(vararg permissions: String) =
-        hasAnyPermission(permissions.toList())
+        isSuperUser || hasAnyPermission(permissions.toList())
 
     /**
      * Return 'true' when all the given [permissions] are present
@@ -181,5 +182,5 @@ data class UserPermissions(
      * Return 'true' when all the given [permissions] are present
      */
     fun hasAllPermissions(vararg permissions: String) =
-        hasAllPermissions(permissions.toList())
+        isSuperUser || hasAllPermissions(permissions.toList())
 }

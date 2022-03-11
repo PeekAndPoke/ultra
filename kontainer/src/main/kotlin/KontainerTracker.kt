@@ -50,7 +50,9 @@ interface KontainerTracker {
 private class NullKontainerTracker : KontainerTracker {
     override fun isLive(): Boolean = false
 
-    override fun track(kontainer: Kontainer) {}
+    override fun track(kontainer: Kontainer) {
+        // noop
+    }
 
     override fun getAlive(): Map<Kontainer, Instant> = emptyMap()
 

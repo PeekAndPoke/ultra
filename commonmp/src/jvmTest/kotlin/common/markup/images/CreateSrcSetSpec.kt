@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 
+@Suppress("Detekt.MaximumLineLength")
 class CreateSrcSetSpec : FreeSpec() {
 
     init {

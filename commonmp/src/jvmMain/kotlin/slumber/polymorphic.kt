@@ -5,6 +5,7 @@ import com.github.matfax.klassindex.KlassIndex
 import de.peekandpoke.ultra.NoCachedKlassIndex
 import kotlin.reflect.KClass
 
+@Suppress("Detekt.TooGenericExceptionCaught")
 fun Polymorphic.Parent.indexedSubClasses() = try {
     this::class.java.declaringClass.kotlin.indexedSubClasses
 } catch (e: Throwable) {

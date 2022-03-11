@@ -2,6 +2,7 @@ package de.peekandpoke.ultra.common.remote
 
 import kotlinx.coroutines.flow.Flow
 
+@Suppress("Detekt.TooManyFunctions")
 interface RemoteRequest {
 
     val requestInterceptors: List<RequestInterceptor>

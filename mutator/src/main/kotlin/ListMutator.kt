@@ -26,6 +26,7 @@ fun <T, M> List<T>.mutator(
 /**
  * Mutator implementation for lists
  */
+@Suppress("Detekt.TooManyFunctions")
 class ListMutator<T, M>(
 
     /** the input value, the original list */

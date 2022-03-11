@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common
 
+@Suppress("Detekt.TooGenericExceptionCaught")
 inline fun <reified T : Enum<T>> safeEnumValueOf(value: String?, default: T): T {
 
     return when (value) {
@@ -13,6 +14,7 @@ inline fun <reified T : Enum<T>> safeEnumValueOf(value: String?, default: T): T 
     }
 }
 
+@Suppress("Detekt.TooGenericExceptionCaught")
 inline fun <reified T : Enum<T>> safeEnumValueOrNull(value: String?): T? {
 
     return when (value) {

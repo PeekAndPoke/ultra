@@ -52,9 +52,7 @@ class DataClassRenderer(
 
         when (target.isInterface) {
             //  Render an interface of a mutator  //////////////////////////////////////////////////////////////////////
-
             true -> {
-
                 block(
                     """
                         @JvmName("mutator$jvmName")

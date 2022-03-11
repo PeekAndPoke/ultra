@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 
+@Suppress("Detekt.TooManyFunctions")
 abstract class ApiClient(val config: Config) {
 
     /**

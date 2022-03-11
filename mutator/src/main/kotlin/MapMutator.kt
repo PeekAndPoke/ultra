@@ -11,6 +11,7 @@ fun <K, T, M> Map<K, T>.mutator(
     return MapMutator(this, onModify, forwardMapper, backwardMapper)
 }
 
+@Suppress("Detekt.TooManyFunctions")
 class MapMutator<K, T, M>(
 
     original: Map<K, T>,
@@ -23,7 +24,7 @@ class MapMutator<K, T, M>(
     operator fun plusAssign(value: Map<K, M>) = plusAssign(value.entries.toList())
 
     operator fun plusAssign(value: List<Map.Entry<K, M>>) = plusAssign(
-        value.map { kv -> kv.key to backwardMapper(kv.value) }.toMap()
+        value.associate { kv -> kv.key to backwardMapper(kv.value) }
     )
 
     override fun copy(input: Map<K, T>) = input.toMutableMap()

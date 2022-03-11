@@ -10,6 +10,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
+@Suppress("Detekt.TooManyFunctions")
 interface Kronos {
 
     companion object {

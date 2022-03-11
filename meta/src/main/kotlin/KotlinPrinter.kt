@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.TypeName
 import de.peekandpoke.ultra.meta.model.MType
 
+@Suppress("Detekt.TooManyFunctions")
 class KotlinPrinter(
     private val packageName: String,
     private val fileAnnotations: List<String> = listOf(),
@@ -82,15 +83,19 @@ class KotlinPrinter(
 
     /** The string builder used to generate the code */
     private val builder = StringBuilder()
+
     /** Accumulates all imports while generating the code */
     private val imports = Imports(packageName, defaultImports)
 
     /** Indentation */
     private val indentation = " ".repeat(indentSize)
+
     /** Current indentation */
     private var currentIndent = ""
+
     /** 'True' when a new line was just started */
     private var isNewLine = false
+
     /** System newline character */
     private val nl = System.lineSeparator()
 

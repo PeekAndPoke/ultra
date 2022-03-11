@@ -22,6 +22,7 @@ fun <T, M> Set<T>.mutator(
 /**
  * Mutator implementation for sets
  */
+@Suppress("Detekt.TooManyFunctions")
 class SetMutator<T, M>(
 
     /** the input value, the original set */
@@ -239,6 +240,7 @@ class SetMutator<T, M>(
     }
 }
 
+@Suppress("Detekt.TooManyFunctions")
 internal class MutableSetWrapper<X>(inner: MutableSet<X>) : MutableSet<X> {
 
     private var _inner = inner
