@@ -33,7 +33,7 @@ class KontainerTools internal constructor(
                     )
                 },
                 codeLocation = DebugInfo.ServiceDefinitionInfo.CodeLocation(
-                    stackTrace = codeLocation.stackPrinted
+                    location = codeLocation.stack.firstOrNull()?.toString() ?: "n/a",
                 ),
                 overwrites = overwrites?.toInfo(),
             )

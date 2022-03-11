@@ -26,7 +26,7 @@ data class DebugInfo(
         val overwrites: ServiceDefinitionInfo?,
     ) {
         data class CodeLocation(
-            val stackTrace: String,
+            val location: String,
         )
     }
 
