@@ -81,7 +81,7 @@ class Kontainer internal constructor(
     /**
      * Get all services that are a super type of the given class as a [Lookup]
      */
-    fun <T : Any> getLookup(cls: KClass<T>): Lookup<T> = getLookup(cls, rootContext)
+    fun <T : Any> getLookup(cls: KClass<T>): LazyServiceLookup<T> = getLookup(cls, rootContext)
 
     /**
      * Get a provider for the given service class
@@ -144,8 +144,8 @@ class Kontainer internal constructor(
     /**
      * Internally gets all super type services of [cls] as a [Lookup]
      */
-    internal fun <T : Any> getLookup(cls: KClass<T>, context: InjectionContext): Lookup<T> {
+    internal fun <T : Any> getLookup(cls: KClass<T>, context: InjectionContext): LazyServiceLookup<T> {
         @Suppress("UNCHECKED_CAST")
-        return blueprint.superTypeLookup.getLookupBlueprint(cls).with(context) as Lookup<T>
+        return blueprint.superTypeLookup.getLookupBlueprint(cls).with(context) as LazyServiceLookup<T>
     }
 }

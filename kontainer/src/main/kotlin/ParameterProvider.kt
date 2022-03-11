@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.kontainer
 
-import de.peekandpoke.ultra.common.Lookup
 import de.peekandpoke.ultra.kontainer.ParameterProvider.ProvisionType.Direct
 import de.peekandpoke.ultra.kontainer.ParameterProvider.ProvisionType.Lazy
 import kotlin.reflect.KClass
@@ -283,7 +282,7 @@ interface ParameterProvider {
         /**
          * Provides a list with all super types
          */
-        override fun provide(context: InjectionContext): Lookup<out Any> = context.getLookup(innerType)
+        override fun provide(context: InjectionContext): LazyServiceLookup<out Any> = context.getLookup(innerType)
 
         /**
          * Always valid.

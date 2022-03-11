@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.kontainer
 
-import de.peekandpoke.ultra.common.Lookup
 import kotlin.reflect.KClass
 
 /**
@@ -53,5 +52,5 @@ data class InjectionContext(
     /**
      * Gets all supertype services for the given [cls] as a Lookup
      */
-    internal fun <T : Any> getLookup(cls: KClass<T>): Lookup<T> = kontainer.getLookup(cls, this)
+    internal fun <T : Any> getLookup(cls: KClass<T>): LazyServiceLookup<T> = kontainer.getLookup(cls, this)
 }

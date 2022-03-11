@@ -16,5 +16,5 @@ class LazyServiceLookupBlueprint<T : Any>(
     /**
      * Creates a [LazyServiceLookup] for the given [context]
      */
-    fun with(context: InjectionContext) = LazyServiceLookup(context, map)
+    fun with(context: InjectionContext): LazyServiceLookup<T> = LazyServiceLookup(context, map)
 }
