@@ -8,9 +8,10 @@ import kotlin.reflect.KType
 import kotlin.reflect.full.allSuperclasses
 import kotlin.reflect.full.allSupertypes
 import kotlin.reflect.full.companionObjectInstance
+import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.jvmName
 
-internal object PolymorphicChildUtil {
+object PolymorphicChildUtil {
 
     fun createChildSlumberer(type: KType): PolymorphicChildSlumberer {
 
@@ -44,8 +45,8 @@ internal object PolymorphicChildUtil {
      * Get the type identifier of a child class
      *
      * First we try to get the identifier from [Polymorphic.Child.identifier].
-     * The we look for a [SerialName] annotation.
-     * Otherwise we use the qualified name of the class
+     * Then we look for a [SerialName] annotation.
+     * Otherwise, we use the qualified name of the class
      */
     fun getIdentifier(cls: KClass<*>) = when (val companion = cls.companionObjectInstance) {
 
@@ -63,18 +64,18 @@ internal object PolymorphicChildUtil {
     }
 }
 
-internal object PolymorphicParentUtil {
+object PolymorphicParentUtil {
 
     /**
      * Creates a polymorphic awaker for the given [cls]
      */
     fun createParentAwaker(cls: KClass<*>): PolymorphicAwaker {
 
-        val discriminator = getDiscriminator(cls)
+        val discriminator: String = getDiscriminator(cls)
 
-        val map = getChildren(cls).map { PolymorphicChildUtil.getIdentifier(it) to it }.toMap()
+        val map: Map<String, KClass<*>> = getChildren(cls).associateBy { PolymorphicChildUtil.getIdentifier(it) }
 
-        val default = getDefaultType(cls)
+        val default: KClass<*>? = getDefaultType(cls)
 
         return PolymorphicAwaker(discriminator, map, default)
     }
@@ -84,11 +85,11 @@ internal object PolymorphicParentUtil {
      */
     fun createParentSlumberer(cls: KClass<*>): PolymorphicParentSlumberer {
 
-        val parent = getParent(cls) ?: cls
+        val parent: KClass<out Any> = getParent(cls) ?: cls
 
-        val discriminator = getDiscriminator(parent)
+        val discriminator: String = getDiscriminator(parent)
 
-        val map = getChildren(parent).map { it to PolymorphicChildUtil.getIdentifier(it) }.toMap()
+        val map: Map<KClass<*>, String> = getChildren(parent).associateWith { PolymorphicChildUtil.getIdentifier(it) }
 
         return PolymorphicParentSlumberer(discriminator, map)
     }
@@ -136,7 +137,7 @@ internal object PolymorphicParentUtil {
      * First we try to get children from the companion object [Polymorphic.Parent.childTypes].
      * Then we add [KClass.sealedSubclasses].
      */
-    fun getChildren(cls: KClass<*>?): List<KClass<*>> {
+    fun <T : Any> getChildren(cls: KClass<T>?): List<KClass<out T>> {
 
         if (cls == null) {
             return emptyList()
@@ -152,6 +153,11 @@ internal object PolymorphicParentUtil {
             .flatMap { getChildren(it).plus(it) }
             .filter { !it.isAbstract }
             .filter { !it.isSealed }
+            .filter { it.isSubclassOf(cls) }
+            .map {
+                @Suppress("UNCHECKED_CAST")
+                it as KClass<out T>
+            }
     }
 
     /**
