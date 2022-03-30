@@ -1,5 +1,6 @@
 @file:Suppress("PropertyName")
 
+import Deps.Test.configureJvmTests
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -13,6 +14,10 @@ val VERSION_NAME: String by project
 
 group = GROUP
 version = VERSION_NAME
+
+repositories {
+    mavenCentral()
+}
 
 dependencies {
     implementation(kotlin("reflect"))
@@ -38,18 +43,12 @@ dependencies {
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
-configure<JavaPluginConvention> {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-}
-
 tasks {
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
     }
+
+    configureJvmTests()
 }
 
 apply(from = "./../maven.publish.gradle.kts")

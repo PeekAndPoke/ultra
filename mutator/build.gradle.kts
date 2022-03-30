@@ -1,5 +1,6 @@
 @file:Suppress("PropertyName")
 
+import Deps.Test.configureJvmTests
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -43,28 +44,21 @@ kotlin {
 }
 
 kapt {
-    useBuildCache = false
-}
-
-configure<JavaPluginConvention> {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-}
-
-val test by tasks.getting(Test::class) {
-    useJUnitPlatform { }
-
-    dependsOn("generateDocs")
+    useBuildCache = true
 }
 
 tasks {
+    withType<KotlinCompile> {
+        kotlinOptions.jvmTarget = "1.8"
+    }
+
+    configureJvmTests {
+        dependsOn("generateDocs")
+    }
 
     create("generateDocs", JavaExec::class) {
         main = "de.peekandpoke.ultra.mutator.examples.GenerateDocsKt"
         classpath = sourceSets.getByName("test").runtimeClasspath
-    }
-
-    withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "1.8"
     }
 }
 

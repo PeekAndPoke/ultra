@@ -1,5 +1,5 @@
-
 import org.gradle.kotlin.dsl.DependencyHandlerScope
+import org.gradle.kotlin.dsl.TaskContainerScope
 import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
 
 @Suppress("MemberVisibilityCanBePrivate")
@@ -79,10 +79,13 @@ object Deps {
             this.block()
         }
 
-        private const val logback_version = "1.2.5"
+        const val logback_version = "1.2.11"
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
-        private const val kotest_version = "4.6.2"
+        const val kotest_version = "5.2.1"
+        const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"
+        const val kotest_framework_api = "io.kotest:kotest-framework-api:$kotest_version"
+
         const val kotest_assertions_core_jvm = "io.kotest:kotest-assertions-core-jvm:$kotest_version"
         const val kotest_runner_junit_jvm = "io.kotest:kotest-runner-junit5-jvm:$kotest_version"
 
@@ -90,16 +93,54 @@ object Deps {
         const val kotest_framework_api_js = "io.kotest:kotest-framework-api-js:$kotest_version"
         const val kotest_framework_engine_js = "io.kotest:kotest-framework-engine-js:$kotest_version"
 
+        fun KotlinDependencyHandler.commonTestDeps() {
+            implementation(kotest_assertions_core)
+            implementation(kotest_framework_api)
+        }
+
         fun KotlinDependencyHandler.jsTestDeps() {
             implementation(kotest_assertions_core_js)
             implementation(kotest_framework_api_js)
             implementation(kotest_framework_engine_js)
         }
 
+        fun KotlinDependencyHandler.jvmTestDeps() {
+            implementation(logback_classic)
+            implementation(kotest_assertions_core_jvm)
+            implementation(kotest_runner_junit_jvm)
+        }
+
         fun DependencyHandlerScope.jvmTestDeps() {
             testImplementation(logback_classic)
             testImplementation(kotest_assertions_core_jvm)
             testImplementation(kotest_runner_junit_jvm)
+        }
+
+        fun TaskContainerScope.configureJvmTests(
+            configure: org.gradle.api.tasks.testing.Test.() -> Unit = {}
+        ) {
+            listOfNotNull(
+                findByName("test") as? org.gradle.api.tasks.testing.Test,
+                findByName("jvmTest") as? org.gradle.api.tasks.testing.Test,
+            ).firstOrNull()?.apply {
+                useJUnitPlatform { }
+
+                filter {
+                    isFailOnNoMatchingTests = false
+                }
+
+                testLogging {
+                    showExceptions = true
+                    showStandardStreams = true
+                    events = setOf(
+                        org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED,
+                        org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
+                    )
+                    exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+                }
+
+                configure()
+            }
         }
     }
 }

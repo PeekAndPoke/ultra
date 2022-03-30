@@ -1,9 +1,13 @@
 @file:Suppress("PropertyName")
 
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import Deps.Test.commonTestDeps
+import Deps.Test.configureJvmTests
+import Deps.Test.jsTestDeps
+import Deps.Test.jvmTestDeps
 
 plugins {
     kotlin("multiplatform")
+    id("io.kotest.multiplatform") version Deps.Test.kotest_version
     id("org.jetbrains.kotlin.plugin.serialization")
     id("org.jetbrains.dokka")
 }
@@ -19,20 +23,17 @@ repositories {
 }
 
 kotlin {
-    js(IR) {
-        browser {
-            webpackTask {
-                output.libraryTarget = "commonjs2"
-            }
-        }
-//        binaries.executable()
-    }
+    targets {
 
-    jvm {
-        val main by compilations.getting {
-            kotlinOptions {
-                // Setup the Kotlin compiler options for the 'main' compilation:
-                jvmTarget = "1.8"
+        js(IR) {
+            browser()
+        }
+
+        jvm {
+            compilations.all {
+                kotlinOptions {
+                    jvmTarget = "1.8"
+                }
             }
         }
     }
@@ -48,6 +49,7 @@ kotlin {
         }
     }
 
+    @Suppress("UNUSED_VARIABLE")
     sourceSets {
 
         val commonMain by getting {
@@ -62,9 +64,7 @@ kotlin {
 
         val commonTest by getting {
             dependencies {
-//                implementation("io.kotest:kotest-assertions-shared:$kotlintest_version")
-//                implementation("io.kotest:kotest-framework-api:$kotlintest_version")
-//                implementation("io.kotest:kotest-runner-junit5:$kotlintest_version")
+                commonTestDeps()
             }
         }
 
@@ -72,6 +72,12 @@ kotlin {
             dependencies {
                 api(Deps.korlibs_klock_js)
                 implementation(npm("whatwg-fetch", "3.6.2"))
+            }
+        }
+
+        js().compilations["test"].defaultSourceSet {
+            dependencies {
+                jsTestDeps()
             }
         }
 
@@ -84,26 +90,14 @@ kotlin {
 
         jvm().compilations["test"].defaultSourceSet {
             dependencies {
-                implementation(Deps.Test.logback_classic)
-                implementation(Deps.Test.kotest_assertions_core_jvm)
-                implementation(Deps.Test.kotest_runner_junit_jvm)
+                jvmTestDeps()
             }
         }
     }
 }
 
-configure<JavaPluginConvention> {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-}
-
 tasks {
-    withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "1.8"
-    }
-
-    getByName("jvmTest", Test::class) {
-        useJUnitPlatform { }
-    }
+    configureJvmTests()
 }
 
 apply(from = "./../maven.publish.gradle.kts")

@@ -1,5 +1,6 @@
 @file:Suppress("PropertyName")
 
+import Deps.Test.configureJvmTests
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -41,18 +42,12 @@ kapt {
     useBuildCache = true
 }
 
-configure<JavaPluginConvention> {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-}
-
-val test by tasks.getting(Test::class) {
-    useJUnitPlatform { }
-}
-
 tasks {
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
     }
+
+    configureJvmTests()
 }
 
 apply(from = "./../maven.publish.gradle.kts")
