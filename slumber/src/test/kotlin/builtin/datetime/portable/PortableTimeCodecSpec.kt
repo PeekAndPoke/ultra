@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.slumber.builtin.datetime
+package de.peekandpoke.ultra.slumber.builtin.datetime.portable
 
 import de.peekandpoke.ultra.common.datetime.PortableTime
 import de.peekandpoke.ultra.slumber.Codec

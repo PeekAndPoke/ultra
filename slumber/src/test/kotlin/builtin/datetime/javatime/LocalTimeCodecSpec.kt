@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.slumber.builtin.datetime
+package de.peekandpoke.ultra.slumber.builtin.datetime.javatime
 
 import de.peekandpoke.ultra.slumber.Codec
 import io.kotest.core.spec.style.StringSpec

@@ -11,8 +11,14 @@ internal const val TS = "ts"
 internal const val TIMEZONE = "timezone"
 internal const val HUMAN = "human"
 
-internal fun toMap(ts: Long, timezone: ZoneId, human: String) = mapOf(
+internal fun toMap(ts: Long, timezone: ZoneId, human: String) = toMap(
+    ts = ts,
+    timezone = timezone.id,
+    human = human,
+)
+
+internal fun toMap(ts: Long, timezone: String, human: String) = mapOf(
     TS to ts,
-    TIMEZONE to timezone.id,
+    TIMEZONE to timezone,
     HUMAN to human
 )

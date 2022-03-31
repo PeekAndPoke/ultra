@@ -59,6 +59,10 @@ object Deps {
     const val kotlinx_serialization_json =
         "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_version"
 
+    // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-datetime
+    private const val kotlinx_datetime_version = "0.3.2"
+    const val kotlinx_datetime_common = "org.jetbrains.kotlinx:kotlinx-datetime:$kotlinx_datetime_version"
+
     // https://mvnrepository.com/artifact/com.soywiz.korlibs.klock/klock
     private const val korlibs_klock_version = "2.6.1"
     const val korlibs_klock_common = "com.soywiz.korlibs.klock:klock:$korlibs_klock_version"

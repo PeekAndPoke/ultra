@@ -58,6 +58,7 @@ kotlin {
                 implementation(Deps.kotlinx_serialization_json)
                 implementation(Deps.kotlinx_coroutines_core)
 
+                api(Deps.kotlinx_datetime_common)
                 api(Deps.korlibs_klock_common)
             }
         }

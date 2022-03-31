@@ -24,11 +24,11 @@ repositories {
 dependencies {
     implementation(kotlin("reflect"))
 
-    api(project(":common"))
-    api(project(":commonmp"))
-
     api(Deps.klassIndexLib)
     api(Deps.kotlinx_serialization_core)
+
+    api(project(":common"))
+    api(project(":commonmp"))
 
     // Testing
     kaptTest(Deps.klassIndexProcessor)
