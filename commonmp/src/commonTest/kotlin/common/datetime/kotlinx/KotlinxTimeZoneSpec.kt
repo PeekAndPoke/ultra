@@ -11,7 +11,7 @@ class KotlinxTimeZoneSpec : StringSpec({
         TimeZone.of("Europe/Berlin").id shouldBe "Europe/Berlin"
     }
 
-    timeZoneIds.forEach {
+    TestConstants.timeZoneIds.forEach {
 
         "Creating a TimeZone from id '$it' must work" {
             TimeZone.of(it).id shouldBe it
