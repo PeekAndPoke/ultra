@@ -73,6 +73,7 @@ kotlin {
             dependencies {
                 api(Deps.korlibs_klock_js)
                 implementation(npm("whatwg-fetch", "3.6.2"))
+                implementation(npm("@js-joda/timezone", "2.12.0"))
             }
         }
 

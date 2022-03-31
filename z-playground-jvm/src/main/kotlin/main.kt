@@ -4,6 +4,7 @@ import de.peekandpoke.ultra.common.datetime.DOOMSDAY_TIMESTAMP
 import de.peekandpoke.ultra.common.datetime.GENESIS_TIMESTAMP
 import de.peekandpoke.ultra.common.network.NetworkUtils
 import java.time.Instant
+import java.time.ZoneId
 
 fun main() {
 
@@ -16,4 +17,12 @@ fun main() {
     println(
         Instant.ofEpochMilli(DOOMSDAY_TIMESTAMP)
     )
+
+    println("=======================================")
+
+    ZoneId.getAvailableZoneIds()
+        .sorted()
+        .forEach { println("\"$it\",") }
+
+    println("=======================================")
 }
