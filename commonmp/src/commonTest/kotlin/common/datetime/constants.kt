@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.common.datetime.kotlinx
+package de.peekandpoke.ultra.common.datetime
 
 object TestConstants {
 

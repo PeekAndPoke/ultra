@@ -17,7 +17,3 @@ val PortableDoomsdayDate = PortableDate(DOOMSDAY_TIMESTAMP)
 
 val PortableGenesisDateTime = PortableDateTime(GENESIS_TIMESTAMP)
 val PortableDoomsdayDateTime = PortableDateTime(DOOMSDAY_TIMESTAMP)
-
-expect fun PortableDate.toIsoString(): String
-
-expect fun PortableDateTime.toIsoString(): String

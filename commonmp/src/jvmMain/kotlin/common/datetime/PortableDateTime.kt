@@ -15,8 +15,6 @@ val PortableDateTime.date
         utc
     )
 
-actual fun PortableDateTime.toIsoString(): String = date.format(isoFormat)
-
 val Instant.portable
     get(): PortableDateTime = PortableDateTime(
         timestamp = this.toEpochMilli()

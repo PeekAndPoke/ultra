@@ -42,7 +42,7 @@ class SerializerRoundTripSpec : StringSpec() {
             )
 
             encoded shouldBe """
-                {"ts":1579046400000,"timezone":"UTC","human":"2020-01-15T00:00:00"}
+                {"ts":1579046400000,"timezone":"UTC","human":"2020-01-15"}
             """.trimIndent()
 
             val decoded = Json.decodeFromString(

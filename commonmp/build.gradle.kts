@@ -26,7 +26,16 @@ kotlin {
     targets {
 
         js(IR) {
-            browser()
+            browser {
+//                testTask {
+//                    useKarma {
+//                        useChromeHeadless()
+//                        usePhantomJS()
+//                        useChromiumHeadless()
+//                        useFirefoxHeadless()
+//                    }
+//                }
+            }
         }
 
         jvm {

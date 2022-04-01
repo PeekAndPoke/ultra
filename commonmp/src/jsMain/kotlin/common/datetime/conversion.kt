@@ -1,19 +1,13 @@
 package de.peekandpoke.ultra.common.datetime
 
 import com.soywiz.klock.Date
-import com.soywiz.klock.DateFormat
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.Time
 
-private val isoFormat = DateFormat(ISO_FORMAT)
 
 val PortableDate.date get(): Date = DateTime.fromUnix(timestamp).date
 
-actual fun PortableDate.toIsoString(): String = date.format(isoFormat)
-
 val PortableDateTime.date get(): DateTime = DateTime.fromUnix(timestamp)
-
-actual fun PortableDateTime.toIsoString(): String = date.format(isoFormat)
 
 // FROM Klock to Portable //////////////////////////////////////////////////////////////////////////////////////////////
 
