@@ -1,26 +1,24 @@
 package de.peekandpoke.ultra.common.datetime
 
 import kotlinx.datetime.DayOfWeek
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
 
 @Suppress("DataClassPrivateConstructor")
 @Serializable(with = MpZonedDateTimeSerializer::class)
 data class MpZonedDateTime private constructor(
-    val value: LocalDateTime,
+    val datetime: MpLocalDateTime,
     val timezone: TimeZone
 ) : Comparable<MpZonedDateTime> {
 
     companion object {
         private val isoWithTimezone = "(.*)\\[(.*)]".toRegex()
 
-        fun of(value: LocalDateTime, timezone: TimeZone): MpZonedDateTime {
+        fun of(value: MpLocalDateTime, timezone: TimeZone): MpZonedDateTime {
 
             return MpZonedDateTime(
-                value = value,
+                datetime = value,
                 timezone = when (timezone.id) {
                     // WHY? There seems to be a difference between TimeZone.UTC and TimeZone.of("UTC")
                     "UTC" -> TimeZone.UTC
@@ -31,7 +29,7 @@ data class MpZonedDateTime private constructor(
         }
 
         fun parse(isoString: String, timezone: TimeZone): MpZonedDateTime = of(
-            value = LocalDateTime.parse(isoString),
+            value = MpLocalDateTime.parse(isoString),
             timezone = timezone
         )
 
@@ -55,24 +53,26 @@ data class MpZonedDateTime private constructor(
         }
     }
 
-    val year: Int get() = value.year
-    val monthNumber: Int get() = value.monthNumber
-    val month: Month get() = value.month
-    val dayOfMonth: Int get() = value.dayOfMonth
-    val dayOfWeek: DayOfWeek get() = value.dayOfWeek
-    val dayOfYear: Int get() = value.dayOfYear
+    val year: Int get() = datetime.year
+    val monthNumber: Int get() = datetime.monthNumber
+    val month: Month get() = datetime.month
+    val dayOfMonth: Int get() = datetime.dayOfMonth
+    val dayOfWeek: DayOfWeek get() = datetime.dayOfWeek
+    val dayOfYear: Int get() = datetime.dayOfYear
 
-    val hour: Int get() = value.hour
-    val minute: Int get() = value.minute
-    val second: Int get() = value.second
-    val nanosecond: Int get() = value.nanosecond
+    val hour: Int get() = datetime.hour
+    val minute: Int get() = datetime.minute
+    val second: Int get() = datetime.second
+    val nanosecond: Int get() = datetime.nanosecond
 
-    private val instant: MpInstant = MpInstant(
-        value = value.toInstant(timezone)
-    )
+    private val instant: MpInstant = datetime.toInstant(timezone)
 
     override fun compareTo(other: MpZonedDateTime): Int {
         return instant.compareTo(other.instant)
+    }
+
+    override fun toString(): String {
+        return "MpZonedDateTime(${toIsoString()})"
     }
 
     fun toIsoString(): String {
@@ -97,9 +97,9 @@ data class MpZonedDateTime private constructor(
 
     fun toInstant(): MpInstant = instant
 
-    fun toLocalDate() = MpLocalDate(value.date)
+    fun toLocalDate(): MpLocalDate = datetime.toDate()
 
-    fun toLocalDateTime() = MpLocalDateTime(value)
+    fun toLocalDateTime(): MpLocalDateTime = datetime
 
     fun toEpochMillis(): Long = toInstant().toEpochMillis()
 

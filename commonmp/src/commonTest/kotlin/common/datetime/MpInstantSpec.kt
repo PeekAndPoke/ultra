@@ -50,7 +50,7 @@ class MpInstantSpec : StringSpec({
 
     "toString" {
         MpInstant.parse("2022-04-01T00:00:00Z")
-            .toString() shouldBe "MpInstant(value=2022-04-01T00:00:00Z)"
+            .toString() shouldBe "MpInstant(2022-04-01T00:00:00.000Z)"
     }
 
     "toIsoString" {

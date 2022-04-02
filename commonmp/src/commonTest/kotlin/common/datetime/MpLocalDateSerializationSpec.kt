@@ -21,7 +21,7 @@ class MpLocalDateSerializationSpec : StringSpec({
         )
 
         result shouldBe """
-            {"ts":1649116800000,"timezone":"UTC","human":"2022-04-05"}
+            {"ts":1649116800000,"timezone":"UTC","human":"2022-04-05T00:00:00.000Z"}
         """.trimIndent()
     }
 
@@ -35,7 +35,7 @@ class MpLocalDateSerializationSpec : StringSpec({
         )
 
         result shouldBe """
-            {"date":{"ts":1649116800000,"timezone":"UTC","human":"2022-04-05"}}
+            {"date":{"ts":1649116800000,"timezone":"UTC","human":"2022-04-05T00:00:00.000Z"}}
         """.trimIndent()
     }
 

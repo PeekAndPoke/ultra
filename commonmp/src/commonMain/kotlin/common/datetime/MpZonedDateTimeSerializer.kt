@@ -35,7 +35,9 @@ object MpZonedDateTimeSerializer : KSerializer<MpZonedDateTime> {
         val timezone = TimeZone.of(v.timezone)
 
         return MpZonedDateTime.of(
-            value = Instant.fromEpochMilliseconds(v.ts).toLocalDateTime(timezone),
+            value = MpLocalDateTime(
+                Instant.fromEpochMilliseconds(v.ts).toLocalDateTime(timezone)
+            ),
             timezone = timezone,
         )
     }

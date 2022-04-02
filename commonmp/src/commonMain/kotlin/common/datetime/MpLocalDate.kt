@@ -14,8 +14,9 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 
+@Suppress("DataClassPrivateConstructor")
 @Serializable(with = MpLocalDateSerializer::class)
-data class MpLocalDate(val value: LocalDate) : Comparable<MpLocalDate> {
+data class MpLocalDate internal constructor(private val value: LocalDate) : Comparable<MpLocalDate> {
 
     companion object {
         fun of(year: Int, month: Int, day: Int): MpLocalDate = MpLocalDate(
@@ -52,7 +53,6 @@ data class MpLocalDate(val value: LocalDate) : Comparable<MpLocalDate> {
         )
     }
 
-
     val year: Int get() = value.year
     val monthNumber: Int get() = value.monthNumber
     val month: Month get() = value.month
@@ -62,6 +62,10 @@ data class MpLocalDate(val value: LocalDate) : Comparable<MpLocalDate> {
 
     override fun compareTo(other: MpLocalDate): Int {
         return value.compareTo(other.value)
+    }
+
+    override fun toString(): String {
+        return "MpLocalDate(${toIsoString()})"
     }
 
     fun toIsoString(): String = atStartOfDay(TimeZone.UTC).toIsoString()

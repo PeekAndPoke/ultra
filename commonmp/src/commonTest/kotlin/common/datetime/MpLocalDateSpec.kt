@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
-import io.kotest.assertions.fail
+import de.peekandpoke.ultra.common.datetime.kotlinx.offsetAt
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeEqualComparingTo
@@ -11,7 +11,6 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.offsetAt
 
 @Suppress("unused")
 class MpLocalDateSpec : StringSpec({
@@ -51,7 +50,7 @@ class MpLocalDateSpec : StringSpec({
 
     "toString" {
         MpLocalDate.parse("2022-04-02")
-            .toString() shouldBe "MpLocalDate(value=2022-04-02)"
+            .toString() shouldBe "MpLocalDate(2022-04-02T00:00:00.000Z)"
     }
 
     "toIsoString" {
@@ -79,12 +78,26 @@ class MpLocalDateSpec : StringSpec({
         subject.dayOfYear shouldBe 95
     }
 
-    "TODO: atStartOfDay" {
-        fail("TODO")
+    "atStartOfDay" {
+
+        val subject = MpLocalDate.of(2022, Month.APRIL, 5)
+
+        subject.atStartOfDay(TimeZone.UTC) shouldBe
+                MpInstant.parse("2022-04-05T00:00:00.000Z")
+
+        subject.atStartOfDay(TimeZone.of("Europe/Bucharest")) shouldBe
+                MpInstant.parse("2022-04-05T00:00:00.000[Europe/Bucharest]")
+
+        subject.atStartOfDay(TimeZone.of("Europe/Bucharest")) shouldBe
+                MpInstant.parse("2022-04-04T21:00:00.000Z")
     }
 
-    "TODO: toLocalDateTime" {
-        fail("TODO")
+    "toLocalDateTime" {
+
+        val subject = MpLocalDate.of(2022, Month.APRIL, 5)
+
+        subject.toLocalDateTime() shouldBe
+                MpLocalDateTime.of(2022, Month.APRIL, 5)
     }
 
     "Arithmetic - plus days" {
@@ -180,7 +193,7 @@ class MpLocalDateSpec : StringSpec({
 
             val startOfDayTs = startOfDay.toEpochSeconds()
 
-            val offset = timezone.offsetAt(instant.value).totalSeconds
+            val offset = timezone.offsetAt(instant).totalSeconds
             val expectedTs = instant.toEpochSeconds() - offset
 
             startOfDayTs shouldBe expectedTs

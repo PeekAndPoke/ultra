@@ -2,7 +2,6 @@ package de.peekandpoke.ultra.common.datetime
 
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializer
@@ -23,9 +22,9 @@ object MpLocalDateSerializer : KSerializer<MpLocalDate> {
         encoder.encodeSerializableValue(
             serializer = SerializationTuple.serializer(),
             value = SerializationTuple(
-                ts = value.value.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds(),
+                ts = value.atStartOfDay(TimeZone.UTC).toEpochMillis(),
                 timezone = "UTC",
-                human = value.value.toString()
+                human = value.toIsoString()
             )
         )
     }

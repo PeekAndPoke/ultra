@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.common.datetime
 
-import io.kotest.assertions.fail
+import de.peekandpoke.ultra.common.datetime.kotlinx.offsetMillisAt
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeEqualComparingTo
 import io.kotest.matchers.comparables.shouldBeGreaterThan
@@ -8,6 +9,7 @@ import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Month
+import kotlinx.datetime.TimeZone
 
 @Suppress("unused")
 class MpLocalDateTimeSpec : StringSpec({
@@ -45,12 +47,14 @@ class MpLocalDateTimeSpec : StringSpec({
                 MpLocalDateTime.parse("2022-04-01T12:00:00.000")
     }
 
-    "TODO: toString" {
-        fail("check me")
+    "toString" {
+        MpLocalDateTime.parse("2022-04-02T12:00")
+            .toString() shouldBe "MpLocalDateTime(2022-04-02T12:00:00.000Z)"
     }
 
-    "TODO: toIsoString" {
-        fail("check me")
+    "toIsoString" {
+        MpLocalDateTime.parse("2022-04-02T12:00")
+            .toIsoString() shouldBe "2022-04-02T12:00:00.000Z"
     }
 
     "parse - toIsoString - round trip" {
@@ -78,11 +82,65 @@ class MpLocalDateTimeSpec : StringSpec({
         subject.nanosecond shouldBe 15
     }
 
-    "TODO toInstant" {
-        fail("check me")
+    "toDate" {
+        val subject = MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14, 15)
+
+        subject.toDate() shouldBe MpLocalDate.of(2022, Month.APRIL, 5)
     }
 
-    "TODO atZone" {
-        fail("check me")
+    "toInstant" {
+        val source = MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14)
+
+        val expectedTs = TestConstants.tsUtc_20220405_121314
+
+        val instantUTC = source.toInstant(TimeZone.UTC)
+
+        withClue("at TimeZone.UTC must not shift the timestamp") {
+            instantUTC shouldBe MpInstant.parse("2022-04-05T12:13:14.000Z")
+            instantUTC.toEpochMillis() shouldBe expectedTs
+        }
+
+        withClue("at TimeZone Europe/Bucharest must shift the timestamp") {
+            val timezone = TimeZone.of("Europe/Bucharest")
+            val instantBucharest = source.toInstant(timezone)
+            instantBucharest shouldBe MpInstant.parse("2022-04-05T09:13:14.000Z")
+            instantBucharest.toEpochMillis() shouldBe
+                    (expectedTs - timezone.offsetMillisAt(instantUTC))
+        }
+    }
+
+    "atZone ... must shift the timestamp with respect to the target timezone" {
+
+        val source = MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14)
+        val sourceInstant = source.toInstant(TimeZone.UTC)
+
+        val expectedTs = TestConstants.tsUtc_20220405_121314
+
+        val zones = listOf(
+            TimeZone.UTC,
+            TimeZone.of("UTC"),
+            TimeZone.of("Europe/Bucharest")
+        )
+
+        zones.forEach { timezone ->
+
+            withClue("Must work for timezone '${timezone.id}'") {
+
+                val result = source.atZone(timezone)
+
+                result shouldBe MpZonedDateTime.of(source, timezone)
+
+                result.toEpochMillis() shouldBe
+                        (expectedTs - timezone.offsetMillisAt(sourceInstant))
+            }
+        }
+    }
+
+    "atUTC" {
+        val source = MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14)
+
+        source.atUTC() shouldBe source.atZone(TimeZone.UTC)
+
+        source.atUTC() shouldBe source.atZone(TimeZone.of("UTC"))
     }
 })

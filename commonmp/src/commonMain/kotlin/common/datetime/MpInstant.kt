@@ -6,8 +6,9 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
+@Suppress("DataClassPrivateConstructor")
 @Serializable(with = MpInstantSerializer::class)
-data class MpInstant(val value: Instant) : Comparable<MpInstant> {
+data class MpInstant internal constructor(internal val value: Instant) : Comparable<MpInstant> {
 
     companion object {
         fun fromEpochMillis(millis: Long): MpInstant = MpInstant(
@@ -18,9 +19,9 @@ data class MpInstant(val value: Instant) : Comparable<MpInstant> {
             value = Instant.fromEpochSeconds(seconds, nanosecondAdjustment.toLong())
         )
 
-        fun parse(isoString: String): MpInstant = MpInstant(
-            value = Instant.parse(isoString)
-        )
+        fun parse(isoString: String): MpInstant {
+            return MpZonedDateTime.parse(isoString).toInstant()
+        }
 
         val Genesis: MpInstant = MpInstant(
             Instant.fromEpochMilliseconds(GENESIS_TIMESTAMP)
@@ -33,6 +34,10 @@ data class MpInstant(val value: Instant) : Comparable<MpInstant> {
 
     override fun compareTo(other: MpInstant): Int {
         return value.compareTo(other.value)
+    }
+
+    override fun toString(): String {
+        return "MpInstant(${toIsoString()})"
     }
 
     fun toIsoString(): String {
@@ -52,7 +57,7 @@ data class MpInstant(val value: Instant) : Comparable<MpInstant> {
     )
 
     fun atZone(timezone: TimeZone): MpZonedDateTime = MpZonedDateTime.of(
-        value.toLocalDateTime(timezone),
+        MpLocalDateTime(value.toLocalDateTime(timezone)),
         timezone,
     )
 }

@@ -1,6 +1,8 @@
 package de.peekandpoke.ultra.common.datetime
 
-import io.kotest.assertions.fail
+import de.peekandpoke.ultra.common.datetime.TestConstants.tsBucharest_20220405_121314
+import de.peekandpoke.ultra.common.datetime.TestConstants.tsUtc_20220405_121314
+import de.peekandpoke.ultra.common.datetime.kotlinx.offsetMillisAt
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeEqualComparingTo
 import io.kotest.matchers.comparables.shouldBeGreaterThan
@@ -64,8 +66,12 @@ class MpZonedDateTimeSpec : StringSpec({
                 MpZonedDateTime.parse("2022-04-05T00:00:00[US/Pacific]")
     }
 
-    "TODO toString" {
-        fail("check me")
+    "toString" {
+        MpZonedDateTime.parse("2022-04-05T00:00:00", TimeZone.UTC)
+            .toString() shouldBe "MpZonedDateTime(2022-04-05T00:00:00.000Z)"
+
+        MpZonedDateTime.parse("2022-04-05T00:00:00", TimeZone.of("Europe/Bucharest"))
+            .toString() shouldBe "MpZonedDateTime(2022-04-05T00:00:00.000[Europe/Bucharest])"
     }
 
     "toIsoString" {
@@ -78,6 +84,14 @@ class MpZonedDateTimeSpec : StringSpec({
 
         MpZonedDateTime.parse("2022-04-05T00:00:00", TimeZone.of("Europe/Berlin"))
             .toIsoString() shouldBe "2022-04-05T00:00:00.000[Europe/Berlin]"
+    }
+
+    "parse - toIsoString - round trip" {
+        val source = MpZonedDateTime.parse("2022-04-05T00:00:00", TimeZone.of("Europe/Bucharest"))
+
+        val result = MpZonedDateTime.parse(source.toIsoString())
+
+        result shouldBe source
     }
 
     "Fields year, monthNumber, month, dayOfMonth, dayOfWeek, dayOfYear, hour, minute, second, nano" {
@@ -98,23 +112,81 @@ class MpZonedDateTimeSpec : StringSpec({
         subject.nanosecond shouldBe 15
     }
 
-    "TODO: toInstant" {
-        fail("check me")
+    "toInstant - UTC" {
+        val subject = MpZonedDateTime.parse("2022-04-05T12:13:14Z")
+
+        val result = subject.toInstant()
+
+        result.toEpochMillis() shouldBe tsUtc_20220405_121314
+
+        result shouldBe MpInstant.parse("2022-04-05T12:13:14Z")
     }
 
-    "TODO: toLocalDate" {
-        fail("check me")
+    "toInstant - Europe/Bucharest" {
+        val subject = MpZonedDateTime.parse("2022-04-05T12:13:14[Europe/Bucharest]")
+
+        val result = subject.toInstant()
+
+        result.toEpochMillis() shouldBe
+                (tsUtc_20220405_121314 - TimeZone.of("Europe/Bucharest").offsetMillisAt(result))
+
+        result shouldBe MpInstant.parse("2022-04-05T09:13:14Z")
     }
 
-    "TODO: toLocalDateTime" {
-        fail("check me")
+    "toLocalDate - UTC" {
+        val timezone = TimeZone.UTC
+
+        MpZonedDateTime.parse("2022-04-05T00:00:00", timezone)
+            .toLocalDate() shouldBe MpLocalDate.parse("2022-04-05")
+
+        MpZonedDateTime.parse("2022-04-05T23:59:59", timezone)
+            .toLocalDate() shouldBe MpLocalDate.parse("2022-04-05")
     }
 
-    "TODO: toEpochMillis" {
-        fail("check me")
+    "toLocalDate - Europe/Bucharest" {
+        val timezone = TimeZone.of("Europe/Bucharest")
+
+        MpZonedDateTime.parse("2022-04-05T00:00:00", timezone)
+            .toLocalDate() shouldBe MpLocalDate.parse("2022-04-05")
+
+        MpZonedDateTime.parse("2022-04-05T23:59:59.999Z", timezone)
+            .toLocalDate() shouldBe MpLocalDate.parse("2022-04-05")
     }
 
-    "TODO: toEpochSeconds" {
-        fail("check me")
+    "toLocalDateTime - UTC" {
+        val timezone = TimeZone.UTC
+
+        MpZonedDateTime.parse("2022-04-05T00:00:00", timezone)
+            .toLocalDateTime() shouldBe MpLocalDateTime.parse("2022-04-05T00:00:00")
+
+        MpZonedDateTime.parse("2022-04-05T23:59:59", timezone)
+            .toLocalDateTime() shouldBe MpLocalDateTime.parse("2022-04-05T23:59:59")
+    }
+
+    "toLocalDateTime - Europe/Bucharest" {
+        val timezone = TimeZone.of("Europe/Bucharest")
+
+        MpZonedDateTime.parse("2022-04-05T00:00:00", timezone)
+            .toLocalDateTime() shouldBe MpLocalDateTime.parse("2022-04-05T00:00:00")
+
+        MpZonedDateTime.parse("2022-04-05T23:59:59", timezone)
+            .toLocalDateTime() shouldBe MpLocalDateTime.parse("2022-04-05T23:59:59")
+    }
+
+    "toEpochMillis" {
+
+        MpZonedDateTime.parse("2022-04-05T12:13:14Z")
+            .toEpochMillis() shouldBe tsUtc_20220405_121314
+
+        MpZonedDateTime.parse("2022-04-05T12:13:14[Europe/Bucharest]")
+            .toEpochMillis() shouldBe tsBucharest_20220405_121314
+    }
+
+    "toEpochSeconds" {
+        MpZonedDateTime.parse("2022-04-05T12:13:14Z")
+            .toEpochSeconds() shouldBe (tsUtc_20220405_121314 / 1000)
+
+        MpZonedDateTime.parse("2022-04-05T12:13:14[Europe/Bucharest]")
+            .toEpochSeconds() shouldBe (tsBucharest_20220405_121314 / 1000)
     }
 })

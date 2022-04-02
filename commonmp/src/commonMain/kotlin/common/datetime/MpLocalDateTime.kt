@@ -11,7 +11,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 
 @Serializable(with = MpLocalDateTimeSerializer::class)
-data class MpLocalDateTime(val value: LocalDateTime) : Comparable<MpLocalDateTime> {
+data class MpLocalDateTime internal constructor(internal val value: LocalDateTime) : Comparable<MpLocalDateTime> {
 
     companion object {
         fun of(
@@ -77,7 +77,13 @@ data class MpLocalDateTime(val value: LocalDateTime) : Comparable<MpLocalDateTim
         return value.compareTo(other.value)
     }
 
+    override fun toString(): String {
+        return "MpLocalDateTime(${toIsoString()})"
+    }
+
     fun toIsoString(): String = atUTC().toIsoString()
+
+    fun toDate(): MpLocalDate = MpLocalDate(value.date)
 
     fun toInstant(timezone: TimeZone): MpInstant = MpInstant(
         value = value.toInstant(timezone)
