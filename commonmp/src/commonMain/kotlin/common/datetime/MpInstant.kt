@@ -35,8 +35,8 @@ data class MpInstant(val value: Instant) : Comparable<MpInstant> {
         return value.compareTo(other.value)
     }
 
-    override fun toString(): String {
-        return value.toString()
+    fun toIsoString(): String {
+        return atZone(TimeZone.UTC).toIsoString()
     }
 
     fun toEpochMillis(): Long = value.toEpochMilliseconds()

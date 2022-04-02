@@ -22,7 +22,7 @@ class MpInstantSerializationSpec : StringSpec({
         )
 
         result shouldBe """
-            {"ts":1649116800000,"timezone":"UTC","human":"2022-04-05T00:00:00Z"}
+            {"ts":1649116800000,"timezone":"UTC","human":"2022-04-05T00:00:00.000Z"}
         """.trimIndent()
     }
 
@@ -36,7 +36,7 @@ class MpInstantSerializationSpec : StringSpec({
         )
 
         result shouldBe """
-            {"date":{"ts":1649116800000,"timezone":"UTC","human":"2022-04-05T00:00:00Z"}}
+            {"date":{"ts":1649116800000,"timezone":"UTC","human":"2022-04-05T00:00:00.000Z"}}
         """.trimIndent()
     }
 
@@ -64,5 +64,20 @@ class MpInstantSerializationSpec : StringSpec({
         result shouldBe Wrapper(
             MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC),
         )
+    }
+
+    "Roundtrip - pure" {
+
+        val start: MpInstant = MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC)
+
+        val result: MpInstant = json.decodeFromString(
+            MpInstant.serializer(),
+            json.encodeToString(
+                MpInstant.serializer(),
+                start
+            )
+        )
+
+        result shouldBe start
     }
 })

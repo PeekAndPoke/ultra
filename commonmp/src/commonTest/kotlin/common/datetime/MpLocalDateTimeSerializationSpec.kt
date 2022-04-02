@@ -21,7 +21,7 @@ class MpLocalDateTimeSerializationSpec : StringSpec({
         )
 
         result shouldBe """
-            {"ts":1649160794000,"timezone":"UTC","human":"2022-04-05T12:13:14"}
+            {"ts":1649160794000,"timezone":"UTC","human":"2022-04-05T12:13:14.000Z"}
         """.trimIndent()
     }
 
@@ -35,7 +35,7 @@ class MpLocalDateTimeSerializationSpec : StringSpec({
         )
 
         result shouldBe """
-            {"date":{"ts":1649160794000,"timezone":"UTC","human":"2022-04-05T12:13:14"}}
+            {"date":{"ts":1649160794000,"timezone":"UTC","human":"2022-04-05T12:13:14.000Z"}}
         """.trimIndent()
     }
 
@@ -63,5 +63,20 @@ class MpLocalDateTimeSerializationSpec : StringSpec({
         result shouldBe Wrapper(
             MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14),
         )
+    }
+
+    "Roundtrip - pure" {
+
+        val start: MpLocalDateTime = MpLocalDateTime.of(2022, Month.APRIL, 5)
+
+        val result: MpLocalDateTime = json.decodeFromString(
+            MpLocalDateTime.serializer(),
+            json.encodeToString(
+                MpLocalDateTime.serializer(),
+                start
+            )
+        )
+
+        result shouldBe start
     }
 })

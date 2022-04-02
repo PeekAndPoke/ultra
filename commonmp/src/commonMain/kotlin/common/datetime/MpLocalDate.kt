@@ -32,9 +32,16 @@ data class MpLocalDate(val value: LocalDate) : Comparable<MpLocalDate> {
             day = day,
         )
 
-        fun parse(isoString: String): MpLocalDate = MpLocalDate(
-            value = LocalDate.parse(isoString)
-        )
+        fun parse(isoString: String): MpLocalDate {
+
+            return try {
+                MpLocalDate(
+                    value = LocalDate.parse(isoString)
+                )
+            } catch (e: Throwable) {
+                MpInstant.parse(isoString).atZone(TimeZone.UTC).toLocalDate()
+            }
+        }
 
         val Genesis: MpLocalDate = MpLocalDate(
             Instant.fromEpochMilliseconds(GENESIS_TIMESTAMP).toLocalDateTime(TimeZone.UTC).date
@@ -57,9 +64,15 @@ data class MpLocalDate(val value: LocalDate) : Comparable<MpLocalDate> {
         return value.compareTo(other.value)
     }
 
-    override fun toString(): String {
-        return value.toString()
-    }
+    fun toIsoString(): String = atStartOfDay(TimeZone.UTC).toIsoString()
+
+    fun atStartOfDay(timezone: TimeZone): MpInstant = MpInstant(
+        value = value.atStartOfDayIn(timezone)
+    )
+
+    fun toLocalDateTime(): MpLocalDateTime = MpLocalDateTime(
+        value = value.atStartOfDayIn(TimeZone.UTC).toLocalDateTime(TimeZone.UTC)
+    )
 
     fun plus(unit: DateTimeUnit.DateBased): MpLocalDate = MpLocalDate(
         value = value.plus(1, unit)
@@ -91,14 +104,6 @@ data class MpLocalDate(val value: LocalDate) : Comparable<MpLocalDate> {
 
     fun minus(period: DatePeriod): MpLocalDate = MpLocalDate(
         value = value.plus(period)
-    )
-
-    fun atStartOfDay(timezone: TimeZone): MpInstant = MpInstant(
-        value = value.atStartOfDayIn(timezone)
-    )
-
-    fun toLocalDateTime(): MpLocalDateTime = MpLocalDateTime(
-        value = value.atStartOfDayIn(TimeZone.UTC).toLocalDateTime(TimeZone.UTC)
     )
 }
 

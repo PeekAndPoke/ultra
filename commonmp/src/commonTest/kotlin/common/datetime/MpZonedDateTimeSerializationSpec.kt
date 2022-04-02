@@ -23,7 +23,7 @@ class MpZonedDateTimeSerializationSpec : StringSpec({
         )
 
         result shouldBe """
-            {"ts":1649160794000,"timezone":"Z","human":"2022-04-05T12:13:14Z"}
+            {"ts":1649160794000,"timezone":"Z","human":"2022-04-05T12:13:14.000Z"}
         """.trimIndent()
     }
 
@@ -36,7 +36,7 @@ class MpZonedDateTimeSerializationSpec : StringSpec({
         )
 
         result shouldBe """
-            {"ts":1649149994000,"timezone":"Europe/Bucharest","human":"2022-04-05T12:13:14[Europe/Bucharest]"}
+            {"ts":1649149994000,"timezone":"Europe/Bucharest","human":"2022-04-05T12:13:14.000[Europe/Bucharest]"}
         """.trimIndent()
     }
 
@@ -51,7 +51,7 @@ class MpZonedDateTimeSerializationSpec : StringSpec({
         )
 
         result shouldBe """
-            {"date":{"ts":1649149994000,"timezone":"Europe/Bucharest","human":"2022-04-05T12:13:14[Europe/Bucharest]"}}
+            {"date":{"ts":1649149994000,"timezone":"Europe/Bucharest","human":"2022-04-05T12:13:14.000[Europe/Bucharest]"}}
         """.trimIndent()
     }
 
@@ -96,5 +96,21 @@ class MpZonedDateTimeSerializationSpec : StringSpec({
             MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14)
                 .atZone(TimeZone.of("Europe/Bucharest")),
         )
+    }
+
+    "Roundtrip - pure" {
+
+        val start: MpZonedDateTime = MpLocalDateTime.of(2022, Month.APRIL, 5)
+            .atZone(TimeZone.of("Europe/Bucharest"))
+
+        val result: MpZonedDateTime = json.decodeFromString(
+            MpZonedDateTime.serializer(),
+            json.encodeToString(
+                MpZonedDateTime.serializer(),
+                start
+            )
+        )
+
+        result shouldBe start
     }
 })

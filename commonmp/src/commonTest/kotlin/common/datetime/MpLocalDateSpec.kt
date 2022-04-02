@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
+import io.kotest.assertions.fail
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeEqualComparingTo
@@ -29,11 +30,11 @@ class MpLocalDateSpec : StringSpec({
 
         MpLocalDate.Genesis shouldBe MpLocalDate.of(-10000, Month.JANUARY, 1)
 
-        MpLocalDate.Genesis.toString() shouldBe "-10000-01-01"
+        MpLocalDate.Genesis.toIsoString() shouldBe "-10000-01-01T00:00:00.000Z"
 
         MpLocalDate.Doomsday shouldBe MpLocalDate.of(10000, Month.JANUARY, 1)
 
-        MpLocalDate.Doomsday.toString() shouldBe "+10000-01-01"
+        MpLocalDate.Doomsday.toIsoString() shouldBe "+10000-01-01T00:00:00.000Z"
     }
 
     "Equality" {
@@ -48,6 +49,24 @@ class MpLocalDateSpec : StringSpec({
                 MpLocalDate.parse("2022-04-01")
     }
 
+    "toString" {
+        MpLocalDate.parse("2022-04-02")
+            .toString() shouldBe "MpLocalDate(value=2022-04-02)"
+    }
+
+    "toIsoString" {
+        MpLocalDate.parse("2022-04-02")
+            .toIsoString() shouldBe "2022-04-02T00:00:00.000Z"
+    }
+
+    "parse - toIsoString - round trip" {
+        val start = MpLocalDate.parse("2022-04-01")
+
+        val result = MpLocalDate.parse(start.toIsoString())
+
+        start shouldBe result
+    }
+
     "Fields year, monthNumber, month, dayOfMonth, dayOfWeek, dayOfYear" {
 
         val subject = MpLocalDate.of(2022, Month.APRIL, 5)
@@ -58,6 +77,14 @@ class MpLocalDateSpec : StringSpec({
         subject.dayOfMonth shouldBe 5
         subject.dayOfWeek shouldBe DayOfWeek.TUESDAY
         subject.dayOfYear shouldBe 95
+    }
+
+    "TODO: atStartOfDay" {
+        fail("TODO")
+    }
+
+    "TODO: toLocalDateTime" {
+        fail("TODO")
     }
 
     "Arithmetic - plus days" {
@@ -135,7 +162,7 @@ class MpLocalDateSpec : StringSpec({
         val startOfDay = date.atStartOfDay(timezone)
 
         withClue("Bucharest is 3 hours ahead of UTC") {
-            startOfDay.toString() shouldBe "2022-04-04T21:00:00Z"
+            startOfDay.toIsoString() shouldBe "2022-04-04T21:00:00.000Z"
         }
     }
 

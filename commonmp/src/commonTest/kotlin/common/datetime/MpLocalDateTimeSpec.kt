@@ -26,11 +26,11 @@ class MpLocalDateTimeSpec : StringSpec({
 
         MpLocalDateTime.Genesis shouldBe MpLocalDateTime.of(-10000, Month.JANUARY, 1)
 
-        MpLocalDateTime.Genesis.toString() shouldBe "-10000-01-01T00:00"
+        MpLocalDateTime.Genesis.toIsoString() shouldBe "-10000-01-01T00:00:00.000Z"
 
         MpLocalDateTime.Doomsday shouldBe MpLocalDateTime.of(10000, Month.JANUARY, 1)
 
-        MpLocalDateTime.Doomsday.toString() shouldBe "+10000-01-01T00:00"
+        MpLocalDateTime.Doomsday.toIsoString() shouldBe "+10000-01-01T00:00:00.000Z"
     }
 
     "Equality" {
@@ -43,6 +43,22 @@ class MpLocalDateTimeSpec : StringSpec({
 
         MpLocalDateTime.parse("2022-04-02T12:00:00.000") shouldBeGreaterThan
                 MpLocalDateTime.parse("2022-04-01T12:00:00.000")
+    }
+
+    "TODO: toString" {
+        fail("check me")
+    }
+
+    "TODO: toIsoString" {
+        fail("check me")
+    }
+
+    "parse - toIsoString - round trip" {
+        val start = MpLocalDateTime.parse("2022-04-01T00:00:00Z")
+
+        val result = MpLocalDateTime.parse(start.toIsoString())
+
+        start shouldBe result
     }
 
     "Fields year, monthNumber, month, dayOfMonth, dayOfWeek, dayOfYear, hour, minute, second, nano" {
@@ -62,11 +78,11 @@ class MpLocalDateTimeSpec : StringSpec({
         subject.nanosecond shouldBe 15
     }
 
-    "toInstant" {
+    "TODO toInstant" {
         fail("check me")
     }
 
-    "atZone" {
+    "TODO atZone" {
         fail("check me")
     }
 })

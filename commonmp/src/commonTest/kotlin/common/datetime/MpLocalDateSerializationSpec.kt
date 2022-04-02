@@ -64,4 +64,19 @@ class MpLocalDateSerializationSpec : StringSpec({
             MpLocalDate.of(2022, Month.APRIL, 5),
         )
     }
+
+    "Roundtrip - pure" {
+
+        val start: MpLocalDate = MpLocalDate.of(2022, Month.APRIL, 5)
+
+        val result: MpLocalDate = json.decodeFromString(
+            MpLocalDate.serializer(),
+            json.encodeToString(
+                MpLocalDate.serializer(),
+                start
+            )
+        )
+
+        result shouldBe start
+    }
 })

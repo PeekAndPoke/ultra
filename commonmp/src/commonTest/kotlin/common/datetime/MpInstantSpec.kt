@@ -27,11 +27,11 @@ class MpInstantSpec : StringSpec({
 
     "Genesis and Doomsday" {
 
-        MpInstant.Genesis.toString() shouldBe "-10000-01-01T00:00:00Z"
+        MpInstant.Genesis.toIsoString() shouldBe "-10000-01-01T00:00:00.000Z"
 
         MpInstant.Genesis.toEpochMillis() shouldBe GENESIS_TIMESTAMP
 
-        MpInstant.Doomsday.toString() shouldBe "+10000-01-01T00:00:00Z"
+        MpInstant.Doomsday.toIsoString() shouldBe "+10000-01-01T00:00:00.000Z"
 
         MpInstant.Doomsday.toEpochMillis() shouldBe DOOMSDAY_TIMESTAMP
     }
@@ -46,6 +46,30 @@ class MpInstantSpec : StringSpec({
 
         MpInstant.parse("2022-04-02T00:00:00Z") shouldBeGreaterThan
                 MpInstant.parse("2022-04-01T00:00:00Z")
+    }
+
+    "toString" {
+        MpInstant.parse("2022-04-01T00:00:00Z")
+            .toString() shouldBe "MpInstant(value=2022-04-01T00:00:00Z)"
+    }
+
+    "toIsoString" {
+        MpInstant.parse("2022-04-01T01:02:03Z")
+            .toIsoString() shouldBe "2022-04-01T01:02:03.000Z"
+
+        MpInstant.parse("2022-04-01T01:02:03.001Z")
+            .toIsoString() shouldBe "2022-04-01T01:02:03.001Z"
+
+        MpInstant.parse("2022-04-01T01:02:03.012Z")
+            .toIsoString() shouldBe "2022-04-01T01:02:03.012Z"
+    }
+
+    "parse - toIsoString - round trip" {
+        val start = MpInstant.parse("2022-04-01T00:00:00Z")
+
+        val result = MpInstant.parse(start.toIsoString())
+
+        start shouldBe result
     }
 
     "Arithmetic - plus duration" {
@@ -72,6 +96,6 @@ class MpInstantSpec : StringSpec({
 
         val atZone = start.atZone(TimeZone.of("Europe/Bucharest"))
 
-        atZone.toString() shouldBe "2022-04-05T03:00[Europe/Bucharest]"
+        atZone.toIsoString() shouldBe "2022-04-05T03:00:00.000[Europe/Bucharest]"
     }
 })

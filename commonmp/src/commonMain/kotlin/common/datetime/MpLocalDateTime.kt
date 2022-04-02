@@ -41,9 +41,16 @@ data class MpLocalDateTime(val value: LocalDateTime) : Comparable<MpLocalDateTim
         )
 
 
-        fun parse(isoString: String): MpLocalDateTime = MpLocalDateTime(
-            value = LocalDateTime.parse(isoString),
-        )
+        fun parse(isoString: String): MpLocalDateTime {
+
+            return try {
+                MpLocalDateTime(
+                    value = LocalDateTime.parse(isoString),
+                )
+            } catch (e: Throwable) {
+                MpInstant.parse(isoString).atZone(TimeZone.UTC).toLocalDateTime()
+            }
+        }
 
         val Genesis: MpLocalDateTime = MpLocalDateTime(
             Instant.fromEpochMilliseconds(GENESIS_TIMESTAMP).toLocalDateTime(TimeZone.UTC)
@@ -70,9 +77,7 @@ data class MpLocalDateTime(val value: LocalDateTime) : Comparable<MpLocalDateTim
         return value.compareTo(other.value)
     }
 
-    override fun toString(): String {
-        return value.toString()
-    }
+    fun toIsoString(): String = atUTC().toIsoString()
 
     fun toInstant(timezone: TimeZone): MpInstant = MpInstant(
         value = value.toInstant(timezone)
