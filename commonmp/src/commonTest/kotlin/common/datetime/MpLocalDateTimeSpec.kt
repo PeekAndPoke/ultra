@@ -80,6 +80,7 @@ class MpLocalDateTimeSpec : StringSpec({
         subject.minute shouldBe 13
         subject.second shouldBe 14
         subject.nanosecond shouldBe 15
+
     }
 
     "toDate" {

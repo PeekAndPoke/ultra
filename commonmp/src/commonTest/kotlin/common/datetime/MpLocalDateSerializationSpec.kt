@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
+import de.peekandpoke.ultra.common.datetime.TestConstants.tsUTC_20220405_000000
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.Month
@@ -39,16 +40,40 @@ class MpLocalDateSerializationSpec : StringSpec({
         """.trimIndent()
     }
 
-    "De-Serializing - pure" {
+    "De-Serializing - pure - UTC" {
 
         val result = json.decodeFromString(
             MpLocalDate.serializer(),
             """
-                {"ts":1649116800000,"timezone":"UTC","human":"2022-04-05"}
+                {"ts":$tsUTC_20220405_000000,"timezone":"UTC"}
             """.trimIndent()
         )
 
         result shouldBe MpLocalDate.of(2022, Month.APRIL, 5)
+    }
+
+    "De-Serializing - pure - Europe/Bucharest" {
+
+        val result = json.decodeFromString(
+            MpLocalDate.serializer(),
+            """
+                {"ts":$tsUTC_20220405_000000,"timezone":"Europe/Bucharest"}
+            """.trimIndent()
+        )
+
+        result shouldBe MpLocalDate.of(2022, Month.APRIL, 5)
+    }
+
+    "De-Serializing - pure - US/Pacific" {
+
+        val result = json.decodeFromString(
+            MpLocalDate.serializer(),
+            """
+                {"ts":$tsUTC_20220405_000000,"timezone":"US/Pacific"}
+            """.trimIndent()
+        )
+
+        result shouldBe MpLocalDate.of(2022, Month.APRIL, 4)
     }
 
     "De-Serializing - wrapped" {

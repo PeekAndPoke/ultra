@@ -1,8 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -35,9 +33,7 @@ object MpZonedDateTimeSerializer : KSerializer<MpZonedDateTime> {
         val timezone = TimeZone.of(v.timezone)
 
         return MpZonedDateTime.of(
-            value = MpLocalDateTime(
-                Instant.fromEpochMilliseconds(v.ts).toLocalDateTime(timezone)
-            ),
+            value = MpInstant.fromEpochMillis(v.ts).atZone(timezone).datetime,
             timezone = timezone,
         )
     }

@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
+import de.peekandpoke.ultra.common.datetime.TestConstants.tsUtc_20220405_121314
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.Month
@@ -57,30 +58,53 @@ class MpZonedDateTimeSerializationSpec : StringSpec({
 
     "De-Serializing - pure - UTC" {
 
+        val timezone = TimeZone.of("Z")
+
         val result = json.decodeFromString(
             MpZonedDateTime.serializer(),
             """
-                {"ts":1649160794000,"timezone":"Z","human":""}
+                {"ts":$tsUtc_20220405_121314,"timezone":"${timezone.id}"}
             """.trimIndent()
         )
 
         result shouldBe
-                MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14)
-                    .atZone(TimeZone.UTC)
+                MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14).atZone(timezone)
+
+        result.toEpochMillis() shouldBe tsUtc_20220405_121314
     }
 
     "De-Serializing - pure - Europe/Bucharest" {
 
+        val timezone = TimeZone.of("Europe/Bucharest")
+
         val result = json.decodeFromString(
             MpZonedDateTime.serializer(),
             """
-                {"ts":1649149994000,"timezone":"Europe/Bucharest","human":""}
+                {"ts":$tsUtc_20220405_121314,"timezone":"${timezone.id}"}
             """.trimIndent()
         )
 
         result shouldBe
-                MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14)
-                    .atZone(TimeZone.of("Europe/Bucharest"))
+                MpLocalDateTime.of(2022, Month.APRIL, 5, 15, 13, 14).atZone(timezone)
+
+        result.toEpochMillis() shouldBe tsUtc_20220405_121314
+    }
+
+    "De-Serializing - pure - US/Pacific" {
+
+        val timezone = TimeZone.of("US/Pacific")
+
+        val result = json.decodeFromString(
+            MpZonedDateTime.serializer(),
+            """
+                {"ts":$tsUtc_20220405_121314,"timezone":"${timezone.id}"}
+            """.trimIndent()
+        )
+
+        result shouldBe
+                MpLocalDateTime.of(2022, Month.APRIL, 5, 5, 13, 14).atZone(timezone)
+
+        result.toEpochMillis() shouldBe tsUtc_20220405_121314
     }
 
     "De-Serializing - wrapped - Europe/Bucharest" {

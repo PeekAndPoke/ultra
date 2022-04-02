@@ -40,12 +40,36 @@ class MpInstantSerializationSpec : StringSpec({
         """.trimIndent()
     }
 
-    "De-Serializing - pure" {
+    "De-Serializing - pure - UTC" {
 
         val result = json.decodeFromString(
             MpInstant.serializer(),
             """
-                {"ts":1649116800000,"timezone":"UTC","human":"2022-04-05T00:00:00Z"}
+                {"ts":1649116800000,"timezone":"UTC"}
+            """.trimIndent()
+        )
+
+        result shouldBe MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC)
+    }
+
+    "De-Serializing - pure - Europe/Bucharest" {
+
+        val result = json.decodeFromString(
+            MpInstant.serializer(),
+            """
+                {"ts":1649116800000,"timezone":"Europe/Bucharest"}
+            """.trimIndent()
+        )
+
+        result shouldBe MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC)
+    }
+
+    "De-Serializing - pure - US/Pacific" {
+
+        val result = json.decodeFromString(
+            MpInstant.serializer(),
+            """
+                {"ts":1649116800000,"timezone":"US/Pacific"}
             """.trimIndent()
         )
 
