@@ -5,10 +5,11 @@ import io.kotest.matchers.comparables.shouldBeEqualComparingTo
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.minutes
 
 @Suppress("unused")
 class MpInstantSpec : StringSpec({
@@ -72,24 +73,6 @@ class MpInstantSpec : StringSpec({
         start shouldBe result
     }
 
-    "Arithmetic - plus duration" {
-
-        val start: MpInstant = MpLocalDateTime.of(2022, Month.APRIL, 5).toInstant(TimeZone.UTC)
-        val startTs = start.toEpochSeconds()
-
-        start.plus(1.seconds) shouldBe MpInstant.fromEpochSeconds(startTs + 1)
-        start.plus(1.hours) shouldBe MpInstant.fromEpochSeconds(startTs + (60 * 60))
-    }
-
-    "Arithmetic - minus duration" {
-
-        val start: MpInstant = MpLocalDateTime.of(2022, Month.APRIL, 5).toInstant(TimeZone.UTC)
-        val startTs = start.toEpochSeconds()
-
-        start.minus(1.seconds) shouldBe MpInstant.fromEpochSeconds(startTs - 1)
-        start.minus(1.hours) shouldBe MpInstant.fromEpochSeconds(startTs - (60 * 60))
-    }
-
     "atZone - Europe/Bucharest" {
 
         val start: MpInstant = MpLocalDateTime.of(2022, Month.APRIL, 5).toInstant(TimeZone.UTC)
@@ -97,5 +80,41 @@ class MpInstantSpec : StringSpec({
         val atZone = start.atZone(TimeZone.of("Europe/Bucharest"))
 
         atZone.toIsoString() shouldBe "2022-04-05T03:00:00.000[Europe/Bucharest]"
+    }
+
+    "plus(duration)" {
+        val now = MpInstant.now()
+        val result = now.plus(1.minutes)
+
+        result.toEpochMillis() shouldBe now.toEpochMillis() + (60 * 1_000)
+    }
+
+    "plus(value, unit, timezone)" {
+
+        val beforeDST = MpInstant.parse("2022-03-27T00:00:00.000[Europe/Berlin]")
+
+        val afterDST = beforeDST.plus(1, DateTimeUnit.DAY, TimeZone.of("Europe/Berlin"))
+
+        afterDST shouldBe MpInstant.parse("2022-03-28T00:00:00.000[Europe/Berlin]")
+
+        (afterDST - beforeDST) shouldBe 23.hours
+    }
+
+    "minus(duration)" {
+        val now = MpInstant.now()
+        val result = now.minus(1.minutes)
+
+        result.toEpochMillis() shouldBe now.toEpochMillis() - (60 * 1_000)
+    }
+
+    "minus(value, unit, timezone)" {
+
+        val beforeDST = MpInstant.parse("2022-03-28T00:00:00.000[Europe/Berlin]")
+
+        val afterDST = beforeDST.minus(1, DateTimeUnit.DAY, TimeZone.of("Europe/Berlin"))
+
+        afterDST shouldBe MpInstant.parse("2022-03-27T00:00:00.000[Europe/Berlin]")
+
+        (afterDST - beforeDST) shouldBe (-23).hours
     }
 })

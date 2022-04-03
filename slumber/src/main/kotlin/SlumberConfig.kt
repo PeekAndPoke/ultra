@@ -3,7 +3,7 @@ package de.peekandpoke.ultra.slumber
 import de.peekandpoke.ultra.slumber.builtin.BuiltInModule
 import de.peekandpoke.ultra.slumber.builtin.datetime.javatime.JavaTimeModule
 import de.peekandpoke.ultra.slumber.builtin.datetime.kotlinx.KotlinxTimeModule
-import de.peekandpoke.ultra.slumber.builtin.datetime.mp.MpTimeCodec
+import de.peekandpoke.ultra.slumber.builtin.datetime.mp.MpTimeModule
 import de.peekandpoke.ultra.slumber.builtin.datetime.portable.PortableTimeModule
 import kotlin.reflect.KType
 
@@ -12,7 +12,7 @@ class SlumberConfig(val modules: List<SlumberModule> = listOf()) {
     companion object {
         val default = SlumberConfig(
             modules = listOf(
-                MpTimeCodec,
+                MpTimeModule,
                 JavaTimeModule,
                 KotlinxTimeModule,
                 PortableTimeModule,

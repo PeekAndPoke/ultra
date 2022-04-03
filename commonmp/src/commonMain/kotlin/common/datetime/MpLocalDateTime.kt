@@ -40,16 +40,8 @@ data class MpLocalDateTime internal constructor(internal val value: LocalDateTim
             nanosecond = nanosecond,
         )
 
-
         fun parse(isoString: String): MpLocalDateTime {
-
-            return try {
-                MpLocalDateTime(
-                    value = LocalDateTime.parse(isoString),
-                )
-            } catch (e: Throwable) {
-                MpInstant.parse(isoString).atZone(TimeZone.UTC).toLocalDateTime()
-            }
+            return MpDateTimeParser.parseInstant(isoString).atZone(TimeZone.UTC).datetime
         }
 
         val Genesis: MpLocalDateTime = MpLocalDateTime(
@@ -85,6 +77,10 @@ data class MpLocalDateTime internal constructor(internal val value: LocalDateTim
 
     fun toDate(): MpLocalDate = MpLocalDate(value.date)
 
+    fun toTime(): MpLocalTime = MpLocalTime.of(
+        hours = hour, minutes = minute, seconds = second, millis = nanosecond / 1_000
+    )
+
     fun toInstant(timezone: TimeZone): MpInstant = MpInstant(
         value = value.toInstant(timezone)
     )
@@ -92,4 +88,8 @@ data class MpLocalDateTime internal constructor(internal val value: LocalDateTim
     fun atZone(timezone: TimeZone): MpZonedDateTime = toInstant(timezone).atZone(timezone)
 
     fun atUTC(): MpZonedDateTime = atZone(TimeZone.UTC)
+
+//    fun plus(duration: Duration, timezone: TimeZone): MpLocalDateTime = MpLocalDateTime(
+//        value = value.plus
+//    )
 }

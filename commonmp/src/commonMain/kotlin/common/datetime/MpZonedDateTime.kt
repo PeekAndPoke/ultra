@@ -13,10 +13,7 @@ data class MpZonedDateTime private constructor(
 ) : Comparable<MpZonedDateTime> {
 
     companion object {
-        private val isoWithTimezone = "(.*)\\[(.*)]".toRegex()
-
         fun of(value: MpLocalDateTime, timezone: TimeZone): MpZonedDateTime {
-
             return MpZonedDateTime(
                 datetime = value,
                 timezone = when (timezone.id) {
@@ -25,32 +22,16 @@ data class MpZonedDateTime private constructor(
                     else -> timezone
                 }
             )
-
         }
 
-        fun parse(isoString: String, timezone: TimeZone): MpZonedDateTime = of(
-            value = MpLocalDateTime.parse(isoString),
-            timezone = timezone
-        )
-
-        fun parse(isoString: String): MpZonedDateTime {
-
-            val regexMatch by lazy {
-                isoWithTimezone.find(isoString)
-            }
-
-            return when {
-                isoString.last() == 'Z' -> parse(isoString.dropLast(1), TimeZone.UTC)
-
-                regexMatch != null -> {
-                    val groupsValues = regexMatch!!.groupValues
-
-                    parse(groupsValues[1], TimeZone.of(groupsValues[2]))
-                }
-
-                else -> parse(isoString, TimeZone.UTC)
-            }
+        fun parse(isoString: String, timezone: TimeZone): MpZonedDateTime {
+            return MpZonedDateTime(
+                datetime = MpDateTimeParser.parseInstant(isoString).atZone(TimeZone.UTC).datetime,
+                timezone = timezone
+            )
         }
+
+        fun parse(isoString: String): MpZonedDateTime = MpDateTimeParser.parseZonedDateTime(isoString)
     }
 
     val year: Int get() = datetime.year
@@ -98,6 +79,8 @@ data class MpZonedDateTime private constructor(
     fun toInstant(): MpInstant = instant
 
     fun toLocalDate(): MpLocalDate = datetime.toDate()
+
+    fun toLocalTime(): MpLocalTime = datetime.toTime()
 
     fun toLocalDateTime(): MpLocalDateTime = datetime
 

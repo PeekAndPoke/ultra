@@ -5,7 +5,6 @@ include(
         // child projects
         ":common",
         ":commonmp",
-        ":foundation",
         ":kontainer",
         ":logging",
         ":meta",
