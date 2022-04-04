@@ -13,9 +13,9 @@ data class MpZonedDateTime private constructor(
 ) : Comparable<MpZonedDateTime> {
 
     companion object {
-        fun of(value: MpLocalDateTime, timezone: TimeZone): MpZonedDateTime {
+        fun of(datetime: MpLocalDateTime, timezone: TimeZone): MpZonedDateTime {
             return MpZonedDateTime(
-                datetime = value,
+                datetime = datetime,
                 timezone = when (timezone.id) {
                     // WHY? There seems to be a difference between TimeZone.UTC and TimeZone.of("UTC")
                     "UTC" -> TimeZone.UTC

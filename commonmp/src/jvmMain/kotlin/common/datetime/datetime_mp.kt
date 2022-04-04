@@ -1,9 +1,80 @@
 package de.peekandpoke.ultra.common.datetime
 
+import kotlinx.datetime.TimeZone
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 actual fun PortableDate.toIsoString(): String = date.format(DateTimeFormatter.ISO_DATE)
 
 actual fun PortableDateTime.toIsoString(): String = date.format(DateTimeFormatter.ISO_DATE_TIME)
 
+/**
+ * Converts an [MpInstant] into a [java.time.Instant]
+ */
+val MpInstant.jvm: Instant
+    get() {
+        return Instant.ofEpochMilli(toEpochMillis())
+    }
 
+/**
+ * Converts a [java.time.Instant] into an [MpInstant]
+ */
+val Instant.mp: MpInstant
+    get() {
+        return MpInstant.fromEpochMillis(toEpochMilli())
+    }
+
+/**
+ * Converts an [MpLocalDateTime] into a [java.time.LocalDateTime]
+ */
+val MpLocalDateTime.jvm: LocalDateTime
+    get() {
+        return LocalDateTime.of(year, monthNumber, dayOfMonth, hour, minute, second, nanosecond)
+    }
+
+/**
+ * Converts a [java.time.LocalDateTime] into an [MpLocalDateTime]
+ */
+val LocalDateTime.mp: MpLocalDateTime
+    get() {
+        return MpLocalDateTime.of(year, monthValue, dayOfMonth, hour, minute, second, nano)
+    }
+
+/**
+ * Converts an [MpLocalDate] into a [java.time.LocalDate]
+ */
+val MpLocalDate.jvm: LocalDate
+    get() {
+        return LocalDate.of(year, monthNumber, dayOfMonth)
+    }
+
+/**
+ * Converts a [java.time.LocalDate] into an [MpLocalDate]
+ */
+val LocalDate.mp: MpLocalDate
+    get() {
+        return MpLocalDate.of(year, monthValue, dayOfMonth)
+    }
+
+/**
+ * Converts an [MpZonedDateTime] into a [java.time.ZonedDateTime]
+ */
+val MpZonedDateTime.jvm: ZonedDateTime
+    get() {
+        return ZonedDateTime.of(datetime.jvm, ZoneId.of(timezone.id))
+    }
+
+/**
+ * Converts a [java.time.ZonedDateTime] into an [MpZonedDateTime]
+ */
+val ZonedDateTime.mp: MpZonedDateTime
+    get() {
+        return MpZonedDateTime.of(
+            datetime = toLocalDateTime().mp,
+            timezone = TimeZone.of(zone.id),
+        )
+    }

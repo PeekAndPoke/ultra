@@ -1,3 +1,5 @@
+@file:JvmName("ConstantsJvm")
+
 package de.peekandpoke.ultra.common.datetime
 
 import java.time.Instant
@@ -15,3 +17,4 @@ val DoomsdayLocalDateTime: LocalDateTime = LocalDateTime.ofInstant(DoomsdayInsta
 
 val GenesisLocalDate: LocalDate = GenesisLocalDateTime.toLocalDate()
 val DoomsdayLocalDate: LocalDate = DoomsdayLocalDateTime.toLocalDate()
+

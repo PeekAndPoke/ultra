@@ -21,7 +21,7 @@ object MpZonedDateTimeAwaker : Awaker {
 
         return when (val ts = data[TS]) {
             is Number -> MpZonedDateTime.of(
-                value = MpInstant.fromEpochMillis(ts.toLong()).atZone(timezone).datetime,
+                datetime = MpInstant.fromEpochMillis(ts.toLong()).atZone(timezone).datetime,
                 timezone = timezone,
             )
 
