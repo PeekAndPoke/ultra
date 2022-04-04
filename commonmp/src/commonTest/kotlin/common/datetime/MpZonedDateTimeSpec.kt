@@ -11,6 +11,7 @@ import io.kotest.matchers.shouldBe
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
+import kotlin.time.Duration.Companion.hours
 
 @Suppress("unused")
 class MpZonedDateTimeSpec : StringSpec({
@@ -189,4 +190,25 @@ class MpZonedDateTimeSpec : StringSpec({
         MpZonedDateTime.parse("2022-04-05T12:13:14[Europe/Bucharest]")
             .toEpochSeconds() shouldBe (tsBucharest_20220405_121314 / 1000)
     }
+
+    "plus(duration)" {
+        val result = MpZonedDateTime.parse("2022-04-05T12:13:14Z").plus(1.hours)
+
+        result shouldBe MpZonedDateTime.parse("2022-04-05T13:13:14Z")
+
+        val resultBucharest = MpZonedDateTime.parse("2022-04-05T12:13:14[Europe/Bucharest]").plus(1.hours)
+
+        resultBucharest shouldBe MpZonedDateTime.parse("2022-04-05T13:13:14[Europe/Bucharest]")
+    }
+
+    "minus(duration)" {
+        val result = MpZonedDateTime.parse("2022-04-05T12:13:14Z").plus(1.hours)
+
+        result shouldBe MpZonedDateTime.parse("2022-04-05T13:13:14Z")
+
+        val resultBucharest = MpZonedDateTime.parse("2022-04-05T12:13:14[Europe/Bucharest]").minus(1.hours)
+
+        resultBucharest shouldBe MpZonedDateTime.parse("2022-04-05T11:13:14[Europe/Bucharest]")
+    }
 })
+

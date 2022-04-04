@@ -4,6 +4,7 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.serialization.Serializable
+import kotlin.time.Duration
 
 @Suppress("DataClassPrivateConstructor")
 @Serializable(with = MpZonedDateTimeSerializer::class)
@@ -32,7 +33,15 @@ data class MpZonedDateTime private constructor(
         }
 
         fun parse(isoString: String): MpZonedDateTime = MpDateTimeParser.parseZonedDateTime(isoString)
+
+        // TODO: test me
+        val Genesis: MpZonedDateTime = MpInstant.Genesis.atZone(TimeZone.UTC)
+
+        // TODO: test me
+        val Doomsday: MpZonedDateTime = MpInstant.Doomsday.atZone(TimeZone.UTC)
     }
+
+    private val instant: MpInstant = datetime.toInstant(timezone)
 
     val year: Int get() = datetime.year
     val monthNumber: Int get() = datetime.monthNumber
@@ -46,7 +55,29 @@ data class MpZonedDateTime private constructor(
     val second: Int get() = datetime.second
     val nanosecond: Int get() = datetime.nanosecond
 
-    private val instant: MpInstant = datetime.toInstant(timezone)
+    // TODO: test me
+    val atStartOfDay
+        get() = copy(
+            datetime = MpLocalDateTime.of(year, month, dayOfMonth)
+        )
+
+    // TODO: test me
+    val atStartOfHour
+        get() = copy(
+            datetime = MpLocalDateTime.of(year, month, dayOfMonth, hour)
+        )
+
+    // TODO: test me
+    val atStartOfMinute
+        get() = copy(
+            datetime = MpLocalDateTime.of(year, month, dayOfMonth, hour, minute)
+        )
+
+    // TODO: test me
+    val atStartOfSecond
+        get() = copy(
+            datetime = MpLocalDateTime.of(year, month, dayOfMonth, hour, minute, second)
+        )
 
     override fun compareTo(other: MpZonedDateTime): Int {
         return instant.compareTo(other.instant)
@@ -87,4 +118,10 @@ data class MpZonedDateTime private constructor(
     fun toEpochMillis(): Long = toInstant().toEpochMillis()
 
     fun toEpochSeconds(): Long = toInstant().toEpochSeconds()
+
+    // TODO: test me
+    fun plus(duration: Duration) = toInstant().plus(duration).atZone(timezone)
+
+    // TODO: test me
+    fun minus(duration: Duration) = toInstant().minus(duration).atZone(timezone)
 }
