@@ -15,7 +15,7 @@ import kotlin.time.Duration.Companion.days
 data class MpZonedDateTime private constructor(
     val datetime: MpLocalDateTime,
     val timezone: TimeZone
-) : Comparable<MpZonedDateTime> {
+) : MpAbsoluteDateTime, Comparable<MpZonedDateTime> {
 
     companion object {
         /**
@@ -156,7 +156,7 @@ data class MpZonedDateTime private constructor(
     /**
      * Converts to an [MpInstant].
      */
-    fun toInstant(): MpInstant = instant
+    override fun toInstant(): MpInstant = instant
 
     /**
      * Converts to an [MpLocalDate].
@@ -189,13 +189,6 @@ data class MpZonedDateTime private constructor(
     // TODO: test me
     fun toRange(duration: Duration): MpZonedDateTimeRange {
         return MpZonedDateTimeRange.of(from = this, duration = duration)
-    }
-
-    /**
-     * Converts this date time into another [timezone].
-     */
-    fun atZone(timezone: TimeZone): MpZonedDateTime {
-        return toInstant().atZone(timezone)
     }
 
     /**

@@ -11,7 +11,9 @@ import kotlin.time.Duration
 
 @Suppress("DataClassPrivateConstructor")
 @Serializable(with = MpInstantSerializer::class)
-data class MpInstant internal constructor(internal val value: Instant) : Comparable<MpInstant> {
+data class MpInstant internal constructor(
+    internal val value: Instant,
+) : MpAbsoluteDateTime, Comparable<MpInstant> {
 
     companion object {
         /**
@@ -91,21 +93,28 @@ data class MpInstant internal constructor(internal val value: Instant) : Compara
     }
 
     /**
-     * Creates a [MpInstantRange] with this as the start and the given [duration].
+     * Returns itself
      */
-    // TODO: test me
-    fun toRange(duration: Duration): MpInstantRange {
-        return MpInstantRange.of(from = this, duration = duration)
+    override fun toInstant(): MpInstant {
+        return this
     }
 
     /**
      * Create a [MpZonedDateTime] at the given [timezone]
      */
-    fun atZone(timezone: TimeZone): MpZonedDateTime {
+    override fun atZone(timezone: TimeZone): MpZonedDateTime {
         return MpZonedDateTime.of(
             MpLocalDateTime(value.toLocalDateTime(timezone)),
             timezone,
         )
+    }
+
+    /**
+     * Creates a [MpInstantRange] with this as the start and the given [duration].
+     */
+    // TODO: test me
+    fun toRange(duration: Duration): MpInstantRange {
+        return MpInstantRange.of(from = this, duration = duration)
     }
 
     /**

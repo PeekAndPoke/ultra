@@ -9,4 +9,8 @@ interface MpAbsoluteDateTime {
     fun atZone(timezone: TimeZone): MpZonedDateTime {
         return toInstant().atZone(timezone)
     }
+
+    fun atUTC(): MpZonedDateTime {
+        return atZone(TimeZone.UTC)
+    }
 }
