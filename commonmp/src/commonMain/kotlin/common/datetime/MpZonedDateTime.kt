@@ -1,5 +1,7 @@
 package de.peekandpoke.ultra.common.datetime
 
+import com.soywiz.klock.DateTime
+import de.peekandpoke.ultra.common.datetime.kotlinx.offsetMillisAt
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Month
@@ -113,6 +115,19 @@ data class MpZonedDateTime private constructor(
      */
     override fun toString(): String {
         return "MpZonedDateTime(${toIsoString()})"
+    }
+
+    /**
+     * Converts into a human-readable string by the given [formatString].
+     *
+     * See https://help.gooddata.com/cloudconnect/manual/date-and-time-format.html
+     */
+    fun format(formatString: String): String {
+        val ts = toEpochMillis() + timezone.offsetMillisAt(instant)
+
+        val klock = DateTime.fromUnix(ts)
+
+        return klock.format(formatString)
     }
 
     /**
@@ -319,4 +334,19 @@ data class MpZonedDateTime private constructor(
     operator fun minus(other: MpZonedDateTime): Duration {
         return toInstant() - other.toInstant()
     }
+}
+
+// TODO: test me
+fun MpZonedDateTime.formatDdMmmYy(): String {
+    return format("dd MMM yy")
+}
+
+// TODO: test me
+fun MpZonedDateTime.formatHhMm(): String {
+    return format("HH:mm")
+}
+
+// TODO: test me
+fun MpZonedDateTime.formatDdMmmYyHhMm(): String {
+    return format("dd MMM yy HH:mm")
 }

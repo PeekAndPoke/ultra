@@ -151,6 +151,17 @@ class MpZonedDateTimeSpec : StringSpec({
         result shouldBe source
     }
 
+    "format" {
+        MpZonedDateTime.parse("2022-04-05T00:00:00.000Z")
+            .format("yyyy-MM-dd'T'HH:mm:ss.SSSZ") shouldBe "2022-04-05T00:00:00.000Z"
+
+        MpZonedDateTime.parse("2022-04-05T12:00:00.000[Europe/Bucharest]")
+            .format("yyyy-MM-dd HH:mm") shouldBe "2022-04-05 12:00"
+
+        MpZonedDateTime.parse("2022-04-05T12:00:00.000[US/Pacific]")
+            .format("yyyy-MM-dd HH:mm") shouldBe "2022-04-05 12:00"
+    }
+
     "Fields year, monthNumber, month, dayOfMonth, dayOfWeek, dayOfYear, hour, minute, second, nano" {
 
         val subject = MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14, 15)

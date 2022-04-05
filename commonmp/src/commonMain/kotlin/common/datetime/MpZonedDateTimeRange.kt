@@ -165,3 +165,12 @@ data class MpZonedDateTimeRange(
         return plus(-value, unit)
     }
 }
+
+// TODO: test me
+fun MpZonedDateTimeRange.formatDdMmmYyHhMm(): String {
+    if (from.atStartOfDay() == to.atStartOfDay()) {
+        return "${from.formatDdMmmYy()} ${from.formatHhMm()} - ${to.formatHhMm()}"
+    }
+
+    return "${from.formatDdMmmYyHhMm()} - ${to.formatDdMmmYyHhMm()}"
+}
