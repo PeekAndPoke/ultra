@@ -18,7 +18,7 @@ class MpInstantSerializationSpec : StringSpec({
 
         val result = json.encodeToString(
             MpInstant.serializer(),
-            MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC),
+            MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC).toInstant(),
         )
 
         result shouldBe """
@@ -31,7 +31,7 @@ class MpInstantSerializationSpec : StringSpec({
         val result = json.encodeToString(
             Wrapper.serializer(),
             Wrapper(
-                MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC),
+                MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC).toInstant(),
             )
         )
 
@@ -49,7 +49,7 @@ class MpInstantSerializationSpec : StringSpec({
             """.trimIndent()
         )
 
-        result shouldBe MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC)
+        result shouldBe MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC).toInstant()
     }
 
     "De-Serializing - pure - Europe/Bucharest" {
@@ -61,7 +61,7 @@ class MpInstantSerializationSpec : StringSpec({
             """.trimIndent()
         )
 
-        result shouldBe MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC)
+        result shouldBe MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC).toInstant()
     }
 
     "De-Serializing - pure - US/Pacific" {
@@ -73,7 +73,7 @@ class MpInstantSerializationSpec : StringSpec({
             """.trimIndent()
         )
 
-        result shouldBe MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC)
+        result shouldBe MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC).toInstant()
     }
 
     "De-Serializing - wrapped" {
@@ -86,13 +86,13 @@ class MpInstantSerializationSpec : StringSpec({
         )
 
         result shouldBe Wrapper(
-            MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC),
+            MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC).toInstant(),
         )
     }
 
     "Roundtrip - pure" {
 
-        val start: MpInstant = MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC)
+        val start: MpInstant = MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC).toInstant()
 
         val result: MpInstant = json.decodeFromString(
             MpInstant.serializer(),

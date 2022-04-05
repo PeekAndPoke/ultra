@@ -83,13 +83,10 @@ class MpLocalDateSpec : StringSpec({
         val subject = MpLocalDate.of(2022, Month.APRIL, 5)
 
         subject.atStartOfDay(TimeZone.UTC) shouldBe
-                MpInstant.parse("2022-04-05T00:00:00.000Z")
+                MpZonedDateTime.parse("2022-04-05T00:00:00.000Z")
 
         subject.atStartOfDay(TimeZone.of("Europe/Bucharest")) shouldBe
-                MpInstant.parse("2022-04-05T00:00:00.000[Europe/Bucharest]")
-
-        subject.atStartOfDay(TimeZone.of("Europe/Bucharest")) shouldBe
-                MpInstant.parse("2022-04-04T21:00:00.000Z")
+                MpZonedDateTime.parse("2022-04-05T00:00:00.000[Europe/Bucharest]")
     }
 
     "toLocalDateTime" {
@@ -175,17 +172,16 @@ class MpLocalDateSpec : StringSpec({
         val startOfDay = date.atStartOfDay(timezone)
 
         withClue("Bucharest is 3 hours ahead of UTC") {
-            startOfDay.toIsoString() shouldBe "2022-04-04T21:00:00.000Z"
+            startOfDay.toIsoString() shouldBe "2022-04-05T00:00:00.000[Europe/Bucharest]"
         }
     }
-
 
     TestConstants.timeZoneIds.forEach { timezoneId ->
 
         "atStartOfDay - at timezone '$timezoneId'" {
 
             val date = MpLocalDate.of(2022, Month.APRIL, 5)
-            val instant = date.atStartOfDay(TimeZone.UTC)
+            val instant = date.atStartOfDay(TimeZone.UTC).toInstant()
 
             val timezone = TimeZone.of(timezoneId)
 

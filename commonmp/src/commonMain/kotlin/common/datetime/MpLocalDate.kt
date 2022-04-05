@@ -70,9 +70,9 @@ data class MpLocalDate internal constructor(private val value: LocalDate) : Comp
 
     fun toIsoString(): String = atStartOfDay(TimeZone.UTC).toIsoString()
 
-    fun atStartOfDay(timezone: TimeZone): MpInstant = MpInstant(
-        value = value.atStartOfDayIn(timezone)
-    )
+    fun atStartOfDay(timezone: TimeZone): MpZonedDateTime {
+        return MpInstant(value.atStartOfDayIn(timezone)).atZone(timezone)
+    }
 
     fun toLocalDateTime(): MpLocalDateTime = MpLocalDateTime(
         value = value.atStartOfDayIn(TimeZone.UTC).toLocalDateTime(TimeZone.UTC)
