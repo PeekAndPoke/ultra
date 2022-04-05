@@ -78,3 +78,29 @@ val ZonedDateTime.mp: MpZonedDateTime
             timezone = TimeZone.of(zone.id),
         )
     }
+
+/**
+ * Converts a [java.time.ZoneId] to a [TimeZone].
+ */
+// TODO: test me
+val ZoneId.kotlinx: TimeZone
+    get() {
+        return TimeZone.of(id)
+    }
+
+/**
+ * Converts a [java.time.ZoneId] to a [TimeZone].
+ */
+// TODO: test me
+fun TimeZone.Companion.of(zone: ZoneId): TimeZone {
+    return of(zone.id)
+}
+
+/**
+ * Converts a [TimeZone] into a [java.time.ZoneId].
+ */
+// TODO: test me
+val TimeZone.jvm: ZoneId
+    get() {
+        return ZoneId.of(id)
+    }

@@ -16,6 +16,12 @@ class MpInstantSpec : StringSpec({
 
     "Construction" {
 
+        MpInstant.fromEpochMillis(TestConstants.tsUTC_20220405_000000) shouldBe
+                MpInstant.parse("2022-04-05T00:00:00.000Z")
+
+        MpInstant.fromEpochSeconds(TestConstants.tsUTC_20220405_000000 / 1_000) shouldBe
+                MpInstant.parse("2022-04-05T00:00:00.000Z")
+
         MpInstant.fromEpochMillis(DOOMSDAY_TIMESTAMP) shouldBe MpInstant.Doomsday
 
         MpInstant.fromEpochMillis(GENESIS_TIMESTAMP) shouldBe MpInstant.Genesis

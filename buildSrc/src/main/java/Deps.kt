@@ -9,7 +9,7 @@ object Deps {
     }
 
     // //////////////////////////////////////////////////////////////////
-    const val kotlinVersion = "1.6.10"
+    const val kotlinVersion = "1.6.20"
     // //////////////////////////////////////////////////////////////////
 
     // Publishing //////////////////////////////////////////////////////
@@ -18,7 +18,7 @@ object Deps {
     // //////////////////////////////////////////////////////////////////
 
     // https://mvnrepository.com/artifact/com.auth0/java-jwt
-    private const val auth0_java_jwt_version = "3.18.3"
+    private const val auth0_java_jwt_version = "3.19.1"
     const val auth0_java_jwt = "com.auth0:java-jwt:$auth0_java_jwt_version"
 
     // TODO: check if we can update to 3.x
@@ -44,7 +44,7 @@ object Deps {
     const val kotlin_compiletesting = "com.github.tschuchortdev:kotlin-compile-testing:$kotlin_compiletesting_version"
 
     // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
-    private const val kotlinpoet_version = "1.10.2"
+    private const val kotlinpoet_version = "1.11.0"
     const val kotlinpoet = "com.squareup:kotlinpoet:$kotlinpoet_version"
 
     // https://kotlinlang.org/docs/releases.html#release-details
@@ -53,7 +53,7 @@ object Deps {
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version"
 
     // https://kotlinlang.org/docs/releases.html#release-details
-    private const val kotlinx_serialization_version = "1.3.1"
+    private const val kotlinx_serialization_version = "1.3.2"
     const val kotlinx_serialization_core =
         "org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version"
     const val kotlinx_serialization_json =
@@ -64,13 +64,13 @@ object Deps {
     const val kotlinx_datetime_common = "org.jetbrains.kotlinx:kotlinx-datetime:$kotlinx_datetime_version"
 
     // https://mvnrepository.com/artifact/com.soywiz.korlibs.klock/klock
-    private const val korlibs_klock_version = "2.6.1"
+    private const val korlibs_klock_version = "2.7.0"
     const val korlibs_klock_common = "com.soywiz.korlibs.klock:klock:$korlibs_klock_version"
     const val korlibs_klock_js = "com.soywiz.korlibs.klock:klock-js:$korlibs_klock_version"
     const val korlibs_klock_jvm = "com.soywiz.korlibs.klock:klock-jvm:$korlibs_klock_version"
 
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-    private const val slf4j_version = "1.7.32"
+    private const val slf4j_version = "1.7.36"
     const val slf4j_api = "org.slf4j:slf4j-api:$slf4j_version"
 
     // // NPM dependencies /////////////////////////////////////////////////////////////////////////
@@ -83,9 +83,11 @@ object Deps {
             this.block()
         }
 
+        // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
         const val logback_version = "1.2.11"
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
+        // https://mvnrepository.com/artifact/io.kotest/kotest-common
         const val kotest_version = "5.2.1"
         const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"
         const val kotest_framework_api = "io.kotest:kotest-framework-api:$kotest_version"

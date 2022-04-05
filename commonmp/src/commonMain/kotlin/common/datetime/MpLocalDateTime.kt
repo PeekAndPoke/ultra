@@ -53,17 +53,36 @@ data class MpLocalDateTime internal constructor(internal val value: LocalDateTim
         )
     }
 
+    /** The year */
     val year: Int get() = value.year
-    val monthNumber: Int get() = value.monthNumber
-    val month: Month get() = value.month
-    val dayOfMonth: Int get() = value.dayOfMonth
-    val dayOfWeek: DayOfWeek get() = value.dayOfWeek
-    val dayOfYear: Int get() = value.dayOfYear
 
+    /** The month as number, where January is "1" */
+    val monthNumber: Int get() = value.monthNumber
+
+    /** The month */
+    val month: Month get() = value.month
+
+    /** The day of the month */
+    val dayOfMonth: Int get() = value.dayOfMonth
+
+    /** The hour */
     val hour: Int get() = value.hour
+
+    /** The minute */
     val minute: Int get() = value.minute
+
+    /** The second */
     val second: Int get() = value.second
+
+    /** The nanosecond */
     val nanosecond: Int get() = value.nanosecond
+
+    // TODO: test me
+    /** The day of the week */
+    val dayOfWeek: DayOfWeek get() = value.dayOfWeek
+    // TODO: test me
+    /** The day of the year */
+    val dayOfYear: Int get() = value.dayOfYear
 
     override fun compareTo(other: MpLocalDateTime): Int {
         return value.compareTo(other.value)
