@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.common.model
 
-import de.peekandpoke.ultra.common.datetime.PortableDateTime
+import de.peekandpoke.ultra.common.datetime.MpInstant
 import kotlinx.serialization.Serializable
 
 // TODO: [TESTS] write some tests for me
@@ -12,7 +12,7 @@ data class AuditLog(
         val empty = AuditLog(emptyList())
     }
 
-    fun last(n: Int) = entries.takeLast(n).sortedByDescending { it.ts.timestamp }
+    fun last(n: Int) = entries.takeLast(n).sortedByDescending { it.ts.toEpochMillis() }
 
     @Serializable
     data class Entry(
@@ -22,7 +22,7 @@ data class AuditLog(
         val clientIp: String,
         val type: Type,
         val message: String,
-        val ts: PortableDateTime,
+        val ts: MpInstant,
     ) {
         @Suppress("EnumEntryName", "Detekt:EnumNaming")
         enum class Type {

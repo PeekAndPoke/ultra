@@ -109,6 +109,14 @@ data class MpInstant internal constructor(internal val value: Instant) : Compara
     }
 
     /**
+     * Creates a [MpZonedDateTime] at the systems current timezone.
+     */
+    // TODO: test me
+    fun atSystemDefaultZone(): MpZonedDateTime {
+        return atZone(TimeZone.currentSystemDefault())
+    }
+
+    /**
      * Adds the [duration] in absolute terms.
      */
     fun plus(duration: Duration): MpInstant {
