@@ -14,6 +14,12 @@ data class MpZonedDateTimeRange(
     companion object {
         // TODO: test me
         val forever = MpZonedDateTimeRange(MpZonedDateTime.Genesis, MpZonedDateTime.Doomsday)
+
+        // TODO: test me
+        fun of(from: MpZonedDateTime, duration: Duration): MpZonedDateTimeRange = MpZonedDateTimeRange(
+            from = from,
+            to = from.plus(duration),
+        )
     }
 
     // TODO: Test

@@ -19,6 +19,10 @@ class KronosSpec : StringSpec({
 
     val fixedKronos = Kronos.fixed(fixedInstant)
 
+    "Kronos.fromClock fixed - secondsNow" {
+        fixedKronos.secondsNow() shouldBe fixedInstant.toEpochSeconds()
+    }
+
     "Kronos.fromClock fixed - millisNow" {
         fixedKronos.millisNow() shouldBe fixedInstant.toEpochMillis()
     }
@@ -69,6 +73,10 @@ class KronosSpec : StringSpec({
 
         val subject: Kronos = fixedKronos.advanceBy { advance }
 
+        "Kronos.advanceBy $advance - secondsNow" {
+            subject.secondsNow() shouldBe fixedInstant.toEpochSeconds() + advance.inWholeSeconds
+        }
+
         "Kronos.advanceBy $advance - millisNow" {
             subject.millisNow() shouldBe fixedInstant.toEpochMillis() + advance.inWholeMilliseconds
         }
@@ -82,8 +90,7 @@ class KronosSpec : StringSpec({
         }
 
         "Kronos.advanceBy $advance - localDateNow" {
-            // TODO: check me
-//            subject.localDateNow() shouldBe fixedLocalDateTime.toDate() // .plusDays(advance.toDays())
+            subject.localDateNow() shouldBe fixedLocalDateTime.atUTC().plus(advance).toLocalDate()
         }
 
         "Kronos.advanceBy $advance - localDateTimeNow" {

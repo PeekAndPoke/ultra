@@ -13,6 +13,12 @@ data class MpInstantRange(
     companion object {
         // TODO: Test
         val forever = MpInstantRange(MpInstant.Genesis, MpInstant.Doomsday)
+
+        // TODO: test me
+        fun of(from: MpInstant, duration: Duration): MpInstantRange = MpInstantRange(
+            from = from,
+            to = from.plus(duration),
+        )
     }
 
     // TODO: Test

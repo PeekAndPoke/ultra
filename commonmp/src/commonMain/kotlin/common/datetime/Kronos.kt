@@ -67,6 +67,9 @@ interface Kronos {
      */
     fun advanceBy(duration: Duration): Kronos = advanceBy { duration }
 
+    /** Get 'now' in epoch seconds */
+    fun secondsNow(): Long = instantNow().toEpochSeconds()
+
     /** Get 'now' in epoch millis */
     fun millisNow(): Long = instantNow().toEpochMillis()
 
@@ -89,10 +92,6 @@ interface Kronos {
     /** Creates a [MpZonedDateTime] for 'now' */
     fun zonedDateTimeNow(timezone: TimeZone): MpZonedDateTime {
         return instantNow().atZone(timezone)
-//        return MpZonedDateTime.of(
-//            value = localDateTimeNow(),
-//            timezone = timezone,
-//        )
     }
 
     /** Creates a [MpLocalTime] for 'now' */

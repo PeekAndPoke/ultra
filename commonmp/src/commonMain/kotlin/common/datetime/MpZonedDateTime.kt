@@ -184,6 +184,14 @@ data class MpZonedDateTime private constructor(
     fun toEpochSeconds(): Long = toInstant().toEpochSeconds()
 
     /**
+     * Creates a [MpZonedDateTimeRange] with this as the start and the given [duration].
+     */
+    // TODO: test me
+    fun toRange(duration: Duration): MpZonedDateTimeRange {
+        return MpZonedDateTimeRange.of(from = this, duration = duration)
+    }
+
+    /**
      * Converts this date time into another [timezone].
      */
     fun atZone(timezone: TimeZone): MpZonedDateTime = toInstant().atZone(timezone)

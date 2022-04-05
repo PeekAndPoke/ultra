@@ -91,6 +91,14 @@ data class MpInstant internal constructor(internal val value: Instant) : Compara
     }
 
     /**
+     * Creates a [MpInstantRange] with this as the start and the given [duration].
+     */
+    // TODO: test me
+    fun toRange(duration: Duration): MpInstantRange {
+        return MpInstantRange.of(from = this, duration = duration)
+    }
+
+    /**
      * Create a [MpZonedDateTime] at the given [timezone]
      */
     fun atZone(timezone: TimeZone): MpZonedDateTime {
