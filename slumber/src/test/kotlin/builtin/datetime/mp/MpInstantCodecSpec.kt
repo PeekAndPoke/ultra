@@ -16,7 +16,8 @@ class MpInstantCodecSpec : StringSpec({
 
     "Slumber - pure" {
 
-        val subject: MpInstant = MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC)
+        val subject: MpInstant = MpLocalDate.of(2022, Month.APRIL, 5)
+            .atStartOfDay(TimeZone.UTC).toInstant()
 
         val result = codec.slumber(subject)
 
@@ -30,7 +31,7 @@ class MpInstantCodecSpec : StringSpec({
     "Serializing - wrapped" {
 
         val subject = Wrapper(
-            MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC),
+            MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC).toInstant(),
         )
 
         val result = codec.slumber(subject)
@@ -52,7 +53,7 @@ class MpInstantCodecSpec : StringSpec({
 
         val result = codec.awake<MpInstant>(input)
 
-        result shouldBe MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC)
+        result shouldBe MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC).toInstant()
     }
 
     "De-Serializing - pure - Europe/Bucharest" {
@@ -63,7 +64,7 @@ class MpInstantCodecSpec : StringSpec({
 
         val result = codec.awake<MpInstant>(input)
 
-        result shouldBe MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC)
+        result shouldBe MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC).toInstant()
     }
 
     "De-Serializing - pure - Us/Pacific" {
@@ -74,7 +75,7 @@ class MpInstantCodecSpec : StringSpec({
 
         val result = codec.awake<MpInstant>(input)
 
-        result shouldBe MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC)
+        result shouldBe MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC).toInstant()
     }
 
 
@@ -91,13 +92,14 @@ class MpInstantCodecSpec : StringSpec({
         val result = codec.awake<Wrapper>(input)
 
         result shouldBe Wrapper(
-            MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC),
+            MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC).toInstant(),
         )
     }
 
     "Roundtrip - pure" {
 
-        val start: MpInstant = MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC)
+        val start: MpInstant = MpLocalDate.of(2022, Month.APRIL, 5)
+            .atStartOfDay(TimeZone.UTC).toInstant()
 
         val result = codec.awake<MpInstant>(
             codec.slumber(start)

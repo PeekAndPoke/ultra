@@ -16,7 +16,9 @@ import kotlinx.serialization.Serializable
 
 @Suppress("DataClassPrivateConstructor")
 @Serializable(with = MpLocalDateSerializer::class)
-data class MpLocalDate internal constructor(private val value: LocalDate) : Comparable<MpLocalDate> {
+data class MpLocalDate internal constructor(
+    private val value: LocalDate,
+) : Comparable<MpLocalDate> {
 
     companion object {
         fun of(year: Int, month: Int, day: Int): MpLocalDate = MpLocalDate(

@@ -266,9 +266,9 @@ class MpZonedDateTimeSpec : StringSpec({
             .toEpochSeconds() shouldBe (tsBucharest_20220405_121314 / 1000)
     }
 
-    "atZone" {
+    "atZone - UTC to Europe/Bucharest" {
 
-        val source = MpZonedDateTime.parse("2022-04-05T12:13:14Z")
+        val source = MpZonedDateTime.parse("2022-04-05T12:13:14.123Z")
 
         val timezone = TimeZone.of("Europe/Bucharest")
         val atZone = source.atZone(timezone)
@@ -276,7 +276,22 @@ class MpZonedDateTimeSpec : StringSpec({
         atZone.timezone shouldBe timezone
         atZone.toEpochMillis() shouldBe source.toEpochMillis()
 
-        atZone.toIsoString() shouldBe "2022-04-05T15:13:14.000[Europe/Bucharest]"
+        atZone.toIsoString() shouldBe "2022-04-05T15:13:14.123[Europe/Bucharest]"
+    }
+
+    "atZone - same timezone" {
+
+        val timezone = TimeZone.of("Europe/Bucharest")
+
+        val source = MpZonedDateTime.parse("2022-04-05T12:13:14.123[Europe/Bucharest]")
+        source.timezone shouldBe timezone
+
+        val atZone = source.atZone(timezone)
+
+        atZone.timezone shouldBe timezone
+        atZone.toEpochMillis() shouldBe source.toEpochMillis()
+
+        atZone.toIsoString() shouldBe "2022-04-05T12:13:14.123[Europe/Bucharest]"
     }
 
     "atStartOfYear" {
