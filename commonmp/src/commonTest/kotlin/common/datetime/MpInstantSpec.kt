@@ -32,6 +32,10 @@ class MpInstantSpec : StringSpec({
         MpInstant.parse("2022-04-05T12:00:00Z").toEpochSeconds() shouldBe 1649160000L
     }
 
+    "Epoch" {
+        MpInstant.Epoch shouldBe MpInstant.parse("1970-01-01T00:00:00.000")
+    }
+
     "Genesis and Doomsday" {
 
         MpInstant.Genesis.toIsoString() shouldBe "-10000-01-01T00:00:00.000Z"

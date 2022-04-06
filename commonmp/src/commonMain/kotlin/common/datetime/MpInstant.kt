@@ -43,6 +43,11 @@ data class MpInstant internal constructor(
         fun parse(isoString: String): MpInstant = MpDateTimeParser.parseInstant(isoString)
 
         /**
+         * Instant at the start of the unix epoch 1970-01-01T00:00:00.000Z
+         */
+        val Epoch: MpInstant = MpInstant.fromEpochMillis(0)
+
+        /**
          * The Genesis, a date in the distant past: -10000-01-01T00:00:00Z
          */
         val Genesis: MpInstant = MpInstant(
