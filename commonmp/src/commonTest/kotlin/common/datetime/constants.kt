@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.common.datetime
 
-import de.peekandpoke.ultra.common.datetime.kotlinx.offsetMillisAt
 import kotlinx.datetime.TimeZone
 
 object TestConstants {

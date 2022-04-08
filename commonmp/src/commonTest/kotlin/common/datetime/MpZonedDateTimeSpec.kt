@@ -2,7 +2,6 @@ package de.peekandpoke.ultra.common.datetime
 
 import de.peekandpoke.ultra.common.datetime.TestConstants.tsBucharest_20220405_121314
 import de.peekandpoke.ultra.common.datetime.TestConstants.tsUtc_20220405_121314
-import de.peekandpoke.ultra.common.datetime.kotlinx.offsetMillisAt
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeEqualComparingTo
 import io.kotest.matchers.comparables.shouldBeGreaterThan

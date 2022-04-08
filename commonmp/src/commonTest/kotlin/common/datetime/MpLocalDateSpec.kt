@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.common.datetime
 
-import de.peekandpoke.ultra.common.datetime.kotlinx.offsetAt
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeEqualComparingTo
@@ -73,7 +72,7 @@ class MpLocalDateSpec : StringSpec({
         subject.year shouldBe 2022
         subject.monthNumber shouldBe 4
         subject.month shouldBe Month.APRIL
-        subject.dayOfMonth shouldBe 5
+        subject.day shouldBe 5
         subject.dayOfWeek shouldBe DayOfWeek.TUESDAY
         subject.dayOfYear shouldBe 95
     }
@@ -183,7 +182,7 @@ class MpLocalDateSpec : StringSpec({
             val date = MpLocalDate.of(2022, Month.APRIL, 5)
             val instant = date.atStartOfDay(TimeZone.UTC).toInstant()
 
-            val timezone = TimeZone.of(timezoneId)
+            val timezone = MpTimezone.of(timezoneId)
 
             val startOfDay = date.atStartOfDay(timezone)
 

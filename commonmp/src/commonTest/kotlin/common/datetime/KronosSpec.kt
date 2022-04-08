@@ -35,28 +35,52 @@ class KronosSpec : StringSpec({
         fixedKronos.instantNow() shouldBe fixedInstant
     }
 
-    "Kronos.fromClock fixed - localDateNow" {
-        fixedKronos.localDateNow() shouldBe fixedLocalDateTime.toDate()
-    }
-
     "Kronos.fromClock fixed - localDateTimeNow" {
         fixedKronos.localDateTimeNow() shouldBe fixedLocalDateTime
     }
 
-    "Kronos.fromClock fixed - zonedDateTimeNow" {
-        MpTimezone.supportedIds.forEach {
-            val timezone = TimeZone.of(it)
+    "Kronos.fromClock fixed - localDateNow - kotlinx timezone" {
+        fixedKronos.localDateNow(TimeZone.UTC) shouldBe fixedLocalDateTime.toDate()
 
-            withClue("Must work for timezone '$timezone'") {
+        fixedKronos.localDateNow(TimeZone.of("Europe/Berlin")) shouldBe fixedLocalDateTime.toDate()
+    }
+
+    "Kronos.fromClock fixed - localDateNow - MpTimezone" {
+        fixedKronos.localDateNow(MpTimezone.UTC) shouldBe fixedLocalDateTime.toDate()
+
+        fixedKronos.localDateNow(MpTimezone.of("Europe/Berlin")) shouldBe fixedLocalDateTime.toDate()
+    }
+
+    "Kronos.fromClock fixed - localTimeNow - kotlinx timezone" {
+        fixedKronos.localTimeNow(TimeZone.UTC) shouldBe fixedLocalDateTime.toTime()
+
+        fixedKronos.localTimeNow(TimeZone.of("Europe/Berlin")) shouldBe MpLocalTime.of(13, 0)
+    }
+
+    "Kronos.fromClock fixed - localTimeNow - MpTimezone" {
+        fixedKronos.localTimeNow(MpTimezone.UTC) shouldBe fixedLocalDateTime.toTime()
+
+        fixedKronos.localTimeNow(MpTimezone.of("Europe/Berlin")) shouldBe MpLocalTime.of(13, 0)
+    }
+
+    "Kronos.fromClock fixed - zonedDateTimeNow - kotlinx Timezone" {
+        MpTimezone.supportedIds.take(10).forEach { zoneId ->
+            val timezone = TimeZone.of(zoneId)
+
+            withClue("Must work for timezone '$zoneId'") {
                 fixedKronos.zonedDateTimeNow(timezone).toInstant() shouldBe fixedInstant
             }
         }
     }
 
-    "Kronos.fromClock fixed - localTimeNow" {
-        fixedKronos.localTimeNow(TimeZone.UTC) shouldBe fixedLocalDateTime.toTime()
+    "Kronos.fromClock fixed - zonedDateTimeNow - MpTimezone" {
+        MpTimezone.supportedIds.forEach { zoneId ->
+            val timezone = MpTimezone.of(zoneId)
 
-        fixedKronos.localTimeNow(TimeZone.of("Europe/Berlin")) shouldBe MpLocalTime.of(13, 0)
+            withClue("Must work for timezone '$zoneId'") {
+                fixedKronos.zonedDateTimeNow(timezone).toInstant() shouldBe fixedInstant
+            }
+        }
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -90,7 +114,18 @@ class KronosSpec : StringSpec({
         }
 
         "Kronos.advanceBy $advance - localDateNow" {
-            subject.localDateNow() shouldBe fixedLocalDateTime.atUTC().plus(advance).toLocalDate()
+            subject.localDateNow(MpTimezone.UTC) shouldBe fixedLocalDateTime.atUTC().plus(advance).toLocalDate()
+        }
+
+        "Kronos.advanceBy $advance - localTimeNow" {
+            MpTimezone.supportedIds.forEach { zoneId ->
+                val timezone = MpTimezone.of(zoneId)
+
+                withClue("Must work for timezone '$zoneId'") {
+                    subject.localTimeNow(timezone) shouldBe
+                            fixedInstant.plus(advance).atZone(timezone).toLocalTime()
+                }
+            }
         }
 
         "Kronos.advanceBy $advance - localDateTimeNow" {
@@ -103,17 +138,6 @@ class KronosSpec : StringSpec({
 
                 withClue("Must work for timezone '$timezone'") {
                     subject.zonedDateTimeNow(timezone).toInstant() shouldBe fixedInstant.plus(advance)
-                }
-            }
-        }
-
-        "Kronos.advanceBy $advance - localTimeNow" {
-            MpTimezone.supportedIds.forEach {
-                val timezone = TimeZone.of(it)
-
-                withClue("Must work for timezone '$timezone'") {
-                    subject.localTimeNow(timezone) shouldBe
-                            fixedInstant.plus(advance).atZone(timezone).toLocalTime()
                 }
             }
         }

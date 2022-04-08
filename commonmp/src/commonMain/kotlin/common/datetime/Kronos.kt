@@ -79,14 +79,29 @@ interface Kronos {
     /** Creates an [MpInstant] for 'now' */
     fun instantNow(): MpInstant
 
-    /** Creates a [MpLocalDate] for 'now' */
-    fun localDateNow(): MpLocalDate {
-        return instantNow().atZone(TimeZone.UTC).toLocalDate()
-    }
-
     /** Creates a [MpLocalDateTime] for 'now' */
     fun localDateTimeNow(): MpLocalDateTime {
         return instantNow().atZone(TimeZone.UTC).toLocalDateTime()
+    }
+
+    /** Creates a [MpLocalDate] in the given [timezone] */
+    fun localDateNow(timezone: TimeZone): MpLocalDate {
+        return instantNow().atZone(timezone).toLocalDate()
+    }
+
+    /** Creates a [MpLocalDate] in the given [timezone] */
+    fun localDateNow(timezone: MpTimezone): MpLocalDate {
+        return localDateNow(timezone.kotlinx)
+    }
+
+    /** Creates a [MpLocalTime] in the given [timezone] */
+    fun localTimeNow(timezone: TimeZone): MpLocalTime {
+        return zonedDateTimeNow(timezone).toLocalTime()
+    }
+
+    /** Creates a [MpLocalTime] in the given [timezone] */
+    fun localTimeNow(timezone: MpTimezone): MpLocalTime {
+        return localTimeNow(timezone.kotlinx)
     }
 
     /** Creates a [MpZonedDateTime] for 'now' */
@@ -94,8 +109,8 @@ interface Kronos {
         return instantNow().atZone(timezone)
     }
 
-    /** Creates a [MpLocalTime] for 'now' */
-    fun localTimeNow(timezone: TimeZone): MpLocalTime {
-        return zonedDateTimeNow(timezone).toLocalTime()
+    /** Creates a [MpZonedDateTime] for 'now' */
+    fun zonedDateTimeNow(timezone: MpTimezone): MpZonedDateTime {
+        return zonedDateTimeNow(timezone.kotlinx)
     }
 }

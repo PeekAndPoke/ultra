@@ -50,7 +50,7 @@ val LocalDateTime.mp: MpLocalDateTime
  */
 val MpLocalDate.jvm: LocalDate
     get() {
-        return LocalDate.of(year, monthNumber, dayOfMonth)
+        return LocalDate.of(year, monthNumber, day)
     }
 
 /**
