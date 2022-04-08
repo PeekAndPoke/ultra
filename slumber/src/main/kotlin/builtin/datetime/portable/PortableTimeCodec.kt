@@ -1,29 +1,29 @@
 package de.peekandpoke.ultra.slumber.builtin.datetime.portable
 
-import de.peekandpoke.ultra.common.datetime.PortableTimezone
+import de.peekandpoke.ultra.common.datetime.PortableTime
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.Slumberer
 
-object PortableTimezoneAwaker : Awaker {
+object PortableTimeAwaker : Awaker {
 
-    override fun awake(data: Any?, context: Awaker.Context): PortableTimezone? {
+    override fun awake(data: Any?, context: Awaker.Context): PortableTime? {
 
-        if (data !is String) {
+        if (data !is Number) {
             return null
         }
 
-        return PortableTimezone(data)
+        return PortableTime(data.toLong())
     }
 }
 
-object PortableTimezoneSlumberer : Slumberer {
+object PortableTimeSlumberer : Slumberer {
 
-    override fun slumber(data: Any?, context: Slumberer.Context): String? {
+    override fun slumber(data: Any?, context: Slumberer.Context): Long? {
 
-        if (data !is PortableTimezone) {
+        if (data !is PortableTime) {
             return null
         }
 
-        return data.id
+        return data.milliSeconds
     }
 }

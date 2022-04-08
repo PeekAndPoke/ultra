@@ -176,7 +176,7 @@ class MpLocalDateSpec : StringSpec({
         }
     }
 
-    TestConstants.timeZoneIds.forEach { timezoneId ->
+    MpTimezone.supportedIds.forEach { timezoneId ->
 
         "atStartOfDay - at timezone '$timezoneId'" {
 

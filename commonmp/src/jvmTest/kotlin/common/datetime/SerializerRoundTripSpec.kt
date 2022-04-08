@@ -79,10 +79,10 @@ class SerializerRoundTripSpec : StringSpec() {
 
         "Encoding and decoding a PortableTimezone must work" {
 
-            val source = ZoneId.of("UTC").portable
+            val source = ZoneId.of("UTC").mp
 
             val encoded = Json.encodeToString(
-                PortableTimezone.serializer(),
+                MpTimezone.serializer(),
                 source
             )
 
@@ -91,7 +91,7 @@ class SerializerRoundTripSpec : StringSpec() {
             """.trimIndent()
 
             val decoded = Json.decodeFromString(
-                PortableTimezone.serializer(),
+                MpTimezone.serializer(),
                 encoded
             )
 

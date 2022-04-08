@@ -4,13 +4,14 @@ import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.datetime.MpLocalDate
 import de.peekandpoke.ultra.common.datetime.MpLocalDateTime
 import de.peekandpoke.ultra.common.datetime.MpLocalTime
+import de.peekandpoke.ultra.common.datetime.MpTimezone
 import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.SlumberModule
 import de.peekandpoke.ultra.slumber.Slumberer
 import kotlin.reflect.KType
 
-object MpTimeModule : SlumberModule {
+object MpDateTimeModule : SlumberModule {
 
     override fun getAwaker(type: KType): Awaker? {
 
@@ -30,6 +31,9 @@ object MpTimeModule : SlumberModule {
 
             MpZonedDateTime::class ->
                 type.wrapIfNonNull(MpZonedDateTimeAwaker)
+
+            MpTimezone::class ->
+                type.wrapIfNonNull(MpTimezoneAwaker)
 
             else -> null
         }
@@ -53,6 +57,9 @@ object MpTimeModule : SlumberModule {
 
             MpZonedDateTime::class ->
                 type.wrapIfNonNull(MpZonedDateTimeSlumberer)
+
+            MpTimezone::class ->
+                type.wrapIfNonNull(MpTimezoneSlumberer)
 
             else -> null
         }

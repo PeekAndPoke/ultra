@@ -3,7 +3,6 @@ package de.peekandpoke.ultra.slumber.builtin.datetime.portable
 import de.peekandpoke.ultra.common.datetime.PortableDate
 import de.peekandpoke.ultra.common.datetime.PortableDateTime
 import de.peekandpoke.ultra.common.datetime.PortableTime
-import de.peekandpoke.ultra.common.datetime.PortableTimezone
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.SlumberModule
 import de.peekandpoke.ultra.slumber.Slumberer
@@ -22,9 +21,6 @@ object PortableTimeModule : SlumberModule {
             PortableDateTime::class ->
                 type.wrapIfNonNull(PortableDateTimeAwaker)
 
-            PortableTimezone::class ->
-                type.wrapIfNonNull(PortableTimezoneAwaker)
-
             else -> null
         }
     }
@@ -40,9 +36,6 @@ object PortableTimeModule : SlumberModule {
 
             PortableDateTime::class ->
                 type.wrapIfNonNull(PortableDateTimeSlumberer)
-
-            PortableTimezone::class ->
-                type.wrapIfNonNull(PortableTimezoneSlumberer)
 
             else -> null
         }

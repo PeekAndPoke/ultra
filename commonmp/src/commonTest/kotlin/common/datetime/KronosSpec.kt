@@ -44,7 +44,7 @@ class KronosSpec : StringSpec({
     }
 
     "Kronos.fromClock fixed - zonedDateTimeNow" {
-        TestConstants.timeZoneIds.forEach {
+        MpTimezone.supportedIds.forEach {
             val timezone = TimeZone.of(it)
 
             withClue("Must work for timezone '$timezone'") {
@@ -98,7 +98,7 @@ class KronosSpec : StringSpec({
         }
 
         "Kronos.advanceBy $advance - zonedDateTimeNow" {
-            TestConstants.timeZoneIds.forEach {
+            MpTimezone.supportedIds.forEach {
                 val timezone = TimeZone.of(it)
 
                 withClue("Must work for timezone '$timezone'") {
@@ -108,7 +108,7 @@ class KronosSpec : StringSpec({
         }
 
         "Kronos.advanceBy $advance - localTimeNow" {
-            TestConstants.timeZoneIds.forEach {
+            MpTimezone.supportedIds.forEach {
                 val timezone = TimeZone.of(it)
 
                 withClue("Must work for timezone '$timezone'") {

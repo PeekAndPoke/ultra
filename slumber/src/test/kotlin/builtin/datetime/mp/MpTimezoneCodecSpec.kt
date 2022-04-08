@@ -1,12 +1,13 @@
-package de.peekandpoke.ultra.slumber.builtin.datetime.portable
+package de.peekandpoke.ultra.slumber.builtin.datetime.mp
 
-import de.peekandpoke.ultra.common.datetime.PortableTimezone
+import de.peekandpoke.ultra.common.datetime.MpTimezone
 import de.peekandpoke.ultra.slumber.Codec
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import kotlinx.datetime.TimeZone
 
-class PortableTimezoneCodecSpec : StringSpec({
+class MpTimezoneCodecSpec : StringSpec({
 
     "Awaking a Timezone from valid data must work" {
 
@@ -14,14 +15,14 @@ class PortableTimezoneCodecSpec : StringSpec({
 
         val data = "Europe/Berlin"
 
-        val result = codec.awake(PortableTimezone::class, data)
+        val result = codec.awake(MpTimezone::class, data)
 
-        result shouldBe PortableTimezone("Europe/Berlin")
+        result shouldBe MpTimezone.of("Europe/Berlin")
     }
 
     "Awaking a Timezone child property must work" {
 
-        data class DataClass(val zone: PortableTimezone)
+        data class DataClass(val zone: MpTimezone)
 
         val codec = Codec.default
 
@@ -31,7 +32,9 @@ class PortableTimezoneCodecSpec : StringSpec({
 
         val result = codec.awake(DataClass::class, data)
 
-        result shouldBe DataClass(PortableTimezone("Europe/Berlin"))
+        result shouldBe DataClass(MpTimezone.of("Europe/Berlin"))
+
+        result!!.zone.kotlinx shouldBe TimeZone.of("Europe/Berlin")
     }
 
     "Awaking a Timezone from invalid data must return null" {
@@ -40,7 +43,7 @@ class PortableTimezoneCodecSpec : StringSpec({
 
         val data = mapOf<String, String>()
 
-        val result = codec.awake<PortableTimezone?>(data)
+        val result = codec.awake<MpTimezone?>(data)
 
         result.shouldBeNull()
     }
@@ -49,7 +52,7 @@ class PortableTimezoneCodecSpec : StringSpec({
 
         val codec = Codec.default
 
-        val data = PortableTimezone("Europe/Berlin")
+        val data = MpTimezone.of("Europe/Berlin")
 
         val result = codec.slumber(data)
 
@@ -58,11 +61,11 @@ class PortableTimezoneCodecSpec : StringSpec({
 
     "Slumbering a Timezone child property must work" {
 
-        data class DataClass(val zone: PortableTimezone)
+        data class DataClass(val zone: MpTimezone)
 
         val codec = Codec.default
 
-        val data = DataClass(PortableTimezone("Europe/Berlin"))
+        val data = DataClass(MpTimezone.of("Europe/Berlin"))
 
         val result = codec.slumber(data)
 

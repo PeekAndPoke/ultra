@@ -82,6 +82,14 @@ data class MpInstantRange(
     }
 
     /**
+     * Converts to the systems current timezone.
+     */
+    // TODO: test me
+    fun atSystemDefaultZone(): MpZonedDateTimeRange {
+        return atZone(TimeZone.currentSystemDefault())
+    }
+
+    /**
      * Adds the [duration] in absolute terms.
      */
     // TODO: Test

@@ -192,14 +192,6 @@ data class MpZonedDateTime private constructor(
     }
 
     /**
-     * Converts to the systems current timezone.
-     */
-    // TODO: test me
-    fun atSystemDefaultZone(): MpZonedDateTime {
-        return toInstant().atSystemDefaultZone()
-    }
-
-    /**
      * Get the start of the year.
      */
     fun atStartOfYear(): MpZonedDateTime = copy(
@@ -348,8 +340,8 @@ data class MpZonedDateTime private constructor(
 }
 
 // TODO: test me
-fun MpZonedDateTime.formatDdMmmYy(): String {
-    return format("dd MMM yy")
+fun MpZonedDateTime.formatDdMmmYyyy(): String {
+    return format("dd MMM yyyy")
 }
 
 // TODO: test me
@@ -358,11 +350,11 @@ fun MpZonedDateTime.formatHhMm(): String {
 }
 
 // TODO: test me
-fun MpZonedDateTime.formatDdMmmYyHhMm(): String {
-    return format("dd MMM yy HH:mm")
+fun MpZonedDateTime.formatDdMmmYyyyHhMm(): String {
+    return format("dd MMM yyyy HH:mm")
 }
 
 // TODO: test me
-fun MpZonedDateTime.formatDdMmmYyHhMmSs(): String {
-    return format("dd MMM yy HH:mm:ss")
+fun MpZonedDateTime.formatDdMmmYyyyHhMmSs(): String {
+    return format("dd MMM yyyy HH:mm:ss")
 }

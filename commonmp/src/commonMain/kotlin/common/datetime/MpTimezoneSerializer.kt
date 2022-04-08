@@ -9,19 +9,19 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-@Serializer(forClass = PortableTimezone::class)
-object PortableTimezoneSerializer : KSerializer<PortableTimezone> {
+@Serializer(forClass = MpTimezone::class)
+object MpTimezoneSerializer : KSerializer<MpTimezone> {
 
     override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("PortableTimezoneSerializer", PrimitiveKind.STRING)
+        PrimitiveSerialDescriptor("MpTimezoneSerializer", PrimitiveKind.STRING)
 
-    override fun serialize(encoder: Encoder, value: PortableTimezone) {
+    override fun serialize(encoder: Encoder, value: MpTimezone) {
         encoder.encodeString(value.id)
     }
 
-    override fun deserialize(decoder: Decoder): PortableTimezone {
+    override fun deserialize(decoder: Decoder): MpTimezone {
         val v = decoder.decodeString()
 
-        return PortableTimezone(v)
+        return MpTimezone.of(v)
     }
 }

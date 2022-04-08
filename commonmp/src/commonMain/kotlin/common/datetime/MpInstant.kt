@@ -45,7 +45,7 @@ data class MpInstant internal constructor(
         /**
          * Instant at the start of the unix epoch 1970-01-01T00:00:00.000Z
          */
-        val Epoch: MpInstant = MpInstant.fromEpochMillis(0)
+        val Epoch: MpInstant = fromEpochMillis(0)
 
         /**
          * The Genesis, a date in the distant past: -10000-01-01T00:00:00Z
@@ -120,14 +120,6 @@ data class MpInstant internal constructor(
     // TODO: test me
     fun toRange(duration: Duration): MpInstantRange {
         return MpInstantRange.of(from = this, duration = duration)
-    }
-
-    /**
-     * Creates a [MpZonedDateTime] at the systems current timezone.
-     */
-    // TODO: test me
-    fun atSystemDefaultZone(): MpZonedDateTime {
-        return atZone(TimeZone.currentSystemDefault())
     }
 
     /**
