@@ -52,6 +52,14 @@ class MpLocalDateSpec : StringSpec({
             .toString() shouldBe "MpLocalDate(2022-04-02T00:00:00.000Z)"
     }
 
+    "format" {
+        MpLocalDate.of(year = 2022, month = Month.APRIL, day = 11)
+            .format("dd MMM yyyy") shouldBe "11 Apr 2022"
+
+        MpLocalDate.of(year = 2022, month = Month.APRIL, day = 11)
+            .formatDdMmmYyyy() shouldBe "11 Apr 2022"
+    }
+
     "toIsoString" {
         MpLocalDate.parse("2022-04-02")
             .toIsoString() shouldBe "2022-04-02T00:00:00.000Z"

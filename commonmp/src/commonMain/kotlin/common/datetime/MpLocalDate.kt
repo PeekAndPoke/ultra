@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
+import com.soywiz.klock.Date
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
@@ -104,10 +105,37 @@ data class MpLocalDate internal constructor(
     }
 
     /**
+     * Converts into a human-readable string by the given [formatString].
+     *
+     * See https://help.gooddata.com/cloudconnect/manual/date-and-time-format.html
+     */
+    fun format(formatString: String): String {
+        val klock = Date(year = year, month = monthNumber, day = day)
+
+        return klock.format(formatString)
+    }
+
+    /**
      * Converts into a iso string.
      */
     fun toIsoString(): String {
         return atStartOfDay(TimeZone.UTC).toIsoString()
+    }
+
+    /**
+     * Gets the start of the month
+     */
+    // TODO: test me
+    fun atStartOfYear(): MpLocalDate {
+        return MpLocalDate.of(year = year, month = Month.JANUARY, day = 1)
+    }
+
+    /**
+     * Gets the start of the month
+     */
+    // TODO: test me
+    fun atStartOfMonth(): MpLocalDate {
+        return MpLocalDate.of(year = year, month = month, day = 1)
     }
 
     /**
@@ -206,4 +234,10 @@ data class MpLocalDate internal constructor(
     }
 }
 
+/**
+ * Formats the date as 'dd MMM yyyy'
+ */
+fun MpLocalDate.formatDdMmmYyyy(): String {
+    return format("dd MMM yyyy")
+}
 
