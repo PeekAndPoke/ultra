@@ -12,7 +12,7 @@ object MpLocalTimeAwaker : Awaker {
             return null
         }
 
-        return MpLocalTime(data.toLong())
+        return MpLocalTime.ofMilliSeconds(data.toLong())
     }
 }
 

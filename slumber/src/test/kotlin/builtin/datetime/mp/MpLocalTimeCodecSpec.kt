@@ -5,13 +5,13 @@ import de.peekandpoke.ultra.slumber.Codec
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
-class MpTimeCodecSpec : StringSpec({
+class MpLocalTimeCodecSpec : StringSpec({
 
     val codec = Codec.default
 
     "Slumber" {
 
-        val subject = MpLocalTime(123)
+        val subject = MpLocalTime.ofMilliSeconds(123)
 
         val result = codec.slumber(subject)
 
@@ -24,12 +24,12 @@ class MpTimeCodecSpec : StringSpec({
 
         val result = codec.awake<MpLocalTime>(input)
 
-        result shouldBe MpLocalTime(123)
+        result shouldBe MpLocalTime.ofMilliSeconds(123)
     }
 
     "Roundtrip - pure" {
 
-        val start = MpLocalTime(123)
+        val start = MpLocalTime.ofMilliSeconds(123)
 
         val result = codec.awake<MpLocalTime>(
             codec.slumber(start)

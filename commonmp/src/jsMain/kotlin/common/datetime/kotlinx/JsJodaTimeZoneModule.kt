@@ -5,4 +5,8 @@ package de.peekandpoke.ultra.common.datetime.kotlinx
 external object JsJodaTimeZoneModule
 
 @Suppress("unused")
-val jsJodaTz = JsJodaTimeZoneModule
+internal val jsJodaTz = JsJodaTimeZoneModule
+
+fun initializeJsJodaTimezones(): JsJodaTimeZoneModule {
+    return jsJodaTz
+}
