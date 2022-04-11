@@ -4,7 +4,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.TimeZone
 
-@Suppress("unused", "SpellCheckingInspection")
+@Suppress("unused")
 class KotlinxTimeZoneSpec : StringSpec({
     "Creating a timezone from an id must work" {
         TimeZone.of("Europe/Berlin").id shouldBe "Europe/Berlin"
