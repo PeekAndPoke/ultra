@@ -8,7 +8,7 @@ import kotlin.time.Duration.Companion.milliseconds
 // TODO: test all of me
 @Suppress("DataClassPrivateConstructor")
 @Serializable(with = MpLocalTimeSerializer::class)
-data class MpLocalTime private constructor(val milliSeconds: Long) : Comparable<MpLocalTime> {
+data class MpLocalTime private constructor(private val milliSeconds: Long) : Comparable<MpLocalTime> {
 
     companion object {
         private const val MillisPerSecond = 1_000L
@@ -22,9 +22,9 @@ data class MpLocalTime private constructor(val milliSeconds: Long) : Comparable<
             )
         }
 
-        fun of(hours: Int, minutes: Int, seconds: Int = 0, millis: Int = 0): MpLocalTime {
+        fun of(hour: Int, minute: Int, second: Int = 0, milliSecond: Int = 0): MpLocalTime {
             return ofMilliSeconds(
-                milliSeconds = (hours * 60 * 60 + minutes * 60 + seconds) * 1_000L + millis
+                milliSeconds = (hour * 60 * 60 + minute * 60 + second) * 1_000L + milliSecond
             )
         }
 
@@ -32,17 +32,21 @@ data class MpLocalTime private constructor(val milliSeconds: Long) : Comparable<
             return ofMilliSeconds(milliSeconds = secondsOfDay * 1_000L)
         }
 
-        val Min: MpLocalTime = of(hours = 0, minutes = 0, seconds = 0, millis = 0)
+        val Min: MpLocalTime = of(hour = 0, minute = 0, second = 0, milliSecond = 0)
 
-        val Max: MpLocalTime = of(hours = 23, minutes = 59, seconds = 59, millis = 999)
+        val Max: MpLocalTime = of(hour = 23, minute = 59, second = 59, milliSecond = 999)
 
-        val Noon: MpLocalTime = of(hours = 12, minutes = 0, seconds = 0, millis = 0)
+        val Noon: MpLocalTime = of(hour = 12, minute = 0, second = 0, milliSecond = 0)
     }
 
-    val hours: Int get() = ((milliSeconds % MillisPerDay) / MillisPerHour).toInt()
-    val minutes: Int get() = ((milliSeconds % MillisPerHour) / MillisPerMinute).toInt()
-    val seconds: Int get() = ((milliSeconds % MillisPerMinute) / MillisPerSecond).toInt()
-    val millis: Int get() = (milliSeconds % MillisPerSecond).toInt()
+    val hour: Int get() = ((milliSeconds % MillisPerDay) / MillisPerHour).toInt()
+    val minute: Int get() = ((milliSeconds % MillisPerHour) / MillisPerMinute).toInt()
+    val second: Int get() = ((milliSeconds % MillisPerMinute) / MillisPerSecond).toInt()
+    val milliSecond: Int get() = (milliSeconds % MillisPerSecond).toInt()
+
+    override fun compareTo(other: MpLocalTime): Int {
+        return milliSeconds.compareTo(other.milliSeconds)
+    }
 
     override fun toString(): String {
         return "MpLocalTime(${toIsoString()})"
@@ -53,13 +57,17 @@ data class MpLocalTime private constructor(val milliSeconds: Long) : Comparable<
     }
 
     fun format(format: String): String {
-        val klock = Time(hour = hours, minute = minutes, second = seconds, millisecond = millis)
+        val klock = Time(hour = hour, minute = minute, second = second, millisecond = milliSecond)
 
         return klock.format(format)
     }
 
-    override fun compareTo(other: MpLocalTime): Int {
-        return milliSeconds.compareTo(other.milliSeconds)
+    fun inWholeMilliSeconds(): Long {
+        return milliSeconds
+    }
+
+    fun asDuration(): Duration {
+        return milliSeconds.milliseconds
     }
 
     fun plus(duration: Duration): MpLocalTime {

@@ -367,6 +367,13 @@ class MpZonedDateTimeSpec : StringSpec({
 
     "atStartOfNext(dayOfWeek)" {
 
+        // Before DST in Berlin
+        MpZonedDateTime.parse("2022-03-27T00:00:00.000[Europe/Berlin]")
+            .atStartOfNext(DayOfWeek.MONDAY).let {
+                it shouldBe MpZonedDateTime.parse("2022-03-28T00:00:00.000[Europe/Berlin]")
+                it.timezone shouldBe TimeZone.of("Europe/Berlin")
+            }
+
         MpZonedDateTime.parse("2022-04-04T23:59:59.999Z")
             .atStartOfNext(DayOfWeek.TUESDAY).let {
                 it shouldBe MpZonedDateTime.parse("2022-04-05T00:00:00.000Z")
@@ -387,6 +394,13 @@ class MpZonedDateTimeSpec : StringSpec({
     }
 
     "atStartOfPrevious(dayOfWeek)" {
+
+        // After DST in Berlin
+        MpZonedDateTime.parse("2022-03-28T00:00:00.000[Europe/Berlin]")
+            .atStartOfPrevious(DayOfWeek.SUNDAY).let {
+                it shouldBe MpZonedDateTime.parse("2022-03-27T00:00:00.000[Europe/Berlin]")
+                it.timezone shouldBe TimeZone.of("Europe/Berlin")
+            }
 
         MpZonedDateTime.parse("2022-04-04T23:59:59.999Z")
             .atStartOfPrevious(DayOfWeek.TUESDAY).let {

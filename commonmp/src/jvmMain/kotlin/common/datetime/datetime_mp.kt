@@ -92,7 +92,7 @@ val LocalTime.mp: MpLocalTime
  * Converts an [MpLocalTime] into a [java.time.LocalDate]
  */
 // TODO: test me
-val MpLocalTime.jvm get(): LocalTime = LocalTime.ofSecondOfDay(milliSeconds / 1000)
+val MpLocalTime.jvm get(): LocalTime = LocalTime.ofSecondOfDay(inWholeMilliSeconds() / 1000)
 
 /**
  * Converts a [java.time.ZoneId] to a [TimeZone].

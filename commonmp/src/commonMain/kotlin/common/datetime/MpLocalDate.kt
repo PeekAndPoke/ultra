@@ -83,10 +83,9 @@ data class MpLocalDate internal constructor(
     /** The day of the month */
     val day: Int get() = value.dayOfMonth
 
-    // TODO: test me
     /** The day of the week */
     val dayOfWeek: DayOfWeek get() = value.dayOfWeek
-    // TODO: test me
+
     /** The day of the year */
     val dayOfYear: Int get() = value.dayOfYear
 
@@ -116,7 +115,7 @@ data class MpLocalDate internal constructor(
     }
 
     /**
-     * Converts into a iso string.
+     * Converts into an iso string.
      */
     fun toIsoString(): String {
         return atStartOfDay(TimeZone.UTC).toIsoString()
@@ -125,17 +124,43 @@ data class MpLocalDate internal constructor(
     /**
      * Gets the start of the month
      */
-    // TODO: test me
     fun atStartOfYear(): MpLocalDate {
-        return MpLocalDate.of(year = year, month = Month.JANUARY, day = 1)
+        return of(year = year, month = Month.JANUARY, day = 1)
     }
 
     /**
      * Gets the start of the month
      */
-    // TODO: test me
     fun atStartOfMonth(): MpLocalDate {
-        return MpLocalDate.of(year = year, month = month, day = 1)
+        return of(year = year, month = month, day = 1)
+    }
+
+    /**
+     * Gets the upcoming day that is of the given [dayOfWeek].
+     */
+    fun atStartOfNext(dayOfWeek: DayOfWeek): MpLocalDate {
+
+        var result = plus(1, DateTimeUnit.DAY)
+
+        while (result.dayOfWeek != dayOfWeek) {
+            result = result.plus(1, DateTimeUnit.DAY)
+        }
+
+        return result
+    }
+
+    /**
+     * Gets the previous day that is of the given [dayOfWeek].
+     */
+    fun atStartOfPrevious(dayOfWeek: DayOfWeek): MpLocalDate {
+
+        var result = this
+
+        while (result.dayOfWeek != dayOfWeek) {
+            result = result.minus(1, DateTimeUnit.DAY)
+        }
+
+        return result
     }
 
     /**
@@ -146,22 +171,6 @@ data class MpLocalDate internal constructor(
     }
 
     /**
-     * Converts into an [MpLocalDateTime] by adding the given [time].
-     */
-    // TODO: test me
-    fun atTime(time: MpLocalTime): MpLocalDateTime {
-        return MpLocalDateTime.of(
-            year = year,
-            month = month,
-            day = day,
-            hour = time.hours,
-            minute = time.minutes,
-            second = time.seconds,
-            nanosecond = time.millis * 1_000,
-        )
-    }
-
-    /**
      * Converts into an [MpZonedDateTime] at the given [timezone].
      */
     fun atStartOfDay(timezone: TimeZone): MpZonedDateTime {
@@ -169,12 +178,31 @@ data class MpLocalDate internal constructor(
     }
 
     /**
+     * Converts into an [MpLocalDateTime] by setting the given [time].
+     */
+    fun atTime(time: MpLocalTime): MpLocalDateTime {
+        return MpLocalDateTime.of(date = this, time = time)
+    }
+
+    /**
+     * Converts into an [MpZonedDateTime] in the given [timezone] by setting the given [time].
+     */
+    fun atTime(time: MpLocalTime, timezone: TimeZone): MpZonedDateTime {
+        return atStartOfDay(timezone).atTime(time)
+    }
+
+    /**
+     * Converts into an [MpZonedDateTime] in the given [timezone] by setting the given [time].
+     */
+    fun atTime(time: MpLocalTime, timezone: MpTimezone): MpZonedDateTime {
+        return atTime(time, timezone.kotlinx)
+    }
+
+    /**
      * Converts into an [MpLocalDateTime] at the start of the day.
      */
     fun toLocalDateTime(): MpLocalDateTime {
-        return MpLocalDateTime(
-            value = value.atStartOfDayIn(TimeZone.UTC).toLocalDateTime(TimeZone.UTC)
-        )
+        return atTime(MpLocalTime.Min)
     }
 
     /**

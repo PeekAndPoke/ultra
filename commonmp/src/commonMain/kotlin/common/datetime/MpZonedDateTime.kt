@@ -7,7 +7,6 @@ import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.days
 
 @Suppress("DataClassPrivateConstructor")
 @Serializable(with = MpZonedDateTimeSerializer::class)
@@ -233,31 +232,42 @@ data class MpZonedDateTime private constructor(
     )
 
     /**
-     * Gets the start of the next upcoming [dayOfWeek].
+     * Gets the start of the upcoming [dayOfWeek].
      */
     fun atStartOfNext(dayOfWeek: DayOfWeek): MpZonedDateTime {
 
-        var result = plus(1.days).atStartOfDay()
+        var result = plus(1, DateTimeUnit.DAY).atStartOfDay()
 
         while (result.dayOfWeek != dayOfWeek) {
-            result = result.plus(1.days).atStartOfDay()
+            result = result.plus(1, DateTimeUnit.DAY).atStartOfDay()
         }
 
         return result
     }
 
     /**
-     * Gets the start of the next upcoming [dayOfWeek].
+     * Gets the start of the preceding [dayOfWeek].
      */
     fun atStartOfPrevious(dayOfWeek: DayOfWeek): MpZonedDateTime {
 
         var result = atStartOfDay()
 
         while (result.dayOfWeek != dayOfWeek) {
-            result = result.minus(1.days).atStartOfDay()
+            result = result.minus(1, DateTimeUnit.DAY).atStartOfDay()
         }
 
         return result
+    }
+
+    /**
+     * Sets the time of the day to the given [time].
+     */
+    // TODO: test me
+    fun atTime(time: MpLocalTime): MpZonedDateTime {
+        return MpLocalDateTime.of(
+            date = toLocalDate(),
+            time = time
+        ).atZone(timezone = timezone)
     }
 
     /**

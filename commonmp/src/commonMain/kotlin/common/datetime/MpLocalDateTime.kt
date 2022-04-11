@@ -40,6 +40,19 @@ data class MpLocalDateTime internal constructor(internal val value: LocalDateTim
             nanosecond = nanosecond,
         )
 
+        // TODO: Test me
+        fun of(
+            date: MpLocalDate, time: MpLocalTime
+        ): MpLocalDateTime = of(
+            year = date.year,
+            month = date.month,
+            day = date.day,
+            hour = time.hour,
+            minute = time.minute,
+            second = time.second,
+            nanosecond = time.milliSecond * 1_000,
+        )
+
         fun parse(isoString: String): MpLocalDateTime {
             return MpDateTimeParser.parseInstant(isoString).atZone(TimeZone.UTC).datetime
         }
@@ -97,14 +110,20 @@ data class MpLocalDateTime internal constructor(internal val value: LocalDateTim
     fun toDate(): MpLocalDate = MpLocalDate(value.date)
 
     fun toTime(): MpLocalTime = MpLocalTime.of(
-        hours = hour, minutes = minute, seconds = second, millis = nanosecond / 1_000
+        hour = hour, minute = minute, second = second, milliSecond = nanosecond / 1_000
     )
 
     fun toInstant(timezone: TimeZone): MpInstant = MpInstant(
         value = value.toInstant(timezone)
     )
 
-    fun atZone(timezone: TimeZone): MpZonedDateTime = toInstant(timezone).atZone(timezone)
+    fun atZone(timezone: TimeZone): MpZonedDateTime {
+        return toInstant(timezone).atZone(timezone)
+    }
+
+    fun atZone(timezone: MpTimezone): MpZonedDateTime {
+        return atZone(timezone.kotlinx)
+    }
 
     fun atUTC(): MpZonedDateTime = atZone(TimeZone.UTC)
 }

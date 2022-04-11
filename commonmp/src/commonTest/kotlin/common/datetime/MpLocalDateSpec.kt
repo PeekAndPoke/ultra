@@ -6,10 +6,12 @@ import io.kotest.matchers.comparables.shouldBeEqualComparingTo
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
+import kotlin.time.Duration.Companion.hours
 
 @Suppress("unused")
 class MpLocalDateSpec : StringSpec({
@@ -35,7 +37,45 @@ class MpLocalDateSpec : StringSpec({
         MpLocalDate.Doomsday.toIsoString() shouldBe "+10000-01-01T00:00:00.000Z"
     }
 
+    "parse - toIsoString - round trip" {
+        val start = MpLocalDate.parse("2022-04-01")
+
+        val result = MpLocalDate.parse(start.toIsoString())
+
+        start shouldBe result
+    }
+
+    "Fields year, monthNumber, month, dayOfMonth, dayOfWeek, dayOfYear" {
+
+        val subject = MpLocalDate.of(2022, Month.APRIL, 5)
+
+        subject.year shouldBe 2022
+        subject.monthNumber shouldBe 4
+        subject.month shouldBe Month.APRIL
+        subject.day shouldBe 5
+        subject.dayOfWeek shouldBe DayOfWeek.TUESDAY
+        subject.dayOfYear shouldBe 95
+    }
+
+    "Field dayOfWeek" {
+        val subject = MpLocalDate.of(2022, Month.APRIL, 5)
+
+        subject.dayOfWeek shouldBe DayOfWeek.TUESDAY
+    }
+
+    "Field dayOfYear" {
+        val subject = MpLocalDate.of(2022, Month.APRIL, 5)
+
+        subject.dayOfYear shouldBe 95
+    }
+
     "Equality" {
+        MpLocalDate.parse("2022-04-01") shouldBe MpLocalDate.parse("2022-04-01")
+
+        MpLocalDate.parse("2022-04-01") shouldNotBe MpLocalDate.parse("2022-04-02")
+    }
+
+    "Comparison" {
 
         MpLocalDate.parse("2022-04-01") shouldBeEqualComparingTo
                 MpLocalDate.parse("2022-04-01")
@@ -65,24 +105,52 @@ class MpLocalDateSpec : StringSpec({
             .toIsoString() shouldBe "2022-04-02T00:00:00.000Z"
     }
 
-    "parse - toIsoString - round trip" {
-        val start = MpLocalDate.parse("2022-04-01")
+    "atStartOfYear" {
+        MpLocalDate.of(2022, Month.JANUARY, 1)
+            .atStartOfYear() shouldBe MpLocalDate.of(2022, Month.JANUARY, 1)
 
-        val result = MpLocalDate.parse(start.toIsoString())
+        MpLocalDate.of(2022, Month.APRIL, 5)
+            .atStartOfYear() shouldBe MpLocalDate.of(2022, Month.JANUARY, 1)
 
-        start shouldBe result
+        MpLocalDate.of(2022, Month.DECEMBER, 31)
+            .atStartOfYear() shouldBe MpLocalDate.of(2022, Month.JANUARY, 1)
     }
 
-    "Fields year, monthNumber, month, dayOfMonth, dayOfWeek, dayOfYear" {
+    "atStartOfMonth" {
+        MpLocalDate.of(2022, Month.JANUARY, 1)
+            .atStartOfMonth() shouldBe MpLocalDate.of(2022, Month.JANUARY, 1)
 
-        val subject = MpLocalDate.of(2022, Month.APRIL, 5)
+        MpLocalDate.of(2022, Month.APRIL, 5)
+            .atStartOfMonth() shouldBe MpLocalDate.of(2022, Month.APRIL, 1)
 
-        subject.year shouldBe 2022
-        subject.monthNumber shouldBe 4
-        subject.month shouldBe Month.APRIL
-        subject.day shouldBe 5
-        subject.dayOfWeek shouldBe DayOfWeek.TUESDAY
-        subject.dayOfYear shouldBe 95
+        MpLocalDate.of(2022, Month.DECEMBER, 31)
+            .atStartOfMonth() shouldBe MpLocalDate.of(2022, Month.DECEMBER, 1)
+    }
+
+    "atStartOfNext(dayOfWeek)" {
+
+        MpLocalDate.parse("2022-04-04")
+            .atStartOfNext(DayOfWeek.TUESDAY).let {
+                it shouldBe MpLocalDate.parse("2022-04-05")
+            }
+
+        MpLocalDate.parse("2022-04-05")
+            .atStartOfNext(DayOfWeek.TUESDAY).let {
+                it shouldBe MpLocalDate.parse("2022-04-12")
+            }
+    }
+
+    "atStartOfPrevious(dayOfWeek)" {
+
+        MpLocalDate.parse("2022-04-04")
+            .atStartOfPrevious(DayOfWeek.TUESDAY).let {
+                it shouldBe MpLocalDate.parse("2022-03-29")
+            }
+
+        MpLocalDate.parse("2022-04-05")
+            .atStartOfPrevious(DayOfWeek.TUESDAY).let {
+                it shouldBe MpLocalDate.parse("2022-04-05")
+            }
     }
 
     "atStartOfDay" {
@@ -94,6 +162,48 @@ class MpLocalDateSpec : StringSpec({
 
         subject.atStartOfDay(TimeZone.of("Europe/Bucharest")) shouldBe
                 MpZonedDateTime.parse("2022-04-05T00:00:00.000[Europe/Bucharest]")
+    }
+
+    "atTime(time)" {
+        val subject = MpLocalDate.of(
+            year = 2022,
+            month = Month.APRIL,
+            day = 5
+        ).atTime(
+            MpLocalTime.of(
+                hour = 12,
+                minute = 13,
+                second = 14,
+                milliSecond = 123,
+            )
+        )
+
+        subject shouldBe MpLocalDateTime.of(
+            year = 2022,
+            month = Month.APRIL,
+            day = 5,
+            hour = 12,
+            minute = 13,
+            second = 14,
+            nanosecond = 123 * 1_000,
+        )
+    }
+
+    "atTime(time, timezone)" {
+
+        // Not Crossing DST in Berlin
+        val notCrossedDst = MpLocalDate.of(2022, 3, 27)
+            .atTime(MpLocalTime.of(2, 0), MpTimezone.of("Europe/Berlin"))
+
+        // Crossing DST in Berlin
+        val crossedDst = MpLocalDate.of(2022, 3, 27)
+            .atTime(MpLocalTime.of(4, 0), MpTimezone.of("Europe/Berlin"))
+
+        notCrossedDst shouldBe MpZonedDateTime.parse("2022-03-27T02:00:00[Europe/Berlin]")
+
+        crossedDst shouldBe MpZonedDateTime.parse("2022-03-27T04:00:00[Europe/Berlin]")
+
+        (crossedDst - notCrossedDst) shouldBe 1.hours
     }
 
     "toLocalDateTime" {

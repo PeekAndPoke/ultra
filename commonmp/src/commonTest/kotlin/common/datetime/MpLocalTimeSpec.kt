@@ -14,7 +14,7 @@ class MpLocalTimeSpec : StringSpec({
             val expected = hour % 24
 
             withClue("Hours of '${subject.toIsoString()}' should be '$expected'") {
-                subject.hours shouldBe expected
+                subject.hour shouldBe expected
             }
         }
     }

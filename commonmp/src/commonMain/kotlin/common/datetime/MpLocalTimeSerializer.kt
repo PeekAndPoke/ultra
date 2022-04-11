@@ -16,7 +16,7 @@ object MpLocalTimeSerializer : KSerializer<MpLocalTime> {
         PrimitiveSerialDescriptor("MpTimeSerializer", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: MpLocalTime) {
-        encoder.encodeLong(value.milliSeconds)
+        encoder.encodeLong(value.inWholeMilliSeconds())
     }
 
     override fun deserialize(decoder: Decoder): MpLocalTime {
