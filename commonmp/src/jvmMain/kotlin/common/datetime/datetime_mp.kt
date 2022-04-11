@@ -84,7 +84,9 @@ val ZonedDateTime.mp: MpZonedDateTime
  * Converts a [java.time.LocalTime] into an [MpLocalTime]
  */
 // TODO: test me
-val LocalTime.mp: MpLocalTime get() = MpLocalTime(milliSeconds = 1000L * (hour * 60 * 60 + minute * 60 + second))
+val LocalTime.mp: MpLocalTime
+    get() =
+        MpLocalTime.ofMilliSeconds(milliSeconds = 1000L * (hour * 60 * 60 + minute * 60 + second))
 
 /**
  * Converts an [MpLocalTime] into a [java.time.LocalDate]

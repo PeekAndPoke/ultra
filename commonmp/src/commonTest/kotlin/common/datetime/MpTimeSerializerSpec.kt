@@ -10,7 +10,7 @@ class MpTimeSerializerSpec : StringSpec({
 
     "Serialize" {
 
-        val input = MpLocalTime(milliSeconds = 123)
+        val input = MpLocalTime.ofMilliSeconds(milliSeconds = 123)
 
         val result = json.encodeToString(
             MpLocalTime.serializer(),
@@ -29,6 +29,6 @@ class MpTimeSerializerSpec : StringSpec({
             input
         )
 
-        result shouldBe MpLocalTime(123)
+        result shouldBe MpLocalTime.ofMilliSeconds(123)
     }
 })

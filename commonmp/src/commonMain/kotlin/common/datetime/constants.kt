@@ -1,5 +1,13 @@
 package de.peekandpoke.ultra.common.datetime
 
+// TODO:
+//  - MpLocalDate additional test
+//  - MpLocalDate.atTime(time): MpLocalDateTime -> is there -> test
+//  - MpLocalDate.atTime(time, timezone): MpZonedDatetime
+//  - MpLocalDateTime.plus(time): MpLocalDateTime
+//  - MpZonedDateTime.plus(time): MpZonedDateTime -> timezone aware adding
+//  - MpLocalTimeSlot.of(from: MpLocalTime, duration: Duration)
+
 internal const val ISO_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
 
 /**

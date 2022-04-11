@@ -8,7 +8,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
-@Suppress("EXPERIMENTAL_API_USAGE")
+@Suppress("OPT_IN_USAGE", "EXPERIMENTAL_API_USAGE")
 @Serializer(forClass = MpLocalTime::class)
 object MpLocalTimeSerializer : KSerializer<MpLocalTime> {
 
@@ -22,6 +22,6 @@ object MpLocalTimeSerializer : KSerializer<MpLocalTime> {
     override fun deserialize(decoder: Decoder): MpLocalTime {
         val v = decoder.decodeLong()
 
-        return MpLocalTime(v)
+        return MpLocalTime.ofMilliSeconds(v)
     }
 }

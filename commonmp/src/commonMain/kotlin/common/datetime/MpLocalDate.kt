@@ -146,6 +146,22 @@ data class MpLocalDate internal constructor(
     }
 
     /**
+     * Converts into an [MpLocalDateTime] by adding the given [time].
+     */
+    // TODO: test me
+    fun atTime(time: MpLocalTime): MpLocalDateTime {
+        return MpLocalDateTime.of(
+            year = year,
+            month = month,
+            day = day,
+            hour = time.hours,
+            minute = time.minutes,
+            second = time.seconds,
+            nanosecond = time.millis * 1_000,
+        )
+    }
+
+    /**
      * Converts into an [MpZonedDateTime] at the given [timezone].
      */
     fun atStartOfDay(timezone: TimeZone): MpZonedDateTime {
