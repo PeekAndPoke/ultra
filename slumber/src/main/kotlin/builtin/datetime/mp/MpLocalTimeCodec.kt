@@ -24,6 +24,6 @@ object MpLocalTimeSlumberer : Slumberer {
             return null
         }
 
-        return data.milliSeconds
+        return data.inWholeMilliSeconds()
     }
 }

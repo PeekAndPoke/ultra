@@ -15,6 +15,13 @@ data class MpLocalTimeSlot(
             to = MpLocalTime.Max,
         )
 
+        fun of(from: MpLocalTime, duration: Duration): MpLocalTimeSlot {
+            return MpLocalTimeSlot(
+                from = from,
+                to = from.plus(duration),
+            )
+        }
+
         fun ofSecondsOfDay(from: Long, to: Long): MpLocalTimeSlot {
             return MpLocalTimeSlot(
                 from = MpLocalTime.ofSecondOfDay(from),

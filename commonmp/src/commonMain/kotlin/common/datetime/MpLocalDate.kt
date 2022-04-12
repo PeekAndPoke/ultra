@@ -206,6 +206,23 @@ data class MpLocalDate internal constructor(
     }
 
     /**
+     * Converts into an [MpZonedDateTimeRange] for the given [timeslot] and [timezone].
+     */
+    fun toRange(timeslot: MpLocalTimeSlot, timezone: TimeZone): MpZonedDateTimeRange {
+        return MpZonedDateTimeRange(
+            from = atTime(timeslot.from, timezone),
+            to = atTime(timeslot.to, timezone)
+        )
+    }
+
+    /**
+     * Converts into an [MpZonedDateTimeRange] for the given [timeslot] and [timezone].
+     */
+    fun toRange(timeslot: MpLocalTimeSlot, timezone: MpTimezone): MpZonedDateTimeRange {
+        return toRange(timeslot, timezone.kotlinx)
+    }
+
+    /**
      * Adds the given [unit] once.
      */
     fun plus(unit: DateTimeUnit.DateBased): MpLocalDate {

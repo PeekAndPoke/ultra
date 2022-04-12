@@ -214,6 +214,17 @@ class MpLocalDateSpec : StringSpec({
                 MpLocalDateTime.of(2022, Month.APRIL, 5)
     }
 
+    "toRange(timeslot, timezone)" {
+
+        val date = MpLocalDate.of(2022, Month.APRIL, 5)
+        val slot = MpLocalTimeSlot.of(MpLocalTime.of(12, 0), 1.hours)
+
+        val range = date.toRange(slot, MpTimezone.of("Europe/Berlin"))
+
+        range.from shouldBe MpZonedDateTime.parse("2022-04-05T12:00:00.000[Europe/Berlin]")
+        range.to shouldBe MpZonedDateTime.parse("2022-04-05T13:00:00.000[Europe/Berlin]")
+    }
+
     "Arithmetic - plus days" {
 
         val start = MpLocalDate.of(2022, Month.APRIL, 5)
