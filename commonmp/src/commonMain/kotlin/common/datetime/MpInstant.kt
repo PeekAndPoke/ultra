@@ -63,7 +63,7 @@ data class MpInstant internal constructor(
     }
 
     /**
-     * Compares.
+     * Compares to the [other] instant.
      */
     override fun compareTo(other: MpInstant): Int {
         return value.compareTo(other.value)
@@ -117,7 +117,6 @@ data class MpInstant internal constructor(
     /**
      * Creates a [MpInstantRange] with this as the start and the given [duration].
      */
-    // TODO: test me
     fun toRange(duration: Duration): MpInstantRange {
         return MpInstantRange.of(from = this, duration = duration)
     }

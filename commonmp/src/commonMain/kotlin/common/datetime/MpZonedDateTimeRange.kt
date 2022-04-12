@@ -13,17 +13,35 @@ data class MpZonedDateTimeRange(
 ) {
     companion object {
         // TODO: test me
+        /**
+         * Range from [MpZonedDateTime.Genesis] until [MpZonedDateTime.Doomsday]
+         */
         val forever = MpZonedDateTimeRange(MpZonedDateTime.Genesis, MpZonedDateTime.Doomsday)
 
         // TODO: test me
+        /**
+         * Creates an [MpZonedDateTimeRange] starting at [from] with the given [duration].
+         */
         fun of(from: MpZonedDateTime, duration: Duration): MpZonedDateTimeRange = MpZonedDateTimeRange(
             from = from,
             to = from.plus(duration),
         )
+
+        /**
+         * Creates an [MpZonedDateTimeRange] from [from] until [MpZonedDateTime.Doomsday].
+         */
+        // TODO: test me
+        fun beginningAt(from: MpZonedDateTime): MpZonedDateTimeRange = MpZonedDateTimeRange(from, forever.to)
+
+        /**
+         * Creates an [MpZonedDateTimeRange] from [MpZonedDateTime.Genesis] until [to].
+         */
+        // TODO: test me
+        fun endingAt(to: MpZonedDateTime): MpZonedDateTimeRange = MpZonedDateTimeRange(forever.from, to)
     }
 
     // TODO: Test
-    val duration: Duration get() = from - to
+    val duration: Duration get() = to - from
 
     // TODO: Test
     val hasStart: Boolean get() = from > MpZonedDateTime.Genesis

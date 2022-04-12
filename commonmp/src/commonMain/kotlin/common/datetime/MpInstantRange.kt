@@ -11,50 +11,100 @@ data class MpInstantRange(
     val to: MpInstant
 ) {
     companion object {
-        // TODO: Test
+        /**
+         * Range from [MpInstant.Genesis] until [MpInstant.Doomsday]
+         */
         val forever = MpInstantRange(MpInstant.Genesis, MpInstant.Doomsday)
 
-        // TODO: test me
+        /**
+         * Creates an [MpInstantRange] starting at [from] with the given [duration].
+         */
         fun of(from: MpInstant, duration: Duration): MpInstantRange = MpInstantRange(
             from = from,
             to = from.plus(duration),
         )
+
+        /**
+         * Creates an [MpInstantRange] from [from] until [MpInstant.Doomsday].
+         */
+        fun beginningAt(from: MpInstant): MpInstantRange = MpInstantRange(from, forever.to)
+
+        /**
+         * Creates an [MpInstantRange] from [MpInstant.Genesis] until [to].
+         */
+        fun endingAt(to: MpInstant): MpInstantRange = MpInstantRange(forever.from, to)
     }
 
-    // TODO: Test
-    val duration: Duration get() = from - to
+    /**
+     * The [Duration] of the range.
+     */
+    val duration: Duration get() = to - from
 
-    // TODO: Test
+    /**
+     * The range has a start when [from] is after [MpInstant.Genesis].
+     */
     val hasStart: Boolean get() = from > MpInstant.Genesis
 
-    // TODO: Test
+    /**
+     * The range has an end when [to] is before [MpInstant.Doomsday].
+     */
     val hasEnd: Boolean get() = to < MpInstant.Doomsday
 
-    // TODO: Test
-    val isOpen: Boolean get() = !hasStart || !hasEnd
+    /**
+     * The range is open, when it has no start, no end, or both.
+     */
+    val isOpen: Boolean get() = !isNotOpen
 
-    // TODO: Test
-    val isNotOpen: Boolean get() = !isOpen
+    /**
+     * The range not is open, when it has a start and an end
+     */
+    val isNotOpen: Boolean get() = hasStart && hasEnd
 
-    // TODO: Test
+    /**
+     * The range is valid when [from] is before [to]
+     */
     val isValid: Boolean get() = from < to
 
+    /**
+     * Converts into an [MpZonedDateTimeRange] at the given [timezone].
+     */
     // TODO: Test
-    fun contains(datetime: MpZonedDateTime): Boolean {
-        return contains(datetime.toInstant())
+    fun atZone(timezone: TimeZone): MpZonedDateTimeRange {
+        return MpZonedDateTimeRange(
+            from = from.atZone(timezone),
+            to = to.atZone(timezone),
+        )
     }
 
-    // TODO: Test
-    fun contains(datetime: MpLocalDateTime, timezone: TimeZone): Boolean {
-        return contains(datetime.toInstant(timezone))
+    /**
+     * Converts into an [MpZonedDateTimeRange] at the systems default timezone.
+     */
+    // TODO: test me
+    fun atSystemDefaultZone(): MpZonedDateTimeRange {
+        return atZone(TimeZone.currentSystemDefault())
     }
 
-    // TODO: Test
-    fun contains(instant: MpInstant): Boolean {
-        return instant >= from && instant < to
+    /**
+     * Checks if this range contains the given [datetime].
+     *
+     * Returns `true` when all conditions are true:
+     * 1. the range is valid
+     * 2. [datetime] >= [from]
+     * 3. [datetime] < [to]
+     */
+    fun contains(datetime: MpAbsoluteDateTime): Boolean {
+        return isValid && datetime.toInstant() >= from && datetime.toInstant() < to
     }
 
-    // TODO: Test
+    /**
+     * Checks if this range contains the given [other] range.
+     *
+     * Returns `true` when all conditions are true:
+     * 1. this range is valid
+     * 2. the other range is valid
+     * 3. this [from] <= the others [from]
+     * 4. this [to] >= the others [to]
+     */
     fun contains(other: MpInstantRange): Boolean {
         return (isValid && other.isValid) &&
                 (from <= other.from && to >= other.to)
@@ -68,25 +118,6 @@ data class MpInstantRange(
                         contains(other) ||
                         other.contains(this)
                 )
-    }
-
-    /**
-     * Create a [MpZonedDateTime] at the given [timezone]
-     */
-    // TODO: Test
-    fun atZone(timezone: TimeZone): MpZonedDateTimeRange {
-        return MpZonedDateTimeRange(
-            from = from.atZone(timezone),
-            to = to.atZone(timezone),
-        )
-    }
-
-    /**
-     * Converts to the systems current timezone.
-     */
-    // TODO: test me
-    fun atSystemDefaultZone(): MpZonedDateTimeRange {
-        return atZone(TimeZone.currentSystemDefault())
     }
 
     /**

@@ -5,9 +5,11 @@ import io.kotest.matchers.comparables.shouldBeEqualComparingTo
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
@@ -48,6 +50,14 @@ class MpInstantSpec : StringSpec({
     }
 
     "Equality" {
+        MpInstant.parse("2022-04-01T00:00:00Z") shouldBe
+                MpInstant.parse("2022-04-01T00:00:00Z")
+
+        MpInstant.parse("2022-04-01T00:00:00Z") shouldNotBe
+                MpInstant.parse("2022-04-01T00:00:00.001Z")
+    }
+
+    "Comparison" {
 
         MpInstant.parse("2022-04-01T00:00:00Z") shouldBeEqualComparingTo
                 MpInstant.parse("2022-04-01T00:00:00Z")
@@ -92,6 +102,22 @@ class MpInstantSpec : StringSpec({
         atZone.toIsoString() shouldBe "2022-04-05T03:00:00.000[Europe/Bucharest]"
     }
 
+    "toRange" {
+        val result1 = MpInstant.parse("2022-04-01T12:13:14.123Z").toRange(2.days)
+
+        result1 shouldBe MpInstantRange(
+            from = MpInstant.parse("2022-04-01T12:13:14.123Z"),
+            to = MpInstant.parse("2022-04-03T12:13:14.123Z"),
+        )
+
+        val result2 = MpInstant.parse("2022-04-03T12:13:14.123Z").toRange((-2).days)
+
+        result2 shouldBe MpInstantRange(
+            from = MpInstant.parse("2022-04-03T12:13:14.123Z"),
+            to = MpInstant.parse("2022-04-01T12:13:14.123Z"),
+        )
+    }
+
     "plus(duration)" {
         val now = MpInstant.now()
         val result = now.plus(1.minutes)
@@ -126,5 +152,11 @@ class MpInstantSpec : StringSpec({
         afterDST shouldBe MpInstant.parse("2022-03-27T00:00:00.000[Europe/Berlin]")
 
         (afterDST - beforeDST) shouldBe (-23).hours
+    }
+
+    "minus(other: MpInstant)" {
+        val result = MpInstant.parse("2022-04-01T01:00:00Z") - MpInstant.parse("2022-04-01T00:00:00Z")
+
+        result shouldBe 1.hours
     }
 })
