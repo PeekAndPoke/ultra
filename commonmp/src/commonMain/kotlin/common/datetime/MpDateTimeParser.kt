@@ -36,7 +36,9 @@ object MpDateTimeParser {
             else -> TimeZone.of(tz.drop(1).dropLast(1))
         }
 
-        val localDateTime = MpLocalDateTime(LocalDateTime.parse("${date}T$time"))
+        val localDateTime = MpLocalDateTime(
+            LocalDateTime.parse("${date}T$time")
+        )
 
         return Pair(localDateTime, timezone)
     }

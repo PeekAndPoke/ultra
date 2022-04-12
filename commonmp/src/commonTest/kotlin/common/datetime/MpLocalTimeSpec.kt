@@ -7,6 +7,17 @@ import io.kotest.matchers.shouldBe
 @Suppress("unused")
 class MpLocalTimeSpec : StringSpec({
 
+    "parse" {
+        MpLocalTime.parse("12:00") shouldBe
+                MpLocalTime.of(hour = 12, minute = 0)
+
+        MpLocalTime.parse("12:13:14") shouldBe
+                MpLocalTime.of(hour = 12, minute = 13, second = 14)
+
+        MpLocalTime.parse("12:13:14.123") shouldBe
+                MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 123)
+    }
+
     "properties - hours" {
         (0..48).forEach { hour ->
 

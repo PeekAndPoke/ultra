@@ -16,6 +16,25 @@ data class MpLocalTime private constructor(private val milliSeconds: Long) : Com
         private const val MillisPerHour = 60 * MillisPerMinute
         private const val MillisPerDay = 24 * MillisPerHour
 
+        fun parse(input: String): MpLocalTime {
+            val parts = input.split(":")
+
+            val hour = parts.getOrNull(0)?.toIntOrNull() ?: 0
+            val minute = parts.getOrNull(1)?.toIntOrNull() ?: 0
+
+            val lastPart = (parts.getOrNull(2) ?: "").split(".")
+
+            val second = lastPart.getOrNull(0)?.toIntOrNull() ?: 0
+            val millis = lastPart.getOrNull(1)?.toIntOrNull() ?: 0
+
+            return of(
+                hour = hour,
+                minute = minute,
+                second = second,
+                milliSecond = millis,
+            )
+        }
+
         fun ofMilliSeconds(milliSeconds: Long): MpLocalTime {
             return MpLocalTime(
                 milliSeconds = milliSeconds % MillisPerDay
