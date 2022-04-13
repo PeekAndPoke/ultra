@@ -23,7 +23,9 @@ val MpInstant.jvm: Instant
  */
 val Instant.mp: MpInstant
     get() {
-        return MpInstant.fromEpochMillis(toEpochMilli())
+        return MpInstant.fromEpochMillis(
+            millis = toEpochMilli()
+        )
     }
 
 /**
@@ -31,7 +33,15 @@ val Instant.mp: MpInstant
  */
 val MpLocalDateTime.jvm: LocalDateTime
     get() {
-        return LocalDateTime.of(year, monthNumber, dayOfMonth, hour, minute, second, nanosecond)
+        return LocalDateTime.of(
+            year,
+            monthNumber,
+            dayOfMonth,
+            hour,
+            minute,
+            second,
+            milliSecond * 1_000_000,
+        )
     }
 
 /**
@@ -39,7 +49,15 @@ val MpLocalDateTime.jvm: LocalDateTime
  */
 val LocalDateTime.mp: MpLocalDateTime
     get() {
-        return MpLocalDateTime.of(year, monthValue, dayOfMonth, hour, minute, second, nano)
+        return MpLocalDateTime.of(
+            year = year,
+            month = monthValue,
+            day = dayOfMonth,
+            hour = hour,
+            minute = minute,
+            second = second,
+            milliSecond = nano / 1_000_000,
+        )
     }
 
 /**
@@ -55,7 +73,7 @@ val MpLocalDate.jvm: LocalDate
  */
 val LocalDate.mp: MpLocalDate
     get() {
-        return MpLocalDate.of(year, monthValue, dayOfMonth)
+        return MpLocalDate.of(year = year, month = monthValue, day = dayOfMonth)
     }
 
 /**
@@ -73,7 +91,7 @@ val ZonedDateTime.mp: MpZonedDateTime
     get() {
         return MpZonedDateTime.of(
             datetime = toLocalDateTime().mp,
-            timezone = TimeZone.of(zone.id),
+            timezone = zone.mp.kotlinx,
         )
     }
 

@@ -92,8 +92,8 @@ data class MpZonedDateTime private constructor(
     /** The second */
     val second: Int get() = datetime.second
 
-    /** The nanosecond */
-    val nanosecond: Int get() = datetime.nanosecond
+    /** The millisecond */
+    val milliSecond: Int get() = datetime.milliSecond
 
     /** The day of the week */
     val dayOfWeek: DayOfWeek get() = datetime.dayOfWeek
@@ -147,7 +147,7 @@ data class MpZonedDateTime private constructor(
 
         return "$yearStr-${monthNumber.pad()}-${dayOfMonth.pad()}T" +
                 "${hour.pad()}:${minute.pad()}:${second.pad()}." +
-                (nanosecond / 1_000_000).pad(3) +
+                milliSecond.pad(3) +
                 tz
     }
 

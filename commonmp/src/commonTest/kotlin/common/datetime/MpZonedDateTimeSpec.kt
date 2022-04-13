@@ -176,7 +176,7 @@ class MpZonedDateTimeSpec : StringSpec({
         subject.hour shouldBe 12
         subject.minute shouldBe 13
         subject.second shouldBe 14
-        subject.nanosecond shouldBe 15
+        subject.milliSecond shouldBe 15
     }
 
     "Fields dayOfWeek" {
@@ -234,11 +234,34 @@ class MpZonedDateTimeSpec : StringSpec({
             .toLocalDate() shouldBe MpLocalDate.parse("2022-04-06")
     }
 
+    "toLocalTime - UTC" {
+        val timezone = TimeZone.UTC
+
+        MpZonedDateTime.parse("2022-04-05T00:00:00", timezone)
+            .toLocalTime() shouldBe MpLocalTime.of(hour = 0, minute = 0, second = 0, milliSecond = 0)
+
+        MpZonedDateTime.parse("2022-04-05T23:59:59.999", timezone)
+            .toLocalTime() shouldBe MpLocalTime.of(hour = 23, minute = 59, second = 59, milliSecond = 999)
+    }
+
+    "toLocalTime - Europe/Bucharest" {
+        val timezone = TimeZone.of("Europe/Bucharest")
+
+        MpZonedDateTime.parse("2022-04-05T00:00:00", timezone)
+            .toLocalTime() shouldBe MpLocalTime.of(hour = 3, minute = 0, second = 0, milliSecond = 0)
+
+        MpZonedDateTime.parse("2022-04-05T23:59:59.999Z", timezone)
+            .toLocalTime() shouldBe MpLocalTime.of(hour = 2, minute = 59, second = 59, milliSecond = 999)
+    }
+
     "toLocalDateTime - UTC" {
         val timezone = TimeZone.UTC
 
         MpZonedDateTime.parse("2022-04-05T00:00:00", timezone)
             .toLocalDateTime() shouldBe MpLocalDateTime.parse("2022-04-05T00:00:00")
+
+        MpZonedDateTime.parse("2022-04-05T12:13:14.123", timezone)
+            .toLocalDateTime() shouldBe MpLocalDateTime.parse("2022-04-05T12:13:14.123")
     }
 
     "toLocalDateTime - Europe/Bucharest" {

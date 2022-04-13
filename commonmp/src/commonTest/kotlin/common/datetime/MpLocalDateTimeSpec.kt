@@ -64,7 +64,7 @@ class MpLocalDateTimeSpec : StringSpec({
         start shouldBe result
     }
 
-    "Fields year, monthNumber, month, dayOfMonth, dayOfWeek, dayOfYear, hour, minute, second, nano" {
+    "Fields year, monthNumber, month, dayOfMonth, dayOfWeek, dayOfYear, hour, minute, second, milliSecond" {
 
         val subject = MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14, 15)
 
@@ -78,14 +78,32 @@ class MpLocalDateTimeSpec : StringSpec({
         subject.hour shouldBe 12
         subject.minute shouldBe 13
         subject.second shouldBe 14
-        subject.nanosecond shouldBe 15
-
+        subject.milliSecond shouldBe 15
     }
 
     "toDate" {
         val subject = MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14, 15)
 
         subject.toDate() shouldBe MpLocalDate.of(2022, Month.APRIL, 5)
+    }
+
+    "toTime()" {
+        val inputs = listOf(
+            MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 0),
+            MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 15),
+            MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 999),
+        )
+
+        inputs.forEach { time ->
+            withClue("Must work for '$time'") {
+                val subject = MpLocalDateTime.of(
+                    MpLocalDate.of(2022, Month.APRIL, 5),
+                    time
+                )
+
+                subject.toTime() shouldBe time
+            }
+        }
     }
 
     "toInstant" {

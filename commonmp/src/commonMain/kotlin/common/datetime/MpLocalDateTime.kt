@@ -22,7 +22,7 @@ data class MpLocalDateTime internal constructor(internal val value: LocalDateTim
             hour: Int = 0,
             minute: Int = 0,
             second: Int = 0,
-            nanosecond: Int = 0,
+            milliSecond: Int = 0,
         ): MpLocalDateTime = MpLocalDateTime(
             LocalDateTime(
                 year = year,
@@ -31,7 +31,7 @@ data class MpLocalDateTime internal constructor(internal val value: LocalDateTim
                 hour = hour,
                 minute = minute,
                 second = second,
-                nanosecond = nanosecond,
+                nanosecond = milliSecond * 1_000_000,
             )
         )
 
@@ -42,7 +42,7 @@ data class MpLocalDateTime internal constructor(internal val value: LocalDateTim
             hour: Int = 0,
             minute: Int = 0,
             second: Int = 0,
-            nanosecond: Int = 0,
+            milliSecond: Int = 0,
         ): MpLocalDateTime = of(
             year = year,
             month = month.number,
@@ -50,7 +50,7 @@ data class MpLocalDateTime internal constructor(internal val value: LocalDateTim
             hour = hour,
             minute = minute,
             second = second,
-            nanosecond = nanosecond,
+            milliSecond = milliSecond,
         )
 
         // TODO: Test me
@@ -61,7 +61,7 @@ data class MpLocalDateTime internal constructor(internal val value: LocalDateTim
             hour = time.hour,
             minute = time.minute,
             second = time.second,
-            nanosecond = time.milliSecond * 1_000,
+            milliSecond = time.milliSecond,
         )
 
         fun parse(isoString: String): MpLocalDateTime {
@@ -98,8 +98,8 @@ data class MpLocalDateTime internal constructor(internal val value: LocalDateTim
     /** The second */
     val second: Int get() = value.second
 
-    /** The nanosecond */
-    val nanosecond: Int get() = value.nanosecond
+    /** The millisecond */
+    val milliSecond: Int get() = value.nanosecond / 1_000_000
 
     // TODO: test me
     /** The day of the week */
@@ -121,7 +121,10 @@ data class MpLocalDateTime internal constructor(internal val value: LocalDateTim
     fun toDate(): MpLocalDate = MpLocalDate(value.date)
 
     fun toTime(): MpLocalTime = MpLocalTime.of(
-        hour = hour, minute = minute, second = second, milliSecond = nanosecond / 1_000
+        hour = hour,
+        minute = minute,
+        second = second,
+        milliSecond = milliSecond,
     )
 
     fun toInstant(timezone: TimeZone): MpInstant = MpInstant(

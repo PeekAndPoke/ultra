@@ -290,7 +290,7 @@ class MpLocalDateSpec : StringSpec({
             hour = 12,
             minute = 13,
             second = 14,
-            nanosecond = 123 * 1_000,
+            milliSecond = 123,
         )
     }
 

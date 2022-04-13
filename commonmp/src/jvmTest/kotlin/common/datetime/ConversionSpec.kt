@@ -35,7 +35,7 @@ class ConversionSpec : FreeSpec() {
 
             "MpLocalDateTime.jvm" {
                 val mp: MpLocalDateTime = MpLocalDateTime.of(
-                    2022, Month.APRIL, 5, 12, 13, 14, 123_000_000
+                    2022, Month.APRIL, 5, 12, 13, 14, 123
                 )
                 val jvm: LocalDateTime = mp.jvm
 
@@ -54,7 +54,7 @@ class ConversionSpec : FreeSpec() {
                 val mp: MpLocalDateTime = jvm.mp
 
                 mp shouldBe MpLocalDateTime.of(
-                    2022, Month.APRIL, 5, 12, 13, 14, 123_000_000
+                    2022, Month.APRIL, 5, 12, 13, 14, 123
                 )
 
                 jvm.toEpochSecond(ZoneOffset.UTC) shouldBe mp.atUTC().toEpochSeconds()
