@@ -67,8 +67,11 @@ kotlin {
                 implementation(Deps.kotlinx_serialization_json)
                 implementation(Deps.kotlinx_coroutines_core)
 
+                // This is still needed for formatting dates - TODO: remove this dependency
+                implementation(Deps.korlibs_klock_common)
+
+                // We expose kotlinx-datetime as it is needed in many cases, e.g. for TimeZone
                 api(Deps.kotlinx_datetime_common)
-                api(Deps.korlibs_klock_common)
             }
         }
 
@@ -80,7 +83,6 @@ kotlin {
 
         js().compilations["main"].defaultSourceSet {
             dependencies {
-                api(Deps.korlibs_klock_js)
                 api(npm("whatwg-fetch", "3.6.2"))
                 api(npm("@js-joda/timezone", "2.12.0"))
             }
@@ -94,7 +96,6 @@ kotlin {
 
         jvm().compilations["main"].defaultSourceSet {
             dependencies {
-                api(Deps.korlibs_klock_jvm)
                 implementation(Deps.klassIndexLib)
             }
         }
