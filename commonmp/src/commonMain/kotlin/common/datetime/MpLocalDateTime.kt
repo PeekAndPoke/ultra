@@ -10,12 +10,19 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 
+@Suppress("Detekt.LongParameterList")
 @Serializable(with = MpLocalDateTimeSerializer::class)
 data class MpLocalDateTime internal constructor(internal val value: LocalDateTime) : Comparable<MpLocalDateTime> {
 
     companion object {
         fun of(
-            year: Int, month: Int, day: Int, hour: Int = 0, minute: Int = 0, second: Int = 0, nanosecond: Int = 0
+            year: Int,
+            month: Int,
+            day: Int,
+            hour: Int = 0,
+            minute: Int = 0,
+            second: Int = 0,
+            nanosecond: Int = 0,
         ): MpLocalDateTime = MpLocalDateTime(
             LocalDateTime(
                 year = year,
@@ -29,7 +36,13 @@ data class MpLocalDateTime internal constructor(internal val value: LocalDateTim
         )
 
         fun of(
-            year: Int, month: Month, day: Int, hour: Int = 0, minute: Int = 0, second: Int = 0, nanosecond: Int = 0
+            year: Int,
+            month: Month,
+            day: Int,
+            hour: Int = 0,
+            minute: Int = 0,
+            second: Int = 0,
+            nanosecond: Int = 0,
         ): MpLocalDateTime = of(
             year = year,
             month = month.number,
@@ -41,9 +54,7 @@ data class MpLocalDateTime internal constructor(internal val value: LocalDateTim
         )
 
         // TODO: Test me
-        fun of(
-            date: MpLocalDate, time: MpLocalTime
-        ): MpLocalDateTime = of(
+        fun of(date: MpLocalDate, time: MpLocalTime): MpLocalDateTime = of(
             year = date.year,
             month = date.month,
             day = date.day,

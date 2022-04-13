@@ -13,42 +13,6 @@ import java.time.ZonedDateTime
 class ConversionSpec : FreeSpec() {
 
     init {
-        "Portable - Conversion Round trips" - {
-
-            "Instant" {
-                val subject = Instant.now()
-
-                subject shouldBe Instant.ofEpochMilli(subject.portable.timestamp)
-            }
-
-            "LocalDate" {
-
-                val subject = LocalDate.now()
-
-                subject shouldBe subject.portable.date
-            }
-
-            "LocalDate - Genesis & Doomsday" {
-
-                GenesisLocalDate shouldBe GenesisLocalDate.portable.date
-
-                DoomsdayLocalDate shouldBe DoomsdayLocalDate.portable.date
-            }
-
-            "LocalDateTime" {
-                val subject = LocalDateTime.now()
-
-                subject shouldBe subject.portable.date
-            }
-
-            "LocalDateTime - Genesis & Doomsday" {
-
-                GenesisLocalDateTime shouldBe GenesisLocalDateTime.portable.date
-
-                DoomsdayLocalDateTime shouldBe DoomsdayLocalDateTime.portable.date
-            }
-        }
-
         "Mp" - {
 
             "MpInstant.jvm" {

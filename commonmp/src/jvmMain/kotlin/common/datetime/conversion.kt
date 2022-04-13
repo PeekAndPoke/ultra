@@ -1,3 +1,5 @@
+@file:JvmName("ConversionJvm")
+
 package de.peekandpoke.ultra.common.datetime
 
 import kotlinx.datetime.TimeZone
@@ -7,11 +9,6 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-
-actual fun PortableDate.toIsoString(): String = date.format(DateTimeFormatter.ISO_DATE)
-
-actual fun PortableDateTime.toIsoString(): String = date.format(DateTimeFormatter.ISO_DATE_TIME)
 
 /**
  * Converts an [MpInstant] into a [java.time.Instant]
