@@ -19,6 +19,21 @@ class KronosSpec : StringSpec({
 
     val fixedKronos = Kronos.fixed(fixedInstant)
 
+    "Kronos.from(descriptor)" {
+
+        val descriptors = listOf(
+            Kronos.systemUtc.describe(),
+            Kronos.systemUtc.advanceBy(10.minutes).describe(),
+            Kronos.systemUtc.advanceBy(10.minutes).advanceBy(1.hours).describe(),
+        )
+
+        descriptors.forEach { descriptor ->
+            descriptor.instantiate().describe() shouldBe descriptor
+
+            Kronos.from(descriptor).describe() shouldBe descriptor
+        }
+    }
+
     "Kronos.fromClock fixed - secondsNow" {
         fixedKronos.secondsNow() shouldBe fixedInstant.toEpochSeconds()
     }

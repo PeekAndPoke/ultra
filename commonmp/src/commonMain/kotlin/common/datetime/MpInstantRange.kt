@@ -68,7 +68,6 @@ data class MpInstantRange(
     /**
      * Converts into an [MpZonedDateTimeRange] at the given [timezone].
      */
-    // TODO: Test
     fun atZone(timezone: TimeZone): MpZonedDateTimeRange {
         return MpZonedDateTimeRange(
             from = from.atZone(timezone),
@@ -77,9 +76,15 @@ data class MpInstantRange(
     }
 
     /**
+     * Converts into an [MpZonedDateTimeRange] at the given [timezone].
+     */
+    fun atZone(timezone: MpTimezone): MpZonedDateTimeRange {
+        return atZone(timezone.kotlinx)
+    }
+
+    /**
      * Converts into an [MpZonedDateTimeRange] at the systems default timezone.
      */
-    // TODO: test me
     fun atSystemDefaultZone(): MpZonedDateTimeRange {
         return atZone(TimeZone.currentSystemDefault())
     }

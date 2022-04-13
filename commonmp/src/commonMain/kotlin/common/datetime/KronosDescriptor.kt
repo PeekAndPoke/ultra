@@ -6,6 +6,13 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed class KronosDescriptor {
 
+    /**
+     * Creates a [Kronos] from the given descriptor
+     */
+    fun instantiate(): Kronos {
+        return Kronos.from(this)
+    }
+
     @Serializable
     @SerialName("system-clock")
     object SystemClock : KronosDescriptor()

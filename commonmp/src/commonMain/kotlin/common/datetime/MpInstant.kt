@@ -77,6 +77,23 @@ data class MpInstant internal constructor(
     }
 
     /**
+     * Returns itself
+     */
+    override fun toInstant(): MpInstant {
+        return this
+    }
+
+    /**
+     * Create a [MpZonedDateTime] at the given [timezone]
+     */
+    override fun atZone(timezone: TimeZone): MpZonedDateTime {
+        return MpZonedDateTime.of(
+            MpLocalDateTime(value.toLocalDateTime(timezone)),
+            timezone,
+        )
+    }
+
+    /**
      * Creates an iso date time string.
      */
     fun toIsoString(): String {
@@ -95,23 +112,6 @@ data class MpInstant internal constructor(
      */
     fun toEpochSeconds(): Long {
         return value.epochSeconds
-    }
-
-    /**
-     * Returns itself
-     */
-    override fun toInstant(): MpInstant {
-        return this
-    }
-
-    /**
-     * Create a [MpZonedDateTime] at the given [timezone]
-     */
-    override fun atZone(timezone: TimeZone): MpZonedDateTime {
-        return MpZonedDateTime.of(
-            MpLocalDateTime(value.toLocalDateTime(timezone)),
-            timezone,
-        )
     }
 
     /**

@@ -4,42 +4,102 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("Detekt.TooManyFunctions")
+/**
+ * The source of truth for creating dates and times.
+ */
 interface Kronos {
 
+    companion object {
+        /**
+         * The [Kronos] that operates on the system clock.
+         */
+        val systemUtc: Kronos = fromClock(Clock.System)
+
+        /**
+         * Creates a [Kronos] that operates on the given [clock].
+         */
+        fun fromClock(clock: Clock): Kronos {
+            return UsingClock(clock)
+        }
+
+        /**
+         * Creates a [Kronos] that is stuck on the given [instant].
+         */
+        fun fixed(instant: MpInstant): Kronos {
+            return fromClock(FixedClock(instant.value))
+        }
+
+        /**
+         * Creates a [Kronos] from the given [descriptor].
+         */
+        fun from(descriptor: KronosDescriptor): Kronos {
+
+            return when (descriptor) {
+                is KronosDescriptor.SystemClock -> {
+                    systemUtc
+                }
+
+                is KronosDescriptor.AdvancedBy -> {
+                    descriptor.inner.instantiate()
+                        .advanceBy(descriptor.durationMs.milliseconds)
+                }
+            }
+        }
+    }
+
+    /**
+     * Fixed implementation of [Clock].
+     *
+     * Will always return the given [fixedInstant].
+     */
     private class FixedClock(private val fixedInstant: Instant) : Clock {
+        /**
+         * 'Now' will always be [fixedInstant].
+         */
         override fun now(): Instant {
             return fixedInstant
         }
     }
 
-    companion object {
-        val systemUtc: Kronos = fromClock(Clock.System)
+    /**
+     * Implementation that gets [instantNow] from the  given [clock].
+     */
+    private class UsingClock(private val clock: Clock) : Kronos {
 
-        fun fromClock(clock: Clock): Kronos = SystemClock(clock)
-
-        fun fixed(instant: MpInstant): Kronos = fromClock(FixedClock(instant.value))
-    }
-
-    private class SystemClock(private val clock: Clock) : Kronos {
-
+        /**
+         * Describes the Kronos.
+         */
         override fun describe(): KronosDescriptor = KronosDescriptor.SystemClock
 
+        /**
+         * Return the 'now' moment in time.
+         */
         override fun instantNow(): MpInstant {
             return MpInstant(clock.now())
         }
     }
 
+    /**
+     * Implementation that gets [instantNow] from the [inner] advanced by [provider].
+     */
     private class AdvancedBy(private val inner: Kronos, private val provider: () -> Duration) : Kronos {
 
         private val duration by lazy { provider() }
 
+        /**
+         * Describes the Kronos.
+         */
         override fun describe(): KronosDescriptor = KronosDescriptor.AdvancedBy(
             durationMs = duration.inWholeMilliseconds,
             inner = inner.describe(),
         )
 
+        /**
+         * Return the 'now' moment in time.
+         */
         override fun instantNow(): MpInstant {
             return inner.instantNow().plus(duration)
         }

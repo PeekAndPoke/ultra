@@ -6,6 +6,7 @@ import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
@@ -53,7 +54,7 @@ class MpInstantSpec : StringSpec({
         MpInstant.parse("2022-04-01T00:00:00Z") shouldBe
                 MpInstant.parse("2022-04-01T00:00:00Z")
 
-        MpInstant.parse("2022-04-01T00:00:00Z") shouldNotBe
+        MpInstant.parse("2022-04-01T00:00:00.000Z") shouldNotBe
                 MpInstant.parse("2022-04-01T00:00:00.001Z")
     }
 
@@ -91,6 +92,12 @@ class MpInstantSpec : StringSpec({
         val result = MpInstant.parse(start.toIsoString())
 
         start shouldBe result
+    }
+
+    "toInstant" {
+        MpInstant.now().let {
+            it shouldBeSameInstanceAs it.toInstant()
+        }
     }
 
     "atZone - Europe/Bucharest" {

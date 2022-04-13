@@ -130,6 +130,30 @@ class MpInstantRangeSpec : StringSpec({
         subject.isValid shouldBe false
     }
 
+    "atZone" {
+
+        now.toRange(10.minutes).let {
+
+            val timezone = MpTimezone.of("Europe/Berlin")
+
+            val zoned = it.atZone(timezone)
+
+            zoned.from shouldBe it.from.atZone(timezone)
+            zoned.to shouldBe it.to.atZone(timezone)
+        }
+    }
+
+    "atSystemDefaultZone" {
+
+        now.toRange(10.minutes).let {
+
+            val zoned = it.atSystemDefaultZone()
+
+            zoned.from shouldBe it.from.atSystemDefaultZone()
+            zoned.to shouldBe it.to.atSystemDefaultZone()
+        }
+    }
+
     "contains(datetime)" {
         val validRange = now.toRange(1.days)
 
