@@ -18,6 +18,17 @@ class MpLocalTimeSpec : StringSpec({
                 MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 123)
     }
 
+    "inWholeMilliSeconds" {
+        MpLocalTime.parse("00:00:00.000").inWholeMilliSeconds() shouldBe
+                (0 * 60 * 60 + 0 * 60 + 0) * 1_000 + 0
+
+        MpLocalTime.parse("12:13:14.123").inWholeMilliSeconds() shouldBe
+                (12 * 60 * 60 + 13 * 60 + 14) * 1_000 + 123
+
+        MpLocalTime.parse("23:59:59.999").inWholeMilliSeconds() shouldBe
+                (23 * 60 * 60 + 59 * 60 + 59) * 1_000 + 999
+    }
+
     "properties - hours" {
         (0..48).forEach { hour ->
 

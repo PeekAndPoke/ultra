@@ -122,14 +122,42 @@ data class MpLocalDate internal constructor(
     }
 
     /**
-     * Gets the start of the month
+     * Gets the start of the century that this date is in.
+     */
+    fun atStartOfCentury(): MpLocalDate {
+        return of(year = (year / 100) * 100, month = Month.JANUARY, day = 1)
+    }
+
+    /**
+     * Gets the start of the century that this date is in.
+     */
+    fun atStartOfDecade(): MpLocalDate {
+        return of(year = (year / 10) * 10, month = Month.JANUARY, day = 1)
+    }
+
+    /**
+     * Gets the start of the year that this date is in.
      */
     fun atStartOfYear(): MpLocalDate {
         return of(year = year, month = Month.JANUARY, day = 1)
     }
 
     /**
-     * Gets the start of the month
+     * Gets the start of the half of the year that this date is in.
+     */
+    fun atStartOfHalfOfYear(): MpLocalDate {
+        return of(year = year, month = 1 + ((monthNumber - 1) / 6) * 6, day = 1)
+    }
+
+    /**
+     * Gets the start of the quarter of the year that this date is in.
+     */
+    fun atStartOfQuarterOfYear(): MpLocalDate {
+        return of(year = year, month = 1 + ((monthNumber - 1) / 3) * 3, day = 1)
+    }
+
+    /**
+     * Gets the start of the month that this date is in.
      */
     fun atStartOfMonth(): MpLocalDate {
         return of(year = year, month = month, day = 1)
@@ -232,33 +260,6 @@ data class MpLocalDate internal constructor(
     }
 
     /**
-     * Adds [amount] times the given [unit].
-     */
-    fun plus(amount: Int, unit: DateTimeUnit.DateBased): MpLocalDate {
-        return MpLocalDate(
-            value = value.plus(amount, unit)
-        )
-    }
-
-    /**
-     * Adds [amount] times the given [unit].
-     */
-    fun plus(amount: Long, unit: DateTimeUnit.DateBased): MpLocalDate {
-        return MpLocalDate(
-            value = value.plus(amount, unit)
-        )
-    }
-
-    /**
-     * Adds the given [DatePeriod].
-     */
-    fun plus(period: DatePeriod): MpLocalDate {
-        return MpLocalDate(
-            value = value.plus(period)
-        )
-    }
-
-    /**
      * Subtracts the given [unit] once.
      */
     fun minus(unit: DateTimeUnit.DateBased): MpLocalDate {
@@ -268,11 +269,29 @@ data class MpLocalDate internal constructor(
     }
 
     /**
+     * Adds [amount] times the given [unit].
+     */
+    fun plus(amount: Int, unit: DateTimeUnit.DateBased): MpLocalDate {
+        return MpLocalDate(
+            value = value.plus(amount, unit)
+        )
+    }
+
+    /**
      * Subtracts [amount] times the given [unit].
      */
     fun minus(amount: Int, unit: DateTimeUnit.DateBased): MpLocalDate {
         return MpLocalDate(
             value = value.minus(amount, unit)
+        )
+    }
+
+    /**
+     * Adds [amount] times the given [unit].
+     */
+    fun plus(amount: Long, unit: DateTimeUnit.DateBased): MpLocalDate {
+        return MpLocalDate(
+            value = value.plus(amount, unit)
         )
     }
 
@@ -288,10 +307,87 @@ data class MpLocalDate internal constructor(
     /**
      * Adds the given [DatePeriod].
      */
+    // TODO: test me
+    fun plus(period: DatePeriod): MpLocalDate {
+        return MpLocalDate(value = value.plus(period))
+    }
+
+    /**
+     * Adds the given [DatePeriod].
+     */
+    // TODO: test me
     fun minus(period: DatePeriod): MpLocalDate {
-        return MpLocalDate(
-            value = value.plus(period)
-        )
+        return MpLocalDate(value = value.minus(period))
+    }
+
+    /**
+     * Adds the given number of [days].
+     */
+    fun plusDays(days: Int): MpLocalDate {
+        return plus(days, DateTimeUnit.DAY)
+    }
+
+    /**
+     * Adds the given number of [days].
+     */
+    fun minusDays(days: Int): MpLocalDate {
+        return plusDays(-days)
+    }
+
+    /**
+     * Adds the given number of [weeks].
+     */
+    fun plusWeeks(weeks: Int): MpLocalDate {
+        return plus(weeks, DateTimeUnit.WEEK)
+    }
+
+    /**
+     * Adds the given number of [weeks].
+     */
+    fun minusWeeks(weeks: Int): MpLocalDate {
+        return plusWeeks(-weeks)
+    }
+
+    /**
+     * Adds the given number of [months].
+     */
+    fun plusMonths(months: Int): MpLocalDate {
+        return plus(months, DateTimeUnit.MONTH)
+    }
+
+    /**
+     * Adds the given number of [months].
+     */
+    fun minusMonths(months: Int): MpLocalDate {
+        return plusMonths(-months)
+    }
+
+    /**
+     * Adds the given number of [years].
+     */
+    fun plusYears(years: Int): MpLocalDate {
+        return plus(years, DateTimeUnit.YEAR)
+    }
+
+    /**
+     * Adds the given number of [years].
+     */
+    fun minusYears(years: Int): MpLocalDate {
+        return plusYears(-years)
+    }
+
+    /**
+     * Adds the given number of [centuries].
+     */
+    fun plusCenturies(centuries: Int): MpLocalDate {
+        return plus(centuries, DateTimeUnit.CENTURY)
+    }
+
+    /**
+     * Adds the given number of [centuries].
+     */
+    fun minusCenturies(centuries: Int): MpLocalDate {
+        return plusCenturies(-centuries)
     }
 }
 

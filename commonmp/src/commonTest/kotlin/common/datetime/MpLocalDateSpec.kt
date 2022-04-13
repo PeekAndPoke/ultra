@@ -105,6 +105,36 @@ class MpLocalDateSpec : StringSpec({
             .toIsoString() shouldBe "2022-04-02T00:00:00.000Z"
     }
 
+    "atStartOfCentury" {
+
+        MpLocalDate.of(2000, Month.JANUARY, 1)
+            .atStartOfCentury() shouldBe MpLocalDate.of(2000, Month.JANUARY, 1)
+
+        MpLocalDate.of(2022, Month.JANUARY, 1)
+            .atStartOfCentury() shouldBe MpLocalDate.of(2000, Month.JANUARY, 1)
+
+        MpLocalDate.of(2099, Month.DECEMBER, 31)
+            .atStartOfCentury() shouldBe MpLocalDate.of(2000, Month.JANUARY, 1)
+
+        MpLocalDate.of(2100, Month.JANUARY, 1)
+            .atStartOfCentury() shouldBe MpLocalDate.of(2100, Month.JANUARY, 1)
+    }
+
+    "atStartOfDecade" {
+
+        MpLocalDate.of(2000, Month.JANUARY, 1)
+            .atStartOfDecade() shouldBe MpLocalDate.of(2000, Month.JANUARY, 1)
+
+        MpLocalDate.of(2022, Month.APRIL, 5)
+            .atStartOfDecade() shouldBe MpLocalDate.of(2020, Month.JANUARY, 1)
+
+        MpLocalDate.of(2029, Month.DECEMBER, 31)
+            .atStartOfDecade() shouldBe MpLocalDate.of(2020, Month.JANUARY, 1)
+
+        MpLocalDate.of(2030, Month.JANUARY, 1)
+            .atStartOfDecade() shouldBe MpLocalDate.of(2030, Month.JANUARY, 1)
+    }
+
     "atStartOfYear" {
         MpLocalDate.of(2022, Month.JANUARY, 1)
             .atStartOfYear() shouldBe MpLocalDate.of(2022, Month.JANUARY, 1)
@@ -114,6 +144,48 @@ class MpLocalDateSpec : StringSpec({
 
         MpLocalDate.of(2022, Month.DECEMBER, 31)
             .atStartOfYear() shouldBe MpLocalDate.of(2022, Month.JANUARY, 1)
+    }
+
+    "atStartOfHalfOfYear" {
+
+        MpLocalDate.of(2022, Month.JANUARY, 1)
+            .atStartOfHalfOfYear() shouldBe MpLocalDate.of(2022, Month.JANUARY, 1)
+
+        MpLocalDate.of(2022, Month.JUNE, 30)
+            .atStartOfHalfOfYear() shouldBe MpLocalDate.of(2022, Month.JANUARY, 1)
+
+        MpLocalDate.of(2022, Month.JULY, 1)
+            .atStartOfHalfOfYear() shouldBe MpLocalDate.of(2022, Month.JULY, 1)
+
+        MpLocalDate.of(2022, Month.DECEMBER, 31)
+            .atStartOfHalfOfYear() shouldBe MpLocalDate.of(2022, Month.JULY, 1)
+    }
+
+    "atStartOfQuarterOfYear" {
+
+        MpLocalDate.of(2022, Month.JANUARY, 1)
+            .atStartOfQuarterOfYear() shouldBe MpLocalDate.of(2022, Month.JANUARY, 1)
+
+        MpLocalDate.of(2022, Month.MARCH, 31)
+            .atStartOfQuarterOfYear() shouldBe MpLocalDate.of(2022, Month.JANUARY, 1)
+
+        MpLocalDate.of(2022, Month.APRIL, 1)
+            .atStartOfQuarterOfYear() shouldBe MpLocalDate.of(2022, Month.APRIL, 1)
+
+        MpLocalDate.of(2022, Month.JUNE, 30)
+            .atStartOfQuarterOfYear() shouldBe MpLocalDate.of(2022, Month.APRIL, 1)
+
+        MpLocalDate.of(2022, Month.JULY, 1)
+            .atStartOfQuarterOfYear() shouldBe MpLocalDate.of(2022, Month.JULY, 1)
+
+        MpLocalDate.of(2022, Month.SEPTEMBER, 30)
+            .atStartOfQuarterOfYear() shouldBe MpLocalDate.of(2022, Month.JULY, 1)
+
+        MpLocalDate.of(2022, Month.OCTOBER, 1)
+            .atStartOfQuarterOfYear() shouldBe MpLocalDate.of(2022, Month.OCTOBER, 1)
+
+        MpLocalDate.of(2022, Month.DECEMBER, 31)
+            .atStartOfQuarterOfYear() shouldBe MpLocalDate.of(2022, Month.OCTOBER, 1)
     }
 
     "atStartOfMonth" {
@@ -162,6 +234,39 @@ class MpLocalDateSpec : StringSpec({
 
         subject.atStartOfDay(TimeZone.of("Europe/Bucharest")) shouldBe
                 MpZonedDateTime.parse("2022-04-05T00:00:00.000[Europe/Bucharest]")
+    }
+
+    "atStartOfDay - Bucharest" {
+
+        val timezone = TimeZone.of("Europe/Bucharest")
+
+        val date = MpLocalDate.of(2022, Month.APRIL, 5)
+
+        val startOfDay = date.atStartOfDay(timezone)
+
+        withClue("Bucharest is 3 hours ahead of UTC") {
+            startOfDay.toIsoString() shouldBe "2022-04-05T00:00:00.000[Europe/Bucharest]"
+        }
+    }
+
+    MpTimezone.supportedIds.forEach { timezoneId ->
+
+        "atStartOfDay - at timezone '$timezoneId'" {
+
+            val date = MpLocalDate.of(2022, Month.APRIL, 5)
+            val instant = date.atStartOfDay(TimeZone.UTC).toInstant()
+
+            val timezone = MpTimezone.of(timezoneId)
+
+            val startOfDay = date.atStartOfDay(timezone)
+
+            val startOfDayTs = startOfDay.toEpochSeconds()
+
+            val offset = timezone.offsetAt(instant).totalSeconds
+            val expectedTs = instant.toEpochSeconds() - offset
+
+            startOfDayTs shouldBe expectedTs
+        }
     }
 
     "atTime(time)" {
@@ -291,36 +396,219 @@ class MpLocalDateSpec : StringSpec({
         start.minus(-5L, DateTimeUnit.YEAR) shouldBe MpLocalDate.of(2027, Month.APRIL, 5)
     }
 
-    "atStartOfDay - Bucharest" {
+    "plusDays" {
 
-        val timezone = TimeZone.of("Europe/Bucharest")
+        MpLocalDate.of(2022, Month.APRIL, 5).plusDays(0) shouldBe
+                MpLocalDate.of(2022, Month.APRIL, 5)
 
-        val date = MpLocalDate.of(2022, Month.APRIL, 5)
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).plusDays(1) shouldBe
+                MpLocalDate.of(2020, Month.MARCH, 1)
 
-        val startOfDay = date.atStartOfDay(timezone)
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).plusDays(2) shouldBe
+                MpLocalDate.of(2020, Month.MARCH, 2)
 
-        withClue("Bucharest is 3 hours ahead of UTC") {
-            startOfDay.toIsoString() shouldBe "2022-04-05T00:00:00.000[Europe/Bucharest]"
-        }
+        MpLocalDate.of(2020, Month.MARCH, 1).plusDays(-1) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 29)
+
+        MpLocalDate.of(2020, Month.MARCH, 1).plusDays(-2) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 28)
     }
 
-    MpTimezone.supportedIds.forEach { timezoneId ->
+    "minusDays" {
 
-        "atStartOfDay - at timezone '$timezoneId'" {
+        MpLocalDate.of(2022, Month.APRIL, 5).minusDays(0) shouldBe
+                MpLocalDate.of(2022, Month.APRIL, 5)
 
-            val date = MpLocalDate.of(2022, Month.APRIL, 5)
-            val instant = date.atStartOfDay(TimeZone.UTC).toInstant()
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).minusDays(-1) shouldBe
+                MpLocalDate.of(2020, Month.MARCH, 1)
 
-            val timezone = MpTimezone.of(timezoneId)
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).minusDays(-2) shouldBe
+                MpLocalDate.of(2020, Month.MARCH, 2)
 
-            val startOfDay = date.atStartOfDay(timezone)
+        MpLocalDate.of(2020, Month.MARCH, 1).minusDays(1) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 29)
 
-            val startOfDayTs = startOfDay.toEpochSeconds()
+        MpLocalDate.of(2020, Month.MARCH, 1).minusDays(2) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 28)
+    }
 
-            val offset = timezone.offsetAt(instant).totalSeconds
-            val expectedTs = instant.toEpochSeconds() - offset
+    "plusWeeks" {
 
-            startOfDayTs shouldBe expectedTs
-        }
+        MpLocalDate.of(2022, Month.APRIL, 5).plusWeeks(0) shouldBe
+                MpLocalDate.of(2022, Month.APRIL, 5)
+
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).plusWeeks(1) shouldBe
+                MpLocalDate.of(2020, Month.MARCH, 7)
+
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).plusWeeks(2) shouldBe
+                MpLocalDate.of(2020, Month.MARCH, 14)
+
+        MpLocalDate.of(2020, Month.MARCH, 7).plusWeeks(-1) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 29)
+
+        MpLocalDate.of(2020, Month.MARCH, 7).plusWeeks(-2) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 22)
+    }
+
+    "minusWeeks" {
+
+        MpLocalDate.of(2022, Month.APRIL, 5).minusWeeks(0) shouldBe
+                MpLocalDate.of(2022, Month.APRIL, 5)
+
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).minusWeeks(-1) shouldBe
+                MpLocalDate.of(2020, Month.MARCH, 7)
+
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).minusWeeks(-2) shouldBe
+                MpLocalDate.of(2020, Month.MARCH, 14)
+
+        MpLocalDate.of(2020, Month.MARCH, 7).minusWeeks(1) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 29)
+
+        MpLocalDate.of(2020, Month.MARCH, 7).minusWeeks(2) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 22)
+    }
+
+    "plusMonths" {
+
+        MpLocalDate.of(2022, Month.APRIL, 5).plusMonths(0) shouldBe
+                MpLocalDate.of(2022, Month.APRIL, 5)
+
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).plusMonths(1) shouldBe
+                MpLocalDate.of(2020, Month.MARCH, 29)
+
+        MpLocalDate.of(2020, Month.JANUARY, 31).plusMonths(2) shouldBe
+                MpLocalDate.of(2020, Month.MARCH, 31)
+
+        MpLocalDate.of(2020, Month.MARCH, 7).plusMonths(-1) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 7)
+
+        MpLocalDate.of(2020, Month.MARCH, 31).plusMonths(-1) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 29)
+
+        MpLocalDate.of(2020, Month.MAY, 31).plusMonths(-1) shouldBe
+                MpLocalDate.of(2020, Month.APRIL, 30)
+
+        MpLocalDate.of(2020, Month.MAY, 30).plusMonths(-1) shouldBe
+                MpLocalDate.of(2020, Month.APRIL, 30)
+
+        MpLocalDate.of(2020, Month.MAY, 29).plusMonths(-1) shouldBe
+                MpLocalDate.of(2020, Month.APRIL, 29)
+    }
+
+    "minusMonths" {
+
+        MpLocalDate.of(2022, Month.APRIL, 5).minusMonths(0) shouldBe
+                MpLocalDate.of(2022, Month.APRIL, 5)
+
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).minusMonths(-1) shouldBe
+                MpLocalDate.of(2020, Month.MARCH, 29)
+
+        MpLocalDate.of(2020, Month.JANUARY, 31).minusMonths(-2) shouldBe
+                MpLocalDate.of(2020, Month.MARCH, 31)
+
+        MpLocalDate.of(2020, Month.MARCH, 7).minusMonths(1) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 7)
+
+        MpLocalDate.of(2020, Month.MARCH, 31).minusMonths(1) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 29)
+
+        MpLocalDate.of(2020, Month.MAY, 31).minusMonths(1) shouldBe
+                MpLocalDate.of(2020, Month.APRIL, 30)
+
+        MpLocalDate.of(2020, Month.MAY, 30).minusMonths(1) shouldBe
+                MpLocalDate.of(2020, Month.APRIL, 30)
+
+        MpLocalDate.of(2020, Month.MAY, 29).minusMonths(1) shouldBe
+                MpLocalDate.of(2020, Month.APRIL, 29)
+    }
+
+    "plusYears" {
+
+        MpLocalDate.of(2022, Month.APRIL, 5).plusYears(0) shouldBe
+                MpLocalDate.of(2022, Month.APRIL, 5)
+
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).plusYears(1) shouldBe
+                MpLocalDate.of(2021, Month.FEBRUARY, 28)
+
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).plusYears(2) shouldBe
+                MpLocalDate.of(2022, Month.FEBRUARY, 28)
+
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).plusYears(4) shouldBe
+                MpLocalDate.of(2024, Month.FEBRUARY, 29)
+
+        MpLocalDate.of(2021, Month.FEBRUARY, 28).plusYears(-1) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 28)
+
+        MpLocalDate.of(2022, Month.FEBRUARY, 28).plusYears(-2) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 28)
+
+        MpLocalDate.of(2024, Month.FEBRUARY, 29).plusYears(-4) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 29)
+    }
+
+    "minusYears" {
+
+        MpLocalDate.of(2022, Month.APRIL, 5).minusYears(0) shouldBe
+                MpLocalDate.of(2022, Month.APRIL, 5)
+
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).minusYears(-1) shouldBe
+                MpLocalDate.of(2021, Month.FEBRUARY, 28)
+
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).minusYears(-2) shouldBe
+                MpLocalDate.of(2022, Month.FEBRUARY, 28)
+
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).minusYears(-4) shouldBe
+                MpLocalDate.of(2024, Month.FEBRUARY, 29)
+
+        MpLocalDate.of(2021, Month.FEBRUARY, 28).minusYears(1) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 28)
+
+        MpLocalDate.of(2022, Month.FEBRUARY, 28).minusYears(2) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 28)
+
+        MpLocalDate.of(2024, Month.FEBRUARY, 29).minusYears(4) shouldBe
+                MpLocalDate.of(2020, Month.FEBRUARY, 29)
+    }
+
+    "plusCenturies" {
+
+        MpLocalDate.of(2022, Month.APRIL, 5).plusCenturies(0) shouldBe
+                MpLocalDate.of(2022, Month.APRIL, 5)
+
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).plusCenturies(1) shouldBe
+                MpLocalDate.of(2120, Month.FEBRUARY, 29)
+
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).plusCenturies(2) shouldBe
+                MpLocalDate.of(2220, Month.FEBRUARY, 29)
+
+        MpLocalDate.of(2000, Month.FEBRUARY, 29).plusCenturies(1) shouldBe
+                MpLocalDate.of(2100, Month.FEBRUARY, 28)
+
+        MpLocalDate.of(2000, Month.FEBRUARY, 29).plusCenturies(-1) shouldBe
+                MpLocalDate.of(1900, Month.FEBRUARY, 28)
+
+        MpLocalDate.of(2000, Month.FEBRUARY, 29).plusCenturies(-4) shouldBe
+                MpLocalDate.of(1600, Month.FEBRUARY, 29)
+    }
+
+    "minusCenturies" {
+
+        MpLocalDate.of(2022, Month.APRIL, 5).minusCenturies(0) shouldBe
+                MpLocalDate.of(2022, Month.APRIL, 5)
+
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).minusCenturies(-1) shouldBe
+                MpLocalDate.of(2120, Month.FEBRUARY, 29)
+
+        MpLocalDate.of(2020, Month.FEBRUARY, 29).minusCenturies(-2) shouldBe
+                MpLocalDate.of(2220, Month.FEBRUARY, 29)
+
+        MpLocalDate.of(2000, Month.FEBRUARY, 29).minusCenturies(-1) shouldBe
+                MpLocalDate.of(2100, Month.FEBRUARY, 28)
+
+        MpLocalDate.of(2000, Month.FEBRUARY, 29).minusCenturies(1) shouldBe
+                MpLocalDate.of(1900, Month.FEBRUARY, 28)
+
+        MpLocalDate.of(2000, Month.FEBRUARY, 29).minusCenturies(4) shouldBe
+                MpLocalDate.of(1600, Month.FEBRUARY, 29)
     }
 })
