@@ -9,7 +9,7 @@ object Deps {
     }
 
     // //////////////////////////////////////////////////////////////////
-    const val kotlinVersion = "1.6.20"
+    const val kotlinVersion = "1.6.10"
     // //////////////////////////////////////////////////////////////////
 
     // Publishing //////////////////////////////////////////////////////
@@ -88,7 +88,7 @@ object Deps {
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://mvnrepository.com/artifact/io.kotest/kotest-common
-        const val kotest_version = "5.2.1"
+        const val kotest_version = "5.2.3"
         const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"
         const val kotest_framework_api = "io.kotest:kotest-framework-api:$kotest_version"
 
