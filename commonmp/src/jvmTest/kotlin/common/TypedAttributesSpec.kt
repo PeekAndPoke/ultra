@@ -33,6 +33,21 @@ class TypedAttributesSpec : FreeSpec() {
             }
         }
 
+        "Nullable keys and values" {
+
+            val key = TypedKey<Any?>("any")
+
+            val subject = TypedAttributes {
+                add(key, null)
+            }
+
+            subject[key] shouldBe null
+
+            val modded = subject.plus(key, 123)
+
+            modded[key] shouldBe 123
+        }
+
         "Conversion" - {
             "asMutable() must work properly" {
                 val value1 = LocalDateTime.now()

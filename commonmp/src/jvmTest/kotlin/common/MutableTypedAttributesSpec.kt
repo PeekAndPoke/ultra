@@ -33,6 +33,21 @@ class MutableTypedAttributesSpec : StringSpec({
         }
     }
 
+    "Nullable keys and values" {
+
+        val key = TypedKey<Any?>("any")
+
+        val subject = MutableTypedAttributes {
+            add(key, null)
+        }
+
+        subject[key] shouldBe null
+
+        subject[key] = 123
+
+        subject[key] shouldBe 123
+    }
+
     "Checking if a key is present must work" {
 
         val value1 = LocalDateTime.now()
@@ -70,6 +85,25 @@ class MutableTypedAttributesSpec : StringSpec({
             subject.has(key1) shouldBe false
             subject.has(key2) shouldBe true
             subject.has(key3) shouldBe true
+        }
+    }
+
+    "Getting and Setting values with getOrPut" {
+
+        val key1: TypedKey<Int> = TypedKey("number")
+
+        val subject: MutableTypedAttributes = MutableTypedAttributes.empty()
+
+        assertSoftly {
+            subject.size shouldBe 0
+
+            subject.getOrPut(key1) { 100 }
+
+            subject[key1] shouldBe 100
+
+            subject.getOrPut(key1) { 200 }
+
+            subject[key1] shouldBe 100
         }
     }
 
