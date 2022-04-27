@@ -1,4 +1,4 @@
-@file:Suppress("Detekt:LargeClass", "Detekt:VariableNaming")
+@file:Suppress("Detekt:EnumNaming", "Detekt:VariableNaming")
 
 package de.peekandpoke.ultra.semanticui
 

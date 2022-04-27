@@ -1,3 +1,5 @@
+@file:Suppress("Detekt:LongParameterList")
+
 package de.peekandpoke.ultra.common.datetime
 
 import kotlinx.datetime.TimeZone

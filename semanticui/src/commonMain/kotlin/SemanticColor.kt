@@ -1,3 +1,5 @@
+@file:Suppress("Detekt:EnumNaming", "Detekt:VariableNaming")
+
 package de.peekandpoke.ultra.semanticui
 
 @Suppress("EnumEntryName", "unused")
