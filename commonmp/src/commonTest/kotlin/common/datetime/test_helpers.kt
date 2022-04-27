@@ -1,4 +1,4 @@
-@file:Suppress("Detekt:LongParameterList")
+@file:Suppress("Detekt:LongParameterList", "Detekt:ParameterListWrapping")
 
 package de.peekandpoke.ultra.common.datetime
 
