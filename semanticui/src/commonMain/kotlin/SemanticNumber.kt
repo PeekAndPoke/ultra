@@ -1,3 +1,5 @@
+@file:Suppress("Detekt:LargeClass", "Detekt:VariableNaming")
+
 package de.peekandpoke.ultra.semanticui
 
 @Suppress("EnumEntryName")
@@ -20,6 +22,7 @@ enum class SemanticNumber {
     sixteen;
 
     companion object {
+        @Suppress("Detekt:ComplexMethod")
         fun of(num: Int): SemanticNumber = when {
             num <= 1 -> one
             num == 2 -> two
