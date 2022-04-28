@@ -23,7 +23,6 @@ class MpLocalDateSpec : StringSpec({
 
         MpLocalDate.of(year = 2022, month = Month.APRIL, day = 1) shouldBe
                 MpLocalDate.parse("2022-04-01")
-
     }
 
     "Genesis and Doomsday" {

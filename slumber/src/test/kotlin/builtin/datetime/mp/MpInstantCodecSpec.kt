@@ -78,7 +78,6 @@ class MpInstantCodecSpec : StringSpec({
         result shouldBe MpLocalDate.of(2022, Month.APRIL, 5).atStartOfDay(TimeZone.UTC).toInstant()
     }
 
-
     "De-Serializing - wrapped" {
 
         val input = mapOf(

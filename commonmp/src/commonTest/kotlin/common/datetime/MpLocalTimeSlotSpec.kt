@@ -183,7 +183,6 @@ class MpLocalTimeSlotSpec : StringSpec({
         }
     }
 
-
     listOf(
         row(
             "All eaten up - exactly",
@@ -255,7 +254,6 @@ class MpLocalTimeSlotSpec : StringSpec({
             source.cutAway(other) shouldBe expected
         }
     }
-
 
     listOf(
         row(

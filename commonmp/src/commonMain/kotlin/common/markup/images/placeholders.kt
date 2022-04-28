@@ -1,4 +1,4 @@
-@file:Suppress("unused")
+@file:Suppress("unused", "Detekt:TopLevelPropertyNaming")
 
 package de.peekandpoke.ultra.common.markup.images
 

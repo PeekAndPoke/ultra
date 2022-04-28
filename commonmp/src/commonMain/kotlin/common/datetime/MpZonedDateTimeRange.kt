@@ -5,7 +5,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
-
+@Suppress("Detekt:TooManyFunctions")
 @Serializable
 data class MpZonedDateTimeRange(
     val from: MpZonedDateTime,

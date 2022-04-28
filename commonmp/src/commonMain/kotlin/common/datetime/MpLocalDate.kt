@@ -15,7 +15,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 
-@Suppress("DataClassPrivateConstructor")
+@Suppress("DataClassPrivateConstructor", "Detekt:TooManyFunctions")
 @Serializable(with = MpLocalDateSerializer::class)
 data class MpLocalDate internal constructor(
     private val value: LocalDate,
@@ -46,7 +46,7 @@ data class MpLocalDate internal constructor(
          * Creates an [MpLocalDate] from the given [isoString].
          */
         fun parse(isoString: String): MpLocalDate {
-
+            @Suppress("Detekt:TooGenericExceptionCaught")
             return try {
                 MpLocalDate(
                     value = LocalDate.parse(isoString)
@@ -397,4 +397,3 @@ data class MpLocalDate internal constructor(
 fun MpLocalDate.formatDdMmmYyyy(): String {
     return format("dd MMM yyyy")
 }
-

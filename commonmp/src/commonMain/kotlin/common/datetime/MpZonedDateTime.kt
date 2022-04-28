@@ -8,7 +8,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
-@Suppress("DataClassPrivateConstructor")
+@Suppress("DataClassPrivateConstructor", "Detekt:TooManyFunctions")
 @Serializable(with = MpZonedDateTimeSerializer::class)
 data class MpZonedDateTime private constructor(
     val datetime: MpLocalDateTime,

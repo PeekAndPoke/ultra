@@ -29,9 +29,8 @@ object MpDateTimeParser {
 
         val date = match.groupValues[1]
         val time = match.groupValues[2]
-        val tz = match.groupValues[3]
 
-        val timezone = when (tz) {
+        val timezone = when (val tz = match.groupValues[3]) {
             "", "Z" -> TimeZone.UTC
             else -> TimeZone.of(tz.drop(1).dropLast(1))
         }

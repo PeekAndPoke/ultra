@@ -474,4 +474,3 @@ class MpZonedDateTimeSpec : StringSpec({
         (source.minus(duration) - source) shouldBe duration.unaryMinus()
     }
 })
-

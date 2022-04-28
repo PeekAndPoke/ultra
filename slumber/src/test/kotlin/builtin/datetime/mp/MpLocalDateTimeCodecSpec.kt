@@ -87,7 +87,6 @@ class MpLocalDateTimeCodecSpec : StringSpec({
         result!!.atZone(timezone).toEpochMillis() shouldBe timestamp
     }
 
-
     "De-Serializing - wrapped" {
 
         val input = mapOf(

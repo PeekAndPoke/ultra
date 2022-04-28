@@ -9,7 +9,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
-@Suppress("DataClassPrivateConstructor")
+@Suppress("DataClassPrivateConstructor", "Detekt:TooManyFunctions")
 @Serializable(with = MpInstantSerializer::class)
 data class MpInstant internal constructor(
     internal val value: Instant,

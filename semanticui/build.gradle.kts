@@ -7,6 +7,7 @@ import Deps.Test.jvmTestDeps
 
 plugins {
     kotlin("multiplatform")
+    id("io.kotest.multiplatform") version Deps.Test.kotest_version
     id("org.jetbrains.kotlin.plugin.serialization")
     id("org.jetbrains.dokka")
 }
@@ -25,7 +26,16 @@ kotlin {
     targets {
 
         js(IR) {
-            browser()
+            browser {
+//                testTask {
+//                    useKarma {
+//                        useChromeHeadless()
+//                        usePhantomJS()
+//                        useChromiumHeadless()
+//                        useFirefoxHeadless()
+//                    }
+//                }
+            }
         }
 
         jvm {
