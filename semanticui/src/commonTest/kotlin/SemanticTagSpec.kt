@@ -79,7 +79,7 @@ class SemanticTagSpec : StringSpec({
 
         (-10..20)
             .forEach { number ->
-                withClue("Must work for '${number}'") {
+                withClue("Must work for '$number'") {
 
                     val expected = when {
                         number < 1 -> SemanticNumber.one
