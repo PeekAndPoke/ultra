@@ -4,10 +4,6 @@ buildscript {
     repositories {
         mavenCentral()
     }
-
-    dependencies {
-//        classpath("com.vanniktech:gradle-code-quality-tools-plugin:0.18.0")
-    }
 }
 
 plugins {
@@ -43,16 +39,3 @@ tasks {
         kotlinOptions.jvmTarget = "1.8"
     }
 }
-
-/*
-codeQualityTools {
-    failEarly = true
-    xmlReports = true
-    htmlReports = true
-    textReports = true
-
-    detekt {
-
-    }
-}
-*/
