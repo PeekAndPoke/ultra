@@ -23,7 +23,7 @@ class MpZonedDateTimeCodecSpec : StringSpec({
 
         result shouldBe mapOf(
             "ts" to 1649160794000L,
-            "timezone" to "Z",
+            "timezone" to "UTC",
             "human" to "2022-04-05T12:13:14.000Z",
         )
     }
