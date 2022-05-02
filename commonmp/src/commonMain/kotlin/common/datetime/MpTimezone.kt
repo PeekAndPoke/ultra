@@ -7,7 +7,13 @@ import kotlinx.serialization.Serializable
 @Serializable(with = MpTimezoneSerializer::class)
 data class MpTimezone private constructor(val id: String) {
     companion object {
-        fun of(id: String): MpTimezone = MpTimezone(id = id)
+        /**
+         * Creates a timezone from the given id
+         */
+        fun of(id: String): MpTimezone = when (id) {
+            "Z" -> UTC
+            else -> MpTimezone(id = id)
+        }
 
         // TODO: test me
         val UTC: MpTimezone get() = MpTimezone(id = "UTC")

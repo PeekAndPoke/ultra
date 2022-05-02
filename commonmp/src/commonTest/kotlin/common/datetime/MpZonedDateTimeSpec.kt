@@ -68,17 +68,17 @@ class MpZonedDateTimeSpec : StringSpec({
         val parsedUtcWithZ = MpZonedDateTime.parse("2022-04-05T00:00:00.000Z")
 
         parsedUtcWithZ.toEpochMillis() shouldBe utc.toEpochMillis()
-        parsedUtcWithZ.timezone shouldBe TimeZone.UTC
+        parsedUtcWithZ.timezone shouldBe MpTimezone.UTC
 
         val parsedUtc = MpZonedDateTime.parse("2022-04-05T00:00:00.000[UTC]")
 
         parsedUtc.toEpochMillis() shouldBe utc.toEpochMillis()
-        parsedUtc.timezone shouldBe TimeZone.UTC
+        parsedUtc.timezone shouldBe MpTimezone.UTC
 
         val parsedEuropeBucharest = MpZonedDateTime.parse("2022-04-05T03:00:00.000[Europe/Bucharest]")
 
         parsedEuropeBucharest.toEpochMillis() shouldBe utc.toEpochMillis()
-        parsedEuropeBucharest.timezone shouldBe TimeZone.of("Europe/Bucharest")
+        parsedEuropeBucharest.timezone shouldBe MpTimezone.of("Europe/Bucharest")
     }
 
     "Construction from epoch" {
@@ -295,7 +295,7 @@ class MpZonedDateTimeSpec : StringSpec({
         val timezone = TimeZone.of("Europe/Bucharest")
         val atZone = source.atZone(timezone)
 
-        atZone.timezone shouldBe timezone
+        atZone.timezone shouldBe timezone.mp
         atZone.toEpochMillis() shouldBe source.toEpochMillis()
 
         atZone.toIsoString() shouldBe "2022-04-05T15:13:14.123[Europe/Bucharest]"
@@ -306,11 +306,11 @@ class MpZonedDateTimeSpec : StringSpec({
         val timezone = TimeZone.of("Europe/Bucharest")
 
         val source = MpZonedDateTime.parse("2022-04-05T12:13:14.123[Europe/Bucharest]")
-        source.timezone shouldBe timezone
+        source.timezone shouldBe timezone.mp
 
         val atZone = source.atZone(timezone)
 
-        atZone.timezone shouldBe timezone
+        atZone.timezone shouldBe timezone.mp
         atZone.toEpochMillis() shouldBe source.toEpochMillis()
 
         atZone.toIsoString() shouldBe "2022-04-05T12:13:14.123[Europe/Bucharest]"
@@ -319,72 +319,72 @@ class MpZonedDateTimeSpec : StringSpec({
     "atStartOfYear" {
         MpZonedDateTime.parse("2022-04-05T12:13:14.123Z").atStartOfYear().let {
             it shouldBe MpZonedDateTime.parse("2022-01-01T00:00:00.000Z")
-            it.timezone shouldBe TimeZone.UTC
+            it.timezone shouldBe MpTimezone.UTC
         }
 
         MpZonedDateTime.parse("2022-04-05T12:13:14.123[Europe/Bucharest]").atStartOfYear().let {
             it shouldBe MpZonedDateTime.parse("2022-01-01T00:00:00.000[Europe/Bucharest]")
-            it.timezone shouldBe TimeZone.of("Europe/Bucharest")
+            it.timezone shouldBe MpTimezone.of("Europe/Bucharest")
         }
     }
 
     "atStartOfMonth" {
         MpZonedDateTime.parse("2022-04-05T12:13:14.123Z").atStartOfMonth().let {
             it shouldBe MpZonedDateTime.parse("2022-04-01T00:00:00.000Z")
-            it.timezone shouldBe TimeZone.UTC
+            it.timezone shouldBe MpTimezone.UTC
         }
 
         MpZonedDateTime.parse("2022-04-05T12:13:14.123[Europe/Bucharest]").atStartOfMonth().let {
             it shouldBe MpZonedDateTime.parse("2022-04-01T00:00:00.000[Europe/Bucharest]")
-            it.timezone shouldBe TimeZone.of("Europe/Bucharest")
+            it.timezone shouldBe MpTimezone.of("Europe/Bucharest")
         }
     }
 
     "atStartOfDay" {
         MpZonedDateTime.parse("2022-04-05T12:13:14.123Z").atStartOfDay().let {
             it shouldBe MpZonedDateTime.parse("2022-04-05T00:00:00.000Z")
-            it.timezone shouldBe TimeZone.UTC
+            it.timezone shouldBe MpTimezone.UTC
         }
 
         MpZonedDateTime.parse("2022-04-05T12:13:14.123[Europe/Bucharest]").atStartOfDay().let {
             it shouldBe MpZonedDateTime.parse("2022-04-05T00:00:00.000[Europe/Bucharest]")
-            it.timezone shouldBe TimeZone.of("Europe/Bucharest")
+            it.timezone shouldBe MpTimezone.of("Europe/Bucharest")
         }
     }
 
     "atStartOfHour" {
         MpZonedDateTime.parse("2022-04-05T12:13:14.123Z").atStartOfHour().let {
             it shouldBe MpZonedDateTime.parse("2022-04-05T12:00:00.000Z")
-            it.timezone shouldBe TimeZone.UTC
+            it.timezone shouldBe MpTimezone.UTC
         }
 
         MpZonedDateTime.parse("2022-04-05T12:13:14.123[Europe/Bucharest]").atStartOfHour().let {
             it shouldBe MpZonedDateTime.parse("2022-04-05T12:00:00.000[Europe/Bucharest]")
-            it.timezone shouldBe TimeZone.of("Europe/Bucharest")
+            it.timezone shouldBe MpTimezone.of("Europe/Bucharest")
         }
     }
 
     "atStartOfMinute" {
         MpZonedDateTime.parse("2022-04-05T12:13:14.123Z").atStartOfMinute().let {
             it shouldBe MpZonedDateTime.parse("2022-04-05T12:13:00.000Z")
-            it.timezone shouldBe TimeZone.UTC
+            it.timezone shouldBe MpTimezone.UTC
         }
 
         MpZonedDateTime.parse("2022-04-05T12:13:14.123[Europe/Bucharest]").atStartOfMinute().let {
             it shouldBe MpZonedDateTime.parse("2022-04-05T12:13:00.000[Europe/Bucharest]")
-            it.timezone shouldBe TimeZone.of("Europe/Bucharest")
+            it.timezone shouldBe MpTimezone.of("Europe/Bucharest")
         }
     }
 
     "atStartOfSecond" {
         MpZonedDateTime.parse("2022-04-05T12:13:14.123Z").atStartOfSecond().let {
             it shouldBe MpZonedDateTime.parse("2022-04-05T12:13:14.000Z")
-            it.timezone shouldBe TimeZone.UTC
+            it.timezone shouldBe MpTimezone.UTC
         }
 
         MpZonedDateTime.parse("2022-04-05T12:13:14.123[Europe/Bucharest]").atStartOfSecond().let {
             it shouldBe MpZonedDateTime.parse("2022-04-05T12:13:14.000[Europe/Bucharest]")
-            it.timezone shouldBe TimeZone.of("Europe/Bucharest")
+            it.timezone shouldBe MpTimezone.of("Europe/Bucharest")
         }
     }
 
@@ -394,25 +394,25 @@ class MpZonedDateTimeSpec : StringSpec({
         MpZonedDateTime.parse("2022-03-27T00:00:00.000[Europe/Berlin]")
             .atStartOfNext(DayOfWeek.MONDAY).let {
                 it shouldBe MpZonedDateTime.parse("2022-03-28T00:00:00.000[Europe/Berlin]")
-                it.timezone shouldBe TimeZone.of("Europe/Berlin")
+                it.timezone shouldBe MpTimezone.of("Europe/Berlin")
             }
 
         MpZonedDateTime.parse("2022-04-04T23:59:59.999Z")
             .atStartOfNext(DayOfWeek.TUESDAY).let {
                 it shouldBe MpZonedDateTime.parse("2022-04-05T00:00:00.000Z")
-                it.timezone shouldBe TimeZone.UTC
+                it.timezone shouldBe MpTimezone.UTC
             }
 
         MpZonedDateTime.parse("2022-04-05T00:00:00.000Z")
             .atStartOfNext(DayOfWeek.TUESDAY).let {
                 it shouldBe MpZonedDateTime.parse("2022-04-12T00:00:00.000Z")
-                it.timezone shouldBe TimeZone.UTC
+                it.timezone shouldBe MpTimezone.UTC
             }
 
         MpZonedDateTime.parse("2022-04-05T00:00:00.001[Europe/Bucharest]")
             .atStartOfNext(DayOfWeek.TUESDAY).let {
                 it shouldBe MpZonedDateTime.parse("2022-04-12T00:00:00.000[Europe/Bucharest]")
-                it.timezone shouldBe TimeZone.of("Europe/Bucharest")
+                it.timezone shouldBe MpTimezone.of("Europe/Bucharest")
             }
     }
 
@@ -422,25 +422,25 @@ class MpZonedDateTimeSpec : StringSpec({
         MpZonedDateTime.parse("2022-03-28T00:00:00.000[Europe/Berlin]")
             .atStartOfPrevious(DayOfWeek.SUNDAY).let {
                 it shouldBe MpZonedDateTime.parse("2022-03-27T00:00:00.000[Europe/Berlin]")
-                it.timezone shouldBe TimeZone.of("Europe/Berlin")
+                it.timezone shouldBe MpTimezone.of("Europe/Berlin")
             }
 
         MpZonedDateTime.parse("2022-04-04T23:59:59.999Z")
             .atStartOfPrevious(DayOfWeek.TUESDAY).let {
                 it shouldBe MpZonedDateTime.parse("2022-03-29T00:00:00.000Z")
-                it.timezone shouldBe TimeZone.UTC
+                it.timezone shouldBe MpTimezone.UTC
             }
 
         MpZonedDateTime.parse("2022-04-05T00:00:00.000Z")
             .atStartOfPrevious(DayOfWeek.TUESDAY).let {
                 it shouldBe MpZonedDateTime.parse("2022-04-05T00:00:00.000Z")
-                it.timezone shouldBe TimeZone.UTC
+                it.timezone shouldBe MpTimezone.UTC
             }
 
         MpZonedDateTime.parse("2022-04-05T00:00:00.001[Europe/Bucharest]")
             .atStartOfPrevious(DayOfWeek.TUESDAY).let {
                 it shouldBe MpZonedDateTime.parse("2022-04-05T00:00:00.000[Europe/Bucharest]")
-                it.timezone shouldBe TimeZone.of("Europe/Bucharest")
+                it.timezone shouldBe MpTimezone.of("Europe/Bucharest")
             }
     }
 

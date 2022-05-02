@@ -10,6 +10,7 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 
+// TODO: test all of me
 @Suppress("Detekt.LongParameterList")
 @Serializable(with = MpLocalDateTimeSerializer::class)
 data class MpLocalDateTime internal constructor(internal val value: LocalDateTime) : Comparable<MpLocalDateTime> {
@@ -130,6 +131,8 @@ data class MpLocalDateTime internal constructor(internal val value: LocalDateTim
     fun toInstant(timezone: TimeZone): MpInstant = MpInstant(
         value = value.toInstant(timezone)
     )
+
+    fun toInstant(timezone: MpTimezone): MpInstant = toInstant(timezone.kotlinx)
 
     fun atZone(timezone: TimeZone): MpZonedDateTime {
         return toInstant(timezone).atZone(timezone)

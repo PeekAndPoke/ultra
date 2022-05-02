@@ -24,7 +24,7 @@ class MpZonedDateTimeSerializationSpec : StringSpec({
         )
 
         result shouldBe """
-            {"ts":1649160794000,"timezone":"Z","human":"2022-04-05T12:13:14.000Z"}
+            {"ts":1649160794000,"timezone":"UTC","human":"2022-04-05T12:13:14.000Z"}
         """.trimIndent()
     }
 

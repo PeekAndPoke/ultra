@@ -12,16 +12,22 @@ class MpTimezoneSpec : StringSpec({
         MpTimezone.of("Europe/Berlin").id shouldBe "Europe/Berlin"
     }
 
-    MpTimezone.supportedIds.forEach { timezoneId ->
+    MpTimezone.supportedIds
+        .filter { it != "Z" }
+        .forEach { timezoneId ->
 
-        "Creating a TimeZone from id '$timezoneId' must work" {
+            "Creating a TimeZone from id '$timezoneId' must work" {
 
-            MpTimezone.of(timezoneId).id shouldBe timezoneId
+                MpTimezone.of(timezoneId).id shouldBe timezoneId
 
-            MpTimezone.of(timezoneId).kotlinx.let {
-                it.shouldBeInstanceOf<TimeZone>()
-                it.id shouldBe timezoneId
+                MpTimezone.of(timezoneId).kotlinx.let {
+                    it.shouldBeInstanceOf<TimeZone>()
+                    it.id shouldBe timezoneId
+                }
             }
         }
+
+    "Creating an MpTimezone from 'Z' must work" {
+        MpTimezone.of("Z") shouldBe MpTimezone.UTC
     }
 })

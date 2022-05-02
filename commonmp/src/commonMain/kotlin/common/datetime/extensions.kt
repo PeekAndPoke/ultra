@@ -13,6 +13,12 @@ val UtcOffset.totalMillis: Long
     }
 
 /**
+ * Converts the [TimeZone] into an [MpTimezone]
+ */
+// TODO: test me
+val TimeZone.mp: MpTimezone get() = MpTimezone.of(id)
+
+/**
  * Get the offset at the given [instant].
  */
 fun TimeZone.offsetAt(instant: MpInstant): UtcOffset {

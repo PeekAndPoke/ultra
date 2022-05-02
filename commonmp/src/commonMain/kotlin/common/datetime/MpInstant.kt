@@ -87,8 +87,15 @@ data class MpInstant internal constructor(
      * Create a [MpZonedDateTime] at the given [timezone]
      */
     override fun atZone(timezone: TimeZone): MpZonedDateTime {
+        return atZone(timezone = timezone.mp)
+    }
+
+    /**
+     * Create a [MpZonedDateTime] at the given [timezone]
+     */
+    override fun atZone(timezone: MpTimezone): MpZonedDateTime {
         return MpZonedDateTime.of(
-            MpLocalDateTime(value.toLocalDateTime(timezone)),
+            MpLocalDateTime(value.toLocalDateTime(timezone.kotlinx)),
             timezone,
         )
     }
@@ -142,6 +149,19 @@ data class MpInstant internal constructor(
     }
 
     /**
+     * Adds once the [unit] by taking the [timezone] into account.
+     *
+     * This method is useful for timezones where there is a DST (Daylight Saving Transition).
+     *
+     * For example adding 1 Day to 2022-03-27T00:00:00[Europe/Berlin]
+     * Will result in              2022-03-28T00:00:00[Europe/Berlin]
+     * while the difference between both instants is only 23 hours.
+     */
+    fun plus(unit: DateTimeUnit, timezone: MpTimezone): MpInstant {
+        return plus(unit = unit, timezone = timezone.kotlinx)
+    }
+
+    /**
      * Adds the [value] times [unit] by taking the [timezone] into account.
      *
      * This method is useful for timezones where there is a DST (Daylight Saving Transition).
@@ -157,6 +177,19 @@ data class MpInstant internal constructor(
             timeZone = timezone,
         )
     )
+
+    /**
+     * Adds the [value] times [unit] by taking the [timezone] into account.
+     *
+     * This method is useful for timezones where there is a DST (Daylight Saving Transition).
+     *
+     * For example adding 1 Day to 2022-03-27T00:00:00[Europe/Berlin]
+     * Will result in              2022-03-28T00:00:00[Europe/Berlin]
+     * while the difference between both instants is only 23 hours.
+     */
+    fun plus(value: Int, unit: DateTimeUnit, timezone: MpTimezone): MpInstant {
+        return plus(value = value, unit = unit, timezone = timezone.kotlinx)
+    }
 
     /**
      * Subtracts the [duration] in absolute terms.
@@ -179,6 +212,19 @@ data class MpInstant internal constructor(
     }
 
     /**
+     * Subtracts once the [unit] by taking the [timezone] into account.
+     *
+     * This method is useful for timezones where there is a DST (Daylight Saving Transition).
+     *
+     * For example subtracting 1 Day to 2022-03-28T00:00:00[Europe/Berlin]
+     * Will result in                   2022-03-27T00:00:00[Europe/Berlin]
+     * while the difference between both instants is only 23 hours.
+     */
+    fun minus(unit: DateTimeUnit, timezone: MpTimezone): MpInstant {
+        return minus(unit = unit, timezone = timezone.kotlinx)
+    }
+
+    /**
      * Subtracts the [value] times [unit] by taking the [timezone] into account.
      *
      * This method is useful for timezones where there is a DST (Daylight Saving Transition).
@@ -189,6 +235,19 @@ data class MpInstant internal constructor(
      */
     fun minus(value: Int, unit: DateTimeUnit, timezone: TimeZone): MpInstant {
         return plus(-value, unit, timezone)
+    }
+
+    /**
+     * Subtracts the [value] times [unit] by taking the [timezone] into account.
+     *
+     * This method is useful for timezones where there is a DST (Daylight Saving Transition).
+     *
+     * For example subtracting 1 Day to 2022-03-28T00:00:00[Europe/Berlin]
+     * Will result in                   2022-03-27T00:00:00[Europe/Berlin]
+     * while the difference between both instants is only 23 hours.
+     */
+    fun minus(value: Int, unit: DateTimeUnit, timezone: MpTimezone): MpInstant {
+        return minus(value = value, unit = unit, timezone = timezone.kotlinx)
     }
 
     /**

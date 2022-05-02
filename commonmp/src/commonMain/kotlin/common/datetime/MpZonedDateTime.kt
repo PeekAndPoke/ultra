@@ -12,7 +12,7 @@ import kotlin.time.Duration
 @Serializable(with = MpZonedDateTimeSerializer::class)
 data class MpZonedDateTime private constructor(
     val datetime: MpLocalDateTime,
-    val timezone: TimeZone
+    val timezone: MpTimezone,
 ) : MpAbsoluteDateTime, Comparable<MpZonedDateTime> {
 
     companion object {
@@ -20,20 +20,35 @@ data class MpZonedDateTime private constructor(
          * Creates from a local [datetime] and a [timezone]
          */
         fun of(datetime: MpLocalDateTime, timezone: TimeZone): MpZonedDateTime {
-            return MpZonedDateTime(
+            return of(
                 datetime = datetime,
                 timezone = when (timezone.id) {
                     // WHY? There seems to be a difference between TimeZone.UTC and TimeZone.of("UTC")
                     "UTC" -> TimeZone.UTC
                     else -> timezone
-                }
+                }.mp
             )
+        }
+
+        /**
+         * Creates from a local [datetime] and a [timezone]
+         */
+        fun of(datetime: MpLocalDateTime, timezone: MpTimezone): MpZonedDateTime {
+            return MpZonedDateTime(datetime = datetime, timezone = timezone)
         }
 
         /**
          * Creates from the given epoch [millis] and [timezone].
          */
         fun fromEpochMillis(millis: Long, timezone: TimeZone): MpZonedDateTime {
+            return fromEpochMillis(millis = millis, timezone = timezone.mp)
+        }
+
+        /**
+         * Creates from the given epoch [millis] and [timezone].
+         */
+        // TODO: test me
+        fun fromEpochMillis(millis: Long, timezone: MpTimezone): MpZonedDateTime {
             return MpInstant.fromEpochMillis(millis).atZone(timezone)
         }
 
@@ -41,6 +56,14 @@ data class MpZonedDateTime private constructor(
          * Creates from the given epoch [seconds] and [timezone].
          */
         fun fromEpochSeconds(seconds: Long, timezone: TimeZone): MpZonedDateTime {
+            return fromEpochSeconds(seconds = seconds, timezone = timezone.mp)
+        }
+
+        /**
+         * Creates from the given epoch [seconds] and [timezone].
+         */
+        // TODO: test me
+        fun fromEpochSeconds(seconds: Long, timezone: MpTimezone): MpZonedDateTime {
             return MpInstant.fromEpochSeconds(seconds).atZone(timezone)
         }
 
@@ -135,9 +158,9 @@ data class MpZonedDateTime private constructor(
 
         fun Number.pad(n: Int = 2) = toString().padStart(n, '0')
 
-        val tz = when (timezone.id) {
+        val tz = when (val tzId = timezone.id) {
             "UTC", "Z" -> "Z"
-            else -> "[$timezone]"
+            else -> "[${tzId}]"
         }
 
         val yearStr = when {
