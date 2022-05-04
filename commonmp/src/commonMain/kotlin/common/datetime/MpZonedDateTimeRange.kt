@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
+import de.peekandpoke.ultra.common.ComparedTo
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.serialization.Serializable
@@ -10,7 +11,7 @@ import kotlin.time.Duration
 data class MpZonedDateTimeRange(
     val from: MpZonedDateTime,
     val to: MpZonedDateTime
-) {
+) : ComparedTo<MpTemporalPeriod> {
     companion object {
         /**
          * Range from [MpZonedDateTime.Genesis] until [MpZonedDateTime.Doomsday]
@@ -66,6 +67,13 @@ data class MpZonedDateTimeRange(
 
     // TODO: Test
     val isValid: Boolean get() = from < to
+
+    /**
+     * Compares the duration to the given period.
+     */
+    override operator fun compareTo(other: MpTemporalPeriod): Int {
+        return to.compareTo(from.plus(other))
+    }
 
     // TODO: Test
     fun contains(datetime: MpZonedDateTime): Boolean {
