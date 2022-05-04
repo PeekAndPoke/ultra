@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.common.search
+package de.peekandpoke.ultra.common.model.search
 
 import kotlinx.serialization.Serializable
 

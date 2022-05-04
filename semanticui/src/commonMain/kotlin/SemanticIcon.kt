@@ -1668,6 +1668,8 @@ class SemanticIcon(private val parent: FlowContent?) {
             "youtube",
             "zhihu"
         )
+            // custom things
+            .plus("dont")
 
         fun cssClassOf(block: SemanticIcon.() -> SemanticIcon): String {
             return SemanticIcon(null).block().cssClasses.joinToString(" ")
@@ -1763,27 +1765,60 @@ class SemanticIcon(private val parent: FlowContent?) {
     // Behaviour ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @SemanticUiCssMarker
-    inline val inverted: SemanticIcon get() = this + "inverted"
+    inline val bordered: SemanticIcon get() = this + "bordered"
 
     @SemanticUiCssMarker
     inline val circular: SemanticIcon get() = this + "circular"
 
     @SemanticUiCssMarker
+    inline val clockwise: SemanticIcon get() = this + "clockwise"
+
+    @SemanticUiCssMarker
+    inline val counterclockwise: SemanticIcon get() = this + "counterclockwise"
+
+    @SemanticUiCssMarker
+    inline val colored: SemanticIcon get() = this + "colored"
+
+    @SemanticUiCssMarker
+    inline val corner: SemanticIcon get() = this + "corner"
+
+    @SemanticUiCssMarker
     inline val disabled: SemanticIcon get() = this + "disabled"
 
     @SemanticUiCssMarker
-    inline val loading: SemanticIcon get() = this + "loading"
+    inline val fitted: SemanticIcon get() = this + "fitted"
+
+    @SemanticUiCssMarker
+    inline val flipped: SemanticIcon get() = this + "flipped"
+
+    @SemanticUiCssMarker
+    inline val horizontally: SemanticIcon get() = this + "horizontally"
 
     @SemanticUiCssMarker
     inline val link: SemanticIcon get() = this + "link"
 
     @SemanticUiCssMarker
-    inline val bordered: SemanticIcon get() = this + "bordered"
+    inline val loading: SemanticIcon get() = this + "loading"
 
     @SemanticUiCssMarker
-    inline val colored: SemanticIcon get() = this + "colored"
+    inline val inverted: SemanticIcon get() = this + "inverted"
+
+    @SemanticUiCssMarker
+    inline val rotated: SemanticIcon get() = this + "rotated"
+
+    @SemanticUiCssMarker
+    inline val vertically: SemanticIcon get() = this + "vertically"
 
     // Position & Alignment ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @SemanticUiCssMarker
+    inline val aligned: SemanticIcon get() = this + "aligned"
+
+    @SemanticUiCssMarker
+    inline val bottom: SemanticIcon get() = this + "bottom"
+
+    @SemanticUiCssMarker
+    inline val floated: SemanticIcon get() = this + "floated"
 
     @SemanticUiCssMarker
     inline val left: SemanticIcon get() = this + "right"
@@ -1795,10 +1830,7 @@ class SemanticIcon(private val parent: FlowContent?) {
     inline val right: SemanticIcon get() = this + "right"
 
     @SemanticUiCssMarker
-    inline val aligned: SemanticIcon get() = this + "aligned"
-
-    @SemanticUiCssMarker
-    inline val floated: SemanticIcon get() = this + "floated"
+    inline val top: SemanticIcon get() = this + "top"
 
     // Size ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1826,9 +1858,16 @@ class SemanticIcon(private val parent: FlowContent?) {
     @SemanticUiCssMarker
     inline val massive: SemanticIcon get() = this + "massive"
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Icons ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Custom //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @SemanticIconMarker
+    inline val dont: SemanticIcon get() = this + "dont"
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Icons ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @SemanticIconMarker
     inline val _500px: SemanticIcon get() = this + "500px"

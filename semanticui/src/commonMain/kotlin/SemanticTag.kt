@@ -355,6 +355,9 @@ class SemanticTag(
     // Semantic UI Words
 
     @SemanticUiCssMarker
+    val icons: SemanticTag get() = this + "icons"
+
+    @SemanticUiCssMarker
     val text: SemanticTag get() = this + "text"
 
     @SemanticUiCssMarker
