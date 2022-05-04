@@ -129,6 +129,14 @@ data class MpInstant internal constructor(
     }
 
     /**
+     * Creates a [MpZonedDateTimeRange] with this as the start and the given [period].
+     */
+    // TODO: test me
+    fun toRange(period: MpTemporalPeriod, timezone: MpTimezone): MpInstantRange {
+        return MpInstantRange(from = this, to = plus(period, timezone).toInstant())
+    }
+
+    /**
      * Adds the [duration] in absolute terms.
      */
     fun plus(duration: Duration): MpInstant {
@@ -170,13 +178,19 @@ data class MpInstant internal constructor(
      * Will result in              2022-03-28T00:00:00[Europe/Berlin]
      * while the difference between both instants is only 23 hours.
      */
-    fun plus(value: Int, unit: DateTimeUnit, timezone: TimeZone): MpInstant = MpInstant(
-        value = this.value.plus(
-            value = value,
-            unit = unit,
-            timeZone = timezone,
+    fun plus(value: Int, unit: DateTimeUnit, timezone: TimeZone): MpInstant {
+        if (value == 0) {
+            return this
+        }
+
+        return MpInstant(
+            value = this.value.plus(
+                value = value,
+                unit = unit,
+                timeZone = timezone,
+            )
         )
-    )
+    }
 
     /**
      * Adds the [value] times [unit] by taking the [timezone] into account.
@@ -189,6 +203,25 @@ data class MpInstant internal constructor(
      */
     fun plus(value: Int, unit: DateTimeUnit, timezone: MpTimezone): MpInstant {
         return plus(value = value, unit = unit, timezone = timezone.kotlinx)
+    }
+
+    /**
+     * Adds the given [period] in the given [timezone].
+     *
+     * Each component is added individually starting with years, months, ..., milliseconds
+     */
+    // TODO: test me
+    fun plus(period: MpTemporalPeriod, timezone: MpTimezone): MpInstant {
+
+        val tz = timezone.kotlinx
+
+        return plus(period.years, DateTimeUnit.YEAR, tz)
+            .plus(period.months, DateTimeUnit.MONTH, tz)
+            .plus(period.days, DateTimeUnit.DAY, tz)
+            .plus(period.hours, DateTimeUnit.HOUR, tz)
+            .plus(period.minutes, DateTimeUnit.MINUTE, tz)
+            .plus(period.seconds, DateTimeUnit.SECOND, tz)
+            .plus(period.milliseconds, DateTimeUnit.MILLISECOND, tz)
     }
 
     /**
@@ -255,5 +288,15 @@ data class MpInstant internal constructor(
      */
     operator fun minus(other: MpInstant): Duration {
         return this.value - other.value
+    }
+
+    /**
+     * Subtracts the given [period] in the given [timezone].
+     *
+     * Each component is added individually starting with years, months, ..., milliseconds
+     */
+    // TODO: test me
+    fun minus(period: MpTemporalPeriod, timezone: MpTimezone): MpInstant {
+        return plus(-period, timezone)
     }
 }

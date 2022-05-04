@@ -213,6 +213,14 @@ data class MpZonedDateTime private constructor(
     }
 
     /**
+     * Creates a [MpZonedDateTimeRange] with this as the start and the given [period].
+     */
+    // TODO: test me
+    fun toRange(period: MpTemporalPeriod): MpZonedDateTimeRange {
+        return MpZonedDateTimeRange.of(from = this, period = period)
+    }
+
+    /**
      * Get the start of the year.
      */
     fun atStartOfYear(): MpZonedDateTime = copy(
@@ -329,6 +337,16 @@ data class MpZonedDateTime private constructor(
     }
 
     /**
+     * Adds the given [period] in the [timezone].
+     *
+     * Each component is added individually starting with years, months, ..., milliseconds
+     */
+    // TODO: test me
+    fun plus(period: MpTemporalPeriod): MpZonedDateTime {
+        return toInstant().plus(period, timezone).atZone(timezone)
+    }
+
+    /**
      * Subtracts the given duration in absolute terms.
      */
     fun minus(duration: Duration): MpZonedDateTime {
@@ -368,6 +386,16 @@ data class MpZonedDateTime private constructor(
      */
     operator fun minus(other: MpZonedDateTime): Duration {
         return toInstant() - other.toInstant()
+    }
+
+    /**
+     * Subtracts the given [period] in the [timezone].
+     *
+     * Each component is added individually starting with years, months, ..., milliseconds
+     */
+    // TODO: test me
+    fun minus(period: MpTemporalPeriod): MpZonedDateTime {
+        return plus(-period)
     }
 }
 

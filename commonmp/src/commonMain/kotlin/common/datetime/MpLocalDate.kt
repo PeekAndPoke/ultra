@@ -234,6 +234,14 @@ data class MpLocalDate internal constructor(
     }
 
     /**
+     * Creates a [MpZonedDateTimeRange] with this as the start and the given [period] in the [timezone].
+     */
+    // TODO: test me
+    fun toRange(period: MpTemporalPeriod, timezone: MpTimezone): MpZonedDateTimeRange {
+        return MpZonedDateTimeRange.of(from = atStartOfDay(timezone), period = period)
+    }
+
+    /**
      * Converts into an [MpZonedDateTimeRange] for the given [timeslot] and [timezone].
      */
     fun toRange(timeslot: MpLocalTimeSlot, timezone: TimeZone): MpZonedDateTimeRange {
@@ -308,16 +316,18 @@ data class MpLocalDate internal constructor(
      * Adds the given [DatePeriod].
      */
     // TODO: test me
-    fun plus(period: DatePeriod): MpLocalDate {
-        return MpLocalDate(value = value.plus(period))
+    fun plus(period: MpTemporalPeriod): MpLocalDate {
+        return plusYears(period.years)
+            .plusMonths(period.months)
+            .plusDays(period.days)
     }
 
     /**
      * Adds the given [DatePeriod].
      */
     // TODO: test me
-    fun minus(period: DatePeriod): MpLocalDate {
-        return MpLocalDate(value = value.minus(period))
+    fun minus(period: MpTemporalPeriod): MpLocalDate {
+        return plus(-period)
     }
 
     /**
