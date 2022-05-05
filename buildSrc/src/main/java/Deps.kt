@@ -9,7 +9,7 @@ object Deps {
     }
 
     // //////////////////////////////////////////////////////////////////
-    const val kotlinVersion = "1.6.10"
+    const val kotlinVersion = "1.6.21"
     // //////////////////////////////////////////////////////////////////
 
     // Publishing //////////////////////////////////////////////////////
@@ -27,7 +27,7 @@ object Deps {
 
     // https://mvnrepository.com/artifact/org.jetbrains.dokka/dokka-gradle-plugin
     // Dokka gradle plugin org.jetbrains.dokka
-    const val dokkaVersion = "1.6.10"
+    const val dokkaVersion = "1.6.21"
 
     // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
     private const val google_auto_service_version = "1.0.1"
@@ -40,7 +40,7 @@ object Deps {
     const val klassIndexProcessor = "com.github.matfax.klassindex:processor:$klassIndexVersion"
 
     // https://mvnrepository.com/artifact/com.github.tschuchortdev/kotlin-compile-testing
-    private const val kotlin_compiletesting_version = "1.4.7"
+    private const val kotlin_compiletesting_version = "1.4.8"
     const val kotlin_compiletesting = "com.github.tschuchortdev:kotlin-compile-testing:$kotlin_compiletesting_version"
 
     // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
@@ -64,11 +64,11 @@ object Deps {
     const val kotlinx_datetime_common = "org.jetbrains.kotlinx:kotlinx-datetime:$kotlinx_datetime_version"
 
     // https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven/org/jetbrains/kotlinx/kotlinx-html/
-    private const val kotlinx_html_version = "0.7.2"
+    private const val kotlinx_html_version = "0.7.5"
     const val kotlinx_html = "org.jetbrains.kotlinx:kotlinx-html:$kotlinx_html_version"
 
     // https://mvnrepository.com/artifact/org.jetbrains.kotlin-wrappers/kotlin-css
-    private const val kotlinx_wrappers_css_version = "1.0.0-pre.325-kotlin-1.6.10"
+    private const val kotlinx_wrappers_css_version = "1.0.0-pre.332-kotlin-1.6.21"
     const val kotlinx_wrappers_css =
         "org.jetbrains.kotlin-wrappers:kotlin-css:$kotlinx_wrappers_css_version"
 
@@ -97,7 +97,7 @@ object Deps {
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://mvnrepository.com/artifact/io.kotest/kotest-common
-        const val kotest_version = "5.2.3"
+        const val kotest_version = "5.3.0"
         const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"
         const val kotest_framework_api = "io.kotest:kotest-framework-api:$kotest_version"
 
