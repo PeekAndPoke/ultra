@@ -767,4 +767,13 @@ class SemanticTag(
 
     @SemanticUiCssMarker
     val popup: SemanticTag get() = this + "popup"
+
+    @SemanticUiCssMarker
+    val wireframe: SemanticTag get() = this + "wireframe"
+
+    @SemanticUiCssMarker
+    val transparent: SemanticTag get() = this + "transparent"
+
+    @SemanticUiCssMarker
+    val logo: SemanticTag get() = this + "logo"
 }
