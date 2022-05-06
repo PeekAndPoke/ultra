@@ -1701,13 +1701,15 @@ class SemanticIcon(private val parent: FlowContent?) {
     // conditional classes
 
     @SemanticUiConditionalMarker
-    fun given(
-        condition: Boolean,
-        action: SemanticIcon.() -> SemanticIcon,
-    ): SemanticIcon = when (condition) {
-        false -> this
-        else -> this.action()
-    }
+    fun given(condition: Boolean, action: SemanticIcon.() -> SemanticIcon): SemanticIcon =
+        when (condition) {
+            false -> this
+            else -> this.action()
+        }
+
+    @SemanticUiConditionalMarker
+    fun givenNot(condition: Boolean, action: SemanticIcon.() -> SemanticIcon): SemanticIcon =
+        given(!condition, action)
 
     @SemanticUiConditionalMarker
     val then: SemanticIcon get() = this

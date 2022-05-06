@@ -159,8 +159,11 @@ class SemanticTag(
         }
 
     @SemanticUiConditionalMarker
-    val then: SemanticTag
-        get() = this
+    fun givenNot(condition: Boolean, action: SemanticTag.() -> SemanticTag): SemanticTag =
+        given(!condition, action)
+
+    @SemanticUiConditionalMarker
+    val then: SemanticTag get() = this
 
     // SemanticUI Numbers
 
