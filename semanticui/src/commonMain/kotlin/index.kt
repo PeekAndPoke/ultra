@@ -1,6 +1,8 @@
 package de.peekandpoke.ultra.semanticui
 
 import kotlinx.html.FlowContent
+import kotlinx.html.Tag
+import kotlin.jvm.JvmName
 
 @SemanticUiDslMarker
 val FlowContent.ui: SemanticTag
@@ -35,12 +37,14 @@ typealias RenderFunc<T> = T.() -> Unit
 /**
  * Helps the compiler to identify a code block that is supposed to run on a semantic tag
  */
+@JvmName("renderFn")
 fun renderFn(block: RenderFn): RenderFn = block
 
 /**
  * Helps the compiler to identify a code block that is supposed to run on a semantic tag
  */
-fun <T> renderFn(block: RenderFunc<T>): RenderFunc<T> = block
+@JvmName("renderFnT")
+fun <T : Tag> renderFn(block: RenderFunc<T>): RenderFunc<T> = block
 
 /**
  * Helps the compiler to identify a code block that is supposed to run on a [FlowContent]

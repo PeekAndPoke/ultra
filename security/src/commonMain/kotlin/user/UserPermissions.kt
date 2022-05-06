@@ -128,7 +128,8 @@ data class UserPermissions(
     /**
      * Return 'true' when the given [role] is present
      */
-    fun hasRole(role: String) = this.roles.contains(role)
+    fun hasRole(role: String) =
+        isSuperUser || this.roles.contains(role)
 
     /**
      * Return 'true' when any of the given [roles] is present
