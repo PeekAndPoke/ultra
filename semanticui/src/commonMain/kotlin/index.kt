@@ -18,6 +18,30 @@ val FlowContent.icon: SemanticIcon
 val FlowContent.emoji: SemanticEmoji
     get() = SemanticEmoji(this)
 
+@SemanticIconMarker
+val FlowContent.flag: SemanticFlag
+    get() = SemanticFlag(this)
+
+/**
+ * Helps the compiler to identify functions that operate on [FlowContent].
+ */
+typealias RenderFn = FlowContent.() -> Unit
+
+/**
+ * Helps the compiler to identify functions that operate on T.
+ */
+typealias RenderFunc<T> = T.() -> Unit
+
+/**
+ * Helps the compiler to identify a code block that is supposed to run on a semantic tag
+ */
+fun renderFn(block: RenderFn): RenderFn = block
+
+/**
+ * Helps the compiler to identify a code block that is supposed to run on a semantic tag
+ */
+fun <T> renderFn(block: RenderFunc<T>): RenderFunc<T> = block
+
 /**
  * Helps the compiler to identify a code block that is supposed to run on a [FlowContent]
  */
@@ -42,3 +66,13 @@ typealias SemanticIconFn = SemanticIcon.() -> SemanticIcon
  * Helps the compiler to identify a code block that is supposed to run on a semantic tag
  */
 fun semanticIcon(block: SemanticIconFn): SemanticIconFn = block
+
+/**
+ * Shorthand type
+ */
+typealias SemanticEmojiFn = SemanticEmoji.() -> SemanticEmoji
+
+/**
+ * Helps the compiler to identify a code block that is supposed to run on a semantic tag
+ */
+fun semanticEmoji(block: SemanticEmojiFn): SemanticEmojiFn = block

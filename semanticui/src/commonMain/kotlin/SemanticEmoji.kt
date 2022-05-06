@@ -8,7 +8,7 @@ class SemanticEmoji(private val parent: FlowContent) {
 
     operator fun invoke(emoji: String, block: EM.() -> Unit = {}) = render(emoji, block)
 
-    private fun render(emoji: String, block: EM.() -> Unit) {
+    private fun render(emoji: String, block: EM.() -> Unit = {}) {
 
         parent.em {
             attributes["data-emoji"] = emoji

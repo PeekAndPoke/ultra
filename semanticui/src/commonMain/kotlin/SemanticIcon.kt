@@ -1688,7 +1688,7 @@ class SemanticIcon(private val parent: FlowContent?) {
         }
     }
 
-    operator fun invoke(block: I.() -> Unit = { }) {
+    operator fun invoke(block: I.() -> Unit = {}) {
         render(block)
     }
 
