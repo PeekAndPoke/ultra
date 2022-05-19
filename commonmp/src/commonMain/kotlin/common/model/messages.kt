@@ -91,32 +91,32 @@ data class MessageCollection(
     /**
      * Creates a copy by adding the given [message]
      */
-    fun withMessage(vararg message: Message): MessageCollection =
+    fun plusMessage(vararg message: Message): MessageCollection =
         copy(messages = this.messages.plus(message))
 
     /**
      * Creates a copy and adds the given [text] as a [Message.info].
      */
-    fun withInfo(text: String, ts: MpInstant? = null): MessageCollection =
-        withMessage(Message.info(text = text, ts = ts))
+    fun plusInfo(text: String, ts: MpInstant? = null): MessageCollection =
+        plusMessage(Message.info(text = text, ts = ts))
 
     /**
      * Creates a copy and adds the given [text] as a [Message.warning].
      */
-    fun withWarning(text: String, ts: MpInstant? = null): MessageCollection =
-        withMessage(Message.warning(text = text, ts = ts))
+    fun plusWarning(text: String, ts: MpInstant? = null): MessageCollection =
+        plusMessage(Message.warning(text = text, ts = ts))
 
     /**
      * Creates a copy and adds the given [text] as a [Message.error].
      */
-    fun withError(text: String, ts: MpInstant? = null): MessageCollection =
-        withMessage(Message.error(text = text, ts = ts))
+    fun plusError(text: String, ts: MpInstant? = null): MessageCollection =
+        plusMessage(Message.error(text = text, ts = ts))
 
     /**
      * Creates a copy and adds the given [messages] as a child.
      */
-    fun withChild(messages: MessageCollection) = copy(
-        children = this.children?.plus(messages) ?: listOf(messages)
+    fun plusChild(vararg messages: MessageCollection) = copy(
+        children = this.children?.plus(messages) ?: messages.toList()
     )
 
     /**
