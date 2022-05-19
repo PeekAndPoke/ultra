@@ -5,6 +5,7 @@ package de.peekandpoke.ultra.semanticui
 import kotlinx.html.FlowContent
 import kotlinx.html.I
 import kotlinx.html.i
+import kotlin.js.JsName
 
 @Suppress("PropertyName", "FunctionName", "unused")
 class SemanticIcon(private val parent: FlowContent?) {
@@ -1678,29 +1679,36 @@ class SemanticIcon(private val parent: FlowContent?) {
 
     private val cssClasses = mutableListOf<String>()
 
+    @JsName("p")
     operator fun plus(cls: String): SemanticIcon = apply { cssClasses.add(cls) }
 
+    @JsName("p2")
     operator fun plus(classes: Array<out String>): SemanticIcon = apply { cssClasses.addAll(classes) }
 
+    @JsName("r")
     fun render(block: I.() -> Unit = {}) {
         parent?.i(classes = cssClasses.joinToString(" ") + " icon") {
             block()
         }
     }
 
+    @JsName("i")
     operator fun invoke(block: I.() -> Unit = {}) {
         render(block)
     }
 
     @SemanticUiCssMarker
+    @JsName("w")
     fun with(cls: String): SemanticIcon = this + cls
 
     @SemanticUiCssMarker
+    @JsName("c")
     fun custom(cls: String): Unit = (this + cls).render()
 
     // conditional classes
 
     @SemanticUiConditionalMarker
+    @JsName("g")
     fun given(condition: Boolean, action: SemanticIcon.() -> SemanticIcon): SemanticIcon =
         when (condition) {
             false -> this
@@ -1708,11 +1716,12 @@ class SemanticIcon(private val parent: FlowContent?) {
         }
 
     @SemanticUiConditionalMarker
+    @JsName("gn")
     fun givenNot(condition: Boolean, action: SemanticIcon.() -> SemanticIcon): SemanticIcon =
         given(!condition, action)
 
     @SemanticUiConditionalMarker
-    val then: SemanticIcon get() = this
+    inline val then: SemanticIcon get() = this
 
     // coloring ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
