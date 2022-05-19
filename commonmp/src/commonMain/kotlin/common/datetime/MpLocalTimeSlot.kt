@@ -67,7 +67,7 @@ data class MpLocalTimeSlot(
 
         return when {
             // other has invalid length
-            other.isNotValid -> listOf(this)
+            this.isNotValid || other.isNotValid -> listOf(this)
 
             // all eaten up
             other.from <= from && to <= other.to -> emptyList()

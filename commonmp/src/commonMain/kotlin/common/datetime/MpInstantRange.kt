@@ -67,6 +67,12 @@ data class MpInstantRange(
     val isValid: Boolean get() = from < to
 
     /**
+     * The range is not valid when [from] is not before [to]
+     */
+    // TODO: Test
+    val isNotValid: Boolean get() = !isValid
+
+    /**
      * Converts into an [MpZonedDateTimeRange] at the given [timezone].
      */
     fun atZone(timezone: TimeZone): MpZonedDateTimeRange {
@@ -124,6 +130,43 @@ data class MpInstantRange(
                         contains(other) ||
                         other.contains(this)
                 )
+    }
+
+    /**
+     * Cuts [other] from this range.
+     *
+     * Results in:
+     * 1. An empty list, when other fully cover this range.
+     * 2. A list with one entry, when other cuts at the left or the right side only.
+     * 3. A list with two entries, when other lies in between this range.
+     */
+    fun cutAway(other: MpInstantRange): List<MpInstantRange> {
+        return when {
+            // other has invalid length
+            this.isNotValid || other.isNotValid -> listOf(this)
+
+            // all eaten up
+            other.from <= from && to <= other.to -> emptyList()
+
+            // the other one is inside and cuts the timeslot into two pieces
+            from < other.from && other.to < to -> listOf(
+                MpInstantRange(from = from, to = other.from),
+                MpInstantRange(from = other.to, to = to)
+            )
+
+            // eating away on the right side
+            other.from < to && to <= other.to -> listOf(
+                MpInstantRange(from = from, to = other.from)
+            )
+
+            // eating away on the left side
+            other.from <= from && from < other.to -> listOf(
+                MpInstantRange(from = other.to, to = to)
+            )
+
+            // Nothing happened
+            else -> listOf(this)
+        }
     }
 
     /**

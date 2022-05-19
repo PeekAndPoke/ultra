@@ -75,6 +75,17 @@ data class MpZonedDateTimeRange(
         return to.compareTo(from.plus(other))
     }
 
+    /**
+     * Converts to the given [timezone].
+     */
+    // TODO: Test
+    fun atZone(timezone: TimeZone): MpZonedDateTimeRange {
+        return MpZonedDateTimeRange(
+            from = from.atZone(timezone),
+            to = to.atZone(timezone),
+        )
+    }
+
     // TODO: Test
     fun contains(datetime: MpZonedDateTime): Boolean {
         return contains(datetime.toInstant())
@@ -118,14 +129,16 @@ data class MpZonedDateTimeRange(
     }
 
     /**
-     * Converts to the given [timezone].
+     * Cuts [other] from this range.
+     *
+     * Results in:
+     * 1. An empty list, when other fully cover this range.
+     * 2. A list with one entry, when other cuts at the left or the right side only.
+     * 3. A list with two entries, when other lies in between this range.
      */
-    // TODO: Test
-    fun atZone(timezone: TimeZone): MpZonedDateTimeRange {
-        return MpZonedDateTimeRange(
-            from = from.atZone(timezone),
-            to = to.atZone(timezone),
-        )
+    fun cutAway(other: MpZonedDateTimeRange): List<MpZonedDateTimeRange> {
+        return toInstantRange().cutAway(other.toInstantRange())
+            .map { it.atZone(from.timezone) }
     }
 
     /**

@@ -249,7 +249,7 @@ class MpLocalTimeSlotSpec : StringSpec({
 
         ("cutAway(other: TimeSlot) - " +
                 "$title: ${source.formatHhMmSs()} cut away ${other.formatHhMmSs()} " +
-                "must be ${expected.format()}") {
+                "must be ${expected.format()}  ") {
 
             source.cutAway(other) shouldBe expected
         }

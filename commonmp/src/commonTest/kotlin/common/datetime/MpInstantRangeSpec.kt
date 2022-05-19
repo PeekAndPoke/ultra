@@ -2,12 +2,14 @@ package de.peekandpoke.ultra.common.datetime
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 @Suppress("unused")
 class MpInstantRangeSpec : StringSpec({
@@ -62,7 +64,7 @@ class MpInstantRangeSpec : StringSpec({
         result.isNotOpen shouldBe false
     }
 
-    "Creation - beginningAt" {
+    "Creation - endingAt" {
         val result = MpInstantRange.endingAt(
             MpInstant.parse("2022-04-01T00:00:00Z")
         )
@@ -79,17 +81,6 @@ class MpInstantRangeSpec : StringSpec({
 
         result.isOpen shouldBe true
         result.isNotOpen shouldBe false
-    }
-
-    "Creation - endingAt" {
-        val result = MpInstantRange.beginningAt(
-            MpInstant.parse("2022-04-01T00:00:00Z")
-        )
-
-        result shouldBe MpInstantRange(
-            MpInstant.parse("2022-04-01T00:00:00Z"),
-            MpInstant.Doomsday,
-        )
     }
 
     "duration" {
@@ -179,7 +170,7 @@ class MpInstantRangeSpec : StringSpec({
         }
     }
 
-    "contains(other: MpInstantRange)" {
+    "contains(other: MpAbsoluteDateTime)" {
 
         @Suppress("UnnecessaryVariable")
         val from = now
@@ -227,6 +218,78 @@ class MpInstantRangeSpec : StringSpec({
 
             valid.contains(invalid) shouldBe false
             invalid.contains(valid) shouldBe false
+        }
+    }
+
+    listOf(
+        row(
+            "All eaten up - exactly",
+            now.toRange(1.hours),
+            now.toRange(1.hours),
+            listOf(),
+        ),
+        row(
+            "All eaten up - surrounding",
+            now.toRange(1.hours),
+            now.minus(1.seconds).toRange(1.hours + 2.seconds),
+            listOf(),
+        ),
+        row(
+            "In the middle",
+            now.toRange(3.hours),
+            now.plus(1.hours).toRange(1.hours),
+            listOf(
+                now.toRange(1.hours),
+                now.plus(2.hours).toRange(1.hours),
+            ),
+        ),
+        row(
+            "In the middle but duration = 0",
+            now.toRange(3.hours),
+            now.plus(1.hours).toRange(0.hours),
+            listOf(
+                now.toRange(3.hours),
+            ),
+        ),
+        row(
+            "On the left side",
+            now.toRange(3.hours),
+            now.toRange(1.hours),
+            listOf(
+                now.plus(1.hours).toRange(2.hours)
+            ),
+        ),
+        row(
+            "On the right side",
+            now.toRange(3.hours),
+            now.plus(2.hours).toRange(1.hours),
+            listOf(
+                now.toRange(2.hours)
+            ),
+        ),
+        row(
+            "Too far on the left side",
+            now.toRange(3.hours),
+            now.minus(2.hours).toRange(2.hours),
+            listOf(
+                now.toRange(3.hours),
+            ),
+        ),
+        row(
+            "Too far on the right side",
+            now.toRange(3.hours),
+            now.plus(3.hours).toRange(2.hours),
+            listOf(
+                now.toRange(3.hours),
+            ),
+        ),
+    ).forEach { (title, source, other, expected) ->
+
+        ("cutAway(other: MpInstantRange) - " +
+                "$title: ${source.format()} cut away ${other.format()} " +
+                "must be ${expected.format()}  ") {
+
+            source.cutAway(other) shouldBe expected
         }
     }
 })

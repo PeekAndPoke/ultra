@@ -3,6 +3,7 @@
 package de.peekandpoke.ultra.common.datetime
 
 import kotlinx.datetime.TimeZone
+import kotlin.jvm.JvmName
 
 fun ts(
     fromHour: Int, fromMinute: Int, toHour: Int, toMinute: Int
@@ -18,7 +19,18 @@ fun ts(
     to = MpLocalTime.of(hour = toHour, minute = toMinute, second = toSecond),
 )
 
+@JvmName("format_List_MpLocalTimeSlot")
 fun List<MpLocalTimeSlot>.format() = map { it.formatHhMmSs() }.toString()
+
+fun MpInstantRange.format() = atSystemDefaultZone().formatDdMmmYyyyHhMm()
+
+@JvmName("format_List_MpInstantRange")
+fun List<MpInstantRange>.format() = map { it.format() }.toString()
+
+fun MpZonedDateTimeRange.format() = formatDdMmmYyyyHhMm()
+
+@JvmName("format_List_MpZonedDateTimeRange")
+fun List<MpZonedDateTimeRange>.format() = map { it.format() }.toString()
 
 object TestConstants {
 
