@@ -22,6 +22,11 @@ fun <T> withMessages(title: String = "", block: MessageCollection.Builder.() -> 
     )
 }
 
+// TODO: test me
+fun messages(title: String = "", block: MessageCollection.Builder.() -> Unit): Messages {
+    return withMessages(title) { block() }.messages
+}
+
 @Serializable
 data class MessageCollection(
     val title: String,
@@ -69,10 +74,49 @@ data class MessageCollection(
     }
 
     /**
+     * Returns 'true' when none of the messages is a [Message.Type.warning] or [Message.Type.error]
+     */
+    val isSuccess get() = (getWorstMessageType() == Message.Type.info)
+
+    /**
+     * Returns 'true' when none of the messages is a [Message.Type.error]
+     */
+    val isWarningOrBetter get() = getWorstMessageType() in listOf(Message.Type.warning, Message.Type.info)
+
+    /**
+     * Returns 'true' when at least one the messages is a [Message.Type.error]
+     */
+    val isError get() = getWorstMessageType() == Message.Type.error
+
+    /**
      * Creates a copy by adding the given [message]
      */
-    fun add(vararg message: Message) = copy(
-        messages = this.messages.plus(message)
+    fun withMessage(vararg message: Message): MessageCollection =
+        copy(messages = this.messages.plus(message))
+
+    /**
+     * Creates a copy and adds the given [text] as a [Message.info].
+     */
+    fun withInfo(text: String, ts: MpInstant? = null): MessageCollection =
+        withMessage(Message.info(text = text, ts = ts))
+
+    /**
+     * Creates a copy and adds the given [text] as a [Message.warning].
+     */
+    fun withWarning(text: String, ts: MpInstant? = null): MessageCollection =
+        withMessage(Message.warning(text = text, ts = ts))
+
+    /**
+     * Creates a copy and adds the given [text] as a [Message.error].
+     */
+    fun withError(text: String, ts: MpInstant? = null): MessageCollection =
+        withMessage(Message.error(text = text, ts = ts))
+
+    /**
+     * Creates a copy and adds the given [messages] as a child.
+     */
+    fun withChild(messages: MessageCollection) = copy(
+        children = this.children?.plus(messages) ?: listOf(messages)
     )
 
     /**
@@ -106,21 +150,6 @@ data class MessageCollection(
             .maxOrNull()
             ?: Message.Type.info
     }
-
-    /**
-     * Returns 'true' when none of the messages is a [Message.Type.warning] or [Message.Type.error]
-     */
-    val isSuccess get() = (getWorstMessageType() == Message.Type.info)
-
-    /**
-     * Returns 'true' when none of the messages is a [Message.Type.error]
-     */
-    val isWarningOrBetter get() = getWorstMessageType() in listOf(Message.Type.warning, Message.Type.info)
-
-    /**
-     * Returns 'true' when at least one the messages is a [Message.Type.error]
-     */
-    val isError get() = getWorstMessageType() == Message.Type.error
 }
 
 @Serializable
@@ -133,11 +162,11 @@ data class Message(
         fun info(text: String, ts: MpInstant? = null) =
             Message(type = Type.info, text = text, ts = ts)
 
-        fun warning(text: String, createdAt: MpInstant? = null) =
-            Message(type = Type.warning, text = text, ts = createdAt)
+        fun warning(text: String, ts: MpInstant? = null) =
+            Message(type = Type.warning, text = text, ts = ts)
 
-        fun error(text: String, createdAt: MpInstant? = null) =
-            Message(type = Type.error, text = text, ts = createdAt)
+        fun error(text: String, ts: MpInstant? = null) =
+            Message(type = Type.error, text = text, ts = ts)
     }
 
     @Suppress("EnumEntryName", "Detekt:EnumNaming")

@@ -34,7 +34,7 @@ class MessageSpec : FreeSpec() {
 
             "Adding nothing" {
 
-                val subject = Messages(title = "empty").add()
+                val subject = Messages(title = "empty").withMessage()
 
                 subject.getWorstMessageType() shouldBe Message.Type.info
                 subject.getAllMessages() shouldBe emptyList()
@@ -52,7 +52,7 @@ class MessageSpec : FreeSpec() {
                         Message.info("#1")
                     ),
                     children = children
-                ).add(
+                ).withMessage(
                     Message.info("#2"),
                     Message.info("#3"),
                 )
@@ -205,7 +205,7 @@ class MessageSpec : FreeSpec() {
                             title = "nested 1",
                             children = listOf(
                                 Messages(title = "nested 1-1")
-                                    .add(Message.info("Info")),
+                                    .withMessage(Message.info("Info")),
                             )
                         ),
                         Messages("nested 2"),
@@ -224,7 +224,7 @@ class MessageSpec : FreeSpec() {
                             title = "nested 1",
                             children = listOf(
                                 Messages(title = "nested 1-1")
-                                    .add(Message.warning("Warning")),
+                                    .withMessage(Message.warning("Warning")),
                             )
                         ),
                         Messages("nested 2"),
@@ -243,7 +243,7 @@ class MessageSpec : FreeSpec() {
                             title = "nested 1",
                             children = listOf(
                                 Messages(title = "nested 1-1")
-                                    .add(Message.error("Error")),
+                                    .withMessage(Message.error("Error")),
                             )
                         ),
                         Messages("nested 2"),
