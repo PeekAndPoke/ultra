@@ -63,11 +63,6 @@ object Deps {
     private const val kotlinx_datetime_version = "0.3.2"
     const val kotlinx_datetime_common = "org.jetbrains.kotlinx:kotlinx-datetime:$kotlinx_datetime_version"
 
-    // https://mvnrepository.com/artifact/org.jetbrains.kotlin-wrappers/kotlin-css
-    private const val kotlinx_wrappers_css_version = "1.0.0-pre.332-kotlin-1.6.21"
-    const val kotlinx_wrappers_css =
-        "org.jetbrains.kotlin-wrappers:kotlin-css:$kotlinx_wrappers_css_version"
-
     // https://mvnrepository.com/artifact/com.soywiz.korlibs.klock/klock
     private const val korlibs_klock_version = "2.7.0"
     const val korlibs_klock_common = "com.soywiz.korlibs.klock:klock:$korlibs_klock_version"
