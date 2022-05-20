@@ -24,754 +24,522 @@ import kotlin.js.JsName
 
 @Suppress("FunctionName", "PropertyName", "unused", "Detekt:TooManyFunctions", "Detekt:VariableNaming")
 class SemanticTag(
-    @PublishedApi internal val flow: FlowContent,
+    @PublishedApi internal val parent: FlowContent,
     @PublishedApi internal val cssClasses: MutableList<String>,
 ) {
     fun _cssClasses(): String = cssClasses.filter { it.isNotBlank() }.joinToString(" ")
 
     fun _renderAsTag(block: FlowContent.() -> Unit) {
-        block(flow)
+        block(parent)
     }
 
     private fun attrs() = attributesMapOf("class", _cssClasses())
 
-    @SemanticUiCssMarker
-    @JsName("i")
-    operator fun invoke(block: DIV.() -> Unit): Unit = Div(block)
+    @SemanticUiCssMarker @JsName("_i") operator fun invoke(block: DIV.() -> Unit): Unit = Div(block)
 
-    @SemanticUiTagMarker
-    @JsName("H1")
-    infix fun H1(block: H1.() -> Unit): Unit = H1(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("H1") infix fun H1(block: H1.() -> Unit): Unit =
+        H1(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("H2")
-    infix fun H2(block: H2.() -> Unit): Unit = H2(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("H2") infix fun H2(block: H2.() -> Unit): Unit =
+        H2(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("H3")
-    infix fun H3(block: H3.() -> Unit): Unit = H3(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("H3") infix fun H3(block: H3.() -> Unit): Unit =
+        H3(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("H4")
-    infix fun H4(block: H4.() -> Unit): Unit = H4(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("H4") infix fun H4(block: H4.() -> Unit): Unit =
+        H4(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("H5")
-    infix fun H5(block: H5.() -> Unit): Unit = H5(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("H5") infix fun H5(block: H5.() -> Unit): Unit =
+        H5(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("H6")
-    infix fun H6(block: H6.() -> Unit): Unit = H6(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("H6") infix fun H6(block: H6.() -> Unit): Unit =
+        H6(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("A")
-    infix fun A(block: A.() -> Unit): Unit = A(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("A") infix fun A(block: A.() -> Unit): Unit =
+        A(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("B")
-    infix fun B(block: B.() -> Unit): Unit = B(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("B") infix fun B(block: B.() -> Unit): Unit =
+        B(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("Button")
-    infix fun Button(block: BUTTON.() -> Unit): Unit = BUTTON(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("Button") infix fun Button(block: BUTTON.() -> Unit): Unit =
+        BUTTON(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("Div")
-    infix fun Div(block: DIV.() -> Unit): Unit = DIV(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("Div") infix fun Div(block: DIV.() -> Unit): Unit =
+        DIV(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("Form")
-    infix fun Form(block: FORM.() -> Unit): Unit = FORM(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("Form") infix fun Form(block: FORM.() -> Unit): Unit =
+        FORM(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("I")
-    infix fun I(block: I.() -> Unit): Unit = I(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("I") infix fun I(block: I.() -> Unit): Unit =
+        I(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("Input")
-    infix fun Input(block: INPUT.() -> Unit): Unit = INPUT(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("Input") infix fun Input(block: INPUT.() -> Unit): Unit =
+        INPUT(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("Img")
-    infix fun Img(block: IMG.() -> Unit): Unit = IMG(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("Img") infix fun Img(block: IMG.() -> Unit): Unit =
+        IMG(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("Label")
-    infix fun Label(block: LABEL.() -> Unit): Unit = LABEL(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("Label") infix fun Label(block: LABEL.() -> Unit): Unit =
+        LABEL(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("P")
-    infix fun P(block: P.() -> Unit): Unit = P(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("P") infix fun P(block: P.() -> Unit): Unit =
+        P(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("Span")
-    infix fun Span(block: SPAN.() -> Unit): Unit = SPAN(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("Span") infix fun Span(block: SPAN.() -> Unit): Unit =
+        SPAN(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("Submit")
-    infix fun Submit(block: BUTTON.() -> Unit): Unit = BUTTON(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("Submit") infix fun Submit(block: BUTTON.() -> Unit): Unit =
+        BUTTON(attrs(), parent.consumer).visitNoInline(block)
 
-    @SemanticUiTagMarker
-    @JsName("Table")
-    infix fun Table(block: TABLE.() -> Unit): Unit = TABLE(attrs(), flow.consumer).visitNoInline(block)
+    @SemanticUiTagMarker @JsName("Table") infix fun Table(block: TABLE.() -> Unit): Unit =
+        TABLE(attrs(), parent.consumer).visitNoInline(block)
 
     // Adding Css Classes //////////////////////////////////////////////////////////////////////////////////////////////
 
-    @SemanticUiCssMarker
-    @JsName("p")
-    operator fun plus(cls: String): SemanticTag = apply { cssClasses.add(cls) }
+    @SemanticUiCssMarker @JsName("_p") operator fun plus(cls: String): SemanticTag = apply { cssClasses.add(cls) }
 
-    @SemanticUiCssMarker
-    @JsName("p2")
-    operator fun plus(classes: Array<out String>): SemanticTag = apply { cssClasses.addAll(classes) }
+    @SemanticUiCssMarker @JsName("_p2") operator fun plus(classes: Array<out String>): SemanticTag =
+        apply { cssClasses.addAll(classes) }
 
-    @SemanticUiCssMarker
-    inline fun with(block: SemanticTag.() -> SemanticTag): SemanticTag = this.run(block)
+    @SemanticUiCssMarker inline fun with(block: SemanticTag.() -> SemanticTag): SemanticTag = this.run(block)
 
-    @SemanticUiCssMarker
-    @JsName("w")
-    fun with(vararg cls: String): SemanticTag = this + cls
+    @SemanticUiCssMarker @JsName("_w") fun with(vararg cls: String): SemanticTag = this + cls
 
-    @SemanticUiCssMarker
-    @JsName("w2")
-    fun with(vararg cls: String, flow: DIV.() -> Unit): Unit = (this + cls).invoke(flow)
+    @SemanticUiCssMarker @JsName("_w2") fun with(vararg cls: String, flow: DIV.() -> Unit): Unit =
+        (this + cls).invoke(flow)
 
     // Conditional classes
 
-    @SemanticUiConditionalMarker
-    @JsName("g")
-    fun given(condition: Boolean, action: SemanticTag.() -> SemanticTag): SemanticTag =
-        when (condition) {
-            false -> this
-            else -> this.action()
-        }
+    @SemanticUiConditionalMarker @JsName("_g") fun given(
+        condition: Boolean,
+        action: SemanticTag.() -> SemanticTag,
+    ): SemanticTag = when (condition) {
+        false -> this
+        else -> this.action()
+    }
 
-    @SemanticUiConditionalMarker
-    @JsName("gn")
-    fun givenNot(condition: Boolean, action: SemanticTag.() -> SemanticTag): SemanticTag =
-        given(!condition, action)
+    @SemanticUiConditionalMarker @JsName("_gn") fun givenNot(
+        condition: Boolean,
+        action: SemanticTag.() -> SemanticTag,
+    ): SemanticTag = given(!condition, action)
 
-    @SemanticUiConditionalMarker
-    inline val then: SemanticTag get() = this
+    @SemanticUiConditionalMarker inline val then: SemanticTag get() = this
 
     // SemanticUI Numbers //////////////////////////////////////////////////////////////////////////////////////////////
 
-    @SemanticUiCssMarker
-    @JsName("n")
-    fun number(int: Int): SemanticTag = number(SemanticNumber.of(int))
+    @SemanticUiCssMarker @JsName("_n") fun number(int: Int): SemanticTag = number(SemanticNumber.of(int))
 
-    @SemanticUiCssMarker
-    @JsName("n2")
-    fun number(int: Int, flow: DIV.() -> Unit): Unit = number(SemanticNumber.of(int), flow)
+    @SemanticUiCssMarker @JsName("_n2") fun number(int: Int, flow: DIV.() -> Unit): Unit =
+        number(SemanticNumber.of(int), flow)
 
-    @SemanticUiCssMarker
-    @JsName("n3")
-    fun number(number: SemanticNumber): SemanticTag = this + number.toString()
+    @SemanticUiCssMarker @JsName("_n3") fun number(number: SemanticNumber): SemanticTag = this + number.toString()
 
-    @SemanticUiCssMarker
-    @JsName("n4")
-    fun number(number: SemanticNumber, flow: DIV.() -> Unit): Unit = with(number.toString(), flow = flow)
+    @SemanticUiCssMarker @JsName("_n4") fun number(number: SemanticNumber, flow: DIV.() -> Unit): Unit =
+        with(number.toString(), flow = flow)
 
-    @SemanticUiCssMarker
-    inline val one: SemanticTag get() = this + "one"
+    @SemanticUiCssMarker val one: SemanticTag @JsName(Fn.f0001) get() = this + "one"
 
-    @SemanticUiCssMarker
-    inline val two: SemanticTag get() = this + "two"
+    @SemanticUiCssMarker val two: SemanticTag @JsName(Fn.f0002) get() = this + "two"
 
-    @SemanticUiCssMarker
-    inline val three: SemanticTag get() = this + "three"
+    @SemanticUiCssMarker val three: SemanticTag @JsName(Fn.f0003) get() = this + "three"
 
-    @SemanticUiCssMarker
-    inline val four: SemanticTag get() = this + "four"
+    @SemanticUiCssMarker val four: SemanticTag @JsName(Fn.f0004) get() = this + "four"
 
-    @SemanticUiCssMarker
-    inline val five: SemanticTag get() = this + "five"
+    @SemanticUiCssMarker val five: SemanticTag @JsName(Fn.f0005) get() = this + "five"
 
-    @SemanticUiCssMarker
-    inline val six: SemanticTag get() = this + "six"
+    @SemanticUiCssMarker val six: SemanticTag @JsName(Fn.f0006) get() = this + "six"
 
-    @SemanticUiCssMarker
-    inline val seven: SemanticTag get() = this + "seven"
+    @SemanticUiCssMarker val seven: SemanticTag @JsName(Fn.f0007) get() = this + "seven"
 
-    @SemanticUiCssMarker
-    inline val eight: SemanticTag get() = this + "eight"
+    @SemanticUiCssMarker val eight: SemanticTag @JsName(Fn.f0008) get() = this + "eight"
 
-    @SemanticUiCssMarker
-    inline val nine: SemanticTag get() = this + "nine"
+    @SemanticUiCssMarker val nine: SemanticTag @JsName(Fn.f0009) get() = this + "nine"
 
-    @SemanticUiCssMarker
-    inline val ten: SemanticTag get() = this + "ten"
+    @SemanticUiCssMarker val ten: SemanticTag @JsName(Fn.f0010) get() = this + "ten"
 
-    @SemanticUiCssMarker
-    inline val eleven: SemanticTag get() = this + "eleven"
+    @SemanticUiCssMarker val eleven: SemanticTag @JsName(Fn.f0011) get() = this + "eleven"
 
-    @SemanticUiCssMarker
-    inline val twelve: SemanticTag get() = this + "twelve"
+    @SemanticUiCssMarker val twelve: SemanticTag @JsName(Fn.f0012) get() = this + "twelve"
 
-    @SemanticUiCssMarker
-    inline val thirteen: SemanticTag get() = this + "thirteen"
+    @SemanticUiCssMarker val thirteen: SemanticTag @JsName(Fn.f0013) get() = this + "thirteen"
 
-    @SemanticUiCssMarker
-    inline val fourteen: SemanticTag get() = this + "fourteen"
+    @SemanticUiCssMarker val fourteen: SemanticTag @JsName(Fn.f0014) get() = this + "fourteen"
 
-    @SemanticUiCssMarker
-    inline val fifteen: SemanticTag get() = this + "fifteen"
+    @SemanticUiCssMarker val fifteen: SemanticTag @JsName(Fn.f0015) get() = this + "fifteen"
 
-    @SemanticUiCssMarker
-    inline val sixteen: SemanticTag get() = this + "sixteen"
+    @SemanticUiCssMarker val sixteen: SemanticTag @JsName(Fn.f0016) get() = this + "sixteen"
 
     // SemanticUI Colors ///////////////////////////////////////////////////////////////////////////////////////////////
 
-    @SemanticUiCssMarker
-    @JsName("c")
-    fun color(color: SemanticColor): SemanticTag = when {
+    @SemanticUiCssMarker @JsName(Fn.f0017) fun color(color: SemanticColor): SemanticTag = when {
         color.isSet -> with(color.toString())
         else -> this
     }
 
-    @SemanticUiCssMarker
-    @JsName("c2")
-    fun color(color: SemanticColor, flow: DIV.() -> Unit): Unit = with(color.toString(), flow = flow)
+    @SemanticUiCssMarker @JsName(Fn.f0018) fun color(color: SemanticColor, flow: DIV.() -> Unit): Unit =
+        with(color.toString(), flow = flow)
 
-    @SemanticUiCssMarker
-    inline val color: SemanticTag get() = this + "color"
+    @SemanticUiCssMarker val color: SemanticTag @JsName(Fn.f0019) get() = this + "color"
 
-    @SemanticUiCssMarker
-    inline val inverted: SemanticTag get() = this + "inverted"
+    @SemanticUiCssMarker val inverted: SemanticTag @JsName(Fn.f0020) get() = this + "inverted"
 
-    @SemanticUiCssMarker
-    inline val red: SemanticTag get() = this + "red"
+    @SemanticUiCssMarker val red: SemanticTag @JsName(Fn.f0021) get() = this + "red"
 
-    @SemanticUiCssMarker
-    inline val orange: SemanticTag get() = this + "orange"
+    @SemanticUiCssMarker val orange: SemanticTag @JsName(Fn.f0022) get() = this + "orange"
 
-    @SemanticUiCssMarker
-    inline val yellow: SemanticTag get() = this + "yellow"
+    @SemanticUiCssMarker val yellow: SemanticTag @JsName(Fn.f0023) get() = this + "yellow"
 
-    @SemanticUiCssMarker
-    inline val olive: SemanticTag get() = this + "olive"
+    @SemanticUiCssMarker val olive: SemanticTag @JsName(Fn.f0024) get() = this + "olive"
 
-    @SemanticUiCssMarker
-    inline val green: SemanticTag get() = this + "green"
+    @SemanticUiCssMarker val green: SemanticTag @JsName(Fn.f0025) get() = this + "green"
 
-    @SemanticUiCssMarker
-    inline val teal: SemanticTag get() = this + "teal"
+    @SemanticUiCssMarker val teal: SemanticTag @JsName(Fn.f0026) get() = this + "teal"
 
-    @SemanticUiCssMarker
-    inline val blue: SemanticTag get() = this + "blue"
+    @SemanticUiCssMarker val blue: SemanticTag @JsName(Fn.f0027) get() = this + "blue"
 
-    @SemanticUiCssMarker
-    inline val violet: SemanticTag get() = this + "violet"
+    @SemanticUiCssMarker val violet: SemanticTag @JsName(Fn.f0028) get() = this + "violet"
 
-    @SemanticUiCssMarker
-    inline val purple: SemanticTag get() = this + "purple"
+    @SemanticUiCssMarker val purple: SemanticTag @JsName(Fn.f0029) get() = this + "purple"
 
-    @SemanticUiCssMarker
-    inline val pink: SemanticTag get() = this + "pink"
+    @SemanticUiCssMarker val pink: SemanticTag @JsName(Fn.f0030) get() = this + "pink"
 
-    @SemanticUiCssMarker
-    inline val brown: SemanticTag get() = this + "brown"
+    @SemanticUiCssMarker val brown: SemanticTag @JsName(Fn.f0031) get() = this + "brown"
 
-    @SemanticUiCssMarker
-    inline val grey: SemanticTag get() = this + "grey"
+    @SemanticUiCssMarker val grey: SemanticTag @JsName(Fn.f0032) get() = this + "grey"
 
-    @SemanticUiCssMarker
-    inline val black: SemanticTag get() = this + "black"
+    @SemanticUiCssMarker val black: SemanticTag @JsName(Fn.f0033) get() = this + "black"
 
-    @SemanticUiCssMarker
-    inline val white: SemanticTag get() = this + "white"
+    @SemanticUiCssMarker val white: SemanticTag @JsName(Fn.f0034) get() = this + "white"
 
     // Sizes ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    @SemanticUiCssMarker
-    inline val short: SemanticTag get() = this + "short"
+    @SemanticUiCssMarker val short: SemanticTag @JsName(Fn.f0035) get() = this + "short"
 
-    @SemanticUiCssMarker
-    inline val long: SemanticTag get() = this + "long"
+    @SemanticUiCssMarker val long: SemanticTag @JsName(Fn.f0036) get() = this + "long"
 
-    @SemanticUiCssMarker
-    inline val mini: SemanticTag get() = this + "mini"
+    @SemanticUiCssMarker val mini: SemanticTag @JsName(Fn.f0037) get() = this + "mini"
 
-    @SemanticUiCssMarker
-    inline val tiny: SemanticTag get() = this + "tiny"
+    @SemanticUiCssMarker val tiny: SemanticTag @JsName(Fn.f0038) get() = this + "tiny"
 
-    @SemanticUiCssMarker
-    inline val small: SemanticTag get() = this + "small"
+    @SemanticUiCssMarker val small: SemanticTag @JsName(Fn.f0039) get() = this + "small"
 
-    @SemanticUiCssMarker
-    inline val medium: SemanticTag get() = this + "medium"
+    @SemanticUiCssMarker val medium: SemanticTag @JsName(Fn.f0040) get() = this + "medium"
 
-    @SemanticUiCssMarker
-    inline val large: SemanticTag get() = this + "large"
+    @SemanticUiCssMarker val large: SemanticTag @JsName(Fn.f0041) get() = this + "large"
 
-    @SemanticUiCssMarker
-    inline val big: SemanticTag get() = this + "big"
+    @SemanticUiCssMarker val big: SemanticTag @JsName(Fn.f0042) get() = this + "big"
 
-    @SemanticUiCssMarker
-    inline val huge: SemanticTag get() = this + "huge"
+    @SemanticUiCssMarker val huge: SemanticTag @JsName(Fn.f0043) get() = this + "huge"
 
-    @SemanticUiCssMarker
-    inline val massive: SemanticTag get() = this + "massive"
+    @SemanticUiCssMarker val massive: SemanticTag @JsName(Fn.f0044) get() = this + "massive"
 
     // SemanticUI Emphasis /////////////////////////////////////////////////////////////////////////////////////////////
 
-    @SemanticUiCssMarker
-    inline val primary: SemanticTag get() = this + "primary"
+    @SemanticUiCssMarker val primary: SemanticTag @JsName(Fn.f0045) get() = this + "primary"
 
-    @SemanticUiCssMarker
-    inline val secondary: SemanticTag get() = this + "secondary"
+    @SemanticUiCssMarker val secondary: SemanticTag @JsName(Fn.f0046) get() = this + "secondary"
 
-    @SemanticUiCssMarker
-    inline val positive: SemanticTag get() = this + "positive"
+    @SemanticUiCssMarker val positive: SemanticTag @JsName(Fn.f0047) get() = this + "positive"
 
-    @SemanticUiCssMarker
-    inline val negative: SemanticTag get() = this + "negative"
+    @SemanticUiCssMarker val negative: SemanticTag @JsName(Fn.f0048) get() = this + "negative"
 
-    @SemanticUiCssMarker
-    inline val warning: SemanticTag get() = this + "warning"
+    @SemanticUiCssMarker val warning: SemanticTag @JsName(Fn.f0049) get() = this + "warning"
 
     // SemanticUI Brands
 
-    @SemanticUiCssMarker
-    inline val facebook: SemanticTag get() = this + "facebook"
+    @SemanticUiCssMarker val facebook: SemanticTag @JsName(Fn.f0050) get() = this + "facebook"
 
-    @SemanticUiCssMarker
-    inline val twitter: SemanticTag get() = this + "twitter"
+    @SemanticUiCssMarker val twitter: SemanticTag @JsName(Fn.f0051) get() = this + "twitter"
 
-    @SemanticUiCssMarker
-    inline val google_plus: SemanticTag get() = this + "google plus"
+    @SemanticUiCssMarker val google_plus: SemanticTag @JsName(Fn.f0052) get() = this + "google plus"
 
-    @SemanticUiCssMarker
-    inline val linkedin: SemanticTag get() = this + "linkedin"
+    @SemanticUiCssMarker val linkedin: SemanticTag @JsName(Fn.f0053) get() = this + "linkedin"
 
-    @SemanticUiCssMarker
-    inline val instagram: SemanticTag get() = this + "instagram"
+    @SemanticUiCssMarker val instagram: SemanticTag @JsName(Fn.f0054) get() = this + "instagram"
 
-    @SemanticUiCssMarker
-    inline val youtube: SemanticTag get() = this + "youtube"
+    @SemanticUiCssMarker val youtube: SemanticTag @JsName(Fn.f0055) get() = this + "youtube"
 
     // Semantic UI Words
 
-    @SemanticUiCssMarker
-    inline val icons: SemanticTag get() = this + "icons"
+    @SemanticUiCssMarker val icons: SemanticTag @JsName(Fn.f0056) get() = this + "icons"
 
-    @SemanticUiCssMarker
-    inline val text: SemanticTag get() = this + "text"
+    @SemanticUiCssMarker val text: SemanticTag @JsName(Fn.f0057) get() = this + "text"
 
-    @SemanticUiCssMarker
-    inline val actions: SemanticTag get() = this + "actions"
+    @SemanticUiCssMarker val actions: SemanticTag @JsName(Fn.f0058) get() = this + "actions"
 
-    @SemanticUiCssMarker
-    inline val active: SemanticTag get() = this + "active"
+    @SemanticUiCssMarker val active: SemanticTag @JsName(Fn.f0059) get() = this + "active"
 
-    @SemanticUiCssMarker
-    inline val basic: SemanticTag get() = this + "basic"
+    @SemanticUiCssMarker val basic: SemanticTag @JsName(Fn.f0060) get() = this + "basic"
 
-    @SemanticUiCssMarker
-    inline val bar: SemanticTag get() = this + "bar"
+    @SemanticUiCssMarker val bar: SemanticTag @JsName(Fn.f0061) get() = this + "bar"
 
-    @SemanticUiCssMarker
-    inline val button: SemanticTag get() = this + "button"
+    @SemanticUiCssMarker val button: SemanticTag @JsName(Fn.f0062) get() = this + "button"
 
-    @SemanticUiCssMarker
-    inline val buttons: SemanticTag get() = this + "buttons"
+    @SemanticUiCssMarker val buttons: SemanticTag @JsName(Fn.f0063) get() = this + "buttons"
 
-    @SemanticUiCssMarker
-    inline val circular: SemanticTag get() = this + "circular"
+    @SemanticUiCssMarker val circular: SemanticTag @JsName(Fn.f0064) get() = this + "circular"
 
-    @SemanticUiCssMarker
-    inline val compact: SemanticTag get() = this + "compact"
+    @SemanticUiCssMarker val compact: SemanticTag @JsName(Fn.f0065) get() = this + "compact"
 
-    @SemanticUiCssMarker
-    inline val disabled: SemanticTag get() = this + "disabled"
+    @SemanticUiCssMarker val disabled: SemanticTag @JsName(Fn.f0066) get() = this + "disabled"
 
-    @SemanticUiCssMarker
-    inline val divider: SemanticTag get() = this + "divider"
+    @SemanticUiCssMarker val divider: SemanticTag @JsName(Fn.f0067) get() = this + "divider"
 
-    @SemanticUiCssMarker
-    inline val dividing: SemanticTag get() = this + "dividing"
+    @SemanticUiCssMarker val dividing: SemanticTag @JsName(Fn.f0068) get() = this + "dividing"
 
-    @SemanticUiCssMarker
-    inline val down: SemanticTag get() = this + "down"
+    @SemanticUiCssMarker val down: SemanticTag @JsName(Fn.f0069) get() = this + "down"
 
-    @SemanticUiCssMarker
-    inline val floated: SemanticTag get() = this + "floated"
+    @SemanticUiCssMarker val floated: SemanticTag @JsName(Fn.f0070) get() = this + "floated"
 
-    @SemanticUiCssMarker
-    inline val floating: SemanticTag get() = this + "floating"
+    @SemanticUiCssMarker val floating: SemanticTag @JsName(Fn.f0071) get() = this + "floating"
 
-    @SemanticUiCssMarker
-    inline val fluid: SemanticTag get() = this + "fluid"
+    @SemanticUiCssMarker val fluid: SemanticTag @JsName(Fn.f0072) get() = this + "fluid"
 
-    @SemanticUiCssMarker
-    inline val flowing: SemanticTag get() = this + "flowing"
+    @SemanticUiCssMarker val flowing: SemanticTag @JsName(Fn.f0073) get() = this + "flowing"
 
-    @SemanticUiCssMarker
-    inline val piled: SemanticTag get() = this + "piled"
+    @SemanticUiCssMarker val piled: SemanticTag @JsName(Fn.f0074) get() = this + "piled"
 
-    @SemanticUiCssMarker
-    inline val fixed: SemanticTag get() = this + "fixed"
+    @SemanticUiCssMarker val fixed: SemanticTag @JsName(Fn.f0075) get() = this + "fixed"
 
-    @SemanticUiCssMarker
-    inline val header: SemanticTag get() = this + "header"
+    @SemanticUiCssMarker val header: SemanticTag @JsName(Fn.f0076) get() = this + "header"
 
-    @SemanticUiCssMarker
-    inline val icon: SemanticTag get() = this + "icon"
+    @SemanticUiCssMarker val icon: SemanticTag @JsName(Fn.f0077) get() = this + "icon"
 
-    @SemanticUiCssMarker
-    inline val image: SemanticTag get() = this + "image"
+    @SemanticUiCssMarker val image: SemanticTag @JsName(Fn.f0078) get() = this + "image"
 
-    @SemanticUiCssMarker
-    inline val line: SemanticTag get() = this + "line"
+    @SemanticUiCssMarker val line: SemanticTag @JsName(Fn.f0079) get() = this + "line"
 
-    @SemanticUiCssMarker
-    inline val link: SemanticTag get() = this + "link"
+    @SemanticUiCssMarker val link: SemanticTag @JsName(Fn.f0080) get() = this + "link"
 
-    @SemanticUiCssMarker
-    inline val bulleted: SemanticTag get() = this + "bulleted"
+    @SemanticUiCssMarker val bulleted: SemanticTag @JsName(Fn.f0081) get() = this + "bulleted"
 
-    @SemanticUiCssMarker
-    inline val list: SemanticTag get() = this + "list"
+    @SemanticUiCssMarker val list: SemanticTag @JsName(Fn.f0082) get() = this + "list"
 
-    @SemanticUiCssMarker
-    inline val loader: SemanticTag get() = this + "loader"
+    @SemanticUiCssMarker val loader: SemanticTag @JsName(Fn.f0083) get() = this + "loader"
 
-    @SemanticUiCssMarker
-    inline val loading: SemanticTag get() = this + "loading"
+    @SemanticUiCssMarker val loading: SemanticTag @JsName(Fn.f0084) get() = this + "loading"
 
-    @SemanticUiCssMarker
-    inline val message: SemanticTag get() = this + "message"
+    @SemanticUiCssMarker val message: SemanticTag @JsName(Fn.f0085) get() = this + "message"
 
-    @SemanticUiCssMarker
-    inline val overlay: SemanticTag get() = this + "overlay"
+    @SemanticUiCssMarker val overlay: SemanticTag @JsName(Fn.f0086) get() = this + "overlay"
 
-    @SemanticUiCssMarker
-    inline val pointing: SemanticTag get() = this + "pointing"
+    @SemanticUiCssMarker val pointing: SemanticTag @JsName(Fn.f0087) get() = this + "pointing"
 
-    @SemanticUiCssMarker
-    inline val scale: SemanticTag get() = this + "scale"
+    @SemanticUiCssMarker val scale: SemanticTag @JsName(Fn.f0088) get() = this + "scale"
 
-    @SemanticUiCssMarker
-    inline val shrink: SemanticTag get() = this + "shrink"
+    @SemanticUiCssMarker val shrink: SemanticTag @JsName(Fn.f0089) get() = this + "shrink"
 
-    @SemanticUiCssMarker
-    inline val toggle: SemanticTag get() = this + "toggle"
+    @SemanticUiCssMarker val toggle: SemanticTag @JsName(Fn.f0090) get() = this + "toggle"
 
-    @SemanticUiCssMarker
-    inline val styled: SemanticTag get() = this + "styled"
+    @SemanticUiCssMarker val styled: SemanticTag @JsName(Fn.f0091) get() = this + "styled"
 
-    @SemanticUiCssMarker
-    inline val accordion: SemanticTag get() = this + "accordion"
+    @SemanticUiCssMarker val accordion: SemanticTag @JsName(Fn.f0092) get() = this + "accordion"
 
-    @SemanticUiCssMarker
-    inline val title: SemanticTag get() = this + "title"
+    @SemanticUiCssMarker val title: SemanticTag @JsName(Fn.f0093) get() = this + "title"
 
-    @SemanticUiCssMarker
-    inline val description: SemanticTag get() = this + "description"
+    @SemanticUiCssMarker val description: SemanticTag @JsName(Fn.f0094) get() = this + "description"
 
-    @SemanticUiCssMarker
-    inline val transition: SemanticTag get() = this + "transition"
+    @SemanticUiCssMarker val transition: SemanticTag @JsName(Fn.f0095) get() = this + "transition"
 
-    @SemanticUiCssMarker
-    inline val relaxed: SemanticTag get() = this + "relaxed"
+    @SemanticUiCssMarker val relaxed: SemanticTag @JsName(Fn.f0096) get() = this + "relaxed"
 
-    @SemanticUiCssMarker
-    inline val attached: SemanticTag get() = this + "attached"
+    @SemanticUiCssMarker val attached: SemanticTag @JsName(Fn.f0097) get() = this + "attached"
 
-    @SemanticUiCssMarker
-    inline val clearing: SemanticTag get() = this + "clearing"
+    @SemanticUiCssMarker val clearing: SemanticTag @JsName(Fn.f0098) get() = this + "clearing"
 
-    @SemanticUiCssMarker
-    inline val top: SemanticTag get() = this + "top"
+    @SemanticUiCssMarker val top: SemanticTag @JsName(Fn.f0099) get() = this + "top"
 
-    @SemanticUiCssMarker
-    inline val bottom: SemanticTag get() = this + "bottom"
+    @SemanticUiCssMarker val bottom: SemanticTag @JsName(Fn.f0100) get() = this + "bottom"
 
-    @SemanticUiCssMarker
-    inline val bordered: SemanticTag get() = this + "bordered"
+    @SemanticUiCssMarker val bordered: SemanticTag @JsName(Fn.f0101) get() = this + "bordered"
 
-    @SemanticUiCssMarker
-    inline val avatar: SemanticTag get() = this + "avatar"
+    @SemanticUiCssMarker val avatar: SemanticTag @JsName(Fn.f0102) get() = this + "avatar"
 
-    @SemanticUiCssMarker
-    inline val placeholder: SemanticTag get() = this + "placeholder"
+    @SemanticUiCssMarker val placeholder: SemanticTag @JsName(Fn.f0103) get() = this + "placeholder"
 
-    @SemanticUiCssMarker
-    inline val cards: SemanticTag get() = this + "cards"
+    @SemanticUiCssMarker val cards: SemanticTag @JsName(Fn.f0104) get() = this + "cards"
 
-    @SemanticUiCssMarker
-    inline val card: SemanticTag get() = this + "card"
+    @SemanticUiCssMarker val card: SemanticTag @JsName(Fn.f0105) get() = this + "card"
 
-    @SemanticUiCssMarker
-    inline val raised: SemanticTag get() = this + "raised"
+    @SemanticUiCssMarker val raised: SemanticTag @JsName(Fn.f0106) get() = this + "raised"
 
-    @SemanticUiCssMarker
-    inline val meta: SemanticTag get() = this + "meta"
+    @SemanticUiCssMarker val meta: SemanticTag @JsName(Fn.f0107) get() = this + "meta"
 
-    @SemanticUiCssMarker
-    inline val dropdown: SemanticTag get() = this + "dropdown"
+    @SemanticUiCssMarker val dropdown: SemanticTag @JsName(Fn.f0108) get() = this + "dropdown"
 
-    @SemanticUiCssMarker
-    inline val sticky: SemanticTag get() = this + "sticky"
+    @SemanticUiCssMarker val sticky: SemanticTag @JsName(Fn.f0109) get() = this + "sticky"
 
-    @SemanticUiCssMarker
-    inline val inline: SemanticTag get() = this + "inline"
+    @SemanticUiCssMarker val inline: SemanticTag @JsName(Fn.f0110) get() = this + "inline"
 
-    @SemanticUiCssMarker
-    inline val progress: SemanticTag get() = this + "progress"
+    @SemanticUiCssMarker val progress: SemanticTag @JsName(Fn.f0111) get() = this + "progress"
 
-    @SemanticUiCssMarker
-    inline val paragraph: SemanticTag get() = this + "paragraph"
+    @SemanticUiCssMarker val paragraph: SemanticTag @JsName(Fn.f0112) get() = this + "paragraph"
 
-    @SemanticUiCssMarker
-    inline val slider: SemanticTag get() = this + "slider"
+    @SemanticUiCssMarker val slider: SemanticTag @JsName(Fn.f0113) get() = this + "slider"
 
-    @SemanticUiCssMarker
-    inline val success: SemanticTag get() = this + "success"
+    @SemanticUiCssMarker val success: SemanticTag @JsName(Fn.f0114) get() = this + "success"
 
-    @SemanticUiCssMarker
-    inline val ordered: SemanticTag get() = this + "ordered"
+    @SemanticUiCssMarker val ordered: SemanticTag @JsName(Fn.f0115) get() = this + "ordered"
 
-    @SemanticUiCssMarker
-    inline val steps: SemanticTag get() = this + "steps"
+    @SemanticUiCssMarker val steps: SemanticTag @JsName(Fn.f0116) get() = this + "steps"
 
-    @SemanticUiCssMarker
-    inline val step: SemanticTag get() = this + "step"
+    @SemanticUiCssMarker val step: SemanticTag @JsName(Fn.f0117) get() = this + "step"
 
-    @SemanticUiCssMarker
-    inline val completed: SemanticTag get() = this + "completed"
+    @SemanticUiCssMarker val completed: SemanticTag @JsName(Fn.f0118) get() = this + "completed"
 
-    @SemanticUiCssMarker
-    inline val computer: SemanticTag get() = this + "computer"
+    @SemanticUiCssMarker val computer: SemanticTag @JsName(Fn.f0119) get() = this + "computer"
 
-    @SemanticUiCssMarker
-    inline val tablet: SemanticTag get() = this + "tablet"
+    @SemanticUiCssMarker val tablet: SemanticTag @JsName(Fn.f0120) get() = this + "tablet"
 
-    @SemanticUiCssMarker
-    inline val mobile: SemanticTag get() = this + "mobile"
+    @SemanticUiCssMarker val mobile: SemanticTag @JsName(Fn.f0121) get() = this + "mobile"
 
-    @SemanticUiCssMarker
-    inline val only: SemanticTag get() = this + "only"
+    @SemanticUiCssMarker val only: SemanticTag @JsName(Fn.f0122) get() = this + "only"
 
-    @SemanticUiCssMarker
-    inline val form: SemanticTag get() = this + "form"
+    @SemanticUiCssMarker val form: SemanticTag @JsName(Fn.f0123) get() = this + "form"
 
-    @SemanticUiCssMarker
-    inline val field: SemanticTag get() = this + "field"
+    @SemanticUiCssMarker val field: SemanticTag @JsName(Fn.f0124) get() = this + "field"
 
-    @SemanticUiCssMarker
-    inline val fields: SemanticTag get() = this + "fields"
+    @SemanticUiCssMarker val fields: SemanticTag @JsName(Fn.f0125) get() = this + "fields"
 
-    @SemanticUiCssMarker
-    inline val checkbox: SemanticTag get() = this + "checkbox"
+    @SemanticUiCssMarker val checkbox: SemanticTag @JsName(Fn.f0126) get() = this + "checkbox"
 
-    @SemanticUiCssMarker
-    inline val error: SemanticTag get() = this + "error"
+    @SemanticUiCssMarker val error: SemanticTag @JsName(Fn.f0127) get() = this + "error"
 
-    @SemanticUiCssMarker
-    inline val input: SemanticTag get() = this + "input"
+    @SemanticUiCssMarker val input: SemanticTag @JsName(Fn.f0128) get() = this + "input"
 
-    @SemanticUiCssMarker
-    inline val sortable: SemanticTag get() = this + "sortable"
+    @SemanticUiCssMarker val sortable: SemanticTag @JsName(Fn.f0129) get() = this + "sortable"
 
-    @SemanticUiCssMarker
-    inline val table: SemanticTag get() = this + "table"
+    @SemanticUiCssMarker val table: SemanticTag @JsName(Fn.f0130) get() = this + "table"
 
-    @SemanticUiCssMarker
-    inline val toast: SemanticTag get() = this + "toast"
+    @SemanticUiCssMarker val toast: SemanticTag @JsName(Fn.f0131) get() = this + "toast"
 
-    @SemanticUiCssMarker
-    inline val toastBox: SemanticTag get() = this + "toast-box"
+    @SemanticUiCssMarker val toastBox: SemanticTag @JsName(Fn.f0132) get() = this + "toast-box"
 
-    @SemanticUiCssMarker
-    inline val toastContainer: SemanticTag get() = this + "toast-container"
+    @SemanticUiCssMarker val toastContainer: SemanticTag @JsName(Fn.f0133) get() = this + "toast-container"
 
-    @SemanticUiCssMarker
-    inline val container: SemanticTag get() = this + "container"
+    @SemanticUiCssMarker val container: SemanticTag @JsName(Fn.f0134) get() = this + "container"
 
-    @SemanticUiCssMarker
-    inline val segment: SemanticTag get() = this + "segment"
+    @SemanticUiCssMarker val segment: SemanticTag @JsName(Fn.f0135) get() = this + "segment"
 
-    @SemanticUiCssMarker
-    inline val segments: SemanticTag get() = this + "segments"
+    @SemanticUiCssMarker val segments: SemanticTag @JsName(Fn.f0136) get() = this + "segments"
 
-    @SemanticUiCssMarker
-    inline val pusher: SemanticTag get() = this + "pusher"
+    @SemanticUiCssMarker val pusher: SemanticTag @JsName(Fn.f0137) get() = this + "pusher"
 
-    @SemanticUiCssMarker
-    inline val left: SemanticTag get() = this + "left"
+    @SemanticUiCssMarker val left: SemanticTag @JsName(Fn.f0138) get() = this + "left"
 
-    @SemanticUiCssMarker
-    inline val right: SemanticTag get() = this + "right"
+    @SemanticUiCssMarker val right: SemanticTag @JsName(Fn.f0139) get() = this + "right"
 
-    @SemanticUiCssMarker
-    inline val ribbon: SemanticTag get() = this + "ribbon"
+    @SemanticUiCssMarker val ribbon: SemanticTag @JsName(Fn.f0140) get() = this + "ribbon"
 
-    @SemanticUiCssMarker
-    inline val horizontal: SemanticTag get() = this + "horizontal"
+    @SemanticUiCssMarker val horizontal: SemanticTag @JsName(Fn.f0141) get() = this + "horizontal"
 
-    @SemanticUiCssMarker
-    inline val equal: SemanticTag get() = this + "equal"
+    @SemanticUiCssMarker val equal: SemanticTag @JsName(Fn.f0142) get() = this + "equal"
 
-    @SemanticUiCssMarker
-    inline val width: SemanticTag get() = this + "width"
+    @SemanticUiCssMarker val width: SemanticTag @JsName(Fn.f0143) get() = this + "width"
 
-    @SemanticUiCssMarker
-    inline val vertical: SemanticTag get() = this + "vertical"
+    @SemanticUiCssMarker val vertical: SemanticTag @JsName(Fn.f0144) get() = this + "vertical"
 
-    @SemanticUiCssMarker
-    inline val row: SemanticTag get() = this + "row"
+    @SemanticUiCssMarker val row: SemanticTag @JsName(Fn.f0145) get() = this + "row"
 
-    @SemanticUiCssMarker
-    inline val column: SemanticTag get() = this + "column"
+    @SemanticUiCssMarker val column: SemanticTag @JsName(Fn.f0146) get() = this + "column"
 
-    @SemanticUiCssMarker
-    inline val grid: SemanticTag get() = this + "grid"
+    @SemanticUiCssMarker val grid: SemanticTag @JsName(Fn.f0147) get() = this + "grid"
 
-    @SemanticUiCssMarker
-    inline val wide: SemanticTag get() = this + "wide"
+    @SemanticUiCssMarker val wide: SemanticTag @JsName(Fn.f0148) get() = this + "wide"
 
-    @SemanticUiCssMarker
-    inline val doubling: SemanticTag get() = this + "doubling"
+    @SemanticUiCssMarker val doubling: SemanticTag @JsName(Fn.f0149) get() = this + "doubling"
 
-    @SemanticUiCssMarker
-    inline val stackable: SemanticTag get() = this + "stackable"
+    @SemanticUiCssMarker val stackable: SemanticTag @JsName(Fn.f0150) get() = this + "stackable"
 
-    @SemanticUiCssMarker
-    inline val stretched: SemanticTag get() = this + "stretched"
+    @SemanticUiCssMarker val stretched: SemanticTag @JsName(Fn.f0151) get() = this + "stretched"
 
-    @SemanticUiCssMarker
-    inline val aligned: SemanticTag get() = this + "aligned"
+    @SemanticUiCssMarker val aligned: SemanticTag @JsName(Fn.f0152) get() = this + "aligned"
 
-    @SemanticUiCssMarker
-    inline val fitted: SemanticTag get() = this + "fitted"
+    @SemanticUiCssMarker val fitted: SemanticTag @JsName(Fn.f0153) get() = this + "fitted"
 
-    @SemanticUiCssMarker
-    inline val center: SemanticTag get() = this + "center"
+    @SemanticUiCssMarker val center: SemanticTag @JsName(Fn.f0154) get() = this + "center"
 
-    @SemanticUiCssMarker
-    inline val centered: SemanticTag get() = this + "centered"
+    @SemanticUiCssMarker val centered: SemanticTag @JsName(Fn.f0155) get() = this + "centered"
 
-    @SemanticUiCssMarker
-    inline val divided: SemanticTag get() = this + "divided"
+    @SemanticUiCssMarker val divided: SemanticTag @JsName(Fn.f0156) get() = this + "divided"
 
-    @SemanticUiCssMarker
-    inline val striped: SemanticTag get() = this + "striped"
+    @SemanticUiCssMarker val striped: SemanticTag @JsName(Fn.f0157) get() = this + "striped"
 
-    @SemanticUiCssMarker
-    inline val celled: SemanticTag get() = this + "celled"
+    @SemanticUiCssMarker val celled: SemanticTag @JsName(Fn.f0158) get() = this + "celled"
 
-    @SemanticUiCssMarker
-    inline val selectable: SemanticTag get() = this + "selectable"
+    @SemanticUiCssMarker val selectable: SemanticTag @JsName(Fn.f0159) get() = this + "selectable"
 
-    @SemanticUiCssMarker
-    inline val middle: SemanticTag get() = this + "middle"
+    @SemanticUiCssMarker val middle: SemanticTag @JsName(Fn.f0160) get() = this + "middle"
 
-    @SemanticUiCssMarker
-    inline val padded: SemanticTag get() = this + "padded"
+    @SemanticUiCssMarker val padded: SemanticTag @JsName(Fn.f0161) get() = this + "padded"
 
-    @SemanticUiCssMarker
-    inline val pagination: SemanticTag get() = this + "pagination"
+    @SemanticUiCssMarker val pagination: SemanticTag @JsName(Fn.f0162) get() = this + "pagination"
 
-    @SemanticUiCssMarker
-    inline val animated: SemanticTag get() = this + "animated"
+    @SemanticUiCssMarker val animated: SemanticTag @JsName(Fn.f0163) get() = this + "animated"
 
-    @SemanticUiCssMarker
-    inline val animating: SemanticTag get() = this + "animating"
+    @SemanticUiCssMarker val animating: SemanticTag @JsName(Fn.f0164) get() = this + "animating"
 
-    @SemanticUiCssMarker
-    inline val fade: SemanticTag get() = this + "fade"
+    @SemanticUiCssMarker val fade: SemanticTag @JsName(Fn.f0165) get() = this + "fade"
 
-    @SemanticUiCssMarker
-    inline val out: SemanticTag get() = this + "out"
+    @SemanticUiCssMarker val out: SemanticTag @JsName(Fn.f0166) get() = this + "out"
 
-    @SemanticUiCssMarker
-    inline val _in: SemanticTag get() = this + "in"
+    @SemanticUiCssMarker val _in: SemanticTag @JsName(Fn.f0167) get() = this + "in"
 
-    @SemanticUiCssMarker
-    inline val extra: SemanticTag get() = this + "extra"
+    @SemanticUiCssMarker val extra: SemanticTag @JsName(Fn.f0168) get() = this + "extra"
 
-    @SemanticUiCssMarker
-    inline val very: SemanticTag get() = this + "very"
+    @SemanticUiCssMarker val very: SemanticTag @JsName(Fn.f0169) get() = this + "very"
 
-    @SemanticUiCssMarker
-    inline val content: SemanticTag get() = this + "content"
+    @SemanticUiCssMarker val content: SemanticTag @JsName(Fn.f0170) get() = this + "content"
 
-    @SemanticUiCssMarker
-    inline val scrolling: SemanticTag get() = this + "scrolling"
+    @SemanticUiCssMarker val scrolling: SemanticTag @JsName(Fn.f0171) get() = this + "scrolling"
 
-    @SemanticUiCssMarker
-    inline val visible: SemanticTag get() = this + "visible"
+    @SemanticUiCssMarker val visible: SemanticTag @JsName(Fn.f0172) get() = this + "visible"
 
-    @SemanticUiCssMarker
-    inline val hidden: SemanticTag get() = this + "hidden"
+    @SemanticUiCssMarker val hidden: SemanticTag @JsName(Fn.f0173) get() = this + "hidden"
 
-    @SemanticUiCssMarker
-    inline val label: SemanticTag get() = this + "label"
+    @SemanticUiCssMarker val label: SemanticTag @JsName(Fn.f0174) get() = this + "label"
 
-    @SemanticUiCssMarker
-    inline val tag: SemanticTag get() = this + "tag"
+    @SemanticUiCssMarker val tag: SemanticTag @JsName(Fn.f0175) get() = this + "tag"
 
-    @SemanticUiCssMarker
-    inline val labeled: SemanticTag get() = this + "labeled"
+    @SemanticUiCssMarker val labeled: SemanticTag @JsName(Fn.f0176) get() = this + "labeled"
 
-    @SemanticUiCssMarker
-    inline val menu: SemanticTag get() = this + "menu"
+    @SemanticUiCssMarker val menu: SemanticTag @JsName(Fn.f0177) get() = this + "menu"
 
-    @SemanticUiCssMarker
-    inline val tab: SemanticTag get() = this + "tab"
+    @SemanticUiCssMarker val tab: SemanticTag @JsName(Fn.f0178) get() = this + "tab"
 
-    @SemanticUiCssMarker
-    inline val tabular: SemanticTag get() = this + "tabular"
+    @SemanticUiCssMarker val tabular: SemanticTag @JsName(Fn.f0179) get() = this + "tabular"
 
-    @SemanticUiCssMarker
-    inline val sidebar: SemanticTag get() = this + "sidebar"
+    @SemanticUiCssMarker val sidebar: SemanticTag @JsName(Fn.f0180) get() = this + "sidebar"
 
-    @SemanticUiCssMarker
-    inline val item: SemanticTag get() = this + "item"
+    @SemanticUiCssMarker val item: SemanticTag @JsName(Fn.f0181) get() = this + "item"
 
-    @SemanticUiCssMarker
-    inline val items: SemanticTag get() = this + "items"
+    @SemanticUiCssMarker val items: SemanticTag @JsName(Fn.f0182) get() = this + "items"
 
-    @SemanticUiCssMarker
-    inline val dimmer: SemanticTag get() = this + "dimmer"
+    @SemanticUiCssMarker val dimmer: SemanticTag @JsName(Fn.f0183) get() = this + "dimmer"
 
-    @SemanticUiCssMarker
-    inline val fullscreen: SemanticTag get() = this + "fullscreen"
+    @SemanticUiCssMarker val fullscreen: SemanticTag @JsName(Fn.f0184) get() = this + "fullscreen"
 
-    @SemanticUiCssMarker
-    inline val modal: SemanticTag get() = this + "modal"
+    @SemanticUiCssMarker val modal: SemanticTag @JsName(Fn.f0185) get() = this + "modal"
 
-    @SemanticUiCssMarker
-    inline val modals: SemanticTag get() = this + "modals"
+    @SemanticUiCssMarker val modals: SemanticTag @JsName(Fn.f0186) get() = this + "modals"
 
-    @SemanticUiCssMarker
-    inline val page: SemanticTag get() = this + "page"
+    @SemanticUiCssMarker val page: SemanticTag @JsName(Fn.f0187) get() = this + "page"
 
-    @SemanticUiCssMarker
-    inline val front: SemanticTag get() = this + "front"
+    @SemanticUiCssMarker val front: SemanticTag @JsName(Fn.f0188) get() = this + "front"
 
-    @SemanticUiCssMarker
-    inline val selection: SemanticTag get() = this + "selection"
+    @SemanticUiCssMarker val selection: SemanticTag @JsName(Fn.f0189) get() = this + "selection"
 
-    @SemanticUiCssMarker
-    inline val default: SemanticTag get() = this + "default"
+    @SemanticUiCssMarker val default: SemanticTag @JsName(Fn.f0190) get() = this + "default"
 
-    @SemanticUiCssMarker
-    inline val selected: SemanticTag get() = this + "selected"
+    @SemanticUiCssMarker val selected: SemanticTag @JsName(Fn.f0191) get() = this + "selected"
 
-    @SemanticUiCssMarker
-    inline val search: SemanticTag get() = this + "search"
+    @SemanticUiCssMarker val search: SemanticTag @JsName(Fn.f0192) get() = this + "search"
 
-    @SemanticUiCssMarker
-    inline val popup: SemanticTag get() = this + "popup"
+    @SemanticUiCssMarker val popup: SemanticTag @JsName(Fn.f0193) get() = this + "popup"
 
-    @SemanticUiCssMarker
-    inline val wireframe: SemanticTag get() = this + "wireframe"
+    @SemanticUiCssMarker val wireframe: SemanticTag @JsName(Fn.f0194) get() = this + "wireframe"
 
-    @SemanticUiCssMarker
-    inline val transparent: SemanticTag get() = this + "transparent"
+    @SemanticUiCssMarker val transparent: SemanticTag @JsName(Fn.f0195) get() = this + "transparent"
 
-    @SemanticUiCssMarker
-    inline val logo: SemanticTag get() = this + "logo"
+    @SemanticUiCssMarker val logo: SemanticTag @JsName(Fn.f0196) get() = this + "logo"
 }

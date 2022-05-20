@@ -2,9 +2,20 @@ import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.body
+import kotlinx.html.div
 import kotlinx.html.stream.createHTML
 
 fun main() {
+
+    createHTML().body {
+        val x = +"==========================================================="
+
+        div {
+            div { +"THIS IS A DIV IN A DIV" }
+        }
+
+        val y = +"==========================================================="
+    }
 
     createHTML().body {
         ui.basic.segment {
@@ -52,7 +63,7 @@ fun main() {
             ui.eight.column.grid {
                 ui.center.aligned.column {
                     icon.large.red.couch()
-                    noui { +"red" }
+                    div { +"red" }
                 }
                 ui.center.aligned.column {
                     icon.large.orange.couch()
