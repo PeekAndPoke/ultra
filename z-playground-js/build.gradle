@@ -17,11 +17,13 @@ dependencies {
 
     // project deps
     api project(":commonmp")
+    api project(":semanticui")
 }
 
 kotlin {
     js(IR) {
-        useCommonJs()
         browser()
+
+        binaries.executable()
     }
 }

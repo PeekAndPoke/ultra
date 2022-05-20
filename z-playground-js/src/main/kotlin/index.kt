@@ -1,36 +1,117 @@
-import de.peekandpoke.ultra.common.remote.ApiClient
-import de.peekandpoke.ultra.common.remote.ApiEndpoint
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
+import de.peekandpoke.ultra.semanticui.icon
+import de.peekandpoke.ultra.semanticui.noui
+import de.peekandpoke.ultra.semanticui.ui
+import kotlinx.html.body
+import kotlinx.html.stream.createHTML
 
 fun main() {
 
-    val config = ApiClient.Config(
-        baseUrl = "https://api.exchangeratesapi.io",
-        codec = Json {
-            classDiscriminator = "_type"
-            ignoreUnknownKeys = true
+    createHTML().body {
+        ui.basic.segment {
+            ui.list {
+                ui.item Label { +"TEXT" }
+                ui.item Label { +"TEXT" }
+                ui.item Label { +"TEXT" }
+                ui.item Label { +"TEXT" }
+                ui.item Label { +"TEXT" }
+                ui.item Label { +"TEXT" }
+                ui.item Label { +"TEXT" }
+                ui.item Label { +"TEXT" }
+                ui.item Label { +"TEXT" }
+                ui.item Label { +"TEXT" }
+                ui.item Label { +"TEXT" }
+                ui.item Label { +"TEXT" }
+                ui.item Label { +"TEXT" }
+                ui.item Label { +"TEXT" }
+            }
         }
-    )
 
-    val client = TestApiClient(config)
+        ui.basic.segment {
+            ui.list {
+                icon.large.red.wrench()
+                icon.large.red.wrench()
+                icon.large.red.wrench()
+                icon.large.red.wrench()
+                icon.large.red.wrench()
+                icon.large.red.wrench()
+                icon.large.red.wrench()
+                icon.large.red.wrench()
+                icon.large.red.wrench()
+                icon.large.red.wrench()
+                icon.large.red.wrench()
+                icon.large.red.wrench()
+                icon.large.red.wrench()
+                icon.large.red.wrench()
+                icon.large.red.wrench()
+            }
+        }
 
-    @Suppress("EXPERIMENTAL_API_USAGE")
-    GlobalScope.launch {
-        client.latest().collect {
-            println("RESPONSE")
-            println(it)
+        ui.segment {
+            ui.header H3 { +"Colors" }
+
+            ui.eight.column.grid {
+                ui.center.aligned.column {
+                    icon.large.red.couch()
+                    noui { +"red" }
+                }
+                ui.center.aligned.column {
+                    icon.large.orange.couch()
+                    noui { +"orange" }
+                }
+                ui.center.aligned.column {
+                    icon.large.yellow.couch()
+                    noui { +"yellow" }
+                }
+                ui.center.aligned.column {
+                    icon.large.olive.couch()
+                    noui { +"olive" }
+                }
+                ui.center.aligned.column {
+                    icon.large.green.couch()
+                    noui { +"green" }
+                }
+                ui.center.aligned.column {
+                    icon.large.teal.couch()
+                    noui { +"teal" }
+                }
+                ui.center.aligned.column {
+                    icon.large.blue.couch()
+                    noui { +"blue" }
+                }
+                ui.center.aligned.column {
+                    icon.large.violet.couch()
+                    noui { +"violet" }
+                }
+                ui.center.aligned.column {
+                    icon.large.purple.couch()
+                    noui { +"purple" }
+                }
+                ui.center.aligned.column {
+                    icon.large.pink.couch()
+                    noui { +"pink" }
+                }
+                ui.center.aligned.column {
+                    icon.large.brown.couch()
+                    noui { +"brown" }
+                }
+                ui.center.aligned.column {
+                    icon.large.grey.couch()
+                    noui { +"grey" }
+                }
+                ui.center.aligned.column {
+                    icon.large.black.couch()
+                    noui { +"black" }
+                }
+                ui.center.aligned.column {
+                    icon.large.white.couch()
+                    noui { +"white" }
+                }
+                ui.center.aligned.inverted.blue.column {
+                    icon.large.white.couch()
+                    noui { +"white" }
+                }
+            }
         }
     }
 }
 
-class TestApiClient(config: Config) : ApiClient(config) {
-
-    companion object {
-        val latest = ApiEndpoint.Get("latest")
-    }
-
-    fun latest() = latest { it }
-}

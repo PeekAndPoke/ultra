@@ -4,11 +4,13 @@ package de.peekandpoke.ultra.semanticui
 
 import kotlinx.html.FlowContent
 import kotlinx.html.I
-import kotlinx.html.i
+import kotlinx.html.attributesMapOf
+import kotlinx.html.body
+import kotlinx.html.stream.createHTML
 import kotlin.js.JsName
 
 @Suppress("PropertyName", "FunctionName", "unused")
-class SemanticIcon(private val parent: FlowContent?) {
+class SemanticIcon(private val parent: FlowContent) {
 
     companion object {
         val all = listOf(
@@ -1673,11 +1675,19 @@ class SemanticIcon(private val parent: FlowContent?) {
             .plus("dont")
 
         fun cssClassOf(block: SemanticIcon.() -> SemanticIcon): String {
-            return SemanticIcon(null).block().cssClasses.joinToString(" ")
+            lateinit var classes: String
+
+            createHTML().body {
+                classes = icon.block().cssClasses.joinToString(" ")
+            }
+
+            return classes
         }
     }
 
     private val cssClasses = mutableListOf<String>()
+
+    private fun attrs() = attributesMapOf("class", cssClasses.joinToString(" ") + " icon")
 
     @JsName("p")
     operator fun plus(cls: String): SemanticIcon = apply { cssClasses.add(cls) }
@@ -1686,11 +1696,7 @@ class SemanticIcon(private val parent: FlowContent?) {
     operator fun plus(classes: Array<out String>): SemanticIcon = apply { cssClasses.addAll(classes) }
 
     @JsName("r")
-    fun render(block: I.() -> Unit = {}) {
-        parent?.i(classes = cssClasses.joinToString(" ") + " icon") {
-            block()
-        }
-    }
+    fun render(block: I.() -> Unit = {}): Unit = I(attrs(), parent.consumer).visitNoInline(block)
 
     @JsName("i")
     operator fun invoke(block: I.() -> Unit = {}) {

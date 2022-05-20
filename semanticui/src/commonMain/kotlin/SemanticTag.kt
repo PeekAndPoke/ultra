@@ -19,7 +19,6 @@ import kotlinx.html.LABEL
 import kotlinx.html.P
 import kotlinx.html.SPAN
 import kotlinx.html.TABLE
-import kotlinx.html.Tag
 import kotlinx.html.attributesMapOf
 import kotlin.js.JsName
 
@@ -36,96 +35,85 @@ class SemanticTag(
 
     private fun attrs() = attributesMapOf("class", _cssClasses())
 
-    private inline fun <T : Tag> T.visit(block: T.() -> Unit) {
-        consumer.onTagStart(this)
-        try {
-            this.block()
-        } catch (err: Throwable) {
-            consumer.onTagError(this, err)
-        } finally {
-            consumer.onTagEnd(this)
-        }
-    }
-
     @SemanticUiCssMarker
     @JsName("i")
     operator fun invoke(block: DIV.() -> Unit): Unit = Div(block)
 
     @SemanticUiTagMarker
     @JsName("H1")
-    infix fun H1(block: H1.() -> Unit): Unit = H1(attrs(), flow.consumer).visit(block)
+    infix fun H1(block: H1.() -> Unit): Unit = H1(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("H2")
-    infix fun H2(block: H2.() -> Unit): Unit = H2(attrs(), flow.consumer).visit(block)
+    infix fun H2(block: H2.() -> Unit): Unit = H2(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("H3")
-    infix fun H3(block: H3.() -> Unit): Unit = H3(attrs(), flow.consumer).visit(block)
+    infix fun H3(block: H3.() -> Unit): Unit = H3(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("H4")
-    infix fun H4(block: H4.() -> Unit): Unit = H4(attrs(), flow.consumer).visit(block)
+    infix fun H4(block: H4.() -> Unit): Unit = H4(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("H5")
-    infix fun H5(block: H5.() -> Unit): Unit = H5(attrs(), flow.consumer).visit(block)
+    infix fun H5(block: H5.() -> Unit): Unit = H5(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("H6")
-    infix fun H6(block: H6.() -> Unit): Unit = H6(attrs(), flow.consumer).visit(block)
+    infix fun H6(block: H6.() -> Unit): Unit = H6(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("A")
-    infix fun A(block: A.() -> Unit): Unit = A(attrs(), flow.consumer).visit(block)
+    infix fun A(block: A.() -> Unit): Unit = A(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("B")
-    infix fun B(block: B.() -> Unit): Unit = B(attrs(), flow.consumer).visit(block)
+    infix fun B(block: B.() -> Unit): Unit = B(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("Button")
-    infix fun Button(block: BUTTON.() -> Unit): Unit = BUTTON(attrs(), flow.consumer).visit(block)
+    infix fun Button(block: BUTTON.() -> Unit): Unit = BUTTON(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("Div")
-    infix fun Div(block: DIV.() -> Unit): Unit = DIV(attrs(), flow.consumer).visit(block)
+    infix fun Div(block: DIV.() -> Unit): Unit = DIV(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("Form")
-    infix fun Form(block: FORM.() -> Unit): Unit = FORM(attrs(), flow.consumer).visit(block)
+    infix fun Form(block: FORM.() -> Unit): Unit = FORM(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("I")
-    infix fun I(block: I.() -> Unit): Unit = I(attrs(), flow.consumer).visit(block)
+    infix fun I(block: I.() -> Unit): Unit = I(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("Input")
-    infix fun Input(block: INPUT.() -> Unit): Unit = INPUT(attrs(), flow.consumer).visit(block)
+    infix fun Input(block: INPUT.() -> Unit): Unit = INPUT(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("Img")
-    infix fun Img(block: IMG.() -> Unit): Unit = IMG(attrs(), flow.consumer).visit(block)
+    infix fun Img(block: IMG.() -> Unit): Unit = IMG(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("Label")
-    infix fun Label(block: LABEL.() -> Unit): Unit = LABEL(attrs(), flow.consumer).visit(block)
+    infix fun Label(block: LABEL.() -> Unit): Unit = LABEL(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("P")
-    infix fun P(block: P.() -> Unit): Unit = P(attrs(), flow.consumer).visit(block)
+    infix fun P(block: P.() -> Unit): Unit = P(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("Span")
-    infix fun Span(block: SPAN.() -> Unit): Unit = SPAN(attrs(), flow.consumer).visit(block)
+    infix fun Span(block: SPAN.() -> Unit): Unit = SPAN(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("Submit")
-    infix fun Submit(block: BUTTON.() -> Unit): Unit = BUTTON(attrs(), flow.consumer).visit(block)
+    infix fun Submit(block: BUTTON.() -> Unit): Unit = BUTTON(attrs(), flow.consumer).visitNoInline(block)
 
     @SemanticUiTagMarker
     @JsName("Table")
-    infix fun Table(block: TABLE.() -> Unit): Unit = TABLE(attrs(), flow.consumer).visit(block)
+    infix fun Table(block: TABLE.() -> Unit): Unit = TABLE(attrs(), flow.consumer).visitNoInline(block)
 
     // Adding Css Classes //////////////////////////////////////////////////////////////////////////////////////////////
 
