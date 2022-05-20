@@ -17,7 +17,6 @@ dependencies {
 
     // project deps
     api project(":commonmp")
-    api project(":semanticui")
 }
 
 kotlin {
