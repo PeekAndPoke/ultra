@@ -11,6 +11,7 @@ include(
         ":mutator",
         ":security",
         ":slumber",
+        ":slumber-test-classes",
 
         // playground
         ":z-playground-js",

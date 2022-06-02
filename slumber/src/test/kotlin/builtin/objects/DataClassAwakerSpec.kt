@@ -1,5 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin.objects
 
+import de.peekandpoke.slumber_test_classes.DataClassWithPrivateCtor
+import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Codec
 import io.kotest.assertions.throwables.shouldThrow
@@ -10,13 +12,6 @@ import io.kotest.matchers.string.shouldContain
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.createType
 
-@Suppress("DataClassPrivateConstructor")
-data class DataClassWithPrivateCtor private constructor(val str: String) {
-    companion object {
-        fun of(str: String) = DataClassWithPrivateCtor(str)
-    }
-}
-
 class DataClassAwakerSpec : StringSpec({
 
     "Awaking a data class with a private primary constructor" {
@@ -24,6 +19,15 @@ class DataClassAwakerSpec : StringSpec({
         val codec = Codec.default
 
         val result = codec.awake(DataClassWithPrivateCtor::class, mapOf("str" to "hello"))
+
+        result shouldBe DataClassWithPrivateCtor.of("hello")
+    }
+
+    "Awaking a data class with a private primary constructor from typeref" {
+
+        val codec = Codec.default
+
+        val result = codec.awake(kType<DataClassWithPrivateCtor>(), mapOf("str" to "hello"))
 
         result shouldBe DataClassWithPrivateCtor.of("hello")
     }

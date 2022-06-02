@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.slumber
 
 import de.peekandpoke.ultra.common.TypedAttributes
+import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kType
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
@@ -9,7 +10,7 @@ import kotlin.reflect.full.createType
 
 open class Codec(
     private val config: SlumberConfig,
-    private val attributes: TypedAttributes = TypedAttributes.empty
+    private val attributes: TypedAttributes = TypedAttributes.empty,
 ) {
 
     companion object {
@@ -28,24 +29,37 @@ open class Codec(
 
     private val kTypeCache = mutableMapOf<KClass<*>, KType>()
 
+    fun <T> getAwaker(type: TypeRef<T>) = getAwaker(type.type)
+
     fun getAwaker(type: KType): Awaker = config.getAwaker(type)
 
-    fun <T : Any> awake(type: KClass<T>, data: Any?): T? = awake(type, data, awakerContext)
+    fun <T : Any> awake(type: KClass<T>, data: Any?): T? {
+        return awake(type, data, awakerContext)
+    }
 
-    inline fun <reified T> awake(data: Any?): T? = awake(kType<T>().type, data, awakerContext) as T?
+    fun awake(type: KType, data: Any?): Any? {
+        return awake(type, data, awakerContext)
+    }
+
+    fun <T> awake(type: TypeRef<T>, data: Any?): T? {
+        @Suppress("UNCHECKED_CAST")
+        return awake(type.type, data, awakerContext) as T?
+    }
+
+    inline fun <reified T> awake(data: Any?): T? {
+        return awake(kType<T>().type, data, awakerContext) as T?
+    }
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : Any> awake(type: KClass<T>, data: Any?, context: Awaker.Context): T? =
-        awake(type.kType(), data, context) as T?
+    fun <T : Any> awake(type: KClass<T>, data: Any?, context: Awaker.Context): T? {
+        return awake(type.kType(), data, context) as T?
+    }
 
-    fun awake(type: KType, data: Any?): Any? =
-        awake(type, data, awakerContext)
-
-    fun awake(type: KType, data: Any?, context: Awaker.Context): Any? =
-        getAwaker(type).awake(data, context)
+    fun awake(type: KType, data: Any?, context: Awaker.Context): Any? {
+        return getAwaker(type).awake(data, context)
+    }
 
     fun slumber(data: Any?): Any? {
-
         val cls = when {
             data != null -> data::class
             else -> Nothing::class

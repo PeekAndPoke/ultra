@@ -6,24 +6,26 @@ import de.peekandpoke.ultra.slumber.Slumberer
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability
-import kotlin.reflect.jvm.javaConstructor
+import kotlin.reflect.jvm.isAccessible
 
 class DataClassCodec(rootType: KType) : Awaker, Slumberer {
 
     /** Raw cls of the rootType */
     private val reified = ReifiedKType(rootType)
 
-    private val ctor = reified.ctor.also {
-        it?.javaConstructor?.let { javaCtor ->
-            if (!javaCtor.isAccessible) {
-                javaCtor.isAccessible = true
-            }
-        }
-    }
+    private val primaryCtor = reified.ctor
 
     private val nullables: Map<KParameter, Any?> =
-        ctor?.parameters?.filter { it.type.isMarkedNullable }?.map { it to null }?.toMap()
+        primaryCtor?.parameters?.filter { it.type.isMarkedNullable }?.associate { it to null }
             ?: emptyMap()
+
+    init {
+        // We need to make all constructors accessible.
+        // This is necessary so that overloaded constructors with default values can be called correctly.
+        reified.cls.constructors.forEach {
+            it.isAccessible = true
+        }
+    }
 
     @Suppress("Detekt:ComplexMethod")
     override fun awake(data: Any?, context: Awaker.Context): Any? {
@@ -70,7 +72,8 @@ class DataClassCodec(rootType: KType) : Awaker, Slumberer {
                 when {
                     param.type.isMarkedNullable -> params[param] = null
 
-                    param.isOptional -> { /* do nothing */
+                    param.isOptional -> {
+                        // do nothing
                     }
 
                     else -> missingParams.add(paramName)
@@ -80,8 +83,8 @@ class DataClassCodec(rootType: KType) : Awaker, Slumberer {
 
         return when {
             // When we have all the parameters we need, we can call the ctor.
-            missingParams.isEmpty() && ctor != null -> ctor.callBy(params)
-            // Otherwise we have to return null
+            missingParams.isEmpty() && primaryCtor != null -> primaryCtor.callBy(params)
+            // Otherwise, we have to return null
             else -> null
         }
     }

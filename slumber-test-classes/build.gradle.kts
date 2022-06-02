@@ -1,12 +1,9 @@
 @file:Suppress("PropertyName")
 
-import Deps.Test.configureJvmTests
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
-    kotlin("kapt")
-    id("org.jetbrains.dokka")
 }
 
 val GROUP: String by project
@@ -23,32 +20,10 @@ repositories {
 
 dependencies {
     implementation(kotlin("reflect"))
-
-    api(Deps.klassIndexLib)
-    api(Deps.kotlinx_serialization_core)
-
-    api(project(":common"))
-    api(project(":commonmp"))
-
-    // Testing
-    testImplementation(project(":slumber-test-classes"))
-    kaptTest(Deps.klassIndexProcessor)
-
-    Deps.Test {
-        jvmTestDeps()
-    }
-}
-
-kapt {
-    useBuildCache = true
 }
 
 tasks {
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
     }
-
-    configureJvmTests()
 }
-
-apply(from = "./../maven.publish.gradle.kts")
