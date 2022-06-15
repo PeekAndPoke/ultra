@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.common
 
-interface ComparedTo<T> : Comparable<T> {
+interface ComparableTo<T> : Comparable<T> {
 
     infix fun isGreaterThan(other: T) = compareTo(other) > 0
 

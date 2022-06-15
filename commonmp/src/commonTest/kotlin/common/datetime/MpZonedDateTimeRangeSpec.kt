@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
+import de.peekandpoke.ultra.common.model.Operators
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.data.row
@@ -124,6 +125,33 @@ class MpZonedDateTimeRangeSpec : StringSpec({
             (subject isLessThanOrEqualTo period).shouldBeTrue()
             (subject isLessThan period).shouldBeTrue()
         }
+    }
+
+    "Comparing must work with Operators.Comparison" {
+
+        fun range(days: Int) = MpZonedDateTime.parse("2022-06-15T12:00:00").toRange(MpDatePeriod(days = days))
+
+        val twoDaysPeriod = MpDatePeriod(days = 2)
+
+        Operators.Comparison.LT(range(1), twoDaysPeriod) shouldBe true
+        Operators.Comparison.LT(range(2), twoDaysPeriod) shouldBe false
+        Operators.Comparison.LT(range(3), twoDaysPeriod) shouldBe false
+
+        Operators.Comparison.LTE(range(1), twoDaysPeriod) shouldBe true
+        Operators.Comparison.LTE(range(2), twoDaysPeriod) shouldBe true
+        Operators.Comparison.LTE(range(3), twoDaysPeriod) shouldBe false
+
+        Operators.Comparison.EQ(range(1), twoDaysPeriod) shouldBe false
+        Operators.Comparison.EQ(range(2), twoDaysPeriod) shouldBe true
+        Operators.Comparison.EQ(range(3), twoDaysPeriod) shouldBe false
+
+        Operators.Comparison.GTE(range(1), twoDaysPeriod) shouldBe false
+        Operators.Comparison.GTE(range(2), twoDaysPeriod) shouldBe true
+        Operators.Comparison.GTE(range(3), twoDaysPeriod) shouldBe true
+
+        Operators.Comparison.GT(range(1), twoDaysPeriod) shouldBe false
+        Operators.Comparison.GT(range(2), twoDaysPeriod) shouldBe false
+        Operators.Comparison.GT(range(3), twoDaysPeriod) shouldBe true
     }
 
     listOf(

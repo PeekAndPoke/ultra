@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
-import de.peekandpoke.ultra.common.ComparedTo
+import de.peekandpoke.ultra.common.ComparableTo
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.serialization.Serializable
 
@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
 data class MpLocalDateRange(
     val from: MpLocalDate,
     val to: MpLocalDate,
-) : ComparedTo<MpDatePeriod> {
+) : ComparableTo<MpDatePeriod> {
     companion object {
         /**
          * A range from [MpLocalDate.Genesis] until [MpLocalDate.Doomsday]
