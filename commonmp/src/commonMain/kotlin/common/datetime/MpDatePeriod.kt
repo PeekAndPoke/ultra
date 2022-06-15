@@ -11,6 +11,8 @@ data class MpDatePeriod(
     override val days: Int = 0,
 ) : MpTemporalPeriod {
     companion object {
+        val Zero: MpDatePeriod = MpDatePeriod()
+
         fun parse(text: String): MpDatePeriod {
             return DatePeriod.parse(text).let {
                 MpDatePeriod(years = it.years, months = it.months, days = it.days)

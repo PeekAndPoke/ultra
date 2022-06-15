@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
+import de.peekandpoke.ultra.common.ComparedTo
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.serialization.Serializable
 
@@ -7,8 +8,8 @@ import kotlinx.serialization.Serializable
 // TODO: test all of me
 data class MpLocalDateRange(
     val from: MpLocalDate,
-    val to: MpLocalDate
-) {
+    val to: MpLocalDate,
+) : ComparedTo<MpDatePeriod> {
     companion object {
         /**
          * A range from [MpLocalDate.Genesis] until [MpLocalDate.Doomsday]
@@ -78,6 +79,10 @@ data class MpLocalDateRange(
     val isNotOpen: Boolean get() = !isOpen
 
     val isValid: Boolean get() = from < to
+
+    override fun compareTo(other: MpDatePeriod): Int {
+        return to.compareTo(from.plus(other))
+    }
 
     fun asPartialRange(): Partial {
         return Partial(from = from, to = to)

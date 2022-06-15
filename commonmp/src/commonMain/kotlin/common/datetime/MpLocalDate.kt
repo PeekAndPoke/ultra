@@ -234,6 +234,14 @@ data class MpLocalDate internal constructor(
     }
 
     /**
+     * Creates a [MpLocalDateRange] with this as the start and the given [period]
+     */
+    // TODO: test me
+    fun toRange(period: MpDatePeriod): MpLocalDateRange {
+        return MpLocalDateRange(from = this, to = this.plus(period))
+    }
+
+    /**
      * Creates a [MpZonedDateTimeRange] with this as the start and the given [period] in the [timezone].
      */
     // TODO: test me

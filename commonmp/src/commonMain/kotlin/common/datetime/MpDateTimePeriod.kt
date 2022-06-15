@@ -15,7 +15,7 @@ data class MpDateTimePeriod(
     override val milliseconds: Int = 0,
 ) : MpTemporalPeriod {
     companion object {
-        val Zero = MpDateTimePeriod()
+        val Zero: MpDateTimePeriod = MpDateTimePeriod()
 
         fun parse(text: String): MpDateTimePeriod {
             return DatePeriod.parse(text).let {
