@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.common.model
 
 import de.peekandpoke.ultra.common.ComparableTo
+import kotlin.js.JsName
 
 interface Operators {
     enum class Comparison {
@@ -10,6 +11,7 @@ interface Operators {
         GTE,
         GT;
 
+        @JsName("compare")
         operator fun <R, L : Comparable<R>> invoke(left: L, right: R): Boolean {
             return when (this) {
                 LT -> left < right
@@ -20,6 +22,7 @@ interface Operators {
             }
         }
 
+        @JsName("compareTo")
         operator fun <R, L : ComparableTo<R>> invoke(left: L, right: R): Boolean {
             return when (this) {
                 LT -> left isLessThan right
