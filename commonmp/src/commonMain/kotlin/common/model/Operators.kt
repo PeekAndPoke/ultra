@@ -11,6 +11,14 @@ interface Operators {
         GTE,
         GT;
 
+        fun toHumanString(): String = when (this) {
+            LT -> "<"
+            LTE -> "<="
+            EQ -> "=="
+            GTE -> ">="
+            GT -> ">"
+        }
+
         @JsName("compare")
         operator fun <R, L : Comparable<R>> invoke(left: L, right: R): Boolean {
             return when (this) {
