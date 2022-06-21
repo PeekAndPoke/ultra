@@ -12,10 +12,39 @@ import kotlin.reflect.full.createType
  *
  * By doing so we can utilize the compiler for checking that reflection types are used correctly.
  */
-@Suppress("unused")
-data class TypeRef<T>(val type: KType) {
+data class TypeRef<T> internal constructor(val type: KType) {
 
     companion object {
+
+        /** Cache for [KType] to [TypeRef] */
+        private val cachedKTypes = mutableMapOf<KType, TypeRef<*>>()
+
+        /** Cache for [KClass] to [TypeRef] */
+        private val cachedKClasses = mutableMapOf<KClass<*>, TypeRef<*>>()
+
+        @PublishedApi
+        internal fun <T> createForKType(type: KType): TypeRef<T> {
+            @Suppress("UNCHECKED_CAST")
+            return cachedKTypes.getOrPut(type) {
+                TypeRef<T>(type)
+            } as TypeRef<T>
+        }
+
+        @PublishedApi
+        internal fun <T : Any> createForKClass(cls: KClass<T>): TypeRef<T> {
+            @Suppress("UNCHECKED_CAST")
+            return cachedKClasses.getOrPut(cls) {
+
+                val type = cls.createType(
+                    arguments = cls.typeParameters.map {
+                        KTypeProjection.invariant(kotlin.Any::class.createType())
+                    }
+                )
+
+                createForKType<T>(type)
+
+            } as TypeRef<T>
+        }
 
         val Unit = kType<Unit>()
         val UnitNull = kType<Unit?>()

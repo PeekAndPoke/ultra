@@ -83,7 +83,7 @@ interface ServiceProvider {
     /**
      * Tracks created service instances
      *
-     * [instance] is the service instance that was create.
+     * [instance] is the service instance that was created.
      * [createdAt] is the timestamp, when the instantiation occurred.
      */
     data class CreatedInstance(

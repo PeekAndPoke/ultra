@@ -16,6 +16,8 @@ dependencies {
     implementation(Deps.kotlinx_coroutines_core)
 
     // project deps
+    api project(":common")
+    api project(":slumber")
     api project(":kontainer")
 }
 

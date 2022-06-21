@@ -1,28 +1,35 @@
 package de.peekandpoke.ultra.playground
 
-import de.peekandpoke.ultra.common.datetime.DOOMSDAY_TIMESTAMP
-import de.peekandpoke.ultra.common.datetime.GENESIS_TIMESTAMP
-import de.peekandpoke.ultra.common.network.NetworkUtils
-import java.time.Instant
-import java.time.ZoneId
+import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.slumber.Codec
+import kotlinx.coroutines.delay
 
-fun main() {
+suspend fun main() {
 
-    println("${NetworkUtils.getHostNameOrDefault()}-${NetworkUtils.getNetworkFingerPrint()}")
-
-    println(
-        Instant.ofEpochMilli(GENESIS_TIMESTAMP)
+    data class ExampleClass<P1, P2>(
+        val p1: P1,
+        val p2: P2,
     )
 
-    println(
-        Instant.ofEpochMilli(DOOMSDAY_TIMESTAMP)
-    )
+    val codec = Codec.default
 
-    println("=======================================")
+    while (true) {
 
-    ZoneId.getAvailableZoneIds()
-        .sorted()
-        .forEach { println("\"$it\",") }
+        repeat(100000) {
 
-    println("=======================================")
+            val type = kType<ExampleClass<Int, String>>()
+
+            val reified = type.reified
+
+            val slumbered = codec.slumber(
+                ExampleClass(1, "a")
+            )
+
+            val awoken: ExampleClass<Int, String>? = codec.awake(kType(), slumbered)
+        }
+
+        delay(1000)
+
+        println("next round")
+    }
 }

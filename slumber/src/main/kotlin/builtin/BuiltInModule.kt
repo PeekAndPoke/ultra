@@ -110,7 +110,7 @@ object BuiltInModule : SlumberModule {
                 cls.isData ->
                     type.wrapIfNonNull(DataClassCodec(type) as Awaker)
 
-                // No param ctor
+                // No param ctor (objects)
                 cls.primaryConstructor != null && cls.primaryConstructor!!.parameters.isEmpty() ->
                     type.wrapIfNonNull(DataClassCodec(type) as Awaker)
 
@@ -198,7 +198,7 @@ object BuiltInModule : SlumberModule {
                 cls.isData ->
                     type.wrapIfNonNull(DataClassCodec(type) as Slumberer)
 
-                // No param ctor
+                // No param ctor (objects)
                 cls.primaryConstructor != null && cls.primaryConstructor!!.parameters.isEmpty() ->
                     type.wrapIfNonNull(DataClassCodec(type) as Slumberer)
 

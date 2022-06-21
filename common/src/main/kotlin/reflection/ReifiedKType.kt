@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.reflection
 
+import java.lang.reflect.Field
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType
@@ -42,7 +43,7 @@ class ReifiedKType(val type: KType) {
     /**
      * Map of properties corresponding to the ctor param to their reified types
      */
-    val properties2Types = ctorParams2Types.map { (param, type) ->
+    val properties2Types: List<Pair<Field, KType>> = ctorParams2Types.map { (param, type) ->
         cls.declaredMemberProperties
             .mapNotNull { it.javaField }
             .first { it.name == param.name }
@@ -65,7 +66,7 @@ class ReifiedKType(val type: KType) {
 
         // Do we have a class?
         is KClass<*> -> {
-            // Let's reify all of the classes type parameters as well
+            // Let's reify all the classes type parameters as well
             classifier.createType(
                 subject.arguments.map {
                     it.copy(type = reifyType(it.type ?: TypeRef.Any.type))

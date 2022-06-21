@@ -25,11 +25,9 @@ inline fun <reified T : Any?> kType(): TypeRef<T> {
 //
 //    return TypeRef(cls.createType(nullable = null is T))
 
-    @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
-    @OptIn(ExperimentalStdlibApi::class)
     val type: KType = typeOf<T>()
 
-    return TypeRef(type = type)
+    return TypeRef.createForKType(type = type)
 }
 
 /**
@@ -40,14 +38,7 @@ fun <T : Any> Class<T>.kType(): TypeRef<T> = kotlin.kType()
 /**
  * Creates a [TypeRef] from the given [KClass]
  */
-fun <T : Any> KClass<T>.kType(): TypeRef<T> =
-    TypeRef(
-        createType(
-            arguments = typeParameters.map {
-                KTypeProjection.invariant(Any::class.createType())
-            }
-        )
-    )
+fun <T : Any> KClass<T>.kType(): TypeRef<T> = TypeRef.createForKClass(this)
 
 /**
  * Creates a [TypeRef] for a List type of the given type
@@ -58,7 +49,7 @@ inline fun <reified T> kListType(): TypeRef<List<T>> = kType<T>().list
  * Creates a [TypeRef] for a Map type with the given [KEY] and [VAL] types
  */
 inline fun <reified KEY, reified VAL> kMapType(): TypeRef<Map<KEY, VAL>> =
-    TypeRef(
+    TypeRef.createForKType(
         Map::class.createType(
             arguments = listOf(
                 KTypeProjection.invariant(kType<KEY>().type),
@@ -71,7 +62,7 @@ inline fun <reified KEY, reified VAL> kMapType(): TypeRef<Map<KEY, VAL>> =
  * Creates a [TypeRef] for a MutableMap type with the given [KEY] and [VAL] types
  */
 inline fun <reified KEY, reified VAL> kMutableMapType(): TypeRef<Map<KEY, VAL>> =
-    TypeRef(
+    TypeRef.createForKType(
         MutableMap::class.createType(
             arguments = listOf(
                 KTypeProjection.invariant(kType<KEY>().type),

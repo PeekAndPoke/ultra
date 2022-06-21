@@ -3,7 +3,9 @@ package de.peekandpoke.ultra.common.reflection
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import kotlin.reflect.typeOf
 
 class TypeRefSpec : StringSpec({
 
@@ -24,6 +26,11 @@ class TypeRefSpec : StringSpec({
             TypeRef.Boolean.type.isMarkedNullable shouldBe false
             TypeRef.BooleanNull.type.classifier shouldBe Boolean::class
             TypeRef.BooleanNull.type.isMarkedNullable shouldBe true
+
+            TypeRef.Byte.type.classifier shouldBe Byte::class
+            TypeRef.Byte.type.isMarkedNullable shouldBe false
+            TypeRef.ByteNull.type.classifier shouldBe Byte::class
+            TypeRef.ByteNull.type.isMarkedNullable shouldBe true
 
             TypeRef.Char.type.classifier shouldBe Char::class
             TypeRef.Char.type.isMarkedNullable shouldBe false
@@ -315,6 +322,40 @@ class TypeRefSpec : StringSpec({
             List::class.java.kType() shouldBe kListType<Any>()
             @Suppress("RemoveExplicitTypeArguments")
             Int::class.java.kType() shouldBe kType<Int>()
+        }
+    }
+
+    "TypeRef.reified - creation" {
+
+        data class ExampleClass<P1, P2>(
+            val p1: P1,
+            val p2: P2,
+        )
+
+        val subject: ReifiedKType = kType<ExampleClass<Int, String?>>().reified
+
+
+        assertSoftly {
+            subject.type shouldBe typeOf<ExampleClass<Int, String?>>()
+            subject.cls shouldBe ExampleClass::class
+
+            subject.ctorParams2Types.shouldHaveSize(2)
+
+            subject.ctorParams2Types[0].first.type.toString() shouldBe "P1"
+            subject.ctorParams2Types[0].first.name shouldBe "p1"
+            subject.ctorParams2Types[0].second shouldBe typeOf<Int>()
+
+            subject.ctorParams2Types[1].first.type.toString() shouldBe "P2"
+            subject.ctorParams2Types[1].first.name shouldBe "p2"
+            subject.ctorParams2Types[1].second shouldBe typeOf<String?>()
+
+            subject.properties2Types[0].first.type.toString() shouldBe "class java.lang.Object"
+            subject.properties2Types[0].first.name shouldBe "p1"
+            subject.properties2Types[0].second shouldBe typeOf<Int>()
+
+            subject.properties2Types[1].first.type.toString() shouldBe "class java.lang.Object"
+            subject.properties2Types[1].first.name shouldBe "p2"
+            subject.properties2Types[1].second shouldBe typeOf<String?>()
         }
     }
 })
