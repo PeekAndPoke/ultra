@@ -47,7 +47,7 @@ interface ServiceProvider {
 
         private class ForDynamicSingleton(
             private val type: Type,
-            private val definition: ServiceDefinition
+            private val definition: ServiceDefinition,
         ) : Provider {
 
             override fun provide(): ForSingleton {
@@ -88,7 +88,7 @@ interface ServiceProvider {
      */
     data class CreatedInstance(
         val instance: Any,
-        val createdAt: Instant
+        val createdAt: Instant,
     )
 
     /**
@@ -109,7 +109,7 @@ interface ServiceProvider {
     /**
      * Provides the service instance
      */
-    fun provide(context: InjectionContext): Any
+    fun provide(kontainer: Kontainer, context: InjectionContext): Any
 
     /**
      * Validates that a service can be provided.
@@ -138,7 +138,7 @@ interface ServiceProvider {
         /**
          * Simply returns the [instance]
          */
-        override fun provide(context: InjectionContext) = instance
+        override fun provide(kontainer: Kontainer, context: InjectionContext) = instance
 
         /**
          * Always valid
@@ -151,7 +151,7 @@ interface ServiceProvider {
      */
     data class ForSingleton internal constructor(
         override val type: Type,
-        override val definition: ServiceDefinition
+        override val definition: ServiceDefinition,
     ) : ServiceProvider {
 
         /**
@@ -164,10 +164,12 @@ interface ServiceProvider {
         /**
          * Get or create the instance of the service
          */
-        override fun provide(context: InjectionContext): Any = instance ?: synchronized(this) {
-            instance ?: create(context).apply {
-                instance = this
-                instances.add(CreatedInstance(this, Instant.now()))
+        override fun provide(kontainer: Kontainer, context: InjectionContext): Any {
+            return instance ?: synchronized(this) {
+                instance ?: create(kontainer, context).apply {
+                    instance = this
+                    instances.add(CreatedInstance(this, Instant.now()))
+                }
             }
         }
 
@@ -181,14 +183,20 @@ interface ServiceProvider {
         /**
          * Creates a new instance
          */
-        private fun create(context: InjectionContext): Any = definition.producer.creator(
-            context.kontainer,
-            definition.producer.paramProviders.map {
-                it.provide(
-                    context.next(definition.serviceCls)
-                )
-            }.toTypedArray()
-        )
+        private fun create(kontainer: Kontainer, context: InjectionContext): Any {
+
+            val nextCtx = context.next(definition.serviceCls)
+
+            return definition.producer.creator(
+                kontainer,
+                definition.producer.paramProviders.map {
+                    it.provide(
+                        kontainer = kontainer,
+                        context = nextCtx
+                    )
+                }.toTypedArray()
+            )
+        }
     }
 
     /**
@@ -197,7 +205,7 @@ interface ServiceProvider {
      * Each call to [provide] will create a new instance.
      */
     data class ForPrototype internal constructor(
-        override val definition: ServiceDefinition
+        override val definition: ServiceDefinition,
     ) : ServiceProvider {
 
         class Provider(private val definition: ServiceDefinition) : ServiceProvider.Provider {
@@ -220,9 +228,13 @@ interface ServiceProvider {
         /**
          * Get or create the instance of the service
          */
-        override fun provide(context: InjectionContext): Any = synchronized(this) {
-            create(context).apply {
-                instances.add(CreatedInstance(this, Instant.now()))
+        override fun provide(kontainer: Kontainer, context: InjectionContext): Any {
+            return synchronized(this) {
+                val instance = create(kontainer, context)
+
+                instances.add(CreatedInstance(instance, Instant.now()))
+
+                instance
             }
         }
 
@@ -236,13 +248,19 @@ interface ServiceProvider {
         /**
          * Creates a new instance
          */
-        private fun create(context: InjectionContext): Any = definition.producer.creator(
-            context.kontainer,
-            definition.producer.paramProviders.map {
-                it.provide(
-                    context.next(definition.serviceCls)
-                )
-            }.toTypedArray()
-        )
+        private fun create(kontainer: Kontainer, context: InjectionContext): Any {
+
+            val nextContext = context.next(definition.serviceCls)
+
+            return definition.producer.creator(
+                kontainer,
+                definition.producer.paramProviders.map {
+                    it.provide(
+                        kontainer = kontainer,
+                        context = nextContext,
+                    )
+                }.toTypedArray()
+            )
+        }
     }
 }

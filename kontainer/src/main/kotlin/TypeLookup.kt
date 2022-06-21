@@ -93,7 +93,11 @@ abstract class TypeLookup {
             lookupBlueprintCache.getOrPut(type) {
 
                 val map = getAllCandidatesFor(type)
-                    .associateWith { { context: InjectionContext -> context.get(it) } }
+                    .associateWith {
+                        { kontainer: Kontainer, context: InjectionContext ->
+                            kontainer.get(it, context)
+                        }
+                    }
 
                 LazyServiceLookupBlueprint(map)
             }

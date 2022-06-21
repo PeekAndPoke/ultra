@@ -74,7 +74,7 @@ interface ParameterProvider {
     /**
      * Provides the parameter value
      */
-    fun provide(context: InjectionContext): Any?
+    fun provide(kontainer: Kontainer, context: InjectionContext): Any?
 
     /**
      * Validates that a parameter can be provided
@@ -112,7 +112,9 @@ interface ParameterProvider {
         /**
          * Provides the config value
          */
-        override fun provide(context: InjectionContext): Any = context.getConfig(paramName)
+        override fun provide(kontainer: Kontainer, context: InjectionContext): Any {
+            return kontainer.getConfig(paramName)
+        }
 
         /**
          * Returns 'true" when a requested injection can be fulfilled.
@@ -149,7 +151,9 @@ interface ParameterProvider {
         /**
          * Injects the context
          */
-        override fun provide(context: InjectionContext): InjectionContext = context
+        override fun provide(kontainer: Kontainer, context: InjectionContext): InjectionContext {
+            return context
+        }
 
         /**
          * Always valid
@@ -190,7 +194,9 @@ interface ParameterProvider {
          *
          * NOTICE: we always use context.getOrNull(). Validity is checked in [validate]
          */
-        override fun provide(context: InjectionContext): Any? = context.getOrNull(paramCls)
+        override fun provide(kontainer: Kontainer, context: InjectionContext): Any? {
+            return kontainer.getOrNull(paramCls, context)
+        }
 
         /**
          * Validates if the service can be provided by the container
@@ -247,7 +253,9 @@ interface ParameterProvider {
         /**
          * Provides a list with all super types
          */
-        override fun provide(context: InjectionContext): List<Any> = context.getAll(innerType)
+        override fun provide(kontainer: Kontainer, context: InjectionContext): List<Any> {
+            return kontainer.getAll(innerType, context)
+        }
 
         /**
          * Always valid.
@@ -282,7 +290,9 @@ interface ParameterProvider {
         /**
          * Provides a list with all super types
          */
-        override fun provide(context: InjectionContext): LazyServiceLookup<out Any> = context.getLookup(innerType)
+        override fun provide(kontainer: Kontainer, context: InjectionContext): LazyServiceLookup<out Any> {
+            return kontainer.getLookup(innerType, context)
+        }
 
         /**
          * Always valid.
@@ -317,8 +327,10 @@ interface ParameterProvider {
         /**
          * Provides a lazy list with all super types
          */
-        override fun provide(context: InjectionContext): KotlinLazy<List<Any>> = lazy {
-            context.getAll(innerType)
+        override fun provide(kontainer: Kontainer, context: InjectionContext): KotlinLazy<List<Any>> {
+            return lazy {
+                kontainer.getAll(innerType, context)
+            }
         }
 
         /**
@@ -361,8 +373,10 @@ interface ParameterProvider {
         /**
          * Provides the service wrapped as a Lazy
          */
-        override fun provide(context: InjectionContext): KotlinLazy<Any?> = lazy {
-            context.getOrNull(paramCls)
+        override fun provide(kontainer: Kontainer, context: InjectionContext): KotlinLazy<Any?> {
+            return lazy {
+                kontainer.getOrNull(paramCls, context)
+            }
         }
 
         /**
@@ -419,7 +433,9 @@ interface ParameterProvider {
         /**
          * Will always raise a [KontainerInconsistent]
          */
-        override fun provide(context: InjectionContext): Nothing = throw KontainerInconsistent(error)
+        override fun provide(kontainer: Kontainer, context: InjectionContext): Nothing {
+            throw KontainerInconsistent(error)
+        }
 
         /**
          * Will always return an error

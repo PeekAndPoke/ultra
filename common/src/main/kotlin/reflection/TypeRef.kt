@@ -25,16 +25,14 @@ data class TypeRef<T> internal constructor(val type: KType) {
         /** Cache for [KClass] to [TypeRef] */
         private val cachedNonNullKClasses = mutableMapOf<KClass<*>, TypeRef<*>>()
 
-        @PublishedApi
-        internal fun <T> createForKType(type: KType): TypeRef<T> {
+        fun <T> createForKType(type: KType): TypeRef<T> {
             @Suppress("UNCHECKED_CAST")
             return cachedKTypes.getOrPut(type) {
                 TypeRef<T>(type)
             } as TypeRef<T>
         }
 
-        @PublishedApi
-        internal fun <T> createForKClass(cls: KClass<*>, nullable: Boolean): TypeRef<T> {
+        fun <T> createForKClass(cls: KClass<*>, nullable: Boolean): TypeRef<T> {
 
             val cache = if (nullable) {
                 cachedNullableKClasses

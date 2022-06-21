@@ -13,23 +13,25 @@ class InjectionContextSpec : StringSpec({
 
     "Injection context points to Kontainer, when service is directly requested from the Kontainer" {
 
-        data class MyInjected(val injector: KClass<*>?)
+        data class MyInjected(val context: InjectionContext)
 
         val blueprint = kontainer {
 
-            prototype(MyInjected::class) { context: InjectionContext -> MyInjected(context.requestingClass) }
+            prototype(MyInjected::class) { context: InjectionContext -> MyInjected(context) }
         }
 
         val subject = blueprint.create()
 
         assertSoftly {
-            subject.get(MyInjected::class).injector shouldBe Kontainer::class
+            subject.get(MyInjected::class).context.requestingClass shouldBe Kontainer::class
+
+            subject.get(MyInjected::class).context.injectingClass shouldBe MyInjected::class
         }
     }
 
     "Using the injection context when injecting a service" {
 
-        data class MyInjected(val injector: KClass<*>)
+        data class MyInjected(val context: InjectionContext)
 
         data class MyInjector(val injected: MyInjected)
 
@@ -37,15 +39,23 @@ class InjectionContextSpec : StringSpec({
 
             prototype(MyInjector::class)
 
-            prototype(MyInjected::class) { context: InjectionContext -> MyInjected(context.requestingClass) }
+            prototype(MyInjected::class) { context: InjectionContext ->
+                MyInjected(context)
+            }
         }
 
         val subject = blueprint.create()
 
         assertSoftly {
-            subject.get(MyInjected::class).injector shouldBe Kontainer::class
+            subject.get(MyInjected::class).let {
+                it.context.requestingClass shouldBe Kontainer::class
+                it.context.injectingClass shouldBe MyInjected::class
+            }
 
-            subject.get(MyInjector::class).injected.injector shouldBe MyInjector::class
+            subject.get(MyInjector::class).let {
+                it.injected.context.requestingClass shouldBe MyInjector::class
+                it.injected.context.injectingClass shouldBe MyInjected::class
+            }
         }
     }
 

@@ -23,7 +23,7 @@ class Kontainer internal constructor(
     /**
      * The root context is used, when services are directly requested from the Kontainer
      */
-    private val rootContext: InjectionContext = InjectionContext(this, Kontainer::class, Kontainer::class)
+    private val rootContext: InjectionContext = InjectionContext.kontainerRoot
 
     /**
      * Get the underlying [ServiceProviderFactory].
@@ -121,7 +121,7 @@ class Kontainer internal constructor(
      */
     internal fun <T : Any> get(service: KClass<T>, context: InjectionContext): T {
         @Suppress("UNCHECKED_CAST")
-        return getProvider(service).provide(context) as T
+        return getProvider(service).provide(this, context) as T
     }
 
     /**
@@ -147,6 +147,6 @@ class Kontainer internal constructor(
      */
     internal fun <T : Any> getLookup(cls: KClass<T>, context: InjectionContext): LazyServiceLookup<T> {
         @Suppress("UNCHECKED_CAST")
-        return blueprint.superTypeLookup.getLookupBlueprint(cls).with(context) as LazyServiceLookup<T>
+        return blueprint.superTypeLookup.getLookupBlueprint(cls).with(this, context) as LazyServiceLookup<T>
     }
 }

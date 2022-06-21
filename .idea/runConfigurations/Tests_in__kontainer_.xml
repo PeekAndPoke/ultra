@@ -12,8 +12,6 @@
         <list>
           <option value=":kontainer:cleanTest" />
           <option value=":kontainer:test" />
-          <option value="--tests" />
-          <option value="*" />
         </list>
       </option>
       <option name="vmOptions" value="" />
