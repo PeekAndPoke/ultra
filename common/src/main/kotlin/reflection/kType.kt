@@ -13,18 +13,6 @@ import kotlin.reflect.typeOf
  */
 inline fun <reified T : Any?> kType(): TypeRef<T> {
 
-//    val cls = T::class
-//
-//    if (cls.typeParameters.isNotEmpty()) {
-//        val tr = object : TypeReference<T>(
-//            cls.java.classLoader ?: Thread.currentThread().contextClassLoader
-//        ) {}
-//
-//        return TypeRef(tr.toKType())
-//    }
-//
-//    return TypeRef(cls.createType(nullable = null is T))
-
     val type: KType = typeOf<T>()
 
     return TypeRef.createForKType(type = type)
@@ -38,7 +26,7 @@ fun <T : Any> Class<T>.kType(): TypeRef<T> = kotlin.kType()
 /**
  * Creates a [TypeRef] from the given [KClass]
  */
-fun <T : Any> KClass<T>.kType(): TypeRef<T> = TypeRef.createForKClass(this)
+fun <T : Any> KClass<T>.kType(): TypeRef<T> = TypeRef.createForKClass(cls = this, nullable = false)
 
 /**
  * Creates a [TypeRef] for a List type of the given type

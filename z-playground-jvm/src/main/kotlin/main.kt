@@ -21,11 +21,11 @@ suspend fun main() {
 
             val reified = type.reified
 
-            val slumbered = codec.slumber(
-                ExampleClass(1, "a")
-            )
-
-            val awoken: ExampleClass<Int, String>? = codec.awake(kType(), slumbered)
+//            val slumbered = codec.slumber(
+//                ExampleClass(1, "a")
+//            )
+//
+//            val awoken: ExampleClass<Int, String>? = codec.awake(kType(), slumbered)
         }
 
         delay(1000)

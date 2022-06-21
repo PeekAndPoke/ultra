@@ -20,7 +20,10 @@ data class TypeRef<T> internal constructor(val type: KType) {
         private val cachedKTypes = mutableMapOf<KType, TypeRef<*>>()
 
         /** Cache for [KClass] to [TypeRef] */
-        private val cachedKClasses = mutableMapOf<KClass<*>, TypeRef<*>>()
+        private val cachedNullableKClasses = mutableMapOf<KClass<*>, TypeRef<*>>()
+
+        /** Cache for [KClass] to [TypeRef] */
+        private val cachedNonNullKClasses = mutableMapOf<KClass<*>, TypeRef<*>>()
 
         @PublishedApi
         internal fun <T> createForKType(type: KType): TypeRef<T> {
@@ -31,9 +34,16 @@ data class TypeRef<T> internal constructor(val type: KType) {
         }
 
         @PublishedApi
-        internal fun <T : Any> createForKClass(cls: KClass<T>): TypeRef<T> {
+        internal fun <T> createForKClass(cls: KClass<*>, nullable: Boolean): TypeRef<T> {
+
+            val cache = if (nullable) {
+                cachedNullableKClasses
+            } else {
+                cachedNonNullKClasses
+            }
+
             @Suppress("UNCHECKED_CAST")
-            return cachedKClasses.getOrPut(cls) {
+            return cache.getOrPut(cls) {
 
                 val type = cls.createType(
                     arguments = cls.typeParameters.map {
@@ -106,11 +116,9 @@ data class TypeRef<T> internal constructor(val type: KType) {
      */
     val list: TypeRef<List<T>> by lazy(LazyThreadSafetyMode.NONE) {
         @Suppress("RemoveExplicitTypeArguments")
-        TypeRef<List<T>>(
+        createForKType<List<T>>(
             List::class.createType(
-                arguments = listOf(
-                    KTypeProjection.invariant(type)
-                ),
+                arguments = listOf(KTypeProjection.invariant(type)),
                 nullable = false
             )
         )
@@ -123,7 +131,10 @@ data class TypeRef<T> internal constructor(val type: KType) {
      *
      * When the given type [W] does not have exactly one type parameter an exception is thrown
      */
-    inline fun <reified W : Any> wrapWith(): TypeRef<W> = wrapWith(W::class, null is W)
+    inline fun <reified W : Any> wrapWith(): TypeRef<W> {
+        @Suppress("USELESS_IS_CHECK")
+        return wrapWith(cls = W::class, null is W)
+    }
 
     /**
      * Wraps the current type with the given generic type [W]
@@ -133,21 +144,27 @@ data class TypeRef<T> internal constructor(val type: KType) {
      * When the given type [W] does not have exactly one type parameter an exception is thrown
      */
     @Suppress("UNCHECKED_CAST")
-    fun <W : Any> wrapWith(cls: KClass<W>, nullable: Boolean): TypeRef<W> = wrapCache.getOrPut(cls) {
+    fun <W : Any> wrapWith(cls: KClass<W>, nullable: Boolean): TypeRef<W> {
 
         if (cls.typeParameters.size != 1) {
             error("Can only wrap with a generic type with exactly one type parameter")
         }
 
-        return TypeRef(
-            cls.createType(
-                arguments = listOf(
-                    KTypeProjection.invariant(type)
-                ),
-                nullable = nullable
+        val cache = if (nullable) {
+            nullableWrapCache
+        } else {
+            nonNullWrapCache
+        }
+
+        return cache.getOrPut(cls) {
+            createForKType<W>(
+                cls.createType(
+                    arguments = listOf(KTypeProjection.invariant(type)),
+                    nullable = nullable
+                )
             )
-        )
-    } as TypeRef<W>
+        } as TypeRef<W>
+    }
 
     /**
      * Internal helper val, that does not carry the correct generic type information.
@@ -166,7 +183,12 @@ data class TypeRef<T> internal constructor(val type: KType) {
     /**
      * Internal cache used by [wrapWith]
      */
-    private val wrapCache = mutableMapOf<KClass<*>, TypeRef<*>>()
+    private val nonNullWrapCache = mutableMapOf<KClass<*>, TypeRef<*>>()
+
+    /**
+     * Internal cache used by [wrapWith]
+     */
+    private val nullableWrapCache = mutableMapOf<KClass<*>, TypeRef<*>>()
 }
 
 /**
