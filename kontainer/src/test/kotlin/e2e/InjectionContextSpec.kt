@@ -3,8 +3,10 @@ package de.peekandpoke.ultra.kontainer.e2e
 import de.peekandpoke.ultra.common.Lookup
 import de.peekandpoke.ultra.kontainer.InjectionContext
 import de.peekandpoke.ultra.kontainer.Kontainer
+import de.peekandpoke.ultra.kontainer.ServiceProvider
 import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlin.reflect.KClass
@@ -157,6 +159,34 @@ class InjectionContextSpec : StringSpec({
 
             subject.get(MyInjector::class).all.all()[0].injector shouldBe MyInjector::class
             subject.get(MyInjector::class).all.all()[1].injector shouldBe MyInjector::class
+        }
+    }
+
+    "A singleton injecting the InjectionContext must become a dynamic singleton" {
+        data class MyInjected(val context: InjectionContext)
+
+        data class MyInjector(val injected: MyInjected)
+
+        val blueprint = kontainer {
+
+            singleton(MyInjector::class)
+
+            singleton(MyInjected::class) { context: InjectionContext ->
+                MyInjected(context)
+            }
+        }
+
+        val kontainer = blueprint.create()
+
+        assertSoftly {
+
+            withClue("MyInjected injects the InjectionContext and must be promoted to a semi dynamic service") {
+                kontainer.getProvider(MyInjected::class).type shouldBe ServiceProvider.Type.SemiDynamic
+            }
+
+            withClue("MyInjector must be promoted to a semi dynamic service as it injects MyInjected") {
+                kontainer.getProvider(MyInjector::class).type shouldBe ServiceProvider.Type.SemiDynamic
+            }
         }
     }
 })

@@ -45,10 +45,22 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     init {
         builder(this)
 
-        // The container is always present (dynamic as it changes with every new Kontainer instance)
+        //
+        // The kontainer is always present (dynamic as it changes with every new Kontainer instance)
+        //
         addDynamic(Kontainer::class, ServiceProducer.forKontainer())
 
+        //
+        // The InjectionContext is always present and dynamic
+        //
+        // NOTICE: We provide a dummy ServiceProducer below.
+        // The InjectionContext is injected via [ParameterProvider.ForInjectionContext]
+        //
+        addDynamic(InjectionContext::class, ServiceProducer.forInstance(InjectionContext.kontainerRoot))
+
+        //
         // The blueprint is always present (singleton as it always stays the same)
+        //
         addSingleton(KontainerBlueprint::class, ServiceProducer.forKontainerBlueprint())
     }
 
