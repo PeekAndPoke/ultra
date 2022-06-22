@@ -85,15 +85,21 @@ class DataClassCodec(rootType: KType) : Awaker, Slumberer {
             // When we have all the parameters we need, we can call the ctor.
             missingParams.isEmpty() && primaryCtor != null -> primaryCtor.callBy(params)
             // Otherwise, we have to return null
-            else -> null
+            else -> {
+                context.log {
+                    "${reified.type} misses parameters ${missingParams.joinToString { "'$it'" }}"
+                }
+
+                null
+            }
         }
     }
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any?>? = when {
 
-        data != null -> reified.properties2Types.map { (prop, type) ->
+        data != null -> reified.properties2Types.associate { (prop, type) ->
             prop.name to context.slumber(type, prop.get(data))
-        }.toMap()
+        }
 
         else -> null
     }

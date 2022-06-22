@@ -15,7 +15,7 @@ class MapAwakerSpec : StringSpec({
 
         val subject = MapAwaker.forMap(kMapType<String, Int>().type)
         val codec = Codec.default
-        val result = subject.awake(mapOf("a" to 1, 2 to 2), codec.awakerContext)!!
+        val result = subject.awake(mapOf("a" to 1, 2 to 2), codec.secondPassAwakerContext)!!
 
         Map::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe mapOf("a" to 1, "2" to 2)
@@ -25,7 +25,7 @@ class MapAwakerSpec : StringSpec({
 
         val subject = MapAwaker.forMap(kMapType<String, Int>().type)
         val codec = Codec.default
-        val result = subject.awake(listOf<Any>(), codec.awakerContext)
+        val result = subject.awake(listOf<Any>(), codec.secondPassAwakerContext)
 
         result shouldBe null
     }
@@ -34,7 +34,7 @@ class MapAwakerSpec : StringSpec({
 
         val subject = MapAwaker.forMap(kMapType<String, Int?>().type)
         val codec = Codec.default
-        val result = subject.awake(mapOf("a" to 1, 2 to null), codec.awakerContext)!!
+        val result = subject.awake(mapOf("a" to 1, 2 to null), codec.secondPassAwakerContext)!!
 
         Map::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe mapOf("a" to 1, "2" to null)
@@ -47,7 +47,7 @@ class MapAwakerSpec : StringSpec({
         val codec = Codec.default
 
         val error = shouldThrow<AwakerException> {
-            subject.awake(mapOf("a" to 1, "wrong" to null), codec.awakerContext)
+            subject.awake(mapOf("a" to 1, "wrong" to null), codec.secondPassAwakerContext)
         }
 
         error.message shouldContain "root.wrong[VAL]"
@@ -71,7 +71,7 @@ class MapAwakerSpec : StringSpec({
 
         val codec = Codec.default
 
-        val result = subject.awake(mapOf("a" to 1, 2 to 2), codec.awakerContext)!!
+        val result = subject.awake(mapOf("a" to 1, 2 to 2), codec.secondPassAwakerContext)!!
 
         MutableMap::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe mapOf("a" to 1, "2" to 2)
@@ -83,7 +83,7 @@ class MapAwakerSpec : StringSpec({
 
         val codec = Codec.default
 
-        val result = subject.awake(mapOf("a" to 1, 2 to null), codec.awakerContext)!!
+        val result = subject.awake(mapOf("a" to 1, 2 to null), codec.secondPassAwakerContext)!!
 
         MutableMap::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe mapOf("a" to 1, "2" to null)
@@ -96,7 +96,7 @@ class MapAwakerSpec : StringSpec({
         val codec = Codec.default
 
         val error = shouldThrow<AwakerException> {
-            subject.awake(mapOf("a" to 1, "wrong" to null), codec.awakerContext)
+            subject.awake(mapOf("a" to 1, "wrong" to null), codec.secondPassAwakerContext)
         }
 
         error.message shouldContain "root.wrong[VAL]"

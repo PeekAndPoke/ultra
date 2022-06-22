@@ -17,7 +17,7 @@ class CollectionAwakerSpec : StringSpec({
 
         val codec = Codec.default
 
-        val result = subject.awake(listOf("1", 2), codec.awakerContext)!!
+        val result = subject.awake(listOf("1", 2), codec.secondPassAwakerContext)!!
 
         List::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe listOf(1, 2)
@@ -29,7 +29,7 @@ class CollectionAwakerSpec : StringSpec({
 
         val codec = Codec.default
 
-        val result = subject.awake(listOf("1", 2, null), codec.awakerContext)!!
+        val result = subject.awake(listOf("1", 2, null), codec.secondPassAwakerContext)!!
 
         List::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe listOf(1, 2, null)
@@ -42,7 +42,7 @@ class CollectionAwakerSpec : StringSpec({
         val codec = Codec.default
 
         val error = shouldThrow<AwakerException> {
-            subject.awake(listOf("1", 2, null), codec.awakerContext)
+            subject.awake(listOf("1", 2, null), codec.secondPassAwakerContext)
         }
 
         // should contain the error for the correct position
@@ -67,7 +67,7 @@ class CollectionAwakerSpec : StringSpec({
 
         val codec = Codec.default
 
-        val result = subject.awake(listOf("1", 2), codec.awakerContext)!!
+        val result = subject.awake(listOf("1", 2), codec.secondPassAwakerContext)!!
 
         result.shouldBeInstanceOf<MutableList<*>>()
 
@@ -81,7 +81,7 @@ class CollectionAwakerSpec : StringSpec({
 
         val codec = Codec.default
 
-        val result = subject.awake(listOf("1", 2, null), codec.awakerContext)!!
+        val result = subject.awake(listOf("1", 2, null), codec.secondPassAwakerContext)!!
 
         result.shouldBeInstanceOf<MutableList<*>>()
 
@@ -96,7 +96,7 @@ class CollectionAwakerSpec : StringSpec({
         val codec = Codec.default
 
         val error = shouldThrow<AwakerException> {
-            subject.awake(listOf("1", 2, null), codec.awakerContext)
+            subject.awake(listOf("1", 2, null), codec.secondPassAwakerContext)
         }
 
         // should contain the error for the correct position
@@ -159,7 +159,7 @@ class CollectionAwakerSpec : StringSpec({
 
         val codec = Codec.default
 
-        val result = subject.awake(listOf("1", 2), codec.awakerContext)!!
+        val result = subject.awake(listOf("1", 2), codec.secondPassAwakerContext)!!
 
         Set::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe setOf(1, 2)
@@ -171,7 +171,7 @@ class CollectionAwakerSpec : StringSpec({
 
         val codec = Codec.default
 
-        val result = subject.awake(listOf("1", 2, null), codec.awakerContext)!!
+        val result = subject.awake(listOf("1", 2, null), codec.secondPassAwakerContext)!!
 
         Set::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe setOf(1, 2, null)
@@ -184,7 +184,7 @@ class CollectionAwakerSpec : StringSpec({
         val codec = Codec.default
 
         val error = shouldThrow<AwakerException> {
-            subject.awake(listOf("1", 2, null), codec.awakerContext)
+            subject.awake(listOf("1", 2, null), codec.secondPassAwakerContext)
         }
 
         // should contain the error for the correct position
@@ -209,7 +209,7 @@ class CollectionAwakerSpec : StringSpec({
 
         val codec = Codec.default
 
-        val result = subject.awake(listOf("1", 2), codec.awakerContext)!!
+        val result = subject.awake(listOf("1", 2), codec.secondPassAwakerContext)!!
 
         result.shouldBeInstanceOf<MutableSet<*>>()
 
@@ -223,7 +223,7 @@ class CollectionAwakerSpec : StringSpec({
 
         val codec = Codec.default
 
-        val result = subject.awake(listOf("1", 2, null), codec.awakerContext)!!
+        val result = subject.awake(listOf("1", 2, null), codec.secondPassAwakerContext)!!
 
         result.shouldBeInstanceOf<MutableSet<*>>()
 
@@ -238,7 +238,7 @@ class CollectionAwakerSpec : StringSpec({
         val codec = Codec.default
 
         val error = shouldThrow<AwakerException> {
-            subject.awake(listOf("1", 2, null), codec.awakerContext)
+            subject.awake(listOf("1", 2, null), codec.secondPassAwakerContext)
         }
 
         // should contain the error for the correct position

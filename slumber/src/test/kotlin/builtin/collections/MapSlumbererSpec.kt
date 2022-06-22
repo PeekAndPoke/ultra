@@ -12,7 +12,7 @@ class MapSlumbererSpec : StringSpec({
 
         val subject = MapSlumberer(kType<String>().type, kType<Int>().type)
         val codec = Codec.default
-        val result = subject.slumber(mapOf("a" to 1, 2 to 2), codec.slumbererContext)!!
+        val result = subject.slumber(mapOf("a" to 1, 2 to 2), codec.secondPassSlumbererContext)!!
 
         result shouldBe mapOf("a" to 1, "2" to 2)
     }
@@ -26,7 +26,7 @@ class MapSlumbererSpec : StringSpec({
             2 to LocalDateTime.of(2000, 1, 1, 0, 0)
         )
 
-        val result = subject.slumber(data, codec.slumbererContext)!!
+        val result = subject.slumber(data, codec.secondPassSlumbererContext)!!
 
         result shouldBe mapOf(
             "a" to mapOf(

@@ -12,51 +12,72 @@ open class Codec(
     private val config: SlumberConfig,
     private val attributes: TypedAttributes = TypedAttributes.empty,
 ) {
-
     companion object {
         val default = Codec(
             config = SlumberConfig.default
         )
     }
 
-    open val awakerContext by lazy {
-        Awaker.Context(this, attributes, "root")
+    open val firstPassAwakerContext: Awaker.Context by lazy {
+        Awaker.Context.Fast(this, attributes)
     }
 
-    open val slumbererContext by lazy {
-        Slumberer.Context(this, attributes, "root")
+    open val secondPassAwakerContext: Awaker.Context
+        get() = Awaker.Context.Tracking(this, attributes, "root", mutableListOf())
+
+    open val firstPassSlumbererContext: Slumberer.Context by lazy {
+        Slumberer.Context.Fast(this, attributes)
     }
 
-    private val kTypeCache = mutableMapOf<KClass<*>, KType>()
+    open val secondPassSlumbererContext: Slumberer.Context
+        get() = Slumberer.Context.Tracking(this, attributes, "root")
+
+    private val class2typeCache = mutableMapOf<KClass<*>, KType>()
 
     fun <T> getAwaker(type: TypeRef<T>) = getAwaker(type.type)
 
     fun getAwaker(type: KType): Awaker = config.getAwaker(type)
 
+    fun <T> getSlumberer(type: TypeRef<T>) = getSlumberer(type.type)
+
+    fun getSlumberer(type: KType): Slumberer = config.getSlumberer(type)
+
     fun <T : Any> awake(type: KClass<T>, data: Any?): T? {
-        return awake(type, data, awakerContext)
+        return awakeInternal(type.kType(), data)
     }
 
     fun awake(type: KType, data: Any?): Any? {
-        return awake(type, data, awakerContext)
+        return awakeInternal(type, data)
     }
 
     fun <T> awake(type: TypeRef<T>, data: Any?): T? {
         @Suppress("UNCHECKED_CAST")
-        return awake(type.type, data, awakerContext) as T?
+        return awake(type.type, data) as T?
     }
 
     inline fun <reified T> awake(data: Any?): T? {
-        return awake(kType<T>().type, data, awakerContext) as T?
+        return awake(kType<T>().type, data) as T?
     }
 
-    @Suppress("UNCHECKED_CAST")
-    fun <T : Any> awake(type: KClass<T>, data: Any?, context: Awaker.Context): T? {
+    internal fun <T : Any> awake(type: KClass<T>, data: Any?, context: Awaker.Context): T? {
+        @Suppress("UNCHECKED_CAST")
         return awake(type.kType(), data, context) as T?
     }
 
-    fun awake(type: KType, data: Any?, context: Awaker.Context): Any? {
+    internal fun awake(type: KType, data: Any?, context: Awaker.Context): Any? {
         return getAwaker(type).awake(data, context)
+    }
+
+    private fun <T> awakeInternal(type: KType, data: Any?): T? {
+
+        val awaker = getAwaker(type)
+
+        @Suppress("UNCHECKED_CAST")
+        return try {
+            awaker.awake(data, firstPassAwakerContext)
+        } catch (e: AwakerException) {
+            awaker.awake(data, secondPassAwakerContext)
+        } as? T?
     }
 
     fun slumber(data: Any?): Any? {
@@ -74,13 +95,44 @@ open class Codec(
     }
 
     fun slumber(targetType: KType, data: Any?): Any? {
-        return config.getSlumberer(targetType).slumber(data, slumbererContext)
+        return slumberInternal(targetType, data)
+    }
+
+    internal fun <T : Any> slumber(data: Any?, context: Slumberer.Context): T? {
+        val cls = when {
+            data != null -> data::class
+            else -> Nothing::class
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        return slumber(cls, data, context) as T?
+    }
+
+    internal fun <T : Any> slumber(type: KClass<T>, data: Any?, context: Slumberer.Context): T? {
+        @Suppress("UNCHECKED_CAST")
+        return slumber(type.kType(), data, context) as T?
+    }
+
+    internal fun slumber(type: KType, data: Any?, context: Slumberer.Context): Any? {
+        return getSlumberer(type).slumber(data, context)
+    }
+
+    private fun <T> slumberInternal(type: KType, data: Any?): T? {
+
+        val slumberer = getSlumberer(type)
+
+        @Suppress("UNCHECKED_CAST")
+        return try {
+            slumberer.slumber(data, firstPassSlumbererContext)
+        } catch (e: SlumberException) {
+            slumberer.slumber(data, secondPassSlumbererContext)
+        } as? T?
     }
 
     /**
      * Creates a KType from the given class by trying to assign somewhat useful type parameters
      */
-    private fun KClass<*>.kType() = kTypeCache.getOrPut(this) {
+    private fun KClass<*>.kType() = class2typeCache.getOrPut(this) {
         createType(
             typeParameters.map { KTypeProjection.invariant(it.upperBounds[0]) }
         )
