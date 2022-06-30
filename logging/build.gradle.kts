@@ -7,7 +7,7 @@ import Deps.Test.jvmTestDeps
 
 plugins {
     kotlin("multiplatform")
-    id("io.kotest.multiplatform") version Deps.Test.kotest_version
+    id("io.kotest.multiplatform") version Deps.Test.kotest_plugin_version
     id("org.jetbrains.kotlin.plugin.serialization")
     id("org.jetbrains.dokka")
 }

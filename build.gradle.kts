@@ -25,6 +25,9 @@ allprojects {
 
         // Repo for KlassIndex (https://github.com/matfax/klassindex)
         maven("https://jitpack.io")
+
+        // Snapshots
+        maven("https://oss.sonatype.org/content/repositories/snapshots")
     }
 }
 
