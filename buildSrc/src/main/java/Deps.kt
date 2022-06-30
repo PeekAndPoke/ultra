@@ -48,12 +48,14 @@ object Deps {
     const val kotlinpoet = "com.squareup:kotlinpoet:$kotlinpoet_version"
 
     // https://kotlinlang.org/docs/releases.html#release-details
+    // https://github.com/Kotlin/kotlinx.coroutines/releases
     private const val kotlinx_coroutines_version = "1.6.3"
     const val kotlinx_coroutines_core =
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version"
 
     // https://kotlinlang.org/docs/releases.html#release-details
-    private const val kotlinx_serialization_version = "1.3.2"
+    // https://github.com/Kotlin/kotlinx.serialization/releases
+    private const val kotlinx_serialization_version = "1.3.3"
     const val kotlinx_serialization_core =
         "org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version"
     const val kotlinx_serialization_json =
@@ -91,8 +93,7 @@ object Deps {
 
         //        const val kotest_version = "5.3.1"
         const val kotest_plugin_version = "5.3.1"
-
-//        const val kotest_version = "5.3.1"
+        //        const val kotest_version = "5.3.1"
         const val kotest_version = "5.4.0.1035-SNAPSHOT"
 
         const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"
@@ -100,38 +101,39 @@ object Deps {
         const val kotest_framework_datatest = "io.kotest:kotest-framework-datatest:$kotest_version"
         const val kotest_framework_engine = "io.kotest:kotest-framework-engine:$kotest_version"
 
-//        const val kotest_assertions_core_jvm = "io.kotest:kotest-assertions-core-jvm:$kotest_version"
         const val kotest_runner_junit_jvm = "io.kotest:kotest-runner-junit5-jvm:$kotest_version"
 
-//        const val kotest_assertions_core_js = "io.kotest:kotest-assertions-core-js:$kotest_version"
-//        const val kotest_framework_api_js = "io.kotest:kotest-framework-api-js:$kotest_version"
-//        const val kotest_framework_engine_js = "io.kotest:kotest-framework-engine-js:$kotest_version"
-
         fun KotlinDependencyHandler.commonTestDeps() {
+            kotlin("test-common")
+            kotlin("test-annotations-common")
             implementation(kotest_assertions_core)
             implementation(kotest_framework_api)
             implementation(kotest_framework_datatest)
 //            implementation(kotest_framework_engine)
-            kotlin("test-common")
-            kotlin("test-annotations-common")
         }
 
         fun KotlinDependencyHandler.jsTestDeps() {
             implementation(kotest_assertions_core)
             implementation(kotest_framework_api)
+            implementation(kotest_framework_datatest)
 //            implementation(kotest_framework_engine)
         }
 
         fun KotlinDependencyHandler.jvmTestDeps() {
             implementation(logback_classic)
-            implementation(kotest_assertions_core)
             implementation(kotest_runner_junit_jvm)
+            implementation(kotest_assertions_core)
+            implementation(kotest_framework_api)
+            implementation(kotest_framework_datatest)
+//            implementation(kotest_framework_engine)
         }
 
         fun DependencyHandlerScope.jvmTestDeps() {
             testImplementation(logback_classic)
-            testImplementation(kotest_assertions_core)
             testImplementation(kotest_runner_junit_jvm)
+            testImplementation(kotest_assertions_core)
+            testImplementation(kotest_framework_api)
+//            testImplementation(kotest_framework_engine)
         }
 
         fun TaskContainerScope.configureJvmTests(
