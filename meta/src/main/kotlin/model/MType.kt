@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.meta.model
 
+import com.squareup.kotlinpoet.DelicateKotlinPoetApi
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeVariableName
@@ -9,7 +10,8 @@ import javax.lang.model.element.ElementKind
 import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
 
-@Suppress("unused", "EXPERIMENTAL_API_USAGE")
+@Suppress("unused")
+@OptIn(DelicateKotlinPoetApi::class)
 class MType(
     model: Model,
     val type: TypeElement,

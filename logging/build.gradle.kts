@@ -10,6 +10,7 @@ plugins {
     id("io.kotest.multiplatform") version Deps.Test.kotest_plugin_version
     id("org.jetbrains.kotlin.plugin.serialization")
     id("org.jetbrains.dokka")
+    id("com.vanniktech.maven.publish")
 }
 
 val GROUP: String by project
@@ -99,5 +100,3 @@ kotlin {
 tasks {
     configureJvmTests()
 }
-
-apply(from = "./../maven.publish.gradle.kts")

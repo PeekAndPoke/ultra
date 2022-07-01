@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.meta
 
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.DelicateKotlinPoetApi
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asTypeName
@@ -26,7 +27,8 @@ import javax.lang.model.util.Types
 import javax.tools.Diagnostic
 import kotlin.reflect.KClass
 
-@Suppress("unused", "EXPERIMENTAL_API_USAGE", "Detekt:TooManyFunctions")
+@Suppress("unused", "Detekt:TooManyFunctions")
+@OptIn(DelicateKotlinPoetApi::class)
 interface ProcessorUtils {
 
     interface Context {

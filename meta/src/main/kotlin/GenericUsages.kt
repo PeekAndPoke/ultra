@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.meta
 
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.DelicateKotlinPoetApi
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.asTypeName
 import de.peekandpoke.ultra.meta.model.MType
@@ -27,7 +28,7 @@ class GenericUsages(val model: Model, types: List<TypeElement>) : ProcessorUtils
 
     private fun DeclaredType.isReified() = typeArguments.all { it is DeclaredType }
 
-    @Suppress("EXPERIMENTAL_API_USAGE")
+    @OptIn(DelicateKotlinPoetApi::class)
     private fun put(declaredType: DeclaredType) = put(
         MType(
             model = model,
