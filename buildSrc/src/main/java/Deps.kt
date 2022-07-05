@@ -79,6 +79,21 @@ object Deps {
 
     // // NPM dependencies /////////////////////////////////////////////////////////////////////////
 
+    object Npm {
+        operator fun <T> invoke(block: Npm.() -> T): T {
+            return this.block()
+        }
+
+        // https://www.npmjs.com/package/whatwg-fetch
+        fun KotlinDependencyHandler.polyfillFetch() = npm("whatwg-fetch", "3.6.2")
+
+        // https://www.npmjs.com/package/@js-joda/core
+        fun KotlinDependencyHandler.jsJodaCore() = npm("@js-joda/core", "5.2.0")
+
+        // https://www.npmjs.com/package/@js-joda/timezone
+        fun KotlinDependencyHandler.jsJodaTimezone() = npm("@js-joda/timezone", "2.12.0")
+    }
+
     // // Test dependencies ////////////////////////////////////////////////////////////////////////
 
     object Test {

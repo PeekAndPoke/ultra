@@ -84,9 +84,9 @@ kotlin {
 
         js().compilations["main"].defaultSourceSet {
             dependencies {
-                api(npm("whatwg-fetch", "3.6.2"))
-                api(npm("@js-joda/timezone", "2.12.0"))
-                api(npm("@js-joda/core", "5.2.0"))
+                api(Deps.Npm { polyfillFetch() })
+                api(Deps.Npm { jsJodaCore() })
+                api(Deps.Npm { jsJodaTimezone() })
             }
         }
 
