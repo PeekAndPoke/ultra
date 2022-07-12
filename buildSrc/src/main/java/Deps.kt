@@ -9,13 +9,13 @@ object Deps {
     }
 
     // Kotlin ////////////////////////////////////////////////////////////////////////////////////
-    const val kotlinVersion = "1.7.0"
+    const val kotlinVersion = "1.7.10"
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     // Dokka /////////////////////////////////////////////////////////////////////////////////////
     // https://mvnrepository.com/artifact/org.jetbrains.dokka/dokka-gradle-plugin
     // Dokka gradle plugin org.jetbrains.dokka
-    const val dokkaVersion = kotlinVersion
+    const val dokkaVersion = "1.7.0" // kotlinVersion
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     // Publishing ////////////////////////////////////////////////////////////////////////////////
@@ -109,9 +109,9 @@ object Deps {
         // https://mvnrepository.com/artifact/io.kotest/kotest-common
 
         //        const val kotest_version = "5.3.1"
-        const val kotest_plugin_version = "5.3.1"
+        const val kotest_plugin_version = "5.3.2"
         //        const val kotest_version = "5.3.1"
-        const val kotest_version = "5.4.0.1035-SNAPSHOT"
+        const val kotest_version = "5.4.0.1048-SNAPSHOT"
 
         const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"
         const val kotest_framework_api = "io.kotest:kotest-framework-api:$kotest_version"
