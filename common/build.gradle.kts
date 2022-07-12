@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm")
     id("org.jetbrains.dokka")
+    id("com.vanniktech.maven.publish")
 }
 
 val GROUP: String by project
@@ -38,5 +39,3 @@ tasks {
 
     configureJvmTests()
 }
-
-apply(from = "./../maven.publish.gradle.kts")

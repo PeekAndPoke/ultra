@@ -7,6 +7,7 @@ plugins {
     kotlin("jvm")
     kotlin("kapt")
     id("org.jetbrains.dokka")
+    id("com.vanniktech.maven.publish")
 }
 
 val GROUP: String by project
@@ -50,5 +51,3 @@ tasks {
 
     configureJvmTests()
 }
-
-apply(from = "./../maven.publish.gradle.kts")

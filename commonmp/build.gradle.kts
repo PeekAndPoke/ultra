@@ -7,9 +7,10 @@ import Deps.Test.jvmTestDeps
 
 plugins {
     kotlin("multiplatform")
-    id("io.kotest.multiplatform") version Deps.Test.kotest_version
+    id("io.kotest.multiplatform") version Deps.Test.kotest_plugin_version
     id("org.jetbrains.kotlin.plugin.serialization")
     id("org.jetbrains.dokka")
+    id("com.vanniktech.maven.publish")
 }
 
 val GROUP: String by project
@@ -83,9 +84,9 @@ kotlin {
 
         js().compilations["main"].defaultSourceSet {
             dependencies {
-                api(npm("whatwg-fetch", "3.6.2"))
-                api(npm("@js-joda/timezone", "2.12.0"))
-                api(npm("@js-joda/core", "5.2.0"))
+                api(Deps.Npm { polyfillFetch() })
+                api(Deps.Npm { jsJodaCore() })
+                api(Deps.Npm { jsJodaTimezone() })
             }
         }
 
@@ -112,5 +113,3 @@ kotlin {
 tasks {
     configureJvmTests()
 }
-
-apply(from = "./../maven.publish.gradle.kts")
