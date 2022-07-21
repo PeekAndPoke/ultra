@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: io.kotest:kotest-framework-concurrency-jvm:5.4.0.1048-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-framework-concurrency-jvm/5.4.0.1048-SNAPSHOT/4d5cd1a92b909dc3f58280944d3d278fe8ea3559/kotest-framework-concurrency-jvm-5.4.0.1048-SNAPSHOT.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-framework-concurrency-jvm/5.4.0.1048-SNAPSHOT/cc4103034383c3ab045c41abb6948bbe36b2ee70/kotest-framework-concurrency-jvm-5.4.0.1048-SNAPSHOT-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

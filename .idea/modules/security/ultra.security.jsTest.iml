@@ -1,25 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id=":z-playground-js:test" external.linked.project.path="$MODULE_DIR$/../../../z-playground-js" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="de.peekandpoke.ultra" external.system.module.type="sourceSet" external.system.module.version="1.0-SNAPSHOT" type="JAVA_MODULE" version="4">
+<module external.linked.project.id=":security:jsTest" external.linked.project.path="$MODULE_DIR$/../../../security" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="io.peekandpoke.ultra" external.system.module.type="sourceSet" external.system.module.version="0.52.0" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="5" platform="JavaScript " allPlatforms="JS []" useProjectSettings="false" isTestModule="true" externalProjectId=":z-playground-js" isHmppProject="true">
+      <configuration version="5" platform="JavaScript " allPlatforms="JS []" useProjectSettings="false" isTestModule="true" externalProjectId=":security" isHmppProject="true">
+        <dependsOnModuleNames>:security:commonTest</dependsOnModuleNames>
+        <sourceSets>
+          <sourceSet>ultra.security.commonTest</sourceSet>
+        </sourceSets>
         <newMppModelJpsModuleKind>COMPILATION_AND_SOURCE_SET_HOLDER</newMppModelJpsModuleKind>
         <externalSystemTestTasks>
-          <externalSystemTestTask>browserTest|:z-playground-js|js</externalSystemTestTask>
+          <externalSystemTestTask>jsBrowserTest|:security|js</externalSystemTestTask>
         </externalSystemTestTasks>
         <compilerSettings>
-          <option name="additionalArguments" value="-Xir-module-name=de.peekandpoke.ultra:z-playground-js_test -Xir-only -Xir-per-module-output-name=ultra-z-playground-js-test -Xir-produce-klib-dir" />
+          <option name="additionalArguments" value="-Xir-module-name=io.peekandpoke.ultra:security_test -Xir-only -Xir-per-module-output-name=ultra-security-test -Xir-produce-klib-dir" />
         </compilerSettings>
         <compilerArguments>
           <flagArguments>
             <flagArg name="metaInfo" arg="true" />
             <flagArg name="noStdlib" arg="true" />
             <flagArg name="sourceMap" arg="true" />
+            <flagArg name="multiPlatform" arg="true" />
           </flagArguments>
           <stringArguments>
             <stringArg name="main" arg="call" />
             <stringArg name="moduleKind" arg="umd" />
-            <stringArg name="outputFile" arg="$MODULE_DIR$/../../../z-playground-js/build/classes/kotlin/test" />
+            <stringArg name="outputFile" arg="$MODULE_DIR$/../../../security/build/classes/kotlin/js/test" />
             <stringArg name="sourceMapEmbedSources" arg="never" />
             <stringArg name="target" arg="v5" />
             <stringArg name="apiVersion" arg="1.7" />
@@ -29,10 +34,16 @@
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/1.7.10/3b38be7ed8f8c678b13991d5b3ec99c4908d3313/kotlin-gradle-plugin-api-1.7.10-gradle70.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-scripting-jvm/1.7.10/c1e3bade3e9795023867dce31404736995037e4f/kotlin-scripting-jvm-1.7.10.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-scripting-common/1.7.10/bddf009658701ba5fb98e40e7877dcce7d8695ee/kotlin-scripting-common-1.7.10.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.7.10/d2abf9e77736acc4450dc4a3f707fa2c10f5099d/kotlin-stdlib-1.7.10.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-native-utils/1.7.10/2f0fbe380f54a395d99e75558c21924ef262cc8e/kotlin-native-utils-1.7.10.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-project-model/1.7.10/a393b70222ebad45abb2e0eb273a7cac9deb4df9/kotlin-project-model-1.7.10.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-tooling-core/1.7.10/8fc54e880cf9ea73396f2844a2d3aa76bdcbcfbb/kotlin-tooling-core-1.7.10.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.7.10/bac80c520d0a9e3f3673bc2658c6ed02ef45a76a/kotlin-stdlib-common-1.7.10.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-util-io/1.7.10/fdcfe10a398c931a5770ca45cffdd245112ca949/kotlin-util-io-1.7.10.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-script-runtime/1.7.10/c99c87a6988d8fd8d5142e9ed5c9f34a7cf561ee/kotlin-script-runtime-1.7.10.jar</arg>
                 <arg>$APPLICATION_PLUGINS_DIR$/Kotlin/kotlinc/lib/kotlinx-serialization-compiler-plugin.jar</arg>
               </args>
             </arrayArg>
@@ -43,13 +54,15 @@
     </facet>
   </component>
   <component name="NewModuleRootManager">
-    <output-test url="file://$MODULE_DIR$/../../../z-playground-js/build/classes/kotlin/test" />
+    <output-test url="file://$MODULE_DIR$/../../../security/build/classes/kotlin/js/test" />
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../../../z-playground-js/src/test" />
+    <content url="file://$MODULE_DIR$/../../../security/src/jsTest" />
     <orderEntry type="jdk" jdkName="Kotlin SDK" jdkType="KotlinSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="ultra.z-playground-js.main" scope="TEST" />
-    <orderEntry type="module" module-name="ultra.z-playground-js.main" scope="RUNTIME" />
+    <orderEntry type="module" module-name="ultra.security.commonMain" scope="TEST" />
+    <orderEntry type="module" module-name="ultra.security.commonTest" scope="TEST" production-on-test="" />
+    <orderEntry type="module" module-name="ultra.security.jsMain" scope="TEST" />
+    <orderEntry type="module" module-name="ultra.security.jsMain" scope="RUNTIME" />
     <orderEntry type="module-library" scope="TEST">
       <library>
         <CLASSES>
@@ -80,14 +93,22 @@
     <orderEntry type="module" module-name="ultra.commonmp.jsMain" scope="TEST" />
     <orderEntry type="module" module-name="ultra.commonmp.commonMain" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-js:1.7.10" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:1.7.10" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json-js:klib:1.3.3" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core-js:klib:1.3.3" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-js:klib:1.6.3" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-core-js:klib:5.4.0.1048-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-datatest-js:klib:5.4.0.1048-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-api-js:klib:5.4.0.1048-SNAPSHOT" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-datetime-js:klib:0.4.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json-js:klib:1.3.3" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-js:klib:1.6.3" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: com.soywiz.korlibs.klock:klock-js:klib:2.7.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-reflect:1.6.21" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:atomicfu-js:klib:0.17.3" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:atomicfu:1.6.21" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-shared-js:klib:5.4.0.1048-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-common-js:klib:5.4.0.1048-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-api-js:klib:5.4.0.1048-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib:1.6.21" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains:annotations:13.0" level="project" />
   </component>
-  <component name="TestModuleProperties" production-module="ultra.z-playground-js.main" />
+  <component name="TestModuleProperties" production-module="ultra.security.jsMain" />
 </module>

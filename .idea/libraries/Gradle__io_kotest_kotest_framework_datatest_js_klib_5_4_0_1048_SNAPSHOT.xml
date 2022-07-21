@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: io.kotest:kotest-framework-datatest-js:klib:5.4.0.1048-SNAPSHOT" type="kotlin.js">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-framework-datatest-js/5.4.0.1048-SNAPSHOT/229d064c8b05c8f5c8a3b15579de302cf4d7887/kotest-framework-datatest-js-5.4.0.1048-SNAPSHOT.klib!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-framework-datatest-js/5.4.0.1048-SNAPSHOT/6765350afed5102f10b2f0bac27f180f31f00e6b/kotest-framework-datatest-js-5.4.0.1048-SNAPSHOT-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

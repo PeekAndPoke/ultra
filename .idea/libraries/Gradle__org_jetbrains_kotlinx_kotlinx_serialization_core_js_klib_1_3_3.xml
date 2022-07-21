@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core-js:klib:1.3.3" type="kotlin.js">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-serialization-core-js/1.3.3/e9d8021dbf71cdbd6797c347739835d0f7b5102d/kotlinx-serialization-core-jsir-1.3.3.klib!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-serialization-core-js/1.3.3/2dc65d3b4ebfcc9cf606c3fff5c97b190955ed6d/kotlinx-serialization-core-js-1.3.3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: io.github.java-diff-utils:java-diff-utils:4.11">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.github.java-diff-utils/java-diff-utils/4.11/e674e7408acefe082e7421d37f5d866e49dc468f/java-diff-utils-4.11.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.github.java-diff-utils/java-diff-utils/4.11/c4ff1b4302cde3f826721fb173be5ba54f4c57eb/java-diff-utils-4.11-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
