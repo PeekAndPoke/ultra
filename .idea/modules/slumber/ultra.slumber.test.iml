@@ -89,8 +89,12 @@
   <component name="NewModuleRootManager">
     <output-test url="file://$MODULE_DIR$/../../../slumber/build/classes/kotlin/test" />
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../../../slumber/build/generated/source/kapt/test" />
-    <content url="file://$MODULE_DIR$/../../../slumber/build/generated/source/kaptKotlin/test" />
+    <content url="file://$MODULE_DIR$/../../../slumber/build/generated/source/kapt/test">
+      <sourceFolder url="file://$MODULE_DIR$/../../../slumber/build/generated/source/kapt/test" isTestSource="true" generated="true" />
+    </content>
+    <content url="file://$MODULE_DIR$/../../../slumber/build/generated/source/kaptKotlin/test">
+      <sourceFolder url="file://$MODULE_DIR$/../../../slumber/build/generated/source/kaptKotlin/test" isTestSource="true" generated="true" />
+    </content>
     <content url="file://$MODULE_DIR$/../../../slumber/src/test">
       <sourceFolder url="file://$MODULE_DIR$/../../../slumber/src/test/kotlin" isTestSource="true" />
     </content>
