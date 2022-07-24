@@ -61,7 +61,9 @@ class MapMutator<K, T, M>(
         if (contained.isNotEmpty()) {
 
             getMutableResult().apply {
-                contained.forEach { k -> remove(k) }
+                contained.forEach { k ->
+                    remove(k)
+                }
             }
         }
     }
