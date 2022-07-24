@@ -6,6 +6,7 @@ import de.peekandpoke.ultra.meta.ProcessorUtils
 import de.peekandpoke.ultra.meta.model.MType
 import de.peekandpoke.ultra.meta.model.MVariable
 
+@Suppress("Detekt")
 class DataClassRenderer(
 
     override val ctx: ProcessorUtils.Context,
