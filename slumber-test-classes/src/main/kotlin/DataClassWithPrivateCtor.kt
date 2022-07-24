@@ -1,4 +1,4 @@
-package de.peekandpoke.slumber_test_classes
+package de.peekandpoke.slumberTestClasses
 
 @Suppress("DataClassPrivateConstructor")
 data class DataClassWithPrivateCtor private constructor(

@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin.objects
 
-import de.peekandpoke.slumber_test_classes.DataClassWithPrivateCtor
+import de.peekandpoke.slumberTestClasses.DataClassWithPrivateCtor
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Codec

@@ -17,4 +17,3 @@ val DoomsdayLocalDateTime: LocalDateTime = LocalDateTime.ofInstant(DoomsdayInsta
 
 val GenesisLocalDate: LocalDate = GenesisLocalDateTime.toLocalDate()
 val DoomsdayLocalDate: LocalDate = DoomsdayLocalDateTime.toLocalDate()
-

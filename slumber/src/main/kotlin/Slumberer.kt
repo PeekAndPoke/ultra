@@ -45,6 +45,5 @@ interface Slumberer {
         }
     }
 
-
     fun slumber(data: Any?, context: Context): Any?
 }

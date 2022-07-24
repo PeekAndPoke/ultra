@@ -160,7 +160,7 @@ data class MpZonedDateTime private constructor(
 
         val tz = when (val tzId = timezone.id) {
             "UTC", "Z" -> "Z"
-            else -> "[${tzId}]"
+            else -> "[$tzId]"
         }
 
         val yearStr = when {

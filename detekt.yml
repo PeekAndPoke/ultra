@@ -53,7 +53,7 @@ complexity:
   active: true
   ComplexCondition:
     active: true
-    threshold: 4
+    threshold: 6
   ComplexInterface:
     active: false
     threshold: 10
@@ -526,7 +526,7 @@ performance:
       - "**/*.Spec.kt"
       - "**/*.Spek.kt"
   SpreadOperator:
-    active: true
+    active: false
     excludes:
       - "**/test/**"
       - "**/*Test/**"
@@ -668,7 +668,7 @@ style:
     active: false
   ReturnCount:
     active: true
-    max: 2
+    max: 3
     excludedFunctions: "equals"
     excludeLabeled: false
     excludeReturnFromLambda: true

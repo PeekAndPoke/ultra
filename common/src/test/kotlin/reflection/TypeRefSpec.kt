@@ -334,7 +334,6 @@ class TypeRefSpec : StringSpec({
 
         val subject: ReifiedKType = kType<ExampleClass<Int, String?>>().reified
 
-
         assertSoftly {
             subject.type shouldBe typeOf<ExampleClass<Int, String?>>()
             subject.cls shouldBe ExampleClass::class

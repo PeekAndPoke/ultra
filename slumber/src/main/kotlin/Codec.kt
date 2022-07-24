@@ -8,6 +8,7 @@ import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.createType
 
+@Suppress("Detekt:TooManyFunctions")
 open class Codec(
     private val config: SlumberConfig,
     private val attributes: TypedAttributes = TypedAttributes.empty,

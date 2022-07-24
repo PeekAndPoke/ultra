@@ -48,9 +48,8 @@ data class TypeRef<T> internal constructor(val type: KType) {
                         KTypeProjection.invariant(kotlin.Any::class.createType())
                     }
                 )
-
+                // Return
                 createForKType<T>(type)
-
             } as TypeRef<T>
         }
 
