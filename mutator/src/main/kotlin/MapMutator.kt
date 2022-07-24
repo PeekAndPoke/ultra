@@ -59,7 +59,6 @@ class MapMutator<K, T, M>(
         val contained = key.filter { getResult().containsKey(it) }
 
         if (contained.isNotEmpty()) {
-
             getMutableResult().apply {
                 contained.forEach { k ->
                     remove(k)
