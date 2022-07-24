@@ -24,8 +24,7 @@ object MpDateTimeParser {
 
     private fun parse(isoString: String): Pair<MpLocalDateTime, TimeZone> {
         val match = isoWithTimezone.find(isoString)
-        // TODO: use more specific
-            ?: throw RuntimeException("Cannot parse iso date string '$isoString'")
+            ?: throw IllegalArgumentException("Cannot parse iso date string '$isoString'")
 
         val date = match.groupValues[1]
         val time = match.groupValues[2]

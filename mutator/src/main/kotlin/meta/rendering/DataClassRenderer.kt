@@ -6,7 +6,6 @@ import de.peekandpoke.ultra.meta.ProcessorUtils
 import de.peekandpoke.ultra.meta.model.MType
 import de.peekandpoke.ultra.meta.model.MVariable
 
-@Suppress("Detekt")
 class DataClassRenderer(
 
     override val ctx: ProcessorUtils.Context,
@@ -21,6 +20,7 @@ class DataClassRenderer(
             // we only look at public properties
             .filter { classType.hasPublicGetterFor(it) }
 
+    @Suppress("Detekt:LongMethod")
     private fun KotlinPrinter.renderFor(target: MType, mutatorClassName: ClassName) {
 
         // Get the short name for the mutator class
