@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id=":meta:test" external.linked.project.path="$MODULE_DIR$/../../../meta" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="io.peekandpoke.ultra" external.system.module.type="sourceSet" external.system.module.version="0.52.0" type="JAVA_MODULE" version="4">
+<module external.linked.project.id=":meta:test" external.linked.project.path="$MODULE_DIR$/../../../meta" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="io.peekandpoke.ultra" external.system.module.type="sourceSet" external.system.module.version="0.52.1" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 1.8" allPlatforms="JVM [1.8]" useProjectSettings="false">
@@ -14,6 +14,10 @@
           <stringArguments>
             <stringArg name="classpath">
               <args>
+                <arg>$MODULE_DIR$/../../../meta/build/classes/kotlin/main</arg>
+                <arg>$MODULE_DIR$/../../../meta/build/tmp/kapt3/classes/main</arg>
+                <arg>$MODULE_DIR$/../../../commonmp/build/libs/commonmp-jvm-0.52.1.jar</arg>
+                <arg>$MODULE_DIR$/../../../common/build/libs/common-0.52.1.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.tschuchortdev/kotlin-compile-testing/1.4.9/b8221a256af154eb85f66c75aa57b6137504a38d/kotlin-compile-testing-1.4.9.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.wumpz/diffutils/2.2/647f913ef6c350d3b1bc1ffa48a74747a13e89f/diffutils-2.2.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.squareup/kotlinpoet/1.12.0/2b116a78080106e6fc11fd13bc0f1c8c818a7205/kotlinpoet-1.12.0.jar</arg>
@@ -75,7 +79,7 @@
                 <arg>$MODULE_DIR$/../../../meta/build/classes/java/main</arg>
                 <arg>$MODULE_DIR$/../../../meta/build/classes/kotlin/main</arg>
                 <arg>$MODULE_DIR$/../../../meta/build/tmp/kapt3/classes/main</arg>
-                <arg>$MODULE_DIR$/../../../meta/build/libs/meta-0.52.0.jar</arg>
+                <arg>$MODULE_DIR$/../../../meta/build/libs/meta-0.52.1.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginClasspaths">

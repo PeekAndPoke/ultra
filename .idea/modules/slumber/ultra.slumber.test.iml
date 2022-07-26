@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id=":slumber:test" external.linked.project.path="$MODULE_DIR$/../../../slumber" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="io.peekandpoke.ultra" external.system.module.type="sourceSet" external.system.module.version="0.52.0" type="JAVA_MODULE" version="4">
+<module external.linked.project.id=":slumber:test" external.linked.project.path="$MODULE_DIR$/../../../slumber" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="io.peekandpoke.ultra" external.system.module.type="sourceSet" external.system.module.version="0.52.1" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 1.8" allPlatforms="JVM [1.8]" useProjectSettings="false">
@@ -14,7 +14,12 @@
           <stringArguments>
             <stringArg name="classpath">
               <args>
+                <arg>$MODULE_DIR$/../../../slumber/build/classes/kotlin/main</arg>
+                <arg>$MODULE_DIR$/../../../slumber/build/tmp/kapt3/classes/main</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.matfax.klassindex/library/4.1.0-rc.1/ac71349109df0a2835ae1c7bd566bdb121f80d82/library-4.1.0-rc.1.jar</arg>
+                <arg>$MODULE_DIR$/../../../common/build/libs/common-0.52.1.jar</arg>
+                <arg>$MODULE_DIR$/../../../commonmp/build/libs/commonmp-jvm-0.52.1.jar</arg>
+                <arg>$MODULE_DIR$/../../../slumber-test-classes/build/libs/slumber-test-classes-0.52.1.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-runner-junit5-jvm/5.4.0.1048-SNAPSHOT/5fc40e51ba7ce4c506359376c1e2c6decc2e3380/kotest-runner-junit5-jvm-5.4.0.1048-SNAPSHOT.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-assertions-core-jvm/5.4.0.1048-SNAPSHOT/c1b81e3e9c62a27a5756358fd565862a3d31aea5/kotest-assertions-core-jvm-5.4.0.1048-SNAPSHOT.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-framework-engine-jvm/5.4.0.1048-SNAPSHOT/7824546b58ccf0bf7709b7527a6705e37eea3fae/kotest-framework-engine-jvm-5.4.0.1048-SNAPSHOT.jar</arg>
@@ -62,7 +67,7 @@
                 <arg>$MODULE_DIR$/../../../slumber/build/classes/java/main</arg>
                 <arg>$MODULE_DIR$/../../../slumber/build/classes/kotlin/main</arg>
                 <arg>$MODULE_DIR$/../../../slumber/build/tmp/kapt3/classes/main</arg>
-                <arg>$MODULE_DIR$/../../../slumber/build/libs/slumber-0.52.0.jar</arg>
+                <arg>$MODULE_DIR$/../../../slumber/build/libs/slumber-0.52.1.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginClasspaths">

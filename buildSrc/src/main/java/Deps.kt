@@ -107,10 +107,8 @@ object Deps {
 
         // https://mvnrepository.com/artifact/io.kotest/kotest-common
 
-        //        const val kotest_version = "5.3.1"
-        const val kotest_plugin_version = "5.3.2"
-        //        const val kotest_version = "5.3.1"
-        const val kotest_version = "5.4.0.1048-SNAPSHOT"
+        const val kotest_plugin_version = "5.4.0"
+        const val kotest_version = "5.4.0"
 
         const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"
         const val kotest_framework_api = "io.kotest:kotest-framework-api:$kotest_version"
@@ -125,14 +123,14 @@ object Deps {
             implementation(kotest_assertions_core)
             implementation(kotest_framework_api)
             implementation(kotest_framework_datatest)
-//            implementation(kotest_framework_engine)
+            implementation(kotest_framework_engine)
         }
 
         fun KotlinDependencyHandler.jsTestDeps() {
             implementation(kotest_assertions_core)
             implementation(kotest_framework_api)
             implementation(kotest_framework_datatest)
-//            implementation(kotest_framework_engine)
+            implementation(kotest_framework_engine)
         }
 
         fun KotlinDependencyHandler.jvmTestDeps() {
@@ -141,7 +139,7 @@ object Deps {
             implementation(kotest_assertions_core)
             implementation(kotest_framework_api)
             implementation(kotest_framework_datatest)
-//            implementation(kotest_framework_engine)
+            implementation(kotest_framework_engine)
         }
 
         fun DependencyHandlerScope.jvmTestDeps() {
@@ -149,11 +147,11 @@ object Deps {
             testImplementation(kotest_runner_junit_jvm)
             testImplementation(kotest_assertions_core)
             testImplementation(kotest_framework_api)
-//            testImplementation(kotest_framework_engine)
+            testImplementation(kotest_framework_engine)
         }
 
         fun TaskContainerScope.configureJvmTests(
-            configure: org.gradle.api.tasks.testing.Test.() -> Unit = {}
+            configure: org.gradle.api.tasks.testing.Test.() -> Unit = {},
         ) {
             listOfNotNull(
                 findByName("test") as? org.gradle.api.tasks.testing.Test,
