@@ -19,16 +19,17 @@ object Deps {
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     // Publishing ////////////////////////////////////////////////////////////////////////////////
-    const val mavenPublishVersion = "0.20.0"
+    // https://search.maven.org/artifact/com.vanniktech/gradle-maven-publish-plugin
+    const val mavenPublishVersion = "0.21.0"
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     // https://mvnrepository.com/artifact/com.auth0/java-jwt
-    private const val auth0_java_jwt_version = "3.19.1"
+    private const val auth0_java_jwt_version = "3.19.2"
     const val auth0_java_jwt = "com.auth0:java-jwt:$auth0_java_jwt_version"
 
-    // TODO: check if we can update to 3.x
-    private const val diffutils_version = "2.2"
-    const val diffutils = "com.github.wumpz:diffutils:$diffutils_version"
+    // https://search.maven.org/artifact/io.github.java-diff-utils/java-diff-utils
+    private const val diffutils_version = "4.12"
+    const val diffutils = "io.github.java-diff-utils:java-diff-utils:$diffutils_version"
 
     // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
     private const val google_auto_service_version = "1.0.1"

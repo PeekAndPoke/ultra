@@ -14,21 +14,19 @@
           <stringArguments>
             <stringArg name="classpath">
               <args>
-                <arg>$MODULE_DIR$/../../../meta/build/libs/meta-0.52.1.jar</arg>
                 <arg>$MODULE_DIR$/../../../commonmp/build/libs/commonmp-jvm-0.52.1.jar</arg>
                 <arg>$MODULE_DIR$/../../../common/build/libs/common-0.52.1.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.squareup/kotlinpoet/1.12.0/2b116a78080106e6fc11fd13bc0f1c8c818a7205/kotlinpoet-1.12.0.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.7.10/d70d7d2c56371f7aa18f32e984e3e2e998fe9081/kotlin-stdlib-jdk8-1.7.10.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-reflect/1.7.10/165e600dfea6185cf5efa700756294cc4904dbeb/kotlin-reflect-1.7.10.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.tschuchortdev/kotlin-compile-testing/1.4.9/b8221a256af154eb85f66c75aa57b6137504a38d/kotlin-compile-testing-1.4.9.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.wumpz/diffutils/2.2/647f913ef6c350d3b1bc1ffa48a74747a13e89f/diffutils-2.2.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.github.java-diff-utils/java-diff-utils/4.12/1a712a91324d566eef39817fc5c9980eb10c21db/java-diff-utils-4.12.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.auto.service/auto-service/1.0.1/c9779f7372192a96c957a3df1faeeabd07881085/auto-service-1.0.1.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.7.10/1ef73fee66f45d52c67e2aca12fd945dbe0659bf/kotlin-stdlib-jdk7-1.7.10.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-datetime-jvm/0.4.0/2224732fcb9b6116fbeb0926dd108604e578356b/kotlinx-datetime-jvm-0.4.0.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.7.10/d2abf9e77736acc4450dc4a3f707fa2c10f5099d/kotlin-stdlib-1.7.10.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.7.10/bac80c520d0a9e3f3673bc2658c6ed02ef45a76a/kotlin-stdlib-common-1.7.10.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/1.7.0/4d09852239f61842072b40b524882fa3caaed371/kotlin-compiler-embeddable-1.7.0.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.eclipse.jgit/org.eclipse.jgit/4.4.1.201607150455-r/63998ced66e425d9e8bcd0c59f710c98f0c021ff/org.eclipse.jgit-4.4.1.201607150455-r.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.auto.service/auto-service-annotations/1.0.1/ac86dacc0eb9285ea9d42eee6aad8629ca3a7432/auto-service-annotations-1.0.1.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.auto/auto-common/1.2/ca270191fd7d2a7297da7c8f29184206df10c67d/auto-common-1.2.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.guava/guava/31.0.1-jre/119ea2b2bc205b138974d351777b20f02b92704b/guava-31.0.1-jre.jar</arg>
@@ -101,13 +99,12 @@
     <orderEntry type="module" module-name="ultra.common.main" />
     <orderEntry type="library" name="Gradle: com.squareup:kotlinpoet:1.12.0" level="project" />
     <orderEntry type="library" name="Gradle: com.github.tschuchortdev:kotlin-compile-testing:1.4.9" level="project" />
-    <orderEntry type="library" name="Gradle: com.github.wumpz:diffutils:2.2" level="project" />
+    <orderEntry type="library" name="Gradle: io.github.java-diff-utils:java-diff-utils:4.12" level="project" />
     <orderEntry type="library" name="Gradle: com.google.auto.service:auto-service:1.0.1" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.10" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib:1.7.10" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:1.7.10" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-compiler-embeddable:1.7.0" level="project" />
-    <orderEntry type="library" name="Gradle: org.eclipse.jgit:org.eclipse.jgit:4.4.1.201607150455-r" level="project" />
     <orderEntry type="library" name="Gradle: com.google.auto.service:auto-service-annotations:1.0.1" level="project" />
     <orderEntry type="library" name="Gradle: com.google.auto:auto-common:1.2" level="project" />
     <orderEntry type="library" name="Gradle: com.google.guava:guava:31.0.1-jre" level="project" />

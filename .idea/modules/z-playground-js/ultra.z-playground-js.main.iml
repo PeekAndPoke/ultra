@@ -30,7 +30,7 @@
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-project-model/1.7.10/a393b70222ebad45abb2e0eb273a7cac9deb4df9/kotlin-project-model-1.7.10.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-tooling-core/1.7.10/8fc54e880cf9ea73396f2844a2d3aa76bdcbcfbb/kotlin-tooling-core-1.7.10.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-util-io/1.7.10/fdcfe10a398c931a5770ca45cffdd245112ca949/kotlin-util-io-1.7.10.jar</arg>
-                <arg>$APPLICATION_PLUGINS_DIR$/Kotlin/kotlinc/lib/kotlinx-serialization-compiler-plugin.jar</arg>
+                <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />

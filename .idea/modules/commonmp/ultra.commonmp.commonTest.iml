@@ -31,7 +31,7 @@
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-util-io/1.7.10/fdcfe10a398c931a5770ca45cffdd245112ca949/kotlin-util-io-1.7.10.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-script-runtime/1.7.10/c99c87a6988d8fd8d5142e9ed5c9f34a7cf561ee/kotlin-script-runtime-1.7.10.jar</arg>
-                <arg>$APPLICATION_PLUGINS_DIR$/Kotlin/kotlinc/lib/kotlinx-serialization-compiler-plugin.jar</arg>
+                <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
@@ -62,13 +62,14 @@
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json:commonMain:1.3.3" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:1.7.10" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core:commonMain:1.3.3" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-core:commonMain:5.4.0.1048-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-core:commonMain:5.4.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.6.3" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: com.soywiz.korlibs.klock:klock:commonMain:2.7.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-datatest:commonMain:5.4.0.1048-SNAPSHOT" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-api:commonMain:5.4.0.1048-SNAPSHOT" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-shared:commonMain:5.4.0.1048-SNAPSHOT" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-api:commonMain:5.4.0.1048-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-datatest:commonMain:5.4.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-engine:commonMain:5.4.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-api:commonMain:5.4.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-shared:commonMain:5.4.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-api:commonMain:5.4.0" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="ultra.commonmp.commonMain" />
 </module>
