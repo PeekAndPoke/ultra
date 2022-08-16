@@ -159,8 +159,8 @@ data class CompileTest internal constructor(
             val content = String(output.readBytes())
 
             val diff = DiffUtils.diff(
-                listOf(expectedContent.trimLineEnds()),
-                listOf(content.trimLineEnds()),
+                expectedContent.trimLineEnds().lines().dropLastWhile { it.isBlank() },
+                content.trimLineEnds().lines().dropLastWhile { it.isBlank() },
             )
 
             return when {

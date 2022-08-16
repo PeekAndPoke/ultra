@@ -14,6 +14,7 @@
           <stringArguments>
             <stringArg name="classpath">
               <args>
+                <arg>$MODULE_DIR$/../../../meta/build/libs/meta-0.52.1.jar</arg>
                 <arg>$MODULE_DIR$/../../../commonmp/build/libs/commonmp-jvm-0.52.1.jar</arg>
                 <arg>$MODULE_DIR$/../../../common/build/libs/common-0.52.1.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.squareup/kotlinpoet/1.12.0/2b116a78080106e6fc11fd13bc0f1c8c818a7205/kotlinpoet-1.12.0.jar</arg>
@@ -73,8 +74,10 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$/../../../mutator/build/generated/source/kapt/main">
       <sourceFolder url="file://$MODULE_DIR$/../../../mutator/build/generated/source/kapt/main" isTestSource="false" generated="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../mutator/build/generated/source/kapt/main" isTestSource="false" generated="true" />
     </content>
     <content url="file://$MODULE_DIR$/../../../mutator/build/generated/source/kaptKotlin/main">
+      <sourceFolder url="file://$MODULE_DIR$/../../../mutator/build/generated/source/kaptKotlin/main" isTestSource="false" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/../../../mutator/build/generated/source/kaptKotlin/main" isTestSource="false" generated="true" />
     </content>
     <content url="file://$MODULE_DIR$/../../../mutator/src/main">

@@ -36,7 +36,7 @@
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/1.7.10/3b38be7ed8f8c678b13991d5b3ec99c4908d3313/kotlin-gradle-plugin-api-1.7.10-gradle70.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-scripting-jvm/1.7.10/c1e3bade3e9795023867dce31404736995037e4f/kotlin-scripting-jvm-1.7.10.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-scripting-common/1.7.10/bddf009658701ba5fb98e40e7877dcce7d8695ee/kotlin-scripting-common-1.7.10.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-framework-multiplatform-plugin-js-jvm/5.4.0/903a08348bb20010dcac603390640e5b7b13c013/kotest-framework-multiplatform-plugin-js-jvm-5.4.0.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-framework-multiplatform-plugin-embeddable-compiler-jvm/5.4.2/3601083b1613a963266453819f9f74d19f25ba10/kotest-framework-multiplatform-plugin-embeddable-compiler-jvm-5.4.2.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.6.21/eeb4d60d75e9ea9c11200d52974e522793b14fba/kotlin-stdlib-jdk8-1.6.21.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.6.21/568c1b78a8e17a4f35b31f0a74e2916095ed74c2/kotlin-stdlib-jdk7-1.6.21.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.7.10/d2abf9e77736acc4450dc4a3f707fa2c10f5099d/kotlin-stdlib-1.7.10.jar</arg>
@@ -108,19 +108,19 @@
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-datetime-js:klib:0.4.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json-js:klib:1.3.3" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core-js:klib:1.3.3" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-core-js:klib:5.4.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-datatest-js:klib:5.4.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-engine-js:klib:5.4.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-api-js:klib:5.4.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-core-js:klib:5.4.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-datatest-js:klib:5.4.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-engine-js:klib:5.4.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-api-js:klib:5.4.2" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-js:klib:1.6.4" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: com.soywiz.korlibs.klock:klock-js:klib:2.7.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-reflect:1.6.21" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.6.4" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:atomicfu-js:klib:0.17.3" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:atomicfu:1.6.21" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-shared-js:klib:5.4.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-common-js:klib:5.4.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-api-js:klib:5.4.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-shared-js:klib:5.4.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-common-js:klib:5.4.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-api-js:klib:5.4.2" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib:1.6.21" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-test-js:klib:1.6.4" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains:annotations:13.0" level="project" />

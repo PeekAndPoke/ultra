@@ -70,8 +70,6 @@ object Deps {
     // https://mvnrepository.com/artifact/com.soywiz.korlibs.klock/klock
     private const val korlibs_klock_version = "2.7.0"
     const val korlibs_klock_common = "com.soywiz.korlibs.klock:klock:$korlibs_klock_version"
-    const val korlibs_klock_js = "com.soywiz.korlibs.klock:klock-js:$korlibs_klock_version"
-    const val korlibs_klock_jvm = "com.soywiz.korlibs.klock:klock-jvm:$korlibs_klock_version"
 
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
     private const val slf4j_version = "1.7.36"
@@ -88,10 +86,10 @@ object Deps {
         fun KotlinDependencyHandler.polyfillFetch() = npm("whatwg-fetch", "3.6.2")
 
         // https://www.npmjs.com/package/@js-joda/core
-        fun KotlinDependencyHandler.jsJodaCore() = npm("@js-joda/core", "5.2.0")
+        fun KotlinDependencyHandler.jsJodaCore() = npm("@js-joda/core", "5.3.0")
 
         // https://www.npmjs.com/package/@js-joda/timezone
-        fun KotlinDependencyHandler.jsJodaTimezone() = npm("@js-joda/timezone", "2.12.0")
+        fun KotlinDependencyHandler.jsJodaTimezone() = npm("@js-joda/timezone", "2.12.1")
     }
 
     // // Test dependencies ////////////////////////////////////////////////////////////////////////
@@ -107,9 +105,8 @@ object Deps {
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://mvnrepository.com/artifact/io.kotest/kotest-common
-
-        const val kotest_plugin_version = "5.4.0"
-        const val kotest_version = "5.4.0"
+        const val kotest_plugin_version = "5.4.2"
+        const val kotest_version = "5.4.2"
 
         const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"
         const val kotest_framework_api = "io.kotest:kotest-framework-api:$kotest_version"

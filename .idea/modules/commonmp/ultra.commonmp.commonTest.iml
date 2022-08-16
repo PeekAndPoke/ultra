@@ -62,14 +62,15 @@
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json:commonMain:1.3.3" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:1.7.10" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core:commonMain:1.3.3" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-core:commonMain:5.4.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-core:commonMain:5.4.2" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.6.3" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: com.soywiz.korlibs.klock:klock:commonMain:2.7.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-datatest:commonMain:5.4.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-engine:commonMain:5.4.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-api:commonMain:5.4.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-shared:commonMain:5.4.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-api:commonMain:5.4.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-datatest:commonMain:5.4.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-engine:commonMain:5.4.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-framework-api:commonMain:5.4.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-shared:commonMain:5.4.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-common:commonMain:5.4.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: io.kotest:kotest-assertions-api:commonMain:5.4.2" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="ultra.commonmp.commonMain" />
 </module>

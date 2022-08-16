@@ -10,10 +10,7 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value=":mutator:cleanTest" />
           <option value=":mutator:test" />
-          <option value="--tests" />
-          <option value="*" />
         </list>
       </option>
       <option name="vmOptions" value="" />

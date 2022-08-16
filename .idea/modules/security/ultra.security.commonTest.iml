@@ -59,25 +59,25 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
-      <library name="Gradle: io.kotest:kotest-assertions-core:commonMain:5.4.0">
+      <library name="Gradle: io.kotest:kotest-assertions-core:commonMain:5.4.2">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../../../.gradle/kotlin/sourceSetMetadata/security.ultra/commonTest/implementation/io.kotest-kotest-assertions-core/io.kotest-kotest-assertions-core-commonMain.klib!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-assertions-core/5.4.0/715596c475e14bf83f45fa3044a130169808139f/kotest-assertions-core-5.4.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-assertions-core/5.4.2/73bb6168404fec58918a5018679e5b30638db616/kotest-assertions-core-5.4.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:1.7.10" level="project" />
     <orderEntry type="module-library" scope="TEST">
-      <library name="Gradle: io.kotest:kotest-framework-datatest:commonMain:5.4.0">
+      <library name="Gradle: io.kotest:kotest-framework-datatest:commonMain:5.4.2">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../../../.gradle/kotlin/sourceSetMetadata/security.ultra/commonTest/implementation/io.kotest-kotest-framework-datatest/io.kotest-kotest-framework-datatest-commonMain.klib!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-framework-datatest/5.4.0/4b4881cbd33ba146d7cc73bee8137fd9453a6253/kotest-framework-datatest-5.4.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-framework-datatest/5.4.2/e5d85118dfd2c2f6e5933cc61aa05afb2df5fc03/kotest-framework-datatest-5.4.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -93,46 +93,57 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
-      <library name="Gradle: io.kotest:kotest-framework-engine:commonMain:5.4.0">
+      <library name="Gradle: io.kotest:kotest-framework-engine:commonMain:5.4.2">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../../../.gradle/kotlin/sourceSetMetadata/security.ultra/commonTest/implementation/io.kotest-kotest-framework-engine/io.kotest-kotest-framework-engine-commonMain.klib!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-framework-engine/5.4.0/625bf7224f1b9443f3af80230640c4809154ea83/kotest-framework-engine-5.4.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-framework-engine/5.4.2/f63a42c311a5db6efe61dc1e598e10f95198c91a/kotest-framework-engine-5.4.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
-      <library name="Gradle: io.kotest:kotest-framework-api:commonMain:5.4.0">
+      <library name="Gradle: io.kotest:kotest-framework-api:commonMain:5.4.2">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../../../.gradle/kotlin/sourceSetMetadata/security.ultra/commonTest/implementation/io.kotest-kotest-framework-api/io.kotest-kotest-framework-api-commonMain.klib!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-framework-api/5.4.0/fcd4607b3c9174ece8b3cd6bcc87ab38b84a1a9b/kotest-framework-api-5.4.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-framework-api/5.4.2/500e99759ce601883d64955d76831f3092eea936/kotest-framework-api-5.4.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
-      <library name="Gradle: io.kotest:kotest-assertions-shared:commonMain:5.4.0">
+      <library name="Gradle: io.kotest:kotest-assertions-shared:commonMain:5.4.2">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../../../.gradle/kotlin/sourceSetMetadata/security.ultra/commonTest/implementation/io.kotest-kotest-assertions-shared/io.kotest-kotest-assertions-shared-commonMain.klib!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-assertions-shared/5.4.0/7b248dbe80816bc73bfc056c6b6046dd35a9b6ca/kotest-assertions-shared-5.4.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-assertions-shared/5.4.2/13ada123767e398551da966b6631c22f9eb77aa/kotest-assertions-shared-5.4.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
-      <library name="Gradle: io.kotest:kotest-assertions-api:commonMain:5.4.0">
+      <library name="Gradle: io.kotest:kotest-common:commonMain:5.4.2">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../../.gradle/kotlin/sourceSetMetadata/security.ultra/commonTest/implementation/io.kotest-kotest-common/io.kotest-kotest-common-commonMain.klib!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-common/5.4.2/84e21bcf9800b8c7beb9af1fc93935b1a92b63f0/kotest-common-5.4.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="Gradle: io.kotest:kotest-assertions-api:commonMain:5.4.2">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../../../.gradle/kotlin/sourceSetMetadata/security.ultra/commonTest/implementation/io.kotest-kotest-assertions-api/io.kotest-kotest-assertions-api-commonMain.klib!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-assertions-api/5.4.0/535e04d647b68865ffa876aa20df7ef0ad7e94b5/kotest-assertions-api-5.4.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-assertions-api/5.4.2/18bcd4a8e61b11211345430fda34db0906c9dde7/kotest-assertions-api-5.4.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
