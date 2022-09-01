@@ -17,9 +17,9 @@ fun <RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Delete.Bound<RESPONSE>): F
 fun <RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Get.Bound<RESPONSE>): Flow<RESPONSE> {
     return remote
         .get(
-            uri = buildUri(pattern = bound.endpoint.uri, params = bound.params)
+            uri = buildUri(pattern = bound.uri, params = bound.params)
         )
-        .body { it decodedBy bound.endpoint.response }
+        .body { it decodedBy bound.responseSerializer }
 }
 
 fun <RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Head.Bound<RESPONSE>): Flow<RESPONSE> {
@@ -31,21 +31,23 @@ fun <RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Head.Bound<RESPONSE>): Flo
 }
 
 fun <BODY, RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Post.Bound<BODY, RESPONSE>): Flow<RESPONSE> {
+    @Suppress("UNCHECKED_CAST")
     return remote
         .post(
-            uri = buildUri(pattern = bound.endpoint.uri, params = bound.params),
+            uri = buildUri(pattern = bound.uri, params = bound.params),
             contentType = "application/json",
-            body = bound.body encodedBy bound.endpoint.body
+            body = bound.body encodedBy bound.bodySerializer as KSerializer<BODY>
         )
-        .body { it decodedBy bound.endpoint.response }
+        .body { it decodedBy bound.responseSerializer }
 }
 
 fun <BODY, RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Put.Bound<BODY, RESPONSE>): Flow<RESPONSE> {
+    @Suppress("UNCHECKED_CAST")
     return remote
         .put(
             uri = buildUri(pattern = bound.uri, params = bound.params),
             contentType = "application/json",
-            body = bound.body encodedBy bound.bodySerializer
+            body = bound.body encodedBy bound.bodySerializer as KSerializer<BODY>
         )
         .body { it decodedBy bound.responseSerializer }
 }
@@ -85,24 +87,37 @@ sealed class TypedApiEndpoint {
         )
     }
 
-    data class Get<RESPONSE>(
+    data class Get<out RESPONSE>(
         override val uri: String,
-        val response: KSerializer<RESPONSE>,
+        val response: KSerializer<out RESPONSE>,
         override val attributes: TypedAttributes = TypedAttributes.empty,
     ) : TypedApiEndpoint() {
-        class Bound<RESPONSE>(
-            val endpoint: Get<RESPONSE>,
+        class Bound<out RESPONSE>(
+            val uri: String,
             val params: Map<String, String?>,
+            val responseSerializer: KSerializer<out RESPONSE>,
         )
 
-        fun bind(params: Map<String, String?> = emptyMap()) =
-            Bound(endpoint = this, params = params)
+        private fun bind(
+            params: Map<String, String?>,
+            responseSerializer: KSerializer<out RESPONSE>,
+        ): Bound<RESPONSE> = Bound(
+            uri = uri,
+            params = params,
+            responseSerializer = responseSerializer,
+        )
 
-        operator fun invoke(params: Map<String, String?> = emptyMap()) =
-            bind(params = params)
+        operator fun invoke(
+            params: Map<String, String?> = emptyMap(),
+            responseSerializer: KSerializer<out @UnsafeVariance RESPONSE> = this.response,
+        ): Bound<RESPONSE> =
+            bind(params = params, responseSerializer = responseSerializer)
 
-        operator fun invoke(vararg params: Pair<String, String?>) =
-            bind(params = params.toMap())
+        operator fun invoke(
+            vararg params: Pair<String, String?>,
+            responseSerializer: KSerializer<out @UnsafeVariance RESPONSE> = this.response,
+        ): Bound<RESPONSE> =
+            invoke(params = params.toMap(), responseSerializer = responseSerializer)
 
         fun withAttributes(builder: TypedAttributes.Builder.() -> Unit): Get<RESPONSE> = copy(
             attributes = attributes.plus(builder)
@@ -137,44 +152,74 @@ sealed class TypedApiEndpoint {
         )
     }
 
-    data class Post<BODY, RESPONSE>(
+    data class Post<out BODY, out RESPONSE>(
         override val uri: String,
-        val body: KSerializer<BODY>,
-        val response: KSerializer<RESPONSE>,
+        val body: KSerializer<out BODY>,
+        val response: KSerializer<out RESPONSE>,
         override val attributes: TypedAttributes = TypedAttributes.empty,
     ) : TypedApiEndpoint() {
-        class Bound<BODY, RESPONSE>(
-            val endpoint: Post<BODY, RESPONSE>,
+        class Bound<out BODY, out RESPONSE>(
+            val uri: String,
             val params: Map<String, String?>,
             val body: BODY,
+            val bodySerializer: KSerializer<out BODY>,
+            val responseSerializer: KSerializer<out RESPONSE>,
         )
 
-        fun bind(params: Map<String, String?> = emptyMap(), body: BODY) =
-            Bound(endpoint = this, params = params, body = body)
+        private fun bind(
+            params: Map<String, String?>,
+            body: BODY,
+            bodySerializer: KSerializer<out BODY>,
+            responseSerializer: KSerializer<out RESPONSE>,
+        ): Bound<BODY, RESPONSE> = Bound(
+            uri = uri,
+            params = params,
+            body = body,
+            bodySerializer = bodySerializer,
+            responseSerializer = responseSerializer,
+        )
 
-        operator fun invoke(params: Map<String, String?> = emptyMap(), body: BODY) =
-            bind(params = params, body = body)
+        operator fun invoke(
+            params: Map<String, String?> = emptyMap(),
+            body: @UnsafeVariance BODY,
+            bodySerializer: KSerializer<out @UnsafeVariance BODY> = this.body,
+            responseSerializer: KSerializer<out @UnsafeVariance RESPONSE> = this.response,
+        ): Bound<BODY, RESPONSE> = bind(
+            params = params,
+            body = body,
+            bodySerializer = bodySerializer,
+            responseSerializer = responseSerializer,
+        )
 
-        operator fun invoke(vararg params: Pair<String, String>, body: BODY) =
-            bind(params = params.toMap(), body = body)
+        operator fun invoke(
+            vararg params: Pair<String, String>,
+            body: @UnsafeVariance BODY,
+            bodySerializer: KSerializer<out @UnsafeVariance BODY> = this.body,
+            responseSerializer: KSerializer<out @UnsafeVariance RESPONSE> = this.response,
+        ) = invoke(
+            params = params.toMap(),
+            body = body,
+            bodySerializer = bodySerializer,
+            responseSerializer = responseSerializer,
+        )
 
         fun withAttributes(builder: TypedAttributes.Builder.() -> Unit): Post<BODY, RESPONSE> = copy(
             attributes = attributes.plus(builder)
         )
     }
 
-    data class Put<BODY, RESPONSE>(
+    data class Put<out BODY, out RESPONSE>(
         override val uri: String,
         val body: KSerializer<out BODY>,
         val response: KSerializer<out RESPONSE>,
         override val attributes: TypedAttributes = TypedAttributes.empty,
     ) : TypedApiEndpoint() {
-        class Bound<BODY, RESPONSE>(
+        class Bound<out BODY, out RESPONSE>(
             val uri: String,
             val params: Map<String, String?>,
             val body: BODY,
-            val bodySerializer: KSerializer<BODY>,
-            val responseSerializer: KSerializer<RESPONSE>,
+            val bodySerializer: KSerializer<out BODY>,
+            val responseSerializer: KSerializer<out RESPONSE>,
         )
 
         private fun bind(
@@ -183,21 +228,20 @@ sealed class TypedApiEndpoint {
             bodySerializer: KSerializer<out BODY>,
             responseSerializer: KSerializer<out RESPONSE>,
         ): Bound<BODY, RESPONSE> {
-            @Suppress("UNCHECKED_CAST")
             return Bound(
                 uri = uri,
                 params = params,
                 body = body,
-                bodySerializer = bodySerializer as KSerializer<BODY>,
-                responseSerializer = responseSerializer as KSerializer<RESPONSE>,
+                bodySerializer = bodySerializer,
+                responseSerializer = responseSerializer,
             )
         }
 
         operator fun invoke(
             params: Map<String, String?> = emptyMap(),
-            body: BODY,
-            bodySerializer: KSerializer<out BODY> = this.body,
-            responseSerializer: KSerializer<out RESPONSE> = this.response,
+            body: @UnsafeVariance BODY,
+            bodySerializer: KSerializer<out @UnsafeVariance BODY> = this.body,
+            responseSerializer: KSerializer<out @UnsafeVariance RESPONSE> = this.response,
         ) = bind(
             params = params,
             body = body,
@@ -207,9 +251,9 @@ sealed class TypedApiEndpoint {
 
         operator fun invoke(
             vararg params: Pair<String, String>,
-            body: BODY,
-            bodySerializer: KSerializer<out BODY> = this.body,
-            responseSerializer: KSerializer<out RESPONSE> = this.response,
+            body: @UnsafeVariance BODY,
+            bodySerializer: KSerializer<out @UnsafeVariance BODY> = this.body,
+            responseSerializer: KSerializer<out @UnsafeVariance RESPONSE> = this.response,
         ) = bind(
             params = params.toMap(),
             body = body,
