@@ -165,8 +165,8 @@ sealed class TypedApiEndpoint {
 
     data class Put<BODY, RESPONSE>(
         override val uri: String,
-        val body: KSerializer<BODY>,
-        val response: KSerializer<RESPONSE>,
+        val body: KSerializer<out BODY>,
+        val response: KSerializer<out RESPONSE>,
         override val attributes: TypedAttributes = TypedAttributes.empty,
     ) : TypedApiEndpoint() {
         class Bound<BODY, RESPONSE>(
@@ -177,27 +177,45 @@ sealed class TypedApiEndpoint {
             val responseSerializer: KSerializer<RESPONSE>,
         )
 
-        fun <SUB : BODY> bind(params: Map<String, String?> = emptyMap(), body: SUB, bodySerializer: KSerializer<SUB>) =
-            Bound(
+        private fun bind(
+            params: Map<String, String?>,
+            body: BODY,
+            bodySerializer: KSerializer<out BODY>,
+            responseSerializer: KSerializer<out RESPONSE>,
+        ): Bound<BODY, RESPONSE> {
+            @Suppress("UNCHECKED_CAST")
+            return Bound(
                 uri = uri,
                 params = params,
                 body = body,
-                bodySerializer = bodySerializer,
-                responseSerializer = response
+                bodySerializer = bodySerializer as KSerializer<BODY>,
+                responseSerializer = responseSerializer as KSerializer<RESPONSE>,
             )
+        }
 
-        operator fun invoke(params: Map<String, String?> = emptyMap(), body: BODY) =
-            bind(params = params, body = body, bodySerializer = this.body)
+        operator fun invoke(
+            params: Map<String, String?> = emptyMap(),
+            body: BODY,
+            bodySerializer: KSerializer<out BODY> = this.body,
+            responseSerializer: KSerializer<out RESPONSE> = this.response,
+        ) = bind(
+            params = params,
+            body = body,
+            bodySerializer = bodySerializer,
+            responseSerializer = responseSerializer,
+        )
 
-        operator fun invoke(vararg params: Pair<String, String>, body: BODY) =
-            bind(params = params.toMap(), body = body, bodySerializer = this.body)
-
-        operator fun <SUB : BODY> invoke(
+        operator fun invoke(
             vararg params: Pair<String, String>,
-            body: SUB,
-            bodySerializer: KSerializer<SUB>
-        ) =
-            bind(params = params.toMap(), body = body, bodySerializer = bodySerializer)
+            body: BODY,
+            bodySerializer: KSerializer<out BODY> = this.body,
+            responseSerializer: KSerializer<out RESPONSE> = this.response,
+        ) = bind(
+            params = params.toMap(),
+            body = body,
+            bodySerializer = bodySerializer,
+            responseSerializer = responseSerializer,
+        )
 
         fun withAttributes(builder: TypedAttributes.Builder.() -> Unit): Put<BODY, RESPONSE> = copy(
             attributes = attributes.plus(builder)

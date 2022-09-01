@@ -20,7 +20,7 @@ object Deps {
 
     // Publishing ////////////////////////////////////////////////////////////////////////////////
     // https://search.maven.org/artifact/com.vanniktech/gradle-maven-publish-plugin
-    const val mavenPublishVersion = "0.21.0"
+    const val mavenPublishVersion = "0.20.0"
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     // https://mvnrepository.com/artifact/com.auth0/java-jwt
@@ -86,10 +86,10 @@ object Deps {
         fun KotlinDependencyHandler.polyfillFetch() = npm("whatwg-fetch", "3.6.2")
 
         // https://www.npmjs.com/package/@js-joda/core
-        fun KotlinDependencyHandler.jsJodaCore() = npm("@js-joda/core", "5.3.0")
+        fun KotlinDependencyHandler.jsJodaCore() = npm("@js-joda/core", "5.3.1")
 
         // https://www.npmjs.com/package/@js-joda/timezone
-        fun KotlinDependencyHandler.jsJodaTimezone() = npm("@js-joda/timezone", "2.12.1")
+        fun KotlinDependencyHandler.jsJodaTimezone() = npm("@js-joda/timezone", "2.12.2")
     }
 
     // // Test dependencies ////////////////////////////////////////////////////////////////////////
@@ -101,7 +101,7 @@ object Deps {
         }
 
         // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-        const val logback_version = "1.2.11"
+        const val logback_version = "1.4.0"
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://mvnrepository.com/artifact/io.kotest/kotest-common
