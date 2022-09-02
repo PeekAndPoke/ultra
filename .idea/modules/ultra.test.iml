@@ -16,6 +16,8 @@
               <args>
                 <arg>$MODULE_DIR$/../../build/classes/kotlin/main</arg>
                 <arg>$MODULE_DIR$/../../build/tmp/kapt3/classes/main</arg>
+                <arg>$MODULE_DIR$/../../common/build/libs/common-0.55.0.RC2-SNAPSHOT.jar</arg>
+                <arg>$MODULE_DIR$/../../commonmp/build/libs/commonmp-jvm-0.55.0.RC2-SNAPSHOT.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.7.10/d70d7d2c56371f7aa18f32e984e3e2e998fe9081/kotlin-stdlib-jdk8-1.7.10.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.7.10/1ef73fee66f45d52c67e2aca12fd945dbe0659bf/kotlin-stdlib-jdk7-1.7.10.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-datetime-jvm/0.4.0/2224732fcb9b6116fbeb0926dd108604e578356b/kotlinx-datetime-jvm-0.4.0.jar</arg>
