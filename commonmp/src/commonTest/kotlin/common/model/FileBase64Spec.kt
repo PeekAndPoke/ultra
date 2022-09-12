@@ -29,6 +29,8 @@ class FileBase64Spec : StringSpec({
 
         subject.mimeType.shouldBeNull()
         subject.data.shouldBeEmpty()
+
+        subject.asDataUrl() shouldBe "data:;base64,"
     }
 
     "fromDataUrl - working for 'png'" {
@@ -40,6 +42,8 @@ class FileBase64Spec : StringSpec({
         subject.mimeType shouldBe "image/png"
         subject.data shouldStartWith "iVB"
         subject.data shouldHaveLength 116
+
+        subject.asDataUrl() shouldBe png
     }
 
     "fromDataUrl - working for 'html'" {
@@ -62,6 +66,8 @@ class FileBase64Spec : StringSpec({
         subject.mimeType shouldBe "image/svg+xml"
         subject.data shouldStartWith "PD94"
         subject.data shouldHaveLength 57
+
+        subject.asDataUrl() shouldBe svg
     }
 
     "fromDataUrl - working for 'zip'" {
@@ -73,6 +79,8 @@ class FileBase64Spec : StringSpec({
         subject.mimeType shouldBe "application/x-zip-compressed"
         subject.data shouldStartWith "UEsDBB"
         subject.data shouldHaveLength 340
+
+        subject.asDataUrl() shouldBe zip
     }
 
     "fromDataUrl - working for 'note'" {
@@ -84,6 +92,8 @@ class FileBase64Spec : StringSpec({
         subject.mimeType shouldBe null
         subject.data shouldStartWith "A%20brief"
         subject.data shouldHaveLength 16
+
+        subject.asDataUrl() shouldBe "data:;base64,A%20brief%20note"
     }
 
     "fromDataUrl - failing for non-data-urls" {
