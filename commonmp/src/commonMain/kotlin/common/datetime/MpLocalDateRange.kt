@@ -42,30 +42,33 @@ data class MpLocalDateRange(
         }
     }
 
-    inner class ToZonedDateTimeRangeConverter(timezone: MpTimezone) {
+    inner class ToZonedDateTimeRangeConverter(private val timezone: MpTimezone) {
+
         val fromNoonToNoon: MpZonedDateTimeRange by lazy(LazyThreadSafetyMode.NONE) {
-            MpZonedDateTimeRange(
-                from = maxOf(
-                    MpZonedDateTime.Genesis,
-                    from.atStartOfDay(timezone).plus(12, DateTimeUnit.HOUR),
-                ),
-                to = minOf(
-                    to.atStartOfDay(timezone).plus(12, DateTimeUnit.HOUR),
-                    MpZonedDateTime.Doomsday,
-                ),
+            create(
+                from = from.atStartOfDay(timezone).plus(12, DateTimeUnit.HOUR),
+                to = to.atStartOfDay(timezone).plus(12, DateTimeUnit.HOUR),
             )
         }
 
         val fromMorningToEvening: MpZonedDateTimeRange by lazy(LazyThreadSafetyMode.NONE) {
-            MpZonedDateTimeRange(
-                from = maxOf(
-                    MpZonedDateTime.Genesis,
-                    from.atStartOfDay(timezone),
-                ),
-                to = minOf(
-                    to.atStartOfDay(timezone).plus(1, DateTimeUnit.DAY),
-                    MpZonedDateTime.Doomsday,
-                ),
+            create(
+                from = from.atStartOfDay(timezone),
+                to = to.atStartOfDay(timezone).plus(1, DateTimeUnit.DAY),
+            )
+        }
+
+        fun fromHourToHour(firstHour: Int, lastHour: Int): MpZonedDateTimeRange {
+            return create(
+                from = from.atStartOfDay(timezone).plus(firstHour, DateTimeUnit.HOUR),
+                to = to.atStartOfDay(timezone).plus(lastHour, DateTimeUnit.HOUR),
+            )
+        }
+
+        private fun create(from: MpZonedDateTime, to: MpZonedDateTime): MpZonedDateTimeRange {
+            return MpZonedDateTimeRange(
+                from = maxOf(MpZonedDateTime.Genesis, from),
+                to = minOf(MpZonedDateTime.Doomsday, to),
             )
         }
     }
