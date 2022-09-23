@@ -20,7 +20,7 @@ object Deps {
 
     // Publishing ////////////////////////////////////////////////////////////////////////////////
     // https://search.maven.org/artifact/com.vanniktech/gradle-maven-publish-plugin
-    const val mavenPublishVersion = "0.20.0"
+    const val mavenPublishVersion = "0.22.0"
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     // https://mvnrepository.com/artifact/com.auth0/java-jwt
