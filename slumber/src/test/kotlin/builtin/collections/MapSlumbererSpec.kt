@@ -8,6 +8,17 @@ import java.time.LocalDateTime
 
 class MapSlumbererSpec : StringSpec({
 
+    "Slumbering an emptyMap must work" {
+
+        val data = emptyMap<Any, Any>()
+
+        val codec = Codec.default
+
+        val result = codec.slumber(data)
+
+        result shouldBe emptyMap<Any, Any>()
+    }
+
     "Slumbering a Map of String-2-Int must work" {
 
         val subject = MapSlumberer(kType<String>().type, kType<Int>().type)

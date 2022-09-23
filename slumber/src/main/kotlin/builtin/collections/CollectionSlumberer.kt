@@ -9,7 +9,7 @@ class CollectionSlumberer(private val innerType: KType) : Slumberer {
 
     companion object {
         fun forIterable(type: KType): CollectionSlumberer {
-            val valueType = (type.arguments[0].type ?: TypeRef.Any.type)
+            val valueType = (type.arguments.getOrNull(0)?.type ?: TypeRef.Any.type)
                 .withNullability(true)
 
             return CollectionSlumberer(valueType)

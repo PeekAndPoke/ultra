@@ -12,9 +12,9 @@ class MapSlumberer(
 
     companion object {
         fun forMap(type: KType): MapSlumberer {
-            val keyType = type.arguments[0].type ?: TypeRef.String.type
+            val keyType = type.arguments.getOrNull(0)?.type ?: TypeRef.String.type
 
-            val valueType = (type.arguments[1].type ?: TypeRef.Any.type)
+            val valueType = (type.arguments.getOrNull(1)?.type ?: TypeRef.Any.type)
                 .withNullability(true)
 
             return MapSlumberer(keyType, valueType)
