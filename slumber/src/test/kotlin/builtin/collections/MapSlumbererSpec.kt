@@ -41,4 +41,22 @@ class MapSlumbererSpec : StringSpec({
             )
         )
     }
+
+    "Slumbering a generic Map with nested null values" {
+
+        val codec = Codec.default
+
+        val data = mapOf(
+            "a" to 1,
+            "b" to null,
+            "c" to mapOf(
+                "a" to null,
+                "b" to listOf("a", null),
+            )
+        )
+
+        val result = codec.slumber(data)
+
+        result shouldBe data
+    }
 })

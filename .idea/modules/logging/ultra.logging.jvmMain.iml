@@ -20,10 +20,10 @@
           <stringArguments>
             <stringArg name="classpath">
               <args>
-                <arg>$MODULE_DIR$/../../../kontainer/build/libs/kontainer-0.55.4.jar</arg>
-                <arg>$MODULE_DIR$/../../../commonmp/build/libs/commonmp-jvm-0.55.4.jar</arg>
+                <arg>$MODULE_DIR$/../../../kontainer/build/libs/kontainer-0.55.5.jar</arg>
+                <arg>$MODULE_DIR$/../../../commonmp/build/libs/commonmp-jvm-0.55.5.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-core-jvm/1.6.3/b2c2f0c8e99eac632a8db723b365bd59067cf7bd/kotlinx-coroutines-core-jvm-1.6.3.jar</arg>
-                <arg>$MODULE_DIR$/../../../common/build/libs/common-0.55.4.jar</arg>
+                <arg>$MODULE_DIR$/../../../common/build/libs/common-0.55.5.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.7.10/d70d7d2c56371f7aa18f32e984e3e2e998fe9081/kotlin-stdlib-jdk8-1.7.10.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-reflect/1.7.10/165e600dfea6185cf5efa700756294cc4904dbeb/kotlin-reflect-1.7.10.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/1.7.36/6c62681a2f655b49963a5983b8b0950a6120ae14/slf4j-api-1.7.36.jar</arg>
