@@ -146,7 +146,7 @@ data class MpZonedDateTime private constructor(
     fun format(formatString: String): String {
         val ts = toEpochMillis() + timezone.offsetMillisAt(instant)
 
-        val klock = DateTime.fromUnix(ts)
+        val klock = DateTime.fromUnixMillis(ts)
 
         return klock.format(formatString)
     }

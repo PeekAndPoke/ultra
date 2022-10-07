@@ -15,7 +15,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 
-@Suppress("DataClassPrivateConstructor", "Detekt:TooManyFunctions")
+@Suppress("Detekt:TooManyFunctions")
 @Serializable(with = MpLocalDateSerializer::class)
 data class MpLocalDate internal constructor(
     private val value: LocalDate,

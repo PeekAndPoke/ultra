@@ -24,18 +24,10 @@ repositories {
 }
 
 kotlin {
-    targets {
+//    targets {
 
         js(IR) {
             browser {
-//                testTask {
-//                    useKarma {
-//                        useChromeHeadless()
-//                        usePhantomJS()
-//                        useChromiumHeadless()
-//                        useFirefoxHeadless()
-//                    }
-//                }
             }
         }
 
@@ -46,7 +38,7 @@ kotlin {
                 }
             }
         }
-    }
+//    }
 
     sourceSets {
 

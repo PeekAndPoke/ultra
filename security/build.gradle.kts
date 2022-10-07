@@ -24,8 +24,7 @@ repositories {
 }
 
 kotlin {
-    targets {
-
+//    targets {
         js(IR) {
             browser()
         }
@@ -37,7 +36,7 @@ kotlin {
                 }
             }
         }
-    }
+//    }
 
     @Suppress("UNUSED_VARIABLE")
     sourceSets {

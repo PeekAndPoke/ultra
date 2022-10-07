@@ -32,10 +32,6 @@ suspend fun main() {
 
         repeat(100000) {
 
-            val type = kType<ExampleClass<Int, String>>()
-
-            val reified = type.reified
-
             val slumbered = codec.slumber(example)
 
             val awoken: ExampleClass<Int, String>? = codec.awake(kType(), slumbered)
