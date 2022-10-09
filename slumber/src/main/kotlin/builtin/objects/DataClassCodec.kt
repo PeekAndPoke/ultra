@@ -2,9 +2,11 @@ package de.peekandpoke.ultra.slumber.builtin.objects
 
 import de.peekandpoke.ultra.common.reflection.ReifiedKType
 import de.peekandpoke.ultra.slumber.Awaker
+import de.peekandpoke.ultra.slumber.Slumber
 import de.peekandpoke.ultra.slumber.Slumberer
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType
+import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.withNullability
 import kotlin.reflect.jvm.isAccessible
 
@@ -18,6 +20,13 @@ class DataClassCodec(rootType: KType) : Awaker, Slumberer {
     private val nullables: Map<KParameter, Any?> =
         primaryCtor?.parameters?.filter { it.type.isMarkedNullable }?.associate { it to null }
             ?: emptyMap()
+
+    private val allSlumberFields =
+        reified.ctorFields2Types
+            .plus(
+                reified.allPropertiesToTypes.filter { (prop, _) -> prop.hasAnnotation<Slumber.Field>() }
+            )
+            .distinctBy { (prop, _) -> prop }
 
     init {
         // We need to make all constructors accessible.
@@ -97,8 +106,10 @@ class DataClassCodec(rootType: KType) : Awaker, Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any?>? = when {
 
-        data != null -> reified.properties2Types.associate { (prop, type) ->
-            prop.name to context.slumber(type, prop.get(data))
+        data != null -> {
+            allSlumberFields.associate { (prop, type) ->
+                prop.name to context.slumber(type, prop.get(data))
+            }
         }
 
         else -> null

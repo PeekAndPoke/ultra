@@ -1,14 +1,15 @@
 package de.peekandpoke.ultra.common.reflection
 
-import java.lang.reflect.Field
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
+import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeParameter
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.jvm.javaField
+import kotlin.reflect.jvm.isAccessible
 
 /**
  * Creates a reified version of the given [KType]
@@ -16,7 +17,7 @@ import kotlin.reflect.jvm.javaField
  * What does that mean? What to you get?
  *
  * - a map of [ctorParams2Types] where generic type parameters are fully reified.
- * - a map of [properties2Types] where generic type parameters are fully reified.
+ * - a map of [ctorFields2Types] where generic type parameters are fully reified.
  *
  * This is very handy e.g. for serialization and de-serialization.
  */
@@ -34,21 +35,55 @@ class ReifiedKType(val type: KType) {
     val ctor = cls.primaryConstructor
 
     /**
-     * Map of ctor parameters to their reified types
+     * All properties declared in the type and all supertypes
+     *
+     * See [KClass.memberProperties]
      */
-    val ctorParams2Types: List<Pair<KParameter, KType>> =
-        ctor?.parameters?.map { it to reifyType(it.type) }
+    val allProperties: List<KProperty1<Any, *>> by lazy(LazyThreadSafetyMode.NONE) {
+        cls.memberProperties
+            .onEach { it.isAccessible = true }
+            .toList()
+    }
+
+    /**
+     * All properties declared in the type and all supertypes associated with it's reified type.
+     *
+     * See [reifyType]
+     * See [KClass.memberProperties]
+     */
+    val allPropertiesToTypes: List<Pair<KProperty1<Any, *>, KType>> by lazy(LazyThreadSafetyMode.NONE) {
+        allProperties.map { it to reifyType(it.returnType) }
+    }
+
+    /**
+     * All properties declared directly in the type (see [KClass.declaredMemberProperties]
+     */
+    val declaredProperties: List<KProperty1<Any, *>> by lazy(LazyThreadSafetyMode.NONE) {
+        cls.declaredMemberProperties
+            .onEach { it.isAccessible = true }
+            .toList()
+    }
+
+    /**
+     * Map of ctor parameters to their reified types
+     *
+     * See [reifyType]
+     */
+    val ctorParams2Types: List<Pair<KParameter, KType>> by lazy(LazyThreadSafetyMode.NONE) {
+        ctor?.parameters
+            ?.map { it to reifyType(it.type) }
             ?: emptyList()
+    }
 
     /**
      * Map of properties corresponding to the ctor param to their reified types
      */
-    val properties2Types: List<Pair<Field, KType>> = ctorParams2Types.map { (param, type) ->
-        cls.declaredMemberProperties
-            .mapNotNull { it.javaField }
-            .first { it.name == param.name }
-            .apply { isAccessible = true }
-            .let { it to type }
+    val ctorFields2Types: List<Pair<KProperty1<Any, *>, KType>> by lazy(LazyThreadSafetyMode.NONE) {
+        ctorParams2Types.map { (param, type) ->
+            declaredProperties
+                .first { it.name == param.name }
+                .let { it to type }
+        }
     }
 
     /**

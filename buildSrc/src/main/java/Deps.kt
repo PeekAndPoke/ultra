@@ -101,7 +101,8 @@ object Deps {
         }
 
         // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-        const val logback_version = "1.4.3"
+        // NOTICE: we CAN NOT go above 1.3.3 because it will no work with Java 8
+        const val logback_version = "1.3.3"
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://mvnrepository.com/artifact/io.kotest/kotest-common

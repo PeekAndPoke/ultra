@@ -21,6 +21,16 @@ class DataClassSlumbererSpec : StringSpec({
         result shouldBe mapOf("str" to "hello", "int" to 1)
     }
 
+    "Slumbering a data class with private parameters" {
+        data class DataClass(private val str: String, private val int: Int)
+
+        val codec = Codec.default
+
+        val result = codec.slumber(DataClass("hello", 1))
+
+        result shouldBe mapOf("str" to "hello", "int" to 1)
+    }
+
     "Slumbering a data class with one String parameter" {
 
         data class DataClass(val str: String)
@@ -117,5 +127,31 @@ class DataClassSlumbererSpec : StringSpec({
         val type = DataClass::class.createType(nullable = true)
 
         codec.slumber(type, null) shouldBe null
+    }
+
+    "Slumbering a generic data class must work" {
+
+        data class Inner(val str: String)
+
+        data class DataClass<T>(val inner: T)
+
+        val codec = Codec.default
+
+        val result = codec.slumber(DataClass(Inner("hello")))
+
+        result shouldBe mapOf("inner" to mapOf("str" to "hello"))
+    }
+
+    "Slumbering a generic data class with an inner generic type must work" {
+
+        data class Inner<T>(val str: T)
+
+        data class DataClass<T>(val inner: T)
+
+        val codec = Codec.default
+
+        val result = codec.slumber(DataClass(Inner("hello")))
+
+        result shouldBe mapOf("inner" to mapOf("str" to "hello"))
     }
 })
