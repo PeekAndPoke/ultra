@@ -1,12 +1,12 @@
 package de.peekandpoke.ultra.slumber.builtin.objects
 
 import de.peekandpoke.ultra.common.reflection.ReifiedKType
+import de.peekandpoke.ultra.common.reflection.hasAnyAnnotationRecursive
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.Slumber
 import de.peekandpoke.ultra.slumber.Slumberer
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType
-import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.withNullability
 import kotlin.reflect.jvm.isAccessible
 
@@ -24,7 +24,9 @@ class DataClassCodec(rootType: KType) : Awaker, Slumberer {
     private val allSlumberFields =
         reified.ctorFields2Types
             .plus(
-                reified.allPropertiesToTypes.filter { (prop, _) -> prop.hasAnnotation<Slumber.Field>() }
+                reified.allPropertiesToTypes.filter { (prop, _) ->
+                    prop.hasAnyAnnotationRecursive { it is Slumber.Field }
+                }
             )
             .distinctBy { (prop, _) -> prop }
 

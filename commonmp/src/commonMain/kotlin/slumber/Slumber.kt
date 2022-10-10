@@ -1,10 +1,10 @@
 package de.peekandpoke.ultra.slumber
 
-import kotlin.annotation.AnnotationTarget.FIELD
-import kotlin.annotation.AnnotationTarget.PROPERTY
+import kotlin.annotation.AnnotationTarget.*
 
-interface Slumber {
+@Target()
+annotation class Slumber {
 
-    @Target(FIELD, PROPERTY)
+    @Target(FIELD, PROPERTY, ANNOTATION_CLASS)
     annotation class Field
 }

@@ -14,9 +14,9 @@
           <stringArguments>
             <stringArg name="classpath">
               <args>
-                <arg>$MODULE_DIR$/../../../meta/build/libs/meta-0.58.0.jar</arg>
-                <arg>$MODULE_DIR$/../../../commonmp/build/libs/commonmp-jvm-0.58.0.jar</arg>
-                <arg>$MODULE_DIR$/../../../common/build/libs/common-0.58.0.jar</arg>
+                <arg>$MODULE_DIR$/../../../meta/build/libs/meta-0.59.0.jar</arg>
+                <arg>$MODULE_DIR$/../../../commonmp/build/libs/commonmp-jvm-0.59.0.jar</arg>
+                <arg>$MODULE_DIR$/../../../common/build/libs/common-0.59.0.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.squareup/kotlinpoet/1.12.0/2b116a78080106e6fc11fd13bc0f1c8c818a7205/kotlinpoet-1.12.0.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.7.20/eac6656981d9d7156e838467d2d8d79093b1570/kotlin-stdlib-jdk8-1.7.20.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-reflect/1.7.20/12b2501e33bb6373e8e347c86d85481863629381/kotlin-reflect-1.7.20.jar</arg>

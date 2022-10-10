@@ -44,6 +44,7 @@ kotlin {
 
         val commonMain by getting {
             dependencies {
+                implementation(kotlin("reflect"))
                 implementation(Deps.kotlinx_serialization_core)
                 implementation(Deps.kotlinx_serialization_json)
                 implementation(Deps.kotlinx_coroutines_core)

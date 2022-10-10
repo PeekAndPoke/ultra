@@ -70,6 +70,16 @@ class AnnotatedFieldsSlumberSpec : StringSpec() {
         override val input: Int,
     ) : AbstractClassWithField<Int>()
 
+    @Slumber.Field
+    annotation class CustomAnnotation
+
+    data class DataClassWithCustomAnnotation(
+        val input: Int,
+    ) {
+        @CustomAnnotation
+        val field: Int get() = input
+    }
+
     init {
 
         "Slumbering a data class with @Slumber.Field annotated fields must work" {
@@ -149,6 +159,21 @@ class AnnotatedFieldsSlumberSpec : StringSpec() {
 
         "Slumbering a data class with @Slumber.Field annotated fields in super class must work" {
             (Codec.default.slumber(DataClassExtendingAbstractClass(input = 10)) as Map<*, *>).let {
+                withClue("size must be correct") {
+                    it.size shouldBe 2
+                }
+
+                withClue("content must be correct") {
+                    it shouldBe mapOf(
+                        "input" to 10,
+                        "field" to 10,
+                    )
+                }
+            }
+        }
+
+        "Slumbering a data class with custom annotation that is itself annotated with @Slumber.Field" {
+            (Codec.default.slumber(DataClassWithCustomAnnotation(input = 10)) as Map<*, *>).let {
                 withClue("size must be correct") {
                     it.size shouldBe 2
                 }
