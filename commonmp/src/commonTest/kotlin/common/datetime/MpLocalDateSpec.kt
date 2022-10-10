@@ -329,7 +329,7 @@ class MpLocalDateSpec : StringSpec({
         range.to shouldBe MpZonedDateTime.parse("2022-04-05T13:00:00.000[Europe/Berlin]")
     }
 
-    "Arithmetic - plus days" {
+    "Arithmetic - plus days (DateTimeUnit.DAY)" {
 
         val start = MpLocalDate.of(2022, Month.APRIL, 5)
 
@@ -340,7 +340,7 @@ class MpLocalDateSpec : StringSpec({
         start.plus(-2L, DateTimeUnit.DAY) shouldBe MpLocalDate.of(2022, Month.APRIL, 3)
     }
 
-    "Arithmetic - minus days" {
+    "Arithmetic - minus days (DateTimeUnit.DAY)" {
 
         val start = MpLocalDate.of(2022, Month.APRIL, 5)
 
@@ -351,7 +351,7 @@ class MpLocalDateSpec : StringSpec({
         start.minus(-2L, DateTimeUnit.DAY) shouldBe MpLocalDate.of(2022, Month.APRIL, 7)
     }
 
-    "Arithmetic - plus months" {
+    "Arithmetic - plus months (DateTimeUnit.MONTH)" {
 
         val start = MpLocalDate.of(2022, Month.APRIL, 5)
 
@@ -362,7 +362,7 @@ class MpLocalDateSpec : StringSpec({
         start.plus(-5L, DateTimeUnit.MONTH) shouldBe MpLocalDate.of(2021, Month.NOVEMBER, 5)
     }
 
-    "Arithmetic - minus months" {
+    "Arithmetic - minus months (DateTimeUnit.MONTH)" {
 
         val start = MpLocalDate.of(2022, Month.APRIL, 5)
 
@@ -373,7 +373,7 @@ class MpLocalDateSpec : StringSpec({
         start.minus(-5L, DateTimeUnit.MONTH) shouldBe MpLocalDate.of(2022, Month.SEPTEMBER, 5)
     }
 
-    "Arithmetic - plus years" {
+    "Arithmetic - plus years (DateTimeUnit.YEAR)" {
 
         val start = MpLocalDate.of(2022, Month.APRIL, 5)
 
@@ -384,7 +384,7 @@ class MpLocalDateSpec : StringSpec({
         start.plus(-5L, DateTimeUnit.YEAR) shouldBe MpLocalDate.of(2017, Month.APRIL, 5)
     }
 
-    "Arithmetic - minus years" {
+    "Arithmetic - minus years (DateTimeUnit.YEAR)" {
 
         val start = MpLocalDate.of(2022, Month.APRIL, 5)
 
@@ -395,7 +395,7 @@ class MpLocalDateSpec : StringSpec({
         start.minus(-5L, DateTimeUnit.YEAR) shouldBe MpLocalDate.of(2027, Month.APRIL, 5)
     }
 
-    "plusDays" {
+    "plusDays - edge cases" {
 
         MpLocalDate.of(2022, Month.APRIL, 5).plusDays(0) shouldBe
                 MpLocalDate.of(2022, Month.APRIL, 5)
@@ -413,7 +413,7 @@ class MpLocalDateSpec : StringSpec({
                 MpLocalDate.of(2020, Month.FEBRUARY, 28)
     }
 
-    "minusDays" {
+    "minusDays - edge cases" {
 
         MpLocalDate.of(2022, Month.APRIL, 5).minusDays(0) shouldBe
                 MpLocalDate.of(2022, Month.APRIL, 5)
@@ -431,7 +431,7 @@ class MpLocalDateSpec : StringSpec({
                 MpLocalDate.of(2020, Month.FEBRUARY, 28)
     }
 
-    "plusWeeks" {
+    "plusWeeks - edge cases" {
 
         MpLocalDate.of(2022, Month.APRIL, 5).plusWeeks(0) shouldBe
                 MpLocalDate.of(2022, Month.APRIL, 5)
@@ -449,7 +449,7 @@ class MpLocalDateSpec : StringSpec({
                 MpLocalDate.of(2020, Month.FEBRUARY, 22)
     }
 
-    "minusWeeks" {
+    "minusWeeks - edge cases" {
 
         MpLocalDate.of(2022, Month.APRIL, 5).minusWeeks(0) shouldBe
                 MpLocalDate.of(2022, Month.APRIL, 5)
@@ -467,7 +467,7 @@ class MpLocalDateSpec : StringSpec({
                 MpLocalDate.of(2020, Month.FEBRUARY, 22)
     }
 
-    "plusMonths" {
+    "plusMonths - edge cases" {
 
         MpLocalDate.of(2022, Month.APRIL, 5).plusMonths(0) shouldBe
                 MpLocalDate.of(2022, Month.APRIL, 5)
@@ -494,7 +494,7 @@ class MpLocalDateSpec : StringSpec({
                 MpLocalDate.of(2020, Month.APRIL, 29)
     }
 
-    "minusMonths" {
+    "minusMonths - edge cases" {
 
         MpLocalDate.of(2022, Month.APRIL, 5).minusMonths(0) shouldBe
                 MpLocalDate.of(2022, Month.APRIL, 5)
@@ -521,7 +521,7 @@ class MpLocalDateSpec : StringSpec({
                 MpLocalDate.of(2020, Month.APRIL, 29)
     }
 
-    "plusYears" {
+    "plusYears - edge cases" {
 
         MpLocalDate.of(2022, Month.APRIL, 5).plusYears(0) shouldBe
                 MpLocalDate.of(2022, Month.APRIL, 5)
@@ -545,7 +545,7 @@ class MpLocalDateSpec : StringSpec({
                 MpLocalDate.of(2020, Month.FEBRUARY, 29)
     }
 
-    "minusYears" {
+    "minusYears - edge cases" {
 
         MpLocalDate.of(2022, Month.APRIL, 5).minusYears(0) shouldBe
                 MpLocalDate.of(2022, Month.APRIL, 5)
@@ -569,7 +569,7 @@ class MpLocalDateSpec : StringSpec({
                 MpLocalDate.of(2020, Month.FEBRUARY, 29)
     }
 
-    "plusCenturies" {
+    "plusCenturies - edge cases" {
 
         MpLocalDate.of(2022, Month.APRIL, 5).plusCenturies(0) shouldBe
                 MpLocalDate.of(2022, Month.APRIL, 5)
@@ -590,7 +590,7 @@ class MpLocalDateSpec : StringSpec({
                 MpLocalDate.of(1600, Month.FEBRUARY, 29)
     }
 
-    "minusCenturies" {
+    "minusCenturies - edge cases" {
 
         MpLocalDate.of(2022, Month.APRIL, 5).minusCenturies(0) shouldBe
                 MpLocalDate.of(2022, Month.APRIL, 5)
@@ -609,5 +609,17 @@ class MpLocalDateSpec : StringSpec({
 
         MpLocalDate.of(2000, Month.FEBRUARY, 29).minusCenturies(4) shouldBe
                 MpLocalDate.of(1600, Month.FEBRUARY, 29)
+    }
+
+    "plus(period: MpTemporalPeriod)" {
+        MpLocalDate.of(2022, Month.APRIL, 5)
+            .plus(MpDatePeriod(years = 1, months = 2, days = 3)) shouldBe
+                MpLocalDate.of(2023, Month.JUNE, 8)
+    }
+
+    "minus(period: MpTemporalPeriod)" {
+        MpLocalDate.of(2022, Month.APRIL, 5)
+            .minus(MpDatePeriod(years = 1, months = 2, days = 3)) shouldBe
+                MpLocalDate.of(2021, Month.FEBRUARY, 2)
     }
 })

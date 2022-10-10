@@ -15,10 +15,10 @@
             <stringArg name="classpath">
               <args>
                 <arg>$MODULE_DIR$/../../../z-playground-jvm/build/classes/kotlin/main</arg>
-                <arg>$MODULE_DIR$/../../../slumber/build/libs/slumber-0.59.0.jar</arg>
-                <arg>$MODULE_DIR$/../../../kontainer/build/libs/kontainer-0.59.0.jar</arg>
-                <arg>$MODULE_DIR$/../../../common/build/libs/common-0.59.0.jar</arg>
-                <arg>$MODULE_DIR$/../../../commonmp/build/libs/commonmp-jvm-0.59.0.jar</arg>
+                <arg>$MODULE_DIR$/../../../slumber/build/libs/slumber-0.59.1.jar</arg>
+                <arg>$MODULE_DIR$/../../../kontainer/build/libs/kontainer-0.59.1.jar</arg>
+                <arg>$MODULE_DIR$/../../../common/build/libs/common-0.59.1.jar</arg>
+                <arg>$MODULE_DIR$/../../../commonmp/build/libs/commonmp-jvm-0.59.1.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-serialization-json-jvm/1.4.0/cfa3e57d044a20e5c9e4561a997df823e2f1c81a/kotlinx-serialization-json-jvm-1.4.0.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-serialization-core-jvm/1.4.0/9b00d574374ae0201a505ab54c7744586866dc27/kotlinx-serialization-core-jvm-1.4.0.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-core-jvm/1.6.4/2c997cd1c0ef33f3e751d3831929aeff1390cb30/kotlinx-coroutines-core-jvm-1.6.4.jar</arg>

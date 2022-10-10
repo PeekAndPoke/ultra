@@ -73,6 +73,39 @@ data class MpLocalDateRange(
         }
     }
 
+    val asDatePeriod: MpDatePeriod by lazy {
+        if (isNotValid) {
+            return@lazy MpDatePeriod.Zero
+        }
+
+        var years = 0
+        var months = 0
+        var days = 0
+
+        var current = from
+
+        val items = listOf(
+            DateTimeUnit.YEAR to { ++years },
+            DateTimeUnit.MONTH to { ++months },
+            DateTimeUnit.DAY to { ++days },
+        )
+
+        items.forEach { (unit, action) ->
+            while (true) {
+                val next = current.plus(unit)
+
+                if (next <= to) {
+                    action()
+                    current = next
+                } else {
+                    break
+                }
+            }
+        }
+
+        MpDatePeriod(years = years, months = months, days = days)
+    }
+
     val hasStart: Boolean get() = from > MpLocalDate.Genesis
 
     val hasEnd: Boolean get() = to < MpLocalDate.Doomsday
@@ -82,6 +115,8 @@ data class MpLocalDateRange(
     val isNotOpen: Boolean get() = !isOpen
 
     val isValid: Boolean get() = from < to
+
+    val isNotValid: Boolean get() = !isValid
 
     override fun compareTo(other: MpDatePeriod): Int {
         return to.compareTo(from.plus(other))

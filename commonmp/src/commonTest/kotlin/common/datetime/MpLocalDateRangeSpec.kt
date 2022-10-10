@@ -70,4 +70,44 @@ class MpLocalDateRangeSpec : StringSpec({
         Operators.Comparison.GT(range(2), twoDaysPeriod) shouldBe false
         Operators.Comparison.GT(range(3), twoDaysPeriod) shouldBe true
     }
+
+    "toRange(period: MpDatePeriod)" {
+        MpLocalDate.parse("2022-03-04").let { from ->
+            val period = MpDatePeriod(years = 1, months = 2, days = 3)
+
+            from.toRange(period) shouldBe MpLocalDateRange(from, from.plus(period))
+        }
+    }
+
+    "asDatePeriod for invalid MpLocalDateRange" {
+
+        val invalid = MpLocalDateRange(
+            from = MpLocalDate.parse("2021-01-01"),
+            to = MpLocalDate.parse("2020-01-01"),
+        )
+
+        invalid.asDatePeriod shouldBe MpDatePeriod.Zero
+    }
+
+    "asDatePeriod for valid MpLocalDateRanges" {
+
+        val start = MpLocalDate.parse("2020-01-01")
+
+        val inputs = listOf(
+            MpDatePeriod(years = 0, months = 0, days = 0),
+            MpDatePeriod(years = 0, months = 0, days = 1),
+            MpDatePeriod(years = 0, months = 1, days = 1),
+            MpDatePeriod(years = 1, months = 1, days = 1),
+            MpDatePeriod(years = 2, months = 2, days = 2),
+            MpDatePeriod(years = 20, months = 10, days = 20),
+        )
+
+        inputs.forEach { input ->
+            val range = start.toRange(input)
+
+            withClue("${range.from.formatDdMmmYyyy()}-${range.to.formatDdMmmYyyy()}  must have period $input") {
+                range.asDatePeriod shouldBe input
+            }
+        }
+    }
 })
