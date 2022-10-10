@@ -348,11 +348,11 @@ class TypeRefSpec : StringSpec({
             subject.ctorParams2Types[1].first.name shouldBe "p2"
             subject.ctorParams2Types[1].second shouldBe typeOf<String?>()
 
-            subject.ctorFields2Types[0].first.type.toString() shouldBe "class java.lang.Object"
+            subject.ctorFields2Types[0].first.returnType.toString() shouldBe "P1"
             subject.ctorFields2Types[0].first.name shouldBe "p1"
             subject.ctorFields2Types[0].second shouldBe typeOf<Int>()
 
-            subject.ctorFields2Types[1].first.type.toString() shouldBe "class java.lang.Object"
+            subject.ctorFields2Types[1].first.returnType.toString() shouldBe "P2"
             subject.ctorFields2Types[1].first.name shouldBe "p2"
             subject.ctorFields2Types[1].second shouldBe typeOf<String?>()
         }
