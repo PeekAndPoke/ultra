@@ -39,6 +39,7 @@ class ReifiedKType(val type: KType) {
      *
      * See [KClass.memberProperties]
      */
+    // TODO: test me
     val allProperties: List<KProperty1<Any, *>> by lazy(LazyThreadSafetyMode.NONE) {
         cls.memberProperties
             .onEach { it.isAccessible = true }
@@ -46,11 +47,12 @@ class ReifiedKType(val type: KType) {
     }
 
     /**
-     * All properties declared in the type and all supertypes associated with it's reified type.
+     * All properties declared in the type and all supertypes associated with their reified types.
      *
      * See [reifyType]
      * See [KClass.memberProperties]
      */
+    // TODO: test me
     val allPropertiesToTypes: List<Pair<KProperty1<Any, *>, KType>> by lazy(LazyThreadSafetyMode.NONE) {
         allProperties.map { it to reifyType(it.returnType) }
     }
@@ -58,10 +60,22 @@ class ReifiedKType(val type: KType) {
     /**
      * All properties declared directly in the type (see [KClass.declaredMemberProperties]
      */
+    // TODO: test me
     val declaredProperties: List<KProperty1<Any, *>> by lazy(LazyThreadSafetyMode.NONE) {
         cls.declaredMemberProperties
             .onEach { it.isAccessible = true }
             .toList()
+    }
+
+    /**
+     * All properties declared directly in the type associated with their reified types.
+     *
+     * See [reifyType]
+     * See [KClass.memberProperties]
+     */
+    // TODO: test me
+    val declaredPropertiesToTypes: List<Pair<KProperty1<Any, *>, KType>> by lazy(LazyThreadSafetyMode.NONE) {
+        declaredProperties.map { it to reifyType(it.returnType) }
     }
 
     /**
