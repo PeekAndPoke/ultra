@@ -249,6 +249,13 @@ data class MpLocalDate internal constructor(
     }
 
     /**
+     * Creates an [MpLocalDateRange] from this to [end].
+     */
+    fun toRange(end: MpLocalDate): MpLocalDateRange {
+        return MpLocalDateRange(this, end)
+    }
+
+    /**
      * Converts into an [MpZonedDateTimeRange] for the given [timeslot] and [timezone].
      */
     fun toRange(timeslot: MpLocalTimeSlot, timezone: TimeZone): MpZonedDateTimeRange {

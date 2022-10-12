@@ -110,4 +110,37 @@ class MpLocalDateRangeSpec : StringSpec({
             }
         }
     }
+
+    "asWholeDays" {
+
+        withClue("for invalid range") {
+            MpLocalDate.parse("2022-01-01")
+                .toRange(MpLocalDate.parse("2022-01-01"))
+                .asWholeDays shouldBe 0
+        }
+
+        withClue("for DST switch - one day") {
+            MpLocalDate.parse("2022-03-27")
+                .toRange(MpLocalDate.parse("2022-03-28"))
+                .asWholeDays shouldBe 1
+        }
+
+        withClue("for DST switch - one year") {
+            MpLocalDate.parse("2022-03-27")
+                .toRange(MpLocalDate.parse("2023-03-27"))
+                .asWholeDays shouldBe 365
+        }
+
+        withClue("with leap year") {
+            MpLocalDate.parse("2020-01-01")
+                .toRange(MpLocalDate.parse("2021-01-01"))
+                .asWholeDays shouldBe (365 + 1)
+        }
+
+        withClue("no leap year - two years, three months, four days") {
+            MpLocalDate.parse("2021-01-01")
+                .toRange(MpLocalDate.parse("2023-04-05"))
+                .asWholeDays shouldBe (365 + 365 + 31 + 28 + 31 + 4)
+        }
+    }
 })

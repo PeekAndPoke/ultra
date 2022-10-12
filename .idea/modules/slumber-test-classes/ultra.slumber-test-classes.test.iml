@@ -34,7 +34,7 @@
               <args>
                 <arg>$MODULE_DIR$/../../../slumber-test-classes/build/classes/java/main</arg>
                 <arg>$MODULE_DIR$/../../../slumber-test-classes/build/classes/kotlin/main</arg>
-                <arg>$MODULE_DIR$/../../../slumber-test-classes/build/libs/slumber-test-classes-0.59.1.jar</arg>
+                <arg>$MODULE_DIR$/../../../slumber-test-classes/build/libs/slumber-test-classes-0.59.2.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginClasspaths">

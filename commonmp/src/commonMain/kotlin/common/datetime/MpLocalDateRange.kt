@@ -3,6 +3,7 @@ package de.peekandpoke.ultra.common.datetime
 import de.peekandpoke.ultra.common.ComparableTo
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.serialization.Serializable
+import kotlin.math.round
 
 @Serializable
 // TODO: test all of me
@@ -104,6 +105,16 @@ data class MpLocalDateRange(
         }
 
         MpDatePeriod(years = years, months = months, days = days)
+    }
+
+    val asWholeDays: Int by lazy {
+        if (isNotValid) {
+            return@lazy 0
+        }
+
+        val seconds = toZonedTimeRange(MpTimezone.UTC).fromNoonToNoon.duration.inWholeSeconds
+
+        round(seconds / (60 * 60 * 24.0)).toInt()
     }
 
     val hasStart: Boolean get() = from > MpLocalDate.Genesis

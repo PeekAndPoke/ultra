@@ -17,8 +17,8 @@
                 <arg>$MODULE_DIR$/../../../slumber/build/classes/kotlin/main</arg>
                 <arg>$MODULE_DIR$/../../../slumber/build/tmp/kapt3/classes/main</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.matfax.klassindex/library/4.1.0-rc.1/ac71349109df0a2835ae1c7bd566bdb121f80d82/library-4.1.0-rc.1.jar</arg>
-                <arg>$MODULE_DIR$/../../../common/build/libs/common-0.59.1.jar</arg>
-                <arg>$MODULE_DIR$/../../../commonmp/build/libs/commonmp-jvm-0.59.1.jar</arg>
+                <arg>$MODULE_DIR$/../../../common/build/libs/common-0.59.2.jar</arg>
+                <arg>$MODULE_DIR$/../../../commonmp/build/libs/commonmp-jvm-0.59.2.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-runner-junit5-jvm/5.5.0/6cf3a3ff92c7292a88d94c8e70f38dbef13d66ca/kotest-runner-junit5-jvm-5.5.0.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-serialization-core-jvm/1.4.0/9b00d574374ae0201a505ab54c7744586866dc27/kotlinx-serialization-core-jvm-1.4.0.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-assertions-core-jvm/5.5.0/632ffcb86d00e3c89a862fccb18156c4a8ec316f/kotest-assertions-core-jvm-5.5.0.jar</arg>
@@ -66,7 +66,7 @@
                 <arg>$MODULE_DIR$/../../../slumber/build/classes/java/main</arg>
                 <arg>$MODULE_DIR$/../../../slumber/build/classes/kotlin/main</arg>
                 <arg>$MODULE_DIR$/../../../slumber/build/tmp/kapt3/classes/main</arg>
-                <arg>$MODULE_DIR$/../../../slumber/build/libs/slumber-0.59.1.jar</arg>
+                <arg>$MODULE_DIR$/../../../slumber/build/libs/slumber-0.59.2.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginClasspaths">
