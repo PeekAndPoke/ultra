@@ -16,12 +16,13 @@
               <args>
                 <arg>$MODULE_DIR$/../../../meta/build/classes/kotlin/main</arg>
                 <arg>$MODULE_DIR$/../../../meta/build/tmp/kapt3/classes/main</arg>
-                <arg>$MODULE_DIR$/../../../commonmp/build/libs/commonmp-jvm-0.59.2.jar</arg>
-                <arg>$MODULE_DIR$/../../../common/build/libs/common-0.59.2.jar</arg>
+                <arg>$MODULE_DIR$/../../../commonmp/build/libs/commonmp-jvm-0.59.3.jar</arg>
+                <arg>$MODULE_DIR$/../../../common/build/libs/common-0.59.3.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.tschuchortdev/kotlin-compile-testing/1.4.9/b8221a256af154eb85f66c75aa57b6137504a38d/kotlin-compile-testing-1.4.9.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.github.java-diff-utils/java-diff-utils/4.12/1a712a91324d566eef39817fc5c9980eb10c21db/java-diff-utils-4.12.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.squareup/kotlinpoet/1.12.0/2b116a78080106e6fc11fd13bc0f1c8c818a7205/kotlinpoet-1.12.0.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.auto.service/auto-service/1.0.1/c9779f7372192a96c957a3df1faeeabd07881085/auto-service-1.0.1.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.devtools.ksp/symbol-processing-api/1.7.20-1.0.6/3a3914c9f06be86d3275918a622037c9897fbfec/symbol-processing-api-1.7.20-1.0.6.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-runner-junit5-jvm/5.5.0/6cf3a3ff92c7292a88d94c8e70f38dbef13d66ca/kotest-runner-junit5-jvm-5.5.0.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-assertions-core-jvm/5.5.0/632ffcb86d00e3c89a862fccb18156c4a8ec316f/kotest-assertions-core-jvm-5.5.0.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.kotest/kotest-framework-engine-jvm/5.5.0/41e082ba2dd07b258fd3cd69b2b5af7d64199de6/kotest-framework-engine-jvm-5.5.0.jar</arg>
@@ -78,7 +79,7 @@
                 <arg>$MODULE_DIR$/../../../meta/build/classes/java/main</arg>
                 <arg>$MODULE_DIR$/../../../meta/build/classes/kotlin/main</arg>
                 <arg>$MODULE_DIR$/../../../meta/build/tmp/kapt3/classes/main</arg>
-                <arg>$MODULE_DIR$/../../../meta/build/libs/meta-0.59.2.jar</arg>
+                <arg>$MODULE_DIR$/../../../meta/build/libs/meta-0.59.3.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginClasspaths">

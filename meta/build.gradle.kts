@@ -35,6 +35,8 @@ dependencies {
     api(Deps.google_auto_service)
     kapt(Deps.google_auto_service)
 
+    api(Deps.kspSymbolProcessingApi)
+
     //  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
 
     kaptTest(Deps.google_auto_service)

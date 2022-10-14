@@ -119,6 +119,12 @@ class MpLocalDateRangeSpec : StringSpec({
                 .asWholeDays shouldBe 0
         }
 
+        withClue("simpel example") {
+            MpLocalDate.parse("2023-10-01")
+                .toRange(MpLocalDate.parse("2023-10-11"))
+                .asWholeDays shouldBe 10
+        }
+
         withClue("for DST switch - one day") {
             MpLocalDate.parse("2022-03-27")
                 .toRange(MpLocalDate.parse("2022-03-28"))
