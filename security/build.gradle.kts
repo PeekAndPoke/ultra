@@ -25,17 +25,17 @@ repositories {
 
 kotlin {
 //    targets {
-        js(IR) {
-            browser()
-        }
+    js(IR) {
+        browser()
+    }
 
-        jvm {
-            compilations.all {
-                kotlinOptions {
-                    jvmTarget = "1.8"
-                }
+    jvm {
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = "1.8"
             }
         }
+    }
 //    }
 
     @Suppress("UNUSED_VARIABLE")
@@ -54,18 +54,18 @@ kotlin {
             }
         }
 
-        js().compilations["main"].defaultSourceSet {
+        val jsMain by getting {
             dependencies {
             }
         }
 
-        js().compilations["test"].defaultSourceSet {
+        val jsTest by getting {
             dependencies {
                 jsTestDeps()
             }
         }
 
-        jvm().compilations["main"].defaultSourceSet {
+        val jvmMain by getting {
             dependencies {
                 implementation(kotlin("reflect"))
                 implementation(project(":kontainer"))
@@ -73,7 +73,7 @@ kotlin {
             }
         }
 
-        jvm().compilations["test"].defaultSourceSet {
+        val jvmTest by getting {
             dependencies {
                 jvmTestDeps()
             }

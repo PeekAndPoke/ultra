@@ -26,28 +26,29 @@ repositories {
 kotlin {
 //    targets {
 
-        js(IR) {
-            browser {
-            }
+    js(IR) {
+        browser {
         }
+    }
 
-        jvm {
-            compilations.all {
-                kotlinOptions {
-                    jvmTarget = "1.8"
-                }
+    jvm {
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = "1.8"
             }
         }
+    }
 //    }
 
+    @Suppress("UNUSED_VARIABLE")
     sourceSets {
 
         val commonMain by getting {
             dependencies {
                 implementation(kotlin("reflect"))
+                implementation(Deps.kotlinx_coroutines_core)
                 implementation(Deps.kotlinx_serialization_core)
                 implementation(Deps.kotlinx_serialization_json)
-                implementation(Deps.kotlinx_coroutines_core)
 
                 // This is still needed for formatting dates - TODO: remove this dependency
                 implementation(Deps.korlibs_klock_common)
@@ -63,27 +64,28 @@ kotlin {
             }
         }
 
-        js().compilations["main"].defaultSourceSet {
+        val jsMain by getting {
             dependencies {
+                implementation(Deps.kotlinx_coroutines_core_js)
                 api(Deps.Npm { polyfillFetch() })
                 api(Deps.Npm { jsJodaCore() })
                 api(Deps.Npm { jsJodaTimezone() })
             }
         }
 
-        js().compilations["test"].defaultSourceSet {
+        val jsTest by getting {
             dependencies {
                 jsTestDeps()
             }
         }
 
-        jvm().compilations["main"].defaultSourceSet {
+        val jvmMain by getting {
             dependencies {
                 implementation(Deps.klassIndexLib)
             }
         }
 
-        jvm().compilations["test"].defaultSourceSet {
+        val jvmTest by getting {
             dependencies {
                 jvmTestDeps()
             }

@@ -25,17 +25,17 @@ repositories {
 
 kotlin {
 //    targets {
-        js(IR) {
-            browser()
-        }
+    js(IR) {
+        browser()
+    }
 
-        jvm {
-            compilations.all {
-                kotlinOptions {
-                    jvmTarget = "1.8"
-                }
+    jvm {
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = "1.8"
             }
         }
+    }
 //    }
 
     @Suppress("UNUSED_VARIABLE")
@@ -43,8 +43,8 @@ kotlin {
 
         val commonMain by getting {
             dependencies {
-                implementation(Deps.kotlinx_serialization_core)
                 implementation(Deps.kotlinx_coroutines_core)
+                implementation(Deps.kotlinx_serialization_core)
 
                 api(project(":commonmp"))
             }
@@ -56,19 +56,19 @@ kotlin {
             }
         }
 
-        js().compilations["main"].defaultSourceSet {
+        val jsMain by getting {
             dependencies {
+                implementation(Deps.kotlinx_coroutines_core_js)
             }
         }
 
-        js().compilations["test"].defaultSourceSet {
+        val jsTest by getting {
             dependencies {
                 jsTestDeps()
             }
         }
 
-        jvm().compilations["main"].defaultSourceSet {
-
+        val jvmMain by getting {
             dependencies {
                 implementation(kotlin("reflect"))
 
@@ -78,7 +78,7 @@ kotlin {
             }
         }
 
-        jvm().compilations["test"].defaultSourceSet {
+        val jvmTest by getting {
             dependencies {
                 jvmTestDeps()
             }
