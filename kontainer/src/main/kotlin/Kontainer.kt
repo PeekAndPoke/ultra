@@ -9,7 +9,7 @@ import kotlin.reflect.KClass
 @Suppress("Detekt.TooManyFunctions")
 class Kontainer internal constructor(
     private val factory: ServiceProviderFactory,
-) {
+) : KontainerAware {
     /**
      * Tools for debugging the kontainer and more
      */
@@ -19,6 +19,11 @@ class Kontainer internal constructor(
      * The blueprint for this kontainer
      */
     val blueprint: KontainerBlueprint = factory.blueprint
+
+    /**
+     * Implementing [KontainerAware]
+     */
+    override val kontainer: Kontainer = this
 
     /**
      * The root context is used, when services are directly requested from the Kontainer
