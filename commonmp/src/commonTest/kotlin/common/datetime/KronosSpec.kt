@@ -4,6 +4,7 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlin.time.Duration
@@ -217,5 +218,12 @@ class KronosSpec : StringSpec({
         subject.shouldBeInstanceOf<Kronos.Mutable>()
         subject.describe() shouldBe modified.describe()
         subject.instantNow() shouldBe modified.instantNow()
+    }
+
+    "Kronos.mutable - Mutable.mutable return the same instance" {
+
+        val subject = Kronos.systemUtc.mutable()
+
+        subject shouldBeSameInstanceAs subject.mutable()
     }
 })

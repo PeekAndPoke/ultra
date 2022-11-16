@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
+import de.peekandpoke.ultra.common.recursion.recurse
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -117,6 +118,17 @@ interface Kronos {
         private var _inner: Kronos = inner
 
         override fun set(inner: Kronos) {
+            val chain = _inner.recurse {
+                when (val rec = this) {
+                    is MutableImpl -> rec._inner
+                    else -> null
+                }
+            }
+
+            if (this in chain) {
+                return
+            }
+
             _inner = inner
         }
 
@@ -148,7 +160,10 @@ interface Kronos {
     fun advanceBy(duration: Duration): Kronos = advanceBy { duration }
 
     /** Makes this Kronos a [Mutable] */
-    fun mutable(): Mutable = MutableImpl(this)
+    fun mutable(): Mutable = when (this) {
+        is Mutable -> this
+        else -> MutableImpl(this)
+    }
 
     /** Get 'now' in epoch seconds */
     fun secondsNow(): Long = instantNow().toEpochSeconds()
