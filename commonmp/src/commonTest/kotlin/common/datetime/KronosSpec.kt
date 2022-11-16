@@ -3,6 +3,7 @@ package de.peekandpoke.ultra.common.datetime
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlin.time.Duration
@@ -199,5 +200,22 @@ class KronosSpec : StringSpec({
                 inner = KronosDescriptor.SystemClock,
             )
         )
+    }
+
+    "Kronos.mutable" {
+
+        val inner = Kronos.fixed(MpInstant.now())
+        val subject = inner.mutable()
+
+        subject.shouldBeInstanceOf<Kronos.Mutable>()
+        subject.describe() shouldBe inner.describe()
+        subject.instantNow() shouldBe inner.instantNow()
+
+        val modified = Kronos.fixed(MpInstant.now()).advanceBy(1.hours)
+        subject.set(modified)
+
+        subject.shouldBeInstanceOf<Kronos.Mutable>()
+        subject.describe() shouldBe modified.describe()
+        subject.instantNow() shouldBe modified.instantNow()
     }
 })

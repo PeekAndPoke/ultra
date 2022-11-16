@@ -12,6 +12,10 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 interface Kronos {
 
+    interface Mutable : Kronos {
+        fun set(inner: Kronos)
+    }
+
     companion object {
         /**
          * The [Kronos] that operates on the system clock.
@@ -106,6 +110,22 @@ interface Kronos {
     }
 
     /**
+     * Implementation of [Mutable]
+     */
+    private class MutableImpl(inner: Kronos) : Mutable {
+
+        private var _inner: Kronos = inner
+
+        override fun set(inner: Kronos) {
+            _inner = inner
+        }
+
+        override fun describe(): KronosDescriptor = _inner.describe()
+
+        override fun instantNow(): MpInstant = _inner.instantNow()
+    }
+
+    /**
      * Returns a description of the kronos
      */
     fun describe(): KronosDescriptor
@@ -126,6 +146,9 @@ interface Kronos {
      * The created dates and times will be advances by the given [duration].
      */
     fun advanceBy(duration: Duration): Kronos = advanceBy { duration }
+
+    /** Makes this Kronos a [Mutable] */
+    fun mutable(): Mutable = MutableImpl(this)
 
     /** Get 'now' in epoch seconds */
     fun secondsNow(): Long = instantNow().toEpochSeconds()
