@@ -3,21 +3,43 @@ package de.peekandpoke.ultra.common
 import kotlin.math.pow
 import kotlin.math.roundToLong
 
-fun Number.toFixed(decimals: Int): String {
-
-    if (decimals <= 0) {
-        return this.toInt().toString()
+fun Number.toFixed(digits: Int): String {
+    if (digits < 0) {
+        return toInt().toString()
     }
 
-    val str1 = this.toString()
-
-    return when (val dot = str1.indexOf('.')) {
-
-        -1 -> "$str1.".padEnd(str1.length + 1 + decimals, '0')
-
-        else -> str1.padEnd(dot + 1 + decimals, '0').substring(0, dot + 1 + decimals)
-    }
+    return toFixedInternal(digits)
 }
+
+internal expect fun Number.toFixedInternal(digits: Int): String
+
+//fun Number.toFixed(decimals: Int): String {
+//
+//    if (decimals <= 0) {
+//        return toInt().toString()
+//    }
+//
+//    val dbl = toDouble()
+//    val signum = if (dbl >= 0.0) "" else "-"
+//
+//    val dblAbs = abs(dbl)
+//    val beforeComma = dblAbs.toInt()
+//    var rest = (dblAbs - beforeComma)
+//    val afterComma = Array(decimals) { "0" }
+//    var allZeros = beforeComma == 0
+//
+//    repeat(decimals) { idx ->
+//        rest *= 10
+//        val i = rest.toInt()
+//        if (i > 0) {
+//            afterComma[idx] = i.toString()
+//            allZeros = false
+//        }
+//        rest -= i
+//    }
+//
+//    return "${if (allZeros) "" else signum}$beforeComma.${afterComma.joinToString("")}"
+//}
 
 fun Number.roundWithPrecision(precision: Int): Double {
 
