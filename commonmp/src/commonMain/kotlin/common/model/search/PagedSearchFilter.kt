@@ -9,7 +9,7 @@ data class PagedSearchFilter(
     val search: String = "",
     val page: Int = defaultPage,
     val epp: Int = defaultEpp,
-    val searchOptions: Set<Option> = emptySet(),
+    val options: Set<Option> = emptySet(),
 ) {
     companion object {
         const val defaultPage = 1
@@ -22,12 +22,12 @@ data class PagedSearchFilter(
             search: String = "",
             page: Int = defaultPage,
             epp: Int = defaultEpp,
-            searchOptions: String? = "",
+            options: String? = "",
         ) = PagedSearchFilter(
             search = search,
             page = page,
             epp = epp,
-            searchOptions = searchOptions.toOptions(),
+            options = options.toOptions(),
         )
 
         /**
@@ -37,11 +37,12 @@ data class PagedSearchFilter(
             search = map["search"] ?: "",
             page = map["page"]?.toIntOrNull() ?: defaultPage,
             epp = map["epp"]?.toIntOrNull() ?: defaultEpp,
-            searchOptions = map["search-options"].toOptions(),
+            options = map["options"].toOptions(),
         )
 
         private fun String?.toOptions(): Set<Option> = this
             ?.split(",")
+            ?.filter { it.isNotBlank() }
             ?.mapNotNull { option -> safeEnumValueOrNull<Option>(option) }
             ?.toSet()
             ?: emptySet()
@@ -64,61 +65,59 @@ data class PagedSearchFilter(
     /**
      * Adds [options] from a single string
      *
-     * Trie to split the  an [option]string and trying at "," and to convert each part to an [Option].
+     * Split the [options] string and trying at "," and to convert each part to an [Option].
      */
     fun withOptions(options: String) = copy(
-        searchOptions = options.toOptions(),
+        options = options.toOptions(),
     )
 
     /**
      * Add an [option].
      */
     fun plusOption(option: Option) = copy(
-        searchOptions = searchOptions.plus(option)
+        options = options.plus(option)
     )
 
     /**
      * Removes an [option].
      */
     fun minusOption(option: Option) = copy(
-        searchOptions = searchOptions.minus(option)
+        options = options.minus(option)
     )
 
     /**
      * Toggles an [option].
      */
     fun toggleOption(option: Option) = copy(
-        searchOptions = searchOptions.toggle(option)
+        options = options.toggle(option)
     )
 
     /**
      * Returns 'true' when the [Option.include_deleted] is set
      */
-    fun hasIncludeDeletedOption() = searchOptions.contains(Option.include_deleted)
+    fun hasIncludeDeletedOption() = options.contains(Option.include_deleted)
 
     /**
      * Returns 'true' when the [Option.include_recently_deleted] is set
      */
-    fun hasIncludeRecentlyDeletedOption() = searchOptions.contains(Option.include_recently_deleted)
+    fun hasIncludeRecentlyDeletedOption() = options.contains(Option.include_recently_deleted)
 
     /**
      * Converts the filter to a [Map].
      */
-    fun toMap(): Map<String, String?> {
+    fun toMap(): Map<String, String> {
         return mapOf(
-            "search" to if (search.isNotBlank()) {
-                search.trim()
-            } else {
-                null
-            },
+            "search" to search.trim(),
             "page" to page.toString(),
             "epp" to epp.toString(),
-            "search-options" to if (searchOptions.isNotEmpty()) {
-                searchOptions.joinToString(",") { it.name }
-            } else {
-                null
-            }
+            "options" to options.joinToString(",") { it.name },
         )
     }
 
+    fun toEntries(): Array<Pair<String, String>> {
+        @Suppress("UNCHECKED_CAST")
+        return toMap().entries
+            .map { it.key to it.value }
+            .toTypedArray()
+    }
 }

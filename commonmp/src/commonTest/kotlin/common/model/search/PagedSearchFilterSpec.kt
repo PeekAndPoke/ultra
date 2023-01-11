@@ -21,7 +21,7 @@ class PagedSearchFilterSpec : StringSpec({
             search = "search",
             page = 2,
             epp = 100,
-            searchOptions = setOf(PagedSearchFilter.Option.include_deleted),
+            options = setOf(PagedSearchFilter.Option.include_deleted),
         )
 
         val data = original.toMap()
@@ -38,7 +38,7 @@ class PagedSearchFilterSpec : StringSpec({
             search = "",
             page = 1,
             epp = 20,
-            searchOptions = emptySet(),
+            options = emptySet(),
         )
     }
 
@@ -48,7 +48,7 @@ class PagedSearchFilterSpec : StringSpec({
             search = "search",
             page = 2,
             epp = 100,
-            searchOptions = "include_deleted",
+            options = "include_deleted",
         )
 
         result shouldBe PagedSearchFilter(
@@ -56,5 +56,61 @@ class PagedSearchFilterSpec : StringSpec({
             page = 2,
             epp = 100,
         ).withOptions(PagedSearchFilter.Option.include_deleted.name)
+    }
+
+    "toMap" {
+
+        PagedSearchFilter(
+            page = 1,
+            epp = 20,
+        ).toMap() shouldBe mapOf(
+            "search" to "",
+            "page" to "1",
+            "epp" to "20",
+            "options" to "",
+        )
+
+        PagedSearchFilter(
+            search = "search",
+            page = 1,
+            epp = 20,
+            options = setOf(
+                PagedSearchFilter.Option.include_deleted,
+                PagedSearchFilter.Option.include_recently_deleted,
+            )
+        ).toMap() shouldBe mapOf(
+            "search" to "search",
+            "page" to "1",
+            "epp" to "20",
+            "options" to "include_deleted,include_recently_deleted"
+        )
+    }
+
+    "toEntries" {
+
+        PagedSearchFilter(
+            page = 1,
+            epp = 20,
+        ).toEntries() shouldBe arrayOf(
+            "search" to "",
+            "page" to "1",
+            "epp" to "20",
+            "options" to "",
+        )
+
+        PagedSearchFilter(
+            search = "search",
+            page = 1,
+            epp = 20,
+            options = setOf(
+                PagedSearchFilter.Option.include_deleted,
+                PagedSearchFilter.Option.include_recently_deleted,
+            )
+        ).toEntries() shouldBe arrayOf(
+            "search" to "search",
+            "page" to "1",
+            "epp" to "20",
+            "options" to "include_deleted,include_recently_deleted"
+        )
     }
 })
