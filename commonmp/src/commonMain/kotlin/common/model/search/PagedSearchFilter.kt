@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.common.model.search
 
 import de.peekandpoke.ultra.common.safeEnumValueOrNull
+import de.peekandpoke.ultra.common.toggle
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -14,11 +15,14 @@ data class PagedSearchFilter(
         const val defaultPage = 1
         const val defaultEpp = 20
 
+        /**
+         * Constructs a [PagedSearchFilter] from the given parameter.
+         */
         fun of(
-            search: String,
-            page: Int,
-            epp: Int,
-            searchOptions: String,
+            search: String = "",
+            page: Int = defaultPage,
+            epp: Int = defaultEpp,
+            searchOptions: String? = "",
         ) = PagedSearchFilter(
             search = search,
             page = page,
@@ -26,6 +30,9 @@ data class PagedSearchFilter(
             searchOptions = searchOptions.toOptions(),
         )
 
+        /**
+         * Constructs a [PagedSearchFilter] from the given [map].
+         */
         fun ofMap(map: Map<String, String?>) = PagedSearchFilter(
             search = map["search"] ?: "",
             page = map["page"]?.toIntOrNull() ?: defaultPage,
@@ -45,10 +52,47 @@ data class PagedSearchFilter(
         include_deleted
     }
 
+    /**
+     * Set the [page] to 1 and [epp] to [Int.MAX_VALUE]
+     */
+    fun all() = copy(
+        page = defaultPage,
+        epp = Int.MAX_VALUE,
+    )
+
+    /**
+     * Adds [options] from a single string
+     *
+     * Trie to split the  an [option]string and trying at "," and to convert each part to an [Option].
+     */
     fun withOptions(options: String) = copy(
         searchOptions = options.toOptions(),
     )
 
+    /**
+     * Add an [option].
+     */
+    fun plusOption(option: Option) = copy(
+        searchOptions = searchOptions.plus(option)
+    )
+
+    /**
+     * Removes an [option].
+     */
+    fun minusOption(option: Option) = copy(
+        searchOptions = searchOptions.minus(option)
+    )
+
+    /**
+     * Toggles an [option].
+     */
+    fun toggleOption(option: Option) = copy(
+        searchOptions = searchOptions.toggle(option)
+    )
+
+    /**
+     * Converts the filter to a [Map].
+     */
     fun toMap(): Map<String, String?> {
         return mapOf(
             "search" to if (search.isNotBlank()) {
