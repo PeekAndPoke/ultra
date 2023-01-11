@@ -5,7 +5,7 @@
       <configuration version="5" platform="JavaScript " allPlatforms="JS []" useProjectSettings="false" isTestModule="false" externalProjectId=":z-playground-js" isHmppProject="true">
         <newMppModelJpsModuleKind>COMPILATION_AND_SOURCE_SET_HOLDER</newMppModelJpsModuleKind>
         <compilerSettings>
-          <option name="additionalArguments" value="-Xir-module-name=de.peekandpoke.ultra:z-playground-js -Xir-only -Xir-per-module-output-name=ultra-z-playground-js -Xir-produce-klib-dir" />
+          <option name="additionalArguments" value="-Xir-only -Xir-per-module-output-name=ultra-z-playground-js -Xir-produce-klib-dir -Xir-module-name=de.peekandpoke.ultra:z-playground-js" />
         </compilerSettings>
         <compilerArguments>
           <flagArguments>
@@ -25,11 +25,11 @@
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
               <args>
-                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/1.7.20/8159de6c79ac1c91fe2ecc488c30b27b2a8f5f1c/kotlin-gradle-plugin-api-1.7.20-gradle71.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-native-utils/1.7.20/kotlin-native-utils-1.7.20.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-project-model/1.7.20/8db9bd1b28e2fefd67727adecb96462f7d454a39/kotlin-project-model-1.7.20.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-tooling-core/1.7.20/19c84dd609449479dd647cfb8b885f6430501a21/kotlin-tooling-core-1.7.20.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-util-io/1.7.20/kotlin-util-io-1.7.20.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/1.7.21/f669044cea0f3007b28d48fdbb67efb1606cec17/kotlin-gradle-plugin-api-1.7.21-gradle71.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-native-utils/1.7.21/kotlin-native-utils-1.7.21.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-project-model/1.7.21/d661b8ef85d36b133eea757a50df6b6d581827af/kotlin-project-model-1.7.21.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-tooling-core/1.7.21/19c84dd609449479dd647cfb8b885f6430501a21/kotlin-tooling-core-1.7.21.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-util-io/1.7.21/kotlin-util-io-1.7.21.jar</arg>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
               </args>
             </arrayArg>
