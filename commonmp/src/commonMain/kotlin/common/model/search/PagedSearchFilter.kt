@@ -49,7 +49,8 @@ data class PagedSearchFilter(
 
     @Suppress("EnumEntryName")
     enum class Option {
-        include_deleted
+        include_deleted,
+        include_recently_deleted,
     }
 
     /**
@@ -89,6 +90,16 @@ data class PagedSearchFilter(
     fun toggleOption(option: Option) = copy(
         searchOptions = searchOptions.toggle(option)
     )
+
+    /**
+     * Returns 'true' when the [Option.include_deleted] is set
+     */
+    fun hasIncludeDeletedOption() = searchOptions.contains(Option.include_deleted)
+
+    /**
+     * Returns 'true' when the [Option.include_recently_deleted] is set
+     */
+    fun hasIncludeRecentlyDeletedOption() = searchOptions.contains(Option.include_recently_deleted)
 
     /**
      * Converts the filter to a [Map].
