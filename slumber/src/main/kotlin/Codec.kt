@@ -115,6 +115,15 @@ open class Codec(
     }
 
     internal fun slumber(type: KType, data: Any?, context: Slumberer.Context): Any? {
+
+//        val slumberer = if (data == null) {
+//            getSlumberer(type)
+//        } else if (type.isSupertypeOf(data::class.starProjectedType)) {
+//            getSlumberer(data::class.starProjectedType)
+//        } else {
+//            getSlumberer(type)
+//        }
+//
         return getSlumberer(type).slumber(data, context)
     }
 

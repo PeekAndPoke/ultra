@@ -10,7 +10,7 @@ class PolymorphicSlumbererSpec : StringSpec({
 
     //  Directly slumbering polymorphic children  //////////////////////////////////////////////////////////////////////
 
-    "Slumbering a polymorphic child independently must include the discriminator" {
+    "Slumbering a polymorphic sealed class child class must include the discriminator" {
 
         val codec = Codec.default
 
@@ -18,6 +18,18 @@ class PolymorphicSlumbererSpec : StringSpec({
 
         result shouldBe mapOf(
             "_type" to PureBase.A::class.qualifiedName,
+            "text" to "hello",
+        )
+    }
+
+    "Slumbering a polymorphic open class child class must include the discriminator" {
+
+        val codec = Codec.default
+
+        val result = codec.slumber(AnnotatedBase.A("hello"))
+
+        result shouldBe mapOf(
+            "_type" to AnnotatedBase.A::class.qualifiedName,
             "text" to "hello",
         )
     }

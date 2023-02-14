@@ -1,7 +1,6 @@
 package de.peekandpoke.ultra.slumber
 
 import de.peekandpoke.ultra.common.TypedAttributes
-import kotlin.reflect.KType
 
 interface Slumberer {
 
@@ -15,7 +14,7 @@ interface Slumberer {
 
         fun slumber(data: Any?): Any? = codec.slumber(data, this)
 
-        fun slumber(targetType: KType, data: Any?): Any? = codec.slumber(targetType, data, this)
+//        fun slumber(targetType: KType, data: Any?): Any? = codec.slumber(targetType, data, this)
 
         @Throws(SlumbererException::class)
         fun reportNullError(): Nothing = throw SlumbererException(

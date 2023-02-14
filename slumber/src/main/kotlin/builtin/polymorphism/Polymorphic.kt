@@ -39,7 +39,8 @@ object PolymorphicChildUtil {
     fun isPolymorphicChild(cls: KClass<*>): Boolean =
         cls.companionObjectInstance is Polymorphic.Child ||
                 cls.allSupertypes.any { (it.classifier as? KClass<*>)?.isSealed ?: false } ||
-                cls.annotations.filterIsInstance<SerialName>().isNotEmpty()
+                cls.annotations.filterIsInstance<SerialName>().isNotEmpty() ||
+                PolymorphicParentUtil.getParent(cls) != null
 
     /**
      * Get the type identifier of a child class

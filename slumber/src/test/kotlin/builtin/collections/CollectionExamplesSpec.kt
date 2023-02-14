@@ -41,8 +41,6 @@ private val intListNonNull = listOf(
     row(emptyList<Int>(), emptyList()),
     row(emptyArray<Int>(), emptyList()),
     row(listOf(1, 2), listOf(1, 2)),
-    row(listOf(1.1, 2.2), listOf(1, 2)),
-    row(listOf("10", 20.toShort()), listOf(10, 20))
 )
 
 /**
@@ -70,8 +68,6 @@ private val mutableIntListNonNull: List<Row2<Any, List<Int>>> = listOf(
     row(emptyList<Int>(), emptyList()),
     row(emptyArray<Int>(), emptyList()),
     row(listOf(1, 2), mutableListOf(1, 2)),
-    row(listOf(1.1, 2.2), mutableListOf(1, 2)),
-    row(listOf("10", 20.toShort()), mutableListOf(10, 20))
 )
 
 /**
@@ -103,10 +99,6 @@ private val listOfStringListNonNull = listOf(
     row(
         listOf(emptyList<Any>()),
         listOf(emptyList<Any>())
-    ),
-    row(
-        listOf(listOf(1, 2), listOf(3.3, 4.4)),
-        listOf(listOf("1", "2"), listOf("3.3", "4.4"))
     ),
     row(
         listOf(listOf("", "a"), listOf()),

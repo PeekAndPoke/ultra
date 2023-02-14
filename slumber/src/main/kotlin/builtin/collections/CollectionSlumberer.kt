@@ -1,20 +1,8 @@
 package de.peekandpoke.ultra.slumber.builtin.collections
 
-import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.Slumberer
-import kotlin.reflect.KType
-import kotlin.reflect.full.withNullability
 
-class CollectionSlumberer(private val innerType: KType) : Slumberer {
-
-    companion object {
-        fun forIterable(type: KType): CollectionSlumberer {
-            val valueType = (type.arguments.getOrNull(0)?.type ?: TypeRef.Any.type)
-                .withNullability(true)
-
-            return CollectionSlumberer(valueType)
-        }
-    }
+object CollectionSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Any? = when (data) {
 
@@ -26,6 +14,6 @@ class CollectionSlumberer(private val innerType: KType) : Slumberer {
     }
 
     private fun map(data: Iterable<*>, context: Slumberer.Context) = data.mapIndexed { idx, it ->
-        context.stepInto(idx.toString()).slumber(innerType, it)
+        context.stepInto(idx.toString()).slumber(it)
     }
 }

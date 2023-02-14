@@ -178,11 +178,11 @@ object BuiltInModule : SlumberModule {
 
                 // Iterables
                 Iterable::class.java.isAssignableFrom(cls.java) ->
-                    type.wrapIfNonNull(CollectionSlumberer.forIterable(type))
+                    type.wrapIfNonNull(CollectionSlumberer)
 
                 // Maps
                 Map::class.java.isAssignableFrom(cls.java) ->
-                    type.wrapIfNonNull(MapSlumberer.forMap(type))
+                    type.wrapIfNonNull(MapSlumberer)
 
                 // Enum
                 cls.java.isEnum ->

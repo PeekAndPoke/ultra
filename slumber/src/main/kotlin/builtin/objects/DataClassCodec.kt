@@ -17,18 +17,17 @@ class DataClassCodec(rootType: KType) : Awaker, Slumberer {
 
     private val primaryCtor = reified.ctor
 
-    private val nullables: Map<KParameter, Any?> =
-        primaryCtor?.parameters?.filter { it.type.isMarkedNullable }?.associate { it to null }
-            ?: emptyMap()
+    private val nullables: Map<KParameter, Any?> = primaryCtor?.parameters
+        ?.filter { it.type.isMarkedNullable }
+        ?.associate { it to null }
+        ?: emptyMap()
 
-    private val allSlumberFields =
-        reified.ctorFields2Types
-            .plus(
-                reified.allPropertiesToTypes.filter { (prop, _) ->
-                    prop.hasAnyAnnotationRecursive { it is Slumber.Field }
-                }
-            )
-            .distinctBy { (prop, _) -> prop }
+    private val allSlumberFields = reified.ctorFields2Types
+        .plus(
+            reified.allPropertiesToTypes
+                .filter { (prop, _) -> prop.hasAnyAnnotationRecursive { it is Slumber.Field } }
+        )
+        .distinctBy { (prop, _) -> prop }
 
     init {
         // We need to make all constructors accessible.
@@ -109,8 +108,8 @@ class DataClassCodec(rootType: KType) : Awaker, Slumberer {
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any?>? = when {
 
         data != null -> {
-            allSlumberFields.associate { (prop, type) ->
-                prop.name to context.slumber(type, prop.get(data))
+            allSlumberFields.associate { (prop, _) ->
+                prop.name to context.slumber(prop.get(data))
             }
         }
 
