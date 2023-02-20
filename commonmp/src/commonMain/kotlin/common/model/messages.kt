@@ -12,7 +12,7 @@ data class ResultWithMessages<T>(
 )
 
 // TODO: test me
-fun <T> withMessages(title: String = "", block: MessageCollection.Builder.() -> T): ResultWithMessages<T> {
+inline fun <T> withMessages(title: String = "", block: MessageCollection.Builder.() -> T): ResultWithMessages<T> {
     val builder = MessageCollection.Builder(title = title)
     val result: T = builder.run(block)
 
@@ -37,11 +37,11 @@ data class MessageCollection(
      * Helps building [Messages]
      */
     // TODO: test me
-    class Builder internal constructor(var title: String = "") {
+    class Builder(var title: String = "") {
 
         private val messages: MutableList<Message> = mutableListOf()
 
-        internal fun build() = Messages(
+        fun build() = Messages(
             title = title,
             messages = messages,
             children = emptyList(),
