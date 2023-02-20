@@ -12,9 +12,24 @@ data class ResultWithMessages<T>(
 )
 
 // TODO: test me
-inline fun <T> withMessages(title: String = "", block: MessageCollection.Builder.() -> T): ResultWithMessages<T> {
+fun <T> withMessages(title: String = "", block: MessageCollection.Builder.() -> T): ResultWithMessages<T> {
     val builder = MessageCollection.Builder(title = title)
     val result: T = builder.run(block)
+
+    return ResultWithMessages(
+        messages = builder.build(),
+        result = result,
+    )
+}
+
+// TODO: test me
+suspend fun <T> withMessagesAsync(
+    title: String = "",
+    block:
+    suspend MessageCollection.Builder.() -> T,
+): ResultWithMessages<T> {
+    val builder = MessageCollection.Builder(title = title)
+    val result: T = builder.run { block() }
 
     return ResultWithMessages(
         messages = builder.build(),
@@ -31,17 +46,17 @@ fun messages(title: String = "", block: MessageCollection.Builder.() -> Unit): M
 data class MessageCollection(
     val title: String,
     val messages: List<Message> = emptyList(),
-    val children: List<MessageCollection>? = null
+    val children: List<MessageCollection>? = null,
 ) {
     /**
      * Helps building [Messages]
      */
     // TODO: test me
-    class Builder(var title: String = "") {
+    class Builder internal constructor(var title: String = "") {
 
         private val messages: MutableList<Message> = mutableListOf()
 
-        fun build() = Messages(
+        internal fun build() = Messages(
             title = title,
             messages = messages,
             children = emptyList(),
