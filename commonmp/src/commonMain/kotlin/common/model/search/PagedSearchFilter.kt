@@ -48,6 +48,18 @@ data class PagedSearchFilter(
             ?: emptySet()
     }
 
+    interface Aware {
+        val search: String
+        val page: Int
+        val epp: Int
+
+        fun toFilter(): PagedSearchFilter = PagedSearchFilter(
+            search = search,
+            page = page,
+            epp = epp,
+        )
+    }
+
     @Suppress("EnumEntryName")
     enum class Option {
         include_deleted,
@@ -115,9 +127,6 @@ data class PagedSearchFilter(
     }
 
     fun toEntries(): Array<Pair<String, String>> {
-        @Suppress("UNCHECKED_CAST")
-        return toMap().entries
-            .map { it.key to it.value }
-            .toTypedArray()
+        return toMap().entries.map { it.key to it.value }.toTypedArray()
     }
 }
