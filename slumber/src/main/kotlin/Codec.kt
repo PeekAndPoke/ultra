@@ -19,12 +19,22 @@ open class Codec(
         )
     }
 
-    open val firstPassAwakerContext: Awaker.Context by lazy {
-        Awaker.Context.Fast(this, attributes)
+    val firstPassAwakerContext: Awaker.Context by lazy {
+        Awaker.Context.Fast(
+            codec = this,
+            attributes = attributes,
+        )
     }
 
-    open val secondPassAwakerContext: Awaker.Context
-        get() = Awaker.Context.Tracking(this, attributes, "root", mutableListOf())
+    fun createSecondPassAwakerContext(
+        rootType: KType,
+    ): Awaker.Context.Tracking = Awaker.Context.Tracking(
+        codec = this,
+        rootType = rootType,
+        attributes = attributes,
+        path = "root",
+        logs = mutableListOf(),
+    )
 
     open val firstPassSlumbererContext: Slumberer.Context by lazy {
         Slumberer.Context.Fast(this, attributes)
@@ -77,7 +87,7 @@ open class Codec(
         return try {
             awaker.awake(data, firstPassAwakerContext)
         } catch (e: AwakerException) {
-            awaker.awake(data, secondPassAwakerContext)
+            awaker.awake(data, createSecondPassAwakerContext(type))
         } as? T?
     }
 

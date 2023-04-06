@@ -17,8 +17,9 @@ interface Slumberer {
 //        fun slumber(targetType: KType, data: Any?): Any? = codec.slumber(targetType, data, this)
 
         @Throws(SlumbererException::class)
-        fun reportNullError(): Nothing = throw SlumbererException(
-            "Value at path '$path' must no be null"
+        fun reportNullError(input: Any?): Nothing = throw SlumbererException(
+            message = "Value at path '$path' must no be null",
+            input = input,
         )
 
         class Fast internal constructor(

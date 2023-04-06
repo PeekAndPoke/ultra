@@ -13,11 +13,12 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a List must work" {
 
-        val subject = CollectionAwaker.forList(TypeRef.Int.list.type)
+        val type = TypeRef.Int.list.type
+        val subject = CollectionAwaker.forList(type)
 
         val codec = Codec.default
 
-        val result = subject.awake(listOf("1", 2), codec.secondPassAwakerContext)!!
+        val result = subject.awake(listOf("1", 2), codec.createSecondPassAwakerContext(type))!!
 
         List::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe listOf(1, 2)
@@ -25,11 +26,12 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a List of nullables must work" {
 
-        val subject = CollectionAwaker.forList(TypeRef.Int.nullable.list.type)
+        val type = TypeRef.Int.nullable.list.type
+        val subject = CollectionAwaker.forList(type)
 
         val codec = Codec.default
 
-        val result = subject.awake(listOf("1", 2, null), codec.secondPassAwakerContext)!!
+        val result = subject.awake(listOf("1", 2, null), codec.createSecondPassAwakerContext(type))!!
 
         List::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe listOf(1, 2, null)
@@ -37,16 +39,18 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a List of non-nullables must fail, when a null is found" {
 
-        val subject = CollectionAwaker.forList(TypeRef.Int.list.type)
+        val type = TypeRef.Int.list.type
+        val subject = CollectionAwaker.forList(type)
 
         val codec = Codec.default
 
         val error = shouldThrow<AwakerException> {
-            subject.awake(listOf("1", 2, null), codec.secondPassAwakerContext)
+            subject.awake(listOf("1", 2, null), codec.createSecondPassAwakerContext(type))
         }
 
         // should contain the error for the correct position
         error.message shouldContain "root.2"
+        error.rootType shouldBe type
     }
 
     "Awaking a List (in a data class) must work" {
@@ -63,11 +67,12 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a MutableList must work" {
 
-        val subject = CollectionAwaker.forList(TypeRef.Int.list.type)
+        val type = TypeRef.Int.list.type
+        val subject = CollectionAwaker.forList(type)
 
         val codec = Codec.default
 
-        val result = subject.awake(listOf("1", 2), codec.secondPassAwakerContext)!!
+        val result = subject.awake(listOf("1", 2), codec.createSecondPassAwakerContext(type))!!
 
         result.shouldBeInstanceOf<MutableList<*>>()
 
@@ -77,11 +82,12 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a MutableList of nullables must work" {
 
-        val subject = CollectionAwaker.forList(TypeRef.Int.nullable.list.type)
+        val type = TypeRef.Int.nullable.list.type
+        val subject = CollectionAwaker.forList(type)
 
         val codec = Codec.default
 
-        val result = subject.awake(listOf("1", 2, null), codec.secondPassAwakerContext)!!
+        val result = subject.awake(listOf("1", 2, null), codec.createSecondPassAwakerContext(type))!!
 
         result.shouldBeInstanceOf<MutableList<*>>()
 
@@ -91,16 +97,18 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a MutableList of non-nullables must fail, when a null is found" {
 
-        val subject = CollectionAwaker.forList(TypeRef.Int.list.type)
+        val type = TypeRef.Int.list.type
+        val subject = CollectionAwaker.forList(type)
 
         val codec = Codec.default
 
         val error = shouldThrow<AwakerException> {
-            subject.awake(listOf("1", 2, null), codec.secondPassAwakerContext)
+            subject.awake(listOf("1", 2, null), codec.createSecondPassAwakerContext(type))
         }
 
         // should contain the error for the correct position
         error.message shouldContain "root.2"
+        error.rootType shouldBe type
     }
 
     "Awaking a MutableList (in a data class) must work" {
@@ -155,11 +163,12 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a Set must work" {
 
-        val subject = CollectionAwaker.forSet(TypeRef.Int.list.type)
+        val type = TypeRef.Int.list.type
+        val subject = CollectionAwaker.forSet(type)
 
         val codec = Codec.default
 
-        val result = subject.awake(listOf("1", 2), codec.secondPassAwakerContext)!!
+        val result = subject.awake(listOf("1", 2), codec.createSecondPassAwakerContext(type))!!
 
         Set::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe setOf(1, 2)
@@ -167,11 +176,12 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a Set of nullables must work" {
 
-        val subject = CollectionAwaker.forSet(TypeRef.Int.nullable.list.type)
+        val type = TypeRef.Int.nullable.list.type
+        val subject = CollectionAwaker.forSet(type)
 
         val codec = Codec.default
 
-        val result = subject.awake(listOf("1", 2, null), codec.secondPassAwakerContext)!!
+        val result = subject.awake(listOf("1", 2, null), codec.createSecondPassAwakerContext(type))!!
 
         Set::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe setOf(1, 2, null)
@@ -179,16 +189,18 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a Set of non-nullables must fail, when a null is found" {
 
-        val subject = CollectionAwaker.forSet(TypeRef.Int.list.type)
+        val type = TypeRef.Int.list.type
+        val subject = CollectionAwaker.forSet(type)
 
         val codec = Codec.default
 
         val error = shouldThrow<AwakerException> {
-            subject.awake(listOf("1", 2, null), codec.secondPassAwakerContext)
+            subject.awake(listOf("1", 2, null), codec.createSecondPassAwakerContext(type))
         }
 
         // should contain the error for the correct position
         error.message shouldContain "root.2"
+        error.rootType shouldBe type
     }
 
     "Awaking a Set (in a data class) must work" {
@@ -205,11 +217,12 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a MutableSet must work" {
 
-        val subject = CollectionAwaker.forSet(TypeRef.Int.list.type)
+        val type = TypeRef.Int.list.type
+        val subject = CollectionAwaker.forSet(type)
 
         val codec = Codec.default
 
-        val result = subject.awake(listOf("1", 2), codec.secondPassAwakerContext)!!
+        val result = subject.awake(listOf("1", 2), codec.createSecondPassAwakerContext(type))!!
 
         result.shouldBeInstanceOf<MutableSet<*>>()
 
@@ -219,11 +232,12 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a MutableSet of nullables must work" {
 
-        val subject = CollectionAwaker.forSet(TypeRef.Int.nullable.list.type)
+        val type = TypeRef.Int.nullable.list.type
+        val subject = CollectionAwaker.forSet(type)
 
         val codec = Codec.default
 
-        val result = subject.awake(listOf("1", 2, null), codec.secondPassAwakerContext)!!
+        val result = subject.awake(listOf("1", 2, null), codec.createSecondPassAwakerContext(type))!!
 
         result.shouldBeInstanceOf<MutableSet<*>>()
 
@@ -233,16 +247,18 @@ class CollectionAwakerSpec : StringSpec({
 
     "Awaking a MutableSet of non-nullables must fail, when a null is found" {
 
-        val subject = CollectionAwaker.forList(TypeRef.Int.list.type)
+        val type = TypeRef.Int.list.type
+        val subject = CollectionAwaker.forList(type)
 
         val codec = Codec.default
 
         val error = shouldThrow<AwakerException> {
-            subject.awake(listOf("1", 2, null), codec.secondPassAwakerContext)
+            subject.awake(listOf("1", 2, null), codec.createSecondPassAwakerContext(type))
         }
 
         // should contain the error for the correct position
         error.message shouldContain "root.2"
+        error.rootType shouldBe type
     }
 
     "Awaking a MutableSet (in a data class) must work" {

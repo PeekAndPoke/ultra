@@ -13,9 +13,10 @@ class MapAwakerSpec : StringSpec({
 
     "Awaking a Map must work" {
 
-        val subject = MapAwaker.forMap(kMapType<String, Int>().type)
+        val type = kMapType<String, Int>().type
+        val subject = MapAwaker.forMap(type)
         val codec = Codec.default
-        val result = subject.awake(mapOf("a" to 1, 2 to 2), codec.secondPassAwakerContext)!!
+        val result = subject.awake(mapOf("a" to 1, 2 to 2), codec.createSecondPassAwakerContext(type))!!
 
         Map::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe mapOf("a" to 1, "2" to 2)
@@ -23,18 +24,20 @@ class MapAwakerSpec : StringSpec({
 
     "Awaking a Map must return null for invalid data" {
 
-        val subject = MapAwaker.forMap(kMapType<String, Int>().type)
+        val type = kMapType<String, Int>().type
+        val subject = MapAwaker.forMap(type)
         val codec = Codec.default
-        val result = subject.awake(listOf<Any>(), codec.secondPassAwakerContext)
+        val result = subject.awake(listOf<Any>(), codec.createSecondPassAwakerContext(type))
 
         result shouldBe null
     }
 
     "Awaking a Map with nullable values must work" {
 
-        val subject = MapAwaker.forMap(kMapType<String, Int?>().type)
+        val type = kMapType<String, Int?>().type
+        val subject = MapAwaker.forMap(type)
         val codec = Codec.default
-        val result = subject.awake(mapOf("a" to 1, 2 to null), codec.secondPassAwakerContext)!!
+        val result = subject.awake(mapOf("a" to 1, 2 to null), codec.createSecondPassAwakerContext(type))!!
 
         Map::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe mapOf("a" to 1, "2" to null)
@@ -42,12 +45,13 @@ class MapAwakerSpec : StringSpec({
 
     "Awaking a Map with non-nullable values must fail when a null is found" {
 
-        val subject = MapAwaker.forMap(kMapType<String, Int>().type)
+        val type = kMapType<String, Int>().type
+        val subject = MapAwaker.forMap(type)
 
         val codec = Codec.default
 
         val error = shouldThrow<AwakerException> {
-            subject.awake(mapOf("a" to 1, "wrong" to null), codec.secondPassAwakerContext)
+            subject.awake(mapOf("a" to 1, "wrong" to null), codec.createSecondPassAwakerContext(type))
         }
 
         error.message shouldContain "root.wrong[VAL]"
@@ -67,11 +71,12 @@ class MapAwakerSpec : StringSpec({
 
     "Awaking a MutableMap must work" {
 
-        val subject = MapAwaker.forMap(kMutableMapType<String, Int>().type)
+        val type = kMutableMapType<String, Int>().type
+        val subject = MapAwaker.forMap(type)
 
         val codec = Codec.default
 
-        val result = subject.awake(mapOf("a" to 1, 2 to 2), codec.secondPassAwakerContext)!!
+        val result = subject.awake(mapOf("a" to 1, 2 to 2), codec.createSecondPassAwakerContext(type))!!
 
         MutableMap::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe mapOf("a" to 1, "2" to 2)
@@ -79,11 +84,12 @@ class MapAwakerSpec : StringSpec({
 
     "Awaking a MutableMap with nullable values must work" {
 
-        val subject = MapAwaker.forMap(kMutableMapType<String, Int?>().type)
+        val type = kMutableMapType<String, Int?>().type
+        val subject = MapAwaker.forMap(type)
 
         val codec = Codec.default
 
-        val result = subject.awake(mapOf("a" to 1, 2 to null), codec.secondPassAwakerContext)!!
+        val result = subject.awake(mapOf("a" to 1, 2 to null), codec.createSecondPassAwakerContext(type))!!
 
         MutableMap::class.java.isAssignableFrom(result::class.java) shouldBe true
         result shouldBe mapOf("a" to 1, "2" to null)
@@ -91,12 +97,13 @@ class MapAwakerSpec : StringSpec({
 
     "Awaking a MutableMap with non-nullable values must fail when a null is found" {
 
-        val subject = MapAwaker.forMap(kMutableMapType<String, Int>().type)
+        val type = kMutableMapType<String, Int>().type
+        val subject = MapAwaker.forMap(type)
 
         val codec = Codec.default
 
         val error = shouldThrow<AwakerException> {
-            subject.awake(mapOf("a" to 1, "wrong" to null), codec.secondPassAwakerContext)
+            subject.awake(mapOf("a" to 1, "wrong" to null), codec.createSecondPassAwakerContext(type))
         }
 
         error.message shouldContain "root.wrong[VAL]"
