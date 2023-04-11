@@ -268,6 +268,24 @@ class DataClassAwakerSpec : StringSpec() {
             result shouldBe DataClass(optional = "default")
         }
 
+        "Awaking a data class with an optional field and invalid data inside the child object" {
+
+            data class Inner(val data: String)
+            data class DataClass(val inner: Inner = Inner("default"))
+
+            val codec = Codec.default
+
+            val result = codec.awake(
+                DataClass::class, mapOf(
+                    "inner" to mapOf(
+                        "data" to listOf<String>("a", "b"),
+                    )
+                )
+            )
+
+            result shouldBe DataClass()
+        }
+
         "Awaking a data class with one Iterable<String> parameter" {
 
             data class DataClass(val strings: Iterable<String>)

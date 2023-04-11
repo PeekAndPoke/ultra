@@ -3,6 +3,7 @@ package de.peekandpoke.ultra.slumber.builtin.objects
 import de.peekandpoke.ultra.common.reflection.ReifiedKType
 import de.peekandpoke.ultra.common.reflection.hasAnyAnnotationRecursive
 import de.peekandpoke.ultra.slumber.Awaker
+import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Slumber
 import de.peekandpoke.ultra.slumber.Slumberer
 import kotlin.reflect.KParameter
@@ -63,7 +64,13 @@ class DataClassCodec(rootType: KType) : Awaker, Slumberer {
                 // Get the value and awake it
                 val bit = when (param.isOptional) {
                     false -> context.stepInto(paramName).awake(type, raw)
-                    else -> context.stepInto(paramName).awake(type.withNullability(true), raw)
+                    // For optional parameter we fall back to the default value or the parameter
+                    // even when the inner object has a deserialization problem.
+                    else -> try {
+                        context.stepInto(paramName).awake(type.withNullability(true), raw)
+                    } catch (ex: AwakerException) {
+                        null
+                    }
                 }
 
                 when {
