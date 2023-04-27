@@ -5,10 +5,10 @@
       <configuration version="5" platform="JavaScript " allPlatforms="JS []" useProjectSettings="false" isTestModule="true" externalProjectId=":z-playground-js" isHmppProject="true">
         <newMppModelJpsModuleKind>COMPILATION_AND_SOURCE_SET_HOLDER</newMppModelJpsModuleKind>
         <externalSystemTestTasks>
-          <externalSystemTestTask>browserTest|:z-playground-js|js</externalSystemTestTask>
+          <externalSystemTestTask>browserTest|:z-playground-js|js|js</externalSystemTestTask>
         </externalSystemTestTasks>
         <compilerSettings>
-          <option name="additionalArguments" value="-Xir-only -Xir-per-module-output-name=ultra-z-playground-js-test -Xir-produce-klib-dir -Xir-module-name=de.peekandpoke.ultra:z-playground-js_test" />
+          <option name="additionalArguments" value="-Xir-module-name=de.peekandpoke.ultra:z-playground-js_test -Xir-only -Xir-per-module-output-name=ultra-z-playground-js-test -Xir-produce-klib-dir -ir-output-name z-playground-js_test -ir-output-dir $MODULE_DIR$/../../../z-playground-js/build/classes/kotlin/test" />
         </compilerSettings>
         <compilerArguments>
           <flagArguments>
@@ -19,20 +19,20 @@
           <stringArguments>
             <stringArg name="main" arg="call" />
             <stringArg name="moduleKind" arg="umd" />
-            <stringArg name="outputFile" arg="$MODULE_DIR$/../../../z-playground-js/build/classes/kotlin/test" />
             <stringArg name="sourceMapEmbedSources" arg="never" />
             <stringArg name="target" arg="v5" />
-            <stringArg name="apiVersion" arg="1.7" />
-            <stringArg name="languageVersion" arg="1.7" />
+            <stringArg name="apiVersion" arg="1.8" />
+            <stringArg name="languageVersion" arg="1.8" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
               <args>
-                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/1.7.21/f669044cea0f3007b28d48fdbb67efb1606cec17/kotlin-gradle-plugin-api-1.7.21-gradle71.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-native-utils/1.7.21/kotlin-native-utils-1.7.21.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-project-model/1.7.21/d661b8ef85d36b133eea757a50df6b6d581827af/kotlin-project-model-1.7.21.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-tooling-core/1.7.21/19c84dd609449479dd647cfb8b885f6430501a21/kotlin-tooling-core-1.7.21.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-util-io/1.7.21/kotlin-util-io-1.7.21.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/1.8.21/90c02487b8df09947d900607ed9b07d99a7276bd/kotlin-gradle-plugin-api-1.8.21-gradle76.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-annotations/1.8.21/a96a3d1487e9dd180df36ea8713661dc1eba955a/kotlin-gradle-plugin-annotations-1.8.21.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-native-utils/1.8.21/b7870ef36d3d38eb30841ee114a8347cd493a823/kotlin-native-utils-1.8.21.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-project-model/1.8.21/98c1ec17f448bdcd216ccbae164c63e90c72b1ba/kotlin-project-model-1.8.21.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-tooling-core/1.8.21/6ab3d6c8e8d13c2748ecf0b74978fbd191def027/kotlin-tooling-core-1.8.21.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-util-io/1.8.21/a8f1235e7880bfa29f1b7b7bd3777700b01301df/kotlin-util-io-1.8.21.jar</arg>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
               </args>
             </arrayArg>
