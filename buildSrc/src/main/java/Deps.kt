@@ -39,7 +39,7 @@ object Deps {
 
     // https://jitpack.io/#matfax/klassindex
     // TODO: remove this library and build out own!
-    private const val klassIndexVersion = "4.1.0-rc.1"
+    private const val klassIndexVersion = "4.1.0"
     const val klassIndexLib = "com.github.matfax.klassindex:library:$klassIndexVersion"
     const val klassIndexProcessor = "com.github.matfax.klassindex:processor:$klassIndexVersion"
 
@@ -105,8 +105,7 @@ object Deps {
         }
 
         // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-        // NOTICE: we CAN NOT go above 1.3.3 because it will no work with Java 8
-        const val logback_version = "1.3.3"
+        const val logback_version = "1.4.7"
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://mvnrepository.com/artifact/io.kotest/kotest-common
