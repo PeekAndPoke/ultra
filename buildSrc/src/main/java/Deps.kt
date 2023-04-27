@@ -39,7 +39,7 @@ object Deps {
 
     // https://jitpack.io/#matfax/klassindex
     // TODO: remove this library and build out own!
-    private const val klassIndexVersion = "4.1.0"
+    private const val klassIndexVersion = "4.1.0-rc.1"
     const val klassIndexLib = "com.github.matfax.klassindex:library:$klassIndexVersion"
     const val klassIndexProcessor = "com.github.matfax.klassindex:processor:$klassIndexVersion"
 
