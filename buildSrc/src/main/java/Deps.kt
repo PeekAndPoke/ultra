@@ -9,22 +9,24 @@ object Deps {
     }
 
     // Kotlin ////////////////////////////////////////////////////////////////////////////////////
-    const val kotlinVersion = "1.7.21"
+    const val kotlinVersion = "1.8.21"
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     // Dokka /////////////////////////////////////////////////////////////////////////////////////
     // https://mvnrepository.com/artifact/org.jetbrains.dokka/dokka-gradle-plugin
     // Dokka gradle plugin org.jetbrains.dokka
-    const val dokkaVersion = "1.7.20" // kotlinVersion
+    const val dokkaVersion = "1.8.10" // kotlinVersion
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     // Publishing ////////////////////////////////////////////////////////////////////////////////
+    // TODO: Check update to 0.25.x version
     // https://search.maven.org/artifact/com.vanniktech/gradle-maven-publish-plugin
     const val mavenPublishVersion = "0.22.0"
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
+    // TODO: Check update to 4.x version
     // https://mvnrepository.com/artifact/com.auth0/java-jwt
-    private const val auth0_java_jwt_version = "3.19.3"
+    private const val auth0_java_jwt_version = "3.19.4"
     const val auth0_java_jwt = "com.auth0:java-jwt:$auth0_java_jwt_version"
 
     // https://search.maven.org/artifact/io.github.java-diff-utils/java-diff-utils
@@ -42,11 +44,11 @@ object Deps {
     const val klassIndexProcessor = "com.github.matfax.klassindex:processor:$klassIndexVersion"
 
     // https://mvnrepository.com/artifact/com.github.tschuchortdev/kotlin-compile-testing
-    private const val kotlin_compiletesting_version = "1.4.9"
+    private const val kotlin_compiletesting_version = "1.5.0"
     const val kotlin_compiletesting = "com.github.tschuchortdev:kotlin-compile-testing:$kotlin_compiletesting_version"
 
     // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
-    private const val kotlinpoet_version = "1.12.0"
+    private const val kotlinpoet_version = "1.13.0"
     const val kotlinpoet = "com.squareup:kotlinpoet:$kotlinpoet_version"
 
     // https://kotlinlang.org/docs/releases.html#release-details
@@ -59,7 +61,7 @@ object Deps {
 
     // https://kotlinlang.org/docs/releases.html#release-details
     // https://github.com/Kotlin/kotlinx.serialization/releases
-    private const val kotlinx_serialization_version = "1.4.1"
+    private const val kotlinx_serialization_version = "1.5.0"
     const val kotlinx_serialization_core =
         "org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version"
     const val kotlinx_serialization_json =
@@ -74,7 +76,7 @@ object Deps {
     const val korlibs_klock_common = "com.soywiz.korlibs.klock:klock:$korlibs_klock_version"
 
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-    private const val slf4j_version = "1.7.36"
+    private const val slf4j_version = "2.0.7"
     const val slf4j_api = "org.slf4j:slf4j-api:$slf4j_version"
 
     // // NPM dependencies /////////////////////////////////////////////////////////////////////////
@@ -88,10 +90,10 @@ object Deps {
         fun KotlinDependencyHandler.polyfillFetch() = npm("whatwg-fetch", "3.6.2")
 
         // https://www.npmjs.com/package/@js-joda/core
-        fun KotlinDependencyHandler.jsJodaCore() = npm("@js-joda/core", "5.4.2")
+        fun KotlinDependencyHandler.jsJodaCore() = npm("@js-joda/core", "5.5.3")
 
         // https://www.npmjs.com/package/@js-joda/timezone
-        fun KotlinDependencyHandler.jsJodaTimezone() = npm("@js-joda/timezone", "2.15.0")
+        fun KotlinDependencyHandler.jsJodaTimezone() = npm("@js-joda/timezone", "2.18.0")
     }
 
     // // Test dependencies ////////////////////////////////////////////////////////////////////////
@@ -103,13 +105,12 @@ object Deps {
         }
 
         // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-        // NOTICE: we CAN NOT go above 1.3.3 because it will no work with Java 8
-        const val logback_version = "1.3.3"
+        const val logback_version = "1.4.7"
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://mvnrepository.com/artifact/io.kotest/kotest-common
-        const val kotest_plugin_version = "5.5.4"
-        const val kotest_version = "5.5.4"
+        const val kotest_plugin_version = "5.6.1"
+        const val kotest_version = "5.6.1"
 
         const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"
         const val kotest_framework_api = "io.kotest:kotest-framework-api:$kotest_version"

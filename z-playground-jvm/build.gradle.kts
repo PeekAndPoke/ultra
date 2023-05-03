@@ -6,8 +6,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm")
     kotlin("kapt")
-    id("org.jetbrains.dokka")
-    id("com.vanniktech.maven.publish")
 }
 
 val GROUP: String by project
@@ -23,21 +21,14 @@ repositories {
 }
 
 dependencies {
-    implementation(kotlin("reflect"))
+    implementation(Deps.kotlinx_serialization_core)
+    implementation(Deps.kotlinx_serialization_json)
+    implementation(Deps.kotlinx_coroutines_core)
 
-    api(Deps.klassIndexLib)
-    api(Deps.kotlinx_serialization_core)
-
+    // project deps
     api(project(":common"))
-    api(project(":commonmp"))
-
-    // Testing
-    testImplementation(project(":slumber-test-classes"))
-    kaptTest(Deps.klassIndexProcessor)
-
-    Deps.Test {
-        jvmTestDeps()
-    }
+    api(project(":slumber"))
+    api(project(":kontainer"))
 }
 
 kapt {
