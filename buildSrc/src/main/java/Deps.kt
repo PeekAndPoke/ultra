@@ -1,5 +1,6 @@
 import org.gradle.kotlin.dsl.DependencyHandlerScope
 import org.gradle.kotlin.dsl.TaskContainerScope
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
 
 @Suppress("MemberVisibilityCanBePrivate")
@@ -11,6 +12,8 @@ object Deps {
     // Kotlin ////////////////////////////////////////////////////////////////////////////////////
     const val kotlinVersion = "1.8.21"
     // ///////////////////////////////////////////////////////////////////////////////////////////
+
+    val jvmTarget = JvmTarget.JVM_17
 
     // Dokka /////////////////////////////////////////////////////////////////////////////////////
     // https://mvnrepository.com/artifact/org.jetbrains.dokka/dokka-gradle-plugin

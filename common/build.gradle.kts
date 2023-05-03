@@ -33,8 +33,10 @@ dependencies {
 }
 
 tasks {
-    withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "17"
+    withType<KotlinCompile>().all {
+        compilerOptions {
+            jvmTarget.set(Deps.jvmTarget)
+        }
     }
 
     configureJvmTests()

@@ -24,7 +24,6 @@ repositories {
 }
 
 kotlin {
-//    targets {
 
     js(IR) {
         browser {
@@ -34,11 +33,10 @@ kotlin {
     jvm {
         compilations.all {
             kotlinOptions {
-                jvmTarget = "17"
+                jvmTarget = Deps.jvmTarget.target
             }
         }
     }
-//    }
 
     @Suppress("UNUSED_VARIABLE")
     sourceSets {
