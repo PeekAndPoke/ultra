@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
-import com.soywiz.klock.Time
+import korlibs.time.Time
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds

@@ -53,12 +53,12 @@ object Deps {
     const val kotlin_compiletesting = "com.github.tschuchortdev:kotlin-compile-testing:$kotlin_compiletesting_version"
 
     // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
-    private const val kotlinpoet_version = "1.13.0"
+    private const val kotlinpoet_version = "1.13.2"
     const val kotlinpoet = "com.squareup:kotlinpoet:$kotlinpoet_version"
 
     // https://kotlinlang.org/docs/releases.html#release-details
     // https://github.com/Kotlin/kotlinx.coroutines/releases
-    private const val kotlinx_coroutines_version = "1.6.4"
+    private const val kotlinx_coroutines_version = "1.7.1"
     const val kotlinx_coroutines_core =
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version"
     const val kotlinx_coroutines_core_js =
@@ -66,7 +66,7 @@ object Deps {
 
     // https://kotlinlang.org/docs/releases.html#release-details
     // https://github.com/Kotlin/kotlinx.serialization/releases
-    private const val kotlinx_serialization_version = "1.5.0"
+    private const val kotlinx_serialization_version = "1.5.1"
     const val kotlinx_serialization_core =
         "org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version"
     const val kotlinx_serialization_json =
@@ -77,7 +77,7 @@ object Deps {
     const val kotlinx_datetime_common = "org.jetbrains.kotlinx:kotlinx-datetime:$kotlinx_datetime_version"
 
     // https://mvnrepository.com/artifact/com.soywiz.korlibs.klock/klock
-    private const val korlibs_klock_version = "3.4.0"
+    private const val korlibs_klock_version = "4.0.0"
     const val korlibs_klock_common = "com.soywiz.korlibs.klock:klock:$korlibs_klock_version"
 
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
@@ -114,8 +114,8 @@ object Deps {
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://mvnrepository.com/artifact/io.kotest/kotest-common
-        const val kotest_plugin_version = "5.6.1"
-        const val kotest_version = "5.6.1"
+        const val kotest_plugin_version = "5.6.2"
+        const val kotest_version = "5.6.2"
 
         const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"
         const val kotest_framework_api = "io.kotest:kotest-framework-api:$kotest_version"

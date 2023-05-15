@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
-import com.soywiz.klock.DateTime
+import korlibs.time.DateTime
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Month
