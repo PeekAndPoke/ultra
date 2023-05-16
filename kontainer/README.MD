@@ -31,8 +31,8 @@ the java world (e.g. in Spring) and compare it with the Kontainer.
 | **Pros**                                                         | **Pros**                                                                               |
 |                                                                  |                                                                                        |
 | service needs to be instantiated exactly once                    | **Dynamic** Services are instantiated for each Kontainer instance                      |
-| every service instance is fully re-usable                        | So do services that injecte **Dynamic** services directly or indirectly                |
-| -> e.g. for each request                                         | Kontainers and **Dynamic** services can be aware of the **Context** used in            |
+| every service instance is fully re-usable                        | So are services that inject a **Dynamic** services directly or indirectly              |
+| -> e.g. for each request                                         | Kontainers and **Dynamic** services can be aware of the **Context** they are used in   |
 |                                                                  | -> e.g. the current request                                                            | 
 |                                                                  | -> e.g. the current user session                                                       | 
 |                                                                  | **Dynamic** services may hold state                                                    | 
