@@ -42,6 +42,11 @@ fun messages(title: String = "", block: MessageCollection.Builder.() -> Unit): M
     return withMessages(title) { block() }.messages
 }
 
+// TODO: test me
+suspend fun messagesAsync(title: String = "", block: suspend MessageCollection.Builder.() -> Unit): Messages {
+    return withMessagesAsync(title) { block() }.messages
+}
+
 @Serializable
 data class MessageCollection(
     val title: String,
