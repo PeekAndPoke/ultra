@@ -13,16 +13,24 @@ class HelpersSpec : StringSpec({
             buildUri("/uri") shouldBe "/uri"
         }
 
-        withClue("Route param but no value given") {
-            buildUri("/uri/{param}") shouldBe "/uri/{param}"
-        }
-
         withClue("Route param and value given") {
             buildUri("/uri/{param}", "param" to "XYZ") shouldBe "/uri/XYZ"
         }
 
         withClue("Route param but another value given") {
-            buildUri("/uri/{param}", "x" to "XYZ") shouldBe "/uri/{param}?x=XYZ"
+            buildUri("/uri/{param}", "x" to "XYZ") shouldBe "/uri/?x=XYZ"
+        }
+
+        withClue("Route param is given but it is an empty string") {
+            buildUri("/uri/{param}", "param" to "") shouldBe "/uri/"
+        }
+
+        withClue("Route param is empty and another one is not") {
+            buildUri("/uri/{first}/and/{second}/end", "second" to "2") shouldBe "/uri//and/2/end"
+        }
+
+        withClue("Additional param is given as an empty string") {
+            buildUri("/uri/{param}", "param" to "p", "add" to "") shouldBe "/uri/p"
         }
 
         withClue("Multiple route params and query params") {
