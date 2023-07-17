@@ -68,18 +68,62 @@ data class MpZonedDateTime private constructor(
         }
 
         /**
-         * Parses from an [isoString] and a [timezone]
+         * Parses from an [isoString] and a [timezone].
+         *
+         * Throws an [IllegalArgumentException] if parsing fails.
          */
+        @Throws(IllegalArgumentException::class)
         fun parse(isoString: String, timezone: TimeZone): MpZonedDateTime {
-            return MpDateTimeParser.parseZonedDateTime(isoString).atZone(timezone)
+            return parse(isoString).atZone(timezone)
+        }
+
+        /**
+         * Parses from an [isoString] and a [timezone].
+         *
+         * Returns null if parsing fails.
+         */
+        fun tryParse(isoString: String, timezone: TimeZone): MpZonedDateTime? {
+            return try {
+                parseInternal(isoString).atZone(timezone)
+            } catch (e: Throwable) {
+                null
+            }
         }
 
         /**
          * Parses from an [isoString] and tries to obtain the timezone from it.
          *
          * If there is no timezone in the [isoString] it will fall back to UTC.
+         *
+         * Throws an [IllegalArgumentException] if parsing fails.
          */
-        fun parse(isoString: String): MpZonedDateTime = MpDateTimeParser.parseZonedDateTime(isoString)
+        @Throws(IllegalArgumentException::class)
+        fun parse(isoString: String): MpZonedDateTime {
+            return try {
+                parseInternal(isoString)
+            } catch (e: Throwable) {
+                throw IllegalArgumentException("Could not parse MpZonedDateTime from '$isoString'", e)
+            }
+        }
+
+        /**
+         * Parses from an [isoString] and tries to obtain the timezone from it.
+         *
+         * If there is no timezone in the [isoString] it will fall back to UTC.
+         *
+         * Returns null if parsing fails.
+         */
+        fun tryParse(isoString: String): MpZonedDateTime? {
+            return try {
+                parseInternal(isoString)
+            } catch (e: Throwable) {
+                null
+            }
+        }
+
+        private fun parseInternal(isoString: String): MpZonedDateTime {
+            return MpDateTimeParser.parseZonedDateTime(isoString)
+        }
 
         /**
          * The Genesis, a date in the distant past: -10000-01-01T00:00:00Z

@@ -23,6 +23,20 @@ data class MpLocalDate internal constructor(
 
     companion object {
         /**
+         * The Genesis, a date in the distant past: -10000-01-01T00:00:00Z
+         */
+        val Genesis: MpLocalDate = MpLocalDate(
+            Instant.fromEpochMilliseconds(GENESIS_TIMESTAMP).toLocalDateTime(TimeZone.UTC).date
+        )
+
+        /**
+         * The Doomsday, a date in the distant future: +10000-01-01T00:00:00Z
+         */
+        val Doomsday: MpLocalDate = MpLocalDate(
+            Instant.fromEpochMilliseconds(DOOMSDAY_TIMESTAMP).toLocalDateTime(TimeZone.UTC).date
+        )
+
+        /**
          * Creates an [MpLocalDate] from [year], [month] and [day].
          */
         fun of(year: Int, month: Int, day: Int): MpLocalDate = MpLocalDate(
@@ -43,32 +57,39 @@ data class MpLocalDate internal constructor(
         )
 
         /**
-         * Creates an [MpLocalDate] from the given [isoString].
+         * Parses an [MpLocalDate] from the given [isoString].
+         *
+         * Throws an [IllegalArgumentException] if parsing fails.
          */
+        @Throws(IllegalArgumentException::class)
         fun parse(isoString: String): MpLocalDate {
-            @Suppress("Detekt:TooGenericExceptionCaught")
             return try {
-                MpLocalDate(
-                    value = LocalDate.parse(isoString)
-                )
+                parseInternal(isoString)
             } catch (e: Throwable) {
-                MpInstant.parse(isoString).atZone(TimeZone.UTC).toLocalDate()
+                throw IllegalArgumentException("Could not parse MpLocalDate from '$isoString'", e)
             }
         }
 
         /**
-         * The Genesis, a date in the distant past: -10000-01-01T00:00:00Z
+         * Parses an [MpLocalDate] from the given [isoString].
+         *
+         * Returns null if parsing fails.
          */
-        val Genesis: MpLocalDate = MpLocalDate(
-            Instant.fromEpochMilliseconds(GENESIS_TIMESTAMP).toLocalDateTime(TimeZone.UTC).date
-        )
+        fun tryParse(isoString: String): MpLocalDate? {
+            return try {
+                parseInternal(isoString)
+            } catch (e: Throwable) {
+                null
+            }
+        }
 
-        /**
-         * The Doomsday, a date in the distant future: +10000-01-01T00:00:00Z
-         */
-        val Doomsday: MpLocalDate = MpLocalDate(
-            Instant.fromEpochMilliseconds(DOOMSDAY_TIMESTAMP).toLocalDateTime(TimeZone.UTC).date
-        )
+        private fun parseInternal(isoString: String): MpLocalDate {
+            return try {
+                MpLocalDate(LocalDate.parse(isoString))
+            } catch (e: Throwable) {
+                MpInstant.parse(isoString).atZone(TimeZone.UTC).toLocalDate()
+            }
+        }
     }
 
     /** The year */

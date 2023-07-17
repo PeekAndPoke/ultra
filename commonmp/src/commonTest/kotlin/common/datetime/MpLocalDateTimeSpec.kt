@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeEqualComparingTo
@@ -61,6 +62,16 @@ class MpLocalDateTimeSpec : StringSpec({
         val result = MpLocalDateTime.parse(start.toIsoString())
 
         start shouldBe result
+    }
+
+    "parse - should throw on invalid input" {
+        shouldThrow<IllegalArgumentException> {
+            MpLocalDateTime.parse("")
+        }
+    }
+
+    "tryParse - should return null invalid input" {
+        MpLocalDateTime.tryParse("") shouldBe null
     }
 
     "Fields year, monthNumber, month, dayOfMonth, dayOfWeek, dayOfYear, hour, minute, second, milliSecond" {

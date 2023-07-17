@@ -65,7 +65,34 @@ data class MpLocalDateTime internal constructor(internal val value: LocalDateTim
             milliSecond = time.milliSecond,
         )
 
+        /**
+         * Parses an [MpLocalDateTime] from the given [isoString].
+         *
+         * Throws an [IllegalArgumentException] if parsing fails.
+         */
+        @Throws(IllegalArgumentException::class)
         fun parse(isoString: String): MpLocalDateTime {
+            return try {
+                parseInternal(isoString)
+            } catch (e: Throwable) {
+                throw IllegalArgumentException("Could not parse MpLocalDateTime from '$isoString'", e)
+            }
+        }
+
+        /**
+         * Parses an [MpLocalDateTime] from the given [isoString].
+         *
+         * Returns null if parsing fails.
+         */
+        fun tryParse(isoString: String): MpLocalDateTime? {
+            return try {
+                parseInternal(isoString)
+            } catch (e: Throwable) {
+                null
+            }
+        }
+
+        private fun parseInternal(isoString: String): MpLocalDateTime {
             return MpDateTimeParser.parseInstant(isoString).atZone(TimeZone.UTC).datetime
         }
 

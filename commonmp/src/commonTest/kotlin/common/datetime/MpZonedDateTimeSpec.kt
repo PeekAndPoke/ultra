@@ -2,10 +2,12 @@ package de.peekandpoke.ultra.common.datetime
 
 import de.peekandpoke.ultra.common.datetime.TestConstants.tsBucharest_20220405_121314
 import de.peekandpoke.ultra.common.datetime.TestConstants.tsUtc_20220405_121314
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeEqualComparingTo
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeLessThan
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Month
@@ -64,7 +66,6 @@ class MpZonedDateTimeSpec : StringSpec({
     "Construction - parse(isoString)" {
 
         val utc = MpZonedDateTime.parse("2022-04-05T00:00:00.000", TimeZone.UTC)
-
         val parsedUtcWithZ = MpZonedDateTime.parse("2022-04-05T00:00:00.000Z")
 
         parsedUtcWithZ.toEpochMillis() shouldBe utc.toEpochMillis()
@@ -79,6 +80,28 @@ class MpZonedDateTimeSpec : StringSpec({
 
         parsedEuropeBucharest.toEpochMillis() shouldBe utc.toEpochMillis()
         parsedEuropeBucharest.timezone shouldBe MpTimezone.of("Europe/Bucharest")
+
+        shouldThrow<IllegalArgumentException> {
+            MpZonedDateTime.parse("")
+        }
+    }
+
+    "Construction - tryParse(isoString)" {
+
+        val utc = MpZonedDateTime.tryParse("2022-04-05T00:00:00.000", TimeZone.UTC)
+        val parsedUtcWithZ = MpZonedDateTime.tryParse("2022-04-05T00:00:00.000Z")
+
+        parsedUtcWithZ.shouldNotBeNull()
+        parsedUtcWithZ.toEpochMillis() shouldBe utc!!.toEpochMillis()
+        parsedUtcWithZ.timezone shouldBe MpTimezone.UTC
+
+        val parsedUtc = MpZonedDateTime.tryParse("2022-04-05T00:00:00.000[UTC]")
+
+        parsedUtc.shouldNotBeNull()
+        parsedUtc.toEpochMillis() shouldBe utc.toEpochMillis()
+        parsedUtc.timezone shouldBe MpTimezone.UTC
+
+        MpZonedDateTime.tryParse("") shouldBe null
     }
 
     "Construction from epoch" {
