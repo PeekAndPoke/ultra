@@ -8,20 +8,24 @@ const val COMMON_MP_JVM = "Hello CommonMpJvm!"
 
 object NoCachedKlassIndex {
 
-    private val cache = mutableMapOf<KClass<*>, Set<KClass<*>>>()
+    private val cache = mutableMapOf<ClassLoader, MutableMap<KClass<*>, Set<KClass<*>>>>()
 
     fun <T : Any> getSubclasses(cls: KClass<T>): Set<KClass<T>> {
+        val loader = cls.java.classLoader
+
         @Suppress("UNCHECKED_CAST")
-        return cache.getOrPut(cls) { internalGetSubClasses(cls) } as Set<KClass<T>>
+        return cache
+            .getOrPut(loader) { mutableMapOf() }
+            .getOrPut(cls) { loader.internalGetSubClasses(cls) } as Set<KClass<T>>
     }
 
     fun <T : Any> getSubclassesUncached(cls: KClass<T>): Set<KClass<T>> {
-        return internalGetSubClasses(cls)
+        val loader = cls.java.classLoader
+
+        return loader.internalGetSubClasses(cls)
     }
 
-    private fun <T : Any> internalGetSubClasses(cls: KClass<T>): Set<KClass<T>> {
-
-        val loader = cls.java.classLoader
+    private fun <T : Any> ClassLoader.internalGetSubClasses(cls: KClass<T>): Set<KClass<T>> {
 
         val result = SubclassIndex.index()
             .filter { (k, _) -> k.qualifiedName == cls.qualifiedName }
@@ -32,7 +36,7 @@ object NoCachedKlassIndex {
             .map { subClass: KClass<T> ->
                 when (val clsName = subClass.java.name) {
                     null -> subClass
-                    else -> loader.loadClass(clsName).kotlin
+                    else -> loadClass(clsName).kotlin
                 }
             }
             .toSet()
