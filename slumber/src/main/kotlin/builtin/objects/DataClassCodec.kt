@@ -10,12 +10,15 @@ import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability
 import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.jvm.javaConstructor
+import kotlin.reflect.jvm.javaMethod
 
 class DataClassCodec(rootType: KType) : Awaker, Slumberer {
 
     /** Raw cls of the rootType */
     private val reified = ReifiedKType(rootType)
 
+    /** Gets the primary Ctor */
     private val primaryCtor = reified.ctor
 
     private val nullables: Map<KParameter, Any?> = primaryCtor?.parameters
@@ -33,8 +36,15 @@ class DataClassCodec(rootType: KType) : Awaker, Slumberer {
     init {
         // We need to make all constructors accessible.
         // This is necessary so that overloaded constructors with default values can be called correctly.
+        // We need to also make the java underlying java methods accessible, as the Kotlin impl is sometimes buggy.
+        primaryCtor?.isAccessible = true
+        primaryCtor?.javaMethod?.isAccessible = true
+        primaryCtor?.javaConstructor?.isAccessible = true
+
         reified.cls.constructors.forEach {
             it.isAccessible = true
+            it.javaMethod?.isAccessible = true
+            it.javaConstructor?.isAccessible = true
         }
     }
 
