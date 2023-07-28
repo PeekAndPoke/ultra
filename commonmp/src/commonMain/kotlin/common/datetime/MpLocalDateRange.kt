@@ -18,12 +18,17 @@ data class MpLocalDateRange(
         val forever: MpLocalDateRange = MpLocalDateRange(MpLocalDate.Genesis, MpLocalDate.Doomsday)
 
         /**
-         * Creates a range from [GenesisLocalDate] until including [to]
+         * Creates a range for the given [from] and [to].
+         */
+        fun of(from: MpLocalDate, to: MpLocalDate): MpLocalDateRange = MpLocalDateRange(from = from, to = to)
+
+        /**
+         * Creates a range from [MpLocalDate.Genesis] until including [to]
          */
         fun endingAt(to: MpLocalDate): MpLocalDateRange = MpLocalDateRange(from = forever.from, to = to)
 
         /**
-         * Creates a DateRange from including [from] until [DoomsdayLocalDate]
+         * Creates a DateRange from including [from] until [MpLocalDate.Doomsday]
          */
         fun beginningAt(from: MpLocalDate): MpLocalDateRange = MpLocalDateRange(from = from, to = forever.to)
     }
@@ -59,10 +64,17 @@ data class MpLocalDateRange(
             )
         }
 
-        fun fromHourToHour(firstHour: Int, lastHour: Int): MpZonedDateTimeRange {
+        fun fromHourToHour(fromHour: Int, toHour: Int): MpZonedDateTimeRange {
             return create(
-                from = from.atStartOfDay(timezone).plus(firstHour, DateTimeUnit.HOUR),
-                to = to.atStartOfDay(timezone).plus(lastHour, DateTimeUnit.HOUR),
+                from = from.atStartOfDay(timezone).plus(fromHour, DateTimeUnit.HOUR),
+                to = to.atStartOfDay(timezone).plus(toHour, DateTimeUnit.HOUR),
+            )
+        }
+
+        fun fromTimeToTime(fromTime: MpLocalTime, toTime: MpLocalTime): MpZonedDateTimeRange {
+            return create(
+                from = from.atTime(fromTime, timezone),
+                to = to.atTime(toTime, timezone),
             )
         }
 
