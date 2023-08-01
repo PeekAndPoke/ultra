@@ -5,14 +5,12 @@ import kotlinx.serialization.Serializable
 
 typealias Messages = MessageCollection
 
-// TODO: test me
 data class ResultWithMessages<T>(
     val messages: Messages,
     val result: T,
 )
 
-// TODO: test me
-fun <T> withMessages(title: String = "", block: MessageCollection.Builder.() -> T): ResultWithMessages<T> {
+inline fun <T> withMessages(title: String = "", block: MessageCollection.Builder.() -> T): ResultWithMessages<T> {
     val builder = MessageCollection.Builder(title = title)
     val result: T = builder.run(block)
 
@@ -22,29 +20,8 @@ fun <T> withMessages(title: String = "", block: MessageCollection.Builder.() -> 
     )
 }
 
-// TODO: test me
-suspend fun <T> withMessagesAsync(
-    title: String = "",
-    block:
-    suspend MessageCollection.Builder.() -> T,
-): ResultWithMessages<T> {
-    val builder = MessageCollection.Builder(title = title)
-    val result: T = builder.run { block() }
-
-    return ResultWithMessages(
-        messages = builder.build(),
-        result = result,
-    )
-}
-
-// TODO: test me
-fun messages(title: String = "", block: MessageCollection.Builder.() -> Unit): Messages {
+inline fun messages(title: String = "", block: MessageCollection.Builder.() -> Unit): Messages {
     return withMessages(title) { block() }.messages
-}
-
-// TODO: test me
-suspend fun messagesAsync(title: String = "", block: suspend MessageCollection.Builder.() -> Unit): Messages {
-    return withMessagesAsync(title) { block() }.messages
 }
 
 @Serializable
@@ -57,10 +34,11 @@ data class MessageCollection(
      * Helps building [Messages]
      */
     // TODO: test me
-    class Builder internal constructor(var title: String = "") {
+    class Builder @PublishedApi internal constructor(var title: String = "") {
 
         private val messages: MutableList<Message> = mutableListOf()
 
+        @PublishedApi
         internal fun build() = Messages(
             title = title,
             messages = messages,
