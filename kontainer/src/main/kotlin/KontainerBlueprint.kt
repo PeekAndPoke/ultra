@@ -58,6 +58,7 @@ class KontainerBlueprint internal constructor(
     /**
      * Base type lookup for finding all candidate services by a given super type
      */
+    @PublishedApi
     internal val superTypeLookup = TypeLookup.ForSuperTypes(definitions.keys)
 
     /**

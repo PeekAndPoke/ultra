@@ -70,9 +70,9 @@ class Kontainer internal constructor(
      * Get a service for the given [cls], and when it is present run the [block] on it.
      *
      * When the service is not present null is returned.
-     * Otherwise the result of the [block] is returned.
+     * Otherwise, the result of the [block] is returned.
      */
-    fun <T : Any, R> use(cls: KClass<T>, block: T.() -> R?): R? {
+    inline fun <T : Any, R> use(cls: KClass<T>, block: T.() -> R?): R? {
 
         val type = blueprint.superTypeLookup.getDistinctForOrNull(cls) ?: return null
 
