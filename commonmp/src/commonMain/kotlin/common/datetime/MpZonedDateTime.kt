@@ -209,7 +209,7 @@ data class MpZonedDateTime private constructor(
 
         val yearStr = when {
             year > 9999 -> "+$year"
-            else -> "$year"
+            else -> year.pad(4)
         }
 
         return "$yearStr-${monthNumber.pad()}-${dayOfMonth.pad()}T" +
