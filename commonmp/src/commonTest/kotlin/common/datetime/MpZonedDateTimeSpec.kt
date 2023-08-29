@@ -163,6 +163,21 @@ class MpZonedDateTimeSpec : StringSpec({
 
         MpZonedDateTime.parse("2022-04-05T00:00:00", TimeZone.of("Europe/Berlin"))
             .toIsoString() shouldBe "2022-04-05T02:00:00.000[Europe/Berlin]"
+
+        MpZonedDateTime.of(
+            datetime = MpLocalDateTime.of(year = 2, month = 3, day = 4),
+            timezone = TimeZone.of("UTC")
+        ).toIsoString() shouldBe "0002-03-04T00:00:00.000Z"
+
+        MpZonedDateTime.of(
+            datetime = MpLocalDateTime.of(year = 232, month = 12, day = 2),
+            timezone = TimeZone.of("UTC")
+        ).toIsoString() shouldBe "0232-12-02T00:00:00.000Z"
+
+        MpZonedDateTime.of(
+            datetime = MpLocalDateTime.of(year = 39, month = 11, day = 25, hour = 15, minute = 44),
+            timezone = TimeZone.of("Europe/Berlin")
+        ).toIsoString() shouldBe "0039-11-25T15:44:00.000[Europe/Berlin]"
     }
 
     "parse - toIsoString - round trip" {
