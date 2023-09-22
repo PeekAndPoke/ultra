@@ -110,6 +110,11 @@ data class MpLocalDate internal constructor(
     /** The day of the year */
     val dayOfYear: Int get() = value.dayOfYear
 
+    /** The number of days of the current month */
+    val numDaysInMonth: Int by lazy {
+        atStartOfMonth().toClosedRange(atLastDayOfMonth()).asWholeDays
+    }
+
     /**
      * Compares to the [other].
      */
@@ -182,6 +187,13 @@ data class MpLocalDate internal constructor(
      */
     fun atStartOfMonth(): MpLocalDate {
         return of(year = year, month = month, day = 1)
+    }
+
+    /**
+     * Gets the start of the month that this date is in.
+     */
+    fun atLastDayOfMonth(): MpLocalDate {
+        return atStartOfMonth().plusMonths(1).minusDays(1)
     }
 
     /**

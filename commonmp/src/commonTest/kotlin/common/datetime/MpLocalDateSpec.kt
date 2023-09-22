@@ -67,6 +67,21 @@ class MpLocalDateSpec : StringSpec({
         subject.dayOfYear shouldBe 95
     }
 
+    "Fields numDaysInMonth" {
+
+        MpLocalDate.of(2023, Month.JANUARY, 1).numDaysInMonth shouldBe 31
+        MpLocalDate.of(2023, Month.JANUARY, 31).numDaysInMonth shouldBe 31
+
+        MpLocalDate.of(2023, Month.FEBRUARY, 1).numDaysInMonth shouldBe 28
+        MpLocalDate.of(2023, Month.FEBRUARY, 28).numDaysInMonth shouldBe 28
+
+        MpLocalDate.of(2024, Month.FEBRUARY, 1).numDaysInMonth shouldBe 29
+        MpLocalDate.of(2024, Month.FEBRUARY, 29).numDaysInMonth shouldBe 29
+
+        MpLocalDate.of(2024, Month.DECEMBER, 1).numDaysInMonth shouldBe 31
+        MpLocalDate.of(2024, Month.DECEMBER, 31).numDaysInMonth shouldBe 31
+    }
+
     "Field dayOfWeek" {
         val subject = MpLocalDate.of(2022, Month.APRIL, 5)
 
@@ -207,6 +222,20 @@ class MpLocalDateSpec : StringSpec({
 
         MpLocalDate.of(2022, Month.DECEMBER, 31)
             .atStartOfMonth() shouldBe MpLocalDate.of(2022, Month.DECEMBER, 1)
+    }
+
+    "atLastDayOfMonth" {
+        MpLocalDate.of(2023, Month.JANUARY, 1)
+            .atLastDayOfMonth() shouldBe MpLocalDate.of(2023, Month.JANUARY, 31)
+
+        MpLocalDate.of(2023, Month.FEBRUARY, 1)
+            .atLastDayOfMonth() shouldBe MpLocalDate.of(2023, Month.FEBRUARY, 28)
+
+        MpLocalDate.of(2024, Month.FEBRUARY, 1)
+            .atLastDayOfMonth() shouldBe MpLocalDate.of(2024, Month.FEBRUARY, 29)
+
+        MpLocalDate.of(2024, Month.DECEMBER, 1)
+            .atLastDayOfMonth() shouldBe MpLocalDate.of(2024, Month.DECEMBER, 31)
     }
 
     "atStartOfNext(dayOfWeek)" {
