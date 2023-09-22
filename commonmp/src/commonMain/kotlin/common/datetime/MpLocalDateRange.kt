@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
+import common.datetime.DateTimeRangeConverter
 import de.peekandpoke.ultra.common.ComparableTo
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.serialization.Serializable
@@ -48,42 +49,8 @@ data class MpLocalDateRange(
         }
     }
 
-    inner class ToZonedDateTimeRangeConverter(private val timezone: MpTimezone) {
-
-        val fromNoonToNoon: MpZonedDateTimeRange by lazy(LazyThreadSafetyMode.NONE) {
-            create(
-                from = from.atStartOfDay(timezone).plus(12, DateTimeUnit.HOUR),
-                to = to.atStartOfDay(timezone).plus(12, DateTimeUnit.HOUR),
-            )
-        }
-
-        val fromMorningToEvening: MpZonedDateTimeRange by lazy(LazyThreadSafetyMode.NONE) {
-            create(
-                from = from.atStartOfDay(timezone),
-                to = to.atStartOfDay(timezone).plus(1, DateTimeUnit.DAY),
-            )
-        }
-
-        fun fromHourToHour(fromHour: Int, toHour: Int): MpZonedDateTimeRange {
-            return create(
-                from = from.atStartOfDay(timezone).plus(fromHour, DateTimeUnit.HOUR),
-                to = to.atStartOfDay(timezone).plus(toHour, DateTimeUnit.HOUR),
-            )
-        }
-
-        fun fromTimeToTime(fromTime: MpLocalTime, toTime: MpLocalTime): MpZonedDateTimeRange {
-            return create(
-                from = from.atTime(fromTime, timezone),
-                to = to.atTime(toTime, timezone),
-            )
-        }
-
-        private fun create(from: MpZonedDateTime, to: MpZonedDateTime): MpZonedDateTimeRange {
-            return MpZonedDateTimeRange(
-                from = maxOf(MpZonedDateTime.Genesis, from),
-                to = minOf(MpZonedDateTime.Doomsday, to),
-            )
-        }
+    val asClosedRange: MpClosedLocalDateRange by lazy {
+        MpClosedLocalDateRange(from = from, to = to.minusDays(1))
     }
 
     val asDatePeriod: MpDatePeriod by lazy {
@@ -126,7 +93,7 @@ data class MpLocalDateRange(
 
         val seconds = toZonedTimeRange(MpTimezone.UTC).fromNoonToNoon.duration.inWholeSeconds
 
-        round(seconds / (60 * 60 * 24.0)).toInt()
+        round(seconds / (60 * 60 * 24.0)).toInt() + 1
     }
 
     val hasStart: Boolean get() = from > MpLocalDate.Genesis
@@ -141,13 +108,17 @@ data class MpLocalDateRange(
 
     val isNotValid: Boolean get() = !isValid
 
-    override fun compareTo(other: MpDatePeriod): Int {
-        return to.compareTo(from.plus(other))
-    }
-
     fun asPartialRange(): Partial {
         return Partial(from = from, to = to)
     }
 
-    fun toZonedTimeRange(timezone: MpTimezone) = ToZonedDateTimeRangeConverter(timezone)
+    override fun compareTo(other: MpDatePeriod): Int {
+        return to.compareTo(from.plus(other))
+    }
+
+    fun toZonedTimeRange(timezone: MpTimezone) = DateTimeRangeConverter(
+        timezone = timezone,
+        from = from,
+        to = to.minusDays(1),
+    )
 }

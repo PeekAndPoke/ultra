@@ -5,7 +5,7 @@
       <configuration version="5" platform="JavaScript " allPlatforms="JS []" useProjectSettings="false" isTestModule="false" externalProjectId=":z-playground-js" isHmppProject="true">
         <newMppModelJpsModuleKind>COMPILATION_AND_SOURCE_SET_HOLDER</newMppModelJpsModuleKind>
         <compilerSettings>
-          <option name="additionalArguments" value="-Xir-module-name=de.peekandpoke.ultra:z-playground-js -Xir-only -Xir-per-module-output-name=ultra-z-playground-js -Xir-produce-klib-dir -ir-output-name z-playground-js -ir-output-dir $MODULE_DIR$/../../../z-playground-js/build/classes/kotlin/main" />
+          <option name="additionalArguments" value="-Xir-module-name=de.peekandpoke.ultra:z-playground-js -Xir-only -Xir-per-module-output-name=ultra-z-playground-js -Xir-produce-klib-dir -main call -ir-output-dir $MODULE_DIR$/../../../z-playground-js/build/classes/kotlin/main" />
         </compilerSettings>
         <compilerArguments>
           <flagArguments>
@@ -14,8 +14,8 @@
             <flagArg name="sourceMap" arg="true" />
           </flagArguments>
           <stringArguments>
-            <stringArg name="main" arg="call" />
             <stringArg name="moduleKind" arg="umd" />
+            <stringArg name="moduleName" arg="z-playground-js" />
             <stringArg name="sourceMapEmbedSources" arg="never" />
             <stringArg name="target" arg="v5" />
             <stringArg name="apiVersion" arg="1.8" />

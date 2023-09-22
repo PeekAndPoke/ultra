@@ -262,6 +262,13 @@ data class MpLocalDate internal constructor(
     }
 
     /**
+     * Creates a [MpClosedLocalDateRange] with this as the start and the given [period]
+     */
+    fun toClosedRange(period: MpDatePeriod): MpClosedLocalDateRange {
+        return MpClosedLocalDateRange(from = this, to = this.plus(period))
+    }
+
+    /**
      * Creates a [MpZonedDateTimeRange] with this as the start and the given [period] in the [timezone].
      */
     // TODO: test me
@@ -274,6 +281,13 @@ data class MpLocalDate internal constructor(
      */
     fun toRange(end: MpLocalDate): MpLocalDateRange {
         return MpLocalDateRange(this, end)
+    }
+
+    /**
+     * Creates an [MpClosedLocalDateRange] from this to [end].
+     */
+    fun toClosedRange(end: MpLocalDate): MpClosedLocalDateRange {
+        return MpClosedLocalDateRange(from = this, to = end)
     }
 
     /**
