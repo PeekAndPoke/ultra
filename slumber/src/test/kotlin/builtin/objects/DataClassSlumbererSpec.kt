@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin.objects
 
 import de.peekandpoke.ultra.slumber.Codec
+import de.peekandpoke.ultra.slumber.Slumber
 import de.peekandpoke.ultra.slumber.SlumbererException
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
@@ -206,6 +207,29 @@ class DataClassSlumbererSpec : StringSpec() {
             val result = codec.slumber(DataClass(Inner("hello")))
 
             result shouldBe mapOf("inner" to mapOf("str" to "hello"))
+        }
+
+        "Slumbering a data class with only null values must work" {
+            data class AllNull(val a: Int? = null, val b: Int? = null)
+
+            val codec = Codec.default
+
+            val result = codec.slumber(AllNull())
+
+            result shouldBe mapOf("a" to null, "b" to null)
+        }
+
+        "Slumbering a data class with only null values and annotated getter must work" {
+            data class AllNull(val a: Int? = null, val b: Int? = null) {
+                @Slumber.Field
+                val text get() = "text"
+            }
+
+            val codec = Codec.default
+
+            val result = codec.slumber(AllNull())
+
+            result shouldBe mapOf("a" to null, "b" to null, "text" to "text")
         }
     }
 }
