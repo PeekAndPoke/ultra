@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
 import com.github.matfax.klassindex.IndexSubclasses
+import de.peekandpoke.ultra.slumber.AdditionalSerialName
 import de.peekandpoke.ultra.slumber.Polymorphic
 import de.peekandpoke.ultra.slumber.indexedSubClasses
 import kotlinx.serialization.SerialName
@@ -126,4 +127,8 @@ open class ChildrenUsingAnnotation {
 
     @SerialName("Sub2")
     data class Sub2(val text: String) : ChildrenUsingAnnotation()
+
+    @SerialName("Sub3")
+    @AdditionalSerialName("Sub3-Additional")
+    data class Sub3(val num: Int) : ChildrenUsingAnnotation()
 }

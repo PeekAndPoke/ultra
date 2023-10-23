@@ -232,6 +232,30 @@ class PolymorphicAwakerSpec : StringSpec({
         result shouldBe ChildrenUsingAnnotation.Sub2("Sub2-value")
     }
 
+    "Directly Awaking a polymorphic using @SerialName and @AdditionalSerialName" {
+
+        val codec = Codec.default
+
+        val result = codec.awake(
+            kType<ChildrenUsingAnnotation>().list.type,
+            listOf(
+                mapOf(
+                    "_type" to "Sub3",
+                    "num" to 100,
+                ),
+                mapOf(
+                    "_type" to "Sub3-Additional",
+                    "num" to 200,
+                ),
+            )
+        )
+
+        result shouldBe listOf(
+            ChildrenUsingAnnotation.Sub3(100),
+            ChildrenUsingAnnotation.Sub3(200),
+        )
+    }
+
     // Deeper class hierarchies  ///////////////////////////////////////////////////////////////////////////////////////
 
     "Awaking children of deeper sealed class hierarchies" {
@@ -271,7 +295,7 @@ class PolymorphicAwakerSpec : StringSpec({
             ParentWithKlassIndex.Sub1::class,
             ParentWithKlassIndex.Sub1.Deeper1::class,
             ParentWithKlassIndex.Sub1.Deeper2::class,
-            ParentWithKlassIndex.Sub2::class
+            ParentWithKlassIndex.Sub2::class,
         )
     }
 

@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
+import de.peekandpoke.ultra.slumber.AdditionalSerialName
 import de.peekandpoke.ultra.slumber.Polymorphic
 import de.peekandpoke.ultra.slumber.builtin.objects.DataClassCodec
 import kotlinx.serialization.SerialName
@@ -43,6 +44,19 @@ object PolymorphicChildUtil {
                 PolymorphicParentUtil.getParent(cls) != null
 
     /**
+     * Gets all serial identifiers of the class.
+     *
+     * Combines the results [getIdentifier] and [getAdditionalIdentifiers].
+     */
+    fun getAllIdentifiers(cls: KClass<*>): List<Pair<String, KClass<*>>> {
+        return listOf(
+            getIdentifier(cls) to cls
+        ).plus(
+            getAdditionalIdentifiers(cls).map { it to cls }
+        )
+    }
+
+    /**
      * Get the type identifier of a child class
      *
      * First we try to get the identifier from [Polymorphic.Child.identifier].
@@ -63,6 +77,18 @@ object PolymorphicChildUtil {
             }
         }
     }
+
+    /**
+     * Get the additional polymorphic identifiers of a class by looking for @AdditionalSerialName
+     *
+     * This is mainly useful, for migrating code away from obsolete serial names.
+     *
+     * see: [AdditionalSerialName]
+     */
+    private fun getAdditionalIdentifiers(cls: KClass<*>): List<String> {
+        return cls.annotations.filterIsInstance<AdditionalSerialName>()
+            .map { it.value }
+    }
 }
 
 object PolymorphicParentUtil {
@@ -74,7 +100,9 @@ object PolymorphicParentUtil {
 
         val discriminator: String = getDiscriminator(cls)
 
-        val map: Map<String, KClass<*>> = getChildren(cls).associateBy { PolymorphicChildUtil.getIdentifier(it) }
+        val map: Map<String, KClass<*>> = getChildren(cls)
+            .flatMap { child -> PolymorphicChildUtil.getAllIdentifiers(child) }
+            .toMap()
 
         val default: KClass<*>? = getDefaultType(cls)
 

@@ -228,4 +228,18 @@ class PolymorphicSlumbererSpec : StringSpec({
             "text" to "Sub2-value",
         )
     }
+
+    "Directly slumbering a polymorphic annotated with @SerialName and @AdditionalSerialName" {
+
+        val codec = Codec.default
+
+        val data = ChildrenUsingAnnotation.Sub3(100)
+
+        val result = codec.slumber(data)
+
+        result shouldBe mapOf(
+            "_type" to "Sub3",
+            "num" to 100,
+        )
+    }
 })
