@@ -247,12 +247,17 @@ class PolymorphicAwakerSpec : StringSpec({
                     "_type" to "Sub3-Additional",
                     "num" to 200,
                 ),
+                mapOf(
+                    "_type" to "Sub3-Additional-2",
+                    "num" to 300,
+                ),
             )
         )
 
         result shouldBe listOf(
             ChildrenUsingAnnotation.Sub3(100),
             ChildrenUsingAnnotation.Sub3(200),
+            ChildrenUsingAnnotation.Sub3(300),
         )
     }
 

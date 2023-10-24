@@ -100,13 +100,17 @@ object PolymorphicParentUtil {
 
         val discriminator: String = getDiscriminator(cls)
 
-        val map: Map<String, KClass<*>> = getChildren(cls)
-            .flatMap { child -> PolymorphicChildUtil.getAllIdentifiers(child) }
-            .toMap()
+        val map: Map<String, KClass<*>> = getIdentifiersToChildClasses(cls)
 
         val default: KClass<*>? = getDefaultType(cls)
 
         return PolymorphicAwaker(discriminator, map, default)
+    }
+
+    fun getIdentifiersToChildClasses(cls: KClass<*>): Map<String, KClass<*>> {
+        return getChildren(cls)
+            .flatMap { child -> PolymorphicChildUtil.getAllIdentifiers(child) }
+            .toMap()
     }
 
     /**

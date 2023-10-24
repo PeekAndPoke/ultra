@@ -122,6 +122,7 @@ open class ChildrenUsingAnnotation {
         data class Deeper1(val text: String) : Sub()
 
         @SerialName("Sub.Deeper2")
+        @AdditionalSerialName("Sub.Deeper2.Additional")
         data class Deeper2(val text: String) : Sub()
     }
 
@@ -130,5 +131,6 @@ open class ChildrenUsingAnnotation {
 
     @SerialName("Sub3")
     @AdditionalSerialName("Sub3-Additional")
+    @AdditionalSerialName("Sub3-Additional-2")
     data class Sub3(val num: Int) : ChildrenUsingAnnotation()
 }
