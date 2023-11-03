@@ -9,7 +9,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
-@Suppress("DataClassPrivateConstructor", "Detekt:TooManyFunctions")
+@Suppress("Detekt:TooManyFunctions")
 @Serializable(with = MpInstantSerializer::class)
 data class MpInstant internal constructor(
     internal val value: Instant,
@@ -41,6 +41,17 @@ data class MpInstant internal constructor(
          * Parses from the given [isoString].
          */
         fun parse(isoString: String): MpInstant = MpDateTimeParser.parseInstant(isoString)
+
+        /**
+         * Tries to parse from the given [isoString].
+         *
+         * If parsing fails null is returned.
+         */
+        fun tryParse(isoString: String): MpInstant? = try {
+            parse(isoString)
+        } catch (e: Throwable) {
+            null
+        }
 
         /**
          * Instant at the start of the unix epoch 1970-01-01T00:00:00.000Z

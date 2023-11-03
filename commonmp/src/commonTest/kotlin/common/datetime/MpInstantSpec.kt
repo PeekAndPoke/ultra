@@ -1,5 +1,7 @@
 package de.peekandpoke.ultra.common.datetime
 
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeEqualComparingTo
 import io.kotest.matchers.comparables.shouldBeGreaterThan
@@ -33,6 +35,28 @@ class MpInstantSpec : StringSpec({
                 MpInstant.Doomsday
 
         MpInstant.parse("2022-04-05T12:00:00Z").toEpochSeconds() shouldBe 1649160000L
+    }
+
+    "parse" {
+        withClue("a valid iso string must work") {
+            MpInstant.parse("2022-04-05T12:00:00Z").toEpochSeconds() shouldBe 1649160000L
+        }
+
+        withClue("an invalid iso string should throw") {
+            shouldThrow<Throwable> {
+                MpInstant.parse("INVALID")
+            }
+        }
+    }
+
+    "tryParse" {
+        withClue("a valid iso string must work") {
+            MpInstant.tryParse("2022-04-05T12:00:00Z")?.toEpochSeconds() shouldBe 1649160000L
+        }
+
+        withClue("an invalid iso string must return null") {
+            MpInstant.tryParse("INVALID") shouldBe null
+        }
     }
 
     "Epoch" {
