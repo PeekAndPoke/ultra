@@ -18,4 +18,11 @@ data class Paged<T>(
     companion object {
         fun <T> empty() = Paged<T>(items = emptyList(), page = 1, epp = 20, fullItemCount = null)
     }
+
+    fun <X> map(block: (T) -> X): Paged<X> = Paged(
+        items = items.map(block),
+        page = page,
+        epp = epp,
+        fullItemCount = fullItemCount,
+    )
 }
