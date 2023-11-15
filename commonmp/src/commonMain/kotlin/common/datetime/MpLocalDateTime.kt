@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
+import de.peekandpoke.ultra.common.ComparableTo
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
@@ -13,7 +14,9 @@ import kotlinx.serialization.Serializable
 // TODO: test all of me
 @Suppress("Detekt.LongParameterList")
 @Serializable(with = MpLocalDateTimeSerializer::class)
-data class MpLocalDateTime internal constructor(internal val value: LocalDateTime) : Comparable<MpLocalDateTime> {
+data class MpLocalDateTime internal constructor(
+    internal val value: LocalDateTime,
+) : ComparableTo<MpLocalDateTime> {
 
     companion object {
         fun of(

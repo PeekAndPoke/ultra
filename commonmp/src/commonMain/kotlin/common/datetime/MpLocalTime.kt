@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
+import de.peekandpoke.ultra.common.ComparableTo
 import korlibs.time.Time
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
@@ -8,7 +9,9 @@ import kotlin.time.Duration.Companion.milliseconds
 // TODO: test all of me
 @Suppress("DataClassPrivateConstructor")
 @Serializable(with = MpLocalTimeSerializer::class)
-data class MpLocalTime private constructor(private val milliSeconds: Long) : Comparable<MpLocalTime> {
+data class MpLocalTime private constructor(
+    private val milliSeconds: Long,
+) : ComparableTo<MpLocalTime> {
 
     companion object {
         const val MillisPerSecond = 1_000L

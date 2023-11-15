@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
+import de.peekandpoke.ultra.common.ComparableTo
 import korlibs.time.DateTime
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
@@ -13,7 +14,7 @@ import kotlin.time.Duration
 data class MpZonedDateTime private constructor(
     val datetime: MpLocalDateTime,
     val timezone: MpTimezone,
-) : MpAbsoluteDateTime, Comparable<MpZonedDateTime> {
+) : MpAbsoluteDateTime, ComparableTo<MpZonedDateTime> {
 
     companion object {
         /**

@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
+import de.peekandpoke.ultra.common.ComparableTo
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
@@ -13,7 +14,7 @@ import kotlin.time.Duration
 @Serializable(with = MpInstantSerializer::class)
 data class MpInstant internal constructor(
     internal val value: Instant,
-) : MpAbsoluteDateTime, Comparable<MpInstant> {
+) : MpAbsoluteDateTime, ComparableTo<MpInstant> {
 
     companion object {
         /**

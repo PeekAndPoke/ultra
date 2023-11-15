@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.datetime
 
+import de.peekandpoke.ultra.common.ComparableTo
 import korlibs.time.Date
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.DateTimeUnit
@@ -19,7 +20,7 @@ import kotlinx.serialization.Serializable
 @Serializable(with = MpLocalDateSerializer::class)
 data class MpLocalDate internal constructor(
     private val value: LocalDate,
-) : Comparable<MpLocalDate> {
+) : ComparableTo<MpLocalDate> {
 
     companion object {
         /**
