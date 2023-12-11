@@ -24,9 +24,6 @@ allprojects {
         // KotlinX
         maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
 
-        // Repo for KlassIndex (https://github.com/matfax/klassindex)
-        maven("https://jitpack.io")
-
         // Snapshots
         maven("https://oss.sonatype.org/content/repositories/snapshots")
     }
