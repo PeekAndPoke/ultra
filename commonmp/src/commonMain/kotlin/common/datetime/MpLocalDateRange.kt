@@ -4,6 +4,7 @@ import common.datetime.DateTimeRangeConverter
 import de.peekandpoke.ultra.common.ComparableTo
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.serialization.Serializable
+import kotlin.math.max
 import kotlin.math.round
 
 @Serializable
@@ -86,7 +87,7 @@ data class MpLocalDateRange(
         MpDatePeriod(years = years, months = months, days = days)
     }
 
-    val asWholeDays: Int by lazy {
+    val numberOfDays: Int by lazy {
         if (isNotValid) {
             return@lazy 0
         }
@@ -94,6 +95,10 @@ data class MpLocalDateRange(
         val seconds = toZonedTimeRange(MpTimezone.UTC).fromNoonToNoon.duration.inWholeSeconds
 
         round(seconds / (60 * 60 * 24.0)).toInt() + 1
+    }
+
+    val numberOfNights: Int by lazy {
+        max(0, numberOfDays - 1)
     }
 
     val hasStart: Boolean get() = from > MpLocalDate.Genesis
@@ -110,6 +115,14 @@ data class MpLocalDateRange(
 
     fun asPartialRange(): Partial {
         return Partial(from = from, to = to)
+    }
+
+    fun asListOfDates(): List<MpLocalDate> {
+        if (isNotValid) {
+            return emptyList()
+        }
+
+        return (0 until numberOfDays).map { from.plusDays(it) }
     }
 
     override fun compareTo(other: MpDatePeriod): Int {
