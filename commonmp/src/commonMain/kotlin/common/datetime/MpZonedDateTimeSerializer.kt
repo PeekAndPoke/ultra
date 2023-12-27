@@ -2,15 +2,12 @@ package de.peekandpoke.ultra.common.datetime
 
 import kotlinx.datetime.TimeZone
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
-@Suppress("EXPERIMENTAL_API_USAGE", "OPT_IN_USAGE")
-@Serializer(forClass = MpZonedDateTime::class)
 object MpZonedDateTimeSerializer : KSerializer<MpZonedDateTime> {
 
     override val descriptor: SerialDescriptor =

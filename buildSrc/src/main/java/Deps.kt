@@ -10,7 +10,7 @@ object Deps {
     }
 
     // Kotlin ////////////////////////////////////////////////////////////////////////////////////
-    const val kotlinVersion = "1.9.21"
+    const val kotlinVersion = "1.9.22"
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     // JVM ///////////////////////////////////////////////////////////////////////////////////////
@@ -52,7 +52,7 @@ object Deps {
 
     // https://kotlinlang.org/docs/releases.html#release-details
     // https://github.com/Kotlin/kotlinx.coroutines/releases
-    private const val kotlinx_coroutines_version = "1.8.0-RC"
+    private const val kotlinx_coroutines_version = "1.8.0-RC2"
     const val kotlinx_coroutines_core =
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version"
     const val kotlinx_coroutines_core_js =
@@ -91,7 +91,7 @@ object Deps {
         }
 
         // https://www.npmjs.com/package/whatwg-fetch
-        fun KotlinDependencyHandler.polyfillFetch() = npm("whatwg-fetch", "3.6.19")
+        fun KotlinDependencyHandler.polyfillFetch() = npm("whatwg-fetch", "3.6.20")
 
         // https://www.npmjs.com/package/@js-joda/core
         fun KotlinDependencyHandler.jsJodaCore() = npm("@js-joda/core", "5.6.1")
