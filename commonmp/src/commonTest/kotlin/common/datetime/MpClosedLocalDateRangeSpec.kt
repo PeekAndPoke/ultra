@@ -5,6 +5,9 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -28,7 +31,7 @@ class MpClosedLocalDateRangeSpec : StringSpec({
             MpLocalDate.parse("2022-06-15").toClosedRange(MpDatePeriod(days = 1))
 
         withClue("The number of whole days must be correct") {
-            subject.asWholeDays shouldBe 2
+            subject.numberOfDays shouldBe 2
         }
 
         withClue("Compared with empty period") {
@@ -97,29 +100,29 @@ class MpClosedLocalDateRangeSpec : StringSpec({
         }
     }
 
-    "asDatePeriod for invalid MpLocalDateRange" {
+    "asDatePeriod for invalid range" {
 
-        val invalid = MpLocalDateRange(
+        val invalid = MpClosedLocalDateRange(
             from = MpLocalDate.parse("2021-01-02"),
             to = MpLocalDate.parse("2020-01-01"),
         )
 
-        invalid.asWholeDays shouldBe 0
+        invalid.numberOfDays shouldBe 0
         invalid.asDatePeriod shouldBe MpDatePeriod(days = 0)
     }
 
-    "asDatePeriod for single day MpLocalDateRange" {
+    "asDatePeriod for single day" {
 
         val singleDay = MpClosedLocalDateRange(
             from = MpLocalDate.parse("2021-01-01"),
             to = MpLocalDate.parse("2021-01-01"),
         )
 
-        singleDay.asWholeDays shouldBe 1
+        singleDay.numberOfDays shouldBe 1
         singleDay.asDatePeriod shouldBe MpDatePeriod(days = 1)
     }
 
-    "asDatePeriod for valid MpLocalDateRanges" {
+    "asDatePeriod for valid ranges" {
 
         val start = MpLocalDate.parse("2020-01-01")
 
@@ -141,38 +144,85 @@ class MpClosedLocalDateRangeSpec : StringSpec({
         }
     }
 
-    "asWholeDays" {
+    "numberOfDays" {
 
         val closedRangeExtraDay = 1
 
         withClue("for invalid range") {
-            MpLocalDate.parse("2022-01-01")
+            MpLocalDate.parse("2022-01-02")
                 .toClosedRange(MpLocalDate.parse("2022-01-01"))
-                .asWholeDays shouldBe 0 + closedRangeExtraDay
+                .numberOfDays shouldBe 0
+        }
+
+        withClue("for same day") {
+            MpLocalDate.parse("2022-03-27")
+                .toClosedRange(MpLocalDate.parse("2022-03-27"))
+                .numberOfDays shouldBe closedRangeExtraDay
         }
 
         withClue("for DST switch - one day") {
             MpLocalDate.parse("2022-03-27")
                 .toClosedRange(MpLocalDate.parse("2022-03-28"))
-                .asWholeDays shouldBe 1 + closedRangeExtraDay
+                .numberOfDays shouldBe 1 + closedRangeExtraDay
         }
 
         withClue("for DST switch - one year") {
             MpLocalDate.parse("2022-03-27")
                 .toClosedRange(MpLocalDate.parse("2023-03-27"))
-                .asWholeDays shouldBe 365 + closedRangeExtraDay
+                .numberOfDays shouldBe 365 + closedRangeExtraDay
         }
 
         withClue("with leap year") {
             MpLocalDate.parse("2020-01-01")
                 .toClosedRange(MpLocalDate.parse("2021-01-01"))
-                .asWholeDays shouldBe (365 + 1 + closedRangeExtraDay)
+                .numberOfDays shouldBe (365 + 1 + closedRangeExtraDay)
         }
 
         withClue("no leap year - two years, three months, four days") {
             MpLocalDate.parse("2021-01-01")
                 .toClosedRange(MpLocalDate.parse("2023-04-05"))
-                .asWholeDays shouldBe (365 + 365 + 31 + 28 + 31 + 4 + closedRangeExtraDay)
+                .numberOfDays shouldBe (365 + 365 + 31 + 28 + 31 + 4 + closedRangeExtraDay)
+        }
+    }
+
+    "numberOfNights" {
+
+        val closedRangeExtraDay = 1
+
+        withClue("for invalid range") {
+            MpLocalDate.parse("2022-01-02")
+                .toClosedRange(MpLocalDate.parse("2022-01-01"))
+                .numberOfNights shouldBe 0
+        }
+
+        withClue("for same day") {
+            MpLocalDate.parse("2022-03-27")
+                .toClosedRange(MpLocalDate.parse("2022-03-27"))
+                .numberOfNights shouldBe 0
+        }
+
+        withClue("for DST switch - one day") {
+            MpLocalDate.parse("2022-03-27")
+                .toClosedRange(MpLocalDate.parse("2022-03-28"))
+                .numberOfNights shouldBe closedRangeExtraDay
+        }
+
+        withClue("for DST switch - one year") {
+            MpLocalDate.parse("2022-03-27")
+                .toClosedRange(MpLocalDate.parse("2023-03-27"))
+                .numberOfNights shouldBe (365 - 1) + closedRangeExtraDay
+        }
+
+        withClue("with leap year") {
+            MpLocalDate.parse("2020-01-01")
+                .toClosedRange(MpLocalDate.parse("2021-01-01"))
+                .numberOfNights shouldBe (365 + closedRangeExtraDay)
+        }
+
+        withClue("no leap year - two years, three months, four days") {
+            MpLocalDate.parse("2021-01-01")
+                .toClosedRange(MpLocalDate.parse("2023-04-05"))
+                .numberOfNights shouldBe (365 + 365 + 31 + 28 + 31 + 3 + closedRangeExtraDay)
         }
     }
 
@@ -216,5 +266,40 @@ class MpClosedLocalDateRangeSpec : StringSpec({
 
         zoned.to shouldBe range.to.atStartOfDay(timezone)
             .plus(21.hours).plus(22.minutes).plus(23.seconds).plus(24.milliseconds)
+    }
+
+    "asListOfDates()" {
+
+        withClue("Invalid range must return an empty list") {
+            val start = MpLocalDate.parse("2020-01-02")
+            val range = start.toClosedRange(start.minusDays(1))
+            val list = range.asListOfDates()
+            list.shouldBeEmpty()
+            list shouldHaveSize range.numberOfDays
+        }
+
+        withClue("Range of a single day must return 1 date") {
+            val start = MpLocalDate.parse("2020-01-02")
+            val range = start.toClosedRange(start)
+            val list = range.asListOfDates()
+            list shouldHaveSize 1
+            list shouldHaveSize range.numberOfDays
+            list shouldBeEqual listOf(
+                start,
+            )
+        }
+
+        withClue("Range of more days must return the correct dates") {
+            val start = MpLocalDate.parse("2020-01-02")
+            val range = start.toClosedRange(start.plusDays(2))
+            val list = range.asListOfDates()
+            list shouldHaveSize 3
+            list shouldHaveSize range.numberOfDays
+            list shouldBeEqual listOf(
+                start,
+                start.plusDays(1),
+                start.plusDays(2),
+            )
+        }
     }
 })

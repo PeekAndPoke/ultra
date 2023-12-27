@@ -113,7 +113,7 @@ data class MpLocalDate internal constructor(
 
     /** The number of days of the current month */
     val numDaysInMonth: Int by lazy {
-        atStartOfMonth().toClosedRange(atLastDayOfMonth()).asWholeDays
+        atStartOfMonth().toClosedRange(atLastDayOfMonth()).numberOfDays
     }
 
     /**
