@@ -18,20 +18,12 @@
             <stringArg name="moduleName" arg="z-playground-js" />
             <stringArg name="sourceMapEmbedSources" arg="never" />
             <stringArg name="target" arg="v5" />
-            <stringArg name="apiVersion" arg="1.8" />
-            <stringArg name="languageVersion" arg="1.8" />
+            <stringArg name="apiVersion" arg="1.9" />
+            <stringArg name="languageVersion" arg="1.9" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/1.8.22/e80d104a6f9e944d8de71ad13338859884657613/kotlin-gradle-plugin-api-1.8.22-gradle76.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-annotations/1.8.22/ce5334a47551d2bc8e66fe0ef5b1b39d5fdb9858/kotlin-gradle-plugin-annotations-1.8.22.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-native-utils/1.8.22/kotlin-native-utils-1.8.22.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-project-model/1.8.22/3cbfe8165834b2554b516b620d168af6f635fbda/kotlin-project-model-1.8.22.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-tooling-core/1.8.22/6ab3d6c8e8d13c2748ecf0b74978fbd191def027/kotlin-tooling-core-1.8.22.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-util-io/1.8.22/kotlin-util-io-1.8.22.jar</arg>
-                <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-              </args>
+              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
           </arrayArguments>

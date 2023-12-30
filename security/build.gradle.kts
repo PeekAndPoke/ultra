@@ -25,7 +25,7 @@ repositories {
 
 kotlin {
 
-    js(IR) {
+    js {
         browser()
     }
 
@@ -37,7 +37,6 @@ kotlin {
         }
     }
 
-    @Suppress("UNUSED_VARIABLE")
     sourceSets {
 
         val commonMain by getting {

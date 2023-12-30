@@ -25,7 +25,7 @@ repositories {
 
 kotlin {
 
-    js(IR) {
+    js {
         browser {
         }
     }
@@ -38,9 +38,7 @@ kotlin {
         }
     }
 
-    @Suppress("UNUSED_VARIABLE")
     sourceSets {
-
         val commonMain by getting {
             dependencies {
                 implementation(kotlin("reflect"))
@@ -48,7 +46,8 @@ kotlin {
                 implementation(Deps.kotlinx_serialization_core)
                 implementation(Deps.kotlinx_serialization_json)
 
-                // This is still needed for formatting dates - TODO: remove this dependency
+                // TODO: Remove this dependency
+                //       It is still needed for formatting dates
                 implementation(Deps.korlibs_klock_common)
 
                 // We expose kotlinx-datetime as it is needed in many cases, e.g. for TimeZone
@@ -79,7 +78,7 @@ kotlin {
 
         val jvmMain by getting {
             dependencies {
-                implementation(Deps.klassIndexLib)
+                implementation(Deps.classindex)
             }
         }
 

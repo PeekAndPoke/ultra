@@ -14,8 +14,6 @@ version = VERSION_NAME
 
 repositories {
     mavenCentral()
-    // Repo for KlassIndex (https://github.com/matfax/klassindex)
-    maven("https://jitpack.io")
 }
 
 dependencies {

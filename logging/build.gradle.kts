@@ -25,7 +25,7 @@ repositories {
 
 kotlin {
 
-    js(IR) {
+    js {
         browser()
     }
 
@@ -37,15 +37,12 @@ kotlin {
         }
     }
 
-    @Suppress("UNUSED_VARIABLE")
     sourceSets {
 
         val commonMain by getting {
             dependencies {
                 implementation(Deps.kotlinx_coroutines_core)
                 implementation(Deps.kotlinx_serialization_core)
-
-                api(project(":commonmp"))
             }
         }
 

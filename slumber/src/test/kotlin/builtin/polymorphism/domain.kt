@@ -1,10 +1,10 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
-import com.github.matfax.klassindex.IndexSubclasses
 import de.peekandpoke.ultra.slumber.AdditionalSerialName
 import de.peekandpoke.ultra.slumber.Polymorphic
 import de.peekandpoke.ultra.slumber.indexedSubClasses
 import kotlinx.serialization.SerialName
+import org.atteo.classindex.IndexSubclasses
 import kotlin.reflect.KClass
 
 sealed class PureBase {

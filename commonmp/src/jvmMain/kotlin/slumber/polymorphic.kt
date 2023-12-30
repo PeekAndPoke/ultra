@@ -1,8 +1,7 @@
 package de.peekandpoke.ultra.slumber
 
-import com.github.matfax.klassindex.IndexSubclasses
-import com.github.matfax.klassindex.KlassIndex
-import de.peekandpoke.ultra.NoCachedKlassIndex
+import org.atteo.classindex.ClassIndex
+import org.atteo.classindex.IndexSubclasses
 import kotlin.reflect.KClass
 
 @Suppress("Detekt.TooGenericExceptionCaught")
@@ -14,9 +13,9 @@ fun Polymorphic.Parent.indexedSubClasses() = try {
 }
 
 /**
- * A set of sub-classes indexed by [KlassIndex]
+ * A set of sub-classes indexed by [ClassIndex]
  *
  * To make this work, the parent class needs to be annotated with [IndexSubclasses]
  */
 internal val <T : Any> KClass<T>.indexedSubClasses
-    get(): Set<KClass<out T>> = NoCachedKlassIndex.getSubclasses(this)
+    get(): Set<KClass<out T>> = ClassIndex.getSubclasses(java).map { it.kotlin }.toSet()

@@ -18,14 +18,12 @@ version = VERSION_NAME
 
 repositories {
     mavenCentral()
-    // Repo for KlassIndex (https://github.com/matfax/klassindex)
-    maven("https://jitpack.io")
 }
 
 dependencies {
     implementation(kotlin("reflect"))
 
-    api(Deps.klassIndexLib)
+    api(Deps.classindex)
     api(Deps.kotlinx_serialization_core)
 
     api(project(":common"))
@@ -33,7 +31,7 @@ dependencies {
 
     // Testing
     testImplementation(project(":slumber-test-classes"))
-    kaptTest(Deps.klassIndexProcessor)
+    kaptTest(Deps.classindex)
 
     Deps.Test {
         jvmTestDeps()
