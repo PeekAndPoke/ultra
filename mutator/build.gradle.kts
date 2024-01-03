@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm")
     kotlin("kapt")
+    id("com.google.devtools.ksp") version Deps.kspVersion
     id("org.jetbrains.dokka")
     id("com.vanniktech.maven.publish")
 }
@@ -23,6 +24,8 @@ repositories {
 dependencies {
     implementation(kotlin("reflect"))
 
+    implementation(Deps.ksp)
+
     api(project(":meta"))
 
     kapt(Deps.google_auto_service)
@@ -30,6 +33,7 @@ dependencies {
     // Test /////////////////////////////////////////////////////////////////////////
 
     kaptTest(project(":mutator"))
+    kspTest(project(":mutator"))
 
     Deps.Test {
         jvmTestDeps()
