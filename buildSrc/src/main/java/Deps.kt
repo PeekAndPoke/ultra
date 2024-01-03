@@ -1,3 +1,4 @@
+import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.DependencyHandlerScope
 import org.gradle.kotlin.dsl.TaskContainerScope
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -10,7 +11,7 @@ object Deps {
     }
 
     // Kotlin ////////////////////////////////////////////////////////////////////////////////////
-    const val kotlinVersion = "1.9.21"
+    const val kotlinVersion = "1.9.22"
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     // JVM ///////////////////////////////////////////////////////////////////////////////////////
@@ -52,7 +53,7 @@ object Deps {
 
     // https://kotlinlang.org/docs/releases.html#release-details
     // https://github.com/Kotlin/kotlinx.coroutines/releases
-    private const val kotlinx_coroutines_version = "1.8.0-RC2"
+    private const val kotlinx_coroutines_version = "1.8.0-RC"
     const val kotlinx_coroutines_core =
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version"
     const val kotlinx_coroutines_core_js =
@@ -60,14 +61,14 @@ object Deps {
 
     // https://kotlinlang.org/docs/releases.html#release-details
     // https://github.com/Kotlin/kotlinx.serialization/releases
-    private const val kotlinx_serialization_version = "1.6.2"
+    private const val kotlinx_serialization_version = "1.6.0"
     const val kotlinx_serialization_core =
         "org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version"
     const val kotlinx_serialization_json =
         "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_version"
 
     // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-datetime
-    private const val kotlinx_datetime_version = "0.5.0"
+    private const val kotlinx_datetime_version = "0.4.1"
     const val kotlinx_datetime_common = "org.jetbrains.kotlinx:kotlinx-datetime:$kotlinx_datetime_version"
 
     // https://mvnrepository.com/artifact/com.soywiz.korlibs.klock/klock
@@ -80,7 +81,7 @@ object Deps {
     const val classindex = "org.atteo.classindex:classindex:$classindex_version"
 
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-    private const val slf4j_version = "2.0.9"
+    private const val slf4j_version = "2.0.10"
     const val slf4j_api = "org.slf4j:slf4j-api:$slf4j_version"
 
     // // NPM dependencies /////////////////////////////////////////////////////////////////////////
@@ -159,11 +160,8 @@ object Deps {
         fun TaskContainerScope.configureJvmTests(
             configure: org.gradle.api.tasks.testing.Test.() -> Unit = {},
         ) {
-            listOfNotNull(
-                findByName("test") as? org.gradle.api.tasks.testing.Test,
-                findByName("jvmTest") as? org.gradle.api.tasks.testing.Test,
-            ).firstOrNull()?.apply {
-                useJUnitPlatform { }
+            withType(org.gradle.api.tasks.testing.Test::class.java).configureEach {
+                useJUnitPlatform()
 
                 filter {
                     isFailOnNoMatchingTests = false

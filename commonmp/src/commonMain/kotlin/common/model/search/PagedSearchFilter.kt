@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.common.model.search
 
-import de.peekandpoke.ultra.common.safeEnumValueOrNull
+import de.peekandpoke.ultra.common.safeEnumOrNull
 import de.peekandpoke.ultra.common.toggle
 import kotlinx.serialization.Serializable
 
@@ -43,7 +43,7 @@ data class PagedSearchFilter(
         private fun String?.toOptions(): Set<Option> = this
             ?.split(",")
             ?.filter { it.isNotBlank() }
-            ?.mapNotNull { option -> safeEnumValueOrNull<Option>(option) }
+            ?.mapNotNull { option -> safeEnumOrNull<Option>(option) }
             ?.toSet()
             ?: emptySet()
     }
