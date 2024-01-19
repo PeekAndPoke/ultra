@@ -113,6 +113,14 @@ data class MpInstant internal constructor(
     }
 
     /**
+     * Creates a [MpLocalDate] at the given timezone
+     */
+    // TODO: Test me
+    fun toLocalData(timezone: MpTimezone): MpLocalDate {
+        return atZone(timezone).toLocalDate()
+    }
+
+    /**
      * Creates an iso date time string.
      */
     fun toIsoString(): String {

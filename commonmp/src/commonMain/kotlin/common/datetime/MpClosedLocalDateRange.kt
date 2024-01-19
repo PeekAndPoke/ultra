@@ -88,4 +88,16 @@ data class MpClosedLocalDateRange(
         from = from,
         to = to,
     )
+
+    // TODO: Test me
+    fun contains(date: MpLocalDate): Boolean {
+        return date in from..to
+    }
+
+    // TODO: Test me
+    fun intersects(other: MpClosedLocalDateRange): Boolean {
+        // TODO: improve this code
+        return toZonedTimeRange(MpTimezone.UTC).fromNoonToNoon
+            .intersects(other.toZonedTimeRange(MpTimezone.UTC).fromNoonToNoon)
+    }
 }
