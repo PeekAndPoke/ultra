@@ -7,11 +7,20 @@ import kotlinx.serialization.SerialName
 import org.atteo.classindex.IndexSubclasses
 import kotlin.reflect.KClass
 
-sealed class PureBase {
+sealed class PureSealedClass {
 
-    data class A(val text: String) : PureBase()
+    data class A(val text: String) : PureSealedClass()
 
-    data class B(val number: Int) : PureBase()
+    data class B(val number: Int) : PureSealedClass()
+}
+
+sealed interface SealedInterface {
+
+    @SerialName("A")
+    data class A(val text: String) : SealedInterface
+
+    @SerialName("B")
+    data class B(val number: Int) : SealedInterface
 }
 
 sealed class CustomDiscriminator {

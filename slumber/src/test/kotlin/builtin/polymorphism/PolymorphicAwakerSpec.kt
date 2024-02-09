@@ -15,14 +15,14 @@ class PolymorphicAwakerSpec : StringSpec({
         val codec = Codec.default
 
         val result = codec.awake(
-            PureBase::class,
+            PureSealedClass::class,
             mapOf(
-                "_type" to PureBase.A::class.qualifiedName,
+                "_type" to PureSealedClass.A::class.qualifiedName,
                 "text" to "hello"
             )
         )
 
-        result shouldBe PureBase.A("hello")
+        result shouldBe PureSealedClass.A("hello")
     }
 
     "Awaking a sealed class (PureBase.B) without using Polymorphic.Child" {
@@ -30,14 +30,14 @@ class PolymorphicAwakerSpec : StringSpec({
         val codec = Codec.default
 
         val result = codec.awake(
-            PureBase::class,
+            PureSealedClass::class,
             mapOf(
-                "_type" to PureBase.B::class.qualifiedName,
+                "_type" to PureSealedClass.B::class.qualifiedName,
                 "number" to "100"
             )
         )
 
-        result shouldBe PureBase.B(100)
+        result shouldBe PureSealedClass.B(100)
     }
 
     "Awaking a sealed class with '_type' missing in the data must return null" {
@@ -45,7 +45,7 @@ class PolymorphicAwakerSpec : StringSpec({
         val codec = Codec.default
 
         val result = codec.awake(
-            kType<PureBase>().nullable.type,
+            kType<PureSealedClass>().nullable.type,
             mapOf<String, Any>()
         )
 
@@ -57,7 +57,7 @@ class PolymorphicAwakerSpec : StringSpec({
         val codec = Codec.default
 
         val result = codec.awake(
-            kType<PureBase>().nullable.type,
+            kType<PureSealedClass>().nullable.type,
             mapOf(
                 "_type" to "UNKNOWN"
             )
@@ -374,7 +374,7 @@ class PolymorphicAwakerSpec : StringSpec({
 
         val codec = Codec.default
 
-        println(PureBase.B::class.qualifiedName)
+        println(PureSealedClass.B::class.qualifiedName)
 
         val result = codec.awake(
             DataClass::class,

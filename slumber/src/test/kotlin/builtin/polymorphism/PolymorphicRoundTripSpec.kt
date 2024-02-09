@@ -6,20 +6,24 @@ import io.kotest.matchers.shouldBe
 
 class PolymorphicRoundTripSpec : StringSpec({
 
-    "Slumbering and awaking round trip - one" {
+    "Slumbering and awaking round trip of sealed classes" {
 
-        data class DataClass(val single: PureBase, val list: List<PureBase>, val map: Map<String, PureBase>)
+        data class DataClass(
+            val single: PureSealedClass,
+            val list: List<PureSealedClass>,
+            val map: Map<String, PureSealedClass>,
+        )
 
         val codec = Codec.default
 
         val source = DataClass(
-            single = PureBase.B(100),
+            single = PureSealedClass.B(100),
             list = listOf(
-                PureBase.A("hello"),
-                PureBase.B(200)
+                PureSealedClass.A("hello"),
+                PureSealedClass.B(200)
             ),
             map = mapOf(
-                "A" to PureBase.A("again")
+                "A" to PureSealedClass.A("again")
             )
         )
 
@@ -30,34 +34,34 @@ class PolymorphicRoundTripSpec : StringSpec({
         result shouldBe source
 
         slumbered shouldBe mapOf(
-            "single" to mapOf("_type" to PureBase.B::class.qualifiedName, "number" to 100),
+            "single" to mapOf("_type" to PureSealedClass.B::class.qualifiedName, "number" to 100),
             "list" to listOf(
-                mapOf("_type" to PureBase.A::class.qualifiedName, "text" to "hello"),
-                mapOf("_type" to PureBase.B::class.qualifiedName, "number" to 200)
+                mapOf("_type" to PureSealedClass.A::class.qualifiedName, "text" to "hello"),
+                mapOf("_type" to PureSealedClass.B::class.qualifiedName, "number" to 200)
             ),
             "map" to mapOf(
                 "A" to mapOf(
-                    "_type" to PureBase.A::class.qualifiedName, "text" to "again"
+                    "_type" to PureSealedClass.A::class.qualifiedName, "text" to "again"
                 )
             )
         )
     }
 
-    "Slumbering and awaking round trip - two - list of list of sealed classes" {
+    "Slumbering and awaking round trip of sealed classes - list of list of sealed classes" {
 
-        data class DataClass(val lists: List<List<PureBase>>)
+        data class DataClass(val lists: List<List<PureSealedClass>>)
 
         val codec = Codec.default
 
         val source = DataClass(
             lists = listOf(
                 listOf(
-                    PureBase.A("hello"),
-                    PureBase.B(100)
+                    PureSealedClass.A("hello"),
+                    PureSealedClass.B(100)
                 ),
                 listOf(
-                    PureBase.B(200),
-                    PureBase.A("again")
+                    PureSealedClass.B(200),
+                    PureSealedClass.A("again")
                 )
             )
         )
@@ -71,12 +75,53 @@ class PolymorphicRoundTripSpec : StringSpec({
         slumbered shouldBe mapOf(
             "lists" to listOf(
                 listOf(
-                    mapOf("_type" to PureBase.A::class.qualifiedName, "text" to "hello"),
-                    mapOf("_type" to PureBase.B::class.qualifiedName, "number" to 100)
+                    mapOf("_type" to PureSealedClass.A::class.qualifiedName, "text" to "hello"),
+                    mapOf("_type" to PureSealedClass.B::class.qualifiedName, "number" to 100)
                 ),
                 listOf(
-                    mapOf("_type" to PureBase.B::class.qualifiedName, "number" to 200),
-                    mapOf("_type" to PureBase.A::class.qualifiedName, "text" to "again")
+                    mapOf("_type" to PureSealedClass.B::class.qualifiedName, "number" to 200),
+                    mapOf("_type" to PureSealedClass.A::class.qualifiedName, "text" to "again")
+                )
+            )
+        )
+    }
+
+    "Slumbering and awaking round trip of sealed interface" {
+
+        data class DataClass(
+            val single: SealedInterface,
+            val list: List<SealedInterface>,
+            val map: Map<String, SealedInterface>,
+        )
+
+        val codec = Codec.default
+
+        val source = DataClass(
+            single = SealedInterface.B(100),
+            list = listOf(
+                SealedInterface.A("hello"),
+                SealedInterface.B(200),
+            ),
+            map = mapOf(
+                "A" to SealedInterface.A("again"),
+            )
+        )
+
+        val slumbered = codec.slumber(source)
+
+        val result = codec.awake(DataClass::class, slumbered)
+
+        result shouldBe source
+
+        slumbered shouldBe mapOf(
+            "single" to mapOf("_type" to "B", "number" to 100),
+            "list" to listOf(
+                mapOf("_type" to "A", "text" to "hello"),
+                mapOf("_type" to "B", "number" to 200)
+            ),
+            "map" to mapOf(
+                "A" to mapOf(
+                    "_type" to "A", "text" to "again"
                 )
             )
         )

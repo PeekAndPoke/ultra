@@ -14,10 +14,10 @@ class PolymorphicSlumbererSpec : StringSpec({
 
         val codec = Codec.default
 
-        val result = codec.slumber(PureBase.A("hello"))
+        val result = codec.slumber(PureSealedClass.A("hello"))
 
         result shouldBe mapOf(
-            "_type" to PureBase.A::class.qualifiedName,
+            "_type" to PureSealedClass.A::class.qualifiedName,
             "text" to "hello",
         )
     }
@@ -41,19 +41,19 @@ class PolymorphicSlumbererSpec : StringSpec({
         val codec = Codec.default
 
         val data = listOf(
-            PureBase.A("hello"),
-            PureBase.B(100)
+            PureSealedClass.A("hello"),
+            PureSealedClass.B(100)
         )
 
-        val result = codec.slumber(kListType<PureBase>().type, data)
+        val result = codec.slumber(kListType<PureSealedClass>().type, data)
 
         result shouldBe listOf(
             mapOf(
-                "_type" to PureBase.A::class.qualifiedName,
+                "_type" to PureSealedClass.A::class.qualifiedName,
                 "text" to "hello"
             ),
             mapOf(
-                "_type" to PureBase.B::class.qualifiedName,
+                "_type" to PureSealedClass.B::class.qualifiedName,
                 "number" to 100
             )
         )
@@ -64,19 +64,19 @@ class PolymorphicSlumbererSpec : StringSpec({
         val codec = Codec.default
 
         val data = mapOf(
-            "A" to PureBase.A("hello"),
-            "B" to PureBase.B(100)
+            "A" to PureSealedClass.A("hello"),
+            "B" to PureSealedClass.B(100)
         )
 
-        val result = codec.slumber(kMapType<String, PureBase>().type, data)
+        val result = codec.slumber(kMapType<String, PureSealedClass>().type, data)
 
         result shouldBe mapOf(
             "A" to mapOf(
-                "_type" to PureBase.A::class.qualifiedName,
+                "_type" to PureSealedClass.A::class.qualifiedName,
                 "text" to "hello"
             ),
             "B" to mapOf(
-                "_type" to PureBase.B::class.qualifiedName,
+                "_type" to PureSealedClass.B::class.qualifiedName,
                 "number" to 100
             )
         )
