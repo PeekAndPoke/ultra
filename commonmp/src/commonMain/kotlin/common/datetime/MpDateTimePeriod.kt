@@ -1,7 +1,10 @@
 package de.peekandpoke.ultra.common.datetime
 
 import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.DateTimePeriod
+import kotlinx.datetime.toDateTimePeriod
 import kotlinx.serialization.Serializable
+import kotlin.time.Duration
 
 @Serializable
 // TODO: Test me
@@ -21,6 +24,22 @@ data class MpDateTimePeriod(
             return DatePeriod.parse(text).let {
                 MpDateTimePeriod(years = it.years, months = it.months, days = it.days)
             }
+        }
+
+        fun of(duration: Duration): MpDateTimePeriod {
+            return of(duration.toDateTimePeriod())
+        }
+
+        fun of(period: DateTimePeriod): MpDateTimePeriod {
+            return MpDateTimePeriod(
+                years = period.years,
+                months = period.months,
+                days = period.days,
+                hours = period.hours,
+                minutes = period.minutes,
+                seconds = period.seconds,
+                milliseconds = period.nanoseconds / 1_000_000,
+            )
         }
     }
 
