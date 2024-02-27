@@ -11,6 +11,9 @@ class TupleSpec : StringSpec({
         val tuple = Tuple1(1)
         tuple.e1 shouldBe 1
     }
+    "Tuple1: should be constructed correctly using tuple()" {
+        tuple(1) shouldBe Tuple1(1)
+    }
     "Tuple1: asList should return correctly" {
         val tuple = Tuple1(1)
         tuple.asList shouldBe listOf(1)
@@ -32,6 +35,9 @@ class TupleSpec : StringSpec({
         val tuple = Tuple2(1, "a")
         tuple.e1 shouldBe 1
         tuple.e2 shouldBe "a"
+    }
+    "Tuple2: should be constructed correctly using tuple()" {
+        tuple(1, "a") shouldBe Tuple2(1, "a")
     }
     "Tuple2: asList should return correctly" {
         val tuple = Tuple2(1, "a")
@@ -56,6 +62,9 @@ class TupleSpec : StringSpec({
         tuple.e2 shouldBe "a"
         tuple.e3 shouldBe 2.2
     }
+    "Tuple3: should be constructed correctly using tuple()" {
+        tuple(1, "a", 2.2) shouldBe Tuple3(1, "a", 2.2)
+    }
     "Tuple3: asList should return correctly" {
         val tuple = Tuple3(1, "a", 2.2)
         tuple.asList shouldBe listOf(1, "a", 2.2)
@@ -79,6 +88,9 @@ class TupleSpec : StringSpec({
         tuple.e2 shouldBe "a"
         tuple.e3 shouldBe 2.2
         tuple.e4 shouldBe true
+    }
+    "Tuple4: should be constructed correctly using tuple()" {
+        tuple(1, "a", 2.2, true) shouldBe Tuple4(1, "a", 2.2, true)
     }
     "Tuple4: asList should return correctly" {
         val tuple = Tuple4(1, "a", 2.2, true)
@@ -105,6 +117,9 @@ class TupleSpec : StringSpec({
         tuple.e4 shouldBe true
         tuple.e5 shouldBe "b"
     }
+    "Tuple5: should be constructed correctly using tuple()" {
+        tuple(1, "a", 2.2, true, "b") shouldBe Tuple5(1, "a", 2.2, true, "b")
+    }
     "Tuple5: asList should return correctly" {
         val tuple = Tuple5(1, "a", 2.2, true, "b")
         tuple.asList shouldBe listOf(1, "a", 2.2, true, "b")
@@ -130,6 +145,10 @@ class TupleSpec : StringSpec({
         tuple.e4 shouldBe true
         tuple.e5 shouldBe "b"
         tuple.e6 shouldBe "c"
+    }
+    "Tuple6: should be constructed correctly using tuple()" {
+        tuple(1, "a", 2.2, true, "b", "c") shouldBe
+                Tuple6(1, "a", 2.2, true, "b", "c")
     }
     "Tuple6: asList should return correctly" {
         val tuple = Tuple6(1, "a", 2.2, true, "b", "c")
@@ -159,11 +178,14 @@ class TupleSpec : StringSpec({
         tuple.e6 shouldBe "c"
         tuple.e7 shouldBe 42
     }
+    "Tuple7: should be constructed correctly using tuple()" {
+        tuple(1, "a", 2.2, true, "b", "c", 42) shouldBe
+                Tuple7(1, "a", 2.2, true, "b", "c", 42)
+    }
     "Tuple7: asList should return correctly" {
         val tuple = Tuple7(1, "a", 2.2, true, "b", "c", 42)
         tuple.asList shouldBe listOf(1, "a", 2.2, true, "b", "c", 42)
     }
-
     "Tuple7: plus should return correctly" {
         val tuple = Tuple7(1, "a", 2.2, true, "b", "c", 42)
         val expectedTuple = Tuple8(1, "a", 2.2, true, "b", "c", 42, false)
@@ -187,6 +209,10 @@ class TupleSpec : StringSpec({
         tuple.e6 shouldBe "c"
         tuple.e7 shouldBe 42
         tuple.e8 shouldBe false
+    }
+    "Tuple8: should be constructed correctly using tuple()" {
+        tuple(1, "a", 2.2, true, "b", "c", 42, false) shouldBe
+                Tuple8(1, "a", 2.2, true, "b", "c", 42, false)
     }
     "Tuple8: asList should return correctly" {
         val tuple = Tuple8(1, "a", 2.2, true, "b", "c", 42, false)
@@ -217,6 +243,10 @@ class TupleSpec : StringSpec({
         tuple.e8 shouldBe false
         tuple.e9 shouldBe "e"
     }
+    "Tuple9: should be constructed correctly using tuple()" {
+        tuple(1, "a", 2.2, true, "b", "c", 42, false, "e") shouldBe
+                Tuple9(1, "a", 2.2, true, "b", "c", 42, false, "e")
+    }
     "Tuple9: asList should return correctly" {
         val tuple = Tuple9(1, "a", 2.2, true, "b", "c", 42, false, "e")
         tuple.asList shouldBe listOf(1, "a", 2.2, true, "b", "c", 42, false, "e")
@@ -246,6 +276,10 @@ class TupleSpec : StringSpec({
         tuple.e8 shouldBe false
         tuple.e9 shouldBe "e"
         tuple.e10 shouldBe "f"
+    }
+    "Tuple10: should be constructed correctly using tuple()" {
+        tuple(1, "a", 2.2, true, "b", "c", 42, false, "e", "f") shouldBe
+                Tuple10(1, "a", 2.2, true, "b", "c", 42, false, "e", "f")
     }
     "Tuple10: asList should return correctly" {
         val tuple = Tuple10(1, "a", 2.2, true, "b", "c", 42, false, "e", "f")
