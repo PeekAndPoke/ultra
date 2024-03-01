@@ -6,7 +6,7 @@ import io.kotest.matchers.shouldBe
 
 class NoArgCtorRoundTripSpec : StringSpec() {
 
-    private data object Empty
+    data object Empty
 
     init {
         "No arg ctor class round trip - one" {
