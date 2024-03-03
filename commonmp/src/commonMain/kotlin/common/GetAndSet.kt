@@ -2,7 +2,7 @@ package de.peekandpoke.ultra.common
 
 import kotlin.reflect.KMutableProperty0
 
-interface GetAndSet<P> {
+interface GetAndSet<P> : Observable<P> {
 
     companion object {
         fun <P> of(getter: () -> P, setter: (P) -> Unit): GetAndSet<P> = Impl(
@@ -19,7 +19,8 @@ interface GetAndSet<P> {
     private class Impl<P>(
         private val getter: () -> P,
         private val setter: (P) -> P,
-    ) : GetAndSet<P> {
+        private val subscriptions: Observable.Subscriptions<P> = Observable.Subscriptions(),
+    ) : GetAndSet<P>, Observable<P> by subscriptions {
 
         override fun hashCode(): Int {
             return get().hashCode()
