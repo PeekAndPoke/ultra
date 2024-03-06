@@ -167,13 +167,6 @@ class RemoteRequestImpl(
     }
 
     /**
-     * issues a connect request returning a flow of it's response
-     *
-     * @param uri endpoint url which getting appended to the baseUrl with `/`
-     */
-    override fun connect(uri: String): Flow<RemoteResponse> = execute(uri, buildInit("CONNECT"))
-
-    /**
      * issues a options request returning a flow of it's response
      *
      * @param uri endpoint url which getting appended to the baseUrl with `/`

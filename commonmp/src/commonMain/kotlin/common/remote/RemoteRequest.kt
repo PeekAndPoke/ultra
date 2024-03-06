@@ -52,13 +52,6 @@ interface RemoteRequest {
     fun delete(uri: String = "", contentType: String = "application/json", body: String? = null): Flow<RemoteResponse>
 
     /**
-     * issues a connect request returning a flow of it's response
-     *
-     * @param uri endpoint url which getting appended to the baseUrl with `/`
-     */
-    fun connect(uri: String = ""): Flow<RemoteResponse>
-
-    /**
      * issues a options request returning a flow of it's response
      *
      * @param uri endpoint url which getting appended to the baseUrl with `/`

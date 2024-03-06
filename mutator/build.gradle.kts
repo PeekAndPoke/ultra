@@ -23,6 +23,7 @@ repositories {
 dependencies {
     implementation(kotlin("reflect"))
 
+    api(project(":commonmp"))
     api(project(":meta"))
 
     kapt(Deps.google_auto_service)

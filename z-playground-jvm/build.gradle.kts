@@ -6,6 +6,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm")
     kotlin("kapt")
+
+    kotlin("plugin.serialization") version Deps.kotlinVersion
 }
 
 val GROUP: String by project
@@ -23,10 +25,19 @@ dependencies {
     implementation(Deps.kotlinx_serialization_json)
     implementation(Deps.kotlinx_coroutines_core)
 
+    implementation(Deps.ktor_client_core)
+    implementation("io.ktor:ktor-client-cio:${Deps.ktor_version}")
+    implementation("io.ktor:ktor-client-content-negotiation:${Deps.ktor_version}")
+    implementation("io.ktor:ktor-client-core:${Deps.ktor_version}")
+    implementation("io.ktor:ktor-client-json:${Deps.ktor_version}")
+    implementation("io.ktor:ktor-client-okhttp:${Deps.ktor_version}")
+
+
     // project deps
     api(project(":common"))
     api(project(":slumber"))
     api(project(":kontainer"))
+    implementation("io.ktor:ktor-client-okhttp-jvm:2.3.9")
 }
 
 kapt {

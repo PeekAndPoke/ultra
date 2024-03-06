@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.remote
 
+import io.ktor.client.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -8,10 +9,11 @@ import org.w3c.fetch.Response
 /**
  * factory method to create a [RemoteRequest]
  */
-actual fun remote(
+actual fun createRequest(
     baseUrl: String,
     requestInterceptors: List<RequestInterceptor>,
-    responseInterceptors: List<ResponseInterceptor>
+    responseInterceptors: List<ResponseInterceptor>,
+    client: HttpClient?,
 ): RemoteRequest = RemoteRequestImpl(
     baseUrl,
     requestInterceptors,

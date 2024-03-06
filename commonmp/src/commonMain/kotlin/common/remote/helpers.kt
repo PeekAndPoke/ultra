@@ -1,5 +1,15 @@
 package de.peekandpoke.ultra.common.remote
 
+
+fun createRequest(
+    config: ApiClient.Config,
+) = createRequest(
+    baseUrl = config.baseUrl,
+    requestInterceptors = config.requestInterceptors,
+    responseInterceptors = config.responseInterceptors,
+    client = config.client,
+)
+
 /**
  * Builds an uri from the given [pattern] and [params].
  */

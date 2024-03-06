@@ -46,6 +46,11 @@ object Deps {
     private const val kotlin_compiletesting_version = "1.5.0"
     const val kotlin_compiletesting = "com.github.tschuchortdev:kotlin-compile-testing:$kotlin_compiletesting_version"
 
+    // https://kotlinlang.org/docs/releases.html
+    // https://github.com/ktorio/ktor/releases
+    const val ktor_version = "2.3.9"
+    const val ktor_client_core = "io.ktor:ktor-client-core:$ktor_version"
+
     // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
     private const val kotlinpoet_version = "1.15.3"
     const val kotlinpoet = "com.squareup:kotlinpoet:$kotlinpoet_version"

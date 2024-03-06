@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.remote
 
+import io.ktor.client.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.KSerializer
@@ -19,12 +20,12 @@ abstract class ApiClient(val config: Config) {
         val baseUrl: String,
         val codec: Json,
         val requestInterceptors: List<RequestInterceptor> = emptyList(),
-        val responseInterceptors: List<ResponseInterceptor> = emptyList()
+        val responseInterceptors: List<ResponseInterceptor> = emptyList(),
+        val client: HttpClient? = null,
     )
 
     /** Gets a net instance of a [RemoteRequest] */
-    val remote
-        get(): RemoteRequest = remote(config.baseUrl, config.requestInterceptors, config.responseInterceptors)
+    val remote get(): RemoteRequest = createRequest(config)
 
     //  CALLING ENDPOINTS  /////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -32,13 +33,13 @@ abstract class ApiClient(val config: Config) {
 
     operator fun <RESPONSE> ApiEndpoint.Get.invoke(
         vararg params: Pair<String, String?>,
-        decode: Json.(String) -> RESPONSE
+        decode: Json.(String) -> RESPONSE,
     ): Flow<RESPONSE> =
         invoke(params = params.toMap(), decode = decode)
 
     operator fun <RESPONSE> ApiEndpoint.Get.invoke(
         params: Map<String, String?>,
-        decode: Json.(String) -> RESPONSE
+        decode: Json.(String) -> RESPONSE,
     ): Flow<RESPONSE> =
         remote
             .get(uri = buildUri(uri, params))
@@ -49,14 +50,14 @@ abstract class ApiClient(val config: Config) {
     operator fun <RESPONSE> ApiEndpoint.Post.invoke(
         vararg params: Pair<String, String?>,
         body: String? = null,
-        decode: Json.(String) -> RESPONSE
+        decode: Json.(String) -> RESPONSE,
     ): Flow<RESPONSE> =
         invoke(params = params.toMap(), body = body, decode = decode)
 
     operator fun <RESPONSE> ApiEndpoint.Post.invoke(
         params: Map<String, String?>,
         body: String?,
-        decode: Json.(String) -> RESPONSE
+        decode: Json.(String) -> RESPONSE,
     ): Flow<RESPONSE> =
         remote
             .post(uri = buildUri(uri, params), body = body ?: "{}")
@@ -67,14 +68,14 @@ abstract class ApiClient(val config: Config) {
     operator fun <RESPONSE> ApiEndpoint.Put.invoke(
         vararg params: Pair<String, String?>,
         body: String? = null,
-        decode: Json.(String) -> RESPONSE
+        decode: Json.(String) -> RESPONSE,
     ): Flow<RESPONSE> =
         invoke(params = params.toMap(), body = body, decode = decode)
 
     operator fun <RESPONSE> ApiEndpoint.Put.invoke(
         params: Map<String, String?>,
         body: String?,
-        decode: Json.(String) -> RESPONSE
+        decode: Json.(String) -> RESPONSE,
     ): Flow<RESPONSE> =
         remote
             .put(uri = buildUri(uri, params), body = body ?: "{}")
@@ -85,14 +86,14 @@ abstract class ApiClient(val config: Config) {
     operator fun <RESPONSE> ApiEndpoint.Delete.invoke(
         vararg params: Pair<String, String?>,
         body: String? = null,
-        decode: Json.(String) -> RESPONSE
+        decode: Json.(String) -> RESPONSE,
     ): Flow<RESPONSE> =
         invoke(params = params.toMap(), body = body, decode = decode)
 
     operator fun <RESPONSE> ApiEndpoint.Delete.invoke(
         params: Map<String, String?>,
         body: String?,
-        decode: Json.(String) -> RESPONSE
+        decode: Json.(String) -> RESPONSE,
     ): Flow<RESPONSE> =
         remote
             .delete(uri = buildUri(uri, params), body = body ?: "{}")

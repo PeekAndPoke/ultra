@@ -46,6 +46,8 @@ kotlin {
                 implementation(Deps.kotlinx_serialization_core)
                 implementation(Deps.kotlinx_serialization_json)
 
+                implementation(Deps.ktor_client_core)
+
                 // We expose kotlinx-datetime as it is needed in many cases, e.g. for TimeZone
                 api(Deps.kotlinx_datetime_common)
 
