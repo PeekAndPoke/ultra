@@ -51,6 +51,7 @@ class WeakReferenceSpec : StringSpec() {
             subject.value shouldBe something
 
             // clearing the reference
+            @Suppress("UNUSED_VALUE")
             something = null
 
             eventually(3.seconds) {

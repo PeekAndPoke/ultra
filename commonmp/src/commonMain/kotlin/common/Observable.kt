@@ -89,5 +89,5 @@ interface Observable<T> {
         }
     }
 
-    fun subscribe(block: (T) -> Unit): Unsubscribe
+    fun subscribe(block: OnChange<T>): Unsubscribe
 }
