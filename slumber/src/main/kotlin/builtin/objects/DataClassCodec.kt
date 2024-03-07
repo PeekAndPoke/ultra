@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin.objects
 
 import de.peekandpoke.ultra.common.reflection.ReifiedKType
+import de.peekandpoke.ultra.common.reflection.hasAnyAnnotationOnPropertyDefinedOnSuperTypes
 import de.peekandpoke.ultra.common.reflection.hasAnyAnnotationRecursive
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.AwakerException
@@ -28,8 +29,12 @@ class DataClassCodec(rootType: KType) : Awaker, Slumberer {
 
     private val allSlumberFields = reified.ctorFields2Types
         .plus(
-            reified.allPropertiesToTypes
-                .filter { (prop, _) -> prop.hasAnyAnnotationRecursive { it is Slumber.Field } }
+            reified.allPropertiesToTypes.filter { (prop, _) ->
+                // Include all fields for serialization that have the @Slumber.Field directly
+                prop.hasAnyAnnotationRecursive { it is Slumber.Field } ||
+                        // Also include fields that have the @Slumber.Field defined in a parent
+                        prop.hasAnyAnnotationOnPropertyDefinedOnSuperTypes(reified.cls) { it is Slumber.Field }
+            }
         )
         .distinctBy { (prop, _) -> prop }
 

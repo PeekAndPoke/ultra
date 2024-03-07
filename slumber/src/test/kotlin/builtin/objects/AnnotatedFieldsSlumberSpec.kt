@@ -2,6 +2,7 @@ package de.peekandpoke.ultra.slumber.builtin.objects
 
 import de.peekandpoke.ultra.slumber.Codec
 import de.peekandpoke.ultra.slumber.Slumber
+import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -45,30 +46,38 @@ class AnnotatedFieldsSlumberSpec : StringSpec() {
         val input: T
 
         @Slumber.Field
-        val fieldOne: T get() = input
+        val shouldBeSerialized: T
     }
 
     interface InterfaceWithFieldTwo<T> {
         val input: T
 
-        @Slumber.Field
-        val fieldTwo: T get() = input
+        val shouldNotBeSerialized: T
     }
 
     data class DataClassImplementingInterface(
         override val input: Int,
-    ) : InterfaceWithFieldOne<Int>, InterfaceWithFieldTwo<Int>
+    ) : InterfaceWithFieldOne<Int>, InterfaceWithFieldTwo<Int> {
+        override val shouldBeSerialized: Int = input
+        override val shouldNotBeSerialized: Int = input
+    }
 
     abstract class AbstractClassWithField<T> {
         abstract val input: T
 
         @Slumber.Field
-        val field: T get() = input
+        abstract val shouldBeSerialized: T
+
+        abstract val shouldNotBeSerialized: T
     }
 
     data class DataClassExtendingAbstractClass(
         override val input: Int,
-    ) : AbstractClassWithField<Int>()
+    ) : AbstractClassWithField<Int>() {
+
+        override val shouldBeSerialized: Int get() = input
+        override val shouldNotBeSerialized: Int get() = input
+    }
 
     @Slumber.Field
     annotation class CustomAnnotation
@@ -144,14 +153,13 @@ class AnnotatedFieldsSlumberSpec : StringSpec() {
         "Slumbering a data class with @Slumber.Field annotated fields in super interface must work" {
             (Codec.default.slumber(DataClassImplementingInterface(input = 10)) as Map<*, *>).let {
                 withClue("size must be correct") {
-                    it.size shouldBe 3
+                    it.size shouldBe 2
                 }
 
                 withClue("content must be correct") {
                     it shouldBe mapOf(
                         "input" to 10,
-                        "fieldOne" to 10,
-                        "fieldTwo" to 10,
+                        "shouldBeSerialized" to 10,
                     )
                 }
             }
@@ -159,15 +167,18 @@ class AnnotatedFieldsSlumberSpec : StringSpec() {
 
         "Slumbering a data class with @Slumber.Field annotated fields in super class must work" {
             (Codec.default.slumber(DataClassExtendingAbstractClass(input = 10)) as Map<*, *>).let {
-                withClue("size must be correct") {
-                    it.size shouldBe 2
-                }
+                assertSoftly {
 
-                withClue("content must be correct") {
-                    it shouldBe mapOf(
-                        "input" to 10,
-                        "field" to 10,
-                    )
+                    withClue("size must be correct") {
+                        it.size shouldBe 2
+                    }
+
+                    withClue("content must be correct") {
+                        it shouldBe mapOf(
+                            "input" to 10,
+                            "shouldBeSerialized" to 10,
+                        )
+                    }
                 }
             }
         }

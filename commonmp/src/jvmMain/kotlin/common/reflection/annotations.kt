@@ -2,6 +2,10 @@ package de.peekandpoke.ultra.common.reflection
 
 import de.peekandpoke.ultra.common.recursion.flattenTreeToSet
 import kotlin.reflect.KAnnotatedElement
+import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
+import kotlin.reflect.full.allSuperclasses
+import kotlin.reflect.full.declaredMemberProperties
 
 fun KAnnotatedElement.findAnnotationsRecursive(
     predicate: (Annotation) -> Boolean,
@@ -19,4 +23,15 @@ fun KAnnotatedElement.hasAnyAnnotationRecursive(
     predicate: (Annotation) -> Boolean,
 ): Boolean {
     return findAnnotationsRecursive(predicate).isNotEmpty()
+}
+
+fun KProperty<*>.hasAnyAnnotationOnPropertyDefinedOnSuperTypes(
+    cls: KClass<*>,
+    predicate: (Annotation) -> Boolean,
+): Boolean {
+    return cls.allSuperclasses.any { superClass ->
+        superClass.declaredMemberProperties
+            .filter { it.name == name }
+            .any { it.hasAnyAnnotationRecursive(predicate) }
+    }
 }
