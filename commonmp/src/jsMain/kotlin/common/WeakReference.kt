@@ -6,7 +6,7 @@ private external class WeakRef<T>(target: T) {
 }
 
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
-actual data class WeakReference<T> actual constructor(private val ref: T) {
+actual class WeakReference<T> actual constructor(ref: T) {
 
     private var internal: WeakRef<T>? = WeakRef(ref)
 
