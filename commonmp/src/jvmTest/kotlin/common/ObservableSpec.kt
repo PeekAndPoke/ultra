@@ -15,7 +15,7 @@ class ObservableSpec : StringSpec() {
 
         fun emit() = subs.emit(counter++)
 
-        override fun subscribe(block: OnChange<Int>): Unsubscribe = subs.subscribe(block)
+        override fun <O> observe(observer: O, block: OnChange<Int>): Unsubscribe = subs.observe(observer, block)
     }
 
     private fun createSomething() = Kronos.systemUtc.instantNow()
@@ -24,7 +24,7 @@ class ObservableSpec : StringSpec() {
         "Subscribing to an Observable must work" {
             val obs = Obs()
             val received = mutableListOf<Int>()
-            val unsub = obs.subscribe { received.add(it) }
+            val unsub = obs.observe(this) { received.add(it) }
 
             obs.emit()
 
@@ -36,7 +36,7 @@ class ObservableSpec : StringSpec() {
         "After unsubscribing no new values must be received" {
             val obs = Obs()
             val received = mutableListOf<Int>()
-            val unsub = obs.subscribe { received.add(it) }
+            val unsub = obs.observe(this) { received.add(it) }
 
             obs.emit()
             obs.emit()
@@ -52,7 +52,7 @@ class ObservableSpec : StringSpec() {
             val received = mutableListOf<Int>()
 
             @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-            var unsub: Unsubscribe? = obs.subscribe { received.add(it) }
+            var unsub: Unsubscribe? = obs.observe(this) { received.add(it) }
 
             obs.emit()
 

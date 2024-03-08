@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.playground
 
+import de.peekandpoke.ultra.common.observe
 import de.peekandpoke.ultra.playground.lib.DataClassMutator
 import de.peekandpoke.ultra.playground.lib.ListMutator
 import de.peekandpoke.ultra.playground.lib.Mutation
@@ -28,10 +29,10 @@ fun MyClass.mutate(mutation: Mutation<MyClass>): MyClass =
     mutator().apply(mutation).value
 
 fun List<MyClass>.mutator(): ListMutator<MyClass> =
-    mutator(child = { onChild -> mutator().apply { subscribe(onChild) } })
+    mutator(child = { onChild -> mutator().apply { observe(onChild) } })
 
 fun Set<MyClass>.mutator(): SetMutator<MyClass> =
-    mutator(child = { onChild -> mutator().apply { subscribe(onChild) } })
+    mutator(child = { onChild -> mutator().apply { observe(onChild) } })
 
 var Mutator<MyClass>.name
     get() = value.name
@@ -46,100 +47,104 @@ var Mutator<MyClass>.type
 
 fun main() {
 
-    dataClassExample()
+    Examples.dataClassExample()
 
-    listExample()
+    Examples.listExample()
 
-    setExample()
+    Examples.setExample()
 }
 
-private fun dataClassExample() {
+object Examples {
 
-    println("----------------------------------------------------------------------------------------")
-    println("-- Simple Data Class example")
+    fun dataClassExample() {
 
-    val myInst = MyClass("Hallo!", MyEnum.One)
+        println("----------------------------------------------------------------------------------------")
+        println("-- Simple Data Class example")
 
-    val mutator = myInst.mutator()
-    mutator.subscribe { println("Value changed: $it") }
+        val myInst = MyClass("Hallo!", MyEnum.One)
 
-    println("Is modified: ${mutator.isModified}")
-    mutator.name = "Hello World!"
-    println("Is modified: ${mutator.isModified}")
+        val mutator = myInst.mutator()
 
-    val prop = mutator::name
-    prop.set("Hello Prop!")
+        observe(mutator) { println("Value changed: $it") }
 
-    println(myInst.mutate { name = "Hallo mutate()" })
+        println("Is modified: ${mutator.isModified}")
+        mutator.name = "Hello World!"
+        println("Is modified: ${mutator.isModified}")
 
-    println()
-}
+        val prop = mutator::name
+        prop.set("Hello Prop!")
 
-private fun listExample() {
-    println("----------------------------------------------------------------------------------------")
-    println("-- List Mutator Example")
+        println(myInst.mutate { name = "Hallo mutate()" })
 
-    val value = listOf(
-        MyClass("first", MyEnum.One),
-        MyClass("second", MyEnum.One),
-    )
-
-    val mutator: ListMutator<MyClass> = value.mutator()
-    mutator.subscribe { it: List<MyClass> -> println("List changed: $it") }
-
-    mutator.forEachIndexed { idx, it ->
-        it.name = "Hello $idx!"
-        it.type = MyEnum.Two
+        println()
     }
 
-    val pos2 = mutator[1]
-    mutator.removeAt(0)
-    pos2.name = "I am so alone"
+    fun listExample() {
+        println("----------------------------------------------------------------------------------------")
+        println("-- List Mutator Example")
 
-    mutator.add(0, MyClass("Hello there!"))
+        val value = listOf(
+            MyClass("first", MyEnum.One),
+            MyClass("second", MyEnum.One),
+        )
 
-    pos2.name = "I am happy again!"
+        val mutator: ListMutator<MyClass> = value.mutator()
+        observe(mutator) { it: List<MyClass> -> println("List changed: $it") }
 
-    println(mutator.value)
+        mutator.forEachIndexed { idx, it ->
+            it.name = "Hello $idx!"
+            it.type = MyEnum.Two
+        }
 
-    println("---------------------------------------------------------------------------------------")
+        val pos2 = mutator[1]
+        mutator.removeAt(0)
+        pos2.name = "I am so alone"
 
-    mutator.modify { it.map { e -> e.copy(name = "") }.toMutableList() }
+        mutator.add(0, MyClass("Hello there!"))
 
-    mutator[0].name = "I have a new name"
+        pos2.name = "I am happy again!"
 
-    println(mutator.value)
+        println(mutator.value)
 
-    println()
-}
+        println("---------------------------------------------------------------------------------------")
 
-private fun setExample() {
-    println("----------------------------------------------------------------------------------------")
-    println("-- Set Mutator Example")
+        mutator.modify { it.map { e -> e.copy(name = "") }.toMutableList() }
 
-    val input = setOf(
-        MyClass("first", MyEnum.One),
-        MyClass("second", MyEnum.One),
-    )
+        mutator[0].name = "I have a new name"
 
-    val mutator: SetMutator<MyClass> = input.mutator()
-    mutator.subscribe { it: Set<MyClass> -> println("Set changed: $it") }
+        println(mutator.value)
 
-    mutator.forEachIndexed { idx, it ->
-        it.name = "Hello $idx!"
-        it.type = MyEnum.Two
+        println()
     }
 
-    mutator.add(MyClass("Hello there!"))
+    fun setExample() {
+        println("----------------------------------------------------------------------------------------")
+        println("-- Set Mutator Example")
 
-    println(mutator.value)
+        val input = setOf(
+            MyClass("first", MyEnum.One),
+            MyClass("second", MyEnum.One),
+        )
 
-    println("---------------------------------------------------------------------------------------")
+        val mutator: SetMutator<MyClass> = input.mutator()
+        observe(mutator) { it: Set<MyClass> -> println("Set changed: $it") }
 
-    mutator.modify { it.mapIndexed { idx, e -> e.copy(name = "Idx $idx") }.toMutableSet() }
+        mutator.forEachIndexed { idx, it ->
+            it.name = "Hello $idx!"
+            it.type = MyEnum.Two
+        }
 
-    mutator.first().name = "I have a new name"
+        mutator.add(MyClass("Hello there!"))
+
+        println(mutator.value)
+
+        println("---------------------------------------------------------------------------------------")
+
+        mutator.modify { it.mapIndexed { idx, e -> e.copy(name = "Idx $idx") }.toMutableSet() }
+
+        mutator.first().name = "I have a new name"
 //    println(mutator.value)
 
-    println()
+        println()
+    }
 }

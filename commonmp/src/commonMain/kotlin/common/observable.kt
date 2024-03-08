@@ -5,9 +5,9 @@ typealias Unsubscribe = () -> Unit
 
 interface Observable<T> {
 
-    private class Subscription<T>(
+    private class Subscription<T, O>(
         val id: Int,
-        val unsubscribe: WeakReference<Unsubscribe>,
+        val unsubscribe: WeakReference<O>,
         val subscription: OnChange<T>,
     )
 
@@ -20,29 +20,32 @@ interface Observable<T> {
         private var idCounter = 0
 
         /** The subscriptions */
-        private val subscriptions: MutableSet<Subscription<T>> = mutableSetOf()
+        private val subscriptions: MutableSet<Subscription<T, *>> = mutableSetOf()
 
         /**
          * Subscribes to the observable stream and executes the given block for each emitted item.
          */
-        override fun subscribe(block: OnChange<T>): Unsubscribe {
+        override fun <O> observe(observer: O, block: OnChange<T>): Unsubscribe {
             val id = RunSync(lock) {
                 idCounter++
             }
 
-            val unsubscribe: Unsubscribe = { unsubscribeId(id) }
-
             val subscription = Subscription(
                 id = id,
-                unsubscribe = WeakReference(unsubscribe),
+                unsubscribe = WeakReference(observer),
                 subscription = block,
             )
 
             subscriptions.add(subscription)
 
+            val unsubscribe: Unsubscribe = { unsubscribeId(id) }
+
             return unsubscribe
         }
 
+        /**
+         * Emit a new value to all observers
+         */
         fun emit(value: T) {
             cleanUp()
             subscriptions.forEach { it.subscription(value) }
@@ -89,5 +92,14 @@ interface Observable<T> {
         }
     }
 
-    fun subscribe(block: OnChange<T>): Unsubscribe
+    /**
+     * Subscribes to the observable for the given [observer] and the callback [block].
+     */
+    fun <O> observe(observer: O, block: OnChange<T>): Unsubscribe
 }
+
+interface Observer {
+    fun <T> Observable<T>.observe(block: OnChange<T>) = observe(this, block)
+}
+
+fun <O : Any, T> O.observe(observable: Observable<T>, block: OnChange<T>) = observable.observe(this, block)

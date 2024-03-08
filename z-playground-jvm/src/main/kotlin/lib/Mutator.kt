@@ -2,8 +2,9 @@ package de.peekandpoke.ultra.playground.lib
 
 import de.peekandpoke.ultra.common.GetAndSet
 import de.peekandpoke.ultra.common.Observable
+import de.peekandpoke.ultra.common.Observer
 
-interface Mutator<V> : GetAndSet<V> {
+interface Mutator<V> : GetAndSet<V>, Observer {
 
     abstract class Base<V>(
         private val initial: V,
