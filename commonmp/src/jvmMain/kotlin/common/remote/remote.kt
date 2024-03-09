@@ -69,6 +69,7 @@ class RemoteRequestImpl(
 
             val response: HttpResponse = client.request(url) {
                 this.method = method
+                this.headers.appendAll(headers.build())
 
                 contentType?.let {
                     this.contentType(ContentType.parse(contentType))
@@ -79,13 +80,15 @@ class RemoteRequestImpl(
                 }
             }
 
-            emit(
-                RemoteResponseImpl(
-                    request = this@RemoteRequestImpl,
-                    response = response,
-                    responseBody = response.bodyAsText()
-                ),
+            val result = RemoteResponseImpl(
+                request = this@RemoteRequestImpl,
+                response = response,
+                responseBody = response.bodyAsText()
             )
+
+            // TODO: call response interceptors
+
+            emit(result)
         }
     }
 
