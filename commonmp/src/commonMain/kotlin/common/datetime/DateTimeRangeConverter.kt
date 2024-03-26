@@ -13,9 +13,9 @@ class DateTimeRangeConverter(
     private val to: MpLocalDate,
 ) {
     val fromNoonToNoon: MpZonedDateTimeRange by lazy(LazyThreadSafetyMode.NONE) {
-        create(
-            from = from.atStartOfDay(timezone).plus(12, DateTimeUnit.HOUR),
-            to = to.atStartOfDay(timezone).plus(12, DateTimeUnit.HOUR),
+        fromHourToHour(
+            fromHour = 12,
+            toHour = 12,
         )
     }
 
@@ -27,9 +27,9 @@ class DateTimeRangeConverter(
     }
 
     fun fromHourToHour(fromHour: Int, toHour: Int): MpZonedDateTimeRange {
-        return create(
-            from = from.atStartOfDay(timezone).plus(fromHour, DateTimeUnit.HOUR),
-            to = to.atStartOfDay(timezone).plus(toHour, DateTimeUnit.HOUR),
+        return fromTimeToTime(
+            fromTime = MpLocalTime.of(hour = fromHour, minute = 0),
+            toTime = MpLocalTime.of(hour = toHour, minute = 0),
         )
     }
 

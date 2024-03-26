@@ -6,6 +6,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
+import kotlinx.datetime.DateTimeUnit
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
@@ -204,6 +205,56 @@ class MpLocalDateRangeSpec : StringSpec({
         zoned.to shouldBe MpZonedDateTime.parse("2021-01-02T00:00:00.000[Europe/Berlin]")
     }
 
+    "toZonedTimeRange().fromMorningToEvening - DST" {
+
+        val range = MpLocalDate.parse("2024-03-31").toClosedRange(MpLocalDate.parse("2024-10-27"))
+        val timezone = MpTimezone.of("Europe/Berlin")
+
+        val zoned = range.toZonedTimeRange(timezone).fromMorningToEvening
+
+        zoned.from shouldBe range.from.atStartOfDay(timezone)
+        zoned.from shouldBe MpZonedDateTime.parse("2024-03-31T00:00:00.000[Europe/Berlin]")
+
+        zoned.to shouldBe range.to.atStartOfDay(timezone).plus(1, DateTimeUnit.DAY)
+        zoned.to shouldBe MpZonedDateTime.parse("2024-10-28T00:00:00.000[Europe/Berlin]")
+    }
+
+    "toZonedTimeRange().fromNoonToNoon" {
+
+        val range = MpLocalDate.parse("2020-01-01").toClosedRange(MpLocalDate.parse("2021-01-02"))
+        val timezone = MpTimezone.of("Europe/Berlin")
+
+        val zoned = range.toZonedTimeRange(timezone).fromNoonToNoon
+
+        zoned.from shouldBe range.from.atStartOfDay(timezone)
+            .atTime(MpLocalTime.of(12, 0))
+
+        zoned.from shouldBe MpZonedDateTime.parse("2020-01-01T12:00:00.000[Europe/Berlin]")
+
+        zoned.to shouldBe range.to.atStartOfDay(timezone)
+            .atTime(MpLocalTime.of(12, 0))
+
+        zoned.to shouldBe MpZonedDateTime.parse("2021-01-02T12:00:00.000[Europe/Berlin]")
+    }
+
+    "toZonedTimeRange().fromNoonToNoon - DST" {
+
+        val range = MpLocalDate.parse("2024-03-31").toClosedRange(MpLocalDate.parse("2024-10-27"))
+        val timezone = MpTimezone.of("Europe/Berlin")
+
+        val zoned = range.toZonedTimeRange(timezone).fromNoonToNoon
+
+        zoned.from shouldBe range.from.atStartOfDay(timezone)
+            .atTime(MpLocalTime.of(12, 0))
+
+        zoned.from shouldBe MpZonedDateTime.parse("2024-03-31T12:00:00.000[Europe/Berlin]")
+
+        zoned.to shouldBe range.to.atStartOfDay(timezone)
+            .atTime(MpLocalTime.of(12, 0))
+
+        zoned.to shouldBe MpZonedDateTime.parse("2024-10-27T12:00:00.000[Europe/Berlin]")
+    }
+
     "toZonedTimeRange().fromHourToHour" {
 
         val range = MpLocalDate.parse("2020-01-01").toRange(MpLocalDate.parse("2021-01-02"))
@@ -214,16 +265,41 @@ class MpLocalDateRangeSpec : StringSpec({
             toHour = 11,
         )
 
-        zoned.from shouldBe range.from.atStartOfDay(timezone).plus(15.hours)
+        zoned.from shouldBe range.from.atStartOfDay(timezone)
+            .atTime(MpLocalTime.of(15, 0))
+
         zoned.from shouldBe MpZonedDateTime.parse("2020-01-01T15:00:00.000[Europe/Berlin]")
 
-        zoned.to shouldBe range.to.atStartOfDay(timezone).minus(1.days).plus(11.hours)
+        zoned.to shouldBe range.to.atStartOfDay(timezone).minus(1.days)
+            .atTime(MpLocalTime.of(11, 0))
+
         zoned.to shouldBe MpZonedDateTime.parse("2021-01-01T11:00:00.000[Europe/Berlin]")
+    }
+
+    "toZonedTimeRange().fromHourToHour - DST shift" {
+
+        val range = MpLocalDate.parse("2024-03-31").toClosedRange(MpLocalDate.parse("2024-10-31"))
+        val timezone = MpTimezone.of("Europe/Berlin")
+
+        val zoned = range.toZonedTimeRange(timezone).fromHourToHour(
+            fromHour = 15,
+            toHour = 11,
+        )
+
+        zoned.from shouldBe range.from.atStartOfDay(timezone)
+            .atTime(MpLocalTime.of(15, 0))
+
+        zoned.from shouldBe MpZonedDateTime.parse("2024-03-31T15:00:00.000[Europe/Berlin]")
+
+        zoned.to shouldBe range.to.atStartOfDay(timezone)
+            .atTime(MpLocalTime.of(11, 0))
+
+        zoned.to shouldBe MpZonedDateTime.parse("2024-10-31T11:00:00.000[Europe/Berlin]")
     }
 
     "toZonedTimeRange().fromTimeToTime" {
 
-        val range = MpLocalDate.parse("2020-01-01").toRange(MpLocalDate.parse("2021-01-02"))
+        val range = MpLocalDate.parse("2020-01-01").toClosedRange(MpLocalDate.parse("2021-01-02"))
         val timezone = MpTimezone.of("Europe/Berlin")
 
         val zoned = range.toZonedTimeRange(timezone).fromTimeToTime(
@@ -236,9 +312,32 @@ class MpLocalDateRangeSpec : StringSpec({
 
         zoned.from shouldBe MpZonedDateTime.parse("2020-01-01T01:02:03.004[Europe/Berlin]")
 
-        zoned.to shouldBe range.to.atStartOfDay(timezone).minus(1.days)
+        zoned.to shouldBe range.to.atStartOfDay(timezone)
             .plus(21.hours).plus(22.minutes).plus(23.seconds).plus(24.milliseconds)
 
-        zoned.to shouldBe MpZonedDateTime.parse("2021-01-01T21:22:23.024[Europe/Berlin]")
+        zoned.to shouldBe MpZonedDateTime.parse("2021-01-02T21:22:23.024[Europe/Berlin]")
+    }
+
+    "toZonedTimeRange().fromTimeToTime - DST shift" {
+
+        val range = MpLocalDate.parse("2024-03-31").toClosedRange(MpLocalDate.parse("2024-10-27"))
+        val timezone = MpTimezone.of("Europe/Berlin")
+
+        val zoned = range.toZonedTimeRange(timezone).fromTimeToTime(
+            fromTime = MpLocalTime.of(hour = 13, minute = 2, second = 3, milliSecond = 4),
+            toTime = MpLocalTime.of(hour = 21, minute = 22, second = 23, milliSecond = 24),
+        )
+
+        zoned.from shouldBe range.from.atStartOfDay(timezone)
+            // Notice we add 12 (13 - 1) hours to offset the DST
+            .plus(12.hours).plus(2.minutes).plus(3.seconds).plus(4.milliseconds)
+
+        zoned.from shouldBe MpZonedDateTime.parse("2024-03-31T13:02:03.004[Europe/Berlin]")
+
+        zoned.to shouldBe range.to.atStartOfDay(timezone)
+            // Notice we add 22 (21 + 1) hours to offset the DST
+            .plus(22.hours).plus(22.minutes).plus(23.seconds).plus(24.milliseconds)
+
+        zoned.to shouldBe MpZonedDateTime.parse("2024-10-27T21:22:23.024[Europe/Berlin]")
     }
 })
