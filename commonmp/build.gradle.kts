@@ -53,7 +53,7 @@ kotlin {
 
                 // TODO: Remove this dependency
                 //       It is still needed for formatting dates
-                implementation(Deps.korlibs_klock_common)
+                implementation(Deps.korlibs_time_common)
             }
         }
 
