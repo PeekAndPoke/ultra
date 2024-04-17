@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="JavaScriptLibraryMappings">
+    <excludedPredefinedLibrary name="ultra/build/js/packages_imported/Kotlin-DateTime-library-kotlinx-datetime/0.6.0-RC.2/node_modules" />
+  </component>
+</project>

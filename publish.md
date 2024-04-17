@@ -12,6 +12,12 @@ To publish to Maven local run this:
 ./gradlew clean build publishToMavenLocal -Psigning.password= -PmavenCentralPassword=
 ```
 
+To publish to Maven local and Maven:
+
+```
+./gradlew clean build publish publishToMavenLocal -Psigning.password= -PmavenCentralPassword=
+```
+
 For details like
 
 - sonatype user
