@@ -45,6 +45,7 @@ kotlin {
                 implementation(Deps.kotlinx_coroutines_core)
                 implementation(Deps.kotlinx_serialization_core)
                 implementation(Deps.kotlinx_serialization_json)
+//                implementation(Deps.kotlinx_atomicfu)
 
                 implementation(Deps.ktor_client_core)
 
@@ -65,7 +66,6 @@ kotlin {
 
         val jsMain by getting {
             dependencies {
-                implementation(Deps.kotlinx_coroutines_core_js)
                 api(Deps.Npm { polyfillFetch() })
                 api(Deps.Npm { jsJodaCore() })
                 api(Deps.Npm { jsJodaTimezone() })

@@ -25,7 +25,7 @@ dependencies {
     implementation(Deps.kotlinx_serialization_json)
     implementation(Deps.kotlinx_coroutines_core)
 
-    implementation(Deps.ktor_client_core)
+//    implementation(Deps.ktor_client_core)
     implementation("io.ktor:ktor-client-cio:${Deps.ktor_version}")
     implementation("io.ktor:ktor-client-content-negotiation:${Deps.ktor_version}")
     implementation("io.ktor:ktor-client-core:${Deps.ktor_version}")
