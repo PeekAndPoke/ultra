@@ -64,12 +64,15 @@ class RemoteRequestImpl(
         contentType: String? = null,
         body: String? = null,
     ): Flow<RemoteResponse> {
+        val remote = this
+
         return flow {
             val url = "$baseUrl/${uri.trimStart('/')}"
 
             val response: HttpResponse = client.request(url) {
-                this.method = method
-                this.headers.appendAll(headers.build())
+                val request = this
+                request.method = method
+                request.headers.appendAll(remote.headers.build())
 
                 contentType?.let {
                     this.contentType(ContentType.parse(contentType))
@@ -81,7 +84,7 @@ class RemoteRequestImpl(
             }
 
             val result = RemoteResponseImpl(
-                request = this@RemoteRequestImpl,
+                request = remote,
                 response = response,
                 responseBody = response.bodyAsText()
             )
