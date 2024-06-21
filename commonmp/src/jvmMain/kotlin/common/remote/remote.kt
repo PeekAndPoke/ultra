@@ -75,11 +75,11 @@ class RemoteRequestImpl(
                 request.headers.appendAll(remote.headers.build())
 
                 contentType?.let {
-                    this.contentType(ContentType.parse(contentType))
+                    request.contentType(ContentType.parse(contentType))
                 }
 
                 body?.let {
-                    this.setBody(body)
+                    request.setBody(body)
                 }
             }
 
