@@ -53,13 +53,13 @@ tasks {
     }
 
     create("runExamples", JavaExec::class) {
-        main = "de.peekandpoke.ultra.kontainer.examples.IndexKt"
+        mainClass.set("de.peekandpoke.ultra.kontainer.examples.IndexKt")
         classpath = sourceSets.getByName("test").runtimeClasspath
         standardInput = System.`in`
     }
 
     create("generateDocs", JavaExec::class) {
-        main = "de.peekandpoke.ultra.kontainer.examples.GenerateDocsKt"
+        mainClass.set("de.peekandpoke.ultra.kontainer.examples.GenerateDocsKt")
         classpath = sourceSets.getByName("test").runtimeClasspath
     }
 }

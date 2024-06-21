@@ -3,20 +3,23 @@
 To publish to Maven run this:
 
 ```
-./gradlew clean build publish -Psigning.password= -PmavenCentralPassword=
+./gradlew clean build publish -Psigning.password= -PmavenCentralUsername= -PmavenCentralPassword=
 ```
 
 To publish to Maven local run this:
 
 ```
-./gradlew clean build publishToMavenLocal -Psigning.password= -PmavenCentralPassword=
+./gradlew clean build publishToMavenLocal -Psigning.password= -PmavenCentralUsername= -PmavenCentralPassword=
 ```
 
 To publish to Maven local and Maven:
 
 ```
-./gradlew clean build publish publishToMavenLocal -Psigning.password= -PmavenCentralPassword=
+./gradlew clean build publish publishToMavenLocal -Psigning.password= -PmavenCentralUsername= -PmavenCentralPassword=
 ```
+
+Get the token from the nexus (mavenCentralUsername & mavenCentralPassword):
+https://s01.oss.sonatype.org/#profile;User%20Token
 
 For details like
 
