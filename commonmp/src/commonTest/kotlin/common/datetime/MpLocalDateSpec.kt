@@ -117,10 +117,28 @@ class MpLocalDateSpec : StringSpec({
             .toString() shouldBe "MpLocalDate(2022-04-02T00:00:00.000Z)"
     }
 
-    "format" {
-        MpLocalDate.of(year = 2022, month = Month.APRIL, day = 11)
-            .format("dd MMM yyyy") shouldBe "11 Apr 2022"
+//    "format(format)" {
+//        val date = MpLocalDate.of(year = 2022, month = Month.APRIL, day = 11)
+//
+//        date.format(LocalDate.Format {
+//            dayOfWeek(DayOfWeekNames.ENGLISH_FULL)
+//            chars(", ")
+//            dayOfMonth()
+//            char(' ')
+//            monthName(MonthNames.ENGLISH_FULL)
+//            char(' ')
+//            year()
+//        }) shouldBe ("Monday, 11 April 2022")
+//    }
 
+    "format(formatString)" {
+        val date = MpLocalDate.of(year = 2022, month = Month.APRIL, day = 11)
+
+        date.format("dd MMM yyyy") shouldBe "11 Apr 2022"
+
+    }
+
+    "formatDdMmmYyyy" {
         MpLocalDate.of(year = 2022, month = Month.APRIL, day = 11)
             .formatDdMmmYyyy() shouldBe "11 Apr 2022"
     }
