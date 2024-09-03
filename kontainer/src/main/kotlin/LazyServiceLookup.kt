@@ -13,8 +13,9 @@ class LazyServiceLookup<T : Any>(
     private val context: InjectionContext,
     /** Map from class to function that produces a service */
     private val map: Map<KClass<out T>, (Kontainer, InjectionContext) -> T>,
+) : Lookup<T> {
 
-    ) : Lookup<T> {
+    val classes: Set<KClass<out T>> = map.keys
 
     override fun <X : T> has(cls: KClass<X>): Boolean = map.contains(cls)
 
@@ -24,6 +25,6 @@ class LazyServiceLookup<T : Any>(
     override fun <X : T> getOrNull(cls: KClass<X>): X? = map[cls]?.invoke(kontainer, context) as X?
 
     override fun all(): List<T> {
-        return map.keys.map { get(it) }
+        return classes.map { get(it) }
     }
 }
