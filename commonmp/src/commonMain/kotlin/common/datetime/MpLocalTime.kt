@@ -39,6 +39,19 @@ data class MpLocalTime private constructor(private val milliSeconds: Long) : Com
         }
 
         /**
+         * Parses an [MpLocalTime] from the given [input].
+         *
+         * Returns null if parsing fails.
+         */
+        fun tryParse(input: String): MpLocalTime? {
+            if (input.isBlank()) {
+                return null
+            }
+
+            return parse(input)
+        }
+
+        /**
          * Creates an [MpLocalTime].
          */
         fun of(hour: Int, minute: Int, second: Int = 0, milliSecond: Int = 0): MpLocalTime {
