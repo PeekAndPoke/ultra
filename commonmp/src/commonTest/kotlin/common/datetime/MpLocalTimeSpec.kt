@@ -1,5 +1,7 @@
 package de.peekandpoke.ultra.common.datetime
 
+import de.peekandpoke.ultra.common.model.tuple
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeEqualComparingTo
@@ -11,15 +13,45 @@ import io.kotest.matchers.shouldNotBe
 @Suppress("unused")
 class MpLocalTimeSpec : StringSpec({
 
-    "parse" {
-        MpLocalTime.parse("12:00") shouldBe
-                MpLocalTime.of(hour = 12, minute = 0)
+    "parsing" {
+        listOf(
+            // working
+            tuple("12:00", MpLocalTime.of(hour = 12, minute = 0, second = 0)),
+            tuple("12:13:14", MpLocalTime.of(hour = 12, minute = 13, second = 14)),
+            tuple("12:13:14.0", MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 0)),
+            tuple("12:13:14.00", MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 0)),
+            tuple("12:13:14.000", MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 0)),
+            tuple("12:13:14.01", MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 10)),
+            tuple("12:13:14.010", MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 10)),
+            tuple("12:13:14.001", MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 1)),
+            tuple("12:13:14.5", MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 500)),
+            tuple("12:13:14.56", MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 560)),
+            tuple("12:13:14.567", MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 567)),
+            // failing
+            tuple("", null),
+            tuple(" ", null),
+            tuple(":", null),
+            tuple("12:", null),
+            tuple(":40", null),
+            tuple("-1:40", null),
+            tuple("25:40", null),
+            tuple("12:-1", null),
+            tuple("12:60", null),
+            tuple("12:12:-1", null),
+            tuple("12:12:60", null),
+            tuple("12:12:60.1000", null),
+        ).forEach { (input, expected) ->
 
-        MpLocalTime.parse("12:13:14") shouldBe
-                MpLocalTime.of(hour = 12, minute = 13, second = 14)
+            withClue("Parsing $input must result in $expected") {
+                MpLocalTime.tryParse(input) shouldBe expected
 
-        MpLocalTime.parse("12:13:14.123") shouldBe
-                MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 123)
+                if (expected == null) {
+                    shouldThrow<IllegalArgumentException> {
+                        MpLocalTime.parse(input)
+                    }
+                }
+            }
+        }
     }
 
     "Creation - ofMilliSeconds()" {

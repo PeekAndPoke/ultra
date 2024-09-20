@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.common.datetime
 
 import de.peekandpoke.ultra.common.ComparableTo
+import de.peekandpoke.ultra.common.model.tuple
 import korlibs.time.Time
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
@@ -19,24 +20,57 @@ data class MpLocalTime private constructor(
         const val MillisPerHour = 60 * MillisPerMinute
         const val MillisPerDay = 24 * MillisPerHour
 
+        fun tryParse(input: String): MpLocalTime? {
+            return try {
+                parse(input)
+            } catch (e: IllegalArgumentException) {
+                null
+            }
+        }
+
         /**
          * Parses the given input into an [MpLocalTime].
+         *
+         * @throws IllegalArgumentException
          */
         fun parse(input: String): MpLocalTime {
             val parts = input.split(":")
 
-            val hour = parts.getOrNull(0)?.toIntOrNull() ?: 0
-            val minute = parts.getOrNull(1)?.toIntOrNull() ?: 0
+            fun ex(): Nothing {
+                throw IllegalArgumentException("Could not parse MpLocalDate from '$input'")
+            }
 
-            val lastPart = (parts.getOrNull(2) ?: "").split(".")
+            if (parts.size < 2 || parts.size > 3) {
+                ex()
+            }
 
-            val second = lastPart.getOrNull(0)?.toIntOrNull() ?: 0
-            val millis = lastPart.getOrNull(1)?.toIntOrNull() ?: 0
+            val hour = parts[0].toIntOrNull()?.takeIf { it in 0..24 } ?: ex()
+
+            val minute = parts[1].toIntOrNull()?.takeIf { it in 0..59 } ?: ex()
+
+            val (seconds: Int, millis: Int) = when (val lastPart = parts.getOrNull(2)) {
+                null -> tuple(0, 0)
+                else -> {
+                    val split = lastPart.split(".")
+
+                    val seconds = split[0].toIntOrNull()?.takeIf { it in 0..59 } ?: ex()
+
+                    val millis = when (val millisPart = split.getOrNull(1)) {
+                        null -> 0
+                        else -> {
+                            millisPart.padEnd(3, '0').toIntOrNull()?.takeIf { it in 0..999 }
+                                ?: ex()
+                        }
+                    }
+
+                    tuple(seconds, millis)
+                }
+            }
 
             return of(
                 hour = hour,
                 minute = minute,
-                second = second,
+                second = seconds,
                 milliSecond = millis,
             )
         }
