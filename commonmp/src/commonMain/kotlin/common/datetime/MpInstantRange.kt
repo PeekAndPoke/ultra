@@ -39,7 +39,7 @@ data class MpInstantRange(
     /**
      * The [Duration] of the range.
      */
-    val duration: Duration get() = to - from
+    val duration: Duration by lazy { to - from }
 
     /**
      * The range has a start when [from] is after [MpInstant.Genesis].

@@ -30,14 +30,11 @@ data class MpLocalTimeSlot(
         }
     }
 
-    val isValid: Boolean
-        get() = duration > Duration.ZERO
+    val duration: Duration by lazy { to - from }
 
-    val isNotValid: Boolean
-        get() = !isValid
+    val isValid: Boolean get() = duration > Duration.ZERO
 
-    val duration: Duration
-        get() = to - from
+    val isNotValid: Boolean get() = !isValid
 
     /**
      * Returns 'true' when this timeslot touches or intersects the [other] time slot.

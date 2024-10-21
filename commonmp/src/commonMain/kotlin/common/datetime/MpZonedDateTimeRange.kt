@@ -51,7 +51,7 @@ data class MpZonedDateTimeRange(
     }
 
     // TODO: Test
-    val duration: Duration get() = to - from
+    val duration: Duration by lazy { to - from }
 
     // TODO: Test
     val hasStart: Boolean get() = from > MpZonedDateTime.Genesis
