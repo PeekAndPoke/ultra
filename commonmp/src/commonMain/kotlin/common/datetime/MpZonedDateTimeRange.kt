@@ -64,6 +64,11 @@ data class MpZonedDateTimeRange(
             true -> MpZonedDateTimeRange(from = from, to = to).takeIf { it.isValid }
             false -> null
         }
+
+        fun asDateRange() = MpClosedLocalDateRange.Partial(
+            from = from?.toLocalDate(),
+            to = to?.toLocalDate(),
+        )
     }
 
     // TODO: Test

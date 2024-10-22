@@ -50,6 +50,11 @@ data class MpInstantRange(
             true -> MpInstantRange(from = from, to = to).takeIf { it.isValid }
             false -> null
         }
+
+        fun asDateRange(timezone: MpTimezone) = MpClosedLocalDateRange.Partial(
+            from = from?.toLocalDate(timezone),
+            to = to?.toLocalDate(timezone),
+        )
     }
 
     /**
