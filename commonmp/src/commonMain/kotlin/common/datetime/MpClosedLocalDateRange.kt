@@ -36,6 +36,7 @@ data class MpClosedLocalDateRange(
             MpClosedLocalDateRange(from = from, to = forever.to)
     }
 
+    // TODO: test me
     @Serializable
     data class Partial(
         val from: MpLocalDate?,

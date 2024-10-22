@@ -50,6 +50,22 @@ data class MpZonedDateTimeRange(
         fun endingAt(to: MpZonedDateTime): MpZonedDateTimeRange = MpZonedDateTimeRange(forever.from, to)
     }
 
+    // TODO: test me
+    @Serializable
+    data class Partial(
+        val from: MpZonedDateTime?,
+        val to: MpZonedDateTime?,
+    ) {
+        companion object {
+            val empty = Partial(from = null, to = null)
+        }
+
+        fun asValidRange(): MpZonedDateTimeRange? = when (from != null && to != null) {
+            true -> MpZonedDateTimeRange(from = from, to = to).takeIf { it.isValid }
+            false -> null
+        }
+    }
+
     // TODO: Test
     val duration: Duration by lazy { to - from }
 
@@ -74,6 +90,14 @@ data class MpZonedDateTimeRange(
     override operator fun compareTo(other: MpTemporalPeriod): Int {
         return to.compareTo(from.plus(other))
     }
+
+    /**
+     * Converts to a [MpClosedLocalDateRange]
+     */
+    fun asDateRange(): MpClosedLocalDateRange = MpClosedLocalDateRange(
+        from = from.toLocalDate(),
+        to = to.toLocalDate(),
+    )
 
     /**
      * Converts to the given [timezone].

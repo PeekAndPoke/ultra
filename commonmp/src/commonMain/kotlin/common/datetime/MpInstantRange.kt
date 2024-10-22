@@ -36,6 +36,22 @@ data class MpInstantRange(
         fun endingAt(to: MpInstant): MpInstantRange = MpInstantRange(forever.from, to)
     }
 
+    // TODO: test me
+    @Serializable
+    data class Partial(
+        val from: MpInstant?,
+        val to: MpInstant?,
+    ) {
+        companion object {
+            val empty = Partial(from = null, to = null)
+        }
+
+        fun asValidRange(): MpInstantRange? = when (from != null && to != null) {
+            true -> MpInstantRange(from = from, to = to).takeIf { it.isValid }
+            false -> null
+        }
+    }
+
     /**
      * The [Duration] of the range.
      */
