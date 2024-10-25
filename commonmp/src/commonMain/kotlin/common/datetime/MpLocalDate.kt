@@ -277,8 +277,9 @@ data class MpLocalDate internal constructor(
     /**
      * Creates a [MpClosedLocalDateRange] with this as the start and the given [period]
      */
+    // TODO: test me
     fun toClosedRange(period: MpDatePeriod): MpClosedLocalDateRange {
-        return MpClosedLocalDateRange(from = this, to = this.plus(period))
+        return MpClosedLocalDateRange(from = this, to = this.plus(period).minusDays(1))
     }
 
     /**
