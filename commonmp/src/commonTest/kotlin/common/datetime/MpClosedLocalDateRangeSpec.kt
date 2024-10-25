@@ -28,7 +28,7 @@ class MpClosedLocalDateRangeSpec : StringSpec({
     "compareTo(period: MpTemporalPeriod) - 1 day" {
 
         val subject: MpClosedLocalDateRange =
-            MpLocalDate.parse("2022-06-15").toClosedRange(MpDatePeriod(days = 1))
+            MpLocalDate.parse("2022-06-15").toClosedRange(MpDatePeriod(days = 2))
 
         withClue("The number of whole days must be correct") {
             subject.numberOfDays shouldBe 2
@@ -69,7 +69,7 @@ class MpClosedLocalDateRangeSpec : StringSpec({
 
         fun range(days: Int) = MpLocalDate.parse("2022-06-15").toClosedRange(MpDatePeriod(days = days))
 
-        val twoDaysPeriod = MpDatePeriod(days = 2)
+        val twoDaysPeriod = MpDatePeriod(days = 1)
 
         Operators.Comparison.LT(range(0), twoDaysPeriod) shouldBe true
         Operators.Comparison.LT(range(1), twoDaysPeriod) shouldBe false
@@ -96,7 +96,7 @@ class MpClosedLocalDateRangeSpec : StringSpec({
         MpLocalDate.parse("2022-03-04").let { from ->
             val period = MpDatePeriod(years = 1, months = 2, days = 3)
 
-            from.toClosedRange(period) shouldBe MpClosedLocalDateRange(from, from.plus(period))
+            from.toClosedRange(period) shouldBe MpClosedLocalDateRange(from, from.plus(period).minusDays(1))
         }
     }
 
@@ -139,7 +139,7 @@ class MpClosedLocalDateRangeSpec : StringSpec({
             val range = start.toClosedRange(input)
 
             withClue("${range.from.formatDdMmmYyyy()}-${range.to.formatDdMmmYyyy()} must have period $input") {
-                range.asDatePeriod shouldBe input.copy(days = input.days + 1)
+                range.asDatePeriod shouldBe input
             }
         }
     }
