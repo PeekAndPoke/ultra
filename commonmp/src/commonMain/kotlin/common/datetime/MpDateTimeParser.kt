@@ -6,7 +6,7 @@ import kotlinx.datetime.TimeZone
 object MpDateTimeParser {
 
     @Suppress("RegExpRedundantEscape")
-    private val isoWithTimezone = "^([0-9-]+)T([0-9:\\.]+)(Z|\\[.+\\])?$".toRegex()
+    private val isoWithTimezone = "^([+-]?[0-9-]+)T([0-9:\\.]+)(Z|\\[.+\\])?$".toRegex()
 
     fun parseInstant(isoString: String): MpInstant {
 

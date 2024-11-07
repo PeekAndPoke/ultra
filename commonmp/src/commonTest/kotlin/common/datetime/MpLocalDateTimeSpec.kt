@@ -54,6 +54,15 @@ class MpLocalDateTimeSpec : StringSpec({
     "toIsoString" {
         MpLocalDateTime.parse("2022-04-02T12:00")
             .toIsoString() shouldBe "2022-04-02T12:00:00.000Z"
+
+        MpLocalDateTime.parse("2022-04-02T12:00:00")
+            .toIsoString() shouldBe "2022-04-02T12:00:00.000Z"
+
+        MpLocalDateTime.parse("2022-04-02T12:00:00.000Z")
+            .toIsoString() shouldBe "2022-04-02T12:00:00.000Z"
+
+        MpLocalDateTime.parse("2022-04-02T12:00:00.000Z")
+            .toIsoString() shouldBe "2022-04-02T12:00:00.000Z"
     }
 
     "parse - toIsoString - round trip" {
@@ -62,6 +71,66 @@ class MpLocalDateTimeSpec : StringSpec({
         val result = MpLocalDateTime.parse(start.toIsoString())
 
         start shouldBe result
+    }
+
+    "parse - Genesis" {
+        run {
+            val start = MpLocalDateTime.Genesis
+            val result = MpLocalDateTime.parse(start.toIsoString())
+
+            start shouldBe result
+            result shouldBe MpLocalDateTime.Genesis
+        }
+
+        run {
+            val start = MpLocalDateTime.parse("-10000-01-01T00:00:00.000Z")
+            val result = MpLocalDateTime.parse(start.toIsoString())
+
+            start shouldBe result
+            result shouldBe MpLocalDateTime.Genesis
+        }
+
+        run {
+            val start = MpLocalDateTime.parse("-10000-01-01T00:00:00Z")
+            val result = MpLocalDateTime.parse(start.toIsoString())
+
+            start shouldBe result
+            result shouldBe MpLocalDateTime.Genesis
+        }
+
+        run {
+            val start = MpLocalDateTime.parse("-10000-01-01T00:00:00")
+            val result = MpLocalDateTime.parse(start.toIsoString())
+
+            start shouldBe result
+            result shouldBe MpLocalDateTime.Genesis
+        }
+    }
+
+    "parse - Doomsday" {
+        run {
+            val start = MpLocalDateTime.Doomsday
+            val result = MpLocalDateTime.parse(start.toIsoString())
+
+            start shouldBe result
+            result shouldBe MpLocalDateTime.Doomsday
+        }
+
+        run {
+            val start = MpLocalDateTime.parse("+10000-01-01T00:00:00")
+            val result = MpLocalDateTime.parse(start.toIsoString())
+
+            start shouldBe result
+            result shouldBe MpLocalDateTime.Doomsday
+        }
+
+        run {
+            val start = MpLocalDateTime.parse("+10000-01-01T00:00:00.000Z")
+            val result = MpLocalDateTime.parse(start.toIsoString())
+
+            start shouldBe result
+            result shouldBe MpLocalDateTime.Doomsday
+        }
     }
 
     "parse - should throw on invalid input" {

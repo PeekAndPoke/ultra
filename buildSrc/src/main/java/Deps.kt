@@ -47,7 +47,7 @@ object Deps {
         "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_version"
 
     // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-datetime
-    private const val kotlinx_datetime_version = "0.6.0"
+    private const val kotlinx_datetime_version = "0.6.1"
     const val kotlinx_datetime_common = "org.jetbrains.kotlinx:kotlinx-datetime:$kotlinx_datetime_version"
 
 //    // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/atomicfu
