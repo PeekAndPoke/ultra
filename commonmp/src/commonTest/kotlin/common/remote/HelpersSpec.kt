@@ -50,5 +50,15 @@ class HelpersSpec : StringSpec({
                 "p2" to "_/_",
             ) shouldBe "/uri/_%26_?p2=_%2F_"
         }
+
+        withClue("With builder - number, string and raw parameters") {
+            buildUri("/uri/{int}/{str}/{raw}") {
+                set("int", 100)
+                set("str", "abc")
+                setRaw("raw", "2024-11-01T12:00:00.00Z")
+                set("extra1", "e1")
+                set("extra2", "e2")
+            } shouldBe "/uri/100/abc/2024-11-01T12:00:00.00Z?extra1=e1&extra2=e2"
+        }
     }
 })
