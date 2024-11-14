@@ -62,11 +62,16 @@ val LocalDateTime.mp: MpLocalDateTime
     }
 
 /**
+ * Converts a [java.time.OffsetDateTime] into an [MpInstant]
+ */
+// TODO: test me
+val OffsetDateTime.mp get(): MpInstant = toInstant().mp
+
+/**
  * Converts a [java.time.OffsetDateTime] into an [MpZonedDateTime]
  */
 // TODO: test me
-fun OffsetDateTime.mp(zone: MpTimezone): MpZonedDateTime =
-    MpZonedDateTime.of(toLocalDateTime().mp, zone)
+fun OffsetDateTime.mp(zone: MpTimezone): MpZonedDateTime = mp.atZone(zone)
 
 /**
  * Converts an [MpLocalDate] into a [java.time.LocalDate]
