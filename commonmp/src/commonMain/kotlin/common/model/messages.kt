@@ -37,13 +37,21 @@ data class MessageCollection(
     class Builder @PublishedApi internal constructor(var title: String = "") {
 
         private val messages: MutableList<Message> = mutableListOf()
+        private val children: MutableList<Messages> = mutableListOf()
 
         @PublishedApi
         internal fun build() = Messages(
             title = title,
-            messages = messages,
-            children = emptyList(),
+            messages = messages.toList(),
+            children = children.toList(),
         )
+
+        /**
+         * Add a child collection
+         */
+        fun addChild(child: Messages) {
+            children.add(child)
+        }
 
         /**
          * Creates a copy by adding the given [message]
