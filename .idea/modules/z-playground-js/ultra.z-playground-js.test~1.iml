@@ -8,7 +8,7 @@
           <externalSystemTestTask>browserTest|:z-playground-js|js|js</externalSystemTestTask>
         </externalSystemTestTasks>
         <compilerSettings>
-          <option name="additionalArguments" value="-Xir-module-name=de.peekandpoke.ultra:z-playground-js_test -Xir-only -Xir-per-module-output-name=ultra-z-playground-js-test -Xir-produce-klib-dir -main call" />
+          <option name="additionalArguments" value="-Xir-module-name=de.peekandpoke.ultra:z-playground-js_test -Xir-per-module-output-name=ultra-z-playground-js-test -Xir-produce-klib-dir -main call" />
         </compilerSettings>
         <compilerArguments>
           <flagArguments>

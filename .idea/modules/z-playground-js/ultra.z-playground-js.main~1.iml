@@ -5,7 +5,7 @@
       <configuration version="5" platform="JavaScript " allPlatforms="JS []" useProjectSettings="false" isTestModule="false" externalProjectId=":z-playground-js" isHmppProject="true">
         <newMppModelJpsModuleKind>COMPILATION_AND_SOURCE_SET_HOLDER</newMppModelJpsModuleKind>
         <compilerSettings>
-          <option name="additionalArguments" value="-Xir-module-name=de.peekandpoke.ultra:z-playground-js -Xir-only -Xir-per-module-output-name=ultra-z-playground-js -Xir-produce-klib-dir -main call" />
+          <option name="additionalArguments" value="-Xir-module-name=de.peekandpoke.ultra:z-playground-js -Xir-per-module-output-name=ultra-z-playground-js -Xir-produce-klib-dir -main call" />
         </compilerSettings>
         <compilerArguments>
           <flagArguments>
