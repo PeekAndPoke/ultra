@@ -3,7 +3,7 @@ package de.peekandpoke.ultra.common.datetime
 import kotlinx.datetime.TimeZone
 import kotlinx.serialization.Serializable
 
-@Suppress("DataClassPrivateConstructor")
+@ConsistentCopyVisibility
 @Serializable(with = MpTimezoneSerializer::class)
 data class MpTimezone private constructor(val id: String) {
     companion object {

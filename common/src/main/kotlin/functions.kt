@@ -9,13 +9,13 @@ import kotlin.reflect.jvm.reflect
  *
  * Notice: the first parameter has index 0
  */
-@Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
 @OptIn(ExperimentalReflectionOnLambdas::class)
 fun <R, T : Function<R>> T.nthParamName(n: Int): String {
 
     // Getting the parameters is quite expensive, so we cache it
     return NthParamNameCache.getOrPut(Pair(this::class, n)) {
-        val params = this.reflect()?.parameters
+        val reflected = this.reflect()
+        val params = reflected?.parameters
 
         params?.get(n)?.name ?: "param$n"
     }
@@ -28,4 +28,4 @@ fun <R, T : Function<R>> T.nthParamName(n: Int): String {
  *
  * Used by [nthParamName]
  */
-internal val NthParamNameCache = mutableMapOf<Pair<KClass<*>, Int>, String>()
+private val NthParamNameCache = mutableMapOf<Pair<KClass<*>, Int>, String>()

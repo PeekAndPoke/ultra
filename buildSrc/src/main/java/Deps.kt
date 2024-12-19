@@ -10,7 +10,7 @@ object Deps {
     }
 
     // Kotlin ////////////////////////////////////////////////////////////////////////////////////
-    const val kotlinVersion = "1.9.21"
+    const val kotlinVersion = "2.0.21"
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     // JVM ///////////////////////////////////////////////////////////////////////////////////////
@@ -20,19 +20,19 @@ object Deps {
     // Dokka /////////////////////////////////////////////////////////////////////////////////////
     // https://mvnrepository.com/artifact/org.jetbrains.dokka/dokka-gradle-plugin
     // Dokka gradle plugin org.jetbrains.dokka
-    const val dokkaVersion = "1.9.20" // kotlinVersion
+    const val dokkaVersion = "2.0.0" // kotlinVersion
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     // Publishing ////////////////////////////////////////////////////////////////////////////////
     // https://search.maven.org/artifact/com.vanniktech/gradle-maven-publish-plugin
-    const val mavenPublishVersion = "0.29.0"
+    const val mavenPublishVersion = "0.30.0"
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     // KOTLIN - DEPS ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     // https://kotlinlang.org/docs/releases.html#release-details
     // https://github.com/Kotlin/kotlinx.coroutines/releases
-    private const val kotlinx_coroutines_version = "1.8.0"
+    private const val kotlinx_coroutines_version = "1.9.0"
     const val kotlinx_coroutines_core =
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version"
     const val kotlinx_coroutines_core_js =
@@ -40,7 +40,7 @@ object Deps {
 
     // https://kotlinlang.org/docs/releases.html#release-details
     // https://github.com/Kotlin/kotlinx.serialization/releases
-    private const val kotlinx_serialization_version = "1.6.2"
+    private const val kotlinx_serialization_version = "1.7.3"
     const val kotlinx_serialization_core =
         "org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version"
     const val kotlinx_serialization_json =
@@ -56,20 +56,20 @@ object Deps {
 
     // https://kotlinlang.org/docs/releases.html
     // https://github.com/ktorio/ktor/releases
-    const val ktor_version = "2.3.10"
+    const val ktor_version = "3.0.2"
     const val ktor_client_core = "io.ktor:ktor-client-core:$ktor_version"
 
     // https://mvnrepository.com/artifact/com.github.tschuchortdev/kotlin-compile-testing
-    private const val kotlin_compiletesting_version = "1.5.0"
+    private const val kotlin_compiletesting_version = "1.6.0"
     const val kotlin_compiletesting = "com.github.tschuchortdev:kotlin-compile-testing:$kotlin_compiletesting_version"
 
     // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
-    private const val kotlinpoet_version = "1.16.0"
+    private const val kotlinpoet_version = "2.0.0"
     const val kotlinpoet = "com.squareup:kotlinpoet:$kotlinpoet_version"
 
-    // https://mvnrepository.com/artifact/com.soywiz.korge/korlibs-time
-    private const val korlibs_time_version = "5.2.0"
-    const val korlibs_time_common = "com.soywiz.korge:korlibs-time:$korlibs_time_version"
+    // https://mvnrepository.com/artifact/com.soywiz/korlibs-time
+    private const val korlibs_time_version = "6.0.0"
+    const val korlibs_time_common = "com.soywiz:korlibs-time:$korlibs_time_version"
 
     // JAVA - DEPS /////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -79,7 +79,7 @@ object Deps {
     const val auth0_java_jwt = "com.auth0:java-jwt:$auth0_java_jwt_version"
 
     // https://search.maven.org/artifact/io.github.java-diff-utils/java-diff-utils
-    private const val diffutils_version = "4.12"
+    private const val diffutils_version = "4.15"
     const val diffutils = "io.github.java-diff-utils:java-diff-utils:$diffutils_version"
 
     // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
@@ -92,7 +92,7 @@ object Deps {
     const val classindex = "org.atteo.classindex:classindex:$classindex_version"
 
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-    private const val slf4j_version = "2.0.12"
+    private const val slf4j_version = "2.0.16"
     const val slf4j_api = "org.slf4j:slf4j-api:$slf4j_version"
 
     // // NPM dependencies /////////////////////////////////////////////////////////////////////////
@@ -106,10 +106,10 @@ object Deps {
         fun KotlinDependencyHandler.polyfillFetch() = npm("whatwg-fetch", "3.6.20")
 
         // https://www.npmjs.com/package/@js-joda/core
-        fun KotlinDependencyHandler.jsJodaCore() = npm("@js-joda/core", "5.6.2")
+        fun KotlinDependencyHandler.jsJodaCore() = npm("@js-joda/core", "5.6.3")
 
         // https://www.npmjs.com/package/@js-joda/timezone
-        fun KotlinDependencyHandler.jsJodaTimezone() = npm("@js-joda/timezone", "2.18.3")
+        fun KotlinDependencyHandler.jsJodaTimezone() = npm("@js-joda/timezone", "2.21.1")
     }
 
     // // Test dependencies ////////////////////////////////////////////////////////////////////////
@@ -121,13 +121,16 @@ object Deps {
         }
 
         // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-        const val logback_version = "1.5.3"
+        const val logback_version = "1.5.12"
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
+        // https://plugins.gradle.org/plugin/io.kotest.multiplatform
+        const val kotest_plugin_version = "5.9.1"
+
+        //        const val kotest_plugin_version = "6.0.0.M1"
         // https://mvnrepository.com/artifact/io.kotest/kotest-common
-        const val kotest_plugin_version = "5.8.1"
-        const val kotest_version = "5.8.1"
-//        const val kotest_version = "5.9.0.1440-SNAPSHOT"
+        const val kotest_version = "5.9.1"
+//        const val kotest_version = "6.0.0.M1"
 
         const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"
         const val kotest_framework_api = "io.kotest:kotest-framework-api:$kotest_version"

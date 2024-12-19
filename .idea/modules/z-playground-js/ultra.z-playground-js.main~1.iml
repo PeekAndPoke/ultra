@@ -14,17 +14,17 @@
             <flagArg name="sourceMap" arg="true" />
           </flagArguments>
           <stringArguments>
-            <stringArg name="moduleKind" arg="umd" />
+            <stringArg name="moduleKind" arg="plain" />
             <stringArg name="moduleName" arg="z-playground-js" />
             <stringArg name="outputDir" arg="$MODULE_DIR$/../../../z-playground-js/build/classes/kotlin/main" />
             <stringArg name="sourceMapEmbedSources" arg="never" />
-            <stringArg name="target" arg="v5" />
-            <stringArg name="apiVersion" arg="1.9" />
-            <stringArg name="languageVersion" arg="1.9" />
+            <stringArg name="target" arg="es5" />
+            <stringArg name="apiVersion" arg="2.0" />
+            <stringArg name="languageVersion" arg="2.0" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
+              <args>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-serialization-compiler-plugin-embeddable/2.0.21/f921e430f2ca63ead1c5640ada25411d06618bfb/kotlin-serialization-compiler-plugin-embeddable-2.0.21.jar</args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
           </arrayArguments>

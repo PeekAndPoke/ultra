@@ -42,9 +42,9 @@ class CollectionsSpec : StringSpec({
 
         assertSoftly {
 
-            listOf<Any>().containsAny(arrayOf()) shouldBe false
+            listOf<Any>().containsAny(arrayOf<Any>()) shouldBe false
             listOf<Any>().containsAny(arrayOf(1)) shouldBe false
-            listOf<Any>(1).containsAny(arrayOf()) shouldBe false
+            listOf<Any>(1).containsAny(arrayOf<Any>()) shouldBe false
             listOf<Any>(1).containsAny(arrayOf(2, 3)) shouldBe false
 
             listOf<Any>(1).containsAny(arrayOf(1)) shouldBe true
@@ -58,9 +58,9 @@ class CollectionsSpec : StringSpec({
 
         assertSoftly {
 
-            listOf<Any>().containsNone(arrayOf()) shouldBe true
+            listOf<Any>().containsNone(arrayOf<Any>()) shouldBe true
             listOf<Any>().containsNone(arrayOf(1)) shouldBe true
-            listOf<Any>(1).containsNone(arrayOf()) shouldBe true
+            listOf<Any>(1).containsNone(arrayOf<Any>()) shouldBe true
             listOf<Any>(1).containsNone(arrayOf(2, 3)) shouldBe true
 
             listOf<Any>(1).containsNone(arrayOf(1)) shouldBe false

@@ -87,6 +87,7 @@ interface ParameterProvider {
     /**
      * Provider for configuration values
      */
+    @ConsistentCopyVisibility
     data class ForConfigValue internal constructor(
         override val parameter: KParameter,
     ) : ParameterProvider {
@@ -219,7 +220,7 @@ interface ParameterProvider {
                     // When there is more than one candidate we cannot distinctly satisfy the dependency
                     else -> listOf(
                         "Parameter '$paramName' is ambiguous. The following services collide: " +
-                                it.map { c -> c.qualifiedName }.joinToString(", ")
+                                it.joinToString(", ") { c -> c.qualifiedName ?: "N/A" }
                     )
                 }
             }
@@ -229,6 +230,7 @@ interface ParameterProvider {
     /**
      * Provider for list of services
      */
+    @ConsistentCopyVisibility
     data class ForListOfServices internal constructor(
         override val parameter: KParameter,
     ) : ParameterProvider {
@@ -266,6 +268,7 @@ interface ParameterProvider {
     /**
      * Provider for a lookup of services
      */
+    @ConsistentCopyVisibility
     data class ForLookupOfServices internal constructor(
         override val parameter: KParameter,
     ) : ParameterProvider {
@@ -400,7 +403,7 @@ interface ParameterProvider {
                     // When there is more than one candidate we cannot distinctly satisfy the dependency
                     else -> listOf(
                         "Parameter '$paramName' is ambiguous. The following services collide: " +
-                                it.map { c -> c.qualifiedName }.joinToString(", ")
+                                it.joinToString(", ") { c -> c.qualifiedName ?: "N/A" }
                     )
                 }
             }
@@ -410,6 +413,7 @@ interface ParameterProvider {
     /**
      * Fallback that always produces an error
      */
+    @ConsistentCopyVisibility
     data class UnknownInjection internal constructor(
         override val parameter: KParameter,
     ) : ParameterProvider {

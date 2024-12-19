@@ -10,6 +10,7 @@ class TypedKey<T>(val name: String = "") {
 /**
  * Map of [TypedKey] to values
  */
+@ConsistentCopyVisibility
 data class TypedAttributes internal constructor(val entries: Map<TypedKey<*>, Any?>) {
 
     companion object {
