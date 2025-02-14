@@ -1,6 +1,8 @@
 package de.peekandpoke.ultra.common
 
 import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
+import kotlin.reflect.KParameter
 import kotlin.reflect.jvm.ExperimentalReflectionOnLambdas
 import kotlin.reflect.jvm.reflect
 
@@ -14,10 +16,12 @@ fun <R, T : Function<R>> T.nthParamName(n: Int): String {
 
     // Getting the parameters is quite expensive, so we cache it
     return NthParamNameCache.getOrPut(Pair(this::class, n)) {
-        val reflected = this.reflect()
-        val params = reflected?.parameters
+        val params = when (this) {
+            is KFunction<*> -> parameters
+            else -> reflect()?.parameters
+        }?.filter { it.kind == KParameter.Kind.VALUE }
 
-        params?.get(n)?.name ?: "p${n + 1}"
+        params?.getOrNull(n)?.name ?: "p${n + 1}"
     }
 }
 
