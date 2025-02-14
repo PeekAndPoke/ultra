@@ -9,6 +9,8 @@
 dataSources.ids
 datasources.xml
 
+.kotlin
+
 !buildSrc
 .gradle
 **/build/
