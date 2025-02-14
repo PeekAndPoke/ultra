@@ -42,7 +42,6 @@ Singleton services are created only once. They are shared across all kontainer i
 are created from the same kontainer blueprint.
 
 Services can be retrieved by:
-
 1. kontainer.get(...)
 2. kontainer.use(...)
 
@@ -78,9 +77,7 @@ println(
     "Kontainer.get() says: ${kontainer.get(Greeter::class).sayHello()}"
 )
 ```
-
 Will output:
-
 ```
 Kontainer.use() says: Hello you!
 Kontainer.get() says: Hello you!
@@ -115,9 +112,7 @@ kontainer.use(Greeter::class) {
     println("Kontainer.use() says: ${sayHello()}")
 }
 ```
-
 Will output:
-
 ```
 Kontainer.use() says: Hello you!
 ```
@@ -151,9 +146,7 @@ kontainer.use(Greeter::class) {
     println("Kontainer.use() says: ${sayHello()}")
 }
 ```
-
 Will output:
-
 ```
 Kontainer.use() says: Hello you!
 ```
@@ -184,9 +177,7 @@ kontainer.use(Greeter::class) {
     println("Kontainer.use() says: ${sayHello()}")
 }
 ```
-
 Will output:
-
 ```
 Kontainer.use() says: Hello you!
 ```
@@ -196,7 +187,6 @@ Kontainer.use() says: Hello you!
 This example shows how to hide the concrete implementation of a service.
 
 The same mechanism is available for all types of service registration:
-
 - singleton
 - dynamic
 - prototype
@@ -236,9 +226,7 @@ try {
     println(e)
 }
 ```
-
 Will output:
-
 ```
 It says: Hello you!
 de.peekandpoke.ultra.kontainer.ServiceNotFound: Service de.peekandpoke.ultra.kontainer.examples.defining_services.HidingTheConcreteImplementationOfAServiceExample.Greeter was not found
@@ -273,9 +261,7 @@ blueprint.create().let { kontainer ->
     println("Counter: ${kontainer.get(Counter::class).next()}")
 }
 ```
-
 Will output:
-
 ```
 Counter: 1
 Counter: 2
@@ -335,9 +321,7 @@ for (round in 1..3) {
     }
 }
 ```
-
 Will output:
-
 ```
 Round #1
 singleton: 1 - dynamic 1 - prototype: 1
@@ -360,7 +344,6 @@ singleton: 9 - dynamic 3 - prototype: 1
 This example shows how a service can inject another service.
 
 For simplicity there are only two ways of injection:
-
 1. Constructor injection.
 2. Factory method injection, which we will see in later examples.
 
@@ -391,9 +374,7 @@ val myService = kontainer.get(MyService::class)
 println("Next: " + myService.counter.next())
 println("Next: " + myService.counter.next())
 ```
-
 Will output:
-
 ```
 Next: 1
 Next: 2
@@ -407,6 +388,7 @@ For example when you have a service class expecting constructor parameters
 that are not known to the kontainer.
 
 Factory methods are available for singletons, dynamics and prototypes from zero up to ten parameters.
+
 
 (see the full [example](../../src/examples/injecting_services/FactoryMethodInjectionExample.kt))
 
@@ -443,9 +425,7 @@ val myService = kontainer.get(MyService::class)
 println("Next: " + myService.next())
 println("Next: " + myService.next())
 ```
-
 Will output:
-
 ```
 Next: 101
 Next: 102
@@ -487,9 +467,7 @@ val two = kontainer.get(Two::class)
 println("One: " + one.counter.next())
 println("Two: " + two.counter.next())
 ```
-
 Will output:
-
 ```
 One: 1
 Two: 2
@@ -531,9 +509,7 @@ val two = kontainer.get(Two::class)
 println("One: " + one.counter.next())
 println("Two: " + two.counter.next())
 ```
-
 Will output:
-
 ```
 One: 1
 Two: 1
@@ -577,9 +553,7 @@ println("FirstService.injected: " + firstService.injected)
 val secondService = kontainer.get(SecondService::class)
 println("SecondService.injected: " + secondService.injected)
 ```
-
 Will output:
-
 ```
 FirstService.injected: null
 SecondService.injected: null
@@ -619,9 +593,7 @@ val myService = kontainer.get(MyService::class)
 
 println("Next: " + myService.counter.next())
 ```
-
 Will output:
-
 ```
 Next: 1
 ```
@@ -667,9 +639,7 @@ try {
     println(e)
 }
 ```
-
 Will output:
-
 ```
 de.peekandpoke.ultra.kontainer.KontainerInconsistent: Kontainer is inconsistent!
 
@@ -729,9 +699,7 @@ myService.repos.forEach {
     println(it.name)
 }
 ```
-
 Will output:
-
 ```
 users
 orders
@@ -774,9 +742,7 @@ println("# instances of the LazilyInjected:   ${kontainer.getProvider(LazilyInje
 println("We used the lazily injected service: ${myService.sayHello()}")
 println("# instances of the LazilyInjected:   ${kontainer.getProvider(LazilyInjected::class).instances.size}")
 ```
-
 Will output:
-
 ```
 We got MyService from the kontainer
 # instances of the LazilyInjected:   0
@@ -820,9 +786,7 @@ val two = kontainer.get(ServiceTwo::class)
 println(one.sayHello())
 println(two.sayHello())
 ```
-
 Will output:
-
 ```
 I am ServiceOne and I know 'two'
 I am ServiceTwo and I know 'one'
@@ -871,9 +835,7 @@ myService.repos.value.forEach {
     println(it.name)
 }
 ```
-
 Will output:
-
 ```
 users
 orders
@@ -936,9 +898,7 @@ println("Getting it from the Lookup: " + myService.repos.get(OrderRepository::cl
 // It is now instantiated
 println("# instances of OrderRepository ${kontainer.getProvider(OrderRepository::class).instances.size}")
 ```
-
 Will output:
-
 ```
 # instances of UserRepository 0
 Getting it from the Lookup: users
@@ -953,7 +913,6 @@ Getting it from the Lookup: orders
 Kontainer Modules are a very useful and simple way to group services together.
 
 Library developers can use them to bundle up their library and to provide easy ways to:
-
 - integrate the library into the kontainer of an application
 - document the library and customization options on a high level
 
@@ -1021,9 +980,7 @@ val kontainerEx = blueprintEx.create()
 
 println("Storage service now is: " + kontainerEx.get(Database::class).storage.name)
 ```
-
 Will output:
-
 ```
 Storage service: FileStorage
 Storage service now is: MemoryStorage
@@ -1055,9 +1012,7 @@ val kontainer = blueprint.create()
 
 println("Sum: " + kontainer.get(Service::class).sum)
 ```
-
 Will output:
-
 ```
 Sum: 111
 ```
