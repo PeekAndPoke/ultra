@@ -5,7 +5,9 @@ import de.peekandpoke.ultra.meta.expectFileToMatch
 import de.peekandpoke.ultra.mutator.Mutable
 import de.peekandpoke.ultra.mutator.meta.MutatorAnnotationProcessor
 import io.kotest.core.spec.style.StringSpec
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 
+@OptIn(ExperimentalCompilerApi::class)
 class DataClassWithListPropertySpec : StringSpec({
 
     "Compiling a data class with one list property" {

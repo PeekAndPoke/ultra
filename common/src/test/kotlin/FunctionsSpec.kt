@@ -16,9 +16,9 @@ class FunctionsSpec : StringSpec() {
                 ::subject1.nthParamName(1) shouldBe "p2"
                 ::subject1.nthParamName(2) shouldBe "p3"
 
-                ::subject2.nthParamName(0) shouldBe "x1"
-                ::subject2.nthParamName(1) shouldBe "x2"
-                ::subject2.nthParamName(2) shouldBe "x3"
+                ::subject2.nthParamName(0) shouldBe "p1"
+                ::subject2.nthParamName(1) shouldBe "p2"
+                ::subject2.nthParamName(2) shouldBe "p3"
 
                 // getting the param names again... this makes sure that the internal cache is working properly
 
@@ -26,9 +26,9 @@ class FunctionsSpec : StringSpec() {
                 ::subject1.nthParamName(1) shouldBe "p2"
                 ::subject1.nthParamName(2) shouldBe "p3"
 
-                ::subject2.nthParamName(0) shouldBe "x1"
-                ::subject2.nthParamName(1) shouldBe "x2"
-                ::subject2.nthParamName(2) shouldBe "x3"
+                ::subject2.nthParamName(0) shouldBe "p1"
+                ::subject2.nthParamName(1) shouldBe "p2"
+                ::subject2.nthParamName(2) shouldBe "p3"
             }
         }
 
@@ -43,9 +43,9 @@ class FunctionsSpec : StringSpec() {
                 subject1.nthParamName(1) shouldBe "p2"
                 subject1.nthParamName(2) shouldBe "p3"
 
-                subject2.nthParamName(0) shouldBe "x1"
-                subject2.nthParamName(1) shouldBe "x2"
-                subject2.nthParamName(2) shouldBe "x3"
+                subject2.nthParamName(0) shouldBe "p1"
+                subject2.nthParamName(1) shouldBe "p2"
+                subject2.nthParamName(2) shouldBe "p3"
 
                 // getting the param names again... this makes sure that the internal cache is working properly
 
@@ -53,9 +53,9 @@ class FunctionsSpec : StringSpec() {
                 subject1.nthParamName(1) shouldBe "p2"
                 subject1.nthParamName(2) shouldBe "p3"
 
-                subject2.nthParamName(0) shouldBe "x1"
-                subject2.nthParamName(1) shouldBe "x2"
-                subject2.nthParamName(2) shouldBe "x3"
+                subject2.nthParamName(0) shouldBe "p1"
+                subject2.nthParamName(1) shouldBe "p2"
+                subject2.nthParamName(2) shouldBe "p3"
             }
         }
 
@@ -64,7 +64,7 @@ class FunctionsSpec : StringSpec() {
             val subject: Function1<Int, Any> = { it }
 
             assertSoftly {
-                subject.nthParamName(0) shouldBe "it"
+                subject.nthParamName(0) shouldBe "p1"
             }
         }
 
@@ -73,8 +73,8 @@ class FunctionsSpec : StringSpec() {
             val subject: Function2<Int, Int, Any?> = { _, _ -> null }
 
             assertSoftly {
-                subject.nthParamName(0) shouldBe "param0"
-                subject.nthParamName(1) shouldBe "param1"
+                subject.nthParamName(0) shouldBe "p1"
+                subject.nthParamName(1) shouldBe "p2"
             }
         }
     }

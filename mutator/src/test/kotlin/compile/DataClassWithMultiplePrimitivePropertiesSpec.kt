@@ -5,8 +5,10 @@ import de.peekandpoke.ultra.meta.expectFileToMatch
 import de.peekandpoke.ultra.mutator.Mutable
 import de.peekandpoke.ultra.mutator.meta.MutatorAnnotationProcessor
 import io.kotest.core.spec.style.StringSpec
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import java.time.LocalDateTime
 
+@OptIn(ExperimentalCompilerApi::class)
 class DataClassWithMultiplePrimitivePropertiesSpec : StringSpec({
 
     "Compiling a data class with multiple primitive properties" {

@@ -17,7 +17,7 @@ fun <R, T : Function<R>> T.nthParamName(n: Int): String {
         val reflected = this.reflect()
         val params = reflected?.parameters
 
-        params?.get(n)?.name ?: "p$n"
+        params?.get(n)?.name ?: "p${n + 1}"
     }
 }
 
