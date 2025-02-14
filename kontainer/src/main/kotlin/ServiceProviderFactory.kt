@@ -14,15 +14,17 @@ class ServiceProviderFactory(
             dynamics.overrides.map { (cls, provider) ->
                 val baseType = blueprint.dynamicsBaseTypeLookUp.getDistinctFor(cls)
 
+                val instance = provider()
+
                 baseType to ServiceProvider.Provider.forInstance(
                     type = ServiceProvider.Type.DynamicOverride,
                     definition = ServiceDefinition(
                         serviceCls = cls,
                         injectionType = InjectionType.Dynamic,
-                        producer = ServiceProducer.forFactory(provider),
+                        producer = ServiceProducer.forInstance(instance),
                         overwrites = blueprint.definitions[baseType]
                     ),
-                    instance = provider(),
+                    instance = instance,
                 )
             }
         )

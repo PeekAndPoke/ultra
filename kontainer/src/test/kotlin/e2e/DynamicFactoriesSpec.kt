@@ -1,14 +1,11 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.AnotherSimpleService
-import de.peekandpoke.ultra.kontainer.CounterService
-import de.peekandpoke.ultra.kontainer.InjectingService
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.kontainer.KontainerInconsistent
 import de.peekandpoke.ultra.kontainer.ServiceNotFound
 import de.peekandpoke.ultra.kontainer.ServiceProvider
+import de.peekandpoke.ultra.kontainer.getName
 import de.peekandpoke.ultra.kontainer.kontainer
-import de.peekandpoke.ultra.kontainer.module
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
@@ -23,19 +20,6 @@ class DynamicFactoriesSpec : StringSpec({
     }
 
     data class Config(override val value: Int) : Base()
-
-    val configs = module {
-        config("c1", 1)
-        config("c2", 10)
-        config("c3", 100)
-        config("c4", 1000)
-        config("c5", 10000)
-        config("c6", 100000)
-        config("c7", 1000000)
-        config("c8", 10000000)
-        config("c9", 100000000)
-        config("c10", 1000000000)
-    }
 
     fun validateWithoutBase(subject: Kontainer, value: Int) {
 
@@ -66,7 +50,7 @@ class DynamicFactoriesSpec : StringSpec({
         }
     }
 
-    "Dynamic factory that has missing dependencies" {
+    "Factory that has missing dependencies" {
 
         val blueprint = kontainer {
             singleton(CounterService::class)
@@ -82,14 +66,14 @@ class DynamicFactoriesSpec : StringSpec({
             }
 
             error.message shouldContain
-                    "Parameter 'another' misses a dependency to '${AnotherSimpleService::class.qualifiedName}'"
+                    "Parameter 'p2' misses a dependency to ${AnotherSimpleService::class.getName()}"
 
             error.message shouldContain
                     "defined at"
         }
     }
 
-    "Dynamic factory with two dependencies" {
+    "Factory with two dependencies" {
 
         val subject = kontainer {
             singleton(CounterService::class)
@@ -105,194 +89,296 @@ class DynamicFactoriesSpec : StringSpec({
         }
     }
 
-    "Dynamic factory with zero params" {
+    "Factory with zero params" {
 
         val subject = kontainer {
-            dynamic0(Config::class) { Config(0) }
+            dynamic.factory(Config::class) { Config(0) }
         }.create()
 
         validateWithoutBase(subject, 0)
     }
 
-    "Dynamic factory with zero params defined with bas class" {
+    "Factory with zero params defined with base class" {
 
         val subject = kontainer {
-            dynamic0(Base::class) { Config(0) }
+            dynamic.factory(Base::class) { Config(0) }
         }.create()
 
         validateWithBase(subject, 0)
     }
 
-    "Dynamic factory with one param" {
+    "Factory with one param" {
 
         val subject = kontainer {
-            module(configs)
+            module(common)
 
-            dynamic(Config::class) { c1: Int -> Config(c1) }
+            dynamic(Config::class) { s1: S01 ->
+                Config(s1.v)
+            }
         }.create()
 
         validateWithoutBase(subject, 1)
     }
 
-    "Dynamic factory with one param defined with base class" {
+    "Factory with one param defined with base class" {
 
         val subject = kontainer {
-            module(configs)
+            module(common)
 
-            dynamic(Base::class) { c1: Int -> Config(c1) }
+            dynamic(Base::class) { s1: S01 ->
+                Config(s1.v)
+            }
         }.create()
 
         validateWithBase(subject, 1)
     }
 
-    "Dynamic factory with two config params" {
+    "Factory with two params" {
 
         val subject = kontainer {
-            module(configs)
+            module(common)
 
-            dynamic(Config::class) { c1: Int, c2: Int -> Config(c1 + c2) }
+            dynamic(Config::class) { s1: S01, s2: S02 ->
+                Config(s1.v + s2.v)
+            }
         }.create()
 
         validateWithoutBase(subject, 11)
     }
 
-    "Dynamic factory with two config params defined with base class" {
+    "Factory with two params defined with base class" {
 
         val subject = kontainer {
-            module(configs)
+            module(common)
 
-            dynamic(Base::class) { c1: Int, c2: Int -> Config(c1 + c2) }
+            dynamic(Base::class) { s1: S01, s2: S02 ->
+                Config(s1.v + s2.v)
+            }
         }.create()
 
         validateWithBase(subject, 11)
     }
 
-    "Dynamic factory with three config params" {
+    "Factory with three params" {
 
         val subject = kontainer {
-            module(configs)
+            module(common)
 
-            dynamic(Config::class) { c1: Int, c2: Int, c3: Int -> Config(c1 + c2 + c3) }
+            dynamic(Config::class) { s1: S01, s2: S02, s3: S03 ->
+                Config(s1.v + s2.v + s3.v)
+            }
         }.create()
 
         validateWithoutBase(subject, 111)
     }
 
-    "Dynamic factory with three config params defined with base class" {
+    "Factory with three params defined with base class" {
 
         val subject = kontainer {
-            module(configs)
+            module(common)
 
-            dynamic(Base::class) { c1: Int, c2: Int, c3: Int -> Config(c1 + c2 + c3) }
+            dynamic(Base::class) { s1: S01, s2: S02, s3: S03 ->
+                Config(s1.v + s2.v + s3.v)
+            }
         }.create()
 
         validateWithBase(subject, 111)
     }
 
-    "Dynamic factory with four config params" {
+    "Factory with four params" {
 
         val subject = kontainer {
-            module(configs)
+            module(common)
 
-            dynamic(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int -> Config(c1 + c2 + c3 + c4) }
+            dynamic(Config::class) { s1: S01, s2: S02, s3: S03, s4: S04 ->
+                Config(s1.v + s2.v + s3.v + s4.v)
+            }
         }.create()
 
         validateWithoutBase(subject, 1111)
     }
 
-    "Dynamic factory with four config params defined with base class" {
+    "Factory with four defined with base class" {
 
         val subject = kontainer {
-            module(configs)
+            module(common)
 
-            dynamic(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int -> Config(c1 + c2 + c3 + c4) }
+            dynamic(Base::class) { s1: S01, s2: S02, s3: S03, s4: S04 ->
+                Config(s1.v + s2.v + s3.v + s4.v)
+            }
         }.create()
 
         validateWithBase(subject, 1111)
     }
 
-    "Dynamic factory with five config params" {
+    "Factory with five params" {
 
         val subject = kontainer {
-            module(configs)
+            module(common)
 
-            dynamic(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int -> Config(c1 + c2 + c3 + c4 + c5) }
+            dynamic(Config::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v)
+            }
         }.create()
 
         validateWithoutBase(subject, 11111)
     }
 
-    "Dynamic factory with five config params defined with base class" {
+    "Factory with five params defined with base class" {
 
         val subject = kontainer {
-            module(configs)
+            module(common)
 
-            dynamic(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int ->
-                Config(c1 + c2 + c3 + c4 + c5)
+            dynamic(Base::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v)
             }
         }.create()
 
         validateWithBase(subject, 11111)
     }
 
-    "Dynamic factory with six config params" {
+    "Factory with six params" {
 
         val subject = kontainer {
-            module(configs)
+            module(common)
 
-            dynamic(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int ->
-                Config(c1 + c2 + c3 + c4 + c5 + c6)
+            dynamic(Config::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v)
             }
         }.create()
 
         validateWithoutBase(subject, 111111)
     }
 
-    "Dynamic factory with six config params defined with base class" {
+    "Factory with six params defined with base class" {
 
         val subject = kontainer {
-            module(configs)
+            module(common)
 
-            dynamic(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int ->
-                Config(c1 + c2 + c3 + c4 + c5 + c6)
+            dynamic(Base::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v)
             }
         }.create()
 
         validateWithBase(subject, 111111)
     }
 
-    "Dynamic factory with seven config params" {
+    "Factory with seven params" {
 
         val subject = kontainer {
-            module(configs)
+            module(common)
 
-            dynamic(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
-                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7)
+            dynamic(Config::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v)
             }
         }.create()
 
         validateWithoutBase(subject, 1111111)
     }
 
-    "Dynamic factory with seven config params defined with base class" {
+    "Factory with seven params defined with base class" {
 
         val subject = kontainer {
-            module(configs)
+            module(common)
 
-            dynamic(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
-                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7)
+            dynamic(Base::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v)
             }
         }.create()
 
         validateWithBase(subject, 1111111)
     }
 
-    "Dynamic factory with one config params defined via dynamic function" {
+    "Factory with eight params" {
+
+        val subject = kontainer {
+            module(common)
+
+            dynamic(Config::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07, s8: S08 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v + s8.v)
+            }
+        }.create()
+
+        validateWithoutBase(subject, 11111111)
+    }
+
+    "Factory with eight params defined with base class" {
+
+        val subject = kontainer {
+            module(common)
+
+            dynamic(Base::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07, s8: S08 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v + s8.v)
+            }
+        }.create()
+
+        validateWithBase(subject, 11111111)
+    }
+
+    "Factory with nine params" {
+
+        val subject = kontainer {
+            module(common)
+
+            dynamic(Config::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07, s8: S08, s9: S09 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v + s8.v + s9.v)
+            }
+        }.create()
+
+        validateWithoutBase(subject, 111111111)
+    }
+
+    "Factory with nine params defined with base class" {
+
+        val subject = kontainer {
+            module(common)
+
+            dynamic(Base::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07, s8: S08, s9: S09 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v + s8.v + s9.v)
+            }
+        }.create()
+
+        validateWithBase(subject, 111111111)
+    }
+
+    "Factory with ten params" {
+
+        val subject = kontainer {
+            module(common)
+
+            dynamic(Config::class) {
+                    s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07, s8: S08, s9: S09,
+                    s10: S10,
+                ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v + s8.v + s9.v + s10.v)
+            }
+        }.create()
+
+        validateWithoutBase(subject, 1111111111)
+    }
+
+    "Factory with ten params defined with base class" {
+
+        val subject = kontainer {
+            module(common)
+
+            dynamic(Base::class) {
+                    s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07, s8: S08, s9: S09,
+                    s10: S10,
+                ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v + s8.v + s9.v + s10.v)
+            }
+        }.create()
+
+        validateWithBase(subject, 1111111111)
+    }
+
+    "Factory with one params defined via dynamic function" {
 
         val blueprint = kontainer {
-            module(configs)
+            module(common)
 
-            val provider: Function<Config> = { c1: Int -> Config(c1) }
+            val provider = { s1: S01 -> Config(s1.v) }
 
             dynamic(Base::class, provider)
         }
@@ -302,13 +388,13 @@ class DynamicFactoriesSpec : StringSpec({
         validateWithBase(subject, 1)
     }
 
-    "Dynamic factory with seven config params defined via dynamic function" {
+    "Factory with seven params defined via dynamic function" {
 
         val blueprint = kontainer {
-            module(configs)
+            module(common)
 
-            val provider: Function<Config> = { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
-                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7)
+            val provider = { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v)
             }
 
             dynamic(Base::class, provider)
@@ -319,14 +405,14 @@ class DynamicFactoriesSpec : StringSpec({
         validateWithBase(subject, 1111111)
     }
 
-    "Dynamic factory with ten config params defined via dynamic function" {
+    "Factory with ten params defined via dynamic function" {
 
         val blueprint = kontainer {
-            module(configs)
+            module(common)
 
-            val provider: Function<Config> =
-                { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int, c9: Int, c10: Int ->
-                    Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9 + c10)
+            val provider =
+                { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07, s8: S08, s9: S09, s10: S10 ->
+                    Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v + s8.v + s9.v + s10.v)
                 }
 
             dynamic(Base::class, provider)

@@ -32,7 +32,7 @@ object Deps {
 
     // https://kotlinlang.org/docs/releases.html#release-details
     // https://github.com/Kotlin/kotlinx.coroutines/releases
-    private const val kotlinx_coroutines_version = "1.9.0"
+    private const val kotlinx_coroutines_version = "1.10.1"
     const val kotlinx_coroutines_core =
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version"
     const val kotlinx_coroutines_core_js =
@@ -40,14 +40,14 @@ object Deps {
 
     // https://kotlinlang.org/docs/releases.html#release-details
     // https://github.com/Kotlin/kotlinx.serialization/releases
-    private const val kotlinx_serialization_version = "1.7.3"
+    private const val kotlinx_serialization_version = "1.8.0"
     const val kotlinx_serialization_core =
         "org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version"
     const val kotlinx_serialization_json =
         "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_version"
 
     // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-datetime
-    private const val kotlinx_datetime_version = "0.6.1"
+    private const val kotlinx_datetime_version = "0.6.2"
     const val kotlinx_datetime_common = "org.jetbrains.kotlinx:kotlinx-datetime:$kotlinx_datetime_version"
 
 //    // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/atomicfu
@@ -56,7 +56,7 @@ object Deps {
 
     // https://kotlinlang.org/docs/releases.html
     // https://github.com/ktorio/ktor/releases
-    const val ktor_version = "3.0.2"
+    const val ktor_version = "3.1.0"
     const val ktor_client_core = "io.ktor:ktor-client-core:$ktor_version"
 
     // https://mvnrepository.com/artifact/com.github.tschuchortdev/kotlin-compile-testing
@@ -106,10 +106,10 @@ object Deps {
         fun KotlinDependencyHandler.polyfillFetch() = npm("whatwg-fetch", "3.6.20")
 
         // https://www.npmjs.com/package/@js-joda/core
-        fun KotlinDependencyHandler.jsJodaCore() = npm("@js-joda/core", "5.6.3")
+        fun KotlinDependencyHandler.jsJodaCore() = npm("@js-joda/core", "5.6.4")
 
         // https://www.npmjs.com/package/@js-joda/timezone
-        fun KotlinDependencyHandler.jsJodaTimezone() = npm("@js-joda/timezone", "2.21.1")
+        fun KotlinDependencyHandler.jsJodaTimezone() = npm("@js-joda/timezone", "2.21.2")
     }
 
     // // Test dependencies ////////////////////////////////////////////////////////////////////////
@@ -121,11 +121,11 @@ object Deps {
         }
 
         // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-        const val logback_version = "1.5.12"
+        const val logback_version = "1.5.16"
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://plugins.gradle.org/plugin/io.kotest.multiplatform
-        const val kotest_plugin_version = "5.9.1"
+        const val kotest_plugin_version = "6.0.0.M2"
 
         //        const val kotest_plugin_version = "6.0.0.M1"
         // https://mvnrepository.com/artifact/io.kotest/kotest-common

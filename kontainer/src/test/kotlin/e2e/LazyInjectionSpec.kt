@@ -1,8 +1,6 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
 import de.peekandpoke.ultra.common.Lookup
-import de.peekandpoke.ultra.kontainer.CounterService
-import de.peekandpoke.ultra.kontainer.LazilyInjecting
 import de.peekandpoke.ultra.kontainer.LazyServiceLookup
 import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.assertions.assertSoftly

@@ -8,7 +8,6 @@ import kotlin.reflect.KType
 
 data class DebugInfo(
     val services: List<ServiceDebugInfo>,
-    val config: Map<String, String>
 ) {
 
     data class ServiceDebugInfo(
@@ -51,7 +50,6 @@ data class DebugInfo(
         }
     }
 
-    @Suppress("DataClassPrivateConstructor")
     data class ParamInfo(
         val name: String,
         val provisionType: ProvisionType,

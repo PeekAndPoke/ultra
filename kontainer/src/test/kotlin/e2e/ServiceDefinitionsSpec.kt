@@ -1,7 +1,5 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.CounterService
-import de.peekandpoke.ultra.kontainer.CounterServiceEx01
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.assertions.withClue

@@ -39,6 +39,7 @@ class ServiceDefinition internal constructor(
                     CodeLocation::class,
                     Companion::class,
                     KontainerBuilder::class,
+                    KontainerBuilder.ServiceBuilder::class,
                     ServiceDefinition::class,
                 ).map { it.java.name }
             )

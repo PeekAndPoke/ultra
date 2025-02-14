@@ -1,5 +1,7 @@
 package de.peekandpoke.ultra.kontainer
 
+import kotlin.reflect.KClass
+
 /**
  * Creates a kontainer blueprint
  */
@@ -25,6 +27,11 @@ fun <P1, P2> module(builder: KontainerBuilder.(P1, P2) -> Unit) = ParameterizedK
  * Creates a parameterized kontainer module with three parameters
  */
 fun <P1, P2, P3> module(builder: KontainerBuilder.(P1, P2, P3) -> Unit) = ParameterizedKontainerModule3(builder)
+
+/**
+ * Get name
+ */
+internal fun KClass<*>.getName() = this.qualifiedName ?: this.simpleName ?: "<unknown>"
 
 /**
  * Kontainer module
