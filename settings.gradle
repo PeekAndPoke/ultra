@@ -12,6 +12,7 @@ include(
         ":security",
         ":slumber",
         ":slumber-test-classes",
+        ":vault",
 
         // playground
         ":z-playground-js",

@@ -71,6 +71,15 @@ object Deps {
     private const val korlibs_time_version = "5.2.0"
     const val korlibs_time_common = "com.soywiz.korge:korlibs-time:$korlibs_time_version"
 
+    // https://mvnrepository.com/artifact/com.github.ajalt.clikt/clikt
+    private const val clikt_version = "4.3.0"
+    const val clikt = "com.github.ajalt.clikt:clikt:$clikt_version"
+
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
+    private const val jackson_version = "2.18.2"
+    const val jackson_annotations = "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
+    const val jackson_databind = "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
+
     // JAVA - DEPS /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // TODO: Check update to 4.x version
