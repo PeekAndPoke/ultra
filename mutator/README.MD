@@ -1,6 +1,6 @@
 # ultra::mutator
 
-Mutator generates code that helps you to mutate nested immutable data structures with hassle of
+Mutator generates code that helps you to mutate nested immutable data structures. So you will not have code like this:
 
 ```
 copy(
