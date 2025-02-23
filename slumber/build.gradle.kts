@@ -25,7 +25,8 @@ dependencies {
     api(Deps.kotlinx_serialization_core)
 
     api(Deps.classindex)
-    api(project(":commonmp"))
+
+    api(project(":common"))
 
     // Testing
     testImplementation(project(":slumber-test-classes"))

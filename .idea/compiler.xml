@@ -24,7 +24,6 @@
       <module name="root.test" target="1.8" />
       <module name="root.ultra.main" target="1.8" />
       <module name="root.ultra.test" target="1.8" />
-      <module name="ultra.common" target="17" />
       <module name="ultra.common-mp" target="11" />
       <module name="ultra.common-mp.commonMain" target="1.8" />
       <module name="ultra.common-mp.commonTest" target="1.8" />
