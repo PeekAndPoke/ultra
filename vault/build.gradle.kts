@@ -48,7 +48,7 @@ kotlin {
 
                 implementation(Deps.ktor_client_core)
 
-                api(project(":commonmp"))
+                api(project(":common"))
             }
         }
 

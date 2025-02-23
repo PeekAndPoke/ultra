@@ -42,7 +42,8 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(Deps.kotlinx_serialization_core)
-                api(project(":commonmp"))
+
+                api(project(":common"))
             }
         }
 

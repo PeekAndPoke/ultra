@@ -23,7 +23,7 @@ repositories {
 dependencies {
     implementation(kotlin("reflect"))
 
-    api(project(":commonmp"))
+    api(project(":common"))
 
     //  code generation  //////////////////////////////////////////////////////////////////////////////////////
 

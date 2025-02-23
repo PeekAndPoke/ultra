@@ -20,7 +20,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/buildSrc" />
-            <option value="$PROJECT_DIR$/commonmp" />
+            <option value="$PROJECT_DIR$/common" />
             <option value="$PROJECT_DIR$/kontainer" />
             <option value="$PROJECT_DIR$/logging" />
             <option value="$PROJECT_DIR$/meta" />

@@ -56,9 +56,7 @@ val noMoreAngelina = angelina.mutate {
 println("The renamed version:")
 println(noMoreAngelina)
 ```
-
 Will output:
-
 ```
 The original:
 Person(name=Angelina, age=35)
@@ -71,20 +69,19 @@ Person(name=Brad, age=47)
 ### A more complex example
 
 Imagine we have some nested immutable data structure with
-
 - data classes
 - lists of objects
 - etc.
 
 This example shows how to easily mutate data structures of any depth.   
 There is no need for things like:
-
 - nested copy(copy(copy(...)))
 - or complicated list manipulations
 
 This example also shows, that we only need to put the @Mutable annotation on the a top level type.  
 The annotation processor / code generator will recursively pick up all types that are referenced / used
 by the top level type.
+
 
 (see the full [example](../../../src/examples/introduction/MoreComplexExample.kt))
 
@@ -155,9 +152,7 @@ println(updated.employees[1])
 println("Is 'Jerry' still the same: " + (company.employees[1] === updated.employees[1]))
 println()
 ```
-
 Will output:
-
 ```
 Initial company
 Company(boss=Person(name=Maximus Grandiosus, age=71), employees=[Employee(person=Person(name=Tom, age=35), address=Address(city=Boston), salary=Salary(currency=USD, amount=20000.0)), Employee(person=Person(name=Jerry, age=35), address=Address(city=New York), salary=Salary(currency=USD, amount=17000.0))])
@@ -207,9 +202,7 @@ println()
 
 println("It is the exact same object (before === after): " + (before === after))
 ```
-
 Will output:
-
 ```
 Before:
 Person(name=Angelina, age=35)
@@ -225,12 +218,10 @@ It is the exact same object (before === after): true
 This example shows what happens when we mutate an object without changing any of it's fields.
 
 Re-assign fields with the exact same values, behaves as if no mutation is done. This means:
-
 - the result will be the original object.
 - there is no new object created.
 
 The same behavior is implemented for other kinds of mutations as well, like:
-
 - List mutation
 - Map mutation
 - ...
@@ -261,9 +252,7 @@ println()
 
 println("It is the exact same object (before === after): " + (before === after))
 ```
-
 Will output:
-
 ```
 Before:
 Person(name=Angelina, age=35)
@@ -324,9 +313,7 @@ println(original)
 println("The result:")
 println(result)
 ```
-
 Will output:
-
 ```
 The original:
 ExampleClassWithScalars(anInt=10, aFloat=3.14, aBoolean=false, aString=Hello World!)
@@ -335,7 +322,6 @@ ExampleClassWithScalars(anInt=11, aFloat=4.669, aBoolean=true, aString=Hey, Hell
 ```
 
 The generated mutator code for our data class looks like this:
-
 ```kotlin
 @file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
 
@@ -443,9 +429,7 @@ println(original)
 println("The result:")
 println(result)
 ```
-
 Will output:
-
 ```
 The original:
 ExampleClassWithNullableScalars(anInt=10, aFloat=3.14, aBoolean=false, aString=Hello World!)
@@ -454,7 +438,6 @@ ExampleClassWithNullableScalars(anInt=null, aFloat=null, aBoolean=false, aString
 ```
 
 The generated mutator code for our data class looks like this:
-
 ```kotlin
 @file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
 
@@ -567,9 +550,7 @@ println(original)
 println("The result:")
 println(result)
 ```
-
 Will output:
-
 ```
 The original:
 ExampleClassWithAny(any=any, nullableAny=null, aDate=2025-02-23)
@@ -578,7 +559,6 @@ ExampleClassWithAny(any=10, nullableAny=4.669, aDate=2025-02-24)
 ```
 
 The generated mutator code for our data class looks like this:
-
 ```kotlin
 @file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
 

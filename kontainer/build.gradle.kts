@@ -23,7 +23,7 @@ dependencies {
     implementation(kotlin("reflect"))
     implementation(Deps.kotlinx_coroutines_core)
 
-    api(project(":commonmp"))
+    api(project(":common"))
 
     // Tests /////////////////////////
     Deps.Test {
