@@ -32,7 +32,7 @@ object Deps {
 
     // https://kotlinlang.org/docs/releases.html#release-details
     // https://github.com/Kotlin/kotlinx.coroutines/releases
-    private const val kotlinx_coroutines_version = "1.8.0"
+    private const val kotlinx_coroutines_version = "1.8.1"
     const val kotlinx_coroutines_core =
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version"
     const val kotlinx_coroutines_core_js =
@@ -40,7 +40,7 @@ object Deps {
 
     // https://kotlinlang.org/docs/releases.html#release-details
     // https://github.com/Kotlin/kotlinx.serialization/releases
-    private const val kotlinx_serialization_version = "1.6.2"
+    private const val kotlinx_serialization_version = "1.6.3"
     const val kotlinx_serialization_core =
         "org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version"
     const val kotlinx_serialization_json =
