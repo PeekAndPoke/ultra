@@ -1,0 +1,3104 @@
+Index: buildSrc/src/main/java/Deps.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import org.gradle.kotlin.dsl.DependencyHandlerScope\nimport org.gradle.kotlin.dsl.TaskContainerScope\nimport org.jetbrains.kotlin.gradle.dsl.JvmTarget\nimport org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler\n\n@Suppress(\"MemberVisibilityCanBePrivate\", \"ConstPropertyName\")\nobject Deps {\n    operator fun invoke(block: Deps.() -> Unit) {\n        this.block()\n    }\n\n    // Kotlin ////////////////////////////////////////////////////////////////////////////////////\n    const val kotlinVersion = \"2.1.10\"\n    // ///////////////////////////////////////////////////////////////////////////////////////////\n\n    // JVM ///////////////////////////////////////////////////////////////////////////////////////\n    val jvmTarget = JvmTarget.JVM_17\n    // ///////////////////////////////////////////////////////////////////////////////////////////\n\n    // Dokka /////////////////////////////////////////////////////////////////////////////////////\n    // https://mvnrepository.com/artifact/org.jetbrains.dokka/dokka-gradle-plugin\n    // Dokka gradle plugin org.jetbrains.dokka\n    const val dokkaVersion = \"2.0.0\" // kotlinVersion\n    // ///////////////////////////////////////////////////////////////////////////////////////////\n\n    // Publishing ////////////////////////////////////////////////////////////////////////////////\n    // https://search.maven.org/artifact/com.vanniktech/gradle-maven-publish-plugin\n    const val mavenPublishVersion = \"0.30.0\"\n    // ///////////////////////////////////////////////////////////////////////////////////////////\n\n    // KOTLIN - DEPS ///////////////////////////////////////////////////////////////////////////////////////////////////\n\n    // https://kotlinlang.org/docs/releases.html#release-details\n    // https://github.com/Kotlin/kotlinx.coroutines/releases\n    private const val kotlinx_coroutines_version = \"1.10.1\"\n    const val kotlinx_coroutines_core =\n        \"org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version\"\n    const val kotlinx_coroutines_core_js =\n        \"org.jetbrains.kotlinx:kotlinx-coroutines-core-js:$kotlinx_coroutines_version\"\n\n    // https://kotlinlang.org/docs/releases.html#release-details\n    // https://github.com/Kotlin/kotlinx.serialization/releases\n    private const val kotlinx_serialization_version = \"1.8.0\"\n    const val kotlinx_serialization_core =\n        \"org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version\"\n    const val kotlinx_serialization_json =\n        \"org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_version\"\n\n    // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-datetime\n    private const val kotlinx_datetime_version = \"0.6.2\"\n    const val kotlinx_datetime_common = \"org.jetbrains.kotlinx:kotlinx-datetime:$kotlinx_datetime_version\"\n\n//    // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/atomicfu\n//    private const val kotlinx_atomicfu_version = \"0.24.0\"\n//    const val kotlinx_atomicfu = \"org.jetbrains.kotlinx:atomicfu:${kotlinx_atomicfu_version}\"\n\n    // https://kotlinlang.org/docs/releases.html\n    // https://github.com/ktorio/ktor/releases\n    const val ktor_version = \"3.1.0\"\n    const val ktor_client_core = \"io.ktor:ktor-client-core:$ktor_version\"\n\n    // https://mvnrepository.com/artifact/com.github.tschuchortdev/kotlin-compile-testing\n    private const val kotlin_compiletesting_version = \"1.6.0\"\n    const val kotlin_compiletesting = \"com.github.tschuchortdev:kotlin-compile-testing:$kotlin_compiletesting_version\"\n\n    // https://mvnrepository.com/artifact/com.squareup/kotlinpoet\n    private const val kotlinpoet_version = \"2.0.0\"\n    const val kotlinpoet = \"com.squareup:kotlinpoet:$kotlinpoet_version\"\n\n    // https://mvnrepository.com/artifact/com.soywiz/korlibs-time\n    private const val korlibs_time_version = \"6.0.0\"\n    const val korlibs_time_common = \"com.soywiz:korlibs-time:$korlibs_time_version\"\n\n    // JAVA - DEPS /////////////////////////////////////////////////////////////////////////////////////////////////////\n\n    // TODO: Check update to 4.x version\n    // https://mvnrepository.com/artifact/com.auth0/java-jwt\n    private const val auth0_java_jwt_version = \"3.19.4\"\n    const val auth0_java_jwt = \"com.auth0:java-jwt:$auth0_java_jwt_version\"\n\n    // https://search.maven.org/artifact/io.github.java-diff-utils/java-diff-utils\n    private const val diffutils_version = \"4.15\"\n    const val diffutils = \"io.github.java-diff-utils:java-diff-utils:$diffutils_version\"\n\n    // https://mvnrepository.com/artifact/com.google.auto.service/auto-service\n    private const val google_auto_service_version = \"1.1.1\"\n    const val google_auto_service = \"com.google.auto.service:auto-service:$google_auto_service_version\"\n\n    // https://github.com/atteo/classindex\n    // https://search.maven.org/artifact/org.atteo.classindex/classindex\n    private const val classindex_version = \"3.13\"\n    const val classindex = \"org.atteo.classindex:classindex:$classindex_version\"\n\n    // https://mvnrepository.com/artifact/org.slf4j/slf4j-api\n    private const val slf4j_version = \"2.0.16\"\n    const val slf4j_api = \"org.slf4j:slf4j-api:$slf4j_version\"\n\n    // // NPM dependencies /////////////////////////////////////////////////////////////////////////\n\n    object Npm {\n        operator fun <T> invoke(block: Npm.() -> T): T {\n            return this.block()\n        }\n\n        // https://www.npmjs.com/package/whatwg-fetch\n        fun KotlinDependencyHandler.polyfillFetch() = npm(\"whatwg-fetch\", \"3.6.20\")\n\n        // https://www.npmjs.com/package/@js-joda/core\n        fun KotlinDependencyHandler.jsJodaCore() = npm(\"@js-joda/core\", \"5.6.4\")\n\n        // https://www.npmjs.com/package/@js-joda/timezone\n        fun KotlinDependencyHandler.jsJodaTimezone() = npm(\"@js-joda/timezone\", \"2.21.2\")\n    }\n\n    // // Test dependencies ////////////////////////////////////////////////////////////////////////\n\n    object Test {\n\n        operator fun invoke(block: Test.() -> Unit) {\n            this.block()\n        }\n\n        // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic\n        const val logback_version = \"1.5.16\"\n        const val logback_classic = \"ch.qos.logback:logback-classic:$logback_version\"\n\n        // https://plugins.gradle.org/plugin/io.kotest.multiplatform\n        const val kotest_plugin_version = \"6.0.0.M2\"\n\n        //        const val kotest_plugin_version = \"6.0.0.M1\"\n        // https://mvnrepository.com/artifact/io.kotest/kotest-common\n        const val kotest_version = \"5.9.1\"\n//        const val kotest_version = \"6.0.0.M1\"\n\n        const val kotest_assertions_core = \"io.kotest:kotest-assertions-core:$kotest_version\"\n        const val kotest_framework_api = \"io.kotest:kotest-framework-api:$kotest_version\"\n        const val kotest_framework_datatest = \"io.kotest:kotest-framework-datatest:$kotest_version\"\n        const val kotest_framework_engine = \"io.kotest:kotest-framework-engine:$kotest_version\"\n\n        const val kotest_runner_junit_jvm = \"io.kotest:kotest-runner-junit5-jvm:$kotest_version\"\n\n        fun KotlinDependencyHandler.commonTestDeps() {\n            kotlin(\"test-common\")\n            kotlin(\"test-annotations-common\")\n            implementation(kotest_assertions_core)\n            implementation(kotest_framework_api)\n            implementation(kotest_framework_datatest)\n            implementation(kotest_framework_engine)\n        }\n\n        fun KotlinDependencyHandler.jsTestDeps() {\n            implementation(kotest_assertions_core)\n            implementation(kotest_framework_api)\n            implementation(kotest_framework_datatest)\n            implementation(kotest_framework_engine)\n        }\n\n        fun KotlinDependencyHandler.jvmTestDeps() {\n            implementation(logback_classic)\n            implementation(kotest_runner_junit_jvm)\n            implementation(kotest_assertions_core)\n            implementation(kotest_framework_api)\n            implementation(kotest_framework_datatest)\n            implementation(kotest_framework_engine)\n        }\n\n        fun DependencyHandlerScope.jvmTestDeps() {\n            testImplementation(logback_classic)\n            testImplementation(kotest_runner_junit_jvm)\n            testImplementation(kotest_assertions_core)\n            testImplementation(kotest_framework_api)\n            testImplementation(kotest_framework_engine)\n        }\n\n        fun TaskContainerScope.configureJvmTests(\n            configure: org.gradle.api.tasks.testing.Test.() -> Unit = {},\n        ) {\n            withType(org.gradle.api.tasks.testing.Test::class.java).configureEach {\n                useJUnitPlatform()\n\n                filter {\n                    isFailOnNoMatchingTests = false\n                }\n\n//                testLogging {\n//                    showExceptions = true\n//                    showStandardStreams = true\n//                    events = setOf(\n//                        org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED,\n//                        org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED\n//                    )\n//                    exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL\n//                }\n\n                configure()\n            }\n        }\n    }\n}\n\nprivate fun DependencyHandlerScope.testImplementation(dep: String) =\n    add(\"testImplementation\", dep)\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/buildSrc/src/main/java/Deps.kt b/buildSrc/src/main/java/Deps.kt
+--- a/buildSrc/src/main/java/Deps.kt	(revision 051bb011bd460c73054c587388185528a82001a0)
++++ b/buildSrc/src/main/java/Deps.kt	(date 1740249884655)
+@@ -71,6 +71,14 @@
+     private const val korlibs_time_version = "6.0.0"
+     const val korlibs_time_common = "com.soywiz:korlibs-time:$korlibs_time_version"
+ 
++    // https://mvnrepository.com/artifact/com.github.ajalt.clikt/clikt
++    private const val clikt_version = "4.3.0"
++    const val clikt = "com.github.ajalt.clikt:clikt:$clikt_version"
++
++    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
++    private const val jackson_version = "2.18.2"
++    const val jackson_annotations = "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
++
+     // JAVA - DEPS /////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+     // TODO: Check update to 4.x version
+Index: settings.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>\nrootProject.name = 'ultra'\n\ninclude(\n        // child projects\n        \":common\",\n        \":commonmp\",\n        \":kontainer\",\n        \":logging\",\n        \":meta\",\n        \":mutator\",\n        \":security\",\n        \":slumber\",\n        \":slumber-test-classes\",\n\n        // playground\n        \":z-playground-js\",\n        \":z-playground-jvm\",\n)\n\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/settings.gradle b/settings.gradle
+--- a/settings.gradle	(revision 051bb011bd460c73054c587388185528a82001a0)
++++ b/settings.gradle	(date 1740249122768)
+@@ -12,6 +12,7 @@
+         ":security",
+         ":slumber",
+         ":slumber-test-classes",
++        ":vault",
+ 
+         // playground
+         ":z-playground-js",
+Index: vault/src/commonMain/kotlin/VaultModels.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/commonMain/kotlin/VaultModels.kt b/vault/src/commonMain/kotlin/VaultModels.kt
+new file mode 100644
+--- /dev/null	(date 1733906439125)
++++ b/vault/src/commonMain/kotlin/VaultModels.kt	(date 1733906439125)
+@@ -0,0 +1,88 @@
++package de.peekandpoke.ultra.vault
++
++import kotlinx.serialization.Serializable
++
++object VaultModels {
++
++    @Serializable
++    data class RepositoryInfo(
++        val connection: String,
++        val name: String,
++        val figures: RepositoryStats,
++        val indexes: IndexesInfo,
++    ) {
++        val hasErrors get() = indexes.missingIndexes.isNotEmpty() || indexes.excessIndexes.isNotEmpty()
++    }
++
++    @Serializable
++    data class RepositoryStats(
++        val id: String?,
++        val name: String?,
++        val type: String?,
++        val isSystem: Boolean?,
++        val status: String?,
++        val waitForSync: Boolean?,
++        val writeConcern: String?,
++        val cacheEnabled: Boolean?,
++        val cacheInUse: Boolean?,
++        val cacheSize: Int?,
++        val cacheUsage: Int?,
++        val documentCount: Long?,
++        val documentsSize: Long?,
++        val indexCount: Long?,
++        val indexesSize: Long?,
++    ) {
++        companion object {
++            val empty = RepositoryStats(
++                id = null,
++                name = null,
++                type = null,
++                isSystem = null,
++                status = null,
++                waitForSync = null,
++                writeConcern = null,
++                cacheEnabled = null,
++                cacheInUse = null,
++                cacheSize = null,
++                cacheUsage = null,
++                documentCount = null,
++                documentsSize = null,
++                indexCount = null,
++                indexesSize = null,
++            )
++        }
++
++        val avgSize: Long? = run {
++            documentCount?.takeIf { it > 0 }?.let { documentsSize?.div(it) }
++        }
++    }
++
++    @Serializable
++    data class IndexesInfo(
++        val connection: String,
++        val repository: String,
++        /** Indexes that exist as they are defined */
++        val healthyIndexes: List<IndexInfo>,
++        /** Indexes that are defined but do not exist */
++        val missingIndexes: List<IndexInfo>,
++        /** Indexes that exist but are not defined */
++        val excessIndexes: List<IndexInfo>,
++    ) {
++        companion object {
++            val empty = IndexesInfo(
++                connection = "",
++                repository = "",
++                healthyIndexes = emptyList(),
++                missingIndexes = emptyList(),
++                excessIndexes = emptyList(),
++            )
++        }
++    }
++
++    @Serializable
++    data class IndexInfo(
++        val name: String,
++        val type: String,
++        val fields: List<String>,
++    )
++}
+Index: vault/src/jvmMain/kotlin/repository_extensions.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/repository_extensions.kt b/vault/src/jvmMain/kotlin/repository_extensions.kt
+new file mode 100644
+--- /dev/null	(date 1733906439127)
++++ b/vault/src/jvmMain/kotlin/repository_extensions.kt	(date 1733906439127)
+@@ -0,0 +1,41 @@
++package de.peekandpoke.ultra.vault
++
++/**
++ * Defines a repository that supports batch inserts
++ */
++interface BatchInsertRepository<T> {
++
++    /**
++     * Inserts multiple elements with a single query.
++     *
++     * The result is a list of the inserted values.
++     * The order of the [values] must match the order of the results.
++     */
++    suspend fun <X : T> batchInsert(values: List<New<X>>): List<Stored<X>>
++
++    /**
++     * Inserts multiple element with a single query.
++     *
++     * The result is a list of the inserted values.
++     * The order of the [values] must match the order of the results.
++     */
++    suspend fun <X : T> batchInsertValues(values: List<X>): List<Stored<X>> {
++        val mapped = values.map { New(value = it) }
++
++        return batchInsert(mapped)
++    }
++
++    /**
++     * Inserts multiple element with a single query.
++     *
++     * The [values] are pair of KEY to VALUE, where the KEY will be used as the _id / _key of the document.
++     *
++     * The result is a list of the inserted values.
++     * The order of the [values] must match the order of the results.
++     */
++    suspend fun <X : T> batchInsertPairs(values: List<Pair<String, X>>): List<Stored<X>> {
++        val mapped = values.map { New(_key = it.first.ensureKey, value = it.second) }
++
++        return batchInsert(mapped)
++    }
++}
+Index: vault/src/commonMain/kotlin/index_commonMain.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/commonMain/kotlin/index_commonMain.kt b/vault/src/commonMain/kotlin/index_commonMain.kt
+new file mode 100644
+--- /dev/null	(date 1733906439125)
++++ b/vault/src/commonMain/kotlin/index_commonMain.kt	(date 1733906439125)
+@@ -0,0 +1,1 @@
++package de.peekandpoke.ultra.vault
+Index: vault/src/jvmMain/kotlin/Database.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/Database.kt b/vault/src/jvmMain/kotlin/Database.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/Database.kt	(date 1733906439126)
+@@ -0,0 +1,104 @@
++package de.peekandpoke.ultra.vault
++
++import de.peekandpoke.ultra.common.Lookup
++import de.peekandpoke.ultra.common.SimpleLookup
++import kotlin.reflect.KClass
++
++class Database(
++    private val repositories: Lookup<Repository<*>>,
++    private val repoClassLookup: SharedRepoClassLookup,
++) {
++    companion object {
++        val withNoRepos = Database(
++            repositories = SimpleLookup { emptyList() },
++            repoClassLookup = SharedRepoClassLookup(),
++        )
++
++        fun of(repos: () -> List<Repository<*>>) = Database(
++            repositories = SimpleLookup(repos),
++            repoClassLookup = SharedRepoClassLookup(),
++        )
++    }
++
++    fun getRepositories(): List<Repository<*>> {
++        return repositories.all()
++    }
++
++    suspend fun ensureRepositories() {
++        repositories.all().forEach { repo ->
++            repo.ensure()
++        }
++    }
++
++    suspend fun validateIndexes(): List<VaultModels.IndexesInfo> {
++        return repositories.all().map { repo ->
++            repo.validateIndexes()
++        }
++    }
++
++    suspend fun ensureIndexes() {
++        repositories.all().forEach { repo ->
++            repo.ensureIndexes()
++            repo.validateIndexes()
++        }
++    }
++
++    suspend fun recreateIndexes() {
++        repositories.all().forEach { repo ->
++            repo.recreateIndexes()
++            repo.validateIndexes()
++        }
++    }
++
++    fun <T : Any> hasRepositoryStoring(type: Class<T>): Boolean {
++
++        return null != repoClassLookup.getOrPut(type) {
++            @Suppress("UNCHECKED_CAST")
++            repositories.all()
++                .firstOrNull { it.stores(type.kotlin) }
++                ?.let { it::class.java as Class<Repository<*>> }
++        }
++    }
++
++    fun <T : Any> getRepositoryStoring(type: Class<T>): Repository<T> {
++        return getRepositoryStoringOrNull(type)
++        // TODO: use customer exception
++            ?: error("No repository stores the type '$type'")
++    }
++
++    fun <T : Any> getRepositoryStoringOrNull(type: Class<T>): Repository<T>? {
++
++        val cls = repoClassLookup.getOrPut(type) {
++            repositories.all()
++                .firstOrNull { it.stores(type.kotlin) }
++                ?.let { it::class.java }
++        }
++
++        return cls?.let {
++            @Suppress("UNCHECKED_CAST")
++            getRepository(it) as Repository<T>
++        }
++    }
++
++    fun <T : Repository<*>> getRepository(cls: KClass<T>): T = getRepository(cls.java)
++
++    fun <T : Repository<*>> getRepository(cls: Class<T>): T {
++        return repositories.getOrNull(cls.kotlin)
++            ?: throw VaultException("No repository of class '$cls' is registered.")
++    }
++
++    inline fun <reified T : Repository<*>> getRepository() = getRepository(T::class.java)
++
++    fun getRepository(name: String): Repository<*> {
++        val cls = repoClassLookup.getOrPut(name) {
++            repositories.all().firstOrNull { it.name == name }?.let { it::class.java }
++        }
++
++        if (cls != null) {
++            return getRepository(cls)
++        }
++
++        // TODO: use customer exception
++        error("No repository with name '$name' was found")
++    }
++}
+Index: vault/src/jvmMain/kotlin/results.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/results.kt b/vault/src/jvmMain/kotlin/results.kt
+new file mode 100644
+--- /dev/null	(date 1733906439127)
++++ b/vault/src/jvmMain/kotlin/results.kt	(date 1733906439127)
+@@ -0,0 +1,6 @@
++package de.peekandpoke.ultra.vault
++
++/**
++ * Remove result
++ */
++data class RemoveResult(val count: Long, val query: TypedQuery<*>?)
+Index: vault/src/jvmMain/kotlin/helpers.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/helpers.kt b/vault/src/jvmMain/kotlin/helpers.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/helpers.kt	(date 1733906439126)
+@@ -0,0 +1,18 @@
++package de.peekandpoke.ultra.vault
++
++import kotlin.reflect.KClass
++
++/**
++ * Helper function that extracts an arangodb key from an id
++ */
++val String.ensureKey get() = if (contains('/')) split('/')[1] else this
++
++/**
++ * Filters all Storable where the value is an instance of [T].
++ */
++inline fun <X : Any, reified T : X> Iterable<Storable<X>>.filterValueIsInstanceOf(
++    @Suppress("UNUSED_PARAMETER") cls: KClass<T>
++): List<Storable<T>> {
++    @Suppress("UNCHECKED_CAST")
++    return filter { it.value is T } as List<Storable<T>>
++}
+Index: vault/src/jvmMain/kotlin/caching.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/caching.kt b/vault/src/jvmMain/kotlin/caching.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/caching.kt	(date 1733906439126)
+@@ -0,0 +1,103 @@
++package de.peekandpoke.ultra.vault
++
++import java.lang.reflect.Type
++
++/**
++ * Entity cache
++ */
++interface EntityCache {
++    /**
++     * Clear all entries from the cache
++     */
++    fun clear()
++
++    /**
++     * Puts the [value] with the given [id] into the cache
++     */
++    fun <T> put(id: String, value: T): T
++
++    /**
++     * Gets or puts the entry for the given [id] by using the [provider] if the [id] is not yet present.
++     */
++    fun <T> getOrPut(id: String, provider: () -> T?): T?
++}
++
++/**
++ * Entity Cache that does not do any caching.
++ */
++object NullEntityCache : EntityCache {
++
++    /**
++     * @see EntityCache.clear
++     */
++    override fun clear() {
++        // noop
++    }
++
++    /**
++     * @see EntityCache.put
++     */
++    override fun <T> put(id: String, value: T): T = value
++
++    /**
++     * @see EntityCache.getOrPut
++     */
++    override fun <T> getOrPut(id: String, provider: () -> T?): T? = provider()
++}
++
++/**
++ * A default implementation for [EntityCache]
++ *
++ * The cache will hold as many [entries] as it is given.
++ * There is no mechanism like TTL or LRU in place here.
++ */
++class DefaultEntityCache : EntityCache {
++
++    private val lock = Any()
++    private val entries = mutableMapOf<String, Any?>()
++
++    /**
++     * @see EntityCache.clear
++     */
++    override fun clear(): Unit = synchronized(lock) {
++        entries.clear()
++    }
++
++    /**
++     * @see EntityCache.put
++     */
++    override fun <T> put(id: String, value: T): T {
++        return synchronized(lock) {
++            value.also {
++                entries[id] = value
++            }
++        }
++    }
++
++    /**
++     * @see EntityCache.getOrPut
++     */
++    override fun <T> getOrPut(id: String, provider: () -> T?): T? {
++        @Suppress("UNCHECKED_CAST")
++        val exists = entries[id] as T
++
++        if (exists != null) {
++            return exists
++        }
++
++        return provider().apply {
++            put(id, this)
++        }
++    }
++}
++
++class SharedRepoClassLookup {
++
++    private val typeLookup = mutableMapOf<Type, Class<out Repository<*>>?>()
++
++    private val nameLookup = mutableMapOf<String, Class<out Repository<*>>?>()
++
++    fun getOrPut(type: Type, defaultValue: () -> Class<out Repository<*>>?) = typeLookup.getOrPut(type, defaultValue)
++
++    fun getOrPut(name: String, defaultValue: () -> Class<out Repository<*>>?) = nameLookup.getOrPut(name, defaultValue)
++}
+Index: vault/src/jvmMain/kotlin/vault_module.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/vault_module.kt b/vault/src/jvmMain/kotlin/vault_module.kt
+new file mode 100644
+--- /dev/null	(date 1733906439127)
++++ b/vault/src/jvmMain/kotlin/vault_module.kt	(date 1733906439127)
+@@ -0,0 +1,67 @@
++package de.peekandpoke.ultra.vault
++
++import de.peekandpoke.ultra.kontainer.KontainerBuilder
++import de.peekandpoke.ultra.kontainer.module
++import de.peekandpoke.ultra.vault.cli.VaultIndexesEnsureCommand
++import de.peekandpoke.ultra.vault.cli.VaultIndexesRecreateCommand
++import de.peekandpoke.ultra.vault.cli.VaultIndexesValidateCommand
++import de.peekandpoke.ultra.vault.cli.VaultRepositoriesEnsureCommand
++import de.peekandpoke.ultra.vault.hooks.TimestampedHook
++import de.peekandpoke.ultra.vault.hooks.TimestampedMillisHook
++import de.peekandpoke.ultra.vault.profiling.NullQueryProfiler
++import de.peekandpoke.ultra.vault.profiling.QueryProfiler
++import de.peekandpoke.ultra.vault.tools.DatabaseGraphBuilder
++import de.peekandpoke.ultra.vault.tools.DatabaseTools
++import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.SupervisorJob
++import kotlinx.coroutines.launch
++import kotlinx.coroutines.runBlocking
++
++fun KontainerBuilder.ultraVault() = module(Ultra_Vault)
++
++/**
++ * Vault kontainer module.
++ *
++ * Defines two dynamic services :
++ *
++ * - [EntityCache] which defaults to [DefaultEntityCache]
++ */
++val Ultra_Vault
++    get() = module {
++        // Database
++        singleton(Database::class)
++        singleton(SharedRepoClassLookup::class)
++
++        // Caching
++        dynamic(EntityCache::class, DefaultEntityCache::class)
++
++        // Hooks
++        dynamic(TimestampedHook::class)
++        dynamic(TimestampedMillisHook::class)
++
++        // Profiling
++        dynamic0(QueryProfiler::class) { NullQueryProfiler }
++
++        // Tools
++        singleton(DatabaseTools::class)
++        dynamic(DatabaseGraphBuilder::class)
++
++        // Cli command
++        singleton(VaultRepositoriesEnsureCommand::class)
++        singleton(VaultIndexesEnsureCommand::class)
++        singleton(VaultIndexesRecreateCommand::class)
++        singleton(VaultIndexesValidateCommand::class)
++    }
++
++object Vault {
++    private val job = SupervisorJob()
++    internal val scope = job + Dispatchers.IO
++
++    fun launch(block: suspend () -> Unit) {
++        runBlocking {
++            launch(scope) {
++                block()
++            }
++        }
++    }
++}
+Index: .idea/modules.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"ProjectModuleManager\">\n    <modules>\n      <module fileurl=\"file://$PROJECT_DIR$/.idea/modules/z-playground-js/de.peekandpoke.ultra.ultra.z-playground-js.main.iml\" filepath=\"$PROJECT_DIR$/.idea/modules/z-playground-js/de.peekandpoke.ultra.ultra.z-playground-js.main.iml\" />\n      <module fileurl=\"file://$PROJECT_DIR$/.idea/modules/z-playground-js/de.peekandpoke.ultra.ultra.z-playground-js.test.iml\" filepath=\"$PROJECT_DIR$/.idea/modules/z-playground-js/de.peekandpoke.ultra.ultra.z-playground-js.test.iml\" />\n      <module fileurl=\"file://$PROJECT_DIR$/.idea/modules/z-playground-js/dev.peekandpoke.ultra.z-playground-js.main.iml\" filepath=\"$PROJECT_DIR$/.idea/modules/z-playground-js/dev.peekandpoke.ultra.z-playground-js.main.iml\" />\n      <module fileurl=\"file://$PROJECT_DIR$/.idea/modules/z-playground-js/dev.peekandpoke.ultra.z-playground-js.test.iml\" filepath=\"$PROJECT_DIR$/.idea/modules/z-playground-js/dev.peekandpoke.ultra.z-playground-js.test.iml\" />\n      <module fileurl=\"file://$PROJECT_DIR$/.idea/modules/z-playground-js/opt.dev.peekandpoke.ultra.z-playground-js.main.iml\" filepath=\"$PROJECT_DIR$/.idea/modules/z-playground-js/opt.dev.peekandpoke.ultra.z-playground-js.main.iml\" />\n      <module fileurl=\"file://$PROJECT_DIR$/.idea/modules/z-playground-js/opt.dev.peekandpoke.ultra.z-playground-js.test.iml\" filepath=\"$PROJECT_DIR$/.idea/modules/z-playground-js/opt.dev.peekandpoke.ultra.z-playground-js.test.iml\" />\n      <module fileurl=\"file://$PROJECT_DIR$/.idea/modules/z-playground-js/peekandpoke.ultra.z-playground-js.main.iml\" filepath=\"$PROJECT_DIR$/.idea/modules/z-playground-js/peekandpoke.ultra.z-playground-js.main.iml\" />\n      <module fileurl=\"file://$PROJECT_DIR$/.idea/modules/z-playground-js/peekandpoke.ultra.z-playground-js.test.iml\" filepath=\"$PROJECT_DIR$/.idea/modules/z-playground-js/peekandpoke.ultra.z-playground-js.test.iml\" />\n      <module fileurl=\"file://$PROJECT_DIR$/.idea/modules/ultra.iml\" filepath=\"$PROJECT_DIR$/.idea/modules/ultra.iml\" />\n      <module fileurl=\"file://$PROJECT_DIR$/.idea/modules/security/ultra.security.commonTest.iml\" filepath=\"$PROJECT_DIR$/.idea/modules/security/ultra.security.commonTest.iml\" />\n      <module fileurl=\"file://$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.main.iml\" filepath=\"$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.main.iml\" />\n      <module fileurl=\"file://$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.test.iml\" filepath=\"$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.test.iml\" />\n    </modules>\n  </component>\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/modules.xml b/.idea/modules.xml
+--- a/.idea/modules.xml	(revision 051bb011bd460c73054c587388185528a82001a0)
++++ b/.idea/modules.xml	(date 1740249690235)
+@@ -12,6 +12,7 @@
+       <module fileurl="file://$PROJECT_DIR$/.idea/modules/z-playground-js/peekandpoke.ultra.z-playground-js.test.iml" filepath="$PROJECT_DIR$/.idea/modules/z-playground-js/peekandpoke.ultra.z-playground-js.test.iml" />
+       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ultra.iml" filepath="$PROJECT_DIR$/.idea/modules/ultra.iml" />
+       <module fileurl="file://$PROJECT_DIR$/.idea/modules/security/ultra.security.commonTest.iml" filepath="$PROJECT_DIR$/.idea/modules/security/ultra.security.commonTest.iml" />
++      <module fileurl="file://$PROJECT_DIR$/.idea/modules/vault/ultra.vault.jvmTest.iml" filepath="$PROJECT_DIR$/.idea/modules/vault/ultra.vault.jvmTest.iml" />
+       <module fileurl="file://$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.main.iml" filepath="$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.main.iml" />
+       <module fileurl="file://$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.test.iml" filepath="$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.test.iml" />
+     </modules>
+Index: vault/src/jvmMain/kotlin/TypedQuery.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/TypedQuery.kt b/vault/src/jvmMain/kotlin/TypedQuery.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/TypedQuery.kt	(date 1733906439126)
+@@ -0,0 +1,31 @@
++package de.peekandpoke.ultra.vault
++
++import de.peekandpoke.ultra.common.reflection.TypeRef
++import de.peekandpoke.ultra.vault.lang.Printer
++import de.peekandpoke.ultra.vault.lang.TerminalExpr
++
++data class TypedQuery<T>(val root: TerminalExpr<T>, val query: String, val vars: Map<String, Any?>) {
++
++    companion object {
++        fun <T> empty(type: TypeRef<T>) = TypedQuery(
++            root = EmptyTerminalExpr(type),
++            query = "",
++            vars = emptyMap(),
++        )
++    }
++
++    private class EmptyTerminalExpr<T>(private val type: TypeRef<T>) : TerminalExpr<T> {
++        override fun print(p: Printer): Any {
++            // noop
++            return Unit
++        }
++
++        override fun getType(): TypeRef<List<T>> {
++            return type.list
++        }
++
++        override fun innerType(): TypeRef<T> {
++            return type
++        }
++    }
++}
+Index: vault/src/jvmMain/kotlin/Repository.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/Repository.kt b/vault/src/jvmMain/kotlin/Repository.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/Repository.kt	(date 1733906439126)
+@@ -0,0 +1,316 @@
++package de.peekandpoke.ultra.vault
++
++import de.peekandpoke.ultra.common.reflection.TypeRef
++import de.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicParentUtil
++import de.peekandpoke.ultra.vault.lang.Aliased
++import de.peekandpoke.ultra.vault.lang.Expression
++import de.peekandpoke.ultra.vault.lang.IterableExpr
++import de.peekandpoke.ultra.vault.lang.Printer
++import kotlinx.coroutines.delay
++import kotlin.reflect.KClass
++import kotlin.reflect.KClassifier
++
++interface Repository<T : Any> : Expression<List<T>>, Aliased {
++
++    class Hooks<T : Any>(
++        val onBeforeSave: List<OnBeforeSave<T>>,
++        val onAfterSave: List<OnAfterSave<T>>,
++        val onAfterDelete: List<OnAfterDelete<T>>,
++    ) {
++        companion object {
++            fun <T : Any> of(vararg hooks: Hook<T>) = of(hooks.toList())
++
++            fun <T : Any> of(hooks: List<Hook<T>>) = Hooks(
++                onBeforeSave = hooks.filterIsInstance<OnBeforeSave<T>>(),
++                onAfterSave = hooks.filterIsInstance<OnAfterSave<T>>(),
++                onAfterDelete = hooks.filterIsInstance<OnAfterDelete<T>>(),
++            )
++
++            fun <T : Any> empty() = Hooks<T>(
++                onBeforeSave = emptyList(),
++                onAfterSave = emptyList(),
++                onAfterDelete = emptyList(),
++            )
++        }
++
++        interface Hook<T : Any>
++
++        interface OnBeforeSave<T : Any> : Hook<T> {
++            fun <X : T> onBeforeSave(repo: Repository<T>, storable: Storable<T>): Storable<X>
++        }
++
++        interface OnAfterSave<T : Any> : Hook<T> {
++            suspend fun <X : T> onAfterSave(repo: Repository<T>, stored: Stored<X>)
++        }
++
++        interface OnAfterDelete<T : Any> : Hook<T> {
++            suspend fun <X : T> onAfterDelete(repo: Repository<T>, deleted: Stored<X>)
++        }
++
++        fun plus(hook: Hook<T>): Hooks<T> = plus(of(hook))
++
++        fun plus(other: Hooks<T>): Hooks<T> = Hooks(
++            onBeforeSave = this.onBeforeSave.plus(other.onBeforeSave),
++            onAfterSave = this.onAfterSave.plus(other.onAfterSave),
++            onAfterDelete = this.onAfterDelete.plus(other.onAfterDelete),
++        )
++
++        fun plus(vararg hooks: List<Hook<T>>): Hooks<T> = plus(
++            of(
++                hooks.toList().flatten()
++            )
++        )
++
++        fun <X : T> applyOnBeforeSaveHooks(repo: Repository<T>, storable: Storable<X>): Storable<X> {
++            return onBeforeSave.fold(storable) { acc, hook -> hook.onBeforeSave(repo, acc) }
++        }
++
++        fun <X : T> applyOnAfterSaveHooks(repo: Repository<T>, stored: Stored<X>): Stored<X> {
++            Vault.launch {
++                delay(1)
++                onAfterSave.forEach { hook -> hook.onAfterSave(repo, stored) }
++            }
++
++            return stored
++        }
++
++        fun <X : T> applyOnAfterDeleteHooks(repo: Repository<T>, stored: Stored<X>): Stored<X> {
++            Vault.launch {
++                delay(1)
++                onAfterDelete.forEach { hook -> hook.onAfterDelete(repo, stored) }
++            }
++
++            return stored
++        }
++    }
++
++    /**
++     * The name of the repository
++     */
++    val name: String
++
++    /**
++     * The connection identifier of the repository
++     */
++    val connection: String
++
++    /**
++     * The type of the entities stored in the repository.
++     *
++     * This is needed for deserialization
++     */
++    val storedType: TypeRef<T>
++
++    /**
++     * Helper for accessing the repos this pointer
++     */
++    val repo get() = this
++
++    /**
++     * Gets an iterable expression for this repo
++     */
++    fun asIterableExpr(rootName: String = "root"): IterableExpr<T> = IterableExpr("root", this)
++
++    /**
++     * Returns the expression type of the repo
++     */
++    override fun getType(): TypeRef<List<T>> = storedType.list
++
++    /**
++     * Prints the repo as part of a query
++     */
++    override fun print(p: Printer) {
++        p.name(name)
++    }
++
++    /**
++     * Gets the alias
++     */
++    override fun getAlias(): String {
++        return name
++    }
++
++    /**
++     * Ensures that the repository is set up properly
++     *
++     * Makes sure that:
++     * 1. the repository is created in the database
++     * 2. indexes are set up
++     *
++     * @see ensureRepository
++     * @see ensureIndexes
++     */
++    suspend fun ensure() {
++        ensureRepository()
++        ensureIndexes()
++    }
++
++    /**
++     * Ensures that the repository is created in the database
++     */
++    suspend fun ensureRepository() {}
++
++    /**
++     * Gets figures about the repository
++     */
++    suspend fun getStats(): VaultModels.RepositoryStats = VaultModels.RepositoryStats.empty.copy(name = name)
++
++    /**
++     * Validates that all indexes are set properly and that there are not excess indexes
++     */
++    suspend fun validateIndexes(): VaultModels.IndexesInfo = VaultModels.IndexesInfo.empty.copy(repository = name)
++
++    /**
++     * Ensures that the indexes are set up
++     */
++    suspend fun ensureIndexes() {}
++
++    /**
++     * Drops all indexes and then re-creates them.
++     */
++    suspend fun recreateIndexes() {}
++
++    /**
++     * Returns a set of all entity classes that the repository stored.
++     *
++     * This will include the base type [storedType] and all or its registered
++     * polymorphic children.
++     */
++    fun getAllStoredClasses(): Set<KClass<out T>> {
++        @Suppress("UNCHECKED_CAST")
++        val mainClass = storedType.type.classifier as KClass<out T>
++
++        return listOf(mainClass)
++            .plus(PolymorphicParentUtil.getChildren(mainClass))
++            .toSet()
++    }
++
++    /**
++     * Checks whether the repository stores the given cls
++     */
++    fun stores(type: KClassifier): Boolean {
++        // Is this the exact type that we store?
++        return type == storedType.type.classifier ||
++                // Or is the stored type a super type?
++                storedType.type.classifier in (type as KClass<*>).supertypes.map { it.classifier }
++    }
++
++    /**
++     * Ensure that the given [idOrKey] is an ID in the form <NAME>/<KEY>
++     */
++    fun ensureId(idOrKey: String): String {
++        return if (idOrKey.contains("/")) {
++            idOrKey
++        } else {
++            "$name/$idOrKey"
++        }
++    }
++
++    /**
++     * Returns all documents in the repository.
++     */
++    suspend fun findAll(): Cursor<Stored<T>>
++
++    /**
++     * Retrieves a document by id or null if there is none.
++     */
++    suspend fun findById(id: String?): Stored<T>?
++
++    /**
++     * Inserts the given object into the database and returns the saved version
++     */
++    suspend fun <X : T> insert(new: X): Stored<X> = insert(New(new))
++
++    /**
++     * Inserts the given object into the database and returns the saved version
++     */
++    suspend fun <X : T> insert(new: X, modify: suspend (X) -> X): Stored<X> = insert(New(modify(new)))
++
++    /**
++     * Inserts the given object with the given key into the database and returns the saved version
++     */
++    suspend fun <X : T> insert(key: String?, new: X): Stored<X> = when (key) {
++        null -> insert(new)
++        else -> insert(New(_key = key, value = new))
++    }
++
++    /**
++     * Inserts the given object into the database and returns the saved version
++     */
++    suspend fun <X : T> insert(new: New<X>): Stored<X>
++
++    /**
++     * Tries to insert the given [entry].
++     *
++     * Return the stored entry, if the insert is successful.
++     */
++    suspend fun <X : T> tryInsert(entry: X): Stored<X>? {
++        return try {
++            insert(entry)
++        } catch (e: Throwable) {
++            null
++        }
++    }
++
++    /**
++     * Updates the given obj in the database and returns the saved version
++     */
++    suspend fun <X : T> save(stored: Stored<X>): Stored<X>
++
++    /**
++     * Saves the given storable and returns the saved version
++     */
++    suspend fun <X : T> save(storable: Storable<X>): Stored<X> = when (storable) {
++        is New<X> -> insert(storable)
++
++        is Stored<X> -> save(storable)
++
++        is Ref<X> -> save(storable.asStored)
++
++        is LazyRef<X> -> save(storable.asStored)
++    }
++
++    /**
++     * Save the given [storable] and applying the given [modify] before storing it.
++     *
++     * Returns the saved version
++     */
++    suspend fun <IN : T, OUT : T> save(storable: Storable<IN>, modify: suspend (IN) -> OUT): Stored<OUT> {
++        val modified: Storable<OUT> = (storable as Storable<T>).withValue(
++            modify(storable.value)
++        )
++
++        return save(modified)
++    }
++
++    /**
++     * Save the given [stored] and applying the given [modify] before storing it.
++     *
++     * Returns the saved version
++     */
++    suspend fun <X : T> saveIfModified(stored: Storable<X>, modify: suspend (X) -> X): Stored<X> {
++
++        val originalValue = stored.value
++        val modifiedValue = modify(originalValue)
++
++        return when (originalValue != modifiedValue) {
++            true -> save(stored.withValue(modifiedValue))
++            else -> stored.asStored
++        }
++    }
++
++    /**
++     * Removes the given entity
++     */
++    suspend fun <X : T> remove(entity: Stored<X>): RemoveResult = remove(entity._id)
++
++    /**
++     * Remove the document with the given id or key
++     */
++    suspend fun remove(idOrKey: String): RemoveResult
++
++    /**
++     * Remove all entries from the collection
++     */
++    suspend fun removeAll(): RemoveResult
++}
+Index: vault/src/jvmMain/kotlin/exception.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/exception.kt b/vault/src/jvmMain/kotlin/exception.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/exception.kt	(date 1733906439126)
+@@ -0,0 +1,3 @@
++package de.peekandpoke.ultra.vault
++
++class VaultException(message: String, cause: Throwable? = null) : Throwable(message, cause)
+Index: vault/src/jvmMain/kotlin/domain.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/domain.kt b/vault/src/jvmMain/kotlin/domain.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/domain.kt	(date 1733906439126)
+@@ -0,0 +1,280 @@
++@file:Suppress("PropertyName")
++
++package de.peekandpoke.ultra.vault
++
++import com.fasterxml.jackson.annotation.JsonIgnore
++import de.peekandpoke.ultra.vault.lang.VaultDslMarker
++import kotlinx.serialization.SerialName
++
++sealed class Storable<out T> {
++    /** The stored value of the document */
++    abstract val value: T
++
++    /** The database id in the form "collection/key" of the document */
++    abstract val _id: String
++
++    /** The database key of the document */
++    abstract val _key: String
++
++    /** The revision of the document */
++    abstract val _rev: String
++
++    /** The name of the collection the document is stored in */
++    @get:JsonIgnore
++    val collection get() = _id.split("/").first()
++
++    /** Converts to a [Ref] */
++    @get:JsonIgnore
++    val asRef: Ref<T> get() = Ref(value, _id, _key, _rev)
++
++    /** Converts to a [LazyRef] */
++    @get:JsonIgnore
++    val asLazyRef: LazyRef<T> get() = LazyRef(_id) { this }
++
++    /** Converts to a [Stored] */
++    @get:JsonIgnore
++    val asStored: Stored<T> get() = Stored(value, _id, _key, _rev)
++
++    /**
++     * Converts to Stored<X> where [X] : [T] by mapping the value with [fn].
++     */
++    abstract fun <X : @UnsafeVariance T> modify(fn: (oldValue: T) -> X): Storable<X>
++
++    /**
++     * Converts to Stored<X> where [X] : [T] by setting the [newValue].
++     */
++    abstract fun <X : @UnsafeVariance T> withValue(newValue: X): Storable<X>
++
++    /**
++     * Transforms to Storable<N> where [N] has no relation to [T]
++     */
++    abstract fun <N> transform(fn: (current: T) -> N): Storable<N>
++
++    /**
++     * Checks if this [Storable] has the same id as the [other]
++     */
++    @VaultDslMarker
++    infix fun hasSameIdAs(other: Storable<@UnsafeVariance T>?) = other != null && _id == other._id
++
++    /**
++     * Checks if this [Storable] has another id as the [other]
++     */
++    @VaultDslMarker
++    infix fun hasOtherIdThan(other: Storable<@UnsafeVariance T>?) = !hasSameIdAs(other)
++
++    /**
++     * Checks if this [Storable] has an id that is equal to one of the [others]
++     */
++    @VaultDslMarker
++    infix fun hasIdIn(others: List<Storable<@UnsafeVariance T>>) = _id in others.map { it._id }
++}
++
++@SerialName(Stored.serialName)
++data class Stored<out T>(
++    override val value: T,
++    override val _id: String,
++    override val _key: String,
++    override val _rev: String,
++) : Storable<T>() {
++
++    companion object {
++        const val serialName = "stored"
++    }
++
++    override fun <X : @UnsafeVariance T> modify(fn: (oldValue: T) -> X): Stored<X> {
++        return withValue(fn(value))
++    }
++
++    suspend fun <X : @UnsafeVariance T> modifyAsync(fn: suspend (oldValue: T) -> X): Stored<X> {
++        return withValue(fn(value))
++    }
++
++    override fun <X : @UnsafeVariance T> withValue(newValue: X): Stored<X> {
++        return Stored(
++            value = newValue,
++            _id = _id,
++            _key = _key,
++            _rev = _rev,
++        )
++    }
++
++    override fun <N> transform(fn: (current: T) -> N): Stored<N> {
++        return Stored(
++            value = fn(value),
++            _id = _id,
++            _key = _key,
++            _rev = _rev,
++        )
++    }
++
++    inline fun <reified X : @UnsafeVariance T> castTyped(): Stored<X>? {
++        @Suppress("UNCHECKED_CAST")
++        return when (value) {
++            is X -> this as Stored<X>
++            else -> null
++        }
++    }
++
++    inline fun <reified X> castUntyped(): Stored<X>? {
++        @Suppress("UNCHECKED_CAST")
++        return when (value) {
++            is X -> this as Stored<X>
++            else -> null
++        }
++    }
++}
++
++@SerialName(LazyRef.serialName)
++data class LazyRef<out T>(
++    override val _id: String,
++    internal val provider: (id: String) -> Storable<T>,
++) : Storable<T>() {
++
++    companion object {
++        const val serialName = "lazy-ref"
++    }
++
++    private val provided by lazy { provider(_id) }
++
++    override val value: T get() = provided.value
++
++    override val _key: String = _id.ensureKey
++
++    override val _rev: String get() = provided._rev
++
++    override fun <X : @UnsafeVariance T> modify(fn: (oldValue: T) -> X): LazyRef<X> {
++        return withValue(fn(value))
++    }
++
++    override fun <X : @UnsafeVariance T> withValue(newValue: X): LazyRef<X> {
++        return LazyRef(
++            _id = _id,
++            provider = { provided.asStored.withValue(newValue) },
++        )
++    }
++
++    override fun <N> transform(fn: (current: T) -> N): LazyRef<N> {
++        return LazyRef(
++            _id = _id,
++            provider = { provided.asStored.transform(fn) },
++        )
++    }
++
++    inline fun <reified X : @UnsafeVariance T> castTyped(): LazyRef<X>? {
++        @Suppress("UNCHECKED_CAST")
++        return when (value) {
++            is X -> this as LazyRef<X>
++            else -> null
++        }
++    }
++
++    inline fun <reified X> castUntyped(): LazyRef<X>? {
++        @Suppress("UNCHECKED_CAST")
++        return when (value) {
++            is X -> this as LazyRef<X>
++            else -> null
++        }
++    }
++}
++
++@SerialName(Ref.serialName)
++data class Ref<out T>(
++    override val value: T,
++    override val _id: String,
++    override val _key: String,
++    override val _rev: String,
++) : Storable<T>() {
++
++    companion object {
++        const val serialName = "ref"
++    }
++
++    override fun <X : @UnsafeVariance T> modify(fn: (oldValue: T) -> X): Ref<X> {
++        return withValue(fn(value))
++    }
++
++    override fun <X : @UnsafeVariance T> withValue(newValue: X): Ref<X> {
++        return Ref(
++            value = newValue,
++            _id = _id,
++            _key = _key,
++            _rev = _rev,
++        )
++    }
++
++    override fun <N> transform(fn: (current: T) -> N): Ref<N> {
++        return Ref(
++            value = fn(value),
++            _id = _id,
++            _key = _key,
++            _rev = _rev,
++        )
++    }
++
++    inline fun <reified X : @UnsafeVariance T> castTyped(): Ref<X>? {
++        @Suppress("UNCHECKED_CAST")
++        return when (value) {
++            is X -> this as Ref<X>
++            else -> null
++        }
++    }
++
++    inline fun <reified X> castUntyped(): Ref<X>? {
++        @Suppress("UNCHECKED_CAST")
++        return when (value) {
++            is X -> this as Ref<X>
++            else -> null
++        }
++    }
++}
++
++@SerialName(New.serialName)
++data class New<out T>(
++    override val value: T,
++    override val _id: String = "",
++    override val _key: String = "",
++    override val _rev: String = "",
++) : Storable<T>() {
++
++    companion object {
++        const val serialName = "new"
++    }
++
++    override fun <X : @UnsafeVariance T> modify(fn: (oldValue: T) -> X): New<X> {
++        return withValue(fn(value))
++    }
++
++    override fun <X : @UnsafeVariance T> withValue(newValue: X): New<X> {
++        return New(
++            value = newValue,
++            _id = _id,
++            _key = _key,
++            _rev = _rev,
++        )
++    }
++
++    override fun <N> transform(fn: (current: T) -> N): New<N> {
++        return New(
++            value = fn(value),
++            _id = _id,
++            _key = _key,
++            _rev = _rev,
++        )
++    }
++
++    inline fun <reified X : @UnsafeVariance T> castTyped(): New<X>? {
++        @Suppress("UNCHECKED_CAST")
++        return when (value) {
++            is X -> this as New<X>
++            else -> null
++        }
++    }
++
++    inline fun <reified X> castUntyped(): New<X>? {
++        @Suppress("UNCHECKED_CAST")
++        return when (value) {
++            is X -> this as New<X>
++            else -> null
++        }
++    }
++}
+Index: vault/src/jvmTest/kotlin/DatabaseSpec.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmTest/kotlin/DatabaseSpec.kt b/vault/src/jvmTest/kotlin/DatabaseSpec.kt
+new file mode 100644
+--- /dev/null	(date 1740250010325)
++++ b/vault/src/jvmTest/kotlin/DatabaseSpec.kt	(date 1740250010325)
+@@ -0,0 +1,5 @@
++package de.peekandpoke.ultra.vault
++
++class DatabaseSpec {
++    // write spec for class Database
++}
+Index: vault/src/jvmMain/kotlin/Cursor.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/Cursor.kt b/vault/src/jvmMain/kotlin/Cursor.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/Cursor.kt	(date 1733906439126)
+@@ -0,0 +1,70 @@
++package de.peekandpoke.ultra.vault
++
++import de.peekandpoke.ultra.common.reflection.TypeRef
++import de.peekandpoke.ultra.common.reflection.kType
++
++interface Cursor<T> : Iterable<T> {
++
++    companion object {
++        inline fun <reified T> empty() = empty(kType<T>())
++
++        fun <T> empty(type: TypeRef<T>): Cursor<T> = EmptyCursor(type)
++
++        inline fun <reified T> of(items: Iterable<T>) =
++            of(type = kType(), items = items)
++
++        fun <T> of(type: TypeRef<T>, items: Iterable<T>): Cursor<T> =
++            Simple(
++                items = items,
++                query = TypedQuery.empty(type),
++            )
++    }
++
++    private class Simple<T>(
++        val items: Iterable<T>,
++        override val query: TypedQuery<T>,
++    ) : Cursor<T> {
++        override fun iterator(): Iterator<T> {
++            return items.iterator()
++        }
++
++        override val entityCache: EntityCache = NullEntityCache
++        override val count: Long get() = items.count().toLong()
++        override val fullCount: Long? get() = null
++        override val timeMs: Double get() = 1.0
++    }
++
++    private class EmptyCursor<T>(type: TypeRef<T>) : Cursor<T> {
++        override fun iterator(): Iterator<T> {
++            return emptyList<T>().listIterator()
++        }
++
++        override val entityCache: EntityCache = NullEntityCache
++        override val query: TypedQuery<T> = TypedQuery.empty(type)
++        override val count: Long = 0
++        override val fullCount: Long = 0
++        override val timeMs: Double = 1.0
++    }
++
++    /** The Entity Cache */
++    val entityCache: EntityCache
++
++    /** The executed query */
++    val query: TypedQuery<T>
++
++    /** The number of results that where returned */
++    val count: Long
++
++    /** The total number of results that would match the query */
++    val fullCount: Long?
++
++    /** The time the query took */
++    val timeMs: Double
++}
++
++/**
++ * Converts the cursor into a list a puts all entries into the EntityCache
++ */
++fun <T> Cursor<Stored<T>>.cache(): List<Stored<T>> {
++    return map { entityCache.put(it._id, it) }
++}
+Index: vault/src/jvmMain/kotlin/slumber/VaultSlumberModule.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/slumber/VaultSlumberModule.kt b/vault/src/jvmMain/kotlin/slumber/VaultSlumberModule.kt
+new file mode 100644
+--- /dev/null	(date 1733906439127)
++++ b/vault/src/jvmMain/kotlin/slumber/VaultSlumberModule.kt	(date 1733906439127)
+@@ -0,0 +1,33 @@
++package de.peekandpoke.ultra.vault.slumber
++
++import de.peekandpoke.ultra.common.TypedKey
++import de.peekandpoke.ultra.slumber.Awaker
++import de.peekandpoke.ultra.slumber.SlumberModule
++import de.peekandpoke.ultra.slumber.Slumberer
++import de.peekandpoke.ultra.vault.*
++import kotlin.reflect.KType
++
++object VaultSlumberModule : SlumberModule {
++
++    val DatabaseKey = TypedKey<Database>("vault_Database")
++    val EntityCacheKey = TypedKey<EntityCache>("vault_EntityCache")
++
++    override fun getAwaker(type: KType): Awaker? {
++        return when (type.classifier) {
++            Ref::class -> RefCodec
++            LazyRef::class -> LazyRefCodec
++            Stored::class -> StoredAwaker(type.arguments[0].type!!)
++            else -> null
++        }
++    }
++
++    override fun getSlumberer(type: KType): Slumberer? {
++        return when (type.classifier) {
++            Ref::class -> RefCodec
++            LazyRef::class -> LazyRefCodec
++            Stored::class -> StoredSlumberer
++            New::class -> StoredSlumberer
++            else -> null
++        }
++    }
++}
+Index: vault/src/jvmMain/kotlin/slumber/slumber_helpers.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/slumber/slumber_helpers.kt b/vault/src/jvmMain/kotlin/slumber/slumber_helpers.kt
+new file mode 100644
+--- /dev/null	(date 1733906439127)
++++ b/vault/src/jvmMain/kotlin/slumber/slumber_helpers.kt	(date 1733906439127)
+@@ -0,0 +1,38 @@
++package de.peekandpoke.ultra.vault.slumber
++
++import de.peekandpoke.ultra.common.datetime.MpInstant
++import de.peekandpoke.ultra.common.datetime.MpLocalDate
++import de.peekandpoke.ultra.common.datetime.MpLocalDateTime
++import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
++import de.peekandpoke.ultra.vault.lang.*
++
++/** Refers to the default polymorphic type discriminator "_type" */
++@Suppress("ObjectPropertyName")
++inline val <T> IterableExpr<T>._type
++    inline get() = PropertyPath.start(this).property<String>("_type")
++
++/** Refers to the default polymorphic type discriminator "_type" */
++@Suppress("ObjectPropertyName")
++inline val <T> PathExpr<T>._type
++    inline get() = property<String>("_type")
++
++/** Refers to the default polymorphic type discriminator "_type" */
++@Suppress("ObjectPropertyName")
++inline val <T> Expression<T>._type
++    inline get() = property<String>("_type")
++
++/** Helper to get the "ts" property of serialized datetime objects */
++inline val PathExpr<MpInstant>.ts
++    @JvmName("ts_MpInstant") inline get() = property<Long>("ts")
++
++/** Helper to get the "ts" property of serialized datetime objects */
++inline val PathExpr<MpZonedDateTime>.ts
++    @JvmName("ts_MpZonedDateTime") inline get() = property<Long>("ts")
++
++/** Helper to get the "ts" property of serialized datetime objects */
++inline val PathExpr<MpLocalDateTime>.ts
++    @JvmName("ts_MpLocalDateTime") inline get() = property<Long>("ts")
++
++/** Helper to get the "ts" property of serialized datetime objects */
++inline val PathExpr<MpLocalDate>.ts
++    @JvmName("ts_MpLocalDate") inline get() = property<Long>("ts")
+Index: vault/src/jvmMain/kotlin/profiling/DefaultQueryProfiler.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/profiling/DefaultQueryProfiler.kt b/vault/src/jvmMain/kotlin/profiling/DefaultQueryProfiler.kt
+new file mode 100644
+--- /dev/null	(date 1733906439127)
++++ b/vault/src/jvmMain/kotlin/profiling/DefaultQueryProfiler.kt	(date 1733906439127)
+@@ -0,0 +1,24 @@
++package de.peekandpoke.ultra.vault.profiling
++
++class DefaultQueryProfiler(
++    override val explainQueries: Boolean,
++) : QueryProfiler {
++    override var entries: List<QueryProfiler.Entry> = emptyList()
++
++    override suspend fun <R> profile(
++        connection: String,
++        queryLanguage: String,
++        query: String,
++        block: suspend (QueryProfiler.Entry) -> R,
++    ): R {
++        val entry = QueryProfiler.Entry.Impl(
++            connection = connection,
++            queryLanguage = queryLanguage,
++            query = query
++        )
++
++        entries = entries.plus(entry)
++
++        return block(entry)
++    }
++}
+Index: vault/src/jvmMain/kotlin/profiling/NullQueryProfiler.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/profiling/NullQueryProfiler.kt b/vault/src/jvmMain/kotlin/profiling/NullQueryProfiler.kt
+new file mode 100644
+--- /dev/null	(date 1733906439127)
++++ b/vault/src/jvmMain/kotlin/profiling/NullQueryProfiler.kt	(date 1733906439127)
+@@ -0,0 +1,17 @@
++package de.peekandpoke.ultra.vault.profiling
++
++object NullQueryProfiler : QueryProfiler {
++
++    override val explainQueries: Boolean = false
++
++    override val entries: List<QueryProfiler.Entry> get() = emptyList()
++
++    override suspend fun <R> profile(
++        connection: String,
++        queryLanguage: String,
++        query: String,
++        block: suspend (QueryProfiler.Entry) -> R,
++    ): R {
++        return block(QueryProfiler.Entry.Null)
++    }
++}
+Index: vault/src/jvmMain/kotlin/profiling/QueryProfiler.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/profiling/QueryProfiler.kt b/vault/src/jvmMain/kotlin/profiling/QueryProfiler.kt
+new file mode 100644
+--- /dev/null	(date 1733906439127)
++++ b/vault/src/jvmMain/kotlin/profiling/QueryProfiler.kt	(date 1733906439127)
+@@ -0,0 +1,144 @@
++package de.peekandpoke.ultra.vault.profiling
++
++interface QueryProfiler {
++
++    interface StopWatch {
++
++        object Null : StopWatch {
++            override val entriesNs: List<Long> = emptyList()
++
++            override val totalNs: Long = 0
++
++            override val count: Int = 0
++
++            override operator fun <T> invoke(block: () -> T): T {
++                return block()
++            }
++
++            override suspend fun <T> async(block: suspend () -> T): T {
++                return block()
++            }
++        }
++
++        class Impl : StopWatch {
++
++            private val sync = Any()
++            override val entriesNs = mutableListOf<Long>()
++
++            override val totalNs get() = entriesNs.sum()
++
++            override val count get() = entriesNs.size
++
++            override operator fun <T> invoke(block: () -> T): T {
++                val start = System.nanoTime()
++                val result = block()
++
++                synchronized(sync) {
++                    entriesNs.add(System.nanoTime() - start)
++                }
++
++                return result
++            }
++
++            override suspend fun <T> async(block: suspend () -> T): T {
++                val start = System.nanoTime()
++                val result = block()
++
++                synchronized(sync) {
++                    entriesNs.add(System.nanoTime() - start)
++                }
++
++                return result
++            }
++        }
++
++        @Suppress("MemberVisibilityCanBePrivate")
++        val entriesNs: List<Long>
++
++        val totalNs get() = entriesNs.sum()
++
++        val count get() = entriesNs.size
++
++        operator fun <T> invoke(block: () -> T): T
++
++        suspend fun <T> async(block: suspend () -> T): T
++    }
++
++    interface Entry {
++
++        object Null : Entry {
++            override var vars: Map<String, Any?>? get() = null; set(_) {}
++
++            override var count: Long? get() = null; set(_) {}
++
++            override var totalCount: Long? get() = null; set(_) {}
++
++            override var queryExplained: String? get() = null; set(_) {}
++
++            override val measureQuery: StopWatch = StopWatch.Null
++            override val measureIterator: StopWatch = StopWatch.Null
++            override val measureSerializer: StopWatch = StopWatch.Null
++            override val measureDeserializer: StopWatch = StopWatch.Null
++            override val measureExplain: StopWatch = StopWatch.Null
++        }
++
++        class Impl(
++            val connection: String,
++            val queryLanguage: String,
++            val query: String
++        ) : Entry {
++            override var vars: Map<String, Any?>? = null
++
++            /** The number of results returned */
++            override var count: Long? = null
++
++            /** The total number of results matching the query */
++            override var totalCount: Long? = null
++
++            /** The total number of results matching the query */
++            override var queryExplained: String? = null
++
++            override val measureQuery: StopWatch.Impl = StopWatch.Impl()
++            override val measureIterator: StopWatch.Impl = StopWatch.Impl()
++            override val measureSerializer: StopWatch.Impl = StopWatch.Impl()
++            override val measureDeserializer: StopWatch.Impl = StopWatch.Impl()
++            override val measureExplain: StopWatch.Impl = StopWatch.Impl()
++        }
++
++        var vars: Map<String, Any?>?
++
++        /** The number of results returned */
++        var count: Long?
++
++        /** The total number of results matching the query */
++        var totalCount: Long?
++
++        /** The total number of results matching the query */
++        var queryExplained: String?
++
++        val totalNs: Long
++            get() = measureQuery.totalNs +
++                    measureIterator.totalNs +
++                    measureSerializer.totalNs +
++                    measureDeserializer.totalNs +
++                    measureExplain.totalNs
++
++        val measureQuery: StopWatch
++        val measureIterator: StopWatch
++        val measureSerializer: StopWatch
++        val measureDeserializer: StopWatch
++        val measureExplain: StopWatch
++    }
++
++    val explainQueries: Boolean
++
++    val entries: List<Entry>
++
++    suspend fun <R> profile(
++        connection: String,
++        queryLanguage: String,
++        query: String,
++        block: suspend (Entry) -> R,
++    ): R
++}
++
+Index: vault/src/jvmMain/kotlin/domain/DatabaseGraphModel.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/domain/DatabaseGraphModel.kt b/vault/src/jvmMain/kotlin/domain/DatabaseGraphModel.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/domain/DatabaseGraphModel.kt	(date 1733906439126)
+@@ -0,0 +1,32 @@
++package de.peekandpoke.ultra.vault.domain
++
++data class DatabaseGraphModel(
++    val repos: List<Repo>,
++) {
++    data class Repo(
++        val id: Id,
++        val connection: String,
++        val storedClasses: List<StoredClass>,
++    ) {
++        data class Id(
++            val name: String,
++            val connection: String,
++        )
++    }
++
++    data class StoredClass(
++        val fqn: String,
++        val references: List<Reference>,
++    )
++
++    data class Reference(
++        val repo: Repo.Id?,
++        val fqn: String,
++        val type: Type,
++    ) {
++        enum class Type {
++            Direct,
++            Lazy,
++        }
++    }
++}
+Index: vault/src/jvmMain/kotlin/tools/DatabaseGraphBuilder.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/tools/DatabaseGraphBuilder.kt b/vault/src/jvmMain/kotlin/tools/DatabaseGraphBuilder.kt
+new file mode 100644
+--- /dev/null	(date 1740249573173)
++++ b/vault/src/jvmMain/kotlin/tools/DatabaseGraphBuilder.kt	(date 1740249573173)
+@@ -0,0 +1,172 @@
++package de.peekandpoke.ultra.vault.tools
++
++import de.peekandpoke.ultra.common.reflection.ReifiedKType
++import de.peekandpoke.ultra.common.reflection.kType
++import de.peekandpoke.ultra.common.startsWithAny
++import de.peekandpoke.ultra.logging.Log
++import de.peekandpoke.ultra.vault.Database
++import de.peekandpoke.ultra.vault.LazyRef
++import de.peekandpoke.ultra.vault.Ref
++import de.peekandpoke.ultra.vault.domain.DatabaseGraphModel
++import kotlin.reflect.KClass
++import kotlin.reflect.KType
++import kotlin.reflect.full.primaryConstructor
++
++class DatabaseGraphBuilder(
++    private val database: Database,
++    private val log: Log,
++) {
++    private inner class RefFinder(type: ReifiedKType) {
++
++        private val packageBlackList = listOf(
++            // exclude java std lib
++            "java.",
++            // exclude javax std lib
++            "javax.",
++            // exclude javafx
++            "javafx.",
++            // exclude kotlin std lib
++            "kotlin.",
++            // exclude google guava
++            "com.google.common."
++        )
++
++        private val visitedTypes = mutableSetOf<KType>()
++
++        private val references = mutableListOf<DatabaseGraphModel.Reference>()
++
++        init {
++            type.ctorParams2Types.forEach { (_, type) ->
++                visit(type)
++            }
++        }
++
++        fun getReferencesTypes(): List<DatabaseGraphModel.Reference> {
++            return references.toList()
++        }
++
++        private fun visit(type: KType) {
++
++            if (visitedTypes.contains(type)) {
++                return
++            }
++
++            visitedTypes.add(type)
++
++            // No class? Stop!
++            val cls = type.classifier as? KClass<*> ?: return
++
++            // Primitive type? Stop!
++            if (cls.java.isPrimitive || cls == String::class) {
++                return
++            }
++
++            // Is this a direct ref?
++            if (type.classifier == Ref::class) {
++                (type.arguments[0].type?.classifier as? KClass<*>)?.let { refClass ->
++                    // TODO: what if there is not repo ?
++                    database.getRepositoryStoringOrNull(refClass.java).let { repo ->
++                        references.add(
++                            DatabaseGraphModel.Reference(
++                                repo = repo?.let {
++                                    DatabaseGraphModel.Repo.Id(name = it.name, connection = it.connection)
++                                },
++                                fqn = refClass.java.name,
++                                type = DatabaseGraphModel.Reference.Type.Direct,
++                            )
++                        )
++                    }
++                }
++                return
++            }
++
++            // Is this a lazy ref?
++            if (type.classifier == LazyRef::class) {
++                (type.arguments[0].type?.classifier as? KClass<*>)?.let { refClass ->
++                    // TODO: what if there is not repo ?
++                    database.getRepositoryStoringOrNull(refClass.java).let { repo ->
++                        references.add(
++                            DatabaseGraphModel.Reference(
++                                repo = repo?.let {
++                                    DatabaseGraphModel.Repo.Id(name = it.name, connection = it.connection)
++                                },
++                                fqn = refClass.java.name,
++                                type = DatabaseGraphModel.Reference.Type.Lazy,
++                            )
++                        )
++                    }
++                }
++                return
++            }
++
++            // Blacklisted package? Stop!
++            if (cls.java.`package`.name.startsWithAny(packageBlackList)) {
++                return
++            }
++
++            // Look at all the type arguments
++            type.arguments.forEach { typeArg ->
++                typeArg.type?.let {
++                    visit(it)
++                }
++            }
++
++            // Look into data classes
++            if (cls.isData) {
++                cls.primaryConstructor?.let { ctor ->
++                    ctor.parameters.forEach { param ->
++                        visit(param.type)
++                    }
++                }
++                return
++            }
++        }
++    }
++
++    private val model: DatabaseGraphModel by lazy {
++        buildInternal()
++    }
++
++    fun getGraph(): DatabaseGraphModel = model
++
++    private fun buildInternal(): DatabaseGraphModel {
++
++        val repos = database.getRepositories().map { repo ->
++
++            log.trace("===============================================")
++            log.trace("REPO: ${repo.name}")
++
++            val storedClasses = repo.getAllStoredClasses().map { cls ->
++
++                val type = cls.kType().reified
++
++                log.trace("  -----------------------------------------------")
++                log.trace("  Class: ${cls.java.name}")
++
++                type.ctorParams2Types.forEach { (param, type) ->
++                    log.trace("    ${param.name}: $type")
++                }
++
++                val references = RefFinder(type).getReferencesTypes()
++
++                log.trace("  => REFS:")
++                references.forEach { ref -> log.trace("    $ref") }
++
++                DatabaseGraphModel.StoredClass(
++                    fqn = cls.java.name,
++                    references = references,
++                )
++            }
++
++            DatabaseGraphModel.Repo(
++                id = DatabaseGraphModel.Repo.Id(name = repo.name, connection = repo.connection),
++                connection = "",
++                storedClasses = storedClasses,
++            )
++        }
++
++        return DatabaseGraphModel(
++            repos = repos,
++        )
++    }
++}
+Index: vault/src/jvmMain/kotlin/slumber/StoredSlumberer.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/slumber/StoredSlumberer.kt b/vault/src/jvmMain/kotlin/slumber/StoredSlumberer.kt
+new file mode 100644
+--- /dev/null	(date 1733906439127)
++++ b/vault/src/jvmMain/kotlin/slumber/StoredSlumberer.kt	(date 1733906439127)
+@@ -0,0 +1,31 @@
++package de.peekandpoke.ultra.vault.slumber
++
++import de.peekandpoke.ultra.slumber.Slumberer
++import de.peekandpoke.ultra.vault.Storable
++
++object StoredSlumberer : Slumberer {
++
++    override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any?>? {
++
++        if (data !is Storable<*>) {
++            return null
++        }
++
++        val slumbered = mutableMapOf<String, Any?>()
++
++        @Suppress("UNCHECKED_CAST")
++        slumbered.putAll(
++            context.slumber(data.value) as Map<String, Any?>
++        )
++
++        if (data._id.isNotEmpty()) {
++            slumbered["_id"] = data._id
++        }
++
++        if (data._key.isNotEmpty()) {
++            slumbered["_key"] = data._key
++        }
++
++        return slumbered
++    }
++}
+Index: vault/src/jvmMain/kotlin/slumber/StoredAwaker.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/slumber/StoredAwaker.kt b/vault/src/jvmMain/kotlin/slumber/StoredAwaker.kt
+new file mode 100644
+--- /dev/null	(date 1733906439127)
++++ b/vault/src/jvmMain/kotlin/slumber/StoredAwaker.kt	(date 1733906439127)
+@@ -0,0 +1,30 @@
++package de.peekandpoke.ultra.vault.slumber
++
++import de.peekandpoke.ultra.slumber.Awaker
++import de.peekandpoke.ultra.vault.Stored
++import kotlin.reflect.KType
++
++class StoredAwaker(private val innerType: KType) : Awaker {
++
++    override fun awake(data: Any?, context: Awaker.Context): Any? {
++
++        if (data !is Map<*, *>) {
++            return null
++        }
++
++        val id = data["_id"]
++        val key = data["_key"]
++        val rev = data["_rev"]
++
++        return when {
++            id is String && key is String && rev is String -> {
++
++                val value = context.awake(innerType, data)
++
++                return Stored(value = value, _id = id, _key = key, _rev = rev)
++            }
++
++            else -> null
++        }
++    }
++}
+Index: vault/src/jvmMain/kotlin/slumber/LazyRefCodec.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/slumber/LazyRefCodec.kt b/vault/src/jvmMain/kotlin/slumber/LazyRefCodec.kt
+new file mode 100644
+--- /dev/null	(date 1733906439127)
++++ b/vault/src/jvmMain/kotlin/slumber/LazyRefCodec.kt	(date 1733906439127)
+@@ -0,0 +1,45 @@
++package de.peekandpoke.ultra.vault.slumber
++
++import de.peekandpoke.ultra.slumber.Awaker
++import de.peekandpoke.ultra.slumber.Slumberer
++import de.peekandpoke.ultra.vault.LazyRef
++import de.peekandpoke.ultra.vault.NullEntityCache
++import de.peekandpoke.ultra.vault.Storable
++import kotlinx.coroutines.runBlocking
++
++object LazyRefCodec : Awaker, Slumberer {
++
++    override fun awake(data: Any?, context: Awaker.Context): Any? {
++
++        if (data !is String) {
++            return null
++        }
++
++        val database = context.attributes[VaultSlumberModule.DatabaseKey]
++
++        return if (database != null) {
++            val cache = context.attributes[VaultSlumberModule.EntityCacheKey] ?: NullEntityCache
++
++            val coll = data.split("/").first()
++
++            LazyRef(_id = data) { id ->
++                cache.getOrPut(id) {
++                    // TODO: [AsyncIO] can we get rid of this runBlocking ?
++                    //       Probably the whole Slumber and all codecs would have to be async then ...
++                    runBlocking {
++                        database.getRepository(coll).findById(id) as Storable<*>
++                    }
++                }!!
++            }
++        } else {
++            null
++        }
++    }
++
++    override fun slumber(data: Any?, context: Slumberer.Context): Any? = when (data) {
++
++        is LazyRef<*> -> data._id
++
++        else -> null
++    }
++}
+Index: vault/src/jvmMain/kotlin/slumber/RefCodec.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/slumber/RefCodec.kt b/vault/src/jvmMain/kotlin/slumber/RefCodec.kt
+new file mode 100644
+--- /dev/null	(date 1733906439127)
++++ b/vault/src/jvmMain/kotlin/slumber/RefCodec.kt	(date 1733906439127)
+@@ -0,0 +1,42 @@
++package de.peekandpoke.ultra.vault.slumber
++
++import de.peekandpoke.ultra.slumber.Awaker
++import de.peekandpoke.ultra.slumber.Slumberer
++import de.peekandpoke.ultra.vault.NullEntityCache
++import de.peekandpoke.ultra.vault.Ref
++import kotlinx.coroutines.runBlocking
++
++object RefCodec : Awaker, Slumberer {
++
++    override fun awake(data: Any?, context: Awaker.Context): Any? {
++
++        if (data !is String) {
++            return null
++        }
++
++        val database = context.attributes[VaultSlumberModule.DatabaseKey]
++
++        return if (database != null) {
++            val cache = context.attributes[VaultSlumberModule.EntityCacheKey] ?: NullEntityCache
++
++            val coll = data.split("/").first()
++
++            cache.getOrPut(data) {
++                // TODO: [AsyncIO] can we get rid of this runBlocking ?
++                //       Probably the whole Slumber and all codecs would have to be async then ...
++                runBlocking {
++                    database.getRepository(coll).findById(data)
++                }
++            }?.asRef
++        } else {
++            null
++        }
++    }
++
++    override fun slumber(data: Any?, context: Slumberer.Context): Any? = when (data) {
++
++        is Ref<*> -> data._id
++
++        else -> null
++    }
++}
+Index: vault/src/jvmMain/kotlin/hooks/TimestampedHook.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/hooks/TimestampedHook.kt b/vault/src/jvmMain/kotlin/hooks/TimestampedHook.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/hooks/TimestampedHook.kt	(date 1733906439126)
+@@ -0,0 +1,25 @@
++package de.peekandpoke.ultra.vault.hooks
++
++import de.peekandpoke.ultra.common.datetime.Kronos
++import de.peekandpoke.ultra.vault.Repository
++import de.peekandpoke.ultra.vault.Storable
++
++class TimestampedHook(
++    private val kronos: Lazy<Kronos>,
++) {
++    private class OnBeforeSave<T : Timestamped>(kronos: Lazy<Kronos>) : Repository.Hooks.OnBeforeSave<T> {
++
++        private val kronos: Kronos by kronos
++
++        override fun <X : T> onBeforeSave(repo: Repository<T>, storable: Storable<T>): Storable<X> {
++            @Suppress("UNCHECKED_CAST")
++            return storable.withValue(
++                storable.value.withTimestamps(
++                    kronos.instantNow()
++                ) as X
++            )
++        }
++    }
++
++    fun <T : Timestamped> onBeforeSave(): Repository.Hooks.OnBeforeSave<T> = OnBeforeSave(kronos)
++}
+Index: vault/src/jvmMain/kotlin/hooks/Timestamped.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/hooks/Timestamped.kt b/vault/src/jvmMain/kotlin/hooks/Timestamped.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/hooks/Timestamped.kt	(date 1733906439126)
+@@ -0,0 +1,21 @@
++package de.peekandpoke.ultra.vault.hooks
++
++import de.peekandpoke.ultra.common.datetime.MpInstant
++
++interface Timestamped {
++    val createdAt: MpInstant
++    val updatedAt: MpInstant
++
++    fun withCreatedAt(instant: MpInstant): Timestamped
++    fun withUpdatedAt(instant: MpInstant): Timestamped
++
++    fun withTimestamps(now: MpInstant): Timestamped {
++        val createdAtApplied = when (createdAt <= MpInstant.Epoch) {
++            true -> withCreatedAt(now)
++            else -> this
++        }
++
++        return createdAtApplied.withUpdatedAt(now)
++    }
++}
++
+Index: vault/src/jvmMain/kotlin/lang/TerminalTypeCastExpression.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/lang/TerminalTypeCastExpression.kt b/vault/src/jvmMain/kotlin/lang/TerminalTypeCastExpression.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/lang/TerminalTypeCastExpression.kt	(date 1733906439126)
+@@ -0,0 +1,16 @@
++package de.peekandpoke.ultra.vault.lang
++
++import de.peekandpoke.ultra.common.reflection.TypeRef
++import de.peekandpoke.ultra.common.reflection.unList
++
++/**
++ * Internal expression representing a type cast
++ */
++class TerminalTypeCastExpression<T>(private val type: TypeRef<List<T>>, private val wrapped: TerminalExpr<*>) : TerminalExpr<T> {
++
++    override fun innerType(): TypeRef<T> = type.unList
++
++    override fun getType() = type
++
++    override fun print(p: Printer) = wrapped.print(p)
++}
+Index: vault/src/jvmMain/kotlin/tools/DatabaseTools.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/tools/DatabaseTools.kt b/vault/src/jvmMain/kotlin/tools/DatabaseTools.kt
+new file mode 100644
+--- /dev/null	(date 1733906439127)
++++ b/vault/src/jvmMain/kotlin/tools/DatabaseTools.kt	(date 1733906439127)
+@@ -0,0 +1,5 @@
++package de.peekandpoke.ultra.vault.tools
++
++class DatabaseTools(
++    val graphBuilder: DatabaseGraphBuilder
++)
+Index: vault/src/jvmMain/kotlin/hooks/TimestampedMillisHook.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/hooks/TimestampedMillisHook.kt b/vault/src/jvmMain/kotlin/hooks/TimestampedMillisHook.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/hooks/TimestampedMillisHook.kt	(date 1733906439126)
+@@ -0,0 +1,25 @@
++package de.peekandpoke.ultra.vault.hooks
++
++import de.peekandpoke.ultra.common.datetime.Kronos
++import de.peekandpoke.ultra.vault.Repository
++import de.peekandpoke.ultra.vault.Storable
++
++class TimestampedMillisHook(
++    private val kronos: Lazy<Kronos>,
++) {
++    private class OnBeforeSave<T : TimestampedMillis>(kronos: Lazy<Kronos>) : Repository.Hooks.OnBeforeSave<T> {
++
++        private val kronos: Kronos by kronos
++
++        override fun <X : T> onBeforeSave(repo: Repository<T>, storable: Storable<T>): Storable<X> {
++            @Suppress("UNCHECKED_CAST")
++            return storable.withValue(
++                storable.value.withTimestamps(
++                    kronos.millisNow()
++                ) as X
++            )
++        }
++    }
++
++    fun <T : TimestampedMillis> onBeforeSave(): Repository.Hooks.OnBeforeSave<T> = OnBeforeSave(kronos)
++}
+Index: vault/src/jvmMain/kotlin/hooks/TimestampedMillis.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/hooks/TimestampedMillis.kt b/vault/src/jvmMain/kotlin/hooks/TimestampedMillis.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/hooks/TimestampedMillis.kt	(date 1733906439126)
+@@ -0,0 +1,19 @@
++package de.peekandpoke.ultra.vault.hooks
++
++interface TimestampedMillis {
++    val createdMs: Long
++    val updatedMs: Long
++
++    fun withCreatedMs(ms: Long): TimestampedMillis
++    fun withUpdatedMs(ms: Long): TimestampedMillis
++
++    fun withTimestamps(now: Long): TimestampedMillis {
++        val createdMsApplied = when (createdMs <= 0) {
++            true -> withCreatedMs(now)
++            else -> this
++        }
++
++        return createdMsApplied.withUpdatedMs(now)
++    }
++}
++
+Index: vault/src/jvmMain/kotlin/lang/Statement.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/lang/Statement.kt b/vault/src/jvmMain/kotlin/lang/Statement.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/lang/Statement.kt	(date 1733906439126)
+@@ -0,0 +1,8 @@
++package de.peekandpoke.ultra.vault.lang
++
++/**
++ * Base interface for all Statements.
++ *
++ * Statements return nothing. Statements cannot be nested within Expressions.
++ */
++interface Statement : Printable
+Index: vault/src/jvmMain/kotlin/lang/Printable.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/lang/Printable.kt b/vault/src/jvmMain/kotlin/lang/Printable.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/lang/Printable.kt	(date 1733906439126)
+@@ -0,0 +1,8 @@
++package de.peekandpoke.ultra.vault.lang
++
++/**
++ * Marks a class as printable by a [Printer]
++ */
++interface Printable {
++    fun print(p: Printer): Any
++}
+Index: vault/src/jvmMain/kotlin/lang/Printer.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/lang/Printer.kt b/vault/src/jvmMain/kotlin/lang/Printer.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/lang/Printer.kt	(date 1733906439126)
+@@ -0,0 +1,107 @@
++package de.peekandpoke.ultra.vault.lang
++
++import com.fasterxml.jackson.databind.ObjectMapper
++
++/**
++ * Common interface for all vault query code printer
++ */
++interface Printer {
++
++    companion object {
++        /**
++         * Shared json printer
++         */
++        private val jsonPrinter = ObjectMapper().writerWithDefaultPrettyPrinter()
++    }
++
++    /**
++     * Printer result
++     */
++    data class Result(val query: String, val vars: Map<String, Any?>) {
++
++        /**
++         * The raw text query with parameters (like @my_param) replaced with actual values.
++         *
++         * This is a debugging helper and e.g. used in the unit tests.
++         */
++        val raw: String by lazy(LazyThreadSafetyMode.NONE) {
++
++            vars.entries.fold(query) { acc, (key, value) ->
++                acc.replace("@$key", jsonPrinter.writeValueAsString(value))
++            }
++        }
++    }
++
++    /**
++     * Appends a name
++     */
++    fun name(name: String): Printer
++
++    /**
++     * Append a printable
++     */
++    fun append(printable: Printable): Printer
++
++    /**
++     * Appends a list of printables
++     */
++    fun append(printables: List<Printable>): Printer
++
++    /**
++     * Appends an array value expression
++     */
++    fun <T> append(array: ArrayValueExpr<T>): Printer
++
++    /**
++     * Appends an object value expression
++     */
++    fun <T> append(obj: ObjectValueExpr<T>): Printer
++
++    /**
++     * Appends a user value (e.g. obtained by "abc".expr("paramName")
++     *
++     * If the given expression is an instance of Aliased, then the name for the user parameter will be taken from it.
++     * Otherwise the name will default to "v".
++     */
++    fun value(expression: Expression<*>, value: Any?): Printer
++
++    /**
++     * Appends a user value with the given parameter name
++     */
++    fun value(parameterName: String, value: Any?): Printer
++
++    /**
++     * Appends multiple expression and put the delimiter between each of them
++     */
++    fun join(args: List<Expression<*>>): Printer
++
++    /**
++     * Appends multiple expression and put the delimiter between each of them
++     */
++    fun join(args: List<Expression<*>>, delimiter: String): Printer
++
++    /**
++     * Appends multiple expression and put the delimiter between each of them
++     */
++    fun join(args: Array<out Expression<*>>): Printer
++
++    /**
++     * Appends multiple expression and put the delimiter between each of them
++     */
++    fun join(args: Array<out Expression<*>>, delimiter: String): Printer
++
++    /**
++     * Appends a raw string
++     */
++    fun append(str: String): Printer
++
++    /**
++     * Appends a string followed by a line break
++     */
++    fun appendLine(str: String = ""): Printer
++
++    /**
++     * Increases the indent for everything added by the [block]
++     */
++    fun indent(block: Printer.() -> Unit): Printer
++}
+Index: vault/src/jvmMain/kotlin/lang/Aliased.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/lang/Aliased.kt b/vault/src/jvmMain/kotlin/lang/Aliased.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/lang/Aliased.kt	(date 1733906439126)
+@@ -0,0 +1,10 @@
++package de.peekandpoke.ultra.vault.lang
++
++/**
++ * Helper interface for the QueryPrinter.
++ *
++ * When an Expression has this interface query printers will use the value returned by getAlias()
++ */
++interface Aliased {
++    fun getAlias(): String
++}
+Index: vault/src/jvmMain/kotlin/lang/TypeCastExpression.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/lang/TypeCastExpression.kt b/vault/src/jvmMain/kotlin/lang/TypeCastExpression.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/lang/TypeCastExpression.kt	(date 1733906439126)
+@@ -0,0 +1,14 @@
++package de.peekandpoke.ultra.vault.lang
++
++import de.peekandpoke.ultra.common.reflection.TypeRef
++
++/**
++ * Internal expression representing a type cast
++ */
++class TypeCastExpression<T>(private val type: TypeRef<T>, private val wrapped: Expression<*>) : Expression<T> {
++
++    override fun getType() = type
++
++    override fun print(p: Printer) = wrapped.print(p)
++}
++
+Index: vault/src/jvmMain/kotlin/lang/PropertyPath.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/lang/PropertyPath.kt b/vault/src/jvmMain/kotlin/lang/PropertyPath.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/lang/PropertyPath.kt	(date 1733906439126)
+@@ -0,0 +1,82 @@
++package de.peekandpoke.ultra.vault.lang
++
++import de.peekandpoke.ultra.common.reflection.TypeRef
++import de.peekandpoke.ultra.common.reflection.kType
++
++typealias PathExpr<P> = PropertyPath<P, P>
++
++@Suppress("unused")
++data class PropertyPath<P, T>(
++    val previous: PropertyPath<*, *>?,
++    val current: Step<T>
++) : Expression<T> {
++
++    companion object {
++        fun <T> start(root: Expression<T>) = PropertyPath<T, T>(null, Step.Expr(root))
++    }
++
++    sealed class Step<T>(private val type: TypeRef<T>) : Expression<T> {
++        override fun getType() = type
++
++        open fun print(p: Printer, isRoot: Boolean) = print(p)
++
++        class Prop<T>(private val name: String, type: TypeRef<T>) : Step<T>(type) {
++
++            override fun print(p: Printer, isRoot: Boolean) {
++                if (!isRoot) {
++                    p.append(".")
++                }
++                print(p)
++            }
++
++            override fun print(p: Printer) = p.name(name)
++        }
++
++        class Expr<T>(private val expr: Expression<T>) : Step<T>(expr.getType()) {
++            override fun print(p: Printer) = p.append(expr)
++        }
++
++        class Operation<T>(private val op: String, type: TypeRef<T>) : Step<T>(type) {
++            override fun print(p: Printer) = p.append(op)
++        }
++    }
++
++
++    override fun getType() = current.getType()
++
++    override fun print(p: Printer) {
++
++        previous?.apply { p.append(this) }
++
++        current.print(p = p, isRoot = previous == null)
++    }
++
++    inline fun <reified NT> property(prop: String) = PropertyPath<P, NT>(this, Step.Prop(prop, kType()))
++
++    inline fun <NF, reified NT> append(prop: String) = PropertyPath<NF, NT>(this, Step.Prop(prop, kType()))
++
++    fun dropRoot(): PropertyPath<P, T>? {
++        val result = when (previous) {
++            null -> null
++            else -> PropertyPath<P, T>(
++                previous = previous.dropRoot(),
++                current = current,
++            )
++        }
++
++        return result
++    }
++}
++
++//// generic property
++
++inline fun <reified T> Expression<*>.property(name: String): PropertyPath<T, T> {
++    @Suppress("UNCHECKED_CAST")
++    return when (this) {
++        // Is this already a Property Path Expression. Then we follow this one.
++        is PathExpr<*> -> property<String>(name) as PropertyPath<T, T>
++
++        // Else we start a property path
++        else -> PropertyPath.start(this).append<T, T>(name)
++    }
++}
+Index: vault/src/jvmMain/kotlin/lang/expressions.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/lang/expressions.kt b/vault/src/jvmMain/kotlin/lang/expressions.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/lang/expressions.kt	(date 1733906439126)
+@@ -0,0 +1,138 @@
++package de.peekandpoke.ultra.vault.lang
++
++import de.peekandpoke.ultra.common.reflection.TypeRef
++import de.peekandpoke.ultra.common.reflection.unList
++
++/**
++ * Base interface for all Expressions.
++ *
++ * Expression return something of a specific type T. Expressions can be nested within other Expressions.
++ */
++interface Expression<T> : Printable {
++    /**
++     * Returns a reference to the type that the expression represents.
++     *
++     * The type information is needed for un-serializing a query result.
++     */
++    fun getType(): TypeRef<T>
++
++    /**
++     * Up-casts the expression of type [T] to the child type [U]
++     */
++    @Suppress("UNCHECKED_CAST")
++    fun <U : T> upcastTo(): Expression<U> = this as Expression<U>
++
++    /**
++     * Down-casts the expression of type [T] to the parent type [D]
++     */
++    @Suppress("UNCHECKED_CAST")
++    fun <D, T : D> downcast(): Expression<D> = this as Expression<D>
++
++    /**
++     * Casts the expression
++     */
++    @Suppress("UNCHECKED_CAST")
++    fun <U> forceCastTo(): Expression<U> = this as Expression<U>
++
++    /**
++     * Makes the expression nullable
++     */
++    @Suppress("UNCHECKED_CAST")
++    fun nullable(): Expression<T?> = this as Expression<T?>
++}
++
++/**
++ * An [Expression] representing a name, like a variable or similar
++ */
++class NameExpr<T>(private val name: String, private val type: TypeRef<T>) : Expression<T> {
++    /**
++     * The type that is represented by the expression
++     */
++    override fun getType() = type
++
++    override fun print(p: Printer) = p.name(name)
++}
++
++/**
++ * An [Expression] holding a [value] of [type] that is programmatically given
++ *
++ * The value optionally can have a [name]. This name is then used for creating the query.
++ */
++data class ValueExpr<T>(private val type: TypeRef<T>, private val value: T, private val name: String = "v") : Expression<T> {
++
++    override fun getType() = type
++    override fun print(p: Printer) = p.value(name, value as Any)
++}
++
++/**
++ * An [Expression] representing an array of values
++ */
++data class ArrayValueExpr<T>(private val type: TypeRef<List<T>>, val items: List<Expression<out T>>) : Expression<List<T>> {
++
++    /** The type of the expression */
++    override fun getType() = type
++
++    /** Prints the expression */
++    override fun print(p: Printer) = p.append(this)
++}
++
++/**
++ * An [Expression] representing iterable values
++ */
++data class IterableExpr<T>(private val __name__: String, private val __inner__: Expression<List<T>>) : Expression<T> {
++
++    override fun getType(): TypeRef<T> = __inner__.getType().unList
++
++    override fun print(p: Printer) = p.name(__name__)
++
++    /**
++     * Down-casts the expression of type [T] to the parent type [D]
++     */
++    @Suppress("UNCHECKED_CAST")
++    override fun <D, T : D> downcast(): IterableExpr<D> = this as IterableExpr<D>
++}
++
++/**
++ * Represents an [Expression] that holds a null
++ *
++ * Can optionally have a [name] that is used when printing the query.
++ */
++class NullValueExpr(val name: String = "v") : Expression<Any?> {
++
++    /** The type of the expression */
++    override fun getType() = TypeRef.AnyNull
++
++    /** Prints the expression */
++    override fun print(p: Printer) = p.value(name, null)
++}
++
++/**
++ * Represents an [Expression] that holds key-value-pairs
++ */
++class ObjectValueExpr<T>(
++    private val type: TypeRef<Map<String, T>>,
++    val pairs: List<Pair<Expression<String>, Expression<out T>>>
++) :
++    Expression<Map<String, T>> {
++
++    /** The type of the expression */
++    override fun getType() = type
++
++    /** Prints the expression */
++    override fun print(p: Printer) = p.append(this)
++}
++
++/**
++ * Base interface for all terminal Expressions.
++ *
++ * A terminal expression can be used to create a query result cursor.
++ *
++ * A terminal expression ALWAYS is a list type. This is how ArangoDB returns data.
++ * The returned data is always an array.
++ */
++interface TerminalExpr<T> : Expression<List<T>> {
++    /**
++     * The T within the List<T>. This type is finally used for un-serialization..
++     */
++    fun innerType(): TypeRef<T>
++}
+Index: vault/src/jvmMain/kotlin/lang/functions.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/lang/functions.kt b/vault/src/jvmMain/kotlin/lang/functions.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/lang/functions.kt	(date 1733906439126)
+@@ -0,0 +1,15 @@
++package de.peekandpoke.ultra.vault.lang
++
++import de.peekandpoke.ultra.common.reflection.TypeRef
++
++abstract class FunctionExpr<R>(private val name: String, private val type: TypeRef<R>) : Expression<R> {
++    override fun getType(): TypeRef<R> = type
++
++    override fun print(p: Printer): Any = with(p) {
++        append(name)
++    }
++}
++
++abstract class FunctionExpr0<R>(name: String, type: TypeRef<R>) : FunctionExpr<R>(name, type)
++
++abstract class FunctionExpr1<P1, R>(name: String, type: TypeRef<R>) : FunctionExpr0<R>(name, type)
+Index: vault/src/jvmMain/kotlin/cli/VaultIndexesRecreateCommand.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/cli/VaultIndexesRecreateCommand.kt b/vault/src/jvmMain/kotlin/cli/VaultIndexesRecreateCommand.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/cli/VaultIndexesRecreateCommand.kt	(date 1733906439126)
+@@ -0,0 +1,16 @@
++package de.peekandpoke.ultra.vault.cli
++
++import com.github.ajalt.clikt.core.CliktCommand
++import de.peekandpoke.ultra.vault.Database
++import kotlinx.coroutines.runBlocking
++
++class VaultIndexesRecreateCommand(
++    database: Lazy<Database>,
++) : CliktCommand(name = "vault:indexes:re-create") {
++
++    private val database: Database by database
++
++    override fun run() = runBlocking {
++        database.recreateIndexes()
++    }
++}
+Index: vault/src/jvmMain/kotlin/cli/VaultIndexesEnsureCommand.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/cli/VaultIndexesEnsureCommand.kt b/vault/src/jvmMain/kotlin/cli/VaultIndexesEnsureCommand.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/cli/VaultIndexesEnsureCommand.kt	(date 1733906439126)
+@@ -0,0 +1,16 @@
++package de.peekandpoke.ultra.vault.cli
++
++import com.github.ajalt.clikt.core.CliktCommand
++import de.peekandpoke.ultra.vault.Database
++import kotlinx.coroutines.runBlocking
++
++class VaultIndexesEnsureCommand(
++    database: Lazy<Database>,
++) : CliktCommand(name = "vault:indexes:ensure") {
++
++    private val database: Database by database
++
++    override fun run() = runBlocking {
++        database.ensureIndexes()
++    }
++}
+Index: vault/src/jvmMain/kotlin/lang/index.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/lang/index.kt b/vault/src/jvmMain/kotlin/lang/index.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/lang/index.kt	(date 1733906439126)
+@@ -0,0 +1,156 @@
++@file:Suppress("FunctionName")
++
++package de.peekandpoke.ultra.vault.lang
++
++import de.peekandpoke.ultra.common.reflection.TypeRef
++import de.peekandpoke.ultra.common.reflection.kListType
++import de.peekandpoke.ultra.common.reflection.kType
++
++////  DSL annotations  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
++@DslMarker
++annotation class VaultDslMarker
++
++@DslMarker
++annotation class VaultFunctionMarker
++
++@DslMarker
++annotation class VaultTerminalExpressionMarker
++
++@DslMarker
++annotation class VaultInputValueMarker
++
++@DslMarker
++annotation class VaultTypeConversionMarker
++
++////  Convenience type aliases  ///////////////////////////////////////////////////////////////////////////////////////////////////////////
++
++/** Type alias for a simple list */
++typealias L1<T> = List<T>
++
++/** Type alias for a list of lists */
++typealias L2<T> = List<List<T>>
++
++/** Type alias for a list of lists of lists */
++typealias L3<T> = List<List<List<T>>>
++
++/** Type alias for a list of lists of lists of lists */
++typealias L4<T> = List<List<List<List<T>>>>
++
++/** Type alias for a list of lists of lists of lists of lists*/
++typealias L5<T> = List<List<List<List<List<T>>>>>
++
++////  Input values  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
++@VaultInputValueMarker
++inline fun <reified T> ARRAY(vararg args: Expression<out T>): Expression<List<T>> = ARRAY(args.toList())
++
++@VaultInputValueMarker
++inline fun <reified T> ARRAY(args: List<Expression<out T>>): Expression<List<T>> = ArrayValueExpr(kListType(), args)
++
++@VaultInputValueMarker
++@JvmName("OBJECT_Pair_StringExpr")
++inline fun <reified T> OBJECT(vararg pairs: Pair<String, Expression<out T>>): ObjectValueExpr<T> = OBJECT(
++    pairs.map { (k, v) -> k.expr to v }.toList()
++)
++
++@VaultInputValueMarker
++@JvmName("OBJECT_Pair_ExprExpr")
++inline fun <reified T> OBJECT(vararg pairs: Pair<Expression<String>, Expression<out T>>): ObjectValueExpr<T> = OBJECT(pairs.toList())
++
++@VaultInputValueMarker
++inline fun <reified T> OBJECT(pairs: List<Pair<Expression<String>, Expression<out T>>>): ObjectValueExpr<T> = ObjectValueExpr(kType(), pairs)
++
++/**
++ * Guard function to prevent calls to .expr() on existing Expressions
++ */
++@Suppress("unused", "UnusedReceiverParameter")
++@Deprecated("Cannot use .expr() on an Expressions", level = DeprecationLevel.ERROR)
++@VaultInputValueMarker
++fun <T> Expression<T>.expr(): Nothing {
++    throw Exception("Cannot call .expr() on an Expression")
++}
++
++/**
++ * Guard val to prevent calls to .expr on existing Expressions
++ */
++@Suppress("unused", "UnusedReceiverParameter")
++@Deprecated("Cannot use .expr on an Expressions", level = DeprecationLevel.ERROR)
++@VaultInputValueMarker
++val <T> Expression<T>.expr: Nothing
++    get() {
++        throw Exception("Cannot call .expr on an Expression")
++    }
++
++/**
++ * Helper to make any object an Vault expression
++ *
++ * Usage:
++ *
++ * 1.expr() // default name "v" will be used
++ * 1.expr("name-in-query")
++ *
++ * "string".expr("name-in-query")
++ *
++ * true.expr("name-in-query")
++ *
++ * Obj().expr("name-in-query")
++ */
++@Suppress("UNCHECKED_CAST")
++@VaultInputValueMarker
++inline fun <reified T> T.expr(name: String = "v"): Expression<T> = when (this) {
++    // guard, so we do not wrap an Expression again
++    is Expression<*> -> this as Expression<T>
++    // otherwise we create a value expression
++    else -> ValueExpr(kType(), this, name)
++}
++
++@Suppress("UNCHECKED_CAST")
++fun <T> T.expr(type: TypeRef<T>, name: String = "v"): Expression<T> = when (this) {
++    // guard, so we do not wrap an Expression again
++    is Expression<*> -> this as Expression<T>
++    // otherwise we create a value expression
++    else -> ValueExpr(type, this, name)
++}
++
++/**
++ * Shorthand for converting any object into an Vault expression without specifying a name
++ *
++ * Usage:
++ *
++ * 1.expr
++ *
++ * "string".expr
++ *
++ * true.expr
++ *
++ * Obj().expr
++ */
++@VaultInputValueMarker
++inline val <reified T> T.expr: Expression<T>
++    get() = this.expr()
++
++/**
++ * Helper to make a "null" Vault expression
++ *
++ * Usage:
++ *
++ * null.expr()
++ *
++ * null.expr("name-in-query")
++ */
++@Suppress("unused")
++@VaultInputValueMarker
++fun Nothing?.expr(name: String = "v"): Expression<Any?> = NullValueExpr(name)
++
++/**
++ * Shorthand for converting a "null" into an Vault expression without specifying a name
++ *
++ * Usage:
++ *
++ * null.expr
++ */
++@VaultInputValueMarker
++val Nothing?.expr: Expression<Any?>
++    get() = this.expr()
++
+Index: vault/src/jvmMain/kotlin/cli/VaultRepositoriesEnsureCommand.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/cli/VaultRepositoriesEnsureCommand.kt b/vault/src/jvmMain/kotlin/cli/VaultRepositoriesEnsureCommand.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/cli/VaultRepositoriesEnsureCommand.kt	(date 1733906439126)
+@@ -0,0 +1,16 @@
++package de.peekandpoke.ultra.vault.cli
++
++import com.github.ajalt.clikt.core.CliktCommand
++import de.peekandpoke.ultra.vault.Database
++import kotlinx.coroutines.runBlocking
++
++class VaultRepositoriesEnsureCommand(
++    database: Lazy<Database>,
++) : CliktCommand(name = "vault:repositories:ensure") {
++
++    private val database: Database by database
++
++    override fun run() = runBlocking {
++        database.ensureRepositories()
++    }
++}
+Index: vault/src/jvmTest/kotlin/index_jvmTest.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmTest/kotlin/index_jvmTest.kt b/vault/src/jvmTest/kotlin/index_jvmTest.kt
+new file mode 100644
+--- /dev/null	(date 1740249716228)
++++ b/vault/src/jvmTest/kotlin/index_jvmTest.kt	(date 1740249716228)
+@@ -0,0 +1,1 @@
++package de.peekandpoke.ultra.vault
+Index: vault/src/jvmMain/kotlin/cli/VaultIndexesValidateCommand.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/src/jvmMain/kotlin/cli/VaultIndexesValidateCommand.kt b/vault/src/jvmMain/kotlin/cli/VaultIndexesValidateCommand.kt
+new file mode 100644
+--- /dev/null	(date 1733906439126)
++++ b/vault/src/jvmMain/kotlin/cli/VaultIndexesValidateCommand.kt	(date 1733906439126)
+@@ -0,0 +1,18 @@
++package de.peekandpoke.ultra.vault.cli
++
++import com.github.ajalt.clikt.core.CliktCommand
++import de.peekandpoke.ultra.vault.Database
++import kotlinx.coroutines.runBlocking
++
++class VaultIndexesValidateCommand(
++    database: Lazy<Database>,
++) : CliktCommand(name = "vault:indexes:validate") {
++
++    private val database: Database by database
++
++    override fun run() {
++        runBlocking {
++            database.validateIndexes()
++        }
++    }
++}
+Index: vault/gradle.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>ISO-8859-1
+===================================================================
+diff --git a/vault/gradle.properties b/vault/gradle.properties
+new file mode 100644
+--- /dev/null	(date 1740249235385)
++++ b/vault/gradle.properties	(date 1740249235385)
+@@ -0,0 +1,9 @@
++SONATYPE_HOST=S01
++RELEASE_SIGNING_ENABLED=true
++#
++POM_ARTIFACT_ID=vault
++#
++POM_NAME="Vault"
++POM_DESCRIPTION="Vault Database Abstraction"
++POM_INCEPTION_YEAR=2020
++#
+Index: vault/build.gradle.kts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/vault/build.gradle.kts b/vault/build.gradle.kts
+new file mode 100644
+--- /dev/null	(date 1740249930026)
++++ b/vault/build.gradle.kts	(date 1740249930026)
+@@ -0,0 +1,89 @@
++@file:Suppress("PropertyName")
++
++import Deps.Test.commonTestDeps
++import Deps.Test.configureJvmTests
++import Deps.Test.jsTestDeps
++import Deps.Test.jvmTestDeps
++
++plugins {
++    kotlin("multiplatform")
++    id("io.kotest.multiplatform") version Deps.Test.kotest_plugin_version
++    id("org.jetbrains.kotlin.plugin.serialization")
++    id("org.jetbrains.dokka")
++    id("com.vanniktech.maven.publish")
++}
++
++val GROUP: String by project
++val VERSION_NAME: String by project
++
++group = GROUP
++version = VERSION_NAME
++
++repositories {
++    mavenCentral()
++}
++
++kotlin {
++
++    js {
++        browser {
++        }
++    }
++
++    jvm {
++        compilations.all {
++            kotlinOptions {
++                jvmTarget = Deps.jvmTarget.target
++            }
++        }
++    }
++
++    sourceSets {
++        val commonMain by getting {
++            dependencies {
++                implementation(kotlin("reflect"))
++                implementation(Deps.kotlinx_coroutines_core)
++                implementation(Deps.kotlinx_serialization_core)
++                implementation(Deps.kotlinx_serialization_json)
++
++                implementation(Deps.ktor_client_core)
++            }
++        }
++
++        val commonTest by getting {
++            dependencies {
++                commonTestDeps()
++            }
++        }
++
++        val jsMain by getting {
++            dependencies {
++            }
++        }
++
++        val jsTest by getting {
++            dependencies {
++                jsTestDeps()
++            }
++        }
++
++        val jvmMain by getting {
++            dependencies {
++                implementation(Deps.jackson_annotations)
++                implementation(Deps.clikt)
++                api(project(":common"))
++                api(project(":logging"))
++            }
++        }
++
++        val jvmTest by getting {
++            dependencies {
++                jvmTestDeps()
++            }
++        }
++    }
++}
++
++tasks {
++    configureJvmTests()
++}
+Index: .idea/gradle.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"GradleMigrationSettings\" migrationVersion=\"1\" />\n  <component name=\"GradleSettings\">\n    <option name=\"linkedExternalProjectsSettings\">\n      <GradleProjectSettings>\n        <compositeConfiguration>\n          <compositeBuild compositeDefinitionSource=\"SCRIPT\">\n            <builds>\n              <build path=\"$PROJECT_DIR$/buildSrc\" name=\"buildSrc\">\n                <projects>\n                  <project path=\"$PROJECT_DIR$/buildSrc\" />\n                </projects>\n              </build>\n            </builds>\n          </compositeBuild>\n        </compositeConfiguration>\n        <option name=\"externalProjectPath\" value=\"$PROJECT_DIR$\" />\n        <option name=\"modules\">\n          <set>\n            <option value=\"$PROJECT_DIR$\" />\n            <option value=\"$PROJECT_DIR$/buildSrc\" />\n            <option value=\"$PROJECT_DIR$/common\" />\n            <option value=\"$PROJECT_DIR$/commonmp\" />\n            <option value=\"$PROJECT_DIR$/kontainer\" />\n            <option value=\"$PROJECT_DIR$/logging\" />\n            <option value=\"$PROJECT_DIR$/meta\" />\n            <option value=\"$PROJECT_DIR$/mutator\" />\n            <option value=\"$PROJECT_DIR$/security\" />\n            <option value=\"$PROJECT_DIR$/slumber\" />\n            <option value=\"$PROJECT_DIR$/slumber-test-classes\" />\n            <option value=\"$PROJECT_DIR$/z-playground-js\" />\n            <option value=\"$PROJECT_DIR$/z-playground-jvm\" />\n          </set>\n        </option>\n      </GradleProjectSettings>\n    </option>\n  </component>\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/gradle.xml b/.idea/gradle.xml
+--- a/.idea/gradle.xml	(revision 051bb011bd460c73054c587388185528a82001a0)
++++ b/.idea/gradle.xml	(date 1740249262956)
+@@ -29,6 +29,7 @@
+             <option value="$PROJECT_DIR$/security" />
+             <option value="$PROJECT_DIR$/slumber" />
+             <option value="$PROJECT_DIR$/slumber-test-classes" />
++            <option value="$PROJECT_DIR$/vault" />
+             <option value="$PROJECT_DIR$/z-playground-js" />
+             <option value="$PROJECT_DIR$/z-playground-jvm" />
+           </set>

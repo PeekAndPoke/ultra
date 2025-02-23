@@ -3,7 +3,6 @@ rootProject.name = 'ultra'
 
 include(
         // child projects
-        ":common",
         ":commonmp",
         ":kontainer",
         ":logging",
@@ -12,6 +11,7 @@ include(
         ":security",
         ":slumber",
         ":slumber-test-classes",
+        ":vault",
 
         // playground
         ":z-playground-js",

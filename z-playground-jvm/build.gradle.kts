@@ -32,12 +32,10 @@ dependencies {
     implementation("io.ktor:ktor-client-json:${Deps.ktor_version}")
     implementation("io.ktor:ktor-client-okhttp:${Deps.ktor_version}")
 
-
     // project deps
-    api(project(":common"))
+    api(project(":commonmp"))
     api(project(":slumber"))
     api(project(":kontainer"))
-    implementation("io.ktor:ktor-client-okhttp-jvm:2.3.9")
 }
 
 kapt {

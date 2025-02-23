@@ -12,6 +12,7 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/z-playground-js/peekandpoke.ultra.z-playground-js.test.iml" filepath="$PROJECT_DIR$/.idea/modules/z-playground-js/peekandpoke.ultra.z-playground-js.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ultra.iml" filepath="$PROJECT_DIR$/.idea/modules/ultra.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/security/ultra.security.commonTest.iml" filepath="$PROJECT_DIR$/.idea/modules/security/ultra.security.commonTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/vault/ultra.vault.jvmTest.iml" filepath="$PROJECT_DIR$/.idea/modules/vault/ultra.vault.jvmTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.main.iml" filepath="$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.test.iml" filepath="$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.test.iml" />
     </modules>

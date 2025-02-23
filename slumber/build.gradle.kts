@@ -22,11 +22,9 @@ repositories {
 
 dependencies {
     implementation(kotlin("reflect"))
-
-    api(Deps.classindex)
     api(Deps.kotlinx_serialization_core)
 
-    api(project(":common"))
+    api(Deps.classindex)
     api(project(":commonmp"))
 
     // Testing
