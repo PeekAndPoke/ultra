@@ -3,7 +3,6 @@ rootProject.name = 'ultra'
 
 include(
         // child projects
-        ":common",
         ":commonmp",
         ":kontainer",
         ":logging",

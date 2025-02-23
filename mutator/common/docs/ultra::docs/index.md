@@ -21,7 +21,7 @@
 
 Let us start with a very simple example.
 
-(see the full [example](../../src/examples/introduction/SimpleExample.kt))
+(see the full [example](../../../src/examples/introduction/SimpleExample.kt))
 
 ```kotlin
 // Let's say we have a data class that has some fields.
@@ -56,7 +56,9 @@ val noMoreAngelina = angelina.mutate {
 println("The renamed version:")
 println(noMoreAngelina)
 ```
+
 Will output:
+
 ```
 The original:
 Person(name=Angelina, age=35)
@@ -69,12 +71,14 @@ Person(name=Brad, age=47)
 ### A more complex example
 
 Imagine we have some nested immutable data structure with
+
 - data classes
 - lists of objects
 - etc.
 
 This example shows how to easily mutate data structures of any depth.   
 There is no need for things like:
+
 - nested copy(copy(copy(...)))
 - or complicated list manipulations
 
@@ -82,8 +86,7 @@ This example also shows, that we only need to put the @Mutable annotation on the
 The annotation processor / code generator will recursively pick up all types that are referenced / used
 by the top level type.
 
-
-(see the full [example](../../src/examples/introduction/MoreComplexExample.kt))
+(see the full [example](../../../src/examples/introduction/MoreComplexExample.kt))
 
 ```kotlin
 // Let's say we have a complex, nested and immutable domain model.
@@ -152,7 +155,9 @@ println(updated.employees[1])
 println("Is 'Jerry' still the same: " + (company.employees[1] === updated.employees[1]))
 println()
 ```
+
 Will output:
+
 ```
 Initial company
 Company(boss=Person(name=Maximus Grandiosus, age=71), employees=[Employee(person=Person(name=Tom, age=35), address=Address(city=Boston), salary=Salary(currency=USD, amount=20000.0)), Employee(person=Person(name=Jerry, age=35), address=Address(city=New York), salary=Salary(currency=USD, amount=17000.0))])
@@ -177,10 +182,10 @@ Is 'Jerry' still the same: true
 
 This example shows what happens when we apply an empty mutation.
 
-When we call **mutate** on an object without changing anything, the result will be 
+When we call **mutate** on an object without changing anything, the result will be
 the exact same object.
 
-(see the full [example](../../src/examples/introduction/EmptyMutationExample.kt))
+(see the full [example](../../../src/examples/introduction/EmptyMutationExample.kt))
 
 ```kotlin
 @Mutable
@@ -202,7 +207,9 @@ println()
 
 println("It is the exact same object (before === after): " + (before === after))
 ```
+
 Will output:
+
 ```
 Before:
 Person(name=Angelina, age=35)
@@ -218,17 +225,19 @@ It is the exact same object (before === after): true
 This example shows what happens when we mutate an object without changing any of it's fields.
 
 Re-assign fields with the exact same values, behaves as if no mutation is done. This means:
+
 - the result will be the original object.
 - there is no new object created.
 
 The same behavior is implemented for other kinds of mutations as well, like:
+
 - List mutation
 - Map mutation
 - ...
 
 Only real changes lead to the creation of object copies.
 
-(see the full [example](../../src/examples/introduction/MutationWithoutChangeExample.kt))
+(see the full [example](../../../src/examples/introduction/MutationWithoutChangeExample.kt))
 
 ```kotlin
 @Mutable
@@ -252,7 +261,9 @@ println()
 
 println("It is the exact same object (before === after): " + (before === after))
 ```
+
 Will output:
+
 ```
 Before:
 Person(name=Angelina, age=35)
@@ -279,7 +290,7 @@ This examples shows how we can mutate scalar (Int, Boolean, Float, ...) and Stri
 Notice that inside of the mutate { } closure, we are not working on our objects itself, but rather on
 a wrapper. The code for this wrapper is generated for us, as we put the @Mutable annotation on our class.
 
-(see the full [example](../../src/examples/dataclasses/ScalarAndStringPropertiesExample.kt))
+(see the full [example](../../../src/examples/dataclasses/ScalarAndStringPropertiesExample.kt))
 
 ```kotlin
 // Here is out data class
@@ -313,7 +324,9 @@ println(original)
 println("The result:")
 println(result)
 ```
+
 Will output:
+
 ```
 The original:
 ExampleClassWithScalars(anInt=10, aFloat=3.14, aBoolean=false, aString=Hello World!)
@@ -322,6 +335,7 @@ ExampleClassWithScalars(anInt=11, aFloat=4.669, aBoolean=true, aString=Hey, Hell
 ```
 
 The generated mutator code for our data class looks like this:
+
 ```kotlin
 @file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
 
@@ -390,13 +404,12 @@ class ExampleClassWithScalarsMutator(
 }
 
 ```
-    
 
 ### Nullable Scalar and String properties
 
 This examples shows how we can mutate nullable scalar (Int, Boolean, Float, ...) and String properties.
 
-(see the full [example](../../src/examples/dataclasses/NullableScalarAndStringPropertiesExample.kt))
+(see the full [example](../../../src/examples/dataclasses/NullableScalarAndStringPropertiesExample.kt))
 
 ```kotlin
 // Here is out data class
@@ -430,7 +443,9 @@ println(original)
 println("The result:")
 println(result)
 ```
+
 Will output:
+
 ```
 The original:
 ExampleClassWithNullableScalars(anInt=10, aFloat=3.14, aBoolean=false, aString=Hello World!)
@@ -439,6 +454,7 @@ ExampleClassWithNullableScalars(anInt=null, aFloat=null, aBoolean=false, aString
 ```
 
 The generated mutator code for our data class looks like this:
+
 ```kotlin
 @file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
 
@@ -507,7 +523,6 @@ class ExampleClassWithNullableScalarsMutator(
 }
 
 ```
-    
 
 ### 'Any' properties and unknown types
 
@@ -515,13 +530,13 @@ This examples shows how we can mutate 'Any" properties.
 It also shows how mutations behave for types of properties that are unknown to Mutator.
 
 In short, the behaviour is exactly the same as with scalar types.
- 
+
 When we have a property in your class of type 'Any" or 'Any?' we can read it and re-assign it.
 
-When we have properties of types, for which Mutator does not support any special mutation mechanism, e.g. 
-java.time.LocalDate, we can do the same: read the value and re-assign the value. 
+When we have properties of types, for which Mutator does not support any special mutation mechanism, e.g.
+java.time.LocalDate, we can do the same: read the value and re-assign the value.
 
-(see the full [example](../../src/examples/dataclasses/AnyPropertiesExample.kt))
+(see the full [example](../../../src/examples/dataclasses/AnyPropertiesExample.kt))
 
 ```kotlin
 // Here is out data class
@@ -552,15 +567,18 @@ println(original)
 println("The result:")
 println(result)
 ```
+
 Will output:
+
 ```
 The original:
-ExampleClassWithAny(any=any, nullableAny=null, aDate=2025-02-22)
+ExampleClassWithAny(any=any, nullableAny=null, aDate=2025-02-23)
 The result:
-ExampleClassWithAny(any=10, nullableAny=4.669, aDate=2025-02-23)
+ExampleClassWithAny(any=10, nullableAny=4.669, aDate=2025-02-24)
 ```
 
 The generated mutator code for our data class looks like this:
+
 ```kotlin
 @file:Suppress("UNUSED_ANONYMOUS_PARAMETER")
 

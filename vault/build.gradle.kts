@@ -48,7 +48,7 @@ kotlin {
 
                 implementation(Deps.ktor_client_core)
 
-                implementation(project(":commonmp"))
+                api(project(":commonmp"))
             }
         }
 
@@ -74,7 +74,6 @@ kotlin {
                 implementation(Deps.jackson_databind)
                 implementation(Deps.clikt)
 
-                api(project(":common"))
                 api(project(":logging"))
                 api(project(":kontainer"))
                 api(project(":slumber"))

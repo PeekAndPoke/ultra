@@ -10,7 +10,7 @@ abstract class ExamplesToDocs(
     private val title: String,
     private val chapters: List<ExampleChapter>,
     private val sourceLocation: File = File("src/examples"),
-    private val outputLocation: File = File("docs/ultra::docs")
+    private val outputLocation: File = File("common/docs/ultra::docs"),
 ) {
     private val builder = StringBuilder()
 

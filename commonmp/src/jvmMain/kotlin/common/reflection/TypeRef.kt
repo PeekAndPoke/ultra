@@ -100,12 +100,12 @@ data class TypeRef<T> internal constructor(val type: KType) {
      */
     val nullable: TypeRef<T?> by lazy(LazyThreadSafetyMode.NONE) {
         @Suppress("RemoveExplicitTypeArguments")
-        TypeRef<T?>(
+        (TypeRef<T?>(
             type.classifier!!.createType(
                 arguments = type.arguments,
                 nullable = true
             )
-        )
+        ))
     }
 
     /**
@@ -113,12 +113,12 @@ data class TypeRef<T> internal constructor(val type: KType) {
      */
     val list: TypeRef<List<T>> by lazy(LazyThreadSafetyMode.NONE) {
         @Suppress("RemoveExplicitTypeArguments")
-        createForKType<List<T>>(
+        (createForKType<List<T>>(
             List::class.createType(
                 arguments = listOf(KTypeProjection.invariant(type)),
                 nullable = false
             )
-        )
+        ))
     }
 
     /**
@@ -174,7 +174,7 @@ data class TypeRef<T> internal constructor(val type: KType) {
         }
 
         @Suppress("RemoveExplicitTypeArguments")
-        TypeRef<Any>(type.arguments[0].type!!)
+        (TypeRef<Any>(type.arguments[0].type!!))
     }
 
     /**

@@ -4,8 +4,8 @@ import java.io.File
 
 object ExampleCodeExtractor {
 
-    private const val beginPattern = "// !BEGIN! //"
-    private const val endPattern = "// !END! //"
+    private const val BEGIN = "// !BEGIN! //"
+    private const val END = "// !END! //"
 
     fun extract(example: Example, srcDir: File): String {
 
@@ -24,16 +24,16 @@ object ExampleCodeExtractor {
         val result = StringBuilder()
 
         do {
-            val begin = src.indexOf(beginPattern, idx)
-            val end = src.indexOf(endPattern, idx)
+            val begin = src.indexOf(BEGIN, idx)
+            val end = src.indexOf(END, idx)
             val found = begin != -1 && end != -1
 
             if (found) {
                 result
-                    .appendLine(src.substring(begin + beginPattern.length, end).trimIndent().trim())
+                    .appendLine(src.substring(begin + BEGIN.length, end).trimIndent().trim())
                     .appendLine()
 
-                idx = end + endPattern.length
+                idx = end + END.length
             }
         } while (found)
 
