@@ -19,7 +19,7 @@ class UserRecordProviderSpec : StringSpec({
 
     "UserRecordProvider.systemUser() should provide the UserRecord correctly" {
 
-        val subject = UserRecordProvider.systemUser()
+        val subject = UserRecordProvider.system()
 
         subject.invoke() shouldBeSameInstanceAs subject.invoke()
         subject.invoke().userId shouldBe "system"

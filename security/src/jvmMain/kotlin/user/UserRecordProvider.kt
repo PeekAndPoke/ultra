@@ -8,9 +8,9 @@ interface UserRecordProvider {
 
     @Suppress("MemberVisibilityCanBePrivate")
     companion object {
-        val anonymous: UserRecordProvider = static("anonymous", "unknown")
+        val anonymous: UserRecordProvider = static(UserRecord.anonymous)
 
-        fun systemUser() = static(
+        fun system() = static(
             userId = "system",
             clientIp = try {
                 "${InetAddress.getLocalHost().hostName} ${InetAddress.getLocalHost().hostAddress}"
@@ -34,7 +34,7 @@ interface UserRecordProvider {
 
     class Lazy(provider: () -> UserRecord) : UserRecordProvider {
 
-        private val userRecord by kotlin.lazy { provider() }
+        private val userRecord: UserRecord by kotlin.lazy { provider() }
 
         override fun invoke(): UserRecord = userRecord
     }
