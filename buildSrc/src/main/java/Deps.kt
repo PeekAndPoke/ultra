@@ -10,7 +10,7 @@ object Deps {
     }
 
     // Kotlin ////////////////////////////////////////////////////////////////////////////////////
-    const val kotlinVersion = "1.9.21"
+    const val kotlinVersion = "1.9.25"
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     // JVM ///////////////////////////////////////////////////////////////////////////////////////
@@ -56,7 +56,7 @@ object Deps {
 
     // https://kotlinlang.org/docs/releases.html
     // https://github.com/ktorio/ktor/releases
-    const val ktor_version = "2.3.10"
+    const val ktor_version = "2.3.12"
     const val ktor_client_core = "io.ktor:ktor-client-core:$ktor_version"
 
     // https://mvnrepository.com/artifact/com.github.tschuchortdev/kotlin-compile-testing
@@ -129,12 +129,12 @@ object Deps {
         }
 
         // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-        const val logback_version = "1.5.3"
+        const val logback_version = "1.5.16"
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://mvnrepository.com/artifact/io.kotest/kotest-common
-        const val kotest_plugin_version = "5.8.1"
-        const val kotest_version = "5.8.1"
+        const val kotest_plugin_version = "5.9.1"
+        const val kotest_version = "5.9.1"
 //        const val kotest_version = "5.9.0.1440-SNAPSHOT"
 
         const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"

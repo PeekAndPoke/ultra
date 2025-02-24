@@ -8,8 +8,12 @@ fun Claim.asStringSet(): Set<String> = asList(String::class.java)?.toSet() ?: em
 
 fun Payload.extractUser(namespace: String = "user"): JwtUserData = JwtUserData(
     id = getClaim("$namespace/id").asString() ?: "",
-    desc = getClaim("$namespace/desc").asString() ?: "",
-    type = getClaim("$namespace/type").asString() ?: "",
+    desc = getClaim("$namespace/desc").asString()
+        ?: getClaim("user-desc").asString()
+        ?: "",
+    type = getClaim("$namespace/type").asString()
+        ?: getClaim("user-type").asString()
+        ?: "",
     email = getClaim("$namespace/email")?.asString(),
 )
 
