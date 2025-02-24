@@ -25,7 +25,7 @@ class JwtPermissionsRoundTripSpec : FreeSpec() {
             )
 
             val jwt = JWT.create()
-                .encode("testns", permissions)
+                .encodePermissions("testns", permissions)
                 .sign(Algorithm.none())
 
             val decoded = JWT.decode(jwt)
@@ -51,7 +51,7 @@ class JwtPermissionsRoundTripSpec : FreeSpec() {
             )
 
             val jwt = JWT.create()
-                .encode("testns", permissions)
+                .encodePermissions("testns", permissions)
                 .sign(Algorithm.none())
 
             val decoded = JWT.decode(jwt)
