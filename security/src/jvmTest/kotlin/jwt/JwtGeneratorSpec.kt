@@ -43,7 +43,7 @@ class JwtGeneratorSpec : StringSpec() {
 
             // Assert
             val decodedToken = jwtGenerator.verifier.verify(token)
-            val extractedUser = jwtGenerator.extractUser(decodedToken)
+            val extractedUser = jwtGenerator.extractUserData(decodedToken)
 
             assertSoftly {
                 withClue("token should contain the expected issuer, audience and subject") {
@@ -77,7 +77,7 @@ class JwtGeneratorSpec : StringSpec() {
 
             // Assert
             val decodedToken = jwtGenerator.verifier.verify(token)
-            val extractedUser = jwtGenerator.extractUser(decodedToken)
+            val extractedUser = jwtGenerator.extractUserData(decodedToken)
 
             assertSoftly {
                 withClue("custom claims should be included in the token") {

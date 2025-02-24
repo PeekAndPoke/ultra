@@ -5,6 +5,7 @@ import com.auth0.jwt.JWTCreator
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.JWTVerifier
 import com.auth0.jwt.interfaces.Payload
+import de.peekandpoke.ultra.security.user.User
 import de.peekandpoke.ultra.security.user.UserPermissions
 
 class JwtGenerator(
@@ -35,7 +36,18 @@ class JwtGenerator(
         .encodePermissions(config.permissionsNs, permissions)
         .sign(signingAlgorithm)
 
-    fun extractUser(payload: Payload): JwtUserData = payload.extractUser(config.userNs)
+    fun extractUserData(payload: Payload): JwtUserData {
+        return payload.extractUser(config.userNs)
+    }
 
-    fun extractPermissions(payload: Payload): UserPermissions = payload.extractPermissions(config.permissionsNs)
+    fun extractPermissions(payload: Payload): UserPermissions {
+        return payload.extractPermissions(config.permissionsNs)
+    }
+
+    fun extractUser(clientIp: String, jwt: Payload): User {
+        return User(
+            record = extractUserData(jwt).toUserRecord(clientIp),
+            permissions = extractPermissions(jwt),
+        )
+    }
 }
