@@ -5,10 +5,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UserRecord(
     val userId: String = ANONYMOUS_ID,
-    val clientIp: String?,
-    val email: String?,
-    val desc: String?,
-    val type: String?,
+    val clientIp: String? = null,
+    val email: String? = null,
+    val desc: String? = null,
+    val type: String? = null,
 ) {
     companion object {
         const val ANONYMOUS_ID = "anonymous"
