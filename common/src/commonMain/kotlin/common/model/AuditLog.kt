@@ -16,9 +16,10 @@ data class AuditLog(
 
     @Serializable
     data class Entry(
-        val userType: String,
         val userId: String,
+        val userType: String,
         val userDesc: String,
+        val userEmail: String? = null,
         val clientIp: String,
         val type: Type,
         val message: String,
