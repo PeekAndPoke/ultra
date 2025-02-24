@@ -11,19 +11,17 @@ interface UserRecordProvider {
         val anonymous: UserRecordProvider = static("anonymous", "unknown")
 
         fun systemUser() = static(
-            UserRecord(
-                userId = "system",
-                clientIp = try {
-                    "${InetAddress.getLocalHost().hostName} ${InetAddress.getLocalHost().hostAddress}"
-                } catch (e: UnknownHostException) {
-                    "unknown"
-                },
-                desc = "system",
-                type = "system",
-            )
+            userId = "system",
+            clientIp = try {
+                "${InetAddress.getLocalHost().hostName} ${InetAddress.getLocalHost().hostAddress}"
+            } catch (e: UnknownHostException) {
+                "unknown"
+            },
         )
 
-        fun static(userId: String, clientIp: String): UserRecordProvider = static(UserRecord(userId, clientIp))
+        fun static(userId: String, clientIp: String): UserRecordProvider = static(
+            UserRecord(userId = userId, clientIp = clientIp, email = null, desc = null, type = null)
+        )
 
         fun static(user: UserRecord): UserRecordProvider = Static(user)
 
