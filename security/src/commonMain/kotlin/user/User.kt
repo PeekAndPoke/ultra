@@ -13,8 +13,8 @@ data class User(
             permissions = UserPermissions.anonymous,
         )
 
-        val system = User(
-            record = UserRecord.system,
+        fun system(ip: String?) = User(
+            record = UserRecord.system(ip),
             permissions = UserPermissions.system
         )
     }

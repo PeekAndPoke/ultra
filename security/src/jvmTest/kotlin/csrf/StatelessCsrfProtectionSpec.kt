@@ -2,8 +2,8 @@ package de.peekandpoke.ultra.security.csrf
 
 import de.peekandpoke.ultra.common.fromBase64
 import de.peekandpoke.ultra.common.toBase64
+import de.peekandpoke.ultra.security.user.UserProvider
 import de.peekandpoke.ultra.security.user.UserRecord
-import de.peekandpoke.ultra.security.user.UserRecordProvider
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -15,7 +15,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "Token patterns" {
 
         val subject = StatelessCsrfProtection(
-            "secret", 1000, UserRecordProvider.static(userId = "USER", clientIp = "IP")
+            "secret", 1000, UserProvider.static(UserRecord(userId = "USER", clientIp = "IP"))
         )
 
         val token = subject.createToken("SALT")
@@ -26,7 +26,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "Validating a valid token must work" {
 
         val subject = StatelessCsrfProtection(
-            "secret", 1000, UserRecordProvider.static(userId = "USER", clientIp = "IP")
+            "secret", 1000, UserProvider.static(UserRecord(userId = "USER", clientIp = "IP"))
         )
 
         val salt = "SALT"
@@ -38,7 +38,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "Validating a valid token must work for anonymous users" {
 
         val subject = StatelessCsrfProtection(
-            "secret", 1000, UserRecordProvider.anonymous
+            "secret", 1000, UserProvider.anonymous
         )
 
         val salt = "SALT"
@@ -50,7 +50,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "Validating a valid token must not work with a wrong salt" {
 
         val subject = StatelessCsrfProtection(
-            "secret", 1000, UserRecordProvider.static(UserRecord("USER", "IP"))
+            "secret", 1000, UserProvider.static(UserRecord(userId = "USER", clientIp = "IP"))
         )
 
         val token = subject.createToken("SALT")
@@ -61,11 +61,11 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "Token must depend on the user id" {
 
         val creator = StatelessCsrfProtection(
-            "secret", 1000, UserRecordProvider.static(UserRecord("USER", "IP"))
+            "secret", 1000, UserProvider.static(UserRecord(userId = "USER", clientIp = "IP"))
         )
 
         val validator = StatelessCsrfProtection(
-            "secret", 1000, UserRecordProvider.static(UserRecord("X", "IP"))
+            "secret", 1000, UserProvider.static(UserRecord(userId = "X", clientIp = "IP"))
         )
 
         val salt = "SALT"
@@ -77,11 +77,11 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "Token must depend on the user ip" {
 
         val creator = StatelessCsrfProtection(
-            "secret", 1000, UserRecordProvider.static(UserRecord("USER", "IP"))
+            "secret", 1000, UserProvider.static(UserRecord(userId = "USER", clientIp = "IP"))
         )
 
         val validator = StatelessCsrfProtection(
-            "secret", 1000, UserRecordProvider.static(UserRecord("USER", "X"))
+            "secret", 1000, UserProvider.static(UserRecord(userId = "X", clientIp = "IP"))
         )
 
         val salt = "SALT"
@@ -93,7 +93,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "The ttl must be part of the tokens hash" {
 
         val creator = StatelessCsrfProtection(
-            "secret", 1000, UserRecordProvider.static(UserRecord("USER", "IP"))
+            "secret", 1000, UserProvider.static(UserRecord(userId = "USER", clientIp = "IP"))
         )
 
         val salt = "SALT"
@@ -111,7 +111,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "Token must become invalid after the its ttl" {
 
         val creator = StatelessCsrfProtection(
-            "secret", 100, UserRecordProvider.static(UserRecord("USER", "IP"))
+            "secret", 10, UserProvider.static(UserRecord(userId = "USER", clientIp = "IP"))
         )
 
         val salt = "SALT"

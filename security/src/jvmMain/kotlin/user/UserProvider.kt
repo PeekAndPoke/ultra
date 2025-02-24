@@ -1,5 +1,8 @@
 package de.peekandpoke.ultra.security.user
 
+import java.net.InetAddress
+import java.net.UnknownHostException
+
 interface UserProvider {
     operator fun invoke(): User
 
@@ -7,14 +10,29 @@ interface UserProvider {
     companion object {
         val anonymous: UserProvider = static(User.anonymous)
 
-        fun system() = static(
-            User(
-                record = UserRecordProvider.system().invoke(),
-                permissions = UserPermissions.system,
+        fun system(): UserProvider {
+            val ip = try {
+                "${InetAddress.getLocalHost().hostName} ${InetAddress.getLocalHost().hostAddress}"
+            } catch (e: UnknownHostException) {
+                null
+            }
+
+            return static(
+                User(
+                    record = UserRecord.system(ip = ip),
+                    permissions = UserPermissions.system,
+                )
             )
-        )
+        }
 
         fun static(user: User): UserProvider = Static(user)
+
+        fun static(
+            record: UserRecord = UserRecord.anonymous,
+            permissions: UserPermissions = UserPermissions.anonymous,
+        ): UserProvider = static(
+            User(record = record, permissions = permissions)
+        )
 
         fun lazy(provider: () -> User): UserProvider = Lazy(provider)
     }

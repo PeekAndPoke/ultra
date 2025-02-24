@@ -3,6 +3,7 @@ package de.peekandpoke.ultra.security.user
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
+import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 
 class UserRecordSpec : FreeSpec() {
 
@@ -41,24 +42,24 @@ class UserRecordSpec : FreeSpec() {
         "UserRecord.system" - {
             "must be correct" {
 
-                val subject = UserRecord.system
+                val subject = UserRecord.system("IP")
 
                 subject.userId shouldBe "system"
-                subject.clientIp shouldBe null
+                subject.clientIp shouldBe "IP"
                 subject.desc shouldBe null
                 subject.type shouldBe null
             }
 
             "must be comparable" {
-                UserRecord.system shouldBeSameInstanceAs UserRecord.system
+                UserRecord.system("IP") shouldNotBeSameInstanceAs UserRecord.system("IP")
 
-                UserRecord.system shouldBe UserRecord(userId = "system")
+                UserRecord.system("IP") shouldBe UserRecord(userId = "system", clientIp = "IP")
             }
         }
 
         "UserRecord.isSystem()" - {
             "must be correct when the it is the anonymous user" {
-                UserRecord.system.isSystem() shouldBe true
+                UserRecord.system(null).isSystem() shouldBe true
 
                 UserRecord(
                     userId = "system",

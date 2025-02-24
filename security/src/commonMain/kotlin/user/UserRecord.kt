@@ -22,15 +22,15 @@ data class UserRecord(
             type = null,
         )
 
-        val system = UserRecord(
+        fun system(ip: String?) = UserRecord(
             userId = SYSTEM_ID,
-            clientIp = null,
+            clientIp = ip,
             email = null,
             desc = null,
             type = null,
         )
     }
 
-    fun isAnonymous() = this == anonymous || userId == ANONYMOUS_ID
-    fun isSystem() = this == system || userId == SYSTEM_ID
+    fun isAnonymous() = userId == ANONYMOUS_ID
+    fun isSystem() = userId == SYSTEM_ID
 }
