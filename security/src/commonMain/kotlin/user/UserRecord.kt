@@ -4,14 +4,33 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UserRecord(
-    val userId: String = "anonymous",
-    val clientIp: String = "unknown",
-    val desc: String = "n/a",
-    val type: String = "n/a",
+    val userId: String = ANONYMOUS_ID,
+    val clientIp: String?,
+    val email: String?,
+    val desc: String?,
+    val type: String?,
 ) {
-    fun isAnonymous() = this == anonymous || userId == "anonymous"
-
     companion object {
-        val anonymous = UserRecord()
+        const val ANONYMOUS_ID = "anonymous"
+        const val SYSTEM_ID = "system"
+
+        val anonymous = UserRecord(
+            userId = ANONYMOUS_ID,
+            clientIp = null,
+            email = null,
+            desc = null,
+            type = null,
+        )
+
+        val system = UserRecord(
+            userId = SYSTEM_ID,
+            clientIp = null,
+            email = null,
+            desc = null,
+            type = null,
+        )
     }
+
+    fun isAnonymous() = this == anonymous || userId == ANONYMOUS_ID
+    fun isSystem() = this == system || userId == SYSTEM_ID
 }
