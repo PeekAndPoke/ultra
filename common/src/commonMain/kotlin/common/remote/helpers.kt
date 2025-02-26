@@ -1,6 +1,10 @@
 package de.peekandpoke.ultra.common.remote
 
+import de.peekandpoke.ktorfx.rest.ApiResponse
 import de.peekandpoke.ultra.common.encodeUriComponent
+import de.peekandpoke.ultra.common.model.Paged
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.builtins.ListSerializer
 import kotlin.jvm.JvmName
 
 private val uriToParamsCache = mutableMapOf<String, Map<String, UriParamBuilder.Value>>()
@@ -8,6 +12,9 @@ private val uriToParamsCache = mutableMapOf<String, Map<String, UriParamBuilder.
 @Suppress("RegExpRedundantEscape")
 private val placeholderRegex = "\\{([^}]*)\\}".toRegex()
 
+/**
+ * Creates a remote request
+ */
 fun createRequest(
     config: ApiClient.Config,
 ) = createRequest(
@@ -16,6 +23,24 @@ fun createRequest(
     responseInterceptors = config.responseInterceptors,
     client = config.client,
 )
+
+/**
+ * Wraps the given serializer with an ApiResponse serializer
+ */
+fun <T> KSerializer<T>.api(): KSerializer<ApiResponse<T>> =
+    ApiResponse.serializer(this)
+
+/**
+ * Wraps the given serializer as list and with an ApiResponse serializer
+ */
+fun <T> KSerializer<T>.apiList(): KSerializer<ApiResponse<List<T>>> =
+    ApiResponse.serializer(ListSerializer(this))
+
+/**
+ * Wraps the given serializer as [Paged] and with an ApiResponse serializer
+ */
+fun <T> KSerializer<T>.apiPaged(): KSerializer<ApiResponse<Paged<T>>> =
+    ApiResponse.serializer(Paged.serializer(this))
 
 /**
  * Builds an uri from the given [pattern] without any parameters.
@@ -104,40 +129,5 @@ fun buildUri(pattern: String, params: Map<String, UriParamBuilder.Value> = empty
             .map { (k, v) -> k.encodeUriComponent() + "=" + (v.encoded ?: "") }
             .joinToString("&")
     }
-}
-
-class UriParamBuilder private constructor() {
-    companion object {
-        fun of(map: Map<String, String?>) = uriParams {
-            map.forEach { (k, v) -> set(k, v) }
-        }
-
-        fun uriParams(block: UriParamBuilder.() -> Unit): Map<String, Value> = UriParamBuilder().apply(block).build()
-    }
-
-    interface Value {
-        val encoded: String?
-    }
-
-    data class StrValue(val str: String?) : Value {
-        override val encoded = str?.encodeUriComponent()
-    }
-
-    data class RawValue(val raw: String?) : Value {
-        override val encoded = raw
-    }
-
-    private val values = mutableMapOf<String, Value>()
-
-    internal fun build() = values.toMap()
-
-    fun set(name: String, value: Value) {
-        values[name] = value
-    }
-
-    fun set(name: String, value: String?) = set(name, StrValue(value))
-    fun set(name: String, value: Number?) = set(name, StrValue(value?.toString()))
-
-    fun setRaw(name: String, value: String?) = set(name, RawValue(value))
 }
 
