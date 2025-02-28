@@ -1,12 +1,12 @@
 package de.peekandpoke.ultra.playground
 
+import de.peekandpoke.ultra.common.maths.Ease
 import de.peekandpoke.ultra.common.model.Message
 import de.peekandpoke.ultra.common.remote.ApiClient
 import de.peekandpoke.ultra.common.remote.TypedApiEndpoint
 import de.peekandpoke.ultra.common.remote.call
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -146,10 +146,14 @@ class Api : ApiClient(
 
 suspend fun main() {
 
+    val nums = listOf(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 
-    val api = Api()
+    println("In")
+    println(nums.joinToString("\n") { "$it to ${Ease.In.bounce(it)}" })
 
-    val response = api.endpoint().firstOrNull()
+    println("Out")
+    println(nums.joinToString("\n") { "$it to ${Ease.Out.bounce(it)}" })
 
-    println(response)
+    println("InOut")
+    println(nums.joinToString("\n") { "$it to ${Ease.InOut.bounce(it)}" })
 }

@@ -23,6 +23,15 @@ interface Polymorphic {
      * </code>
      */
     interface Parent {
+        companion object {
+            @Suppress("UnusedReceiverParameter")
+            inline fun <reified T : Any> Parent.children(
+                builder: PolymorphicChildrenToSerializers.Builder<T>.() -> Unit,
+            ): PolymorphicChildrenToSerializers<T> {
+                return PolymorphicChildrenToSerializers.Builder(T::class).apply(builder).build()
+            }
+        }
+
         /**
          * The name of the data field which acts as the discriminator, defaulting to [defaultDiscriminator]
          *
@@ -79,11 +88,4 @@ interface Polymorphic {
          */
         const val defaultDiscriminator: String = "_type"
     }
-}
-
-@Suppress("UnusedReceiverParameter")
-inline fun <reified T : Any> Polymorphic.Parent.children(
-    builder: PolymorphicChildrenToSerializers.Builder<T>.() -> Unit,
-): PolymorphicChildrenToSerializers<T> {
-    return PolymorphicChildrenToSerializers.Builder(T::class).apply(builder).build()
 }
