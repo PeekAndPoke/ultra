@@ -80,3 +80,10 @@ interface Polymorphic {
         const val defaultDiscriminator: String = "_type"
     }
 }
+
+@Suppress("UnusedReceiverParameter")
+inline fun <reified T : Any> Polymorphic.Parent.children(
+    builder: PolymorphicChildrenToSerializers.Builder<T>.() -> Unit,
+): PolymorphicChildrenToSerializers<T> {
+    return PolymorphicChildrenToSerializers.Builder(T::class).apply(builder).build()
+}
