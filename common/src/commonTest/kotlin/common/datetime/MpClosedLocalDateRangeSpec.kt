@@ -100,6 +100,49 @@ class MpClosedLocalDateRangeSpec : StringSpec({
         }
     }
 
+    "toEnclosingMonthRange()" {
+
+        withClue("Date within the month of February in a non-leap year") {
+            val date = MpLocalDate.parse("2023-02-15")
+            val range = date.toEnclosingMonthRange()
+
+            range shouldBeEqual MpClosedLocalDateRange(
+                from = MpLocalDate.parse("2023-02-01"),
+                to = MpLocalDate.parse("2023-02-28")
+            )
+        }
+
+        withClue("Date within the month of February in a leap year") {
+            val date = MpLocalDate.parse("2020-02-15")
+            val range = date.toEnclosingMonthRange()
+
+            range shouldBeEqual MpClosedLocalDateRange(
+                from = MpLocalDate.parse("2020-02-01"),
+                to = MpLocalDate.parse("2020-02-29")
+            )
+        }
+
+        withClue("Date within the month of December") {
+            val date = MpLocalDate.parse("2023-12-25")
+            val range = date.toEnclosingMonthRange()
+
+            range shouldBeEqual MpClosedLocalDateRange(
+                from = MpLocalDate.parse("2023-12-01"),
+                to = MpLocalDate.parse("2023-12-31")
+            )
+        }
+
+        withClue("Date within the month of January") {
+            val date = MpLocalDate.parse("2023-01-01")
+            val range = date.toEnclosingMonthRange()
+
+            range shouldBeEqual MpClosedLocalDateRange(
+                from = MpLocalDate.parse("2023-01-01"),
+                to = MpLocalDate.parse("2023-01-31")
+            )
+        }
+    }
+
     "asDatePeriod for invalid range" {
 
         val invalid = MpClosedLocalDateRange(

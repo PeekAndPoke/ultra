@@ -3,6 +3,8 @@ package de.peekandpoke.ultra.common.datetime
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.comparables.shouldBeEqualComparingTo
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeLessThan
@@ -233,13 +235,32 @@ class MpLocalDateSpec : StringSpec({
 
     "atStartOfMonth" {
         MpLocalDate.of(2022, Month.JANUARY, 1)
-            .atStartOfMonth() shouldBe MpLocalDate.of(2022, Month.JANUARY, 1)
+            .atFirstOfMonth() shouldBe MpLocalDate.of(2022, Month.JANUARY, 1)
 
         MpLocalDate.of(2022, Month.APRIL, 5)
-            .atStartOfMonth() shouldBe MpLocalDate.of(2022, Month.APRIL, 1)
+            .atFirstOfMonth() shouldBe MpLocalDate.of(2022, Month.APRIL, 1)
 
         MpLocalDate.of(2022, Month.DECEMBER, 31)
-            .atStartOfMonth() shouldBe MpLocalDate.of(2022, Month.DECEMBER, 1)
+            .atFirstOfMonth() shouldBe MpLocalDate.of(2022, Month.DECEMBER, 1)
+    }
+
+    "atNthOfMonth" {
+        MpLocalDate.of(2023, Month.JANUARY, 1)
+            .atNthOfMonth(1) shouldBe MpLocalDate.of(2023, Month.JANUARY, 1)
+
+        MpLocalDate.of(2023, Month.JANUARY, 1)
+            .atNthOfMonth(5) shouldBe MpLocalDate.of(2023, Month.JANUARY, 5)
+
+        MpLocalDate.of(2023, Month.JANUARY, 1)
+            .atNthOfMonth(31) shouldBe MpLocalDate.of(2023, Month.JANUARY, 31)
+
+        shouldThrow<IllegalArgumentException> {
+            MpLocalDate.of(2023, Month.JANUARY, 1).atNthOfMonth(32)
+        }
+
+        shouldThrow<IllegalArgumentException> {
+            MpLocalDate.of(2023, Month.JANUARY, 1).atNthOfMonth(-1)
+        }
     }
 
     "atLastDayOfMonth" {
@@ -679,5 +700,114 @@ class MpLocalDateSpec : StringSpec({
         MpLocalDate.of(2022, Month.APRIL, 5)
             .minus(MpDatePeriod(years = 1, months = 2, days = 3)) shouldBe
                 MpLocalDate.of(2021, Month.FEBRUARY, 2)
+    }
+
+    "atNoon" {
+        val subject = MpLocalDate.of(2022, Month.APRIL, 5)
+        val zone = MpTimezone.of("Europe/Berlin")
+
+        subject.atNoon(zone) shouldBe MpLocalDateTime.of(
+            year = 2022,
+            month = Month.APRIL,
+            day = 5,
+            hour = 12,
+            minute = 0,
+            second = 0,
+            milliSecond = 0
+        ).atZone(zone)
+    }
+
+    "getDatesInMonth with days - should handle empty input" {
+        val date = MpLocalDate.of(2024, 2, 15)
+        date.getDatesInMonth(emptyList<Int>()).shouldBeEmpty()
+    }
+
+    "getDatesInMonth with days - should return valid dates in order" {
+        val date = MpLocalDate.of(2024, 2, 15)
+
+        date.getDatesInMonth(listOf(5, 3, 1, 4, 2)) shouldContainExactly listOf(
+            MpLocalDate.of(2024, 2, 1),
+            MpLocalDate.of(2024, 2, 2),
+            MpLocalDate.of(2024, 2, 3),
+            MpLocalDate.of(2024, 2, 4),
+            MpLocalDate.of(2024, 2, 5)
+        )
+    }
+
+    "getDatesInMonth with days - should filter out invalid days" {
+        val date = MpLocalDate.of(2024, 2, 15) // February 2024 has 29 days
+
+        date.getDatesInMonth(listOf(28, 29, 30, 31)) shouldContainExactly listOf(
+            MpLocalDate.of(2024, 2, 28),
+            MpLocalDate.of(2024, 2, 29)
+        )
+    }
+
+    "getDatesInMonth with days - should handle negative numbers" {
+        val date = MpLocalDate.of(2024, 2, 15)
+
+        date.getDatesInMonth(listOf(-1, 0, 1, 2)) shouldContainExactly listOf(
+            MpLocalDate.of(2024, 2, 1),
+            MpLocalDate.of(2024, 2, 2)
+        )
+    }
+
+    "getDatesInMonth with weekdays - should handle empty input" {
+        val date = MpLocalDate.of(2024, 2, 15)
+        date.getDatesInMonth(emptyList<DayOfWeek>()).shouldBeEmpty()
+    }
+
+    "getDatesInMonth with weekdays - should return all matching weekdays" {
+        val date = MpLocalDate.of(2024, 2, 15)
+
+        date.getDatesInMonth(listOf(DayOfWeek.MONDAY)) shouldContainExactly listOf(
+            MpLocalDate.of(2024, 2, 5),
+            MpLocalDate.of(2024, 2, 12),
+            MpLocalDate.of(2024, 2, 19),
+            MpLocalDate.of(2024, 2, 26)
+        )
+    }
+
+    "getDatesInMonth with weekdays - should handle multiple weekdays" {
+        val date = MpLocalDate.of(2024, 2, 15)
+
+        date.getDatesInMonth(listOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)) shouldContainExactly listOf(
+            MpLocalDate.of(2024, 2, 3),  // Saturday
+            MpLocalDate.of(2024, 2, 4),  // Sunday
+            MpLocalDate.of(2024, 2, 10), // Saturday
+            MpLocalDate.of(2024, 2, 11), // Sunday
+            MpLocalDate.of(2024, 2, 17), // Saturday
+            MpLocalDate.of(2024, 2, 18), // Sunday
+            MpLocalDate.of(2024, 2, 24), // Saturday
+            MpLocalDate.of(2024, 2, 25)  // Sunday
+        )
+    }
+
+    "getDatesInMonth with weekdays - should handle all weekdays" {
+        val date = MpLocalDate.of(2024, 2, 15)
+        val allDays = DayOfWeek.values().toList()
+
+        val result = date.getDatesInMonth(allDays)
+
+        // February 2024 has 29 days
+        result.size shouldBe 29
+        result.first() shouldBe MpLocalDate.of(2024, 2, 1)
+        result.last() shouldBe MpLocalDate.of(2024, 2, 29)
+    }
+
+    "getDatesInMonth with weekdays - should maintain chronological order" {
+        val date = MpLocalDate.of(2024, 2, 15)
+
+        // Testing with reversed order of weekdays to ensure output is still chronological
+        date.getDatesInMonth(listOf(DayOfWeek.TUESDAY, DayOfWeek.MONDAY)) shouldContainExactly listOf(
+            MpLocalDate.of(2024, 2, 5),  // Monday
+            MpLocalDate.of(2024, 2, 6),  // Tuesday
+            MpLocalDate.of(2024, 2, 12), // Monday
+            MpLocalDate.of(2024, 2, 13), // Tuesday
+            MpLocalDate.of(2024, 2, 19), // Monday
+            MpLocalDate.of(2024, 2, 20), // Tuesday
+            MpLocalDate.of(2024, 2, 26), // Monday
+            MpLocalDate.of(2024, 2, 27)  // Tuesday
+        )
     }
 })
