@@ -264,18 +264,18 @@ class MpLocalDateSpec : StringSpec() {
             }
         }
 
-        "atLastDayOfMonth" {
+        "atLastOfMonth" {
             MpLocalDate.of(2023, Month.JANUARY, 1)
-                .atLastDayOfMonth() shouldBe MpLocalDate.of(2023, Month.JANUARY, 31)
+                .atLastOfMonth() shouldBe MpLocalDate.of(2023, Month.JANUARY, 31)
 
             MpLocalDate.of(2023, Month.FEBRUARY, 1)
-                .atLastDayOfMonth() shouldBe MpLocalDate.of(2023, Month.FEBRUARY, 28)
+                .atLastOfMonth() shouldBe MpLocalDate.of(2023, Month.FEBRUARY, 28)
 
             MpLocalDate.of(2024, Month.FEBRUARY, 1)
-                .atLastDayOfMonth() shouldBe MpLocalDate.of(2024, Month.FEBRUARY, 29)
+                .atLastOfMonth() shouldBe MpLocalDate.of(2024, Month.FEBRUARY, 29)
 
             MpLocalDate.of(2024, Month.DECEMBER, 1)
-                .atLastDayOfMonth() shouldBe MpLocalDate.of(2024, Month.DECEMBER, 31)
+                .atLastOfMonth() shouldBe MpLocalDate.of(2024, Month.DECEMBER, 31)
         }
 
         "atStartOfNext(dayOfWeek)" {

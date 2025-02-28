@@ -114,7 +114,7 @@ data class MpLocalDate internal constructor(
 
     /** The number of days of the current month */
     val numDaysInMonth: Int by lazy {
-        atFirstOfMonth().toClosedRange(atLastDayOfMonth()).numberOfDays
+        atFirstOfMonth().toClosedRange(atLastOfMonth()).numberOfDays
     }
 
     /**
@@ -201,7 +201,7 @@ data class MpLocalDate internal constructor(
     /**
      * Gets the start of the month that this date is in.
      */
-    fun atLastDayOfMonth(): MpLocalDate {
+    fun atLastOfMonth(): MpLocalDate {
         return atFirstOfMonth().plusMonths(1).minusDays(1)
     }
 
@@ -315,7 +315,7 @@ data class MpLocalDate internal constructor(
     /**
      * Constructs a closed date range representing the entire month containing this date.
      */
-    fun toEnclosingMonthRange() = MpClosedLocalDateRange(from = atFirstOfMonth(), to = atLastDayOfMonth())
+    fun toEnclosingMonthRange() = MpClosedLocalDateRange(from = atFirstOfMonth(), to = atLastOfMonth())
 
     /**
      * Converts into an [MpZonedDateTimeRange] for the given [timeslot] and [timezone].
