@@ -40,7 +40,7 @@ val Ultra_Vault
         dynamic(TimestampedMillisHook::class)
 
         // Profiling
-        dynamic0(QueryProfiler::class) { NullQueryProfiler }
+        dynamic.factory(QueryProfiler::class) { NullQueryProfiler }
 
         // Tools
         singleton(DatabaseTools::class)

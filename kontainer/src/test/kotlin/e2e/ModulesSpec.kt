@@ -1,9 +1,5 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.AnotherSimpleService
-import de.peekandpoke.ultra.kontainer.ConfigIntInjecting
-import de.peekandpoke.ultra.kontainer.CounterService
-import de.peekandpoke.ultra.kontainer.InjectingService
 import de.peekandpoke.ultra.kontainer.KontainerDslModule
 import de.peekandpoke.ultra.kontainer.KontainerModule
 import de.peekandpoke.ultra.kontainer.kontainer
@@ -34,7 +30,6 @@ class ModulesSpec : StringSpec({
         }
 
         val kontainer = kontainer {
-            moduleOne()
             module(moduleOne)
             module(moduleTwo)
             singleton(InjectingService::class)

@@ -8,6 +8,7 @@ import io.kotest.core.spec.style.StringSpec
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import java.time.LocalDateTime
 
+@Suppress("UnnecessaryOptInAnnotation")
 @OptIn(ExperimentalCompilerApi::class)
 class DataClassWithMultiplePrimitivePropertiesSpec : StringSpec({
 
