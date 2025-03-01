@@ -82,9 +82,8 @@ object Deps {
 
     // JAVA - DEPS /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // TODO: Check update to 4.x version
     // https://mvnrepository.com/artifact/com.auth0/java-jwt
-    private const val auth0_java_jwt_version = "3.19.4"
+    private const val auth0_java_jwt_version = "4.5.0"
     const val auth0_java_jwt = "com.auth0:java-jwt:$auth0_java_jwt_version"
 
     // https://search.maven.org/artifact/io.github.java-diff-utils/java-diff-utils
@@ -138,8 +137,8 @@ object Deps {
 
         //        const val kotest_plugin_version = "6.0.0.M1"
         // https://mvnrepository.com/artifact/io.kotest/kotest-common
-        const val kotest_version = "5.9.1"
-//        const val kotest_version = "6.0.0.M1"
+        const val kotest_version = "6.0.0.M2"
+//        const val kotest_version = "5.9.1"
 
         const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"
         const val kotest_framework_api = "io.kotest:kotest-framework-api:$kotest_version"

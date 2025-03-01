@@ -1,24 +1,6 @@
-package de.peekandpoke.ultra.playground
+package de.peekandpoke.ktorfx.rest
 
-import de.peekandpoke.ultra.common.maths.Ease
-import de.peekandpoke.ultra.common.model.Message
-import de.peekandpoke.ultra.common.remote.ApiClient
-import de.peekandpoke.ultra.common.remote.TypedApiEndpoint
-import de.peekandpoke.ultra.common.remote.call
-import io.ktor.client.*
-import io.ktor.client.engine.okhttp.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-
-@Serializable
-data class ApiResponse<out T>(
-    /** The status code */
-    val status: HttpStatusCode,
-    /** The response data */
-    val data: T?,
-    /** Messages to be sent along */
-    val messages: List<Message>? = null,
-)
 
 @Serializable
 data class HttpStatusCode(val value: Int, val description: String) {
@@ -98,62 +80,4 @@ data class HttpStatusCode(val value: Int, val description: String) {
         val VariantAlsoNegotiates: HttpStatusCode = HttpStatusCode(506, "Variant Also Negotiates")
         val InsufficientStorage: HttpStatusCode = HttpStatusCode(507, "Insufficient Storage")
     }
-}
-
-@Serializable
-data class AppInfo(
-    val environment: String,
-    val version: String,
-    val buildAt: String,
-    val gitBranch: String,
-    val gitRev: String,
-) {
-//    fun getParsedVersion() = Version.parse(version)
-}
-
-val TheBaseApiCodec: Json = Json {
-    classDiscriminator = "_type"
-    encodeDefaults = true
-    ignoreUnknownKeys = true
-//    serializersModule = TheBaseApiPolymorphicModule
-    prettyPrint = true
-}
-
-class Api : ApiClient(
-    config = ApiClient.Config(
-        baseUrl = "https://api.qa08.jointhebase.dev",
-        codec = TheBaseApiCodec,
-        client = HttpClient(OkHttp) {
-            engine {
-                config {
-                    followRedirects(true)
-                }
-            }
-        }
-    )
-) {
-    companion object {
-        val Endpoint = TypedApiEndpoint.Get(
-            uri = "app-info",
-            response = ApiResponse.serializer(AppInfo.serializer()),
-        )
-    }
-
-    fun endpoint() = call(
-        Endpoint()
-    )
-}
-
-suspend fun main() {
-
-    val nums = listOf(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
-
-    println("In")
-    println(nums.joinToString("\n") { "$it to ${Ease.In.bounce(it)}" })
-
-    println("Out")
-    println(nums.joinToString("\n") { "$it to ${Ease.Out.bounce(it)}" })
-
-    println("InOut")
-    println(nums.joinToString("\n") { "$it to ${Ease.InOut.bounce(it)}" })
 }

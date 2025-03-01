@@ -3,23 +3,23 @@ package de.peekandpoke.ultra.security.csrf
 import de.peekandpoke.ultra.common.fromBase64
 import de.peekandpoke.ultra.common.sha384
 import de.peekandpoke.ultra.common.toBase64
-import de.peekandpoke.ultra.security.user.UserRecordProvider
+import de.peekandpoke.ultra.security.user.UserProvider
 
 class StatelessCsrfProtection(
     private val csrfSecret: String,
     private val csrfTtlMillis: Int,
-    userRecordProvider: UserRecordProvider
+    userProvider: UserProvider,
 ) : CsrfProtection {
 
     internal val glue = "#"
 
-    private val userId = userRecordProvider().userId
-    private val clientIp = userRecordProvider().clientIp
+    private val user by lazy { userProvider() }
+
+    private val userId get() = user.record.userId
+    private val clientIp get() = user.record.clientIp
 
     override fun createToken(salt: String): String {
-
         val ttl = System.currentTimeMillis() + csrfTtlMillis
-
         val signature = sign(salt, ttl)
 
         return "$ttl$glue$signature".toBase64()
@@ -27,7 +27,6 @@ class StatelessCsrfProtection(
 
     @Suppress("Detekt:ReturnCount")
     override fun validateToken(salt: String, token: String): Boolean {
-
         val decoded = String(token.fromBase64())
         val parts = decoded.split(glue)
 

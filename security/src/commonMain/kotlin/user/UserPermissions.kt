@@ -15,6 +15,7 @@ data class UserPermissions(
 ) {
     companion object {
         val anonymous = UserPermissions()
+        val system = UserPermissions(isSuperUser = true)
     }
 
     /**

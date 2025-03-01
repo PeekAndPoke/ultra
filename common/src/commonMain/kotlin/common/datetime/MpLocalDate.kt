@@ -15,6 +15,7 @@ import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
+import kotlin.jvm.JvmName
 
 @Suppress("Detekt:TooManyFunctions")
 @ConsistentCopyVisibility
@@ -114,7 +115,7 @@ data class MpLocalDate internal constructor(
 
     /** The number of days of the current month */
     val numDaysInMonth: Int by lazy {
-        atStartOfMonth().toClosedRange(atLastDayOfMonth()).numberOfDays
+        atFirstOfMonth().toClosedRange(atLastOfMonth()).numberOfDays
     }
 
     /**
@@ -187,15 +188,22 @@ data class MpLocalDate internal constructor(
     /**
      * Gets the start of the month that this date is in.
      */
-    fun atStartOfMonth(): MpLocalDate {
+    fun atFirstOfMonth(): MpLocalDate {
         return of(year = year, month = month, day = 1)
+    }
+
+    /**
+     * Gets the nth day in the same year and month
+     */
+    fun atNthOfMonth(n: Int): MpLocalDate {
+        return of(year = year, month = month, day = n)
     }
 
     /**
      * Gets the start of the month that this date is in.
      */
-    fun atLastDayOfMonth(): MpLocalDate {
-        return atStartOfMonth().plusMonths(1).minusDays(1)
+    fun atLastOfMonth(): MpLocalDate {
+        return atFirstOfMonth().plusMonths(1).minusDays(1)
     }
 
     /**
@@ -304,6 +312,11 @@ data class MpLocalDate internal constructor(
     fun toClosedRange(end: MpLocalDate): MpClosedLocalDateRange {
         return MpClosedLocalDateRange(from = this, to = end)
     }
+
+    /**
+     * Constructs a closed date range representing the entire month containing this date.
+     */
+    fun toEnclosingMonthRange() = MpClosedLocalDateRange(from = atFirstOfMonth(), to = atLastOfMonth())
 
     /**
      * Converts into an [MpZonedDateTimeRange] for the given [timeslot] and [timezone].
@@ -462,6 +475,49 @@ data class MpLocalDate internal constructor(
      */
     fun minusCenturies(centuries: Int): MpLocalDate {
         return plusCenturies(-centuries)
+    }
+
+    /**
+     * Converts this local date to an MpZonedDateTime at noon in the specified timezone.
+     *
+     * @param timezone The timezone in which the date should be converted to noon.
+     */
+    fun atNoon(timezone: MpTimezone): MpZonedDateTime = atTime(time = MpLocalTime.Noon, timezone = timezone)
+
+    /**
+     * Returns a list of dates corresponding to the specified days in the current month.
+     * Filters out any days that are not valid for the current month.
+     *
+     * @param days A collection of integers representing the days of the month to retrieve.
+     * @return A sorted list of dates for the valid specified days in the current month.
+     */
+    @JvmName("getDatesInMonth_by_days")
+    fun getDatesInMonth(days: Iterable<Int>): List<MpLocalDate> {
+        val range = 1..numDaysInMonth
+
+        val result = days
+            .filter { day -> day in range }
+            .map { day -> atNthOfMonth(day) }
+            .sorted()
+
+        return result
+    }
+
+    /**
+     * Retrieves a list of dates in the current month that match the specified weekdays.
+     * Filters out duplicates and only includes valid dates that fall within the month.
+     *
+     * @param weekdays A collection of DayOfWeek values representing the weekdays to include.
+     * @return A list of MpLocalDate objects for the specified weekdays in the current month.
+     */
+    @JvmName("getDatesInMonth_by_weekdays")
+    fun getDatesInMonth(weekdays: Iterable<DayOfWeek>): List<MpLocalDate> {
+        val days = weekdays.toSet()
+
+        return (1..numDaysInMonth)
+            .map { day -> atNthOfMonth(day) }
+            .filter { date -> date.dayOfWeek in days }
+            .distinct()
     }
 }
 
