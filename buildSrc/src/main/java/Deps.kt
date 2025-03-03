@@ -48,7 +48,7 @@ object Deps {
 
     // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-datetime
     private const val kotlinx_datetime_version = "0.6.2"
-    const val kotlinx_datetime_common = "org.jetbrains.kotlinx:kotlinx-datetime:$kotlinx_datetime_version"
+    const val kotlinx_datetime = "org.jetbrains.kotlinx:kotlinx-datetime:$kotlinx_datetime_version"
 
 //    // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/atomicfu
 //    private const val kotlinx_atomicfu_version = "0.24.0"
@@ -56,7 +56,7 @@ object Deps {
 
     // https://kotlinlang.org/docs/releases.html
     // https://github.com/ktorio/ktor/releases
-    const val ktor_version = "3.1.0"
+    const val ktor_version = "3.1.1"
     const val ktor_client_core = "io.ktor:ktor-client-core:$ktor_version"
 
     // https://mvnrepository.com/artifact/com.github.tschuchortdev/kotlin-compile-testing
@@ -64,19 +64,19 @@ object Deps {
     const val kotlin_compiletesting = "com.github.tschuchortdev:kotlin-compile-testing:$kotlin_compiletesting_version"
 
     // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
-    private const val kotlinpoet_version = "2.0.0"
+    private const val kotlinpoet_version = "2.1.0"
     const val kotlinpoet = "com.squareup:kotlinpoet:$kotlinpoet_version"
 
     // https://mvnrepository.com/artifact/com.soywiz/korlibs-time
     private const val korlibs_time_version = "6.0.0"
-    const val korlibs_time_common = "com.soywiz:korlibs-time:$korlibs_time_version"
+    const val korlibs_time = "com.soywiz:korlibs-time:$korlibs_time_version"
 
     // https://mvnrepository.com/artifact/com.github.ajalt.clikt/clikt
-    private const val clikt_version = "4.3.0"
+    private const val clikt_version = "5.0.3"
     const val clikt = "com.github.ajalt.clikt:clikt:$clikt_version"
 
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
-    private const val jackson_version = "2.18.2"
+    private const val jackson_version = "2.18.3"
     const val jackson_annotations = "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
     const val jackson_databind = "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
 
@@ -100,7 +100,7 @@ object Deps {
     const val classindex = "org.atteo.classindex:classindex:$classindex_version"
 
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-    private const val slf4j_version = "2.0.16"
+    private const val slf4j_version = "2.0.17"
     const val slf4j_api = "org.slf4j:slf4j-api:$slf4j_version"
 
     // // NPM dependencies /////////////////////////////////////////////////////////////////////////
@@ -129,7 +129,7 @@ object Deps {
         }
 
         // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-        const val logback_version = "1.5.16"
+        const val logback_version = "1.5.17"
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://plugins.gradle.org/plugin/io.kotest.multiplatform

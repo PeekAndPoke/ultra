@@ -49,11 +49,11 @@ kotlin {
                 implementation(Deps.ktor_client_core)
 
                 // We expose kotlinx-datetime as it is needed in many cases, e.g. for TimeZone
-                api(Deps.kotlinx_datetime_common)
+                api(Deps.kotlinx_datetime)
 
                 // TODO: Remove this dependency
                 //       It is still needed for formatting dates
-                implementation(Deps.korlibs_time_common)
+                implementation(Deps.korlibs_time)
             }
         }
 
