@@ -192,7 +192,6 @@ interface ParameterProvider {
     /**
      * Provider for list of services
      */
-    @ConsistentCopyVisibility
     data class ForListOfServices internal constructor(
         override val name: String,
         override val type: KType,
@@ -231,7 +230,6 @@ interface ParameterProvider {
     /**
      * Provider for a lookup of services
      */
-    @ConsistentCopyVisibility
     data class ForLookupOfServices internal constructor(
         override val name: String,
         override val type: KType,
@@ -375,7 +373,6 @@ interface ParameterProvider {
     /**
      * Fallback that always produces an error
      */
-    @ConsistentCopyVisibility
     data class UnknownInjection internal constructor(
         override val name: String,
         override val type: KType,

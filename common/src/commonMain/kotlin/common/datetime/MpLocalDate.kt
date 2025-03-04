@@ -18,7 +18,6 @@ import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmName
 
 @Suppress("Detekt:TooManyFunctions")
-@ConsistentCopyVisibility
 @Serializable(with = MpLocalDateSerializer::class)
 data class MpLocalDate internal constructor(
     private val value: LocalDate,

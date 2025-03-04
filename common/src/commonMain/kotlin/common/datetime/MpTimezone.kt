@@ -3,9 +3,8 @@ package de.peekandpoke.ultra.common.datetime
 import kotlinx.datetime.TimeZone
 import kotlinx.serialization.Serializable
 
-@ConsistentCopyVisibility
 @Serializable(with = MpTimezoneSerializer::class)
-data class MpTimezone private constructor(val id: String) {
+data class MpTimezone internal constructor(val id: String) {
     companion object {
         /**
          * Creates a timezone from the given id

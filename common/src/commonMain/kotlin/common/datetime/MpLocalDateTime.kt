@@ -13,7 +13,6 @@ import kotlinx.serialization.Serializable
 
 // TODO: test all of me
 @Suppress("Detekt.LongParameterList")
-@ConsistentCopyVisibility
 @Serializable(with = MpLocalDateTimeSerializer::class)
 data class MpLocalDateTime internal constructor(
     internal val value: LocalDateTime,

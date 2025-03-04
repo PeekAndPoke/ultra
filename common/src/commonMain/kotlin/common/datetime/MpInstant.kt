@@ -11,7 +11,6 @@ import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
 @Suppress("Detekt:TooManyFunctions")
-@ConsistentCopyVisibility
 @Serializable(with = MpInstantSerializer::class)
 data class MpInstant internal constructor(
     internal val value: Instant,

@@ -11,9 +11,8 @@ import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
 @Suppress("Detekt:TooManyFunctions")
-@ConsistentCopyVisibility
 @Serializable(with = MpZonedDateTimeSerializer::class)
-data class MpZonedDateTime private constructor(
+data class MpZonedDateTime internal constructor(
     val datetime: MpLocalDateTime,
     val timezone: MpTimezone,
 ) : MpAbsoluteDateTime, ComparableTo<MpZonedDateTime> {
