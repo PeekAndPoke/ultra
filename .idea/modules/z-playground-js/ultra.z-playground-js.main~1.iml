@@ -22,7 +22,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
+              <args>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-serialization-compiler-plugin-embeddable/2.1.10/5f9d3a378f471e0168d63c26a4ced31da7047abf/kotlin-serialization-compiler-plugin-embeddable-2.1.10.jar</args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
           </arrayArguments>
