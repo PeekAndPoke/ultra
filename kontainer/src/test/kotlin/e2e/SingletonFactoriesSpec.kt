@@ -120,6 +120,20 @@ class SingletonFactoriesSpec : StringSpec({
         validateWithoutBase(subject, 1)
     }
 
+    "Factory with one lazy param" {
+
+        val subject = kontainer {
+            module(common)
+
+            singleton(Config::class) { s1: Lazy<S01> ->
+                val s1 by s1
+                Config(s1.v)
+            }
+        }.create()
+
+        validateWithoutBase(subject, 1)
+    }
+
     "Factory with one param defined with base class" {
 
         val subject = kontainer {

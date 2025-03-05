@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.kontainer
 
+import de.peekandpoke.ultra.common.reflection.kType
 import kotlin.reflect.KClass
-import kotlin.reflect.full.createType
 
 @Suppress("Detekt:TooManyFunctions")
 class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit) {
@@ -105,12 +105,12 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
                 cls = srv,
                 producer = ServiceProducer.forFactory(
                     params = listOf(
-                        P1::class.createType(nullable = null is P1)
-                    ),
+                        kType<P1>(),
+                    ).map { it.reified.type },
                     creates = IMPL::class,
                     factory = { p ->
                         factory(
-                            p[0] as P1
+                            p[0] as P1,
                         )
                     },
                 )
@@ -130,14 +130,14 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
                 cls = srv,
                 producer = ServiceProducer.forFactory(
                     params = listOf(
-                        P1::class.createType(nullable = null is P1),
-                        P2::class.createType(nullable = null is P2),
-                    ),
+                        kType<P1>(),
+                        kType<P2>(),
+                    ).map { it.reified.type },
                     creates = IMPL::class,
                     factory = { p ->
                         factory(
                             p[0] as P1,
-                            p[1] as P2
+                            p[1] as P2,
                         )
                     },
                 )
@@ -157,16 +157,16 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
                 cls = srv,
                 producer = ServiceProducer.forFactory(
                     params = listOf(
-                        P1::class.createType(nullable = null is P1),
-                        P2::class.createType(nullable = null is P2),
-                        P3::class.createType(nullable = null is P3),
-                    ),
+                        kType<P1>(),
+                        kType<P2>(),
+                        kType<P3>(),
+                    ).map { it.reified.type },
                     creates = IMPL::class,
                     factory = { p ->
                         factory(
                             p[0] as P1,
                             p[1] as P2,
-                            p[2] as P3
+                            p[2] as P3,
                         )
                     },
                 )
@@ -189,18 +189,18 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
                 cls = srv,
                 producer = ServiceProducer.forFactory(
                     params = listOf(
-                        P1::class.createType(nullable = null is P1),
-                        P2::class.createType(nullable = null is P2),
-                        P3::class.createType(nullable = null is P3),
-                        P4::class.createType(nullable = null is P4),
-                    ),
+                        kType<P1>(),
+                        kType<P2>(),
+                        kType<P3>(),
+                        kType<P4>(),
+                    ).map { it.reified.type },
                     creates = IMPL::class,
                     factory = { p ->
                         factory(
                             p[0] as P1,
                             p[1] as P2,
                             p[2] as P3,
-                            p[3] as P4
+                            p[3] as P4,
                         )
                     },
                 )
@@ -223,12 +223,12 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
                 cls = srv,
                 producer = ServiceProducer.forFactory(
                     params = listOf(
-                        P1::class.createType(nullable = null is P1),
-                        P2::class.createType(nullable = null is P2),
-                        P3::class.createType(nullable = null is P3),
-                        P4::class.createType(nullable = null is P4),
-                        P5::class.createType(nullable = null is P5),
-                    ),
+                        kType<P1>(),
+                        kType<P2>(),
+                        kType<P3>(),
+                        kType<P4>(),
+                        kType<P5>(),
+                    ).map { it.reified.type },
                     creates = IMPL::class,
                     factory = { p ->
                         factory(
@@ -236,7 +236,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
                             p[1] as P2,
                             p[2] as P3,
                             p[3] as P4,
-                            p[4] as P5
+                            p[4] as P5,
                         )
                     },
                 )
@@ -259,13 +259,13 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
                 cls = srv,
                 producer = ServiceProducer.forFactory(
                     params = listOf(
-                        P1::class.createType(nullable = null is P1),
-                        P2::class.createType(nullable = null is P2),
-                        P3::class.createType(nullable = null is P3),
-                        P4::class.createType(nullable = null is P4),
-                        P5::class.createType(nullable = null is P5),
-                        P6::class.createType(nullable = null is P6),
-                    ),
+                        kType<P1>(),
+                        kType<P2>(),
+                        kType<P3>(),
+                        kType<P4>(),
+                        kType<P5>(),
+                        kType<P6>(),
+                    ).map { it.reified.type },
                     creates = IMPL::class,
                     factory = { p ->
                         factory(
@@ -274,7 +274,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
                             p[2] as P3,
                             p[3] as P4,
                             p[4] as P5,
-                            p[5] as P6
+                            p[5] as P6,
                         )
                     },
                 )
@@ -297,14 +297,14 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
                 cls = srv,
                 producer = ServiceProducer.forFactory(
                     params = listOf(
-                        P1::class.createType(nullable = null is P1),
-                        P2::class.createType(nullable = null is P2),
-                        P3::class.createType(nullable = null is P3),
-                        P4::class.createType(nullable = null is P4),
-                        P5::class.createType(nullable = null is P5),
-                        P6::class.createType(nullable = null is P6),
-                        P7::class.createType(nullable = null is P7),
-                    ),
+                        kType<P1>(),
+                        kType<P2>(),
+                        kType<P3>(),
+                        kType<P4>(),
+                        kType<P5>(),
+                        kType<P6>(),
+                        kType<P7>(),
+                    ).map { it.reified.type },
                     creates = IMPL::class,
                     factory = { p ->
                         factory(
@@ -314,7 +314,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
                             p[3] as P4,
                             p[4] as P5,
                             p[5] as P6,
-                            p[6] as P7
+                            p[6] as P7,
                         )
                     },
                 )
@@ -337,15 +337,15 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
                 cls = srv,
                 producer = ServiceProducer.forFactory(
                     params = listOf(
-                        P1::class.createType(nullable = null is P1),
-                        P2::class.createType(nullable = null is P2),
-                        P3::class.createType(nullable = null is P3),
-                        P4::class.createType(nullable = null is P4),
-                        P5::class.createType(nullable = null is P5),
-                        P6::class.createType(nullable = null is P6),
-                        P7::class.createType(nullable = null is P7),
-                        P8::class.createType(nullable = null is P8),
-                    ),
+                        kType<P1>(),
+                        kType<P2>(),
+                        kType<P3>(),
+                        kType<P4>(),
+                        kType<P5>(),
+                        kType<P6>(),
+                        kType<P7>(),
+                        kType<P8>(),
+                    ).map { it.reified.type },
                     creates = IMPL::class,
                     factory = { p ->
                         factory(
@@ -380,16 +380,16 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
                 cls = srv,
                 producer = ServiceProducer.forFactory(
                     params = listOf(
-                        P1::class.createType(nullable = null is P1),
-                        P2::class.createType(nullable = null is P2),
-                        P3::class.createType(nullable = null is P3),
-                        P4::class.createType(nullable = null is P4),
-                        P5::class.createType(nullable = null is P5),
-                        P6::class.createType(nullable = null is P6),
-                        P7::class.createType(nullable = null is P7),
-                        P8::class.createType(nullable = null is P8),
-                        P9::class.createType(nullable = null is P9),
-                    ),
+                        kType<P1>(),
+                        kType<P2>(),
+                        kType<P3>(),
+                        kType<P4>(),
+                        kType<P5>(),
+                        kType<P6>(),
+                        kType<P7>(),
+                        kType<P8>(),
+                        kType<P9>(),
+                    ).map { it.reified.type },
                     creates = IMPL::class,
                     factory = { p ->
                         factory(
@@ -425,17 +425,17 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
                 cls = srv,
                 producer = ServiceProducer.forFactory(
                     params = listOf(
-                        P1::class.createType(nullable = null is P1),
-                        P2::class.createType(nullable = null is P2),
-                        P3::class.createType(nullable = null is P3),
-                        P4::class.createType(nullable = null is P4),
-                        P5::class.createType(nullable = null is P5),
-                        P6::class.createType(nullable = null is P6),
-                        P7::class.createType(nullable = null is P7),
-                        P8::class.createType(nullable = null is P8),
-                        P9::class.createType(nullable = null is P9),
-                        P10::class.createType(nullable = null is P10),
-                    ),
+                        kType<P1>(),
+                        kType<P2>(),
+                        kType<P3>(),
+                        kType<P4>(),
+                        kType<P5>(),
+                        kType<P6>(),
+                        kType<P7>(),
+                        kType<P8>(),
+                        kType<P9>(),
+                        kType<P10>(),
+                    ).map { it.reified.type },
                     creates = IMPL::class,
                     factory = { p ->
                         factory(
@@ -584,7 +584,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     @KontainerDslModule
     fun module(
         module: KontainerModule,
-    ): KontainerBuilder = apply {module.apply(this) }
+    ): KontainerBuilder = apply { module.apply(this) }
 
     /** Imports a parameterized module */
     @KontainerDslModule
