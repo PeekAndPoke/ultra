@@ -60,7 +60,7 @@ class GeneralInjectionSpec : StringSpec({
     "Container with a singleton service (builder style)" {
 
         val subject = kontainer {
-            singleton.factory(CounterService::class) { CounterService() }
+            singleton(CounterService::class) { CounterService() }
         }.create()
 
         assertSoftly {

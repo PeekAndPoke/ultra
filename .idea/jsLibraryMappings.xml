@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="JavaScriptLibraryMappings">
+    <excludedPredefinedLibrary name="ultra/build/js/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-common-test/node_modules" />
     <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-logging-test/node_modules" />
     <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-security-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-test/node_modules" />
     <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-vault-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages_imported/Kotlin-DateTime-library-kotlinx-datetime/0.6.2/node_modules" />
   </component>
 </project>

@@ -35,7 +35,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic.factory(DynamicService::class) {
+            dynamic(DynamicService::class) {
                 DynamicService(10)
             }
         }
@@ -145,7 +145,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic.factory(DynamicService::class) { DynamicService(100) }
+            dynamic(DynamicService::class) { DynamicService(100) }
         }
 
         val subject = blueprint.create()
@@ -164,7 +164,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic.factory(DynamicService::class) { DynamicService(100) }
+            dynamic(DynamicService::class) { DynamicService(100) }
         }
 
         val subject = blueprint.create()
@@ -182,7 +182,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic.factory(DynamicService::class) { DynamicService(100) }
+            dynamic(DynamicService::class) { DynamicService(100) }
         }
 
         val subjectOne = blueprint.create()
@@ -201,7 +201,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic.factory(DynamicService::class) { DynamicService(100) }
+            dynamic(DynamicService::class) { DynamicService(100) }
         }
 
         val subject = blueprint.create {
@@ -228,7 +228,7 @@ class DynamicServicesSpec : StringSpec({
         class DerivedService(value: Int) : DynamicService(value)
 
         val blueprint = kontainer {
-            dynamic.factory(DynamicService::class) { DynamicService(100) }
+            dynamic(DynamicService::class) { DynamicService(100) }
         }
 
         val subject = blueprint.create {
@@ -255,7 +255,7 @@ class DynamicServicesSpec : StringSpec({
         class DerivedService(value: Int) : DynamicService(value)
 
         val blueprint = kontainer {
-            dynamic.factory(DynamicService::class) { DynamicService(100) }
+            dynamic(DynamicService::class) { DynamicService(100) }
         }
 
         val subject = blueprint.create {

@@ -92,7 +92,7 @@ class SingletonFactoriesSpec : StringSpec({
     "Factory with zero params" {
 
         val subject = kontainer {
-            singleton.factory(Config::class) { Config(0) }
+            singleton(Config::class) { Config(0) }
         }.create()
 
         validateWithoutBase(subject, 0)
@@ -101,7 +101,7 @@ class SingletonFactoriesSpec : StringSpec({
     "Factory with zero params defined with base class" {
 
         val subject = kontainer {
-            singleton.factory(Base::class) { Config(0) }
+            singleton(Base::class) { Config(0) }
         }.create()
 
         validateWithBase(subject, 0)

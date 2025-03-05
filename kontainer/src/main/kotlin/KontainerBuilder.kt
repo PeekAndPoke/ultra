@@ -78,16 +78,16 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
          * The service can be injected by the type [SRV] and its base types
          */
         @JvmName("invoke_0_params")
-        inline fun <SRV : Any, reified IMPL : SRV> factory(
+        inline operator fun <SRV : Any, reified IMPL : SRV> invoke(
             srv: KClass<SRV>,
-            noinline factory: () -> IMPL,
+            noinline factory: (Any?) -> IMPL,
         ) {
             add(
                 cls = srv,
                 producer = ServiceProducer.forFactory(
                     params = listOf(),
                     creates = IMPL::class,
-                    factory = { factory() },
+                    factory = { factory(Unit) },
                 )
             )
         }
