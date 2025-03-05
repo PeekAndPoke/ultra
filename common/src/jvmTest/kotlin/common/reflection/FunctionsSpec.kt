@@ -4,6 +4,7 @@ import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldStartWith
 import kotlin.reflect.KParameter.Kind
 
 
@@ -60,23 +61,23 @@ class FunctionsSpec : StringSpec() {
 
             assertSoftly {
 
-                subject1.nthParamName(0) shouldBe "p1"
-                subject1.nthParamName(1) shouldBe "p2"
-                subject1.nthParamName(2) shouldBe "p3"
+                subject1.nthParamName(0) shouldStartWith "p1"
+                subject1.nthParamName(1) shouldStartWith "p2"
+                subject1.nthParamName(2) shouldStartWith "p3"
 
-                subject2.nthParamName(0) shouldBe "p1"
-                subject2.nthParamName(1) shouldBe "p2"
-                subject2.nthParamName(2) shouldBe "p3"
+                subject2.nthParamName(0) shouldStartWith "p1"
+                subject2.nthParamName(1) shouldStartWith "p2"
+                subject2.nthParamName(2) shouldStartWith "p3"
 
                 // getting the param names again... this makes sure that the internal cache is working properly
 
-                subject1.nthParamName(0) shouldBe "p1"
-                subject1.nthParamName(1) shouldBe "p2"
-                subject1.nthParamName(2) shouldBe "p3"
+                subject1.nthParamName(0) shouldStartWith "p1"
+                subject1.nthParamName(1) shouldStartWith "p2"
+                subject1.nthParamName(2) shouldStartWith "p3"
 
-                subject2.nthParamName(0) shouldBe "p1"
-                subject2.nthParamName(1) shouldBe "p2"
-                subject2.nthParamName(2) shouldBe "p3"
+                subject2.nthParamName(0) shouldStartWith "p1"
+                subject2.nthParamName(1) shouldStartWith "p2"
+                subject2.nthParamName(2) shouldStartWith "p3"
             }
         }
 
@@ -85,7 +86,7 @@ class FunctionsSpec : StringSpec() {
             val subject: Function1<Int, Any> = { it }
 
             assertSoftly {
-                subject.nthParamName(0) shouldBe "p1"
+                subject.nthParamName(0) shouldStartWith "p1"
             }
         }
 
@@ -94,8 +95,8 @@ class FunctionsSpec : StringSpec() {
             val subject: Function2<Int, Int, Any?> = { _, _ -> null }
 
             assertSoftly {
-                subject.nthParamName(0) shouldBe "p1"
-                subject.nthParamName(1) shouldBe "p2"
+                subject.nthParamName(0) shouldStartWith "p1"
+                subject.nthParamName(1) shouldStartWith "p2"
             }
         }
     }

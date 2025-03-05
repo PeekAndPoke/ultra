@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.reflection
 
+import kotlin.math.absoluteValue
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
@@ -14,6 +15,8 @@ import kotlin.reflect.jvm.reflect
 @OptIn(ExperimentalReflectionOnLambdas::class)
 fun <R, T : Function<R>> T.nthParamName(n: Int): String {
 
+    fun fallback() = "p${n + 1}_${this::class.hashCode().absoluteValue.toString(16)}"
+
     // Getting the parameters is quite expensive, so we cache it
     return NthParamNameCache.getOrPut(Pair(this::class, n)) {
         val params = when (this) {
@@ -21,7 +24,7 @@ fun <R, T : Function<R>> T.nthParamName(n: Int): String {
             else -> reflect()?.parameters
         }?.filter { it.kind == KParameter.Kind.VALUE }
 
-        params?.getOrNull(n)?.name ?: "p${n + 1}"
+        params?.getOrNull(n)?.name ?: fallback()
     }
 }
 
