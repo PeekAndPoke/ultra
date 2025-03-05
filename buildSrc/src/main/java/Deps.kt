@@ -51,9 +51,9 @@ object Deps {
     private const val kotlinx_datetime_version = "0.6.2"
     const val kotlinx_datetime = "org.jetbrains.kotlinx:kotlinx-datetime:$kotlinx_datetime_version"
 
-//    // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/atomicfu
-//    private const val kotlinx_atomicfu_version = "0.24.0"
-//    const val kotlinx_atomicfu = "org.jetbrains.kotlinx:atomicfu:${kotlinx_atomicfu_version}"
+    // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/atomicfu
+    private const val kotlinx_atomicfu_version = "0.27.0"
+    const val kotlinx_atomicfu = "org.jetbrains.kotlinx:atomicfu:${kotlinx_atomicfu_version}"
 
     // https://kotlinlang.org/docs/releases.html
     // https://github.com/ktorio/ktor/releases

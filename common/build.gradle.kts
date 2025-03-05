@@ -40,13 +40,13 @@ kotlin {
             dependencies {
                 implementation(kotlin("reflect"))
                 implementation(Deps.kotlinx_coroutines_core)
+                implementation(Deps.kotlinx_atomicfu)
                 implementation(Deps.kotlinx_serialization_core)
                 implementation(Deps.kotlinx_serialization_json)
 
                 implementation(Deps.ktor_client_core)
 
-                // We expose kotlinx-datetime as it is needed in many cases, e.g. for TimeZone
-                api(Deps.kotlinx_datetime)
+                implementation(Deps.kotlinx_datetime)
 
                 // TODO: Remove this dependency
                 //       It is still needed for formatting dates
@@ -89,5 +89,7 @@ kotlin {
 }
 
 tasks {
+    getByName("compileKotlinJs").dependsOn(":compileCommonMainKotlinMetadata")
+
     configureJvmTests()
 }

@@ -15,14 +15,13 @@ plugins {
 
 allprojects {
     repositories {
-        mavenLocal()
         mavenCentral()
-
         // KotlinX
         maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
-
         // Snapshots
         maven("https://oss.sonatype.org/content/repositories/snapshots")
+        // Local
+        mavenLocal()
     }
 }
 

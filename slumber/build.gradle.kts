@@ -21,7 +21,8 @@ repositories {
 
 dependencies {
     implementation(kotlin("reflect"))
-    api(Deps.kotlinx_serialization_core)
+    implementation(Deps.kotlinx_serialization_core)
+    implementation(Deps.kotlinx_datetime)
 
     api(Deps.classindex)
 
