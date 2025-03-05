@@ -192,7 +192,7 @@ interface ParameterProvider {
     /**
      * Provider for list of services
      */
-    data class ForListOfServices internal constructor(
+    data class ForListOfServices(
         override val name: String,
         override val type: KType,
     ) : ParameterProvider {
@@ -230,7 +230,7 @@ interface ParameterProvider {
     /**
      * Provider for a lookup of services
      */
-    data class ForLookupOfServices internal constructor(
+    data class ForLookupOfServices(
         override val name: String,
         override val type: KType,
     ) : ParameterProvider {
@@ -373,7 +373,7 @@ interface ParameterProvider {
     /**
      * Fallback that always produces an error
      */
-    data class UnknownInjection internal constructor(
+    data class UnknownInjection(
         override val name: String,
         override val type: KType,
     ) : ParameterProvider {

@@ -19,7 +19,7 @@ import kotlin.jvm.JvmName
 
 @Suppress("Detekt:TooManyFunctions")
 @Serializable(with = MpLocalDateSerializer::class)
-data class MpLocalDate internal constructor(
+data class MpLocalDate(
     private val value: LocalDate,
 ) : ComparableTo<MpLocalDate> {
 

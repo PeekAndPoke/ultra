@@ -122,7 +122,7 @@ interface ServiceProvider {
     /**
      * Provides an already existing object as a service
      */
-    data class ForInstance internal constructor(
+    data class ForInstance(
         override val type: Type,
         override val definition: ServiceDefinition,
         private val instance: Any,
@@ -149,7 +149,7 @@ interface ServiceProvider {
     /**
      * Provides a global singleton service
      */
-    data class ForSingleton internal constructor(
+    data class ForSingleton(
         override val type: Type,
         override val definition: ServiceDefinition,
     ) : ServiceProvider {
@@ -204,7 +204,7 @@ interface ServiceProvider {
      *
      * Each call to [provide] will create a new instance.
      */
-    data class ForPrototype internal constructor(
+    data class ForPrototype(
         override val definition: ServiceDefinition,
     ) : ServiceProvider {
 

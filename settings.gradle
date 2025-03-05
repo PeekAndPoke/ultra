@@ -1,4 +1,3 @@
-
 rootProject.name = 'ultra'
 
 include(
@@ -12,9 +11,5 @@ include(
         ":slumber",
         ":slumber-test-classes",
         ":vault",
-
-        // playground
-        ":z-playground-js",
-        ":z-playground-jvm",
 )
 

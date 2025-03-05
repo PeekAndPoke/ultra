@@ -10,7 +10,7 @@ class TypedKey<T>(val name: String = "") {
 /**
  * Map of [TypedKey] to values
  */
-data class TypedAttributes internal constructor(val entries: Map<TypedKey<*>, Any?>) {
+data class TypedAttributes(val entries: Map<TypedKey<*>, Any?>) {
 
     companion object {
         /** Empty instance */

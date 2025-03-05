@@ -12,7 +12,7 @@ import kotlin.time.Duration
 
 @Suppress("Detekt:TooManyFunctions")
 @Serializable(with = MpZonedDateTimeSerializer::class)
-data class MpZonedDateTime internal constructor(
+data class MpZonedDateTime(
     val datetime: MpLocalDateTime,
     val timezone: MpTimezone,
 ) : MpAbsoluteDateTime, ComparableTo<MpZonedDateTime> {
