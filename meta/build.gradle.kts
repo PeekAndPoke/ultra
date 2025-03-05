@@ -1,7 +1,6 @@
 @file:Suppress("PropertyName")
 
 import Deps.Test.configureJvmTests
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
@@ -43,12 +42,10 @@ dependencies {
     }
 }
 
-tasks {
-    withType<KotlinCompile>().all {
-        compilerOptions {
-            jvmTarget.set(Deps.jvmTarget)
-        }
-    }
+kotlin {
+    jvmToolchain(Deps.jvmTargetVersion)
+}
 
+tasks {
     configureJvmTests()
 }

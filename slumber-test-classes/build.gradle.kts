@@ -1,7 +1,5 @@
 @file:Suppress("PropertyName")
 
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     kotlin("jvm")
 }
@@ -20,10 +18,9 @@ dependencies {
     implementation(kotlin("reflect"))
 }
 
+kotlin {
+    jvmToolchain(Deps.jvmTargetVersion)
+}
+
 tasks {
-    withType<KotlinCompile>().all {
-        compilerOptions {
-            jvmTarget.set(Deps.jvmTarget)
-        }
-    }
 }

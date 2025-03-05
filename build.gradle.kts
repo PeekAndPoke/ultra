@@ -40,14 +40,14 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation(project(":common"))
             }
         }
 
-        val jvmMain by getting {
+        jvmMain {
             dependencies {
 //                implementation(project(":mutator"))
             }

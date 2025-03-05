@@ -29,42 +29,39 @@ kotlin {
         browser()
     }
 
+    jvmToolchain(Deps.jvmTargetVersion)
+
     jvm {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = Deps.jvmTarget.target
-            }
-        }
     }
 
     sourceSets {
 
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 implementation(Deps.kotlinx_coroutines_core)
                 implementation(Deps.kotlinx_serialization_core)
             }
         }
 
-        val commonTest by getting {
+        commonTest {
             dependencies {
                 commonTestDeps()
             }
         }
 
-        val jsMain by getting {
+        jsMain {
             dependencies {
                 implementation(Deps.kotlinx_coroutines_core_js)
             }
         }
 
-        val jsTest by getting {
+        jsTest {
             dependencies {
                 jsTestDeps()
             }
         }
 
-        val jvmMain by getting {
+        jvmMain {
             dependencies {
                 implementation(kotlin("reflect"))
 
@@ -74,7 +71,7 @@ kotlin {
             }
         }
 
-        val jvmTest by getting {
+        jvmTest {
             dependencies {
                 jvmTestDeps()
             }

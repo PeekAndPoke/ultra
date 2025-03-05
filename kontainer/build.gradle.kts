@@ -1,7 +1,6 @@
 @file:Suppress("PropertyName")
 
 import Deps.Test.configureJvmTests
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
@@ -32,6 +31,8 @@ dependencies {
 }
 
 kotlin {
+    jvmToolchain(Deps.jvmTargetVersion)
+
     sourceSets {
         test {
             kotlin.srcDir("src/examples")
@@ -40,12 +41,6 @@ kotlin {
 }
 
 tasks {
-    withType<KotlinCompile>().all {
-        compilerOptions {
-            jvmTarget.set(Deps.jvmTarget)
-        }
-    }
-
     configureJvmTests {
         dependsOn("generateDocs")
     }

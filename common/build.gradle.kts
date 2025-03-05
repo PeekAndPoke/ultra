@@ -30,16 +30,13 @@ kotlin {
         }
     }
 
+    jvmToolchain(Deps.jvmTargetVersion)
+
     jvm {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = Deps.jvmTarget.target
-            }
-        }
     }
 
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 implementation(kotlin("reflect"))
                 implementation(Deps.kotlinx_coroutines_core)
@@ -57,13 +54,13 @@ kotlin {
             }
         }
 
-        val commonTest by getting {
+        commonTest {
             dependencies {
                 commonTestDeps()
             }
         }
 
-        val jsMain by getting {
+        jsMain {
             dependencies {
                 api(Deps.Npm { polyfillFetch() })
                 api(Deps.Npm { jsJodaCore() })
@@ -71,19 +68,19 @@ kotlin {
             }
         }
 
-        val jsTest by getting {
+        jsTest {
             dependencies {
                 jsTestDeps()
             }
         }
 
-        val jvmMain by getting {
+        jvmMain {
             dependencies {
                 implementation(Deps.classindex)
             }
         }
 
-        val jvmTest by getting {
+        jvmTest {
             dependencies {
                 jvmTestDeps()
             }
