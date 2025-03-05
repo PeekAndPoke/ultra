@@ -46,7 +46,7 @@ kotlin {
 
                 implementation(Deps.ktor_client_core)
 
-                implementation(Deps.kotlinx_datetime)
+                api(Deps.kotlinx_datetime)
 
                 // TODO: Remove this dependency
                 //       It is still needed for formatting dates
