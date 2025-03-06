@@ -7,7 +7,7 @@ import Deps.Test.jvmTestDeps
 
 plugins {
     kotlin("multiplatform")
-    id("org.jetbrains.kotlin.plugin.serialization")
+    kotlin("plugin.serialization")
     id("io.kotest.multiplatform")
     id("org.jetbrains.dokka")
     id("com.vanniktech.maven.publish")

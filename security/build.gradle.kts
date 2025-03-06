@@ -7,7 +7,7 @@ import Deps.Test.jvmTestDeps
 
 plugins {
     kotlin("multiplatform")
-    id("org.jetbrains.kotlin.plugin.serialization")
+    kotlin("plugin.serialization")
     id("io.kotest.multiplatform")
     id("org.jetbrains.dokka")
     id("com.vanniktech.maven.publish")
@@ -19,12 +19,7 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
-repositories {
-    mavenCentral()
-}
-
 kotlin {
-
     js {
         browser()
     }

@@ -188,8 +188,10 @@ object Deps {
             withType(org.gradle.api.tasks.testing.Test::class.java).configureEach {
                 useJUnitPlatform()
 
+                outputs.upToDateWhen { false }
+
                 filter {
-                    isFailOnNoMatchingTests = false
+                    isFailOnNoMatchingTests = true
                 }
 
 //                testLogging {
@@ -206,7 +208,7 @@ object Deps {
             }
         }
     }
-}
 
-private fun DependencyHandlerScope.testImplementation(dep: String) =
-    add("testImplementation", dep)
+    private fun DependencyHandlerScope.testImplementation(dep: String) =
+        add("testImplementation", dep)
+}
