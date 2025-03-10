@@ -10,9 +10,7 @@ class DatabaseSpec : StringSpec() {
 
     private val k
         get() = kontainer {
-            singleton0(Kronos::class) {
-                Kronos.systemUtc
-            }
+            singleton(Kronos::class) { Kronos.systemUtc }
 
             ultraLogging()
             ultraVault()

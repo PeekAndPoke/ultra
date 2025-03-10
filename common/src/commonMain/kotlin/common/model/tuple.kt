@@ -168,7 +168,7 @@ data class Tuple1<E1>(
      *
      * @return A lazy evaluated list containing the element.
      */
-    val asList: List<E1> by lazy { listOf(e1) }
+    val asList by lazy { listOf(e1) }
 
     /**
      * Adds an element to the current tuple, creating a new tuple with an additional element.
@@ -200,7 +200,7 @@ data class Tuple2<E1, E2>(
      *
      * The resulting list will contain the elements in the same order as they appear in the tuple.
      */
-    val asList: List<Any?> by lazy { listOf(e1, e2) }
+    val asList by lazy { listOf(e1, e2) }
 
     /**
      * Adds an element to the current tuple, creating a new tuple with an additional element.
@@ -232,7 +232,7 @@ data class Tuple3<E1, E2, E3>(
      *
      * The resulting list will contain the elements in the same order as they appear in the tuple.
      */
-    val asList: List<Any?> by lazy { listOf(e1, e2, e3) }
+    val asList by lazy { listOf(e1, e2, e3) }
 
     /**
      * Adds an element to the current tuple, creating a new tuple with an additional element.
@@ -264,7 +264,7 @@ data class Tuple4<E1, E2, E3, E4>(
      *
      * The resulting list will contain the elements in the same order as they appear in the tuple.
      */
-    val asList: List<Any?> by lazy { listOf(e1, e2, e3, e4) }
+    val asList by lazy { listOf(e1, e2, e3, e4) }
 
     /**
      * Adds an element to the current tuple, creating a new tuple with an additional element.
@@ -296,7 +296,7 @@ data class Tuple5<E1, E2, E3, E4, E5>(
      *
      * The resulting list will contain the elements in the same order as they appear in the tuple.
      */
-    val asList: List<Any?> by lazy { listOf(e1, e2, e3, e4, e5) }
+    val asList by lazy { listOf(e1, e2, e3, e4, e5) }
 
     /**
      * Adds an element to the current tuple, creating a new tuple with an additional element.
@@ -328,7 +328,7 @@ data class Tuple6<E1, E2, E3, E4, E5, E6>(
      *
      * The resulting list will contain the elements in the same order as they appear in the tuple.
      */
-    val asList: List<Any?> by lazy { listOf(e1, e2, e3, e4, e5, e6) }
+    val asList by lazy { listOf(e1, e2, e3, e4, e5, e6) }
 
     /**
      * Adds an element to the current tuple, creating a new tuple with an additional element.
@@ -360,7 +360,7 @@ data class Tuple7<E1, E2, E3, E4, E5, E6, E7>(
      *
      * The resulting list will contain the elements in the same order as they appear in the tuple.
      */
-    val asList: List<Any?> by lazy { listOf(e1, e2, e3, e4, e5, e6, e7) }
+    val asList by lazy { listOf(e1, e2, e3, e4, e5, e6, e7) }
 
     /**
      * Adds an element to the current tuple, creating a new tuple with an additional element.
@@ -392,7 +392,7 @@ data class Tuple8<E1, E2, E3, E4, E5, E6, E7, E8>(
      *
      * The resulting list will contain the elements in the same order as they appear in the tuple.
      */
-    val asList: List<Any?> by lazy { listOf(e1, e2, e3, e4, e5, e6, e7, e8) }
+    val asList by lazy { listOf(e1, e2, e3, e4, e5, e6, e7, e8) }
 
     /**
      * Adds an element to the current tuple, creating a new tuple with an additional element.
@@ -424,7 +424,7 @@ data class Tuple9<E1, E2, E3, E4, E5, E6, E7, E8, E9>(
      *
      * The resulting list will contain the elements in the same order as they appear in the tuple.
      */
-    val asList: List<Any?> by lazy { listOf(e1, e2, e3, e4, e5, e6, e7, e8, e9) }
+    val asList by lazy { listOf(e1, e2, e3, e4, e5, e6, e7, e8, e9) }
 
     /**
      * Adds an element to the current tuple, creating a new tuple with an additional element.

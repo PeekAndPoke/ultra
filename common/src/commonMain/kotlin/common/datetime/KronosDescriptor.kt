@@ -4,7 +4,18 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed class KronosDescriptor {
+sealed interface KronosDescriptor {
+
+    @SerialName("system-clock")
+    @Serializable
+    object SystemClock : KronosDescriptor
+
+    @SerialName("advanced-by")
+    @Serializable
+    data class AdvancedBy(
+        val durationMs: Long,
+        val inner: KronosDescriptor,
+    ) : KronosDescriptor
 
     /**
      * Creates a [Kronos] from the given descriptor
@@ -12,15 +23,4 @@ sealed class KronosDescriptor {
     fun instantiate(): Kronos {
         return Kronos.from(this)
     }
-
-    @Serializable
-    @SerialName("system-clock")
-    object SystemClock : KronosDescriptor()
-
-    @Serializable
-    @SerialName("advanced-by")
-    data class AdvancedBy(
-        val durationMs: Long,
-        val inner: KronosDescriptor,
-    ) : KronosDescriptor()
 }

@@ -1,9 +1,12 @@
+@file:OptIn(ExperimentalCompilerApi::class)
+
 package de.peekandpoke.ultra.meta
 
 import com.github.difflib.DiffUtils
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import de.peekandpoke.ultra.meta.CompileTest.Builder
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import javax.annotation.processing.Processor
 
 /**
@@ -43,13 +46,13 @@ fun Builder.expectFileCount(count: Int) =
  * @see compileTest
  * @see Builder
  */
-data class CompileTest internal constructor(
+class CompileTest internal constructor(
     /** annotations processors to be used for compilation */
     val processors: List<Processor>,
     /** source files to be compiled */
     val sourcesFiles: List<SourceFile>,
     /** expectations to be checked */
-    val expectations: List<Expectation>
+    val expectations: List<Expectation>,
 ) {
     /**
      * Compiles and checks expectations

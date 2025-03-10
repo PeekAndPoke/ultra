@@ -23,13 +23,13 @@ abstract class TypeLookup {
         val candidates = getAllCandidatesFor(type)
 
         if (candidates.isEmpty()) {
-            throw ServiceNotFound("Service ${type.qualifiedName} was not found")
+            throw ServiceNotFound("Service ${type.getName()} was not found")
         }
 
         if (candidates.size > 1) {
             throw ServiceAmbiguous(
-                "Service ${type.qualifiedName} is ambiguous. It has multiple candidates: " +
-                        candidates.map { it.qualifiedName }.joinToString(", ")
+                "Service ${type.getName()} is ambiguous. It has multiple candidates: " +
+                        candidates.joinToString(", ") { it.getName() }
             )
         }
 

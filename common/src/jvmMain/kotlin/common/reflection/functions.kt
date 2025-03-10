@@ -1,6 +1,9 @@
 package de.peekandpoke.ultra.common.reflection
 
+import kotlin.math.absoluteValue
 import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
+import kotlin.reflect.KParameter
 import kotlin.reflect.jvm.ExperimentalReflectionOnLambdas
 import kotlin.reflect.jvm.reflect
 
@@ -9,15 +12,19 @@ import kotlin.reflect.jvm.reflect
  *
  * Notice: the first parameter has index 0
  */
-@Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
 @OptIn(ExperimentalReflectionOnLambdas::class)
 fun <R, T : Function<R>> T.nthParamName(n: Int): String {
 
+    fun fallback() = "p${n + 1}_${this::class.hashCode().absoluteValue.toString(16)}"
+
     // Getting the parameters is quite expensive, so we cache it
     return NthParamNameCache.getOrPut(Pair(this::class, n)) {
-        val params = this.reflect()?.parameters
+        val params = when (this) {
+            is KFunction<*> -> parameters
+            else -> reflect()?.parameters
+        }?.filter { it.kind == KParameter.Kind.VALUE }
 
-        params?.get(n)?.name ?: "param$n"
+        params?.getOrNull(n)?.name ?: fallback()
     }
 }
 
@@ -28,4 +35,4 @@ fun <R, T : Function<R>> T.nthParamName(n: Int): String {
  *
  * Used by [nthParamName]
  */
-internal val NthParamNameCache = mutableMapOf<Pair<KClass<*>, Int>, String>()
+private val NthParamNameCache = mutableMapOf<Pair<KClass<*>, Int>, String>()

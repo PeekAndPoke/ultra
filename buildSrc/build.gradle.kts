@@ -3,11 +3,12 @@ plugins {
 }
 
 repositories {
+    gradlePluginPortal()
     mavenCentral()
 }
 
 dependencies {
-    api("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.25")
+    api("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.10")
 
-//    implementation(gradleApi())
+    implementation(gradleApi())
 }

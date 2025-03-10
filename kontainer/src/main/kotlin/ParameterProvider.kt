@@ -4,6 +4,8 @@ import de.peekandpoke.ultra.kontainer.ParameterProvider.ProvisionType.Direct
 import de.peekandpoke.ultra.kontainer.ParameterProvider.ProvisionType.Lazy
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
+import kotlin.reflect.KType
+import kotlin.reflect.full.createType
 import kotlin.Lazy as KotlinLazy
 
 /**
@@ -12,36 +14,42 @@ import kotlin.Lazy as KotlinLazy
 interface ParameterProvider {
 
     companion object Factory {
-        /** Factory method */
-        fun of(parameter: KParameter): ParameterProvider {
-
-            val paramCls = parameter.type.classifier as KClass<*>
+        fun of(name: String, type: KType): ParameterProvider {
+            val cls = type.classifier as KClass<*>
 
             return when {
-                // Config values: primitive types or strings are config values
-                paramCls.isPrimitiveOrString() -> ForConfigValue(parameter)
-
                 // InjectionContext: inject the InjectionContext
-                paramCls.isInjectionContext() -> ForInjectionContext(parameter)
+                cls.isInjectionContext() -> ForInjectionContext(name)
 
                 // Lazy<List<T>>: lazily injects all super types of T
-                parameter.type.isLazyListType() -> ForLazyListOfServices(parameter)
+                type.isLazyListType() -> ForLazyListOfServices(name, type)
 
                 // Lazy<T>: lazily inject a service
-                parameter.type.isLazyServiceType() -> ForLazyService(parameter)
+                type.isLazyServiceType() -> ForLazyService(name, type)
 
                 // List<T>: injects all super types of T
-                parameter.type.isListType() -> ForListOfServices(parameter)
+                type.isListType() -> ForListOfServices(name, type)
 
                 // Lookup<T>: injects all super types of T as a lookup
-                parameter.type.isLookupType() -> ForLookupOfServices(parameter)
+                type.isLookupType() -> ForLookupOfServices(name, type)
 
                 // Service: when there are no type parameters we have a usual service class
-                paramCls.isServiceType() -> ForService(parameter)
+                cls.isServiceType() -> ForService(name, type)
 
                 // Otherwise, we cannot handle it
-                else -> UnknownInjection(parameter)
+                else -> UnknownInjection(name, type)
             }
+        }
+
+        fun of(name: String, cls: KClass<out Any>, nullable: Boolean): ParameterProvider {
+            return of(name, cls.createType(nullable = nullable))
+        }
+
+        fun of(parameter: KParameter): ParameterProvider {
+            val name = parameter.name ?: "p${parameter.index}"
+            val type = parameter.type
+
+            return of(name, type)
         }
     }
 
@@ -59,7 +67,12 @@ interface ParameterProvider {
     /**
      * The name of the parameter
      */
-    val parameter: KParameter
+    val name: String
+
+    /**
+     * The type of the parameter
+     */
+    val type: KType
 
     /**
      * Get the injected services types
@@ -85,63 +98,19 @@ interface ParameterProvider {
     fun validate(kontainer: Kontainer): List<String>
 
     /**
-     * Provider for configuration values
-     */
-    data class ForConfigValue internal constructor(
-        override val parameter: KParameter,
-    ) : ParameterProvider {
-
-        /** The type of the config value to be injected */
-        private val paramCls = parameter.type.classifier as KClass<*>
-
-        /** The name of the parameter for which the config value is to be injected */
-        private val paramName = parameter.name ?: "n/a"
-
-        /**
-         * Get the injected services types
-         */
-        override fun getInjectedServiceTypes(blueprint: KontainerBlueprint): Set<KClass<*>> = setOf(
-            paramCls,
-        )
-
-        /**
-         * Gets the provision type of the parameter.
-         */
-        override fun getProvisionType(): ProvisionType = Direct
-
-        /**
-         * Provides the config value
-         */
-        override fun provide(kontainer: Kontainer, context: InjectionContext): Any {
-            return kontainer.getConfig(paramName)
-        }
-
-        /**
-         * Returns 'true" when a requested injection can be fulfilled.
-         */
-        override fun validate(kontainer: Kontainer): List<String> = when {
-
-            kontainer.hasConfig(paramName, paramCls) -> listOf()
-
-            else -> listOf(
-                "Parameter '$paramName' misses a config value '$paramName' of type ${paramCls.qualifiedName}"
-            )
-        }
-    }
-
-    /**
      * Provider for the injection context
      */
     class ForInjectionContext internal constructor(
-        override val parameter: KParameter,
+        override val name: String,
     ) : ParameterProvider {
+
+        override val type: KType get() = InjectionContext::class.createType()
 
         /**
          * Get the injected services types
          */
-        override fun getInjectedServiceTypes(blueprint: KontainerBlueprint): Set<KClass<*>> = setOf(
-            InjectionContext::class,
-        )
+        override fun getInjectedServiceTypes(blueprint: KontainerBlueprint): Set<KClass<*>> =
+            setOf(InjectionContext::class)
 
         /**
          * Gets the provision type of the parameter.
@@ -165,24 +134,18 @@ interface ParameterProvider {
      * Base for single service providers
      */
     class ForService internal constructor(
-        override val parameter: KParameter,
+        override val name: String,
+        override val type: KType,
     ) : ParameterProvider {
 
-        /** The class of the service to be injected */
-        private val paramCls = parameter.type.classifier as KClass<*>
-
-        /** 'true" when the parameter is nullable, meaning that the service is optional */
-        private val isNullable = parameter.type.isMarkedNullable
-
-        /** The name of the parameter for which the service is to be injected */
-        private val paramName = parameter.name ?: "n/a"
+        private val isNullable = type.isMarkedNullable
+        private val cls = type.classifier as KClass<*>
 
         /**
          * Get the injected services types
          */
-        override fun getInjectedServiceTypes(blueprint: KontainerBlueprint): Set<KClass<*>> = setOf(
-            paramCls,
-        )
+        override fun getInjectedServiceTypes(blueprint: KontainerBlueprint): Set<KClass<*>> =
+            setOf(cls)
 
         /**
          * Gets the provision type of the parameter.
@@ -195,7 +158,7 @@ interface ParameterProvider {
          * NOTICE: we always use context.getOrNull(). Validity is checked in [validate]
          */
         override fun provide(kontainer: Kontainer, context: InjectionContext): Any? {
-            return kontainer.getOrNull(paramCls, context)
+            return kontainer.getOrNull(cls, context)
         }
 
         /**
@@ -205,7 +168,7 @@ interface ParameterProvider {
 
             isNullable -> listOf()
 
-            else -> kontainer.getCandidates(paramCls).let {
+            else -> kontainer.getCandidates(cls).let {
 
                 when {
                     // When there is exactly one candidate everything is fine
@@ -213,13 +176,13 @@ interface ParameterProvider {
 
                     // When there is no candidate then we cannot satisfy the dependency
                     it.isEmpty() -> listOf(
-                        "Parameter '$paramName' misses a dependency to '${paramCls.qualifiedName}'"
+                        "Parameter '$name' misses a dependency to ${cls.getName()}"
                     )
 
                     // When there is more than one candidate we cannot distinctly satisfy the dependency
                     else -> listOf(
-                        "Parameter '$paramName' is ambiguous. The following services collide: " +
-                                it.map { c -> c.qualifiedName }.joinToString(", ")
+                        "Parameter '$name' is ambiguous. The following services collide: " +
+                                it.joinToString(", ") { c -> c.getName() }
                     )
                 }
             }
@@ -229,14 +192,15 @@ interface ParameterProvider {
     /**
      * Provider for list of services
      */
-    data class ForListOfServices internal constructor(
-        override val parameter: KParameter,
+    data class ForListOfServices(
+        override val name: String,
+        override val type: KType,
     ) : ParameterProvider {
 
         /**
          * Get the type parameter of the list
          */
-        private val innerType = parameter.type.getInnerClass()
+        private val innerType = type.getInnerClass()
 
         /**
          * Get the injected services types
@@ -266,14 +230,15 @@ interface ParameterProvider {
     /**
      * Provider for a lookup of services
      */
-    data class ForLookupOfServices internal constructor(
-        override val parameter: KParameter,
+    data class ForLookupOfServices(
+        override val name: String,
+        override val type: KType,
     ) : ParameterProvider {
 
         /**
          * Get the type parameter of the list
          */
-        private val innerType = parameter.type.getInnerClass()
+        private val innerType = type.getInnerClass()
 
         /**
          * Get the injected services types
@@ -304,13 +269,14 @@ interface ParameterProvider {
      * Provider for a lazy list of services
      */
     class ForLazyListOfServices internal constructor(
-        override val parameter: KParameter,
+        override val name: String,
+        override val type: KType,
     ) : ParameterProvider {
 
         /**
          * Get the type parameter of the list within the lazy
          */
-        private val innerType = parameter.type.getInnerInnerClass()
+        private val innerType = type.getInnerInnerClass()
 
         /**
          * Get the injected services types
@@ -343,11 +309,12 @@ interface ParameterProvider {
      * Provider for a lazy service
      */
     class ForLazyService internal constructor(
-        override val parameter: KParameter,
+        override val name: String,
+        override val type: KType,
     ) : ParameterProvider {
 
         /** The type wrapped within the Lazy */
-        private val innerType = parameter.type.arguments[0].type!!
+        private val innerType = type.arguments[0].type!!
 
         /** The class of the service to be injected */
         private val paramCls = innerType.classifier as KClass<*>
@@ -355,15 +322,11 @@ interface ParameterProvider {
         /** 'true" when the parameter is nullable, meaning that the service is optional */
         private val isNullable = innerType.isMarkedNullable
 
-        /** The name of the parameter for which the service is to be injected */
-        private val paramName = parameter.name ?: "n/a"
-
         /**
          * Get the injected services types
          */
-        override fun getInjectedServiceTypes(blueprint: KontainerBlueprint): Set<KClass<*>> = setOf(
-            paramCls,
-        )
+        override fun getInjectedServiceTypes(blueprint: KontainerBlueprint): Set<KClass<*>> =
+            setOf(paramCls)
 
         /**
          * Gets the provision type of the parameter.
@@ -394,13 +357,13 @@ interface ParameterProvider {
 
                     // When there is no candidate then we cannot satisfy the dependency
                     it.isEmpty() -> listOf(
-                        "Parameter '$paramName' misses a lazy dependency to '${paramCls.qualifiedName}'"
+                        "Parameter '$name' misses a lazy dependency to '${paramCls.getName()}'"
                     )
 
                     // When there is more than one candidate we cannot distinctly satisfy the dependency
                     else -> listOf(
-                        "Parameter '$paramName' is ambiguous. The following services collide: " +
-                                it.map { c -> c.qualifiedName }.joinToString(", ")
+                        "Parameter '$name' is ambiguous. The following services collide: " +
+                                it.joinToString(", ") { c -> c.getName() }
                     )
                 }
             }
@@ -410,15 +373,16 @@ interface ParameterProvider {
     /**
      * Fallback that always produces an error
      */
-    data class UnknownInjection internal constructor(
-        override val parameter: KParameter,
+    data class UnknownInjection(
+        override val name: String,
+        override val type: KType,
     ) : ParameterProvider {
 
         /** The class of the service to be injected */
-        private val paramCls = parameter.type.classifier as KClass<*>
+        private val paramCls = type.classifier as KClass<*>
 
         /** The error that will be raised by [provide] and [validate] */
-        private val error = "Parameter '${parameter.name}' has no known way to inject a '${paramCls.qualifiedName}'"
+        private val error = "Parameter '${name}' has no known way to inject a ${paramCls.getName()}"
 
         /**
          * Get the injected services types

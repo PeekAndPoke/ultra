@@ -1,7 +1,6 @@
 @file:Suppress("PropertyName")
 
 import Deps.Test.configureJvmTests
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
@@ -15,10 +14,6 @@ val VERSION_NAME: String by project
 
 group = GROUP
 version = VERSION_NAME
-
-repositories {
-    mavenCentral()
-}
 
 dependencies {
     implementation(kotlin("reflect"))
@@ -38,6 +33,8 @@ dependencies {
 }
 
 kotlin {
+    jvmToolchain(Deps.jvmTargetVersion)
+
     sourceSets {
         test {
             kotlin.srcDir("src/examples")
@@ -45,17 +42,7 @@ kotlin {
     }
 }
 
-kapt {
-    useBuildCache = true
-}
-
 tasks {
-    withType<KotlinCompile>().all {
-        compilerOptions {
-            jvmTarget.set(Deps.jvmTarget)
-        }
-    }
-
     configureJvmTests {
         dependsOn("generateDocs")
     }
@@ -64,4 +51,8 @@ tasks {
         mainClass.set("de.peekandpoke.ultra.mutator.examples.GenerateDocsKt")
         classpath = sourceSets.getByName("test").runtimeClasspath
     }
+}
+
+kapt {
+    useBuildCache = true
 }

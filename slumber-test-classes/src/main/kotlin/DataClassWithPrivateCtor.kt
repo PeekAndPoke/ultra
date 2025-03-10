@@ -1,6 +1,6 @@
 package de.peekandpoke.slumberTestClasses
 
-@Suppress("DataClassPrivateConstructor")
+@ConsistentCopyVisibility
 data class DataClassWithPrivateCtor private constructor(
     val str: String,
     val def: String? = null,

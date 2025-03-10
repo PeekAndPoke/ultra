@@ -7,11 +7,10 @@ import kotlin.reflect.KClass
  */
 class KontainerBlueprint internal constructor(
     val config: Config,
-    internal val configValues: Map<String, Any>,
     internal val definitions: Map<KClass<*>, ServiceDefinition>,
 ) {
     data class Config(
-        val trackKontainers: Boolean = false
+        val trackKontainers: Boolean = false,
     ) {
         companion object {
             val default = Config()
@@ -122,7 +121,6 @@ class KontainerBlueprint internal constructor(
 
         return KontainerBlueprint(
             config = config,
-            configValues = configValues.plus(result.configValues),
             definitions = definitions.plus(result.definitions),
         )
     }
@@ -148,8 +146,7 @@ class KontainerBlueprint internal constructor(
 
         if (unexpectedDynamics.isNotEmpty()) {
             throw KontainerInconsistent(
-                "Unexpected dynamics were provided: " +
-                        unexpectedDynamics.map { it.qualifiedName }.joinToString(", ")
+                "Unexpected dynamics were provided: " + unexpectedDynamics.joinToString(", ") { it.getName() }
             )
         }
 
@@ -187,8 +184,9 @@ class KontainerBlueprint internal constructor(
 
                 val (provider, errors) = entry
                 val codeLocation = provider.definition.codeLocation.first()
+                val name = cls.getName()
 
-                "${serviceIdx + 1}. Service '${cls.qualifiedName}'\n" +
+                "${serviceIdx + 1}. Service '${name}'\n" +
                         "    defined at ${codeLocation ?: "n/a"})\n" +
                         errors.joinToString("\n") { "    -> $it" }
             }
@@ -196,11 +194,7 @@ class KontainerBlueprint internal constructor(
         if (errors.isNotEmpty()) {
             val err = "Kontainer is inconsistent!\n\n" +
                     "Problems:\n\n" +
-                    errors.joinToString("\n") + "\n\n" +
-                    "Config values:\n\n" +
-                    configValues.map { (k, v) ->
-                        "${k.padEnd(10)} => '$v' (${v::class.qualifiedName})"
-                    }.joinToString("\n") + "\n"
+                    errors.joinToString("\n") + "\n\n"
 
             throw KontainerInconsistent(err)
         }

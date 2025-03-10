@@ -8,22 +8,21 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 // TODO: test all of me
-@Suppress("DataClassPrivateConstructor")
 @Serializable(with = MpLocalTimeSerializer::class)
-data class MpLocalTime private constructor(
+data class MpLocalTime(
     private val milliSeconds: Long,
 ) : ComparableTo<MpLocalTime> {
 
     companion object {
-        const val MillisPerSecond = 1_000L
-        const val MillisPerMinute = 60 * MillisPerSecond
-        const val MillisPerHour = 60 * MillisPerMinute
-        const val MillisPerDay = 24 * MillisPerHour
+        const val MILLIS_PER_SECOND = 1_000L
+        const val MILLIS_PER_MINUTE = 60 * MILLIS_PER_SECOND
+        const val MILLIS_PER_HOUR = 60 * MILLIS_PER_MINUTE
+        const val MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR
 
         fun tryParse(input: String): MpLocalTime? {
             return try {
                 parse(input)
-            } catch (e: IllegalArgumentException) {
+            } catch (_: IllegalArgumentException) {
                 null
             }
         }
@@ -89,7 +88,7 @@ data class MpLocalTime private constructor(
          */
         fun ofMilliSeconds(milliSecondsOfDay: Long): MpLocalTime {
             return MpLocalTime(
-                milliSeconds = milliSecondsOfDay % MillisPerDay
+                milliSeconds = milliSecondsOfDay % MILLIS_PER_DAY
             )
         }
 
@@ -119,25 +118,25 @@ data class MpLocalTime private constructor(
     /** The hour component. */
     val hour: Int
         get() {
-            return ((milliSeconds % MillisPerDay) / MillisPerHour).toInt()
+            return ((milliSeconds % MILLIS_PER_DAY) / MILLIS_PER_HOUR).toInt()
         }
 
     /** The minute component. */
     val minute: Int
         get() {
-            return ((milliSeconds % MillisPerHour) / MillisPerMinute).toInt()
+            return ((milliSeconds % MILLIS_PER_HOUR) / MILLIS_PER_MINUTE).toInt()
         }
 
     /** The second component. */
     val second: Int
         get() {
-            return ((milliSeconds % MillisPerMinute) / MillisPerSecond).toInt()
+            return ((milliSeconds % MILLIS_PER_MINUTE) / MILLIS_PER_SECOND).toInt()
         }
 
     /** The millisecond component. */
     val milliSecond: Int
         get() {
-            return (milliSeconds % MillisPerSecond).toInt()
+            return (milliSeconds % MILLIS_PER_SECOND).toInt()
         }
 
     /**

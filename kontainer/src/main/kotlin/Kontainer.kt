@@ -104,21 +104,6 @@ class Kontainer internal constructor(
         return factory.getProvider(type)
     }
 
-    // getting parameters //////////////////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Check if there is a config value with the given [id] that is of the given [type]
-     */
-    fun hasConfig(id: String, type: KClass<*>): Boolean {
-        return blueprint.configValues[id].let { it != null && it::class == type }
-    }
-
-    /**
-     * Get a config value by its [id]
-     */
-    @Suppress("UNCHECKED_CAST")
-    fun <T> getConfig(id: String): T = blueprint.configValues[id] as T
-
     // internal helpers ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**

@@ -14,7 +14,7 @@ import kotlinx.serialization.Serializable
 // TODO: test all of me
 @Suppress("Detekt.LongParameterList")
 @Serializable(with = MpLocalDateTimeSerializer::class)
-data class MpLocalDateTime internal constructor(
+data class MpLocalDateTime(
     internal val value: LocalDateTime,
 ) : ComparableTo<MpLocalDateTime> {
 
@@ -90,7 +90,7 @@ data class MpLocalDateTime internal constructor(
         fun tryParse(isoString: String): MpLocalDateTime? {
             return try {
                 parseInternal(isoString)
-            } catch (e: Throwable) {
+            } catch (_: Throwable) {
                 null
             }
         }

@@ -115,14 +115,14 @@ interface ServiceProvider {
      * Validates that a service can be provided.
      *
      * When all is well an empty list is returned.
-     * Otherwise a list of error strings is returned.
+     * Otherwise, a list of error strings is returned.
      */
     fun validate(kontainer: Kontainer): List<String>
 
     /**
      * Provides an already existing object as a service
      */
-    data class ForInstance internal constructor(
+    data class ForInstance(
         override val type: Type,
         override val definition: ServiceDefinition,
         private val instance: Any,
@@ -149,7 +149,7 @@ interface ServiceProvider {
     /**
      * Provides a global singleton service
      */
-    data class ForSingleton internal constructor(
+    data class ForSingleton(
         override val type: Type,
         override val definition: ServiceDefinition,
     ) : ServiceProvider {
@@ -176,7 +176,7 @@ interface ServiceProvider {
         /**
          * Validates that all parameters can be provided
          */
-        override fun validate(kontainer: Kontainer) = definition.producer.paramProviders.flatMap {
+        override fun validate(kontainer: Kontainer) = definition.producer.params.flatMap {
             it.validate(kontainer)
         }
 
@@ -189,7 +189,7 @@ interface ServiceProvider {
 
             return definition.producer.creator(
                 kontainer,
-                definition.producer.paramProviders.map {
+                definition.producer.params.map {
                     it.provide(
                         kontainer = kontainer,
                         context = nextCtx
@@ -204,7 +204,7 @@ interface ServiceProvider {
      *
      * Each call to [provide] will create a new instance.
      */
-    data class ForPrototype internal constructor(
+    data class ForPrototype(
         override val definition: ServiceDefinition,
     ) : ServiceProvider {
 
@@ -241,7 +241,7 @@ interface ServiceProvider {
         /**
          * Validates that all parameters can be provided
          */
-        override fun validate(kontainer: Kontainer) = definition.producer.paramProviders.flatMap {
+        override fun validate(kontainer: Kontainer) = definition.producer.params.flatMap {
             it.validate(kontainer)
         }
 
@@ -254,7 +254,7 @@ interface ServiceProvider {
 
             return definition.producer.creator(
                 kontainer,
-                definition.producer.paramProviders.map {
+                definition.producer.params.map {
                     it.provide(
                         kontainer = kontainer,
                         context = nextContext,

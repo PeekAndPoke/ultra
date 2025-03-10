@@ -234,8 +234,8 @@ de.peekandpoke.ultra.kontainer.ServiceNotFound: Service de.peekandpoke.ultra.kon
 
 ### Singletons are shared
 
-This example shows that singleton services are shared across all kontainers, 
-that are created from the same blueprint. 
+This example shows that singleton services are shared across all kontainers,
+that are created from the same blueprint.
 
 (see the full [example](../../src/examples/defining_services/SharedSingletonExample.kt))
 
@@ -273,13 +273,13 @@ This example shows the difference between a **Singleton**, a **Dynamic** and a *
 
 **Singleton** services are instantiated only once. They are then shared across all kontainer instances.  
 **Dynamic** services are instantiated for each kontainer instance.  
-**Prototype** services are instantiated each time they are requested from the kontainer.  
+**Prototype** services are instantiated each time they are requested from the kontainer.
 
-You will see that:  
+You will see that:
 
 The **SingletonCounter** is globally created once and is always increasing.  
 The **DynamicCounter** is created once for each kontainer instance.  
-The **PrototypeCounter** is created every time it is requested from the kontainer.  
+The **PrototypeCounter** is created every time it is requested from the kontainer.
 
 (see the full [example](../../src/examples/defining_services/SingletonVsDynamicVsPrototypeExample.kt))
 
@@ -382,9 +382,9 @@ Next: 2
 
 ### Factory Method Injection
 
-Sometimes pure constructor injection is not enough.  
+Sometimes pure constructor injection is not enough.
 
-For example when you have a service class expecting constructor parameters 
+For example when you have a service class expecting constructor parameters
 that are not known to the kontainer.
 
 Factory methods are available for singletons, dynamics and prototypes from zero up to ten parameters.
@@ -646,10 +646,8 @@ de.peekandpoke.ultra.kontainer.KontainerInconsistent: Kontainer is inconsistent!
 Problems:
 
 1. Service 'de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.MyService'
-    defined at de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample$run$blueprint$1.invoke(InjectBySuperTypeFailsToAmbiguityExample.kt:44))
+    defined at de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.run$lambda$0(InjectBySuperTypeFailsToAmbiguityExample.kt:44))
     -> Parameter 'counter' is ambiguous. The following services collide: de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.CounterOne, de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.CounterTwo
-
-Config values:
 ```
 
 ### Injection of all Services By SuperType
@@ -660,7 +658,7 @@ This is very useful when we design systems for extensibility.
 
 For Example:  
 Let's say we have a Database service that injects all registered Repositories.
-Repositories can then even by added by code that is not maintained by us. 
+Repositories can then even by added by code that is not maintained by us.
 
 (see the full [example](../../src/examples/injecting_services/InjectAllBySuperTypeExample.kt))
 
@@ -711,7 +709,7 @@ orders
 
 This example shows how a to lazily inject a service.
 
-This means that the injected service will only be instantiated when it is used for the first time. 
+This means that the injected service will only be instantiated when it is used for the first time.
 
 (see the full [example](../../src/examples/injecting_services/LazyInjectionExample.kt))
 
@@ -755,8 +753,8 @@ We used the lazily injected service: Here I am!
 ### Breaking Cyclic Dependencies with Lazy Injection
 
 In some cases we have services that need to injected each other.
- 
-This cyclic dependency can be broken with lazy injection. 
+
+This cyclic dependency can be broken with lazy injection.
 
 (see the full [example](../../src/examples/injecting_services/LazyInjectionCycleBreakerExample.kt))
 
@@ -847,7 +845,7 @@ orders
 
 This example shows how to lazily inject all services of a given super type using a lookup.
 
-What is this good for? 
+What is this good for?
 
 By using a lazy lookup we can inject many services without instantiating them.  
 We can get individual services from the LookUp by their class.
@@ -919,10 +917,10 @@ Library developers can use them to bundle up their library and to provide easy w
 - document the library and customization options on a high level
 
 A user of a kontainer module can then simply include the module into the kontainer definition.
- 
+
 A module can also give a nice high level documentation of what the library does and how to customize it.
 
-For example there could be some comments in the module definition code, that explain which services can be 
+For example there could be some comments in the module definition code, that explain which services can be
 overridden to achieve different behaviours of the library.
 
 ### Defining a simple module

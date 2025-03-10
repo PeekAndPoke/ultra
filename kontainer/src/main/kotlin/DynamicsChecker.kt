@@ -3,11 +3,11 @@ package de.peekandpoke.ultra.kontainer
 import kotlin.reflect.KClass
 
 /**
- * Helper class to validate the correctness instances passed [KontainerBlueprint.create].
+ * Helper class to validate the correctness service instances passed to [KontainerBlueprint.create] at runtime.
  *
  * For each set of classes passed to [getUnexpected] the result is cached for future reuse.
  */
-data class DynamicsChecker internal constructor(val dynamics: Set<KClass<*>>) {
+class DynamicsChecker internal constructor(val dynamics: Set<KClass<*>>) {
 
     /**
      * Internal cache
@@ -20,7 +20,7 @@ data class DynamicsChecker internal constructor(val dynamics: Set<KClass<*>>) {
      * Checks if all [given] are contained in all [dynamics]
      *
      * If all is well an empty set is returned.
-     * Otherwise the set will contain all classes that are not expected.
+     * Otherwise, the set will contain all classes that are not expected.
      */
     fun getUnexpected(given: Set<KClass<*>>): Set<KClass<*>> {
 

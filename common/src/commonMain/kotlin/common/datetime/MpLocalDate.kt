@@ -19,7 +19,7 @@ import kotlin.jvm.JvmName
 
 @Suppress("Detekt:TooManyFunctions")
 @Serializable(with = MpLocalDateSerializer::class)
-data class MpLocalDate internal constructor(
+data class MpLocalDate(
     private val value: LocalDate,
 ) : ComparableTo<MpLocalDate> {
 
@@ -80,7 +80,7 @@ data class MpLocalDate internal constructor(
         fun tryParse(isoString: String): MpLocalDate? {
             return try {
                 parseInternal(isoString)
-            } catch (e: Throwable) {
+            } catch (_: Throwable) {
                 null
             }
         }
@@ -88,7 +88,7 @@ data class MpLocalDate internal constructor(
         private fun parseInternal(isoString: String): MpLocalDate {
             return try {
                 MpLocalDate(LocalDate.parse(isoString))
-            } catch (e: Throwable) {
+            } catch (_: Throwable) {
                 MpInstant.parse(isoString).atZone(TimeZone.UTC).toLocalDate()
             }
         }

@@ -10,7 +10,7 @@ import kotlin.reflect.KClass
  * - the service that is injecting: [injectingClass]
  * - the service that is requesting a service: [requestingClass]
  */
-data class InjectionContext internal constructor(
+class InjectionContext internal constructor(
     /** Class requesting the service */
     val requestingClass: KClass<out Any>,
     /** Class that is about to be injected */

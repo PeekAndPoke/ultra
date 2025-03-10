@@ -1,14 +1,11 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.AnotherSimpleService
-import de.peekandpoke.ultra.kontainer.CounterService
-import de.peekandpoke.ultra.kontainer.InjectingService
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.kontainer.KontainerInconsistent
 import de.peekandpoke.ultra.kontainer.ServiceNotFound
 import de.peekandpoke.ultra.kontainer.ServiceProvider
+import de.peekandpoke.ultra.kontainer.getName
 import de.peekandpoke.ultra.kontainer.kontainer
-import de.peekandpoke.ultra.kontainer.module
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
@@ -23,19 +20,6 @@ class SingletonFactoriesSpec : StringSpec({
     }
 
     data class Config(override val value: Int) : Base()
-
-    val configs = module {
-        config("c1", 1)
-        config("c2", 10)
-        config("c3", 100)
-        config("c4", 1000)
-        config("c5", 10000)
-        config("c6", 100000)
-        config("c7", 1000000)
-        config("c8", 10000000)
-        config("c9", 100000000)
-        config("c10", 1000000000)
-    }
 
     fun validateWithoutBase(subject: Kontainer, value: Int) {
 
@@ -66,10 +50,11 @@ class SingletonFactoriesSpec : StringSpec({
         }
     }
 
-    "Singleton factory that has missing dependencies" {
+    "Factory that has missing dependencies" {
 
         val blueprint = kontainer {
             singleton(CounterService::class)
+
             singleton(InjectingService::class) { simple: CounterService, another: AnotherSimpleService ->
                 InjectingService(simple, another)
             }
@@ -81,378 +66,333 @@ class SingletonFactoriesSpec : StringSpec({
             }
 
             error.message shouldContain
-                    "Parameter 'another' misses a dependency to '${AnotherSimpleService::class.qualifiedName}'"
+                    "Parameter 'p2' misses a dependency to ${AnotherSimpleService::class.getName()}"
 
             error.message shouldContain
                     "defined at"
         }
     }
 
-    "Singleton factory with two dependencies" {
+    "Factory with two dependencies" {
 
-        val blueprint = kontainer {
+        val subject = kontainer {
             singleton(CounterService::class)
             singleton(AnotherSimpleService::class)
 
             singleton(InjectingService::class) { simple: CounterService, another: AnotherSimpleService ->
                 InjectingService(simple, another)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         assertSoftly {
             subject.get<InjectingService>()::class shouldBe InjectingService::class
         }
     }
 
-    "Singleton factory with zero params" {
+    "Factory with zero params" {
 
-        val blueprint = kontainer {
-            singleton0(Config::class) { Config(0) }
-        }
-
-        val subject = blueprint.create()
+        val subject = kontainer {
+            singleton(Config::class) { Config(0) }
+        }.create()
 
         validateWithoutBase(subject, 0)
     }
 
-    "Singleton factory with zero params defined with bas class" {
+    "Factory with zero params defined with base class" {
 
-        val blueprint = kontainer {
-            singleton0(Base::class) { Config(0) }
-        }
-
-        val subject = blueprint.create()
+        val subject = kontainer {
+            singleton(Base::class) { Config(0) }
+        }.create()
 
         validateWithBase(subject, 0)
     }
 
-    "Singleton factory with one param" {
+    "Factory with one param" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Config::class) { c1: Int ->
-                Config(c1)
+            singleton(Config::class) { s1: S01 ->
+                Config(s1.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithoutBase(subject, 1)
     }
 
-    "Singleton factory with one param defined with base class" {
+    "Factory with one lazy param" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Base::class) { c1: Int ->
-                Config(c1)
+            singleton(Config::class) { s1: Lazy<S01> ->
+                val s1 by s1
+                Config(s1.v)
             }
-        }
+        }.create()
 
-        val subject = blueprint.create()
+        validateWithoutBase(subject, 1)
+    }
+
+    "Factory with one param defined with base class" {
+
+        val subject = kontainer {
+            module(common)
+
+            singleton(Base::class) { s1: S01 ->
+                Config(s1.v)
+            }
+        }.create()
 
         validateWithBase(subject, 1)
     }
 
-    "Singleton factory with two config params" {
+    "Factory with two params" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Config::class) { c1: Int, c2: Int ->
-                Config(c1 + c2)
+            singleton(Config::class) { s1: S01, s2: S02 ->
+                Config(s1.v + s2.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithoutBase(subject, 11)
     }
 
-    "Singleton factory with two config params defined with base class" {
+    "Factory with two params defined with base class" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Base::class) { c1: Int, c2: Int ->
-                Config(c1 + c2)
+            singleton(Base::class) { s1: S01, s2: S02 ->
+                Config(s1.v + s2.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithBase(subject, 11)
     }
 
-    "Singleton factory with three config params" {
+    "Factory with three params" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Config::class) { c1: Int, c2: Int, c3: Int ->
-                Config(c1 + c2 + c3)
+            singleton(Config::class) { s1: S01, s2: S02, s3: S03 ->
+                Config(s1.v + s2.v + s3.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithoutBase(subject, 111)
     }
 
-    "Singleton factory with three config params defined with base class" {
+    "Factory with three params defined with base class" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Base::class) { c1: Int, c2: Int, c3: Int ->
-                Config(c1 + c2 + c3)
+            singleton(Base::class) { s1: S01, s2: S02, s3: S03 ->
+                Config(s1.v + s2.v + s3.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithBase(subject, 111)
     }
 
-    "Singleton factory with four config params" {
+    "Factory with four params" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int ->
-                Config(c1 + c2 + c3 + c4)
+            singleton(Config::class) { s1: S01, s2: S02, s3: S03, s4: S04 ->
+                Config(s1.v + s2.v + s3.v + s4.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithoutBase(subject, 1111)
     }
 
-    "Singleton factory with four config params defined with base class" {
+    "Factory with four defined with base class" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int ->
-                Config(c1 + c2 + c3 + c4)
+            singleton(Base::class) { s1: S01, s2: S02, s3: S03, s4: S04 ->
+                Config(s1.v + s2.v + s3.v + s4.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithBase(subject, 1111)
     }
 
-    "Singleton factory with five config params" {
+    "Factory with five params" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int ->
-                Config(c1 + c2 + c3 + c4 + c5)
+            singleton(Config::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithoutBase(subject, 11111)
     }
 
-    "Singleton factory with five config params defined with base class" {
+    "Factory with five params defined with base class" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int ->
-                Config(c1 + c2 + c3 + c4 + c5)
+            singleton(Base::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithBase(subject, 11111)
     }
 
-    "Singleton factory with six config params" {
+    "Factory with six params" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int ->
-                Config(c1 + c2 + c3 + c4 + c5 + c6)
+            singleton(Config::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithoutBase(subject, 111111)
     }
 
-    "Singleton factory with six config params defined with base class" {
+    "Factory with six params defined with base class" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int ->
-                Config(c1 + c2 + c3 + c4 + c5 + c6)
+            singleton(Base::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithBase(subject, 111111)
     }
 
-    "Singleton factory with seven config params" {
+    "Factory with seven params" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
-                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7)
+            singleton(Config::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithoutBase(subject, 1111111)
     }
 
-    "Singleton factory with seven config params defined with base class" {
+    "Factory with seven params defined with base class" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
-                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7)
+            singleton(Base::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithBase(subject, 1111111)
     }
 
-    "Singleton factory with eight config params" {
+    "Factory with eight params" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int ->
-                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8)
+            singleton(Config::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07, s8: S08 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v + s8.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithoutBase(subject, 11111111)
     }
 
-    "Singleton factory with eight config params defined with base class" {
+    "Factory with eight params defined with base class" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int ->
-                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8)
+            singleton(Base::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07, s8: S08 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v + s8.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithBase(subject, 11111111)
     }
 
-    "Singleton factory with nine config params" {
+    "Factory with nine params" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int,
-                                       c9: Int ->
-                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9)
+            singleton(Config::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07, s8: S08, s9: S09 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v + s8.v + s9.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithoutBase(subject, 111111111)
     }
 
-    "Singleton factory with nine config params defined with base class" {
+    "Factory with nine params defined with base class" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int,
-                                     c9: Int ->
-                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9)
+            singleton(Base::class) { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07, s8: S08, s9: S09 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v + s8.v + s9.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithBase(subject, 111111111)
     }
 
-    "Singleton factory with ten config params" {
+    "Factory with ten params" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Config::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int,
-                                       c9: Int, c10: Int ->
-                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9 + c10)
+            singleton(Config::class) {
+                    s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07, s8: S08, s9: S09,
+                    s10: S10,
+                ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v + s8.v + s9.v + s10.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithoutBase(subject, 1111111111)
     }
 
-    "Singleton factory with ten config params defined with base class" {
+    "Factory with ten params defined with base class" {
 
-        val blueprint = kontainer {
-            module(configs)
+        val subject = kontainer {
+            module(common)
 
-            singleton(Base::class) { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int,
-                                     c9: Int, c10: Int ->
-                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9 + c10)
+            singleton(Base::class) {
+                    s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07, s8: S08, s9: S09,
+                    s10: S10,
+                ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v + s8.v + s9.v + s10.v)
             }
-        }
-
-        val subject = blueprint.create()
+        }.create()
 
         validateWithBase(subject, 1111111111)
     }
 
-    "Singleton factory with zero config params defined via dynamic function" {
+    "Factory with one params defined via dynamic function" {
 
         val blueprint = kontainer {
-            module(configs)
+            module(common)
 
-            val provider: Function<Config> = { Config(0) }
-
-            singleton(Base::class, provider)
-        }
-
-        val subject = blueprint.create()
-
-        validateWithBase(subject, 0)
-    }
-
-    "Singleton factory with one config params defined via dynamic function" {
-
-        val blueprint = kontainer {
-            module(configs)
-
-            val provider: Function<Config> = { c1: Int -> Config(c1) }
+            val provider = { s1: S01 -> Config(s1.v) }
 
             singleton(Base::class, provider)
         }
@@ -462,13 +402,13 @@ class SingletonFactoriesSpec : StringSpec({
         validateWithBase(subject, 1)
     }
 
-    "Singleton factory with seven config params defined via dynamic function" {
+    "Factory with seven params defined via dynamic function" {
 
         val blueprint = kontainer {
-            module(configs)
+            module(common)
 
-            val provider: Function<Config> = { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int ->
-                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7)
+            val provider = { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07 ->
+                Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v)
             }
 
             singleton(Base::class, provider)
@@ -479,15 +419,15 @@ class SingletonFactoriesSpec : StringSpec({
         validateWithBase(subject, 1111111)
     }
 
-    "Singleton factory with ten config params defined via dynamic function" {
+    "Factory with ten params defined via dynamic function" {
 
         val blueprint = kontainer {
-            module(configs)
+            module(common)
 
-            val provider: Function<Config> = { c1: Int, c2: Int, c3: Int, c4: Int, c5: Int, c6: Int, c7: Int, c8: Int,
-                                               c9: Int, c10: Int ->
-                Config(c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9 + c10)
-            }
+            val provider =
+                { s1: S01, s2: S02, s3: S03, s4: S04, s5: S05, s6: S06, s7: S07, s8: S08, s9: S09, s10: S10 ->
+                    Config(s1.v + s2.v + s3.v + s4.v + s5.v + s6.v + s7.v + s8.v + s9.v + s10.v)
+                }
 
             singleton(Base::class, provider)
         }

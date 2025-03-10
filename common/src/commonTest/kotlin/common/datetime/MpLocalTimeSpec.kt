@@ -57,16 +57,16 @@ class MpLocalTimeSpec : StringSpec({
     "Creation - ofMilliSeconds()" {
 
         MpLocalTime.ofMilliSeconds(
-            12 * MpLocalTime.MillisPerHour +
-                    13 * MpLocalTime.MillisPerMinute +
-                    14 * MpLocalTime.MillisPerSecond +
+            12 * MpLocalTime.MILLIS_PER_HOUR +
+                    13 * MpLocalTime.MILLIS_PER_MINUTE +
+                    14 * MpLocalTime.MILLIS_PER_SECOND +
                     123
         ) shouldBe MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 123)
 
         MpLocalTime.ofMilliSeconds(
-            36 * MpLocalTime.MillisPerHour +
-                    13 * MpLocalTime.MillisPerMinute +
-                    14 * MpLocalTime.MillisPerSecond +
+            36 * MpLocalTime.MILLIS_PER_HOUR +
+                    13 * MpLocalTime.MILLIS_PER_MINUTE +
+                    14 * MpLocalTime.MILLIS_PER_SECOND +
                     123
         ) shouldBe MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 123)
     }
@@ -74,16 +74,16 @@ class MpLocalTimeSpec : StringSpec({
     "Creation - ofSecondOfDay()" {
 
         MpLocalTime.ofSecondOfDay(
-            (12 * MpLocalTime.MillisPerHour +
-                    13 * MpLocalTime.MillisPerMinute +
-                    14 * MpLocalTime.MillisPerSecond +
+            (12 * MpLocalTime.MILLIS_PER_HOUR +
+                    13 * MpLocalTime.MILLIS_PER_MINUTE +
+                    14 * MpLocalTime.MILLIS_PER_SECOND +
                     123) / 1_000
         ) shouldBe MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 0)
 
         MpLocalTime.ofSecondOfDay(
-            (36 * MpLocalTime.MillisPerHour +
-                    13 * MpLocalTime.MillisPerMinute +
-                    14 * MpLocalTime.MillisPerSecond +
+            (36 * MpLocalTime.MILLIS_PER_HOUR +
+                    13 * MpLocalTime.MILLIS_PER_MINUTE +
+                    14 * MpLocalTime.MILLIS_PER_SECOND +
                     123) / 1_000
         ) shouldBe MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 0)
     }

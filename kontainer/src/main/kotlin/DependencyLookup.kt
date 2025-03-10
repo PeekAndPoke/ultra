@@ -34,7 +34,7 @@ class DependencyLookup internal constructor(
          */
         val record = { def: ServiceDefinition ->
 
-            def.producer.signature.forEach { parameter ->
+            def.producer.params.forEach { parameter ->
 
                 val type = parameter.type
                 val paramCls = type.classifier as KClass<*>

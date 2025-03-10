@@ -7,8 +7,8 @@ import Deps.Test.jvmTestDeps
 
 plugins {
     kotlin("multiplatform")
-    id("io.kotest.multiplatform") version Deps.Test.kotest_plugin_version
-    id("org.jetbrains.kotlin.plugin.serialization")
+    kotlin("plugin.serialization")
+    id("io.kotest.multiplatform")
     id("org.jetbrains.dokka")
     id("com.vanniktech.maven.publish")
 }
@@ -19,52 +19,43 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
-repositories {
-    mavenCentral()
-}
-
 kotlin {
-
     js {
         browser {
         }
     }
 
+    jvmToolchain(Deps.jvmTargetVersion)
+
     jvm {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = Deps.jvmTarget.target
-            }
-        }
     }
 
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 implementation(kotlin("reflect"))
                 implementation(Deps.kotlinx_coroutines_core)
+                implementation(Deps.kotlinx_atomicfu)
                 implementation(Deps.kotlinx_serialization_core)
                 implementation(Deps.kotlinx_serialization_json)
-//                implementation(Deps.kotlinx_atomicfu)
 
                 implementation(Deps.ktor_client_core)
 
-                // We expose kotlinx-datetime as it is needed in many cases, e.g. for TimeZone
-                api(Deps.kotlinx_datetime_common)
+                api(Deps.kotlinx_datetime)
 
                 // TODO: Remove this dependency
                 //       It is still needed for formatting dates
-                implementation(Deps.korlibs_time_common)
+                implementation(Deps.korlibs_time)
             }
         }
 
-        val commonTest by getting {
+        commonTest {
             dependencies {
                 commonTestDeps()
             }
         }
 
-        val jsMain by getting {
+        jsMain {
             dependencies {
                 api(Deps.Npm { polyfillFetch() })
                 api(Deps.Npm { jsJodaCore() })
@@ -72,19 +63,19 @@ kotlin {
             }
         }
 
-        val jsTest by getting {
+        jsTest {
             dependencies {
                 jsTestDeps()
             }
         }
 
-        val jvmMain by getting {
+        jvmMain {
             dependencies {
                 implementation(Deps.classindex)
             }
         }
 
-        val jvmTest by getting {
+        jvmTest {
             dependencies {
                 jvmTestDeps()
             }
@@ -93,5 +84,7 @@ kotlin {
 }
 
 tasks {
+    getByName("compileKotlinJs").dependsOn(":compileCommonMainKotlinMetadata")
+
     configureJvmTests()
 }

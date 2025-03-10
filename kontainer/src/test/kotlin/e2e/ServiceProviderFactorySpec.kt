@@ -1,11 +1,6 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.AnotherInjectingService
-import de.peekandpoke.ultra.kontainer.AnotherSimpleService
-import de.peekandpoke.ultra.kontainer.CounterService
-import de.peekandpoke.ultra.kontainer.CounterServiceEx01
 import de.peekandpoke.ultra.kontainer.ServiceProvider
-import de.peekandpoke.ultra.kontainer.SomeIndependentService
 import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue

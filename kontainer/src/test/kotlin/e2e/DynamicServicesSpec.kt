@@ -1,16 +1,10 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
 import de.peekandpoke.ultra.common.Lookup
-import de.peekandpoke.ultra.kontainer.AnotherSimpleService
-import de.peekandpoke.ultra.kontainer.CounterService
-import de.peekandpoke.ultra.kontainer.DeeperInjectingService
-import de.peekandpoke.ultra.kontainer.InjectingService
 import de.peekandpoke.ultra.kontainer.InvalidClassProvided
 import de.peekandpoke.ultra.kontainer.KontainerInconsistent
-import de.peekandpoke.ultra.kontainer.MyServiceInterface
 import de.peekandpoke.ultra.kontainer.ServiceNotFound
 import de.peekandpoke.ultra.kontainer.ServiceProvider
-import de.peekandpoke.ultra.kontainer.SomeIndependentService
 import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
@@ -41,8 +35,9 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            config("value", 1)
-            dynamic(DynamicService::class)
+            dynamic(DynamicService::class) {
+                DynamicService(10)
+            }
         }
 
         assertSoftly {
@@ -150,7 +145,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic0(DynamicService::class) { DynamicService(100) }
+            dynamic(DynamicService::class) { DynamicService(100) }
         }
 
         val subject = blueprint.create()
@@ -169,7 +164,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic0(DynamicService::class) { DynamicService(100) }
+            dynamic(DynamicService::class) { DynamicService(100) }
         }
 
         val subject = blueprint.create()
@@ -187,7 +182,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic0(DynamicService::class) { DynamicService(100) }
+            dynamic(DynamicService::class) { DynamicService(100) }
         }
 
         val subjectOne = blueprint.create()
@@ -206,7 +201,7 @@ class DynamicServicesSpec : StringSpec({
         data class DynamicService(val value: Int)
 
         val blueprint = kontainer {
-            dynamic0(DynamicService::class) { DynamicService(100) }
+            dynamic(DynamicService::class) { DynamicService(100) }
         }
 
         val subject = blueprint.create {
@@ -233,7 +228,7 @@ class DynamicServicesSpec : StringSpec({
         class DerivedService(value: Int) : DynamicService(value)
 
         val blueprint = kontainer {
-            dynamic0(DynamicService::class) { DynamicService(100) }
+            dynamic(DynamicService::class) { DynamicService(100) }
         }
 
         val subject = blueprint.create {
@@ -260,7 +255,7 @@ class DynamicServicesSpec : StringSpec({
         class DerivedService(value: Int) : DynamicService(value)
 
         val blueprint = kontainer {
-            dynamic0(DynamicService::class) { DynamicService(100) }
+            dynamic(DynamicService::class) { DynamicService(100) }
         }
 
         val subject = blueprint.create {

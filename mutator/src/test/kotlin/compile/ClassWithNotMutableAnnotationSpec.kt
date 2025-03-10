@@ -8,7 +8,9 @@ import de.peekandpoke.ultra.mutator.Mutable
 import de.peekandpoke.ultra.mutator.NotMutable
 import de.peekandpoke.ultra.mutator.meta.MutatorAnnotationProcessor
 import io.kotest.core.spec.style.StringSpec
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 
+@OptIn(ExperimentalCompilerApi::class)
 class ClassWithNotMutableAnnotationSpec : StringSpec({
 
     "Compiling a data class with passed through generic parameter" {

@@ -12,7 +12,7 @@ import kotlin.time.Duration
 
 @Suppress("Detekt:TooManyFunctions")
 @Serializable(with = MpInstantSerializer::class)
-data class MpInstant internal constructor(
+data class MpInstant(
     internal val value: Instant,
 ) : MpAbsoluteDateTime, ComparableTo<MpInstant> {
 
@@ -50,7 +50,7 @@ data class MpInstant internal constructor(
          */
         fun tryParse(isoString: String): MpInstant? = try {
             parse(isoString)
-        } catch (e: Throwable) {
+        } catch (_: Throwable) {
             null
         }
 

@@ -7,8 +7,8 @@ import Deps.Test.jvmTestDeps
 
 plugins {
     kotlin("multiplatform")
-    id("io.kotest.multiplatform") version Deps.Test.kotest_plugin_version
-    id("org.jetbrains.kotlin.plugin.serialization")
+    kotlin("plugin.serialization")
+    id("io.kotest.multiplatform")
     id("org.jetbrains.dokka")
     id("com.vanniktech.maven.publish")
 }
@@ -19,27 +19,19 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
-repositories {
-    mavenCentral()
-}
-
 kotlin {
-
     js {
         browser {
         }
     }
 
+    jvmToolchain(Deps.jvmTargetVersion)
+
     jvm {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = Deps.jvmTarget.target
-            }
-        }
     }
 
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 implementation(kotlin("reflect"))
                 implementation(Deps.kotlinx_coroutines_core)
@@ -52,24 +44,24 @@ kotlin {
             }
         }
 
-        val commonTest by getting {
+        commonTest {
             dependencies {
                 commonTestDeps()
             }
         }
 
-        val jsMain by getting {
+        jsMain {
             dependencies {
             }
         }
 
-        val jsTest by getting {
+        jsTest {
             dependencies {
                 jsTestDeps()
             }
         }
 
-        val jvmMain by getting {
+        jvmMain {
             dependencies {
                 implementation(Deps.jackson_databind)
                 implementation(Deps.clikt)
@@ -80,7 +72,7 @@ kotlin {
             }
         }
 
-        val jvmTest by getting {
+        jvmTest {
             dependencies {
                 jvmTestDeps()
             }

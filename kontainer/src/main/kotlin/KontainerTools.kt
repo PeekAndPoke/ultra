@@ -12,22 +12,18 @@ class KontainerTools internal constructor(
 
     fun getDebugInfo(): DebugInfo {
 
-        val config = blueprint.configValues
-            .map { (k, v) -> k to "$v (${v::class.qualifiedName})" }
-            .toMap()
-
         fun ServiceDefinition.toInfo(): DebugInfo.ServiceDefinitionInfo {
             return DebugInfo.ServiceDefinitionInfo(
                 creates = DebugInfo.ClassInfo.of(producer.creates),
                 injectionType = injectionType,
-                injects = producer.paramProviders.map { provider ->
+                injects = producer.params.map { parameter ->
                     DebugInfo.ParamInfo(
-                        name = provider.parameter.name ?: "n/a",
-                        provisionType = when (provider.getProvisionType()) {
+                        name = parameter.name,
+                        provisionType = when (parameter.getProvisionType()) {
                             ParameterProvider.ProvisionType.Direct -> DebugInfo.ParamInfo.ProvisionType.Direct
                             ParameterProvider.ProvisionType.Lazy -> DebugInfo.ParamInfo.ProvisionType.Lazy
                         },
-                        classes = provider.getInjectedServiceTypes(blueprint).map {
+                        classes = parameter.getInjectedServiceTypes(blueprint).map {
                             DebugInfo.ClassInfo.of(it)
                         },
                     )
@@ -53,7 +49,7 @@ class KontainerTools internal constructor(
             )
         }
 
-        return DebugInfo(config = config, services = services)
+        return DebugInfo(services = services)
     }
 
     fun dumpKontainer(): String {
@@ -65,9 +61,9 @@ class KontainerTools internal constructor(
         rows.addAll(
             factory.getAllProviders().map { (k, v) ->
                 Triple(
-                    k.qualifiedName ?: "n/a",
+                    k.getName(),
                     v.type.toString(),
-                    v.instances.joinToString("\n") { "${it.createdAt}: ${it.instance::class.qualifiedName}" }
+                    v.instances.joinToString("\n") { "${it.createdAt}: ${it.instance::class.getName()}" }
                 )
             }
         )
@@ -82,18 +78,8 @@ class KontainerTools internal constructor(
             "${it.first.padEnd(lens.first)} | ${it.second.padEnd(lens.second)} | ${it.third.padEnd(lens.third)}"
         }
 
-        val maxConfigLength = blueprint.configValues.map { (k, _) -> k.length }.maxOrNull() ?: 0
-
-        val configs = blueprint.configValues
-            .map { (k, v) -> "${k.padEnd(maxConfigLength)} | $v (${v::class.qualifiedName})" }
-            .joinToString("\n")
-
         return "Kontainer dump:" +
                 "\n\n" +
-                services.joinToString("\n") +
-                "\n\n" +
-                "Config values:" +
-                "\n\n" +
-                configs
+                services.joinToString("\n")
     }
 }

@@ -646,10 +646,8 @@ de.peekandpoke.ultra.kontainer.KontainerInconsistent: Kontainer is inconsistent!
 Problems:
 
 1. Service 'de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.MyService'
-    defined at de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample$run$blueprint$1.invoke(InjectBySuperTypeFailsToAmbiguityExample.kt:44))
+    defined at de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.run$lambda$0(InjectBySuperTypeFailsToAmbiguityExample.kt:44))
     -> Parameter 'counter' is ambiguous. The following services collide: de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.CounterOne, de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.CounterTwo
-
-Config values:
 ```
 
 ### Injection of all Services By SuperType

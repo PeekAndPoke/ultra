@@ -2,6 +2,7 @@ package de.peekandpoke.ultra.common.datetime
 
 import de.peekandpoke.ultra.common.ComparableTo
 import korlibs.time.DateTime
+import korlibs.time.format
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Month
@@ -9,9 +10,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
-@Suppress("DataClassPrivateConstructor", "Detekt:TooManyFunctions")
+@Suppress("Detekt:TooManyFunctions")
 @Serializable(with = MpZonedDateTimeSerializer::class)
-data class MpZonedDateTime private constructor(
+data class MpZonedDateTime(
     val datetime: MpLocalDateTime,
     val timezone: MpTimezone,
 ) : MpAbsoluteDateTime, ComparableTo<MpZonedDateTime> {
@@ -86,7 +87,7 @@ data class MpZonedDateTime private constructor(
         fun tryParse(isoString: String, timezone: TimeZone): MpZonedDateTime? {
             return try {
                 parseInternal(isoString).atZone(timezone)
-            } catch (e: Throwable) {
+            } catch (_: Throwable) {
                 null
             }
         }
@@ -117,7 +118,7 @@ data class MpZonedDateTime private constructor(
         fun tryParse(isoString: String): MpZonedDateTime? {
             return try {
                 parseInternal(isoString)
-            } catch (e: Throwable) {
+            } catch (_: Throwable) {
                 null
             }
         }

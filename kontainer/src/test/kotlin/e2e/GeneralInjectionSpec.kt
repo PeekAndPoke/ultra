@@ -1,13 +1,5 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.AnotherInjectingService
-import de.peekandpoke.ultra.kontainer.AnotherSimpleService
-import de.peekandpoke.ultra.kontainer.CounterService
-import de.peekandpoke.ultra.kontainer.CounterServiceEx01
-import de.peekandpoke.ultra.kontainer.CounterServiceEx02
-import de.peekandpoke.ultra.kontainer.DeeperInjectingService
-import de.peekandpoke.ultra.kontainer.InjectingService
-import de.peekandpoke.ultra.kontainer.InjectingSomethingWeird
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.kontainer.KontainerBlueprint
 import de.peekandpoke.ultra.kontainer.KontainerInconsistent
@@ -68,7 +60,7 @@ class GeneralInjectionSpec : StringSpec({
     "Container with a singleton service (builder style)" {
 
         val subject = kontainer {
-            singleton0(CounterService::class) { CounterService() }
+            singleton(CounterService::class) { CounterService() }
         }.create()
 
         assertSoftly {
@@ -155,7 +147,7 @@ class GeneralInjectionSpec : StringSpec({
             }
 
             error.message shouldContain
-                    "Parameter 'another' misses a dependency to '${AnotherSimpleService::class.qualifiedName}'"
+                    "Parameter 'another' misses a dependency to ${AnotherSimpleService::class.qualifiedName}"
         }
     }
 
@@ -170,7 +162,7 @@ class GeneralInjectionSpec : StringSpec({
                 blueprint.create()
             }
 
-            error.message shouldContain "Parameter 'weird' misses a dependency to 'kotlin.collections.Map'"
+            error.message shouldContain "Parameter 'weird' misses a dependency to kotlin.collections.Map"
         }
     }
 
@@ -218,15 +210,12 @@ class GeneralInjectionSpec : StringSpec({
         second.get<CounterService>().inc()
 
         assertSoftly {
-            @Suppress("RemoveExplicitTypeArguments")
             first.get<CounterService>() shouldBe second.get<CounterService>()
             first.get<CounterService>().get() shouldBe 3
             second.get<CounterService>().get() shouldBe 3
 
-            @Suppress("RemoveExplicitTypeArguments")
             first.get<AnotherSimpleService>() shouldBe second.get<AnotherSimpleService>()
 
-            @Suppress("RemoveExplicitTypeArguments")
             first.get<InjectingService>() shouldBe second.get<InjectingService>()
         }
     }

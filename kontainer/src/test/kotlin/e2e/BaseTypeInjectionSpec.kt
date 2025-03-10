@@ -1,11 +1,5 @@
 package de.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.AmbiguousImplOne
-import de.peekandpoke.ultra.kontainer.AmbiguousImplTwo
-import de.peekandpoke.ultra.kontainer.AnotherSimpleService
-import de.peekandpoke.ultra.kontainer.CounterService
-import de.peekandpoke.ultra.kontainer.InjectingAllAmbiguous
-import de.peekandpoke.ultra.kontainer.InjectingAmbiguous
 import de.peekandpoke.ultra.kontainer.KontainerInconsistent
 import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.assertions.assertSoftly

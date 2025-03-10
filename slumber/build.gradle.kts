@@ -1,7 +1,6 @@
 @file:Suppress("PropertyName")
 
 import Deps.Test.configureJvmTests
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
@@ -16,13 +15,10 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation(kotlin("reflect"))
-    api(Deps.kotlinx_serialization_core)
+    implementation(Deps.kotlinx_serialization_core)
+    implementation(Deps.kotlinx_datetime)
 
     api(Deps.classindex)
 
@@ -37,16 +33,14 @@ dependencies {
     }
 }
 
-kapt {
-    useBuildCache = true
+kotlin {
+    jvmToolchain(Deps.jvmTargetVersion)
 }
 
 tasks {
-    withType<KotlinCompile>().all {
-        compilerOptions {
-            jvmTarget.set(Deps.jvmTarget)
-        }
-    }
-
     configureJvmTests()
+}
+
+kapt {
+    useBuildCache = true
 }

@@ -1,5 +1,10 @@
 package de.peekandpoke.ultra.kontainer
 
+import kotlin.reflect.KClass
+
+/**
+ * Creates a kontainer blueprint
+ */
 @DslMarker
 annotation class KontainerDsl
 
@@ -49,6 +54,11 @@ fun <P1, P2, P3, P4> module(builder: KontainerBuilder.(P1, P2, P3, P4) -> Unit) 
 @KontainerDslModule
 fun <P1, P2, P3, P4, P5> module(builder: KontainerBuilder.(P1, P2, P3, P4, P5) -> Unit) =
     ParameterizedKontainerModule5(builder)
+
+/**
+ * Get name
+ */
+internal fun KClass<*>.getName() = this.qualifiedName ?: this.simpleName ?: "<unknown>"
 
 /**
  * Kontainer module

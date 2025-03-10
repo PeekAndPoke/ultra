@@ -12,7 +12,8 @@ import kotlin.reflect.full.createType
  *
  * By doing so we can utilize the compiler for checking that reflection types are used correctly.
  */
-data class TypeRef<T> internal constructor(val type: KType) {
+@ConsistentCopyVisibility
+data class TypeRef<T> private constructor(val type: KType) {
 
     companion object {
 
