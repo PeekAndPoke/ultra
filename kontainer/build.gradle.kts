@@ -14,10 +14,6 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation(kotlin("reflect"))
     implementation(Deps.kotlinx_coroutines_core)

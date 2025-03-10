@@ -19,12 +19,7 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
-repositories {
-    mavenCentral()
-}
-
 kotlin {
-
     js {
         browser()
     }
@@ -35,7 +30,6 @@ kotlin {
     }
 
     sourceSets {
-
         commonMain {
             dependencies {
                 implementation(Deps.kotlinx_coroutines_core)
