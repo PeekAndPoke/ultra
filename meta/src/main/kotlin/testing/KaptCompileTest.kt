@@ -1,38 +1,39 @@
 @file:OptIn(ExperimentalCompilerApi::class)
 
-package de.peekandpoke.ultra.meta
+package de.peekandpoke.ultra.meta.testing
 
 import com.github.difflib.DiffUtils
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import de.peekandpoke.ultra.meta.CompileTest.Builder
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import javax.annotation.processing.Processor
 
 /**
  * Compile testing DSL entry point
  */
-fun compileTest(builder: Builder.() -> Unit) = Builder().apply(builder).build().run()
+fun kaptCompileTest(builder: KaptCompileTest.Builder.() -> Unit): KotlinCompilation.Result {
+    return KaptCompileTest.Builder().apply(builder).build().run()
+}
 
 /**
  * Adds an expectation that matches the contents of a [file] with the [expectedContent]
  *
- * @see [CompileTest.ExpectFileToMatch]
+ * @see [KaptCompileTest.ExpectFileToMatch]
  */
-fun Builder.expectFileToMatch(file: String, expectedContent: String) =
-    expect(CompileTest.ExpectFileToMatch(file, expectedContent))
+fun KaptCompileTest.Builder.expectFileToMatch(file: String, expectedContent: String) =
+    expect(KaptCompileTest.ExpectFileToMatch(file, expectedContent))
 
 /**
  * Adds an expectation that checks that the given file was NOT created
  */
-fun Builder.expectFileToNotExist(file: String) =
-    expect(CompileTest.ExpectFileToNotExist(file))
+fun KaptCompileTest.Builder.expectFileToNotExist(file: String) =
+    expect(KaptCompileTest.ExpectFileToNotExist(file))
 
 /**
  * Adds an expectation that checks for the exact number of files to be created
  */
-fun Builder.expectFileCount(count: Int) =
-    expect(CompileTest.ExpectFileCount(count))
+fun KaptCompileTest.Builder.expectFileCount(count: Int) =
+    expect(KaptCompileTest.ExpectFileCount(count))
 
 /**
  * The compile test runner.
@@ -43,10 +44,10 @@ fun Builder.expectFileCount(count: Int) =
  * When there are any errors an [IllegalStateException] is raised with text containing detailed information
  * about all failed expectations.
  *
- * @see compileTest
+ * @see kaptCompileTest
  * @see Builder
  */
-class CompileTest internal constructor(
+class KaptCompileTest internal constructor(
     /** annotations processors to be used for compilation */
     val processors: List<Processor>,
     /** source files to be compiled */
@@ -84,7 +85,7 @@ class CompileTest internal constructor(
     }
 
     /**
-     * Builder for creating a [CompileTest]
+     * Builder for creating a [KaptCompileTest]
      */
     class Builder internal constructor() {
         /** source files */
@@ -99,7 +100,7 @@ class CompileTest internal constructor(
         /**
          * Creates the CompileTest
          */
-        internal fun build() = CompileTest(
+        internal fun build() = KaptCompileTest(
             sourcesFiles = sourceFiles,
             processors = processors,
             expectations = expectations
@@ -133,7 +134,7 @@ class CompileTest internal constructor(
     }
 
     /**
-     * Defines an expectation to be checked by a [CompileTest]
+     * Defines an expectation to be checked by a [KaptCompileTest]
      */
     interface Expectation {
         /**

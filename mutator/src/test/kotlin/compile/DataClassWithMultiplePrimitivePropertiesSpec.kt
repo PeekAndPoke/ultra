@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.mutator.compile
 
-import de.peekandpoke.ultra.meta.compileTest
-import de.peekandpoke.ultra.meta.expectFileToMatch
+import de.peekandpoke.ultra.meta.testing.expectFileToMatch
+import de.peekandpoke.ultra.meta.testing.kaptCompileTest
 import de.peekandpoke.ultra.mutator.Mutable
 import de.peekandpoke.ultra.mutator.meta.MutatorAnnotationProcessor
 import io.kotest.core.spec.style.StringSpec
@@ -14,7 +14,7 @@ class DataClassWithMultiplePrimitivePropertiesSpec : StringSpec({
 
     "Compiling a data class with multiple primitive properties" {
 
-        compileTest {
+        kaptCompileTest {
 
             processor(MutatorAnnotationProcessor())
 

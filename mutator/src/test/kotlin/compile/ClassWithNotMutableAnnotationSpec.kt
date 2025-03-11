@@ -1,9 +1,9 @@
 package de.peekandpoke.ultra.mutator.compile
 
-import de.peekandpoke.ultra.meta.compileTest
-import de.peekandpoke.ultra.meta.expectFileCount
-import de.peekandpoke.ultra.meta.expectFileToMatch
-import de.peekandpoke.ultra.meta.expectFileToNotExist
+import de.peekandpoke.ultra.meta.testing.expectFileCount
+import de.peekandpoke.ultra.meta.testing.expectFileToMatch
+import de.peekandpoke.ultra.meta.testing.expectFileToNotExist
+import de.peekandpoke.ultra.meta.testing.kaptCompileTest
 import de.peekandpoke.ultra.mutator.Mutable
 import de.peekandpoke.ultra.mutator.NotMutable
 import de.peekandpoke.ultra.mutator.meta.MutatorAnnotationProcessor
@@ -15,7 +15,7 @@ class ClassWithNotMutableAnnotationSpec : StringSpec({
 
     "Compiling a data class with passed through generic parameter" {
 
-        compileTest {
+        kaptCompileTest {
 
             processor(MutatorAnnotationProcessor())
 

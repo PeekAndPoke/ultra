@@ -23,9 +23,11 @@ dependencies {
     //  code generation  //////////////////////////////////////////////////////////////////////////////////////
 
     api(Deps.kotlin_compiletesting)
+    api(Deps.kotlin_compiletesting_ksp)
     api(Deps.diffutils)
-
     api(Deps.kotlinpoet)
+    api(Deps.ksp_symbol_processing)
+
     api(Deps.google_auto_service)
     kapt(Deps.google_auto_service)
 

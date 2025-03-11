@@ -60,9 +60,15 @@ object Deps {
     const val ktor_version = "3.1.1"
     const val ktor_client_core = "io.ktor:ktor-client-core:$ktor_version"
 
+    // https://github.com/google/ksp/releases
+    const val ksp_version = "2.1.10-1.0.31"
+    const val ksp_symbol_processing = "com.google.devtools.ksp:symbol-processing-api:$ksp_version"
+
     // https://mvnrepository.com/artifact/com.github.tschuchortdev/kotlin-compile-testing
     private const val kotlin_compiletesting_version = "1.6.0"
     const val kotlin_compiletesting = "com.github.tschuchortdev:kotlin-compile-testing:$kotlin_compiletesting_version"
+    const val kotlin_compiletesting_ksp =
+        "com.github.tschuchortdev:kotlin-compile-testing-ksp:$kotlin_compiletesting_version"
 
     // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
     private const val kotlinpoet_version = "2.1.0"
