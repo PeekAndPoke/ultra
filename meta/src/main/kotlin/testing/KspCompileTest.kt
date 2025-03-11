@@ -55,7 +55,13 @@ class KspCompileTest internal constructor(
     val sourcesFiles: List<SourceFile>,
     /** expectations to be checked */
     val expectations: List<Expectation>,
+    /** Options */
+    val options: Options,
 ) {
+    data class Options(
+        val inheritClassPath: Boolean,
+    )
+
     /**
      * Compiles and checks expectations
      */
@@ -65,7 +71,7 @@ class KspCompileTest internal constructor(
         val compilation: KotlinCompilation = KotlinCompilation().apply {
             sources = sourcesFiles
             symbolProcessorProviders = processors
-            inheritClassPath = true
+            inheritClassPath = options.inheritClassPath
 
 //            workingDir = File("tmp/Kotlin-Compilation/${LocalDateTime.now()}").absoluteFile.ensureDirectory()
         }
@@ -91,12 +97,15 @@ class KspCompileTest internal constructor(
     class Builder internal constructor() {
         /** source files */
         private val sourceFiles = mutableListOf<SourceFile>()
-
         /** annotation processors */
         private val processors = mutableListOf<SymbolProcessorProvider>()
-
         /** expectations */
         private val expectations = mutableListOf<Expectation>()
+
+        /** options */
+        private var options = Options(
+            inheritClassPath = false,
+        )
 
         /**
          * Creates the CompileTest
@@ -104,7 +113,8 @@ class KspCompileTest internal constructor(
         internal fun build() = KspCompileTest(
             sourcesFiles = sourceFiles,
             processors = processors,
-            expectations = expectations
+            expectations = expectations,
+            options = options,
         )
 
         /**
@@ -131,6 +141,15 @@ class KspCompileTest internal constructor(
          */
         fun expect(vararg expectation: Expectation) = apply {
             expectations.addAll(expectation)
+        }
+
+        /**
+         * Setting this to true will make the KotlinCompilation inherit the classpath of the calling process
+         */
+        fun inheritClassPath(value: Boolean) = apply {
+            options = options.copy(
+                inheritClassPath = value,
+            )
         }
     }
 
