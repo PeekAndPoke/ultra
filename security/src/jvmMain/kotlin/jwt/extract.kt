@@ -7,7 +7,9 @@ import de.peekandpoke.ultra.security.user.UserPermissions
 fun Claim.asStringSet(): Set<String> = asList(String::class.java)?.toSet() ?: emptySet()
 
 fun Payload.extractUser(namespace: String = "user"): JwtUserData = JwtUserData(
-    id = getClaim("$namespace/id").asString() ?: "",
+    id = getClaim("$namespace/id").asString()
+        ?: subject
+        ?: "",
     desc = getClaim("$namespace/desc").asString()
         ?: getClaim("user-desc").asString()
         ?: "",
