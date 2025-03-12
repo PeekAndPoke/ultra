@@ -13,10 +13,10 @@ plugins {
     id("com.vanniktech.maven.publish")
 }
 
-val GROUP: String by project
+val ULTRA_GROUP: String by project
 val VERSION_NAME: String by project
 
-group = GROUP
+group = ULTRA_GROUP
 version = VERSION_NAME
 
 kotlin {
