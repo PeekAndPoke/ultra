@@ -21,6 +21,10 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/buildSrc" />
             <option value="$PROJECT_DIR$/common" />
+            <option value="$PROJECT_DIR$/karango" />
+            <option value="$PROJECT_DIR$/karango/addons" />
+            <option value="$PROJECT_DIR$/karango/core" />
+            <option value="$PROJECT_DIR$/karango/ksp" />
             <option value="$PROJECT_DIR$/kontainer" />
             <option value="$PROJECT_DIR$/logging" />
             <option value="$PROJECT_DIR$/meta" />

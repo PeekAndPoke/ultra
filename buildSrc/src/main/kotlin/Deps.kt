@@ -42,18 +42,6 @@ object Deps {
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     object KotlinLibs {
-        object Ultra {
-            // https://search.maven.org/search?q=g:io.peekandpoke.ultra%20AND%20a:commonmp
-            private const val ultra_version = "0.81.2"
-            const val common = "io.peekandpoke.ultra:common:$ultra_version"
-            const val kontainer = "io.peekandpoke.ultra:kontainer:$ultra_version"
-            const val logging = "io.peekandpoke.ultra:logging:$ultra_version"
-            const val meta = "io.peekandpoke.ultra:meta:$ultra_version"
-            const val security = "io.peekandpoke.ultra:security:$ultra_version"
-            const val slumber = "io.peekandpoke.ultra:slumber:$ultra_version"
-            const val vault = "io.peekandpoke.ultra:vault:$ultra_version"
-        }
-
         object Kraft {
             // https://central.sonatype.com/search?q=g%3Aio.peekandpoke.kraft++a%3Acore&smo=true
             private const val kraft_version = "0.61.0"

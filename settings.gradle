@@ -1,7 +1,7 @@
 rootProject.name = 'ultra'
 
 include(
-        // child projects
+        // ULTRA projects
         ":common",
         ":kontainer",
         ":logging",
@@ -11,5 +11,10 @@ include(
         ":slumber",
         ":slumber-test-classes",
         ":vault",
+
+        // KARANGO projects
+        ":karango:core",
+        ":karango:addons",
+        ":karango:ksp",
 )
 
