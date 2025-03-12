@@ -34,11 +34,11 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(kotlin("reflect"))
-                implementation(Deps.kotlinx_coroutines_core)
-                implementation(Deps.kotlinx_serialization_core)
-                implementation(Deps.kotlinx_serialization_json)
+                implementation(Deps.KotlinX.coroutines_core)
+                implementation(Deps.KotlinX.serialization_core)
+                implementation(Deps.KotlinX.serialization_json)
 
-                implementation(Deps.ktor_client_core)
+                implementation(Deps.Ktor.Client.core)
 
                 api(project(":common"))
             }
@@ -63,8 +63,8 @@ kotlin {
 
         jvmMain {
             dependencies {
-                implementation(Deps.jackson_databind)
-                implementation(Deps.clikt)
+                implementation(Deps.JavaLibs.Jackson.databind)
+                implementation(Deps.KotlinLibs.clikt)
 
                 api(project(":logging"))
                 api(project(":kontainer"))

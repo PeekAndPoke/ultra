@@ -32,7 +32,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(Deps.kotlinx_serialization_core)
+                implementation(Deps.KotlinX.serialization_core)
 
                 api(project(":common"))
             }
@@ -59,7 +59,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("reflect"))
                 implementation(project(":kontainer"))
-                api(Deps.auth0_java_jwt)
+                api(Deps.JavaLibs.auth0_java_jwt)
             }
         }
 

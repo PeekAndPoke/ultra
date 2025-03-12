@@ -34,18 +34,17 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(kotlin("reflect"))
-                implementation(Deps.kotlinx_coroutines_core)
-                implementation(Deps.kotlinx_atomicfu)
-                implementation(Deps.kotlinx_serialization_core)
-                implementation(Deps.kotlinx_serialization_json)
+                implementation(Deps.KotlinX.coroutines_core)
+                implementation(Deps.KotlinX.serialization_core)
+                implementation(Deps.KotlinX.serialization_json)
 
-                implementation(Deps.ktor_client_core)
+                implementation(Deps.Ktor.Client.core)
 
-                api(Deps.kotlinx_datetime)
+                api(Deps.KotlinX.datetime)
 
                 // TODO: Remove this dependency
                 //       It is still needed for formatting dates
-                implementation(Deps.korlibs_time)
+                implementation(Deps.KotlinLibs.korlibs_time)
             }
         }
 
@@ -71,7 +70,7 @@ kotlin {
 
         jvmMain {
             dependencies {
-                implementation(Deps.classindex)
+                implementation(Deps.JavaLibs.classindex)
             }
         }
 

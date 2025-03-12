@@ -16,7 +16,7 @@ version = VERSION_NAME
 
 dependencies {
     implementation(kotlin("reflect"))
-    implementation(Deps.kotlinx_coroutines_core)
+    implementation(Deps.KotlinX.coroutines_core)
 
     api(project(":common"))
 

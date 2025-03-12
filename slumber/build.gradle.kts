@@ -17,16 +17,16 @@ version = VERSION_NAME
 
 dependencies {
     implementation(kotlin("reflect"))
-    implementation(Deps.kotlinx_serialization_core)
-    implementation(Deps.kotlinx_datetime)
+    implementation(Deps.KotlinX.serialization_core)
+    implementation(Deps.KotlinX.datetime)
 
-    api(Deps.classindex)
+    api(Deps.JavaLibs.classindex)
 
     api(project(":common"))
 
     // Testing
     testImplementation(project(":slumber-test-classes"))
-    kaptTest(Deps.classindex)
+    kaptTest(Deps.JavaLibs.classindex)
 
     Deps.Test {
         jvmTestDeps()

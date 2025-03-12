@@ -21,7 +21,7 @@ dependencies {
     api(project(":common"))
     api(project(":meta"))
 
-    kapt(Deps.google_auto_service)
+    kapt(Deps.JavaLibs.Google.auto_service)
 
     // Test /////////////////////////////////////////////////////////////////////////
 

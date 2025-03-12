@@ -15,6 +15,10 @@ val VERSION_NAME: String by project
 group = GROUP
 version = VERSION_NAME
 
+kotlin {
+    jvmToolchain(Deps.jvmTargetVersion)
+}
+
 dependencies {
     implementation(kotlin("reflect"))
 
@@ -22,26 +26,21 @@ dependencies {
 
     //  code generation  //////////////////////////////////////////////////////////////////////////////////////
 
-    api(Deps.kotlin_compiletesting)
-    api(Deps.kotlin_compiletesting_ksp)
-    api(Deps.diffutils)
-    api(Deps.kotlinpoet)
-    api(Deps.ksp_symbol_processing)
+    api(Deps.Ksp.compiletesting)
+    api(Deps.Ksp.compiletesting_ksp)
+    api(Deps.JavaLibs.diffutils)
+    api(Deps.KotlinLibs.kotlinpoet)
 
-    api(Deps.google_auto_service)
-    kapt(Deps.google_auto_service)
+    api(Deps.JavaLibs.Google.auto_service)
+    kapt(Deps.JavaLibs.Google.auto_service)
 
     //  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    kaptTest(Deps.google_auto_service)
+    kaptTest(Deps.JavaLibs.Google.auto_service)
 
     Deps.Test {
         jvmTestDeps()
     }
-}
-
-kotlin {
-    jvmToolchain(Deps.jvmTargetVersion)
 }
 
 tasks {

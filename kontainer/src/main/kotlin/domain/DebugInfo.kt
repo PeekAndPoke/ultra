@@ -31,12 +31,11 @@ data class DebugInfo(
 
     data class InstanceDebugInfo(
         val createdAt: Instant,
-        val cls: ClassInfo
+        val cls: ClassInfo,
     )
 
-    @Suppress("DataClassPrivateConstructor")
-    data class ClassInfo private constructor(
-        val fqn: String
+    data class ClassInfo(
+        val fqn: String,
     ) {
         companion object {
             fun <T : Any> of(cls: KClass<T>): ClassInfo = ClassInfo(

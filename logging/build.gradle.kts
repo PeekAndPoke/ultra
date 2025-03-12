@@ -32,8 +32,8 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(Deps.kotlinx_coroutines_core)
-                implementation(Deps.kotlinx_serialization_core)
+                implementation(Deps.KotlinX.coroutines_core)
+                implementation(Deps.KotlinX.serialization_core)
             }
         }
 
@@ -45,7 +45,6 @@ kotlin {
 
         jsMain {
             dependencies {
-                implementation(Deps.kotlinx_coroutines_core_js)
             }
         }
 
@@ -58,10 +57,9 @@ kotlin {
         jvmMain {
             dependencies {
                 implementation(kotlin("reflect"))
-
                 implementation(project(":kontainer"))
 
-                implementation(Deps.slf4j_api)
+                implementation(Deps.JavaLibs.slf4j_api)
             }
         }
 
