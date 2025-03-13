@@ -210,7 +210,7 @@ object Deps {
     object JavaLibs {
         object ArangoDb {
             // https://mvnrepository.com/artifact/com.arangodb/arangodb-java-driver
-            private const val driver_version = "7.7.1"
+            private const val driver_version = "7.17.0"
             const val java_driver = "com.arangodb:arangodb-java-driver:$driver_version"
         }
 
