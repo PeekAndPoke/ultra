@@ -1,3 +1,5 @@
+@file:Suppress("Detekt:LongParameterList")
+
 package de.peekandpoke.ultra.kontainer
 
 import kotlin.reflect.KClass
@@ -19,6 +21,11 @@ annotation class KontainerDslDynamic
 
 @DslMarker
 annotation class KontainerDslPrototype
+
+/**
+ * Get name
+ */
+internal fun KClass<*>.getName() = this.qualifiedName ?: this.simpleName ?: "<unknown>"
 
 /** Creates a kontainer blueprint */
 @KontainerDsl
@@ -56,13 +63,9 @@ fun <P1, P2, P3, P4, P5> module(builder: KontainerBuilder.(P1, P2, P3, P4, P5) -
     ParameterizedKontainerModule5(builder)
 
 /**
- * Get name
- */
-internal fun KClass<*>.getName() = this.qualifiedName ?: this.simpleName ?: "<unknown>"
-
-/**
  * Kontainer module
  */
+@KontainerDslModule
 class KontainerModule(private val module: KontainerBuilder.() -> Unit) {
     fun apply(builder: KontainerBuilder) {
         builder.module()
@@ -82,6 +85,7 @@ class ParameterizedKontainerModule<P>(private val module: KontainerBuilder.(P) -
 /**
  * Parameterized Kontainer module
  */
+@KontainerDslModule
 class ParameterizedKontainerModule2<P1, P2>(private val module: KontainerBuilder.(P1, P2) -> Unit) {
     fun apply(builder: KontainerBuilder, p1: P1, p2: P2) {
         builder.module(p1, p2)
@@ -91,6 +95,7 @@ class ParameterizedKontainerModule2<P1, P2>(private val module: KontainerBuilder
 /**
  * Parameterized Kontainer module
  */
+@KontainerDslModule
 class ParameterizedKontainerModule3<P1, P2, P3>(private val module: KontainerBuilder.(P1, P2, P3) -> Unit) {
     fun apply(builder: KontainerBuilder, p1: P1, p2: P2, p3: P3) {
         builder.module(p1, p2, p3)
@@ -100,6 +105,7 @@ class ParameterizedKontainerModule3<P1, P2, P3>(private val module: KontainerBui
 /**
  * Parameterized Kontainer module
  */
+@KontainerDslModule
 class ParameterizedKontainerModule4<P1, P2, P3, P4>(private val module: KontainerBuilder.(P1, P2, P3, P4) -> Unit) {
     fun apply(builder: KontainerBuilder, p1: P1, p2: P2, p3: P3, p4: P4) {
         builder.module(p1, p2, p3, p4)
@@ -109,6 +115,7 @@ class ParameterizedKontainerModule4<P1, P2, P3, P4>(private val module: Kontaine
 /**
  * Parameterized Kontainer module
  */
+@KontainerDslModule
 class ParameterizedKontainerModule5<P1, P2, P3, P4, P5>(private val module: KontainerBuilder.(P1, P2, P3, P4, P5) -> Unit) {
     fun apply(builder: KontainerBuilder, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5) {
         builder.module(p1, p2, p3, p4, p5)
