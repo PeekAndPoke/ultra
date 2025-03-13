@@ -35,7 +35,7 @@ fun getKarangoDefaultSlumberConfig() = SlumberConfig.default.prependModules(Vaul
  */
 val KarangoModule = module { config: ArangoDbConfig ->
 
-    val arangoDb: ArangoDatabaseAsync = config.toArangoDbWithoutCache()
+    val arangoDb: ArangoDatabaseAsync = config.toArangoDb()
 
     instance(ArangoDatabaseAsync::class, arangoDb)
 
