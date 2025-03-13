@@ -146,7 +146,7 @@ class ApiResponseSpec : StringSpec() {
         "map() should transform the data in the ApiResponse" {
             val originalResponse = ApiResponse.ok("test data")
 
-            val mappedResponse = originalResponse.map { it?.uppercase() }
+            val mappedResponse = originalResponse.map { it.uppercase() }
 
             assertSoftly {
                 mappedResponse.status shouldBe HttpStatusCode.OK
@@ -187,10 +187,10 @@ class ApiResponseSpec : StringSpec() {
             }
         }
 
-        "map() should handle null data properly" {
+        "mapNullable() should handle null data properly" {
             val originalResponse = ApiResponse.notFound<String>(null)
 
-            val mappedResponse = originalResponse.map { it?.uppercase() ?: "NOT FOUND" }
+            val mappedResponse = originalResponse.mapNullable { it?.uppercase() ?: "NOT FOUND" }
 
             assertSoftly {
                 mappedResponse.status shouldBe HttpStatusCode.NotFound
