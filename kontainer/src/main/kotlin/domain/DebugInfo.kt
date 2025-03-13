@@ -56,7 +56,7 @@ data class DebugInfo(
     ) {
         enum class ProvisionType {
             Direct,
-            Lazy;
+            Lazy
         }
     }
 }

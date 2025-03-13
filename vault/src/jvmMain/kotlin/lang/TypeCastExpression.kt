@@ -11,4 +11,3 @@ class TypeCastExpression<T>(private val type: TypeRef<T>, private val wrapped: E
 
     override fun print(p: Printer) = wrapped.print(p)
 }
-

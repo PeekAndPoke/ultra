@@ -141,4 +141,3 @@ interface QueryProfiler {
         block: suspend (Entry) -> R,
     ): R
 }
-

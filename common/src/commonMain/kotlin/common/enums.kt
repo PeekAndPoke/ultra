@@ -33,4 +33,3 @@ inline fun <reified T : Enum<T>> safeEnumsOf(input: String?, delimiter: String =
         else -> input.splitAndTrimToSet(delimiter).mapNotNull { safeEnumOrNull<T>(it) }
     }
 }
-

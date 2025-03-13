@@ -162,8 +162,11 @@ class RemoteRequestImpl(
      * @param body content to send in the body of the request
      */
     override fun delete(uri: String, contentType: String, body: String?): Flow<RemoteResponse> {
-        return if (body != null) execute(uri, buildInit("DELETE", contentType, body))
-        else execute(uri, buildInit("DELETE"))
+        return if (body != null) {
+            execute(uri, buildInit("DELETE", contentType, body))
+        } else {
+            execute(uri, buildInit("DELETE"))
+        }
     }
 
     /**

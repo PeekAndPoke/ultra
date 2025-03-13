@@ -6,7 +6,6 @@ import io.kotest.matchers.shouldBe
 
 class CollectionsSpec : StringSpec({
 
-
     "Collection.containsAny: array" {
         assertSoftly {
 

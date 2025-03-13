@@ -29,6 +29,6 @@ data class FileBase64(
     }
 
     fun asDataUrl(): String {
-        return "data:${mimeType ?: ""};base64,${data}"
+        return "data:${mimeType ?: ""};base64,$data"
     }
 }

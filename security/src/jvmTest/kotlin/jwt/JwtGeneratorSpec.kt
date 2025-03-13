@@ -184,4 +184,3 @@ class JwtGeneratorSpec : StringSpec() {
         }
     }
 }
-
