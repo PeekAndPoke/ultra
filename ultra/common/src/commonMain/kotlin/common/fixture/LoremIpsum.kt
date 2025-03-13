@@ -7,6 +7,8 @@ import kotlin.random.Random
  */
 object LoremIpsum {
 
+    private val rand = Random(1234)
+
     private const val WORDS = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, " +
             "sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, " +
             "sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. " +
@@ -21,15 +23,11 @@ object LoremIpsum {
 
     private val WORDS_SPLIT = WORDS.split(" ")
 
-    private val rand = Random(1234)
+    private fun getWordAt(idx: Int) = WORDS_SPLIT[idx % WORDS_SPLIT.size]
 
     operator fun invoke(words: Int) = words(words)
 
-    fun words(words: Int) = WORDS_SPLIT.subList(0, words).joinToString(" ")
+    fun words(words: Int) = (0..<words).joinToString(separator = " ", transform = ::getWordAt)
 
     fun words(words: Int, randomRange: Int = 5) = words(words + rand.nextInt(-randomRange, randomRange))
-
-    fun imageUrl(width: Int, height: Int): String = "https://picsum.photos/$width/$height?r=${rand.nextInt()}"
-
-    fun imageUrls(amount: Int, width: Int, height: Int): List<String> = (0 until amount).map { imageUrl(width, height) }
 }

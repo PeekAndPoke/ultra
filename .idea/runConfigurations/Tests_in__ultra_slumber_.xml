@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Tests in 'logging'" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="Tests in 'ultra:slumber'" type="GradleRunConfiguration" factoryName="Gradle" folderName="ultra">
     <ExternalSystemSettings>
       <option name="executionName" />
-      <option name="externalProjectPath" value="$PROJECT_DIR$" />
+      <option name="externalProjectPath" value="$PROJECT_DIR$/ultra/slumber" />
       <option name="externalSystemIdString" value="GRADLE" />
       <option name="scriptParameters" value="" />
       <option name="taskDescriptions">
@@ -10,10 +10,9 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value=":logging:cleanTest" />
-          <option value=":logging:test" />
-          <option value="--tests" />
-          <option value="*" />
+          <option value="clean" />
+          <option value="check" />
+          <option value="allTests" />
         </list>
       </option>
       <option name="vmOptions" value="" />
@@ -21,6 +20,7 @@
     <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
     <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
     <DebugAllEnabled>false</DebugAllEnabled>
+    <RunAsTest>false</RunAsTest>
     <method v="2" />
   </configuration>
 </component>

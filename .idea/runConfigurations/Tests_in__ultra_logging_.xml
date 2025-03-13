@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Tests in 'kontainer'" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="Tests in 'ultra:logging'" type="GradleRunConfiguration" factoryName="Gradle" folderName="ultra">
     <ExternalSystemSettings>
       <option name="executionName" />
-      <option name="externalProjectPath" value="$PROJECT_DIR$/kontainer" />
+      <option name="externalProjectPath" value="$PROJECT_DIR$/ultra/logging" />
       <option name="externalSystemIdString" value="GRADLE" />
       <option name="scriptParameters" value="" />
       <option name="taskDescriptions">
@@ -10,15 +10,17 @@
       </option>
       <option name="taskNames">
         <list>
+          <option value="clean" />
           <option value="check" />
+          <option value="allTests" />
         </list>
       </option>
-      <option name="vmOptions" />
+      <option name="vmOptions" value="" />
     </ExternalSystemSettings>
-    <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+    <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
     <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
     <DebugAllEnabled>false</DebugAllEnabled>
-    <RunAsTest>false</RunAsTest>
+    <RunAsTest>true</RunAsTest>
     <method v="2" />
   </configuration>
 </component>
