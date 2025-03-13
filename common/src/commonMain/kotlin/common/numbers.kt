@@ -13,7 +13,7 @@ fun Number.toFixed(digits: Int): String {
 
 internal expect fun Number.toFixedInternal(digits: Int): String
 
-//fun Number.toFixed(decimals: Int): String {
+// fun Number.toFixed(decimals: Int): String {
 //
 //    if (decimals <= 0) {
 //        return toInt().toString()
@@ -39,7 +39,7 @@ internal expect fun Number.toFixedInternal(digits: Int): String
 //    }
 //
 //    return "${if (allZeros) "" else signum}$beforeComma.${afterComma.joinToString("")}"
-//}
+// }
 
 fun Number.roundWithPrecision(precision: Int): Double {
 

@@ -131,7 +131,6 @@ class AnnotatedFieldsSlumberSpec : StringSpec() {
                         "lazy" to 10,
                     )
                 }
-
             }
 
             (Codec.default.slumber(GenericDataClassWithFields(input = "10")) as Map<*, *>).let {

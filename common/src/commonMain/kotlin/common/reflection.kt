@@ -4,7 +4,7 @@ import kotlin.reflect.KType
 
 // TODO: test me
 val KType.isPrimitive
-    get() : Boolean = classifier in listOf(
+    get(): Boolean = classifier in listOf(
         Boolean::class,
         Char::class,
         Byte::class,

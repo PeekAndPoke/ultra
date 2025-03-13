@@ -382,7 +382,7 @@ interface ParameterProvider {
         private val paramCls = type.classifier as KClass<*>
 
         /** The error that will be raised by [provide] and [validate] */
-        private val error = "Parameter '${name}' has no known way to inject a ${paramCls.getName()}"
+        private val error = "Parameter '$name' has no known way to inject a ${paramCls.getName()}"
 
         /**
          * Get the injected services types

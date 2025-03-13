@@ -15,4 +15,3 @@ data class EmptyApiResponse(
     /** Insights head */
     val insights: ApiResponse.Insights? = null,
 )
-

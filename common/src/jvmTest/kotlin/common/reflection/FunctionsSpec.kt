@@ -7,7 +7,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import kotlin.reflect.KParameter.Kind
 
-
 class FunctionsSpec : StringSpec() {
 
     fun subject1(p1: Int, p2: Int, p3: Int) = p1 + p2 + p3

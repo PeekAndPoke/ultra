@@ -41,7 +41,6 @@ data class PropertyPath<P, T>(
         }
     }
 
-
     override fun getType() = current.getType()
 
     override fun print(p: Printer) {
@@ -68,7 +67,7 @@ data class PropertyPath<P, T>(
     }
 }
 
-//// generic property
+// // generic property
 
 inline fun <reified T> Expression<*>.property(name: String): PropertyPath<T, T> {
     @Suppress("UNCHECKED_CAST")

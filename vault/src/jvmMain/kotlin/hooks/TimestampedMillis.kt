@@ -16,4 +16,3 @@ interface TimestampedMillis {
         return createdMsApplied.withUpdatedMs(now)
     }
 }
-

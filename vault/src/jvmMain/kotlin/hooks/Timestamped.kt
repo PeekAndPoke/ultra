@@ -18,4 +18,3 @@ interface Timestamped {
         return createdAtApplied.withUpdatedAt(now)
     }
 }
-

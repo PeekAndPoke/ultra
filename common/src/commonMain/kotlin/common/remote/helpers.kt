@@ -129,4 +129,3 @@ fun buildUri(pattern: String, params: Map<String, UriParamBuilder.Value> = empty
             .joinToString("&")
     }
 }
-
