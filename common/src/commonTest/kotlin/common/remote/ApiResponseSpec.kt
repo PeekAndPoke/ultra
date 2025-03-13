@@ -198,7 +198,6 @@ class ApiResponseSpec : StringSpec() {
             }
         }
 
-
         // 1XX Creation methods /////////////////////////////////////////////////////////////////////////////////////
 
         "continueResponse() should create an ApiResponse with HttpStatusCode.Continue" {

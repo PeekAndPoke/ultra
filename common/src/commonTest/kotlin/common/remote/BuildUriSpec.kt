@@ -91,5 +91,4 @@ class BuildUriSpec : StringSpec() {
             } shouldBe "https://example.com/api/users?details=full&page=1&size=25&t=1624654321"
         }
     }
-
 }

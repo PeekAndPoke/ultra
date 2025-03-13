@@ -342,7 +342,6 @@ data class ApiResponse<out T>(
         inline fun <T> unavailableForLegalReasons(data: T? = null): ApiResponse<T> =
             ApiResponse(HttpStatusCode.UnavailableForLegalReasons, data)
 
-
         // 5XX /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         /**
@@ -457,4 +456,3 @@ data class ApiResponse<out T>(
         )
     )
 }
-
