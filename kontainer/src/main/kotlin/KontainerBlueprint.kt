@@ -186,7 +186,7 @@ class KontainerBlueprint internal constructor(
                 val codeLocation = provider.definition.codeLocation.first()
                 val name = cls.getName()
 
-                "${serviceIdx + 1}. Service '${name}'\n" +
+                "${serviceIdx + 1}. Service '$name'\n" +
                         "    defined at ${codeLocation ?: "n/a"})\n" +
                         errors.joinToString("\n") { "    -> $it" }
             }
