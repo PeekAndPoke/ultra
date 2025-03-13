@@ -21,7 +21,6 @@ import de.peekandpoke.ultra.vault.slumber.ts
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 
-
 interface SoftDeletableRepositoryAddon<T : SoftDeletable.Mutable<T>> : Repository<T> {
 
     val kronos: Kronos

@@ -49,30 +49,42 @@ data class ArrayOpExpr<T>(
 }
 
 @VaultFunctionMarker
-inline infix fun <reified T> Expression<out Collection<T>>.ANY(partial: PartialBooleanExpression<T>): Expression<Boolean> =
+inline infix fun <reified T> Expression<out Collection<T>>.ANY(
+    partial: PartialBooleanExpression<T>
+): Expression<Boolean> =
     partial(ArrayOpExpr(this, ArrayOperator.ANY, kType()))
 
 // TODO: Write unit tests
 @VaultFunctionMarker
-inline infix fun <reified T> Expression<out Collection<T>>.ANY_IN(other: Expression<out Collection<T>>): Expression<Boolean> =
+inline infix fun <reified T> Expression<out Collection<T>>.ANY_IN(
+    other: Expression<out Collection<T>>
+): Expression<Boolean> =
     this ANY { it IN other }
 
 @VaultFunctionMarker
-inline infix fun <reified T> Expression<out Collection<T>>.NONE(partial: PartialBooleanExpression<T>): Expression<Boolean> =
+inline infix fun <reified T> Expression<out Collection<T>>.NONE(
+    partial: PartialBooleanExpression<T>
+): Expression<Boolean> =
     partial(ArrayOpExpr(this, ArrayOperator.NONE, kType()))
 
 // TODO: Write unit tests
 @VaultFunctionMarker
-inline infix fun <reified T> Expression<out Collection<T>>.NONE_IN(other: Expression<out Collection<T>>): Expression<Boolean> =
+inline infix fun <reified T> Expression<out Collection<T>>.NONE_IN(
+    other: Expression<out Collection<T>>
+): Expression<Boolean> =
     this NONE { it IN other }
 
 @VaultFunctionMarker
-inline infix fun <reified T> Expression<out Collection<T>>.ALL(partial: PartialBooleanExpression<T>): Expression<Boolean> =
+inline infix fun <reified T> Expression<out Collection<T>>.ALL(
+    partial: PartialBooleanExpression<T>
+): Expression<Boolean> =
     partial(ArrayOpExpr(this, ArrayOperator.ALL, kType()))
 
 // TODO: Write unit tests
 @VaultFunctionMarker
-inline infix fun <reified T> Expression<out Collection<T>>.ALL_IN(other: Expression<out Collection<T>>): Expression<Boolean> =
+inline infix fun <reified T> Expression<out Collection<T>>.ALL_IN(
+    other: Expression<out Collection<T>>
+): Expression<Boolean> =
     this ALL { it IN other }
 
 @VaultFunctionMarker

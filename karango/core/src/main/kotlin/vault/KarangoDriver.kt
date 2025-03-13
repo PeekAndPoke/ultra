@@ -113,7 +113,6 @@ class KarangoDriver(
                                 /* bindVars = */ vars,
                                 /* options = */ options,
                             ).await()
-
                         } catch (e: ArangoDBException) {
                             throw KarangoQueryException(
                                 query = query,

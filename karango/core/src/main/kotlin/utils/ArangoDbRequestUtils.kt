@@ -37,7 +37,6 @@ class ArangoDbRequestUtils(
 
             (body["msg"] as? String)
                 ?: ("ERROR: Unknown response format\n\n" + response.body.toString())
-
         } catch (e: Throwable) {
             "ERROR: ${e.stackTraceToString()}"
         }

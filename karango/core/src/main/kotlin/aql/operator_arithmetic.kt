@@ -22,7 +22,6 @@ internal class ArithmeticExpression<L, R>(
 
     override fun print(p: Printer) =
         p.append("(").append(left).append(" ${op.op} ").append(right).append(")")
-
 }
 
 operator fun <L, R> Expression<L>.plus(right: Expression<R>): Expression<Number> =

@@ -405,7 +405,7 @@ class KarangoKspProcessor(
                 val args = arguments.mapNotNull { arg -> arg.type?.resolve()?.let { arg to it } }
 
                 args.forEach { (arg, type) ->
-                    logger.info("    --> ${arg}: $type")
+                    logger.info("    --> $arg: $type")
                 }
 
                 args

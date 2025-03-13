@@ -124,10 +124,9 @@ class AqlPrinter : Printer {
             }
 
             else -> {
-                append("@${existing}")
+                append("@$existing")
             }
         }
-
     }
 
     /**

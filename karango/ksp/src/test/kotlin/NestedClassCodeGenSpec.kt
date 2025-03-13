@@ -48,7 +48,6 @@ class NestedClassCodeGenSpec : StringSpec() {
 
             warn { "Fix this as soon as CompileTesting supports Kotlin 2.1.10" }
 
-
 //                expectFileToMatch(
 //                    "Outer${"$$"}karango.kt",
 //                    """

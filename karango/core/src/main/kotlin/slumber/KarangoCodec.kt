@@ -21,4 +21,3 @@ class KarangoCodec(
         configure()
     }
 )
-

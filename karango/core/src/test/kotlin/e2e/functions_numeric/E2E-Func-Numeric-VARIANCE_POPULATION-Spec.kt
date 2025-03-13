@@ -59,7 +59,6 @@ class `E2E-Func-Numeric-VARIANCE_POPULATION-Spec` : StringSpec({
         result.first() shouldBe 25.0
     }
 
-
     val cases = listOf(
         row(
             "VARIANCE_POPULATION( [] ) - ARRAY",

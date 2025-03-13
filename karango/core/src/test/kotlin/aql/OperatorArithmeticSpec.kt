@@ -67,7 +67,6 @@ class OperatorArithmeticSpec : StringSpec({
                     expression.op shouldBe operator
                     expression.right::class shouldBe ValueExpr::class
                 }
-
             } else {
                 fail("invalid result type")
             }

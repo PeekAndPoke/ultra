@@ -20,7 +20,6 @@ version = VERSION_NAME
 kotlin {
     js {
         browser {}
-
     }
 
     jvmToolchain(Deps.jvmTargetVersion)
@@ -48,7 +47,6 @@ kotlin {
         }
 
         jsMain {
-
         }
 
         jsTest {

@@ -59,7 +59,6 @@ class `E2E-Func-Numeric-MEDIAN-Spec` : StringSpec({
         result.first() shouldBe 30.0
     }
 
-
     val cases = listOf(
         row(
             "MEDIAN( [1, 2, 3] ) - listOf",

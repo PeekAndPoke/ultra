@@ -186,7 +186,6 @@ class `E2E-Func-Array-APPEND-Spec` : StringSpec({
         }
     }
 
-
     val cases = listOf(
         row(
             "APPEND ([], [])",
