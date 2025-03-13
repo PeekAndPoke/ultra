@@ -42,7 +42,11 @@ class Kontainer internal constructor(
      *
      * This will reset all dynamic services, just like creating a new kontainer from a [KontainerBlueprint].
      */
-    fun clone(): Kontainer = factory.newKontainer()
+    fun clone(dynamics: DynamicOverrides.Builder.() -> Unit = {}): Kontainer {
+        return factory.newKontainer(
+            DynamicOverrides.Builder().apply(dynamics).build()
+        )
+    }
 
     // getting services ////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -31,7 +31,12 @@ class ServiceProviderFactory(
 
     private val providers: MutableMap<KClass<*>, ServiceProvider> = mutableMapOf()
 
-    fun newKontainer() = blueprint.instantiate(dynamics)
+    // TODO: test me
+    fun newKontainer(overrides: DynamicOverrides): Kontainer {
+        return blueprint.instantiate(
+            dynamics.merge(overrides)
+        )
+    }
 
     /**
      * Get the [ServiceProducer] for the given [cls].

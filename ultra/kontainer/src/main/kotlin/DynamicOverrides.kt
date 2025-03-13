@@ -18,4 +18,8 @@ class DynamicOverrides internal constructor(
             overrides[srv] = instance
         }
     }
+
+    fun merge(other: DynamicOverrides): DynamicOverrides {
+        return DynamicOverrides(this.overrides + other.overrides)
+    }
 }

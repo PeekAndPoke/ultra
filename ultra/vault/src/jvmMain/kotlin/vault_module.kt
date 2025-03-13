@@ -29,7 +29,7 @@ fun KontainerBuilder.ultraVault() = module(Ultra_Vault)
 val Ultra_Vault
     get() = module {
         // Database
-        singleton(Database::class)
+        dynamic(Database::class)
         singleton(SharedRepoClassLookup::class)
 
         // Caching
