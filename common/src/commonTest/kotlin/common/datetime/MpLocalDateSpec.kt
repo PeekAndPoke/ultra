@@ -138,7 +138,6 @@ class MpLocalDateSpec : StringSpec() {
             val date = MpLocalDate.of(year = 2022, month = Month.APRIL, day = 11)
 
             date.format("dd MMM yyyy") shouldBe "11 Apr 2022"
-
         }
 
         "formatDdMmmYyyy" {
@@ -773,14 +772,14 @@ class MpLocalDateSpec : StringSpec() {
             val date = MpLocalDate.of(2024, 2, 15)
 
             date.getDatesInMonth(listOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)) shouldContainExactly listOf(
-                MpLocalDate.of(2024, 2, 3),  // Saturday
-                MpLocalDate.of(2024, 2, 4),  // Sunday
+                MpLocalDate.of(2024, 2, 3), // Saturday
+                MpLocalDate.of(2024, 2, 4), // Sunday
                 MpLocalDate.of(2024, 2, 10), // Saturday
                 MpLocalDate.of(2024, 2, 11), // Sunday
                 MpLocalDate.of(2024, 2, 17), // Saturday
                 MpLocalDate.of(2024, 2, 18), // Sunday
                 MpLocalDate.of(2024, 2, 24), // Saturday
-                MpLocalDate.of(2024, 2, 25)  // Sunday
+                MpLocalDate.of(2024, 2, 25) // Sunday
             )
         }
 
@@ -801,14 +800,14 @@ class MpLocalDateSpec : StringSpec() {
 
             // Testing with reversed order of weekdays to ensure output is still chronological
             date.getDatesInMonth(listOf(DayOfWeek.TUESDAY, DayOfWeek.MONDAY)) shouldContainExactly listOf(
-                MpLocalDate.of(2024, 2, 5),  // Monday
-                MpLocalDate.of(2024, 2, 6),  // Tuesday
+                MpLocalDate.of(2024, 2, 5), // Monday
+                MpLocalDate.of(2024, 2, 6), // Tuesday
                 MpLocalDate.of(2024, 2, 12), // Monday
                 MpLocalDate.of(2024, 2, 13), // Tuesday
                 MpLocalDate.of(2024, 2, 19), // Monday
                 MpLocalDate.of(2024, 2, 20), // Tuesday
                 MpLocalDate.of(2024, 2, 26), // Monday
-                MpLocalDate.of(2024, 2, 27)  // Tuesday
+                MpLocalDate.of(2024, 2, 27) // Tuesday
             )
         }
     }

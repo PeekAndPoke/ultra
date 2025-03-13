@@ -116,7 +116,9 @@ class ParameterizedKontainerModule4<P1, P2, P3, P4>(private val module: Kontaine
  * Parameterized Kontainer module
  */
 @KontainerDslModule
-class ParameterizedKontainerModule5<P1, P2, P3, P4, P5>(private val module: KontainerBuilder.(P1, P2, P3, P4, P5) -> Unit) {
+class ParameterizedKontainerModule5<P1, P2, P3, P4, P5>(
+    private val module: KontainerBuilder.(P1, P2, P3, P4, P5) -> Unit
+) {
     fun apply(builder: KontainerBuilder, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5) {
         builder.module(p1, p2, p3, p4, p5)
     }

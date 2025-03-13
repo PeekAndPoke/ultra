@@ -20,7 +20,8 @@ fun <E1> tuple(
  * @return A tuple containing the specified elements.
  */
 fun <E1, E2> tuple(
-    e1: E1, e2: E2,
+    e1: E1,
+    e2: E2,
 ) = Tuple2(e1, e2)
 
 /**
@@ -33,7 +34,9 @@ fun <E1, E2> tuple(
  * @return a new instance of Tuple3 with the specified elements
  */
 fun <E1, E2, E3> tuple(
-    e1: E1, e2: E2, e3: E3,
+    e1: E1,
+    e2: E2,
+    e3: E3,
 ) = Tuple3(e1, e2, e3)
 
 /**
@@ -47,7 +50,10 @@ fun <E1, E2, E3> tuple(
  * @return A new tuple containing the given elements.
  */
 fun <E1, E2, E3, E4> tuple(
-    e1: E1, e2: E2, e3: E3, e4: E4,
+    e1: E1,
+    e2: E2,
+    e3: E3,
+    e4: E4,
 ) = Tuple4(e1, e2, e3, e4)
 
 /**
@@ -62,7 +68,11 @@ fun <E1, E2, E3, E4> tuple(
  * @return A new tuple with the specified elements.
  */
 fun <E1, E2, E3, E4, E5> tuple(
-    e1: E1, e2: E2, e3: E3, e4: E4, e5: E5,
+    e1: E1,
+    e2: E2,
+    e3: E3,
+    e4: E4,
+    e5: E5,
 ) = Tuple5(e1, e2, e3, e4, e5)
 
 /**
@@ -78,7 +88,12 @@ fun <E1, E2, E3, E4, E5> tuple(
  * @return a tuple containing the specified elements
  */
 fun <E1, E2, E3, E4, E5, E6> tuple(
-    e1: E1, e2: E2, e3: E3, e4: E4, e5: E5, e6: E6,
+    e1: E1,
+    e2: E2,
+    e3: E3,
+    e4: E4,
+    e5: E5,
+    e6: E6,
 ) = Tuple6(e1, e2, e3, e4, e5, e6)
 
 /**
@@ -95,7 +110,13 @@ fun <E1, E2, E3, E4, E5, E6> tuple(
  * @return A new 7-element tuple with the given values.
  */
 fun <E1, E2, E3, E4, E5, E6, E7> tuple(
-    e1: E1, e2: E2, e3: E3, e4: E4, e5: E5, e6: E6, e7: E7,
+    e1: E1,
+    e2: E2,
+    e3: E3,
+    e4: E4,
+    e5: E5,
+    e6: E6,
+    e7: E7,
 ) = Tuple7(e1, e2, e3, e4, e5, e6, e7)
 
 /**
@@ -113,7 +134,14 @@ fun <E1, E2, E3, E4, E5, E6, E7> tuple(
  * @return the tuple containing the specified elements
  */
 fun <E1, E2, E3, E4, E5, E6, E7, E8> tuple(
-    e1: E1, e2: E2, e3: E3, e4: E4, e5: E5, e6: E6, e7: E7, e8: E8,
+    e1: E1,
+    e2: E2,
+    e3: E3,
+    e4: E4,
+    e5: E5,
+    e6: E6,
+    e7: E7,
+    e8: E8,
 ) = Tuple8(e1, e2, e3, e4, e5, e6, e7, e8)
 
 /**
@@ -132,7 +160,15 @@ fun <E1, E2, E3, E4, E5, E6, E7, E8> tuple(
  * @return A new tuple with the specified elements.
  */
 fun <E1, E2, E3, E4, E5, E6, E7, E8, E9> tuple(
-    e1: E1, e2: E2, e3: E3, e4: E4, e5: E5, e6: E6, e7: E7, e8: E8, e9: E9,
+    e1: E1,
+    e2: E2,
+    e3: E3,
+    e4: E4,
+    e5: E5,
+    e6: E6,
+    e7: E7,
+    e8: E8,
+    e9: E9,
 ) = Tuple9(e1, e2, e3, e4, e5, e6, e7, e8, e9)
 
 /**
@@ -152,7 +188,16 @@ fun <E1, E2, E3, E4, E5, E6, E7, E8, E9> tuple(
  * @return A tuple containing the specified elements.
  */
 fun <E1, E2, E3, E4, E5, E6, E7, E8, E9, E10> tuple(
-    e1: E1, e2: E2, e3: E3, e4: E4, e5: E5, e6: E6, e7: E7, e8: E8, e9: E9, e10: E10,
+    e1: E1,
+    e2: E2,
+    e3: E3,
+    e4: E4,
+    e5: E5,
+    e6: E6,
+    e7: E7,
+    e8: E8,
+    e9: E9,
+    e10: E10,
 ) = Tuple10(e1, e2, e3, e4, e5, e6, e7, e8, e9, e10)
 
 /**
@@ -193,7 +238,8 @@ data class Tuple1<E1>(
  * Represents a tuple containing two elements.
  */
 data class Tuple2<E1, E2>(
-    val e1: E1, val e2: E2,
+    val e1: E1,
+    val e2: E2,
 ) {
     /**
      * Lazily converts the elements of this tuple to a list.
@@ -225,7 +271,9 @@ data class Tuple2<E1, E2>(
  * Represents a tuple containing three elements.
  */
 data class Tuple3<E1, E2, E3>(
-    val e1: E1, val e2: E2, val e3: E3,
+    val e1: E1,
+    val e2: E2,
+    val e3: E3,
 ) {
     /**
      * Lazily converts the elements of this tuple to a list.
@@ -257,7 +305,10 @@ data class Tuple3<E1, E2, E3>(
  * Represents a tuple containing four elements.
  */
 data class Tuple4<E1, E2, E3, E4>(
-    val e1: E1, val e2: E2, val e3: E3, val e4: E4,
+    val e1: E1,
+    val e2: E2,
+    val e3: E3,
+    val e4: E4,
 ) {
     /**
      * Lazily converts the elements of this tuple to a list.
@@ -289,7 +340,11 @@ data class Tuple4<E1, E2, E3, E4>(
  * Represents a tuple containing five elements.
  */
 data class Tuple5<E1, E2, E3, E4, E5>(
-    val e1: E1, val e2: E2, val e3: E3, val e4: E4, val e5: E5,
+    val e1: E1,
+    val e2: E2,
+    val e3: E3,
+    val e4: E4,
+    val e5: E5,
 ) {
     /**
      * Lazily converts the elements of this tuple to a list.
@@ -321,7 +376,12 @@ data class Tuple5<E1, E2, E3, E4, E5>(
  * Represents a tuple containing six elements.
  */
 data class Tuple6<E1, E2, E3, E4, E5, E6>(
-    val e1: E1, val e2: E2, val e3: E3, val e4: E4, val e5: E5, val e6: E6,
+    val e1: E1,
+    val e2: E2,
+    val e3: E3,
+    val e4: E4,
+    val e5: E5,
+    val e6: E6,
 ) {
     /**
      * Lazily converts the elements of this tuple to a list.
@@ -353,7 +413,13 @@ data class Tuple6<E1, E2, E3, E4, E5, E6>(
  * Represents a tuple containing seven elements.
  */
 data class Tuple7<E1, E2, E3, E4, E5, E6, E7>(
-    val e1: E1, val e2: E2, val e3: E3, val e4: E4, val e5: E5, val e6: E6, val e7: E7,
+    val e1: E1,
+    val e2: E2,
+    val e3: E3,
+    val e4: E4,
+    val e5: E5,
+    val e6: E6,
+    val e7: E7,
 ) {
     /**
      * Lazily converts the elements of this tuple to a list.
@@ -385,7 +451,14 @@ data class Tuple7<E1, E2, E3, E4, E5, E6, E7>(
  * Represents a tuple containing eight elements.
  */
 data class Tuple8<E1, E2, E3, E4, E5, E6, E7, E8>(
-    val e1: E1, val e2: E2, val e3: E3, val e4: E4, val e5: E5, val e6: E6, val e7: E7, val e8: E8,
+    val e1: E1,
+    val e2: E2,
+    val e3: E3,
+    val e4: E4,
+    val e5: E5,
+    val e6: E6,
+    val e7: E7,
+    val e8: E8,
 ) {
     /**
      * Lazily converts the elements of this tuple to a list.
@@ -417,7 +490,15 @@ data class Tuple8<E1, E2, E3, E4, E5, E6, E7, E8>(
  * Represents a tuple containing nine elements.
  */
 data class Tuple9<E1, E2, E3, E4, E5, E6, E7, E8, E9>(
-    val e1: E1, val e2: E2, val e3: E3, val e4: E4, val e5: E5, val e6: E6, val e7: E7, val e8: E8, val e9: E9,
+    val e1: E1,
+    val e2: E2,
+    val e3: E3,
+    val e4: E4,
+    val e5: E5,
+    val e6: E6,
+    val e7: E7,
+    val e8: E8,
+    val e9: E9,
 ) {
     /**
      * Lazily converts the elements of this tuple to a list.
@@ -450,8 +531,16 @@ data class Tuple9<E1, E2, E3, E4, E5, E6, E7, E8, E9>(
  * Represents a tuple containing ten elements.
  */
 data class Tuple10<E1, E2, E3, E4, E5, E6, E7, E8, E9, E10>(
-    val e1: E1, val e2: E2, val e3: E3, val e4: E4, val e5: E5,
-    val e6: E6, val e7: E7, val e8: E8, val e9: E9, val e10: E10,
+    val e1: E1,
+    val e2: E2,
+    val e3: E3,
+    val e4: E4,
+    val e5: E5,
+    val e6: E6,
+    val e7: E7,
+    val e8: E8,
+    val e9: E9,
+    val e10: E10,
 ) {
     /**
      * Lazily converts the elements of this tuple to a list.
