@@ -438,19 +438,7 @@ data class ApiResponse<out T>(
     /**
      * Creates a new ApiResponse, while mapping the [data].
      */
-    fun <R> map(mapper: (T) -> R): ApiResponse<R> {
-        return ApiResponse(
-            status = status,
-            data = data?.let { mapper(it) },
-            messages = messages,
-            insights = insights,
-        )
-    }
-
-    /**
-     * Creates a new ApiResponse, while mapping the [data].
-     */
-    fun <R> mapNullable(mapper: (T?) -> R): ApiResponse<R> {
+    fun <R> map(mapper: (T?) -> R?): ApiResponse<R> {
         return ApiResponse(
             status = status,
             data = mapper(data),
