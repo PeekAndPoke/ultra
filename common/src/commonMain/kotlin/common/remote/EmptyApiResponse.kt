@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.rest
+package de.peekandpoke.ultra.common.remote
 
 import de.peekandpoke.ultra.common.model.Message
 import kotlinx.serialization.Serializable

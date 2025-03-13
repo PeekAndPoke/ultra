@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.common.remote
 
-import de.peekandpoke.ktorfx.rest.ApiResponse
 import de.peekandpoke.ultra.common.encodeUriComponent
 import de.peekandpoke.ultra.common.model.Paged
 import kotlinx.serialization.KSerializer
