@@ -28,11 +28,11 @@ kotlin {
 
         api(Deps.JavaLibs.ArangoDb.java_driver)
 
-        implementation(project(":common"))
-        implementation(project(":kontainer"))
-        implementation(project(":logging"))
-        implementation(project(":slumber"))
-        implementation(project(":vault"))
+        implementation(project(":ultra:common"))
+        implementation(project(":ultra:kontainer"))
+        implementation(project(":ultra:logging"))
+        implementation(project(":ultra:slumber"))
+        implementation(project(":ultra:vault"))
 
         // //  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
 

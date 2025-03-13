@@ -20,19 +20,20 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/buildSrc" />
-            <option value="$PROJECT_DIR$/common" />
             <option value="$PROJECT_DIR$/karango" />
             <option value="$PROJECT_DIR$/karango/addons" />
             <option value="$PROJECT_DIR$/karango/core" />
             <option value="$PROJECT_DIR$/karango/ksp" />
-            <option value="$PROJECT_DIR$/kontainer" />
-            <option value="$PROJECT_DIR$/logging" />
-            <option value="$PROJECT_DIR$/meta" />
-            <option value="$PROJECT_DIR$/mutator" />
-            <option value="$PROJECT_DIR$/security" />
-            <option value="$PROJECT_DIR$/slumber" />
-            <option value="$PROJECT_DIR$/slumber-test-classes" />
-            <option value="$PROJECT_DIR$/vault" />
+            <option value="$PROJECT_DIR$/ultra" />
+            <option value="$PROJECT_DIR$/ultra/common" />
+            <option value="$PROJECT_DIR$/ultra/kontainer" />
+            <option value="$PROJECT_DIR$/ultra/logging" />
+            <option value="$PROJECT_DIR$/ultra/meta" />
+            <option value="$PROJECT_DIR$/ultra/mutator" />
+            <option value="$PROJECT_DIR$/ultra/security" />
+            <option value="$PROJECT_DIR$/ultra/slumber" />
+            <option value="$PROJECT_DIR$/ultra/slumber-test-classes" />
+            <option value="$PROJECT_DIR$/ultra/vault" />
           </set>
         </option>
       </GradleProjectSettings>

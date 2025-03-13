@@ -10,8 +10,7 @@ Check out the sub-projects. There you will find details, descriptive test cases 
 
 ## ultra::common
 
-[ultra::common](common/README.MD) - Helper functions and utilities for:  
-[ultra::commonmp](commonmp/README.MD) - Multiplatform helper functions and utilities for:
+[ultra::common](ultra/common/README.MD) - Multiplatform Helpers and utilities for:
 
 - Collections, Lists, Files, Functions
 - Hashing (like MD5, SHA256, ...)
@@ -27,19 +26,19 @@ Check out the sub-projects. There you will find details, descriptive test cases 
 
 ## ultra::kontainer
 
-[ultra::kontainer](kontainer/README.MD) - A multi stage dependency injection mechanism
+[ultra::kontainer](ultra/kontainer/README.MD) - A multi stage dependency injection mechanism
 
-[READ MORE](kontainer/README.MD) ||
-[EXAMPLES](kontainer/docs/ultra::docs/index.md) ||
-[TESTS](kontainer/src/test/kotlin)
+[READ MORE](ultra/kontainer/README.MD) ||
+[EXAMPLES](ultra/kontainer/docs/ultra::docs/index.md) ||
+[TESTS](ultra/kontainer/src/test/kotlin)
 
 ## ultra::logging
 
-[ultra::logging](logging/README.MD) - A lean logging framework that integrates with the Kontainer
+[ultra::logging](ultra/logging/README.MD) - A lean logging framework that integrates with the Kontainer
 
 ## ultra::meta
 
-[ultra::meta](meta/README.MD) - Meta Programming Tools for Kotlin Annotation Processing and code generation
+[ultra::meta](ultra/meta/README.MD) - Meta Programming Tools for Kotlin Annotation Processing and code generation
 
 Projects using this:
 
@@ -49,11 +48,11 @@ Projects using this:
 
 ## ultra::mutator
 
-[ultra::mutator](mutator/README.MD) - Mutate the Immutable!
+[ultra::mutator](ultra/mutator/README.MD) - Mutate the Immutable!
 
-[READ MORE](mutator/README.MD) ||
-[EXAMPLES](mutator/docs/ultra::docs/index.md) ||
-[TESTS](mutator/src/test/kotlin)
+[READ MORE](ultra/mutator/README.MD) ||
+[EXAMPLES](ultra/mutator/docs/ultra::docs/index.md) ||
+[TESTS](ultra/mutator/src/test/kotlin)
 
 Mutator is a kotlin library inspired by [immerjs](https://github.com/immerjs/immer).  
 It enables you to manipulate deeply nested immutable data structures.  
@@ -66,15 +65,15 @@ With zero boilerplate code at all and some powerful additional features.
 
 ## ultra::security
 
-[ultra::security](security/README.MD) - Everyday security features
+[ultra::security](ultra/security/README.MD) - Everyday security features
 
 ## ultra::slumber
 
-[ultra::slumber](slumber/README.MD) - Object serialization with nullability awareness
+[ultra::slumber](ultra/slumber/README.MD) - Object serialization with nullability awareness
 
-[READ MORE](slumber/README.MD) ||
-[EXAMPLES](mutator/docs/ultra::docs/index.md) ||
-[TESTS](mutator/src/test/kotlin)
+[READ MORE](ultra/slumber/README.MD) ||
+[EXAMPLES](ultra/mutator/docs/ultra::docs/index.md) ||
+[TESTS](ultra/mutator/src/test/kotlin)
 
 Slumber is aware of the Null Safety that is built into Kotlin.
 

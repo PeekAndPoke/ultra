@@ -25,8 +25,8 @@ kotlin {
         implementation(Deps.JavaLibs.Google.auto_service)
         kapt(Deps.JavaLibs.Google.auto_service)
 
-        implementation(project(":slumber"))
-        implementation(project(":vault"))
+        implementation(project(":ultra:slumber"))
+        implementation(project(":ultra:vault"))
         implementation(project(":karango:core"))
 
         // //  tests  ////////////////////////////////////////////////////////////////////////////////////////////////

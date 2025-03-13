@@ -1,5 +1,9 @@
 package de.peekandpoke.ultra.common.markup.images
 
+import de.peekandpoke.ultra.common.markup.images.ImageSizes.Companion.breakpoints
+import de.peekandpoke.ultra.common.markup.images.ImageSizes.Companion.mobileBreakpoint
+
+
 /**
  * Helper function for building [ImageSizes]
  */

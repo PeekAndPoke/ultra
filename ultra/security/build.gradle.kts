@@ -32,8 +32,9 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(Deps.KotlinX.coroutines_core)
                 implementation(Deps.KotlinX.serialization_core)
+
+                api(project(":ultra:common"))
             }
         }
 
@@ -57,9 +58,8 @@ kotlin {
         jvmMain {
             dependencies {
                 implementation(kotlin("reflect"))
-                implementation(project(":kontainer"))
-
-                implementation(Deps.JavaLibs.slf4j_api)
+                implementation(project(":ultra:kontainer"))
+                api(Deps.JavaLibs.auth0_java_jwt)
             }
         }
 

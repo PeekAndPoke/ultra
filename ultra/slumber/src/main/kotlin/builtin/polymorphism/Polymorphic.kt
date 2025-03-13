@@ -3,6 +3,8 @@ package de.peekandpoke.ultra.slumber.builtin.polymorphism
 import de.peekandpoke.ultra.slumber.AdditionalSerialName
 import de.peekandpoke.ultra.slumber.Polymorphic
 import de.peekandpoke.ultra.slumber.builtin.objects.DataClassCodec
+import de.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicChildUtil.getAdditionalIdentifiers
+import de.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicChildUtil.getIdentifier
 import kotlinx.serialization.SerialName
 import kotlin.reflect.KClass
 import kotlin.reflect.KType

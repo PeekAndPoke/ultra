@@ -2,15 +2,15 @@ rootProject.name = 'ultra'
 
 include(
         // ULTRA projects
-        ":common",
-        ":kontainer",
-        ":logging",
-        ":meta",
-        ":mutator",
-        ":security",
-        ":slumber",
-        ":slumber-test-classes",
-        ":vault",
+        ":ultra:common",
+        ":ultra:kontainer",
+        ":ultra:logging",
+        ":ultra:meta",
+        ":ultra:mutator",
+        ":ultra:security",
+        ":ultra:slumber",
+        ":ultra:slumber-test-classes",
+        ":ultra:vault",
 
         // KARANGO projects
         ":karango:core",

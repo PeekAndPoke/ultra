@@ -34,7 +34,7 @@ kotlin {
             dependencies {
                 implementation(Deps.KotlinX.serialization_core)
 
-                implementation(project(":common"))
+                implementation(project(":ultra:common"))
             }
         }
 
@@ -59,7 +59,7 @@ kotlin {
 
         jvmMain {
             dependencies {
-                api(project(":vault"))
+                api(project(":ultra:vault"))
                 api(project(":karango:core"))
 
                 configurations.getByName("kspJvm").dependencies.add(project(":karango:ksp"))

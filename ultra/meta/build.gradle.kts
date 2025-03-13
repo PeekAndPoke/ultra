@@ -22,7 +22,7 @@ kotlin {
 dependencies {
     implementation(kotlin("reflect"))
 
-    api(project(":common"))
+    api(project(":ultra:common"))
 
     //  code generation  //////////////////////////////////////////////////////////////////////////////////////
 

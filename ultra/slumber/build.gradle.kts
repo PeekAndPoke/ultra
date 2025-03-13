@@ -22,10 +22,10 @@ dependencies {
 
     api(Deps.JavaLibs.classindex)
 
-    api(project(":common"))
+    api(project(":ultra:common"))
 
     // Testing
-    testImplementation(project(":slumber-test-classes"))
+    testImplementation(project(":ultra:slumber-test-classes"))
     kaptTest(Deps.JavaLibs.classindex)
 
     Deps.Test {

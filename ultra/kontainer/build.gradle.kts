@@ -18,7 +18,7 @@ dependencies {
     implementation(kotlin("reflect"))
     implementation(Deps.KotlinX.coroutines_core)
 
-    api(project(":common"))
+    api(project(":ultra:common"))
 
     // Tests /////////////////////////
     Deps.Test {

@@ -18,14 +18,14 @@ version = VERSION_NAME
 dependencies {
     implementation(kotlin("reflect"))
 
-    api(project(":common"))
-    api(project(":meta"))
+    api(project(":ultra:common"))
+    api(project(":ultra:meta"))
 
     kapt(Deps.JavaLibs.Google.auto_service)
 
     // Test /////////////////////////////////////////////////////////////////////////
 
-    kaptTest(project(":mutator"))
+    kaptTest(project(":ultra:mutator"))
 
     Deps.Test {
         jvmTestDeps()

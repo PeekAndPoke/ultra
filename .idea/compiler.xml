@@ -24,6 +24,7 @@
       <module name="root.test" target="1.8" />
       <module name="root.ultra.main" target="1.8" />
       <module name="root.ultra.test" target="1.8" />
+      <module name="ultra.common" target="17" />
       <module name="ultra.common-mp" target="11" />
       <module name="ultra.common-mp.commonMain" target="1.8" />
       <module name="ultra.common-mp.commonTest" target="1.8" />
@@ -35,8 +36,26 @@
       <module name="ultra.common.test" target="17" />
       <module name="ultra.commonmp.jvmMain~1" target="1.8" />
       <module name="ultra.commonmp.jvmTest~1" target="1.8" />
+      <module name="ultra.kontainer" target="17" />
+      <module name="ultra.kontainer.main" target="17" />
+      <module name="ultra.kontainer.test" target="17" />
+      <module name="ultra.logging" target="17" />
       <module name="ultra.main" target="17" />
+      <module name="ultra.meta" target="17" />
+      <module name="ultra.meta.main" target="17" />
+      <module name="ultra.meta.test" target="17" />
+      <module name="ultra.mutator" target="17" />
+      <module name="ultra.mutator.main" target="17" />
+      <module name="ultra.mutator.test" target="17" />
+      <module name="ultra.security" target="17" />
+      <module name="ultra.slumber" target="17" />
+      <module name="ultra.slumber-test-classes" target="17" />
+      <module name="ultra.slumber-test-classes.main" target="17" />
+      <module name="ultra.slumber-test-classes.test" target="17" />
+      <module name="ultra.slumber.main" target="17" />
+      <module name="ultra.slumber.test" target="17" />
       <module name="ultra.test" target="17" />
+      <module name="ultra.vault" target="17" />
       <module name="ultra.z-playground-js" target="17" />
       <module name="ultra.z-playground-jvm" target="17" />
       <module name="ultra.z-playground-jvm.main" target="17" />

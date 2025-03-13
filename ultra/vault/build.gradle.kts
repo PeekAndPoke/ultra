@@ -40,7 +40,7 @@ kotlin {
 
                 implementation(Deps.Ktor.Client.core)
 
-                api(project(":common"))
+                api(project(":ultra:common"))
             }
         }
 
@@ -66,9 +66,9 @@ kotlin {
                 implementation(Deps.JavaLibs.Jackson.databind)
                 implementation(Deps.KotlinLibs.clikt)
 
-                api(project(":logging"))
-                api(project(":kontainer"))
-                api(project(":slumber"))
+                api(project(":ultra:logging"))
+                api(project(":ultra:kontainer"))
+                api(project(":ultra:slumber"))
             }
         }
 
