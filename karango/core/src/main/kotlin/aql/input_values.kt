@@ -91,4 +91,3 @@ fun Nothing?.aql(name: String = "v"): Expression<Any?> = this.expr(name)
 @VaultInputValueMarker
 val Nothing?.aql: Expression<Any?>
     get() = this.aql()
-

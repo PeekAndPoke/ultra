@@ -7,7 +7,6 @@ import io.kotest.matchers.shouldBe
 
 class OperationBooleanSpec : StringSpec({
 
-
     val samples = listOf(
         // EQ Operation
         row("EQ: partial and value", ARRAY(1.aql, 2.aql) ALL EQ(2), "[1, 2] ALL == 2"),

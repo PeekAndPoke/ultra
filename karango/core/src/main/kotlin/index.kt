@@ -57,7 +57,6 @@ val KarangoModule = module { config: ArangoDbConfig ->
 private val dbCache = mutableMapOf<ArangoDbConfig, ArangoDatabaseAsync>()
 private val lock = Any()
 
-
 fun ArangoDbConfig.toArangoDb(): ArangoDatabaseAsync = synchronized(lock) {
     // TODO: check that the DB was not yet shut down
     dbCache[this]?.let { return it }

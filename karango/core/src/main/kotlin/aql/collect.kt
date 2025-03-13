@@ -61,7 +61,6 @@ fun <T, A> StatementBuilder.COLLECT_AGGREGATE(
     ).addStmt()
 }
 
-
 @VaultDslMarker
 class CollectWithExpression<T> internal constructor(
     private val func: FunctionExpr<T>,

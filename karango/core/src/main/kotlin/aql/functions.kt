@@ -6,16 +6,15 @@ import de.peekandpoke.ultra.vault.lang.Expression
 import de.peekandpoke.ultra.vault.lang.FunctionExpr0
 import de.peekandpoke.ultra.vault.lang.Printer
 
-
 object Aql {
     object COUNT : FunctionExpr0<Int>(AqlFunc.COUNT.toString(), kType())
 }
 
 enum class AqlFunc {
     // Overloaded functions
-    LENGTH,                // TODO: impl, tests FOR Collections
-    COUNT,                 // TODO: impl, tests FOR Collections
-    REVERSE,               // TODO: impl, tests FOR Collections
+    LENGTH, // TODO: impl, tests FOR Collections
+    COUNT, // TODO: impl, tests FOR Collections
+    REVERSE, // TODO: impl, tests FOR Collections
 
     // Array
     APPEND,
@@ -46,38 +45,36 @@ enum class AqlFunc {
 
     // Date TODO
 
-
     // Database functions
-    COLLECTION_COUNT,      // TODO: impl, tests
-    COLLECTIONS,           // TODO: impl, tests
-    DOCUMENT,              // TODO: tests
-    HASH,                  // TODO: impl, tests
-    APPLY,                 // TODO: impl, tests
-    ASSERT,                // TODO: impl, tests
-    WARN,                  // TODO: impl, tests
-    CALL,                  // TODO: impl, tests
-    FAIL,                  // TODO: impl, tests
-    NOOPT,                 // TODO: impl, tests
-    PASSTHRU,              // TODO: impl, tests
-    SLEEP,                 // TODO: impl, tests
-    V8,                    // TODO: impl, tests
-    VERSION,               // TODO: impl, tests
+    COLLECTION_COUNT, // TODO: impl, tests
+    COLLECTIONS, // TODO: impl, tests
+    DOCUMENT, // TODO: tests
+    HASH, // TODO: impl, tests
+    APPLY, // TODO: impl, tests
+    ASSERT, // TODO: impl, tests
+    WARN, // TODO: impl, tests
+    CALL, // TODO: impl, tests
+    FAIL, // TODO: impl, tests
+    NOOPT, // TODO: impl, tests
+    PASSTHRU, // TODO: impl, tests
+    SLEEP, // TODO: impl, tests
+    V8, // TODO: impl, tests
+    VERSION, // TODO: impl, tests
 
     // Document / Object TODO
 
-    MERGE,                 // TODO: tests
-    UNSET,                 // TODO: Tests
+    MERGE, // TODO: tests
+    UNSET, // TODO: Tests
 
     // Fulltext TODO
 
     // Geo // TODO
 
-
     // Miscellaneous
-    FIRST_LIST,            // TODO: impl, tests
-    FIRST_DOCUMENT,        // TODO: impl, tests
-    NOT,                   // TODO: tests
-    NOT_NULL,              // TODO: impl, tests
+    FIRST_LIST, // TODO: impl, tests
+    FIRST_DOCUMENT, // TODO: impl, tests
+    NOT, // TODO: tests
+    NOT_NULL, // TODO: impl, tests
 
     // Numeric
     ABS,
@@ -135,24 +132,24 @@ enum class AqlFunc {
     MD5,
     RANDOM_TOKEN,
     REGEX_MATCHES,
-    REGEX_SPLIT,           // TODO: impl, tests
-    REGEX_TEST,            // TODO: impl, tests
-    REGEX_REPLACE,         // TODO: impl, tests
+    REGEX_SPLIT, // TODO: impl, tests
+    REGEX_TEST, // TODO: impl, tests
+    REGEX_REPLACE, // TODO: impl, tests
     RIGHT,
     RTRIM,
     SHA1,
     SHA512,
     SPLIT,
     SOUNDEX,
-    SUBSTITUTE,            // TODO: impl, tests
+    SUBSTITUTE, // TODO: impl, tests
     SUBSTRING,
-    TOKENS,                // TODO: impl, tests
+    TOKENS, // TODO: impl, tests
     TO_BASE64,
     TO_HEX,
     TRIM,
     UPPER,
     UUID,
-    STARTS_WITH,           // TODO: tests
+    STARTS_WITH, // TODO: tests
 
     // Type checks
     IS_NULL,
@@ -235,4 +232,3 @@ internal class FuncCallImpl<T>(
     override fun getType() = type
     override fun print(p: Printer) = p.append("${func.name}(").join(args).append(")")
 }
-

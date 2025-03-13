@@ -39,5 +39,3 @@ internal data class SortBy(val sorts: List<Sort>) : Statement {
         return printer.appendLine()
     }
 }
-
-

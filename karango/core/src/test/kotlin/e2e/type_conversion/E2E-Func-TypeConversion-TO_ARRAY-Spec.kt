@@ -63,7 +63,6 @@ class `E2E-Func-TypeConversion-TO_ARRAY-Spec` : StringSpec({
         result3.toList() shouldBe listOf(listOf<Any>())
     }
 
-
     val cases = listOf(
         row("TO_ARRAY(false)", false, listOf(false)),
         row("TO_ARRAY(true)", true, listOf(true)),
@@ -141,7 +140,6 @@ class `E2E-Func-TypeConversion-TO_ARRAY-Spec` : StringSpec({
             withClue(result.query.query + "\n\n" + result.query.vars + "\n\n") {
                 result.toList() shouldBe listOf(expected)
             }
-
         }
     }
 

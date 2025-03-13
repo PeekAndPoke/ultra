@@ -13,22 +13,26 @@ import de.peekandpoke.ultra.vault.lang.VaultDslMarker
 
 @VaultDslMarker
 fun <T> StatementBuilder.LET(
-    name: String, expression: Expression<T>,
+    name: String,
+    expression: Expression<T>,
 ): Expression<T> = LetExpr(name, expression).addStmt().toExpression()
 
 @VaultDslMarker
 fun StatementBuilder.LET(
-    name: String, @Suppress("UNUSED_PARAMETER") value: Nothing?,
+    name: String,
+    @Suppress("UNUSED_PARAMETER") value: Nothing?,
 ): Expression<Any?> = LET(name, NullValueExpr())
 
 @VaultDslMarker
 inline fun <reified T> StatementBuilder.LET(
-    name: String, value: T,
+    name: String,
+    value: T,
 ): Expression<T> = Let(name, value, kType()).addStmt().toExpression()
 
 @VaultDslMarker
 inline fun <reified T> StatementBuilder.LET(
-    name: String, builder: () -> T,
+    name: String,
+    builder: () -> T,
 ): Expression<T> = Let(name, builder(), kType()).addStmt().toExpression()
 
 /**

@@ -12,7 +12,6 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
-
 @Suppress("ClassName")
 class `E2E-ReturnDirectly-Spec` : StringSpec() {
 
@@ -512,7 +511,6 @@ class `E2E-ReturnDirectly-Spec` : StringSpec() {
 
                 withClue("TypeRef for deserialization") {
                     result.query.root.innerType() shouldBe kMapType<String, E2ePerson>()
-
                 }
 
                 withClue("TypeRef of TerminalExpr") {

@@ -84,7 +84,6 @@ class ForLoop internal constructor() : StatementBuilder {
     fun PAGE(page: Int = 1, epp: Int = 20) = LIMIT(offset = max(0, page - 1) * epp, limit = epp)
 }
 
-
 internal class ForLoopExpr<T, R>(
     private val iterator: IterableExpr<T>,
     private val iterable: Expression<List<T>>,

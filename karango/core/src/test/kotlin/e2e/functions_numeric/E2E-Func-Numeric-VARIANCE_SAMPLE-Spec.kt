@@ -58,7 +58,6 @@ class `E2E-Func-Numeric-VARIANCE_SAMPLE-Spec` : StringSpec({
         result.first() shouldBe 50.0
     }
 
-
     val cases = listOf(
         row(
             "VARIANCE_SAMPLE( [] ) - ARRAY",

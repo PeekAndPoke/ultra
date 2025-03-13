@@ -8,4 +8,3 @@ internal val JonBonJovi = TestPerson("Jon Jovi", TestPersonDetails("Bon"), listO
 internal val EdgarAllanPoe = TestPerson("Edgar Poe", TestPersonDetails("Allan"), listOf())
 
 internal val HeinzRudolfKunze = TestPerson("Heinz Kunze", TestPersonDetails("Rudolf"), listOf())
-

@@ -53,7 +53,6 @@ internal class RemoveIn<E, T : Any> internal constructor(
     private val options: RemoveOptions,
 ) : TerminalExpr<T> {
 
-
     override fun innerType(): TypeRef<T> = repo.storedType
 
     override fun getType() = repo.getType()

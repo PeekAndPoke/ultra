@@ -59,7 +59,6 @@ class `E2E-Func-Numeric-STDDEV_POPULATION-Spec` : StringSpec({
         result.first() shouldBe 5.0
     }
 
-
     val cases = listOf(
         row(
             "STDDEV_POPULATION( [] ) - ARRAY",

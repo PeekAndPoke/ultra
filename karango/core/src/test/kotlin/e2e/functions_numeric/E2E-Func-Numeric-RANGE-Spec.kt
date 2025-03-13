@@ -62,7 +62,7 @@ class `E2E-Func-Numeric-RANGE-Spec` : StringSpec({
                 val l = LET("l", expression)
 
                 @Suppress("UNCHECKED_CAST")
-                RETURN(l) as TerminalExpr<List<Number>>  // Don't do this at home... just a workaround for the different return types
+                RETURN(l) as TerminalExpr<List<Number>> // Don't do this at home... just a workaround for the different return types
             }
 
             withDetailedClue(expression, expected) {
