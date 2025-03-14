@@ -159,7 +159,7 @@ data class MpInstant(
     /**
      * Adds the [duration] in absolute terms.
      */
-    fun plus(duration: Duration): MpInstant {
+    operator fun plus(duration: Duration): MpInstant {
         return MpInstant(value = value.plus(duration))
     }
 
@@ -247,7 +247,7 @@ data class MpInstant(
     /**
      * Subtracts the [duration] in absolute terms.
      */
-    fun minus(duration: Duration): MpInstant {
+    operator fun minus(duration: Duration): MpInstant {
         return plus(duration.unaryMinus())
     }
 

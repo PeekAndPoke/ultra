@@ -13,6 +13,11 @@ import kotlin.time.Duration
 typealias EaseFn = (Double) -> Double
 
 object Ease {
+
+    fun EaseFn.bindFromTo(from: Double, to: Double): BoundFromTo {
+        return BoundFromTo(from = from, to = to, fn = this)
+    }
+
     class Timed(
         val from: Double,
         val to: Double,
@@ -32,6 +37,16 @@ object Ease {
             return calc(from, to, progress, fn).also {
                 onProgress(progress, isDone)
             }
+        }
+    }
+
+    class BoundFromTo(val from: Double, val to: Double, val fn: EaseFn) {
+        operator fun invoke(progress: Double): Double {
+            return calc(progress = progress)
+        }
+
+        fun calc(progress: Double): Double {
+            return calc(from = from, to = to, progress = progress, fn = fn)
         }
     }
 
