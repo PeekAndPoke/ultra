@@ -19,7 +19,7 @@ fun <RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Head.Bound<RESPONSE>): Flo
     ).body { it decodedBy bound.endpoint.response }
 }
 
-fun ApiClient.call(bound: TypedApiEndpoint.Sse.Bound): ClientSSESession {
+suspend fun ApiClient.call(bound: TypedApiEndpoint.Sse.Bound): ClientSSESession {
     return remote.sse(
         uri = buildUri(pattern = bound.uri, params = bound.params)
     )

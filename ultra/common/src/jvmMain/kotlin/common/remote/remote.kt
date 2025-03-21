@@ -114,7 +114,9 @@ class RemoteRequestImpl(
      * Start an sse session
      */
     override suspend fun sse(uri: String): ClientSSESession {
-        return client.sseSession(uri)
+        val url = "$baseUrl/${uri.trimStart('/')}"
+
+        return client.sseSession(url)
     }
 
     /**

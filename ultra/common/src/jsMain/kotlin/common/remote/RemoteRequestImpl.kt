@@ -142,9 +142,11 @@ class RemoteRequestImpl(
      */
     override suspend fun sse(uri: String): ClientSSESession {
 
+        val url = "$baseUrl/${uri.trimStart('/')}"
+
         val c = client ?: throw IllegalStateException("No client available")
 
-        return c.sseSession(uri)
+        return c.sseSession(url)
     }
 
     /**
