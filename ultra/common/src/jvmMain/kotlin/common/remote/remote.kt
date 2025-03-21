@@ -2,6 +2,7 @@ package de.peekandpoke.ultra.common.remote
 
 import de.peekandpoke.ultra.common.toBase64
 import io.ktor.client.*
+import io.ktor.client.plugins.sse.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -48,7 +49,7 @@ class RemoteRequestImpl(
     client: HttpClient?,
 ) : RemoteRequest {
 
-    private val client = client!!
+    private val client = client ?: error("No client available")
 
     private val headers: HeadersBuilder = HeadersBuilder()
 
@@ -108,6 +109,13 @@ class RemoteRequestImpl(
      * @param uri endpoint url which getting appended to the baseUrl with `/`
      */
     override fun head(uri: String): Flow<RemoteResponse> = execute(HttpMethod.Head, uri)
+
+    /**
+     * Start an sse session
+     */
+    override suspend fun sse(uri: String): ClientSSESession {
+        return client.sseSession(uri)
+    }
 
     /**
      * issues a post request returning a flow of it's response

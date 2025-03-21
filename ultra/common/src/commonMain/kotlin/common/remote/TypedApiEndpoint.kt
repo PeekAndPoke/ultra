@@ -3,53 +3,50 @@ package de.peekandpoke.ultra.common.remote
 import de.peekandpoke.ultra.common.TypedAttributes
 import de.peekandpoke.ultra.common.TypedKey
 import de.peekandpoke.ultra.common.model.EmptyObject
+import io.ktor.client.plugins.sse.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.KSerializer
 
-fun <RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Delete.Bound<RESPONSE>): Flow<RESPONSE> {
-    return remote
-        .delete(
-            uri = buildUri(pattern = bound.endpoint.uri, params = bound.params)
-        )
-        .body { it decodedBy bound.endpoint.response }
-}
-
 fun <RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Get.Bound<RESPONSE>): Flow<RESPONSE> {
-    return remote
-        .get(
-            uri = buildUri(pattern = bound.uri, params = bound.params)
-        )
-        .body { it decodedBy bound.responseSerializer }
+    return remote.get(
+        uri = buildUri(pattern = bound.uri, params = bound.params)
+    ).body { it decodedBy bound.responseSerializer }
 }
 
 fun <RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Head.Bound<RESPONSE>): Flow<RESPONSE> {
-    return remote
-        .head(
-            uri = buildUri(pattern = bound.endpoint.uri, params = bound.params)
-        )
-        .body { it decodedBy bound.endpoint.response }
+    return remote.head(
+        uri = buildUri(pattern = bound.endpoint.uri, params = bound.params)
+    ).body { it decodedBy bound.endpoint.response }
+}
+
+fun ApiClient.call(bound: TypedApiEndpoint.Sse.Bound): ClientSSESession {
+    return remote.sse(
+        uri = buildUri(pattern = bound.uri, params = bound.params)
+    )
 }
 
 fun <BODY, RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Post.Bound<BODY, RESPONSE>): Flow<RESPONSE> {
     @Suppress("UNCHECKED_CAST")
-    return remote
-        .post(
-            uri = buildUri(pattern = bound.uri, params = bound.params),
-            contentType = "application/json",
-            body = bound.body encodedBy bound.bodySerializer as KSerializer<BODY>
-        )
-        .body { it decodedBy bound.responseSerializer }
+    return remote.post(
+        uri = buildUri(pattern = bound.uri, params = bound.params),
+        contentType = "application/json",
+        body = bound.body encodedBy bound.bodySerializer as KSerializer<BODY>
+    ).body { it decodedBy bound.responseSerializer }
 }
 
 fun <BODY, RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Put.Bound<BODY, RESPONSE>): Flow<RESPONSE> {
     @Suppress("UNCHECKED_CAST")
-    return remote
-        .put(
-            uri = buildUri(pattern = bound.uri, params = bound.params),
-            contentType = "application/json",
-            body = bound.body encodedBy bound.bodySerializer as KSerializer<BODY>
-        )
-        .body { it decodedBy bound.responseSerializer }
+    return remote.put(
+        uri = buildUri(pattern = bound.uri, params = bound.params),
+        contentType = "application/json",
+        body = bound.body encodedBy bound.bodySerializer as KSerializer<BODY>
+    ).body { it decodedBy bound.responseSerializer }
+}
+
+fun <RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Delete.Bound<RESPONSE>): Flow<RESPONSE> {
+    return remote.delete(
+        uri = buildUri(pattern = bound.endpoint.uri, params = bound.params)
+    ).body { it decodedBy bound.endpoint.response }
 }
 
 sealed class TypedApiEndpoint {

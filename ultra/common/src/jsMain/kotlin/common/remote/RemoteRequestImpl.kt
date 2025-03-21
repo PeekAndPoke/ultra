@@ -1,5 +1,7 @@
 package de.peekandpoke.ultra.common.remote
 
+import io.ktor.client.*
+import io.ktor.client.plugins.sse.*
 import kotlinx.browser.window
 import kotlinx.coroutines.await
 import kotlinx.coroutines.flow.Flow
@@ -17,7 +19,8 @@ import org.w3c.fetch.RequestRedirect
 class RemoteRequestImpl(
     private val baseUrl: String,
     override val requestInterceptors: List<RequestInterceptor>,
-    override val responseInterceptors: List<ResponseInterceptor>
+    override val responseInterceptors: List<ResponseInterceptor>,
+    private val client: HttpClient?,
 ) : RemoteRequest {
     private var headers: Headers? = undefined
     private var referrer: String? = undefined
@@ -133,6 +136,16 @@ class RemoteRequestImpl(
      * @param uri endpoint url which getting appended to the baseUrl with `/`
      */
     override fun head(uri: String): Flow<RemoteResponse> = execute(uri, buildInit("HEAD"))
+
+    /**
+     * Start an sse session
+     */
+    override suspend fun sse(uri: String): ClientSSESession {
+
+        val c = client ?: throw IllegalStateException("No client available")
+
+        return c.sseSession(uri)
+    }
 
     /**
      * issues a post request returning a flow of it's response

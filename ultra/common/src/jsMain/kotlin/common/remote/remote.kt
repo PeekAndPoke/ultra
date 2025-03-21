@@ -17,7 +17,8 @@ actual fun createRequest(
 ): RemoteRequest = RemoteRequestImpl(
     baseUrl,
     requestInterceptors,
-    responseInterceptors
+    responseInterceptors,
+    client,
 )
 
 /**

@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.common.remote
 
+import io.ktor.client.plugins.sse.*
 import kotlinx.coroutines.flow.Flow
 
 @Suppress("Detekt.TooManyFunctions")
@@ -23,6 +24,11 @@ interface RemoteRequest {
      * @param uri endpoint url which getting appended to the baseUrl with `/`
      */
     fun head(uri: String = ""): Flow<RemoteResponse>
+
+    /**
+     * Starts an sse session
+     */
+    suspend fun sse(uri: String = ""): ClientSSESession
 
     /**
      * issues a post request returning a flow of it's response
