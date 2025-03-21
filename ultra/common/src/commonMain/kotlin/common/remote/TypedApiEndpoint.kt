@@ -124,6 +124,37 @@ sealed class TypedApiEndpoint {
         )
     }
 
+    data class Sse(
+        override val uri: String,
+        override val attributes: TypedAttributes = TypedAttributes.empty,
+    ) : TypedApiEndpoint() {
+        class Bound(
+            val uri: String,
+            val params: Map<String, String?>,
+        )
+
+        private fun bind(
+            params: Map<String, String?>,
+        ): Bound = Bound(
+            uri = uri,
+            params = params,
+        )
+
+        operator fun invoke(
+            params: Map<String, String?> = emptyMap(),
+        ): Bound =
+            bind(params = params)
+
+        operator fun invoke(
+            vararg params: Pair<String, String?>,
+        ): Bound =
+            invoke(params = params.toMap())
+
+        fun withAttributes(builder: TypedAttributes.Builder.() -> Unit): Sse = copy(
+            attributes = attributes.plus(builder)
+        )
+    }
+
     data class Head<RESPONSE>(
         override val uri: String,
         val response: KSerializer<RESPONSE>,

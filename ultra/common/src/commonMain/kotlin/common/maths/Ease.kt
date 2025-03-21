@@ -14,8 +14,8 @@ typealias EaseFn = (Double) -> Double
 
 object Ease {
 
-    fun EaseFn.bindFromTo(from: Double, to: Double): BoundFromTo {
-        return BoundFromTo(from = from, to = to, fn = this)
+    fun EaseFn.bindFromTo(from: Number, to: Number): BoundFromTo {
+        return BoundFromTo(from = from.toDouble(), to = to.toDouble(), fn = this)
     }
 
     class Timed(

@@ -42,23 +42,6 @@ object Deps {
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     object KotlinLibs {
-        object Kraft {
-            // https://central.sonatype.com/search?q=g%3Aio.peekandpoke.kraft++a%3Acore&smo=true
-            private const val kraft_version = "0.61.0"
-            const val core = "io.peekandpoke.kraft:core:$kraft_version"
-            const val semanticui = "io.peekandpoke.kraft:semanticui:$kraft_version"
-
-            const val addons_chartjs = "io.peekandpoke.kraft:addons-chartjs:$kraft_version"
-            const val addons_konva = "io.peekandpoke.kraft:addons-konva:$kraft_version"
-            const val addons_marked = "io.peekandpoke.kraft:addons-marked:$kraft_version"
-            const val addons_nxcompile = "io.peekandpoke.kraft:addons-nxcompile:$kraft_version"
-            const val addons_pdfjs = "io.peekandpoke.kraft:addons-pdfjs:$kraft_version"
-            const val addons_prismjs = "io.peekandpoke.kraft:addons-prismjs:$kraft_version"
-            const val addons_signaturepad = "io.peekandpoke.kraft:addons-signaturepad:$kraft_version"
-            const val addons_sourcemappedstacktrace =
-                "io.peekandpoke.kraft:addons-sourcemappedstacktrace:$kraft_version"
-        }
-
         // https://mvnrepository.com/artifact/com.github.ajalt.clikt/clikt
         private const val clikt_version = "5.0.3"
         const val clikt = "com.github.ajalt.clikt:clikt:$clikt_version"
