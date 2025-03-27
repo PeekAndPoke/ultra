@@ -7,6 +7,7 @@ import de.peekandpoke.ultra.slumber.builtin.collections.CollectionAwaker
 import de.peekandpoke.ultra.slumber.builtin.collections.CollectionSlumberer
 import de.peekandpoke.ultra.slumber.builtin.collections.MapAwaker
 import de.peekandpoke.ultra.slumber.builtin.collections.MapSlumberer
+import de.peekandpoke.ultra.slumber.builtin.kotlinx.KotlinXJsonCodec
 import de.peekandpoke.ultra.slumber.builtin.objects.AnyAwaker
 import de.peekandpoke.ultra.slumber.builtin.objects.AnySlumberer
 import de.peekandpoke.ultra.slumber.builtin.objects.DataClassCodec
@@ -49,80 +50,50 @@ object BuiltInModule : SlumberModule {
 
         if (cls is KClass<*>) {
 
+            val primaryCtor = cls.primaryConstructor
+
             return when {
                 // Null or Nothing
-                cls in listOf(Nothing::class, Unit::class) ->
-                    NullCodec
+                cls in listOf(Nothing::class, Unit::class) -> NullCodec
 
-                // Any type
-                cls in listOf(Any::class, Serializable::class) ->
-                    type.wrapIfNonNull(AnyAwaker)
-
-                // Primitive types
-                cls == Number::class ->
-                    type.wrapIfNonNull(NumberAwaker)
-
-                cls == Boolean::class ->
-                    type.wrapIfNonNull(BooleanAwaker)
-
-                cls == Byte::class ->
-                    type.wrapIfNonNull(ByteAwaker)
-
-                cls == Char::class ->
-                    type.wrapIfNonNull(CharAwaker)
-
-                cls == Double::class ->
-                    type.wrapIfNonNull(DoubleAwaker)
-
-                cls == Float::class ->
-                    type.wrapIfNonNull(FloatAwaker)
-
-                cls == Int::class ->
-                    type.wrapIfNonNull(IntAwaker)
-
-                cls == Long::class ->
-                    type.wrapIfNonNull(LongAwaker)
-
-                cls == Short::class ->
-                    type.wrapIfNonNull(ShortAwaker)
-
-                // Strings
-                cls == String::class -> type.wrapIfNonNull(StringAwaker)
-
-                // Lists
-                cls == Iterable::class || cls == List::class || cls == MutableList::class ->
-                    type.wrapIfNonNull(CollectionAwaker.forList(type))
-
-                // Sets
-                cls == Set::class || cls == MutableSet::class ->
-                    type.wrapIfNonNull(CollectionAwaker.forSet(type))
-
-                // Maps
-                cls == Map::class || cls == MutableMap::class ->
-                    type.wrapIfNonNull(MapAwaker.forMap(type))
-
-                // Enum
-                cls.java.isEnum ->
-                    type.wrapIfNonNull(EnumCodec(type) as Awaker)
-
-                // Polymorphic classes
-                PolymorphicParentUtil.isPolymorphicParent(cls) ->
-                    type.wrapIfNonNull(PolymorphicParentUtil.createParentAwaker(cls))
-
-                // Singleton Object instance
-                cls.objectInstance != null ->
-                    type.wrapIfNonNull(ObjectInstanceCodec(cls.objectInstance!!) as Awaker)
-
-                // Data classes
-                cls.isData ->
-                    type.wrapIfNonNull(DataClassCodec(type) as Awaker)
-
-                // No param ctor (objects)
-                cls.primaryConstructor != null && cls.primaryConstructor!!.parameters.isEmpty() ->
-                    type.wrapIfNonNull(DataClassCodec(type) as Awaker)
-
-                // Type cannot be handled by this module
-                else -> null
+                else -> when {
+                    // Any type
+                    cls in listOf(Any::class, Serializable::class) -> AnyAwaker
+                    // Primitive types
+                    cls == Number::class -> NumberAwaker
+                    cls == Boolean::class -> BooleanAwaker
+                    cls == Byte::class -> ByteAwaker
+                    cls == Char::class -> CharAwaker
+                    cls == Double::class -> DoubleAwaker
+                    cls == Float::class -> FloatAwaker
+                    cls == Int::class -> IntAwaker
+                    cls == Long::class -> LongAwaker
+                    cls == Short::class -> ShortAwaker
+                    cls == String::class -> StringAwaker
+                    // KotlinX Json
+                    KotlinXJsonCodec.appliesTo(cls) -> KotlinXJsonCodec as Awaker
+                    // Lists
+                    cls == Iterable::class || cls == List::class || cls == MutableList::class ->
+                        CollectionAwaker.forList(type)
+                    // Sets
+                    cls == Set::class || cls == MutableSet::class -> CollectionAwaker.forSet(type)
+                    // Maps
+                    cls == Map::class || cls == MutableMap::class -> MapAwaker.forMap(type)
+                    // Enum
+                    cls.java.isEnum -> EnumCodec(type) as Awaker
+                    // Polymorphic classes
+                    PolymorphicParentUtil.isPolymorphicParent(cls) -> PolymorphicParentUtil.createParentAwaker(cls)
+                    // Singleton Object instance
+                    cls.objectInstance != null -> ObjectInstanceCodec(cls.objectInstance!!) as Awaker
+                    // Data classes
+                    cls.isData -> DataClassCodec(type) as Awaker
+                    // No param ctor (objects)
+                    primaryCtor != null && primaryCtor.parameters.isEmpty() -> DataClassCodec(type) as Awaker
+                    // Type cannot be handled by this module
+                    else -> null
+                }?.let {
+                    type.wrapIfNonNull(it)
+                }
             }
         }
 
@@ -136,78 +107,48 @@ object BuiltInModule : SlumberModule {
 
         if (cls is KClass<*>) {
 
+            val primaryCtor = cls.primaryConstructor
+
             return when {
                 // Null or Nothing
                 cls in listOf(Nothing::class, Unit::class) -> NullCodec
 
-                // Any, Object or Serializable type
-                cls in listOf(Any::class, Serializable::class) ->
-                    type.wrapIfNonNull(AnySlumberer)
-
-                // Primitive types
-                cls == Number::class ->
-                    type.wrapIfNonNull(NumberSlumberer)
-
-                cls == Boolean::class ->
-                    type.wrapIfNonNull(BooleanSlumberer)
-
-                cls == Byte::class ->
-                    type.wrapIfNonNull(ByteSlumberer)
-
-                cls == Char::class ->
-                    type.wrapIfNonNull(CharSlumberer)
-
-                cls == Double::class ->
-                    type.wrapIfNonNull(DoubleSlumberer)
-
-                cls == Float::class ->
-                    type.wrapIfNonNull(FloatSlumberer)
-
-                cls == Int::class ->
-                    type.wrapIfNonNull(IntSlumberer)
-
-                cls == Long::class ->
-                    type.wrapIfNonNull(LongSlumberer)
-
-                cls == Short::class ->
-                    type.wrapIfNonNull(ShortSlumberer)
-
-                // Strings
-                cls == String::class ->
-                    type.wrapIfNonNull(StringSlumberer)
-
-                // Iterables
-                Iterable::class.java.isAssignableFrom(cls.java) ->
-                    type.wrapIfNonNull(CollectionSlumberer)
-
-                // Maps
-                Map::class.java.isAssignableFrom(cls.java) ->
-                    type.wrapIfNonNull(MapSlumberer)
-
-                // Enum
-                cls.java.isEnum ->
-                    type.wrapIfNonNull(EnumCodec(type) as Slumberer)
-
-                // Polymorphic classes
-                PolymorphicParentUtil.isPolymorphicParent(cls) ->
-                    type.wrapIfNonNull(PolymorphicParentUtil.createParentSlumberer(cls))
-
-                PolymorphicChildUtil.isPolymorphicChild(cls) ->
-                    type.wrapIfNonNull(PolymorphicChildUtil.createChildSlumberer(type))
-
-                // Singleton Object instance
-                cls.objectInstance != null ->
-                    type.wrapIfNonNull(ObjectInstanceCodec(cls.objectInstance!!) as Slumberer)
-
-                // Data classes
-                cls.isData ->
-                    type.wrapIfNonNull(DataClassCodec(type) as Slumberer)
-
-                // No param ctor (objects)
-                cls.primaryConstructor != null && cls.primaryConstructor!!.parameters.isEmpty() ->
-                    type.wrapIfNonNull(DataClassCodec(type) as Slumberer)
-
-                else -> null
+                else -> when {
+                    // Any, Object or Serializable type
+                    cls in listOf(Any::class, Serializable::class) -> AnySlumberer
+                    // Primitive types
+                    cls == Number::class -> NumberSlumberer
+                    cls == Boolean::class -> BooleanSlumberer
+                    cls == Byte::class -> ByteSlumberer
+                    cls == Char::class -> CharSlumberer
+                    cls == Double::class -> DoubleSlumberer
+                    cls == Float::class -> FloatSlumberer
+                    cls == Int::class -> IntSlumberer
+                    cls == Long::class -> LongSlumberer
+                    cls == Short::class -> ShortSlumberer
+                    cls == String::class -> StringSlumberer
+                    // KotlinX Json
+                    KotlinXJsonCodec.appliesTo(cls) -> KotlinXJsonCodec as Slumberer
+                    // Iterables
+                    Iterable::class.java.isAssignableFrom(cls.java) -> CollectionSlumberer
+                    // Maps
+                    Map::class.java.isAssignableFrom(cls.java) -> MapSlumberer
+                    // Enum
+                    cls.java.isEnum -> EnumCodec(type) as Slumberer
+                    // Polymorphic classes
+                    PolymorphicParentUtil.isPolymorphicParent(cls) -> PolymorphicParentUtil.createParentSlumberer(cls)
+                    PolymorphicChildUtil.isPolymorphicChild(cls) -> PolymorphicChildUtil.createChildSlumberer(type)
+                    // Singleton Object instance
+                    cls.objectInstance != null -> ObjectInstanceCodec(cls.objectInstance!!) as Slumberer
+                    // Data classes
+                    cls.isData -> DataClassCodec(type) as Slumberer
+                    // No param ctor (objects)
+                    primaryCtor != null && primaryCtor.parameters.isEmpty() -> DataClassCodec(type) as Slumberer
+                    // Type cannot be handled by this module
+                    else -> null
+                }?.let {
+                    type.wrapIfNonNull(it)
+                }
             }
         }
 

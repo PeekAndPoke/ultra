@@ -18,6 +18,7 @@ version = VERSION_NAME
 dependencies {
     implementation(kotlin("reflect"))
     implementation(Deps.KotlinX.serialization_core)
+    implementation(Deps.KotlinX.serialization_json)
     implementation(Deps.KotlinX.datetime)
 
     api(Deps.JavaLibs.classindex)

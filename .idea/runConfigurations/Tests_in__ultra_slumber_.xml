@@ -12,7 +12,6 @@
         <list>
           <option value="clean" />
           <option value="check" />
-          <option value="allTests" />
         </list>
       </option>
       <option name="vmOptions" value="" />
