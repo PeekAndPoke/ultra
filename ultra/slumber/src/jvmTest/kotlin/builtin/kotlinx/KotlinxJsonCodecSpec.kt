@@ -1,8 +1,8 @@
 package de.peekandpoke.ultra.slumber.builtin.kotlinx
 
 import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.builtin.kotlinx.KotlinXJsonCodec.toJsonElement
-import de.peekandpoke.ultra.slumber.builtin.kotlinx.KotlinXJsonCodec.unwrap
+import de.peekandpoke.ultra.slumber.JsonUtil.toJsonElement
+import de.peekandpoke.ultra.slumber.JsonUtil.unwrap
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.serialization.json.JsonArray

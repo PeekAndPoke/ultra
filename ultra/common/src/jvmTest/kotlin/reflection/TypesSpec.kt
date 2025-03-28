@@ -1,7 +1,5 @@
-package de.peekandpoke.ultra.reflection
+package de.peekandpoke.ultra.common.reflection
 
-import de.peekandpoke.ultra.common.reflection.isPrimitive
-import de.peekandpoke.ultra.common.reflection.primitiveTypes
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe

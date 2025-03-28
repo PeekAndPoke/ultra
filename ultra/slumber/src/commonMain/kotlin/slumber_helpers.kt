@@ -23,8 +23,7 @@ fun <T : Any> PolymorphicModuleBuilder<T>.addChildren(items: PolymorphicChildren
 }
 
 // TODO: Test me
-@kotlin.ConsistentCopyVisibility
-data class PolymorphicChildrenToSerializers<T : Any> internal constructor(
+data class PolymorphicChildrenToSerializers<T : Any>(
     val base: KClass<T>,
     val entries: List<TypeAndSerializer<T>>,
 ) : Set<KClass<out T>> {

@@ -1,6 +1,5 @@
-package de.peekandpoke.ultra.model
+package de.peekandpoke.ultra.common.model
 
-import de.peekandpoke.ultra.common.model.Paged
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
 

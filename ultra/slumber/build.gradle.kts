@@ -3,7 +3,7 @@
 import Deps.Test.configureJvmTests
 
 plugins {
-    kotlin("jvm")
+    kotlin("multiplatform")
     kotlin("kapt")
     id("org.jetbrains.dokka")
     id("com.vanniktech.maven.publish")
@@ -15,33 +15,63 @@ val VERSION_NAME: String by project
 group = ULTRA_GROUP
 version = VERSION_NAME
 
-dependencies {
-    implementation(kotlin("reflect"))
-    implementation(Deps.KotlinX.serialization_core)
-    implementation(Deps.KotlinX.serialization_json)
-    implementation(Deps.KotlinX.datetime)
 
-    api(Deps.JavaLibs.classindex)
+kotlin {
+    js {
+        browser {}
+    }
 
-    api(project(":ultra:common"))
+    jvmToolchain(Deps.jvmTargetVersion)
 
-    // Testing
-    testImplementation(project(":ultra:slumber-test-classes"))
-    kaptTest(Deps.JavaLibs.classindex)
+    jvm {
+        withJava()
+    }
 
-    Deps.Test {
-        jvmTestDeps()
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation(kotlin("reflect"))
+                implementation(Deps.KotlinX.serialization_json)
+
+                api(project(":ultra:common"))
+            }
+        }
+
+        commonTest {
+            dependencies {
+                Deps.Test { commonTestDeps() }
+            }
+        }
+
+        jsMain {
+
+        }
+
+        jsTest {
+
+        }
+
+        jvmMain {
+            dependencies {
+                api(Deps.JavaLibs.classindex)
+
+                implementation(Deps.KotlinX.datetime)
+            }
+        }
+
+        jvmTest {
+            dependencies {
+                implementation(project(":ultra:slumber-test-classes"))
+                Deps.Test { jvmTestDeps() }
+            }
+        }
     }
 }
 
-kotlin {
-    jvmToolchain(Deps.jvmTargetVersion)
+dependencies {
+    add("kapt", Deps.JavaLibs.classindex)
 }
 
 tasks {
     configureJvmTests()
-}
-
-kapt {
-    useBuildCache = true
 }

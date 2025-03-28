@@ -70,7 +70,6 @@ kotlin {
 
         jvmMain {
             dependencies {
-                implementation(Deps.JavaLibs.classindex)
             }
         }
 

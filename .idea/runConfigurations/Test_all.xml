@@ -12,6 +12,7 @@
         <list>
           <option value="clean" />
           <option value="check" />
+          <option value="test" />
         </list>
       </option>
       <option name="vmOptions" value="" />

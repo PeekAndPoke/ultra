@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.common
 
 // Original JS reference
-private external class WeakRef<T>(target: T) {
+private external class WeakRef<T>(@Suppress("unused") target: T) {
     fun deref(): T
 }
 
