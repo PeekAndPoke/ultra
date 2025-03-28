@@ -10,7 +10,7 @@ import de.peekandpoke.ultra.security.user.UserPermissions
 
 class JwtGenerator(
     /** The configuration */
-    private val config: JwtConfig,
+    val config: JwtConfig,
     /** Signing algorithm to be used */
     private val signingAlgorithm: Algorithm = Algorithm.HMAC512(config.singingKey),
 ) {

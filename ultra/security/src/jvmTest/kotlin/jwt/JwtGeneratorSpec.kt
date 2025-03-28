@@ -28,6 +28,10 @@ class JwtGeneratorSpec : StringSpec() {
     private val jwtGenerator = JwtGenerator(config = mockConfig)
 
     init {
+        "Config must be public" {
+            jwtGenerator.config shouldBe mockConfig
+        }
+
         "createJwt should generate a valid token for provided user data" {
             // Arrange
             val userData = JwtUserData(
