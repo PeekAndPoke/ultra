@@ -1,0 +1,50 @@
+@file:Suppress("PropertyName")
+
+import Deps.Test.configureJvmTests
+
+plugins {
+    kotlin("jvm")
+    kotlin("plugin.serialization")
+    id("io.kotest.multiplatform") version Deps.Test.kotest_plugin_version
+    id("com.vanniktech.maven.publish") version Deps.mavenPublishVersion
+    idea
+}
+
+val FUNKTOR_GROUP: String by project
+val VERSION_NAME: String by project
+
+group = FUNKTOR_GROUP
+version = VERSION_NAME
+
+kotlin {
+    jvmToolchain(Deps.jvmTargetVersion)
+
+    dependencies {
+        api(Deps.Ktor.Server.webjars)
+        api(Deps.Ktor.Server.html_builder)
+        api(Deps.KotlinX.wrappers_css)
+
+        api(project(":kraft:semanticui"))
+        api(project(":funktor:core"))
+
+        ////  webjars  //////////////////////////////////////////////////////////////////////////////////////////////
+
+        api(Deps.WebJars.jquery)
+        api(Deps.WebJars.prismjs)
+        api(Deps.WebJars.fomanticui_css) {
+            exclude(group = "org.webjars.npm", module = "jquery")
+        }
+        api(Deps.WebJars.lazysizes)
+        api(Deps.WebJars.visjs)
+
+        ////  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
+
+        Deps.Test {
+            jvmTestDeps()
+        }
+    }
+}
+
+tasks {
+    configureJvmTests()
+}

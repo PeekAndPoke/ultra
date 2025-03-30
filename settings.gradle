@@ -12,11 +12,6 @@ include(
         ":ultra:slumber-test-classes",
         ":ultra:vault",
 
-        // KARANGO //////////////////////////////////////////////////////////////////////////////
-        ":karango:core",
-        ":karango:addons",
-        ":karango:ksp",
-
         // KRAFT ////////////////////////////////////////////////////////////////////////////////
         ":kraft:core",
         ":kraft:semanticui",
@@ -35,5 +30,21 @@ include(
         ":kraft:examples:addons",
         ":kraft:examples:hello-world",
         ":kraft:examples:fomanticui",
+
+        // FUNKTOR //////////////////////////////////////////////////////////////////////////////
+        ":funktor:all",
+        ":funktor:core",
+        ":funktor:cluster",
+        ":funktor:logging",
+        ":funktor:insights",
+        ":funktor:rest",
+        ":funktor:staticweb",
+        ":funktor:messaging",
+        ":funktor:testing",
+
+        // KARANGO //////////////////////////////////////////////////////////////////////////////
+        ":karango:core",
+        ":karango:addons",
+        ":karango:ksp",
 )
 

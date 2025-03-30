@@ -134,6 +134,7 @@ object Deps {
             const val metrics = "io.ktor:ktor-server-metrics:$ktor_version"
             const val partial_content = "io.ktor:ktor-server-partial-content:$ktor_version"
             const val sessions = "io.ktor:ktor-server-sessions:$ktor_version"
+            const val sse = "io.ktor:ktor-server-sse:$ktor_version"
             const val status_pages = "io.ktor:ktor-server-status-pages:$ktor_version"
             const val webjars = "io.ktor:ktor-server-webjars:$ktor_version"
             const val websockets = "io.ktor:ktor-server-websockets:$ktor_version"
@@ -156,6 +157,7 @@ object Deps {
                 implementation(metrics)
                 implementation(partial_content)
                 implementation(sessions)
+                implementation(sse)
                 implementation(status_pages)
                 implementation(webjars)
                 implementation(websockets)
@@ -332,6 +334,37 @@ object Deps {
         // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
         private const val slf4j_version = "2.0.17"
         const val slf4j_api = "org.slf4j:slf4j-api:$slf4j_version"
+    }
+
+    object WebJars {
+        // jQuery: https://www.webjars.org/
+        private const val jquery_version = "3.7.1"
+        const val jquery = "org.webjars:jquery:$jquery_version"
+
+        // Lazy Sized: https://www.webjars.org/
+        private const val lazysizes_version = "5.1.2"
+        const val lazysizes = "org.webjars.bower:lazysizes:$lazysizes_version"
+
+        // VisJS: https://www.webjars.org/
+        private const val visjs_version = "4.21.0"
+        const val visjs = "org.webjars:visjs:$visjs_version"
+
+        // https://mvnrepository.com/artifact/org.webjars.bower/slick-carousel
+        private const val slick_carousel_version = "1.8.1"
+        const val slick_carousel = "org.webjars.bower:slick-carousel:$slick_carousel_version"
+
+        // https://mvnrepository.com/artifact/org.webjars.npm/glidejs__glide
+        private const val glidejs_version = "3.4.1"
+        const val glidejs = "org.webjars.npm:glidejs__glide:$glidejs_version"
+
+        // https://mvnrepository.com/artifact/org.webjars.npm/prismjs
+        private const val prismjs_version = "1.29.0"
+        const val prismjs = "org.webjars.npm:prismjs:$prismjs_version"
+
+        // https://www.webjars.org/
+        private const val fomanticui_version = "2.8.8"
+        const val fomanticui_css = "org.webjars.npm:fomantic-ui-css:$fomanticui_version"
+        const val fomanticui_js = "org.webjars.npm:fomantic-ui-js:$fomanticui_version"
     }
 
     object IDE {

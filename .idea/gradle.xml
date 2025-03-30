@@ -20,6 +20,16 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/buildSrc" />
+            <option value="$PROJECT_DIR$/funktor" />
+            <option value="$PROJECT_DIR$/funktor/all" />
+            <option value="$PROJECT_DIR$/funktor/cluster" />
+            <option value="$PROJECT_DIR$/funktor/core" />
+            <option value="$PROJECT_DIR$/funktor/insights" />
+            <option value="$PROJECT_DIR$/funktor/logging" />
+            <option value="$PROJECT_DIR$/funktor/messaging" />
+            <option value="$PROJECT_DIR$/funktor/rest" />
+            <option value="$PROJECT_DIR$/funktor/staticweb" />
+            <option value="$PROJECT_DIR$/funktor/testing" />
             <option value="$PROJECT_DIR$/karango" />
             <option value="$PROJECT_DIR$/karango/addons" />
             <option value="$PROJECT_DIR$/karango/core" />

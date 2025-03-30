@@ -1,0 +1,10 @@
+package de.peekandpoke.ktorfx.core.websocket
+
+object CoreWebsocketClientModule : WebsocketClientModule() {
+
+    // Messages sent ///////////////////////////////////////////////////////////////////////////////////////////
+
+    // Messages received ///////////////////////////////////////////////////////////////////////////////////////
+
+    val OnWebsocketConnected = receives("websocket:connected", WebsocketConnected.serializer())
+}
