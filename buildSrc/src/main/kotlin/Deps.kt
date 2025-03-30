@@ -334,6 +334,11 @@ object Deps {
         const val slf4j_api = "org.slf4j:slf4j-api:$slf4j_version"
     }
 
+    object IDE {
+        const val jetbrains_annotations_version = "26.0.2"
+        const val jetbrains_annotations = "org.jetbrains:annotations:$jetbrains_annotations_version"
+    }
+
     // // NPM dependencies /////////////////////////////////////////////////////////////////////////
 
     object Npm {
@@ -349,6 +354,49 @@ object Deps {
 
         // https://www.npmjs.com/package/@js-joda/timezone
         fun KotlinDependencyHandler.jsJodaTimezone() = npm("@js-joda/timezone", "2.21.2")
+
+        // https://www.npmjs.com/package/bowser
+        fun KotlinDependencyHandler.bowser() = npm("bowser", "2.11.0")
+
+        // https://www.npmjs.com/package/chart.js
+        fun KotlinDependencyHandler.chartJs() = npm("chart.js", "4.4.8")
+
+        // TODO: check update to 4.x versions
+        // https://www.npmjs.com/package/jwt-decode
+        fun KotlinDependencyHandler.jwtDecode() = npm("jwt-decode", "3.1.2")
+
+        // TODO: check update to 9.x versions
+        // https://www.npmjs.com/package/konva
+        fun KotlinDependencyHandler.konva() = npm("konva", "8.4.3")
+
+        // https://www.npmjs.com/package/minidenticons
+        fun KotlinDependencyHandler.minidenticons() = npm("minidenticons", "4.2.1")
+
+        // https://www.npmjs.com/package/marked
+        fun KotlinDependencyHandler.marked() = npm("marked", "15.0.7")
+
+        // https://www.npmjs.com/package/@nx-js/compiler-util
+        fun KotlinDependencyHandler.nxJsCompilerUtil() = npm("@nx-js/compiler-util", "2.0.0")
+
+        // https://www.npmjs.com/package/pdfjs-dist
+        // See [PdfJs.kt] as this lib is loaded asynchronously
+        @Suppress("UnusedReceiverParameter", "unused")
+        fun KotlinDependencyHandler.pdfJs() = "4.10.38"
+
+        // https://www.npmjs.com/package/preact
+        fun KotlinDependencyHandler.preact() = npm("preact", "10.26.4")
+
+        // https://www.npmjs.com/package/prismjs
+        fun KotlinDependencyHandler.prismjs() = npm("prismjs", "1.29.0")
+
+        // https://www.npmjs.com/package/signature_pad
+        fun KotlinDependencyHandler.signaturepad() = npm("signature_pad", "5.0.4")
+
+        // https://www.npmjs.com/package/sourcemapped-stacktrace
+        fun KotlinDependencyHandler.sourcemappedStacktrace() = npm("sourcemapped-stacktrace", "1.1.11")
+
+        // https://www.npmjs.com/package/trim-canvas
+        fun KotlinDependencyHandler.trimCanvas() = npm("trim-canvas", "0.1.2")
     }
 
     // // Test dependencies ////////////////////////////////////////////////////////////////////////

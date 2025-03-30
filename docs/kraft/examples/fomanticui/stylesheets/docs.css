@@ -1,0 +1,94 @@
+div.full.height > .toc {
+    height: 100vh;
+    position: fixed;
+    background-color: #1b1c1d;
+    width: 250px;
+    overflow-y: scroll;
+}
+
+.toc .ui.menu {
+    width: auto;
+}
+
+.toc .ui.menu .item .ui.logo.image {
+    width: 35px;
+    margin-right: 1em;
+}
+
+.pusher > .article {
+    margin-left: 250px;
+}
+
+.article .example {
+    margin: 2em 0em;
+    padding: 2em 0em;
+    position: relative;
+}
+
+.article .example .wireframe.image {
+    opacity: 0.5;
+}
+
+.article .grid-docs .grid:before {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background-color: #FAFAFA;
+    content: ' ';
+    width: calc(100% - 2rem);
+    height: calc(100% - 2rem);
+    box-shadow: 0px 0px 0px 1px #DDDDDD inset;
+}
+
+.article .grid-docs .grid .column:not(.row):not(.grid):after {
+    background-color: rgba(86, 61, 124, .1);
+    -webkit-box-shadow: 0px 0px 0px 1px rgb(86 61 124 / 20%) inset;
+    box-shadow: 0px 0px 0px 1px rgb(86 61 124 / 20%) inset;
+    content: "";
+    display: block;
+    min-height: 50px;
+}
+
+.article .grid-docs .ui.attached.button {
+    z-index: 10000;
+}
+
+.article .nested-grid-docs .grid:before {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    content: ' ';
+    width: calc(100% - 2rem);
+    height: calc(100% - 2rem);
+    box-shadow: 0px 0px 0px 1px #DDDDDD inset;
+}
+
+.article .nested-grid-docs .grid .grid:before {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background-color: #FAFAFA;
+    content: ' ';
+    width: calc(100% - 2rem);
+    height: calc(100% - 2rem);
+    box-shadow: 0px 0px 0px 1px #DDDDDD inset;
+}
+
+.article .nested-grid-docs .grid .column:empty:after {
+    background-color: rgba(86, 61, 124, .1);
+    -webkit-box-shadow: 0px 0px 0px 1px rgb(86 61 124 / 20%) inset;
+    box-shadow: 0px 0px 0px 1px rgb(86 61 124 / 20%) inset;
+    content: "";
+    display: block;
+    min-height: 50px;
+}
+
+.article .nested-grid-docs .grid .grid .column:not(.row):not(.grid):after {
+    background-color: rgba(150, 61, 124, .2);
+    -webkit-box-shadow: 0px 0px 0px 1px rgb(150 61 124 / 30%) inset;
+    box-shadow: 0px 0px 0px 1px rgb(150 61 124 / 30%) inset;
+    content: "";
+    display: block;
+    min-height: 50px;
+}
+
