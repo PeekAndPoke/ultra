@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 
 plugins {
     kotlin("multiplatform")
-    id("org.jetbrains.kotlin.plugin.serialization") version Deps.kotlinVersion
+    kotlin("plugin.serialization")
 }
 
 val GROUP = "io.peekandpoke.kraft.examples"

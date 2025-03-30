@@ -8,7 +8,6 @@ plugins {
     id("com.google.devtools.ksp") version Deps.Ksp.version
     id("org.jetbrains.dokka")
     id("com.vanniktech.maven.publish")
-    idea
 }
 
 val KARANGO_GROUP: String by project

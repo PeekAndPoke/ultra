@@ -6,9 +6,9 @@ import Deps.Test.configureJvmTests
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
-    id("io.kotest.multiplatform") version Deps.Test.kotest_plugin_version
-    id("com.vanniktech.maven.publish") version Deps.mavenPublishVersion
-    idea
+    id("io.kotest.multiplatform")
+    id("org.jetbrains.dokka")
+    id("com.vanniktech.maven.publish")
 }
 
 val FUNKTOR_GROUP: String by project
