@@ -19,10 +19,6 @@ val VERSION_NAME: String by project
 group = KRAFT_GROUP
 version = VERSION_NAME
 
-repositories {
-    mavenCentral()
-}
-
 kotlin {
     js {
         browser {
