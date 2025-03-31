@@ -7,7 +7,14 @@ import de.peekandpoke.kraft.addons.semanticui.forms.UiTextArea
 import de.peekandpoke.kraft.addons.semanticui.forms.old.select.SelectField
 import de.peekandpoke.kraft.addons.semanticui.forms.old.select.SelectFieldComponent
 import de.peekandpoke.kraft.addons.semanticui.modals.OkCancelModal
-import de.peekandpoke.kraft.components.*
+import de.peekandpoke.kraft.components.NoProps
+import de.peekandpoke.kraft.components.PureComponent
+import de.peekandpoke.kraft.components.comp
+import de.peekandpoke.kraft.components.onAuxClick
+import de.peekandpoke.kraft.components.onClick
+import de.peekandpoke.kraft.components.onContextMenu
+import de.peekandpoke.kraft.components.onContextMenuStoppingEvent
+import de.peekandpoke.kraft.components.onKeyDown
 import de.peekandpoke.kraft.semanticui.css
 import de.peekandpoke.kraft.semanticui.noui
 import de.peekandpoke.kraft.semanticui.ui
@@ -17,7 +24,13 @@ import kotlinx.browser.window
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.css.vw
 import kotlinx.css.width
-import kotlinx.html.*
+import kotlinx.html.Tag
+import kotlinx.html.a
+import kotlinx.html.div
+import kotlinx.html.h1
+import kotlinx.html.h2
+import kotlinx.html.style
+import kotlinx.html.unsafe
 import org.w3c.dom.events.KeyboardEvent
 import org.w3c.dom.pointerevents.PointerEvent
 import kotlin.time.Duration.Companion.days
@@ -144,7 +157,7 @@ class MainPage(ctx: NoProps) : PureComponent(ctx) {
 
                 ui.blue.button {
                     onClick {
-                        modals.show { handle ->
+                        kraft.modals.show { handle ->
                             OkCancelModal {
                                 mini(
                                     handle = handle,
@@ -245,7 +258,7 @@ class MainPage(ctx: NoProps) : PureComponent(ctx) {
                     noui.card {
                         noui.content {
                             onContextMenuStoppingEvent { evt ->
-                                popups.showContextMenu(evt, PopupsManager.Positioning.BottomLeft) {
+                                kraft.popups.showContextMenu(evt, PopupsManager.Positioning.BottomLeft) {
                                     ui.basic.vertical.menu {
                                         noui.item A { href = "#"; +"Menu 1" }
                                         noui.item A { href = "#"; +"Menu 2" }
@@ -259,7 +272,7 @@ class MainPage(ctx: NoProps) : PureComponent(ctx) {
                     noui.card {
                         noui.content {
                             onContextMenuStoppingEvent { evt ->
-                                popups.showContextMenu(evt, PopupsManager.Positioning.BottomCenter) {
+                                kraft.popups.showContextMenu(evt, PopupsManager.Positioning.BottomCenter) {
                                     ui.basic.vertical.menu {
                                         noui.item A { href = "#"; +"Menu 1" }
                                         noui.item A { href = "#"; +"Menu 2" }
@@ -273,7 +286,7 @@ class MainPage(ctx: NoProps) : PureComponent(ctx) {
                     noui.card {
                         noui.content {
                             onContextMenuStoppingEvent { evt ->
-                                popups.showContextMenu(evt, PopupsManager.Positioning.BottomRight) {
+                                kraft.popups.showContextMenu(evt, PopupsManager.Positioning.BottomRight) {
                                     ui.basic.vertical.menu {
                                         noui.item A { href = "#"; +"Menu 1" }
                                         noui.item A { href = "#"; +"Menu 2" }
@@ -289,7 +302,7 @@ class MainPage(ctx: NoProps) : PureComponent(ctx) {
                     noui.card {
                         noui.content {
                             onContextMenuStoppingEvent { evt ->
-                                popups.showContextMenu(evt, PopupsManager.Positioning.BottomRight) {
+                                kraft.popups.showContextMenu(evt, PopupsManager.Positioning.BottomRight) {
                                     ui.basic.vertical.menu {
                                         css { width = 70.vw }
                                         noui.item A { href = "#"; +"Menu 1" }
@@ -304,7 +317,7 @@ class MainPage(ctx: NoProps) : PureComponent(ctx) {
                     noui.card {
                         noui.content {
                             onContextMenuStoppingEvent { evt ->
-                                popups.showContextMenu(evt, PopupsManager.Positioning.BottomLeft) {
+                                kraft.popups.showContextMenu(evt, PopupsManager.Positioning.BottomLeft) {
                                     ui.basic.vertical.menu {
                                         css { width = 70.vw }
                                         noui.item A { href = "#"; +"Menu 1" }
@@ -325,7 +338,7 @@ class MainPage(ctx: NoProps) : PureComponent(ctx) {
                     noui.item {
                         ui.basic.label {
                             onClick {
-                                popups.showContextMenu(it, PopupsManager.Positioning.BottomLeft) {
+                                kraft.popups.showContextMenu(it, PopupsManager.Positioning.BottomLeft) {
                                     ui.horizontal.menu {
                                         css {
                                             width = 50.vw
@@ -345,7 +358,7 @@ class MainPage(ctx: NoProps) : PureComponent(ctx) {
                     noui.item {
                         ui.basic.label {
                             onClick {
-                                popups.showContextMenu(it, PopupsManager.Positioning.BottomRight) {
+                                kraft.popups.showContextMenu(it, PopupsManager.Positioning.BottomRight) {
                                     ui.basic.horizontal.menu {
                                         css {
                                             width = 50.vw

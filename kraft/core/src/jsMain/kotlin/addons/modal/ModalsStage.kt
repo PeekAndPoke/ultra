@@ -26,16 +26,12 @@ class ModalsStage(ctx: Ctx<Props>) : Component<ModalsStage.Props>(ctx) {
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private val current: List<ModalsManager.Handle> by subscribingTo(props.modals.current)
+    private val current: List<ModalsManager.Handle> by subscribingTo(props.modals)
 
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
         div(classes = "modal-stage") {
-//            key = current.hashCode().toString()
-
-//            console.log("ModelDialogStage", current.hashCode().toString(), current.size)
-
             current.forEach {
                 it.view(this, it)
             }

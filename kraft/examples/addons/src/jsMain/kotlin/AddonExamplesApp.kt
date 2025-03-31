@@ -24,15 +24,17 @@ class AddonExamplesApp(ctx: NoProps) : PureComponent(ctx) {
 
     override fun VDom.render() {
 
-        ui.container {
+        kraft.mount(this) {
+            ui.container {
+                ui.basic.segment {
+                    ui.header H1 { +"KRAFT Usage Examples" }
+                }
 
-            ui.basic.segment {
-                ui.header H1 { +"KRAFT Usage Examples" }
-            }
-
-            ui.basic.segment {
-                RouterComponent(router = router)
+                ui.basic.segment {
+                    RouterComponent(router = router)
+                }
             }
         }
+
     }
 }

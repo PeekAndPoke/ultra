@@ -26,15 +26,17 @@ class App(ctx: NoProps) : PureComponent(ctx) {
 
         console.info("rendering app ...")
 
-        div("pusher") {
-            div("full height") {
-                div("toc") {
-                    AppMenu()
+        kraft.mount(this) {
+            div("pusher") {
+                div("full height") {
+                    div("toc") {
+                        AppMenu()
+                    }
                 }
-            }
 
-            div("article") {
-                RouterComponent(router = router)
+                div("article") {
+                    RouterComponent(router = router)
+                }
             }
         }
     }

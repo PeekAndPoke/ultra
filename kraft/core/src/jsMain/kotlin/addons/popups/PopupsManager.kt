@@ -1,10 +1,12 @@
 package de.peekandpoke.kraft.addons.popups
 
+import de.peekandpoke.kraft.addons.popups.PopupsManager.Handle
 import de.peekandpoke.kraft.components.onMouseOut
 import de.peekandpoke.kraft.components.onMouseOver
 import de.peekandpoke.kraft.components.onMouseUp
 import de.peekandpoke.kraft.streams.Stream
 import de.peekandpoke.kraft.streams.StreamSource
+import de.peekandpoke.kraft.streams.Unsubscribe
 import de.peekandpoke.kraft.utils.Rectangle
 import de.peekandpoke.kraft.utils.Vector2D
 import kotlinx.browser.document
@@ -16,7 +18,7 @@ import org.w3c.dom.events.UIEvent
 
 typealias PopupPositionFn = (target: HTMLElement, contentSize: Vector2D) -> Vector2D
 
-class PopupsManager {
+class PopupsManager : Stream<List<Handle>> {
     class ShowHoverPopup(private val popups: PopupsManager) {
 
         fun show(
@@ -82,13 +84,13 @@ class PopupsManager {
 
     private var handleCounter = 0
 
-    private val stack: MutableList<Handle> = mutableListOf()
-
-    private val popupStream: StreamSource<List<Handle>> = StreamSource(emptyList())
-
-    val current: Stream<List<Handle>> = popupStream.readonly
+    private val streamSource: StreamSource<List<Handle>> = StreamSource(emptyList())
 
     val showHoverPopup = ShowHoverPopup(popups = this)
+
+    override fun invoke(): List<Handle> = streamSource()
+
+    override fun subscribeToStream(sub: (List<Handle>) -> Unit): Unsubscribe = streamSource.subscribeToStream(sub)
 
     /**
      * Shows a popup relative to the target of the [event] by using the [positioning]
@@ -161,29 +163,24 @@ class PopupsManager {
     internal fun add(view: PopupRenderer): Handle {
 
         return Handle(id = ++handleCounter, view = view, manager = this).apply {
-            stack.add(this)
-            notify()
+            streamSource.modify { this.plus(this@apply) }
         }
     }
 
     internal fun close(handle: Handle) {
         // call onClose handlers
-        stack.filter { it.id == handle.id }
+        streamSource()
+            .filter { it.id == handle.id }
             .forEach { it.onCloseHandlers.forEach { handler -> handler() } }
 
         // Remove from stack
-        stack.removeAll { it.id == handle.id }
-
-        notify()
+        streamSource.modify {
+            filterNot { it.id == handle.id }
+        }
     }
 
     fun closeAll() {
-        stack.clear()
-        notify()
-    }
-
-    private fun notify() {
-        popupStream(stack)
+        streamSource.modify { emptyList() }
     }
 
     private fun getPageCoords(element: HTMLElement): Rectangle {

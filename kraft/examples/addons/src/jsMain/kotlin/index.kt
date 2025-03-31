@@ -1,10 +1,13 @@
 package de.peekandpoke.kraft.examples.jsaddons
 
+import de.peekandpoke.kraft.Kraft
 import de.peekandpoke.kraft.addons.routing.Router
 import de.peekandpoke.kraft.addons.routing.router
 import de.peekandpoke.kraft.vdom.preact.PreactVDomEngine
 import kotlinx.browser.document
 import org.w3c.dom.HTMLElement
+
+val kraft = Kraft.initialize()
 
 val routes = Routes()
 

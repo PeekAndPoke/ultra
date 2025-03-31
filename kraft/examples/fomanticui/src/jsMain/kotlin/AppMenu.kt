@@ -6,7 +6,11 @@ import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.semanticui.noui
 import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.vdom.VDom
-import kotlinx.html.*
+import kotlinx.html.FlowContent
+import kotlinx.html.Tag
+import kotlinx.html.a
+import kotlinx.html.b
+import kotlinx.html.img
 
 @Suppress("FunctionName")
 fun Tag.AppMenu() = comp {
@@ -52,6 +56,9 @@ class AppMenu(ctx: NoProps) : PureComponent(ctx) {
             noui.item {
                 noui.header { +"Building blocks" }
                 noui.menu {
+                    noui.item A { href = routes.howtoModalDialogs(); +"Modal Dialogs" }
+                    noui.item A { href = routes.howtoPopupsAndContextMenus(); +"Popups & Context Menus" }
+                    noui.item A { href = routes.howtoToasts(); +"Toasts" }
                     noui.item A { href = routes.howtoBlocksDragAndDrop(); +"Drag & Drop" }
                     noui.item A { href = routes.howtoBlocksListField(); +"List field" }
                 }

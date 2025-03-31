@@ -4,7 +4,11 @@ import de.peekandpoke.kraft.addons.forms.collections.ListField
 import de.peekandpoke.kraft.addons.forms.collections.ListFieldComponent
 import de.peekandpoke.kraft.addons.routing.PageTitle
 import de.peekandpoke.kraft.addons.semanticui.forms.UiTextArea
-import de.peekandpoke.kraft.components.*
+import de.peekandpoke.kraft.components.NoProps
+import de.peekandpoke.kraft.components.PureComponent
+import de.peekandpoke.kraft.components.comp
+import de.peekandpoke.kraft.components.key
+import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.semanticui.icon
 import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.vdom.VDom

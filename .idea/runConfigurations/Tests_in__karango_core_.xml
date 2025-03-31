@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Tests in 'karango:core'" type="GradleRunConfiguration" factoryName="Gradle" folderName="karango">
+  <configuration default="false" name="Tests in 'karango:core'" type="GradleRunConfiguration" factoryName="Gradle" folderName="Karango">
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$/karango/core" />

@@ -1,9 +1,11 @@
 package de.peekandpoke.kraft.addons.modal
 
+import de.peekandpoke.kraft.addons.modal.ModalsManager.Handle
 import de.peekandpoke.kraft.streams.Stream
 import de.peekandpoke.kraft.streams.StreamSource
+import de.peekandpoke.kraft.streams.Unsubscribe
 
-class ModalsManager {
+class ModalsManager : Stream<List<Handle>> {
 
     private var handleCounter = 0
 
@@ -21,38 +23,33 @@ class ModalsManager {
         fun close() = dialogs.close(this)
     }
 
-    private val stack: MutableList<Handle> = mutableListOf()
+    private val streamSource: StreamSource<List<Handle>> = StreamSource(emptyList())
 
-    private val modalStream: StreamSource<List<Handle>> = StreamSource(emptyList())
+    override fun invoke(): List<Handle> = streamSource()
 
-    val current: Stream<List<Handle>> = modalStream.readonly
+    override fun subscribeToStream(sub: (List<Handle>) -> Unit): Unsubscribe = streamSource.subscribeToStream(sub)
 
     fun show(view: ModalRenderer): Handle {
 
         return Handle(id = ++handleCounter, view = view, dialogs = this).apply {
-            stack.add(this)
-            notify()
+            streamSource.modify { plus(this@apply) }
         }
     }
 
     fun close(handle: Handle) {
         // call onClose handlers
-        stack.filter { it.id == handle.id }
+        streamSource()
+            .filter { it.id == handle.id }
             .forEach { it.onCloseHandlers.forEach { handler -> handler() } }
 
         // Remove from stack
-        stack.removeAll { it.id == handle.id }
-
-        notify()
+        streamSource.modify {
+            filterNot { it.id == handle.id }
+        }
     }
 
     fun closeAll() {
-        stack.clear()
-        notify()
-    }
-
-    private fun notify() {
-        modalStream(stack)
+        streamSource.modify { emptyList() }
     }
 }
 

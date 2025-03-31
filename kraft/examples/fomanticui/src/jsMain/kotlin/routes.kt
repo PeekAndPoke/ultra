@@ -28,7 +28,10 @@ import de.peekandpoke.kraft.examples.fomanticui.pages.elements.step.StepPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.elements.text.TextPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.home.HomePage
 import de.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.dnd.DragAndDropPage
+import de.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.flashmessages.FlashMessagesPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.listfield.ListFieldPage
+import de.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.modals.ModalDialogsPage
+import de.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.popups.PopupsAndContextMenusPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo.FormDemosPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.KraftComponentBasicsPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.KraftComponentStatePage
@@ -50,6 +53,9 @@ class Routes {
 
     val howtoFormsDemo = Static("/howto/forms/demo")
 
+    val howtoModalDialogs = Static("/howto/blocks/modal-dialogs")
+    val howtoPopupsAndContextMenus = Static("/howto/blocks/popups-and-context-menus")
+    val howtoToasts = Static("/howto/blocks/toasts")
     val howtoBlocksDragAndDrop = Static("/howto/blocks/drag-and-drop")
     val howtoBlocksListField = Static("/howto/blocks/list-field")
 
@@ -97,6 +103,9 @@ fun RouterBuilder.mount(routes: Routes) {
 
     mount(routes.howtoFormsDemo) { FormDemosPage() }
 
+    mount(routes.howtoModalDialogs) { ModalDialogsPage() }
+    mount(routes.howtoPopupsAndContextMenus) { PopupsAndContextMenusPage() }
+    mount(routes.howtoToasts) { FlashMessagesPage() }
     mount(routes.howtoBlocksDragAndDrop) { DragAndDropPage() }
     mount(routes.howtoBlocksListField) { ListFieldPage() }
 

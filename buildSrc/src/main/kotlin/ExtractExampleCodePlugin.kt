@@ -69,10 +69,10 @@ class ExtractExampleCodePlugin : Plugin<Project> {
     ) {
         group = "extractCodeBlocks"
 
-        doFirst {
-            val projectDir = project.projectDir.absoluteFile
+        val projectDir = project.projectDir.absoluteFile
+        val ktFiles = projectDir.walkTopDown().filter { it.isFile && it.extension == "kt" }
 
-            val ktFiles = projectDir.walkTopDown().filter { it.isFile && it.extension == "kt" }
+        doFirst {
 
             val startExampleRegex = "<CodeBlock ([^>]+)>".toRegex()
             val alphaNumRegex = "[^a-zA-Z0-9]+".toRegex()
