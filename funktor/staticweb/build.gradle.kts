@@ -6,7 +6,6 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
     id("io.kotest.multiplatform")
-    id("org.jetbrains.dokka")
     id("com.vanniktech.maven.publish")
 }
 
@@ -15,6 +14,10 @@ val VERSION_NAME: String by project
 
 group = FUNKTOR_GROUP
 version = VERSION_NAME
+
+Docs {
+    useEmptyJavadoc()
+}
 
 kotlin {
     jvmToolchain(Deps.jvmTargetVersion)

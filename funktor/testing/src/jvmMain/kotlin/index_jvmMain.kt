@@ -1,1 +1,1 @@
-package de.peekandpoke.ktorfx.testing
+package de.peekandpoke.funktor.testing

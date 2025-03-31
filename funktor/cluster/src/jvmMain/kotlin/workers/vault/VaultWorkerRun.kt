@@ -1,8 +1,8 @@
-package de.peekandpoke.ktorfx.cluster.workers.vault
+package de.peekandpoke.funktor.cluster.workers.vault
 
+import de.peekandpoke.funktor.cluster.workers.api.WorkerModel
+import de.peekandpoke.funktor.cluster.workers.domain.WorkerRun
 import de.peekandpoke.karango.Karango
-import de.peekandpoke.ktorfx.cluster.workers.api.WorkerModel
-import de.peekandpoke.ktorfx.cluster.workers.domain.WorkerRun
 import de.peekandpoke.ultra.slumber.Slumber
 
 @Karango

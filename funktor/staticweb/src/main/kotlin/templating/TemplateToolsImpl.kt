@@ -1,9 +1,9 @@
-package de.peekandpoke.ktorfx.staticweb.templating
+package de.peekandpoke.funktor.staticweb.templating
 
-import de.peekandpoke.ktorfx.core.broker.TypedRouteRenderer
-import de.peekandpoke.ktorfx.core.config.AppConfig
-import de.peekandpoke.ktorfx.staticweb.flashsession.FlashSession
-import de.peekandpoke.ktorfx.staticweb.resources.WebResources
+import de.peekandpoke.funktor.core.broker.TypedRouteRenderer
+import de.peekandpoke.funktor.core.config.AppConfig
+import de.peekandpoke.funktor.staticweb.flashsession.FlashSession
+import de.peekandpoke.funktor.staticweb.resources.WebResources
 
 class TemplateToolsImpl(
     override val config: AppConfig,

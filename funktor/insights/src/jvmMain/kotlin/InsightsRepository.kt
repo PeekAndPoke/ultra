@@ -1,5 +1,5 @@
-package de.peekandpoke.ktorfx.insights
+package de.peekandpoke.funktor.insights
 
-import de.peekandpoke.ktorfx.cluster.depot.repos.DepotRepository
+import de.peekandpoke.funktor.cluster.depot.repos.DepotRepository
 
 interface InsightsRepository : DepotRepository

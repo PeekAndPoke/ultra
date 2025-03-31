@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.depot.api
+package de.peekandpoke.funktor.cluster.depot.api
 
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.slumber.Slumber

@@ -1,9 +1,9 @@
-package de.peekandpoke.ktorfx.rest
+package de.peekandpoke.funktor.rest
 
-import de.peekandpoke.ktorfx.core.broker.OutgoingConverter
-import de.peekandpoke.ktorfx.core.broker.Routes
-import de.peekandpoke.ktorfx.core.broker.TypedRoute
-import de.peekandpoke.ktorfx.core.broker.UriPattern
+import de.peekandpoke.funktor.core.broker.OutgoingConverter
+import de.peekandpoke.funktor.core.broker.Routes
+import de.peekandpoke.funktor.core.broker.TypedRoute
+import de.peekandpoke.funktor.core.broker.UriPattern
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.common.remote.ApiResponse
 import de.peekandpoke.ultra.common.remote.TypedApiEndpoint

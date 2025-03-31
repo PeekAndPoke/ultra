@@ -1,11 +1,11 @@
-package de.peekandpoke.ktorfx.insights.gui
+package de.peekandpoke.funktor.insights.gui
 
-import de.peekandpoke.ktorfx.core.broker.TypedRouteRenderer
-import de.peekandpoke.ktorfx.core.broker.get
-import de.peekandpoke.ktorfx.core.config.AppConfig
-import de.peekandpoke.ktorfx.core.kontainer
-import de.peekandpoke.ktorfx.core.model.AppInfo
-import de.peekandpoke.ktorfx.insights.InsightsDataLoader
+import de.peekandpoke.funktor.core.broker.TypedRouteRenderer
+import de.peekandpoke.funktor.core.broker.get
+import de.peekandpoke.funktor.core.config.AppConfig
+import de.peekandpoke.funktor.core.kontainer
+import de.peekandpoke.funktor.core.model.AppInfo
+import de.peekandpoke.funktor.insights.InsightsDataLoader
 import io.ktor.http.*
 import io.ktor.server.html.*
 import io.ktor.server.response.*

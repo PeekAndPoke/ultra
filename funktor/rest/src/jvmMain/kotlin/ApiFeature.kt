@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.rest
+package de.peekandpoke.funktor.rest
 
 /**
  * Common interface for all Api features

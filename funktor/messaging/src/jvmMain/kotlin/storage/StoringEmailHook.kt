@@ -1,10 +1,10 @@
-package de.peekandpoke.ktorfx.messaging.storage
+package de.peekandpoke.funktor.messaging.storage
 
-import de.peekandpoke.ktorfx.messaging.Email
-import de.peekandpoke.ktorfx.messaging.EmailHooks
-import de.peekandpoke.ktorfx.messaging.api.EmailBody
-import de.peekandpoke.ktorfx.messaging.api.EmailResult
-import de.peekandpoke.ktorfx.messaging.api.SentMessageModel
+import de.peekandpoke.funktor.messaging.Email
+import de.peekandpoke.funktor.messaging.EmailHooks
+import de.peekandpoke.funktor.messaging.api.EmailBody
+import de.peekandpoke.funktor.messaging.api.EmailResult
+import de.peekandpoke.funktor.messaging.api.SentMessageModel
 import de.peekandpoke.ultra.common.TypedAttributes
 import de.peekandpoke.ultra.common.TypedKey
 

@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.rest.codegen
+package de.peekandpoke.funktor.rest.codegen
 
 import com.github.difflib.DiffUtils
 import io.kotest.assertions.fail

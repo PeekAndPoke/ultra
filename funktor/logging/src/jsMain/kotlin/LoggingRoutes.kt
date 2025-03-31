@@ -1,11 +1,11 @@
-package de.peekandpoke.ktorfx.logging
+package de.peekandpoke.funktor.logging
 
+import de.peekandpoke.funktor.logging.api.LogEntryModel
 import de.peekandpoke.kraft.addons.routing.Route1
 import de.peekandpoke.kraft.addons.routing.RouterBuilder
 import de.peekandpoke.kraft.addons.routing.Static
-import de.peekandpoke.ktorfx.logging.api.LogEntryModel
 
-class LoggingRoutes(mount: String = "/_/ktorfx/logging") {
+class LoggingRoutes(mount: String = "/_/funktor/logging") {
 
     val list = Static(mount)
     val view = Route1("$mount/{id}")
@@ -13,7 +13,7 @@ class LoggingRoutes(mount: String = "/_/ktorfx/logging") {
     fun view(entry: LogEntryModel) = view(id = entry.id)
 }
 
-fun RouterBuilder.mountKtorFxLogging(
+fun RouterBuilder.mountFunktorLogging(
     ui: LoggingUi,
 ) {
     mount(ui.routes.list) { ui { LogEntriesListPage() } }

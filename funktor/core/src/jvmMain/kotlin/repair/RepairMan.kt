@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core.repair
+package de.peekandpoke.funktor.core.repair
 
 import de.peekandpoke.ultra.logging.Log
 

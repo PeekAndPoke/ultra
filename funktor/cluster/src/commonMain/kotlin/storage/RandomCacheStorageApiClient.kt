@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.storage
+package de.peekandpoke.funktor.cluster.storage
 
 import de.peekandpoke.ultra.common.model.Paged
 import de.peekandpoke.ultra.common.remote.ApiClient
@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 class RandomCacheStorageApiClient(config: Config) : ApiClient(config) {
 
     companion object {
-        const val base = "/_/ktorfx/storage/random-cache"
+        const val base = "/_/funktor/storage/random-cache"
 
         val List = Get(
             base,

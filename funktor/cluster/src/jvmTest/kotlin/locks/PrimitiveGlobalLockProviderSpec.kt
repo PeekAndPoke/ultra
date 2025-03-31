@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.locks
+package de.peekandpoke.funktor.cluster.locks
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 class PrimitiveGlobalLockProviderSpec : GlobalLockProviderSpecBase() {

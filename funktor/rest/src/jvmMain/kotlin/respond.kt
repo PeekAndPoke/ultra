@@ -1,9 +1,9 @@
-package de.peekandpoke.ktorfx.rest
+package de.peekandpoke.funktor.rest
 
-import de.peekandpoke.ktorfx.core.appConfig
-import de.peekandpoke.ktorfx.core.kontainerOrNull
-import de.peekandpoke.ktorfx.core.metrics.RequestMetricsProvider
-import de.peekandpoke.ktorfx.rest.auth.AuthRule
+import de.peekandpoke.funktor.core.appConfig
+import de.peekandpoke.funktor.core.kontainerOrNull
+import de.peekandpoke.funktor.core.metrics.RequestMetricsProvider
+import de.peekandpoke.funktor.rest.auth.AuthRule
 import de.peekandpoke.ultra.common.encodeUriComponent
 import de.peekandpoke.ultra.common.network.NetworkUtils
 import de.peekandpoke.ultra.common.remote.ApiResponse

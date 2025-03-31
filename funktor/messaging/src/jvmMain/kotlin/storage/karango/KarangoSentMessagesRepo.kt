@@ -1,5 +1,10 @@
-package de.peekandpoke.ktorfx.messaging.storage.karango
+package de.peekandpoke.funktor.messaging.storage.karango
 
+import de.peekandpoke.funktor.messaging.storage.SentMessage
+import de.peekandpoke.funktor.messaging.storage.SentMessagesStorage
+import de.peekandpoke.funktor.messaging.storage.createdAt
+import de.peekandpoke.funktor.messaging.storage.lookup
+import de.peekandpoke.funktor.messaging.storage.refs
 import de.peekandpoke.karango.aql.DESC
 import de.peekandpoke.karango.aql.FOR
 import de.peekandpoke.karango.aql.IN
@@ -10,11 +15,6 @@ import de.peekandpoke.karango.aql.expand
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.IndexBuilder
 import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ktorfx.messaging.storage.SentMessage
-import de.peekandpoke.ktorfx.messaging.storage.SentMessagesStorage
-import de.peekandpoke.ktorfx.messaging.storage.createdAt
-import de.peekandpoke.ktorfx.messaging.storage.lookup
-import de.peekandpoke.ktorfx.messaging.storage.refs
 import de.peekandpoke.ultra.common.model.search.PagedSearchFilter
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.vault.Cursor

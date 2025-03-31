@@ -1,8 +1,8 @@
-package de.peekandpoke.ktorfx.core.cli.cmd
+package de.peekandpoke.funktor.core.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
-import de.peekandpoke.ktorfx.core.JsonPrinter
-import de.peekandpoke.ktorfx.core.config.AppConfig
+import de.peekandpoke.funktor.core.JsonPrinter
+import de.peekandpoke.funktor.core.config.AppConfig
 
 class AppConfigCliCommand(
     config: Lazy<AppConfig>,

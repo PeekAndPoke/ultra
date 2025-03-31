@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.core.repair
+package de.peekandpoke.funktor.core.repair
 
-import de.peekandpoke.ktorfx.core.lifecycle.AppLifeCycleHooks
+import de.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
 import io.ktor.server.application.*
 
 class RepairManOnAppStartingHook(

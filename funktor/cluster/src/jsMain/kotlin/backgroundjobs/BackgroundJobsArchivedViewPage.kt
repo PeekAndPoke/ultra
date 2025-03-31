@@ -1,5 +1,6 @@
-package de.peekandpoke.ktorfx.cluster.backgroundjobs
+package de.peekandpoke.funktor.cluster.backgroundjobs
 
+import de.peekandpoke.funktor.cluster.FunktorClusterUi
 import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
@@ -8,7 +9,6 @@ import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.streams.addons.debouncedFuncExceptFirst
 import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ktorfx.cluster.KtorFxClusterUi
 import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
 import kotlinx.html.FlowContent
 
@@ -17,7 +17,7 @@ class BackgroundJobsArchivedViewPage(ctx: Ctx<Props>) : Component<BackgroundJobs
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: KtorFxClusterUi,
+        val ui: FunktorClusterUi,
         val id: String,
     )
 
@@ -42,7 +42,7 @@ class BackgroundJobsArchivedViewPage(ctx: Ctx<Props>) : Component<BackgroundJobs
     }
 
     override fun VDom.render() {
-        JoinedPageTitle { listOf("KtorFx", "Background Jobs Archive", props.id) }
+        JoinedPageTitle { listOf("Funktor", "Background Jobs Archive", props.id) }
 
         ui.padded.segment {
             ui.dividing.header H2 { +"Archived Background Job '${props.id}'" }

@@ -1,8 +1,8 @@
-package de.peekandpoke.ktorfx.rest.auth
+package de.peekandpoke.funktor.rest.auth
 
-import de.peekandpoke.ktorfx.core.kontainer
-import de.peekandpoke.ktorfx.rest.auth.AuthRule.CheckCtx
-import de.peekandpoke.ktorfx.rest.auth.AuthRule.EstimateCtx
+import de.peekandpoke.funktor.core.kontainer
+import de.peekandpoke.funktor.rest.auth.AuthRule.CheckCtx
+import de.peekandpoke.funktor.rest.auth.AuthRule.EstimateCtx
 import de.peekandpoke.ultra.common.remote.ApiAccessLevel
 import de.peekandpoke.ultra.kontainer.KontainerAware
 import de.peekandpoke.ultra.security.user.User

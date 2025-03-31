@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.locks
+package de.peekandpoke.funktor.cluster.locks
 
 import kotlin.time.Duration
 

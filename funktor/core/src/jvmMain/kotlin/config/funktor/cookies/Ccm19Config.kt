@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core.config.ktorfx.cookies
+package de.peekandpoke.funktor.core.config.funktor.cookies
 
 data class Ccm19Config(
     val enabled: Boolean,

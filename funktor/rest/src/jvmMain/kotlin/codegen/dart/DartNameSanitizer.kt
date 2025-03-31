@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.rest.codegen.dart
+package de.peekandpoke.funktor.rest.codegen.dart
 
 object DartNameSanitizer {
 

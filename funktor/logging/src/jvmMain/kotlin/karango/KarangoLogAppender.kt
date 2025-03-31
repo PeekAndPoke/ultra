@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.logging.karango
+package de.peekandpoke.funktor.logging.karango
 
 import de.peekandpoke.ultra.common.network.NetworkUtils
 import de.peekandpoke.ultra.logging.LogAppender

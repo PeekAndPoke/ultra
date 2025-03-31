@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.locks
+package de.peekandpoke.funktor.cluster.locks
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector

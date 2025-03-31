@@ -1,9 +1,9 @@
-package de.peekandpoke.ktorfx.insights.collectors
+package de.peekandpoke.funktor.insights.collectors
 
+import de.peekandpoke.funktor.insights.InsightsCollector
+import de.peekandpoke.funktor.insights.InsightsCollectorData
+import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
 import de.peekandpoke.kraft.semanticui.icon
-import de.peekandpoke.ktorfx.insights.InsightsCollector
-import de.peekandpoke.ktorfx.insights.InsightsCollectorData
-import de.peekandpoke.ktorfx.insights.gui.InsightsGuiTemplate
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.*

@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.cluster.depot.repos
+package de.peekandpoke.funktor.cluster.depot.repos
 
-import de.peekandpoke.ktorfx.cluster.depot.api.DepotItemModel
+import de.peekandpoke.funktor.cluster.depot.api.DepotItemModel
 import kotlinx.serialization.SerialName
 
 fun depotPutFileOptions(block: DepotPutFileOptions.Builder.() -> Unit = {}) =

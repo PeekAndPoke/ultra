@@ -1,8 +1,8 @@
-package de.peekandpoke.ktorfx.insights
+package de.peekandpoke.funktor.insights
 
+import de.peekandpoke.funktor.insights.gui.InsightsBarTemplate
+import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
 import de.peekandpoke.kraft.semanticui.ui
-import de.peekandpoke.ktorfx.insights.gui.InsightsBarTemplate
-import de.peekandpoke.ktorfx.insights.gui.InsightsGuiTemplate
 import kotlinx.html.DIV
 import kotlinx.html.Unsafe
 import kotlinx.html.div

@@ -1,14 +1,14 @@
-package de.peekandpoke.ktorfx.cluster
+package de.peekandpoke.funktor.cluster
 
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.BackgroundJobs
-import de.peekandpoke.ktorfx.cluster.depot.DepotFacade
-import de.peekandpoke.ktorfx.cluster.locks.GlobalServerId
-import de.peekandpoke.ktorfx.cluster.locks.GlobalServerList
-import de.peekandpoke.ktorfx.cluster.locks.LocksFacade
-import de.peekandpoke.ktorfx.cluster.storage.StorageFacade
-import de.peekandpoke.ktorfx.cluster.workers.WorkersFacade
+import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
+import de.peekandpoke.funktor.cluster.depot.DepotFacade
+import de.peekandpoke.funktor.cluster.locks.GlobalServerId
+import de.peekandpoke.funktor.cluster.locks.GlobalServerList
+import de.peekandpoke.funktor.cluster.locks.LocksFacade
+import de.peekandpoke.funktor.cluster.storage.StorageFacade
+import de.peekandpoke.funktor.cluster.workers.WorkersFacade
 
-class KtorFxClusterFacade(
+class FunktorClusterFacade(
     serverId: Lazy<GlobalServerId>,
     servers: Lazy<GlobalServerList>,
     locks: Lazy<LocksFacade>,

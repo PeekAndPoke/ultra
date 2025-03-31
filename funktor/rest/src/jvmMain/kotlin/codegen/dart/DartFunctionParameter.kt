@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.rest.codegen.dart
+package de.peekandpoke.funktor.rest.codegen.dart
 
-import de.peekandpoke.ktorfx.rest.codegen.dart.printer.DartCodePrintFn
-import de.peekandpoke.ktorfx.rest.codegen.dart.printer.DartCodePrinter
+import de.peekandpoke.funktor.rest.codegen.dart.printer.DartCodePrintFn
+import de.peekandpoke.funktor.rest.codegen.dart.printer.DartCodePrinter
 
 data class DartFunctionParameter(
     val type: DartType,

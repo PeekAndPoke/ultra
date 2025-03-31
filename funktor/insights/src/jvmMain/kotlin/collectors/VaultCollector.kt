@@ -1,12 +1,12 @@
-package de.peekandpoke.ktorfx.insights.collectors
+package de.peekandpoke.funktor.insights.collectors
 
+import de.peekandpoke.funktor.insights.InsightsCollector
+import de.peekandpoke.funktor.insights.InsightsCollectorData
+import de.peekandpoke.funktor.insights.gui.InsightsBarTemplate
+import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
+import de.peekandpoke.funktor.staticweb.resources.prismjs.prism
 import de.peekandpoke.kraft.semanticui.icon
 import de.peekandpoke.kraft.semanticui.ui
-import de.peekandpoke.ktorfx.insights.InsightsCollector
-import de.peekandpoke.ktorfx.insights.InsightsCollectorData
-import de.peekandpoke.ktorfx.insights.gui.InsightsBarTemplate
-import de.peekandpoke.ktorfx.insights.gui.InsightsGuiTemplate
-import de.peekandpoke.ktorfx.staticweb.resources.prismjs.prism
 import de.peekandpoke.ultra.vault.domain.DatabaseGraphModel
 import de.peekandpoke.ultra.vault.profiling.QueryProfiler
 import de.peekandpoke.ultra.vault.tools.DatabaseGraphBuilder

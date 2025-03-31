@@ -1,12 +1,12 @@
-package de.peekandpoke.ktorfx.testing
+package de.peekandpoke.funktor.testing
 
-import de.peekandpoke.ktorfx.core.App
-import de.peekandpoke.ktorfx.core.KontainerKey
-import de.peekandpoke.ktorfx.core.config.AppConfig
-import de.peekandpoke.ktorfx.core.fixtures.FixtureInstaller
-import de.peekandpoke.ktorfx.core.fixtures.FixtureLoader
-import de.peekandpoke.ktorfx.rest.ApiRoute
-import de.peekandpoke.ktorfx.testing.TestBed.Companion.createTestBed
+import de.peekandpoke.funktor.core.App
+import de.peekandpoke.funktor.core.KontainerKey
+import de.peekandpoke.funktor.core.config.AppConfig
+import de.peekandpoke.funktor.core.fixtures.FixtureInstaller
+import de.peekandpoke.funktor.core.fixtures.FixtureLoader
+import de.peekandpoke.funktor.rest.ApiRoute
+import de.peekandpoke.funktor.testing.TestBed.Companion.createTestBed
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.kontainer.KontainerAware
 import de.peekandpoke.ultra.vault.Database

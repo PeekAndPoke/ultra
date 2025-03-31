@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.logging
+package de.peekandpoke.funktor.logging
 
 import de.peekandpoke.kraft.components.debugId
 import de.peekandpoke.kraft.components.onClick

@@ -1,9 +1,9 @@
-package de.peekandpoke.ktorfx.cluster.backgroundjobs
+package de.peekandpoke.funktor.cluster.backgroundjobs
 
+import de.peekandpoke.funktor.cluster.FunktorClusterUi
 import de.peekandpoke.kraft.addons.routing.Route1
 import de.peekandpoke.kraft.addons.routing.RouterBuilder
 import de.peekandpoke.kraft.addons.routing.Static
-import de.peekandpoke.ktorfx.cluster.KtorFxClusterUi
 
 class BackgroundJobsRoutes(mount: String) {
 
@@ -16,8 +16,8 @@ class BackgroundJobsRoutes(mount: String) {
     fun viewArchived(id: String) = viewArchived.build(id)
 }
 
-internal fun RouterBuilder.mountKtorFxBackgroundJobs(
-    ui: KtorFxClusterUi,
+internal fun RouterBuilder.mountFunktorBackgroundJobs(
+    ui: FunktorClusterUi,
 ) {
     mount(ui.routes.backgroundJobs.listQueued) { ui { BackgroundJobsQueuedListPage() } }
     mount(ui.routes.backgroundJobs.viewQueued) { ui { BackgroundJobsQueuedViewPage(it["id"]) } }

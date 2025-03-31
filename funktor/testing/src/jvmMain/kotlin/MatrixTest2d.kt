@@ -1,10 +1,10 @@
-package de.peekandpoke.ktorfx.testing
+package de.peekandpoke.funktor.testing
 
 import io.kotest.core.spec.style.scopes.FreeSpecContainerScope
 
 @JvmName("matrixTest1d")
 suspend fun <D1> FreeSpecContainerScope.matrixTest1d(builder: MatrixTest1d.Builder<D1>.() -> Unit) {
-    de.peekandpoke.ktorfx.testing.MatrixTest1d.Builder<D1>(context = this)
+    de.peekandpoke.funktor.testing.MatrixTest1d.Builder<D1>(context = this)
         .apply { builder() }
         .build()
         .run()
@@ -12,7 +12,7 @@ suspend fun <D1> FreeSpecContainerScope.matrixTest1d(builder: MatrixTest1d.Build
 
 @JvmName("matrixTest2d")
 suspend fun <D1, D2> FreeSpecContainerScope.matrixTest2d(builder: MatrixTest2d.Builder<D1, D2>.() -> Unit) {
-    de.peekandpoke.ktorfx.testing.MatrixTest2d.Builder<D1, D2>(context = this)
+    de.peekandpoke.funktor.testing.MatrixTest2d.Builder<D1, D2>(context = this)
         .apply { builder() }
         .build()
         .run()
@@ -20,7 +20,7 @@ suspend fun <D1, D2> FreeSpecContainerScope.matrixTest2d(builder: MatrixTest2d.B
 
 @JvmName("matrixTest3d")
 suspend fun <D1, D2, D3> FreeSpecContainerScope.matrixTest3d(builder: MatrixTest3d.Builder<D1, D2, D3>.() -> Unit) {
-    de.peekandpoke.ktorfx.testing.MatrixTest3d.Builder<D1, D2, D3>(context = this)
+    de.peekandpoke.funktor.testing.MatrixTest3d.Builder<D1, D2, D3>(context = this)
         .apply { builder() }
         .build()
         .run()

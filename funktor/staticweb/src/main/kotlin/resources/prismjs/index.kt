@@ -1,22 +1,22 @@
-package de.peekandpoke.ktorfx.staticweb.resources.prismjs
+package de.peekandpoke.funktor.staticweb.resources.prismjs
 
-import de.peekandpoke.ktorfx.core.model.CacheBuster
-import de.peekandpoke.ktorfx.staticweb.resources.WebResourceGroup
-import de.peekandpoke.ktorfx.staticweb.resources.WebResources
+import de.peekandpoke.funktor.core.model.CacheBuster
+import de.peekandpoke.funktor.staticweb.resources.WebResourceGroup
+import de.peekandpoke.funktor.staticweb.resources.WebResources
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
 
 /**
- * Imports the [KtorFX_PrismJs] into the [KontainerBuilder]
+ * Imports the [Funktor_PrismJs] into the [KontainerBuilder]
  */
-fun KontainerBuilder.ktorFxPrismJs() = module(KtorFX_PrismJs)
+fun KontainerBuilder.funktorPrismJs() = module(Funktor_PrismJs)
 
 val WebResources.prismJs get() = get(PrismJsWebResources::class)
 
 /**
  * Defines the prism js module
  */
-val KtorFX_PrismJs = module {
+val Funktor_PrismJs = module {
     singleton(PrismJsWebResources::class)
 }
 
@@ -36,6 +36,6 @@ class PrismJsWebResources(cacheBuster: CacheBuster) : WebResourceGroup(cacheBust
     webjarJs("/vendor/prismjs/components/prism-kotlin.js")
 
     // custom languages (or ones not yet present in webjars)
-    resourceJs("/assets/ktorfx/prismjs/aql.js")
+    resourceJs("/assets/funktor/prismjs/aql.js")
 })
 

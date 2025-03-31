@@ -1,11 +1,11 @@
-package de.peekandpoke.ktorfx.core.repair
+package de.peekandpoke.funktor.core.repair
 
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
 
-internal fun KontainerBuilder.ktorFxRepair() = module(KtorFxRepairModule)
+internal fun KontainerBuilder.funktorRepair() = module(Funktor_Repair)
 
-internal val KtorFxRepairModule = module {
+internal val Funktor_Repair = module {
 
     // The facade
     dynamic(RepairMan::class)

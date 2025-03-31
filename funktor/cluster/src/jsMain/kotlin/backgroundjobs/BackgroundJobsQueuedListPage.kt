@@ -1,5 +1,7 @@
-package de.peekandpoke.ktorfx.cluster.backgroundjobs
+package de.peekandpoke.funktor.cluster.backgroundjobs
 
+import de.peekandpoke.funktor.cluster.FunktorClusterUi
+import de.peekandpoke.funktor.cluster.renderDefault
 import de.peekandpoke.kraft.addons.pagination.pagedSearchFilter
 import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.addons.semanticui.PaginationPages.PaginationPages
@@ -11,8 +13,6 @@ import de.peekandpoke.kraft.semanticui.icon
 import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ktorfx.cluster.KtorFxClusterUi
-import de.peekandpoke.ktorfx.cluster.renderDefault
 import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
 import de.peekandpoke.ultra.common.model.Paged
 import de.peekandpoke.ultra.common.model.search.PagedSearchFilter
@@ -34,7 +34,7 @@ class BackgroundJobsQueuedListPage(ctx: Ctx<Props>) : Component<BackgroundJobsQu
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: KtorFxClusterUi,
+        val ui: FunktorClusterUi,
     )
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,7 +50,7 @@ class BackgroundJobsQueuedListPage(ctx: Ctx<Props>) : Component<BackgroundJobsQu
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
-        JoinedPageTitle { listOf("KtorFx", "Background Jobs Queue") }
+        JoinedPageTitle { listOf("Funktor", "Background Jobs Queue") }
 
         ui.padded.segment {
 

@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.messaging
+package de.peekandpoke.funktor.messaging
 
-import de.peekandpoke.ktorfx.messaging.api.EmailResult
+import de.peekandpoke.funktor.messaging.api.EmailResult
 import de.peekandpoke.ultra.logging.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

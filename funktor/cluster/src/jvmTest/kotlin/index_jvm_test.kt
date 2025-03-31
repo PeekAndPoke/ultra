@@ -1,1 +1,1 @@
-package de.peekandpoke.ktorfx.cluster
+package de.peekandpoke.funktor.cluster

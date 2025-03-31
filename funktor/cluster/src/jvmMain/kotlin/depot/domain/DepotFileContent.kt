@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.depot.domain
+package de.peekandpoke.funktor.cluster.depot.domain
 
 /**
  * Definition of the content of a depot file

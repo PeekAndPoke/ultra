@@ -1,1 +1,1 @@
-package de.peekandpoke.ktorfx.rest
+package de.peekandpoke.funktor.rest

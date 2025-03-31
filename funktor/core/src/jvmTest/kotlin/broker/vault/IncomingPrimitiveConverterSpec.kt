@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core.broker.vault
+package de.peekandpoke.funktor.core.broker.vault
 
 import de.peekandpoke.ultra.common.reflection.kType
 import io.kotest.core.spec.style.StringSpec

@@ -1,5 +1,7 @@
-package de.peekandpoke.ktorfx.cluster.vault
+package de.peekandpoke.funktor.cluster.vault
 
+import de.peekandpoke.funktor.cluster.FunktorClusterUi
+import de.peekandpoke.funktor.cluster.renderDefault
 import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
@@ -9,8 +11,6 @@ import de.peekandpoke.kraft.semanticui.noui
 import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ktorfx.cluster.KtorFxClusterUi
-import de.peekandpoke.ktorfx.cluster.renderDefault
 import de.peekandpoke.ultra.common.camelCaseSplit
 import de.peekandpoke.ultra.vault.VaultModels
 import kotlinx.coroutines.flow.map
@@ -30,7 +30,7 @@ class VaultIndexPage(ctx: Ctx<Props>) : Component<VaultIndexPage.Props>(ctx) {
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: KtorFxClusterUi,
+        val ui: FunktorClusterUi,
     )
 
     private enum class Sorting {
@@ -62,7 +62,7 @@ class VaultIndexPage(ctx: Ctx<Props>) : Component<VaultIndexPage.Props>(ctx) {
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
-        JoinedPageTitle { listOf("KtorFx", "Vault") }
+        JoinedPageTitle { listOf("Funktor", "Vault") }
 
         ui.padded.segment {
             ui.right.floated.small.basic.icon.button {

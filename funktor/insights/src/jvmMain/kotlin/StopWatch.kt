@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.insights
+package de.peekandpoke.funktor.insights
 
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds

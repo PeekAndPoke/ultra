@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.logging.api
+package de.peekandpoke.funktor.logging.api
 
-import de.peekandpoke.ktorfx.logging.LogsFilter
+import de.peekandpoke.funktor.logging.LogsFilter
 import de.peekandpoke.ultra.common.model.Paged
 import de.peekandpoke.ultra.common.remote.ApiClient
 import de.peekandpoke.ultra.common.remote.ApiResponse
@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.Flow
 class LoggingApiClient(config: Config) : ApiClient(config) {
 
     companion object {
-        const val base = "/_/ktorfx/logs"
+        const val base = "/_/funktor/logs"
 
         val List = Get(
             uri = base,

@@ -1,5 +1,9 @@
-package de.peekandpoke.ktorfx.cluster.depot
+package de.peekandpoke.funktor.cluster.depot
 
+import de.peekandpoke.funktor.cluster.FunktorClusterUi
+import de.peekandpoke.funktor.cluster.depot.api.DepotBrowseModel
+import de.peekandpoke.funktor.cluster.depot.api.DepotItemModel
+import de.peekandpoke.funktor.cluster.renderDefault
 import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.addons.routing.urlParam
 import de.peekandpoke.kraft.components.Component
@@ -10,10 +14,6 @@ import de.peekandpoke.kraft.semanticui.noui
 import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ktorfx.cluster.KtorFxClusterUi
-import de.peekandpoke.ktorfx.cluster.depot.api.DepotBrowseModel
-import de.peekandpoke.ktorfx.cluster.depot.api.DepotItemModel
-import de.peekandpoke.ktorfx.cluster.renderDefault
 import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
 import kotlinx.coroutines.flow.map
 import kotlinx.html.FlowContent
@@ -29,7 +29,7 @@ class DepotBrowsePage(ctx: Ctx<Props>) : Component<DepotBrowsePage.Props>(ctx) {
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: KtorFxClusterUi,
+        val ui: FunktorClusterUi,
         val repo: String,
         val path: String,
     )
@@ -49,7 +49,7 @@ class DepotBrowsePage(ctx: Ctx<Props>) : Component<DepotBrowsePage.Props>(ctx) {
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
-        JoinedPageTitle { listOf("KtorFx", "Depot", path) }
+        JoinedPageTitle { listOf("Funktor", "Depot", path) }
 
         ui.padded.segment {
             ui.right.floated.small.basic.icon.button {

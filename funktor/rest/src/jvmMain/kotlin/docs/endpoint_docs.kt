@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.rest.docs
+package de.peekandpoke.funktor.rest.docs
 
-import de.peekandpoke.ktorfx.rest.ApiRoute
-import de.peekandpoke.ktorfx.rest.RestDslMarkerConfig
+import de.peekandpoke.funktor.rest.ApiRoute
+import de.peekandpoke.funktor.rest.RestDslMarkerConfig
 import de.peekandpoke.ultra.common.TypedKey
 
 data class EndpointDocs(

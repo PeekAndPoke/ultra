@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.rest.codec
+package de.peekandpoke.funktor.rest.codec
 
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kType

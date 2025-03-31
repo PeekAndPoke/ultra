@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core
+package de.peekandpoke.funktor.core
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper

@@ -1,14 +1,14 @@
-package de.peekandpoke.ktorfx.testing
+package de.peekandpoke.funktor.testing
 
-import de.peekandpoke.ktorfx.core.broker.TypedRoute
-import de.peekandpoke.ktorfx.core.broker.typedRouteRenderer
-import de.peekandpoke.ktorfx.core.config.AppConfig
-import de.peekandpoke.ktorfx.core.websocket.WebsocketClientModule
-import de.peekandpoke.ktorfx.core.websocket.WsClientMessage
-import de.peekandpoke.ktorfx.core.websocket.WsServerMessage
-import de.peekandpoke.ktorfx.rest.ApiRoute
-import de.peekandpoke.ktorfx.rest.codec.RestCodec
-import de.peekandpoke.ktorfx.rest.restCodec
+import de.peekandpoke.funktor.core.broker.TypedRoute
+import de.peekandpoke.funktor.core.broker.typedRouteRenderer
+import de.peekandpoke.funktor.core.config.AppConfig
+import de.peekandpoke.funktor.core.websocket.WebsocketClientModule
+import de.peekandpoke.funktor.core.websocket.WsClientMessage
+import de.peekandpoke.funktor.core.websocket.WsServerMessage
+import de.peekandpoke.funktor.rest.ApiRoute
+import de.peekandpoke.funktor.rest.codec.RestCodec
+import de.peekandpoke.funktor.rest.restCodec
 import de.peekandpoke.ultra.common.model.EmptyObject
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kType

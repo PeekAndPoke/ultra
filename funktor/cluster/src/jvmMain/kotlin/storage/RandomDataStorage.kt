@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.cluster.storage
+package de.peekandpoke.funktor.cluster.storage
 
-import de.peekandpoke.ktorfx.cluster.storage.domain.RawRandomData
-import de.peekandpoke.ktorfx.cluster.storage.domain.TypedRandomData
+import de.peekandpoke.funktor.cluster.storage.domain.RawRandomData
+import de.peekandpoke.funktor.cluster.storage.domain.TypedRandomData
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kType

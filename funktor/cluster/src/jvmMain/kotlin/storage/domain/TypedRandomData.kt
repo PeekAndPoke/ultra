@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.storage.domain
+package de.peekandpoke.funktor.cluster.storage.domain
 
 import de.peekandpoke.ultra.common.datetime.MpInstant
 

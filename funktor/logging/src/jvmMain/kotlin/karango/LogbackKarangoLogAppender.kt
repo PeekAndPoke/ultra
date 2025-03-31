@@ -1,15 +1,15 @@
-package de.peekandpoke.ktorfx.logging.karango
+package de.peekandpoke.funktor.logging.karango
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.classic.spi.ThrowableProxy
 import ch.qos.logback.core.UnsynchronizedAppenderBase
+import de.peekandpoke.funktor.logging.FunktorLoggingBuilder
 import de.peekandpoke.karango.config.ArangoDbConfig
 import de.peekandpoke.karango.getKarangoDefaultSlumberConfig
 import de.peekandpoke.karango.slumber.KarangoCodec
 import de.peekandpoke.karango.toArangoDbWithoutCache
 import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ktorfx.logging.KtorFXLoggingBuilder
 import de.peekandpoke.ultra.common.network.NetworkUtils
 import de.peekandpoke.ultra.logging.LogLevel
 import de.peekandpoke.ultra.vault.Database
@@ -22,7 +22,7 @@ import kotlinx.coroutines.runBlocking
 fun Application.addKarangoAppender(
     config: ArangoDbConfig,
     minLevel: Level = Level.INFO,
-    repoName: String = KtorFXLoggingBuilder.defaultLogCollectionName,
+    repoName: String = FunktorLoggingBuilder.defaultLogCollectionName,
 ) {
     when (val l = log) {
         is ch.qos.logback.classic.Logger -> {

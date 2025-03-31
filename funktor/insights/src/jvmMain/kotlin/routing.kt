@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.insights
+package de.peekandpoke.funktor.insights
 
-import de.peekandpoke.ktorfx.core.fullUrl
-import de.peekandpoke.ktorfx.insights.collectors.RoutingCollector
+import de.peekandpoke.funktor.core.fullUrl
+import de.peekandpoke.funktor.insights.collectors.RoutingCollector
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.routing.*
@@ -19,14 +19,14 @@ fun Route.instrumentWithInsights() {
         getTopMostRouting()?.registerTracer()
     }
 
-    val plugin = createRouteScopedPlugin(name = "KtorFX-Insights") {
+    val plugin = createRouteScopedPlugin(name = "Funktor-Insights") {
 
         val timer = AttributeKey<Long>("StartTime")
 
         on(CallSetup) { call ->
             call.attributes.put(timer, System.nanoTime())
 
-            call.ktorFxInsights?.start(call)
+            call.funktorInsights?.start(call)
         }
 
         on(ResponseSent) { call ->
@@ -37,7 +37,7 @@ fun Route.instrumentWithInsights() {
             }
 
             // Record the collected insights
-            call.ktorFxInsights?.let { insights ->
+            call.funktorInsights?.let { insights ->
                 call.launch(Dispatchers.Unconfined) { insights.finish(call) }
             }
         }

@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.rest.auth
+package de.peekandpoke.funktor.rest.auth
 
-import de.peekandpoke.ktorfx.rest.ApiRoute
-import de.peekandpoke.ktorfx.rest.RestAuthRuleMarker
+import de.peekandpoke.funktor.rest.ApiRoute
+import de.peekandpoke.funktor.rest.RestAuthRuleMarker
 import de.peekandpoke.ultra.common.remote.ApiAccessLevel
 import de.peekandpoke.ultra.security.user.UserPermissions
 import io.ktor.server.application.*

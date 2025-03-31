@@ -32,7 +32,7 @@ external fun h(type: dynamic, props: dynamic, children: dynamic): dynamic
  */
 open external class Component(props: dynamic, context: dynamic) {
 
-    /** The Base Dom Element or Text */
+    /** The base dom element or text */
     val base: dynamic
 
     fun forceUpdate(): dynamic

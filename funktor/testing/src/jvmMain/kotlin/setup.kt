@@ -1,11 +1,11 @@
-package de.peekandpoke.ktorfx.testing
+package de.peekandpoke.funktor.testing
 
-import de.peekandpoke.ktorfx.core.App
-import de.peekandpoke.ktorfx.core.AppArgs
-import de.peekandpoke.ktorfx.core.config.AppConfig
-import de.peekandpoke.ktorfx.core.config.AppConfig.Companion.typed
-import de.peekandpoke.ktorfx.core.provideApp
-import de.peekandpoke.ktorfx.core.provideKontainer
+import de.peekandpoke.funktor.core.App
+import de.peekandpoke.funktor.core.AppArgs
+import de.peekandpoke.funktor.core.config.AppConfig
+import de.peekandpoke.funktor.core.config.AppConfig.Companion.typed
+import de.peekandpoke.funktor.core.provideApp
+import de.peekandpoke.funktor.core.provideKontainer
 import de.peekandpoke.ultra.kontainer.Kontainer
 import io.ktor.server.config.*
 import io.ktor.server.testing.*

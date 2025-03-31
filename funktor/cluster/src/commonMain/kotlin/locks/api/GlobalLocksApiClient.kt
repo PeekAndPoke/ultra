@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.locks.api
+package de.peekandpoke.funktor.cluster.locks.api
 
 import de.peekandpoke.ultra.common.remote.ApiClient
 import de.peekandpoke.ultra.common.remote.ApiResponse
@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 class GlobalLocksApiClient(config: Config) : ApiClient(config) {
 
     companion object {
-        const val base = "/_/ktorfx/cluster"
+        const val base = "/_/funktor/cluster"
 
         val ListGlobalLocks = Get(
             "$base/global-locks",

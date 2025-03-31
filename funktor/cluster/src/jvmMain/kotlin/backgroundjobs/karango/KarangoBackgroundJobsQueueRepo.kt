@@ -1,5 +1,12 @@
-package de.peekandpoke.ktorfx.cluster.backgroundjobs.karango
+package de.peekandpoke.funktor.cluster.backgroundjobs.karango
 
+import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
+import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobQueued
+import de.peekandpoke.funktor.cluster.backgroundjobs.domain.dataHash
+import de.peekandpoke.funktor.cluster.backgroundjobs.domain.dueAt
+import de.peekandpoke.funktor.cluster.backgroundjobs.domain.state
+import de.peekandpoke.funktor.cluster.backgroundjobs.domain.type
+import de.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import de.peekandpoke.karango.aql.ASC
 import de.peekandpoke.karango.aql.EQ
 import de.peekandpoke.karango.aql.FOR
@@ -9,13 +16,6 @@ import de.peekandpoke.karango.aql.RETURN_COUNT
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.IndexBuilder
 import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.BackgroundJobs
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.domain.BackgroundJobQueued
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.domain.dataHash
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.domain.dueAt
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.domain.state
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.domain.type
-import de.peekandpoke.ktorfx.core.fixtures.RepoFixtureLoader
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.vault.Cursor

@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.messaging.storage
+package de.peekandpoke.funktor.messaging.storage
 
-import de.peekandpoke.ktorfx.messaging.api.EmailAttachment
-import de.peekandpoke.ktorfx.messaging.api.SentMessageModel
+import de.peekandpoke.funktor.messaging.api.EmailAttachment
+import de.peekandpoke.funktor.messaging.api.SentMessageModel
 import de.peekandpoke.ultra.common.model.search.PagedSearchFilter
 import de.peekandpoke.ultra.vault.Cursor
 import de.peekandpoke.ultra.vault.Repository

@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core.websocket
+package de.peekandpoke.funktor.core.websocket
 
 object CoreWebsocketClientModule : WebsocketClientModule() {
 

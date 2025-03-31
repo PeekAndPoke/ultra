@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.cluster.depot
+package de.peekandpoke.funktor.cluster.depot
 
-import de.peekandpoke.ktorfx.cluster.depot.domain.DepotUri
+import de.peekandpoke.funktor.cluster.depot.domain.DepotUri
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
 

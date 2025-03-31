@@ -1,10 +1,10 @@
-package de.peekandpoke.ktorfx.cluster.backgroundjobs
+package de.peekandpoke.funktor.cluster.backgroundjobs
 
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.domain.BackgroundJobQueued
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.domain.BackgroundJobRetryPolicy
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.example.ExampleBackgroundJobHandler01
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.example.ExampleBackgroundJobHandler02
-import de.peekandpoke.ktorfx.cluster.workers.WorkersRunner
+import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobQueued
+import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobRetryPolicy
+import de.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler01
+import de.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler02
+import de.peekandpoke.funktor.cluster.workers.WorkersRunner
 import de.peekandpoke.ultra.kontainer.Kontainer
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.nondeterministic.eventually

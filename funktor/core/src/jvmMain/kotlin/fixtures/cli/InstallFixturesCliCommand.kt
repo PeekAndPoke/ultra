@@ -1,8 +1,8 @@
-package de.peekandpoke.ktorfx.core.fixtures.cli
+package de.peekandpoke.funktor.core.fixtures.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
-import de.peekandpoke.ktorfx.core.fixtures.FixtureInstaller
+import de.peekandpoke.funktor.core.fixtures.FixtureInstaller
 import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.logging.Log

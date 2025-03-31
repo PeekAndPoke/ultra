@@ -1,8 +1,8 @@
-package de.peekandpoke.ktorfx.cluster.depot.repos
+package de.peekandpoke.funktor.cluster.depot.repos
 
-import de.peekandpoke.ktorfx.cluster.depot.api.DepotItemModel.Meta
-import de.peekandpoke.ktorfx.cluster.depot.domain.DepotFileContent
-import de.peekandpoke.ktorfx.cluster.depot.domain.DepotItem
+import de.peekandpoke.funktor.cluster.depot.api.DepotItemModel.Meta
+import de.peekandpoke.funktor.cluster.depot.domain.DepotFileContent
+import de.peekandpoke.funktor.cluster.depot.domain.DepotItem
 import depot.api.DepotRepositoryModel
 
 /**

@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.locks
+package de.peekandpoke.funktor.cluster.locks
 
 import de.peekandpoke.ultra.common.datetime.Kronos
 import io.kotest.assertions.throwables.shouldThrow

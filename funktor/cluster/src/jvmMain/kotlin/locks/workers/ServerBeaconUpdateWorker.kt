@@ -1,10 +1,10 @@
-package de.peekandpoke.ktorfx.cluster.locks.workers
+package de.peekandpoke.funktor.cluster.locks.workers
 
-import de.peekandpoke.ktorfx.cluster.locks.GlobalServerId
-import de.peekandpoke.ktorfx.cluster.locks.ServerBeaconRepository
-import de.peekandpoke.ktorfx.cluster.workers.StateProvider
-import de.peekandpoke.ktorfx.cluster.workers.Worker
-import de.peekandpoke.ktorfx.core.model.AppInfo
+import de.peekandpoke.funktor.cluster.locks.GlobalServerId
+import de.peekandpoke.funktor.cluster.locks.ServerBeaconRepository
+import de.peekandpoke.funktor.cluster.workers.StateProvider
+import de.peekandpoke.funktor.cluster.workers.Worker
+import de.peekandpoke.funktor.core.model.AppInfo
 import de.peekandpoke.ultra.common.datetime.MpInstant
 
 class ServerBeaconUpdateWorker(

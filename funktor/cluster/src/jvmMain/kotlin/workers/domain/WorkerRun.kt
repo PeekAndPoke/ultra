@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.cluster.workers.domain
+package de.peekandpoke.funktor.cluster.workers.domain
 
-import de.peekandpoke.ktorfx.cluster.workers.api.WorkerModel
+import de.peekandpoke.funktor.cluster.workers.api.WorkerModel
 
 data class WorkerRun(
     /** The id of the worker */

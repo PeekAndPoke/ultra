@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.vault.api
+package de.peekandpoke.funktor.cluster.vault.api
 
 import de.peekandpoke.ultra.common.remote.ApiClient
 import de.peekandpoke.ultra.common.remote.ApiResponse

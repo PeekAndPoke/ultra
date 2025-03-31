@@ -1,33 +1,33 @@
-package de.peekandpoke.ktorfx.cluster
+package de.peekandpoke.funktor.cluster
 
+import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsArchivedListPage
+import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsArchivedViewPage
+import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsQueuedListPage
+import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsQueuedViewPage
+import de.peekandpoke.funktor.cluster.depot.DepotBrowsePage
+import de.peekandpoke.funktor.cluster.depot.DepotRepositoriesListPage
+import de.peekandpoke.funktor.cluster.locks.GlobalLocksListPage
+import de.peekandpoke.funktor.cluster.locks.ServerBeaconsListPage
+import de.peekandpoke.funktor.cluster.storage.RandomCacheStorageListPage
+import de.peekandpoke.funktor.cluster.storage.RandomCacheStorageViewPage
+import de.peekandpoke.funktor.cluster.storage.RandomDataStorageListPage
+import de.peekandpoke.funktor.cluster.storage.RandomDataStorageViewPage
+import de.peekandpoke.funktor.cluster.vault.VaultIndexPage
+import de.peekandpoke.funktor.cluster.workers.WorkerDetailsPage
+import de.peekandpoke.funktor.cluster.workers.WorkersListPage
 import de.peekandpoke.kraft.addons.routing.Router
 import de.peekandpoke.kraft.addons.routing.RouterProvider
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.semanticui.RenderFn
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.BackgroundJobsArchivedListPage
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.BackgroundJobsArchivedViewPage
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.BackgroundJobsQueuedListPage
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.BackgroundJobsQueuedViewPage
-import de.peekandpoke.ktorfx.cluster.depot.DepotBrowsePage
-import de.peekandpoke.ktorfx.cluster.depot.DepotRepositoriesListPage
-import de.peekandpoke.ktorfx.cluster.locks.GlobalLocksListPage
-import de.peekandpoke.ktorfx.cluster.locks.ServerBeaconsListPage
-import de.peekandpoke.ktorfx.cluster.storage.RandomCacheStorageListPage
-import de.peekandpoke.ktorfx.cluster.storage.RandomCacheStorageViewPage
-import de.peekandpoke.ktorfx.cluster.storage.RandomDataStorageListPage
-import de.peekandpoke.ktorfx.cluster.storage.RandomDataStorageViewPage
-import de.peekandpoke.ktorfx.cluster.vault.VaultIndexPage
-import de.peekandpoke.ktorfx.cluster.workers.WorkerDetailsPage
-import de.peekandpoke.ktorfx.cluster.workers.WorkersListPage
 import de.peekandpoke.ultra.common.datetime.Kronos
 import kotlinx.html.Tag
 import org.w3c.dom.events.MouseEvent
 
-class KtorFxClusterUi(
+class FunktorClusterUi(
     val routerProvider: RouterProvider,
     val kronosProvider: () -> Kronos,
-    val api: KtorFxClusterApiClient,
-    val routes: KtorFxClusterRoutes,
+    val api: FunktorClusterApiClient,
+    val routes: FunktorClusterRoutes,
     val customInternals: RenderFn = {},
 ) {
     /** Gets the router */
@@ -38,13 +38,13 @@ class KtorFxClusterUi(
 
     //// Helpers /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    fun navTo(route: KtorFxClusterRoutes.() -> String) {
+    fun navTo(route: FunktorClusterRoutes.() -> String) {
         router.navToUri(
             routes.route()
         )
     }
 
-    fun navTo(evt: MouseEvent, route: KtorFxClusterRoutes.() -> String) {
+    fun navTo(evt: MouseEvent, route: FunktorClusterRoutes.() -> String) {
         router.navToUri(
             evt = evt,
             uri = routes.route()
@@ -52,36 +52,36 @@ class KtorFxClusterUi(
     }
 
     /**
-     * Small helper to get [KtorFxClusterUi] as a this pointer into the scope
+     * Small helper to get [FunktorClusterUi] as this pointer into the scope
      */
-    operator fun invoke(block: KtorFxClusterUi.() -> Unit) {
+    operator fun invoke(block: FunktorClusterUi.() -> Unit) {
         this.block()
     }
 
     //// Overview ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Suppress("FunctionName")
-    fun Tag.KtorFxClusterOverviewPage() = comp(
-        KtorFxClusterOverviewPage.Props(
-            ui = this@KtorFxClusterUi,
+    fun Tag.FunktorClusterOverviewPage() = comp(
+        FunktorClusterOverviewPage.Props(
+            ui = this@FunktorClusterUi,
             customInternals = customInternals,
         )
     ) {
-        KtorFxClusterOverviewPage(it)
+        FunktorClusterOverviewPage(it)
     }
 
     //// Locks Ui Components /////////////////////////////////////////////////////////////////////////////////////////////
 
     @Suppress("FunctionName")
     fun Tag.ServerBeaconsListPage() = comp(
-        ServerBeaconsListPage.Props(ui = this@KtorFxClusterUi)
+        ServerBeaconsListPage.Props(ui = this@FunktorClusterUi)
     ) {
         ServerBeaconsListPage(it)
     }
 
     @Suppress("FunctionName")
     fun Tag.GlobalLocksListPage() = comp(
-        GlobalLocksListPage.Props(ui = this@KtorFxClusterUi)
+        GlobalLocksListPage.Props(ui = this@FunktorClusterUi)
     ) {
         GlobalLocksListPage(it)
     }
@@ -90,28 +90,28 @@ class KtorFxClusterUi(
 
     @Suppress("FunctionName")
     fun Tag.BackgroundJobsQueuedListPage() = comp(
-        BackgroundJobsQueuedListPage.Props(ui = this@KtorFxClusterUi)
+        BackgroundJobsQueuedListPage.Props(ui = this@FunktorClusterUi)
     ) {
         BackgroundJobsQueuedListPage(it)
     }
 
     @Suppress("FunctionName")
     fun Tag.BackgroundJobsQueuedViewPage(id: String) = comp(
-        BackgroundJobsQueuedViewPage.Props(ui = this@KtorFxClusterUi, id = id)
+        BackgroundJobsQueuedViewPage.Props(ui = this@FunktorClusterUi, id = id)
     ) {
         BackgroundJobsQueuedViewPage(it)
     }
 
     @Suppress("FunctionName")
     fun Tag.BackgroundJobsArchivedListPage() = comp(
-        BackgroundJobsArchivedListPage.Props(ui = this@KtorFxClusterUi)
+        BackgroundJobsArchivedListPage.Props(ui = this@FunktorClusterUi)
     ) {
         BackgroundJobsArchivedListPage(it)
     }
 
     @Suppress("FunctionName")
     fun Tag.BackgroundJobsArchivedViewPage(id: String) = comp(
-        BackgroundJobsArchivedViewPage.Props(ui = this@KtorFxClusterUi, id = id)
+        BackgroundJobsArchivedViewPage.Props(ui = this@FunktorClusterUi, id = id)
     ) {
         BackgroundJobsArchivedViewPage(it)
     }
@@ -120,14 +120,14 @@ class KtorFxClusterUi(
 
     @Suppress("FunctionName")
     fun Tag.DepotRepositoriesListPage() = comp(
-        DepotRepositoriesListPage.Props(ui = this@KtorFxClusterUi)
+        DepotRepositoriesListPage.Props(ui = this@FunktorClusterUi)
     ) {
         DepotRepositoriesListPage(it)
     }
 
     @Suppress("FunctionName")
     fun Tag.DepotBrowsePage(repo: String, path: String) = comp(
-        DepotBrowsePage.Props(ui = this@KtorFxClusterUi, repo = repo, path = path)
+        DepotBrowsePage.Props(ui = this@FunktorClusterUi, repo = repo, path = path)
     ) {
         DepotBrowsePage(it)
     }
@@ -136,7 +136,7 @@ class KtorFxClusterUi(
 
     @Suppress("FunctionName")
     fun Tag.RandomDataStorageListPage() = comp(
-        RandomDataStorageListPage.Props(ui = this@KtorFxClusterUi)
+        RandomDataStorageListPage.Props(ui = this@FunktorClusterUi)
     ) {
         RandomDataStorageListPage(it)
     }
@@ -145,14 +145,14 @@ class KtorFxClusterUi(
     fun Tag.RandomDataStorageViewPage(
         id: String,
     ) = comp(
-        RandomDataStorageViewPage.Props(ui = this@KtorFxClusterUi, id = id)
+        RandomDataStorageViewPage.Props(ui = this@FunktorClusterUi, id = id)
     ) {
         RandomDataStorageViewPage(it)
     }
 
     @Suppress("FunctionName")
     fun Tag.RandomCacheStorageListPage() = comp(
-        RandomCacheStorageListPage.Props(ui = this@KtorFxClusterUi)
+        RandomCacheStorageListPage.Props(ui = this@FunktorClusterUi)
     ) {
         RandomCacheStorageListPage(it)
     }
@@ -161,7 +161,7 @@ class KtorFxClusterUi(
     fun Tag.RandomCacheStorageViewPage(
         id: String,
     ) = comp(
-        RandomCacheStorageViewPage.Props(ui = this@KtorFxClusterUi, id = id)
+        RandomCacheStorageViewPage.Props(ui = this@FunktorClusterUi, id = id)
     ) {
         RandomCacheStorageViewPage(it)
     }
@@ -170,7 +170,7 @@ class KtorFxClusterUi(
 
     @Suppress("FunctionName")
     fun Tag.VaultIndexPage() = comp(
-        VaultIndexPage.Props(ui = this@KtorFxClusterUi)
+        VaultIndexPage.Props(ui = this@FunktorClusterUi)
     ) {
         VaultIndexPage(it)
     }
@@ -179,14 +179,14 @@ class KtorFxClusterUi(
 
     @Suppress("FunctionName")
     fun Tag.WorkersListPage() = comp(
-        WorkersListPage.Props(ui = this@KtorFxClusterUi)
+        WorkersListPage.Props(ui = this@FunktorClusterUi)
     ) {
         WorkersListPage(it)
     }
 
     @Suppress("FunctionName")
     fun Tag.WorkerDetailsPage(id: String) = comp(
-        WorkerDetailsPage.Props(ui = this@KtorFxClusterUi, id = id)
+        WorkerDetailsPage.Props(ui = this@FunktorClusterUi, id = id)
     ) {
         WorkerDetailsPage(it)
     }

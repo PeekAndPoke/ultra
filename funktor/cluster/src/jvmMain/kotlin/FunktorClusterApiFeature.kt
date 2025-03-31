@@ -1,21 +1,21 @@
-package de.peekandpoke.ktorfx.cluster
+package de.peekandpoke.funktor.cluster
 
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.api.BackgroundJobsApi
-import de.peekandpoke.ktorfx.cluster.depot.api.DepotApi
-import de.peekandpoke.ktorfx.cluster.locks.api.GlobalLocksApi
-import de.peekandpoke.ktorfx.cluster.storage.api.RandomCacheStorageApi
-import de.peekandpoke.ktorfx.cluster.storage.api.RandomDataStorageApi
-import de.peekandpoke.ktorfx.cluster.vault.api.VaultApi
-import de.peekandpoke.ktorfx.cluster.workers.api.WorkersApi
-import de.peekandpoke.ktorfx.core.broker.OutgoingConverter
-import de.peekandpoke.ktorfx.rest.ApiFeature
+import de.peekandpoke.funktor.cluster.backgroundjobs.api.BackgroundJobsApi
+import de.peekandpoke.funktor.cluster.depot.api.DepotApi
+import de.peekandpoke.funktor.cluster.locks.api.GlobalLocksApi
+import de.peekandpoke.funktor.cluster.storage.api.RandomCacheStorageApi
+import de.peekandpoke.funktor.cluster.storage.api.RandomDataStorageApi
+import de.peekandpoke.funktor.cluster.vault.api.VaultApi
+import de.peekandpoke.funktor.cluster.workers.api.WorkersApi
+import de.peekandpoke.funktor.core.broker.OutgoingConverter
+import de.peekandpoke.funktor.rest.ApiFeature
 
 /**
  * Api feature for UpNext
  */
-class KtorFxClusterApiFeature(converter: OutgoingConverter) : ApiFeature {
+class FunktorClusterApiFeature(converter: OutgoingConverter) : ApiFeature {
 
-    override val name = "KtorFx Cluster"
+    override val name = "Funktor Cluster"
 
     override val description = """
         Exposes information server internals.

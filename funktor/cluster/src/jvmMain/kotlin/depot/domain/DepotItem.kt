@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.cluster.depot.domain
+package de.peekandpoke.funktor.cluster.depot.domain
 
-import de.peekandpoke.ktorfx.cluster.depot.api.DepotItemModel
-import de.peekandpoke.ktorfx.cluster.depot.repos.DepotRepository
+import de.peekandpoke.funktor.cluster.depot.api.DepotItemModel
+import de.peekandpoke.funktor.cluster.depot.repos.DepotRepository
 import de.peekandpoke.ultra.common.datetime.MpInstant
 
 /**

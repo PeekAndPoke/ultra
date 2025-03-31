@@ -1,10 +1,10 @@
-package de.peekandpoke.ktorfx.cluster.locks.api
+package de.peekandpoke.funktor.cluster.locks.api
 
-import de.peekandpoke.ktorfx.cluster.cluster
-import de.peekandpoke.ktorfx.core.broker.OutgoingConverter
-import de.peekandpoke.ktorfx.rest.ApiRoutes
-import de.peekandpoke.ktorfx.rest.docs.codeGen
-import de.peekandpoke.ktorfx.rest.docs.docs
+import de.peekandpoke.funktor.cluster.cluster
+import de.peekandpoke.funktor.core.broker.OutgoingConverter
+import de.peekandpoke.funktor.rest.ApiRoutes
+import de.peekandpoke.funktor.rest.docs.codeGen
+import de.peekandpoke.funktor.rest.docs.docs
 import de.peekandpoke.ultra.common.remote.ApiResponse
 
 class GlobalLocksApi(converter: OutgoingConverter) : ApiRoutes("global-locks", converter) {

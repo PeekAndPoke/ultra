@@ -1,11 +1,11 @@
-package de.peekandpoke.ktorfx.cluster.locks.karango
+package de.peekandpoke.funktor.cluster.locks.karango
 
+import de.peekandpoke.funktor.cluster.locks.ServerBeaconRepository
+import de.peekandpoke.funktor.cluster.locks.domain.ServerBeacon
+import de.peekandpoke.funktor.core.fixtures.FixtureLoader
+import de.peekandpoke.funktor.core.model.AppInfo
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ktorfx.cluster.locks.ServerBeaconRepository
-import de.peekandpoke.ktorfx.cluster.locks.domain.ServerBeacon
-import de.peekandpoke.ktorfx.core.fixtures.FixtureLoader
-import de.peekandpoke.ktorfx.core.model.AppInfo
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.vault.Stored

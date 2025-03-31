@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.cluster.depot.domain
+package de.peekandpoke.funktor.cluster.depot.domain
 
-import de.peekandpoke.ktorfx.cluster.depot.api.DepotUriModel
+import de.peekandpoke.funktor.cluster.depot.api.DepotUriModel
 
 @Suppress("DataClassPrivateConstructor", "DATA_CLASS_COPY_VISIBILITY_WILL_BE_CHANGED_WARNING")
 data class DepotUri private constructor(

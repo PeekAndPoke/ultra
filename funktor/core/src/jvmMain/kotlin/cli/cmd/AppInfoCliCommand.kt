@@ -1,9 +1,9 @@
-package de.peekandpoke.ktorfx.core.cli.cmd
+package de.peekandpoke.funktor.core.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
-import de.peekandpoke.ktorfx.core.JsonPrinter
-import de.peekandpoke.ktorfx.core.model.AppInfo
+import de.peekandpoke.funktor.core.JsonPrinter
+import de.peekandpoke.funktor.core.model.AppInfo
 
 class AppInfoCliCommand(
     appInfo: Lazy<AppInfo>,

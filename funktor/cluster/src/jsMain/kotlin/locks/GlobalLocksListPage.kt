@@ -1,5 +1,8 @@
-package de.peekandpoke.ktorfx.cluster.locks
+package de.peekandpoke.funktor.cluster.locks
 
+import de.peekandpoke.funktor.cluster.FunktorClusterUi
+import de.peekandpoke.funktor.cluster.locks.api.GlobalLockEntryModel
+import de.peekandpoke.funktor.cluster.renderDefault
 import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
@@ -8,9 +11,6 @@ import de.peekandpoke.kraft.semanticui.icon
 import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ktorfx.cluster.KtorFxClusterUi
-import de.peekandpoke.ktorfx.cluster.locks.api.GlobalLockEntryModel
-import de.peekandpoke.ktorfx.cluster.renderDefault
 import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
 import kotlinx.coroutines.flow.map
 import kotlinx.html.FlowContent
@@ -26,7 +26,7 @@ class GlobalLocksListPage(ctx: Ctx<Props>) : Component<GlobalLocksListPage.Props
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: KtorFxClusterUi,
+        val ui: FunktorClusterUi,
     )
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40,7 +40,7 @@ class GlobalLocksListPage(ctx: Ctx<Props>) : Component<GlobalLocksListPage.Props
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
-        JoinedPageTitle { listOf("KtorFx", "Global Locks") }
+        JoinedPageTitle { listOf("Funktor", "Global Locks") }
 
         ui.padded.segment {
             ui.right.floated.small.basic.icon.button {

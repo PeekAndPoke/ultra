@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.backgroundjobs
+package de.peekandpoke.funktor.cluster.backgroundjobs
 
 import de.peekandpoke.ultra.common.model.Paged
 import de.peekandpoke.ultra.common.remote.ApiClient

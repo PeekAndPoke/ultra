@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster
+package de.peekandpoke.funktor.cluster
 
 import de.peekandpoke.kraft.components.debugId
 import de.peekandpoke.kraft.components.onClick

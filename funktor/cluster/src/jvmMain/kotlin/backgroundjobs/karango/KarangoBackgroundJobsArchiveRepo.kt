@@ -1,16 +1,16 @@
-package de.peekandpoke.ktorfx.cluster.backgroundjobs.karango
+package de.peekandpoke.funktor.cluster.backgroundjobs.karango
 
+import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
+import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobArchived
+import de.peekandpoke.funktor.cluster.backgroundjobs.domain.archivedAt
+import de.peekandpoke.funktor.cluster.backgroundjobs.domain.expiresAt
+import de.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import de.peekandpoke.karango.aql.DESC
 import de.peekandpoke.karango.aql.FOR
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.IndexBuilder
 import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.BackgroundJobs
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.domain.BackgroundJobArchived
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.domain.archivedAt
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.domain.expiresAt
-import de.peekandpoke.ktorfx.core.fixtures.RepoFixtureLoader
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.vault.Cursor
 import de.peekandpoke.ultra.vault.Stored

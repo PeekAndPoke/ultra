@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.cluster.vault
+package de.peekandpoke.funktor.cluster.vault
 
-import de.peekandpoke.ktorfx.core.lifecycle.AppLifeCycleHooks
+import de.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
 import de.peekandpoke.ultra.vault.Database
 import io.ktor.server.application.*
 

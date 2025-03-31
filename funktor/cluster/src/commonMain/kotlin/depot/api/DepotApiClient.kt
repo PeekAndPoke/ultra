@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.depot.api
+package de.peekandpoke.funktor.cluster.depot.api
 
 import de.peekandpoke.ultra.common.remote.ApiClient
 import de.peekandpoke.ultra.common.remote.ApiResponse
@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 class DepotApiClient(config: Config) : ApiClient(config) {
 
     companion object {
-        const val base = "/_/ktorfx/depot"
+        const val base = "/_/funktor/depot"
 
         val ListRepositories = Get(
             uri = "$base/repositories",

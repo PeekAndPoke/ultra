@@ -1,8 +1,8 @@
-package de.peekandpoke.ktorfx.core.broker.vault
+package de.peekandpoke.funktor.core.broker.vault
 
-import de.peekandpoke.ktorfx.core.broker.CouldNotConvertException
-import de.peekandpoke.ktorfx.core.broker.IncomingParamConverter
-import de.peekandpoke.ktorfx.core.broker.OutgoingParamConverter
+import de.peekandpoke.funktor.core.broker.CouldNotConvertException
+import de.peekandpoke.funktor.core.broker.IncomingParamConverter
+import de.peekandpoke.funktor.core.broker.OutgoingParamConverter
 import de.peekandpoke.ultra.common.datetime.MpAbsoluteDateTime
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.datetime.MpLocalDate

@@ -1,5 +1,6 @@
-package de.peekandpoke.ktorfx.cluster.storage
+package de.peekandpoke.funktor.cluster.storage
 
+import de.peekandpoke.funktor.cluster.FunktorClusterUi
 import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
@@ -8,7 +9,6 @@ import de.peekandpoke.kraft.semanticui.noui
 import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ktorfx.cluster.KtorFxClusterUi
 import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
 import kotlinx.css.Color
 import kotlinx.css.Overflow
@@ -25,7 +25,7 @@ class RandomDataStorageViewPage(ctx: Ctx<Props>) : Component<RandomDataStorageVi
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: KtorFxClusterUi,
+        val ui: FunktorClusterUi,
         val id: String,
     )
 
@@ -46,7 +46,7 @@ class RandomDataStorageViewPage(ctx: Ctx<Props>) : Component<RandomDataStorageVi
     }
 
     override fun VDom.render() {
-        JoinedPageTitle { listOf("KtorFx", "Random Storage", props.id) }
+        JoinedPageTitle { listOf("Funktor", "Random Storage", props.id) }
 
         ui.padded.segment {
 

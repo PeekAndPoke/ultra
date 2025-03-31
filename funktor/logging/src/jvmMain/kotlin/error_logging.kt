@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.logging
+package de.peekandpoke.funktor.logging
 
-import de.peekandpoke.ktorfx.core.kontainerOrNull
-import de.peekandpoke.ktorfx.core.methodAndUrl
+import de.peekandpoke.funktor.core.kontainerOrNull
+import de.peekandpoke.funktor.core.methodAndUrl
 import de.peekandpoke.ultra.logging.Log
 import io.ktor.server.application.*
 import io.ktor.server.plugins.*

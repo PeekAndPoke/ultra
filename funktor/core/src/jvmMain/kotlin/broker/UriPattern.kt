@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core.broker
+package de.peekandpoke.funktor.core.broker
 
 /**
  * Represents an Uri Pattern

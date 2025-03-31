@@ -1,9 +1,9 @@
-package de.peekandpoke.ktorfx.core.config
+package de.peekandpoke.funktor.core.config
 
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
-import de.peekandpoke.ktorfx.core.config.ktor.KtorConfig
-import de.peekandpoke.ktorfx.core.config.ktorfx.KtorFxConfig
+import de.peekandpoke.funktor.core.config.funktor.FunktorConfig
+import de.peekandpoke.funktor.core.config.ktor.KtorConfig
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.slumber.Codec
@@ -132,7 +132,7 @@ interface AppConfig {
     @Suppress("unused")
     private object NullAppConfig : AppConfig {
         override val ktor = KtorConfig()
-        override val ktorFx = KtorFxConfig()
+        override val funktor = FunktorConfig()
     }
 
     /**
@@ -141,8 +141,8 @@ interface AppConfig {
     val ktor: KtorConfig
 
     /**
-     * Configuration for KtorFx-specific functionality used within the application.
+     * Configuration for Funktor-specific functionality used within the application.
      */
-    val ktorFx: KtorFxConfig
+    val funktor: FunktorConfig
 }
 

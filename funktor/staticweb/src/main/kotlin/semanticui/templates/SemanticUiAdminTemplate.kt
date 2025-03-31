@@ -1,8 +1,8 @@
-package de.peekandpoke.ktorfx.staticweb.semanticui.templates
+package de.peekandpoke.funktor.staticweb.semanticui.templates
 
+import de.peekandpoke.funktor.staticweb.templating.SimpleTemplateBase
+import de.peekandpoke.funktor.staticweb.templating.TemplateTools
 import de.peekandpoke.kraft.semanticui.ui
-import de.peekandpoke.ktorfx.staticweb.templating.SimpleTemplateBase
-import de.peekandpoke.ktorfx.staticweb.templating.TemplateTools
 import io.ktor.server.html.*
 import kotlinx.html.HTML
 import kotlinx.html.body

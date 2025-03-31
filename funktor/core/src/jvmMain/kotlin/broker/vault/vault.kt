@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.core.broker.vault
+package de.peekandpoke.funktor.core.broker.vault
 
-import de.peekandpoke.ktorfx.core.broker.IncomingParamConverter
-import de.peekandpoke.ktorfx.core.broker.OutgoingParamConverter
+import de.peekandpoke.funktor.core.broker.IncomingParamConverter
+import de.peekandpoke.funktor.core.broker.OutgoingParamConverter
 import de.peekandpoke.ultra.vault.Database
 import de.peekandpoke.ultra.vault.Storable
 import de.peekandpoke.ultra.vault.Stored

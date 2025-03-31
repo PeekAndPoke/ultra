@@ -1,5 +1,6 @@
-package de.peekandpoke.ktorfx.logging
+package de.peekandpoke.funktor.logging
 
+import de.peekandpoke.funktor.logging.api.LogEntryModel
 import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.addons.semanticui.PaginationPages.PaginationPages
 import de.peekandpoke.kraft.addons.semanticui.forms.UiInputField
@@ -14,7 +15,6 @@ import de.peekandpoke.kraft.semanticui.noui
 import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ktorfx.logging.api.LogEntryModel
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.model.Paged
 import de.peekandpoke.ultra.common.toggle
@@ -55,7 +55,7 @@ class LogEntriesListPage(ctx: Ctx<Props>) : Component<LogEntriesListPage.Props>(
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
-        JoinedPageTitle { listOf("KtorFx", "Logs") }
+        JoinedPageTitle { listOf("Funktor", "Logs") }
 
         ui.padded.segment {
             header()

@@ -1,35 +1,35 @@
-package de.peekandpoke.ktorfx
+package de.peekandpoke.funktor
 
-import de.peekandpoke.ktorfx.cluster.KtorFXClusterBuilder
-import de.peekandpoke.ktorfx.cluster.ktorFxCluster
-import de.peekandpoke.ktorfx.core.broker.ktorFxBroker
-import de.peekandpoke.ktorfx.core.config.AppConfig
-import de.peekandpoke.ktorfx.core.ktorFxCore
-import de.peekandpoke.ktorfx.core.model.AppInfo
-import de.peekandpoke.ktorfx.core.model.default
-import de.peekandpoke.ktorfx.insights.ktorFxInsights
-import de.peekandpoke.ktorfx.logging.KtorFXLoggingBuilder
-import de.peekandpoke.ktorfx.logging.ktorFxLogging
-import de.peekandpoke.ktorfx.messaging.KtorFXCMessagingBuilder
-import de.peekandpoke.ktorfx.messaging.ktorFxMessaging
-import de.peekandpoke.ktorfx.rest.KtorFXRestBuilder
-import de.peekandpoke.ktorfx.rest.ktorFxRest
-import de.peekandpoke.ktorfx.staticweb.ktorFxStaticWeb
+import de.peekandpoke.funktor.cluster.FunktorClusterBuilder
+import de.peekandpoke.funktor.cluster.funktorCluster
+import de.peekandpoke.funktor.core.broker.funktorBroker
+import de.peekandpoke.funktor.core.config.AppConfig
+import de.peekandpoke.funktor.core.funktorCore
+import de.peekandpoke.funktor.core.model.AppInfo
+import de.peekandpoke.funktor.core.model.default
+import de.peekandpoke.funktor.insights.funktorInsights
+import de.peekandpoke.funktor.logging.FunktorLoggingBuilder
+import de.peekandpoke.funktor.logging.funktorLogging
+import de.peekandpoke.funktor.messaging.FunktorCMessagingBuilder
+import de.peekandpoke.funktor.messaging.funktorMessaging
+import de.peekandpoke.funktor.rest.FunktorRestBuilder
+import de.peekandpoke.funktor.rest.funktorRest
+import de.peekandpoke.funktor.staticweb.funktorStaticWeb
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
 
 // Kontainer module
 
-fun KontainerBuilder.ktorFx(
+fun KontainerBuilder.funktor(
     config: AppConfig,
     appInfo: AppInfo = AppInfo.default(),
-    rest: KtorFXRestBuilder.() -> Unit = {},
-    logging: KtorFXLoggingBuilder.() -> Unit = {},
-    cluster: KtorFXClusterBuilder.() -> Unit = {},
-    messaging: KtorFXCMessagingBuilder.() -> Unit = {},
+    rest: FunktorRestBuilder.() -> Unit = {},
+    logging: FunktorLoggingBuilder.() -> Unit = {},
+    cluster: FunktorClusterBuilder.() -> Unit = {},
+    messaging: FunktorCMessagingBuilder.() -> Unit = {},
 ) = module(
-    KtorFX,
-    KtorFXParams(
+    Funktor,
+    FunktorParams(
         appInfo = appInfo,
         config = config,
         rest = rest,
@@ -40,23 +40,23 @@ fun KontainerBuilder.ktorFx(
 )
 
 @Suppress("DATA_CLASS_COPY_VISIBILITY_WILL_BE_CHANGED_WARNING")
-data class KtorFXParams internal constructor(
+data class FunktorParams internal constructor(
     val config: AppConfig,
     val appInfo: AppInfo,
-    val rest: KtorFXRestBuilder.() -> Unit,
-    val logging: KtorFXLoggingBuilder.() -> Unit,
-    val cluster: KtorFXClusterBuilder.() -> Unit,
-    val messaging: KtorFXCMessagingBuilder.() -> Unit,
+    val rest: FunktorRestBuilder.() -> Unit,
+    val logging: FunktorLoggingBuilder.() -> Unit,
+    val cluster: FunktorClusterBuilder.() -> Unit,
+    val messaging: FunktorCMessagingBuilder.() -> Unit,
 )
 
 /** Module definition */
-val KtorFX = module { params: KtorFXParams ->
-    ktorFxCore(params.config, params.appInfo)
-    ktorFxBroker()
-    ktorFxRest(params.rest)
-    ktorFxCluster(params.cluster)
-    ktorFxLogging(params.logging)
-    ktorFxStaticWeb()
-    ktorFxMessaging(params.messaging)
-    ktorFxInsights()
+val Funktor = module { params: FunktorParams ->
+    funktorCore(params.config, params.appInfo)
+    funktorBroker()
+    funktorRest(params.rest)
+    funktorCluster(params.cluster)
+    funktorLogging(params.logging)
+    funktorStaticWeb()
+    funktorMessaging(params.messaging)
+    funktorInsights()
 }

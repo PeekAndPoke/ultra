@@ -1,11 +1,11 @@
-package de.peekandpoke.ktorfx.insights.gui
+package de.peekandpoke.funktor.insights.gui
 
+import de.peekandpoke.funktor.core.broker.TypedRoute
+import de.peekandpoke.funktor.core.broker.TypedRouteRenderer
+import de.peekandpoke.funktor.core.config.AppConfig
+import de.peekandpoke.funktor.core.model.AppInfo
 import de.peekandpoke.kraft.semanticui.icon
 import de.peekandpoke.kraft.semanticui.ui
-import de.peekandpoke.ktorfx.core.broker.TypedRoute
-import de.peekandpoke.ktorfx.core.broker.TypedRouteRenderer
-import de.peekandpoke.ktorfx.core.config.AppConfig
-import de.peekandpoke.ktorfx.core.model.AppInfo
 import io.ktor.http.*
 import io.ktor.server.html.*
 import kotlinx.html.FlowContent

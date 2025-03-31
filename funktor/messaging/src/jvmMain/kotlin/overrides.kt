@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.messaging
+package de.peekandpoke.funktor.messaging
 
-import de.peekandpoke.ktorfx.messaging.api.EmailBody
-import de.peekandpoke.ktorfx.messaging.api.EmailDestination
+import de.peekandpoke.funktor.messaging.api.EmailBody
+import de.peekandpoke.funktor.messaging.api.EmailDestination
 
 class MailingOverrides(
     val overrides: List<MailingOverride>,

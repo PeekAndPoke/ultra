@@ -1,15 +1,15 @@
-package de.peekandpoke.ktorfx.cluster.backgroundjobs.karango
+package de.peekandpoke.funktor.cluster.backgroundjobs.karango
 
+import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsSpecBase
+import de.peekandpoke.funktor.cluster.funktorCluster
+import de.peekandpoke.funktor.core.broker.funktorBroker
+import de.peekandpoke.funktor.core.config.AppConfig
+import de.peekandpoke.funktor.core.funktorCore
+import de.peekandpoke.funktor.core.model.AppInfo
+import de.peekandpoke.funktor.core.model.default
+import de.peekandpoke.funktor.rest.funktorRest
 import de.peekandpoke.karango.config.ArangoDbConfig
 import de.peekandpoke.karango.karango
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.BackgroundJobsSpecBase
-import de.peekandpoke.ktorfx.cluster.ktorFxCluster
-import de.peekandpoke.ktorfx.core.broker.ktorFxBroker
-import de.peekandpoke.ktorfx.core.config.AppConfig
-import de.peekandpoke.ktorfx.core.ktorFxCore
-import de.peekandpoke.ktorfx.core.model.AppInfo
-import de.peekandpoke.ktorfx.core.model.default
-import de.peekandpoke.ktorfx.rest.ktorFxRest
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.kontainer.kontainer
 import de.peekandpoke.ultra.security.user.UserProvider
@@ -20,10 +20,10 @@ class BackgroundJobWithKarangoSpec : BackgroundJobsSpecBase() {
 
     override fun createKontainer(): Kontainer = runBlocking {
         kontainer {
-            ktorFxCore(AppConfig.empty, AppInfo.default())
-            ktorFxBroker()
-            ktorFxRest()
-            ktorFxCluster {
+            funktorCore(AppConfig.empty, AppInfo.default())
+            funktorBroker()
+            funktorRest()
+            funktorCluster {
                 useKarango()
             }
             karango(config = ArangoDbConfig.forUnitTests)

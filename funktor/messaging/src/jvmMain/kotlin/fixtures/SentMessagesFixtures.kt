@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.messaging.fixtures
+package de.peekandpoke.funktor.messaging.fixtures
 
-import de.peekandpoke.ktorfx.core.fixtures.FixtureLoader
-import de.peekandpoke.ktorfx.messaging.storage.SentMessagesStorage
+import de.peekandpoke.funktor.core.fixtures.FixtureLoader
+import de.peekandpoke.funktor.messaging.storage.SentMessagesStorage
 
 class SentMessagesFixtures(
     private val repo: SentMessagesStorage,

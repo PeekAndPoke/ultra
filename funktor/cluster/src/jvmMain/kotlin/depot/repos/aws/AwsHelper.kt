@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.cluster.depot.repos.aws
+package de.peekandpoke.funktor.cluster.depot.repos.aws
 
-import de.peekandpoke.ktorfx.cluster.depot.api.DepotItemModel
-import de.peekandpoke.ktorfx.cluster.depot.domain.DepotItem
+import de.peekandpoke.funktor.cluster.depot.api.DepotItemModel
+import de.peekandpoke.funktor.cluster.depot.domain.DepotItem
 import software.amazon.awssdk.services.s3.model.GetObjectTaggingResponse
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.Tag

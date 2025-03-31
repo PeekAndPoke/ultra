@@ -1,22 +1,22 @@
-package de.peekandpoke.ktorfx.insights.gui
+package de.peekandpoke.funktor.insights.gui
 
+import de.peekandpoke.funktor.core.broker.TypedRoute
+import de.peekandpoke.funktor.core.broker.TypedRouteRenderer
+import de.peekandpoke.funktor.insights.InsightsMapper
+import de.peekandpoke.funktor.insights.collectors.RuntimeCollector
+import de.peekandpoke.funktor.insights.collectors.VaultCollector
+import de.peekandpoke.funktor.staticweb.resources.WebResources
+import de.peekandpoke.funktor.staticweb.resources.common.fomanticUi
+import de.peekandpoke.funktor.staticweb.resources.common.jQuery
+import de.peekandpoke.funktor.staticweb.resources.common.vizJs
+import de.peekandpoke.funktor.staticweb.resources.css
+import de.peekandpoke.funktor.staticweb.resources.js
+import de.peekandpoke.funktor.staticweb.resources.prismjs.Language
+import de.peekandpoke.funktor.staticweb.resources.prismjs.prism
+import de.peekandpoke.funktor.staticweb.resources.prismjs.prismJs
 import de.peekandpoke.kraft.semanticui.icon
 import de.peekandpoke.kraft.semanticui.semantic
 import de.peekandpoke.kraft.semanticui.ui
-import de.peekandpoke.ktorfx.core.broker.TypedRoute
-import de.peekandpoke.ktorfx.core.broker.TypedRouteRenderer
-import de.peekandpoke.ktorfx.insights.InsightsMapper
-import de.peekandpoke.ktorfx.insights.collectors.RuntimeCollector
-import de.peekandpoke.ktorfx.insights.collectors.VaultCollector
-import de.peekandpoke.ktorfx.staticweb.resources.WebResources
-import de.peekandpoke.ktorfx.staticweb.resources.common.fomanticUi
-import de.peekandpoke.ktorfx.staticweb.resources.common.jQuery
-import de.peekandpoke.ktorfx.staticweb.resources.common.vizJs
-import de.peekandpoke.ktorfx.staticweb.resources.css
-import de.peekandpoke.ktorfx.staticweb.resources.js
-import de.peekandpoke.ktorfx.staticweb.resources.prismjs.Language
-import de.peekandpoke.ktorfx.staticweb.resources.prismjs.prism
-import de.peekandpoke.ktorfx.staticweb.resources.prismjs.prismJs
 import de.peekandpoke.ultra.kontainer.Kontainer
 import io.ktor.http.*
 import io.ktor.server.html.*
@@ -142,7 +142,7 @@ class InsightsGuiTemplate(
             ui.coloring().attached.segment {
 
                 ui.big.horizontal.divided.list {
-                    ui.inverted.header.item { +"KtorFX" }
+                    ui.inverted.header.item { +"Funktor" }
 
                     ui.item { +guiData.statusCode.toString() }
                     ui.item { +guiData.requestMethod }

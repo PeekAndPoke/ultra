@@ -1,5 +1,7 @@
-package de.peekandpoke.ktorfx.cluster.depot
+package de.peekandpoke.funktor.cluster.depot
 
+import de.peekandpoke.funktor.cluster.FunktorClusterUi
+import de.peekandpoke.funktor.cluster.renderDefault
 import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
@@ -8,8 +10,6 @@ import de.peekandpoke.kraft.semanticui.icon
 import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ktorfx.cluster.KtorFxClusterUi
-import de.peekandpoke.ktorfx.cluster.renderDefault
 import depot.api.DepotRepositoryModel
 import kotlinx.coroutines.flow.map
 import kotlinx.html.FlowContent
@@ -25,7 +25,7 @@ class DepotRepositoriesListPage(ctx: Ctx<Props>) : Component<DepotRepositoriesLi
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: KtorFxClusterUi,
+        val ui: FunktorClusterUi,
     )
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37,7 +37,7 @@ class DepotRepositoriesListPage(ctx: Ctx<Props>) : Component<DepotRepositoriesLi
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
-        JoinedPageTitle { listOf("KtorFx", "Depot", "Repositories") }
+        JoinedPageTitle { listOf("Funktor", "Depot", "Repositories") }
 
         ui.padded.segment {
             ui.right.floated.small.basic.icon.button {

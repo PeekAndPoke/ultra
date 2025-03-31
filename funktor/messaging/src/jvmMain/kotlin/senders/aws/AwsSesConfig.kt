@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.messaging.senders.aws
+package de.peekandpoke.funktor.messaging.senders.aws
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 

@@ -1,1 +1,1 @@
-package de.peekandpoke.ktorfx.core
+package de.peekandpoke.funktor.core

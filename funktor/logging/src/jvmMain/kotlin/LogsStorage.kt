@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.logging
+package de.peekandpoke.funktor.logging
 
-import de.peekandpoke.ktorfx.logging.api.LogEntryModel
-import de.peekandpoke.ktorfx.logging.api.LogsRequest
+import de.peekandpoke.funktor.logging.api.LogEntryModel
+import de.peekandpoke.funktor.logging.api.LogsRequest
 import de.peekandpoke.ultra.common.model.Paged
 
 interface LogsStorage {

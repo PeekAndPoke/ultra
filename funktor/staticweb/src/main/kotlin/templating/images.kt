@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.staticweb.templating
+package de.peekandpoke.funktor.staticweb.templating
 
 import de.peekandpoke.ultra.common.markup.images.ImageSizes
 import de.peekandpoke.ultra.common.markup.images.ImageSrcSet

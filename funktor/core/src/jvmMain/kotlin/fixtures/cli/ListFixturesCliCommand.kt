@@ -1,8 +1,8 @@
-package de.peekandpoke.ktorfx.core.fixtures.cli
+package de.peekandpoke.funktor.core.fixtures.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
-import de.peekandpoke.ktorfx.core.fixtures.FixtureInstaller
+import de.peekandpoke.funktor.core.fixtures.FixtureInstaller
 
 class ListFixturesCliCommand(
     installer: Lazy<FixtureInstaller>,

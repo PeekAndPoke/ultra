@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.workers
+package de.peekandpoke.funktor.cluster.workers
 
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import java.util.concurrent.atomic.AtomicInteger

@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core
+package de.peekandpoke.funktor.core
 
 import de.peekandpoke.ultra.common.maths.Ease
 import de.peekandpoke.ultra.common.maths.Ease.bindFromTo

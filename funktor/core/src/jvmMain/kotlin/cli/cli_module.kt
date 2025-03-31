@@ -1,13 +1,13 @@
-package de.peekandpoke.ktorfx.core.cli
+package de.peekandpoke.funktor.core.cli
 
-import de.peekandpoke.ktorfx.core.cli.cmd.AppConfigCliCommand
-import de.peekandpoke.ktorfx.core.cli.cmd.AppInfoCliCommand
+import de.peekandpoke.funktor.core.cli.cmd.AppConfigCliCommand
+import de.peekandpoke.funktor.core.cli.cmd.AppInfoCliCommand
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
 
-internal fun KontainerBuilder.ktorFxCli() = module(KtorFX_Cli)
+internal fun KontainerBuilder.funktorCli() = module(Funktor_Cli)
 
-internal val KtorFX_Cli = module {
+internal val Funktor_Cli = module {
     dynamic(CliRunner::class)
 
     // Commands

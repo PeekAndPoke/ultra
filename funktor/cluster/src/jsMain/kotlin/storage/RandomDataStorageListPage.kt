@@ -1,5 +1,7 @@
-package de.peekandpoke.ktorfx.cluster.storage
+package de.peekandpoke.funktor.cluster.storage
 
+import de.peekandpoke.funktor.cluster.FunktorClusterUi
+import de.peekandpoke.funktor.cluster.renderDefault
 import de.peekandpoke.kraft.addons.pagination.pagedSearchFilter
 import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.addons.semanticui.PaginationPages.PaginationPages
@@ -13,8 +15,6 @@ import de.peekandpoke.kraft.semanticui.icon
 import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ktorfx.cluster.KtorFxClusterUi
-import de.peekandpoke.ktorfx.cluster.renderDefault
 import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
 import de.peekandpoke.ultra.common.model.Paged
 import de.peekandpoke.ultra.common.model.search.PagedSearchFilter
@@ -33,7 +33,7 @@ class RandomDataStorageListPage(ctx: Ctx<Props>) : Component<RandomDataStorageLi
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: KtorFxClusterUi,
+        val ui: FunktorClusterUi,
     )
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -49,7 +49,7 @@ class RandomDataStorageListPage(ctx: Ctx<Props>) : Component<RandomDataStorageLi
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
-        JoinedPageTitle { listOf("KtorFx", "Random Storage") }
+        JoinedPageTitle { listOf("Funktor", "Random Storage") }
 
         ui.padded.segment {
 

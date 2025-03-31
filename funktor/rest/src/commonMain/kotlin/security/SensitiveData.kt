@@ -1,3 +1,3 @@
-package de.peekandpoke.ktorfx.rest.security
+package de.peekandpoke.funktor.rest.security
 
 annotation class SensitiveData

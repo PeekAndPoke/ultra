@@ -1,9 +1,9 @@
-package de.peekandpoke.ktorfx.cluster.locks.karango
+package de.peekandpoke.funktor.cluster.locks.karango
 
+import de.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
+import de.peekandpoke.funktor.core.fixtures.FixtureLoader
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ktorfx.cluster.locks.domain.GlobalLockEntry
-import de.peekandpoke.ktorfx.core.fixtures.FixtureLoader
 import de.peekandpoke.ultra.common.reflection.kType
 
 class KarangoGlobalLocksRepo(driver: KarangoDriver, repoName: String) :

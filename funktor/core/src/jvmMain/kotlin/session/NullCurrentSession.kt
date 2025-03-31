@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core.session
+package de.peekandpoke.funktor.core.session
 
 import io.ktor.server.sessions.*
 import kotlin.reflect.KClass

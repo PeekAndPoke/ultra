@@ -1,9 +1,9 @@
-package de.peekandpoke.ktorfx.logging.karango
+package de.peekandpoke.funktor.logging.karango
 
-import de.peekandpoke.ktorfx.logging.LogsFilter
-import de.peekandpoke.ktorfx.logging.LogsStorage
-import de.peekandpoke.ktorfx.logging.api.LogEntryModel
-import de.peekandpoke.ktorfx.logging.api.LogsRequest
+import de.peekandpoke.funktor.logging.LogsFilter
+import de.peekandpoke.funktor.logging.LogsStorage
+import de.peekandpoke.funktor.logging.api.LogEntryModel
+import de.peekandpoke.funktor.logging.api.LogsRequest
 import de.peekandpoke.ultra.common.model.Paged
 
 class KarangoLogsStorage(

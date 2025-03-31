@@ -1,11 +1,11 @@
-package de.peekandpoke.ktorfx.core.cli
+package de.peekandpoke.funktor.core.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.subcommands
-import de.peekandpoke.ktorfx.core.App
-import de.peekandpoke.ktorfx.core.AppArgs
-import de.peekandpoke.ktorfx.core.config.AppConfig
+import de.peekandpoke.funktor.core.App
+import de.peekandpoke.funktor.core.AppArgs
+import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.ultra.kontainer.Kontainer
 import kotlin.system.exitProcess
 

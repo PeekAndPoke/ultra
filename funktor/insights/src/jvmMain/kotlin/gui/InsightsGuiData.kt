@@ -1,10 +1,10 @@
-package de.peekandpoke.ktorfx.insights.gui
+package de.peekandpoke.funktor.insights.gui
 
-import de.peekandpoke.ktorfx.cluster.depot.domain.DepotItem
-import de.peekandpoke.ktorfx.insights.InsightsCollectorData
-import de.peekandpoke.ktorfx.insights.StopWatch
-import de.peekandpoke.ktorfx.insights.collectors.RequestCollector
-import de.peekandpoke.ktorfx.insights.collectors.ResponseCollector
+import de.peekandpoke.funktor.cluster.depot.domain.DepotItem
+import de.peekandpoke.funktor.insights.InsightsCollectorData
+import de.peekandpoke.funktor.insights.StopWatch
+import de.peekandpoke.funktor.insights.collectors.RequestCollector
+import de.peekandpoke.funktor.insights.collectors.ResponseCollector
 import io.ktor.http.*
 import java.time.LocalDateTime
 import kotlin.reflect.KClass

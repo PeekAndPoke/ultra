@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.core.broker
+package de.peekandpoke.funktor.core.broker
 
-import de.peekandpoke.ktorfx.core.broker.vault.IncomingPrimitiveConverter
+import de.peekandpoke.funktor.core.broker.vault.IncomingPrimitiveConverter
 import de.peekandpoke.ultra.common.SimpleLookup
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kType
@@ -52,10 +52,10 @@ class IncomingConverterSpec : StringSpec() {
             )
 
             subject.convert(
-                parametersOf("name", "ktorfx"),
-                parametersOf("name", "ktorfx-query-param"),
+                parametersOf("name", "funktor"),
+                parametersOf("name", "funktor-query-param"),
                 kType<MyClass>()
-            ) shouldBe MyClass("ktorfx")
+            ) shouldBe MyClass("funktor")
         }
 
         "Converting an object from query parameters" {
@@ -69,10 +69,10 @@ class IncomingConverterSpec : StringSpec() {
             )
 
             subject.convert(
-                parametersOf("other", "ktorfx"),
-                parametersOf("name", "ktorfx-query-param"),
+                parametersOf("other", "funktor"),
+                parametersOf("name", "funktor-query-param"),
                 kType<MyClass>()
-            ) shouldBe MyClass("ktorfx-query-param")
+            ) shouldBe MyClass("funktor-query-param")
         }
 
         "Nullable route-parameters can be converted to null" {

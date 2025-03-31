@@ -1,12 +1,12 @@
-package de.peekandpoke.ktorfx.messaging
+package de.peekandpoke.funktor.messaging
 
+import de.peekandpoke.funktor.core.kontainer
+import de.peekandpoke.funktor.messaging.fixtures.SentMessagesFixtures
+import de.peekandpoke.funktor.messaging.senders.NullEmailSender
+import de.peekandpoke.funktor.messaging.storage.SentMessagesStorage
+import de.peekandpoke.funktor.messaging.storage.StoringEmailHook
+import de.peekandpoke.funktor.messaging.storage.karango.KarangoSentMessagesRepo
 import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ktorfx.core.kontainer
-import de.peekandpoke.ktorfx.messaging.fixtures.SentMessagesFixtures
-import de.peekandpoke.ktorfx.messaging.senders.NullEmailSender
-import de.peekandpoke.ktorfx.messaging.storage.SentMessagesStorage
-import de.peekandpoke.ktorfx.messaging.storage.StoringEmailHook
-import de.peekandpoke.ktorfx.messaging.storage.karango.KarangoSentMessagesRepo
 import de.peekandpoke.ultra.kontainer.KontainerAware
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
@@ -14,15 +14,15 @@ import de.peekandpoke.ultra.vault.hooks.TimestampedHook
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
-fun KontainerBuilder.ktorFxMessaging(
-    builder: KtorFXCMessagingBuilder.() -> Unit = {},
-) = module(KtorFx_Messaging, builder)
+fun KontainerBuilder.funktorMessaging(
+    builder: FunktorCMessagingBuilder.() -> Unit = {},
+) = module(Funktor_Messaging, builder)
 
-inline val KontainerAware.ktorFxMessaging: MessagingServices get() = kontainer.get()
-inline val ApplicationCall.ktorFxMessaging: MessagingServices get() = kontainer.ktorFxMessaging
-inline val RoutingContext.ktorFxMessaging: MessagingServices get() = call.ktorFxMessaging
+inline val KontainerAware.funktorMessaging: MessagingServices get() = kontainer.get()
+inline val ApplicationCall.funktorMessaging: MessagingServices get() = kontainer.funktorMessaging
+inline val RoutingContext.funktorMessaging: MessagingServices get() = call.funktorMessaging
 
-val KtorFx_Messaging = module { builder: KtorFXCMessagingBuilder.() -> Unit ->
+val Funktor_Messaging = module { builder: FunktorCMessagingBuilder.() -> Unit ->
     // Facade
     singleton(MessagingServices::class)
 
@@ -40,10 +40,10 @@ val KtorFx_Messaging = module { builder: KtorFXCMessagingBuilder.() -> Unit ->
 
     /////////////////////////////////////////////////////////////////////////////////
     // Apply external configuration
-    KtorFXCMessagingBuilder(this).apply(builder)
+    FunktorCMessagingBuilder(this).apply(builder)
 }
 
-class KtorFXCMessagingBuilder internal constructor(private val kontainer: KontainerBuilder) {
+class FunktorCMessagingBuilder internal constructor(private val kontainer: KontainerBuilder) {
 
     fun useKarango(
         sentMessageRepoName: String = "system_sent_messages",

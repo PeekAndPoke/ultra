@@ -1,14 +1,14 @@
-package de.peekandpoke.ktorfx.cluster.backgroundjobs
+package de.peekandpoke.funktor.cluster.backgroundjobs
 
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.domain.BackgroundJobArchived
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.domain.BackgroundJobExecutionResult
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.domain.BackgroundJobQueued
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.domain.BackgroundJobRetryPolicy
-import de.peekandpoke.ktorfx.cluster.locks.GlobalLocksProvider
-import de.peekandpoke.ktorfx.cluster.locks.GlobalServerId
-import de.peekandpoke.ktorfx.cluster.locks.LocksException
-import de.peekandpoke.ktorfx.cluster.workers.StateProvider
-import de.peekandpoke.ktorfx.core.Retry
+import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobArchived
+import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobExecutionResult
+import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobQueued
+import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobRetryPolicy
+import de.peekandpoke.funktor.cluster.locks.GlobalLocksProvider
+import de.peekandpoke.funktor.cluster.locks.GlobalServerId
+import de.peekandpoke.funktor.cluster.locks.LocksException
+import de.peekandpoke.funktor.cluster.workers.StateProvider
+import de.peekandpoke.funktor.core.Retry
 import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.reflection.TypeRef

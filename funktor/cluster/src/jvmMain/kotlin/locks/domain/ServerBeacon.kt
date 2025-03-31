@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.cluster.locks.domain
+package de.peekandpoke.funktor.cluster.locks.domain
 
-import de.peekandpoke.ktorfx.cluster.locks.workers.GlobalLocksCleanupWorker
-import de.peekandpoke.ktorfx.cluster.locks.workers.ServerBeaconUpdateWorker
+import de.peekandpoke.funktor.cluster.locks.workers.GlobalLocksCleanupWorker
+import de.peekandpoke.funktor.cluster.locks.workers.ServerBeaconUpdateWorker
 import de.peekandpoke.ultra.common.datetime.MpInstant
 
 /**

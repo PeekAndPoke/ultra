@@ -1,24 +1,24 @@
-package de.peekandpoke.ktorfx.staticweb.resources.common
+package de.peekandpoke.funktor.staticweb.resources.common
 
-import de.peekandpoke.ktorfx.core.model.CacheBuster
-import de.peekandpoke.ktorfx.staticweb.resources.WebResourceGroup
-import de.peekandpoke.ktorfx.staticweb.resources.WebResources
-import de.peekandpoke.ktorfx.staticweb.resources.prismjs.ktorFxPrismJs
+import de.peekandpoke.funktor.core.model.CacheBuster
+import de.peekandpoke.funktor.staticweb.resources.WebResourceGroup
+import de.peekandpoke.funktor.staticweb.resources.WebResources
+import de.peekandpoke.funktor.staticweb.resources.prismjs.funktorPrismJs
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
 
-internal fun KontainerBuilder.ktorFxCommonWebResources() = module(KtorFxCommonWebResources)
+internal fun KontainerBuilder.funktorCommonWebResources() = module(Funktor_CommonWebResources)
 
 val WebResources.fomanticUi get() = get(FomanticUiWebResources::class)
 
-internal val KtorFxCommonWebResources = module {
+internal val Funktor_CommonWebResources = module {
     // Common web resources
     singleton(FomanticUiWebResources::class)
     singleton(JQueryWebResource::class)
     singleton(LazySizesWebResource::class)
     singleton(VisJsWebResource::class)
 
-    ktorFxPrismJs()
+    funktorPrismJs()
 }
 
 class FomanticUiWebResources(cacheBuster: CacheBuster) : WebResourceGroup(cacheBuster, {

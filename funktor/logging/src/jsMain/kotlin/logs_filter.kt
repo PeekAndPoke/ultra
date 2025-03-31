@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.logging
+package de.peekandpoke.funktor.logging
 
 import de.peekandpoke.kraft.addons.routing.Router
 import de.peekandpoke.kraft.addons.routing.urlParams

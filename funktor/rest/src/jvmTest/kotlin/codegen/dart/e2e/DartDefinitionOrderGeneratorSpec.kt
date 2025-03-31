@@ -1,10 +1,10 @@
-package de.peekandpoke.ktorfx.rest.codegen.dart.e2e
+package de.peekandpoke.funktor.rest.codegen.dart.e2e
 
-import de.peekandpoke.ktorfx.rest.codegen.dart.addClass
-import de.peekandpoke.ktorfx.rest.codegen.dart.extends
-import de.peekandpoke.ktorfx.rest.codegen.dartProject
-import de.peekandpoke.ktorfx.rest.codegen.shouldHaveNoDiffs
-import de.peekandpoke.ktorfx.rest.codegen.tagged
+import de.peekandpoke.funktor.rest.codegen.dart.addClass
+import de.peekandpoke.funktor.rest.codegen.dart.extends
+import de.peekandpoke.funktor.rest.codegen.dartProject
+import de.peekandpoke.funktor.rest.codegen.shouldHaveNoDiffs
+import de.peekandpoke.funktor.rest.codegen.tagged
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 

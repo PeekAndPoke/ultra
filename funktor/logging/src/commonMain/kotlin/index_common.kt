@@ -1,1 +1,1 @@
-package de.peekandpoke.ktorfx.logging
+package de.peekandpoke.funktor.logging

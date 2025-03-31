@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.messaging.api
+package de.peekandpoke.funktor.messaging.api
 
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import kotlinx.serialization.SerialName

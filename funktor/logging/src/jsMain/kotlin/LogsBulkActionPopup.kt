@@ -1,5 +1,7 @@
-package de.peekandpoke.ktorfx.logging
+package de.peekandpoke.funktor.logging
 
+import de.peekandpoke.funktor.logging.api.LogEntryModel
+import de.peekandpoke.funktor.logging.api.LogsRequest
 import de.peekandpoke.kraft.addons.forms.formController
 import de.peekandpoke.kraft.addons.modal.ModalsManager
 import de.peekandpoke.kraft.addons.semanticui.forms.UiDateTimeField
@@ -13,8 +15,6 @@ import de.peekandpoke.kraft.semanticui.noui
 import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.utils.doubleClickProtection
 import de.peekandpoke.kraft.utils.launch
-import de.peekandpoke.ktorfx.logging.api.LogEntryModel
-import de.peekandpoke.ktorfx.logging.api.LogsRequest
 import de.peekandpoke.ultra.common.datetime.MpTimezone
 import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
 import kotlinx.coroutines.flow.catch

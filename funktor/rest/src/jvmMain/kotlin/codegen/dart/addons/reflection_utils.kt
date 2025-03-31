@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.rest.codegen.dart.addons
+package de.peekandpoke.funktor.rest.codegen.dart.addons
 
 import de.peekandpoke.ultra.slumber.Polymorphic
 import kotlin.reflect.KClass

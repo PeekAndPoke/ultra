@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.rest.auth
+package de.peekandpoke.funktor.rest.auth
 
-import de.peekandpoke.ktorfx.core.jwtGenerator
-import de.peekandpoke.ktorfx.core.kontainer
+import de.peekandpoke.funktor.core.jwtGenerator
+import de.peekandpoke.funktor.core.kontainer
 import de.peekandpoke.ultra.security.user.User
 import de.peekandpoke.ultra.security.user.UserProvider
 import de.peekandpoke.ultra.security.user.UserRecord

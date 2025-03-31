@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.messaging.api
+package de.peekandpoke.funktor.messaging.api
 
 import kotlinx.serialization.Serializable
 

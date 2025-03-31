@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.cluster.backgroundjobs.example
+package de.peekandpoke.funktor.cluster.backgroundjobs.example
 
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.BackgroundJobs
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.domain.BackgroundJobQueued
+import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
+import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobQueued
 import de.peekandpoke.ultra.common.reflection.kType
 import kotlinx.coroutines.delay
 

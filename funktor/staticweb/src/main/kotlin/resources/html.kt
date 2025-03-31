@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.staticweb.resources
+package de.peekandpoke.funktor.staticweb.resources
 
 import kotlinx.html.FlowOrMetaDataContent
 import kotlinx.html.LinkRel

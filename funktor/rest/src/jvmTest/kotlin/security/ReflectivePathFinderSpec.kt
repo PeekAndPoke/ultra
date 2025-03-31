@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.rest.security
+package de.peekandpoke.funktor.rest.security
 
-import de.peekandpoke.ktorfx.rest.security.ReflectivePathFinder.Companion.findAnnotatedElementPaths
+import de.peekandpoke.funktor.rest.security.ReflectivePathFinder.Companion.findAnnotatedElementPaths
 import de.peekandpoke.ultra.common.model.Paged
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.common.remote.ApiResponse

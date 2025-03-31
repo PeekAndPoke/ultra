@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core.repair
+package de.peekandpoke.funktor.core.repair
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context

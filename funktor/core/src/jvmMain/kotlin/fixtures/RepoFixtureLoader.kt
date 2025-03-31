@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core.fixtures
+package de.peekandpoke.funktor.core.fixtures
 
 import de.peekandpoke.ultra.vault.BatchInsertRepository
 import de.peekandpoke.ultra.vault.LazyRef

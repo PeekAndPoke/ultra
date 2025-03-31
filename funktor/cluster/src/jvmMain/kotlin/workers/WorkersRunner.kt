@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.cluster.workers
+package de.peekandpoke.funktor.cluster.workers
 
-import de.peekandpoke.ktorfx.core.lifecycle.AppLifeCycleBuilder
+import de.peekandpoke.funktor.core.lifecycle.AppLifeCycleBuilder
 import de.peekandpoke.ultra.kontainer.Kontainer
 import io.ktor.server.application.*
 import kotlinx.coroutines.Dispatchers

@@ -1,13 +1,13 @@
-package de.peekandpoke.ktorfx.core
+package de.peekandpoke.funktor.core
 
-import de.peekandpoke.ktorfx.core.cli.ktorFxCli
-import de.peekandpoke.ktorfx.core.config.AppConfig
-import de.peekandpoke.ktorfx.core.fixtures.ktorFxFixtures
-import de.peekandpoke.ktorfx.core.lifecycle.AppLifeCycleHooks
-import de.peekandpoke.ktorfx.core.model.AppInfo
-import de.peekandpoke.ktorfx.core.model.CacheBuster
-import de.peekandpoke.ktorfx.core.repair.ktorFxRepair
-import de.peekandpoke.ktorfx.core.session.NullCurrentSession
+import de.peekandpoke.funktor.core.cli.funktorCli
+import de.peekandpoke.funktor.core.config.AppConfig
+import de.peekandpoke.funktor.core.fixtures.funktorFixtures
+import de.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
+import de.peekandpoke.funktor.core.model.AppInfo
+import de.peekandpoke.funktor.core.model.CacheBuster
+import de.peekandpoke.funktor.core.repair.funktorRepair
+import de.peekandpoke.funktor.core.session.NullCurrentSession
 import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.kontainer.KontainerAware
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
@@ -23,7 +23,10 @@ import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 
-fun KontainerBuilder.ktorFxCore(config: AppConfig, info: AppInfo) = module(KtorFX_Core, config, info)
+fun KontainerBuilder.funktorCore(
+    config: AppConfig,
+    info: AppInfo,
+) = module(Funktor_Core, config, info)
 
 inline val KontainerAware.kronos: Kronos get() = kontainer.get()
 inline val ApplicationCall.kronos: Kronos get() = kontainer.kronos
@@ -65,7 +68,7 @@ inline val RoutingContext.userProvider: UserProvider get() = call.userProvider
 /**
  * Common kontainer module
  */
-val KtorFX_Core = module { config: AppConfig, info: AppInfo ->
+val Funktor_Core = module { config: AppConfig, info: AppInfo ->
 
     // App config
     instance(config)
@@ -86,13 +89,13 @@ val KtorFX_Core = module { config: AppConfig, info: AppInfo ->
 
     ////  Modules  //////////////////////////////////////////////////////////////////////////
     ultraLogging()
-    ultraSecurity(config.ktorFx.security)
+    ultraSecurity(config.funktor.security)
     ultraVault()
 
-    // KtorFX sub-modules
-    ktorFxCli()
-    ktorFxRepair()
-    ktorFxFixtures(config)
+    // Funktor sub-modules
+    funktorCli()
+    funktorRepair()
+    funktorFixtures(config)
 }
 
 

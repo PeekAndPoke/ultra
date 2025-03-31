@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.rest.codegen.dart
+package de.peekandpoke.funktor.rest.codegen.dart
 
-import de.peekandpoke.ktorfx.rest.codegen.dart.printer.DartCodePrinter
-import de.peekandpoke.ktorfx.rest.docs.Docs
+import de.peekandpoke.funktor.rest.codegen.dart.printer.DartCodePrinter
+import de.peekandpoke.funktor.rest.docs.Docs
 import kotlin.reflect.KParameter
 
 interface DartPrintable {

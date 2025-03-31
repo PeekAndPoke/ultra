@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.staticweb.flashsession
+package de.peekandpoke.funktor.staticweb.flashsession
 
 const val SUCCESS = "success"
 const val INFO = "info"

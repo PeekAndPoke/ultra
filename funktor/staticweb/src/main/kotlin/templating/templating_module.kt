@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.staticweb.templating
+package de.peekandpoke.funktor.staticweb.templating
 
-import de.peekandpoke.ktorfx.core.kontainer
+import de.peekandpoke.funktor.core.kontainer
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
 import io.ktor.http.*
@@ -10,12 +10,12 @@ import io.ktor.server.routing.*
 import kotlinx.html.HTML
 import kotlin.reflect.KClass
 
-internal fun KontainerBuilder.ktorFxTemplating() = module(KtorFX_Templating)
+internal fun KontainerBuilder.funktorTemplating() = module(Funktor_Templating)
 
 /**
  * Templating kontainer module
  */
-internal val KtorFX_Templating = module {
+internal val Funktor_Templating = module {
     /**
      * Override this one with an application specific implementation of [TemplateTools]
      */

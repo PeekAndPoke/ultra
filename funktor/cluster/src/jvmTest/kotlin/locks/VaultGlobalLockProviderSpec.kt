@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.cluster.locks
+package de.peekandpoke.funktor.cluster.locks
 
-import de.peekandpoke.ktorfx.cluster.locks.domain.GlobalLockEntry
+import de.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.vault.Cursor

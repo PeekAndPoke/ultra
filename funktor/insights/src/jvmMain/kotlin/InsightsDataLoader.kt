@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.insights
+package de.peekandpoke.funktor.insights
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import de.peekandpoke.ktorfx.insights.gui.InsightsGuiData
+import de.peekandpoke.funktor.insights.gui.InsightsGuiData
 import de.peekandpoke.ultra.logging.Log
 import kotlin.reflect.full.allSuperclasses
 

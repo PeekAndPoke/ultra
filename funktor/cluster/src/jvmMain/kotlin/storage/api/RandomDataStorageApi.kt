@@ -1,15 +1,15 @@
-package de.peekandpoke.ktorfx.cluster.storage.api
+package de.peekandpoke.funktor.cluster.storage.api
 
-import de.peekandpoke.ktorfx.cluster.cluster
-import de.peekandpoke.ktorfx.cluster.storage.RandomDataStorageApiClient
-import de.peekandpoke.ktorfx.cluster.storage.RawRandomDataModel
-import de.peekandpoke.ktorfx.cluster.storage.domain.RawRandomData
-import de.peekandpoke.ktorfx.core.broker.OutgoingConverter
-import de.peekandpoke.ktorfx.core.jsonPrinter
-import de.peekandpoke.ktorfx.rest.ApiRoutes
-import de.peekandpoke.ktorfx.rest.QueryParams
-import de.peekandpoke.ktorfx.rest.docs.codeGen
-import de.peekandpoke.ktorfx.rest.docs.docs
+import de.peekandpoke.funktor.cluster.cluster
+import de.peekandpoke.funktor.cluster.storage.RandomDataStorageApiClient
+import de.peekandpoke.funktor.cluster.storage.RawRandomDataModel
+import de.peekandpoke.funktor.cluster.storage.domain.RawRandomData
+import de.peekandpoke.funktor.core.broker.OutgoingConverter
+import de.peekandpoke.funktor.core.jsonPrinter
+import de.peekandpoke.funktor.rest.ApiRoutes
+import de.peekandpoke.funktor.rest.QueryParams
+import de.peekandpoke.funktor.rest.docs.codeGen
+import de.peekandpoke.funktor.rest.docs.docs
 import de.peekandpoke.ultra.common.model.Paged
 import de.peekandpoke.ultra.common.remote.ApiResponse
 import de.peekandpoke.ultra.vault.Stored

@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.cluster.locks
+package de.peekandpoke.funktor.cluster.locks
 
-import de.peekandpoke.ktorfx.core.config.AppConfig
+import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.ultra.common.network.NetworkUtils
 
 class GlobalServerId(config: AppConfig) {

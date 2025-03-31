@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.rest.codegen.dart
+package de.peekandpoke.funktor.rest.codegen.dart
 
-import de.peekandpoke.ktorfx.rest.codegen.dart.printer.DartCodePrinter
+import de.peekandpoke.funktor.rest.codegen.dart.printer.DartCodePrinter
 import de.peekandpoke.ultra.common.ensureDirectory
 import java.io.File
 

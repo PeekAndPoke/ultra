@@ -1,8 +1,8 @@
-package de.peekandpoke.ktorfx.rest
+package de.peekandpoke.funktor.rest
 
-import de.peekandpoke.ktorfx.core.kontainer
-import de.peekandpoke.ktorfx.rest.codec.RestCodec
-import de.peekandpoke.ktorfx.rest.codec.SlumberRestCodec
+import de.peekandpoke.funktor.core.kontainer
+import de.peekandpoke.funktor.rest.codec.RestCodec
+import de.peekandpoke.funktor.rest.codec.SlumberRestCodec
 import de.peekandpoke.ultra.common.TypedAttributes
 import de.peekandpoke.ultra.kontainer.KontainerAware
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
@@ -16,15 +16,15 @@ import de.peekandpoke.ultra.vault.slumber.VaultSlumberModule
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
-fun KontainerBuilder.ktorFxRest(
-    builder: KtorFXRestBuilder.() -> Unit = {},
-) = module(KtorFX_Rest, builder)
+fun KontainerBuilder.funktorRest(
+    builder: FunktorRestBuilder.() -> Unit = {},
+) = module(Funktor_Rest, builder)
 
 inline val KontainerAware.restCodec: RestCodec get() = kontainer.get()
 inline val ApplicationCall.restCodec: RestCodec get() = kontainer.restCodec
 inline val RoutingContext.restCodec: RestCodec get() = call.restCodec
 
-val KtorFX_Rest = module { builder: KtorFXRestBuilder.() -> Unit ->
+val Funktor_Rest = module { builder: FunktorRestBuilder.() -> Unit ->
 
     val codecConfig = SlumberConfig.default.prependModules(VaultSlumberModule)
 
@@ -43,10 +43,10 @@ val KtorFX_Rest = module { builder: KtorFXRestBuilder.() -> Unit ->
         )
     }
 
-    KtorFXRestBuilder(this).apply(builder)
+    FunktorRestBuilder(this).apply(builder)
 }
 
-class KtorFXRestBuilder internal constructor(private val kontainer: KontainerBuilder) {
+class FunktorRestBuilder internal constructor(private val kontainer: KontainerBuilder) {
 
     fun jwt(config: JwtConfig) {
         with(kontainer) {

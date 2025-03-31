@@ -1,9 +1,9 @@
-package de.peekandpoke.ktorfx.staticweb.templating
+package de.peekandpoke.funktor.staticweb.templating
 
+import de.peekandpoke.funktor.core.broker.TypedRoute
+import de.peekandpoke.funktor.staticweb.flashsession.FlashSession
+import de.peekandpoke.funktor.staticweb.resources.WebResources
 import de.peekandpoke.kraft.semanticui.SemanticTag
-import de.peekandpoke.ktorfx.core.broker.TypedRoute
-import de.peekandpoke.ktorfx.staticweb.flashsession.FlashSession
-import de.peekandpoke.ktorfx.staticweb.resources.WebResources
 import io.ktor.server.html.*
 import kotlinx.html.FlowContent
 import kotlinx.html.HEAD

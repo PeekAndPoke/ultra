@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core.websocket
+package de.peekandpoke.funktor.core.websocket
 
 import de.peekandpoke.ultra.common.model.EmptyObject
 import kotlinx.serialization.KSerializer

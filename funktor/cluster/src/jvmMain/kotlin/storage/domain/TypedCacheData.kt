@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.cluster.storage.domain
+package de.peekandpoke.funktor.cluster.storage.domain
 
-import de.peekandpoke.ktorfx.cluster.storage.RawCacheDataModel
+import de.peekandpoke.funktor.cluster.storage.RawCacheDataModel
 import de.peekandpoke.ultra.common.datetime.MpInstant
 
 data class TypedCacheData<T>(

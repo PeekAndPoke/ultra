@@ -1,9 +1,9 @@
-package de.peekandpoke.ktorfx.rest.codegen.dart
+package de.peekandpoke.funktor.rest.codegen.dart
 
-import de.peekandpoke.ktorfx.rest.codegen.CodeGenDsl
-import de.peekandpoke.ktorfx.rest.codegen.Tags
-import de.peekandpoke.ktorfx.rest.codegen.dart.printer.DartCodePrintFn
-import de.peekandpoke.ktorfx.rest.codegen.dart.printer.DartCodePrinter
+import de.peekandpoke.funktor.rest.codegen.CodeGenDsl
+import de.peekandpoke.funktor.rest.codegen.Tags
+import de.peekandpoke.funktor.rest.codegen.dart.printer.DartCodePrintFn
+import de.peekandpoke.funktor.rest.codegen.dart.printer.DartCodePrinter
 
 class DartCodeBlock(
     override val file: DartFile.Definition,

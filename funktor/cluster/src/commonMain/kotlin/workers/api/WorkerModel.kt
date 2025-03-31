@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.workers.api
+package de.peekandpoke.funktor.cluster.workers.api
 
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import kotlinx.serialization.SerialName

@@ -1,12 +1,12 @@
-package de.peekandpoke.ktorfx.insights.gui
+package de.peekandpoke.funktor.insights.gui
 
-import de.peekandpoke.ktorfx.core.model.CacheBuster
-import de.peekandpoke.ktorfx.staticweb.resources.WebResourceGroup
-import de.peekandpoke.ktorfx.staticweb.resources.WebResources
+import de.peekandpoke.funktor.core.model.CacheBuster
+import de.peekandpoke.funktor.staticweb.resources.WebResourceGroup
+import de.peekandpoke.funktor.staticweb.resources.WebResources
 
 val WebResources.insightsBar get() = get(InsightsBarWebResources::class)
 
 class InsightsBarWebResources(buster: CacheBuster) : WebResourceGroup(buster, {
-    resourceCss("/assets/ktorfx/insights/bar.css")
-    resourceJs("/assets/ktorfx/insights/bar.js")
+    resourceCss("/assets/funktor/insights/bar.css")
+    resourceJs("/assets/funktor/insights/bar.js")
 })

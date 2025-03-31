@@ -1,9 +1,9 @@
-package de.peekandpoke.ktorfx.insights.gui
+package de.peekandpoke.funktor.insights.gui
 
-import de.peekandpoke.ktorfx.cluster.depot.domain.DepotItem
-import de.peekandpoke.ktorfx.core.broker.OutgoingConverter
-import de.peekandpoke.ktorfx.core.broker.Routes
-import de.peekandpoke.ktorfx.core.broker.TypedRoute
+import de.peekandpoke.funktor.cluster.depot.domain.DepotItem
+import de.peekandpoke.funktor.core.broker.OutgoingConverter
+import de.peekandpoke.funktor.core.broker.Routes
+import de.peekandpoke.funktor.core.broker.TypedRoute
 
 class InsightsGuiRoutes(converter: OutgoingConverter) : Routes(converter, "/_") {
 

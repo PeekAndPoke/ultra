@@ -1,23 +1,23 @@
-package de.peekandpoke.ktorfx.insights
+package de.peekandpoke.funktor.insights
 
-import de.peekandpoke.ktorfx.core.kontainerOrNull
-import de.peekandpoke.ktorfx.core.model.InsightsConfig
-import de.peekandpoke.ktorfx.insights.collectors.AppConfigCollector
-import de.peekandpoke.ktorfx.insights.collectors.KontainerCollector
-import de.peekandpoke.ktorfx.insights.collectors.LogCollector
-import de.peekandpoke.ktorfx.insights.collectors.RequestCollector
-import de.peekandpoke.ktorfx.insights.collectors.ResponseCollector
-import de.peekandpoke.ktorfx.insights.collectors.RoutingCollector
-import de.peekandpoke.ktorfx.insights.collectors.RuntimeCollector
-import de.peekandpoke.ktorfx.insights.collectors.TemplateInsightsCollector
-import de.peekandpoke.ktorfx.insights.collectors.UserCollector
-import de.peekandpoke.ktorfx.insights.collectors.VaultCollector
-import de.peekandpoke.ktorfx.insights.gui.InsightsBarWebResources
-import de.peekandpoke.ktorfx.insights.gui.InsightsGui
-import de.peekandpoke.ktorfx.insights.gui.InsightsGuiRoutes
-import de.peekandpoke.ktorfx.insights.gui.InsightsGuiTemplate
-import de.peekandpoke.ktorfx.insights.gui.InsightsGuiWebResources
-import de.peekandpoke.ktorfx.insights.gui.InsightsRenderer
+import de.peekandpoke.funktor.core.kontainerOrNull
+import de.peekandpoke.funktor.core.model.InsightsConfig
+import de.peekandpoke.funktor.insights.collectors.AppConfigCollector
+import de.peekandpoke.funktor.insights.collectors.KontainerCollector
+import de.peekandpoke.funktor.insights.collectors.LogCollector
+import de.peekandpoke.funktor.insights.collectors.RequestCollector
+import de.peekandpoke.funktor.insights.collectors.ResponseCollector
+import de.peekandpoke.funktor.insights.collectors.RoutingCollector
+import de.peekandpoke.funktor.insights.collectors.RuntimeCollector
+import de.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector
+import de.peekandpoke.funktor.insights.collectors.UserCollector
+import de.peekandpoke.funktor.insights.collectors.VaultCollector
+import de.peekandpoke.funktor.insights.gui.InsightsBarWebResources
+import de.peekandpoke.funktor.insights.gui.InsightsGui
+import de.peekandpoke.funktor.insights.gui.InsightsGuiRoutes
+import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
+import de.peekandpoke.funktor.insights.gui.InsightsGuiWebResources
+import de.peekandpoke.funktor.insights.gui.InsightsRenderer
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.kontainer.KontainerAware
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
@@ -27,13 +27,13 @@ import impl.InsightsSlim
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
-fun KontainerBuilder.ktorFxInsights() = module(KtorFX_Insights)
+fun KontainerBuilder.funktorInsights() = module(Funktor_Insights)
 
-val KontainerAware.ktorFxInsights get() = kontainer.getOrNull(Insights::class)
-val ApplicationCall.ktorFxInsights get() = kontainerOrNull?.ktorFxInsights
-val RoutingContext.ktorFxInsights get() = call.ktorFxInsights
+val KontainerAware.funktorInsights get() = kontainer.getOrNull(Insights::class)
+val ApplicationCall.funktorInsights get() = kontainerOrNull?.funktorInsights
+val RoutingContext.funktorInsights get() = call.funktorInsights
 
-val KtorFX_Insights = module {
+val Funktor_Insights = module {
     dynamic(InsightsConfig::class) { InsightsConfig.Disabled }
 
     dynamic(Insights::class) { config: InsightsConfig, kontainer: Kontainer ->

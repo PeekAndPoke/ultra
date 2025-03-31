@@ -1,5 +1,9 @@
-package de.peekandpoke.ktorfx.cluster.workers
+package de.peekandpoke.funktor.cluster.workers
 
+import de.peekandpoke.funktor.cluster.FunktorClusterUi
+import de.peekandpoke.funktor.cluster.formatNonZeroComponents
+import de.peekandpoke.funktor.cluster.renderDefault
+import de.peekandpoke.funktor.cluster.workers.api.WorkerModel
 import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
@@ -9,10 +13,6 @@ import de.peekandpoke.kraft.semanticui.icon
 import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ktorfx.cluster.KtorFxClusterUi
-import de.peekandpoke.ktorfx.cluster.formatNonZeroComponents
-import de.peekandpoke.ktorfx.cluster.renderDefault
-import de.peekandpoke.ktorfx.cluster.workers.api.WorkerModel
 import de.peekandpoke.ultra.common.datetime.MpDateTimePeriod
 import de.peekandpoke.ultra.common.roundWithPrecision
 import de.peekandpoke.ultra.common.toFixed
@@ -34,7 +34,7 @@ class WorkersListPage(ctx: Ctx<Props>) : Component<WorkersListPage.Props>(ctx) {
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: KtorFxClusterUi,
+        val ui: FunktorClusterUi,
     )
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -48,7 +48,7 @@ class WorkersListPage(ctx: Ctx<Props>) : Component<WorkersListPage.Props>(ctx) {
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
-        JoinedPageTitle { listOf("KtorFx", "Workers") }
+        JoinedPageTitle { listOf("Funktor", "Workers") }
 
         ui.padded.segment {
             ui.right.floated.small.basic.icon.button {

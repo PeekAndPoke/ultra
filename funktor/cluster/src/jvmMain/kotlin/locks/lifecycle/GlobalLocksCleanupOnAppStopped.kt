@@ -1,8 +1,8 @@
-package de.peekandpoke.ktorfx.cluster.locks.lifecycle
+package de.peekandpoke.funktor.cluster.locks.lifecycle
 
-import de.peekandpoke.ktorfx.cluster.locks.GlobalLocksProvider
-import de.peekandpoke.ktorfx.cluster.locks.GlobalServerId
-import de.peekandpoke.ktorfx.core.lifecycle.AppLifeCycleHooks
+import de.peekandpoke.funktor.cluster.locks.GlobalLocksProvider
+import de.peekandpoke.funktor.cluster.locks.GlobalServerId
+import de.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
 import de.peekandpoke.ultra.logging.Log
 import io.ktor.server.application.*
 

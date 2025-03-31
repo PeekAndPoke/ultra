@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.cluster.workers.services
+package de.peekandpoke.funktor.cluster.workers.services
 
-import de.peekandpoke.ktorfx.cluster.workers.Worker
-import de.peekandpoke.ktorfx.cluster.workers.WorkersFacade
+import de.peekandpoke.funktor.cluster.workers.Worker
+import de.peekandpoke.funktor.cluster.workers.WorkersFacade
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async

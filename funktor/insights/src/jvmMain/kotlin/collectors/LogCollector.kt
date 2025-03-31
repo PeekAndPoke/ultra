@@ -1,14 +1,14 @@
-package de.peekandpoke.ktorfx.insights.collectors
+package de.peekandpoke.funktor.insights.collectors
 
+import de.peekandpoke.funktor.core.kontainer
+import de.peekandpoke.funktor.insights.InsightsCollector
+import de.peekandpoke.funktor.insights.InsightsCollectorData
+import de.peekandpoke.funktor.insights.gui.InsightsBarTemplate
+import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
 import de.peekandpoke.kraft.semanticui.SemanticFn
 import de.peekandpoke.kraft.semanticui.icon
 import de.peekandpoke.kraft.semanticui.semantic
 import de.peekandpoke.kraft.semanticui.ui
-import de.peekandpoke.ktorfx.core.kontainer
-import de.peekandpoke.ktorfx.insights.InsightsCollector
-import de.peekandpoke.ktorfx.insights.InsightsCollectorData
-import de.peekandpoke.ktorfx.insights.gui.InsightsBarTemplate
-import de.peekandpoke.ktorfx.insights.gui.InsightsGuiTemplate
 import de.peekandpoke.ultra.logging.LogAppender
 import de.peekandpoke.ultra.logging.LogLevel
 import io.ktor.server.application.*

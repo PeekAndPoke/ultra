@@ -1,15 +1,15 @@
-package de.peekandpoke.ktorfx.insights.gui
+package de.peekandpoke.funktor.insights.gui
 
-import de.peekandpoke.ktorfx.core.model.CacheBuster
-import de.peekandpoke.ktorfx.staticweb.resources.WebResourceGroup
-import de.peekandpoke.ktorfx.staticweb.resources.WebResources
+import de.peekandpoke.funktor.core.model.CacheBuster
+import de.peekandpoke.funktor.staticweb.resources.WebResourceGroup
+import de.peekandpoke.funktor.staticweb.resources.WebResources
 
 val WebResources.insightsGui get() = get(InsightsGuiWebResources::class)
 
 class InsightsGuiWebResources(buster: CacheBuster) : WebResourceGroup(buster, {
 
-    resourceCss("/assets/ktorfx/insights/gui.css")
+    resourceCss("/assets/funktor/insights/gui.css")
 
-    resourceJs("/assets/ktorfx/insights/semanticui-tablesort.js")
-    resourceJs("/assets/ktorfx/insights/gui.js")
+    resourceJs("/assets/funktor/insights/semanticui-tablesort.js")
+    resourceJs("/assets/funktor/insights/gui.js")
 })

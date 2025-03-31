@@ -1,10 +1,10 @@
-package de.peekandpoke.ktorfx.cluster.depot
+package de.peekandpoke.funktor.cluster.depot
 
-import de.peekandpoke.ktorfx.cluster.depot.api.DepotItemModel
-import de.peekandpoke.ktorfx.cluster.depot.domain.DepotFileContent
-import de.peekandpoke.ktorfx.cluster.depot.domain.DepotItem
-import de.peekandpoke.ktorfx.cluster.depot.domain.DepotUri
-import de.peekandpoke.ktorfx.cluster.depot.repos.DepotRepository
+import de.peekandpoke.funktor.cluster.depot.api.DepotItemModel
+import de.peekandpoke.funktor.cluster.depot.domain.DepotFileContent
+import de.peekandpoke.funktor.cluster.depot.domain.DepotItem
+import de.peekandpoke.funktor.cluster.depot.domain.DepotUri
+import de.peekandpoke.funktor.cluster.depot.repos.DepotRepository
 import de.peekandpoke.ultra.common.Lookup
 import kotlin.reflect.KClass
 

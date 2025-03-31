@@ -1,8 +1,8 @@
-package de.peekandpoke.ktorfx.cluster.locks
+package de.peekandpoke.funktor.cluster.locks
 
+import de.peekandpoke.funktor.cluster.FunktorClusterUi
 import de.peekandpoke.kraft.addons.routing.RouterBuilder
 import de.peekandpoke.kraft.addons.routing.Static
-import de.peekandpoke.ktorfx.cluster.KtorFxClusterUi
 
 class LocksRoutes(mount: String) {
 
@@ -11,8 +11,8 @@ class LocksRoutes(mount: String) {
     val listGlobalLocks = Static("$mount/global-locks")
 }
 
-internal fun RouterBuilder.mountKtorFxLocks(
-    ui: KtorFxClusterUi,
+internal fun RouterBuilder.mountFunktorLocks(
+    ui: FunktorClusterUi,
 ) {
     mount(ui.routes.locks.listServerBeacons) { ui { ServerBeaconsListPage() } }
     mount(ui.routes.locks.listGlobalLocks) { ui { GlobalLocksListPage() } }

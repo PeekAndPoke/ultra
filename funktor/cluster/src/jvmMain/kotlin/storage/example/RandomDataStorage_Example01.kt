@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.cluster.storage.example
+package de.peekandpoke.funktor.cluster.storage.example
 
-import de.peekandpoke.ktorfx.cluster.storage.RandomDataStorage
+import de.peekandpoke.funktor.cluster.storage.RandomDataStorage
 
 @Suppress("ClassName")
 class RandomDataStorage_Example01(

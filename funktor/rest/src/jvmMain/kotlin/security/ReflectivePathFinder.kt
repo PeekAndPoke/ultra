@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.rest.security
+package de.peekandpoke.funktor.rest.security
 
 import de.peekandpoke.ultra.common.reflection.ReifiedKType
 import de.peekandpoke.ultra.common.reflection.TypeRef

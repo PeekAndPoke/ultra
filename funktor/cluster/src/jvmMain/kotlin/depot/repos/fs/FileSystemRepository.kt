@@ -1,10 +1,10 @@
-package de.peekandpoke.ktorfx.cluster.depot.repos.fs
+package de.peekandpoke.funktor.cluster.depot.repos.fs
 
-import de.peekandpoke.ktorfx.cluster.depot.api.DepotItemModel
-import de.peekandpoke.ktorfx.cluster.depot.domain.DepotFileContent
-import de.peekandpoke.ktorfx.cluster.depot.domain.DepotItem
-import de.peekandpoke.ktorfx.cluster.depot.repos.DepotPutFileOptions
-import de.peekandpoke.ktorfx.cluster.depot.repos.DepotRepository
+import de.peekandpoke.funktor.cluster.depot.api.DepotItemModel
+import de.peekandpoke.funktor.cluster.depot.domain.DepotFileContent
+import de.peekandpoke.funktor.cluster.depot.domain.DepotItem
+import de.peekandpoke.funktor.cluster.depot.repos.DepotPutFileOptions
+import de.peekandpoke.funktor.cluster.depot.repos.DepotRepository
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.ensureDirectory
 import java.io.File

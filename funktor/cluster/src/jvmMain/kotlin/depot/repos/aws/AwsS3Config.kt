@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.depot.repos.aws
+package de.peekandpoke.funktor.cluster.depot.repos.aws
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 

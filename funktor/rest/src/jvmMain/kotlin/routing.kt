@@ -1,10 +1,10 @@
 @file:Suppress("MoveVariableDeclarationIntoWhen")
 
-package de.peekandpoke.ktorfx.rest
+package de.peekandpoke.funktor.rest
 
-import de.peekandpoke.ktorfx.core.broker.convertIncomingParameters
-import de.peekandpoke.ktorfx.core.broker.handle
-import de.peekandpoke.ktorfx.rest.auth.AuthRule
+import de.peekandpoke.funktor.core.broker.convertIncomingParameters
+import de.peekandpoke.funktor.core.broker.handle
+import de.peekandpoke.funktor.rest.auth.AuthRule
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*

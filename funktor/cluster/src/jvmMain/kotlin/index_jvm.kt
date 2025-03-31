@@ -1,44 +1,44 @@
-package de.peekandpoke.ktorfx.cluster
+package de.peekandpoke.funktor.cluster
 
+import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
+import de.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler01
+import de.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler02
+import de.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsArchiveRepo
+import de.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsQueueRepo
+import de.peekandpoke.funktor.cluster.backgroundjobs.workers.BackgroundJobsWorker
+import de.peekandpoke.funktor.cluster.depot.DepotFacade
+import de.peekandpoke.funktor.cluster.locks.GlobalLocksProvider
+import de.peekandpoke.funktor.cluster.locks.GlobalServerId
+import de.peekandpoke.funktor.cluster.locks.GlobalServerList
+import de.peekandpoke.funktor.cluster.locks.LocksFacade
+import de.peekandpoke.funktor.cluster.locks.PrimitiveGlobalLocksProvider
+import de.peekandpoke.funktor.cluster.locks.ServerBeaconRepository
+import de.peekandpoke.funktor.cluster.locks.VaultGlobalLocksProvider
+import de.peekandpoke.funktor.cluster.locks.cli.ReleaseLocksCliCommand
+import de.peekandpoke.funktor.cluster.locks.karango.KarangoGlobalLocksRepo
+import de.peekandpoke.funktor.cluster.locks.karango.KarangoServerBeaconRepo
+import de.peekandpoke.funktor.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStarting
+import de.peekandpoke.funktor.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStopped
+import de.peekandpoke.funktor.cluster.locks.workers.GlobalLocksCleanupWorker
+import de.peekandpoke.funktor.cluster.locks.workers.ServerBeaconCleanupWorker
+import de.peekandpoke.funktor.cluster.locks.workers.ServerBeaconUpdateWorker
+import de.peekandpoke.funktor.cluster.storage.RandomCacheStorage
+import de.peekandpoke.funktor.cluster.storage.RandomDataStorage
+import de.peekandpoke.funktor.cluster.storage.StorageFacade
+import de.peekandpoke.funktor.cluster.storage.example.RandomDataStorage_Example01
+import de.peekandpoke.funktor.cluster.storage.fixtures.RandomCacheStorageFixtures
+import de.peekandpoke.funktor.cluster.storage.fixtures.RandomDataStorageFixtures
+import de.peekandpoke.funktor.cluster.storage.karango.KarangoRandomCacheRepository
+import de.peekandpoke.funktor.cluster.storage.karango.KarangoRandomDataRepository
+import de.peekandpoke.funktor.cluster.vault.EnsureRepositoriesOnAppStarting
+import de.peekandpoke.funktor.cluster.workers.WorkersFacade
+import de.peekandpoke.funktor.cluster.workers.fixtures.WorkerFixtures
+import de.peekandpoke.funktor.cluster.workers.services.WorkerHistory
+import de.peekandpoke.funktor.cluster.workers.services.WorkerRegistry
+import de.peekandpoke.funktor.cluster.workers.services.WorkerTracker
+import de.peekandpoke.funktor.cluster.workers.vault.KarangoWorkerHistoryRepo
+import de.peekandpoke.funktor.core.kontainer
 import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.BackgroundJobs
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.example.ExampleBackgroundJobHandler01
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.example.ExampleBackgroundJobHandler02
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.karango.KarangoBackgroundJobsArchiveRepo
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.karango.KarangoBackgroundJobsQueueRepo
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.workers.BackgroundJobsWorker
-import de.peekandpoke.ktorfx.cluster.depot.DepotFacade
-import de.peekandpoke.ktorfx.cluster.locks.GlobalLocksProvider
-import de.peekandpoke.ktorfx.cluster.locks.GlobalServerId
-import de.peekandpoke.ktorfx.cluster.locks.GlobalServerList
-import de.peekandpoke.ktorfx.cluster.locks.LocksFacade
-import de.peekandpoke.ktorfx.cluster.locks.PrimitiveGlobalLocksProvider
-import de.peekandpoke.ktorfx.cluster.locks.ServerBeaconRepository
-import de.peekandpoke.ktorfx.cluster.locks.VaultGlobalLocksProvider
-import de.peekandpoke.ktorfx.cluster.locks.cli.ReleaseLocksCliCommand
-import de.peekandpoke.ktorfx.cluster.locks.karango.KarangoGlobalLocksRepo
-import de.peekandpoke.ktorfx.cluster.locks.karango.KarangoServerBeaconRepo
-import de.peekandpoke.ktorfx.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStarting
-import de.peekandpoke.ktorfx.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStopped
-import de.peekandpoke.ktorfx.cluster.locks.workers.GlobalLocksCleanupWorker
-import de.peekandpoke.ktorfx.cluster.locks.workers.ServerBeaconCleanupWorker
-import de.peekandpoke.ktorfx.cluster.locks.workers.ServerBeaconUpdateWorker
-import de.peekandpoke.ktorfx.cluster.storage.RandomCacheStorage
-import de.peekandpoke.ktorfx.cluster.storage.RandomDataStorage
-import de.peekandpoke.ktorfx.cluster.storage.StorageFacade
-import de.peekandpoke.ktorfx.cluster.storage.example.RandomDataStorage_Example01
-import de.peekandpoke.ktorfx.cluster.storage.fixtures.RandomCacheStorageFixtures
-import de.peekandpoke.ktorfx.cluster.storage.fixtures.RandomDataStorageFixtures
-import de.peekandpoke.ktorfx.cluster.storage.karango.KarangoRandomCacheRepository
-import de.peekandpoke.ktorfx.cluster.storage.karango.KarangoRandomDataRepository
-import de.peekandpoke.ktorfx.cluster.vault.EnsureRepositoriesOnAppStarting
-import de.peekandpoke.ktorfx.cluster.workers.WorkersFacade
-import de.peekandpoke.ktorfx.cluster.workers.fixtures.WorkerFixtures
-import de.peekandpoke.ktorfx.cluster.workers.services.WorkerHistory
-import de.peekandpoke.ktorfx.cluster.workers.services.WorkerRegistry
-import de.peekandpoke.ktorfx.cluster.workers.services.WorkerTracker
-import de.peekandpoke.ktorfx.cluster.workers.vault.KarangoWorkerHistoryRepo
-import de.peekandpoke.ktorfx.core.kontainer
 import de.peekandpoke.ultra.kontainer.KontainerAware
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
@@ -47,13 +47,13 @@ import de.peekandpoke.ultra.vault.hooks.TimestampedHook
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
-fun KontainerBuilder.ktorFxCluster(
-    builder: KtorFXClusterBuilder.() -> Unit = {},
-) = module(KtorFX_Cluster, builder)
+fun KontainerBuilder.funktorCluster(
+    builder: FunktorClusterBuilder.() -> Unit = {},
+) = module(Funktor_Cluster, builder)
 
-inline val KontainerAware.cluster: KtorFxClusterFacade get() = kontainer.get()
-inline val ApplicationCall.cluster: KtorFxClusterFacade get() = kontainer.cluster
-inline val RoutingContext.cluster: KtorFxClusterFacade get() = call.cluster
+inline val KontainerAware.cluster: FunktorClusterFacade get() = kontainer.get()
+inline val ApplicationCall.cluster: FunktorClusterFacade get() = kontainer.cluster
+inline val RoutingContext.cluster: FunktorClusterFacade get() = call.cluster
 
 inline val KontainerAware.database: Database get() = kontainer.get(Database::class)
 inline val ApplicationCall.database: Database get() = kontainer.database
@@ -62,12 +62,12 @@ inline val RoutingContext.database: Database get() = call.database
 /**
  * Background workers kontainer module
  */
-val KtorFX_Cluster = module { builder: KtorFXClusterBuilder.() -> Unit ->
+val Funktor_Cluster = module { builder: FunktorClusterBuilder.() -> Unit ->
 
     // The Facade for all essential services ////////////////////////////////////////
-    singleton(KtorFxClusterFacade::class)
+    singleton(FunktorClusterFacade::class)
     // Api facade
-    singleton(KtorFxClusterApiFeature::class)
+    singleton(FunktorClusterApiFeature::class)
 
     // //////////////////////////////////////////////////////////////////////////////
     // BackgroundJobs
@@ -140,10 +140,10 @@ val KtorFX_Cluster = module { builder: KtorFXClusterBuilder.() -> Unit ->
     // //////////////////////////////////////////////////////////////////////////////
     // Apply external configuration
     // //
-    KtorFXClusterBuilder(this).apply(builder)
+    FunktorClusterBuilder(this).apply(builder)
 }
 
-class KtorFXClusterBuilder internal constructor(private val kontainer: KontainerBuilder) {
+class FunktorClusterBuilder internal constructor(private val kontainer: KontainerBuilder) {
 
     fun useKarango(
         globalLockRepoName: String = "system_global_locks",

@@ -1,13 +1,13 @@
-package de.peekandpoke.ktorfx.staticweb.flashsession
+package de.peekandpoke.funktor.staticweb.flashsession
 
-import de.peekandpoke.ktorfx.core.kontainer
+import de.peekandpoke.funktor.core.kontainer
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 
-internal fun KontainerBuilder.ktorFxFlashSession() = module(KtorFX_FlashSession)
+internal fun KontainerBuilder.funktorFlashSession() = module(Funktor_FlashSession)
 
 /**
  * FlashSession kontainer module
@@ -16,7 +16,7 @@ internal fun KontainerBuilder.ktorFxFlashSession() = module(KtorFX_FlashSession)
  *
  * - [FlashSession] which defaults to [NullFlashSession]
  */
-internal val KtorFX_FlashSession = module {
+internal val Funktor_FlashSession = module {
     dynamic(FlashSession::class) { current: CurrentSession -> FlashSession.of(current) }
 }
 

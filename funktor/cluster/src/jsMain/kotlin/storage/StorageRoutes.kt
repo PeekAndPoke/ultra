@@ -1,9 +1,9 @@
-package de.peekandpoke.ktorfx.cluster.storage
+package de.peekandpoke.funktor.cluster.storage
 
+import de.peekandpoke.funktor.cluster.FunktorClusterUi
 import de.peekandpoke.kraft.addons.routing.Route1
 import de.peekandpoke.kraft.addons.routing.RouterBuilder
 import de.peekandpoke.kraft.addons.routing.Static
-import de.peekandpoke.ktorfx.cluster.KtorFxClusterUi
 
 class StorageRoutes(mount: String) {
 
@@ -27,8 +27,8 @@ class StorageRoutes(mount: String) {
     val randomCache = RandomCache("$mount/random-cache")
 }
 
-internal fun RouterBuilder.mountKtorFxStorage(
-    ui: KtorFxClusterUi,
+internal fun RouterBuilder.mountFunktorStorage(
+    ui: FunktorClusterUi,
 ) {
     mount(ui.routes.storage.randomData.list) { ui { RandomDataStorageListPage() } }
     mount(ui.routes.storage.randomData.view) { ui { RandomDataStorageViewPage(it["id"]) } }

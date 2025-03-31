@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core.broker
+package de.peekandpoke.funktor.core.broker
 
 import de.peekandpoke.ultra.common.Lookup
 import java.lang.reflect.Type

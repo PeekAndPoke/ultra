@@ -1,8 +1,8 @@
-package de.peekandpoke.ktorfx.cluster.workers.example
+package de.peekandpoke.funktor.cluster.workers.example
 
-import de.peekandpoke.ktorfx.cluster.workers.StateProvider
-import de.peekandpoke.ktorfx.cluster.workers.Worker
-import de.peekandpoke.ktorfx.cluster.workers.isRunning
+import de.peekandpoke.funktor.cluster.workers.StateProvider
+import de.peekandpoke.funktor.cluster.workers.Worker
+import de.peekandpoke.funktor.cluster.workers.isRunning
 import de.peekandpoke.ultra.logging.Log
 import kotlinx.coroutines.delay
 import kotlin.time.Duration

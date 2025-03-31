@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core.websocket
+package de.peekandpoke.funktor.core.websocket
 
 import com.benasher44.uuid.uuid4
 import kotlinx.serialization.Serializable

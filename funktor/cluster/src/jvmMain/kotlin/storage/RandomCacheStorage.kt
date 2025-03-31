@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.cluster.storage
+package de.peekandpoke.funktor.cluster.storage
 
-import de.peekandpoke.ktorfx.cluster.storage.domain.RawCacheData
-import de.peekandpoke.ktorfx.cluster.storage.domain.TypedCacheData
+import de.peekandpoke.funktor.cluster.storage.domain.RawCacheData
+import de.peekandpoke.funktor.cluster.storage.domain.TypedCacheData
 import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kType

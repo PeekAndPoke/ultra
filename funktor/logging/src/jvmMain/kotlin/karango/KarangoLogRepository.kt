@@ -1,5 +1,7 @@
-package de.peekandpoke.ktorfx.logging.karango
+package de.peekandpoke.funktor.logging.karango
 
+import de.peekandpoke.funktor.logging.LogsFilter
+import de.peekandpoke.funktor.logging.api.LogsRequest
 import de.peekandpoke.karango.KarangoCursor
 import de.peekandpoke.karango.aql.CONTAINS
 import de.peekandpoke.karango.aql.DESC
@@ -16,8 +18,6 @@ import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.IndexBuilder
 import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ktorfx.logging.LogsFilter
-import de.peekandpoke.ktorfx.logging.api.LogsRequest
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.logging.NullLog
 import de.peekandpoke.ultra.vault.Stored

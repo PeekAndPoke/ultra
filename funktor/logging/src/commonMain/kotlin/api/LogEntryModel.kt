@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.logging.api
+package de.peekandpoke.funktor.logging.api
 
 import de.peekandpoke.ultra.logging.LogLevel
 import kotlinx.serialization.Serializable

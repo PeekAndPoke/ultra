@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core.broker
+package de.peekandpoke.funktor.core.broker
 
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import kotlin.reflect.KType

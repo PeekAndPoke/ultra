@@ -1,9 +1,9 @@
-package de.peekandpoke.ktorfx.cluster.depot
+package de.peekandpoke.funktor.cluster.depot
 
+import de.peekandpoke.funktor.cluster.FunktorClusterUi
 import de.peekandpoke.kraft.addons.routing.Route1
 import de.peekandpoke.kraft.addons.routing.RouterBuilder
 import de.peekandpoke.kraft.addons.routing.Static
-import de.peekandpoke.ktorfx.cluster.KtorFxClusterUi
 import js.uri.encodeURI
 
 class DepotRoutes(mount: String) {
@@ -13,8 +13,8 @@ class DepotRoutes(mount: String) {
     fun browse(repo: String, path: String) = browse.buildUri(repo) + "?path=${encodeURI(path)}"
 }
 
-internal fun RouterBuilder.mountKtorFxDepot(
-    ui: KtorFxClusterUi,
+internal fun RouterBuilder.mountFunktorDepot(
+    ui: FunktorClusterUi,
 ) {
     mount(ui.routes.depot.listRepositories) { ui { DepotRepositoriesListPage() } }
     mount(ui.routes.depot.browse) { ui { DepotBrowsePage(repo = it["repo"], path = it["path"]) } }

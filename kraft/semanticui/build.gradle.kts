@@ -8,7 +8,6 @@ import Deps.Test.jvmTestDeps
 plugins {
     kotlin("multiplatform")
     id("io.kotest.multiplatform")
-    id("org.jetbrains.dokka")
     id("com.vanniktech.maven.publish")
 }
 
@@ -17,6 +16,10 @@ val VERSION_NAME: String by project
 
 group = KRAFT_GROUP
 version = VERSION_NAME
+
+Docs {
+    useEmptyJavadoc()
+}
 
 kotlin {
     js {

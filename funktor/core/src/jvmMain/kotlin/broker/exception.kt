@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core.broker
+package de.peekandpoke.funktor.core.broker
 
 open class ConverterException(message: String, cause: Throwable? = null) : Throwable(message, cause)
 

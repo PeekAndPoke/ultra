@@ -1,11 +1,11 @@
-package de.peekandpoke.ktorfx.logging.api
+package de.peekandpoke.funktor.logging.api
 
-import de.peekandpoke.ktorfx.core.broker.OutgoingConverter
-import de.peekandpoke.ktorfx.logging.LogsFilter
-import de.peekandpoke.ktorfx.logging.logging
-import de.peekandpoke.ktorfx.rest.ApiRoutes
-import de.peekandpoke.ktorfx.rest.docs.codeGen
-import de.peekandpoke.ktorfx.rest.docs.docs
+import de.peekandpoke.funktor.core.broker.OutgoingConverter
+import de.peekandpoke.funktor.logging.LogsFilter
+import de.peekandpoke.funktor.logging.logging
+import de.peekandpoke.funktor.rest.ApiRoutes
+import de.peekandpoke.funktor.rest.docs.codeGen
+import de.peekandpoke.funktor.rest.docs.docs
 import de.peekandpoke.ultra.common.remote.ApiResponse
 import de.peekandpoke.ultra.logging.LogLevel
 

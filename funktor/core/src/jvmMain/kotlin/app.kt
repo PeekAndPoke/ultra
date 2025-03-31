@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.core
+package de.peekandpoke.funktor.core
 
-import de.peekandpoke.ktorfx.core.cli.CliRunner
-import de.peekandpoke.ktorfx.core.config.AppConfig
+import de.peekandpoke.funktor.core.cli.CliRunner
+import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.kontainer.DynamicOverrides
@@ -15,7 +15,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 
 /**
- * Defines the entry point for the application setup using KtorFX, allowing configuration of
+ * Defines the entry point for the application setup using Funktor, allowing configuration of
  * CLI interactions, server initialization, and kontainers setup.
  *
  * @param C The specific type of application configuration implementing [AppConfig].
@@ -28,7 +28,7 @@ import io.ktor.server.netty.*
  *
  * @return An instance of [App.Definition] containing the application definition and configuration.
  */
-inline fun <reified C : AppConfig> ktorFxApp(
+inline fun <reified C : AppConfig> funktorApp(
     noinline cli: (ctx: App<C>) -> Unit = App.Definition.defaultCli,
     noinline server: (ctx: App<C>) -> Unit = App.Definition.defaultNettyServer,
     noinline kontainers: (config: C) -> AppKontainers,

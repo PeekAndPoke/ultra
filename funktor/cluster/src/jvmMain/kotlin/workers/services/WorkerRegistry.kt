@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.cluster.workers.services
+package de.peekandpoke.funktor.cluster.workers.services
 
-import de.peekandpoke.ktorfx.cluster.workers.Worker
+import de.peekandpoke.funktor.cluster.workers.Worker
 import de.peekandpoke.ultra.common.Lookup
 
 /**

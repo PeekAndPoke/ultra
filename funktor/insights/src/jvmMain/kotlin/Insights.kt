@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.insights
+package de.peekandpoke.funktor.insights
 
-import de.peekandpoke.ktorfx.core.metrics.RequestMetricsProvider
-import de.peekandpoke.ktorfx.core.model.InsightsConfig
+import de.peekandpoke.funktor.core.metrics.RequestMetricsProvider
+import de.peekandpoke.funktor.core.model.InsightsConfig
 import io.ktor.server.application.*
 import kotlin.reflect.KClass
 import kotlin.time.Duration

@@ -1,13 +1,13 @@
 package impl
 
 import com.fasterxml.jackson.module.kotlin.convertValue
-import de.peekandpoke.ktorfx.core.model.InsightsConfig
-import de.peekandpoke.ktorfx.insights.CollectorData
-import de.peekandpoke.ktorfx.insights.Insights
-import de.peekandpoke.ktorfx.insights.InsightsCollector
-import de.peekandpoke.ktorfx.insights.InsightsData
-import de.peekandpoke.ktorfx.insights.InsightsMapper
-import de.peekandpoke.ktorfx.insights.InsightsRepository
+import de.peekandpoke.funktor.core.model.InsightsConfig
+import de.peekandpoke.funktor.insights.CollectorData
+import de.peekandpoke.funktor.insights.Insights
+import de.peekandpoke.funktor.insights.InsightsCollector
+import de.peekandpoke.funktor.insights.InsightsData
+import de.peekandpoke.funktor.insights.InsightsMapper
+import de.peekandpoke.funktor.insights.InsightsRepository
 import de.peekandpoke.ultra.common.Lookup
 import io.ktor.server.application.*
 import io.ktor.server.request.*

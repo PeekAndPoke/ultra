@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.cluster.locks
+package de.peekandpoke.funktor.cluster.locks
 
-import de.peekandpoke.ktorfx.cluster.locks.domain.ServerBeacon
-import de.peekandpoke.ktorfx.core.model.AppInfo
+import de.peekandpoke.funktor.cluster.locks.domain.ServerBeacon
+import de.peekandpoke.funktor.core.model.AppInfo
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.vault.New
 import de.peekandpoke.ultra.vault.Stored

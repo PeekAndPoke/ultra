@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.depot.api
+package de.peekandpoke.funktor.cluster.depot.api
 
 import depot.api.DepotRepositoryModel
 import kotlinx.serialization.Serializable

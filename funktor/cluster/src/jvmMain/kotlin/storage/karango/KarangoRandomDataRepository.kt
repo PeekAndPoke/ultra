@@ -1,5 +1,9 @@
-package de.peekandpoke.ktorfx.cluster.storage.karango
+package de.peekandpoke.funktor.cluster.storage.karango
 
+import de.peekandpoke.funktor.cluster.storage.RandomDataStorage
+import de.peekandpoke.funktor.cluster.storage.domain.RawRandomData
+import de.peekandpoke.funktor.cluster.storage.domain.category
+import de.peekandpoke.funktor.cluster.storage.domain.dataId
 import de.peekandpoke.karango.aql.CONTAINS
 import de.peekandpoke.karango.aql.EQ
 import de.peekandpoke.karango.aql.FOR
@@ -10,10 +14,6 @@ import de.peekandpoke.karango.aql.any
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.IndexBuilder
 import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ktorfx.cluster.storage.RandomDataStorage
-import de.peekandpoke.ktorfx.cluster.storage.domain.RawRandomData
-import de.peekandpoke.ktorfx.cluster.storage.domain.category
-import de.peekandpoke.ktorfx.cluster.storage.domain.dataId
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.vault.Cursor

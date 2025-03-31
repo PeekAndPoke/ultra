@@ -1,7 +1,7 @@
 package impl
 
-import de.peekandpoke.ktorfx.core.model.InsightsConfig
-import de.peekandpoke.ktorfx.insights.Insights
+import de.peekandpoke.funktor.core.model.InsightsConfig
+import de.peekandpoke.funktor.insights.Insights
 import io.ktor.server.application.*
 
 class InsightsSlim(override val config: InsightsConfig) : Insights.Base() {

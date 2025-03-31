@@ -1,5 +1,8 @@
-package de.peekandpoke.ktorfx.cluster.workers
+package de.peekandpoke.funktor.cluster.workers
 
+import de.peekandpoke.funktor.cluster.FunktorClusterUi
+import de.peekandpoke.funktor.cluster.formatNonZeroComponents
+import de.peekandpoke.funktor.cluster.workers.api.WorkerModel
 import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
@@ -7,9 +10,6 @@ import de.peekandpoke.kraft.semanticui.icon
 import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ktorfx.cluster.KtorFxClusterUi
-import de.peekandpoke.ktorfx.cluster.formatNonZeroComponents
-import de.peekandpoke.ktorfx.cluster.workers.api.WorkerModel
 import de.peekandpoke.ultra.common.datetime.MpDateTimePeriod
 import kotlinx.coroutines.flow.first
 import kotlinx.html.FlowContent
@@ -25,7 +25,7 @@ class WorkerDetailsPage(ctx: Ctx<Props>) : Component<WorkerDetailsPage.Props>(ct
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: KtorFxClusterUi,
+        val ui: FunktorClusterUi,
         val id: String,
     )
 
@@ -46,7 +46,7 @@ class WorkerDetailsPage(ctx: Ctx<Props>) : Component<WorkerDetailsPage.Props>(ct
     }
 
     override fun VDom.render() {
-        JoinedPageTitle { listOf("KtorFx", "Workers", props.id) }
+        JoinedPageTitle { listOf("Funktor", "Workers", props.id) }
 
         ui.padded.segment {
             ui.header H2 { +"Worker ${props.id}" }

@@ -1,1 +1,1 @@
-package de.peekandpoke.ktorfx.messaging
+package de.peekandpoke.funktor.messaging

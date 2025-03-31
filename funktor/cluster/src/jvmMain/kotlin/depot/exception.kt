@@ -1,3 +1,3 @@
-package de.peekandpoke.ktorfx.cluster.depot
+package de.peekandpoke.funktor.cluster.depot
 
 class DepotException(message: String) : Throwable(message)

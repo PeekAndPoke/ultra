@@ -1,8 +1,8 @@
-package de.peekandpoke.ktorfx.rest.security
+package de.peekandpoke.funktor.rest.security
 
-import de.peekandpoke.ktorfx.rest.ApiRoute
-import de.peekandpoke.ktorfx.rest.RestDslMarkerConfig
-import de.peekandpoke.ktorfx.rest.RestSecurityRuleMarker
+import de.peekandpoke.funktor.rest.ApiRoute
+import de.peekandpoke.funktor.rest.RestDslMarkerConfig
+import de.peekandpoke.funktor.rest.RestSecurityRuleMarker
 import de.peekandpoke.ultra.common.TypedKey
 
 data class EndpointSecurity(

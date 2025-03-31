@@ -1,14 +1,14 @@
-package de.peekandpoke.ktorfx.core.broker
+package de.peekandpoke.funktor.core.broker
 
-import de.peekandpoke.ktorfx.core.broker.vault.IncomingJavaTimeConverter
-import de.peekandpoke.ktorfx.core.broker.vault.IncomingMpDateTimeConverter
-import de.peekandpoke.ktorfx.core.broker.vault.IncomingPrimitiveConverter
-import de.peekandpoke.ktorfx.core.broker.vault.IncomingVaultConverter
-import de.peekandpoke.ktorfx.core.broker.vault.OutgoingJavaTimeConverter
-import de.peekandpoke.ktorfx.core.broker.vault.OutgoingMpDateTimeConverter
-import de.peekandpoke.ktorfx.core.broker.vault.OutgoingPrimitiveConverter
-import de.peekandpoke.ktorfx.core.broker.vault.OutgoingVaultConverter
-import de.peekandpoke.ktorfx.core.kontainer
+import de.peekandpoke.funktor.core.broker.vault.IncomingJavaTimeConverter
+import de.peekandpoke.funktor.core.broker.vault.IncomingMpDateTimeConverter
+import de.peekandpoke.funktor.core.broker.vault.IncomingPrimitiveConverter
+import de.peekandpoke.funktor.core.broker.vault.IncomingVaultConverter
+import de.peekandpoke.funktor.core.broker.vault.OutgoingJavaTimeConverter
+import de.peekandpoke.funktor.core.broker.vault.OutgoingMpDateTimeConverter
+import de.peekandpoke.funktor.core.broker.vault.OutgoingPrimitiveConverter
+import de.peekandpoke.funktor.core.broker.vault.OutgoingVaultConverter
+import de.peekandpoke.funktor.core.kontainer
 import de.peekandpoke.ultra.kontainer.KontainerAware
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
@@ -16,9 +16,9 @@ import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
 /**
- * Helper for importing [KtorFX_Broker] into a [KontainerBuilder]
+ * Helper for importing [Funktor_Broker] into a [KontainerBuilder]
  */
-fun KontainerBuilder.ktorFxBroker() = module(KtorFX_Broker)
+fun KontainerBuilder.funktorBroker() = module(Funktor_Broker)
 
 /** Get the [IncomingConverter] from the kontainer */
 inline val KontainerAware.incomingConverter: IncomingConverter get() = kontainer.get()
@@ -41,7 +41,7 @@ inline val RoutingContext.typedRouteRenderer: TypedRouteRenderer get() = call.ty
 /**
  * Broker kontainer module for type safe routing.
  */
-val KtorFX_Broker
+val Funktor_Broker
     get() = module {
 
         singleton(IncomingConverterLookup::class)

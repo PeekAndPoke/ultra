@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.cluster.locks
+package de.peekandpoke.funktor.cluster.locks
 
-import de.peekandpoke.ktorfx.cluster.locks.domain.GlobalLockEntry
-import de.peekandpoke.ktorfx.core.Retry.retry
+import de.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
+import de.peekandpoke.funktor.core.Retry.retry
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.vault.RemoveResult
 import de.peekandpoke.ultra.vault.Repository

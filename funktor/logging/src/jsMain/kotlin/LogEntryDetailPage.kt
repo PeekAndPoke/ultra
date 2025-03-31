@@ -1,5 +1,7 @@
-package de.peekandpoke.ktorfx.logging
+package de.peekandpoke.funktor.logging
 
+import de.peekandpoke.funktor.logging.api.LogEntryModel
+import de.peekandpoke.funktor.logging.api.LogsRequest
 import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
@@ -11,8 +13,6 @@ import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.utils.doubleClickProtection
 import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ktorfx.logging.api.LogEntryModel
-import de.peekandpoke.ktorfx.logging.api.LogsRequest
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
@@ -49,7 +49,7 @@ class LogEntryDetailPage(ctx: Ctx<Props>) : Component<LogEntryDetailPage.Props>(
     }
 
     override fun VDom.render() {
-        JoinedPageTitle { listOf("KtorFx", "Logs", props.id) }
+        JoinedPageTitle { listOf("Funktor", "Logs", props.id) }
 
         ui.padded.segment {
             loader.renderDefault(this) {

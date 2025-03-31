@@ -1,8 +1,8 @@
-package de.peekandpoke.ktorfx.messaging.senders
+package de.peekandpoke.funktor.messaging.senders
 
-import de.peekandpoke.ktorfx.messaging.Email
-import de.peekandpoke.ktorfx.messaging.EmailSender
-import de.peekandpoke.ktorfx.messaging.api.EmailResult
+import de.peekandpoke.funktor.messaging.Email
+import de.peekandpoke.funktor.messaging.EmailSender
+import de.peekandpoke.funktor.messaging.api.EmailResult
 import java.security.SecureRandom
 import kotlin.random.Random
 

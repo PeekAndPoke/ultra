@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core.model
+package de.peekandpoke.funktor.core.model
 
 import de.peekandpoke.ultra.common.datetime.Kronos
 import kotlinx.serialization.Serializable

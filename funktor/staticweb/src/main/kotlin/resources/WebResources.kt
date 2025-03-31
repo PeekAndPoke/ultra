@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.staticweb.resources
+package de.peekandpoke.funktor.staticweb.resources
 
-import de.peekandpoke.ktorfx.core.model.CacheBuster
+import de.peekandpoke.funktor.core.model.CacheBuster
 import de.peekandpoke.ultra.common.Lookup
 import de.peekandpoke.ultra.common.md5
 import de.peekandpoke.ultra.common.sha384

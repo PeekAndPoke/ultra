@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.core
+package de.peekandpoke.funktor.core
 
-import de.peekandpoke.ktorfx.core.config.AppConfig
+import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.ultra.kontainer.Kontainer
 import io.ktor.server.application.*
 import io.ktor.server.routing.*

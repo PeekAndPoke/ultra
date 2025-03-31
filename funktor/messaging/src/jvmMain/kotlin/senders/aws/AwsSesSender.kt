@@ -1,9 +1,9 @@
-package de.peekandpoke.ktorfx.messaging.senders.aws
+package de.peekandpoke.funktor.messaging.senders.aws
 
-import de.peekandpoke.ktorfx.messaging.Email
-import de.peekandpoke.ktorfx.messaging.EmailSender
-import de.peekandpoke.ktorfx.messaging.api.EmailBody
-import de.peekandpoke.ktorfx.messaging.api.EmailResult
+import de.peekandpoke.funktor.messaging.Email
+import de.peekandpoke.funktor.messaging.EmailSender
+import de.peekandpoke.funktor.messaging.api.EmailBody
+import de.peekandpoke.funktor.messaging.api.EmailResult
 import de.peekandpoke.ultra.common.fromBase64
 import kotlinx.coroutines.future.await
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials

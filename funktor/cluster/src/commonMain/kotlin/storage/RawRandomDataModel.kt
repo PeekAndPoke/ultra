@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.storage
+package de.peekandpoke.funktor.cluster.storage
 
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import kotlinx.serialization.Serializable

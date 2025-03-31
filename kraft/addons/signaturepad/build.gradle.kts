@@ -6,7 +6,6 @@ import Deps.Test.jsTestDeps
 plugins {
     kotlin("multiplatform")
     id("io.kotest.multiplatform")
-    id("org.jetbrains.dokka")
     id("com.vanniktech.maven.publish")
 }
 

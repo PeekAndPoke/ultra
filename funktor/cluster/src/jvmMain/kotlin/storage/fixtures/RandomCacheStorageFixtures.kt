@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.cluster.storage.fixtures
+package de.peekandpoke.funktor.cluster.storage.fixtures
 
-import de.peekandpoke.ktorfx.cluster.storage.RandomCacheStorage
-import de.peekandpoke.ktorfx.core.fixtures.FixtureLoader
+import de.peekandpoke.funktor.cluster.storage.RandomCacheStorage
+import de.peekandpoke.funktor.core.fixtures.FixtureLoader
 
 class RandomCacheStorageFixtures(
     private val randomCacheStorage: RandomCacheStorage,

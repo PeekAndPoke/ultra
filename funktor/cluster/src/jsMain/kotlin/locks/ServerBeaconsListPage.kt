@@ -1,5 +1,8 @@
-package de.peekandpoke.ktorfx.cluster.locks
+package de.peekandpoke.funktor.cluster.locks
 
+import de.peekandpoke.funktor.cluster.FunktorClusterUi
+import de.peekandpoke.funktor.cluster.locks.api.ServerBeaconModel
+import de.peekandpoke.funktor.cluster.renderDefault
 import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
@@ -8,9 +11,6 @@ import de.peekandpoke.kraft.semanticui.icon
 import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ktorfx.cluster.KtorFxClusterUi
-import de.peekandpoke.ktorfx.cluster.locks.api.ServerBeaconModel
-import de.peekandpoke.ktorfx.cluster.renderDefault
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
 import kotlinx.coroutines.flow.map
@@ -27,7 +27,7 @@ class ServerBeaconsListPage(ctx: Ctx<Props>) : Component<ServerBeaconsListPage.P
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: KtorFxClusterUi,
+        val ui: FunktorClusterUi,
     )
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -43,7 +43,7 @@ class ServerBeaconsListPage(ctx: Ctx<Props>) : Component<ServerBeaconsListPage.P
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
-        JoinedPageTitle { listOf("KtorFx", "Server Beacons") }
+        JoinedPageTitle { listOf("Funktor", "Server Beacons") }
 
         ui.padded.segment {
             ui.right.floated.small.basic.icon.button {

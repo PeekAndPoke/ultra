@@ -1,10 +1,10 @@
-package de.peekandpoke.ktorfx.cluster.workers.services
+package de.peekandpoke.funktor.cluster.workers.services
 
-import de.peekandpoke.ktorfx.cluster.locks.GlobalServerId
-import de.peekandpoke.ktorfx.cluster.workers.Worker
-import de.peekandpoke.ktorfx.cluster.workers.api.WorkerModel
-import de.peekandpoke.ktorfx.cluster.workers.domain.WorkerRun
-import de.peekandpoke.ktorfx.cluster.workers.vault.VaultWorkerRun
+import de.peekandpoke.funktor.cluster.locks.GlobalServerId
+import de.peekandpoke.funktor.cluster.workers.Worker
+import de.peekandpoke.funktor.cluster.workers.api.WorkerModel
+import de.peekandpoke.funktor.cluster.workers.domain.WorkerRun
+import de.peekandpoke.funktor.cluster.workers.vault.VaultWorkerRun
 import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.vault.BatchInsertRepository

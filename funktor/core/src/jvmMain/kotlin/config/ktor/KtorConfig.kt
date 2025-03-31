@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core.config.ktor
+package de.peekandpoke.funktor.core.config.ktor
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 

@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.workers.api
+package de.peekandpoke.funktor.cluster.workers.api
 
 import de.peekandpoke.ultra.common.remote.ApiClient
 import de.peekandpoke.ultra.common.remote.ApiResponse

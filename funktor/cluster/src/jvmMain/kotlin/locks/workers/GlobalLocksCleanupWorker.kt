@@ -1,10 +1,10 @@
-package de.peekandpoke.ktorfx.cluster.locks.workers
+package de.peekandpoke.funktor.cluster.locks.workers
 
-import de.peekandpoke.ktorfx.cluster.locks.GlobalLocksProvider
-import de.peekandpoke.ktorfx.cluster.locks.GlobalServerList
-import de.peekandpoke.ktorfx.cluster.locks.domain.GlobalLockEntry
-import de.peekandpoke.ktorfx.cluster.workers.StateProvider
-import de.peekandpoke.ktorfx.cluster.workers.Worker
+import de.peekandpoke.funktor.cluster.locks.GlobalLocksProvider
+import de.peekandpoke.funktor.cluster.locks.GlobalServerList
+import de.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
+import de.peekandpoke.funktor.cluster.workers.StateProvider
+import de.peekandpoke.funktor.cluster.workers.Worker
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.logging.Log
 import kotlin.time.Duration.Companion.minutes

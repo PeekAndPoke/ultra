@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.rest.codegen.dart
+package de.peekandpoke.funktor.rest.codegen.dart
 
-import de.peekandpoke.ktorfx.rest.codegen.Taggable
-import de.peekandpoke.ktorfx.rest.codegen.Tags
+import de.peekandpoke.funktor.rest.codegen.Taggable
+import de.peekandpoke.funktor.rest.codegen.Tags
 
 interface DartElement : DartPrintable {
 

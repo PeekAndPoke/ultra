@@ -1,1 +1,1 @@
-package de.peekandpoke.ktorfx.staticweb
+package de.peekandpoke.funktor.staticweb

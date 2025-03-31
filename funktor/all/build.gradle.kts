@@ -29,7 +29,7 @@ kotlin {
 
         commonMain {
             dependencies {
-                // add all ktorfx sub-projects
+                // add all funktor sub-projects
                 api(project(":funktor:core"))
                 api(project(":funktor:cluster"))
                 api(project(":funktor:logging"))

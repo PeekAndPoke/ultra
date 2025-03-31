@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster.backgroundjobs.domain
+package de.peekandpoke.funktor.cluster.backgroundjobs.domain
 
 import de.peekandpoke.karango.Karango
 import de.peekandpoke.ultra.common.datetime.MpInstant

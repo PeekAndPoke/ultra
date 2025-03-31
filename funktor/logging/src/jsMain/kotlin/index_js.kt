@@ -1,7 +1,7 @@
-package de.peekandpoke.ktorfx.logging
+package de.peekandpoke.funktor.logging
 
+import de.peekandpoke.funktor.logging.api.LogEntryModel
 import de.peekandpoke.kraft.semanticui.ui
-import de.peekandpoke.ktorfx.logging.api.LogEntryModel
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.logging.LogLevel
 import kotlinx.html.FlowContent

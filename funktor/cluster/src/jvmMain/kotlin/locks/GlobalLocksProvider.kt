@@ -1,6 +1,6 @@
-package de.peekandpoke.ktorfx.cluster.locks
+package de.peekandpoke.funktor.cluster.locks
 
-import de.peekandpoke.ktorfx.cluster.locks.domain.GlobalLockEntry
+import de.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.single

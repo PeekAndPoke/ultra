@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core.broker
+package de.peekandpoke.funktor.core.broker
 
 import io.ktor.http.*
 import io.ktor.server.application.*

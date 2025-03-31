@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.cluster
+package de.peekandpoke.funktor.cluster
 
 import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.components.Component
@@ -10,12 +10,12 @@ import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.vdom.VDom
 import kotlinx.html.FlowContent
 
-class KtorFxClusterOverviewPage(ctx: Ctx<Props>) : Component<KtorFxClusterOverviewPage.Props>(ctx) {
+class FunktorClusterOverviewPage(ctx: Ctx<Props>) : Component<FunktorClusterOverviewPage.Props>(ctx) {
 
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: KtorFxClusterUi,
+        val ui: FunktorClusterUi,
         val customInternals: RenderFn,
     )
 
@@ -24,10 +24,10 @@ class KtorFxClusterOverviewPage(ctx: Ctx<Props>) : Component<KtorFxClusterOvervi
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
-        JoinedPageTitle { listOf("KtorFx", "Cluster") }
+        JoinedPageTitle { listOf("Funktor", "Cluster") }
 
         ui.padded.segment {
-            ui.header H2 { +"KtorFX Server Internals" }
+            ui.header H2 { +"Funktor Server Internals" }
 
             props.customInternals(this)
 

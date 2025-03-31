@@ -1,9 +1,9 @@
-package de.peekandpoke.ktorfx.cluster.workers
+package de.peekandpoke.funktor.cluster.workers
 
-import de.peekandpoke.ktorfx.cluster.workers.api.WorkerModel
-import de.peekandpoke.ktorfx.cluster.workers.services.WorkerHistory
-import de.peekandpoke.ktorfx.cluster.workers.services.WorkerRegistry
-import de.peekandpoke.ktorfx.cluster.workers.services.WorkerTracker
+import de.peekandpoke.funktor.cluster.workers.api.WorkerModel
+import de.peekandpoke.funktor.cluster.workers.services.WorkerHistory
+import de.peekandpoke.funktor.cluster.workers.services.WorkerRegistry
+import de.peekandpoke.funktor.cluster.workers.services.WorkerTracker
 import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.kontainer.Kontainer

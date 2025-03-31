@@ -1,5 +1,8 @@
-package de.peekandpoke.ktorfx.cluster.workers.vault
+package de.peekandpoke.funktor.cluster.workers.vault
 
+import de.peekandpoke.funktor.cluster.workers.domain.endTs
+import de.peekandpoke.funktor.cluster.workers.domain.workerId
+import de.peekandpoke.funktor.cluster.workers.services.WorkerHistory
 import de.peekandpoke.karango._key
 import de.peekandpoke.karango.aql.DESC
 import de.peekandpoke.karango.aql.EQ
@@ -13,9 +16,6 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.IndexBuilder
 import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ktorfx.cluster.workers.domain.endTs
-import de.peekandpoke.ktorfx.cluster.workers.domain.workerId
-import de.peekandpoke.ktorfx.cluster.workers.services.WorkerHistory
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.vault.Cursor

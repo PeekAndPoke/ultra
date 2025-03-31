@@ -1,8 +1,8 @@
-package de.peekandpoke.ktorfx.cluster.backgroundjobs.workers
+package de.peekandpoke.funktor.cluster.backgroundjobs.workers
 
-import de.peekandpoke.ktorfx.cluster.backgroundjobs.BackgroundJobs
-import de.peekandpoke.ktorfx.cluster.workers.StateProvider
-import de.peekandpoke.ktorfx.cluster.workers.Worker
+import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
+import de.peekandpoke.funktor.cluster.workers.StateProvider
+import de.peekandpoke.funktor.cluster.workers.Worker
 import de.peekandpoke.ultra.common.datetime.MpInstant
 
 class BackgroundJobsWorker(

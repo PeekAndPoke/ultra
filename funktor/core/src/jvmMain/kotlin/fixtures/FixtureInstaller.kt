@@ -1,4 +1,4 @@
-package de.peekandpoke.ktorfx.core.fixtures
+package de.peekandpoke.funktor.core.fixtures
 
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
