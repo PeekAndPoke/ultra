@@ -12,7 +12,7 @@ import kotlinx.html.FlowContent
 @DslMarker
 annotation class KraftDsl
 
-fun kraftApp(block: KraftApp.Builder.() -> Unit) = KraftApp.Builder().apply(block).build()
+fun kraftApp(block: KraftApp.Builder.() -> Unit = {}) = KraftApp.Builder().apply(block).build()
 
 class KraftApp internal constructor(
     settings: Settings,
