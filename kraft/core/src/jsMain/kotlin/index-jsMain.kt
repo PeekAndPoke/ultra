@@ -12,30 +12,40 @@ import kotlinx.html.FlowContent
 @DslMarker
 annotation class KraftDsl
 
-class Kraft internal constructor() {
-    companion object {
-        /**
-         * Initializes all external libraries and the returns [Kraft].
-         */
-        fun initialize(): Kraft {
-            initializeJsJodaTimezones()
+fun kraftApp(block: KraftApp.Builder.() -> Unit) = KraftApp.Builder().apply(block).build()
 
-            return Kraft()
-        }
+class KraftApp internal constructor(
+    settings: Settings,
+) {
+    class Settings(
+        val toasts: ToastsManager.Settings,
+    )
+
+    class Builder internal constructor() {
+        private val toasts = ToastsManager.Builder()
+
+        fun toasts(block: ToastsManager.Builder.() -> Unit) = toasts.apply(block)
+
+        internal fun build() = KraftApp(
+            Settings(
+                toasts = toasts.build()
+            )
+        )
+    }
+
+    init {
+        initializeJsJodaTimezones()
     }
 
     val modals = ModalsManager()
     val popups = PopupsManager()
-    val toast = ToastsManager()
-
-    @Deprecated("use toast instead", ReplaceWith("toast"), DeprecationLevel.ERROR)
-    val flash = toast
+    val toasts = ToastsManager(settings.toasts)
 
     fun mount(tag: FlowContent, block: FlowContent.() -> Unit) {
         with(tag) {
             ModalsStage(modals)
             PopupsStage(popups)
-            ToastsStage(toast)
+            ToastsStage(toasts)
 
             block()
         }

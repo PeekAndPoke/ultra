@@ -10,11 +10,11 @@ import kotlinx.html.Tag
 
 @Suppress("FunctionName")
 fun Tag.ToastsStage(
-    flashMessages: ToastsManager,
-    options: ToastsStage.Options = ToastsStage.Options(),
+    toasts: ToastsManager,
+    options: ToastsStage.Options = toasts.settings.stageOptions,
 ) = comp(
     ToastsStage.Props(
-        flashMessages = flashMessages,
+        toasts = toasts,
         options = options,
     )
 ) {
@@ -26,7 +26,7 @@ class ToastsStage(ctx: Ctx<Props>) : Component<ToastsStage.Props>(ctx) {
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val flashMessages: ToastsManager,
+        val toasts: ToastsManager,
         val options: Options,
     )
 
@@ -36,7 +36,7 @@ class ToastsStage(ctx: Ctx<Props>) : Component<ToastsStage.Props>(ctx) {
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private val current by subscribingTo(props.flashMessages)
+    private val current by subscribingTo(props.toasts)
 
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 

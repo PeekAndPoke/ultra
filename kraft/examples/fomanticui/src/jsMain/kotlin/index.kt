@@ -1,16 +1,23 @@
 package de.peekandpoke.kraft.examples.fomanticui
 
-import de.peekandpoke.kraft.Kraft
 import de.peekandpoke.kraft.addons.routing.Router
 import de.peekandpoke.kraft.addons.routing.router
+import de.peekandpoke.kraft.addons.toasts.ToastsStage
 import de.peekandpoke.kraft.examples.fomanticui.pages.NotFoundPage
+import de.peekandpoke.kraft.kraftApp
 import de.peekandpoke.kraft.utils.ResponsiveController
 import de.peekandpoke.kraft.vdom.preact.PreactVDomEngine
 import kotlinx.browser.document
 import org.w3c.dom.HTMLElement
 
 /** Initializes KRAFT */
-val kraft = Kraft.initialize()
+val kraft = kraftApp {
+    toasts {
+        stageOptions = ToastsStage.Options(
+            positioning = { top.right }
+        )
+    }
+}
 
 /** Create the routes */
 val routes = Routes()

@@ -28,7 +28,7 @@ class FlashMessagesPage(ctx: NoProps) : PureComponent(ctx) {
                 noui.column {
                     ui.info.button {
                         onClick {
-                            kraft.toast.info("This is an info message")
+                            kraft.toasts.info("This is an info message")
                         }
 
                         +"Click Me"
@@ -38,7 +38,7 @@ class FlashMessagesPage(ctx: NoProps) : PureComponent(ctx) {
                 noui.column {
                     ui.warning.button {
                         onClick {
-                            kraft.toast.warning("This is a warning message")
+                            kraft.toasts.warning("This is a warning message")
                         }
 
                         +"Click Me"
@@ -48,7 +48,7 @@ class FlashMessagesPage(ctx: NoProps) : PureComponent(ctx) {
                 noui.column {
                     ui.error.button {
                         onClick {
-                            kraft.toast.error("This is an error message")
+                            kraft.toasts.error("This is an error message")
                         }
 
                         +"Click Me"

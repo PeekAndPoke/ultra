@@ -23,12 +23,11 @@ import kotlin.time.Duration.Companion.seconds
 typealias ToastRenderer = FlowContent.(Handle) -> Unit
 
 class ToastsManager(
-    val defaultDuration: Duration? = 5.seconds,
-    val defaultRenderer: ToastRenderer = ToastsManager.defaultRenderer,
+    val settings: Settings,
 ) : Stream<List<Handle>> {
 
     companion object {
-        val defaultRenderer: ToastRenderer = { handle ->
+        val DefaultRenderer: ToastRenderer = { handle ->
 
             val styleFn: SemanticFn = when (handle.message.type) {
                 Message.Type.info -> semantic { green }
@@ -53,6 +52,24 @@ class ToastsManager(
         }
     }
 
+    data class Settings(
+        val defaultDuration: Duration?,
+        val defaultRenderer: ToastRenderer,
+        val stageOptions: ToastsStage.Options,
+    )
+
+    class Builder internal constructor() {
+        var defaultDuration: Duration? = 7.seconds
+        var defaultRenderer: ToastRenderer = DefaultRenderer
+        var stageOptions: ToastsStage.Options = ToastsStage.Options()
+
+        internal fun build() = Settings(
+            defaultDuration = defaultDuration,
+            defaultRenderer = defaultRenderer,
+            stageOptions = stageOptions,
+        )
+    }
+
     data class Handle(
         val id: Int,
         val message: Toast,
@@ -72,8 +89,8 @@ class ToastsManager(
 
     fun info(
         text: String,
-        duration: Duration? = defaultDuration,
-        renderer: ToastRenderer = defaultRenderer,
+        duration: Duration? = settings.defaultDuration,
+        renderer: ToastRenderer = settings.defaultRenderer,
     ) {
         append(
             message = Toast.Companion.info(text = text, duration = duration),
@@ -83,8 +100,8 @@ class ToastsManager(
 
     fun warning(
         text: String,
-        duration: Duration? = defaultDuration,
-        renderer: ToastRenderer = defaultRenderer,
+        duration: Duration? = settings.defaultDuration,
+        renderer: ToastRenderer = settings.defaultRenderer,
     ) {
         append(
             message = Toast.Companion.warning(text = text, duration = duration),
@@ -94,8 +111,8 @@ class ToastsManager(
 
     fun error(
         text: String,
-        duration: Duration? = defaultDuration,
-        renderer: ToastRenderer = defaultRenderer,
+        duration: Duration? = settings.defaultDuration,
+        renderer: ToastRenderer = settings.defaultRenderer,
     ) {
         append(
             message = Toast.Companion.error(text = text, duration = duration),
@@ -106,8 +123,8 @@ class ToastsManager(
     fun append(
         type: Message.Type,
         text: String,
-        duration: Duration? = defaultDuration,
-        renderer: ToastRenderer = defaultRenderer,
+        duration: Duration? = settings.defaultDuration,
+        renderer: ToastRenderer = settings.defaultRenderer,
     ) = append(
         message = Toast(type = type, text = text, duration = duration),
         renderer = renderer,
@@ -115,16 +132,16 @@ class ToastsManager(
 
     fun append(
         messages: Messages,
-        duration: Duration? = defaultDuration,
-        renderer: ToastRenderer = defaultRenderer,
+        duration: Duration? = settings.defaultDuration,
+        renderer: ToastRenderer = settings.defaultRenderer,
     ) {
         messages.getAllMessages().forEach { append(it, duration, renderer) }
     }
 
     fun append(
         message: Message,
-        duration: Duration? = defaultDuration,
-        renderer: ToastRenderer = defaultRenderer,
+        duration: Duration? = settings.defaultDuration,
+        renderer: ToastRenderer = settings.defaultRenderer,
     ) {
         append(
             message = Toast(type = message.type, text = message.text, duration = duration),
@@ -134,7 +151,7 @@ class ToastsManager(
 
     fun append(
         message: Toast,
-        renderer: ToastRenderer = defaultRenderer,
+        renderer: ToastRenderer = settings.defaultRenderer,
     ) {
         val next = message.nextHandle(renderer)
 
