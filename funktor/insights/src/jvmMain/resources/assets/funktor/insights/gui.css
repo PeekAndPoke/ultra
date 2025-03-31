@@ -1,0 +1,7 @@
+#content > * {
+    display: none;
+}
+
+#content pre {
+    overflow: auto;
+}

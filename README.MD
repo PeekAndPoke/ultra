@@ -1,95 +1,35 @@
-# ULTRA components for Kotlin Servers and Android
+# ULTRA - Mono-Repo
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.1.10-success.svg)](https://kotlinlang.org/docs/releases.html)
 [![CodeFactor](https://www.codefactor.io/repository/github/peekandpoke/ultra/badge)](https://www.codefactor.io/repository/github/peekandpoke/ultra)
 [![Maven Central](https://shields.io/maven-central/v/io.peekandpoke.ultra/commonmp)](https://search.maven.org/search?q=io.peekandpoke.ultra)
 
-ULTRA is a set of libraries and helpers to enhance your everyday Kotlin coding with more power, stability and enjoyment.
+This Mono-Repo now combines the following pieces for easier development und publishing:
 
-Check out the sub-projects. There you will find details, descriptive test cases and usage examples.
+# Ultra - Foundations
 
-## ultra::common
+All kinds of useful foundations for your next idea.
 
-[ultra::common](ultra/common/README.MD) - Multiplatform Helpers and utilities for:
+See [!here](ultra/README.MD) for details.
 
-- Collections, Lists, Files, Functions
-- Hashing (like MD5, SHA256, ...)
-- Utility Classes and Interfaces
-- Recursive programming
-  - map recursive objects to plain lists
-    - find all child objects that match a certain criteria   
-- Reflection
-    - type safe type references
-    - reification of KType
-- random data generation
-    - LoremIpsum texts 
+# Kraft - build Single-Page-Apps in pure Kotlin
 
-## ultra::kontainer
+Kraft builds on top of lightweight VDOM engines, like Preact. The rest is pure Kotlin.
 
-[ultra::kontainer](ultra/kontainer/README.MD) - A multi stage dependency injection mechanism
+See [!here](kraft/README.MD) for details.
 
-[READ MORE](ultra/kontainer/README.MD) ||
-[EXAMPLES](ultra/kontainer/docs/ultra::docs/index.md) ||
-[TESTS](ultra/kontainer/src/test/kotlin)
+# Funktor - combines fun and Ktor
 
-## ultra::logging
+Funktor gives you all you need for your next client-server-application.
 
-[ultra::logging](ultra/logging/README.MD) - A lean logging framework that integrates with the Kontainer
+- Real reuse of data models and business logic on the clients and the server
+- all code is Kotlin
 
-## ultra::meta
+See [!here](funktor/README.MD) for details.
 
-[ultra::meta](ultra/meta/README.MD) - Meta Programming Tools for Kotlin Annotation Processing and code generation
+# Karango - type-safe interaction with ArangoDB
 
-Projects using this:
+Karango gives you a powerful way to interact with ArangoDB.
 
-- ultra::slumber
-- ultra::vault
-- karango (ArangoDB repositories for ultra::vault)
+See [!here](karango/README.MD) for details.
 
-## ultra::mutator
-
-[ultra::mutator](ultra/mutator/README.MD) - Mutate the Immutable!
-
-[READ MORE](ultra/mutator/README.MD) ||
-[EXAMPLES](ultra/mutator/docs/ultra::docs/index.md) ||
-[TESTS](ultra/mutator/src/test/kotlin)
-
-Mutator is a kotlin library inspired by [immerjs](https://github.com/immerjs/immer).  
-It enables you to manipulate deeply nested immutable data structures.  
-With zero boilerplate code at all and some powerful additional features.
-
-- It gives you a powerful way for mutating deeply nested immutable data structures.
-- By doing so, it encourages a 100% immutable data design
-- ... and more of functional programming style.
-- Therefore you will have far less tricky bugs.
-
-## ultra::security
-
-[ultra::security](ultra/security/README.MD) - Everyday security features
-
-## ultra::slumber
-
-[ultra::slumber](ultra/slumber/README.MD) - Object serialization with nullability awareness
-
-[READ MORE](ultra/slumber/README.MD) ||
-[EXAMPLES](ultra/mutator/docs/ultra::docs/index.md) ||
-[TESTS](ultra/mutator/src/test/kotlin)
-
-Slumber is aware of the Null Safety that is built into Kotlin.
-
-Pure Java serialization libraries like [Jackson](https://github.com/FasterXML/jackson) are not.
-
-Kotlin handles the [Billion Dollar Mistake](https://en.wikipedia.org/wiki/Tony_Hoare#Apologies_and_retractions)
-very well. And so should your serialization framework! Slumber does it for you.
-
-# TODOs:
-
-- ( ) Remove com.github.matfax.klassindex:library completely
-  - ( ) Replace with own implementation using KSP
-
-- ( ) Slumber
-  - ( ) Full java time support
-
-- ( ) Mutator
-  - ( ) support better code generation for nested classes
-  

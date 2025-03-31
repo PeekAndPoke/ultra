@@ -6,9 +6,7 @@ plugins {
     kotlin("jvm")
     kotlin("kapt")
     id("com.google.devtools.ksp") version Deps.Ksp.version
-    id("org.jetbrains.dokka")
     id("com.vanniktech.maven.publish")
-    idea
 }
 
 val KARANGO_GROUP: String by project
@@ -16,6 +14,10 @@ val VERSION_NAME: String by project
 
 group = KARANGO_GROUP
 version = VERSION_NAME
+
+Docs {
+    useEmptyJavadoc()
+}
 
 kotlin {
     jvmToolchain(Deps.jvmTargetVersion)

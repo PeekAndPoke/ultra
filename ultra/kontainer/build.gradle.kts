@@ -4,7 +4,6 @@ import Deps.Test.configureJvmTests
 
 plugins {
     kotlin("jvm")
-    id("org.jetbrains.dokka")
     id("com.vanniktech.maven.publish")
 }
 
@@ -13,6 +12,10 @@ val VERSION_NAME: String by project
 
 group = ULTRA_GROUP
 version = VERSION_NAME
+
+Docs {
+    useEmptyJavadoc()
+}
 
 dependencies {
     implementation(kotlin("reflect"))

@@ -10,6 +10,7 @@ plugins {
     id("io.kotest.multiplatform") version Deps.Test.kotest_plugin_version apply false
     id("org.jetbrains.dokka") version Deps.dokkaVersion apply false
     id("com.vanniktech.maven.publish") version Deps.mavenPublishVersion apply false
+    idea
 }
 
 allprojects {
