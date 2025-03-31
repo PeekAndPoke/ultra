@@ -26,13 +26,16 @@ class Kraft internal constructor() {
 
     val modals = ModalsManager()
     val popups = PopupsManager()
-    val flash = ToastsManager()
+    val toast = ToastsManager()
+
+    @Deprecated("use toast instead", ReplaceWith("toast"), DeprecationLevel.ERROR)
+    val flash = toast
 
     fun mount(tag: FlowContent, block: FlowContent.() -> Unit) {
         with(tag) {
             ModalsStage(modals)
             PopupsStage(popups)
-            ToastsStage(flash)
+            ToastsStage(toast)
 
             block()
         }

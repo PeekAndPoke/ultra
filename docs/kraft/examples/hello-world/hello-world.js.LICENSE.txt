@@ -20,6 +20,11 @@
  * @license BSD-3-Clause (see LICENSE in the root directory of this source tree)
  */
 
+/*
+ * @copyright (c) 2016-present, Philipp Thürwächter, Pattrick Hüper
+ * @license BSD-3-Clause (see LICENSE in the root directory of this source tree)
+ */
+
 /**
  * @copyright (c) 2016, Philipp Thürwächter & Pattrick Hüper
  * @copyright (c) 2007-present, Stephen Colebourne & Michael Nascimento Santos
@@ -38,3 +43,5 @@
 //! @license BSD-3-Clause (see LICENSE in the root directory of this source tree)
 
 //! @version @js-joda/core - 5.6.4
+
+//! @version @js-joda/timezone - 2.21.2-2024a
