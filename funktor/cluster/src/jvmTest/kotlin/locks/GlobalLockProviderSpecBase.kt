@@ -1,8 +1,8 @@
 package de.peekandpoke.funktor.cluster.locks
 
 import de.peekandpoke.ultra.common.datetime.Kronos
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.assertions.timing.eventually
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
 import io.kotest.matchers.comparables.shouldBeLessThan
