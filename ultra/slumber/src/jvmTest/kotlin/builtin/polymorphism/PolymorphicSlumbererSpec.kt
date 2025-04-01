@@ -114,11 +114,11 @@ class PolymorphicSlumbererSpec : StringSpec({
         val codec = Codec.default
 
         val data = listOf(
-            AnnotedChildrenBase.A("hello"),
-            AnnotedChildrenBase.B(100)
+            AnnotatedChildrenBase.A("hello"),
+            AnnotatedChildrenBase.B(100)
         )
 
-        val result = codec.slumber(kListType<AnnotedChildrenBase>().type, data)
+        val result = codec.slumber(kListType<AnnotatedChildrenBase>().type, data)
 
         result shouldBe listOf(
             mapOf(

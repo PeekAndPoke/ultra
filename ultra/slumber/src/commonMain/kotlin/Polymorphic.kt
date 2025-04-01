@@ -8,6 +8,13 @@ import kotlin.reflect.KClass
  */
 interface Polymorphic {
 
+    companion object {
+        /**
+         * Default type discriminator field name
+         */
+        const val defaultDiscriminator: String = "_type"
+    }
+
     /**
      * Applies custom settings to a polymorphic parent class.
      *
@@ -82,11 +89,34 @@ interface Polymorphic {
         val identifier: String
     }
 
-    companion object {
-
-        /**
-         * Default type discriminator field name
-         */
-        const val defaultDiscriminator: String = "_type"
-    }
+    /**
+     * Similar to [Child].
+     *
+     * Carries additional type information about the owning type.
+     * This is useful for polymorphic queries where the type and the serialName are needed.
+     *
+     * Example:
+     *
+     * <code>
+     *     class MyChild : MyParent() {
+     *         companion object : Polymorphic.TypedChild<MyChild> {
+     *             override val identifier = "Child"
+     *         }
+     *     }
+     * </code>
+     *
+     * This can then be used to query a repo:
+     *
+     * <code>
+     *     suspend inline fun <reified T : MyParent> MyRepo.findFirst(type: TypedChild<T>): Stored<T>? {
+     *         return findFirst {
+     *             FOR(repo) { item ->
+     *                 FILTER(item._type EQ type.identifier)
+     *                 RETURN(item)
+     *             }
+     *         }?.castTyped()
+     *     }
+     * </code>
+     */
+    interface TypedChild<T> : Child
 }

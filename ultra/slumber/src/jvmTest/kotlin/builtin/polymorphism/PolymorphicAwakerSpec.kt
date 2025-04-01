@@ -160,14 +160,14 @@ class PolymorphicAwakerSpec : StringSpec({
         val codec = Codec.default
 
         val result = codec.awake(
-            AnnotedChildrenBase::class,
+            AnnotatedChildrenBase::class,
             mapOf(
                 "_type" to "Child_A",
                 "text" to "hello"
             )
         )
 
-        result shouldBe AnnotedChildrenBase.A("hello")
+        result shouldBe AnnotatedChildrenBase.A("hello")
     }
 
     "Awaking a sealed class (AnnotedChildrenBase.B) using Polymorphic.Child" {
@@ -175,14 +175,14 @@ class PolymorphicAwakerSpec : StringSpec({
         val codec = Codec.default
 
         val result = codec.awake(
-            AnnotedChildrenBase::class,
+            AnnotatedChildrenBase::class,
             mapOf(
                 "_type" to "Child_B",
                 "number" to "100"
             )
         )
 
-        result shouldBe AnnotedChildrenBase.B(100)
+        result shouldBe AnnotatedChildrenBase.B(100)
     }
 
     //  Non sealed base class annotated with Polymorphic.Parent  ///////////////////////////////////////////////////////
@@ -367,9 +367,9 @@ class PolymorphicAwakerSpec : StringSpec({
     "Awaking a data class that contains polymorphics - one" {
 
         data class DataClass(
-            val single: AnnotedChildrenBase,
-            val list: List<AnnotedChildrenBase>,
-            val map: Map<String, AnnotedChildrenBase>
+            val single: AnnotatedChildrenBase,
+            val list: List<AnnotatedChildrenBase>,
+            val map: Map<String, AnnotatedChildrenBase>,
         )
 
         val codec = Codec.default
@@ -393,20 +393,20 @@ class PolymorphicAwakerSpec : StringSpec({
         )
 
         result shouldBe DataClass(
-            single = AnnotedChildrenBase.B(100),
+            single = AnnotatedChildrenBase.B(100),
             list = listOf(
-                AnnotedChildrenBase.A("hello"),
-                AnnotedChildrenBase.B(200)
+                AnnotatedChildrenBase.A("hello"),
+                AnnotatedChildrenBase.B(200)
             ),
             map = mapOf(
-                "A" to AnnotedChildrenBase.A("again")
+                "A" to AnnotatedChildrenBase.A("again")
             )
         )
     }
 
     "Awaking a data class that contains polymorphics - two" {
 
-        data class DataClass(val lists: List<List<AnnotedChildrenBase>>)
+        data class DataClass(val lists: List<List<AnnotatedChildrenBase>>)
 
         val codec = Codec.default
 
@@ -429,12 +429,12 @@ class PolymorphicAwakerSpec : StringSpec({
         result shouldBe DataClass(
             lists = listOf(
                 listOf(
-                    AnnotedChildrenBase.A("hello"),
-                    AnnotedChildrenBase.B(100)
+                    AnnotatedChildrenBase.A("hello"),
+                    AnnotatedChildrenBase.B(100)
                 ),
                 listOf(
-                    AnnotedChildrenBase.B(200),
-                    AnnotedChildrenBase.A("again")
+                    AnnotatedChildrenBase.B(200),
+                    AnnotatedChildrenBase.A("again")
                 )
             )
         )

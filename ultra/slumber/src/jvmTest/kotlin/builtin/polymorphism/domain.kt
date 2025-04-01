@@ -61,16 +61,16 @@ sealed class BaseWithDefaultType {
     }
 }
 
-sealed class AnnotedChildrenBase {
+sealed class AnnotatedChildrenBase {
 
-    data class A(val text: String) : AnnotedChildrenBase() {
-        companion object : Polymorphic.Child {
+    data class A(val text: String) : AnnotatedChildrenBase() {
+        companion object : Polymorphic.TypedChild<A> {
             override val identifier = "Child_A"
         }
     }
 
-    data class B(val number: Int) : AnnotedChildrenBase() {
-        companion object : Polymorphic.Child {
+    data class B(val number: Int) : AnnotatedChildrenBase() {
+        companion object : Polymorphic.TypedChild<B> {
             override val identifier = "Child_B"
         }
     }
