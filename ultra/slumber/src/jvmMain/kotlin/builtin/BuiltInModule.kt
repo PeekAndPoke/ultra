@@ -8,6 +8,7 @@ import de.peekandpoke.ultra.slumber.builtin.collections.CollectionSlumberer
 import de.peekandpoke.ultra.slumber.builtin.collections.MapAwaker
 import de.peekandpoke.ultra.slumber.builtin.collections.MapSlumberer
 import de.peekandpoke.ultra.slumber.builtin.kotlinx.KotlinXJsonCodec
+import de.peekandpoke.ultra.slumber.builtin.kotlinx.KotlinXJsonNullCodec
 import de.peekandpoke.ultra.slumber.builtin.objects.AnyAwaker
 import de.peekandpoke.ultra.slumber.builtin.objects.AnySlumberer
 import de.peekandpoke.ultra.slumber.builtin.objects.DataClassCodec
@@ -71,6 +72,7 @@ object BuiltInModule : SlumberModule {
                     cls == Short::class -> ShortAwaker
                     cls == String::class -> StringAwaker
                     // KotlinX Json
+                    KotlinXJsonNullCodec.appliesTo(cls) -> KotlinXJsonNullCodec as Awaker
                     KotlinXJsonCodec.appliesTo(cls) -> KotlinXJsonCodec as Awaker
                     // Lists
                     cls == Iterable::class || cls == List::class || cls == MutableList::class ->
@@ -113,8 +115,8 @@ object BuiltInModule : SlumberModule {
                 // Null or Nothing
                 cls in listOf(Nothing::class, Unit::class) -> NullCodec
 
-                // KotlinX Json ... we do not wrap with wrapIfNonNull because JsonNull
-                KotlinXJsonCodec.appliesTo(cls) -> KotlinXJsonCodec as Slumberer
+                // we do not wrap JsonNull with wrapIfNonNull
+                KotlinXJsonNullCodec.appliesTo(cls) -> KotlinXJsonNullCodec as Slumberer
 
                 else -> when {
                     // Any, Object or Serializable type
@@ -130,6 +132,8 @@ object BuiltInModule : SlumberModule {
                     cls == Long::class -> LongSlumberer
                     cls == Short::class -> ShortSlumberer
                     cls == String::class -> StringSlumberer
+                    // KotlinX Json
+                    KotlinXJsonCodec.appliesTo(cls) -> KotlinXJsonCodec as Slumberer
                     // Iterables
                     Iterable::class.java.isAssignableFrom(cls.java) -> CollectionSlumberer
                     // Maps

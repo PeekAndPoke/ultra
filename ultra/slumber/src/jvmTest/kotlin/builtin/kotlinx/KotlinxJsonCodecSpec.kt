@@ -269,5 +269,17 @@ class KotlinxJsonCodecSpec : StringSpec() {
                 json = JsonNull,
             )
         }
+
+        "Slumber JsonNull" {
+            val slumbered = Codec.default.slumber(JsonNull)
+
+            slumbered shouldBe null
+        }
+
+        "Awake null to JsonNull" {
+            val awoken = Codec.default.awake<JsonNull>(null)
+
+            awoken shouldBe JsonNull
+        }
     }
 }
