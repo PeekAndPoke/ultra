@@ -31,7 +31,7 @@ class ToastsStage(ctx: Ctx<Props>) : Component<ToastsStage.Props>(ctx) {
     )
 
     data class Options(
-        val positioning: SemanticFn = { bottom.right },
+        val positioning: SemanticFn = { top.right },
     )
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////

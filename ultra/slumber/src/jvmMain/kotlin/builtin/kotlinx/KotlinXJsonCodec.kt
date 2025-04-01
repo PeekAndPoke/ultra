@@ -5,7 +5,6 @@ import de.peekandpoke.ultra.slumber.JsonUtil.toJsonElement
 import de.peekandpoke.ultra.slumber.JsonUtil.unwrap
 import de.peekandpoke.ultra.slumber.Slumberer
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.jsonObject
 import kotlin.reflect.KClass
 
 object KotlinXJsonCodec : Awaker, Slumberer {
@@ -16,7 +15,7 @@ object KotlinXJsonCodec : Awaker, Slumberer {
 
 
     override fun awake(data: Any?, context: Awaker.Context): Any? {
-        return data.toJsonElement().jsonObject
+        return data.toJsonElement()
     }
 
     override fun slumber(data: Any?, context: Slumberer.Context): Any? {
