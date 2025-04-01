@@ -113,6 +113,9 @@ object BuiltInModule : SlumberModule {
                 // Null or Nothing
                 cls in listOf(Nothing::class, Unit::class) -> NullCodec
 
+                // KotlinX Json ... we do not wrap with wrapIfNonNull because JsonNull
+                KotlinXJsonCodec.appliesTo(cls) -> KotlinXJsonCodec as Slumberer
+
                 else -> when {
                     // Any, Object or Serializable type
                     cls in listOf(Any::class, Serializable::class) -> AnySlumberer
@@ -127,8 +130,6 @@ object BuiltInModule : SlumberModule {
                     cls == Long::class -> LongSlumberer
                     cls == Short::class -> ShortSlumberer
                     cls == String::class -> StringSlumberer
-                    // KotlinX Json
-                    KotlinXJsonCodec.appliesTo(cls) -> KotlinXJsonCodec as Slumberer
                     // Iterables
                     Iterable::class.java.isAssignableFrom(cls.java) -> CollectionSlumberer
                     // Maps

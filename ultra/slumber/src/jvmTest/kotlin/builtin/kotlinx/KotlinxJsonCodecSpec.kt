@@ -6,6 +6,7 @@ import de.peekandpoke.ultra.slumber.JsonUtil.unwrap
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -165,7 +166,7 @@ class KotlinxJsonCodecSpec : StringSpec() {
 
             data class DataClass(
                 val string: String,
-                val json: JsonObject,
+                val json: JsonElement,
             )
 
             val instance = DataClass(
@@ -183,11 +184,55 @@ class KotlinxJsonCodecSpec : StringSpec() {
             )
         }
 
+        "Slumber integration example with nullable" {
+
+            data class DataClass(
+                val string: String,
+                val json: JsonElement? = null,
+            )
+
+            val instance = DataClass(
+                string = "test",
+                json = null,
+            )
+
+            val slumbered = Codec.default.slumber(instance)
+
+            slumbered shouldBe mapOf(
+                "string" to "test",
+                "json" to null,
+            )
+        }
+
+        "Slumber integration example with JsonNull as child" {
+
+            data class DataClass(
+                val string: String,
+                val json: JsonElement? = null,
+            )
+
+            val instance = DataClass(
+                string = "test",
+                json = buildJsonObject {
+                    put("jsonNull", JsonNull)
+                },
+            )
+
+            val slumbered = Codec.default.slumber(instance)
+
+            slumbered shouldBe mapOf(
+                "string" to "test",
+                "json" to mapOf(
+                    "jsonNull" to null,
+                ),
+            )
+        }
+
         "Awake integration example" {
 
             data class DataClass(
                 val string: String,
-                val json: JsonObject,
+                val json: JsonElement,
             )
 
             val data = mapOf(
@@ -202,6 +247,26 @@ class KotlinxJsonCodecSpec : StringSpec() {
                 json = buildJsonObject {
                     put("key", "value")
                 }
+            )
+        }
+
+        "Awake integration example with nullable" {
+
+            data class DataClass(
+                val string: String,
+                val json: JsonElement? = null,
+            )
+
+            val data = mapOf(
+                "string" to "test",
+                "json" to null,
+            )
+
+            val awakened = Codec.default.awake<DataClass>(data)
+
+            awakened shouldBe DataClass(
+                string = "test",
+                json = JsonNull,
             )
         }
     }

@@ -21,6 +21,7 @@ object JsonUtil {
     }
 
     fun JsonElement.unwrap(): Any? = when (this) {
+        is JsonNull -> null
         is JsonObject -> unwrap()
         is JsonArray -> map { it.unwrap() }
         is JsonPrimitive -> when {

@@ -13,7 +13,6 @@ object KotlinXJsonCodec : Awaker, Slumberer {
         return JsonElement::class.java.isAssignableFrom(cls.java)
     }
 
-
     override fun awake(data: Any?, context: Awaker.Context): Any? {
         return data.toJsonElement()
     }
