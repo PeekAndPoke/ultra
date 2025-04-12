@@ -142,7 +142,7 @@ data class HttpStatusCode(val value: Int, val description: String) {
                 NetworkAuthenticationRequired,
             )
 
-        fun of(status: Int, fallback: HttpStatusCode): HttpStatusCode? =
+        fun of(status: Int, fallback: HttpStatusCode): HttpStatusCode =
             allStatusCodes.firstOrNull { it.value == status } ?: fallback
     }
 
