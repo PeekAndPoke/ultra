@@ -16,9 +16,7 @@ import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.css.Overflow
 import kotlinx.css.maxHeight
-import kotlinx.css.minHeight
 import kotlinx.css.overflowY
-import kotlinx.css.px
 import kotlinx.css.vh
 import kotlinx.html.TEXTAREA
 import kotlinx.html.Tag
@@ -105,7 +103,6 @@ class UiTextAreaComponent(ctx: Ctx<Props>) :
 
             textArea {
                 css {
-                    minHeight = 1.px
                     maxHeight = 50.vh
                     overflowY = Overflow.auto
                 }
