@@ -62,4 +62,20 @@
       <module name="ultra.z-playground-jvm.test" target="17" />
     </bytecodeTargetLevel>
   </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="ultra.karango.ksp" options="-proc:none" />
+      <module name="ultra.karango.ksp.main" options="-proc:none" />
+      <module name="ultra.karango.ksp.test" options="-proc:none" />
+      <module name="ultra.ultra.meta" options="-proc:none" />
+      <module name="ultra.ultra.meta.main" options="-proc:none" />
+      <module name="ultra.ultra.meta.test" options="-proc:none" />
+      <module name="ultra.ultra.mutator" options="-proc:none" />
+      <module name="ultra.ultra.mutator.main" options="-proc:none" />
+      <module name="ultra.ultra.mutator.test" options="-proc:none" />
+      <module name="ultra.ultra.slumber" options="-proc:none" />
+      <module name="ultra.ultra.slumber.main" options="-proc:none" />
+      <module name="ultra.ultra.slumber.test" options="-proc:none" />
+    </option>
+  </component>
 </project>
