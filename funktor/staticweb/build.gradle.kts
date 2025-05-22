@@ -51,3 +51,7 @@ kotlin {
 tasks {
     configureJvmTests()
 }
+
+mavenPublishing {
+
+}

@@ -51,3 +51,7 @@ kotlin {
         }
     }
 }
+
+mavenPublishing {
+
+}

@@ -1,3 +1,20 @@
+# New publishing method
+
+How to publish
+
+```
+./gradlew publishAllPublicationsToMavenCentralRepository
+```
+
+Maven User and password need to be put into ~/.gradle/gradle.properties:
+
+```
+mavenCentralUsername=
+mavenCentralPassword=
+
+signing.password=
+```
+
 # How to publish
 
 To publish to Maven run this:

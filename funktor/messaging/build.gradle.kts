@@ -84,3 +84,7 @@ dependencies {
 tasks {
     configureJvmTests()
 }
+
+mavenPublishing {
+
+}

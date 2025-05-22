@@ -59,3 +59,7 @@ tasks {
 kapt {
     useBuildCache = true
 }
+
+mavenPublishing {
+
+}

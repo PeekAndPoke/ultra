@@ -89,3 +89,7 @@ tasks {
 
     configureJvmTests()
 }
+
+mavenPublishing {
+
+}

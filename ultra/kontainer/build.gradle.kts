@@ -55,3 +55,7 @@ tasks {
         classpath = sourceSets.getByName("test").runtimeClasspath
     }
 }
+
+mavenPublishing {
+
+}
