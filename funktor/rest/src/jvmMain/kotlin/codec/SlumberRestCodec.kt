@@ -1,5 +1,6 @@
 package de.peekandpoke.funktor.rest.codec
 
+import com.fasterxml.jackson.core.StreamReadConstraints
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.ObjectWriter
@@ -23,6 +24,13 @@ class SlumberRestCodec(
     companion object {
         val defaultJacksonMapper: ObjectMapper = ObjectMapper()
             .registerKotlinModule()
+            .apply {
+                factory.setStreamReadConstraints(
+                    StreamReadConstraints.builder()
+                        .maxStringLength(50_000_000)
+                        .build()
+                )
+            }
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
         val prettyPrinter: ObjectWriter = defaultJacksonMapper.writerWithDefaultPrettyPrinter()
