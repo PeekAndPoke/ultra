@@ -36,6 +36,18 @@
       <module name="ultra.common.test" target="17" />
       <module name="ultra.commonmp.jvmMain~1" target="1.8" />
       <module name="ultra.commonmp.jvmTest~1" target="1.8" />
+      <module name="ultra.funktor.all.main" target="17" />
+      <module name="ultra.funktor.all.test" target="17" />
+      <module name="ultra.funktor.cluster.main" target="17" />
+      <module name="ultra.funktor.cluster.test" target="17" />
+      <module name="ultra.funktor.logging.main" target="17" />
+      <module name="ultra.funktor.logging.test" target="17" />
+      <module name="ultra.funktor.messaging.main" target="17" />
+      <module name="ultra.funktor.messaging.test" target="17" />
+      <module name="ultra.funktor.testing.main" target="17" />
+      <module name="ultra.funktor.testing.test" target="17" />
+      <module name="ultra.karango.addons.main" target="17" />
+      <module name="ultra.karango.addons.test" target="17" />
       <module name="ultra.kontainer" target="17" />
       <module name="ultra.kontainer.main" target="17" />
       <module name="ultra.kontainer.test" target="17" />
@@ -55,6 +67,8 @@
       <module name="ultra.slumber.main" target="17" />
       <module name="ultra.slumber.test" target="17" />
       <module name="ultra.test" target="17" />
+      <module name="ultra.ultra.slumber.main" target="17" />
+      <module name="ultra.ultra.slumber.test" target="17" />
       <module name="ultra.vault" target="17" />
       <module name="ultra.z-playground-js" target="17" />
       <module name="ultra.z-playground-jvm" target="17" />
@@ -74,6 +88,8 @@
       <module name="ultra.ultra.mutator.main" options="-proc:none" />
       <module name="ultra.ultra.mutator.test" options="-proc:none" />
       <module name="ultra.ultra.slumber" options="-proc:none" />
+      <module name="ultra.ultra.slumber.jvmMain" options="-proc:none" />
+      <module name="ultra.ultra.slumber.jvmTest" options="-proc:none" />
       <module name="ultra.ultra.slumber.main" options="-proc:none" />
       <module name="ultra.ultra.slumber.test" options="-proc:none" />
     </option>

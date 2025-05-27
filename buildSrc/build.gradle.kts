@@ -8,7 +8,7 @@ repositories {
 }
 
 dependencies {
-    api("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.10")
+    api("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.21")
 
     implementation(gradleApi())
 }

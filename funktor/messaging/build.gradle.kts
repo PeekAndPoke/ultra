@@ -28,7 +28,6 @@ kotlin {
     jvmToolchain(Deps.jvmTargetVersion)
 
     jvm {
-        withJava()
     }
 
     sourceSets {
