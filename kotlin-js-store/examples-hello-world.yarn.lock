@@ -2435,10 +2435,10 @@ signal-exit@^3.0.3:
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-3.0.7.tgz#a9a1767f8af84155114eaabd73f99273c8f59ad9"
   integrity sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==
 
-signature_pad@5.0.7:
-  version "5.0.7"
-  resolved "https://registry.yarnpkg.com/signature_pad/-/signature_pad-5.0.7.tgz#4f24348a3ce8b2cdd95d3ba99566bef7281d4719"
-  integrity sha512-j2C6NTZ3c99G3hvFTsg6oOWy/tmftgwIXrvsr3+99+5SuPW6OdSpo++ZUzLVNfNHYmp2Z2Al76YV/3RhS/nDJg==
+signature_pad@5.0.10:
+  version "5.0.10"
+  resolved "https://registry.yarnpkg.com/signature_pad/-/signature_pad-5.0.10.tgz#765a8e2ebab2999ab9244de6c2ffb7e868d1cbb9"
+  integrity sha512-t7rLjpAtxYAIrTHr7EKfY8ulTWF+G/LFMto502a61KZvZNWZSwhTPeLE6171YMDd2sSYRBwQ17ENK5huAi9Rsg==
 
 socket.io-adapter@~2.5.2:
   version "2.5.5"

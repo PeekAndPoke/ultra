@@ -1,6 +1,6 @@
 package de.peekandpoke.kraft.addons.signaturepad
 
-import de.peekandpoke.kraft.addons.signaturepad.js.signature_pad
+import de.peekandpoke.kraft.addons.signaturepad.js.SignaturePadJs
 import de.peekandpoke.kraft.addons.signaturepad.js.trim_canvas
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
@@ -23,7 +23,7 @@ import org.w3c.dom.events.Event
 
 @Suppress("FunctionName")
 fun Tag.SignaturePad(
-    options: signature_pad.Options = jsObject { },
+    options: SignaturePadJs.Options = jsObject { },
     onChange: (SignaturePad) -> Unit = {},
 ) = comp(
     SignaturePad.Props(
@@ -39,7 +39,7 @@ class SignaturePad(ctx: Ctx<Props>) : Component<SignaturePad.Props>(ctx) {
     //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val options: signature_pad.Options,
+        val options: SignaturePadJs.Options,
         val onChange: (SignaturePad) -> Unit,
     )
 
@@ -76,7 +76,7 @@ class SignaturePad(ctx: Ctx<Props>) : Component<SignaturePad.Props>(ctx) {
         fun toJpg(quality: Double = 0.9): FileBase64? = toDataUrl("image/jpeg", quality)
     }
 
-    private var pad: signature_pad.SignaturePad? = null
+    private var pad: SignaturePadJs? = null
 
     //  Public interface  ///////////////////////////////////////////////////////////////////////////////////////
 
@@ -105,7 +105,9 @@ class SignaturePad(ctx: Ctx<Props>) : Component<SignaturePad.Props>(ctx) {
 
                 dom?.let {
                     getCanvas()?.let { canvas ->
-                        pad = signature_pad.SignaturePad(canvas, props.options)
+                        console.log("signature-pad", ::SignaturePadJs)
+
+                        pad = SignaturePadJs(canvas, props.options)
 
                         pad?.addEventListener("endStroke", ::onPadEndStroke)
 

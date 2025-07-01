@@ -424,7 +424,7 @@ object Deps {
         fun KotlinDependencyHandler.prismjs() = npm("prismjs", "1.29.0")
 
         // https://www.npmjs.com/package/signature_pad
-        fun KotlinDependencyHandler.signaturepad() = npm("signature_pad", "5.0.7")
+        fun KotlinDependencyHandler.signaturepad() = npm("signature_pad", "5.0.10")
 
         // https://www.npmjs.com/package/sourcemapped-stacktrace
         fun KotlinDependencyHandler.sourcemappedStacktrace() = npm("sourcemapped-stacktrace", "1.1.11")
