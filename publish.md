@@ -1,6 +1,6 @@
-# New publishing method
+# How to publish
 
-How to publish
+How to publish to Maven Central:
 
 ```
 ./gradlew publishAllPublicationsToMavenCentralRepository
@@ -15,35 +15,11 @@ mavenCentralPassword=
 signing.password=
 ```
 
-# How to publish
-
-To publish to Maven run this:
+How to publish to Maven local:
 
 ```
-./gradlew clean build publish -Psigning.password= -PmavenCentralUsername= -PmavenCentralPassword=
+./gradlew publishToMavenLocal
 ```
-
-To publish to Maven local run this:
-
-```
-./gradlew clean build publishToMavenLocal -Psigning.password= -PmavenCentralUsername= -PmavenCentralPassword=
-```
-
-To publish to Maven local and Maven:
-
-```
-./gradlew clean build publish publishToMavenLocal -Psigning.password= -PmavenCentralUsername= -PmavenCentralPassword=
-```
-
-Get the token from the nexus (mavenCentralUsername & mavenCentralPassword):
-https://s01.oss.sonatype.org/#profile;User%20Token
-
-For details like
-
-- sonatype user
-- signing key
-
-etc. see [gradle.properties](gradle.properties).
 
 ## Some Details
 
@@ -61,7 +37,6 @@ The nexus is here
 ## Helpful Resources
 
 ### Links that helped
-
 
 Sonatype JIRA "peekandpoke.io":
 - https://issues.sonatype.org/browse/OSSRH-65427
