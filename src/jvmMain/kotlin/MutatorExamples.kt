@@ -1,79 +1,48 @@
 package de.peekandpoke.ultra.playground
 
 import de.peekandpoke.ultra.common.observe
-import de.peekandpoke.ultra.playground.lib.DataClassMutator
 import de.peekandpoke.ultra.playground.lib.ListMutator
-import de.peekandpoke.ultra.playground.lib.Mutation
-import de.peekandpoke.ultra.playground.lib.Mutator
 import de.peekandpoke.ultra.playground.lib.SetMutator
 import de.peekandpoke.ultra.playground.lib.add
-import de.peekandpoke.ultra.playground.lib.mutator
+import de.peekandpoke.ultra.playground.lib.invoke
+import de.peekandpoke.ultra.playground.lib.onChange
 
-// //  USER CODE  ////////////////////////////////////////////////////////////////////////////////////////////////
-
-enum class MyEnum {
-    One,
-    Two,
-}
-
-data class MyClass(val name: String, val type: MyEnum = MyEnum.One)
-
-// //  GENERATED CODE  ////////////////////////////////////////////////////////////////////////////////////////////////
-
-class MyClassMutator(value: MyClass) : DataClassMutator<MyClass>(value)
-
-fun MyClass.mutator(): MyClassMutator =
-    MyClassMutator(this)
-
-fun MyClass.mutate(mutation: Mutation<MyClass>): MyClass =
-    mutator().apply(mutation).value
-
-fun List<MyClass>.mutator(): ListMutator<MyClass> =
-    mutator(child = { onChild -> mutator().apply { observe(onChild) } })
-
-fun Set<MyClass>.mutator(): SetMutator<MyClass> =
-    mutator(child = { onChild -> mutator().apply { observe(onChild) } })
-
-var Mutator<MyClass>.name
-    get() = value.name
-    set(v) = modifyIfChanged(value.name, v) { it.copy(name = v) }
-
-var Mutator<MyClass>.type
-    get() = value.type
-    set(v) = modifyIfChanged(value.type, v) { it.copy(type = v) }
-
-// //  TEST-CODE  ////////////////////////////////////////////////////////////////////////////////////////////////
-
-fun main() {
-
-    Examples.dataClassExample()
-
-    Examples.listExample()
-
-    Examples.setExample()
-}
-
-object Examples {
+object MutatorExamples {
 
     fun dataClassExample() {
 
         println("----------------------------------------------------------------------------------------")
         println("-- Simple Data Class example")
 
-        val myInst = MyClass("Hallo!", MyEnum.One)
+        val myInst = MyClass(name = "Hallo!")
 
-        val mutator = myInst.mutator()
+        val mutator = myInst.mutator().onChange { println("Value changed: $it") }
 
-        observe(mutator) { println("Value changed: $it") }
-
-        println("Is modified: ${mutator.isModified}")
+        println("Is modified: ${mutator.isModified()}")
         mutator.name = "Hello World!"
-        println("Is modified: ${mutator.isModified}")
+        println("Is modified: ${mutator.isModified()}")
 
         val prop = mutator::name
         prop.set("Hello Prop!")
 
-        println(myInst.mutate { name = "Hallo mutate()" })
+        mutator {
+            name = "Hallo mutate()"
+            address.city = "New Leipzig"
+        }
+
+        mutator {
+            name = "Hallo mutate() 2"
+            address {
+                city = "New Leipzig 2"
+                street = "New Street"
+            }
+        }
+
+        val deepChange = mutator()
+
+        println(
+            "After deep change: $deepChange"
+        )
 
         println()
     }
@@ -83,8 +52,8 @@ object Examples {
         println("-- List Mutator Example")
 
         val value = listOf(
-            MyClass("first", MyEnum.One),
-            MyClass("second", MyEnum.One),
+            MyClass("first", type = MyEnum.One),
+            MyClass("second", type = MyEnum.One),
         )
 
         val mutator: ListMutator<MyClass> = value.mutator()
@@ -103,7 +72,7 @@ object Examples {
 
         pos2.name = "I am happy again!"
 
-        println(mutator.value)
+        println(mutator.get())
 
         println("---------------------------------------------------------------------------------------")
 
@@ -111,7 +80,7 @@ object Examples {
 
         mutator[0].name = "I have a new name"
 
-        println(mutator.value)
+        println(mutator.get())
 
         println()
     }
@@ -121,8 +90,8 @@ object Examples {
         println("-- Set Mutator Example")
 
         val input = setOf(
-            MyClass("first", MyEnum.One),
-            MyClass("second", MyEnum.One),
+            MyClass("first", type = MyEnum.One),
+            MyClass("second", type = MyEnum.One),
         )
 
         val mutator: SetMutator<MyClass> = input.mutator()
@@ -135,7 +104,7 @@ object Examples {
 
         mutator.add(MyClass("Hello there!"))
 
-        println(mutator.value)
+        println(mutator.get())
 
         println("---------------------------------------------------------------------------------------")
 

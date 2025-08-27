@@ -41,6 +41,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(kotlin("stdlib-common"))
+                implementation(Deps.KotlinX.coroutines_core)
                 implementation(project(":ultra:common"))
             }
         }
