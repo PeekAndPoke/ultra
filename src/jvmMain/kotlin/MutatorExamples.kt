@@ -3,8 +3,6 @@ package de.peekandpoke.ultra.playground
 import de.peekandpoke.ultra.common.observe
 import de.peekandpoke.ultra.playground.lib.ListMutator
 import de.peekandpoke.ultra.playground.lib.SetMutator
-import de.peekandpoke.ultra.playground.lib.add
-import de.peekandpoke.ultra.playground.lib.invoke
 import de.peekandpoke.ultra.playground.lib.onChange
 
 object MutatorExamples {
@@ -68,7 +66,7 @@ object MutatorExamples {
         mutator.removeAt(0)
         pos2.name = "I am so alone"
 
-        mutator.add(0, MyClass("Hello there!"))
+        mutator.add(0, MyClass("Hello there!").mutator())
 
         pos2.name = "I am happy again!"
 
@@ -76,7 +74,7 @@ object MutatorExamples {
 
         println("---------------------------------------------------------------------------------------")
 
-        mutator.modify { it.map { e -> e.copy(name = "") }.toMutableList() }
+        mutator.modifyValue { it.map { e -> e.copy(name = "") }.toMutableList() }
 
         mutator[0].name = "I have a new name"
 
@@ -102,13 +100,13 @@ object MutatorExamples {
             it.type = MyEnum.Two
         }
 
-        mutator.add(MyClass("Hello there!"))
+        mutator.add(MyClass("Hello there!").mutator())
 
         println(mutator.get())
 
         println("---------------------------------------------------------------------------------------")
 
-        mutator.modify { it.mapIndexed { idx, e -> e.copy(name = "Idx $idx") }.toMutableSet() }
+        mutator.modifyValue { it.mapIndexed { idx, e -> e.copy(name = "Idx $idx") }.toMutableSet() }
 
         mutator.first().name = "I have a new name"
 //    println(mutator.value)

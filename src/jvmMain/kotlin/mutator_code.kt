@@ -39,7 +39,7 @@ inline var Mutator<MyClass>.type
 
 inline val Mutator<MyClass>.address: DataClassMutator<MyAddress>
     get() = get().address.mutator()
-        .onChange { address -> modify { get().copy(address = address) } }
+        .onChange { address -> modifyValue { get().copy(address = address) } }
 
 inline fun MyAddress.mutator(): DataClassMutator<MyAddress> = DataClassMutator(this)
 

@@ -72,7 +72,7 @@ class SetMutatorImpl<V>(initial: Set<V>, private val childToMutator: V.() -> Mut
      * Clears the whole list
      */
     override fun clear() {
-        modify { it.also { clear() } }.commit()
+        modifyValue { it.also { clear() } }.commit()
     }
 
     /**
