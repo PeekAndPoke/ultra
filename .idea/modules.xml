@@ -2,6 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ultra.iml" filepath="$PROJECT_DIR$/.idea/modules/ultra.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/buildSrc/ultra.buildSrc.main.iml" filepath="$PROJECT_DIR$/.idea/modules/buildSrc/ultra.buildSrc.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mutator/core/ultra.mutator.core.jvmTest.iml" filepath="$PROJECT_DIR$/.idea/modules/mutator/core/ultra.mutator.core.jvmTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mutator/ksp/ultra.mutator.ksp.main.iml" filepath="$PROJECT_DIR$/.idea/modules/mutator/ksp/ultra.mutator.ksp.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/security/ultra.security.commonTest.iml" filepath="$PROJECT_DIR$/.idea/modules/security/ultra.security.commonTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.main.iml" filepath="$PROJECT_DIR$/.idea/modules/z-playground-js/ultra.z-playground-js.main.iml" />
     </modules>

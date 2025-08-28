@@ -46,5 +46,9 @@ include(
         ":karango:core",
         ":karango:addons",
         ":karango:ksp",
+
+        // MUTATOR //////////////////////////////////////////////////////////////////////////////
+        ":mutator:core",
+        ":mutator:ksp",
 )
 

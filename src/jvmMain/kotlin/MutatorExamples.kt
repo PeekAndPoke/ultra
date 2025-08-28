@@ -1,9 +1,9 @@
 package de.peekandpoke.ultra.playground
 
+import de.peekandpoke.mutator.ListMutator
+import de.peekandpoke.mutator.SetMutator
+import de.peekandpoke.mutator.onChange
 import de.peekandpoke.ultra.common.observe
-import de.peekandpoke.ultra.playground.lib.ListMutator
-import de.peekandpoke.ultra.playground.lib.SetMutator
-import de.peekandpoke.ultra.playground.lib.onChange
 
 object MutatorExamples {
 

@@ -1,14 +1,8 @@
-package de.peekandpoke.ultra.playground.lib
-
-import de.peekandpoke.ultra.common.toggle
+package de.peekandpoke.mutator
 
 fun <V> Set<V>.mutator(child: V.() -> Mutator<V>): SetMutator<V> = SetMutatorImpl(this, child)
 
 fun <V> SetMutator<V>.add(element: V) = add(Mutator.Null(element))
-
-fun <V> SetMutator<V>.remove(element: V) = remove(Mutator.Null(element))
-
-fun <V> SetMutator<V>.toggle(element: V) = toggle(Mutator.Null(element))
 
 interface SetMutator<V> : Mutator<MutableSet<V>>, MutableSet<Mutator<V>>
 

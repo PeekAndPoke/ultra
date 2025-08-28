@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Tests in 'ultra:mutator'" type="GradleRunConfiguration" factoryName="Gradle" folderName="Ultra">
+  <configuration default="false" name="Tests in 'ultra:mutator'" type="GradleRunConfiguration" factoryName="Gradle" folderName="Mutator">
     <ExternalSystemSettings>
       <option name="executionName" />
-      <option name="externalProjectPath" value="$PROJECT_DIR$/ultra/mutator" />
+      <option name="externalProjectPath" value="$PROJECT_DIR$/mutator" />
       <option name="externalSystemIdString" value="GRADLE" />
       <option name="scriptParameters" value="" />
       <option name="taskDescriptions">

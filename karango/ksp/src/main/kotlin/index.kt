@@ -1,1 +1,1 @@
-package de.kotlincook.karango.ksp
+package de.peekandpoke.karango.ksp

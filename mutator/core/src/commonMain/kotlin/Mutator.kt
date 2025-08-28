@@ -1,15 +1,12 @@
-package de.peekandpoke.ultra.playground.lib
+package de.peekandpoke.mutator
 
 import de.peekandpoke.ultra.common.GetAndSet
 import de.peekandpoke.ultra.common.Observable
 import de.peekandpoke.ultra.common.Observer
 import de.peekandpoke.ultra.common.OnChange
 
+@MutatorDsl
 interface Mutator<V> : GetAndSet<V>, Observer {
-
-    companion object {
-
-    }
 
     abstract class Base<V>(
         private val initial: V,
@@ -22,7 +19,8 @@ interface Mutator<V> : GetAndSet<V>, Observer {
         override fun isModified(): Boolean = _value != initial
 
         override fun modifyValue(block: (V) -> V) {
-            _value = block(_value)
+            val modified = block(_value)
+            _value = if (modified != initial) modified else initial
             commit()
         }
 

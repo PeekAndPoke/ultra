@@ -1,6 +1,5 @@
-package de.peekandpoke.karango.ksp
+package de.peekandpoke.ultra.ksp
 
-import com.google.auto.service.AutoService
 import com.google.devtools.ksp.getDeclaredProperties
 import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.processing.CodeGenerator
@@ -9,9 +8,7 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
-import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.ClassKind
-import com.google.devtools.ksp.symbol.FileLocation
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -20,29 +17,14 @@ import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSTypeArgument
 import com.google.devtools.ksp.symbol.Modifier
-import com.google.devtools.ksp.symbol.NonExistLocation
-import de.peekandpoke.karango.Karango
-import de.peekandpoke.ultra.slumber.Slumber
-import de.peekandpoke.ultra.vault.LazyRef
-import de.peekandpoke.ultra.vault.New
-import de.peekandpoke.ultra.vault.Ref
-import de.peekandpoke.ultra.vault.Storable
-import de.peekandpoke.ultra.vault.Stored
+import de.peekandpoke.mutator.Mutable
+import de.peekandpoke.mutator.NotMutable
 import kotlin.reflect.KClass
 
-@Suppress("unused")
-@AutoService(SymbolProcessorProvider::class)
-class KarangoKspProcessorProvider : SymbolProcessorProvider {
-    override fun create(
-        environment: SymbolProcessorEnvironment,
-    ): SymbolProcessor {
-        return KarangoKspProcessor(environment)
-    }
-}
-
-class KarangoKspProcessor(
+class MutatorKspProcessor(
     private val environment: SymbolProcessorEnvironment,
 ) : SymbolProcessor {
+
     companion object {
         val blackListedPackages = listOf(
             "java.",
@@ -52,11 +34,6 @@ class KarangoKspProcessor(
         )
 
         val blackListedClasses = listOf<String>(
-            New::class.qualifiedName!!,
-            Ref::class.qualifiedName!!,
-            LazyRef::class.qualifiedName!!,
-            Stored::class.qualifiedName!!,
-            Storable::class.qualifiedName!!,
         )
     }
 
@@ -71,29 +48,42 @@ class KarangoKspProcessor(
 
         // Find all types that have a Karango Annotation
         val withAnnotations = resolver
-            .getSymbolsWithAnnotation(Karango::class.qualifiedName!!)
+            .getSymbolsWithAnnotation(Mutable::class.qualifiedName!!)
             .filterIsInstance<KSClassDeclaration>()
 
         // Find all referenced classes
         val allTypes = withAnnotations
             .combineWithReferencedTypes()
-            .sortedBy { it.qualifiedName?.asString() }
+            .filterNot { it.hasAnnotation(NotMutable::class) }
+            .filter { it.isData() }
+            .filter { it.qualifiedName != null }
+            .sortedBy { it.qualifiedName!!.asString() }
 
         val (pool, blacklisted) = allTypes.partition { !it.isBlackListed() }
 
-        blacklisted.forEach { cls ->
+        blacklisted.toSet().forEach { cls ->
             logger.warn("Blacklisted type: ${cls.classKind} $cls : ${cls.qualifiedName?.asString()}")
         }
 
-        pool.forEach { cls ->
-            logger.warn("Generating code for type: ${cls.classKind} $cls : ${cls.qualifiedName?.asString()}")
-            generateCode(cls)
+        pool.toSet().let { pool ->
+            pool.forEach { cls ->
+                logger.warn("Generating code for type: ${cls.classKind} $cls : ${cls.qualifiedName?.asString()}")
+                generateCode(cls, pool)
+            }
         }
 
         return listOf()
     }
 
-    private fun generateCode(cls: KSClassDeclaration) {
+    private fun KSAnnotated.hasAnnotation(cls: KClass<*>): Boolean {
+        return annotations.any { ann ->
+            val type = ann.annotationType.resolve().declaration as? KSClassDeclaration
+            type?.qualifiedName?.asString() == cls.qualifiedName
+        }
+    }
+
+
+    private fun generateCode(cls: KSClassDeclaration, poolOfMutables: Set<KSClassDeclaration>) {
         val simpleNames = cls.getSimpleNames()
         val subjectName = simpleNames.joinToString(".") { it.asString() }
         val packageName = cls.packageName.asString()
@@ -104,150 +94,61 @@ class KarangoKspProcessor(
                 sources = listOfNotNull(cls.containingFile).toTypedArray(),
             ),
             packageName = packageName,
-            fileName = subjectName + "${"$$"}karango",
+            fileName = subjectName + "${"$$"}mutator",
             extensionName = "kt",
         )
 
-        val codeBlocks = mutableListOf<String>()
+        val codeBlocks = MutatorCodeBlocks()
 
         codeBlocks.add(
             """
+                @file:Suppress("RemoveRedundantBackticks")
+
                 package $packageName
         
-                import de.peekandpoke.karango.*
-                import de.peekandpoke.karango.aql.*
-                import de.peekandpoke.ultra.vault.lang.*
+                import de.peekandpoke.mutator.*
         
             """.trimIndent()
         )
 
-        codeBlocks.add("//// generic property")
-        codeBlocks.add(
-            """
-                inline fun <reified T> IterableExpr<$subjectName>.property(name: String) = PropertyPath.start(this).append<T, T>(name)
+        when {
+            cls.isData() -> {
+                codeBlocks.add("// Mutator for data class $subjectName")
 
-            """.trimIndent()
-        )
+                val allFields = cls.getDeclaredProperties()
 
-        val allFields = cls.getDeclaredProperties()
+                val ctorFields = allFields.filter { it.isPrimaryCtorParameter() }
 
-        val ctorFields = allFields.filter { it.isPrimaryCtorParameter() }
+                // TODO: how to handle nested classes ?
+                val clsName = codeBlocks.getClassName(cls)
 
-        // TODO:
-        //  - test that ctor parameters are picked up properly
-        ctorFields.forEach { field ->
-            logger.info("  --> Found ctor field ${field.simpleName.asString()} with annotations ${field.annotations.print()}")
-        }
+                codeBlocks.add(
+                    """
+                        @MutatorDsl
+                        fun $clsName.mutator(): DataClassMutator<$clsName> = DataClassMutator(this)
+                        
+                        @MutatorDsl
+                        fun $clsName.mutate(mutation: Mutation<$clsName>): $clsName = mutator().apply(mutation).get()
+                        
+                    """.trimIndent()
+                )
 
-        // TODO:
-        //  - test that @Karango.Field and @Slumber.Field are picked up and will get code generated
-        //  - test that @Karango.Ignore does not get code generated
-        //  - test that non-ctor fields do not get code generated, unless annotated
-        val annotatedFields = allFields
-            .filterNot { it.isPrimaryCtorParameter() }
-            .filter { it.hasAnyAnnotation(Karango.Field::class, Slumber.Field::class) }
-            .filterNot { it.hasAnnotation(Karango.Ignore::class) }
-
-        annotatedFields.forEach { field ->
-            logger.info("  --> Found annotated field ${field.simpleName.asString()} with annotations ${field.annotations.print()}")
-        }
-
-        ctorFields.plus(annotatedFields).forEach { field ->
-            renderProperty(
-                codeBlocks = codeBlocks,
-                subject = subjectName,
-                property = field,
-            )
-        }
-
-        file.write(codeBlocks.joinToString("\n").toByteArray())
-    }
-
-    fun renderProperty(
-        codeBlocks: MutableList<String>,
-        subject: String,
-        property: KSPropertyDeclaration,
-    ) {
-        val replacements = listOf(
-            // Map mutable kotlin collection to immutable names
-            "kotlin.collections.MutableList" to List::class.qualifiedName!!,
-            "kotlin.collections.MutableSet" to Set::class.qualifiedName!!,
-            "kotlin.collections.MutableMap" to Map::class.qualifiedName!!,
-            // Vault types
-            Ref::class.qualifiedName!! to "kotlin.String",
-            LazyRef::class.qualifiedName!! to "kotlin.String",
-        )
-
-        val prop = property.simpleName.asString()
-        val annotations = property.annotations.toList()
-        val propType = property.type.resolve()
-
-        val definedType = propType.toFullyQualifiedString()
-        val type = replacements.fold(definedType) { acc, (from, to) -> acc.replace(from, to) }
-
-        val definedAs = when (property.isPrimaryCtorParameter()) {
-            true -> "Primary Constructor Param"
-            else -> "Property"
-        }
-
-        val definedBy = when (val p = property.parentDeclaration) {
-            null -> "Unknown"
-            is KSClassDeclaration -> "Class ${p.qualifiedName?.asString()}"
-            else -> "$p (${p::class.qualifiedName})"
-        }
-
-        val definedAt = when (val l = property.location) {
-            is FileLocation -> "${l.filePath}:${l.lineNumber}"
-            is NonExistLocation -> "Unknown"
-        }
-
-        codeBlocks.add("// $prop ".padEnd(160, '/'))
-        codeBlocks.add("// annotations: ${annotations.print()}")
-        codeBlocks.add("// defined as:   $definedAs")
-        codeBlocks.add("// defined by:   $definedBy")
-        codeBlocks.add("// defined type: $definedType")
-        codeBlocks.add("// cleaned type: $type")
-        codeBlocks.add("// defined at:   $definedAt")
-        codeBlocks.add(
-            """
-
-                inline val IterableExpr<$subject>.$prop inline get() = PropertyPath.start(this).append<$type, $type>("$prop")
-                inline val Expression<$subject>.$prop inline get() = PropertyPath.start(this).append<$type, $type>("$prop")
-
-                inline val PropertyPath<$subject, $subject>.$prop @JvmName("${prop}_0") inline get() = append<$type, $type>("$prop")
-                inline val PropertyPath<$subject, L1<$subject>>.$prop @JvmName("${prop}_1") inline get() = append<$type, L1<$type>>("$prop")
-                inline val PropertyPath<$subject, L2<$subject>>.$prop @JvmName("${prop}_2") inline get() = append<$type, L2<$type>>("$prop")
-                inline val PropertyPath<$subject, L3<$subject>>.$prop @JvmName("${prop}_3") inline get() = append<$type, L3<$type>>("$prop")
-                inline val PropertyPath<$subject, L4<$subject>>.$prop @JvmName("${prop}_4") inline get() = append<$type, L4<$type>>("$prop")
-                inline val PropertyPath<$subject, L5<$subject>>.$prop @JvmName("${prop}_5") inline get() = append<$type, L5<$type>>("$prop")
-
-            """.trimIndent()
-        )
-    }
-
-    private fun KSType.toFullyQualifiedString(): String {
-        val fqn = declaration.qualifiedName?.asString()
-
-        // TODO:
-        //  - test for Ref and LazyRef
-        //  - tests for Type Parameters
-        return when (fqn) {
-            null -> "kotlin.Any?"
-            // References are treated as just strings
-            Ref::class.qualifiedName -> "kotlin.String"
-            // Lazy References are treated as just strings
-            LazyRef::class.qualifiedName -> "kotlin.String"
-
-            // otherwise we take the original type
-            else -> when (arguments.isEmpty()) {
-                true -> fqn
-                else -> {
-                    val mapped = arguments.map { it.type?.resolve()?.toFullyQualifiedString() ?: "*" }
-                    val joined = mapped.joinToString(", ") { it }
-
-                    "$fqn<$joined>"
+                ctorFields.forEach { field ->
+                    // Is this field if a Mutable type?
+                    if (poolOfMutables.contains(field.type.resolve().declaration)) {
+                        codeBlocks.addMutatorField(cls, field)
+                    } else {
+                        codeBlocks.addGetterSetterField(cls, field)
+                    }
                 }
             }
+        }
+
+
+
+
+        if (codeBlocks.isNotEmpty()) {
+            file.write(codeBlocks.build().toByteArray())
         }
     }
 
