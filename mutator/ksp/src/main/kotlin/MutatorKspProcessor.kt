@@ -113,7 +113,7 @@ class MutatorKspProcessor(
         ctx.codeBlocks.takeIf { it.isNotEmpty() }?.let { codeBlocks ->
             codeBlocks.prepend(
                 """
-                    @file:Suppress("RemoveRedundantBackticks", "unused")
+                    @file:Suppress("RemoveRedundantBackticks", "unused", "NOTHING_TO_INLINE")
     
                     package $packageName
             

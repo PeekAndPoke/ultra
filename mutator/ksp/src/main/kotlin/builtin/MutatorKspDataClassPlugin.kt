@@ -39,20 +39,20 @@ class MutatorKspDataClassPlugin : MutatorKspPlugin {
         codeBlocks.append(
             """
                 @MutatorDsl
-                fun $typeParams$clsName.mutator(): $boundObjectMutatorName = $ObjectMutatorName(this)
+                inline fun $typeParams$clsName.mutator() = $ObjectMutatorName(this)
                 
                 @MutatorDsl
-                fun $typeParams$clsName.mutate(
+                inline fun $typeParams$clsName.mutate(
                     mutation: $boundObjectMutatorName.() -> Unit,
                 ): $clsName = mutator().apply(mutation).get()
                 
                 @MutatorDsl
-                fun ${typeParams}List<$clsName>.mutate(
+                inline fun ${typeParams}List<$clsName>.mutate(
                     mutation: $ListMutatorName<$clsName>.() -> Unit,
                 ): List<$clsName> = mutator(child = { mutator() }).apply(mutation).get()
                 
                 @MutatorDsl
-                fun ${typeParams}Set<$clsName>.mutate(
+                inline fun ${typeParams}Set<$clsName>.mutate(
                     mutation: $SetMutatorName<$clsName>.() -> Unit,
                 ): Set<$clsName> = mutator(child = { mutator() }).apply(mutation).get()
                 

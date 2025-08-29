@@ -1,6 +1,7 @@
 package de.peekandpoke.mutator.ksp
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import de.peekandpoke.mutator.ListMutator
 import de.peekandpoke.mutator.ObjectMutator
@@ -55,14 +56,7 @@ class MutatorCodeBlocks {
                             && bound.isMarkedNullable
                 }
                 .joinToString(", ") { bound ->
-                    val nullable = if (bound.isMarkedNullable) "?" else ""
-
-                    val cls = when (bound.declaration.isPrimitiveOrString()) {
-                        true -> bound.declaration.simpleName.asString()
-                        else -> bound.declaration.qualifiedName!!.asString()
-                    }
-
-                    cls + nullable
+                    getTypeString(bound.declaration, bound.isMarkedNullable)
                 }
 
             if (bounds.isEmpty()) name else "$name : $bounds"
@@ -75,6 +69,17 @@ class MutatorCodeBlocks {
 
     fun getPropertyName(prop: KSPropertyDeclaration): String {
         return wrapWithBackticks(prop.simpleName.asString())
+    }
+
+    fun getTypeString(declaration: KSDeclaration, nullable: Boolean): String {
+        val nullableStr = if (nullable) "?" else ""
+
+        val cls = when (declaration.isPrimitiveOrString()) {
+            true -> declaration.simpleName.asString()
+            else -> declaration.qualifiedName!!.asString()
+        }
+
+        return wrapWithBackticks(cls) + nullableStr
     }
 
     fun prepend(code: String) = apply {
