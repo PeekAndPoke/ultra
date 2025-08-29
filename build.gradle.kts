@@ -43,6 +43,7 @@ kotlin {
                 implementation(kotlin("stdlib-common"))
                 implementation(Deps.KotlinX.coroutines_core)
                 implementation(project(":ultra:common"))
+                implementation(project(":mutator:core"))
             }
         }
 

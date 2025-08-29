@@ -1,12 +1,12 @@
 package de.peekandpoke.ultra.playground
 
-import de.peekandpoke.ultra.playground.lib.DataClassMutator
-import de.peekandpoke.ultra.playground.lib.ListMutator
-import de.peekandpoke.ultra.playground.lib.Mutation
-import de.peekandpoke.ultra.playground.lib.Mutator
-import de.peekandpoke.ultra.playground.lib.SetMutator
-import de.peekandpoke.ultra.playground.lib.mutator
-import de.peekandpoke.ultra.playground.lib.onChange
+import de.peekandpoke.mutator.ListMutator
+import de.peekandpoke.mutator.Mutation
+import de.peekandpoke.mutator.Mutator
+import de.peekandpoke.mutator.ObjectMutator
+import de.peekandpoke.mutator.SetMutator
+import de.peekandpoke.mutator.mutator
+import de.peekandpoke.mutator.onChange
 
 // //  USER CODE  ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -25,7 +25,7 @@ data class MyClass(
 
 // //  GENERATED CODE  ////////////////////////////////////////////////////////////////////////////////////////////////
 
-fun MyClass.mutator(): DataClassMutator<MyClass> = DataClassMutator(this)
+fun MyClass.mutator(): ObjectMutator<MyClass> = ObjectMutator(this)
 
 fun MyClass.mutate(mutation: Mutation<MyClass>): MyClass = mutator().apply(mutation).get()
 
@@ -37,11 +37,11 @@ inline var Mutator<MyClass>.type
     get() = get().type
     set(v) = modifyIfChanged(get().type, v) { it.copy(type = v) }
 
-inline val Mutator<MyClass>.address: DataClassMutator<MyAddress>
+inline val Mutator<MyClass>.address
     get() = get().address.mutator()
         .onChange { address -> modifyValue { get().copy(address = address) } }
 
-inline fun MyAddress.mutator(): DataClassMutator<MyAddress> = DataClassMutator(this)
+inline fun MyAddress.mutator(): ObjectMutator<MyAddress> = ObjectMutator(this)
 
 inline fun MyAddress.mutate(mutation: Mutation<MyAddress>): MyAddress = mutator().apply(mutation).get()
 

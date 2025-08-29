@@ -9,10 +9,10 @@ plugins {
     id("com.vanniktech.maven.publish")
 }
 
-val KARANGO_GROUP: String by project
+val MUTATOR_GROUP: String by project
 val VERSION_NAME: String by project
 
-group = KARANGO_GROUP
+group = MUTATOR_GROUP
 version = VERSION_NAME
 
 Docs {
@@ -27,15 +27,13 @@ kotlin {
         implementation(Deps.JavaLibs.Google.auto_service)
         kapt(Deps.JavaLibs.Google.auto_service)
 
-        implementation(project(":ultra:slumber"))
-        implementation(project(":ultra:vault"))
-        implementation(project(":karango:core"))
+        implementation(project(":mutator:core"))
 
         // //  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
 
         testImplementation(Deps.Ksp.compiletesting_ksp)
         kaptTest(Deps.JavaLibs.Google.auto_service)
-        kspTest(project(":karango:ksp"))
+        kspTest(project(":mutator:ksp"))
 
         Deps.Test {
             jvmTestDeps()

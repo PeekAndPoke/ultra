@@ -1,4 +1,4 @@
-package de.kotlincook.karango.ksp
+package de.peekandpoke.karango.ksp
 
 import com.google.auto.service.AutoService
 import com.google.devtools.ksp.getDeclaredProperties
@@ -325,14 +325,6 @@ class KarangoKspProcessor(
     }
 
     private fun KSClassDeclaration.isBlackListed(): Boolean {
-
-        // TODO: what about these?
-//        val enclosedBlackList = listOf(
-//            "Companion", // Kotlin Companion object
-//            "INSTANCE", // Kotlinx/serialization serializer instance
-//            "${'$'}serializer", // Kotlinx/serialization serializer instance
-//            "DefaultImpls", // Kotlin Default implementations for interfaces
-//        )
 
         val predicates = listOf<(KSClassDeclaration) -> Boolean>(
             { cls -> cls.qualifiedName == null },

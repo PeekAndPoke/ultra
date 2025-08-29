@@ -56,7 +56,8 @@
       <module name="ultra.meta" target="17" />
       <module name="ultra.meta.main" target="17" />
       <module name="ultra.meta.test" target="17" />
-      <module name="ultra.mutator" target="17" />
+      <module name="ultra.mutator.core.main" target="17" />
+      <module name="ultra.mutator.core.test" target="17" />
       <module name="ultra.mutator.main" target="17" />
       <module name="ultra.mutator.test" target="17" />
       <module name="ultra.security" target="17" />
@@ -67,6 +68,7 @@
       <module name="ultra.slumber.main" target="17" />
       <module name="ultra.slumber.test" target="17" />
       <module name="ultra.test" target="17" />
+      <module name="ultra.ultra.mutator" target="17" />
       <module name="ultra.ultra.slumber.main" target="17" />
       <module name="ultra.ultra.slumber.test" target="17" />
       <module name="ultra.vault" target="17" />
@@ -81,6 +83,9 @@
       <module name="ultra.karango.ksp" options="-proc:none" />
       <module name="ultra.karango.ksp.main" options="-proc:none" />
       <module name="ultra.karango.ksp.test" options="-proc:none" />
+      <module name="ultra.mutator.ksp" options="-proc:none" />
+      <module name="ultra.mutator.ksp.main" options="-proc:none" />
+      <module name="ultra.mutator.ksp.test" options="-proc:none" />
       <module name="ultra.ultra.meta" options="-proc:none" />
       <module name="ultra.ultra.meta.main" options="-proc:none" />
       <module name="ultra.ultra.meta.test" options="-proc:none" />

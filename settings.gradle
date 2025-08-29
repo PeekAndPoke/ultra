@@ -6,7 +6,6 @@ include(
         ":ultra:kontainer",
         ":ultra:logging",
         ":ultra:meta",
-        ":ultra:mutator",
         ":ultra:security",
         ":ultra:slumber",
         ":ultra:slumber-test-classes",
@@ -46,5 +45,9 @@ include(
         ":karango:core",
         ":karango:addons",
         ":karango:ksp",
+
+        // MUTATOR //////////////////////////////////////////////////////////////////////////////
+        ":mutator:core",
+        ":mutator:ksp",
 )
 
