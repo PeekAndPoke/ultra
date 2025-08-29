@@ -1,10 +1,12 @@
 package de.peekandpoke.mutator.e2e
 
 import de.peekandpoke.mutator.domain.Address
+import de.peekandpoke.mutator.domain.OneBoundedGenericParam
+import de.peekandpoke.mutator.domain.OneGenericParam
 import de.peekandpoke.mutator.domain.Outer
 import de.peekandpoke.mutator.domain.Person
 import de.peekandpoke.mutator.domain.SealedInterface
-import de.peekandpoke.mutator.domain.SimpleGeneric
+import de.peekandpoke.mutator.domain.TwoGenericParams
 import de.peekandpoke.mutator.domain.address
 import de.peekandpoke.mutator.domain.city
 import de.peekandpoke.mutator.domain.firstName
@@ -13,6 +15,8 @@ import de.peekandpoke.mutator.domain.lastName
 import de.peekandpoke.mutator.domain.mutate
 import de.peekandpoke.mutator.domain.street
 import de.peekandpoke.mutator.domain.value
+import de.peekandpoke.mutator.domain.value1
+import de.peekandpoke.mutator.domain.value2
 import de.peekandpoke.mutator.domain.zip
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -151,9 +155,38 @@ class DomainSpec : StringSpec() {
             result shouldBe SealedInterface.One(value = "1+1")
         }
 
-        "Mutating a generic class" {
-            val subject = SimpleGeneric(value = "1")
+        "Mutating a generic class with one unbounded generic parameter must work" {
+            // With string
+            val subjectStr = OneGenericParam(value = "1")
+            val resultStr = subjectStr.mutate {
+                value = "1+1"
+            }
+            resultStr shouldBe OneGenericParam(value = "1+1")
 
+            // With int
+
+            val subjectInt = OneGenericParam(value = 1)
+            val resultInt = subjectInt.mutate {
+                value += 10
+            }
+            resultInt shouldBe OneGenericParam(value = 1 + 10)
+        }
+
+        "Mutating a generic class with two unbounded generic parameters must work" {
+            val subject = TwoGenericParams(value1 = "1", value2 = 1)
+            val result = subject.mutate {
+                value1 = "1+1"
+                value2 += 10
+            }
+            result shouldBe TwoGenericParams(value1 = "1+1", value2 = 1 + 10)
+        }
+
+        "Mutating a generic class with one bounded generic parameter must work" {
+            val subject = OneBoundedGenericParam(value = "1")
+            val result = subject.mutate {
+                value = "1+1"
+            }
+            result shouldBe OneBoundedGenericParam(value = "1+1")
         }
 
         "Mutating a list of sealed interfaces must work" {

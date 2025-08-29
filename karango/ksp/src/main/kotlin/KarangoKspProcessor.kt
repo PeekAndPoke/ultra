@@ -1,6 +1,5 @@
 package de.peekandpoke.karango.ksp
 
-import com.google.auto.service.AutoService
 import com.google.devtools.ksp.getDeclaredProperties
 import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.processing.CodeGenerator
@@ -9,7 +8,6 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
-import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.FileLocation
 import com.google.devtools.ksp.symbol.KSAnnotated
@@ -29,16 +27,6 @@ import de.peekandpoke.ultra.vault.Ref
 import de.peekandpoke.ultra.vault.Storable
 import de.peekandpoke.ultra.vault.Stored
 import kotlin.reflect.KClass
-
-@Suppress("unused")
-@AutoService(SymbolProcessorProvider::class)
-class KarangoKspProcessorProvider : SymbolProcessorProvider {
-    override fun create(
-        environment: SymbolProcessorEnvironment,
-    ): SymbolProcessor {
-        return KarangoKspProcessor(environment)
-    }
-}
 
 class KarangoKspProcessor(
     private val environment: SymbolProcessorEnvironment,

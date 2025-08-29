@@ -145,7 +145,6 @@ class MutatorKspProcessor(
             { cls -> cls.qualifiedName == null },
             { cls -> cls.qualifiedName?.asString() in blackListedClasses },
             { cls -> !cls.isData() && !cls.isAbstract() && !cls.isSealed() },
-            { cls -> cls.typeParameters.isNotEmpty() },
             { cls -> cls.classKind == ClassKind.ENUM_CLASS },
             { cls -> cls.isCompanionObject },
             { cls -> cls.isPrimitiveOrString() },

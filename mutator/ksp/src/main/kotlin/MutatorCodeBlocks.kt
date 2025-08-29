@@ -5,6 +5,7 @@ import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import de.peekandpoke.mutator.ListMutator
 import de.peekandpoke.mutator.ObjectMutator
 import de.peekandpoke.mutator.SetMutator
+import de.peekandpoke.ultra.common.surround
 
 class MutatorCodeBlocks {
 
@@ -22,10 +23,54 @@ class MutatorCodeBlocks {
 
     fun build() = blocks.joinToString("\n")
 
-    fun wrapWithBackticks(str: String) = "`$str`"
+    fun wrapWithBackticks(str: String) = str.surround("`")
 
     fun getClassName(cls: KSClassDeclaration): String {
         return cls.getSimpleNames().joinToString(".") { wrapWithBackticks(it.asString()) }
+    }
+
+    fun getTypeParams(cls: KSClassDeclaration): String? {
+        if (cls.typeParameters.isEmpty()) return null
+
+        return cls.typeParameters
+            .joinToString(", ") { it.name.asString() }
+            .surround("<", ">")
+    }
+
+    fun getTypeParamsWithBounds(cls: KSClassDeclaration): String? {
+        if (cls.typeParameters.isEmpty()) return null
+
+        return cls.typeParameters.joinToString(", ") {
+            val name = it.name.asString()
+
+            val bounds = it.bounds
+                .map { bound -> bound.resolve() }
+                // We ignore all classes that do not have a qualified name
+                .filterNot { bound ->
+                    bound.declaration.qualifiedName == null
+                }
+                // We ignore kotlin.Any? as this is the default bound
+                .filterNot { bound ->
+                    bound.declaration.qualifiedName?.asString() == Any::class.qualifiedName
+                            && bound.isMarkedNullable
+                }
+                .joinToString(", ") { bound ->
+                    val nullable = if (bound.isMarkedNullable) "?" else ""
+
+                    val cls = when (bound.declaration.isPrimitiveOrString()) {
+                        true -> bound.declaration.simpleName.asString()
+                        else -> bound.declaration.qualifiedName!!.asString()
+                    }
+
+                    cls + nullable
+                }
+
+            if (bounds.isEmpty()) name else "$name : $bounds"
+        }.surround("<", ">")
+    }
+
+    fun getClassNameWithTypeParams(cls: KSClassDeclaration): String {
+        return "${getClassName(cls)}${getTypeParams(cls) ?: ""}"
     }
 
     fun getPropertyName(prop: KSPropertyDeclaration): String {
@@ -41,13 +86,14 @@ class MutatorCodeBlocks {
     }
 
     fun addObjectMutatorField(cls: KSClassDeclaration, prop: KSPropertyDeclaration) = apply {
-        val clsName = getClassName(cls)
+        val clsName = getClassNameWithTypeParams(cls)
+        val typeParams = getTypeParamsWithBounds(cls)?.plus(" ") ?: ""
         val fieldName = getPropertyName(prop)
 
         append(
             """
                 @MutatorDsl
-                inline val Mutator<$clsName>.$fieldName
+                inline val ${typeParams}Mutator<$clsName>.$fieldName
                     get() = get().$fieldName.mutator()
                         .onChange { $fieldName -> modifyValue { get().copy($fieldName = $fieldName) } }
 
@@ -56,13 +102,14 @@ class MutatorCodeBlocks {
     }
 
     fun addObjectPureField(cls: KSClassDeclaration, prop: KSPropertyDeclaration) = apply {
-        val clsName = getClassName(cls)
+        val clsName = getClassNameWithTypeParams(cls)
+        val typeParams = getTypeParamsWithBounds(cls)?.plus(" ") ?: ""
         val fieldName = getPropertyName(prop)
 
         append(
             """
                 @MutatorDsl
-                inline var Mutator<$clsName>.$fieldName
+                inline var ${typeParams}Mutator<$clsName>.$fieldName
                     get() = get().$fieldName
                     set(v) = modifyIfChanged(get().$fieldName, v) { it.copy($fieldName = v) }
 

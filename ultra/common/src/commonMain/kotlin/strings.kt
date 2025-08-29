@@ -11,6 +11,11 @@ import kotlin.jvm.JvmName
 fun String.surround(with: String) = "$with${this}$with"
 
 /**
+ * Puts the string [prefix] before and the string [suffix] after the string
+ */
+fun String.surround(prefix: String, suffix: String) = "$prefix${this}$suffix"
+
+/**
  * Converts the first letter of the String to uppercase
  */
 fun String.ucFirst(): String = when {

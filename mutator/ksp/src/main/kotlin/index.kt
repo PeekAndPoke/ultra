@@ -1,6 +1,7 @@
 package de.peekandpoke.mutator.ksp
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSName
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.Modifier
@@ -24,9 +25,9 @@ fun KSClassDeclaration.isSealed(): Boolean = modifiers.contains(Modifier.SEALED)
 
 fun KSClassDeclaration.isAbstract(): Boolean = modifiers.contains(Modifier.ABSTRACT)
 
-fun KSClassDeclaration.getSimpleNames(): List<KSName> {
+fun KSDeclaration.getSimpleNames(): List<KSName> {
     val names = mutableListOf<KSName>()
-    var current: KSClassDeclaration? = this
+    var current: KSDeclaration? = this
 
     while (current != null) {
         names.add(0, current.simpleName)
@@ -36,7 +37,7 @@ fun KSClassDeclaration.getSimpleNames(): List<KSName> {
     return names.toList()
 }
 
-fun KSClassDeclaration.isPrimitive(): Boolean {
+fun KSDeclaration.isPrimitive(): Boolean {
     val qualifiedName = this.qualifiedName?.asString() ?: return false
 
     return when (qualifiedName) {
@@ -54,7 +55,7 @@ fun KSClassDeclaration.isPrimitive(): Boolean {
     }
 }
 
-fun KSClassDeclaration.isPrimitiveOrString(): Boolean {
+fun KSDeclaration.isPrimitiveOrString(): Boolean {
     val qualifiedName = this.qualifiedName?.asString() ?: return false
 
     return isPrimitive() || when (qualifiedName) {
