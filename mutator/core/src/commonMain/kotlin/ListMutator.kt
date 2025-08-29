@@ -2,11 +2,13 @@ package de.peekandpoke.mutator
 
 fun <V> List<V>.mutator(child: V.() -> Mutator<V>): ListMutator<V> = ListMutatorImpl(this, child)
 
-fun <V> ListMutator<V>.add(element: V): Boolean = add(Mutator.Null(element))
+fun <V> ListMutator<V>.add(element: V): Boolean = add(getChildMutator(element))
 
-fun <V> ListMutator<V>.add(index: Int, element: V) = add(index, Mutator.Null(element))
+fun <V> ListMutator<V>.add(index: Int, element: V) = add(index, getChildMutator(element))
 
-interface ListMutator<V> : Mutator<MutableList<V>>, MutableList<Mutator<V>>
+interface ListMutator<V> : Mutator<MutableList<V>>, MutableList<Mutator<V>> {
+    fun getChildMutator(child: V): Mutator<V>
+}
 
 class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mutator<V>) :
     Mutator.Base<MutableList<V>>(value.toMutableList()),
@@ -61,6 +63,8 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
         }
     }
 
+    override fun getChildMutator(child: V): Mutator<V> = childToMutator(child)
+
     /**
      * The size of the currently mutated list.
      */
@@ -97,7 +101,7 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      * Clears the whole list
      */
     override fun clear() {
-        modifyValue { it.also { clear() } }.commit()
+        modifyValue { it.also { clear() } }.notifyObservers()
     }
 
     /**
@@ -106,28 +110,28 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      * @return `true` because the list is always modified as the result of this operation.
      */
     override fun add(element: Mutator<V>): Boolean {
-        return get().add(element.get()).commit()
+        return get().add(element.get()).notifyObservers()
     }
 
     /**
      * Inserts an element into the list at the specified [index].
      */
     override fun add(index: Int, element: Mutator<V>) {
-        return get().add(index, element.get()).commit()
+        return get().add(index, element.get()).notifyObservers()
     }
 
     /**
      * Adds all the elements of the specified collection to the end of this list.
      */
     override fun addAll(elements: Collection<Mutator<V>>): Boolean {
-        return get().addAll(elements.extract()).commit()
+        return get().addAll(elements.extract()).notifyObservers()
     }
 
     /**
      * Inserts all the elements of the specified collection [elements] into this list at the specified [index].
      */
     override fun addAll(index: Int, elements: Collection<Mutator<V>>): Boolean {
-        return get().addAll(index, elements.extract()).commit()
+        return get().addAll(index, elements.extract()).notifyObservers()
     }
 
     /**
@@ -136,7 +140,7 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      * @return true when the element has been removed from the list
      */
     override fun remove(element: Mutator<V>): Boolean {
-        return get().remove(element.get()).commit()
+        return get().remove(element.get()).notifyObservers()
     }
 
     /**
@@ -147,21 +151,21 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      * @return the element that has been removed.
      */
     override fun removeAt(index: Int): Mutator<V> {
-        return get().removeAt(index).childToMutator().commit()
+        return get().removeAt(index).childToMutator().notifyObservers()
     }
 
     /**
      * Removes all of the given [elements]
      */
     override fun removeAll(elements: Collection<Mutator<V>>): Boolean {
-        return get().removeAll(elements.extract()).commit()
+        return get().removeAll(elements.extract()).notifyObservers()
     }
 
     /**
      * Retains all of the given [elements]
      */
     override fun retainAll(elements: Collection<Mutator<V>>): Boolean {
-        return get().retainAll(elements.extract()).commit()
+        return get().retainAll(elements.extract()).notifyObservers()
     }
 
     /**
@@ -188,7 +192,7 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      * Returns: the element previously at the specified position.
      */
     override fun set(index: Int, element: Mutator<V>): Mutator<V> {
-        return get().set(index, element.get()).childToMutator().commit()
+        return get().set(index, element.get()).childToMutator().notifyObservers()
     }
 
     /**
@@ -228,6 +232,6 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      */
     private fun setAt(index: Int, element: V) {
         get()[index] = element
-        commit()
+        notifyObservers()
     }
 }
