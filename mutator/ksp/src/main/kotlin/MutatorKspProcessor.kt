@@ -1,6 +1,5 @@
-package de.peekandpoke.ultra.ksp
+package de.peekandpoke.mutator.ksp
 
-import com.google.devtools.ksp.getDeclaredProperties
 import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
@@ -10,15 +9,13 @@ import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
-import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSName
-import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSTypeArgument
-import com.google.devtools.ksp.symbol.Modifier
 import de.peekandpoke.mutator.Mutable
 import de.peekandpoke.mutator.NotMutable
+import de.peekandpoke.mutator.ksp.builtin.MutatorKspDataClassPlugin
+import java.util.*
 import kotlin.reflect.KClass
 
 class MutatorKspProcessor(
@@ -37,12 +34,35 @@ class MutatorKspProcessor(
         )
     }
 
+    private val plugins by lazy { loadPlugins() }
+
     private val codeGenerator: CodeGenerator get() = environment.codeGenerator
 
     private val logger: KSPLogger get() = environment.logger
 
     @Suppress("unused")
     private val options: Map<String, String> get() = environment.options
+
+    init {
+        plugins.plugins.forEachIndexed { index, plugin ->
+            logger.warn("Plugin ${index + 1}: ${plugin::class.qualifiedName} - ${plugin.name}")
+        }
+    }
+
+    private fun loadPlugins(): MutatorKspPlugins {
+        val loaded = try {
+            ServiceLoader.load(MutatorKspPlugin::class.java).toList()
+        } catch (e: Exception) {
+            logger.warn("ServiceLoader failed: ${e.message}")
+            emptyList()
+        }
+
+        val builtIn = listOf(
+            MutatorKspDataClassPlugin(),
+        )
+
+        return MutatorKspPlugins(plugins = loaded.plus(builtIn))
+    }
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
 
@@ -55,7 +75,6 @@ class MutatorKspProcessor(
         val allTypes = withAnnotations
             .combineWithReferencedTypes()
             .filterNot { it.hasAnnotation(NotMutable::class) }
-            .filter { it.isData() }
             .filter { it.qualifiedName != null }
             .sortedBy { it.qualifiedName!!.asString() }
 
@@ -68,7 +87,7 @@ class MutatorKspProcessor(
         pool.toSet().let { pool ->
             pool.forEach { cls ->
                 logger.warn("Generating code for type: ${cls.classKind} $cls : ${cls.qualifiedName?.asString()}")
-                generateCode(cls, pool)
+                generateCode(cls)
             }
         }
 
@@ -82,146 +101,41 @@ class MutatorKspProcessor(
         }
     }
 
-
-    private fun generateCode(cls: KSClassDeclaration, poolOfMutables: Set<KSClassDeclaration>) {
-        val simpleNames = cls.getSimpleNames()
-        val subjectName = simpleNames.joinToString(".") { it.asString() }
+    private fun generateCode(cls: KSClassDeclaration) {
         val packageName = cls.packageName.asString()
 
-        val file = codeGenerator.createNewFile(
-            dependencies = Dependencies(
-                aggregating = false,
-                sources = listOfNotNull(cls.containingFile).toTypedArray(),
-            ),
-            packageName = packageName,
-            fileName = subjectName + "${"$$"}mutator",
-            extensionName = "kt",
-        )
+        val ctx =
+            MutatorKspPlugin.MutatorGeneratorContext(codeBlocks = MutatorCodeBlocks(), cls = cls, plugins = plugins)
 
-        val codeBlocks = MutatorCodeBlocks()
+        val handler = plugins.findMutatorGenerator(cls)
+        handler?.generateForClass(ctx)
 
-        codeBlocks.add(
-            """
-                @file:Suppress("RemoveRedundantBackticks")
+        ctx.codeBlocks.takeIf { it.isNotEmpty() }?.let { codeBlocks ->
+            codeBlocks.prepend(
+                """
+                    @file:Suppress("RemoveRedundantBackticks", "unused")
+    
+                    package $packageName
+            
+                    import de.peekandpoke.mutator.*
+            
+                """.trimIndent()
+            )
 
-                package $packageName
-        
-                import de.peekandpoke.mutator.*
-        
-            """.trimIndent()
-        )
+            val simpleNames = cls.getSimpleNames()
+            val subjectName = simpleNames.joinToString(".") { it.asString() }
 
-        when {
-            cls.isData() -> {
-                codeBlocks.add("// Mutator for data class $subjectName")
+            val file = codeGenerator.createNewFile(
+                dependencies = Dependencies(
+                    aggregating = false,
+                    sources = listOfNotNull(cls.containingFile).toTypedArray(),
+                ),
+                packageName = packageName,
+                fileName = subjectName + "${"$$"}mutator",
+                extensionName = "kt",
+            )
 
-                val allFields = cls.getDeclaredProperties()
-
-                val ctorFields = allFields.filter { it.isPrimaryCtorParameter() }
-
-                // TODO: how to handle nested classes ?
-                val clsName = codeBlocks.getClassName(cls)
-
-                codeBlocks.add(
-                    """
-                        @MutatorDsl
-                        fun $clsName.mutator(): DataClassMutator<$clsName> = DataClassMutator(this)
-                        
-                        @MutatorDsl
-                        fun $clsName.mutate(mutation: Mutation<$clsName>): $clsName = mutator().apply(mutation).get()
-                        
-                    """.trimIndent()
-                )
-
-                ctorFields.forEach { field ->
-                    // Is this field if a Mutable type?
-                    if (poolOfMutables.contains(field.type.resolve().declaration)) {
-                        codeBlocks.addMutatorField(cls, field)
-                    } else {
-                        codeBlocks.addGetterSetterField(cls, field)
-                    }
-                }
-            }
-        }
-
-
-
-
-        if (codeBlocks.isNotEmpty()) {
             file.write(codeBlocks.build().toByteArray())
-        }
-    }
-
-    private fun KSPropertyDeclaration.isPrimaryCtorParameter(): Boolean {
-
-        // Get the containing class
-        val classDeclaration = parentDeclaration as? KSClassDeclaration ?: return false
-
-        // Get the primary constructor
-        val primaryConstructor = classDeclaration.primaryConstructor ?: return false
-
-        // Check if this property name matches any of the constructor parameters
-        return primaryConstructor.parameters.any { param ->
-            param.name?.asString() == this.simpleName.asString()
-        }
-    }
-
-    private fun Sequence<KSAnnotation>.print(): String {
-        return toList().print()
-    }
-
-    private fun List<KSAnnotation>.print(): String {
-        return joinToString(", ") { ann -> ann.annotationType.resolve().declaration.qualifiedName?.asString() ?: "n/a" }
-    }
-
-    private fun KSPropertyDeclaration.hasAnyAnnotation(vararg cls: KClass<*>): Boolean {
-        return cls.any { hasAnnotation(it) }
-    }
-
-    private fun KSPropertyDeclaration.hasAnnotation(cls: KClass<*>): Boolean {
-        return annotations.any { ann ->
-            val type = ann.annotationType.resolve().declaration as? KSClassDeclaration
-
-            type?.qualifiedName?.asString() == cls.qualifiedName
-        }
-    }
-
-    private fun KSClassDeclaration.isData(): Boolean {
-        return modifiers.contains(Modifier.DATA)
-    }
-
-    private fun KSClassDeclaration.isSealed(): Boolean {
-        return modifiers.contains(Modifier.SEALED)
-    }
-
-    private fun KSClassDeclaration.getSimpleNames(): List<KSName> {
-        val names = mutableListOf<KSName>()
-        var current: KSClassDeclaration? = this
-
-        while (current != null) {
-            names.add(0, current.simpleName)
-            current = current.parentDeclaration as? KSClassDeclaration
-        }
-
-        return names.toList()
-    }
-
-    private fun KSClassDeclaration.isPrimitiveOrString(): Boolean {
-        val qualifiedName = this.qualifiedName?.asString() ?: return false
-
-        return when (qualifiedName) {
-            Byte::class.qualifiedName,
-            Short::class.qualifiedName,
-            Int::class.qualifiedName,
-            Long::class.qualifiedName,
-            Float::class.qualifiedName,
-            Double::class.qualifiedName,
-            Boolean::class.qualifiedName,
-            Char::class.qualifiedName,
-            String::class.qualifiedName,
-                -> true
-
-            else -> false
         }
     }
 

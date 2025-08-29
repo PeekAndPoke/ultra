@@ -6,7 +6,6 @@ include(
         ":ultra:kontainer",
         ":ultra:logging",
         ":ultra:meta",
-        ":ultra:mutator",
         ":ultra:security",
         ":ultra:slumber",
         ":ultra:slumber-test-classes",

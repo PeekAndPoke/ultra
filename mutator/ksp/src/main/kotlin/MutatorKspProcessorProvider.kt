@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.ksp
+package de.peekandpoke.mutator.ksp
 
 import com.google.auto.service.AutoService
 import com.google.devtools.ksp.processing.SymbolProcessor

@@ -68,6 +68,7 @@
       <module name="ultra.slumber.main" target="17" />
       <module name="ultra.slumber.test" target="17" />
       <module name="ultra.test" target="17" />
+      <module name="ultra.ultra.mutator" target="17" />
       <module name="ultra.ultra.slumber.main" target="17" />
       <module name="ultra.ultra.slumber.test" target="17" />
       <module name="ultra.vault" target="17" />

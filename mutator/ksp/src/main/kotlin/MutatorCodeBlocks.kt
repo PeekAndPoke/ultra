@@ -1,9 +1,18 @@
-package de.peekandpoke.ultra.ksp
+package de.peekandpoke.mutator.ksp
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import de.peekandpoke.mutator.ListMutator
+import de.peekandpoke.mutator.ObjectMutator
+import de.peekandpoke.mutator.SetMutator
 
 class MutatorCodeBlocks {
+
+    companion object {
+        val ObjectMutatorName = ObjectMutator::class.simpleName
+        val ListMutatorName = ListMutator::class.simpleName
+        val SetMutatorName = SetMutator::class.simpleName
+    }
 
     private val blocks = mutableListOf<String>()
 
@@ -16,32 +25,26 @@ class MutatorCodeBlocks {
     fun wrapWithBackticks(str: String) = "`$str`"
 
     fun getClassName(cls: KSClassDeclaration): String {
-        val names = mutableListOf<String>()
-        var current: KSClassDeclaration? = cls
-
-        while (current != null) {
-            names.add(0, wrapWithBackticks(current.simpleName.asString()))
-            current = current.parentDeclaration as? KSClassDeclaration
-        }
-
-        val fullName = names.joinToString(".")
-
-        return fullName
+        return cls.getSimpleNames().joinToString(".") { wrapWithBackticks(it.asString()) }
     }
 
     fun getPropertyName(prop: KSPropertyDeclaration): String {
         return wrapWithBackticks(prop.simpleName.asString())
     }
 
-    fun add(code: String) = apply {
+    fun prepend(code: String) = apply {
+        blocks.add(0, code)
+    }
+
+    fun append(code: String) = apply {
         blocks += code
     }
 
-    fun addMutatorField(cls: KSClassDeclaration, prop: KSPropertyDeclaration) = apply {
+    fun addObjectMutatorField(cls: KSClassDeclaration, prop: KSPropertyDeclaration) = apply {
         val clsName = getClassName(cls)
         val fieldName = getPropertyName(prop)
 
-        add(
+        append(
             """
                 @MutatorDsl
                 inline val Mutator<$clsName>.$fieldName
@@ -52,11 +55,11 @@ class MutatorCodeBlocks {
         )
     }
 
-    fun addGetterSetterField(cls: KSClassDeclaration, prop: KSPropertyDeclaration) = apply {
+    fun addObjectPureField(cls: KSClassDeclaration, prop: KSPropertyDeclaration) = apply {
         val clsName = getClassName(cls)
         val fieldName = getPropertyName(prop)
 
-        add(
+        append(
             """
                 @MutatorDsl
                 inline var Mutator<$clsName>.$fieldName

@@ -47,6 +47,12 @@ interface Mutator<V> : GetAndSet<V>, Observer {
 
     override operator fun invoke(): V = get()
     override operator fun invoke(input: V): V = set(input)
+
+    @MutatorDsl
+    fun <T : V> cast(value: T, block: Mutator<T>.(T) -> Unit) {
+        @Suppress("UNCHECKED_CAST")
+        (this as Mutator<T>).block(value)
+    }
 }
 
 fun <V, M : Mutator<V>> M.onChange(block: OnChange<V>): M = apply { observe(this, block) }

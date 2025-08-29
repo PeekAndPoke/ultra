@@ -25,6 +25,7 @@ kotlin {
     dependencies {
         implementation(Deps.Ksp.symbol_processing)
         implementation(Deps.JavaLibs.Google.auto_service)
+        kapt(Deps.JavaLibs.Google.auto_service)
 
         implementation(project(":ultra:slumber"))
         implementation(project(":ultra:vault"))
@@ -33,6 +34,7 @@ kotlin {
         // //  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
 
         testImplementation(Deps.Ksp.compiletesting_ksp)
+        kaptTest(Deps.JavaLibs.Google.auto_service)
         kspTest(project(":karango:ksp"))
 
         Deps.Test {

@@ -1,9 +1,9 @@
 package de.peekandpoke.ultra.playground
 
-import de.peekandpoke.mutator.DataClassMutator
 import de.peekandpoke.mutator.ListMutator
 import de.peekandpoke.mutator.Mutation
 import de.peekandpoke.mutator.Mutator
+import de.peekandpoke.mutator.ObjectMutator
 import de.peekandpoke.mutator.SetMutator
 import de.peekandpoke.mutator.mutator
 import de.peekandpoke.mutator.onChange
@@ -25,7 +25,7 @@ data class MyClass(
 
 // //  GENERATED CODE  ////////////////////////////////////////////////////////////////////////////////////////////////
 
-fun MyClass.mutator(): DataClassMutator<MyClass> = DataClassMutator(this)
+fun MyClass.mutator(): ObjectMutator<MyClass> = ObjectMutator(this)
 
 fun MyClass.mutate(mutation: Mutation<MyClass>): MyClass = mutator().apply(mutation).get()
 
@@ -41,7 +41,7 @@ inline val Mutator<MyClass>.address
     get() = get().address.mutator()
         .onChange { address -> modifyValue { get().copy(address = address) } }
 
-inline fun MyAddress.mutator(): DataClassMutator<MyAddress> = DataClassMutator(this)
+inline fun MyAddress.mutator(): ObjectMutator<MyAddress> = ObjectMutator(this)
 
 inline fun MyAddress.mutate(mutation: Mutation<MyAddress>): MyAddress = mutator().apply(mutation).get()
 

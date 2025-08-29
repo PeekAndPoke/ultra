@@ -4,6 +4,7 @@ import Deps.Test.configureJvmTests
 
 plugins {
     kotlin("multiplatform")
+    kotlin("kapt")
     id("com.google.devtools.ksp") version Deps.Ksp.version
     id("com.vanniktech.maven.publish")
 }
@@ -71,6 +72,10 @@ dependencies {
     kspCommonMainMetadata(project(":mutator:ksp"))
     add("kspJvmTest", project(":mutator:ksp"))
     add("kspJsTest", project(":mutator:ksp"))
+
+    // Add kapt dependency for JVM target
+    add("kapt", Deps.JavaLibs.Google.auto_service)
+    add("kaptTest", Deps.JavaLibs.Google.auto_service)
 }
 
 tasks {

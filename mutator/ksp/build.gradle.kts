@@ -32,6 +32,7 @@ kotlin {
         // //  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
 
         testImplementation(Deps.Ksp.compiletesting_ksp)
+        kaptTest(Deps.JavaLibs.Google.auto_service)
         kspTest(project(":mutator:ksp"))
 
         Deps.Test {
