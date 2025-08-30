@@ -106,6 +106,22 @@ class MutatorCodeBlocks {
         )
     }
 
+    fun addCollectionMutatorField(cls: KSClassDeclaration, prop: KSPropertyDeclaration) = apply {
+        val clsName = getClassNameWithTypeParams(cls)
+        val typeParams = getTypeParamsWithBounds(cls)?.plus(" ") ?: ""
+        val fieldName = getPropertyName(prop)
+
+        append(
+            """
+                @MutatorDsl
+                inline val ${typeParams}Mutator<$clsName>.$fieldName
+                    get() = get().$fieldName.mutator()
+                        .onChange { $fieldName -> modifyValue { get().copy($fieldName = $fieldName) } }
+
+            """.trimIndent()
+        )
+    }
+
     fun addObjectPureField(cls: KSClassDeclaration, prop: KSPropertyDeclaration) = apply {
         val clsName = getClassNameWithTypeParams(cls)
         val typeParams = getTypeParamsWithBounds(cls)?.plus(" ") ?: ""

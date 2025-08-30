@@ -66,3 +66,13 @@ fun KSDeclaration.isPrimitiveOrString(): Boolean {
         else -> false
     }
 }
+
+fun KSDeclaration.declaresKotlinList(): Boolean {
+    return this is KSClassDeclaration &&
+            this.qualifiedName?.asString() == List::class.qualifiedName!!
+}
+
+fun KSDeclaration.declaresKotlinSet(): Boolean {
+    return this is KSClassDeclaration &&
+            this.qualifiedName?.asString() == Set::class.qualifiedName!!
+}

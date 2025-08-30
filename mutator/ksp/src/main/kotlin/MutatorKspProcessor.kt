@@ -108,7 +108,7 @@ class MutatorKspProcessor(
             MutatorKspPlugin.MutatorGeneratorContext(codeBlocks = MutatorCodeBlocks(), cls = cls, plugins = plugins)
 
         val handler = plugins.findMutatorGenerator(cls)
-        handler?.generateForClass(ctx)
+        handler?.generateMutatorFor(ctx)
 
         ctx.codeBlocks.takeIf { it.isNotEmpty() }?.let { codeBlocks ->
             codeBlocks.prepend(

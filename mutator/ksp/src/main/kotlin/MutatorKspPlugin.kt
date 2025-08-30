@@ -2,6 +2,7 @@ package de.peekandpoke.mutator.ksp
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSDeclaration
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 
 interface MutatorKspPlugin {
 
@@ -19,10 +20,15 @@ interface MutatorKspPlugin {
     /**
      * Checks if the plugin can handle the given type.
      */
-    fun generatesMutatorFor(type: KSDeclaration): Boolean
+    fun generatesMutatorFor(declaration: KSDeclaration, plugins: MutatorKspPlugins): Boolean
 
     /**
      * Generates the code for the given type.
      */
-    fun generateForClass(ctx: MutatorGeneratorContext)
+    fun generateMutatorFor(ctx: MutatorGeneratorContext)
+
+    /**
+     * Checks if the plugin can handle the given property.
+     */
+    fun generatesMutatorFieldFor(property: KSPropertyDeclaration, plugins: MutatorKspPlugins): Boolean
 }

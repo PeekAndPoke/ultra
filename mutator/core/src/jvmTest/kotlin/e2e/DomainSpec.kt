@@ -1,6 +1,8 @@
 package de.peekandpoke.mutator.e2e
 
+import de.peekandpoke.mutator.Mutator
 import de.peekandpoke.mutator.domain.Address
+import de.peekandpoke.mutator.domain.AddressBook
 import de.peekandpoke.mutator.domain.OneBoundedGenericParam
 import de.peekandpoke.mutator.domain.OneGenericParam
 import de.peekandpoke.mutator.domain.Outer
@@ -8,6 +10,7 @@ import de.peekandpoke.mutator.domain.Person
 import de.peekandpoke.mutator.domain.SealedInterface
 import de.peekandpoke.mutator.domain.TwoGenericParams
 import de.peekandpoke.mutator.domain.address
+import de.peekandpoke.mutator.domain.addresses
 import de.peekandpoke.mutator.domain.city
 import de.peekandpoke.mutator.domain.firstName
 import de.peekandpoke.mutator.domain.inner
@@ -244,6 +247,28 @@ class DomainSpec : StringSpec() {
             result shouldBe setOf(
                 SealedInterface.One(value = "1+1"),
                 SealedInterface.Two(value = 1 + 10),
+            )
+        }
+
+        "Mutating an object with a list property must work" {
+            val subject = AddressBook(
+                addresses = listOf(
+                    Address(street = "Street 1", city = "City-1", zip = "Zip-1"),
+                    Address(street = "Street 2", city = "City-2", zip = "Zip-2"),
+                )
+            )
+
+            val result = subject.mutate {
+                addresses.forEach { it: Mutator<Address> ->
+                    it.street += "-changed"
+                }
+            }
+
+            result shouldBe AddressBook(
+                addresses = listOf(
+                    Address(street = "Street 1-changed", city = "City-1", zip = "Zip-1"),
+                    Address(street = "Street 2-changed", city = "City-2", zip = "Zip-2"),
+                )
             )
         }
     }

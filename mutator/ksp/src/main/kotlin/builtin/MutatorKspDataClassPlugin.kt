@@ -3,11 +3,16 @@ package de.peekandpoke.mutator.ksp.builtin
 import com.google.devtools.ksp.getDeclaredProperties
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSDeclaration
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import de.peekandpoke.mutator.ksp.GenericsUtil
 import de.peekandpoke.mutator.ksp.MutatorCodeBlocks.Companion.ListMutatorName
 import de.peekandpoke.mutator.ksp.MutatorCodeBlocks.Companion.ObjectMutatorName
 import de.peekandpoke.mutator.ksp.MutatorCodeBlocks.Companion.SetMutatorName
 import de.peekandpoke.mutator.ksp.MutatorKspPlugin
 import de.peekandpoke.mutator.ksp.MutatorKspPlugin.MutatorGeneratorContext
+import de.peekandpoke.mutator.ksp.MutatorKspPlugins
+import de.peekandpoke.mutator.ksp.declaresKotlinList
+import de.peekandpoke.mutator.ksp.declaresKotlinSet
 import de.peekandpoke.mutator.ksp.isData
 import de.peekandpoke.mutator.ksp.isPrimaryCtorParameter
 import de.peekandpoke.mutator.ksp.isSealed
@@ -16,11 +21,29 @@ class MutatorKspDataClassPlugin : MutatorKspPlugin {
 
     override val name = "BuiltIn: Data Class Plugin"
 
-    override fun generatesMutatorFor(type: KSDeclaration): Boolean {
-        return type is KSClassDeclaration && (type.isData() || type.isSealed())
+    override fun generatesMutatorFor(declaration: KSDeclaration, plugins: MutatorKspPlugins): Boolean {
+        if (declaration !is KSClassDeclaration) return false
+
+        return declaration.isData() || declaration.isSealed()
     }
 
-    override fun generateForClass(ctx: MutatorGeneratorContext) {
+    override fun generatesMutatorFieldFor(
+        property: KSPropertyDeclaration,
+        plugins: MutatorKspPlugins,
+    ): Boolean {
+        val type = property.type.resolve()
+        val decl = type.declaration
+
+        if (decl !is KSClassDeclaration) return false
+
+        if (decl.isData() || decl.isSealed()) return true
+
+        if (isSupportedCollection(property, plugins)) return true
+
+        return false
+    }
+
+    override fun generateMutatorFor(ctx: MutatorGeneratorContext) {
         val cls = ctx.cls
         val codeBlocks = ctx.codeBlocks
         val plugins = ctx.plugins
@@ -47,27 +70,53 @@ class MutatorKspDataClassPlugin : MutatorKspPlugin {
                 ): $clsName = mutator().apply(mutation).get()
                 
                 @MutatorDsl
+                inline fun ${typeParams}List<$clsName>.mutator() = mutator(child = { mutator() })
+                
+                @MutatorDsl
                 inline fun ${typeParams}List<$clsName>.mutate(
                     mutation: $ListMutatorName<$clsName>.() -> Unit,
-                ): List<$clsName> = mutator(child = { mutator() }).apply(mutation).get()
-                
+                ): List<$clsName> = mutator().apply(mutation).get()
+
+                @MutatorDsl
+                inline fun ${typeParams}Set<$clsName>.mutator() = mutator(child = { mutator() })
+
                 @MutatorDsl
                 inline fun ${typeParams}Set<$clsName>.mutate(
                     mutation: $SetMutatorName<$clsName>.() -> Unit,
-                ): Set<$clsName> = mutator(child = { mutator() }).apply(mutation).get()
+                ): Set<$clsName> = mutator().apply(mutation).get()
                 
             """.trimIndent()
         )
 
         if (cls.isData()) {
             ctorFields.forEach { field ->
-                // Is this field if a Mutable type?
-                if (plugins.hasMutatorGenerator(field.type.resolve().declaration)) {
-                    codeBlocks.addObjectMutatorField(cls, field)
-                } else {
-                    codeBlocks.addObjectPureField(cls, field)
+                when {
+                    plugins.hasMutatorFieldGenerator(field) -> {
+                        codeBlocks.addObjectMutatorField(cls, field)
+                    }
+
+                    else -> {
+                        codeBlocks.addObjectPureField(cls, field)
+                    }
                 }
             }
         }
+    }
+
+    private fun isSupportedCollection(property: KSPropertyDeclaration, plugins: MutatorKspPlugins): Boolean {
+        val type = property.type.resolve()
+        val decl = type.declaration
+
+        val collectionTypeParam = decl
+            .takeIf { it.declaresKotlinList() || it.declaresKotlinSet() }
+            ?.typeParameters?.firstOrNull()
+
+        if (collectionTypeParam != null) {
+            val boundType = GenericsUtil { type.boundTypeOf(collectionTypeParam) }
+
+            return boundType != null && plugins.hasMutatorGenerator(boundType.declaration)
+        }
+
+        return false
     }
 }

@@ -60,7 +60,6 @@
             <option value="$PROJECT_DIR$/ultra/kontainer" />
             <option value="$PROJECT_DIR$/ultra/logging" />
             <option value="$PROJECT_DIR$/ultra/meta" />
-            <option value="$PROJECT_DIR$/ultra/mutator" />
             <option value="$PROJECT_DIR$/ultra/security" />
             <option value="$PROJECT_DIR$/ultra/slumber" />
             <option value="$PROJECT_DIR$/ultra/slumber-test-classes" />

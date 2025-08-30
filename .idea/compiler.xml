@@ -69,6 +69,8 @@
       <module name="ultra.slumber.test" target="17" />
       <module name="ultra.test" target="17" />
       <module name="ultra.ultra.mutator" target="17" />
+      <module name="ultra.ultra.mutator.main" target="17" />
+      <module name="ultra.ultra.mutator.test" target="17" />
       <module name="ultra.ultra.slumber.main" target="17" />
       <module name="ultra.ultra.slumber.test" target="17" />
       <module name="ultra.vault" target="17" />
@@ -83,6 +85,9 @@
       <module name="ultra.karango.ksp" options="-proc:none" />
       <module name="ultra.karango.ksp.main" options="-proc:none" />
       <module name="ultra.karango.ksp.test" options="-proc:none" />
+      <module name="ultra.mutator.core" options="-proc:none" />
+      <module name="ultra.mutator.core.jvmMain" options="-proc:none" />
+      <module name="ultra.mutator.core.jvmTest" options="-proc:none" />
       <module name="ultra.mutator.ksp" options="-proc:none" />
       <module name="ultra.mutator.ksp.main" options="-proc:none" />
       <module name="ultra.mutator.ksp.test" options="-proc:none" />
