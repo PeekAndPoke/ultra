@@ -16,12 +16,10 @@ class MutatingListsOfDataClasses : SimpleExample() {
 
     // !END! //
 
-    override val title = "Mutating data classes directly"
+    override val title = "Mutating lists data classes"
 
     override val description = """
-        This example shows how to apply the @Mutate annotation to a data class.
-        
-        We will then mutate the data class directly using `mutate { ... }`.
+        This example shows how to mutate lists of data classes.
     """.trimIndent()
 
     override fun run() {

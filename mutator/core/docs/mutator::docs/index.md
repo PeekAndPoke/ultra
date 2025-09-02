@@ -6,7 +6,7 @@
 
     1. [Mutating data classes directly](#MUTATING-DATA-CLASSES-DIRECTLY)
     2. [Mutating data classes using a Mutator](#MUTATING-DATA-CLASSES-USING-A-MUTATOR)
-   3. [Mutating data classes directly](#MUTATING-DATA-CLASSES-DIRECTLY)
+   3. [Mutating lists data classes](#MUTATING-LISTS-DATA-CLASSES)
 
 2. [Code Generation](#CODE-GENERATION)
 
@@ -101,11 +101,9 @@ Original: Person(name=John, age=42)
 Mutated:  Person(name=Jane, age=32)
 ```
 
-### Mutating data classes directly
+### Mutating lists data classes
 
-This example shows how to apply the @Mutate annotation to a data class.
-
-We will then mutate the data class directly using `mutate { ... }`.
+This example shows how to mutate lists of data classes.
 
 (see the full [example](../../src/examples/basic_mutations/MutatingListsOfDataClasses.kt))
 
@@ -141,9 +139,7 @@ println()
 println("Mutated:")
 result.forEach { println("  - $it") }
 ```
-
 Will output:
-
 ```
 Original:
   - Person(name=John, age=42)
