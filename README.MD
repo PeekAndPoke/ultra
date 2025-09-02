@@ -18,7 +18,7 @@ Kraft builds on top of lightweight VDOM engines, like Preact. The rest is pure K
 
 See [!here](kraft/README.MD) for details.
 
-# Mutator - Easy mutablity for deeply nested data structures
+# Mutator - Mutate the Immutable
 
 Mutator gives you a simple way to mutate deeply nested immutable data structures.
 
