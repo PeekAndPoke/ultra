@@ -25,7 +25,7 @@ class CodeGeneratedForDataClasses : SimpleExample() {
 
     @Mutable
     data class AddressBook(
-        val persons: List<Address>,
+        val persons: List<Person>,
     )
 
     // !END! //

@@ -127,7 +127,7 @@ data class Address(
 
 @Mutable
 data class AddressBook(
-    val persons: List<Address>,
+    val persons: List<Person>,
 )
 ```
 Code generated for the Person class
