@@ -41,9 +41,10 @@ kotlin {
     }
 }
 
-apply<ExtractExampleCodePlugin>()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+apply<ExtractExampleCodePlugin>()
 
 Docs {
     distributeJsExample(dir = "docs/kraft/examples")

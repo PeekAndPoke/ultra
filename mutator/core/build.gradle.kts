@@ -15,9 +15,7 @@ val VERSION_NAME: String by project
 group = MUTATOR_GROUP
 version = VERSION_NAME
 
-Docs {
-    useEmptyJavadoc()
-}
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 kotlin {
 
@@ -61,6 +59,8 @@ kotlin {
         }
 
         jvmTest {
+            kotlin.srcDir("src/examples")
+
             dependencies {
                 Deps.Test { jvmTestDeps() }
             }
@@ -79,7 +79,14 @@ dependencies {
 }
 
 tasks {
-    configureJvmTests()
+    configureJvmTests {
+        dependsOn("generateDocs")
+    }
+
+    create("generateDocs", JavaExec::class) {
+        mainClass.set("de.peekandpoke.mutator.examples.GenerateDocsKt")
+        classpath = sourceSets.getByName("jvmTest").runtimeClasspath
+    }
 }
 
 mavenPublishing {

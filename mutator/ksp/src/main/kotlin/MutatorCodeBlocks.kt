@@ -94,29 +94,14 @@ class MutatorCodeBlocks {
         val clsName = getClassNameWithTypeParams(cls)
         val typeParams = getTypeParamsWithBounds(cls)?.plus(" ") ?: ""
         val fieldName = getPropertyName(prop)
+        val nullable = if (prop.type.resolve().isMarkedNullable) "?" else ""
 
         append(
             """
                 @MutatorDsl
                 inline val ${typeParams}Mutator<$clsName>.$fieldName
-                    get() = get().$fieldName.mutator()
-                        .onChange { $fieldName -> modifyValue { get().copy($fieldName = $fieldName) } }
-
-            """.trimIndent()
-        )
-    }
-
-    fun addCollectionMutatorField(cls: KSClassDeclaration, prop: KSPropertyDeclaration) = apply {
-        val clsName = getClassNameWithTypeParams(cls)
-        val typeParams = getTypeParamsWithBounds(cls)?.plus(" ") ?: ""
-        val fieldName = getPropertyName(prop)
-
-        append(
-            """
-                @MutatorDsl
-                inline val ${typeParams}Mutator<$clsName>.$fieldName
-                    get() = get().$fieldName.mutator()
-                        .onChange { $fieldName -> modifyValue { get().copy($fieldName = $fieldName) } }
+                    get() = get().$fieldName$nullable.mutator()
+                        $nullable.onChange { $fieldName -> modifyValue { get().copy($fieldName = $fieldName) } }
 
             """.trimIndent()
         )

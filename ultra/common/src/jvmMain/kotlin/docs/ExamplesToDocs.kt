@@ -9,8 +9,8 @@ import java.io.File
 abstract class ExamplesToDocs(
     private val title: String,
     private val chapters: List<ExampleChapter>,
-    private val sourceLocation: File = File("src/examples"),
-    private val outputLocation: File = File("common/docs/ultra::docs"),
+    private val sourceLocation: File,
+    private val outputLocation: File,
 ) {
     private val builder = StringBuilder()
 
@@ -99,8 +99,8 @@ abstract class ExamplesToDocs(
                 }
 
                 // Render addition explanation if the is any
-                if (example.additionalInfo.isNotEmpty()) {
-                    builder.appendLine(example.additionalInfo).appendLine()
+                example.additionalOutputs.forEach {
+                    builder.appendLine(it).appendLine()
                 }
             }
         }

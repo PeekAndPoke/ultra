@@ -18,6 +18,16 @@ Kraft builds on top of lightweight VDOM engines, like Preact. The rest is pure K
 
 See [!here](kraft/README.MD) for details.
 
+# Mutator - Easy mutablity for deeply nested data structures
+
+Mutator gives you a simple way to mutate deeply nested immutable data structures.
+
+Read more [here](mutator/README.MD).
+
+Check out the [Docs with examples](mutator/core/docs/mutator::docs/index.md).
+
+Check out the [full example code](mutator/core/src/examples)
+
 # Funktor - combines fun and Ktor
 
 Funktor gives you all you need for your next client-server-application.

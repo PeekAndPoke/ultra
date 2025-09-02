@@ -8,7 +8,7 @@ interface Example {
     val description: String
 
     /** Additional information that is shown after the example code and output */
-    val additionalInfo: String get() = ""
+    val additionalOutputs: List<String>
 
     /**
      * Runs the example code
@@ -19,9 +19,18 @@ interface Example {
      * Runs the example code while trapping all console output
      */
     fun runAndRecordOutput(): String
+
+    /**
+     * Adds additional output to the example
+     */
+    fun addAdditionalOutput(output: String)
 }
 
 abstract class SimpleExample : Example {
+
+    private val _additionalOutputs = mutableListOf<String>()
+
+    override val additionalOutputs: List<String> get() = _additionalOutputs.toList()
 
     private var builder: StringBuilder? = null
 
@@ -38,6 +47,10 @@ abstract class SimpleExample : Example {
 $code
 ```
     """
+
+    override fun addAdditionalOutput(output: String) {
+        _additionalOutputs.add(output)
+    }
 
     fun print(message: Any) {
         when (val b = builder) {

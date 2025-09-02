@@ -4,11 +4,14 @@ import de.peekandpoke.ultra.common.docs.ExamplesToDocs
 import de.peekandpoke.ultra.kontainer.examples.defining_modules._DefiningModules
 import de.peekandpoke.ultra.kontainer.examples.defining_services._DefiningServices
 import de.peekandpoke.ultra.kontainer.examples.injecting_services._InjectingServices
+import java.io.File
 
 fun main() {
     val generator = object : ExamplesToDocs(
         title = "Examples for ultra::kontainer",
-        chapters = chapters
+        chapters = chapters,
+        sourceLocation = File("src/examples"),
+        outputLocation = File("common/docs/ultra::docs"),
     ) {}
 
     generator.run()
