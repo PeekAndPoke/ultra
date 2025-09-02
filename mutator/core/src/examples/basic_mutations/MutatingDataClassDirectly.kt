@@ -30,16 +30,11 @@ class MutatingDataClassDirectly : SimpleExample() {
         // Get an instance
         val person = Person("John", 42)
 
-        // Create the mutator
-        val mutator = person.mutator()
-
-        // We can invoke the mutator ...
-        val result = mutator {
+        // We mutate the instance directly
+        val result = person.mutate {
             name = "Jane"
+            age -= 10
         }
-
-        // Or we can change properties directly ...
-        mutator.age -= 10
 
         // Results in
         println("Original: $person")

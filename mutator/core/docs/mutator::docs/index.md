@@ -32,29 +32,22 @@ data class Person(
 // Get an instance
 val person = Person("John", 42)
 
-// Create the mutator
-val mutator = person.mutator()
-
-// We can invoke the mutator ...
-val result = mutator {
+// We mutate the instance directly
+val result = person.mutate {
     name = "Jane"
+    age -= 10
 }
-
-// Or we can change properties directly ...
-mutator.age -= 10
 
 // Results in
 println("Original: $person")
 println()
 println("Mutated:  $result")
 ```
-
 Will output:
-
 ```
 Original: Person(name=John, age=42)
 
-Mutated:  de.peekandpoke.mutator.ObjectMutator@6a024a67
+Mutated:  Person(name=Jane, age=32)
 ```
 
 ### Mutating data classes using a Mutator
@@ -76,21 +69,32 @@ data class Person(
 // Get an instance
 val person = Person("John", 42)
 
-// We mutate the instance directly
-val result = person.mutate {
+// Create the mutator
+val mutator = person.mutator()
+
+// We can invoke the mutator ...
+mutator {
     name = "Jane"
-    age -= 10
 }
 
+// Or we can change properties directly ...
+mutator.age -= 10
+
+// Get the result
+val result = mutator()
+val isModified = mutator.isModified()
+
 // Results in
+println("Is modified: $isModified")
+println()
 println("Original: $person")
 println()
 println("Mutated:  $result")
 ```
-
 Will output:
-
 ```
+Is modified: true
+
 Original: Person(name=John, age=42)
 
 Mutated:  Person(name=Jane, age=32)
@@ -126,8 +130,8 @@ data class AddressBook(
     val persons: List<Address>,
 )
 ```
-
 Code generated for the Person class
+
 
 ```kotlin
 @file:Suppress("RemoveRedundantBackticks", "unused", "NOTHING_TO_INLINE")
@@ -181,6 +185,7 @@ get() = get().`address`?.mutator()
 
 Code generated for the Address class
 
+
 ```kotlin
 @file:Suppress("RemoveRedundantBackticks", "unused", "NOTHING_TO_INLINE")
 
@@ -227,6 +232,7 @@ set(v) = modifyIfChanged(get().`city`, v) { it.copy(`city` = v) }
 ```
 
 Code generated for the AddressBook class
+
 
 ```kotlin
 @file:Suppress("RemoveRedundantBackticks", "unused", "NOTHING_TO_INLINE")

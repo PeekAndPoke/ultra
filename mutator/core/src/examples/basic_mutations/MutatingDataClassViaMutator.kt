@@ -27,17 +27,27 @@ class MutatingDataClassViaMutator : SimpleExample() {
     override fun run() {
         // !BEGIN! //
 
-
         // Get an instance
         val person = Person("John", 42)
 
-        // We mutate the instance directly
-        val result = person.mutate {
+        // Create the mutator
+        val mutator = person.mutator()
+
+        // We can invoke the mutator ...
+        mutator {
             name = "Jane"
-            age -= 10
         }
 
+        // Or we can change properties directly ...
+        mutator.age -= 10
+
+        // Get the result
+        val result = mutator()
+        val isModified = mutator.isModified()
+
         // Results in
+        println("Is modified: $isModified")
+        println()
         println("Original: $person")
         println()
         println("Mutated:  $result")
