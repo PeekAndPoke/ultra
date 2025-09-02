@@ -10,5 +10,6 @@ class _BasicMutationsChapters : ExampleChapter {
     override val examples = listOf(
         MutatingDataClassDirectly(),
         MutatingDataClassViaMutator(),
+        MutatingListsOfDataClasses()
     )
 }

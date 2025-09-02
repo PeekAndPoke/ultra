@@ -6,6 +6,7 @@
 
     1. [Mutating data classes directly](#MUTATING-DATA-CLASSES-DIRECTLY)
     2. [Mutating data classes using a Mutator](#MUTATING-DATA-CLASSES-USING-A-MUTATOR)
+   3. [Mutating data classes directly](#MUTATING-DATA-CLASSES-DIRECTLY)
 
 2. [Code Generation](#CODE-GENERATION)
 
@@ -98,6 +99,61 @@ Is modified: true
 Original: Person(name=John, age=42)
 
 Mutated:  Person(name=Jane, age=32)
+```
+
+### Mutating data classes directly
+
+This example shows how to apply the @Mutate annotation to a data class.
+
+We will then mutate the data class directly using `mutate { ... }`.
+
+(see the full [example](../../src/examples/basic_mutations/MutatingListsOfDataClasses.kt))
+
+```kotlin
+// We defined the data class
+@Mutable
+data class Person(
+    val name: String,
+    val age: Int,
+)
+
+// Get an instance
+val persons = listOf(
+    Person("John", 42),
+    Person("Jane", 40),
+    Person("Jill", 30),
+    Person("Jack", 20),
+)
+
+// We mutate the instance directly
+val result = persons.mutate {
+    // We only keep persons with age <= 30
+    retainAll { it.age <= 30 }
+
+    // And then we modify them
+    forEach { it.name += "-changed" }
+}
+
+// Results in
+println("Original:")
+persons.forEach { println("  - $it") }
+println()
+println("Mutated:")
+result.forEach { println("  - $it") }
+```
+
+Will output:
+
+```
+Original:
+  - Person(name=John, age=42)
+  - Person(name=Jane, age=40)
+  - Person(name=Jill, age=30)
+  - Person(name=Jack, age=20)
+
+Mutated:
+  - Person(name=Jill-changed, age=30)
+  - Person(name=Jack-changed, age=20)
 ```
 
 ## Code Generation

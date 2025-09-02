@@ -47,19 +47,19 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
         override fun previousIndex(): Int = pos - 1
 
         override fun previous(): Mutator<V> {
-            TODO("Not yet implemented")
+            return get()[--pos].childToMutator().also { current = it }
         }
 
         override fun remove() {
-            TODO("Not yet implemented")
+            removeAt(--pos)
         }
 
         override fun add(element: Mutator<V>) {
-            TODO("Not yet implemented")
+            add(pos++, element)
         }
 
         override fun set(element: Mutator<V>) {
-            TODO("Not yet implemented")
+            setAt(pos - 1, element.get())
         }
     }
 
