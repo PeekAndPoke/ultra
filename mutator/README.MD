@@ -1,6 +1,8 @@
 # Mutator
 
-Mutator generates code that helps you to mutate nested immutable data structures with hassle of
+Mutator generates code that helps you to mutate nested immutable data structures without hassle.
+
+Constructs like this are no longer necessary:
 
 ```
 copy(
