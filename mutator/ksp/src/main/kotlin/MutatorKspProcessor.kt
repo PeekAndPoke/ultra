@@ -1,20 +1,19 @@
 package de.peekandpoke.mutator.ksp
 
-import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
-import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSTypeArgument
 import de.peekandpoke.mutator.Mutable
 import de.peekandpoke.mutator.NotMutable
-import de.peekandpoke.mutator.ksp.builtin.MutatorKspDataClassPlugin
+import de.peekandpoke.mutator.ksp.builtin.BuiltInMutableObjectsPlugin
+import de.peekandpoke.mutator.ksp.builtin.BuiltInPlatformTypesVetoingPlugin
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -22,30 +21,18 @@ class MutatorKspProcessor(
     private val environment: SymbolProcessorEnvironment,
 ) : SymbolProcessor {
 
-    companion object {
-        val blackListedPackages = listOf(
-            "java.",
-            "javax.",
-            "kotlin.",
-            "kotlinx.",
-        )
+    val plugins by lazy { loadPlugins() }
 
-        val blackListedClasses = listOf<String>(
-        )
-    }
-
-    private val plugins by lazy { loadPlugins() }
+    val logger: KSPLogger get() = environment.logger
 
     private val codeGenerator: CodeGenerator get() = environment.codeGenerator
-
-    private val logger: KSPLogger get() = environment.logger
 
     @Suppress("unused")
     private val options: Map<String, String> get() = environment.options
 
     init {
         plugins.plugins.forEachIndexed { index, plugin ->
-            logger.warn("Plugin ${index + 1}: ${plugin::class.qualifiedName} - ${plugin.name}")
+            logger.warn("Plugin ${index + 1}: ${plugin.name} | ${plugin::class.qualifiedName}")
         }
     }
 
@@ -58,10 +45,14 @@ class MutatorKspProcessor(
         }
 
         val builtIn = listOf(
-            MutatorKspDataClassPlugin(),
+            BuiltInPlatformTypesVetoingPlugin(),
+            BuiltInMutableObjectsPlugin(),
         )
 
-        return MutatorKspPlugins(plugins = loaded.plus(builtIn))
+        return MutatorKspPlugins(
+            processor = this,
+            plugins = loaded.plus(builtIn),
+        )
     }
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
@@ -75,16 +66,10 @@ class MutatorKspProcessor(
         val allTypes = withAnnotations
             .combineWithReferencedTypes()
             .filterNot { it.hasAnnotation(NotMutable::class) }
-            .filter { it.qualifiedName != null }
-            .sortedBy { it.qualifiedName!!.asString() }
+            .filterNot { plugins.isVetoed(it) }
+            .sortedBy { it.qualifiedName?.asString() }
 
-        val (pool, blacklisted) = allTypes.partition { !it.isBlackListed() }
-
-        blacklisted.toSet().forEach { cls ->
-            logger.warn("Blacklisted type: ${cls.classKind} $cls : ${cls.qualifiedName?.asString()}")
-        }
-
-        pool.toSet().let { pool ->
+        allTypes.toSet().let { pool ->
             pool.forEach { cls ->
                 logger.warn("Generating code for type: ${cls.classKind} $cls : ${cls.qualifiedName?.asString()}")
                 generateCode(cls)
@@ -108,7 +93,7 @@ class MutatorKspProcessor(
             MutatorKspPlugin.MutatorGeneratorContext(codeBlocks = MutatorCodeBlocks(), cls = cls, plugins = plugins)
 
         val handler = plugins.findMutatorGenerator(cls)
-        handler?.generateMutatorFor(ctx)
+        handler?.generateMutatorFor(processor = this, ctx = ctx)
 
         ctx.codeBlocks.takeIf { it.isNotEmpty() }?.let { codeBlocks ->
             codeBlocks.prepend(
@@ -137,25 +122,6 @@ class MutatorKspProcessor(
 
             file.write(codeBlocks.build().toByteArray())
         }
-    }
-
-    private fun KSClassDeclaration.isBlackListed(): Boolean {
-
-        val predicates = listOf<(KSClassDeclaration) -> Boolean>(
-            { cls -> cls.qualifiedName == null },
-            { cls -> cls.qualifiedName?.asString() in blackListedClasses },
-            { cls -> !cls.isData() && !cls.isAbstract() && !cls.isSealed() },
-            { cls -> cls.classKind == ClassKind.ENUM_CLASS },
-            { cls -> cls.isCompanionObject },
-            { cls -> cls.isPrimitiveOrString() },
-            { cls ->
-                val fqn = cls.qualifiedName?.asString()
-
-                blackListedPackages.any { pkg -> fqn?.startsWith(pkg) == true }
-            },
-        )
-
-        return predicates.any { it(this) }
     }
 
     private fun Sequence<KSClassDeclaration>.combineWithReferencedTypes(): Set<KSClassDeclaration> {

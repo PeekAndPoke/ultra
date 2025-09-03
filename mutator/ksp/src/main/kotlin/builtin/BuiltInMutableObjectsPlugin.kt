@@ -11,23 +11,29 @@ import de.peekandpoke.mutator.ksp.MutatorCodeBlocks.Companion.SetMutatorName
 import de.peekandpoke.mutator.ksp.MutatorKspPlugin
 import de.peekandpoke.mutator.ksp.MutatorKspPlugin.MutatorGeneratorContext
 import de.peekandpoke.mutator.ksp.MutatorKspPlugins
+import de.peekandpoke.mutator.ksp.MutatorKspProcessor
 import de.peekandpoke.mutator.ksp.declaresKotlinList
 import de.peekandpoke.mutator.ksp.declaresKotlinSet
 import de.peekandpoke.mutator.ksp.isData
 import de.peekandpoke.mutator.ksp.isPrimaryCtorParameter
 import de.peekandpoke.mutator.ksp.isSealed
 
-class MutatorKspDataClassPlugin : MutatorKspPlugin {
+class BuiltInMutableObjectsPlugin : MutatorKspPlugin {
 
-    override val name = "BuiltIn: Data Class Plugin"
+    override val name = "BuiltIn: Mutable Objects Plugin"
 
-    override fun generatesMutatorFor(declaration: KSDeclaration, plugins: MutatorKspPlugins): Boolean {
+    override fun generatesMutatorFor(
+        processor: MutatorKspProcessor,
+        declaration: KSDeclaration,
+        plugins: MutatorKspPlugins,
+    ): Boolean {
         if (declaration !is KSClassDeclaration) return false
 
         return declaration.isData() || declaration.isSealed()
     }
 
     override fun generatesMutatorFieldFor(
+        processor: MutatorKspProcessor,
         property: KSPropertyDeclaration,
         plugins: MutatorKspPlugins,
     ): Boolean {
@@ -43,7 +49,10 @@ class MutatorKspDataClassPlugin : MutatorKspPlugin {
         return false
     }
 
-    override fun generateMutatorFor(ctx: MutatorGeneratorContext) {
+    override fun generateMutatorFor(
+        processor: MutatorKspProcessor,
+        ctx: MutatorGeneratorContext,
+    ) {
         val cls = ctx.cls
         val codeBlocks = ctx.codeBlocks
         val plugins = ctx.plugins

@@ -6,23 +6,22 @@ import de.peekandpoke.ultra.vault.lang.Expression
 import de.peekandpoke.ultra.vault.lang.ObjectValueExpr
 import de.peekandpoke.ultra.vault.lang.Printable
 import de.peekandpoke.ultra.vault.lang.Printer
-import de.peekandpoke.ultra.vault.lang.Printer.Result
 import kotlin.math.max
 
 /**
  * Prints the raw query, with all parameter value included
  */
-fun Printable.printRawQuery() = AqlPrinter.raw(this)
+fun Printable.printRawQuery(): String = AqlPrinter.printRawQuery(this)
 
 /**
  * Prints the query, with placeholders for parameters
  */
-fun Printable.printQuery() = AqlPrinter.sandbox(this)
+fun Printable.printQuery(): String = AqlPrinter.printQuery(this)
 
 /**
  * Prints the query and returns a [Printer.Result]
  */
-fun Printable.print() = AqlPrinter.sandboxQuery(this)
+fun Printable.print(): Printer.Result = AqlPrinter.print(this)
 
 /**
  * The Aql printer
@@ -33,11 +32,11 @@ class AqlPrinter : Printer {
      * Internal static helpers
      */
     companion object {
-        internal fun raw(printable: Printable): String = sandboxQuery(printable).raw
+        internal fun printRawQuery(printable: Printable): String = print(printable).raw
 
-        internal fun sandbox(printable: Printable): String = sandboxQuery(printable).query
+        internal fun printQuery(printable: Printable): String = print(printable).query
 
-        internal fun sandboxQuery(printable: Printable): Printer.Result = AqlPrinter().append(printable).build()
+        internal fun print(printable: Printable): Printer.Result = AqlPrinter().append(printable).build()
     }
 
     private val stringBuilder = StringBuilder()
@@ -47,7 +46,7 @@ class AqlPrinter : Printer {
     private var newLine = true
 
     /**
-     * Build the [Result]
+     * Build the [Printer.Result]
      */
     fun build() = Printer.Result(stringBuilder.toString(), queryVars)
 

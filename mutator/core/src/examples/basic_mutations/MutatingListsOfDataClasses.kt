@@ -16,7 +16,7 @@ class MutatingListsOfDataClasses : SimpleExample() {
 
     // !END! //
 
-    override val title = "Mutating lists data classes"
+    override val title = "Mutating lists of data classes"
 
     override val description = """
         This example shows how to mutate lists of data classes.
