@@ -39,6 +39,7 @@
             <option value="$PROJECT_DIR$/kraft/addons/avatars" />
             <option value="$PROJECT_DIR$/kraft/addons/browserdetect" />
             <option value="$PROJECT_DIR$/kraft/addons/chartjs" />
+            <option value="$PROJECT_DIR$/kraft/addons/jwtdecode" />
             <option value="$PROJECT_DIR$/kraft/addons/konva" />
             <option value="$PROJECT_DIR$/kraft/addons/marked" />
             <option value="$PROJECT_DIR$/kraft/addons/nxcompile" />

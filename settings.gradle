@@ -18,6 +18,7 @@ include(
         ":kraft:addons:avatars",
         ":kraft:addons:browserdetect",
         ":kraft:addons:chartjs",
+        ":kraft:addons:jwtdecode",
         ":kraft:addons:konva",
         ":kraft:addons:marked",
         ":kraft:addons:nxcompile",
