@@ -5,8 +5,8 @@ import de.peekandpoke.funktor.insights.InsightsCollectorData
 import de.peekandpoke.funktor.insights.gui.InsightsBarTemplate
 import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
 import de.peekandpoke.funktor.staticweb.resources.prismjs.prism
-import de.peekandpoke.kraft.semanticui.icon
-import de.peekandpoke.kraft.semanticui.ui
+import de.peekandpoke.ultra.semanticui.icon
+import de.peekandpoke.ultra.semanticui.ui
 import de.peekandpoke.ultra.vault.domain.DatabaseGraphModel
 import de.peekandpoke.ultra.vault.profiling.QueryProfiler
 import de.peekandpoke.ultra.vault.tools.DatabaseGraphBuilder

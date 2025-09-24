@@ -1,11 +1,11 @@
 package de.peekandpoke.funktor.cluster.backgroundjobs
 
-import de.peekandpoke.kraft.semanticui.SemanticIconFn
-import de.peekandpoke.kraft.semanticui.css
-import de.peekandpoke.kraft.semanticui.icon
-import de.peekandpoke.kraft.semanticui.noui
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
+import de.peekandpoke.ultra.semanticui.SemanticIconFn
+import de.peekandpoke.ultra.semanticui.css
+import de.peekandpoke.ultra.semanticui.icon
+import de.peekandpoke.ultra.semanticui.noui
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.css.Color
 import kotlinx.css.Overflow
 import kotlinx.css.Padding

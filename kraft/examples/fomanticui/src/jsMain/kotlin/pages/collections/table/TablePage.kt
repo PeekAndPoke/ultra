@@ -7,13 +7,26 @@ import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.examples.fomanticui.helpers.HorizontalContentAndCode
 import de.peekandpoke.kraft.examples.fomanticui.helpers.example
 import de.peekandpoke.kraft.examples.fomanticui.helpers.readTheFomanticUiDocs
-import de.peekandpoke.kraft.semanticui.icon
-import de.peekandpoke.kraft.semanticui.noui
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.fixture.LoremIpsum
+import de.peekandpoke.ultra.semanticui.icon
+import de.peekandpoke.ultra.semanticui.noui
+import de.peekandpoke.ultra.semanticui.ui
 import generated.ExtractedCodeBlocks
-import kotlinx.html.*
+import kotlinx.html.FlowContent
+import kotlinx.html.InputType
+import kotlinx.html.Tag
+import kotlinx.html.a
+import kotlinx.html.br
+import kotlinx.html.input
+import kotlinx.html.label
+import kotlinx.html.p
+import kotlinx.html.tbody
+import kotlinx.html.td
+import kotlinx.html.tfoot
+import kotlinx.html.th
+import kotlinx.html.thead
+import kotlinx.html.tr
 
 @Suppress("FunctionName")
 fun Tag.TablePage() = comp {

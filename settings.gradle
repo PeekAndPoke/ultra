@@ -7,13 +7,13 @@ include(
         ":ultra:logging",
         ":ultra:meta",
         ":ultra:security",
+        ":ultra:semanticui",
         ":ultra:slumber",
         ":ultra:slumber-test-classes",
         ":ultra:vault",
 
         // KRAFT ////////////////////////////////////////////////////////////////////////////////
         ":kraft:core",
-        ":kraft:semanticui",
         // Addons
         ":kraft:addons:avatars",
         ":kraft:addons:browserdetect",

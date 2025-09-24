@@ -15,9 +15,13 @@ import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import de.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.common.datetime.*
+import de.peekandpoke.ultra.common.datetime.Kronos
+import de.peekandpoke.ultra.common.datetime.MpLocalDate
+import de.peekandpoke.ultra.common.datetime.MpLocalDateTime
+import de.peekandpoke.ultra.common.datetime.MpTimezone
+import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.Tag
 
 @Suppress("FunctionName")

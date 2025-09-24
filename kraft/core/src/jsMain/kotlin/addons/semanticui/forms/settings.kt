@@ -5,8 +5,12 @@ import de.peekandpoke.kraft.addons.forms.FieldOptions
 import de.peekandpoke.kraft.addons.forms.InputOptions
 import de.peekandpoke.kraft.addons.forms.KraftFormsSettingDsl
 import de.peekandpoke.kraft.components.onClick
-import de.peekandpoke.kraft.semanticui.*
 import de.peekandpoke.ultra.common.TypedKey
+import de.peekandpoke.ultra.semanticui.SemanticFn
+import de.peekandpoke.ultra.semanticui.SemanticIconFn
+import de.peekandpoke.ultra.semanticui.SemanticTag
+import de.peekandpoke.ultra.semanticui.icon
+import de.peekandpoke.ultra.semanticui.semantic
 import kotlinx.html.DIV
 import kotlinx.html.I
 import kotlinx.html.InputType

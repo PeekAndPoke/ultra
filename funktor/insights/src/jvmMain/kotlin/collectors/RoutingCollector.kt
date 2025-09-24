@@ -4,7 +4,7 @@ import de.peekandpoke.funktor.insights.InsightsCollector
 import de.peekandpoke.funktor.insights.InsightsCollectorData
 import de.peekandpoke.funktor.insights.RoutingInstrumentation
 import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
-import de.peekandpoke.kraft.semanticui.icon
+import de.peekandpoke.ultra.semanticui.icon
 import io.ktor.server.application.*
 import kotlinx.html.pre
 

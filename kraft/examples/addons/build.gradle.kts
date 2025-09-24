@@ -36,6 +36,7 @@ kotlin {
                 api(project(":kraft:addons:avatars"))
                 api(project(":kraft:addons:browserdetect"))
                 api(project(":kraft:addons:chartjs"))
+                api(project(":kraft:addons:jwtdecode"))
                 api(project(":kraft:addons:konva"))
                 api(project(":kraft:addons:marked"))
                 api(project(":kraft:addons:nxcompile"))

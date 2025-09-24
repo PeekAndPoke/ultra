@@ -11,10 +11,10 @@ plugins {
     id("com.vanniktech.maven.publish")
 }
 
-val KRAFT_GROUP: String by project
+val ULTRA_GROUP: String by project
 val VERSION_NAME: String by project
 
-group = KRAFT_GROUP
+group = ULTRA_GROUP
 version = VERSION_NAME
 
 Docs {

@@ -3,11 +3,11 @@ package de.peekandpoke.funktor.cluster
 import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.semanticui.RenderFn
-import de.peekandpoke.kraft.semanticui.icon
-import de.peekandpoke.kraft.semanticui.noui
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.semanticui.RenderFn
+import de.peekandpoke.ultra.semanticui.icon
+import de.peekandpoke.ultra.semanticui.noui
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 
 class FunktorClusterOverviewPage(ctx: Ctx<Props>) : Component<FunktorClusterOverviewPage.Props>(ctx) {

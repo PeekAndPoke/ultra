@@ -1,9 +1,15 @@
 package de.peekandpoke.kraft.examples.fomanticui.helpers
 
 import de.peekandpoke.kraft.components.key
-import de.peekandpoke.kraft.semanticui.noui
-import de.peekandpoke.kraft.semanticui.ui
-import kotlinx.html.*
+import de.peekandpoke.ultra.semanticui.noui
+import de.peekandpoke.ultra.semanticui.ui
+import kotlinx.html.FlowContent
+import kotlinx.html.TD
+import kotlinx.html.tbody
+import kotlinx.html.td
+import kotlinx.html.th
+import kotlinx.html.thead
+import kotlinx.html.tr
 import kotlin.reflect.KProperty1
 
 data class PropRenderer<T, V>(

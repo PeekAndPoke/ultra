@@ -15,11 +15,11 @@ import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.components.onContextMenu
 import de.peekandpoke.kraft.components.onContextMenuStoppingEvent
 import de.peekandpoke.kraft.components.onKeyDown
-import de.peekandpoke.kraft.semanticui.css
-import de.peekandpoke.kraft.semanticui.noui
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
+import de.peekandpoke.ultra.semanticui.css
+import de.peekandpoke.ultra.semanticui.noui
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.browser.window
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.css.vw

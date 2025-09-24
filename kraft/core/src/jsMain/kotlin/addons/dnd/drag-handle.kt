@@ -3,10 +3,10 @@ package de.peekandpoke.kraft.addons.dnd
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.semanticui.css
 import de.peekandpoke.kraft.utils.Vector2D
 import de.peekandpoke.kraft.utils.absolutePosition
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.semanticui.css
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.css.Display

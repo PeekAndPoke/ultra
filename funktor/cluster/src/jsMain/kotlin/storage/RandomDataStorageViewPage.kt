@@ -4,12 +4,12 @@ import de.peekandpoke.funktor.cluster.FunktorClusterUi
 import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.semanticui.css
-import de.peekandpoke.kraft.semanticui.noui
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
+import de.peekandpoke.ultra.semanticui.css
+import de.peekandpoke.ultra.semanticui.noui
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.css.Color
 import kotlinx.css.Overflow
 import kotlinx.css.Padding

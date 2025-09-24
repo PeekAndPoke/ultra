@@ -2,7 +2,7 @@ package de.peekandpoke.funktor.insights
 
 import de.peekandpoke.funktor.insights.gui.InsightsBarTemplate
 import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
-import de.peekandpoke.kraft.semanticui.ui
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.DIV
 import kotlinx.html.Unsafe
 import kotlinx.html.div

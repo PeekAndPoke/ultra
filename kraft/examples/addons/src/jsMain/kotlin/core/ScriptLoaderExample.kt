@@ -4,14 +4,21 @@ import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.onClick
-import de.peekandpoke.kraft.semanticui.icon
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.utils.ScriptLoader
 import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.semanticui.icon
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.browser.window
 import kotlinx.coroutines.asDeferred
-import kotlinx.html.*
+import kotlinx.html.Tag
+import kotlinx.html.link
+import kotlinx.html.p
+import kotlinx.html.tbody
+import kotlinx.html.td
+import kotlinx.html.thead
+import kotlinx.html.tr
+import kotlinx.html.unsafe
 import kotlin.js.Promise
 
 @Suppress("FunctionName")

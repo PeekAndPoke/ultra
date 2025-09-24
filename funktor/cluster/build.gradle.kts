@@ -33,7 +33,7 @@ kotlin {
                 implementation(Deps.KotlinX.wrappers_css)
 
                 implementation(project(":kraft:core"))
-                implementation(project(":kraft:semanticui"))
+                implementation(project(":ultra:semanticui"))
 
                 implementation(project(":funktor:core"))
                 implementation(project(":funktor:rest"))

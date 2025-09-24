@@ -4,14 +4,14 @@ import de.peekandpoke.funktor.insights.InsightsCollector
 import de.peekandpoke.funktor.insights.InsightsCollectorData
 import de.peekandpoke.funktor.insights.gui.InsightsBarTemplate
 import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
-import de.peekandpoke.kraft.semanticui.icon
-import de.peekandpoke.kraft.semanticui.noui
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.ultra.common.recursion.recurse
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.kontainer.KontainerBlueprint
 import de.peekandpoke.ultra.kontainer.ServiceProvider
 import de.peekandpoke.ultra.kontainer.domain.DebugInfo
+import de.peekandpoke.ultra.semanticui.icon
+import de.peekandpoke.ultra.semanticui.noui
+import de.peekandpoke.ultra.semanticui.ui
 import io.ktor.server.application.*
 import kotlinx.html.Unsafe
 import kotlinx.html.div

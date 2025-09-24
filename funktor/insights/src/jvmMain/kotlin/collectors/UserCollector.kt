@@ -4,11 +4,11 @@ import de.peekandpoke.funktor.insights.InsightsCollector
 import de.peekandpoke.funktor.insights.InsightsCollectorData
 import de.peekandpoke.funktor.insights.gui.InsightsBarTemplate
 import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
-import de.peekandpoke.kraft.semanticui.icon
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.ultra.security.user.UserPermissions
 import de.peekandpoke.ultra.security.user.UserProvider
 import de.peekandpoke.ultra.security.user.UserRecord
+import de.peekandpoke.ultra.semanticui.icon
+import de.peekandpoke.ultra.semanticui.ui
 import io.ktor.server.application.*
 import kotlinx.html.title
 

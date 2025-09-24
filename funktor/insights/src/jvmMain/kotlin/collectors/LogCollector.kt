@@ -5,12 +5,12 @@ import de.peekandpoke.funktor.insights.InsightsCollector
 import de.peekandpoke.funktor.insights.InsightsCollectorData
 import de.peekandpoke.funktor.insights.gui.InsightsBarTemplate
 import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
-import de.peekandpoke.kraft.semanticui.SemanticFn
-import de.peekandpoke.kraft.semanticui.icon
-import de.peekandpoke.kraft.semanticui.semantic
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.ultra.logging.LogAppender
 import de.peekandpoke.ultra.logging.LogLevel
+import de.peekandpoke.ultra.semanticui.SemanticFn
+import de.peekandpoke.ultra.semanticui.icon
+import de.peekandpoke.ultra.semanticui.semantic
+import de.peekandpoke.ultra.semanticui.ui
 import io.ktor.server.application.*
 import kotlinx.html.pre
 import kotlinx.html.title

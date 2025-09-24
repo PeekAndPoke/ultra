@@ -12,8 +12,8 @@ import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.examples.fomanticui.helpers.HorizontalContentAndCode
 import de.peekandpoke.kraft.examples.fomanticui.helpers.example
-import de.peekandpoke.kraft.semanticui.flag
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.semanticui.flag
 import generated.ExtractedCodeBlocks
 import kotlinx.html.Tag
 

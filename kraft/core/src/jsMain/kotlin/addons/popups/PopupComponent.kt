@@ -3,11 +3,18 @@ package de.peekandpoke.kraft.addons.popups
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.semanticui.css
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.utils.Vector2D
 import de.peekandpoke.kraft.vdom.VDom
-import kotlinx.css.*
+import de.peekandpoke.ultra.semanticui.css
+import de.peekandpoke.ultra.semanticui.ui
+import kotlinx.css.Display
+import kotlinx.css.Padding
+import kotlinx.css.display
+import kotlinx.css.left
+import kotlinx.css.padding
+import kotlinx.css.px
+import kotlinx.css.top
+import kotlinx.css.zIndex
 import kotlinx.html.Tag
 import org.w3c.dom.HTMLElement
 

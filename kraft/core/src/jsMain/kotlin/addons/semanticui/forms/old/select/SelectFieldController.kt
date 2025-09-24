@@ -1,6 +1,6 @@
 package de.peekandpoke.kraft.addons.semanticui.forms.old.select
 
-import de.peekandpoke.kraft.semanticui.SemanticTag
+import de.peekandpoke.ultra.semanticui.SemanticTag
 import org.w3c.dom.HTMLInputElement
 
 internal class SelectFieldController<T>(private val component: SelectFieldComponent<T>) {

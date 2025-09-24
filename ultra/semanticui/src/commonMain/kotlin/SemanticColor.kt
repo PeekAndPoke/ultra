@@ -1,6 +1,6 @@
 @file:Suppress("Detekt:EnumNaming", "Detekt:VariableNaming")
 
-package de.peekandpoke.kraft.semanticui
+package de.peekandpoke.ultra.semanticui
 
 @Suppress("EnumEntryName", "unused")
 enum class SemanticColor {

@@ -34,8 +34,8 @@ kotlin {
 
         commonMain {
             dependencies {
+                implementation(project(":ultra:semanticui"))
                 implementation(project(":kraft:core"))
-                implementation(project(":kraft:semanticui"))
 
                 api(project(":funktor:core"))
                 api(project(":funktor:rest"))

@@ -7,7 +7,7 @@ import de.peekandpoke.funktor.staticweb.resources.common.jQuery
 import de.peekandpoke.funktor.staticweb.resources.common.lazySizes
 import de.peekandpoke.funktor.staticweb.resources.css
 import de.peekandpoke.funktor.staticweb.resources.js
-import de.peekandpoke.kraft.semanticui.SemanticTag
+import de.peekandpoke.ultra.semanticui.SemanticTag
 import io.ktor.server.html.*
 import kotlinx.html.FlowContent
 import kotlinx.html.HEAD

@@ -1,7 +1,7 @@
 package de.peekandpoke.kraft.addons.semanticui.forms
 
 import de.peekandpoke.kraft.addons.forms.FormField
-import de.peekandpoke.kraft.semanticui.ui
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 
 fun <P> FormField<P>.renderErrors(flow: FlowContent) {

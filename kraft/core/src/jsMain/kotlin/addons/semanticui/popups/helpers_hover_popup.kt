@@ -1,9 +1,9 @@
 package de.peekandpoke.kraft.addons.semanticui.popups
 
 import de.peekandpoke.kraft.addons.popups.PopupsManager
-import de.peekandpoke.kraft.semanticui.SemanticTag
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.utils.Vector2D
+import de.peekandpoke.ultra.semanticui.SemanticTag
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.CommonAttributeGroupFacade
 import kotlinx.html.DIV
 import org.w3c.dom.HTMLElement

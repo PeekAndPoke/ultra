@@ -1,9 +1,9 @@
 package de.peekandpoke.funktor.cluster.storage
 
-import de.peekandpoke.kraft.semanticui.noui
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
+import de.peekandpoke.ultra.semanticui.noui
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 import kotlin.time.Duration.Companion.seconds
 

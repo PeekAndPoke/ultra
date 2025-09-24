@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.semanticui
+package de.peekandpoke.ultra.semanticui
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec

@@ -1,10 +1,9 @@
 package de.peekandpoke.kraft.addons.semanticui.pagination
 
-import de.peekandpoke.kraft.addons.semanticui.PaginationPages.PaginationPages
 import de.peekandpoke.kraft.components.key
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.ultra.common.model.Paged
 import de.peekandpoke.ultra.common.model.search.PagedSearchFilter
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 
 fun <T> FlowContent.renderPaginationAsAttachedSegment(

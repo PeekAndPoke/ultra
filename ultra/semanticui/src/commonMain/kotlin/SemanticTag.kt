@@ -5,9 +5,30 @@
     "Detekt:VariableNaming",
 )
 
-package de.peekandpoke.kraft.semanticui
+package de.peekandpoke.ultra.semanticui
 
-import kotlinx.html.*
+import kotlinx.html.A
+import kotlinx.html.B
+import kotlinx.html.BUTTON
+import kotlinx.html.DIV
+import kotlinx.html.FORM
+import kotlinx.html.H1
+import kotlinx.html.H2
+import kotlinx.html.H3
+import kotlinx.html.H4
+import kotlinx.html.H5
+import kotlinx.html.H6
+import kotlinx.html.I
+import kotlinx.html.IMG
+import kotlinx.html.INPUT
+import kotlinx.html.LABEL
+import kotlinx.html.OL
+import kotlinx.html.P
+import kotlinx.html.SPAN
+import kotlinx.html.TABLE
+import kotlinx.html.Tag
+import kotlinx.html.UL
+import kotlinx.html.attributesMapOf
 
 @Suppress("FunctionName", "PropertyName", "unused", "Detekt:TooManyFunctions", "Detekt:VariableNaming")
 class SemanticTag(

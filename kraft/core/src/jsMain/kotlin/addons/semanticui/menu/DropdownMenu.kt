@@ -1,9 +1,21 @@
 package de.peekandpoke.kraft.addons.semanticui.menu
 
-import de.peekandpoke.kraft.components.*
-import de.peekandpoke.kraft.semanticui.*
+import de.peekandpoke.kraft.components.Component
+import de.peekandpoke.kraft.components.Ctx
+import de.peekandpoke.kraft.components.comp
+import de.peekandpoke.kraft.components.onClick
+import de.peekandpoke.kraft.components.onMouseEnter
+import de.peekandpoke.kraft.components.onMouseLeave
+import de.peekandpoke.kraft.components.onMouseOver
 import de.peekandpoke.kraft.utils.async
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.semanticui.RenderFn
+import de.peekandpoke.ultra.semanticui.RenderFunc
+import de.peekandpoke.ultra.semanticui.SemanticTag
+import de.peekandpoke.ultra.semanticui.css
+import de.peekandpoke.ultra.semanticui.icon
+import de.peekandpoke.ultra.semanticui.noui
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.browser.window
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

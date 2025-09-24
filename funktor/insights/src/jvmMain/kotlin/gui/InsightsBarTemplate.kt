@@ -4,8 +4,8 @@ import de.peekandpoke.funktor.core.broker.TypedRoute
 import de.peekandpoke.funktor.core.broker.TypedRouteRenderer
 import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.funktor.core.model.AppInfo
-import de.peekandpoke.kraft.semanticui.icon
-import de.peekandpoke.kraft.semanticui.ui
+import de.peekandpoke.ultra.semanticui.icon
+import de.peekandpoke.ultra.semanticui.ui
 import io.ktor.http.*
 import io.ktor.server.html.*
 import kotlinx.html.FlowContent

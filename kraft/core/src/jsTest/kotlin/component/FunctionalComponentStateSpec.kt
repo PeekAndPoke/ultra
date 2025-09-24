@@ -2,9 +2,9 @@ package de.peekandpoke.kraft.component
 
 import de.peekandpoke.kraft.components.component
 import de.peekandpoke.kraft.components.value
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.testbed.TestBed
 import de.peekandpoke.kraft.testbed.textContent
+import de.peekandpoke.ultra.semanticui.ui
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay

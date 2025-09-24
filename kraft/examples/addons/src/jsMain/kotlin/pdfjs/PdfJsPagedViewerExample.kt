@@ -2,13 +2,21 @@ package de.peekandpoke.kraft.examples.jsaddons.pdfjs
 
 import de.peekandpoke.kraft.addons.pdfjs.PagedPdfViewer
 import de.peekandpoke.kraft.addons.pdfjs.PdfSource
-import de.peekandpoke.kraft.components.*
-import de.peekandpoke.kraft.semanticui.css
-import de.peekandpoke.kraft.semanticui.icon
-import de.peekandpoke.kraft.semanticui.noui
-import de.peekandpoke.kraft.semanticui.ui
+import de.peekandpoke.kraft.components.Component
+import de.peekandpoke.kraft.components.ComponentRef
+import de.peekandpoke.kraft.components.Ctx
+import de.peekandpoke.kraft.components.comp
+import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.vdom.VDom
-import kotlinx.css.*
+import de.peekandpoke.ultra.semanticui.css
+import de.peekandpoke.ultra.semanticui.icon
+import de.peekandpoke.ultra.semanticui.noui
+import de.peekandpoke.ultra.semanticui.ui
+import kotlinx.css.Color
+import kotlinx.css.Padding
+import kotlinx.css.backgroundColor
+import kotlinx.css.padding
+import kotlinx.css.px
 import kotlinx.html.Tag
 
 @Suppress("FunctionName")

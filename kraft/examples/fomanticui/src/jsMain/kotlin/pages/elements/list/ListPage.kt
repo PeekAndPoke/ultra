@@ -15,13 +15,19 @@ import de.peekandpoke.kraft.examples.fomanticui.helpers.HorizontalContentAndCode
 import de.peekandpoke.kraft.examples.fomanticui.helpers.allSizes
 import de.peekandpoke.kraft.examples.fomanticui.helpers.example
 import de.peekandpoke.kraft.examples.fomanticui.helpers.readTheFomanticUiDocs
-import de.peekandpoke.kraft.semanticui.icon
-import de.peekandpoke.kraft.semanticui.noui
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.fixture.LoremIpsum
+import de.peekandpoke.ultra.semanticui.icon
+import de.peekandpoke.ultra.semanticui.noui
+import de.peekandpoke.ultra.semanticui.ui
 import generated.ExtractedCodeBlocks
-import kotlinx.html.*
+import kotlinx.html.FlowContent
+import kotlinx.html.Tag
+import kotlinx.html.a
+import kotlinx.html.li
+import kotlinx.html.ol
+import kotlinx.html.p
+import kotlinx.html.ul
 
 @Suppress("FunctionName")
 fun Tag.ListPage() = comp {

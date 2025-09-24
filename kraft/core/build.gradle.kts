@@ -47,7 +47,7 @@ kotlin {
             dependencies {
                 api(Deps.KotlinX.coroutines_core)
                 api(project(":ultra:common"))
-                api(project(":kraft:semanticui"))
+                api(project(":ultra:semanticui"))
 
                 implementation(Deps.IDE.jetbrains_annotations)
             }

@@ -4,12 +4,16 @@ import de.peekandpoke.kraft.addons.browserdetect.BrowserDetect
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.semanticui.css
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.semanticui.css
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.css.Overflow
 import kotlinx.css.overflow
-import kotlinx.html.*
+import kotlinx.html.Tag
+import kotlinx.html.pre
+import kotlinx.html.tbody
+import kotlinx.html.td
+import kotlinx.html.tr
 
 @Suppress("FunctionName")
 fun Tag.BrowserDetectExample() = comp {

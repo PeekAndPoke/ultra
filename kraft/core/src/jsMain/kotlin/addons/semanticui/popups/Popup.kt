@@ -3,9 +3,9 @@ package de.peekandpoke.kraft.addons.semanticui.popups
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.semanticui.css
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.semanticui.css
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.css.Display
 import kotlinx.css.display
 import kotlinx.html.DIV

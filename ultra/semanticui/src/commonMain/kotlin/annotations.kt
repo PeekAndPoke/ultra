@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.semanticui
+package de.peekandpoke.ultra.semanticui
 
 @DslMarker
 annotation class SemanticUiDslMarker

@@ -51,6 +51,9 @@
       <module name="ultra.kontainer" target="17" />
       <module name="ultra.kontainer.main" target="17" />
       <module name="ultra.kontainer.test" target="17" />
+      <module name="ultra.kraft.semanticui" target="17" />
+      <module name="ultra.kraft.semanticui.jvmMain" target="17" />
+      <module name="ultra.kraft.semanticui.jvmTest" target="17" />
       <module name="ultra.logging" target="17" />
       <module name="ultra.main" target="17" />
       <module name="ultra.meta" target="17" />

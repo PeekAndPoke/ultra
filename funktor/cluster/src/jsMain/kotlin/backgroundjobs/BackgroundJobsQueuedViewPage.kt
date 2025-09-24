@@ -4,12 +4,12 @@ import de.peekandpoke.funktor.cluster.FunktorClusterUi
 import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.semanticui.noui
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.streams.addons.debouncedFuncExceptFirst
 import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
+import de.peekandpoke.ultra.semanticui.noui
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 
 class BackgroundJobsQueuedViewPage(ctx: Ctx<Props>) : Component<BackgroundJobsQueuedViewPage.Props>(ctx) {

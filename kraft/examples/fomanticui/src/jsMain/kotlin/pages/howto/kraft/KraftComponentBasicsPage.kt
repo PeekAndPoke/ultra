@@ -20,8 +20,8 @@ import de.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.code.Functiona
 import de.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.code.FunctionalPureComponent
 import de.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.code.PropsExampleComponent
 import de.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.code.PureExampleComponent
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.semanticui.ui
 import generated.ExtractedCodeBlocks
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag

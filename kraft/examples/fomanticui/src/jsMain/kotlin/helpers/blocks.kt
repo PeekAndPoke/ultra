@@ -5,10 +5,14 @@ import de.peekandpoke.kraft.addons.prismjs.PrismKotlin
 import de.peekandpoke.kraft.addons.prismjs.PrismPlugin.CopyToClipboard.Companion.copyToClipboard
 import de.peekandpoke.kraft.addons.prismjs.PrismPlugin.LineNumbers.Companion.lineNumbers
 import de.peekandpoke.kraft.addons.prismjs.PrismPlugin.ShowLanguage.Companion.showLanguage
-import de.peekandpoke.kraft.semanticui.icon
-import de.peekandpoke.kraft.semanticui.noui
-import de.peekandpoke.kraft.semanticui.ui
-import kotlinx.html.*
+import de.peekandpoke.ultra.semanticui.icon
+import de.peekandpoke.ultra.semanticui.noui
+import de.peekandpoke.ultra.semanticui.ui
+import kotlinx.html.DIV
+import kotlinx.html.FlowContent
+import kotlinx.html.a
+import kotlinx.html.div
+import kotlinx.html.p
 
 fun FlowContent.readTheFomanticUiDocs(url: String) {
     ui.positive.message {

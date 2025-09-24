@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.semanticui
+package de.peekandpoke.ultra.semanticui
 
 import kotlinx.html.Tag
 import kotlinx.html.visitTag

@@ -5,9 +5,9 @@ import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.onClick
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.html.Tag

@@ -14,10 +14,10 @@ import de.peekandpoke.funktor.staticweb.resources.js
 import de.peekandpoke.funktor.staticweb.resources.prismjs.Language
 import de.peekandpoke.funktor.staticweb.resources.prismjs.prism
 import de.peekandpoke.funktor.staticweb.resources.prismjs.prismJs
-import de.peekandpoke.kraft.semanticui.icon
-import de.peekandpoke.kraft.semanticui.semantic
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.ultra.kontainer.Kontainer
+import de.peekandpoke.ultra.semanticui.icon
+import de.peekandpoke.ultra.semanticui.semantic
+import de.peekandpoke.ultra.semanticui.ui
 import io.ktor.http.*
 import io.ktor.server.html.*
 import kotlinx.html.BODY

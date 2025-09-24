@@ -1,9 +1,9 @@
 package de.peekandpoke.funktor.logging
 
 import de.peekandpoke.funktor.logging.api.LogEntryModel
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.logging.LogLevel
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 
 fun MpInstant.formatAtSystemDefault() = atSystemDefaultZone().format("yyyy-MM-dd HH:mm:ss.SSS")

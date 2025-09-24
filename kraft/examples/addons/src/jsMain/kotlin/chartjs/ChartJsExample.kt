@@ -5,12 +5,12 @@ import de.peekandpoke.kraft.addons.chartjs.chartJsData
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.semanticui.css
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.streams.addons.map
 import de.peekandpoke.kraft.streams.addons.ticker
 import de.peekandpoke.kraft.utils.jsObject
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.semanticui.css
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.css.height
 import kotlinx.css.vh
 import kotlinx.html.FlowContent

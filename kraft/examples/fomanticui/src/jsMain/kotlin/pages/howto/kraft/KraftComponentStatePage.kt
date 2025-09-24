@@ -20,8 +20,8 @@ import de.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.code.CounterCo
 import de.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.code.FunctionalCounterComponent
 import de.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.code.FunctionalTickerComponent
 import de.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.code.TickerComponent
-import de.peekandpoke.kraft.semanticui.ui
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.semanticui.ui
 import generated.ExtractedCodeBlocks
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag

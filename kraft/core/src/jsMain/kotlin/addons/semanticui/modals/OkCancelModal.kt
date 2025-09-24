@@ -5,10 +5,10 @@ import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.debugId
 import de.peekandpoke.kraft.components.onClick
-import de.peekandpoke.kraft.semanticui.RenderFn
-import de.peekandpoke.kraft.semanticui.SemanticTag
-import de.peekandpoke.kraft.semanticui.noui
-import de.peekandpoke.kraft.semanticui.ui
+import de.peekandpoke.ultra.semanticui.RenderFn
+import de.peekandpoke.ultra.semanticui.SemanticTag
+import de.peekandpoke.ultra.semanticui.noui
+import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 

@@ -192,9 +192,7 @@ println("Original: $person")
 println()
 println("Mutated:  $result")
 ```
-
 Will output:
-
 ```
 Original: Person(name=John, age=42, address=Address(street=street, city=city))
 

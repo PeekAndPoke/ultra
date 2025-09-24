@@ -1,10 +1,10 @@
 package de.peekandpoke.kraft.addons.forms
 
 import de.peekandpoke.kraft.addons.forms.validation.Rule
-import de.peekandpoke.kraft.semanticui.RenderFunc
 import de.peekandpoke.kraft.utils.ResponsiveController
 import de.peekandpoke.ultra.common.MutableTypedAttributes
 import de.peekandpoke.ultra.common.TypedKey
+import de.peekandpoke.ultra.semanticui.RenderFunc
 import kotlinx.html.InputType
 import kotlinx.html.LABEL
 import kotlinx.html.TEXTAREA

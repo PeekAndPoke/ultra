@@ -7,8 +7,8 @@ import de.peekandpoke.funktor.insights.InsightsCollector
 import de.peekandpoke.funktor.insights.InsightsCollectorData
 import de.peekandpoke.funktor.insights.InsightsMapper
 import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
-import de.peekandpoke.kraft.semanticui.icon
-import de.peekandpoke.kraft.semanticui.ui
+import de.peekandpoke.ultra.semanticui.icon
+import de.peekandpoke.ultra.semanticui.ui
 import io.ktor.server.application.*
 
 class AppConfigCollector(

@@ -5,9 +5,10 @@ import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.messages.sendMessage
-import de.peekandpoke.kraft.semanticui.noui
 import de.peekandpoke.kraft.vdom.VDom
-import kotlinx.html.*
+import de.peekandpoke.ultra.semanticui.noui
+import kotlinx.html.FlowContent
+import kotlinx.html.Tag
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.MouseEvent
 

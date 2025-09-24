@@ -62,7 +62,7 @@ kotlin {
                 api(Deps.Ktor.Server.html_builder)
                 api(Deps.KotlinX.wrappers_css)
 
-                api(project(":kraft:semanticui"))
+                api(project(":ultra:semanticui"))
 
                 api(project(":funktor:core"))
                 api(project(":funktor:cluster"))

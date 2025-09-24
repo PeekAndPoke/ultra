@@ -18,8 +18,8 @@ import de.peekandpoke.funktor.cluster.workers.WorkersListPage
 import de.peekandpoke.kraft.addons.routing.Router
 import de.peekandpoke.kraft.addons.routing.RouterProvider
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.semanticui.RenderFn
 import de.peekandpoke.ultra.common.datetime.Kronos
+import de.peekandpoke.ultra.semanticui.RenderFn
 import kotlinx.html.Tag
 import org.w3c.dom.events.MouseEvent
 

@@ -3,8 +3,8 @@ package de.peekandpoke.kraft.addons.dnd
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.semanticui.css
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.semanticui.css
 import kotlinx.css.Display
 import kotlinx.css.display
 import kotlinx.html.Tag
