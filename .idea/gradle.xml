@@ -64,6 +64,7 @@
             <option value="$PROJECT_DIR$/ultra/semanticui" />
             <option value="$PROJECT_DIR$/ultra/slumber" />
             <option value="$PROJECT_DIR$/ultra/slumber-test-classes" />
+            <option value="$PROJECT_DIR$/ultra/streams" />
             <option value="$PROJECT_DIR$/ultra/vault" />
           </set>
         </option>

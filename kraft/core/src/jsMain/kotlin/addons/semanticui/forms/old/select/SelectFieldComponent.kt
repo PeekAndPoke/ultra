@@ -12,7 +12,6 @@ import de.peekandpoke.kraft.components.onFocus
 import de.peekandpoke.kraft.components.onInput
 import de.peekandpoke.kraft.components.onKeyUp
 import de.peekandpoke.kraft.components.onMouseDown
-import de.peekandpoke.kraft.streams.addons.debounce
 import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.semanticui.css
@@ -20,6 +19,7 @@ import de.peekandpoke.ultra.semanticui.flowContent
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui
+import de.peekandpoke.ultra.streams.ops.debounce
 import kotlinx.browser.window
 import kotlinx.coroutines.flow.Flow
 import kotlinx.css.CssBuilder

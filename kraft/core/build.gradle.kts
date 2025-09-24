@@ -48,6 +48,7 @@ kotlin {
                 api(Deps.KotlinX.coroutines_core)
                 api(project(":ultra:common"))
                 api(project(":ultra:semanticui"))
+                api(project(":ultra:streams"))
 
                 implementation(Deps.IDE.jetbrains_annotations)
             }

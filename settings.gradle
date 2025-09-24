@@ -10,6 +10,7 @@ include(
         ":ultra:semanticui",
         ":ultra:slumber",
         ":ultra:slumber-test-classes",
+        ":ultra:streams",
         ":ultra:vault",
 
         // KRAFT ////////////////////////////////////////////////////////////////////////////////

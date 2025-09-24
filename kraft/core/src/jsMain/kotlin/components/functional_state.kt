@@ -2,8 +2,8 @@ package de.peekandpoke.kraft.components
 
 import de.peekandpoke.kraft.components.state.FunctionalComponentStateProperty
 import de.peekandpoke.kraft.components.state.FunctionalComponentStreamProperty
-import de.peekandpoke.kraft.streams.Stream
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.streams.Stream
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.typeOf
 

@@ -1,8 +1,8 @@
 package de.peekandpoke.kraft.utils
 
-import de.peekandpoke.kraft.streams.Stream
-import de.peekandpoke.kraft.streams.StreamSource
 import de.peekandpoke.ultra.common.TypedKey
+import de.peekandpoke.ultra.streams.Stream
+import de.peekandpoke.ultra.streams.StreamSource
 import kotlinx.coroutines.flow.Flow
 
 class LazyLoader {

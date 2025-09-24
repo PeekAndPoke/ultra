@@ -1,9 +1,9 @@
 package de.peekandpoke.kraft.addons.modal
 
 import de.peekandpoke.kraft.addons.modal.ModalsManager.Handle
-import de.peekandpoke.kraft.streams.Stream
-import de.peekandpoke.kraft.streams.StreamSource
-import de.peekandpoke.kraft.streams.Unsubscribe
+import de.peekandpoke.ultra.streams.Stream
+import de.peekandpoke.ultra.streams.StreamSource
+import de.peekandpoke.ultra.streams.Unsubscribe
 
 class ModalsManager : Stream<List<Handle>> {
 

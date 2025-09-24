@@ -1,7 +1,7 @@
 package de.peekandpoke.kraft.streams.addons
 
-import de.peekandpoke.kraft.streams.Stream
-import de.peekandpoke.kraft.streams.StreamSource
+import de.peekandpoke.ultra.streams.Stream
+import de.peekandpoke.ultra.streams.StreamSource
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 

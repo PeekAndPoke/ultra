@@ -4,7 +4,7 @@ package de.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.code
 import de.peekandpoke.kraft.components.component
 import de.peekandpoke.kraft.components.subscribingTo
 import de.peekandpoke.kraft.components.value
-import de.peekandpoke.kraft.streams.addons.ticker
+import de.peekandpoke.ultra.streams.ops.ticker
 import kotlinx.html.div
 
 val FunctionalTickerComponent = component { delay: Int ->

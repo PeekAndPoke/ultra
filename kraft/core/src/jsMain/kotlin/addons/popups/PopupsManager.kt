@@ -4,11 +4,11 @@ import de.peekandpoke.kraft.addons.popups.PopupsManager.Handle
 import de.peekandpoke.kraft.components.onMouseOut
 import de.peekandpoke.kraft.components.onMouseOver
 import de.peekandpoke.kraft.components.onMouseUp
-import de.peekandpoke.kraft.streams.Stream
-import de.peekandpoke.kraft.streams.StreamSource
-import de.peekandpoke.kraft.streams.Unsubscribe
 import de.peekandpoke.kraft.utils.Rectangle
 import de.peekandpoke.kraft.utils.Vector2D
+import de.peekandpoke.ultra.streams.Stream
+import de.peekandpoke.ultra.streams.StreamSource
+import de.peekandpoke.ultra.streams.Unsubscribe
 import kotlinx.browser.document
 import kotlinx.html.CommonAttributeGroupFacade
 import org.w3c.dom.DOMRect

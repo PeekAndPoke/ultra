@@ -1,6 +1,6 @@
 package de.peekandpoke.kraft.utils
 
-import de.peekandpoke.kraft.streams.StreamSource
+import de.peekandpoke.ultra.streams.StreamSource
 import kotlinext.js.js
 import kotlinx.browser.document
 import kotlinx.browser.window

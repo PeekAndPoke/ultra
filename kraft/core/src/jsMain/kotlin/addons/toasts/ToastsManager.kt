@@ -3,9 +3,6 @@ package de.peekandpoke.kraft.addons.toasts
 import de.peekandpoke.kraft.addons.toasts.ToastsManager.Handle
 import de.peekandpoke.kraft.components.key
 import de.peekandpoke.kraft.components.onClick
-import de.peekandpoke.kraft.streams.Stream
-import de.peekandpoke.kraft.streams.StreamSource
-import de.peekandpoke.kraft.streams.Unsubscribe
 import de.peekandpoke.ultra.common.model.Message
 import de.peekandpoke.ultra.common.model.Messages
 import de.peekandpoke.ultra.semanticui.SemanticFn
@@ -15,6 +12,9 @@ import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.semantic
 import de.peekandpoke.ultra.semanticui.semanticIcon
 import de.peekandpoke.ultra.semanticui.ui
+import de.peekandpoke.ultra.streams.Stream
+import de.peekandpoke.ultra.streams.StreamSource
+import de.peekandpoke.ultra.streams.Unsubscribe
 import kotlinx.browser.window
 import kotlinx.html.FlowContent
 import kotlin.time.Duration

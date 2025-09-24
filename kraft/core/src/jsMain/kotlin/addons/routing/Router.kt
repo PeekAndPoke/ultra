@@ -1,7 +1,7 @@
 package de.peekandpoke.kraft.addons.routing
 
-import de.peekandpoke.kraft.streams.Stream
-import de.peekandpoke.kraft.streams.StreamSource
+import de.peekandpoke.ultra.streams.Stream
+import de.peekandpoke.ultra.streams.StreamSource
 import kotlinx.browser.window
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.MouseEvent
