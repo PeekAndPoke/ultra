@@ -44,7 +44,7 @@ class SemanticTagSpec : StringSpec({
 
     "Rendering numbers - for all SemanticNumber.values()" {
 
-        SemanticNumber.values()
+        SemanticNumber.entries
             .forEach { number ->
                 withClue("Must work for '${number.name}'") {
 
@@ -116,7 +116,7 @@ class SemanticTagSpec : StringSpec({
 
     "Rendering colors - for all SemanticColor.values()" {
 
-        SemanticColor.values()
+        SemanticColor.entries
             .filter { it !in listOf(SemanticColor.none, SemanticColor.default) }
             .forEach { color ->
                 withClue("Must work for '${color.name}'") {
