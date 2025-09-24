@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.streams.addons
+package de.peekandpoke.ultra.streams.ops
 
 import de.peekandpoke.ultra.streams.StreamSource
 import io.kotest.assertions.withClue
@@ -11,7 +11,7 @@ class DistinctSpec : StringSpec({
 
         data class X(val v: Int)
 
-        val source = StreamSource(X(10))
+        val source = StreamSource.Companion(X(10))
 
         val mapped = source.distinct(strict = false)
 
@@ -50,7 +50,7 @@ class DistinctSpec : StringSpec({
 
         data class X(val v: Int)
 
-        val source = StreamSource(X(10))
+        val source = StreamSource.Companion(X(10))
 
         val mapped = source.distinct()
 
@@ -89,7 +89,7 @@ class DistinctSpec : StringSpec({
 
         data class X(val v: Int)
 
-        val source = StreamSource(X(10))
+        val source = StreamSource.Companion(X(10))
 
         val mapped = source.distinct(strict = true)
 
@@ -130,7 +130,7 @@ class DistinctSpec : StringSpec({
 
         data class X(val v: Int)
 
-        val source = StreamSource(X(10))
+        val source = StreamSource.Companion(X(10))
 
         val mapped = source.distinctStrict()
 

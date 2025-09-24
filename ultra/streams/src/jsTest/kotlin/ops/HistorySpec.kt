@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.streams.addons
+package de.peekandpoke.ultra.streams.ops
 
 import de.peekandpoke.ultra.streams.StreamSource
 import io.kotest.assertions.withClue
@@ -9,7 +9,7 @@ class HistorySpec : StringSpec({
 
     "history()" {
 
-        val source = StreamSource(10.0)
+        val source = StreamSource.Companion(10.0)
 
         val mapped = source.history(3)
 
@@ -56,7 +56,7 @@ class HistorySpec : StringSpec({
 
     "historyOfNonNull()" {
 
-        val source = StreamSource<Double?>(10.0)
+        val source = StreamSource.Companion<Double?>(10.0)
 
         val mapped = source.historyOfNonNull(3)
 

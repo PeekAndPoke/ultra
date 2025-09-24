@@ -1,6 +1,5 @@
-package de.peekandpoke.kraft.streams.addons
+package de.peekandpoke.ultra.streams.ops
 
-import de.peekandpoke.kraft.utils.identity
 import de.peekandpoke.ultra.streams.StreamSource
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -9,9 +8,9 @@ class MapSpec : StringSpec({
 
     "Mapping with identity" {
 
-        val source = StreamSource(10)
+        val source = StreamSource.Companion(10)
 
-        val mapped = source.map(::identity)
+        val mapped = source.map({ it })
 
         val received = mutableListOf<Int>()
 
@@ -34,7 +33,7 @@ class MapSpec : StringSpec({
         data class In(val v: Int)
         data class Out(val v: Int)
 
-        val source = StreamSource(In(10))
+        val source = StreamSource.Companion(In(10))
 
         val mapped = source.map { Out(v = it.v * 10) }
 

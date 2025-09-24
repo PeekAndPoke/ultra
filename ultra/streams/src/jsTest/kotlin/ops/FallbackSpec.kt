@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.streams.addons
+package de.peekandpoke.ultra.streams.ops
 
 import de.peekandpoke.ultra.streams.Stream
 import de.peekandpoke.ultra.streams.StreamSource
@@ -9,7 +9,7 @@ class FallbackSpec : StringSpec({
 
     "fallbackTo constant" {
 
-        val source = StreamSource<Int?>(10)
+        val source = StreamSource.Companion<Int?>(10)
 
         val mapped = source.fallbackTo(0)
 
@@ -31,7 +31,7 @@ class FallbackSpec : StringSpec({
 
     "fallbackBy callback" {
 
-        val source = StreamSource<Int?>(10)
+        val source = StreamSource.Companion<Int?>(10)
 
         var next = 0
         val mapped: Stream<Int> = source.fallbackBy { ++next }

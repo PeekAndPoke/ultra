@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.streams.addons
+package de.peekandpoke.ultra.streams.ops
 
 import de.peekandpoke.ultra.streams.StreamSource
 import io.kotest.assertions.withClue
@@ -9,7 +9,7 @@ class IndexedSpec : StringSpec({
 
     "indexed() - NOT querying the value before subscribing" {
 
-        val source = StreamSource(10.0)
+        val source = StreamSource.Companion(10.0)
 
         val mapped = source.indexed()
 

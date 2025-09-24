@@ -1,7 +1,5 @@
 package de.peekandpoke.kraft.utils
 
-// TODO: move to ultra::common
-
 fun <T> List<T>.setAt(idx: Int, item: T): List<T> {
     return replaceAt(idx, item)
 }

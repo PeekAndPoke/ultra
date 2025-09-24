@@ -9,7 +9,7 @@ import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui
-import de.peekandpoke.ultra.streams.addons.debouncedFuncExceptFirst
+import de.peekandpoke.ultra.streams.ops.debouncedFuncExceptFirst
 import kotlinx.html.FlowContent
 
 class BackgroundJobsArchivedViewPage(ctx: Ctx<Props>) : Component<BackgroundJobsArchivedViewPage.Props>(ctx) {

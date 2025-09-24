@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.streams.addons
+package de.peekandpoke.ultra.streams.ops
 
 import de.peekandpoke.ultra.streams.Stream
 import de.peekandpoke.ultra.streams.StreamSource
@@ -10,7 +10,7 @@ class FilterSpec : StringSpec({
 
     "filter without initial value" {
 
-        val source = StreamSource(10)
+        val source = StreamSource.Companion(10)
 
         val mapped = source.filter { it > 10 }
 
@@ -41,7 +41,7 @@ class FilterSpec : StringSpec({
 
     "filter with initial value" {
 
-        val source = StreamSource(10)
+        val source = StreamSource.Companion(10)
 
         val mapped = source.filter(0) { it > 10 }
 
@@ -72,7 +72,7 @@ class FilterSpec : StringSpec({
 
     "filterNotNull with first value on stream being 'null'" {
 
-        val source = StreamSource<Int?>(null)
+        val source = StreamSource.Companion<Int?>(null)
 
         val mapped = source.filterNotNull(0)
 
@@ -108,7 +108,7 @@ class FilterSpec : StringSpec({
         data class A(val x: Int) : Data()
         data class B(val x: Int) : Data()
 
-        val source = StreamSource<Data?>(null)
+        val source = StreamSource.Companion<Data?>(null)
 
         val mapped: Stream<B?> = source.filterIsInstance()
 
@@ -144,7 +144,7 @@ class FilterSpec : StringSpec({
         data class A(val x: Int) : Data()
         data class B(val x: Int) : Data()
 
-        val source = StreamSource<Data?>(null)
+        val source = StreamSource.Companion<Data?>(null)
 
         val mapped: Stream<B> = source.filterIsInstance(B(0))
 

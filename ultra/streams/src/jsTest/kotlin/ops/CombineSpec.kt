@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.streams.addons
+package de.peekandpoke.ultra.streams.ops
 
 import de.peekandpoke.ultra.streams.StreamSource
 import io.kotest.core.spec.style.StringSpec
@@ -8,8 +8,8 @@ class CombineSpec : StringSpec({
 
     "combinedWith" {
 
-        val first = StreamSource(10)
-        val second = StreamSource("a")
+        val first = StreamSource.Companion(10)
+        val second = StreamSource.Companion("a")
 
         val received = mutableListOf<Pair<Int, String>>()
 
@@ -41,8 +41,8 @@ class CombineSpec : StringSpec({
 
     "pairedWith" {
 
-        val first = StreamSource(10)
-        val second = StreamSource("a")
+        val first = StreamSource.Companion(10)
+        val second = StreamSource.Companion("a")
 
         val received = mutableListOf<Pair<Int, String>>()
 

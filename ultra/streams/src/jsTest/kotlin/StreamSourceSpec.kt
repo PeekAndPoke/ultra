@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.streams
+package de.peekandpoke.ultra.streams
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe

@@ -7,6 +7,7 @@ import Deps.Test.jvmTestDeps
 
 plugins {
     kotlin("multiplatform")
+    kotlin("plugin.serialization")
     id("io.kotest.multiplatform")
     id("com.vanniktech.maven.publish")
 }

@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.streams.addons
+package de.peekandpoke.ultra.streams.ops
 
 import de.peekandpoke.ultra.streams.StreamSource
 import io.kotest.assertions.withClue
@@ -13,7 +13,7 @@ class MapAsyncSpec : StringSpec({
         data class In(val v: Int)
         data class Out(val v: Int)
 
-        val source = StreamSource(In(10))
+        val source = StreamSource.Companion(In(10))
 
         val mapped = source.mapAsync {
             delay(10)

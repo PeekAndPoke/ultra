@@ -9,7 +9,8 @@ import de.peekandpoke.kraft.utils.jsObject
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.semanticui.css
 import de.peekandpoke.ultra.semanticui.ui
-import de.peekandpoke.ultra.streams.addons.ticker
+import de.peekandpoke.ultra.streams.ops.map
+import de.peekandpoke.ultra.streams.ops.ticker
 import kotlinx.css.height
 import kotlinx.css.vh
 import kotlinx.html.FlowContent

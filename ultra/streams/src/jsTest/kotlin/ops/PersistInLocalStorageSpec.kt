@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.streams.addons
+package de.peekandpoke.ultra.streams.ops
 
 import de.peekandpoke.ultra.streams.StreamSource
 import io.kotest.core.spec.style.StringSpec
@@ -20,12 +20,12 @@ class PersistInLocalStorageSpec : StringSpec() {
             val key = "int-key"
 
             // We initialize the stream with 100
-            val original = StreamSource(100).persistInLocalStorage(key, Int.serializer())
+            val original = StreamSource.Companion(100).persistInLocalStorage(key, Int.Companion.serializer())
             // Then we send 200, which should be stored in the local storage
             original(200)
 
             // Then we create another persistent stream on the same key
-            val copy = StreamSource(100).persistInLocalStorage(key, Int.serializer())
+            val copy = StreamSource.Companion(100).persistInLocalStorage(key, Int.serializer())
             // And the value should be the last value that was sent to the stream
             copy.subscribeToStream {
                 it shouldBe 200
@@ -39,7 +39,7 @@ class PersistInLocalStorageSpec : StringSpec() {
             val key = "object-key"
 
             // We initialize the stream with 100
-            val original = StreamSource(
+            val original = StreamSource.Companion(
                 PersistedObject("first")
             ).persistInLocalStorage(key, PersistedObject.serializer())
 
@@ -48,7 +48,7 @@ class PersistInLocalStorageSpec : StringSpec() {
             original(persisted)
 
             // Then we create another persistent stream on the same key
-            val copy = StreamSource(
+            val copy = StreamSource.Companion(
                 PersistedObject("")
             ).persistInLocalStorage(key, PersistedObject.serializer())
 

@@ -6,7 +6,7 @@ import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.streams.StreamSource
-import de.peekandpoke.ultra.streams.addons.persistInLocalStorage
+import de.peekandpoke.ultra.streams.ops.persistInLocalStorage
 import kotlinx.html.Tag
 import kotlinx.html.div
 import kotlinx.serialization.Serializable
