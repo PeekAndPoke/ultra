@@ -15,6 +15,7 @@ private val specialChars = listOf(
     '_',
     '(',
     ')',
+    '~',
 ).map { it.code }.toSet()
 
 actual fun String.encodeUriComponent(): String {
