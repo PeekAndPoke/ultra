@@ -1,7 +1,7 @@
 package de.peekandpoke.kraft.examples.jsaddons.pdfjs
 
-import de.peekandpoke.kraft.addons.routing.RouterBuilder
 import de.peekandpoke.kraft.routing.Route1
+import de.peekandpoke.kraft.routing.RouterBuilder
 import de.peekandpoke.kraft.routing.Static
 
 class PdfJsRoutes {

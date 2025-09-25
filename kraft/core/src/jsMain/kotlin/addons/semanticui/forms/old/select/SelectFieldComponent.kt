@@ -1,7 +1,5 @@
 package de.peekandpoke.kraft.addons.semanticui.forms.old.select
 
-import de.peekandpoke.kraft.addons.forms.FormFieldComponent
-import de.peekandpoke.kraft.addons.forms.validation.Rule
 import de.peekandpoke.kraft.addons.semanticui.forms.renderErrors
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.key
@@ -36,15 +34,16 @@ typealias OptionFilterFn<T> = List<SelectFieldComponent.Option<T>>.(search: Stri
 
 typealias AutoSuggestFn<T> = suspend (search: String) -> Flow<List<SelectFieldComponent.Option<T>>>
 
-class SelectFieldComponent<T>(ctx: Ctx<Props<T>>) : FormFieldComponent<T, SelectFieldComponent.Props<T>>(ctx) {
+class SelectFieldComponent<T>(ctx: Ctx<Props<T>>) :
+    de.peekandpoke.kraft.forms.FormFieldComponent<T, SelectFieldComponent.Props<T>>(ctx) {
 
     data class Props<P>(
         val config: Config<P>,
-    ) : FormFieldComponent.Props<P> {
+    ) : de.peekandpoke.kraft.forms.FormFieldComponent.Props<P> {
         override val initialValue: P get() = config.value
         override val fromStr: (String) -> P get() = config.fromStr
         override val onChange: (P) -> Unit get() = config.onChange
-        override val rules: List<Rule<P>> get() = config.rules
+        override val rules: List<de.peekandpoke.kraft.forms.validation.Rule<P>> get() = config.rules
     }
 
     data class Option<out T>(
@@ -60,7 +59,7 @@ class SelectFieldComponent<T>(ctx: Ctx<Props<T>>) : FormFieldComponent<T, Select
         val asProps get() = Props(config = this)
 
         /** The validation rules */
-        val rules: MutableList<Rule<T>> = mutableListOf()
+        val rules: MutableList<de.peekandpoke.kraft.forms.validation.Rule<T>> = mutableListOf()
 
         /** The options of the select field */
         val options: MutableList<Option<T>> = mutableListOf()
@@ -166,7 +165,10 @@ class SelectFieldComponent<T>(ctx: Ctx<Props<T>>) : FormFieldComponent<T, Select
         /**
          * Adds a validation rule
          */
-        fun accepts(rule: Rule<T>, vararg rules: Rule<T>) {
+        fun accepts(
+            rule: de.peekandpoke.kraft.forms.validation.Rule<T>,
+            vararg rules: de.peekandpoke.kraft.forms.validation.Rule<T>,
+        ) {
             this.rules.add(rule)
             this.rules.addAll(rules)
         }

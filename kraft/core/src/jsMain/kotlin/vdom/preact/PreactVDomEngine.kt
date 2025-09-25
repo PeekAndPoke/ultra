@@ -1,5 +1,6 @@
 package de.peekandpoke.kraft.vdom.preact
 
+import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.utils.jsObject
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.kraft.vdom.VDomEngine
@@ -24,7 +25,9 @@ class PreactVDomEngine(override val options: VDomEngine.Options) : VDomEngine {
 
     override fun mount(element: HTMLElement, view: VDom.() -> Any?) {
 
-        val lowLevelRoot = render { view() }
+        val root = VDom.Root(ctx = Ctx.of(engine = this))
+
+        val lowLevelRoot = render(root) { view() }
 
         preact.render(lowLevelRoot, element)
     }

@@ -1,9 +1,17 @@
 package de.peekandpoke.kraft.vdom
 
 import de.peekandpoke.kraft.components.Component
+import de.peekandpoke.kraft.components.NoProps
+import de.peekandpoke.kraft.components.PureComponent
 import kotlinx.html.FlowContent
 
-class VDom(engine: VDomEngine, val component: Component<*>? = null) : FlowContent {
+class VDom(engine: VDomEngine, val component: Component<*>) : FlowContent {
+
+    class Root(ctx: NoProps) : PureComponent(ctx) {
+        override fun VDom.render() {
+        }
+    }
+
 
     fun render(builder: VDom.() -> Any?): dynamic {
         builder()

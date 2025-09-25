@@ -1,9 +1,5 @@
 package de.peekandpoke.kraft.addons.semanticui.forms
 
-import de.peekandpoke.kraft.addons.forms.FieldOptions
-import de.peekandpoke.kraft.addons.forms.GenericFormField
-import de.peekandpoke.kraft.addons.forms.KraftFormsDsl
-import de.peekandpoke.kraft.addons.forms.TextAreaOptions
 import de.peekandpoke.kraft.addons.semanticui.forms.UiTextAreaComponent.Options
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
@@ -24,7 +20,7 @@ import kotlinx.html.textArea
 import org.w3c.dom.HTMLTextAreaElement
 
 @Suppress("FunctionName")
-@KraftFormsDsl
+@de.peekandpoke.kraft.forms.KraftFormsDsl
 fun Tag.UiTextArea(
     value: String,
     onChange: (String) -> Unit,
@@ -40,15 +36,16 @@ fun Tag.UiTextArea(
 }
 
 class UiTextAreaComponent(ctx: Ctx<Props>) :
-    GenericFormField<String, Options, UiTextAreaComponent.Props>(ctx) {
+    de.peekandpoke.kraft.forms.GenericFormField<String, Options, UiTextAreaComponent.Props>(ctx) {
 
-    class Options : FieldOptions.Base<String>(), TextAreaOptions<String>, SemanticOptions<String>
+    class Options : de.peekandpoke.kraft.forms.FieldOptions.Base<String>(),
+        de.peekandpoke.kraft.forms.TextAreaOptions<String>, SemanticOptions<String>
 
     data class Props(
         override val value: String,
         override val onChange: (String) -> Unit,
         override val options: Options,
-    ) : GenericFormField.Props<String, Options>
+    ) : de.peekandpoke.kraft.forms.GenericFormField.Props<String, Options>
 
     val inputElement: HTMLTextAreaElement get() = dom!!.querySelector("textarea") as HTMLTextAreaElement
 

@@ -1,15 +1,14 @@
 package de.peekandpoke.kraft.addons.semanticui.forms
 
-import de.peekandpoke.kraft.addons.forms.FieldOptions
-import de.peekandpoke.kraft.addons.forms.GenericFormField
-import de.peekandpoke.kraft.addons.forms.KraftFormsDsl
-import de.peekandpoke.kraft.addons.forms.SettingsBuilder
 import de.peekandpoke.kraft.addons.semanticui.forms.UiInputFieldComponent.Options
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.key
 import de.peekandpoke.kraft.components.onChange
 import de.peekandpoke.kraft.components.onInput
+import de.peekandpoke.kraft.forms.FieldOptions
+import de.peekandpoke.kraft.forms.GenericFormField
+import de.peekandpoke.kraft.forms.KraftFormsDsl
 import de.peekandpoke.kraft.utils.dateToYmd
 import de.peekandpoke.kraft.utils.localDateTimeToYmdHms
 import de.peekandpoke.kraft.utils.numberToString
@@ -494,7 +493,7 @@ class UiDateFieldRenderer(private val tag: Tag) {
     @KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<MpLocalDateTime>,
-        builder: SettingsBuilder<MpLocalDate> = {},
+        builder: de.peekandpoke.kraft.forms.SettingsBuilder<MpLocalDate> = {},
     ) = invoke(prop(), prop::set, builder)
 
     /**
@@ -504,7 +503,7 @@ class UiDateFieldRenderer(private val tag: Tag) {
     operator fun invoke(
         value: MpLocalDateTime,
         onChange: (MpLocalDateTime) -> Unit,
-        builder: SettingsBuilder<MpLocalDate> = {},
+        builder: de.peekandpoke.kraft.forms.SettingsBuilder<MpLocalDate> = {},
     ) = invoke(
         value = value.toDate(),
         onChange = { onChange(it.atTime(value.toTime())) },
@@ -517,7 +516,7 @@ class UiDateFieldRenderer(private val tag: Tag) {
     @KraftFormsDsl
     fun nullable(
         prop: KMutableProperty0<MpLocalDateTime?>,
-        builder: SettingsBuilder<MpLocalDate?> = {},
+        builder: de.peekandpoke.kraft.forms.SettingsBuilder<MpLocalDate?> = {},
     ) = nullable(prop(), prop::set, builder)
 
     /**

@@ -7,12 +7,12 @@
 
 package de.peekandpoke.kraft.examples.fomanticui.pages.home
 
-import de.peekandpoke.kraft.addons.routing.PageTitle
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.examples.fomanticui.helpers.example
 import de.peekandpoke.kraft.examples.fomanticui.helpers.kotlinToHtml
+import de.peekandpoke.kraft.routing.PageTitle
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.ui

@@ -2,8 +2,8 @@ package de.peekandpoke.funktor.logging
 
 import de.peekandpoke.funktor.logging.api.LoggingApiClient
 import de.peekandpoke.kraft.addons.modal.ModalsManager
-import de.peekandpoke.kraft.addons.routing.RouterProvider
 import de.peekandpoke.kraft.components.comp
+import de.peekandpoke.kraft.routing.RouterProvider
 import kotlinx.html.Tag
 
 class LoggingUi(

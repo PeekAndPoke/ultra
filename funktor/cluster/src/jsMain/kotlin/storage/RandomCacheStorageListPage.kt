@@ -3,7 +3,6 @@ package de.peekandpoke.funktor.cluster.storage
 import de.peekandpoke.funktor.cluster.FunktorClusterUi
 import de.peekandpoke.funktor.cluster.renderDefault
 import de.peekandpoke.kraft.addons.pagination.pagedSearchFilter
-import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.addons.semanticui.forms.UiInputField
 import de.peekandpoke.kraft.addons.semanticui.pagination.PaginationEpp
 import de.peekandpoke.kraft.addons.semanticui.pagination.PaginationPages
@@ -11,6 +10,7 @@ import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.key
 import de.peekandpoke.kraft.components.onClick
+import de.peekandpoke.kraft.routing.JoinedPageTitle
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.model.Paged

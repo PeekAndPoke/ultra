@@ -7,8 +7,6 @@
 
 package de.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 
-import de.peekandpoke.kraft.addons.forms.formController
-import de.peekandpoke.kraft.addons.forms.validation.nonNull
 import de.peekandpoke.kraft.addons.semanticui.forms.UiDateTimeField
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
@@ -16,6 +14,7 @@ import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import de.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
+import de.peekandpoke.kraft.forms.formController
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.datetime.MpLocalDateTime
 import de.peekandpoke.ultra.common.datetime.MpTimezone
@@ -52,14 +51,14 @@ class FormWithNullableDateTimes(ctx: NoProps) : PureComponent(ctx) {
                     ui.two.fields {
                         UiDateTimeField.nullable(draft.localDateTime, { draft = draft.copy(localDateTime = it) }) {
                             label { +State::localDateTime.name }
-                            accepts(nonNull())
+                            accepts(_root_ide_package_.de.peekandpoke.kraft.forms.validation.nonNull())
                         }
 
                         val tz = MpTimezone.of("Europe/Berlin")
 
                         UiDateTimeField.nullable(draft.zonedDateTime, tz, { draft = draft.copy(zonedDateTime = it) }) {
                             label { +State::zonedDateTime.name }
-                            accepts(nonNull())
+                            accepts(_root_ide_package_.de.peekandpoke.kraft.forms.validation.nonNull())
                         }
                     }
                 }

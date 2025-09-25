@@ -12,7 +12,7 @@ import de.peekandpoke.funktor.cluster.vault.VaultRoutes
 import de.peekandpoke.funktor.cluster.vault.mountFunktorVault
 import de.peekandpoke.funktor.cluster.workers.WorkersRoutes
 import de.peekandpoke.funktor.cluster.workers.mountFunktorWorkers
-import de.peekandpoke.kraft.addons.routing.RouterBuilder
+import de.peekandpoke.kraft.routing.RouterBuilder
 import de.peekandpoke.kraft.routing.Static
 
 class FunktorClusterRoutes(val mount: String = "/_/funktor/cluster") {

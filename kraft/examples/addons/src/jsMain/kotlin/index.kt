@@ -1,9 +1,9 @@
 package de.peekandpoke.kraft.examples.jsaddons
 
-import de.peekandpoke.kraft.addons.routing.Router
-import de.peekandpoke.kraft.addons.routing.router
 import de.peekandpoke.kraft.addons.toasts.ToastsStage
 import de.peekandpoke.kraft.kraftApp
+import de.peekandpoke.kraft.routing.Router
+import de.peekandpoke.kraft.routing.router
 import de.peekandpoke.kraft.vdom.preact.PreactVDomEngine
 import kotlinx.browser.document
 import org.w3c.dom.HTMLElement

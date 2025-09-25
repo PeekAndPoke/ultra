@@ -1,14 +1,13 @@
 package de.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.listfield
 
-import de.peekandpoke.kraft.addons.forms.collections.ListField
-import de.peekandpoke.kraft.addons.forms.collections.ListFieldComponent
-import de.peekandpoke.kraft.addons.routing.PageTitle
 import de.peekandpoke.kraft.addons.semanticui.forms.UiTextArea
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.key
 import de.peekandpoke.kraft.components.onClick
+import de.peekandpoke.kraft.forms.collections.ListField
+import de.peekandpoke.kraft.routing.PageTitle
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.ui
@@ -83,7 +82,7 @@ class ListFieldPage(ctx: NoProps) : PureComponent(ctx) {
         }
     }
 
-    private fun <T> FlowContent.upRemoveDownButtons(ctx: ListFieldComponent.ItemCtx<T>) {
+    private fun <T> FlowContent.upRemoveDownButtons(ctx: de.peekandpoke.kraft.forms.collections.ListFieldComponent.ItemCtx<T>) {
 
         if (ctx.idx > 0) {
             ui.basic.blue.icon.button {

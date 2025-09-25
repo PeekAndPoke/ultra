@@ -11,11 +11,11 @@ import de.peekandpoke.kraft.addons.prismjs.PrismHtml
 import de.peekandpoke.kraft.addons.prismjs.PrismKotlin
 import de.peekandpoke.kraft.addons.prismjs.PrismPlugin.CopyToClipboard.Companion.copyToClipboard
 import de.peekandpoke.kraft.addons.prismjs.PrismPlugin.LineNumbers.Companion.lineNumbers
-import de.peekandpoke.kraft.addons.routing.PageTitle
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.examples.fomanticui.helpers.example
+import de.peekandpoke.kraft.routing.PageTitle
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent

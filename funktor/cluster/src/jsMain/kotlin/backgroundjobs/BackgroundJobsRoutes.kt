@@ -1,8 +1,8 @@
 package de.peekandpoke.funktor.cluster.backgroundjobs
 
 import de.peekandpoke.funktor.cluster.FunktorClusterUi
-import de.peekandpoke.kraft.addons.routing.RouterBuilder
 import de.peekandpoke.kraft.routing.Route1
+import de.peekandpoke.kraft.routing.RouterBuilder
 import de.peekandpoke.kraft.routing.Static
 
 class BackgroundJobsRoutes(mount: String) {

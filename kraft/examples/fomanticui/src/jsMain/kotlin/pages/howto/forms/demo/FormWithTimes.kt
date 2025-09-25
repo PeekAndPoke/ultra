@@ -7,7 +7,6 @@
 
 package de.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 
-import de.peekandpoke.kraft.addons.forms.formController
 import de.peekandpoke.kraft.addons.semanticui.forms.UiDateField
 import de.peekandpoke.kraft.addons.semanticui.forms.UiTimeField
 import de.peekandpoke.kraft.components.NoProps
@@ -16,6 +15,7 @@ import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import de.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
+import de.peekandpoke.kraft.forms.formController
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.common.datetime.MpLocalDateTime

@@ -7,11 +7,6 @@
 
 package de.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 
-import de.peekandpoke.kraft.addons.forms.formController
-import de.peekandpoke.kraft.addons.forms.validation.comparable.greaterThan
-import de.peekandpoke.kraft.addons.forms.validation.numbers.greaterThan
-import de.peekandpoke.kraft.addons.forms.validation.numbers.lessThan
-import de.peekandpoke.kraft.addons.forms.validation.strings.notBlank
 import de.peekandpoke.kraft.addons.semanticui.forms.UiCheckboxField
 import de.peekandpoke.kraft.addons.semanticui.forms.UiInputField
 import de.peekandpoke.kraft.components.NoProps
@@ -21,6 +16,7 @@ import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import de.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
 import de.peekandpoke.kraft.examples.fomanticui.responsiveCtrl
+import de.peekandpoke.kraft.forms.formController
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.ui
@@ -74,8 +70,8 @@ class FormWithPrimitives(ctx: NoProps) : PureComponent(ctx) {
                             rightClearingIcon()
 
                             accepts(
-                                notBlank(),
-                                greaterThan("abc") { "Must be greater than 'abc'" },
+                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.strings.notBlank(),
+                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.comparable.greaterThan("abc") { "Must be greater than 'abc'" },
                             )
                         }
 
@@ -87,8 +83,8 @@ class FormWithPrimitives(ctx: NoProps) : PureComponent(ctx) {
                             leftIcon { green.percent }
 
                             accepts(
-                                greaterThan(6.0),
-                                lessThan(20.0)
+                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.greaterThan(6.0),
+                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.lessThan(20.0)
                             )
                         }
                     }
@@ -107,8 +103,8 @@ class FormWithPrimitives(ctx: NoProps) : PureComponent(ctx) {
                             }
 
                             accepts(
-                                greaterThan(5.0),
-                                lessThan(20.0)
+                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.greaterThan(5.0),
+                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.lessThan(20.0)
                             )
                         }
 
@@ -125,8 +121,8 @@ class FormWithPrimitives(ctx: NoProps) : PureComponent(ctx) {
                             }
 
                             accepts(
-                                greaterThan(3.0),
-                                lessThan(20.0)
+                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.greaterThan(3.0),
+                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.lessThan(20.0)
                             )
                         }
                     }

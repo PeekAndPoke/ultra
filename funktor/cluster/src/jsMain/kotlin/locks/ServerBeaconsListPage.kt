@@ -3,10 +3,10 @@ package de.peekandpoke.funktor.cluster.locks
 import de.peekandpoke.funktor.cluster.FunktorClusterUi
 import de.peekandpoke.funktor.cluster.locks.api.ServerBeaconModel
 import de.peekandpoke.funktor.cluster.renderDefault
-import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.onClick
+import de.peekandpoke.kraft.routing.JoinedPageTitle
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.datetime.MpInstant

@@ -7,9 +7,6 @@
 
 package de.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 
-import de.peekandpoke.kraft.addons.forms.formController
-import de.peekandpoke.kraft.addons.forms.validation.numbers.greaterThan
-import de.peekandpoke.kraft.addons.forms.validation.numbers.lessThan
 import de.peekandpoke.kraft.addons.semanticui.forms.UiInputField
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
@@ -17,6 +14,7 @@ import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import de.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
+import de.peekandpoke.kraft.forms.formController
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
@@ -62,8 +60,8 @@ class FormWithNullablePrimitives(ctx: NoProps) : PureComponent(ctx) {
                             step(3)
 
                             accepts(
-                                greaterThan(6.0),
-                                lessThan(15.0)
+                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.greaterThan(6.0),
+                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.lessThan(15.0)
                             )
                         }
                     }
@@ -74,8 +72,8 @@ class FormWithNullablePrimitives(ctx: NoProps) : PureComponent(ctx) {
                             placeholder("Enter a number")
 
                             accepts(
-                                greaterThan(5.0),
-                                lessThan(20.0)
+                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.greaterThan(5.0),
+                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.lessThan(20.0)
                             )
                         }
 
@@ -85,8 +83,8 @@ class FormWithNullablePrimitives(ctx: NoProps) : PureComponent(ctx) {
                             step(0.5)
 
                             accepts(
-                                greaterThan(3.0),
-                                lessThan(10.0)
+                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.greaterThan(3.0),
+                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.lessThan(10.0)
                             )
                         }
                     }

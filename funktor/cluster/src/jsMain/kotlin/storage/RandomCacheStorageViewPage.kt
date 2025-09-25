@@ -1,9 +1,9 @@
 package de.peekandpoke.funktor.cluster.storage
 
 import de.peekandpoke.funktor.cluster.FunktorClusterUi
-import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
+import de.peekandpoke.kraft.routing.JoinedPageTitle
 import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.semanticui.css

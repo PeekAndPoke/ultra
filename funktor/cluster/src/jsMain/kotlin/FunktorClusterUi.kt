@@ -15,9 +15,9 @@ import de.peekandpoke.funktor.cluster.storage.RandomDataStorageViewPage
 import de.peekandpoke.funktor.cluster.vault.VaultIndexPage
 import de.peekandpoke.funktor.cluster.workers.WorkerDetailsPage
 import de.peekandpoke.funktor.cluster.workers.WorkersListPage
-import de.peekandpoke.kraft.addons.routing.Router
-import de.peekandpoke.kraft.addons.routing.RouterProvider
 import de.peekandpoke.kraft.components.comp
+import de.peekandpoke.kraft.routing.Router
+import de.peekandpoke.kraft.routing.RouterProvider
 import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.semanticui.RenderFn
 import kotlinx.html.Tag

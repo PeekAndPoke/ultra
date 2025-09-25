@@ -2,10 +2,10 @@ package de.peekandpoke.funktor.logging
 
 import de.peekandpoke.funktor.logging.api.LogEntryModel
 import de.peekandpoke.funktor.logging.api.LogsRequest
-import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.onClick
+import de.peekandpoke.kraft.routing.JoinedPageTitle
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.utils.doubleClickProtection
 import de.peekandpoke.kraft.utils.launch

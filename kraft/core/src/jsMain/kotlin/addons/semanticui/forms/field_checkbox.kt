@@ -1,8 +1,5 @@
 package de.peekandpoke.kraft.addons.semanticui.forms
 
-import de.peekandpoke.kraft.addons.forms.FieldOptions
-import de.peekandpoke.kraft.addons.forms.GenericFormField
-import de.peekandpoke.kraft.addons.forms.KraftFormsDsl
 import de.peekandpoke.kraft.addons.semanticui.forms.UiCheckBoxComponent.Options
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
@@ -19,11 +16,11 @@ import kotlinx.html.input
 import org.w3c.dom.HTMLInputElement
 import kotlin.reflect.KMutableProperty0
 
-@KraftFormsDsl
+@de.peekandpoke.kraft.forms.KraftFormsDsl
 val Tag.UiCheckboxField get() = UiCheckboxFieldRenderer(this)
 
 @Suppress("FunctionName")
-@KraftFormsDsl
+@de.peekandpoke.kraft.forms.KraftFormsDsl
 fun <T> Tag.UiCheckboxField(
     value: T,
     onChange: (T) -> Unit,
@@ -43,9 +40,10 @@ fun <T> Tag.UiCheckboxField(
 }
 
 class UiCheckBoxComponent<T, P : UiCheckBoxComponent.Props<T>>(ctx: Ctx<P>) :
-    GenericFormField<T, Options<T>, P>(ctx) {
+    de.peekandpoke.kraft.forms.GenericFormField<T, Options<T>, P>(ctx) {
 
-    class Options<T> : FieldOptions.Base<T>(), SemanticOptions<T>, SemanticOptions.Checkbox<T>
+    class Options<T> : de.peekandpoke.kraft.forms.FieldOptions.Base<T>(), SemanticOptions<T>,
+        SemanticOptions.Checkbox<T>
 
     data class Props<X>(
         override val value: X,
@@ -53,7 +51,7 @@ class UiCheckBoxComponent<T, P : UiCheckBoxComponent.Props<T>>(ctx: Ctx<P>) :
         override val options: Options<X>,
         val on: X,
         val off: X,
-    ) : GenericFormField.Props<X, Options<X>>
+    ) : de.peekandpoke.kraft.forms.GenericFormField.Props<X, Options<X>>
 
     val inputElement: HTMLInputElement get() = dom!!.querySelector("input") as HTMLInputElement
 
@@ -133,7 +131,7 @@ class UiCheckboxFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a Boolean
      */
-    @KraftFormsDsl
+    @de.peekandpoke.kraft.forms.KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<Boolean>,
         builder: Options<Boolean>.() -> Unit = {},
@@ -142,7 +140,7 @@ class UiCheckboxFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a Boolean
      */
-    @KraftFormsDsl
+    @de.peekandpoke.kraft.forms.KraftFormsDsl
     operator fun invoke(
         value: Boolean,
         onChange: (Boolean) -> Unit,
@@ -150,9 +148,9 @@ class UiCheckboxFieldRenderer(private val tag: Tag) {
     ) = invoke(value = value, onChange = onChange, off = false, on = true, builder = builder)
 
     /**
-     * Renders the field for an the type [T]
+     * Renders the field for the type [T]
      */
-    @KraftFormsDsl
+    @de.peekandpoke.kraft.forms.KraftFormsDsl
     operator fun <T> invoke(
         value: T,
         onChange: (T) -> Unit,

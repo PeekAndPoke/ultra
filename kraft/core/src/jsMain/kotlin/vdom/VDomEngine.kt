@@ -21,7 +21,7 @@ interface VDomEngine {
 
     fun triggerRedraw(component: Component<*>)
 
-    fun render(host: Component<*>? = null, builder: VDom.() -> Any?): dynamic {
-        return VDom(this, host).render { builder() }
+    fun render(component: Component<*>, builder: VDom.() -> Any?): dynamic {
+        return VDom(engine = this, component = component).render { builder() }
     }
 }

@@ -3,9 +3,9 @@ package de.peekandpoke.funktor.cluster.workers
 import de.peekandpoke.funktor.cluster.FunktorClusterUi
 import de.peekandpoke.funktor.cluster.formatNonZeroComponents
 import de.peekandpoke.funktor.cluster.workers.api.WorkerModel
-import de.peekandpoke.kraft.addons.routing.JoinedPageTitle
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
+import de.peekandpoke.kraft.routing.JoinedPageTitle
 import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.datetime.MpDateTimePeriod
