@@ -3,6 +3,7 @@ rootProject.name = 'ultra'
 include(
         // ULTRA ////////////////////////////////////////////////////////////////////////////////
         ":ultra:common",
+        ":ultra:html",
         ":ultra:kontainer",
         ":ultra:logging",
         ":ultra:meta",
@@ -15,6 +16,7 @@ include(
 
         // KRAFT ////////////////////////////////////////////////////////////////////////////////
         ":kraft:core",
+        ":kraft:semanticui",
         // Addons
         ":kraft:addons:avatars",
         ":kraft:addons:browserdetect",

@@ -7,15 +7,14 @@ import Deps.Test.jvmTestDeps
 
 plugins {
     kotlin("multiplatform")
-    kotlin("plugin.serialization")
     id("io.kotest.multiplatform")
     id("com.vanniktech.maven.publish")
 }
 
-val KRAFT_GROUP: String by project
+val ULTRA_GROUP: String by project
 val VERSION_NAME: String by project
 
-group = KRAFT_GROUP
+group = ULTRA_GROUP
 version = VERSION_NAME
 
 Docs {
@@ -25,15 +24,14 @@ Docs {
 kotlin {
     js {
         browser {
-            testTask {
+//            testTask {
 //                useKarma {
-//                    useChrome()
 //                    useChromeHeadless()
+//                    usePhantomJS()
 //                    useChromiumHeadless()
-//                    useChromeCanaryHeadless()
 //                    useFirefoxHeadless()
 //                }
-            }
+//            }
         }
     }
 
@@ -42,16 +40,13 @@ kotlin {
     jvm {
     }
 
+    @Suppress("UNUSED_VARIABLE")
     sourceSets {
+
         commonMain {
             dependencies {
-                api(Deps.KotlinX.coroutines_core)
-                implementation(Deps.IDE.jetbrains_annotations)
+                api(Deps.KotlinX.wrappers_css)
                 api(Deps.KotlinX.html)
-
-                api(project(":ultra:common"))
-                api(project(":ultra:html"))
-                api(project(":ultra:streams"))
             }
         }
 
@@ -63,13 +58,6 @@ kotlin {
 
         jsMain {
             dependencies {
-                api(Deps.KotlinX.wrappers_extensions)
-                api(Deps.KotlinX.serialization_json)
-
-                // Preact VDOM engine
-                api(Deps.Npm { preact() })
-                // JWT decode
-                api(Deps.Npm { jwtDecode() })
             }
         }
 
@@ -80,6 +68,8 @@ kotlin {
         }
 
         jvmMain {
+            dependencies {
+            }
         }
 
         jvmTest {
@@ -92,4 +82,8 @@ kotlin {
 
 tasks {
     configureJvmTests()
+}
+
+mavenPublishing {
+
 }

@@ -52,11 +52,13 @@
             <option value="$PROJECT_DIR$/kraft/examples/addons" />
             <option value="$PROJECT_DIR$/kraft/examples/fomanticui" />
             <option value="$PROJECT_DIR$/kraft/examples/hello-world" />
+            <option value="$PROJECT_DIR$/kraft/semanticui" />
             <option value="$PROJECT_DIR$/mutator" />
             <option value="$PROJECT_DIR$/mutator/core" />
             <option value="$PROJECT_DIR$/mutator/ksp" />
             <option value="$PROJECT_DIR$/ultra" />
             <option value="$PROJECT_DIR$/ultra/common" />
+            <option value="$PROJECT_DIR$/ultra/html" />
             <option value="$PROJECT_DIR$/ultra/kontainer" />
             <option value="$PROJECT_DIR$/ultra/logging" />
             <option value="$PROJECT_DIR$/ultra/meta" />

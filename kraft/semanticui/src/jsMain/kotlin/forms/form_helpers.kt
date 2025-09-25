@@ -1,0 +1,18 @@
+package de.peekandpoke.kraft.semanticui.forms
+
+import de.peekandpoke.ultra.semanticui.ui
+import kotlinx.html.FlowContent
+
+fun <P> de.peekandpoke.kraft.forms.FormField<P>.renderErrors(flow: FlowContent) {
+    renderErrors(this, flow)
+}
+
+fun <P> renderErrors(field: de.peekandpoke.kraft.forms.FormField<P>, flow: FlowContent) {
+    flow.apply {
+        if (field.touched) {
+            field.errors.filter { it.isNotBlank() }.forEach { error ->
+                ui.basic.red.pointing.label { +error }
+            }
+        }
+    }
+}

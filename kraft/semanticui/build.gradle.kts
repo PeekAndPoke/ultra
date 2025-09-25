@@ -45,13 +45,8 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api(Deps.KotlinX.coroutines_core)
-                implementation(Deps.IDE.jetbrains_annotations)
-                api(Deps.KotlinX.html)
-
-                api(project(":ultra:common"))
-                api(project(":ultra:html"))
-                api(project(":ultra:streams"))
+                api(project(":ultra:semanticui"))
+                api(project(":kraft:core"))
             }
         }
 
@@ -63,13 +58,6 @@ kotlin {
 
         jsMain {
             dependencies {
-                api(Deps.KotlinX.wrappers_extensions)
-                api(Deps.KotlinX.serialization_json)
-
-                // Preact VDOM engine
-                api(Deps.Npm { preact() })
-                // JWT decode
-                api(Deps.Npm { jwtDecode() })
             }
         }
 

@@ -51,9 +51,6 @@
       <module name="ultra.kontainer" target="17" />
       <module name="ultra.kontainer.main" target="17" />
       <module name="ultra.kontainer.test" target="17" />
-      <module name="ultra.kraft.semanticui" target="17" />
-      <module name="ultra.kraft.semanticui.jvmMain" target="17" />
-      <module name="ultra.kraft.semanticui.jvmTest" target="17" />
       <module name="ultra.logging" target="17" />
       <module name="ultra.main" target="17" />
       <module name="ultra.meta" target="17" />
@@ -71,6 +68,9 @@
       <module name="ultra.slumber.main" target="17" />
       <module name="ultra.slumber.test" target="17" />
       <module name="ultra.test" target="17" />
+      <module name="ultra.ultra.datetime" target="17" />
+      <module name="ultra.ultra.datetime.jvmMain" target="17" />
+      <module name="ultra.ultra.datetime.jvmTest" target="17" />
       <module name="ultra.ultra.mutator" target="17" />
       <module name="ultra.ultra.mutator.main" target="17" />
       <module name="ultra.ultra.mutator.test" target="17" />
