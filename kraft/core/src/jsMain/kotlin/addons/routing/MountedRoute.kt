@@ -1,9 +1,10 @@
 package de.peekandpoke.kraft.addons.routing
 
+import de.peekandpoke.kraft.routing.Route
 import kotlinx.html.FlowContent
 
 /**
- * Represents a [Route] that is mounted by a [Router]
+ * Represents a [de.peekandpoke.kraft.routing.Route] that is mounted by a [Router]
  *
  * The [middlewares] are called in order once this [route] is matched and is about to become the [ActiveRoute].
  *

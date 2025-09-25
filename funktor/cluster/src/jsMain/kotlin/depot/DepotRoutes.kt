@@ -1,9 +1,9 @@
 package de.peekandpoke.funktor.cluster.depot
 
 import de.peekandpoke.funktor.cluster.FunktorClusterUi
-import de.peekandpoke.kraft.addons.routing.Route1
 import de.peekandpoke.kraft.addons.routing.RouterBuilder
-import de.peekandpoke.kraft.addons.routing.Static
+import de.peekandpoke.kraft.routing.Route1
+import de.peekandpoke.kraft.routing.Static
 import js.uri.encodeURI
 
 class DepotRoutes(mount: String) {

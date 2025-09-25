@@ -1,7 +1,6 @@
 package de.peekandpoke.kraft.examples.jsaddons
 
 import de.peekandpoke.kraft.addons.routing.RouterBuilder
-import de.peekandpoke.kraft.addons.routing.Static
 import de.peekandpoke.kraft.examples.jsaddons.avatars.AvatarsRoutes
 import de.peekandpoke.kraft.examples.jsaddons.avatars.mount
 import de.peekandpoke.kraft.examples.jsaddons.browserdetect.BrowserDetectExample
@@ -15,6 +14,7 @@ import de.peekandpoke.kraft.examples.jsaddons.pdfjs.PdfJsRoutes
 import de.peekandpoke.kraft.examples.jsaddons.pdfjs.mount
 import de.peekandpoke.kraft.examples.jsaddons.prismjs.PrismJsExample
 import de.peekandpoke.kraft.examples.jsaddons.signaturepad.SignaturePadExample
+import de.peekandpoke.kraft.routing.Static
 
 class Routes {
 

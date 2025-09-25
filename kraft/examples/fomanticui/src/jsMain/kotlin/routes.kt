@@ -1,7 +1,6 @@
 package de.peekandpoke.kraft.examples.fomanticui
 
 import de.peekandpoke.kraft.addons.routing.RouterBuilder
-import de.peekandpoke.kraft.addons.routing.Static
 import de.peekandpoke.kraft.examples.fomanticui.pages.collections.breadcrumb.BreadcrumbPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.collections.form.FormPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.collections.grid.GridPage
@@ -42,6 +41,7 @@ import de.peekandpoke.kraft.examples.fomanticui.pages.views.comment.CommentPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.views.feed.FeedPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.views.item.ItemPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.views.statistic.StatisticPage
+import de.peekandpoke.kraft.routing.Static
 
 class Routes {
     val home = Static("")

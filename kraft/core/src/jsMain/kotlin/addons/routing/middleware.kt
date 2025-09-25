@@ -1,5 +1,7 @@
 package de.peekandpoke.kraft.addons.routing
 
+import de.peekandpoke.kraft.routing.Route
+
 /**
  * A [RouterMiddleware] is just a function with [RouterMiddlewareContext] as the receiver
  */

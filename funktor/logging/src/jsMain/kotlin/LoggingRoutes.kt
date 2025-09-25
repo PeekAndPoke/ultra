@@ -1,9 +1,9 @@
 package de.peekandpoke.funktor.logging
 
 import de.peekandpoke.funktor.logging.api.LogEntryModel
-import de.peekandpoke.kraft.addons.routing.Route1
 import de.peekandpoke.kraft.addons.routing.RouterBuilder
-import de.peekandpoke.kraft.addons.routing.Static
+import de.peekandpoke.kraft.routing.Route1
+import de.peekandpoke.kraft.routing.Static
 
 class LoggingRoutes(mount: String = "/_/funktor/logging") {
 

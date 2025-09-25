@@ -1,5 +1,6 @@
 package de.peekandpoke.kraft.addons.routing
 
+import de.peekandpoke.kraft.routing.Route
 import kotlinx.html.FlowContent
 
 /**

@@ -1,5 +1,7 @@
 package de.peekandpoke.kraft.addons.routing
 
+import de.peekandpoke.kraft.routing.Route
+import de.peekandpoke.kraft.routing.RoutePattern
 import kotlinx.html.FlowContent
 
 /**
@@ -61,7 +63,7 @@ class RouterBuilder {
      */
     fun catchAll(view: FlowContent.(Route.Match) -> Unit) {
         mounted.add(
-            MountedRoute(Pattern.CatchAll, middlewares.toList(), view)
+            MountedRoute(RoutePattern.CatchAll, middlewares.toList(), view)
         )
     }
 }

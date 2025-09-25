@@ -2,7 +2,7 @@ package de.peekandpoke.funktor.cluster.vault
 
 import de.peekandpoke.funktor.cluster.FunktorClusterUi
 import de.peekandpoke.kraft.addons.routing.RouterBuilder
-import de.peekandpoke.kraft.addons.routing.Static
+import de.peekandpoke.kraft.routing.Static
 
 class VaultRoutes(mount: String) {
     val index = Static(mount)

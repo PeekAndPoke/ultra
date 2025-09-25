@@ -1,5 +1,6 @@
 package de.peekandpoke.kraft.addons.routing
 
+import de.peekandpoke.kraft.routing.Route
 import de.peekandpoke.ultra.streams.Stream
 import de.peekandpoke.ultra.streams.StreamSource
 import kotlinx.browser.window
