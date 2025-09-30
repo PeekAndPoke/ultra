@@ -19,7 +19,7 @@ import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.routing.Router
 import de.peekandpoke.kraft.routing.RouterProvider
 import de.peekandpoke.ultra.common.datetime.Kronos
-import de.peekandpoke.ultra.semanticui.RenderFn
+import de.peekandpoke.ultra.html.RenderFn
 import kotlinx.html.Tag
 import org.w3c.dom.events.MouseEvent
 

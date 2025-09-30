@@ -6,7 +6,7 @@ import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.key
 import de.peekandpoke.kraft.utils.jsObject
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.semanticui.css
+import de.peekandpoke.ultra.html.css
 import konva.Circle
 import konva.Layer
 import konva.LayerConfig

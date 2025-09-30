@@ -2,14 +2,14 @@ package de.peekandpoke.funktor.logging
 
 import de.peekandpoke.funktor.logging.api.LogEntryModel
 import de.peekandpoke.funktor.logging.api.LogsRequest
-import de.peekandpoke.kraft.addons.modal.ModalsManager
-import de.peekandpoke.kraft.addons.semanticui.forms.UiDateTimeField
-import de.peekandpoke.kraft.addons.semanticui.modals.FadingModal
+import de.peekandpoke.kraft.common.ModalsManager
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.debugId
 import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.forms.formController
+import de.peekandpoke.kraft.semanticui.forms.UiDateTimeField
+import de.peekandpoke.kraft.semanticui.modals.FadingModal
 import de.peekandpoke.kraft.utils.doubleClickProtection
 import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.ultra.common.datetime.MpTimezone

@@ -5,12 +5,6 @@ to make it work.
  */
 
 @file:Suppress(
-    "INTERFACE_WITH_SUPERCLASS",
-    "OVERRIDING_FINAL_MEMBER",
-    "RETURN_TYPE_MISMATCH_ON_OVERRIDE",
-    "CONFLICTING_OVERLOADS",
-    "EXTERNAL_DELEGATION",
-    "NESTED_CLASS_IN_EXTERNAL_INTERFACE",
     "PackageDirectoryMismatch",
     "unused",
     "FunctionName",
@@ -27,7 +21,17 @@ to make it work.
 
 package konva
 
-import org.w3c.dom.*
+import org.w3c.dom.CanvasGradient
+import org.w3c.dom.CanvasPattern
+import org.w3c.dom.CanvasRenderingContext2D
+import org.w3c.dom.HTMLCanvasElement
+import org.w3c.dom.HTMLElement
+import org.w3c.dom.HTMLImageElement
+import org.w3c.dom.HTMLVideoElement
+import org.w3c.dom.ImageBitmap
+import org.w3c.dom.ImageData
+import org.w3c.dom.Path2D
+import org.w3c.dom.TextMetrics
 import org.w3c.dom.events.Event
 
 external var pixelRatio: Number = definedExternally

@@ -32,6 +32,7 @@ kotlin {
             dependencies {
                 // project deps
                 api(project(":kraft:core"))
+                api(project(":kraft:semanticui"))
                 // addons
                 api(project(":kraft:addons:avatars"))
                 api(project(":kraft:addons:browserdetect"))

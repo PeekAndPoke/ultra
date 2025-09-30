@@ -9,7 +9,7 @@ import de.peekandpoke.kraft.components.debugId
 import de.peekandpoke.kraft.utils.jsObject
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.model.FileBase64
-import de.peekandpoke.ultra.semanticui.css
+import de.peekandpoke.ultra.html.css
 import kotlinx.browser.window
 import kotlinx.css.height
 import kotlinx.css.pct

@@ -1,9 +1,17 @@
-package de.peekandpoke.kraft.messages
+package de.peekandpoke.kraft.coretests.messages
 
-import de.peekandpoke.kraft.components.*
-import de.peekandpoke.kraft.testbed.TestBed
-import de.peekandpoke.kraft.testbed.click
-import de.peekandpoke.kraft.testbed.textContent
+import de.peekandpoke.kraft.components.Component
+import de.peekandpoke.kraft.components.Ctx
+import de.peekandpoke.kraft.components.NoProps
+import de.peekandpoke.kraft.components.PureComponent
+import de.peekandpoke.kraft.components.comp
+import de.peekandpoke.kraft.components.onClick
+import de.peekandpoke.kraft.messages.MessageBase
+import de.peekandpoke.kraft.messages.onMessage
+import de.peekandpoke.kraft.messages.sendMessage
+import de.peekandpoke.kraft.testing.TestBed
+import de.peekandpoke.kraft.testing.click
+import de.peekandpoke.kraft.testing.textContent
 import de.peekandpoke.kraft.vdom.VDom
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe

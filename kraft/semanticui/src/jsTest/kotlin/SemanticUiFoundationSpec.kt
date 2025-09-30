@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.addon.semanticui
+package de.peekandpoke.kraft.semanticui
 
-import de.peekandpoke.kraft.testbed.TestBed
+import de.peekandpoke.kraft.testing.TestBed
 import de.peekandpoke.ultra.semanticui.ui
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize

@@ -1,5 +1,6 @@
-package de.peekandpoke.kraft.testbed
+package de.peekandpoke.kraft.testing
 
+import de.peekandpoke.kraft.kraftApp
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.kraft.vdom.VDomEngine
 import de.peekandpoke.kraft.vdom.preact.PreactVDomEngine
@@ -9,7 +10,6 @@ import kotlinx.dom.appendElement
 import org.w3c.dom.Element
 import org.w3c.dom.HTMLBodyElement
 import org.w3c.dom.HTMLDivElement
-import org.w3c.dom.get
 
 class TestBed<E : VDomEngine> private constructor(
     private val engine: E,
@@ -39,20 +39,22 @@ class TestBed<E : VDomEngine> private constructor(
 
     suspend fun render(view: VDom.() -> Any?, test: suspend (element: KQuery<Element>) -> Unit) {
 
-        val body = document.getElementsByTagName("body")[0] as HTMLBodyElement
+        val body = document.querySelector("body") as HTMLBodyElement
 
         val testBed = body.appendElement("div") {
             id = "kraft-testbed"
         } as HTMLDivElement
 
-        try {
-            engine.mount(testBed, view)
+        val app = kraftApp { }
 
-            delay(3)
+        try {
+            app.mount(element = testBed, engine = engine, view = view)
+
+            delay(1)
 
             test(KQuery(listOf(testBed)))
 
-            delay(3)
+            delay(1)
         } finally {
             testBed.remove()
         }

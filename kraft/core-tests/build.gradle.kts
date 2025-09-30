@@ -9,7 +9,6 @@ plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
     id("io.kotest.multiplatform")
-    id("com.vanniktech.maven.publish")
 }
 
 val KRAFT_GROUP: String by project
@@ -17,10 +16,6 @@ val VERSION_NAME: String by project
 
 group = KRAFT_GROUP
 version = VERSION_NAME
-
-Docs {
-    useEmptyJavadoc()
-}
 
 kotlin {
     js {
@@ -45,15 +40,14 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api(project(":ultra:semanticui"))
-                api(project(":kraft:core"))
+                implementation(project(":kraft:core"))
+                implementation(project(":kraft:testing"))
             }
         }
 
         commonTest {
             dependencies {
                 commonTestDeps()
-                api(project(":kraft:testing"))
             }
         }
 

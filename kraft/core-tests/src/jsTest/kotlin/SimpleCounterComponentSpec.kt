@@ -1,12 +1,12 @@
-package de.peekandpoke.kraft
+package de.peekandpoke.kraft.coretests
 
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.onClick
-import de.peekandpoke.kraft.testbed.TestBed
-import de.peekandpoke.kraft.testbed.click
-import de.peekandpoke.kraft.testbed.textContent
+import de.peekandpoke.kraft.testing.TestBed
+import de.peekandpoke.kraft.testing.click
+import de.peekandpoke.kraft.testing.textContent
 import de.peekandpoke.kraft.vdom.VDom
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -58,7 +58,6 @@ private class PureCounter(ctx: NoProps) : PureComponent(ctx) {
 class SimpleCounterComponentSpec : StringSpec() {
 
     init {
-
         "Clicking the plus button must have an effect" {
 
             TestBed.preact({

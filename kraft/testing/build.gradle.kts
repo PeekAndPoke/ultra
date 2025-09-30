@@ -45,15 +45,13 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api(project(":ultra:semanticui"))
-                api(project(":kraft:core"))
+                implementation(project(":kraft:core"))
             }
         }
 
         commonTest {
             dependencies {
                 commonTestDeps()
-                api(project(":kraft:testing"))
             }
         }
 

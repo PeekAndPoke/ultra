@@ -1,7 +1,7 @@
-package de.peekandpoke.kraft
+package de.peekandpoke.kraft.coretests
 
-import de.peekandpoke.kraft.testbed.TestBed
-import de.peekandpoke.kraft.testbed.textContent
+import de.peekandpoke.kraft.testing.TestBed
+import de.peekandpoke.kraft.testing.textContent
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain

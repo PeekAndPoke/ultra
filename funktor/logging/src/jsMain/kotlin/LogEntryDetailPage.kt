@@ -11,7 +11,7 @@ import de.peekandpoke.kraft.utils.doubleClickProtection
 import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.datetime.MpInstant
-import de.peekandpoke.ultra.semanticui.css
+import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.coroutines.flow.firstOrNull

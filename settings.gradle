@@ -16,7 +16,9 @@ include(
 
         // KRAFT ////////////////////////////////////////////////////////////////////////////////
         ":kraft:core",
+        ":kraft:core-tests",
         ":kraft:semanticui",
+        ":kraft:testing",
         // Addons
         ":kraft:addons:avatars",
         ":kraft:addons:browserdetect",

@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.testbed
+package de.peekandpoke.kraft.testing
 
 import org.w3c.dom.Element
 import org.w3c.dom.HTMLElement

@@ -48,11 +48,13 @@
             <option value="$PROJECT_DIR$/kraft/addons/signaturepad" />
             <option value="$PROJECT_DIR$/kraft/addons/sourcemappedstacktrace" />
             <option value="$PROJECT_DIR$/kraft/core" />
+            <option value="$PROJECT_DIR$/kraft/core-tests" />
             <option value="$PROJECT_DIR$/kraft/examples" />
             <option value="$PROJECT_DIR$/kraft/examples/addons" />
             <option value="$PROJECT_DIR$/kraft/examples/fomanticui" />
             <option value="$PROJECT_DIR$/kraft/examples/hello-world" />
             <option value="$PROJECT_DIR$/kraft/semanticui" />
+            <option value="$PROJECT_DIR$/kraft/testing" />
             <option value="$PROJECT_DIR$/mutator" />
             <option value="$PROJECT_DIR$/mutator/core" />
             <option value="$PROJECT_DIR$/mutator/ksp" />

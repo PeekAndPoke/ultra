@@ -1,10 +1,7 @@
-package de.peekandpoke.kraft.addon.semanticui.forms
+package de.peekandpoke.kraft.semanticui.forms
 
-import de.peekandpoke.kraft.addons.semanticui.forms.UiInputField
-import de.peekandpoke.kraft.addons.semanticui.forms.UiInputFieldComponent
-import de.peekandpoke.kraft.addons.semanticui.forms.simulate
 import de.peekandpoke.kraft.components.ComponentRef
-import de.peekandpoke.kraft.testbed.TestBed
+import de.peekandpoke.kraft.testing.TestBed
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe

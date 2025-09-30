@@ -10,7 +10,7 @@ import de.peekandpoke.kraft.utils.SimpleAsyncQueue
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.utils.jsObject
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.semanticui.css
+import de.peekandpoke.ultra.html.css
 import kotlinx.browser.window
 import kotlinx.coroutines.await
 import kotlinx.css.Overflow
