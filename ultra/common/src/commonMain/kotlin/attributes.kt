@@ -171,6 +171,16 @@ class MutableTypedAttributes internal constructor(entries: Map<TypedKey<*>, Any?
     }
 
     /**
+     * Adds all entries from [other].
+     */
+    fun add(other: TypedAttributes) {
+        other.entries.forEach { (key, value) ->
+            @Suppress("UNCHECKED_CAST")
+            set(key as TypedKey<Any?>, value)
+        }
+    }
+
+    /**
      * Returns 'true' when the given key is set even if the value is falsy, like null, false etc.
      */
     fun <T> has(key: TypedKey<T>) = _entries.containsKey(key)

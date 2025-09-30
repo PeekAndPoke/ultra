@@ -1,8 +1,8 @@
 package de.peekandpoke.kraft.semanticui.modals
 
-import de.peekandpoke.kraft.addons.modal.ModalsManager
 import de.peekandpoke.kraft.addons.styling.StyleSheet
 import de.peekandpoke.kraft.addons.styling.StyleSheets
+import de.peekandpoke.kraft.common.ModalsManager
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.onClick

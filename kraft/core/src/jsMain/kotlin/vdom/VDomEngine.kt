@@ -1,5 +1,6 @@
 package de.peekandpoke.kraft.vdom
 
+import de.peekandpoke.kraft.KraftApp
 import de.peekandpoke.kraft.components.Component
 import org.w3c.dom.HTMLElement
 
@@ -15,13 +16,22 @@ interface VDomEngine {
 
     val options: Options
 
-    fun mount(element: HTMLElement, view: VDom.() -> Any?)
+    fun mount(app: KraftApp, element: HTMLElement, view: VDom.() -> Any?)
 
     fun createTagConsumer(host: Component<*>?): VDomTagConsumer
 
     fun triggerRedraw(component: Component<*>)
 
-    fun render(component: Component<*>, builder: VDom.() -> Any?): dynamic {
-        return VDom(engine = this, component = component).render { builder() }
+    fun render(component: Component<*>): dynamic {
+        val vdom = VDom(
+            engine = this,
+            component = component,
+        )
+
+        return vdom.render {
+            with(component) {
+                vdom.render()
+            }
+        }
     }
 }

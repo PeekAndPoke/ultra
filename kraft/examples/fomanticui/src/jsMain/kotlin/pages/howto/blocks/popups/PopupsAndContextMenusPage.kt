@@ -1,12 +1,12 @@
 package de.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.popups
 
-import de.peekandpoke.kraft.addons.popups.PopupsManager.Positioning
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.onMouseEnter
-import de.peekandpoke.kraft.examples.fomanticui.kraft
 import de.peekandpoke.kraft.routing.PageTitle
+import de.peekandpoke.kraft.semanticui.popups
+import de.peekandpoke.kraft.semanticui.popups.PopupsManager.Positioning
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui
@@ -31,7 +31,7 @@ class PopupsAndContextMenusPage(ctx: NoProps) : PureComponent(ctx) {
                 noui.column {
                     ui.fluid.basic.button {
                         onMouseEnter { evt ->
-                            kraft.popups.showContextMenu(evt) {
+                            popups.showContextMenu(evt) {
                                 ui.vertical.menu {
                                     noui.item A { +"Item 1" }
                                     noui.item A { +"Item 2" }
@@ -46,7 +46,7 @@ class PopupsAndContextMenusPage(ctx: NoProps) : PureComponent(ctx) {
                 noui.column {
                     ui.fluid.basic.button {
                         onMouseEnter { evt ->
-                            kraft.popups.showContextMenu(evt, Positioning.BottomLeft) {
+                            popups.showContextMenu(evt, Positioning.BottomLeft) {
                                 ui.vertical.menu {
                                     noui.item A { +"Item 1" }
                                     noui.item A { +"Item 2" }
@@ -61,7 +61,7 @@ class PopupsAndContextMenusPage(ctx: NoProps) : PureComponent(ctx) {
                 noui.column {
                     ui.fluid.basic.button {
                         onMouseEnter { evt ->
-                            kraft.popups.showContextMenu(evt, Positioning.BottomRight) {
+                            popups.showContextMenu(evt, Positioning.BottomRight) {
                                 ui.vertical.menu {
                                     noui.item A { +"Item 1" }
                                     noui.item A { +"Item 2" }
@@ -76,7 +76,7 @@ class PopupsAndContextMenusPage(ctx: NoProps) : PureComponent(ctx) {
                 noui.column {
                     ui.fluid.basic.button {
                         onMouseEnter { evt ->
-                            kraft.popups.showContextMenu(evt, Positioning.BottomCenter) {
+                            popups.showContextMenu(evt, Positioning.BottomCenter) {
                                 ui.vertical.menu {
                                     noui.item A { +"Item 1" }
                                     noui.item A { +"Item 2" }
@@ -88,7 +88,6 @@ class PopupsAndContextMenusPage(ctx: NoProps) : PureComponent(ctx) {
                     }
                 }
             }
-
         }
     }
 }

@@ -1,13 +1,13 @@
 package de.peekandpoke.kraft
 
-import de.peekandpoke.kraft.addons.popups.PopupsManager
-import de.peekandpoke.kraft.addons.popups.PopupsStage
-import de.peekandpoke.kraft.addons.toasts.ToastsManager
-import de.peekandpoke.kraft.addons.toasts.ToastsStage
-import de.peekandpoke.kraft.common.ModalsManager
-import de.peekandpoke.kraft.common.ModalsStage
+import de.peekandpoke.kraft.components.Automount
+import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.kraft.vdom.VDomEngine
+import de.peekandpoke.ultra.common.MutableTypedAttributes
+import de.peekandpoke.ultra.common.TypedAttributes
+import de.peekandpoke.ultra.common.TypedKey
 import de.peekandpoke.ultra.common.datetime.kotlinx.initializeJsJodaTimezones
-import kotlinx.html.FlowContent
+import org.w3c.dom.HTMLElement
 
 @DslMarker
 annotation class KraftDsl
@@ -15,21 +15,18 @@ annotation class KraftDsl
 fun kraftApp(block: KraftApp.Builder.() -> Unit = {}) = KraftApp.Builder().apply(block).build()
 
 class KraftApp internal constructor(
-    settings: Settings,
+    val appAttributes: TypedAttributes,
 ) {
-    class Settings(
-        val toasts: ToastsManager.Settings,
-    )
-
     class Builder internal constructor() {
-        private val toasts = ToastsManager.Builder()
+        private val attributes = MutableTypedAttributes.empty()
 
-        fun toasts(block: ToastsManager.Builder.() -> Unit) = toasts.apply(block)
+        fun <T> setAttribute(key: TypedKey<T>, value: T) = apply {
+            attributes[key] = value
+        }
+
 
         internal fun build() = KraftApp(
-            Settings(
-                toasts = toasts.build()
-            )
+            appAttributes = attributes.asImmutable(),
         )
     }
 
@@ -37,17 +34,23 @@ class KraftApp internal constructor(
         initializeJsJodaTimezones()
     }
 
-    val modals = ModalsManager()
-    val popups = PopupsManager()
-    val toasts = ToastsManager(settings.toasts)
+    private val automounted: List<Automount> = run {
+        appAttributes.entries
+            .mapNotNull { (_, v) -> v as? Automount }
+            .sortedByDescending { it.priority }
+    }
 
-    fun mount(tag: FlowContent, block: FlowContent.() -> Unit) {
-        with(tag) {
-            ModalsStage(modals)
-            PopupsStage(popups)
-            ToastsStage(toasts)
-
-            block()
+    fun mount(element: HTMLElement, engine: VDomEngine, view: VDom.() -> Any?) {
+        engine.mount(app = this, element = element) {
+            automounted.forEach { it.mount(this) }
+            view()
         }
     }
+
+//    fun mount(tag: FlowContent, block: FlowContent.() -> Unit) {
+//        with(tag) {
+//            automounted.forEach { it.mount(this) }
+//            block()
+//        }
+//    }
 }

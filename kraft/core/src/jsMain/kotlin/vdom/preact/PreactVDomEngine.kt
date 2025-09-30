@@ -1,5 +1,6 @@
 package de.peekandpoke.kraft.vdom.preact
 
+import de.peekandpoke.kraft.KraftApp
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.utils.jsObject
 import de.peekandpoke.kraft.vdom.VDom
@@ -9,25 +10,26 @@ import org.w3c.dom.HTMLElement
 import de.peekandpoke.kraft.components.Component as KraftComponent
 import preact.Component as PreactComponent
 
-class PreactVDomEngine(override val options: VDomEngine.Options) : VDomEngine {
+class PreactVDomEngine(
+    override val options: VDomEngine.Options = VDomEngine.Options.default,
+) : VDomEngine {
 
-    companion object {
-        operator fun invoke(
-            element: HTMLElement,
-            options: VDomEngine.Options = VDomEngine.Options.default,
-            view: VDom.() -> Any?,
-        ): PreactVDomEngine {
-            return PreactVDomEngine(options).apply {
-                mount(element, view)
-            }
-        }
-    }
+    override fun mount(app: KraftApp, element: HTMLElement, view: VDom.() -> Any?) {
 
-    override fun mount(element: HTMLElement, view: VDom.() -> Any?) {
+        val root = VDom.Root(
+            ctx = Ctx(
+                engine = this,
+                parent = null,
+                props = VDom.Root.Props(
+                    app = app,
+                    view = view,
+                )
+            ),
+        )
 
-        val root = VDom.Root(ctx = Ctx.of(engine = this))
+        val lowLevelRoot = render(root)
 
-        val lowLevelRoot = render(root) { view() }
+//        console.log("preact lowLevelRoot", lowLevelRoot)
 
         preact.render(lowLevelRoot, element)
     }

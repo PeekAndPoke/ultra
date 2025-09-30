@@ -4,8 +4,8 @@ import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.onClick
-import de.peekandpoke.kraft.examples.fomanticui.kraft
 import de.peekandpoke.kraft.routing.PageTitle
+import de.peekandpoke.kraft.semanticui.toasts
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui
@@ -28,7 +28,7 @@ class FlashMessagesPage(ctx: NoProps) : PureComponent(ctx) {
                 noui.column {
                     ui.info.button {
                         onClick {
-                            kraft.toasts.info("This is an info message")
+                            toasts.info("This is an info message")
                         }
 
                         +"Click Me"
@@ -38,7 +38,7 @@ class FlashMessagesPage(ctx: NoProps) : PureComponent(ctx) {
                 noui.column {
                     ui.warning.button {
                         onClick {
-                            kraft.toasts.warning("This is a warning message")
+                            toasts.warning("This is a warning message")
                         }
 
                         +"Click Me"
@@ -48,7 +48,7 @@ class FlashMessagesPage(ctx: NoProps) : PureComponent(ctx) {
                 noui.column {
                     ui.error.button {
                         onClick {
-                            kraft.toasts.error("This is an error message")
+                            toasts.error("This is an error message")
                         }
 
                         +"Click Me"

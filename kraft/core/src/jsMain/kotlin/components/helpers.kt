@@ -3,7 +3,14 @@ package de.peekandpoke.kraft.components
 import de.peekandpoke.kraft.KraftDsl
 import de.peekandpoke.kraft.vdom.VDomTagConsumer
 import kotlinx.html.CommonAttributeGroupFacade
+import kotlinx.html.FlowContent
 import kotlinx.html.Tag
+
+interface Automount {
+    val priority: Int get() = 0
+
+    fun mount(flow: FlowContent)
+}
 
 /**
  * Markup Element key

@@ -1,15 +1,18 @@
 package de.peekandpoke.kraft.semanticui.popups
 
+import de.peekandpoke.kraft.components.Automount
 import de.peekandpoke.kraft.components.onMouseOut
 import de.peekandpoke.kraft.components.onMouseOver
 import de.peekandpoke.kraft.components.onMouseUp
 import de.peekandpoke.kraft.utils.Rectangle
 import de.peekandpoke.kraft.utils.Vector2D
+import de.peekandpoke.ultra.common.TypedKey
 import de.peekandpoke.ultra.streams.Stream
 import de.peekandpoke.ultra.streams.StreamSource
 import de.peekandpoke.ultra.streams.Unsubscribe
 import kotlinx.browser.document
 import kotlinx.html.CommonAttributeGroupFacade
+import kotlinx.html.FlowContent
 import org.w3c.dom.DOMRect
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.MouseEvent
@@ -17,7 +20,11 @@ import org.w3c.dom.events.UIEvent
 
 typealias PopupPositionFn = (target: HTMLElement, contentSize: Vector2D) -> Vector2D
 
-class PopupsManager : Stream<List<PopupsManager.Handle>> {
+class PopupsManager : Stream<List<PopupsManager.Handle>>, Automount {
+    companion object {
+        val key = TypedKey<PopupsManager>("popups")
+    }
+
     class ShowHoverPopup(private val popups: PopupsManager) {
 
         fun show(
@@ -90,6 +97,14 @@ class PopupsManager : Stream<List<PopupsManager.Handle>> {
     override fun invoke(): List<Handle> = streamSource()
 
     override fun subscribeToStream(sub: (List<Handle>) -> Unit): Unsubscribe = streamSource.subscribeToStream(sub)
+
+    override val priority = 1000
+
+    override fun mount(flow: FlowContent) {
+        with(flow) {
+            PopupsStage(popups = this@PopupsManager)
+        }
+    }
 
     /**
      * Shows a popup relative to the target of the [event] by using the [positioning]

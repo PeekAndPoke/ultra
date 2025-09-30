@@ -1,7 +1,6 @@
 package de.peekandpoke.kraft.semanticui.dnd
 
 import org.w3c.dom.events.Event
-import org.w3c.dom.events.EventTarget
 import kotlin.reflect.KClass
 
 internal object Dnd {
@@ -43,8 +42,8 @@ internal object Dnd {
             contexts?.forEach {
                 // add mouse over event listeners
                 it.target.parent?.dom?.apply {
-                    EventTarget.addEventListener("mouseover", it.onMouseOver)
-                    EventTarget.addEventListener("mouseout", it.onMouseOut)
+                    addEventListener("mouseover", it.onMouseOver)
+                    addEventListener("mouseout", it.onMouseOut)
                 }
 
                 // signalize to the drop target that dragging has started
@@ -62,8 +61,8 @@ internal object Dnd {
             contexts?.forEach {
                 // remove mouse over event listeners
                 it.target.parent?.dom?.apply {
-                    EventTarget.removeEventListener("mouseover", it.onMouseOver)
-                    EventTarget.removeEventListener("mouseout", it.onMouseOut)
+                    removeEventListener("mouseover", it.onMouseOver)
+                    removeEventListener("mouseout", it.onMouseOut)
                 }
 
                 // signalize to the drop target that dragging has ended

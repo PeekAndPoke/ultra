@@ -1,8 +1,10 @@
 package de.peekandpoke.kraft.semanticui.toasts
 
+import de.peekandpoke.kraft.components.Automount
 import de.peekandpoke.kraft.components.key
 import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.semanticui.toasts.ToastsManager.Handle
+import de.peekandpoke.ultra.common.TypedKey
 import de.peekandpoke.ultra.common.model.Message
 import de.peekandpoke.ultra.common.model.Messages
 import de.peekandpoke.ultra.semanticui.SemanticFn
@@ -24,9 +26,11 @@ typealias ToastRenderer = FlowContent.(Handle) -> Unit
 
 class ToastsManager(
     val settings: Settings,
-) : Stream<List<Handle>> {
+) : Stream<List<Handle>>, Automount {
 
     companion object {
+        val key = TypedKey<ToastsManager>("toasts")
+
         val DefaultRenderer: ToastRenderer = { handle ->
 
             val styleFn: SemanticFn = when (handle.message.type) {
@@ -87,13 +91,21 @@ class ToastsManager(
 
     override fun subscribeToStream(sub: (List<Handle>) -> Unit): Unsubscribe = source.subscribeToStream(sub)
 
+    override val priority = 1000
+
+    override fun mount(flow: FlowContent) {
+        with(flow) {
+            ToastsStage(toasts = this@ToastsManager)
+        }
+    }
+
     fun info(
         text: String,
         duration: Duration? = settings.defaultDuration,
         renderer: ToastRenderer = settings.defaultRenderer,
     ) {
         append(
-            message = Toast.Companion.info(text = text, duration = duration),
+            message = Toast.info(text = text, duration = duration),
             renderer = renderer,
         )
     }
@@ -104,7 +116,7 @@ class ToastsManager(
         renderer: ToastRenderer = settings.defaultRenderer,
     ) {
         append(
-            message = Toast.Companion.warning(text = text, duration = duration),
+            message = Toast.warning(text = text, duration = duration),
             renderer = renderer,
         )
     }
@@ -115,7 +127,7 @@ class ToastsManager(
         renderer: ToastRenderer = settings.defaultRenderer,
     ) {
         append(
-            message = Toast.Companion.error(text = text, duration = duration),
+            message = Toast.error(text = text, duration = duration),
             renderer = renderer,
         )
     }

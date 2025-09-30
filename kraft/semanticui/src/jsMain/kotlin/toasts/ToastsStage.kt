@@ -38,6 +38,8 @@ class ToastsStage(ctx: Ctx<Props>) : Component<ToastsStage.Props>(ctx) {
 
     private val current by subscribingTo(props.toasts)
 
+    private val options get() = props.toasts.settings.stageOptions
+
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {

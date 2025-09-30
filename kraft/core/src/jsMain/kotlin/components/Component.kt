@@ -53,7 +53,7 @@ abstract class Component<PROPS>(val ctx: Ctx<PROPS>) {
         /**
          * Hook for props update
          */
-        inner class NextPropsHook<PROPS> {
+        class NextPropsHook<PROPS> {
             private val listeners = mutableListOf<(newProps: PROPS, previousProps: PROPS) -> Unit>()
 
             /**
@@ -383,7 +383,7 @@ abstract class Component<PROPS>(val ctx: Ctx<PROPS>) {
 
 //        console.log("rendering component", this)
 
-        renderCache = ctx.engine.render(this) { render() }
+        renderCache = ctx.engine.render(this)
 
         return renderCache
     }

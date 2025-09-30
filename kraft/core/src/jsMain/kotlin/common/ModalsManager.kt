@@ -1,13 +1,18 @@
 package de.peekandpoke.kraft.common
 
-import de.peekandpoke.kraft.addons.modal.ModalsManager.Handle
+import de.peekandpoke.kraft.common.ModalsManager.Handle
+import de.peekandpoke.kraft.components.Automount
+import de.peekandpoke.ultra.common.TypedKey
 import de.peekandpoke.ultra.streams.Stream
 import de.peekandpoke.ultra.streams.StreamSource
 import de.peekandpoke.ultra.streams.Unsubscribe
+import kotlinx.html.FlowContent
 
-class ModalsManager : Stream<List<Handle>> {
+class ModalsManager : Stream<List<Handle>>, Automount {
 
-    private var handleCounter = 0
+    companion object {
+        val key = TypedKey<ModalsManager>("modals")
+    }
 
     class Handle internal constructor(
         val id: Int,
@@ -23,11 +28,21 @@ class ModalsManager : Stream<List<Handle>> {
         fun close() = dialogs.close(this)
     }
 
+    private var handleCounter = 0
+
     private val streamSource: StreamSource<List<Handle>> = StreamSource(emptyList())
 
     override fun invoke(): List<Handle> = streamSource()
 
     override fun subscribeToStream(sub: (List<Handle>) -> Unit): Unsubscribe = streamSource.subscribeToStream(sub)
+
+    override val priority = 1000
+
+    override fun mount(flow: FlowContent) {
+        with(flow) {
+            ModalsStage(modals = this@ModalsManager)
+        }
+    }
 
     fun show(view: ModalRenderer): Handle {
 
