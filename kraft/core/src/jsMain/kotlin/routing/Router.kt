@@ -1,5 +1,6 @@
 package de.peekandpoke.kraft.routing
 
+import de.peekandpoke.ultra.common.TypedKey
 import de.peekandpoke.ultra.streams.Stream
 import de.peekandpoke.ultra.streams.StreamSource
 import kotlinx.browser.window
@@ -10,6 +11,10 @@ import org.w3c.dom.events.MouseEvent
  * The Router
  */
 class Router(private val mountedRoutes: List<MountedRoute>, private var enabled: Boolean) {
+
+    companion object {
+        val key = TypedKey<Router>("router")
+    }
 
     data class History(
         val router: Router,

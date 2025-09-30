@@ -1,5 +1,8 @@
 package de.peekandpoke.kraft.utils
 
+import de.peekandpoke.kraft.components.Component
+import de.peekandpoke.kraft.components.getAttributeRecursive
+import de.peekandpoke.ultra.common.TypedKey
 import de.peekandpoke.ultra.streams.Stream
 import de.peekandpoke.ultra.streams.StreamSource
 import de.peekandpoke.ultra.streams.Unsubscribe
@@ -7,9 +10,15 @@ import kotlinx.browser.document
 import kotlinx.browser.window
 import org.w3c.dom.events.Event
 
+val Component<*>.responsiveCtrl get() = getAttributeRecursive(ResponsiveController.key)
+
 class ResponsiveController(
     private val breakpoints: Breakpoints = Breakpoints.default,
 ) : Stream<ResponsiveController.State> {
+
+    companion object {
+        val key = TypedKey<ResponsiveController>("responsiveCtrl")
+    }
 
     enum class DisplayType {
         Desktop,

@@ -1,6 +1,9 @@
 package de.peekandpoke.kraft
 
 import de.peekandpoke.kraft.components.Automount
+import de.peekandpoke.kraft.routing.Router
+import de.peekandpoke.kraft.routing.RouterBuilder
+import de.peekandpoke.kraft.utils.ResponsiveController
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.kraft.vdom.VDomEngine
 import de.peekandpoke.ultra.common.MutableTypedAttributes
@@ -12,22 +15,38 @@ import org.w3c.dom.HTMLElement
 @DslMarker
 annotation class KraftDsl
 
+@KraftDsl
 fun kraftApp(block: KraftApp.Builder.() -> Unit = {}) = KraftApp.Builder().apply(block).build()
 
 class KraftApp internal constructor(
     val appAttributes: TypedAttributes,
 ) {
+    @KraftDsl
     class Builder internal constructor() {
-        private val attributes = MutableTypedAttributes.empty()
+        private val appAttributes = MutableTypedAttributes.empty()
+        private val router = RouterBuilder()
 
-        fun <T> setAttribute(key: TypedKey<T>, value: T) = apply {
-            attributes[key] = value
+        init {
+            appAttributes[ResponsiveController.key] = ResponsiveController()
         }
 
+        fun <T> setAttribute(key: TypedKey<T>, value: T) = apply {
+            appAttributes[key] = value
+        }
 
-        internal fun build() = KraftApp(
-            appAttributes = attributes.asImmutable(),
-        )
+        fun routing(block: RouterBuilder.() -> Unit) = apply {
+            router.block()
+        }
+
+        fun responsive(ctrl: ResponsiveController) = setAttribute(ResponsiveController.key, ctrl)
+
+        internal fun build(): KraftApp {
+            appAttributes[Router.key] = router.build()
+
+            return KraftApp(
+                appAttributes = appAttributes.asImmutable(),
+            )
+        }
     }
 
     init {
@@ -45,6 +64,9 @@ class KraftApp internal constructor(
             automounted.forEach { it.mount(this) }
             view()
         }
+
+        // Navigate to the current URI, if there is a router present
+        appAttributes[Router.key]?.navigateToWindowUri()
     }
 
 //    fun mount(tag: FlowContent, block: FlowContent.() -> Unit) {

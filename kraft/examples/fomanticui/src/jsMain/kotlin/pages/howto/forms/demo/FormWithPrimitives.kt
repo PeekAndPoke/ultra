@@ -13,10 +13,10 @@ import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import de.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
-import de.peekandpoke.kraft.examples.fomanticui.responsiveCtrl
 import de.peekandpoke.kraft.forms.formController
 import de.peekandpoke.kraft.semanticui.forms.UiCheckboxField
 import de.peekandpoke.kraft.semanticui.forms.UiInputField
+import de.peekandpoke.kraft.utils.responsiveCtrl
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.ui

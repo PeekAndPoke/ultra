@@ -24,7 +24,7 @@ interface VDomEngine {
 
     fun render(component: Component<*>): dynamic {
         val vdom = VDom(
-            engine = this,
+            consumer = createTagConsumer(component),
             component = component,
         )
 

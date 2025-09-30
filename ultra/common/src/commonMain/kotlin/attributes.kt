@@ -100,17 +100,17 @@ class MutableTypedAttributes internal constructor(entries: Map<TypedKey<*>, Any?
         /**
          * Empty instance
          */
-        fun empty() = MutableTypedAttributes(emptyMap())
+        fun empty(): MutableTypedAttributes = MutableTypedAttributes(emptyMap())
 
         /**
          * Builder method
          */
-        operator fun invoke(builder: Builder.() -> Unit) = of(builder)
+        operator fun invoke(builder: Builder.() -> Unit): MutableTypedAttributes = of(builder)
 
         /**
          * Builder method
          */
-        fun of(builder: Builder.() -> Unit) = Builder().apply(builder).build()
+        fun of(builder: Builder.() -> Unit): MutableTypedAttributes = Builder().apply(builder).build()
     }
 
     /**

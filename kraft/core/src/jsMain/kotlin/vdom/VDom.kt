@@ -5,7 +5,10 @@ import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import kotlinx.html.FlowContent
 
-class VDom(engine: VDomEngine, val component: Component<*>) : FlowContent {
+class VDom(
+    override val consumer: VDomTagConsumer,
+    val component: Component<*>,
+) : FlowContent {
 
     class Root(ctx: Ctx<Props>) : Component<Root.Props>(ctx) {
         data class Props(
@@ -14,6 +17,7 @@ class VDom(engine: VDomEngine, val component: Component<*>) : FlowContent {
         )
 
         init {
+            // Mix in all the properties that are set up for the app
             attributes.add(props.app.appAttributes)
         }
 
@@ -28,7 +32,7 @@ class VDom(engine: VDomEngine, val component: Component<*>) : FlowContent {
         return consumer.finalize().render()
     }
 
-    override val consumer = engine.createTagConsumer(component)
+//    override val consumer: VDomTagConsumer = consumer
 
     override val attributes: MutableMap<String, String>
         get() = mutableMapOf()

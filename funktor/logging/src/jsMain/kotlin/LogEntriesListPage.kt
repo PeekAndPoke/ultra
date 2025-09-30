@@ -1,21 +1,21 @@
 package de.peekandpoke.funktor.logging
 
 import de.peekandpoke.funktor.logging.api.LogEntryModel
-import de.peekandpoke.kraft.addons.semanticui.forms.UiInputField
-import de.peekandpoke.kraft.addons.semanticui.forms.old.select.SelectField
-import de.peekandpoke.kraft.addons.semanticui.pagination.PaginationEpp
-import de.peekandpoke.kraft.addons.semanticui.pagination.PaginationPages
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.routing.JoinedPageTitle
+import de.peekandpoke.kraft.semanticui.forms.UiInputField
+import de.peekandpoke.kraft.semanticui.forms.old.select.SelectField
+import de.peekandpoke.kraft.semanticui.pagination.PaginationEpp
+import de.peekandpoke.kraft.semanticui.pagination.PaginationPages
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.model.Paged
 import de.peekandpoke.ultra.common.toggle
+import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.logging.LogLevel
-import de.peekandpoke.ultra.semanticui.css
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui
