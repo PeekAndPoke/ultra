@@ -5,6 +5,7 @@ import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.routing.JoinedPageTitle
+import de.peekandpoke.kraft.routing.router
 import de.peekandpoke.kraft.semanticui.forms.UiInputField
 import de.peekandpoke.kraft.semanticui.forms.old.select.SelectField
 import de.peekandpoke.kraft.semanticui.pagination.PaginationEpp
@@ -48,9 +49,7 @@ class LogEntriesListPage(ctx: Ctx<Props>) : Component<LogEntriesListPage.Props>(
         props.ui.api.list(filter).map { it.data!! }
     }
 
-    var filter: LogsFilter by logsFilter(props.ui.router()) {
-        loader.reloadSilently()
-    }
+    var filter: LogsFilter by logsFilter { loader.reloadSilently() }
 
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -148,9 +147,9 @@ class LogEntriesListPage(ctx: Ctx<Props>) : Component<LogEntriesListPage.Props>(
                 entries.items.forEach { entry ->
                     tr {
                         onClick { event ->
-                            props.ui.router().navToUri(
-                                uri = props.ui.routes.view(entry),
-                                evt = event
+                            router.navToUri(
+                                evt = event,
+                                route = props.ui.routes.view(entry),
                             )
                         }
 

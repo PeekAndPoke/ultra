@@ -11,16 +11,14 @@ class StorageRoutes(mount: String) {
         val list = Static(mount)
 
         val view = Route1("$mount/{id}")
-
-        fun view(id: String) = view.build(id)
+        fun view(id: String) = view.bind(id)
     }
 
     class RandomCache(mount: String) {
         val list = Static(mount)
 
         val view = Route1("$mount/{id}")
-
-        fun view(id: String) = view.build(id)
+        fun view(id: String) = view.bind(id)
     }
 
     val randomData = RandomData("$mount/random-data")

@@ -15,22 +15,26 @@ import kotlinx.html.div
  * The router component displays the view that is associated with the [ActiveRoute] of the given [Router]
  */
 @Suppress("FunctionName")
-fun Tag.RouterComponent(router: Router) = comp(RouterComponent.Props(router)) {
+fun Tag.RouterComponent(
+    router: Router? = null,
+) = comp(RouterComponent.Props(router)) {
     RouterComponent(it)
 }
 
 class RouterComponent internal constructor(ctx: Ctx<Props>) : Component<RouterComponent.Props>(ctx) {
 
     data class Props(
-        val router: Router,
+        val router: Router?,
     )
 
     ////  STATE  ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private val current: ActiveRoute by subscribingTo(props.router.current)
+    private val activeRouter get() = props.router ?: router
+
+    private val current: ActiveRoute by subscribingTo(activeRouter.current)
 
     private val currentUri: String by subscribingTo(
-        props.router.current
+        activeRouter.current
             .map { it.uri.split("?").firstOrNull() ?: "" }
             .distinct()
     ) {

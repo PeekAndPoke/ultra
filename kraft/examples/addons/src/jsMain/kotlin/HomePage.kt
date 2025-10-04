@@ -4,6 +4,8 @@ import de.peekandpoke.kraft.addons.avatars.Avatars
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
+import de.peekandpoke.kraft.examples.jsaddons.core.CoreExamples
+import de.peekandpoke.kraft.routing.href
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.semanticui.noui
@@ -36,7 +38,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
         ui.four.doubling.link.cards {
 
             noui.card A {
-                href = routes.avatars.index()
+                href(routes.avatars.index())
 
                 noui.center.aligned.content {
                     renderLogo(
@@ -50,7 +52,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
             }
 
             noui.card A {
-                href = routes.browserDetect()
+                href(routes.browserDetect())
 
                 noui.center.aligned.content {
                     renderLogo(
@@ -64,7 +66,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
             }
 
             noui.card A {
-                href = routes.chartJs()
+                href(routes.chartJs())
 
                 noui.center.aligned.content {
                     renderLogo(
@@ -78,7 +80,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
             }
 
             noui.card A {
-                href = routes.jwtDecode()
+                href(routes.jwtDecode())
 
                 noui.center.aligned.content {
                     renderLogo(
@@ -92,7 +94,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
             }
 
             noui.card A {
-                href = routes.konva()
+                href(routes.konva())
 
                 noui.center.aligned.content {
                     renderLogo(
@@ -106,7 +108,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
             }
 
             noui.card A {
-                href = routes.marked()
+                href(routes.marked())
 
                 noui.center.aligned.content {
                     renderLogo(
@@ -120,7 +122,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
             }
 
             noui.card A {
-                href = routes.pdfjs.index()
+                href(routes.pdfjs.index())
 
                 noui.center.aligned.content {
                     renderLogo(
@@ -134,7 +136,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
             }
 
             noui.card A {
-                href = routes.prismjs()
+                href(routes.prismjs())
 
                 noui.center.aligned.content {
                     renderLogo(
@@ -148,7 +150,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
             }
 
             noui.card A {
-                href = routes.signaturePad()
+                href(routes.signaturePad())
 
                 noui.center.aligned.content {
                     renderLogo(
@@ -164,15 +166,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
     }
 
     private fun FlowContent.renderCoreCards() {
-        ui.four.doubling.cards {
-            noui.card A {
-                href = routes.core.scriptLoader()
-
-                noui.center.aligned.content {
-                    +"Script Loader"
-                }
-            }
-        }
+        CoreExamples()
     }
 
     private fun FlowContent.renderLogo(src: String, alt: String) {

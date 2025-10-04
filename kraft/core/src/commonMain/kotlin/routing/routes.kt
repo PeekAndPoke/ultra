@@ -1,54 +1,64 @@
 package de.peekandpoke.kraft.routing
 
+@Suppress("UNCHECKED_CAST")
+internal fun Map<String, String?>.removeNullValues() = filterValues { it != null } as Map<String, String>
+
 /**
  * A static route is a route that does not have any route parameters
  */
-open class Static(pattern: String) : RouteBase(pattern = pattern, numParams = 0) {
-    operator fun invoke() =
-        buildUri()
+class Static(pattern: String) : RouteBase(pattern = pattern, numParams = 0) {
+    /** Binds the uri with the given parameters */
+    operator fun invoke(): Route.Bound {
+        return bind()
+    }
 }
 
 /**
  * A parameterized route with one route parameter
  */
-open class Route1(pattern: String) : RouteBase(pattern = pattern, numParams = 1) {
-    /** Builds the uri with the given parameters */
-    fun build(p1: String) =
-        buildUri(p1)
+class Route1(pattern: String) : RouteBase(pattern = pattern, numParams = 1) {
+    /** Binds the uri with the given parameters */
+    operator fun invoke(p1: String): Route.Bound {
+        return bind(p1)
+    }
 }
 
 /**
  * A parameterized route with two route parameters
  */
-open class Route2(pattern: String) : RouteBase(pattern = pattern, numParams = 2) {
-    /** Builds the uri with the given parameters */
-    fun build(p1: String, p2: String) =
-        buildUri(p1, p2)
+class Route2(pattern: String) : RouteBase(pattern = pattern, numParams = 2) {
+    /** Binds the uri with the given parameters */
+    operator fun invoke(p1: String, p2: String): Route.Bound {
+        return bind(p1, p2)
+    }
 }
 
 /**
  * A parameterized route with two route parameters
  */
-open class Route3(pattern: String) : RouteBase(pattern = pattern, numParams = 3) {
-    /** Builds the uri with the given parameters */
-    fun build(p1: String, p2: String, p3: String) =
-        buildUri(p1, p2, p3)
+class Route3(pattern: String) : RouteBase(pattern = pattern, numParams = 3) {
+    /** Binds the uri with the given parameters */
+    operator fun invoke(p1: String, p2: String, p3: String): Route.Bound {
+        return bind(p1, p2, p3)
+    }
 }
 
 /**
  * A parameterized route with two route parameters
  */
-open class Route4(pattern: String) : RouteBase(pattern = pattern, numParams = 4) {
+class Route4(pattern: String) : RouteBase(pattern = pattern, numParams = 4) {
     /** Builds the uri with the given parameters */
-    fun build(p1: String, p2: String, p3: String, p4: String) =
-        buildUri(p1, p2, p3, p4)
+    operator fun invoke(p1: String, p2: String, p3: String, p4: String): Route.Bound {
+        return bind(p1, p2, p3, p4)
+    }
 }
 
 /**
  * A parameterized route with two route parameters
  */
-open class Route5(pattern: String) : RouteBase(pattern = pattern, numParams = 5) {
+class Route5(pattern: String) : RouteBase(pattern = pattern, numParams = 5) {
     /** Builds the uri with the given parameters */
-    fun build(p1: String, p2: String, p3: String, p4: String, p5: String) =
-        buildUri(p1, p2, p3, p4, p5)
+    operator fun invoke(p1: String, p2: String, p3: String, p4: String, p5: String): Route.Bound {
+        return bind(p1, p2, p3, p4, p5)
+    }
 }

@@ -8,6 +8,7 @@ import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.routing.JoinedPageTitle
+import de.peekandpoke.kraft.routing.router
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.datetime.MpDateTimePeriod
@@ -105,9 +106,10 @@ class WorkersListPage(ctx: Ctx<Props>) : Component<WorkersListPage.Props>(ctx) {
 
                     tr {
                         onClick { event ->
-                            props.ui.navTo(event) {
-                                workers.view(worker)
-                            }
+                            router.navToUri(
+                                evt = event,
+                                route = props.ui.routes.workers.view(worker),
+                            )
                         }
 
                         td {

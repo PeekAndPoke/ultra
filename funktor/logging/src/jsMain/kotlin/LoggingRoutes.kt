@@ -9,7 +9,7 @@ class LoggingRoutes(mount: String = "/_/funktor/logging") {
 
     val list = Static(mount)
     val view = Route1("$mount/{id}")
-    fun view(id: String) = view.build(id)
+    fun view(id: String) = view.bind(id)
     fun view(entry: LogEntryModel) = view(id = entry.id)
 }
 

@@ -6,6 +6,7 @@ import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.routing.JoinedPageTitle
+import de.peekandpoke.kraft.routing.router
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.semanticui.icon
@@ -74,9 +75,10 @@ class DepotRepositoriesListPage(ctx: Ctx<Props>) : Component<DepotRepositoriesLi
                 repos.forEach { repo ->
                     tr {
                         onClick { evt ->
-                            props.ui.navTo(evt) {
-                                depot.browse(repo = repo.name, path = "")
-                            }
+                            router.navToUri(
+                                evt = evt,
+                                route = props.ui.routes.depot.browse(repo = repo.name, path = ""),
+                            )
                         }
 
                         td { // Name

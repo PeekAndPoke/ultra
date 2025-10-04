@@ -26,7 +26,7 @@ class DataLoaderComponent(ctx: Ctx<Props>) : Component<DataLoaderComponent.Props
         val start: Int,
     )
 
-    private var filter by pagedSearchFilter(router) {
+    private var filter by pagedSearchFilter {
         console.log(it)
         reload()
     }
@@ -34,7 +34,7 @@ class DataLoaderComponent(ctx: Ctx<Props>) : Component<DataLoaderComponent.Props
     private var reloads by value(0)
 
     private val loader = dataLoader {
-        flow<Int> {
+        flow {
             delay(1_000)
             emit(props.start + reloads)
         }

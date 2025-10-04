@@ -4,13 +4,13 @@ import de.peekandpoke.funktor.cluster.FunktorClusterUi
 import de.peekandpoke.kraft.routing.Route1
 import de.peekandpoke.kraft.routing.RouterBuilder
 import de.peekandpoke.kraft.routing.Static
-import js.uri.encodeURI
 
 class DepotRoutes(mount: String) {
     val listRepositories = Static("$mount/repos")
 
     val browse = Route1("$mount/repos/{repo}/browse")
-    fun browse(repo: String, path: String) = browse.buildUri(repo) + "?path=${encodeURI(path)}"
+    fun browse(repo: String, path: String) = browse.bind(repo)
+        .plusQueryParams("path" to path)
 }
 
 internal fun RouterBuilder.mountFunktorDepot(

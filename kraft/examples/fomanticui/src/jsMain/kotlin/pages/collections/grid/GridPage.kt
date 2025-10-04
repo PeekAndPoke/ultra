@@ -11,6 +11,7 @@ import de.peekandpoke.kraft.examples.fomanticui.helpers.example
 import de.peekandpoke.kraft.examples.fomanticui.helpers.readTheFomanticUiDocs
 import de.peekandpoke.kraft.examples.fomanticui.routes
 import de.peekandpoke.kraft.routing.PageTitle
+import de.peekandpoke.kraft.routing.href
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.semanticui.noui
@@ -319,7 +320,7 @@ class GridPage(ctx: NoProps) : PureComponent(ctx) {
         p { +"Grids are fluid and will automatically flow in size to take the maximum available width." }
 
         p {
-            a(href = routes.elementsContainer()) { +"Containers" }
+            a { href(routes.elementsContainer()); +"Containers" }
             +" are elements designed to limit page content to a reasonable maximum width for display based "
             +"on the size of the user's screen."
         }
@@ -645,7 +646,7 @@ class GridPage(ctx: NoProps) : PureComponent(ctx) {
 
         p {
             +"A "
-            a(href = routes.elementsContainer()) { +"container" }
+            a { href(routes.elementsContainer()); +"container" }
             +" can be used alongside a grid to provide a responsive, fixed width container for wrapping the "
             +"contents of a page."
         }

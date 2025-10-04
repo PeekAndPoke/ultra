@@ -3,6 +3,7 @@ package de.peekandpoke.funktor.cluster
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.routing.JoinedPageTitle
+import de.peekandpoke.kraft.routing.href
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.html.RenderFn
 import de.peekandpoke.ultra.semanticui.icon
@@ -41,7 +42,7 @@ class FunktorClusterOverviewPage(ctx: Ctx<Props>) : Component<FunktorClusterOver
 
         ui.four.doubling.stackable.cards {
             ui.card A {
-                href = props.ui.routes.locks.listServerBeacons()
+                href(props.ui.routes.locks.listServerBeacons())
 
                 ui.center.aligned.content {
                     icon.large.font_awesome_flag()
@@ -52,7 +53,7 @@ class FunktorClusterOverviewPage(ctx: Ctx<Props>) : Component<FunktorClusterOver
             }
 
             ui.card A {
-                href = props.ui.routes.locks.listGlobalLocks()
+                href(props.ui.routes.locks.listGlobalLocks())
 
                 ui.center.aligned.content {
                     icon.large.unlock()
@@ -67,7 +68,7 @@ class FunktorClusterOverviewPage(ctx: Ctx<Props>) : Component<FunktorClusterOver
 
         ui.four.doubling.stackable.cards {
             ui.card A {
-                href = props.ui.routes.workers.list()
+                href(props.ui.routes.workers.list())
 
                 ui.center.aligned.content {
                     icon.large.robot()
@@ -78,7 +79,7 @@ class FunktorClusterOverviewPage(ctx: Ctx<Props>) : Component<FunktorClusterOver
             }
 
             ui.card A {
-                href = props.ui.routes.backgroundJobs.listQueued()
+                href(props.ui.routes.backgroundJobs.listQueued())
 
                 ui.center.aligned.content {
                     icon.large.pallet()
@@ -89,7 +90,7 @@ class FunktorClusterOverviewPage(ctx: Ctx<Props>) : Component<FunktorClusterOver
             }
 
             ui.card A {
-                href = props.ui.routes.backgroundJobs.listArchived()
+                href(props.ui.routes.backgroundJobs.listArchived())
 
                 ui.center.aligned.content {
                     icon.large.boxes()
@@ -104,7 +105,7 @@ class FunktorClusterOverviewPage(ctx: Ctx<Props>) : Component<FunktorClusterOver
 
         ui.four.doubling.stackable.cards {
             ui.card A {
-                href = props.ui.routes.vault.index()
+                href(props.ui.routes.vault.index())
 
                 ui.center.aligned.content {
                     icon.large.database()
@@ -115,7 +116,7 @@ class FunktorClusterOverviewPage(ctx: Ctx<Props>) : Component<FunktorClusterOver
             }
 
             ui.card A {
-                href = props.ui.routes.depot.listRepositories()
+                href(props.ui.routes.depot.listRepositories())
 
                 ui.center.aligned.content {
                     icon.large.boxes()
@@ -126,7 +127,7 @@ class FunktorClusterOverviewPage(ctx: Ctx<Props>) : Component<FunktorClusterOver
             }
 
             ui.card A {
-                href = props.ui.routes.storage.randomData.list()
+                href(props.ui.routes.storage.randomData.list())
 
                 ui.center.aligned.content {
                     icon.large.database()
@@ -137,7 +138,7 @@ class FunktorClusterOverviewPage(ctx: Ctx<Props>) : Component<FunktorClusterOver
             }
 
             ui.card A {
-                href = props.ui.routes.storage.randomCache.list()
+                href(props.ui.routes.storage.randomCache.list())
 
                 ui.center.aligned.content {
                     icon.large.memory()

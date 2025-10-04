@@ -6,12 +6,18 @@ import de.peekandpoke.ultra.common.encodeUriComponent
 /**
  * A parameterized route with one route parameter
  */
-abstract class RouteBase(final override val pattern: String, numParams: Int) : Route, Route.Renderable {
+abstract class RouteBase(final override val pattern: String, numParams: Int) : Route {
 
     companion object {
         @Suppress("RegExpRedundantEscape")
         val placeholderRegex = "\\{([^}]+)\\}".toRegex()
         const val extractRegexPattern = "([^/]*)"
+
+        /**
+         * Internal helper for building uris
+         */
+        fun String.replacePlaceholder(placeholder: String, value: String) =
+            replace("{$placeholder}", value.encodeUriComponent())
     }
 
     /**
@@ -79,33 +85,22 @@ abstract class RouteBase(final override val pattern: String, numParams: Int) : R
     /**
      * Builds a uri with the given [routeParams]
      */
-    override fun buildUri(vararg routeParams: String): String =
-        routeParams.foldIndexed("#$pattern") { idx, pattern, param ->
-            pattern.replacePlaceholder(placeholders[idx], param)
-        }
+    fun bind(vararg routeParams: String?): Route.Bound {
+        val routeParamsMap = routeParams
+            .mapIndexed { idx, param -> placeholders[idx] to param }
+            .toMap()
+
+        return bind(routeParams = routeParamsMap, queryParams = emptyMap())
+    }
 
     /**
      * Builds a uri with the given [routeParams] and [queryParams]
      */
-    override fun buildUri(routeParams: Map<String, String>, queryParams: Map<String, String?>): String {
-
-        val withoutQuery = routeParams.entries.fold("#$pattern") { pattern, entry ->
-            pattern.replacePlaceholder(entry.key, entry.value)
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        val cleanedQueryParams = queryParams.filterValues { it != null } as Map<String, String>
-
-        return when (cleanedQueryParams.isEmpty()) {
-            true -> withoutQuery
-            else -> "$withoutQuery?" + cleanedQueryParams
-                .map { "${it.key}=${it.value.encodeUriComponent()}" }.joinToString("&")
-        }
+    fun bind(routeParams: Map<String, String?>, queryParams: Map<String, String?>): Route.Bound {
+        return Route.Bound(
+            route = this,
+            routeParams = routeParams.removeNullValues(),
+            queryParams = queryParams.removeNullValues(),
+        )
     }
-
-    /**
-     * Internal helper for building uris
-     */
-    private fun String.replacePlaceholder(placeholder: String, value: String) =
-        replace("{$placeholder}", value.encodeUriComponent())
 }

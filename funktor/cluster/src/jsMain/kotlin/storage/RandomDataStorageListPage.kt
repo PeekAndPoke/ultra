@@ -8,6 +8,7 @@ import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.key
 import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.routing.JoinedPageTitle
+import de.peekandpoke.kraft.routing.router
 import de.peekandpoke.kraft.semanticui.forms.UiInputField
 import de.peekandpoke.kraft.semanticui.pagination.PaginationEpp
 import de.peekandpoke.kraft.semanticui.pagination.PaginationPages
@@ -38,7 +39,7 @@ class RandomDataStorageListPage(ctx: Ctx<Props>) : Component<RandomDataStorageLi
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
-    var filter: PagedSearchFilter by pagedSearchFilter(router = props.ui.router) { loader.reloadSilently() }
+    var filter: PagedSearchFilter by pagedSearchFilter { loader.reloadSilently() }
 
     private val loader = dataLoader {
         props.ui.api.storage.randomData
@@ -106,9 +107,10 @@ class RandomDataStorageListPage(ctx: Ctx<Props>) : Component<RandomDataStorageLi
 
                     tr {
                         onClick { event ->
-                            props.ui.navTo(event) {
-                                storage.randomData.view(item.id)
-                            }
+                            router.navToUri(
+                                evt = event,
+                                route = props.ui.routes.storage.randomData.view(item.id)
+                            )
                         }
 
                         td { // Category

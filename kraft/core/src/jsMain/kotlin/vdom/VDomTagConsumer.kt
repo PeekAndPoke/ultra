@@ -10,7 +10,7 @@ interface VDomTagConsumer : TagConsumer<VDomElement> {
 
     val engine: VDomEngine
 
-    val host: Component<*>?
+    val host: Component<*>
 
     val isDebugMode: Boolean get() = engine.options.debugMode
 

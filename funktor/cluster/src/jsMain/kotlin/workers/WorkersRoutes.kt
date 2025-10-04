@@ -11,8 +11,7 @@ class WorkersRoutes(mount: String) {
     val list = Static(mount)
 
     val view = Route1("$mount/{id}")
-
-    fun view(worker: WorkerModel) = view.build(worker.id)
+    fun view(worker: WorkerModel) = view.bind(worker.id)
 }
 
 internal fun RouterBuilder.mountFunktorWorkers(

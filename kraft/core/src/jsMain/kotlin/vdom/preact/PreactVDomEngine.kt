@@ -34,7 +34,7 @@ class PreactVDomEngine(
         preact.render(lowLevelRoot, element)
     }
 
-    override fun createTagConsumer(host: KraftComponent<*>?): VDomTagConsumer {
+    override fun createTagConsumer(host: KraftComponent<*>): VDomTagConsumer {
         return PreactTagConsumer(this, host)
     }
 

@@ -5,125 +5,166 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
 class QueryParamsSpec : StringSpec() {
+    val renderer = Route.Renderer.Default
+
     init {
         // Static route with query parameters
-        "Static route - buildUri with empty query params" {
+        "Static route - rendering with empty query params" {
             val route = Static("/home")
 
-            route.buildUri(routeParams = emptyMap(), queryParams = emptyMap()) shouldBe "#/home"
+            val bound = route.bind(routeParams = emptyMap(), queryParams = emptyMap())
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/home"
         }
 
-        "Static route - buildUri with single query param" {
+        "Static route - rendering with single query param" {
             val route = Static("/search")
 
-            route.buildUri(routeParams = emptyMap(), queryParams = mapOf("q" to "kotlin")) shouldBe "#/search?q=kotlin"
+            val bound = route.bind(routeParams = emptyMap(), queryParams = mapOf("q" to "kotlin"))
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/search?q=kotlin"
         }
 
-        "Static route - buildUri with multiple query params" {
+        "Static route - rendering with multiple query params" {
             val route = Static("/products")
 
-            route.buildUri(
+            val bound = route.bind(
                 routeParams = emptyMap(),
                 queryParams = mapOf("category" to "electronics", "sort" to "price")
-            ) shouldBe "#/products?category=electronics&sort=price"
+            )
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/products?category=electronics&sort=price"
         }
 
-        "Static route - buildUri with query params containing spaces" {
+        "Static route - rendering with query params containing spaces" {
             val route = Static("/search")
 
-            route.buildUri(
+            val bound = route.bind(
                 routeParams = emptyMap(),
                 queryParams = mapOf("q" to "hello world", "type" to "full text")
-            ) shouldBe "#/search?q=hello%20world&type=full%20text"
+            )
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/search?q=hello%20world&type=full%20text"
         }
 
-        "Static route - buildUri with query params containing special characters" {
+        "Static route - rendering with query params containing special characters" {
             val route = Static("/filter")
 
-            route.buildUri(
+            val bound = route.bind(
                 routeParams = emptyMap(),
                 queryParams = mapOf("name" to "John & Jane", "category" to "R&D")
-            ) shouldBe "#/filter?name=John%20%26%20Jane&category=R%26D"
+            )
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/filter?name=John%20%26%20Jane&category=R%26D"
         }
 
         // Route1 with query parameters
-        "Route1 - buildUri with route param and query params" {
+        "Route1 - rendering with route param and query params" {
             val route = Route1("/user/{id}")
 
-            route.buildUri(
+            val bound = route.bind(
                 routeParams = mapOf("id" to "123"),
                 queryParams = mapOf("tab" to "profile", "edit" to "true")
-            ) shouldBe "#/user/123?tab=profile&edit=true"
+            )
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/user/123?tab=profile&edit=true"
         }
 
-        "Route1 - buildUri with complex route param and query params" {
+        "Route1 - rendering with complex route param and query params" {
             val route = Route1("/product/{slug}")
 
-            route.buildUri(
+            val bound = route.bind(
                 routeParams = mapOf("slug" to "gaming-laptop"),
                 queryParams = mapOf("color" to "silver", "warranty" to "2 years", "discount" to "10%")
-            ) shouldBe "#/product/gaming-laptop?color=silver&warranty=2%20years&discount=10%25"
+            )
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/product/gaming-laptop?color=silver&warranty=2%20years&discount=10%25"
         }
 
         // Route2 with query parameters
-        "Route2 - buildUri with route params and query params" {
+        "Route2 - rendering with route params and query params" {
             val route = Route2("/category/{category}/product/{id}")
 
-            route.buildUri(
+            val bound = route.bind(
                 routeParams = mapOf("category" to "electronics", "id" to "laptop-123"),
                 queryParams = mapOf("view" to "detailed", "compare" to "true")
-            ) shouldBe "#/category/electronics/product/laptop-123?view=detailed&compare=true"
+            )
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/category/electronics/product/laptop-123?view=detailed&compare=true"
         }
 
-        "Route2 - buildUri with encoded route params and query params" {
+        "Route2 - rendering with encoded route params and query params" {
             val route = Route2("/user/{name}/post/{title}")
 
-            route.buildUri(
+            val bound = route.bind(
                 routeParams = mapOf("name" to "john doe", "title" to "my first post"),
                 queryParams = mapOf("draft" to "false", "tags" to "tech,programming")
-            ) shouldBe "#/user/john%20doe/post/my%20first%20post?draft=false&tags=tech%2Cprogramming"
+            )
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/user/john%20doe/post/my%20first%20post?draft=false&tags=tech%2Cprogramming"
         }
 
         // Route3 with query parameters
-        "Route3 - buildUri with route params and query params" {
+        "Route3 - rendering with route params and query params" {
             val route = Route3("/org/{orgId}/team/{teamId}/project/{projectId}")
 
-            route.buildUri(
+            val bound = route.bind(
                 routeParams = mapOf("orgId" to "acme", "teamId" to "dev", "projectId" to "web-app"),
                 queryParams = mapOf("status" to "active", "priority" to "high", "assignee" to "john")
-            ) shouldBe "#/org/acme/team/dev/project/web-app?status=active&priority=high&assignee=john"
+            )
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/org/acme/team/dev/project/web-app?status=active&priority=high&assignee=john"
         }
 
         // Query parameter edge cases
         "Query params - empty values should be included" {
             val route = Static("/search")
 
-            route.buildUri(
+            val bound = route.bind(
                 routeParams = emptyMap(),
                 queryParams = mapOf("q" to "", "filter" to "active")
-            ) shouldBe "#/search?q=&filter=active"
+            )
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/search?q=&filter=active"
         }
 
         "Query params - null values should be filtered out" {
             val route = Static("/filter")
 
-            route.buildUri(
+            val bound = route.bind(
                 routeParams = emptyMap(),
                 queryParams = mapOf("category" to "electronics", "brand" to null, "price" to "100")
-            ) shouldBe "#/filter?category=electronics&price=100"
+            )
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/filter?category=electronics&price=100"
         }
 
         "Query params - URL encoding special characters" {
             val route = Static("/api")
 
-            route.buildUri(
+            val bound = route.bind(
                 routeParams = emptyMap(),
                 queryParams = mapOf(
                     "url" to "https://example.com/path?param=value",
                     "symbols" to "!@#$%^&*()",
                     "unicode" to "José María"
                 )
-            ) shouldBe "#/api?url=https%3A%2F%2Fexample.com%2Fpath%3Fparam%3Dvalue&symbols=!%40%23%24%25%5E%26*()&unicode=Jos%C3%A9%20Mar%C3%ADa"
+            )
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/api?url=https%3A%2F%2Fexample.com%2Fpath%3Fparam%3Dvalue&symbols=!%40%23%24%25%5E%26*()&unicode=Jos%C3%A9%20Mar%C3%ADa"
         }
 
         // Query parameter matching and extraction
@@ -222,10 +263,10 @@ class QueryParamsSpec : StringSpec() {
             val route = Route2("/user/{userId}/post/{postId}")
             val match = route.match("/user/123/post/456?query=test")!!
 
-            match.param("userId") shouldBe "123"
-            match.param("postId") shouldBe "456"
-            match.param("nonexistent") shouldBe ""
-            match.param("nonexistent", "default") shouldBe "default"
+            match.routeParam("userId") shouldBe "123"
+            match.routeParam("postId") shouldBe "456"
+            match.routeParam("nonexistent") shouldBe ""
+            match.routeParam("nonexistent", "default") shouldBe "default"
         }
 
         "Route.Match - bracket operator should work like param" {
@@ -252,7 +293,7 @@ class QueryParamsSpec : StringSpec() {
         "Complex scenario - Route3 with encoded params and complex query params" {
             val route = Route3("/store/{country}/{city}/{branch}")
 
-            val builtUri = route.buildUri(
+            val bound = route.bind(
                 routeParams = mapOf("country" to "United States", "city" to "New York", "branch" to "5th Avenue"),
                 queryParams = mapOf(
                     "department" to "Electronics & Computers",
@@ -262,7 +303,9 @@ class QueryParamsSpec : StringSpec() {
                 )
             )
 
-            val match = route.match(builtUri.removePrefix("#"))
+            val rendered = renderer.render(bound)
+
+            val match = route.match(rendered)
             match shouldNotBe null
             match?.routeParams?.get("country") shouldBe "United States"
             match?.routeParams?.get("city") shouldBe "New York"

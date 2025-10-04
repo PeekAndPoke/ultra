@@ -16,40 +16,20 @@ import de.peekandpoke.funktor.cluster.vault.VaultIndexPage
 import de.peekandpoke.funktor.cluster.workers.WorkerDetailsPage
 import de.peekandpoke.funktor.cluster.workers.WorkersListPage
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.routing.Router
-import de.peekandpoke.kraft.routing.RouterProvider
 import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.html.RenderFn
 import kotlinx.html.Tag
-import org.w3c.dom.events.MouseEvent
 
 class FunktorClusterUi(
-    val routerProvider: RouterProvider,
     val kronosProvider: () -> Kronos,
     val api: FunktorClusterApiClient,
     val routes: FunktorClusterRoutes,
     val customInternals: RenderFn = {},
 ) {
-    /** Gets the router */
-    val router: Router get() = routerProvider()
-
     /** Get the kronos */
     val kronos: Kronos get() = kronosProvider()
 
     //// Helpers /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    fun navTo(route: FunktorClusterRoutes.() -> String) {
-        router.navToUri(
-            routes.route()
-        )
-    }
-
-    fun navTo(evt: MouseEvent, route: FunktorClusterRoutes.() -> String) {
-        router.navToUri(
-            evt = evt,
-            uri = routes.route()
-        )
-    }
 
     /**
      * Small helper to get [FunktorClusterUi] as this pointer into the scope

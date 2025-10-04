@@ -16,6 +16,7 @@ import de.peekandpoke.kraft.examples.fomanticui.helpers.readTheFomanticUiDocs
 import de.peekandpoke.kraft.examples.fomanticui.helpers.shortParagraphWireFrame
 import de.peekandpoke.kraft.examples.fomanticui.routes
 import de.peekandpoke.kraft.routing.PageTitle
+import de.peekandpoke.kraft.routing.href
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.fixture.LoremIpsum
 import de.peekandpoke.ultra.semanticui.icon
@@ -641,9 +642,9 @@ class SegmentPage(ctx: NoProps) : PureComponent(ctx) {
 
         ui.info.message {
             +"Attached segments are designed to be used with other attached variations like "
-            b { a(href = routes.elementsHeader()) { +"attached headers" } }
+            b { a { href(routes.elementsHeader()); +"attached headers" } }
             +" or "
-            b { a(href = routes.collectionsMessage()) { +"attached messages" } }
+            b { a { href(routes.collectionsMessage()); +"attached messages" } }
         }
 
         HorizontalContentAndCode(

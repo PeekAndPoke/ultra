@@ -18,7 +18,7 @@ import kotlin.reflect.KClass
  */
 internal class PreactTagConsumer(
     override val engine: PreactVDomEngine,
-    override val host: Component<*>?,
+    override val host: Component<*>,
 ) : VDomTagConsumer {
 
     /** Flag whether the debug mode is enabled */

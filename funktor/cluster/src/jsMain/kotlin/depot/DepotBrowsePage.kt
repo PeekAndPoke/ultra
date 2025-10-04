@@ -8,6 +8,7 @@ import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.routing.JoinedPageTitle
+import de.peekandpoke.kraft.routing.router
 import de.peekandpoke.kraft.routing.urlParam
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
@@ -36,7 +37,7 @@ class DepotBrowsePage(ctx: Ctx<Props>) : Component<DepotBrowsePage.Props>(ctx) {
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private val path: String by urlParam(props.ui.router, "path", props.path) {
+    private val path: String by urlParam("path", props.path) {
         loader.reload()
     }
 
@@ -137,12 +138,12 @@ class DepotBrowsePage(ctx: Ctx<Props>) : Component<DepotBrowsePage.Props>(ctx) {
             tbody {
                 tr {
                     onClick { evt ->
-                        props.ui.navTo(evt) {
-                            when (content.isRoot) {
-                                true -> depot.listRepositories()
-                                false -> depot.browse(repo = props.repo, path = content.parentPath)
-                            }
+                        val route = when (content.isRoot) {
+                            true -> props.ui.routes.depot.listRepositories()
+                            false -> props.ui.routes.depot.browse(repo = props.repo, path = content.parentPath)
                         }
+
+                        router.navToUri(evt = evt, route = route)
                     }
 
                     td("collapsing") { // Icon
@@ -160,9 +161,10 @@ class DepotBrowsePage(ctx: Ctx<Props>) : Component<DepotBrowsePage.Props>(ctx) {
                 content.children.forEach { item ->
                     tr {
                         onClick { evt ->
-                            props.ui.navTo(evt) {
-                                depot.browse(repo = props.repo, path = item.path)
-                            }
+                            router.navToUri(
+                                evt = evt,
+                                route = props.ui.routes.depot.browse(repo = props.repo, path = item.path),
+                            )
                         }
 
                         td("collapsing") {

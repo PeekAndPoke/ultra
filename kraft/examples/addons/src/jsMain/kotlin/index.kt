@@ -19,6 +19,8 @@ val kraft = kraftApp {
     )
 
     routing {
+        useHashStrategy()
+
         mount(routes)
         catchAll { NotFoundPage() }
     }

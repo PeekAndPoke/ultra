@@ -1,43 +1,35 @@
 package de.peekandpoke.kraft.routing
 
 import de.peekandpoke.kraft.components.Component
-import kotlinx.browser.window
+import de.peekandpoke.kraft.vdom.VDomTagConsumer
+import kotlinx.html.A
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-fun navigateTo(uri: String) {
+fun A.href(route: Route.Bound) {
+    val c = consumer as? VDomTagConsumer ?: error("Consumer must be a VDomTagConsumer")
+    val router = c.host.router
 
-    val current = window.location.href
-
-    val loc = current.split("#")
-    val base = loc[0]
-    val new = "$base#${uri.trimStart('#')}"
-
-    if (current != new) {
-        window.location.href = new
-    }
+    href = router.strategy.render(route)
 }
 
 fun <C> Component<C>.urlParam(
-    router: Router, name: String, default: Int, onChange: ((Int) -> Unit)? = null,
+    name: String, default: Int, onChange: ((Int) -> Unit)? = null,
 ) = urlParams(
-    router = router,
     fromParams = { it[name]?.toIntOrNull() ?: default },
     toParams = { mapOf(name to "$it") },
     onChange = onChange,
 )
 
 fun <C> Component<C>.urlParam(
-    router: Router, name: String, default: String, onChange: ((String) -> Unit)? = null,
+    name: String, default: String, onChange: ((String) -> Unit)? = null,
 ) = urlParams(
-    router = router,
     fromParams = { it[name] ?: default },
     toParams = { mapOf(name to it) },
     onChange = onChange,
 )
 
 fun <C, T> Component<C>.urlParams(
-    router: Router,
     fromParams: (Map<String, String>) -> T,
     toParams: (T) -> Map<String, Any?>,
     onChange: ((T) -> Unit)? = null,

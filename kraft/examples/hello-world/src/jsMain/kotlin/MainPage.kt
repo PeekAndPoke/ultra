@@ -1,11 +1,5 @@
 package de.peekandpoke.kraft.examples.helloworld
 
-import de.peekandpoke.kraft.addons.popups.PopupsManager
-import de.peekandpoke.kraft.addons.semanticui.forms.UiDateTimeField
-import de.peekandpoke.kraft.addons.semanticui.forms.UiTextArea
-import de.peekandpoke.kraft.addons.semanticui.forms.old.select.SelectField
-import de.peekandpoke.kraft.addons.semanticui.forms.old.select.SelectFieldComponent
-import de.peekandpoke.kraft.addons.semanticui.modals.OkCancelModal
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
@@ -15,9 +9,18 @@ import de.peekandpoke.kraft.components.onContextMenu
 import de.peekandpoke.kraft.components.onContextMenuStoppingEvent
 import de.peekandpoke.kraft.components.onKeyDown
 import de.peekandpoke.kraft.forms.formController
+import de.peekandpoke.kraft.routing.router
+import de.peekandpoke.kraft.semanticui.forms.UiDateTimeField
+import de.peekandpoke.kraft.semanticui.forms.UiTextArea
+import de.peekandpoke.kraft.semanticui.forms.old.select.SelectField
+import de.peekandpoke.kraft.semanticui.forms.old.select.SelectFieldComponent
+import de.peekandpoke.kraft.semanticui.modals
+import de.peekandpoke.kraft.semanticui.modals.OkCancelModal
+import de.peekandpoke.kraft.semanticui.popups
+import de.peekandpoke.kraft.semanticui.popups.PopupsManager
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
-import de.peekandpoke.ultra.semanticui.css
+import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.browser.window
@@ -157,7 +160,7 @@ class MainPage(ctx: NoProps) : PureComponent(ctx) {
 
                 ui.blue.button {
                     onClick {
-                        kraft.modals.show { handle ->
+                        modals.show { handle ->
                             OkCancelModal {
                                 mini(
                                     handle = handle,
@@ -258,7 +261,7 @@ class MainPage(ctx: NoProps) : PureComponent(ctx) {
                     noui.card {
                         noui.content {
                             onContextMenuStoppingEvent { evt ->
-                                kraft.popups.showContextMenu(evt, PopupsManager.Positioning.BottomLeft) {
+                                popups.showContextMenu(evt, PopupsManager.Positioning.BottomLeft) {
                                     ui.basic.vertical.menu {
                                         noui.item A { href = "#"; +"Menu 1" }
                                         noui.item A { href = "#"; +"Menu 2" }
@@ -272,7 +275,7 @@ class MainPage(ctx: NoProps) : PureComponent(ctx) {
                     noui.card {
                         noui.content {
                             onContextMenuStoppingEvent { evt ->
-                                kraft.popups.showContextMenu(evt, PopupsManager.Positioning.BottomCenter) {
+                                popups.showContextMenu(evt, PopupsManager.Positioning.BottomCenter) {
                                     ui.basic.vertical.menu {
                                         noui.item A { href = "#"; +"Menu 1" }
                                         noui.item A { href = "#"; +"Menu 2" }
@@ -286,7 +289,7 @@ class MainPage(ctx: NoProps) : PureComponent(ctx) {
                     noui.card {
                         noui.content {
                             onContextMenuStoppingEvent { evt ->
-                                kraft.popups.showContextMenu(evt, PopupsManager.Positioning.BottomRight) {
+                                popups.showContextMenu(evt, PopupsManager.Positioning.BottomRight) {
                                     ui.basic.vertical.menu {
                                         noui.item A { href = "#"; +"Menu 1" }
                                         noui.item A { href = "#"; +"Menu 2" }
@@ -302,7 +305,7 @@ class MainPage(ctx: NoProps) : PureComponent(ctx) {
                     noui.card {
                         noui.content {
                             onContextMenuStoppingEvent { evt ->
-                                kraft.popups.showContextMenu(evt, PopupsManager.Positioning.BottomRight) {
+                                popups.showContextMenu(evt, PopupsManager.Positioning.BottomRight) {
                                     ui.basic.vertical.menu {
                                         css { width = 70.vw }
                                         noui.item A { href = "#"; +"Menu 1" }
@@ -317,7 +320,7 @@ class MainPage(ctx: NoProps) : PureComponent(ctx) {
                     noui.card {
                         noui.content {
                             onContextMenuStoppingEvent { evt ->
-                                kraft.popups.showContextMenu(evt, PopupsManager.Positioning.BottomLeft) {
+                                popups.showContextMenu(evt, PopupsManager.Positioning.BottomLeft) {
                                     ui.basic.vertical.menu {
                                         css { width = 70.vw }
                                         noui.item A { href = "#"; +"Menu 1" }
@@ -338,7 +341,7 @@ class MainPage(ctx: NoProps) : PureComponent(ctx) {
                     noui.item {
                         ui.basic.label {
                             onClick {
-                                kraft.popups.showContextMenu(it, PopupsManager.Positioning.BottomLeft) {
+                                popups.showContextMenu(it, PopupsManager.Positioning.BottomLeft) {
                                     ui.horizontal.menu {
                                         css {
                                             width = 50.vw
@@ -358,7 +361,7 @@ class MainPage(ctx: NoProps) : PureComponent(ctx) {
                     noui.item {
                         ui.basic.label {
                             onClick {
-                                kraft.popups.showContextMenu(it, PopupsManager.Positioning.BottomRight) {
+                                popups.showContextMenu(it, PopupsManager.Positioning.BottomRight) {
                                     ui.basic.horizontal.menu {
                                         css {
                                             width = 50.vw

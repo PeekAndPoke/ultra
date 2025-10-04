@@ -212,12 +212,19 @@ abstract class Component<PROPS>(val ctx: Ctx<PROPS>) {
         ctx.engine.triggerRedraw(this)
     }
 
+    //  Ref Helpers  ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Creates a reference to another component.
+     */
+    fun <C : Component<*>> createRef() = ComponentRef.Tracker<C>()
+
     //  Stream Helpers  ///////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Subscribes to a [Stream].
      *
-     * When the components is destroyed, the subscription will be unsubscribed automatically.
+     * When the component is destroyed, the subscription will be unsubscribed automatically.
      */
     operator fun <T> Stream<T>.invoke(handler: (T) -> Unit): () -> Unit {
 
@@ -229,9 +236,9 @@ abstract class Component<PROPS>(val ctx: Ctx<PROPS>) {
     /**
      * Subscribes to a [Stream].
      *
-     * When the components is destroyed, the subscription will be unsubscribed automatically.
+     * When the component is destroyed, the subscription will be unsubscribed automatically.
      */
-    internal fun <T> Stream<T>.subscribe(handler: (T) -> Unit): () -> Unit = this(handler)
+    fun <T> Stream<T>.subscribe(handler: (T) -> Unit): () -> Unit = this(handler)
 
     //  State Helpers  ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -330,10 +337,6 @@ abstract class Component<PROPS>(val ctx: Ctx<PROPS>) {
 
         return ComponentStreamProperty(component = this, stream = stream)
     }
-
-    //  Ref Helpers  /////////////////////////////////////////////////////////////////////////////////////////////////
-
-    fun <C : Component<*>> createRef() = ComponentRef.Tracker<C>()
 
     //  Private functions  //////////////////////////////////////////////////////////////////////////////////////////
 

@@ -6,18 +6,26 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
 class Route4Spec : StringSpec() {
+    val renderer = Route.Renderer.Default
+
     init {
         "Route4 - basic pattern with four parameters" {
             val route = Route4("/user/{userId}/project/{projectId}/task/{taskId}/comment/{commentId}")
 
             route.pattern shouldBe "/user/{userId}/project/{projectId}/task/{taskId}/comment/{commentId}"
-            route.build("123", "456", "789", "101") shouldBe "#/user/123/project/456/task/789/comment/101"
+            val bound = route.bind("123", "456", "789", "101")
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/user/123/project/456/task/789/comment/101"
         }
 
         "Route4 - consecutive parameters" {
             val route = Route4("/api/{version}/{service}/{resource}/{action}")
 
-            route.build("v1", "users", "profile", "update") shouldBe "#/api/v1/users/profile/update"
+            val bound = route.bind("v1", "users", "profile", "update")
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/api/v1/users/profile/update"
         }
 
         "Route4 - matching valid URI with all parameter extraction" {
@@ -30,18 +38,6 @@ class Route4Spec : StringSpec() {
                 "deptId" to "eng",
                 "teamId" to "backend",
                 "memberId" to "john"
-            )
-        }
-
-        "Route4 - build and buildUri should produce same result" {
-            val route = Route4("/a/{p1}/b/{p2}/c/{p3}/d/{p4}")
-            val params = listOf("val1", "val2", "val3", "val4")
-
-            route.build(params[0], params[1], params[2], params[3]) shouldBe route.buildUri(
-                params[0],
-                params[1],
-                params[2],
-                params[3]
             )
         }
 
@@ -78,14 +74,14 @@ class Route4Spec : StringSpec() {
         "Route4 - all empty parameters" {
             val route = Route4("/filter/{cat}/{subcat}/{brand}/{model}")
 
-            route.build("", "", "", "") shouldBe "#/filter////"
+            renderer.render(route("", "", "", "")) shouldBe "/filter////"
         }
 
         "Route4 - mixed empty and non-empty parameters" {
             val route = Route4("/search/{type}/{cat}/{query}/{sort}")
 
-            route.build("product", "", "laptop", "") shouldBe "#/search/product//laptop/"
-            route.build("", "electronics", "", "price") shouldBe "#/search//electronics//price"
+            renderer.render(route("product", "", "laptop", "")) shouldBe "/search/product//laptop/"
+            renderer.render(route("", "electronics", "", "price")) shouldBe "/search//electronics//price"
         }
 
         // Matching edge cases
@@ -122,8 +118,9 @@ class Route4Spec : StringSpec() {
                 "emoji test 🎉 #awesome"
             )
 
-            val builtUri = route.build(values[0], values[1], values[2], values[3])
-            val match = route.match(builtUri.removePrefix("#"))
+            val bound = route(values[0], values[1], values[2], values[3])
+            val rendered = renderer.render(bound)
+            val match = route.match(rendered)
 
             match shouldNotBe null
             match?.routeParams?.get("p1") shouldBe values[0]
@@ -136,8 +133,9 @@ class Route4Spec : StringSpec() {
             val route = Route4("/empty/{p1}/{p2}/{p3}/{p4}")
             val values = listOf("", "", "", "")
 
-            val builtUri = route.build(values[0], values[1], values[2], values[3])
-            val match = route.match(builtUri.removePrefix("#"))
+            val bound = route(values[0], values[1], values[2], values[3])
+            val rendered = renderer.render(bound)
+            val match = route.match(rendered)
 
             match shouldNotBe null
             match?.routeParams?.get("p1") shouldBe values[0]
@@ -155,8 +153,9 @@ class Route4Spec : StringSpec() {
                 "🚀💻🎯✨"
             )
 
-            val builtUri = route.build(values[0], values[1], values[2], values[3])
-            val match = route.match(builtUri.removePrefix("#"))
+            val bound = route(values[0], values[1], values[2], values[3])
+            val rendered = renderer.render(bound)
+            val match = route.match(rendered)
 
             match shouldNotBe null
             match?.routeParams?.get("simple") shouldBe values[0]
@@ -183,12 +182,15 @@ class Route4Spec : StringSpec() {
             val route =
                 Route4("/api/v2/organizations/{orgId}/departments/{deptId}/projects/{projectId}/tasks/{taskId}/details")
 
-            route.build(
+            val bound = route(
                 "very-long-organization-name",
                 "engineering-department",
                 "website-redesign-project",
                 "implement-user-authentication"
-            ) shouldBe "#/api/v2/organizations/very-long-organization-name/departments/engineering-department/projects/website-redesign-project/tasks/implement-user-authentication/details"
+            )
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/api/v2/organizations/very-long-organization-name/departments/engineering-department/projects/website-redesign-project/tasks/implement-user-authentication/details"
 
             val match =
                 route.match("/api/v2/organizations/acme-corporation-ltd/departments/software-engineering/projects/mobile-app-development/tasks/setup-ci-cd-pipeline/details")
@@ -205,7 +207,7 @@ class Route4Spec : StringSpec() {
         "Route4 - all parameters at root level" {
             val route = Route4("/{p1}/{p2}/{p3}/{p4}")
 
-            route.build("a", "b", "c", "d") shouldBe "#/a/b/c/d"
+            renderer.render(route("a", "b", "c", "d")) shouldBe "/a/b/c/d"
 
             val match = route.match("/en/us/admin/dashboard")
             match shouldNotBe null

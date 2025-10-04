@@ -6,24 +6,32 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
 class Route5Spec : StringSpec() {
+    val renderer = Route.Renderer.Default
+
     init {
         "Route5 - basic pattern with five parameters" {
             val route = Route5("/org/{orgId}/dept/{deptId}/team/{teamId}/project/{projectId}/task/{taskId}")
 
             route.pattern shouldBe "/org/{orgId}/dept/{deptId}/team/{teamId}/project/{projectId}/task/{taskId}"
-            route.build(
+            val bound = route.bind(
                 "acme",
                 "eng",
                 "backend",
                 "api",
                 "auth"
-            ) shouldBe "#/org/acme/dept/eng/team/backend/project/api/task/auth"
+            )
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/org/acme/dept/eng/team/backend/project/api/task/auth"
         }
 
         "Route5 - consecutive parameters" {
             val route = Route5("/api/{version}/{service}/{resource}/{action}/{format}")
 
-            route.build("v2", "users", "profile", "update", "json") shouldBe "#/api/v2/users/profile/update/json"
+            val bound = route.bind("v2", "users", "profile", "update", "json")
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/api/v2/users/profile/update/json"
         }
 
         "Route5 - matching valid URI with all parameter extraction" {
@@ -37,19 +45,6 @@ class Route5Spec : StringSpec() {
                 "city" to "seattle",
                 "store" to "downtown",
                 "department" to "electronics"
-            )
-        }
-
-        "Route5 - build and buildUri should produce same result" {
-            val route = Route5("/a/{p1}/b/{p2}/c/{p3}/d/{p4}/e/{p5}")
-            val params = listOf("val1", "val2", "val3", "val4", "val5")
-
-            route.build(params[0], params[1], params[2], params[3], params[4]) shouldBe route.buildUri(
-                params[0],
-                params[1],
-                params[2],
-                params[3],
-                params[4]
             )
         }
 
@@ -86,20 +81,20 @@ class Route5Spec : StringSpec() {
         "Route5 - all empty parameters" {
             val route = Route5("/filter/{cat}/{subcat}/{brand}/{model}/{color}")
 
-            route.build("", "", "", "", "") shouldBe "#/filter/////"
+            renderer.render(route("", "", "", "", "")) shouldBe "/filter/////"
         }
 
         "Route5 - mixed empty and non-empty parameters" {
             val route = Route5("/search/{type}/{cat}/{query}/{sort}/{limit}")
 
-            route.build("product", "", "laptop", "", "10") shouldBe "#/search/product//laptop//10"
-            route.build("", "electronics", "", "price", "") shouldBe "#/search//electronics//price/"
+            renderer.render(route("product", "", "laptop", "", "10")) shouldBe "/search/product//laptop//10"
+            renderer.render(route("", "electronics", "", "price", "")) shouldBe "/search//electronics//price/"
         }
 
         "Route5 - only middle parameter non-empty" {
             val route = Route5("/path/{p1}/{p2}/{p3}/{p4}/{p5}")
 
-            route.build("", "", "middle", "", "") shouldBe "#/path///middle//"
+            renderer.render(route("", "", "middle", "", "")) shouldBe "/path///middle//"
         }
 
         // Matching edge cases
@@ -140,8 +135,9 @@ class Route5Spec : StringSpec() {
                 "forward/slash & question?"
             )
 
-            val builtUri = route.build(values[0], values[1], values[2], values[3], values[4])
-            val match = route.match(builtUri.removePrefix("#"))
+            val bound = route(values[0], values[1], values[2], values[3], values[4])
+            val rendered = renderer.render(bound)
+            val match = route.match(rendered)
 
             match shouldNotBe null
             match?.routeParams?.get("p1") shouldBe values[0]
@@ -161,8 +157,9 @@ class Route5Spec : StringSpec() {
                 ""
             )
 
-            val builtUri = route.build(values[0], values[1], values[2], values[3], values[4])
-            val match = route.match(builtUri.removePrefix("#"))
+            val bound = route(values[0], values[1], values[2], values[3], values[4])
+            val rendered = renderer.render(bound)
+            val match = route.match(rendered)
 
             match shouldNotBe null
             match?.routeParams?.get("p1") shouldBe values[0]
@@ -182,8 +179,9 @@ class Route5Spec : StringSpec() {
                 "Mixed: José's 100% café & more! 🎉"
             )
 
-            val builtUri = route.build(values[0], values[1], values[2], values[3], values[4])
-            val match = route.match(builtUri.removePrefix("#"))
+            val bound = route(values[0], values[1], values[2], values[3], values[4])
+            val rendered = renderer.render(bound)
+            val match = route.match(rendered)
 
             match shouldNotBe null
             match?.routeParams?.get("simple") shouldBe values[0]
@@ -212,13 +210,16 @@ class Route5Spec : StringSpec() {
             val route =
                 Route5("/api/v3/organizations/{orgId}/departments/{deptId}/teams/{teamId}/projects/{projectId}/epics/{epicId}/details")
 
-            route.build(
+            val bound = route(
                 "multinational-corporation-holdings-ltd",
                 "advanced-software-engineering-division",
                 "backend-microservices-architecture-team",
                 "next-generation-user-authentication-system",
                 "implement-oauth2-with-jwt-tokens"
-            ) shouldBe "#/api/v3/organizations/multinational-corporation-holdings-ltd/departments/advanced-software-engineering-division/teams/backend-microservices-architecture-team/projects/next-generation-user-authentication-system/epics/implement-oauth2-with-jwt-tokens/details"
+            )
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/api/v3/organizations/multinational-corporation-holdings-ltd/departments/advanced-software-engineering-division/teams/backend-microservices-architecture-team/projects/next-generation-user-authentication-system/epics/implement-oauth2-with-jwt-tokens/details"
 
             val match =
                 route.match("/api/v3/organizations/global-tech-solutions/departments/ai-research-development/teams/machine-learning-platform/projects/natural-language-processing/epics/sentiment-analysis-pipeline/details")
@@ -236,13 +237,16 @@ class Route5Spec : StringSpec() {
         "Route5 - all parameters at root level with complex values" {
             val route = Route5("/{p1}/{p2}/{p3}/{p4}/{p5}")
 
-            route.build(
+            val bound = route(
                 "lang-en",
                 "country-usa",
                 "region-west",
                 "city-seattle",
                 "district-downtown"
-            ) shouldBe "#/lang-en/country-usa/region-west/city-seattle/district-downtown"
+            )
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/lang-en/country-usa/region-west/city-seattle/district-downtown"
 
             val match = route.match("/fr/canada/quebec/montreal/old-port")
             match shouldNotBe null
@@ -266,8 +270,10 @@ class Route5Spec : StringSpec() {
             val longValue5 =
                 "Final parameter with everything: spaces, symbols & more, unicode José, emojis 🚀💻, and URLs https://test.com"
 
-            val builtUri = route.build(longValue1, longValue2, longValue3, longValue4, longValue5)
-            val match = route.match(builtUri.removePrefix("#"))
+
+            val bound = route(longValue1, longValue2, longValue3, longValue4, longValue5)
+            val rendered = renderer.render(bound)
+            val match = route.match(rendered)
 
             match shouldNotBe null
             match?.routeParams?.get("p1") shouldBe longValue1

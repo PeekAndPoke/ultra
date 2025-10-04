@@ -4,6 +4,7 @@ import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.examples.jsaddons.routes
+import de.peekandpoke.kraft.routing.href
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui
@@ -25,9 +26,9 @@ class PdfJsExample(ctx: NoProps) : PureComponent(ctx) {
             ui.header H2 { +"PDF JS" }
 
             val docs = listOf(
-                "pdf/contract.pdf",
-                "pdf/eg14_cats_and_people.pdf",
-                "pdf/Get_Started_With_Smallpdf.pdf",
+                "/pdf/contract.pdf",
+                "/pdf/eg14_cats_and_people.pdf",
+                "/pdf/Get_Started_With_Smallpdf.pdf",
             )
 
             ui.basic.segment {
@@ -37,7 +38,7 @@ class PdfJsExample(ctx: NoProps) : PureComponent(ctx) {
                     }
                     docs.forEach { doc ->
                         noui.item A {
-                            href = routes.pdfjs.paged(doc)
+                            href(routes.pdfjs.paged(doc))
                             +doc
                         }
                     }
@@ -51,7 +52,7 @@ class PdfJsExample(ctx: NoProps) : PureComponent(ctx) {
                     }
                     docs.forEach { doc ->
                         noui.item A {
-                            href = routes.pdfjs.scrolling(doc)
+                            href(routes.pdfjs.scrolling(doc))
                             +doc
                         }
                     }

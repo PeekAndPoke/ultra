@@ -18,7 +18,7 @@ interface VDomEngine {
 
     fun mount(app: KraftApp, element: HTMLElement, view: VDom.() -> Any?)
 
-    fun createTagConsumer(host: Component<*>?): VDomTagConsumer
+    fun createTagConsumer(host: Component<*>): VDomTagConsumer
 
     fun triggerRedraw(component: Component<*>)
 

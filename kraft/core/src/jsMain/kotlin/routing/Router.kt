@@ -1,19 +1,197 @@
 package de.peekandpoke.kraft.routing
 
+import de.peekandpoke.kraft.routing.Router.RouterStrategy.Companion.HASH_PREFIX
 import de.peekandpoke.ultra.common.TypedKey
+import de.peekandpoke.ultra.common.isUrlWithProtocol
 import de.peekandpoke.ultra.streams.Stream
 import de.peekandpoke.ultra.streams.StreamSource
 import kotlinx.browser.window
+import org.w3c.dom.HTMLAnchorElement
+import org.w3c.dom.Node
 import org.w3c.dom.events.Event
+import org.w3c.dom.events.EventTarget
 import org.w3c.dom.events.MouseEvent
 
 /**
  * The Router
  */
-class Router(private val mountedRoutes: List<MountedRoute>, private var enabled: Boolean) {
-
+class Router(
+    private val mountedRoutes: List<MountedRoute>,
+    strategyProvider: (Router) -> RouterStrategy,
+    private var enabled: Boolean,
+) {
     companion object {
         val key = TypedKey<Router>("router")
+
+        fun willOpenNewTab(evt: MouseEvent?): Boolean {
+            return when (evt) {
+                null -> false
+                else -> {
+                    evt.ctrlKey // Windows, Linux
+                            || evt.metaKey // MacOS
+                            || (evt.button == 1.toShort()) // Middle Mouse button
+                }
+            }
+        }
+    }
+
+    interface RouterStrategy : Route.Renderer {
+        companion object {
+            const val HASH_PREFIX = "#"
+        }
+
+        fun init()
+
+        fun navigateToUri(uri: String)
+
+        fun replaceUri(uri: String)
+
+        fun getUriFromWindowLocation(): String
+    }
+
+    class HashRoutingStrategy(private val router: Router) : RouterStrategy {
+
+        override fun init() {
+            window.addEventListener("hashchange", ::windowListener)
+        }
+
+        override fun render(bound: Route.Bound): String {
+            return "#" + super.render(bound)
+        }
+
+        override fun navigateToUri(uri: String) {
+            val currentUri = getUriFromWindowLocation()
+            val cleanUri = uri.cleanUri()
+
+            if (currentUri != cleanUri) {
+                window.location.hash = cleanUri
+            } else {
+                router.navigateToWindowUri()
+            }
+        }
+
+        override fun replaceUri(uri: String) {
+            window.history.pushState(data = null, title = "", url = uri.cleanUri())
+        }
+
+        override fun getUriFromWindowLocation(): String {
+            return window.location.hash.cleanUri()
+        }
+
+        private fun String.cleanUri(): String {
+            return removePrefix(HASH_PREFIX).trim()
+        }
+
+        /**
+         * Private listener for the "hashchange" event
+         */
+        private fun windowListener(event: Event) {
+            if (router.enabled) {
+                event.preventDefault()
+
+                router.navigateToWindowUri()
+            }
+        }
+    }
+
+    class PathRoutingStrategy(private val router: Router) : RouterStrategy {
+        override fun init() {
+            window.addEventListener("popstate", ::popstateListener)
+            // Intercept clicks on links to prevent page reloads
+            window.addEventListener("click", ::clickListener)
+        }
+
+        override fun navigateToUri(uri: String) {
+            val currentUri = getUriFromWindowLocation()
+
+            if (currentUri != uri) {
+                window.history.pushState(null, "", uri)
+            }
+
+            router.navigateToWindowUri()
+        }
+
+        override fun replaceUri(uri: String) {
+            window.history.replaceState(null, "", uri)
+            router.navigateToWindowUri()
+        }
+
+        override fun getUriFromWindowLocation(): String {
+            return window.location.pathname + window.location.search + window.location.hash
+        }
+
+        /**
+         * Private listener for the "popstate" event (history-based routing)
+         */
+        private fun popstateListener(event: Event) {
+            if (router.enabled) {
+                console.log("popstateListener: ${event.type}", event)
+                event.preventDefault()
+                router.navigateToWindowUri()
+            }
+        }
+
+        /**
+         * Private listener for click events to intercept navigation (history-based routing)
+         */
+        private fun clickListener(event: Event) {
+            console.log("clickListener: ${event.type}", event)
+
+            if (!router.enabled) return
+
+            console.log("clickListener: 1")
+
+            val mouseEvent = event as? MouseEvent ?: return
+
+            console.log("clickListener: 2", mouseEvent.target)
+
+            // Find the closest anchor element by traversing up the DOM tree
+            val target = findClosestAnchor(mouseEvent.target) ?: return
+
+            console.log("clickListener: 3")
+
+            // Check if it's an internal link
+            val href = target.getAttribute("href") ?: return
+
+            console.log("clickListener: 4")
+
+            // External link, let browser handle it
+            if (href.isUrlWithProtocol()) return
+
+            console.log("clickListener: 5")
+
+            // Check if we should open in new tab -> let browser handle it
+            if (willOpenNewTab(mouseEvent)) return
+
+            console.log("clickListener: 6")
+
+            event.preventDefault()
+            router.navToUri(uri = href)
+        }
+
+        /**
+         * Traverses up the DOM tree to find the closest anchor element
+         */
+        private fun findClosestAnchor(target: EventTarget?): HTMLAnchorElement? {
+            var current: Node? = target as? Node
+
+            while (current != null) {
+                // Check if current node is an anchor element
+                if (current is HTMLAnchorElement) {
+                    return current
+                }
+
+                // Move up to parent node
+                current = current.parentNode
+
+                // Stop at document level to avoid infinite loops
+                if (current is org.w3c.dom.Document) {
+                    break
+                }
+            }
+
+            return null
+        }
     }
 
     data class History(
@@ -27,21 +205,19 @@ class Router(private val mountedRoutes: List<MountedRoute>, private var enabled:
         }
     }
 
-    private val prefix = "#"
+    val strategy: RouterStrategy = strategyProvider(this)
 
     /** Writable stream with the current [ActiveRoute] */
     private val _current = StreamSource(ActiveRoute("", Route.Match.default, MountedRoute.default))
-
-    /** Public readonly stream with the current [ActiveRoute] */
     val current: Stream<ActiveRoute> = _current
 
+    /** Writable stream with the history of [ActiveRoute]s */
     private val _historyEntries: MutableList<ActiveRoute> = mutableListOf()
-
     private val _history = StreamSource(History(this, _historyEntries.toList()))
     val history: Stream<History> = _history
 
     init {
-        window.addEventListener("hashchange", ::windowListener)
+        strategy.init()
 
         current.subscribeToStream {
             _historyEntries.add(it)
@@ -57,26 +233,21 @@ class Router(private val mountedRoutes: List<MountedRoute>, private var enabled:
         enabled = true
     }
 
-    fun willOpenNewTab(evt: MouseEvent?): Boolean {
-        return when (evt) {
-            null -> false
-            else -> {
-                evt.ctrlKey // Windows, Linux
-                        || evt.metaKey // MacOS
-                        || (evt.button == 1.toShort()) // Middle Mouse button
-            }
-        }
-    }
-
     /**
      * Navigates to the given uri.
      */
     fun navToUri(uri: String) {
-        if (window.location.hash != uri) {
-            window.location.hash = uri
-        } else {
-            navigateToWindowUri()
-        }
+        strategy.navigateToUri(uri)
+    }
+
+    /**
+     * Navigates to the given [route].
+     */
+    fun navToUri(evt: MouseEvent?, route: Route.Bound) {
+        navToUri(
+            evt = evt,
+            uri = strategy.render(route),
+        )
     }
 
     /**
@@ -85,7 +256,7 @@ class Router(private val mountedRoutes: List<MountedRoute>, private var enabled:
      * If [evt].ctrlKey is true, the uri will be opened in a new tab.
      */
     fun navToUri(evt: MouseEvent?, uri: String) {
-        return navToUri(
+        navToUri(
             uri = uri,
             newTab = willOpenNewTab(evt),
         )
@@ -110,10 +281,10 @@ class Router(private val mountedRoutes: List<MountedRoute>, private var enabled:
      * If [target] is not null, window.open(target = target) will be used to open a new tab / window.
      */
     fun navToUri(uri: String, target: String? = null) {
-        if (target == null) {
+        if (target == null || target.isBlank() || target == "_self") {
             navToUri(uri)
         } else {
-            window.open(uri, target = target)
+            window.open(url = uri, target = target)
         }
     }
 
@@ -121,31 +292,30 @@ class Router(private val mountedRoutes: List<MountedRoute>, private var enabled:
      * Navigates to the [route] by filling in the given [routeParams] and [queryParams].
      */
     fun navToUri(route: Route, routeParams: Map<String, String>, queryParams: Map<String, String>) {
-        (route as? Route.Renderable)?.let {
-            navToUri(
-                it.buildUri(routeParams = routeParams, queryParams = queryParams)
-            )
-        }
+        val bound = Route.Bound(route = route, routeParams = routeParams, queryParams = queryParams)
+
+        val uri = strategy.render(bound)
+
+        navToUri(uri)
     }
 
     /**
      * Navigates to the [route].
      */
     fun navToUri(route: Route.Match) {
-        navToUri(route = route.route, routeParams = route.routeParams, queryParams = route.queryParams)
+        navToUri(
+            route = route.route, routeParams = route.routeParams, queryParams = route.queryParams,
+        )
     }
 
     /**
      * Replaces the current uri with changing the history
      */
     fun replaceUri(uri: String) {
+        val currentUri = strategy.getUriFromWindowLocation()
 
-        if (window.location.hash != uri) {
-            window.history.replaceState(
-                null,
-                "",
-                window.location.pathname + uri
-            )
+        if (currentUri != uri) {
+            strategy.replaceUri(uri)
             // Remove the last from the history
             _historyEntries.removeLast()
             // Resolve the next route
@@ -157,11 +327,10 @@ class Router(private val mountedRoutes: List<MountedRoute>, private var enabled:
      * Replaces the current uri without changing the browser history.
      */
     fun replaceUri(route: Route, routeParams: Map<String, String>, queryParams: Map<String, String>) {
-        (route as? Route.Renderable)?.let {
-            replaceUri(
-                it.buildUri(routeParams = routeParams, queryParams = queryParams)
-            )
-        }
+        val bound = Route.Bound(route = route, routeParams = routeParams, queryParams = queryParams)
+        val uri = strategy.render(bound)
+
+        replaceUri(uri)
     }
 
     /**
@@ -169,7 +338,7 @@ class Router(private val mountedRoutes: List<MountedRoute>, private var enabled:
      */
     fun replaceUri(route: Route.Match) {
         replaceUri(
-            route.route, routeParams = route.routeParams, queryParams = route.queryParams
+            route = route.route, routeParams = route.routeParams, queryParams = route.queryParams
         )
     }
 
@@ -202,7 +371,7 @@ class Router(private val mountedRoutes: List<MountedRoute>, private var enabled:
      */
     fun navigateToWindowUri() {
         // get the location from the browser
-        val uri = window.location.hash.removePrefix(prefix)
+        val uri = strategy.getUriFromWindowLocation()
 
         val resolved = resolveRouteForUri(uri)
 
@@ -253,16 +422,5 @@ class Router(private val mountedRoutes: List<MountedRoute>, private var enabled:
      */
     fun hasRouteForUri(uri: String): Boolean {
         return resolveRouteForUri(uri) != null
-    }
-
-    /**
-     * Private listener for the "hashchange" event
-     */
-    private fun windowListener(event: Event) {
-        if (enabled) {
-            event.preventDefault()
-
-            navigateToWindowUri()
-        }
     }
 }

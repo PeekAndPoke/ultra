@@ -1,5 +1,6 @@
 package routing
 
+import de.peekandpoke.kraft.routing.Route
 import de.peekandpoke.kraft.routing.Static
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
@@ -7,34 +8,36 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
 class StaticSpec : StringSpec() {
+    val renderer = Route.Renderer.Default
     init {
         "Static route - simple pattern without parameters" {
             val route = Static("/home")
 
             route.pattern shouldBe "/home"
-            route() shouldBe "#/home"
-            route.buildUri() shouldBe "#/home"
+
+            renderer.render(route()) shouldBe "/home"
+            renderer.render(route.bind()) shouldBe "/home"
         }
 
         "Static route - pattern with trailing slash" {
             val route = Static("/about/")
 
             route.pattern shouldBe "/about/"
-            route() shouldBe "#/about/"
+            renderer.render(route()) shouldBe "/about/"
         }
 
         "Static route - root pattern" {
             val route = Static("/")
 
             route.pattern shouldBe "/"
-            route() shouldBe "#/"
+            renderer.render(route()) shouldBe "/"
         }
 
         "Static route - nested path pattern" {
             val route = Static("/admin/dashboard")
 
             route.pattern shouldBe "/admin/dashboard"
-            route() shouldBe "#/admin/dashboard"
+            renderer.render(route()) shouldBe "/admin/dashboard"
         }
 
         "Static route - matching valid URI" {

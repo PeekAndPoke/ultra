@@ -8,12 +8,16 @@ import kotlinx.html.FlowContent
 class RouterBuilder {
 
     private var enabled = true
+    private var strategy: (Router) -> Router.RouterStrategy = { Router.HashRoutingStrategy(it) }
 
     private val mounted = mutableListOf<MountedRoute>()
-
     private val middlewares = mutableListOf<RouterMiddleware>()
 
-    fun build() = Router(mounted.toList(), enabled)
+    fun build() = Router(
+        mountedRoutes = mounted.toList(),
+        strategyProvider = strategy,
+        enabled = enabled,
+    )
 
     /**
      * Creates a router that is enabled from the beginning
@@ -27,6 +31,27 @@ class RouterBuilder {
      */
     fun disabled() {
         enabled = false
+    }
+
+    /**
+     * Sets the strategy for the router.
+     */
+    fun strategy(strategy: (Router) -> Router.RouterStrategy) {
+        this.strategy = strategy
+    }
+
+    /**
+     * Uses the path strategy for the router.
+     */
+    fun usePathStrategy() {
+        strategy { Router.PathRoutingStrategy(it) }
+    }
+
+    /**
+     * Uses the hash strategy for the router.
+     */
+    fun useHashStrategy() {
+        strategy { Router.HashRoutingStrategy(it) }
     }
 
     /**

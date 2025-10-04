@@ -7,6 +7,7 @@ import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.routing.JoinedPageTitle
+import de.peekandpoke.kraft.routing.router
 import de.peekandpoke.kraft.semanticui.pagination.PaginationEpp
 import de.peekandpoke.kraft.semanticui.pagination.PaginationPages
 import de.peekandpoke.kraft.utils.dataLoader
@@ -39,7 +40,7 @@ class BackgroundJobsQueuedListPage(ctx: Ctx<Props>) : Component<BackgroundJobsQu
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private var filter: PagedSearchFilter by pagedSearchFilter(router = props.ui.router) { loader.reloadSilently() }
+    private var filter: PagedSearchFilter by pagedSearchFilter { loader.reloadSilently() }
 
     private val loader = dataLoader {
         props.ui.api.backgroundJobs
@@ -116,9 +117,10 @@ class BackgroundJobsQueuedListPage(ctx: Ctx<Props>) : Component<BackgroundJobsQu
                         }
 
                         onClick { event ->
-                            props.ui.navTo(event) {
-                                backgroundJobs.viewQueued(id = job.id)
-                            }
+                            router.navToUri(
+                                evt = event,
+                                route = props.ui.routes.backgroundJobs.viewQueued(id = job.id)
+                            )
                         }
 
                         td { // Id

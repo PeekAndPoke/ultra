@@ -9,11 +9,11 @@ class BackgroundJobsRoutes(mount: String) {
 
     val listQueued = Static("$mount/queued")
     val viewQueued = Route1("$mount/queued/{id}")
-    fun viewQueued(id: String) = viewQueued.build(id)
+    fun viewQueued(id: String) = viewQueued.bind(id)
 
     val listArchived = Static("$mount/archived")
     val viewArchived = Route1("$mount/archived/{id}")
-    fun viewArchived(id: String) = viewArchived.build(id)
+    fun viewArchived(id: String) = viewArchived.bind(id)
 }
 
 internal fun RouterBuilder.mountFunktorBackgroundJobs(

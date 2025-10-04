@@ -3,7 +3,7 @@ package de.peekandpoke.kraft.routing
 import kotlinx.html.FlowContent
 
 /**
- * Represent the route that is currently selected as active route by a [Router]
+ * Represent the route currently selected as active route by a [Router]
  */
 data class ActiveRoute(
     val uri: String,

@@ -1,5 +1,6 @@
 package routing
 
+import de.peekandpoke.kraft.routing.Route
 import de.peekandpoke.kraft.routing.Route1
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
@@ -7,39 +8,60 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
 class Route1Spec : StringSpec() {
+    val renderer = Route.Renderer.Default
+
     init {
         "Route1 - simple pattern with one parameter" {
             val route = Route1("/user/{id}")
 
             route.pattern shouldBe "/user/{id}"
-            route.build("123") shouldBe "#/user/123"
+
+            val bound = route.bind("123")
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/user/123"
         }
 
         "Route1 - pattern with named parameter" {
             val route = Route1("/product/{productId}")
 
             route.pattern shouldBe "/product/{productId}"
-            route.build("abc-123") shouldBe "#/product/abc-123"
+
+            val bound = route.bind("abc-123")
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/product/abc-123"
         }
 
         "Route1 - pattern with parameter at the beginning" {
             val route = Route1("/{category}/list")
 
             route.pattern shouldBe "/{category}/list"
-            route.build("electronics") shouldBe "#/electronics/list"
+
+            val bound = route.bind("electronics")
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/electronics/list"
         }
 
         "Route1 - pattern with parameter at the end" {
             val route = Route1("/api/v1/{endpoint}")
 
             route.pattern shouldBe "/api/v1/{endpoint}"
-            route.build("users") shouldBe "#/api/v1/users"
+
+            val bound = route.bind("users")
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/api/v1/users"
         }
 
         "Route1 - pattern with parameter containing special characters" {
             val route = Route1("/file/{filename}")
 
-            route.build("test-file_v1.2.txt") shouldBe "#/file/test-file_v1.2.txt"
+            val bound = route.bind("test-file_v1.2.txt")
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/file/test-file_v1.2.txt"
         }
 
         "Route1 - matching valid URI with parameter extraction" {
@@ -102,17 +124,13 @@ class Route1Spec : StringSpec() {
             match shouldBe null
         }
 
-        "Route1 - buildUri with vararg should work" {
+        "Route1 - bind with vararg should work" {
             val route = Route1("/item/{id}")
 
-            route.buildUri("xyz-789") shouldBe "#/item/xyz-789"
-        }
+            val bound = route.bind("xyz-789")
+            val rendered = renderer.render(bound)
 
-        "Route1 - build and buildUri should produce same result" {
-            val route = Route1("/document/{docId}")
-            val paramValue = "doc-456"
-
-            route.build(paramValue) shouldBe route.buildUri(paramValue)
+            rendered shouldBe "/item/xyz-789"
         }
 
         "Route1 - pattern with no placeholders should throw error" {
@@ -144,19 +162,28 @@ class Route1Spec : StringSpec() {
         "Route1 - empty parameter value" {
             val route = Route1("/search/{query}")
 
-            route.build("") shouldBe "#/search/"
+            val bound = route("")
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/search/"
         }
 
         "Route1 - parameter with URL-like characters" {
             val route = Route1("/redirect/{url}")
 
-            route.build("https://example.com") shouldBe "#/redirect/https%3A%2F%2Fexample.com"
+            val bound = route("https://example.com")
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/redirect/https%3A%2F%2Fexample.com"
         }
 
         "Route1 - parameter with spaces and special characters" {
             val route = Route1("/title/{name}")
 
-            route.build("Hello World & More!") shouldBe "#/title/Hello%20World%20%26%20More!"
+            val bound = route("Hello World & More!")
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/title/Hello%20World%20%26%20More!"
         }
 
         "Route1 - matching parameter with spaces and special characters" {
@@ -170,7 +197,10 @@ class Route1Spec : StringSpec() {
         "Route1 - root level parameter" {
             val route = Route1("/{slug}")
 
-            route.build("homepage") shouldBe "#/homepage"
+            val bound = route("homepage")
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/homepage"
 
             val match = route.match("/about")
             match shouldNotBe null
@@ -180,7 +210,10 @@ class Route1Spec : StringSpec() {
         "Route1 - deeply nested parameter" {
             val route = Route1("/api/v2/users/profile/{userId}/settings")
 
-            route.build("user123") shouldBe "#/api/v2/users/profile/user123/settings"
+            val bound = route("user123")
+            val rendered = renderer.render(bound)
+
+            rendered shouldBe "/api/v2/users/profile/user123/settings"
 
             val match = route.match("/api/v2/users/profile/user456/settings")
             match shouldNotBe null
@@ -192,8 +225,10 @@ class Route1Spec : StringSpec() {
             val route = Route1("/search/{query}")
             val originalValue = "hello world"
 
-            val builtUri = route.build(originalValue)
-            val match = route.match(builtUri.removePrefix("#"))
+            val bound = route(originalValue)
+            val rendered = renderer.render(bound)
+
+            val match = route.match(rendered)
 
             match shouldNotBe null
             match?.routeParams?.get("query") shouldBe originalValue
@@ -203,8 +238,10 @@ class Route1Spec : StringSpec() {
             val route = Route1("/file/{name}")
             val originalValue = "my file & data.txt"
 
-            val builtUri = route.build(originalValue)
-            val match = route.match(builtUri.removePrefix("#"))
+            val bound = route(originalValue)
+            val rendered = renderer.render(bound)
+
+            val match = route.match(rendered)
 
             match shouldNotBe null
             match?.routeParams?.get("name") shouldBe originalValue
@@ -214,8 +251,10 @@ class Route1Spec : StringSpec() {
             val route = Route1("/redirect/{url}")
             val originalValue = "https://example.com/path?param=value"
 
-            val builtUri = route.build(originalValue)
-            val match = route.match(builtUri.removePrefix("#"))
+            val bound = route(originalValue)
+            val rendered = renderer.render(bound)
+
+            val match = route.match(rendered)
 
             match shouldNotBe null
             match?.routeParams?.get("url") shouldBe originalValue
@@ -225,8 +264,10 @@ class Route1Spec : StringSpec() {
             val route = Route1("/discount/{code}")
             val originalValue = "SAVE25%NOW"
 
-            val builtUri = route.build(originalValue)
-            val match = route.match(builtUri.removePrefix("#"))
+            val bound = route(originalValue)
+            val rendered = renderer.render(bound)
+
+            val match = route.match(rendered)
 
             match shouldNotBe null
             match?.routeParams?.get("code") shouldBe originalValue
@@ -236,8 +277,10 @@ class Route1Spec : StringSpec() {
             val route = Route1("/calculation/{formula}")
             val originalValue = "a+b=c"
 
-            val builtUri = route.build(originalValue)
-            val match = route.match(builtUri.removePrefix("#"))
+            val bound = route(originalValue)
+            val rendered = renderer.render(bound)
+
+            val match = route.match(rendered)
 
             match shouldNotBe null
             match?.routeParams?.get("formula") shouldBe originalValue
@@ -247,8 +290,10 @@ class Route1Spec : StringSpec() {
             val route = Route1("/tag/{hashtag}")
             val originalValue = "#awesome"
 
-            val builtUri = route.build(originalValue)
-            val match = route.match(builtUri.removePrefix("#"))
+            val bound = route(originalValue)
+            val rendered = renderer.render(bound)
+
+            val match = route.match(rendered)
 
             match shouldNotBe null
             match?.routeParams?.get("hashtag") shouldBe originalValue
@@ -258,8 +303,10 @@ class Route1Spec : StringSpec() {
             val route = Route1("/user/{name}")
             val originalValue = "José María"
 
-            val builtUri = route.build(originalValue)
-            val match = route.match(builtUri.removePrefix("#"))
+            val bound = route(originalValue)
+            val rendered = renderer.render(bound)
+
+            val match = route.match(rendered)
 
             match shouldNotBe null
             match?.routeParams?.get("name") shouldBe originalValue
@@ -269,8 +316,10 @@ class Route1Spec : StringSpec() {
             val route = Route1("/reaction/{emoji}")
             val originalValue = "👍🎉"
 
-            val builtUri = route.build(originalValue)
-            val match = route.match(builtUri.removePrefix("#"))
+            val bound = route(originalValue)
+            val rendered = renderer.render(bound)
+
+            val match = route.match(rendered)
 
             match shouldNotBe null
             match?.routeParams?.get("emoji") shouldBe originalValue
@@ -280,8 +329,10 @@ class Route1Spec : StringSpec() {
             val route = Route1("/path/{segment}")
             val originalValue = "folder/subfolder"
 
-            val builtUri = route.build(originalValue)
-            val match = route.match(builtUri.removePrefix("#"))
+            val bound = route(originalValue)
+            val rendered = renderer.render(bound)
+
+            val match = route.match(rendered)
 
             match shouldNotBe null
             match?.routeParams?.get("segment") shouldBe originalValue
@@ -291,8 +342,10 @@ class Route1Spec : StringSpec() {
             val route = Route1("/query/{question}")
             val originalValue = "What is love?"
 
-            val builtUri = route.build(originalValue)
-            val match = route.match(builtUri.removePrefix("#"))
+            val bound = route(originalValue)
+            val rendered = renderer.render(bound)
+
+            val match = route.match(rendered)
 
             match shouldNotBe null
             match?.routeParams?.get("question") shouldBe originalValue
