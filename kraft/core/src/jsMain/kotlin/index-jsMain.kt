@@ -10,6 +10,7 @@ import de.peekandpoke.ultra.common.MutableTypedAttributes
 import de.peekandpoke.ultra.common.TypedAttributes
 import de.peekandpoke.ultra.common.TypedKey
 import de.peekandpoke.ultra.common.datetime.kotlinx.initializeJsJodaTimezones
+import kotlinx.browser.document
 import org.w3c.dom.HTMLElement
 
 @DslMarker
@@ -59,6 +60,13 @@ class KraftApp internal constructor(
             .sortedByDescending { it.priority }
     }
 
+    fun mount(selector: String, engine: VDomEngine, view: VDom.() -> Any?) {
+        val element = document.querySelector(selector) as? HTMLElement
+            ?: error("No element found for selector '$selector'")
+
+        mount(element, engine, view)
+    }
+
     fun mount(element: HTMLElement, engine: VDomEngine, view: VDom.() -> Any?) {
         engine.mount(app = this, element = element) {
             automounted.forEach { it.mount(this) }
@@ -68,11 +76,4 @@ class KraftApp internal constructor(
         // Navigate to the current URI, if there is a router present
         appAttributes[Router.key]?.navigateToWindowUri()
     }
-
-//    fun mount(tag: FlowContent, block: FlowContent.() -> Unit) {
-//        with(tag) {
-//            automounted.forEach { it.mount(this) }
-//            block()
-//        }
-//    }
 }
