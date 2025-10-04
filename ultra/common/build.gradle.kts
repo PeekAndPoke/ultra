@@ -59,8 +59,8 @@ kotlin {
 
         jsMain {
             dependencies {
-                api(Deps.Npm { polyfillFetch() })
-                api(Deps.Npm { jsJodaCore() })
+//                api(Deps.Npm { polyfillFetch() })
+//                api(Deps.Npm { jsJodaCore() })
                 api(Deps.Npm { jsJodaTimezone() })
             }
         }
