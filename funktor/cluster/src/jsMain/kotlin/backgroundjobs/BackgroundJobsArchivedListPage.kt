@@ -5,7 +5,6 @@ import de.peekandpoke.funktor.cluster.renderDefault
 import de.peekandpoke.kraft.addons.pagination.pagedSearchFilter
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.routing.JoinedPageTitle
 import de.peekandpoke.kraft.routing.router
 import de.peekandpoke.kraft.semanticui.pagination.PaginationEpp
@@ -15,6 +14,7 @@ import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
 import de.peekandpoke.ultra.common.model.Paged
 import de.peekandpoke.ultra.common.model.search.PagedSearchFilter
+import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.coroutines.flow.map

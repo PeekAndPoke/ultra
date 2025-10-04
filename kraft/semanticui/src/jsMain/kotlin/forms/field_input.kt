@@ -3,8 +3,6 @@ package de.peekandpoke.kraft.semanticui.forms
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.key
-import de.peekandpoke.kraft.components.onChange
-import de.peekandpoke.kraft.components.onInput
 import de.peekandpoke.kraft.forms.FieldOptions
 import de.peekandpoke.kraft.forms.GenericFormField
 import de.peekandpoke.kraft.forms.KraftFormsDsl
@@ -33,6 +31,8 @@ import de.peekandpoke.ultra.common.datetime.MpLocalDateTime
 import de.peekandpoke.ultra.common.datetime.MpLocalTime
 import de.peekandpoke.ultra.common.datetime.MpTimezone
 import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
+import de.peekandpoke.ultra.html.onChange
+import de.peekandpoke.ultra.html.onInput
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.browser.document
 import kotlinx.html.FlowContent
@@ -111,7 +111,7 @@ class UiInputFieldComponent<T, P : UiInputFieldComponent.Props<T>>(ctx: Ctx<P>) 
                     // We keep the current [userInput] as long when it fromStr value is the same as the current value
                     val userMapped = try {
                         props.fromStr(userInput)
-                    } catch (e: Throwable) {
+                    } catch (_: Throwable) {
                         null
                     }
 

@@ -6,7 +6,6 @@ import de.peekandpoke.kraft.common.ModalsManager
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.debugId
-import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.forms.formController
 import de.peekandpoke.kraft.semanticui.forms.UiDateTimeField
 import de.peekandpoke.kraft.semanticui.modals.FadingModal
@@ -14,6 +13,7 @@ import de.peekandpoke.kraft.utils.doubleClickProtection
 import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.ultra.common.datetime.MpTimezone
 import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
+import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui

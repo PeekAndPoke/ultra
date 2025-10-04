@@ -4,8 +4,8 @@ import de.peekandpoke.kraft.common.ModalsManager
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.debugId
-import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.ultra.html.RenderFn
+import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.SemanticTag
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui

@@ -2,13 +2,6 @@ package de.peekandpoke.kraft.semanticui.forms.old.select
 
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.key
-import de.peekandpoke.kraft.components.onAnimationEnd
-import de.peekandpoke.kraft.components.onBlur
-import de.peekandpoke.kraft.components.onClick
-import de.peekandpoke.kraft.components.onFocus
-import de.peekandpoke.kraft.components.onInput
-import de.peekandpoke.kraft.components.onKeyUp
-import de.peekandpoke.kraft.components.onMouseDown
 import de.peekandpoke.kraft.forms.FormFieldComponent
 import de.peekandpoke.kraft.forms.validation.Rule
 import de.peekandpoke.kraft.semanticui.forms.renderErrors
@@ -16,6 +9,13 @@ import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.html.flowContent
+import de.peekandpoke.ultra.html.onAnimationEnd
+import de.peekandpoke.ultra.html.onBlur
+import de.peekandpoke.ultra.html.onClick
+import de.peekandpoke.ultra.html.onFocus
+import de.peekandpoke.ultra.html.onInput
+import de.peekandpoke.ultra.html.onKeyUp
+import de.peekandpoke.ultra.html.onMouseDown
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui

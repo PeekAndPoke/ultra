@@ -3,9 +3,9 @@ package de.peekandpoke.kraft.semanticui.components
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.components.onAnimationEnd
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.html.RenderFunc
+import de.peekandpoke.ultra.html.onAnimationEnd
 import kotlinx.html.DIV
 import kotlinx.html.Tag
 import kotlinx.html.div

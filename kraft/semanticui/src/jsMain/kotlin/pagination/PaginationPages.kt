@@ -4,8 +4,8 @@ import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.key
-import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui

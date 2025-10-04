@@ -4,7 +4,6 @@ import de.peekandpoke.funktor.logging.api.LogEntryModel
 import de.peekandpoke.funktor.logging.api.LogsRequest
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.routing.JoinedPageTitle
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.utils.doubleClickProtection
@@ -12,6 +11,7 @@ import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.html.css
+import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.coroutines.flow.firstOrNull

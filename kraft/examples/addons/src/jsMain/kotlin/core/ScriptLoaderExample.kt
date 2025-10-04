@@ -3,10 +3,10 @@ package de.peekandpoke.kraft.examples.jsaddons.core
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.utils.ScriptLoader
 import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.browser.window

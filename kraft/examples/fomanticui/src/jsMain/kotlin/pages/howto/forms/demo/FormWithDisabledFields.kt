@@ -10,7 +10,6 @@ package de.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import de.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
 import de.peekandpoke.kraft.forms.formController
@@ -20,6 +19,7 @@ import de.peekandpoke.kraft.semanticui.forms.UiTextArea
 import de.peekandpoke.kraft.semanticui.forms.old.select.SelectField
 import de.peekandpoke.kraft.semanticui.forms.old.select.SelectFieldComponent
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.html.InputType

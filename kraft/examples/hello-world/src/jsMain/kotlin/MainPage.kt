@@ -3,11 +3,6 @@ package de.peekandpoke.kraft.examples.helloworld
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.components.onAuxClick
-import de.peekandpoke.kraft.components.onClick
-import de.peekandpoke.kraft.components.onContextMenu
-import de.peekandpoke.kraft.components.onContextMenuStoppingEvent
-import de.peekandpoke.kraft.components.onKeyDown
 import de.peekandpoke.kraft.forms.formController
 import de.peekandpoke.kraft.routing.router
 import de.peekandpoke.kraft.semanticui.forms.UiDateTimeField
@@ -21,6 +16,11 @@ import de.peekandpoke.kraft.semanticui.popups.PopupsManager
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
 import de.peekandpoke.ultra.html.css
+import de.peekandpoke.ultra.html.onAuxClick
+import de.peekandpoke.ultra.html.onClick
+import de.peekandpoke.ultra.html.onContextMenu
+import de.peekandpoke.ultra.html.onContextMenuStoppingEvent
+import de.peekandpoke.ultra.html.onKeyDown
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.browser.window

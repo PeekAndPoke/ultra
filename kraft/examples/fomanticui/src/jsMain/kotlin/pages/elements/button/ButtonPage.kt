@@ -10,12 +10,12 @@ package de.peekandpoke.kraft.examples.fomanticui.pages.elements.button
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.examples.fomanticui.helpers.VerticalContentAndCode
 import de.peekandpoke.kraft.examples.fomanticui.helpers.example
 import de.peekandpoke.kraft.examples.fomanticui.helpers.readTheFomanticUiDocs
 import de.peekandpoke.kraft.routing.PageTitle
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui

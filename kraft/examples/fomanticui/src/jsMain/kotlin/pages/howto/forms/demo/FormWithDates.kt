@@ -10,7 +10,6 @@ package de.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import de.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
 import de.peekandpoke.kraft.forms.formController
@@ -21,6 +20,7 @@ import de.peekandpoke.ultra.common.datetime.MpLocalDate
 import de.peekandpoke.ultra.common.datetime.MpLocalDateTime
 import de.peekandpoke.ultra.common.datetime.MpTimezone
 import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
+import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.Tag
 

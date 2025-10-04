@@ -5,11 +5,11 @@ import de.peekandpoke.kraft.addons.styling.StyleSheets
 import de.peekandpoke.kraft.common.ModalsManager
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.routing.BackNavigationTrap
 import de.peekandpoke.kraft.routing.BackNavigationTrap.Companion.trapBackNavigation
 import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.browser.window
 import kotlinx.coroutines.delay

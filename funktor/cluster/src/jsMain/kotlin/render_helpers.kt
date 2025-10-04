@@ -1,9 +1,9 @@
 package de.peekandpoke.funktor.cluster
 
 import de.peekandpoke.kraft.components.debugId
-import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.kraft.utils.DataLoader
 import de.peekandpoke.ultra.common.datetime.MpTemporalPeriod
+import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent

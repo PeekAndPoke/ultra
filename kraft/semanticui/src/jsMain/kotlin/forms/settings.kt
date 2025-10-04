@@ -1,7 +1,7 @@
 package de.peekandpoke.kraft.semanticui.forms
 
-import de.peekandpoke.kraft.components.onClick
 import de.peekandpoke.ultra.common.TypedKey
+import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.SemanticFn
 import de.peekandpoke.ultra.semanticui.SemanticIconFn
 import de.peekandpoke.ultra.semanticui.SemanticTag

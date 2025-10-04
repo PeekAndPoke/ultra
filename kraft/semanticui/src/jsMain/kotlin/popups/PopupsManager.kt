@@ -1,12 +1,12 @@
 package de.peekandpoke.kraft.semanticui.popups
 
 import de.peekandpoke.kraft.components.Automount
-import de.peekandpoke.kraft.components.onMouseOut
-import de.peekandpoke.kraft.components.onMouseOver
-import de.peekandpoke.kraft.components.onMouseUp
 import de.peekandpoke.kraft.utils.Rectangle
 import de.peekandpoke.kraft.utils.Vector2D
 import de.peekandpoke.ultra.common.TypedKey
+import de.peekandpoke.ultra.html.onMouseOut
+import de.peekandpoke.ultra.html.onMouseOver
+import de.peekandpoke.ultra.html.onMouseUp
 import de.peekandpoke.ultra.streams.Stream
 import de.peekandpoke.ultra.streams.StreamSource
 import de.peekandpoke.ultra.streams.Unsubscribe
