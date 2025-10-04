@@ -1,6 +1,5 @@
 @file:Suppress("PropertyName")
 
-
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
