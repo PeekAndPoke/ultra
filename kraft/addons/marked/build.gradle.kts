@@ -28,7 +28,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(project(":kraft:core"))
+//                implementation(project(":kraft:core"))
             }
         }
 
@@ -40,7 +40,9 @@ kotlin {
 
         jsMain {
             dependencies {
+                implementation(Deps.KotlinX.wrappers_extensions)
                 api(Deps.Npm { marked() })
+                api(Deps.Npm { domPurify() })
             }
         }
 

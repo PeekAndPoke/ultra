@@ -403,6 +403,9 @@ object Deps {
         // https://www.npmjs.com/package/marked
         fun KotlinDependencyHandler.marked() = npm("marked", "15.0.12")
 
+        // https://www.npmjs.com/package/dompurify
+        fun KotlinDependencyHandler.domPurify() = npm("dompurify", "3.2.7")
+
         // https://www.npmjs.com/package/@nx-js/compiler-util
         fun KotlinDependencyHandler.nxJsCompilerUtil() = npm("@nx-js/compiler-util", "2.0.0")
 

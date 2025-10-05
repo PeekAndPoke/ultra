@@ -1,5 +1,6 @@
 package de.peekandpoke.kraft.examples.jsaddons.marked
 
+import de.peekandpoke.kraft.addons.marked.markdown2html
 import de.peekandpoke.kraft.addons.marked.marked
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
@@ -35,6 +36,8 @@ class MarkedExample(ctx: NoProps) : PureComponent(ctx) {
             2. item 2
             
             `code`
+            
+            <div style="color: red; padding: 20px; border: 1px solid red;" onclick="window.alert('You have been pwnd!')">Evil div with onclick handler.</div>
         """.trimIndent()
     )
 
@@ -42,7 +45,17 @@ class MarkedExample(ctx: NoProps) : PureComponent(ctx) {
 
     override fun VDom.render() {
         ui.segment {
-            ui.header H2 { +"Marked JS" }
+            ui.header H2 { +"Markdown rendering" }
+
+            p {
+                +"Uses marked.js to render Markdown to HTML and DOMPurify to sanitize the HTML."
+            }
+
+            p {
+                a(href = "https://www.npmjs.com/package/dompurify", target = "_blank") {
+                    +"https://www.npmjs.com/package/dompurify"
+                }
+            }
 
             p {
                 a(href = "https://www.npmjs.com/package/marked", target = "_blank") {
@@ -67,9 +80,9 @@ class MarkedExample(ctx: NoProps) : PureComponent(ctx) {
                         headerIds = false
                     })
 
-                    +marked.parse(
-                        input
-                    )
+                    val rendered = markdown2html(input)
+
+                    +rendered
                 }
             }
         }

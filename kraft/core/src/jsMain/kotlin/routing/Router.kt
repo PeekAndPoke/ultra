@@ -102,17 +102,19 @@ class Router(
         }
 
         override fun navigateToUri(uri: String) {
+            val cleanUri = uri.cleanUri()
             val currentUri = getUriFromWindowLocation()
 
-            if (currentUri != uri) {
-                window.history.pushState(null, "", uri)
+            if (currentUri != cleanUri) {
+                window.history.pushState(null, "", cleanUri)
             }
 
             router.navigateToWindowUri()
         }
 
         override fun replaceUri(uri: String) {
-            window.history.replaceState(null, "", uri)
+            val cleanUri = uri.cleanUri()
+            window.history.replaceState(null, "", cleanUri)
             router.navigateToWindowUri()
         }
 
@@ -120,12 +122,16 @@ class Router(
             return window.location.pathname + window.location.search + window.location.hash
         }
 
+        private fun String.cleanUri(): String {
+            return "/" + trim().trimStart('/')
+        }
+
         /**
          * Private listener for the "popstate" event (history-based routing)
          */
         private fun popstateListener(event: Event) {
             if (router.enabled) {
-                console.log("popstateListener: ${event.type}", event)
+//                console.log("popstateListener: ${event.type}", event)
                 event.preventDefault()
                 router.navigateToWindowUri()
             }
@@ -135,35 +141,35 @@ class Router(
          * Private listener for click events to intercept navigation (history-based routing)
          */
         private fun clickListener(event: Event) {
-            console.log("clickListener: ${event.type}", event)
+//            console.log("clickListener: ${event.type}", event)
 
             if (!router.enabled) return
 
-            console.log("clickListener: 1")
+//            console.log("clickListener: 1")
 
             val mouseEvent = event as? MouseEvent ?: return
 
-            console.log("clickListener: 2", mouseEvent.target)
+//            console.log("clickListener: 2", mouseEvent.target)
 
             // Find the closest anchor element by traversing up the DOM tree
             val target = findClosestAnchor(mouseEvent.target) ?: return
 
-            console.log("clickListener: 3")
+//            console.log("clickListener: 3")
 
             // Check if it's an internal link
             val href = target.getAttribute("href") ?: return
 
-            console.log("clickListener: 4")
+//            console.log("clickListener: 4")
 
             // External link, let browser handle it
             if (href.isUrlWithProtocol()) return
 
-            console.log("clickListener: 5")
+//            console.log("clickListener: 5")
 
             // Check if we should open in new tab -> let browser handle it
             if (willOpenNewTab(mouseEvent)) return
 
-            console.log("clickListener: 6")
+//            console.log("clickListener: 6")
 
             event.preventDefault()
             router.navToUri(uri = href)
