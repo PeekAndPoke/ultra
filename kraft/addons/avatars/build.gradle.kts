@@ -40,6 +40,7 @@ kotlin {
 
         jsMain {
             dependencies {
+                implementation(Deps.KotlinX.wrappers_extensions)
                 api(Deps.Npm { minidenticons() })
             }
         }

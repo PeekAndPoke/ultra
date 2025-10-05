@@ -40,7 +40,7 @@ kotlin {
 
         jsMain {
             dependencies {
-                api(Deps.Npm { nxJsCompilerUtil() })
+                api(Deps.Npm { jwtDecode() })
             }
         }
 
