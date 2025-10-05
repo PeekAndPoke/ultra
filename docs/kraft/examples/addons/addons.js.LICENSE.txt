@@ -28,14 +28,14 @@
  */
 
 /*!
- * Chart.js v4.4.9
+ * Chart.js v4.5.0
  * https://www.chartjs.org
  * (c) 2025 Chart.js Contributors
  * Released under the MIT License
  */
 
 /*!
- * Signature Pad v5.0.10 | https://github.com/szimek/signature_pad
+ * Signature Pad v5.1.1 | https://github.com/szimek/signature_pad
  * (c) 2025 Szymon Nowak | Released under the MIT license
  */
 

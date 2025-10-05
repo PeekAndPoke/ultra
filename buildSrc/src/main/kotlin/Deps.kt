@@ -380,20 +380,14 @@ object Deps {
             return this.block()
         }
 
-        // https://www.npmjs.com/package/whatwg-fetch
-        fun KotlinDependencyHandler.polyfillFetch() = npm("whatwg-fetch", "3.6.20")
-
-        // https://www.npmjs.com/package/@js-joda/core
-        fun KotlinDependencyHandler.jsJodaCore() = npm("@js-joda/core", "5.6.5")
-
         // https://www.npmjs.com/package/@js-joda/timezone
         fun KotlinDependencyHandler.jsJodaTimezone() = npm("@js-joda/timezone", "2.22.0")
 
         // https://www.npmjs.com/package/bowser
-        fun KotlinDependencyHandler.bowser() = npm("bowser", "2.11.0")
+        fun KotlinDependencyHandler.bowser() = npm("bowser", "2.12.1")
 
         // https://www.npmjs.com/package/chart.js
-        fun KotlinDependencyHandler.chartJs() = npm("chart.js", "4.4.9")
+        fun KotlinDependencyHandler.chartJs() = npm("chart.js", "4.5.0")
 
         // TODO: check update to 4.x versions
         // https://www.npmjs.com/package/jwt-decode
@@ -421,10 +415,10 @@ object Deps {
         fun KotlinDependencyHandler.preact() = npm("preact", "10.26.4")
 
         // https://www.npmjs.com/package/prismjs
-        fun KotlinDependencyHandler.prismjs() = npm("prismjs", "1.29.0")
+        fun KotlinDependencyHandler.prismjs() = npm("prismjs", "1.30.0")
 
         // https://www.npmjs.com/package/signature_pad
-        fun KotlinDependencyHandler.signaturepad() = npm("signature_pad", "5.0.10")
+        fun KotlinDependencyHandler.signaturepad() = npm("signature_pad", "5.1.1")
 
         // https://www.npmjs.com/package/sourcemapped-stacktrace
         fun KotlinDependencyHandler.sourcemappedStacktrace() = npm("sourcemapped-stacktrace", "1.1.11")
@@ -442,7 +436,7 @@ object Deps {
         }
 
         // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-        const val logback_version = "1.5.18"
+        const val logback_version = "1.5.19"
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://plugins.gradle.org/plugin/io.kotest.multiplatform

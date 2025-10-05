@@ -42,9 +42,6 @@ class RemoteRequestImpl(
      * builds a request, sends it to the server, awaits the response (async), creates a flow of it and attaches the defined errorHandler
      */
     private fun execute(url: String, init: RequestInit): Flow<RemoteResponse> = flow {
-
-        polyfillFetch()
-
         val response = window.fetch("$baseUrl/${url.trimStart('/')}", init).await()
 
         val remoteResponse: RemoteResponse = RemoteResponseImpl(
