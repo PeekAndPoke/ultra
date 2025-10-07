@@ -13,6 +13,11 @@ abstract class RouteBase(final override val pattern: String, numParams: Int) : R
         val placeholderRegex = "\\{([^}]+)\\}".toRegex()
         const val extractRegexPattern = "([^/]*)"
 
+        fun getPlaceholderNames(pattern: String): List<String> = placeholderRegex
+            .findAll(pattern)
+            .map { it.groupValues[1] }
+            .toList()
+
         /**
          * Internal helper for building uris
          */
@@ -23,23 +28,20 @@ abstract class RouteBase(final override val pattern: String, numParams: Int) : R
     /**
      * We extract all placeholders from the pattern
      */
-    private val placeholders = placeholderRegex
-        .findAll(pattern)
-        .map { it.groupValues[1] }
-        .toList()
+    private val placeholderNames = getPlaceholderNames(pattern)
 
     /**
      * We construct a regex for matching the whole pattern with param placeholders
      */
     private val matchingRegex =
-        placeholders.fold(pattern) { acc, placeholder ->
+        placeholderNames.fold(pattern) { acc, placeholder ->
             acc.replace("{$placeholder}", extractRegexPattern)
         }.replace("/", "\\/").toRegex()
 
     init {
         // Sanity check
-        if (numParams != placeholders.size) {
-            error("The route '$pattern' has [${placeholders.size}] route-params but should have [$numParams]")
+        if (numParams != placeholderNames.size) {
+            error("The route '$pattern' has [${placeholderNames.size}] route-params but should have [$numParams]")
         }
     }
 
@@ -62,7 +64,7 @@ abstract class RouteBase(final override val pattern: String, numParams: Int) : R
 //        console.log(match)
 //        console.log(match.groupValues)
 
-        val routeParams = placeholders
+        val routeParams = placeholderNames
             .zip(match.groupValues.drop(1).map { it.decodeUriComponent() })
             .toMap()
 
@@ -87,7 +89,7 @@ abstract class RouteBase(final override val pattern: String, numParams: Int) : R
      */
     fun bind(vararg routeParams: String?): Route.Bound {
         val routeParamsMap = routeParams
-            .mapIndexed { idx, param -> placeholders[idx] to param }
+            .mapIndexed { idx, param -> placeholderNames[idx] to param }
             .toMap()
 
         return bind(routeParams = routeParamsMap, queryParams = emptyMap())
