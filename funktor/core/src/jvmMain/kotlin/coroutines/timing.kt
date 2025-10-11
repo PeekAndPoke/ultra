@@ -67,17 +67,25 @@ class TimingInterceptor : CopyableThreadContextElement<TimingInterceptor.State>,
 
         fun plot(indent: String = ""): String = buildString {
             append("$indent$coroutineName")
-            dispatcherName?.let { append(" ($it)") }
-            appendLine(": ${"%.2f".format(timeMs)} ms, ${"%.2f".format(cpuUsagePct)} % CPU")
+            dispatcherName?.let { append(" | $it") }
+            append(" | time = ${"%.2f".format(timeMs)} ms")
+            append(" | cpu time = ${"%.2f".format(cpuMs)} ms")
+            append(" | cpu pct = ${"%.2f".format(cpuUsagePct)} %")
+            appendLine()
+
+            val newIndent = indent.replace(".".toRegex(), " ") + "+ "
+
             children.forEach {
-                append(it.plot("$indent  "))
+                append(
+                    it.plot(newIndent)
+                )
             }
         }
     }
 
     class State(val startTime: Long)
 
-    private val start = System.nanoTime()
+    private val start: Long = System.nanoTime()
     private val activeNs = AtomicLong(0)
     private var capturedContext: CoroutineContext? = null
 

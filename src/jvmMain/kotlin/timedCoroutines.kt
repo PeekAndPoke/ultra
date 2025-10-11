@@ -36,7 +36,7 @@ suspend fun main() {
     val result = measureCoroutine {
 
         launch(Dispatchers.Default + CoroutineName("ioWork")) {
-            ioWork(duration = 500.milliseconds)
+            ioWork(duration = 50.milliseconds)
         }
 
         val totalSum = run {
@@ -48,7 +48,7 @@ suspend fun main() {
                     delay(1.milliseconds)
                     println("started job $job")
 
-                    val result = cpuWork(1_000_000_000)
+                    val result = cpuWork(100_000_000)
 
                     println("finished job $job with result $result")
 
