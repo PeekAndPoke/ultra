@@ -1,6 +1,7 @@
 package de.peekandpoke.ultra.playground
 
 import coroutines.measureCoroutine
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -34,16 +35,16 @@ suspend fun main() {
 
     val result = measureCoroutine {
 
-        val totalSum = coroutineScope {
+        launch(Dispatchers.Default + CoroutineName("ioWork")) {
+            ioWork(duration = 300.milliseconds)
+        }
 
-            launch(Dispatchers.Default) {
-                ioWork(duration = 200.milliseconds)
-            }
+        val totalSum = run {
 
-            val numCoroutines = 16
+            val numCoroutines = 2 * Runtime.getRuntime().availableProcessors()
 
-            val jobs = (0..<numCoroutines).map { job ->
-                async(Dispatchers.Default) {
+            val jobs = (0..<numCoroutines).mapIndexed { idx, job ->
+                async(Dispatchers.Default + CoroutineName("cpuWork-$idx")) {
                     delay(1.milliseconds)
                     println("started job $job")
 
@@ -63,10 +64,12 @@ suspend fun main() {
         "Total sum: $totalSum"
     }
 
-    println("value      = ${result.value}")
-    println("total time = ${"%.2f".format(result.timing.totalMs)} ms")
-    println("cpu time   = ${"%.2f".format(result.timing.cpuMs)} ms")
-    println("cpu pct    = ${"%.2f".format(result.timing.cpuPct * 100)} %")
-    println("idle time  = ${"%.2f".format(result.timing.idleMs)} ms")
-    println("idle pct   = ${"%.2f".format(result.timing.idlePct * 100)} %")
+    println("value           = ${result.value}")
+    println("total time      = ${"%.2f".format(result.timing.timeMs)} ms")
+    println("total cpu time  = ${"%.2f".format(result.timing.totalCpuMs)} ms")
+    println("total cpu usage = ${"%.2f".format(result.timing.totalCpuUsage)}")
+    println("total cpu pct   = ${"%.2f".format(result.timing.totalCpuUsagePct)} %")
+
+    println()
+    println(result.timing.plot())
 }
