@@ -1,12 +1,11 @@
 package de.peekandpoke.karango.e2e.functions_array
 
-import de.peekandpoke.karango.aql.`*`
 import de.peekandpoke.karango.aql.APPEND
 import de.peekandpoke.karango.aql.FOR
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
-import de.peekandpoke.karango.aql.get
+import de.peekandpoke.karango.aql.expand
 import de.peekandpoke.karango.e2e.E2ePerson
 import de.peekandpoke.karango.e2e.age
 import de.peekandpoke.karango.e2e.karangoDriver
@@ -174,7 +173,7 @@ class `E2E-Func-Array-APPEND-Spec` : StringSpec({
             }
 
             RETURN(
-                APPEND<Any>(a[`*`].age, b[`*`].name, true.aql)
+                APPEND<Any>(a.expand().age, b.expand().name, true.aql)
             )
         }
 

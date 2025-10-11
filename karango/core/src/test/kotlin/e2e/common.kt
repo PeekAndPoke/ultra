@@ -6,6 +6,7 @@ import de.peekandpoke.karango.aql.print
 import de.peekandpoke.karango.config.ArangoDbConfig
 import de.peekandpoke.karango.slumber.KarangoCodec
 import de.peekandpoke.karango.testdomain.TestPersonsRepository
+import de.peekandpoke.karango.testdomain.TestTimestampedRepository
 import de.peekandpoke.karango.toArangoDb
 import de.peekandpoke.karango.vault.KarangoDriver
 import de.peekandpoke.ultra.common.datetime.Kronos
@@ -50,7 +51,8 @@ fun createDatabase(repos: (driver: KarangoDriver) -> List<Repository<*>>): Pair<
 
 private val dbAndDriver = createDatabase { driver ->
     listOf(
-        TestPersonsRepository(driver = driver, timestamped = TimestampedHook(lazy { kronos })),
+        TestPersonsRepository(driver = driver),
+        TestTimestampedRepository(driver = driver, timestamped = TimestampedHook(lazy { kronos })),
     )
 }
 val database: Database = dbAndDriver.first

@@ -12,7 +12,7 @@ import de.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
 /**
  * Inserts or updates a document.
  */
-@Suppress("unused")
+@Suppress("unused", "UnusedReceiverParameter")
 @VaultTerminalExpressionMarker
 fun <T> StatementBuilder.UPSERT(entity: Storable<T>, mode: UpsertMode = UpsertMode.Update) = UpsertPartial(entity, mode)
 

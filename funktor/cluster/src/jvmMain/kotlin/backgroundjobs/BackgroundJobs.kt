@@ -4,7 +4,6 @@ import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobArchive
 import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobExecutionResult
 import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobQueued
 import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobRetryPolicy
-import de.peekandpoke.funktor.cluster.locks.GlobalLocksProvider
 import de.peekandpoke.funktor.cluster.locks.GlobalServerId
 import de.peekandpoke.funktor.cluster.locks.LocksException
 import de.peekandpoke.funktor.cluster.workers.StateProvider
@@ -30,7 +29,6 @@ class BackgroundJobs(
     entityCache: Lazy<EntityCache?>,
     queue: Lazy<Queue>,
     archive: Lazy<Archive>,
-    locks: Lazy<GlobalLocksProvider>,
     serverId: Lazy<GlobalServerId>,
     codec: Lazy<DataCodec>,
     log: Lazy<Log>,
@@ -56,15 +54,6 @@ class BackgroundJobs(
             job: Stored<BackgroundJobQueued>,
             modify: (BackgroundJobQueued) -> BackgroundJobQueued,
         ): Stored<BackgroundJobQueued>
-
-        /**
-         * Set the internal [state] of the given [job].
-         */
-        suspend fun setState(
-            job: Stored<BackgroundJobQueued>,
-            state: BackgroundJobQueued.State,
-        ): Stored<BackgroundJobQueued> =
-            modify(job) { it.copy(state = state) }
 
         /**
          * Creates the given [job] if there is no other job with the same type and hash-code present.
@@ -94,7 +83,7 @@ class BackgroundJobs(
         /**
          * Get the next job that is due.
          */
-        suspend fun getNextDue(due: MpInstant): Stored<BackgroundJobQueued>?
+        suspend fun claimNextDue(due: MpInstant): Stored<BackgroundJobQueued>?
 
         /**
          * Get a job by its [id].
@@ -140,7 +129,7 @@ class BackgroundJobs(
                 return Cursor.empty()
             }
 
-            override suspend fun getNextDue(due: MpInstant): Stored<BackgroundJobQueued>? {
+            override suspend fun claimNextDue(due: MpInstant): Stored<BackgroundJobQueued>? {
                 return null
             }
 
@@ -173,7 +162,7 @@ class BackgroundJobs(
                 /**
                  * Returns the next job that is [due] with the least [BackgroundJobQueued.dueAt].
                  */
-                suspend fun findNextDue(due: MpInstant): Stored<BackgroundJobQueued>?
+                suspend fun claimNextDue(due: MpInstant): Stored<BackgroundJobQueued>?
 
                 /**
                  * Checks if there already is a job in the queue with given [type] and [dataHash].
@@ -220,8 +209,8 @@ class BackgroundJobs(
                 return repo.findAllDueSorted(due)
             }
 
-            override suspend fun getNextDue(due: MpInstant): Stored<BackgroundJobQueued>? {
-                return repo.findNextDue(due)
+            override suspend fun claimNextDue(due: MpInstant): Stored<BackgroundJobQueued>? {
+                return repo.claimNextDue(due)
             }
 
             override suspend fun get(id: String): Stored<BackgroundJobQueued>? {
@@ -314,6 +303,10 @@ class BackgroundJobs(
         backgroundJobs: Lazy<BackgroundJobs>,
         val dataType: TypeRef<D>,
     ) {
+        companion object {
+            internal fun systemNow() = Kronos.systemUtc.instantNow()
+        }
+
         /**
          * The BackgroundJobs facade.
          */
@@ -339,7 +332,7 @@ class BackgroundJobs(
          */
         suspend fun queue(
             data: D,
-            dueAt: MpInstant = now().plus(200.milliseconds),
+            dueAt: MpInstant = systemNow().plus(200.milliseconds),
             retryPolicy: BackgroundJobRetryPolicy = BackgroundJobRetryPolicy.None,
         ) {
             backgroundJobs.queueJob(
@@ -347,7 +340,7 @@ class BackgroundJobs(
                     type = jobType,
                     data = data,
                     retryPolicy = retryPolicy,
-                    createdAt = now(),
+                    createdAt = systemNow(),
                     dueAt = dueAt,
                 )
             )
@@ -360,7 +353,7 @@ class BackgroundJobs(
          */
         suspend fun queueIfNotPresent(
             data: D,
-            dueAt: MpInstant = now().plus(10.milliseconds),
+            dueAt: MpInstant = systemNow().plus(10.milliseconds),
             retryPolicy: BackgroundJobRetryPolicy = BackgroundJobRetryPolicy.None,
         ) {
             backgroundJobs.queueJobIfNotPresent(
@@ -368,7 +361,7 @@ class BackgroundJobs(
                     type = jobType,
                     data = data,
                     retryPolicy = retryPolicy,
-                    createdAt = now(),
+                    createdAt = systemNow(),
                     dueAt = dueAt,
                 )
             )
@@ -386,7 +379,7 @@ class BackgroundJobs(
         ) {
             return queueIfNotPresent(
                 data = data,
-                dueAt = now().plus(dueIn),
+                dueAt = systemNow().plus(dueIn),
                 retryPolicy = retryPolicy,
             )
         }
@@ -402,19 +395,16 @@ class BackgroundJobs(
         ) {
             return queueIfNotPresent(
                 data = data,
-                dueAt = now(),
+                dueAt = systemNow(),
                 retryPolicy = retryPolicy,
             )
         }
-
-        private fun now() = Kronos.systemUtc.instantNow()
     }
 
     private val handlers: List<Handler<Any?, *>> by handlers
     private val entityCache: EntityCache? by entityCache
     private val queue: Queue by queue
     private val archive: Archive by archive
-    private val locks: GlobalLocksProvider by locks
     private val serverId: GlobalServerId by serverId
     private val codec: DataCodec by codec
     private val log: Log by log
@@ -433,9 +423,9 @@ class BackgroundJobs(
         }
     }
 
-    suspend fun getNextDueJob(): Stored<BackgroundJobQueued>? {
+    suspend fun claimNextDueJob(): Stored<BackgroundJobQueued>? {
         return mutex.withLock {
-            queue.getNextDue(
+            queue.claimNextDue(
                 Kronos.systemUtc.instantNow()
             )
         }
@@ -468,9 +458,9 @@ class BackgroundJobs(
     suspend fun runQueuedJobs(state: StateProvider) {
         do {
             val job = try {
-                getNextDueJob()
+                claimNextDueJob()
             } catch (e: Throwable) {
-                log.warning("Could not read next due jobs\n${e.stackTraceToString()}")
+                log.warning("Could not read next due job\n${e.stackTraceToString()}")
                 null
             }
 
@@ -482,14 +472,9 @@ class BackgroundJobs(
                 val startedAt = System.currentTimeMillis()
 
                 // Get lock on the job
-                val result: BackgroundJobExecutionResult? = try {
+                val result: BackgroundJobExecutionResult = try {
                     // We try to get a lock on the job
-                    locks.lock(key = "queued-background-job-${job._key}", timeout = Duration.ZERO) {
-                        runLockedJob(startedAt, job)
-                    }
-                } catch (_: LocksException.Timeout) {
-                    // just ignore it, as another server had the lock and took care of the job
-                    null
+                    runJob(startedAt, job)
                 } catch (e: LocksException.Execution) {
                     BackgroundJobExecutionResult.Failed(
                         executionTimeMs = System.currentTimeMillis() - startedAt,
@@ -501,45 +486,37 @@ class BackgroundJobs(
                     )
                 }
 
+                val withResult = job.modify { it.plusResult(result) }
+
                 when (result) {
-                    null -> {
-                        // Do nothing ... it just timed out, meaning another server had the lock and took care of the job
-                    }
-
-                    else -> {
-                        val withResult = job.modify { it.plusResult(result) }
-
-                        when (result) {
-                            is BackgroundJobExecutionResult.Failed -> {
-                                when (val rescheduled =
-                                    withResult.value.retryPolicy.scheduleRetry(withResult, MpInstant.now())) {
-                                    // No retry
-                                    null -> archiveJob(withResult)
-                                    // Otherwise, schedule re-try
-                                    else -> queue.modify(withResult) {
-                                        it.copy(dueAt = rescheduled)
-                                    }
-                                }
-                            }
-
-                            is BackgroundJobExecutionResult.Success -> {
-                                // Archive the job
-                                archiveJob(withResult)
+                    is BackgroundJobExecutionResult.Failed -> {
+                        when (val rescheduled =
+                            withResult.value.retryPolicy.scheduleRetry(withResult, MpInstant.now())) {
+                            // No retry
+                            null -> archiveJob(withResult)
+                            // Otherwise, schedule re-try
+                            else -> queue.modify(withResult) {
+                                it.copy(
+                                    dueAt = rescheduled,
+                                    state = BackgroundJobQueued.State.WAITING,
+                                )
                             }
                         }
+                    }
+
+                    is BackgroundJobExecutionResult.Success -> {
+                        // Archive the job
+                        archiveJob(withResult)
                     }
                 }
             }
         } while (job != null && state().isRunning)
     }
 
-    private suspend fun runLockedJob(
+    private suspend fun runJob(
         startedAtMs: Long,
         job: Stored<BackgroundJobQueued>,
     ): BackgroundJobExecutionResult {
-        // Now that we have the lock, we mark the job as "processing"
-        queue.setState(job, BackgroundJobQueued.State.PROCESSING)
-
         val result = try {
             when (val handler = handlers.firstOrNull { it.canHandle(job.value) }) {
                 null -> {
@@ -579,12 +556,6 @@ class BackgroundJobs(
                     "stack" to t.stackTraceToString(),
                 )
             )
-        }
-
-        // When the execution failed we put it back into the queue
-        if (result is BackgroundJobExecutionResult.Failed) {
-            // Finally, we reset the state to "waiting"
-            queue.setState(job, BackgroundJobQueued.State.WAITING)
         }
 
         return result

@@ -54,6 +54,23 @@ data class PropertyPath<P, T>(
 
     inline fun <NF, reified NT> append(prop: String) = PropertyPath<NF, NT>(this, Step.Prop(prop, kType()))
 
+    fun getAsList(): List<Expression<*>> {
+        val result = mutableListOf<Expression<*>>()
+
+        var current: PropertyPath<*, *>? = this
+        while (current != null) {
+            result.add(0, current.current)
+            current = current.previous
+        }
+
+        return result
+    }
+
+    fun getRoot(): Expression<*>? = when (val p = previous) {
+        null -> null
+        else -> p.getRoot()
+    }
+
     fun dropRoot(): PropertyPath<P, T>? {
         val result = when (previous) {
             null -> null

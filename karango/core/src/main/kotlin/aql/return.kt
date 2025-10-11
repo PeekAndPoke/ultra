@@ -14,6 +14,14 @@ fun <R> StatementBuilder.RETURN(ret: Expression<R>): TerminalExpr<R> = Return(re
 
 @Suppress("UnusedReceiverParameter")
 @VaultTerminalExpressionMarker
+fun <R> StatementBuilder.RETURN_OLD(ret: Expression<R>): TerminalExpr<R> = ReturnOld(ret)
+
+@Suppress("UnusedReceiverParameter")
+@VaultTerminalExpressionMarker
+fun <R> StatementBuilder.RETURN_NEW(ret: Expression<R>): TerminalExpr<R> = ReturnNew(ret)
+
+@Suppress("UnusedReceiverParameter")
+@VaultTerminalExpressionMarker
 fun <R> StatementBuilder.RETURN_DISTINCT(ret: Expression<R>): TerminalExpr<R> = ReturnDistinct(ret)
 
 @VaultTerminalExpressionMarker
@@ -27,19 +35,25 @@ fun StatementBuilder.RETURN_COUNT(variableName: String = "count"): TerminalExpr<
 }
 
 internal class Return<T>(private val expression: Expression<T>) : TerminalExpr<T> {
-
     override fun innerType() = expression.getType()
-
     override fun getType(): TypeRef<List<T>> = expression.getType().list
+    override fun print(p: Printer) = p.append("RETURN ").append(expression).nl()
+}
 
-    override fun print(p: Printer) = p.append("RETURN ").append(expression).appendLine()
+internal class ReturnOld<T>(private val expression: Expression<T>) : TerminalExpr<T> {
+    override fun innerType() = expression.getType()
+    override fun getType(): TypeRef<List<T>> = expression.getType().list
+    override fun print(p: Printer) = p.append("RETURN OLD").nl()
+}
+
+internal class ReturnNew<T>(private val expression: Expression<T>) : TerminalExpr<T> {
+    override fun innerType() = expression.getType()
+    override fun getType(): TypeRef<List<T>> = expression.getType().list
+    override fun print(p: Printer) = p.append("RETURN NEW").nl()
 }
 
 internal class ReturnDistinct<T>(private val expression: Expression<T>) : TerminalExpr<T> {
-
     override fun innerType() = expression.getType()
-
     override fun getType(): TypeRef<List<T>> = expression.getType().list
-
-    override fun print(p: Printer) = p.append("RETURN DISTINCT").append(expression).appendLine()
+    override fun print(p: Printer) = p.append("RETURN DISTINCT ").append(expression).nl()
 }

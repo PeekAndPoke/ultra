@@ -155,7 +155,7 @@ abstract class BackgroundJobsSpecBase : FreeSpec() {
             // Start processing it in the background
             val background = runJobsInBackground()
 
-            // We for the job to go into PROCESSING state
+            // We wait for the job to go into PROCESSING state
             eventually(2000.milliseconds) {
                 val queued = backgroundJobs.listQueuedJobs()
                 queued.filter { it.value.state == BackgroundJobQueued.State.PROCESSING }.shouldNotBeEmpty()

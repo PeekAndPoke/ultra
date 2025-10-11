@@ -114,8 +114,7 @@ class NullValueExpr(val name: String = "v") : Expression<Any?> {
 class ObjectValueExpr<T>(
     private val type: TypeRef<Map<String, T>>,
     val pairs: List<Pair<Expression<String>, Expression<out T>>>,
-) :
-    Expression<Map<String, T>> {
+) : Expression<Map<String, T>> {
 
     /** The type of the expression */
     override fun getType() = type

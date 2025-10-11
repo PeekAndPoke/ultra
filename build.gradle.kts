@@ -50,6 +50,7 @@ kotlin {
         jvmMain {
             dependencies {
 //                implementation(project(":mutator"))
+                implementation(project(":funktor:core"))
             }
         }
     }

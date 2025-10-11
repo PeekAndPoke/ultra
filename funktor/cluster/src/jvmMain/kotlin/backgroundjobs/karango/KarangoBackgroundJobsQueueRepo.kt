@@ -13,6 +13,9 @@ import de.peekandpoke.karango.aql.FOR
 import de.peekandpoke.karango.aql.LTE
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.RETURN_COUNT
+import de.peekandpoke.karango.aql.RETURN_NEW
+import de.peekandpoke.karango.aql.UPDATE
+import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.IndexBuilder
 import de.peekandpoke.karango.vault.KarangoDriver
@@ -25,9 +28,11 @@ import de.peekandpoke.ultra.vault.slumber.ts
 class KarangoBackgroundJobsQueueRepo(
     driver: KarangoDriver,
     repoName: String,
-) :
-    EntityRepository<BackgroundJobQueued>(name = repoName, kType(), driver),
-    BackgroundJobs.Queue.Vault.Repo {
+) : EntityRepository<BackgroundJobQueued>(
+    name = repoName,
+    storedType = kType(),
+    driver = driver
+), BackgroundJobs.Queue.Vault.Repo {
 
     /**
      * The fixtures are only here to clear the database collection
@@ -37,6 +42,7 @@ class KarangoBackgroundJobsQueueRepo(
     override fun IndexBuilder<BackgroundJobQueued>.buildIndexes() {
         this.persistentIndex {
             field { dueAt.ts }
+            field { state }
         }
 
         persistentIndex {
@@ -46,9 +52,9 @@ class KarangoBackgroundJobsQueueRepo(
     }
 
     override suspend fun findAllSorted(page: Int?, epp: Int?): Cursor<Stored<BackgroundJobQueued>> = find {
-//        queryOptions {
-//            it.count(true).fullCount(true)
-//        }
+        queryOptions {
+            it.count(true).fullCount(true)
+        }
 
         FOR(repo) {
             SORT(it.dueAt.ts.ASC)
@@ -72,15 +78,21 @@ class KarangoBackgroundJobsQueueRepo(
         }
     }
 
-    override suspend fun findNextDue(due: MpInstant): Stored<BackgroundJobQueued>? = findFirst {
+    override suspend fun claimNextDue(due: MpInstant): Stored<BackgroundJobQueued>? = findFirst {
         FOR(repo) {
             val dueAt = it.dueAt.ts
 
             FILTER(dueAt LTE due.toEpochMillis())
+            FILTER(it.state EQ BackgroundJobQueued.State.WAITING)
             SORT(dueAt.ASC)
             LIMIT(1)
+            UPDATE(it, repo) {
+                put({ state }) {
+                    BackgroundJobQueued.State.PROCESSING.aql
+                }
+            }
 
-            RETURN(it)
+            RETURN_NEW(it)
         }
     }
 

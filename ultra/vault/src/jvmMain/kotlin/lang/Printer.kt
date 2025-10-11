@@ -101,6 +101,11 @@ interface Printer {
     fun appendLine(str: String = ""): Printer
 
     /**
+     * Appends a line break
+     */
+    fun nl(): Printer = appendLine()
+
+    /**
      * Increases the indent for everything added by the [block]
      */
     fun indent(block: Printer.() -> Unit): Printer
