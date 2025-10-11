@@ -6,10 +6,12 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration.Companion.microseconds
 
 suspend fun <T> measureCoroutine(
     name: String = "ROOT",
@@ -20,6 +22,11 @@ suspend fun <T> measureCoroutine(
     val result = withContext(timer + CoroutineName(name)) {
         block()
     }
+
+    // Let the timer complete its work. This is necessary because the timer is a child coroutine,
+    // and we need to wait for it to complete before we can get the timing.
+    // Otherwise, some child timing will be incompletely recorded
+    delay(1.microseconds)
 
     return TimingInterceptor.TimedResult(
         value = result,
@@ -61,7 +68,7 @@ class TimingInterceptor : CopyableThreadContextElement<TimingInterceptor.State>,
         fun plot(indent: String = ""): String = buildString {
             append("$indent$coroutineName")
             dispatcherName?.let { append(" ($it)") }
-            appendLine(": $timeMs ms, $cpuUsagePct% CPU")
+            appendLine(": ${"%.2f".format(timeMs)} ms, ${"%.2f".format(cpuUsagePct)} % CPU")
             children.forEach {
                 append(it.plot("$indent  "))
             }

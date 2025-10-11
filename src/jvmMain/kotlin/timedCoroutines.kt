@@ -36,12 +36,12 @@ suspend fun main() {
     val result = measureCoroutine {
 
         launch(Dispatchers.Default + CoroutineName("ioWork")) {
-            ioWork(duration = 300.milliseconds)
+            ioWork(duration = 500.milliseconds)
         }
 
         val totalSum = run {
 
-            val numCoroutines = 2 * Runtime.getRuntime().availableProcessors()
+            val numCoroutines = Runtime.getRuntime().availableProcessors()
 
             val jobs = (0..<numCoroutines).mapIndexed { idx, job ->
                 async(Dispatchers.Default + CoroutineName("cpuWork-$idx")) {
