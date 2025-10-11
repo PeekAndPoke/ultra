@@ -13,6 +13,7 @@ suspend fun <T> measureCoroutine(block: suspend () -> T): TimingInterceptor.Time
         block()
     }
 
+
     return TimingInterceptor.TimedResult(
         value = result,
         timing = timer.getTiming()
