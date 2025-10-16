@@ -65,11 +65,11 @@ suspend fun main() {
     }
 
     println("value           = ${result.value}")
-    println("total time      = ${"%.2f".format(result.timing.timeMs)} ms")
-    println("total cpu time  = ${"%.2f".format(result.timing.totalCpuMs)} ms")
-    println("total cpu usage = ${"%.2f".format(result.timing.totalCpuUsage)}")
-    println("total cpu pct   = ${"%.2f".format(result.timing.totalCpuUsagePct)} %")
+    println("total time      = ${"%.2f".format(result.profile.timeMs)} ms")
+    println("total cpu time  = ${"%.2f".format(result.profile.totalCpuMs)} ms")
+    println("total cpu usage = ${"%.2f".format(result.profile.totalCpuUsage)}")
+    println("total cpu pct   = ${"%.2f".format(result.profile.totalCpuUsagePct)} %")
 
     println()
-    println(result.timing.plot())
+    println(result.profile.plot())
 }

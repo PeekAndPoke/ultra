@@ -1,6 +1,7 @@
 package de.peekandpoke.funktor.cluster.backgroundjobs
 
 import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
+import de.peekandpoke.ultra.common.roundWithPrecision
 import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.semanticui.SemanticIconFn
 import de.peekandpoke.ultra.semanticui.icon
@@ -25,11 +26,14 @@ internal fun FlowContent.renderTableEntry(results: List<BackgroundJobResultModel
         .forEach { chunk ->
             chunk.forEach { result ->
                 span {
-                    title = """
-                        ${result.executionTimeMs}ms at ${
-                        result.executedAt.atSystemDefaultZone().formatDdMmmYyyyHhMmSs()
-                    } by ${result.serverId}                    
-                    """.trimIndent()
+                    val parts = listOfNotNull(
+                        result.startedAt.atSystemDefaultZone().formatDdMmmYyyyHhMmSs(),
+                        "${result.executionDurationMs} ms",
+                        result.cpuProfile?.let { "${it.totalCpuUsagePct.roundWithPrecision(2)} % CPU" },
+                        "by ${result.serverId}",
+                    )
+
+                    title = parts.joinToString(" | ")
 
                     renderIcon(result)
                 }
@@ -99,15 +103,44 @@ internal fun FlowContent.renderResultsAsSegments(results: List<BackgroundJobResu
                     }
                     noui.item {
                         noui.header { +"Executed At" }
-                        noui.content { +result.executedAt.atSystemDefaultZone().formatDdMmmYyyyHhMmSs() }
-                    }
-                    noui.item {
-                        noui.header { +"Execution Time" }
-                        noui.content { +"${result.executionTimeMs}ms" }
+                        noui.content { +result.startedAt.atSystemDefaultZone().formatDdMmmYyyyHhMmSs() }
                     }
                     noui.item {
                         noui.header { +"Executed By" }
                         noui.content { +result.serverId }
+                    }
+                    noui.item {
+                        noui.header { +"Execution Time" }
+                        noui.content { +"${result.executionDurationMs} ms" }
+                    }
+
+                    result.cpuProfile?.let { profile ->
+                        noui.item {
+                            noui.header { +"Profiled Time" }
+                            noui.content { +"${profile.timeMs.roundWithPrecision(2)} ms" }
+                        }
+                        noui.item {
+                            noui.header { +"Profiled CPU %" }
+                            noui.content { +"${profile.totalCpuUsagePct.roundWithPrecision(2)} %" }
+                        }
+                        noui.item {
+                            noui.header { +"Profiled CPU time" }
+                            noui.content { +"${profile.totalCpuMs.roundWithPrecision(2)} %" }
+                        }
+                    }
+                }
+
+                result.cpuProfile?.let { profile ->
+                    ui.header { +"Profile" }
+
+                    pre {
+                        css {
+                            padding = Padding(5.px)
+                            backgroundColor = Color("#F0F0F0")
+                            overflow = Overflow.auto
+                        }
+
+                        +profile.plot()
                     }
                 }
 

@@ -14,6 +14,7 @@ import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
 import de.peekandpoke.ultra.common.model.Paged
 import de.peekandpoke.ultra.common.model.search.PagedSearchFilter
+import de.peekandpoke.ultra.common.roundWithPrecision
 import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.ui
@@ -79,34 +80,21 @@ class BackgroundJobsArchivedListPage(ctx: Ctx<Props>) : Component<BackgroundJobs
         ui.attached.striped.selectable.table Table {
             thead {
                 tr {
-                    th {
-                        +"Id"
-                    }
-                    th {
-                        +"Type"
-                    }
-                    th {
-                        +"Created At"
-                    }
-                    th {
-                        +"Archived At"
-                    }
-                    th {
-                        +"Data"
-                    }
-                    th {
-                        +"Retry Policy"
-                    }
-                    th {
-                        +"Last Execution Time"
-                    }
-                    th {
-                        +"Results"
-                    }
+                    th { +"Id" }
+                    th { +"Type" }
+                    th { +"Created" }
+                    th { +"Archived" }
+                    th { +"Data" }
+                    th { +"Retry Policy" }
+                    th { +"Time" }
+                    th { +"CPU" }
+                    th { +"Results" }
                 }
             }
             tbody {
                 jobs.forEach { job ->
+
+                    val lastResult = job.results.lastOrNull()
 
                     tr("top aligned") {
 
@@ -129,10 +117,10 @@ class BackgroundJobsArchivedListPage(ctx: Ctx<Props>) : Component<BackgroundJobs
                         td { // Type
                             +job.type
                         }
-                        td { // Created at
+                        td { // Created
                             +(job.createdAt?.atSystemDefaultZone()?.formatDdMmmYyyyHhMmSs() ?: "n/a")
                         }
-                        td { // Archived at
+                        td { // Archived
                             +job.archivedAt.atSystemDefaultZone().formatDdMmmYyyyHhMmSs()
                         }
                         td { // Data
@@ -149,11 +137,17 @@ class BackgroundJobsArchivedListPage(ctx: Ctx<Props>) : Component<BackgroundJobs
                         td { // Retry Policy
                             renderTableEntry(job.retryPolicy)
                         }
-                        td { // Last Execution Time
-                            when (val last = job.results.lastOrNull()) {
+                        td { // Time
+                            when (lastResult) {
                                 null -> +"n/a"
-                                else -> +"${last.executionTimeMs}ms"
+                                else -> +"${lastResult.executionDurationMs} ms"
                             }
+                        }
+                        td { // CPU
+                            val cpu = lastResult?.cpuProfile
+                                ?.let { "${it.totalCpuUsagePct.roundWithPrecision(2)} %" }
+
+                            +(cpu ?: "n/a")
                         }
                         td { // Results
                             renderTableEntry(job.results)

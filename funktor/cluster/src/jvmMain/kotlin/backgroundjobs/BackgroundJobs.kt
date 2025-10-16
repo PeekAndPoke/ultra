@@ -1,5 +1,6 @@
 package de.peekandpoke.funktor.cluster.backgroundjobs
 
+import coroutines.measureCoroutine
 import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobArchived
 import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobExecutionResult
 import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobQueued
@@ -469,22 +470,27 @@ class BackgroundJobs(
                 // The "do"-loop might be running a very long time, we need to avoid stale entries in the cache.
                 entityCache?.clear()
 
-                val startedAt = System.currentTimeMillis()
+                val startedAt = Kronos.systemUtc.instantNow()
 
                 // Get lock on the job
-                val result: BackgroundJobExecutionResult = try {
-                    // We try to get a lock on the job
-                    runJob(startedAt, job)
-                } catch (e: LocksException.Execution) {
-                    BackgroundJobExecutionResult.Failed(
-                        executionTimeMs = System.currentTimeMillis() - startedAt,
-                        serverId = serverId.getId(),
-                        data = mapOf(
-                            "error" to e.message,
-                            "stack" to e.stackTraceToString()
+                val profiled = measureCoroutine {
+                    try {
+                        // We try to get a lock on the job
+                        runJob(startedAt, job)
+                    } catch (e: LocksException.Execution) {
+                        BackgroundJobExecutionResult.Failed(
+                            serverId = serverId.getId(),
+                            data = mapOf(
+                                "error" to e.message,
+                                "stack" to e.stackTraceToString()
+                            ),
+                            startedAt = startedAt,
+                            endedAt = Kronos.systemUtc.instantNow(),
                         )
-                    )
+                    }
                 }
+
+                val result = profiled.value.withCpuProfile(profiled.profile)
 
                 val withResult = job.modify { it.plusResult(result) }
 
@@ -514,18 +520,19 @@ class BackgroundJobs(
     }
 
     private suspend fun runJob(
-        startedAtMs: Long,
+        startedAt: MpInstant,
         job: Stored<BackgroundJobQueued>,
     ): BackgroundJobExecutionResult {
         val result = try {
             when (val handler = handlers.firstOrNull { it.canHandle(job.value) }) {
                 null -> {
                     BackgroundJobExecutionResult.Failed(
-                        executionTimeMs = System.currentTimeMillis() - startedAtMs,
                         serverId = serverId.getId(),
                         data = mapOf(
                             "error" to "No handler found"
-                        )
+                        ),
+                        startedAt = startedAt,
+                        endedAt = Kronos.systemUtc.instantNow(),
                     )
                 }
 
@@ -536,25 +543,24 @@ class BackgroundJobs(
                     )
 
                     BackgroundJobExecutionResult.Success(
-                        executionTimeMs = System.currentTimeMillis() - startedAtMs,
                         serverId = serverId.getId(),
                         data = mapOf(
-                            "output" to when (output) {
-                                is Unit -> null
-                                else -> output
-                            }
-                        )
+                            "output" to output.takeUnless { it is Unit }
+                        ),
+                        startedAt = startedAt,
+                        endedAt = Kronos.systemUtc.instantNow(),
                     )
                 }
             }
         } catch (t: Throwable) {
             BackgroundJobExecutionResult.Failed(
-                executionTimeMs = System.currentTimeMillis() - startedAtMs,
                 serverId = serverId.getId(),
                 data = mapOf(
                     "error" to t.message,
                     "stack" to t.stackTraceToString(),
-                )
+                ),
+                startedAt = startedAt,
+                endedAt = Kronos.systemUtc.instantNow(),
             )
         }
 

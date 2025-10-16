@@ -1,5 +1,6 @@
 package coroutines
 
+import de.peekandpoke.funktor.core.model.CpuProfile
 import kotlinx.coroutines.CopyableThreadContextElement
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineName
@@ -16,7 +17,7 @@ import kotlin.time.Duration.Companion.microseconds
 suspend fun <T> measureCoroutine(
     name: String = "ROOT",
     block: suspend CoroutineScope.() -> T,
-): TimingInterceptor.TimedResult<T> {
+): CpuProfile.WithValue<T> {
     val timer = TimingInterceptor()
 
     val result = withContext(timer + CoroutineName(name)) {
@@ -28,9 +29,9 @@ suspend fun <T> measureCoroutine(
     // Otherwise, some child timing will be incompletely recorded
     delay(1.microseconds)
 
-    return TimingInterceptor.TimedResult(
+    return CpuProfile.WithValue(
         value = result,
-        timing = timer.getTiming().children.first(),
+        profile = timer.getCpuProfile().children.first(),
     )
 }
 
@@ -39,49 +40,6 @@ class TimingInterceptor : CopyableThreadContextElement<TimingInterceptor.State>,
     AbstractCoroutineContextElement(TimingInterceptor) {
 
     companion object Key : CoroutineContext.Key<TimingInterceptor>
-
-    data class TimedResult<T>(
-        val value: T,
-        val timing: Timing,
-    )
-
-    data class Timing(
-        val coroutineName: String,
-        val dispatcherName: String?,
-        val timeMs: Double,
-        val cpuMs: Double,
-        val children: List<Timing> = emptyList(),
-    ) {
-        val cpuUsage: Double = cpuMs / timeMs
-        val cpuUsagePct: Double = cpuUsage * 100
-
-        val totalCpuMs: Double by lazy {
-            cpuMs + children.sumOf { it.totalCpuMs }
-        }
-
-        val totalCpuUsage: Double by lazy {
-            cpuUsage + children.sumOf { it.totalCpuUsage }
-        }
-
-        val totalCpuUsagePct: Double by lazy { totalCpuUsage * 100 }
-
-        fun plot(indent: String = ""): String = buildString {
-            append("$indent$coroutineName")
-            dispatcherName?.let { append(" | $it") }
-            append(" | time = ${"%.2f".format(timeMs)} ms")
-            append(" | cpu time = ${"%.2f".format(cpuMs)} ms")
-            append(" | cpu pct = ${"%.2f".format(cpuUsagePct)} %")
-            appendLine()
-
-            val newIndent = indent.replace(".".toRegex(), " ") + "+ "
-
-            children.forEach {
-                append(
-                    it.plot(newIndent)
-                )
-            }
-        }
-    }
 
     class State(val startTime: Long)
 
@@ -114,7 +72,7 @@ class TimingInterceptor : CopyableThreadContextElement<TimingInterceptor.State>,
         return this
     }
 
-    fun getTiming(): Timing {
+    fun getCpuProfile(): CpuProfile {
         val totalMs = (System.nanoTime() - start) / 1e6
         val cpuMs = activeNs.get() / 1e6
 
@@ -124,12 +82,11 @@ class TimingInterceptor : CopyableThreadContextElement<TimingInterceptor.State>,
         // get the dispatcher name
         val dispatcherName = capturedContext?.get(CoroutineDispatcher)?.toString()
 
-        val timing = Timing(
-            coroutineName = coroutineName,
-            dispatcherName = dispatcherName,
+        val timing = CpuProfile(
+            names = listOfNotNull(coroutineName, dispatcherName),
             timeMs = totalMs,
             cpuMs = cpuMs,
-            children = children.map { it.getTiming() }
+            children = children.map { it.getCpuProfile() }
         )
 
         return timing

@@ -138,15 +138,17 @@ class BackgroundJobsApi(converter: OutgoingConverter) : ApiRoutes("background-jo
             is BackgroundJobExecutionResult.Success -> BackgroundJobResultModel.Success(
                 data = jsonPrinter.prettyPrint(result.data),
                 serverId = result.serverId,
-                executedAt = result.executedAt,
-                executionTimeMs = result.executionTimeMs,
+                startedAt = result.startedAt,
+                endedAt = result.endedAt,
+                cpuProfile = result.cpuProfile,
             )
 
             is BackgroundJobExecutionResult.Failed -> BackgroundJobResultModel.Failed(
                 data = jsonPrinter.prettyPrint(result.data),
                 serverId = result.serverId,
-                executedAt = result.executedAt,
-                executionTimeMs = result.executionTimeMs,
+                startedAt = result.startedAt,
+                endedAt = result.endedAt,
+                cpuProfile = result.cpuProfile,
             )
         }
 

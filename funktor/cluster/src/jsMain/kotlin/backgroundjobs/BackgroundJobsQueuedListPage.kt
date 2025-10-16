@@ -152,7 +152,7 @@ class BackgroundJobsQueuedListPage(ctx: Ctx<Props>) : Component<BackgroundJobsQu
                         td { // Last Execution Time
                             when (val last = job.results.lastOrNull()) {
                                 null -> +"n/a"
-                                else -> +"${last.executionTimeMs}ms"
+                                else -> +"${last.executionDurationMs} ms"
                             }
                         }
                         td { // Results
