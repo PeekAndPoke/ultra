@@ -7,7 +7,8 @@ buildscript {
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization") version Deps.kotlinVersion apply false
-    id("io.kotest.multiplatform") version Deps.Test.kotest_plugin_version apply false
+    id("io.kotest") version Deps.Test.kotest_plugin_version apply false
+    id("com.google.devtools.ksp") version Deps.Ksp.version apply false
     id("org.jetbrains.dokka") version Deps.dokkaVersion apply false
     id("com.vanniktech.maven.publish") version Deps.mavenPublishVersion apply false
     idea
@@ -22,6 +23,26 @@ allprojects {
         // maven("https://oss.sonatype.org/content/repositories/snapshots")
         // Local
         // mavenLocal()
+    }
+}
+
+// Apply to every subproject (skips the root automatically)
+subprojects {
+    // Derive a stable, unique archive name from the Gradle path:
+    // :sub          -> sub
+    // :kraft:core   -> kraft-core
+    // :funktor:core -> funktor-core
+    // :a:b:c        -> a-b-c
+    apply<BasePlugin>()
+
+    val nameFromPath = path.removePrefix(":").replace(":", "-")
+
+    extensions.configure<BasePluginExtension> {
+        archivesName.convention(nameFromPath)
+    }
+
+    tasks.withType<AbstractArchiveTask>().configureEach {
+        archiveBaseName.convention(nameFromPath)
     }
 }
 
@@ -40,7 +61,6 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(kotlin("stdlib-common"))
                 implementation(Deps.KotlinX.coroutines_core)
                 implementation(project(":ultra:common"))
                 implementation(project(":mutator:core"))

@@ -10,9 +10,9 @@ import de.peekandpoke.karango.e2e.E2ePerson
 import de.peekandpoke.karango.e2e.age
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.vault.lang.ARRAY
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
@@ -60,27 +60,27 @@ class `E2E-Func-Numeric-MEDIAN-Spec` : StringSpec({
     }
 
     val cases = listOf(
-        row(
+        tuple(
             "MEDIAN( [1, 2, 3] ) - listOf",
             MEDIAN(listOf(1, 2, 3).aql),
             2.0
         ),
-        row(
+        tuple(
             "MEDIAN( [1, 2, 3] ) - ARRAY",
             MEDIAN(ARRAY(1.aql, 2.aql, 3.aql)),
             2.0
         ),
-        row(
+        tuple(
             "MEDIAN( [ 1, 2, 3, 4 ] )",
             MEDIAN(listOf(1, 2, 3, 4).aql),
             2.5
         ),
-        row(
+        tuple(
             "MEDIAN( [ 4, 2, 3, 1 ] )",
             MEDIAN(listOf(4, 2, 3, 1).aql),
             2.5
         ),
-        row(
+        tuple(
             "MEDIAN( [ 999, 80, 4, 4, 4, 3, 3, 3 ] )",
             MEDIAN(listOf(999, 80, 4, 4, 4, 3, 3, 3).aql),
             4.0

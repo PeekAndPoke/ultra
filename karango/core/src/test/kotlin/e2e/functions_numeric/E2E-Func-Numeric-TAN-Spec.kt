@@ -6,25 +6,25 @@ import de.peekandpoke.karango.aql.TAN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-Numeric-TAN-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "TAN(10)",
             TAN(10.aql),
             0.6483608274590866
         ),
-        row(
+        tuple(
             "TAN(5)",
             TAN(5.aql),
             -3.380515006246586
         ),
-        row(
+        tuple(
             "TAN(0)",
             TAN(0.aql),
             0.0

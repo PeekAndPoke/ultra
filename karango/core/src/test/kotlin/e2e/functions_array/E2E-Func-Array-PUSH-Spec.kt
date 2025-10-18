@@ -6,32 +6,32 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.vault.lang.ARRAY
 import de.peekandpoke.ultra.vault.lang.TerminalExpr
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-Array-PUSH-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "PUSH ([], 0)",
             PUSH(ARRAY(), 1.aql),
             listOf(1)
         ),
-        row(
+        tuple(
             "PUSH ([1], 'a')",
             PUSH<Any>(ARRAY(1.aql), "a".aql),
             listOf(1L, "a")
         ),
-        row(
+        tuple(
             "PUSH ([1], 1, true)",
             PUSH(ARRAY(1.aql), 1.aql, true.aql),
             listOf(1)
         ),
-        row(
+        tuple(
             "PUSH ([1, 1], 2, true)",
             PUSH(ARRAY(1.aql, 1.aql), 2.aql, true.aql),
             listOf(1, 1, 2)

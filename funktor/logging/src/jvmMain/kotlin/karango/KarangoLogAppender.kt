@@ -1,8 +1,8 @@
 package de.peekandpoke.funktor.logging.karango
 
 import de.peekandpoke.ultra.common.network.NetworkUtils
-import de.peekandpoke.ultra.logging.LogAppender
-import de.peekandpoke.ultra.logging.LogLevel
+import de.peekandpoke.ultra.log.LogAppender
+import de.peekandpoke.ultra.log.LogLevel
 import java.time.ZonedDateTime
 
 class KarangoLogAppender(

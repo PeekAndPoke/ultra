@@ -1,9 +1,9 @@
 package de.peekandpoke.ultra.slumber.builtin.primitive
 
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
 import de.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
-import io.kotest.data.row
 
 class StringAwakerSpec : AwakerSpecHelper(
     type = TypeRef.String, nonNullSamples = nonNull, nullableSamples = nullable
@@ -17,21 +17,21 @@ class StringSlumberSpec : SlumbererSpecHelper(
  * Samples that map properly. These must be converted correctly to String and to String?
  */
 private val nonNull = listOf(
-    row(0, 0.toString()),
-    row(0.toByte(), 0.toString()),
-    row(0.toShort(), 0.toString()),
-    row(0.toLong(), 0.toString()),
-    row(0.0, 0.0.toString()),
-    row(0.1, 0.1.toString()),
-    row(0.0f, 0.0.toString()),
-    row(0.1f, 0.1f.toString()),
+    tuple(0, 0.toString()),
+    tuple(0.toByte(), 0.toString()),
+    tuple(0.toShort(), 0.toString()),
+    tuple(0.toLong(), 0.toString()),
+    tuple(0.0, 0.0.toString()),
+    tuple(0.1, 0.1.toString()),
+    tuple(0.0f, 0.0.toString()),
+    tuple(0.1f, 0.1f.toString()),
 
-    row(true, "true"),
-    row(false, "false"),
-    row('c', "c"),
-    row("", ""),
-    row(" ", " "),
-    row("abc", "abc")
+    tuple(true, "true"),
+    tuple(false, "false"),
+    tuple('c', "c"),
+    tuple("", ""),
+    tuple(" ", " "),
+    tuple("abc", "abc")
 )
 
 /**

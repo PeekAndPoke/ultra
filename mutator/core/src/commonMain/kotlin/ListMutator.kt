@@ -24,12 +24,12 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
 
         override fun nextIndex(): Int = pos
 
-        override fun hasNext(): Boolean = pos < get().size
+        override fun hasNext(): Boolean = pos < doGet().size
 
         override fun next(): Mutator<V> {
             val idx = pos++
 
-            return get()[idx].run {
+            return doGet()[idx].run {
                 // return the current element mapped to a mutator with onModify callback
                 childToMutator(this)
                     .onChange {
@@ -47,7 +47,7 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
         override fun previousIndex(): Int = pos - 1
 
         override fun previous(): Mutator<V> {
-            return get()[--pos].childToMutator().also { current = it }
+            return doGet()[--pos].childToMutator().also { current = it }
         }
 
         override fun remove() {
@@ -61,6 +61,12 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
         override fun set(element: Mutator<V>) {
             setAt(pos - 1, element.get())
         }
+
+        /**
+         * Helper to work around compiler issues with casting to MutableList<V>
+         */
+        @Suppress("USELESS_CAST", "NOTHING_TO_INLINE")
+        private inline fun doGet(): MutableList<V> = get() as MutableList<V>
     }
 
     override fun getChildMutator(child: V): Mutator<V> = childToMutator(child)

@@ -1,9 +1,9 @@
 package de.peekandpoke.ultra.slumber.builtin.primitive
 
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
 import de.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
-import io.kotest.data.row
 
 class DoubleAwakerSpec : AwakerSpecHelper(
     type = TypeRef.Double, nonNullSamples = nonNull, nullableSamples = nullable
@@ -17,19 +17,19 @@ class DoubleSlumberSpec : SlumbererSpecHelper(
  * Samples that map properly. These must be converted correctly to Double and to Double?
  */
 private val nonNull = listOf(
-    row(0, 0.toDouble()),
-    row(0.toByte(), 0.toDouble()),
-    row(0.toShort(), 0.toDouble()),
-    row(0.toLong(), 0.toDouble()),
-    row(0.0, 0.toDouble()),
-    row(0.0f, 0.toDouble()),
-    row(Double.MAX_VALUE, Double.MAX_VALUE),
-    row(Double.MIN_VALUE, Double.MIN_VALUE),
+    tuple(0, 0.toDouble()),
+    tuple(0.toByte(), 0.toDouble()),
+    tuple(0.toShort(), 0.toDouble()),
+    tuple(0.toLong(), 0.toDouble()),
+    tuple(0.0, 0.toDouble()),
+    tuple(0.0f, 0.toDouble()),
+    tuple(Double.MAX_VALUE, Double.MAX_VALUE),
+    tuple(Double.MIN_VALUE, Double.MIN_VALUE),
 
-    row("0", 0.toDouble()),
-    row(0.0.toString(), 0.toDouble()),
-    row(Double.MAX_VALUE.toString(), Double.MAX_VALUE),
-    row(Double.MIN_VALUE.toString(), Double.MIN_VALUE)
+    tuple("0", 0.toDouble()),
+    tuple(0.0.toString(), 0.toDouble()),
+    tuple(Double.MAX_VALUE.toString(), Double.MAX_VALUE),
+    tuple(Double.MIN_VALUE.toString(), Double.MIN_VALUE)
 )
 
 /**

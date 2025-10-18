@@ -10,8 +10,6 @@ import de.peekandpoke.funktor.testing.TestBed.Companion.createTestBed
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.kontainer.KontainerAware
 import de.peekandpoke.ultra.vault.Database
-import io.kotest.assertions.fail
-import io.kotest.common.runBlocking
 import io.kotest.core.listeners.AfterSpecListener
 import io.kotest.core.listeners.BeforeProjectListener
 import io.kotest.core.listeners.BeforeSpecListener
@@ -20,9 +18,11 @@ import io.kotest.core.spec.style.FreeSpec
 import io.kotest.core.spec.style.scopes.FreeSpecContainerScope
 import io.ktor.server.testing.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
+import kotlin.test.fail
 import kotlin.time.Duration.Companion.milliseconds
 
 interface AppSpecAware<C : AppConfig> : KontainerAware {
@@ -118,7 +118,8 @@ abstract class AppSpec<C : AppConfig>(val app: App.Definition<C>) : FreeSpec(), 
                     rt.freeMemory(),
                     rt.totalMemory(),
                     rt.maxMemory()
-                ).joinToString(" / ") { "${it / (1024 * 1024)}MB" }
+                ).joinToString(" / ") { p -> "${p / (1024 * 1024)}MB" }
+
                 println("[${this::class.simpleName}] Starting TestApplicationEngine... $mem")
 
                 it.start()

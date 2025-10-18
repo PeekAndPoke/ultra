@@ -6,20 +6,20 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-String-ENCODE_URI_COMPONENT-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "ENCODE_URI_COMPONENT ( \"foo bar\" ))",
             ENCODE_URI_COMPONENT("foo bar".aql),
             "foo%20bar"
         ),
-        row(
+        tuple(
             "ENCODE_URI_COMPONENT ( \"föö bär\" ))",
             ENCODE_URI_COMPONENT("föö bär".aql),
             "f%C3%B6%C3%B6%20b%C3%A4r"

@@ -4,7 +4,6 @@ import de.peekandpoke.ultra.common.datetime.Kronos
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.kotest.mpp.uniqueId
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 
@@ -60,7 +59,7 @@ class WeakReferenceSpec : StringSpec() {
 
             eventually(180.seconds) {
                 // Create lots of new object to trigger garbage collection
-                garbage.add((1..1_000_000).map { uniqueId() })
+                garbage.add((1..1_000_000).map { Kronos.systemUtc.instantNow().toString() })
                 delay(1)
                 garbage.clear()
                 delay(1)

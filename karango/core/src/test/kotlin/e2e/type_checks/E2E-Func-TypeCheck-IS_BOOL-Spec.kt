@@ -7,56 +7,56 @@ import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.E2ePerson
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.vault.lang.ARRAY
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-TypeCheck-IS_BOOL-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "IS_BOOL(true)",
             IS_BOOL(true.aql),
             true
         ),
-        row(
+        tuple(
             "IS_BOOL(false)",
             IS_BOOL(true.aql),
             true
         ),
-        row(
+        tuple(
             "IS_BOOL(null)",
             IS_BOOL(null.aql),
             false
         ),
-        row(
+        tuple(
             "IS_BOOL(0)",
             IS_BOOL(0.aql),
             false
         ),
-        row(
+        tuple(
             "IS_BOOL(1)",
             IS_BOOL(1.aql),
             false
         ),
-        row(
+        tuple(
             "IS_BOOL(\"a\")",
             IS_BOOL("a".aql),
             false
         ),
-        row(
+        tuple(
             "IS_BOOL(\"\")",
             IS_BOOL("".aql),
             false
         ),
-        row(
+        tuple(
             "IS_BOOL([0])",
             IS_BOOL(ARRAY(0.aql)),
             false
         ),
-        row(
+        tuple(
             "IS_BOOL(object)",
             IS_BOOL(E2ePerson("name", 10).aql),
             false

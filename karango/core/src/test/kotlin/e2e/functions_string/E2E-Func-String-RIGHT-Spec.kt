@@ -6,20 +6,20 @@ import de.peekandpoke.karango.aql.RIGHT
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-String-RIGHT-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "RIGHT of part of string",
             RIGHT("abc".aql, 2.aql),
             "bc"
         ),
-        row(
+        tuple(
             "RIGHT with n greater than length of string",
             RIGHT("abc".aql, 10.aql),
             "abc"

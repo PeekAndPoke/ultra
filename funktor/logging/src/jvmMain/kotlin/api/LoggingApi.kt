@@ -7,7 +7,7 @@ import de.peekandpoke.funktor.rest.ApiRoutes
 import de.peekandpoke.funktor.rest.docs.codeGen
 import de.peekandpoke.funktor.rest.docs.docs
 import de.peekandpoke.ultra.common.remote.ApiResponse
-import de.peekandpoke.ultra.logging.LogLevel
+import de.peekandpoke.ultra.log.LogLevel
 
 class LoggingApi(converter: OutgoingConverter) : ApiRoutes("logging", converter) {
 

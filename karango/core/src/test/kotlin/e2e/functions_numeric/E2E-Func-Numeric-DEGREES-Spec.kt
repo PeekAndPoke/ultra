@@ -6,25 +6,25 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-Numeric-DEGREES-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "DEGREES(0.7853981633974483)",
             DEGREES(0.7853981633974483.aql),
             45.0
         ),
-        row(
+        tuple(
             "DEGREES(0)",
             DEGREES(0.aql),
             0.0
         ),
-        row(
+        tuple(
             "DEGREES(3.141592653589793)",
             DEGREES(3.141592653589793.aql),
             180.0

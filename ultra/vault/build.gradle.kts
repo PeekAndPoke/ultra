@@ -8,7 +8,8 @@ import Deps.Test.jvmTestDeps
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
-    id("io.kotest.multiplatform")
+    id("io.kotest")
+    id("com.google.devtools.ksp")
     id("com.vanniktech.maven.publish")
 }
 
@@ -69,7 +70,7 @@ kotlin {
                 implementation(Deps.JavaLibs.Jackson.databind)
                 implementation(Deps.KotlinLibs.clikt)
 
-                api(project(":ultra:logging"))
+                api(project(":ultra:log"))
                 api(project(":ultra:kontainer"))
                 api(project(":ultra:slumber"))
             }

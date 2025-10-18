@@ -6,42 +6,42 @@ import de.peekandpoke.karango.aql.UNSHIFT
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.vault.lang.ARRAY
 import de.peekandpoke.ultra.vault.lang.TerminalExpr
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-Array-UNSHIFT-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "UNSHIFT ([], 0)",
             UNSHIFT(ARRAY(), 1.aql),
             listOf(1)
         ),
-        row(
+        tuple(
             "UNSHIFT ([1], 'a')",
             UNSHIFT<Any>(ARRAY(1.aql), "a".aql),
             listOf("a", 1L)
         ),
-        row(
+        tuple(
             "UNSHIFT ([1], 1, true)",
             UNSHIFT(ARRAY(1.aql), 1.aql, true.aql),
             listOf(1)
         ),
-        row(
+        tuple(
             "UNSHIFT ([1], 2, true)",
             UNSHIFT(ARRAY(1.aql), 2.aql, true.aql),
             listOf(2, 1)
         ),
-        row(
+        tuple(
             "UNSHIFT ([1, 1], 2, true)",
             UNSHIFT(ARRAY(1.aql, 1.aql), 2.aql, true.aql),
             listOf(2, 1, 1)
         ),
-        row(
+        tuple(
             "UNSHIFT ([1, 1, 2], 2, true)",
             UNSHIFT(ARRAY(1.aql, 1.aql, 2.aql), 2.aql, true.aql),
             listOf(1, 1, 2)

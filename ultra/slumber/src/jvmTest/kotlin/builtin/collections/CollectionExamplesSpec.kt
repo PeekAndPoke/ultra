@@ -1,10 +1,10 @@
 package de.peekandpoke.ultra.slumber.builtin.collections
 
+import de.peekandpoke.ultra.common.model.Tuple2
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
 import de.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
-import io.kotest.data.Row2
-import io.kotest.data.row
 
 /**
  * Samples that map to null. Converting to Byte must throw. Converting must not throw.
@@ -38,9 +38,9 @@ class IntListSlumberSpec : SlumbererSpecHelper(
  * Samples that map properly. These must be converted correctly.
  */
 private val intListNonNull = listOf(
-    row(emptyList<Int>(), emptyList()),
-    row(emptyArray<Int>(), emptyList()),
-    row(listOf(1, 2), listOf(1, 2)),
+    tuple(emptyList<Int>(), emptyList()),
+    tuple(emptyArray<Int>(), emptyList()),
+    tuple(listOf(1, 2), listOf(1, 2)),
 )
 
 /**
@@ -64,10 +64,10 @@ class MutableIntListSlumberSpec : SlumbererSpecHelper(
 /**
  * Samples that map properly. These must be converted correctly.
  */
-private val mutableIntListNonNull: List<Row2<Any, List<Int>>> = listOf(
-    row(emptyList<Int>(), emptyList()),
-    row(emptyArray<Int>(), emptyList()),
-    row(listOf(1, 2), mutableListOf(1, 2)),
+private val mutableIntListNonNull: List<Tuple2<Any, List<Int>>> = listOf(
+    tuple(emptyList<Int>(), emptyList()),
+    tuple(emptyArray<Int>(), emptyList()),
+    tuple(listOf(1, 2), mutableListOf(1, 2)),
 )
 
 /**
@@ -88,19 +88,19 @@ class ListOfStringListSlumberSpec : SlumbererSpecHelper(
  * Samples that map properly. These must be converted correctly.
  */
 private val listOfStringListNonNull = listOf(
-    row(
+    tuple(
         emptyList<Any>(),
         emptyList<List<String>>()
     ),
-    row(
+    tuple(
         emptyArray<Any>(),
         emptyList<List<String>>()
     ),
-    row(
+    tuple(
         listOf(emptyList<Any>()),
         listOf(emptyList<Any>())
     ),
-    row(
+    tuple(
         listOf(listOf("", "a"), listOf()),
         listOf(listOf("", "a"), listOf())
     )

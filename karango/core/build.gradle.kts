@@ -32,7 +32,7 @@ kotlin {
 
         implementation(project(":ultra:common"))
         implementation(project(":ultra:kontainer"))
-        implementation(project(":ultra:logging"))
+        implementation(project(":ultra:log"))
         implementation(project(":ultra:slumber"))
         implementation(project(":ultra:vault"))
 

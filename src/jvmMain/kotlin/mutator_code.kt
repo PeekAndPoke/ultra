@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package de.peekandpoke.ultra.playground
 
 import de.peekandpoke.mutator.ListMutator

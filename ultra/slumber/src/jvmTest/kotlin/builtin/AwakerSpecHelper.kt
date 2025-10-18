@@ -1,17 +1,17 @@
 package de.peekandpoke.ultra.slumber.builtin
 
+import de.peekandpoke.ultra.common.model.Tuple2
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Codec
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.Row2
 import io.kotest.matchers.shouldBe
 
 abstract class AwakerSpecHelper(
     type: TypeRef<*>,
-    nonNullSamples: List<Row2<*, *>>,
-    nullableSamples: List<*>
+    nonNullSamples: List<Tuple2<*, *>>,
+    nullableSamples: List<*>,
 ) : StringSpec({
 
     val clsName = type.type.toString()

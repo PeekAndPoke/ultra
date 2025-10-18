@@ -3,7 +3,7 @@ package de.peekandpoke.funktor.cluster.workers.example
 import de.peekandpoke.funktor.cluster.workers.StateProvider
 import de.peekandpoke.funktor.cluster.workers.Worker
 import de.peekandpoke.funktor.cluster.workers.isRunning
-import de.peekandpoke.ultra.logging.Log
+import de.peekandpoke.ultra.log.Log
 import kotlinx.coroutines.delay
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes

@@ -5,8 +5,8 @@ import de.peekandpoke.funktor.insights.InsightsCollector
 import de.peekandpoke.funktor.insights.InsightsCollectorData
 import de.peekandpoke.funktor.insights.gui.InsightsBarTemplate
 import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
-import de.peekandpoke.ultra.logging.LogAppender
-import de.peekandpoke.ultra.logging.LogLevel
+import de.peekandpoke.ultra.log.LogAppender
+import de.peekandpoke.ultra.log.LogLevel
 import de.peekandpoke.ultra.semanticui.SemanticFn
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.semantic

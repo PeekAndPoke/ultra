@@ -1,9 +1,9 @@
 package de.peekandpoke.ultra.slumber.builtin.primitive
 
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
 import de.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
-import io.kotest.data.row
 
 class IntAwakerSpec : AwakerSpecHelper(
     type = TypeRef.Int, nonNullSamples = nonNull, nullableSamples = nullable
@@ -17,19 +17,19 @@ class IntSlumberSpec : SlumbererSpecHelper(
  * Samples that map properly. These must be converted correctly to Int and to Int?
  */
 private val nonNull = listOf(
-    row(0, 0),
-    row(0.toByte(), 0),
-    row(0.toShort(), 0),
-    row(0.toLong(), 0),
-    row(0.0, 0),
-    row(0.0f, 0),
-    row(Int.MAX_VALUE, Int.MAX_VALUE),
-    row(Int.MIN_VALUE, Int.MIN_VALUE),
+    tuple(0, 0),
+    tuple(0.toByte(), 0),
+    tuple(0.toShort(), 0),
+    tuple(0.toLong(), 0),
+    tuple(0.0, 0),
+    tuple(0.0f, 0),
+    tuple(Int.MAX_VALUE, Int.MAX_VALUE),
+    tuple(Int.MIN_VALUE, Int.MIN_VALUE),
 
-    row("0", 0),
-    row(0.0.toString(), 0),
-    row(Int.MAX_VALUE.toString(), Int.MAX_VALUE),
-    row(Int.MIN_VALUE.toString(), Int.MIN_VALUE)
+    tuple("0", 0),
+    tuple(0.0.toString(), 0),
+    tuple(Int.MAX_VALUE.toString(), Int.MAX_VALUE),
+    tuple(Int.MIN_VALUE.toString(), Int.MIN_VALUE)
 )
 
 /**

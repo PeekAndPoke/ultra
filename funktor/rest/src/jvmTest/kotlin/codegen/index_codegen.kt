@@ -1,7 +1,7 @@
 package de.peekandpoke.funktor.rest.codegen
 
 import com.github.difflib.DiffUtils
-import io.kotest.assertions.fail
+import org.junit.jupiter.api.fail
 
 infix fun String.shouldHaveNoDiffs(expected: String) {
 

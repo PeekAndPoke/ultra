@@ -7,30 +7,30 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-Numeric-COS-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "COS(1)",
             COS(1.aql),
             0.5403023058681398
         ),
-        row(
+        tuple(
             "COS(0)",
             COS(0.aql),
             1.0
         ),
-        row(
+        tuple(
             "COS(-3.141592653589783)",
             COS((-3.141592653589783).aql),
             -1.0
         ),
-        row(
+        tuple(
             "COS(RADIANS(45))",
             COS(RADIANS(45.aql)),
             0.7071067811865476

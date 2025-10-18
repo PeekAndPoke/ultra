@@ -6,25 +6,25 @@ import de.peekandpoke.karango.aql.RTRIM
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-String-RTRIM-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "RTRIM of \"foo bar\"",
             RTRIM("foo bar".aql),
             "foo bar"
         ),
-        row(
+        tuple(
             "RTRIM of \"  foo bar  \"",
             RTRIM("  foo bar  ".aql),
             "  foo bar"
         ),
-        row(
+        tuple(
             "RTRIM of \"--==[foo-bar]==--\" with chars \"-=[]\"",
             RTRIM("--==[foo-bar]==--".aql, "-=[]".aql),
             "--==[foo-bar"

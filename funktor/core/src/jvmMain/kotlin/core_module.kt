@@ -12,7 +12,7 @@ import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.kontainer.KontainerAware
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
-import de.peekandpoke.ultra.logging.ultraLogging
+import de.peekandpoke.ultra.log.ultraLogging
 import de.peekandpoke.ultra.security.jwt.JwtGenerator
 import de.peekandpoke.ultra.security.password.PasswordHasher
 import de.peekandpoke.ultra.security.ultraSecurity

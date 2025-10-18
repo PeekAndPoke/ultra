@@ -14,7 +14,6 @@ import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.common.remote.ApiResponse
 import de.peekandpoke.ultra.kontainer.Kontainer
-import io.kotest.assertions.fail
 import io.kotest.assertions.withClue
 import io.ktor.client.plugins.websocket.*
 import io.ktor.client.request.HttpRequestBuilder
@@ -28,6 +27,7 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.createType
+import kotlin.test.fail
 
 class AppUnderTest<C : AppConfig>(
     testBed: Lazy<TestBed<C>>,

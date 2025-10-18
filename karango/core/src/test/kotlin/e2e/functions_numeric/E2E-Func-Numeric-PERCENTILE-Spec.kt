@@ -7,25 +7,25 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-Numeric-PERCENTILE-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "PERCENTILE( [1, 2, 3, 4], 50 )",
             PERCENTILE(listOf(1, 2, 3, 4).aql, 50.aql),
             2.0
         ),
-        row(
+        tuple(
             "PERCENTILE( [1, 2, 3, 4], 50, \"rank\" )",
             PERCENTILE(listOf(1, 2, 3, 4).aql, 50.aql, PercentileMethod.RANK),
             2.0
         ),
-        row(
+        tuple(
             "PERCENTILE( [1, 2, 3, 4], 50, \"interpolation\" )",
             PERCENTILE(listOf(1, 2, 3, 4).aql, 50.aql, PercentileMethod.INTERPOLATION),
             2.5

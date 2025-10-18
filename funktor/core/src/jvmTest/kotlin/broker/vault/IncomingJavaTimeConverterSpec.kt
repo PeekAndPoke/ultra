@@ -1,9 +1,8 @@
 package de.peekandpoke.funktor.core.broker.vault
 
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.common.reflection.kType
 import io.kotest.core.spec.style.FreeSpec
-import io.kotest.data.forAll
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import java.time.Instant
@@ -18,20 +17,19 @@ class IncomingJavaTimeConverterSpec : FreeSpec() {
     init {
         "Supported types" - {
 
-            forAll(
-                row(Instant::class, true),
+            listOf(
+                tuple(Instant::class, true),
 
-                row(LocalDate::class, true),
-                row(LocalTime::class, true),
-                row(LocalDateTime::class, true),
-                row(ZonedDateTime::class, true),
+                tuple(LocalDate::class, true),
+                tuple(LocalTime::class, true),
+                tuple(LocalDateTime::class, true),
+                tuple(ZonedDateTime::class, true),
 
-                row(ZoneId::class, true),
+                tuple(ZoneId::class, true),
 
                 // negative cases
-                row(Object::class, false),
-
-                ) { type, supported ->
+                tuple(Object::class, false),
+            ).forEach { (type, supported) ->
 
                 "Must ${if (supported) "" else " NOT "} support the type '$type'" {
 
@@ -62,21 +60,33 @@ class IncomingJavaTimeConverterSpec : FreeSpec() {
 
         "Converting to an Instant" - {
 
-            forAll(
-                row("2019-01-01", Instant.ofEpochMilli(1546300800000)),
-                row("2019-01-01T12:00", Instant.ofEpochMilli(1546344000000)),
-                row("2019-01-01 12:00", Instant.ofEpochMilli(1546344000000)),
-                row("2019-01-01T12:00:00", Instant.ofEpochMilli(1546344000000)),
-                row("2019-01-01 12:00:00", Instant.ofEpochMilli(1546344000000)),
-                row("2019-01-01T12:00:00.123", Instant.ofEpochMilli(1546344000123)),
-                row("2019-01-01 12:00:00.123", Instant.ofEpochMilli(1546344000123)),
-                row("2019-01-01T12:00:00.123Z", Instant.ofEpochMilli(1546344000123)),
-                row("2019-01-01 12:00:00.123Z", Instant.ofEpochMilli(1546344000123)),
-                row("2019-01-01T12:00:00.123+01:00", ZonedDateTime.parse("2019-01-01T12:00:00.123+01:00").toInstant()),
-                row("2019-01-01 12:00:00.123+01:00", ZonedDateTime.parse("2019-01-01T12:00:00.123+01:00").toInstant()),
-                row("2019-01-01T00:00:00.123-01:00", ZonedDateTime.parse("2019-01-01T00:00:00.123-01:00").toInstant()),
-                row("2019-01-01 00:00:00.123-01:00", ZonedDateTime.parse("2019-01-01T00:00:00.123-01:00").toInstant()),
-            ) { input, expected ->
+            listOf(
+                tuple("2019-01-01", Instant.ofEpochMilli(1546300800000)),
+                tuple("2019-01-01T12:00", Instant.ofEpochMilli(1546344000000)),
+                tuple("2019-01-01 12:00", Instant.ofEpochMilli(1546344000000)),
+                tuple("2019-01-01T12:00:00", Instant.ofEpochMilli(1546344000000)),
+                tuple("2019-01-01 12:00:00", Instant.ofEpochMilli(1546344000000)),
+                tuple("2019-01-01T12:00:00.123", Instant.ofEpochMilli(1546344000123)),
+                tuple("2019-01-01 12:00:00.123", Instant.ofEpochMilli(1546344000123)),
+                tuple("2019-01-01T12:00:00.123Z", Instant.ofEpochMilli(1546344000123)),
+                tuple("2019-01-01 12:00:00.123Z", Instant.ofEpochMilli(1546344000123)),
+                tuple(
+                    "2019-01-01T12:00:00.123+01:00",
+                    ZonedDateTime.parse("2019-01-01T12:00:00.123+01:00").toInstant()
+                ),
+                tuple(
+                    "2019-01-01 12:00:00.123+01:00",
+                    ZonedDateTime.parse("2019-01-01T12:00:00.123+01:00").toInstant()
+                ),
+                tuple(
+                    "2019-01-01T00:00:00.123-01:00",
+                    ZonedDateTime.parse("2019-01-01T00:00:00.123-01:00").toInstant()
+                ),
+                tuple(
+                    "2019-01-01 00:00:00.123-01:00",
+                    ZonedDateTime.parse("2019-01-01T00:00:00.123-01:00").toInstant()
+                ),
+            ).forEach { (input, expected) ->
 
                 "'$input' must be converted to an Instant" {
 
@@ -89,14 +99,14 @@ class IncomingJavaTimeConverterSpec : FreeSpec() {
 
         "Converting to a LocalTime" - {
 
-            forAll(
-                row("00:00", LocalTime.MIN),
-                row("12:00", LocalTime.of(12, 0)),
-                row("12:13:14", LocalTime.of(12, 13, 14)),
-                row("12:13:14.1", LocalTime.of(12, 13, 14, 100 * 1_000_000)),
-                row("12:13:14.12", LocalTime.of(12, 13, 14, 120 * 1_000_000)),
-                row("12:13:14.123", LocalTime.of(12, 13, 14, 123 * 1_000_000)),
-            ) { input, expected ->
+            listOf(
+                tuple("00:00", LocalTime.MIN),
+                tuple("12:00", LocalTime.of(12, 0)),
+                tuple("12:13:14", LocalTime.of(12, 13, 14)),
+                tuple("12:13:14.1", LocalTime.of(12, 13, 14, 100 * 1_000_000)),
+                tuple("12:13:14.12", LocalTime.of(12, 13, 14, 120 * 1_000_000)),
+                tuple("12:13:14.123", LocalTime.of(12, 13, 14, 123 * 1_000_000)),
+            ).forEach { (input, expected) ->
 
                 "'$input' must be converted to a LocalTime" {
 
@@ -109,21 +119,21 @@ class IncomingJavaTimeConverterSpec : FreeSpec() {
 
         "Converting to a LocalDate" - {
 
-            forAll(
-                row("2019-01-01", LocalDate.parse("2019-01-01")),
-                row("2019-01-01T12:00", LocalDate.parse("2019-01-01")),
-                row("2019-01-01 12:00", LocalDate.parse("2019-01-01")),
-                row("2019-01-01T12:00:00", LocalDate.parse("2019-01-01")),
-                row("2019-01-01 12:00:00", LocalDate.parse("2019-01-01")),
-                row("2019-01-01T12:00:00.123", LocalDate.parse("2019-01-01")),
-                row("2019-01-01 12:00:00.123", LocalDate.parse("2019-01-01")),
-                row("2019-01-01T12:00:00.123Z", LocalDate.parse("2019-01-01")),
-                row("2019-01-01 12:00:00.123Z", LocalDate.parse("2019-01-01")),
-                row("2019-01-01T00:00:00.123+01:00", LocalDate.parse("2019-01-01")),
-                row("2019-01-01 00:00:00.123+01:00", LocalDate.parse("2019-01-01")),
-                row("2019-01-01T00:00:00.123-01:00", LocalDate.parse("2019-01-01")),
-                row("2019-01-01 00:00:00.123-01:00", LocalDate.parse("2019-01-01")),
-            ) { input, expected ->
+            listOf(
+                tuple("2019-01-01", LocalDate.parse("2019-01-01")),
+                tuple("2019-01-01T12:00", LocalDate.parse("2019-01-01")),
+                tuple("2019-01-01 12:00", LocalDate.parse("2019-01-01")),
+                tuple("2019-01-01T12:00:00", LocalDate.parse("2019-01-01")),
+                tuple("2019-01-01 12:00:00", LocalDate.parse("2019-01-01")),
+                tuple("2019-01-01T12:00:00.123", LocalDate.parse("2019-01-01")),
+                tuple("2019-01-01 12:00:00.123", LocalDate.parse("2019-01-01")),
+                tuple("2019-01-01T12:00:00.123Z", LocalDate.parse("2019-01-01")),
+                tuple("2019-01-01 12:00:00.123Z", LocalDate.parse("2019-01-01")),
+                tuple("2019-01-01T00:00:00.123+01:00", LocalDate.parse("2019-01-01")),
+                tuple("2019-01-01 00:00:00.123+01:00", LocalDate.parse("2019-01-01")),
+                tuple("2019-01-01T00:00:00.123-01:00", LocalDate.parse("2019-01-01")),
+                tuple("2019-01-01 00:00:00.123-01:00", LocalDate.parse("2019-01-01")),
+            ).forEach { (input, expected) ->
 
                 "'$input' must be converted to a LocalDate" {
 
@@ -136,21 +146,21 @@ class IncomingJavaTimeConverterSpec : FreeSpec() {
 
         "Converting to LocalDateTime" - {
 
-            forAll(
-                row("2019-01-01", LocalDateTime.parse("2019-01-01T00:00:00")),
-                row("2019-01-01T12:00", LocalDateTime.parse("2019-01-01T12:00:00")),
-                row("2019-01-01 12:00", LocalDateTime.parse("2019-01-01T12:00:00")),
-                row("2019-01-01T12:00:00", LocalDateTime.parse("2019-01-01T12:00:00")),
-                row("2019-01-01 12:00:00", LocalDateTime.parse("2019-01-01T12:00:00")),
-                row("2019-01-01T12:00:00.123", LocalDateTime.parse("2019-01-01T12:00:00.123")),
-                row("2019-01-01 12:00:00.123", LocalDateTime.parse("2019-01-01T12:00:00.123")),
-                row("2019-01-01T12:00:00.123Z", LocalDateTime.parse("2019-01-01T12:00:00.123")),
-                row("2019-01-01 12:00:00.123Z", LocalDateTime.parse("2019-01-01T12:00:00.123")),
-                row("2019-01-01T00:00:00.123+01:00", LocalDateTime.parse("2019-01-01T00:00:00.123")),
-                row("2019-01-01 00:00:00.123+01:00", LocalDateTime.parse("2019-01-01T00:00:00.123")),
-                row("2019-01-01T00:00:00.123-01:00", LocalDateTime.parse("2019-01-01T00:00:00.123")),
-                row("2019-01-01 00:00:00.123-01:00", LocalDateTime.parse("2019-01-01T00:00:00.123")),
-            ) { input, expected ->
+            listOf(
+                tuple("2019-01-01", LocalDateTime.parse("2019-01-01T00:00:00")),
+                tuple("2019-01-01T12:00", LocalDateTime.parse("2019-01-01T12:00:00")),
+                tuple("2019-01-01 12:00", LocalDateTime.parse("2019-01-01T12:00:00")),
+                tuple("2019-01-01T12:00:00", LocalDateTime.parse("2019-01-01T12:00:00")),
+                tuple("2019-01-01 12:00:00", LocalDateTime.parse("2019-01-01T12:00:00")),
+                tuple("2019-01-01T12:00:00.123", LocalDateTime.parse("2019-01-01T12:00:00.123")),
+                tuple("2019-01-01 12:00:00.123", LocalDateTime.parse("2019-01-01T12:00:00.123")),
+                tuple("2019-01-01T12:00:00.123Z", LocalDateTime.parse("2019-01-01T12:00:00.123")),
+                tuple("2019-01-01 12:00:00.123Z", LocalDateTime.parse("2019-01-01T12:00:00.123")),
+                tuple("2019-01-01T00:00:00.123+01:00", LocalDateTime.parse("2019-01-01T00:00:00.123")),
+                tuple("2019-01-01 00:00:00.123+01:00", LocalDateTime.parse("2019-01-01T00:00:00.123")),
+                tuple("2019-01-01T00:00:00.123-01:00", LocalDateTime.parse("2019-01-01T00:00:00.123")),
+                tuple("2019-01-01 00:00:00.123-01:00", LocalDateTime.parse("2019-01-01T00:00:00.123")),
+            ).forEach { (input, expected) ->
 
                 "'$input' must be converted to a LocalDateTime" {
 
@@ -163,24 +173,24 @@ class IncomingJavaTimeConverterSpec : FreeSpec() {
 
         "Converting to a ZonedDateTime" - {
 
-            forAll(
-                row("2019-01-01", ZonedDateTime.parse("2019-01-01T00:00:00Z")),
-                row("2019-01-01T12:00", ZonedDateTime.parse("2019-01-01T12:00:00Z")),
-                row("2019-01-01 12:00", ZonedDateTime.parse("2019-01-01T12:00:00Z")),
-                row("2019-01-01T12:00:00", ZonedDateTime.parse("2019-01-01T12:00:00Z")),
-                row("2019-01-01 12:00:00", ZonedDateTime.parse("2019-01-01T12:00:00Z")),
-                row("2019-01-01T12:00:00.123", ZonedDateTime.parse("2019-01-01T12:00:00.123Z")),
-                row("2019-01-01 12:00:00.123", ZonedDateTime.parse("2019-01-01T12:00:00.123Z")),
-                row("2019-01-01T12:00:00.123Z", ZonedDateTime.parse("2019-01-01T12:00:00.123Z")),
-                row("2019-01-01 12:00:00.123Z", ZonedDateTime.parse("2019-01-01T12:00:00.123Z")),
-                row("2019-01-01T00:00:00.123+01:00", ZonedDateTime.parse("2019-01-01T00:00:00.123+01:00")),
-                row("2019-01-01 00:00:00.123+01:00", ZonedDateTime.parse("2019-01-01T00:00:00.123+01:00")),
-                row("2019-01-01T00:00:00.123-01:00", ZonedDateTime.parse("2019-01-01T00:00:00.123-01:00")),
-                row("2019-01-01 00:00:00.123-01:00", ZonedDateTime.parse("2019-01-01T00:00:00.123-01:00")),
+            listOf(
+                tuple("2019-01-01", ZonedDateTime.parse("2019-01-01T00:00:00Z")),
+                tuple("2019-01-01T12:00", ZonedDateTime.parse("2019-01-01T12:00:00Z")),
+                tuple("2019-01-01 12:00", ZonedDateTime.parse("2019-01-01T12:00:00Z")),
+                tuple("2019-01-01T12:00:00", ZonedDateTime.parse("2019-01-01T12:00:00Z")),
+                tuple("2019-01-01 12:00:00", ZonedDateTime.parse("2019-01-01T12:00:00Z")),
+                tuple("2019-01-01T12:00:00.123", ZonedDateTime.parse("2019-01-01T12:00:00.123Z")),
+                tuple("2019-01-01 12:00:00.123", ZonedDateTime.parse("2019-01-01T12:00:00.123Z")),
+                tuple("2019-01-01T12:00:00.123Z", ZonedDateTime.parse("2019-01-01T12:00:00.123Z")),
+                tuple("2019-01-01 12:00:00.123Z", ZonedDateTime.parse("2019-01-01T12:00:00.123Z")),
+                tuple("2019-01-01T00:00:00.123+01:00", ZonedDateTime.parse("2019-01-01T00:00:00.123+01:00")),
+                tuple("2019-01-01 00:00:00.123+01:00", ZonedDateTime.parse("2019-01-01T00:00:00.123+01:00")),
+                tuple("2019-01-01T00:00:00.123-01:00", ZonedDateTime.parse("2019-01-01T00:00:00.123-01:00")),
+                tuple("2019-01-01 00:00:00.123-01:00", ZonedDateTime.parse("2019-01-01T00:00:00.123-01:00")),
                 // TODO: fix the next two
-                // row("2019-01-01T12:00:00.123[Europe/Berlin]", ZonedDateTime.parse("2019-01-01T12:00:00.123Z[Europe/Berlin]")),
-                // row("2019-01-01 12:00:00.123[Europe/Berlin]", ZonedDateTime.parse("2019-01-01T12:00:00.123Z[Europe/Berlin]")),
-            ) { input, expected ->
+                // tuple("2019-01-01T12:00:00.123[Europe/Berlin]", ZonedDateTime.parse("2019-01-01T12:00:00.123Z[Europe/Berlin]")),
+                // tuple("2019-01-01 12:00:00.123[Europe/Berlin]", ZonedDateTime.parse("2019-01-01T12:00:00.123Z[Europe/Berlin]")),
+            ).forEach { (input, expected) ->
 
                 "'$input' must be converted to a ZonedDateTime" {
 

@@ -12,7 +12,7 @@ import de.peekandpoke.funktor.core.Retry
 import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.logging.Log
+import de.peekandpoke.ultra.log.Log
 import de.peekandpoke.ultra.slumber.Codec
 import de.peekandpoke.ultra.slumber.SlumberConfig
 import de.peekandpoke.ultra.vault.Cursor

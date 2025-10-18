@@ -7,35 +7,35 @@ import de.peekandpoke.karango.aql.TO_STRING
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-String-CONCAT_SEPARATOR-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "CONCAT_SEPARATOR with empty separator one empty string parameter",
             CONCAT_SEPARATOR("".aql, "".aql),
             ""
         ),
-        row(
+        tuple(
             "CONCAT_SEPARATOR with non empty separator one empty string parameter",
             CONCAT_SEPARATOR(", ".aql, "".aql),
             ""
         ),
-        row(
+        tuple(
             "CONCAT_SEPARATOR with none empty separator and two empty string parameters",
             CONCAT_SEPARATOR(", ".aql, "a".aql, "b".aql),
             "a, b"
         ),
-        row(
+        tuple(
             "CONCAT_SEPARATOR with empty separator more parameters",
             CONCAT_SEPARATOR("".aql, "a".aql, "_".aql, 123.aql.TO_STRING),
             "a_123"
         ),
-        row(
+        tuple(
             "CONCAT_SEPARATOR with none empty separator more parameters",
             CONCAT_SEPARATOR(", ".aql, "a".aql, "_".aql, 123.aql.TO_STRING),
             "a, _, 123"

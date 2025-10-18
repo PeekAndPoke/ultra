@@ -6,9 +6,11 @@ import Deps.Test.jsTestDeps
 import Deps.Test.jvmTestDeps
 
 plugins {
+    base
     kotlin("multiplatform")
     kotlin("plugin.serialization")
-    id("io.kotest.multiplatform")
+    id("io.kotest")
+    id("com.google.devtools.ksp")
     id("com.vanniktech.maven.publish")
 }
 
@@ -17,6 +19,11 @@ val VERSION_NAME: String by project
 
 group = KRAFT_GROUP
 version = VERSION_NAME
+
+// This affects only the **filename**, not Maven coordinates
+base {
+    archivesName.set("kraft-core")
+}
 
 Docs {
     useEmptyJavadoc()

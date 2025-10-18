@@ -6,31 +6,31 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.vault.lang.ARRAY
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-Array-CONTAINS_ARRAY_IDX-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "CONTAINS_ARRAY_IDX ([], 0)",
             CONTAINS_ARRAY_IDX(ARRAY(), 0.aql),
             -1L
         ),
-        row(
+        tuple(
             "CONTAINS_ARRAY_IDX ([1], 1)",
             CONTAINS_ARRAY_IDX(ARRAY(1.aql), 1.aql),
             0L
         ),
-        row(
+        tuple(
             "CONTAINS_ARRAY_IDX ([1, 2, 3], 3)",
             CONTAINS_ARRAY_IDX(ARRAY(1.aql, 2.aql, 3.aql), 3.aql),
             2L
         ),
-        row(
+        tuple(
             "CONTAINS_ARRAY_IDX ([1, 2, 3], 4)",
             CONTAINS_ARRAY_IDX(ARRAY(1.aql, 2.aql, 3.aql), 4.aql),
             -1L

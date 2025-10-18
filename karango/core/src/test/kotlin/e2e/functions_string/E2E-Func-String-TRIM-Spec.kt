@@ -6,35 +6,35 @@ import de.peekandpoke.karango.aql.TRIM
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-String-TRIM-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "TRIM of \"foo bar\"",
             TRIM("foo bar".aql),
             "foo bar"
         ),
-        row(
+        tuple(
             "TRIM of \"  foo bar  \"",
             TRIM("  foo bar  ".aql),
             "foo bar"
         ),
-        row(
+        tuple(
             "TRIM of \"--==[foo-bar]==--\" with chars \"-=[]\"",
             TRIM("--==[foo-bar]==--".aql, "-=[]".aql),
             "foo-bar"
         ),
-        row(
+        tuple(
             "TRIM of \"  foobar\\t \\r\\n \"",
             TRIM("  foobar\t \r\n ".aql),
             "foobar"
         ),
-        row(
+        tuple(
             "TRIM of \";foo;bar;baz, \" with chars \",; \"",
             TRIM(";foo;bar;baz, ".aql, ",; ".aql),
             "foo;bar;baz"

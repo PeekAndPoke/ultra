@@ -10,9 +10,9 @@ import de.peekandpoke.karango.e2e.E2ePerson
 import de.peekandpoke.karango.e2e.age
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.vault.lang.ARRAY
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
@@ -59,17 +59,17 @@ class `E2E-Func-Numeric-AVG-Spec` : StringSpec({
     }
 
     val cases = listOf(
-        row(
+        tuple(
             "AVG( [5, 2, 9, 2] )",
             AVG(listOf(5, 2, 9, 2).aql),
             4.5
         ),
-        row(
+        tuple(
             "AVG( [ -3, -5, 2 ] )",
             AVG(listOf(-3, -5, 2).aql),
             -2.0
         ),
-        row(
+        tuple(
             "AVG( [ 999, 80, 4, 4, 4, 3, 3, 3 ] )",
             AVG(listOf(999, 80, 4, 4, 4, 3, 3, 3).aql),
             137.5

@@ -6,50 +6,50 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 open class `E2E-Func-String-FIND_FIRST-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "FIND_FIRST empty needle in empty haystack",
             FIND_FIRST("".aql, "".aql),
             0L
         ),
-        row(
+        tuple(
             "FIND_FIRST empty needle in haystack",
             FIND_FIRST("abc".aql, "".aql),
             0L
         ),
-        row(
+        tuple(
             "FIND_FIRST not finding (no start no end)",
             FIND_FIRST("abc".aql, "x".aql),
             -1L
         ),
-        row(
+        tuple(
             "FIND_FIRST finding (no start no end)",
             FIND_FIRST("abc abc abc".aql, "abc".aql),
             0L
         ),
-        row(
+        tuple(
             "FIND_FIRST finding with start (no end)",
             FIND_FIRST("abc abc abc".aql, "abc".aql, 1.aql),
             4L
         ),
-        row(
+        tuple(
             "FIND_FIRST finding with start and end",
             FIND_FIRST("abc abc abc".aql, "abc".aql, 1.aql, 6.aql),
             4L
         ),
-        row(
+        tuple(
             "FIND_FIRST not finding with start and end",
             FIND_FIRST("abc abc abc".aql, "abc".aql, 1.aql, 2.aql),
             -1L
         ),
-        row(
+        tuple(
             "FIND_FIRST not finding with start greater end",
             FIND_FIRST("abc abc abc".aql, "abc".aql, 2.aql, 1.aql),
             -1L

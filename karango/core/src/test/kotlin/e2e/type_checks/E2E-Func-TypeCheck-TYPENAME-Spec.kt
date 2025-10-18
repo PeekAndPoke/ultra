@@ -7,66 +7,66 @@ import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.E2ePerson
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.vault.lang.ARRAY
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-TypeCheck-TYPENAME-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "TYPENAME(true)",
             TYPENAME(true.aql),
             "bool"
         ),
-        row(
+        tuple(
             "TYPENAME(false)",
             TYPENAME(true.aql),
             "bool"
         ),
-        row(
+        tuple(
             "TYPENAME(null)",
             TYPENAME(null.aql),
             "null"
         ),
-        row(
+        tuple(
             "TYPENAME(0)",
             TYPENAME(0.aql),
             "number"
         ),
-        row(
+        tuple(
             "TYPENAME(1.1)",
             TYPENAME(1.1.aql),
             "number"
         ),
-        row(
+        tuple(
             "TYPENAME(\"a\")",
             TYPENAME("a".aql),
             "string"
         ),
-        row(
+        tuple(
             "TYPENAME(\"\")",
             TYPENAME("".aql),
             "string"
         ),
-        row(
+        tuple(
             "TYPENAME(\"1\")",
             TYPENAME("1".aql),
             "string"
         ),
-        row(
+        tuple(
             "TYPENAME([])",
             TYPENAME(ARRAY<Any>()),
             "array"
         ),
-        row(
+        tuple(
             "TYPENAME([0])",
             TYPENAME(ARRAY(0.aql)),
             "array"
         ),
-        row(
+        tuple(
             "TYPENAME(object)",
             TYPENAME(E2ePerson("name", 10).aql),
             "object"

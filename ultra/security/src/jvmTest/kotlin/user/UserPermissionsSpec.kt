@@ -1,10 +1,8 @@
 package de.peekandpoke.ultra.security.user
 
+import de.peekandpoke.ultra.common.model.tuple
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
-import io.kotest.data.forAll
-import io.kotest.data.headers
-import io.kotest.data.row
-import io.kotest.data.table
 import io.kotest.matchers.shouldBe
 
 class UserPermissionsSpec : FreeSpec() {
@@ -100,89 +98,91 @@ class UserPermissionsSpec : FreeSpec() {
 
             "hasOrganisation" {
 
-                table(
-                    headers("Subject", "Test", "Expected"),
-                    row(
+                listOf(
+                    tuple(
                         UserPermissions(),
                         "some-org",
                         false
                     ),
-                    row(
+                    tuple(
                         UserPermissions(isSuperUser = true),
                         "some-org",
                         true
                     ),
-                    row(
+                    tuple(
                         UserPermissions(isSuperUser = false, organisations = setOf("a", "b")),
                         "c",
                         false
                     ),
-                    row(
+                    tuple(
                         UserPermissions(isSuperUser = false, organisations = setOf("a", "b")),
                         "a",
                         true
                     ),
-                    row(
+                    tuple(
                         UserPermissions(isSuperUser = false, organisations = setOf("a", "b")),
                         "b",
                         true
                     ),
-                    row(
+                    tuple(
                         UserPermissions(isSuperUser = true, organisations = setOf("a", "b")),
                         "c",
                         true
                     ),
-                ).forAll { subject, test, expected ->
-                    subject.hasOrganisation(test) shouldBe expected
+                ).forEach { (subject, test, expected) ->
+                    withClue("$subject $test expects $expected") {
+                        subject.hasOrganisation(test) shouldBe expected
+                    }
                 }
             }
 
             "hasAnyOrganisation" {
 
-                table(
-                    headers("Subject", "Test", "Expected"),
-                    row(
+                listOf(
+                    tuple(
                         UserPermissions(),
                         emptyList(),
                         false
                     ),
-                    row(
+                    tuple(
                         UserPermissions(isSuperUser = true),
                         emptyList(),
                         true
                     ),
-                    row(
+                    tuple(
                         UserPermissions(isSuperUser = true),
                         setOf("some-org"),
                         true
                     ),
-                    row(
+                    tuple(
                         UserPermissions(isSuperUser = false, organisations = setOf("a", "b")),
                         listOf("c"),
                         false
                     ),
-                    row(
+                    tuple(
                         UserPermissions(isSuperUser = false, organisations = setOf("a", "b")),
                         emptyList(),
                         false
                     ),
-                    row(
+                    tuple(
                         UserPermissions(isSuperUser = false, organisations = setOf("a", "b")),
                         setOf("a", "X"),
                         true
                     ),
-                    row(
+                    tuple(
                         UserPermissions(isSuperUser = false, organisations = setOf("a", "b")),
                         setOf("b", "X"),
                         true
                     ),
-                    row(
+                    tuple(
                         UserPermissions(isSuperUser = true, organisations = setOf("a", "b")),
                         setOf("Y", "X"),
                         true
                     ),
-                ).forAll { subject, test, expected ->
-                    subject.hasAnyOrganisation(test) shouldBe expected
+                ).forEach { (subject, test, expected) ->
+                    withClue("$subject $test expects $expected") {
+                        subject.hasAnyOrganisation(test) shouldBe expected
+                    }
                 }
             }
         }

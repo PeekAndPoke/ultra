@@ -19,7 +19,7 @@ import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.IndexBuilder
 import de.peekandpoke.karango.vault.KarangoDriver
 import de.peekandpoke.ultra.common.reflection.kType
-import de.peekandpoke.ultra.logging.NullLog
+import de.peekandpoke.ultra.log.NullLog
 import de.peekandpoke.ultra.vault.Stored
 import de.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 

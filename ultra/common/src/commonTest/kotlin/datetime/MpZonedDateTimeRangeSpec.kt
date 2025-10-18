@@ -1,9 +1,9 @@
 package de.peekandpoke.ultra.common.datetime
 
 import de.peekandpoke.ultra.common.model.Operators
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
@@ -315,19 +315,19 @@ class MpZonedDateTimeRangeSpec : StringSpec({
     }
 
     listOf(
-        row(
+        tuple(
             "All eaten up - exactly",
             now.toRange(1.hours),
             now.toRange(1.hours),
             listOf(),
         ),
-        row(
+        tuple(
             "All eaten up - surrounding",
             now.toRange(1.hours),
             now.minus(1.seconds).toRange(1.hours + 2.seconds),
             listOf(),
         ),
-        row(
+        tuple(
             "In the middle",
             now.toRange(3.hours),
             now.plus(1.hours).toRange(1.hours),
@@ -336,7 +336,7 @@ class MpZonedDateTimeRangeSpec : StringSpec({
                 now.plus(2.hours).toRange(1.hours),
             ),
         ),
-        row(
+        tuple(
             "In the middle but duration = 0",
             now.toRange(3.hours),
             now.plus(1.hours).toRange(0.hours),
@@ -344,7 +344,7 @@ class MpZonedDateTimeRangeSpec : StringSpec({
                 now.toRange(3.hours),
             ),
         ),
-        row(
+        tuple(
             "On the left side",
             now.toRange(3.hours),
             now.toRange(1.hours),
@@ -352,7 +352,7 @@ class MpZonedDateTimeRangeSpec : StringSpec({
                 now.plus(1.hours).toRange(2.hours)
             ),
         ),
-        row(
+        tuple(
             "On the right side",
             now.toRange(3.hours),
             now.plus(2.hours).toRange(1.hours),
@@ -360,7 +360,7 @@ class MpZonedDateTimeRangeSpec : StringSpec({
                 now.toRange(2.hours)
             ),
         ),
-        row(
+        tuple(
             "Too far on the left side",
             now.toRange(3.hours),
             now.minus(2.hours).toRange(2.hours),
@@ -368,7 +368,7 @@ class MpZonedDateTimeRangeSpec : StringSpec({
                 now.toRange(3.hours),
             ),
         ),
-        row(
+        tuple(
             "Too far on the right side",
             now.toRange(3.hours),
             now.plus(3.hours).toRange(2.hours),

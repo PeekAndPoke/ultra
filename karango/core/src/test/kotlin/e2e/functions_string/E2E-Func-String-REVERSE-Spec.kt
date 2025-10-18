@@ -6,30 +6,30 @@ import de.peekandpoke.karango.aql.REVERSE
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-String-REVERSE-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "REVERSE( \"\" )",
             REVERSE("".aql),
             ""
         ),
-        row(
+        tuple(
             "REVERSE( \"a\")",
             REVERSE("a".aql),
             "a"
         ),
-        row(
+        tuple(
             "REVERSE( \"ab\" )",
             REVERSE("ab".aql),
             "ba"
         ),
-        row(
+        tuple(
             "REVERSE( \"abc\" )",
             REVERSE("abc".aql),
             "cba"

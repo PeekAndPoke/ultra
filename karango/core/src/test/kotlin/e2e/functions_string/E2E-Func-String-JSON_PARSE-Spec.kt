@@ -6,50 +6,50 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 open class `E2E-Func-String-JSON_PARSE-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "JSON_PARSE of single quoted string -> parse error",
             JSON_PARSE("'string'".aql),
             null
         ),
-        row(
+        tuple(
             "JSON_PARSE of broken json -> parse error",
             JSON_PARSE("broken".aql),
             null
         ),
-        row(
+        tuple(
             "JSON_PARSE of 'null'",
             JSON_PARSE("null".aql),
             null
         ),
-        row(
+        tuple(
             "JSON_PARSE of '1'",
             JSON_PARSE("1".aql),
             1L
         ),
-        row(
+        tuple(
             "JSON_PARSE of '-1.1'",
             JSON_PARSE("-1.1".aql),
             -1.1
         ),
-        row(
+        tuple(
             "JSON_PARSE of 'string'",
             JSON_PARSE("\"string\"".aql),
             "string"
         ),
-        row(
+        tuple(
             "JSON_PARSE of [1, \"a\"]",
             JSON_PARSE("""[1, "a"]""".aql),
             listOf(1L, "a")
         ),
-        row(
+        tuple(
             "JSON_PARSE of {a:1, b:[1, 2]}",
             JSON_PARSE("""{"a":1, "b":[1, 2]}""".aql),
             mapOf("a" to 1L, "b" to listOf(1L, 2L))

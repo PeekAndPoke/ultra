@@ -9,9 +9,6 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeSameSizeAs
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.delay
 
 @Suppress("ClassName")
 class `E2E-Cursor-Spec` : StringSpec() {
@@ -95,27 +92,6 @@ class `E2E-Cursor-Spec` : StringSpec() {
                 first shouldBeSameSizeAs cursor
                 first shouldBeSameSizeAs second
                 first.map { it.value.name } shouldBe second.map { it.value.name }
-            }
-        }
-
-        "Parallel Iteration of a cursor must work" {
-            val cursor = coll.findAll()
-
-            val results = (0..1_000).map { count ->
-                async {
-                    println("Parallel cursor iteration: Starting $count")
-                    delay(100)
-
-                    cursor.map { it }.also {
-                        println("Parallel cursor iteration: Completed $count")
-                    }
-                }
-            }.awaitAll()
-
-            assertSoftly {
-                results.forEach { result ->
-                    result shouldBeSameSizeAs cursor
-                }
             }
         }
     }

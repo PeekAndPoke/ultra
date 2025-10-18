@@ -1,0 +1,57 @@
+<configuration>
+    <property name="LOG_PATH" value="tmp/logs"/>
+    <property name="LOG_ARCHIVE" value="${LOG_PATH}/archive"/>
+
+    <property name="LOG_PATTERN" value="%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level - %msg%n"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+
+        <!-- Minimum log level -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+        <file>${LOG_PATH}/rollingfile.log</file>
+
+        <!-- Minimum log level -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_ARCHIVE}/rollingfile.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1000MB</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="io.peekandpoke" level="INFO"/>
+    <logger name="io.peekandpoke.aktor.llms.mcp" level="INFO"/>
+    <logger name="de.peekandpoke" level="INFO"/>
+
+    <logger name="io.netty" level="INFO"/>
+    <logger name="io.ktor.auth.jwt" level="WARN"/>
+    <logger name="com.arangodb" level="INFO"/>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+    <root level="INFO">
+        <appender-ref ref="FILE"/>
+    </root>
+
+
+</configuration>

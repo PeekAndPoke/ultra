@@ -16,7 +16,7 @@ import de.peekandpoke.ultra.common.model.Paged
 import de.peekandpoke.ultra.common.toggle
 import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.html.onClick
-import de.peekandpoke.ultra.logging.LogLevel
+import de.peekandpoke.ultra.log.LogLevel
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui

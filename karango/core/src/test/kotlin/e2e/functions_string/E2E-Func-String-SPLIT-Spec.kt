@@ -6,41 +6,41 @@ import de.peekandpoke.karango.aql.SPLIT
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.vault.lang.ARRAY
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-String-SPLIT-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "SPLIT( \"foo-bar-baz\", \"-\" )",
             SPLIT("foo-bar-baz".aql, "-".aql),
             listOf("foo", "bar", "baz")
         ),
-        row(
+        tuple(
             "SPLIT( \"foo-bar-baz\", \"-\", 1 )",
             SPLIT("foo-bar-baz".aql, "-".aql, 2.aql()),
             listOf("foo", "bar")
         ),
-        row(
+        tuple(
             "SPLIT( \"foo, bar & baz\", [ \", \", \" & \" ] ) - listOf",
             SPLIT("foo, bar & baz".aql, listOf(", ", " & ").aql),
             listOf("foo", "bar", "baz")
         ),
-        row(
+        tuple(
             "SPLIT( \"foo, bar & baz\", [ \", \", \" & \" ] ) - ARRAY",
             SPLIT("foo, bar & baz".aql, ARRAY(", ".aql, " & ".aql)),
             listOf("foo", "bar", "baz")
         ),
-        row(
+        tuple(
             "SPLIT( \"foo, bar & baz & buzz\", [ \", \", \" & \" ], 1 ) - listOf",
             SPLIT("foo, bar & baz & buzz".aql, listOf(", ", " & ").aql, 3.aql),
             listOf("foo", "bar", "baz")
         ),
-        row(
+        tuple(
             "SPLIT( \"foo, bar & baz & buzz\", [ \", \", \" & \" ], 1 ) - ARRAY",
             SPLIT("foo, bar & baz & buzz".aql, ARRAY(", ".aql, " & ".aql), 3.aql),
             listOf("foo", "bar", "baz")

@@ -1,9 +1,9 @@
 package de.peekandpoke.ultra.slumber.builtin.primitive
 
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
 import de.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
-import io.kotest.data.row
 
 class NumberAwakerSpec : AwakerSpecHelper(
     type = TypeRef.Number, nonNullSamples = nonNull, nullableSamples = nullable
@@ -17,15 +17,15 @@ class NumberSlumberSpec : SlumbererSpecHelper(
  * Samples that map properly. These must be converted correctly to Number and to Number?
  */
 private val nonNull = listOf(
-    row(0, 0),
-    row(0.toByte(), 0.toByte()),
-    row(0.toShort(), 0.toShort()),
-    row(0.toLong(), 0.toLong()),
-    row(0.0, 0.0),
-    row(0.0f, 0.0f),
+    tuple(0, 0),
+    tuple(0.toByte(), 0.toByte()),
+    tuple(0.toShort(), 0.toShort()),
+    tuple(0.toLong(), 0.toLong()),
+    tuple(0.0, 0.0),
+    tuple(0.0f, 0.0f),
 
-    row("0", 0.0),
-    row(0.0.toString(), 0.0)
+    tuple("0", 0.0),
+    tuple(0.0.toString(), 0.0)
 )
 
 /**

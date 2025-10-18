@@ -40,7 +40,7 @@ suspend fun FreeSpecContainerScope.story(name: String, builder: TestStory.StoryB
                 is TestStoryStep.Single -> stepName {
 
                     println("".padStart(80, '='))
-                    println(testScope.testCase.name.testName)
+                    println(testScope.testCase.name.name)
                     println("".padStart(80, '='))
 
                     listOfNotNull(story.description)
@@ -54,7 +54,7 @@ suspend fun FreeSpecContainerScope.story(name: String, builder: TestStory.StoryB
                             step.code.invoke(this)
                         }
 
-                        else -> fail("Previous step '${f.name.testName}' has already failed.")
+                        else -> fail("Previous step '${f.name.name}' has already failed.")
                     }
 
                     println()
