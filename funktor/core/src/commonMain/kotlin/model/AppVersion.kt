@@ -4,15 +4,15 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AppVersion(
-    val group: String = N_A,
+    val project: String = N_A,
     val version: String = N_A,
     val gitBranch: String = N_A,
     val gitRev: String = N_A,
     val gitDesc: String = N_A,
-    val date: String? = null,
+    val date: String = N_A,
 ) {
     companion object {
-        const val N_A = "n/a"
+        private const val N_A = "n/a"
     }
 
     val isAvailable get() = gitBranch != N_A

@@ -1,6 +1,7 @@
 @file:Suppress("PropertyName")
 
 import Deps.Test.configureJvmTests
+import Deps.createVersionFile
 
 plugins {
     kotlin("jvm")
@@ -16,11 +17,11 @@ val VERSION_NAME: String by project
 group = FUNKTOR_DEMO_GROUP
 version = VERSION_NAME
 
+createVersionFile()
+
 allprojects {
     repositories {
         mavenCentral()
-        maven { setUrl("https://jitpack.io") }
-        mavenLocal()
     }
 }
 
@@ -52,3 +53,4 @@ kotlin {
 tasks {
     configureJvmTests()
 }
+

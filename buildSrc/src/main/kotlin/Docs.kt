@@ -21,6 +21,7 @@ object Docs {
 
         tasks.register<Copy>("useEmptyJavadoc") {
             val fromDir = rootProject.projectDir
+            val buildDir = layout.buildDirectory.get().asFile
             val intoDir = File(buildDir, "/libs")
             val targetFile = "${project.name}-$VERSION_NAME-javadoc.jar"
 

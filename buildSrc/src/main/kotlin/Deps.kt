@@ -1,7 +1,13 @@
+import org.ajoberstar.grgit.Grgit
+import org.gradle.api.Project
 import org.gradle.kotlin.dsl.DependencyHandlerScope
 import org.gradle.kotlin.dsl.TaskContainerScope
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
+import java.io.File
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
 
 @Suppress("MemberVisibilityCanBePrivate", "ConstPropertyName")
 object Deps {
@@ -524,6 +530,48 @@ object Deps {
 //                }
 
                 configure()
+            }
+        }
+    }
+
+    fun Project.createVersionFile(
+        vararg outputDirs: String = arrayOf(
+            "./src/main/resources",
+            "./tmp"
+        ),
+    ) {
+        plugins.withId("java") {
+            tasks.named("processResources") {
+                dependsOn("versionFile")
+            }
+        }
+
+        tasks.register("versionFile") {
+            val rootProject = project.rootProject
+            val projectDir = project.projectDir
+
+            val git = Grgit.open {
+                dir = rootProject.projectDir
+            }
+
+            File(projectDir, "tmp").mkdirs()
+
+            val now = LocalDateTime.now()
+            val nowStr = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+
+            val content = """{
+                "project": "${project.path.removePrefix(":").replace(":", "-")}",
+                "version": "${project.version}",
+                "gitBranch": "${git.branch.current().name}",
+                "gitRev": "${git.head().id.take(8)}",
+                "gitDesc": "${git.describe { tags = true }}",
+                "date": "$nowStr"
+            }"""
+
+            outputDirs.forEach {
+                val dir = File(projectDir, it)
+                dir.mkdirs()
+                File(dir, "version.json").writeText(content)
             }
         }
     }
