@@ -1,15 +1,13 @@
 @file:Suppress("PropertyName")
 
-import Deps.Test.commonTestDeps
 import Deps.Test.configureJvmTests
-import Deps.Test.jsTestDeps
-import Deps.Test.jvmTestDeps
 
 plugins {
-    kotlin("multiplatform")
+    kotlin("jvm")
     kotlin("plugin.serialization") version Deps.kotlinVersion
     id("com.google.devtools.ksp") version Deps.Ksp.version
     idea
+    application
 }
 
 val FUNKTOR_DEMO_GROUP: String by project
@@ -33,65 +31,21 @@ idea {
     }
 }
 
-kotlin {
-    js {
-        browser {}
-    }
+application {
+    mainClass.set("io.peekandpoke.funktor.demo.server.MainKt")
+}
 
+kotlin {
     jvmToolchain(Deps.jvmTargetVersion)
 
-    jvm {
-        @Suppress("OPT_IN_USAGE")
-        binaries {
-            executable {
-                mainClass.set("io.peekandpoke.funktor.demo.server.MainKt")
-            }
-        }
-    }
+    dependencies {
+        implementation(project(":funktor:all"))
 
-    sourceSets {
-        commonMain {
-            dependencies {
-                implementation(project(":funktor:all"))
-            }
-        }
+        Deps.Ktor.Server.full(this)
 
-        commonTest {
-            dependencies {
-                commonTestDeps()
-            }
-        }
-
-        jsMain {
-            dependencies {
-            }
-        }
-
-        jsTest {
-            dependencies {
-                jsTestDeps()
-            }
-        }
-
-        jvmMain {
-            dependencies {
-                Deps.Ktor.Server.full(this)
-
-                implementation(project(":karango:core"))
-                implementation(project(":karango:addons"))
-                configurations.getByName("kspJvm").dependencies.add(project(":karango:ksp"))
-
-                implementation(Deps.JavaLibs.logback_classic)
-            }
-        }
-
-        jvmTest {
-            dependencies {
-                Deps.Ktor.Server.fullTest(this)
-
-                jvmTestDeps()
-            }
-        }
+        implementation(project(":karango:core"))
+        implementation(project(":karango:addons"))
+        ksp(project(":karango:ksp"))
     }
 }
 

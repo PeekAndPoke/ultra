@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.demo.server.api.api
 
+import de.peekandpoke.funktor.core.appInfo
 import de.peekandpoke.funktor.core.broker.fallback
 import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.funktor.core.methodAndUrl
@@ -7,6 +8,7 @@ import de.peekandpoke.funktor.rest.ApiFeature
 import de.peekandpoke.funktor.rest.ApiStatusPages.installApiStatusPages
 import de.peekandpoke.funktor.rest.apiRespond
 import de.peekandpoke.funktor.rest.handle
+import de.peekandpoke.ultra.common.remote.ApiResponse
 import de.peekandpoke.ultra.security.jwt.JwtAnonymous
 import de.peekandpoke.ultra.security.jwt.JwtGenerator
 import io.ktor.server.application.*
@@ -14,6 +16,8 @@ import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.plugins.*
 import io.ktor.server.routing.*
+import kotlinx.coroutines.delay
+import kotlin.random.Random
 
 class ApiApp(
     val features: List<ApiFeature>,
@@ -52,7 +56,11 @@ class ApiApp(
 
         route("/_/ping") {
             val handler: RoutingHandler = {
-                call.apiRespond(call.request.methodAndUrl())
+                val pong = ApiResponse.ok(
+                    call.request.methodAndUrl()
+                )
+
+                call.apiRespond(pong)
             }
 
             options(handler)
@@ -64,8 +72,15 @@ class ApiApp(
             patch(handler)
         }
 
+        get("/_/appinfo") {
+            val result = appInfo
+
+            call.apiRespond(result)
+        }
+
         // Fallback for all routes that did not match
         fallback {
+            delay(Random.nextLong(100, 300))
             throw NotFoundException()
         }
 

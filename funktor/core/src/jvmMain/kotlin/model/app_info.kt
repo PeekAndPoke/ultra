@@ -5,7 +5,7 @@ import kotlinx.serialization.json.Json
 fun AppInfo.Companion.default(
     loader: ClassLoader = Thread.currentThread().contextClassLoader,
 ): AppInfo {
-    return AppInfo(
+    return AppInfo.of(
         version = AppVersion.default(loader = loader)
     )
 }
