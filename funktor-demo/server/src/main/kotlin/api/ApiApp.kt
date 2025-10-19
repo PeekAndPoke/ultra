@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.demo.server.api.api
+package io.peekandpoke.funktor.demo.server.api
 
 import de.peekandpoke.funktor.core.appInfo
 import de.peekandpoke.funktor.core.broker.fallback
@@ -56,7 +56,7 @@ class ApiApp(
 
         route("/_/ping") {
             val handler: RoutingHandler = {
-                val pong = ApiResponse.ok(
+                val pong = ApiResponse.Companion.ok(
                     call.request.methodAndUrl()
                 )
 
@@ -80,7 +80,7 @@ class ApiApp(
 
         // Fallback for all routes that did not match
         fallback {
-            delay(Random.nextLong(100, 300))
+            delay(Random.Default.nextLong(100, 300))
             throw NotFoundException()
         }
 

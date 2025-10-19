@@ -77,3 +77,5 @@ class KraftApp internal constructor(
         appAttributes[Router.key]?.navigateToWindowUri()
     }
 }
+
+val KraftApp.router: Router get() = appAttributes[Router.key]!!

@@ -38,6 +38,7 @@ include(
 
         // FUNKTOR //////////////////////////////////////////////////////////////////////////////
         ":funktor:all",
+        ":funktor:auth",
         ":funktor:core",
         ":funktor:cluster",
         ":funktor:logging",
@@ -49,6 +50,8 @@ include(
 
         // FUNKTOR-DEMO /////////////////////////////////////////////////////////////////////////
         ":funktor-demo:server",
+        ":funktor-demo:adminapp",
+        ":funktor-demo:common",
 
         // KARANGO //////////////////////////////////////////////////////////////////////////////
         ":karango:core",

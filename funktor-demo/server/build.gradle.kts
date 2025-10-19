@@ -40,13 +40,15 @@ kotlin {
     jvmToolchain(Deps.jvmTargetVersion)
 
     dependencies {
-        implementation(project(":funktor:all"))
-
         Deps.Ktor.Server.full(this)
+
+        implementation(project(":funktor:all"))
 
         implementation(project(":karango:core"))
         implementation(project(":karango:addons"))
         ksp(project(":karango:ksp"))
+
+        implementation(project(":funktor-demo:common"))
     }
 }
 

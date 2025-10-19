@@ -1,5 +1,6 @@
 package de.peekandpoke.funktor
 
+import de.peekandpoke.funktor.auth.funktorAuth
 import de.peekandpoke.funktor.cluster.FunktorClusterBuilder
 import de.peekandpoke.funktor.cluster.funktorCluster
 import de.peekandpoke.funktor.core.broker.funktorBroker
@@ -52,6 +53,7 @@ data class FunktorParams internal constructor(
 /** Module definition */
 val Funktor = module { params: FunktorParams ->
     funktorCore(params.config, params.appInfo)
+    funktorAuth()
     funktorBroker()
     funktorRest(params.rest)
     funktorCluster(params.cluster)

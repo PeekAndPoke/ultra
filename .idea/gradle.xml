@@ -22,8 +22,11 @@
             <option value="$PROJECT_DIR$/buildSrc" />
             <option value="$PROJECT_DIR$/funktor" />
             <option value="$PROJECT_DIR$/funktor-demo" />
+            <option value="$PROJECT_DIR$/funktor-demo/adminapp" />
+            <option value="$PROJECT_DIR$/funktor-demo/common" />
             <option value="$PROJECT_DIR$/funktor-demo/server" />
             <option value="$PROJECT_DIR$/funktor/all" />
+            <option value="$PROJECT_DIR$/funktor/auth" />
             <option value="$PROJECT_DIR$/funktor/cluster" />
             <option value="$PROJECT_DIR$/funktor/core" />
             <option value="$PROJECT_DIR$/funktor/insights" />

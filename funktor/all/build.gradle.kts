@@ -31,6 +31,7 @@ kotlin {
             dependencies {
                 // add all funktor sub-projects
                 api(project(":funktor:core"))
+                api(project(":funktor:auth"))
                 api(project(":funktor:cluster"))
                 api(project(":funktor:logging"))
                 api(project(":funktor:insights"))

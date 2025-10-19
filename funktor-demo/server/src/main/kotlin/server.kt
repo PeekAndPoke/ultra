@@ -12,7 +12,7 @@ import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
-import io.peekandpoke.funktor.demo.server.api.api.ApiApp
+import io.peekandpoke.funktor.demo.server.api.ApiApp
 import kotlinx.serialization.json.Json
 
 @Suppress("unused")
@@ -49,9 +49,15 @@ fun Application.module() = app.module(this) { app, config, init ->
 
         allowCredentials = true
 
-        // Or to be more specific:
-        allowHost("localhost:36587", schemes = listOf("http", "https"))
-        allowHost("127.0.0.1:36587", schemes = listOf("http", "https"))
+        // Dev adminapp:
+        allowHost("localhost:36588", schemes = listOf("http", "https"))
+        allowHost("127.0.0.1:36588", schemes = listOf("http", "https"))
+        // Dev webapp:
+        allowHost("localhost:36589", schemes = listOf("http", "https"))
+        allowHost("127.0.0.1:36589", schemes = listOf("http", "https"))
+        // Dev domains
+        allowHost("admin.funktor-demo.local:36587", schemes = listOf("http", "https"))
+        allowHost("www.funktor-demo.local:36587", schemes = listOf("http", "https"))
     }
 
     install(io.ktor.server.plugins.contentnegotiation.ContentNegotiation) {
