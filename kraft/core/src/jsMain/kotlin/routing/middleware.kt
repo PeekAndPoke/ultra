@@ -21,11 +21,18 @@ data class RouterMiddlewareContext(
     fun proceed() = RouterMiddlewareResult.Proceed
 }
 
+/**
+ * The result of a [RouterMiddlewareFn]
+ */
 sealed interface RouterMiddlewareResult {
-    /** When [Proceed] is returned, the routing will continue normally */
+    /**
+     * When [Proceed] is returned, the routing will continue normally
+     */
     object Proceed : RouterMiddlewareResult
 
-    /** When [Redirect] is returned, the current routing be stepped and a redirect to [uri] will happen */
+    /**
+     * When [Redirect] is returned, the current routing be stepped and a redirect to [uri] will happen
+     */
     data class Redirect(
         val uri: String,
     ) : RouterMiddlewareResult
