@@ -1,5 +1,8 @@
 package de.peekandpoke.kraft.routing
 
+import de.peekandpoke.kraft.KraftApp
+import de.peekandpoke.kraft.components.Component
+import de.peekandpoke.kraft.components.getAttributeRecursive
 import de.peekandpoke.kraft.routing.Router.RouterStrategy.Companion.HASH_PREFIX
 import de.peekandpoke.ultra.common.TypedKey
 import de.peekandpoke.ultra.common.isUrlWithProtocol
@@ -22,6 +25,12 @@ class Router(
 ) {
     companion object {
         val key = TypedKey<Router>("router")
+
+        @RouterDsl
+        val KraftApp.router: Router get() = appAttributes[key]!!
+
+        @RouterDsl
+        val Component<*>.router get() = getAttributeRecursive(key)
 
         fun willOpenNewTab(evt: MouseEvent?): Boolean {
             return when (evt) {

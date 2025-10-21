@@ -7,7 +7,7 @@ import de.peekandpoke.funktor.demo.adminapp.funktorLogging
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.routing.router
+import de.peekandpoke.kraft.routing.Router.Companion.router
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.html.onClick
@@ -16,6 +16,7 @@ import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.css.marginLeft
 import kotlinx.css.marginRight
+import kotlinx.css.marginTop
 import kotlinx.css.px
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
@@ -46,12 +47,26 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
     //  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
+        renderMenu()
+
+        div {
+            css {
+                marginTop = 16.px
+                marginLeft = 250.px
+                marginRight = 50.px
+            }
+
+            props.content(this)
+        }
+    }
+
+    private fun FlowContent.renderMenu() {
         val u = user ?: return
 
-        ui.sidebar.vertical.visible.menu {
-            ui.basic.segment {
+        ui.inverted.sidebar.vertical.visible.menu {
+            noui.item A {
                 onClick { evt -> router.navToUri(evt, Nav.profile()) }
-                +u.name
+                +"Profile"
             }
 
             noui.item A {
@@ -60,7 +75,7 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
             }
 
             if (auth.user?.isSuperUser == true) {
-                ui.divider()
+                noui.item()
 
                 noui.item A {
                     onClick { evt -> router.navToUri(evt, funktorLogging.routes.list()) }
@@ -72,7 +87,7 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
                 }
             }
 
-            ui.divider()
+            noui.item()
 
             noui.item A {
                 onClick { evt ->
@@ -82,15 +97,6 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
                 icon.sign_out_alternate()
                 +"Logout"
             }
-        }
-
-        div {
-            css {
-                marginLeft = 250.px
-                marginRight = 50.px
-            }
-
-            props.content(this)
         }
     }
 }

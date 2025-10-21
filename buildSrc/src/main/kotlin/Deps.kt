@@ -566,7 +566,7 @@ object Deps {
                 "gitRev": "${git.head().id.take(8)}",
                 "gitDesc": "${git.describe { tags = true }}",
                 "date": "$nowStr"
-            }"""
+            }""".trimIndent()
 
             outputDirs.forEach {
                 val dir = File(projectDir, it)

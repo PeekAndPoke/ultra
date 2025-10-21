@@ -6,7 +6,7 @@ import de.peekandpoke.kraft.addons.pagination.pagedSearchFilter
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.routing.JoinedPageTitle
-import de.peekandpoke.kraft.routing.router
+import de.peekandpoke.kraft.routing.Router.Companion.router
 import de.peekandpoke.kraft.semanticui.pagination.PaginationEpp
 import de.peekandpoke.kraft.semanticui.pagination.PaginationPages
 import de.peekandpoke.kraft.utils.dataLoader

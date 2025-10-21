@@ -1,6 +1,8 @@
 package de.peekandpoke.kraft.semanticui.toasts
 
 import de.peekandpoke.kraft.components.AutoMountedUi
+import de.peekandpoke.kraft.components.Component
+import de.peekandpoke.kraft.components.getAttributeRecursive
 import de.peekandpoke.kraft.components.key
 import de.peekandpoke.kraft.semanticui.toasts.ToastsManager.Handle
 import de.peekandpoke.ultra.common.TypedKey
@@ -30,6 +32,8 @@ class ToastsManager(
 
     companion object {
         val key = TypedKey<ToastsManager>("toasts")
+
+        val Component<*>.toasts: ToastsManager get() = getAttributeRecursive(key)
 
         val DefaultRenderer: ToastRenderer = { handle ->
 

@@ -14,7 +14,7 @@ import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.forms.formController
 import de.peekandpoke.kraft.forms.validation.strings.notEmpty
 import de.peekandpoke.kraft.routing.Route
-import de.peekandpoke.kraft.routing.router
+import de.peekandpoke.kraft.routing.Router.Companion.router
 import de.peekandpoke.kraft.semanticui.forms.UiInputField
 import de.peekandpoke.kraft.semanticui.forms.UiPasswordField
 import de.peekandpoke.kraft.utils.dataLoader
@@ -163,7 +163,8 @@ class LoginWidget<USER>(ctx: Ctx<Props<USER>>) : Component<LoginWidget.Props<USE
             console.log("Login success. Redirecting to $uri")
             props.state.redirectAfterLogin(uri)
         } else {
-            displayState = displayState.withMessage(message = Message.error("Login failed"))
+            displayState = displayState
+                .withMessage(message = Message.error("Login failed"))
         }
     }
 

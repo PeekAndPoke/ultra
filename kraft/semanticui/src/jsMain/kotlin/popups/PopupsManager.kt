@@ -1,6 +1,8 @@
 package de.peekandpoke.kraft.semanticui.popups
 
 import de.peekandpoke.kraft.components.AutoMountedUi
+import de.peekandpoke.kraft.components.Component
+import de.peekandpoke.kraft.components.getAttributeRecursive
 import de.peekandpoke.kraft.utils.Rectangle
 import de.peekandpoke.kraft.utils.Vector2D
 import de.peekandpoke.ultra.common.TypedKey
@@ -23,6 +25,8 @@ typealias PopupPositionFn = (target: HTMLElement, contentSize: Vector2D) -> Vect
 class PopupsManager : Stream<List<PopupsManager.Handle>>, AutoMountedUi {
     companion object {
         val key = TypedKey<PopupsManager>("popups")
+
+        val Component<*>.popups: PopupsManager get() = getAttributeRecursive(key)
     }
 
     class ShowHoverPopup(private val popups: PopupsManager) {

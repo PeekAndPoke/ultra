@@ -2,6 +2,8 @@ package de.peekandpoke.kraft.common
 
 import de.peekandpoke.kraft.common.ModalsManager.Handle
 import de.peekandpoke.kraft.components.AutoMountedUi
+import de.peekandpoke.kraft.components.Component
+import de.peekandpoke.kraft.components.getAttributeRecursive
 import de.peekandpoke.ultra.common.TypedKey
 import de.peekandpoke.ultra.streams.Stream
 import de.peekandpoke.ultra.streams.StreamSource
@@ -15,6 +17,8 @@ class ModalsManager : Stream<List<Handle>>, AutoMountedUi {
 
     companion object {
         val key = TypedKey<ModalsManager>("modals")
+
+        val Component<*>.modals: ModalsManager get() = getAttributeRecursive(key)
     }
 
     /**

@@ -7,7 +7,7 @@ import de.peekandpoke.funktor.cluster.renderDefault
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.routing.JoinedPageTitle
-import de.peekandpoke.kraft.routing.router
+import de.peekandpoke.kraft.routing.Router.Companion.router
 import de.peekandpoke.kraft.routing.urlParam
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom

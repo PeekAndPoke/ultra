@@ -4,7 +4,7 @@ import de.peekandpoke.funktor.logging.api.LogEntryModel
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.routing.JoinedPageTitle
-import de.peekandpoke.kraft.routing.router
+import de.peekandpoke.kraft.routing.Router.Companion.router
 import de.peekandpoke.kraft.semanticui.forms.UiInputField
 import de.peekandpoke.kraft.semanticui.forms.old.select.SelectField
 import de.peekandpoke.kraft.semanticui.pagination.PaginationEpp
