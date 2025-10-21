@@ -35,6 +35,7 @@ class AdminUsersRepo(
                 id = _id,
                 name = name,
                 email = email,
+                isSuperUser = isSuperUser,
             )
         }
     }
@@ -62,6 +63,7 @@ class AdminUsersRepo(
                 "karsten", AdminUser(
                     name = "Karsten",
                     email = "karsten.john.gerber@googlemail.com",
+                    isSuperUser = true,
                 )
             ).also { user -> user.createPassword() }
         }

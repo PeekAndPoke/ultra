@@ -1,6 +1,6 @@
 package de.peekandpoke.kraft.semanticui.popups
 
-import de.peekandpoke.kraft.components.Automount
+import de.peekandpoke.kraft.components.AutoMountedUi
 import de.peekandpoke.kraft.utils.Rectangle
 import de.peekandpoke.kraft.utils.Vector2D
 import de.peekandpoke.ultra.common.TypedKey
@@ -20,7 +20,7 @@ import org.w3c.dom.events.UIEvent
 
 typealias PopupPositionFn = (target: HTMLElement, contentSize: Vector2D) -> Vector2D
 
-class PopupsManager : Stream<List<PopupsManager.Handle>>, Automount {
+class PopupsManager : Stream<List<PopupsManager.Handle>>, AutoMountedUi {
     companion object {
         val key = TypedKey<PopupsManager>("popups")
     }

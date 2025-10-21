@@ -8,6 +8,7 @@ import de.peekandpoke.ultra.vault.hooks.Timestamped
 data class AdminUser(
     val name: String,
     val email: String,
+    val isSuperUser: Boolean = false,
     override val createdAt: MpInstant = MpInstant.Epoch,
     override val updatedAt: MpInstant = createdAt,
 ) : Timestamped {

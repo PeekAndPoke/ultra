@@ -125,6 +125,7 @@ class AdminUserRealm(
                 email = user.value.email,
             ),
             permissions = UserPermissions(
+                isSuperUser = user.value.isSuperUser,
                 organisations = setOf(),
                 roles = setOf(),
             )

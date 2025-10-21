@@ -1,11 +1,13 @@
 package de.peekandpoke.funktor.demo.adminapp
 
+import de.peekandpoke.funktor.cluster.mountFunktorCluster
 import de.peekandpoke.funktor.demo.adminapp.layout.LoggedInLayout
 import de.peekandpoke.funktor.demo.adminapp.pages.DashboardPage
 import de.peekandpoke.funktor.demo.adminapp.pages.LoginPage
 import de.peekandpoke.funktor.demo.adminapp.pages.NotFoundPage
 import de.peekandpoke.funktor.demo.adminapp.pages.ProfilePage
-import de.peekandpoke.kraft.routing.RouterBuilder
+import de.peekandpoke.funktor.logging.mountFunktorLogging
+import de.peekandpoke.kraft.routing.RootRouterBuilder
 import de.peekandpoke.kraft.routing.Static
 
 object Nav {
@@ -17,16 +19,22 @@ object Nav {
     val profile = Static("/profile")
 }
 
-fun RouterBuilder.mountNav() {
+fun RootRouterBuilder.mountNav() {
     val authMiddleware = State.auth.routerMiddleWare(Nav.login())
 
     mount(Nav.login) { LoginPage() }
 
-    using(authMiddleware) {
-        mount(Nav.dashboard) { LoggedInLayout { DashboardPage() } }
-        mount(Nav.dashboardSlash) { LoggedInLayout { DashboardPage() } }
+    middleware(authMiddleware) {
+        layout({ LoggedInLayout(it) }) {
 
-        mount(Nav.profile) { LoggedInLayout { ProfilePage() } }
+            mount(Nav.dashboard) { DashboardPage() }
+            mount(Nav.dashboardSlash) { DashboardPage() }
+            mount(Nav.profile) { ProfilePage() }
+
+            // Mount funktor routes
+            funktorLogging { mountFunktorLogging(this) }
+            funktorCluster { mountFunktorCluster(this) }
+        }
     }
 
     catchAll {

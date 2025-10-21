@@ -6,7 +6,7 @@ import kotlinx.html.CommonAttributeGroupFacade
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 
-interface Automount {
+interface AutoMountedUi {
     val priority: Int get() = 0
 
     fun mount(flow: FlowContent)

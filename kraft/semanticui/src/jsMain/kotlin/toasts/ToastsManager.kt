@@ -1,6 +1,6 @@
 package de.peekandpoke.kraft.semanticui.toasts
 
-import de.peekandpoke.kraft.components.Automount
+import de.peekandpoke.kraft.components.AutoMountedUi
 import de.peekandpoke.kraft.components.key
 import de.peekandpoke.kraft.semanticui.toasts.ToastsManager.Handle
 import de.peekandpoke.ultra.common.TypedKey
@@ -26,7 +26,7 @@ typealias ToastRenderer = FlowContent.(Handle) -> Unit
 
 class ToastsManager(
     val settings: Settings,
-) : Stream<List<Handle>>, Automount {
+) : Stream<List<Handle>>, AutoMountedUi {
 
     companion object {
         val key = TypedKey<ToastsManager>("toasts")

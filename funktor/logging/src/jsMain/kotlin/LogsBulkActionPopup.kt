@@ -3,11 +3,13 @@ package de.peekandpoke.funktor.logging
 import de.peekandpoke.funktor.logging.api.LogEntryModel
 import de.peekandpoke.funktor.logging.api.LogsRequest
 import de.peekandpoke.kraft.common.ModalsManager
+import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.components.debugId
 import de.peekandpoke.kraft.forms.formController
 import de.peekandpoke.kraft.semanticui.forms.UiDateTimeField
+import de.peekandpoke.kraft.semanticui.modals
 import de.peekandpoke.kraft.semanticui.modals.FadingModal
 import de.peekandpoke.kraft.utils.doubleClickProtection
 import de.peekandpoke.kraft.utils.launch
@@ -23,8 +25,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 
-fun showLogsBulkActionPopup(ui: LoggingUi) {
-    ui.modals.show { handle ->
+fun <T> Component<T>.showLogsBulkActionPopup(ui: LoggingUi) {
+    modals.show { handle ->
         LogsBulkActionPopup(handle, ui)
     }
 }

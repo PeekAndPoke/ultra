@@ -386,23 +386,26 @@ class Router(
         }
 
         resolved?.let { (mounted, match) ->
-            // Create a context for the router middlewares
-            val ctx = RouterMiddlewareContext(this, uri, match)
-            // Call all the middlewares
-            mounted.middlewares.forEach { it(ctx) }
+            val middlewareContext = RouterMiddlewareContext(uri = uri)
 
-            // Do we have a redirect ?
-            when (val redirect = ctx.redirectToUri) {
-                null -> {
-                    // Notify all subscribers that the active route has changed
-                    _current(ActiveRoute(uri, match, mounted))
-                }
+            // Check all middlewares
+            mounted.middlewares.forEach { middleware ->
+                // Call the middleware with the context
+                when (val result = middleware.middleware(middlewareContext)) {
+                    is RouterMiddlewareResult.Proceed -> Unit // noop
 
-                else -> {
-                    // Yes so let's go to the redirect
-                    navToUri(redirect)
+                    is RouterMiddlewareResult.Redirect -> {
+                        console.log("Middleware: Redirecting to: ${result.uri}")
+                        // Yes so let's go to the redirect
+                        navToUri(result.uri)
+                        // Stop here
+                        return@let
+                    }
                 }
             }
+
+            // Notify all subscribers that the active route has changed
+            _current(ActiveRoute(uri, match, mounted))
         }
     }
 

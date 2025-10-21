@@ -1,6 +1,6 @@
 package de.peekandpoke.kraft.examples.jsaddons.core
 
-import de.peekandpoke.kraft.routing.RouterBuilder
+import de.peekandpoke.kraft.routing.RootRouterBuilder
 import de.peekandpoke.kraft.routing.Static
 
 class CoreRoutes {
@@ -8,7 +8,7 @@ class CoreRoutes {
     val scriptLoader = Static("/core/script-loader")
 }
 
-fun RouterBuilder.mount(routes: CoreRoutes) {
+fun RootRouterBuilder.mount(routes: CoreRoutes) {
     mount(routes.index) {}
     mount(routes.scriptLoader) { ScriptLoaderExample() }
 }

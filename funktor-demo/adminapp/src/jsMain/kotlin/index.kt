@@ -1,9 +1,13 @@
 package de.peekandpoke.funktor.demo.adminapp
 
 import de.peekandpoke.funktor.auth.authState
+import de.peekandpoke.funktor.cluster.FunktorClusterApiClient
+import de.peekandpoke.funktor.cluster.FunktorClusterUi
 import de.peekandpoke.funktor.demo.adminapp.state.AdminAppState
+import de.peekandpoke.funktor.logging.LoggingUi
+import de.peekandpoke.funktor.logging.api.LoggingApiClient
 import de.peekandpoke.kraft.kraftApp
-import de.peekandpoke.kraft.router
+import de.peekandpoke.kraft.routing.router
 import de.peekandpoke.kraft.semanticui.semanticUI
 import de.peekandpoke.kraft.semanticui.toasts
 import de.peekandpoke.kraft.semanticui.toasts.ToastsStage
@@ -33,6 +37,14 @@ val State: AdminAppState = AdminAppState(
     ),
 )
 
+val funktorCluster = FunktorClusterUi(
+    api = FunktorClusterApiClient(Apis.config),
+)
+
+val funktorLogging = LoggingUi(
+    api = LoggingApiClient(Apis.config),
+)
+
 val kraft = kraftApp {
     semanticUI {
         toasts {
@@ -44,7 +56,7 @@ val kraft = kraftApp {
 
     routing {
         usePathStrategy()
-
+        // Mount app routes
         mountNav()
     }
 }

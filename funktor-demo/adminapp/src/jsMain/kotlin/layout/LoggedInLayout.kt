@@ -2,6 +2,8 @@ package de.peekandpoke.funktor.demo.adminapp.layout
 
 import de.peekandpoke.funktor.demo.adminapp.Nav
 import de.peekandpoke.funktor.demo.adminapp.State
+import de.peekandpoke.funktor.demo.adminapp.funktorCluster
+import de.peekandpoke.funktor.demo.adminapp.funktorLogging
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
@@ -21,9 +23,9 @@ import kotlinx.html.div
 
 @Suppress("FunctionName")
 fun Tag.LoggedInLayout(
-    inner: FlowContent.() -> Unit,
+    content: FlowContent.() -> Unit,
 ) = comp(
-    LoggedInLayout.Props(inner = inner)
+    LoggedInLayout.Props(content = content)
 ) {
     LoggedInLayout(it)
 }
@@ -33,7 +35,7 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
     //  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val inner: FlowContent.() -> Unit,
+        val content: FlowContent.() -> Unit,
     )
 
     //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -57,6 +59,21 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
                 +"Dashboard"
             }
 
+            if (auth.user?.isSuperUser == true) {
+                ui.divider()
+
+                noui.item A {
+                    onClick { evt -> router.navToUri(evt, funktorLogging.routes.list()) }
+                    +"Server Logs"
+                }
+                noui.item A {
+                    onClick { evt -> router.navToUri(evt, funktorCluster.routes.overview()) }
+                    +"Server Internals"
+                }
+            }
+
+            ui.divider()
+
             noui.item A {
                 onClick { evt ->
                     router.navToUri(evt, Nav.login())
@@ -73,7 +90,7 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
                 marginRight = 50.px
             }
 
-            props.inner(this)
+            props.content(this)
         }
     }
 }

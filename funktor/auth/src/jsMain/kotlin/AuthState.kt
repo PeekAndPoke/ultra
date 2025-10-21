@@ -84,14 +84,16 @@ class AuthState<USER>(
         return streamSource().realm?.passwordPolicy ?: PasswordPolicy.default
     }
 
-    fun routerMiddleWare(loginRoute: Route.Bound) = routerMiddleware {
+    fun routerMiddleWare(loginRoute: Route.Bound) = routerMiddleware { ctx ->
         val auth = invoke()
 
         val loginUri = router().strategy.render(loginRoute)
 
         if (!auth.isLoggedIn) {
-            redirectAfterLoginUri = uri.takeIf { it != loginUri }
-            redirectTo(loginUri)
+            redirectAfterLoginUri = ctx.uri.takeIf { it != loginUri }
+            ctx.redirect(loginUri)
+        } else {
+            ctx.proceed()
         }
     }
 
@@ -124,7 +126,7 @@ class AuthState<USER>(
         val response = api
             .recover(request)
             .map { it.data }
-            .catch { null }
+            .catch { /* noop */ }
             .firstOrNull()
 
         return response

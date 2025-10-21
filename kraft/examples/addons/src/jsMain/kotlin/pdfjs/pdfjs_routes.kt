@@ -1,7 +1,7 @@
 package de.peekandpoke.kraft.examples.jsaddons.pdfjs
 
+import de.peekandpoke.kraft.routing.RootRouterBuilder
 import de.peekandpoke.kraft.routing.Route1
-import de.peekandpoke.kraft.routing.RouterBuilder
 import de.peekandpoke.kraft.routing.Static
 
 class PdfJsRoutes {
@@ -14,7 +14,7 @@ class PdfJsRoutes {
     fun scrolling(uri: String) = scrolling.bind(uri)
 }
 
-fun RouterBuilder.mount(routes: PdfJsRoutes) {
+fun RootRouterBuilder.mount(routes: PdfJsRoutes) {
     mount(routes.index) { PdfJsExample() }
     mount(routes.paged) { PdfJsPagedViewerExample(it["uri"]) }
     mount(routes.scrolling) { PdfJsScrollingViewerExample(it["uri"]) }

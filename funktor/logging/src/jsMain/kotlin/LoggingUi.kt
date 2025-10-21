@@ -1,14 +1,12 @@
 package de.peekandpoke.funktor.logging
 
 import de.peekandpoke.funktor.logging.api.LoggingApiClient
-import de.peekandpoke.kraft.common.ModalsManager
 import de.peekandpoke.kraft.components.comp
 import kotlinx.html.Tag
 
 class LoggingUi(
     val api: LoggingApiClient,
-    val routes: LoggingRoutes,
-    val modals: ModalsManager,
+    val routes: LoggingRoutes = LoggingRoutes(),
 ) {
     //// Helpers //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
