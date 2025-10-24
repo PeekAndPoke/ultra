@@ -3,6 +3,7 @@ package de.peekandpoke.karango.vault
 import com.arangodb.ArangoCursorAsync
 import com.arangodb.ArangoDBException
 import com.arangodb.ArangoDatabaseAsync
+import com.arangodb.entity.ArangoDBVersion
 import com.arangodb.entity.CollectionType
 import com.arangodb.model.AqlQueryOptions
 import com.arangodb.model.CollectionCreateOptions
@@ -26,6 +27,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.runBlocking
 
 class KarangoDriver(
     private val lazyCodec: Lazy<KarangoCodec>,
@@ -51,6 +53,14 @@ class KarangoDriver(
         lazyProfiler = lazy { newProfiler },
         log = log,
     )
+
+    private val version: ArangoDBVersion by lazy {
+        runBlocking { arangoDb.version.await() }
+    }
+
+    fun getDatabaseVersion(): ArangoDBVersion {
+        return version
+    }
 
     suspend fun ensureEntityCollection(
         name: String,

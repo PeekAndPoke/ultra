@@ -60,6 +60,8 @@
             <option value="$PROJECT_DIR$/kraft/examples/hello-world" />
             <option value="$PROJECT_DIR$/kraft/semanticui" />
             <option value="$PROJECT_DIR$/kraft/testing" />
+            <option value="$PROJECT_DIR$/monko" />
+            <option value="$PROJECT_DIR$/monko/core" />
             <option value="$PROJECT_DIR$/mutator" />
             <option value="$PROJECT_DIR$/mutator/core" />
             <option value="$PROJECT_DIR$/mutator/ksp" />

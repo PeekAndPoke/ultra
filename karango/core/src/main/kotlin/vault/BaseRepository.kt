@@ -6,8 +6,6 @@ import com.arangodb.model.CollectionCreateOptions
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.lang.IterableExpr
-import kotlinx.coroutines.future.await
-import kotlinx.coroutines.runBlocking
 
 abstract class BaseRepository<T : Any>(
     override val name: String,
@@ -19,7 +17,7 @@ abstract class BaseRepository<T : Any>(
      * The connection identifier of the repository
      */
     override val connection: String by lazy {
-        val version = runBlocking { driver.arangoDb.version.await() }
+        val version = driver.getDatabaseVersion()
 
         "ArangoDB(${version.version})::${driver.arangoDb.name()}"
     }

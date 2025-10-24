@@ -80,6 +80,15 @@ object Deps {
         // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
         private const val kotlinpoet_version = "2.2.0"
         const val kotlinpoet = "com.squareup:kotlinpoet:$kotlinpoet_version"
+
+        object MongoDb {
+            private const val mongodb_driver_version = "5.6.1"
+            const val mongodb_driver_bom = "org.mongodb:mongodb-driver-bom:$mongodb_driver_version"
+            const val mongodb_driver_kotlin_coroutine =
+                "org.mongodb:mongodb-driver-kotlin-coroutine:$mongodb_driver_version"
+            const val mongodb_bson_kotlinx =
+                "org.mongodb:bson-kotlinx:$mongodb_driver_version"
+        }
     }
 
     object KotlinX {
