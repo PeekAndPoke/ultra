@@ -3,10 +3,10 @@ package de.peekandpoke.kraft.examples.jsaddons.konva
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.components.key
 import de.peekandpoke.kraft.utils.jsObject
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.html.css
+import de.peekandpoke.ultra.html.key
 import konva.Circle
 import konva.Layer
 import konva.LayerConfig

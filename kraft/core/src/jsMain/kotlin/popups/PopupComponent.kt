@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.semanticui.popups
+package de.peekandpoke.kraft.popups
 
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
@@ -6,7 +6,6 @@ import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.utils.Vector2D
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.html.css
-import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.css.Display
 import kotlinx.css.Padding
 import kotlinx.css.display
@@ -16,6 +15,7 @@ import kotlinx.css.px
 import kotlinx.css.top
 import kotlinx.css.zIndex
 import kotlinx.html.Tag
+import kotlinx.html.div
 import org.w3c.dom.HTMLElement
 
 @Suppress("FunctionName")
@@ -23,7 +23,7 @@ fun Tag.PopupComponent(
     target: HTMLElement,
     positioning: (target: HTMLElement, contentSize: Vector2D) -> Vector2D,
     handle: PopupsManager.Handle,
-    content: PopupRenderer,
+    content: PopupContentRenderer,
 ) = comp(
     PopupComponent.Props(
         target = target,
@@ -43,7 +43,7 @@ class PopupComponent(ctx: Ctx<Props>) : Component<PopupComponent.Props>(ctx) {
         val target: HTMLElement,
         val positioning: (target: HTMLElement, contentSize: Vector2D) -> Vector2D,
         val handle: PopupsManager.Handle,
-        val content: PopupRenderer,
+        val content: PopupContentRenderer,
     )
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -69,10 +69,12 @@ class PopupComponent(ctx: Ctx<Props>) : Component<PopupComponent.Props>(ctx) {
 
     override fun VDom.render() {
 
+        console.log("Rending Default popup component ${props.handle.id}")
+
         captureContentSize()
 
         // Just a container
-        ui.basic.flowing.popup.bottom.left.visible {
+        div {
             css {
                 zIndex = 9999
                 display = Display.inlineBlock
@@ -81,10 +83,6 @@ class PopupComponent(ctx: Ctx<Props>) : Component<PopupComponent.Props>(ctx) {
                 val pos = props.positioning(props.target, contentSize)
                 left = pos.x.px
                 top = pos.y.px
-
-//                if (contentSize == Vector2D.zero) {
-//                    visibility = Visibility.hidden
-//                }
             }
 
             props.content(this, props.handle)

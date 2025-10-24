@@ -2,7 +2,6 @@ package de.peekandpoke.kraft.semanticui.forms
 
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.components.key
 import de.peekandpoke.kraft.forms.FieldOptions
 import de.peekandpoke.kraft.forms.GenericFormField
 import de.peekandpoke.kraft.forms.KraftFormsDsl
@@ -31,6 +30,7 @@ import de.peekandpoke.ultra.common.datetime.MpLocalDateTime
 import de.peekandpoke.ultra.common.datetime.MpLocalTime
 import de.peekandpoke.ultra.common.datetime.MpTimezone
 import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
+import de.peekandpoke.ultra.html.key
 import de.peekandpoke.ultra.html.onChange
 import de.peekandpoke.ultra.html.onInput
 import de.peekandpoke.ultra.semanticui.ui

@@ -15,8 +15,8 @@ interface LogsStorage {
     /** Finds log entries */
     suspend fun find(filter: LogsFilter): Paged<LogEntryModel>
 
-    /** Finds log entries */
-    suspend fun find(filter: LogsRequest.BulkAction.Filter): List<LogEntryModel>
+    /** Executes a bulk action */
+    suspend fun execBulkAction(action: LogsRequest.BulkAction): LogsRequest.BulkResponse
 
     /** Modifies a log entry */
     suspend fun modifyById(id: String, block: (LogEntryModel) -> LogEntryModel): LogEntryModel? {
@@ -30,13 +30,6 @@ interface LogsStorage {
         return modifyById(id) { applyAction(it, action) }
     }
 
-    /** Executes a bulk action */
-    suspend fun execBulkAction(body: LogsRequest.BulkAction): List<LogEntryModel> {
-        return find(body.filter)
-            .map { applyAction(it, body.action) }
-            .map { update(it) }
-    }
-
     /**
      * Applies the given action to the given entry.
      *
@@ -48,6 +41,9 @@ interface LogsStorage {
         }
     }
 
+    /**
+     * A no-op implementation of [LogsStorage]
+     */
     class Null : LogsStorage {
         override suspend fun getById(id: String): LogEntryModel? {
             return null
@@ -61,8 +57,10 @@ interface LogsStorage {
             return Paged.empty()
         }
 
-        override suspend fun find(filter: LogsRequest.BulkAction.Filter): List<LogEntryModel> {
-            return emptyList()
+        override suspend fun execBulkAction(action: LogsRequest.BulkAction): LogsRequest.BulkResponse {
+            return LogsRequest.BulkResponse(
+                numChanged = 0,
+            )
         }
     }
 }

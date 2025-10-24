@@ -2,9 +2,9 @@ package de.peekandpoke.kraft.semanticui.forms
 
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.components.key
 import de.peekandpoke.kraft.semanticui.forms.UiCheckBoxComponent.Options
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.html.key
 import de.peekandpoke.ultra.html.onChange
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.browser.document

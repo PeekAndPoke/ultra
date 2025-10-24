@@ -4,7 +4,6 @@ import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.routing.RouterComponent
-import de.peekandpoke.kraft.routing.router
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.Tag
@@ -16,22 +15,14 @@ fun Tag.AddonExamplesApp() = comp {
 
 class AddonExamplesApp(ctx: NoProps) : PureComponent(ctx) {
 
-    //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
-
-    @Suppress("unused")
-    private val activeRoute by subscribingTo(router.current)
-
-    //  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
-
     override fun VDom.render() {
-
         ui.container {
             ui.basic.segment {
-                ui.header H1 { +"KRAFT Usage Examples" }
+                ui.header H1 { +"KRAFT AddOns" }
             }
 
             ui.basic.segment {
-                RouterComponent(router = router)
+                RouterComponent()
             }
         }
     }

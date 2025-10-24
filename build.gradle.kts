@@ -1,3 +1,7 @@
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
+
 buildscript {
     repositories {
         mavenCentral()
@@ -43,6 +47,17 @@ subprojects {
 
     tasks.withType<AbstractArchiveTask>().configureEach {
         archiveBaseName.convention(nameFromPath)
+    }
+}
+
+rootProject.plugins.withType<YarnPlugin> {
+    rootProject.the<YarnRootExtension>().apply {
+        // Don't fail the build when yarn.lock changes (optional but common)
+        yarnLockMismatchReport = YarnLockMismatchReport.WARNING
+        // Always just regenerate/replace yarn.lock
+        yarnLockAutoReplace = true
+        // Optional: if a new lock didn't exist before, don't spam about it
+        reportNewYarnLock = false
     }
 }
 

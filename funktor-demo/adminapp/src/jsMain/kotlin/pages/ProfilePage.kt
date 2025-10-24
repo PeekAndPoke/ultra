@@ -5,7 +5,7 @@ import de.peekandpoke.funktor.demo.adminapp.State
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.semanticui.toasts.ToastsManager.Companion.toasts
+import de.peekandpoke.kraft.toasts.ToastsManager.Companion.toasts
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui

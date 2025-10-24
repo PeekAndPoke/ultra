@@ -9,8 +9,6 @@ import de.peekandpoke.funktor.logging.api.LoggingApiClient
 import de.peekandpoke.kraft.kraftApp
 import de.peekandpoke.kraft.routing.Router.Companion.router
 import de.peekandpoke.kraft.semanticui.semanticUI
-import de.peekandpoke.kraft.semanticui.toasts
-import de.peekandpoke.kraft.semanticui.toasts.ToastsStage
 import de.peekandpoke.kraft.vdom.preact.PreactVDomEngine
 import io.peekandpoke.funktor.demo.common.AdminUserModel
 import kotlinx.browser.window
@@ -46,13 +44,7 @@ val funktorLogging = LoggingUi(
 )
 
 val kraft = kraftApp {
-    semanticUI {
-        toasts {
-            stageOptions = ToastsStage.Options(
-                positioning = { top.right }
-            )
-        }
-    }
+    semanticUI()
 
     routing {
         usePathStrategy()

@@ -1,26 +1,32 @@
-package de.peekandpoke.kraft.semanticui.toasts
+package de.peekandpoke.kraft.toasts
 
 import de.peekandpoke.kraft.components.AutoMountedUi
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.getAttributeRecursive
-import de.peekandpoke.kraft.components.key
-import de.peekandpoke.kraft.semanticui.toasts.ToastsManager.Handle
+import de.peekandpoke.kraft.toasts.ToastsManager.Handle
 import de.peekandpoke.ultra.common.TypedKey
 import de.peekandpoke.ultra.common.model.Message
 import de.peekandpoke.ultra.common.model.Messages
+import de.peekandpoke.ultra.html.css
+import de.peekandpoke.ultra.html.key
 import de.peekandpoke.ultra.html.onClick
-import de.peekandpoke.ultra.semanticui.SemanticFn
-import de.peekandpoke.ultra.semanticui.SemanticIconFn
-import de.peekandpoke.ultra.semanticui.icon
-import de.peekandpoke.ultra.semanticui.noui
-import de.peekandpoke.ultra.semanticui.semantic
-import de.peekandpoke.ultra.semanticui.semanticIcon
-import de.peekandpoke.ultra.semanticui.ui
 import de.peekandpoke.ultra.streams.Stream
 import de.peekandpoke.ultra.streams.StreamSource
 import de.peekandpoke.ultra.streams.Unsubscribe
 import kotlinx.browser.window
+import kotlinx.css.Border
+import kotlinx.css.BorderStyle
+import kotlinx.css.Color
+import kotlinx.css.Display
+import kotlinx.css.Padding
+import kotlinx.css.backgroundColor
+import kotlinx.css.border
+import kotlinx.css.display
+import kotlinx.css.padding
+import kotlinx.css.px
 import kotlinx.html.FlowContent
+import kotlinx.html.div
+import kotlinx.html.span
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -35,27 +41,25 @@ class ToastsManager(
 
         val Component<*>.toasts: ToastsManager get() = getAttributeRecursive(key)
 
-        val DefaultRenderer: ToastRenderer = { handle ->
+        val DefaultToastsRenderer: ToastRenderer = { handle ->
 
-            val styleFn: SemanticFn = when (handle.message.type) {
-                Message.Type.info -> semantic { green }
-                Message.Type.warning -> semantic { warning }
-                Message.Type.error -> semantic { error }
-            }
+            div {
+                css {
+                    padding = Padding(8.px)
+                    display = Display.inlineBlock
+                    border = Border(1.px, BorderStyle.solid, Color.grey)
 
-            val iconFn: SemanticIconFn = when (handle.message.type) {
-                Message.Type.info -> semanticIcon { icon.check_circle }
-                Message.Type.warning -> semanticIcon { icon.exclamation_circle }
-                Message.Type.error -> semanticIcon { icon.exclamation_circle }
-            }
-
-            ui.floating.toastBox.transition.visible {
-                ui.styleFn().toast.compact.visible {
-                    key = handle.id.toString()
-                    onClick { handle.close() }
-                    icon.iconFn().render()
-                    noui.content { +handle.message.text }
+                    backgroundColor = when (handle.message.type) {
+                        Message.Type.info -> Color.green
+                        Message.Type.warning -> Color.yellow
+                        Message.Type.error -> Color.red
+                    }
                 }
+
+                key = handle.id.toString()
+                onClick { handle.close() }
+
+                span { +handle.message.text }
             }
         }
     }
@@ -68,13 +72,15 @@ class ToastsManager(
 
     class Builder internal constructor() {
         var defaultDuration: Duration? = 7.seconds
-        var defaultRenderer: ToastRenderer = DefaultRenderer
+        var defaultRenderer: ToastRenderer = DefaultToastsRenderer
         var stageOptions: ToastsStage.Options = ToastsStage.Options()
 
-        internal fun build() = Settings(
-            defaultDuration = defaultDuration,
-            defaultRenderer = defaultRenderer,
-            stageOptions = stageOptions,
+        internal fun build() = ToastsManager(
+            settings = Settings(
+                defaultDuration = defaultDuration,
+                defaultRenderer = defaultRenderer,
+                stageOptions = stageOptions,
+            )
         )
     }
 
@@ -191,7 +197,7 @@ class ToastsManager(
     private fun Toast.nextHandle(renderer: ToastRenderer): Handle {
         val handleId = ++handleCounter
 
-        console.log("new handle: $handleId")
+//        console.log("new handle: $handleId")
 
         return Handle(
             id = handleId,

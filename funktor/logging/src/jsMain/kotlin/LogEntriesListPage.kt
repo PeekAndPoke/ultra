@@ -91,11 +91,13 @@ class LogEntriesListPage(ctx: Ctx<Props>) : Component<LogEntriesListPage.Props>(
                 ui.three.wide.field {
                     label { +"State" }
 
-                    ui.horizontal.list {
+                    val entries = LogEntryModel.State.entries
+
+                    ui.number(entries.size).column.grid {
                         LogEntryModel.State.entries.forEach { state ->
-                            noui.item {
+                            noui.column {
                                 val selected = filter.state.contains(state)
-                                ui.given(selected) { blue }.label {
+                                ui.given(selected) { blue }.fluid.label {
                                     onClick { filter = filter.copy(state = filter.state.toggle(state)).firstPage() }
                                     +state.name
                                 }
@@ -123,7 +125,11 @@ class LogEntriesListPage(ctx: Ctx<Props>) : Component<LogEntriesListPage.Props>(
 
                     ui.primary.icon.button {
                         title = "Bulk Actions"
-                        onClick { showLogsBulkActionPopup(props.ui) }
+                        onClick {
+                            showLogsBulkActionPopup(props.ui) {
+                                loader.reloadSilently()
+                            }
+                        }
                         icon.tools()
                     }
                 }

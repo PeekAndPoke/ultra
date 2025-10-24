@@ -1,5 +1,6 @@
 package de.peekandpoke.kraft.semanticui.popups
 
+import de.peekandpoke.kraft.popups.PopupsManager
 import de.peekandpoke.kraft.utils.Vector2D
 import de.peekandpoke.ultra.semanticui.SemanticTag
 import de.peekandpoke.ultra.semanticui.ui
@@ -18,7 +19,7 @@ fun PopupsManager.ShowHoverPopup.topLeft(
 
         Vector2D(
             x = rect.left + contentSize.x,
-            y = rect.top - contentSize.y - 7
+            y = rect.top - (contentSize.y + 7)
         )
     }
 

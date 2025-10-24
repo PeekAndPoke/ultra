@@ -1,10 +1,20 @@
-package de.peekandpoke.kraft.semanticui.toasts
+package de.peekandpoke.kraft.toasts
 
+import de.peekandpoke.kraft.KraftApp
+import de.peekandpoke.kraft.KraftDsl
 import de.peekandpoke.ultra.common.model.Message
 import de.peekandpoke.ultra.common.safeEnumOrNull
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+
+@KraftDsl
+fun KraftApp.Builder.toasts(settings: ToastsManager.Builder.() -> Unit = {}) = apply {
+    setAttribute(
+        key = ToastsManager.key,
+        value = ToastsManager.Builder().apply(settings).build(),
+    )
+}
 
 @Serializable
 data class Toast(

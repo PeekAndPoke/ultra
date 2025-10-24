@@ -68,12 +68,10 @@ class LoggingApi(converter: OutgoingConverter) : ApiRoutes("logging", converter)
             isSuperUser()
         }.handle { body ->
 
-            val result: List<LogEntryModel> = logging.logsStorage.execBulkAction(body)
+            val result: LogsRequest.BulkResponse = logging.logsStorage.execBulkAction(body)
 
-            ApiResponse.okOrNotFound(
-                LogsRequest.BulkResponse(
-                    numChanged = result.size,
-                )
+            ApiResponse.ok(
+                result
             )
         }
     }

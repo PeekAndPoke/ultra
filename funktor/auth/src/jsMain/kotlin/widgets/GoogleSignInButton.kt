@@ -4,8 +4,8 @@ import com.benasher44.uuid.uuid4
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.components.data
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.html.data
 import de.peekandpoke.ultra.semanticui.noui
 import kotlinx.browser.window
 import kotlinx.html.Tag

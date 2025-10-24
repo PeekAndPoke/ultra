@@ -3,9 +3,9 @@ package de.peekandpoke.kraft.routing
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.components.key
 import de.peekandpoke.kraft.routing.Router.Companion.router
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.html.key
 import de.peekandpoke.ultra.streams.ops.distinct
 import de.peekandpoke.ultra.streams.ops.map
 import kotlinx.browser.window

@@ -1,9 +1,12 @@
 package de.peekandpoke.kraft
 
 import de.peekandpoke.kraft.components.AutoMountedUi
+import de.peekandpoke.kraft.modals.modals
+import de.peekandpoke.kraft.popups.popups
 import de.peekandpoke.kraft.routing.RootRouterBuilder
 import de.peekandpoke.kraft.routing.Router
 import de.peekandpoke.kraft.routing.RouterDsl
+import de.peekandpoke.kraft.toasts.toasts
 import de.peekandpoke.kraft.utils.ResponsiveController
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.kraft.vdom.VDomEngine
@@ -29,10 +32,17 @@ class KraftApp internal constructor(
         private val router = RootRouterBuilder()
 
         init {
+            // We always add the default Modals manager
+            modals()
+            // We always add the default toasts manager
+            toasts()
+            // We always add the default Popups manager
+            popups()
             // We always have the default responsive controller
             responsive(ResponsiveController())
         }
 
+        @RouterDsl
         fun <T> setAttribute(key: TypedKey<T>, value: T) = apply {
             appAttributes[key] = value
         }
@@ -42,6 +52,7 @@ class KraftApp internal constructor(
             router.block()
         }
 
+        @RouterDsl
         fun responsive(ctrl: ResponsiveController) = setAttribute(ResponsiveController.key, ctrl)
 
         internal fun build(): KraftApp {

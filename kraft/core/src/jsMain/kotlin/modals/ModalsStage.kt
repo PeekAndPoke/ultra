@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.common
+package de.peekandpoke.kraft.modals
 
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx

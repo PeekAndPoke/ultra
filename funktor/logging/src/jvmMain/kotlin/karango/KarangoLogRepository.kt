@@ -6,6 +6,7 @@ import de.peekandpoke.karango.KarangoCursor
 import de.peekandpoke.karango.aql.CONTAINS
 import de.peekandpoke.karango.aql.DESC
 import de.peekandpoke.karango.aql.FOR
+import de.peekandpoke.karango.aql.ForLoop
 import de.peekandpoke.karango.aql.GTE
 import de.peekandpoke.karango.aql.IN
 import de.peekandpoke.karango.aql.IS_NULL
@@ -21,6 +22,7 @@ import de.peekandpoke.karango.vault.KarangoDriver
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.log.NullLog
 import de.peekandpoke.ultra.vault.Stored
+import de.peekandpoke.ultra.vault.lang.IterableExpr
 import de.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 
 class KarangoLogRepository(
@@ -84,24 +86,19 @@ class KarangoLogRepository(
         }
     }
 
-    suspend fun findBy(filter: LogsRequest.BulkAction.Filter) = find {
-        FOR(repo) { entry ->
-
-            filter.from?.let {
-                FILTER(entry.createdAt GTE it.toEpochMillis())
-            }
-
-            filter.to?.let {
-                FILTER(entry.createdAt LT it.toEpochMillis())
-            }
-
-            filter.states?.let {
-                FILTER(IS_NULL(entry.state) OR (entry.state IN it))
-            }
-
-            SORT(entry.createdAt.DESC)
-
-            RETURN(entry)
+    fun ForLoop.filter(entry: IterableExpr<KarangoLogEntry>, filter: LogsRequest.BulkAction.Filter) {
+        filter.from?.let {
+            FILTER(entry.createdAt GTE it.toEpochMillis())
         }
+
+        filter.to?.let {
+            FILTER(entry.createdAt LT it.toEpochMillis())
+        }
+
+        filter.states?.let {
+            FILTER(IS_NULL(entry.state) OR (entry.state IN it))
+        }
+
+        SORT(entry.createdAt.DESC)
     }
 }

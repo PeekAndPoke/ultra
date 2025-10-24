@@ -2,7 +2,6 @@ package de.peekandpoke.kraft.components
 
 import de.peekandpoke.kraft.KraftDsl
 import de.peekandpoke.kraft.vdom.VDomTagConsumer
-import kotlinx.html.CommonAttributeGroupFacade
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 
@@ -10,46 +9,6 @@ interface AutoMountedUi {
     val priority: Int get() = 0
 
     fun mount(flow: FlowContent)
-}
-
-/**
- * Markup Element key
- */
-@KraftDsl
-var CommonAttributeGroupFacade.key: String
-    get() = attributes["key"] ?: ""
-    set(value) {
-        attributes["key"] = value
-    }
-
-/**
- * Gets the "debug-id" attribute
- */
-@KraftDsl
-fun CommonAttributeGroupFacade.debugId(): String? = attributes["debug-id"]
-
-/**
- * Sets the "debug-id" attribute to [id]
- */
-@KraftDsl
-fun CommonAttributeGroupFacade.debugId(id: String) {
-    (consumer as? VDomTagConsumer)
-        ?.takeIf { it.isDebugMode }
-        ?.let { attributes["debug-id"] = id }
-}
-
-/**
- * Gets the "data-[id]" attribute
- */
-@KraftDsl
-fun CommonAttributeGroupFacade.data(id: String): String? = attributes["data-$id"]
-
-/**
- * Sets the "data-[id]" attribute to [value]
- */
-@KraftDsl
-fun CommonAttributeGroupFacade.data(id: String, value: String) {
-    attributes["data-$id"] = value
 }
 
 /**

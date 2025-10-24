@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.semanticui.popups
+package de.peekandpoke.kraft.popups
 
 import de.peekandpoke.kraft.components.AutoMountedUi
 import de.peekandpoke.kraft.components.Component
@@ -22,11 +22,37 @@ import org.w3c.dom.events.UIEvent
 
 typealias PopupPositionFn = (target: HTMLElement, contentSize: Vector2D) -> Vector2D
 
-class PopupsManager : Stream<List<PopupsManager.Handle>>, AutoMountedUi {
+typealias PopupComponentFactory = FlowContent.(target: HTMLElement, positioning: PopupPositionFn, handle: PopupsManager.Handle, content: PopupContentRenderer) -> Unit
+
+class PopupsManager(
+    val settings: Settings,
+) : Stream<List<PopupsManager.Handle>>, AutoMountedUi {
     companion object {
         val key = TypedKey<PopupsManager>("popups")
 
         val Component<*>.popups: PopupsManager get() = getAttributeRecursive(key)
+
+        val DefaultPopupFactory: PopupComponentFactory = { target, positioning, handle, content ->
+            PopupComponent(target = target, positioning = positioning, handle = handle, content = content)
+        }
+    }
+
+    data class Settings(
+        val popupRenderer: PopupComponentFactory,
+    )
+
+    class Builder internal constructor() {
+        private var popupFactory: PopupComponentFactory = DefaultPopupFactory
+
+        fun popupFactory(factory: PopupComponentFactory) {
+            popupFactory = factory
+        }
+
+        internal fun build() = PopupsManager(
+            Settings(
+                popupRenderer = popupFactory,
+            )
+        )
     }
 
     class ShowHoverPopup(private val popups: PopupsManager) {
@@ -34,7 +60,7 @@ class PopupsManager : Stream<List<PopupsManager.Handle>>, AutoMountedUi {
         fun show(
             tag: CommonAttributeGroupFacade,
             positioning: (target: HTMLElement, contentSize: Vector2D) -> Vector2D,
-            view: PopupRenderer,
+            view: PopupContentRenderer,
         ) {
             with(tag) {
                 var handle: Handle? = null
@@ -55,7 +81,7 @@ class PopupsManager : Stream<List<PopupsManager.Handle>>, AutoMountedUi {
                         popups.add { h ->
                             handle = h
 
-                            PopupComponent(target = target, positioning = positioning, handle = h, content = view)
+                            popups.settings.popupRenderer(this, target, positioning, h, view)
                         }
                     }
                 }
@@ -68,13 +94,13 @@ class PopupsManager : Stream<List<PopupsManager.Handle>>, AutoMountedUi {
 
     class Handle internal constructor(
         val id: Int,
-        val view: PopupRenderer,
+        val view: PopupContentRenderer,
         internal val manager: PopupsManager,
     ) {
         internal val onCloseHandlers = mutableListOf<() -> Unit>()
 
         /**
-         * Adds a listener that is called when the popup gets closed
+         * Adds a listener which is called when the popup gets closed
          */
         fun onClose(onClose: () -> Unit) = apply {
             onCloseHandlers.add(onClose)
@@ -116,7 +142,7 @@ class PopupsManager : Stream<List<PopupsManager.Handle>>, AutoMountedUi {
     fun showContextMenu(
         event: UIEvent,
         positioning: Positioning = Positioning.BottomLeft,
-        view: PopupRenderer,
+        view: PopupContentRenderer,
     ): Handle {
         event.stopPropagation()
         closeAll()
@@ -148,7 +174,7 @@ class PopupsManager : Stream<List<PopupsManager.Handle>>, AutoMountedUi {
         }
     }
 
-    fun showContextMenu(event: UIEvent, view: PopupRenderer): Handle {
+    fun showContextMenu(event: UIEvent, view: PopupContentRenderer): Handle {
         event.stopPropagation()
         closeAll()
 
@@ -167,21 +193,19 @@ class PopupsManager : Stream<List<PopupsManager.Handle>>, AutoMountedUi {
         }
     }
 
-    internal fun add(element: HTMLElement, content: PopupRenderer, positioning: PopupPositionFn): Handle {
+    fun closeAll() {
+        streamSource.modify { emptyList() }
+    }
+
+    internal fun add(element: HTMLElement, content: PopupContentRenderer, positioning: PopupPositionFn): Handle {
         return add { handle ->
-            PopupComponent(
-                target = element,
-                positioning = positioning,
-                handle = handle,
-                content = content,
-            )
+            settings.popupRenderer(this, element, positioning, handle, content)
         }
     }
 
-    internal fun add(view: PopupRenderer): Handle {
-
-        return Handle(id = ++handleCounter, view = view, manager = this).apply {
-            streamSource.modify { this.plus(this@apply) }
+    internal fun add(view: PopupContentRenderer): Handle {
+        return Handle(id = ++handleCounter, view = view, manager = this).also {
+            streamSource.modify { plus(it) }
         }
     }
 
@@ -195,10 +219,6 @@ class PopupsManager : Stream<List<PopupsManager.Handle>>, AutoMountedUi {
         streamSource.modify {
             filterNot { it.id == handle.id }
         }
-    }
-
-    fun closeAll() {
-        streamSource.modify { emptyList() }
     }
 
     private fun getPageCoords(element: HTMLElement): Rectangle {

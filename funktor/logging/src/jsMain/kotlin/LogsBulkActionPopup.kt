@@ -2,19 +2,19 @@ package de.peekandpoke.funktor.logging
 
 import de.peekandpoke.funktor.logging.api.LogEntryModel
 import de.peekandpoke.funktor.logging.api.LogsRequest
-import de.peekandpoke.kraft.common.ModalsManager
-import de.peekandpoke.kraft.common.ModalsManager.Companion.modals
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.components.debugId
 import de.peekandpoke.kraft.forms.formController
+import de.peekandpoke.kraft.modals.ModalsManager
+import de.peekandpoke.kraft.modals.ModalsManager.Companion.modals
 import de.peekandpoke.kraft.semanticui.forms.UiDateTimeField
 import de.peekandpoke.kraft.semanticui.modals.FadingModal
 import de.peekandpoke.kraft.utils.doubleClickProtection
 import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.ultra.common.datetime.MpTimezone
 import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
+import de.peekandpoke.ultra.html.debugId
 import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.noui
@@ -25,8 +25,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 
-fun <T> Component<T>.showLogsBulkActionPopup(ui: LoggingUi) {
+fun <T> Component<T>.showLogsBulkActionPopup(ui: LoggingUi, onClose: (() -> Unit)? = null) {
     modals.show { handle ->
+        handle.onClose { onClose?.invoke() }
+
         LogsBulkActionPopup(handle, ui)
     }
 }

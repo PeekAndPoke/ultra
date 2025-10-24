@@ -1,11 +1,11 @@
-package de.peekandpoke.kraft.semanticui.popups
+package de.peekandpoke.kraft.popups
 
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.components.key
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.html.css
+import de.peekandpoke.ultra.html.key
 import kotlinx.browser.document
 import kotlinx.css.Display
 import kotlinx.css.Position
@@ -57,9 +57,6 @@ class PopupsStage(ctx: Ctx<Props>) : Component<PopupsStage.Props>(ctx) {
             css {
                 position = Position.absolute
             }
-//            key = current.hashCode().toString()
-
-//            console.log("ModelDialogStage", current.hashCode().toString(), current.size)
 
             current.forEach {
                 div {

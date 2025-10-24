@@ -12,6 +12,11 @@ if (devServer) {
 
     // History fallback so that reloads work properly
     devServer.historyApiFallback = true
+
+    // Remove static directories that should not be watched
+    // Otherwise we get frontend reloads f.e. when log entries are written
+    devServer.static = devServer.static
+        .filter(it => it.includes("build"))
 }
 
 console.log(config)
