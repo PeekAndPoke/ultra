@@ -4,7 +4,6 @@ import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.routing.RouterComponent
-import de.peekandpoke.kraft.routing.router
 import de.peekandpoke.kraft.vdom.VDom
 import kotlinx.html.Tag
 import kotlinx.html.div
@@ -15,13 +14,6 @@ fun Tag.App() = comp {
 }
 
 class App(ctx: NoProps) : PureComponent(ctx) {
-
-    //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
-
-    @Suppress("unused")
-    private val activeRoute by subscribingTo(router.current)
-
-    //  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
 
@@ -35,7 +27,7 @@ class App(ctx: NoProps) : PureComponent(ctx) {
             }
 
             div("article") {
-                RouterComponent(router = router)
+                RouterComponent()
             }
         }
     }

@@ -7,32 +7,32 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.vault.lang.ARRAY
 import de.peekandpoke.ultra.vault.lang.TerminalExpr
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-Array-FIRST-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "FIRST ([])",
             FIRST(ARRAY<Any>()),
             null
         ),
-        row(
+        tuple(
             "IS_NULL( FIRST ([]) )",
             IS_NULL(FIRST(ARRAY<Any>())),
             true
         ),
-        row(
+        tuple(
             "FIRST  (['a'])",
             FIRST(ARRAY("a".aql)),
             "a"
         ),
-        row(
+        tuple(
             "FIRST  (['a', 'b'])",
             FIRST(ARRAY("a".aql, "b".aql)),
             "a"

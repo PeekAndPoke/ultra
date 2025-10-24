@@ -6,30 +6,30 @@ import de.peekandpoke.karango.aql.SOUNDEX
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-String-SOUNDEX-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "SOUNDEX( \"example\" )",
             SOUNDEX("example".aql),
             "E251"
         ),
-        row(
+        tuple(
             "SOUNDEX( \"ekzampul\")",
             SOUNDEX("ekzampul".aql),
             "E251"
         ),
-        row(
+        tuple(
             "SOUNDEX( \"soundex\" )",
             SOUNDEX("soundex".aql),
             "S532"
         ),
-        row(
+        tuple(
             "SOUNDEX( \"sounteks\" )",
             SOUNDEX("sounteks".aql),
             "S532"

@@ -7,71 +7,71 @@ import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.E2ePerson
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.vault.lang.ARRAY
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-TypeCheck-IS_OBJECT-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "IS_OBJECT(object) - empty object",
             IS_OBJECT(mapOf<Any, Any>().aql),
             true
         ),
-        row(
+        tuple(
             "IS_OBJECT(object) - object with properties",
             IS_OBJECT(E2ePerson("name", 10).aql),
             true
         ),
-        row(
+        tuple(
             "IS_OBJECT(true)",
             IS_OBJECT(true.aql),
             false
         ),
-        row(
+        tuple(
             "IS_OBJECT(false)",
             IS_OBJECT(true.aql),
             false
         ),
-        row(
+        tuple(
             "IS_OBJECT(null)",
             IS_OBJECT(null.aql),
             false
         ),
-        row(
+        tuple(
             "IS_OBJECT(0)",
             IS_OBJECT(0.aql),
             false
         ),
-        row(
+        tuple(
             "IS_OBJECT(1)",
             IS_OBJECT(1.aql),
             false
         ),
-        row(
+        tuple(
             "IS_OBJECT(\"a\")",
             IS_OBJECT("a".aql),
             false
         ),
-        row(
+        tuple(
             "IS_OBJECT(\"\")",
             IS_OBJECT("".aql),
             false
         ),
-        row(
+        tuple(
             "IS_OBJECT([0]) - ARRAY",
             IS_OBJECT(ARRAY(0.aql)),
             false
         ),
-        row(
+        tuple(
             "IS_OBJECT([0]) - listOf",
             IS_OBJECT(listOf(0).aql),
             false
         ),
-        row(
+        tuple(
             "IS_OBJECT([object])",
             IS_OBJECT(ARRAY(E2ePerson("name", 10).aql)),
             false

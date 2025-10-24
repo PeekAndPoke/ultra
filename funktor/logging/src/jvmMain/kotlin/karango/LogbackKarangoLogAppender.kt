@@ -11,7 +11,7 @@ import de.peekandpoke.karango.slumber.KarangoCodec
 import de.peekandpoke.karango.toArangoDbWithoutCache
 import de.peekandpoke.karango.vault.KarangoDriver
 import de.peekandpoke.ultra.common.network.NetworkUtils
-import de.peekandpoke.ultra.logging.LogLevel
+import de.peekandpoke.ultra.log.LogLevel
 import de.peekandpoke.ultra.vault.Database
 import de.peekandpoke.ultra.vault.NullEntityCache
 import io.ktor.server.application.*

@@ -3,9 +3,11 @@
 import Deps.Test.configureJvmTests
 
 plugins {
+    base
     kotlin("multiplatform")
     kotlin("plugin.serialization")
-    id("io.kotest.multiplatform")
+    id("io.kotest")
+    id("com.google.devtools.ksp")
     id("com.vanniktech.maven.publish")
 }
 
@@ -15,6 +17,11 @@ val VERSION_NAME: String by project
 group = FUNKTOR_GROUP
 version = VERSION_NAME
 
+// This affects only the **filename**, not Maven coordinates
+base {
+    archivesName.set("funktor-core")
+}
+
 Docs {
     useEmptyJavadoc()
 }
@@ -22,7 +29,6 @@ Docs {
 kotlin {
     js {
         browser {}
-
     }
 
     jvmToolchain(Deps.jvmTargetVersion)
@@ -43,7 +49,7 @@ kotlin {
                 api(Deps.KotlinLibs.uuid)
 
                 api(project(":ultra:common"))
-                api(project(":ultra:logging"))
+                api(project(":ultra:log"))
                 api(project(":ultra:security"))
                 api(project(":ultra:slumber"))
                 api(project(":ultra:vault"))

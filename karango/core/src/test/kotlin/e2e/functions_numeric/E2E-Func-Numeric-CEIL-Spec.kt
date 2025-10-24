@@ -6,35 +6,35 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-Numeric-CEIL-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "CEIL(2)",
             CEIL(2.aql),
             2.0
         ),
-        row(
+        tuple(
             "CEIL(2.49)",
             CEIL(2.49.aql),
             3.0
         ),
-        row(
+        tuple(
             "CEIL(2.50)",
             CEIL(2.50.aql),
             3.0
         ),
-        row(
+        tuple(
             "CEIL(-2.50)",
             CEIL((-2.50).aql),
             -2.0
         ),
-        row(
+        tuple(
             "CEIL(-2.51)",
             CEIL((-2.51).aql),
             -2.0

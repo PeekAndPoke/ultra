@@ -2,7 +2,7 @@ package de.peekandpoke.funktor.logging.karango
 
 import de.peekandpoke.funktor.logging.api.LogEntryModel
 import de.peekandpoke.karango.Karango
-import de.peekandpoke.ultra.logging.LogLevel
+import de.peekandpoke.ultra.log.LogLevel
 import de.peekandpoke.ultra.vault.Storable
 
 @Karango

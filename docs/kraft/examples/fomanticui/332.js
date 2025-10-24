@@ -1,2 +1,2 @@
-(globalThis.webpackChunkfomanticui=globalThis.webpackChunkfomanticui||[]).push([[332],{332:()=>{Prism.languages.jsonp=Prism.languages.extend("json",{punctuation:/[{}[\]();,.]/}),Prism.languages.insertBefore("jsonp","punctuation",{function:/(?!\s)[_$a-zA-Z\xA0-\uFFFF](?:(?!\s)[$\w\xA0-\uFFFF])*(?=\s*\()/})}}]);
+(globalThis.webpackChunkkraft_examples_fomanticui=globalThis.webpackChunkkraft_examples_fomanticui||[]).push([[332],{332:()=>{Prism.languages.jsonp=Prism.languages.extend("json",{punctuation:/[{}[\]();,.]/}),Prism.languages.insertBefore("jsonp","punctuation",{function:/(?!\s)[_$a-zA-Z\xA0-\uFFFF](?:(?!\s)[$\w\xA0-\uFFFF])*(?=\s*\()/})}}]);
 //# sourceMappingURL=332.js.map

@@ -1,11 +1,11 @@
 package de.peekandpoke.kraft.semanticui.forms.old.misc
 
 import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.key
 import de.peekandpoke.kraft.forms.FormFieldComponent
 import de.peekandpoke.kraft.forms.validation.Rule
 import de.peekandpoke.kraft.semanticui.forms.renderErrors
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.html.key
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.div
 

@@ -1,27 +1,39 @@
 package de.peekandpoke.kraft.routing
 
 /**
- * A [RouterMiddleware] is just a function with [RouterMiddlewareContext] as the receiver
+ * A router middleware function
  */
-typealias RouterMiddleware = RouterMiddlewareContext.() -> Unit
+typealias RouterMiddlewareFn = (RouterMiddlewareContext) -> RouterMiddlewareResult
 
 /**
  * Helper for defining a router middleware
  */
-fun routerMiddleware(func: RouterMiddleware): RouterMiddleware = func
+fun routerMiddleware(func: RouterMiddlewareFn): RouterMiddlewareFn = func
 
 /**
- * The context for all middlewares
+ * Context passed to a [RouterMiddlewareFn]
  */
-class RouterMiddlewareContext(
-    val router: Router,
+data class RouterMiddlewareContext(
     val uri: String,
-    val match: Route.Match,
 ) {
-    var redirectToUri: String? = null
-        private set
+    fun redirect(uri: String) = RouterMiddlewareResult.Redirect(uri)
 
-    fun redirectTo(uri: String) {
-        redirectToUri = uri
-    }
+    fun proceed() = RouterMiddlewareResult.Proceed
+}
+
+/**
+ * The result of a [RouterMiddlewareFn]
+ */
+sealed interface RouterMiddlewareResult {
+    /**
+     * When [Proceed] is returned, the routing will continue normally
+     */
+    object Proceed : RouterMiddlewareResult
+
+    /**
+     * When [Redirect] is returned, the current routing be stepped and a redirect to [uri] will happen
+     */
+    data class Redirect(
+        val uri: String,
+    ) : RouterMiddlewareResult
 }

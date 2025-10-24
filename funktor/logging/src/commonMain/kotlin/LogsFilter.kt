@@ -3,7 +3,7 @@ package de.peekandpoke.funktor.logging
 import de.peekandpoke.funktor.logging.api.LogEntryModel
 import de.peekandpoke.ultra.common.safeEnumOf
 import de.peekandpoke.ultra.common.safeEnumsOf
-import de.peekandpoke.ultra.logging.LogLevel
+import de.peekandpoke.ultra.log.LogLevel
 import kotlinx.serialization.Serializable
 
 @Serializable

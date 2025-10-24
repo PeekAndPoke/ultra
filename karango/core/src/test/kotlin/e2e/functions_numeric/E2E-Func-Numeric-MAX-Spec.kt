@@ -6,20 +6,20 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-Numeric-MAX-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "MAX( [] )",
             MAX(listOf<Number>().aql),
             null
         ),
-        row(
+        tuple(
             "MAX( [5, 9, -2, 1] )",
             MAX(listOf(5, 9, -2, 1).aql),
             9L

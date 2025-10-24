@@ -6,25 +6,25 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-Numeric-ABS-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "ABS (0)",
             ABS(0.aql),
             0.0
         ),
-        row(
+        tuple(
             "ABS (-1.1)",
             ABS((-1.1).aql),
             1.1
         ),
-        row(
+        tuple(
             "ABS (1.1)",
             ABS(1.1.aql),
             1.1

@@ -1,9 +1,9 @@
 package de.peekandpoke.ultra.slumber.builtin.primitive
 
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
 import de.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
-import io.kotest.data.row
 
 class BooleanAwakerSpec : AwakerSpecHelper(
     type = TypeRef.Boolean, nonNullSamples = nonNull, nullableSamples = nullable
@@ -18,21 +18,21 @@ class BooleanSlumberSpec : SlumbererSpecHelper(
  */
 private val nonNull = listOf(
     @Suppress("BooleanLiteralArgument")
-    row(true, true),
-    row(1, true),
-    row(2, true),
-    row(1.1, true),
-    row("true", true),
-    row("1", true),
-    row("2", true),
+    tuple(true, true),
+    tuple(1, true),
+    tuple(2, true),
+    tuple(1.1, true),
+    tuple("true", true),
+    tuple("1", true),
+    tuple("2", true),
 
     @Suppress("BooleanLiteralArgument")
-    row(false, false),
-    row(0, false),
-    row(0.9999, false),
-    row("0", false),
-    row("false", false),
-    row("stuff", false)
+    tuple(false, false),
+    tuple(0, false),
+    tuple(0.9999, false),
+    tuple("0", false),
+    tuple("false", false),
+    tuple("stuff", false)
 )
 
 /**

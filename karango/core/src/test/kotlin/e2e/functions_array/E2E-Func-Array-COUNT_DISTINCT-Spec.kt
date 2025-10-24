@@ -6,31 +6,31 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.vault.lang.ARRAY
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-Array-COUNT_DISTINCT-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "COUNT_DISTINCT ([])",
             COUNT_DISTINCT(ARRAY<Any>()),
             0L
         ),
-        row(
+        tuple(
             "COUNT_DISTINCT (['a'])",
             COUNT_DISTINCT(ARRAY("a".aql)),
             1L
         ),
-        row(
+        tuple(
             "COUNT_DISTINCT (['a', 'a'])",
             COUNT_DISTINCT(ARRAY("a".aql, "a".aql)),
             1L
         ),
-        row(
+        tuple(
             "COUNT_DISTINCT (['a', 'b', 'a'])",
             COUNT_DISTINCT(ARRAY("a".aql, "b".aql, "a".aql)),
             2L

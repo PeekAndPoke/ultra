@@ -6,60 +6,60 @@ import de.peekandpoke.karango.aql.SUBSTRING
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-String-SUBSTRING-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "SUBSTRING(\"abc\", 0)",
             SUBSTRING("abc".aql, 0.aql),
             "abc"
         ),
-        row(
+        tuple(
             "SUBSTRING(\"abc\", 1)",
             SUBSTRING("abc".aql, 1.aql),
             "bc"
         ),
-        row(
+        tuple(
             "SUBSTRING(\"abc\", -1)",
             SUBSTRING("abc".aql, (-1).aql),
             "c"
         ),
-        row(
+        tuple(
             "SUBSTRING(\"abc\", -2, 1)",
             SUBSTRING("abc".aql, (-2).aql, 1.aql),
             "b"
         ),
-        row(
+        tuple(
             "SUBSTRING(\"abc\", 1, 0)",
             SUBSTRING("abc".aql, 1.aql, 0.aql),
             ""
         ),
-        row(
+        tuple(
             "SUBSTRING(\"abc\", 1, 1)",
             SUBSTRING("abc".aql, 1.aql, 1.aql),
             "b"
         ),
-        row(
+        tuple(
             "SUBSTRING(\"abc\", 1, 10)",
             SUBSTRING("abc".aql, 1.aql, 10.aql),
             "bc"
         ),
-        row(
+        tuple(
             "SUBSTRING(\"abc\", 1, -1)",
             SUBSTRING("abc".aql, 1.aql, (-1).aql),
             ""
         ),
-        row(
+        tuple(
             "SUBSTRING(\"abc\", -5, 2)",
             SUBSTRING("abc".aql, (-5).aql, 2.aql),
             "ab"
         ),
-        row(
+        tuple(
             "SUBSTRING(\"abc\", -5, 3)",
             SUBSTRING("abc".aql, (-5).aql, 3.aql),
             "abc"

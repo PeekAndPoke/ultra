@@ -36,6 +36,10 @@
       <module name="ultra.common.test" target="17" />
       <module name="ultra.commonmp.jvmMain~1" target="1.8" />
       <module name="ultra.commonmp.jvmTest~1" target="1.8" />
+      <module name="ultra.funktor-demo.adminapp.jvmMain" target="17" />
+      <module name="ultra.funktor-demo.adminapp.jvmTest" target="17" />
+      <module name="ultra.funktor-demo.server.jvmMain" target="17" />
+      <module name="ultra.funktor-demo.server.jvmTest" target="17" />
       <module name="ultra.funktor.all.main" target="17" />
       <module name="ultra.funktor.all.test" target="17" />
       <module name="ultra.funktor.cluster.main" target="17" />
@@ -71,6 +75,9 @@
       <module name="ultra.ultra.datetime" target="17" />
       <module name="ultra.ultra.datetime.jvmMain" target="17" />
       <module name="ultra.ultra.datetime.jvmTest" target="17" />
+      <module name="ultra.ultra.logging" target="17" />
+      <module name="ultra.ultra.logging.jvmMain" target="17" />
+      <module name="ultra.ultra.logging.jvmTest" target="17" />
       <module name="ultra.ultra.mutator" target="17" />
       <module name="ultra.ultra.mutator.main" target="17" />
       <module name="ultra.ultra.mutator.test" target="17" />

@@ -5,7 +5,8 @@ import Deps.Test.configureJvmTests
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
-    id("io.kotest.multiplatform")
+    id("io.kotest")
+    id("com.google.devtools.ksp")
     id("com.vanniktech.maven.publish")
 }
 
@@ -62,7 +63,7 @@ kotlin {
         jvmMain {
             dependencies {
                 implementation(Deps.Ktor.Server.Test.host)
-                implementation(Deps.Test.kotest_framework_api)
+                implementation(Deps.Test.kotest_framework_engine)
                 implementation(Deps.Test.kotest_assertions_core)
             }
         }

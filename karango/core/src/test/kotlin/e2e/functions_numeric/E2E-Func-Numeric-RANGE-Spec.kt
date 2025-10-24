@@ -6,36 +6,36 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.vault.lang.TerminalExpr
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-Numeric-RANGE-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "RANGE( 1, 4 )",
             RANGE(1.aql, 4.aql),
             listOf(1L, 2L, 3L, 4L)
         ),
-        row(
+        tuple(
             "RANGE( 1, 4, 2 )",
             RANGE(1.aql, 4.aql, 2.aql),
             listOf(1.0, 3.0)
         ),
-        row(
+        tuple(
             "RANGE( 1, 4, -2 )",
             RANGE(1.aql, 4.aql, (-2).aql),
             null
         ),
-        row(
+        tuple(
             "RANGE( 1.5, 4.4 )",
             RANGE(1.5.aql, 4.4.aql),
             listOf(1L, 2L, 3L, 4L)
         ),
-        row(
+        tuple(
             "RANGE( 1.5, 4.4, 1.0 )",
             RANGE(1.5.aql, 4.4.aql, 1.0.aql),
             listOf(1.5, 2.5, 3.5)

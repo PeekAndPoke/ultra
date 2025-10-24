@@ -96,4 +96,3 @@ interface Mutator<V> : GetAndSet<V> {
 }
 
 fun <V, M : Mutator<V>> M.onChange(block: OnChange<V>): M = apply { observe(this, block) }
-

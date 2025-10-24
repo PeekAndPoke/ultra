@@ -18,7 +18,7 @@ class SetMutatorImpl<V>(initial: Set<V>, private val childToMutator: V.() -> Mut
     private inner class It : MutableIterator<Mutator<V>> {
 
         // We make a copy of the value, so we can modify while iteration
-        private val inner = get().toList().iterator()
+        private val inner = doGet().toList().iterator()
         private var current: V? = null
 
         override fun hasNext() = inner.hasNext()
@@ -39,9 +39,15 @@ class SetMutatorImpl<V>(initial: Set<V>, private val childToMutator: V.() -> Mut
 
         override fun remove() {
             current?.let {
-                get().remove(it)
+                doGet().remove(it)
             }
         }
+
+        /**
+         * Helper to work around compiler issues with casting to MutableSet<V>
+         */
+        @Suppress("USELESS_CAST", "NOTHING_TO_INLINE")
+        private inline fun doGet(): MutableSet<V> = get() as MutableSet<V>
     }
 
     override fun getChildMutator(child: V): Mutator<V> = childToMutator(child)

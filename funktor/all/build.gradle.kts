@@ -4,7 +4,8 @@ import Deps.Test.configureJvmTests
 
 plugins {
     kotlin("multiplatform")
-    id("io.kotest.multiplatform")
+    id("io.kotest")
+    id("com.google.devtools.ksp")
     id("com.vanniktech.maven.publish")
 }
 
@@ -30,6 +31,7 @@ kotlin {
             dependencies {
                 // add all funktor sub-projects
                 api(project(":funktor:core"))
+                api(project(":funktor:auth"))
                 api(project(":funktor:cluster"))
                 api(project(":funktor:logging"))
                 api(project(":funktor:insights"))
@@ -47,7 +49,6 @@ kotlin {
         }
 
         jsMain {
-
         }
 
         jsTest {
@@ -60,6 +61,8 @@ kotlin {
 
         jvmMain {
             dependencies {
+                api(Deps.JavaLibs.logback_classic)
+
                 api(project(":funktor:staticweb"))
             }
         }

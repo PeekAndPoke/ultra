@@ -11,13 +11,13 @@ import de.peekandpoke.karango.e2e.age
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.name
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.vault.Cursor
 import de.peekandpoke.ultra.vault.lang.ARRAY
 import de.peekandpoke.ultra.vault.lang.TerminalExpr
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
@@ -186,37 +186,37 @@ class `E2E-Func-Array-APPEND-Spec` : StringSpec({
     }
 
     val cases = listOf(
-        row(
+        tuple(
             "APPEND ([], [])",
             APPEND<Any>(ARRAY(), ARRAY()),
             listOf()
         ),
-        row(
+        tuple(
             "APPEND ([1], [])",
             APPEND(ARRAY(1.aql), ARRAY()),
             listOf(1)
         ),
-        row(
+        tuple(
             "APPEND ([], [1])",
             APPEND(ARRAY(), ARRAY(1.aql)),
             listOf(1)
         ),
-        row(
+        tuple(
             "APPEND ([1,2,3], [4,5,6])",
             APPEND(ARRAY(1.aql, 2.aql, 3.aql), listOf(4, 5, 6).aql),
             listOf(1, 2, 3, 4, 5, 6)
         ),
-        row(
+        tuple(
             "APPEND (['1'], ['2'])",
             APPEND(ARRAY("1".aql), ARRAY("2".aql)),
             listOf("1", "2")
         ),
-        row(
+        tuple(
             "APPEND ([1, 1, 2, 3], [3, 4, 5, 5], true)",
             APPEND(ARRAY(1.aql, 1.aql, 2.aql, 3.aql), ARRAY(3.aql, 4.aql, 5.aql, 5.aql), true.aql),
             listOf(1, 2, 3, 4, 5)
         ),
-        row(
+        tuple(
             "APPEND (['1'], ['2'], true)",
             APPEND(ARRAY("1".aql), ARRAY("2".aql), true.aql),
             listOf("1", "2")

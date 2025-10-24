@@ -1,8 +1,8 @@
 package de.peekandpoke.kraft.semanticui.pagination
 
-import de.peekandpoke.kraft.components.key
 import de.peekandpoke.ultra.common.model.Paged
 import de.peekandpoke.ultra.common.model.search.PagedSearchFilter
+import de.peekandpoke.ultra.html.key
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 

@@ -1,8 +1,12 @@
 package de.peekandpoke.kraft
 
-import de.peekandpoke.kraft.components.Automount
+import de.peekandpoke.kraft.components.AutoMountedUi
+import de.peekandpoke.kraft.modals.modals
+import de.peekandpoke.kraft.popups.popups
+import de.peekandpoke.kraft.routing.RootRouterBuilder
 import de.peekandpoke.kraft.routing.Router
-import de.peekandpoke.kraft.routing.RouterBuilder
+import de.peekandpoke.kraft.routing.RouterDsl
+import de.peekandpoke.kraft.toasts.toasts
 import de.peekandpoke.kraft.utils.ResponsiveController
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.kraft.vdom.VDomEngine
@@ -25,20 +29,30 @@ class KraftApp internal constructor(
     @KraftDsl
     class Builder internal constructor() {
         private val appAttributes = MutableTypedAttributes.empty()
-        private val router = RouterBuilder()
+        private val router = RootRouterBuilder()
 
         init {
-            appAttributes[ResponsiveController.key] = ResponsiveController()
+            // We always add the default Modals manager
+            modals()
+            // We always add the default toasts manager
+            toasts()
+            // We always add the default Popups manager
+            popups()
+            // We always have the default responsive controller
+            responsive(ResponsiveController())
         }
 
+        @RouterDsl
         fun <T> setAttribute(key: TypedKey<T>, value: T) = apply {
             appAttributes[key] = value
         }
 
-        fun routing(block: RouterBuilder.() -> Unit) = apply {
+        @RouterDsl
+        fun routing(block: RootRouterBuilder.() -> Unit) = apply {
             router.block()
         }
 
+        @RouterDsl
         fun responsive(ctrl: ResponsiveController) = setAttribute(ResponsiveController.key, ctrl)
 
         internal fun build(): KraftApp {
@@ -54,9 +68,9 @@ class KraftApp internal constructor(
         initializeJsJodaTimezones()
     }
 
-    private val automounted: List<Automount> = run {
+    private val autoMountedUis: List<AutoMountedUi> = run {
         appAttributes.entries
-            .mapNotNull { (_, v) -> v as? Automount }
+            .mapNotNull { (_, v) -> v as? AutoMountedUi }
             .sortedByDescending { it.priority }
     }
 
@@ -69,7 +83,7 @@ class KraftApp internal constructor(
 
     fun mount(element: HTMLElement, engine: VDomEngine, view: VDom.() -> Any?) {
         engine.mount(app = this, element = element) {
-            automounted.forEach { it.mount(this) }
+            autoMountedUis.forEach { it.mount(this) }
             view()
         }
 
@@ -77,3 +91,4 @@ class KraftApp internal constructor(
         appAttributes[Router.key]?.navigateToWindowUri()
     }
 }
+

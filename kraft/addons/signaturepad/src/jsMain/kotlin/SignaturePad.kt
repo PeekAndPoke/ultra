@@ -5,11 +5,11 @@ import de.peekandpoke.kraft.addons.signaturepad.js.trim_canvas
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.components.debugId
 import de.peekandpoke.kraft.utils.jsObject
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.model.FileBase64
 import de.peekandpoke.ultra.html.css
+import de.peekandpoke.ultra.html.debugId
 import kotlinx.browser.window
 import kotlinx.css.height
 import kotlinx.css.pct

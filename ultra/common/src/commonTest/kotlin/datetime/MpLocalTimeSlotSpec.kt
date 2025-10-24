@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.common.datetime
 
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 import kotlin.time.Duration.Companion.minutes
 
@@ -55,17 +55,17 @@ class MpLocalTimeSlotSpec : StringSpec({
     }
 
     listOf(
-        row(
+        tuple(
             "Zero duration",
             ts(12, 0, 12, 0),
             false
         ),
-        row(
+        tuple(
             "Negative duration",
             ts(12, 0, 1, 12, 0, 0),
             false
         ),
-        row(
+        tuple(
             "Positive duration",
             ts(12, 0, 0, 12, 0, 1),
             true
@@ -78,43 +78,43 @@ class MpLocalTimeSlotSpec : StringSpec({
     }
 
     listOf(
-        row(
+        tuple(
             "Exactly the same",
             ts(10, 0, 11, 0),
             ts(10, 0, 11, 0),
             true,
         ),
-        row(
+        tuple(
             "Fully surrounding",
             ts(10, 0, 11, 0),
             ts(9, 0, 12, 0),
             true,
         ),
-        row(
+        tuple(
             "Within",
             ts(10, 0, 11, 0),
             ts(10, 15, 10, 45),
             true,
         ),
-        row(
+        tuple(
             "Barely touching on the right",
             ts(10, 0, 11, 0),
             ts(11, 0, 12, 0),
             true,
         ),
-        row(
+        tuple(
             "Barely touching on the left",
             ts(10, 0, 11, 0),
             ts(9, 0, 10, 0),
             true,
         ),
-        row(
+        tuple(
             "Too far on the right",
             ts(10, 0, 0, 11, 0, 0),
             ts(11, 0, 1, 12, 0, 0),
             false,
         ),
-        row(
+        tuple(
             "Too far on the left",
             ts(10, 0, 0, 11, 0, 0),
             ts(9, 0, 0, 9, 59, 59),
@@ -132,43 +132,43 @@ class MpLocalTimeSlotSpec : StringSpec({
 
     listOf(
         // Touching TimeSlots
-        row(
+        tuple(
             ts(10, 0, 11, 0),
             ts(10, 0, 11, 0),
             listOf(ts(10, 0, 11, 0)),
         ),
-        row(
+        tuple(
             ts(10, 0, 11, 0),
             ts(10, 0, 11, 10),
             listOf(ts(10, 0, 11, 10)),
         ),
-        row(
+        tuple(
             ts(10, 0, 11, 0),
             ts(10, 10, 11, 10),
             listOf(ts(10, 0, 11, 10)),
         ),
-        row(
+        tuple(
             ts(10, 0, 11, 0),
             ts(9, 50, 11, 0),
             listOf(ts(9, 50, 11, 0)),
         ),
-        row(
+        tuple(
             ts(10, 0, 11, 0),
             ts(9, 50, 10, 50),
             listOf(ts(9, 50, 11, 0)),
         ),
-        row(
+        tuple(
             ts(10, 0, 11, 0),
             ts(9, 50, 11, 10),
             listOf(ts(9, 50, 11, 10)),
         ),
         // Not touching TimeSlots
-        row(
+        tuple(
             ts(10, 0, 11, 0),
             ts(8, 0, 9, 0),
             listOf(ts(8, 0, 9, 0), ts(10, 0, 11, 0)),
         ),
-        row(
+        tuple(
             ts(10, 0, 11, 0),
             ts(12, 0, 13, 0),
             listOf(ts(10, 0, 11, 0), ts(12, 0, 13, 0)),
@@ -184,19 +184,19 @@ class MpLocalTimeSlotSpec : StringSpec({
     }
 
     listOf(
-        row(
+        tuple(
             "All eaten up - exactly",
             ts(10, 0, 11, 0),
             ts(10, 0, 11, 0),
             listOf(),
         ),
-        row(
+        tuple(
             "All eaten up - surrounding",
             ts(10, 0, 11, 0),
             ts(9, 59, 11, 1),
             listOf(),
         ),
-        row(
+        tuple(
             "In the middle",
             ts(10, 0, 11, 0),
             ts(10, 1, 10, 59),
@@ -205,7 +205,7 @@ class MpLocalTimeSlotSpec : StringSpec({
                 ts(10, 59, 11, 0),
             ),
         ),
-        row(
+        tuple(
             "In the middle but duration = 0",
             ts(10, 0, 11, 0),
             ts(10, 30, 10, 30),
@@ -213,7 +213,7 @@ class MpLocalTimeSlotSpec : StringSpec({
                 ts(10, 0, 11, 0),
             ),
         ),
-        row(
+        tuple(
             "On the left side",
             ts(10, 0, 11, 0),
             ts(10, 0, 10, 1),
@@ -221,7 +221,7 @@ class MpLocalTimeSlotSpec : StringSpec({
                 ts(10, 1, 11, 0),
             ),
         ),
-        row(
+        tuple(
             "On the right side",
             ts(10, 0, 11, 0),
             ts(10, 59, 11, 0),
@@ -229,7 +229,7 @@ class MpLocalTimeSlotSpec : StringSpec({
                 ts(10, 0, 10, 59),
             ),
         ),
-        row(
+        tuple(
             "Too far on the left side",
             ts(10, 0, 11, 0),
             ts(9, 0, 9, 59),
@@ -237,7 +237,7 @@ class MpLocalTimeSlotSpec : StringSpec({
                 ts(10, 0, 11, 0),
             ),
         ),
-        row(
+        tuple(
             "Too far on the right side",
             ts(10, 0, 11, 0),
             ts(11, 1, 12, 0),
@@ -256,19 +256,19 @@ class MpLocalTimeSlotSpec : StringSpec({
     }
 
     listOf(
-        row(
+        tuple(
             "Edge case: empty initial slot",
             ts(10, 0, 10, 0),
             10, 0,
             listOf()
         ),
-        row(
+        tuple(
             "Edge case: duration < 1",
             ts(10, 0, 11, 0),
             0, 0,
             listOf()
         ),
-        row(
+        tuple(
             "Edge case: gap < 0",
             ts(10, 0, 11, 0),
             30, -10,
@@ -277,7 +277,7 @@ class MpLocalTimeSlotSpec : StringSpec({
                 ts(10, 30, 11, 0),
             )
         ),
-        row(
+        tuple(
             "Normal case: duration = 15 gap = 5",
             ts(10, 0, 11, 0),
             15, 5,
@@ -287,7 +287,7 @@ class MpLocalTimeSlotSpec : StringSpec({
                 ts(10, 40, 10, 55),
             )
         ),
-        row(
+        tuple(
             "Normal case: duration = 1 gap = 0",
             ts(10, 0, 10, 5),
             1, 0,

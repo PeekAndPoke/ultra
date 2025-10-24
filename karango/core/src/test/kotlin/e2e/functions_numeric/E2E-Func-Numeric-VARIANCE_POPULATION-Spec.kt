@@ -11,9 +11,9 @@ import de.peekandpoke.karango.e2e.E2ePerson
 import de.peekandpoke.karango.e2e.age
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.vault.lang.ARRAY
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
@@ -60,42 +60,42 @@ class `E2E-Func-Numeric-VARIANCE_POPULATION-Spec` : StringSpec({
     }
 
     val cases = listOf(
-        row(
+        tuple(
             "VARIANCE_POPULATION( [] ) - ARRAY",
             VARIANCE_POPULATION(ARRAY()),
             null
         ),
-        row(
+        tuple(
             "VARIANCE_POPULATION( [1] ) - ARRAY",
             VARIANCE_POPULATION(ARRAY(1.aql)),
             0.0
         ),
-        row(
+        tuple(
             "VARIANCE_POPULATION( [1, 1] ) - ARRAY",
             VARIANCE_POPULATION(ARRAY(1.aql, 1.aql)),
             0.0
         ),
-        row(
+        tuple(
             "VARIANCE_POPULATION( [ 1, 3, 6, 5, 2 ] ) - ARRAY",
             VARIANCE_POPULATION(ARRAY<Number>(1.aql, 3.aql, 6.aql, 5.aql, 2.0.aql)),
             3.4400000000000004
         ),
-        row(
+        tuple(
             "VARIANCE_POPULATION( [ 1, 3, 6, 5, 2 ] ) - listOf",
             VARIANCE_POPULATION(listOf(1, 3, 6, 5, 2).aql),
             3.4400000000000004
         ),
-        row(
+        tuple(
             "VARIANCE_POPULATION( [ 1.0, 3, 6, 5, 2 ] ) - listOf",
             VARIANCE_POPULATION(listOf<Number>(1.0, 3, 6, 5, 2).aql),
             3.4400000000000004
         ),
-        row(
+        tuple(
             "STDDEV( [ 1, 3, 6, 5, 2.0 ] ) - ARRAY",
             VARIANCE(ARRAY<Number>(1.aql, 3.aql, 6.aql, 5.aql, 2.0.aql)),
             3.4400000000000004
         ),
-        row(
+        tuple(
             "STDDEV( [ 1, 3, 6, 5, 2.0 ] ) - listOf",
             VARIANCE(listOf<Number>(1, 3, 6, 5, 2.0).aql),
             3.4400000000000004

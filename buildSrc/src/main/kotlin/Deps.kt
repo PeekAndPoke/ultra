@@ -1,7 +1,13 @@
+import org.ajoberstar.grgit.Grgit
+import org.gradle.api.Project
 import org.gradle.kotlin.dsl.DependencyHandlerScope
 import org.gradle.kotlin.dsl.TaskContainerScope
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
+import java.io.File
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
 
 @Suppress("MemberVisibilityCanBePrivate", "ConstPropertyName")
 object Deps {
@@ -10,11 +16,11 @@ object Deps {
     }
 
     // Kotlin ////////////////////////////////////////////////////////////////////////////////////
-    const val kotlinVersion = "2.1.21"
+    const val kotlinVersion = "2.2.20"
 
     object Ksp {
         // https://github.com/google/ksp/releases
-        const val version = "2.1.21-2.0.1"
+        const val version = "2.2.20-2.0.4"
         const val symbol_processing = "com.google.devtools.ksp:symbol-processing-api:$version"
 
         // https://mvnrepository.com/artifact/com.github.tschuchortdev/kotlin-compile-testing
@@ -33,7 +39,7 @@ object Deps {
     // Dokka /////////////////////////////////////////////////////////////////////////////////////
     // https://mvnrepository.com/artifact/org.jetbrains.dokka/dokka-gradle-plugin
     // Dokka gradle plugin org.jetbrains.dokka
-    const val dokkaVersion = "2.0.0" // kotlinVersion
+    const val dokkaVersion = "2.1.0" // kotlinVersion
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     // Publishing ////////////////////////////////////////////////////////////////////////////////
@@ -48,7 +54,7 @@ object Deps {
 
         // https://mvnrepository.com/artifact/com.github.doyaaaaaken/kotlin-csv
         private const val csv_version = "1.10.0"
-        const val csv = "com.github.doyaaaaaken:kotlin-csv:$csv_version"
+        const val csv = "com.jsoizo:kotlin-csv:$csv_version"
 
         // https://mvnrepository.com/artifact/io.github.evanrupert/excelkt
         private const val excelkt_version = "1.0.2"
@@ -64,7 +70,7 @@ object Deps {
         const val korlibs_time = "com.soywiz:korlibs-time:$korlibs_time_version"
 
         // https://mvnrepository.com/artifact/io.github.g0dkar/qrcode-kotlin
-        private const val qrcode_version = "4.4.01"
+        private const val qrcode_version = "4.5.0"
         const val qrcode = "io.github.g0dkar:qrcode-kotlin:$qrcode_version"
 
         // https://mvnrepository.com/artifact/io.github.serpro69/kotlin-faker
@@ -86,7 +92,7 @@ object Deps {
         const val datetime = "org.jetbrains.kotlinx:kotlinx-datetime:$datetime_version"
 
         // https://github.com/Kotlin/kotlinx.serialization/releases
-        private const val serialization_version = "1.8.1"
+        private const val serialization_version = "1.9.0"
         const val serialization_core =
             "org.jetbrains.kotlinx:kotlinx-serialization-core:$serialization_version"
         const val serialization_json =
@@ -97,7 +103,7 @@ object Deps {
         const val html = "org.jetbrains.kotlinx:kotlinx-html:$html_version"
 
         // https://mvnrepository.com/artifact/org.jetbrains.kotlin-wrappers/kotlin-css
-        private const val wrappers_version = "2025.5.8"
+        private const val wrappers_version = "2025.10.7"
         const val wrappers_css =
             "org.jetbrains.kotlin-wrappers:kotlin-css:$wrappers_version"
 
@@ -111,7 +117,7 @@ object Deps {
     object Ktor {
         // https://kotlinlang.org/docs/releases.html
         // https://github.com/ktorio/ktor/releases
-        const val ktor_version = "3.1.3"
+        const val ktor_version = "3.3.1"
 
         object Server {
             object Test {
@@ -165,6 +171,34 @@ object Deps {
                 // Tests
                 testImplementation(Test.host)
             }
+
+            fun full(scope: KotlinDependencyHandler) = with(scope) {
+                implementation(auth)
+                implementation(auth_jwt)
+                implementation(auto_head)
+                implementation(caching_headers)
+                implementation(content_negotiation)
+                implementation(compression)
+                implementation(core)
+                implementation(cors)
+                implementation(default_headers)
+                implementation(hsts)
+                implementation(html_builder)
+                implementation(host_common)
+                implementation(netty)
+                implementation(metrics)
+                implementation(partial_content)
+                implementation(sessions)
+                implementation(sse)
+                implementation(status_pages)
+                implementation(webjars)
+                implementation(websockets)
+                implementation(double_receive)
+            }
+
+            fun fullTest(scope: KotlinDependencyHandler) = with(scope) {
+                implementation(Test.host)
+            }
         }
 
         object Client {
@@ -195,7 +229,7 @@ object Deps {
     object JavaLibs {
         object ArangoDb {
             // https://mvnrepository.com/artifact/com.arangodb/arangodb-java-driver
-            private const val driver_version = "7.18.0"
+            private const val driver_version = "7.22.1"
             const val java_driver = "com.arangodb:arangodb-java-driver:$driver_version"
         }
 
@@ -204,7 +238,7 @@ object Deps {
             private const val jackson_version = "2.19.0"
 
             // https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-kotlin
-            private const val jackson_kotlin_module_version = "2.19.0"
+            private const val jackson_kotlin_module_version = "2.20.0"
 
             const val databind = "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
             const val annotations = "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
@@ -225,17 +259,10 @@ object Deps {
 
         object Aws {
             // https://mvnrepository.com/artifact/software.amazon.awssdk/s3
-            const val awssdk_version = "2.31.50"
+            const val awssdk_version = "2.35.8"
 
             const val s3 = "software.amazon.awssdk:s3:$awssdk_version"
             const val ses = "software.amazon.awssdk:ses:$awssdk_version"
-        }
-
-        object Stripe {
-            // TODO: upgrade at some point BUT this also means an API-Level update ...
-            // https://mvnrepository.com/artifact/com.stripe/stripe-java
-            private const val sdk_version = "21.15.0"
-            const val java_sdk = "com.stripe:stripe-java:$sdk_version"
         }
 
         object Google {
@@ -244,11 +271,11 @@ object Deps {
             const val auto_service = "com.google.auto.service:auto-service:$auto_service_version"
 
             // https://mvnrepository.com/artifact/com.google.api-client/google-api-client
-            private const val api_client_version = "2.8.0"
+            private const val api_client_version = "2.8.1"
             const val api_client = "com.google.api-client:google-api-client:$api_client_version"
 
             // https://mvnrepository.com/artifact/com.google.firebase/firebase-admin
-            private const val firebase_admin_version = "9.4.3"
+            private const val firebase_admin_version = "9.7.0"
             const val firebase_admin = "com.google.firebase:firebase-admin:$firebase_admin_version"
         }
 
@@ -285,7 +312,7 @@ object Deps {
             const val email = "org.apache.commons:commons-email:$email_version"
 
             // https://mvnrepository.com/artifact/commons-cli/commons-cli
-            private const val cli_version = "1.9.0"
+            private const val cli_version = "1.10.0"
             const val cli = "commons-cli:commons-cli:$cli_version"
         }
 
@@ -294,7 +321,7 @@ object Deps {
         const val auth0_java_jwt = "com.auth0:java-jwt:$auth0_java_jwt_version"
 
         // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-        private const val logback_version = "1.5.18"
+        private const val logback_version = "1.5.19"
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://github.com/atteo/classindex
@@ -303,7 +330,7 @@ object Deps {
         const val classindex = "org.atteo.classindex:classindex:$classindex_version"
 
         // https://mvnrepository.com/artifact/org.commonmark/commonmark
-        private const val commonmark_version = "0.24.0"
+        private const val commonmark_version = "0.27.0"
         const val commonmark = "org.commonmark:commonmark:$commonmark_version"
         const val commonmark_ext_gfm_tables = "org.commonmark:commonmark-ext-gfm-tables:$commonmark_version"
 
@@ -320,15 +347,15 @@ object Deps {
 
         // https://mvnrepository.com/artifact/org.apache.tika/tika-core
         // ... mime type detector based on content of file
-        private const val tika_version = "3.1.0"
+        private const val tika_version = "3.2.3"
         const val tika_core = "org.apache.tika:tika-core:$tika_version"
 
         // https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
-        private const val okhttp_version = "4.12.0"
+        private const val okhttp_version = "5.2.1"
         const val okhttp = "com.squareup.okhttp3:okhttp:$okhttp_version"
 
         // https://search.maven.org/artifact/io.github.java-diff-utils/java-diff-utils
-        private const val diffutils_version = "4.15"
+        private const val diffutils_version = "4.16"
         const val diffutils = "io.github.java-diff-utils:java-diff-utils:$diffutils_version"
 
         // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
@@ -443,33 +470,26 @@ object Deps {
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://plugins.gradle.org/plugin/io.kotest.multiplatform
-//        const val kotest_plugin_version = "6.0.0.M4"
-        const val kotest_plugin_version = "5.9.1"
+        const val kotest_plugin_version = "6.0.4"
+//        const val kotest_plugin_version = "5.9.1"
 
         // https://mvnrepository.com/artifact/io.kotest/kotest-common
-//        const val kotest_version = "6.0.0.M4"
-        const val kotest_version = "5.9.1"
+        const val kotest_version = "6.0.4"
+//        const val kotest_version = "5.9.1"
 
-        const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"
-        const val kotest_framework_api = "io.kotest:kotest-framework-api:$kotest_version"
-        const val kotest_framework_datatest = "io.kotest:kotest-framework-datatest:$kotest_version"
         const val kotest_framework_engine = "io.kotest:kotest-framework-engine:$kotest_version"
-
+        const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"
         const val kotest_runner_junit_jvm = "io.kotest:kotest-runner-junit5-jvm:$kotest_version"
 
         fun KotlinDependencyHandler.commonTestDeps() {
             kotlin("test-common")
             kotlin("test-annotations-common")
             implementation(kotest_assertions_core)
-            implementation(kotest_framework_api)
-            implementation(kotest_framework_datatest)
             implementation(kotest_framework_engine)
         }
 
         fun KotlinDependencyHandler.jsTestDeps() {
             implementation(kotest_assertions_core)
-            implementation(kotest_framework_api)
-            implementation(kotest_framework_datatest)
             implementation(kotest_framework_engine)
         }
 
@@ -477,8 +497,6 @@ object Deps {
             implementation(logback_classic)
             implementation(kotest_runner_junit_jvm)
             implementation(kotest_assertions_core)
-            implementation(kotest_framework_api)
-            implementation(kotest_framework_datatest)
             implementation(kotest_framework_engine)
         }
 
@@ -486,7 +504,6 @@ object Deps {
             testImplementation(logback_classic)
             testImplementation(kotest_runner_junit_jvm)
             testImplementation(kotest_assertions_core)
-            testImplementation(kotest_framework_api)
             testImplementation(kotest_framework_engine)
         }
 
@@ -513,6 +530,48 @@ object Deps {
 //                }
 
                 configure()
+            }
+        }
+    }
+
+    fun Project.createVersionFile(
+        vararg outputDirs: String = arrayOf(
+            "./src/main/resources",
+            "./tmp"
+        ),
+    ) {
+        plugins.withId("java") {
+            tasks.named("processResources") {
+                dependsOn("versionFile")
+            }
+        }
+
+        tasks.register("versionFile") {
+            val rootProject = project.rootProject
+            val projectDir = project.projectDir
+
+            val git = Grgit.open {
+                dir = rootProject.projectDir
+            }
+
+            File(projectDir, "tmp").mkdirs()
+
+            val now = LocalDateTime.now()
+            val nowStr = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+
+            val content = """{
+                "project": "${project.path.removePrefix(":").replace(":", "-")}",
+                "version": "${project.version}",
+                "gitBranch": "${git.branch.current().name}",
+                "gitRev": "${git.head().id.take(8)}",
+                "gitDesc": "${git.describe { tags = true }}",
+                "date": "$nowStr"
+            }""".trimIndent()
+
+            outputDirs.forEach {
+                val dir = File(projectDir, it)
+                dir.mkdirs()
+                File(dir, "version.json").writeText(content)
             }
         }
     }

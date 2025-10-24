@@ -6,25 +6,25 @@ import de.peekandpoke.karango.aql.TO_HEX
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-String-TO_HEX-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "TO_HEX (\"\")",
             TO_HEX("".aql),
             ""
         ),
-        row(
+        tuple(
             "TO_HEX (\"ABC\")",
             TO_HEX("ABC".aql),
             "414243"
         ),
-        row(
+        tuple(
             "TO_HEX (\"abc ?\")",
             TO_HEX("abc ?".aql),
             "616263203f"

@@ -4,18 +4,21 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AppVersion(
-    val group: String = na,
-    val version: String = na,
-    val gitBranch: String = na,
-    val gitRev: String = na,
-    val gitDesc: String = na,
-    val date: String? = null,
+    val project: String = N_A,
+    val version: String = N_A,
+    val gitBranch: String = N_A,
+    val gitRev: String = N_A,
+    val gitDesc: String = N_A,
+    val date: String = N_A,
 ) {
-    val isAvailable get() = gitBranch != na
-
-    fun describeGit() = listOfNotNull(gitBranch.takeIf { it != na }, gitRev.takeIf { it != na }).joinToString("-")
-
     companion object {
-        const val na = "n/a"
+        private const val N_A = "n/a"
     }
+
+    val isAvailable get() = gitBranch != N_A
+
+    fun describeGit() = listOfNotNull(
+        gitBranch.takeIf { it != N_A },
+        gitRev.takeIf { it != N_A },
+    ).joinToString("-")
 }

@@ -4,7 +4,7 @@ import de.peekandpoke.funktor.logging.api.LogEntryModel
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.routing.JoinedPageTitle
-import de.peekandpoke.kraft.routing.router
+import de.peekandpoke.kraft.routing.Router.Companion.router
 import de.peekandpoke.kraft.semanticui.forms.UiInputField
 import de.peekandpoke.kraft.semanticui.forms.old.select.SelectField
 import de.peekandpoke.kraft.semanticui.pagination.PaginationEpp
@@ -16,7 +16,7 @@ import de.peekandpoke.ultra.common.model.Paged
 import de.peekandpoke.ultra.common.toggle
 import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.html.onClick
-import de.peekandpoke.ultra.logging.LogLevel
+import de.peekandpoke.ultra.log.LogLevel
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui
@@ -91,11 +91,13 @@ class LogEntriesListPage(ctx: Ctx<Props>) : Component<LogEntriesListPage.Props>(
                 ui.three.wide.field {
                     label { +"State" }
 
-                    ui.horizontal.list {
+                    val entries = LogEntryModel.State.entries
+
+                    ui.number(entries.size).column.grid {
                         LogEntryModel.State.entries.forEach { state ->
-                            noui.item {
+                            noui.column {
                                 val selected = filter.state.contains(state)
-                                ui.given(selected) { blue }.label {
+                                ui.given(selected) { blue }.fluid.label {
                                     onClick { filter = filter.copy(state = filter.state.toggle(state)).firstPage() }
                                     +state.name
                                 }
@@ -123,7 +125,11 @@ class LogEntriesListPage(ctx: Ctx<Props>) : Component<LogEntriesListPage.Props>(
 
                     ui.primary.icon.button {
                         title = "Bulk Actions"
-                        onClick { showLogsBulkActionPopup(props.ui) }
+                        onClick {
+                            showLogsBulkActionPopup(props.ui) {
+                                loader.reloadSilently()
+                            }
+                        }
                         icon.tools()
                     }
                 }

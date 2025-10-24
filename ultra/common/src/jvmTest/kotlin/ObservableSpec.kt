@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.common
 
-import de.peekandpoke.ultra.common.datetime.Kronos
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -17,8 +16,6 @@ class ObservableSpec : StringSpec() {
 
         override fun <O> observe(observer: O, block: OnChange<Int>): Unsubscribe = subs.observe(observer, block)
     }
-
-    private fun createSomething() = Kronos.systemUtc.instantNow()
 
     init {
         "Subscribing to an Observable must work" {

@@ -6,57 +6,57 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-String-LIKE-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "LIKE(\"cart\", \"ca_t\")",
             LIKE("cart".aql, "ca_t".aql),
             true
         ),
-        row(
+        tuple(
             "LIKE(\"carrot\", \"ca_t\")",
             LIKE("carrot".aql, "ca_t".aql),
             false
         ),
-        row(
+        tuple(
             "LIKE(\"carrot\", \"ca%t\")",
             LIKE("carrot".aql, "ca%t".aql),
             true
         ),
 
-        row(
+        tuple(
             "LIKE(\"foo bar baz\", \"bar\")",
             LIKE("foo bar baz".aql, "bar".aql),
             false
         ),
-        row(
+        tuple(
             "LIKE(\"foo bar baz\", \"%bar%\")",
             LIKE("foo bar baz".aql, "%bar%".aql),
             true
         ),
-        row(
+        tuple(
             "LIKE(\"bar\", \"%bar%\")",
             LIKE("bar".aql, "%bar%".aql),
             true
         ),
 
-        row(
+        tuple(
             "LIKE(\"FoO bAr BaZ\", \"fOo%bAz\")  in caseInsensitive mode",
             LIKE("FoO bAr BaZ".aql, "fOo%bAz".aql),
             false
         ),
-        row(
+        tuple(
             "LIKE(\"FoO bAr BaZ\", \"fOo%bAz\", false)  in caseInsensitive mode",
             LIKE("FoO bAr BaZ".aql, "fOo%bAz".aql, false.aql),
             false
         ),
-        row(
+        tuple(
             "LIKE(\"FoO bAr BaZ\", \"fOo%bAz\", true) in caseInsensitive mode",
             LIKE("FoO bAr BaZ".aql, "fOo%bAz".aql, true.aql),
             true

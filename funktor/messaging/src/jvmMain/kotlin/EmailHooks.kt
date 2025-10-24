@@ -1,7 +1,7 @@
 package de.peekandpoke.funktor.messaging
 
 import de.peekandpoke.funktor.messaging.api.EmailResult
-import de.peekandpoke.ultra.logging.Log
+import de.peekandpoke.ultra.log.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope

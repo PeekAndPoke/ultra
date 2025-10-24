@@ -1,0 +1,235 @@
+package de.peekandpoke.kraft.popups
+
+import de.peekandpoke.kraft.components.AutoMountedUi
+import de.peekandpoke.kraft.components.Component
+import de.peekandpoke.kraft.components.getAttributeRecursive
+import de.peekandpoke.kraft.utils.Rectangle
+import de.peekandpoke.kraft.utils.Vector2D
+import de.peekandpoke.ultra.common.TypedKey
+import de.peekandpoke.ultra.html.onMouseOut
+import de.peekandpoke.ultra.html.onMouseOver
+import de.peekandpoke.ultra.html.onMouseUp
+import de.peekandpoke.ultra.streams.Stream
+import de.peekandpoke.ultra.streams.StreamSource
+import de.peekandpoke.ultra.streams.Unsubscribe
+import kotlinx.browser.document
+import kotlinx.html.CommonAttributeGroupFacade
+import kotlinx.html.FlowContent
+import org.w3c.dom.DOMRect
+import org.w3c.dom.HTMLElement
+import org.w3c.dom.events.MouseEvent
+import org.w3c.dom.events.UIEvent
+
+typealias PopupPositionFn = (target: HTMLElement, contentSize: Vector2D) -> Vector2D
+
+typealias PopupComponentFactory = FlowContent.(target: HTMLElement, positioning: PopupPositionFn, handle: PopupsManager.Handle, content: PopupContentRenderer) -> Unit
+
+class PopupsManager(
+    val settings: Settings,
+) : Stream<List<PopupsManager.Handle>>, AutoMountedUi {
+    companion object {
+        val key = TypedKey<PopupsManager>("popups")
+
+        val Component<*>.popups: PopupsManager get() = getAttributeRecursive(key)
+
+        val DefaultPopupFactory: PopupComponentFactory = { target, positioning, handle, content ->
+            PopupComponent(target = target, positioning = positioning, handle = handle, content = content)
+        }
+    }
+
+    data class Settings(
+        val popupRenderer: PopupComponentFactory,
+    )
+
+    class Builder internal constructor() {
+        private var popupFactory: PopupComponentFactory = DefaultPopupFactory
+
+        fun popupFactory(factory: PopupComponentFactory) {
+            popupFactory = factory
+        }
+
+        internal fun build() = PopupsManager(
+            Settings(
+                popupRenderer = popupFactory,
+            )
+        )
+    }
+
+    class ShowHoverPopup(private val popups: PopupsManager) {
+
+        fun show(
+            tag: CommonAttributeGroupFacade,
+            positioning: (target: HTMLElement, contentSize: Vector2D) -> Vector2D,
+            view: PopupContentRenderer,
+        ) {
+            with(tag) {
+                var handle: Handle? = null
+
+                val close = {
+                    handle?.let { h ->
+                        popups.close(h)
+                        handle = null
+                    }
+                }
+
+                onMouseOver { event ->
+                    (event.target as? HTMLElement)?.let { target ->
+                        if (handle != null) {
+                            return@let
+                        }
+
+                        popups.add { h ->
+                            handle = h
+
+                            popups.settings.popupRenderer(this, target, positioning, h, view)
+                        }
+                    }
+                }
+                onMouseOut { close() }
+                // In case there is a link, we also close the popup when the link is clicked.
+                onMouseUp { close() }
+            }
+        }
+    }
+
+    class Handle internal constructor(
+        val id: Int,
+        val view: PopupContentRenderer,
+        internal val manager: PopupsManager,
+    ) {
+        internal val onCloseHandlers = mutableListOf<() -> Unit>()
+
+        /**
+         * Adds a listener which is called when the popup gets closed
+         */
+        fun onClose(onClose: () -> Unit) = apply {
+            onCloseHandlers.add(onClose)
+        }
+
+        /**
+         * Closes the popup
+         */
+        fun close() = manager.close(this)
+    }
+
+    enum class Positioning {
+        BottomLeft,
+        BottomCenter,
+        BottomRight,
+    }
+
+    private var handleCounter = 0
+
+    private val streamSource: StreamSource<List<Handle>> = StreamSource(emptyList())
+
+    val showHoverPopup = ShowHoverPopup(popups = this)
+
+    override fun invoke(): List<Handle> = streamSource()
+
+    override fun subscribeToStream(sub: (List<Handle>) -> Unit): Unsubscribe = streamSource.subscribeToStream(sub)
+
+    override val priority = 1000
+
+    override fun mount(flow: FlowContent) {
+        with(flow) {
+            PopupsStage(popups = this@PopupsManager)
+        }
+    }
+
+    /**
+     * Shows a popup relative to the target of the [event] by using the [positioning]
+     */
+    fun showContextMenu(
+        event: UIEvent,
+        positioning: Positioning = Positioning.BottomLeft,
+        view: PopupContentRenderer,
+    ): Handle {
+        event.stopPropagation()
+        closeAll()
+
+        val element = event.target as HTMLElement
+
+        return add(element, view) { target, contentSize ->
+            val bodyWidth = document.body?.offsetWidth?.toDouble() ?: 1200.0
+            val pageCoords = getPageCoords(target)
+
+            val temp = when (positioning) {
+                Positioning.BottomLeft -> pageCoords.bottomLeft
+                Positioning.BottomCenter -> {
+                    ((pageCoords.bottomLeft + pageCoords.bottomRight) / 2.0) - Vector2D(contentSize.x / 2.0, 0.0)
+                }
+
+                Positioning.BottomRight -> pageCoords.bottomRight - Vector2D(contentSize.x, 0.0)
+            }
+
+//            console.log(pageCoords.width, contentSize.x, pageCoords.width - contentSize.x)
+
+            Vector2D(
+                x = maxOf(
+                    0.0,
+                    minOf(bodyWidth - contentSize.x, temp.x),
+                ),
+                y = temp.y,
+            )
+        }
+    }
+
+    fun showContextMenu(event: UIEvent, view: PopupContentRenderer): Handle {
+        event.stopPropagation()
+        closeAll()
+
+        val element = event.target as HTMLElement
+        val moveDown = Vector2D(0.0, 7.0)
+
+        return add(element, view) { target, _ ->
+
+            val mouseEvent: MouseEvent? = event as? MouseEvent
+
+            if (mouseEvent != null) {
+                Vector2D(x = mouseEvent.pageX, y = mouseEvent.pageY + 7)
+            } else {
+                getPageCoords(target).bottomLeft.plus(moveDown)
+            }
+        }
+    }
+
+    fun closeAll() {
+        streamSource.modify { emptyList() }
+    }
+
+    internal fun add(element: HTMLElement, content: PopupContentRenderer, positioning: PopupPositionFn): Handle {
+        return add { handle ->
+            settings.popupRenderer(this, element, positioning, handle, content)
+        }
+    }
+
+    internal fun add(view: PopupContentRenderer): Handle {
+        return Handle(id = ++handleCounter, view = view, manager = this).also {
+            streamSource.modify { plus(it) }
+        }
+    }
+
+    internal fun close(handle: Handle) {
+        // call onClose handlers
+        streamSource()
+            .filter { it.id == handle.id }
+            .forEach { it.onCloseHandlers.forEach { handler -> handler() } }
+
+        // Remove from stack
+        streamSource.modify {
+            filterNot { it.id == handle.id }
+        }
+    }
+
+    private fun getPageCoords(element: HTMLElement): Rectangle {
+        val body = document.body?.getBoundingClientRect() ?: DOMRect()
+        val rect = element.getBoundingClientRect()
+
+        return Rectangle(
+            x1 = (rect.left - body.left),
+            y1 = (rect.top - body.top),
+            width = rect.width,
+            height = rect.height,
+        )
+    }
+}

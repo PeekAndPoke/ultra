@@ -9,8 +9,8 @@ import de.peekandpoke.karango.vault.KarangoDriver
 import de.peekandpoke.ultra.kontainer.KontainerAware
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
-import de.peekandpoke.ultra.logging.LogLevel
-import de.peekandpoke.ultra.logging.Slf4jAppender
+import de.peekandpoke.ultra.log.LogLevel
+import de.peekandpoke.ultra.log.Slf4jAppender
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import org.slf4j.LoggerFactory

@@ -2,7 +2,7 @@ package de.peekandpoke.funktor.logging
 
 import de.peekandpoke.funktor.logging.api.LogEntryModel
 import de.peekandpoke.ultra.common.datetime.MpInstant
-import de.peekandpoke.ultra.logging.LogLevel
+import de.peekandpoke.ultra.log.LogLevel
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 

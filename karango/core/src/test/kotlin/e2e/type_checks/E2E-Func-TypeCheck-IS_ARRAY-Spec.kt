@@ -7,61 +7,61 @@ import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.E2ePerson
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.vault.lang.ARRAY
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-TypeCheck-IS_ARRAY-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "IS_ARRAY(true)",
             IS_ARRAY(true.aql),
             false
         ),
-        row(
+        tuple(
             "IS_ARRAY(false)",
             IS_ARRAY(true.aql),
             false
         ),
-        row(
+        tuple(
             "IS_ARRAY(null)",
             IS_ARRAY(null.aql),
             false
         ),
-        row(
+        tuple(
             "IS_ARRAY(0)",
             IS_ARRAY(0.aql),
             false
         ),
-        row(
+        tuple(
             "IS_ARRAY(1)",
             IS_ARRAY(1.aql),
             false
         ),
-        row(
+        tuple(
             "IS_ARRAY(\"a\")",
             IS_ARRAY("a".aql),
             false
         ),
-        row(
+        tuple(
             "IS_ARRAY(\"\")",
             IS_ARRAY("".aql),
             false
         ),
-        row(
+        tuple(
             "IS_ARRAY([0]) - ARRAY",
             IS_ARRAY(ARRAY(0.aql)),
             true
         ),
-        row(
+        tuple(
             "IS_ARRAY([0]) - listOf",
             IS_ARRAY(listOf(0).aql),
             true
         ),
-        row(
+        tuple(
             "IS_ARRAY(object)",
             IS_ARRAY(E2ePerson("name", 10).aql),
             false

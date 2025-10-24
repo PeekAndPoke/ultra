@@ -15,9 +15,7 @@ import de.peekandpoke.ultra.kontainer.module
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
-/**
- * Helper for importing [Funktor_Broker] into a [KontainerBuilder]
- */
+/** Helper for importing [Funktor_Broker] into a [KontainerBuilder] */
 fun KontainerBuilder.funktorBroker() = module(Funktor_Broker)
 
 /** Get the [IncomingConverter] from the kontainer */

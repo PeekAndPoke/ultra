@@ -1,6 +1,6 @@
 package de.peekandpoke.funktor.core.repair
 
-import de.peekandpoke.ultra.logging.Log
+import de.peekandpoke.ultra.log.Log
 
 class RepairMan(
     private val repairs: List<Repair>,

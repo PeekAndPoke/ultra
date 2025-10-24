@@ -15,8 +15,8 @@ import de.peekandpoke.karango.buildQuery
 import de.peekandpoke.karango.slumber.KarangoCodec
 import de.peekandpoke.karango.utils.ArangoDbRequestUtils
 import de.peekandpoke.ultra.common.reflection.kMapType
-import de.peekandpoke.ultra.logging.Log
-import de.peekandpoke.ultra.logging.NullLog
+import de.peekandpoke.ultra.log.Log
+import de.peekandpoke.ultra.log.NullLog
 import de.peekandpoke.ultra.vault.TypedQuery
 import de.peekandpoke.ultra.vault.lang.TerminalExpr
 import de.peekandpoke.ultra.vault.profiling.NullQueryProfiler

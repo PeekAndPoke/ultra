@@ -6,31 +6,31 @@ import de.peekandpoke.karango.aql.SHIFT
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.vault.lang.ARRAY
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-Array-SHIFT-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "SHIFT ([])",
             SHIFT(ARRAY()),
             listOf()
         ),
-        row(
+        tuple(
             "SHIFT ([1])",
             SHIFT(ARRAY(1.aql)),
             listOf()
         ),
-        row(
+        tuple(
             "SHIFT ([1, 2])",
             SHIFT(ARRAY(1.aql, 2.aql)),
             listOf(2)
         ),
-        row(
+        tuple(
             "SHIFT ([1, 2, 3])",
             SHIFT(ARRAY(1.aql, 2.aql, 3.aql)),
             listOf(2, 3)

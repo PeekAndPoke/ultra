@@ -40,7 +40,7 @@ import de.peekandpoke.kraft.examples.fomanticui.pages.views.comment.CommentPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.views.feed.FeedPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.views.item.ItemPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.views.statistic.StatisticPage
-import de.peekandpoke.kraft.routing.RouterBuilder
+import de.peekandpoke.kraft.routing.RootRouterBuilder
 import de.peekandpoke.kraft.routing.Static
 
 class Routes {
@@ -93,7 +93,7 @@ class Routes {
     val viewsStatistic = Static("/views/statistic")
 }
 
-fun RouterBuilder.mount(routes: Routes) {
+fun RootRouterBuilder.mount(routes: Routes) {
     mount(routes.home) { HomePage() }
     mount(routes.homeSlash) { HomePage() }
 

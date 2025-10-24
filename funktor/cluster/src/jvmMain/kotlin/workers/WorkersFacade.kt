@@ -7,7 +7,7 @@ import de.peekandpoke.funktor.cluster.workers.services.WorkerTracker
 import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.kontainer.Kontainer
-import de.peekandpoke.ultra.logging.Log
+import de.peekandpoke.ultra.log.Log
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

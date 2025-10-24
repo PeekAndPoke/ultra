@@ -4,17 +4,10 @@ import de.peekandpoke.kraft.kraftApp
 import de.peekandpoke.kraft.routing.RouterComponent
 import de.peekandpoke.kraft.routing.Static
 import de.peekandpoke.kraft.semanticui.semanticUI
-import de.peekandpoke.kraft.semanticui.toasts.ToastsStage
 import de.peekandpoke.kraft.vdom.preact.PreactVDomEngine
 
 val kraft = kraftApp {
-    semanticUI(
-        toasts = {
-            stageOptions = ToastsStage.Options(
-                positioning = { top.right }
-            )
-        }
-    )
+    semanticUI()
 
     routing {
         val main = Static("")

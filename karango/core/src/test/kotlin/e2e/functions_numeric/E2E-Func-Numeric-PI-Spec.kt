@@ -5,15 +5,15 @@ import de.peekandpoke.karango.aql.PI
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-Numeric-PI-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "PI()",
             PI(),
             3.141592653589793

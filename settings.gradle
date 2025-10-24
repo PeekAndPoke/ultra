@@ -5,7 +5,7 @@ include(
         ":ultra:common",
         ":ultra:html",
         ":ultra:kontainer",
-        ":ultra:logging",
+        ":ultra:log",
         ":ultra:meta",
         ":ultra:security",
         ":ultra:semanticui",
@@ -38,6 +38,7 @@ include(
 
         // FUNKTOR //////////////////////////////////////////////////////////////////////////////
         ":funktor:all",
+        ":funktor:auth",
         ":funktor:core",
         ":funktor:cluster",
         ":funktor:logging",
@@ -46,6 +47,11 @@ include(
         ":funktor:staticweb",
         ":funktor:messaging",
         ":funktor:testing",
+
+        // FUNKTOR-DEMO /////////////////////////////////////////////////////////////////////////
+        ":funktor-demo:server",
+        ":funktor-demo:adminapp",
+        ":funktor-demo:common",
 
         // KARANGO //////////////////////////////////////////////////////////////////////////////
         ":karango:core",

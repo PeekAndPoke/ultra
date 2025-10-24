@@ -3,11 +3,11 @@ package de.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.listfield
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.components.key
 import de.peekandpoke.kraft.forms.collections.ListField
 import de.peekandpoke.kraft.routing.PageTitle
 import de.peekandpoke.kraft.semanticui.forms.UiTextArea
 import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.html.key
 import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.ui

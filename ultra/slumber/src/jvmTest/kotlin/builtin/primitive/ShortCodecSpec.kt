@@ -1,9 +1,9 @@
 package de.peekandpoke.ultra.slumber.builtin.primitive
 
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
 import de.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
-import io.kotest.data.row
 
 class ShortAwakerSpec : AwakerSpecHelper(
     type = TypeRef.Short, nonNullSamples = nonNull, nullableSamples = nullable
@@ -17,19 +17,19 @@ class ShortSlumberSpec : SlumbererSpecHelper(
  * Samples that map properly. These must be converted correctly to Short and to Short?
  */
 private val nonNull = listOf(
-    row(0, 0.toShort()),
-    row(0.toByte(), 0.toShort()),
-    row(0.toShort(), 0.toShort()),
-    row(0.toLong(), 0.toShort()),
-    row(0.0, 0.toShort()),
-    row(0.0f, 0.toShort()),
-    row(Short.MAX_VALUE, Short.MAX_VALUE),
-    row(Short.MIN_VALUE, Short.MIN_VALUE),
+    tuple(0, 0.toShort()),
+    tuple(0.toByte(), 0.toShort()),
+    tuple(0.toShort(), 0.toShort()),
+    tuple(0.toLong(), 0.toShort()),
+    tuple(0.0, 0.toShort()),
+    tuple(0.0f, 0.toShort()),
+    tuple(Short.MAX_VALUE, Short.MAX_VALUE),
+    tuple(Short.MIN_VALUE, Short.MIN_VALUE),
 
-    row("0", 0.toShort()),
-    row(0.0.toString(), 0.toShort()),
-    row(Short.MAX_VALUE.toString(), Short.MAX_VALUE),
-    row(Short.MIN_VALUE.toString(), Short.MIN_VALUE)
+    tuple("0", 0.toShort()),
+    tuple(0.0.toString(), 0.toShort()),
+    tuple(Short.MAX_VALUE.toString(), Short.MAX_VALUE),
+    tuple(Short.MIN_VALUE.toString(), Short.MIN_VALUE)
 )
 
 /**

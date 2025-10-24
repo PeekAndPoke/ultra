@@ -6,7 +6,7 @@ plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
     id("com.google.devtools.ksp") version Deps.Ksp.version
-    id("io.kotest.multiplatform")
+    id("io.kotest")
     id("com.vanniktech.maven.publish")
 }
 

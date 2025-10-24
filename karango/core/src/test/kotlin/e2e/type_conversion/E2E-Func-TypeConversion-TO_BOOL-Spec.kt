@@ -6,9 +6,9 @@ import de.peekandpoke.karango.aql.TO_BOOL
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.E2ePerson
 import de.peekandpoke.karango.e2e.karangoDriver
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
@@ -67,31 +67,31 @@ class `E2E-Func-TypeConversion-TO_BOOL-Spec` : StringSpec({
     }
 
     val cases = listOf(
-        row("TO_BOOL(false)", false, c = false),
-        row("TO_BOOL(true)", true, c = true),
+        tuple("TO_BOOL(false)", false, false),
+        tuple("TO_BOOL(true)", true, true),
 
-        row("TO_BOOL(0)", 0, false),
-        row("TO_BOOL(1)", 1, true),
-        row("TO_BOOL(-1)", -1, true),
+        tuple("TO_BOOL(0)", 0, false),
+        tuple("TO_BOOL(1)", 1, true),
+        tuple("TO_BOOL(-1)", -1, true),
 
-        row("TO_BOOL(0.0)", 0.0, false),
-        row("TO_BOOL(0.1)", 0.1, true),
-        row("TO_BOOL(-0.1)", -0.1, true),
+        tuple("TO_BOOL(0.0)", 0.0, false),
+        tuple("TO_BOOL(0.1)", 0.1, true),
+        tuple("TO_BOOL(-0.1)", -0.1, true),
 
-        row("TO_BOOL(\"\") empty string", "", false),
-        row("TO_BOOL(\"a\") none empty string", "a", true),
+        tuple("TO_BOOL(\"\") empty string", "", false),
+        tuple("TO_BOOL(\"a\") none empty string", "a", true),
 
-        row("TO_BOOL([]) empty list", listOf<Int>(), true),
-        row("TO_BOOL([0]) none empty list", listOf(0), true),
-        row("TO_BOOL([1]) none empty list", listOf(1), true),
-        row("TO_BOOL([0, 0]) none empty list", listOf(0, 0), true),
-        row("TO_BOOL([1, 1]) none empty list", listOf(1, 1), true),
-        row("TO_BOOL(['x']) none empty list", listOf("x"), true),
-        row("TO_BOOL(['x', 'x']) none empty list", listOf("x", "x"), true),
+        tuple("TO_BOOL([]) empty list", listOf<Int>(), true),
+        tuple("TO_BOOL([0]) none empty list", listOf(0), true),
+        tuple("TO_BOOL([1]) none empty list", listOf(1), true),
+        tuple("TO_BOOL([0, 0]) none empty list", listOf(0, 0), true),
+        tuple("TO_BOOL([1, 1]) none empty list", listOf(1, 1), true),
+        tuple("TO_BOOL(['x']) none empty list", listOf("x"), true),
+        tuple("TO_BOOL(['x', 'x']) none empty list", listOf("x", "x"), true),
 
-        row("TO_BOOL(object)", E2ePerson("a", 1), true),
-        row("TO_BOOL([object]) list with one objects", listOf(E2ePerson("a", 1)), true),
-        row("TO_BOOL([object, object]) list with two objects", listOf(E2ePerson("a", 1), E2ePerson("b", 2)), true)
+        tuple("TO_BOOL(object)", E2ePerson("a", 1), true),
+        tuple("TO_BOOL([object]) list with one objects", listOf(E2ePerson("a", 1)), true),
+        tuple("TO_BOOL([object, object]) list with two objects", listOf(E2ePerson("a", 1), E2ePerson("b", 2)), true)
     )
 
     for ((description, expression, expected) in cases) {

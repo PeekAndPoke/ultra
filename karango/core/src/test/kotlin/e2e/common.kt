@@ -19,7 +19,7 @@ import de.peekandpoke.ultra.vault.hooks.TimestampedHook
 import de.peekandpoke.ultra.vault.lang.Expression
 import de.peekandpoke.ultra.vault.slumber.VaultSlumberModule
 import io.kotest.assertions.withClue
-import io.kotest.core.test.TestContext
+import io.kotest.core.spec.style.scopes.TerminalScope
 import kotlinx.coroutines.runBlocking
 
 private val arangoConfig: ArangoDbConfig = ArangoDbConfig.forUnitTests
@@ -62,7 +62,7 @@ val karangoDriver: KarangoDriver = dbAndDriver.second
 data class E2ePerson(val name: String, val age: Int)
 
 @Suppress("unused", "UnusedReceiverParameter")
-fun <T, R : Any> TestContext.withDetailedClue(expression: Expression<T>, expected: Any?, block: () -> R): R {
+fun <T, R : Any> TerminalScope.withDetailedClue(expression: Expression<T>, expected: Any?, block: () -> R): R {
 
     val printerResult = expression.print()
 

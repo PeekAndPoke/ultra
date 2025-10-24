@@ -1,7 +1,6 @@
 package de.peekandpoke.kraft.semanticui.forms.old.select
 
 import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.key
 import de.peekandpoke.kraft.forms.FormFieldComponent
 import de.peekandpoke.kraft.forms.validation.Rule
 import de.peekandpoke.kraft.semanticui.forms.renderErrors
@@ -9,6 +8,7 @@ import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.html.flowContent
+import de.peekandpoke.ultra.html.key
 import de.peekandpoke.ultra.html.onAnimationEnd
 import de.peekandpoke.ultra.html.onBlur
 import de.peekandpoke.ultra.html.onClick
@@ -303,7 +303,7 @@ class SelectFieldComponent<T>(ctx: Ctx<Props<T>>) :
                 event.preventDefault()
             }
 
-            props.config.label?.let { it ->
+            props.config.label?.let {
                 label { it(this) }
             }
 

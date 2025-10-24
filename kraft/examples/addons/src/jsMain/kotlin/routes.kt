@@ -13,7 +13,7 @@ import de.peekandpoke.kraft.examples.jsaddons.pdfjs.PdfJsRoutes
 import de.peekandpoke.kraft.examples.jsaddons.pdfjs.mount
 import de.peekandpoke.kraft.examples.jsaddons.prismjs.PrismJsExample
 import de.peekandpoke.kraft.examples.jsaddons.signaturepad.SignaturePadExample
-import de.peekandpoke.kraft.routing.RouterBuilder
+import de.peekandpoke.kraft.routing.RootRouterBuilder
 import de.peekandpoke.kraft.routing.Static
 
 class Routes {
@@ -34,7 +34,7 @@ class Routes {
     val core = CoreRoutes()
 }
 
-fun RouterBuilder.mount(routes: Routes) {
+fun RootRouterBuilder.mount(routes: Routes) {
     mount(routes.home) { HomePage() }
     mount(routes.homeSlash) { HomePage() }
 

@@ -1,6 +1,6 @@
 package de.peekandpoke.kraft.examples.fomanticui.helpers
 
-import de.peekandpoke.kraft.components.key
+import de.peekandpoke.ultra.html.key
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent

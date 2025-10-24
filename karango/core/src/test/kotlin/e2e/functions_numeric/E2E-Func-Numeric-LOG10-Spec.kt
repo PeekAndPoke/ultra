@@ -6,25 +6,25 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-Numeric-LOG10-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "LOG10(10000)",
             LOG10(10000.aql),
             4.0
         ),
-        row(
+        tuple(
             "LOG10(10)",
             LOG10(10.aql),
             1.0
         ),
-        row(
+        tuple(
             "LOG10(0)",
             LOG10(0.aql),
             null

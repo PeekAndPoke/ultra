@@ -6,25 +6,25 @@ import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
 class `E2E-Func-Numeric-EXP2-Spec` : StringSpec({
 
     val cases = listOf(
-        row(
+        tuple(
             "EXP2(16)",
             EXP2(16.aql),
             65536.0
         ),
-        row(
+        tuple(
             "EXP2(1)",
             EXP2(1.aql),
             2.0
         ),
-        row(
+        tuple(
             "EXP2(0)",
             EXP2(0.aql),
             1.0

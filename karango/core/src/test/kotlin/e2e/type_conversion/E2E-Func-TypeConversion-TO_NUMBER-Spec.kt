@@ -6,9 +6,9 @@ import de.peekandpoke.karango.aql.TO_NUMBER
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.E2ePerson
 import de.peekandpoke.karango.e2e.karangoDriver
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
@@ -64,34 +64,34 @@ class `E2E-Func-TypeConversion-TO_NUMBER-Spec` : StringSpec({
     }
 
     val cases = listOf(
-        row("TO_NUMBER(false)", false, 0.0),
-        row("TO_NUMBER(true)", true, 1.0),
+        tuple("TO_NUMBER(false)", false, 0.0),
+        tuple("TO_NUMBER(true)", true, 1.0),
 
-//        row("TO_NUMBER(0)", 0, 0.0),
-//        row("TO_NUMBER(1)", 1, 1.0),
-//        row("TO_NUMBER(-1)", -1, -1.0),
+//        tuple("TO_NUMBER(0)", 0, 0.0),
+//        tuple("TO_NUMBER(1)", 1, 1.0),
+//        tuple("TO_NUMBER(-1)", -1, -1.0),
 
-        row("TO_NUMBER(0.0)", 0.0, 0.0),
-        row("TO_NUMBER(0.1)", 0.1, 0.1),
-        row("TO_NUMBER(-0.1)", -0.1, -0.1),
+        tuple("TO_NUMBER(0.0)", 0.0, 0.0),
+        tuple("TO_NUMBER(0.1)", 0.1, 0.1),
+        tuple("TO_NUMBER(-0.1)", -0.1, -0.1),
 
-        row("TO_NUMBER(\"\") empty string", "", 0.0),
-        row("TO_NUMBER(\"a\") none empty string", "a", 0L),
+        tuple("TO_NUMBER(\"\") empty string", "", 0.0),
+        tuple("TO_NUMBER(\"a\") none empty string", "a", 0L),
 
-        row("TO_NUMBER([]) empty list", listOf<Int>(), 0.0),
-        row("TO_NUMBER([0]) none empty list", listOf(0), 0.0),
-        row("TO_NUMBER([1]) none empty list", listOf(1), 1.0),
-        row("TO_NUMBER([0, 0]) none empty list", listOf(0, 0), 0L),
-        row("TO_NUMBER([0, 1]) none empty list", listOf(0, 1), 0L),
-        row("TO_NUMBER([1, 1]) none empty list", listOf(1, 1), 0L),
-        row("TO_NUMBER([1, 0]) none empty list", listOf(1, 0), 0L),
-        row("TO_NUMBER([1, [2, 3]]) none empty list", listOf(1, listOf(2, 3)), 0L),
-        row("TO_NUMBER(['x']) none empty list", listOf("x"), 0L),
-        row("TO_NUMBER(['x', 'x']) none empty list", listOf("x", "x"), 0L),
+        tuple("TO_NUMBER([]) empty list", listOf<Int>(), 0.0),
+        tuple("TO_NUMBER([0]) none empty list", listOf(0), 0.0),
+        tuple("TO_NUMBER([1]) none empty list", listOf(1), 1.0),
+        tuple("TO_NUMBER([0, 0]) none empty list", listOf(0, 0), 0L),
+        tuple("TO_NUMBER([0, 1]) none empty list", listOf(0, 1), 0L),
+        tuple("TO_NUMBER([1, 1]) none empty list", listOf(1, 1), 0L),
+        tuple("TO_NUMBER([1, 0]) none empty list", listOf(1, 0), 0L),
+        tuple("TO_NUMBER([1, [2, 3]]) none empty list", listOf(1, listOf(2, 3)), 0L),
+        tuple("TO_NUMBER(['x']) none empty list", listOf("x"), 0L),
+        tuple("TO_NUMBER(['x', 'x']) none empty list", listOf("x", "x"), 0L),
 
-        row("TO_NUMBER(object)", E2ePerson("a", 1), 0L),
-        row("TO_NUMBER([object]) list with one objects", listOf(E2ePerson("a", 1)), 0L),
-        row("TO_NUMBER([object, object]) list with two objects", listOf(E2ePerson("a", 1), E2ePerson("b", 2)), 0L)
+        tuple("TO_NUMBER(object)", E2ePerson("a", 1), 0L),
+        tuple("TO_NUMBER([object]) list with one objects", listOf(E2ePerson("a", 1)), 0L),
+        tuple("TO_NUMBER([object, object]) list with two objects", listOf(E2ePerson("a", 1), E2ePerson("b", 2)), 0L)
     )
 
     for ((description, expression, expected) in cases) {

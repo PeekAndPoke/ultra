@@ -1,6 +1,5 @@
 package de.peekandpoke.mutator.e2e
 
-import de.peekandpoke.mutator.Mutator
 import de.peekandpoke.mutator.domain.Address
 import de.peekandpoke.mutator.domain.AddressBook
 import de.peekandpoke.mutator.domain.OneBoundedGenericParam
@@ -16,6 +15,7 @@ import de.peekandpoke.mutator.domain.firstName
 import de.peekandpoke.mutator.domain.inner
 import de.peekandpoke.mutator.domain.lastName
 import de.peekandpoke.mutator.domain.mutate
+import de.peekandpoke.mutator.domain.mutator
 import de.peekandpoke.mutator.domain.street
 import de.peekandpoke.mutator.domain.value
 import de.peekandpoke.mutator.domain.value1
@@ -192,7 +192,7 @@ class DomainSpec : StringSpec() {
             result shouldBe OneBoundedGenericParam(value = "1+1")
         }
 
-        "Mutating a list of sealed interfaces must work" {
+        "Mutating a list of sealed interfaces must work using mutate {}" {
 
             val subject = listOf(
                 SealedInterface.One(value = "1"),
@@ -221,7 +221,38 @@ class DomainSpec : StringSpec() {
             )
         }
 
-        "Mutating a set of sealed interfaces must work" {
+        "Mutating a list of sealed interfaces must work by getting a mutator()" {
+
+            val subject = listOf(
+                SealedInterface.One(value = "1"),
+                SealedInterface.Two(value = 1),
+            )
+
+            val mutator = subject.mutator()
+
+            mutator.forEach {
+                with(it) {
+                    when (val v = get()) {
+                        is SealedInterface.One -> cast(v) {
+                            value = "1+1"
+                        }
+
+                        is SealedInterface.Two -> cast(v) {
+                            value += 10
+                        }
+                    }
+                }
+            }
+
+            val result = mutator.get()
+
+            result shouldBe listOf(
+                SealedInterface.One(value = "1+1"),
+                SealedInterface.Two(value = 1 + 10),
+            )
+        }
+
+        "Mutating a set of sealed interfaces must work using mutate {}" {
 
             val subject = setOf(
                 SealedInterface.One(value = "1"),
@@ -250,6 +281,37 @@ class DomainSpec : StringSpec() {
             )
         }
 
+        "Mutating a set of sealed interfaces must work by getting a mutator()" {
+
+            val subject = setOf(
+                SealedInterface.One(value = "1"),
+                SealedInterface.Two(value = 1),
+            )
+
+            val mutator = subject.mutator()
+
+            mutator.forEach {
+                with(it) {
+                    when (val v = get()) {
+                        is SealedInterface.One -> cast(v) {
+                            value = "1+1"
+                        }
+
+                        is SealedInterface.Two -> cast(v) {
+                            value += 10
+                        }
+                    }
+                }
+            }
+
+            val result = mutator.get()
+
+            result shouldBe setOf(
+                SealedInterface.One(value = "1+1"),
+                SealedInterface.Two(value = 1 + 10),
+            )
+        }
+
         "Mutating an object with a list property must work" {
             val subject = AddressBook(
                 addresses = listOf(
@@ -259,7 +321,7 @@ class DomainSpec : StringSpec() {
             )
 
             val result = subject.mutate {
-                addresses.forEach { it: Mutator<Address> ->
+                addresses.forEach {
                     it.street += "-changed"
                 }
             }

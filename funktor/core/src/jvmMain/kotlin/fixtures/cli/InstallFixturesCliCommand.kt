@@ -5,7 +5,7 @@ import com.github.ajalt.clikt.core.Context
 import de.peekandpoke.funktor.core.fixtures.FixtureInstaller
 import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.kontainer.Kontainer
-import de.peekandpoke.ultra.logging.Log
+import de.peekandpoke.ultra.log.Log
 import de.peekandpoke.ultra.vault.Database
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking

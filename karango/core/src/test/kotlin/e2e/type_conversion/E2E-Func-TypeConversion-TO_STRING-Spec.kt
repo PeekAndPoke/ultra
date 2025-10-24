@@ -6,9 +6,9 @@ import de.peekandpoke.karango.aql.TO_STRING
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.E2ePerson
 import de.peekandpoke.karango.e2e.karangoDriver
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
@@ -64,38 +64,38 @@ class `E2E-Func-TypeConversion-TO_STRING-Spec` : StringSpec({
     }
 
     val cases = listOf(
-        row("TO_STRING(false)", false, "false"),
-        row("TO_STRING(true)", true, "true"),
+        tuple("TO_STRING(false)", false, "false"),
+        tuple("TO_STRING(true)", true, "true"),
 
-        row("TO_STRING(0)", 0, "0"),
-        row("TO_STRING(1)", 1, "1"),
-        row("TO_STRING(-1)", -1, "-1"),
+        tuple("TO_STRING(0)", 0, "0"),
+        tuple("TO_STRING(1)", 1, "1"),
+        tuple("TO_STRING(-1)", -1, "-1"),
 
-        row("TO_STRING(0.0)", 0.0, "0"),
-        row("TO_STRING(0.1)", 0.1, "0.1"),
-        row("TO_STRING(-0.1)", -0.1, "-0.1"),
+        tuple("TO_STRING(0.0)", 0.0, "0"),
+        tuple("TO_STRING(0.1)", 0.1, "0.1"),
+        tuple("TO_STRING(-0.1)", -0.1, "-0.1"),
 
-        row("TO_STRING(\"\") empty string", "", ""),
-        row("TO_STRING(\"a\") none empty string", "a", "a"),
+        tuple("TO_STRING(\"\") empty string", "", ""),
+        tuple("TO_STRING(\"a\") none empty string", "a", "a"),
 
-        row("TO_STRING([]) empty list", listOf<Int>(), "[]"),
-        row("TO_STRING([0]) none empty list", listOf(0), "[0]"),
-        row("TO_STRING([1]) none empty list", listOf(1), "[1]"),
-        row("TO_STRING([0, 0]) none empty list", listOf(0, 0), "[0,0]"),
-        row("TO_STRING([0, 1]) none empty list", listOf(0, 1), "[0,1]"),
-        row("TO_STRING([1, 1]) none empty list", listOf(1, 1), "[1,1]"),
-        row("TO_STRING([1, 0]) none empty list", listOf(1, 0), "[1,0]"),
-        row("TO_STRING([1, [2, 3]]) none empty list", listOf(1, listOf(2, 3)), "[1,[2,3]]"),
-        row("TO_STRING(['x']) none empty list", listOf("x"), """["x"]"""),
-        row("TO_STRING(['x', 'x']) none empty list", listOf("x", "x"), """["x","x"]"""),
+        tuple("TO_STRING([]) empty list", listOf<Int>(), "[]"),
+        tuple("TO_STRING([0]) none empty list", listOf(0), "[0]"),
+        tuple("TO_STRING([1]) none empty list", listOf(1), "[1]"),
+        tuple("TO_STRING([0, 0]) none empty list", listOf(0, 0), "[0,0]"),
+        tuple("TO_STRING([0, 1]) none empty list", listOf(0, 1), "[0,1]"),
+        tuple("TO_STRING([1, 1]) none empty list", listOf(1, 1), "[1,1]"),
+        tuple("TO_STRING([1, 0]) none empty list", listOf(1, 0), "[1,0]"),
+        tuple("TO_STRING([1, [2, 3]]) none empty list", listOf(1, listOf(2, 3)), "[1,[2,3]]"),
+        tuple("TO_STRING(['x']) none empty list", listOf("x"), """["x"]"""),
+        tuple("TO_STRING(['x', 'x']) none empty list", listOf("x", "x"), """["x","x"]"""),
 
-        row("TO_STRING(object)", E2ePerson("a", 1), """{"name":"a","age":1}"""),
-        row(
+        tuple("TO_STRING(object)", E2ePerson("a", 1), """{"name":"a","age":1}"""),
+        tuple(
             "TO_STRING([object]) list with one objects",
             listOf(E2ePerson("a", 1)),
             """[{"name":"a","age":1}]"""
         ),
-        row(
+        tuple(
             "TO_STRING([object, object]) list with two objects",
             listOf(E2ePerson("a", 1), E2ePerson("b", 2)),
             """[{"name":"a","age":1},{"name":"b","age":2}]"""

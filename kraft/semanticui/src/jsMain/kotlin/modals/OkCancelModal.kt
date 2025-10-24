@@ -1,10 +1,10 @@
 package de.peekandpoke.kraft.semanticui.modals
 
-import de.peekandpoke.kraft.common.ModalsManager
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.components.debugId
+import de.peekandpoke.kraft.modals.ModalsManager
 import de.peekandpoke.ultra.html.RenderFn
+import de.peekandpoke.ultra.html.debugId
 import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.SemanticTag
 import de.peekandpoke.ultra.semanticui.noui

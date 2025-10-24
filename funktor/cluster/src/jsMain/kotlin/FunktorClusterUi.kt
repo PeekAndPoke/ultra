@@ -21,11 +21,13 @@ import de.peekandpoke.ultra.html.RenderFn
 import kotlinx.html.Tag
 
 class FunktorClusterUi(
-    val kronosProvider: () -> Kronos,
+    kronos: () -> Kronos = { Kronos.systemUtc },
     val api: FunktorClusterApiClient,
-    val routes: FunktorClusterRoutes,
+    val routes: FunktorClusterRoutes = FunktorClusterRoutes(),
     val customInternals: RenderFn = {},
 ) {
+    private val kronosProvider = kronos
+
     /** Get the kronos */
     val kronos: Kronos get() = kronosProvider()
 

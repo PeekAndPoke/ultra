@@ -2,7 +2,7 @@ package de.peekandpoke.ultra.vault
 
 import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.kontainer.kontainer
-import de.peekandpoke.ultra.logging.ultraLogging
+import de.peekandpoke.ultra.log.ultraLogging
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.types.shouldBeInstanceOf
 

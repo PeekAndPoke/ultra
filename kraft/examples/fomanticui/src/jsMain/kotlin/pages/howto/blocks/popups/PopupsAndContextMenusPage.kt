@@ -3,9 +3,9 @@ package de.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.popups
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
+import de.peekandpoke.kraft.popups.PopupsManager.Companion.popups
+import de.peekandpoke.kraft.popups.PopupsManager.Positioning
 import de.peekandpoke.kraft.routing.PageTitle
-import de.peekandpoke.kraft.semanticui.popups
-import de.peekandpoke.kraft.semanticui.popups.PopupsManager.Positioning
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.html.onMouseEnter
 import de.peekandpoke.ultra.semanticui.noui

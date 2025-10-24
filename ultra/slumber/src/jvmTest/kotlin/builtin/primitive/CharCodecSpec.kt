@@ -1,9 +1,9 @@
 package de.peekandpoke.ultra.slumber.builtin.primitive
 
+import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
 import de.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
-import io.kotest.data.row
 
 class CharAwakerSpec : AwakerSpecHelper(
     type = TypeRef.Char, nonNullSamples = nonNull, nullableSamples = nullable
@@ -17,11 +17,11 @@ class CharSlumberSpec : SlumbererSpecHelper(
  * Samples that map properly. These must be converted correctly to Char and to Char?
  */
 private val nonNull = listOf(
-    row('a', 'a'),
-    row('b', 'b'),
-    row("true", 't'),
-    row("FALSE", 'F'),
-    row("stuff", 's')
+    tuple('a', 'a'),
+    tuple('b', 'b'),
+    tuple("true", 't'),
+    tuple("FALSE", 'F'),
+    tuple("stuff", 's')
 )
 
 /**

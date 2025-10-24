@@ -1,8 +1,8 @@
 package de.peekandpoke.ultra.common
 
+import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 
 class ListsSpec : StringSpec({
@@ -15,16 +15,16 @@ class ListsSpec : StringSpec({
     //  List.replace  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     listOf(
-        row(listOf(), "old", "new", listOf()),
-        row(listOf("old"), "old", "new", listOf("new")),
-        row(listOf("old", "old"), "old", "new", listOf("new", "new")),
-        row(listOf("x", "old", "new", "old", "x"), "old", "new", listOf("x", "new", "new", "new", "x")),
+        tuple(listOf(), "old", "new", listOf()),
+        tuple(listOf("old"), "old", "new", listOf("new")),
+        tuple(listOf("old", "old"), "old", "new", listOf("new", "new")),
+        tuple(listOf("x", "old", "new", "old", "x"), "old", "new", listOf("x", "new", "new", "new", "x")),
         // here we check the none strict equality between 'old' and 'old2'
-        row(listOf(old), old, new, listOf(new)),
-        row(listOf(old2), old, new, listOf(new)),
-        row(listOf(old, old2), old, new, listOf(new, new)),
+        tuple(listOf(old), old, new, listOf(new)),
+        tuple(listOf(old2), old, new, listOf(new)),
+        tuple(listOf(old, old2), old, new, listOf(new, new)),
         // more complex example
-        row(listOf(other, old, new, old, other), old, new, listOf(other, new, new, new, other))
+        tuple(listOf(other, old, new, old, other), old, new, listOf(other, new, new, new, other))
     ).forEachIndexed { testIdx, (source, old, new, expected) ->
 
         "List.replace #$testIdx: '$source', old: '$old', new: '$new' should be '$expected'" {
@@ -35,16 +35,16 @@ class ListsSpec : StringSpec({
     //  List.replaceStrict  ////////////////////////////////////////////////////////////////////////////////////////////
 
     listOf(
-        row(listOf(), "old", "new", listOf()),
-        row(listOf("old"), "old", "new", listOf("new")),
-        row(listOf("old", "old"), "old", "new", listOf("new", "new")),
-        row(listOf("x", "old", "new", "old", "x"), "old", "new", listOf("x", "new", "new", "new", "x")),
+        tuple(listOf(), "old", "new", listOf()),
+        tuple(listOf("old"), "old", "new", listOf("new")),
+        tuple(listOf("old", "old"), "old", "new", listOf("new", "new")),
+        tuple(listOf("x", "old", "new", "old", "x"), "old", "new", listOf("x", "new", "new", "new", "x")),
         // here we check the none strict equality between 'old' and 'old2'
-        row(listOf(old), old, new, listOf(new)),
-        row(listOf(old2), old, new, listOf(old2)),
-        row(listOf(old, old2), old, new, listOf(new, old2)),
+        tuple(listOf(old), old, new, listOf(new)),
+        tuple(listOf(old2), old, new, listOf(old2)),
+        tuple(listOf(old, old2), old, new, listOf(new, old2)),
         // more complex example
-        row(listOf(other, old, new, old, other), old, new, listOf(other, new, new, new, other))
+        tuple(listOf(other, old, new, old, other), old, new, listOf(other, new, new, new, other))
     ).forEachIndexed { testIdx, (source, old, new, expected) ->
 
         "List.replaceStrict #$testIdx: '$source', old: '$old', new: '$new' should be '$expected'" {
@@ -55,8 +55,8 @@ class ListsSpec : StringSpec({
     //  List.replaceAt  ////////////////////////////////////////////////////////////////////////////////////////////////
 
     listOf(
-        row(listOf("a"), 0, "z", listOf("z")),
-        row(listOf("a", "b"), 1, "z", listOf("a", "z"))
+        tuple(listOf("a"), 0, "z", listOf("z")),
+        tuple(listOf("a", "b"), 1, "z", listOf("a", "z"))
     ).forEachIndexed { testIdx, (source, idx, new, expected) ->
 
         "List.replaceAt #$testIdx: '$source', idx: '$idx', new: '$new' should be '$expected'" {
@@ -79,13 +79,13 @@ class ListsSpec : StringSpec({
     //  List.remove  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     listOf(
-        row(listOf(), old, listOf()),
-        row(listOf(old), old, listOf()),
-        row(listOf(old2), old, listOf()),
-        row(listOf(old, other), old, listOf(other)),
+        tuple(listOf(), old, listOf()),
+        tuple(listOf(old), old, listOf()),
+        tuple(listOf(old2), old, listOf()),
+        tuple(listOf(old, other), old, listOf(other)),
         // here we check the none strict comparison between 'old' and 'old2'
-        row(listOf(old2), old, listOf()),
-        row(listOf(old, new, old2, other), old, listOf(new, other))
+        tuple(listOf(old2), old, listOf()),
+        tuple(listOf(old, new, old2, other), old, listOf(new, other))
     ).forEachIndexed { testIdx, (source, element, expected) ->
 
         "List.remove $testIdx: '$source', element: '$element' shouldBe '$expected'" {
@@ -96,11 +96,11 @@ class ListsSpec : StringSpec({
     //  List.removeStrict  /////////////////////////////////////////////////////////////////////////////////////////////
 
     listOf(
-        row(listOf(), old, listOf()),
-        row(listOf(old), old, listOf()),
-        row(listOf(old2), old, listOf(old2)),
-        row(listOf(old, other), old, listOf(other)),
-        row(listOf(old, new, old2, other), old, listOf(new, old2, other))
+        tuple(listOf(), old, listOf()),
+        tuple(listOf(old), old, listOf()),
+        tuple(listOf(old2), old, listOf(old2)),
+        tuple(listOf(old, other), old, listOf(other)),
+        tuple(listOf(old, new, old2, other), old, listOf(new, old2, other))
     ).forEachIndexed { testIdx, (source, element, expected) ->
 
         "List.removeStrict #$testIdx: '$source', element: '$element' shouldBe '$expected'" {
@@ -111,9 +111,9 @@ class ListsSpec : StringSpec({
     //  List.removeAt  /////////////////////////////////////////////////////////////////////////////////////////////////
 
     listOf(
-        row(listOf("a"), 0, listOf()),
-        row(listOf("a", "b"), 0, listOf("b")),
-        row(listOf("a", "b"), 1, listOf("a"))
+        tuple(listOf("a"), 0, listOf()),
+        tuple(listOf("a", "b"), 0, listOf("b")),
+        tuple(listOf("a", "b"), 1, listOf("a"))
     ).forEachIndexed { testIdx, (source, idx, expected) ->
 
         "List.removeAt #$testIdx: '$source', idx: '$idx' should be '$expected'" {
@@ -136,9 +136,9 @@ class ListsSpec : StringSpec({
     //  List.addAt  ////////////////////////////////////////////////////////////////////////////////////////////////////
 
     listOf(
-        row(listOf(), 0, "z", listOf("z")),
-        row(listOf("a"), 0, "z", listOf("z", "a")),
-        row(listOf("a"), 1, "z", listOf("a", "z"))
+        tuple(listOf(), 0, "z", listOf("z")),
+        tuple(listOf("a"), 0, "z", listOf("z", "a")),
+        tuple(listOf("a"), 1, "z", listOf("a", "z"))
     ).forEachIndexed { testIdx, (source, idx, new, expected) ->
 
         "List.addAt #$testIdx: '$source', idx: '$idx', new: '$new' should be '$expected'" {
@@ -161,11 +161,11 @@ class ListsSpec : StringSpec({
     //  List.addAt  ////////////////////////////////////////////////////////////////////////////////////////////////////
 
     listOf(
-        row(listOf(), 0, 1, listOf()),
-        row(listOf("a"), 0, 1, listOf("a")),
-        row(listOf("a", "b"), 0, 1, listOf("b", "a")),
-        row(listOf("a", "b", "c"), 0, 1, listOf("b", "a", "c")),
-        row(listOf("a", "b", "c"), 2, 1, listOf("a", "c", "b"))
+        tuple(listOf(), 0, 1, listOf()),
+        tuple(listOf("a"), 0, 1, listOf("a")),
+        tuple(listOf("a", "b"), 0, 1, listOf("b", "a")),
+        tuple(listOf("a", "b", "c"), 0, 1, listOf("b", "a", "c")),
+        tuple(listOf("a", "b", "c"), 2, 1, listOf("a", "c", "b"))
     ).forEachIndexed { testIdx, (source, idx1, idx2, expected) ->
 
         "List.swapAt #$testIdx: '$source', idx1: '$idx1', idx2: '$idx2' should be '$expected'" {
