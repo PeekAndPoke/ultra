@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.playground
 
+import com.mongodb.client.model.Filters
 import de.peekandpoke.monko.MonkoConfig
 import de.peekandpoke.monko.MonkoDriver
 import de.peekandpoke.monko.MonkoRepository
@@ -40,7 +41,6 @@ suspend fun main() {
 
     val di = blueprint.create()
 
-
     val moviesRepository = di.get<MoviesRepository>()
 
     val faker = faker { }
@@ -54,11 +54,22 @@ suspend fun main() {
 
     println("Inserted document: $inserted")
 
-    val loaded = moviesRepository.findAll()
+    val loaded = moviesRepository.find {
+        filter(
+            Filters.regex("title", "a")
+        )
+        limit(10)
+    }
 
+    println("Query:")
+    println(loaded.query.query)
+
+    println()
     println("Found documents: ${loaded.count}")
 
     loaded.forEachIndexed { idx, movie ->
         println("Found document ${idx + 1}: $movie")
     }
+
+    println()
 }

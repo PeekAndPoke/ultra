@@ -1,14 +1,13 @@
 package de.peekandpoke.monko
 
+import com.mongodb.client.model.Filters.eq
 import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.vault.Cursor
 import de.peekandpoke.ultra.vault.New
 import de.peekandpoke.ultra.vault.RemoveResult
 import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.Repository.Hooks
 import de.peekandpoke.ultra.vault.Stored
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.toList
+import de.peekandpoke.ultra.vault.ensureKey
 
 abstract class MonkoRepository<T : Any>(
     override val name: String,
@@ -23,45 +22,35 @@ abstract class MonkoRepository<T : Any>(
         "MongoDB(${version})::${driver.database.name}"
     }
 
-    override suspend fun findAll(): Cursor<Stored<T>> {
-        val result = driver.find(collection = name)
+    override suspend fun findAll(): MonkoCursor<Stored<T>> {
+        val result = driver.findStored(collection = name, type = storedType)
 
-        val items = result
-            .map {
-                val key = "" + it["_id"]
-                Stored(
-                    _id = "$name/$key",
-                    _key = key,
-                    _rev = "",
-                    value = driver.codec.awake(storedType, it) as T,
-                )
-            }
-            .toList()
+        return result
+    }
 
-        return Cursor.of(items)
+    suspend fun find(query: MonkoDriver.FindQueryBuilder.() -> Unit): MonkoCursor<Stored<T>> {
+        val result = driver.findStored(collection = name, type = storedType, query = query)
+
+        return result
     }
 
     override suspend fun findById(id: String?): Stored<T>? {
-        TODO("Not yet implemented")
+        val result = driver.findStored(collection = name, type = storedType) {
+            filter(eq("_id", id?.ensureKey))
+            limit(1)
+        }
+
+        return result.firstOrNull()
     }
 
     override suspend fun <X : T> insert(new: New<X>): Stored<X> {
-        val coll = driver.database.getCollection<Map<String, Any?>>(name)
+        val result = driver.insertOne(
+            collection = name,
+            value = new.value,
+            key = new._key.takeIf { it.isNotBlank() },
+        )
 
-        @Suppress("UNCHECKED_CAST")
-        val data = driver.codec.slumber(new) as Map<String, Any?>
-
-        val result = coll.insertOne(data)
-
-        return result.insertedId?.let { key ->
-            Stored(
-                _id = "$name/$key",
-                _key = key.toString(),
-                _rev = "",
-                value = new.value,
-            )
-        } ?: throw IllegalStateException("Insert failed")
-
+        return result
     }
 
     override suspend fun <X : T> save(stored: Stored<X>): Stored<X> {

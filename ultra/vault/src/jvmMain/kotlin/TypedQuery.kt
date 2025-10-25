@@ -7,10 +7,10 @@ import de.peekandpoke.ultra.vault.lang.TerminalExpr
 data class TypedQuery<T>(val root: TerminalExpr<T>, val query: String, val vars: Map<String, Any?>) {
 
     companion object {
-        fun <T> empty(type: TypeRef<T>) = TypedQuery(
+        fun <T> of(type: TypeRef<T>, query: String = "", vars: Map<String, Any?> = emptyMap()) = TypedQuery(
             root = EmptyTerminalExpr(type),
-            query = "",
-            vars = emptyMap(),
+            query = query,
+            vars = vars,
         )
     }
 

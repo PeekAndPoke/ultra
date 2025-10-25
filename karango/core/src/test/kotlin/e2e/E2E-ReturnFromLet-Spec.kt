@@ -39,12 +39,10 @@ class `E2E-ReturnFromLet-Spec` : StringSpec({
             }
 
             withClue("TypeRef for deserialization") {
-                @Suppress("RemoveExplicitTypeArguments")
                 result.query.root.innerType() shouldBe TypeRef.String
             }
 
             withClue("TypeRef of TerminalExpr") {
-                @Suppress("RemoveExplicitTypeArguments")
                 result.query.root.getType() shouldBe TypeRef.String.list
             }
         }
@@ -76,12 +74,10 @@ class `E2E-ReturnFromLet-Spec` : StringSpec({
             }
 
             withClue("TypeRef for deserialization") {
-                @Suppress("RemoveExplicitTypeArguments")
                 result.query.root.innerType() shouldBe TypeRef.String.list
             }
 
             withClue("TypeRef of TerminalExpr") {
-                @Suppress("RemoveExplicitTypeArguments")
                 result.query.root.getType() shouldBe TypeRef.String.list.list
             }
         }
@@ -113,12 +109,10 @@ class `E2E-ReturnFromLet-Spec` : StringSpec({
             }
 
             withClue("TypeRef for deserialization") {
-                @Suppress("RemoveExplicitTypeArguments")
                 result.query.root.innerType() shouldBe kMapType<String, String>()
             }
 
             withClue("TypeRef of TerminalExpr") {
-                @Suppress("RemoveExplicitTypeArguments")
                 result.query.root.getType() shouldBe kMapType<String, String>().list
             }
         }
@@ -155,12 +149,10 @@ class `E2E-ReturnFromLet-Spec` : StringSpec({
             }
 
             withClue("TypeRef for deserialization") {
-                @Suppress("RemoveExplicitTypeArguments")
                 result.query.root.innerType() shouldBe kMapType<String, Int>().list
             }
 
             withClue("TypeRef of TerminalExpr") {
-                @Suppress("RemoveExplicitTypeArguments")
                 result.query.root.getType() shouldBe kMapType<String, Int>().list.list
             }
         }
