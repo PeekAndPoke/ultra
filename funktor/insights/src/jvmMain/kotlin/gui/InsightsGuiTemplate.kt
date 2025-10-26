@@ -24,12 +24,14 @@ import kotlinx.html.BODY
 import kotlinx.html.FlowContent
 import kotlinx.html.HEAD
 import kotlinx.html.HTML
-import kotlinx.html.a
 import kotlinx.html.body
 import kotlinx.html.div
 import kotlinx.html.head
 import kotlinx.html.id
 import kotlinx.html.style
+import kotlinx.html.tbody
+import kotlinx.html.td
+import kotlinx.html.tr
 import kotlinx.html.unsafe
 
 class InsightsGuiTemplate(
@@ -43,7 +45,7 @@ class InsightsGuiTemplate(
     val styles = PlaceholderList<HEAD, HEAD>()
     val scripts = PlaceholderList<FlowContent, FlowContent>()
 
-    val contentPlaceholder = Placeholder<BODY>()
+    val bodyPlaceholder = Placeholder<BODY>()
 
     val menuPlaceholders = PlaceholderList<FlowContent, FlowContent>()
 
@@ -97,7 +99,7 @@ class InsightsGuiTemplate(
         }
 
         body {
-            insert(contentPlaceholder)
+            insert(bodyPlaceholder)
 
             each(scripts) { insert(it) }
         }
@@ -109,6 +111,38 @@ class InsightsGuiTemplate(
                 attributes["data-key"] = "overview"
 
                 ui.basic.segment {
+
+                    ui.segment {
+                        ui.header H3 { +"Overview" }
+
+                        ui.basic.table Table {
+                            tbody {
+                                tr {
+                                    td { +"Request" }
+                                    td { +(guiData.requestMethod + " " + guiData.requestUrl) }
+                                }
+                                tr {
+                                    td { +"Status" }
+                                    td {
+                                        val status = guiData.statusCode
+                                        when {
+                                            status == null -> ui.grey.label { +"n/a" }
+                                            status.isSuccess() -> ui.green.label { +"${status.value} ${status.description}" }
+                                            else -> ui.red.label { +"${status.value} ${status.description}" }
+                                        }
+                                    }
+                                }
+                                tr {
+                                    td { +"Response time" }
+                                    td { +guiData.responseTimeMs }
+                                }
+                                tr {
+                                    td { +"Timestamp" }
+                                    td { +guiData.ts.toString() }
+                                }
+                            }
+                        }
+                    }
 
                     guiData.use(VaultCollector.Data::class) {
                         ui.segment {
@@ -131,7 +165,7 @@ class InsightsGuiTemplate(
             it.renderDetails(this)
         }
 
-        contentPlaceholder {
+        bodyPlaceholder {
 
             val coloring = when {
                 guiData.statusCode?.isSuccess() == true -> semantic { green.inverted }
@@ -148,7 +182,6 @@ class InsightsGuiTemplate(
                     ui.item { +guiData.requestMethod }
                     ui.item { +guiData.requestUrl }
                     ui.item { +guiData.responseTimeMs }
-                    ui.item { +guiData.ts.toString() }
                 }
             }
 
@@ -157,22 +190,6 @@ class InsightsGuiTemplate(
 
                 each(menuPlaceholders) {
                     insert(it)
-                }
-
-                if (guiData.previousFile != null) {
-                    a(href = routes.details(guiData.previousFile).url) {
-                        ui.item {
-                            icon.big.arrow_left()
-                        }
-                    }
-                }
-
-                if (guiData.nextFile !== null) {
-                    a(href = routes.details(guiData.nextFile).url) {
-                        ui.item {
-                            icon.big.arrow_right()
-                        }
-                    }
                 }
             }
 

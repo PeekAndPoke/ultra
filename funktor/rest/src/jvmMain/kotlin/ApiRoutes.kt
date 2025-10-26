@@ -38,7 +38,7 @@ abstract class ApiRoutes(val name: String, converter: OutgoingConverter, mountPo
     val routeBuilder = RouteBuilder(converter, mountPoint)
 
     /** A list with all registered routes */
-    val all get(): List<ApiRoute<*>> = allRoutes
+    val all get(): List<ApiRoute<*>> = allRoutes.toList()
 
     /** Registers a route */
     @RestDslMarkerRoute

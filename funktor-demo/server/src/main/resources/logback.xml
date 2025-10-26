@@ -38,7 +38,6 @@
     </appender>
 
     <logger name="io.peekandpoke" level="INFO"/>
-    <logger name="io.peekandpoke.aktor.llms.mcp" level="INFO"/>
     <logger name="de.peekandpoke" level="INFO"/>
 
     <logger name="io.netty" level="INFO"/>

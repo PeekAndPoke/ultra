@@ -71,7 +71,7 @@ class InsightsBarTemplate(
             ui.item {
                 title = "Processing time"
 
-                val duration = guiData.stopWatch.totalDuration()
+                val duration = guiData.responseDuration
                 val durationMillis: Double = duration.inWholeNanoseconds / 1_000_000.0
 
                 when {

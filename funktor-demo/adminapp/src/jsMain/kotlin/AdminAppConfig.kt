@@ -4,7 +4,7 @@ data class AdminAppConfig(
     val orgId: String = "",
     val lang: String = "en",
     val fallbackLang: String = "en",
-    val title: String = "Aktor WebApp | Local",
+    val title: String = "Funktor-Demo Admin | Local",
     val environment: String = "dev",
     val wwwBaseUrl: String = "http://www.funktor-demo.local:36587",
     val apiBaseUrl: String = "http://api.funktor-demo.local:36587",

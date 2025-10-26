@@ -4,6 +4,8 @@ import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsRoutes
 import de.peekandpoke.funktor.cluster.backgroundjobs.mountFunktorBackgroundJobs
 import de.peekandpoke.funktor.cluster.depot.DepotRoutes
 import de.peekandpoke.funktor.cluster.depot.mountFunktorDepot
+import de.peekandpoke.funktor.cluster.devtools.DevtoolsRoutes
+import de.peekandpoke.funktor.cluster.devtools.mountFunktorDevtools
 import de.peekandpoke.funktor.cluster.locks.LocksRoutes
 import de.peekandpoke.funktor.cluster.locks.mountFunktorLocks
 import de.peekandpoke.funktor.cluster.storage.StorageRoutes
@@ -30,6 +32,8 @@ class FunktorClusterRoutes(val mount: String = "/_/funktor/cluster") {
     val depot = DepotRoutes("$mount/depot")
 
     val storage = StorageRoutes("$mount/storage")
+
+    val devtools = DevtoolsRoutes("$mount/devtools")
 }
 
 fun RouterBuilder.mountFunktorCluster(ui: FunktorClusterUi) {
@@ -42,4 +46,5 @@ fun RouterBuilder.mountFunktorCluster(ui: FunktorClusterUi) {
     mountFunktorBackgroundJobs(ui)
     mountFunktorDepot(ui)
     mountFunktorStorage(ui)
+    mountFunktorDevtools(ui)
 }
