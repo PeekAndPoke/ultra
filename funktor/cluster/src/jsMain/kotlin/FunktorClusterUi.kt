@@ -180,8 +180,6 @@ class FunktorClusterUi(
     fun Tag.DevtoolsRequestHistoryPage() = comp(
         DevtoolsRequestHistoryPage.Props(
             ui = this@FunktorClusterUi,
-            // TODO ...
-            baseUrl = "http://admin.funktor-demo.local:36587/_/insights/details",
         )
     ) {
         DevtoolsRequestHistoryPage(it)

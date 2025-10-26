@@ -40,6 +40,8 @@ internal class InsightsFull(
 
     override fun getRequestDetailsUri(): String = filename
 
+    override fun getRequestDetailsUrl(): String = config.baseUrl.trimEnd('/') + "/" + filename
+
     override fun <T : InsightsCollector> getOrNull(cls: KClass<T>): T? = collectors.getOrNull(cls)
 
     override suspend fun finish(call: ApplicationCall) {

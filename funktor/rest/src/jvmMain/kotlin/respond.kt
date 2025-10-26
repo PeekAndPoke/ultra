@@ -76,11 +76,12 @@ fun <T : Any?> ApplicationCall.enrichApiResponseWithInsights(response: ApiRespon
         ApiResponse.Insights(
             ts = Instant.now().epochSecond,
             method = request.httpMethod.value,
-            url = "${request.origin.scheme}//${request.origin.serverHost}:${request.origin.serverPort}${request.origin.uri}",
+            url = "${request.origin.scheme}://${request.origin.serverHost}:${request.origin.serverPort}${request.origin.uri}",
             server = server,
             status = response.status,
             durationMs = metrics?.getRequestDurationInMs(),
             detailsUri = metrics?.getRequestDetailsUri()?.encodeUriComponent(),
+            detailsUrl = metrics?.getRequestDetailsUrl(),
         )
     )
 }

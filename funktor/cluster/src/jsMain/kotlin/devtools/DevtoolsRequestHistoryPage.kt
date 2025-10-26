@@ -3,7 +3,6 @@ package de.peekandpoke.funktor.cluster.devtools
 import de.peekandpoke.funktor.cluster.FunktorClusterUi
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.routing.JoinedPageTitle
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.common.roundWithPrecision
@@ -11,7 +10,6 @@ import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.browser.window
-import kotlinx.html.Tag
 import kotlinx.html.tbody
 import kotlinx.html.td
 import kotlinx.html.th
@@ -19,24 +17,10 @@ import kotlinx.html.thead
 import kotlinx.html.tr
 import kotlin.js.Date
 
-@Suppress("FunctionName")
-fun Tag.DevtoolsRequestHistoryPage(
-    ui: FunktorClusterUi,
-    baseUrl: String,
-) = comp(
-    DevtoolsRequestHistoryPage.Props(
-        ui = ui,
-        baseUrl = baseUrl,
-    ),
-) {
-    DevtoolsRequestHistoryPage(it)
-}
-
 class DevtoolsRequestHistoryPage(ctx: Ctx<Props>) : Component<DevtoolsRequestHistoryPage.Props>(ctx) {
 
     data class Props(
         val ui: FunktorClusterUi,
-        val baseUrl: String,
     )
 
     ////  STATE  ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -75,11 +59,13 @@ class DevtoolsRequestHistoryPage(ctx: Ctx<Props>) : Component<DevtoolsRequestHis
                         .reversed()
                         .forEachIndexed { idx, it ->
 
-                            val insightUrl = props.baseUrl + "/" + it.detailsUri + "/show"
+                            val insightUrl = it.detailsUrl
 
                             tr {
-                                onClick {
-                                    window.open(insightUrl, "_blank")?.focus()
+                                insightUrl?.let {
+                                    onClick {
+                                        window.open(insightUrl, "_blank")?.focus()
+                                    }
                                 }
 
                                 td { +"${idx + 1}." }
@@ -98,11 +84,13 @@ class DevtoolsRequestHistoryPage(ctx: Ctx<Props>) : Component<DevtoolsRequestHis
                                 td { +(it.durationMs?.roundWithPrecision(2)?.toString() ?: "n/a") }
                                 td { +it.server }
                                 td {
-                                    ui.icon.button A {
-                                        target = "_blank"
-                                        href = insightUrl
+                                    insightUrl?.let {
+                                        ui.icon.button A {
+                                            target = "_blank"
+                                            href = insightUrl
 
-                                        icon.search()
+                                            icon.search()
+                                        }
                                     }
                                 }
                             }

@@ -6,9 +6,9 @@ data class AdminAppConfig(
     val fallbackLang: String = "en",
     val title: String = "Funktor-Demo Admin | Local",
     val environment: String = "dev",
-    val wwwBaseUrl: String = "http://www.funktor-demo.local:36587",
-    val apiBaseUrl: String = "http://api.funktor-demo.local:36587",
-    val insightsDetailsBaseUrl: String = "http://admin.funktor-demo.local:36587/_/insights/details/",
+    val wwwBaseUrl: String = "http://www.funktor-demo.localhost:36587",
+    val apiBaseUrl: String = "http://api.funktor-demo.localhost:36587",
+    val insightsDetailsBaseUrl: String = "http://admin.funktor-demo.localhost:36587/_/insights/details/",
 ) {
     @Suppress("unused")
     @JsName("withOrgId")

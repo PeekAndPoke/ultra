@@ -9,4 +9,6 @@ interface RequestMetricsProvider {
     fun getRequestDurationInMs(): Double = getRequestDuration().inWholeNanoseconds / 1_000_000.0
 
     fun getRequestDetailsUri(): String?
+
+    fun getRequestDetailsUrl(): String?
 }
