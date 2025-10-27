@@ -104,7 +104,7 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
     /**
      * Helper for accessing the repos this pointer
      */
-    val repo get() = this
+    val repo: Repository<T> get() = this
 
     /**
      * Gets an iterable expression for this repo
@@ -153,12 +153,12 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
     /**
      * Gets figures about the repository
      */
-    suspend fun getStats(): VaultModels.RepositoryStats = VaultModels.RepositoryStats.empty.copy(name = name)
+    suspend fun getStats(): VaultModels.RepositoryStats = VaultModels.RepositoryStats.empty
 
     /**
      * Validates that all indexes are set properly and that there are not excess indexes
      */
-    suspend fun validateIndexes(): VaultModels.IndexesInfo = VaultModels.IndexesInfo.empty.copy(repository = name)
+    suspend fun validateIndexes(): VaultModels.IndexesInfo = VaultModels.IndexesInfo.empty
 
     /**
      * Ensures that the indexes are set up
@@ -209,7 +209,7 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
     /**
      * Returns all documents in the repository.
      */
-    suspend fun findAll(): Cursor<Stored<T>>
+    suspend fun findAll(): Cursor<Stored<T>> = Cursor.empty()
 
     /**
      * Retrieves a document by id or null if there is none.

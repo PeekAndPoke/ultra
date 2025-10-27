@@ -38,8 +38,6 @@ import de.peekandpoke.ultra.vault.lang.TerminalExpr
 import de.peekandpoke.ultra.vault.lang.expr
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.milliseconds
 
 abstract class EntityRepository<T : Any>(
@@ -49,10 +47,6 @@ abstract class EntityRepository<T : Any>(
     private val hooks: Hooks<T> = Hooks.empty(),
 ) : BaseRepository<T>(name = name, storedType = storedType, driver = driver),
     BatchInsertRepository<T> {
-
-    companion object {
-        private val logger: Logger = LoggerFactory.getLogger(EntityRepository::class.java)
-    }
 
     override suspend fun ensureRepository() {
         driver.ensureEntityCollection(
@@ -74,22 +68,48 @@ abstract class EntityRepository<T : Any>(
         @Suppress("UNCHECKED_CAST")
         val indexes = figures?.get("indexes") as? Map<String, *>
 
+        val docCount = (figuresResponse["count"] as? Number)?.toLong()
+        val docTotalSize = (figures?.get("documentsSize") as? Number)?.toLong()
+
+        val docAvgSize: Long? = run {
+            if (docTotalSize == null || docCount == null || docCount <= 0L) {
+                null
+            } else {
+                docTotalSize / docCount
+            }
+        }
+
         return VaultModels.RepositoryStats(
-            id = info.id,
-            name = info.name,
             type = info.type.name,
             isSystem = info.isSystem,
             status = info.status.name,
-            waitForSync = info.waitForSync,
-            writeConcern = figuresResponse["writeConcern"].toString(),
-            cacheEnabled = figuresResponse["cacheEnabled"] as? Boolean,
-            cacheInUse = figures?.get("cacheInUse") as? Boolean,
-            cacheSize = (figures?.get("cacheSize") as? Number)?.toInt(),
-            cacheUsage = (figures?.get("cacheUsage") as? Number)?.toInt(),
-            documentCount = (figuresResponse["count"] as? Number)?.toLong(),
-            documentsSize = (figures?.get("documentsSize") as? Number)?.toLong(),
-            indexCount = (indexes?.get("count") as? Number)?.toLong(),
-            indexesSize = (indexes?.get("size") as? Number)?.toLong(),
+            storage = VaultModels.RepositoryStats.Storage(
+                count = docCount,
+                totalSize = docTotalSize,
+                avgSize = docAvgSize,
+            ),
+            indexes = VaultModels.RepositoryStats.Indexes(
+                count = (indexes?.get("count") as? Number)?.toLong(),
+                totalSize = (indexes?.get("size") as? Number)?.toLong(),
+            ),
+            custom = listOf(
+                VaultModels.RepositoryStats.Custom.of(
+                    name = "Cache",
+                    entries = mapOf(
+                        "Enabled" to figuresResponse["cacheEnabled"] as? Boolean,
+                        "In Use" to figuresResponse["cacheInUse"] as? Boolean,
+                        "Size" to (figures?.get("cacheSize") as? Number)?.toInt(),
+                        "Usage" to (figures?.get("cacheUsage") as? Number)?.toInt(),
+                    )
+                ),
+                VaultModels.RepositoryStats.Custom.of(
+                    name = "Read / Write",
+                    entries = mapOf(
+                        "Write Concern" to figuresResponse["writeConcern"] as? String,
+                        "WaitFor Sync" to info.waitForSync,
+                    )
+                )
+            ),
         )
     }
 
@@ -104,24 +124,22 @@ abstract class EntityRepository<T : Any>(
         val excess = indexes.filter { index -> index.matchesNone(definitions) }
 
         if (missing.isEmpty() && excess.isEmpty()) {
-            logger.info("[OK] Indexes for repo $name are set up properly")
+            driver.log.info("[OK] Indexes for repo $name are set up properly")
         } else {
-            logger.warn("[FAILED] Checking repo $name with ${definitions.size} index definitions")
+            driver.log.warning("[FAILED] Checking repo $name with ${definitions.size} index definitions")
 
             missing.forEach {
                 val name = "$name::${it.getEffectiveName()}"
-                logger.warn("[MISSING] Index $name with fields ${it.getFieldPaths()} is missing")
+                driver.log.warning("[MISSING] Index $name with fields ${it.getFieldPaths()} is missing")
             }
 
             excess.forEach {
                 val name = "$name::${it.name}"
-                logger.warn("[EXCESS] Index $name with fields ${it.fields} is not defined")
+                driver.log.warning("[EXCESS] Index $name with fields ${it.fields} is not defined")
             }
         }
 
         return VaultModels.IndexesInfo(
-            connection = connection,
-            repository = name,
             healthyIndexes = health.map { it.getIndexDetails() },
             missingIndexes = missing.map { it.getIndexDetails() },
             excessIndexes = excess.map {
@@ -144,25 +162,32 @@ abstract class EntityRepository<T : Any>(
             results.forEach { r ->
                 when (r) {
                     is IndexBuilder.EnsureResult.Ensured -> {
-                        logger.info("[OK] Ensured index '${r.qualifiedName()}' (${r.idx.type}) on fields ${r.fields}")
+                        driver.log.info(
+                            "[OK] Ensured index '${r.qualifiedName()}' (${r.idx.type}) on fields ${r.fields}"
+                        )
                         return
                     }
 
                     is IndexBuilder.EnsureResult.Kept -> {
-                        logger.info("[OK] Kept index '${r.qualifiedName()}' (${r.idx.type}) on fields ${r.fields}")
+                        driver.log.info(
+                            "[OK] Kept index '${r.qualifiedName()}' (${r.idx.type}) on fields ${r.fields}"
+                        )
                         return
                     }
 
                     is IndexBuilder.EnsureResult.ReCreated -> {
-                        logger.info("[OK] Re-Created index '${r.qualifiedName()}' (${r.idx.type}) on fields ${r.fields}")
+                        driver.log.info(
+                            "[OK] Re-Created index '${r.qualifiedName()}' (${r.idx.type}) on fields ${r.fields}"
+                        )
                         return
                     }
 
                     is IndexBuilder.EnsureResult.Error -> {
                         if (attempts < maxAttempts) {
-                            logger.warn(
-                                "[WARNING] Will retry to crate index '${r.qualifiedName()}' on fields ${r.fields}, ErrNum: ${r.error.errorNum} " +
-                                        "ResponseCode: ${r.error.responseCode} Message: ${r.error.errorMessage}",
+                            driver.log.warning(
+                                "[WARNING] Will retry to crate index '${r.qualifiedName()}' on fields ${r.fields}, " +
+                                        "ErrNum: ${r.error.errorNum} ResponseCode: ${r.error.responseCode} " +
+                                        "Message: ${r.error.errorMessage}",
                             )
 
                             // Reload all indexes
@@ -170,9 +195,10 @@ abstract class EntityRepository<T : Any>(
                             // And wait a bit
                             delay(1000.milliseconds)
                         } else {
-                            logger.error(
-                                "[ERROR] Creating index '${r.qualifiedName()}' on fields ${r.fields} failed, ErrNum: ${r.error.errorNum} " +
-                                        "ResponseCode: ${r.error.responseCode} Message: ${r.error.errorMessage}",
+                            driver.log.error(
+                                "[ERROR] Creating index '${r.qualifiedName()}' on fields ${r.fields} failed, " +
+                                        "ErrNum: ${r.error.errorNum} ResponseCode: ${r.error.responseCode} " +
+                                        "Message: ${r.error.errorMessage}",
                             )
                         }
                     }
@@ -192,9 +218,9 @@ abstract class EntityRepository<T : Any>(
             val name = "$name::${it.name}"
             try {
                 val deleted: String = coll.deleteIndex(it.id).await()
-                logger.info("[OK] Deleted index '$deleted'")
+                driver.log.info("[OK] Deleted index '$deleted'")
             } catch (e: ArangoDBException) {
-                logger.error("[Error] Deleting index '$name' failed: ${e.message}")
+                driver.log.error("[Error] Deleting index '$name' failed: ${e.message}")
             }
         }
 

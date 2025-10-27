@@ -1,25 +1,88 @@
 package de.peekandpoke.monko
 
 import com.mongodb.client.model.Filters.eq
+import de.peekandpoke.monko.lang.printQuery
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.vault.New
 import de.peekandpoke.ultra.vault.RemoveResult
 import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.Repository.Hooks
 import de.peekandpoke.ultra.vault.Stored
+import de.peekandpoke.ultra.vault.VaultModels
 import de.peekandpoke.ultra.vault.ensureKey
+import de.peekandpoke.ultra.vault.lang.Expression
+import de.peekandpoke.ultra.vault.lang.PropertyPath
+import org.bson.Document
 
 abstract class MonkoRepository<T : Any>(
     override val name: String,
     override val storedType: TypeRef<T>,
-    private val driver: MonkoDriver,
+    protected val driver: MonkoDriver,
     private val hooks: Hooks<T> = Hooks.empty(),
 ) : Repository<T> {
 
     override val connection: String by lazy {
-        val version = driver.getDatabaseVersion()
+        driver.getConnectionName()
+    }
 
-        "MongoDB(${version})::${driver.database.name}"
+    fun <R> field(block: (Expression<T>) -> PropertyPath<R, *>): String {
+        val path = block(repo.forceCastTo())
+
+        val dropped = path.dropRoot() ?: return ""
+
+        return dropped.getAsList().joinToString(".") {
+            it.printQuery().replace("`", "")
+        }
+    }
+
+    override suspend fun getStats(): VaultModels.RepositoryStats {
+        val coll = driver.database.getCollection<Document>(name)
+        val stats = driver.database.runCommand(Document("collStats", name))
+
+        val docCount = stats.getNumberOrNull("count")?.toLong()
+        val docAvgSize = stats.getNumberOrNull("avgObjSize")?.toLong()
+        val docTotalSize = run {
+            if (docCount == null || docAvgSize == null) {
+                null
+            } else {
+                docCount * docAvgSize
+            }
+        }
+
+        return VaultModels.RepositoryStats(
+            type = null,
+            isSystem = null,
+            status = null,
+            storage = VaultModels.RepositoryStats.Storage(
+                count = docCount,
+                totalSize = docTotalSize,
+                avgSize = docAvgSize,
+            ),
+            indexes = VaultModels.RepositoryStats.Indexes(
+                count = stats.getNumberOrNull("nindexes")?.toLong(),
+                totalSize = stats.getNumberOrNull("totalIndexSize")?.toLong(),
+            ),
+            custom = listOf(
+                VaultModels.RepositoryStats.Custom.of(
+                    name = "Read / Write",
+                    entries = mapOf(
+                        "Read Concern" to coll.readConcern.toString(),
+                        "Read Preference" to coll.readPreference.name,
+                        "Write Concern" to coll.writeConcern.toString(),
+                    )
+                )
+            ),
+        )
+    }
+
+    override suspend fun recreateIndexes() {
+        val indexes = driver.listIndexes(collection = name)
+
+        indexes.forEach { index ->
+            driver.dropIndex(collection = name, indexName = index["name"].toString())
+        }
+
+        ensureIndexes()
     }
 
     override suspend fun findAll(): MonkoCursor<Stored<T>> {
@@ -44,13 +107,17 @@ abstract class MonkoRepository<T : Any>(
     }
 
     override suspend fun <X : T> insert(new: New<X>): Stored<X> {
-        val result = driver.insertOne(
+        // Apply before save hooks
+        val beforeHookApplied = hooks.applyOnBeforeSaveHooks(this, new)
+
+        val storedInDb = driver.insertOne(
             collection = name,
-            value = new.value,
+            value = beforeHookApplied.value,
             key = new._key.takeIf { it.isNotBlank() },
         )
 
-        return result
+        // Apply after save hooks
+        return hooks.applyOnAfterSaveHooks(this, storedInDb)
     }
 
     override suspend fun <X : T> save(stored: Stored<X>): Stored<X> {
@@ -62,6 +129,6 @@ abstract class MonkoRepository<T : Any>(
     }
 
     override suspend fun removeAll(): RemoveResult {
-        TODO("Not yet implemented")
+        return driver.removeAll(collection = name)
     }
 }

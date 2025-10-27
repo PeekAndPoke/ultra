@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.playground
 
 import com.mongodb.client.model.Filters
-import de.peekandpoke.monko.MonkoConfig
+import de.peekandpoke.monko.MongoDbConfig
 import de.peekandpoke.monko.MonkoDriver
 import de.peekandpoke.monko.MonkoRepository
 import de.peekandpoke.monko.monko
@@ -9,6 +9,7 @@ import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.kontainer.kontainer
 import de.peekandpoke.ultra.log.ultraLogging
+import de.peekandpoke.ultra.vault.VaultConfig
 import de.peekandpoke.ultra.vault.ultraVault
 import io.github.serpro69.kfaker.faker
 
@@ -24,7 +25,9 @@ class MoviesRepository(
 
 suspend fun main() {
 
-    val config = MonkoConfig(
+    val vaultConfig = VaultConfig()
+
+    val mongoConfig = MongoDbConfig(
         connectionString = "mongodb://root:root@localhost:27017",
         database = "funktor-dev",
     )
@@ -33,8 +36,8 @@ suspend fun main() {
         singleton(Kronos::class) { Kronos.systemUtc }
 
         ultraLogging()
-        ultraVault()
-        monko(config)
+        ultraVault(vaultConfig)
+        monko(mongoConfig)
 
         dynamic(MoviesRepository::class)
     }

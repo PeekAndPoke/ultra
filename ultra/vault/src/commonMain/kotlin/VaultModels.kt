@@ -8,7 +8,7 @@ object VaultModels {
     data class RepositoryInfo(
         val connection: String,
         val name: String,
-        val figures: RepositoryStats,
+        val stats: RepositoryStats,
         val indexes: IndexesInfo,
     ) {
         val hasErrors get() = indexes.missingIndexes.isNotEmpty() || indexes.excessIndexes.isNotEmpty()
@@ -16,51 +16,53 @@ object VaultModels {
 
     @Serializable
     data class RepositoryStats(
-        val id: String?,
-        val name: String?,
         val type: String?,
         val isSystem: Boolean?,
         val status: String?,
-        val waitForSync: Boolean?,
-        val writeConcern: String?,
-        val cacheEnabled: Boolean?,
-        val cacheInUse: Boolean?,
-        val cacheSize: Int?,
-        val cacheUsage: Int?,
-        val documentCount: Long?,
-        val documentsSize: Long?,
-        val indexCount: Long?,
-        val indexesSize: Long?,
+        val storage: Storage,
+        val indexes: Indexes,
+        val custom: List<Custom>,
     ) {
         companion object {
             val empty = RepositoryStats(
-                id = null,
-                name = null,
                 type = null,
                 isSystem = null,
                 status = null,
-                waitForSync = null,
-                writeConcern = null,
-                cacheEnabled = null,
-                cacheInUse = null,
-                cacheSize = null,
-                cacheUsage = null,
-                documentCount = null,
-                documentsSize = null,
-                indexCount = null,
-                indexesSize = null,
+                storage = Storage(),
+                indexes = Indexes(),
+                custom = emptyList(),
             )
         }
 
-        val avgSize: Long? = run {
-            documentCount?.takeIf { it > 0 }?.let { documentsSize?.div(it) }
+        @Serializable
+        data class Storage(
+            val count: Long? = null,
+            val avgSize: Long? = null,
+            val totalSize: Long? = null,
+        )
+
+        @Serializable
+        data class Indexes(
+            val count: Long? = null,
+            val totalSize: Long? = null,
+        )
+
+        @Serializable
+        data class Custom(
+            val name: String,
+            val entries: Map<String, String?>,
+        ) {
+            companion object {
+                fun of(name: String, entries: Map<String, Any?>) = Custom(
+                    name = name,
+                    entries = entries.mapValues { it.value?.toString() },
+                )
+            }
         }
     }
 
     @Serializable
     data class IndexesInfo(
-        val connection: String,
-        val repository: String,
         /** Indexes that exist as they are defined */
         val healthyIndexes: List<IndexInfo>,
         /** Indexes that are defined but do not exist */
@@ -70,8 +72,6 @@ object VaultModels {
     ) {
         companion object {
             val empty = IndexesInfo(
-                connection = "",
-                repository = "",
                 healthyIndexes = emptyList(),
                 missingIndexes = emptyList(),
                 excessIndexes = emptyList(),

@@ -9,14 +9,14 @@ import de.peekandpoke.ultra.vault.Database
 import de.peekandpoke.ultra.vault.EntityCache
 import de.peekandpoke.ultra.vault.slumber.VaultSlumberModule
 
-fun KontainerBuilder.monko(config: MonkoConfig) = module(MonkoModule, config)
+fun KontainerBuilder.monko(config: MongoDbConfig) = module(MonkoModule, config)
 
 fun getMonkoDefaultSlumberConfig() = SlumberConfig.default.prependModules(VaultSlumberModule)
 
 /**
  * Monko kontainer module
  */
-val MonkoModule = module { config: MonkoConfig ->
+val MonkoModule = module { config: MongoDbConfig ->
 
     singleton(MongoClient::class) {
         config.toMongoClient()
@@ -41,10 +41,10 @@ val MonkoModule = module { config: MonkoConfig ->
     }
 }
 
-private val dbCache = mutableMapOf<MonkoConfig, MongoClient>()
+private val dbCache = mutableMapOf<MongoDbConfig, MongoClient>()
 private val lock = Any()
 
-fun MonkoConfig.toMongoClient(): MongoClient = synchronized(lock) {
+fun MongoDbConfig.toMongoClient(): MongoClient = synchronized(lock) {
     // TODO: check that the DB was not yet shut down
     dbCache[this]?.let { return it }
 
@@ -53,7 +53,7 @@ fun MonkoConfig.toMongoClient(): MongoClient = synchronized(lock) {
     }
 }
 
-fun MonkoConfig.toMongoClientWithoutCache(): MongoClient {
+fun MongoDbConfig.toMongoClientWithoutCache(): MongoClient {
     val client = MongoClient.create(connectionString)
 
     return client

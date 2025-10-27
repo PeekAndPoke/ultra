@@ -26,7 +26,7 @@ class AuthSystem(
     class Deps(
         val messaging: MessagingServices,
         val jwtGenerator: JwtGenerator,
-        val storage: AuthStorage,
+        val storage: AuthRecordStorage,
         val passwordHasher: PasswordHasher,
         val random: AuthRandom,
     )
@@ -74,6 +74,7 @@ class AuthSystem(
     /** Activate a user account by [realm] and [request] */
     suspend fun activate(realm: String, request: AuthActivateRequest): AuthActivateResponse {
         // Activation not yet implemented
+        // TODO: implement me
         return AuthActivateResponse(success = false)
     }
 }

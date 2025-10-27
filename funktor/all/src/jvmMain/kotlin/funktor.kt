@@ -1,5 +1,6 @@
 package de.peekandpoke.funktor
 
+import de.peekandpoke.funktor.auth.FunktorAuthBuilder
 import de.peekandpoke.funktor.auth.funktorAuth
 import de.peekandpoke.funktor.cluster.FunktorClusterBuilder
 import de.peekandpoke.funktor.cluster.funktorCluster
@@ -11,7 +12,7 @@ import de.peekandpoke.funktor.core.model.default
 import de.peekandpoke.funktor.insights.funktorInsights
 import de.peekandpoke.funktor.logging.FunktorLoggingBuilder
 import de.peekandpoke.funktor.logging.funktorLogging
-import de.peekandpoke.funktor.messaging.FunktorCMessagingBuilder
+import de.peekandpoke.funktor.messaging.FunktorMessagingBuilder
 import de.peekandpoke.funktor.messaging.funktorMessaging
 import de.peekandpoke.funktor.rest.FunktorRestBuilder
 import de.peekandpoke.funktor.rest.funktorRest
@@ -20,6 +21,18 @@ import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
 
 // Kontainer module
+/** Module definition */
+val Funktor = module { params: FunktorParams ->
+    funktorCore(params.config, params.appInfo)
+    funktorAuth(params.auth)
+    funktorBroker()
+    funktorRest(params.rest)
+    funktorCluster(params.cluster)
+    funktorLogging(params.logging)
+    funktorStaticWeb()
+    funktorMessaging(params.messaging)
+    funktorInsights()
+}
 
 fun KontainerBuilder.funktor(
     config: AppConfig,
@@ -27,7 +40,8 @@ fun KontainerBuilder.funktor(
     rest: FunktorRestBuilder.() -> Unit = {},
     logging: FunktorLoggingBuilder.() -> Unit = {},
     cluster: FunktorClusterBuilder.() -> Unit = {},
-    messaging: FunktorCMessagingBuilder.() -> Unit = {},
+    messaging: FunktorMessagingBuilder.() -> Unit = {},
+    auth: FunktorAuthBuilder.() -> Unit = {},
 ) = module(
     Funktor,
     FunktorParams(
@@ -37,28 +51,17 @@ fun KontainerBuilder.funktor(
         logging = logging,
         cluster = cluster,
         messaging = messaging,
+        auth = auth,
     )
 )
 
-@Suppress("DATA_CLASS_COPY_VISIBILITY_WILL_BE_CHANGED_WARNING")
+@ConsistentCopyVisibility
 data class FunktorParams internal constructor(
     val config: AppConfig,
     val appInfo: AppInfo,
     val rest: FunktorRestBuilder.() -> Unit,
     val logging: FunktorLoggingBuilder.() -> Unit,
     val cluster: FunktorClusterBuilder.() -> Unit,
-    val messaging: FunktorCMessagingBuilder.() -> Unit,
+    val messaging: FunktorMessagingBuilder.() -> Unit,
+    val auth: FunktorAuthBuilder.() -> Unit,
 )
-
-/** Module definition */
-val Funktor = module { params: FunktorParams ->
-    funktorCore(params.config, params.appInfo)
-    funktorAuth()
-    funktorBroker()
-    funktorRest(params.rest)
-    funktorCluster(params.cluster)
-    funktorLogging(params.logging)
-    funktorStaticWeb()
-    funktorMessaging(params.messaging)
-    funktorInsights()
-}

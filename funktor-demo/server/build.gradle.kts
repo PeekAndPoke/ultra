@@ -48,6 +48,8 @@ kotlin {
         implementation(project(":karango:addons"))
         ksp(project(":karango:ksp"))
 
+        implementation(project(":monko:core"))
+
         implementation(project(":funktor-demo:common"))
     }
 }

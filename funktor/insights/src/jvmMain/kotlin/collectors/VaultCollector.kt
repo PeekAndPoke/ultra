@@ -122,7 +122,7 @@ class VaultCollector(private val profiler: QueryProfiler) : InsightsCollector {
                             }
                         }
 
-                        prism(it.queryLanguage) { it.query }
+                        prism(it.queryLanguage) { it.query ?: "" }
 
                         json(it.vars)
 

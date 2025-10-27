@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.demo.server.admin
 
-import de.peekandpoke.funktor.auth.AuthStorage
+import de.peekandpoke.funktor.auth.AuthRecordStorage
 import de.peekandpoke.funktor.auth.domain.AuthRecord
 import de.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import de.peekandpoke.karango.aql.EQ
@@ -42,14 +42,14 @@ class AdminUsersRepo(
 
     class Fixtures(
         repo: AdminUsersRepo,
-        private val authStorage: AuthStorage,
+        private val authRecordStorage: AuthRecordStorage,
         private val passwordHasher: PasswordHasher,
     ) : RepoFixtureLoader<AdminUser>(repo = repo) {
 
         private val commonPassword = "S3cret123!"
 
         private suspend fun Stored<AdminUser>.createPassword(password: String = commonPassword) {
-            authStorage.createRecord {
+            authRecordStorage.createRecord {
                 AuthRecord.Password(
                     realm = AdminUserRealm.REALM,
                     ownerId = _id,

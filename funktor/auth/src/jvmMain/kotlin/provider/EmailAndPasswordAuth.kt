@@ -4,7 +4,6 @@ import de.peekandpoke.funktor.auth.AuthError
 import de.peekandpoke.funktor.auth.AuthRealm
 import de.peekandpoke.funktor.auth.AuthSystem
 import de.peekandpoke.funktor.auth.domain.AuthRecord
-import de.peekandpoke.funktor.auth.findLatestRecordBy
 import de.peekandpoke.funktor.auth.model.AuthProviderModel
 import de.peekandpoke.funktor.auth.model.AuthRecoveryRequest
 import de.peekandpoke.funktor.auth.model.AuthRecoveryResponse
@@ -75,7 +74,7 @@ class EmailAndPasswordAuth(
         val user = realm.loadUserByEmail(email)
             ?: throw AuthError.invalidCredentials()
 
-        validateCurrentPassword(realm, user, password).takeIf { it == true }
+        validateCurrentPassword(realm, user, password).takeIf { it }
             ?: throw AuthError.invalidCredentials()
 
         return user

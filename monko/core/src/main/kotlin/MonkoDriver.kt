@@ -1,5 +1,8 @@
 package de.peekandpoke.monko
 
+import com.mongodb.ExplainVerbosity
+import com.mongodb.client.model.DropIndexOptions
+import com.mongodb.client.model.IndexOptions
 import com.mongodb.client.result.InsertOneResult
 import com.mongodb.kotlin.client.coroutine.FindFlow
 import com.mongodb.kotlin.client.coroutine.MongoClient
@@ -7,6 +10,7 @@ import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.log.Log
 import de.peekandpoke.ultra.log.NullLog
+import de.peekandpoke.ultra.vault.RemoveResult
 import de.peekandpoke.ultra.vault.Stored
 import de.peekandpoke.ultra.vault.TypedQuery
 import de.peekandpoke.ultra.vault.profiling.NullQueryProfiler
@@ -25,6 +29,14 @@ class MonkoDriver(
     private val lazyProfiler: Lazy<QueryProfiler> = lazy { NullQueryProfiler },
     private val log: Log = NullLog,
 ) {
+    companion object {
+        private val prettyJsonWriterSettings = JsonWriterSettings.builder().indent(true).build()
+
+        private fun Document.toPrettyJson(): String {
+            return toBsonDocument().toJson(prettyJsonWriterSettings)
+        }
+    }
+
     class FindQueryBuilder internal constructor() {
         private var filter: Bson? = null
         private var sort: Bson? = null
@@ -56,17 +68,13 @@ class MonkoDriver(
         }
 
         fun print(): String {
-            val jsonWriterSettings = JsonWriterSettings.builder().indent(true).build()
+            val doc = Document()
+            doc["filter"] = filter?.toBsonDocument()
+            doc["sort"] = sort?.toBsonDocument()
+            doc["limit"] = limit
+            doc["skip"] = skip
 
-            val filterJson = filter?.toBsonDocument()?.toJson(jsonWriterSettings)
-            val sortJson = sort?.toBsonDocument()?.toJson(jsonWriterSettings)
-
-            return buildString {
-                appendLine("Filter: $filterJson")
-                appendLine("Sort: $sortJson")
-                appendLine("Limit: $limit")
-                appendLine("Skip: $skip")
-            }
+            return doc.toPrettyJson()
         }
     }
 
@@ -104,6 +112,36 @@ class MonkoDriver(
         return version
     }
 
+    fun getConnectionName(): String {
+        val version = getDatabaseVersion()
+
+        return "MongoDB(${version})::${database.name}"
+    }
+
+    suspend fun listIndexes(collection: String): List<Document> {
+        val coll = database.getCollection<Document>(collection)
+
+        val result = coll.listIndexes()
+
+        return result.toList()
+    }
+
+    suspend fun dropIndex(collection: String, indexName: String, options: DropIndexOptions = DropIndexOptions()) {
+        val coll = database.getCollection<Document>(collection)
+
+        coll.dropIndex(indexName = indexName, options = options)
+
+
+    }
+
+    suspend fun createIndex(collection: String, keys: Document, options: IndexOptions = IndexOptions()): String {
+        val coll = database.getCollection<Document>(collection)
+
+        val result = coll.createIndex(keys, options)
+
+        return result
+    }
+
     suspend fun insertOne(collection: String, document: Document): InsertOneResult {
         val coll = database.getCollection<Document>(collection)
 
@@ -130,7 +168,34 @@ class MonkoDriver(
         )
     }
 
-    fun find(
+    suspend fun <T> findStored(
+        collection: String,
+        type: TypeRef<T>,
+        query: FindQueryBuilder.() -> Unit = {},
+    ): MonkoCursor<Stored<T>> {
+        return profile {
+            findStored(collection, type, query)
+        }
+    }
+
+    suspend fun removeAll(collection: String): RemoveResult {
+        val coll = database.getCollection<Document>(collection)
+        val result = coll.deleteMany(Document())
+
+        return RemoveResult(
+            count = result.deletedCount,
+            query = null,
+        )
+    }
+
+    private suspend fun <R> profile(block: suspend QueryProfiler.Entry.() -> R): R = profiler.profile(
+        connection = getConnectionName(),
+        queryLanguage = "json",
+        query = "",
+        block = block,
+    )
+
+    private fun find(
         collection: String,
         adjust: FindQueryBuilder.() -> Unit = {},
     ): Pair<FindQueryBuilder, FindFlow<Map<String, Any?>>> {
@@ -143,38 +208,59 @@ class MonkoDriver(
         return queryBuilder to flow
     }
 
-    suspend fun <T> findStored(
+    private suspend fun <T> QueryProfiler.Entry.findStored(
         collection: String,
         type: TypeRef<T>,
         query: FindQueryBuilder.() -> Unit = {},
     ): MonkoCursor<Stored<T>> {
+        val profile = this
+
         val found = find(collection, query)
+        val builder = found.first
+        val flow = found.second
 
-        val mapped = found.second.map {
-            val key = "" + it["_id"]
+        val mapped = flow.map {
+            profile.measureDeserializer {
+                val key = "" + it["_id"]
 
-            @Suppress("UNCHECKED_CAST")
-            val value = codec.awake(type, it) as T
+                @Suppress("UNCHECKED_CAST")
+                val value = codec.awake(type, it) as T
 
-            Stored(
-                _id = "$collection/$key",
-                _key = key,
-                _rev = "",
-                value = value,
-            )
+                Stored(
+                    _id = "$collection/$key",
+                    _key = key,
+                    _rev = "",
+                    value = value,
+                )
+            }
         }
 
         val storedType = type.wrapWith<Stored<T>>()
 
+        val entries = profile.measureQuery.async {
+            mapped.toList()
+        }
+
         val cursor = MonkoCursor(
-            entries = mapped.toList(),
+            entries = entries,
             query = TypedQuery.of(
                 type = storedType,
-                query = found.first.print(),
+                query = builder.print(),
                 vars = emptyMap(),
             ),
             entityCache = codec.entityCache,
         )
+
+        profile.count = cursor.count
+        profile.query = cursor.query.query
+        profile.vars = cursor.query.vars
+
+        if (profiler.explainQueries) {
+            profile.measureExplain.async {
+                val explained = flow.explain(ExplainVerbosity.QUERY_PLANNER)
+                profile.queryExplained = explained.toPrettyJson()
+            }
+        }
 
         return cursor
     }

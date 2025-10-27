@@ -28,6 +28,7 @@ kotlin {
 
         api(platform(Deps.KotlinLibs.MongoDb.mongodb_driver_bom))
         api(Deps.KotlinLibs.MongoDb.mongodb_driver_kotlin_coroutine)
+        api(Deps.KotlinLibs.MongoDb.mongodb_bson_kotlinx)
 
         implementation(project(":ultra:common"))
         implementation(project(":ultra:kontainer"))

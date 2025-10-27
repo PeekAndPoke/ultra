@@ -67,6 +67,8 @@ interface QueryProfiler {
     interface Entry {
 
         object Null : Entry {
+            override var query: String? get() = null; set(_) {}
+
             override var vars: Map<String, Any?>? get() = null; set(_) {}
 
             override var count: Long? get() = null; set(_) {}
@@ -85,7 +87,7 @@ interface QueryProfiler {
         class Impl(
             val connection: String,
             val queryLanguage: String,
-            val query: String,
+            override var query: String? = null,
         ) : Entry {
             override var vars: Map<String, Any?>? = null
 
@@ -104,6 +106,8 @@ interface QueryProfiler {
             override val measureDeserializer: StopWatch.Impl = StopWatch.Impl()
             override val measureExplain: StopWatch.Impl = StopWatch.Impl()
         }
+
+        var query: String?
 
         var vars: Map<String, Any?>?
 

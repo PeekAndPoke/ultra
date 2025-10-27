@@ -33,7 +33,7 @@ class KarangoDriver(
     private val lazyCodec: Lazy<KarangoCodec>,
     private val lazyArangoDb: Lazy<ArangoDatabaseAsync>,
     private val lazyProfiler: Lazy<QueryProfiler> = lazy { NullQueryProfiler },
-    private val log: Log = NullLog,
+    val log: Log = NullLog,
 ) {
     val codec: KarangoCodec by lazyCodec
     val arangoDb: ArangoDatabaseAsync by lazyArangoDb
