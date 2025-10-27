@@ -6,10 +6,9 @@ import com.arangodb.entity.IndexType
 import com.arangodb.model.CollectionCreateOptions
 import de.peekandpoke.karango.KarangoCursor
 import de.peekandpoke.karango.KarangoQueryException
-import de.peekandpoke.karango._id
-import de.peekandpoke.karango._key
 import de.peekandpoke.karango.aql.AS
-import de.peekandpoke.karango.aql.AqlBuilder
+import de.peekandpoke.karango.aql.AqlStatementBuilderImpl
+import de.peekandpoke.karango.aql.AqlTerminalExpr
 import de.peekandpoke.karango.aql.COUNT
 import de.peekandpoke.karango.aql.DOCUMENT
 import de.peekandpoke.karango.aql.FOR
@@ -20,6 +19,7 @@ import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.REMOVE
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.UPSERT_REPLACE
+import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.vault.IndexBuilder.Companion.matchesAny
 import de.peekandpoke.karango.vault.IndexBuilder.Companion.matchesNone
 import de.peekandpoke.ultra.common.reflection.TypeRef
@@ -31,11 +31,8 @@ import de.peekandpoke.ultra.vault.RemoveResult
 import de.peekandpoke.ultra.vault.Repository.Hooks
 import de.peekandpoke.ultra.vault.Storable
 import de.peekandpoke.ultra.vault.Stored
-import de.peekandpoke.ultra.vault.TypedQuery
 import de.peekandpoke.ultra.vault.VaultModels
 import de.peekandpoke.ultra.vault.ensureKey
-import de.peekandpoke.ultra.vault.lang.TerminalExpr
-import de.peekandpoke.ultra.vault.lang.expr
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlin.time.Duration.Companion.milliseconds
@@ -343,7 +340,7 @@ abstract class EntityRepository<T : Any>(
     }
 
     suspend inline fun <reified C> findPartial(
-        crossinline builder: AqlBuilder.() -> TerminalExpr<out C>,
+        crossinline builder: AqlStatementBuilderImpl.() -> AqlTerminalExpr<out C>,
     ): KarangoCursor<Stored<C>> = query {
         builder().AS(kType<C>().wrapWith<Stored<C>>().list)
     }
@@ -351,22 +348,26 @@ abstract class EntityRepository<T : Any>(
     /**
      * Returns all results as [Stored] entities
      */
-    suspend fun <X : T> find(builder: AqlBuilder.() -> TerminalExpr<out X>): KarangoCursor<Stored<X>> = query {
-        builder().wrapAsStored()
-    }
+    suspend fun <X : T> find(
+        builder: AqlStatementBuilderImpl.() -> AqlTerminalExpr<out X>,
+    ): KarangoCursor<Stored<X>> =
+        query {
+            builder().wrapAsStored()
+        }
 
     /**
      * Convenience function that returns [Stored] entities and converts to Cursor to a List right away.
      */
-    suspend fun <X : T> findList(builder: AqlBuilder.() -> TerminalExpr<out X>): List<Stored<X>> =
+    suspend fun <X : T> findList(builder: AqlStatementBuilderImpl.() -> AqlTerminalExpr<out X>): List<Stored<X>> =
         find(builder).toList()
 
     /**
      * Returns the first result as [Stored] entity
      */
-    suspend fun <X : T> findFirst(builder: AqlBuilder.() -> TerminalExpr<out X>): Stored<X>? = queryFirst {
-        builder().wrapAsStored()
-    }
+    suspend fun <X : T> findFirst(builder: AqlStatementBuilderImpl.() -> AqlTerminalExpr<out X>): Stored<X>? =
+        queryFirst {
+            builder().wrapAsStored()
+        }
 
     /**
      * Find one by id or key and return it as [Stored] entity
@@ -427,24 +428,27 @@ abstract class EntityRepository<T : Any>(
     /**
      * Performs the query
      */
-    suspend fun <X> query(query: TypedQuery<X>): KarangoCursor<X> = driver.query(query)
+    suspend fun <X> query(query: AqlTypedQuery<X>): KarangoCursor<X> = driver.query(query)
 
     /**
      * Performs a query and returns a cursor of results
      */
-    suspend fun <X> query(builder: AqlBuilder.() -> TerminalExpr<X>): KarangoCursor<X> = driver.query(builder)
+    suspend fun <X> query(builder: AqlStatementBuilderImpl.() -> AqlTerminalExpr<X>): KarangoCursor<X> =
+        driver.query(builder)
 
     /**
      * Performs a query and return a list of results
      *
      * This means that the internal [Cursor] is completely iterated and converted into a [List]
      */
-    suspend fun <X> queryList(builder: AqlBuilder.() -> TerminalExpr<X>): List<X> = query(builder).toList()
+    suspend fun <X> queryList(builder: AqlStatementBuilderImpl.() -> AqlTerminalExpr<X>): List<X> =
+        query(builder).toList()
 
     /**
      * Performs a query and returns the first result or null
      */
-    suspend fun <X> queryFirst(builder: AqlBuilder.() -> TerminalExpr<X>): X? = query(builder).firstOrNull()
+    suspend fun <X> queryFirst(builder: AqlStatementBuilderImpl.() -> AqlTerminalExpr<X>): X? =
+        query(builder).firstOrNull()
 
     // //  BatchInsert  //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -465,7 +469,7 @@ abstract class EntityRepository<T : Any>(
 
         val result: KarangoCursor<Stored<X>> = query {
 
-            val vals = LET("values", mapped.expr(type))
+            val vals = LET("values", mapped.aql(type))
 
             FOR(vals) { item ->
                 INSERT(item) INTO repo
@@ -484,6 +488,6 @@ abstract class EntityRepository<T : Any>(
      *
      * This is used to tell the deserialization, that we actually want [Stored] entities to be returned
      */
-    private fun <U> TerminalExpr<out U>.wrapAsStored(): TerminalExpr<Stored<U>> =
+    private fun <U> AqlTerminalExpr<out U>.wrapAsStored(): AqlTerminalExpr<Stored<U>> =
         AS(repo.storedType.wrapWith<Stored<U>>().list)
 }

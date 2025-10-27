@@ -10,16 +10,15 @@ import com.arangodb.model.CollectionCreateOptions
 import de.peekandpoke.karango.AqlQueryOptionProvider
 import de.peekandpoke.karango.KarangoCursor
 import de.peekandpoke.karango.KarangoQueryException
-import de.peekandpoke.karango.aql.AqlBuilder
-import de.peekandpoke.karango.aql.RootExpression
-import de.peekandpoke.karango.buildQuery
+import de.peekandpoke.karango.aql.AqlRootExpression
+import de.peekandpoke.karango.aql.AqlStatementBuilderImpl
+import de.peekandpoke.karango.aql.AqlTerminalExpr
+import de.peekandpoke.karango.buildAqlQuery
 import de.peekandpoke.karango.slumber.KarangoCodec
 import de.peekandpoke.karango.utils.ArangoDbRequestUtils
 import de.peekandpoke.ultra.common.reflection.kMapType
 import de.peekandpoke.ultra.log.Log
 import de.peekandpoke.ultra.log.NullLog
-import de.peekandpoke.ultra.vault.TypedQuery
-import de.peekandpoke.ultra.vault.lang.TerminalExpr
 import de.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 import de.peekandpoke.ultra.vault.profiling.QueryProfiler
 import kotlinx.coroutines.Dispatchers
@@ -76,14 +75,13 @@ class KarangoDriver(
     /**
      * Performs a query and returns a cursor of results
      */
-    suspend fun <X> query(builder: AqlBuilder.() -> TerminalExpr<X>): KarangoCursor<X> = query(
-        query = buildQuery(builder)
-    )
+    suspend fun <X> query(builder: AqlStatementBuilderImpl.() -> AqlTerminalExpr<X>): KarangoCursor<X> =
+        query(query = buildAqlQuery(builder))
 
     /**
      * Performs the query and returns a cursor of the results
      */
-    suspend fun <T> query(query: TypedQuery<T>): KarangoCursor<T> {
+    suspend fun <T> query(query: AqlTypedQuery<T>): KarangoCursor<T> {
 
         return profiler.profile(
             connection = "ArangoDB::${arangoDb.name()}",
@@ -102,7 +100,7 @@ class KarangoDriver(
 //            println(query.vars)
 
             // Get the options configured on the query
-            val optionsProvider: AqlQueryOptionProvider? = (query.root as? RootExpression<T>)?.builder?.queryOptions
+            val optionsProvider: AqlQueryOptionProvider? = (query.root as? AqlRootExpression<T>)?.builder?.queryOptions
 
             // Apply the options
             val options = AqlQueryOptions().count(true).let {

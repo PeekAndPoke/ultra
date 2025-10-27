@@ -5,11 +5,11 @@ import com.arangodb.ArangoDBException
 import com.arangodb.entity.IndexEntity
 import com.arangodb.model.PersistentIndexOptions
 import com.arangodb.model.TtlIndexOptions
-import de.peekandpoke.karango.aql.printQuery
+import de.peekandpoke.karango.aql.AqlIterableExpr
+import de.peekandpoke.karango.aql.AqlPrinter.Companion.printQuery
+import de.peekandpoke.karango.aql.AqlPropertyPath
 import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.VaultModels
-import de.peekandpoke.ultra.vault.lang.IterableExpr
-import de.peekandpoke.ultra.vault.lang.PropertyPath
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlin.time.Duration.Companion.milliseconds
@@ -97,7 +97,7 @@ class IndexBuilder<T : Any>(private val repo: BaseRepository<T>) {
         /**
          * The fields included in the index.
          */
-        private val _fields = mutableListOf<PropertyPath<*, *>>()
+        private val _fields = mutableListOf<AqlPropertyPath<*, *>>()
 
         /**
          * Get the effective index name
@@ -157,7 +157,7 @@ class IndexBuilder<T : Any>(private val repo: BaseRepository<T>) {
                                     EnsureResult.Kept(repo = repo, idx = existing)
                                 } else {
                                     // No. Drop the clashing index and try to re-create the index
-                                    @Suppress("UNUSED_VARIABLE")
+                                    @Suppress("UNUSED_VARIABLE", "unused")
                                     val deleted: String = coll.deleteIndex(existing.id).await()
 
                                     // Wait for the index actually being deleted on the cluster
@@ -189,7 +189,7 @@ class IndexBuilder<T : Any>(private val repo: BaseRepository<T>) {
         /**
          * Add a field to the index
          */
-        fun field(block: IterableExpr<T>.() -> PropertyPath<*, *>) {
+        fun field(block: AqlIterableExpr<T>.() -> AqlPropertyPath<*, *>) {
             _fields.add(
                 repo.repoExpr.block()
             )
@@ -199,8 +199,7 @@ class IndexBuilder<T : Any>(private val repo: BaseRepository<T>) {
          * Returns printed paths of all index fields
          */
         fun getFieldPaths() = _fields.mapNotNull { path -> path.dropRoot() }
-            .map { it.printQuery() }
-            .map { it.replace("`", "") }
+            .map { it.printQuery().replace("`", "") }
 
         protected fun getEffectiveName(prefix: String): String {
             val unclean = name ?: "$prefix${getFieldPaths().joinToString("-")}"

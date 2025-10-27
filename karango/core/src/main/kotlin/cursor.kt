@@ -2,10 +2,10 @@ package de.peekandpoke.karango
 
 import com.arangodb.ArangoCursorAsync
 import de.peekandpoke.karango.slumber.KarangoCodec
+import de.peekandpoke.karango.vault.AqlTypedQuery
 import de.peekandpoke.ultra.vault.Cursor
 import de.peekandpoke.ultra.vault.EntityCache
 import de.peekandpoke.ultra.vault.Stored
-import de.peekandpoke.ultra.vault.TypedQuery
 import de.peekandpoke.ultra.vault.profiling.QueryProfiler
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
@@ -15,14 +15,11 @@ import java.io.Closeable
 //                 make use of Kotlin's Sequence api
 class KarangoCursor<T>(
     arangoCursor: ArangoCursorAsync<*>,
-    override val query: TypedQuery<T>,
+    override val query: AqlTypedQuery<T>,
     val codec: KarangoCodec,
     private val profiler: QueryProfiler.Entry,
 ) : Cursor<T>, Closeable {
-
-    private val lock = Any()
     private var inner = arangoCursor
-
     private val type = query.root.innerType().type
 
     /** List of pairs, where first is the raw data and second the deserialized data */

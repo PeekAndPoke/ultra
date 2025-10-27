@@ -3,57 +3,64 @@
 package de.peekandpoke.karango.aql
 
 import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.vault.lang.Expression
-import de.peekandpoke.ultra.vault.lang.Printer
-import de.peekandpoke.ultra.vault.lang.TerminalExpr
 import de.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
 
 @Suppress("UnusedReceiverParameter")
 @VaultTerminalExpressionMarker
-fun <R> StatementBuilder.RETURN(ret: Expression<R>): TerminalExpr<R> = Return(ret)
+fun <R> AqlStatementBuilder.RETURN(ret: AqlExpression<R>): AqlTerminalExpr<R> =
+    AqlReturn(ret)
 
 @Suppress("UnusedReceiverParameter")
 @VaultTerminalExpressionMarker
-fun <R> StatementBuilder.RETURN_OLD(ret: Expression<R>): TerminalExpr<R> = ReturnOld(ret)
+fun <R> AqlStatementBuilder.RETURN_OLD(ret: AqlExpression<R>): AqlTerminalExpr<R> =
+    AqlReturnOld(ret)
 
 @Suppress("UnusedReceiverParameter")
 @VaultTerminalExpressionMarker
-fun <R> StatementBuilder.RETURN_NEW(ret: Expression<R>): TerminalExpr<R> = ReturnNew(ret)
+fun <R> AqlStatementBuilder.RETURN_NEW(ret: AqlExpression<R>): AqlTerminalExpr<R> =
+    AqlReturnNew(ret)
 
 @Suppress("UnusedReceiverParameter")
 @VaultTerminalExpressionMarker
-fun <R> StatementBuilder.RETURN_DISTINCT(ret: Expression<R>): TerminalExpr<R> = ReturnDistinct(ret)
+fun <R> AqlStatementBuilder.RETURN_DISTINCT(ret: AqlExpression<R>): AqlTerminalExpr<R> =
+    AqlReturnDistinct(ret)
 
 @VaultTerminalExpressionMarker
-fun StatementBuilder.RETURN_COUNT(variableName: String = "count"): TerminalExpr<Int> {
+fun AqlStatementBuilder.RETURN_COUNT(variableName: String = "count"): AqlTerminalExpr<Int> {
 
-    val count: Expression<Int> = COLLECT_WITH(Aql.COUNT, variableName)
+    val count: AqlExpression<Int> = COLLECT_WITH(Aql.COUNT, variableName)
 
-    return RETURN(
-        count
-    )
+    return RETURN(count)
 }
 
-internal class Return<T>(private val expression: Expression<T>) : TerminalExpr<T> {
+internal class AqlReturn<T>(private val expression: AqlExpression<T>) : AqlTerminalExpr<T> {
     override fun innerType() = expression.getType()
     override fun getType(): TypeRef<List<T>> = expression.getType().list
-    override fun print(p: Printer) = p.append("RETURN ").append(expression).nl()
+    override fun print(p: AqlPrinter) {
+        p.append("RETURN ").append(expression).nl()
+    }
 }
 
-internal class ReturnOld<T>(private val expression: Expression<T>) : TerminalExpr<T> {
+internal class AqlReturnOld<T>(private val expression: AqlExpression<T>) : AqlTerminalExpr<T> {
     override fun innerType() = expression.getType()
     override fun getType(): TypeRef<List<T>> = expression.getType().list
-    override fun print(p: Printer) = p.append("RETURN OLD").nl()
+    override fun print(p: AqlPrinter) {
+        p.append("RETURN OLD").nl()
+    }
 }
 
-internal class ReturnNew<T>(private val expression: Expression<T>) : TerminalExpr<T> {
+internal class AqlReturnNew<T>(private val expression: AqlExpression<T>) : AqlTerminalExpr<T> {
     override fun innerType() = expression.getType()
     override fun getType(): TypeRef<List<T>> = expression.getType().list
-    override fun print(p: Printer) = p.append("RETURN NEW").nl()
+    override fun print(p: AqlPrinter) {
+        p.append("RETURN NEW").nl()
+    }
 }
 
-internal class ReturnDistinct<T>(private val expression: Expression<T>) : TerminalExpr<T> {
+internal class AqlReturnDistinct<T>(private val expression: AqlExpression<T>) : AqlTerminalExpr<T> {
     override fun innerType() = expression.getType()
     override fun getType(): TypeRef<List<T>> = expression.getType().list
-    override fun print(p: Printer) = p.append("RETURN DISTINCT ").append(expression).nl()
+    override fun print(p: AqlPrinter) {
+        p.append("RETURN DISTINCT ").append(expression).nl()
+    }
 }

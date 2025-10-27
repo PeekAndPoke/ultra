@@ -1,5 +1,6 @@
 package de.peekandpoke.karango.e2e.functions_array
 
+import de.peekandpoke.karango.aql.ARRAY
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.SORTED
@@ -8,8 +9,6 @@ import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
 import de.peekandpoke.ultra.common.model.tuple
-import de.peekandpoke.ultra.vault.lang.ARRAY
-import de.peekandpoke.ultra.vault.lang.TerminalExpr
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
@@ -44,8 +43,7 @@ class `E2E-Func-Array-UNION_DISTINCT-Spec` : StringSpec({
         "$description - direct return" {
 
             val result = karangoDriver.query {
-                @Suppress("UNCHECKED_CAST")
-                RETURN(expression) as TerminalExpr<Any>
+                RETURN(expression)
             }
 
             withDetailedClue(expression, expected) {
@@ -58,8 +56,7 @@ class `E2E-Func-Array-UNION_DISTINCT-Spec` : StringSpec({
             val result = karangoDriver.query {
                 val l = LET("l", expression)
 
-                @Suppress("UNCHECKED_CAST")
-                RETURN(l) as TerminalExpr<Any>
+                RETURN(l)
             }
 
             withDetailedClue(expression, expected) {

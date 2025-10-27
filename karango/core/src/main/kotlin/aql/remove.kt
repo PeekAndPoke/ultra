@@ -2,40 +2,38 @@
 
 package de.peekandpoke.karango.aql
 
+import de.peekandpoke.karango.vault.KarangoRepository
 import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.Stored
 import de.peekandpoke.ultra.vault.ensureKey
-import de.peekandpoke.ultra.vault.lang.Expression
-import de.peekandpoke.ultra.vault.lang.Printer
-import de.peekandpoke.ultra.vault.lang.TerminalExpr
 import de.peekandpoke.ultra.vault.lang.VaultDslMarker
 import de.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
 
 @Suppress("unused")
 @VaultTerminalExpressionMarker
-fun REMOVE(what: String) = REMOVE(what.aql)
+fun REMOVE(what: String): AqlRemovePreStage<String> = REMOVE(what.aql)
 
 @Suppress("unused")
 @VaultTerminalExpressionMarker
-fun <E> REMOVE(what: Expression<E>) = RemovePreStage(what)
+fun <E> REMOVE(what: AqlExpression<E>): AqlRemovePreStage<E> = AqlRemovePreStage(what)
 
 @Suppress("unused")
 @VaultTerminalExpressionMarker
-fun <T> REMOVE(entity: Stored<T>) = RemovePreStage(entity._id.ensureKey.aql)
+fun <T> REMOVE(entity: Stored<T>): AqlRemovePreStage<String> = AqlRemovePreStage(entity._id.ensureKey.aql)
 
 @VaultDslMarker
-class RemovePreStage<E> internal constructor(private val what: Expression<E>) {
+class AqlRemovePreStage<E> internal constructor(private val what: AqlExpression<E>) {
 
     @VaultTerminalExpressionMarker
-    infix fun <T : Any> IN(repo: Repository<T>): TerminalExpr<T> = IN(repo = repo, options = {})
+    infix fun <T : Any> IN(repo: KarangoRepository<T>): AqlTerminalExpr<T> =
+        IN(repo = repo, options = {})
 
     @VaultTerminalExpressionMarker
-    fun <T : Any> IN(repo: Repository<T>, options: RemoveOptions.() -> Unit): TerminalExpr<T> =
-        RemoveIn(repo = repo, expression = what, options = RemoveOptions().apply(options))
+    fun <T : Any> IN(repo: KarangoRepository<T>, options: AqlRemoveOptions.() -> Unit): AqlTerminalExpr<T> =
+        AqlRemoveIn(repo = repo, expression = what, options = AqlRemoveOptions().apply(options))
 }
 
-class RemoveOptions internal constructor() {
+class AqlRemoveOptions internal constructor() {
     var ignoreErrors: Boolean? = null
     var waitForSync: Boolean? = null
     var ignoreRevs: Boolean? = null
@@ -47,26 +45,28 @@ class RemoveOptions internal constructor() {
     )
 }
 
-internal class RemoveIn<E, T : Any> internal constructor(
-    private val repo: Repository<T>,
-    private val expression: Expression<E>,
-    private val options: RemoveOptions,
-) : TerminalExpr<T> {
+internal class AqlRemoveIn<E, T : Any> internal constructor(
+    private val repo: KarangoRepository<T>,
+    private val expression: AqlExpression<E>,
+    private val options: AqlRemoveOptions,
+) : AqlTerminalExpr<T> {
 
     override fun innerType(): TypeRef<T> = repo.storedType
 
     override fun getType() = repo.getType()
 
-    override fun print(p: Printer) = with(p) {
-        append("REMOVE ").append(expression).append(" IN ").append(repo)
+    override fun print(p: AqlPrinter) {
+        p.append("REMOVE ").append(expression).append(" IN ").append(repo)
 
         options.getParams().takeIf { it.isNotEmpty() }?.let { params ->
-            append(" OPTIONS { ")
-            append(params.joinToString(", ") { (name, value) -> "$name: $value" })
-            append(" } ")
+            p.append(" OPTIONS { ")
+            p.append(params.joinToString(", ") { (name, value) -> "$name: $value" })
+            p.append(" } ")
         }
 
-        appendLine()
-        append("RETURN OLD").appendLine()
+        p.nl()
+
+        p.append("RETURN OLD")
+        p.appendLine()
     }
 }

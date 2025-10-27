@@ -1,10 +1,10 @@
 package de.peekandpoke.karango.e2e
 
+import de.peekandpoke.karango.KarangoCursor
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kMapType
-import de.peekandpoke.ultra.vault.Cursor
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
@@ -85,7 +85,7 @@ class `E2E-ReturnFromLet-Spec` : StringSpec({
 
     "Returning a Map<String, String> defined by LET" {
 
-        val result: Cursor<Map<String, String>> = karangoDriver.query {
+        val result: KarangoCursor<Map<String, String>> = karangoDriver.query {
             val a = LET("a") { mapOf("s1" to "s2") }
             RETURN(a)
         }
@@ -125,7 +125,7 @@ class `E2E-ReturnFromLet-Spec` : StringSpec({
             mapOf("s3" to 3)
         )
 
-        val result: Cursor<List<Map<String, Int>>> = karangoDriver.query {
+        val result: KarangoCursor<List<Map<String, Int>>> = karangoDriver.query {
             val a = LET("a", input)
             RETURN(a)
         }

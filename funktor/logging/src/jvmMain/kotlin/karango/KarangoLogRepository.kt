@@ -3,10 +3,10 @@ package de.peekandpoke.funktor.logging.karango
 import de.peekandpoke.funktor.logging.LogsFilter
 import de.peekandpoke.funktor.logging.api.LogsRequest
 import de.peekandpoke.karango.KarangoCursor
+import de.peekandpoke.karango.aql.AqlForLoop
 import de.peekandpoke.karango.aql.CONTAINS
 import de.peekandpoke.karango.aql.DESC
 import de.peekandpoke.karango.aql.FOR
-import de.peekandpoke.karango.aql.ForLoop
 import de.peekandpoke.karango.aql.GTE
 import de.peekandpoke.karango.aql.IN
 import de.peekandpoke.karango.aql.IS_NULL
@@ -22,7 +22,6 @@ import de.peekandpoke.karango.vault.KarangoDriver
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.log.NullLog
 import de.peekandpoke.ultra.vault.Stored
-import de.peekandpoke.ultra.vault.lang.IterableExpr
 import de.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 
 class KarangoLogRepository(
@@ -86,7 +85,7 @@ class KarangoLogRepository(
         }
     }
 
-    fun ForLoop.filter(entry: IterableExpr<KarangoLogEntry>, filter: LogsRequest.BulkAction.Filter) {
+    fun AqlForLoop.filter(entry: IterableExpr<KarangoLogEntry>, filter: LogsRequest.BulkAction.Filter) {
         filter.from?.let {
             FILTER(entry.createdAt GTE it.toEpochMillis())
         }

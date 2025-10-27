@@ -26,7 +26,7 @@ abstract class MonkoRepository<T : Any>(
     }
 
     fun <R> field(block: (Expression<T>) -> PropertyPath<R, *>): String {
-        val path = block(repo.forceCastTo())
+        val path = block(repo.asIterableExpr())
 
         val dropped = path.dropRoot() ?: return ""
 

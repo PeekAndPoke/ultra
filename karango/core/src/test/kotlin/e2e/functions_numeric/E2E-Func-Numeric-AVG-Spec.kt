@@ -1,5 +1,6 @@
 package de.peekandpoke.karango.e2e.functions_numeric
 
+import de.peekandpoke.karango.aql.ARRAY
 import de.peekandpoke.karango.aql.AVG
 import de.peekandpoke.karango.aql.FOR
 import de.peekandpoke.karango.aql.GT
@@ -11,7 +12,6 @@ import de.peekandpoke.karango.e2e.age
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
 import de.peekandpoke.ultra.common.model.tuple
-import de.peekandpoke.ultra.vault.lang.ARRAY
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 

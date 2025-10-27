@@ -1,5 +1,6 @@
 package de.peekandpoke.karango.e2e.functions_array
 
+import de.peekandpoke.karango.aql.ARRAY
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.REMOVE_VALUES
 import de.peekandpoke.karango.aql.RETURN
@@ -7,7 +8,6 @@ import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
 import de.peekandpoke.ultra.common.model.tuple
-import de.peekandpoke.ultra.vault.lang.ARRAY
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 

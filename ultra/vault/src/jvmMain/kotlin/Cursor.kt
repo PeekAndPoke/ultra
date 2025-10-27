@@ -14,10 +14,7 @@ interface Cursor<T> : Iterable<T> {
             of(type = kType(), items = items)
 
         fun <T> of(type: TypeRef<T>, items: Iterable<T>): Cursor<T> =
-            Simple(
-                items = items,
-                query = TypedQuery.of(type),
-            )
+            Simple(items = items, query = TypedQuery.of(returns = type))
     }
 
     private class Simple<T>(
@@ -40,7 +37,7 @@ interface Cursor<T> : Iterable<T> {
         }
 
         override val entityCache: EntityCache = NullEntityCache
-        override val query: TypedQuery<T> = TypedQuery.of(type)
+        override val query: TypedQuery<T> = TypedQuery.of(returns = type)
         override val count: Long = 0
         override val fullCount: Long = 0
         override val timeMs: Double = 1.0

@@ -1,42 +1,52 @@
 package de.peekandpoke.karango.aql
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import de.peekandpoke.ultra.vault.lang.Aliased
-import de.peekandpoke.ultra.vault.lang.ArrayValueExpr
-import de.peekandpoke.ultra.vault.lang.Expression
-import de.peekandpoke.ultra.vault.lang.ObjectValueExpr
-import de.peekandpoke.ultra.vault.lang.Printable
-import de.peekandpoke.ultra.vault.lang.Printer
 import kotlin.math.max
 
-/**
- * Prints the raw query, with all parameter value included
- */
-fun Printable.printRawQuery(): String = AqlPrinter.printRawQuery(this)
 
-/**
- * Prints the query, with placeholders for parameters
- */
-fun Printable.printQuery(): String = AqlPrinter.printQuery(this)
+/** The Aql printer */
+class AqlPrinter {
 
-/**
- * Prints the query and returns a [Printer.Result]
- */
-fun Printable.print(): Printer.Result = AqlPrinter.print(this)
+    companion object {
+        /** Shared json printer */
+        private val jsonPrinter = ObjectMapper().writerWithDefaultPrettyPrinter()
 
-/**
- * The Aql printer
- */
-class AqlPrinter : Printer {
+        /** Prints the raw query, with all parameter value included */
+        fun <T> AqlExpression<T>.printRawQuery(): String = printRawQuery(this)
+
+        /** Prints the query, with placeholders for parameters */
+        fun <T> AqlExpression<T>.printQuery(): String = printQuery(this)
+
+        /** Prints the query and returns a [AqlPrinter.Result] */
+        fun <T> AqlExpression<T>.print(): Result = print(this)
+
+        /** Prints the raw query, with all parameter value included */
+        internal fun <T> printRawQuery(printable: AqlExpression<T>): String = print(printable).raw
+
+        /** Prints the query, with placeholders for parameters */
+        internal fun <T> printQuery(printable: AqlExpression<T>): String = print(printable).query
+
+        /** Prints the query and returns a [AqlPrinter.Result] */
+        internal fun <T> print(printable: AqlExpression<T>): Result = AqlPrinter().append(printable).build()
+    }
 
     /**
-     * Internal static helpers
+     * Printer result
      */
-    companion object {
-        internal fun printRawQuery(printable: Printable): String = print(printable).raw
+    data class Result(val query: String, val vars: Map<String, Any?>) {
 
-        internal fun printQuery(printable: Printable): String = print(printable).query
+        /**
+         * The raw text query with parameters (like @my_param) replaced with actual values.
+         *
+         * This is a debugging helper and e.g. used in the unit tests.
+         */
+        val raw: String by lazy(LazyThreadSafetyMode.NONE) {
 
-        internal fun print(printable: Printable): Printer.Result = AqlPrinter().append(printable).build()
+            vars.entries.fold(query) { acc, (key, value) ->
+                acc.replace("@$key", jsonPrinter.writeValueAsString(value))
+            }
+        }
     }
 
     private val stringBuilder = StringBuilder()
@@ -46,36 +56,36 @@ class AqlPrinter : Printer {
     private var newLine = true
 
     /**
-     * Build the [Printer.Result]
+     * Build the [AqlPrinter.Result]
      */
-    fun build() = Printer.Result(stringBuilder.toString(), queryVars)
+    fun build() = Result(stringBuilder.toString(), queryVars)
 
     /**
      * Appends a name
      */
-    override fun name(name: String): AqlPrinter = append(name.toName())
+    fun name(name: String): AqlPrinter = append(name.toName())
 
     /**
      * Append a printable
      */
-    override fun append(printable: Printable): AqlPrinter = apply { printable.print(this) }
+    fun <T> append(printable: AqlExpression<T>): AqlPrinter = apply { printable.print(this) }
 
     /**
      * Appends a list of printables
      */
-    override fun append(printables: List<Printable>): AqlPrinter = apply { printables.forEach { append(it) } }
+    fun <T> append(printables: List<AqlExpression<T>>): AqlPrinter = apply { printables.forEach { append(it) } }
 
     /**
      * Appends an array value expression
      */
-    override fun <T> append(array: ArrayValueExpr<T>): Printer = apply {
+    fun <T> append(array: AqlArrayValueExpr<T>): AqlPrinter = apply {
         append("[").join(array.items).append("]")
     }
 
     /**
      * Appends an object value expression
      */
-    override fun <T> append(obj: ObjectValueExpr<T>): Printer = apply {
+    fun <T> append(obj: AqlObjectValueExpr<T>): AqlPrinter = apply {
 
         val lastIdx = obj.pairs.size - 1
 
@@ -101,13 +111,13 @@ class AqlPrinter : Printer {
      * If the given expression is an instance of Aliased, then the name for the user parameter will be taken from it.
      * Otherwise the name will default to "v".
      */
-    override fun value(expression: Expression<*>, value: Any?): AqlPrinter =
+    fun <T> value(expression: AqlExpression<T>, value: T?): AqlPrinter =
         value(if (expression is Aliased) expression.getAlias() else "v", value)
 
     /**
      * Appends a user value with the given parameter name
      */
-    override fun value(parameterName: String, value: Any?): AqlPrinter = apply {
+    fun <T> value(parameterName: String, value: T?): AqlPrinter = apply {
 
         // check if there already is a parameter with the exact same value, starting with the same name
         val existing = queryVars.entries
@@ -131,24 +141,24 @@ class AqlPrinter : Printer {
     /**
      * Appends multiple expression and put the delimiter between each of them
      */
-    override fun join(args: List<Expression<*>>): AqlPrinter = join(args.toTypedArray(), ", ")
+    fun <T> join(args: List<AqlExpression<out T>>): AqlPrinter = join(args.toTypedArray(), ", ")
 
     /**
      * Appends multiple expression and put the delimiter between each of them
      */
-    override fun join(args: List<Expression<*>>, delimiter: String): AqlPrinter = join(args.toTypedArray(), delimiter)
+    fun <T> join(args: List<AqlExpression<out T>>, delimiter: String): AqlPrinter = join(args.toTypedArray(), delimiter)
 
     /**
      * Appends multiple expression and put the delimiter between each of them
      */
-    override fun join(args: Array<out Expression<*>>): AqlPrinter = join(args, ", ")
+    fun <T> join(args: Array<out AqlExpression<out T>>): AqlPrinter = join(args, ", ")
 
     /**
      * Appends multiple expression and put the delimiter between each of them
      */
-    override fun join(args: Array<out Expression<*>>, delimiter: String): AqlPrinter = apply {
+    fun <T> join(args: Array<out AqlExpression<out T>>, delimiter: String): AqlPrinter = apply {
 
-        args.forEachIndexed { idx, a ->
+        args.forEachIndexed { idx: Int, a: AqlExpression<out T> ->
 
             append(a)
 
@@ -161,7 +171,7 @@ class AqlPrinter : Printer {
     /**
      * Appends a raw string
      */
-    override fun append(str: String): AqlPrinter = apply {
+    fun append(str: String): AqlPrinter = apply {
 
         if (newLine) {
             stringBuilder.append(indent)
@@ -174,13 +184,12 @@ class AqlPrinter : Printer {
     /**
      * Appends a line break
      */
-    fun appendLine(): AqlPrinter = appendLine("")
+    fun nl(): AqlPrinter = appendLine("")
 
     /**
      * Appends a string followed by a line break
      */
-    override fun appendLine(str: String): AqlPrinter = apply {
-
+    fun appendLine(str: String = ""): AqlPrinter = apply {
         append(str)
         stringBuilder.appendLine()
 
@@ -190,7 +199,7 @@ class AqlPrinter : Printer {
     /**
      * Increases the indent for everything added by the [block]
      */
-    override fun indent(block: Printer.() -> Unit): AqlPrinter = apply {
+    fun indent(block: AqlPrinter.() -> Unit): AqlPrinter = apply {
 
         indent += "    "
 

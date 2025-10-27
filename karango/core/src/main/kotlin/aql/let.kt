@@ -4,63 +4,62 @@ package de.peekandpoke.karango.aql
 
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kType
-import de.peekandpoke.ultra.vault.lang.Expression
-import de.peekandpoke.ultra.vault.lang.NameExpr
-import de.peekandpoke.ultra.vault.lang.NullValueExpr
-import de.peekandpoke.ultra.vault.lang.Printer
-import de.peekandpoke.ultra.vault.lang.Statement
 import de.peekandpoke.ultra.vault.lang.VaultDslMarker
 
 @VaultDslMarker
-fun <T> StatementBuilder.LET(
+fun <T> AqlStatementBuilder.LET(
     name: String,
-    expression: Expression<T>,
-): Expression<T> = LetExpr(name, expression).addStmt().toExpression()
+    expression: AqlExpression<T>,
+): AqlExpression<T> = AqlLetExpr(name, expression).addStmt().toExpression()
 
 @VaultDslMarker
-fun StatementBuilder.LET(
+fun AqlStatementBuilder.LET(
     name: String,
     @Suppress("UNUSED_PARAMETER") value: Nothing?,
-): Expression<Any?> = LET(name, NullValueExpr())
+): AqlExpression<Any?> = LET(name = name, expression = AqlValueExpr.Null())
 
 @VaultDslMarker
-inline fun <reified T> StatementBuilder.LET(
+inline fun <reified T> AqlStatementBuilder.LET(
     name: String,
     value: T,
-): Expression<T> = Let(name, value, kType()).addStmt().toExpression()
+): AqlExpression<T> = AqlLetStmt(name, value, kType()).addStmt().toExpression()
 
 @VaultDslMarker
-inline fun <reified T> StatementBuilder.LET(
+inline fun <reified T> AqlStatementBuilder.LET(
     name: String,
     builder: () -> T,
-): Expression<T> = Let(name, builder(), kType()).addStmt().toExpression()
+): AqlExpression<T> = AqlLetStmt(name, builder(), kType()).addStmt().toExpression()
 
 /**
  * Let statement created from a user value
  */
-class Let<T>(name: String, private val value: T, type: TypeRef<T>) : Statement {
+class AqlLetStmt<T>(name: String, private val value: T, type: TypeRef<T>) : AqlStatement {
 
     private val lName = "l_$name"
 
-    private val expression: Expression<T> = NameExpr(lName, type)
+    private val expression: AqlExpression<T> = AqlNameExpr(lName, type)
 
-    fun toExpression(): Expression<T> = expression
+    fun toExpression(): AqlExpression<T> = expression
 
-    override fun print(p: Printer) =
-        p.append("LET ").name(lName).append(" = (").value(lName, value as Any).append(")").appendLine()
+    override fun print(p: AqlPrinter) {
+        p.append("LET ").name(lName).append(" = (").value(lName, value as Any).append(")")
+        p.nl()
+    }
 }
 
 /**
  * Let statement created from an expression
  */
-class LetExpr<T>(name: String, private val value: Expression<T>) : Statement {
+class AqlLetExpr<T>(name: String, private val value: AqlExpression<T>) : AqlStatement {
 
     private val lName = "l_$name"
 
-    private val expression: Expression<T> = NameExpr(lName, value.getType())
+    private val expression: AqlExpression<T> = AqlNameExpr(lName, value.getType())
 
-    fun toExpression(): Expression<T> = expression
+    fun toExpression(): AqlExpression<T> = expression
 
-    override fun print(p: Printer) =
-        p.append("LET ").name(lName).append(" = (").append(value).append(")").appendLine()
+    override fun print(p: AqlPrinter) {
+        p.append("LET ").name(lName).append(" = (").append(value).append(")")
+        p.appendLine()
+    }
 }

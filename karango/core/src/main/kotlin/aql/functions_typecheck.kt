@@ -2,7 +2,6 @@
 
 package de.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.vault.lang.Expression
 import de.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
 /**
@@ -11,7 +10,8 @@ import de.peekandpoke.ultra.vault.lang.VaultFunctionMarker
  * See https://www.arangodb.com/docs/stable/aql/functions-type-cast.html
  */
 @VaultFunctionMarker
-fun <T> IS_NULL(expr: Expression<T>) = AqlFunc.IS_NULL.boolCall(expr)
+fun <T> IS_NULL(expr: AqlExpression<T>): AqlExpression<Boolean> =
+    AqlFunc.IS_NULL.boolCall(expr)
 
 /**
  * Checks whether a value is a null value
@@ -19,7 +19,8 @@ fun <T> IS_NULL(expr: Expression<T>) = AqlFunc.IS_NULL.boolCall(expr)
  * See https://www.arangodb.com/docs/stable/aql/functions-type-cast.html
  */
 @VaultFunctionMarker
-fun <T> IS_NOT_NULL(expr: Expression<T>) = IS_NULL(expr).NOT()
+fun <T> IS_NOT_NULL(expr: AqlExpression<T>): AqlExpression<Boolean> =
+    IS_NULL(expr).NOT()
 
 /**
  * Checks whether a value is a boolean value
@@ -27,7 +28,8 @@ fun <T> IS_NOT_NULL(expr: Expression<T>) = IS_NULL(expr).NOT()
  * See https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#type-check-functions
  */
 @VaultFunctionMarker
-fun <T> IS_BOOL(expr: Expression<T>) = AqlFunc.IS_BOOL.boolCall(expr)
+fun <T> IS_BOOL(expr: AqlExpression<T>): AqlExpression<Boolean> =
+    AqlFunc.IS_BOOL.boolCall(expr)
 
 /**
  * Checks whether a value is a number value
@@ -35,7 +37,8 @@ fun <T> IS_BOOL(expr: Expression<T>) = AqlFunc.IS_BOOL.boolCall(expr)
  * See https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#type-check-functions
  */
 @VaultFunctionMarker
-fun <T> IS_NUMBER(expr: Expression<T>) = AqlFunc.IS_NUMBER.boolCall(expr)
+fun <T> IS_NUMBER(expr: AqlExpression<T>): AqlExpression<Boolean> =
+    AqlFunc.IS_NUMBER.boolCall(expr)
 
 /**
  * Checks whether a value is a string value
@@ -43,7 +46,8 @@ fun <T> IS_NUMBER(expr: Expression<T>) = AqlFunc.IS_NUMBER.boolCall(expr)
  * See https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#type-check-functions
  */
 @VaultFunctionMarker
-fun <T> IS_STRING(expr: Expression<T>) = AqlFunc.IS_STRING.boolCall(expr)
+fun <T> IS_STRING(expr: AqlExpression<T>): AqlExpression<Boolean> =
+    AqlFunc.IS_STRING.boolCall(expr)
 
 /**
  * Checks whether a value is an array value
@@ -51,7 +55,8 @@ fun <T> IS_STRING(expr: Expression<T>) = AqlFunc.IS_STRING.boolCall(expr)
  * See https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#type-check-functions
  */
 @VaultFunctionMarker
-fun <T> IS_ARRAY(expr: Expression<T>) = AqlFunc.IS_ARRAY.boolCall(expr)
+fun <T> IS_ARRAY(expr: AqlExpression<T>): AqlExpression<Boolean> =
+    AqlFunc.IS_ARRAY.boolCall(expr)
 
 /**
  * Checks whether a value is an array value
@@ -61,7 +66,8 @@ fun <T> IS_ARRAY(expr: Expression<T>) = AqlFunc.IS_ARRAY.boolCall(expr)
  * See https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#type-check-functions
  */
 @VaultFunctionMarker
-fun <T> IS_LIST(expr: Expression<T>) = AqlFunc.IS_LIST.boolCall(expr)
+fun <T> IS_LIST(expr: AqlExpression<T>): AqlExpression<Boolean> =
+    AqlFunc.IS_LIST.boolCall(expr)
 
 /**
  * Checks whether a value is an object value
@@ -69,7 +75,8 @@ fun <T> IS_LIST(expr: Expression<T>) = AqlFunc.IS_LIST.boolCall(expr)
  * See https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#type-check-functions
  */
 @VaultFunctionMarker
-fun <T> IS_OBJECT(expr: Expression<T>) = AqlFunc.IS_OBJECT.boolCall(expr)
+fun <T> IS_OBJECT(expr: AqlExpression<T>): AqlExpression<Boolean> =
+    AqlFunc.IS_OBJECT.boolCall(expr)
 
 /**
  * Checks whether a value is a document
@@ -81,7 +88,8 @@ fun <T> IS_OBJECT(expr: Expression<T>) = AqlFunc.IS_OBJECT.boolCall(expr)
  * See https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#type-check-functions
  */
 @VaultFunctionMarker
-fun <T> IS_DOCUMENT(expr: Expression<T>) = AqlFunc.IS_DOCUMENT.boolCall(expr)
+fun <T> IS_DOCUMENT(expr: AqlExpression<T>): AqlExpression<Boolean> =
+    AqlFunc.IS_DOCUMENT.boolCall(expr)
 
 /**
  * Checks whether a value is a datestring
@@ -89,7 +97,8 @@ fun <T> IS_DOCUMENT(expr: Expression<T>) = AqlFunc.IS_DOCUMENT.boolCall(expr)
  * See https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#type-check-functions
  */
 @VaultFunctionMarker
-fun <T> IS_DATESTRING(expr: Expression<T>) = AqlFunc.IS_DATESTRING.boolCall(expr)
+fun <T> IS_DATESTRING(expr: AqlExpression<T>): AqlExpression<Boolean> =
+    AqlFunc.IS_DATESTRING.boolCall(expr)
 
 /**
  * Return the data type name of value.
@@ -97,7 +106,8 @@ fun <T> IS_DATESTRING(expr: Expression<T>) = AqlFunc.IS_DATESTRING.boolCall(expr
  * See https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#type-check-functions
  */
 @VaultFunctionMarker
-fun <T> IS_KEY(expr: Expression<T>) = AqlFunc.IS_KEY.boolCall(expr)
+fun <T> IS_KEY(expr: AqlExpression<T>): AqlExpression<Boolean> =
+    AqlFunc.IS_KEY.boolCall(expr)
 
 /**
  * Return the data type name of value.
@@ -107,4 +117,5 @@ fun <T> IS_KEY(expr: Expression<T>) = AqlFunc.IS_KEY.boolCall(expr)
  * See https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#type-check-functions
  */
 @VaultFunctionMarker
-fun <T> TYPENAME(expr: Expression<T>) = AqlFunc.TYPENAME.stringCall(expr)
+fun <T> TYPENAME(expr: AqlExpression<T>): AqlExpression<String> =
+    AqlFunc.TYPENAME.stringCall(expr)

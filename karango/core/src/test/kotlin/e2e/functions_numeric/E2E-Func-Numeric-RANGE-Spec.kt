@@ -7,7 +7,6 @@ import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
 import de.peekandpoke.ultra.common.model.tuple
-import de.peekandpoke.ultra.vault.lang.TerminalExpr
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
@@ -47,8 +46,7 @@ class `E2E-Func-Numeric-RANGE-Spec` : StringSpec({
         "$description - direct return" {
 
             val result = karangoDriver.query {
-                @Suppress("UNCHECKED_CAST")
-                RETURN(expression) as TerminalExpr<List<Number>> // Don't do this at home... just a workaround for the different return types
+                RETURN(expression)
             }
 
             withDetailedClue(expression, expected) {
@@ -61,8 +59,7 @@ class `E2E-Func-Numeric-RANGE-Spec` : StringSpec({
             val result = karangoDriver.query {
                 val l = LET("l", expression)
 
-                @Suppress("UNCHECKED_CAST")
-                RETURN(l) as TerminalExpr<List<Number>> // Don't do this at home... just a workaround for the different return types
+                RETURN(l)
             }
 
             withDetailedClue(expression, expected) {

@@ -2,12 +2,18 @@ package de.peekandpoke.karango.aql
 
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kType
-import de.peekandpoke.ultra.vault.lang.Expression
-import de.peekandpoke.ultra.vault.lang.FunctionExpr0
-import de.peekandpoke.ultra.vault.lang.Printer
+import de.peekandpoke.ultra.vault.lang.VaultInputValueMarker
 
 object Aql {
-    object COUNT : FunctionExpr0<Int>(AqlFunc.COUNT.toString(), kType())
+    object COUNT : AqlFunctionExpr0<Int>(AqlFunc.COUNT.toString(), kType())
+}
+
+enum class AqlPercentileMethod(val method: String) {
+    @VaultInputValueMarker
+    RANK("rank"),
+
+    @VaultInputValueMarker
+    INTERPOLATION("interpolation")
 }
 
 enum class AqlFunc {
@@ -172,63 +178,103 @@ enum class AqlFunc {
     TO_LIST,
 }
 
-fun <T> AqlFunc.call(type: TypeRef<T>, vararg args: Expression<*>) = FuncCall.of(type, this, args)
-fun <T> AqlFunc.nullableCall(type: TypeRef<T?>, vararg args: Expression<*>) = FuncCall.of(type, this, args)
+fun <T> AqlFunc.call(type: TypeRef<T>, vararg args: AqlExpression<*>): AqlExpression<T> =
+    AqlFuncCall.of(type, this, args)
 
-fun AqlFunc.anyCall(vararg args: Expression<*>) = FuncCall.any(this, args)
-fun AqlFunc.nullableAnyCall(vararg args: Expression<*>) = FuncCall.nullableAny(this, args)
+fun <T> AqlFunc.nullableCall(type: TypeRef<T?>, vararg args: AqlExpression<*>): AqlExpression<T?> =
+    AqlFuncCall.of(type, this, args)
 
-fun <T> AqlFunc.arrayCall(type: TypeRef<List<T>>, vararg args: Expression<*>) = FuncCall.array(this, type, args)
-fun <T> AqlFunc.nullableArrayCall(type: TypeRef<List<T>?>, vararg args: Expression<*>) =
-    FuncCall.nullableArray(this, type, args)
+fun AqlFunc.anyCall(vararg args: AqlExpression<*>): AqlExpression<Any> =
+    AqlFuncCall.any(this, args)
 
-fun AqlFunc.boolCall(vararg args: Expression<*>) = FuncCall.bool(this, args)
+fun AqlFunc.nullableAnyCall(vararg args: AqlExpression<*>): AqlExpression<Any?> =
+    AqlFuncCall.nullableAny(this, args)
 
-fun AqlFunc.numberCall(vararg args: Expression<*>) = FuncCall.number(this, args)
-fun AqlFunc.nullableNumberCall(vararg args: Expression<*>) = FuncCall.nullableNumber(this, args)
+fun <T> AqlFunc.arrayCall(type: TypeRef<List<T>>, vararg args: AqlExpression<*>): AqlExpression<List<T>> =
+    AqlFuncCall.array(this, type, args)
 
-fun AqlFunc.stringCall(vararg args: Expression<*>) = FuncCall.string(this, args)
+fun <T> AqlFunc.nullableArrayCall(type: TypeRef<List<T>?>, vararg args: AqlExpression<*>): AqlExpression<List<T>?> =
+    AqlFuncCall.nullableArray(this, type, args)
 
-interface FuncCall<T> : Expression<T> {
+fun AqlFunc.boolCall(vararg args: AqlExpression<*>): AqlExpression<Boolean> =
+    AqlFuncCall.bool(this, args)
+
+fun AqlFunc.numberCall(vararg args: AqlExpression<*>): AqlExpression<Number> =
+    AqlFuncCall.number(this, args)
+
+fun AqlFunc.nullableNumberCall(vararg args: AqlExpression<*>): AqlExpression<Number?> =
+    AqlFuncCall.nullableNumber(this, args)
+
+fun AqlFunc.stringCall(vararg args: AqlExpression<*>): AqlExpression<String> =
+    AqlFuncCall.string(this, args)
+
+fun AqlFunc.nullableStringCall(vararg args: AqlExpression<*>): AqlExpression<String?> =
+    AqlFuncCall.nullableString(this, args)
+
+interface AqlFuncCall<T> : AqlExpression<T> {
 
     companion object {
 
-        fun <X> of(type: TypeRef<X>, func: AqlFunc, args: Array<out Expression<*>>): Expression<X> =
-            FuncCallImpl(type, func, args)
+        fun <X> of(
+            type: TypeRef<X>, func: AqlFunc, args: Array<out AqlExpression<*>>,
+        ): AqlExpression<X> =
+            AqlFuncCallImpl(type, func, args)
 
-        fun any(func: AqlFunc, args: Array<out Expression<*>>): Expression<Any> = FuncCallImpl(TypeRef.Any, func, args)
-        fun nullableAny(func: AqlFunc, args: Array<out Expression<*>>): Expression<Any?> =
-            FuncCallImpl(TypeRef.AnyNull, func, args)
+        fun any(
+            func: AqlFunc, args: Array<out AqlExpression<*>>,
+        ): AqlExpression<Any> =
+            AqlFuncCallImpl(TypeRef.Any, func, args)
 
-        fun <T> array(func: AqlFunc, type: TypeRef<List<T>>, args: Array<out Expression<*>>): FuncCall<List<T>> =
-            FuncCallImpl(type, func, args)
+        fun nullableAny(
+            func: AqlFunc, args: Array<out AqlExpression<*>>,
+        ): AqlExpression<Any?> =
+            AqlFuncCallImpl(TypeRef.AnyNull, func, args)
+
+        fun <T> array(
+            func: AqlFunc, type: TypeRef<List<T>>, args: Array<out AqlExpression<*>>,
+        ): AqlExpression<List<T>> =
+            AqlFuncCallImpl(type, func, args)
 
         fun <T> nullableArray(
-            func: AqlFunc,
-            type: TypeRef<List<T>?>,
-            args: Array<out Expression<*>>,
-        ): FuncCall<List<T>?> = FuncCallImpl(type, func, args)
+            func: AqlFunc, type: TypeRef<List<T>?>, args: Array<out AqlExpression<*>>,
+        ): AqlExpression<List<T>?> = AqlFuncCallImpl(type, func, args)
 
-        fun bool(func: AqlFunc, args: Array<out Expression<*>>): Expression<Boolean> =
-            FuncCallImpl(TypeRef.Boolean, func, args)
+        fun bool(
+            func: AqlFunc, args: Array<out AqlExpression<*>>,
+        ): AqlExpression<Boolean> =
+            AqlFuncCallImpl(TypeRef.Boolean, func, args)
 
-        fun number(func: AqlFunc, args: Array<out Expression<*>>): Expression<Number> =
-            FuncCallImpl(TypeRef.Number, func, args)
+        fun number(
+            func: AqlFunc, args: Array<out AqlExpression<*>>,
+        ): AqlExpression<Number> =
+            AqlFuncCallImpl(TypeRef.Number, func, args)
 
-        fun nullableNumber(func: AqlFunc, args: Array<out Expression<*>>): Expression<Number?> =
-            FuncCallImpl(TypeRef.NumberNull, func, args)
+        fun nullableNumber(
+            func: AqlFunc, args: Array<out AqlExpression<*>>,
+        ): AqlExpression<Number?> =
+            AqlFuncCallImpl(TypeRef.NumberNull, func, args)
 
-        fun string(func: AqlFunc, args: Array<out Expression<*>>): Expression<String> =
-            FuncCallImpl(TypeRef.String, func, args)
+        fun string(
+            func: AqlFunc, args: Array<out AqlExpression<*>>,
+        ): AqlExpression<String> =
+            AqlFuncCallImpl(TypeRef.String, func, args)
+
+        fun nullableString(
+            func: AqlFunc, args: Array<out AqlExpression<*>>,
+        ): AqlExpression<String?> =
+            AqlFuncCallImpl(TypeRef.StringNull, func, args)
     }
 }
 
-internal class FuncCallImpl<T>(
+internal class AqlFuncCallImpl<T>(
     private val type: TypeRef<T>,
     private val func: AqlFunc,
-    private val args: Array<out Expression<*>>,
-) : FuncCall<T> {
+    private val args: Array<out AqlExpression<*>>,
+) : AqlFuncCall<T> {
 
     override fun getType() = type
-    override fun print(p: Printer) = p.append("${func.name}(").join(args).append(")")
+
+    override fun print(p: AqlPrinter) {
+        p.append("${func.name}(").join(args).append(")")
+    }
 }

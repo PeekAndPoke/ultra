@@ -112,7 +112,7 @@ class KarangoKspProcessor(
         codeBlocks.add("//// generic property")
         codeBlocks.add(
             """
-                inline fun <reified T> IterableExpr<$subjectName>.property(name: String) = PropertyPath.start(this).append<T, T>(name)
+                inline fun <reified T> AqlIterableExpr<$subjectName>.property(name: String) = AqlPropertyPath.start(this).append<T, T>(name)
 
             """.trimIndent()
         )
@@ -199,15 +199,15 @@ class KarangoKspProcessor(
         codeBlocks.add(
             """
 
-                inline val IterableExpr<$subject>.$prop inline get() = PropertyPath.start(this).append<$type, $type>("$prop")
-                inline val Expression<$subject>.$prop inline get() = PropertyPath.start(this).append<$type, $type>("$prop")
+                inline val AqlIterableExpr<$subject>.$prop inline get() = AqlPropertyPath.start(this).append<$type, $type>("$prop")
+                inline val AqlExpression<$subject>.$prop inline get() = AqlPropertyPath.start(this).append<$type, $type>("$prop")
 
-                inline val PropertyPath<$subject, $subject>.$prop @JvmName("${prop}_0") inline get() = append<$type, $type>("$prop")
-                inline val PropertyPath<$subject, L1<$subject>>.$prop @JvmName("${prop}_1") inline get() = append<$type, L1<$type>>("$prop")
-                inline val PropertyPath<$subject, L2<$subject>>.$prop @JvmName("${prop}_2") inline get() = append<$type, L2<$type>>("$prop")
-                inline val PropertyPath<$subject, L3<$subject>>.$prop @JvmName("${prop}_3") inline get() = append<$type, L3<$type>>("$prop")
-                inline val PropertyPath<$subject, L4<$subject>>.$prop @JvmName("${prop}_4") inline get() = append<$type, L4<$type>>("$prop")
-                inline val PropertyPath<$subject, L5<$subject>>.$prop @JvmName("${prop}_5") inline get() = append<$type, L5<$type>>("$prop")
+                inline val AqlPropertyPath<$subject, $subject>.$prop @JvmName("${prop}_0") inline get() = append<$type, $type>("$prop")
+                inline val AqlPropertyPath<$subject, L1<$subject>>.$prop @JvmName("${prop}_1") inline get() = append<$type, L1<$type>>("$prop")
+                inline val AqlPropertyPath<$subject, L2<$subject>>.$prop @JvmName("${prop}_2") inline get() = append<$type, L2<$type>>("$prop")
+                inline val AqlPropertyPath<$subject, L3<$subject>>.$prop @JvmName("${prop}_3") inline get() = append<$type, L3<$type>>("$prop")
+                inline val AqlPropertyPath<$subject, L4<$subject>>.$prop @JvmName("${prop}_4") inline get() = append<$type, L4<$type>>("$prop")
+                inline val AqlPropertyPath<$subject, L5<$subject>>.$prop @JvmName("${prop}_5") inline get() = append<$type, L5<$type>>("$prop")
 
             """.trimIndent()
         )

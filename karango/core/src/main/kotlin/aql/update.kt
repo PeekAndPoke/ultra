@@ -1,39 +1,38 @@
 package de.peekandpoke.karango.aql
 
+import de.peekandpoke.karango.aql.AqlPrinter.Companion.printQuery
+import de.peekandpoke.karango.vault.KarangoRepository
 import de.peekandpoke.ultra.common.reflection.kType
-import de.peekandpoke.ultra.vault.Repository
-import de.peekandpoke.ultra.vault.lang.Expression
-import de.peekandpoke.ultra.vault.lang.NameExpr
-import de.peekandpoke.ultra.vault.lang.Printer
-import de.peekandpoke.ultra.vault.lang.PropertyPath
-import de.peekandpoke.ultra.vault.lang.Statement
 
 @Suppress("FunctionName")
-fun <T : Any> StatementBuilder.UPDATE(
-    expr: Expression<T>,
-    repo: Repository<T>,
-    with: UpdateWith.UpdateWithBuilder<T>.() -> Unit,
-): UpdateWith<T> {
-    return UpdateWith(
+fun <T : Any> AqlStatementBuilder.UPDATE(
+    expr: AqlExpression<T>,
+    repo: KarangoRepository<T>,
+    with: AqlUpdateWithStmt.UpdateWithBuilder<T>.() -> Unit,
+): AqlUpdateWithStmt<T> {
+    return AqlUpdateWithStmt(
         expr = expr,
         repo = repo,
-        assignments = UpdateWith.UpdateWithBuilder(expr).apply(with).build(),
+        assignments = AqlUpdateWithStmt.UpdateWithBuilder(expr).apply(with).build(),
     ).addStmt()
 }
 
-class UpdateWith<T : Any>(
-    private val expr: Expression<T>,
-    private val repo: Repository<T>,
-    private val assignments: List<Pair<PropertyPath<*, *>, Expression<*>>>,
-) : Statement {
+class AqlUpdateWithStmt<T : Any>(
+    private val expr: AqlExpression<T>,
+    private val repo: KarangoRepository<T>,
+    private val assignments: List<Pair<AqlPropertyPath<*, *>, AqlExpression<*>>>,
+) : AqlStatement {
 
-    class UpdateWithBuilder<T>(private val root: Expression<T>) {
+    class UpdateWithBuilder<T>(private val root: AqlExpression<T>) {
         /**
          * The fields included in the index.
          */
-        private val _assignments = mutableListOf<Pair<PropertyPath<*, *>, Expression<*>>>()
+        private val _assignments = mutableListOf<Pair<AqlPropertyPath<*, *>, AqlExpression<*>>>()
 
-        fun <X> put(field: Expression<T>.() -> PropertyPath<X, *>, value: Expression<T>.() -> Expression<X>) {
+        fun <X> put(
+            field: AqlExpression<T>.() -> AqlPropertyPath<X, *>,
+            value: AqlExpression<T>.() -> AqlExpression<X>,
+        ) {
             _assignments.add(
                 root.field() to root.value()
             )
@@ -42,26 +41,27 @@ class UpdateWith<T : Any>(
         internal fun build() = _assignments.toList()
     }
 
-    override fun print(p: Printer): Any = p.apply {
-        append("UPDATE ").append(expr).append(" WITH { ").nl()
-        indent {
+    override fun print(p: AqlPrinter) {
+        p.append("UPDATE ").append(expr).append(" WITH { ").nl()
 
+        p.indent {
             val converted = convertAssignments(assignments)
-
             append(converted)
         }
-        append("} IN ").append(repo).nl()
+
+        p.append("} IN ").append(repo)
+        p.nl()
     }
 
-    private fun Printer.append(map: Map<String, Any?>) {
+    private fun AqlPrinter.append(map: Map<String, Any?>) {
 
         map.forEach { (name, value) ->
-            val nameExpr = NameExpr(name, kType<String>())
+            val nameExpr = AqlNameExpr(name, kType<String>())
 
             append(nameExpr).append(": ")
 
             when (value) {
-                is Expression<*> -> append(value)
+                is AqlExpression<*> -> append(value)
                 is Map<*, *> -> {
                     append("{").nl()
                     indent {
@@ -79,7 +79,7 @@ class UpdateWith<T : Any>(
         }
     }
 
-    private fun convertAssignments(items: List<Pair<PropertyPath<*, *>, Expression<*>>>): Map<String, Any?> {
+    private fun convertAssignments(items: List<Pair<AqlPropertyPath<*, *>, AqlExpression<*>>>): Map<String, Any?> {
 
         val result = mutableMapOf<String, Any?>()
 

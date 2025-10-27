@@ -2,11 +2,9 @@
 
 package de.peekandpoke.karango.aql
 
+import de.peekandpoke.karango.vault.KarangoRepository
 import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.Storable
-import de.peekandpoke.ultra.vault.lang.Printer
-import de.peekandpoke.ultra.vault.lang.TerminalExpr
 import de.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
 
 /**
@@ -14,7 +12,8 @@ import de.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
  */
 @Suppress("unused", "UnusedReceiverParameter")
 @VaultTerminalExpressionMarker
-fun <T> StatementBuilder.UPSERT(entity: Storable<T>, mode: UpsertMode = UpsertMode.Update) = UpsertPartial(entity, mode)
+fun <T> AqlStatementBuilder.UPSERT(entity: Storable<T>, mode: AqlUpsertMode = AqlUpsertMode.Update) =
+    AqlUpsertPartial(entity, mode)
 
 /**
  * Inserts or updates a document by using the UPDATE variant.
@@ -23,7 +22,7 @@ fun <T> StatementBuilder.UPSERT(entity: Storable<T>, mode: UpsertMode = UpsertMo
  */
 @Suppress("unused")
 @VaultTerminalExpressionMarker
-fun <T : Any> StatementBuilder.UPSERT_UPDATE(entity: Storable<T>) = UPSERT(entity, UpsertMode.Update)
+fun <T : Any> AqlStatementBuilder.UPSERT_UPDATE(entity: Storable<T>) = UPSERT(entity, AqlUpsertMode.Update)
 
 /**
  * Inserts or updates a document by using the "REPLACE" variant.
@@ -32,47 +31,44 @@ fun <T : Any> StatementBuilder.UPSERT_UPDATE(entity: Storable<T>) = UPSERT(entit
  */
 @Suppress("unused")
 @VaultTerminalExpressionMarker
-fun <T : Any> StatementBuilder.UPSERT_REPLACE(entity: Storable<T>) = UPSERT(entity, UpsertMode.Replace)
+fun <T : Any> AqlStatementBuilder.UPSERT_REPLACE(entity: Storable<T>) = UPSERT(entity, AqlUpsertMode.Replace)
 
 /**
  * The mode to used for updating documents.
  *
  * See https://www.arangodb.com/docs/stable/aql/operations-upsert.html
  */
-enum class UpsertMode {
+enum class AqlUpsertMode {
     Update,
     Replace
 }
 
-class UpsertPartial<T> internal constructor(
+class AqlUpsertPartial<T> internal constructor(
     val entity: Storable<T>,
-    internal val mode: UpsertMode,
+    internal val mode: AqlUpsertMode,
 )
 
 @VaultTerminalExpressionMarker
-infix fun <T : Any, X : T> UpsertPartial<X>.INTO(repo: Repository<T>): TerminalExpr<T> = UpsertInto(
-    entity = entity, repo = repo, mode = mode
-)
+infix fun <T : Any, X : T> AqlUpsertPartial<X>.INTO(repo: KarangoRepository<T>): AqlTerminalExpr<T> =
+    AqlUpsertIntoExpr(entity = entity, repo = repo, mode = mode)
 
-internal class UpsertInto<T : Any, X : T>(
+internal class AqlUpsertIntoExpr<T : Any, X : T>(
     private val entity: Storable<X>,
-    private val repo: Repository<T>,
-    private val mode: UpsertMode,
-) : TerminalExpr<T> {
+    private val repo: KarangoRepository<T>,
+    private val mode: AqlUpsertMode,
+) : AqlTerminalExpr<T> {
 
     override fun innerType(): TypeRef<T> = repo.storedType
 
     override fun getType() = repo.getType()
 
-    override fun print(p: Printer) {
+    override fun print(p: AqlPrinter) {
+        p.append("UPSERT { _key: \"").append(entity._key).append("\" }").appendLine()
 
-        with(p) {
-            append("UPSERT { _key: \"").append(entity._key).append("\" }").appendLine()
-            indent {
-                append("INSERT ").value("v", entity).appendLine()
-                append("${mode.name.uppercase()} ").value("v", entity).append(" IN ").append(repo).appendLine()
-                append("RETURN NEW").appendLine()
-            }
+        p.indent {
+            append("INSERT ").value("v", entity).appendLine()
+            append("${mode.name.uppercase()} ").value("v", entity).append(" IN ").append(repo).appendLine()
+            append("RETURN NEW").appendLine()
         }
     }
 }

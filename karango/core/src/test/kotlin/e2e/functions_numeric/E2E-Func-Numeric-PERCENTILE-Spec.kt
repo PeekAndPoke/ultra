@@ -1,8 +1,8 @@
 package de.peekandpoke.karango.e2e.functions_numeric
 
+import de.peekandpoke.karango.aql.AqlPercentileMethod
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.PERCENTILE
-import de.peekandpoke.karango.aql.PercentileMethod
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
@@ -22,12 +22,12 @@ class `E2E-Func-Numeric-PERCENTILE-Spec` : StringSpec({
         ),
         tuple(
             "PERCENTILE( [1, 2, 3, 4], 50, \"rank\" )",
-            PERCENTILE(listOf(1, 2, 3, 4).aql, 50.aql, PercentileMethod.RANK),
+            PERCENTILE(listOf(1, 2, 3, 4).aql, 50.aql, AqlPercentileMethod.RANK),
             2.0
         ),
         tuple(
             "PERCENTILE( [1, 2, 3, 4], 50, \"interpolation\" )",
-            PERCENTILE(listOf(1, 2, 3, 4).aql, 50.aql, PercentileMethod.INTERPOLATION),
+            PERCENTILE(listOf(1, 2, 3, 4).aql, 50.aql, AqlPercentileMethod.INTERPOLATION),
             2.5
         )
     )

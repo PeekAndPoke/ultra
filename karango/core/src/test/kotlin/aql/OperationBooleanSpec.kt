@@ -1,7 +1,7 @@
 package de.peekandpoke.karango.aql
 
+import de.peekandpoke.karango.aql.AqlPrinter.Companion.printRawQuery
 import de.peekandpoke.ultra.common.model.tuple
-import de.peekandpoke.ultra.vault.lang.ARRAY
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 

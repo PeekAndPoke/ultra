@@ -36,7 +36,7 @@ class QueryBuilderSpec : StringSpec() {
     init {
         "Filter operators must be applied correctly" {
 
-            val query = buildQuery {
+            val query = buildAqlQuery {
                 FOR("iter", database.testPersons) {
                     FILTER(it.name EQ "V_EQ")
                     FILTER(it.name NE "V_NE")
@@ -102,7 +102,7 @@ class QueryBuilderSpec : StringSpec() {
 
         "Iterator name must be taken from parameter name of FOR loop" {
 
-            val query = buildQuery {
+            val query = buildAqlQuery {
                 FOR(database.testPersons) { iterator ->
                     FILTER(iterator.addresses.expand().street ALL EQ("street"))
                     RETURN(iterator)
@@ -116,7 +116,7 @@ class QueryBuilderSpec : StringSpec() {
 
         "Property path must be rendered correctly" {
 
-            val query = buildQuery {
+            val query = buildAqlQuery {
                 FOR("p", database.testPersons) {
                     FILTER(it.addresses.expand().street ALL EQ("street"))
                     RETURN(it)
@@ -134,7 +134,7 @@ class QueryBuilderSpec : StringSpec() {
 
         "Property path with Array expansion [*] and contraction [**] must be rendered correctly" {
 
-            val query = buildQuery {
+            val query = buildAqlQuery {
                 FOR("person", database.testPersons) {
                     FILTER(it.books.expand().authors.expand().firstName.contract() ALL EQ("street"))
                     RETURN(it)
@@ -152,7 +152,7 @@ class QueryBuilderSpec : StringSpec() {
 
         "Array operators ANY, ALL, NONE must be rendered correctly" {
 
-            val query = buildQuery {
+            val query = buildAqlQuery {
                 FOR("person", database.testPersons) {
                     FILTER(it.addresses.expand().street ANY EQ("str"))
                     FILTER(it.addresses.expand().street ALL NE("str"))

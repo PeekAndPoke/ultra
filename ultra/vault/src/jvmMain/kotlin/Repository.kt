@@ -4,8 +4,6 @@ import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicParentUtil
 import de.peekandpoke.ultra.vault.lang.Aliased
 import de.peekandpoke.ultra.vault.lang.Expression
-import de.peekandpoke.ultra.vault.lang.IterableExpr
-import de.peekandpoke.ultra.vault.lang.Printer
 import kotlinx.coroutines.delay
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
@@ -107,21 +105,9 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
     val repo: Repository<T> get() = this
 
     /**
-     * Gets an iterable expression for this repo
-     */
-    fun asIterableExpr(rootName: String = "root"): IterableExpr<T> = IterableExpr("root", this)
-
-    /**
      * Returns the expression type of the repo
      */
     override fun getType(): TypeRef<List<T>> = storedType.list
-
-    /**
-     * Prints the repo as part of a query
-     */
-    override fun print(p: Printer) {
-        p.name(name)
-    }
 
     /**
      * Gets the alias
