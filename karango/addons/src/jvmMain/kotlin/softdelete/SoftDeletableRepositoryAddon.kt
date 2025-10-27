@@ -10,6 +10,7 @@ import de.peekandpoke.karango.aql.GTE
 import de.peekandpoke.karango.aql.IS_NULL
 import de.peekandpoke.karango.aql.NOT
 import de.peekandpoke.karango.aql.anyOrTrueIfEmpty
+import de.peekandpoke.karango.aql.property
 import de.peekandpoke.karango.aql.ts
 import de.peekandpoke.karango.vault.IndexBuilder
 import de.peekandpoke.ultra.common.datetime.Kronos
@@ -17,7 +18,6 @@ import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.model.search.PagedSearchFilter
 import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.Stored
-import de.peekandpoke.ultra.vault.lang.Expression
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 
@@ -45,11 +45,11 @@ interface SoftDeletableRepositoryAddon<T : SoftDeletable.Mutable<T>> : Repositor
         )
     }
 
-    fun Expression<T>.getSoftDeleteField(): AqlPropertyPath<SoftDelete, SoftDelete> {
+    fun AqlExpression<T>.getSoftDeleteField(): AqlPropertyPath<SoftDelete, SoftDelete> {
         return this.property(SoftDeletable::softDelete.name)
     }
 
-    fun Expression<T>.getSoftDeletedAt(): AqlPropertyPath<MpInstant, Long> {
+    fun AqlExpression<T>.getSoftDeletedAt(): AqlPropertyPath<MpInstant, Long> {
         return getSoftDeleteField().deletedAt.ts
     }
 

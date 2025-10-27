@@ -11,6 +11,8 @@ import de.peekandpoke.karango.aql.DESC
 import de.peekandpoke.karango.aql.EQ
 import de.peekandpoke.karango.aql.FOR
 import de.peekandpoke.karango.aql.RETURN
+import de.peekandpoke.karango.aql._type
+import de.peekandpoke.karango.aql.ts
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.IndexBuilder
 import de.peekandpoke.karango.vault.KarangoDriver
@@ -18,8 +20,6 @@ import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.Stored
 import de.peekandpoke.ultra.vault.hooks.TimestampedHook
-import de.peekandpoke.ultra.vault.slumber._type
-import de.peekandpoke.ultra.vault.slumber.ts
 
 class KarangoAuthRecordsRepo(
     name: String = "system_auth_records",

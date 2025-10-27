@@ -10,7 +10,7 @@ import de.peekandpoke.karango.aql.FOR
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.LOWER
 import de.peekandpoke.karango.aql.RETURN
-import de.peekandpoke.karango.aql.any
+import de.peekandpoke.karango.aql.anyOrTrueIfEmpty
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.IndexBuilder
 import de.peekandpoke.karango.vault.KarangoDriver
@@ -58,7 +58,7 @@ class KarangoRandomDataRepository(
                     listOf(
                         CONTAINS(LOWER(entry.category), searchLower),
                         CONTAINS(LOWER(entry.dataId), searchLower),
-                    ).any
+                    ).anyOrTrueIfEmpty
                 )
             }
 

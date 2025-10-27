@@ -1,7 +1,10 @@
 package de.peekandpoke.monko
 
 import com.mongodb.client.model.Filters.eq
-import de.peekandpoke.monko.lang.printQuery
+import de.peekandpoke.monko.lang.MongoExpression
+import de.peekandpoke.monko.lang.MongoIterableExpr
+import de.peekandpoke.monko.lang.MongoPrinter.Companion.printQuery
+import de.peekandpoke.monko.lang.MongoPropertyPath
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.vault.New
 import de.peekandpoke.ultra.vault.RemoveResult
@@ -10,8 +13,6 @@ import de.peekandpoke.ultra.vault.Repository.Hooks
 import de.peekandpoke.ultra.vault.Stored
 import de.peekandpoke.ultra.vault.VaultModels
 import de.peekandpoke.ultra.vault.ensureKey
-import de.peekandpoke.ultra.vault.lang.Expression
-import de.peekandpoke.ultra.vault.lang.PropertyPath
 import org.bson.Document
 
 abstract class MonkoRepository<T : Any>(
@@ -19,14 +20,18 @@ abstract class MonkoRepository<T : Any>(
     override val storedType: TypeRef<T>,
     protected val driver: MonkoDriver,
     private val hooks: Hooks<T> = Hooks.empty(),
-) : Repository<T> {
+) : Repository<T>, MongoExpression<List<T>> {
 
     override val connection: String by lazy {
         driver.getConnectionName()
     }
 
-    fun <R> field(block: (Expression<T>) -> PropertyPath<R, *>): String {
-        val path = block(repo.asIterableExpr())
+    override val repo: MonkoRepository<T> get() = this
+
+    val repoExpr: MongoIterableExpr<T> = MongoIterableExpr("repo", this)
+
+    fun <R> field(block: (MongoExpression<T>) -> MongoPropertyPath<R, *>): String {
+        val path = block(repoExpr)
 
         val dropped = path.dropRoot() ?: return ""
 

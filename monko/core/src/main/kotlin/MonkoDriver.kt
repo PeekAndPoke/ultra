@@ -7,12 +7,12 @@ import com.mongodb.client.result.InsertOneResult
 import com.mongodb.kotlin.client.coroutine.FindFlow
 import com.mongodb.kotlin.client.coroutine.MongoClient
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
+import de.peekandpoke.monko.vault.vault.MongoTypedQuery
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.log.Log
 import de.peekandpoke.ultra.log.NullLog
 import de.peekandpoke.ultra.vault.RemoveResult
 import de.peekandpoke.ultra.vault.Stored
-import de.peekandpoke.ultra.vault.TypedQuery
 import de.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 import de.peekandpoke.ultra.vault.profiling.QueryProfiler
 import kotlinx.coroutines.flow.map
@@ -243,7 +243,7 @@ class MonkoDriver(
 
         val cursor = MonkoCursor(
             entries = entries,
-            query = TypedQuery.of(
+            query = MongoTypedQuery.of(
                 type = storedType,
                 query = builder.print(),
                 vars = emptyMap(),

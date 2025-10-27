@@ -14,8 +14,6 @@ import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.Stored
 import de.peekandpoke.ultra.vault.hooks.TimestampedHook
-import de.peekandpoke.ultra.vault.slumber._type
-import de.peekandpoke.ultra.vault.slumber.ts
 import org.bson.Document
 
 class MonkoAuthRecordsRepo(

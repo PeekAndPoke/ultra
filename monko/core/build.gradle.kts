@@ -25,6 +25,7 @@ kotlin {
     dependencies {
         implementation(kotlin("reflect"))
         implementation(Deps.KotlinX.coroutines_core)
+        implementation(Deps.JavaLibs.Jackson.module_kotlin)
 
         api(platform(Deps.KotlinLibs.MongoDb.mongodb_driver_bom))
         api(Deps.KotlinLibs.MongoDb.mongodb_driver_kotlin_coroutine)

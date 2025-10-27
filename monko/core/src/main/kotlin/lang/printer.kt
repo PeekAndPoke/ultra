@@ -1,42 +1,52 @@
 package de.peekandpoke.monko.lang
 
-import de.peekandpoke.ultra.vault.lang.Aliased
-import de.peekandpoke.ultra.vault.lang.ArrayValueExpr
-import de.peekandpoke.ultra.vault.lang.Expression
-import de.peekandpoke.ultra.vault.lang.ObjectValueExpr
-import de.peekandpoke.ultra.vault.lang.Printable
-import de.peekandpoke.ultra.vault.lang.Printer
+import com.fasterxml.jackson.databind.ObjectMapper
 import kotlin.math.max
-
-/**
- * Prints the raw query, with all parameter value included
- */
-fun Printable.printRawQuery(): String = MongoPrinter.printRawQuery(this)
-
-/**
- * Prints the query, with placeholders for parameters
- */
-fun Printable.printQuery(): String = MongoPrinter.printQuery(this)
-
-/**
- * Prints the query and returns a [Printer.Result]
- */
-fun Printable.print(): Printer.Result = MongoPrinter.print(this)
 
 /**
  * The Aql printer
  */
-class MongoPrinter : Printer {
+class MongoPrinter {
+
+    companion object {
+        /** Shared json printer */
+        private val jsonPrinter = ObjectMapper().writerWithDefaultPrettyPrinter()
+
+        /** Prints the raw query, with all parameter value included */
+        fun <T> MongoExpression<T>.printRawQuery(): String = printRawQuery(this)
+
+        /** Prints the query, with placeholders for parameters */
+        fun <T> MongoExpression<T>.printQuery(): String = printQuery(this)
+
+        /** Prints the query and returns a [Result] */
+        fun <T> MongoExpression<T>.print(): Result = print(this)
+
+        /** Prints the raw query, with all parameter value included */
+        internal fun <T> printRawQuery(printable: MongoExpression<T>): String = print(printable).raw
+
+        /** Prints the query, with placeholders for parameters */
+        internal fun <T> printQuery(printable: MongoExpression<T>): String = print(printable).query
+
+        /** Prints the query and returns a [Result] */
+        internal fun <T> print(printable: MongoExpression<T>): Result = MongoPrinter().append(printable).build()
+    }
 
     /**
-     * Internal static helpers
+     * Printer result
      */
-    companion object {
-        internal fun printRawQuery(printable: Printable): String = print(printable).raw
+    data class Result(val query: String, val vars: Map<String, Any?>) {
 
-        internal fun printQuery(printable: Printable): String = print(printable).query
+        /**
+         * The raw text query with parameters (like @my_param) replaced with actual values.
+         *
+         * This is a debugging helper and e.g. used in the unit tests.
+         */
+        val raw: String by lazy(LazyThreadSafetyMode.NONE) {
 
-        internal fun print(printable: Printable): Printer.Result = MongoPrinter().append(printable).build()
+            vars.entries.fold(query) { acc, (key, value) ->
+                acc.replace("@$key", jsonPrinter.writeValueAsString(value))
+            }
+        }
     }
 
     private val stringBuilder = StringBuilder()
@@ -46,107 +56,44 @@ class MongoPrinter : Printer {
     private var newLine = true
 
     /**
-     * Build the [Printer.Result]
+     * Build the [Result]
      */
-    fun build() = Printer.Result(stringBuilder.toString(), queryVars)
+    fun build() = Result(stringBuilder.toString(), queryVars)
 
     /**
      * Appends a name
      */
-    override fun name(name: String): MongoPrinter = append(name.toName())
+    fun name(name: String): MongoPrinter = append(name.escapeName())
 
     /**
      * Append a printable
      */
-    override fun append(printable: Printable): MongoPrinter = apply { printable.print(this) }
+    fun <T> append(printable: MongoExpression<T>): MongoPrinter = apply { printable.print(this) }
 
     /**
      * Appends a list of printables
      */
-    override fun append(printables: List<Printable>): MongoPrinter = apply { printables.forEach { append(it) } }
-
-    /**
-     * Appends an array value expression
-     */
-    override fun <T> append(array: ArrayValueExpr<T>): MongoPrinter = apply {
-        append("[").join(array.items).append("]")
-    }
-
-    /**
-     * Appends an object value expression
-     */
-    override fun <T> append(obj: ObjectValueExpr<T>): MongoPrinter = apply {
-
-        val lastIdx = obj.pairs.size - 1
-
-        append("{")
-
-        indent {
-            obj.pairs.forEachIndexed { idx, p ->
-
-                append(p.first).append(": ").append("(").append(p.second).append(")")
-
-                if (idx < lastIdx) {
-                    append(", ")
-                }
-            }
-        }
-
-        append("}")
-    }
-
-    /**
-     * Appends a user value (e.g. obtained by "abc".aql("paramName")
-     *
-     * If the given expression is an instance of Aliased, then the name for the user parameter will be taken from it.
-     * Otherwise the name will default to "v".
-     */
-    override fun value(expression: Expression<*>, value: Any?): MongoPrinter =
-        value(if (expression is Aliased) expression.getAlias() else "v", value)
-
-    /**
-     * Appends a user value with the given parameter name
-     */
-    override fun value(parameterName: String, value: Any?): MongoPrinter = apply {
-
-        // check if there already is a parameter with the exact same value, starting with the same name
-        val existing = queryVars.entries
-            .firstOrNull { (k, v) -> v == value && k.startsWith(parameterName) }
-            ?.key
-
-        when (existing) {
-            null -> {
-                val key = parameterName.toParamName() + "_" + (queryVars.size + 1)
-
-                append("@$key")
-                queryVars[key] = value
-            }
-
-            else -> {
-                append("@$existing")
-            }
-        }
-    }
+    fun <T> append(printables: List<MongoExpression<T>>): MongoPrinter = apply { printables.forEach { append(it) } }
 
     /**
      * Appends multiple expression and put the delimiter between each of them
      */
-    override fun join(args: List<Expression<*>>): MongoPrinter = join(args.toTypedArray(), ", ")
+    fun <T> join(args: List<MongoExpression<T>>): MongoPrinter = join(args.toTypedArray(), ", ")
 
     /**
      * Appends multiple expression and put the delimiter between each of them
      */
-    override fun join(args: List<Expression<*>>, delimiter: String): MongoPrinter = join(args.toTypedArray(), delimiter)
+    fun <T> join(args: List<MongoExpression<T>>, delimiter: String): MongoPrinter = join(args.toTypedArray(), delimiter)
 
     /**
      * Appends multiple expression and put the delimiter between each of them
      */
-    override fun join(args: Array<out Expression<*>>): MongoPrinter = join(args, ", ")
+    fun <T> join(args: Array<out MongoExpression<T>>): MongoPrinter = join(args, ", ")
 
     /**
      * Appends multiple expression and put the delimiter between each of them
      */
-    override fun join(args: Array<out Expression<*>>, delimiter: String): MongoPrinter = apply {
+    fun <T> join(args: Array<out MongoExpression<T>>, delimiter: String): MongoPrinter = apply {
 
         args.forEachIndexed { idx, a ->
 
@@ -161,7 +108,7 @@ class MongoPrinter : Printer {
     /**
      * Appends a raw string
      */
-    override fun append(str: String): MongoPrinter = apply {
+    fun append(str: String): MongoPrinter = apply {
 
         if (newLine) {
             stringBuilder.append(indent)
@@ -174,12 +121,12 @@ class MongoPrinter : Printer {
     /**
      * Appends a line break
      */
-    fun appendLine(): MongoPrinter = appendLine("")
+    fun nl(): MongoPrinter = appendLine("")
 
     /**
      * Appends a string followed by a line break
      */
-    override fun appendLine(str: String): MongoPrinter = apply {
+    fun appendLine(str: String = ""): MongoPrinter = apply {
 
         append(str)
         stringBuilder.appendLine()
@@ -190,8 +137,7 @@ class MongoPrinter : Printer {
     /**
      * Increases the indent for everything added by the [block]
      */
-    override fun indent(block: Printer.() -> Unit): MongoPrinter = apply {
-
+    fun indent(block: MongoPrinter.() -> Unit): MongoPrinter = apply {
         indent += "    "
 
         this.block()
@@ -200,22 +146,7 @@ class MongoPrinter : Printer {
     }
 
     /**
-     * Cleans up parameter names
-     */
-    private fun String.toParamName() = this
-        .replace("`", "")
-        .replace(".", "__")
-        .replace("[*]", "_STAR")
-        .replace("[**]", "_STAR2")
-        .replace("[^a-zA-Z0-9_]".toRegex(), "_")
-
-    /**
      * Ensures that all names are surrounded by ticks
      */
-    private fun String.toName() = split(".").joinToString(".", transform = ::tick)
-
-    /**
-     * Surround a string with ticks and replaces all inner ticks with a "?"
-     */
-    private fun tick(str: String) = "`${str.replace("`", "?")}`"
+    private fun String.escapeName() = this
 }

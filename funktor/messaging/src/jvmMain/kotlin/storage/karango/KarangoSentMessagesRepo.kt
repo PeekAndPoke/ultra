@@ -9,9 +9,10 @@ import de.peekandpoke.karango.aql.DESC
 import de.peekandpoke.karango.aql.FOR
 import de.peekandpoke.karango.aql.IN
 import de.peekandpoke.karango.aql.RETURN
-import de.peekandpoke.karango.aql.any
+import de.peekandpoke.karango.aql.anyOrTrueIfEmpty
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.aql.expand
+import de.peekandpoke.karango.aql.ts
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.IndexBuilder
 import de.peekandpoke.karango.vault.KarangoDriver
@@ -21,7 +22,6 @@ import de.peekandpoke.ultra.vault.Cursor
 import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.Stored
 import de.peekandpoke.ultra.vault.hooks.TimestampedHook
-import de.peekandpoke.ultra.vault.slumber.ts
 
 class KarangoSentMessagesRepo(
     driver: KarangoDriver,
@@ -52,7 +52,7 @@ class KarangoSentMessagesRepo(
 
         FOR(repo) { message ->
             if (refs.isNotEmpty()) {
-                FILTER(refs.map { ref -> ref.aql IN message.lookup.refs }.any)
+                FILTER(refs.map { ref -> ref.aql IN message.lookup.refs }.anyOrTrueIfEmpty)
             } else {
                 FILTER(false.aql)
             }
