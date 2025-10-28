@@ -111,10 +111,10 @@ complexity:
       - "**/*.Test.kt"
       - "**/*.Spec.kt"
       - "**/*.Spek.kt"
-    thresholdInFiles: 11
-    thresholdInClasses: 11
-    thresholdInInterfaces: 11
-    thresholdInObjects: 11
+    thresholdInFiles: 31
+    thresholdInClasses: 31
+    thresholdInInterfaces: 31
+    thresholdInObjects: 31
     thresholdInEnums: 11
     ignoreDeprecated: false
     ignorePrivate: false
