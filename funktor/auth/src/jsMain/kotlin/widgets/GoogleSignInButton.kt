@@ -18,11 +18,11 @@ import kotlinx.html.script
 fun Tag.GoogleSignInButton(
     clientId: String,
     // Customization options (optional)
-    text: String = "signin_with",          // signin_with | signup_with | continue_with | signin
-    theme: String = "outline",             // outline | filled_blue | filled_black
-    shape: String = "rectangular",         // rectangular | pill | circle | square
-    size: String = "large",               // large | medium | small
-    logoAlignment: String = "center",     // left | center
+    text: String = "signin_with", // signin_with | signup_with | continue_with | signin
+    theme: String = "outline", // outline | filled_blue | filled_black
+    shape: String = "rectangular", // rectangular | pill | circle | square
+    size: String = "large", // large | medium | small
+    logoAlignment: String = "center", // left | center
     fullWidth: Boolean = true,
     onToken: (token: String) -> Unit,
 ) = comp(

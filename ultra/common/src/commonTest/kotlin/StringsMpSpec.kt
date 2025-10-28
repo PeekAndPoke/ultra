@@ -42,17 +42,17 @@ class StringsMpSpec : StringSpec({
         "]" to "%5D",
 
         // Special characters
-        " " to "%20",  // space
+        " " to "%20", // space
         "\"" to "%22", // quote
-        "%" to "%25",  // percent
-        "<" to "%3C",  // less than
-        ">" to "%3E",  // greater than
+        "%" to "%25", // percent
+        "<" to "%3C", // less than
+        ">" to "%3E", // greater than
         "\\" to "%5C", // backslash
-        "^" to "%5E",  // caret
-        "`" to "%60",  // backtick
-        "{" to "%7B",  // left brace
-        "|" to "%7C",  // pipe
-        "}" to "%7D",  // right brace
+        "^" to "%5E", // caret
+        "`" to "%60", // backtick
+        "{" to "%7B", // left brace
+        "|" to "%7C", // pipe
+        "}" to "%7D", // right brace
 
         // Unicode characters (Latin)
         "José" to "Jos%C3%A9",
