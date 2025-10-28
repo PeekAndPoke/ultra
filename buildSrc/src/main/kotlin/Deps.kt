@@ -1,3 +1,5 @@
+@file:Suppress("detekt:all")
+
 import org.ajoberstar.grgit.Grgit
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.DependencyHandlerScope

@@ -1,3 +1,5 @@
+@file:Suppress("detekt:all")
+
 import org.gradle.api.Project
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Sync
@@ -13,6 +15,7 @@ object Docs {
 
     fun Project.useEmptyJavadoc() {
 
+        @Suppress("LocalVariableName")
         val VERSION_NAME: String by project
 
         tasks.findByName("dokkaHtml")?.let {
@@ -48,6 +51,7 @@ object Docs {
             dependsOn("assemble")
             dependsOn("jsBrowserProductionWebpack")
 
+            val buildDir = layout.buildDirectory.get().asFile
             val fromDir = File(buildDir, "dist/js/productionExecutable")
             val intoDir = File(rootProject.projectDir, "${dir.trimEnd('/')}/${project.name}")
 
