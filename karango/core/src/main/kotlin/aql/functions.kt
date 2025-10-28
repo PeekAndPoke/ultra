@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package de.peekandpoke.karango.aql
 
 import de.peekandpoke.ultra.common.reflection.TypeRef

@@ -5,6 +5,7 @@ to make it work.
  */
 
 @file:Suppress(
+    "all",
     "PackageDirectoryMismatch",
     "unused",
     "FunctionName",
