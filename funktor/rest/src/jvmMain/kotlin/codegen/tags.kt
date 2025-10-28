@@ -25,4 +25,3 @@ class Tags(val tags: Array<out Any>) {
         }
     }
 }
-

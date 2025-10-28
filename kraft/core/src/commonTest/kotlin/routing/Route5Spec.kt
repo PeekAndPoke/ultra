@@ -270,7 +270,6 @@ class Route5Spec : StringSpec() {
             val longValue5 =
                 "Final parameter with everything: spaces, symbols & more, unicode José, emojis 🚀💻, and URLs https://test.com"
 
-
             val bound = route(longValue1, longValue2, longValue3, longValue4, longValue5)
             val rendered = renderer.render(bound)
             val match = route.match(rendered)

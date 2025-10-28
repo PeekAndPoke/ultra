@@ -97,5 +97,3 @@ val Funktor_Core = module { config: AppConfig, info: AppInfo ->
     funktorRepair()
     funktorFixtures(config)
 }
-
-

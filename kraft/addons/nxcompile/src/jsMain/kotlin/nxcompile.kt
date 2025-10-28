@@ -10,4 +10,3 @@ external object NxCompile {
      */
     fun compileCode(code: String): dynamic
 }
-

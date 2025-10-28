@@ -11,4 +11,3 @@ data class InsightsData(
 )
 
 data class CollectorData(val cls: String, val data: Map<*, *>)
-

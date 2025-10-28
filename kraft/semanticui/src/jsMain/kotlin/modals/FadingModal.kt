@@ -58,7 +58,6 @@ abstract class FadingModal<P : FadingModal.Props>(ctx: Ctx<P>) : Component<P>(ct
         BackNavigationTrap.TrapResult.Continue
     }
 
-
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     init {

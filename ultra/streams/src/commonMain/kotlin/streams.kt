@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.streams
 
-
 /**
  * The [Unsubscribe] function is returned when a subscription is created on a [Stream].
  *

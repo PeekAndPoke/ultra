@@ -123,7 +123,6 @@ fun DartFunction.Definition.addAnnotation(complete: String) {
     addAnnotation(DartAnnotation.Definition(complete))
 }
 
-
 @CodeGenDsl
 fun DartFunction.Definition.async() {
     async = true

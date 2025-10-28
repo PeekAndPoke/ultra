@@ -12,7 +12,6 @@ interface DartElement : DartPrintable {
     }
 }
 
-
 interface DartFileElement : DartElement {
 
     val file: DartFile.Definition

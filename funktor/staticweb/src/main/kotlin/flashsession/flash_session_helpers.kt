@@ -24,4 +24,3 @@ fun FlashSession.secondary(message: String) = add(message, SECONDARY)
 fun FlashSession.dark(message: String) = add(message, DARK)
 
 fun FlashSession.light(message: String) = add(message, LIGHT)
-

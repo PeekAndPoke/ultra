@@ -98,4 +98,3 @@ class SemanticUiPopupComponent(ctx: Ctx<Props>) : Component<SemanticUiPopupCompo
         }
     }
 }
-

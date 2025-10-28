@@ -17,4 +17,3 @@ fun CommonAttributeGroupFacade.css(builder: CssBuilder) {
 fun CommonAttributeGroupFacade.css(css: InlineStyle) {
     style = css.css
 }
-

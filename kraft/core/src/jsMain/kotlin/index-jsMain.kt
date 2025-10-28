@@ -91,4 +91,3 @@ class KraftApp internal constructor(
         appAttributes[Router.key]?.navigateToWindowUri()
     }
 }
-

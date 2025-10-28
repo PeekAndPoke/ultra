@@ -20,4 +20,3 @@ class LazyLoader {
         } as Stream<T>
     }
 }
-

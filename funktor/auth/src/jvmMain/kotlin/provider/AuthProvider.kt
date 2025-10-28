@@ -88,4 +88,3 @@ fun AuthProvider.supportsSignIn(): Boolean = hasCapability(AuthProviderModel.Cap
  * Checks if the provider supports sign-up
  */
 fun AuthProvider.supportsSignUp(): Boolean = hasCapability(AuthProviderModel.Capability.SignUp)
-

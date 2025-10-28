@@ -18,7 +18,6 @@ kotlin {
 
         binaries.executable()
 
-
     }
 
     jvmToolchain(Deps.jvmTargetVersion)

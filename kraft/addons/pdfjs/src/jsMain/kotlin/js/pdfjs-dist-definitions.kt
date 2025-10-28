@@ -120,4 +120,3 @@ external interface PdfjsLib {
 
     fun getDocument(src: GetDocumentParameters): PDFDocumentLoadingTask
 }
-

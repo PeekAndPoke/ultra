@@ -6,4 +6,3 @@ import de.peekandpoke.funktor.rest.codegen.dart.addImport
 fun DartFile.Definition.importDartConvert() {
     addImport("dart:convert")
 }
-

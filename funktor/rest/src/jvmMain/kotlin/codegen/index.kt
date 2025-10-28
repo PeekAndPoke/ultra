@@ -28,8 +28,6 @@ val splash =
                 
     """.trimIndent()
 
-
 @CodeGenDsl
 fun dartProject(packageName: String, builder: DartProject.Definition.() -> Unit) =
     DartProject.Definition(packageName).apply(builder).build()
-

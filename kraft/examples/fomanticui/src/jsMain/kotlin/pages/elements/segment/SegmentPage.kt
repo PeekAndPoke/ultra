@@ -618,7 +618,6 @@ class SegmentPage(ctx: NoProps) : PureComponent(ctx) {
         }
     }
 
-
     private fun FlowContent.renderInvertedSegment() = example {
         ui.header H3 { +"Inverted" }
 

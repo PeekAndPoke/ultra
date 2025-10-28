@@ -50,7 +50,6 @@ abstract class SimpleTemplateBase(
     /** Placeholder list for the pages scripts */
     final override val scripts = PlaceholderList<FlowContent, FlowContent>()
 
-
     /**
      * Call this to load the default lazy images version
      */

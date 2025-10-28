@@ -40,7 +40,6 @@ object ApiStatusPages {
                 }
             }
 
-
             on(CallFailed) { call, cause ->
                 try {
                     when {
@@ -105,4 +104,3 @@ object ApiStatusPages {
         call.logNotFound(cause = cause, hint = attack?.key?.let { "Attack detected: $it" })
     }
 }
-

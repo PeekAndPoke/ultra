@@ -38,4 +38,3 @@ class PrismJsWebResources(cacheBuster: CacheBuster) : WebResourceGroup(cacheBust
     // custom languages (or ones not yet present in webjars)
     resourceJs("/assets/funktor/prismjs/aql.js")
 })
-

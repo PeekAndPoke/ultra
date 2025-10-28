@@ -71,7 +71,6 @@ class LoginPage(ctx: NoProps) : PureComponent(ctx) {
 //                }
 //            }
 
-
             ui.container {
                 css {
                     height = 100.vh

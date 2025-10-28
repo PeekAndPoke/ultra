@@ -152,7 +152,6 @@ class Route3Spec : StringSpec() {
             match shouldBe null
         }
 
-
         "Route3 - pattern with no placeholders should throw error" {
             shouldThrow<IllegalStateException> {
                 Route3("/static/path/here")

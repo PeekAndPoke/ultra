@@ -56,4 +56,3 @@ val Funktor_Broker
         singleton(OutgoingMpDateTimeConverter::class)
         singleton(OutgoingJavaTimeConverter::class)
     }
-

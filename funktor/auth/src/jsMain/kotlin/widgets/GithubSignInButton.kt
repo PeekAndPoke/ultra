@@ -45,7 +45,6 @@ class GithubSignInButton(ctx: Ctx<Props>) : Component<GithubSignInButton.Props>(
 
     //  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-
     override fun VDom.render() {
         div {
             ui.fluid.basic.button {

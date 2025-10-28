@@ -43,4 +43,3 @@ class KQuery<E : Element>(private val elements: List<E>) : List<E> by elements {
         return select(css.cssSelector<T>())
     }
 }
-

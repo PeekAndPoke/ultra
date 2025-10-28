@@ -19,7 +19,6 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.isSubclassOf
 
-
 fun DartFile.Definition.importJsonAnnotation() {
     addImport("package:json_annotation/json_annotation.dart")
 }

@@ -11,4 +11,3 @@ fun <T : Any> KClass<T>.getDirectPolymorphicChildren(): Set<KClass<*>> {
 
     return sealed.plus(companion).toSet()
 }
-

@@ -89,4 +89,3 @@ class PopupComponent(ctx: Ctx<Props>) : Component<PopupComponent.Props>(ctx) {
         }
     }
 }
-

@@ -44,7 +44,6 @@ class AppLifeCycleHooks(
         }
     }
 
-
     interface OnAppStarting {
         val executionOrder: ExecutionOrder get() = ExecutionOrder.Normal
 

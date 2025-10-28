@@ -181,4 +181,3 @@ fun <PARAMS> Route.handleSse(route: ApiRoute.Sse<PARAMS>) {
         }
     }
 }
-

@@ -59,4 +59,3 @@ fun <PARAMS, BODY, RESPONSE> ApiRoute.WithBodyAndParams<PARAMS, BODY, RESPONSE>.
 ): ApiRoute.WithBodyAndParams<PARAMS, BODY, RESPONSE> {
     return withAttribute(EndpointSecurityKey, EndpointSecurity.Builder().also { it.block(this) }.build())
 }
-

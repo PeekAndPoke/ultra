@@ -8,7 +8,6 @@ import kotlin.reflect.KType
 import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.isSubclassOf
 
-
 class ReflectivePathFinder private constructor(
     private val root: KType,
     private val predicate: (ItemToCheck) -> Boolean,
