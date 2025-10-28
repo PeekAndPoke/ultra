@@ -27,7 +27,6 @@ class BackgroundJobWithKarangoSpec : BackgroundJobsSpecBase() {
                 useKarango()
             }
             karango(config = ArangoDbConfig.forUnitTests)
-
         }.create {
             with { UserProvider.anonymous }
         }.also {

@@ -40,7 +40,6 @@ class InsightsDataLoader(
                     }
 
                     return@mapNotNull mapper.convertValue(it.data, cls.java) as InsightsCollectorData
-
                 } catch (e: Throwable) {
                     log.warning("Could not deserialize collector ${it.cls} in ${file.path} - ${e.message}")
 

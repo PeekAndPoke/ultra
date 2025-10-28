@@ -197,7 +197,6 @@ abstract class RepoFixtureLoader<T : Any>(protected val repo: Repository<T>) : F
             fixtures.minus(batchable.toSet()).forEach {
                 it.ensure()
             }
-
         } else {
             // If no batch insert is possible we insert fixtures one by one
             fixtures.forEach {

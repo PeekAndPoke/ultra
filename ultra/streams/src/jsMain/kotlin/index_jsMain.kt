@@ -21,7 +21,6 @@ fun <T> Stream<T>.asFlow(): Flow<T> {
                 channel.send(it)
             }
         }.subscribeToStream()
-
     }.onCompletion {
         sub?.invoke()
     }

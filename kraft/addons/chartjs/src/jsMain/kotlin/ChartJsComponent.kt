@@ -80,7 +80,6 @@ class ChartJsComponent(ctx: Ctx<Props>) : Component<ChartJsComponent.Props>(ctx)
                 }
 
                 c.update()
-
             } catch (e: Throwable) {
                 console.error("Updating the chart failed")
                 console.error(e)

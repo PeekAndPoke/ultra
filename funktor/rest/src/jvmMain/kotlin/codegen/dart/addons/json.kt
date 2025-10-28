@@ -49,7 +49,6 @@ fun DartClass.Definition.addJsonSerializableAnnotation() {
 
         else -> addAnnotation("@JsonSerializable(explicitToJson: true, converters: [InstantConverter()])")
     }
-
 }
 
 fun DartClass.Definition.addToJson(discriminatorName: String = "_type") {
@@ -77,7 +76,6 @@ fun DartClass.Definition.addToJson(discriminatorName: String = "_type") {
                 append("map['$discriminatorName'] = '${serialName.value}';").nl()
                 nl()
                 append("return map;")
-
             } else {
                 append("return _${"$"}${this@addToJson.name}ToJson(")
                 join(listOf("this").plus(typeParameters.map { "toJson${it.name}" })) {

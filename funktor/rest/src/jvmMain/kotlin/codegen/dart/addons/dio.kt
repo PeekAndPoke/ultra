@@ -174,7 +174,6 @@ fun DartClass.Definition.addDioEndpointFunction(
                 bodyDartType?.let {
                     append("data: requestBody.toJson(),").nl()
                 }
-
             }.appendLine(");")
 
             nl()

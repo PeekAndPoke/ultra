@@ -73,12 +73,10 @@ suspend fun LoadedFileBase64.compressImageToJpg(maxBytes: Long): LoadedFileBase6
                         resolve(
                             LoadedFileBase64.of(file = file, dataUrl = result ?: dataUrl)
                         )
-
                     } catch (e: Throwable) {
                         resolve(original)
                     }
                 }
-
             }.asDeferred().await()
         }
     }

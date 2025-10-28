@@ -30,7 +30,6 @@ class UserCollector(
                     +user.userId
                 }
             }
-
         }
 
         override fun renderDetails(template: InsightsGuiTemplate) = with(template) {

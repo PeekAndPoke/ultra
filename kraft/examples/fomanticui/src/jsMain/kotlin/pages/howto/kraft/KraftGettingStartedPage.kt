@@ -122,5 +122,4 @@ fun main() {
             copyToClipboard()
         }
     }
-
 }

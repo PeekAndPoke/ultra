@@ -78,5 +78,4 @@ tasks {
 }
 
 mavenPublishing {
-
 }

@@ -68,7 +68,6 @@ abstract class FormFieldComponent<T, P : FormFieldComponent.Props<T>>(
         try {
             val newValue = props.fromStr(input)
             setValue(newValue)
-
         } catch (t: Throwable) {
             console.error(t)
 

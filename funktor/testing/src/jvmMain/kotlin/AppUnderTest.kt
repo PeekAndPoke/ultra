@@ -297,7 +297,6 @@ class AppUnderTest<C : AppConfig>(
                             restCodec.deserialize(type, text)?.let {
                                 items.add(it.data)
                             }
-
                         } catch (_: Throwable) {
                             // noop
                         }

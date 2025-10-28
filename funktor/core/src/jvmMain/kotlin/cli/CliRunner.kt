@@ -31,7 +31,6 @@ class CliRunner(
                 executor.run(app.args)
 
                 exitProcess(0)
-
             } catch (e: Throwable) {
 
                 println(DIVIDER)
