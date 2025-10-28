@@ -36,7 +36,7 @@ internal class InsightsFull(
         { it.request.uri.contains("/insights/details") }
     )
 
-    private val filename: String = "records-${date}/$dateTime.json"
+    private val filename: String = "records-$date/$dateTime.json"
 
     override fun getRequestDetailsUri(): String = filename
 
