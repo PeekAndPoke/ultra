@@ -25,9 +25,9 @@ actual fun String.encodeUriComponent(): String {
         charMap.getOrPut(unsignedByte) {
             when {
                 // Check if this byte represents an unreserved ASCII character
-                (unsignedByte in 65..90) ||  // A-Z
+                (unsignedByte in 65..90) || // A-Z
                         (unsignedByte in 97..122) || // a-z
-                        (unsignedByte in 48..57) ||  // 0-9
+                        (unsignedByte in 48..57) || // 0-9
                         (unsignedByte in specialChars)
                     -> unsignedByte.toChar().toString()
                 // Everything else gets percent-encoded

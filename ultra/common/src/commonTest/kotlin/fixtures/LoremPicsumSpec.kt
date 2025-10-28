@@ -34,7 +34,7 @@ class LoremPicsumSpec : StringSpec() {
         "random values should be deterministic due to fixed seed" {
             val firstUrl = LoremPicsum.imageUrl(100, 100)
             val secondUrl = LoremPicsum.imageUrl(100, 100)
-            firstUrl shouldNotBe secondUrl  // Different random values for each call
+            firstUrl shouldNotBe secondUrl // Different random values for each call
 
             // Reset to simulate fresh object instance
             val firstUrlsSet = LoremPicsum.imageUrls(3, 200, 200)
