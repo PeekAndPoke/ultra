@@ -359,7 +359,8 @@ class LabelPage(ctx: NoProps) : PureComponent(ctx) {
         HorizontalContentAndCode(
             ExtractedCodeBlocks.pages_elements_label_LabelPage_kt_renderRibbonLabel_3,
         ) {
-            ui.basic.segment {                // <CodeBlock renderRibbonLabel_3>
+            ui.basic.segment {
+                // <CodeBlock renderRibbonLabel_3>
                 ui.two.column.grid {
                     ui.column {
                         ui.fluid.image {
