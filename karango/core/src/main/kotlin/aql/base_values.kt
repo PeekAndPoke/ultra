@@ -28,7 +28,6 @@ val <T> AqlExpression<T>.aql: Nothing
         throw Exception("Cannot call .aql() on already existing AqlExpression")
     }
 
-
 /**
  * Helper to make any object am aql expression
  */

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import de.peekandpoke.ultra.vault.lang.Aliased
 import kotlin.math.max
 
-
 /** The Aql printer */
 class AqlPrinter {
 

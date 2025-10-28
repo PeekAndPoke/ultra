@@ -92,7 +92,6 @@ dependencies {
     add("kspJvm", project(":monko:ksp"))
 }
 
-
 tasks {
     configureJvmTests()
 }

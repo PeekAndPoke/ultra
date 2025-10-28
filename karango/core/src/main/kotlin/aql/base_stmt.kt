@@ -38,4 +38,3 @@ class AqlStatementBuilderImpl internal constructor() : AqlStatementBuilder {
         _optionProviders.add(block)
     }
 }
-

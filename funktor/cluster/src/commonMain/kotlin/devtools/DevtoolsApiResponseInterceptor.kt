@@ -22,7 +22,6 @@ class DevtoolsApiResponseInterceptor : ResponseInterceptor {
             apiResponse.insights?.apply {
                 DevtoolsState.RequestHistory.add(this)
             }
-
         } catch (e: Throwable) {
             println("Could not intercept response: ${e.stackTraceToString()}")
         }

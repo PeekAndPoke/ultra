@@ -334,7 +334,8 @@ fun REVERSE(
  */
 @VaultFunctionMarker
 fun <T : Number> RIGHT(
-    value: AqlExpression<String>, n: AqlExpression<T>,
+    value: AqlExpression<String>,
+    n: AqlExpression<T>,
 ): AqlExpression<String> =
     AqlFunc.RIGHT.stringCall(value, n)
 

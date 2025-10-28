@@ -115,7 +115,7 @@ class MonkoDriver(
     fun getConnectionName(): String {
         val version = getDatabaseVersion()
 
-        return "MongoDB(${version})::${database.name}"
+        return "MongoDB($version)::${database.name}"
     }
 
     suspend fun listIndexes(collection: String): List<Document> {
@@ -130,8 +130,6 @@ class MonkoDriver(
         val coll = database.getCollection<Document>(collection)
 
         coll.dropIndex(indexName = indexName, options = options)
-
-
     }
 
     suspend fun createIndex(collection: String, keys: Document, options: IndexOptions = IndexOptions()): String {
@@ -161,7 +159,7 @@ class MonkoDriver(
             ?: throw IllegalStateException("Insert failed")
 
         return Stored(
-            _id = "$collection/${insertedId}",
+            _id = "$collection/$insertedId",
             _key = key ?: insertedId,
             _rev = "",
             value = value,

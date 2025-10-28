@@ -44,5 +44,3 @@ class AdminAppApis(appConfig: AdminAppConfig, tokenProvider: () -> String?) {
 
     val auth = AuthApiClient(realm = "admin-user", config = config)
 }
-
-
