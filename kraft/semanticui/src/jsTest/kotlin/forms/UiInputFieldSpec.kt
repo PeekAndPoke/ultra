@@ -85,7 +85,6 @@ class UiInputFieldSpec : StringSpec({
                 val inputs = "+123"
                 field.simulate().keysPressed(inputs)
 
-
                 withClue("inputElement.value must be updated") {
                     field.inputElement.value shouldBe "initial$inputs"
                 }

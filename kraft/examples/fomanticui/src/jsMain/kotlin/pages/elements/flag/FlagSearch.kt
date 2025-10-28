@@ -1,6 +1,5 @@
 package de.peekandpoke.kraft.examples.fomanticui.pages.elements.flag
 
-
 import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp

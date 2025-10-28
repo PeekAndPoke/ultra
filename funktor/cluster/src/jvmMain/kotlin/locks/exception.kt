@@ -17,5 +17,3 @@ sealed class LocksException(message: String?, cause: Throwable? = null) : Throwa
 
     class Execution(cause: Throwable? = null) : LocksException(message = cause?.message, cause)
 }
-
-

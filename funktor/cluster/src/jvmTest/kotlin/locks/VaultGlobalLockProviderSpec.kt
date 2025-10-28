@@ -79,4 +79,3 @@ class VaultGlobalLockProviderSpec : GlobalLockProviderSpecBase() {
         }
     }
 }
-

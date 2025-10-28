@@ -145,4 +145,3 @@ interface AppConfig {
      */
     val funktor: FunktorConfig
 }
-

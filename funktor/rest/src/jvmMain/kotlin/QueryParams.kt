@@ -17,4 +17,3 @@ interface QueryParams {
         val id: String,
     )
 }
-

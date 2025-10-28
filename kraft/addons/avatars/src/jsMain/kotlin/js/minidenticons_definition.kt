@@ -9,4 +9,3 @@ external object JsMinIdenticons {
         lightness: Number? = definedExternally,
     ): String
 }
-

@@ -161,4 +161,3 @@ interface SemanticOptions<T> : de.peekandpoke.kraft.forms.FieldOptions<T> {
     @de.peekandpoke.kraft.forms.KraftFormsSettingDsl
     val appear get() = access(appearKey)
 }
-

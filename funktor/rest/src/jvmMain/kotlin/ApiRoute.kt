@@ -113,7 +113,6 @@ sealed class ApiRoute<RESPONSE> {
         )
     }
 
-
     /**
      * Plain route with input params or input body
      */
@@ -195,7 +194,6 @@ sealed class ApiRoute<RESPONSE> {
         fun checkAccess(ctx: AuthRule.CheckCtx<PARAMS, Unit>) = AuthResult(
             failedRules = authRules.filter { !it.check(ctx) }
         )
-
 
         /**
          * Renders the route by replacing the placeholders with the given [parameters]

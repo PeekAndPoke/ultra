@@ -20,4 +20,3 @@ fun AppLifeCycleBuilder.launchWorkers(
 typealias StateProvider = () -> WorkersRunner.State
 
 val StateProvider.isRunning get() = this().isRunning
-

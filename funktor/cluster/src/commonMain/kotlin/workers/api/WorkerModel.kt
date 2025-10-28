@@ -70,4 +70,3 @@ data class WorkerModel(
         return (duration.inWholeMilliseconds.toDouble() * runs.size) / (max - min).inWholeMilliseconds.toDouble()
     }
 }
-

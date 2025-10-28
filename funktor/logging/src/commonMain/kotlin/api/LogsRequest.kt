@@ -32,4 +32,3 @@ sealed class LogsRequest {
         data class SetState(val state: LogEntryModel.State) : Action()
     }
 }
-

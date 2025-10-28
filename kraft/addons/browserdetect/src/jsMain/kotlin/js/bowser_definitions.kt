@@ -36,4 +36,3 @@ external class Bowser internal constructor() {
 
     fun getEngine(): Engine
 }
-

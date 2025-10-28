@@ -14,7 +14,6 @@ import de.peekandpoke.funktor.auth.model.AuthUpdateResponse
 import de.peekandpoke.ultra.log.Log
 import de.peekandpoke.ultra.vault.Stored
 
-
 /**
  * Authentication provider for handling email and password-based authentication.
  *

@@ -57,4 +57,3 @@ kotlin {
 tasks {
     configureJvmTests()
 }
-

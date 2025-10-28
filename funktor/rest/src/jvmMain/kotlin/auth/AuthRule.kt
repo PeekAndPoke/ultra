@@ -265,4 +265,3 @@ class AndAuthRule<PARAMS, BODY>(internal val rules: List<AuthRule<PARAMS, BODY>>
 
     infix fun and(other: AuthRule<PARAMS, BODY>): AuthRule<PARAMS, BODY> = AndAuthRule(rules.plus(other))
 }
-

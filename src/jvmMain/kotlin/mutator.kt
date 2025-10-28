@@ -10,4 +10,3 @@ fun main() {
 
     MutatorExamples.setExample()
 }
-

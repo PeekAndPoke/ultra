@@ -15,4 +15,3 @@ abstract class MessageBase<S>(override val sender: S) : Message<S> {
         _isStopped = true
     }
 }
-

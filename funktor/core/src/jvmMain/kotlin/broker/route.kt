@@ -74,4 +74,3 @@ fun Route.fallback(body: RoutingHandler) {
     delete(uri, body)
     options(uri, body)
 }
-

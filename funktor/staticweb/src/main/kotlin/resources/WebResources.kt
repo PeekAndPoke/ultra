@@ -46,7 +46,6 @@ class WebResources(
     operator fun <T : WebResourceGroup> get(cls: KClass<T>): T = groups.getOrNull(cls)
         ?: throw WebResourceGroupNotFound("Resource group '${cls.qualifiedName}' is not present.")
 
-
     fun combine(resources: List<WebResource>, webjarsPrefix: String): CombinedResources {
 
         return combinedCache.getOrPut(resources.toList()) {

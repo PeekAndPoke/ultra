@@ -159,7 +159,6 @@ abstract class ApiRoutes(val name: String, converter: OutgoingConverter, mountPo
             .apply { addRoute(this) }
     }
 
-
     fun <RESPONSE> addRoute(route: ApiRoute<RESPONSE>) {
         allRoutes.add(route)
     }

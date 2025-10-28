@@ -94,7 +94,6 @@ fun CommonAttributeGroupFacade.onClickStoppingEvent(handler: (PointerEvent) -> U
     handler(e.asDynamic())
 }
 
-
 /**
  * Adds an onClick and an onAuxClick handler.
  *

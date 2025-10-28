@@ -56,7 +56,6 @@ fun <PARAMS, RESPONSE> ApiRoute.WithParams<PARAMS, RESPONSE>.codeGen(
     return withAttribute(CodeGenHintsKey, CodeGenHints.Builder().also { it.block(this) }.build())
 }
 
-
 @RestDslMarkerConfig
 fun <BODY, RESPONSE> ApiRoute.WithBody<BODY, RESPONSE>.codeGen(
     block: CodeGenHints.Builder.(ApiRoute.WithBody<BODY, RESPONSE>) -> Unit,

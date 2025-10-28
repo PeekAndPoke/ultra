@@ -180,4 +180,3 @@ class OkCancelModal(ctx: Ctx<Props>) : FadingModal<OkCancelModal.Props>(ctx) {
         }
     }
 }
-

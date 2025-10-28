@@ -16,7 +16,6 @@ import java.time.format.DateTimeParseException
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 
-
 private val supportedClasses = listOf(
     ZoneId::class,
     LocalTime::class,

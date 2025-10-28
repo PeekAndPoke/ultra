@@ -16,4 +16,3 @@ suspend fun ApplicationCall.redirectToReferrer() {
 suspend fun <T : Any> ApplicationCall.respondRedirect(route: TypedRoute.Bound<T>, permanent: Boolean = false) {
     return respondRedirect(typedRouteRenderer.render(route), permanent)
 }
-

@@ -86,4 +86,3 @@ val Funktor_Insights = module {
     singleton(InsightsGui::class)
     prototype(InsightsGuiTemplate::class)
 }
-

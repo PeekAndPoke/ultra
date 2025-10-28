@@ -31,5 +31,3 @@ interface Insights : RequestMetricsProvider {
         return getOrNull(cls)?.block()
     }
 }
-
-

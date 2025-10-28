@@ -75,7 +75,6 @@ class LogsBulkActionPopup(ctx: Ctx<Props>) : FadingModal<LogsBulkActionPopup.Pro
     private var from: MpZonedDateTime? by value(null)
     private var to: MpZonedDateTime? by value(null)
 
-
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     private fun getFilter() = LogsRequest.BulkAction.Filter(from = from?.toInstant(), to = to?.toInstant())

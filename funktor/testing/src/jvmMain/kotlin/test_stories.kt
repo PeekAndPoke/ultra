@@ -218,4 +218,3 @@ sealed class TestStoryStep {
         inline fun <reified T> data() = TestStory.State<T>(spec, state, TypedKey(), kType())
     }
 }
-

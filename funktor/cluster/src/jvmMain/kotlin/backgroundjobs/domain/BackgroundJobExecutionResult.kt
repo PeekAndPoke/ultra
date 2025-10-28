@@ -6,7 +6,6 @@ import kotlinx.serialization.SerialName
 
 sealed interface BackgroundJobExecutionResult {
 
-
     @SerialName("success")
     data class Success(
         override val data: Map<String, Any?>,

@@ -27,7 +27,6 @@ class ReflectivePathFinderSpec : StringSpec() {
         )
     }
 
-
     init {
         "Simple Object hierarchy" {
 

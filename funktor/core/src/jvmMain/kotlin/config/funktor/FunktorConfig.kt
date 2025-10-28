@@ -11,4 +11,3 @@ data class FunktorConfig(
     val cookieConsent: CookieConsentConfig = CookieConsentConfig(),
     val vault: VaultConfig = VaultConfig(),
 )
-

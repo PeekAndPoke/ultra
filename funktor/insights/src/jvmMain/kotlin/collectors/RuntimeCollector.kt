@@ -118,7 +118,6 @@ class RuntimeCollector : InsightsCollector {
         }
     }
 
-
     override fun finish(call: ApplicationCall): InsightsCollectorData {
 
         val rt = Runtime.getRuntime()

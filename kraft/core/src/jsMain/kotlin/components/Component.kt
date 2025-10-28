@@ -127,7 +127,6 @@ abstract class Component<PROPS>(val ctx: Ctx<PROPS>) {
     /** Render cache with the last render result */
     private var renderCache: dynamic = null
 
-
     /** A list of stream unsubscribe functions. Will be called when the component is removed */
     private val unSubscribers = mutableListOf<Unsubscribe>()
 

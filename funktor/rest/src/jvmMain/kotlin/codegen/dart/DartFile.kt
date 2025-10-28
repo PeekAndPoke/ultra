@@ -228,7 +228,6 @@ fun DartFile.Definition.addTypedef(name: String, tags: Tags = Tags.empty, builde
     )
 }
 
-
 @CodeGenDsl
 fun DartFile.Definition.addEnum(name: String, tags: Tags = Tags.empty, builder: DartEnum.Definition.() -> Unit) {
     elements.add(
