@@ -1,3 +1,5 @@
+@file:Suppress("detekt:all")
+
 package de.peekandpoke.kraft.examples.jsaddons
 
 import de.peekandpoke.kraft.examples.jsaddons.avatars.AvatarsRoutes
