@@ -166,7 +166,6 @@ class DataLoader<T>(
                     .first()
 
                 onComplete(result)
-
             } catch (e: Throwable) {
                 handleFinished()
                 handleException(e)

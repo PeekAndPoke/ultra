@@ -83,5 +83,4 @@ tasks {
 }
 
 mavenPublishing {
-
 }

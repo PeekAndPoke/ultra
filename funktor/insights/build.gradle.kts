@@ -45,7 +45,6 @@ kotlin {
         }
 
         jsMain {
-
         }
 
         jsTest {
@@ -86,5 +85,4 @@ tasks {
 }
 
 mavenPublishing {
-
 }

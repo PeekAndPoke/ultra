@@ -77,7 +77,6 @@ class IncomingJavaTimeConverter : IncomingParamConverter {
         private fun determineDateFormat(dateString: String): NamedFormat? = DATE_FORMAT_REGEXPS.entries
             .firstOrNull { (regex, _) -> regex.matches(dateString) }
             ?.let { (_, format) -> format }
-
     }
 
     data class NamedFormat(
@@ -100,7 +99,6 @@ class IncomingJavaTimeConverter : IncomingParamConverter {
                 ZoneId.of(
                     ZoneId.SHORT_IDS.getOrDefault(value, value)
                 )
-
             } catch (e: DateTimeException) {
                 throw CouldNotConvertException("Could not parse ZoneId '$value'", e)
             }

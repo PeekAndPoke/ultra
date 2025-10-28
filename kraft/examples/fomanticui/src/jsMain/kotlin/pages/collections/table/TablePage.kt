@@ -66,7 +66,6 @@ class TablePage(ctx: NoProps) : PureComponent(ctx) {
             ui.dividing.header H2 { +"Variations" }
 
             readTheFomanticUiDocs("https://fomantic-ui.com/collections/table.html#single-line")
-
         }
     }
 

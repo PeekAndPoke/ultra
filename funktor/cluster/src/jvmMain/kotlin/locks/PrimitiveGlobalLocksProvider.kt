@@ -56,7 +56,6 @@ class PrimitiveGlobalLocksProvider(private val retryDelayMs: Long = 1) : GlobalL
 
                     running = false
                 }
-
             } else {
                 // Wait a bit until retry
                 delay(max(1L, retryDelayMs))

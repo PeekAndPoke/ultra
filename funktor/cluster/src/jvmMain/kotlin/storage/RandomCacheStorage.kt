@@ -121,7 +121,6 @@ class RandomCacheStorage(
                         ?.let { raw ->
                             inner.encode(key.type, raw.value)
                         }
-
                 } catch (e: Throwable) {
                     e.printStackTrace()
                     null

@@ -114,7 +114,6 @@ class DndDropTargetComponent<PAYLOAD : Any>(ctx: Ctx<Props<PAYLOAD>>) :
     init {
         lifecycle.onMount {
             Dnd.registerDropTarget(this)
-
         }
 
         lifecycle.onUnmount {

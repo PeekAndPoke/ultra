@@ -232,7 +232,6 @@ class ScriptLoaderExample(ctx: NoProps) : PureComponent(ctx) {
                     val result = promise.asDeferred().await().also { console.log("Result", it) }
 
                     unifiedResult = result.value
-
                 }
             }
             +"Load 'unified' as module"

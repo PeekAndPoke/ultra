@@ -16,7 +16,6 @@ internal val Funktor_Fixtures = module { config: AppConfig ->
     if (config.ktor.isProduction) {
 
         singleton(FixtureInstaller::class, NullFixtureInstaller::class)
-
     } else {
 
         singleton(FixtureInstaller::class, SimpleFixtureInstaller::class)

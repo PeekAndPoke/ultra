@@ -37,7 +37,6 @@ fun FlowContent.srcSetImage(src: String, alt: String, sizes: ImageSizes = ImageS
                 }
             }
         }
-
     } else {
         img(src = Transparent2x1PngBase64, alt = alt)
     }

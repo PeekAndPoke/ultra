@@ -71,7 +71,6 @@ class AwsSesSender(private val client: SesAsyncClient) : EmailSender {
             val sendResult: SendEmailResponse = client.sendEmail(request).await()
 
             EmailResult.ofMessageId(sendResult.messageId())
-
         } catch (error: Throwable) {
             EmailResult.ofError(error)
         }
@@ -121,7 +120,6 @@ class AwsSesSender(private val client: SesAsyncClient) : EmailSender {
             val sendResult: SendRawEmailResponse = client.sendRawEmail(rawEmailRequest).await()
 
             EmailResult.ofMessageId(sendResult.messageId())
-
         } catch (error: Throwable) {
             EmailResult.ofError(error)
         }

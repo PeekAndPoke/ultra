@@ -545,5 +545,4 @@ class MpZonedDateTimeRangeSpec : StringSpec({
         range1.intersects(range2).shouldBeFalse()
         range2.intersects(range1).shouldBeFalse()
     }
-
 })

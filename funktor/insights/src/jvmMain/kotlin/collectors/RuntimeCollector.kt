@@ -147,5 +147,4 @@ class RuntimeCollector : InsightsCollector {
             systemProperties = System.getProperties().map { (k, v) -> k.toString() to v.toString() }.toMap()
         )
     }
-
 }

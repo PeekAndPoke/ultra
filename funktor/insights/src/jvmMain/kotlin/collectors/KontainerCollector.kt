@@ -451,7 +451,6 @@ class KontainerCollector(
                 numTotal = numTotal,
                 info = kontainer.tools.getDebugInfo(),
             )
-
         } catch (e: Throwable) {
             println("[ERROR] Could not get kontainer DebugInfo!\n${e.stackTraceToString()}")
 
