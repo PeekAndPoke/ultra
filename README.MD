@@ -1,4 +1,4 @@
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.1.10-success.svg)](https://kotlinlang.org/docs/releases.html)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.2.20-success.svg)](https://kotlinlang.org/docs/releases.html)
 [![CodeFactor](https://www.codefactor.io/repository/github/peekandpoke/ultra/badge)](https://www.codefactor.io/repository/github/peekandpoke/ultra)
 [![Maven Central](https://shields.io/maven-central/v/io.peekandpoke.ultra/common)](https://search.maven.org/search?q=io.peekandpoke.ultra)
 
