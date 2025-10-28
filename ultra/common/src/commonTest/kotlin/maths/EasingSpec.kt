@@ -29,14 +29,14 @@ class EasingSpec : StringSpec() {
                 val boundQuad = Ease.In.quad.bindFromTo(10.0, 30.0)
 
                 boundQuad(0.0) shouldBe 10.0
-                boundQuad(0.5) shouldBe 15.0  // 10 + (30-10) * 0.25 = 15.0, since quad(0.5) = 0.25
+                boundQuad(0.5) shouldBe 15.0 // 10 + (30-10) * 0.25 = 15.0, since quad(0.5) = 0.25
                 boundQuad(1.0) shouldBe 30.0
 
                 // Test with negative values
                 val boundNegative = Ease.Out.cubic.bindFromTo(0.0, -100.0)
 
                 boundNegative(0.0) shouldBe 0.0
-                boundNegative(0.5) shouldBe -87.5  // 0 + (-100-0) * 0.875 = -87.5, since Out.cubic(0.5) = 0.875
+                boundNegative(0.5) shouldBe -87.5 // 0 + (-100-0) * 0.875 = -87.5, since Out.cubic(0.5) = 0.875
                 boundNegative(1.0) shouldBe -100.0
 
                 // Test with inverted range (from > to)
@@ -63,15 +63,15 @@ class EasingSpec : StringSpec() {
             )
 
             // Test at different times
-            timed.calc(startTime) shouldBe 10.0  // At start time, should be at 'from' value
-            timed.calc(startTime + 250.milliseconds) shouldBe 12.5  // 25% through
-            timed.calc(startTime + 500.milliseconds) shouldBe 15.0  // 50% through
-            timed.calc(startTime + 750.milliseconds) shouldBe 17.5  // 75% through
-            timed.calc(startTime + 1000.milliseconds) shouldBe 20.0  // At end time, should be at 'to' value
+            timed.calc(startTime) shouldBe 10.0 // At start time, should be at 'from' value
+            timed.calc(startTime + 250.milliseconds) shouldBe 12.5 // 25% through
+            timed.calc(startTime + 500.milliseconds) shouldBe 15.0 // 50% through
+            timed.calc(startTime + 750.milliseconds) shouldBe 17.5 // 75% through
+            timed.calc(startTime + 1000.milliseconds) shouldBe 20.0 // At end time, should be at 'to' value
 
             // Test before and after the duration
-            timed.calc(startTime - 100.milliseconds) shouldBe 10.0  // Before start time, should be at 'from' value
-            timed.calc(startTime + 1500.milliseconds) shouldBe 20.0  // After end time, should be at 'to' value
+            timed.calc(startTime - 100.milliseconds) shouldBe 10.0 // Before start time, should be at 'from' value
+            timed.calc(startTime + 1500.milliseconds) shouldBe 20.0 // After end time, should be at 'to' value
 
             // Test with a non-linear easing function
             val timedQuad = Ease.Timed(
@@ -83,7 +83,7 @@ class EasingSpec : StringSpec() {
             )
 
             timedQuad.calc(startTime) shouldBe 10.0
-            timedQuad.calc(startTime + 500.milliseconds) shouldBe 15.0  // quad(0.5) = 0.25, so 10 + (30-10) * 0.25 = 15.0
+            timedQuad.calc(startTime + 500.milliseconds) shouldBe 15.0 // quad(0.5) = 0.25, so 10 + (30-10) * 0.25 = 15.0
             timedQuad.calc(startTime + 1000.milliseconds) shouldBe 30.0
 
             // Test with callback
@@ -97,8 +97,8 @@ class EasingSpec : StringSpec() {
                 callCount++
             }
 
-            lastProgress shouldBe 0.5  // Progress should be 0.5 at the midpoint
-            lastDone shouldBe false    // Not done yet
+            lastProgress shouldBe 0.5 // Progress should be 0.5 at the midpoint
+            lastDone shouldBe false // Not done yet
             callCount shouldBe 1
 
             timed.calc(startTime + 1000.milliseconds) { progress, done ->
@@ -107,8 +107,8 @@ class EasingSpec : StringSpec() {
                 callCount++
             }
 
-            lastProgress shouldBe 1.0  // Progress should be 1.0 at the end
-            lastDone shouldBe true     // Should be done
+            lastProgress shouldBe 1.0 // Progress should be 1.0 at the end
+            lastDone shouldBe true // Should be done
             callCount shouldBe 2
 
             // Test with zero or negative duration (should use minimum of 1ms)
@@ -121,7 +121,7 @@ class EasingSpec : StringSpec() {
             )
 
             timedZeroDuration.calc(startTime) shouldBe 10.0
-            timedZeroDuration.calc(startTime + 1.milliseconds) shouldBe 30.0  // Should complete after 1ms
+            timedZeroDuration.calc(startTime + 1.milliseconds) shouldBe 30.0 // Should complete after 1ms
         }
 
         "linear easing should return correct value" {
