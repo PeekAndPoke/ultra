@@ -1,10 +1,10 @@
-package de.peekandpoke.karango
+package de.peekandpoke.ultra.vault
 
 import de.peekandpoke.ultra.slumber.Slumber
 import kotlin.annotation.AnnotationTarget.*
 
 @Target(CLASS)
-annotation class Karango {
+annotation class Vault {
 
     @Target(FIELD, PROPERTY, FUNCTION)
     @Slumber.Field

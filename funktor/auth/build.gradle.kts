@@ -89,7 +89,9 @@ kotlin {
 
 dependencies {
     add("kspJvm", project(":karango:ksp"))
+    add("kspJvm", project(":monko:ksp"))
 }
+
 
 tasks {
     configureJvmTests()

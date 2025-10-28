@@ -59,7 +59,7 @@ val Ultra_Vault = module { config: VaultConfig ->
         singleton(VaultIndexesValidateCommand::class)
     }
 
-object Vault {
+object VaultScope {
     private val job = SupervisorJob()
     internal val scope = job + Dispatchers.IO
 

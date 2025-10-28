@@ -1,6 +1,5 @@
 package de.peekandpoke.karango.addons.softdelete
 
-import de.peekandpoke.karango.Karango
 import de.peekandpoke.karango.aql.AND
 import de.peekandpoke.karango.aql.AqlExpression
 import de.peekandpoke.karango.aql.AqlForLoop
@@ -18,6 +17,7 @@ import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.model.search.PagedSearchFilter
 import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.Stored
+import de.peekandpoke.ultra.vault.Vault
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 
@@ -25,8 +25,11 @@ interface SoftDeletableRepositoryAddon<T : SoftDeletable.Mutable<T>> : Repositor
 
     val kronos: Kronos
 
+    /**
+     * This class is here to trigger the Vault code generation for [SoftDelete]
+     */
     @Suppress("unused")
-    @Karango
+    @Vault
     data class TriggerKarango(
         val softDelete: SoftDelete,
     )

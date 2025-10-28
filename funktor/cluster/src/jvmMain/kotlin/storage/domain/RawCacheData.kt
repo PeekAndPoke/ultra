@@ -1,11 +1,11 @@
 package de.peekandpoke.funktor.cluster.storage.domain
 
 import de.peekandpoke.funktor.cluster.storage.RawCacheDataModel
-import de.peekandpoke.karango.Karango
 import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.vault.Vault
 import de.peekandpoke.ultra.vault.hooks.Timestamped
 
-@Karango
+@Vault
 data class RawCacheData(
     /** Storage category key */
     val category: String,

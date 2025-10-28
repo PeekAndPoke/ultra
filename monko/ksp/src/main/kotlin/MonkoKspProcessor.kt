@@ -1,4 +1,4 @@
-package de.peekandpoke.karango.ksp
+package de.peekandpoke.monko.ksp
 
 import com.google.devtools.ksp.getDeclaredProperties
 import com.google.devtools.ksp.isAbstract
@@ -28,7 +28,7 @@ import de.peekandpoke.ultra.vault.Stored
 import de.peekandpoke.ultra.vault.Vault
 import kotlin.reflect.KClass
 
-class KarangoKspProcessor(
+class MonkoKspProcessor(
     private val environment: SymbolProcessorEnvironment,
 ) : SymbolProcessor {
     companion object {
@@ -62,7 +62,7 @@ class KarangoKspProcessor(
             .getSymbolsWithAnnotation(Vault::class.qualifiedName!!)
             .filterIsInstance<KSClassDeclaration>()
 
-        logger.warn("KARANGO ... Found ${withAnnotations.count()} types with @${Vault::class.simpleName}")
+        logger.warn("MONKO ... Found ${withAnnotations.count()} types with @${Vault::class.simpleName}")
 
         // Find all referenced classes
         val allTypes = withAnnotations
@@ -94,7 +94,7 @@ class KarangoKspProcessor(
                 sources = listOfNotNull(cls.containingFile).toTypedArray(),
             ),
             packageName = packageName,
-            fileName = subjectName + "${"$$"}karango",
+            fileName = subjectName + "${"$$"}monko",
             extensionName = "kt",
         )
 
@@ -104,9 +104,8 @@ class KarangoKspProcessor(
             """
                 package $packageName
         
-                import de.peekandpoke.karango.*
-                import de.peekandpoke.karango.aql.*
-                import de.peekandpoke.ultra.vault.lang.*
+                import de.peekandpoke.monko.*
+                import de.peekandpoke.monko.lang.*
         
             """.trimIndent()
         )
@@ -114,7 +113,7 @@ class KarangoKspProcessor(
         codeBlocks.add("//// generic property")
         codeBlocks.add(
             """
-                inline fun <reified T> AqlIterableExpr<$subjectName>.property(name: String) = AqlPropertyPath.start(this).append<T, T>(name)
+                inline fun <reified T> MongoIterableExpr<$subjectName>.property(name: String) = MongoPropertyPath.start(this).append<T, T>(name)
 
             """.trimIndent()
         )
@@ -201,15 +200,10 @@ class KarangoKspProcessor(
         codeBlocks.add(
             """
 
-                inline val AqlIterableExpr<$subject>.$prop inline get() = AqlPropertyPath.start(this).append<$type, $type>("$prop")
-                inline val AqlExpression<$subject>.$prop inline get() = AqlPropertyPath.start(this).append<$type, $type>("$prop")
+                inline val MongoIterableExpr<$subject>.$prop inline get() = MongoPropertyPath.start(this).append<$type, $type>("$prop")
+                inline val MongoExpression<$subject>.$prop inline get() = MongoPropertyPath.start(this).append<$type, $type>("$prop")
 
-                inline val AqlPropertyPath<$subject, $subject>.$prop @JvmName("${prop}_0") inline get() = append<$type, $type>("$prop")
-                inline val AqlPropertyPath<$subject, L1<$subject>>.$prop @JvmName("${prop}_1") inline get() = append<$type, L1<$type>>("$prop")
-                inline val AqlPropertyPath<$subject, L2<$subject>>.$prop @JvmName("${prop}_2") inline get() = append<$type, L2<$type>>("$prop")
-                inline val AqlPropertyPath<$subject, L3<$subject>>.$prop @JvmName("${prop}_3") inline get() = append<$type, L3<$type>>("$prop")
-                inline val AqlPropertyPath<$subject, L4<$subject>>.$prop @JvmName("${prop}_4") inline get() = append<$type, L4<$type>>("$prop")
-                inline val AqlPropertyPath<$subject, L5<$subject>>.$prop @JvmName("${prop}_5") inline get() = append<$type, L5<$type>>("$prop")
+                inline val MongoPropertyPath<$subject, $subject>.$prop @JvmName("${prop}_0") inline get() = append<$type, $type>("$prop")
 
             """.trimIndent()
         )

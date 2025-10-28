@@ -10,6 +10,8 @@ import de.peekandpoke.funktor.auth.domain.realm
 import de.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import de.peekandpoke.monko.MonkoDriver
 import de.peekandpoke.monko.MonkoRepository
+import de.peekandpoke.monko.lang._type
+import de.peekandpoke.monko.lang.ts
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.Stored

@@ -13,9 +13,11 @@ import de.peekandpoke.ultra.vault.tools.DatabaseGraphBuilder
 import io.ktor.server.application.*
 import kotlinx.html.FlowContent
 import kotlinx.html.Unsafe
+import kotlinx.html.details
 import kotlinx.html.div
 import kotlinx.html.id
 import kotlinx.html.style
+import kotlinx.html.summary
 import kotlinx.html.title
 
 class VaultCollector(private val profiler: QueryProfiler) : InsightsCollector {
@@ -124,26 +126,36 @@ class VaultCollector(private val profiler: QueryProfiler) : InsightsCollector {
 
                         prism(it.queryLanguage) { it.query ?: "" }
 
-                        json(it.vars)
+                        if (it.vars?.isNotEmpty() == true) {
+                            json(it.vars)
+                        }
 
                         it.queryExplained?.let { explained ->
-                            prism("text") { explained }
+                            details {
+                                summary { +"Explained" }
+                                div {
+                                    prism("text") { explained }
+                                }
+                            }
                         }
                     }
                 }
 
-                ui.dividing.header H3 { +"Database graph" }
+                ui.divider()
 
-                ui.segment {
-                    json(graph)
+                details {
+                    summary { +"Database Graph Data" }
+                    ui.segment {
+                        json(graph)
+                    }
                 }
             }
 
             graph?.let {
                 inlineScript {
                     +"""
-                    let network = null;
-                """.trimIndent()
+                        let network = null;
+                    """.trimIndent()
 
                     renderGraphJs(template, it)
                 }

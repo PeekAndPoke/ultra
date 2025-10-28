@@ -1,11 +1,11 @@
 package de.peekandpoke.funktor.cluster.backgroundjobs.domain
 
-import de.peekandpoke.karango.Karango
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.slumber.Codec
+import de.peekandpoke.ultra.vault.Vault
 import kotlin.time.Duration
 
-@Karango
+@Vault
 data class BackgroundJobQueued(
     val type: String,
     val data: Any?,

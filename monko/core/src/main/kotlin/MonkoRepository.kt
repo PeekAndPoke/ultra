@@ -3,6 +3,8 @@ package de.peekandpoke.monko
 import com.mongodb.client.model.Filters.eq
 import de.peekandpoke.monko.lang.MongoExpression
 import de.peekandpoke.monko.lang.MongoIterableExpr
+import de.peekandpoke.monko.lang.MongoNameExpr
+import de.peekandpoke.monko.lang.MongoPrinter
 import de.peekandpoke.monko.lang.MongoPrinter.Companion.printQuery
 import de.peekandpoke.monko.lang.MongoPropertyPath
 import de.peekandpoke.ultra.common.reflection.TypeRef
@@ -30,7 +32,13 @@ abstract class MonkoRepository<T : Any>(
 
     val repoExpr: MongoIterableExpr<T> = MongoIterableExpr("repo", this)
 
-    fun <R> field(block: (MongoExpression<T>) -> MongoPropertyPath<R, *>): String {
+    override fun print(p: MongoPrinter) {
+        p.append(
+            MongoNameExpr(name = name, type = TypeRef.String)
+        )
+    }
+
+    fun <R> field(block: (MongoIterableExpr<T>) -> MongoPropertyPath<R, *>): String {
         val path = block(repoExpr)
 
         val dropped = path.dropRoot() ?: return ""

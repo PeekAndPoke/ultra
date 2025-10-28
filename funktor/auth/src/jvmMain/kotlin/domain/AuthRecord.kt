@@ -1,11 +1,11 @@
 package de.peekandpoke.funktor.auth.domain
 
-import de.peekandpoke.karango.Karango
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.slumber.Polymorphic
+import de.peekandpoke.ultra.vault.Vault
 import de.peekandpoke.ultra.vault.hooks.Timestamped
 
-@Karango
+@Vault
 sealed interface AuthRecord : Timestamped {
 
     data class Password(
@@ -26,20 +26,20 @@ sealed interface AuthRecord : Timestamped {
     }
 
     /** The realm that record belongs to */
-    @Karango.Field
+    @Vault.Field
     val realm: String
 
     /** The id of the owner / user */
-    @Karango.Field
+    @Vault.Field
     val ownerId: String
 
     /** Epoch seconds timestamp, when this entry expires, or NULL if it never expires */
-    @Karango.Field
+    @Vault.Field
     val expiresAt: Long?
 
-    @Karango.Field
+    @Vault.Field
     override val createdAt: MpInstant
 
-    @Karango.Field
+    @Vault.Field
     override val updatedAt: MpInstant
 }

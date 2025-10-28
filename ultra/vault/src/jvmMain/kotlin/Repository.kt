@@ -64,7 +64,7 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
         }
 
         fun <X : T> applyOnAfterSaveHooks(repo: Repository<T>, stored: Stored<X>): Stored<X> {
-            Vault.launch {
+            VaultScope.launch {
                 delay(1)
                 onAfterSave.forEach { hook -> hook.onAfterSave(repo, stored) }
             }
@@ -73,7 +73,7 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
         }
 
         fun <X : T> applyOnAfterDeleteHooks(repo: Repository<T>, stored: Stored<X>): Stored<X> {
-            Vault.launch {
+            VaultScope.launch {
                 delay(1)
                 onAfterDelete.forEach { hook -> hook.onAfterDelete(repo, stored) }
             }
