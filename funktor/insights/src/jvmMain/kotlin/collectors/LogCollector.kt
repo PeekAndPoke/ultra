@@ -73,19 +73,25 @@ class LogCollector : InsightsCollector {
 
             content {
 
-                entries.forEach { entry ->
-
-                    val bgColor: SemanticFn = when (entry.level) {
-                        LogLevel.ALL, LogLevel.TRACE -> semantic { this }
-                        LogLevel.DEBUG -> semantic { this }
-                        LogLevel.INFO -> semantic { positive }
-                        LogLevel.WARNING -> semantic { warning }
-                        LogLevel.ERROR, LogLevel.OFF -> semantic { error }
+                if (entries.isEmpty()) {
+                    ui.message {
+                        +"No log entries"
                     }
+                } else {
+                    entries.forEach { entry ->
 
-                    ui.bgColor().message {
-                        pre {
-                            +entry.text
+                        val bgColor: SemanticFn = when (entry.level) {
+                            LogLevel.ALL, LogLevel.TRACE -> semantic { this }
+                            LogLevel.DEBUG -> semantic { this }
+                            LogLevel.INFO -> semantic { positive }
+                            LogLevel.WARNING -> semantic { warning }
+                            LogLevel.ERROR, LogLevel.OFF -> semantic { error }
+                        }
+
+                        ui.bgColor().message {
+                            pre {
+                                +entry.text
+                            }
                         }
                     }
                 }

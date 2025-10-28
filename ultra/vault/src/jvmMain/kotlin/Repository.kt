@@ -4,8 +4,6 @@ import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicParentUtil
 import de.peekandpoke.ultra.vault.lang.Aliased
 import de.peekandpoke.ultra.vault.lang.Expression
-import de.peekandpoke.ultra.vault.lang.IterableExpr
-import de.peekandpoke.ultra.vault.lang.Printer
 import kotlinx.coroutines.delay
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
@@ -66,7 +64,7 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
         }
 
         fun <X : T> applyOnAfterSaveHooks(repo: Repository<T>, stored: Stored<X>): Stored<X> {
-            Vault.launch {
+            VaultScope.launch {
                 delay(1)
                 onAfterSave.forEach { hook -> hook.onAfterSave(repo, stored) }
             }
@@ -75,7 +73,7 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
         }
 
         fun <X : T> applyOnAfterDeleteHooks(repo: Repository<T>, stored: Stored<X>): Stored<X> {
-            Vault.launch {
+            VaultScope.launch {
                 delay(1)
                 onAfterDelete.forEach { hook -> hook.onAfterDelete(repo, stored) }
             }
@@ -104,24 +102,12 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
     /**
      * Helper for accessing the repos this pointer
      */
-    val repo get() = this
-
-    /**
-     * Gets an iterable expression for this repo
-     */
-    fun asIterableExpr(rootName: String = "root"): IterableExpr<T> = IterableExpr("root", this)
+    val repo: Repository<T> get() = this
 
     /**
      * Returns the expression type of the repo
      */
     override fun getType(): TypeRef<List<T>> = storedType.list
-
-    /**
-     * Prints the repo as part of a query
-     */
-    override fun print(p: Printer) {
-        p.name(name)
-    }
 
     /**
      * Gets the alias
@@ -153,12 +139,12 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
     /**
      * Gets figures about the repository
      */
-    suspend fun getStats(): VaultModels.RepositoryStats = VaultModels.RepositoryStats.empty.copy(name = name)
+    suspend fun getStats(): VaultModels.RepositoryStats = VaultModels.RepositoryStats.empty
 
     /**
      * Validates that all indexes are set properly and that there are not excess indexes
      */
-    suspend fun validateIndexes(): VaultModels.IndexesInfo = VaultModels.IndexesInfo.empty.copy(repository = name)
+    suspend fun validateIndexes(): VaultModels.IndexesInfo = VaultModels.IndexesInfo.empty
 
     /**
      * Ensures that the indexes are set up
@@ -209,7 +195,7 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
     /**
      * Returns all documents in the repository.
      */
-    suspend fun findAll(): Cursor<Stored<T>>
+    suspend fun findAll(): Cursor<Stored<T>> = Cursor.empty()
 
     /**
      * Retrieves a document by id or null if there is none.

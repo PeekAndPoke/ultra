@@ -1,11 +1,11 @@
 package de.peekandpoke.funktor.logging.karango
 
 import de.peekandpoke.funktor.logging.api.LogEntryModel
-import de.peekandpoke.karango.Karango
 import de.peekandpoke.ultra.log.LogLevel
 import de.peekandpoke.ultra.vault.Storable
+import de.peekandpoke.ultra.vault.Vault
 
-@Karango
+@Vault
 data class KarangoLogEntry(
     val createdAt: Long,
     val expiresAt: Long = createdAt / 1000,

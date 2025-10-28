@@ -3,8 +3,8 @@ package de.kotlincook.karango.ksp
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.symbolProcessorProviders
-import de.peekandpoke.karango.Karango
 import de.peekandpoke.karango.ksp.KarangoKspProcessorProvider
+import de.peekandpoke.ultra.vault.Vault
 import io.kotest.common.ExperimentalKotest
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.engine.test.logging.warn
@@ -21,9 +21,9 @@ class NestedClassCodeGenSpec : StringSpec() {
                 contents = """
                     package karango.compile
                     
-                    import ${Karango::class.qualifiedName}
+                    import ${Vault::class.qualifiedName}
 
-                    @Karango
+                    @Vault
                     data class Outer(val inner: Inner) {
                         data class Inner(val num: Int)
                     }

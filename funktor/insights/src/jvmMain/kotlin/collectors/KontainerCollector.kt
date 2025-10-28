@@ -201,8 +201,8 @@ class KontainerCollector(
                 service.definition.injects.flatMap { inject ->
                     inject.classes.map { cls ->
                         mapOf(
-                            "from" to getId(cls),
-                            "to" to getId(service.cls),
+                            "from" to getId(service.cls),
+                            "to" to getId(cls),
                             "arrows" to "to",
                             "dashes" to when (inject.provisionType) {
                                 DebugInfo.ParamInfo.ProvisionType.Direct -> false
@@ -336,8 +336,8 @@ class KontainerCollector(
                 service.definition.injects.flatMap { inject ->
                     inject.classes.map { cls ->
                         mapOf(
-                            "from" to getId(cls),
-                            "to" to getId(service.cls),
+                            "from" to getId(service.cls),
+                            "to" to getId(cls),
                             "arrows" to "to",
                             "dashes" to when (inject.provisionType) {
                                 DebugInfo.ParamInfo.ProvisionType.Direct -> false

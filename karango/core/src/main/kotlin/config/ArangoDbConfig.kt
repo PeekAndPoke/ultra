@@ -11,13 +11,7 @@ data class ArangoDbConfig(
     val database: String = "_system",
     val useSsl: Boolean = false,
     val caCertX509: String? = null,
-    val flags: Flags = Flags(),
 ) {
-    data class Flags(
-        val enableProfiler: Boolean = false,
-        val enableExplain: Boolean = false,
-    )
-
     companion object {
         val forUnitTests get() = ArangoDbConfig()
     }

@@ -3,103 +3,114 @@
 package de.peekandpoke.karango.aql
 
 import de.peekandpoke.ultra.common.reflection.nthParamName
-import de.peekandpoke.ultra.vault.lang.Expression
-import de.peekandpoke.ultra.vault.lang.IterableExpr
-import de.peekandpoke.ultra.vault.lang.Printer
-import de.peekandpoke.ultra.vault.lang.Statement
-import de.peekandpoke.ultra.vault.lang.TerminalExpr
 import de.peekandpoke.ultra.vault.lang.VaultDslMarker
 import kotlin.math.max
 
 @VaultDslMarker
-fun FOR(iteratorName: String) = ForLoop.For(iteratorName)
+fun FOR(name: String) = AqlForLoop.For(iteratorName = name)
 
 @VaultDslMarker
 fun <T, R> FOR(
     name: String,
-    iterable: Expression<List<T>>,
-    builder: ForLoop.(IterableExpr<T>) -> TerminalExpr<R>,
-): TerminalExpr<R> {
+    iterable: AqlExpression<List<T>>,
+    builder: AqlForLoop.(AqlIterableExpr<T>) -> AqlTerminalExpr<R>,
+): AqlTerminalExpr<R> {
     return FOR(name) IN (iterable.invoke(builder))
 }
 
 @VaultDslMarker
-fun <T, R> FOR(iterable: Expression<List<T>>, builder: ForLoop.(IterableExpr<T>) -> TerminalExpr<R>): TerminalExpr<R> =
-    FOR(builder.nthParamName(1), iterable, builder)
+fun <T, R> FOR(
+    iterable: AqlExpression<List<T>>,
+    builder: AqlForLoop.(AqlIterableExpr<T>) -> AqlTerminalExpr<R>,
+): AqlTerminalExpr<R> =
+    FOR(name = builder.nthParamName(1), iterable = iterable, builder = builder)
 
 @VaultDslMarker
-operator fun <T, R> Expression<List<T>>.invoke(builder: ForLoop.(IterableExpr<T>) -> TerminalExpr<R>) =
-    ForLoop.In(this, builder)
+operator fun <T, R> AqlExpression<List<T>>.invoke(builder: AqlForLoop.(AqlIterableExpr<T>) -> AqlTerminalExpr<R>) =
+    AqlForLoop.In(iterable = this, builder = builder)
 
 @VaultDslMarker
-class ForLoop internal constructor() : StatementBuilder {
+class AqlForLoop internal constructor() : AqlStatementBuilder {
 
     @VaultDslMarker
     class For(private val iteratorName: String) {
 
         @VaultDslMarker
-        infix fun <T, R> IN(forIn: In<T, R>): TerminalExpr<R> {
+        infix fun <T, R> IN(forIn: In<T, R>): AqlTerminalExpr<R> {
 
-            val loop = ForLoop()
-            val iterator = IterableExpr(iteratorName, forIn.iterable)
+            val loop = AqlForLoop()
+            val iterator = AqlIterableExpr(iteratorName, forIn.iterable)
             val returns = forIn.builder(loop, iterator)
 
-            return ForLoopExpr(iterator, forIn.iterable, loop.stmts, returns)
+            return AqlForLoopExpr(iterator, forIn.iterable, loop.stmts, returns)
         }
     }
 
     @VaultDslMarker
     class In<T, R>(
-        internal val iterable: Expression<List<T>>,
-        internal val builder: ForLoop.(IterableExpr<T>) -> TerminalExpr<R>,
+        internal val iterable: AqlExpression<List<T>>,
+        internal val builder: AqlForLoop.(AqlIterableExpr<T>) -> AqlTerminalExpr<R>,
     )
 
-    override val stmts = mutableListOf<Statement>()
+    override val stmts = mutableListOf<AqlStatement>()
 
     @VaultDslMarker
-    fun FILTER(predicate: Expression<Boolean>): Unit = run {
-        Filter(predicate).addStmt()
+    fun FILTER(predicate: AqlExpression<Boolean>): Unit = run {
+        AqlFilterStatement(predicate).addStmt()
     }
 
     @VaultDslMarker
-    fun FILTER_ANY(vararg predicate: Expression<Boolean>): Unit =
+    fun FILTER_ANY(vararg predicate: AqlExpression<Boolean>) {
         FILTER(predicate.toList().any)
+    }
 
     @VaultDslMarker
-    fun SORT(vararg sorts: Sort): Unit = run { SortBy(sorts.toList()).addStmt() }
+    fun SORT(vararg sorts: AqlSorting) {
+        AqlSortByStmt(sorts.toList()).addStmt()
+    }
 
     @VaultDslMarker
-    fun <T> SORT(expr: Expression<T>, direction: Direction = Direction.ASC): Unit = SORT(expr.sort(direction))
+    fun <T> SORT(expr: AqlExpression<T>, direction: AqlSortDirection = AqlSortDirection.ASC) {
+        SORT(expr.sort(direction))
+    }
 
     @VaultDslMarker
-    fun LIMIT(limit: Int): Unit = run { OffsetAndLimit(0, limit).addStmt() }
+    fun LIMIT(limit: Int) {
+        AqlOffsetAndLimitStmt(0, limit).addStmt()
+    }
 
     @VaultDslMarker
-    fun LIMIT(offset: Int, limit: Int): Unit = run { OffsetAndLimit(offset, limit).addStmt() }
+    fun LIMIT(offset: Int, limit: Int) {
+        AqlOffsetAndLimitStmt(offset, limit).addStmt()
+    }
 
     @VaultDslMarker
-    fun SKIP(skip: Int): Unit = run { OffsetAndLimit(skip, null).addStmt() }
+    fun SKIP(skip: Int) {
+        AqlOffsetAndLimitStmt(skip, null).addStmt()
+    }
 
     @VaultDslMarker
-    fun PAGE(page: Int = 1, epp: Int = 20) = LIMIT(offset = max(0, page - 1) * epp, limit = epp)
+    fun PAGE(page: Int = 1, epp: Int = 20) {
+        LIMIT(offset = max(0, page - 1) * epp, limit = epp)
+    }
 }
 
-internal class ForLoopExpr<T, R>(
-    private val iterator: IterableExpr<T>,
-    private val iterable: Expression<List<T>>,
-    private val stmts: List<Statement>,
-    private val ret: TerminalExpr<R>,
-) : TerminalExpr<R> {
+internal class AqlForLoopExpr<T, R>(
+    private val iterator: AqlIterableExpr<T>,
+    private val iterable: AqlExpression<List<T>>,
+    private val stmts: List<AqlStatement>,
+    private val ret: AqlTerminalExpr<R>,
+) : AqlTerminalExpr<R> {
 
     override fun getType() = ret.getType()
 
     override fun innerType() = ret.innerType()
 
-    override fun print(p: Printer) = with(p) {
+    override fun print(p: AqlPrinter) {
 
-        append("FOR ").append(iterator).append(" IN ").append(iterable).appendLine()
+        p.append("FOR ").append(iterator).append(" IN ").append(iterable).appendLine()
 
-        indent {
+        p.indent {
             append(stmts)
             append(ret)
         }

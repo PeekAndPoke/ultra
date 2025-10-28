@@ -38,6 +38,21 @@ class FunktorClusterOverviewPage(ctx: Ctx<Props>) : Component<FunktorClusterOver
 
     private fun FlowContent.renderCards() {
 
+        ui.dividing.header { +"Devtools" }
+
+        ui.four.doubling.stackable.cards {
+            ui.card A {
+                href(props.ui.routes.devtools.requestHistory())
+
+                ui.center.aligned.content {
+                    icon.large.cloud_upload_alternate()
+                }
+                ui.center.aligned.content {
+                    noui.header { +"Request History" }
+                }
+            }
+        }
+
         ui.dividing.header { +"Server and Global Locks" }
 
         ui.four.doubling.stackable.cards {

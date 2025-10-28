@@ -1,6 +1,8 @@
 package de.peekandpoke.karango.e2e.functions_array
 
+import de.peekandpoke.karango.KarangoCursor
 import de.peekandpoke.karango.aql.APPEND
+import de.peekandpoke.karango.aql.ARRAY
 import de.peekandpoke.karango.aql.FOR
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
@@ -13,9 +15,6 @@ import de.peekandpoke.karango.e2e.name
 import de.peekandpoke.karango.e2e.withDetailedClue
 import de.peekandpoke.ultra.common.model.tuple
 import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.vault.Cursor
-import de.peekandpoke.ultra.vault.lang.ARRAY
-import de.peekandpoke.ultra.vault.lang.TerminalExpr
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -27,7 +26,10 @@ class `E2E-Func-Array-APPEND-Spec` : StringSpec({
 
         val result = karangoDriver.query {
             RETURN(
-                APPEND(ARRAY(1.aql, 2.aql, 3.aql), ARRAY(4.aql, 5.aql, 6.aql))
+                APPEND(
+                    ARRAY(1.aql, 2.aql, 3.aql),
+                    ARRAY(4.aql, 5.aql, 6.aql),
+                )
             )
         }
 
@@ -57,7 +59,7 @@ class `E2E-Func-Array-APPEND-Spec` : StringSpec({
 
     "APPEND must return the correct typeref for incompatible arrays" {
 
-        val result: Cursor<List<Any>> = karangoDriver.query {
+        val result: KarangoCursor<List<Any>> = karangoDriver.query {
             RETURN(
                 APPEND<Any>(ARRAY(1.aql), ARRAY("a".aql))
             )
@@ -75,7 +77,11 @@ class `E2E-Func-Array-APPEND-Spec` : StringSpec({
 
         val result = karangoDriver.query {
             RETURN(
-                APPEND<Any>(ARRAY(1.aql, 1.aql), ARRAY("a".aql, "a".aql), true.aql)
+                APPEND<Any>(
+                    ARRAY(1.aql, 1.aql),
+                    ARRAY("a".aql, "a".aql),
+                    true.aql,
+                )
             )
         }
 
@@ -107,7 +113,9 @@ class `E2E-Func-Array-APPEND-Spec` : StringSpec({
 
             RETURN(
                 APPEND(
-                    FOR(a) { RETURN(it.age) }, FOR(b) { RETURN(it.age) }, true.aql
+                    FOR(a) { RETURN(it.age) },
+                    FOR(b) { RETURN(it.age) },
+                    true.aql,
                 )
             )
         }
@@ -173,7 +181,11 @@ class `E2E-Func-Array-APPEND-Spec` : StringSpec({
             }
 
             RETURN(
-                APPEND<Any>(a.expand().age, b.expand().name, true.aql)
+                APPEND<Any>(
+                    a.expand().age,
+                    b.expand().name,
+                    true.aql,
+                )
             )
         }
 
@@ -229,7 +241,7 @@ class `E2E-Func-Array-APPEND-Spec` : StringSpec({
 
             val result = karangoDriver.query {
                 @Suppress("UNCHECKED_CAST")
-                RETURN(expression) as TerminalExpr<Any>
+                RETURN(expression)
             }
 
             withDetailedClue(expression, expected) {
@@ -243,7 +255,7 @@ class `E2E-Func-Array-APPEND-Spec` : StringSpec({
                 val l = LET("l", expression)
 
                 @Suppress("UNCHECKED_CAST")
-                RETURN(l) as TerminalExpr<Any>
+                RETURN(l)
             }
 
             withDetailedClue(expression, expected) {

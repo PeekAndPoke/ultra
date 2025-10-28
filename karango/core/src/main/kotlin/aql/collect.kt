@@ -2,11 +2,6 @@
 
 package de.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.vault.lang.Expression
-import de.peekandpoke.ultra.vault.lang.FunctionExpr
-import de.peekandpoke.ultra.vault.lang.NameExpr
-import de.peekandpoke.ultra.vault.lang.Printer
-import de.peekandpoke.ultra.vault.lang.Statement
 import de.peekandpoke.ultra.vault.lang.VaultDslMarker
 import de.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
 
@@ -20,40 +15,47 @@ import de.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
  * when used like this:
  *
  * ```kotlin
- *     val count: Expression<Int> = COLLECT_WITH(Aql.COUNT, "variable")
+ *     val count: AqlExpression<Int> = COLLECT_WITH(Aql.COUNT, "variable")
  * ```
  */
 @Suppress("unused")
 @VaultTerminalExpressionMarker
-fun <T> StatementBuilder.COLLECT_WITH(with: FunctionExpr<T>, into: String): Expression<T> {
+fun <T> AqlStatementBuilder.COLLECT_WITH(with: AqlFunctionExpr<T>, into: String): AqlExpression<T> {
 
-    CollectWithExpression(with, into).addStmt()
+    AqlCollectWithExpressionStmt(with, into).addStmt()
 
-    return NameExpr(into, with.getType())
+    return AqlNameExpr(into, with.getType())
 }
 
 @Suppress("unused")
 @VaultDslMarker
-fun <T> StatementBuilder.COLLECT(assignee: String, expr: Expression<T>): CollectStatement<T> {
-    return CollectStatement(assignee = assignee, expr = expr).addStmt()
+fun <T> AqlStatementBuilder.COLLECT(
+    assignee: String,
+    expr: AqlExpression<T>,
+): AqlCollectStmt<T> {
+    return AqlCollectStmt(assignee = assignee, expr = expr).addStmt()
 }
 
 @Suppress("unused")
 @VaultDslMarker
-fun <T> StatementBuilder.COLLECT_INTO(assignee: String, expr: Expression<T>, into: String): CollectIntoStatement<T> {
-    return CollectIntoStatement(assignee = assignee, expr = expr, into = into).addStmt()
+fun <T> AqlStatementBuilder.COLLECT_INTO(
+    assignee: String,
+    expr: AqlExpression<T>,
+    into: String,
+): AqlCollectIntoStmt<T> {
+    return AqlCollectIntoStmt(assignee = assignee, expr = expr, into = into).addStmt()
 }
 
 @Suppress("unused")
 @VaultDslMarker
-fun <T, A> StatementBuilder.COLLECT_AGGREGATE(
+fun <T, A> AqlStatementBuilder.COLLECT_AGGREGATE(
     group: String,
-    groupBy: Expression<T>,
+    groupBy: AqlExpression<T>,
     aggregate: String,
-    aggregateWith: Expression<A>,
-): CollectAggregateStatement<T, A> {
+    aggregateWith: AqlExpression<A>,
+): AqlCollectAggregateStmt<T, A> {
 
-    return CollectAggregateStatement(
+    return AqlCollectAggregateStmt(
         group = group,
         groupBy = groupBy,
         aggregate = aggregate,
@@ -62,63 +64,65 @@ fun <T, A> StatementBuilder.COLLECT_AGGREGATE(
 }
 
 @VaultDslMarker
-class CollectWithExpression<T> internal constructor(
-    private val func: FunctionExpr<T>,
+class AqlCollectWithExpressionStmt<T> internal constructor(
+    private val func: AqlFunctionExpr<T>,
     private val variable: String,
-) : Statement {
-    override fun print(p: Printer): Any = with(p) {
-        append("COLLECT WITH ").append(func).append(" INTO ").append(variable).appendLine()
+) : AqlStatement {
+    override fun print(p: AqlPrinter) {
+        with(p) {
+            append("COLLECT WITH ").append(func).append(" INTO ").append(variable).nl()
+        }
     }
 }
 
 @VaultDslMarker
-class CollectStatement<T> internal constructor(
+class AqlCollectStmt<T> internal constructor(
     assignee: String,
-    private val expr: Expression<T>,
-) : Statement {
+    private val expr: AqlExpression<T>,
+) : AqlStatement {
 
-    val assignee: NameExpr<T> = NameExpr(assignee, expr.getType())
+    val assignee: AqlNameExpr<T> = AqlNameExpr(assignee, expr.getType())
 
-    override fun print(p: Printer): Any = with(p) {
-        append("COLLECT ")
-            .append(assignee).append(" = ").append(this@CollectStatement.expr)
-            .appendLine()
+    override fun print(p: AqlPrinter) {
+        p.append("COLLECT ")
+        p.append(assignee).append(" = ").append(expr)
+        p.nl()
     }
 }
 
 @VaultDslMarker
-class CollectIntoStatement<T> internal constructor(
+class AqlCollectIntoStmt<T> internal constructor(
     assignee: String,
-    private val expr: Expression<T>,
+    private val expr: AqlExpression<T>,
     into: String,
-) : Statement {
+) : AqlStatement {
 
-    val assignee: NameExpr<T> = NameExpr(assignee, expr.getType())
-    val into: NameExpr<List<T>> = NameExpr(into, expr.getType().list)
+    val assignee: AqlNameExpr<T> = AqlNameExpr(assignee, expr.getType())
+    val into: AqlNameExpr<List<T>> = AqlNameExpr(into, expr.getType().list)
 
-    override fun print(p: Printer): Any = with(p) {
-        append("COLLECT ")
-            .append(assignee).append(" = ").append(this@CollectIntoStatement.expr)
-            .append(" INTO ").append(into)
-            .appendLine()
+    override fun print(p: AqlPrinter) {
+        p.append("COLLECT ")
+        p.append(assignee).append(" = ").append(expr)
+        p.append(" INTO ").append(into)
+        p.nl()
     }
 }
 
 @VaultDslMarker
-class CollectAggregateStatement<G, A> internal constructor(
+class AqlCollectAggregateStmt<G, A> internal constructor(
     group: String,
-    private val groupBy: Expression<G>,
+    private val groupBy: AqlExpression<G>,
     aggregate: String,
-    private val aggregateWith: Expression<A>,
-) : Statement {
+    private val aggregateWith: AqlExpression<A>,
+) : AqlStatement {
 
-    val group: NameExpr<G> = NameExpr(group, groupBy.getType())
-    val aggregate: NameExpr<A> = NameExpr(aggregate, aggregateWith.getType())
+    val group: AqlNameExpr<G> = AqlNameExpr(group, groupBy.getType())
+    val aggregate: AqlNameExpr<A> = AqlNameExpr(aggregate, aggregateWith.getType())
 
-    override fun print(p: Printer): Any = with(p) {
-        append("COLLECT ")
-            .append(group).append(" = ").append(groupBy)
-            .append(" AGGREGATE ").append(aggregate).append(" = ").append(aggregateWith)
-            .appendLine()
+    override fun print(p: AqlPrinter) {
+        p.append("COLLECT ")
+        p.append(group).append(" = ").append(groupBy)
+        p.append(" AGGREGATE ").append(aggregate).append(" = ").append(aggregateWith)
+        p.nl()
     }
 }

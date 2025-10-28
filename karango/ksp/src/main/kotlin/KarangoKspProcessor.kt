@@ -19,13 +19,13 @@ import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSTypeArgument
 import com.google.devtools.ksp.symbol.Modifier
 import com.google.devtools.ksp.symbol.NonExistLocation
-import de.peekandpoke.karango.Karango
 import de.peekandpoke.ultra.slumber.Slumber
 import de.peekandpoke.ultra.vault.LazyRef
 import de.peekandpoke.ultra.vault.New
 import de.peekandpoke.ultra.vault.Ref
 import de.peekandpoke.ultra.vault.Storable
 import de.peekandpoke.ultra.vault.Stored
+import de.peekandpoke.ultra.vault.Vault
 import kotlin.reflect.KClass
 
 class KarangoKspProcessor(
@@ -59,8 +59,10 @@ class KarangoKspProcessor(
 
         // Find all types that have a Karango Annotation
         val withAnnotations = resolver
-            .getSymbolsWithAnnotation(Karango::class.qualifiedName!!)
+            .getSymbolsWithAnnotation(Vault::class.qualifiedName!!)
             .filterIsInstance<KSClassDeclaration>()
+
+        logger.warn("KARANGO ... Found ${withAnnotations.count()} types with @${Vault::class.simpleName}")
 
         // Find all referenced classes
         val allTypes = withAnnotations
@@ -88,7 +90,7 @@ class KarangoKspProcessor(
 
         val file = codeGenerator.createNewFile(
             dependencies = Dependencies(
-                aggregating = false,
+                aggregating = true,
                 sources = listOfNotNull(cls.containingFile).toTypedArray(),
             ),
             packageName = packageName,
@@ -112,7 +114,7 @@ class KarangoKspProcessor(
         codeBlocks.add("//// generic property")
         codeBlocks.add(
             """
-                inline fun <reified T> IterableExpr<$subjectName>.property(name: String) = PropertyPath.start(this).append<T, T>(name)
+                inline fun <reified T> AqlIterableExpr<$subjectName>.property(name: String) = AqlPropertyPath.start(this).append<T, T>(name)
 
             """.trimIndent()
         )
@@ -128,13 +130,13 @@ class KarangoKspProcessor(
         }
 
         // TODO:
-        //  - test that @Karango.Field and @Slumber.Field are picked up and will get code generated
-        //  - test that @Karango.Ignore does not get code generated
+        //  - test that @Vault.Field and @Slumber.Field are picked up and will get code generated
+        //  - test that @Vault.Ignore does not get code generated
         //  - test that non-ctor fields do not get code generated, unless annotated
         val annotatedFields = allFields
             .filterNot { it.isPrimaryCtorParameter() }
-            .filter { it.hasAnyAnnotation(Karango.Field::class, Slumber.Field::class) }
-            .filterNot { it.hasAnnotation(Karango.Ignore::class) }
+            .filter { it.hasAnyAnnotation(Vault.Field::class, Slumber.Field::class) }
+            .filterNot { it.hasAnnotation(Vault.Ignore::class) }
 
         annotatedFields.forEach { field ->
             logger.info("  --> Found annotated field ${field.simpleName.asString()} with annotations ${field.annotations.print()}")
@@ -199,15 +201,15 @@ class KarangoKspProcessor(
         codeBlocks.add(
             """
 
-                inline val IterableExpr<$subject>.$prop inline get() = PropertyPath.start(this).append<$type, $type>("$prop")
-                inline val Expression<$subject>.$prop inline get() = PropertyPath.start(this).append<$type, $type>("$prop")
+                inline val AqlIterableExpr<$subject>.$prop inline get() = AqlPropertyPath.start(this).append<$type, $type>("$prop")
+                inline val AqlExpression<$subject>.$prop inline get() = AqlPropertyPath.start(this).append<$type, $type>("$prop")
 
-                inline val PropertyPath<$subject, $subject>.$prop @JvmName("${prop}_0") inline get() = append<$type, $type>("$prop")
-                inline val PropertyPath<$subject, L1<$subject>>.$prop @JvmName("${prop}_1") inline get() = append<$type, L1<$type>>("$prop")
-                inline val PropertyPath<$subject, L2<$subject>>.$prop @JvmName("${prop}_2") inline get() = append<$type, L2<$type>>("$prop")
-                inline val PropertyPath<$subject, L3<$subject>>.$prop @JvmName("${prop}_3") inline get() = append<$type, L3<$type>>("$prop")
-                inline val PropertyPath<$subject, L4<$subject>>.$prop @JvmName("${prop}_4") inline get() = append<$type, L4<$type>>("$prop")
-                inline val PropertyPath<$subject, L5<$subject>>.$prop @JvmName("${prop}_5") inline get() = append<$type, L5<$type>>("$prop")
+                inline val AqlPropertyPath<$subject, $subject>.$prop @JvmName("${prop}_0") inline get() = append<$type, $type>("$prop")
+                inline val AqlPropertyPath<$subject, L1<$subject>>.$prop @JvmName("${prop}_1") inline get() = append<$type, L1<$type>>("$prop")
+                inline val AqlPropertyPath<$subject, L2<$subject>>.$prop @JvmName("${prop}_2") inline get() = append<$type, L2<$type>>("$prop")
+                inline val AqlPropertyPath<$subject, L3<$subject>>.$prop @JvmName("${prop}_3") inline get() = append<$type, L3<$type>>("$prop")
+                inline val AqlPropertyPath<$subject, L4<$subject>>.$prop @JvmName("${prop}_4") inline get() = append<$type, L4<$type>>("$prop")
+                inline val AqlPropertyPath<$subject, L5<$subject>>.$prop @JvmName("${prop}_5") inline get() = append<$type, L5<$type>>("$prop")
 
             """.trimIndent()
         )

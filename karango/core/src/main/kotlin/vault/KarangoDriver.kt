@@ -3,22 +3,22 @@ package de.peekandpoke.karango.vault
 import com.arangodb.ArangoCursorAsync
 import com.arangodb.ArangoDBException
 import com.arangodb.ArangoDatabaseAsync
+import com.arangodb.entity.ArangoDBVersion
 import com.arangodb.entity.CollectionType
 import com.arangodb.model.AqlQueryOptions
 import com.arangodb.model.CollectionCreateOptions
 import de.peekandpoke.karango.AqlQueryOptionProvider
 import de.peekandpoke.karango.KarangoCursor
 import de.peekandpoke.karango.KarangoQueryException
-import de.peekandpoke.karango.aql.AqlBuilder
-import de.peekandpoke.karango.aql.RootExpression
-import de.peekandpoke.karango.buildQuery
+import de.peekandpoke.karango.aql.AqlRootExpression
+import de.peekandpoke.karango.aql.AqlStatementBuilderImpl
+import de.peekandpoke.karango.aql.AqlTerminalExpr
+import de.peekandpoke.karango.buildAqlQuery
 import de.peekandpoke.karango.slumber.KarangoCodec
 import de.peekandpoke.karango.utils.ArangoDbRequestUtils
 import de.peekandpoke.ultra.common.reflection.kMapType
 import de.peekandpoke.ultra.log.Log
 import de.peekandpoke.ultra.log.NullLog
-import de.peekandpoke.ultra.vault.TypedQuery
-import de.peekandpoke.ultra.vault.lang.TerminalExpr
 import de.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 import de.peekandpoke.ultra.vault.profiling.QueryProfiler
 import kotlinx.coroutines.Dispatchers
@@ -26,12 +26,13 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.runBlocking
 
 class KarangoDriver(
     private val lazyCodec: Lazy<KarangoCodec>,
     private val lazyArangoDb: Lazy<ArangoDatabaseAsync>,
     private val lazyProfiler: Lazy<QueryProfiler> = lazy { NullQueryProfiler },
-    private val log: Log = NullLog,
+    val log: Log = NullLog,
 ) {
     val codec: KarangoCodec by lazyCodec
     val arangoDb: ArangoDatabaseAsync by lazyArangoDb
@@ -52,6 +53,14 @@ class KarangoDriver(
         log = log,
     )
 
+    private val version: ArangoDBVersion by lazy {
+        runBlocking { arangoDb.version.await() }
+    }
+
+    fun getDatabaseVersion(): ArangoDBVersion {
+        return version
+    }
+
     suspend fun ensureEntityCollection(
         name: String,
         options: CollectionCreateOptions = CollectionCreateOptions().type(CollectionType.DOCUMENT),
@@ -66,14 +75,13 @@ class KarangoDriver(
     /**
      * Performs a query and returns a cursor of results
      */
-    suspend fun <X> query(builder: AqlBuilder.() -> TerminalExpr<X>): KarangoCursor<X> = query(
-        query = buildQuery(builder)
-    )
+    suspend fun <X> query(builder: AqlStatementBuilderImpl.() -> AqlTerminalExpr<X>): KarangoCursor<X> =
+        query(query = buildAqlQuery(builder))
 
     /**
      * Performs the query and returns a cursor of the results
      */
-    suspend fun <T> query(query: TypedQuery<T>): KarangoCursor<T> {
+    suspend fun <T> query(query: AqlTypedQuery<T>): KarangoCursor<T> {
 
         return profiler.profile(
             connection = "ArangoDB::${arangoDb.name()}",
@@ -92,7 +100,7 @@ class KarangoDriver(
 //            println(query.vars)
 
             // Get the options configured on the query
-            val optionsProvider: AqlQueryOptionProvider? = (query.root as? RootExpression<T>)?.builder?.queryOptions
+            val optionsProvider: AqlQueryOptionProvider? = (query.root as? AqlRootExpression<T>)?.builder?.queryOptions
 
             // Apply the options
             val options = AqlQueryOptions().count(true).let {
@@ -141,7 +149,12 @@ class KarangoDriver(
             profilerEntry.totalCount = result.extra?.stats?.fullCount
 
             // return the cursor
-            KarangoCursor(result, query, codec, profilerEntry)
+            KarangoCursor(
+                arangoCursor = result,
+                query = query,
+                codec = codec,
+                profiler = profilerEntry,
+            )
         }
     }
 }

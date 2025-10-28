@@ -1,23 +1,23 @@
 package de.peekandpoke.karango.addons.softdelete
 
-import de.peekandpoke.karango.Karango
 import de.peekandpoke.karango.aql.AND
-import de.peekandpoke.karango.aql.ForLoop
+import de.peekandpoke.karango.aql.AqlExpression
+import de.peekandpoke.karango.aql.AqlForLoop
+import de.peekandpoke.karango.aql.AqlIterableExpr
+import de.peekandpoke.karango.aql.AqlPropertyPath
 import de.peekandpoke.karango.aql.GTE
 import de.peekandpoke.karango.aql.IS_NULL
 import de.peekandpoke.karango.aql.NOT
-import de.peekandpoke.karango.aql.any
+import de.peekandpoke.karango.aql.anyOrTrueIfEmpty
+import de.peekandpoke.karango.aql.property
+import de.peekandpoke.karango.aql.ts
 import de.peekandpoke.karango.vault.IndexBuilder
 import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.model.search.PagedSearchFilter
 import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.Stored
-import de.peekandpoke.ultra.vault.lang.Expression
-import de.peekandpoke.ultra.vault.lang.IterableExpr
-import de.peekandpoke.ultra.vault.lang.PropertyPath
-import de.peekandpoke.ultra.vault.lang.property
-import de.peekandpoke.ultra.vault.slumber.ts
+import de.peekandpoke.ultra.vault.Vault
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 
@@ -25,8 +25,11 @@ interface SoftDeletableRepositoryAddon<T : SoftDeletable.Mutable<T>> : Repositor
 
     val kronos: Kronos
 
+    /**
+     * This class is here to trigger the Vault code generation for [SoftDelete]
+     */
     @Suppress("unused")
-    @Karango
+    @Vault
     data class TriggerKarango(
         val softDelete: SoftDelete,
     )
@@ -45,20 +48,20 @@ interface SoftDeletableRepositoryAddon<T : SoftDeletable.Mutable<T>> : Repositor
         )
     }
 
-    fun Expression<T>.getSoftDeleteField(): PropertyPath<SoftDelete, SoftDelete> {
+    fun AqlExpression<T>.getSoftDeleteField(): AqlPropertyPath<SoftDelete, SoftDelete> {
         return this.property(SoftDeletable::softDelete.name)
     }
 
-    fun Expression<T>.getSoftDeletedAt(): PropertyPath<MpInstant, Long> {
+    fun AqlExpression<T>.getSoftDeletedAt(): AqlPropertyPath<MpInstant, Long> {
         return getSoftDeleteField().deletedAt.ts
     }
 
-    fun ForLoop.filterSoftDelete(
-        expr: IterableExpr<T>,
+    fun AqlForLoop.filterSoftDelete(
+        expr: AqlIterableExpr<T>,
         showDeleted: Boolean = false,
         showDeletedAfter: MpInstant? = null,
     ) {
-        val conditions = mutableListOf<Expression<Boolean>>()
+        val conditions = mutableListOf<AqlExpression<Boolean>>()
 
         if (!showDeleted) {
             conditions.add(
@@ -74,12 +77,12 @@ interface SoftDeletableRepositoryAddon<T : SoftDeletable.Mutable<T>> : Repositor
         }
 
         FILTER(
-            conditions.any
+            conditions.anyOrTrueIfEmpty
         )
     }
 
-    fun ForLoop.filterSoftDelete(
-        expr: IterableExpr<T>,
+    fun AqlForLoop.filterSoftDelete(
+        expr: AqlIterableExpr<T>,
         filter: PagedSearchFilter,
         showRecentlyDeletedFor: Duration = 24.hours,
     ) {

@@ -12,7 +12,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 
-@Suppress("ClassName", "LocalVariableName")
+@Suppress("ClassName")
 class `E2E-Crud-Insert-Spec` : StringSpec({
 
     "Inserting documents via save() must work" {

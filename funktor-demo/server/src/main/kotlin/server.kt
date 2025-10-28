@@ -3,15 +3,17 @@ package io.peekandpoke.funktor.demo.server
 import ch.qos.logback.classic.Level
 import de.peekandpoke.funktor.cluster.workers.launchWorkers
 import de.peekandpoke.funktor.core.lifecycle.lifeCycle
-import de.peekandpoke.funktor.insights.instrumentWithInsights
+import de.peekandpoke.funktor.insights.gui.InsightsGui
 import de.peekandpoke.funktor.logging.karango.addKarangoAppender
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import io.ktor.server.http.content.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
+import io.ktor.server.webjars.*
 import io.peekandpoke.funktor.demo.server.api.ApiApp
 import kotlinx.serialization.json.Json
 
@@ -25,6 +27,10 @@ fun Application.module() = app.module(this) { app, config, init ->
             // TODO: start and stop the workers by using LifeCycleHooks as well
             launchWorkers { init.clone() }
         }
+    }
+
+    install(Webjars) {
+        path = "vendor"
     }
 
     install(SSE)
@@ -56,8 +62,8 @@ fun Application.module() = app.module(this) { app, config, init ->
         allowHost("localhost:36589", schemes = listOf("http", "https"))
         allowHost("127.0.0.1:36589", schemes = listOf("http", "https"))
         // Dev domains
-        allowHost("admin.funktor-demo.local:36587", schemes = listOf("http", "https"))
-        allowHost("www.funktor-demo.local:36587", schemes = listOf("http", "https"))
+        allowHost("admin.funktor-demo.localhost:36587", schemes = listOf("http", "https"))
+        allowHost("www.funktor-demo.localhost:36587", schemes = listOf("http", "https"))
     }
 
     install(io.ktor.server.plugins.contentnegotiation.ContentNegotiation) {
@@ -70,23 +76,35 @@ fun Application.module() = app.module(this) { app, config, init ->
     }
 
     routing {
-        get("/") {
-            call.respondText("Hello, world!")
-        }
-
-        get("/ping") {
-            call.respondText("pong")
-        }
-
-        ////  API  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // //  API  /////////////////////////////////////////////////////////////////////////////////////////////////////
 
         host("api.*".toRegex()) {
             // Install Kontainer into ApplicationCall
             installApiKontainer(app, config.api.insights)
-            // Instrument the pipeline with insights collectors
-            instrumentWithInsights()
             // Mount the app
             init.get(ApiApp::class).apply { mountApiAppModule() }
+        }
+
+        // // ADMIN /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        host("admin.*".toRegex()) {
+            // Install Kontainer into ApplicationCall
+            installWwwKontainer(app, config.api.insights)
+
+            staticResources(remotePath = "assets", basePackage = "assets")
+
+            // mount the insights gui when present
+            init.use(InsightsGui::class) {
+                mount()
+            }
+
+            get("/") {
+                call.respondText("Hello, world!")
+            }
+
+            get("/ping") {
+                call.respondText("pong")
+            }
         }
     }
 }

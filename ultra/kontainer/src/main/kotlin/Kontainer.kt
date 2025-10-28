@@ -133,7 +133,8 @@ class Kontainer internal constructor(
      */
     internal fun <T : Any> getAll(cls: KClass<T>, context: InjectionContext): List<T> {
         @Suppress("UNCHECKED_CAST")
-        return blueprint.superTypeLookup.getAllCandidatesFor(cls).map { get(it, context) as T }
+        return blueprint.superTypeLookup
+            .getAllCandidatesFor(cls).map { get(it, context) as T }
     }
 
     /**
@@ -141,6 +142,7 @@ class Kontainer internal constructor(
      */
     internal fun <T : Any> getLookup(cls: KClass<T>, context: InjectionContext): LazyServiceLookup<T> {
         @Suppress("UNCHECKED_CAST")
-        return blueprint.superTypeLookup.getLookupBlueprint(cls).with(this, context) as LazyServiceLookup<T>
+        return blueprint.superTypeLookup
+            .getLookupBlueprint(cls).with(this, context) as LazyServiceLookup<T>
     }
 }

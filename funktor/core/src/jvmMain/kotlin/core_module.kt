@@ -90,7 +90,7 @@ val Funktor_Core = module { config: AppConfig, info: AppInfo ->
     ////  Modules  //////////////////////////////////////////////////////////////////////////
     ultraLogging()
     ultraSecurity(config.funktor.security)
-    ultraVault()
+    ultraVault(config.funktor.vault)
 
     // Funktor sub-modules
     funktorCli()

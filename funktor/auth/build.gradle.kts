@@ -73,8 +73,9 @@ kotlin {
 
                 implementation(Deps.JavaLibs.Google.api_client)
 
-                implementation(project(":karango:core"))
                 implementation(project(":funktor:core"))
+                implementation(project(":karango:core"))
+                implementation(project(":monko:core"))
             }
         }
 
@@ -88,6 +89,7 @@ kotlin {
 
 dependencies {
     add("kspJvm", project(":karango:ksp"))
+    add("kspJvm", project(":monko:ksp"))
 }
 
 tasks {

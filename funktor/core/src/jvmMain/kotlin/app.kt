@@ -9,7 +9,6 @@ import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.kontainer.KontainerBlueprint
 import de.peekandpoke.ultra.security.user.UserProvider
 import de.peekandpoke.ultra.vault.profiling.NullQueryProfiler
-import de.peekandpoke.ultra.vault.profiling.QueryProfiler
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -173,7 +172,7 @@ data class AppArgs(val args: List<String>) {
     }
 
     /**
-     * Args as typed array
+     * Args as a typed array
      */
     val argsArray = args.toTypedArray()
 
@@ -200,48 +199,9 @@ interface AppKontainers {
     fun create(dynamics: DynamicOverrides.Builder.() -> Unit = {}): Kontainer = blueprint.create(dynamics)
 
     fun system(): Kontainer = create {
-        // user record provider
+        // DEFAULT: we use the system user record provider
         with { UserProvider.system() }
-        // We do not profile database queries
+        // DEFAULT: We do not profile database queries
         with { NullQueryProfiler }
-//        with { LoggingQueryProfiles }
-    }
-}
-
-object LoggingQueryProfiles : QueryProfiler {
-    override val entries: List<QueryProfiler.Entry>
-        get() = emptyList()
-
-    override val explainQueries: Boolean
-        get() = false
-
-    private val map = mutableMapOf<String, Int>()
-
-    override suspend fun <R> profile(
-        connection: String,
-        queryLanguage: String,
-        query: String,
-        block: suspend (QueryProfiler.Entry) -> R,
-    ): R {
-        synchronized(map) {
-            map[query] = map.getOrDefault(query, 0) + 1
-        }
-
-        val logs = map.entries
-            .sortedByDescending { (_, count) -> count }
-            .take(20)
-            .map { (query, count) ->
-                "${count}X : ${query.replace("\n", "\\n").take(160)}"
-            }
-
-        println(
-            "-- Distinct Queries: ${map.size} ------------------------------------------------------------------------------------" +
-                    "\n" +
-                    logs.joinToString("\n")
-        )
-
-        System.out.flush()
-
-        return block(QueryProfiler.Entry.Null)
     }
 }

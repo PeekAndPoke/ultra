@@ -9,7 +9,7 @@ data class AppVersion(
     val gitBranch: String = N_A,
     val gitRev: String = N_A,
     val gitDesc: String = N_A,
-    val date: String = N_A,
+    val date: String? = null,
 ) {
     companion object {
         private const val N_A = "n/a"

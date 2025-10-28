@@ -80,6 +80,15 @@ object Deps {
         // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
         private const val kotlinpoet_version = "2.2.0"
         const val kotlinpoet = "com.squareup:kotlinpoet:$kotlinpoet_version"
+
+        object MongoDb {
+            private const val mongodb_driver_version = "5.6.1"
+            const val mongodb_driver_bom = "org.mongodb:mongodb-driver-bom:$mongodb_driver_version"
+            const val mongodb_driver_kotlin_coroutine =
+                "org.mongodb:mongodb-driver-kotlin-coroutine:$mongodb_driver_version"
+            const val mongodb_bson_kotlinx =
+                "org.mongodb:bson-kotlinx:$mongodb_driver_version"
+        }
     }
 
     object KotlinX {
@@ -540,26 +549,21 @@ object Deps {
             "./tmp"
         ),
     ) {
-        plugins.withId("java") {
-            tasks.named("processResources") {
-                dependsOn("versionFile")
-            }
-        }
-
         tasks.register("versionFile") {
-            val rootProject = project.rootProject
-            val projectDir = project.projectDir
+            doLast {
+                val rootProject = project.rootProject
+                val projectDir = project.projectDir
 
-            val git = Grgit.open {
-                dir = rootProject.projectDir
-            }
+                val git = Grgit.open {
+                    dir = rootProject.projectDir
+                }
 
-            File(projectDir, "tmp").mkdirs()
+                File(projectDir, "tmp").mkdirs()
 
-            val now = LocalDateTime.now()
-            val nowStr = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                val now = LocalDateTime.now()
+                val nowStr = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
 
-            val content = """{
+                val content = """{
                 "project": "${project.path.removePrefix(":").replace(":", "-")}",
                 "version": "${project.version}",
                 "gitBranch": "${git.branch.current().name}",
@@ -568,10 +572,11 @@ object Deps {
                 "date": "$nowStr"
             }""".trimIndent()
 
-            outputDirs.forEach {
-                val dir = File(projectDir, it)
-                dir.mkdirs()
-                File(dir, "version.json").writeText(content)
+                outputDirs.forEach {
+                    val dir = File(projectDir, it)
+                    dir.mkdirs()
+                    File(dir, "version.json").writeText(content)
+                }
             }
         }
     }

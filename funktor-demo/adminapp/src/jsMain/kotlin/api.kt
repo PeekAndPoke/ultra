@@ -1,11 +1,10 @@
 package de.peekandpoke.funktor.demo.adminapp
 
 import de.peekandpoke.funktor.auth.api.AuthApiClient
+import de.peekandpoke.funktor.cluster.devtools.DevtoolsApiResponseInterceptor
 import de.peekandpoke.ultra.common.remote.ApiClient.Config
-import de.peekandpoke.ultra.common.remote.RemoteRequest
-import de.peekandpoke.ultra.common.remote.RemoteResponse
-import de.peekandpoke.ultra.common.remote.RequestInterceptor
-import de.peekandpoke.ultra.common.remote.ResponseInterceptor
+import de.peekandpoke.ultra.common.remote.ErrorLoggingResponseInterceptor
+import de.peekandpoke.ultra.common.remote.SetBearerRequestInterceptor
 import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.sse.*
@@ -25,10 +24,10 @@ class AdminAppApis(appConfig: AdminAppConfig, tokenProvider: () -> String?) {
         baseUrl = appConfig.apiBaseUrl,
         codec = codec,
         requestInterceptors = listOf(
-            JwtRequestInterceptor(tokenProvider)
+            SetBearerRequestInterceptor(tokenProvider)
         ),
         responseInterceptors = listOf(
-//            ApiResponseInterceptor(),
+            DevtoolsApiResponseInterceptor(),
             ErrorLoggingResponseInterceptor()
         ),
         client = HttpClient {
@@ -44,24 +43,4 @@ class AdminAppApis(appConfig: AdminAppConfig, tokenProvider: () -> String?) {
     )
 
     val auth = AuthApiClient(realm = "admin-user", config = config)
-}
-
-class JwtRequestInterceptor(private val token: () -> String?) : RequestInterceptor {
-
-    override fun intercept(request: RemoteRequest) {
-        token()?.let {
-            request.header("Authorization", "Bearer $it")
-        }
-    }
-}
-
-class ErrorLoggingResponseInterceptor : ResponseInterceptor {
-
-    override suspend fun intercept(response: RemoteResponse): RemoteResponse {
-        if (!response.ok) {
-            console.error(response)
-        }
-
-        return response
-    }
 }

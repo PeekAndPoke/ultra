@@ -8,6 +8,7 @@ import de.peekandpoke.ultra.vault.cli.VaultIndexesValidateCommand
 import de.peekandpoke.ultra.vault.cli.VaultRepositoriesEnsureCommand
 import de.peekandpoke.ultra.vault.hooks.TimestampedHook
 import de.peekandpoke.ultra.vault.hooks.TimestampedMillisHook
+import de.peekandpoke.ultra.vault.profiling.DefaultQueryProfiler
 import de.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 import de.peekandpoke.ultra.vault.profiling.QueryProfiler
 import de.peekandpoke.ultra.vault.tools.DatabaseGraphBuilder
@@ -17,7 +18,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-fun KontainerBuilder.ultraVault() = module(Ultra_Vault)
+fun KontainerBuilder.ultraVault(config: VaultConfig) = module(Ultra_Vault, config)
 
 /**
  * Vault kontainer module.
@@ -26,8 +27,7 @@ fun KontainerBuilder.ultraVault() = module(Ultra_Vault)
  *
  * - [EntityCache] which defaults to [DefaultEntityCache]
  */
-val Ultra_Vault
-    get() = module {
+val Ultra_Vault = module { config: VaultConfig ->
         // Database
         dynamic(Database::class)
         singleton(SharedRepoClassLookup::class)
@@ -40,7 +40,13 @@ val Ultra_Vault
         dynamic(TimestampedMillisHook::class)
 
         // Profiling
-        dynamic(QueryProfiler::class) { NullQueryProfiler }
+    dynamic(QueryProfiler::class) {
+        if (config.profile) {
+            DefaultQueryProfiler(explainQueries = config.explain)
+        } else {
+            NullQueryProfiler
+        }
+    }
 
         // Tools
         singleton(DatabaseTools::class)
@@ -53,7 +59,7 @@ val Ultra_Vault
         singleton(VaultIndexesValidateCommand::class)
     }
 
-object Vault {
+object VaultScope {
     private val job = SupervisorJob()
     internal val scope = job + Dispatchers.IO
 

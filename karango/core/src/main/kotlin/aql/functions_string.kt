@@ -3,7 +3,6 @@
 package de.peekandpoke.karango.aql
 
 import de.peekandpoke.ultra.common.reflection.kListType
-import de.peekandpoke.ultra.vault.lang.Expression
 import de.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
 /**
@@ -12,7 +11,10 @@ import de.peekandpoke.ultra.vault.lang.VaultFunctionMarker
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#charlength
  */
 @VaultFunctionMarker
-fun CHAR_LENGTH(expr: Expression<String>) = AqlFunc.CHAR_LENGTH.numberCall(expr)
+fun CHAR_LENGTH(
+    expr: AqlExpression<String>,
+): AqlExpression<Number> =
+    AqlFunc.CHAR_LENGTH.numberCall(expr)
 
 /**
  * Concatenate the values passed as value1 to valueN.
@@ -20,7 +22,11 @@ fun CHAR_LENGTH(expr: Expression<String>) = AqlFunc.CHAR_LENGTH.numberCall(expr)
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#concat
  */
 @VaultFunctionMarker
-fun CONCAT(first: Expression<String>, vararg rest: Expression<String>) = AqlFunc.CONCAT.stringCall(first, *rest)
+fun CONCAT(
+    first: AqlExpression<String>,
+    vararg rest: AqlExpression<String>,
+): AqlExpression<String> =
+    AqlFunc.CONCAT.stringCall(first, *rest)
 
 /**
  * Concatenate the strings passed as arguments value1 to valueN using the separator string.
@@ -28,7 +34,11 @@ fun CONCAT(first: Expression<String>, vararg rest: Expression<String>) = AqlFunc
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#concatseparator
  */
 @VaultFunctionMarker
-fun CONCAT_SEPARATOR(separator: Expression<String>, first: Expression<String>, vararg rest: Expression<String>) =
+fun CONCAT_SEPARATOR(
+    separator: AqlExpression<String>,
+    first: AqlExpression<String>,
+    vararg rest: AqlExpression<String>,
+): AqlExpression<String> =
     AqlFunc.CONCAT_SEPARATOR.stringCall(separator, first, *rest)
 
 /**
@@ -37,7 +47,11 @@ fun CONCAT_SEPARATOR(separator: Expression<String>, first: Expression<String>, v
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#contains
  */
 @VaultFunctionMarker
-fun CONTAINS(haystack: Expression<String>, needle: Expression<String>) = AqlFunc.CONTAINS.boolCall(haystack, needle)
+fun CONTAINS(
+    haystack: AqlExpression<String>,
+    needle: AqlExpression<String>,
+): AqlExpression<Boolean> =
+    AqlFunc.CONTAINS.boolCall(haystack, needle)
 
 /**
  * Return the encoded uri component of value.
@@ -45,7 +59,10 @@ fun CONTAINS(haystack: Expression<String>, needle: Expression<String>) = AqlFunc
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#encodeuricomponent
  */
 @VaultFunctionMarker
-fun ENCODE_URI_COMPONENT(value: Expression<String>) = AqlFunc.ENCODE_URI_COMPONENT.stringCall(value)
+fun ENCODE_URI_COMPONENT(
+    value: AqlExpression<String>,
+): AqlExpression<String> =
+    AqlFunc.ENCODE_URI_COMPONENT.stringCall(value)
 
 /**
  * Determine the character length of a string.
@@ -53,7 +70,10 @@ fun ENCODE_URI_COMPONENT(value: Expression<String>) = AqlFunc.ENCODE_URI_COMPONE
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#count
  */
 @VaultFunctionMarker
-fun COUNT(expr: Expression<String>) = AqlFunc.COUNT.numberCall(expr)
+fun COUNT(
+    expr: AqlExpression<String>,
+): AqlExpression<Number> =
+    AqlFunc.COUNT.numberCall(expr)
 
 /**
  * Return the position of the first occurrence of the string search inside the string text. Positions start at 0.
@@ -61,7 +81,10 @@ fun COUNT(expr: Expression<String>) = AqlFunc.COUNT.numberCall(expr)
  * https://docs.arangodb.com/current/AQL/Functions/String.html#findfirst
  */
 @VaultFunctionMarker
-fun FIND_FIRST(haystack: Expression<String>, needle: Expression<String>) =
+fun FIND_FIRST(
+    haystack: AqlExpression<String>,
+    needle: AqlExpression<String>,
+): AqlExpression<Number> =
     AqlFunc.FIND_FIRST.numberCall(haystack, needle)
 
 /**
@@ -70,7 +93,11 @@ fun FIND_FIRST(haystack: Expression<String>, needle: Expression<String>) =
  * https://docs.arangodb.com/current/AQL/Functions/String.html#findfirst
  */
 @VaultFunctionMarker
-fun <T : Number> FIND_FIRST(haystack: Expression<String>, needle: Expression<String>, start: Expression<T>) =
+fun <T : Number> FIND_FIRST(
+    haystack: AqlExpression<String>,
+    needle: AqlExpression<String>,
+    start: AqlExpression<T>,
+): AqlExpression<Number> =
     AqlFunc.FIND_FIRST.numberCall(haystack, needle, start)
 
 /**
@@ -80,11 +107,11 @@ fun <T : Number> FIND_FIRST(haystack: Expression<String>, needle: Expression<Str
  */
 @VaultFunctionMarker
 fun <T1 : Number, T2 : Number> FIND_FIRST(
-    haystack: Expression<String>,
-    needle: Expression<String>,
-    start: Expression<T1>,
-    end: Expression<T2>,
-) =
+    haystack: AqlExpression<String>,
+    needle: AqlExpression<String>,
+    start: AqlExpression<T1>,
+    end: AqlExpression<T2>,
+): AqlExpression<Number> =
     AqlFunc.FIND_FIRST.numberCall(haystack, needle, start, end)
 
 /**
@@ -93,7 +120,11 @@ fun <T1 : Number, T2 : Number> FIND_FIRST(
  * https://docs.arangodb.com/current/AQL/Functions/String.html#findlast
  */
 @VaultFunctionMarker
-fun FIND_LAST(haystack: Expression<String>, needle: Expression<String>) = AqlFunc.FIND_LAST.numberCall(haystack, needle)
+fun FIND_LAST(
+    haystack: AqlExpression<String>,
+    needle: AqlExpression<String>,
+): AqlExpression<Number> =
+    AqlFunc.FIND_LAST.numberCall(haystack, needle)
 
 /**
  * Return the position of the first occurrence of the string search inside the string text. Positions start at 0.
@@ -101,7 +132,11 @@ fun FIND_LAST(haystack: Expression<String>, needle: Expression<String>) = AqlFun
  * https://docs.arangodb.com/current/AQL/Functions/String.html#findlast
  */
 @VaultFunctionMarker
-fun <T : Number> FIND_LAST(haystack: Expression<String>, needle: Expression<String>, start: Expression<T>) =
+fun <T : Number> FIND_LAST(
+    haystack: AqlExpression<String>,
+    needle: AqlExpression<String>,
+    start: AqlExpression<T>,
+): AqlExpression<Number> =
     AqlFunc.FIND_LAST.numberCall(haystack, needle, start)
 
 /**
@@ -111,11 +146,11 @@ fun <T : Number> FIND_LAST(haystack: Expression<String>, needle: Expression<Stri
  */
 @VaultFunctionMarker
 fun <T1 : Number, T2 : Number> FIND_LAST(
-    haystack: Expression<String>,
-    needle: Expression<String>,
-    start: Expression<T1>,
-    end: Expression<T2>,
-) =
+    haystack: AqlExpression<String>,
+    needle: AqlExpression<String>,
+    start: AqlExpression<T1>,
+    end: AqlExpression<T2>,
+): AqlExpression<Number> =
     AqlFunc.FIND_LAST.numberCall(haystack, needle, start, end)
 
 /**
@@ -124,7 +159,10 @@ fun <T1 : Number, T2 : Number> FIND_LAST(
  * https://docs.arangodb.com/current/AQL/Functions/String.html#jsonparse
  */
 @VaultFunctionMarker
-fun JSON_PARSE(expr: Expression<String>) = AqlFunc.JSON_PARSE.nullableAnyCall(expr)
+fun JSON_PARSE(
+    expr: AqlExpression<String>,
+): AqlExpression<Any?> =
+    AqlFunc.JSON_PARSE.nullableAnyCall(expr)
 
 /**
  * Return a JSON string representation of the input value.
@@ -132,7 +170,10 @@ fun JSON_PARSE(expr: Expression<String>) = AqlFunc.JSON_PARSE.nullableAnyCall(ex
  * https://docs.arangodb.com/current/AQL/Functions/String.html#jsonstringify
  */
 @VaultFunctionMarker
-fun <T> JSON_STRINGIFY(expr: Expression<T>) = AqlFunc.JSON_STRINGIFY.stringCall(expr)
+fun <T> JSON_STRINGIFY(
+    expr: AqlExpression<T>,
+): AqlExpression<String> =
+    AqlFunc.JSON_STRINGIFY.stringCall(expr)
 
 /**
  * Return the n leftmost characters of the string value.
@@ -140,7 +181,11 @@ fun <T> JSON_STRINGIFY(expr: Expression<T>) = AqlFunc.JSON_STRINGIFY.stringCall(
  * https://docs.arangodb.com/current/AQL/Functions/String.html#left
  */
 @VaultFunctionMarker
-fun <T : Number> LEFT(expr: Expression<String>, n: Expression<T>) = AqlFunc.LEFT.stringCall(expr, n)
+fun <T : Number> LEFT(
+    expr: AqlExpression<String>,
+    n: AqlExpression<T>,
+): AqlExpression<String> =
+    AqlFunc.LEFT.stringCall(expr, n)
 
 /**
  * Determine the character length of a string.
@@ -148,7 +193,10 @@ fun <T : Number> LEFT(expr: Expression<String>, n: Expression<T>) = AqlFunc.LEFT
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#length
  */
 @VaultFunctionMarker
-fun LENGTH(expr: Expression<String>) = AqlFunc.LENGTH.numberCall(expr)
+fun LENGTH(
+    expr: AqlExpression<String>,
+): AqlExpression<Number> =
+    AqlFunc.LENGTH.numberCall(expr)
 
 /**
  * Calculate the Levenshtein distance between two strings.
@@ -156,7 +204,10 @@ fun LENGTH(expr: Expression<String>) = AqlFunc.LENGTH.numberCall(expr)
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#levenshteindistance
  */
 @VaultFunctionMarker
-fun LEVENSHTEIN_DISTANCE(left: Expression<String>, right: Expression<String>) =
+fun LEVENSHTEIN_DISTANCE(
+    left: AqlExpression<String>,
+    right: AqlExpression<String>,
+): AqlExpression<Number> =
     AqlFunc.LEVENSHTEIN_DISTANCE.numberCall(left, right)
 
 /**
@@ -165,7 +216,11 @@ fun LEVENSHTEIN_DISTANCE(left: Expression<String>, right: Expression<String>) =
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#like
  */
 @VaultFunctionMarker
-fun LIKE(text: Expression<String>, search: Expression<String>) = AqlFunc.LIKE.boolCall(text, search)
+fun LIKE(
+    text: AqlExpression<String>,
+    search: AqlExpression<String>,
+): AqlExpression<Boolean> =
+    AqlFunc.LIKE.boolCall(text, search)
 
 /**
  * Check whether the pattern search is contained in the string text, using wildcard matching.
@@ -173,7 +228,11 @@ fun LIKE(text: Expression<String>, search: Expression<String>) = AqlFunc.LIKE.bo
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#like
  */
 @VaultFunctionMarker
-fun LIKE(text: Expression<String>, search: Expression<String>, caseInsensitive: Expression<Boolean>) =
+fun LIKE(
+    text: AqlExpression<String>,
+    search: AqlExpression<String>,
+    caseInsensitive: AqlExpression<Boolean>,
+): AqlExpression<Boolean> =
     AqlFunc.LIKE.boolCall(text, search, caseInsensitive)
 
 /**
@@ -182,7 +241,10 @@ fun LIKE(text: Expression<String>, search: Expression<String>, caseInsensitive: 
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#lower
  */
 @VaultFunctionMarker
-fun LOWER(expr: Expression<String>) = AqlFunc.LOWER.stringCall(expr)
+fun LOWER(
+    expr: AqlExpression<String>,
+): AqlExpression<String> =
+    AqlFunc.LOWER.stringCall(expr)
 
 /**
  * Return the string value with whitespace stripped from the start only.
@@ -190,7 +252,10 @@ fun LOWER(expr: Expression<String>) = AqlFunc.LOWER.stringCall(expr)
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#ltrim
  */
 @VaultFunctionMarker
-fun LTRIM(subject: Expression<String>) = AqlFunc.LTRIM.stringCall(subject)
+fun LTRIM(
+    subject: AqlExpression<String>,
+): AqlExpression<String> =
+    AqlFunc.LTRIM.stringCall(subject)
 
 /**
  * Return the string value with whitespace stripped from the start only.
@@ -198,7 +263,11 @@ fun LTRIM(subject: Expression<String>) = AqlFunc.LTRIM.stringCall(subject)
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#ltrim
  */
 @VaultFunctionMarker
-fun LTRIM(subject: Expression<String>, chars: Expression<String>) = AqlFunc.LTRIM.stringCall(subject, chars)
+fun LTRIM(
+    subject: AqlExpression<String>,
+    chars: AqlExpression<String>,
+): AqlExpression<String> =
+    AqlFunc.LTRIM.stringCall(subject, chars)
 
 /**
  * Calculate the MD5 checksum for text and return it in a hexadecimal string representation.
@@ -206,7 +275,10 @@ fun LTRIM(subject: Expression<String>, chars: Expression<String>) = AqlFunc.LTRI
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#md5
  */
 @VaultFunctionMarker
-fun MD5(value: Expression<String>) = AqlFunc.MD5.stringCall(value)
+fun MD5(
+    value: AqlExpression<String>,
+): AqlExpression<String> =
+    AqlFunc.MD5.stringCall(value)
 
 /**
  * Generate a pseudo-random token string with the specified length. The algorithm for token generation should be treated as opaque.
@@ -214,7 +286,10 @@ fun MD5(value: Expression<String>) = AqlFunc.MD5.stringCall(value)
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#randomtoken
  */
 @VaultFunctionMarker
-fun <T : Number> RANDOM_TOKEN(length: Expression<T>) = AqlFunc.RANDOM_TOKEN.stringCall(length)
+fun <T : Number> RANDOM_TOKEN(
+    length: AqlExpression<T>,
+): AqlExpression<String> =
+    AqlFunc.RANDOM_TOKEN.stringCall(length)
 
 /**
  * Return the matches in the given string text, using the regex.
@@ -222,8 +297,11 @@ fun <T : Number> RANDOM_TOKEN(length: Expression<T>) = AqlFunc.RANDOM_TOKEN.stri
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#regexmatches
  */
 @VaultFunctionMarker
-fun REGEX_MATCHES(text: Expression<String>, regex: Expression<String>) =
-    AqlFunc.REGEX_MATCHES.nullableArrayCall(kListType<String>().nullable, text, regex)
+fun REGEX_MATCHES(
+    text: AqlExpression<String>,
+    regex: AqlExpression<String>,
+): AqlExpression<List<String>?> =
+    AqlFunc.REGEX_MATCHES.nullableArrayCall(type = kListType<String>().nullable, text, regex)
 
 /**
  * Return the matches in the given string text, using the regex.
@@ -231,8 +309,12 @@ fun REGEX_MATCHES(text: Expression<String>, regex: Expression<String>) =
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#regexmatches
  */
 @VaultFunctionMarker
-fun REGEX_MATCHES(text: Expression<String>, regex: Expression<String>, caseInsensitive: Expression<Boolean>) =
-    AqlFunc.REGEX_MATCHES.nullableArrayCall(kListType<String>().nullable, text, regex, caseInsensitive)
+fun REGEX_MATCHES(
+    text: AqlExpression<String>,
+    regex: AqlExpression<String>,
+    caseInsensitive: AqlExpression<Boolean>,
+): AqlExpression<List<String>?> =
+    AqlFunc.REGEX_MATCHES.nullableArrayCall(type = kListType<String>().nullable, text, regex, caseInsensitive)
 
 /**
  * Return the reverse of the string value.
@@ -240,7 +322,10 @@ fun REGEX_MATCHES(text: Expression<String>, regex: Expression<String>, caseInsen
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#reverse
  */
 @VaultFunctionMarker
-fun REVERSE(value: Expression<String>) = AqlFunc.REVERSE.stringCall(value)
+fun REVERSE(
+    value: AqlExpression<String>,
+): AqlExpression<String> =
+    AqlFunc.REVERSE.stringCall(value)
 
 /**
  * Return the n rightmost characters of the string value.
@@ -248,7 +333,11 @@ fun REVERSE(value: Expression<String>) = AqlFunc.REVERSE.stringCall(value)
  * https://docs.arangodb.com/current/AQL/Functions/String.html#right
  */
 @VaultFunctionMarker
-fun <T : Number> RIGHT(value: Expression<String>, n: Expression<T>) = AqlFunc.RIGHT.stringCall(value, n)
+fun <T : Number> RIGHT(
+    value: AqlExpression<String>,
+    n: AqlExpression<T>,
+): AqlExpression<String> =
+    AqlFunc.RIGHT.stringCall(value, n)
 
 /**
  * Return the string value with whitespace stripped at the start only.
@@ -256,7 +345,10 @@ fun <T : Number> RIGHT(value: Expression<String>, n: Expression<T>) = AqlFunc.RI
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#rtrim
  */
 @VaultFunctionMarker
-fun RTRIM(subject: Expression<String>) = AqlFunc.RTRIM.stringCall(subject)
+fun RTRIM(
+    subject: AqlExpression<String>,
+): AqlExpression<String> =
+    AqlFunc.RTRIM.stringCall(subject)
 
 /**
  * Return the string value with whitespace stripped at the start only.
@@ -264,7 +356,11 @@ fun RTRIM(subject: Expression<String>) = AqlFunc.RTRIM.stringCall(subject)
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#rtrim
  */
 @VaultFunctionMarker
-fun RTRIM(subject: Expression<String>, chars: Expression<String>) = AqlFunc.RTRIM.stringCall(subject, chars)
+fun RTRIM(
+    subject: AqlExpression<String>,
+    chars: AqlExpression<String>,
+): AqlExpression<String> =
+    AqlFunc.RTRIM.stringCall(subject, chars)
 
 /**
  * Calculate the SHA1 checksum for text and returns it in a hexadecimal string representation.
@@ -272,7 +368,10 @@ fun RTRIM(subject: Expression<String>, chars: Expression<String>) = AqlFunc.RTRI
  * https://docs.arangodb.com/current/AQL/Functions/String.html#sha1
  */
 @VaultFunctionMarker
-fun SHA1(expr: Expression<String>) = AqlFunc.SHA1.stringCall(expr)
+fun SHA1(
+    expr: AqlExpression<String>,
+): AqlExpression<String> =
+    AqlFunc.SHA1.stringCall(expr)
 
 /**
  * Calculate the SHA512 checksum for text and returns it in a hexadecimal string representation.
@@ -280,7 +379,10 @@ fun SHA1(expr: Expression<String>) = AqlFunc.SHA1.stringCall(expr)
  * https://docs.arangodb.com/current/AQL/Functions/String.html#sha256
  */
 @VaultFunctionMarker
-fun SHA512(expr: Expression<String>) = AqlFunc.SHA512.stringCall(expr)
+fun SHA512(
+    expr: AqlExpression<String>,
+): AqlExpression<String> =
+    AqlFunc.SHA512.stringCall(expr)
 
 /**
  * Split the given string value into a list of strings, using the separator.
@@ -288,27 +390,11 @@ fun SHA512(expr: Expression<String>) = AqlFunc.SHA512.stringCall(expr)
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#split
  */
 @VaultFunctionMarker
-fun SPLIT(value: Expression<String>, separator: Expression<String>) =
-    AqlFunc.SPLIT.arrayCall(kListType<String>(), value, separator)
-
-/**
- * Split the given string value into a list of strings, using the separator.
- *
- * See https://docs.arangodb.com/current/AQL/Functions/String.html#split
- */
-@JvmName("SPLIT2")
-@VaultFunctionMarker
-fun SPLIT(value: Expression<String>, separator: Expression<List<String>>) =
-    AqlFunc.SPLIT.arrayCall(kListType<String>(), value, separator)
-
-/**
- * Split the given string value into a list of strings, using the separator.
- *
- * See https://docs.arangodb.com/current/AQL/Functions/String.html#split
- */
-@VaultFunctionMarker
-fun <T : Number> SPLIT(value: Expression<String>, separator: Expression<String>, limit: Expression<T>) =
-    AqlFunc.SPLIT.arrayCall(kListType<String>(), value, separator, limit)
+fun SPLIT(
+    value: AqlExpression<String>,
+    separator: AqlExpression<String>,
+): AqlExpression<List<String>> =
+    AqlFunc.SPLIT.arrayCall(type = kListType<String>(), value, separator)
 
 /**
  * Split the given string value into a list of strings, using the separator.
@@ -317,8 +403,38 @@ fun <T : Number> SPLIT(value: Expression<String>, separator: Expression<String>,
  */
 @JvmName("SPLIT2")
 @VaultFunctionMarker
-fun <T : Number> SPLIT(value: Expression<String>, separator: Expression<List<String>>, limit: Expression<T>) =
-    AqlFunc.SPLIT.arrayCall(kListType<String>(), value, separator, limit)
+fun SPLIT(
+    value: AqlExpression<String>,
+    separator: AqlExpression<List<String>>,
+): AqlExpression<List<String>> =
+    AqlFunc.SPLIT.arrayCall(type = kListType<String>(), value, separator)
+
+/**
+ * Split the given string value into a list of strings, using the separator.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/String.html#split
+ */
+@VaultFunctionMarker
+fun <T : Number> SPLIT(
+    value: AqlExpression<String>,
+    separator: AqlExpression<String>,
+    limit: AqlExpression<T>,
+): AqlExpression<List<String>> =
+    AqlFunc.SPLIT.arrayCall(type = kListType<String>(), value, separator, limit)
+
+/**
+ * Split the given string value into a list of strings, using the separator.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/String.html#split
+ */
+@JvmName("SPLIT2")
+@VaultFunctionMarker
+fun <T : Number> SPLIT(
+    value: AqlExpression<String>,
+    separator: AqlExpression<List<String>>,
+    limit: AqlExpression<T>,
+): AqlExpression<List<String>> =
+    AqlFunc.SPLIT.arrayCall(type = kListType<String>(), value, separator, limit)
 
 /**
  * Return the soundex fingerprint of value.
@@ -326,7 +442,10 @@ fun <T : Number> SPLIT(value: Expression<String>, separator: Expression<List<Str
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#soundex
  */
 @VaultFunctionMarker
-fun SOUNDEX(value: Expression<String>) = AqlFunc.SOUNDEX.stringCall(value)
+fun SOUNDEX(
+    value: AqlExpression<String>,
+): AqlExpression<String> =
+    AqlFunc.SOUNDEX.stringCall(value)
 
 /**
  * Return a substring of value.
@@ -334,7 +453,10 @@ fun SOUNDEX(value: Expression<String>) = AqlFunc.SOUNDEX.stringCall(value)
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#substring
  */
 @VaultFunctionMarker
-fun <T : Number> SUBSTRING(value: Expression<String>, offset: Expression<T>) =
+fun <T : Number> SUBSTRING(
+    value: AqlExpression<String>,
+    offset: AqlExpression<T>,
+): AqlExpression<String> =
     AqlFunc.SUBSTRING.stringCall(value, offset)
 
 /**
@@ -343,7 +465,11 @@ fun <T : Number> SUBSTRING(value: Expression<String>, offset: Expression<T>) =
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#substring
  */
 @VaultFunctionMarker
-fun <T1 : Number, T2 : Number> SUBSTRING(value: Expression<String>, offset: Expression<T1>, length: Expression<T2>) =
+fun <T1 : Number, T2 : Number> SUBSTRING(
+    value: AqlExpression<String>,
+    offset: AqlExpression<T1>,
+    length: AqlExpression<T2>,
+): AqlExpression<String> =
     AqlFunc.SUBSTRING.stringCall(value, offset, length)
 
 /**
@@ -352,7 +478,10 @@ fun <T1 : Number, T2 : Number> SUBSTRING(value: Expression<String>, offset: Expr
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#trim
  */
 @VaultFunctionMarker
-fun TRIM(subject: Expression<String>) = AqlFunc.TRIM.stringCall(subject)
+fun TRIM(
+    subject: AqlExpression<String>,
+): AqlExpression<String> =
+    AqlFunc.TRIM.stringCall(subject)
 
 /**
  * Return the string value with whitespace stripped from start and end
@@ -360,7 +489,11 @@ fun TRIM(subject: Expression<String>) = AqlFunc.TRIM.stringCall(subject)
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#trim
  */
 @VaultFunctionMarker
-fun TRIM(subject: Expression<String>, chars: Expression<String>) = AqlFunc.TRIM.stringCall(subject, chars)
+fun TRIM(
+    subject: AqlExpression<String>,
+    chars: AqlExpression<String>,
+): AqlExpression<String> =
+    AqlFunc.TRIM.stringCall(subject, chars)
 
 /**
  * Return the base64 representation of value.
@@ -368,7 +501,10 @@ fun TRIM(subject: Expression<String>, chars: Expression<String>) = AqlFunc.TRIM.
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#tobase64
  */
 @VaultFunctionMarker
-fun TO_BASE64(value: Expression<String>) = AqlFunc.TO_BASE64.stringCall(value)
+fun TO_BASE64(
+    value: AqlExpression<String>,
+): AqlExpression<String> =
+    AqlFunc.TO_BASE64.stringCall(value)
 
 /**
  * Return the hex representation of value.
@@ -376,7 +512,10 @@ fun TO_BASE64(value: Expression<String>) = AqlFunc.TO_BASE64.stringCall(value)
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#tobase64
  */
 @VaultFunctionMarker
-fun TO_HEX(value: Expression<String>) = AqlFunc.TO_HEX.stringCall(value)
+fun TO_HEX(
+    value: AqlExpression<String>,
+): AqlExpression<String> =
+    AqlFunc.TO_HEX.stringCall(value)
 
 /**
  * Convert lower-case letters in value to their upper-case counterparts. All other characters are returned unchanged.
@@ -384,7 +523,10 @@ fun TO_HEX(value: Expression<String>) = AqlFunc.TO_HEX.stringCall(value)
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#upper
  */
 @VaultFunctionMarker
-fun UPPER(expr: Expression<String>) = AqlFunc.UPPER.stringCall(expr)
+fun UPPER(
+    expr: AqlExpression<String>,
+): AqlExpression<String> =
+    AqlFunc.UPPER.stringCall(expr)
 
 /**
  * Return a universally unique identifier value.
@@ -392,7 +534,8 @@ fun UPPER(expr: Expression<String>) = AqlFunc.UPPER.stringCall(expr)
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#uuid
  */
 @VaultFunctionMarker
-fun UUID() = AqlFunc.UUID.stringCall()
+fun UUID(): AqlExpression<String> =
+    AqlFunc.UUID.stringCall()
 
 /**
  * Check whether the given string starts with prefix
@@ -400,4 +543,8 @@ fun UUID() = AqlFunc.UUID.stringCall()
  * See https://www.arangodb.com/docs/stable/aql/functions-string.html#starts_with
  */
 @VaultFunctionMarker
-fun STARTS_WITH(text: Expression<String>, prefix: Expression<String>) = AqlFunc.STARTS_WITH.boolCall(text, prefix)
+fun STARTS_WITH(
+    text: AqlExpression<String>,
+    prefix: AqlExpression<String>,
+): AqlExpression<Boolean> =
+    AqlFunc.STARTS_WITH.boolCall(text, prefix)

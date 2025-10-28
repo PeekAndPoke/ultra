@@ -16,6 +16,7 @@ import de.peekandpoke.karango.aql.RETURN_COUNT
 import de.peekandpoke.karango.aql.RETURN_NEW
 import de.peekandpoke.karango.aql.UPDATE
 import de.peekandpoke.karango.aql.aql
+import de.peekandpoke.karango.aql.ts
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.IndexBuilder
 import de.peekandpoke.karango.vault.KarangoDriver
@@ -23,7 +24,6 @@ import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.vault.Cursor
 import de.peekandpoke.ultra.vault.Stored
-import de.peekandpoke.ultra.vault.slumber.ts
 
 class KarangoBackgroundJobsQueueRepo(
     driver: KarangoDriver,

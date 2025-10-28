@@ -5,7 +5,8 @@ import java.time.LocalDateTime
 data class InsightsData(
     val ts: LocalDateTime,
     val date: String,
-    val stopWatch: StopWatch,
+    val startedNs: Long,
+    val endedNs: Long,
     val collectors: List<CollectorData>,
 )
 

@@ -6,6 +6,7 @@ import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsQueuedListPag
 import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsQueuedViewPage
 import de.peekandpoke.funktor.cluster.depot.DepotBrowsePage
 import de.peekandpoke.funktor.cluster.depot.DepotRepositoriesListPage
+import de.peekandpoke.funktor.cluster.devtools.DevtoolsRequestHistoryPage
 import de.peekandpoke.funktor.cluster.locks.GlobalLocksListPage
 import de.peekandpoke.funktor.cluster.locks.ServerBeaconsListPage
 import de.peekandpoke.funktor.cluster.storage.RandomCacheStorageListPage
@@ -31,7 +32,7 @@ class FunktorClusterUi(
     /** Get the kronos */
     val kronos: Kronos get() = kronosProvider()
 
-    //// Helpers /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // // Helpers ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Small helper to get [FunktorClusterUi] as this pointer into the scope
@@ -40,7 +41,7 @@ class FunktorClusterUi(
         this.block()
     }
 
-    //// Overview ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // // Overview //////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Suppress("FunctionName")
     fun Tag.FunktorClusterOverviewPage() = comp(
@@ -52,7 +53,7 @@ class FunktorClusterUi(
         FunktorClusterOverviewPage(it)
     }
 
-    //// Locks Ui Components /////////////////////////////////////////////////////////////////////////////////////////////
+    // // Locks Ui Components ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Suppress("FunctionName")
     fun Tag.ServerBeaconsListPage() = comp(
@@ -68,7 +69,7 @@ class FunktorClusterUi(
         GlobalLocksListPage(it)
     }
 
-    //// BackgroundJobs Ui Components ////////////////////////////////////////////////////////////////////////////////////
+    // // BackgroundJobs Ui Components //////////////////////////////////////////////////////////////////////////////////
 
     @Suppress("FunctionName")
     fun Tag.BackgroundJobsQueuedListPage() = comp(
@@ -98,7 +99,7 @@ class FunktorClusterUi(
         BackgroundJobsArchivedViewPage(it)
     }
 
-    //// Depot Ui Components /////////////////////////////////////////////////////////////////////////////////////////////
+    // // Depot Ui Components ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Suppress("FunctionName")
     fun Tag.DepotRepositoriesListPage() = comp(
@@ -114,7 +115,7 @@ class FunktorClusterUi(
         DepotBrowsePage(it)
     }
 
-    //// Storage Ui Components ///////////////////////////////////////////////////////////////////////////////////////////
+    // // Storage Ui Components /////////////////////////////////////////////////////////////////////////////////////////
 
     @Suppress("FunctionName")
     fun Tag.RandomDataStorageListPage() = comp(
@@ -148,7 +149,7 @@ class FunktorClusterUi(
         RandomCacheStorageViewPage(it)
     }
 
-    //// Vault Ui Components ///////////////////////////////////////////////////////////////////////////////////////////
+    // // Vault Ui Components ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Suppress("FunctionName")
     fun Tag.VaultIndexPage() = comp(
@@ -157,7 +158,7 @@ class FunktorClusterUi(
         VaultIndexPage(it)
     }
 
-    //// Workers Ui Components ///////////////////////////////////////////////////////////////////////////////////////////
+    // // Workers Ui Components /////////////////////////////////////////////////////////////////////////////////////////
 
     @Suppress("FunctionName")
     fun Tag.WorkersListPage() = comp(
@@ -171,5 +172,16 @@ class FunktorClusterUi(
         WorkerDetailsPage.Props(ui = this@FunktorClusterUi, id = id)
     ) {
         WorkerDetailsPage(it)
+    }
+
+    // // Devtools Ui Components ////////////////////////////////////////////////////////////////////////////////////////
+
+    @Suppress("FunctionName")
+    fun Tag.DevtoolsRequestHistoryPage() = comp(
+        DevtoolsRequestHistoryPage.Props(
+            ui = this@FunktorClusterUi,
+        )
+    ) {
+        DevtoolsRequestHistoryPage(it)
     }
 }

@@ -15,14 +15,14 @@ import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
 fun KontainerBuilder.funktorMessaging(
-    builder: FunktorCMessagingBuilder.() -> Unit = {},
+    builder: FunktorMessagingBuilder.() -> Unit = {},
 ) = module(Funktor_Messaging, builder)
 
 inline val KontainerAware.funktorMessaging: MessagingServices get() = kontainer.get()
 inline val ApplicationCall.funktorMessaging: MessagingServices get() = kontainer.funktorMessaging
 inline val RoutingContext.funktorMessaging: MessagingServices get() = call.funktorMessaging
 
-val Funktor_Messaging = module { builder: FunktorCMessagingBuilder.() -> Unit ->
+val Funktor_Messaging = module { builder: FunktorMessagingBuilder.() -> Unit ->
     // Facade
     singleton(MessagingServices::class)
 
@@ -40,10 +40,10 @@ val Funktor_Messaging = module { builder: FunktorCMessagingBuilder.() -> Unit ->
 
     /////////////////////////////////////////////////////////////////////////////////
     // Apply external configuration
-    FunktorCMessagingBuilder(this).apply(builder)
+    FunktorMessagingBuilder(this).apply(builder)
 }
 
-class FunktorCMessagingBuilder internal constructor(private val kontainer: KontainerBuilder) {
+class FunktorMessagingBuilder internal constructor(private val kontainer: KontainerBuilder) {
 
     fun useKarango(
         sentMessageRepoName: String = "system_sent_messages",

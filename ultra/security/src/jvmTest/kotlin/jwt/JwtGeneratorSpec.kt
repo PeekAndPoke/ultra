@@ -19,7 +19,7 @@ class JwtGeneratorSpec : StringSpec() {
     private val mockConfig = JwtConfig(
         issuer = "testIssuer",
         audience = "testAudience",
-        singingKey = "testSigningKey",
+        signingKey = "testSigningKey",
         permissionsNs = permissionsNs,
         userNs = userNs,
     )

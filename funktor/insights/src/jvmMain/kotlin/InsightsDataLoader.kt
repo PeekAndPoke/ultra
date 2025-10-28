@@ -19,7 +19,7 @@ class InsightsDataLoader(
         val file = repository.getFile(path) ?: return null
 
         // get all newest files
-        val siblings = repository.listItems(file.parentPath)
+        val siblings = repository.listItems(file.parentPath).sortedByDescending { it.lastModifiedAt }
 
         val fileIdx = siblings.indexOfFirst { it.path == path }
         // get the previous and next file
@@ -31,31 +31,31 @@ class InsightsDataLoader(
         val insightsData = mapper.readValue<InsightsData>(recordString)
 
         val collectors = insightsData.collectors
-            .map {
+            .mapNotNull {
                 try {
                     val cls = Class.forName(it.cls).kotlin
 
                     if (!cls.allSuperclasses.contains(InsightsCollectorData::class)) {
-                        return@map null
+                        return@mapNotNull null
                     }
 
-                    return@map mapper.convertValue(it.data, cls.java) as InsightsCollectorData
+                    return@mapNotNull mapper.convertValue(it.data, cls.java) as InsightsCollectorData
 
                 } catch (e: Throwable) {
                     log.warning("Could not deserialize collector ${it.cls} in ${file.path} - ${e.message}")
 
-                    return@map null
+                    return@mapNotNull null
                 }
             }
-            .filterNotNull()
 
         return InsightsGuiData(
-            insightsData.ts,
-            insightsData.date,
-            insightsData.stopWatch,
-            collectors,
-            nextFile,
-            previousFile
+            ts = insightsData.ts,
+            date = insightsData.date,
+            startedNs = insightsData.startedNs,
+            endedNs = insightsData.endedNs,
+            collectors = collectors,
+            nextFile = nextFile,
+            previousFile = previousFile,
         )
     }
 }

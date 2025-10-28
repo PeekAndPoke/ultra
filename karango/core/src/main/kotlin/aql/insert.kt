@@ -2,67 +2,65 @@
 
 package de.peekandpoke.karango.aql
 
+import de.peekandpoke.karango.vault.KarangoRepository
 import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.Storable
-import de.peekandpoke.ultra.vault.lang.Expression
-import de.peekandpoke.ultra.vault.lang.Printer
-import de.peekandpoke.ultra.vault.lang.TerminalExpr
 import de.peekandpoke.ultra.vault.lang.VaultDslMarker
 import de.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
 
 @Suppress("unused")
 @VaultTerminalExpressionMarker
-fun <T : Any> StatementBuilder.INSERT(what: Expression<T>) = InsertExpression(what)
+fun <T : Any> AqlStatementBuilder.INSERT(what: AqlExpression<T>) = AqlInsertExpression(what)
 
 @VaultTerminalExpressionMarker
 @JvmName("INSERT_Storable")
 @Suppress("UNCHECKED_CAST")
-fun <T : Any> StatementBuilder.INSERT(what: Expression<Storable<T>>) = INSERT(what as Expression<T>)
+fun <T : Any> AqlStatementBuilder.INSERT(what: AqlExpression<Storable<T>>) = INSERT(what as AqlExpression<T>)
 
 @VaultDslMarker
-class InsertExpression<T : Any> internal constructor(private val what: Expression<T>) {
+class AqlInsertExpression<T : Any> internal constructor(private val what: AqlExpression<T>) {
     @Suppress("UNCHECKED_CAST")
     @VaultTerminalExpressionMarker
-    infix fun INTO(repo: Repository<in T>): TerminalExpr<T> = InsertExpressionInto(what, repo as Repository<T>)
+    infix fun INTO(repo: KarangoRepository<in T>): AqlTerminalExpr<T> =
+        AqlInsertExpressionInto(expression = what, repo = repo as KarangoRepository<T>)
 }
 
-internal class InsertExpressionInto<T : Any>(
-    private val expression: Expression<T>,
-    private val repo: Repository<T>,
-) : TerminalExpr<T> {
+internal class AqlInsertExpressionInto<T : Any>(
+    private val expression: AqlExpression<T>,
+    private val repo: KarangoRepository<T>,
+) : AqlTerminalExpr<T> {
 
     override fun innerType() = expression.getType()
 
     override fun getType() = repo.getType()
 
-    override fun print(p: Printer) = with(p) {
-
-        append("INSERT ").append(expression).append(" INTO ").append(repo).appendLine()
-        append("RETURN NEW").appendLine()
+    override fun print(p: AqlPrinter) {
+        p.append("INSERT ").append(expression).append(" INTO ").append(repo).appendLine()
+        p.append("RETURN NEW").appendLine()
     }
 }
 
 @Suppress("unused")
 @VaultTerminalExpressionMarker
-fun <T : Any> StatementBuilder.INSERT(entity: Storable<T>) = InsertNewStorable(entity)
+fun <T : Any> AqlStatementBuilder.INSERT(entity: Storable<T>) = AqlInsertNewStorable(entity)
 
-class InsertNewStorable<T> internal constructor(val entity: Storable<T>)
+class AqlInsertNewStorable<T> internal constructor(val entity: Storable<T>)
 
 @VaultTerminalExpressionMarker
-infix fun <T : Any, X : T> InsertNewStorable<X>.INTO(repo: Repository<T>): TerminalExpr<T> =
-    InsertNewStorableInto(entity, repo)
+infix fun <T : Any, X : T> AqlInsertNewStorable<X>.INTO(repo: KarangoRepository<T>): AqlTerminalExpr<T> =
+    AqlInsertNewStorableInto(entity, repo)
 
-internal class InsertNewStorableInto<T : Any, X : T>(private val new: Storable<X>, private val repo: Repository<T>) :
-    TerminalExpr<T> {
+internal class AqlInsertNewStorableInto<T : Any, X : T>(
+    private val new: Storable<X>,
+    private val repo: KarangoRepository<T>,
+) : AqlTerminalExpr<T> {
 
     override fun innerType(): TypeRef<T> = repo.storedType
 
     override fun getType() = repo.getType()
 
-    override fun print(p: Printer) = with(p) {
-
-        append("INSERT ").value("v", new).append(" INTO ").append(repo).appendLine()
-        append("RETURN NEW").appendLine()
+    override fun print(p: AqlPrinter) {
+        p.append("INSERT ").value("v", new).append(" INTO ").append(repo).appendLine()
+        p.append("RETURN NEW").appendLine()
     }
 }

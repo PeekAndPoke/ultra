@@ -25,7 +25,7 @@ class VaultApi(converter: OutgoingConverter) : ApiRoutes("vault", converter) {
                 VaultModels.RepositoryInfo(
                     connection = repo.connection,
                     name = repo.name,
-                    figures = repo.getStats(),
+                    stats = repo.getStats(),
                     indexes = repo.validateIndexes(),
                 )
             }

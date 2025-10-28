@@ -1,6 +1,5 @@
 package de.peekandpoke.karango.testdomain
 
-import de.peekandpoke.karango.Karango
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.KarangoDriver
 import de.peekandpoke.ultra.common.datetime.MpInstant
@@ -10,6 +9,7 @@ import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.Repository.Hooks
 import de.peekandpoke.ultra.vault.Storable
 import de.peekandpoke.ultra.vault.Stored
+import de.peekandpoke.ultra.vault.Vault
 import de.peekandpoke.ultra.vault.hooks.Timestamped
 import de.peekandpoke.ultra.vault.hooks.TimestampedHook
 
@@ -18,7 +18,7 @@ val Database.testTimestamped get() = getRepository<TestTimestampedRepository>()
 class TestTimestampedRepository(
     driver: KarangoDriver,
     timestamped: TimestampedHook,
-    val testHooks: TestHooks = TestHooks(),
+    testHooks: TestHooks = TestHooks(),
 ) : EntityRepository<TestTimestamped>(
     name = "test-timestamped",
     storedType = kType(),
@@ -97,7 +97,7 @@ private fun Hooks<TestTimestamped>.plus(testHooks: TestTimestampedRepository.Tes
     testHooks.onAfterDelete,
 )
 
-@Karango
+@Vault
 data class TestTimestamped(
     val name: String,
     override val createdAt: MpInstant = MpInstant.Epoch,

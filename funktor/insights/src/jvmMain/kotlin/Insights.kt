@@ -5,13 +5,14 @@ import de.peekandpoke.funktor.core.model.InsightsConfig
 import io.ktor.server.application.*
 import kotlin.reflect.KClass
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 
 interface Insights : RequestMetricsProvider {
 
     abstract class Base : Insights {
-        val stopWatch: StopWatch = StopWatch()
+        val startedNs: Long = System.nanoTime()
 
-        override fun getRequestDuration() = stopWatch.totalDuration()
+        override fun getRequestDuration(): Duration = (System.nanoTime() - startedNs).nanoseconds
     }
 
     val config: InsightsConfig

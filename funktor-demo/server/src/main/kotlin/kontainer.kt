@@ -2,21 +2,18 @@ package io.peekandpoke.funktor.demo.server
 
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
-import de.peekandpoke.funktor.auth.AuthStorage
-import de.peekandpoke.funktor.auth.db.karango.KarangoAuthRecordsRepo
-import de.peekandpoke.funktor.auth.db.karango.KarangoAuthStorage
 import de.peekandpoke.funktor.core.App
 import de.peekandpoke.funktor.core.installKontainer
 import de.peekandpoke.funktor.core.model.InsightsConfig
 import de.peekandpoke.funktor.funktor
+import de.peekandpoke.funktor.insights.instrumentWithInsights
 import de.peekandpoke.funktor.messaging.EmailSender
 import de.peekandpoke.funktor.messaging.senders.ExampleDomainsIgnoringEmailSender
 import de.peekandpoke.funktor.messaging.senders.aws.AwsSesSender
 import de.peekandpoke.funktor.rest.auth.jwtUserProvider
 import de.peekandpoke.karango.karango
+import de.peekandpoke.monko.monko
 import de.peekandpoke.ultra.kontainer.kontainer
-import de.peekandpoke.ultra.security.jwt.JwtConfig
-import de.peekandpoke.ultra.vault.profiling.DefaultQueryProfiler
 import io.ktor.server.routing.*
 import io.peekandpoke.funktor.demo.server.admin.AdminUserModule
 import io.peekandpoke.funktor.demo.server.api.ApiApp
@@ -24,19 +21,28 @@ import java.io.File
 
 data class KeysConfig(val config: Config)
 
-fun Route.installApiKontainer(app: App<FunktorDemoConfig>, insights: InsightsConfig?) = installKontainer { call ->
-    app.kontainers.create {
-        // user record provider
-        with { call.jwtUserProvider() }
-        // Insights config
-        insights?.let { with { insights } }
-        // Database query profile
-        if (app.config.arangodb.flags.enableProfiler) {
-            with {
-                DefaultQueryProfiler(explainQueries = app.config.arangodb.flags.enableExplain)
-            }
+fun Route.installWwwKontainer(app: App<FunktorDemoConfig>, insights: InsightsConfig?) {
+    installKontainer {
+        app.kontainers.create {
+            // Insights config
+            insights?.let { with { insights } }
         }
     }
+
+    instrumentWithInsights(insights)
+}
+
+fun Route.installApiKontainer(app: App<FunktorDemoConfig>, insights: InsightsConfig?) {
+    installKontainer { call ->
+        app.kontainers.create {
+            // user record provider
+            with { call.jwtUserProvider() }
+            // Insights config
+            insights?.let { with { insights } }
+        }
+    }
+
+    instrumentWithInsights(insights)
 }
 
 fun createBlueprint(config: FunktorDemoConfig) = kontainer {
@@ -44,15 +50,7 @@ fun createBlueprint(config: FunktorDemoConfig) = kontainer {
     funktor(
         config = config,
         rest = {
-            jwt(
-                JwtConfig(
-                    singingKey = config.auth.apiJwtSigningKey,
-                    permissionsNs = "permissions",
-                    userNs = "user",
-                    issuer = "https://api.funktor-demo.io",
-                    audience = "api.funktor-demo.io",
-                )
-            )
+            jwt(config.auth.jwt)
         },
         logging = {
             useKarango()
@@ -62,16 +60,17 @@ fun createBlueprint(config: FunktorDemoConfig) = kontainer {
         },
         messaging = {
             useKarango()
+        },
+        auth = {
+            useMonko()
         }
     )
 
-    // TODO: add config builder to FunktorAuth() to enable karango storage
-    dynamic(AuthStorage::class, KarangoAuthStorage::class)
-    dynamic(KarangoAuthRecordsRepo::class)
-    dynamic(KarangoAuthRecordsRepo.Fixtures::class)
-
-    // Mount Karango
+    // Mount ArangoDb
     karango(config = config.arangodb)
+
+    // Mount MongoDb
+    monko(config = config.mongodb)
 
     // Keys config
     instance(
@@ -79,7 +78,6 @@ fun createBlueprint(config: FunktorDemoConfig) = kontainer {
             ConfigFactory.parseFile(File("./config/keys.env.conf"))
         )
     )
-
 
     // Mailing
     val awsSender: AwsSesSender by lazy {
@@ -91,7 +89,6 @@ fun createBlueprint(config: FunktorDemoConfig) = kontainer {
             wrapped = awsSender,
         )
     }
-
 
     // Apps
     singleton(ApiApp::class)

@@ -3,8 +3,8 @@ package de.kotlincook.karango.ksp
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.symbolProcessorProviders
-import de.peekandpoke.karango.Karango
 import de.peekandpoke.karango.ksp.KarangoKspProcessorProvider
+import de.peekandpoke.ultra.vault.Vault
 import io.kotest.common.ExperimentalKotest
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.engine.test.logging.warn
@@ -21,14 +21,14 @@ class AbstractClassCodeGenSpec : StringSpec() {
                 contents = """
                     package karango.compile
                     
-                    import ${Karango::class.qualifiedName}
+                    import ${Vault::class.qualifiedName}
                     
-                    @Karango
+                    @Vault
                     abstract class AbstractClass {
-                        @Karango.Field
+                        @Vault.Field
                         abstract val x: Int
                         
-                        @Karango.Field
+                        @Vault.Field
                         abstract val data: SomeClass
                         
                         abstract val noCodeGeneratedForMe: String

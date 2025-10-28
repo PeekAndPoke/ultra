@@ -152,7 +152,8 @@ class AdminUserRealm(
     }
 
     override suspend fun createUserForSignup(email: String, displayName: String?): Stored<AdminUser> {
-        val name = (displayName ?: "").trim()
+        val name = (displayName ?: email.split("@").first()).trim()
+
         return appUserRepo.insert(
             AdminUser(
                 name = name,

@@ -13,7 +13,7 @@ class DatabaseSpec : StringSpec() {
             singleton(Kronos::class) { Kronos.systemUtc }
 
             ultraLogging()
-            ultraVault()
+            ultraVault(VaultConfig())
         }.create()
 
     init {

@@ -12,7 +12,7 @@ class JwtGenerator(
     /** The configuration */
     val config: JwtConfig,
     /** Signing algorithm to be used */
-    private val signingAlgorithm: Algorithm = Algorithm.HMAC512(config.singingKey),
+    private val signingAlgorithm: Algorithm = Algorithm.HMAC512(config.signingKey),
 ) {
     val verifier: JWTVerifier = JWT
         .require(signingAlgorithm)

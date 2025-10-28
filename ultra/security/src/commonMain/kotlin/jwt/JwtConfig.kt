@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class JwtConfig(
     /** The secret signing key for the JWT token */
-    val singingKey: String,
+    val signingKey: String,
     /** The issuer to be applied to the tokens */
     val issuer: String,
     /** The audience to be applied to the tokens */

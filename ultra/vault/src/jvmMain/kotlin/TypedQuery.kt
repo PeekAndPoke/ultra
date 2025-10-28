@@ -1,31 +1,33 @@
 package de.peekandpoke.ultra.vault
 
 import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.vault.lang.Printer
-import de.peekandpoke.ultra.vault.lang.TerminalExpr
+import de.peekandpoke.ultra.vault.lang.Expression
 
-data class TypedQuery<T>(val root: TerminalExpr<T>, val query: String, val vars: Map<String, Any?>) {
-
+interface TypedQuery<T> {
     companion object {
-        fun <T> empty(type: TypeRef<T>) = TypedQuery(
-            root = EmptyTerminalExpr(type),
-            query = "",
-            vars = emptyMap(),
-        )
+        fun <T> of(returns: TypeRef<T>): TypedQuery<T> =
+            TypedQueryImpl(
+                root = EmptyExpression(returns.list),
+                query = "",
+                vars = emptyMap(),
+            )
     }
 
-    private class EmptyTerminalExpr<T>(private val type: TypeRef<T>) : TerminalExpr<T> {
-        override fun print(p: Printer): Any {
-            // noop
-            return Unit
-        }
+    val root: Expression<List<T>>
+    val query: String
+    val vars: Map<String, Any?>
+}
 
-        override fun getType(): TypeRef<List<T>> {
-            return type.list
-        }
-
-        override fun innerType(): TypeRef<T> {
-            return type
-        }
+@PublishedApi
+internal class EmptyExpression<T>(private val type: TypeRef<T>) : Expression<T> {
+    override fun getType(): TypeRef<T> {
+        return type
     }
 }
+
+@PublishedApi
+internal class TypedQueryImpl<T>(
+    override val root: Expression<List<T>>,
+    override val query: String,
+    override val vars: Map<String, Any?>,
+) : TypedQuery<T>

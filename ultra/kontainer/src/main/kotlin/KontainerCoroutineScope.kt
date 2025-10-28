@@ -7,7 +7,7 @@ import kotlin.coroutines.CoroutineContext
 
 internal object KontainerCoroutineScope : CoroutineScope {
     private val scopeJob = SupervisorJob()
-    private val scope = CoroutineScope(Dispatchers.Unconfined + scopeJob)
+    private val scope = CoroutineScope(Dispatchers.Default + scopeJob)
 
     override val coroutineContext: CoroutineContext
         get() = scope.coroutineContext

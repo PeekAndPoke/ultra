@@ -1,41 +1,39 @@
 package de.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.vault.lang.Expression
-import de.peekandpoke.ultra.vault.lang.Printer
-import de.peekandpoke.ultra.vault.lang.Statement
 import de.peekandpoke.ultra.vault.lang.VaultDslMarker
 
 @VaultDslMarker
-val <T> Expression<T>.ASC: Sort
-    get() = Sort(this, Direction.ASC)
+val <T> AqlExpression<T>.ASC: AqlSorting
+    get() = AqlSorting(this, AqlSortDirection.ASC)
 
 @VaultDslMarker
-val <T> Expression<T>.DESC: Sort
-    get() = Sort(this, Direction.DESC)
+val <T> AqlExpression<T>.DESC: AqlSorting
+    get() = AqlSorting(this, AqlSortDirection.DESC)
 
 @VaultDslMarker
-fun <T> Expression<T>.sort(direction: Direction): Sort = Sort(this, direction)
+fun <T> AqlExpression<T>.sort(direction: AqlSortDirection): AqlSorting =
+    AqlSorting(expression = this, direction = direction)
 
-enum class Direction(val op: String) {
+enum class AqlSortDirection(val op: String) {
     ASC("ASC"),
     DESC("DESC"),
 }
 
-data class Sort(
-    val expression: Expression<*>,
-    val direction: Direction,
+data class AqlSorting(
+    val expression: AqlExpression<*>,
+    val direction: AqlSortDirection,
 )
 
-internal data class SortBy(val sorts: List<Sort>) : Statement {
-    override fun print(p: Printer): Printer {
-        var printer = p.append("SORT ")
+internal data class AqlSortByStmt(val sorts: List<AqlSorting>) : AqlStatement {
+    override fun print(p: AqlPrinter) {
+        p.append("SORT ")
+
         sorts.forEachIndexed { idx, sort ->
-            printer = printer.append(sort.expression).append(" ${sort.direction.op}")
-            if (idx < sorts.lastIndex) {
-                printer = printer.append(", ")
-            }
+            p.append(sort.expression).append(" ${sort.direction.op}")
+
+            if (idx < sorts.lastIndex) p.append(", ")
         }
 
-        return printer.appendLine()
+        p.nl()
     }
 }

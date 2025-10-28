@@ -1,12 +1,12 @@
 package de.peekandpoke.karango.e2e
 
+import de.peekandpoke.karango.aql.ARRAY
+import de.peekandpoke.karango.aql.OBJECT
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kMapType
 import de.peekandpoke.ultra.common.reflection.kType
-import de.peekandpoke.ultra.vault.lang.ARRAY
-import de.peekandpoke.ultra.vault.lang.OBJECT
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec

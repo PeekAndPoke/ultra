@@ -1,6 +1,5 @@
 package de.peekandpoke.karango.testdomain
 
-import de.peekandpoke.karango.Karango
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.KarangoDriver
 import de.peekandpoke.ultra.common.reflection.kType
@@ -9,6 +8,7 @@ import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.Repository.Hooks
 import de.peekandpoke.ultra.vault.Storable
 import de.peekandpoke.ultra.vault.Stored
+import de.peekandpoke.ultra.vault.Vault
 
 val Database.testPersons get() = getRepository<TestPersonsRepository>()
 
@@ -86,7 +86,7 @@ private fun Hooks<TestPerson>.plus(testHooks: TestPersonsRepository.TestHooks): 
     testHooks.onAfterDelete,
 )
 
-@Karango
+@Vault
 data class TestPerson(
     val name: String,
     val details: TestPersonDetails = TestPersonDetails(),

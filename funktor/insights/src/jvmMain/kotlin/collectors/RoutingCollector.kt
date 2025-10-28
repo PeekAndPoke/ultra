@@ -32,8 +32,10 @@ class RoutingCollector : InsightsCollector {
     private var data: Data = Data()
 
     override fun finish(call: ApplicationCall): InsightsCollectorData {
+        val trace = call.attributes.getOrNull(RoutingInstrumentation.Key)
+
         return data.copy(
-            trace = call.attributes.getOrNull(RoutingInstrumentation.Key)?.buildText()
+            trace = trace?.buildText()
         )
     }
 }

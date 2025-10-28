@@ -12,9 +12,9 @@ import de.peekandpoke.ultra.common.Lookup
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.reflect.KClass
@@ -32,17 +32,20 @@ internal class InsightsFull(
     // TODO: make injectable
     private val filter = listOf<(ApplicationCall) -> Boolean>(
         { it.request.uri.contains("favicon.ico") },
-        { it.request.uri.startsWith("/_/") }
+        { it.request.uri.contains("/insights/bar") },
+        { it.request.uri.contains("/insights/details") }
     )
 
     private val filename: String = "records-${date}/$dateTime.json"
 
     override fun getRequestDetailsUri(): String = filename
 
+    override fun getRequestDetailsUrl(): String = config.baseUrl.trimEnd('/') + "/" + filename
+
     override fun <T : InsightsCollector> getOrNull(cls: KClass<T>): T? = collectors.getOrNull(cls)
 
     override suspend fun finish(call: ApplicationCall) {
-        stopWatch.end()
+        val endedNs = System.nanoTime()
 
         // do not record if any of the filters match
         if (filter.any { it(call) }) {
@@ -52,15 +55,16 @@ internal class InsightsFull(
         // finish all collectors
         val entries = collectors.all().map { it.finish(call) }
 
-        coroutineScope {
+        supervisorScope {
             launch(Dispatchers.IO) {
                 delay(1)
 
                 val data = InsightsData(
-                    dateTime,
-                    dateTime.toString(),
-                    stopWatch,
-                    entries.map {
+                    ts = dateTime,
+                    date = dateTime.toString(),
+                    startedNs = startedNs,
+                    endedNs = endedNs,
+                    collectors = entries.map {
                         CollectorData(it::class.jvmName, mapper.convertValue(it))
                     }
                 )

@@ -1,44 +1,58 @@
 package de.peekandpoke.funktor.insights
 
 import de.peekandpoke.funktor.core.fullUrl
+import de.peekandpoke.funktor.core.model.InsightsConfig
 import de.peekandpoke.funktor.insights.collectors.RoutingCollector
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.routing.*
 import io.ktor.util.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.microseconds
 
 /**
  * Applies insights instrumentation to the Pipeline
  */
-fun Route.instrumentWithInsights() {
+fun Route.instrumentWithInsights(config: InsightsConfig?) {
+
+    if (config?.enabled != true) {
+        return
+    }
 
     // Install the tracer
     RoutingInstrumentation {
         getTopMostRouting()?.registerTracer()
     }
 
+    val timer = AttributeKey<Long>("StartTime")
+
     val plugin = createRouteScopedPlugin(name = "Funktor-Insights") {
 
-        val timer = AttributeKey<Long>("StartTime")
-
         on(CallSetup) { call ->
-            call.attributes.put(timer, System.nanoTime())
+            call.funktorInsights?.let { insights ->
+                call.attributes.put(timer, System.nanoTime())
 
-            call.funktorInsights?.start(call)
+                insights.start(call)
+            }
         }
 
         on(ResponseSent) { call ->
-            call.attributes.getOrNull(timer)?.let { startTime ->
-                val ns = System.nanoTime() - startTime
-
-                application.log.trace("${call.request.fullUrl()} took ${ns / 1_000_000.0} ms")
-            }
-
-            // Record the collected insights
             call.funktorInsights?.let { insights ->
-                call.launch(Dispatchers.Unconfined) { insights.finish(call) }
+                call.attributes.getOrNull(timer)?.let { startTime ->
+                    val ns = System.nanoTime() - startTime
+
+                    application.log.trace("${call.request.fullUrl()} took ${ns / 1_000_000.0} ms")
+                }
+
+                // Record the collected insights
+                insights.let { insights ->
+                    call.launch(Dispatchers.IO) {
+                        delay(1.microseconds)
+                        insights.finish(call)
+                    }
+                }
             }
         }
     }

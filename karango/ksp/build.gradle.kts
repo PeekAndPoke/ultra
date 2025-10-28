@@ -4,8 +4,7 @@ import Deps.Test.configureJvmTests
 
 plugins {
     kotlin("jvm")
-    kotlin("kapt")
-    id("com.google.devtools.ksp") version Deps.Ksp.version
+    id("com.google.devtools.ksp")
     id("com.vanniktech.maven.publish")
 }
 
@@ -24,8 +23,6 @@ kotlin {
 
     dependencies {
         implementation(Deps.Ksp.symbol_processing)
-        implementation(Deps.JavaLibs.Google.auto_service)
-        kapt(Deps.JavaLibs.Google.auto_service)
 
         implementation(project(":ultra:slumber"))
         implementation(project(":ultra:vault"))
@@ -34,7 +31,6 @@ kotlin {
         // //  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
 
         testImplementation(Deps.Ksp.compiletesting_ksp)
-        kaptTest(Deps.JavaLibs.Google.auto_service)
         kspTest(project(":karango:ksp"))
 
         Deps.Test {

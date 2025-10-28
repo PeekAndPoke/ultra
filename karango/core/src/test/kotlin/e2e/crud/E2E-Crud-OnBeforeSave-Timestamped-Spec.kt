@@ -12,7 +12,7 @@ import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
-@Suppress("ClassName", "LocalVariableName")
+@Suppress("ClassName")
 class `E2E-Crud-OnBeforeSave-Timestamped-Spec` : StringSpec({
 
     "Creating a document must set the 'createdAt' and 'updatedAt' timestamps" {

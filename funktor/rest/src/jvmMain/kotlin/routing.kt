@@ -28,7 +28,6 @@ fun <RESPONSE> Route.handlePlain(route: ApiRoute.Plain<RESPONSE>): Route {
     val uri = route.route.pattern.pattern
 
     return route(uri, route.method) {
-
         handle(route.route) {
             // Create the authorization context
             val ctx: AuthRule.CheckCtx<Unit, Unit> = AuthRule.CheckCtx.plain(call)
@@ -54,14 +53,11 @@ inline fun <reified RESULT : Any> Route.handle(
     val uri = route.route.pattern.pattern
 
     return route(uri, route.method) {
-
         handle(route.route) {
             // Create the authorization context
             val ctx: AuthRule.CheckCtx<Unit, Unit> = AuthRule.CheckCtx.plain(call)
-
             // Check authorization rules
             val authResult = route.checkAccess(ctx)
-
             // Respond accordingly
             when (authResult.isSuccess()) {
                 true -> call.respond(body())
@@ -81,14 +77,11 @@ fun <PARAMS, RESPONSE> Route.handleWithParams(
     val uri = route.route.pattern.pattern
 
     return route(uri, route.method) {
-
         handle(route.route) { params: PARAMS ->
             // Create the authorization context
             val ctx: AuthRule.CheckCtx<PARAMS, Unit> = AuthRule.CheckCtx.paramsOnly(call = call, params = params)
-
             // Check authorization rules
             val authResult = route.checkAccess(ctx)
-
             // Respond accordingly
             when (authResult.isSuccess()) {
                 true -> route.handler(this, params)
@@ -112,17 +105,14 @@ fun <BODY, RESPONSE> Route.handleWithBody(
         handle(route.route) {
             // Receive the request body
             val bodyContent = call.receive<ByteArray>()
-
             // Awake the request body
             @Suppress("UNCHECKED_CAST")
-            val bodyAwoken = restCodec.deserialize(route.bodyType.type, String(bodyContent)) as BODY
-
+            val bodyAwoken = restCodec
+                .deserialize(route.bodyType.type, String(bodyContent)) as BODY
             // Create the authorization context
             val ctx: AuthRule.CheckCtx<Unit, BODY> = AuthRule.CheckCtx.bodyOnly(call = call, body = bodyAwoken)
-
             // Check authorization rules
             val authResult = route.checkAccess(ctx)
-
             // Respond accordingly
             when (authResult.isSuccess()) {
                 true -> route.handler(this, bodyAwoken)
