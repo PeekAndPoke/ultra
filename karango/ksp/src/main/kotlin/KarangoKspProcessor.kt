@@ -90,7 +90,7 @@ class KarangoKspProcessor(
 
         val file = codeGenerator.createNewFile(
             dependencies = Dependencies(
-                aggregating = true,
+                aggregating = false,
                 sources = listOfNotNull(cls.containingFile).toTypedArray(),
             ),
             packageName = packageName,
