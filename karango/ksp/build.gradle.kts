@@ -26,12 +26,15 @@ kotlin {
 
         implementation(project(":ultra:slumber"))
         implementation(project(":ultra:vault"))
+
         implementation(project(":karango:core"))
 
         // //  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
 
         testImplementation(Deps.Ksp.compiletesting_ksp)
         kspTest(project(":karango:ksp"))
+
+        testImplementation(project(":ultra:meta"))
 
         Deps.Test {
             jvmTestDeps()

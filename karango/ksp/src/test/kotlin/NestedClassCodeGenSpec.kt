@@ -33,7 +33,7 @@ class NestedClassCodeGenSpec : StringSpec() {
 
             val compilation = KotlinCompilation().apply {
                 sources = listOf(source)
-                symbolProcessorProviders = listOf(KarangoKspProcessorProvider())
+                symbolProcessorProviders.add(KarangoKspProcessorProvider())
                 inheritClassPath = false
             }
 

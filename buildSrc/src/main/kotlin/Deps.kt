@@ -25,9 +25,8 @@ object Deps {
         const val symbol_processing = "com.google.devtools.ksp:symbol-processing-api:$version"
 
         // https://mvnrepository.com/artifact/com.github.tschuchortdev/kotlin-compile-testing
-        private const val compiletesting_version = "1.6.0"
-        const val compiletesting = "com.github.tschuchortdev:kotlin-compile-testing:$compiletesting_version"
-        const val compiletesting_ksp = "com.github.tschuchortdev:kotlin-compile-testing-ksp:$compiletesting_version"
+        private const val compiletesting_version = "0.11.0"
+        const val compiletesting_ksp = "dev.zacsweers.kctfork:ksp:$compiletesting_version"
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////

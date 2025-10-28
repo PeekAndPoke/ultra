@@ -187,7 +187,7 @@ class KarangoKspProcessor(
         }
 
         val definedAt = when (val l = property.location) {
-            is FileLocation -> "${l.filePath}:${l.lineNumber}"
+            is FileLocation -> "Line ${l.lineNumber}"
             is NonExistLocation -> "Unknown"
         }
 
@@ -195,9 +195,9 @@ class KarangoKspProcessor(
         codeBlocks.add("// annotations: ${annotations.print()}")
         codeBlocks.add("// defined as:   $definedAs")
         codeBlocks.add("// defined by:   $definedBy")
+        codeBlocks.add("// defined at:   $definedAt")
         codeBlocks.add("// defined type: $definedType")
         codeBlocks.add("// cleaned type: $type")
-        codeBlocks.add("// defined at:   $definedAt")
         codeBlocks.add(
             """
 

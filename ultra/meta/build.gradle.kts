@@ -25,21 +25,14 @@ kotlin {
 dependencies {
     implementation(kotlin("reflect"))
 
-    api(project(":ultra:common"))
+    implementation(project(":ultra:common"))
 
     //  code generation  //////////////////////////////////////////////////////////////////////////////////////
 
-    api(Deps.Ksp.compiletesting)
     api(Deps.Ksp.compiletesting_ksp)
     api(Deps.JavaLibs.diffutils)
-    api(Deps.KotlinLibs.kotlinpoet)
-
-    api(Deps.JavaLibs.Google.auto_service)
-    kapt(Deps.JavaLibs.Google.auto_service)
 
     //  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    kaptTest(Deps.JavaLibs.Google.auto_service)
 
     Deps.Test {
         jvmTestDeps()
