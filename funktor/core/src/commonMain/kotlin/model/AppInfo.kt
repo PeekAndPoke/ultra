@@ -16,7 +16,7 @@ data class AppInfo(
         fun of(version: AppVersion): AppInfo {
             val versionName: String = when (val date = version.date) {
                 null -> version.describeGit() + "-${Kronos.systemUtc.microsNow()}"
-                else -> version.describeGit() + "-${date}"
+                else -> version.describeGit() + "-$date"
             }
 
             val versionHash: String = run {

@@ -66,7 +66,7 @@ class BuiltInMutableObjectsPlugin : MutatorKspPlugin {
         val allFields = cls.getDeclaredProperties()
         val ctorFields = allFields.filter { it.isPrimaryCtorParameter() }
 
-        val boundObjectMutatorName = "${ObjectMutatorName}<${clsName}>"
+        val boundObjectMutatorName = "$ObjectMutatorName<$clsName>"
 
         codeBlocks.append(
             """

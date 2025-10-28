@@ -238,7 +238,7 @@ private fun DartFunctionWithNamedParameters.Definition.addResultType(type: KType
     val resolved = file.resolveDartType(type)
 
     if (resolved.failed) {
-        addDoc("Failed to resolve type '${type}'")
+        addDoc("Failed to resolve type '$type'")
     } else {
         // Make sure the return type is imported
         (type.classifier as? KClass<*>)?.let { cls ->

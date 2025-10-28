@@ -202,7 +202,7 @@ class DartSerializableCodeGen(
                         modifiers = setOf(DartModifier.final),
                     ) {
                         if (cleanedName != name) {
-                            addAnnotation("@JsonKey(name: '${name}')")
+                            addAnnotation("@JsonKey(name: '$name')")
                         }
 
                         addAnnotation("@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)")
@@ -223,7 +223,7 @@ class DartSerializableCodeGen(
                         modifiers = setOf(DartModifier.final),
                     ) {
                         if (cleanedName != name) {
-                            addAnnotation("@JsonKey(name: '${name}')")
+                            addAnnotation("@JsonKey(name: '$name')")
                         }
 
                         param.extractDeprecationAnnotation()?.let { addAnnotation(it) }

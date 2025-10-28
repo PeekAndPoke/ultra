@@ -35,7 +35,7 @@ data class DepotUri private constructor(
         }
     }
 
-    val uri: String = "$protocol://${repo}/${path}"
+    val uri: String = "$protocol://$repo/$path"
 
     fun asApiModel() = DepotUriModel(repo = repo, path = path, uri = uri)
 }

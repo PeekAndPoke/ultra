@@ -136,7 +136,7 @@ fun DartClass.Definition.addJsonFactory(discriminatorName: String = "_type") {
                 file.useClass(cls)
             }
 
-            addDoc("Has ${childClasses.size} polymorphic child classes. Using type discriminator '${discriminatorName}'.")
+            addDoc("Has ${childClasses.size} polymorphic child classes. Using type discriminator '$discriminatorName'.")
             addDoc("Child classes are:")
             childClasses.forEachIndexed { index, it ->
                 addDoc("  ${index + 1}. '${it.first}' to '${it.second.qualifiedName}'")

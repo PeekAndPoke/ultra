@@ -219,9 +219,9 @@ class KontainerCollector(
 
             // Render raw js
             +"""
-                $("#${buttonId}").on("click", () => {
+                $("#$buttonId").on("click", () => {
                     if (!network) {
-                        $("#${containerId}").show();
+                        $("#$containerId").show();
                         setTimeout(() => { createInstanceGraph(); }, 500);
                     }
                 });
@@ -354,9 +354,9 @@ class KontainerCollector(
 
             // Render raw js
             +"""
-                $("#${buttonId}").on("click", () => {
+                $("#$buttonId").on("click", () => {
                     if (!network) {
-                        $("#${containerId}").show();
+                        $("#$containerId").show();
                         setTimeout(() => { createFullGraph(); }, 500);
                     }
                 });

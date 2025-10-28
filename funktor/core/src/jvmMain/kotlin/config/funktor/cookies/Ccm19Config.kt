@@ -10,6 +10,6 @@ data class Ccm19Config(
             return null
         }
 
-        return "https://cloud.ccm19.de/app.js?apiKey=${apiKey}&domain=${domain}"
+        return "https://cloud.ccm19.de/app.js?apiKey=$apiKey&domain=$domain"
     }
 }
