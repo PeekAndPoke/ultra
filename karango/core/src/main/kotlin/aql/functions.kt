@@ -44,19 +44,6 @@ enum class AqlFunc {
     NOT_NULL, // TODO: impl, tests
 
     // Numeric
-    LOG,
-    LOG2,
-    LOG10,
-    MAX,
-    MEDIAN,
-    MIN,
-    PERCENTILE,
-    PI,
-    POW,
-    RADIANS,
-    RAND,
-    RANGE,
-    ROUND,
     SIN,
     SQRT,
     STDDEV_POPULATION,

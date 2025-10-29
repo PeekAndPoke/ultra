@@ -6,6 +6,31 @@ import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
 /**
+ * Return the greatest element of anyArray. The array is not limited to numbers. Also see type and value order.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#min
+ */
+@VaultFunctionMarker val MAX = aqlFunc<Number?>("MAX")
+
+@VaultFunctionMarker
+fun <T : Any> MAX(array: AqlExpression<List<T>>): AqlExpression<Number?> = MAX.call(array)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the median value of the values in array.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#median
+ */
+@VaultFunctionMarker val MEDIAN = aqlFunc<Number?>("MEDIAN")
+
+/** Return the median value of the values in array. */
+@VaultFunctionMarker
+fun <T : Number> MEDIAN(numArray: AqlExpression<List<T>>): AqlExpression<Number?> = MEDIAN.call(numArray)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
  * Merge the documents document1 to documentN into a single document.
  *
  * If document attribute keys are ambiguous, the merged result will contain the values of the documents
@@ -31,6 +56,18 @@ inline fun <reified T> MERGE(
     vararg documentN: AqlExpression<out T>,
 ): AqlExpression<T> =
     MERGE.call(type = kType(), document1, document2, *documentN)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the smallest element of anyArray. The array is not limited to numbers. Also see type and value order.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#min
+ */
+@VaultFunctionMarker val MIN = aqlFunc<Number?>("MIN")
+
+@VaultFunctionMarker
+fun <T : Number> MIN(numArray: AqlExpression<List<T>>): AqlExpression<Number?> = MIN.call(numArray)
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -34,3 +34,42 @@ fun <T> LENGTH(anyArray: AqlExpression<List<T>>): AqlExpression<Number> = LENGTH
 /** Determine the character length of a string. */
 @VaultFunctionMarker @JvmName("LENGTH_String")
 fun LENGTH(expr: AqlExpression<String>): AqlExpression<Number> = LENGTH.call(expr)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the natural logarithm of value. The base is Euler's constant (2.71828...).
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#log
+ */
+@VaultFunctionMarker val LOG = aqlFunc<Number?>("LOG")
+
+/** Return the natural logarithm of value. The base is Euler's constant (2.71828...). */
+@VaultFunctionMarker
+fun <T : Number> LOG(value: AqlExpression<T>): AqlExpression<Number?> = LOG.call(value)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the base 2 logarithm of value.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#log
+ */
+@VaultFunctionMarker val LOG2 = aqlFunc<Number?>("LOG2")
+
+/** Return the base 2 logarithm of value. */
+@VaultFunctionMarker
+fun <T : Number> LOG2(value: AqlExpression<T>): AqlExpression<Number?> = LOG2.call(value)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the base 10 logarithm of value.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#log
+ */
+@VaultFunctionMarker val LOG10 = aqlFunc<Number?>("LOG10")
+
+/** Return the base 10 logarithm of value. */
+@VaultFunctionMarker
+fun <T : Number> LOG10(value: AqlExpression<T>): AqlExpression<Number?> = LOG10.call(value)

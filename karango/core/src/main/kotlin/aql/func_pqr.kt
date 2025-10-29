@@ -6,6 +6,63 @@ import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
 /**
+ * Return the nth percentile of the values in numArray.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#percentile
+ */
+@VaultFunctionMarker val PERCENTILE = aqlFunc<Number>("PERCENTILE")
+
+/**
+ * Return the nth percentile of the values in numArray.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#percentile
+ */
+@VaultFunctionMarker
+fun <T1 : Number, T2 : Number> PERCENTILE(
+    numArray: AqlExpression<List<T1>>,
+    n: AqlExpression<T2>,
+): AqlExpression<Number> =
+    PERCENTILE.call(numArray, n)
+
+/** Return the nth percentile of the values in numArray. */
+@VaultFunctionMarker
+fun <T1 : Number?, T2 : Number> PERCENTILE(
+    numArray: AqlExpression<List<T1>>,
+    n: AqlExpression<T2>,
+    method: AqlPercentileMethod,
+): AqlExpression<Number> =
+    PERCENTILE.call(numArray, n, method.method.aql)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Returns pi.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#pi
+ */
+@VaultFunctionMarker val PI = aqlFunc<Number>("PI")
+
+/** Returns pi. */
+@VaultFunctionMarker
+fun PI(): AqlExpression<Number> = PI.call()
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the base to the exponent exp.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#pow
+ */
+@VaultFunctionMarker val POW = aqlFunc<Number>("POW")
+
+/** Return the base to the exponent exp. */
+@VaultFunctionMarker
+fun <T1 : Number, T2 : Number> POW(base: AqlExpression<T1>, exp: AqlExpression<T2>): AqlExpression<Number> =
+    POW.call(base, exp)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
  * Remove the last element of array.
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Array.html#pop
@@ -55,6 +112,58 @@ inline fun <reified T> PUSH(
     unique: AqlExpression<Boolean>,
 ): AqlExpression<List<T>> =
     PUSH.call(type = kType(), anyArray, value, unique)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the angle converted from degrees to radians.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#radians
+ */
+@VaultFunctionMarker val RADIANS = aqlFunc<Number>("RADIANS")
+
+/** Return the angle converted from degrees to radians. */
+@VaultFunctionMarker
+fun <T : Number> RADIANS(deg: AqlExpression<T>): AqlExpression<Number> = RADIANS.call(deg)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return a pseudo-random number between 0 and 1.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#rand
+ */
+@VaultFunctionMarker val RAND = aqlFunc<Number>("RAND")
+
+/** Return a pseudo-random number between 0 and 1. */
+@VaultFunctionMarker
+fun RAND(): AqlExpression<Number> = RAND.call()
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return an array of numbers in the specified range, optionally with increments other than 1.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#range
+ */
+@VaultFunctionMarker val RANGE = aqlFunc<List<Number>?>("RANGE")
+
+/** Return an array of numbers in the specified range, optionally with increments other than 1. */
+@VaultFunctionMarker
+fun <T1 : Number, T2 : Number> RANGE(
+    start: AqlExpression<T1>,
+    stop: AqlExpression<T2>,
+): AqlExpression<List<Number>?> =
+    RANGE.call(start, stop)
+
+/** Return an array of numbers in the specified range, optionally with increments other than 1. */
+@VaultFunctionMarker
+fun <T1 : Number, T2 : Number, T3 : Number> RANGE(
+    start: AqlExpression<T1>,
+    stop: AqlExpression<T2>,
+    step: AqlExpression<T3>,
+): AqlExpression<List<Number>?> =
+    RANGE.call(start, stop, step)
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -132,3 +241,16 @@ inline fun <reified T> REVERSE(anyArray: AqlExpression<List<T>>): AqlExpression<
 @VaultFunctionMarker @JvmName("REVERSE_String")
 fun REVERSE_STRING(value: AqlExpression<String>): AqlExpression<String> =
     REVERSE.call(type = kType(), value)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the integer closest to value.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#round
+ */
+@VaultFunctionMarker val ROUND = aqlFunc<Number>("ROUND")
+
+/** Return the integer closest to value. */
+@VaultFunctionMarker
+fun <T : Number> ROUND(value: AqlExpression<T>): AqlExpression<Number> = ROUND.call(value)
