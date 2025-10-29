@@ -456,6 +456,7 @@ class BackgroundJobs(
         return archive.get(id = id)
     }
 
+    @Suppress("detekt:TooGenericExceptionCaught")
     suspend fun runQueuedJobs(state: StateProvider) {
         do {
             val job = try {
@@ -519,6 +520,7 @@ class BackgroundJobs(
         } while (job != null && state().isRunning)
     }
 
+    @Suppress("detekt:TooGenericExceptionCaught")
     private suspend fun runJob(
         startedAt: MpInstant,
         job: Stored<BackgroundJobQueued>,

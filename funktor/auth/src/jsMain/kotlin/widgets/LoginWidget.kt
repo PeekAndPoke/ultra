@@ -1,3 +1,5 @@
+@file:Suppress("detekt:LongMethod")
+
 package de.peekandpoke.funktor.auth.widgets
 
 import de.peekandpoke.funktor.auth.AuthState
