@@ -1,3 +1,5 @@
+@file:Suppress("detekt:VariableNaming")
+
 package de.peekandpoke.kraft.vdom.preact
 
 import de.peekandpoke.kraft.utils.jsObject
