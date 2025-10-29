@@ -149,6 +149,7 @@ class Router(
         /**
          * Private listener for click events to intercept navigation (history-based routing)
          */
+        @Suppress("detekt:ReturnCount")
         private fun clickListener(event: Event) {
 //            console.log("clickListener: ${event.type}", event)
 
