@@ -18,6 +18,19 @@ fun <T : Any> MAX(array: AqlExpression<List<T>>): AqlExpression<Number?> = MAX.c
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
+ * Calculate the MD5 checksum for text and return it in a hexadecimal string representation.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/String.html#md5
+ */
+@VaultFunctionMarker val MD5 = aqlFunc<String>("MD5")
+
+/** Calculate the MD5 checksum for text and return it in a hexadecimal string representation. */
+@VaultFunctionMarker
+fun MD5(value: AqlExpression<String>): AqlExpression<String> = MD5.call(value)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
  * Return the median value of the values in array.
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#median
@@ -105,6 +118,22 @@ inline fun <reified T, N : Number> NTH(
     position: AqlExpression<N>,
 ): AqlExpression<T?> =
     NTH.call(type = kType(), anyArray, position)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Returns the boolean negation of value.
+ */
+// TODO: tests
+@VaultFunctionMarker val NOT = aqlFunc<Boolean>("NOT")
+
+/** Returns the boolean negation of value. */
+@VaultFunctionMarker @JvmName("NOT_2")
+fun NOT(expr: AqlExpression<Boolean>): AqlExpression<Boolean> = NOT.call(expr)
+
+/** Returns the boolean negation of value. */
+@VaultFunctionMarker @JvmName("NOT_1")
+fun AqlExpression<Boolean>.NOT(): AqlExpression<Boolean> = NOT(expr = this)
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

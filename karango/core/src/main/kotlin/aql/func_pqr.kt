@@ -2,6 +2,7 @@
 
 package de.peekandpoke.karango.aql
 
+import de.peekandpoke.ultra.common.reflection.kListType
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
@@ -142,6 +143,21 @@ fun RAND(): AqlExpression<Number> = RAND.call()
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
+ * Generate a pseudo-random token string with the specified length.
+ *
+ * The algorithm for token generation should be treated as opaque.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/String.html#randomtoken
+ */
+@VaultFunctionMarker val RANDOM_TOKEN = aqlFunc<String>("RANDOM_TOKEN")
+
+/** Generate a pseudo-random token string with the specified length. */
+@VaultFunctionMarker
+fun <T : Number> RANDOM_TOKEN(length: AqlExpression<T>): AqlExpression<String> = RANDOM_TOKEN.call(length)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
  * Return an array of numbers in the specified range, optionally with increments other than 1.
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#range
@@ -164,6 +180,85 @@ fun <T1 : Number, T2 : Number, T3 : Number> RANGE(
     step: AqlExpression<T3>,
 ): AqlExpression<List<Number>?> =
     RANGE.call(start, stop, step)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the matches in the given string text, using the regex.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/String.html#regexmatches
+ */
+@VaultFunctionMarker val REGEX_MATCHES = aqlFunc<List<String>?>("REGEX_MATCHES")
+
+/** Return the matches in the given string text, using the regex. */
+@VaultFunctionMarker
+fun REGEX_MATCHES(text: AqlExpression<String>, regex: AqlExpression<String>): AqlExpression<List<String>?> =
+    REGEX_MATCHES.call(text, regex)
+
+/** Return the matches in the given string text, using the regex. */
+@VaultFunctionMarker
+fun REGEX_MATCHES(
+    text: AqlExpression<String>,
+    regex: AqlExpression<String>,
+    caseInsensitive: AqlExpression<Boolean>,
+): AqlExpression<List<String>?> =
+    REGEX_MATCHES.call(text, regex, caseInsensitive)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the matches in the given string text, using the regex.
+ *
+ * See https://docs.arangodb.com/stable/aql/functions/string/#regex_split
+ */
+@VaultFunctionMarker val REGEX_SPLIT = aqlFunc<List<String>?>("REGEX_SPLIT")
+
+/** Return the matches in the given string text, using the regex. */
+@VaultFunctionMarker
+fun REGEX_SPLIT(text: AqlExpression<String>, regex: AqlExpression<String>): AqlExpression<List<String>?> =
+    REGEX_SPLIT.call(text, regex)
+
+/** Return the matches in the given string text, using the regex. */
+@VaultFunctionMarker
+fun REGEX_SPLIT(
+    text: AqlExpression<String>,
+    regex: AqlExpression<String>,
+    caseInsensitive: AqlExpression<Boolean>,
+): AqlExpression<List<String>?> =
+    REGEX_SPLIT.call(text, regex, caseInsensitive)
+
+/** Return the matches in the given string text, using the regex. */
+@VaultFunctionMarker
+fun REGEX_SPLIT(
+    text: AqlExpression<String>,
+    regex: AqlExpression<String>,
+    caseInsensitive: AqlExpression<Boolean>,
+    limit: AqlExpression<Int>,
+): AqlExpression<List<String>?> =
+    REGEX_SPLIT.call(type = kListType<String>().nullable, text, regex, caseInsensitive, limit)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the matches in the given string text, using the regex.
+ *
+ * See https://docs.arangodb.com/stable/aql/functions/string/#regex_test
+ */
+@VaultFunctionMarker val REGEX_TEST = aqlFunc<Boolean?>("REGEX_TEST")
+
+/** Return the matches in the given string text, using the regex. */
+@VaultFunctionMarker
+fun REGEX_TEST(text: AqlExpression<String>, regex: AqlExpression<String>): AqlExpression<Boolean?> =
+    REGEX_TEST.call(text, regex)
+
+/** Return the matches in the given string text, using the regex. */
+@VaultFunctionMarker
+fun REGEX_TEST(
+    text: AqlExpression<String>,
+    regex: AqlExpression<String>,
+    caseInsensitive: AqlExpression<Boolean>,
+): AqlExpression<Boolean?> =
+    REGEX_TEST.call(text, regex, caseInsensitive)
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -245,6 +340,20 @@ fun REVERSE_STRING(value: AqlExpression<String>): AqlExpression<String> =
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
+ * Return the n rightmost characters of the string value.
+ *
+ * https://docs.arangodb.com/current/AQL/Functions/String.html#right
+ */
+@VaultFunctionMarker val RIGHT = aqlFunc<String>("RIGHT")
+
+/** Return the n rightmost characters of the string value. */
+@VaultFunctionMarker
+fun <T : Number> RIGHT(value: AqlExpression<String>, n: AqlExpression<T>): AqlExpression<String> =
+    RIGHT.call(value, n)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
  * Return the integer closest to value.
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#round
@@ -254,3 +363,21 @@ fun REVERSE_STRING(value: AqlExpression<String>): AqlExpression<String> =
 /** Return the integer closest to value. */
 @VaultFunctionMarker
 fun <T : Number> ROUND(value: AqlExpression<T>): AqlExpression<Number> = ROUND.call(value)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the string value with whitespace stripped at the start only.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/String.html#rtrim
+ */
+@VaultFunctionMarker val RTRIM = aqlFunc<String>("RTRIM")
+
+/** Return the string value with whitespace stripped at the start only. */
+@VaultFunctionMarker
+fun RTRIM(subject: AqlExpression<String>): AqlExpression<String> = RTRIM.call(subject)
+
+/** Return the string value with whitespace stripped at the start only. */
+@VaultFunctionMarker
+fun RTRIM(subject: AqlExpression<String>, chars: AqlExpression<String>): AqlExpression<String> =
+    RTRIM.call(subject, chars)

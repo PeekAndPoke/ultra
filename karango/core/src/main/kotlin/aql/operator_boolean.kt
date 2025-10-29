@@ -269,12 +269,3 @@ infix fun AqlExpression<Boolean>.OR(value: Boolean): AqlExpression<Boolean> =
 infix fun AqlExpression<Boolean>.OR(value: AqlExpression<Boolean>): AqlExpression<Boolean> =
     AqlFilterLogicExpression(left = this, op = AqlLogicOperator.OR, right = value)
 
-@VaultFunctionMarker
-@JvmName("NOT_1")
-fun AqlExpression<Boolean>.NOT(): AqlExpression<Boolean> =
-    AqlFunc.NOT.boolCall(this)
-
-@VaultFunctionMarker
-@JvmName("NOT_2")
-fun NOT(expr: AqlExpression<Boolean>): AqlExpression<Boolean> =
-    AqlFunc.NOT.boolCall(expr)
