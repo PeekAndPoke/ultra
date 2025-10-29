@@ -1,3 +1,5 @@
+@file:Suppress("detekt:ReturnCount")
+
 package de.peekandpoke.mutator.ksp.builtin
 
 import com.google.devtools.ksp.getDeclaredProperties
