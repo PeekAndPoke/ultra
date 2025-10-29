@@ -60,7 +60,7 @@ data class PagedSearchFilter(
         )
     }
 
-    @Suppress("EnumEntryName")
+    @Suppress("EnumEntryName", "detekt:EnumNaming")
     enum class Option {
         include_deleted,
         include_recently_deleted,

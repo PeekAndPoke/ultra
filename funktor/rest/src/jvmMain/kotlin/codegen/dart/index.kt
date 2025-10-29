@@ -8,7 +8,7 @@ interface DartPrintable {
     fun print(printer: DartCodePrinter): Any?
 }
 
-@Suppress("EnumEntryName")
+@Suppress("EnumEntryName", "detekt:EnumNaming")
 enum class DartModifier {
     abstract,
     final,
