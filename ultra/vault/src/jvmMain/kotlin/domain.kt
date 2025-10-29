@@ -1,4 +1,4 @@
-@file:Suppress("PropertyName")
+@file:Suppress("PropertyName", "detekt:VariableNaming")
 
 package de.peekandpoke.ultra.vault
 
