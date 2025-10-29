@@ -1,6 +1,6 @@
-package de.peekandpoke.karango.e2e.functions_numeric
+package de.peekandpoke.karango.e2e.functions.def
 
-import de.peekandpoke.karango.aql.FLOOR
+import de.peekandpoke.karango.aql.EXP
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
@@ -11,28 +11,23 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Numeric-FLOOR-Spec` : StringSpec({
+class E2E_Func_EXP_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "FLOOR(2.50)",
-            FLOOR(2.50.aql),
-            2.0
+            "EXP(1)",
+            EXP(1.aql),
+            2.718281828459045
         ),
         tuple(
-            "FLOOR(2.51)",
-            FLOOR(2.51.aql),
-            2.0
+            "EXP(10)",
+            EXP(10.aql),
+            22026.465794806718
         ),
         tuple(
-            "FLOOR(-2.49)",
-            FLOOR((-2.49).aql),
-            -3.0
-        ),
-        tuple(
-            "FLOOR(-2.50)",
-            FLOOR((-2.50).aql),
-            -3.0
+            "EXP(0)",
+            EXP(0.aql),
+            1.0
         )
     )
 

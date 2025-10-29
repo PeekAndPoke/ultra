@@ -1,6 +1,6 @@
-package de.peekandpoke.karango.e2e.functions_string
+package de.peekandpoke.karango.e2e.functions.def
 
-import de.peekandpoke.karango.aql.FIND_LAST
+import de.peekandpoke.karango.aql.FIND_FIRST
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
@@ -11,47 +11,47 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-open class `E2E-Func-String-FIND_LAST-Spec` : StringSpec({
+open class E2E_Func_FIND_FIRST_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "FIND_LAST empty needle in empty haystack",
-            FIND_LAST("".aql, "".aql),
+            "FIND_FIRST empty needle in empty haystack",
+            FIND_FIRST("".aql, "".aql),
             0L
         ),
         tuple(
-            "FIND_LAST empty needle in haystack",
-            FIND_LAST("abc".aql, "".aql),
-            3L
+            "FIND_FIRST empty needle in haystack",
+            FIND_FIRST("abc".aql, "".aql),
+            0L
         ),
         tuple(
-            "FIND_LAST not finding (no start no end)",
-            FIND_LAST("abc".aql, "x".aql),
+            "FIND_FIRST not finding (no start no end)",
+            FIND_FIRST("abc".aql, "x".aql),
             -1L
         ),
         tuple(
-            "FIND_LAST finding (no start no end)",
-            FIND_LAST("abc abc abc".aql, "abc".aql),
-            8L
+            "FIND_FIRST finding (no start no end)",
+            FIND_FIRST("abc abc abc".aql, "abc".aql),
+            0L
         ),
         tuple(
-            "FIND_LAST finding with start (no end)",
-            FIND_LAST("abc abc abc".aql, "abc".aql, 1.aql),
-            8L
-        ),
-        tuple(
-            "FIND_LAST finding with start and end",
-            FIND_LAST("abc abc abc".aql, "abc".aql, 1.aql, 6.aql),
+            "FIND_FIRST finding with start (no end)",
+            FIND_FIRST("abc abc abc".aql, "abc".aql, 1.aql),
             4L
         ),
         tuple(
-            "FIND_LAST not finding with start and end",
-            FIND_LAST("abc abc abc".aql, "abc".aql, 1.aql, 2.aql),
+            "FIND_FIRST finding with start and end",
+            FIND_FIRST("abc abc abc".aql, "abc".aql, 1.aql, 6.aql),
+            4L
+        ),
+        tuple(
+            "FIND_FIRST not finding with start and end",
+            FIND_FIRST("abc abc abc".aql, "abc".aql, 1.aql, 2.aql),
             -1L
         ),
         tuple(
-            "FIND_LAST not finding with start greater end",
-            FIND_LAST("abc abc abc".aql, "abc".aql, 2.aql, 1.aql),
+            "FIND_FIRST not finding with start greater end",
+            FIND_FIRST("abc abc abc".aql, "abc".aql, 2.aql, 1.aql),
             -1L
         )
     )

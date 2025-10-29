@@ -44,12 +44,6 @@ enum class AqlFunc {
     NOT_NULL, // TODO: impl, tests
 
     // Numeric
-    CEIL,
-    COS,
-    DEGREES,
-    EXP,
-    EXP2,
-    FLOOR,
     LOG,
     LOG2,
     LOG10,
@@ -75,9 +69,6 @@ enum class AqlFunc {
     VARIANCE,
 
     // Strings
-    ENCODE_URI_COMPONENT,
-    FIND_FIRST,
-    FIND_LAST,
     JSON_PARSE,
     JSON_STRINGIFY,
     LEFT,

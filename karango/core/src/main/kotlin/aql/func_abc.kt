@@ -127,6 +127,32 @@ fun <T : Number> AVG(numArray: AqlExpression<out Collection<T>>): AqlExpression<
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
+ * Return the integer closest but not less than value.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#ceil
+ */
+@VaultFunctionMarker val CEIL = aqlFunc<Number>("CEIL")
+
+/** Return the integer closest but not less than value. */
+@VaultFunctionMarker
+fun <T : Number> CEIL(value: AqlExpression<T>): AqlExpression<Number> = CEIL.call(value)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the cosine of value.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#cos
+ */
+@VaultFunctionMarker val COS = aqlFunc<Number>("COS")
+
+/** Return the cosine of value. */
+@VaultFunctionMarker
+fun <T : Number> COS(value: AqlExpression<T>): AqlExpression<Number> = COS.call(value)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
  * Return the number of characters in value (not byte length).
  *
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#charlength

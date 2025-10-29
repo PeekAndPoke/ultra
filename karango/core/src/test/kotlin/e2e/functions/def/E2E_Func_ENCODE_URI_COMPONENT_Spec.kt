@@ -1,4 +1,4 @@
-package de.peekandpoke.karango.e2e.functions_string
+package de.peekandpoke.karango.e2e.functions.def
 
 import de.peekandpoke.karango.aql.ENCODE_URI_COMPONENT
 import de.peekandpoke.karango.aql.LET
@@ -11,7 +11,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-String-ENCODE_URI_COMPONENT-Spec` : StringSpec({
+class E2E_Func_ENCODE_URI_COMPONENT_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
