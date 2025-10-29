@@ -1,3 +1,5 @@
+@file:Suppress("detekt:all")
+
 package de.peekandpoke.kraft.examples.helloworld
 
 import de.peekandpoke.kraft.components.NoProps

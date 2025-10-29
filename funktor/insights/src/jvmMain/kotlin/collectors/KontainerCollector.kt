@@ -303,7 +303,7 @@ class KontainerCollector(
             """.trimIndent()
         }
 
-        @Suppress("DuplicatedCode")
+        @Suppress("DuplicatedCode", "detekt:LongMethod")
         private fun Unsafe.renderFullGraphJs(template: InsightsGuiTemplate) {
 
             val buttonId = showFullGraphButtonId

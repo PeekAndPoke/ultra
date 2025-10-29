@@ -1,4 +1,4 @@
-@file:Suppress("DuplicatedCode")
+@file:Suppress("DuplicatedCode", "detekt:all")
 
 package de.peekandpoke.kraft.examples.fomanticui.pages.views.statistic
 
