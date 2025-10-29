@@ -1,4 +1,4 @@
-package de.peekandpoke.karango.e2e.functions_string
+package de.peekandpoke.karango.e2e.functions.abc
 
 import de.peekandpoke.karango.aql.CONCAT_SEPARATOR
 import de.peekandpoke.karango.aql.LET
@@ -12,7 +12,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-String-CONCAT_SEPARATOR-Spec` : StringSpec({
+class E2E_Func_CONCAT_SEPARATOR_Spec : StringSpec({
 
     val cases = listOf(
         tuple(

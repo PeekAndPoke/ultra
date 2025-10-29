@@ -1,9 +1,9 @@
-package de.peekandpoke.karango.e2e.functions_string
+package de.peekandpoke.karango.e2e.functions.abc
 
 import de.peekandpoke.karango.aql.CONCAT
+import de.peekandpoke.karango.aql.CONTAINS
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
-import de.peekandpoke.karango.aql.TO_STRING
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
@@ -12,28 +12,28 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-String-CONCAT-Spec` : StringSpec({
+class E2E_Func_CONTAINS_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "CONCAT with one empty string parameter",
-            CONCAT("".aql),
-            ""
+            "prefix CONTAINS matching an input value",
+            CONTAINS("abc".aql(), "b".aql()),
+            true
         ),
         tuple(
-            "CONCAT with two empty string parameters",
-            CONCAT("".aql, "".aql),
-            ""
+            "prefix CONTAINS not matching on input value expression",
+            CONTAINS("abc".aql(), "X".aql()),
+            false
         ),
         tuple(
-            "CONCAT with multiple parameters",
-            CONCAT("a".aql, "".aql, "b".aql),
-            "ab"
+            "prefix CONTAINS matching two expressions",
+            CONTAINS(CONCAT("abc".aql(), "def".aql()), CONCAT("c".aql(), "d".aql())),
+            true
         ),
         tuple(
-            "CONCAT with more parameters",
-            CONCAT("".aql, "a".aql, "_".aql, 123.aql.TO_STRING),
-            "a_123"
+            "prefix CONTAINS not matching two expression",
+            CONTAINS(CONCAT("abc".aql(), "def".aql()), CONCAT("X".aql(), "Y".aql())),
+            false
         )
     )
 

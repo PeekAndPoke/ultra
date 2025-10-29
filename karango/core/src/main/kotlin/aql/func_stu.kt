@@ -125,6 +125,18 @@ inline fun <reified T> UNIQUE(anyArray: AqlExpression<List<T>>): AqlExpression<L
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+@VaultFunctionMarker val UNSET = aqlFunc<Any>("UNSET")
+
+@VaultFunctionMarker
+inline fun <reified T> UNSET(
+    document: AqlExpression<out T>,
+    attributeName1: AqlExpression<String>,
+    vararg attributeNameN: AqlExpression<String>,
+): AqlExpression<T> =
+    UNSET.call(type = kType(), document, attributeName1, *attributeNameN)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /**
  * Prepend value to anyArray (left side).
  *

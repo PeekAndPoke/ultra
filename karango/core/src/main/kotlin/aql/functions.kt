@@ -16,10 +16,9 @@ enum class AqlPercentileMethod(val method: String) {
 enum class AqlFunc {
     // TODO: all date functions
 
-    // Database functions
+    // TODO: special Database functions
     COLLECTION_COUNT, // TODO: impl, tests
     COLLECTIONS, // TODO: impl, tests
-    DOCUMENT, // TODO: tests
     HASH, // TODO: impl, tests
     APPLY, // TODO: impl, tests
     ASSERT, // TODO: impl, tests
@@ -32,14 +31,11 @@ enum class AqlFunc {
     V8, // TODO: impl, tests
     VERSION, // TODO: impl, tests
 
-    // Document / Object TODO
+    // TODO: Document / Object functions
 
-    MERGE, // TODO: tests
-    UNSET, // TODO: Tests
+    // TODO: Fulltext functions
 
-    // Fulltext TODO
-
-    // Geo // TODO
+    // TODO: Geo functions
 
     // Miscellaneous
     FIRST_LIST, // TODO: impl, tests
@@ -84,10 +80,6 @@ enum class AqlFunc {
     VARIANCE,
 
     // Strings
-    CHAR_LENGTH,
-    CONCAT,
-    CONCAT_SEPARATOR,
-    CONTAINS,
     ENCODE_URI_COMPONENT,
     FIND_FIRST,
     FIND_LAST,
@@ -132,13 +124,6 @@ enum class AqlFunc {
     IS_DATESTRING,
     IS_KEY,
     TYPENAME,
-
-    // Type Conversion
-    TO_BOOL,
-    TO_NUMBER,
-    TO_STRING,
-    TO_ARRAY,
-    TO_LIST,
 }
 
 fun <T> AqlFunc.call(type: TypeRef<T>, vararg args: AqlExpression<*>): AqlExpression<T> =

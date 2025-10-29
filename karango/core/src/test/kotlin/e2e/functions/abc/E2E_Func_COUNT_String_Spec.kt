@@ -1,6 +1,6 @@
-package de.peekandpoke.karango.e2e.functions_string
+package de.peekandpoke.karango.e2e.functions.abc
 
-import de.peekandpoke.karango.aql.CHAR_LENGTH
+import de.peekandpoke.karango.aql.COUNT
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
@@ -11,27 +11,27 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-String-CHAR_LENGTH-Spec` : StringSpec({
+class E2E_Func_COUNT_String_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "CHAR_LENGTH on an empty string parameter",
-            CHAR_LENGTH("".aql),
+            "COUNT on an empty string parameter",
+            COUNT("".aql),
             0L
         ),
         tuple(
-            "CHAR_LENGTH on a simple string parameter",
-            CHAR_LENGTH("1".aql),
+            "COUNT on a simple string parameter",
+            COUNT("1".aql),
             1L
         ),
         tuple(
-            "CHAR_LENGTH on another simple string parameter",
-            CHAR_LENGTH("12".aql),
+            "COUNT on another simple string parameter",
+            COUNT("12".aql),
             2L
         ),
         tuple(
-            "CHAR_LENGTH on a string with UTF-8 characters",
-            CHAR_LENGTH("äöüß".aql),
+            "COUNT on a string with UTF-8 characters",
+            COUNT("äöüß".aql),
             4L
         )
     )

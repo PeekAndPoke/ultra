@@ -5,53 +5,7 @@ package de.peekandpoke.karango.aql
 import de.peekandpoke.ultra.common.reflection.kListType
 import de.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
-/**
- * Return the number of characters in value (not byte length).
- *
- * See https://docs.arangodb.com/current/AQL/Functions/String.html#charlength
- */
-@VaultFunctionMarker
-fun CHAR_LENGTH(
-    expr: AqlExpression<String>,
-): AqlExpression<Number> =
-    AqlFunc.CHAR_LENGTH.numberCall(expr)
 
-/**
- * Concatenate the values passed as value1 to valueN.
- *
- * See https://docs.arangodb.com/current/AQL/Functions/String.html#concat
- */
-@VaultFunctionMarker
-fun CONCAT(
-    first: AqlExpression<String>,
-    vararg rest: AqlExpression<String>,
-): AqlExpression<String> =
-    AqlFunc.CONCAT.stringCall(first, *rest)
-
-/**
- * Concatenate the strings passed as arguments value1 to valueN using the separator string.
- *
- * See https://docs.arangodb.com/current/AQL/Functions/String.html#concatseparator
- */
-@VaultFunctionMarker
-fun CONCAT_SEPARATOR(
-    separator: AqlExpression<String>,
-    first: AqlExpression<String>,
-    vararg rest: AqlExpression<String>,
-): AqlExpression<String> =
-    AqlFunc.CONCAT_SEPARATOR.stringCall(separator, first, *rest)
-
-/**
- * Check whether the string search is contained in the string text. The string matching performed by CONTAINS is case-sensitive.
- *
- * See https://docs.arangodb.com/current/AQL/Functions/String.html#contains
- */
-@VaultFunctionMarker
-fun CONTAINS(
-    haystack: AqlExpression<String>,
-    needle: AqlExpression<String>,
-): AqlExpression<Boolean> =
-    AqlFunc.CONTAINS.boolCall(haystack, needle)
 
 /**
  * Return the encoded uri component of value.

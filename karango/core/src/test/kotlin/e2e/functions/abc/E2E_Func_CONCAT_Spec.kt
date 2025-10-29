@@ -1,8 +1,9 @@
-package de.peekandpoke.karango.e2e.functions_string
+package de.peekandpoke.karango.e2e.functions.abc
 
-import de.peekandpoke.karango.aql.COUNT
+import de.peekandpoke.karango.aql.CONCAT
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
+import de.peekandpoke.karango.aql.TO_STRING
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
@@ -11,28 +12,28 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-String-COUNT-Spec` : StringSpec({
+class E2E_Func_CONCAT_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "COUNT on an empty string parameter",
-            COUNT("".aql),
-            0L
+            "CONCAT with one empty string parameter",
+            CONCAT("".aql),
+            ""
         ),
         tuple(
-            "COUNT on a simple string parameter",
-            COUNT("1".aql),
-            1L
+            "CONCAT with two empty string parameters",
+            CONCAT("".aql, "".aql),
+            ""
         ),
         tuple(
-            "COUNT on another simple string parameter",
-            COUNT("12".aql),
-            2L
+            "CONCAT with multiple parameters",
+            CONCAT("a".aql, "".aql, "b".aql),
+            "ab"
         ),
         tuple(
-            "COUNT on a string with UTF-8 characters",
-            COUNT("äöüß".aql),
-            4L
+            "CONCAT with more parameters",
+            CONCAT("".aql, "a".aql, "_".aql, 123.aql.TO_STRING),
+            "a_123"
         )
     )
 

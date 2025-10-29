@@ -12,7 +12,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-TypeConversion-TO_STRING-Spec` : StringSpec({
+class E2E_Func_TO_STRING_Spec : StringSpec({
 
     "TO_STRING conversion of 'null' directly" {
 

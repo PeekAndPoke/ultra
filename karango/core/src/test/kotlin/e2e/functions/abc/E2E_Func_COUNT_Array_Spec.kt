@@ -1,7 +1,8 @@
-package de.peekandpoke.karango.e2e.functions_string
+package de.peekandpoke.karango.e2e.functions.abc
 
-import de.peekandpoke.karango.aql.CONCAT
-import de.peekandpoke.karango.aql.CONTAINS
+import de.peekandpoke.karango.aql.ARRAY
+import de.peekandpoke.karango.aql.AqlPrinter.Companion.printRawQuery
+import de.peekandpoke.karango.aql.COUNT
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
@@ -12,32 +13,21 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-String-CONTAINS-Spec` : StringSpec({
+class E2E_Func_COUNT_Array_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "prefix CONTAINS matching an input value",
-            CONTAINS("abc".aql(), "b".aql()),
-            true
+            COUNT(ARRAY<Any>()),
+            0L
         ),
         tuple(
-            "prefix CONTAINS not matching on input value expression",
-            CONTAINS("abc".aql(), "X".aql()),
-            false
-        ),
-        tuple(
-            "prefix CONTAINS matching two expressions",
-            CONTAINS(CONCAT("abc".aql(), "def".aql()), CONCAT("c".aql(), "d".aql())),
-            true
-        ),
-        tuple(
-            "prefix CONTAINS not matching two expression",
-            CONTAINS(CONCAT("abc".aql(), "def".aql()), CONCAT("X".aql(), "Y".aql())),
-            false
+            COUNT(ARRAY("a".aql)),
+            1L
         )
     )
 
-    for ((description, expression, expected) in cases) {
+    for ((expression, expected) in cases) {
+        val description = expression.printRawQuery()
 
         "$description - direct return" {
 

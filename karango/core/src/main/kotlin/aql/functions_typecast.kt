@@ -10,48 +10,39 @@ import de.peekandpoke.ultra.vault.lang.VaultTypeConversionMarker
 /**
  * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#tobool
  */
-@VaultTypeConversionMarker
-fun TO_BOOL(expr: AqlExpression<*>): AqlExpression<Boolean> =
-    AqlFunc.TO_BOOL.boolCall(expr)
+@VaultTypeConversionMarker val TO_BOOL = aqlFunc<Boolean>("TO_BOOL")
 
-/**
- * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#tobool
- */
 @VaultTypeConversionMarker
-val <T> AqlExpression<T>.TO_BOOL: AqlExpression<Boolean>
-    get() = TO_BOOL(this)
+fun TO_BOOL(expr: AqlExpression<*>): AqlExpression<Boolean> = TO_BOOL.call(expr)
+
+@VaultTypeConversionMarker
+val <T> AqlExpression<T>.TO_BOOL: AqlExpression<Boolean> get() = TO_BOOL(this)
 
 // //  TO_NUMBER  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#tostring
  */
-@VaultTypeConversionMarker
-fun TO_NUMBER(expr: AqlExpression<*>): AqlExpression<Number> =
-    AqlFunc.TO_NUMBER.numberCall(expr)
+@VaultTypeConversionMarker val TO_NUMBER = aqlFunc<Number>("TO_NUMBER")
 
-/**
- * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#tostring
- */
 @VaultTypeConversionMarker
-val <T> AqlExpression<T>.TO_NUMBER: AqlExpression<Number>
-    get() = TO_NUMBER(this)
+fun TO_NUMBER(expr: AqlExpression<*>): AqlExpression<Number> = TO_NUMBER.call(expr)
+
+@VaultTypeConversionMarker
+val <T> AqlExpression<T>.TO_NUMBER: AqlExpression<Number> get() = TO_NUMBER(this)
 
 // //  TO_STRING  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#tostring
  */
-@VaultTypeConversionMarker
-fun TO_STRING(expr: AqlExpression<*>): AqlExpression<String> =
-    AqlFunc.TO_STRING.stringCall(expr)
+@VaultTypeConversionMarker val TO_STRING = aqlFunc<String>("TO_STRING")
 
-/**
- * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#tostring
- */
 @VaultTypeConversionMarker
-val <T> AqlExpression<T>.TO_STRING: AqlExpression<String>
-    get() = TO_STRING(this)
+fun TO_STRING(expr: AqlExpression<*>): AqlExpression<String> = TO_STRING.call(expr)
+
+@VaultTypeConversionMarker
+val <T> AqlExpression<T>.TO_STRING: AqlExpression<String> get() = TO_STRING(this)
 
 // //  TO_ARRAY  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -60,31 +51,22 @@ val <T> AqlExpression<T>.TO_STRING: AqlExpression<String>
  *
  * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#toarray
  */
+@VaultTypeConversionMarker val TO_ARRAY = aqlFunc<List<Any?>>("TO_ARRAY")
+
 @JvmName("TO_ARRAY_L")
 @VaultTypeConversionMarker
 inline fun <reified T> TO_ARRAY(expr: AqlExpression<out Collection<T>>): AqlExpression<List<T>> =
-    AqlFunc.TO_ARRAY.arrayCall(type = kType(), expr)
+    TO_ARRAY.call(type = kType(), expr)
 
-/**
- * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#toarray
- */
 @JvmName("TO_ARRAY_E")
 @VaultTypeConversionMarker
 inline fun <reified T> TO_ARRAY(expr: AqlExpression<T>): AqlExpression<List<T>> =
-    AqlFunc.TO_ARRAY.arrayCall(type = kType(), expr)
+    TO_ARRAY.call(type = kType(), expr)
 
-/**
- * Guard, to NOT wrap a list again
- *
- * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#toarray
- */
 @VaultTypeConversionMarker
-inline val <reified T> AqlExpression<Collection<T>>.TO_ARRAY: AqlExpression<List<T>>
+inline val <reified T> AqlExpression<out Collection<T>>.TO_ARRAY: AqlExpression<List<T>>
     @JvmName("TO_ARRAY_LV") get() = TO_ARRAY(this)
 
-/**
- * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#toarray
- */
 @VaultTypeConversionMarker
 inline val <reified T> AqlExpression<T>.TO_ARRAY: AqlExpression<List<T>>
     @JvmName("TO_ARRAY_V") get() = TO_ARRAY(this)
@@ -96,36 +78,22 @@ inline val <reified T> AqlExpression<T>.TO_ARRAY: AqlExpression<List<T>>
  *
  * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#tolist
  */
+@VaultTypeConversionMarker val TO_LIST = aqlFunc<List<Any?>>("TO_LIST")
+
 @JvmName("TO_LIST_L")
 @VaultTypeConversionMarker
 inline fun <reified T> TO_LIST(expr: AqlExpression<out Collection<T>>): AqlExpression<List<T>> =
-    AqlFunc.TO_LIST.arrayCall(type = kType(), expr)
+    TO_LIST.call(type = kType(), expr)
 
-/**
- * Alias of TO_ARRAY
- *
- * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#tolist
- */
 @JvmName("TO_LIST_E")
 @VaultTypeConversionMarker
 inline fun <reified T> TO_LIST(expr: AqlExpression<T>): AqlExpression<List<T>> =
-    AqlFunc.TO_LIST.arrayCall(type = kType(), expr)
+    TO_LIST.call(type = kType(), expr)
 
-
-/**
- * Alias of TO_ARRAY
- *
- * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#tolist
- */
 @VaultTypeConversionMarker
-inline val <reified T> AqlExpression<List<T>>.TO_LIST: AqlExpression<List<T>>
+inline val <reified T> AqlExpression<out Collection<T>>.TO_LIST: AqlExpression<List<T>>
     @JvmName("TO_LIST_LV") get() = TO_LIST(this)
 
-/**
- * Alias of TO_ARRAY
- *
- * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#tolist
- */
 @VaultTypeConversionMarker
 inline val <reified T> AqlExpression<T>.TO_LIST: AqlExpression<List<T>>
     @JvmName("TO_LIST_V") get() = TO_LIST(this)

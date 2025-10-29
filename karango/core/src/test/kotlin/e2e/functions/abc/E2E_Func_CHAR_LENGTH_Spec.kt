@@ -1,8 +1,6 @@
 package de.peekandpoke.karango.e2e.functions.abc
 
-import de.peekandpoke.karango.aql.ARRAY
-import de.peekandpoke.karango.aql.AqlPrinter.Companion.printRawQuery
-import de.peekandpoke.karango.aql.COUNT
+import de.peekandpoke.karango.aql.CHAR_LENGTH
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
@@ -13,21 +11,32 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class E2E_Func_COUNT_Spec : StringSpec({
+class E2E_Func_CHAR_LENGTH_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            COUNT(ARRAY<Any>()),
+            "CHAR_LENGTH on an empty string parameter",
+            CHAR_LENGTH("".aql),
             0L
         ),
         tuple(
-            COUNT(ARRAY("a".aql)),
+            "CHAR_LENGTH on a simple string parameter",
+            CHAR_LENGTH("1".aql),
             1L
+        ),
+        tuple(
+            "CHAR_LENGTH on another simple string parameter",
+            CHAR_LENGTH("12".aql),
+            2L
+        ),
+        tuple(
+            "CHAR_LENGTH on a string with UTF-8 characters",
+            CHAR_LENGTH("äöüß".aql),
+            4L
         )
     )
 
-    for ((expression, expected) in cases) {
-        val description = expression.printRawQuery()
+    for ((description, expression, expected) in cases) {
 
         "$description - direct return" {
 

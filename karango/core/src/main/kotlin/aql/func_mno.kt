@@ -6,6 +6,35 @@ import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
 /**
+ * Merge the documents document1 to documentN into a single document.
+ *
+ * If document attribute keys are ambiguous, the merged result will contain the values of the documents
+ * contained later in the argument list.
+ *
+ * See https://www.arangodb.com/docs/stable/aql/functions-document.html
+ */
+// TODO: write e3e tests
+@VaultFunctionMarker val MERGE = aqlFunc<Any?>("MERGE")
+
+/** Merge the documents document1 to documentN into a single document. */
+@VaultFunctionMarker
+inline fun <reified T> MERGE(
+    document1: AqlExpression<out T>,
+    document2: AqlExpression<out T>,
+): AqlExpression<T> = MERGE.call(type = kType(), document1, document2)
+
+/** Merge the documents document1 to documentN into a single document. */
+@VaultFunctionMarker
+inline fun <reified T> MERGE(
+    document1: AqlExpression<out T>,
+    document2: AqlExpression<out T>,
+    vararg documentN: AqlExpression<out T>,
+): AqlExpression<T> =
+    MERGE.call(type = kType(), document1, document2, *documentN)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
  * Return the difference of all arrays specified.
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Array.html#minus

@@ -57,6 +57,67 @@ inline fun <reified T> APPEND(
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
+ * Return the number of characters in value (not byte length).
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/String.html#charlength
+ */
+@VaultFunctionMarker val CHAR_LENGTH = aqlFunc<Number>("CHAR_LENGTH")
+
+/** Return the number of characters in value (not byte length). */
+@VaultFunctionMarker
+fun CHAR_LENGTH(expr: AqlExpression<String>): AqlExpression<Number> = CHAR_LENGTH.call(expr)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Concatenate the values passed as value1 to valueN.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/String.html#concat
+ */
+@VaultFunctionMarker val CONCAT = aqlFunc<String>("CONCAT")
+
+/** Concatenate the values passed as value1 to valueN. */
+@VaultFunctionMarker
+fun CONCAT(first: AqlExpression<String>, vararg rest: AqlExpression<String>): AqlExpression<String> =
+    CONCAT.call(first, *rest)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Concatenate the strings passed as arguments value1 to valueN using the separator string.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/String.html#concatseparator
+ */
+@VaultFunctionMarker val CONCAT_SEPARATOR = aqlFunc<String>("CONCAT_SEPARATOR")
+
+/** Concatenate the strings passed as arguments value1 to valueN using the separator string. */
+@VaultFunctionMarker
+fun CONCAT_SEPARATOR(
+    separator: AqlExpression<String>,
+    first: AqlExpression<String>,
+    vararg rest: AqlExpression<String>,
+): AqlExpression<String> =
+    CONCAT_SEPARATOR.call(separator, first, *rest)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Check whether the string search is contained in the string text.
+ *
+ * The string matching performed by CONTAINS is case-sensitive.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/String.html#contains
+ */
+@VaultFunctionMarker val CONTAINS = aqlFunc<Boolean>("CONTAINS")
+
+/** Check whether the string search is contained in the string text. */
+@VaultFunctionMarker
+fun CONTAINS(haystack: AqlExpression<String>, needle: AqlExpression<String>): AqlExpression<Boolean> =
+    CONTAINS.call(haystack, needle)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
  * Return whether search is contained in anyArray.
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Array.html#contains_array
