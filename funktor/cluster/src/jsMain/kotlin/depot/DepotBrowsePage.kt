@@ -149,7 +149,7 @@ class DepotBrowsePage(ctx: Ctx<Props>) : Component<DepotBrowsePage.Props>(ctx) {
                     td("collapsing") { // Icon
                         icon.folder()
                     }
-                    td {// Name
+                    td { // Name
                         +".."
                     }
                     td { // Size

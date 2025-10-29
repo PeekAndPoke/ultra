@@ -59,7 +59,7 @@ fun jsToKotlin(it: dynamic): Any? {
  * Converts a map to a raw javascript object
  */
 val <T> Map<String, T>.js
-    get() : dynamic {
+    get(): dynamic {
         val obj = jsObject()
 
         forEach { (k, v) -> obj[k] = v }

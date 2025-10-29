@@ -14,7 +14,7 @@ class ListFixturesCliCommand(
         return "Lists all fixtures"
     }
 
-    override fun run(): Unit {
+    override fun run() {
         println("Fixture Installer: ${installer::class.qualifiedName}")
         println()
         println("Available fixtures:")
