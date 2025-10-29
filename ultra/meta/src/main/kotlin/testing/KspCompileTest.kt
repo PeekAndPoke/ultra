@@ -40,7 +40,6 @@ fun KspCompileTest.Builder.expectFileToNotExist(file: String) =
 fun KspCompileTest.Builder.expectFileCount(count: Int) =
     expect(KspCompileTest.ExpectFileCount(count))
 
-
 fun CompilationResult.getGeneratedSources(): List<File> {
     return when (this) {
         is JvmCompilationResult -> File(outputDirectory, "../ksp/sources")
