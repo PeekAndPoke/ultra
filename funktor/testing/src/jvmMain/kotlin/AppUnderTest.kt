@@ -1,3 +1,5 @@
+@file:Suppress("detekt:TooGenericExceptionCaught")
+
 package de.peekandpoke.funktor.testing
 
 import de.peekandpoke.funktor.core.broker.TypedRoute
