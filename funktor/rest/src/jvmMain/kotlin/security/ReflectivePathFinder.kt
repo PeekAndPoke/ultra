@@ -1,3 +1,5 @@
+@file:Suppress("detekt:ReturnCount")
+
 package de.peekandpoke.funktor.rest.security
 
 import de.peekandpoke.ultra.common.reflection.ReifiedKType

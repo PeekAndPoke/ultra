@@ -1,3 +1,5 @@
+@file:Suppress("detekt:ReturnCount")
+
 package de.peekandpoke.ultra.vault.tools
 
 import de.peekandpoke.ultra.common.reflection.ReifiedKType
