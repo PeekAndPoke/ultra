@@ -36,9 +36,9 @@ class Router(
             return when (evt) {
                 null -> false
                 else -> {
-                    evt.ctrlKey // Windows, Linux
-                            || evt.metaKey // MacOS
-                            || (evt.button == 1.toShort()) // Middle Mouse button
+                    evt.ctrlKey || // Windows, Linux
+                            evt.metaKey || // MacOS
+                            (evt.button == 1.toShort()) // Middle Mouse button
                 }
             }
         }

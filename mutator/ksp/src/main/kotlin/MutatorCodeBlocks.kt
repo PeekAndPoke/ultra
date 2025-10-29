@@ -52,8 +52,8 @@ class MutatorCodeBlocks {
                 }
                 // We ignore kotlin.Any? as this is the default bound
                 .filterNot { bound ->
-                    bound.declaration.qualifiedName?.asString() == Any::class.qualifiedName
-                            && bound.isMarkedNullable
+                    bound.declaration.qualifiedName?.asString() == Any::class.qualifiedName &&
+                            bound.isMarkedNullable
                 }
                 .joinToString(", ") { bound ->
                     getTypeString(bound.declaration, bound.isMarkedNullable)
