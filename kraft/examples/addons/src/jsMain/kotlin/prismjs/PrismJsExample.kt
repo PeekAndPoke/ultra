@@ -1,3 +1,5 @@
+@file:Suppress("detekt:all")
+
 package de.peekandpoke.kraft.examples.jsaddons.prismjs
 
 import de.peekandpoke.kraft.addons.prismjs.PrismAtom

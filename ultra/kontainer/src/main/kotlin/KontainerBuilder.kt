@@ -1,9 +1,10 @@
+@file:Suppress("Detekt:TooManyFunctions", "detekt:LongParameterList")
+
 package de.peekandpoke.ultra.kontainer
 
 import de.peekandpoke.ultra.common.reflection.kType
 import kotlin.reflect.KClass
 
-@Suppress("Detekt:TooManyFunctions")
 class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit) {
 
     private val definitions = mutableMapOf<KClass<*>, ServiceDefinition>()
@@ -41,7 +42,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         }
     }
 
-    inner class ServiceBuilder internal constructor(
+    class ServiceBuilder internal constructor(
         private val fn: (cls: KClass<out Any>, producer: ServiceProducer<out Any>) -> Unit,
     ) {
         @PublishedApi

@@ -1,3 +1,5 @@
+@file:Suppress("detekt:all")
+
 package de.peekandpoke.funktor.insights.collectors
 
 import de.peekandpoke.funktor.insights.InsightsCollector
@@ -303,7 +305,7 @@ class KontainerCollector(
             """.trimIndent()
         }
 
-        @Suppress("DuplicatedCode", "detekt:LongMethod")
+        @Suppress("DuplicatedCode")
         private fun Unsafe.renderFullGraphJs(template: InsightsGuiTemplate) {
 
             val buttonId = showFullGraphButtonId
