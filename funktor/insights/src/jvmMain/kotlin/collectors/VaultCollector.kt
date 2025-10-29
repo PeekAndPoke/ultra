@@ -1,3 +1,5 @@
+@file:Suppress("detekt:LongMethod")
+
 package de.peekandpoke.funktor.insights.collectors
 
 import de.peekandpoke.funktor.insights.InsightsCollector

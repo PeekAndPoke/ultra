@@ -135,7 +135,7 @@ class DataLoader<T>(
         jobs.forEach {
             try {
                 it.cancel()
-            } finally {
+            } catch (_: Throwable) {
             }
         }
 

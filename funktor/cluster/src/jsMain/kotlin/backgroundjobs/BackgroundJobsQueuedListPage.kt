@@ -1,3 +1,5 @@
+@file:Suppress("detekt:LongMethod")
+
 package de.peekandpoke.funktor.cluster.backgroundjobs
 
 import de.peekandpoke.funktor.cluster.FunktorClusterUi

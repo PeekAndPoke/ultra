@@ -4,8 +4,8 @@ package de.peekandpoke.kraft.semanticui.forms
 
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
+import de.peekandpoke.kraft.forms.AbstractFormField
 import de.peekandpoke.kraft.forms.FieldOptions
-import de.peekandpoke.kraft.forms.GenericFormField
 import de.peekandpoke.kraft.forms.KraftFormsDsl
 import de.peekandpoke.kraft.semanticui.forms.UiInputFieldComponent.Options
 import de.peekandpoke.kraft.utils.dateToYmd
@@ -80,7 +80,7 @@ fun <T> Tag.UiInputField(
 }
 
 class UiInputFieldComponent<T, P : UiInputFieldComponent.Props<T>>(ctx: Ctx<P>) :
-    GenericFormField<T, Options<T>, P>(ctx) {
+    AbstractFormField<T, Options<T>, P>(ctx) {
 
     class Options<T> : FieldOptions.Base<T>(), SemanticOptions<T>, SemanticOptions.Input<T>
 
@@ -90,7 +90,7 @@ class UiInputFieldComponent<T, P : UiInputFieldComponent.Props<T>>(ctx: Ctx<P>) 
         override val options: Options<X>,
         val toStr: (X) -> String,
         val fromStr: (String) -> X,
-    ) : GenericFormField.Props<X, Options<X>>
+    ) : AbstractFormField.Props<X, Options<X>>
 
     val inputElement: HTMLInputElement get() = dom!!.querySelector("input") as HTMLInputElement
 

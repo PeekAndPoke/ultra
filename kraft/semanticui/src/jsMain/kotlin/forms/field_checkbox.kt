@@ -40,7 +40,7 @@ fun <T> Tag.UiCheckboxField(
 }
 
 class UiCheckBoxComponent<T, P : UiCheckBoxComponent.Props<T>>(ctx: Ctx<P>) :
-    de.peekandpoke.kraft.forms.GenericFormField<T, Options<T>, P>(ctx) {
+    de.peekandpoke.kraft.forms.AbstractFormField<T, Options<T>, P>(ctx) {
 
     class Options<T> : de.peekandpoke.kraft.forms.FieldOptions.Base<T>(), SemanticOptions<T>,
         SemanticOptions.Checkbox<T>
@@ -51,7 +51,7 @@ class UiCheckBoxComponent<T, P : UiCheckBoxComponent.Props<T>>(ctx: Ctx<P>) :
         override val options: Options<X>,
         val on: X,
         val off: X,
-    ) : de.peekandpoke.kraft.forms.GenericFormField.Props<X, Options<X>>
+    ) : de.peekandpoke.kraft.forms.AbstractFormField.Props<X, Options<X>>
 
     val inputElement: HTMLInputElement get() = dom!!.querySelector("input") as HTMLInputElement
 

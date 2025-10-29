@@ -36,7 +36,7 @@ fun Tag.UiTextArea(
 }
 
 class UiTextAreaComponent(ctx: Ctx<Props>) :
-    de.peekandpoke.kraft.forms.GenericFormField<String, Options, UiTextAreaComponent.Props>(ctx) {
+    de.peekandpoke.kraft.forms.AbstractFormField<String, Options, UiTextAreaComponent.Props>(ctx) {
 
     class Options : de.peekandpoke.kraft.forms.FieldOptions.Base<String>(),
         de.peekandpoke.kraft.forms.TextAreaOptions<String>, SemanticOptions<String>
@@ -45,7 +45,7 @@ class UiTextAreaComponent(ctx: Ctx<Props>) :
         override val value: String,
         override val onChange: (String) -> Unit,
         override val options: Options,
-    ) : de.peekandpoke.kraft.forms.GenericFormField.Props<String, Options>
+    ) : de.peekandpoke.kraft.forms.AbstractFormField.Props<String, Options>
 
     val inputElement: HTMLTextAreaElement get() = dom!!.querySelector("textarea") as HTMLTextAreaElement
 

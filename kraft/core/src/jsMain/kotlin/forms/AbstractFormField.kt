@@ -2,32 +2,14 @@ package de.peekandpoke.kraft.forms
 
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.messages.sendMessage
-import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.html.onClick
 import kotlinx.html.FlowContent
-import kotlinx.html.Tag
 import kotlinx.html.label
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.MouseEvent
 
-@Suppress("FunctionName")
-fun <T> Tag.GenericFormField(
-    value: T,
-    onChange: (T) -> Unit,
-    options: FieldOptions<T>,
-) = comp(
-    GenericFormField.DefaultProps(
-        value = value,
-        onChange = onChange,
-        options = options,
-    )
-) {
-    GenericFormField(it)
-}
-
-open class GenericFormField<T, O : FieldOptions<T>, P : GenericFormField.Props<T, O>>(
+abstract class AbstractFormField<T, O : FieldOptions<T>, P : AbstractFormField.Props<T, O>>(
     ctx: Ctx<P>,
 ) : Component<P>(ctx), FormField<T> {
 
@@ -38,12 +20,6 @@ open class GenericFormField<T, O : FieldOptions<T>, P : GenericFormField.Props<T
         val onChange: (T) -> Unit
         val options: O
     }
-
-    data class DefaultProps<T, O : FieldOptions<T>>(
-        override val value: T,
-        override val onChange: (T) -> Unit,
-        override val options: O,
-    ) : Props<T, O>
 
     val options: O get() = props.options
 
@@ -80,11 +56,11 @@ open class GenericFormField<T, O : FieldOptions<T>, P : GenericFormField.Props<T
     init {
         lifecycle {
             onMount {
-                sendMessage(FormFieldMountedMessage(this@GenericFormField))
+                sendMessage(FormFieldMountedMessage(this@AbstractFormField))
             }
 
             onUnmount {
-                sendMessage(FormFieldUnmountedMessage(this@GenericFormField))
+                sendMessage(FormFieldUnmountedMessage(this@AbstractFormField))
             }
 
             onNextProps { new, _ ->
@@ -125,9 +101,6 @@ open class GenericFormField<T, O : FieldOptions<T>, P : GenericFormField.Props<T
         return errors.isEmpty()
     }
 
-    override fun VDom.render() {
-    }
-
     fun focus(cssSelector: String) {
         (dom?.querySelector(cssSelector) as? HTMLElement)?.focus()
     }
@@ -137,7 +110,7 @@ open class GenericFormField<T, O : FieldOptions<T>, P : GenericFormField.Props<T
 
         if (this._value != value) {
             try {
-                sendMessage(_root_ide_package_.de.peekandpoke.kraft.forms.FormFieldInputChanged(this))
+                sendMessage(FormFieldInputChanged(this))
             } finally {
             }
 
