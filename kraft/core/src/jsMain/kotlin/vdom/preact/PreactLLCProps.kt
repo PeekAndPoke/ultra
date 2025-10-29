@@ -1,5 +1,3 @@
-@file:Suppress("detekt:VariableNaming")
-
 package de.peekandpoke.kraft.vdom.preact
 
 import de.peekandpoke.kraft.components.Component
@@ -10,7 +8,7 @@ import de.peekandpoke.kraft.components.Ctx
  *
  * NOTICE: We define this interface as external to prevent property name-mangling.
  */
-@Suppress("PropertyName")
+@Suppress("PropertyName", "detekt:VariableNaming")
 internal external interface PreactLLCProps {
     var __ctx: Ctx<*>
     var __ctor: (Ctx<*>) -> Component<*>

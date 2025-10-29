@@ -1,4 +1,4 @@
-@file:Suppress("PrivatePropertyName")
+@file:Suppress("PrivatePropertyName", "detekt:ConstructorParameterNaming")
 
 package de.peekandpoke.monko.lang
 
