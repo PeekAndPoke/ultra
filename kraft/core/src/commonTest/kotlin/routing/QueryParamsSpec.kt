@@ -1,3 +1,5 @@
+@file:Suppress("detekt:all")
+
 package de.peekandpoke.kraft.routing
 
 import io.kotest.core.spec.style.StringSpec

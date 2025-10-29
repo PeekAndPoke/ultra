@@ -1,3 +1,5 @@
+@file:Suppress("detekt:all")
+
 package de.peekandpoke.kraft.routing
 
 import io.kotest.assertions.throwables.shouldThrow

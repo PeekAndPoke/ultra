@@ -1,7 +1,7 @@
-package routing
+@file:Suppress("detekt:all")
 
-import de.peekandpoke.kraft.routing.Route
-import de.peekandpoke.kraft.routing.Static
+package de.peekandpoke.kraft.routing
+
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -9,6 +9,7 @@ import io.kotest.matchers.shouldNotBe
 
 class StaticSpec : StringSpec() {
     val renderer = Route.Renderer.Default
+
     init {
         "Static route - simple pattern without parameters" {
             val route = Static("/home")

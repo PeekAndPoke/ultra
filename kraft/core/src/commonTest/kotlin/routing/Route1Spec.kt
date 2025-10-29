@@ -1,7 +1,7 @@
-package routing
+@file:Suppress("detekt:all")
 
-import de.peekandpoke.kraft.routing.Route
-import de.peekandpoke.kraft.routing.Route1
+package de.peekandpoke.kraft.routing
+
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
