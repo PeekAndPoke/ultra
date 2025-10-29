@@ -1,3 +1,5 @@
+@file:Suppress("detekt:TooGenericExceptionCaught")
+
 package de.peekandpoke.kraft.semanticui.forms
 
 import de.peekandpoke.kraft.components.Ctx

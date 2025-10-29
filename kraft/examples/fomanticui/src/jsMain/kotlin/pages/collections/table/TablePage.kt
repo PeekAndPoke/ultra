@@ -1,3 +1,5 @@
+@file:Suppress("detekt:all")
+
 package de.peekandpoke.kraft.examples.fomanticui.pages.collections.table
 
 import de.peekandpoke.kraft.components.NoProps
