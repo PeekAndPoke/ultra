@@ -22,7 +22,9 @@ import org.w3c.dom.events.UIEvent
 
 typealias PopupPositionFn = (target: HTMLElement, contentSize: Vector2D) -> Vector2D
 
-typealias PopupComponentFactory = FlowContent.(target: HTMLElement, positioning: PopupPositionFn, handle: PopupsManager.Handle, content: PopupContentRenderer) -> Unit
+typealias PopupComponentFactory = FlowContent.(
+    target: HTMLElement, positioning: PopupPositionFn, handle: PopupsManager.Handle, content: PopupContentRenderer,
+) -> Unit
 
 class PopupsManager(
     val settings: Settings,

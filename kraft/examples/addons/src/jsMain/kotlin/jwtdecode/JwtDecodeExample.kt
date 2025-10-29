@@ -1,3 +1,5 @@
+@file:Suppress("detekt:all")
+
 package de.peekandpoke.kraft.examples.jsaddons.jwtdecode
 
 import de.peekandpoke.kraft.addons.decodeJwt

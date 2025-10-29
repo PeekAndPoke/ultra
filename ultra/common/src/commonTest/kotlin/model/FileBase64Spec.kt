@@ -1,3 +1,5 @@
+@file:Suppress("detekt:all")
+
 package de.peekandpoke.ultra.common.model
 
 import io.kotest.core.spec.style.StringSpec
