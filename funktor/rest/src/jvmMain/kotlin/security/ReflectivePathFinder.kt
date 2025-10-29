@@ -85,9 +85,9 @@ class ReflectivePathFinder private constructor(
         val cls = visitedType.classifier as? KClass<*> ?: return
 
         // Dive in to collection types
-        val isCollectionType = cls.isSubclassOf(Collection::class)
-                || cls.isSubclassOf(Map::class)
-                || cls.isSubclassOf(Array::class)
+        val isCollectionType = cls.isSubclassOf(Collection::class) ||
+                cls.isSubclassOf(Map::class) ||
+                cls.isSubclassOf(Array::class)
 
         if (isCollectionType) {
             visitedType.arguments.forEach { projection ->
