@@ -13,7 +13,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-TypeCheck-IS_DATESTRING-Spec` : StringSpec({
+class E2E_Func_IS_DATESTRING_Spec : StringSpec({
 
     val cases = listOf(
         tuple(

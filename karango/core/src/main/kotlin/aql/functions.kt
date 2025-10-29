@@ -111,19 +111,6 @@ enum class AqlFunc {
     UPPER,
     UUID,
     STARTS_WITH, // TODO: tests
-
-    // Type checks
-    IS_NULL,
-    IS_BOOL,
-    IS_NUMBER,
-    IS_STRING,
-    IS_ARRAY,
-    IS_LIST,
-    IS_OBJECT,
-    IS_DOCUMENT,
-    IS_DATESTRING,
-    IS_KEY,
-    TYPENAME,
 }
 
 fun <T> AqlFunc.call(type: TypeRef<T>, vararg args: AqlExpression<*>): AqlExpression<T> =

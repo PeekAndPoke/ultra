@@ -1,9 +1,9 @@
 package de.peekandpoke.karango.e2e.type_checks
 
 import de.peekandpoke.karango.aql.ARRAY
-import de.peekandpoke.karango.aql.IS_LIST
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
+import de.peekandpoke.karango.aql.TYPENAME
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.E2ePerson
 import de.peekandpoke.karango.e2e.karangoDriver
@@ -13,58 +13,63 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-TypeCheck-IS_LIST-Spec` : StringSpec({
+class E2E_Func_TYPENAME_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "IS_LIST(true)",
-            IS_LIST(true.aql),
-            false
+            "TYPENAME(true)",
+            TYPENAME(true.aql),
+            "bool"
         ),
         tuple(
-            "IS_LIST(false)",
-            IS_LIST(true.aql),
-            false
+            "TYPENAME(false)",
+            TYPENAME(true.aql),
+            "bool"
         ),
         tuple(
-            "IS_LIST(null)",
-            IS_LIST(null.aql),
-            false
+            "TYPENAME(null)",
+            TYPENAME(null.aql),
+            "null"
         ),
         tuple(
-            "IS_LIST(0)",
-            IS_LIST(0.aql),
-            false
+            "TYPENAME(0)",
+            TYPENAME(0.aql),
+            "number"
         ),
         tuple(
-            "IS_LIST(1)",
-            IS_LIST(1.aql),
-            false
+            "TYPENAME(1.1)",
+            TYPENAME(1.1.aql),
+            "number"
         ),
         tuple(
-            "IS_LIST(\"a\")",
-            IS_LIST("a".aql),
-            false
+            "TYPENAME(\"a\")",
+            TYPENAME("a".aql),
+            "string"
         ),
         tuple(
-            "IS_LIST(\"\")",
-            IS_LIST("".aql),
-            false
+            "TYPENAME(\"\")",
+            TYPENAME("".aql),
+            "string"
         ),
         tuple(
-            "IS_LIST([0]) - ARRAY",
-            IS_LIST(ARRAY(0.aql)),
-            true
+            "TYPENAME(\"1\")",
+            TYPENAME("1".aql),
+            "string"
         ),
         tuple(
-            "IS_LIST([0]) - listOf",
-            IS_LIST(listOf(0).aql),
-            true
+            "TYPENAME([])",
+            TYPENAME(ARRAY<Any>()),
+            "array"
         ),
         tuple(
-            "IS_LIST(object)",
-            IS_LIST(E2ePerson("name", 10).aql),
-            false
+            "TYPENAME([0])",
+            TYPENAME(ARRAY(0.aql)),
+            "array"
+        ),
+        tuple(
+            "TYPENAME(object)",
+            TYPENAME(E2ePerson("name", 10).aql),
+            "object"
         )
     )
 

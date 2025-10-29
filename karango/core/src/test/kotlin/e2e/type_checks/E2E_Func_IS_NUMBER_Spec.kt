@@ -1,7 +1,7 @@
 package de.peekandpoke.karango.e2e.type_checks
 
 import de.peekandpoke.karango.aql.ARRAY
-import de.peekandpoke.karango.aql.IS_ARRAY
+import de.peekandpoke.karango.aql.IS_NUMBER
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
@@ -13,57 +13,62 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-TypeCheck-IS_ARRAY-Spec` : StringSpec({
+class E2E_Func_IS_NUMBER_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "IS_ARRAY(true)",
-            IS_ARRAY(true.aql),
+            "IS_NUMBER(true)",
+            IS_NUMBER(true.aql),
             false
         ),
         tuple(
-            "IS_ARRAY(false)",
-            IS_ARRAY(true.aql),
+            "IS_NUMBER(false)",
+            IS_NUMBER(true.aql),
             false
         ),
         tuple(
-            "IS_ARRAY(null)",
-            IS_ARRAY(null.aql),
+            "IS_NUMBER(null)",
+            IS_NUMBER(null.aql),
             false
         ),
         tuple(
-            "IS_ARRAY(0)",
-            IS_ARRAY(0.aql),
-            false
-        ),
-        tuple(
-            "IS_ARRAY(1)",
-            IS_ARRAY(1.aql),
-            false
-        ),
-        tuple(
-            "IS_ARRAY(\"a\")",
-            IS_ARRAY("a".aql),
-            false
-        ),
-        tuple(
-            "IS_ARRAY(\"\")",
-            IS_ARRAY("".aql),
-            false
-        ),
-        tuple(
-            "IS_ARRAY([0]) - ARRAY",
-            IS_ARRAY(ARRAY(0.aql)),
+            "IS_NUMBER(0)",
+            IS_NUMBER(0.aql),
             true
         ),
         tuple(
-            "IS_ARRAY([0]) - listOf",
-            IS_ARRAY(listOf(0).aql),
+            "IS_NUMBER(1)",
+            IS_NUMBER(1.aql),
             true
         ),
         tuple(
-            "IS_ARRAY(object)",
-            IS_ARRAY(E2ePerson("name", 10).aql),
+            "IS_NUMBER(-1.5)",
+            IS_NUMBER((-1.5).aql),
+            true
+        ),
+        tuple(
+            "IS_NUMBER(\"1\")",
+            IS_NUMBER("1".aql),
+            false
+        ),
+        tuple(
+            "IS_NUMBER(\"a\")",
+            IS_NUMBER("a".aql),
+            false
+        ),
+        tuple(
+            "IS_NUMBER(\"\")",
+            IS_NUMBER("".aql),
+            false
+        ),
+        tuple(
+            "IS_NUMBER([0])",
+            IS_NUMBER(ARRAY(0.aql)),
+            false
+        ),
+        tuple(
+            "IS_NUMBER(object)",
+            IS_NUMBER(E2ePerson("name", 10).aql),
             false
         )
     )

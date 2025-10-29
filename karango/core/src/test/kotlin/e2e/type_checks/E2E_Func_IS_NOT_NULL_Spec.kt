@@ -1,7 +1,7 @@
 package de.peekandpoke.karango.e2e.type_checks
 
 import de.peekandpoke.karango.aql.ARRAY
-import de.peekandpoke.karango.aql.IS_BOOL
+import de.peekandpoke.karango.aql.IS_NOT_NULL
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
@@ -13,53 +13,53 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-TypeCheck-IS_BOOL-Spec` : StringSpec({
+class E2E_Func_IS_NOT_NULL_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "IS_BOOL(true)",
-            IS_BOOL(true.aql),
-            true
+            "IS_NOT_NULL(true)",
+            IS_NOT_NULL(true.aql),
+            false.not()
         ),
         tuple(
-            "IS_BOOL(false)",
-            IS_BOOL(true.aql),
-            true
+            "IS_NOT_NULL(false)",
+            IS_NOT_NULL(true.aql),
+            false.not()
         ),
         tuple(
-            "IS_BOOL(null)",
-            IS_BOOL(null.aql),
-            false
+            "IS_NOT_NULL(null)",
+            IS_NOT_NULL(null.aql),
+            true.not()
         ),
         tuple(
-            "IS_BOOL(0)",
-            IS_BOOL(0.aql),
-            false
+            "IS_NOT_NULL(0)",
+            IS_NOT_NULL(0.aql),
+            false.not()
         ),
         tuple(
-            "IS_BOOL(1)",
-            IS_BOOL(1.aql),
-            false
+            "IS_NOT_NULL(1)",
+            IS_NOT_NULL(1.aql),
+            false.not()
         ),
         tuple(
-            "IS_BOOL(\"a\")",
-            IS_BOOL("a".aql),
-            false
+            "IS_NOT_NULL(\"a\")",
+            IS_NOT_NULL("a".aql),
+            false.not()
         ),
         tuple(
-            "IS_BOOL(\"\")",
-            IS_BOOL("".aql),
-            false
+            "IS_NOT_NULL(\"\")",
+            IS_NOT_NULL("".aql),
+            false.not()
         ),
         tuple(
-            "IS_BOOL([0])",
-            IS_BOOL(ARRAY(0.aql)),
-            false
+            "IS_NOT_NULL([0])",
+            IS_NOT_NULL(ARRAY(0.aql)),
+            false.not()
         ),
         tuple(
-            "IS_BOOL(object)",
-            IS_BOOL(E2ePerson("name", 10).aql),
-            false
+            "IS_NOT_NULL(object)",
+            IS_NOT_NULL(E2ePerson("name", 10).aql),
+            false.not()
         )
     )
 

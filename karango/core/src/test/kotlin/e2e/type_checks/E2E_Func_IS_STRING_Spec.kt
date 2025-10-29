@@ -1,9 +1,9 @@
 package de.peekandpoke.karango.e2e.type_checks
 
 import de.peekandpoke.karango.aql.ARRAY
+import de.peekandpoke.karango.aql.IS_STRING
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
-import de.peekandpoke.karango.aql.TYPENAME
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.E2ePerson
 import de.peekandpoke.karango.e2e.karangoDriver
@@ -13,63 +13,53 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-TypeCheck-TYPENAME-Spec` : StringSpec({
+class E2E_Func_IS_STRING_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "TYPENAME(true)",
-            TYPENAME(true.aql),
-            "bool"
+            "IS_STRING(true)",
+            IS_STRING(true.aql),
+            false
         ),
         tuple(
-            "TYPENAME(false)",
-            TYPENAME(true.aql),
-            "bool"
+            "IS_STRING(false)",
+            IS_STRING(true.aql),
+            false
         ),
         tuple(
-            "TYPENAME(null)",
-            TYPENAME(null.aql),
-            "null"
+            "IS_STRING(null)",
+            IS_STRING(null.aql),
+            false
         ),
         tuple(
-            "TYPENAME(0)",
-            TYPENAME(0.aql),
-            "number"
+            "IS_STRING(0)",
+            IS_STRING(0.aql),
+            false
         ),
         tuple(
-            "TYPENAME(1.1)",
-            TYPENAME(1.1.aql),
-            "number"
+            "IS_STRING(1)",
+            IS_STRING(1.aql),
+            false
         ),
         tuple(
-            "TYPENAME(\"a\")",
-            TYPENAME("a".aql),
-            "string"
+            "IS_STRING(\"a\")",
+            IS_STRING("a".aql),
+            true
         ),
         tuple(
-            "TYPENAME(\"\")",
-            TYPENAME("".aql),
-            "string"
+            "IS_STRING(\"\")",
+            IS_STRING("".aql),
+            true
         ),
         tuple(
-            "TYPENAME(\"1\")",
-            TYPENAME("1".aql),
-            "string"
+            "IS_STRING([0])",
+            IS_STRING(ARRAY(0.aql)),
+            false
         ),
         tuple(
-            "TYPENAME([])",
-            TYPENAME(ARRAY<Any>()),
-            "array"
-        ),
-        tuple(
-            "TYPENAME([0])",
-            TYPENAME(ARRAY(0.aql)),
-            "array"
-        ),
-        tuple(
-            "TYPENAME(object)",
-            TYPENAME(E2ePerson("name", 10).aql),
-            "object"
+            "IS_STRING(object)",
+            IS_STRING(E2ePerson("name", 10).aql),
+            false
         )
     )
 

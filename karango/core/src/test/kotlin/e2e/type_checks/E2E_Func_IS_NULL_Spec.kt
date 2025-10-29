@@ -1,7 +1,7 @@
 package de.peekandpoke.karango.e2e.type_checks
 
 import de.peekandpoke.karango.aql.ARRAY
-import de.peekandpoke.karango.aql.IS_STRING
+import de.peekandpoke.karango.aql.IS_NULL
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
@@ -13,52 +13,52 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-TypeCheck-IS_STRING-Spec` : StringSpec({
+class E2E_Func_IS_NULL_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "IS_STRING(true)",
-            IS_STRING(true.aql),
+            "IS_NULL(true)",
+            IS_NULL(true.aql),
             false
         ),
         tuple(
-            "IS_STRING(false)",
-            IS_STRING(true.aql),
+            "IS_NULL(false)",
+            IS_NULL(true.aql),
             false
         ),
         tuple(
-            "IS_STRING(null)",
-            IS_STRING(null.aql),
-            false
-        ),
-        tuple(
-            "IS_STRING(0)",
-            IS_STRING(0.aql),
-            false
-        ),
-        tuple(
-            "IS_STRING(1)",
-            IS_STRING(1.aql),
-            false
-        ),
-        tuple(
-            "IS_STRING(\"a\")",
-            IS_STRING("a".aql),
+            "IS_NULL(null)",
+            IS_NULL(null.aql),
             true
         ),
         tuple(
-            "IS_STRING(\"\")",
-            IS_STRING("".aql),
-            true
-        ),
-        tuple(
-            "IS_STRING([0])",
-            IS_STRING(ARRAY(0.aql)),
+            "IS_NULL(0)",
+            IS_NULL(0.aql),
             false
         ),
         tuple(
-            "IS_STRING(object)",
-            IS_STRING(E2ePerson("name", 10).aql),
+            "IS_NULL(1)",
+            IS_NULL(1.aql),
+            false
+        ),
+        tuple(
+            "IS_NULL(\"a\")",
+            IS_NULL("a".aql),
+            false
+        ),
+        tuple(
+            "IS_NULL(\"\")",
+            IS_NULL("".aql),
+            false
+        ),
+        tuple(
+            "IS_NULL([0])",
+            IS_NULL(ARRAY(0.aql)),
+            false
+        ),
+        tuple(
+            "IS_NULL(object)",
+            IS_NULL(E2ePerson("name", 10).aql),
             false
         )
     )

@@ -60,7 +60,7 @@ inline fun <reified T : Any> DOCUMENT(collection: KarangoRepository<T>, vararg i
  * Get a list of documents from the given collection by their keys.
  */
 @VaultFunctionMarker
-inline fun <reified T : Any> DOCUMENT(collection: KarangoRepository<T>, ids: List<String>) =
+fun <T : Any> DOCUMENT(collection: KarangoRepository<T>, ids: List<String>) =
     DOCUMENT(type = collection.getType(), collection.name, ids)
 
 /**

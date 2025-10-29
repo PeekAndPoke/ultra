@@ -1,7 +1,7 @@
 package de.peekandpoke.karango.e2e.type_checks
 
 import de.peekandpoke.karango.aql.ARRAY
-import de.peekandpoke.karango.aql.IS_KEY
+import de.peekandpoke.karango.aql.IS_OBJECT
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
@@ -13,53 +13,67 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-TypeCheck-IS_KEY-Spec` : StringSpec({
+class E2E_Func_IS_OBJECT_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "IS_KEY(\"a\")",
-            IS_KEY("a".aql),
+            "IS_OBJECT(object) - empty object",
+            IS_OBJECT(mapOf<Any, Any>().aql),
             true
         ),
-        // //////////////////////////////////////////////////////////////////////////////////////////////
         tuple(
-            "IS_KEY(true)",
-            IS_KEY(true.aql),
+            "IS_OBJECT(object) - object with properties",
+            IS_OBJECT(E2ePerson("name", 10).aql),
+            true
+        ),
+        tuple(
+            "IS_OBJECT(true)",
+            IS_OBJECT(true.aql),
             false
         ),
         tuple(
-            "IS_KEY(false)",
-            IS_KEY(true.aql),
+            "IS_OBJECT(false)",
+            IS_OBJECT(true.aql),
             false
         ),
         tuple(
-            "IS_KEY(null)",
-            IS_KEY(null.aql),
+            "IS_OBJECT(null)",
+            IS_OBJECT(null.aql),
             false
         ),
         tuple(
-            "IS_KEY(0)",
-            IS_KEY(0.aql),
+            "IS_OBJECT(0)",
+            IS_OBJECT(0.aql),
             false
         ),
         tuple(
-            "IS_KEY(1)",
-            IS_KEY(1.aql),
+            "IS_OBJECT(1)",
+            IS_OBJECT(1.aql),
             false
         ),
         tuple(
-            "IS_KEY(\"\")",
-            IS_KEY("".aql),
+            "IS_OBJECT(\"a\")",
+            IS_OBJECT("a".aql),
             false
         ),
         tuple(
-            "IS_KEY([0])",
-            IS_KEY(ARRAY(0.aql)),
+            "IS_OBJECT(\"\")",
+            IS_OBJECT("".aql),
             false
         ),
         tuple(
-            "IS_KEY(object)",
-            IS_KEY(E2ePerson("name", 10).aql),
+            "IS_OBJECT([0]) - ARRAY",
+            IS_OBJECT(ARRAY(0.aql)),
+            false
+        ),
+        tuple(
+            "IS_OBJECT([0]) - listOf",
+            IS_OBJECT(listOf(0).aql),
+            false
+        ),
+        tuple(
+            "IS_OBJECT([object])",
+            IS_OBJECT(ARRAY(E2ePerson("name", 10).aql)),
             false
         )
     )

@@ -1,7 +1,7 @@
 package de.peekandpoke.karango.e2e.type_checks
 
 import de.peekandpoke.karango.aql.ARRAY
-import de.peekandpoke.karango.aql.IS_OBJECT
+import de.peekandpoke.karango.aql.IS_DOCUMENT
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
@@ -13,67 +13,67 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-TypeCheck-IS_OBJECT-Spec` : StringSpec({
+class E2E_Func_IS_DOCUMENT_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "IS_OBJECT(object) - empty object",
-            IS_OBJECT(mapOf<Any, Any>().aql),
+            "IS_DOCUMENT(object) - empty objects seem to be documents",
+            IS_DOCUMENT(mapOf<Any, Any>().aql),
             true
         ),
         tuple(
-            "IS_OBJECT(object) - object with properties",
-            IS_OBJECT(E2ePerson("name", 10).aql),
+            "IS_DOCUMENT(object) - objects seem to be documents",
+            IS_DOCUMENT(E2ePerson("name", 10).aql),
             true
         ),
         tuple(
-            "IS_OBJECT(true)",
-            IS_OBJECT(true.aql),
+            "IS_DOCUMENT(true)",
+            IS_DOCUMENT(true.aql),
             false
         ),
         tuple(
-            "IS_OBJECT(false)",
-            IS_OBJECT(true.aql),
+            "IS_DOCUMENT(false)",
+            IS_DOCUMENT(true.aql),
             false
         ),
         tuple(
-            "IS_OBJECT(null)",
-            IS_OBJECT(null.aql),
+            "IS_DOCUMENT(null)",
+            IS_DOCUMENT(null.aql),
             false
         ),
         tuple(
-            "IS_OBJECT(0)",
-            IS_OBJECT(0.aql),
+            "IS_DOCUMENT(0)",
+            IS_DOCUMENT(0.aql),
             false
         ),
         tuple(
-            "IS_OBJECT(1)",
-            IS_OBJECT(1.aql),
+            "IS_DOCUMENT(1)",
+            IS_DOCUMENT(1.aql),
             false
         ),
         tuple(
-            "IS_OBJECT(\"a\")",
-            IS_OBJECT("a".aql),
+            "IS_DOCUMENT(\"a\")",
+            IS_DOCUMENT("a".aql),
             false
         ),
         tuple(
-            "IS_OBJECT(\"\")",
-            IS_OBJECT("".aql),
+            "IS_DOCUMENT(\"\")",
+            IS_DOCUMENT("".aql),
             false
         ),
         tuple(
-            "IS_OBJECT([0]) - ARRAY",
-            IS_OBJECT(ARRAY(0.aql)),
+            "IS_DOCUMENT([0]) - ARRAY",
+            IS_DOCUMENT(ARRAY(0.aql)),
             false
         ),
         tuple(
-            "IS_OBJECT([0]) - listOf",
-            IS_OBJECT(listOf(0).aql),
+            "IS_DOCUMENT([0]) - listOf",
+            IS_DOCUMENT(listOf(0).aql),
             false
         ),
         tuple(
-            "IS_OBJECT([object])",
-            IS_OBJECT(ARRAY(E2ePerson("name", 10).aql)),
+            "IS_DOCUMENT([object])",
+            IS_DOCUMENT(ARRAY(E2ePerson("name", 10).aql)),
             false
         )
     )
