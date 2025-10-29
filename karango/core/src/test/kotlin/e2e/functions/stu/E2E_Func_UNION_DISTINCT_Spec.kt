@@ -1,9 +1,10 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.stu
 
 import de.peekandpoke.karango.aql.ARRAY
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
-import de.peekandpoke.karango.aql.SHIFT
+import de.peekandpoke.karango.aql.SORTED
+import de.peekandpoke.karango.aql.UNION_DISTINCT
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
@@ -12,28 +13,28 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-SHIFT-Spec` : StringSpec({
+class E2E_Func_UNION_DISTINCT_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "SHIFT ([])",
-            SHIFT(ARRAY()),
+            "UNION_DISTINCT ([], [])",
+            UNION_DISTINCT(ARRAY(), ARRAY()),
             listOf()
         ),
         tuple(
-            "SHIFT ([1])",
-            SHIFT(ARRAY(1.aql)),
-            listOf()
+            "UNION_DISTINCT ([1], [])",
+            SORTED(UNION_DISTINCT(ARRAY(1.aql), ARRAY())),
+            listOf(1),
         ),
         tuple(
-            "SHIFT ([1, 2])",
-            SHIFT(ARRAY(1.aql, 2.aql)),
-            listOf(2)
+            "UNION_DISTINCT ([1, 2], [2, 3])",
+            SORTED(UNION_DISTINCT(ARRAY(1.aql, 2.aql), ARRAY(2.aql, 3.aql))),
+            listOf(1, 2, 3),
         ),
         tuple(
-            "SHIFT ([1, 2, 3])",
-            SHIFT(ARRAY(1.aql, 2.aql, 3.aql)),
-            listOf(2, 3)
+            "UNION_DISTINCT ([1, 2], [2, 3], [3, 4])",
+            SORTED(UNION_DISTINCT(ARRAY(1.aql, 2.aql), ARRAY(2.aql, 3.aql), ARRAY(3.aql, 4.aql))),
+            listOf(1, 2, 3, 4),
         )
     )
 
@@ -46,7 +47,7 @@ class `E2E-Func-Array-SHIFT-Spec` : StringSpec({
             }
 
             withDetailedClue(expression, expected) {
-                result.toList() shouldBe listOf(expected)
+                result.toList().first() shouldBe expected
             }
         }
 
@@ -59,7 +60,7 @@ class `E2E-Func-Array-SHIFT-Spec` : StringSpec({
             }
 
             withDetailedClue(expression, expected) {
-                result.toList() shouldBe listOf(expected)
+                result.toList().first() shouldBe expected
             }
         }
     }

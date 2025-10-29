@@ -359,17 +359,6 @@ fun REGEX_TEST(
     AqlFunc.REGEX_TEST.nullableBoolCall(text, regex, caseInsensitive)
 
 /**
- * Return the reverse of the string value.
- *
- * See https://docs.arangodb.com/current/AQL/Functions/String.html#reverse
- */
-@VaultFunctionMarker
-fun REVERSE(
-    value: AqlExpression<String>,
-): AqlExpression<String> =
-    AqlFunc.REVERSE.stringCall(value)
-
-/**
  * Return the n rightmost characters of the string value.
  *
  * https://docs.arangodb.com/current/AQL/Functions/String.html#right

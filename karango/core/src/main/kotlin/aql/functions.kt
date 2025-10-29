@@ -14,20 +14,7 @@ enum class AqlPercentileMethod(val method: String) {
 }
 
 enum class AqlFunc {
-    // Overloaded functions
-    REVERSE,
-
-    // Array
-    SHIFT,
-    SLICE,
-    SORTED,
-    SORTED_UNIQUE,
-    UNION,
-    UNION_DISTINCT,
-    UNIQUE,
-    UNSHIFT,
-
-    // Date TODO
+    // TODO: all date functions
 
     // Database functions
     COLLECTION_COUNT, // TODO: impl, tests

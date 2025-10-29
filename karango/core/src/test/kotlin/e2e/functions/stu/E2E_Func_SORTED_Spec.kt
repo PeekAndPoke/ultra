@@ -1,10 +1,9 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.stu
 
 import de.peekandpoke.karango.aql.ARRAY
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.SORTED
-import de.peekandpoke.karango.aql.UNION_DISTINCT
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
@@ -13,28 +12,18 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-UNION_DISTINCT-Spec` : StringSpec({
+class E2E_Func_SORTED_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "UNION_DISTINCT ([], [])",
-            UNION_DISTINCT(ARRAY(), ARRAY()),
+            "SORTED ( [] )",
+            SORTED(ARRAY()),
             listOf()
         ),
         tuple(
-            "UNION_DISTINCT ([1], [])",
-            SORTED(UNION_DISTINCT(ARRAY(1.aql), ARRAY())),
-            listOf(1),
-        ),
-        tuple(
-            "UNION_DISTINCT ([1, 2], [2, 3])",
-            SORTED(UNION_DISTINCT(ARRAY(1.aql, 2.aql), ARRAY(2.aql, 3.aql))),
-            listOf(1, 2, 3),
-        ),
-        tuple(
-            "UNION_DISTINCT ([1, 2], [2, 3], [3, 4])",
-            SORTED(UNION_DISTINCT(ARRAY(1.aql, 2.aql), ARRAY(2.aql, 3.aql), ARRAY(3.aql, 4.aql))),
-            listOf(1, 2, 3, 4),
+            "SORTED ( [ 8, 4, 2, 10, 6 ] )",
+            SORTED(listOf(8, 4, 2, 10, 6).aql),
+            listOf(2, 4, 6, 8, 10)
         )
     )
 
@@ -47,7 +36,7 @@ class `E2E-Func-Array-UNION_DISTINCT-Spec` : StringSpec({
             }
 
             withDetailedClue(expression, expected) {
-                result.toList().first() shouldBe expected
+                result.toList() shouldBe listOf(expected)
             }
         }
 
@@ -60,7 +49,7 @@ class `E2E-Func-Array-UNION_DISTINCT-Spec` : StringSpec({
             }
 
             withDetailedClue(expression, expected) {
-                result.toList().first() shouldBe expected
+                result.toList() shouldBe listOf(expected)
             }
         }
     }
