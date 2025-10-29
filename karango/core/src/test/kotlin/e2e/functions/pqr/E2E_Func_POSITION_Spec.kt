@@ -1,8 +1,8 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.pqr
 
 import de.peekandpoke.karango.aql.ARRAY
 import de.peekandpoke.karango.aql.LET
-import de.peekandpoke.karango.aql.POSITION_IDX
+import de.peekandpoke.karango.aql.POSITION
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
@@ -12,27 +12,27 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-POSITION_IDX-Spec` : StringSpec({
+class E2E_Func_POSITION_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "POSITION_IDX ([], 0)",
-            POSITION_IDX(ARRAY(), 0.aql),
+            "POSITION ([], 0)",
+            POSITION(ARRAY(), 0.aql),
             -1L
         ),
         tuple(
-            "POSITION_IDX ([1], 1)",
-            POSITION_IDX(ARRAY(1.aql), 1.aql),
+            "POSITION ([1], 1)",
+            POSITION(ARRAY(1.aql), 1.aql),
             0L
         ),
         tuple(
-            "POSITION_IDX ([1, 2, 3], 3)",
-            POSITION_IDX(ARRAY(1.aql, 2.aql, 3.aql), 3.aql),
+            "POSITION ([1, 2, 3], 3)",
+            POSITION(ARRAY(1.aql, 2.aql, 3.aql), 3.aql),
             2L
         ),
         tuple(
-            "POSITION_IDX ([1, 2, 3], 4)",
-            POSITION_IDX(ARRAY(1.aql, 2.aql, 3.aql), 4.aql),
+            "POSITION ([1, 2, 3], 4)",
+            POSITION(ARRAY(1.aql, 2.aql, 3.aql), 4.aql),
             -1L
         )
     )

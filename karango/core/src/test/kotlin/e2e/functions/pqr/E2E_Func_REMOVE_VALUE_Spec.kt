@@ -1,8 +1,8 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.pqr
 
 import de.peekandpoke.karango.aql.ARRAY
 import de.peekandpoke.karango.aql.LET
-import de.peekandpoke.karango.aql.REMOVE_VALUES
+import de.peekandpoke.karango.aql.REMOVE_VALUE
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
@@ -12,28 +12,43 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-REMOVE_VALUESS-Spec` : StringSpec({
+class E2E_Func_REMOVE_VALUE_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "REMOVE_VALUES ([], [])",
-            REMOVE_VALUES(ARRAY(), ARRAY()),
+            "REMOVE_VALUE ([], 0)",
+            REMOVE_VALUE(ARRAY(), 0.aql),
             listOf()
         ),
         tuple(
-            "REMOVE_VALUES ([1], [])",
-            REMOVE_VALUES(ARRAY(1.aql), ARRAY()),
+            "REMOVE_VALUE ([1], 1)",
+            REMOVE_VALUE(ARRAY(1.aql), 1.aql),
+            listOf()
+        ),
+        tuple(
+            "REMOVE_VALUE ([1], 0)",
+            REMOVE_VALUE(ARRAY(1.aql), 0.aql),
             listOf(1)
         ),
         tuple(
-            "REMOVE_VALUES ([1], [1])",
-            REMOVE_VALUES(ARRAY(1.aql), ARRAY(1.aql)),
-            listOf()
+            "REMOVE_VALUE ([1, 2], 1)",
+            REMOVE_VALUE(ARRAY(1.aql, 2.aql), 1.aql),
+            listOf(2)
         ),
         tuple(
-            "REMOVE_VALUES ([1, 1, 2, 2, 3, 3, 4, 5], [1, 3, 4])",
-            REMOVE_VALUES(ARRAY(1.aql, 1.aql, 2.aql, 2.aql, 3.aql, 4.aql, 5.aql), ARRAY(1.aql, 3.aql, 5.aql)),
-            listOf(2, 2, 4)
+            "REMOVE_VALUE ([1, 2], 2)",
+            REMOVE_VALUE(ARRAY(1.aql, 2.aql), 2.aql),
+            listOf(1)
+        ),
+        tuple(
+            "REMOVE_VALUE ([1, 1, 2], 1, 1)",
+            REMOVE_VALUE(ARRAY(1.aql, 1.aql, 2.aql), 1.aql, 1.aql),
+            listOf(1, 2)
+        ),
+        tuple(
+            "REMOVE_VALUE ([1, 1, 2], 1, 2)",
+            REMOVE_VALUE(ARRAY(1.aql, 1.aql, 2.aql), 1.aql, 2.aql),
+            listOf(2)
         )
     )
 

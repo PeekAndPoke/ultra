@@ -1,4 +1,4 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.pqr
 
 import de.peekandpoke.karango.aql.ARRAY
 import de.peekandpoke.karango.aql.LET
@@ -12,7 +12,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-REMOVE_NTH-Spec` : StringSpec({
+class E2E_Func_REMOVE_NTH_Spec : StringSpec({
 
     val cases = listOf(
         tuple(

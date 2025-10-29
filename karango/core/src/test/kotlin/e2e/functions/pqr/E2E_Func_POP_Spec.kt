@@ -1,8 +1,8 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.pqr
 
 import de.peekandpoke.karango.aql.ARRAY
 import de.peekandpoke.karango.aql.LET
-import de.peekandpoke.karango.aql.POSITION
+import de.peekandpoke.karango.aql.POP
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
@@ -12,28 +12,28 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-POSITION-Spec` : StringSpec({
+class E2E_Func_POP_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "POSITION ([], 0)",
-            POSITION(ARRAY(), 0.aql),
-            false
+            "POP ([])",
+            POP(ARRAY()),
+            listOf()
         ),
         tuple(
-            "POSITION ([1], 1)",
-            POSITION(ARRAY(1.aql), 1.aql),
-            true
+            "POP ([1])",
+            POP(ARRAY(1.aql)),
+            listOf()
         ),
         tuple(
-            "POSITION ([1, 2, 3], 3)",
-            POSITION(ARRAY(1.aql, 2.aql, 3.aql), 3.aql),
-            true
+            "POP ([1, 2])",
+            POP(ARRAY(1.aql, 2.aql)),
+            listOf(1)
         ),
         tuple(
-            "POSITION ([1, 2, 3], 4)",
-            POSITION(ARRAY(1.aql, 2.aql, 3.aql), 4.aql),
-            false
+            "POP ([1, 2, 3])",
+            POP(ARRAY(1.aql, 2.aql, 3.aql)),
+            listOf(1, 2)
         )
     )
 
@@ -54,6 +54,7 @@ class `E2E-Func-Array-POSITION-Spec` : StringSpec({
 
             val result = karangoDriver.query {
                 val l = LET("l", expression)
+
                 RETURN(l)
             }
 

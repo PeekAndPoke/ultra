@@ -1,8 +1,8 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.pqr
 
 import de.peekandpoke.karango.aql.ARRAY
 import de.peekandpoke.karango.aql.LET
-import de.peekandpoke.karango.aql.PUSH
+import de.peekandpoke.karango.aql.REMOVE_VALUES
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
@@ -12,28 +12,28 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-PUSH-Spec` : StringSpec({
+class E2E_Func_REMOVE_VALUESS_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "PUSH ([], 0)",
-            PUSH(ARRAY(), 1.aql),
+            "REMOVE_VALUES ([], [])",
+            REMOVE_VALUES(ARRAY(), ARRAY()),
+            listOf()
+        ),
+        tuple(
+            "REMOVE_VALUES ([1], [])",
+            REMOVE_VALUES(ARRAY(1.aql), ARRAY()),
             listOf(1)
         ),
         tuple(
-            "PUSH ([1], 'a')",
-            PUSH<Any>(ARRAY(1.aql), "a".aql),
-            listOf(1L, "a")
+            "REMOVE_VALUES ([1], [1])",
+            REMOVE_VALUES(ARRAY(1.aql), ARRAY(1.aql)),
+            listOf()
         ),
         tuple(
-            "PUSH ([1], 1, true)",
-            PUSH(ARRAY(1.aql), 1.aql, true.aql),
-            listOf(1)
-        ),
-        tuple(
-            "PUSH ([1, 1], 2, true)",
-            PUSH(ARRAY(1.aql, 1.aql), 2.aql, true.aql),
-            listOf(1, 1, 2)
+            "REMOVE_VALUES ([1, 1, 2, 2, 3, 3, 4, 5], [1, 3, 4])",
+            REMOVE_VALUES(ARRAY(1.aql, 1.aql, 2.aql, 2.aql, 3.aql, 4.aql, 5.aql), ARRAY(1.aql, 3.aql, 5.aql)),
+            listOf(2, 2, 4)
         )
     )
 

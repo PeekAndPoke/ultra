@@ -1,8 +1,8 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.pqr
 
 import de.peekandpoke.karango.aql.ARRAY
 import de.peekandpoke.karango.aql.LET
-import de.peekandpoke.karango.aql.REMOVE_VALUE
+import de.peekandpoke.karango.aql.PUSH
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
@@ -12,43 +12,28 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-REMOVE_VALUE-Spec` : StringSpec({
+class E2E_Func_PUSH_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "REMOVE_VALUE ([], 0)",
-            REMOVE_VALUE(ARRAY(), 0.aql),
-            listOf()
-        ),
-        tuple(
-            "REMOVE_VALUE ([1], 1)",
-            REMOVE_VALUE(ARRAY(1.aql), 1.aql),
-            listOf()
-        ),
-        tuple(
-            "REMOVE_VALUE ([1], 0)",
-            REMOVE_VALUE(ARRAY(1.aql), 0.aql),
+            "PUSH ([], 0)",
+            PUSH(ARRAY(), 1.aql),
             listOf(1)
         ),
         tuple(
-            "REMOVE_VALUE ([1, 2], 1)",
-            REMOVE_VALUE(ARRAY(1.aql, 2.aql), 1.aql),
-            listOf(2)
+            "PUSH ([1], 'a')",
+            PUSH<Any>(ARRAY(1.aql), "a".aql),
+            listOf(1L, "a")
         ),
         tuple(
-            "REMOVE_VALUE ([1, 2], 2)",
-            REMOVE_VALUE(ARRAY(1.aql, 2.aql), 2.aql),
+            "PUSH ([1], 1, true)",
+            PUSH(ARRAY(1.aql), 1.aql, true.aql),
             listOf(1)
         ),
         tuple(
-            "REMOVE_VALUE ([1, 1, 2], 1, 1)",
-            REMOVE_VALUE(ARRAY(1.aql, 1.aql, 2.aql), 1.aql, 1.aql),
-            listOf(1, 2)
-        ),
-        tuple(
-            "REMOVE_VALUE ([1, 1, 2], 1, 2)",
-            REMOVE_VALUE(ARRAY(1.aql, 1.aql, 2.aql), 1.aql, 2.aql),
-            listOf(2)
+            "PUSH ([1, 1], 2, true)",
+            PUSH(ARRAY(1.aql, 1.aql), 2.aql, true.aql),
+            listOf(1, 1, 2)
         )
     )
 

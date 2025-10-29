@@ -18,12 +18,6 @@ enum class AqlFunc {
     REVERSE,
 
     // Array
-    POP,
-    POSITION,
-    PUSH,
-    REMOVE_NTH,
-    REMOVE_VALUE,
-    REMOVE_VALUES,
     SHIFT,
     SLICE,
     SORTED,

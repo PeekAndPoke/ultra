@@ -1,9 +1,9 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.pqr
 
 import de.peekandpoke.karango.aql.ARRAY
 import de.peekandpoke.karango.aql.LET
-import de.peekandpoke.karango.aql.POP
 import de.peekandpoke.karango.aql.RETURN
+import de.peekandpoke.karango.aql.REVERSE
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
@@ -12,28 +12,38 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-POP-Spec` : StringSpec({
+class E2E_Func_REVERSE_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "POP ([])",
-            POP(ARRAY()),
+            "REVERSE( [] )",
+            REVERSE(ARRAY()),
             listOf()
         ),
         tuple(
-            "POP ([1])",
-            POP(ARRAY(1.aql)),
-            listOf()
+            "REVERSE( ['a'] )",
+            REVERSE(ARRAY("a".aql)),
+            listOf("a")
         ),
         tuple(
-            "POP ([1, 2])",
-            POP(ARRAY(1.aql, 2.aql)),
-            listOf(1)
+            "REVERSE( ['a', 'b'] ) - ARRAY",
+            REVERSE(ARRAY("a".aql, "b".aql)),
+            listOf("b", "a")
         ),
         tuple(
-            "POP ([1, 2, 3])",
-            POP(ARRAY(1.aql, 2.aql, 3.aql)),
-            listOf(1, 2)
+            "REVERSE( ['a', 'b'] ) - listOf",
+            REVERSE(listOf("a", "b").aql),
+            listOf("b", "a")
+        ),
+        tuple(
+            "REVERSE( ['a', 'b', 'c'] ) - ARRAY",
+            REVERSE(ARRAY("a".aql, "b".aql, "c".aql)),
+            listOf("c", "b", "a")
+        ),
+        tuple(
+            "REVERSE( ['a', 'b', 'c'] ) - listOf",
+            REVERSE(listOf("a", "b", "c").aql),
+            listOf("c", "b", "a")
         )
     )
 
