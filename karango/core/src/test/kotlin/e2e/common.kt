@@ -15,7 +15,6 @@ import de.peekandpoke.ultra.slumber.SlumberConfig
 import de.peekandpoke.ultra.vault.Database
 import de.peekandpoke.ultra.vault.DefaultEntityCache
 import de.peekandpoke.ultra.vault.Repository
-import de.peekandpoke.ultra.vault.Vault
 import de.peekandpoke.ultra.vault.hooks.TimestampedHook
 import de.peekandpoke.ultra.vault.slumber.VaultSlumberModule
 import io.kotest.assertions.withClue
@@ -54,11 +53,9 @@ private val dbAndDriver = createDatabase { driver ->
         TestTimestampedRepository(driver = driver, timestamped = TimestampedHook(lazy { kronos })),
     )
 }
+
 val database: Database = dbAndDriver.first
 val karangoDriver: KarangoDriver = dbAndDriver.second
-
-@Vault
-data class E2ePerson(val name: String, val age: Int)
 
 fun <T, R : Any> withDetailedClue(expression: AqlExpression<T>, expected: Any?, block: () -> R): R {
 
