@@ -1,6 +1,6 @@
-package de.peekandpoke.karango.e2e.functions_numeric
+package de.peekandpoke.karango.e2e.functions.abc
 
-import de.peekandpoke.karango.aql.ASIN
+import de.peekandpoke.karango.aql.ATAN2
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
@@ -11,28 +11,28 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Numeric-ASIN-Spec` : StringSpec({
+class E2E_Func_ATAN2_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "ASIN (1)",
-            ASIN(1.aql),
-            1.5707963267948966
-        ),
-        tuple(
-            "ASIN (0)",
-            ASIN(0.aql),
+            "ATAN2(0, 0)",
+            ATAN2(0.aql, 0.aql),
             0.0
         ),
         tuple(
-            "ASIN (-1)",
-            ASIN((-1).aql),
-            -1.5707963267948966
+            "ATAN2(1, 0)",
+            ATAN2(1.aql, 0.aql),
+            1.5707963267948966
         ),
         tuple(
-            "ASIN (2)",
-            ASIN(2.aql),
-            null
+            "ATAN2(1, 1)",
+            ATAN2(1.aql, 1.aql),
+            0.7853981633974483
+        ),
+        tuple(
+            "ATAN2(-10, 20)",
+            ATAN2((-10).aql, 20.aql),
+            -0.4636476090008061
         )
     )
 

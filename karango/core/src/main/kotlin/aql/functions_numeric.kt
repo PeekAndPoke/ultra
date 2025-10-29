@@ -7,63 +7,7 @@ import de.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
 
 
-/**
- * Return the arcsine of value.
- *
- * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#asin
- */
-@VaultFunctionMarker
-fun <T : Number> ASIN(
-    value: AqlExpression<T>,
-): AqlExpression<Number?> =
-    AqlFunc.ASIN.nullableNumberCall(value)
 
-/**
- * Return the arctangent of value.
- *
- * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#atan
- */
-@VaultFunctionMarker
-fun <T : Number> ATAN(
-    value: AqlExpression<T>,
-): AqlExpression<Number> =
-    AqlFunc.ATAN.numberCall(value)
-
-/**
- * Return the arctangent of the quotient of y and x.
- *
- * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#atan2
- */
-@VaultFunctionMarker
-fun <T1 : Number, T2 : Number> ATAN2(
-    x: AqlExpression<T1>,
-    y: AqlExpression<T2>,
-): AqlExpression<Number> =
-    AqlFunc.ATAN2.numberCall(x, y)
-
-/**
- * Return the average (arithmetic mean) of the values in array.
- *
- * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#average
- */
-@VaultFunctionMarker
-fun <T : Number> AVERAGE(
-    numArray: AqlExpression<List<T>>,
-): AqlExpression<Number> =
-    AqlFunc.AVERAGE.numberCall(numArray)
-
-/**
- * Return the average (arithmetic mean) of the values in array.
- *
- * Alias of AVERAGE
- *
- * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#avg
- */
-@VaultFunctionMarker
-fun <T : Number> AVG(
-    numArray: AqlExpression<List<T>>,
-): AqlExpression<Number> =
-    AqlFunc.AVG.numberCall(numArray)
 
 /**
  * Return the integer closest but not less than value.

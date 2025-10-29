@@ -57,6 +57,76 @@ inline fun <reified T> APPEND(
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
+ * Return the arcsine of value.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#asin
+ */
+@VaultFunctionMarker val ASIN = aqlFunc<Number?>("ASIN")
+
+/** Return the arcsine of value. */
+@VaultFunctionMarker
+fun <T : Number> ASIN(value: AqlExpression<T>): AqlExpression<Number?> = ASIN.call(value)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the arctangent of value.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#atan
+ */
+@VaultFunctionMarker val ATAN = aqlFunc<Number>("ATAN")
+
+/** Return the arctangent of value. */
+@VaultFunctionMarker
+fun <T : Number> ATAN(value: AqlExpression<T>): AqlExpression<Number> = ATAN.call(value)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the arctangent of the quotient of y and x.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#atan2
+ */
+@VaultFunctionMarker val ATAN2 = aqlFunc<Number>("ATAN2")
+
+/** Return the arctangent of the quotient of y and x. */
+@VaultFunctionMarker
+fun <T1 : Number, T2 : Number> ATAN2(x: AqlExpression<T1>, y: AqlExpression<T2>): AqlExpression<Number> =
+    ATAN2.call(x, y)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the average (arithmetic mean) of the values in array.
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#average
+ */
+@VaultFunctionMarker val AVERAGE = aqlFunc<Number?>("AVERAGE")
+
+/** Return the average (arithmetic mean) of the values in array. */
+@VaultFunctionMarker
+fun <T : Number> AVERAGE(numArray: AqlExpression<out Collection<T>>): AqlExpression<Number?> =
+    AVERAGE.call(numArray)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the average (arithmetic mean) of the values in array.
+ *
+ * Alias of AVERAGE
+ *
+ * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#avg
+ */
+@VaultFunctionMarker val AVG = aqlFunc<Number?>("AVG")
+
+/** Return the average (arithmetic mean) of the values in array. */
+@VaultFunctionMarker
+fun <T : Number> AVG(numArray: AqlExpression<out Collection<T>>): AqlExpression<Number?> =
+    AVG.call(numArray)
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
  * Return the number of characters in value (not byte length).
  *
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#charlength

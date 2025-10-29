@@ -44,11 +44,6 @@ enum class AqlFunc {
     NOT_NULL, // TODO: impl, tests
 
     // Numeric
-    ASIN,
-    ATAN,
-    ATAN2,
-    AVERAGE,
-    AVG,
     CEIL,
     COS,
     DEGREES,

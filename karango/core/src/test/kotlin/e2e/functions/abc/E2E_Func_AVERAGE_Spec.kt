@@ -1,4 +1,4 @@
-package de.peekandpoke.karango.e2e.functions_numeric
+package de.peekandpoke.karango.e2e.functions.abc
 
 import de.peekandpoke.karango.aql.ARRAY
 import de.peekandpoke.karango.aql.AVERAGE
@@ -16,7 +16,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Numeric-AVERAGE-Spec` : StringSpec({
+class E2E_Func_AVERAGE_Spec : StringSpec({
 
     "AVERAGE from multiple LETs" {
 
