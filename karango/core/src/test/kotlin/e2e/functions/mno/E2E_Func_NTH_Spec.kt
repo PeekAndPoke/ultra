@@ -1,8 +1,8 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.mno
 
 import de.peekandpoke.karango.aql.ARRAY
-import de.peekandpoke.karango.aql.INTERSECTION
 import de.peekandpoke.karango.aql.LET
+import de.peekandpoke.karango.aql.NTH
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
@@ -12,38 +12,43 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-INTERSECTION-Spec` : StringSpec({
+class E2E_Func_NTH_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "INTERSECTION ([], [])",
-            INTERSECTION(ARRAY(), ARRAY()),
-            listOf()
+            "NTH ([], 0)",
+            NTH(ARRAY(), 0.aql),
+            null
         ),
         tuple(
-            "INTERSECTION ([1], [])",
-            INTERSECTION(ARRAY(1.aql), ARRAY()),
-            listOf()
+            "NTH ([1], 0)",
+            NTH(ARRAY(1.aql), 0.aql),
+            1
         ),
         tuple(
-            "INTERSECTION ([1, 2], [2, 3])",
-            INTERSECTION(ARRAY(1.aql, 2.aql), ARRAY(2.aql, 3.aql)),
-            listOf(2)
+            "NTH ([1], -1)",
+            NTH(ARRAY(1.aql), (-1).aql),
+            null
         ),
         tuple(
-            "INTERSECTION ([1, 2], ['a', 'b'])",
-            INTERSECTION<Any>(ARRAY(1.aql, 2.aql), ARRAY("a".aql, "b".aql)),
-            listOf()
+            "NTH ([1], 1)",
+            NTH(ARRAY(1.aql), 1.aql),
+            null
         ),
         tuple(
-            "INTERSECTION ([1, 2], [1, 'a', 'b'])",
-            INTERSECTION<Any>(ARRAY(1.aql, 2.aql), ARRAY<Any>(1.aql, "a".aql, "b".aql)),
-            listOf(1L)
+            "NTH ([1, 2], 0)",
+            NTH(ARRAY(1.aql, 2.aql), 0.aql),
+            1
         ),
         tuple(
-            "INTERSECTION ( [ [1, 2] ], [ [1, 2], ['a', 'b']] )",
-            INTERSECTION<Any>(ARRAY(ARRAY(1.aql, 2.aql)), ARRAY(ARRAY(1.aql, 2.aql), ARRAY("a".aql, "b".aql))),
-            listOf(listOf(1L, 2L))
+            "NTH ([1, 2], 1)",
+            NTH(ARRAY(1.aql, 2.aql), 1.aql),
+            2
+        ),
+        tuple(
+            "NTH ([1, 2], 2)",
+            NTH(ARRAY(1.aql, 2.aql), 2.aql),
+            null
         )
     )
 

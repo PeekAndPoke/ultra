@@ -1,7 +1,7 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.abc
 
 import de.peekandpoke.karango.aql.ARRAY
-import de.peekandpoke.karango.aql.LAST
+import de.peekandpoke.karango.aql.CONTAINS_ARRAY
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
@@ -12,24 +12,29 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-LAST-Spec` : StringSpec({
+class E2E_Func_CONTAINS_ARRAY_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "LAST ([])",
-            LAST(ARRAY<Any>()),
-            null
+            "CONTAINS_ARRAY ([], 0)",
+            CONTAINS_ARRAY(ARRAY(), 0.aql),
+            false
         ),
         tuple(
-            "LAST ([1])",
-            LAST(ARRAY(1.aql)),
-            1
+            "CONTAINS_ARRAY ([1], 1)",
+            CONTAINS_ARRAY(ARRAY(1.aql), 1.aql),
+            true
         ),
         tuple(
-            "LAST ([1, 2])",
-            LAST(ARRAY(1.aql, 2.aql)),
-            2
-        )
+            "CONTAINS_ARRAY ([1, 2, 3], 3)",
+            CONTAINS_ARRAY(ARRAY(1.aql, 2.aql, 3.aql), 3.aql),
+            true
+        ),
+        tuple(
+            "CONTAINS_ARRAY ([1, 2, 3], 4)",
+            CONTAINS_ARRAY(ARRAY(1.aql, 2.aql, 3.aql), 4.aql),
+            false
+        ),
     )
 
     for ((description, expression, expected) in cases) {
@@ -49,7 +54,6 @@ class `E2E-Func-Array-LAST-Spec` : StringSpec({
 
             val result = karangoDriver.query {
                 val l = LET("l", expression)
-
                 RETURN(l)
             }
 

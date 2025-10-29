@@ -1,9 +1,8 @@
-package de.peekandpoke.karango.e2e.functions_array
+package e2e.functions_string
 
-import de.peekandpoke.karango.aql.ARRAY
-import de.peekandpoke.karango.aql.FIRST
-import de.peekandpoke.karango.aql.IS_NULL
+import de.peekandpoke.karango.aql.AqlPrinter.Companion.printRawQuery
 import de.peekandpoke.karango.aql.LET
+import de.peekandpoke.karango.aql.REGEX_TEST
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
@@ -13,41 +12,37 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-FIRST-Spec` : StringSpec({
+class `E2E-Func-String-REGEX_TEST-Spec` : StringSpec({
 
     val cases = listOf(
         tuple(
-            "FIRST ([])",
-            FIRST(ARRAY<Any>()),
-            null
-        ),
-        tuple(
-            "IS_NULL( FIRST ([]) )",
-            IS_NULL(FIRST(ARRAY<Any>())),
+            REGEX_TEST("the quick brown fox".aql, "the.*fox".aql),
             true
         ),
         tuple(
-            "FIRST  (['a'])",
-            FIRST(ARRAY("a".aql)),
-            "a"
+            REGEX_TEST("the quick brown fox".aql, "the.*FOX".aql, false.aql),
+            false
         ),
         tuple(
-            "FIRST  (['a', 'b'])",
-            FIRST(ARRAY("a".aql, "b".aql)),
-            "a"
-        )
+            REGEX_TEST("the quick brown fox".aql, "the.*FOX".aql, true.aql),
+            true
+        ),
     )
 
-    for ((description, expression, expected) in cases) {
+    for ((expression, expected) in cases) {
+
+        val description = expression.printRawQuery()
 
         "$description - direct return" {
 
-            val result = karangoDriver.query {
-                RETURN(expression)
-            }
+            repeat(10) {
+                val result = karangoDriver.query {
+                    RETURN(expression)
+                }
 
-            withDetailedClue(expression, expected) {
-                result.toList() shouldBe listOf(expected)
+                withDetailedClue(expression, expected) {
+                    result.toList() shouldBe listOf(expected)
+                }
             }
         }
 

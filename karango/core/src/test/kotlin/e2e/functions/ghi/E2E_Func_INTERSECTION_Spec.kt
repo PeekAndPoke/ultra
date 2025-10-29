@@ -1,7 +1,7 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.ghi
 
 import de.peekandpoke.karango.aql.ARRAY
-import de.peekandpoke.karango.aql.COUNT_DISTINCT
+import de.peekandpoke.karango.aql.INTERSECTION
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
@@ -12,28 +12,38 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-COUNT_DISTINCT-Spec` : StringSpec({
+class E2E_Func_INTERSECTION_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "COUNT_DISTINCT ([])",
-            COUNT_DISTINCT(ARRAY<Any>()),
-            0L
+            "INTERSECTION ([], [])",
+            INTERSECTION(ARRAY(), ARRAY()),
+            listOf()
         ),
         tuple(
-            "COUNT_DISTINCT (['a'])",
-            COUNT_DISTINCT(ARRAY("a".aql)),
-            1L
+            "INTERSECTION ([1], [])",
+            INTERSECTION(ARRAY(1.aql), ARRAY()),
+            listOf()
         ),
         tuple(
-            "COUNT_DISTINCT (['a', 'a'])",
-            COUNT_DISTINCT(ARRAY("a".aql, "a".aql)),
-            1L
+            "INTERSECTION ([1, 2], [2, 3])",
+            INTERSECTION(ARRAY(1.aql, 2.aql), ARRAY(2.aql, 3.aql)),
+            listOf(2)
         ),
         tuple(
-            "COUNT_DISTINCT (['a', 'b', 'a'])",
-            COUNT_DISTINCT(ARRAY("a".aql, "b".aql, "a".aql)),
-            2L
+            "INTERSECTION ([1, 2], ['a', 'b'])",
+            INTERSECTION<Any>(ARRAY(1.aql, 2.aql), ARRAY("a".aql, "b".aql)),
+            listOf()
+        ),
+        tuple(
+            "INTERSECTION ([1, 2], [1, 'a', 'b'])",
+            INTERSECTION<Any>(ARRAY(1.aql, 2.aql), ARRAY<Any>(1.aql, "a".aql, "b".aql)),
+            listOf(1L)
+        ),
+        tuple(
+            "INTERSECTION ( [ [1, 2] ], [ [1, 2], ['a', 'b']] )",
+            INTERSECTION<Any>(ARRAY(ARRAY(1.aql, 2.aql)), ARRAY(ARRAY(1.aql, 2.aql), ARRAY("a".aql, "b".aql))),
+            listOf(listOf(1L, 2L))
         )
     )
 

@@ -1,6 +1,7 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.abc
 
 import de.peekandpoke.karango.aql.ARRAY
+import de.peekandpoke.karango.aql.AqlPrinter.Companion.printRawQuery
 import de.peekandpoke.karango.aql.COUNT
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
@@ -12,22 +13,21 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-COUNT-Spec` : StringSpec({
+class E2E_Func_COUNT_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "COUNT ([])",
             COUNT(ARRAY<Any>()),
             0L
         ),
         tuple(
-            "COUNT (['a'])",
             COUNT(ARRAY("a".aql)),
             1L
         )
     )
 
-    for ((description, expression, expected) in cases) {
+    for ((expression, expected) in cases) {
+        val description = expression.printRawQuery()
 
         "$description - direct return" {
 

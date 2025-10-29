@@ -5,27 +5,7 @@ package de.peekandpoke.karango.aql
 import de.peekandpoke.ultra.common.reflection.kListType
 import de.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
-/**
- * Return the absolute part of value.
- *
- * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#abs
- */
-@VaultFunctionMarker
-fun <T : Number> ABS(
-    value: AqlExpression<T>,
-): AqlExpression<Number> =
-    AqlFunc.ABS.numberCall(value)
 
-/**
- * Return the arccosine of value.
- *
- * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#acos
- */
-@VaultFunctionMarker
-fun <T : Number> ACOS(
-    value: AqlExpression<T>,
-): AqlExpression<Number?> =
-    AqlFunc.ACOS.nullableNumberCall(value)
 
 /**
  * Return the arcsine of value.

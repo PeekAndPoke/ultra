@@ -1,8 +1,8 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.mno
 
 import de.peekandpoke.karango.aql.ARRAY
-import de.peekandpoke.karango.aql.CONTAINS_ARRAY
 import de.peekandpoke.karango.aql.LET
+import de.peekandpoke.karango.aql.MINUS
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
@@ -12,28 +12,38 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-CONTAINS_ARRAY-Spec` : StringSpec({
+class E2E_Func_MINUS_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "CONTAINS_ARRAY ([], 0)",
-            CONTAINS_ARRAY(ARRAY(), 0.aql),
-            false
+            "MINUS ([1,2,3,4], [3,4,5,6], [5,6,7,8])",
+            MINUS(listOf(1, 2, 3, 4).aql, listOf(3, 4, 5, 6).aql, listOf(5, 6, 7, 8).aql),
+            listOf(2, 1)
         ),
         tuple(
-            "CONTAINS_ARRAY ([1], 1)",
-            CONTAINS_ARRAY(ARRAY(1.aql), 1.aql),
-            true
+            "MINUS ([], [])",
+            MINUS(ARRAY(), ARRAY()),
+            listOf()
         ),
         tuple(
-            "CONTAINS_ARRAY ([1, 2, 3], 3)",
-            CONTAINS_ARRAY(ARRAY(1.aql, 2.aql, 3.aql), 3.aql),
-            true
+            "MINUS ([1], [])",
+            MINUS(ARRAY(1.aql), ARRAY()),
+            listOf(1)
         ),
         tuple(
-            "CONTAINS_ARRAY ([1, 2, 3], 4)",
-            CONTAINS_ARRAY(ARRAY(1.aql, 2.aql, 3.aql), 4.aql),
-            false
+            "MINUS ([1, 2], [2, 3])",
+            MINUS(ARRAY(1.aql, 2.aql), ARRAY(2.aql, 3.aql)),
+            listOf(1)
+        ),
+        tuple(
+            "MINUS ([1, 2], ['a', 'b'])",
+            MINUS<Any>(ARRAY(1.aql, 2.aql), ARRAY("a".aql, "b".aql)),
+            listOf(2L, 1L)
+        ),
+        tuple(
+            "MINUS ([1, 2], [1, 'a', 'b'])",
+            MINUS<Any>(ARRAY(1.aql, 2.aql), ARRAY<Any>(1.aql, "a".aql, "b".aql)),
+            listOf(2L)
         )
     )
 
@@ -54,6 +64,7 @@ class `E2E-Func-Array-CONTAINS_ARRAY-Spec` : StringSpec({
 
             val result = karangoDriver.query {
                 val l = LET("l", expression)
+
                 RETURN(l)
             }
 

@@ -1,4 +1,4 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.abc
 
 import de.peekandpoke.karango.KarangoCursor
 import de.peekandpoke.karango.aql.APPEND
@@ -20,7 +20,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-APPEND-Spec` : StringSpec({
+class E2E_Func_APPEND_Spec : StringSpec({
 
     "APPEND must return the correct typeref for two int-arrays" {
 
@@ -37,7 +37,7 @@ class `E2E-Func-Array-APPEND-Spec` : StringSpec({
 
             result.first() shouldBe listOf(1, 2, 3, 4, 5, 6)
 
-            result.query.root.innerType() shouldBe TypeRef.Int.list
+            result.query.root.innerType() shouldBe TypeRef.Companion.Int.list
         }
     }
 
@@ -53,7 +53,7 @@ class `E2E-Func-Array-APPEND-Spec` : StringSpec({
 
             result.first() shouldBe listOf(1L, 2L, 3L, 4.5, 5.5, 6.5)
 
-            result.query.root.innerType() shouldBe TypeRef.Number.list
+            result.query.root.innerType() shouldBe TypeRef.Companion.Number.list
         }
     }
 
@@ -69,7 +69,7 @@ class `E2E-Func-Array-APPEND-Spec` : StringSpec({
 
             result.first() shouldBe listOf(1L, "a")
 
-            result.query.root.innerType() shouldBe TypeRef.Any.list
+            result.query.root.innerType() shouldBe TypeRef.Companion.Any.list
         }
     }
 
@@ -89,7 +89,7 @@ class `E2E-Func-Array-APPEND-Spec` : StringSpec({
 
             result.first() shouldBe listOf(1L, "a")
 
-            result.query.root.innerType() shouldBe TypeRef.Any.list
+            result.query.root.innerType() shouldBe TypeRef.Companion.Any.list
         }
     }
 
@@ -124,7 +124,7 @@ class `E2E-Func-Array-APPEND-Spec` : StringSpec({
 
             result.first() shouldBe listOf(10, 15, 20)
 
-            result.query.root.innerType() shouldBe TypeRef.Int.list
+            result.query.root.innerType() shouldBe TypeRef.Companion.Int.list
         }
     }
 
@@ -158,7 +158,7 @@ class `E2E-Func-Array-APPEND-Spec` : StringSpec({
 
             result.first() shouldBe listOf(10L, 15L, "c", "d")
 
-            result.query.root.innerType() shouldBe TypeRef.Any.list
+            result.query.root.innerType() shouldBe TypeRef.Companion.Any.list
         }
     }
 
@@ -193,7 +193,7 @@ class `E2E-Func-Array-APPEND-Spec` : StringSpec({
 
             result.first() shouldBe listOf(10L, 15L, "c", "d")
 
-            result.query.root.innerType() shouldBe TypeRef.Any.list
+            result.query.root.innerType() shouldBe TypeRef.Companion.Any.list
         }
     }
 

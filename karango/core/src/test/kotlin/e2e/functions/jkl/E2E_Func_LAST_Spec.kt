@@ -1,8 +1,8 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.jkl
 
 import de.peekandpoke.karango.aql.ARRAY
+import de.peekandpoke.karango.aql.LAST
 import de.peekandpoke.karango.aql.LET
-import de.peekandpoke.karango.aql.NTH
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
@@ -12,43 +12,23 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-NTH-Spec` : StringSpec({
+class E2E_Func_LAST_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "NTH ([], 0)",
-            NTH(ARRAY(), 0.aql),
+            "LAST ([])",
+            LAST(ARRAY<Any>()),
             null
         ),
         tuple(
-            "NTH ([1], 0)",
-            NTH(ARRAY(1.aql), 0.aql),
+            "LAST ([1])",
+            LAST(ARRAY(1.aql)),
             1
         ),
         tuple(
-            "NTH ([1], -1)",
-            NTH(ARRAY(1.aql), (-1).aql),
-            null
-        ),
-        tuple(
-            "NTH ([1], 1)",
-            NTH(ARRAY(1.aql), 1.aql),
-            null
-        ),
-        tuple(
-            "NTH ([1, 2], 0)",
-            NTH(ARRAY(1.aql, 2.aql), 0.aql),
-            1
-        ),
-        tuple(
-            "NTH ([1, 2], 1)",
-            NTH(ARRAY(1.aql, 2.aql), 1.aql),
+            "LAST ([1, 2])",
+            LAST(ARRAY(1.aql, 2.aql)),
             2
-        ),
-        tuple(
-            "NTH ([1, 2], 2)",
-            NTH(ARRAY(1.aql, 2.aql), 2.aql),
-            null
         )
     )
 

@@ -2,6 +2,7 @@
 
 package de.peekandpoke.karango.aql
 
+import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.vault.lang.VaultTypeConversionMarker
 
 // //  TO_BOOL  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,16 +62,16 @@ val <T> AqlExpression<T>.TO_STRING: AqlExpression<String>
  */
 @JvmName("TO_ARRAY_L")
 @VaultTypeConversionMarker
-fun <T> TO_ARRAY(expr: AqlExpression<List<T>>): AqlExpression<List<T>> =
-    AqlFunc.TO_ARRAY.arrayCall(type = expr.getType(), expr)
+inline fun <reified T> TO_ARRAY(expr: AqlExpression<out Collection<T>>): AqlExpression<List<T>> =
+    AqlFunc.TO_ARRAY.arrayCall(type = kType(), expr)
 
 /**
  * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#toarray
  */
 @JvmName("TO_ARRAY_E")
 @VaultTypeConversionMarker
-fun <T> TO_ARRAY(expr: AqlExpression<T>): AqlExpression<List<T>> =
-    AqlFunc.TO_ARRAY.arrayCall(type = expr.getType().list, expr)
+inline fun <reified T> TO_ARRAY(expr: AqlExpression<T>): AqlExpression<List<T>> =
+    AqlFunc.TO_ARRAY.arrayCall(type = kType(), expr)
 
 /**
  * Guard, to NOT wrap a list again
@@ -78,14 +79,14 @@ fun <T> TO_ARRAY(expr: AqlExpression<T>): AqlExpression<List<T>> =
  * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#toarray
  */
 @VaultTypeConversionMarker
-val <T> AqlExpression<List<T>>.TO_ARRAY: AqlExpression<List<T>>
+inline val <reified T> AqlExpression<Collection<T>>.TO_ARRAY: AqlExpression<List<T>>
     @JvmName("TO_ARRAY_LV") get() = TO_ARRAY(this)
 
 /**
  * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#toarray
  */
 @VaultTypeConversionMarker
-val <T> AqlExpression<T>.TO_ARRAY: AqlExpression<List<T>>
+inline val <reified T> AqlExpression<T>.TO_ARRAY: AqlExpression<List<T>>
     @JvmName("TO_ARRAY_V") get() = TO_ARRAY(this)
 
 // //  TO_LIST  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -97,7 +98,8 @@ val <T> AqlExpression<T>.TO_ARRAY: AqlExpression<List<T>>
  */
 @JvmName("TO_LIST_L")
 @VaultTypeConversionMarker
-fun <T> TO_LIST(expr: AqlExpression<List<T>>): AqlExpression<List<T>> = TO_ARRAY(expr)
+inline fun <reified T> TO_LIST(expr: AqlExpression<out Collection<T>>): AqlExpression<List<T>> =
+    AqlFunc.TO_LIST.arrayCall(type = kType(), expr)
 
 /**
  * Alias of TO_ARRAY
@@ -106,7 +108,9 @@ fun <T> TO_LIST(expr: AqlExpression<List<T>>): AqlExpression<List<T>> = TO_ARRAY
  */
 @JvmName("TO_LIST_E")
 @VaultTypeConversionMarker
-fun <T> TO_LIST(expr: AqlExpression<T>): AqlExpression<List<T>> = TO_ARRAY(expr)
+inline fun <reified T> TO_LIST(expr: AqlExpression<T>): AqlExpression<List<T>> =
+    AqlFunc.TO_LIST.arrayCall(type = kType(), expr)
+
 
 /**
  * Alias of TO_ARRAY
@@ -114,8 +118,8 @@ fun <T> TO_LIST(expr: AqlExpression<T>): AqlExpression<List<T>> = TO_ARRAY(expr)
  * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#tolist
  */
 @VaultTypeConversionMarker
-val <T> AqlExpression<List<T>>.TO_LIST: AqlExpression<List<T>>
-    @JvmName("TO_LIST_LV") get() = TO_ARRAY(this)
+inline val <reified T> AqlExpression<List<T>>.TO_LIST: AqlExpression<List<T>>
+    @JvmName("TO_LIST_LV") get() = TO_LIST(this)
 
 /**
  * Alias of TO_ARRAY
@@ -123,5 +127,5 @@ val <T> AqlExpression<List<T>>.TO_LIST: AqlExpression<List<T>>
  * https://docs.arangodb.com/current/AQL/Functions/TypeCast.html#tolist
  */
 @VaultTypeConversionMarker
-val <T> AqlExpression<T>.TO_LIST: AqlExpression<List<T>>
-    @JvmName("TO_LIST_V") get() = this.TO_ARRAY
+inline val <reified T> AqlExpression<T>.TO_LIST: AqlExpression<List<T>>
+    @JvmName("TO_LIST_V") get() = TO_LIST(this)

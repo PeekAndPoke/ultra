@@ -1,6 +1,7 @@
-package de.peekandpoke.karango.e2e.functions_numeric
+package de.peekandpoke.karango.e2e.functions.abc
 
-import de.peekandpoke.karango.aql.ABS
+import de.peekandpoke.karango.aql.ARRAY
+import de.peekandpoke.karango.aql.COUNT_UNIQUE
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
@@ -11,23 +12,28 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Numeric-ABS-Spec` : StringSpec({
+class E2E_Func_COUNT_UNIQUE_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "ABS (0)",
-            ABS(0.aql),
-            0.0
+            "COUNT_UNIQUE ([])",
+            COUNT_UNIQUE(ARRAY<Any>()),
+            0L
         ),
         tuple(
-            "ABS (-1.1)",
-            ABS((-1.1).aql),
-            1.1
+            "COUNT_UNIQUE (['a'])",
+            COUNT_UNIQUE(ARRAY("a".aql)),
+            1L
         ),
         tuple(
-            "ABS (1.1)",
-            ABS(1.1.aql),
-            1.1
+            "COUNT_UNIQUE (['a', 'a'])",
+            COUNT_UNIQUE(ARRAY("a".aql, "a".aql)),
+            1L
+        ),
+        tuple(
+            "COUNT_UNIQUE (['a', 'b', 'a'])",
+            COUNT_UNIQUE(ARRAY("a".aql, "b".aql, "a".aql)),
+            2L
         )
     )
 

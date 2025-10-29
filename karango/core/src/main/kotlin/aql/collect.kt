@@ -20,7 +20,7 @@ import de.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
  */
 @Suppress("unused")
 @VaultTerminalExpressionMarker
-fun <T> AqlStatementBuilder.COLLECT_WITH(with: AqlFunctionExpr<T>, into: String): AqlExpression<T> {
+fun <T> AqlStatementBuilder.COLLECT_WITH(with: AqlFunctionDefinition<T>, into: String): AqlExpression<T> {
 
     AqlCollectWithExpressionStmt(with, into).addStmt()
 
@@ -65,7 +65,7 @@ fun <T, A> AqlStatementBuilder.COLLECT_AGGREGATE(
 
 @VaultDslMarker
 class AqlCollectWithExpressionStmt<T> internal constructor(
-    private val func: AqlFunctionExpr<T>,
+    private val func: AqlFunctionDefinition<T>,
     private val variable: String,
 ) : AqlStatement {
     override fun print(p: AqlPrinter) {

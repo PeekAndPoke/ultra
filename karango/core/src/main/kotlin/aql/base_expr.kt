@@ -77,17 +77,6 @@ data class AqlValueExpr<T>(
 }
 
 /**
- * Internal expression representing a type cast
- */
-class AqlTypeCastExpression<T>(private val type: TypeRef<T>, private val wrapped: AqlExpression<*>) : AqlExpression<T> {
-    override fun getType() = type
-
-    override fun print(p: AqlPrinter) {
-        wrapped.print(p)
-    }
-}
-
-/**
  * Base interface for all terminal Expressions.
  *
  * A terminal expression can be used to create a query result cursor.

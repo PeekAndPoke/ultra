@@ -59,21 +59,8 @@ fun CONTAINS(
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#encodeuricomponent
  */
 @VaultFunctionMarker
-fun ENCODE_URI_COMPONENT(
-    value: AqlExpression<String>,
-): AqlExpression<String> =
+fun ENCODE_URI_COMPONENT(value: AqlExpression<String>): AqlExpression<String> =
     AqlFunc.ENCODE_URI_COMPONENT.stringCall(value)
-
-/**
- * Determine the character length of a string.
- *
- * See https://docs.arangodb.com/current/AQL/Functions/String.html#count
- */
-@VaultFunctionMarker
-fun COUNT(
-    expr: AqlExpression<String>,
-): AqlExpression<Number> =
-    AqlFunc.COUNT.numberCall(expr)
 
 /**
  * Return the position of the first occurrence of the string search inside the string text. Positions start at 0.
@@ -187,16 +174,6 @@ fun <T : Number> LEFT(
 ): AqlExpression<String> =
     AqlFunc.LEFT.stringCall(expr, n)
 
-/**
- * Determine the character length of a string.
- *
- * See https://docs.arangodb.com/current/AQL/Functions/String.html#length
- */
-@VaultFunctionMarker
-fun LENGTH(
-    expr: AqlExpression<String>,
-): AqlExpression<Number> =
-    AqlFunc.LENGTH.numberCall(expr)
 
 /**
  * Calculate the Levenshtein distance between two strings.
@@ -315,6 +292,71 @@ fun REGEX_MATCHES(
     caseInsensitive: AqlExpression<Boolean>,
 ): AqlExpression<List<String>?> =
     AqlFunc.REGEX_MATCHES.nullableArrayCall(type = kListType<String>().nullable, text, regex, caseInsensitive)
+
+/**
+ * Return the matches in the given string text, using the regex.
+ *
+ * See https://docs.arangodb.com/stable/aql/functions/string/#regex_split
+ */
+@VaultFunctionMarker
+fun REGEX_SPLIT(
+    text: AqlExpression<String>,
+    regex: AqlExpression<String>,
+): AqlExpression<List<String>?> =
+    AqlFunc.REGEX_SPLIT.nullableArrayCall(type = kListType<String>().nullable, text, regex)
+
+/**
+ * Return the matches in the given string text, using the regex.
+ *
+ * See https://docs.arangodb.com/stable/aql/functions/string/#regex_split
+ */
+@VaultFunctionMarker
+fun REGEX_SPLIT(
+    text: AqlExpression<String>,
+    regex: AqlExpression<String>,
+    caseInsensitive: AqlExpression<Boolean>,
+): AqlExpression<List<String>?> =
+    AqlFunc.REGEX_SPLIT.nullableArrayCall(type = kListType<String>().nullable, text, regex, caseInsensitive)
+
+/**
+ * Return the matches in the given string text, using the regex.
+ *
+ * See https://docs.arangodb.com/stable/aql/functions/string/#regex_split
+ */
+@VaultFunctionMarker
+fun REGEX_SPLIT(
+    text: AqlExpression<String>,
+    regex: AqlExpression<String>,
+    caseInsensitive: AqlExpression<Boolean>,
+    limit: AqlExpression<Int>,
+): AqlExpression<List<String>?> =
+    AqlFunc.REGEX_SPLIT
+        .nullableArrayCall(type = kListType<String>().nullable, text, regex, caseInsensitive, limit)
+
+/**
+ * Return the matches in the given string text, using the regex.
+ *
+ * See https://docs.arangodb.com/stable/aql/functions/string/#regex_test
+ */
+@VaultFunctionMarker
+fun REGEX_TEST(
+    text: AqlExpression<String>,
+    regex: AqlExpression<String>,
+): AqlExpression<Boolean?> =
+    AqlFunc.REGEX_TEST.nullableBoolCall(text, regex)
+
+/**
+ * Return the matches in the given string text, using the regex.
+ *
+ * See https://docs.arangodb.com/stable/aql/functions/string/#regex_test
+ */
+@VaultFunctionMarker
+fun REGEX_TEST(
+    text: AqlExpression<String>,
+    regex: AqlExpression<String>,
+    caseInsensitive: AqlExpression<Boolean>,
+): AqlExpression<Boolean?> =
+    AqlFunc.REGEX_TEST.nullableBoolCall(text, regex, caseInsensitive)
 
 /**
  * Return the reverse of the string value.

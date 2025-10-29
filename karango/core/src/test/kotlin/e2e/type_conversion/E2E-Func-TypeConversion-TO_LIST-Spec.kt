@@ -1,5 +1,6 @@
 package de.peekandpoke.karango.e2e.type_conversion
 
+import de.peekandpoke.karango.aql.ARRAY
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.TO_LIST
@@ -64,6 +65,33 @@ class `E2E-Func-TypeConversion-TO_LIST-Spec` : StringSpec({
         }
 
         result3.toList() shouldBe listOf(listOf<Any>())
+    }
+
+    "TO_LIST conversion of collections" {
+
+        karangoDriver.query {
+            val values = listOf(1L, 2L, 3L) as Collection<Long>
+
+            RETURN(
+                ARRAY(
+                    TO_LIST(values.aql),
+                    TO_LIST(values.toList().aql),
+                    TO_LIST(values.toSet().aql),
+                    values.aql.TO_LIST,
+                    values.toList().aql.TO_LIST,
+                    values.toSet().aql.TO_LIST,
+                )
+            )
+        }.let { result ->
+            result.first() shouldBe listOf(
+                listOf(1L, 2L, 3L),
+                listOf(1L, 2L, 3L),
+                listOf(1L, 2L, 3L),
+                listOf(1L, 2L, 3L),
+                listOf(1L, 2L, 3L),
+                listOf(1L, 2L, 3L),
+            )
+        }
     }
 
     val cases = listOf(

@@ -28,7 +28,7 @@ fun <R> AqlStatementBuilder.RETURN_DISTINCT(ret: AqlExpression<R>): AqlTerminalE
 @VaultTerminalExpressionMarker
 fun AqlStatementBuilder.RETURN_COUNT(variableName: String = "count"): AqlTerminalExpr<Int> {
 
-    val count: AqlExpression<Int> = COLLECT_WITH(Aql.COUNT, variableName)
+    val count: AqlExpression<Int> = COLLECT_WITH(COUNT, variableName)
 
     return RETURN(count)
 }

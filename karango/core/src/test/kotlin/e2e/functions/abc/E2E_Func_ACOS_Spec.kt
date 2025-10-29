@@ -1,8 +1,7 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.abc
 
-import de.peekandpoke.karango.aql.ARRAY
+import de.peekandpoke.karango.aql.ACOS
 import de.peekandpoke.karango.aql.LET
-import de.peekandpoke.karango.aql.MINUS
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.karangoDriver
@@ -12,38 +11,28 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-MINUS-Spec` : StringSpec({
+class E2E_Func_ACOS_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "MINUS ([1,2,3,4], [3,4,5,6], [5,6,7,8])",
-            MINUS(listOf(1, 2, 3, 4).aql, listOf(3, 4, 5, 6).aql, listOf(5, 6, 7, 8).aql),
-            listOf(2, 1)
+            "ACOS (-1)",
+            ACOS((-1).aql),
+            3.141592653589793
         ),
         tuple(
-            "MINUS ([], [])",
-            MINUS(ARRAY(), ARRAY()),
-            listOf()
+            "ACOS (0)",
+            ACOS(0.aql),
+            1.5707963267948966
         ),
         tuple(
-            "MINUS ([1], [])",
-            MINUS(ARRAY(1.aql), ARRAY()),
-            listOf(1)
+            "ACOS (1)",
+            ACOS(1.aql),
+            0.0
         ),
         tuple(
-            "MINUS ([1, 2], [2, 3])",
-            MINUS(ARRAY(1.aql, 2.aql), ARRAY(2.aql, 3.aql)),
-            listOf(1)
-        ),
-        tuple(
-            "MINUS ([1, 2], ['a', 'b'])",
-            MINUS<Any>(ARRAY(1.aql, 2.aql), ARRAY("a".aql, "b".aql)),
-            listOf(2L, 1L)
-        ),
-        tuple(
-            "MINUS ([1, 2], [1, 'a', 'b'])",
-            MINUS<Any>(ARRAY(1.aql, 2.aql), ARRAY<Any>(1.aql, "a".aql, "b".aql)),
-            listOf(2L)
+            "ACOS (2)",
+            ACOS(2.aql),
+            null
         )
     )
 

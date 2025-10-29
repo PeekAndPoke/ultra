@@ -39,7 +39,7 @@ class MutatorKspProcessor(
     private fun loadPlugins(): MutatorKspPlugins {
         val loaded = try {
             ServiceLoader.load(MutatorKspPlugin::class.java).toList()
-        } catch (e: RuntimeException) {
+        } catch (e: Exception) {
             logger.warn("ServiceLoader failed: ${e.message}")
             emptyList()
         }

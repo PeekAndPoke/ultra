@@ -1,7 +1,7 @@
-package de.peekandpoke.karango.e2e.functions_array
+package de.peekandpoke.karango.e2e.functions.abc
 
 import de.peekandpoke.karango.aql.ARRAY
-import de.peekandpoke.karango.aql.LENGTH
+import de.peekandpoke.karango.aql.COUNT_DISTINCT
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
@@ -12,18 +12,28 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Array-LENGTH-Spec` : StringSpec({
+class E2E_Func_COUNT_DISTINCT_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "LENGTH ([])",
-            LENGTH(ARRAY<Any>()),
+            "COUNT_DISTINCT ([])",
+            COUNT_DISTINCT(ARRAY<Any>()),
             0L
         ),
         tuple(
-            "LENGTH (['a'])",
-            LENGTH(ARRAY("a".aql)),
+            "COUNT_DISTINCT (['a'])",
+            COUNT_DISTINCT(ARRAY("a".aql)),
             1L
+        ),
+        tuple(
+            "COUNT_DISTINCT (['a', 'a'])",
+            COUNT_DISTINCT(ARRAY("a".aql, "a".aql)),
+            1L
+        ),
+        tuple(
+            "COUNT_DISTINCT (['a', 'b', 'a'])",
+            COUNT_DISTINCT(ARRAY("a".aql, "b".aql, "a".aql)),
+            2L
         )
     )
 

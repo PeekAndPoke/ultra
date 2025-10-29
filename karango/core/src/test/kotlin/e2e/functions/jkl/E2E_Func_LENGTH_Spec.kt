@@ -1,6 +1,7 @@
-package de.peekandpoke.karango.e2e.functions_numeric
+package de.peekandpoke.karango.e2e.functions.jkl
 
-import de.peekandpoke.karango.aql.ACOS
+import de.peekandpoke.karango.aql.ARRAY
+import de.peekandpoke.karango.aql.LENGTH
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
@@ -11,28 +12,18 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 @Suppress("ClassName")
-class `E2E-Func-Numeric-ACOS-Spec` : StringSpec({
+class E2E_Func_LENGTH_Spec : StringSpec({
 
     val cases = listOf(
         tuple(
-            "ACOS (-1)",
-            ACOS((-1).aql),
-            3.141592653589793
+            "LENGTH ([])",
+            LENGTH(ARRAY<Any>()),
+            0L
         ),
         tuple(
-            "ACOS (0)",
-            ACOS(0.aql),
-            1.5707963267948966
-        ),
-        tuple(
-            "ACOS (1)",
-            ACOS(1.aql),
-            0.0
-        ),
-        tuple(
-            "ACOS (2)",
-            ACOS(2.aql),
-            null
+            "LENGTH (['a'])",
+            LENGTH(ARRAY("a".aql)),
+            1L
         )
     )
 
