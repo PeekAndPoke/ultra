@@ -14,9 +14,9 @@ val AdminUserModule = module {
 
     dynamic(AdminUserRealm::class)
 
-    singleton(AdminUserServices::class)
+    dynamic(AdminUserServices::class)
 //    singleton(AppUserApiFeature::class)
 
-    singleton(AdminUsersRepo::class)
-    singleton(AdminUsersRepo.Fixtures::class)
+    dynamic(AdminUsersRepo::class)
+    dynamic(AdminUsersRepo.Fixtures::class)
 }

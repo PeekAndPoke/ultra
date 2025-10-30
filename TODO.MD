@@ -1,5 +1,10 @@
 # Funktor
 
+## Vault
+
+- ( ) Generalize Karango::Addons so it can be used by Monko as well
+    - ( ) SoftDelete
+
 ## Auth
 
 - ( ) Automatically refresh the JWT token

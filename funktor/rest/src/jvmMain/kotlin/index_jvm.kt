@@ -48,7 +48,9 @@ val Funktor_Rest = module { builder: FunktorRestBuilder.() -> Unit ->
 
 class FunktorRestBuilder internal constructor(private val kontainer: KontainerBuilder) {
 
-    fun jwt(config: JwtConfig) {
+    fun jwt(config: JwtConfig?) {
+        if (config == null) return
+
         with(kontainer) {
             singleton(JwtGenerator::class) { JwtGenerator(config) }
         }

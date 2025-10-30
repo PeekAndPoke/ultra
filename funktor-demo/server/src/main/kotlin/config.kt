@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.demo.server
 
+import AuthConfig
 import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.funktor.core.config.funktor.FunktorConfig
 import de.peekandpoke.funktor.core.config.ktor.KtorConfig
@@ -7,7 +8,6 @@ import de.peekandpoke.funktor.core.model.InsightsConfig
 import de.peekandpoke.funktor.messaging.senders.aws.AwsSesConfig
 import de.peekandpoke.karango.config.ArangoDbConfig
 import de.peekandpoke.monko.MongoDbConfig
-import de.peekandpoke.ultra.security.jwt.JwtConfig
 
 data class FunktorDemoConfig(
     override val ktor: KtorConfig,
@@ -18,10 +18,6 @@ data class FunktorDemoConfig(
     val api: ApiConfig,
     val aws: AwsConfig,
 ) : AppConfig {
-
-    data class AuthConfig(
-        val jwt: JwtConfig,
-    )
 
     data class ApiConfig(
         val baseUrl: String,
