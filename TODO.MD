@@ -16,6 +16,10 @@
     - ( ) Api to reset the password
     - ( ) Method to reset the password, revoke the token
 
+- ( ) FunktorRestBuilder
+    - ( ) check that the JWT signing key is "good" enough
+    - ( ) cli command to generate a JWT signing key
+
 ## General
 
 - ( ) Compile testing

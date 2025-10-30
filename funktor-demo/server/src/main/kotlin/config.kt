@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.demo.server
 
-import AuthConfig
+import de.peekandpoke.funktor.auth.AuthConfig
 import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.funktor.core.config.funktor.FunktorConfig
 import de.peekandpoke.funktor.core.config.ktor.KtorConfig

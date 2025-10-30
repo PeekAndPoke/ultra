@@ -1,6 +1,7 @@
 package de.peekandpoke.funktor.auth
 
 import de.peekandpoke.funktor.auth.api.AuthApiFeature
+import de.peekandpoke.funktor.auth.cli.AuthGenerateJwtSigningSecretCliCommand
 import de.peekandpoke.funktor.auth.db.karango.KarangoAuthRecordsRepo
 import de.peekandpoke.funktor.auth.db.monko.MonkoAuthRecordsRepo
 import de.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
@@ -40,6 +41,8 @@ val FunktorAuth = module { builder: FunktorAuthBuilder.() -> Unit ->
     dynamic(AuthRecordStorage.Adapter::class) { AuthRecordStorage.Adapter.Null }
     // API
     singleton(AuthApiFeature::class)
+    // CLI
+    singleton(AuthGenerateJwtSigningSecretCliCommand::class)
 
     FunktorAuthBuilder(this).apply(builder)
 }
