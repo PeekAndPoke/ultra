@@ -2,6 +2,7 @@ package de.peekandpoke.ultra.slumber.builtin
 
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Codec
+import de.peekandpoke.ultra.slumber.awake
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.string.shouldContain

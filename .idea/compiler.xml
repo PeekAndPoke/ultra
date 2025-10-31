@@ -50,6 +50,9 @@
       <module name="ultra.funktor.messaging.test" target="17" />
       <module name="ultra.funktor.testing.main" target="17" />
       <module name="ultra.funktor.testing.test" target="17" />
+      <module name="ultra.karango.addons" target="17" />
+      <module name="ultra.karango.addons.jvmMain" target="17" />
+      <module name="ultra.karango.addons.jvmTest" target="17" />
       <module name="ultra.karango.addons.main" target="17" />
       <module name="ultra.karango.addons.test" target="17" />
       <module name="ultra.kontainer" target="17" />

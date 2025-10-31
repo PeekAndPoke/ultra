@@ -3,6 +3,7 @@ package de.peekandpoke.ultra.slumber.builtin.collections
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Codec
+import de.peekandpoke.ultra.slumber.awake
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -115,7 +116,7 @@ class CollectionAwakerSpec : StringSpec({
 
         data class DataClass(
             val items: List<Int>,
-            val mutable: MutableList<Int>
+            val mutable: MutableList<Int>,
         )
 
         val codec = Codec.default
@@ -140,7 +141,7 @@ class CollectionAwakerSpec : StringSpec({
 
         data class DataClass(
             val items: List<Int>,
-            val mutable: MutableList<Int>
+            val mutable: MutableList<Int>,
         )
 
         val codec = Codec.default

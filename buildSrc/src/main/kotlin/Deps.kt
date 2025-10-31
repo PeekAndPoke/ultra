@@ -17,11 +17,11 @@ object Deps {
     }
 
     // Kotlin ////////////////////////////////////////////////////////////////////////////////////
-    const val kotlinVersion = "2.2.20"
+    const val kotlinVersion = "2.2.21"
 
     object Ksp {
         // https://github.com/google/ksp/releases
-        const val version = "2.2.20-2.0.4"
+        const val version = "2.2.21-2.0.4"
         const val symbol_processing = "com.google.devtools.ksp:symbol-processing-api:$version"
 
         // https://mvnrepository.com/artifact/dev.zacsweers.kctfork/ksp

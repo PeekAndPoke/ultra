@@ -3,6 +3,7 @@ package de.peekandpoke.ultra.slumber.builtin.polymorphism
 import de.peekandpoke.ultra.common.reflection.kListType
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.slumber.Codec
+import de.peekandpoke.ultra.slumber.awake
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 

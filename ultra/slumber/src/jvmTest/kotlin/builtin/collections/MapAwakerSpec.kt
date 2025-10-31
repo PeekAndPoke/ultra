@@ -4,6 +4,7 @@ import de.peekandpoke.ultra.common.reflection.kMapType
 import de.peekandpoke.ultra.common.reflection.kMutableMapType
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Codec
+import de.peekandpoke.ultra.slumber.awake
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe

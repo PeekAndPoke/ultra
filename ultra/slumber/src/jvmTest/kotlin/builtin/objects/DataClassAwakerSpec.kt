@@ -4,6 +4,7 @@ import de.peekandpoke.slumberTestClasses.DataClassWithPrivateCtor
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Codec
+import de.peekandpoke.ultra.slumber.awake
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec

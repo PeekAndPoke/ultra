@@ -3,6 +3,7 @@ package de.peekandpoke.ultra.slumber.builtin.objects
 import de.peekandpoke.ultra.slumber.Codec
 import de.peekandpoke.ultra.slumber.Slumber
 import de.peekandpoke.ultra.slumber.SlumbererException
+import de.peekandpoke.ultra.slumber.slumber
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
@@ -221,6 +222,7 @@ class DataClassSlumbererSpec : StringSpec() {
 
         "Slumbering a data class with only null values and annotated getter must work" {
             data class AllNull(val a: Int? = null, val b: Int? = null) {
+                @Suppress("unused")
                 @Slumber.Field
                 val text get() = "text"
             }
