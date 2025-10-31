@@ -92,7 +92,7 @@ class EmailAndPasswordAuth(
         val result = when (request) {
             is AuthUpdateRequest.SetPassword -> {
                 // 1. Check for new password to meet the password policy
-                realm.passwordPolicy.matches(request.newPassword).takeIf { it == true }
+                realm.passwordPolicy.matches(request.newPassword).takeIf { it }
                     ?: throw AuthError.weakPassword()
 
                 // 3. Write new password entry into database
@@ -107,7 +107,7 @@ class EmailAndPasswordAuth(
                 val emailResult = realm.messaging.sendPasswordChangedEmail(user)
 
                 if (emailResult.success.not()) {
-                    log.warning("Sending 'Password Changed' failed for user ${user._id} ${realm.getUserEmail(user)}")
+                    log.warning("Sending 'Password Changed' Email failed for user ${user._id} ${realm.getUserEmail(user)}")
                 }
 
                 AuthUpdateResponse(success = true)

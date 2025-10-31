@@ -3,6 +3,7 @@ package de.peekandpoke.funktor.messaging
 import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.funktor.messaging.api.EmailBody
 import de.peekandpoke.funktor.messaging.api.EmailDestination
+import de.peekandpoke.ultra.common.isEmail
 
 class MailingOverrides(
     val overrides: List<MailingOverride>,
@@ -19,10 +20,14 @@ class MailingOverrides(
             overrides = overrides.toList()
         )
 
-        fun developmentMode(config: AppConfig, toEmail: String) {
-            val env = "${config.ktor.application.id} | ${config.ktor.deployment.environment}"
+        fun developmentMode(config: AppConfig, devConfig: MailingDevConfig?) {
+            if (devConfig == null) return
 
-            replaceDestination(toEmail)
+            devConfig.destination?.takeIf { it.isEmail() }?.let { toEmail ->
+                replaceDestination(toEmail)
+            }
+
+            val env = "${config.ktor.application.id} | ${config.ktor.deployment.environment}"
 
             prefixBody(
                 """

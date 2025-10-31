@@ -45,6 +45,7 @@ kotlin {
                 implementation(Deps.Ktor.Client.core)
 
                 api(project(":ultra:common"))
+                api(project(":ultra:slumber"))
             }
         }
 

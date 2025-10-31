@@ -2,8 +2,23 @@
 
 ## Vault
 
-- ( ) Generalize Karango::Addons so it can be used by Monko as well
-    - ( ) SoftDelete
+- ( ) make Cursor truely async
+
+### Karango
+
+- ( ) Check and implement todos
+
+### Monko
+
+- ( ) Implement SoftDelete repo addon (see karango for reference)
+- ( ) Implement all Hooks in MonkoRepository
+    - ( ) onBeforeSave
+        - -> in insert many
+        - -> in update many
+    - ( ) onAfterSave
+        - -> in insert many
+        - -> in update many
+    - ( ) onAfterDelete
 
 ## Auth
 
@@ -22,6 +37,10 @@
 
 ## Messaging
 
+- ( ) Store attachments in blob-storage or different table
+    - ( ) compress with password protected zip -> https://github.com/srikanth-lingala/zip4j
+    - ( ) wire up with cluster::depot
+
 - ( ) Add more email providers
     - ( ) sendgrid
 
@@ -36,12 +55,13 @@
 - ( ) Email templates modeling
 - ( ) Email templates editor
 
+## Slumber
+
+- ( ) Add caching for slumber() keeping the last x models in memory
+
 ## Rest
 
 1. Refactor + Complete or remove the Dart-Codegen
 
 - move the codegen into its own package
 
-## Karango
-
-- ( ) Check and implement todos

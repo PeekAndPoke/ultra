@@ -6,8 +6,8 @@ import kotlin.annotation.AnnotationTarget.*
 @Target(CLASS)
 annotation class Vault {
 
-    @Target(FIELD, PROPERTY, FUNCTION)
     @Slumber.Field
+    @Target(FIELD, PROPERTY, FUNCTION)
     annotation class Field
 
     @Target(FIELD, PROPERTY, FUNCTION)

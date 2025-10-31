@@ -45,10 +45,10 @@ kotlin {
         implementation(project(":funktor:all"))
 
         implementation(project(":karango:core"))
-        implementation(project(":karango:addons"))
         ksp(project(":karango:ksp"))
 
         implementation(project(":monko:core"))
+        ksp(project(":monko:ksp"))
 
         implementation(project(":funktor-demo:common"))
     }

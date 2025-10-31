@@ -8,15 +8,13 @@ import de.peekandpoke.funktor.core.model.InsightsConfig
 import de.peekandpoke.funktor.funktor
 import de.peekandpoke.funktor.insights.instrumentWithInsights
 import de.peekandpoke.funktor.messaging.EmailSender
-import de.peekandpoke.funktor.messaging.senders.ignoreExampleDomains
+import de.peekandpoke.funktor.messaging.senders.applyDevConfig
 import de.peekandpoke.funktor.messaging.senders.sendgrid.SendgridSender
 import de.peekandpoke.funktor.messaging.senders.withHooks
-import de.peekandpoke.funktor.messaging.senders.withOverrides
 import de.peekandpoke.funktor.messaging.storage.StoringEmailHook
 import de.peekandpoke.funktor.rest.auth.jwtUserProvider
 import de.peekandpoke.karango.karango
 import de.peekandpoke.monko.monko
-import de.peekandpoke.ultra.common.modifyIf
 import de.peekandpoke.ultra.kontainer.kontainer
 import de.peekandpoke.ultra.log.Log
 import io.ktor.server.routing.*
@@ -90,16 +88,12 @@ fun createBlueprint(config: FunktorDemoConfig) = kontainer {
 
     singleton(EmailSender::class) { log: Log, storing: StoringEmailHook ->
         mailSender
-            .ignoreExampleDomains()
+            .applyDevConfig(config = config, devConfig = config.devOverrides?.mailing)
             .withHooks(log) {
                 onAfterSend(storing)
 
                 onAfterSend { email, result ->
                     log.info("Email sent: $email, result: $result")
-                }
-            }.modifyIf(config.ktor.isDevelopment) {
-                withOverrides {
-                    developmentMode(config, toEmail = "")
                 }
             }
     }

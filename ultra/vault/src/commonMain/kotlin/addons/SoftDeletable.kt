@@ -1,4 +1,4 @@
-package de.peekandpoke.karango.addons.softdelete
+package de.peekandpoke.ultra.vault.addons
 
 interface SoftDeletable {
     interface Mutable<T> : SoftDeletable {

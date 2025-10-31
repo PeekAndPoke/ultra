@@ -5,6 +5,7 @@ import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.funktor.core.config.funktor.FunktorConfig
 import de.peekandpoke.funktor.core.config.ktor.KtorConfig
 import de.peekandpoke.funktor.core.model.InsightsConfig
+import de.peekandpoke.funktor.messaging.MailingDevConfig
 import de.peekandpoke.funktor.messaging.senders.aws.AwsSesConfig
 import de.peekandpoke.funktor.messaging.senders.sendgrid.SendgridConfig
 import de.peekandpoke.karango.config.ArangoDbConfig
@@ -23,7 +24,7 @@ data class FunktorDemoConfig(
 ) : AppConfig {
 
     data class DevOverrides(
-        val toEmail: String?,
+        val mailing: MailingDevConfig? = null,
     )
 
     data class ApiConfig(

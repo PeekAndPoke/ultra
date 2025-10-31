@@ -19,6 +19,7 @@ class StoringEmailHook(
 
             is EmailStoring.WithoutContent -> {
                 repo.storeSentEmail(
+                    result = result,
                     refs = storing.refs,
                     tags = storing.tags,
                     content = SentMessageModel.Content.EmailContent(
@@ -34,6 +35,7 @@ class StoringEmailHook(
 
             is EmailStoring.WithContent -> {
                 repo.storeSentEmail(
+                    result = result,
                     refs = storing.refs,
                     tags = storing.tags,
                     content = SentMessageModel.Content.EmailContent(

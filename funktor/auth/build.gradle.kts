@@ -39,8 +39,6 @@ kotlin {
                 implementation(project(":ultra:security"))
                 implementation(project(":ultra:slumber"))
 
-                implementation(project(":karango:addons"))
-
                 implementation(project(":funktor:messaging"))
                 implementation(project(":funktor:rest"))
             }

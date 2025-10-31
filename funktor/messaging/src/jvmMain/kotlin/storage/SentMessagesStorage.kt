@@ -1,6 +1,7 @@
 package de.peekandpoke.funktor.messaging.storage
 
 import de.peekandpoke.funktor.messaging.api.EmailAttachment
+import de.peekandpoke.funktor.messaging.api.EmailResult
 import de.peekandpoke.funktor.messaging.api.SentMessageModel
 import de.peekandpoke.ultra.common.model.search.PagedSearchFilter
 import de.peekandpoke.ultra.vault.Cursor
@@ -20,6 +21,7 @@ interface SentMessagesStorage {
         }
 
         override suspend fun storeSentEmail(
+            result: EmailResult,
             refs: Set<String>,
             tags: Set<String>,
             content: SentMessageModel.Content.EmailContent,
@@ -44,12 +46,14 @@ interface SentMessagesStorage {
         }
 
         override suspend fun storeSentEmail(
+            result: EmailResult,
             refs: Set<String>,
             tags: Set<String>,
             content: SentMessageModel.Content.EmailContent,
             attachments: List<EmailAttachment>,
         ) {
             val sent = SentMessage(
+                result = result,
                 refs = refs,
                 tags = tags,
                 content = content,
@@ -68,6 +72,7 @@ interface SentMessagesStorage {
     ): Cursor<Stored<SentMessage>>
 
     suspend fun storeSentEmail(
+        result: EmailResult,
         refs: Set<String>,
         tags: Set<String>,
         content: SentMessageModel.Content.EmailContent,
