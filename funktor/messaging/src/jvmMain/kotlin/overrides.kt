@@ -1,5 +1,6 @@
 package de.peekandpoke.funktor.messaging
 
+import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.funktor.messaging.api.EmailBody
 import de.peekandpoke.funktor.messaging.api.EmailDestination
 
@@ -17,6 +18,34 @@ class MailingOverrides(
         internal fun build() = MailingOverrides(
             overrides = overrides.toList()
         )
+
+        fun developmentMode(config: AppConfig, toEmail: String) {
+            val env = "${config.ktor.application.id} | ${config.ktor.deployment.environment}"
+
+            replaceDestination(toEmail)
+
+            prefixBody(
+                """
+                    <div style="background-color: #ff0000; color: #ffffff; padding: 10px; font-family: monospace;">
+                        DEV $env
+                    </div>
+                """.trimIndent()
+            )
+
+            prefixSubject("[$env]")
+        }
+
+        fun replaceDestination(to: String) {
+            addOverride(MailingOverride.ReplaceDestination.to(to))
+        }
+
+        fun prefixBody(prefix: String) {
+            addOverride(MailingOverride.PrefixBody(prefix))
+        }
+
+        fun prefixSubject(prefix: String) {
+            addOverride(MailingOverride.PrefixSubject(prefix))
+        }
 
         fun addOverride(override: MailingOverride) {
             overrides.add(override)
