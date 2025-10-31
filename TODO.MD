@@ -20,9 +20,18 @@
     - ( ) check that the JWT signing key is "good" enough
     - ( ) cli command to generate a JWT signing key
 
+## Messaging
+
+- ( ) Add more email providers
+    - ( ) sendgrid
+
 ## General
 
+- ( ) remove common Cache interface in favor of cache4k https://github.com/ReactiveCircus/cache4k
+
 - ( ) Compile testing
+    - ( ) write compile tests for Monko
+    - ( ) write compile tests for Mutator
 
 - ( ) Email templates modeling
 - ( ) Email templates editor

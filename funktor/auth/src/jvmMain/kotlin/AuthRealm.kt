@@ -15,6 +15,7 @@ import de.peekandpoke.funktor.auth.provider.AuthProvider
 import de.peekandpoke.funktor.auth.provider.supportsSignIn
 import de.peekandpoke.funktor.messaging.api.EmailResult
 import de.peekandpoke.ultra.vault.Stored
+import io.ktor.http.*
 import kotlinx.serialization.json.JsonObject
 
 interface AuthRealm<USER> {
@@ -22,7 +23,7 @@ interface AuthRealm<USER> {
     interface Messaging<USER> {
         suspend fun sendPasswordChangedEmail(user: Stored<USER>): EmailResult
 
-//        suspend fun sendPasswordResetEmil()
+        suspend fun sendPasswordResetEmil(user: Stored<USER>, resetUrl: Url): EmailResult
     }
 
     /** Unique id of the realm */

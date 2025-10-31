@@ -64,6 +64,12 @@ kotlin {
                 // AWS SES https://aws.amazon.com/sdk-for-java/
                 implementation(Deps.JavaLibs.Aws.ses)
 
+                // For senders that use apis directly, like SendGrid
+                implementation(Deps.Ktor.Client.core)
+                implementation(Deps.Ktor.Client.cio)
+                implementation(Deps.Ktor.Client.content_negotiation)
+                implementation(Deps.Ktor.Common.serialization_kotlinx_json)
+
                 implementation(project(":karango:core"))
             }
         }

@@ -5,54 +5,19 @@ import de.peekandpoke.funktor.messaging.EmailHooks
 import de.peekandpoke.funktor.messaging.api.EmailBody
 import de.peekandpoke.funktor.messaging.api.EmailResult
 import de.peekandpoke.funktor.messaging.api.SentMessageModel
-import de.peekandpoke.ultra.common.TypedAttributes
-import de.peekandpoke.ultra.common.TypedKey
+import de.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.storing
 
 class StoringEmailHook(
     private val repo: SentMessagesStorage,
 ) : EmailHooks.OnAfterSend {
 
-    companion object {
-        val attr = TypedKey<Storing>("storing")
-
-        fun TypedAttributes.Builder.storing(storing: Storing) {
-            add(attr, storing)
-        }
-    }
-
-    sealed class Storing {
-        data class WithoutContent(
-            val refs: Set<String>,
-            val tags: Set<String>,
-        ) : Storing()
-
-        data class Complete(
-            val refs: Set<String>,
-            val tags: Set<String>,
-            val modifyContent: (String) -> String = { it },
-        ) : Storing() {
-            fun anonymizeLinks() = copy(
-                modifyContent = {
-                    val previous = modifyContent(it)
-
-                    val regex = "href=\".*?\"".toRegex()
-
-                    regex.replace(
-                        input = previous,
-                        replacement = "href=\"#anonymized\" onclick=\"return false;\"",
-                    )
-                }
-            )
-        }
-    }
-
-    override suspend fun onAfterSend(email: Email, result: EmailResult) {
-        when (val storing = email.attributes[attr]) {
+    override suspend operator fun invoke(email: Email, result: EmailResult) {
+        when (val storing = email.storing()) {
             null -> {
                 // noop
             }
 
-            is Storing.WithoutContent -> {
+            is EmailStoring.WithoutContent -> {
                 repo.storeSentEmail(
                     refs = storing.refs,
                     tags = storing.tags,
@@ -67,7 +32,7 @@ class StoringEmailHook(
                 )
             }
 
-            is Storing.Complete -> {
+            is EmailStoring.WithContent -> {
                 repo.storeSentEmail(
                     refs = storing.refs,
                     tags = storing.tags,

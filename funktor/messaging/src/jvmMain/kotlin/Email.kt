@@ -4,6 +4,7 @@ import de.peekandpoke.funktor.messaging.api.EmailAttachment
 import de.peekandpoke.funktor.messaging.api.EmailBody
 import de.peekandpoke.funktor.messaging.api.EmailDestination
 import de.peekandpoke.ultra.common.TypedAttributes
+import de.peekandpoke.ultra.common.TypedKey
 
 /**
  * Base interface for all email messages
@@ -21,4 +22,12 @@ data class Email(
     val attachments: List<EmailAttachment> = emptyList(),
     /** Attributes */
     val attributes: TypedAttributes = TypedAttributes.empty,
-)
+) {
+    companion object {
+        val emailIdempotencyKey = TypedKey<String>("idempotencyKey")
+    }
+
+    fun withIdempotencyKey(key: String): Email = copy(attributes = attributes.plus(emailIdempotencyKey, key))
+
+    fun getIdempotencyKey(): String? = attributes[emailIdempotencyKey]
+}

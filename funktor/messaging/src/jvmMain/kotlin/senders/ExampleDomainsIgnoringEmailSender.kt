@@ -13,9 +13,13 @@ import kotlin.random.Random
  * when all receivers are matching the given [domains].
  */
 class ExampleDomainsIgnoringEmailSender(
-    private val domains: List<String> = listOf("example.com"),
+    private val domains: List<String> = defaultDomains,
     private val wrapped: EmailSender,
 ) : EmailSender {
+
+    companion object {
+        val defaultDomains = listOf("example.com")
+    }
 
     private val random = Random(SecureRandom.getInstanceStrong().nextLong())
 

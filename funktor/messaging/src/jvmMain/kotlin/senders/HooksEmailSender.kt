@@ -6,8 +6,8 @@ import de.peekandpoke.funktor.messaging.EmailSender
 import de.peekandpoke.funktor.messaging.api.EmailResult
 
 class HooksEmailSender(
-    private val wrapped: EmailSender,
     private val hooks: EmailHooks,
+    private val wrapped: EmailSender,
 ) : EmailSender {
     override suspend fun send(email: Email): EmailResult {
         return wrapped.send(email).also { result ->

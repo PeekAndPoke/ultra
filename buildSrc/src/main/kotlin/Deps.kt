@@ -24,7 +24,7 @@ object Deps {
         const val version = "2.2.20-2.0.4"
         const val symbol_processing = "com.google.devtools.ksp:symbol-processing-api:$version"
 
-        // https://mvnrepository.com/artifact/com.github.tschuchortdev/kotlin-compile-testing
+        // https://mvnrepository.com/artifact/dev.zacsweers.kctfork/ksp
         private const val compiletesting_version = "0.11.0"
         const val compiletesting_ksp = "dev.zacsweers.kctfork:ksp:$compiletesting_version"
     }
@@ -242,28 +242,14 @@ object Deps {
             const val java_driver = "com.arangodb:arangodb-java-driver:$driver_version"
         }
 
-        object Jackson {
-            // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
-            private const val jackson_version = "2.19.0"
+        object ApacheCommons {
+            // https://mvnrepository.com/artifact/org.apache.commons/commons-email
+            private const val email_version = "1.6.0"
+            const val email = "org.apache.commons:commons-email:$email_version"
 
-            // https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-kotlin
-            private const val jackson_kotlin_module_version = "2.20.0"
-
-            const val databind = "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
-            const val annotations = "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
-            const val datatype_jdk8 = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jackson_version"
-            const val datatype_jsr310 = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version"
-
-            const val module_kotlin =
-                "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_kotlin_module_version"
-
-            fun fullImpl(scope: DependencyHandlerScope) = with(scope) {
-                implementation(databind)
-                implementation(annotations)
-                implementation(datatype_jdk8)
-                implementation(datatype_jsr310)
-                implementation(module_kotlin)
-            }
+            // https://mvnrepository.com/artifact/commons-cli/commons-cli
+            private const val cli_version = "1.10.0"
+            const val cli = "commons-cli:commons-cli:$cli_version"
         }
 
         object Aws {
@@ -288,6 +274,30 @@ object Deps {
             const val firebase_admin = "com.google.firebase:firebase-admin:$firebase_admin_version"
         }
 
+        object Jackson {
+            // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+            private const val jackson_version = "2.19.0"
+
+            // https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-kotlin
+            private const val jackson_kotlin_module_version = "2.20.0"
+
+            const val databind = "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
+            const val annotations = "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
+            const val datatype_jdk8 = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jackson_version"
+            const val datatype_jsr310 = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version"
+
+            const val module_kotlin =
+                "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_kotlin_module_version"
+
+            fun fullImpl(scope: DependencyHandlerScope) = with(scope) {
+                implementation(databind)
+                implementation(annotations)
+                implementation(datatype_jdk8)
+                implementation(datatype_jsr310)
+                implementation(module_kotlin)
+            }
+        }
+
         object Pdf {
             // https://mvnrepository.com/artifact/org.xhtmlrenderer/flying-saucer-core
             private const val flying_saucer_version = "9.7.2"
@@ -308,21 +318,10 @@ object Deps {
             }
         }
 
-        object Moshi {
-            // https://mvnrepository.com/artifact/com.squareup.moshi/moshi-kotlin
-            private const val moshi_version = "1.15.2"
-            const val kotlin = "com.squareup.moshi:moshi-kotlin:$moshi_version"
-            const val adapters = "com.squareup.moshi:moshi-adapters:$moshi_version"
-        }
-
-        object ApacheCommons {
-            // https://mvnrepository.com/artifact/org.apache.commons/commons-email
-            private const val email_version = "1.6.0"
-            const val email = "org.apache.commons:commons-email:$email_version"
-
-            // https://mvnrepository.com/artifact/commons-cli/commons-cli
-            private const val cli_version = "1.10.0"
-            const val cli = "commons-cli:commons-cli:$cli_version"
+        object Sendgrid {
+            // https://mvnrepository.com/artifact/com.sendgrid/sendgrid-java
+            private const val sendgrid_version = "4.10.3"
+            const val sendgrid_java = "com.sendgrid:sendgrid-java:$sendgrid_version"
         }
 
         // https://mvnrepository.com/artifact/com.auth0/java-jwt

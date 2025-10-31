@@ -67,8 +67,6 @@ class MonkoAuthRecordsRepo(
             limit(1)
         }
 
-        println(found.query.query)
-
         return found.firstOrNull()
     }
 }

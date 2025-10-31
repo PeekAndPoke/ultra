@@ -8,12 +8,15 @@ import de.peekandpoke.funktor.core.model.InsightsConfig
 import de.peekandpoke.funktor.funktor
 import de.peekandpoke.funktor.insights.instrumentWithInsights
 import de.peekandpoke.funktor.messaging.EmailSender
-import de.peekandpoke.funktor.messaging.senders.ExampleDomainsIgnoringEmailSender
-import de.peekandpoke.funktor.messaging.senders.aws.AwsSesSender
+import de.peekandpoke.funktor.messaging.senders.ignoreExampleDomains
+import de.peekandpoke.funktor.messaging.senders.sendgrid.SendgridSender
+import de.peekandpoke.funktor.messaging.senders.withHooks
+import de.peekandpoke.funktor.messaging.storage.StoringEmailHook
 import de.peekandpoke.funktor.rest.auth.jwtUserProvider
 import de.peekandpoke.karango.karango
 import de.peekandpoke.monko.monko
 import de.peekandpoke.ultra.kontainer.kontainer
+import de.peekandpoke.ultra.log.Log
 import io.ktor.server.routing.*
 import io.peekandpoke.funktor.demo.server.admin.AdminUserModule
 import io.peekandpoke.funktor.demo.server.api.ApiApp
@@ -80,14 +83,19 @@ fun createBlueprint(config: FunktorDemoConfig) = kontainer {
     )
 
     // Mailing
-    val awsSender: AwsSesSender by lazy {
-        AwsSesSender.of(config = config.aws.ses)
-    }
+//    val mailSender: AwsSesSender by lazy { AwsSesSender.of(config = config.aws.ses) }
+    val mailSender: SendgridSender by lazy { SendgridSender.of(config = config.sendgrid) }
 
-    singleton(EmailSender::class) {
-        ExampleDomainsIgnoringEmailSender(
-            wrapped = awsSender,
-        )
+    singleton(EmailSender::class) { log: Log, storing: StoringEmailHook ->
+        mailSender
+            .ignoreExampleDomains()
+            .withHooks(log) {
+                onAfterSend(storing)
+
+                onAfterSend { email, result ->
+                    log.info("Email sent: $email, result: $result")
+                }
+            }
     }
 
     // Apps
