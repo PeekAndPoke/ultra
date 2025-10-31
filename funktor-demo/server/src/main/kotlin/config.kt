@@ -19,7 +19,12 @@ data class FunktorDemoConfig(
     val api: ApiConfig,
     val aws: AwsConfig,
     val sendgrid: SendgridConfig,
+    val devOverrides: DevOverrides? = null,
 ) : AppConfig {
+
+    data class DevOverrides(
+        val toEmail: String?,
+    )
 
     data class ApiConfig(
         val baseUrl: String,
