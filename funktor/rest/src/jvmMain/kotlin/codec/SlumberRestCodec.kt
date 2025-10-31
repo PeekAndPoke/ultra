@@ -9,6 +9,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import de.peekandpoke.ultra.common.TypedAttributes
 import de.peekandpoke.ultra.slumber.Codec
 import de.peekandpoke.ultra.slumber.SlumberConfig
+import de.peekandpoke.ultra.slumber.slumber
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 

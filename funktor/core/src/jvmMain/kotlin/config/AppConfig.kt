@@ -7,6 +7,7 @@ import de.peekandpoke.funktor.core.config.ktor.KtorConfig
 import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.slumber.Codec
+import de.peekandpoke.ultra.slumber.awake
 import java.io.File
 
 /**

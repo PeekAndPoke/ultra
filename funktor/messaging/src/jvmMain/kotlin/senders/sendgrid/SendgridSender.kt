@@ -1,5 +1,10 @@
 package de.peekandpoke.funktor.messaging.senders.sendgrid
 
+import com.sendgrid.helpers.mail.Mail
+import com.sendgrid.helpers.mail.objects.Attachments
+import com.sendgrid.helpers.mail.objects.Content
+import com.sendgrid.helpers.mail.objects.Email
+import com.sendgrid.helpers.mail.objects.Personalization
 import de.peekandpoke.funktor.messaging.EmailSender
 import de.peekandpoke.funktor.messaging.api.EmailBody
 import de.peekandpoke.funktor.messaging.api.EmailResult
@@ -9,9 +14,8 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.serialization.jackson.*
 import kotlinx.io.IOException
-import kotlinx.serialization.json.Json
 import de.peekandpoke.funktor.messaging.Email as LibEmail
 
 class SendgridSender(private val client: SendGridClientV3) : EmailSender {
@@ -34,7 +38,8 @@ class SendgridSender(private val client: SendGridClientV3) : EmailSender {
     ) {
         private val http = HttpClient(CIO) {
             install(ContentNegotiation) {
-                json(Json { ignoreUnknownKeys = true })
+                jackson {
+                }
             }
             expectSuccess = false // we'll handle status codes ourselves
         }
@@ -43,28 +48,27 @@ class SendgridSender(private val client: SendGridClientV3) : EmailSender {
          * Non-blocking mail send. Returns true if SendGrid accepted the request (HTTP 202).
          */
         suspend fun send(mail: Mail, idempotencyKey: String? = null): EmailResult {
-            val response: HttpResponse = http.post("$baseUrl/v3/mail/send") {
+            val url = "$baseUrl/v3/mail/send"
+
+            val response: HttpResponse = http.post(url) {
                 header(HttpHeaders.Authorization, "Bearer $apiKey")
                 header(HttpHeaders.ContentType, ContentType.Application.Json)
                 idempotencyKey?.let {
                     header("Idempotency-Key", idempotencyKey)
                 }
-                if (idempotencyKey != null)
-                    setBody(mail)
+                setBody(mail)
             }
 
             @Suppress("UastIncorrectHttpHeaderInspection")
             val messageId = response.headers["X-Message-Id"] ?: response.headers["Message-Id"]
 
             return if (response.status.isSuccess()) {
-                EmailResult.ofMessageId(
-                    messageId = messageId ?: "unknown",
-                )
+                EmailResult.ofMessageId(messageId = messageId ?: "unknown")
             } else {
                 val body = try {
                     response.bodyAsText()
-                } finally {
-                    // noop
+                } catch (e: Throwable) {
+                    "Response body could not be read:\n${e.stackTraceToString()}"
                 }
 
                 EmailResult.error(message = body)
@@ -75,11 +79,11 @@ class SendgridSender(private val client: SendGridClientV3) : EmailSender {
     override suspend fun send(email: LibEmail): EmailResult {
         val from = Email(email.source)
 
-        val personalization = Personalization(
-            to = email.destination.toAddresses.map { Email(it) },
-            cc = email.destination.ccAddresses.map { Email(it) },
-            bcc = email.destination.bccAddresses.map { Email(it) },
-        )
+        val personalization = Personalization().apply {
+            email.destination.toAddresses.forEach { addTo(Email(it)) }
+            email.destination.ccAddresses.forEach { addCc(Email(it)) }
+            email.destination.bccAddresses.forEach { addBcc(Email(it)) }
+        }
 
         val subject = email.subject
 
@@ -88,15 +92,20 @@ class SendgridSender(private val client: SendGridClientV3) : EmailSender {
             is EmailBody.Html -> Content("text/html", email.body.content)
         }
 
-        val attachments = email.attachments.map { attachment -> Attachment.from(attachment) }
 
-        val mail = Mail(
-            from = from,
-            personalizations = listOf(personalization),
-            subject = subject,
-            content = listOf(content),
-            attachments = attachments.takeIf { it.isNotEmpty() },
-        )
+        val attachments = email.attachments.map { attachment ->
+            Attachments.Builder(attachment.mimeType, attachment.dataBase64)
+        }
+
+        val mail = Mail().apply {
+            setFrom(from)
+            addPersonalization(personalization)
+            setSubject(subject)
+            addContent(content)
+            attachments.forEach {
+                addAttachments(it.build())
+            }
+        }
 
         return try {
             client.send(mail = mail, idempotencyKey = email.getIdempotencyKey())

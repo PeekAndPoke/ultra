@@ -17,7 +17,7 @@ object Deps {
     }
 
     // Kotlin ////////////////////////////////////////////////////////////////////////////////////
-    const val kotlinVersion = "2.2.21"
+    const val kotlinVersion = "2.2.20"
 
     object Ksp {
         // https://github.com/google/ksp/releases
@@ -320,7 +320,7 @@ object Deps {
 
         object Sendgrid {
             // https://mvnrepository.com/artifact/com.sendgrid/sendgrid-java
-            private const val sendgrid_version = "4.10.3"
+            private const val sendgrid_version = "5.0.0-rc.1"
             const val sendgrid_java = "com.sendgrid:sendgrid-java:$sendgrid_version"
         }
 

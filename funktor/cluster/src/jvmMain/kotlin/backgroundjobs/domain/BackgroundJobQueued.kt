@@ -2,6 +2,7 @@ package de.peekandpoke.funktor.cluster.backgroundjobs.domain
 
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.slumber.Codec
+import de.peekandpoke.ultra.slumber.slumber
 import de.peekandpoke.ultra.vault.Vault
 import kotlin.time.Duration
 
@@ -19,7 +20,7 @@ data class BackgroundJobQueued(
     companion object {
         private fun calcHash(data: Any?): Int {
             val hash = try {
-                Codec.default.slumber(data)?.hashCode() ?: 0
+                Codec.default.slumber(data)?.hashCode() ?: data?.hashCode() ?: 0
             } catch (_: Exception) {
                 Hash(data).hashCode()
             }

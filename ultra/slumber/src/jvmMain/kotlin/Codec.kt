@@ -126,7 +126,7 @@ open class Codec(
         @Suppress("UNCHECKED_CAST")
         return try {
             slumberer.slumber(data, firstPassSlumbererContext)
-        } catch (e: SlumberException) {
+        } catch (_: SlumberException) {
             slumberer.slumber(data, secondPassSlumbererContext)
         } as? T?
     }
