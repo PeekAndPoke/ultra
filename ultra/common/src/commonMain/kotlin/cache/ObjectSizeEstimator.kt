@@ -1,10 +1,21 @@
 package de.peekandpoke.ultra.common.cache
 
 import de.peekandpoke.ultra.common.WeakSet
+import de.peekandpoke.ultra.common.cache.ObjectSizeEstimatorImpl.EstimatorConfig
 
-class ObjectSizeEstimator(
+interface ObjectSizeEstimator {
+    companion object {
+        operator fun invoke(cfg: EstimatorConfig = EstimatorConfig()): ObjectSizeEstimator {
+            return ObjectSizeEstimatorImpl(cfg)
+        }
+    }
+
+    fun estimate(obj: Any?): Long
+}
+
+class ObjectSizeEstimatorImpl(
     val cfg: EstimatorConfig = EstimatorConfig(),
-) {
+) : ObjectSizeEstimator {
     companion object {
         const val NULL_SIZE = 4L
 
@@ -26,12 +37,11 @@ class ObjectSizeEstimator(
         val pointerSize: Long = 8L,
     )
 
-
-    fun estimate(obj: Any?): Long {
+    override fun estimate(obj: Any?): Long {
         // avoid cycles
-        if (seen.has(obj)) return 0L
+        if (seen.contains(obj)) return 0L
 
-        seen.put(obj)
+        seen.add(obj)
 
         return when (obj) {
             null -> NULL_SIZE

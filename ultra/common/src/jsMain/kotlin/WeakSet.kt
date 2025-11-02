@@ -2,17 +2,21 @@ package de.peekandpoke.ultra.common
 
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 // TODO: test me JS
-actual class WeakSet<T> actual constructor() {
+actual class WeakSet<E> actual constructor() {
     private var ids = createJsWeakSet()
 
-    actual fun has(value: T): Boolean = ids.has(value)
+    actual val size: Int get() = ids.size
 
-    actual fun put(value: T) {
-        ids.add(value)
+    actual fun toSet(): Set<E> = (ids.values().toArray() as Array<E>).toSet()
+
+    actual fun contains(element: E): Boolean = ids.has(element)
+
+    actual fun add(element: E) {
+        ids.add(element)
     }
 
-    actual fun remove(value: T) {
-        ids.delete(value)
+    actual fun remove(element: E) {
+        ids.delete(element)
     }
 
     actual fun clear() {

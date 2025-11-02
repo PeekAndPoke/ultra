@@ -4,20 +4,25 @@ import java.util.*
 
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 // TODO: test me JVM
-actual class WeakSet<T> actual constructor() {
-    private val ids = IdentityHashMap<T, Boolean>()
+actual class WeakSet<E> actual constructor() {
+    /**
+     * Use a WeakHashMap-backed Set so keys can be garbage collected when no strong refs remain
+     */
+    private val set: MutableSet<E> = Collections.newSetFromMap(WeakHashMap<E, Boolean>())
 
-    actual fun has(value: T): Boolean = ids.containsKey(value)
+    actual val size: Int get() = set.size
 
-    actual fun put(value: T) {
-        ids[value] = true
+    actual fun toSet(): Set<E> = set.toSet()
+
+    actual fun contains(element: E): Boolean = set.contains(element)
+
+    actual fun add(element: E) {
+        set.add(element)
     }
 
-    actual fun remove(value: T) {
-        ids.remove(value)
+    actual fun remove(element: E) {
+        set.remove(element)
     }
 
-    actual fun clear() {
-        ids.clear()
-    }
+    actual fun clear() = set.clear()
 }

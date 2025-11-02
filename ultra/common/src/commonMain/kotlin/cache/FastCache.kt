@@ -9,26 +9,67 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration
 
-// TODO: test me
-class FastCache<K, V>(
-    private val behaviours: List<Behaviour<K, V>>,
+fun <K, V> fastCache(
     scope: CoroutineScope = Cache.defaultCoroutineScope,
-    private val loopDelay: Duration = 100.milliseconds,
+    loopDelay: Duration = FastCache.defaultLoopDelay,
+    configure: FastCache.Builder<K, V>.() -> Unit = {},
+): FastCache<K, V> {
+    val builder = FastCache.Builder<K, V>(scope = scope, loopDelay = loopDelay)
+
+    return builder.apply(configure).build()
+}
+
+/**
+ * Cache implementation that focuses on performance.
+ *
+ * The cache can use a number of [behaviours].
+ * There is an internal processing loop that periodically invokes the behaviours.
+ *
+ * This means f.e. that the [Builder.maxMemoryUsage] behaviour will not check after every insert whether the cache is
+ * over the limit and something needs to be evicted. Instead, the loop will check the memory usage periodically and
+ * evict entries until the memory usage is below the limit.
+ */
+class FastCache<K, V>(
+    scope: CoroutineScope = Cache.defaultCoroutineScope,
+    private val behaviours: List<Behaviour<K, V>>,
+    private val loopDelay: Duration = defaultLoopDelay,
 ) : Cache<K, V> {
 
-    class Builder<K, V>(private val scope: CoroutineScope = Cache.defaultCoroutineScope) {
+    companion object {
+        val defaultLoopDelay = 50.milliseconds
+    }
+
+    /**
+     * Builder for [FastCache].
+     */
+    class Builder<K, V>(
+        private val scope: CoroutineScope = Cache.defaultCoroutineScope,
+        private var loopDelay: Duration = defaultLoopDelay,
+    ) {
         private val behaviours = mutableListOf<Behaviour<K, V>>()
 
+        /** Sets the loop delay. */
+        fun loopDelay(delay: Duration) = apply { loopDelay = delay }
+
+        /** Adds a behaviour to the cache. */
         fun addBehaviour(behaviour: Behaviour<K, V>) = apply { behaviours.add(behaviour) }
 
+        /** Adds the [ExpireAfterAccessBehaviour] to the cache. */
         fun expireAfterAccess(ttl: Duration) = addBehaviour(ExpireAfterAccessBehaviour(ttl))
 
+        /** Adds the [MaxEntriesBehaviour] to the cache. */
         fun maxEntries(maxEntries: Int) = addBehaviour(MaxEntriesBehaviour(maxEntries))
 
+        /** Adds the [MaxMemoryUsageBehaviour] to the cache. */
         fun maxMemoryUsage(maxMemorySize: Long, estimator: ObjectSizeEstimator = ObjectSizeEstimator()) =
             addBehaviour(MaxMemoryUsageBehaviour(maxMemorySize, estimator))
 
-        fun build() = FastCache(behaviours, scope)
+        /** Builds the [FastCache] instance. */
+        fun build() = FastCache(
+            scope = scope,
+            behaviours = behaviours,
+            loopDelay = loopDelay,
+        )
     }
 
     sealed interface Action<K, V> {
@@ -44,7 +85,7 @@ class FastCache<K, V>(
     }
 
     class ExpireAfterAccessBehaviour<K, V>(ttl: Duration) : Behaviour<K, V> {
-        private val durationMs = ttl.inWholeMilliseconds
+        private val ttlMs = ttl.inWholeMilliseconds
         private val clock = Kronos.systemUtc
         private val lastAccess = mutableMapOf<K, Long>()
 
@@ -64,9 +105,13 @@ class FastCache<K, V>(
             }
 
             // check for expired entries
-            lastAccess.filter { it.value + durationMs < now }.forEach { (key, _) ->
+            lastAccess.filter { it.value + ttlMs < now }.forEach { (key, _) ->
                 expire(cache, key)
             }
+
+            println(
+                lastAccess.mapValues { (it.value + ttlMs) - now }.toList()
+            )
         }
 
         private fun expire(cache: FastCache<K, V>, key: K) {
@@ -188,27 +233,31 @@ class FastCache<K, V>(
         private val loopDelay: Duration,
     ) {
         suspend fun run() {
-            do {
-                val cache = ref.get() ?: return
+            ref.get()?.let { doRun(it) }
+        }
 
-                // println("Loop.run")
+        private suspend fun doRun(cache: FastCache<K, V>) {
+            // println("LOOP RUN  |  ")
 
-                val actions = cache.sync {
-                    // Get the currently stored actions
-                    cache.lastActions.also {
-                        // Create a new instance
-                        cache.lastActions = ArrayList(it.size)
-                    }
+            val actions = cache.sync {
+                // Get the currently stored actions
+                cache.lastActions.also {
+                    // Create a new instance
+                    cache.lastActions = ArrayList(it.size)
                 }
+            }
 
-                if (actions.isNotEmpty()) {
-                    cache.behaviours.forEach { behaviour ->
-                        behaviour.process(cache, actions)
-                    }
-                }
+            cache.behaviours.forEach { behaviour ->
+                behaviour.process(cache, actions)
+            }
 
-                delay(loopDelay)
-            } while (true)
+            triggerNextRun()
+        }
+
+        private suspend fun triggerNextRun() {
+            delay(loopDelay)
+
+            ref.get()?.let { doRun(it) }
         }
     }
 
@@ -268,6 +317,7 @@ class FastCache<K, V>(
     }
 
     private fun removeSilently(key: K) = sync {
+        // println("FastCache.removeSilently: $key  |  ")
         map.remove(key)
     }
 

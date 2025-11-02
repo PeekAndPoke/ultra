@@ -99,6 +99,7 @@ object Deps {
         // https://github.com/Kotlin/kotlinx.coroutines/releases
         private const val coroutines_version = "1.10.2"
         const val coroutines_core = "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+        const val coroutines_test = "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version"
 
         // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-datetime
         private const val datetime_version = "0.6.2"

@@ -40,8 +40,8 @@ class SimpleLookup<T : Any>(provider: () -> List<T>) : Lookup<T> {
     /**
      * Map of item classes to items
      */
-    private val items by lazy {
-        provider().map { it::class to it }.toMap()
+    private val items: Map<KClass<out T>, T> by lazy {
+        provider().associateBy { it::class }
     }
 
     /**
@@ -54,7 +54,8 @@ class SimpleLookup<T : Any>(provider: () -> List<T>) : Lookup<T> {
      *
      * Throws an exception when there is no instance for the requested [cls]
      */
-    override fun <X : T> get(cls: KClass<X>): X = getOrNull(cls) ?: error("There is no instance of '$cls'")
+    override fun <X : T> get(cls: KClass<X>): X = getOrNull(cls)
+        ?: error("There is no instance of '$cls'")
 
     /**
      * Returns the instance of the given [cls]

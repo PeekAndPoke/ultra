@@ -63,4 +63,4 @@ fun <T> MutableList<T>.unshift(elements: Collection<T>): MutableList<T> = apply 
  *
  * If there is no entry in the list then null is returned.
  */
-fun <T> MutableList<T>.shift(): T? = if (size > 0) removeAt(0) else null
+fun <T> MutableList<T>.shift(): T? = if (isNotEmpty()) removeAt(0) else null

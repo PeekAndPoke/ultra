@@ -49,7 +49,7 @@ class WeakReferenceSpec : StringSpec() {
 
             subject.value shouldBe something
 
-            val garbage = mutableListOf<List<String>>()
+            val garbage = mutableListOf<List<Any>>()
 
             // clearing the reference
             @Suppress("UNUSED_VALUE")
@@ -59,9 +59,7 @@ class WeakReferenceSpec : StringSpec() {
 
             eventually(180.seconds) {
                 // Create lots of new object to trigger garbage collection
-                garbage.add((1..1_000_000).map { Kronos.systemUtc.instantNow().toString() })
-                delay(1)
-                garbage.clear()
+                garbage.add((1..1_000).map { ByteArray(1_000) { 0 } })
                 delay(1)
 
                 // TODO: How can we test this?

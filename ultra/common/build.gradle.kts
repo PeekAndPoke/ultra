@@ -54,6 +54,7 @@ kotlin {
 
         commonTest {
             dependencies {
+                implementation(Deps.KotlinX.coroutines_test)
                 commonTestDeps()
             }
         }

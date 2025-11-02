@@ -2,7 +2,7 @@ package de.peekandpoke.mutator
 
 fun <V> Set<V>.mutator(child: V.() -> Mutator<V>): SetMutator<V> = SetMutatorImpl(this, child)
 
-fun <V> SetMutator<V>.add(element: V) = add(getChildMutator(element))
+fun <V> SetMutator<V>.add(element: V) = this@add.add(getChildMutator(element))
 
 interface SetMutator<V> : Mutator<MutableSet<V>>, MutableSet<Mutator<V>> {
     fun getChildMutator(child: V): Mutator<V>
