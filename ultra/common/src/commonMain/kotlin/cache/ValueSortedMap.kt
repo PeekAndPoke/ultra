@@ -36,11 +36,11 @@ internal class ValueSortedMap<K, V, T : Comparable<T>>(
         if (c != 0) c else a.id.compareTo(b.id)
     }
 
-    private fun indexOf(node: Node<K, V, T>): Int {
-        // Find position of a node by (sort, id)
-        val idx = sorted.binarySearch(node, nodeComparator)
-
-        return idx
+    /**
+     * Find the position of a node by in the sorted array.
+     */
+    private fun indexOfInSorted(node: Node<K, V, T>): Int {
+        return sorted.binarySearch(node, nodeComparator)
     }
 
     // --- MutableMap<K, V> ---
@@ -73,7 +73,7 @@ internal class ValueSortedMap<K, V, T : Comparable<T>>(
         val prev = byKey[key]
         if (prev != null) {
             // remove old node from the sorted array
-            val idx = indexOf(prev)
+            val idx = indexOfInSorted(prev)
             if (idx >= 0) sorted.removeAt(idx)
         }
 
@@ -95,14 +95,12 @@ internal class ValueSortedMap<K, V, T : Comparable<T>>(
 
     override fun remove(key: K): V? {
         val node = byKey.remove(key) ?: return null
-        val idx = indexOf(node)
+        val idx = indexOfInSorted(node)
 
         if (idx >= 0) sorted.removeAt(idx)
 
         return node.value
     }
-
-    // --- Extra conveniences ---
 
     /** Entries in ascending order by sort key. */
     fun ascending(): Iterable<Pair<K, V>> = object : Iterable<Pair<K, V>> {

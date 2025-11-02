@@ -76,7 +76,7 @@ class FastCache<K, V>(
         val key: K
     }
 
-    class ReadAction<K, V>(override val key: K) : Action<K, V>
+    class ReadAction<K, V>(override val key: K, val value: V) : Action<K, V>
     class PutAction<K, V>(override val key: K, val value: V) : Action<K, V>
     class RemoveAction<K, V>(override val key: K) : Action<K, V>
 
@@ -85,6 +85,9 @@ class FastCache<K, V>(
     }
 
     class ExpireAfterAccessBehaviour<K, V>(ttl: Duration) : Behaviour<K, V> {
+        // TODO: track times
+        //   - use ValueSortedMap to store the access times
+
         private val ttlMs = ttl.inWholeMilliseconds
         private val clock = Kronos.systemUtc
         private val lastAccess = mutableMapOf<K, Long>()
@@ -109,9 +112,7 @@ class FastCache<K, V>(
                 expire(cache, key)
             }
 
-            println(
-                lastAccess.mapValues { (it.value + ttlMs) - now }.toList()
-            )
+            // println(lastAccess.mapValues { (it.value + ttlMs) - now }.toList())
         }
 
         private fun expire(cache: FastCache<K, V>, key: K) {
@@ -121,6 +122,10 @@ class FastCache<K, V>(
     }
 
     class MaxEntriesBehaviour<K, V>(val maxEntries: Int) : Behaviour<K, V> {
+        // TODO: track times
+        //   - use ValueSortedMap to store the access times
+        //   - evict oldest first
+
         override fun process(cache: FastCache<K, V>, actions: List<Action<K, V>>) {
             cache.entries.keys
                 .take(cache.entries.size - maxEntries)
@@ -150,10 +155,21 @@ class FastCache<K, V>(
         private var totalSize = 0L
 
         override fun process(cache: FastCache<K, V>, actions: List<Action<K, V>>) {
+
+            // The Plan:
+            // - Group actions by key
+            // - last action per key is the current state
+            // - remove actions that are not needed anymore
+            // - update the total tracked size
+
             val now = clock.millisNow()
 
-            actions.forEach { action ->
-                val current = data[action.key]
+            val byKey = actions
+                .groupBy { it.key }
+                .mapValues { (_, actions) -> actions.last() }
+
+            byKey.forEach { (key, action) ->
+                val current = data[key]
                 val currentSize = current?.size ?: 0
 
                 when (action) {
@@ -164,10 +180,16 @@ class FastCache<K, V>(
                         }
                     }
 
-                    is PutAction -> {
+                    is ReadAction, is PutAction -> {
+                        val value = when (action) {
+                            is ReadAction -> action.value
+                            is PutAction -> action.value
+                            else -> error("Unexpected action: $action")
+                        }
+
                         // Update the total tracked size
                         val newKeySize = estimator.estimate(action.key)
-                        val newValueSize = estimator.estimate(action.value)
+                        val newValueSize = estimator.estimate(value)
                         val newSize = newKeySize + newValueSize
 
                         totalSize += newSize - currentSize
@@ -175,7 +197,7 @@ class FastCache<K, V>(
                         // Update the data map
                         data[action.key] = Entry(
                             key = action.key,
-                            value = action.value,
+                            value = value,
                             accessed = now,
                             size = newSize,
                         )
@@ -287,14 +309,14 @@ class FastCache<K, V>(
     val entries: Map<K, V> get() = map.toMap()
 
     override fun has(key: K): Boolean = sync {
-        map.containsKey(key).also {
-            addAction(ReadAction(key))
-        }
+        map[key]?.also {
+            addAction(ReadAction(key, it))
+        } != null
     }
 
     override fun get(key: K): V? = sync {
-        map[key].also {
-            addAction(ReadAction(key))
+        map[key]?.also {
+            addAction(ReadAction(key, it))
         }
     }
 

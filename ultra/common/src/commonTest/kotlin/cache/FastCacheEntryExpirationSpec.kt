@@ -49,8 +49,8 @@ class FastCacheExpireAfterAccessSpec : StringSpec() {
             // Access the entry to refresh last-access
             cache.get("x") shouldBe "v"
 
-            // Wait 1 / 4 ttl
-            delay(ttl * 0.25)
+            // Wait halt ttl
+            delay(ttl * 0.5)
             // Key must still be there
             cache.keys shouldContainExactlyInAnyOrder setOf("x")
 
