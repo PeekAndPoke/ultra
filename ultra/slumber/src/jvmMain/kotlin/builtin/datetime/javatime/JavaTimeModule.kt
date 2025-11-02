@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin.datetime.javatime
 
+import de.peekandpoke.ultra.common.TypedAttributes
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.SlumberModule
 import de.peekandpoke.ultra.slumber.Slumberer
@@ -15,7 +16,7 @@ import kotlin.reflect.full.isSuperclassOf
 
 object JavaTimeModule : SlumberModule {
 
-    override fun getAwaker(type: KType): Awaker? {
+    override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? {
         return when (type.classifier) {
             // Java util
             java.util.Date::class ->
@@ -44,10 +45,11 @@ object JavaTimeModule : SlumberModule {
         }
     }
 
-    override fun getSlumberer(type: KType): Slumberer? {
+    override fun getSlumberer(type: KType, attributes: TypedAttributes): Slumberer? {
 
         val cls = type.classifier
 
+        @Suppress("IntroduceWhenSubject")
         return when {
             // Java util
             cls == java.util.Date::class ->

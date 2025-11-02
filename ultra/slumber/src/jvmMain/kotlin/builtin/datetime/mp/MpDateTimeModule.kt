@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin.datetime.mp
 
+import de.peekandpoke.ultra.common.TypedAttributes
 import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.datetime.MpLocalDate
 import de.peekandpoke.ultra.common.datetime.MpLocalDateTime
@@ -13,7 +14,7 @@ import kotlin.reflect.KType
 
 object MpDateTimeModule : SlumberModule {
 
-    override fun getAwaker(type: KType): Awaker? {
+    override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? {
 
         return when (type.classifier) {
 
@@ -39,7 +40,7 @@ object MpDateTimeModule : SlumberModule {
         }
     }
 
-    override fun getSlumberer(type: KType): Slumberer? {
+    override fun getSlumberer(type: KType, attributes: TypedAttributes): Slumberer? {
 
         return when (type.classifier) {
 

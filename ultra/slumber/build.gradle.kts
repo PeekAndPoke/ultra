@@ -55,6 +55,7 @@ kotlin {
                 api(Deps.JavaLibs.classindex)
 
                 implementation(Deps.KotlinX.datetime)
+                implementation(Deps.KotlinLibs.cache4k)
             }
         }
 

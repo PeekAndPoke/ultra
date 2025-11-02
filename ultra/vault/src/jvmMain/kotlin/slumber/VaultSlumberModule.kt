@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.vault.slumber
 
+import de.peekandpoke.ultra.common.TypedAttributes
 import de.peekandpoke.ultra.common.TypedKey
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.SlumberModule
@@ -17,7 +18,7 @@ object VaultSlumberModule : SlumberModule {
     val DatabaseKey = TypedKey<Database>("vault_Database")
     val EntityCacheKey = TypedKey<EntityCache>("vault_EntityCache")
 
-    override fun getAwaker(type: KType): Awaker? {
+    override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? {
         return when (type.classifier) {
             Ref::class -> RefCodec
             LazyRef::class -> LazyRefCodec
@@ -26,7 +27,7 @@ object VaultSlumberModule : SlumberModule {
         }
     }
 
-    override fun getSlumberer(type: KType): Slumberer? {
+    override fun getSlumberer(type: KType, attributes: TypedAttributes): Slumberer? {
         return when (type.classifier) {
             Ref::class -> RefCodec
             LazyRef::class -> LazyRefCodec

@@ -48,6 +48,10 @@ object Deps {
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     object KotlinLibs {
+        // https://central.sonatype.com/search?q=g:io.github.reactivecircus.cache4k
+        private const val cache4k_version = "0.14.0"
+        const val cache4k = "io.github.reactivecircus.cache4k:cache4k:$cache4k_version"
+
         // https://mvnrepository.com/artifact/com.github.ajalt.clikt/clikt
         private const val clikt_version = "5.0.3"
         const val clikt = "com.github.ajalt.clikt:clikt:$clikt_version"

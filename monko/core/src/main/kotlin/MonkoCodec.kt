@@ -13,11 +13,12 @@ class MonkoCodec(
     val entityCache: EntityCache,
     configure: TypedAttributes.Builder.() -> Unit = {},
 ) : Codec(
-    config = config,
-    attributes = TypedAttributes.of {
-        add(VaultSlumberModule.DatabaseKey, database)
-        add(VaultSlumberModule.EntityCacheKey, entityCache)
+    config = config.plusAttributes(
+        TypedAttributes.of {
+            add(VaultSlumberModule.DatabaseKey, database)
+            add(VaultSlumberModule.EntityCacheKey, entityCache)
 
-        configure()
-    }
+            configure()
+        }
+    )
 )

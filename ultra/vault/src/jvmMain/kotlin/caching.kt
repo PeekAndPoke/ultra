@@ -97,7 +97,9 @@ class SharedRepoClassLookup {
 
     private val nameLookup = mutableMapOf<String, Class<out Repository<*>>?>()
 
-    fun getOrPut(type: Type, defaultValue: () -> Class<out Repository<*>>?) = typeLookup.getOrPut(type, defaultValue)
+    fun getOrPut(type: Type, defaultValue: () -> Class<out Repository<*>>?) =
+        typeLookup.getOrPut(type, defaultValue)
 
-    fun getOrPut(name: String, defaultValue: () -> Class<out Repository<*>>?) = nameLookup.getOrPut(name, defaultValue)
+    fun getOrPut(name: String, defaultValue: () -> Class<out Repository<*>>?) =
+        nameLookup.getOrPut(name, defaultValue)
 }

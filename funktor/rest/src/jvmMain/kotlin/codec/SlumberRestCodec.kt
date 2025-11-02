@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.ObjectWriter
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import de.peekandpoke.ultra.common.TypedAttributes
 import de.peekandpoke.ultra.slumber.Codec
 import de.peekandpoke.ultra.slumber.SlumberConfig
 import de.peekandpoke.ultra.slumber.slumber
@@ -18,9 +17,8 @@ import kotlin.reflect.typeOf
  */
 class SlumberRestCodec(
     config: SlumberConfig,
-    attributes: TypedAttributes = TypedAttributes.empty,
     private val jacksonMapper: ObjectMapper = defaultJacksonMapper,
-) : RestCodec, Codec(config, attributes) {
+) : RestCodec, Codec(config) {
 
     companion object {
         val defaultJacksonMapper: ObjectMapper = ObjectMapper()

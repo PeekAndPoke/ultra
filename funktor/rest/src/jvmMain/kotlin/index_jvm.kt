@@ -4,12 +4,16 @@ import de.peekandpoke.funktor.core.kontainer
 import de.peekandpoke.funktor.rest.codec.RestCodec
 import de.peekandpoke.funktor.rest.codec.SlumberRestCodec
 import de.peekandpoke.ultra.common.TypedAttributes
+import de.peekandpoke.ultra.common.cache.FastCache
+import de.peekandpoke.ultra.common.remote.ApiResponse
 import de.peekandpoke.ultra.kontainer.KontainerAware
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
 import de.peekandpoke.ultra.security.jwt.JwtConfig
 import de.peekandpoke.ultra.security.jwt.JwtGenerator
 import de.peekandpoke.ultra.slumber.SlumberConfig
+import de.peekandpoke.ultra.slumber.builtin.objects.DataClassSlumberer
+import de.peekandpoke.ultra.slumber.builtin.objects.DataClassSlumberer.Companion.withSlumberCache
 import de.peekandpoke.ultra.vault.Database
 import de.peekandpoke.ultra.vault.EntityCache
 import de.peekandpoke.ultra.vault.slumber.VaultSlumberModule
@@ -28,18 +32,28 @@ val Funktor_Rest = module { builder: FunktorRestBuilder.() -> Unit ->
 
     val codecConfig = SlumberConfig.default.prependModules(VaultSlumberModule)
 
+    val rawCache = FastCache.Builder<Any?, Any?>()
+        .maxMemoryUsage(128 * 1024 * 1024) // 128 MB
+        .build()
+
+    val slumberCache = DataClassSlumberer.SlumberCache(
+        wrapped = rawCache,
+        excludedClasses = setOf(ApiResponse::class, ApiResponse.Insights::class)
+    )
+
     dynamic(RestCodec::class) { database: Database?, entityCache: EntityCache? ->
         SlumberRestCodec(
-            config = codecConfig,
-            attributes = TypedAttributes.of {
-                if (database != null) {
-                    add(VaultSlumberModule.DatabaseKey, database)
-                }
+            config = codecConfig.plusAttributes(
+                TypedAttributes.of {
+                    if (database != null) {
+                        add(VaultSlumberModule.DatabaseKey, database)
+                    }
 
-                if (entityCache != null) {
-                    add(VaultSlumberModule.EntityCacheKey, entityCache)
-                }
-            },
+                    if (entityCache != null) {
+                        add(VaultSlumberModule.EntityCacheKey, entityCache)
+                    }
+                },
+            ).withSlumberCache(slumberCache)
         )
     }
 

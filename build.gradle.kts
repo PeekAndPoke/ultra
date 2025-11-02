@@ -86,9 +86,9 @@ kotlin {
             dependencies {
 //                implementation(project(":mutator"))
                 implementation(project(":funktor:core"))
-
                 implementation(project(":monko:core"))
 
+                implementation(Deps.KotlinLibs.cache4k)
                 implementation(Deps.KotlinLibs.faker)
 
                 implementation(Deps.JavaLibs.logback_classic)

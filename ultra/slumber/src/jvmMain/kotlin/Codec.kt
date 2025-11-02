@@ -8,8 +8,7 @@ import kotlin.reflect.full.createType
 
 @Suppress("Detekt:TooManyFunctions")
 open class Codec(
-    private val config: SlumberConfig,
-    private val attributes: TypedAttributes = TypedAttributes.empty,
+    val config: SlumberConfig,
 ) {
     companion object {
         private val class2typeCache = mutableMapOf<KClass<*>, KType>()
@@ -27,6 +26,8 @@ open class Codec(
             )
         }
     }
+
+    val attributes: TypedAttributes = config.attributes
 
     val firstPassAwakerContext: Awaker.Context by lazy {
         Awaker.Context.Fast(
@@ -64,7 +65,6 @@ open class Codec(
     }
 
     fun getSlumberer(type: KType): Slumberer = config.getSlumberer(type)
-
 
     internal fun <T : Any> awake(type: KClass<T>, data: Any?, context: Awaker.Context): T? {
         @Suppress("UNCHECKED_CAST")

@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin
 
+import de.peekandpoke.ultra.common.TypedAttributes
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.SlumberModule
 import de.peekandpoke.ultra.slumber.Slumberer
@@ -11,7 +12,8 @@ import de.peekandpoke.ultra.slumber.builtin.kotlinx.KotlinXJsonCodec
 import de.peekandpoke.ultra.slumber.builtin.kotlinx.KotlinXJsonNullCodec
 import de.peekandpoke.ultra.slumber.builtin.objects.AnyAwaker
 import de.peekandpoke.ultra.slumber.builtin.objects.AnySlumberer
-import de.peekandpoke.ultra.slumber.builtin.objects.DataClassCodec
+import de.peekandpoke.ultra.slumber.builtin.objects.DataClassAwaker
+import de.peekandpoke.ultra.slumber.builtin.objects.DataClassSlumberer
 import de.peekandpoke.ultra.slumber.builtin.objects.EnumCodec
 import de.peekandpoke.ultra.slumber.builtin.objects.NullCodec
 import de.peekandpoke.ultra.slumber.builtin.objects.ObjectInstanceCodec
@@ -45,7 +47,7 @@ import kotlin.reflect.full.primaryConstructor
 object BuiltInModule : SlumberModule {
 
     @Suppress("Detekt:ComplexMethod")
-    override fun getAwaker(type: KType): Awaker? {
+    override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? {
 
         val cls = type.classifier
 
@@ -88,9 +90,9 @@ object BuiltInModule : SlumberModule {
                     // Singleton Object instance
                     cls.objectInstance != null -> ObjectInstanceCodec(cls.objectInstance!!) as Awaker
                     // Data classes
-                    cls.isData -> DataClassCodec(type) as Awaker
+                    cls.isData -> DataClassAwaker(type)
                     // No param ctor (objects)
-                    primaryCtor != null && primaryCtor.parameters.isEmpty() -> DataClassCodec(type) as Awaker
+                    primaryCtor != null && primaryCtor.parameters.isEmpty() -> DataClassAwaker(type)
                     // Type cannot be handled by this module
                     else -> null
                 }?.let {
@@ -103,7 +105,7 @@ object BuiltInModule : SlumberModule {
     }
 
     @Suppress("Detekt:ComplexMethod")
-    override fun getSlumberer(type: KType): Slumberer? {
+    override fun getSlumberer(type: KType, attributes: TypedAttributes): Slumberer? {
 
         val cls = type.classifier
 
@@ -141,14 +143,18 @@ object BuiltInModule : SlumberModule {
                     // Enum
                     cls.java.isEnum -> EnumCodec(type) as Slumberer
                     // Polymorphic classes
-                    PolymorphicParentUtil.isPolymorphicParent(cls) -> PolymorphicParentUtil.createParentSlumberer(cls)
-                    PolymorphicChildUtil.isPolymorphicChild(cls) -> PolymorphicChildUtil.createChildSlumberer(type)
+                    PolymorphicParentUtil.isPolymorphicParent(cls) ->
+                        PolymorphicParentUtil.createParentSlumberer(cls)
+
+                    PolymorphicChildUtil.isPolymorphicChild(cls) ->
+                        PolymorphicChildUtil.createChildSlumberer(type, attributes)
                     // Singleton Object instance
                     cls.objectInstance != null -> ObjectInstanceCodec(cls.objectInstance!!) as Slumberer
                     // Data classes
-                    cls.isData -> DataClassCodec(type) as Slumberer
+                    cls.isData -> DataClassSlumberer(type, attributes)
                     // No param ctor (objects)
-                    primaryCtor != null && primaryCtor.parameters.isEmpty() -> DataClassCodec(type) as Slumberer
+                    primaryCtor != null && primaryCtor.parameters.isEmpty() ->
+                        DataClassSlumberer(type, attributes)
                     // Type cannot be handled by this module
                     else -> null
                 }?.let {

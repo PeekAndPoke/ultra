@@ -1,13 +1,16 @@
 package de.peekandpoke.ultra.slumber
 
+import de.peekandpoke.ultra.common.TypedAttributes
 import de.peekandpoke.ultra.slumber.builtin.BuiltInModule
 import de.peekandpoke.ultra.slumber.builtin.datetime.javatime.JavaTimeModule
 import de.peekandpoke.ultra.slumber.builtin.datetime.kotlinx.KotlinxTimeModule
 import de.peekandpoke.ultra.slumber.builtin.datetime.mp.MpDateTimeModule
 import kotlin.reflect.KType
 
-class SlumberConfig(val modules: List<SlumberModule> = listOf()) {
-
+data class SlumberConfig(
+    val modules: List<SlumberModule> = listOf(),
+    val attributes: TypedAttributes = TypedAttributes.empty,
+) {
     companion object {
         val default = SlumberConfig(
             modules = listOf(
@@ -23,6 +26,8 @@ class SlumberConfig(val modules: List<SlumberModule> = listOf()) {
 
     private val slumbererLookUp = mutableMapOf<KType, Slumberer?>()
 
+    fun codec(): Codec = Codec(this)
+
     fun prependModules(vararg module: SlumberModule) = prependModules(module.toList())
 
     fun prependModules(prepend: List<SlumberModule>) = SlumberConfig(
@@ -35,12 +40,16 @@ class SlumberConfig(val modules: List<SlumberModule> = listOf()) {
         modules = this.modules.plus(append)
     )
 
+    fun plusAttributes(attributes: TypedAttributes): SlumberConfig = copy(
+        attributes = this.attributes.plus(attributes)
+    )
+
     fun getAwaker(type: KType): Awaker {
 
         return awakerLookup.getOrPut(type) {
             modules
                 .asSequence()
-                .mapNotNull { it.getAwaker(type) }
+                .mapNotNull { it.getAwaker(type, attributes) }
                 .firstOrNull()
         }
             ?: error("There is no known way to awake the type '$type'")
@@ -51,7 +60,7 @@ class SlumberConfig(val modules: List<SlumberModule> = listOf()) {
         return slumbererLookUp.getOrPut(type) {
             modules
                 .asSequence()
-                .mapNotNull { it.getSlumberer(type) }
+                .mapNotNull { it.getSlumberer(type, attributes) }
                 .firstOrNull()
         }
             ?: error("There is no known way to slumber the type '$type'")

@@ -1,8 +1,9 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
+import de.peekandpoke.ultra.common.TypedAttributes
 import de.peekandpoke.ultra.slumber.AdditionalSerialName
 import de.peekandpoke.ultra.slumber.Polymorphic
-import de.peekandpoke.ultra.slumber.builtin.objects.DataClassCodec
+import de.peekandpoke.ultra.slumber.builtin.objects.DataClassSlumberer
 import de.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicChildUtil.getAdditionalIdentifiers
 import de.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicChildUtil.getIdentifier
 import kotlinx.serialization.SerialName
@@ -16,7 +17,7 @@ import kotlin.reflect.jvm.jvmName
 
 object PolymorphicChildUtil {
 
-    fun createChildSlumberer(type: KType): PolymorphicChildSlumberer {
+    fun createChildSlumberer(type: KType, attributes: TypedAttributes): PolymorphicChildSlumberer {
 
         val cls = type.classifier as KClass<*>
 
@@ -29,7 +30,7 @@ object PolymorphicChildUtil {
         return PolymorphicChildSlumberer(
             discriminator = discriminator,
             identifier = identifier,
-            childSlumberer = DataClassCodec(type)
+            childSlumberer = DataClassSlumberer(type, attributes)
         )
     }
 
@@ -124,7 +125,7 @@ object PolymorphicParentUtil {
 
         val discriminator: String = getDiscriminator(parent)
 
-        val map: Map<KClass<*>, String> = getChildren(parent).associateWith { PolymorphicChildUtil.getIdentifier(it) }
+        val map: Map<KClass<*>, String> = getChildren(parent).associateWith { getIdentifier(it) }
 
         return PolymorphicParentSlumberer(discriminator, map)
     }
