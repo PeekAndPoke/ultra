@@ -19,6 +19,9 @@ fun <K, V> fastCache(
     return builder.apply(configure).build()
 }
 
+// TODO:
+//  - MaxMemory behavior ... tests that the memory usage is updated correctly
+
 /**
  * Cache implementation that focuses on performance.
  *
@@ -31,8 +34,8 @@ fun <K, V> fastCache(
  */
 class FastCache<K, V>(
     scope: CoroutineScope = Cache.defaultCoroutineScope,
-    private val behaviours: List<Behaviour<K, V>>,
-    private val loopDelay: Duration = defaultLoopDelay,
+    val behaviours: List<Behaviour<K, V>>,
+    val loopDelay: Duration = defaultLoopDelay,
 ) : Cache<K, V> {
 
     companion object {

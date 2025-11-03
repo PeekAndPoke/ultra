@@ -1,5 +1,9 @@
 # Funktor
 
+## Rest
+
+- ( ) make slumberer cache size configurable
+
 ## Vault
 
 - ( ) make Cursor truely async
@@ -61,7 +65,6 @@
 
 ## Rest
 
-1. Refactor + Complete or remove the Dart-Codegen
-
-- move the codegen into its own package
+- ( ) Refactor + Complete or remove the Dart-Codegen
+    - ( )move the codegen into its own package
 

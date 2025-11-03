@@ -28,12 +28,15 @@ inline val KontainerAware.restCodec: RestCodec get() = kontainer.get()
 inline val ApplicationCall.restCodec: RestCodec get() = kontainer.restCodec
 inline val RoutingContext.restCodec: RestCodec get() = call.restCodec
 
+
 val Funktor_Rest = module { builder: FunktorRestBuilder.() -> Unit ->
 
     val codecConfig = SlumberConfig.default.prependModules(VaultSlumberModule)
 
+    val cacheMemory = Runtime.getRuntime().maxMemory() / 10
+
     val rawCache = FastCache.Builder<Any?, Any?>()
-        .maxMemoryUsage(128 * 1024 * 1024) // 128 MB
+        .maxMemoryUsage(cacheMemory) // 128 MB
         .build()
 
     val slumberCache = DataClassSlumberer.SlumberCache(
