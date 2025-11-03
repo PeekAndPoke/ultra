@@ -80,61 +80,167 @@ class FastCache<K, V>(
     class PutAction<K, V>(override val key: K, val value: V) : Action<K, V>
     class RemoveAction<K, V>(override val key: K) : Action<K, V>
 
-    interface Behaviour<K, V> {
-        fun process(cache: FastCache<K, V>, actions: List<Action<K, V>>)
+    data class ActionUpdates<K, V>(
+        val actions: List<Action<K, V>>,
+    ) {
+        val byKey: Map<K, List<Action<K, V>>> by lazy {
+            actions.groupBy { it.key }
+        }
+
+        val lastByKey: Map<K, Action<K, V>> by lazy {
+            byKey.mapValues { (_, actions) -> actions.last() }
+        }
     }
 
+    interface Behaviour<K, V> {
+        fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>)
+    }
+
+    @Suppress("DuplicatedCode")
     class ExpireAfterAccessBehaviour<K, V>(ttl: Duration) : Behaviour<K, V> {
-        // TODO: track times
-        //   - use ValueSortedMap to store the access times
+        private data class Entry<K, V>(
+            val key: K,
+            val value: V,
+            val accessed: Long,
+        )
 
         private val ttlMs = ttl.inWholeMilliseconds
         private val clock = Kronos.systemUtc
-        private val lastAccess = mutableMapOf<K, Long>()
+        private val data = ValueSortedMap<K, Entry<K, V>, Long> { it.accessed }
 
-        override fun process(cache: FastCache<K, V>, actions: List<Action<K, V>>) {
+        /**
+         * Processes the cache actions
+         *
+         * The following steps are taken:
+         * - Group actions by key
+         * - take the last action per key, as it is the current state
+         * - update the total tracked size
+         * - evict oldest as long as the capacity limit is violated
+         */
+        override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
             val now = clock.millisNow()
-            // process all actions
-            actions.forEach { action ->
-                when (action) {
-                    is ReadAction, is PutAction -> {
-                        lastAccess[action.key] = now
-                    }
 
-                    is RemoveAction -> {
-                        lastAccess.remove(action.key)
-                    }
-                }
+            updates.lastByKey.forEach { (key, action) ->
+                handle(now, key, action)
             }
 
-            // check for expired entries
-            lastAccess.filter { it.value + ttlMs < now }.forEach { (key, _) ->
-                expire(cache, key)
-            }
-
-            // println(lastAccess.mapValues { (it.value + ttlMs) - now }.toList())
+            // Evict entries until we are below the max memory size
+            evictAllNecessary(now, cache)
         }
 
-        private fun expire(cache: FastCache<K, V>, key: K) {
-            lastAccess.remove(key)
+        private fun handle(now: Long, key: K, action: Action<K, V>) {
+            when (action) {
+                is ReadAction, is PutAction -> {
+                    val value = when (action) {
+                        is ReadAction -> action.value
+                        is PutAction -> action.value
+                        else -> error("Unexpected action: $action")
+                    }
+
+                    // Update the data map
+                    data[action.key] = Entry(key = action.key, value = value, accessed = now)
+                }
+
+                is RemoveAction -> {
+                    data.remove(key)
+                }
+            }
+        }
+
+        private fun evict(cache: FastCache<K, V>, key: K) {
+            // Remove entry locally
+            data.remove(key)
+            // Remove entry from the cache
             cache.removeSilently(key)
         }
-    }
 
-    class MaxEntriesBehaviour<K, V>(val maxEntries: Int) : Behaviour<K, V> {
-        // TODO: track times
-        //   - use ValueSortedMap to store the access times
-        //   - evict oldest first
+        private fun evictAllNecessary(now: Long, cache: FastCache<K, V>) {
 
-        override fun process(cache: FastCache<K, V>, actions: List<Action<K, V>>) {
-            cache.entries.keys
-                .take(cache.entries.size - maxEntries)
-                .forEach { key ->
-                    cache.removeSilently(key)
-                }
+            val toEvict = data.ascending()
+                .takeWhile { (_, entry) -> now - entry.accessed >= ttlMs }
+
+            toEvict.forEach { (key, _) -> evict(cache, key) }
         }
     }
 
+    /**
+     * Behaviour that keeps a maximum number of entries in the cache.
+     *
+     * The least recently accessed entries are evicted first.
+     */
+    @Suppress("DuplicatedCode")
+    class MaxEntriesBehaviour<K, V>(maxEntries: Int) : Behaviour<K, V> {
+        private data class Entry<K, V>(
+            val key: K,
+            val value: V,
+            val accessed: Long,
+        )
+
+        private val clock = Kronos.systemUtc
+        private val data = ValueSortedMap<K, Entry<K, V>, Long> { it.accessed }
+        private val maxEntries = maxEntries.coerceAtLeast(1)
+
+        /**
+         * Processes the cache actions
+         *
+         * The following steps are taken:
+         * - Group actions by key
+         * - take the last action per key, as it is the current state
+         * - update the total tracked size
+         * - evict oldest as long as the capacity limit is violated
+         */
+        override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
+            val now = clock.millisNow()
+
+            updates.lastByKey.forEach { (key, action) ->
+                handle(now, key, action)
+            }
+
+            // Evict entries until we are below the max memory size
+            evictAllNecessary(cache)
+        }
+
+        private fun handle(now: Long, key: K, action: Action<K, V>) {
+            when (action) {
+                is ReadAction, is PutAction -> {
+                    val value = when (action) {
+                        is ReadAction -> action.value
+                        is PutAction -> action.value
+                        else -> error("Unexpected action: $action")
+                    }
+
+                    // Update the data map
+                    data[action.key] = Entry(key = action.key, value = value, accessed = now)
+                }
+
+                is RemoveAction -> {
+                    data.remove(key)
+                }
+            }
+        }
+
+        private fun evict(cache: FastCache<K, V>, key: K) {
+            // Remove entry locally
+            data.remove(key)
+            // Remove entry from the cache
+            cache.removeSilently(key)
+        }
+
+        private fun evictAllNecessary(cache: FastCache<K, V>) {
+            while (data.size > maxEntries) {
+                val next = data.ascending().first().second
+
+                evict(cache, next.key)
+            }
+        }
+    }
+
+    /**
+     * Behaviour that keeps a maximum memory size in the cache.
+     *
+     * The least recently accessed entries are evicted first.
+     */
+    @Suppress("DuplicatedCode")
     class MaxMemoryUsageBehaviour<K, V>(
         val maxMemorySize: Long,
         val estimator: ObjectSizeEstimator = ObjectSizeEstimator(),
@@ -148,75 +254,56 @@ class FastCache<K, V>(
         )
 
         private val clock = Kronos.systemUtc
-        private val data = ValueSortedMap<K, Entry<K, V>, Long> {
-            it.accessed
-        }
-
+        private val data = ValueSortedMap<K, Entry<K, V>, Long> { it.accessed }
         private var totalSize = 0L
 
-        override fun process(cache: FastCache<K, V>, actions: List<Action<K, V>>) {
-
-            // The Plan:
-            // - Group actions by key
-            // - last action per key is the current state
-            // - remove actions that are not needed anymore
-            // - update the total tracked size
-
+        /**
+         * Processes the cache actions
+         *
+         * The following steps are taken:
+         * - Group actions by key
+         * - take the last action per key, as it is the current state
+         * - update the total tracked size
+         * - evict oldest as long as the memory limit is violated
+         */
+        override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
             val now = clock.millisNow()
 
-            val byKey = actions
-                .groupBy { it.key }
-                .mapValues { (_, actions) -> actions.last() }
-
-            byKey.forEach { (key, action) ->
-                val current = data[key]
-                val currentSize = current?.size ?: 0
-
-                when (action) {
-                    is ReadAction -> {
-                        // Update the last access time in data map
-                        current?.let {
-                            data[action.key] = current.copy(accessed = now)
-                        }
-                    }
-
-                    is ReadAction, is PutAction -> {
-                        val value = when (action) {
-                            is ReadAction -> action.value
-                            is PutAction -> action.value
-                            else -> error("Unexpected action: $action")
-                        }
-
-                        // Update the total tracked size
-                        val newKeySize = estimator.estimate(action.key)
-                        val newValueSize = estimator.estimate(value)
-                        val newSize = newKeySize + newValueSize
-
-                        totalSize += newSize - currentSize
-
-                        // Update the data map
-                        data[action.key] = Entry(
-                            key = action.key,
-                            value = value,
-                            accessed = now,
-                            size = newSize,
-                        )
-                    }
-
-                    is RemoveAction -> {
-                        current?.let {
-                            remove(current)
-                        }
-                        // Update the total tracked size
-                        totalSize -= currentSize
-                        // Remove from data map
-                        data.remove(action.key)
-                    }
-                }
+            updates.lastByKey.forEach { (key, action) ->
+                handle(now, key, action)
             }
 
             // Evict entries until we are below the max memory size
             evictAllNecessary(cache)
+        }
+
+        private fun handle(now: Long, key: K, action: Action<K, V>) {
+            val current = data[key]
+            val currentSize = current?.size ?: 0
+
+            when (action) {
+                is ReadAction, is PutAction -> {
+                    val value = when (action) {
+                        is ReadAction -> action.value
+                        is PutAction -> action.value
+                        else -> error("Unexpected action: $action")
+                    }
+
+                    // Update the total tracked size
+                    val newKeySize = estimator.estimate(action.key)
+                    val newValueSize = estimator.estimate(value)
+                    val newSize = newKeySize + newValueSize
+
+                    totalSize += newSize - currentSize
+
+                    // Update the data map
+                    data[action.key] = Entry(key = action.key, value = value, accessed = now, size = newSize)
+                }
+
+                is RemoveAction -> {
+                    current?.let { remove(current) }
+                }
+            }
         }
 
         private fun remove(entry: Entry<K, V>) {
@@ -269,8 +356,10 @@ class FastCache<K, V>(
                 }
             }
 
+            val updates = ActionUpdates(actions)
+
             cache.behaviours.forEach { behaviour ->
-                behaviour.process(cache, actions)
+                behaviour.process(cache, updates)
             }
 
             triggerNextRun()

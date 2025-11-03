@@ -46,7 +46,7 @@ class FastCacheMaxEntriesSpec : StringSpec({
         cache.entries.size shouldBe 2
     }
 
-    "reads do not affect MaxEntries eviction order (evicts by insertion order)" {
+    "Reads affect MaxEntries eviction order (evicts by access order)" {
         // MaxEntriesBehaviour implementation evicts based on entries iteration order
         // (insertion order for the backing map), so reads shouldn't change which item is evicted.
         val cache = fastCache<String, String> {
@@ -54,20 +54,23 @@ class FastCacheMaxEntriesSpec : StringSpec({
         }
 
         cache.put("old", "v1")
-        delay(10.milliseconds)
+
+        // Longer delay to wait for the inner loop to process
+        delay(200.milliseconds)
         cache.put("mid", "v2")
-        delay(10.milliseconds)
+
+        // Longer delay to wait for the inner loop to process
+        delay(200.milliseconds)
         cache.put("new", "v3")
 
         // Access "old" and "mid" a bunch of times to simulate "frequent" reads
         repeat(5) { _ ->
             cache.get("old")
-            cache.get("mid")
-            delay(20.milliseconds)
+            delay(50.milliseconds)
         }
 
-        // Because eviction is insertion-order based, "old" (inserted first) should be evicted,
-        // even though it was frequently read.
-        cache.keys shouldContainExactlyInAnyOrder listOf("mid", "new")
+        // "old" should stay as it was touched
+        // "new" should stay as it has a greater access timestamp than "mid"
+        cache.keys shouldContainExactlyInAnyOrder listOf("old", "new")
     }
 })
