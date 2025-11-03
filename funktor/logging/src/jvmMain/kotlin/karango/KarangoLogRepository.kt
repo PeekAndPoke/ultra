@@ -36,9 +36,21 @@ class KarangoLogRepository(
 ) {
 
     override fun IndexBuilder<KarangoLogEntry>.buildIndexes() {
-        this.persistentIndex {
+        persistentIndex {
             field { createdAt }
             field { severity }
+            field { state }
+        }
+
+        persistentIndex {
+            field { createdAt }
+        }
+
+        persistentIndex {
+            field { severity }
+        }
+
+        persistentIndex {
             field { state }
         }
 

@@ -86,6 +86,10 @@ interface DataClassSlumberer : Slumberer {
         }
 
         override fun getOrPut(key: Any?, producer: () -> Any?): Any? {
+            if (key == null || key::class in excludedClasses) {
+                return producer()
+            }
+
             return wrapped.getOrPut(key, producer)
         }
 

@@ -10,6 +10,7 @@ import kotlin.reflect.KType
 data class SlumberConfig(
     val modules: List<SlumberModule> = listOf(),
     val attributes: TypedAttributes = TypedAttributes.empty,
+    val lookup: Lookup = Lookup(),
 ) {
     companion object {
         val default = SlumberConfig(
@@ -22,22 +23,25 @@ data class SlumberConfig(
         )
     }
 
-    private val awakerLookup = mutableMapOf<KType, Awaker?>()
-
-    private val slumbererLookUp = mutableMapOf<KType, Slumberer?>()
+    class Lookup {
+        val awakers = mutableMapOf<KType, Awaker?>()
+        val slumberers = mutableMapOf<KType, Slumberer?>()
+    }
 
     fun codec(): Codec = Codec(this)
-
-    fun prependModules(vararg module: SlumberModule) = prependModules(module.toList())
-
-    fun prependModules(prepend: List<SlumberModule>) = SlumberConfig(
-        modules = prepend.plus(this.modules)
-    )
 
     fun appendModules(vararg module: SlumberModule) = appendModules(module.toList())
 
     fun appendModules(append: List<SlumberModule>) = SlumberConfig(
-        modules = this.modules.plus(append)
+        modules = this.modules.plus(append),
+        lookup = Lookup(), // We reset the lookup, because the new module could handle types differently
+    )
+
+    fun prependModules(vararg module: SlumberModule) = prependModules(module.toList())
+
+    fun prependModules(prepend: List<SlumberModule>) = SlumberConfig(
+        modules = prepend.plus(this.modules),
+        lookup = Lookup(), // We reset the lookup, because the new module could handle types differently
     )
 
     fun plusAttributes(attributes: TypedAttributes): SlumberConfig = copy(
@@ -45,10 +49,8 @@ data class SlumberConfig(
     )
 
     fun getAwaker(type: KType): Awaker {
-
-        return awakerLookup.getOrPut(type) {
-            modules
-                .asSequence()
+        return lookup.awakers.getOrPut(type) {
+            modules.asSequence()
                 .mapNotNull { it.getAwaker(type, attributes) }
                 .firstOrNull()
         }
@@ -57,9 +59,8 @@ data class SlumberConfig(
 
     fun getSlumberer(type: KType): Slumberer {
 
-        return slumbererLookUp.getOrPut(type) {
-            modules
-                .asSequence()
+        return lookup.slumberers.getOrPut(type) {
+            modules.asSequence()
                 .mapNotNull { it.getSlumberer(type, attributes) }
                 .firstOrNull()
         }

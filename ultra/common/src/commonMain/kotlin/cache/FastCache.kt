@@ -326,16 +326,16 @@ class FastCache<K, V>(
         addAction(PutAction(key, value))
     }
 
-    override fun remove(key: K): V? = sync {
-        map.remove(key).also {
-            addAction(RemoveAction(key))
-        }
-    }
-
     override fun getOrPut(key: K, producer: () -> V): V = sync {
         map[key] ?: producer()
             .also { map[key] = it }
             .also { addAction(PutAction(key, it)) }
+    }
+
+    override fun remove(key: K): V? = sync {
+        map.remove(key).also {
+            addAction(RemoveAction(key))
+        }
     }
 
     private fun removeSilently(key: K) = sync {
