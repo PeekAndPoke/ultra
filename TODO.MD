@@ -1,3 +1,16 @@
+# General
+
+- ( ) Compile testing
+    - ( ) write compile tests for Monko
+    - ( ) write compile tests for Mutator
+
+- ( ) Email templates modeling
+- ( ) Email templates editor
+
+## Ultra::Common
+
+- ( ) write tests for FastCache maxMemorySize behavior
+
 # Funktor
 
 ## Rest
@@ -47,17 +60,6 @@
 
 - ( ) Add more email providers
     - ( ) sendgrid
-
-## General
-
-- ( ) remove common Cache interface in favor of cache4k https://github.com/ReactiveCircus/cache4k
-
-- ( ) Compile testing
-    - ( ) write compile tests for Monko
-    - ( ) write compile tests for Mutator
-
-- ( ) Email templates modeling
-- ( ) Email templates editor
 
 ## Slumber
 

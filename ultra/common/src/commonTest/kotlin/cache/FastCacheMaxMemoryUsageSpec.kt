@@ -1,10 +1,12 @@
 // language: kotlin
 package de.peekandpoke.ultra.common.cache
 
+import io.kotest.assertions.fail
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
+import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -98,6 +100,126 @@ class FastCacheMaxMemoryUsageSpec : StringSpec() {
             // The eviction should remove the least-recently-accessed; since kb was put before the final put(ka),
             // it's likely kb gets evicted leaving only ka, but we just assert that exactly one entry remains
             cache.entries.size shouldBe 1
+        }
+
+        "MaxMemoryUsageBehaviour.totalSize equals sum of sizes of entries tracked" {
+            // A deterministic estimator returning exact sizes for given keys/values
+            class StubEstimator(private val sizes: Map<Any?, Long>) : ObjectSizeEstimator {
+                override fun estimate(obj: Any?): Long = sizes[obj] ?: 0L
+            }
+
+            val sizes = mapOf<Any?, Long>(
+                // key sizes
+                "k1" to 1L,
+                "k2" to 1L,
+                "k3" to 1L,
+                // value sizes
+                "v1" to 49L,
+                "v2" to 79L,
+                "v3" to 11L,
+            )
+
+            val estimator = StubEstimator(sizes)
+
+            // Build cache with the behaviour and a small loopDelay so the loop runs frequently.
+            val cache = fastCache<Any, Any>(loopDelay = 20.milliseconds) {
+                maxMemoryUsage(10_000L, estimator) // large max to avoid eviction in this test
+            }
+
+            // Put three entries with different sizes
+            cache.put("k1", "v1") // size = 1 + 49 = 50
+            delay(10.milliseconds)
+            cache.put("k2", "v2") // size = 1 + 79 = 80
+            delay(10.milliseconds)
+            cache.put("k3", "v3") // size = 1 + 11 = 12
+
+            // Give the processing loop time to run and update the behaviour internal state
+            delay(200.milliseconds)
+
+            // Find the MaxMemoryUsageBehaviour instance exposed on the cache
+            val behaviour =
+                cache.behaviours.filterIsInstance<FastCache.MaxMemoryUsageBehaviour<Any, Any>>().firstOrNull()
+                    ?: error("MaxMemoryUsageBehaviour not found on cache")
+
+            // Expected total size = 50 + 80 + 12 = 142
+            behaviour.totalSize shouldBe (50L + 80L + 12L)
+        }
+
+        "totalSize updates correctly when an entry is overwritten and when removed" {
+            class StubEstimator(private val sizes: Map<Any?, Long>) : ObjectSizeEstimator {
+                override fun estimate(obj: Any?): Long = sizes[obj] ?: 0L
+            }
+
+            val sizes = mapOf<Any?, Long>(
+                "k" to 1L,
+                "v1" to 20L,
+                "v2" to 30L,
+            )
+
+            val estimator = StubEstimator(sizes)
+
+            val cache = fastCache<Any, Any>(loopDelay = 20.milliseconds) {
+                maxMemoryUsage(10_000L, estimator)
+            }
+
+            // Put initial value
+            cache.put("k", "v1") // size = 1 + 20 = 21
+            delay(100.milliseconds)
+
+            val behaviour =
+                cache.behaviours.filterIsInstance<FastCache.MaxMemoryUsageBehaviour<Any, Any>>().firstOrNull()
+                    ?: error("MaxMemoryUsageBehaviour not found on cache")
+
+            behaviour.totalSize shouldBe 21L
+
+            // Overwrite same key with a larger value -> size should become 1 + 30 = 31
+            cache.put("k", "v2")
+            delay(100.milliseconds)
+
+            behaviour.totalSize shouldBe 31L
+
+            // Remove the key -> totalSize becomes 0
+            cache.remove("k")
+            delay(100.milliseconds)
+
+            behaviour.totalSize shouldBe 0L
+        }
+
+        "MaxMemoryUsageBehaviour.totalSize must match total size ... randomized test" {
+            // We estimate the size as the int input value itself.
+            class StubEstimator() : ObjectSizeEstimator {
+                override fun estimate(obj: Any?): Long = (obj as? Int)?.toLong() ?: 0L
+            }
+
+            val estimator = StubEstimator()
+
+            val cache = fastCache<Int, Int> {
+                maxMemoryUsage(1000L, estimator)
+            }
+
+            val behaviour = cache.behaviours
+                .filterIsInstance<FastCache.MaxMemoryUsageBehaviour<Int, Int>>().first()
+
+            val rand = Random(42)
+
+            // 100 random rounds
+            repeat(100) {
+
+                // insert 100 numbers
+                repeat(100) {
+                    val num = rand.nextInt(100)
+                    cache.put(num, num)
+                }
+
+                // Wait for the cache to settle down / inner loop to catch up
+                delay(100.milliseconds)
+
+                val expectedTotalMemoryUsage = (cache.keys.sum() + cache.values.sum()).toLong()
+
+                if (behaviour.totalSize != expectedTotalMemoryUsage) {
+                    fail("totalSize is ${behaviour.totalSize} but should be $expectedTotalMemoryUsage")
+                }
+            }
         }
     }
 }

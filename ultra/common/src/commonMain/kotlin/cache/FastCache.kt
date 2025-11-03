@@ -256,9 +256,11 @@ class FastCache<K, V>(
             val size: Long,
         )
 
+        var totalSize = 0L
+            private set
+
         private val clock = Kronos.systemUtc
         private val data = ValueSortedMap<K, Entry<K, V>, Long> { it.accessed }
-        private var totalSize = 0L
 
         /**
          * Processes the cache actions

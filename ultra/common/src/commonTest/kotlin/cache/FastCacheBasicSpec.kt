@@ -65,8 +65,6 @@ class FastCacheBasicSpec : StringSpec() {
                 // Launch many coroutines that interleave puts and gets
                 val jobs = List(200) { idx ->
                     scope.async {
-                        println("Started coroutine $idx")
-
                         val key = idx % 10
                         cache.put(key, idx)
                         val v = cache.get(key)
