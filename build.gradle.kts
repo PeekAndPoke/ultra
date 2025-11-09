@@ -48,6 +48,20 @@ subprojects {
     tasks.withType<AbstractArchiveTask>().configureEach {
         archiveBaseName.convention(nameFromPath)
     }
+
+    plugins.withId("com.vanniktech.maven.publish") {
+        extensions.configure<PublishingExtension> {
+            publications
+                .matching { it.name != "kotlinMultiplatform" }
+                .matching { it is MavenPublication }
+                .configureEach {
+                    if (this is MavenPublication) {
+                        this.artifactId = nameFromPath
+                    }
+
+                }
+        }
+    }
 }
 
 rootProject.plugins.withType<YarnPlugin> {

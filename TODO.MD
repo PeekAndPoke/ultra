@@ -1,5 +1,8 @@
 # General
 
+- ( ) write docs, have a look at these tools
+    - ( ) https://squidfunk.github.io/mkdocs-material/
+
 - ( ) Compile testing
     - ( ) write compile tests for Monko
     - ( ) write compile tests for Mutator
@@ -39,8 +42,16 @@
 
 ## Auth
 
-- ( ) Automatically refresh the JWT token
-- ( ) On window focus, check if the JWT token is still valid, otherwise log out
+- ( ) Default Email templates for AuthRealm.Messaging
+    - ( ) sendPasswordChangedEmail
+    - ( ) sendPasswordResetEmail
+    - ( ) sendAccountVerificationEmail
+    - ( ) sendWelcomeEmail
+
+- ( ) Frontend
+    - ( ) Automatically refresh the JWT token
+    - ( ) On window focus, check if the JWT token is still valid, otherwise log out
+
 - ( ) Reset Password Flow
     - ( ) create token, store in AuthRecords (with expiration time)
     - ( ) send Email

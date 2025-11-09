@@ -10,6 +10,7 @@ import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import de.peekandpoke.funktor.auth.model.AuthSignUpResponse
 import de.peekandpoke.funktor.auth.model.AuthUpdateRequest
 import de.peekandpoke.funktor.auth.model.AuthUpdateResponse
+import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.funktor.messaging.MessagingServices
 import de.peekandpoke.ultra.security.jwt.JwtGenerator
 import de.peekandpoke.ultra.security.password.PasswordHasher
@@ -24,6 +25,7 @@ class AuthSystem(
     private val realms: List<AuthRealm<Any>>,
 ) {
     class Deps(
+        val config: AppConfig,
         val messaging: MessagingServices,
         val jwtGenerator: JwtGenerator,
         val storage: AuthRecordStorage,

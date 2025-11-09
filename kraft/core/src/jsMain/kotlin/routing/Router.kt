@@ -259,6 +259,17 @@ class Router(
     /**
      * Navigates to the given [route].
      */
+    fun navToUri(route: Route.Bound) {
+        navToUri(evt = null, route = route)
+    }
+
+    /**
+     * Navigates to the given [route].
+     *
+     * Takes the [evt] into account, to open a new tab in the browser:
+     * - when a special key where held while clicking
+     * - when the middle mouse button was clicked
+     */
     fun navToUri(evt: MouseEvent?, route: Route.Bound) {
         navToUri(
             evt = evt,
@@ -269,7 +280,9 @@ class Router(
     /**
      * Navigate to the given [uri].
      *
-     * If [evt].ctrlKey is true, the uri will be opened in a new tab.
+     * Takes the [evt] into account, to open a new tab in the browser:
+     * - when a special key where held while clicking
+     * - when the middle mouse button was clicked
      */
     fun navToUri(evt: MouseEvent?, uri: String) {
         navToUri(
