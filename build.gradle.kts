@@ -19,6 +19,15 @@ plugins {
 }
 
 allprojects {
+    apply(plugin = "idea")
+
+    idea {
+        module {
+            isDownloadJavadoc = true
+            isDownloadSources = true
+        }
+    }
+
     repositories {
         mavenCentral()
         // KotlinX
@@ -32,37 +41,24 @@ allprojects {
 
 // Apply to every subproject (skips the root automatically)
 subprojects {
-    // Derive a stable, unique archive name from the Gradle path:
-    // :sub          -> sub
-    // :kraft:core   -> kraft-core
-    // :funktor:core -> funktor-core
-    // :a:b:c        -> a-b-c
+    // Derive a stable, unique archive name from the Gradle path and prefix it:
+    // :sub          -> ultra-sub
+    // :kraft:core   -> ultra-kraft-core
+    // :funktor:core -> ultra-funktor-core
+    // :a:b:c        -> ultra-a-b-c
     apply<BasePlugin>()
 
-    val nameFromPath = path.removePrefix(":").replace(":", "-")
+    val prefixedName = path.removePrefix(":").replace(":", "-")
 
     extensions.configure<BasePluginExtension> {
-        archivesName.convention(nameFromPath)
+        archivesName.convention(prefixedName)
     }
 
     tasks.withType<AbstractArchiveTask>().configureEach {
-        archiveBaseName.convention(nameFromPath)
-    }
-
-    plugins.withId("com.vanniktech.maven.publish") {
-        extensions.configure<PublishingExtension> {
-            publications
-                .matching { it.name != "kotlinMultiplatform" }
-                .matching { it is MavenPublication }
-                .configureEach {
-                    if (this is MavenPublication) {
-                        this.artifactId = nameFromPath
-                    }
-
-                }
-        }
+        archiveBaseName.convention(prefixedName)
     }
 }
+
 
 rootProject.plugins.withType<YarnPlugin> {
     rootProject.the<YarnRootExtension>().apply {

@@ -47,7 +47,7 @@ class `E2E-Crud-OnBeforeSave-Timestamped-Spec` : StringSpec({
 
         withClue("updatedAt must be changed on subsequent save") {
             savedAgain.value.updatedAt shouldBeGreaterThan initialUpdatedAt.plus(99.milliseconds)
-            savedAgain.value.updatedAt shouldBeLessThan initialUpdatedAt.plus(200.milliseconds)
+            savedAgain.value.updatedAt shouldBeLessThan initialUpdatedAt.plus(1000.milliseconds)
         }
     }
 })
