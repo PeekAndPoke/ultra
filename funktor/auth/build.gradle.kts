@@ -69,6 +69,8 @@ kotlin {
                 implementation(Deps.Ktor.Client.content_negotiation)
                 implementation(Deps.Ktor.Common.serialization_kotlinx_json)
 
+                implementation(Deps.KotlinX.html)
+
                 implementation(Deps.JavaLibs.Google.api_client)
 
                 implementation(project(":funktor:core"))

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="JavaScriptLibraryMappings">
-    <excludedPredefinedLibrary name="ultra/build/js/node_modules" />
     <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-funktor-all-test/node_modules" />
     <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-funktor-auth-test/node_modules" />
     <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-funktor-cluster-test/node_modules" />
@@ -13,13 +12,37 @@
     <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-funktor-logging-test/node_modules" />
     <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-funktor-messaging-test/node_modules" />
     <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-funktor-rest-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-funktor-testing-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-addons-avatars-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-addons-browserdetect-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-addons-chartjs-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-addons-jwtdecode-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-addons-konva-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-addons-marked-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-addons-marked/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-addons-nxcompile-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-addons-pdfjs-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-addons-prismjs-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-addons-signaturepad-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-addons-sourcemappedstacktrace-test/node_modules" />
     <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-core-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-core-tests-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-examples-addons-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-examples-addons/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-examples-fomanticui-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-examples-fomanticui/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-examples-hello-world-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-examples-hello-world/node_modules" />
     <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-semanticui-test/node_modules" />
     <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-kraft-testing-test/node_modules" />
     <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-mutator-core-test/node_modules" />
-    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-test/node_modules" />
     <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-ultra-common-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-ultra-html-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-ultra-log-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-ultra-security-test/node_modules" />
     <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-ultra-semanticui-test/node_modules" />
-    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-ultra-slumber-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-ultra-streams-test/node_modules" />
+    <excludedPredefinedLibrary name="ultra/build/js/packages/ultra-ultra-vault-test/node_modules" />
   </component>
 </project>

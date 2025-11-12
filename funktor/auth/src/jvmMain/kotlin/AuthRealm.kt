@@ -13,9 +13,19 @@ import de.peekandpoke.funktor.auth.model.AuthUpdateResponse
 import de.peekandpoke.funktor.auth.model.PasswordPolicy
 import de.peekandpoke.funktor.auth.provider.AuthProvider
 import de.peekandpoke.funktor.auth.provider.supportsSignIn
+import de.peekandpoke.funktor.messaging.Email
+import de.peekandpoke.funktor.messaging.api.EmailBody
+import de.peekandpoke.funktor.messaging.api.EmailDestination
 import de.peekandpoke.funktor.messaging.api.EmailResult
+import de.peekandpoke.funktor.messaging.storage.EmailStoring
+import de.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.store
 import de.peekandpoke.ultra.vault.Stored
 import io.ktor.http.*
+import kotlinx.html.a
+import kotlinx.html.body
+import kotlinx.html.br
+import kotlinx.html.h1
+import kotlinx.html.p
 import kotlinx.serialization.json.JsonObject
 
 interface AuthRealm<USER> {
@@ -26,11 +36,92 @@ interface AuthRealm<USER> {
         suspend fun sendPasswordResetEmil(user: Stored<USER>, resetUrl: Url): EmailResult
     }
 
+    class DefaultMessaging<USER>(
+        val senderEmail: String,
+        val senderName: String,
+        val applicationName: String,
+        val realm: AuthRealm<USER>,
+    ) : Messaging<USER> {
+
+        override suspend fun sendPasswordChangedEmail(user: Stored<USER>): EmailResult {
+            val userEmail = realm.getUserEmail(user)
+
+            return realm.deps.messaging.mailing.send(
+                Email(
+                    source = senderEmail,
+                    destination = EmailDestination.to(userEmail),
+                    subject = "$applicationName: Your password was changed",
+                    body = EmailBody.Html {
+                        body {
+                            h1 { +"Heads up!" }
+
+                            p {
+                                +"Your password was changed. If this was not you, please contact us!"
+                            }
+
+                            p {
+                                +"Yours sincerely,"
+                                br()
+                                +senderName
+                            }
+                        }
+                    }
+                ).store(
+                    EmailStoring.withAnonymizedContent(
+                        refs = setOf(user._id, userEmail),
+                        tags = setOf("password-changed"),
+                    )
+                )
+            )
+        }
+
+        override suspend fun sendPasswordResetEmil(user: Stored<USER>, resetUrl: Url): EmailResult {
+            val userEmail = realm.getUserEmail(user)
+
+            return realm.deps.messaging.mailing.send(
+                Email(
+                    source = senderEmail,
+                    destination = EmailDestination.to(userEmail),
+                    subject = "$applicationName: Recover your Account",
+                    body = EmailBody.Html {
+                        body {
+                            h1 { +"Heads up!" }
+
+                            p {
+                                +"Click the link below to recover your account and set a new password."
+                            }
+
+                            p {
+                                a(href = resetUrl.toString()) {
+                                    +"Recover account"
+                                }
+                            }
+
+                            p {
+                                +"Yours sincerely,"
+                                br()
+                                +senderName
+                            }
+                        }
+                    }
+                ).store(
+                    EmailStoring.withAnonymizedContent(
+                        refs = setOf(user._id, userEmail),
+                        tags = setOf("password-reset"),
+                    )
+                )
+            )
+        }
+    }
+
     /** Unique id of the realm */
     val id: String
 
     /** Auth providers for this realm */
     val providers: List<AuthProvider>
+
+    /** AuthSystem dependencies */
+    val deps: AuthSystem.Deps
 
     /** User messaging */
     val messaging: Messaging<USER>
