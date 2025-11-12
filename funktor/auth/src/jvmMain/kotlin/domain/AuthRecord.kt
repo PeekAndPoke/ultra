@@ -25,6 +25,22 @@ sealed interface AuthRecord : Timestamped {
         override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
     }
 
+    data class PasswordRecovery(
+        override val realm: String,
+        override val ownerId: String,
+        override val expiresAt: Long,
+        override val createdAt: MpInstant = MpInstant.Epoch,
+        override val updatedAt: MpInstant = createdAt,
+        val token: String,
+    ) : AuthRecord {
+        companion object : Polymorphic.TypedChild<PasswordRecovery> {
+            override val identifier = "password-recovery"
+        }
+
+        override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
+        override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+    }
+
     /** The realm that record belongs to */
     @Vault.Field
     val realm: String

@@ -30,6 +30,7 @@ val FunktorAuth = module { builder: FunktorAuthBuilder.() -> Unit ->
     // Facade
     dynamic(AuthSystem::class)
     dynamic(AuthSystem.Deps::class)
+    dynamic(AuthSystem.Storage::class)
     // Services
     instance(AuthRandom())
     // Provider Factories

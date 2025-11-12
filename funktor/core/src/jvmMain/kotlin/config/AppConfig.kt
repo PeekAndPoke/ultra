@@ -134,6 +134,7 @@ interface AppConfig {
     private object NullAppConfig : AppConfig {
         override val ktor = KtorConfig()
         override val funktor = FunktorConfig()
+        override val keys: Map<String, String> = emptyMap()
     }
 
     /**
@@ -145,4 +146,20 @@ interface AppConfig {
      * Configuration for Funktor-specific functionality used within the application.
      */
     val funktor: FunktorConfig
+
+    /**
+     * A map of key-value pairs user fr
+     */
+    val keys: Map<String, String>
+
+    /**
+     * Get the [key] or throw an [IllegalStateException] when the key is not found.
+     */
+    @Throws(IllegalStateException::class)
+    fun getKey(key: String) = getKeyOrNull(key) ?: error("No key found for '$key'")
+
+    /**
+     * Get the [key] or return null when the key is not found.
+     */
+    fun getKeyOrNull(key: String) = keys[key]
 }

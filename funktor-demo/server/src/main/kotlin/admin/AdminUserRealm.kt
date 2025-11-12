@@ -12,9 +12,7 @@ import de.peekandpoke.ultra.common.datetime.jvm
 import de.peekandpoke.ultra.security.jwt.JwtUserData
 import de.peekandpoke.ultra.security.user.UserPermissions
 import de.peekandpoke.ultra.vault.Stored
-import io.ktor.server.config.*
 import io.peekandpoke.funktor.demo.common.AdminUserModel
-import io.peekandpoke.funktor.demo.server.KeysConfig
 import io.peekandpoke.funktor.demo.server.admin.AdminUsersRepo.Companion.asApiModel
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -24,7 +22,6 @@ import kotlin.time.Duration.Companion.hours
 class AdminUserRealm(
     deps: Lazy<AuthSystem.Deps>,
     appUserRepo: Lazy<AdminUsersRepo>,
-    keys: Lazy<KeysConfig>,
     emailAndPassword: Lazy<EmailAndPasswordAuth.Factory>,
     googleSso: Lazy<GoogleSsoAuth.Factory>,
     githubSso: Lazy<GithubSsoAuth.Factory>,
@@ -33,12 +30,13 @@ class AdminUserRealm(
         const val REALM = "admin-user"
     }
 
-    override val deps by deps
-    private val appUserRepo by appUserRepo
-    private val keys by keys
-    private val emailAndPassword by emailAndPassword
-    private val googleSso by googleSso
-    private val githubSso by githubSso
+    override val deps: AuthSystem.Deps by deps
+    private val appUserRepo: AdminUsersRepo by appUserRepo
+    private val emailAndPassword: EmailAndPasswordAuth.Factory by emailAndPassword
+    private val googleSso: GoogleSsoAuth.Factory by googleSso
+    private val githubSso: GithubSsoAuth.Factory by githubSso
+
+    private val authConfig = this.deps.config.funktor.auth
 
     override val id: String = REALM
 
@@ -52,12 +50,15 @@ class AdminUserRealm(
     override val providers = listOfNotNull(
         // Email / Password
         this.emailAndPassword(
+            frontendUrls = EmailAndPasswordAuth.FrontendUrls(
+                recoverPasswordUrlPattern = authConfig.baseUrls["admin"] + "/recover-password/{realm}/{token}"
+            ),
             capabilities = setOf(
                 AuthProviderModel.Capability.SignIn,
             )
         ),
         // Google SSO
-        this.keys.config.tryGetString("GOOGLE_SSO_CLIENT_ID")?.let { clientId ->
+        this.deps.config.getKeyOrNull("GOOGLE_SSO_CLIENT_ID")?.let { clientId ->
             googleSso(
                 googleClientId = clientId,
                 capabilities = setOf(
@@ -66,8 +67,8 @@ class AdminUserRealm(
             )
         },
         // Github SSO
-        this.keys.config.tryGetString("GITHUB_SSO_CLIENT_ID")?.let { clientId ->
-            this.keys.config.tryGetString("GITHUB_SSO_CLIENT_SECRET")?.let { secret ->
+        this.deps.config.getKeyOrNull("GITHUB_SSO_CLIENT_ID")?.let { clientId ->
+            this.deps.config.getKeyOrNull("GITHUB_SSO_CLIENT_SECRET")?.let { secret ->
                 githubSso(
                     githubClientId = clientId,
                     githubClientSecret = secret,

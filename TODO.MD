@@ -42,6 +42,13 @@
 
 ## Auth
 
+- ( ) Reset Password Flow
+    - (x) create token, store in AuthRecords (with expiration time)
+    - (x) send Email
+    - ( ) Frontend to set new password
+    - ( ) Api to reset the password
+    - ( ) Method to reset the password, revoke the token
+
 - ( ) Default Email templates for AuthRealm.Messaging
     - ( ) sendPasswordChangedEmail
     - ( ) sendPasswordResetEmail
@@ -52,12 +59,6 @@
     - ( ) Automatically refresh the JWT token
     - ( ) On window focus, check if the JWT token is still valid, otherwise log out
 
-- ( ) Reset Password Flow
-    - ( ) create token, store in AuthRecords (with expiration time)
-    - ( ) send Email
-    - ( ) Frontend to set new password
-    - ( ) Api to reset the password
-    - ( ) Method to reset the password, revoke the token
 
 - ( ) FunktorRestBuilder
     - ( ) check that the JWT signing key is "good" enough

@@ -55,7 +55,7 @@ interface AuthProvider {
     /**
      * Account recovery
      */
-    suspend fun <USER> recover(realm: AuthRealm<USER>, request: AuthRecoveryRequest): AuthRecoveryResponse {
+    suspend fun <USER> recoverPassword(realm: AuthRealm<USER>, request: AuthRecoveryRequest): AuthRecoveryResponse {
         return AuthRecoveryResponse(
             success = false,
         )

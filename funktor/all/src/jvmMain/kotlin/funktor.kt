@@ -26,7 +26,7 @@ val Funktor = module { params: FunktorParams ->
     funktorCore(params.config, params.appInfo)
     funktorAuth(params.auth)
     funktorBroker()
-    funktorRest(params.rest)
+    funktorRest(params.config, params.rest)
     funktorCluster(params.cluster)
     funktorLogging(params.logging)
     funktorStaticWeb()

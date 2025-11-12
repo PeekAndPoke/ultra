@@ -292,6 +292,7 @@ class LoginWidget<USER>(ctx: Ctx<Props<USER>>) : Component<LoginWidget.Props<USE
                     }
                 }
             }
+
             if (signUpProviders.isNotEmpty()) {
                 noui.column {
                     ui.header { +"Sign Up" }

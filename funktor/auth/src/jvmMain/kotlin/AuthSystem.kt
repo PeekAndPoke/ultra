@@ -12,6 +12,7 @@ import de.peekandpoke.funktor.auth.model.AuthUpdateRequest
 import de.peekandpoke.funktor.auth.model.AuthUpdateResponse
 import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.funktor.messaging.MessagingServices
+import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.security.jwt.JwtGenerator
 import de.peekandpoke.ultra.security.password.PasswordHasher
 
@@ -26,12 +27,26 @@ class AuthSystem(
 ) {
     class Deps(
         val config: AppConfig,
-        val messaging: MessagingServices,
-        val jwtGenerator: JwtGenerator,
-        val storage: AuthRecordStorage,
-        val passwordHasher: PasswordHasher,
-        val random: AuthRandom,
-    )
+        kronos: Lazy<Kronos>,
+        messaging: Lazy<MessagingServices>,
+        jwtGenerator: Lazy<JwtGenerator>,
+        storage: Lazy<Storage>,
+        passwordHasher: Lazy<PasswordHasher>,
+        random: Lazy<AuthRandom>,
+    ) {
+        val kronos by kronos
+        val messaging by messaging
+        val jwtGenerator by jwtGenerator
+        val storage by storage
+        val passwordHasher by passwordHasher
+        val random by random
+    }
+
+    class Storage(
+        authRecords: Lazy<AuthRecordStorage>,
+    ) {
+        val authRecords by authRecords
+    }
 
     init {
         val duplicatedRealms = realms.groupBy { it.id }
@@ -65,7 +80,7 @@ class AuthSystem(
 
     /** Get realm by [realm] or throw [AuthError] if not present */
     suspend fun recover(realm: String, request: AuthRecoveryRequest): AuthRecoveryResponse {
-        return getRealm(realm).recover(request)
+        return getRealm(realm).recoverPassword(request)
     }
 
     /** Get realm by [realm] or throw [AuthError] if not present */

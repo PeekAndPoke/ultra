@@ -43,7 +43,7 @@ class AuthRecordStorage(
 
     val adapter by adapter
 
-    suspend fun <T : AuthRecord> createRecord(
+    suspend fun <T : AuthRecord> create(
         create: AuthRecordStorage.() -> T,
     ): Stored<T> {
         return adapter.createRecord(

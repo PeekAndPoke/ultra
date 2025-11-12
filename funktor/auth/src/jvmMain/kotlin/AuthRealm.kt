@@ -20,7 +20,6 @@ import de.peekandpoke.funktor.messaging.api.EmailResult
 import de.peekandpoke.funktor.messaging.storage.EmailStoring
 import de.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.store
 import de.peekandpoke.ultra.vault.Stored
-import io.ktor.http.*
 import kotlinx.html.a
 import kotlinx.html.body
 import kotlinx.html.br
@@ -33,7 +32,7 @@ interface AuthRealm<USER> {
     interface Messaging<USER> {
         suspend fun sendPasswordChangedEmail(user: Stored<USER>): EmailResult
 
-        suspend fun sendPasswordResetEmil(user: Stored<USER>, resetUrl: Url): EmailResult
+        suspend fun sendPasswordRecoveryEmil(user: Stored<USER>, resetUrl: String): EmailResult
     }
 
     class DefaultMessaging<USER>(
@@ -75,7 +74,7 @@ interface AuthRealm<USER> {
             )
         }
 
-        override suspend fun sendPasswordResetEmil(user: Stored<USER>, resetUrl: Url): EmailResult {
+        override suspend fun sendPasswordRecoveryEmil(user: Stored<USER>, resetUrl: String): EmailResult {
             val userEmail = realm.getUserEmail(user)
 
             return realm.deps.messaging.mailing.send(
@@ -92,7 +91,7 @@ interface AuthRealm<USER> {
                             }
 
                             p {
-                                a(href = resetUrl.toString()) {
+                                a(href = resetUrl) {
                                     +"Recover account"
                                 }
                             }
@@ -179,11 +178,11 @@ interface AuthRealm<USER> {
         return result
     }
 
-    suspend fun recover(request: AuthRecoveryRequest): AuthRecoveryResponse {
+    suspend fun recoverPassword(request: AuthRecoveryRequest): AuthRecoveryResponse {
         val provider = providers.firstOrNull { it.id == request.provider }
             ?: throw AuthError("Provider not found: ${request.provider}")
 
-        val result = provider.recover(realm = this, request = request)
+        val result = provider.recoverPassword(realm = this, request = request)
 
         return result
     }

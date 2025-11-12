@@ -1,5 +1,6 @@
 package de.peekandpoke.funktor.rest
 
+import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.funktor.core.kontainer
 import de.peekandpoke.funktor.rest.codec.RestCodec
 import de.peekandpoke.funktor.rest.codec.SlumberRestCodec
@@ -21,15 +22,16 @@ import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
 fun KontainerBuilder.funktorRest(
+    config: AppConfig,
     builder: FunktorRestBuilder.() -> Unit = {},
-) = module(Funktor_Rest, builder)
+) = module(Funktor_Rest, config, builder)
 
 inline val KontainerAware.restCodec: RestCodec get() = kontainer.get()
 inline val ApplicationCall.restCodec: RestCodec get() = kontainer.restCodec
 inline val RoutingContext.restCodec: RestCodec get() = call.restCodec
 
 
-val Funktor_Rest = module { builder: FunktorRestBuilder.() -> Unit ->
+val Funktor_Rest = module { config: AppConfig, builder: FunktorRestBuilder.() -> Unit ->
 
     val codecConfig = SlumberConfig.default.prependModules(VaultSlumberModule)
 
@@ -60,10 +62,21 @@ val Funktor_Rest = module { builder: FunktorRestBuilder.() -> Unit ->
         )
     }
 
-    FunktorRestBuilder(this).apply(builder)
+    FunktorRestBuilder(kontainer = this, config = config).apply(builder)
 }
 
-class FunktorRestBuilder internal constructor(private val kontainer: KontainerBuilder) {
+class FunktorRestBuilder internal constructor(
+    private val kontainer: KontainerBuilder,
+    val config: AppConfig,
+) {
+
+    fun jwt() {
+        jwt(config)
+    }
+
+    fun jwt(config: AppConfig) {
+        jwt(config.funktor.auth.jwt)
+    }
 
     fun jwt(config: JwtConfig?) {
         config ?: error("JwtConfig must not be null")

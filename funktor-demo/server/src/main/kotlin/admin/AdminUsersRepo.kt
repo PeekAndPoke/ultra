@@ -49,7 +49,7 @@ class AdminUsersRepo(
         private val commonPassword = "S3cret123!"
 
         private suspend fun Stored<AdminUser>.createPassword(password: String = commonPassword) {
-            authRecordStorage.createRecord {
+            authRecordStorage.create {
                 AuthRecord.Password(
                     realm = AdminUserRealm.REALM,
                     ownerId = _id,

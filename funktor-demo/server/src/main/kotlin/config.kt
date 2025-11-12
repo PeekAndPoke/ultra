@@ -1,6 +1,5 @@
 package io.peekandpoke.funktor.demo.server
 
-import de.peekandpoke.funktor.auth.AuthConfig
 import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.funktor.core.config.funktor.FunktorConfig
 import de.peekandpoke.funktor.core.config.ktor.KtorConfig
@@ -14,7 +13,7 @@ import de.peekandpoke.monko.MongoDbConfig
 data class FunktorDemoConfig(
     override val ktor: KtorConfig,
     override val funktor: FunktorConfig = FunktorConfig(),
-    val auth: AuthConfig,
+    override val keys: Map<String, String> = emptyMap(),
     val arangodb: ArangoDbConfig,
     val mongodb: MongoDbConfig,
     val api: ApiConfig,
