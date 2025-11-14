@@ -1,5 +1,6 @@
 package de.peekandpoke.funktor.demo.adminapp
 
+import de.peekandpoke.funktor.auth.AuthFrontendConfig
 import de.peekandpoke.funktor.auth.authState
 import de.peekandpoke.funktor.cluster.FunktorClusterApiClient
 import de.peekandpoke.funktor.cluster.FunktorClusterUi
@@ -30,6 +31,10 @@ val Apis: AdminAppApis = AdminAppApis(Config) { State.auth().token?.token }
 
 val State: AdminAppState = AdminAppState(
     auth = authState<AdminUserModel>(
+        config = AuthFrontendConfig(
+            redirectAfterLogin = Nav.dashboard(),
+            backgroundImageUrl = "https://miro.medium.com/v2/resize:fit:2048/format:webp/0*m_7JMnJZnFN2338H.png",
+        ),
         api = Apis.auth,
         router = { kraft.router },
     ),
@@ -49,7 +54,7 @@ val kraft = kraftApp {
     routing {
         usePathStrategy()
         // Mount app routes
-        mountNav()
+        mountNav(authState = State.auth)
     }
 }
 

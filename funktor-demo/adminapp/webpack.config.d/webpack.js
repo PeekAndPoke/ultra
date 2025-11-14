@@ -5,7 +5,7 @@ if (devServer) {
     // config.devtool = false
     config.devtool = "source-map"
 
-    devServer.host = "127.0.0.1"
+    // devServer.host = "127.0.0.1"
     devServer.port = 36588
     devServer.open = true
     devServer.hot = false

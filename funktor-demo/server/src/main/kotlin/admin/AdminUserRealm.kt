@@ -55,6 +55,7 @@ class AdminUserRealm(
             ),
             capabilities = setOf(
                 AuthProviderModel.Capability.SignIn,
+                AuthProviderModel.Capability.SignUp,
             )
         ),
         // Google SSO
@@ -63,6 +64,7 @@ class AdminUserRealm(
                 googleClientId = clientId,
                 capabilities = setOf(
                     AuthProviderModel.Capability.SignIn,
+                    AuthProviderModel.Capability.SignUp,
                 )
             )
         },
@@ -74,6 +76,7 @@ class AdminUserRealm(
                     githubClientSecret = secret,
                     capabilities = setOf(
                         AuthProviderModel.Capability.SignIn,
+                        AuthProviderModel.Capability.SignUp,
                     )
                 )
             }

@@ -91,7 +91,7 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
 
             noui.item A {
                 onClick { evt ->
-                    router.navToUri(evt, Nav.login())
+                    router.navToUri(evt, Nav.auth.login())
                     State.auth.logout()
                 }
                 icon.sign_out_alternate()

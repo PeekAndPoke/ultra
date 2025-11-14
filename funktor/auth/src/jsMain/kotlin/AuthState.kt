@@ -28,16 +28,19 @@ import kotlinx.serialization.serializer
 import kotlin.js.Date
 
 inline fun <reified USER> authState(
+    config: AuthFrontendConfig,
     api: AuthApiClient,
     noinline router: () -> Router,
 ) = AuthState<USER>(
     userSerializer = serializer(),
+    config = config,
     api = api,
     router = router,
 )
 
 class AuthState<USER>(
     val userSerializer: KSerializer<USER>,
+    val config: AuthFrontendConfig,
     val api: AuthApiClient,
     val router: () -> Router,
 ) : Stream<AuthState.Data<USER>> {

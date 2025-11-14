@@ -39,6 +39,8 @@ kotlin {
                 implementation(project(":ultra:security"))
                 implementation(project(":ultra:slumber"))
 
+                implementation(project(":kraft:core"))
+
                 implementation(project(":funktor:messaging"))
                 implementation(project(":funktor:rest"))
             }

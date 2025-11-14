@@ -1,6 +1,7 @@
 package de.peekandpoke.funktor.auth.provider
 
 import de.peekandpoke.funktor.auth.AuthError
+import de.peekandpoke.funktor.auth.AuthFrontendRoutes
 import de.peekandpoke.funktor.auth.AuthRealm
 import de.peekandpoke.funktor.auth.AuthSystem
 import de.peekandpoke.funktor.auth.domain.AuthRecord
@@ -66,7 +67,7 @@ class EmailAndPasswordAuth(
          * - contains a {realm} placeholder for the realm's identifier
          * - contains a {token} placeholder for the password reset token
          */
-        val recoverPasswordUrlPattern: String,
+        val recoverPasswordUrlPattern: String = AuthFrontendRoutes().resetPassword.pattern,
     )
 
     private val deps by deps
@@ -121,7 +122,9 @@ class EmailAndPasswordAuth(
                 val emailResult = realm.messaging.sendPasswordChangedEmail(user)
 
                 if (emailResult.success.not()) {
-                    log.warning("Sending 'Password Changed' Email failed for user ${user._id} ${realm.getUserEmail(user)}")
+                    log.warning(
+                        "Sending 'Password Changed' Email failed for user ${user._id} ${realm.getUserEmail(user)}"
+                    )
                 }
 
                 AuthUpdateResponse(success = true)
@@ -164,7 +167,9 @@ class EmailAndPasswordAuth(
                 )
 
                 if (emailResult.success.not()) {
-                    log.warning("Sending 'Password Changed' Email failed for user ${user._id} ${realm.getUserEmail(user)}")
+                    log.warning(
+                        "Sending 'Password Changed' Email failed for user ${user._id} ${realm.getUserEmail(user)}"
+                    )
                 }
 
                 AuthRecoveryResponse.success
