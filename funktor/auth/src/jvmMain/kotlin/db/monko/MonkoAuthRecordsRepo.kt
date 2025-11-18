@@ -7,6 +7,7 @@ import de.peekandpoke.funktor.auth.domain.AuthRecord
 import de.peekandpoke.funktor.auth.domain.createdAt
 import de.peekandpoke.funktor.auth.domain.ownerId
 import de.peekandpoke.funktor.auth.domain.realm
+import de.peekandpoke.funktor.auth.domain.token
 import de.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import de.peekandpoke.monko.MonkoDriver
 import de.peekandpoke.monko.MonkoRepository
@@ -46,22 +47,34 @@ class MonkoAuthRecordsRepo(
         )
     }
 
-    override suspend fun findLatestBy(
-        realm: String,
-        type: String,
-        owner: String,
-    ): Stored<AuthRecord>? {
+    override suspend fun findLatest(realm: String, type: String, owner: String): Stored<AuthRecord>? {
         val found = find {
             filter(
                 Filters.and(
+                    Filters.eq(field { it._type }, type),
                     Filters.eq(field { it.realm }, realm),
                     Filters.eq(field { it.ownerId }, owner),
-                    Filters.eq(field { it._type }, type),
                 )
             )
 
             sort(
                 Sorts.descending(field { it.createdAt.ts })
+            )
+
+            limit(1)
+        }
+
+        return found.firstOrNull()
+    }
+
+    override suspend fun findByToken(realm: String, type: String, token: String): Stored<AuthRecord>? {
+        val found = find {
+            filter(
+                Filters.and(
+                    Filters.eq(field { it._type }, type),
+                    Filters.eq(field { it.realm }, realm),
+                    Filters.eq(field { it.token }, token),
+                )
             )
 
             limit(1)

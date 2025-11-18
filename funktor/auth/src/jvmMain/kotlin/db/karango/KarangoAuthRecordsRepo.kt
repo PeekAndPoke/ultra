@@ -6,6 +6,7 @@ import de.peekandpoke.funktor.auth.domain.createdAt
 import de.peekandpoke.funktor.auth.domain.expiresAt
 import de.peekandpoke.funktor.auth.domain.ownerId
 import de.peekandpoke.funktor.auth.domain.realm
+import de.peekandpoke.funktor.auth.domain.token
 import de.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import de.peekandpoke.karango.aql.DESC
 import de.peekandpoke.karango.aql.EQ
@@ -48,14 +49,28 @@ class KarangoAuthRecordsRepo(
         }
     }
 
-    override suspend fun findLatestBy(realm: String, type: String, owner: String): Stored<AuthRecord>? {
+    override suspend fun findLatest(realm: String, type: String, owner: String): Stored<AuthRecord>? {
         return findFirst {
             FOR(repo) { r ->
+                FILTER(r._type EQ type)
                 FILTER(r.realm EQ realm)
                 FILTER(r.ownerId EQ owner)
-                FILTER(r._type EQ type)
 
                 SORT(r.createdAt.ts.DESC)
+
+                LIMIT(1)
+
+                RETURN(r)
+            }
+        }
+    }
+
+    override suspend fun findByToken(realm: String, type: String, token: String): Stored<AuthRecord>? {
+        return findFirst {
+            FOR(repo) { r ->
+                FILTER(r._type EQ type)
+                FILTER(r.realm EQ realm)
+                FILTER(r.token EQ token)
 
                 LIMIT(1)
 

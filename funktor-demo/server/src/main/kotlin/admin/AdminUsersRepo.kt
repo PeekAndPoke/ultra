@@ -40,6 +40,7 @@ class AdminUsersRepo(
         }
     }
 
+    @Suppress("unused")
     class Fixtures(
         repo: AdminUsersRepo,
         private val authRecordStorage: AuthRecordStorage,
@@ -53,7 +54,7 @@ class AdminUsersRepo(
                 AuthRecord.Password(
                     realm = AdminUserRealm.REALM,
                     ownerId = _id,
-                    hash = passwordHasher.hash(password)
+                    token = passwordHasher.hash(password)
                 )
             }
         }

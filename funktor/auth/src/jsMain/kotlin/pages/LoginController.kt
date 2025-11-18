@@ -130,7 +130,7 @@ class LoginController<USER>(
                 }
 
                 ui.header {
-                    +"Enter your email to recover your password"
+                    +"Enter your email to reset your password"
                 }
 
                 UiInputField(s.email, { displayState = s.copy(email = it) }) {
@@ -157,7 +157,7 @@ class LoginController<USER>(
                                 )
                             }
                         }
-                        +"Recover Password"
+                        +"Reset Password"
                     }
                 }
 

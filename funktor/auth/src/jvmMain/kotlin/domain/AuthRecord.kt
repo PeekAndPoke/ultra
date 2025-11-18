@@ -15,7 +15,7 @@ sealed interface AuthRecord : Timestamped {
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
         /** The hashed password */
-        val hash: String,
+        override val token: String,
     ) : AuthRecord {
         companion object : Polymorphic.TypedChild<Password> {
             override val identifier = "password"
@@ -31,7 +31,8 @@ sealed interface AuthRecord : Timestamped {
         override val expiresAt: Long,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
-        val token: String,
+        /** Very long secret token */
+        override val token: String,
     ) : AuthRecord {
         companion object : Polymorphic.TypedChild<PasswordRecovery> {
             override val identifier = "password-recovery"
@@ -52,6 +53,10 @@ sealed interface AuthRecord : Timestamped {
     /** Epoch seconds timestamp, when this entry expires, or NULL if it never expires */
     @Vault.Field
     val expiresAt: Long?
+
+    /** The token, f.e. the password-hash or the password-reset-token */
+    @Vault.Field
+    val token: String?
 
     @Vault.Field
     override val createdAt: MpInstant

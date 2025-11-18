@@ -45,15 +45,24 @@
 - ( ) Reset Password Flow
     - (x) create token, store in AuthRecords (with expiration time)
     - (x) send Email
-    - ( ) Frontend to set new password
-    - ( ) Api to reset the password
-    - ( ) Method to reset the password, revoke the token
+  - (x) Frontend to set new password
+  - (x) Api to reset the password
+  - (x) Method to reset the password, revoke the token
+  - ( ) Send email to user when password is reset
+
+- ( ) Keep track of devices
+    - ( ) Store "device id" in local storage ... or just some random string
+    - ( ) Send "device id" along with sign in request / sign up request
+    - ( ) Send email to user when a new device is used
+
+- ( ) Logout from certain devices ??? how ???
 
 - ( ) Default Email templates for AuthRealm.Messaging
     - ( ) sendPasswordChangedEmail
     - ( ) sendPasswordResetEmail
     - ( ) sendAccountVerificationEmail
     - ( ) sendWelcomeEmail
+  - ( ) sign in from new device
 
 - ( ) Frontend
     - ( ) Automatically refresh the JWT token

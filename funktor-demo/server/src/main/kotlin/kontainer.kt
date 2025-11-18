@@ -60,7 +60,7 @@ fun createBlueprint(config: FunktorDemoConfig) = kontainer {
             useKarango()
         },
         auth = {
-            useMonko()
+            useKarango()
         }
     )
 
