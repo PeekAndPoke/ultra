@@ -1,6 +1,5 @@
 package de.peekandpoke.funktor.auth.pages
 
-import de.peekandpoke.funktor.auth.AuthFrontendConfig
 import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.css.BackgroundRepeat

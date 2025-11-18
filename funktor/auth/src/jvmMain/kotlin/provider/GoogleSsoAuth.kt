@@ -16,18 +16,21 @@ import java.security.GeneralSecurityException
 import java.util.*
 
 class GoogleSsoAuth(
-    override val id: String,
     override val capabilities: Set<AuthProviderModel.Capability>,
     val googleClientId: String,
 ) : AuthProvider {
 
+    companion object {
+        const val ID = "google-sso"
+        const val GOOGLE_SSO_CLIENT_ID = "GOOGLE_SSO_CLIENT_ID"
+        const val GOOGLE_SSO_CLIENT_SECRET = "GOOGLE_SSO_CLIENT_SECRET"
+    }
+
     class Factory {
         operator fun invoke(
-            id: String = "google-sso",
             googleClientId: String,
             capabilities: Set<AuthProviderModel.Capability> = setOf(AuthProviderModel.Capability.SignIn),
         ) = GoogleSsoAuth(
-            id = id,
             googleClientId = googleClientId,
             capabilities = capabilities,
         )
@@ -40,7 +43,29 @@ class GoogleSsoAuth(
             .build()
     }
 
-    override suspend fun <USER> signIn(realm: AuthRealm<USER>, request: AuthSignInRequest): Stored<USER> {
+    /** Provider ID */
+    override val id: String = ID
+
+    /**
+     * @{inheritDoc}
+     */
+    override fun asApiModel(): AuthProviderModel {
+        return AuthProviderModel(
+            id = id,
+            type = AuthProviderModel.TYPE_GOOGLE,
+            capabilities = capabilities,
+            config = buildJsonObject {
+                put("client-id", googleClientId)
+            },
+        )
+    }
+
+    /**
+     * @{inheritDoc}
+     */
+    override suspend fun <USER> signIn(
+        realm: AuthRealm<USER>, request: AuthSignInRequest,
+    ): Stored<USER> {
 
         val typed = (request as? AuthSignInRequest.OAuth)
             ?: throw AuthError.invalidCredentials()
@@ -57,9 +82,11 @@ class GoogleSsoAuth(
             ?: throw AuthError.invalidCredentials()
     }
 
+    /**
+     * @{inheritDoc}
+     */
     override suspend fun <USER> signUp(
-        realm: AuthRealm<USER>,
-        request: AuthSignUpRequest,
+        realm: AuthRealm<USER>, request: AuthSignUpRequest,
     ): AuthProvider.SignUpResult<USER> {
 
         val typed = (request as? AuthSignUpRequest.OAuth)
@@ -81,17 +108,6 @@ class GoogleSsoAuth(
         return AuthProvider.SignUpResult(
             user = user,
             requiresActivation = false,
-        )
-    }
-
-    override fun asApiModel(): AuthProviderModel {
-        return AuthProviderModel(
-            id = id,
-            type = AuthProviderModel.TYPE_GOOGLE,
-            capabilities = capabilities,
-            config = buildJsonObject {
-                put("client-id", googleClientId)
-            },
         )
     }
 }

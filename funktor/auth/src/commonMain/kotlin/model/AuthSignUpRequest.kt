@@ -23,25 +23,3 @@ sealed interface AuthSignUpRequest {
         val token: String,
     ) : AuthSignUpRequest
 }
-
-@Serializable
-data class AuthSignUpResponse(
-    val signIn: AuthSignInResponse? = null,
-    val requiresActivation: Boolean = false,
-) {
-    companion object {
-        val failed = AuthSignUpResponse(signIn = null, requiresActivation = false)
-    }
-
-    val success: Boolean = signIn != null
-}
-
-@Serializable
-data class AuthActivateRequest(
-    val token: String,
-)
-
-@Serializable
-data class AuthActivateResponse(
-    val success: Boolean,
-)

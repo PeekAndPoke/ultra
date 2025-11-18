@@ -2,7 +2,6 @@ package de.peekandpoke.funktor.demo.adminapp
 
 import de.peekandpoke.funktor.auth.AuthFrontendRoutes
 import de.peekandpoke.funktor.auth.AuthState
-import de.peekandpoke.funktor.auth.mountAuth
 import de.peekandpoke.funktor.cluster.mountFunktorCluster
 import de.peekandpoke.funktor.demo.adminapp.layout.LoggedInLayout
 import de.peekandpoke.funktor.demo.adminapp.pages.DashboardPage
@@ -23,10 +22,13 @@ object Nav {
 }
 
 fun RootRouterBuilder.mountNav(authState: AuthState<AdminUserModel>) {
-    val authMiddleware = State.auth.routerMiddleWare(Nav.auth.login())
+    // Auth uris are not protected
+    authState.mount(this)
 
-    mountAuth(routes = Nav.auth, state = authState)
+    // Get the auth middleware
+    val authMiddleware = authState.routerMiddleWare(Nav.auth.login())
 
+    // Protected uris, only available for logged in users
     middleware(authMiddleware) {
         layout({ LoggedInLayout(it) }) {
 

@@ -2,15 +2,17 @@ package de.peekandpoke.funktor.auth
 
 import de.peekandpoke.funktor.auth.api.AuthApiClient
 import de.peekandpoke.funktor.auth.model.AuthRealmModel
-import de.peekandpoke.funktor.auth.model.AuthRecoveryRequest
-import de.peekandpoke.funktor.auth.model.AuthRecoveryResponse
+import de.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
+import de.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
+import de.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import de.peekandpoke.funktor.auth.model.AuthSignInRequest
 import de.peekandpoke.funktor.auth.model.AuthSignInResponse
-import de.peekandpoke.funktor.auth.model.AuthUpdateRequest
 import de.peekandpoke.funktor.auth.model.PasswordPolicy
+import de.peekandpoke.funktor.auth.pages.AuthFrontend
 import de.peekandpoke.kraft.addons.decodeJwtAsMap
 import de.peekandpoke.kraft.routing.Route
 import de.peekandpoke.kraft.routing.Router
+import de.peekandpoke.kraft.routing.RouterBuilder
 import de.peekandpoke.kraft.routing.routerMiddleware
 import de.peekandpoke.ultra.security.user.UserPermissions
 import de.peekandpoke.ultra.slumber.JsonUtil.toJsonObject
@@ -28,19 +30,19 @@ import kotlinx.serialization.serializer
 import kotlin.js.Date
 
 inline fun <reified USER> authState(
-    config: AuthFrontendConfig,
+    frontend: AuthFrontend,
     api: AuthApiClient,
     noinline router: () -> Router,
 ) = AuthState<USER>(
     userSerializer = serializer(),
-    config = config,
+    frontend = frontend,
     api = api,
     router = router,
 )
 
 class AuthState<USER>(
     val userSerializer: KSerializer<USER>,
-    val config: AuthFrontendConfig,
+    val frontend: AuthFrontend,
     val api: AuthApiClient,
     val router: () -> Router,
 ) : Stream<AuthState.Data<USER>> {
@@ -82,6 +84,10 @@ class AuthState<USER>(
     override fun invoke(): Data<USER> = streamSource()
 
     override fun subscribeToStream(sub: (Data<USER>) -> Unit): Unsubscribe = streamSource.subscribeToStream(sub)
+
+    fun mount(builder: RouterBuilder) {
+        frontend.mount(builder = builder, state = this)
+    }
 
     fun getPasswordPolicy(): PasswordPolicy {
         return streamSource().realm?.passwordPolicy ?: PasswordPolicy.default
@@ -125,10 +131,36 @@ class AuthState<USER>(
         return streamSource()
     }
 
-    suspend fun recover(request: AuthRecoveryRequest): AuthRecoveryResponse? {
+    suspend fun recoverAccountInitPasswordReset(
+        request: AuthRecoverAccountRequest.InitPasswordReset,
+    ): AuthRecoverAccountResponse.InitPasswordReset? {
         val response = api
-            .recover(request)
-            .map { it.data }
+            .recoverAccountInitPasswordReset(request)
+            .map { it.data!! }
+            .catch { /* noop */ }
+            .firstOrNull()
+
+        return response
+    }
+
+    suspend fun recoverAccountValidatePasswordResetToken(
+        request: AuthRecoverAccountRequest.ValidatePasswordResetToken,
+    ): AuthRecoverAccountResponse.ValidatePasswordResetToken? {
+        val response = api
+            .recoverAccountValidatePasswordResetToken(request)
+            .map { it.data!! }
+            .catch { /* noop */ }
+            .firstOrNull()
+
+        return response
+    }
+
+    suspend fun recoverAccountSetPasswordWithToken(
+        request: AuthRecoverAccountRequest.SetPasswordWithToken,
+    ): AuthRecoverAccountResponse.SetPasswordWithToken? {
+        val response = api
+            .recoverAccountSetPasswordWithToken(request)
+            .map { it.data!! }
             .catch { /* noop */ }
             .firstOrNull()
 
@@ -139,12 +171,12 @@ class AuthState<USER>(
         streamSource(Data.empty())
     }
 
-    suspend fun requestAuthUpdate(request: AuthUpdateRequest): Boolean {
+    suspend fun requestSetPassword(request: AuthSetPasswordRequest): Boolean {
         val auth = streamSource()
 
-        if (!auth.isLoggedIn) return false
+        if (auth.isNotLoggedIn) return false
 
-        val result = api.update(request)
+        val result = api.setPassword(request)
             .catch { /* noop */ }
             .map { it.data!! }
             .firstOrNull()

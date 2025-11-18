@@ -3,13 +3,12 @@ package de.peekandpoke.funktor.auth.pages
 import de.peekandpoke.funktor.auth.AuthState
 import de.peekandpoke.funktor.auth.asFormRule
 import de.peekandpoke.funktor.auth.model.AuthProviderModel
-import de.peekandpoke.funktor.auth.model.AuthRecoveryRequest
-import de.peekandpoke.funktor.auth.model.AuthRecoveryResponse
+import de.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
+import de.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
 import de.peekandpoke.funktor.auth.model.AuthSignInRequest
 import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import de.peekandpoke.funktor.auth.widgets.GithubSignInButton
 import de.peekandpoke.funktor.auth.widgets.GoogleSignInButton
-import de.peekandpoke.funktor.auth.widgets.LoginWidget.Companion.AUTH_CALLBACK_PARAM
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.forms.formController
 import de.peekandpoke.kraft.forms.validation.strings.notEmpty
@@ -36,11 +35,17 @@ import kotlinx.html.FlowContent
 import kotlinx.html.a
 import kotlinx.html.div
 import kotlinx.serialization.json.jsonPrimitive
+import org.w3c.dom.url.URLSearchParams
 
 class LoginController<USER>(
     private val host: Component<*>,
     private val state: AuthState<USER>,
 ) {
+    companion object {
+        const val AUTH_CALLBACK_PARAM = "auth-callback"
+        const val AUTH_ACTION_PARAM = "auth-action"
+    }
+
     sealed interface DisplayState {
         data class Login(
             val email: String = "",
@@ -136,21 +141,20 @@ class LoginController<USER>(
                     ui.primary.fluid.givenNot(noDblClick.canRun) { loading }.button Submit {
                         onClick {
                             launch {
-                                val result = recoverPassword(
-                                    AuthRecoveryRequest.ResetPassword(
+                                initPasswordReset(
+                                    AuthRecoverAccountRequest.InitPasswordReset(
                                         provider = s.provider.id,
                                         email = s.email,
                                     )
                                 )
 
-                                displayState = when (result?.success) {
-                                    true -> DisplayState.Login(
-                                        email = s.email,
-                                        message = Message.info("Recovery email sent. Please check your inbox."),
-                                    )
-
-                                    else -> s.copy(message = Message.error("Recovery not possible"))
-                                }
+                                // NOTICE: We always show this message no matter if the email address exists or not.
+                                //         If we were to show an error if an email address does not exist, we would
+                                //         expose sensitive data to an attacker.
+                                displayState = DisplayState.Login(
+                                    email = s.email,
+                                    message = Message.info("Recovery email sent. Please check your inbox."),
+                                )
                             }
                         }
                         +"Recover Password"
@@ -409,15 +413,47 @@ class LoginController<USER>(
     val formCtrl = host.formController()
     val noDblClick = host.doubleClickProtection()
 
+    fun handleAuthCallback() {
+        val realm = realmLoader.value() ?: return
+
+        // Handle any callback params ... f.e. from Github-OAuth
+        val params = URLSearchParams(window.location.search)
+
+        if (params.has(AUTH_CALLBACK_PARAM)) {
+            val providerId = params.get(AUTH_CALLBACK_PARAM)
+            val action = params.get(AUTH_ACTION_PARAM)
+            val provider = realm.providers.find { it.id == providerId }
+
+            when (provider?.type) {
+                AuthProviderModel.TYPE_GITHUB -> {
+                    params.get("code")?.let { code ->
+                        if (action == "signup") {
+                            signup(AuthSignUpRequest.OAuth(provider = provider.id, token = code))
+                        } else {
+                            login(AuthSignInRequest.OAuth(provider = provider.id, token = code))
+                        }
+                    }
+                }
+            }
+
+            // Remove the excess query params from the uri
+            val parts = listOf(window.location.origin, window.location.pathname, window.location.hash)
+
+            window.history.pushState(null, "", parts.joinToString(""))
+        }
+    }
+
     fun login(request: AuthSignInRequest) {
         launch {
             doLogin(request)
         }
     }
 
-    suspend fun recoverPassword(request: AuthRecoveryRequest): AuthRecoveryResponse? {
+    suspend fun initPasswordReset(
+        request: AuthRecoverAccountRequest.InitPasswordReset,
+    ): AuthRecoverAccountResponse.InitPasswordReset? {
         return noDblClick.runBlocking {
-            state.recover(request)
+            state.recoverAccountInitPasswordReset(request)
         }
     }
 
@@ -433,8 +469,8 @@ class LoginController<USER>(
         val result = state.login(request)
 
         if (result.isLoggedIn) {
-            val uri = host.router.strategy.render(state.config.redirectAfterLogin)
-            console.log("Login success. Redirecting to $uri")
+            val uri = host.router.strategy.render(state.frontend.config.redirectAfterLogin)
+            console.info("Login success. Redirecting to $uri")
             state.redirectAfterLogin(uri)
         } else {
             displayState = displayState.withMessage(Message.error("Login failed"))

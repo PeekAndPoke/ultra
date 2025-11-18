@@ -3,7 +3,7 @@ package de.peekandpoke.funktor.auth.widgets
 import de.peekandpoke.funktor.auth.AuthState
 import de.peekandpoke.funktor.auth.asFormRule
 import de.peekandpoke.funktor.auth.model.AuthProviderModel
-import de.peekandpoke.funktor.auth.model.AuthUpdateRequest
+import de.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
@@ -66,8 +66,8 @@ class ChangePasswordWidget<USER>(ctx: Ctx<Props<USER>>) : Component<ChangePasswo
     private val noDblClick = doubleClickProtection()
 
     private suspend fun updatePassword() = noDblClick.runBlocking {
-        val result = auth.requestAuthUpdate(
-            AuthUpdateRequest.SetPassword(
+        val result = auth.requestSetPassword(
+            AuthSetPasswordRequest(
                 provider = provider?.id ?: "",
                 userId = userId ?: "",
                 newPassword = newPassword,

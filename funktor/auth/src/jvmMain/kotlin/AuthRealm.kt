@@ -1,17 +1,18 @@
 package de.peekandpoke.funktor.auth
 
-import de.peekandpoke.funktor.auth.model.AuthProviderModel
+import de.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import de.peekandpoke.funktor.auth.model.AuthRealmModel
-import de.peekandpoke.funktor.auth.model.AuthRecoveryRequest
-import de.peekandpoke.funktor.auth.model.AuthRecoveryResponse
+import de.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
+import de.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
+import de.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
+import de.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import de.peekandpoke.funktor.auth.model.AuthSignInRequest
 import de.peekandpoke.funktor.auth.model.AuthSignInResponse
 import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import de.peekandpoke.funktor.auth.model.AuthSignUpResponse
-import de.peekandpoke.funktor.auth.model.AuthUpdateRequest
-import de.peekandpoke.funktor.auth.model.AuthUpdateResponse
 import de.peekandpoke.funktor.auth.model.PasswordPolicy
 import de.peekandpoke.funktor.auth.provider.AuthProvider
+import de.peekandpoke.funktor.auth.provider.hasCapability
 import de.peekandpoke.funktor.auth.provider.supportsSignIn
 import de.peekandpoke.funktor.messaging.Email
 import de.peekandpoke.funktor.messaging.api.EmailBody
@@ -143,62 +144,38 @@ interface AuthRealm<USER> {
     /** Serializes the given user */
     suspend fun serializeUser(user: Stored<USER>): JsonObject
 
-    /**
-     * Creates a new user during sign-up. Providers call this to create a user for the given email/displayName.
-     */
+    /** Creates a new user during sign-up. Providers call this to create a user for the given email/displayName. */
     suspend fun createUserForSignup(email: String, displayName: String?): Stored<USER>
 
     /**
      * Signs in a user. Providers should check their SignIn capability internally.
      */
     suspend fun signIn(request: AuthSignInRequest): AuthSignInResponse {
-        val provider = providers.firstOrNull { it.id == request.provider }
-            ?: throw AuthError("Provider not found: ${request.provider}")
+        val provider = getProvider(request.provider).supporting(Capability.SignIn)
 
         if (provider.supportsSignIn().not()) {
-            throw AuthError("Provider does not support sign in: ${request.provider}")
+            throw AuthError.providerDoesNotSupportAction(
+                provider = request.provider,
+                action = Capability.SignIn.name,
+            )
         }
 
         val user = provider.signIn<USER>(realm = this, request = request)
 
-        val response = user.toSignInResponse()
-
-        return response
-    }
-
-    suspend fun update(request: AuthUpdateRequest): AuthUpdateResponse {
-        val provider = providers.firstOrNull { it.id == request.provider }
-            ?: throw AuthError("Provider not found: ${request.provider}")
-
-        val user = loadUserById(request.userId)
-            ?: throw AuthError("User not found: ${request.userId}")
-
-        val result = provider.update(realm = this, user = user, request = request)
-
-        return result
-    }
-
-    suspend fun recoverPassword(request: AuthRecoveryRequest): AuthRecoveryResponse {
-        val provider = providers.firstOrNull { it.id == request.provider }
-            ?: throw AuthError("Provider not found: ${request.provider}")
-
-        val result = provider.recoverPassword(realm = this, request = request)
-
-        return result
+        return user.toSignInResponse()
     }
 
     /**
      * Signs up a new user. Providers should check their SignUp capability internally.
      */
     suspend fun signUp(request: AuthSignUpRequest): AuthSignUpResponse {
-        val provider = providers.firstOrNull { it.id == request.provider }
-            ?: throw AuthError("Provider not found: ${request.provider}")
-
-        if (AuthProviderModel.Capability.SignUp !in provider.capabilities) {
-            throw AuthError("Provider does not support sign up: ${request.provider}")
-        }
+        val provider = getProvider(request.provider).supporting(Capability.SignUp)
 
         val result = provider.signUp(realm = this, request = request)
+
+        if (result.requiresActivation) {
+            // TODO: send account activation email
+        }
 
         val response = AuthSignUpResponse(
             signIn = result.user.toSignInResponse(),
@@ -208,15 +185,78 @@ interface AuthRealm<USER> {
         return response
     }
 
+    /**
+     * Sets a new password for the given user.
+     */
+    suspend fun setPassword(request: AuthSetPasswordRequest): AuthSetPasswordResponse {
+        return getProvider(request.provider)
+            .setPassword(realm = this, request = request)
+    }
+
+    /**
+     * Initiates a password reset.
+     */
+    suspend fun recoverAccountInitPasswordReset(
+        request: AuthRecoverAccountRequest.InitPasswordReset,
+    ): AuthRecoverAccountResponse.InitPasswordReset {
+        return getProvider(request.provider)
+            .recoverAccountInitPasswordReset(realm = this, request = request)
+    }
+
+    /**
+     * Validates the password reset token.
+     */
+    suspend fun recoverAccountValidatePasswordResetToken(
+        request: AuthRecoverAccountRequest.ValidatePasswordResetToken,
+    ): AuthRecoverAccountResponse.ValidatePasswordResetToken {
+        return getProvider(request.provider)
+            .recoverAccountValidatePasswordResetToken(realm = this, request = request)
+    }
+
+    /**
+     * Resets the password with the given token.
+     */
+    suspend fun recoverAccountSetPasswordWithToken(
+        request: AuthRecoverAccountRequest.SetPasswordWithToken,
+    ): AuthRecoverAccountResponse.SetPasswordWithToken {
+        return getProvider(request.provider)
+            .recoverAccountSetPasswordWithToken(realm = this, request = request)
+    }
+
+    /**
+     * Converts a user to a sign in response.
+     */
     suspend fun Stored<USER>.toSignInResponse() = AuthSignInResponse(
         token = generateJwt(this),
         realm = asApiModel(),
         user = serializeUser(this),
     )
 
+    /**
+     * Converts the realm to an api model.
+     */
     fun asApiModel(): AuthRealmModel = AuthRealmModel(
         id = id,
         providers = providers.map { it.asApiModel() },
         passwordPolicy = passwordPolicy,
     )
+
+    /**
+     * Gets a provider by its id or throws an [AuthError] if not found.
+     */
+    fun getProvider(id: String): AuthProvider {
+        return providers.firstOrNull { it.id == id }
+            ?: throw AuthError.providerNotFound(provider = id)
+    }
+
+    /**
+     * Checks if the provider has the given [capability] or throws an [AuthError] if capability is not supported.
+     */
+    fun AuthProvider.supporting(capability: Capability): AuthProvider {
+        return takeIf { hasCapability(capability) }
+            ?: throw AuthError.providerDoesNotSupportAction(
+                provider = id,
+                action = capability.name,
+            )
+    }
 }

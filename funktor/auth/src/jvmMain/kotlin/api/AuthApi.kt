@@ -1,12 +1,13 @@
 package de.peekandpoke.funktor.auth.api
 
 import de.peekandpoke.funktor.auth.AuthError
+import de.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import de.peekandpoke.funktor.auth.funktorAuth
-import de.peekandpoke.funktor.auth.model.AuthActivateResponse
-import de.peekandpoke.funktor.auth.model.AuthRecoveryResponse
+import de.peekandpoke.funktor.auth.model.AuthActivateActivateResponse
+import de.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
+import de.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import de.peekandpoke.funktor.auth.model.AuthSignInResponse
 import de.peekandpoke.funktor.auth.model.AuthSignUpResponse
-import de.peekandpoke.funktor.auth.model.AuthUpdateResponse
 import de.peekandpoke.funktor.core.broker.OutgoingConverter
 import de.peekandpoke.funktor.core.user
 import de.peekandpoke.funktor.rest.ApiRoutes
@@ -18,7 +19,7 @@ import kotlin.random.Random
 
 class AuthApi(converter: OutgoingConverter) : ApiRoutes("login", converter) {
 
-    val getRealm = AuthApiClient.GetRealm.mount(AuthApiFeature.RealmParam::class) {
+    val getRealm = AuthApiClient.GetRealm.mount(RealmParam::class) {
         docs {
             name = "Get realm"
         }.codeGen {
@@ -35,7 +36,7 @@ class AuthApi(converter: OutgoingConverter) : ApiRoutes("login", converter) {
         }
     }
 
-    val signIn = AuthApiClient.SignIn.mount(AuthApiFeature.RealmParam::class) {
+    val signIn = AuthApiClient.SignIn.mount(RealmParam::class) {
         docs {
             name = "Sign in"
         }.codeGen {
@@ -57,11 +58,11 @@ class AuthApi(converter: OutgoingConverter) : ApiRoutes("login", converter) {
         }
     }
 
-    val update = AuthApiClient.Update.mount(AuthApiFeature.RealmParam::class) {
+    val setPassword = AuthApiClient.SetPassword.mount(RealmParam::class) {
         docs {
-            name = "Update"
+            name = "Set Password"
         }.codeGen {
-            funcName = "update"
+            funcName = "setPassword"
         }.authorize {
             public()
         }.handle { params, body ->
@@ -75,38 +76,16 @@ class AuthApi(converter: OutgoingConverter) : ApiRoutes("login", converter) {
 
             try {
                 funktorAuth
-                    .update(params.realm, body)
+                    .setPassword(params.realm, body)
                     .let { ApiResponse.ok(it) }
             } catch (e: AuthError) {
-                ApiResponse.badRequest(AuthUpdateResponse.failed)
+                ApiResponse.badRequest(AuthSetPasswordResponse.failed)
                     .withInfo(e.message ?: "")
             }
         }
     }
 
-    val recover = AuthApiClient.Recover.mount(AuthApiFeature.RealmParam::class) {
-        docs {
-            name = "Recover"
-        }.codeGen {
-            funcName = "recover"
-        }.authorize {
-            public()
-        }.handle { params, body ->
-            // Let the bots wait a bit
-            letTheBotsWait()
-
-            try {
-                funktorAuth
-                    .recover(params.realm, body)
-                    .let { ApiResponse.ok(it) }
-            } catch (e: AuthError) {
-                ApiResponse.badRequest(AuthRecoveryResponse.failed)
-                    .withInfo(e.message ?: "")
-            }
-        }
-    }
-
-    val signUp = AuthApiClient.SignUp.mount(AuthApiFeature.RealmParam::class) {
+    val signUp = AuthApiClient.SignUp.mount(RealmParam::class) {
         docs {
             name = "Sign up"
         }.codeGen {
@@ -127,11 +106,11 @@ class AuthApi(converter: OutgoingConverter) : ApiRoutes("login", converter) {
         }
     }
 
-    val activate = AuthApiClient.Activate.mount(AuthApiFeature.RealmParam::class) {
+    val activateAccount = AuthApiClient.ActivateAccount.mount(RealmParam::class) {
         docs {
-            name = "Activate"
+            name = "Activate Account"
         }.codeGen {
-            funcName = "activate"
+            funcName = "activateAccount"
         }.authorize {
             public()
         }.handle { params, body ->
@@ -142,11 +121,79 @@ class AuthApi(converter: OutgoingConverter) : ApiRoutes("login", converter) {
                     .activate(params.realm, body)
                     .let { ApiResponse.ok(it) }
             } catch (e: AuthError) {
-                ApiResponse.badRequest(AuthActivateResponse(success = false))
+                ApiResponse.badRequest(AuthActivateActivateResponse(success = false))
                     .withInfo(e.message ?: "")
             }
         }
     }
+
+    val recoverAccountInitPasswordReset = AuthApiClient.RecoverAccountInitPasswordReset.mount(RealmParam::class) {
+        docs {
+            name = "Recover Account Init Password Reset"
+        }.codeGen {
+            funcName = "recoverAccountInitPasswordReset"
+        }.authorize {
+            public()
+        }.handle { params, body ->
+            // Let the bots wait a bit
+            letTheBotsWait()
+
+            try {
+                funktorAuth
+                    .recoverAccountInitPasswordReset(params.realm, body)
+                    .let { ApiResponse.ok(it) }
+            } catch (e: AuthError) {
+                ApiResponse.badRequest(AuthRecoverAccountResponse.InitPasswordReset)
+                    .withInfo(e.message ?: "")
+            }
+        }
+    }
+
+    val recoverAccountValidatePasswordResetToken =
+        AuthApiClient.RecoverAccountValidatePasswordResetToken.mount(RealmParam::class) {
+            docs {
+                name = "Recover Account Validate Password Reset Token"
+            }.codeGen {
+                funcName = "recoverAccountValidatePasswordResetToken"
+            }.authorize {
+                public()
+            }.handle { params, body ->
+                // Let the bots wait a bit
+                letTheBotsWait()
+
+                try {
+                    funktorAuth
+                        .recoverAccountValidatePasswordResetToken(params.realm, body)
+                        .let { ApiResponse.ok(it) }
+                } catch (e: AuthError) {
+                    ApiResponse.badRequest(AuthRecoverAccountResponse.ValidatePasswordResetToken(success = false))
+                        .withInfo(e.message ?: "")
+                }
+            }
+        }
+
+    val recoverAccountSetPasswordWithToken =
+        AuthApiClient.RecoverAccountSetPasswordWithToken.mount(RealmParam::class) {
+            docs {
+                name = "Recover Account Set Password With Token"
+            }.codeGen {
+                funcName = "recoverAccountSetPasswordWithToken"
+            }.authorize {
+                public()
+            }.handle { params, body ->
+                // Let the bots wait a bit
+                letTheBotsWait()
+
+                try {
+                    funktorAuth
+                        .recoverAccountSetPasswordWithToken(params.realm, body)
+                        .let { ApiResponse.ok(it) }
+                } catch (e: AuthError) {
+                    ApiResponse.badRequest(AuthRecoverAccountResponse.SetPasswordWithToken(success = false))
+                        .withInfo(e.message ?: "")
+                }
+            }
+        }
 
     private suspend fun letTheBotsWait() {
         delay(Random.nextLong(250, 500))

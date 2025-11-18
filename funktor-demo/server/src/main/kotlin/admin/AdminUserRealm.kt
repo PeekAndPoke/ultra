@@ -51,7 +51,7 @@ class AdminUserRealm(
         // Email / Password
         this.emailAndPassword(
             frontendUrls = EmailAndPasswordAuth.FrontendUrls(
-                recoverPasswordUrlPattern = authConfig.baseUrls["admin"] + "/recover-password/{realm}/{token}"
+                baseUrl = authConfig.baseUrls["admin"]!!.trimEnd('/') + "/auth",
             ),
             capabilities = setOf(
                 AuthProviderModel.Capability.SignIn,
@@ -59,7 +59,7 @@ class AdminUserRealm(
             )
         ),
         // Google SSO
-        this.deps.config.getKeyOrNull("GOOGLE_SSO_CLIENT_ID")?.let { clientId ->
+        this.deps.config.getKeyOrNull(GoogleSsoAuth.GOOGLE_SSO_CLIENT_ID)?.let { clientId ->
             googleSso(
                 googleClientId = clientId,
                 capabilities = setOf(
@@ -69,8 +69,8 @@ class AdminUserRealm(
             )
         },
         // Github SSO
-        this.deps.config.getKeyOrNull("GITHUB_SSO_CLIENT_ID")?.let { clientId ->
-            this.deps.config.getKeyOrNull("GITHUB_SSO_CLIENT_SECRET")?.let { secret ->
+        this.deps.config.getKeyOrNull(GithubSsoAuth.GITHUB_SSO_CLIENT_ID)?.let { clientId ->
+            this.deps.config.getKeyOrNull(GithubSsoAuth.GITHUB_SSO_CLIENT_SECRET)?.let { secret ->
                 githubSso(
                     githubClientId = clientId,
                     githubClientSecret = secret,

@@ -6,12 +6,12 @@ import de.peekandpoke.funktor.auth.AuthRealm
 import de.peekandpoke.funktor.auth.AuthSystem
 import de.peekandpoke.funktor.auth.domain.AuthRecord
 import de.peekandpoke.funktor.auth.model.AuthProviderModel
-import de.peekandpoke.funktor.auth.model.AuthRecoveryRequest
-import de.peekandpoke.funktor.auth.model.AuthRecoveryResponse
+import de.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
+import de.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
+import de.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
+import de.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import de.peekandpoke.funktor.auth.model.AuthSignInRequest
 import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
-import de.peekandpoke.funktor.auth.model.AuthUpdateRequest
-import de.peekandpoke.funktor.auth.model.AuthUpdateResponse
 import de.peekandpoke.ultra.common.remote.buildUri
 import de.peekandpoke.ultra.common.toBase64
 import de.peekandpoke.ultra.log.Log
@@ -63,14 +63,34 @@ class EmailAndPasswordAuth(
 
     data class FrontendUrls(
         /**
-         * Url pattern for the password recovery frontend
-         * - contains a {realm} placeholder for the realm's identifier
-         * - contains a {token} placeholder for the password reset token
+         * The base url of the auth routes in the frontend application.
+         *
+         * Usually https://my-app.io/auth/
          */
-        val recoverPasswordUrlPattern: String = AuthFrontendRoutes().resetPassword.pattern,
+        val baseUrl: String,
+        /**
+         * Frontend routes, needed for generating deep-links, f.e. for:
+         * - account activation/verification after email and password sign-up
+         * - password reset
+         */
+        val routes: AuthFrontendRoutes = AuthFrontendRoutes(mountPoint = baseUrl.trimEnd('/')),
     )
 
+    /**
+     * Lazily loaded dependencies required for authentication operations.
+     */
     private val deps by deps
+
+    /**
+     * {@inheritDoc}
+     */
+    override fun asApiModel(): AuthProviderModel {
+        return AuthProviderModel(
+            id = id,
+            capabilities = capabilities,
+            type = AuthProviderModel.TYPE_EMAIL_PASSWORD,
+        )
+    }
 
     /**
      * {@inheritDoc}
@@ -98,90 +118,8 @@ class EmailAndPasswordAuth(
     /**
      * {@inheritDoc}
      */
-    override suspend fun <USER> update(
-        realm: AuthRealm<USER>,
-        user: Stored<USER>,
-        request: AuthUpdateRequest,
-    ): AuthUpdateResponse {
-
-        val result = when (request) {
-            is AuthUpdateRequest.SetPassword -> {
-                // 1. Check for new password to meet the password policy
-                realm.passwordPolicy.matches(request.newPassword).takeIf { it }
-                    ?: throw AuthError.weakPassword()
-
-                // 3. Write new password entry into database
-                deps.storage.authRecords.create {
-                    AuthRecord.Password(
-                        realm = realm.id,
-                        ownerId = user._id,
-                        hash = deps.passwordHasher.hash(request.newPassword),
-                    )
-                }
-
-                val emailResult = realm.messaging.sendPasswordChangedEmail(user)
-
-                if (emailResult.success.not()) {
-                    log.warning(
-                        "Sending 'Password Changed' Email failed for user ${user._id} ${realm.getUserEmail(user)}"
-                    )
-                }
-
-                AuthUpdateResponse(success = true)
-            }
-        }
-
-        return result
-    }
-
-    override suspend fun <USER> recoverPassword(
-        realm: AuthRealm<USER>,
-        request: AuthRecoveryRequest,
-    ): AuthRecoveryResponse {
-
-        @Suppress("REDUNDANT_ELSE_IN_WHEN")
-        return when (request) {
-            is AuthRecoveryRequest.ResetPassword -> {
-
-                val user = realm.loadUserByEmail(request.email)
-                    ?: return AuthRecoveryResponse.failed
-
-                val token = deps.random.getToken().toBase64()
-
-                // Store the token in the database
-                deps.storage.authRecords.create {
-                    AuthRecord.PasswordRecovery(
-                        realm = realm.id,
-                        ownerId = user._id,
-                        token = token,
-                        expiresAt = deps.kronos.instantNow().plus(1.hours).toEpochMillis(),
-                    )
-                }
-
-                val emailResult = realm.messaging.sendPasswordRecoveryEmil(
-                    user = user,
-                    resetUrl = buildUri(frontendUrls.recoverPasswordUrlPattern) {
-                        set("realm", id)
-                        set("token", token)
-                    }
-                )
-
-                if (emailResult.success.not()) {
-                    log.warning(
-                        "Sending 'Password Changed' Email failed for user ${user._id} ${realm.getUserEmail(user)}"
-                    )
-                }
-
-                AuthRecoveryResponse.success
-            }
-
-            else -> AuthRecoveryResponse.failed
-        }
-    }
-
     override suspend fun <USER> signUp(
-        realm: AuthRealm<USER>,
-        request: AuthSignUpRequest,
+        realm: AuthRealm<USER>, request: AuthSignUpRequest,
     ): AuthProvider.SignUpResult<USER> {
 
         val typed = request as? AuthSignUpRequest.EmailAndPassword
@@ -218,10 +156,84 @@ class EmailAndPasswordAuth(
         )
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    override suspend fun <USER> setPassword(
+        realm: AuthRealm<USER>, request: AuthSetPasswordRequest,
+    ): AuthSetPasswordResponse {
+
+        // 1. Check for new password to meet the password policy
+        realm.passwordPolicy.matches(request.newPassword).takeIf { it }
+            ?: throw AuthError.weakPassword()
+
+        val user = realm.loadUserById(request.userId)
+            ?: throw AuthError.userNotFound(request.userId)
+
+        // 3. Write new password entry into database
+        deps.storage.authRecords.create {
+            AuthRecord.Password(
+                realm = realm.id,
+                ownerId = user._id,
+                hash = deps.passwordHasher.hash(request.newPassword),
+            )
+        }
+
+        val emailResult = realm.messaging.sendPasswordChangedEmail(user)
+
+        if (emailResult.success.not()) {
+            log.warning(
+                "Sending 'Password Changed' Email failed for user ${user._id} ${realm.getUserEmail(user)}"
+            )
+        }
+
+        return AuthSetPasswordResponse(success = true)
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    override suspend fun <USER> recoverAccountInitPasswordReset(
+        realm: AuthRealm<USER>, request: AuthRecoverAccountRequest.InitPasswordReset,
+    ): AuthRecoverAccountResponse.InitPasswordReset {
+
+        val user = realm.loadUserByEmail(request.email)
+            ?: return AuthRecoverAccountResponse.InitPasswordReset
+
+        val token = deps.random.getToken().toBase64()
+
+        // Store the token in the database
+        deps.storage.authRecords.create {
+            AuthRecord.PasswordRecovery(
+                realm = realm.id,
+                ownerId = user._id,
+                token = token,
+                expiresAt = deps.kronos.instantNow().plus(1.hours).toEpochMillis(),
+            )
+        }
+
+        val emailResult = realm.messaging.sendPasswordRecoveryEmil(
+            user = user,
+            resetUrl = buildUri(frontendUrls.routes.resetPassword.pattern) {
+                set(AuthFrontendRoutes.PROVIDER_PARAM, id)
+                set(AuthFrontendRoutes.TOKEN_PARAM, token)
+            }
+        )
+
+        if (emailResult.success.not()) {
+            log.warning(
+                "Sending 'Password Changed' Email failed for user ${user._id} ${realm.getUserEmail(user)}"
+            )
+        }
+
+        return AuthRecoverAccountResponse.InitPasswordReset
+    }
+
+    /**
+     * Validates the given [password] against the latest password for the given [user] in the [realm].
+     */
     private suspend fun <USER> validateCurrentPassword(
-        realm: AuthRealm<USER>,
-        user: Stored<USER>,
-        password: String,
+        realm: AuthRealm<USER>, user: Stored<USER>, password: String,
     ): Boolean {
         val record = deps.storage.authRecords.findLatestRecordBy(
             type = AuthRecord.Password,
@@ -230,13 +242,5 @@ class EmailAndPasswordAuth(
         ) ?: return false
 
         return deps.passwordHasher.check(plaintext = password, hash = record.value.hash)
-    }
-
-    override fun asApiModel(): AuthProviderModel {
-        return AuthProviderModel(
-            id = id,
-            capabilities = capabilities,
-            type = AuthProviderModel.TYPE_EMAIL_PASSWORD,
-        )
     }
 }

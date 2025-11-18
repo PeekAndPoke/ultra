@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.auth
+package de.peekandpoke.funktor.auth.pages
 
 import de.peekandpoke.kraft.routing.Route
 

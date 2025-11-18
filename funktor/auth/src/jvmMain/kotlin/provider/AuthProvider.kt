@@ -3,12 +3,12 @@ package de.peekandpoke.funktor.auth.provider
 import de.peekandpoke.funktor.auth.AuthError
 import de.peekandpoke.funktor.auth.AuthRealm
 import de.peekandpoke.funktor.auth.model.AuthProviderModel
-import de.peekandpoke.funktor.auth.model.AuthRecoveryRequest
-import de.peekandpoke.funktor.auth.model.AuthRecoveryResponse
+import de.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
+import de.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
+import de.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
+import de.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import de.peekandpoke.funktor.auth.model.AuthSignInRequest
 import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
-import de.peekandpoke.funktor.auth.model.AuthUpdateRequest
-import de.peekandpoke.funktor.auth.model.AuthUpdateResponse
 import de.peekandpoke.ultra.vault.Stored
 
 interface AuthProvider {
@@ -35,36 +35,54 @@ interface AuthProvider {
      *
      * Otherwise [AuthError] will be thrown.
      */
-    suspend fun <USER> signIn(realm: AuthRealm<USER>, request: AuthSignInRequest): Stored<USER> {
+    suspend fun <USER> signIn(
+        realm: AuthRealm<USER>, request: AuthSignInRequest,
+    ): Stored<USER> {
         throw AuthError.notSupported()
     }
 
     /**
      * Updates specific things about the authentication setup of the user
      */
-    suspend fun <USER> update(
-        realm: AuthRealm<USER>,
-        user: Stored<USER>,
-        request: AuthUpdateRequest,
-    ): AuthUpdateResponse {
-        return AuthUpdateResponse(
-            success = false,
-        )
-    }
-
-    /**
-     * Account recovery
-     */
-    suspend fun <USER> recoverPassword(realm: AuthRealm<USER>, request: AuthRecoveryRequest): AuthRecoveryResponse {
-        return AuthRecoveryResponse(
-            success = false,
-        )
+    suspend fun <USER> setPassword(
+        realm: AuthRealm<USER>, request: AuthSetPasswordRequest,
+    ): AuthSetPasswordResponse {
+        throw AuthError.notSupported()
     }
 
     /**
      * Sign up a new account for the given request. Providers should check their SignUp capability internally.
      */
-    suspend fun <USER> signUp(realm: AuthRealm<USER>, request: AuthSignUpRequest): SignUpResult<USER> {
+    suspend fun <USER> signUp(
+        realm: AuthRealm<USER>, request: AuthSignUpRequest,
+    ): SignUpResult<USER> {
+        throw AuthError.notSupported()
+    }
+
+    /**
+     * Init account password recovery
+     */
+    suspend fun <USER> recoverAccountInitPasswordReset(
+        realm: AuthRealm<USER>, request: AuthRecoverAccountRequest.InitPasswordReset,
+    ): AuthRecoverAccountResponse.InitPasswordReset {
+        throw AuthError.notSupported()
+    }
+
+    /**
+     * Validate token for password reset
+     */
+    suspend fun <USER> recoverAccountValidatePasswordResetToken(
+        realm: AuthRealm<USER>, request: AuthRecoverAccountRequest.ValidatePasswordResetToken,
+    ): AuthRecoverAccountResponse.ValidatePasswordResetToken {
+        throw AuthError.notSupported()
+    }
+
+    /**
+     * Recover account by setting a new password
+     */
+    suspend fun <USER> recoverAccountSetPasswordWithToken(
+        realm: AuthRealm<USER>, request: AuthRecoverAccountRequest.SetPasswordWithToken,
+    ): AuthRecoverAccountResponse.SetPasswordWithToken {
         throw AuthError.notSupported()
     }
 
