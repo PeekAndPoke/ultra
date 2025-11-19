@@ -11,7 +11,6 @@ sealed interface AuthRecord : Timestamped {
     data class Password(
         override val realm: String,
         override val ownerId: String,
-        override val expiresAt: Long? = null,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
         /** The hashed password */
@@ -21,11 +20,13 @@ sealed interface AuthRecord : Timestamped {
             override val identifier = "password"
         }
 
+        override val expiresAt: Long? = null
+
         override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
         override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
     }
 
-    data class PasswordRecovery(
+    data class PasswordRecoveryToken(
         override val realm: String,
         override val ownerId: String,
         override val expiresAt: Long,
@@ -34,8 +35,8 @@ sealed interface AuthRecord : Timestamped {
         /** Very long secret token */
         override val token: String,
     ) : AuthRecord {
-        companion object : Polymorphic.TypedChild<PasswordRecovery> {
-            override val identifier = "password-recovery"
+        companion object : Polymorphic.TypedChild<PasswordRecoveryToken> {
+            override val identifier = "password-recovery-token"
         }
 
         override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)

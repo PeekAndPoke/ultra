@@ -196,11 +196,11 @@ class EmailAndPasswordAuth(
 
         // Store the token in the database
         deps.storage.authRecords.create {
-            AuthRecord.PasswordRecovery(
+            AuthRecord.PasswordRecoveryToken(
                 realm = realm.id,
                 ownerId = user._id,
                 token = token,
-                expiresAt = deps.kronos.instantNow().plus(1.hours).toEpochMillis(),
+                expiresAt = deps.kronos.instantNow().plus(1.hours).toEpochSeconds(),
             )
         }
 
@@ -229,7 +229,7 @@ class EmailAndPasswordAuth(
     ): AuthRecoverAccountResponse.ValidatePasswordResetToken {
 
         val tokenRecord = deps.storage.authRecords
-            .findByToken(type = AuthRecord.PasswordRecovery, realm = realm.id, token = request.token)
+            .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = realm.id, token = request.token)
 
         return AuthRecoverAccountResponse.ValidatePasswordResetToken(
             success = tokenRecord != null,
@@ -244,7 +244,7 @@ class EmailAndPasswordAuth(
     ): AuthRecoverAccountResponse.SetPasswordWithToken {
 
         val tokenRecord = deps.storage.authRecords
-            .findByToken(type = AuthRecord.PasswordRecovery, realm = realm.id, token = request.token)
+            .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = realm.id, token = request.token)
             ?: return AuthRecoverAccountResponse.SetPasswordWithToken(success = false)
 
         // Write a new password entry into the auth records storage

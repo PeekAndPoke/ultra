@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ultra.iml" filepath="$PROJECT_DIR$/.idea/modules/ultra.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/buildSrc/ultra.buildSrc.main.iml" filepath="$PROJECT_DIR$/.idea/modules/buildSrc/ultra.buildSrc.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/funktor-demo/server/ultra.funktor-demo.server.iml" filepath="$PROJECT_DIR$/.idea/modules/funktor-demo/server/ultra.funktor-demo.server.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/funktor/auth/ultra.funktor.auth.jvmTest.iml" filepath="$PROJECT_DIR$/.idea/modules/funktor/auth/ultra.funktor.auth.jvmTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/monko/core/ultra.monko.core.main.iml" filepath="$PROJECT_DIR$/.idea/modules/monko/core/ultra.monko.core.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/monko/ksp/ultra.monko.ksp.main.iml" filepath="$PROJECT_DIR$/.idea/modules/monko/ksp/ultra.monko.ksp.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mutator/core/ultra.mutator.core.jvmTest.iml" filepath="$PROJECT_DIR$/.idea/modules/mutator/core/ultra.mutator.core.jvmTest.iml" />

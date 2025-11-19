@@ -23,6 +23,17 @@ interface AppConfig {
         val empty: AppConfig = NullAppConfig
 
         /**
+         * Creates a new instance of `AppConfig` with the specified configuration.
+         */
+        fun of(
+            ktor: KtorConfig = KtorConfig(),
+            funktor: FunktorConfig = FunktorConfig(),
+            keys: Map<String, String> = emptyMap(),
+        ): AppConfig {
+            return AppConfigImpl(ktor, funktor, keys)
+        }
+
+        /**
          * Loads the application configuration based on the specified environment.
          *
          * @param env    The environment for which the configuration should be loaded (e.g., "dev", "live", "qa").
@@ -136,6 +147,12 @@ interface AppConfig {
         override val funktor = FunktorConfig()
         override val keys: Map<String, String> = emptyMap()
     }
+
+    private class AppConfigImpl(
+        override val ktor: KtorConfig,
+        override val funktor: FunktorConfig,
+        override val keys: Map<String, String>,
+    ) : AppConfig
 
     /**
      * Configuration for the Ktor server.

@@ -24,6 +24,7 @@ import de.peekandpoke.ultra.security.password.PasswordHasher
  */
 class AuthSystem(
     private val realms: List<AuthRealm<Any>>,
+    deps: Lazy<Deps>,
 ) {
     class Deps(
         val config: AppConfig,
@@ -47,6 +48,8 @@ class AuthSystem(
     ) {
         val authRecords by authRecords
     }
+
+    val deps by deps
 
     init {
         val duplicatedRealms = realms.groupBy { it.id }

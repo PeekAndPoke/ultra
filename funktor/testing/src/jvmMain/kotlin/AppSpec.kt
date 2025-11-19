@@ -28,7 +28,7 @@ import kotlin.time.Duration.Companion.milliseconds
 interface AppSpecAware<C : AppConfig> : KontainerAware {
     val spec: AppSpec<C>
 
-    fun testApp(host: String): AppUnderTest<C> = AppUnderTest<C>(testBed = spec.testBed, host = host)
+    fun testApp(host: String): AppUnderTest<C> = AppUnderTest(testBed = spec.testBed, host = host)
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE")

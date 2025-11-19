@@ -155,14 +155,18 @@ class MonkoDriver(
         val document = Document(slumbered)
         key?.let { document["_id"] = it }
 
-        val result = insertOne(collection, document)
+        val result: InsertOneResult = insertOne(collection, document)
 
-        val insertedId = result.insertedId?.toString()
-            ?: throw IllegalStateException("Insert failed")
+        val insertedId = result.insertedId ?: throw IllegalStateException("Insert failed")
+        val stringId: String = when {
+            insertedId.isString -> insertedId.asString().value
+            insertedId.isObjectId -> insertedId.asObjectId().value.toHexString()
+            else -> insertedId.toString()
+        }
 
         return Stored(
-            _id = "$collection/$insertedId",
-            _key = key ?: insertedId,
+            _id = "$collection/$stringId",
+            _key = stringId,
             _rev = "",
             value = value,
         )
