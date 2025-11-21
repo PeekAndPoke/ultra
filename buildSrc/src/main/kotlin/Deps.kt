@@ -1,4 +1,4 @@
-@file:Suppress("detekt:all")
+@file:Suppress("detekt:all", "unused")
 
 import org.ajoberstar.grgit.Grgit
 import org.gradle.api.Project
@@ -370,6 +370,10 @@ object Deps {
         // https://search.maven.org/artifact/io.github.java-diff-utils/java-diff-utils
         private const val diffutils_version = "4.16"
         const val diffutils = "io.github.java-diff-utils:java-diff-utils:$diffutils_version"
+
+        //https://mvnrepository.com/artifact/com.password4j/password4j
+        private const val password4j_version = "1.8.4"
+        const val password4j = "com.password4j:password4j:$password4j_version"
 
         // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
         private const val slf4j_version = "2.0.17"

@@ -19,10 +19,12 @@ import kotlinx.coroutines.runBlocking
 class BackgroundJobWithKarangoSpec : BackgroundJobsSpecBase() {
 
     override fun createKontainer(): Kontainer = runBlocking {
+        val config = AppConfig.empty
+
         kontainer {
-            funktorCore(AppConfig.empty, AppInfo.default())
+            funktorCore(config, AppInfo.default())
             funktorBroker()
-            funktorRest()
+            funktorRest(config)
             funktorCluster {
                 useKarango()
             }

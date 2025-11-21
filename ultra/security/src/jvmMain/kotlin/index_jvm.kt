@@ -4,7 +4,7 @@ import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
 import de.peekandpoke.ultra.security.csrf.CsrfProtection
 import de.peekandpoke.ultra.security.csrf.StatelessCsrfProtection
-import de.peekandpoke.ultra.security.password.PBKDF2PasswordHasher
+import de.peekandpoke.ultra.security.password.CompoundPasswordHasher
 import de.peekandpoke.ultra.security.password.PasswordHasher
 import de.peekandpoke.ultra.security.user.UserProvider
 
@@ -20,7 +20,5 @@ val Ultra_Security = module { config: UltraSecurityConfig ->
         StatelessCsrfProtection(config.csrfSecret, config.csrfTtlMillis, userProvider)
     }
 
-    singleton(PasswordHasher::class) {
-        PBKDF2PasswordHasher()
-    }
+    singleton(PasswordHasher::class) { CompoundPasswordHasher.default }
 }

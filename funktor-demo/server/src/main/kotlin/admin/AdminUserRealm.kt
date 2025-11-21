@@ -103,13 +103,12 @@ class AdminUserRealm(
         ).jsonObject
     }
 
-    override suspend fun createUserForSignup(email: String, displayName: String?): Stored<AdminUser> {
-        val name = (displayName ?: email.split("@").first()).trim()
+    override suspend fun createUserForSignup(params: AuthRealm.CreateUserForSignupParams): Stored<AdminUser> {
 
         return appUserRepo.insert(
             AdminUser(
-                name = name,
-                email = email.trim(),
+                name = params.displayName,
+                email = params.email,
             )
         )
     }

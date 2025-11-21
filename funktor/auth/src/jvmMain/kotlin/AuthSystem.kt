@@ -26,21 +26,31 @@ class AuthSystem(
     realms: Lazy<List<AuthRealm<Any>>>,
     deps: Lazy<Deps>,
 ) {
-    class Deps(
-        val config: AppConfig,
+    interface Deps {
+        val config: AppConfig
+        val kronos: Kronos
+        val messaging: MessagingServices
+        val jwtGenerator: JwtGenerator
+        val storage: Storage
+        val passwordHasher: PasswordHasher
+        val random: AuthRandom
+    }
+
+    class DefaultDeps(
+        override val config: AppConfig,
         kronos: Lazy<Kronos>,
         messaging: Lazy<MessagingServices>,
         jwtGenerator: Lazy<JwtGenerator>,
         storage: Lazy<Storage>,
         passwordHasher: Lazy<PasswordHasher>,
         random: Lazy<AuthRandom>,
-    ) {
-        val kronos by kronos
-        val messaging by messaging
-        val jwtGenerator by jwtGenerator
-        val storage by storage
-        val passwordHasher by passwordHasher
-        val random by random
+    ) : Deps {
+        override val kronos by kronos
+        override val messaging by messaging
+        override val jwtGenerator by jwtGenerator
+        override val storage by storage
+        override val passwordHasher by passwordHasher
+        override val random by random
     }
 
     class Storage(

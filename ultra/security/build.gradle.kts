@@ -64,6 +64,7 @@ kotlin {
                 implementation(kotlin("reflect"))
                 implementation(project(":ultra:kontainer"))
                 api(Deps.JavaLibs.auth0_java_jwt)
+                api(Deps.JavaLibs.password4j)
             }
         }
 

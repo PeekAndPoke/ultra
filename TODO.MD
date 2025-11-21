@@ -50,6 +50,11 @@
   - (x) Method to reset the password, revoke the token
   - ( ) Send email to user when password is reset
 
+- ( ) Activate account
+    - ( ) Send account activation email / validate email address email
+    - ( ) Api to activate account
+    - ( ) Frontend to activate account
+
 - ( ) Keep track of devices
     - ( ) Store "device id" in local storage ... or just some random string
     - ( ) Send "device id" along with sign in request / sign up request

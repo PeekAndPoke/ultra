@@ -4,11 +4,11 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
-class PBKDF2PasswordHasherSpec : StringSpec({
+class PBKDF2WithHmacSHA256PasswordHasherSpec : StringSpec({
 
     "Password should be hashed without collisions" {
 
-        val hasher = PBKDF2PasswordHasher()
+        val hasher = PBKDF2WithHmacSHA256PasswordHasher.i65536k256
 
         listOf(
             "",

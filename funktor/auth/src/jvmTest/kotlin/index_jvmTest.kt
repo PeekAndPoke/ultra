@@ -3,6 +3,7 @@ package de.peekandpoke.funktor.auth
 import de.peekandpoke.funktor.auth.KarangoTestAppUsersRepo.Companion.asApiModel
 import de.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import de.peekandpoke.funktor.auth.model.AuthSignInResponse
+import de.peekandpoke.funktor.auth.model.PasswordPolicy
 import de.peekandpoke.funktor.auth.provider.AuthProvider
 import de.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import de.peekandpoke.funktor.auth.provider.GithubSsoAuth
@@ -10,6 +11,8 @@ import de.peekandpoke.funktor.auth.provider.GoogleSsoAuth
 import de.peekandpoke.funktor.core.broker.funktorBroker
 import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.funktor.core.config.funktor.FunktorConfig
+import de.peekandpoke.funktor.messaging.MessagingServices
+import de.peekandpoke.funktor.messaging.api.EmailResult
 import de.peekandpoke.funktor.messaging.funktorMessaging
 import de.peekandpoke.funktor.rest.funktorRest
 import de.peekandpoke.karango.aql.EQ
@@ -26,7 +29,9 @@ import de.peekandpoke.ultra.kontainer.kontainer
 import de.peekandpoke.ultra.log.ultraLogging
 import de.peekandpoke.ultra.security.UltraSecurityConfig
 import de.peekandpoke.ultra.security.jwt.JwtConfig
+import de.peekandpoke.ultra.security.jwt.JwtGenerator
 import de.peekandpoke.ultra.security.jwt.JwtUserData
+import de.peekandpoke.ultra.security.password.PasswordHasher
 import de.peekandpoke.ultra.security.ultraSecurity
 import de.peekandpoke.ultra.security.user.UserPermissions
 import de.peekandpoke.ultra.vault.Database
@@ -81,26 +86,70 @@ suspend fun createAuthTestContainer(
     }
 }
 
-open class MinimalTestRealm(
+class TestMessaging(
+    val onSendPasswordChangedEmail: suspend (Stored<Any>) -> EmailResult = {
+        error("sendPasswordChangedEmail was not expected to be called")
+    },
+    val onSendPasswordRecoveryEmil: suspend (Stored<Any>, String) -> EmailResult = { _, _ ->
+        error("sendPasswordRecoveryEmil was not expected to be called")
+    },
+) : AuthRealm.Messaging<Any> {
+    override suspend fun sendPasswordChangedEmail(user: Stored<Any>): EmailResult =
+        onSendPasswordChangedEmail(user)
+
+    override suspend fun sendPasswordRecoveryEmil(user: Stored<Any>, resetUrl: String): EmailResult =
+        onSendPasswordRecoveryEmil(user, resetUrl)
+}
+
+class MinimalTestDeps : AuthSystem.Deps {
+    override val config: AppConfig get() = error("Not needed for test")
+
+    override val kronos: Kronos get() = error("Not needed for test")
+
+    override val messaging: MessagingServices get() = error("Not needed for test")
+
+    override val jwtGenerator: JwtGenerator get() = error("Not needed for test")
+
+    override val storage: AuthSystem.Storage get() = error("Not needed for test")
+
+    override val passwordHasher: PasswordHasher get() = error("Not needed for test")
+
+    override val random: AuthRandom get() = error("Not needed for test")
+}
+
+class MinimalTestRealm(
+    override val passwordPolicy: PasswordPolicy = PasswordPolicy.default,
+    val getMessaging: () -> AuthRealm.Messaging<Any> = { TestMessaging() },
     val onLoadUserByEmail: suspend (String) -> Stored<Any>? =
         { error("loadUserByEmail was not expected to be called") },
+    val onLoadUserById: suspend (String) -> Stored<Any>? =
+        { error("onLoadUserById was not expected to be called") },
     val onCreateUserForSignup: suspend (params: AuthRealm.CreateUserForSignupParams) -> Stored<Any> =
         { error("createUserForSignup was not expected to be called") },
+    val onGetUserEmail: suspend (user: Stored<Any>) -> String =
+        { error("getUserEmail was not expected to be called") },
 ) : AuthRealm<Any> {
     override val id: String get() = "test-realm"
 
     override suspend fun loadUserByEmail(email: String): Stored<Any>? =
         onLoadUserByEmail(email)
 
+    override suspend fun loadUserById(id: String): Stored<Any>? =
+        onLoadUserById(id)
+
     override suspend fun createUserForSignup(params: AuthRealm.CreateUserForSignupParams): Stored<Any> =
         onCreateUserForSignup(params)
 
+    override val messaging get() = getMessaging()
+
     override val deps get() = error("Not needed for test")
-    override val messaging get() = error("Not needed for test")
+
     override val providers get() = error("Not needed for test")
-    override suspend fun loadUserById(id: String) = error("Not needed for test")
+
     override suspend fun generateJwt(user: Stored<Any>) = error("Not needed for test")
-    override suspend fun getUserEmail(user: Stored<Any>) = error("Not needed for test")
+
+    override suspend fun getUserEmail(user: Stored<Any>) = onGetUserEmail(user)
+
     override suspend fun serializeUser(user: Stored<Any>) = error("Not needed for test")
 }
 

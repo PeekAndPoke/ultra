@@ -2,7 +2,9 @@ package de.peekandpoke.funktor.auth.provider
 
 import de.peekandpoke.funktor.auth.AuthError
 import de.peekandpoke.funktor.auth.AuthFrontendRoutes
+import de.peekandpoke.funktor.auth.AuthRandom
 import de.peekandpoke.funktor.auth.AuthRealm
+import de.peekandpoke.funktor.auth.AuthRecordStorage
 import de.peekandpoke.funktor.auth.AuthSystem
 import de.peekandpoke.funktor.auth.domain.AuthRecord
 import de.peekandpoke.funktor.auth.model.AuthProviderModel
@@ -12,9 +14,12 @@ import de.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import de.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import de.peekandpoke.funktor.auth.model.AuthSignInRequest
 import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
+import de.peekandpoke.ultra.common.datetime.Kronos
+import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.common.isEmail
 import de.peekandpoke.ultra.common.remote.buildUri
-import de.peekandpoke.ultra.common.toBase64
 import de.peekandpoke.ultra.log.Log
+import de.peekandpoke.ultra.security.password.PasswordHasher
 import de.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.buildJsonObject
 import kotlin.time.Duration.Companion.hours
@@ -27,15 +32,19 @@ import kotlin.time.Duration.Companion.hours
  * records while adhering to the realm's password policy.
  *
  * @param id A unique identifier for the provider.
- * @param deps Lazily loaded dependencies required for authentication operations.
+ * @param services Lazily loaded dependencies required for authentication operations.
  */
 class EmailAndPasswordAuth(
-    override val id: String,
     override val capabilities: Set<AuthProviderModel.Capability> = setOf(AuthProviderModel.Capability.SignIn),
-    private val log: Log,
     private val frontendUrls: FrontendUrls,
-    deps: Lazy<AuthSystem.Deps>,
+    private val log: Log,
+    services: Lazy<Services>,
 ) : AuthProvider {
+
+    companion object {
+        const val ID = "email-password"
+    }
+
     /**
      * Factory for creating instances of the EmailAndPasswordAuth provider.
      *
@@ -50,18 +59,104 @@ class EmailAndPasswordAuth(
         private val log: Log,
     ) {
         operator fun invoke(
-            id: String = "email-password",
             frontendUrls: FrontendUrls,
             capabilities: Set<AuthProviderModel.Capability> = setOf(AuthProviderModel.Capability.SignIn),
+            services: Lazy<Services> = lazy { Services(deps.value) },
         ) = EmailAndPasswordAuth(
-            id = id,
-            deps = deps,
+            services = services,
             log = log,
             capabilities = capabilities,
             frontendUrls = frontendUrls,
         )
     }
 
+    /** Interface for providing dependencies to the [EmailAndPasswordAuth] provider. */
+    interface Services {
+        companion object {
+            operator fun invoke(deps: AuthSystem.Deps): Services = DefaultServices(
+                kronos = lazy { deps.kronos },
+                authRandom = lazy { deps.random },
+                authRecordStorage = lazy { deps.storage.authRecords },
+                passwordHasher = lazy { deps.passwordHasher },
+            )
+        }
+
+        /** Get the current instant */
+        fun instantNow(): MpInstant
+
+        /** Generate a random base64-encoded token with the given length in bytes */
+        fun generateRandomBase64Token(length: Int): String
+
+        /** Hash the given plaintext password */
+        fun hashPassword(password: String): String
+
+        /** Check if the given plaintext password matches the given hash */
+        fun checkPassword(plaintext: String, hash: String): Boolean
+
+        /** Create a new auth record of the given type */
+        suspend fun <T : AuthRecord> createAuthRecord(record: () -> T): Stored<T>
+
+        /** Find the password recovery token for the given [realm] and [owner] */
+        suspend fun findLatestPasswordRecord(realm: String, owner: String): Stored<AuthRecord.Password>?
+
+        /** Find the password recovery token for the given [realm] and [token] */
+        suspend fun findPasswordRecoveryToken(realm: String, token: String): Stored<AuthRecord.PasswordRecoveryToken>?
+    }
+
+    /** Default implementation of the [Services] interface. */
+    private class DefaultServices(
+        kronos: Lazy<Kronos>,
+        authRandom: Lazy<AuthRandom>,
+        authRecordStorage: Lazy<AuthRecordStorage>,
+        passwordHasher: Lazy<PasswordHasher>,
+    ) : Services {
+        private val kronos by kronos
+        private val authRandom by authRandom
+        private val authRecordStorage by authRecordStorage
+        private val passwordHasher by passwordHasher
+
+        /** @{inheritDoc} */
+        override fun instantNow(): MpInstant {
+            return kronos.instantNow()
+        }
+
+        /** @{inheritDoc} */
+        override fun generateRandomBase64Token(length: Int): String {
+            return authRandom.getTokenAsBase64(length)
+        }
+
+        /** @{inheritDoc} */
+        override fun hashPassword(password: String): String {
+            return passwordHasher.hashAsString(password)
+        }
+
+        /** @{inheritDoc} */
+        override fun checkPassword(plaintext: String, hash: String): Boolean {
+            return passwordHasher.check(plaintext, hash)
+        }
+
+        /** @{inheritDoc} */
+        override suspend fun findLatestPasswordRecord(realm: String, owner: String): Stored<AuthRecord.Password>? {
+            return authRecordStorage
+                .findLatestRecordBy(type = AuthRecord.Password, realm = realm, owner = owner)
+        }
+
+        /** @{inheritDoc} */
+        override suspend fun <T : AuthRecord> createAuthRecord(record: () -> T): Stored<T> {
+            return authRecordStorage.create { record() }
+        }
+
+        /** @{inheritDoc} */
+        override suspend fun findPasswordRecoveryToken(
+            realm: String,
+            token: String,
+        ): Stored<AuthRecord.PasswordRecoveryToken>? {
+            return authRecordStorage
+                .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = realm, token = token)
+        }
+    }
+
+    /** The URLs used for deep-linking into the frontend application. */
     data class FrontendUrls(
         /**
          * The base url of the auth routes in the frontend application.
@@ -77,10 +172,11 @@ class EmailAndPasswordAuth(
         val routes: AuthFrontendRoutes = AuthFrontendRoutes(mountPoint = baseUrl.trimEnd('/')),
     )
 
-    /**
-     * Lazily loaded dependencies required for authentication operations.
-     */
-    private val deps by deps
+    /** Lazily loaded dependencies required for authentication operations. */
+    private val services: Services by services
+
+    /** The provider id */
+    override val id: String = ID
 
     /**
      * {@inheritDoc}
@@ -98,19 +194,19 @@ class EmailAndPasswordAuth(
      * {@inheritDoc}
      */
     override suspend fun <USER> signIn(realm: AuthRealm<USER>, request: AuthSignInRequest): Stored<USER> {
-
+        // Validate request type
         val typed: AuthSignInRequest.EmailAndPassword = (request as? AuthSignInRequest.EmailAndPassword)
+            ?: throw AuthError.invalidRequest()
+        // Validate email
+        val email = typed.email.takeIf { it.isEmail() }
             ?: throw AuthError.invalidCredentials()
-
-        val email = typed.email.takeIf { it.isNotBlank() }
-            ?: throw AuthError.invalidCredentials()
-
+        // Validate password
         val password = typed.password.takeIf { it.isNotBlank() }
             ?: throw AuthError.invalidCredentials()
-
-        val user = realm.loadUserByEmail(email)
+        // Load user
+        val user = realm.loadUserByEmail(email.trim().lowercase())
             ?: throw AuthError.invalidCredentials()
-
+        // Validate password
         validateCurrentPassword(realm, user, password).takeIf { it }
             ?: throw AuthError.invalidCredentials()
 
@@ -123,30 +219,22 @@ class EmailAndPasswordAuth(
     override suspend fun <USER> signUp(
         realm: AuthRealm<USER>, request: AuthSignUpRequest,
     ): AuthProvider.SignUpResult<USER> {
-
+        // Check request
         val typed = request as? AuthSignUpRequest.EmailAndPassword
-            ?: throw AuthError("Invalid sign-up request for email/password")
-
-        val email = typed.email.trim().lowercase()
-
-        if (email.isBlank()) throw AuthError("Invalid email")
-
+            ?: throw AuthError.invalidRequest()
+        // Create params for user creation
+        val createParams = AuthRealm.CreateUserForSignupParams
+            .of(email = typed.email, displayName = typed.displayName)
+        // Validate email address
+        if (createParams.email.isEmail().not()) throw AuthError.invalidRequest()
         // Enforce the password policy
         if (!realm.passwordPolicy.matches(typed.password)) throw AuthError.weakPassword()
-
         // Ensure no existing user
-        if (realm.loadUserByEmail(email) != null) throw AuthError("User already exists")
-
+        if (realm.loadUserByEmail(createParams.email) != null) throw AuthError("User already exists")
         // Create user via realm hook
-        val user = realm.createUserForSignup(
-            AuthRealm.CreateUserForSignupParams.of(
-                email = email,
-                displayName = typed.displayName,
-            )
-        )
-
+        val user = realm.createUserForSignup(createParams)
         // Store password record
-        deps.storage.authRecords.create {
+        services.createAuthRecord {
             createPasswordRecord(realmId = realm.id, ownerId = user._id, password = typed.password)
         }
 
@@ -171,7 +259,7 @@ class EmailAndPasswordAuth(
             ?: throw AuthError.userNotFound(request.userId)
 
         // 3. Write new password entry into database
-        deps.storage.authRecords.create {
+        services.createAuthRecord {
             createPasswordRecord(realmId = realm.id, ownerId = user._id, password = request.newPassword)
         }
 
@@ -196,15 +284,17 @@ class EmailAndPasswordAuth(
         val user = realm.loadUserByEmail(request.email)
             ?: return AuthRecoverAccountResponse.InitPasswordReset
 
-        val token = deps.random.getToken(length = 256).toBase64()
+        // TODO: make length configurable
+        val token = services.generateRandomBase64Token(length = 256)
 
         // Store the token in the database
-        deps.storage.authRecords.create {
+        services.createAuthRecord {
             AuthRecord.PasswordRecoveryToken(
                 realm = realm.id,
                 ownerId = user._id,
                 token = token,
-                expiresAt = deps.kronos.instantNow().plus(1.hours).toEpochSeconds(),
+                // TODO: make expiration configurable
+                expiresAt = services.instantNow().plus(1.hours).toEpochSeconds(),
             )
         }
 
@@ -232,8 +322,8 @@ class EmailAndPasswordAuth(
         realm: AuthRealm<USER>, request: AuthRecoverAccountRequest.ValidatePasswordResetToken,
     ): AuthRecoverAccountResponse.ValidatePasswordResetToken {
 
-        val tokenRecord = deps.storage.authRecords
-            .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = realm.id, token = request.token)
+        val tokenRecord = services
+            .findPasswordRecoveryToken(realm = realm.id, token = request.token)
 
         return AuthRecoverAccountResponse.ValidatePasswordResetToken(
             success = tokenRecord != null,
@@ -247,22 +337,24 @@ class EmailAndPasswordAuth(
         realm: AuthRealm<USER>, request: AuthRecoverAccountRequest.SetPasswordWithToken,
     ): AuthRecoverAccountResponse.SetPasswordWithToken {
 
-        val tokenRecord = deps.storage.authRecords
-            .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = realm.id, token = request.token)
+        val tokenRecord = services
+            .findPasswordRecoveryToken(realm = realm.id, token = request.token)
             ?: return AuthRecoverAccountResponse.SetPasswordWithToken(success = false)
 
         // Write a new password entry into the auth records storage
-        deps.storage.authRecords.create {
+        services.createAuthRecord {
             createPasswordRecord(realmId = realm.id, ownerId = tokenRecord.value.ownerId, password = request.password)
         }
 
-        // TODO: send password changed email
+        // Send email to the user to notify them that their password has been changed
+        realm.loadUserById(tokenRecord.value.ownerId)?.let { user ->
+            realm.messaging.sendPasswordChangedEmail(user)
+        }
 
         return AuthRecoverAccountResponse.SetPasswordWithToken(
             success = true,
         )
     }
-
 
     /**
      * Validates the given [password] against the latest password for the given [user] in the [realm].
@@ -270,11 +362,11 @@ class EmailAndPasswordAuth(
     private suspend fun <USER> validateCurrentPassword(
         realm: AuthRealm<USER>, user: Stored<USER>, password: String,
     ): Boolean {
-        val record = deps.storage.authRecords
-            .findLatestRecordBy(type = AuthRecord.Password, realm = realm.id, owner = user._id)
+        val record = services
+            .findLatestPasswordRecord(realm = realm.id, owner = user._id)
             ?: return false
 
-        return deps.passwordHasher.check(plaintext = password, hash = record.value.token)
+        return services.checkPassword(plaintext = password, hash = record.value.token)
     }
 
     /**
@@ -284,7 +376,7 @@ class EmailAndPasswordAuth(
         return AuthRecord.Password(
             realm = realmId,
             ownerId = ownerId,
-            token = deps.passwordHasher.hash(password),
+            token = services.hashPassword(password),
         )
     }
 }

@@ -56,7 +56,7 @@ class AdminUsersRepo(
                 AuthRecord.Password(
                     realm = AdminUserRealm.REALM,
                     ownerId = _id,
-                    token = passwordHasher.hash(password)
+                    token = passwordHasher.hashAsString(password)
                 )
             }
         }
