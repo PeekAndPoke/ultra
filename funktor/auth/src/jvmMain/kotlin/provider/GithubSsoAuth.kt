@@ -22,6 +22,9 @@ class GithubSsoAuth(
     override val capabilities: Set<AuthProviderModel.Capability>,
     val githubClientId: String,
     val githubClientSecret: String,
+    remoteClient: Lazy<RemoteClient> = lazy {
+        RemoteClient(clientId = githubClientId, clientSecret = githubClientSecret)
+    },
 ) : AuthProvider {
 
     companion object {
@@ -64,6 +67,66 @@ class GithubSsoAuth(
             }
     }
 
+    /** Remote client talking to the Github API */
+    interface RemoteClient {
+        companion object {
+            /** Creates a new instance of the remote client */
+            operator fun invoke(clientId: String, clientSecret: String): RemoteClient =
+                DefaultRemoteClient(clientId, clientSecret)
+        }
+
+        /** Gets the access token for the given [code] */
+        suspend fun getAccessToken(code: String): JsonObject?
+
+        /** Gets the user for the given [access] token */
+        suspend fun getUser(access: JsonObject): JsonObject?
+    }
+
+    /** Default implementation of the remote client */
+    private class DefaultRemoteClient(private val clientId: String, private val clientSecret: String) : RemoteClient {
+
+        /** @{inheritDoc} */
+        override suspend fun getAccessToken(code: String): JsonObject? {
+            // see https://medium.com/@r.sadatshokouhi/implementing-sso-in-react-with-github-oauth2-4d8dbf02e607
+
+            val url = "https://github.com/login/oauth/access_token"
+
+            val response = httpClient.post(url) {
+                contentType(ContentType.Application.Json)
+                accept(ContentType.Application.Json)
+                setBody(buildJsonObject {
+                    put("client_id", clientId)
+                    put("client_secret", clientSecret)
+                    put("code", code)
+                })
+            }
+
+            if (!response.status.isSuccess()) return null
+
+            return response.body<JsonObject?>()
+        }
+
+        /** @{inheritDoc} */
+        override suspend fun getUser(access: JsonObject): JsonObject? {
+
+            val tokenType = access["token_type"]?.jsonPrimitive?.content
+            val accessToken = access["access_token"]?.jsonPrimitive?.content
+
+            val response = httpClient.get("https://api.github.com/user") {
+                accept(ContentType.Application.Json)
+                header(HttpHeaders.Authorization, "$tokenType $accessToken")
+            }
+
+            if (!response.status.isSuccess()) return null
+
+            return response.body<JsonObject?>()
+        }
+
+    }
+
+    /** Remote client talking to the Github API */
+    private val remoteClient by lazy { remoteClient.value }
+
     /** Provider ID */
     override val id: String = ID
 
@@ -90,12 +153,10 @@ class GithubSsoAuth(
         val typed = (request as? AuthSignInRequest.OAuth)
             ?: throw AuthError.invalidCredentials()
 
-        // see https://medium.com/@r.sadatshokouhi/implementing-sso-in-react-with-github-oauth2-4d8dbf02e607
-
-        val ghAccessToken = getAccessToken(typed.token)
+        val ghAccessToken = remoteClient.getAccessToken(typed.token)
             ?: throw AuthError.invalidCredentials()
 
-        val ghUser = getUser(ghAccessToken)
+        val ghUser = remoteClient.getUser(ghAccessToken)
             ?: throw AuthError.invalidCredentials()
 
         val email = ghUser["email"]?.jsonPrimitive?.content
@@ -115,10 +176,10 @@ class GithubSsoAuth(
         val typed = (request as? AuthSignUpRequest.OAuth)
             ?: throw AuthError("Invalid sign-up request for GitHub")
 
-        val ghAccessToken = getAccessToken(typed.token)
+        val ghAccessToken = remoteClient.getAccessToken(typed.token)
             ?: throw AuthError.invalidCredentials()
 
-        val ghUser = getUser(ghAccessToken)
+        val ghUser = remoteClient.getUser(ghAccessToken)
             ?: throw AuthError.invalidCredentials()
 
         val email = ghUser["email"]?.jsonPrimitive?.content
@@ -138,36 +199,5 @@ class GithubSsoAuth(
             user = user,
             requiresActivation = false,
         )
-    }
-
-    private suspend fun getAccessToken(code: String): JsonObject? {
-        val response = httpClient.post("https://github.com/login/oauth/access_token") {
-            contentType(ContentType.Application.Json)
-            accept(ContentType.Application.Json)
-            setBody(buildJsonObject {
-                put("client_id", githubClientId)
-                put("client_secret", githubClientSecret)
-                put("code", code)
-            })
-        }
-
-        if (!response.status.isSuccess()) return null
-
-        return response.body<JsonObject?>()
-    }
-
-    private suspend fun getUser(access: JsonObject): JsonObject? {
-
-        val tokenType = access["token_type"]?.jsonPrimitive?.content
-        val accessToken = access["access_token"]?.jsonPrimitive?.content
-
-        val response = httpClient.get("https://api.github.com/user") {
-            accept(ContentType.Application.Json)
-            header(HttpHeaders.Authorization, "$tokenType $accessToken")
-        }
-
-        if (!response.status.isSuccess()) return null
-
-        return response.body<JsonObject?>()
     }
 }

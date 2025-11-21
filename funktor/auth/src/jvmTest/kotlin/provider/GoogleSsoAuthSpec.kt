@@ -1,9 +1,6 @@
 package de.peekandpoke.funktor.auth.provider
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
-import com.google.api.client.http.apache.v2.ApacheHttpTransport
-import com.google.api.client.json.gson.GsonFactory
 import com.google.api.client.json.webtoken.JsonWebSignature
 import de.peekandpoke.funktor.auth.AuthError
 import de.peekandpoke.funktor.auth.MinimalTestRealm
@@ -22,11 +19,6 @@ import java.security.GeneralSecurityException
 
 
 class GoogleSsoAuthSpec : FreeSpec() {
-
-    private fun dummyVerifierBuilder() = GoogleIdTokenVerifier.Builder(
-        ApacheHttpTransport(),
-        GsonFactory.getDefaultInstance()
-    )
 
     init {
         "Factory" - {
@@ -94,7 +86,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
                     googleClientId = "test-client-id",
-                    idTokenVerifier = lazy { error("Should not be used in this test") }
+                    remoteClient = lazy { error("Should not be used in this test") }
                 )
 
                 val result = subject.asApiModel()
@@ -112,7 +104,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
                     googleClientId = "irrelevant",
-                    idTokenVerifier = lazy { error("Should not be called") }
+                    remoteClient = lazy { error("Should not be called") }
                 )
 
                 // A request that is not OAuth
@@ -128,9 +120,9 @@ class GoogleSsoAuthSpec : FreeSpec() {
             }
 
             "should throw InvalidCredentials when token verification fails" {
-                // A verifier that always throws an exception
-                val verifier = object : GoogleIdTokenVerifier(dummyVerifierBuilder()) {
-                    override fun verify(idTokenString: String?): GoogleIdToken {
+                // Remote client mock
+                val remoteClient = object : GoogleSsoAuth.RemoteClient {
+                    override suspend fun verifyIdToken(token: String): GoogleIdToken {
                         throw GeneralSecurityException("Token is invalid!")
                     }
                 }
@@ -138,7 +130,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
                     googleClientId = "irrelevant",
-                    idTokenVerifier = lazy { verifier }
+                    remoteClient = lazy { remoteClient }
                 )
 
                 val request = AuthSignInRequest.OAuth(provider = subject.id, token = "some-token")
@@ -159,14 +151,17 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 val idToken = GoogleIdToken(JsonWebSignature.Header(), tokenPayload, byteArrayOf(), byteArrayOf())
 
                 // A verifier that returns a valid token
-                val verifier = object : GoogleIdTokenVerifier(dummyVerifierBuilder()) {
-                    override fun verify(idTokenString: String?): GoogleIdToken = idToken
+                // Remote client mock
+                val remoteClient = object : GoogleSsoAuth.RemoteClient {
+                    override suspend fun verifyIdToken(token: String): GoogleIdToken {
+                        return idToken
+                    }
                 }
 
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
                     googleClientId = "irrelevant",
-                    idTokenVerifier = lazy { verifier }
+                    remoteClient = lazy { remoteClient }
                 )
 
                 val request = AuthSignInRequest.OAuth(provider = subject.id, token = "some-token")
@@ -193,18 +188,20 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 }
                 val idToken = GoogleIdToken(JsonWebSignature.Header(), tokenPayload, byteArrayOf(), byteArrayOf())
 
-                // A verifier that returns a valid token
-                val verifier = object : GoogleIdTokenVerifier(dummyVerifierBuilder()) {
-                    override fun verify(idTokenString: String?): GoogleIdToken = idToken
+                // Remote client mock
+                val remoteClient = object : GoogleSsoAuth.RemoteClient {
+                    override suspend fun verifyIdToken(token: String): GoogleIdToken {
+                        return idToken
+                    }
                 }
 
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
                     googleClientId = "irrelevant",
-                    idTokenVerifier = lazy { verifier }
+                    remoteClient = lazy { remoteClient }
                 )
 
-                val storedUser = Stored(_id = "repo/user-id", _key = "user-id", value = Any())
+                val storedUser = Stored(_id = "repo/user-id", value = Any())
 
                 val request = AuthSignInRequest.OAuth(provider = subject.id, token = "some-token")
 
@@ -229,7 +226,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
                     googleClientId = "irrelevant",
-                    idTokenVerifier = lazy { error("Should not be called") }
+                    remoteClient = lazy { error("Should not be called") }
                 )
 
                 // A request that is not OAuth
@@ -244,9 +241,9 @@ class GoogleSsoAuthSpec : FreeSpec() {
             }
 
             "should throw InvalidCredentials when token verification fails" {
-                // A verifier that always throws an exception
-                val verifier = object : GoogleIdTokenVerifier(dummyVerifierBuilder()) {
-                    override fun verify(idTokenString: String?): GoogleIdToken {
+                // Remote client mock
+                val remoteClient = object : GoogleSsoAuth.RemoteClient {
+                    override suspend fun verifyIdToken(token: String): GoogleIdToken {
                         throw GeneralSecurityException("Token is invalid!")
                     }
                 }
@@ -254,7 +251,31 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
                     googleClientId = "irrelevant",
-                    idTokenVerifier = lazy { verifier }
+                    remoteClient = lazy { remoteClient }
+                )
+
+                val request = AuthSignUpRequest.OAuth(provider = subject.id, token = "some-token")
+
+                val realm = MinimalTestRealm()
+                val error = shouldThrow<AuthError> {
+                    subject.signUp(realm, request)
+                }
+
+                error.message shouldBe "Invalid credentials"
+            }
+
+            "Remote client can return null when token verification fails" {
+                // Remote client mock
+                val remoteClient = object : GoogleSsoAuth.RemoteClient {
+                    override suspend fun verifyIdToken(token: String): GoogleIdToken? {
+                        return null
+                    }
+                }
+
+                val subject = GoogleSsoAuth(
+                    capabilities = setOf(AuthProviderModel.Capability.SignUp),
+                    googleClientId = "irrelevant",
+                    remoteClient = lazy { remoteClient }
                 )
 
                 val request = AuthSignUpRequest.OAuth(provider = subject.id, token = "some-token")
@@ -274,15 +295,17 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 val idTokenWithoutEmail =
                     GoogleIdToken(JsonWebSignature.Header(), payloadWithoutEmail, byteArrayOf(), byteArrayOf())
 
-                // A verifier that returns a token without an email
-                val verifier = object : GoogleIdTokenVerifier(dummyVerifierBuilder()) {
-                    override fun verify(idTokenString: String?): GoogleIdToken = idTokenWithoutEmail
+                // Remote client mock
+                val remoteClient = object : GoogleSsoAuth.RemoteClient {
+                    override suspend fun verifyIdToken(token: String): GoogleIdToken {
+                        return idTokenWithoutEmail
+                    }
                 }
 
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
                     googleClientId = "irrelevant",
-                    idTokenVerifier = lazy { verifier }
+                    remoteClient = lazy { remoteClient }
                 )
 
                 val request = AuthSignUpRequest.OAuth(provider = subject.id, token = "some-token")
@@ -303,15 +326,17 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 }
                 val idToken = GoogleIdToken(JsonWebSignature.Header(), tokenPayload, byteArrayOf(), byteArrayOf())
 
-                // A verifier that returns a valid token
-                val verifier = object : GoogleIdTokenVerifier(dummyVerifierBuilder()) {
-                    override fun verify(idTokenString: String?): GoogleIdToken = idToken
+                // Remote client mock
+                val remoteClient = object : GoogleSsoAuth.RemoteClient {
+                    override suspend fun verifyIdToken(token: String): GoogleIdToken {
+                        return idToken
+                    }
                 }
 
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
                     googleClientId = "irrelevant",
-                    idTokenVerifier = lazy { verifier }
+                    remoteClient = lazy { remoteClient }
                 )
 
                 val newUser = Stored(_id = "new-user-id", value = Any())
@@ -345,15 +370,17 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 }
                 val idToken = GoogleIdToken(JsonWebSignature.Header(), tokenPayload, byteArrayOf(), byteArrayOf())
 
-                // A verifier that returns a valid token
-                val verifier = object : GoogleIdTokenVerifier(dummyVerifierBuilder()) {
-                    override fun verify(idTokenString: String?): GoogleIdToken = idToken
+                // Remote client mock
+                val remoteClient = object : GoogleSsoAuth.RemoteClient {
+                    override suspend fun verifyIdToken(token: String): GoogleIdToken {
+                        return idToken
+                    }
                 }
 
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
                     googleClientId = "irrelevant",
-                    idTokenVerifier = lazy { verifier }
+                    remoteClient = lazy { remoteClient }
                 )
 
                 val existingUser = Stored(_id = "existing-user-id", value = Any())
@@ -365,7 +392,6 @@ class GoogleSsoAuthSpec : FreeSpec() {
                         existingUser // User exists
                     },
                     onCreateUserForSignup = { _ ->
-
                         error("Should not be called")
                     }
                 )

@@ -13,25 +13,19 @@ import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import java.io.IOException
 import java.security.GeneralSecurityException
 
 class GoogleSsoAuth(
     override val capabilities: Set<AuthProviderModel.Capability>,
     val googleClientId: String,
-    idTokenVerifier: Lazy<GoogleIdTokenVerifier>,
+    remoteClient: Lazy<RemoteClient>,
 ) : AuthProvider {
 
     companion object {
         const val ID = "google-sso"
         const val GOOGLE_SSO_CLIENT_ID = "GOOGLE_SSO_CLIENT_ID"
         const val GOOGLE_SSO_CLIENT_SECRET = "GOOGLE_SSO_CLIENT_SECRET"
-
-        fun createLazyDefaultIdTokenVerifier(clientId: String): Lazy<GoogleIdTokenVerifier> = lazy {
-            GoogleIdTokenVerifier
-                .Builder(ApacheHttpTransport(), GsonFactory.getDefaultInstance())
-                .setAudience(listOf(clientId))
-                .build()
-        }
     }
 
     class Factory(
@@ -40,11 +34,11 @@ class GoogleSsoAuth(
         operator fun invoke(
             capabilities: Set<AuthProviderModel.Capability>,
             googleClientId: String,
-            idTokenVerifier: Lazy<GoogleIdTokenVerifier> = createLazyDefaultIdTokenVerifier(googleClientId),
+            remoteClient: Lazy<RemoteClient> = lazy { RemoteClient(googleClientId) },
         ) = GoogleSsoAuth(
             googleClientId = googleClientId,
             capabilities = capabilities,
-            idTokenVerifier = idTokenVerifier,
+            remoteClient = remoteClient,
         )
 
         fun fromAppConfig(vararg capabilities: AuthProviderModel.Capability): GoogleSsoAuth? =
@@ -59,8 +53,41 @@ class GoogleSsoAuth(
             }
     }
 
-    /** The verifier used to verify the ID token */
-    private val idTokenVerifier: GoogleIdTokenVerifier by idTokenVerifier
+    /**
+     * The remote client talking to the Google API
+     */
+    interface RemoteClient {
+        companion object {
+            operator fun invoke(clientId: String): RemoteClient = DefaultRemoteClient(clientId)
+        }
+
+        /**
+         * Verifies the given id token.
+         */
+        @Throws(GeneralSecurityException::class, IOException::class)
+        suspend fun verifyIdToken(token: String): GoogleIdToken?
+    }
+
+    /**
+     * Default implementation of the remote client
+     */
+    private class DefaultRemoteClient(private val clientId: String) : RemoteClient {
+
+        private val tokenVerifier by lazy {
+            GoogleIdTokenVerifier
+                .Builder(ApacheHttpTransport(), GsonFactory.getDefaultInstance())
+                .setAudience(listOf(clientId))
+                .build()
+        }
+
+        @Throws(GeneralSecurityException::class, IOException::class)
+        override suspend fun verifyIdToken(token: String): GoogleIdToken? {
+            return tokenVerifier.verify(token)
+        }
+    }
+
+    /** The remote client talking to the Google API */
+    private val remoteClient: RemoteClient by remoteClient
 
     /** Provider ID */
     override val id: String = ID
@@ -90,7 +117,7 @@ class GoogleSsoAuth(
             ?: throw AuthError.invalidRequest()
 
         val idToken: GoogleIdToken = try {
-            this@GoogleSsoAuth.idTokenVerifier.verify(typed.token)
+            remoteClient.verifyIdToken(typed.token) ?: throw AuthError.invalidCredentials()
         } catch (e: GeneralSecurityException) {
             throw AuthError.invalidCredentials(e)
         }
@@ -112,7 +139,7 @@ class GoogleSsoAuth(
             ?: throw AuthError("Invalid sign-up request for Google")
 
         val idToken: GoogleIdToken = try {
-            this@GoogleSsoAuth.idTokenVerifier.verify(typed.token)
+            remoteClient.verifyIdToken(typed.token) ?: throw AuthError.invalidCredentials()
         } catch (e: GeneralSecurityException) {
             throw AuthError.invalidCredentials(e)
         }
