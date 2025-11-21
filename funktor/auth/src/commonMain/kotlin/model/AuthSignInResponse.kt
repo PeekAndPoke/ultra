@@ -1,6 +1,7 @@
 package de.peekandpoke.funktor.auth.model
 
 import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -12,6 +13,7 @@ data class AuthSignInResponse(
     val user: JsonObject,
 ) {
     @Serializable
+    @SerialName("token")
     data class Token(
         val token: String,
         val permissionsNs: String,

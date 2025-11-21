@@ -40,6 +40,8 @@ class AdminUsersRepo(
         }
     }
 
+    interface OnAfterSave : Repository.Hooks.OnAfterSave<AdminUser>
+
     @Suppress("unused")
     class Fixtures(
         repo: AdminUsersRepo,
@@ -69,8 +71,6 @@ class AdminUsersRepo(
             ).also { user -> user.createPassword() }
         }
     }
-
-    interface OnAfterSave : Repository.Hooks.OnAfterSave<AdminUser>
 
     override fun IndexBuilder<AdminUser>.buildIndexes() {
         persistentIndex {

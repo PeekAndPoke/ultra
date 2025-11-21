@@ -16,6 +16,7 @@ import de.peekandpoke.ultra.common.remote.buildUri
 import de.peekandpoke.ultra.common.toBase64
 import de.peekandpoke.ultra.log.Log
 import de.peekandpoke.ultra.vault.Stored
+import kotlinx.serialization.json.buildJsonObject
 import kotlin.time.Duration.Companion.hours
 
 /**
@@ -87,8 +88,9 @@ class EmailAndPasswordAuth(
     override fun asApiModel(): AuthProviderModel {
         return AuthProviderModel(
             id = id,
-            capabilities = capabilities,
             type = AuthProviderModel.TYPE_EMAIL_PASSWORD,
+            capabilities = capabilities,
+            config = buildJsonObject { },
         )
     }
 
@@ -137,8 +139,10 @@ class EmailAndPasswordAuth(
 
         // Create user via realm hook
         val user = realm.createUserForSignup(
-            email = email,
-            displayName = typed.displayName?.trim(),
+            AuthRealm.CreateUserForSignupParams.of(
+                email = email,
+                displayName = typed.displayName,
+            )
         )
 
         // Store password record

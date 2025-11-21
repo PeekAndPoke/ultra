@@ -8,7 +8,7 @@ data class AuthProviderModel(
     val id: String,
     val type: String,
     val capabilities: Set<Capability>,
-    val config: JsonObject? = null,
+    val config: JsonObject,
 ) {
     @Serializable
     enum class Capability {

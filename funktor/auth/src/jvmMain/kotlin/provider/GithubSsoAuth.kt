@@ -5,6 +5,7 @@ import de.peekandpoke.funktor.auth.AuthRealm
 import de.peekandpoke.funktor.auth.model.AuthProviderModel
 import de.peekandpoke.funktor.auth.model.AuthSignInRequest
 import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
+import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.ultra.vault.Stored
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -35,16 +36,32 @@ class GithubSsoAuth(
         }
     }
 
-    class Factory {
+    class Factory(
+        private val config: AppConfig,
+    ) {
         operator fun invoke(
             githubClientId: String,
             githubClientSecret: String,
-            capabilities: Set<AuthProviderModel.Capability> = setOf(AuthProviderModel.Capability.SignIn),
+            capabilities: Set<AuthProviderModel.Capability>,
         ) = GithubSsoAuth(
             githubClientId = githubClientId,
             githubClientSecret = githubClientSecret,
             capabilities = capabilities,
         )
+
+        fun fromAppConfig(vararg capabilities: AuthProviderModel.Capability): GithubSsoAuth? =
+            fromAppConfig(capabilities = capabilities.toSet())
+
+        fun fromAppConfig(capabilities: Set<AuthProviderModel.Capability>): GithubSsoAuth? =
+            config.getKeyOrNull(GITHUB_SSO_CLIENT_ID)?.let { clientId ->
+                config.getKeyOrNull(GITHUB_SSO_CLIENT_SECRET)?.let { secret ->
+                    invoke(
+                        githubClientId = clientId,
+                        githubClientSecret = secret,
+                        capabilities = capabilities,
+                    )
+                }
+            }
     }
 
     /** Provider ID */
@@ -110,7 +127,12 @@ class GithubSsoAuth(
         val name = ghUser["name"]?.jsonPrimitive?.content
 
         val existing = realm.loadUserByEmail(email)
-        val user = existing ?: realm.createUserForSignup(email = email, displayName = name)
+        val user = existing ?: realm.createUserForSignup(
+            AuthRealm.CreateUserForSignupParams.of(
+                email = email,
+                displayName = name,
+            )
+        )
 
         return AuthProvider.SignUpResult(
             user = user,

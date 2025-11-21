@@ -23,7 +23,7 @@ import de.peekandpoke.ultra.security.password.PasswordHasher
  *                  Realms must have unique identifiers to avoid duplication.
  */
 class AuthSystem(
-    private val realms: List<AuthRealm<Any>>,
+    realms: Lazy<List<AuthRealm<Any>>>,
     deps: Lazy<Deps>,
 ) {
     class Deps(
@@ -49,15 +49,21 @@ class AuthSystem(
         val authRecords by authRecords
     }
 
+    val realms by realms
     val deps by deps
 
-    init {
+    /** Validate that all realms
+     *
+     * Check that all realms are configured properly.
+     * And that there are no duplicated realms by their id.
+     */
+    fun validateRealms() {
         val duplicatedRealms = realms.groupBy { it.id }
-            .filter { (id, realms) -> realms.size > 1 }
-            .map { (id, realms) -> id }
+            .filter { (_, realms) -> realms.size > 1 }
+            .map { (id, _) -> id }
 
         if (duplicatedRealms.isNotEmpty()) {
-            throw error("Found duplicated authentication realms: $duplicatedRealms")
+            throw AuthError("Found duplicated authentication realms: $duplicatedRealms")
         }
     }
 

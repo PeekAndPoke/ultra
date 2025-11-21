@@ -29,10 +29,11 @@ inline val RoutingContext.funktorAuth: AuthSystem get() = call.funktorAuth
 val FunktorAuth = module { builder: FunktorAuthBuilder.() -> Unit ->
     // Facade
     dynamic(AuthSystem::class)
+    dynamic(AuthSystemAppHooks::class)
     dynamic(AuthSystem.Deps::class)
     dynamic(AuthSystem.Storage::class)
     // Services
-    instance(AuthRandom())
+    instance(AuthRandom.default)
     // Provider Factories
     dynamic(EmailAndPasswordAuth.Factory::class)
     dynamic(GoogleSsoAuth.Factory::class)

@@ -69,16 +69,16 @@ sealed class Storable<out T> {
     infix fun hasIdIn(others: List<Storable<@UnsafeVariance T>>) = _id in others.map { it._id }
 }
 
-@SerialName(Stored.serialName)
+@SerialName(Stored.SERIAL_NAME)
 data class Stored<out T>(
     override val value: T,
     override val _id: String,
-    override val _key: String,
-    override val _rev: String,
+    override val _key: String = _id.ensureKey,
+    override val _rev: String = "",
 ) : Storable<T>() {
 
     companion object {
-        const val serialName = "stored"
+        const val SERIAL_NAME = "stored"
     }
 
     override fun <X : @UnsafeVariance T> modify(fn: (oldValue: T) -> X): Stored<X> {
@@ -124,14 +124,14 @@ data class Stored<out T>(
     }
 }
 
-@SerialName(LazyRef.serialName)
+@SerialName(LazyRef.SERIAL_NAME)
 data class LazyRef<out T>(
     override val _id: String,
     internal val provider: (id: String) -> Storable<T>,
 ) : Storable<T>() {
 
     companion object {
-        const val serialName = "lazy-ref"
+        const val SERIAL_NAME = "lazy-ref"
     }
 
     private val provided by lazy { provider(_id) }
@@ -177,7 +177,7 @@ data class LazyRef<out T>(
     }
 }
 
-@SerialName(Ref.serialName)
+@SerialName(Ref.SERIAL_NAME)
 data class Ref<out T>(
     override val value: T,
     override val _id: String,
@@ -186,7 +186,7 @@ data class Ref<out T>(
 ) : Storable<T>() {
 
     companion object {
-        const val serialName = "ref"
+        const val SERIAL_NAME = "ref"
     }
 
     override fun <X : @UnsafeVariance T> modify(fn: (oldValue: T) -> X): Ref<X> {
@@ -228,7 +228,7 @@ data class Ref<out T>(
     }
 }
 
-@SerialName(New.serialName)
+@SerialName(New.SERIAL_NAME)
 data class New<out T>(
     override val value: T,
     override val _id: String = "",
@@ -237,7 +237,7 @@ data class New<out T>(
 ) : Storable<T>() {
 
     companion object {
-        const val serialName = "new"
+        const val SERIAL_NAME = "new"
     }
 
     override fun <X : @UnsafeVariance T> modify(fn: (oldValue: T) -> X): New<X> {

@@ -114,6 +114,22 @@ interface AuthRealm<USER> {
         }
     }
 
+    /**
+     * Parameters for creating a new user during sign-up, see [createUserForSignup]
+     */
+    @ConsistentCopyVisibility
+    data class CreateUserForSignupParams private constructor(
+        val email: String,
+        val displayName: String,
+    ) {
+        companion object {
+            fun of(email: String, displayName: String? = null) = CreateUserForSignupParams(
+                email = email.trim().lowercase(),
+                displayName = displayName?.trim() ?: email.substringBefore("@").trim(),
+            )
+        }
+    }
+
     /** Unique id of the realm */
     val id: String
 
@@ -145,7 +161,7 @@ interface AuthRealm<USER> {
     suspend fun serializeUser(user: Stored<USER>): JsonObject
 
     /** Creates a new user during sign-up. Providers call this to create a user for the given email/displayName. */
-    suspend fun createUserForSignup(email: String, displayName: String?): Stored<USER>
+    suspend fun createUserForSignup(params: CreateUserForSignupParams): Stored<USER>
 
     /**
      * Signs in a user. Providers should check their SignIn capability internally.

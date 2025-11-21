@@ -328,7 +328,7 @@ class LoginController<USER>(
         }
 
         fun FlowContent.renderGoogleSignInButton(provider: AuthProviderModel) {
-            val clientId = provider.config?.get("client-id")?.jsonPrimitive?.content ?: ""
+            val clientId = provider.config["client-id"]?.jsonPrimitive?.content ?: ""
 
             GoogleSignInButton(clientId = clientId) { token ->
                 login(
@@ -338,7 +338,7 @@ class LoginController<USER>(
         }
 
         fun FlowContent.renderGoogleSignUpButton(provider: AuthProviderModel) {
-            val clientId = provider.config?.get("client-id")?.jsonPrimitive?.content ?: ""
+            val clientId = provider.config["client-id"]?.jsonPrimitive?.content ?: ""
 
             GoogleSignInButton(
                 clientId = clientId,
@@ -356,7 +356,7 @@ class LoginController<USER>(
         }
 
         fun FlowContent.renderGithubSignInButton(provider: AuthProviderModel) {
-            val clientId = provider.config?.get("client-id")?.jsonPrimitive?.content ?: ""
+            val clientId = provider.config["client-id"]?.jsonPrimitive?.content ?: ""
 
             val parts = listOf(
                 window.location.origin,
@@ -379,7 +379,7 @@ class LoginController<USER>(
         }
 
         fun FlowContent.renderGithubSignUpButton(provider: AuthProviderModel) {
-            val clientId = provider.config?.get("client-id")?.jsonPrimitive?.content ?: ""
+            val clientId = provider.config["client-id"]?.jsonPrimitive?.content ?: ""
 
             val parts = listOf(
                 window.location.origin,

@@ -9,39 +9,58 @@ import de.peekandpoke.funktor.auth.AuthRealm
 import de.peekandpoke.funktor.auth.model.AuthProviderModel
 import de.peekandpoke.funktor.auth.model.AuthSignInRequest
 import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
+import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.security.GeneralSecurityException
-import java.util.*
 
 class GoogleSsoAuth(
     override val capabilities: Set<AuthProviderModel.Capability>,
     val googleClientId: String,
+    idTokenVerifier: Lazy<GoogleIdTokenVerifier>,
 ) : AuthProvider {
 
     companion object {
         const val ID = "google-sso"
         const val GOOGLE_SSO_CLIENT_ID = "GOOGLE_SSO_CLIENT_ID"
         const val GOOGLE_SSO_CLIENT_SECRET = "GOOGLE_SSO_CLIENT_SECRET"
+
+        fun createLazyDefaultIdTokenVerifier(clientId: String): Lazy<GoogleIdTokenVerifier> = lazy {
+            GoogleIdTokenVerifier
+                .Builder(ApacheHttpTransport(), GsonFactory.getDefaultInstance())
+                .setAudience(listOf(clientId))
+                .build()
+        }
     }
 
-    class Factory {
+    class Factory(
+        private val config: AppConfig,
+    ) {
         operator fun invoke(
+            capabilities: Set<AuthProviderModel.Capability>,
             googleClientId: String,
-            capabilities: Set<AuthProviderModel.Capability> = setOf(AuthProviderModel.Capability.SignIn),
+            idTokenVerifier: Lazy<GoogleIdTokenVerifier> = createLazyDefaultIdTokenVerifier(googleClientId),
         ) = GoogleSsoAuth(
             googleClientId = googleClientId,
             capabilities = capabilities,
+            idTokenVerifier = idTokenVerifier,
         )
+
+        fun fromAppConfig(vararg capabilities: AuthProviderModel.Capability): GoogleSsoAuth? =
+            fromAppConfig(capabilities = capabilities.toSet())
+
+        fun fromAppConfig(capabilities: Set<AuthProviderModel.Capability>): GoogleSsoAuth? =
+            config.getKeyOrNull(GOOGLE_SSO_CLIENT_ID)?.let { clientId ->
+                invoke(
+                    googleClientId = clientId,
+                    capabilities = capabilities,
+                )
+            }
     }
 
-    private val verifier by lazy {
-        GoogleIdTokenVerifier
-            .Builder(ApacheHttpTransport(), GsonFactory.getDefaultInstance())
-            .setAudience(Collections.singletonList(googleClientId))
-            .build()
-    }
+    /** The verifier used to verify the ID token */
+    private val idTokenVerifier: GoogleIdTokenVerifier by idTokenVerifier
 
     /** Provider ID */
     override val id: String = ID
@@ -68,10 +87,10 @@ class GoogleSsoAuth(
     ): Stored<USER> {
 
         val typed = (request as? AuthSignInRequest.OAuth)
-            ?: throw AuthError.invalidCredentials()
+            ?: throw AuthError.invalidRequest()
 
         val idToken: GoogleIdToken = try {
-            verifier.verify(typed.token)
+            this@GoogleSsoAuth.idTokenVerifier.verify(typed.token)
         } catch (e: GeneralSecurityException) {
             throw AuthError.invalidCredentials(e)
         }
@@ -93,7 +112,7 @@ class GoogleSsoAuth(
             ?: throw AuthError("Invalid sign-up request for Google")
 
         val idToken: GoogleIdToken = try {
-            verifier.verify(typed.token)
+            this@GoogleSsoAuth.idTokenVerifier.verify(typed.token)
         } catch (e: GeneralSecurityException) {
             throw AuthError.invalidCredentials(e)
         }
@@ -103,7 +122,12 @@ class GoogleSsoAuth(
         val displayName = (payload["name"] as? String)
 
         val existing = realm.loadUserByEmail(email)
-        val user = existing ?: realm.createUserForSignup(email = email, displayName = displayName)
+        val user = existing ?: realm.createUserForSignup(
+            AuthRealm.CreateUserForSignupParams.of(
+                email = email,
+                displayName = displayName,
+            )
+        )
 
         return AuthProvider.SignUpResult(
             user = user,

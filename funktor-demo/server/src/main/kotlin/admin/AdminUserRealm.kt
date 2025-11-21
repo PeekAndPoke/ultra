@@ -2,7 +2,7 @@ package io.peekandpoke.funktor.demo.server.admin
 
 import de.peekandpoke.funktor.auth.AuthRealm
 import de.peekandpoke.funktor.auth.AuthSystem
-import de.peekandpoke.funktor.auth.model.AuthProviderModel
+import de.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import de.peekandpoke.funktor.auth.model.AuthSignInResponse
 import de.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import de.peekandpoke.funktor.auth.provider.GithubSsoAuth
@@ -35,7 +35,6 @@ class AdminUserRealm(
     private val emailAndPassword: EmailAndPasswordAuth.Factory by emailAndPassword
     private val googleSso: GoogleSsoAuth.Factory by googleSso
     private val githubSso: GithubSsoAuth.Factory by githubSso
-
     private val authConfig = this.deps.config.funktor.auth
 
     override val id: String = REALM
@@ -47,41 +46,21 @@ class AdminUserRealm(
         realm = this,
     )
 
-    override val providers = listOfNotNull(
-        // Email / Password
-        this.emailAndPassword(
-            frontendUrls = EmailAndPasswordAuth.FrontendUrls(
-                baseUrl = authConfig.baseUrls["admin"]!!.trimEnd('/') + "/auth",
+    override val providers by lazy {
+        listOfNotNull(
+            // Email / Password
+            this.emailAndPassword(
+                frontendUrls = EmailAndPasswordAuth.FrontendUrls(
+                    baseUrl = authConfig.baseUrls["admin"]!!.trimEnd('/') + "/auth",
+                ),
+                capabilities = setOf(Capability.SignIn, Capability.SignUp)
             ),
-            capabilities = setOf(
-                AuthProviderModel.Capability.SignIn,
-                AuthProviderModel.Capability.SignUp,
-            )
-        ),
-        // Google SSO
-        this.deps.config.getKeyOrNull(GoogleSsoAuth.GOOGLE_SSO_CLIENT_ID)?.let { clientId ->
-            googleSso(
-                googleClientId = clientId,
-                capabilities = setOf(
-                    AuthProviderModel.Capability.SignIn,
-                    AuthProviderModel.Capability.SignUp,
-                )
-            )
-        },
-        // Github SSO
-        this.deps.config.getKeyOrNull(GithubSsoAuth.GITHUB_SSO_CLIENT_ID)?.let { clientId ->
-            this.deps.config.getKeyOrNull(GithubSsoAuth.GITHUB_SSO_CLIENT_SECRET)?.let { secret ->
-                githubSso(
-                    githubClientId = clientId,
-                    githubClientSecret = secret,
-                    capabilities = setOf(
-                        AuthProviderModel.Capability.SignIn,
-                        AuthProviderModel.Capability.SignUp,
-                    )
-                )
-            }
-        },
-    )
+            // Google SSO
+            this.googleSso.fromAppConfig(Capability.SignIn, Capability.SignUp),
+            // Github SSO
+            this.githubSso.fromAppConfig(Capability.SignIn, Capability.SignUp),
+        )
+    }
 
     override suspend fun loadUserById(id: String) = appUserRepo.findById(id)
 

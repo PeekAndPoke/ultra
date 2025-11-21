@@ -18,6 +18,9 @@ open class AuthError(message: String, cause: Throwable? = null) : Throwable(mess
         fun invalidCredentials(cause: Throwable? = null) =
             AuthError("Invalid credentials", cause)
 
+        fun invalidRequest(cause: Throwable? = null) =
+            AuthError("Invalid request", cause)
+
         fun weakPassword(cause: Throwable? = null) =
             AuthError("Weak password", cause)
     }
