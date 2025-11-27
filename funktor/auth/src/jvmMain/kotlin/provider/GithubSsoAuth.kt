@@ -6,6 +6,7 @@ import de.peekandpoke.funktor.auth.model.AuthProviderModel
 import de.peekandpoke.funktor.auth.model.AuthSignInRequest
 import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import de.peekandpoke.funktor.core.config.AppConfig
+import de.peekandpoke.ultra.log.Log
 import de.peekandpoke.ultra.vault.Stored
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -20,10 +21,10 @@ import kotlinx.serialization.json.put
 
 class GithubSsoAuth(
     override val capabilities: Set<AuthProviderModel.Capability>,
-    val githubClientId: String,
-    val githubClientSecret: String,
+    val clientId: String,
+    val clientSecret: String,
     remoteClient: Lazy<RemoteClient> = lazy {
-        RemoteClient(clientId = githubClientId, clientSecret = githubClientSecret)
+        RemoteClient(clientId = clientId, clientSecret = clientSecret)
     },
 ) : AuthProvider {
 
@@ -39,32 +40,44 @@ class GithubSsoAuth(
         }
     }
 
+    /**
+     * Factory for creating a new instance of the GithubSsoAuth provider.
+     */
     class Factory(
         private val config: AppConfig,
+        private val log: Log,
     ) {
         operator fun invoke(
-            githubClientId: String,
-            githubClientSecret: String,
+            clientId: String,
+            clientSecret: String,
             capabilities: Set<AuthProviderModel.Capability>,
         ) = GithubSsoAuth(
-            githubClientId = githubClientId,
-            githubClientSecret = githubClientSecret,
+            clientId = clientId,
+            clientSecret = clientSecret,
             capabilities = capabilities,
         )
 
         fun fromAppConfig(vararg capabilities: AuthProviderModel.Capability): GithubSsoAuth? =
             fromAppConfig(capabilities = capabilities.toSet())
 
-        fun fromAppConfig(capabilities: Set<AuthProviderModel.Capability>): GithubSsoAuth? =
-            config.getKeyOrNull(GITHUB_SSO_CLIENT_ID)?.let { clientId ->
-                config.getKeyOrNull(GITHUB_SSO_CLIENT_SECRET)?.let { secret ->
-                    invoke(
-                        githubClientId = clientId,
-                        githubClientSecret = secret,
-                        capabilities = capabilities,
-                    )
-                }
+        fun fromAppConfig(capabilities: Set<AuthProviderModel.Capability>): GithubSsoAuth? {
+            val clientId = config.getKeyOrNull(GITHUB_SSO_CLIENT_ID)
+            val clientSecret = config.getKeyOrNull(GITHUB_SSO_CLIENT_SECRET)
+
+            if (clientId == null || clientSecret == null) {
+                log.warning(
+                    "Could not find '$GITHUB_SSO_CLIENT_ID' or '$GITHUB_SSO_CLIENT_SECRET' in the keys config. " +
+                            "Skipping Github SSO provider."
+                )
+                return null
             }
+
+            return invoke(
+                clientId = clientId,
+                clientSecret = clientSecret,
+                capabilities = capabilities,
+            )
+        }
     }
 
     /** Remote client talking to the Github API */
@@ -139,7 +152,7 @@ class GithubSsoAuth(
             type = AuthProviderModel.TYPE_GITHUB,
             capabilities = capabilities,
             config = buildJsonObject {
-                put("client-id", githubClientId)
+                put("client-id", clientId)
             },
         )
     }

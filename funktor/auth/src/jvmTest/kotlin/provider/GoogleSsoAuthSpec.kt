@@ -8,6 +8,7 @@ import de.peekandpoke.funktor.auth.model.AuthProviderModel
 import de.peekandpoke.funktor.auth.model.AuthSignInRequest
 import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import de.peekandpoke.funktor.core.config.AppConfig
+import de.peekandpoke.ultra.log.NullLog
 import de.peekandpoke.ultra.vault.Stored
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
@@ -26,17 +27,17 @@ class GoogleSsoAuthSpec : FreeSpec() {
             "invoke" - {
                 "should create a new instance with the given parameters" {
                     val config = AppConfig.of()
-                    val subject = GoogleSsoAuth.Factory(config)
+                    val subject = GoogleSsoAuth.Factory(config, NullLog)
 
                     val result = subject(
-                        googleClientId = "my-client-id",
+                        clientId = "my-client-id",
                         capabilities = setOf(
                             AuthProviderModel.Capability.SignIn,
                             AuthProviderModel.Capability.SignUp,
                         )
                     )
 
-                    result.googleClientId shouldBe "my-client-id"
+                    result.clientId shouldBe "my-client-id"
                     result.capabilities shouldBe setOf(
                         AuthProviderModel.Capability.SignIn,
                         AuthProviderModel.Capability.SignUp,
@@ -47,7 +48,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
             "fromAppConfig" - {
                 "should return null when GOOGLE_SSO_CLIENT_ID is not configured" {
                     val config = AppConfig.of()
-                    val subject = GoogleSsoAuth.Factory(config)
+                    val subject = GoogleSsoAuth.Factory(config, NullLog)
 
                     val result = subject.fromAppConfig(
                         AuthProviderModel.Capability.SignIn,
@@ -64,7 +65,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
                         )
                     )
 
-                    val subject = GoogleSsoAuth.Factory(config)
+                    val subject = GoogleSsoAuth.Factory(config, NullLog)
 
                     val result = subject.fromAppConfig(
                         AuthProviderModel.Capability.SignIn,
@@ -72,7 +73,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
                     )
 
                     result.shouldNotBeNull()
-                    result.googleClientId shouldBe "my-client-id"
+                    result.clientId shouldBe "my-client-id"
                     result.capabilities shouldBe setOf(
                         AuthProviderModel.Capability.SignIn,
                         AuthProviderModel.Capability.SignUp,
@@ -85,7 +86,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
             "should return a correct API model" {
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
-                    googleClientId = "test-client-id",
+                    clientId = "test-client-id",
                     remoteClient = lazy { error("Should not be used in this test") }
                 )
 
@@ -103,7 +104,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
             "should throw InvalidCredentials when request is not OAuth" {
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
-                    googleClientId = "irrelevant",
+                    clientId = "irrelevant",
                     remoteClient = lazy { error("Should not be called") }
                 )
 
@@ -129,7 +130,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
 
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
-                    googleClientId = "irrelevant",
+                    clientId = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 
@@ -160,7 +161,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
 
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
-                    googleClientId = "irrelevant",
+                    clientId = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 
@@ -197,7 +198,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
 
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
-                    googleClientId = "irrelevant",
+                    clientId = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 
@@ -225,7 +226,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
             "should throw an error when request is not OAuth" {
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
-                    googleClientId = "irrelevant",
+                    clientId = "irrelevant",
                     remoteClient = lazy { error("Should not be called") }
                 )
 
@@ -250,7 +251,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
 
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
-                    googleClientId = "irrelevant",
+                    clientId = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 
@@ -274,7 +275,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
 
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
-                    googleClientId = "irrelevant",
+                    clientId = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 
@@ -304,7 +305,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
 
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
-                    googleClientId = "irrelevant",
+                    clientId = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 
@@ -335,7 +336,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
 
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
-                    googleClientId = "irrelevant",
+                    clientId = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 
@@ -379,7 +380,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
 
                 val subject = GoogleSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
-                    googleClientId = "irrelevant",
+                    clientId = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 

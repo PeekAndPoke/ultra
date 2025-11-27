@@ -6,6 +6,7 @@ import de.peekandpoke.funktor.auth.model.AuthProviderModel
 import de.peekandpoke.funktor.auth.model.AuthSignInRequest
 import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import de.peekandpoke.funktor.core.config.AppConfig
+import de.peekandpoke.ultra.log.NullLog
 import de.peekandpoke.ultra.vault.Stored
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
@@ -25,19 +26,19 @@ class GithubSsoAuthSpec : FreeSpec() {
             "invoke" - {
                 "should create a new instance with the given parameters" {
                     val config = AppConfig.of()
-                    val subject = GithubSsoAuth.Factory(config)
+                    val subject = GithubSsoAuth.Factory(config, NullLog)
 
                     val result = subject(
-                        githubClientId = "my-client-id",
-                        githubClientSecret = "my-client-secret",
+                        clientId = "my-client-id",
+                        clientSecret = "my-client-secret",
                         capabilities = setOf(
                             AuthProviderModel.Capability.SignIn,
                             AuthProviderModel.Capability.SignUp,
                         )
                     )
 
-                    result.githubClientId shouldBe "my-client-id"
-                    result.githubClientSecret shouldBe "my-client-secret"
+                    result.clientId shouldBe "my-client-id"
+                    result.clientSecret shouldBe "my-client-secret"
                     result.capabilities shouldBe setOf(
                         AuthProviderModel.Capability.SignIn,
                         AuthProviderModel.Capability.SignUp,
@@ -52,7 +53,7 @@ class GithubSsoAuthSpec : FreeSpec() {
                             GithubSsoAuth.GITHUB_SSO_CLIENT_SECRET to "my-client-secret"
                         )
                     )
-                    val subject = GithubSsoAuth.Factory(config)
+                    val subject = GithubSsoAuth.Factory(config, NullLog)
 
                     val result = subject.fromAppConfig(
                         AuthProviderModel.Capability.SignIn,
@@ -68,7 +69,7 @@ class GithubSsoAuthSpec : FreeSpec() {
                             GithubSsoAuth.GITHUB_SSO_CLIENT_ID to "my-client-id"
                         )
                     )
-                    val subject = GithubSsoAuth.Factory(config)
+                    val subject = GithubSsoAuth.Factory(config, NullLog)
 
                     val result = subject.fromAppConfig(
                         AuthProviderModel.Capability.SignIn,
@@ -86,7 +87,7 @@ class GithubSsoAuthSpec : FreeSpec() {
                         )
                     )
 
-                    val subject = GithubSsoAuth.Factory(config)
+                    val subject = GithubSsoAuth.Factory(config, NullLog)
 
                     val result = subject.fromAppConfig(
                         AuthProviderModel.Capability.SignIn,
@@ -94,8 +95,8 @@ class GithubSsoAuthSpec : FreeSpec() {
                     )
 
                     result.shouldNotBeNull()
-                    result.githubClientId shouldBe "my-client-id"
-                    result.githubClientSecret shouldBe "my-client-secret"
+                    result.clientId shouldBe "my-client-id"
+                    result.clientSecret shouldBe "my-client-secret"
                     result.capabilities shouldBe setOf(
                         AuthProviderModel.Capability.SignIn,
                         AuthProviderModel.Capability.SignUp,
@@ -108,8 +109,8 @@ class GithubSsoAuthSpec : FreeSpec() {
             "should return a correct API model" {
                 val subject = GithubSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
-                    githubClientId = "test-client-id",
-                    githubClientSecret = "test-client-secret",
+                    clientId = "test-client-id",
+                    clientSecret = "test-client-secret",
                     remoteClient = lazy { error("Should not be used in this test") }
                 )
 
@@ -127,8 +128,8 @@ class GithubSsoAuthSpec : FreeSpec() {
             "should throw InvalidCredentials when request is not OAuth" {
                 val subject = GithubSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
-                    githubClientId = "irrelevant",
-                    githubClientSecret = "irrelevant",
+                    clientId = "irrelevant",
+                    clientSecret = "irrelevant",
                     remoteClient = lazy { error("Should not be called") }
                 )
 
@@ -159,8 +160,8 @@ class GithubSsoAuthSpec : FreeSpec() {
 
                 val subject = GithubSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
-                    githubClientId = "irrelevant",
-                    githubClientSecret = "irrelevant",
+                    clientId = "irrelevant",
+                    clientSecret = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 
@@ -192,8 +193,8 @@ class GithubSsoAuthSpec : FreeSpec() {
 
                 val subject = GithubSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
-                    githubClientId = "irrelevant",
-                    githubClientSecret = "irrelevant",
+                    clientId = "irrelevant",
+                    clientSecret = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 
@@ -224,8 +225,8 @@ class GithubSsoAuthSpec : FreeSpec() {
 
                 val subject = GithubSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
-                    githubClientId = "irrelevant",
-                    githubClientSecret = "irrelevant",
+                    clientId = "irrelevant",
+                    clientSecret = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 
@@ -256,8 +257,8 @@ class GithubSsoAuthSpec : FreeSpec() {
 
                 val subject = GithubSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
-                    githubClientId = "irrelevant",
-                    githubClientSecret = "irrelevant",
+                    clientId = "irrelevant",
+                    clientSecret = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 
@@ -296,8 +297,8 @@ class GithubSsoAuthSpec : FreeSpec() {
 
                 val subject = GithubSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
-                    githubClientId = "irrelevant",
-                    githubClientSecret = "irrelevant",
+                    clientId = "irrelevant",
+                    clientSecret = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 
@@ -324,8 +325,8 @@ class GithubSsoAuthSpec : FreeSpec() {
             "should throw an error when request is not OAuth" {
                 val subject = GithubSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
-                    githubClientId = "irrelevant",
-                    githubClientSecret = "irrelevant",
+                    clientId = "irrelevant",
+                    clientSecret = "irrelevant",
                     remoteClient = lazy { error("Should not be called") }
                 )
 
@@ -355,8 +356,8 @@ class GithubSsoAuthSpec : FreeSpec() {
 
                 val subject = GithubSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
-                    githubClientId = "irrelevant",
-                    githubClientSecret = "irrelevant",
+                    clientId = "irrelevant",
+                    clientSecret = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 
@@ -387,8 +388,8 @@ class GithubSsoAuthSpec : FreeSpec() {
 
                 val subject = GithubSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
-                    githubClientId = "irrelevant",
-                    githubClientSecret = "irrelevant",
+                    clientId = "irrelevant",
+                    clientSecret = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 
@@ -419,8 +420,8 @@ class GithubSsoAuthSpec : FreeSpec() {
 
                 val subject = GithubSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
-                    githubClientId = "irrelevant",
-                    githubClientSecret = "irrelevant",
+                    clientId = "irrelevant",
+                    clientSecret = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 
@@ -454,8 +455,8 @@ class GithubSsoAuthSpec : FreeSpec() {
 
                 val subject = GithubSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
-                    githubClientId = "irrelevant",
-                    githubClientSecret = "irrelevant",
+                    clientId = "irrelevant",
+                    clientSecret = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 
@@ -502,8 +503,8 @@ class GithubSsoAuthSpec : FreeSpec() {
 
                 val subject = GithubSsoAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
-                    githubClientId = "irrelevant",
-                    githubClientSecret = "irrelevant",
+                    clientId = "irrelevant",
+                    clientSecret = "irrelevant",
                     remoteClient = lazy { remoteClient }
                 )
 

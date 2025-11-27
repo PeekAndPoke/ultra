@@ -68,6 +68,9 @@ class EmailAndPasswordAuth(
             capabilities = capabilities,
             frontendUrls = frontendUrls,
         )
+
+        // TODO: from app config ... auto-build frontend urls from app config
+//        fun fromAppConfig()
     }
 
     /** Interface for providing dependencies to the [EmailAndPasswordAuth] provider. */

@@ -10,6 +10,7 @@ import de.peekandpoke.funktor.auth.model.AuthProviderModel
 import de.peekandpoke.funktor.auth.model.AuthSignInRequest
 import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import de.peekandpoke.funktor.core.config.AppConfig
+import de.peekandpoke.ultra.log.Log
 import de.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -18,7 +19,7 @@ import java.security.GeneralSecurityException
 
 class GoogleSsoAuth(
     override val capabilities: Set<AuthProviderModel.Capability>,
-    val googleClientId: String,
+    val clientId: String,
     remoteClient: Lazy<RemoteClient>,
 ) : AuthProvider {
 
@@ -28,29 +29,62 @@ class GoogleSsoAuth(
         const val GOOGLE_SSO_CLIENT_SECRET = "GOOGLE_SSO_CLIENT_SECRET"
     }
 
+    /**
+     * Factory for creating instances of the GoogleSsoAuth provider.
+     */
     class Factory(
         private val config: AppConfig,
+        private val log: Log,
     ) {
+        /**
+         * Creates a new instance of the GoogleSsoAuth provider.
+         */
         operator fun invoke(
             capabilities: Set<AuthProviderModel.Capability>,
-            googleClientId: String,
-            remoteClient: Lazy<RemoteClient> = lazy { RemoteClient(googleClientId) },
+            clientId: String,
+            remoteClient: Lazy<RemoteClient> = lazy { RemoteClient(clientId) },
         ) = GoogleSsoAuth(
-            googleClientId = googleClientId,
+            clientId = clientId,
             capabilities = capabilities,
             remoteClient = remoteClient,
         )
 
+        /**
+         * Creates a new instance of the GoogleSsoAuth provider.
+         *
+         * Looks for the following keys in the config:
+         * - GOOGLE_SSO_CLIENT_ID
+         * - GOOGLE_SSO_CLIENT_SECRET
+         *
+         * When the keys are found, a new instance of the GoogleSsoAuth provider is created.
+         * Otherwise, null is returned.
+         */
         fun fromAppConfig(vararg capabilities: AuthProviderModel.Capability): GoogleSsoAuth? =
             fromAppConfig(capabilities = capabilities.toSet())
 
-        fun fromAppConfig(capabilities: Set<AuthProviderModel.Capability>): GoogleSsoAuth? =
-            config.getKeyOrNull(GOOGLE_SSO_CLIENT_ID)?.let { clientId ->
-                invoke(
-                    googleClientId = clientId,
-                    capabilities = capabilities,
+        /**
+         * Creates a new instance of the GoogleSsoAuth provider.
+         *
+         * Looks for the following keys in the config:
+         * - GOOGLE_SSO_CLIENT_ID
+         * - GOOGLE_SSO_CLIENT_SECRET
+         *
+         * When the keys are found, a new instance of the GoogleSsoAuth provider is created.
+         * Otherwise, null is returned.
+         */
+        fun fromAppConfig(capabilities: Set<AuthProviderModel.Capability>): GoogleSsoAuth? {
+            val clientId = config.getKeyOrNull(GOOGLE_SSO_CLIENT_ID)
+
+            if (clientId == null) {
+                log.warning(
+                    "Could not find '$GOOGLE_SSO_CLIENT_ID' in the keys config. " +
+                            "Skipping Google SSO provider."
                 )
+                return null
             }
+
+            return invoke(clientId = clientId, capabilities = capabilities)
+        }
     }
 
     /**
@@ -101,7 +135,7 @@ class GoogleSsoAuth(
             type = AuthProviderModel.TYPE_GOOGLE,
             capabilities = capabilities,
             config = buildJsonObject {
-                put("client-id", googleClientId)
+                put("client-id", clientId)
             },
         )
     }
