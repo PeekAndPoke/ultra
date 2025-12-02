@@ -212,7 +212,7 @@ class FastCacheMaxMemoryUsageSpec : StringSpec() {
                 }
 
                 // Wait for the cache to settle down / inner loop to catch up
-                delay(100.milliseconds)
+                delay(500.milliseconds)
 
                 val expectedTotalMemoryUsage = (cache.keys.sum() + cache.values.sum()).toLong()
 

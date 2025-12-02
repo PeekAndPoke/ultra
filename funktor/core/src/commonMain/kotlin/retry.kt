@@ -2,7 +2,6 @@ package de.peekandpoke.funktor.core
 
 import de.peekandpoke.ultra.common.maths.Ease
 import de.peekandpoke.ultra.common.maths.Ease.bindFromTo
-import de.peekandpoke.ultra.common.maths.EaseFn
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
@@ -17,7 +16,7 @@ object Retry {
     suspend fun <T> retry(
         attempts: Int = 10,
         delays: ClosedRange<Duration> = 100.milliseconds..1000.milliseconds,
-        easeFn: EaseFn = Ease.In.quad,
+        easeFn: Ease.Fn = Ease.In.quad,
         block: suspend () -> T,
     ): T? = retry(
         attempts = attempts,
@@ -31,7 +30,7 @@ object Retry {
         attempts: Int = 10,
         firstDelay: Duration = 100.milliseconds,
         lastDelay: Duration = 1000.milliseconds,
-        easeFn: EaseFn = Ease.In.quad,
+        easeFn: Ease.Fn = Ease.In.quad,
         block: suspend () -> T,
     ): T? {
         val result = flow {
@@ -51,14 +50,14 @@ object Retry {
         attempts: Int = 10,
         firstDelay: Duration = 100.milliseconds,
         lastDelay: Duration = firstDelay * 10,
-        easeFn: EaseFn = Ease.In.quad,
+        easeFn: Ease.Fn = Ease.In.quad,
     ): Flow<T> {
         val ease = easeFn.bindFromTo(
             from = firstDelay.inWholeMilliseconds.toDouble(),
             to = lastDelay.inWholeMilliseconds.toDouble(),
         )
 
-        return retryWhen { cause, attempt ->
+        return retryWhen { _, attempt ->
             if (attempt >= attempts) {
                 false
             } else {

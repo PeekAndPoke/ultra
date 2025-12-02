@@ -1,12 +1,14 @@
 package de.peekandpoke.ultra.common.maths
 
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.common.maths.Ease.bindFromTo
+import de.peekandpoke.ultra.common.maths.Ease.timed
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
+import korlibs.time.hours
 import korlibs.time.milliseconds
 
 class EasingSpec : StringSpec() {
@@ -49,85 +51,101 @@ class EasingSpec : StringSpec() {
         }
 
         "Ease.Timed should correctly interpolate over time" {
-            // Import MpInstant if needed
-            val startTime = MpInstant.fromEpochMillis(1000)
             val duration = 1000.milliseconds
+            val kronos = Kronos.fixedNow().mutable()
 
             // Create a timed easing from 10.0 to 20.0 using linear easing
-            val timed = Ease.Timed(
+            val timed = Ease.linear.timed(
                 from = 10.0,
                 to = 20.0,
-                start = startTime,
                 duration = duration,
-                fn = Ease.linear
+                kronos = kronos,
             )
 
             // Test at different times
-            timed.calc(startTime) shouldBe 10.0 // At start time, should be at 'from' value
-            timed.calc(startTime + 250.milliseconds) shouldBe 12.5 // 25% through
-            timed.calc(startTime + 500.milliseconds) shouldBe 15.0 // 50% through
-            timed.calc(startTime + 750.milliseconds) shouldBe 17.5 // 75% through
-            timed.calc(startTime + 1000.milliseconds) shouldBe 20.0 // At end time, should be at 'to' value
+            timed() shouldBe 10.0 // At start time, should be at 'from' value
+            timed.isDone shouldBe false
 
-            // Test before and after the duration
-            timed.calc(startTime - 100.milliseconds) shouldBe 10.0 // Before start time, should be at 'from' value
-            timed.calc(startTime + 1500.milliseconds) shouldBe 20.0 // After end time, should be at 'to' value
+            kronos.mutate { advanceBy(250.milliseconds) }
+            timed() shouldBe 12.5 // 25% through
+            timed.isDone shouldBe false
+
+            kronos.mutate { advanceBy(250.milliseconds) }
+            timed() shouldBe 15.0 // 50% through
+            timed.isDone shouldBe false
+
+            kronos.mutate { advanceBy(250.milliseconds) }
+            timed() shouldBe 17.5 // 75% through
+            timed.isDone shouldBe false
+
+            kronos.mutate { advanceBy(250.milliseconds) }
+            timed { progress, done ->
+                progress shouldBe 1.0
+                done shouldBe true
+            } shouldBe 20.0 // At end time, should be at 'to' value
+
+            timed.isDone shouldBe true
+
+            // Test after the duration
+            kronos.mutate { advanceBy(1500.milliseconds) }
+            timed.calc { progress, isDone ->
+                progress shouldBe 1.0
+                isDone shouldBe true
+            } shouldBe 20.0 // After end time, should be at 'to' value
+            timed.isDone shouldBe true
+
+            // Test before the duration
+            kronos.mutate { advanceBy((-1).hours) }
+            timed.calc { progress, isDone ->
+                progress shouldBe 0.0
+                isDone shouldBe false
+            } shouldBe 10.0
+            timed.isDone shouldBe false
+        }
+
+        "Ease.Timed should correctly interpolate over time -> ease in quad" {
+            val duration = 1000.milliseconds
+            val kronos = Kronos.fixedNow().mutable()
 
             // Test with a non-linear easing function
-            val timedQuad = Ease.Timed(
+            val timedQuad = Ease.In.quad.timed(
                 from = 10.0,
                 to = 30.0,
-                start = startTime,
                 duration = duration,
-                fn = Ease.In.quad
+                kronos = kronos,
             )
 
-            timedQuad.calc(startTime) shouldBe 10.0
-            timedQuad.calc(startTime + 500.milliseconds) shouldBe 15.0 // quad(0.5) = 0.25, so 10 + (30-10) * 0.25 = 15.0
-            timedQuad.calc(startTime + 1000.milliseconds) shouldBe 30.0
+            timedQuad.calc() shouldBe 10.0
 
-            // Test with callback
-            var lastProgress = 0.0
-            var lastDone = false
-            var callCount = 0
+            kronos.mutate { advanceBy(500.milliseconds) }
+            timedQuad.calc() shouldBe 15.0 // quad(0.5) = 0.25, so 10 + (30-10) * 0.25 = 15.0
 
-            timed.calc(startTime + 500.milliseconds) { progress, done ->
-                lastProgress = progress
-                lastDone = done
-                callCount++
-            }
+            kronos.mutate { advanceBy(500.milliseconds) }
+            timedQuad.calc() shouldBe 30.0
+        }
 
-            lastProgress shouldBe 0.5 // Progress should be 0.5 at the midpoint
-            lastDone shouldBe false // Not done yet
-            callCount shouldBe 1
+        "Stuck easing should always return 0.0" {
+            Ease.stuck(-0.1) shouldBe 0.0
+            Ease.stuck(0.0) shouldBe 0.0
+            Ease.stuck(0.5) shouldBe 0.0
+            Ease.stuck(1.0) shouldBe 0.0
+            Ease.stuck(1.1) shouldBe 0.0
+        }
 
-            timed.calc(startTime + 1000.milliseconds) { progress, done ->
-                lastProgress = progress
-                lastDone = done
-                callCount++
-            }
-
-            lastProgress shouldBe 1.0 // Progress should be 1.0 at the end
-            lastDone shouldBe true // Should be done
-            callCount shouldBe 2
-
-            // Test with zero or negative duration (should use minimum of 1ms)
-            val timedZeroDuration = Ease.Timed(
-                from = 10.0,
-                to = 30.0,
-                start = startTime,
-                duration = 0.milliseconds,
-                fn = Ease.linear
-            )
-
-            timedZeroDuration.calc(startTime) shouldBe 10.0
-            timedZeroDuration.calc(startTime + 1.milliseconds) shouldBe 30.0 // Should complete after 1ms
+        "Immediate easing should always return 1.0" {
+            Ease.immediate(-0.1) shouldBe 1.0
+            Ease.immediate(0.0) shouldBe 1.0
+            Ease.immediate(0.5) shouldBe 1.0
+            Ease.immediate(1.0) shouldBe 1.0
+            Ease.immediate(1.1) shouldBe 1.0
         }
 
         "linear easing should return correct value" {
+            Ease.linear(-0.1) shouldBe 0.0
             Ease.linear(0.0) shouldBe 0.0
             Ease.linear(0.5) shouldBe 0.5
             Ease.linear(1.0) shouldBe 1.0
+            Ease.linear(1.1) shouldBe 1.0
         }
 
         "ease-in sine should return correct value" {

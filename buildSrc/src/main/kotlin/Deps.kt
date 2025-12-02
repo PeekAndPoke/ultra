@@ -486,12 +486,12 @@ object Deps {
         const val logback_version = "1.5.19"
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
-        // https://plugins.gradle.org/plugin/io.kotest.multiplatform
-        const val kotest_plugin_version = "6.0.4"
+        // https://plugins.gradle.org/plugin/io.kotest
+        const val kotest_plugin_version = "6.0.7"
 //        const val kotest_plugin_version = "5.9.1"
 
         // https://mvnrepository.com/artifact/io.kotest/kotest-common
-        const val kotest_version = "6.0.4"
+        const val kotest_version = "6.0.7"
 //        const val kotest_version = "5.9.1"
 
         const val kotest_framework_engine = "io.kotest:kotest-framework-engine:$kotest_version"

@@ -13,8 +13,13 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 interface Kronos {
 
+    /** Mutable kronos */
     interface Mutable : Kronos {
+        /** Sets the inner kronos */
         fun set(inner: Kronos)
+
+        /** Mutates the inner kronos */
+        fun mutate(block: Kronos.() -> Kronos)
     }
 
     companion object {
@@ -36,6 +41,11 @@ interface Kronos {
         fun fixed(instant: MpInstant): Kronos {
             return fromClock(FixedClock(instant.value))
         }
+
+        /**
+         * Creates a [Kronos] that is stuck on 'now'.
+         */
+        fun fixedNow(): Kronos = fixed(MpInstant.now())
 
         /**
          * Creates a [Kronos] from the given [descriptor].
@@ -130,6 +140,10 @@ interface Kronos {
             }
 
             _inner = inner
+        }
+
+        override fun mutate(block: Kronos.() -> Kronos) {
+            _inner = block(_inner)
         }
 
         override fun describe(): KronosDescriptor = _inner.describe()
