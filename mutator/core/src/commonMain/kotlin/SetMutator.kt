@@ -4,6 +4,20 @@ fun <V> Set<V>.mutator(child: V.() -> Mutator<V>): SetMutator<V> = SetMutatorImp
 
 fun <V> SetMutator<V>.add(element: V) = this@add.add(getChildMutator(element))
 
+/**
+ * Returns a set containing only the mutators whose underlying value is an instance of specified type parameter [X].
+ */
+inline fun <reified X : V, V> SetMutator<V>.filterMutatorsOf(): Set<Mutator<X>> {
+    return mapNotNull { mutator ->
+        if (mutator.get() is X) {
+            @Suppress("UNCHECKED_CAST")
+            mutator as Mutator<X>
+        } else {
+            null
+        }
+    }.toSet()
+}
+
 interface SetMutator<V> : Mutator<MutableSet<V>>, MutableSet<Mutator<V>> {
     fun getChildMutator(child: V): Mutator<V>
 }
@@ -82,7 +96,10 @@ class SetMutatorImpl<V>(initial: Set<V>, private val childToMutator: V.() -> Mut
      * Clears the whole list
      */
     override fun clear() {
-        modifyValue { it.also { clear() } }.notifyObservers()
+        if (get().isNotEmpty()) {
+            get().clear()
+            notifyObservers()
+        }
     }
 
     /**
@@ -91,7 +108,7 @@ class SetMutatorImpl<V>(initial: Set<V>, private val childToMutator: V.() -> Mut
      * @return `true` if the element has been added, `false` if the element is already contained in the set.
      */
     override fun add(element: Mutator<V>): Boolean {
-        return get().add(element.get()).notifyObservers()
+        return get().add(element.get()).also { if (it) notifyObservers() }
     }
 
     /**
@@ -100,7 +117,7 @@ class SetMutatorImpl<V>(initial: Set<V>, private val childToMutator: V.() -> Mut
      * @return 'true if any of the elements has been added, 'false' if all elements are already contained in the set.
      */
     override fun addAll(elements: Collection<Mutator<V>>): Boolean {
-        return get().addAll(elements.extract()).notifyObservers()
+        return get().addAll(elements.extract()).also { if (it) notifyObservers() }
     }
 
     /**
@@ -109,7 +126,7 @@ class SetMutatorImpl<V>(initial: Set<V>, private val childToMutator: V.() -> Mut
      * @return 'true' of the element was removed from the set
      */
     override fun remove(element: Mutator<V>): Boolean {
-        return get().remove(element.get()).notifyObservers()
+        return get().remove(element.get()).also { if (it) notifyObservers() }
     }
 
     /**
@@ -118,7 +135,7 @@ class SetMutatorImpl<V>(initial: Set<V>, private val childToMutator: V.() -> Mut
      * @return 'true' when the list has been modified
      */
     override fun removeAll(elements: Collection<Mutator<V>>): Boolean {
-        return get().removeAll(elements.extract()).notifyObservers()
+        return get().removeAll(elements.extract()).also { if (it) notifyObservers() }
     }
 
     /**
@@ -127,7 +144,7 @@ class SetMutatorImpl<V>(initial: Set<V>, private val childToMutator: V.() -> Mut
      * @return 'true' when the list has been modified
      */
     override fun retainAll(elements: Collection<Mutator<V>>): Boolean {
-        return get().retainAll(elements.extract()).notifyObservers()
+        return get().retainAll(elements.extract()).also { if (it) notifyObservers() }
     }
 
     /**

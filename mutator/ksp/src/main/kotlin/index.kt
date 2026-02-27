@@ -76,3 +76,7 @@ fun KSDeclaration.declaresKotlinSet(): Boolean {
     return this is KSClassDeclaration &&
             this.qualifiedName?.asString() == Set::class.qualifiedName!!
 }
+
+fun KSDeclaration.declaresKotlinMap(): Boolean {
+    return qualifiedName?.asString() == Map::class.qualifiedName!!
+}

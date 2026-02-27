@@ -4,6 +4,7 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import de.peekandpoke.mutator.ListMutator
+import de.peekandpoke.mutator.MapMutator
 import de.peekandpoke.mutator.ObjectMutator
 import de.peekandpoke.mutator.SetMutator
 import de.peekandpoke.ultra.common.surround
@@ -14,6 +15,7 @@ class MutatorCodeBlocks {
         val ObjectMutatorName = ObjectMutator::class.simpleName
         val ListMutatorName = ListMutator::class.simpleName
         val SetMutatorName = SetMutator::class.simpleName
+        val MapMutatorName = MapMutator::class.simpleName
     }
 
     private val blocks = mutableListOf<String>()
@@ -35,6 +37,14 @@ class MutatorCodeBlocks {
 
         return cls.typeParameters
             .joinToString(", ") { it.name.asString() }
+            .surround("<", ">")
+    }
+
+    fun getTypeParamsStarProjection(cls: KSClassDeclaration): String? {
+        if (cls.typeParameters.isEmpty()) return null
+
+        return cls.typeParameters
+            .joinToString(", ") { "*" }
             .surround("<", ">")
     }
 
@@ -65,6 +75,10 @@ class MutatorCodeBlocks {
 
     fun getClassNameWithTypeParams(cls: KSClassDeclaration): String {
         return "${getClassName(cls)}${getTypeParams(cls) ?: ""}"
+    }
+
+    fun getClassNameStarProjection(cls: KSClassDeclaration): String {
+        return "${getClassName(cls)}${getTypeParamsStarProjection(cls) ?: ""}"
     }
 
     fun getPropertyName(prop: KSPropertyDeclaration): String {
