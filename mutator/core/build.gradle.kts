@@ -70,6 +70,7 @@ kotlin {
 
 dependencies {
     kspCommonMainMetadata(project(":mutator:ksp"))
+
     add("kspJvmTest", project(":mutator:ksp"))
     add("kspJsTest", project(":mutator:ksp"))
 
