@@ -1,6 +1,7 @@
 package de.peekandpoke.mutator
 
-fun <V> List<V>.mutator(child: V.() -> Mutator<V>): ListMutator<V> = ListMutatorImpl(this, child)
+fun <V> List<V>.mutator(child: V.() -> Mutator<V>): ListMutator<V> =
+    ListMutatorImpl(this, child)
 
 fun <V> ListMutator<V>.add(element: V): Boolean = add(getChildMutator(element))
 
@@ -29,11 +30,18 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
         override fun next(): Mutator<V> {
             val idx = pos++
 
-            return doGet()[idx].run {
+            // We remember the original object, just like in get(index)
+            val initial = doGet()[idx]
+
+            return initial.run {
                 // return the current element mapped to a mutator with onModify callback
                 childToMutator(this)
-                    .onChange {
-                        setAt(idx, it)
+                    .onChange { new ->
+                        // Dynamically find the element because the list might have changed
+                        val currentPos = doGet().indexOfFirst { it === initial }
+                        if (currentPos != -1) {
+                            setAt(currentPos, new)
+                        }
                     }
                     .also {
                         // remember the current element, so we can use it for remove()
@@ -47,7 +55,21 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
         override fun previousIndex(): Int = pos - 1
 
         override fun previous(): Mutator<V> {
-            return doGet()[--pos].childToMutator().also { current = it }
+            val idx = --pos
+            val initial = doGet()[idx]
+
+            return initial.run {
+                childToMutator(this)
+                    .onChange { new ->
+                        val currentPos = doGet().indexOfFirst { it === initial }
+                        if (currentPos != -1) {
+                            setAt(currentPos, new)
+                        }
+                    }
+                    .also {
+                        current = it
+                    }
+            }
         }
 
         override fun remove() {
@@ -107,7 +129,10 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      * Clears the whole list
      */
     override fun clear() {
-        modifyValue { it.also { clear() } }.notifyObservers()
+        if (get().isNotEmpty()) {
+            get().clear()
+            notifyObservers()
+        }
     }
 
     /**
@@ -116,28 +141,29 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      * @return `true` because the list is always modified as the result of this operation.
      */
     override fun add(element: Mutator<V>): Boolean {
-        return get().add(element.get()).notifyObservers()
+        return get().add(element.get()).also { if (it) notifyObservers() }
     }
 
     /**
      * Inserts an element into the list at the specified [index].
      */
     override fun add(index: Int, element: Mutator<V>) {
-        return get().add(index, element.get()).notifyObservers()
+        get().add(index, element.get())
+        notifyObservers()
     }
 
     /**
      * Adds all the elements of the specified collection to the end of this list.
      */
     override fun addAll(elements: Collection<Mutator<V>>): Boolean {
-        return get().addAll(elements.extract()).notifyObservers()
+        return get().addAll(elements.extract()).also { if (it) notifyObservers() }
     }
 
     /**
      * Inserts all the elements of the specified collection [elements] into this list at the specified [index].
      */
     override fun addAll(index: Int, elements: Collection<Mutator<V>>): Boolean {
-        return get().addAll(index, elements.extract()).notifyObservers()
+        return get().addAll(index, elements.extract()).also { if (it) notifyObservers() }
     }
 
     /**
@@ -146,7 +172,7 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      * @return true when the element has been removed from the list
      */
     override fun remove(element: Mutator<V>): Boolean {
-        return get().remove(element.get()).notifyObservers()
+        return get().remove(element.get()).also { if (it) notifyObservers() }
     }
 
     /**
@@ -157,21 +183,21 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      * @return the element that has been removed.
      */
     override fun removeAt(index: Int): Mutator<V> {
-        return get().removeAt(index).childToMutator().notifyObservers()
+        return get().removeAt(index).childToMutator().also { notifyObservers() }
     }
 
     /**
      * Removes all of the given [elements]
      */
     override fun removeAll(elements: Collection<Mutator<V>>): Boolean {
-        return get().removeAll(elements.extract()).notifyObservers()
+        return get().removeAll(elements.extract()).also { if (it) notifyObservers() }
     }
 
     /**
      * Retains all of the given [elements]
      */
     override fun retainAll(elements: Collection<Mutator<V>>): Boolean {
-        return get().retainAll(elements.extract()).notifyObservers()
+        return get().retainAll(elements.extract()).also { if (it) notifyObservers() }
     }
 
     /**
@@ -198,7 +224,15 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      * Returns: the element previously at the specified position.
      */
     override fun set(index: Int, element: Mutator<V>): Mutator<V> {
-        return get().set(index, element.get()).childToMutator().notifyObservers()
+        val old = get()[index]
+        val new = element.get()
+
+        if (old != new) {
+            get()[index] = new
+            notifyObservers()
+        }
+
+        return old.childToMutator()
     }
 
     /**

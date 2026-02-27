@@ -28,11 +28,16 @@ class SetMutatorImpl<V>(initial: Set<V>, private val childToMutator: V.() -> Mut
             return inner.next().run {
                 // remember the current element, so we can use it for remove()
                 current = this
-                // Keep track if the last state of our element, so we can remove and add correctly
-                val last = this
 
-                childToMutator(this).onChange {
-                    replace(last, it)
+                // Track the most recently replaced version of this element
+                var currentTrackedValue = this
+
+                childToMutator(this).onChange { newValue ->
+                    // Replace the currently known value with the new one
+                    replace(currentTrackedValue, newValue)
+                    // Update our tracker for the next modification
+                    currentTrackedValue = newValue
+                    current = newValue
                 }
             }
         }
@@ -40,6 +45,7 @@ class SetMutatorImpl<V>(initial: Set<V>, private val childToMutator: V.() -> Mut
         override fun remove() {
             current?.let {
                 doGet().remove(it)
+                notifyObservers() // Don't forget to notify!
             }
         }
 
@@ -134,9 +140,11 @@ class SetMutatorImpl<V>(initial: Set<V>, private val childToMutator: V.() -> Mut
     //  HELPERS  ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private fun replace(old: V, new: V) {
-        get().remove(old)
-        get().add(new)
-        notifyObservers()
+        val didRemove = get().remove(old)
+        if (didRemove) {
+            get().add(new)
+            notifyObservers()
+        }
     }
 
     /**
