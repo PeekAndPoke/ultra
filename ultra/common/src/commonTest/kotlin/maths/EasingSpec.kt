@@ -323,18 +323,22 @@ class EasingSpec : StringSpec() {
         }
 
         "calc function should interpolate correctly" {
-            Ease.calc(0.0, 100.0, 0.5, Ease.linear) shouldBe 50.0
-            Ease.calc(0.0, 100.0, 0.0, Ease.linear) shouldBe 0.0
-            Ease.calc(0.0, 100.0, 1.0, Ease.linear) shouldBe 100.0
+            assertSoftly {
+                Ease.calc(0.0, 100.0, 0.5, Ease.linear) shouldBe 50.0
+                Ease.calc(0.0, 100.0, 0.0, Ease.linear) shouldBe 0.0
+                Ease.calc(0.0, 100.0, 1.0, Ease.linear) shouldBe 100.0
 
-            Ease.calc(-50.0, 50.0, 0.5, Ease.linear) shouldBe 0.0
-            Ease.calc(50.0, -50.0, 0.5, Ease.linear) shouldBe 0.0
+                Ease.calc(-50.0, 50.0, 0.5, Ease.linear) shouldBe 0.0
+                Ease.calc(50.0, -50.0, 0.5, Ease.linear) shouldBe 0.0
 
-            Ease.calc(-50.0, 50.0, 0.5, Ease.Out.pow(2.0)) shouldBe 25.0
-            Ease.calc(50.0, -50.0, 0.5, Ease.Out.pow(2.0)) shouldBe -25.0
+                Ease.calc(-50.0, 50.0, 0.5, Ease.Out.pow(2.0)) shouldBe 25.0
+                Ease.calc(50.0, -50.0, 0.5, Ease.Out.pow(2.0)) shouldBe -25.0
 
-            Ease.calc(-50.0, 50.0, 0.5, Ease.Out.pow(2.2)) shouldBe 25.0
-            Ease.calc(50.0, -50.0, 0.5, Ease.Out.pow(2.2)) shouldBe -25.0
+                Ease.calc(-50.0, 50.0, 0.5, Ease.Out.pow(2.2)) shouldBe
+                        28.2362359175969.plusOrMinus(0.000001)
+                Ease.calc(50.0, -50.0, 0.5, Ease.Out.pow(2.2)) shouldBe
+                        (-28.2362359175969).plusOrMinus(0.000001)
+            }
         }
     }
 }

@@ -11,6 +11,7 @@ import kotlinx.css.Display
 import kotlinx.css.Position
 import kotlinx.css.display
 import kotlinx.css.position
+import kotlinx.css.zIndex
 import kotlinx.html.Tag
 import kotlinx.html.div
 import org.w3c.dom.events.Event
@@ -56,6 +57,7 @@ class PopupsStage(ctx: Ctx<Props>) : Component<PopupsStage.Props>(ctx) {
         div(classes = "popup-stage") {
             css {
                 position = Position.absolute
+                zIndex = 10000
             }
 
             current.forEach {
