@@ -75,7 +75,10 @@ class PopupsManager(
                 }
 
                 onMouseOver { event ->
-                    (event.target as? HTMLElement)?.let { target ->
+                    val element = event.currentTarget as? HTMLElement
+                        ?: event.target as? HTMLElement
+
+                    element?.let { target ->
                         if (handle != null) {
                             return@let
                         }
@@ -149,7 +152,8 @@ class PopupsManager(
         event.stopPropagation()
         closeAll()
 
-        val element = event.target as HTMLElement
+        val element = event.currentTarget as? HTMLElement
+            ?: event.target as HTMLElement
 
         return add(element, view) { target, contentSize ->
             val bodyWidth = document.body?.offsetWidth?.toDouble() ?: 1200.0
@@ -185,7 +189,9 @@ class PopupsManager(
         event.stopPropagation()
         closeAll()
 
-        val element = event.target as HTMLElement
+        val element = event.currentTarget as? HTMLElement
+            ?: event.target as HTMLElement
+
         val moveDown = Vector2D(0.0, 7.0)
 
         return add(element, view) { target, _ ->
