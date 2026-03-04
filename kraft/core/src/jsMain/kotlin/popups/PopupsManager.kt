@@ -156,12 +156,17 @@ class PopupsManager(
             val pageCoords = getPageCoords(target)
 
             val temp = when (positioning) {
-                Positioning.BottomLeft -> pageCoords.bottomLeft
+                Positioning.BottomLeft -> {
+                    pageCoords.bottomLeft
+                }
+
                 Positioning.BottomCenter -> {
                     ((pageCoords.bottomLeft + pageCoords.bottomRight) / 2.0) - Vector2D(contentSize.x / 2.0, 0.0)
                 }
 
-                Positioning.BottomRight -> pageCoords.bottomRight - Vector2D(contentSize.x, 0.0)
+                Positioning.BottomRight -> {
+                    pageCoords.bottomRight - Vector2D(contentSize.x, 0.0)
+                }
             }
 
 //            console.log(pageCoords.width, contentSize.x, pageCoords.width - contentSize.x)

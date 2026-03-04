@@ -90,8 +90,8 @@ class SemanticUiPopupComponent(ctx: Ctx<Props>) : Component<SemanticUiPopupCompo
                 position = Position.absolute
 
                 val pos = props.positioning(props.target, contentSize)
-                left = pos.x.px
-                top = pos.y.px
+                left = pos.x.toInt().px
+                top = pos.y.toInt().px
             }
 
             props.content(this, props.handle)

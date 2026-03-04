@@ -5,12 +5,14 @@ import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.html.css
+import de.peekandpoke.ultra.html.debugId
 import de.peekandpoke.ultra.html.key
 import kotlinx.browser.document
-import kotlinx.css.Display
 import kotlinx.css.Position
-import kotlinx.css.display
+import kotlinx.css.left
 import kotlinx.css.position
+import kotlinx.css.px
+import kotlinx.css.top
 import kotlinx.css.zIndex
 import kotlinx.html.Tag
 import kotlinx.html.div
@@ -56,16 +58,23 @@ class PopupsStage(ctx: Ctx<Props>) : Component<PopupsStage.Props>(ctx) {
     override fun VDom.render() {
         div(classes = "popup-stage") {
             css {
-                position = Position.absolute
+                position = Position.fixed
+                top = 0.px
+                left = 0.px
                 zIndex = 10000
             }
 
             current.forEach {
                 div {
                     key = "popup-${it.id}"
+                    debugId("popup-${it.id}")
+
                     css {
-                        display = Display.inlineBlock
+                        position = Position.absolute
+                        top = 0.px
+                        left = 0.px
                     }
+
                     it.view(this, it)
                 }
             }
