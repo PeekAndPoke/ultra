@@ -24,7 +24,7 @@ abstract class FadingModal<P : FadingModal.Props>(ctx: Ctx<P>) : Component<P>(ct
     companion object {
 
         object Style : StyleSheet() {
-            val noScroll = rule {
+            val noScroll by rule {
                 overflowX = Overflow.hidden
                 overflowY = Overflow.hidden
             }
@@ -63,7 +63,7 @@ abstract class FadingModal<P : FadingModal.Props>(ctx: Ctx<P>) : Component<P>(ct
     init {
         lifecycle {
             onMount {
-                window.document.body?.classList?.add(Style.noScroll)
+                window.document.body?.classList?.add(Style.noScroll())
 
                 launch {
                     delay(props.transition.fadeInTimeMs.toLong())
@@ -113,7 +113,7 @@ abstract class FadingModal<P : FadingModal.Props>(ctx: Ctx<P>) : Component<P>(ct
     private fun fadeOut() {
         if (!fadingOut) {
             // Make the body no longer scrollable as long as the popup is shown
-            window.document.body?.classList?.remove(Style.noScroll)
+            window.document.body?.classList?.remove(Style.noScroll())
 
             fadingOut = true
 
