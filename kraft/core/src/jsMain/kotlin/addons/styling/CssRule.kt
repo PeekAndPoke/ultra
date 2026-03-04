@@ -6,5 +6,5 @@ open class CssRule(val name: String) {
 
     override fun toString(): String = name
 
-    operator fun invoke(): String = selector
+    operator fun invoke(): String = name
 }
