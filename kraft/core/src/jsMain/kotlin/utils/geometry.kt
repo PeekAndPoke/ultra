@@ -19,4 +19,7 @@ data class Rectangle(val x1: Double, val y1: Double, val width: Double, val heig
     val bottomLeft by lazy { Vector2D(x1, y1 + height) }
     val topRight by lazy { Vector2D(x1 + width, y1) }
     val bottomRight by lazy { Vector2D(x1 + width, y1 + height) }
+
+    val center by lazy { topLeft.plus(Vector2D(width / 2, height / 2)) }
+    val dimension by lazy { Vector2D(width, height) }
 }

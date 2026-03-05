@@ -16,7 +16,6 @@ import kotlinx.browser.document
 import kotlinx.html.CommonAttributeGroupFacade
 import kotlinx.html.FlowContent
 import org.w3c.dom.HTMLElement
-import org.w3c.dom.events.MouseEvent
 import org.w3c.dom.events.UIEvent
 
 /**
@@ -207,29 +206,21 @@ class PopupsManager(
                 }
             }
 
-            calculatePopupPosition(anchor, positioning, contentSize)
+            calculatePopupPosition(
+                anchor = anchor,
+                positioning = positioning,
+                contentSize = contentSize,
+                elementSize = pageCoords.dimension,
+            )
         }
     }
 
     fun showContextMenu(event: UIEvent, view: PopupContentRenderer): Handle {
-        event.stopPropagation()
-        closeAll()
-
-        val element = event.currentTarget as? HTMLElement
-            ?: event.target as HTMLElement
-
-        val moveDown = Vector2D(0.0, 7.0)
-
-        return add(element, view) { target, _ ->
-
-            val mouseEvent: MouseEvent? = event as? MouseEvent
-
-            if (mouseEvent != null) {
-                Vector2D(x = mouseEvent.pageX, y = mouseEvent.pageY + 7)
-            } else {
-                target.getPageCoords().bottomLeft.plus(moveDown)
-            }
-        }
+        return showContextMenu(
+            event = event,
+            positioning = Positioning.BottomLeft,
+            view = view,
+        )
     }
 
     fun showContextMenu(
@@ -242,7 +233,11 @@ class PopupsManager(
         val element = document.body as HTMLElement
 
         return add(element, view) { _, contentSize ->
-            calculatePopupPosition(anchor, positioning, contentSize)
+            calculatePopupPosition(
+                anchor = anchor,
+                positioning = positioning,
+                contentSize = contentSize,
+            )
         }
     }
 
@@ -250,6 +245,7 @@ class PopupsManager(
         anchor: Vector2D,
         positioning: Positioning,
         contentSize: Vector2D,
+        elementSize: Vector2D = Vector2D.zero,
     ): Vector2D {
         val bodyWidth = document.body?.offsetWidth?.toDouble() ?: 1200.0
         val bodyHeight = kotlinx.browser.window.innerHeight.toDouble()
@@ -265,12 +261,12 @@ class PopupsManager(
         }
 
         // Fallback for Top -> Bottom if not enough space on top
-        if (temp.y < 0 && anchor.y + contentSize.y <= bodyHeight) {
-            temp = Vector2D(temp.x, anchor.y)
+        if (temp.y < 0 && anchor.y + elementSize.y + contentSize.y <= bodyHeight) {
+            temp = Vector2D(temp.x, anchor.y + elementSize.y)
         }
         // Fallback for Bottom -> Top if not enough space on bottom
-        else if (temp.y + contentSize.y > bodyHeight && anchor.y - contentSize.y >= 0) {
-            temp = Vector2D(temp.x, anchor.y - contentSize.y)
+        else if (temp.y + contentSize.y > bodyHeight && anchor.y - elementSize.y - contentSize.y >= 0) {
+            temp = Vector2D(temp.x, anchor.y - elementSize.y - contentSize.y)
         }
 
         // Fallback for Left/Right boundary collisions
