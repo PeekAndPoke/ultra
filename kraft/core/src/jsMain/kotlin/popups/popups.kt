@@ -2,10 +2,27 @@ package de.peekandpoke.kraft.popups
 
 import de.peekandpoke.kraft.KraftApp
 import de.peekandpoke.kraft.KraftDsl
+import de.peekandpoke.kraft.utils.Vector2D
 import kotlinx.html.FlowContent
+import org.w3c.dom.HTMLElement
 
-typealias PopupContentRenderer = FlowContent.(PopupsManager.Handle) -> Unit
+/** A function which renders the content of a popup */
+typealias PopupContentRenderer = FlowContent.(handle: PopupsManager.Handle) -> Unit
 
+/** A function which positions a popup */
+typealias PopupPositionFn = (target: HTMLElement, contentSize: Vector2D) -> Vector2D
+
+/** A function which renders a popup */
+typealias PopupComponentFactory = FlowContent.(
+    target: HTMLElement,
+    positioning: PopupPositionFn,
+    handle: PopupsManager.Handle,
+    content: PopupContentRenderer,
+) -> Unit
+
+/**
+ * Register a [PopupsManager] in the [KraftApp]
+ */
 @KraftDsl
 fun KraftApp.Builder.popups(settings: PopupsManager.Builder.() -> Unit = {}) = apply {
     setAttribute(

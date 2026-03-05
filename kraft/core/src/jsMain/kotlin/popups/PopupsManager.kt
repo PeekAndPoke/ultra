@@ -19,20 +19,6 @@ import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.MouseEvent
 import org.w3c.dom.events.UIEvent
 
-/** A function which renders the content of a popup */
-typealias PopupContentRenderer = FlowContent.(handle: PopupsManager.Handle) -> Unit
-
-/** A function which positions a popup */
-typealias PopupPositionFn = (target: HTMLElement, contentSize: Vector2D) -> Vector2D
-
-/** A function which renders a popup */
-typealias PopupComponentFactory = FlowContent.(
-    target: HTMLElement,
-    positioning: PopupPositionFn,
-    handle: PopupsManager.Handle,
-    content: PopupContentRenderer,
-) -> Unit
-
 /**
  * A manager for popups.
  */
