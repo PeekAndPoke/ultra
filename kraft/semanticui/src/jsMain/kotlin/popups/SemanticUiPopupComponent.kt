@@ -75,8 +75,8 @@ class SemanticUiPopupComponent(ctx: Ctx<Props>) : Component<SemanticUiPopupCompo
                 val rect = it.getBoundingClientRect()
                 contentSize = Vector2D(rect.width, rect.height)
 
-                console.log("dom", it.outerHTML)
-                console.log("contentSize", contentSize)
+//                console.log("dom", it.outerHTML)
+//                console.log("contentSize", contentSize)
             }
         }
     }

@@ -3,8 +3,8 @@ package de.peekandpoke.kraft.popups
 import de.peekandpoke.kraft.components.AutoMountedUi
 import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.getAttributeRecursive
-import de.peekandpoke.kraft.utils.Rectangle
 import de.peekandpoke.kraft.utils.Vector2D
+import de.peekandpoke.kraft.utils.getPageCoords
 import de.peekandpoke.ultra.common.TypedKey
 import de.peekandpoke.ultra.html.onMouseOut
 import de.peekandpoke.ultra.html.onMouseOver
@@ -15,7 +15,6 @@ import de.peekandpoke.ultra.streams.Unsubscribe
 import kotlinx.browser.document
 import kotlinx.html.CommonAttributeGroupFacade
 import kotlinx.html.FlowContent
-import org.w3c.dom.DOMRect
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.MouseEvent
 import org.w3c.dom.events.UIEvent
@@ -157,7 +156,7 @@ class PopupsManager(
 
         return add(element, view) { target, contentSize ->
             val bodyWidth = document.body?.offsetWidth?.toDouble() ?: 1200.0
-            val pageCoords = getPageCoords(target)
+            val pageCoords = target.getPageCoords()
 
             val temp = when (positioning) {
                 Positioning.BottomLeft -> {
@@ -201,8 +200,44 @@ class PopupsManager(
             if (mouseEvent != null) {
                 Vector2D(x = mouseEvent.pageX, y = mouseEvent.pageY + 7)
             } else {
-                getPageCoords(target).bottomLeft.plus(moveDown)
+                target.getPageCoords().bottomLeft.plus(moveDown)
             }
+        }
+    }
+
+    fun showContextMenu(
+        anchor: Vector2D,
+        positioning: Positioning,
+        view: PopupContentRenderer,
+    ): Handle {
+        closeAll()
+
+        val element = document.body as HTMLElement
+
+        return add(element, view) { _, contentSize ->
+            val bodyWidth = document.body?.offsetWidth?.toDouble() ?: 1920.0
+
+            val temp = when (positioning) {
+                Positioning.BottomLeft -> {
+                    anchor
+                }
+
+                Positioning.BottomCenter -> {
+                    anchor - Vector2D(contentSize.x / 2.0, 0.0)
+                }
+
+                Positioning.BottomRight -> {
+                    anchor - Vector2D(contentSize.x, 0.0)
+                }
+            }
+
+            Vector2D(
+                x = maxOf(
+                    0.0,
+                    minOf(bodyWidth - contentSize.x, temp.x),
+                ),
+                y = temp.y,
+            )
         }
     }
 
@@ -210,19 +245,19 @@ class PopupsManager(
         streamSource.modify { emptyList() }
     }
 
-    internal fun add(element: HTMLElement, content: PopupContentRenderer, positioning: PopupPositionFn): Handle {
+    fun add(element: HTMLElement, content: PopupContentRenderer, positioning: PopupPositionFn): Handle {
         return add { handle ->
             settings.popupRenderer(this, element, positioning, handle, content)
         }
     }
 
-    internal fun add(view: PopupContentRenderer): Handle {
+    fun add(view: PopupContentRenderer): Handle {
         return Handle(id = ++handleCounter, view = view, manager = this).also {
             streamSource.modify { plus(it) }
         }
     }
 
-    internal fun close(handle: Handle) {
+    fun close(handle: Handle) {
         // call onClose handlers
         streamSource()
             .filter { it.id == handle.id }
@@ -232,17 +267,5 @@ class PopupsManager(
         streamSource.modify {
             filterNot { it.id == handle.id }
         }
-    }
-
-    private fun getPageCoords(element: HTMLElement): Rectangle {
-        val body = document.body?.getBoundingClientRect() ?: DOMRect()
-        val rect = element.getBoundingClientRect()
-
-        return Rectangle(
-            x1 = (rect.left - body.left),
-            y1 = (rect.top - body.top),
-            width = rect.width,
-            height = rect.height,
-        )
     }
 }
