@@ -117,6 +117,9 @@ class PopupsManager(
     }
 
     enum class Positioning {
+        TopLeft,
+        TopCenter,
+        TopRight,
         BottomLeft,
         BottomCenter,
         BottomRight,
@@ -143,6 +146,9 @@ class PopupsManager(
     /**
      * Shows a popup relative to the target of the [event] by using the [positioning]
      */
+    /**
+     * Shows a popup relative to the target of the [event] by using the [positioning]
+     */
     fun showContextMenu(
         event: UIEvent,
         positioning: Positioning = Positioning.BottomLeft,
@@ -155,32 +161,32 @@ class PopupsManager(
             ?: event.target as HTMLElement
 
         return add(element, view) { target, contentSize ->
-            val bodyWidth = document.body?.offsetWidth?.toDouble() ?: 1200.0
             val pageCoords = target.getPageCoords()
 
-            val temp = when (positioning) {
+            val anchor = when (positioning) {
+                Positioning.TopLeft -> {
+                    pageCoords.topLeft
+                }
+
+                Positioning.TopCenter -> {
+                    (pageCoords.topLeft + pageCoords.topRight) / 2.0
+                }
+
+                Positioning.TopRight -> {
+                    pageCoords.topRight
+                }
                 Positioning.BottomLeft -> {
                     pageCoords.bottomLeft
                 }
-
                 Positioning.BottomCenter -> {
-                    ((pageCoords.bottomLeft + pageCoords.bottomRight) / 2.0) - Vector2D(contentSize.x / 2.0, 0.0)
+                    (pageCoords.bottomLeft + pageCoords.bottomRight) / 2.0
                 }
-
                 Positioning.BottomRight -> {
-                    pageCoords.bottomRight - Vector2D(contentSize.x, 0.0)
+                    pageCoords.bottomRight
                 }
             }
 
-//            console.log(pageCoords.width, contentSize.x, pageCoords.width - contentSize.x)
-
-            Vector2D(
-                x = maxOf(
-                    0.0,
-                    minOf(bodyWidth - contentSize.x, temp.x),
-                ),
-                y = temp.y,
-            )
+            calculatePopupPosition(anchor, positioning, contentSize)
         }
     }
 
@@ -215,30 +221,48 @@ class PopupsManager(
         val element = document.body as HTMLElement
 
         return add(element, view) { _, contentSize ->
-            val bodyWidth = document.body?.offsetWidth?.toDouble() ?: 1920.0
-
-            val temp = when (positioning) {
-                Positioning.BottomLeft -> {
-                    anchor
-                }
-
-                Positioning.BottomCenter -> {
-                    anchor - Vector2D(contentSize.x / 2.0, 0.0)
-                }
-
-                Positioning.BottomRight -> {
-                    anchor - Vector2D(contentSize.x, 0.0)
-                }
-            }
-
-            Vector2D(
-                x = maxOf(
-                    0.0,
-                    minOf(bodyWidth - contentSize.x, temp.x),
-                ),
-                y = temp.y,
-            )
+            calculatePopupPosition(anchor, positioning, contentSize)
         }
+    }
+
+    private fun calculatePopupPosition(
+        anchor: Vector2D,
+        positioning: Positioning,
+        contentSize: Vector2D,
+    ): Vector2D {
+        val bodyWidth = document.body?.offsetWidth?.toDouble() ?: 1200.0
+        val bodyHeight = kotlinx.browser.window.innerHeight.toDouble()
+
+        // Calculate the initial position based on the requested positioning
+        var temp = when (positioning) {
+            Positioning.TopLeft -> anchor - Vector2D(0.0, contentSize.y)
+            Positioning.TopCenter -> anchor - Vector2D(contentSize.x / 2.0, contentSize.y)
+            Positioning.TopRight -> anchor - Vector2D(contentSize.x, contentSize.y)
+            Positioning.BottomLeft -> anchor
+            Positioning.BottomCenter -> anchor - Vector2D(contentSize.x / 2.0, 0.0)
+            Positioning.BottomRight -> anchor - Vector2D(contentSize.x, 0.0)
+        }
+
+        // Fallback for Top -> Bottom if not enough space on top
+        if (temp.y < 0 && anchor.y + contentSize.y <= bodyHeight) {
+            temp = Vector2D(temp.x, anchor.y)
+        }
+        // Fallback for Bottom -> Top if not enough space on bottom
+        else if (temp.y + contentSize.y > bodyHeight && anchor.y - contentSize.y >= 0) {
+            temp = Vector2D(temp.x, anchor.y - contentSize.y)
+        }
+
+        // Fallback for Left/Right boundary collisions
+        // If it doesn't fit on the left, align it to the left edge
+        if (temp.x < 0) {
+            temp = Vector2D(0.0, temp.y)
+        }
+        // If it doesn't fit on the right, align it to the right edge
+        else if (temp.x + contentSize.x > bodyWidth) {
+            temp = Vector2D(maxOf(0.0, bodyWidth - contentSize.x), temp.y)
+        }
+
+        return temp
     }
 
     fun closeAll() {
