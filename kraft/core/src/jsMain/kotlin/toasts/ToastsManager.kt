@@ -101,10 +101,10 @@ class ToastsManager(
 
     override fun subscribeToStream(sub: (List<Handle>) -> Unit): Unsubscribe = source.subscribeToStream(sub)
 
-    override val priority = 1000
+    override val autoMountPriority = 1000
 
-    override fun mount(flow: FlowContent) {
-        with(flow) {
+    override fun autoMount(element: FlowContent) {
+        with(element) {
             ToastsStage(toasts = this@ToastsManager)
         }
     }

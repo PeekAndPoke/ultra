@@ -19,12 +19,23 @@ import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.MouseEvent
 import org.w3c.dom.events.UIEvent
 
+/** A function which renders the content of a popup */
+typealias PopupContentRenderer = FlowContent.(handle: PopupsManager.Handle) -> Unit
+
+/** A function which positions a popup */
 typealias PopupPositionFn = (target: HTMLElement, contentSize: Vector2D) -> Vector2D
 
+/** A function which renders a popup */
 typealias PopupComponentFactory = FlowContent.(
-    target: HTMLElement, positioning: PopupPositionFn, handle: PopupsManager.Handle, content: PopupContentRenderer,
+    target: HTMLElement,
+    positioning: PopupPositionFn,
+    handle: PopupsManager.Handle,
+    content: PopupContentRenderer,
 ) -> Unit
 
+/**
+ * A manager for popups.
+ */
 class PopupsManager(
     val settings: Settings,
 ) : Stream<List<PopupsManager.Handle>>, AutoMountedUi {
@@ -38,10 +49,16 @@ class PopupsManager(
         }
     }
 
+    /**
+     * Settings for the popups manager
+     */
     data class Settings(
         val popupRenderer: PopupComponentFactory,
     )
 
+    /**
+     * PopupsManager builder
+     */
     class Builder internal constructor() {
         private var popupFactory: PopupComponentFactory = DefaultPopupFactory
 
@@ -56,6 +73,9 @@ class PopupsManager(
         )
     }
 
+    /**
+     * A helper class to show a popup when the mouse hovers over an element.
+     */
     class ShowHoverPopup(private val popups: PopupsManager) {
 
         fun show(
@@ -96,6 +116,9 @@ class PopupsManager(
         }
     }
 
+    /**
+     * A handle to a popup.
+     */
     class Handle internal constructor(
         val id: Int,
         val view: PopupContentRenderer,
@@ -116,6 +139,9 @@ class PopupsManager(
         fun close() = manager.close(this)
     }
 
+    /**
+     * Enum representing the positioning options for a popup.
+     */
     enum class Positioning {
         TopLeft,
         TopCenter,
@@ -125,27 +151,33 @@ class PopupsManager(
         BottomRight,
     }
 
+    /** The current list of popups */
     private var handleCounter = 0
 
+    /** The current list of popups */
     private val streamSource: StreamSource<List<Handle>> = StreamSource(emptyList())
 
+    /** Helper for displaying hover popups */
     val showHoverPopup = ShowHoverPopup(popups = this)
 
+    /** @inheritDoc */
     override fun invoke(): List<Handle> = streamSource()
 
+    /** @inheritDoc */
     override fun subscribeToStream(sub: (List<Handle>) -> Unit): Unsubscribe = streamSource.subscribeToStream(sub)
 
-    override val priority = 1000
+    /** auto mount priority */
+    override val autoMountPriority = 1000
 
-    override fun mount(flow: FlowContent) {
-        with(flow) {
+    /**
+     * Mounts the popup stage to the given [element]
+     */
+    override fun autoMount(element: FlowContent) {
+        with(element) {
             PopupsStage(popups = this@PopupsManager)
         }
     }
 
-    /**
-     * Shows a popup relative to the target of the [event] by using the [positioning]
-     */
     /**
      * Shows a popup relative to the target of the [event] by using the [positioning]
      */
@@ -175,12 +207,15 @@ class PopupsManager(
                 Positioning.TopRight -> {
                     pageCoords.topRight
                 }
+
                 Positioning.BottomLeft -> {
                     pageCoords.bottomLeft
                 }
+
                 Positioning.BottomCenter -> {
                     (pageCoords.bottomLeft + pageCoords.bottomRight) / 2.0
                 }
+
                 Positioning.BottomRight -> {
                     pageCoords.bottomRight
                 }

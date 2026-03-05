@@ -5,10 +5,15 @@ import de.peekandpoke.kraft.vdom.VDomTagConsumer
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 
+/**
+ * A component that can be automatically mounted to the DOM
+ */
 interface AutoMountedUi {
-    val priority: Int get() = 0
+    /** The priority of the component. Higher values are mounted first */
+    val autoMountPriority: Int get() = 0
 
-    fun mount(flow: FlowContent)
+    /** Mounts the component to the given element */
+    fun autoMount(element: FlowContent)
 }
 
 /**

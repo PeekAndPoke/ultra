@@ -40,10 +40,10 @@ interface ModalsManager : Stream<List<Handle>>, AutoMountedUi {
     }
 
     /** Auto mount priority */
-    override val priority get() = 1000
+    override val autoMountPriority get() = 1000
 
     /** Mount the modals stage into the given flow */
-    override fun mount(flow: FlowContent)
+    override fun autoMount(element: FlowContent)
 
     /** Show a modal dialog */
     fun show(view: ModalRenderer): Handle
@@ -67,11 +67,11 @@ abstract class BaseModalsManager : ModalsManager {
     override fun subscribeToStream(sub: (List<Handle>) -> Unit): Unsubscribe = streamSource.subscribeToStream(sub)
 
     /** Auto mount priority */
-    override val priority = 1000
+    override val autoMountPriority = 1000
 
     /** Mount the modals stage into the given flow */
-    override fun mount(flow: FlowContent) {
-        with(flow) {
+    override fun autoMount(element: FlowContent) {
+        with(element) {
             ModalsStage(modals = this@BaseModalsManager)
         }
     }

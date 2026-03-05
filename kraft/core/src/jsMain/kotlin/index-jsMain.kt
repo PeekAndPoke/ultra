@@ -71,7 +71,7 @@ class KraftApp internal constructor(
     private val autoMountedUis: List<AutoMountedUi> = run {
         appAttributes.entries
             .mapNotNull { (_, v) -> v as? AutoMountedUi }
-            .sortedByDescending { it.priority }
+            .sortedByDescending { it.autoMountPriority }
     }
 
     fun mount(selector: String, engine: VDomEngine, view: VDom.() -> Any?) {
@@ -83,7 +83,7 @@ class KraftApp internal constructor(
 
     fun mount(element: HTMLElement, engine: VDomEngine, view: VDom.() -> Any?) {
         engine.mount(app = this, element = element) {
-            autoMountedUis.forEach { it.mount(this) }
+            autoMountedUis.forEach { it.autoMount(this) }
             view()
         }
 
