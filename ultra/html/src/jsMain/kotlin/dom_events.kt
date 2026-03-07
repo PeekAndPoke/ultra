@@ -17,6 +17,8 @@ import kotlinx.html.js.onKeyDownFunction
 import kotlinx.html.js.onKeyPressFunction
 import kotlinx.html.js.onKeyUpFunction
 import kotlinx.html.js.onMouseDownFunction
+import kotlinx.html.js.onMouseEnterFunction
+import kotlinx.html.js.onMouseLeaveFunction
 import kotlinx.html.js.onMouseMoveFunction
 import kotlinx.html.js.onMouseOutFunction
 import kotlinx.html.js.onMouseOverFunction
@@ -123,6 +125,15 @@ fun CommonAttributeGroupFacade.onContextMenuStoppingEvent(handler: (UIEvent) -> 
     e.preventDefault()
     e.stopPropagation()
     handler(e.asDynamic())
+}
+
+/**
+ * Adds an onDblClick handler.
+ *
+ * https://developer.mozilla.org/en-US/docs/Web/API/Element/dblclick_event
+ */
+fun CommonAttributeGroupFacade.onDblClick(handler: (MouseEvent) -> Unit) {
+    consumer.onTagEvent(this, "ondblclick", handler.asDynamic())
 }
 
 /**
@@ -246,7 +257,7 @@ fun CommonAttributeGroupFacade.onMouseDown(handler: (MouseEvent) -> Unit) {
  * https://developer.mozilla.org/en-US/docs/Web/API/Element/mouseenter_event
  */
 fun CommonAttributeGroupFacade.onMouseEnter(handler: (MouseEvent) -> Unit) {
-    consumer.onTagEvent(this, "onmouseenter", handler.asDynamic())
+    onMouseEnterFunction = handler.asDynamic()
 }
 
 /**
@@ -255,7 +266,7 @@ fun CommonAttributeGroupFacade.onMouseEnter(handler: (MouseEvent) -> Unit) {
  * https://developer.mozilla.org/en-US/docs/Web/API/Element/mouseleave_event
  */
 fun CommonAttributeGroupFacade.onMouseLeave(handler: (MouseEvent) -> Unit) {
-    consumer.onTagEvent(this, "onmouseleave", handler.asDynamic())
+    onMouseLeaveFunction = handler.asDynamic()
 }
 
 /**
