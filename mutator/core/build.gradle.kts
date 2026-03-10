@@ -22,13 +22,6 @@ kotlin {
     js {
         browser {
             testTask {
-//                useKarma {
-//                    useChrome()
-//                    useChromeHeadless()
-//                    useChromiumHeadless()
-//                    useChromeCanaryHeadless()
-//                    useFirefoxHeadless()
-//                }
             }
         }
     }
@@ -48,13 +41,17 @@ kotlin {
 
         commonTest {
             dependencies {
-                Deps.Test { commonTestDeps() }
+                Deps.Test {
+                    commonTestDeps()
+                }
             }
         }
 
         jsTest {
             dependencies {
-                Deps.Test { jsTestDeps() }
+                Deps.Test {
+                    jsTestDeps()
+                }
             }
         }
 
@@ -62,7 +59,9 @@ kotlin {
             kotlin.srcDir("src/examples")
 
             dependencies {
-                Deps.Test { jvmTestDeps() }
+                Deps.Test {
+                    jvmTestDeps()
+                }
             }
         }
     }

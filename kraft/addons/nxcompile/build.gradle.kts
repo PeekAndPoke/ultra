@@ -23,6 +23,8 @@ Docs {
 kotlin {
     js {
         browser {
+            testTask {
+            }
         }
     }
 

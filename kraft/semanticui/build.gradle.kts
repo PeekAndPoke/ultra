@@ -27,13 +27,6 @@ kotlin {
     js {
         browser {
             testTask {
-//                useKarma {
-//                    useChrome()
-//                    useChromeHeadless()
-//                    useChromiumHeadless()
-//                    useChromeCanaryHeadless()
-//                    useFirefoxHeadless()
-//                }
             }
         }
     }
@@ -54,7 +47,7 @@ kotlin {
         commonTest {
             dependencies {
                 commonTestDeps()
-                api(project(":kraft:testing"))
+                implementation(project(":kraft:testing"))
             }
         }
 

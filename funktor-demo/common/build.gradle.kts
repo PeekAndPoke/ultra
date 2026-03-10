@@ -14,6 +14,8 @@ version = VERSION_NAME
 kotlin {
     js {
         browser {
+            testTask {
+            }
         }
     }
 

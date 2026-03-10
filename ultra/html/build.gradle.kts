@@ -25,14 +25,8 @@ Docs {
 kotlin {
     js {
         browser {
-//            testTask {
-//                useKarma {
-//                    useChromeHeadless()
-//                    usePhantomJS()
-//                    useChromiumHeadless()
-//                    useFirefoxHeadless()
-//                }
-//            }
+            testTask {
+            }
         }
     }
 

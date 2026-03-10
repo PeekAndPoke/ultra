@@ -23,7 +23,10 @@ Docs {
 
 kotlin {
     js {
-        browser {}
+        browser {
+            testTask {
+            }
+        }
     }
 
     jvmToolchain(Deps.jvmTargetVersion)
