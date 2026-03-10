@@ -1,11 +1,21 @@
 package de.peekandpoke.kraft.utils
 
 import de.peekandpoke.kraft.components.Component
+import de.peekandpoke.ultra.common.TypedKey
 import kotlinx.coroutines.Deferred
 
 fun <T> Component<T>.doubleClickProtection() = DoubleClickProtection(this)
 
+val <T> Component<T>.noDblClick: DoubleClickProtection
+    get() {
+        return attributes.getOrPut(DoubleClickProtection.key) { DoubleClickProtection(this) }
+    }
+
 class DoubleClickProtection(component: Component<*>) {
+
+    companion object {
+        val key = TypedKey<DoubleClickProtection>("DoubleClickProtection")
+    }
 
     private var counter: Int by component.value(0)
 

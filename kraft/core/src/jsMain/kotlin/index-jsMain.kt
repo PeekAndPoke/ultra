@@ -5,8 +5,8 @@ import de.peekandpoke.kraft.modals.modals
 import de.peekandpoke.kraft.popups.popups
 import de.peekandpoke.kraft.routing.RootRouterBuilder
 import de.peekandpoke.kraft.routing.Router
-import de.peekandpoke.kraft.routing.RouterDsl
 import de.peekandpoke.kraft.toasts.toasts
+import de.peekandpoke.kraft.utils.DocumentController
 import de.peekandpoke.kraft.utils.ResponsiveController
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.kraft.vdom.VDomEngine
@@ -40,20 +40,29 @@ class KraftApp internal constructor(
             popups()
             // We always have the default responsive controller
             responsive(ResponsiveController())
+            // We always have the default document controller
+            document(DocumentController())
         }
 
-        @RouterDsl
+        /** Sets an attribute for the app. */
+        @KraftDsl
         fun <T> setAttribute(key: TypedKey<T>, value: T) = apply {
             appAttributes[key] = value
         }
 
-        @RouterDsl
+        /** Sets the responsive controller for the app. */
+        @KraftDsl
+        fun responsive(ctrl: ResponsiveController) = setAttribute(ResponsiveController.key, ctrl)
+
+        /** Sets the document controller for the app. */
+        @KraftDsl
+        fun document(ctrl: DocumentController) = setAttribute(DocumentController.key, ctrl)
+
+        /** Sets the router for the app. */
+        @KraftDsl
         fun routing(block: RootRouterBuilder.() -> Unit) = apply {
             router.block()
         }
-
-        @RouterDsl
-        fun responsive(ctrl: ResponsiveController) = setAttribute(ResponsiveController.key, ctrl)
 
         internal fun build(): KraftApp {
             appAttributes[Router.key] = router.build()

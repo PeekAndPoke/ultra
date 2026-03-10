@@ -28,7 +28,7 @@ abstract class Component<PROPS>(val ctx: Ctx<PROPS>) {
     /**
      * Lifecycle hooks for components
      */
-    class LifeCycle<PROPS> {
+    class LifeCycle<PROPS>(val component: Component<PROPS>) {
         /**
          * Hook with no callback parameters
          */
@@ -104,7 +104,7 @@ abstract class Component<PROPS>(val ctx: Ctx<PROPS>) {
     val dom: HTMLElement? get() = _dom
 
     /** The life-cycle [LifeCycle] that the component exposes */
-    val lifecycle: LifeCycle<PROPS> = LifeCycle()
+    val lifecycle: LifeCycle<PROPS> = LifeCycle(this)
 
     /** An automatically generated unique dom key for the component instance. */
     val autoDomKey: String = getNextDomKey()

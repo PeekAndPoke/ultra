@@ -10,14 +10,14 @@ import kotlinx.browser.document
 import kotlinx.browser.window
 import org.w3c.dom.events.Event
 
-val Component<*>.responsiveCtrl get() = getAttributeRecursive(ResponsiveController.key)
+val Component<*>.responsiveCtrl: ResponsiveController get() = getAttributeRecursive(ResponsiveController.key)
 
 class ResponsiveController(
     private val breakpoints: Breakpoints = Breakpoints.default,
 ) : Stream<ResponsiveController.State> {
 
     companion object {
-        val key = TypedKey<ResponsiveController>("responsiveCtrl")
+        val key = TypedKey<ResponsiveController>("ResponsiveCtrl")
     }
 
     enum class DisplayType {

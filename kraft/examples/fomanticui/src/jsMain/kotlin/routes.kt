@@ -30,6 +30,7 @@ import de.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.flashmessages
 import de.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.listfield.ListFieldPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.modals.ModalDialogsPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.popups.PopupsAndContextMenusPage
+import de.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.utils.KraftUtilsPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo.FormDemosPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.KraftComponentBasicsPage
 import de.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.KraftComponentStatePage
@@ -58,6 +59,7 @@ class Routes {
     val howtoToasts = Static("/howto/blocks/toasts")
     val howtoBlocksDragAndDrop = Static("/howto/blocks/drag-and-drop")
     val howtoBlocksListField = Static("/howto/blocks/list-field")
+    val howtoUtils = Static("/howto/blocks/utils")
 
     val elementsButton = Static("/elements/button")
     val elementsContainer = Static("/elements/container")
@@ -108,6 +110,7 @@ fun RootRouterBuilder.mount(routes: Routes) {
     mount(routes.howtoToasts) { FlashMessagesPage() }
     mount(routes.howtoBlocksDragAndDrop) { DragAndDropPage() }
     mount(routes.howtoBlocksListField) { ListFieldPage() }
+    mount(routes.howtoUtils) { KraftUtilsPage() }
 
     mount(routes.elementsButton) { ButtonPage() }
     mount(routes.elementsContainer) { ContainerPage() }
