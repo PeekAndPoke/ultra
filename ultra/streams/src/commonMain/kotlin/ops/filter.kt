@@ -32,7 +32,7 @@ fun <T> Stream<T?>.filterNotNull(initial: T): Stream<T> {
 /**
  * Filters the incoming values and publish only the ones that are an instance of [I].
  */
-inline fun <T, reified I : T> Stream<T?>.filterIsInstance(): Stream<I?> {
+inline fun <reified I : T, T> Stream<T>.filterIsInstance(): Stream<I?> {
     @Suppress("UNCHECKED_CAST")
     return filter { it is I } as Stream<I?>
 }
@@ -40,7 +40,7 @@ inline fun <T, reified I : T> Stream<T?>.filterIsInstance(): Stream<I?> {
 /**
  * Filters the incoming values and publish only the ones that are an instance of [I].
  */
-inline fun <T, reified I : T> Stream<T?>.filterIsInstance(initial: I): Stream<I> {
+inline fun <reified I : T, T> Stream<T>.filterIsInstance(initial: I): Stream<I> {
     @Suppress("UNCHECKED_CAST")
     return filter(initial) { it is I } as Stream<I>
 }

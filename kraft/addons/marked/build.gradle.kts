@@ -43,7 +43,7 @@ kotlin {
 
         jsMain {
             dependencies {
-                implementation(Deps.KotlinX.wrappers_extensions)
+                implementation(Deps.KotlinX.wrappers_js)
                 api(Deps.Npm { marked() })
                 api(Deps.Npm { domPurify() })
             }

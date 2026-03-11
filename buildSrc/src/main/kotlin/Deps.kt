@@ -119,11 +119,9 @@ object Deps {
         const val wrappers_css =
             "org.jetbrains.kotlin-wrappers:kotlin-css:$wrappers_version"
 
-        // NOTICE: KEEP the pre.450 as newer versions do NOT support JAVA eight anymore
-        // https://mvnrepository.com/artifact/org.jetbrains.kotlin-wrappers/kotlin-extensions
-        private const val wrappers_extensions_version = "1.0.1-pre.823"
-        const val wrappers_extensions =
-            "org.jetbrains.kotlin-wrappers:kotlin-extensions:$wrappers_extensions_version"
+        // https://central.sonatype.com/artifact/org.jetbrains.kotlin-wrappers/kotlin-js/versions
+        private const val wrappers_js_version = "2026.3.8"
+        const val wrappers_js = "org.jetbrains.kotlin-wrappers:kotlin-js:$wrappers_js_version"
     }
 
     object Ktor {
@@ -496,11 +494,8 @@ object Deps {
 
         // https://plugins.gradle.org/plugin/io.kotest
         const val kotest_plugin_version = "6.1.6"
-//        const val kotest_plugin_version = "5.9.1"
-
         // https://mvnrepository.com/artifact/io.kotest/kotest-common
         const val kotest_version = "6.1.5"
-//        const val kotest_version = "5.9.1"
 
         const val kotest_framework_engine = "io.kotest:kotest-framework-engine:$kotest_version"
         const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"

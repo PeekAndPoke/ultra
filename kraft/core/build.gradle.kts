@@ -63,7 +63,7 @@ kotlin {
 
         jsMain {
             dependencies {
-                api(Deps.KotlinX.wrappers_extensions)
+                api(Deps.KotlinX.wrappers_js)
                 api(Deps.KotlinX.serialization_json)
 
                 // Preact VDOM engine
