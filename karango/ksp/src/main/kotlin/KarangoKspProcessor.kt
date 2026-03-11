@@ -39,7 +39,7 @@ class KarangoKspProcessor(
             "kotlinx.",
         )
 
-        val blackListedClasses = listOf<String>(
+        val blackListedClasses = listOf(
             New::class.qualifiedName!!,
             Ref::class.qualifiedName!!,
             LazyRef::class.qualifiedName!!,
@@ -62,7 +62,7 @@ class KarangoKspProcessor(
             .getSymbolsWithAnnotation(Vault::class.qualifiedName!!)
             .filterIsInstance<KSClassDeclaration>()
 
-        logger.warn("KARANGO ... Found ${withAnnotations.count()} types with @${Vault::class.simpleName}")
+        logger.info("KARANGO ... Found ${withAnnotations.count()} types with @${Vault::class.simpleName}")
 
         // Find all referenced classes
         val allTypes = withAnnotations
@@ -72,11 +72,11 @@ class KarangoKspProcessor(
         val (pool, blacklisted) = allTypes.partition { !it.isBlackListed() }
 
         blacklisted.forEach { cls ->
-            logger.warn("Blacklisted type: ${cls.classKind} $cls : ${cls.qualifiedName?.asString()}")
+            logger.info("Blacklisted type: ${cls.classKind} $cls : ${cls.qualifiedName?.asString()}")
         }
 
         pool.forEach { cls ->
-            logger.warn("Generating code for type: ${cls.classKind} $cls : ${cls.qualifiedName?.asString()}")
+            logger.info("Generating code for type: ${cls.classKind} $cls : ${cls.qualifiedName?.asString()}")
             generateCode(cls)
         }
 

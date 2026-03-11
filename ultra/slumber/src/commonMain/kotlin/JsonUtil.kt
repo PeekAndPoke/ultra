@@ -36,7 +36,7 @@ object JsonUtil {
     fun Map<String, Any?>.toJsonObject(): JsonObject {
         return buildJsonObject {
             forEach { (key, value) ->
-                put(key.toString(), value.toJsonElement())
+                put(key, value.toJsonElement())
             }
         }
     }

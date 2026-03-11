@@ -32,7 +32,7 @@ class MutatorKspProcessor(
 
     init {
         plugins.plugins.forEachIndexed { index, plugin ->
-            logger.warn("Plugin ${index + 1}: ${plugin.name} | ${plugin::class.qualifiedName}")
+            logger.info("Plugin ${index + 1}: ${plugin.name} | ${plugin::class.qualifiedName}")
         }
     }
 
@@ -71,7 +71,7 @@ class MutatorKspProcessor(
 
         allTypes.toSet().let { pool ->
             pool.forEach { cls ->
-                logger.warn("Generating code for type: ${cls.classKind} $cls : ${cls.qualifiedName?.asString()}")
+                logger.info("Generating code for type: ${cls.classKind} $cls : ${cls.qualifiedName?.asString()}")
                 generateCode(cls)
             }
         }

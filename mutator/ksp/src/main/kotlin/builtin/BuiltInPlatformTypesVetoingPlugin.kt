@@ -39,7 +39,7 @@ class BuiltInPlatformTypesVetoingPlugin : MutatorKspPlugin {
                 isNullQualifiedName
 
         if (isVetoed) {
-            processor.logger.warn("Type $declaration is vetoed from being generated as a mutator")
+            processor.logger.info("Type $declaration is vetoed from being generated as a mutator")
         }
 
         return isVetoed
