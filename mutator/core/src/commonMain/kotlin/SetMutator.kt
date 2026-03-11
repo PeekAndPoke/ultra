@@ -66,8 +66,7 @@ class SetMutatorImpl<V>(initial: Set<V>, private val childToMutator: V.() -> Mut
         /**
          * Helper to work around compiler issues with casting to MutableSet<V>
          */
-        @Suppress("USELESS_CAST", "NOTHING_TO_INLINE")
-        private inline fun doGet(): MutableSet<V> = get() as MutableSet<V>
+        private fun doGet(): MutableSet<V> = this@SetMutatorImpl.get()
     }
 
     override fun getChildMutator(child: V): Mutator<V> = childToMutator(child)

@@ -10,6 +10,7 @@ import de.peekandpoke.funktor.testing.TestBed.Companion.createTestBed
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.kontainer.KontainerAware
 import de.peekandpoke.ultra.vault.Database
+import io.kotest.assertions.fail
 import io.kotest.core.listeners.AfterSpecListener
 import io.kotest.core.listeners.BeforeProjectListener
 import io.kotest.core.listeners.BeforeSpecListener
@@ -22,7 +23,6 @@ import kotlinx.coroutines.runBlocking
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.test.fail
 import kotlin.time.Duration.Companion.milliseconds
 
 interface AppSpecAware<C : AppConfig> : KontainerAware {

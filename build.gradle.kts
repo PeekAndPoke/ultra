@@ -73,7 +73,10 @@ rootProject.plugins.withType<YarnPlugin> {
 
 kotlin {
     js {
-        browser {}
+        browser {
+            testTask {
+            }
+        }
 
         binaries.executable()
     }
@@ -98,7 +101,6 @@ kotlin {
                 implementation(project(":funktor:core"))
                 implementation(project(":monko:core"))
 
-                implementation(Deps.KotlinLibs.cache4k)
                 implementation(Deps.KotlinLibs.faker)
 
                 implementation(Deps.JavaLibs.logback_classic)

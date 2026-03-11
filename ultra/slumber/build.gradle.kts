@@ -20,7 +20,10 @@ Docs {
 
 kotlin {
     js {
-        browser {}
+        browser {
+            testTask {
+            }
+        }
     }
 
     jvmToolchain(Deps.jvmTargetVersion)
@@ -40,7 +43,9 @@ kotlin {
 
         commonTest {
             dependencies {
-                Deps.Test { commonTestDeps() }
+                Deps.Test {
+                    commonTestDeps()
+                }
             }
         }
 
@@ -48,6 +53,11 @@ kotlin {
         }
 
         jsTest {
+            dependencies {
+                Deps.Test {
+                    jsTestDeps()
+                }
+            }
         }
 
         jvmMain {
@@ -55,14 +65,15 @@ kotlin {
                 api(Deps.JavaLibs.classindex)
 
                 implementation(Deps.KotlinX.datetime)
-                implementation(Deps.KotlinLibs.cache4k)
             }
         }
 
         jvmTest {
             dependencies {
                 implementation(project(":ultra:slumber-test-classes"))
-                Deps.Test { jvmTestDeps() }
+                Deps.Test {
+                    jvmTestDeps()
+                }
             }
         }
     }

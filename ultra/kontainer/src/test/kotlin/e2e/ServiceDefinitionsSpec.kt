@@ -96,7 +96,7 @@ class ServiceDefinitionsSpec : StringSpec() {
                 }
 
                 withClue("The overwritten service itself did not overwrite anything") {
-                    def.overwrites!!.overwrites.shouldBeNull()
+                    def.overwrites.overwrites.shouldBeNull()
                 }
             }
         }

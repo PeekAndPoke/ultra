@@ -87,8 +87,7 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
         /**
          * Helper to work around compiler issues with casting to MutableList<V>
          */
-        @Suppress("USELESS_CAST", "NOTHING_TO_INLINE")
-        private inline fun doGet(): MutableList<V> = get() as MutableList<V>
+        private fun doGet(): MutableList<V> = this@ListMutatorImpl.get()
     }
 
     override fun getChildMutator(child: V): Mutator<V> = childToMutator(child)

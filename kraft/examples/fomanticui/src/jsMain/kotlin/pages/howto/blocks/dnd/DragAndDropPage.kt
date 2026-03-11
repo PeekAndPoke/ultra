@@ -6,9 +6,9 @@ import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.routing.PageTitle
 import de.peekandpoke.kraft.vdom.VDom
 import de.peekandpoke.ultra.semanticui.ui
-import js.core.JsNumber
 import kotlinx.html.Tag
 import kotlinx.html.p
+import kotlin.math.floor
 
 @Suppress("FunctionName")
 fun Tag.DragAndDropPage() = comp {
@@ -16,6 +16,8 @@ fun Tag.DragAndDropPage() = comp {
 }
 
 class DragAndDropPage(ctx: NoProps) : PureComponent(ctx) {
+
+    private fun Number.isInteger(): Boolean = floor(this.toDouble()) == this
 
     override fun VDom.render() {
         PageTitle("How To | Drag and drop")
@@ -43,7 +45,7 @@ class DragAndDropPage(ctx: NoProps) : PureComponent(ctx) {
                         it == 1
                     }
                     DropZoneComponent("Accepts %2") {
-                        JsNumber.isInteger(it) && it.toInt() % 2 == 0
+                        it.isInteger() && it.toInt() % 2 == 0
                     }
                     DropZoneComponent("Accepts 3") {
                         it == 3
@@ -52,10 +54,10 @@ class DragAndDropPage(ctx: NoProps) : PureComponent(ctx) {
                         it.toDouble() > 4
                     }
                     DropZoneComponent("Accepts all Ints") {
-                        JsNumber.isInteger(it)
+                        it.isInteger()
                     }
                     DropZoneComponent("Accepts all Floating points") {
-                        !JsNumber.isInteger(it)
+                        !it.isInteger()
                     }
                 }
             }

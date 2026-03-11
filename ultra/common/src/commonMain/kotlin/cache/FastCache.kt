@@ -137,7 +137,7 @@ class FastCache<K, V>(
                     val value = when (action) {
                         is ReadAction -> action.value
                         is PutAction -> action.value
-                        else -> error("Unexpected action: $action")
+                        // else -> error("Unexpected action: $action")
                     }
 
                     // Update the data map
@@ -209,7 +209,7 @@ class FastCache<K, V>(
                     val value = when (action) {
                         is ReadAction -> action.value
                         is PutAction -> action.value
-                        else -> error("Unexpected action: $action")
+                        // else -> error("Unexpected action: $action")
                     }
 
                     // Update the data map
@@ -291,7 +291,7 @@ class FastCache<K, V>(
                     val value = when (action) {
                         is ReadAction -> action.value
                         is PutAction -> action.value
-                        else -> error("Unexpected action: $action")
+                        // else -> error("Unexpected action: $action")
                     }
 
                     // Update the total tracked size

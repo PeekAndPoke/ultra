@@ -22,7 +22,10 @@ Docs {
 
 kotlin {
     js {
-        browser {}
+        browser {
+            testTask {
+            }
+        }
     }
 
     jvmToolchain(Deps.jvmTargetVersion)
@@ -40,7 +43,9 @@ kotlin {
 
         commonTest {
             dependencies {
-                Deps.Test { commonTestDeps() }
+                Deps.Test {
+                    commonTestDeps()
+                }
             }
         }
 
@@ -51,7 +56,9 @@ kotlin {
 
         jsTest {
             dependencies {
-                Deps.Test { jsTestDeps() }
+                Deps.Test {
+                    jsTestDeps()
+                }
             }
         }
 

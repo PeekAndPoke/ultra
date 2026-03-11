@@ -25,8 +25,8 @@ fun jsObjectOf(vararg pairs: Pair<String, dynamic>): dynamic {
 }
 
 fun jsObjectToMap(obj: dynamic): Map<String, Any?> {
-    return Object.keys(obj as Any)
-        .associateWith { jsToKotlin(obj[it]) }
+    @Suppress("OPT_IN_USAGE")
+    return Object.keys(obj as Any).associateWith { jsToKotlin(obj[it]) }
 }
 
 fun jsArrayToList(arr: dynamic): List<Any?> {

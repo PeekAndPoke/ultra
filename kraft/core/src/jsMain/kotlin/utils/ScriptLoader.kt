@@ -1,7 +1,6 @@
 package de.peekandpoke.kraft.utils
 
 import de.peekandpoke.ultra.streams.StreamSource
-import kotlinext.js.js
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.CompletableDeferred
@@ -156,7 +155,7 @@ object ScriptLoader {
         script.referrerPolicy?.let { tag.asDynamic().referrerPolicy = it }
 
         val win = window.asDynamic()
-        win.___ScriptLoader___ = win.___ScriptLoader___ ?: js { }
+        win.___ScriptLoader___ = win.___ScriptLoader___ ?: js("{}")
 
         val cbName = "cb_" + (callbackCounter++).toString()
         win.___ScriptLoader___[cbName] = { result: dynamic ->

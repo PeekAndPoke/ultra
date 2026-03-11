@@ -160,7 +160,7 @@ fun <PARAMS, BODY, RESPONSE> Route.handleWithBodyAndParams(
 /**
  * Registers a handler for a [ApiRoute.Sse] starting a server sse session
  */
-fun <PARAMS> Route.handleSse(route: ApiRoute.Sse<PARAMS>) {
+fun <PARAMS> Route.handleSse(route: ApiRoute.Sse<PARAMS>): Route {
 
     val uri = route.route.pattern.pattern
 

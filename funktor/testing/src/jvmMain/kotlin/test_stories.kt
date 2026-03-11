@@ -7,11 +7,11 @@ import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.kontainer.KontainerAware
+import io.kotest.assertions.fail
 import io.kotest.core.spec.style.scopes.FreeSpecContainerScope
 import io.kotest.core.spec.style.scopes.FreeSpecTerminalScope
 import io.kotest.core.test.TestCase
 import kotlinx.coroutines.delay
-import org.junit.jupiter.api.fail
 
 @DslMarker
 annotation class TestStoryMarker

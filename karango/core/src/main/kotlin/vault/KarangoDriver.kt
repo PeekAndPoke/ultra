@@ -117,7 +117,7 @@ class KarangoDriver(
                         try {
                             arangoDb.query(
                                 /* query = */ query.query,
-                                /* type = */ Object::class.java,
+                                /* type = */ Any::class.java,
                                 /* bindVars = */ vars,
                                 /* options = */ options,
                             ).await()

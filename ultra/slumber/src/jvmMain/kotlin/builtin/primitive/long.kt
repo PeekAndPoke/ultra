@@ -13,7 +13,7 @@ object LongSlumberer : Slumberer {
 
 private fun map(data: Any?): Long? = when (data) {
 
-    is Long -> data.toLong()
+    is Long -> data
 
     is Int -> data.toLong()
 

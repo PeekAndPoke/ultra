@@ -1,6 +1,7 @@
 @file:Suppress("PropertyName")
 
 import Deps.Test.configureJvmTests
+import Deps.Test.jvmTestDeps
 
 plugins {
     kotlin("multiplatform")
@@ -21,7 +22,10 @@ Docs {
 
 kotlin {
     js {
-        browser {}
+        browser {
+            testTask {
+            }
+        }
     }
 
     jvmToolchain(Deps.jvmTargetVersion)
