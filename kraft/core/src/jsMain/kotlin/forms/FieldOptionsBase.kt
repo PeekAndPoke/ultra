@@ -19,6 +19,7 @@ interface FieldOptions<T> : FieldOptionsAccess<T> {
     companion object {
         operator fun <T> invoke(): FieldOptions<T> = Base()
 
+        private val domKeyKey = TypedKey<String>("domKey")
         private val labelKey = TypedKey<RenderFunc<LABEL>>("label")
         private val placeholderKey = TypedKey<String>("placeholder")
         private val nameKey = TypedKey<String>("name")
@@ -72,6 +73,9 @@ interface FieldOptions<T> : FieldOptionsAccess<T> {
 
     @KraftFormsSettingDsl
     val rules: List<Rule<T>>
+
+    @KraftFormsSettingDsl
+    val domKey get() = access(domKeyKey)
 
     @KraftFormsSettingDsl
     val label get() = access(labelKey)

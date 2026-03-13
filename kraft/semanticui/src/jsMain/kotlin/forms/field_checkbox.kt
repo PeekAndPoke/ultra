@@ -82,7 +82,7 @@ class UiCheckBoxComponent<T, P : UiCheckBoxComponent.Props<T>>(ctx: Ctx<P>) :
     override fun VDom.render() {
 
         ui.with(options.appear.getOrDefault { this }).given(hasErrors) { error }.field {
-            key = autoDomKey
+            key = options.domKey.getOrDefault(autoDomKey)
 
             div {
                 ui.with(options.style.getOrDefault { this }).checkbox {

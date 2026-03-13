@@ -94,7 +94,7 @@ class UiTextAreaComponent(ctx: Ctx<Props>) :
 
     override fun VDom.render() {
         ui.with(options.appear.getOrDefault { this }).given(hasErrors) { error }.field {
-            key = autoDomKey
+            key = options.domKey.getOrDefault(autoDomKey)
 
             renderLabel("textarea")
 
