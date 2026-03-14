@@ -1,7 +1,6 @@
 package de.peekandpoke.ultra.common
 
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING", "unused")
-// // TODO: test me JVM
 expect class WeakSet<E>() {
     val size: Int
 

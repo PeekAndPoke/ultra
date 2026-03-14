@@ -61,6 +61,15 @@ interface DataClassSlumberer : Slumberer {
         val wrapped: Cache<Any?, Any?>,
         val excludedClasses: Set<KClass<*>> = emptySet(),
     ) : Cache<Any?, Any?> {
+        override val keys: Set<Any?> get() = wrapped.keys
+        override val values: List<Any?> get() = wrapped.values
+        override val entries: Map<Any?, Any?> get() = wrapped.entries
+        override val size: Int get() = wrapped.size
+
+        override fun clear() {
+            wrapped.clear()
+        }
+
         override fun get(key: Any?): Any? {
             if (key == null || key::class in excludedClasses) {
                 return null
