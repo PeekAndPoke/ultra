@@ -347,33 +347,31 @@ class FastCache<K, V>(
         private val loopDelay: Duration,
     ) {
         suspend fun run() {
-            ref.get()?.let { doRun(it) }
-        }
+            while (true) {
+                // Check if the cache is still alive, otherwise break the loop and finish the coroutine
+                val cache = ref.get() ?: break
 
-        private suspend fun doRun(cache: FastCache<K, V>) {
-            // println("LOOP RUN  |  ")
+                // println("LOOP RUN  |  ")
 
-            val actions = cache.sync {
-                // Get the currently stored actions
-                cache.lastActions.also {
-                    // Create a new instance
-                    cache.lastActions = ArrayList(it.size)
+                val actions = cache.sync {
+                    // Get the currently stored actions
+                    cache.lastActions.also { currentActions ->
+                        // Create a new instance for the actions
+                        cache.lastActions = ArrayList(currentActions.size)
+                        // Create a new instance for the actions keys set
+                        cache.lastActionsKeys = HashSet(cache.lastActionsKeys.size)
+                    }
                 }
+
+                val updates = ActionUpdates(actions)
+
+                cache.behaviours.forEach { behaviour ->
+                    behaviour.process(cache, updates)
+                }
+
+                // Wait for the next cycle
+                delay(loopDelay)
             }
-
-            val updates = ActionUpdates(actions)
-
-            cache.behaviours.forEach { behaviour ->
-                behaviour.process(cache, updates)
-            }
-
-            triggerNextRun()
-        }
-
-        private suspend fun triggerNextRun() {
-            delay(loopDelay)
-
-            ref.get()?.let { doRun(it) }
         }
     }
 
@@ -390,18 +388,38 @@ class FastCache<K, V>(
         }
     }
 
+    /** Internal lock */
     private val lock = Any()
 
+    /** List with last taken actions, to be processed by the behaviours */
     private var lastActions = ArrayList<Action<K, V>>(1_000)
 
+    /** Set of keys that are included in [lastActions] */
+    private var lastActionsKeys = HashSet<K>()
+
+    /** Internal data map */
     private val map = mutableMapOf<K, V>()
 
-    val keys: Set<K> get() = map.keys.toSet()
+    /** All current keys */
+    override val keys: Set<K> get() = sync { map.keys.toSet() }
 
-    val values: List<V> get() = map.values.toList()
+    /** All current values */
+    override val values: List<V> get() = sync { map.values.toList() }
 
-    val entries: Map<K, V> get() = map.toMap()
+    /** All current entries */
+    override val entries: Map<K, V> get() = sync { map.toMap() }
 
+    /** Number of entries in the cache */
+    override val size: Int get() = sync { map.size }
+
+    /** Clears the cache */
+    override fun clear() = sync {
+        map.clear()
+        lastActions.clear()
+        lastActionsKeys.clear()
+    }
+
+    /** Check if the cache contains the given key */
     override fun has(key: K): Boolean = sync {
         map[key]?.also {
             addAction(ReadAction(key, it))
@@ -420,10 +438,21 @@ class FastCache<K, V>(
         addAction(PutAction(key, value))
     }
 
-    override fun getOrPut(key: K, producer: () -> V): V = sync {
-        map[key] ?: producer()
-            .also { map[key] = it }
-            .also { addAction(PutAction(key, it)) }
+    override fun getOrPut(key: K, producer: () -> V): V {
+        // Fast path: try to get the existing value
+        get(key)?.let { return it }
+
+        // Slow path: compute the value outside the lock
+        // Tradeoff: the producer might be called multiple times when a race-condition occurs
+        val newValue = producer()
+
+        // Insert if it hasn't been put by another thread in the meantime
+        return sync {
+            map[key] ?: newValue.also {
+                map[key] = it
+                addAction(PutAction(key, it))
+            }
+        }
     }
 
     override fun remove(key: K): V? = sync {
@@ -433,12 +462,18 @@ class FastCache<K, V>(
     }
 
     private fun removeSilently(key: K) = sync {
-        // println("FastCache.removeSilently: $key  |  ")
-        map.remove(key)
+        // If there is a pending action for this key (e.g. it was just Put or Read),
+        // it means the entry was recently updated or accessed, so we should NOT evict it.
+        val hasPendingUpdates = lastActionsKeys.contains(key)
+
+        if (!hasPendingUpdates) {
+            map.remove(key)
+        }
     }
 
     private fun addAction(action: Action<K, V>) {
         lastActions.add(action)
+        lastActionsKeys.add(action.key)
     }
 
     @Suppress("NOTHING_TO_INLINE")
