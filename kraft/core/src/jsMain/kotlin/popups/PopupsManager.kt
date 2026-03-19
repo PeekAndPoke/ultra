@@ -181,28 +181,16 @@ class PopupsManager(
             val pageCoords = target.getPageCoords()
 
             val anchor = when (positioning) {
-                Positioning.TopLeft -> {
+                Positioning.TopLeft, Positioning.BottomLeft -> {
                     pageCoords.topLeft
                 }
 
-                Positioning.TopCenter -> {
+                Positioning.TopCenter, Positioning.BottomCenter -> {
                     (pageCoords.topLeft + pageCoords.topRight) / 2.0
                 }
 
-                Positioning.TopRight -> {
+                Positioning.TopRight, Positioning.BottomRight -> {
                     pageCoords.topRight
-                }
-
-                Positioning.BottomLeft -> {
-                    pageCoords.bottomLeft
-                }
-
-                Positioning.BottomCenter -> {
-                    (pageCoords.bottomLeft + pageCoords.bottomRight) / 2.0
-                }
-
-                Positioning.BottomRight -> {
-                    pageCoords.bottomRight
                 }
             }
 
@@ -255,9 +243,9 @@ class PopupsManager(
             Positioning.TopLeft -> anchor - Vector2D(0.0, contentSize.y)
             Positioning.TopCenter -> anchor - Vector2D(contentSize.x / 2.0, contentSize.y)
             Positioning.TopRight -> anchor - Vector2D(contentSize.x, contentSize.y)
-            Positioning.BottomLeft -> anchor
-            Positioning.BottomCenter -> anchor - Vector2D(contentSize.x / 2.0, 0.0)
-            Positioning.BottomRight -> anchor - Vector2D(contentSize.x, 0.0)
+            Positioning.BottomLeft -> anchor + Vector2D(0.0, elementSize.y)
+            Positioning.BottomCenter -> anchor + Vector2D(-contentSize.x / 2.0, elementSize.y)
+            Positioning.BottomRight -> anchor + Vector2D(-contentSize.x, elementSize.y)
         }
 
         // Fallback for Top -> Bottom if not enough space on top
@@ -265,8 +253,8 @@ class PopupsManager(
             temp = Vector2D(temp.x, anchor.y + elementSize.y)
         }
         // Fallback for Bottom -> Top if not enough space on bottom
-        else if (temp.y + contentSize.y > bodyHeight && anchor.y - elementSize.y - contentSize.y >= 0) {
-            temp = Vector2D(temp.x, anchor.y - elementSize.y - contentSize.y)
+        else if (temp.y + contentSize.y > bodyHeight && anchor.y - contentSize.y >= 0) {
+            temp = Vector2D(temp.x, anchor.y - contentSize.y)
         }
 
         // Fallback for Left/Right boundary collisions
