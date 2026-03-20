@@ -68,7 +68,7 @@ private class NullKontainerTracker : KontainerTracker {
  */
 internal class LiveKontainerTracker : KontainerTracker {
 
-    private val lock = Object()
+    private val lock = Any()
 
     private val instances = WeakHashMap<Kontainer, Instant>()
 
