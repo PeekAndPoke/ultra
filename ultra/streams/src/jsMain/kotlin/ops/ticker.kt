@@ -4,20 +4,64 @@ import de.peekandpoke.ultra.streams.Stream
 import de.peekandpoke.ultra.streams.StreamSourceImpl
 import kotlinx.browser.window
 import kotlin.js.Date
-import kotlin.math.round
 import kotlin.time.Duration
 
-fun ticker(intervalMs: Int): Stream<Long> = Ticker(intervalMs)
+data class TickerFrame(val count: Int, val currentTime: Double, val deltaTime: Double)
 
-fun ticker(interval: Duration): Stream<Long> = ticker(interval.inWholeMilliseconds.toInt())
+private fun initial() = TickerFrame(count = 0, currentTime = Date.now(), deltaTime = 0.0)
+
+fun ticker(intervalMs: Int): Stream<TickerFrame> = Ticker(intervalMs)
+
+fun ticker(interval: Duration): Stream<TickerFrame> = ticker(interval.inWholeMilliseconds.toInt())
+
+fun animTicker(): Stream<TickerFrame> = AnimTicker()
+
+internal class AnimTicker : StreamSourceImpl<TickerFrame>(initial()) {
+
+    private var requestId: Int? = null
+    private var previousTime: Double? = null
+    private var count: Int = 0
+
+    override fun onSub() {
+        if (requestId == null) {
+            scheduleFrame()
+        }
+    }
+
+    override fun onUnSub() {
+        if (subscriptions.isEmpty() && requestId != null) {
+            window.cancelAnimationFrame(requestId!!)
+            requestId = null
+            previousTime = null
+        }
+    }
+
+    private fun scheduleFrame() {
+        requestId = window.requestAnimationFrame(::handler)
+    }
+
+    private fun handler(timestamp: Double) {
+        val delta = previousTime?.let { timestamp - it } ?: 0.0
+        previousTime = timestamp
+        count++
+
+        this.invoke(TickerFrame(count = count, currentTime = timestamp, deltaTime = delta))
+
+        if (subscriptions.isNotEmpty()) {
+            scheduleFrame()
+        } else {
+            requestId = null
+        }
+    }
+}
 
 internal class Ticker(
     private val intervalMs: Int,
-) : StreamSourceImpl<Long>(0) {
+) : StreamSourceImpl<TickerFrame>(initial()) {
 
-    private val start = Date.now()
-
+    private var previousTime: Double? = null
     private var interval: Int? = null
+    private var count: Int = 0
 
     override fun onSub() {
         if (interval == null) {
@@ -29,14 +73,16 @@ internal class Ticker(
         if (subscriptions.isEmpty() && interval != null) {
             window.clearInterval(interval!!)
             interval = null
+            previousTime = null
         }
     }
 
     private fun handler() {
         val now = Date.now()
+        val delta = previousTime?.let { now - it } ?: 0.0
+        previousTime = now
+        count++
 
-        val counter = round((now - start) / intervalMs).toLong()
-
-        this.invoke(counter)
+        this.invoke(TickerFrame(count = count, currentTime = now, deltaTime = delta))
     }
 }

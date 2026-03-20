@@ -30,7 +30,7 @@ class ChartJsExample(ctx: NoProps) : PureComponent(ctx) {
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private val factor by subscribingTo(ticker(1.seconds).map { 1.0 + sin(it * 10 * PI / 180.0) })
+    private val factor by subscribingTo(ticker(1.seconds).map { 1.0 + sin(it.count * 10 * PI / 180.0) })
 
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 

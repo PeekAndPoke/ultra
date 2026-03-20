@@ -29,7 +29,7 @@ class TickerComponent(ctx: Ctx<Props>) : Component<TickerComponent.Props>(ctx) {
 
     private val tick = ticker(props.delay)
 
-    private val currentTick: Long by subscribingTo(tick)
+    private val currentTick by subscribingTo(tick)
 
     //  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 

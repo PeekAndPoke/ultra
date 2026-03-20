@@ -11,10 +11,10 @@ class CutoffTickerSpec : StringSpec({
     "cutoffWhen with ticker stops producing values after unsubscribe" {
 
         val predicate = StreamSource(false)
-        val received = mutableListOf<Long>()
+        val received = mutableListOf<TickerFrame>()
 
         // We keep track of the ticker values, so we can see if the ticker keeps producing values or not
-        var lastTickerValue = 0L
+        var lastTickerValue = TickerFrame(count = 0, currentTime = 0.0, deltaTime = 0.0)
         val cutoff = ticker(20)
             .onEach { lastTickerValue = it }
             .cutoffWhen(predicate)
@@ -54,9 +54,9 @@ class CutoffTickerSpec : StringSpec({
     "cutoffWhen with ticker stops the ticker while predicate is true and resumes when predicate becomes false again" {
 
         val predicate = StreamSource(false)
-        val received = mutableListOf<Long>()
+        val received = mutableListOf<TickerFrame>()
 
-        var lastTickerValue = 0L
+        var lastTickerValue = TickerFrame(count = 0, currentTime = 0.0, deltaTime = 0.0)
         val cutoff = ticker(20)
             .onEach { lastTickerValue = it }
             .cutoffWhen(predicate)
@@ -96,7 +96,7 @@ class CutoffTickerSpec : StringSpec({
     "cutoffWhenNot with ticker stops producing values after unsubscribe" {
 
         val predicate = StreamSource(true)
-        val received = mutableListOf<Long>()
+        val received = mutableListOf<TickerFrame>()
 
         val cutoff = ticker(20).cutoffWhenNot(predicate)
 
