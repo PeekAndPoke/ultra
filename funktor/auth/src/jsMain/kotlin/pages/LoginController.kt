@@ -477,7 +477,6 @@ class LoginController<USER>(
         }
     }
 
-
     private suspend fun doSignup(request: AuthSignUpRequest) = noDblClick.runBlocking {
         // Clear any previous message
         displayState = displayState.withMessage(message = null)

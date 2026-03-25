@@ -351,7 +351,7 @@ class MpLocalDateRangeSpec : StringSpec({
         range.contains(MpLocalDate.parse("2024-01-01")) shouldBe true
         range.contains(MpLocalDate.parse("2024-01-15")) shouldBe true
         range.contains(MpLocalDate.parse("2024-01-30")) shouldBe true
-        range.contains(MpLocalDate.parse("2024-01-31")) shouldBe false  // to is exclusive
+        range.contains(MpLocalDate.parse("2024-01-31")) shouldBe false // to is exclusive
         range.contains(MpLocalDate.parse("2023-12-31")) shouldBe false
     }
 

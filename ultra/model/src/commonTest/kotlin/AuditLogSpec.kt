@@ -50,8 +50,8 @@ class AuditLogSpec : StringSpec({
         val last2 = log.last(2)
 
         last2 shouldHaveSize 2
-        last2[0].message shouldBe "b"  // ts 3000 first (descending)
-        last2[1].message shouldBe "c"  // ts 2000 second
+        last2[0].message shouldBe "b" // ts 3000 first (descending)
+        last2[1].message shouldBe "c" // ts 2000 second
     }
 
     "last(n) with n larger than entries returns all sorted" {

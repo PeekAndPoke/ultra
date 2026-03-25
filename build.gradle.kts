@@ -59,7 +59,6 @@ subprojects {
     }
 }
 
-
 rootProject.plugins.withType<YarnPlugin> {
     rootProject.the<YarnRootExtension>().apply {
         // Don't fail the build when yarn.lock changes (optional but common)

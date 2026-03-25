@@ -2,7 +2,6 @@ package io.peekandpoke.ultra.html
 
 import de.peekandpoke.ultra.html.createSrcSet
 
-
 /**
  * Represents an image src set
  */

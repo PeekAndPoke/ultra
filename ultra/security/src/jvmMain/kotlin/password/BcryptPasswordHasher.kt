@@ -31,7 +31,6 @@ class BcryptPasswordHasher(
         )
     }
 
-
     override fun check(plaintext: String?, hash: PasswordHasher.Hash?): Boolean {
         if (plaintext == null || hash == null || hash.id != id) {
             return false

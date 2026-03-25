@@ -39,7 +39,6 @@ class WeakSetSpec : StringSpec() {
             set.isEmpty().shouldBeTrue()
         }
 
-
         "add and contains should work" {
             val s = WeakSet<String>()
 
@@ -134,4 +133,3 @@ class WeakSetSpec : StringSpec() {
         }
     }
 }
-
