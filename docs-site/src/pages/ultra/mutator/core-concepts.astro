@@ -25,6 +25,7 @@ import {Code} from 'astro:components';
     fun isModified(): Boolean // Has the value changed since creation / last commit?
     fun getInitialValue(): V  // The value at creation / last commit
     fun commit()              // Accept current value as new baseline
+    fun reset(): V            // Revert to initial value
 
     fun modifyValue(block: (V) -> V)  // Transform the value
 }`} lang="kotlin" theme="vitesse-dark"/>

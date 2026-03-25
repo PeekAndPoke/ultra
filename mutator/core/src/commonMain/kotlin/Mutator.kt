@@ -14,8 +14,8 @@ interface Mutator<V> : GetAndSet<V> {
         initial: V,
         private val subscriptions: Observable.Subscriptions<V> = Observable.Subscriptions(),
     ) : Mutator<V>, Observable<V> by subscriptions {
-        private var _initial = initial
-        private var _value = _initial
+        private var _initial = snapshotInitial(initial)
+        private var _value = initial
 
         override fun get(): V = _value
 
@@ -30,9 +30,27 @@ interface Mutator<V> : GetAndSet<V> {
         }
 
         override fun commit() {
-            _initial = _value
+            _initial = snapshotInitial(_value)
             notifyObservers()
         }
+
+        override fun reset(): V {
+            _value = snapshotInitial(_initial)
+            notifyObservers()
+            return _value
+        }
+
+        /**
+         * Creates a snapshot of the value for use as the initial/baseline value.
+         *
+         * Override this in subclasses that wrap mutable values (e.g. collections)
+         * to return a defensive copy, so that in-place mutations to [_value] don't
+         * also modify [_initial].
+         *
+         * The default implementation returns the value as-is, which is correct
+         * for immutable values like data classes.
+         */
+        protected open fun snapshotInitial(value: V): V = value
 
         fun <X> X.notifyObservers(): X {
             subscriptions.emit(_value)
@@ -74,6 +92,11 @@ interface Mutator<V> : GetAndSet<V> {
      * Commits the current value, making it the initial value.
      */
     fun commit()
+
+    /**
+     * Resets the value back to the initial value.
+     */
+    fun reset(): V = set(getInitialValue())
 
     /**
      * Modifies the value directly without the [Mutator].

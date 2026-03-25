@@ -11,6 +11,8 @@ class MapMutatorImpl<K, V>(
     private val childToMutator: V.() -> Mutator<V>,
 ) : Mutator.Base<MutableMap<K, V>>(initial.toMutableMap()), MapMutator<K, V> {
 
+    override fun snapshotInitial(value: MutableMap<K, V>): MutableMap<K, V> = value.toMutableMap()
+
     override fun getChildMutator(child: V): Mutator<V> = childToMutator(child)
 
     override val entries: MutableSet<MutableMap.MutableEntry<K, Mutator<V>>>

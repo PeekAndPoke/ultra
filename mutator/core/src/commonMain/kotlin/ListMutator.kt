@@ -15,6 +15,8 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
     Mutator.Base<MutableList<V>>(value.toMutableList()),
     ListMutator<V> {
 
+    override fun snapshotInitial(value: MutableList<V>): MutableList<V> = value.toMutableList()
+
     /**
      * Iterator impl
      */

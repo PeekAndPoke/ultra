@@ -3,7 +3,9 @@ package io.peekandpoke.mutator
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.mutator.domain.Address
-import io.peekandpoke.mutator.domain.mutator
+import io.peekandpoke.mutator.domain.city
+import io.peekandpoke.mutator.domain.mutate
+import io.peekandpoke.mutator.domain.street
 
 class MutatorBaseSpec : StringSpec({
 
@@ -104,6 +106,138 @@ class MutatorBaseSpec : StringSpec({
         mutator.commit()
 
         mutator.getInitialValue() shouldBe newAddress
+    }
+
+    "reset() reverts to initial value" {
+        val address = Address("Street", "City", "Zip")
+        val mutator = address.mutator()
+
+        mutator.set(Address("Other", "City", "Zip"))
+        mutator.isModified() shouldBe true
+
+        mutator.reset()
+
+        mutator.get() shouldBe address
+        mutator.isModified() shouldBe false
+    }
+
+    "reset() after commit reverts to committed value" {
+        val address = Address("Street", "City", "Zip")
+        val mutator = address.mutator()
+        val committed = Address("Committed", "City", "Zip")
+
+        mutator.set(committed)
+        mutator.commit()
+        mutator.set(Address("Other", "City", "Zip"))
+
+        mutator.reset()
+
+        mutator.get() shouldBe committed
+        mutator.isModified() shouldBe false
+    }
+
+    "reset() works on data class mutator via mutate" {
+        val address = Address("Street", "City", "Zip")
+
+        val result = address.mutate {
+            street = "Changed"
+            city = "Changed"
+            reset()
+        }
+
+        result shouldBe address
+    }
+
+    "isModified() works on ListMutator" {
+        val list = listOf(
+            Address("Street 1", "City", "Zip"),
+        )
+        val mutator = list.mutator()
+
+        mutator.isModified() shouldBe false
+        mutator.add(Address("Street 2", "City", "Zip"))
+        mutator.isModified() shouldBe true
+    }
+
+    "isModified() works on SetMutator" {
+        val set = setOf(
+            Address("Street 1", "City", "Zip"),
+        )
+        val mutator = set.mutator()
+
+        mutator.isModified() shouldBe false
+        mutator.add(Address("Street 2", "City", "Zip"))
+        mutator.isModified() shouldBe true
+    }
+
+    "isModified() works on MapMutator" {
+        val map = mapOf(
+            "a" to Address("Street 1", "City", "Zip"),
+        )
+        val mutator = map.mutator()
+
+        mutator.isModified() shouldBe false
+        mutator.put("b", mutator.getChildMutator(Address("Street 2", "City", "Zip")))
+        mutator.isModified() shouldBe true
+    }
+
+    "reset() works on ListMutator" {
+        val list = listOf(
+            Address("Street 1", "City", "Zip"),
+        )
+        val mutator = list.mutator()
+
+        mutator.add(Address("Street 2", "City", "Zip"))
+        mutator.isModified() shouldBe true
+
+        mutator.reset()
+
+        mutator.get() shouldBe list
+        mutator.isModified() shouldBe false
+    }
+
+    "reset() works on SetMutator" {
+        val set = setOf(
+            Address("Street 1", "City", "Zip"),
+        )
+        val mutator = set.mutator()
+
+        mutator.add(Address("Street 2", "City", "Zip"))
+        mutator.isModified() shouldBe true
+
+        mutator.reset()
+
+        mutator.get() shouldBe set
+        mutator.isModified() shouldBe false
+    }
+
+    "reset() works on MapMutator" {
+        val map = mapOf(
+            "a" to Address("Street 1", "City", "Zip"),
+        )
+        val mutator = map.mutator()
+
+        mutator.put("b", mutator.getChildMutator(Address("Street 2", "City", "Zip")))
+        mutator.isModified() shouldBe true
+
+        mutator.reset()
+
+        mutator.get() shouldBe map
+        mutator.isModified() shouldBe false
+    }
+
+    "commit() then isModified() works on ListMutator" {
+        val list = listOf(
+            Address("Street 1", "City", "Zip"),
+        )
+        val mutator = list.mutator()
+
+        mutator.add(Address("Street 2", "City", "Zip"))
+        mutator.commit()
+        mutator.isModified() shouldBe false
+
+        mutator.add(Address("Street 3", "City", "Zip"))
+        mutator.isModified() shouldBe true
     }
 
     "set() notifies observers" {

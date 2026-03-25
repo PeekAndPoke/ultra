@@ -83,7 +83,7 @@ mutator.removeAt(0)
 mutator.clear()
 
 // Check the result
-mutator.get()  // [Address("Street 3", "City 3", "Zip 3")]`} lang="kotlin" theme="vitesse-dark"/>
+mutator()  // [Address("Street 3", "City 3", "Zip 3")]`} lang="kotlin" theme="vitesse-dark"/>
 
     <h3>Nested list in a data class</h3>
 
@@ -128,7 +128,7 @@ val obj = WithCollections(
 // Modify elements via iteration
 val updated = obj.mutate {
     tags.forEach { mutator ->
-        if (mutator.get().street == "Street 1") {
+        if (mutator().street == "Street 1") {
             mutator.street = "Modified Street"
         }
     }

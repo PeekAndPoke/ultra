@@ -120,13 +120,13 @@ All libraries are published on [Maven Central](https://central.sonatype.com/name
 
 ```kotlin
 dependencies {
-    implementation("io.peekandpoke.ultra:mutator-core:0.104.0")
-    ksp("io.peekandpoke.ultra:mutator-ksp:0.104.0")
-    implementation("io.peekandpoke.ultra:kontainer:0.104.0")
-    implementation("io.peekandpoke.ultra:slumber:0.104.0")
-    implementation("io.peekandpoke.ultra:streams:0.104.0")
-    implementation("io.peekandpoke.ultra:karango-core:0.104.0")
-    implementation("io.peekandpoke.kraft:core:0.104.0")
+    implementation("io.peekandpoke.ultra:mutator-core:0.104.1")
+    ksp("io.peekandpoke.ultra:mutator-ksp:0.104.1")
+    implementation("io.peekandpoke.ultra:kontainer:0.104.1")
+    implementation("io.peekandpoke.ultra:slumber:0.104.1")
+    implementation("io.peekandpoke.ultra:streams:0.104.1")
+    implementation("io.peekandpoke.ultra:karango-core:0.104.1")
+    implementation("io.peekandpoke.kraft:core:0.104.1")
 }
 ```
 

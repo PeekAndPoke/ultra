@@ -26,6 +26,8 @@ class SetMutatorImpl<V>(initial: Set<V>, private val childToMutator: V.() -> Mut
     Mutator.Base<MutableSet<V>>(initial.toMutableSet()),
     SetMutator<V> {
 
+    override fun snapshotInitial(value: MutableSet<V>): MutableSet<V> = value.toMutableSet()
+
     /**
      * Iterator impl
      */

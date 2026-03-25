@@ -46,15 +46,16 @@ mutator.onChange { updatedOrder ->
 
 // Each sub-form binds directly to its sub-mutator:
 fun renderCustomerFields(m: Mutator<OrderForm>) {
-    // Changing m.customer.name triggers onChange all the way to the root
-    textInput(value = m.customer.name, onChange = { m.customer.name = it })
-    textInput(value = m.customer.email, onChange = { m.customer.email = it })
+    // Changing m.customer.name triggers onChange all the way to the root.
+    // The generated properties are mutable, so you can pass them as KMutableProperty references:
+    textInput(prop = m.customer::name)
+    textInput(prop = m.customer::email)
 }
 
 fun renderAddressFields(m: Mutator<Address>) {
-    textInput(value = m.street, onChange = { m.street = it })
-    textInput(value = m.city,   onChange = { m.city = it })
-    textInput(value = m.zip,    onChange = { m.zip = it })
+    textInput(prop = m::street)
+    textInput(prop = m::city)
+    textInput(prop = m::zip)
 }
 
 // No callback wiring between levels!
@@ -81,7 +82,7 @@ fun onSave() {
 
 // On discard — reset to the last committed state:
 fun onDiscard() {
-    mutator.set(mutator.getInitialValue())
+    mutator.reset()
     // isModified() is now false — all changes reverted
 }`} lang="kotlin" theme="vitesse-dark"/>
 
@@ -235,7 +236,7 @@ val mutator = article.mutator()
 
 // Render each block based on its type:
 mutator.blocks.forEach { blockMutator ->
-    when (val block = blockMutator.get()) {
+    when (val block = blockMutator()) {
         is ContentBlock.Text -> blockMutator.cast(block) {
             textArea(value = body, onChange = { body = it })
         }

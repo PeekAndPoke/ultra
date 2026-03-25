@@ -44,7 +44,7 @@ sealed interface PaymentMethod {
 
 val updated = methods.mutate {
     forEach { mutator ->
-        when (val value = mutator.get()) {
+        when (val value = mutator()) {
             is PaymentMethod.CreditCard ->
                 mutator.cast(value) { expiry = "12/28" }
 
@@ -88,7 +88,7 @@ cards.forEach { cardMutator ->
 
 val updated = items.mutate {
     forEachIndexed { index, mutator ->
-        when (val v = mutator.get()) {
+        when (val v = mutator()) {
             is SealedInterface.One -> mutator.cast(v) { value += "-${'$'}index" }
             is SealedInterface.Two -> mutator.cast(v) { value += index }
         }
