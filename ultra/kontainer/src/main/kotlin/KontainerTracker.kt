@@ -1,13 +1,10 @@
 package de.peekandpoke.ultra.kontainer
 
-import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.*
 
 /**
  * Keeps track of instantiated kontainers and services
- *
- * TODO: also keep track of services... to find leaks, where services are not disposed
  */
 interface KontainerTracker {
 
@@ -75,10 +72,8 @@ internal class LiveKontainerTracker : KontainerTracker {
     override fun isLive(): Boolean = true
 
     override fun track(kontainer: Kontainer) {
-        KontainerCoroutineScope.launch {
-            synchronized(lock) {
-                instances[kontainer] = Instant.now()
-            }
+        synchronized(lock) {
+            instances[kontainer] = Instant.now()
         }
     }
 

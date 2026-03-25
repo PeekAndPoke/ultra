@@ -1,0 +1,116 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { kontainerSidebar } from '../../../data/kontainer-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Modules" sidebar={kontainerSidebar} description="Group services into reusable Kontainer modules">
+
+<h1>Modules</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Group related services into reusable modules. Libraries ship a module,
+  applications include it — with optional overrides.
+</p>
+
+<h2>What are modules?</h2>
+
+<p>A Kontainer module is a reusable block of service definitions. Instead of copying service registrations across projects, you define them once in a module and include it.</p>
+
+<p>Modules are useful for:</p>
+<ul>
+  <li><strong>Library authors</strong> — bundle your library's services into a module users can drop in</li>
+  <li><strong>Large applications</strong> — organize services by feature area</li>
+  <li><strong>Customization</strong> — provide sensible defaults that users can override</li>
+</ul>
+
+<h2>Defining a simple module</h2>
+
+<Code code={`import de.peekandpoke.ultra.kontainer.module
+
+// Some services
+interface Storage {
+    val name: String
+}
+
+class FileStorage : Storage {
+    override val name = "FileStorage"
+}
+
+class Database(val storage: Storage)
+
+// Define the module
+val databaseModule = module {
+    singleton(Database::class)
+    singleton(Storage::class, FileStorage::class)
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Using a module</h2>
+
+<Code code={`val blueprint = kontainer {
+    module(databaseModule)
+}
+
+val kontainer = blueprint.create()
+println(kontainer.get(Database::class).storage.name)  // "FileStorage"`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Overriding module services</h2>
+
+<p>Any service defined by a module can be overridden. Just register the same type after including the module:</p>
+
+<Code code={`class MemoryStorage : Storage {
+    override val name = "MemoryStorage"
+}
+
+val blueprint = kontainer {
+    module(databaseModule)
+
+    // Override the Storage implementation
+    singleton(Storage::class, MemoryStorage::class)
+}
+
+val kontainer = blueprint.create()
+println(kontainer.get(Database::class).storage.name)  // "MemoryStorage"`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Parameterized modules</h2>
+
+<p>Modules can accept parameters — up to 5 — for configuration at inclusion time:</p>
+
+<Code code={`class Service(val sum: Int)
+
+// Module with three parameters
+val configModule = module { a: Int, b: Int, c: Int ->
+    instance(Service(a + b + c))
+}
+
+val blueprint = kontainer {
+    module(configModule, 1, 10, 100)
+}
+
+val kontainer = blueprint.create()
+println(kontainer.get(Service::class).sum)  // 111`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Composing modules</h2>
+
+<p>Modules can include other modules, enabling layered architectures:</p>
+
+<Code code={`val coreModule = module {
+    singleton(Counter::class)
+}
+
+val appModule = module {
+    module(coreModule)
+    singleton(MyService::class)
+}
+
+val blueprint = kontainer {
+    module(appModule)
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/kontainer/advanced" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Advanced topics &rarr;
+  </a>
+</div>
+
+</DocsLayout>

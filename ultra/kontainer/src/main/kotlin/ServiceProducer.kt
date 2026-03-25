@@ -18,7 +18,6 @@ class ServiceProducer<T : Any> internal constructor(
     val creates: KClass<out T>,
     val creator: (kontainer: Kontainer, params: Array<Any?>) -> T,
 ) {
-    @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
     companion object {
         /**
          * Creates a producer for the Kontainer itself, making it possible to inject the Kontainer.

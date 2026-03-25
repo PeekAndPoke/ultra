@@ -1,0 +1,276 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { kontainerSidebar } from '../../../data/kontainer-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Service Lifecycle" sidebar={kontainerSidebar} description="Per-request containers, lifecycle comparison, and automatic semi-dynamic promotion in Kontainer">
+
+<h1>Service Lifecycle</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  How Kontainer's lifecycle model enables per-request scoping, stateful dynamic services,
+  and automatic cleanup — without manual wiring.
+</p>
+
+<h2 id="per-request-containers">Per-request containers</h2>
+
+<p>The real power of Kontainer's lifecycle model shows up on the server side. The pattern is simple and inspired by PHP's request model:</p>
+
+<ol>
+  <li>Define a <strong>blueprint once</strong> at application startup</li>
+  <li>For every incoming request (or CLI command, scheduled job, etc.), <strong>create a fresh container</strong> from the blueprint</li>
+  <li>Dynamic services carry <strong>per-request state</strong> — the current user, collected metrics, audit context</li>
+  <li>When the request is done, the container and all its dynamic services are <strong>garbage collected</strong> — clean slate, no leaks</li>
+</ol>
+
+<p>Singletons survive across requests (database pools, caches, configuration). Dynamic services are scoped to exactly one unit of work. This gives you the simplicity of "everything is fresh per request" without the cost of recreating stateless services.</p>
+
+<Code code={`// Define once at app startup
+val blueprint = kontainer {
+    // Shared across all requests
+    singleton(DatabasePool::class)
+    singleton(UserRepository::class)
+    singleton(AuditLogRepository::class)
+
+    // Fresh per request — carry request-scoped state
+    dynamic(RequestContext::class)
+    dynamic(RequestInsights::class)
+    dynamic(AuditLog::class)
+}
+
+// On each incoming request:
+val kontainer = blueprint.create {
+    with(RequestContext::class) {
+        RequestContext(userId = authenticatedUser.id, traceId = request.traceId)
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h3>Example: Injecting the current user everywhere</h3>
+
+<p>Since <code>RequestContext</code> is a dynamic service, any service can inject it and access the current user — without passing it through every method call:</p>
+
+<Code code={`class RequestContext(val userId: String, val traceId: String)
+
+class AuditLog(private val ctx: RequestContext) {
+    private val entries = mutableListOf<String>()
+
+    fun record(action: String) {
+        entries.add("[${'$'}{ctx.traceId}] User ${'$'}{ctx.userId}: ${'$'}action")
+    }
+
+    fun getEntries() = entries.toList()
+}
+
+class OrderService(
+    private val ctx: RequestContext,
+    private val auditLog: AuditLog,
+    private val repo: OrderRepository,
+) {
+    fun placeOrder(item: String) {
+        repo.save(Order(item, ctx.userId))
+        auditLog.record("placed order for ${'$'}item")
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>The <code>AuditLog</code> and <code>OrderService</code> both get the same <code>RequestContext</code> instance — scoped to this request. Next request, fresh instances.</p>
+
+<h3>Example: Per-request metrics collection</h3>
+
+<p>Collect metrics throughout request processing, then flush them at the end. This pattern is used extensively in <strong>Funktor Insights</strong>:</p>
+
+<Code code={`class RequestInsights {
+    private val dbQueries = mutableListOf<QueryRecord>()
+    private val logs = mutableListOf<LogEntry>()
+    private val timings = mutableMapOf<String, Long>()
+
+    fun recordDbQuery(query: String, durationMs: Long) {
+        dbQueries.add(QueryRecord(query, durationMs))
+    }
+
+    fun recordLog(level: String, message: String) {
+        logs.add(LogEntry(level, message))
+    }
+
+    fun recordTiming(label: String, durationMs: Long) {
+        timings[label] = durationMs
+    }
+
+    fun summary() = InsightsSummary(
+        totalDbQueries = dbQueries.size,
+        totalDbTimeMs = dbQueries.sumOf { it.durationMs },
+        logs = logs.toList(),
+        timings = timings.toMap(),
+    )
+}
+
+// Any service in the request can record metrics
+class UserRepository(private val insights: RequestInsights) {
+    fun findById(id: String): User {
+        val start = System.currentTimeMillis()
+        val result = db.query("SELECT * FROM users WHERE id = ?", id)
+        insights.recordDbQuery("findById", System.currentTimeMillis() - start)
+        return result
+    }
+}
+
+// At the end of the request, flush the collected insights
+val summary = kontainer.get(RequestInsights::class).summary()
+metricsService.report(summary)`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Because <code>RequestInsights</code> is dynamic, every service in the request writes to the same instance. When the request ends and the container is garbage collected, all that state goes with it — no manual cleanup needed.</p>
+
+<h2 id="lifecycles-side-by-side">Lifecycles side by side</h2>
+
+<p>The best way to understand the three lifecycles is to see them running together. Here we register one counter as each type and create three container instances, calling each counter three times per container:</p>
+
+<Code code={`abstract class Counter {
+    private var count = 0
+    fun next() = ++count
+}
+
+class SingletonCounter : Counter()
+class DynamicCounter : Counter()
+class PrototypeCounter : Counter()
+
+val blueprint = kontainer {
+    singleton(SingletonCounter::class)
+    dynamic(DynamicCounter::class)
+    prototype(PrototypeCounter::class)
+}
+
+for (round in 1..3) {
+    println("Round #${'$'}round")
+    val kontainer = blueprint.create()
+
+    repeat(3) {
+        val s = kontainer.get(SingletonCounter::class).next()
+        val d = kontainer.get(DynamicCounter::class).next()
+        val p = kontainer.get(PrototypeCounter::class).next()
+        println("  singleton: ${'$'}s  dynamic: ${'$'}d  prototype: ${'$'}p")
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Output:</p>
+
+<div class="not-prose my-6">
+  <table class="w-full text-sm text-left font-mono">
+    <thead>
+      <tr class="border-b border-white/10">
+        <th class="py-2 text-white font-semibold font-sans">Container</th>
+        <th class="py-2 text-white font-semibold font-sans">Call</th>
+        <th class="py-2 text-brand-400 font-semibold">singleton</th>
+        <th class="py-2 text-brand-400 font-semibold">dynamic</th>
+        <th class="py-2 text-brand-400 font-semibold">prototype</th>
+      </tr>
+    </thead>
+    <tbody class="text-gray-400">
+      <tr class="border-b border-white/5"><td class="py-1">Round #1</td><td class="py-1">1st</td><td class="py-1">1</td><td class="py-1">1</td><td class="py-1">1</td></tr>
+      <tr class="border-b border-white/5"><td class="py-1"></td><td class="py-1">2nd</td><td class="py-1">2</td><td class="py-1">2</td><td class="py-1">1</td></tr>
+      <tr class="border-b border-white/10"><td class="py-1"></td><td class="py-1">3rd</td><td class="py-1">3</td><td class="py-1">3</td><td class="py-1">1</td></tr>
+      <tr class="border-b border-white/5"><td class="py-1">Round #2</td><td class="py-1">1st</td><td class="py-1">4</td><td class="py-1">1</td><td class="py-1">1</td></tr>
+      <tr class="border-b border-white/5"><td class="py-1"></td><td class="py-1">2nd</td><td class="py-1">5</td><td class="py-1">2</td><td class="py-1">1</td></tr>
+      <tr class="border-b border-white/10"><td class="py-1"></td><td class="py-1">3rd</td><td class="py-1">6</td><td class="py-1">3</td><td class="py-1">1</td></tr>
+      <tr class="border-b border-white/5"><td class="py-1">Round #3</td><td class="py-1">1st</td><td class="py-1">7</td><td class="py-1">1</td><td class="py-1">1</td></tr>
+      <tr class="border-b border-white/5"><td class="py-1"></td><td class="py-1">2nd</td><td class="py-1">8</td><td class="py-1">2</td><td class="py-1">1</td></tr>
+      <tr><td class="py-1"></td><td class="py-1">3rd</td><td class="py-1">9</td><td class="py-1">3</td><td class="py-1">1</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>Notice the pattern:</p>
+<ul>
+  <li><strong>Singleton</strong> keeps counting globally (1 &rarr; 9) — same instance across all three containers</li>
+  <li><strong>Dynamic</strong> resets to 1 each round — fresh instance per container, but stable within it</li>
+  <li><strong>Prototype</strong> is always 1 — brand new instance on every <code>.get()</code> call</li>
+</ul>
+
+<p>This is why dynamic services are the key to per-request state: they behave like singletons <em>within</em> a container (so all services in the same request share the same instance), but each new container gets a clean slate.</p>
+
+<h2 id="semi-dynamic">Automatic lifecycle promotion (semi-dynamic)</h2>
+
+<p>There's a subtle but important problem with mixing singletons and dynamic services. Consider this:</p>
+
+<Code code={`class RequestContext(val userId: String)   // dynamic — fresh per request
+
+class OrderService(val ctx: RequestContext)  // singleton — shared globally?`} lang="kotlin" theme="vitesse-dark" />
+
+<p>If <code>OrderService</code> were a true singleton, it would be created once and hold a reference to the <code>RequestContext</code> from the <em>first</em> request forever. Every subsequent request would see the wrong user. That's a bug.</p>
+
+<p>Kontainer prevents this automatically. When a service is defined as <code>singleton</code> but injects a <code>dynamic</code> service (directly or transitively), Kontainer <strong>promotes</strong> it to <strong>semi-dynamic</strong> — it behaves like a dynamic service, getting a fresh instance per container.</p>
+
+<Code code={`val blueprint = kontainer {
+    dynamic(RequestContext::class)
+
+    // Defined as singleton, but Kontainer detects that it injects
+    // a dynamic service and promotes it to semi-dynamic automatically.
+    singleton(OrderService::class)
+    singleton(AuditLog::class)
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>You don't need to do anything — Kontainer analyzes the dependency graph and makes the right call. The rule is simple:</p>
+
+<p><strong>If you depend on something that must be cleaned up per unit of work, you must be cleaned up too.</strong></p>
+
+<p>This promotion <strong>bubbles up the dependency tree</strong>. If service A injects service B, and B injects a dynamic service C, then both A and B become semi-dynamic — even though only C was explicitly marked as dynamic. The "contamination" flows from the leaves to the root, ensuring that no singleton accidentally holds onto stale per-request state.</p>
+
+<Code code={`class RequestContext(val userId: String)        // dynamic
+
+class AuditLog(val ctx: RequestContext)           // singleton → semi-dynamic (injects dynamic)
+
+class OrderService(val audit: AuditLog)           // singleton → semi-dynamic (injects semi-dynamic)
+
+class OrderController(val orders: OrderService)   // singleton → semi-dynamic (injects semi-dynamic)`} lang="kotlin" theme="vitesse-dark" />
+
+<p>The only services that remain true singletons are those with <strong>no transitive dependency</strong> on any dynamic service — like a database pool or a configuration object. Everything else is automatically scoped correctly.</p>
+
+<p>You can verify this at runtime using the <a href="/ultra/kontainer/advanced#debug-tools">debug tools</a> — the provider type will show <code>SemiDynamic</code> for promoted services.</p>
+
+<h2>Comparison</h2>
+
+<div class="not-prose my-8">
+  <table class="w-full text-sm text-left">
+    <thead>
+      <tr class="border-b border-white/10">
+        <th class="py-2 text-white font-semibold">Lifecycle</th>
+        <th class="py-2 text-white font-semibold">Created</th>
+        <th class="py-2 text-white font-semibold">Shared across containers</th>
+        <th class="py-2 text-white font-semibold">Use case</th>
+      </tr>
+    </thead>
+    <tbody class="text-gray-400">
+      <tr class="border-b border-white/5">
+        <td class="py-2"><code>singleton</code></td>
+        <td class="py-2">Once, globally</td>
+        <td class="py-2">Yes</td>
+        <td class="py-2">Stateless services, DB pools, configs</td>
+      </tr>
+      <tr class="border-b border-white/5">
+        <td class="py-2"><code>dynamic</code></td>
+        <td class="py-2">Once per container</td>
+        <td class="py-2">No</td>
+        <td class="py-2">Request context, user, audit logs, metrics</td>
+      </tr>
+      <tr class="border-b border-white/5">
+        <td class="py-2"><code>prototype</code></td>
+        <td class="py-2">Every injection / get()</td>
+        <td class="py-2">No</td>
+        <td class="py-2">Disposable, short-lived objects</td>
+      </tr>
+      <tr>
+        <td class="py-2"><em>semi-dynamic</em></td>
+        <td class="py-2">Once per container</td>
+        <td class="py-2">No</td>
+        <td class="py-2">Auto-promoted singletons that inject dynamic services</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/kontainer/injection" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Learn about injection &rarr;
+  </a>
+</div>
+
+</DocsLayout>

@@ -1,0 +1,117 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { kontainerSidebar } from '../../../data/kontainer-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Kontainer" sidebar={kontainerSidebar} description="Lightweight dependency injection for Kotlin">
+
+<h1>Kontainer — Dependency Injection, Done Right</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  A lightweight DI container for Kotlin. Constructor injection, lifecycle management,
+  and compile-time verification — no magic, no annotations, no surprises.
+</p>
+
+<h2>What is Kontainer?</h2>
+
+<p>Kontainer is a dependency injection container that uses a <strong>two-stage architecture</strong>: you define a blueprint, then create container instances from it. Services are injected via constructors — no annotations, no reflection tricks, no runtime surprises.</p>
+
+<Code code={`val blueprint = kontainer {
+    singleton(UserRepository::class)
+    singleton(UserService::class)
+    dynamic(RequestContext::class)
+}
+
+val kontainer = blueprint.create()
+val service = kontainer.get(UserService::class)`} lang="kotlin" theme="vitesse-dark" />
+
+<p>That's it. Define services, create a container, get what you need.</p>
+
+<h2>The core idea: stateful, scoped containers</h2>
+
+<p>Most DI containers give you a single, long-lived container. Kontainer is different — it's built around the idea that <strong>you create a fresh container for every unit of work</strong>.</p>
+
+<p>On the server side, every incoming HTTP request, CLI command, or scheduled job gets its own container instance, created from a shared blueprint. Singletons (database pools, configuration) are shared. But <strong>dynamic services are fresh per container</strong> — they can carry state that lives exactly as long as the request does, then gets garbage collected. Clean slate, every time.</p>
+
+<p>This unlocks powerful patterns:</p>
+
+<ul>
+  <li><strong>Inject the current user everywhere</strong> — set it once when the request starts, every service that needs it gets it via constructor injection. No parameter threading.</li>
+  <li><strong>Per-request metrics and audit logs</strong> — collect database query counts, timings, and log entries throughout a request. Flush at the end. No manual cleanup.</li>
+  <li><strong>Request-scoped caching</strong> — cache expensive lookups for the duration of one request without worrying about stale data across requests.</li>
+</ul>
+
+<p>Think of it as PHP's "shared nothing" model, but selective — you choose which services are global and which are per-request. This pattern is used extensively in <a href="/ultra/funktor/">Funktor</a>'s Insights module for production observability.</p>
+
+<p>Read more about this in <a href="/ultra/kontainer/lifecycle">Service Lifecycle</a>.</p>
+
+<h2>Why Kontainer?</h2>
+
+<p><strong>Not another Dagger clone.</strong> Kontainer doesn't generate code at compile time or scan classpath at runtime. Instead, it validates the entire dependency graph on first use and gives you clear error messages when something doesn't wire up.</p>
+
+<ul>
+  <li><strong>Pure Kotlin DSL</strong> — no annotations, no XML, no YAML. Your DI config is code.</li>
+  <li><strong>Three lifecycles</strong> — Singleton (global), Dynamic (per-container), Prototype (per-injection). Choose what fits.</li>
+  <li><strong>Validated on first use</strong> — missing dependencies, ambiguous services, and inconsistencies are caught immediately with clear messages.</li>
+  <li><strong>Constructor injection</strong> — services declare what they need in their constructor. Kontainer fills it in.</li>
+  <li><strong>No classpath scanning</strong> — you control exactly what goes into the container.</li>
+</ul>
+
+<h2>What you get</h2>
+
+<div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Service Lifecycles</h3>
+    <p class="text-sm text-gray-400">Singleton, Dynamic, and Prototype — each with clear, predictable behavior.</p>
+  </div>
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Constructor Injection</h3>
+    <p class="text-sm text-gray-400">Declare dependencies in your constructor. Kontainer resolves them automatically.</p>
+  </div>
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Factory Methods</h3>
+    <p class="text-sm text-gray-400">When constructors aren't enough, use factory lambdas with up to 10 injected parameters.</p>
+  </div>
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Lazy &amp; List Injection</h3>
+    <p class="text-sm text-gray-400"><code>Lazy&lt;T&gt;</code>, <code>List&lt;T&gt;</code>, <code>Lookup&lt;T&gt;</code> — inject one, many, or defer.</p>
+  </div>
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Modules</h3>
+    <p class="text-sm text-gray-400">Group services into reusable modules. Libraries ship a module, apps include it.</p>
+  </div>
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Debug Tools</h3>
+    <p class="text-sm text-gray-400">Code location tracking, container dumps, and debug info for every service.</p>
+  </div>
+</div>
+
+<h2>Quick taste</h2>
+
+<p>A service with dependencies, resolved automatically:</p>
+
+<Code code={`class UserRepository {
+    fun findById(id: String) = "User #${'$'}id"
+}
+
+class UserService(private val repo: UserRepository) {
+    fun greet(id: String) = "Hello, ${'$'}{repo.findById(id)}!"
+}
+
+val blueprint = kontainer {
+    singleton(UserRepository::class)
+    singleton(UserService::class)
+}
+
+val kontainer = blueprint.create()
+println(kontainer.get(UserService::class).greet("42"))
+// "Hello, User #42!"`} lang="kotlin" theme="vitesse-dark" />
+
+<div class="not-prose mt-8">
+  <a href="/ultra/kontainer/getting-started" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Get started &rarr;
+  </a>
+</div>
+
+</DocsLayout>

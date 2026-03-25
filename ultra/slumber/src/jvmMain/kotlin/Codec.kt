@@ -9,6 +9,15 @@ import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.createType
 
+/**
+ * Orchestrates serialization (slumber) and deserialization (awake) using a [SlumberConfig].
+ *
+ * Uses a two-pass strategy: the first pass uses a lightweight [Awaker.Context.Fast] / [Slumberer.Context.Fast]
+ * with no path tracking. If it fails, a second pass with full [Awaker.Context.Tracking] provides
+ * detailed error diagnostics including the exact path where deserialization failed.
+ *
+ * Use [Codec.default] for standard usage with built-in type support.
+ */
 @Suppress("Detekt:TooManyFunctions")
 open class Codec(
     val config: SlumberConfig,
@@ -16,6 +25,7 @@ open class Codec(
     companion object {
         private val class2typeCache = mutableMapOf<KClass<*>, KType>()
 
+        /** Default codec with built-in support for primitives, collections, data classes, datetime, enums, and polymorphism. */
         val default = Codec(
             config = SlumberConfig.default
         )
@@ -57,8 +67,10 @@ open class Codec(
         get() = Slumberer.Context.Tracking(this, attributes, "root")
 
 
+    /** Returns the [Awaker] registered for the given [type]. Throws if no awaker is found. */
     fun getAwaker(type: KType): Awaker = config.getAwaker(type)
 
+    /** Deserializes [data] into an object of the given [type]. Uses two-pass error handling. */
     @OptIn(ExperimentalContracts::class, ExperimentalExtendedContracts::class)
     fun awake(type: KType, data: Any?): Any? {
         contract {
@@ -68,6 +80,7 @@ open class Codec(
         return awakeInternal(type, data)
     }
 
+    /** Returns the [Slumberer] registered for the given [type]. Throws if no slumberer is found. */
     fun getSlumberer(type: KType): Slumberer = config.getSlumberer(type)
 
     internal fun <T : Any> awake(type: KClass<T>, data: Any?, context: Awaker.Context): T? {
@@ -91,7 +104,13 @@ open class Codec(
         } as? T?
     }
 
+    /** Serializes [data] as the given [targetType]. Uses two-pass error handling. */
+    @OptIn(ExperimentalContracts::class, ExperimentalExtendedContracts::class)
     fun slumber(targetType: KType, data: Any?): Any? {
+        contract {
+            (data != null) implies (returnsNotNull())
+        }
+
         return slumberInternal(targetType, data)
     }
 
@@ -111,15 +130,6 @@ open class Codec(
     }
 
     internal fun slumber(type: KType, data: Any?, context: Slumberer.Context): Any? {
-
-//        val slumberer = if (data == null) {
-//            getSlumberer(type)
-//        } else if (type.isSupertypeOf(data::class.starProjectedType)) {
-//            getSlumberer(data::class.starProjectedType)
-//        } else {
-//            getSlumberer(type)
-//        }
-//
         return getSlumberer(type).slumber(data, context)
     }
 

@@ -33,11 +33,14 @@ No "common-" prefix. Example: `:ultra:datetime`, `:ultra:reflection`.
 - `Placeholders`
 - `TypedKey`, `TypedAttributes`, `MutableTypedAttributes`
 - `recursion/` package
+- `maths/` package — `Ease` object, all easing functions (`In.*`, `Out.*`, `InOut.*`, `linear`, etc.),
+  `Ease.BoundFromTo`, `Ease.Timed`, `easeFn()`, `Ease.calc()`
 - JVM utils: `hashing.kt`, `encoding.kt`, `files.kt`, `network/NetworkUtils.kt`
 - JVM `classes.kt`, `strings.kt`, `numbers.kt` (platform actuals)
 - JS platform actuals (`strings_mp.kt`, `numbers.kt`, `WeakReference.kt`, `WeakSet.kt`, `RunSync.kt`)
 
-**Dependencies:** `kotlin-stdlib`, `kotlin-reflect` (for `Lookup` and `KType.isPrimitive`)
+**Dependencies:** `kotlin-stdlib`, `kotlin-reflect` (for `Lookup` and `KType.isPrimitive`),
+`:ultra:datetime` (Kronos for `Ease.Timed`)
 
 **Rationale:** Leaf utilities with no heavy deps. Every other module can depend on this cheaply.
 
@@ -124,23 +127,7 @@ modules that actually need date/time.
 
 ---
 
-### 6. `:ultra:maths` — Easing & animation math
-
-**What moves here:**
-
-- `de.peekandpoke.ultra.common.maths.*`
-- `Ease` object + `Ease.Fn` interface
-- All easing functions: `In.*`, `Out.*`, `InOut.*`, `linear`, `stuck`, `immediate`
-- `Ease.BoundFromTo`, `Ease.Timed`
-- `easeFn()`, `Ease.calc()`
-
-**Dependencies:** `:ultra:common`, `:ultra:datetime` (Kronos for `Ease.Timed`)
-
-**Rationale:** Only needed by animation/UI code (primarily Kraft).
-
----
-
-### 7. `:ultra:reflection` — JVM reflection utilities
+### 6. `:ultra:reflection` — JVM reflection utilities
 
 **What moves here:**
 
@@ -158,13 +145,25 @@ modules that actually need date/time.
 
 ---
 
+### 7. `:ultra:fixture` — Test data generators
+
+**What moves here:**
+
+- `de.peekandpoke.ultra.common.fixture.*` — `LoremIpsum`, `LoremCat`, `LoremPicsum`
+
+**Dependencies:** `:ultra:common`
+
+**Rationale:** Test data generators are a distinct concern. Useful for demos, tests, and prototyping
+but not needed by production code.
+
+---
+
 ### 8. `:ultra:extras` — Niche / optional utilities
 
 **What moves here:**
 
 - `de.peekandpoke.ultra.common.markup.*` — `ImageSrcSet`, `ImageSizes`, `CloudinaryImage`,
   `CloudinaryImageSrcSetGenerator`, `placeholders.kt`
-- `de.peekandpoke.ultra.common.fixture.*` — `LoremIpsum`, `LoremCat`, `LoremPicsum`
 - `de.peekandpoke.ultra.common.docs.*` (JVM) — `ExampleCodeExtractor`, `ExampleRunner`, `ExamplesToDocs`
 
 **Dependencies:** `:ultra:common`
@@ -176,31 +175,36 @@ modules that actually need date/time.
 ## Dependency Graph
 
 ```
-:ultra:common          (leaf — kotlin-stdlib, kotlin-reflect only)
+:ultra:common          (utils + maths; depends on :ultra:datetime for Ease.Timed)
     |
     +-- :ultra:model           (+kotlinx-serialization)
     +-- :ultra:datetime        (+kotlinx-datetime, korlibs-time, kotlinx-serialization)
     +-- :ultra:reflection      (+kotlin-reflect, JVM only)
+    +-- :ultra:fixture         (no additional deps)
     +-- :ultra:extras          (no additional deps)
     |
     +-- :ultra:cache           (+:ultra:datetime, +kotlinx-coroutines)
-    +-- :ultra:maths           (+:ultra:datetime)
     +-- :ultra:remote          (+:ultra:model, +ktor-client)
 ```
 
+Note: `:ultra:common` depends on `:ultra:datetime` because `Ease.Timed` uses `Kronos`.
+This creates a circular-looking relationship but it's one-directional: `datetime` does NOT
+depend on `common`. Alternatively, `Ease.Timed` could accept a `() -> Long` lambda instead
+of `Kronos` to break this coupling entirely.
+
 ## Consumer Impact
 
-| Consumer           | Today           | After decomposition                                                                 |
-|--------------------|-----------------|-------------------------------------------------------------------------------------|
-| `:ultra:kontainer` | `:ultra:common` | `:ultra:common`, `:ultra:reflection`                                                |
-| `:ultra:slumber`   | `:ultra:common` | `:ultra:common`, `:ultra:model`, `:ultra:datetime`, `:ultra:reflection`             |
-| `:ultra:vault`     | `:ultra:common` | `:ultra:common`, `:ultra:model`, `:ultra:datetime`, `:ultra:remote`                 |
-| `:ultra:security`  | `:ultra:common` | `:ultra:common`, `:ultra:model` (tbd)                                               |
-| `:ultra:meta`      | `:ultra:common` | `:ultra:common` (tbd)                                                               |
-| `:mutator:core`    | `:ultra:common` | `:ultra:common`, `:ultra:model`                                                     |
-| `:kraft:core`      | `:ultra:common` | `:ultra:common`, `:ultra:model`, `:ultra:datetime`, `:ultra:remote`, `:ultra:maths` |
-| `:funktor:core`    | `:ultra:common` | `:ultra:common`, `:ultra:model`, `:ultra:datetime`, `:ultra:remote`                 |
-| `:karango:core`    | `:ultra:common` | `:ultra:common`, `:ultra:model`, `:ultra:datetime`                                  |
+| Consumer           | Today           | After decomposition                                                     |
+|--------------------|-----------------|-------------------------------------------------------------------------|
+| `:ultra:kontainer` | `:ultra:common` | `:ultra:common`, `:ultra:reflection`                                    |
+| `:ultra:slumber`   | `:ultra:common` | `:ultra:common`, `:ultra:model`, `:ultra:datetime`, `:ultra:reflection` |
+| `:ultra:vault`     | `:ultra:common` | `:ultra:common`, `:ultra:model`, `:ultra:datetime`, `:ultra:remote`     |
+| `:ultra:security`  | `:ultra:common` | `:ultra:common`, `:ultra:model` (tbd)                                   |
+| `:ultra:meta`      | `:ultra:common` | `:ultra:common` (tbd)                                                   |
+| `:mutator:core`    | `:ultra:common` | `:ultra:common`, `:ultra:model`                                         |
+| `:kraft:core`      | `:ultra:common` | `:ultra:common`, `:ultra:model`, `:ultra:datetime`, `:ultra:remote`     |
+| `:funktor:core`    | `:ultra:common` | `:ultra:common`, `:ultra:model`, `:ultra:datetime`, `:ultra:remote`     |
+| `:karango:core`    | `:ultra:common` | `:ultra:common`, `:ultra:model`, `:ultra:datetime`                      |
 
 ## Migration Steps
 

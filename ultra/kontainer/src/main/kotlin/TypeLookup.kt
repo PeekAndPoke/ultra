@@ -19,7 +19,6 @@ abstract class TypeLookup {
      */
     fun getDistinctFor(type: KClass<*>): KClass<*> {
 
-        // TODO: we should have the cache layer at this point and not in the subsclasses
         val candidates = getAllCandidatesFor(type)
 
         if (candidates.isEmpty()) {
@@ -106,8 +105,13 @@ abstract class TypeLookup {
          * Get a distinct super type of the given [type] or null if there is none or multiple candidates
          */
         fun <T : Any> getDistinctForOrNull(type: KClass<T>): KClass<T>? {
+            val candidates = getAllCandidatesFor(type)
+
             @Suppress("UNCHECKED_CAST")
-            return getAllCandidatesFor(type).firstOrNull() as KClass<T>?
+            return when (candidates.size) {
+                1 -> candidates.first() as KClass<T>
+                else -> null
+            }
         }
     }
 }

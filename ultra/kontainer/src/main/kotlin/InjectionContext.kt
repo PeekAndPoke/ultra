@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.kontainer
 
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 
 /**
@@ -20,7 +21,7 @@ class InjectionContext internal constructor(
         internal val kontainerRoot = InjectionContext(Kontainer::class, Kontainer::class)
     }
 
-    private val nextCache = mutableMapOf<KClass<*>, InjectionContext>()
+    private val nextCache = ConcurrentHashMap<KClass<*>, InjectionContext>()
 
     /**
      * Advances the context.
@@ -36,29 +37,4 @@ class InjectionContext internal constructor(
             )
         }
     }
-
-//    /**
-//     * Gets a config parameter from the kontainer
-//     */
-//    internal fun <T> getConfig(name: String): T = kontainer.getConfig(name)
-//
-//    /**
-//     * Gets a service from the kontainer
-//     */
-//    internal fun <T : Any> get(cls: KClass<T>): T = kontainer.get(cls, this)
-//
-//    /**
-//     * Gets a service or null from the kontainer
-//     */
-//    internal fun <T : Any> getOrNull(cls: KClass<T>): T? = kontainer.getOrNull(cls, this)
-//
-//    /**
-//     * Gets all supertype services for the given [cls] as a List
-//     */
-//    internal fun <T : Any> getAll(cls: KClass<T>): List<T> = kontainer.getAll(cls, this)
-//
-//    /**
-//     * Gets all supertype services for the given [cls] as a Lookup
-//     */
-//    internal fun <T : Any> getLookup(cls: KClass<T>): LazyServiceLookup<T> = kontainer.getLookup(cls, this)
 }
