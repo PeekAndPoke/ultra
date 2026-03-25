@@ -1,7 +1,7 @@
 package de.peekandpoke.funktor.auth
 
 import de.peekandpoke.funktor.auth.domain.AuthRecord
-import de.peekandpoke.ultra.common.datetime.Kronos
+import de.peekandpoke.ultra.datetime.Kronos
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.kotest.assertions.withClue

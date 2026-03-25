@@ -4,7 +4,7 @@ import de.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
 import de.peekandpoke.funktor.core.fixtures.FixtureLoader
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.kType
 
 class KarangoGlobalLocksRepo(driver: KarangoDriver, repoName: String) :
     EntityRepository<GlobalLockEntry>(name = repoName, kType(), driver) {

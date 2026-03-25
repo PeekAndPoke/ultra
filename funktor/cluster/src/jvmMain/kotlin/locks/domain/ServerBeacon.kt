@@ -2,7 +2,7 @@ package de.peekandpoke.funktor.cluster.locks.domain
 
 import de.peekandpoke.funktor.cluster.locks.workers.GlobalLocksCleanupWorker
 import de.peekandpoke.funktor.cluster.locks.workers.ServerBeaconUpdateWorker
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpInstant
 
 /**
  * A server beacon that can be stored.

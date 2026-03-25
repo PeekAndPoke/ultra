@@ -12,8 +12,8 @@ import de.peekandpoke.kraft.semanticui.forms.UiDateTimeField
 import de.peekandpoke.kraft.semanticui.modals.FadingModal
 import de.peekandpoke.kraft.utils.doubleClickProtection
 import de.peekandpoke.kraft.utils.launch
-import de.peekandpoke.ultra.common.datetime.MpTimezone
-import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
+import de.peekandpoke.ultra.datetime.MpTimezone
+import de.peekandpoke.ultra.datetime.MpZonedDateTime
 import de.peekandpoke.ultra.html.debugId
 import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.icon

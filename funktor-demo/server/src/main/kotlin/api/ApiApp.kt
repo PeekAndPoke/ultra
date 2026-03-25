@@ -8,7 +8,7 @@ import de.peekandpoke.funktor.rest.ApiFeature
 import de.peekandpoke.funktor.rest.ApiStatusPages.installApiStatusPages
 import de.peekandpoke.funktor.rest.apiRespond
 import de.peekandpoke.funktor.rest.handle
-import de.peekandpoke.ultra.common.remote.ApiResponse
+import de.peekandpoke.ultra.remote.ApiResponse
 import de.peekandpoke.ultra.security.jwt.JwtAnonymous
 import de.peekandpoke.ultra.security.jwt.JwtGenerator
 import io.ktor.server.application.*

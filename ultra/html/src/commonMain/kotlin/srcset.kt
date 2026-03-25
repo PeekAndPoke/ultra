@@ -1,10 +1,10 @@
-package de.peekandpoke.ultra.extras.markup
+package de.peekandpoke.ultra.html
 
 private val srcSetCache = mutableMapOf<SrcSetCacheEntry, ImageSrcSet>()
 
 private data class SrcSetCacheEntry(
     var url: String,
-    var sizes: ImageSizes
+    var sizes: ImageSizes,
 )
 
 /**

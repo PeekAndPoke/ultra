@@ -2,7 +2,7 @@
 
 package de.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.common.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.TypeRef
 
 data class AqlFilterStatement(private val predicate: AqlExpression<Boolean>) : AqlStatement {
     override fun print(p: AqlPrinter) {

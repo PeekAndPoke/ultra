@@ -2,7 +2,7 @@ package de.peekandpoke.funktor.cluster.workers.services
 
 import de.peekandpoke.funktor.cluster.workers.Worker
 import de.peekandpoke.funktor.cluster.workers.WorkersFacade
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpInstant
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope

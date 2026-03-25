@@ -12,7 +12,7 @@ import de.peekandpoke.funktor.auth.model.AuthSignInRequest
 import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import de.peekandpoke.funktor.auth.model.PasswordPolicy
 import de.peekandpoke.funktor.messaging.api.EmailResult
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpInstant
 import de.peekandpoke.ultra.log.NullLog
 import de.peekandpoke.ultra.vault.Stored
 import io.kotest.assertions.throwables.shouldThrow

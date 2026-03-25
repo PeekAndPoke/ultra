@@ -6,7 +6,7 @@ import de.peekandpoke.funktor.cluster.locks.api.GlobalLocksApiClient
 import de.peekandpoke.funktor.cluster.storage.StorageApiClient
 import de.peekandpoke.funktor.cluster.vault.api.VaultApiClient
 import de.peekandpoke.funktor.cluster.workers.api.WorkersApiClient
-import de.peekandpoke.ultra.common.remote.ApiClient
+import de.peekandpoke.ultra.remote.ApiClient
 
 class FunktorClusterApiClient(config: ApiClient.Config) {
 

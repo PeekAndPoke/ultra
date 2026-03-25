@@ -1,9 +1,9 @@
 package de.peekandpoke.kraft.semanticui
 
 import de.peekandpoke.kraft.toasts.ToastRenderer
-import de.peekandpoke.ultra.common.model.Message
 import de.peekandpoke.ultra.html.key
 import de.peekandpoke.ultra.html.onClick
+import de.peekandpoke.ultra.model.Message
 import de.peekandpoke.ultra.semanticui.SemanticFn
 import de.peekandpoke.ultra.semanticui.SemanticIconFn
 import de.peekandpoke.ultra.semanticui.icon

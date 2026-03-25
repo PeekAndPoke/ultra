@@ -5,7 +5,7 @@ import de.peekandpoke.funktor.cluster.locks.ServerBeaconRepository
 import de.peekandpoke.funktor.cluster.workers.StateProvider
 import de.peekandpoke.funktor.cluster.workers.Worker
 import de.peekandpoke.funktor.core.model.AppInfo
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpInstant
 
 class ServerBeaconUpdateWorker(
     serverId: Lazy<GlobalServerId>,

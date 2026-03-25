@@ -8,9 +8,9 @@ import com.mongodb.kotlin.client.coroutine.FindFlow
 import com.mongodb.kotlin.client.coroutine.MongoClient
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import de.peekandpoke.monko.vault.vault.MongoTypedQuery
-import de.peekandpoke.ultra.common.reflection.TypeRef
 import de.peekandpoke.ultra.log.Log
 import de.peekandpoke.ultra.log.NullLog
+import de.peekandpoke.ultra.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.awake
 import de.peekandpoke.ultra.slumber.slumber
 import de.peekandpoke.ultra.vault.RemoveResult

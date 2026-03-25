@@ -13,7 +13,7 @@ import de.peekandpoke.funktor.core.user
 import de.peekandpoke.funktor.rest.ApiRoutes
 import de.peekandpoke.funktor.rest.docs.codeGen
 import de.peekandpoke.funktor.rest.docs.docs
-import de.peekandpoke.ultra.common.remote.ApiResponse
+import de.peekandpoke.ultra.remote.ApiResponse
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 

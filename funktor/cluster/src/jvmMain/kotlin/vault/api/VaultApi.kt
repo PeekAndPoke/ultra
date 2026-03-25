@@ -5,7 +5,7 @@ import de.peekandpoke.funktor.core.broker.OutgoingConverter
 import de.peekandpoke.funktor.rest.ApiRoutes
 import de.peekandpoke.funktor.rest.docs.codeGen
 import de.peekandpoke.funktor.rest.docs.docs
-import de.peekandpoke.ultra.common.remote.ApiResponse
+import de.peekandpoke.ultra.remote.ApiResponse
 import de.peekandpoke.ultra.vault.VaultModels
 
 class VaultApi(converter: OutgoingConverter) : ApiRoutes("vault", converter) {

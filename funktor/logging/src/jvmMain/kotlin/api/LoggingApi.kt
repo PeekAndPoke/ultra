@@ -6,8 +6,8 @@ import de.peekandpoke.funktor.logging.logging
 import de.peekandpoke.funktor.rest.ApiRoutes
 import de.peekandpoke.funktor.rest.docs.codeGen
 import de.peekandpoke.funktor.rest.docs.docs
-import de.peekandpoke.ultra.common.remote.ApiResponse
 import de.peekandpoke.ultra.log.LogLevel
+import de.peekandpoke.ultra.remote.ApiResponse
 
 class LoggingApi(converter: OutgoingConverter) : ApiRoutes("logging", converter) {
 

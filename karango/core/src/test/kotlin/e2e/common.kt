@@ -9,8 +9,8 @@ import de.peekandpoke.karango.testdomain.TestPersonsRepository
 import de.peekandpoke.karango.testdomain.TestTimestampedRepository
 import de.peekandpoke.karango.toArangoDb
 import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.common.surround
+import de.peekandpoke.ultra.datetime.Kronos
 import de.peekandpoke.ultra.slumber.SlumberConfig
 import de.peekandpoke.ultra.vault.Database
 import de.peekandpoke.ultra.vault.DefaultEntityCache

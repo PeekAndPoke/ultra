@@ -1,7 +1,7 @@
 package de.peekandpoke.funktor.cluster.backgroundjobs
 
-import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
 import de.peekandpoke.ultra.common.roundWithPrecision
+import de.peekandpoke.ultra.datetime.formatDdMmmYyyyHhMmSs
 import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.semanticui.SemanticIconFn
 import de.peekandpoke.ultra.semanticui.icon

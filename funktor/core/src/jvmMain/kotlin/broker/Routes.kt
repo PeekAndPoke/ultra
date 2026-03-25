@@ -1,7 +1,7 @@
 package de.peekandpoke.funktor.core.broker
 
-import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.kType
 
 /**
  * Base class for all route collections

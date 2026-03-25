@@ -3,7 +3,7 @@
 package de.peekandpoke.karango.aql
 
 import de.peekandpoke.karango.vault.KarangoRepository
-import de.peekandpoke.ultra.common.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.TypeRef
 import de.peekandpoke.ultra.vault.Storable
 import de.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
 

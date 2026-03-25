@@ -1,11 +1,11 @@
 package de.peekandpoke.funktor.cluster.workers.api
 
-import de.peekandpoke.ultra.common.remote.ApiClient
-import de.peekandpoke.ultra.common.remote.ApiResponse
-import de.peekandpoke.ultra.common.remote.TypedApiEndpoint
-import de.peekandpoke.ultra.common.remote.api
-import de.peekandpoke.ultra.common.remote.apiList
-import de.peekandpoke.ultra.common.remote.call
+import de.peekandpoke.ultra.remote.ApiClient
+import de.peekandpoke.ultra.remote.ApiResponse
+import de.peekandpoke.ultra.remote.TypedApiEndpoint
+import de.peekandpoke.ultra.remote.api
+import de.peekandpoke.ultra.remote.apiList
+import de.peekandpoke.ultra.remote.call
 import kotlinx.coroutines.flow.Flow
 
 class WorkersApiClient(config: Config) : ApiClient(config) {

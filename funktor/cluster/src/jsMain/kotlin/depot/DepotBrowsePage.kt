@@ -11,7 +11,7 @@ import de.peekandpoke.kraft.routing.Router.Companion.router
 import de.peekandpoke.kraft.routing.urlParam
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
+import de.peekandpoke.ultra.datetime.formatDdMmmYyyyHhMmSs
 import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.noui

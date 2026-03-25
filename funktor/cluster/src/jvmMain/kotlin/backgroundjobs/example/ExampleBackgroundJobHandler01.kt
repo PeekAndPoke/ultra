@@ -2,7 +2,7 @@ package de.peekandpoke.funktor.cluster.backgroundjobs.example
 
 import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
 import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobQueued
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.kType
 import kotlinx.coroutines.delay
 import kotlinx.serialization.SerialName
 

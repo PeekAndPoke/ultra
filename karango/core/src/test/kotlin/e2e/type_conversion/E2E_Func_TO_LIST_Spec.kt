@@ -7,7 +7,7 @@ import de.peekandpoke.karango.aql.TO_LIST
 import de.peekandpoke.karango.aql.aql
 import de.peekandpoke.karango.e2e.E2ePerson
 import de.peekandpoke.karango.e2e.karangoDriver
-import de.peekandpoke.ultra.common.model.tuple
+import de.peekandpoke.ultra.common.tuple
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe

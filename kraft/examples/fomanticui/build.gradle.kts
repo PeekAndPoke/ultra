@@ -33,6 +33,7 @@ kotlin {
             dependencies {
                 // project deps
                 api(project(":kraft:semanticui"))
+                api(project(":ultra:fixture"))
                 // addons
                 api(project(":kraft:addons:prismjs"))
             }

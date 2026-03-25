@@ -20,13 +20,13 @@ import de.peekandpoke.karango.aql.FOR
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ultra.common.datetime.Kronos
-import de.peekandpoke.ultra.common.datetime.jvm
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.datetime.Kronos
+import de.peekandpoke.ultra.datetime.jvm
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.kontainer
 import de.peekandpoke.ultra.log.ultraLogging
+import de.peekandpoke.ultra.reflection.kType
 import de.peekandpoke.ultra.security.UltraSecurityConfig
 import de.peekandpoke.ultra.security.jwt.JwtConfig
 import de.peekandpoke.ultra.security.jwt.JwtGenerator

@@ -11,7 +11,7 @@ import de.peekandpoke.karango.e2e.E2ePerson
 import de.peekandpoke.karango.e2e.age
 import de.peekandpoke.karango.e2e.karangoDriver
 import de.peekandpoke.karango.e2e.withDetailedClue
-import de.peekandpoke.ultra.common.model.tuple
+import de.peekandpoke.ultra.common.tuple
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 

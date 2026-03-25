@@ -1,9 +1,8 @@
 package de.peekandpoke.ultra.kontainer.examples.defining_services
 
-import de.peekandpoke.ultra.extras.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.kontainer
+import de.peekandpoke.ultra.tooling.SimpleExample
 
-@Suppress("ComplexRedundantLet")
 class DefiningAnExistingInstanceExample : SimpleExample() {
 
     override val title = "Defining an existing object as a Singleton service"

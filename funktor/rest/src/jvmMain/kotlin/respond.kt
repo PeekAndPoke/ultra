@@ -6,7 +6,7 @@ import de.peekandpoke.funktor.core.metrics.RequestMetricsProvider
 import de.peekandpoke.funktor.rest.auth.AuthRule
 import de.peekandpoke.ultra.common.encodeUriComponent
 import de.peekandpoke.ultra.common.network.NetworkUtils
-import de.peekandpoke.ultra.common.remote.ApiResponse
+import de.peekandpoke.ultra.remote.ApiResponse
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.*

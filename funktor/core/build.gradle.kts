@@ -52,6 +52,10 @@ kotlin {
                 api(Deps.KotlinLibs.uuid)
 
                 api(project(":ultra:common"))
+                api(project(":ultra:datetime"))
+                api(project(":ultra:maths"))
+                api(project(":ultra:model"))
+                api(project(":ultra:remote"))
                 api(project(":ultra:log"))
                 api(project(":ultra:security"))
                 api(project(":ultra:slumber"))

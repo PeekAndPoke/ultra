@@ -1,7 +1,7 @@
 package de.peekandpoke.mutator.examples.code_generation
 
 import de.peekandpoke.mutator.Mutable
-import de.peekandpoke.ultra.common.docs.SimpleExample
+import de.peekandpoke.ultra.tooling.SimpleExample
 import java.io.File
 
 @Suppress("unused")

@@ -9,7 +9,7 @@ import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.utils.doubleClickProtection
 import de.peekandpoke.kraft.utils.launch
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpInstant
 import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.noui

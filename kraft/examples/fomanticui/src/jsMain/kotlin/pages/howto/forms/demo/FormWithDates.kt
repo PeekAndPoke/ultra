@@ -15,11 +15,11 @@ import de.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
 import de.peekandpoke.kraft.forms.formController
 import de.peekandpoke.kraft.semanticui.forms.UiDateField
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.common.datetime.Kronos
-import de.peekandpoke.ultra.common.datetime.MpLocalDate
-import de.peekandpoke.ultra.common.datetime.MpLocalDateTime
-import de.peekandpoke.ultra.common.datetime.MpTimezone
-import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
+import de.peekandpoke.ultra.datetime.Kronos
+import de.peekandpoke.ultra.datetime.MpLocalDate
+import de.peekandpoke.ultra.datetime.MpLocalDateTime
+import de.peekandpoke.ultra.datetime.MpTimezone
+import de.peekandpoke.ultra.datetime.MpZonedDateTime
 import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.Tag

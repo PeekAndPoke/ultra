@@ -1,7 +1,7 @@
 package de.peekandpoke.funktor.cluster.backgroundjobs
 
 import de.peekandpoke.funktor.core.model.CpuProfile
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpInstant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

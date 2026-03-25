@@ -1,9 +1,9 @@
 package de.peekandpoke.kraft.utils
 
-import de.peekandpoke.ultra.common.datetime.MpLocalDate
-import de.peekandpoke.ultra.common.datetime.MpLocalDateTime
-import de.peekandpoke.ultra.common.datetime.MpLocalTime
-import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
+import de.peekandpoke.ultra.datetime.MpLocalDate
+import de.peekandpoke.ultra.datetime.MpLocalDateTime
+import de.peekandpoke.ultra.datetime.MpLocalTime
+import de.peekandpoke.ultra.datetime.MpZonedDateTime
 
 fun <T> identity(it: T): T = it
 

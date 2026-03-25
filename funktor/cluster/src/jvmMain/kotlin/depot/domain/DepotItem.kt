@@ -2,7 +2,7 @@ package de.peekandpoke.funktor.cluster.depot.domain
 
 import de.peekandpoke.funktor.cluster.depot.api.DepotItemModel
 import de.peekandpoke.funktor.cluster.depot.repos.DepotRepository
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpInstant
 
 /**
  * Definition of a depot file

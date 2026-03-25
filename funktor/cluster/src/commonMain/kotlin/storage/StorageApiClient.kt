@@ -1,6 +1,6 @@
 package de.peekandpoke.funktor.cluster.storage
 
-import de.peekandpoke.ultra.common.remote.ApiClient
+import de.peekandpoke.ultra.remote.ApiClient
 
 class StorageApiClient(config: Config) : ApiClient(config) {
 

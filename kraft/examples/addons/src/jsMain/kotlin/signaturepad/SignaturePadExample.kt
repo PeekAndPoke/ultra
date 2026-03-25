@@ -6,9 +6,9 @@ import de.peekandpoke.kraft.components.NoProps
 import de.peekandpoke.kraft.components.PureComponent
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.common.model.FileBase64
 import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.html.onClick
+import de.peekandpoke.ultra.model.FileBase64
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.css.Border

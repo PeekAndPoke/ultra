@@ -1,6 +1,6 @@
 package de.peekandpoke.funktor.cluster.depot.api
 
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpInstant
 import de.peekandpoke.ultra.slumber.Slumber
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -41,7 +41,7 @@ sealed class DepotItemModel {
                 null -> Public
                 else -> try {
                     valueOf(value)
-                } catch (e: Throwable) {
+                } catch (_: Throwable) {
                     Public
                 }
             }

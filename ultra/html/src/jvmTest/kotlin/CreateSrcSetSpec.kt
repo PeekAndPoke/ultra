@@ -1,6 +1,6 @@
 @file:Suppress("Detekt.MaximumLineLength")
 
-package de.peekandpoke.ultra.extras.markup
+package de.peekandpoke.ultra.html
 
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldBeEmpty

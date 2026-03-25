@@ -16,7 +16,7 @@ import de.peekandpoke.kraft.semanticui.forms.old.select.SelectField
 import de.peekandpoke.kraft.semanticui.forms.old.select.SelectFieldComponent
 import de.peekandpoke.kraft.semanticui.modals.OkCancelModal
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
+import de.peekandpoke.ultra.datetime.MpZonedDateTime
 import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.html.onAuxClick
 import de.peekandpoke.ultra.html.onClick

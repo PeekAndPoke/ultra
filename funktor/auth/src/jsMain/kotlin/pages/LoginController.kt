@@ -18,10 +18,10 @@ import de.peekandpoke.kraft.semanticui.forms.UiPasswordField
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.utils.doubleClickProtection
 import de.peekandpoke.kraft.utils.launch
-import de.peekandpoke.ultra.common.model.Message
 import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.html.onSubmit
+import de.peekandpoke.ultra.model.Message
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui

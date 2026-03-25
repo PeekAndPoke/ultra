@@ -6,8 +6,8 @@ import de.peekandpoke.funktor.cluster.depot.domain.DepotItem
 import de.peekandpoke.funktor.cluster.depot.repos.DepotPutFileOptions
 import de.peekandpoke.funktor.cluster.depot.repos.DepotRepository
 import de.peekandpoke.funktor.cluster.depot.repos.depotPutFileOptions
-import de.peekandpoke.ultra.common.datetime.MpInstant
-import de.peekandpoke.ultra.common.datetime.mp
+import de.peekandpoke.ultra.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.mp
 import kotlinx.coroutines.future.await
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.core.async.AsyncResponseTransformer

@@ -11,11 +11,11 @@ import de.peekandpoke.funktor.auth.model.AuthSignInRequest
 import de.peekandpoke.funktor.auth.model.AuthSignInResponse
 import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import de.peekandpoke.funktor.auth.model.AuthSignUpResponse
-import de.peekandpoke.ultra.common.remote.ApiClient
-import de.peekandpoke.ultra.common.remote.ApiResponse
-import de.peekandpoke.ultra.common.remote.TypedApiEndpoint
-import de.peekandpoke.ultra.common.remote.api
-import de.peekandpoke.ultra.common.remote.call
+import de.peekandpoke.ultra.remote.ApiClient
+import de.peekandpoke.ultra.remote.ApiResponse
+import de.peekandpoke.ultra.remote.TypedApiEndpoint
+import de.peekandpoke.ultra.remote.api
+import de.peekandpoke.ultra.remote.call
 import kotlinx.coroutines.flow.Flow
 
 class AuthApiClient(private val realm: String, config: Config) : ApiClient(config) {

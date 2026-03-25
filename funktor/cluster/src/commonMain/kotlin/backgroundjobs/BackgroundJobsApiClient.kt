@@ -1,12 +1,12 @@
 package de.peekandpoke.funktor.cluster.backgroundjobs
 
-import de.peekandpoke.ultra.common.model.Paged
-import de.peekandpoke.ultra.common.remote.ApiClient
-import de.peekandpoke.ultra.common.remote.ApiResponse
-import de.peekandpoke.ultra.common.remote.TypedApiEndpoint.Get
-import de.peekandpoke.ultra.common.remote.api
-import de.peekandpoke.ultra.common.remote.apiPaged
-import de.peekandpoke.ultra.common.remote.call
+import de.peekandpoke.ultra.model.Paged
+import de.peekandpoke.ultra.remote.ApiClient
+import de.peekandpoke.ultra.remote.ApiResponse
+import de.peekandpoke.ultra.remote.TypedApiEndpoint.Get
+import de.peekandpoke.ultra.remote.api
+import de.peekandpoke.ultra.remote.apiPaged
+import de.peekandpoke.ultra.remote.call
 import kotlinx.coroutines.flow.Flow
 
 class BackgroundJobsApiClient(config: Config) : ApiClient(config) {

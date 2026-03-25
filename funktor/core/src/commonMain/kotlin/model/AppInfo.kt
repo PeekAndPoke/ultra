@@ -1,6 +1,6 @@
 package de.peekandpoke.funktor.core.model
 
-import de.peekandpoke.ultra.common.datetime.Kronos
+import de.peekandpoke.ultra.datetime.Kronos
 import kotlinx.serialization.Serializable
 import kotlin.math.absoluteValue
 

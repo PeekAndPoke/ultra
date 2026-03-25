@@ -2,7 +2,7 @@ package de.peekandpoke.mutator.examples
 
 import de.peekandpoke.mutator.examples.basic_mutations._BasicMutationsChapters
 import de.peekandpoke.mutator.examples.code_generation._CodeGenerationChapters
-import de.peekandpoke.ultra.common.docs.ExamplesToDocs
+import de.peekandpoke.ultra.tooling.ExamplesToDocs
 import java.io.File
 
 fun main() {

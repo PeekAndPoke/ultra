@@ -3,12 +3,12 @@
 package de.peekandpoke.karango.aql
 
 import de.peekandpoke.karango.vault.KarangoRepository
-import de.peekandpoke.ultra.common.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.TypeRef
 import de.peekandpoke.ultra.vault.Storable
 import de.peekandpoke.ultra.vault.lang.VaultDslMarker
 import de.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
 
-@Suppress("unused")
+@Suppress("unused", "UnusedReceiverParameter")
 @VaultTerminalExpressionMarker
 fun <T : Any> AqlStatementBuilder.INSERT(what: AqlExpression<T>) = AqlInsertExpression(what)
 
@@ -40,7 +40,7 @@ internal class AqlInsertExpressionInto<T : Any>(
     }
 }
 
-@Suppress("unused")
+@Suppress("unused", "UnusedReceiverParameter")
 @VaultTerminalExpressionMarker
 fun <T : Any> AqlStatementBuilder.INSERT(entity: Storable<T>) = AqlInsertNewStorable(entity)
 

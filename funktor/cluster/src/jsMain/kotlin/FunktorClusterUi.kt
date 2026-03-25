@@ -17,7 +17,7 @@ import de.peekandpoke.funktor.cluster.vault.VaultIndexPage
 import de.peekandpoke.funktor.cluster.workers.WorkerDetailsPage
 import de.peekandpoke.funktor.cluster.workers.WorkersListPage
 import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.ultra.common.datetime.Kronos
+import de.peekandpoke.ultra.datetime.Kronos
 import de.peekandpoke.ultra.html.RenderFn
 import kotlinx.html.Tag
 

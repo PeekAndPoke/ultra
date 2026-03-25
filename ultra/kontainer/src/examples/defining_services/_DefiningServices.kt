@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.kontainer.examples.defining_services
 
-import de.peekandpoke.ultra.extras.docs.ExampleChapter
+import de.peekandpoke.ultra.tooling.ExampleChapter
 
 @Suppress("ClassName")
 class _DefiningServices : ExampleChapter {

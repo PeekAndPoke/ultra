@@ -3,7 +3,7 @@ package de.peekandpoke.funktor.cluster.backgroundjobs.workers
 import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
 import de.peekandpoke.funktor.cluster.workers.StateProvider
 import de.peekandpoke.funktor.cluster.workers.Worker
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpInstant
 
 class BackgroundJobsWorker(
     private val backgroundJobs: BackgroundJobs,

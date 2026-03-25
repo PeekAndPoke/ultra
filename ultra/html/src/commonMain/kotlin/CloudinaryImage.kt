@@ -1,11 +1,11 @@
-package de.peekandpoke.ultra.extras.markup
+package de.peekandpoke.ultra.html
 
 data class CloudinaryImage(
     val protocol: String,
     val appId: String,
     val quality: Map<String, String?>,
     val transform: Map<String, String?>,
-    val rest: List<String>
+    val rest: List<String>,
 ) {
     val url
         get(): String {

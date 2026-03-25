@@ -3,7 +3,7 @@ package de.peekandpoke.funktor.messaging.storage
 import de.peekandpoke.funktor.messaging.api.EmailAttachment
 import de.peekandpoke.funktor.messaging.api.EmailResult
 import de.peekandpoke.funktor.messaging.api.SentMessageModel
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpInstant
 import de.peekandpoke.ultra.vault.Stored
 import de.peekandpoke.ultra.vault.Vault
 import de.peekandpoke.ultra.vault.hooks.Timestamped

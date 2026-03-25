@@ -3,8 +3,8 @@ package de.peekandpoke.karango.e2e
 import de.peekandpoke.karango.KarangoCursor
 import de.peekandpoke.karango.aql.LET
 import de.peekandpoke.karango.aql.RETURN
-import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.common.reflection.kMapType
+import de.peekandpoke.ultra.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.kMapType
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec

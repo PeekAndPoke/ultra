@@ -1,6 +1,6 @@
 package de.peekandpoke.funktor.cluster.storage.domain
 
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpInstant
 import de.peekandpoke.ultra.vault.Vault
 import de.peekandpoke.ultra.vault.hooks.Timestamped
 

@@ -2,8 +2,8 @@
 
 package de.peekandpoke.funktor.rest.security
 
-import de.peekandpoke.ultra.common.reflection.ReifiedKType
-import de.peekandpoke.ultra.common.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.ReifiedKType
+import de.peekandpoke.ultra.reflection.TypeRef
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType

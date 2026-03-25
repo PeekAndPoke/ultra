@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.extras.docs
+package de.peekandpoke.ultra.tooling
 
 interface Example {
     /** The title of the example */

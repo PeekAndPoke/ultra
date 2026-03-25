@@ -1,7 +1,7 @@
 package de.peekandpoke.mutator.examples.basic_mutations
 
 import de.peekandpoke.mutator.Mutable
-import de.peekandpoke.ultra.common.docs.SimpleExample
+import de.peekandpoke.ultra.tooling.SimpleExample
 
 class MutatingDataClassDirectly : SimpleExample() {
 

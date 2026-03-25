@@ -1,8 +1,8 @@
 package de.peekandpoke.funktor.core.broker
 
-import de.peekandpoke.ultra.common.reflection.ReifiedKType
-import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.ReifiedKType
+import de.peekandpoke.ultra.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.kType
 import io.ktor.http.*
 import kotlin.reflect.KParameter
 

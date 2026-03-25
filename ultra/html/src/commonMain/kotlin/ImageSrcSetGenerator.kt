@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.extras.markup
+package de.peekandpoke.ultra.html
 
 /**
  * Image src set generator generate an [ImageSrcSet] from a source and [ImageSizes]

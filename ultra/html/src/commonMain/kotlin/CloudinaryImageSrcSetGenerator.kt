@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.extras.markup
+package de.peekandpoke.ultra.html
 
 /**
  * Cloudinary specific [ImageSrcSet] generator

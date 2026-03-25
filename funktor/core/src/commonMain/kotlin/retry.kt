@@ -1,7 +1,7 @@
 package de.peekandpoke.funktor.core
 
-import de.peekandpoke.ultra.common.maths.Ease
-import de.peekandpoke.ultra.common.maths.Ease.bindFromTo
+import de.peekandpoke.ultra.maths.Ease
+import de.peekandpoke.ultra.maths.Ease.bindFromTo
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull

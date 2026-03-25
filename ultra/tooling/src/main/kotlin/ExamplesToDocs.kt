@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.extras.docs
+package de.peekandpoke.ultra.tooling
 
 import de.peekandpoke.ultra.common.child
 import de.peekandpoke.ultra.common.cleanDirectory

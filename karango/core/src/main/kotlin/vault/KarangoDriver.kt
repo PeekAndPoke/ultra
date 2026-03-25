@@ -16,9 +16,9 @@ import de.peekandpoke.karango.aql.AqlTerminalExpr
 import de.peekandpoke.karango.buildAqlQuery
 import de.peekandpoke.karango.slumber.KarangoCodec
 import de.peekandpoke.karango.utils.ArangoDbRequestUtils
-import de.peekandpoke.ultra.common.reflection.kMapType
 import de.peekandpoke.ultra.log.Log
 import de.peekandpoke.ultra.log.NullLog
+import de.peekandpoke.ultra.reflection.kMapType
 import de.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 import de.peekandpoke.ultra.vault.profiling.QueryProfiler
 import kotlinx.coroutines.Dispatchers

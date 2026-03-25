@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.vault.lang
 
-import de.peekandpoke.ultra.common.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.TypeRef
 
 /**
  * Base interface for all Expressions.

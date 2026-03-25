@@ -1,6 +1,6 @@
 package de.peekandpoke.funktor.cluster.backgroundjobs
 
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpInstant
 import kotlinx.serialization.Serializable
 
 @Serializable

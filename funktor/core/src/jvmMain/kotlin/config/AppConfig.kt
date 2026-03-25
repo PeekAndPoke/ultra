@@ -4,8 +4,8 @@ import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import de.peekandpoke.funktor.core.config.funktor.FunktorConfig
 import de.peekandpoke.funktor.core.config.ktor.KtorConfig
-import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.kType
 import de.peekandpoke.ultra.slumber.Codec
 import de.peekandpoke.ultra.slumber.awake
 import java.io.File

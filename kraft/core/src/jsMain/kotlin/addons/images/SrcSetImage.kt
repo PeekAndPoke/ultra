@@ -4,8 +4,8 @@ import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.Ctx
 import de.peekandpoke.kraft.components.comp
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.common.markup.images.ImageSizes
-import de.peekandpoke.ultra.common.markup.images.ImageSrcSet
+import de.peekandpoke.ultra.html.ImageSizes
+import de.peekandpoke.ultra.html.ImageSrcSet
 import kotlinx.html.IMG
 import kotlinx.html.Tag
 import kotlinx.html.img

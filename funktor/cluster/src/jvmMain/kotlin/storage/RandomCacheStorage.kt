@@ -2,9 +2,9 @@ package de.peekandpoke.funktor.cluster.storage
 
 import de.peekandpoke.funktor.cluster.storage.domain.RawCacheData
 import de.peekandpoke.funktor.cluster.storage.domain.TypedCacheData
-import de.peekandpoke.ultra.common.datetime.Kronos
-import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.datetime.Kronos
+import de.peekandpoke.ultra.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.kType
 import de.peekandpoke.ultra.vault.Cursor
 import de.peekandpoke.ultra.vault.New
 import de.peekandpoke.ultra.vault.Repository

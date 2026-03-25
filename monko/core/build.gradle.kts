@@ -32,6 +32,8 @@ kotlin {
         api(Deps.KotlinLibs.MongoDb.mongodb_bson_kotlinx)
 
         implementation(project(":ultra:common"))
+        implementation(project(":ultra:datetime"))
+        implementation(project(":ultra:reflection"))
         implementation(project(":ultra:kontainer"))
         implementation(project(":ultra:log"))
         implementation(project(":ultra:slumber"))

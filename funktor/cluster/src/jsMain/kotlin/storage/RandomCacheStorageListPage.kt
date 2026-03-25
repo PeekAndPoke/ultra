@@ -12,11 +12,11 @@ import de.peekandpoke.kraft.semanticui.pagination.PaginationEpp
 import de.peekandpoke.kraft.semanticui.pagination.PaginationPages
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.common.model.Paged
-import de.peekandpoke.ultra.common.model.search.PagedSearchFilter
 import de.peekandpoke.ultra.common.roundWithPrecision
 import de.peekandpoke.ultra.html.key
 import de.peekandpoke.ultra.html.onClick
+import de.peekandpoke.ultra.model.Paged
+import de.peekandpoke.ultra.model.PagedSearchFilter
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.coroutines.flow.map

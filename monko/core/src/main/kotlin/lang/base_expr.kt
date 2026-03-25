@@ -2,8 +2,8 @@
 
 package de.peekandpoke.monko.lang
 
-import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.common.reflection.unList
+import de.peekandpoke.ultra.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.unList
 import de.peekandpoke.ultra.vault.lang.Expression
 
 /**

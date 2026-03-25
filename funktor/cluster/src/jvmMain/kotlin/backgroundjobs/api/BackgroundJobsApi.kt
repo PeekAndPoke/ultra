@@ -15,8 +15,8 @@ import de.peekandpoke.funktor.core.jsonPrinter
 import de.peekandpoke.funktor.rest.ApiRoutes
 import de.peekandpoke.funktor.rest.docs.codeGen
 import de.peekandpoke.funktor.rest.docs.docs
-import de.peekandpoke.ultra.common.model.Paged
-import de.peekandpoke.ultra.common.remote.ApiResponse
+import de.peekandpoke.ultra.model.Paged
+import de.peekandpoke.ultra.remote.ApiResponse
 import de.peekandpoke.ultra.vault.Stored
 import io.ktor.server.routing.*
 

@@ -5,7 +5,7 @@ import de.peekandpoke.funktor.cluster.locks.GlobalServerList
 import de.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
 import de.peekandpoke.funktor.cluster.workers.StateProvider
 import de.peekandpoke.funktor.cluster.workers.Worker
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpInstant
 import de.peekandpoke.ultra.log.Log
 import kotlin.time.Duration.Companion.minutes
 

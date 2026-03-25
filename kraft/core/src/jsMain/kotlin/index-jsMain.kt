@@ -13,7 +13,7 @@ import de.peekandpoke.kraft.vdom.VDomEngine
 import de.peekandpoke.ultra.common.MutableTypedAttributes
 import de.peekandpoke.ultra.common.TypedAttributes
 import de.peekandpoke.ultra.common.TypedKey
-import de.peekandpoke.ultra.common.datetime.kotlinx.initializeJsJodaTimezones
+import de.peekandpoke.ultra.datetime.kotlinx.initializeJsJodaTimezones
 import kotlinx.browser.document
 import org.w3c.dom.HTMLElement
 
