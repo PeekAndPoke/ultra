@@ -8,7 +8,11 @@ import kotlin.time.Duration.Companion.seconds
 
 class WeakReferenceSpec : StringSpec() {
 
-    private fun createSomething(): Any = kotlin.random.Random.nextLong().toString()
+    // JS WeakRef only accepts objects, not primitives (string, number, boolean).
+    // Using a data class ensures we always create a proper JS object.
+    private data class Something(val value: Long)
+
+    private fun createSomething(): Any = Something(kotlin.random.Random.nextLong())
 
     init {
         "Creating a weak ref must work" {
@@ -41,29 +45,19 @@ class WeakReferenceSpec : StringSpec() {
             subject.value shouldBe something
         }
 
-        "A weak reference must eventually be garbage collected" {
+        // JS GC is non-deterministic — no way to force WeakRef.deref() to return undefined.
+        "A weak reference must eventually be garbage collected".config(enabled = false) {
 
             var something: Any? = createSomething()
             val subject = WeakReference(something)
 
             subject.value shouldBe something
 
-            val garbage = mutableListOf<List<Any>>()
-
-            // clearing the reference
             @Suppress("UNUSED_VALUE")
             something = null
 
-            println("Javascript: Waiting for weak reference to be cleandup up ... this may take a while")
-
             eventually(180.seconds) {
-                // Create lots of new object to trigger garbage collection
-                garbage.add((1..1_000).map { ByteArray(1_000) { 0 } })
-                delay(1)
-
-                // TODO: How can we test this?
-                println("TODO: How can we test this?")
-//                subject.value shouldBe null
+                subject.value shouldBe null
             }
         }
     }

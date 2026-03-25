@@ -5,6 +5,8 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
 
+// Debounce tests require multithreading (the debounce coroutine and the test's delay
+// must run concurrently). This doesn't work on JS's single-threaded event loop.
 class DebounceSpec : StringSpec({
 
     "debounce emits a single value after the delay" {
@@ -18,7 +20,6 @@ class DebounceSpec : StringSpec({
             received.add(it)
         }
 
-        // Initial value is published immediately by subscribeToStream
         received shouldBe listOf(10)
 
         source(20)
@@ -40,10 +41,8 @@ class DebounceSpec : StringSpec({
             received.add(it)
         }
 
-        // Initial value
         received shouldBe listOf(0)
 
-        // Rapid fire — only last should survive
         source(1)
         source(2)
         source(3)
@@ -68,13 +67,10 @@ class DebounceSpec : StringSpec({
 
         source(1)
         delay(60)
-        // Timer restarted — 1 should NOT have been emitted yet
         source(2)
         delay(60)
-        // Timer restarted again — 2 should NOT have been emitted yet
         source(3)
         delay(150)
-        // Now 3 should have been emitted
 
         received shouldBe listOf(0, 3)
 
