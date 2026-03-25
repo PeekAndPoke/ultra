@@ -1,14 +1,14 @@
-package de.peekandpoke.funktor.testing
+package io.peekandpoke.funktor.testing
 
-import de.peekandpoke.funktor.core.App
-import de.peekandpoke.funktor.core.AppArgs
-import de.peekandpoke.funktor.core.config.AppConfig
-import de.peekandpoke.funktor.core.config.AppConfig.Companion.typed
-import de.peekandpoke.funktor.core.provideApp
-import de.peekandpoke.funktor.core.provideKontainer
-import de.peekandpoke.ultra.kontainer.Kontainer
 import io.ktor.server.config.*
 import io.ktor.server.testing.*
+import io.peekandpoke.funktor.core.App
+import io.peekandpoke.funktor.core.AppArgs
+import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.funktor.core.config.AppConfig.Companion.typed
+import io.peekandpoke.funktor.core.provideApp
+import io.peekandpoke.funktor.core.provideKontainer
+import io.peekandpoke.ultra.kontainer.Kontainer
 
 class TestBed<C : AppConfig>(
     val app: App<C>,

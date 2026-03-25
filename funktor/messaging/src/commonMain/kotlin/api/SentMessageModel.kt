@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.messaging.api
+package io.peekandpoke.funktor.messaging.api
 
-import de.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.MpInstant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

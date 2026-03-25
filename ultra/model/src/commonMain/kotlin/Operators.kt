@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.model
+package io.peekandpoke.ultra.model
 
-import de.peekandpoke.ultra.common.ComparableTo
+import io.peekandpoke.ultra.common.ComparableTo
 import kotlin.js.JsName
 
 interface Operators {

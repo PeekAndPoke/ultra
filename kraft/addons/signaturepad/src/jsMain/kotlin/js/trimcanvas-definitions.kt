@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.addons.signaturepad.js
+package io.peekandpoke.kraft.addons.signaturepad.js
 
 import org.w3c.dom.HTMLCanvasElement
 

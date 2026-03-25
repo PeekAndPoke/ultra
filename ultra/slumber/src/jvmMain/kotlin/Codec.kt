@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.slumber
+package io.peekandpoke.ultra.slumber
 
-import de.peekandpoke.ultra.common.TypedAttributes
+import io.peekandpoke.ultra.common.TypedAttributes
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.ExperimentalExtendedContracts
 import kotlin.contracts.contract

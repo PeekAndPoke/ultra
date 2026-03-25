@@ -1,31 +1,31 @@
-package de.peekandpoke.funktor.insights
+package io.peekandpoke.funktor.insights
 
-import de.peekandpoke.funktor.core.kontainerOrNull
-import de.peekandpoke.funktor.core.model.InsightsConfig
-import de.peekandpoke.funktor.insights.collectors.AppConfigCollector
-import de.peekandpoke.funktor.insights.collectors.KontainerCollector
-import de.peekandpoke.funktor.insights.collectors.LogCollector
-import de.peekandpoke.funktor.insights.collectors.RequestCollector
-import de.peekandpoke.funktor.insights.collectors.ResponseCollector
-import de.peekandpoke.funktor.insights.collectors.RoutingCollector
-import de.peekandpoke.funktor.insights.collectors.RuntimeCollector
-import de.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector
-import de.peekandpoke.funktor.insights.collectors.UserCollector
-import de.peekandpoke.funktor.insights.collectors.VaultCollector
-import de.peekandpoke.funktor.insights.gui.InsightsBarWebResources
-import de.peekandpoke.funktor.insights.gui.InsightsGui
-import de.peekandpoke.funktor.insights.gui.InsightsGuiRoutes
-import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
-import de.peekandpoke.funktor.insights.gui.InsightsGuiWebResources
-import de.peekandpoke.funktor.insights.gui.InsightsRenderer
-import de.peekandpoke.ultra.kontainer.Kontainer
-import de.peekandpoke.ultra.kontainer.KontainerAware
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
-import de.peekandpoke.ultra.kontainer.module
 import impl.InsightsFull
 import impl.InsightsSlim
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
+import io.peekandpoke.funktor.core.kontainerOrNull
+import io.peekandpoke.funktor.core.model.InsightsConfig
+import io.peekandpoke.funktor.insights.collectors.AppConfigCollector
+import io.peekandpoke.funktor.insights.collectors.KontainerCollector
+import io.peekandpoke.funktor.insights.collectors.LogCollector
+import io.peekandpoke.funktor.insights.collectors.RequestCollector
+import io.peekandpoke.funktor.insights.collectors.ResponseCollector
+import io.peekandpoke.funktor.insights.collectors.RoutingCollector
+import io.peekandpoke.funktor.insights.collectors.RuntimeCollector
+import io.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector
+import io.peekandpoke.funktor.insights.collectors.UserCollector
+import io.peekandpoke.funktor.insights.collectors.VaultCollector
+import io.peekandpoke.funktor.insights.gui.InsightsBarWebResources
+import io.peekandpoke.funktor.insights.gui.InsightsGui
+import io.peekandpoke.funktor.insights.gui.InsightsGuiRoutes
+import io.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
+import io.peekandpoke.funktor.insights.gui.InsightsGuiWebResources
+import io.peekandpoke.funktor.insights.gui.InsightsRenderer
+import io.peekandpoke.ultra.kontainer.Kontainer
+import io.peekandpoke.ultra.kontainer.KontainerAware
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.module
 
 fun KontainerBuilder.funktorInsights() = module(Funktor_Insights)
 

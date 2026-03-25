@@ -1,12 +1,12 @@
-package de.peekandpoke.ultra.kontainer.e2e
+package io.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
+import io.peekandpoke.ultra.kontainer.kontainer
 
 class BlueprintExtensionSpec : FreeSpec() {
 

@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.streams
+package io.peekandpoke.ultra.streams
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

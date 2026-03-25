@@ -1,11 +1,5 @@
-package de.peekandpoke.funktor.cluster.backgroundjobs
+package io.peekandpoke.funktor.cluster.backgroundjobs
 
-import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobQueued
-import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobRetryPolicy
-import de.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler01
-import de.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler02
-import de.peekandpoke.funktor.cluster.workers.WorkersRunner
-import de.peekandpoke.ultra.kontainer.Kontainer
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.assertions.withClue
@@ -15,6 +9,12 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.maps.shouldContainAll
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobQueued
+import io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobRetryPolicy
+import io.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler01
+import io.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler02
+import io.peekandpoke.funktor.cluster.workers.WorkersRunner
+import io.peekandpoke.ultra.kontainer.Kontainer
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope

@@ -1,3 +1,3 @@
 @file:Suppress("PackageDirectoryMismatch")
 
-package de.peekandpoke.kraft.addons.sourcemappedstacktrace
+package io.peekandpoke.kraft.addons.sourcemappedstacktrace

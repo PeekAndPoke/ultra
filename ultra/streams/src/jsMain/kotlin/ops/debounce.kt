@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.streams.ops
+package io.peekandpoke.ultra.streams.ops
 
 /** Creates a debounced function using browser setTimeout */
 fun debouncedFunc(delayMs: Int = 200, block: () -> Unit): () -> Unit {

@@ -1,11 +1,11 @@
-package de.peekandpoke.kraft.addons.images
+package io.peekandpoke.kraft.addons.images
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.html.ImageSizes
-import de.peekandpoke.ultra.html.ImageSrcSet
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.ImageSizes
+import io.peekandpoke.ultra.html.ImageSrcSet
 import kotlinx.html.IMG
 import kotlinx.html.Tag
 import kotlinx.html.img

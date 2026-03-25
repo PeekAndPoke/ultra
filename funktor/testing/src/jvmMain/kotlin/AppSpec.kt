@@ -1,15 +1,5 @@
-package de.peekandpoke.funktor.testing
+package io.peekandpoke.funktor.testing
 
-import de.peekandpoke.funktor.core.App
-import de.peekandpoke.funktor.core.KontainerKey
-import de.peekandpoke.funktor.core.config.AppConfig
-import de.peekandpoke.funktor.core.fixtures.FixtureInstaller
-import de.peekandpoke.funktor.core.fixtures.FixtureLoader
-import de.peekandpoke.funktor.rest.ApiRoute
-import de.peekandpoke.funktor.testing.TestBed.Companion.createTestBed
-import de.peekandpoke.ultra.kontainer.Kontainer
-import de.peekandpoke.ultra.kontainer.KontainerAware
-import de.peekandpoke.ultra.vault.Database
 import io.kotest.assertions.fail
 import io.kotest.core.listeners.AfterSpecListener
 import io.kotest.core.listeners.BeforeProjectListener
@@ -18,6 +8,16 @@ import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.core.spec.style.scopes.FreeSpecContainerScope
 import io.ktor.server.testing.*
+import io.peekandpoke.funktor.core.App
+import io.peekandpoke.funktor.core.KontainerKey
+import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.funktor.core.fixtures.FixtureInstaller
+import io.peekandpoke.funktor.core.fixtures.FixtureLoader
+import io.peekandpoke.funktor.rest.ApiRoute
+import io.peekandpoke.funktor.testing.TestBed.Companion.createTestBed
+import io.peekandpoke.ultra.kontainer.Kontainer
+import io.peekandpoke.ultra.kontainer.KontainerAware
+import io.peekandpoke.ultra.vault.Database
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlin.properties.ReadOnlyProperty

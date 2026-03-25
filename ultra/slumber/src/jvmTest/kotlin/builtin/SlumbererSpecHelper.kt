@@ -1,12 +1,12 @@
-package de.peekandpoke.ultra.slumber.builtin
+package io.peekandpoke.ultra.slumber.builtin
 
-import de.peekandpoke.ultra.common.Tuple2
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.SlumbererException
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.common.Tuple2
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.SlumbererException
 
 abstract class SlumbererSpecHelper(
     type: TypeRef<*>,

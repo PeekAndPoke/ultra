@@ -1,15 +1,15 @@
-package de.peekandpoke.funktor.insights.collectors
+package io.peekandpoke.funktor.insights.collectors
 
-import de.peekandpoke.funktor.insights.InsightsCollector
-import de.peekandpoke.funktor.insights.InsightsCollectorData
-import de.peekandpoke.funktor.insights.gui.InsightsBarTemplate
-import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
-import de.peekandpoke.ultra.security.user.UserPermissions
-import de.peekandpoke.ultra.security.user.UserProvider
-import de.peekandpoke.ultra.security.user.UserRecord
-import de.peekandpoke.ultra.semanticui.icon
-import de.peekandpoke.ultra.semanticui.ui
 import io.ktor.server.application.*
+import io.peekandpoke.funktor.insights.InsightsCollector
+import io.peekandpoke.funktor.insights.InsightsCollectorData
+import io.peekandpoke.funktor.insights.gui.InsightsBarTemplate
+import io.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
+import io.peekandpoke.ultra.security.user.UserPermissions
+import io.peekandpoke.ultra.security.user.UserProvider
+import io.peekandpoke.ultra.security.user.UserRecord
+import io.peekandpoke.ultra.semanticui.icon
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.title
 
 class UserCollector(

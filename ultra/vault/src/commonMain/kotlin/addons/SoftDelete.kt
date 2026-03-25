@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.vault.addons
+package io.peekandpoke.ultra.vault.addons
 
-import de.peekandpoke.ultra.datetime.MpInstant
-import de.peekandpoke.ultra.vault.Vault
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.vault.Vault
 import kotlinx.serialization.Serializable
 
 @Vault

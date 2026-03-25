@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.slumber.builtin.kotlinx
+package io.peekandpoke.ultra.slumber.builtin.kotlinx
 
-import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.Slumberer
+import io.peekandpoke.ultra.slumber.Awaker
+import io.peekandpoke.ultra.slumber.Slumberer
 import kotlinx.serialization.json.JsonNull
 import kotlin.reflect.KClass
 

@@ -1,7 +1,7 @@
-package de.peekandpoke.karango.e2e.crud
+package io.peekandpoke.karango.e2e.crud
 
-import de.peekandpoke.karango.testdomain.TestPerson
-import de.peekandpoke.karango.testdomain.TestPersonDetails
+import io.peekandpoke.karango.testdomain.TestPerson
+import io.peekandpoke.karango.testdomain.TestPersonDetails
 
 internal val JonBonJovi = TestPerson(
     name = "Jon Jovi",

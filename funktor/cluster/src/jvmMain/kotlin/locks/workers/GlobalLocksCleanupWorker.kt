@@ -1,12 +1,12 @@
-package de.peekandpoke.funktor.cluster.locks.workers
+package io.peekandpoke.funktor.cluster.locks.workers
 
-import de.peekandpoke.funktor.cluster.locks.GlobalLocksProvider
-import de.peekandpoke.funktor.cluster.locks.GlobalServerList
-import de.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
-import de.peekandpoke.funktor.cluster.workers.StateProvider
-import de.peekandpoke.funktor.cluster.workers.Worker
-import de.peekandpoke.ultra.datetime.MpInstant
-import de.peekandpoke.ultra.log.Log
+import io.peekandpoke.funktor.cluster.locks.GlobalLocksProvider
+import io.peekandpoke.funktor.cluster.locks.GlobalServerList
+import io.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
+import io.peekandpoke.funktor.cluster.workers.StateProvider
+import io.peekandpoke.funktor.cluster.workers.Worker
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.log.Log
 import kotlin.time.Duration.Companion.minutes
 
 class GlobalLocksCleanupWorker(

@@ -1,14 +1,14 @@
 @file:Suppress("MoveVariableDeclarationIntoWhen")
 
-package de.peekandpoke.funktor.rest
+package io.peekandpoke.funktor.rest
 
-import de.peekandpoke.funktor.core.broker.convertIncomingParameters
-import de.peekandpoke.funktor.core.broker.handle
-import de.peekandpoke.funktor.rest.auth.AuthRule
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
+import io.peekandpoke.funktor.core.broker.convertIncomingParameters
+import io.peekandpoke.funktor.core.broker.handle
+import io.peekandpoke.funktor.rest.auth.AuthRule
 
 fun <RESPONSE> Route.handle(route: ApiRoute<RESPONSE>) {
     when (route) {

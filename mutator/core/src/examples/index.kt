@@ -1,1 +1,1 @@
-package de.peekandpoke.mutator.examples
+package io.peekandpoke.mutator.examples

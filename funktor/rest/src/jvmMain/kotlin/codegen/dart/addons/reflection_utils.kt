@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.rest.codegen.dart.addons
+package io.peekandpoke.funktor.rest.codegen.dart.addons
 
-import de.peekandpoke.ultra.slumber.Polymorphic
+import io.peekandpoke.ultra.slumber.Polymorphic
 import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObjectInstance
 

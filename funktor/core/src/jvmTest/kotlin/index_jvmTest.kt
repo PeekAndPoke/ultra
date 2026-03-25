@@ -1,1 +1,1 @@
-package de.peekandpoke.funktor.core
+package io.peekandpoke.funktor.core

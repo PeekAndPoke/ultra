@@ -1,8 +1,8 @@
-package de.peekandpoke.kraft.routing
+package io.peekandpoke.kraft.routing
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.routing.Router.Companion.router
-import de.peekandpoke.kraft.vdom.VDomTagConsumer
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.routing.Router.Companion.router
+import io.peekandpoke.kraft.vdom.VDomTagConsumer
 import kotlinx.html.A
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty

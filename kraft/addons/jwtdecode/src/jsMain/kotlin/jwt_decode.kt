@@ -1,6 +1,6 @@
 @file:Suppress("FunctionName", "ClassName", "unused")
 
-package de.peekandpoke.kraft.addons
+package io.peekandpoke.kraft.addons
 
 import js.objects.Object
 

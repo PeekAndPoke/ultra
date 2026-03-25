@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.messaging.senders
+package io.peekandpoke.funktor.messaging.senders
 
-import de.peekandpoke.funktor.messaging.Email
-import de.peekandpoke.funktor.messaging.EmailSender
-import de.peekandpoke.funktor.messaging.api.EmailResult
+import io.peekandpoke.funktor.messaging.Email
+import io.peekandpoke.funktor.messaging.EmailSender
+import io.peekandpoke.funktor.messaging.api.EmailResult
 
 class NullEmailSender : EmailSender {
 

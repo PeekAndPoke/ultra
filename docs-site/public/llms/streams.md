@@ -108,7 +108,7 @@ Streams is a Kotlin Multiplatform library — it works in `commonMain`, `jvmMain
 A `StreamSource` is a mutable reactive value. It always has a current value.
 
 ```kotlin
-import de.peekandpoke.ultra.streams.StreamSource
+import io.peekandpoke.ultra.streams.StreamSource
 
 val counter = StreamSource(0)
 
@@ -421,7 +421,7 @@ paused(false)
 Emits a `TickerFrame` at regular intervals. Only runs while subscribed:
 
 ```kotlin
-import de.peekandpoke.ultra.streams.ops.ticker
+import io.peekandpoke.ultra.streams.ops.ticker
 
 val tick = ticker(1000)  // every 1000ms
 
@@ -463,7 +463,7 @@ Forgetting to unsubscribe is the most common source of leaks in reactive code. T
 your subscriptions and cleans them up in a single call:
 
 ```kotlin
-import de.peekandpoke.ultra.streams.Subscriptions
+import io.peekandpoke.ultra.streams.Subscriptions
 
 val subs = Subscriptions()
 
@@ -554,7 +554,7 @@ Emits a `TickerFrame` on every `requestAnimationFrame` callback (~60fps). Perfec
 loops:
 
 ```kotlin
-import de.peekandpoke.ultra.streams.ops.animTicker
+import io.peekandpoke.ultra.streams.ops.animTicker
 
 val tick = animTicker()
 
@@ -575,7 +575,7 @@ rate.
 Persists a stream's value in localStorage. On page reload, the stream initializes from storage:
 
 ```kotlin
-import de.peekandpoke.ultra.streams.ops.persistInLocalStorage
+import io.peekandpoke.ultra.streams.ops.persistInLocalStorage
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
 
@@ -597,8 +597,8 @@ Falls back to in-memory storage silently if localStorage is unavailable or the q
 Standalone debounced function wrappers using browser `setTimeout`. Useful outside of streams:
 
 ```kotlin
-import de.peekandpoke.ultra.streams.ops.debouncedFunc
-import de.peekandpoke.ultra.streams.ops.debouncedFuncExceptFirst
+import io.peekandpoke.ultra.streams.ops.debouncedFunc
+import io.peekandpoke.ultra.streams.ops.debouncedFuncExceptFirst
 
 val saveSearch = debouncedFunc(delayMs = 200) {
     performSearch(inputField.value)
@@ -625,8 +625,8 @@ Build your own operators, bridge to Kotlin Flow, and understand the platform mat
 Build operators by extending `StreamMapper` (transform) or `StreamWrapper` (pass-through):
 
 ```kotlin
-import de.peekandpoke.ultra.streams.Stream
-import de.peekandpoke.ultra.streams.StreamMapper
+import io.peekandpoke.ultra.streams.Stream
+import io.peekandpoke.ultra.streams.StreamMapper
 
 fun Stream<Int>.clamp(min: Int, max: Int): Stream<Int> =
     StreamMapper(
@@ -648,7 +648,7 @@ For operators with internal state, extend `StreamWrapperBase` directly and overr
 Convert any stream to a Kotlin `Flow`:
 
 ```kotlin
-import de.peekandpoke.ultra.streams.ops.asFlow
+import io.peekandpoke.ultra.streams.ops.asFlow
 
 val source = StreamSource(1)
 

@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.security.jwt
+package io.peekandpoke.ultra.security.jwt
 
-import de.peekandpoke.ultra.security.user.UserRecord
+import io.peekandpoke.ultra.security.user.UserRecord
 import kotlinx.serialization.Serializable
 
 @Serializable

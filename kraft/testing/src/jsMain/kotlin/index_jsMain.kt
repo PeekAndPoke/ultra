@@ -1,1 +1,1 @@
-package de.peekandpoke.kraft.testing
+package io.peekandpoke.kraft.testing

@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.slumber.builtin.polymorphism
+package io.peekandpoke.ultra.slumber.builtin.polymorphism
 
-import de.peekandpoke.ultra.slumber.Slumberer
+import io.peekandpoke.ultra.slumber.Slumberer
 
 class PolymorphicChildSlumberer(
     private val discriminator: String,

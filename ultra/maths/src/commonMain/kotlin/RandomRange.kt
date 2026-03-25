@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.maths.stochastic
+package io.peekandpoke.ultra.maths.stochastic
 
 import kotlinx.serialization.SerialName
 

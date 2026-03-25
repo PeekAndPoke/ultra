@@ -1,11 +1,11 @@
-package de.peekandpoke.ultra.slumber.builtin.objects
+package io.peekandpoke.ultra.slumber.builtin.objects
 
-import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.awake
-import de.peekandpoke.ultra.slumber.slumber
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
+import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.awake
+import io.peekandpoke.ultra.slumber.slumber
 
 object SingletonA
 

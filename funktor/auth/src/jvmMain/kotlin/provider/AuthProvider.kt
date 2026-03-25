@@ -1,15 +1,15 @@
-package de.peekandpoke.funktor.auth.provider
+package io.peekandpoke.funktor.auth.provider
 
-import de.peekandpoke.funktor.auth.AuthError
-import de.peekandpoke.funktor.auth.AuthRealm
-import de.peekandpoke.funktor.auth.model.AuthProviderModel
-import de.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
-import de.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
-import de.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
-import de.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
-import de.peekandpoke.funktor.auth.model.AuthSignInRequest
-import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
-import de.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.funktor.auth.AuthError
+import io.peekandpoke.funktor.auth.AuthRealm
+import io.peekandpoke.funktor.auth.model.AuthProviderModel
+import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
+import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
+import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
+import io.peekandpoke.funktor.auth.model.AuthSignInRequest
+import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
+import io.peekandpoke.ultra.vault.Stored
 
 interface AuthProvider {
 

@@ -1,7 +1,7 @@
-package de.peekandpoke.mutator.examples.code_generation
+package io.peekandpoke.mutator.examples.code_generation
 
-import de.peekandpoke.mutator.Mutable
-import de.peekandpoke.ultra.tooling.SimpleExample
+import io.peekandpoke.mutator.Mutable
+import io.peekandpoke.ultra.tooling.SimpleExample
 import java.io.File
 
 @Suppress("unused")
@@ -39,7 +39,7 @@ class CodeGeneratedForDataClasses : SimpleExample() {
     """.trimIndent()
 
     override fun run() {
-        val dir = File("build/generated/ksp/jvm/jvmTest/kotlin/de/peekandpoke/mutator/examples/code_generation/")
+        val dir = File("build/generated/ksp/jvm/jvmTest/kotlin/io/peekandpoke/mutator/examples/code_generation/")
 
         val personCode = File(dir, "CodeGeneratedForDataClasses.Person${"$$"}mutator.kt").readText()
 

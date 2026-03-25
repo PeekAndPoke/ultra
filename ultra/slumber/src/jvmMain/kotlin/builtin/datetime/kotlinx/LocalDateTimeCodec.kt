@@ -1,10 +1,10 @@
-package de.peekandpoke.ultra.slumber.builtin.datetime.kotlinx
+package io.peekandpoke.ultra.slumber.builtin.datetime.kotlinx
 
-import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.Slumberer
-import de.peekandpoke.ultra.slumber.builtin.datetime.TIMEZONE
-import de.peekandpoke.ultra.slumber.builtin.datetime.TS
-import de.peekandpoke.ultra.slumber.builtin.datetime.toMap
+import io.peekandpoke.ultra.slumber.Awaker
+import io.peekandpoke.ultra.slumber.Slumberer
+import io.peekandpoke.ultra.slumber.builtin.datetime.TIMEZONE
+import io.peekandpoke.ultra.slumber.builtin.datetime.TS
+import io.peekandpoke.ultra.slumber.builtin.datetime.toMap
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone

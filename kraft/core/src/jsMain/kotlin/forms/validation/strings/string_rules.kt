@@ -1,11 +1,11 @@
-package de.peekandpoke.kraft.forms.validation.strings
+package io.peekandpoke.kraft.forms.validation.strings
 
-import de.peekandpoke.kraft.forms.KraftFormsRuleDsl
-import de.peekandpoke.kraft.forms.validation.Rule
+import io.peekandpoke.kraft.forms.KraftFormsRuleDsl
+import io.peekandpoke.kraft.forms.validation.Rule
 
 @KraftFormsRuleDsl
 fun <T : CharSequence?> empty(message: (T) -> String): Rule<T> =
-    _root_ide_package_.de.peekandpoke.kraft.forms.validation.GenericRule(
+    _root_ide_package_.io.peekandpoke.kraft.forms.validation.GenericRule(
         messageFn = message,
         checkFn = { (it ?: "").isEmpty() }
     )
@@ -16,7 +16,7 @@ fun <T : CharSequence?> empty(message: String = "Must be empty"): Rule<T> =
 
 @KraftFormsRuleDsl
 fun <T : CharSequence?> notEmpty(message: (T) -> String): Rule<T> =
-    _root_ide_package_.de.peekandpoke.kraft.forms.validation.GenericRule(
+    _root_ide_package_.io.peekandpoke.kraft.forms.validation.GenericRule(
         messageFn = message,
         checkFn = { (it ?: "").isNotEmpty() }
     )
@@ -27,7 +27,7 @@ fun <T : CharSequence?> notEmpty(message: String = "Must not be empty"): Rule<T>
 
 @KraftFormsRuleDsl
 fun <T : CharSequence?> blank(message: (T) -> String): Rule<T> =
-    _root_ide_package_.de.peekandpoke.kraft.forms.validation.GenericRule(
+    _root_ide_package_.io.peekandpoke.kraft.forms.validation.GenericRule(
         messageFn = message,
         checkFn = { (it ?: "").isBlank() }
     )
@@ -38,7 +38,7 @@ fun <T : CharSequence?> blank(message: String = "Must be blank"): Rule<T> =
 
 @KraftFormsRuleDsl
 fun <T : CharSequence?> notBlank(message: (T) -> String): Rule<T> =
-    _root_ide_package_.de.peekandpoke.kraft.forms.validation.GenericRule(
+    _root_ide_package_.io.peekandpoke.kraft.forms.validation.GenericRule(
         messageFn = message,
         checkFn = { (it ?: "").isNotBlank() }
     )
@@ -49,7 +49,7 @@ fun <T : CharSequence?> notBlank(message: String = "Must not be blank"): Rule<T>
 
 @KraftFormsRuleDsl
 fun <T : CharSequence?> minLength(length: Int, message: (T) -> String): Rule<T> =
-    _root_ide_package_.de.peekandpoke.kraft.forms.validation.GenericRule(
+    _root_ide_package_.io.peekandpoke.kraft.forms.validation.GenericRule(
         messageFn = message,
         checkFn = { (it ?: "").length >= length }
     )
@@ -60,7 +60,7 @@ fun <T : CharSequence?> minLength(length: Int, message: String = "Must be at lea
 
 @KraftFormsRuleDsl
 fun <T : CharSequence?> maxLength(length: Int, message: (T) -> String): Rule<T> =
-    _root_ide_package_.de.peekandpoke.kraft.forms.validation.GenericRule(
+    _root_ide_package_.io.peekandpoke.kraft.forms.validation.GenericRule(
         messageFn = message,
         checkFn = { (it ?: "").length <= length }
     )
@@ -71,7 +71,7 @@ fun <T : CharSequence?> maxLength(length: Int, message: String = "Must be at mos
 
 @KraftFormsRuleDsl
 fun <T : CharSequence?> exactLength(length: Int, message: (T) -> String): Rule<T> =
-    _root_ide_package_.de.peekandpoke.kraft.forms.validation.GenericRule(
+    _root_ide_package_.io.peekandpoke.kraft.forms.validation.GenericRule(
         messageFn = message,
         checkFn = { (it ?: "").length == length }
     )

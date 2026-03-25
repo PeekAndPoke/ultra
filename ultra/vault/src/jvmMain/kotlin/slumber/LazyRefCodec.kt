@@ -1,10 +1,10 @@
-package de.peekandpoke.ultra.vault.slumber
+package io.peekandpoke.ultra.vault.slumber
 
-import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.Slumberer
-import de.peekandpoke.ultra.vault.LazyRef
-import de.peekandpoke.ultra.vault.NullEntityCache
-import de.peekandpoke.ultra.vault.Storable
+import io.peekandpoke.ultra.slumber.Awaker
+import io.peekandpoke.ultra.slumber.Slumberer
+import io.peekandpoke.ultra.vault.LazyRef
+import io.peekandpoke.ultra.vault.NullEntityCache
+import io.peekandpoke.ultra.vault.Storable
 import kotlinx.coroutines.runBlocking
 
 object LazyRefCodec : Awaker, Slumberer {

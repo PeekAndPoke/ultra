@@ -1,13 +1,13 @@
-package de.peekandpoke.kraft.examples.helloworld
+package io.peekandpoke.kraft.examples.helloworld
 
-import de.peekandpoke.kraft.addons.pagination.pagedSearchFilter
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.utils.dataLoader
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.html.onClick
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.addons.pagination.pagedSearchFilter
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.utils.dataLoader
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.onClick
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.html.Tag

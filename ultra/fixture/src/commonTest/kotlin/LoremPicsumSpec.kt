@@ -1,11 +1,11 @@
-package de.peekandpoke.ultra.fixtures
+package io.peekandpoke.ultra.fixtures
 
-import de.peekandpoke.ultra.fixture.LoremPicsum
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldStartWith
+import io.peekandpoke.ultra.fixture.LoremPicsum
 
 class LoremPicsumSpec : StringSpec() {
     init {

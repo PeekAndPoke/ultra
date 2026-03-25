@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.common.network
+package io.peekandpoke.ultra.common.network
 
-import de.peekandpoke.ultra.common.md5
+import io.peekandpoke.ultra.common.md5
 import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.SocketException

@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.cluster.locks
+package io.peekandpoke.funktor.cluster.locks
 
-import de.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
+import io.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.FlowCollector
 import kotlin.math.max

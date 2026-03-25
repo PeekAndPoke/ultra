@@ -1,1 +1,1 @@
-package de.peekandpoke.karango.addons
+package io.peekandpoke.karango.addons

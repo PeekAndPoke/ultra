@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.utils
+package io.peekandpoke.kraft.utils
 
-import de.peekandpoke.ultra.streams.StreamSource
+import io.peekandpoke.ultra.streams.StreamSource
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.CompletableDeferred

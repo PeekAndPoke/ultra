@@ -1,11 +1,11 @@
-package de.peekandpoke.ultra.slumber.builtin.polymorphism
+package io.peekandpoke.ultra.slumber.builtin.polymorphism
 
-import de.peekandpoke.ultra.reflection.kListType
-import de.peekandpoke.ultra.reflection.kMapType
-import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.slumber
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.reflection.kListType
+import io.peekandpoke.ultra.reflection.kMapType
+import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.slumber
 
 class PolymorphicSlumbererSpec : StringSpec({
 

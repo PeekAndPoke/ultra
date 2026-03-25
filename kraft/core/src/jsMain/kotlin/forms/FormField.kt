@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.forms
+package io.peekandpoke.kraft.forms
 
 interface FormField<T> {
 

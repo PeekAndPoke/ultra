@@ -1,7 +1,7 @@
-package de.peekandpoke.kraft.modals
+package io.peekandpoke.kraft.modals
 
-import de.peekandpoke.kraft.KraftApp
-import de.peekandpoke.kraft.KraftDsl
+import io.peekandpoke.kraft.KraftApp
+import io.peekandpoke.kraft.KraftDsl
 import kotlinx.html.DIV
 
 typealias ModalRenderer = DIV.(ModalsManager.Handle) -> Unit

@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.vault.domain
+package io.peekandpoke.ultra.vault.domain
 
 data class DatabaseGraphModel(
     val repos: List<Repo>,

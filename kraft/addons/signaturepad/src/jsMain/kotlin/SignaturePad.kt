@@ -1,15 +1,15 @@
-package de.peekandpoke.kraft.addons.signaturepad
+package io.peekandpoke.kraft.addons.signaturepad
 
-import de.peekandpoke.kraft.addons.signaturepad.js.SignaturePadJs
-import de.peekandpoke.kraft.addons.signaturepad.js.trim_canvas
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.utils.jsObject
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.html.css
-import de.peekandpoke.ultra.html.debugId
-import de.peekandpoke.ultra.model.FileBase64
+import io.peekandpoke.kraft.addons.signaturepad.js.SignaturePadJs
+import io.peekandpoke.kraft.addons.signaturepad.js.trim_canvas
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.utils.jsObject
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.css
+import io.peekandpoke.ultra.html.debugId
+import io.peekandpoke.ultra.model.FileBase64
 import kotlinx.browser.window
 import kotlinx.css.height
 import kotlinx.css.pct

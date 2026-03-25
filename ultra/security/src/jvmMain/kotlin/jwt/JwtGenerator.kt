@@ -1,12 +1,12 @@
-package de.peekandpoke.ultra.security.jwt
+package io.peekandpoke.ultra.security.jwt
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTCreator
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.JWTVerifier
 import com.auth0.jwt.interfaces.Payload
-import de.peekandpoke.ultra.security.user.User
-import de.peekandpoke.ultra.security.user.UserPermissions
+import io.peekandpoke.ultra.security.user.User
+import io.peekandpoke.ultra.security.user.UserPermissions
 
 class JwtGenerator(
     /** The configuration */

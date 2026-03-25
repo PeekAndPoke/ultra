@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.rest.codec
+package io.peekandpoke.funktor.rest.codec
 
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.kType
 import kotlin.reflect.KType
 
 inline fun <reified T> RestCodec.deserialize(content: Any): T? = deserialize(kType(), content)

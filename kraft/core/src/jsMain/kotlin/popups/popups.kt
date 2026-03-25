@@ -1,8 +1,8 @@
-package de.peekandpoke.kraft.popups
+package io.peekandpoke.kraft.popups
 
-import de.peekandpoke.kraft.KraftApp
-import de.peekandpoke.kraft.KraftDsl
-import de.peekandpoke.kraft.utils.Vector2D
+import io.peekandpoke.kraft.KraftApp
+import io.peekandpoke.kraft.KraftDsl
+import io.peekandpoke.kraft.utils.Vector2D
 import kotlinx.html.FlowContent
 import org.w3c.dom.HTMLElement
 

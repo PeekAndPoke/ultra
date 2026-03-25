@@ -1,11 +1,11 @@
-package de.peekandpoke.funktor.cluster.locks.workers
+package io.peekandpoke.funktor.cluster.locks.workers
 
-import de.peekandpoke.funktor.cluster.locks.GlobalServerId
-import de.peekandpoke.funktor.cluster.locks.ServerBeaconRepository
-import de.peekandpoke.funktor.cluster.workers.StateProvider
-import de.peekandpoke.funktor.cluster.workers.Worker
-import de.peekandpoke.funktor.core.model.AppInfo
-import de.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.funktor.cluster.locks.GlobalServerId
+import io.peekandpoke.funktor.cluster.locks.ServerBeaconRepository
+import io.peekandpoke.funktor.cluster.workers.StateProvider
+import io.peekandpoke.funktor.cluster.workers.Worker
+import io.peekandpoke.funktor.core.model.AppInfo
+import io.peekandpoke.ultra.datetime.MpInstant
 
 class ServerBeaconUpdateWorker(
     serverId: Lazy<GlobalServerId>,

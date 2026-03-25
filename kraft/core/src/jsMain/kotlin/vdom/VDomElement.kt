@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.vdom
+package io.peekandpoke.kraft.vdom
 
 import kotlinx.html.org.w3c.dom.events.Event
 

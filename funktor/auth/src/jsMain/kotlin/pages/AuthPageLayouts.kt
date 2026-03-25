@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.auth.pages
+package io.peekandpoke.funktor.auth.pages
 
-import de.peekandpoke.ultra.html.css
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.ultra.html.css
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.css.BackgroundRepeat
 import kotlinx.css.Color
 import kotlinx.css.Image

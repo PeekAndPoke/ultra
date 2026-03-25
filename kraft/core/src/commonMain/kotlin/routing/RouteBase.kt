@@ -1,7 +1,7 @@
-package de.peekandpoke.kraft.routing
+package io.peekandpoke.kraft.routing
 
-import de.peekandpoke.ultra.common.decodeUriComponent
-import de.peekandpoke.ultra.common.encodeUriComponent
+import io.peekandpoke.ultra.common.decodeUriComponent
+import io.peekandpoke.ultra.common.encodeUriComponent
 
 /**
  * A parameterized route with one route parameter

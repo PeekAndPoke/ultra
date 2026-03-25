@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.vault.hooks
+package io.peekandpoke.ultra.vault.hooks
 
-import de.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.MpInstant
 
 interface Timestamped {
     val createdAt: MpInstant

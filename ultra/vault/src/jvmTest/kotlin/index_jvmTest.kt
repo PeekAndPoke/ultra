@@ -1,1 +1,1 @@
-package de.peekandpoke.ultra.vault
+package io.peekandpoke.ultra.vault

@@ -1,9 +1,9 @@
-package de.peekandpoke.funktor.core.cli.cmd
+package io.peekandpoke.funktor.core.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
-import de.peekandpoke.funktor.core.JsonPrinter
-import de.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.funktor.core.JsonPrinter
+import io.peekandpoke.funktor.core.config.AppConfig
 
 class AppConfigCliCommand(
     config: Lazy<AppConfig>,

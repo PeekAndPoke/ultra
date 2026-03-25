@@ -1,21 +1,21 @@
-package de.peekandpoke.funktor.auth
+package io.peekandpoke.funktor.auth
 
-import de.peekandpoke.funktor.auth.api.AuthApiFeature
-import de.peekandpoke.funktor.auth.cli.AuthGenerateJwtSigningSecretCliCommand
-import de.peekandpoke.funktor.auth.db.karango.KarangoAuthRecordsRepo
-import de.peekandpoke.funktor.auth.db.monko.MonkoAuthRecordsRepo
-import de.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
-import de.peekandpoke.funktor.auth.provider.GithubSsoAuth
-import de.peekandpoke.funktor.auth.provider.GoogleSsoAuth
-import de.peekandpoke.funktor.core.kontainer
-import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.monko.MonkoDriver
-import de.peekandpoke.ultra.kontainer.KontainerAware
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
-import de.peekandpoke.ultra.kontainer.module
-import de.peekandpoke.ultra.vault.hooks.TimestampedHook
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
+import io.peekandpoke.funktor.auth.api.AuthApiFeature
+import io.peekandpoke.funktor.auth.cli.AuthGenerateJwtSigningSecretCliCommand
+import io.peekandpoke.funktor.auth.db.karango.KarangoAuthRecordsRepo
+import io.peekandpoke.funktor.auth.db.monko.MonkoAuthRecordsRepo
+import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
+import io.peekandpoke.funktor.auth.provider.GithubSsoAuth
+import io.peekandpoke.funktor.auth.provider.GoogleSsoAuth
+import io.peekandpoke.funktor.core.kontainer
+import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.monko.MonkoDriver
+import io.peekandpoke.ultra.kontainer.KontainerAware
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.module
+import io.peekandpoke.ultra.vault.hooks.TimestampedHook
 
 /** Helper for importing [FunktorAuth] into a [KontainerBuilder] */
 fun KontainerBuilder.funktorAuth(

@@ -1,5 +1,5 @@
-package de.peekandpoke.funktor.insights
+package io.peekandpoke.funktor.insights
 
-import de.peekandpoke.funktor.cluster.depot.repos.DepotRepository
+import io.peekandpoke.funktor.cluster.depot.repos.DepotRepository
 
 interface InsightsRepository : DepotRepository

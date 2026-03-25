@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.cluster.locks.domain
+package io.peekandpoke.funktor.cluster.locks.domain
 
-import de.peekandpoke.funktor.cluster.locks.workers.GlobalLocksCleanupWorker
-import de.peekandpoke.funktor.cluster.locks.workers.ServerBeaconUpdateWorker
-import de.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.funktor.cluster.locks.workers.GlobalLocksCleanupWorker
+import io.peekandpoke.funktor.cluster.locks.workers.ServerBeaconUpdateWorker
+import io.peekandpoke.ultra.datetime.MpInstant
 
 /**
  * A server beacon that can be stored.

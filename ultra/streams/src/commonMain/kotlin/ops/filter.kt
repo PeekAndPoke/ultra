@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.streams.ops
+package io.peekandpoke.ultra.streams.ops
 
-import de.peekandpoke.ultra.streams.Stream
-import de.peekandpoke.ultra.streams.StreamWrapperBase
+import io.peekandpoke.ultra.streams.Stream
+import io.peekandpoke.ultra.streams.StreamWrapperBase
 
 /**
  * Filter the incoming values and publish only the ones that match the [predicate].

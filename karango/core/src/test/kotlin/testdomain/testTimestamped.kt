@@ -1,17 +1,17 @@
-package de.peekandpoke.karango.testdomain
+package io.peekandpoke.karango.testdomain
 
-import de.peekandpoke.karango.vault.EntityRepository
-import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ultra.datetime.MpInstant
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.vault.Database
-import de.peekandpoke.ultra.vault.Repository
-import de.peekandpoke.ultra.vault.Repository.Hooks
-import de.peekandpoke.ultra.vault.Storable
-import de.peekandpoke.ultra.vault.Stored
-import de.peekandpoke.ultra.vault.Vault
-import de.peekandpoke.ultra.vault.hooks.Timestamped
-import de.peekandpoke.ultra.vault.hooks.TimestampedHook
+import io.peekandpoke.karango.vault.EntityRepository
+import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.vault.Database
+import io.peekandpoke.ultra.vault.Repository
+import io.peekandpoke.ultra.vault.Repository.Hooks
+import io.peekandpoke.ultra.vault.Storable
+import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.Vault
+import io.peekandpoke.ultra.vault.hooks.Timestamped
+import io.peekandpoke.ultra.vault.hooks.TimestampedHook
 
 val Database.testTimestamped get() = getRepository<TestTimestampedRepository>()
 

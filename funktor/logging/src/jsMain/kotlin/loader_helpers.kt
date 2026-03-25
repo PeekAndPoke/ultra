@@ -1,10 +1,10 @@
-package de.peekandpoke.funktor.logging
+package io.peekandpoke.funktor.logging
 
-import de.peekandpoke.kraft.utils.DataLoader
-import de.peekandpoke.ultra.html.debugId
-import de.peekandpoke.ultra.html.onClick
-import de.peekandpoke.ultra.semanticui.icon
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.utils.DataLoader
+import io.peekandpoke.ultra.html.debugId
+import io.peekandpoke.ultra.html.onClick
+import io.peekandpoke.ultra.semanticui.icon
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 
 // TODO: make common multiplatform and consolidate duplicates

@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.remote
+package io.peekandpoke.ultra.remote
 
 import io.ktor.client.*
 import kotlinx.coroutines.flow.Flow

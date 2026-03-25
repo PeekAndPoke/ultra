@@ -30,7 +30,7 @@ dependencies {
 
     <p>Annotate data classes with <code>@Vault</code>. KSP generates type-safe property accessors at compile time.</p>
 
-    <Code code={`import de.peekandpoke.ultra.vault.Vault
+    <Code code={`import io.peekandpoke.ultra.vault.Vault
 
 @Vault
 data class Person(
@@ -41,9 +41,9 @@ data class Person(
 
     <h2>3. Create a repository</h2>
 
-    <Code code={`import de.peekandpoke.karango.vault.EntityRepository
-import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ultra.reflection.kType
+    <Code code={`import io.peekandpoke.karango.vault.EntityRepository
+import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.ultra.reflection.kType
 
 class PersonsRepo(driver: KarangoDriver) : EntityRepository<Person>(
     name = "persons",          // ArangoDB collection name
@@ -53,7 +53,7 @@ class PersonsRepo(driver: KarangoDriver) : EntityRepository<Person>(
 
     <h2>4. Configure the connection</h2>
 
-    <Code code={`import de.peekandpoke.karango.config.ArangoDbConfig
+    <Code code={`import io.peekandpoke.karango.config.ArangoDbConfig
 
 val config = ArangoDbConfig(
     host = "localhost",
@@ -65,7 +65,7 @@ val config = ArangoDbConfig(
 
     <p>With Kontainer (dependency injection):</p>
 
-    <Code code={`import de.peekandpoke.karango.karango
+    <Code code={`import io.peekandpoke.karango.karango
 
 kontainer {
     karango(config)

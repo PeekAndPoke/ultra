@@ -1,9 +1,9 @@
-package de.peekandpoke.funktor.auth.domain
+package io.peekandpoke.funktor.auth.domain
 
-import de.peekandpoke.ultra.datetime.MpInstant
-import de.peekandpoke.ultra.slumber.Polymorphic
-import de.peekandpoke.ultra.vault.Vault
-import de.peekandpoke.ultra.vault.hooks.Timestamped
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.slumber.Polymorphic
+import io.peekandpoke.ultra.vault.Vault
+import io.peekandpoke.ultra.vault.hooks.Timestamped
 
 @Vault
 sealed interface AuthRecord : Timestamped {

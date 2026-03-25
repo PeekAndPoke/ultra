@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.vault.hooks
+package io.peekandpoke.ultra.vault.hooks
 
-import de.peekandpoke.ultra.datetime.Kronos
-import de.peekandpoke.ultra.vault.Repository
-import de.peekandpoke.ultra.vault.Storable
+import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.vault.Repository
+import io.peekandpoke.ultra.vault.Storable
 
 class TimestampedMillisHook(
     private val kronos: Lazy<Kronos>,

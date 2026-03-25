@@ -1,15 +1,15 @@
-package de.peekandpoke.ultra.slumber.builtin.objects
+package io.peekandpoke.ultra.slumber.builtin.objects
 
-import de.peekandpoke.slumberTestClasses.DataClassWithPrivateCtor
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.slumber.AwakerException
-import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.awake
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.peekandpoke.slumberTestClasses.DataClassWithPrivateCtor
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.slumber.AwakerException
+import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.awake
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.createType
 

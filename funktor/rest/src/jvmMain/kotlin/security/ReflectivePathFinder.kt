@@ -1,9 +1,9 @@
 @file:Suppress("detekt:ReturnCount")
 
-package de.peekandpoke.funktor.rest.security
+package io.peekandpoke.funktor.rest.security
 
-import de.peekandpoke.ultra.reflection.ReifiedKType
-import de.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.ReifiedKType
+import io.peekandpoke.ultra.reflection.TypeRef
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType

@@ -1,7 +1,7 @@
-package de.peekandpoke.karango
+package io.peekandpoke.karango
 
 import com.arangodb.ArangoDBException
-import de.peekandpoke.karango.vault.AqlTypedQuery
+import io.peekandpoke.karango.vault.AqlTypedQuery
 
 /** Base exception for all Karango errors. */
 open class KarangoException(

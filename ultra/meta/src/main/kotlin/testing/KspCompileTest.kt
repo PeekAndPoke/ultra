@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalCompilerApi::class)
 
-package de.peekandpoke.ultra.meta.testing
+package io.peekandpoke.ultra.meta.testing
 
 import com.github.difflib.DiffUtils
 import com.google.devtools.ksp.processing.SymbolProcessorProvider

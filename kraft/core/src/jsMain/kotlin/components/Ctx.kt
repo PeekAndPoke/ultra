@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.components
+package io.peekandpoke.kraft.components
 
-import de.peekandpoke.kraft.vdom.VDomEngine
+import io.peekandpoke.kraft.vdom.VDomEngine
 
 typealias NoProps = Ctx<Any?>
 

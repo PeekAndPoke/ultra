@@ -1,12 +1,12 @@
-package de.peekandpoke.kraft.examples.jsaddons.browserdetect
+package io.peekandpoke.kraft.examples.jsaddons.browserdetect
 
-import de.peekandpoke.kraft.addons.browserdetect.BrowserDetect
-import de.peekandpoke.kraft.components.NoProps
-import de.peekandpoke.kraft.components.PureComponent
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.html.css
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.addons.browserdetect.BrowserDetect
+import io.peekandpoke.kraft.components.NoProps
+import io.peekandpoke.kraft.components.PureComponent
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.css
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.css.Overflow
 import kotlinx.css.overflow
 import kotlinx.html.Tag

@@ -1,1 +1,1 @@
-package de.peekandpoke.funktor.rest
+package io.peekandpoke.funktor.rest

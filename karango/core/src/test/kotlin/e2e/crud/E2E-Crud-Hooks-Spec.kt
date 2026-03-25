@@ -1,12 +1,12 @@
-package de.peekandpoke.karango.e2e.crud
+package io.peekandpoke.karango.e2e.crud
 
-import de.peekandpoke.karango.e2e.database
-import de.peekandpoke.karango.testdomain.testPersons
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.peekandpoke.karango.e2e.database
+import io.peekandpoke.karango.testdomain.testPersons
 import kotlin.time.Duration.Companion.seconds
 
 @Suppress("ClassName")

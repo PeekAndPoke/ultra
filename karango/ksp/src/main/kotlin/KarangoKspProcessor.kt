@@ -1,4 +1,4 @@
-package de.peekandpoke.karango.ksp
+package io.peekandpoke.karango.ksp
 
 import com.google.devtools.ksp.getDeclaredProperties
 import com.google.devtools.ksp.isAbstract
@@ -19,13 +19,13 @@ import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSTypeArgument
 import com.google.devtools.ksp.symbol.Modifier
 import com.google.devtools.ksp.symbol.NonExistLocation
-import de.peekandpoke.ultra.slumber.Slumber
-import de.peekandpoke.ultra.vault.LazyRef
-import de.peekandpoke.ultra.vault.New
-import de.peekandpoke.ultra.vault.Ref
-import de.peekandpoke.ultra.vault.Storable
-import de.peekandpoke.ultra.vault.Stored
-import de.peekandpoke.ultra.vault.Vault
+import io.peekandpoke.ultra.slumber.Slumber
+import io.peekandpoke.ultra.vault.LazyRef
+import io.peekandpoke.ultra.vault.New
+import io.peekandpoke.ultra.vault.Ref
+import io.peekandpoke.ultra.vault.Storable
+import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.Vault
 import kotlin.reflect.KClass
 
 class KarangoKspProcessor(
@@ -104,9 +104,9 @@ class KarangoKspProcessor(
             """
                 package $packageName
         
-                import de.peekandpoke.karango.*
-                import de.peekandpoke.karango.aql.*
-                import de.peekandpoke.ultra.vault.lang.*
+                import io.peekandpoke.karango.*
+                import io.peekandpoke.karango.aql.*
+                import io.peekandpoke.ultra.vault.lang.*
         
             """.trimIndent()
         )

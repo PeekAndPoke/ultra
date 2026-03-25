@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.addons.analytics
+package io.peekandpoke.kraft.addons.analytics
 
-import de.peekandpoke.kraft.utils.jsObjectOf
+import io.peekandpoke.kraft.utils.jsObjectOf
 import kotlinx.browser.window
 
 class GtmAnalyticsHandler(

@@ -1,12 +1,12 @@
-package de.peekandpoke.funktor.core.fixtures.cli
+package io.peekandpoke.funktor.core.fixtures.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
-import de.peekandpoke.funktor.core.fixtures.FixtureInstaller
-import de.peekandpoke.ultra.datetime.Kronos
-import de.peekandpoke.ultra.kontainer.Kontainer
-import de.peekandpoke.ultra.log.Log
-import de.peekandpoke.ultra.vault.Database
+import io.peekandpoke.funktor.core.fixtures.FixtureInstaller
+import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.kontainer.Kontainer
+import io.peekandpoke.ultra.log.Log
+import io.peekandpoke.ultra.vault.Database
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 

@@ -1,21 +1,21 @@
-package de.peekandpoke.funktor.auth.api
+package io.peekandpoke.funktor.auth.api
 
-import de.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
-import de.peekandpoke.funktor.auth.model.AuthActivateActivateResponse
-import de.peekandpoke.funktor.auth.model.AuthRealmModel
-import de.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
-import de.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
-import de.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
-import de.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
-import de.peekandpoke.funktor.auth.model.AuthSignInRequest
-import de.peekandpoke.funktor.auth.model.AuthSignInResponse
-import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
-import de.peekandpoke.funktor.auth.model.AuthSignUpResponse
-import de.peekandpoke.ultra.remote.ApiClient
-import de.peekandpoke.ultra.remote.ApiResponse
-import de.peekandpoke.ultra.remote.TypedApiEndpoint
-import de.peekandpoke.ultra.remote.api
-import de.peekandpoke.ultra.remote.call
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
+import io.peekandpoke.funktor.auth.model.AuthActivateActivateResponse
+import io.peekandpoke.funktor.auth.model.AuthRealmModel
+import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
+import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
+import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
+import io.peekandpoke.funktor.auth.model.AuthSignInRequest
+import io.peekandpoke.funktor.auth.model.AuthSignInResponse
+import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
+import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
+import io.peekandpoke.ultra.remote.ApiClient
+import io.peekandpoke.ultra.remote.ApiResponse
+import io.peekandpoke.ultra.remote.TypedApiEndpoint
+import io.peekandpoke.ultra.remote.api
+import io.peekandpoke.ultra.remote.call
 import kotlinx.coroutines.flow.Flow
 
 class AuthApiClient(private val realm: String, config: Config) : ApiClient(config) {

@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.examples.fomanticui.helpers
+package io.peekandpoke.kraft.examples.fomanticui.helpers
 
-import de.peekandpoke.ultra.semanticui.SemanticFn
+import io.peekandpoke.ultra.semanticui.SemanticFn
 
 val allSizes = listOf<SemanticFn>(
     { mini },

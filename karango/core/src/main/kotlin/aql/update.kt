@@ -1,8 +1,8 @@
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.karango.aql.AqlPrinter.Companion.printQuery
-import de.peekandpoke.karango.vault.KarangoRepository
-import de.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.karango.aql.AqlPrinter.Companion.printQuery
+import io.peekandpoke.karango.vault.KarangoRepository
+import io.peekandpoke.ultra.reflection.kType
 
 @Suppress("FunctionName")
 fun <T : Any> AqlStatementBuilder.UPDATE(

@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.fixtures
+package io.peekandpoke.ultra.fixtures
 
-import de.peekandpoke.ultra.fixture.LoremCat
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.fixture.LoremCat
 
 class LoremCatSpec : StringSpec() {
     init {

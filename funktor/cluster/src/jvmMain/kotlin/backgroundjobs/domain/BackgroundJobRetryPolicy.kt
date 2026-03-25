@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.cluster.backgroundjobs.domain
+package io.peekandpoke.funktor.cluster.backgroundjobs.domain
 
-import de.peekandpoke.ultra.datetime.MpInstant
-import de.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.SerialName
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds

@@ -1,1 +1,1 @@
-package de.peekandpoke.funktor.testing
+package io.peekandpoke.funktor.testing

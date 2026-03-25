@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.rest.codec
+package io.peekandpoke.funktor.rest.codec
 
 import com.fasterxml.jackson.core.StreamReadConstraints
 import com.fasterxml.jackson.databind.DeserializationFeature
@@ -6,9 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.ObjectWriter
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.SlumberConfig
-import de.peekandpoke.ultra.slumber.slumber
+import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.SlumberConfig
+import io.peekandpoke.ultra.slumber.slumber
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 

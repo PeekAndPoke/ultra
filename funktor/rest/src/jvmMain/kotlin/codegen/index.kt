@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.rest.codegen
+package io.peekandpoke.funktor.rest.codegen
 
-import de.peekandpoke.funktor.rest.codegen.dart.DartProject
+import io.peekandpoke.funktor.rest.codegen.dart.DartProject
 
 val splash =
     """

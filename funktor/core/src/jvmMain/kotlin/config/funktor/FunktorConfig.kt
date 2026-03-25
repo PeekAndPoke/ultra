@@ -1,10 +1,10 @@
-package de.peekandpoke.funktor.core.config.funktor
+package io.peekandpoke.funktor.core.config.funktor
 
-import de.peekandpoke.funktor.core.config.funktor.cookies.CookieConsentConfig
-import de.peekandpoke.funktor.core.config.funktor.tracking.TrackingConfig
-import de.peekandpoke.ultra.security.UltraSecurityConfig
-import de.peekandpoke.ultra.security.jwt.JwtConfig
-import de.peekandpoke.ultra.vault.VaultConfig
+import io.peekandpoke.funktor.core.config.funktor.cookies.CookieConsentConfig
+import io.peekandpoke.funktor.core.config.funktor.tracking.TrackingConfig
+import io.peekandpoke.ultra.security.UltraSecurityConfig
+import io.peekandpoke.ultra.security.jwt.JwtConfig
+import io.peekandpoke.ultra.vault.VaultConfig
 
 data class FunktorConfig(
     val security: UltraSecurityConfig = UltraSecurityConfig("CHANGE_ME", 0),

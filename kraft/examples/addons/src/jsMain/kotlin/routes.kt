@@ -1,20 +1,20 @@
-package de.peekandpoke.kraft.examples.jsaddons
+package io.peekandpoke.kraft.examples.jsaddons
 
-import de.peekandpoke.kraft.examples.jsaddons.avatars.AvatarsRoutes
-import de.peekandpoke.kraft.examples.jsaddons.avatars.mount
-import de.peekandpoke.kraft.examples.jsaddons.browserdetect.BrowserDetectExample
-import de.peekandpoke.kraft.examples.jsaddons.chartjs.ChartJsExample
-import de.peekandpoke.kraft.examples.jsaddons.core.CoreRoutes
-import de.peekandpoke.kraft.examples.jsaddons.core.mount
-import de.peekandpoke.kraft.examples.jsaddons.jwtdecode.JwtDecodeExample
-import de.peekandpoke.kraft.examples.jsaddons.konva.KonvaExample
-import de.peekandpoke.kraft.examples.jsaddons.marked.MarkedExample
-import de.peekandpoke.kraft.examples.jsaddons.pdfjs.PdfJsRoutes
-import de.peekandpoke.kraft.examples.jsaddons.pdfjs.mount
-import de.peekandpoke.kraft.examples.jsaddons.prismjs.PrismJsExample
-import de.peekandpoke.kraft.examples.jsaddons.signaturepad.SignaturePadExample
-import de.peekandpoke.kraft.routing.RootRouterBuilder
-import de.peekandpoke.kraft.routing.Static
+import io.peekandpoke.kraft.examples.jsaddons.avatars.AvatarsRoutes
+import io.peekandpoke.kraft.examples.jsaddons.avatars.mount
+import io.peekandpoke.kraft.examples.jsaddons.browserdetect.BrowserDetectExample
+import io.peekandpoke.kraft.examples.jsaddons.chartjs.ChartJsExample
+import io.peekandpoke.kraft.examples.jsaddons.core.CoreRoutes
+import io.peekandpoke.kraft.examples.jsaddons.core.mount
+import io.peekandpoke.kraft.examples.jsaddons.jwtdecode.JwtDecodeExample
+import io.peekandpoke.kraft.examples.jsaddons.konva.KonvaExample
+import io.peekandpoke.kraft.examples.jsaddons.marked.MarkedExample
+import io.peekandpoke.kraft.examples.jsaddons.pdfjs.PdfJsRoutes
+import io.peekandpoke.kraft.examples.jsaddons.pdfjs.mount
+import io.peekandpoke.kraft.examples.jsaddons.prismjs.PrismJsExample
+import io.peekandpoke.kraft.examples.jsaddons.signaturepad.SignaturePadExample
+import io.peekandpoke.kraft.routing.RootRouterBuilder
+import io.peekandpoke.kraft.routing.Static
 
 class Routes {
 

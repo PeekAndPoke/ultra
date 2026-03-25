@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.streams.ops
+package io.peekandpoke.ultra.streams.ops
 
-import de.peekandpoke.ultra.streams.Stream
+import io.peekandpoke.ultra.streams.Stream
 
 /**
  * Records the latest incoming values up to the given [capacity].

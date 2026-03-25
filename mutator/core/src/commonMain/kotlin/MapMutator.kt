@@ -1,4 +1,4 @@
-package de.peekandpoke.mutator
+package io.peekandpoke.mutator
 
 fun <K, V> Map<K, V>.mutator(child: V.() -> Mutator<V>): MapMutator<K, V> = MapMutatorImpl(this, child)
 

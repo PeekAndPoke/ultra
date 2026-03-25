@@ -1,10 +1,10 @@
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.karango.aql.AqlPrinter.Companion.print
-import de.peekandpoke.ultra.common.tuple
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.karango.aql.AqlPrinter.Companion.print
+import io.peekandpoke.ultra.common.tuple
 import org.junit.jupiter.api.fail
 
 class OperatorArithmeticSpec : StringSpec({

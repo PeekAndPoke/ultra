@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.auth.pages
+package io.peekandpoke.funktor.auth.pages
 
-import de.peekandpoke.funktor.auth.AuthFrontendRoutes
-import de.peekandpoke.funktor.auth.AuthState
-import de.peekandpoke.kraft.routing.RouterBuilder
+import io.peekandpoke.funktor.auth.AuthFrontendRoutes
+import io.peekandpoke.funktor.auth.AuthState
+import io.peekandpoke.kraft.routing.RouterBuilder
 
 interface AuthFrontend {
     companion object {

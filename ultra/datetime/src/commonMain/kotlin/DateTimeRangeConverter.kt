@@ -1,10 +1,10 @@
 package common.datetime
 
-import de.peekandpoke.ultra.datetime.MpLocalDate
-import de.peekandpoke.ultra.datetime.MpLocalTime
-import de.peekandpoke.ultra.datetime.MpTimezone
-import de.peekandpoke.ultra.datetime.MpZonedDateTime
-import de.peekandpoke.ultra.datetime.MpZonedDateTimeRange
+import io.peekandpoke.ultra.datetime.MpLocalDate
+import io.peekandpoke.ultra.datetime.MpLocalTime
+import io.peekandpoke.ultra.datetime.MpTimezone
+import io.peekandpoke.ultra.datetime.MpZonedDateTime
+import io.peekandpoke.ultra.datetime.MpZonedDateTimeRange
 import kotlinx.datetime.DateTimeUnit
 
 class DateTimeRangeConverter(

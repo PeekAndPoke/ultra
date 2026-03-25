@@ -1,13 +1,13 @@
-package de.peekandpoke.funktor.logging.api
+package io.peekandpoke.funktor.logging.api
 
-import de.peekandpoke.funktor.core.broker.OutgoingConverter
-import de.peekandpoke.funktor.logging.LogsFilter
-import de.peekandpoke.funktor.logging.logging
-import de.peekandpoke.funktor.rest.ApiRoutes
-import de.peekandpoke.funktor.rest.docs.codeGen
-import de.peekandpoke.funktor.rest.docs.docs
-import de.peekandpoke.ultra.log.LogLevel
-import de.peekandpoke.ultra.remote.ApiResponse
+import io.peekandpoke.funktor.core.broker.OutgoingConverter
+import io.peekandpoke.funktor.logging.LogsFilter
+import io.peekandpoke.funktor.logging.logging
+import io.peekandpoke.funktor.rest.ApiRoutes
+import io.peekandpoke.funktor.rest.docs.codeGen
+import io.peekandpoke.funktor.rest.docs.docs
+import io.peekandpoke.ultra.log.LogLevel
+import io.peekandpoke.ultra.remote.ApiResponse
 
 class LoggingApi(converter: OutgoingConverter) : ApiRoutes("logging", converter) {
 

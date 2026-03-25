@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.reflection
+package io.peekandpoke.ultra.reflection
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec

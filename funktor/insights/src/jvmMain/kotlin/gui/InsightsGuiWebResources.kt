@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.insights.gui
+package io.peekandpoke.funktor.insights.gui
 
-import de.peekandpoke.funktor.core.model.CacheBuster
-import de.peekandpoke.funktor.staticweb.resources.WebResourceGroup
-import de.peekandpoke.funktor.staticweb.resources.WebResources
+import io.peekandpoke.funktor.core.model.CacheBuster
+import io.peekandpoke.funktor.staticweb.resources.WebResourceGroup
+import io.peekandpoke.funktor.staticweb.resources.WebResources
 
 val WebResources.insightsGui get() = get(InsightsGuiWebResources::class)
 

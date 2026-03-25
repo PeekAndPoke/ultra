@@ -1,6 +1,6 @@
-package de.peekandpoke.mutator.examples.code_generation
+package io.peekandpoke.mutator.examples.code_generation
 
-import de.peekandpoke.ultra.tooling.ExampleChapter
+import io.peekandpoke.ultra.tooling.ExampleChapter
 
 @Suppress("ClassName")
 class _CodeGenerationChapters : ExampleChapter {

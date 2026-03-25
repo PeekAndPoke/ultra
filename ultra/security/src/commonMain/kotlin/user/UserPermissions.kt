@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.security.user
+package io.peekandpoke.ultra.security.user
 
-import de.peekandpoke.ultra.common.containsAny
+import io.peekandpoke.ultra.common.containsAny
 import kotlinx.serialization.Serializable
 
 @Suppress("Detekt.TooManyFunctions")

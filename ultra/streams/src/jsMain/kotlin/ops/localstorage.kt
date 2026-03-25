@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.streams.ops
+package io.peekandpoke.ultra.streams.ops
 
-import de.peekandpoke.ultra.streams.PersistentStreamSource
-import de.peekandpoke.ultra.streams.StreamSource
-import de.peekandpoke.ultra.streams.StreamStorage
+import io.peekandpoke.ultra.streams.PersistentStreamSource
+import io.peekandpoke.ultra.streams.StreamSource
+import io.peekandpoke.ultra.streams.StreamStorage
 import kotlinx.browser.window
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.StringFormat

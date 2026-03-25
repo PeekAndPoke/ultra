@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.vault
+package io.peekandpoke.ultra.vault
 
 data class VaultConfig(
     val profile: Boolean = false,

@@ -1,1 +1,1 @@
-package de.peekandpoke.karango.ksp
+package io.peekandpoke.karango.ksp

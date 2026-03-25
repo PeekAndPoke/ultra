@@ -229,7 +229,7 @@ try {
 Will output:
 ```
 It says: Hello you!
-de.peekandpoke.ultra.kontainer.ServiceNotFound: Service de.peekandpoke.ultra.kontainer.examples.defining_services.HidingTheConcreteImplementationOfAServiceExample.Greeter was not found
+io.peekandpoke.ultra.kontainer.ServiceNotFound: Service io.peekandpoke.ultra.kontainer.examples.defining_services.HidingTheConcreteImplementationOfAServiceExample.Greeter was not found
 ```
 
 ### Singletons are shared
@@ -641,13 +641,13 @@ try {
 ```
 Will output:
 ```
-de.peekandpoke.ultra.kontainer.KontainerInconsistent: Kontainer is inconsistent!
+io.peekandpoke.ultra.kontainer.KontainerInconsistent: Kontainer is inconsistent!
 
 Problems:
 
-1. Service 'de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.MyService'
-    defined at de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.run$lambda$0(InjectBySuperTypeFailsToAmbiguityExample.kt:44))
-    -> Parameter 'counter' is ambiguous. The following services collide: de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.CounterOne, de.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.CounterTwo
+1. Service 'io.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.MyService'
+    defined at io.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.run$lambda$0(InjectBySuperTypeFailsToAmbiguityExample.kt:44))
+    -> Parameter 'counter' is ambiguous. The following services collide: io.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.CounterOne, io.peekandpoke.ultra.kontainer.examples.injecting_services.InjectBySuperTypeFailsToAmbiguityExample.CounterTwo
 ```
 
 ### Injection of all Services By SuperType

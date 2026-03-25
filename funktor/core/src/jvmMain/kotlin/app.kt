@@ -1,17 +1,17 @@
-package de.peekandpoke.funktor.core
+package io.peekandpoke.funktor.core
 
-import de.peekandpoke.funktor.core.cli.CliRunner
-import de.peekandpoke.funktor.core.config.AppConfig
-import de.peekandpoke.ultra.kontainer.DynamicOverrides
-import de.peekandpoke.ultra.kontainer.Kontainer
-import de.peekandpoke.ultra.kontainer.KontainerBlueprint
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.security.user.UserProvider
-import de.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.peekandpoke.funktor.core.cli.CliRunner
+import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.ultra.kontainer.DynamicOverrides
+import io.peekandpoke.ultra.kontainer.Kontainer
+import io.peekandpoke.ultra.kontainer.KontainerBlueprint
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.security.user.UserProvider
+import io.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 
 /**
  * Defines the entry point for the application setup using Funktor, allowing configuration of

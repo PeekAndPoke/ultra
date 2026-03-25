@@ -1,11 +1,11 @@
-package de.peekandpoke.mutator
+package io.peekandpoke.mutator
 
-import de.peekandpoke.mutator.domain.Address
-import de.peekandpoke.mutator.domain.mutate
-import de.peekandpoke.mutator.domain.mutator
-import de.peekandpoke.mutator.domain.street
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.mutator.domain.Address
+import io.peekandpoke.mutator.domain.mutate
+import io.peekandpoke.mutator.domain.mutator
+import io.peekandpoke.mutator.domain.street
 
 class MapMutatorSpec : StringSpec({
 

@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.playground
+package io.peekandpoke.ultra.playground
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay

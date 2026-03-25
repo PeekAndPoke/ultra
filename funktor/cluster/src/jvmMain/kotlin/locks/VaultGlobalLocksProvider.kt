@@ -1,10 +1,10 @@
-package de.peekandpoke.funktor.cluster.locks
+package io.peekandpoke.funktor.cluster.locks
 
-import de.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
-import de.peekandpoke.funktor.core.Retry.retry
-import de.peekandpoke.ultra.datetime.MpInstant
-import de.peekandpoke.ultra.vault.RemoveResult
-import de.peekandpoke.ultra.vault.Repository
+import io.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
+import io.peekandpoke.funktor.core.Retry.retry
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.vault.RemoveResult
+import io.peekandpoke.ultra.vault.Repository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.FlowCollector
 import kotlin.math.max

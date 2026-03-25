@@ -1,8 +1,8 @@
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.karango.AqlQueryOptionProvider
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.vault.lang.VaultDslMarker
+import io.peekandpoke.karango.AqlQueryOptionProvider
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.vault.lang.VaultDslMarker
 
 /**
  * Base interface for all Statements.

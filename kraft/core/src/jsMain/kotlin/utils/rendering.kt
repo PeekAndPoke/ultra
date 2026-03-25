@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.utils
+package io.peekandpoke.kraft.utils
 
 import kotlinx.html.FlowContent
 import kotlinx.html.br

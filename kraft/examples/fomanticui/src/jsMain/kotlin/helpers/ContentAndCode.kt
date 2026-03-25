@@ -1,14 +1,14 @@
-package de.peekandpoke.kraft.examples.fomanticui.helpers
+package io.peekandpoke.kraft.examples.fomanticui.helpers
 
-import de.peekandpoke.kraft.addons.prismjs.PrismKotlin
-import de.peekandpoke.kraft.addons.prismjs.PrismPlugin.CopyToClipboard.Companion.copyToClipboard
-import de.peekandpoke.kraft.addons.prismjs.PrismPlugin.LineNumbers.Companion.lineNumbers
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.semanticui.semantic
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.addons.prismjs.PrismKotlin
+import io.peekandpoke.kraft.addons.prismjs.PrismPlugin.CopyToClipboard.Companion.copyToClipboard
+import io.peekandpoke.kraft.addons.prismjs.PrismPlugin.LineNumbers.Companion.lineNumbers
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.semanticui.semantic
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 

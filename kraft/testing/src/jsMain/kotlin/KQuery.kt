@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.testing
+package io.peekandpoke.kraft.testing
 
-import de.peekandpoke.kraft.testing.KQuery.Selector.Companion.cssSelector
+import io.peekandpoke.kraft.testing.KQuery.Selector.Companion.cssSelector
 import org.w3c.dom.Element
 import org.w3c.dom.asList
 

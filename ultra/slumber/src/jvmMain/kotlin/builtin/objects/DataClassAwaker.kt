@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.slumber.builtin.objects
+package io.peekandpoke.ultra.slumber.builtin.objects
 
-import de.peekandpoke.ultra.reflection.ReifiedKType
-import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.AwakerException
+import io.peekandpoke.ultra.reflection.ReifiedKType
+import io.peekandpoke.ultra.slumber.Awaker
+import io.peekandpoke.ultra.slumber.AwakerException
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability

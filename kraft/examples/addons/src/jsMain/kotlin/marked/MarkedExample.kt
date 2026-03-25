@@ -1,14 +1,14 @@
-package de.peekandpoke.kraft.examples.jsaddons.marked
+package io.peekandpoke.kraft.examples.jsaddons.marked
 
-import de.peekandpoke.kraft.addons.marked.markdown2html
-import de.peekandpoke.kraft.addons.marked.marked
-import de.peekandpoke.kraft.components.NoProps
-import de.peekandpoke.kraft.components.PureComponent
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.semanticui.forms.UiTextArea
-import de.peekandpoke.kraft.utils.jsObject
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.addons.marked.markdown2html
+import io.peekandpoke.kraft.addons.marked.marked
+import io.peekandpoke.kraft.components.NoProps
+import io.peekandpoke.kraft.components.PureComponent
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.semanticui.forms.UiTextArea
+import io.peekandpoke.kraft.utils.jsObject
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.Tag
 import kotlinx.html.a
 import kotlinx.html.p

@@ -5,19 +5,19 @@
     "Detekt:LongMethod",
 )
 
-package de.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft
+package io.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft
 
-import de.peekandpoke.kraft.addons.prismjs.PrismHtml
-import de.peekandpoke.kraft.addons.prismjs.PrismKotlin
-import de.peekandpoke.kraft.addons.prismjs.PrismPlugin.CopyToClipboard.Companion.copyToClipboard
-import de.peekandpoke.kraft.addons.prismjs.PrismPlugin.LineNumbers.Companion.lineNumbers
-import de.peekandpoke.kraft.components.NoProps
-import de.peekandpoke.kraft.components.PureComponent
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.examples.fomanticui.helpers.example
-import de.peekandpoke.kraft.routing.PageTitle
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.addons.prismjs.PrismHtml
+import io.peekandpoke.kraft.addons.prismjs.PrismKotlin
+import io.peekandpoke.kraft.addons.prismjs.PrismPlugin.CopyToClipboard.Companion.copyToClipboard
+import io.peekandpoke.kraft.addons.prismjs.PrismPlugin.LineNumbers.Companion.lineNumbers
+import io.peekandpoke.kraft.components.NoProps
+import io.peekandpoke.kraft.components.PureComponent
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.fomanticui.helpers.example
+import io.peekandpoke.kraft.routing.PageTitle
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 import kotlinx.html.a
@@ -98,8 +98,8 @@ class KraftGettingStartedPage(ctx: NoProps) : PureComponent(ctx) {
 
         PrismKotlin(
             """
-import de.peekandpoke.kraft.Kraft
-import de.peekandpoke.kraft.vdom.preact.PreactVDomEngine
+import io.peekandpoke.kraft.Kraft
+import io.peekandpoke.kraft.vdom.preact.PreactVDomEngine
 import kotlinx.browser.document
 import kotlinx.html.h1
 import org.w3c.dom.HTMLElement

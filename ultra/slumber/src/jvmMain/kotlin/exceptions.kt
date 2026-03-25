@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.slumber
+package io.peekandpoke.ultra.slumber
 
 import kotlin.reflect.KType
 

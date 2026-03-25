@@ -1,10 +1,10 @@
-package de.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.code
+package io.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.code
 
 // <CodeBlock code>
-import de.peekandpoke.kraft.components.component
-import de.peekandpoke.kraft.components.subscribingTo
-import de.peekandpoke.kraft.components.value
-import de.peekandpoke.ultra.streams.ops.ticker
+import io.peekandpoke.kraft.components.component
+import io.peekandpoke.kraft.components.subscribingTo
+import io.peekandpoke.kraft.components.value
+import io.peekandpoke.ultra.streams.ops.ticker
 import kotlinx.html.div
 
 val FunctionalTickerComponent = component { delay: Int ->

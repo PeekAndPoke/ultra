@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.remote
+package io.peekandpoke.ultra.remote
 
-import de.peekandpoke.ultra.common.encodeUriComponent
+import io.peekandpoke.ultra.common.encodeUriComponent
 
 class UriParamBuilder private constructor() {
     companion object {

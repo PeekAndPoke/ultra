@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.auth
+package io.peekandpoke.funktor.auth
 
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.be

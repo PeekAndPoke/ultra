@@ -1,10 +1,10 @@
-package de.peekandpoke.ultra.slumber.builtin.datetime.javatime
+package io.peekandpoke.ultra.slumber.builtin.datetime.javatime
 
-import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.Slumberer
-import de.peekandpoke.ultra.slumber.builtin.datetime.TS
-import de.peekandpoke.ultra.slumber.builtin.datetime.toMap
-import de.peekandpoke.ultra.slumber.builtin.datetime.utc
+import io.peekandpoke.ultra.slumber.Awaker
+import io.peekandpoke.ultra.slumber.Slumberer
+import io.peekandpoke.ultra.slumber.builtin.datetime.TS
+import io.peekandpoke.ultra.slumber.builtin.datetime.toMap
+import io.peekandpoke.ultra.slumber.builtin.datetime.utc
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime

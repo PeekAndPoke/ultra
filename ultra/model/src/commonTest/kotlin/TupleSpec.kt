@@ -1,8 +1,18 @@
-package de.peekandpoke.ultra.model
+package io.peekandpoke.ultra.model
 
-import de.peekandpoke.ultra.common.*
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.common.Tuple1
+import io.peekandpoke.ultra.common.Tuple10
+import io.peekandpoke.ultra.common.Tuple2
+import io.peekandpoke.ultra.common.Tuple3
+import io.peekandpoke.ultra.common.Tuple4
+import io.peekandpoke.ultra.common.Tuple5
+import io.peekandpoke.ultra.common.Tuple6
+import io.peekandpoke.ultra.common.Tuple7
+import io.peekandpoke.ultra.common.Tuple8
+import io.peekandpoke.ultra.common.Tuple9
+import io.peekandpoke.ultra.common.tuple
 
 class TupleSpec : StringSpec({
 

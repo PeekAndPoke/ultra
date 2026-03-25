@@ -1,5 +1,5 @@
 // Kotlin
-package de.peekandpoke.ultra.cache
+package io.peekandpoke.ultra.cache
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty

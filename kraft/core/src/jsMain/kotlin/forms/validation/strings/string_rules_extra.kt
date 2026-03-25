@@ -1,10 +1,10 @@
-package de.peekandpoke.kraft.forms.validation.strings
+package io.peekandpoke.kraft.forms.validation.strings
 
-import de.peekandpoke.kraft.forms.KraftFormsRuleDsl
-import de.peekandpoke.kraft.forms.validation.GenericRule
-import de.peekandpoke.kraft.forms.validation.Rule
-import de.peekandpoke.ultra.common.isEmail
-import de.peekandpoke.ultra.common.isUrlWithProtocol
+import io.peekandpoke.kraft.forms.KraftFormsRuleDsl
+import io.peekandpoke.kraft.forms.validation.GenericRule
+import io.peekandpoke.kraft.forms.validation.Rule
+import io.peekandpoke.ultra.common.isEmail
+import io.peekandpoke.ultra.common.isUrlWithProtocol
 
 @KraftFormsRuleDsl
 fun <T : CharSequence?> validEmail(message: (T) -> String): Rule<T> =

@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.common
+package io.peekandpoke.ultra.common
 
 /**
  * If [condition] is true, returns the result of [modifier], otherwise returns this.

@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.kontainer.e2e
+package io.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
+import io.peekandpoke.ultra.kontainer.kontainer
 
 class KontainerToolsSpec : FreeSpec() {
 

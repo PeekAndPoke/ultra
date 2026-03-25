@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.kontainer.e2e
+package io.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.module
+import io.peekandpoke.ultra.kontainer.module
 
 interface MyServiceInterface
 

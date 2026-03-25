@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.semanticui.forms.old.select
+package io.peekandpoke.kraft.semanticui.forms.old.select
 
-import de.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.components.comp
 import kotlinx.html.Tag
 import kotlin.reflect.KMutableProperty0
 

@@ -1,13 +1,13 @@
-package de.peekandpoke.kraft.semanticui
+package io.peekandpoke.kraft.semanticui
 
-import de.peekandpoke.kraft.KraftApp
-import de.peekandpoke.kraft.KraftDsl
-import de.peekandpoke.kraft.modals.modals
-import de.peekandpoke.kraft.popups.popups
-import de.peekandpoke.kraft.semanticui.popups.SemanticUiPopupComponent
-import de.peekandpoke.kraft.toasts.ToastsManager
-import de.peekandpoke.kraft.toasts.ToastsStage
-import de.peekandpoke.kraft.toasts.toasts
+import io.peekandpoke.kraft.KraftApp
+import io.peekandpoke.kraft.KraftDsl
+import io.peekandpoke.kraft.modals.modals
+import io.peekandpoke.kraft.popups.popups
+import io.peekandpoke.kraft.semanticui.popups.SemanticUiPopupComponent
+import io.peekandpoke.kraft.toasts.ToastsManager
+import io.peekandpoke.kraft.toasts.ToastsStage
+import io.peekandpoke.kraft.toasts.toasts
 
 @KraftDsl
 fun KraftApp.Builder.semanticUI(

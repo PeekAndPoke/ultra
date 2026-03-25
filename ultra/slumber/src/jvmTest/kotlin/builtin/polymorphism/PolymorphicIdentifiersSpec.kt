@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.slumber.builtin.polymorphism
+package io.peekandpoke.ultra.slumber.builtin.polymorphism
 
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe

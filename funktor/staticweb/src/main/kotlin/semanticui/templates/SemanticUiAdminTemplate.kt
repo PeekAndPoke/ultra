@@ -1,9 +1,9 @@
-package de.peekandpoke.funktor.staticweb.semanticui.templates
+package io.peekandpoke.funktor.staticweb.semanticui.templates
 
-import de.peekandpoke.funktor.staticweb.templating.SimpleTemplateBase
-import de.peekandpoke.funktor.staticweb.templating.TemplateTools
-import de.peekandpoke.ultra.semanticui.ui
 import io.ktor.server.html.*
+import io.peekandpoke.funktor.staticweb.templating.SimpleTemplateBase
+import io.peekandpoke.funktor.staticweb.templating.TemplateTools
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.HTML
 import kotlinx.html.body
 import kotlinx.html.head

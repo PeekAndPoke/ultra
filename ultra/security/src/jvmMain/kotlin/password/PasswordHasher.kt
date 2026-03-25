@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.security.password
+package io.peekandpoke.ultra.security.password
 
 import java.security.SecureRandom
 

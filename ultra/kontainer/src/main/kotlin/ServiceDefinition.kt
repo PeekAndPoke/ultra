@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.kontainer
+package io.peekandpoke.ultra.kontainer
 
 import kotlin.reflect.KClass
 
@@ -36,7 +36,7 @@ class ServiceDefinition internal constructor(
             val originalStack = throwable.stackTrace
 
             val excludes = listOf(
-                "de.peekandpoke.ultra.kontainer.IndexKt",
+                "io.peekandpoke.ultra.kontainer.IndexKt",
             ).plus(
                 listOf(
                     CodeLocation::class,

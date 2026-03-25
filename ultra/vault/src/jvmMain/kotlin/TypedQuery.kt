@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.vault
+package io.peekandpoke.ultra.vault
 
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.vault.lang.Expression
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.vault.lang.Expression
 
 interface TypedQuery<T> {
     companion object {

@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.streams.ops
+package io.peekandpoke.ultra.streams.ops
 
-import de.peekandpoke.ultra.streams.Stream
-import de.peekandpoke.ultra.streams.StreamWrapper
+import io.peekandpoke.ultra.streams.Stream
+import io.peekandpoke.ultra.streams.StreamWrapper
 
 /**
  * Ignores duplicate values and thus only publishes when the value has changed.

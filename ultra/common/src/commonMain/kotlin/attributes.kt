@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.common
+package io.peekandpoke.ultra.common
 
 /**
  * Defines a typed key to be used with [TypedAttributes] and [MutableTypedAttributes]

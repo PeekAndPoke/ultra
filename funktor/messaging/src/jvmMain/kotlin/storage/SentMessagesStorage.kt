@@ -1,12 +1,12 @@
-package de.peekandpoke.funktor.messaging.storage
+package io.peekandpoke.funktor.messaging.storage
 
-import de.peekandpoke.funktor.messaging.api.EmailAttachment
-import de.peekandpoke.funktor.messaging.api.EmailResult
-import de.peekandpoke.funktor.messaging.api.SentMessageModel
-import de.peekandpoke.ultra.model.PagedSearchFilter
-import de.peekandpoke.ultra.vault.Cursor
-import de.peekandpoke.ultra.vault.Repository
-import de.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.funktor.messaging.api.EmailAttachment
+import io.peekandpoke.funktor.messaging.api.EmailResult
+import io.peekandpoke.funktor.messaging.api.SentMessageModel
+import io.peekandpoke.ultra.model.PagedSearchFilter
+import io.peekandpoke.ultra.vault.Cursor
+import io.peekandpoke.ultra.vault.Repository
+import io.peekandpoke.ultra.vault.Stored
 
 interface SentMessagesStorage {
 

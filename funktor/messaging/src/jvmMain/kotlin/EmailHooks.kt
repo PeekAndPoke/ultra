@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.messaging
+package io.peekandpoke.funktor.messaging
 
-import de.peekandpoke.funktor.messaging.api.EmailResult
-import de.peekandpoke.ultra.log.Log
-import de.peekandpoke.ultra.log.NullLog
+import io.peekandpoke.funktor.messaging.api.EmailResult
+import io.peekandpoke.ultra.log.Log
+import io.peekandpoke.ultra.log.NullLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope

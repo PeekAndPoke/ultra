@@ -1,9 +1,9 @@
-package de.peekandpoke.funktor.cluster.backgroundjobs
+package io.peekandpoke.funktor.cluster.backgroundjobs
 
-import de.peekandpoke.funktor.cluster.FunktorClusterUi
-import de.peekandpoke.kraft.routing.Route1
-import de.peekandpoke.kraft.routing.RouterBuilder
-import de.peekandpoke.kraft.routing.Static
+import io.peekandpoke.funktor.cluster.FunktorClusterUi
+import io.peekandpoke.kraft.routing.Route1
+import io.peekandpoke.kraft.routing.RouterBuilder
+import io.peekandpoke.kraft.routing.Static
 
 class BackgroundJobsRoutes(mount: String) {
 

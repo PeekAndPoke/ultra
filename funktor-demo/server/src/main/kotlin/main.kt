@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.demo.server
 
-import de.peekandpoke.funktor.core.AppKontainers
-import de.peekandpoke.funktor.core.funktorApp
+import io.peekandpoke.funktor.core.AppKontainers
+import io.peekandpoke.funktor.core.funktorApp
 
 val app = funktorApp<FunktorDemoConfig>(
     kontainers = { config ->

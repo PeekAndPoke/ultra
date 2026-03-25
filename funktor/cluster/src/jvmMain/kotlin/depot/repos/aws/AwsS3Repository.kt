@@ -1,13 +1,13 @@
-package de.peekandpoke.funktor.cluster.depot.repos.aws
+package io.peekandpoke.funktor.cluster.depot.repos.aws
 
-import de.peekandpoke.funktor.cluster.depot.api.DepotItemModel
-import de.peekandpoke.funktor.cluster.depot.domain.DepotFileContent
-import de.peekandpoke.funktor.cluster.depot.domain.DepotItem
-import de.peekandpoke.funktor.cluster.depot.repos.DepotPutFileOptions
-import de.peekandpoke.funktor.cluster.depot.repos.DepotRepository
-import de.peekandpoke.funktor.cluster.depot.repos.depotPutFileOptions
-import de.peekandpoke.ultra.datetime.MpInstant
-import de.peekandpoke.ultra.datetime.mp
+import io.peekandpoke.funktor.cluster.depot.api.DepotItemModel
+import io.peekandpoke.funktor.cluster.depot.domain.DepotFileContent
+import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
+import io.peekandpoke.funktor.cluster.depot.repos.DepotPutFileOptions
+import io.peekandpoke.funktor.cluster.depot.repos.DepotRepository
+import io.peekandpoke.funktor.cluster.depot.repos.depotPutFileOptions
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.mp
 import kotlinx.coroutines.future.await
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.core.async.AsyncResponseTransformer

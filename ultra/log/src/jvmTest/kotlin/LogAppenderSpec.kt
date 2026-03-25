@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.log
+package io.peekandpoke.ultra.log
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -8,7 +8,7 @@ import java.time.ZonedDateTime
 class LogAppenderSpec : StringSpec({
 
     "formatLoggerName shortens package parts to first char" {
-        LogAppender.formatLoggerName("de.peekandpoke.ultra.log.MyLogger") shouldBe "d.p.u.l.MyLogger"
+        LogAppender.formatLoggerName("io.peekandpoke.ultra.log.MyLogger") shouldBe "i.p.u.l.MyLogger"
     }
 
     "formatLoggerName keeps single-part names unchanged" {
@@ -32,11 +32,11 @@ class LogAppenderSpec : StringSpec({
 
     "format shortens long logger names" {
         val ts = ZonedDateTime.parse("2024-06-15T10:30:45+02:00[Europe/Berlin]")
-        val longName = "de.peekandpoke.ultra.some.very.deep.package.MyService"
+        val longName = "io.peekandpoke.ultra.some.very.deep.package.MyService"
 
         val result = LogAppender.format(ts, LogLevel.DEBUG, "msg", longName)
 
         // Should use abbreviated name since > 30 chars
-        result shouldContain "d.p.u.s.v.d.p.MyService"
+        result shouldContain "i.p.u.s.v.d.p.MyService"
     }
 })

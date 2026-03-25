@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.kontainer.examples.injecting_services
+package io.peekandpoke.ultra.kontainer.examples.injecting_services
 
-import de.peekandpoke.ultra.tooling.ExampleChapter
+import io.peekandpoke.ultra.tooling.ExampleChapter
 
 @Suppress("ClassName")
 class _InjectingServices : ExampleChapter {

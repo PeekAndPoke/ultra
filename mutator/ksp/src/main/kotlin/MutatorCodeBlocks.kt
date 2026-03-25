@@ -1,13 +1,13 @@
-package de.peekandpoke.mutator.ksp
+package io.peekandpoke.mutator.ksp
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
-import de.peekandpoke.mutator.ListMutator
-import de.peekandpoke.mutator.MapMutator
-import de.peekandpoke.mutator.ObjectMutator
-import de.peekandpoke.mutator.SetMutator
-import de.peekandpoke.ultra.common.surround
+import io.peekandpoke.mutator.ListMutator
+import io.peekandpoke.mutator.MapMutator
+import io.peekandpoke.mutator.ObjectMutator
+import io.peekandpoke.mutator.SetMutator
+import io.peekandpoke.ultra.common.surround
 
 class MutatorCodeBlocks {
 

@@ -1,9 +1,9 @@
-package de.peekandpoke.kraft.addons.chartjs
+package io.peekandpoke.kraft.addons.chartjs
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.vdom.VDom
 import kotlinx.html.Tag
 import kotlinx.html.canvas
 import kotlinx.html.style

@@ -1,3 +1,3 @@
-package de.peekandpoke.mutator
+package io.peekandpoke.mutator
 
 typealias Mutation<V> = Mutator<V>.() -> Unit

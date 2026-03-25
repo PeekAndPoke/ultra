@@ -1,8 +1,8 @@
-package de.peekandpoke.kraft.forms.validation.collections
+package io.peekandpoke.kraft.forms.validation.collections
 
-import de.peekandpoke.kraft.forms.KraftFormsRuleDsl
-import de.peekandpoke.kraft.forms.validation.GenericRule
-import de.peekandpoke.kraft.forms.validation.Rule
+import io.peekandpoke.kraft.forms.KraftFormsRuleDsl
+import io.peekandpoke.kraft.forms.validation.GenericRule
+import io.peekandpoke.kraft.forms.validation.Rule
 
 @KraftFormsRuleDsl
 fun <T : Collection<*>> notEmpty(message: (T) -> String): Rule<T> =

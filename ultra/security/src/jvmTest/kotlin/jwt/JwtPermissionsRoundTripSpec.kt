@@ -1,11 +1,11 @@
-package de.peekandpoke.ultra.security.jwt
+package io.peekandpoke.ultra.security.jwt
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import de.peekandpoke.ultra.security.user.UserPermissions
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
+import io.peekandpoke.ultra.security.user.UserPermissions
 
 class JwtPermissionsRoundTripSpec : FreeSpec() {
 

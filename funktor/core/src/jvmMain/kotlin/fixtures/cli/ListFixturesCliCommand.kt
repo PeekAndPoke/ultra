@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.core.fixtures.cli
+package io.peekandpoke.funktor.core.fixtures.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
-import de.peekandpoke.funktor.core.fixtures.FixtureInstaller
+import io.peekandpoke.funktor.core.fixtures.FixtureInstaller
 
 class ListFixturesCliCommand(
     installer: Lazy<FixtureInstaller>,

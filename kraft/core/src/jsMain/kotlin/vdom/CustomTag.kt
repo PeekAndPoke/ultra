@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.vdom
+package io.peekandpoke.kraft.vdom
 
 import kotlinx.html.FlowContent
 import kotlinx.html.HTMLTag

@@ -1,11 +1,11 @@
-package de.peekandpoke.funktor.cluster.depot
+package io.peekandpoke.funktor.cluster.depot
 
-import de.peekandpoke.funktor.cluster.depot.api.DepotItemModel
-import de.peekandpoke.funktor.cluster.depot.domain.DepotFileContent
-import de.peekandpoke.funktor.cluster.depot.domain.DepotItem
-import de.peekandpoke.funktor.cluster.depot.domain.DepotUri
-import de.peekandpoke.funktor.cluster.depot.repos.DepotRepository
-import de.peekandpoke.ultra.common.Lookup
+import io.peekandpoke.funktor.cluster.depot.api.DepotItemModel
+import io.peekandpoke.funktor.cluster.depot.domain.DepotFileContent
+import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
+import io.peekandpoke.funktor.cluster.depot.domain.DepotUri
+import io.peekandpoke.funktor.cluster.depot.repos.DepotRepository
+import io.peekandpoke.ultra.common.Lookup
 import kotlin.reflect.KClass
 
 /**

@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.addons.files
+package io.peekandpoke.kraft.addons.files
 
 import org.w3c.files.File
 

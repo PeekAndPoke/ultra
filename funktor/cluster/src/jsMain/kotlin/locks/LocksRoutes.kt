@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.cluster.locks
+package io.peekandpoke.funktor.cluster.locks
 
-import de.peekandpoke.funktor.cluster.FunktorClusterUi
-import de.peekandpoke.kraft.routing.RouterBuilder
-import de.peekandpoke.kraft.routing.Static
+import io.peekandpoke.funktor.cluster.FunktorClusterUi
+import io.peekandpoke.kraft.routing.RouterBuilder
+import io.peekandpoke.kraft.routing.Static
 
 class LocksRoutes(mount: String) {
 

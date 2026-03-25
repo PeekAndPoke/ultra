@@ -1,12 +1,12 @@
-package de.peekandpoke.funktor.cluster.vault.api
+package io.peekandpoke.funktor.cluster.vault.api
 
-import de.peekandpoke.funktor.cluster.database
-import de.peekandpoke.funktor.core.broker.OutgoingConverter
-import de.peekandpoke.funktor.rest.ApiRoutes
-import de.peekandpoke.funktor.rest.docs.codeGen
-import de.peekandpoke.funktor.rest.docs.docs
-import de.peekandpoke.ultra.remote.ApiResponse
-import de.peekandpoke.ultra.vault.VaultModels
+import io.peekandpoke.funktor.cluster.database
+import io.peekandpoke.funktor.core.broker.OutgoingConverter
+import io.peekandpoke.funktor.rest.ApiRoutes
+import io.peekandpoke.funktor.rest.docs.codeGen
+import io.peekandpoke.funktor.rest.docs.docs
+import io.peekandpoke.ultra.remote.ApiResponse
+import io.peekandpoke.ultra.vault.VaultModels
 
 class VaultApi(converter: OutgoingConverter) : ApiRoutes("vault", converter) {
 

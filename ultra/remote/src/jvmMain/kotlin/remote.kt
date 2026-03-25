@@ -1,11 +1,11 @@
-package de.peekandpoke.ultra.remote
+package io.peekandpoke.ultra.remote
 
-import de.peekandpoke.ultra.common.toBase64
 import io.ktor.client.*
 import io.ktor.client.plugins.sse.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.peekandpoke.ultra.common.toBase64
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 

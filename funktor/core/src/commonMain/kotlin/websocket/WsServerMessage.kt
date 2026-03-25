@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.core.websocket
+package io.peekandpoke.funktor.core.websocket
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

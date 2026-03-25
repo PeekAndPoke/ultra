@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.streams
+package io.peekandpoke.ultra.streams
 
-import de.peekandpoke.ultra.streams.ops.map
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.streams.ops.map
 
 class HandlerResilienceSpec : StringSpec({
 

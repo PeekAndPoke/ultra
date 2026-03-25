@@ -1,7 +1,7 @@
-package de.peekandpoke.mutator.examples.basic_mutations
+package io.peekandpoke.mutator.examples.basic_mutations
 
-import de.peekandpoke.mutator.examples.basic_mutations.basic_mutations.MutatingNestedDataClasses
-import de.peekandpoke.ultra.tooling.ExampleChapter
+import io.peekandpoke.mutator.examples.basic_mutations.basic_mutations.MutatingNestedDataClasses
+import io.peekandpoke.ultra.tooling.ExampleChapter
 
 @Suppress("ClassName")
 class _BasicMutationsChapters : ExampleChapter {

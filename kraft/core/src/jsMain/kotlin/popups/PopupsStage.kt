@@ -1,12 +1,12 @@
-package de.peekandpoke.kraft.popups
+package io.peekandpoke.kraft.popups
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.html.css
-import de.peekandpoke.ultra.html.debugId
-import de.peekandpoke.ultra.html.key
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.css
+import io.peekandpoke.ultra.html.debugId
+import io.peekandpoke.ultra.html.key
 import kotlinx.browser.document
 import kotlinx.css.Position
 import kotlinx.css.left

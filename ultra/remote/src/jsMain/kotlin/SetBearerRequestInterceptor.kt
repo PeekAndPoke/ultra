@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.remote
+package io.peekandpoke.ultra.remote
 
 class SetBearerRequestInterceptor(private val token: () -> String?) : RequestInterceptor {
 

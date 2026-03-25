@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.insights
+package io.peekandpoke.funktor.insights
 
 import java.time.LocalDateTime
 

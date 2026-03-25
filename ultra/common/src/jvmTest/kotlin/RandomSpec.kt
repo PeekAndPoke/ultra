@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.common
+package io.peekandpoke.ultra.common
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue

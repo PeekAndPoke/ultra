@@ -1,12 +1,12 @@
-package de.peekandpoke.funktor.cluster.depot.api
+package io.peekandpoke.funktor.cluster.depot.api
 
-import de.peekandpoke.ultra.remote.ApiClient
-import de.peekandpoke.ultra.remote.ApiResponse
-import de.peekandpoke.ultra.remote.TypedApiEndpoint.Get
-import de.peekandpoke.ultra.remote.api
-import de.peekandpoke.ultra.remote.apiList
-import de.peekandpoke.ultra.remote.call
 import depot.api.DepotRepositoryModel
+import io.peekandpoke.ultra.remote.ApiClient
+import io.peekandpoke.ultra.remote.ApiResponse
+import io.peekandpoke.ultra.remote.TypedApiEndpoint.Get
+import io.peekandpoke.ultra.remote.api
+import io.peekandpoke.ultra.remote.apiList
+import io.peekandpoke.ultra.remote.call
 import kotlinx.coroutines.flow.Flow
 
 class DepotApiClient(config: Config) : ApiClient(config) {

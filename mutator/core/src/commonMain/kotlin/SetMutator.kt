@@ -1,4 +1,4 @@
-package de.peekandpoke.mutator
+package io.peekandpoke.mutator
 
 fun <V> Set<V>.mutator(child: V.() -> Mutator<V>): SetMutator<V> = SetMutatorImpl(this, child)
 

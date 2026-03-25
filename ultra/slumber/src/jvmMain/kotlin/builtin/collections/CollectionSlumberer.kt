@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.slumber.builtin.collections
+package io.peekandpoke.ultra.slumber.builtin.collections
 
-import de.peekandpoke.ultra.slumber.Slumberer
+import io.peekandpoke.ultra.slumber.Slumberer
 
 object CollectionSlumberer : Slumberer {
 

@@ -1,19 +1,19 @@
-package de.peekandpoke.funktor.cluster.backgroundjobs.karango
+package io.peekandpoke.funktor.cluster.backgroundjobs.karango
 
-import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsSpecBase
-import de.peekandpoke.funktor.cluster.funktorCluster
-import de.peekandpoke.funktor.core.broker.funktorBroker
-import de.peekandpoke.funktor.core.config.AppConfig
-import de.peekandpoke.funktor.core.funktorCore
-import de.peekandpoke.funktor.core.model.AppInfo
-import de.peekandpoke.funktor.core.model.default
-import de.peekandpoke.funktor.rest.funktorRest
-import de.peekandpoke.karango.config.ArangoDbConfig
-import de.peekandpoke.karango.karango
-import de.peekandpoke.ultra.kontainer.Kontainer
-import de.peekandpoke.ultra.kontainer.kontainer
-import de.peekandpoke.ultra.security.user.UserProvider
-import de.peekandpoke.ultra.vault.Database
+import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsSpecBase
+import io.peekandpoke.funktor.cluster.funktorCluster
+import io.peekandpoke.funktor.core.broker.funktorBroker
+import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.funktor.core.funktorCore
+import io.peekandpoke.funktor.core.model.AppInfo
+import io.peekandpoke.funktor.core.model.default
+import io.peekandpoke.funktor.rest.funktorRest
+import io.peekandpoke.karango.config.ArangoDbConfig
+import io.peekandpoke.karango.karango
+import io.peekandpoke.ultra.kontainer.Kontainer
+import io.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.ultra.security.user.UserProvider
+import io.peekandpoke.ultra.vault.Database
 import kotlinx.coroutines.runBlocking
 
 class BackgroundJobWithKarangoSpec : BackgroundJobsSpecBase() {

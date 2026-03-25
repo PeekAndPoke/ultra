@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.components
+package io.peekandpoke.kraft.components
 
 /**
  * Base component that has no props and no state

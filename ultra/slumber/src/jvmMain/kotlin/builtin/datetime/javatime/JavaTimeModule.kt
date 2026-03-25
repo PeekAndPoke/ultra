@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.slumber.builtin.datetime.javatime
+package io.peekandpoke.ultra.slumber.builtin.datetime.javatime
 
-import de.peekandpoke.ultra.common.TypedAttributes
-import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.SlumberModule
-import de.peekandpoke.ultra.slumber.Slumberer
+import io.peekandpoke.ultra.common.TypedAttributes
+import io.peekandpoke.ultra.slumber.Awaker
+import io.peekandpoke.ultra.slumber.SlumberModule
+import io.peekandpoke.ultra.slumber.Slumberer
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime

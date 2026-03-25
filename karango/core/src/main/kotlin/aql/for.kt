@@ -1,9 +1,9 @@
 @file:Suppress("FunctionName")
 
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.reflection.nthParamName
-import de.peekandpoke.ultra.vault.lang.VaultDslMarker
+import io.peekandpoke.ultra.reflection.nthParamName
+import io.peekandpoke.ultra.vault.lang.VaultDslMarker
 import kotlin.math.max
 
 @VaultDslMarker

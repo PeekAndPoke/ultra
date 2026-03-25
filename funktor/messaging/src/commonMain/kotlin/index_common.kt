@@ -1,1 +1,1 @@
-package de.peekandpoke.funktor.messaging
+package io.peekandpoke.funktor.messaging

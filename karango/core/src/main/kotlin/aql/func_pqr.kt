@@ -1,10 +1,10 @@
 @file:Suppress("FunctionName")
 
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.reflection.kListType
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.vault.lang.VaultFunctionMarker
+import io.peekandpoke.ultra.reflection.kListType
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
 /**
  * Return the nth percentile of the values in numArray.

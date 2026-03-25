@@ -1,11 +1,11 @@
-package de.peekandpoke.funktor.auth.cli
+package io.peekandpoke.funktor.auth.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
-import de.peekandpoke.funktor.auth.AuthRandom
+import io.peekandpoke.funktor.auth.AuthRandom
 
 class AuthGenerateJwtSigningSecretCliCommand(
     random: Lazy<AuthRandom>,

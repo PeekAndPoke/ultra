@@ -1,11 +1,11 @@
 @file:Suppress("FunctionName")
 
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.karango.vault.KarangoRepository
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.vault.Storable
-import de.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
+import io.peekandpoke.karango.vault.KarangoRepository
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.vault.Storable
+import io.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
 
 /**
  * Inserts or updates a document.

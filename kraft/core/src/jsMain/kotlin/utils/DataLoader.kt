@@ -1,9 +1,9 @@
-package de.peekandpoke.kraft.utils
+package io.peekandpoke.kraft.utils
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.ultra.streams.Stream
-import de.peekandpoke.ultra.streams.StreamSource
-import de.peekandpoke.ultra.streams.ops.map
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.ultra.streams.Stream
+import io.peekandpoke.ultra.streams.StreamSource
+import io.peekandpoke.ultra.streams.ops.map
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

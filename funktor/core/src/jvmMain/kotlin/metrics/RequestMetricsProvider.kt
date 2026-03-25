@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.core.metrics
+package io.peekandpoke.funktor.core.metrics
 
 import kotlin.time.Duration
 

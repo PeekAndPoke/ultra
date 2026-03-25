@@ -1,10 +1,10 @@
-package de.peekandpoke.ultra.playground
+package io.peekandpoke.ultra.playground
 
-import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.SlumberConfig
-import de.peekandpoke.ultra.slumber.builtin.objects.DataClassSlumberer.Companion.withSlumberCache
-import de.peekandpoke.ultra.slumber.slumber
 import io.github.serpro69.kfaker.faker
+import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.SlumberConfig
+import io.peekandpoke.ultra.slumber.builtin.objects.DataClassSlumberer.Companion.withSlumberCache
+import io.peekandpoke.ultra.slumber.slumber
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.supervisorScope

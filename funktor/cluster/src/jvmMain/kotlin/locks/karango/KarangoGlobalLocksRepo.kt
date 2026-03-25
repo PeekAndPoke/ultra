@@ -1,10 +1,10 @@
-package de.peekandpoke.funktor.cluster.locks.karango
+package io.peekandpoke.funktor.cluster.locks.karango
 
-import de.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
-import de.peekandpoke.funktor.core.fixtures.FixtureLoader
-import de.peekandpoke.karango.vault.EntityRepository
-import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
+import io.peekandpoke.funktor.core.fixtures.FixtureLoader
+import io.peekandpoke.karango.vault.EntityRepository
+import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.ultra.reflection.kType
 
 class KarangoGlobalLocksRepo(driver: KarangoDriver, repoName: String) :
     EntityRepository<GlobalLockEntry>(name = repoName, kType(), driver) {

@@ -1,13 +1,13 @@
 @file:Suppress("FunctionName")
 
-package de.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.code
+package io.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.code
 
 // <CodeBlock code>
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.streams.ops.ticker
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.streams.ops.ticker
 import kotlinx.html.Tag
 import kotlinx.html.div
 

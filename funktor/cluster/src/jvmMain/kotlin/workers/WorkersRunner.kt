@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.cluster.workers
+package io.peekandpoke.funktor.cluster.workers
 
-import de.peekandpoke.funktor.core.lifecycle.AppLifeCycleBuilder
-import de.peekandpoke.ultra.kontainer.Kontainer
 import io.ktor.server.application.*
+import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleBuilder
+import io.peekandpoke.ultra.kontainer.Kontainer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay

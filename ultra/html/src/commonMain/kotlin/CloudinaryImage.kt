@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.html
+package io.peekandpoke.ultra.html
 
 data class CloudinaryImage(
     val protocol: String,

@@ -1,12 +1,12 @@
-package de.peekandpoke.ultra.security
+package io.peekandpoke.ultra.security
 
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
-import de.peekandpoke.ultra.kontainer.module
-import de.peekandpoke.ultra.security.csrf.CsrfProtection
-import de.peekandpoke.ultra.security.csrf.StatelessCsrfProtection
-import de.peekandpoke.ultra.security.password.CompoundPasswordHasher
-import de.peekandpoke.ultra.security.password.PasswordHasher
-import de.peekandpoke.ultra.security.user.UserProvider
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.module
+import io.peekandpoke.ultra.security.csrf.CsrfProtection
+import io.peekandpoke.ultra.security.csrf.StatelessCsrfProtection
+import io.peekandpoke.ultra.security.password.CompoundPasswordHasher
+import io.peekandpoke.ultra.security.password.PasswordHasher
+import io.peekandpoke.ultra.security.user.UserProvider
 
 @Suppress("unused")
 fun KontainerBuilder.ultraSecurity(config: UltraSecurityConfig) = module(Ultra_Security, config)

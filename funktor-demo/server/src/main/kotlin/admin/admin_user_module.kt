@@ -1,10 +1,10 @@
 package io.peekandpoke.funktor.demo.server.admin
 
-import de.peekandpoke.funktor.core.kontainer
-import de.peekandpoke.ultra.kontainer.KontainerAware
-import de.peekandpoke.ultra.kontainer.module
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
+import io.peekandpoke.funktor.core.kontainer
+import io.peekandpoke.ultra.kontainer.KontainerAware
+import io.peekandpoke.ultra.kontainer.module
 
 inline val KontainerAware.adminUsers: AdminUserServices get() = kontainer.get()
 inline val ApplicationCall.adminUsers: AdminUserServices get() = kontainer.adminUsers

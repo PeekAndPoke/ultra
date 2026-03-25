@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.cluster.locks
+package io.peekandpoke.funktor.cluster.locks
 
-import de.peekandpoke.funktor.cluster.locks.domain.ServerBeacon
+import io.peekandpoke.funktor.cluster.locks.domain.ServerBeacon
 
 class GlobalServerList {
 

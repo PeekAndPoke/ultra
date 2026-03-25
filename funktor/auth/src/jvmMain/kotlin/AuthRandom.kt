@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.auth
+package io.peekandpoke.funktor.auth
 
-import de.peekandpoke.ultra.common.toBase64
+import io.peekandpoke.ultra.common.toBase64
 import java.security.SecureRandom
 
 interface AuthRandom {

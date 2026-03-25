@@ -1,16 +1,16 @@
-package de.peekandpoke.karango.e2e
+package io.peekandpoke.karango.e2e
 
-import de.peekandpoke.karango.aql.LET
-import de.peekandpoke.karango.aql.RETURN
-import de.peekandpoke.karango.aql.div
-import de.peekandpoke.karango.aql.minus
-import de.peekandpoke.karango.aql.plus
-import de.peekandpoke.karango.aql.rem
-import de.peekandpoke.karango.aql.times
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.karango.aql.LET
+import io.peekandpoke.karango.aql.RETURN
+import io.peekandpoke.karango.aql.div
+import io.peekandpoke.karango.aql.minus
+import io.peekandpoke.karango.aql.plus
+import io.peekandpoke.karango.aql.rem
+import io.peekandpoke.karango.aql.times
 
 @Suppress("ClassName")
 class `E2E-Arithmetics-Spec` : StringSpec({

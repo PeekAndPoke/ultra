@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.remote
+package io.peekandpoke.ultra.remote
 
 class ErrorLoggingResponseInterceptor : ResponseInterceptor {
     override suspend fun intercept(response: RemoteResponse): RemoteResponse {

@@ -1,4 +1,4 @@
-package de.peekandpoke.monko
+package io.peekandpoke.monko
 
 import com.mongodb.ExplainVerbosity
 import com.mongodb.client.model.DropIndexOptions
@@ -7,16 +7,16 @@ import com.mongodb.client.result.InsertOneResult
 import com.mongodb.kotlin.client.coroutine.FindFlow
 import com.mongodb.kotlin.client.coroutine.MongoClient
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
-import de.peekandpoke.monko.vault.vault.MongoTypedQuery
-import de.peekandpoke.ultra.log.Log
-import de.peekandpoke.ultra.log.NullLog
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.slumber.awake
-import de.peekandpoke.ultra.slumber.slumber
-import de.peekandpoke.ultra.vault.RemoveResult
-import de.peekandpoke.ultra.vault.Stored
-import de.peekandpoke.ultra.vault.profiling.NullQueryProfiler
-import de.peekandpoke.ultra.vault.profiling.QueryProfiler
+import io.peekandpoke.monko.vault.vault.MongoTypedQuery
+import io.peekandpoke.ultra.log.Log
+import io.peekandpoke.ultra.log.NullLog
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.slumber.awake
+import io.peekandpoke.ultra.slumber.slumber
+import io.peekandpoke.ultra.vault.RemoveResult
+import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.profiling.NullQueryProfiler
+import io.peekandpoke.ultra.vault.profiling.QueryProfiler
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking

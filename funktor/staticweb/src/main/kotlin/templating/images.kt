@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.staticweb.templating
+package io.peekandpoke.funktor.staticweb.templating
 
-import de.peekandpoke.ultra.html.ImageSizes
-import de.peekandpoke.ultra.html.ImageSrcSet
 import de.peekandpoke.ultra.html.Transparent2x1PngBase64
+import io.peekandpoke.ultra.html.ImageSizes
+import io.peekandpoke.ultra.html.ImageSrcSet
 import kotlinx.html.FlowContent
 import kotlinx.html.IMG
 import kotlinx.html.img

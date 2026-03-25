@@ -5,24 +5,24 @@
     "Detekt:LongMethod",
 )
 
-package de.peekandpoke.kraft.examples.fomanticui.pages.elements.segment
+package io.peekandpoke.kraft.examples.fomanticui.pages.elements.segment
 
-import de.peekandpoke.kraft.components.NoProps
-import de.peekandpoke.kraft.components.PureComponent
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.examples.fomanticui.helpers.HorizontalContentAndCode
-import de.peekandpoke.kraft.examples.fomanticui.helpers.example
-import de.peekandpoke.kraft.examples.fomanticui.helpers.readTheFomanticUiDocs
-import de.peekandpoke.kraft.examples.fomanticui.helpers.shortParagraphWireFrame
-import de.peekandpoke.kraft.examples.fomanticui.routes
-import de.peekandpoke.kraft.routing.PageTitle
-import de.peekandpoke.kraft.routing.href
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.fixture.LoremIpsum
-import de.peekandpoke.ultra.semanticui.icon
-import de.peekandpoke.ultra.semanticui.noui
-import de.peekandpoke.ultra.semanticui.ui
 import generated.ExtractedCodeBlocks
+import io.peekandpoke.kraft.components.NoProps
+import io.peekandpoke.kraft.components.PureComponent
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.fomanticui.helpers.HorizontalContentAndCode
+import io.peekandpoke.kraft.examples.fomanticui.helpers.example
+import io.peekandpoke.kraft.examples.fomanticui.helpers.readTheFomanticUiDocs
+import io.peekandpoke.kraft.examples.fomanticui.helpers.shortParagraphWireFrame
+import io.peekandpoke.kraft.examples.fomanticui.routes
+import io.peekandpoke.kraft.routing.PageTitle
+import io.peekandpoke.kraft.routing.href
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.fixture.LoremIpsum
+import io.peekandpoke.ultra.semanticui.icon
+import io.peekandpoke.ultra.semanticui.noui
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 import kotlinx.html.a

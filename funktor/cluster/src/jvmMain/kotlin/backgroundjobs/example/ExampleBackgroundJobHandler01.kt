@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.cluster.backgroundjobs.example
+package io.peekandpoke.funktor.cluster.backgroundjobs.example
 
-import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
-import de.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobQueued
-import de.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
+import io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobQueued
+import io.peekandpoke.ultra.reflection.kType
 import kotlinx.coroutines.delay
 import kotlinx.serialization.SerialName
 

@@ -1,4 +1,4 @@
-package de.peekandpoke.karango.config
+package io.peekandpoke.karango.config
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 

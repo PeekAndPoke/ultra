@@ -1,14 +1,14 @@
-package de.peekandpoke.funktor.rest.codegen.dart.e2e
+package io.peekandpoke.funktor.rest.codegen.dart.e2e
 
-import de.peekandpoke.funktor.rest.codegen.dart.DartInt
-import de.peekandpoke.funktor.rest.codegen.dart.DartString
-import de.peekandpoke.funktor.rest.codegen.dart.addClass
-import de.peekandpoke.funktor.rest.codegen.dart.addDefaultConstructor
-import de.peekandpoke.funktor.rest.codegen.dart.addProperty
-import de.peekandpoke.funktor.rest.codegen.dartProject
-import de.peekandpoke.funktor.rest.codegen.shouldHaveNoDiffs
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
+import io.peekandpoke.funktor.rest.codegen.dart.DartInt
+import io.peekandpoke.funktor.rest.codegen.dart.DartString
+import io.peekandpoke.funktor.rest.codegen.dart.addClass
+import io.peekandpoke.funktor.rest.codegen.dart.addDefaultConstructor
+import io.peekandpoke.funktor.rest.codegen.dart.addProperty
+import io.peekandpoke.funktor.rest.codegen.dartProject
+import io.peekandpoke.funktor.rest.codegen.shouldHaveNoDiffs
 
 class DartDefaultConstructorGeneratorSpec : StringSpec(
     {

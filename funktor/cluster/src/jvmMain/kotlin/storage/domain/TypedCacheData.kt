@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.cluster.storage.domain
+package io.peekandpoke.funktor.cluster.storage.domain
 
-import de.peekandpoke.funktor.cluster.storage.RawCacheDataModel
-import de.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.funktor.cluster.storage.RawCacheDataModel
+import io.peekandpoke.ultra.datetime.MpInstant
 
 data class TypedCacheData<T>(
     val category: String,

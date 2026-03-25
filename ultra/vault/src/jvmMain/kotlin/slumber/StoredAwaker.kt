@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.vault.slumber
+package io.peekandpoke.ultra.vault.slumber
 
-import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.vault.Stored
-import de.peekandpoke.ultra.vault.ensureKey
+import io.peekandpoke.ultra.slumber.Awaker
+import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.ensureKey
 import kotlin.reflect.KType
 
 class StoredAwaker(private val innerType: KType) : Awaker {

@@ -1,7 +1,7 @@
-package de.peekandpoke.kraft.forms
+package io.peekandpoke.kraft.forms
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.messages.onMessage
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.messages.onMessage
 
 open class FormController(private val component: Component<*>, val stopEvents: Boolean = true) {
 

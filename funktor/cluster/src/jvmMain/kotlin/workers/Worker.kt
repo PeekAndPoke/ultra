@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.cluster.workers
+package io.peekandpoke.funktor.cluster.workers
 
-import de.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.MpInstant
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours

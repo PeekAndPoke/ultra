@@ -1,4 +1,4 @@
-package de.peekandpoke.mutator.ksp
+package io.peekandpoke.mutator.ksp
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSDeclaration

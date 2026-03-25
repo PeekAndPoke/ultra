@@ -1,12 +1,12 @@
-package de.peekandpoke.funktor.cluster.storage
+package io.peekandpoke.funktor.cluster.storage
 
-import de.peekandpoke.ultra.model.Paged
-import de.peekandpoke.ultra.remote.ApiClient
-import de.peekandpoke.ultra.remote.ApiResponse
-import de.peekandpoke.ultra.remote.TypedApiEndpoint.Get
-import de.peekandpoke.ultra.remote.api
-import de.peekandpoke.ultra.remote.apiPaged
-import de.peekandpoke.ultra.remote.call
+import io.peekandpoke.ultra.model.Paged
+import io.peekandpoke.ultra.remote.ApiClient
+import io.peekandpoke.ultra.remote.ApiResponse
+import io.peekandpoke.ultra.remote.TypedApiEndpoint.Get
+import io.peekandpoke.ultra.remote.api
+import io.peekandpoke.ultra.remote.apiPaged
+import io.peekandpoke.ultra.remote.call
 import kotlinx.coroutines.flow.Flow
 
 class RandomDataStorageApiClient(config: Config) : ApiClient(config) {

@@ -1,8 +1,8 @@
-package de.peekandpoke.kraft.forms
+package io.peekandpoke.kraft.forms
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.value
-import de.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.value
+import io.peekandpoke.kraft.vdom.VDom
 
 @DslMarker
 annotation class KraftFormsDsl

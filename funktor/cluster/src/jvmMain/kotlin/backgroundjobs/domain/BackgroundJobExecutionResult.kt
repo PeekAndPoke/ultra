@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.cluster.backgroundjobs.domain
+package io.peekandpoke.funktor.cluster.backgroundjobs.domain
 
-import de.peekandpoke.funktor.core.model.CpuProfile
-import de.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.funktor.core.model.CpuProfile
+import io.peekandpoke.ultra.datetime.MpInstant
 import kotlinx.serialization.SerialName
 
 sealed interface BackgroundJobExecutionResult {

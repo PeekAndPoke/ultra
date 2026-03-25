@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.staticweb.resources.prismjs
+package io.peekandpoke.funktor.staticweb.resources.prismjs
 
 import kotlinx.html.FlowContent
 import kotlinx.html.code

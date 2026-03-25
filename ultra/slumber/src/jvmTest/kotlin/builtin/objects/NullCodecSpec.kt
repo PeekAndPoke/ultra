@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.slumber.builtin.objects
+package io.peekandpoke.ultra.slumber.builtin.objects
 
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.slumber.Codec
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.slumber.Codec
 
 class NullCodecSpec : StringSpec({
 

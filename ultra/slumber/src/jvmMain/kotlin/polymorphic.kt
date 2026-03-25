@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.slumber
+package io.peekandpoke.ultra.slumber
 
 import org.atteo.classindex.ClassIndex
 import org.atteo.classindex.IndexSubclasses

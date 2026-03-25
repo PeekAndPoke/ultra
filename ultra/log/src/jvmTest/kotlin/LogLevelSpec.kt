@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.log
+package io.peekandpoke.ultra.log
 
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe

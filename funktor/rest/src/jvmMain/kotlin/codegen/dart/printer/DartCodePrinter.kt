@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.rest.codegen.dart.printer
+package io.peekandpoke.funktor.rest.codegen.dart.printer
 
-import de.peekandpoke.funktor.rest.codegen.dart.DartFile
-import de.peekandpoke.funktor.rest.codegen.dart.DartPrintable
+import io.peekandpoke.funktor.rest.codegen.dart.DartFile
+import io.peekandpoke.funktor.rest.codegen.dart.DartPrintable
 import java.io.File
 
 typealias DartCodePrintFn = DartCodePrinter.() -> Unit

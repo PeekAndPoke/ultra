@@ -1,20 +1,20 @@
-package de.peekandpoke.funktor.auth.provider
+package io.peekandpoke.funktor.auth.provider
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
 import com.google.api.client.json.webtoken.JsonWebSignature
-import de.peekandpoke.funktor.auth.AuthError
-import de.peekandpoke.funktor.auth.MinimalTestRealm
-import de.peekandpoke.funktor.auth.model.AuthProviderModel
-import de.peekandpoke.funktor.auth.model.AuthSignInRequest
-import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
-import de.peekandpoke.funktor.core.config.AppConfig
-import de.peekandpoke.ultra.log.NullLog
-import de.peekandpoke.ultra.vault.Stored
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.funktor.auth.AuthError
+import io.peekandpoke.funktor.auth.MinimalTestRealm
+import io.peekandpoke.funktor.auth.model.AuthProviderModel
+import io.peekandpoke.funktor.auth.model.AuthSignInRequest
+import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
+import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.ultra.log.NullLog
+import io.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.jsonPrimitive
 import java.security.GeneralSecurityException
 

@@ -1,14 +1,14 @@
-package de.peekandpoke.karango.e2e.crud
+package io.peekandpoke.karango.e2e.crud
 
-import de.peekandpoke.karango.e2e.database
-import de.peekandpoke.karango.e2e.kronos
-import de.peekandpoke.karango.testdomain.TestTimestamped
-import de.peekandpoke.karango.testdomain.testTimestamped
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.karango.e2e.database
+import io.peekandpoke.karango.e2e.kronos
+import io.peekandpoke.karango.testdomain.TestTimestamped
+import io.peekandpoke.karango.testdomain.testTimestamped
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 

@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.forms
+package io.peekandpoke.kraft.forms
 
-import de.peekandpoke.kraft.messages.MessageBase
+import io.peekandpoke.kraft.messages.MessageBase
 
 /**
  * This message is sent when the value of a form field changes.

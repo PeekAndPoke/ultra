@@ -1,8 +1,8 @@
-package de.peekandpoke.kraft.addons.pagination
+package io.peekandpoke.kraft.addons.pagination
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.routing.urlParams
-import de.peekandpoke.ultra.model.PagedSearchFilter
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.routing.urlParams
+import io.peekandpoke.ultra.model.PagedSearchFilter
 import kotlin.properties.ReadWriteProperty
 
 fun <C> Component<C>.pagedSearchFilter(

@@ -1,7 +1,7 @@
-package de.peekandpoke.kraft.components.state
+package io.peekandpoke.kraft.components.state
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.ultra.streams.Stream
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.ultra.streams.Stream
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType

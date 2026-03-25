@@ -1,6 +1,6 @@
 @file:Suppress("Detekt:LongParameterList", "Detekt:ParameterListWrapping")
 
-package de.peekandpoke.ultra.datetime
+package io.peekandpoke.ultra.datetime
 
 import kotlinx.datetime.TimeZone
 import kotlin.jvm.JvmName

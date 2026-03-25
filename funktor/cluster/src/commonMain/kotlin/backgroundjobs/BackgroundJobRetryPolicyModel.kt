@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.cluster.backgroundjobs
+package io.peekandpoke.funktor.cluster.backgroundjobs
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

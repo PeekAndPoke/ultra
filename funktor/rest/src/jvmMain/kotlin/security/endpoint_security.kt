@@ -1,9 +1,9 @@
-package de.peekandpoke.funktor.rest.security
+package io.peekandpoke.funktor.rest.security
 
-import de.peekandpoke.funktor.rest.ApiRoute
-import de.peekandpoke.funktor.rest.RestDslMarkerConfig
-import de.peekandpoke.funktor.rest.RestSecurityRuleMarker
-import de.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.funktor.rest.ApiRoute
+import io.peekandpoke.funktor.rest.RestDslMarkerConfig
+import io.peekandpoke.funktor.rest.RestSecurityRuleMarker
+import io.peekandpoke.ultra.common.TypedKey
 
 data class EndpointSecurity(
     val allowsSensitiveData: Boolean,

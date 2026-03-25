@@ -1,13 +1,13 @@
-package de.peekandpoke.funktor.auth
+package io.peekandpoke.funktor.auth
 
-import de.peekandpoke.karango.config.ArangoDbConfig
-import de.peekandpoke.karango.karango
-import de.peekandpoke.ultra.kontainer.Kontainer
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.karango.config.ArangoDbConfig
+import io.peekandpoke.karango.karango
+import io.peekandpoke.ultra.kontainer.Kontainer
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
 
 class AuthRealmSpec : FreeSpec() {
 

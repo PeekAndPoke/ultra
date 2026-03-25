@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.auth
+package io.peekandpoke.funktor.auth
 
 open class AuthError(message: String, cause: Throwable? = null) : Throwable(message = message, cause = cause) {
 

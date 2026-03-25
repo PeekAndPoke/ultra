@@ -1,12 +1,12 @@
-package de.peekandpoke.funktor.core.cli
+package io.peekandpoke.funktor.core.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.subcommands
-import de.peekandpoke.funktor.core.App
-import de.peekandpoke.funktor.core.AppArgs
-import de.peekandpoke.funktor.core.config.AppConfig
-import de.peekandpoke.ultra.kontainer.Kontainer
+import io.peekandpoke.funktor.core.App
+import io.peekandpoke.funktor.core.AppArgs
+import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.ultra.kontainer.Kontainer
 import kotlin.system.exitProcess
 
 class CliRunner(

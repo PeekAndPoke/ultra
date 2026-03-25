@@ -1,16 +1,16 @@
-package de.peekandpoke.funktor.testing
+package io.peekandpoke.funktor.testing
 
-import de.peekandpoke.funktor.core.config.AppConfig
-import de.peekandpoke.ultra.common.MutableTypedAttributes
-import de.peekandpoke.ultra.common.TypedKey
-import de.peekandpoke.ultra.kontainer.Kontainer
-import de.peekandpoke.ultra.kontainer.KontainerAware
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.reflection.kType
 import io.kotest.assertions.fail
 import io.kotest.core.spec.style.scopes.FreeSpecContainerScope
 import io.kotest.core.spec.style.scopes.FreeSpecTerminalScope
 import io.kotest.core.test.TestCase
+import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.ultra.common.MutableTypedAttributes
+import io.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.ultra.kontainer.Kontainer
+import io.peekandpoke.ultra.kontainer.KontainerAware
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.kType
 import kotlinx.coroutines.delay
 
 @DslMarker

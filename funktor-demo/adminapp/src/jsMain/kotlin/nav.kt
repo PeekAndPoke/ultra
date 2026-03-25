@@ -1,16 +1,16 @@
-package de.peekandpoke.funktor.demo.adminapp
+package io.peekandpoke.funktor.demo.adminapp
 
-import de.peekandpoke.funktor.auth.AuthFrontendRoutes
-import de.peekandpoke.funktor.auth.AuthState
-import de.peekandpoke.funktor.cluster.mountFunktorCluster
-import de.peekandpoke.funktor.demo.adminapp.layout.LoggedInLayout
-import de.peekandpoke.funktor.demo.adminapp.pages.DashboardPage
-import de.peekandpoke.funktor.demo.adminapp.pages.NotFoundPage
-import de.peekandpoke.funktor.demo.adminapp.pages.ProfilePage
-import de.peekandpoke.funktor.logging.mountFunktorLogging
-import de.peekandpoke.kraft.routing.RootRouterBuilder
-import de.peekandpoke.kraft.routing.Static
+import io.peekandpoke.funktor.auth.AuthFrontendRoutes
+import io.peekandpoke.funktor.auth.AuthState
+import io.peekandpoke.funktor.cluster.mountFunktorCluster
+import io.peekandpoke.funktor.demo.adminapp.layout.LoggedInLayout
+import io.peekandpoke.funktor.demo.adminapp.pages.DashboardPage
+import io.peekandpoke.funktor.demo.adminapp.pages.NotFoundPage
+import io.peekandpoke.funktor.demo.adminapp.pages.ProfilePage
 import io.peekandpoke.funktor.demo.common.AdminUserModel
+import io.peekandpoke.funktor.logging.mountFunktorLogging
+import io.peekandpoke.kraft.routing.RootRouterBuilder
+import io.peekandpoke.kraft.routing.Static
 
 object Nav {
     val auth = AuthFrontendRoutes()

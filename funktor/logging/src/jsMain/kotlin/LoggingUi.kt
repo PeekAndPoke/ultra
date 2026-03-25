@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.logging
+package io.peekandpoke.funktor.logging
 
-import de.peekandpoke.funktor.logging.api.LoggingApiClient
-import de.peekandpoke.kraft.components.comp
+import io.peekandpoke.funktor.logging.api.LoggingApiClient
+import io.peekandpoke.kraft.components.comp
 import kotlinx.html.Tag
 
 class LoggingUi(

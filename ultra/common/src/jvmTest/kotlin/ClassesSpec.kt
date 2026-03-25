@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.common
+package io.peekandpoke.ultra.common
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -17,15 +17,15 @@ class ClassesSpec : StringSpec({
         tuple("de", "", File("..")),
         tuple("de", "de", File("")),
         tuple("", "de", File("de")),
-        tuple("de.peekandpoke", "", File("../..")),
-        tuple("de.peekandpoke", "de", File("..")),
-        tuple("de.peekandpoke", "de.peekandpoke", File("")),
-        tuple("de", "de.peekandpoke", File("peekandpoke")),
-        tuple("", "de.peekandpoke", File("de/peekandpoke")),
-        tuple("de.peekandpoke", "de.other", File("../other")),
-        tuple("de.peekandpoke", "de.other.package", File("../other/package")),
-        tuple("de.peekandpoke.ultra", "com", File("../../../com")),
-        tuple("de.peekandpoke.ultra", "com.thebase", File("../../../com/thebase"))
+        tuple("io.peekandpoke", "", File("../..")),
+        tuple("io.peekandpoke", "io", File("..")),
+        tuple("io.peekandpoke", "io.peekandpoke", File("")),
+        tuple("io", "io.peekandpoke", File("peekandpoke")),
+        tuple("", "io.peekandpoke", File("io/peekandpoke")),
+        tuple("io.peekandpoke", "io.other", File("../other")),
+        tuple("io.peekandpoke", "io.other.package", File("../other/package")),
+        tuple("io.peekandpoke.ultra", "com", File("../../../com")),
+        tuple("io.peekandpoke.ultra", "com.thebase", File("../../../com/thebase"))
     ).forEachIndexed { idx, (src, target, expected) ->
 
         "String.getRelativePackagePath #$idx: \"$src\".getRelativePackagePath(\"$target\") should be '$expected'" {

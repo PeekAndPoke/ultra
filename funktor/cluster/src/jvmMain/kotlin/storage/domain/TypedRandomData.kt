@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.cluster.storage.domain
+package io.peekandpoke.funktor.cluster.storage.domain
 
-import de.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.MpInstant
 
 data class TypedRandomData<T>(
     val category: String,

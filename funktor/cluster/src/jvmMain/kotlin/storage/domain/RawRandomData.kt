@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.cluster.storage.domain
+package io.peekandpoke.funktor.cluster.storage.domain
 
-import de.peekandpoke.ultra.datetime.MpInstant
-import de.peekandpoke.ultra.vault.Vault
-import de.peekandpoke.ultra.vault.hooks.Timestamped
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.vault.Vault
+import io.peekandpoke.ultra.vault.hooks.Timestamped
 
 @Vault
 data class RawRandomData(

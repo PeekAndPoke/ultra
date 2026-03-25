@@ -85,7 +85,7 @@ tasks {
     }
 
     create("generateDocs", JavaExec::class) {
-        mainClass.set("de.peekandpoke.mutator.examples.GenerateDocsKt")
+        mainClass.set("io.peekandpoke.mutator.examples.GenerateDocsKt")
         classpath = sourceSets.getByName("jvmTest").runtimeClasspath
     }
 }

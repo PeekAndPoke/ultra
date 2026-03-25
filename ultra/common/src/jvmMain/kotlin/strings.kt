@@ -1,6 +1,6 @@
 @file:JvmName("StringJvmKt")
 
-package de.peekandpoke.ultra.common
+package io.peekandpoke.ultra.common
 
 import java.net.URLEncoder
 

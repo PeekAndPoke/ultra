@@ -1,16 +1,16 @@
-package de.peekandpoke.kraft.semanticui
+package io.peekandpoke.kraft.semanticui
 
-import de.peekandpoke.kraft.toasts.ToastRenderer
-import de.peekandpoke.ultra.html.key
-import de.peekandpoke.ultra.html.onClick
-import de.peekandpoke.ultra.model.Message
-import de.peekandpoke.ultra.semanticui.SemanticFn
-import de.peekandpoke.ultra.semanticui.SemanticIconFn
-import de.peekandpoke.ultra.semanticui.icon
-import de.peekandpoke.ultra.semanticui.noui
-import de.peekandpoke.ultra.semanticui.semantic
-import de.peekandpoke.ultra.semanticui.semanticIcon
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.toasts.ToastRenderer
+import io.peekandpoke.ultra.html.key
+import io.peekandpoke.ultra.html.onClick
+import io.peekandpoke.ultra.model.Message
+import io.peekandpoke.ultra.semanticui.SemanticFn
+import io.peekandpoke.ultra.semanticui.SemanticIconFn
+import io.peekandpoke.ultra.semanticui.icon
+import io.peekandpoke.ultra.semanticui.noui
+import io.peekandpoke.ultra.semanticui.semantic
+import io.peekandpoke.ultra.semanticui.semanticIcon
+import io.peekandpoke.ultra.semanticui.ui
 
 val SemanticUiToastsRenderer: ToastRenderer = { handle ->
 

@@ -1,10 +1,6 @@
 package io.peekandpoke.funktor.demo.server
 
 import ch.qos.logback.classic.Level
-import de.peekandpoke.funktor.cluster.workers.launchWorkers
-import de.peekandpoke.funktor.core.lifecycle.lifeCycle
-import de.peekandpoke.funktor.insights.gui.InsightsGui
-import de.peekandpoke.funktor.logging.karango.addKarangoAppender
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -14,7 +10,11 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
 import io.ktor.server.webjars.*
+import io.peekandpoke.funktor.cluster.workers.launchWorkers
+import io.peekandpoke.funktor.core.lifecycle.lifeCycle
 import io.peekandpoke.funktor.demo.server.api.ApiApp
+import io.peekandpoke.funktor.insights.gui.InsightsGui
+import io.peekandpoke.funktor.logging.karango.addKarangoAppender
 import kotlinx.serialization.json.Json
 
 @Suppress("unused")

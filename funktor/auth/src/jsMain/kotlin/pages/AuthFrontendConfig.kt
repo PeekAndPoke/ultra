@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.auth.pages
+package io.peekandpoke.funktor.auth.pages
 
-import de.peekandpoke.kraft.routing.Route
+import io.peekandpoke.kraft.routing.Route
 
 data class AuthFrontendConfig(
     val redirectAfterLogin: Route.Bound,

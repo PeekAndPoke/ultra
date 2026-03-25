@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.vault
+package io.peekandpoke.ultra.vault
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe

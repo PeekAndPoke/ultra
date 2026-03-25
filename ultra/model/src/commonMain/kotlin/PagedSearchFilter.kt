@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.model
+package io.peekandpoke.ultra.model
 
-import de.peekandpoke.ultra.common.safeEnumOrNull
-import de.peekandpoke.ultra.common.toggle
+import io.peekandpoke.ultra.common.safeEnumOrNull
+import io.peekandpoke.ultra.common.toggle
 import kotlinx.serialization.Serializable
 
 @Serializable

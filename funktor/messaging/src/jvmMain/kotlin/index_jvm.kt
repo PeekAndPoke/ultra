@@ -1,18 +1,18 @@
-package de.peekandpoke.funktor.messaging
+package io.peekandpoke.funktor.messaging
 
-import de.peekandpoke.funktor.core.kontainer
-import de.peekandpoke.funktor.messaging.fixtures.SentMessagesFixtures
-import de.peekandpoke.funktor.messaging.senders.NullEmailSender
-import de.peekandpoke.funktor.messaging.storage.SentMessagesStorage
-import de.peekandpoke.funktor.messaging.storage.StoringEmailHook
-import de.peekandpoke.funktor.messaging.storage.karango.KarangoSentMessagesRepo
-import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ultra.kontainer.KontainerAware
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
-import de.peekandpoke.ultra.kontainer.module
-import de.peekandpoke.ultra.vault.hooks.TimestampedHook
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
+import io.peekandpoke.funktor.core.kontainer
+import io.peekandpoke.funktor.messaging.fixtures.SentMessagesFixtures
+import io.peekandpoke.funktor.messaging.senders.NullEmailSender
+import io.peekandpoke.funktor.messaging.storage.SentMessagesStorage
+import io.peekandpoke.funktor.messaging.storage.StoringEmailHook
+import io.peekandpoke.funktor.messaging.storage.karango.KarangoSentMessagesRepo
+import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.ultra.kontainer.KontainerAware
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.module
+import io.peekandpoke.ultra.vault.hooks.TimestampedHook
 
 fun KontainerBuilder.funktorMessaging(
     builder: FunktorMessagingBuilder.() -> Unit = {},

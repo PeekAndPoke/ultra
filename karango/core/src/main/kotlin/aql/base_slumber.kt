@@ -1,9 +1,9 @@
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.datetime.MpInstant
-import de.peekandpoke.ultra.datetime.MpLocalDate
-import de.peekandpoke.ultra.datetime.MpLocalDateTime
-import de.peekandpoke.ultra.datetime.MpZonedDateTime
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.MpLocalDate
+import io.peekandpoke.ultra.datetime.MpLocalDateTime
+import io.peekandpoke.ultra.datetime.MpZonedDateTime
 
 /** Refers to the default polymorphic type discriminator "_type" */
 @Suppress("ObjectPropertyName")

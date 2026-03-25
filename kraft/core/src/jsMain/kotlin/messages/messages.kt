@@ -1,7 +1,7 @@
-package de.peekandpoke.kraft.messages
+package io.peekandpoke.kraft.messages
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.ultra.common.TypedKey
 
 /**
  * The key used to store the [MessagesHandler] on the components properties

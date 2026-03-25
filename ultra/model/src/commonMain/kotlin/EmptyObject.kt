@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.model
+package io.peekandpoke.ultra.model
 
 import kotlinx.serialization.Serializable
 

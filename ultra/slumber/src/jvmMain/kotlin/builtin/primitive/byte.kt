@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.slumber.builtin.primitive
+package io.peekandpoke.ultra.slumber.builtin.primitive
 
-import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.Slumberer
+import io.peekandpoke.ultra.slumber.Awaker
+import io.peekandpoke.ultra.slumber.Slumberer
 
 object ByteAwaker : Awaker {
     override fun awake(data: Any?, context: Awaker.Context) = map(data)

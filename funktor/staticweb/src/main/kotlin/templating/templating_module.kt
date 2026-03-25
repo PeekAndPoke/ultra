@@ -1,12 +1,12 @@
-package de.peekandpoke.funktor.staticweb.templating
+package io.peekandpoke.funktor.staticweb.templating
 
-import de.peekandpoke.funktor.core.kontainer
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
-import de.peekandpoke.ultra.kontainer.module
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.html.*
 import io.ktor.server.routing.*
+import io.peekandpoke.funktor.core.kontainer
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.module
 import kotlinx.html.HTML
 import kotlin.reflect.KClass
 

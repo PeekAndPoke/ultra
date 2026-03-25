@@ -2,12 +2,12 @@
 
 package de.kotlincook.karango.ksp
 
-import de.peekandpoke.karango.ksp.KarangoKspProcessorProvider
-import de.peekandpoke.ultra.meta.testing.expectFileToMatch
-import de.peekandpoke.ultra.meta.testing.kspCompileTest
-import de.peekandpoke.ultra.vault.Vault
 import io.kotest.common.ExperimentalKotest
 import io.kotest.core.spec.style.StringSpec
+import io.peekandpoke.karango.ksp.KarangoKspProcessorProvider
+import io.peekandpoke.ultra.meta.testing.expectFileToMatch
+import io.peekandpoke.ultra.meta.testing.kspCompileTest
+import io.peekandpoke.ultra.vault.Vault
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 
 @OptIn(ExperimentalCompilerApi::class, ExperimentalKotest::class)
@@ -40,9 +40,9 @@ class NestedClassCodeGenSpec : StringSpec() {
                     contents = """
                         package karango.compile
                         
-                        import de.peekandpoke.karango.*
-                        import de.peekandpoke.karango.aql.*
-                        import de.peekandpoke.ultra.vault.lang.*
+                        import io.peekandpoke.karango.*
+                        import io.peekandpoke.karango.aql.*
+                        import io.peekandpoke.ultra.vault.lang.*
                         
                         //// generic property
                         inline fun <reified T> AqlIterableExpr<Outer>.property(name: String) = AqlPropertyPath.start(this).append<T, T>(name)
@@ -72,9 +72,9 @@ class NestedClassCodeGenSpec : StringSpec() {
                     contents = """
                         package karango.compile
 
-                        import de.peekandpoke.karango.*
-                        import de.peekandpoke.karango.aql.*
-                        import de.peekandpoke.ultra.vault.lang.*
+                        import io.peekandpoke.karango.*
+                        import io.peekandpoke.karango.aql.*
+                        import io.peekandpoke.ultra.vault.lang.*
 
                         //// generic property
                         inline fun <reified T> AqlIterableExpr<Outer.Inner>.property(name: String) = AqlPropertyPath.start(this).append<T, T>(name)

@@ -1,13 +1,13 @@
-package de.peekandpoke.kraft.examples.jsaddons.core
+package io.peekandpoke.kraft.examples.jsaddons.core
 
-import de.peekandpoke.kraft.components.NoProps
-import de.peekandpoke.kraft.components.PureComponent
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.examples.jsaddons.routes
-import de.peekandpoke.kraft.routing.href
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.semanticui.noui
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.components.NoProps
+import io.peekandpoke.kraft.components.PureComponent
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.jsaddons.routes
+import io.peekandpoke.kraft.routing.href
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.semanticui.noui
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.Tag
 
 @Suppress("FunctionName")

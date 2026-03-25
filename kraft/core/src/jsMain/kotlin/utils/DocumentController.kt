@@ -1,9 +1,9 @@
-package de.peekandpoke.kraft.utils
+package io.peekandpoke.kraft.utils
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.getAttributeRecursive
-import de.peekandpoke.ultra.common.TypedKey
-import de.peekandpoke.ultra.streams.StreamSource
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.getAttributeRecursive
+import io.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.ultra.streams.StreamSource
 import kotlinx.browser.document
 import kotlinx.browser.window
 

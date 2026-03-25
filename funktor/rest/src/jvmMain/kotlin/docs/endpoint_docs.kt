@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.rest.docs
+package io.peekandpoke.funktor.rest.docs
 
-import de.peekandpoke.funktor.rest.ApiRoute
-import de.peekandpoke.funktor.rest.RestDslMarkerConfig
-import de.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.funktor.rest.ApiRoute
+import io.peekandpoke.funktor.rest.RestDslMarkerConfig
+import io.peekandpoke.ultra.common.TypedKey
 
 data class EndpointDocs(
     val name: String?,

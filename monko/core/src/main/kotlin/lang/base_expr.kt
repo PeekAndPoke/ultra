@@ -1,10 +1,10 @@
 @file:Suppress("PrivatePropertyName", "detekt:ConstructorParameterNaming")
 
-package de.peekandpoke.monko.lang
+package io.peekandpoke.monko.lang
 
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.reflection.unList
-import de.peekandpoke.ultra.vault.lang.Expression
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.unList
+import io.peekandpoke.ultra.vault.lang.Expression
 
 /**
  * Base for all AQL expressions

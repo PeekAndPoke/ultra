@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.utils
+package io.peekandpoke.kraft.utils
 
 data class Vector2D(val x: Double, val y: Double) {
     companion object {

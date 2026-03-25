@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.cluster.locks.cli
+package io.peekandpoke.funktor.cluster.locks.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
-import de.peekandpoke.funktor.cluster.locks.LocksFacade
+import io.peekandpoke.funktor.cluster.locks.LocksFacade
 import kotlinx.coroutines.runBlocking
 
 class ReleaseLocksCliCommand(

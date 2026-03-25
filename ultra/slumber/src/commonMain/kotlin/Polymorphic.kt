@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.slumber
+package io.peekandpoke.ultra.slumber
 
-import de.peekandpoke.ultra.slumber.Polymorphic.Companion.defaultDiscriminator
+import io.peekandpoke.ultra.slumber.Polymorphic.Companion.defaultDiscriminator
 import kotlin.reflect.KClass
 
 /**

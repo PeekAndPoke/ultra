@@ -1,8 +1,8 @@
-package de.peekandpoke.mutator
+package io.peekandpoke.mutator
 
-import de.peekandpoke.ultra.common.GetAndSet
-import de.peekandpoke.ultra.common.Observable
-import de.peekandpoke.ultra.common.OnChange
+import io.peekandpoke.ultra.common.GetAndSet
+import io.peekandpoke.ultra.common.Observable
+import io.peekandpoke.ultra.common.OnChange
 
 @MutatorDsl
 interface Mutator<V> : GetAndSet<V> {

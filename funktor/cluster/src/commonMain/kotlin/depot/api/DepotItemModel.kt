@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.cluster.depot.api
+package io.peekandpoke.funktor.cluster.depot.api
 
-import de.peekandpoke.ultra.datetime.MpInstant
-import de.peekandpoke.ultra.slumber.Slumber
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.slumber.Slumber
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

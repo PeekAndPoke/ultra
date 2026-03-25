@@ -1,13 +1,13 @@
-package de.peekandpoke.kraft.semanticui.forms
+package io.peekandpoke.kraft.semanticui.forms
 
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.semanticui.forms.UiTextAreaComponent.Options
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.html.css
-import de.peekandpoke.ultra.html.key
-import de.peekandpoke.ultra.html.onInput
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.semanticui.forms.UiTextAreaComponent.Options
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.css
+import io.peekandpoke.ultra.html.key
+import io.peekandpoke.ultra.html.onInput
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.css.Overflow
@@ -20,7 +20,7 @@ import kotlinx.html.textArea
 import org.w3c.dom.HTMLTextAreaElement
 
 @Suppress("FunctionName")
-@de.peekandpoke.kraft.forms.KraftFormsDsl
+@io.peekandpoke.kraft.forms.KraftFormsDsl
 fun Tag.UiTextArea(
     value: String,
     onChange: (String) -> Unit,
@@ -36,16 +36,16 @@ fun Tag.UiTextArea(
 }
 
 class UiTextAreaComponent(ctx: Ctx<Props>) :
-    de.peekandpoke.kraft.forms.AbstractFormField<String, Options, UiTextAreaComponent.Props>(ctx) {
+    io.peekandpoke.kraft.forms.AbstractFormField<String, Options, UiTextAreaComponent.Props>(ctx) {
 
-    class Options : de.peekandpoke.kraft.forms.FieldOptions.Base<String>(),
-        de.peekandpoke.kraft.forms.TextAreaOptions<String>, SemanticOptions<String>
+    class Options : io.peekandpoke.kraft.forms.FieldOptions.Base<String>(),
+        io.peekandpoke.kraft.forms.TextAreaOptions<String>, SemanticOptions<String>
 
     data class Props(
         override val value: String,
         override val onChange: (String) -> Unit,
         override val options: Options,
-    ) : de.peekandpoke.kraft.forms.AbstractFormField.Props<String, Options>
+    ) : io.peekandpoke.kraft.forms.AbstractFormField.Props<String, Options>
 
     val inputElement: HTMLTextAreaElement get() = dom!!.querySelector("textarea") as HTMLTextAreaElement
 

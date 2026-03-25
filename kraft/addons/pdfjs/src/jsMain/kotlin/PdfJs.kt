@@ -1,7 +1,7 @@
-package de.peekandpoke.kraft.addons.pdfjs
+package io.peekandpoke.kraft.addons.pdfjs
 
-import de.peekandpoke.kraft.addons.pdfjs.js.PdfjsLib
-import de.peekandpoke.kraft.utils.ScriptLoader
+import io.peekandpoke.kraft.addons.pdfjs.js.PdfjsLib
+import io.peekandpoke.kraft.utils.ScriptLoader
 import kotlinx.browser.window
 import kotlinx.coroutines.await
 import kotlinx.coroutines.flow.Flow

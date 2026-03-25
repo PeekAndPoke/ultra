@@ -1,10 +1,10 @@
-package de.peekandpoke.funktor.cluster.locks.lifecycle
+package io.peekandpoke.funktor.cluster.locks.lifecycle
 
-import de.peekandpoke.funktor.cluster.locks.GlobalLocksProvider
-import de.peekandpoke.funktor.cluster.locks.GlobalServerId
-import de.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
-import de.peekandpoke.ultra.log.Log
 import io.ktor.server.application.*
+import io.peekandpoke.funktor.cluster.locks.GlobalLocksProvider
+import io.peekandpoke.funktor.cluster.locks.GlobalServerId
+import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
+import io.peekandpoke.ultra.log.Log
 
 class GlobalLocksCleanupOnAppStarting(
     private val globalLocksProvider: GlobalLocksProvider,

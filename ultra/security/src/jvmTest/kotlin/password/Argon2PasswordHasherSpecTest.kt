@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.security.password
+package io.peekandpoke.ultra.security.password
 
 import com.password4j.types.Argon2
 import io.kotest.assertions.withClue

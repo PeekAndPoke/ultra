@@ -1,6 +1,6 @@
 @file:JvmName("ConversionJvm")
 
-package de.peekandpoke.ultra.datetime
+package io.peekandpoke.ultra.datetime
 
 import kotlinx.datetime.TimeZone
 import java.time.Instant

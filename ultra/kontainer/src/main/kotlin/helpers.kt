@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.kontainer
+package io.peekandpoke.ultra.kontainer
 
-import de.peekandpoke.ultra.common.Lookup
+import io.peekandpoke.ultra.common.Lookup
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 

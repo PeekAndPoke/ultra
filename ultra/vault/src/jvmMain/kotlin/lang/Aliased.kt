@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.vault.lang
+package io.peekandpoke.ultra.vault.lang
 
 /**
  * Helper interface for the QueryPrinter.

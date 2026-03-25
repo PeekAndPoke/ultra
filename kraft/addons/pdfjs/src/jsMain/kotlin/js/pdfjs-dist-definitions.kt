@@ -1,6 +1,6 @@
 @file:Suppress("PropertyName", "ClassName", "detekt:all")
 
-package de.peekandpoke.kraft.addons.pdfjs.js
+package io.peekandpoke.kraft.addons.pdfjs.js
 
 import js.objects.Object
 import org.khronos.webgl.Uint8Array

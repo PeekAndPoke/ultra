@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.vault.slumber
+package io.peekandpoke.ultra.vault.slumber
 
-import de.peekandpoke.ultra.slumber.Slumberer
-import de.peekandpoke.ultra.vault.Storable
+import io.peekandpoke.ultra.slumber.Slumberer
+import io.peekandpoke.ultra.vault.Storable
 
 object StoredSlumberer : Slumberer {
 

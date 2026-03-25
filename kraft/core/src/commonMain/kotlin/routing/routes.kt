@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.routing
+package io.peekandpoke.kraft.routing
 
 @Suppress("UNCHECKED_CAST")
 internal fun Map<String, String?>.removeNullValues() = filterValues { it != null } as Map<String, String>

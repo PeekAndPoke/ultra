@@ -1,9 +1,9 @@
 @file:Suppress("PropertyName", "detekt:VariableNaming")
 
-package de.peekandpoke.ultra.vault
+package io.peekandpoke.ultra.vault
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import de.peekandpoke.ultra.vault.lang.VaultDslMarker
+import io.peekandpoke.ultra.vault.lang.VaultDslMarker
 import kotlinx.serialization.SerialName
 
 sealed class Storable<out T> {

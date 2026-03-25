@@ -1,18 +1,18 @@
-package de.peekandpoke.funktor.demo.adminapp
+package io.peekandpoke.funktor.demo.adminapp
 
-import de.peekandpoke.funktor.auth.authState
-import de.peekandpoke.funktor.auth.pages.AuthFrontend
-import de.peekandpoke.funktor.auth.pages.AuthFrontendConfig
-import de.peekandpoke.funktor.cluster.FunktorClusterApiClient
-import de.peekandpoke.funktor.cluster.FunktorClusterUi
-import de.peekandpoke.funktor.demo.adminapp.state.AdminAppState
-import de.peekandpoke.funktor.logging.LoggingUi
-import de.peekandpoke.funktor.logging.api.LoggingApiClient
-import de.peekandpoke.kraft.kraftApp
-import de.peekandpoke.kraft.routing.Router.Companion.router
-import de.peekandpoke.kraft.semanticui.semanticUI
-import de.peekandpoke.kraft.vdom.preact.PreactVDomEngine
+import io.peekandpoke.funktor.auth.authState
+import io.peekandpoke.funktor.auth.pages.AuthFrontend
+import io.peekandpoke.funktor.auth.pages.AuthFrontendConfig
+import io.peekandpoke.funktor.cluster.FunktorClusterApiClient
+import io.peekandpoke.funktor.cluster.FunktorClusterUi
+import io.peekandpoke.funktor.demo.adminapp.state.AdminAppState
 import io.peekandpoke.funktor.demo.common.AdminUserModel
+import io.peekandpoke.funktor.logging.LoggingUi
+import io.peekandpoke.funktor.logging.api.LoggingApiClient
+import io.peekandpoke.kraft.kraftApp
+import io.peekandpoke.kraft.routing.Router.Companion.router
+import io.peekandpoke.kraft.semanticui.semanticUI
+import io.peekandpoke.kraft.vdom.preact.PreactVDomEngine
 import kotlinx.browser.window
 
 val win = window.asDynamic()

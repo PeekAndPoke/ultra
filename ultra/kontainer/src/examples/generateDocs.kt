@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.kontainer.examples
+package io.peekandpoke.ultra.kontainer.examples
 
-import de.peekandpoke.ultra.kontainer.examples.defining_modules._DefiningModules
-import de.peekandpoke.ultra.kontainer.examples.defining_services._DefiningServices
-import de.peekandpoke.ultra.kontainer.examples.injecting_services._InjectingServices
-import de.peekandpoke.ultra.tooling.ExamplesToDocs
+import io.peekandpoke.ultra.kontainer.examples.defining_modules._DefiningModules
+import io.peekandpoke.ultra.kontainer.examples.defining_services._DefiningServices
+import io.peekandpoke.ultra.kontainer.examples.injecting_services._InjectingServices
+import io.peekandpoke.ultra.tooling.ExamplesToDocs
 import java.io.File
 
 fun main() {

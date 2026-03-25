@@ -1,9 +1,9 @@
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.karango.aql.AqlPrinter.Companion.printRawQuery
-import de.peekandpoke.ultra.common.tuple
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.karango.aql.AqlPrinter.Companion.printRawQuery
+import io.peekandpoke.ultra.common.tuple
 
 class OperationBooleanSpec : StringSpec({
 

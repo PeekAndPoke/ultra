@@ -1,15 +1,15 @@
-package de.peekandpoke.kraft.semanticui.popups
+package io.peekandpoke.kraft.semanticui.popups
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.popups.PopupContentRenderer
-import de.peekandpoke.kraft.popups.PopupsManager
-import de.peekandpoke.kraft.utils.Vector2D
-import de.peekandpoke.kraft.utils.launch
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.html.css
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.popups.PopupContentRenderer
+import io.peekandpoke.kraft.popups.PopupsManager
+import io.peekandpoke.kraft.utils.Vector2D
+import io.peekandpoke.kraft.utils.launch
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.css
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.css.Display
 import kotlinx.css.Padding
 import kotlinx.css.Position

@@ -1,3 +1,3 @@
-package de.peekandpoke.ultra.remote
+package io.peekandpoke.ultra.remote
 
 actual external fun encodeURIComponent(value: String): String

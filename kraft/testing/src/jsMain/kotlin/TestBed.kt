@@ -1,9 +1,9 @@
-package de.peekandpoke.kraft.testing
+package io.peekandpoke.kraft.testing
 
-import de.peekandpoke.kraft.kraftApp
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.kraft.vdom.VDomEngine
-import de.peekandpoke.kraft.vdom.preact.PreactVDomEngine
+import io.peekandpoke.kraft.kraftApp
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.kraft.vdom.VDomEngine
+import io.peekandpoke.kraft.vdom.preact.PreactVDomEngine
 import kotlinx.browser.document
 import kotlinx.coroutines.delay
 import kotlinx.dom.appendElement

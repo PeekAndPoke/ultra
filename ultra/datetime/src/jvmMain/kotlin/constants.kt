@@ -1,6 +1,6 @@
 @file:JvmName("ConstantsJvm")
 
-package de.peekandpoke.ultra.datetime
+package io.peekandpoke.ultra.datetime
 
 import java.time.Instant
 import java.time.LocalDate

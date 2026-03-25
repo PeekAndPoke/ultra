@@ -1,9 +1,9 @@
-package de.peekandpoke.funktor.core.cli
+package io.peekandpoke.funktor.core.cli
 
-import de.peekandpoke.funktor.core.cli.cmd.AppConfigCliCommand
-import de.peekandpoke.funktor.core.cli.cmd.AppInfoCliCommand
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
-import de.peekandpoke.ultra.kontainer.module
+import io.peekandpoke.funktor.core.cli.cmd.AppConfigCliCommand
+import io.peekandpoke.funktor.core.cli.cmd.AppInfoCliCommand
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.module
 
 internal fun KontainerBuilder.funktorCli() = module(Funktor_Cli)
 

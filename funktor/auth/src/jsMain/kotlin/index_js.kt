@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.auth
+package io.peekandpoke.funktor.auth
 
-import de.peekandpoke.funktor.auth.model.PasswordPolicy
-import de.peekandpoke.kraft.forms.validation.given
+import io.peekandpoke.funktor.auth.model.PasswordPolicy
+import io.peekandpoke.kraft.forms.validation.given
 
 fun PasswordPolicy.asFormRule() = given<String>(
     check = { matches(it) },

@@ -5,16 +5,16 @@
     "Detekt:LongMethod",
 )
 
-package de.peekandpoke.kraft.examples.fomanticui.pages.elements.flag
+package io.peekandpoke.kraft.examples.fomanticui.pages.elements.flag
 
-import de.peekandpoke.kraft.components.NoProps
-import de.peekandpoke.kraft.components.PureComponent
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.examples.fomanticui.helpers.HorizontalContentAndCode
-import de.peekandpoke.kraft.examples.fomanticui.helpers.example
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.semanticui.flag
 import generated.ExtractedCodeBlocks
+import io.peekandpoke.kraft.components.NoProps
+import io.peekandpoke.kraft.components.PureComponent
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.fomanticui.helpers.HorizontalContentAndCode
+import io.peekandpoke.kraft.examples.fomanticui.helpers.example
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.semanticui.flag
 import kotlinx.html.Tag
 
 @Suppress("FunctionName")

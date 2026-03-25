@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.model
+package io.peekandpoke.ultra.model
 
-import de.peekandpoke.ultra.datetime.MpInstant
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.datetime.MpInstant
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 

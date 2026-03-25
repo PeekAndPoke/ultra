@@ -1,11 +1,11 @@
-package de.peekandpoke.karango
+package io.peekandpoke.karango
 
 import com.arangodb.model.AqlQueryOptions
-import de.peekandpoke.karango.aql.AqlPrinter
-import de.peekandpoke.karango.aql.AqlRootExpression
-import de.peekandpoke.karango.aql.AqlStatementBuilderImpl
-import de.peekandpoke.karango.aql.AqlTerminalExpr
-import de.peekandpoke.karango.vault.AqlTypedQuery
+import io.peekandpoke.karango.aql.AqlPrinter
+import io.peekandpoke.karango.aql.AqlRootExpression
+import io.peekandpoke.karango.aql.AqlStatementBuilderImpl
+import io.peekandpoke.karango.aql.AqlTerminalExpr
+import io.peekandpoke.karango.vault.AqlTypedQuery
 
 typealias AqlQueryOptionProvider = (AqlQueryOptions) -> AqlQueryOptions
 

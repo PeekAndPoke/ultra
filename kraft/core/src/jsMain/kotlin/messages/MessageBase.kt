@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.messages
+package io.peekandpoke.kraft.messages
 
 /**
  * Base impl for [Message].

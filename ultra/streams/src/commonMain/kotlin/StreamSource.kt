@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.streams
+package io.peekandpoke.ultra.streams
 
 /**
  * Define a stream source to which new values can be written.

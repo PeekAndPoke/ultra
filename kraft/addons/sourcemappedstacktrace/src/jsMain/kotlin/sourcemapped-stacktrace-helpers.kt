@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.addons.sourcemappedstacktrace
+package io.peekandpoke.kraft.addons.sourcemappedstacktrace
 
-import de.peekandpoke.kraft.utils.js
+import io.peekandpoke.kraft.utils.js
 
 fun mapStackTraceCached(stack: String, done: (Array<String>) -> dynamic): dynamic {
     return mapStackTrace(

@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.vault.cli
+package io.peekandpoke.ultra.vault.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
-import de.peekandpoke.ultra.vault.Database
+import io.peekandpoke.ultra.vault.Database
 import kotlinx.coroutines.runBlocking
 
 class VaultIndexesRecreateCommand(

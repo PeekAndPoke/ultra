@@ -1,8 +1,8 @@
-package de.peekandpoke.monko
+package io.peekandpoke.monko
 
-import de.peekandpoke.ultra.vault.Cursor
-import de.peekandpoke.ultra.vault.EntityCache
-import de.peekandpoke.ultra.vault.TypedQuery
+import io.peekandpoke.ultra.vault.Cursor
+import io.peekandpoke.ultra.vault.EntityCache
+import io.peekandpoke.ultra.vault.TypedQuery
 
 class MonkoCursor<T>(
     val entries: List<T>,

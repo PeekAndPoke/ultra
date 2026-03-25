@@ -1,17 +1,17 @@
-package de.peekandpoke.ultra.playground
+package io.peekandpoke.ultra.playground
 
 import com.mongodb.client.model.Filters
-import de.peekandpoke.monko.MongoDbConfig
-import de.peekandpoke.monko.MonkoDriver
-import de.peekandpoke.monko.MonkoRepository
-import de.peekandpoke.monko.monko
-import de.peekandpoke.ultra.datetime.Kronos
-import de.peekandpoke.ultra.kontainer.kontainer
-import de.peekandpoke.ultra.log.ultraLogging
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.vault.VaultConfig
-import de.peekandpoke.ultra.vault.ultraVault
 import io.github.serpro69.kfaker.faker
+import io.peekandpoke.monko.MongoDbConfig
+import io.peekandpoke.monko.MonkoDriver
+import io.peekandpoke.monko.MonkoRepository
+import io.peekandpoke.monko.monko
+import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.ultra.log.ultraLogging
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.vault.VaultConfig
+import io.peekandpoke.ultra.vault.ultraVault
 
 data class Movie(val title: String, val year: Int)
 

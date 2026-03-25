@@ -1,11 +1,11 @@
-package de.peekandpoke.funktor.staticweb.flashsession
+package io.peekandpoke.funktor.staticweb.flashsession
 
-import de.peekandpoke.funktor.core.kontainer
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
-import de.peekandpoke.ultra.kontainer.module
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
+import io.peekandpoke.funktor.core.kontainer
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.module
 
 internal fun KontainerBuilder.funktorFlashSession() = module(Funktor_FlashSession)
 

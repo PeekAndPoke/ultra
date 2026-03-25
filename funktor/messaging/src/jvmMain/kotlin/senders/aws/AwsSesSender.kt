@@ -1,10 +1,10 @@
-package de.peekandpoke.funktor.messaging.senders.aws
+package io.peekandpoke.funktor.messaging.senders.aws
 
-import de.peekandpoke.funktor.messaging.Email
-import de.peekandpoke.funktor.messaging.EmailSender
-import de.peekandpoke.funktor.messaging.api.EmailBody
-import de.peekandpoke.funktor.messaging.api.EmailResult
-import de.peekandpoke.ultra.common.fromBase64
+import io.peekandpoke.funktor.messaging.Email
+import io.peekandpoke.funktor.messaging.EmailSender
+import io.peekandpoke.funktor.messaging.api.EmailBody
+import io.peekandpoke.funktor.messaging.api.EmailResult
+import io.peekandpoke.ultra.common.fromBase64
 import kotlinx.coroutines.future.await
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.core.SdkBytes

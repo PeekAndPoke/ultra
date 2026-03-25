@@ -1,4 +1,4 @@
-package de.peekandpoke.mutator
+package io.peekandpoke.mutator
 
 fun <V> List<V>.mutator(child: V.() -> Mutator<V>): ListMutator<V> =
     ListMutatorImpl(this, child)

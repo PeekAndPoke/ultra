@@ -1,7 +1,7 @@
-package de.peekandpoke.mutator.examples.basic_mutations
+package io.peekandpoke.mutator.examples.basic_mutations
 
-import de.peekandpoke.mutator.Mutable
-import de.peekandpoke.ultra.tooling.SimpleExample
+import io.peekandpoke.mutator.Mutable
+import io.peekandpoke.ultra.tooling.SimpleExample
 
 class MutatingListsOfDataClasses : SimpleExample() {
 

@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.slumber.builtin.datetime
+package io.peekandpoke.ultra.slumber.builtin.datetime
 
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter

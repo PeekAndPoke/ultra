@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.messaging.senders.sendgrid
+package io.peekandpoke.funktor.messaging.senders.sendgrid
 
 data class SendgridConfig(
     val apiKey: String,

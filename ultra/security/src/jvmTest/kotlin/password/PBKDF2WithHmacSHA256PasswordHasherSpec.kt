@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.security.password
+package io.peekandpoke.ultra.security.password
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec

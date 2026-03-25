@@ -1,7 +1,7 @@
-package de.peekandpoke.kraft.examples.jsaddons.core
+package io.peekandpoke.kraft.examples.jsaddons.core
 
-import de.peekandpoke.kraft.routing.RootRouterBuilder
-import de.peekandpoke.kraft.routing.Static
+import io.peekandpoke.kraft.routing.RootRouterBuilder
+import io.peekandpoke.kraft.routing.Static
 
 class CoreRoutes {
     val index = Static("/core")

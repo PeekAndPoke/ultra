@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.tooling
+package io.peekandpoke.ultra.tooling
 
 class ExampleRunner {
 

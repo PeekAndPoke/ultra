@@ -1,3 +1,3 @@
 @file:Suppress("PackageDirectoryMismatch")
 
-package de.peekandpoke.kraft.addons.nxcompile
+package io.peekandpoke.kraft.addons.nxcompile

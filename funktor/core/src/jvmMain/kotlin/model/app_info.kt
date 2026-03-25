@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.core.model
+package io.peekandpoke.funktor.core.model
 
 import kotlinx.serialization.json.Json
 

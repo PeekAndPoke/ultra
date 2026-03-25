@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.staticweb.resources.prismjs
+package io.peekandpoke.funktor.staticweb.resources.prismjs
 
 /**
  * Enum with languages that are supported by prism js

@@ -1,4 +1,4 @@
-package de.peekandpoke.mutator
+package io.peekandpoke.mutator
 
 @DslMarker
 annotation class MutatorDsl

@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.tooling
+package io.peekandpoke.ultra.tooling
 
 import java.io.File
 

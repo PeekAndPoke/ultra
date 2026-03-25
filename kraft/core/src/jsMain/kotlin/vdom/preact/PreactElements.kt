@@ -1,12 +1,12 @@
-package de.peekandpoke.kraft.vdom.preact
+package io.peekandpoke.kraft.vdom.preact
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.ComponentRef
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.utils.js
-import de.peekandpoke.kraft.utils.jsArray
-import de.peekandpoke.kraft.utils.jsObject
-import de.peekandpoke.kraft.vdom.VDomElement
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.ComponentRef
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.utils.js
+import io.peekandpoke.kraft.utils.jsArray
+import io.peekandpoke.kraft.utils.jsObject
+import io.peekandpoke.kraft.vdom.VDomElement
 import kotlinx.html.Tag
 import kotlinx.html.Unsafe
 import kotlinx.html.org.w3c.dom.events.Event

@@ -1,8 +1,8 @@
-package de.peekandpoke.kraft.addons.pdfjs
+package io.peekandpoke.kraft.addons.pdfjs
 
-import de.peekandpoke.kraft.addons.pdfjs.js.PdfjsLib
-import de.peekandpoke.kraft.utils.jsObject
-import de.peekandpoke.ultra.common.atob
+import io.peekandpoke.kraft.addons.pdfjs.js.PdfjsLib
+import io.peekandpoke.kraft.utils.jsObject
+import io.peekandpoke.ultra.common.atob
 import kotlinx.coroutines.flow.Flow
 import org.khronos.webgl.Uint8Array
 

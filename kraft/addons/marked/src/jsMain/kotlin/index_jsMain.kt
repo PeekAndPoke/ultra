@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.addons.marked
+package io.peekandpoke.kraft.addons.marked
 
 import js.objects.Object
 

@@ -1,19 +1,19 @@
-package de.peekandpoke.karango.e2e.functions.abc
+package io.peekandpoke.karango.e2e.functions.abc
 
-import de.peekandpoke.karango.aql.ARRAY
-import de.peekandpoke.karango.aql.AVG
-import de.peekandpoke.karango.aql.FOR
-import de.peekandpoke.karango.aql.GT
-import de.peekandpoke.karango.aql.LET
-import de.peekandpoke.karango.aql.RETURN
-import de.peekandpoke.karango.aql.aql
-import de.peekandpoke.karango.e2e.E2ePerson
-import de.peekandpoke.karango.e2e.age
-import de.peekandpoke.karango.e2e.karangoDriver
-import de.peekandpoke.karango.e2e.withDetailedClue
-import de.peekandpoke.ultra.common.tuple
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.karango.aql.ARRAY
+import io.peekandpoke.karango.aql.AVG
+import io.peekandpoke.karango.aql.FOR
+import io.peekandpoke.karango.aql.GT
+import io.peekandpoke.karango.aql.LET
+import io.peekandpoke.karango.aql.RETURN
+import io.peekandpoke.karango.aql.aql
+import io.peekandpoke.karango.e2e.E2ePerson
+import io.peekandpoke.karango.e2e.age
+import io.peekandpoke.karango.e2e.karangoDriver
+import io.peekandpoke.karango.e2e.withDetailedClue
+import io.peekandpoke.ultra.common.tuple
 
 @Suppress("ClassName")
 class E2E_Func_AVG_Spec : StringSpec({

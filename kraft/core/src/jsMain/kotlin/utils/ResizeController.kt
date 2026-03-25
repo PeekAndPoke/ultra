@@ -1,9 +1,9 @@
-package de.peekandpoke.kraft.utils
+package io.peekandpoke.kraft.utils
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.ext.ResizeObserver
-import de.peekandpoke.kraft.ext.ResizeObserverEntry
-import de.peekandpoke.ultra.streams.Unsubscribe
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.ext.ResizeObserver
+import io.peekandpoke.kraft.ext.ResizeObserverEntry
+import io.peekandpoke.ultra.streams.Unsubscribe
 
 fun <T> Component<T>.resizeCtrl() = ResizeController(this)
 

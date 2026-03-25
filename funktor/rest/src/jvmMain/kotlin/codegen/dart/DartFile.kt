@@ -1,9 +1,9 @@
-package de.peekandpoke.funktor.rest.codegen.dart
+package io.peekandpoke.funktor.rest.codegen.dart
 
-import de.peekandpoke.funktor.rest.codegen.CodeGenDsl
-import de.peekandpoke.funktor.rest.codegen.Tags
-import de.peekandpoke.funktor.rest.codegen.dart.printer.DartCodePrinter
-import de.peekandpoke.funktor.rest.codegen.splash
+import io.peekandpoke.funktor.rest.codegen.CodeGenDsl
+import io.peekandpoke.funktor.rest.codegen.Tags
+import io.peekandpoke.funktor.rest.codegen.dart.printer.DartCodePrinter
+import io.peekandpoke.funktor.rest.codegen.splash
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeParameter

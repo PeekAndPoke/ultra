@@ -1,19 +1,19 @@
-package de.peekandpoke.funktor.auth.widgets
+package io.peekandpoke.funktor.auth.widgets
 
-import de.peekandpoke.funktor.auth.AuthState
-import de.peekandpoke.funktor.auth.asFormRule
-import de.peekandpoke.funktor.auth.model.AuthProviderModel
-import de.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.forms.formController
-import de.peekandpoke.kraft.semanticui.forms.UiPasswordField
-import de.peekandpoke.kraft.utils.doubleClickProtection
-import de.peekandpoke.kraft.utils.launch
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.html.onSubmit
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.funktor.auth.AuthState
+import io.peekandpoke.funktor.auth.asFormRule
+import io.peekandpoke.funktor.auth.model.AuthProviderModel
+import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.forms.formController
+import io.peekandpoke.kraft.semanticui.forms.UiPasswordField
+import io.peekandpoke.kraft.utils.doubleClickProtection
+import io.peekandpoke.kraft.utils.launch
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.onSubmit
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 

@@ -1,9 +1,9 @@
-package de.peekandpoke.monko.vault.vault
+package io.peekandpoke.monko.vault.vault
 
-import de.peekandpoke.monko.lang.MongoExpression
-import de.peekandpoke.monko.lang.MongoPrinter
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.vault.TypedQuery
+import io.peekandpoke.monko.lang.MongoExpression
+import io.peekandpoke.monko.lang.MongoPrinter
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.vault.TypedQuery
 
 data class MongoTypedQuery<T>(
     override val root: MongoExpression<List<T>>,

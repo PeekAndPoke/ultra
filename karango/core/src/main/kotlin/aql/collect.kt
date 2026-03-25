@@ -1,9 +1,9 @@
 @file:Suppress("FunctionName")
 
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.vault.lang.VaultDslMarker
-import de.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
+import io.peekandpoke.ultra.vault.lang.VaultDslMarker
+import io.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
 
 /**
  * Creates a COLLECT WITH expression like

@@ -1,15 +1,15 @@
-package de.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.popups
+package io.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.popups
 
-import de.peekandpoke.kraft.components.NoProps
-import de.peekandpoke.kraft.components.PureComponent
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.popups.PopupsManager.Companion.popups
-import de.peekandpoke.kraft.popups.PopupsManager.Positioning
-import de.peekandpoke.kraft.routing.PageTitle
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.html.onMouseEnter
-import de.peekandpoke.ultra.semanticui.noui
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.components.NoProps
+import io.peekandpoke.kraft.components.PureComponent
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.popups.PopupsManager.Companion.popups
+import io.peekandpoke.kraft.popups.PopupsManager.Positioning
+import io.peekandpoke.kraft.routing.PageTitle
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.onMouseEnter
+import io.peekandpoke.ultra.semanticui.noui
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.Tag
 
 @Suppress("FunctionName")

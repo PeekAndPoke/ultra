@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.security.jwt
+package io.peekandpoke.ultra.security.jwt
 
 import com.auth0.jwt.exceptions.JWTDecodeException
 import com.auth0.jwt.interfaces.Claim

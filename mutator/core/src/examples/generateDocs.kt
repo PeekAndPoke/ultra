@@ -1,8 +1,8 @@
-package de.peekandpoke.mutator.examples
+package io.peekandpoke.mutator.examples
 
-import de.peekandpoke.mutator.examples.basic_mutations._BasicMutationsChapters
-import de.peekandpoke.mutator.examples.code_generation._CodeGenerationChapters
-import de.peekandpoke.ultra.tooling.ExamplesToDocs
+import io.peekandpoke.mutator.examples.basic_mutations._BasicMutationsChapters
+import io.peekandpoke.mutator.examples.code_generation._CodeGenerationChapters
+import io.peekandpoke.ultra.tooling.ExamplesToDocs
 import java.io.File
 
 fun main() {

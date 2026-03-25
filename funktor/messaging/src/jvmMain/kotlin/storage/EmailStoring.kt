@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.messaging.storage
+package io.peekandpoke.funktor.messaging.storage
 
-import de.peekandpoke.funktor.messaging.Email
-import de.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.funktor.messaging.Email
+import io.peekandpoke.ultra.common.TypedKey
 
 sealed class EmailStoring {
     companion object {

@@ -1,4 +1,4 @@
-package de.peekandpoke.monko.ksp
+package io.peekandpoke.monko.ksp
 
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment

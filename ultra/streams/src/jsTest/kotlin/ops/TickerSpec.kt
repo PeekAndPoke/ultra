@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.streams.ops
+package io.peekandpoke.ultra.streams.ops
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec

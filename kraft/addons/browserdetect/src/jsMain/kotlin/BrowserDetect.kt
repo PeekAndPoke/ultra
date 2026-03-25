@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.addons.browserdetect
+package io.peekandpoke.kraft.addons.browserdetect
 
-import de.peekandpoke.kraft.addons.browserdetect.js.Bowser
+import io.peekandpoke.kraft.addons.browserdetect.js.Bowser
 import kotlinx.browser.window
 import org.w3c.dom.MimeType
 import org.w3c.dom.Navigator

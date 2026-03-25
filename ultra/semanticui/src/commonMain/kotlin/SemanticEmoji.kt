@@ -5,7 +5,7 @@
     "Detekt:VariableNaming",
 )
 
-package de.peekandpoke.ultra.semanticui
+package io.peekandpoke.ultra.semanticui
 
 import kotlinx.html.EM
 import kotlinx.html.FlowContent

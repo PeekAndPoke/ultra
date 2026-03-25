@@ -1,10 +1,10 @@
-package de.peekandpoke.funktor.rest.auth
+package io.peekandpoke.funktor.rest.auth
 
-import de.peekandpoke.funktor.rest.ApiRoute
-import de.peekandpoke.funktor.rest.RestAuthRuleMarker
-import de.peekandpoke.ultra.remote.ApiAccessLevel
-import de.peekandpoke.ultra.security.user.UserPermissions
 import io.ktor.server.application.*
+import io.peekandpoke.funktor.rest.ApiRoute
+import io.peekandpoke.funktor.rest.RestAuthRuleMarker
+import io.peekandpoke.ultra.remote.ApiAccessLevel
+import io.peekandpoke.ultra.security.user.UserPermissions
 
 /**
  * Helper class for creating auth rules

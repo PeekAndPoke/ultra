@@ -1,7 +1,7 @@
-package de.peekandpoke.kraft.components.state
+package io.peekandpoke.kraft.components.state
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.utils.launch
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.utils.launch
 import kotlin.properties.ObservableProperty
 import kotlin.reflect.KProperty
 

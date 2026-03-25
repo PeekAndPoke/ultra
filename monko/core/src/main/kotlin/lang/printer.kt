@@ -1,4 +1,4 @@
-package de.peekandpoke.monko.lang
+package io.peekandpoke.monko.lang
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import kotlin.math.max

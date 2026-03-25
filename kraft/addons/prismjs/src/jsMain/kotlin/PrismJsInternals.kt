@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.addons.prismjs
+package io.peekandpoke.kraft.addons.prismjs
 
 import kotlinx.browser.document
 import kotlinx.coroutines.delay

@@ -1,6 +1,5 @@
-package de.peekandpoke.ultra.datetime
+package io.peekandpoke.ultra.datetime
 
-import de.peekandpoke.ultra.datetime.ComparableTo
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime

@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.insights
+package io.peekandpoke.funktor.insights
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import de.peekandpoke.funktor.insights.gui.InsightsGuiData
-import de.peekandpoke.ultra.log.Log
+import io.peekandpoke.funktor.insights.gui.InsightsGuiData
+import io.peekandpoke.ultra.log.Log
 import kotlin.reflect.full.allSuperclasses
 
 class InsightsDataLoader(

@@ -1,12 +1,12 @@
-package de.peekandpoke.funktor.cluster.locks
+package io.peekandpoke.funktor.cluster.locks
 
-import de.peekandpoke.ultra.datetime.Kronos
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.datetime.Kronos
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect

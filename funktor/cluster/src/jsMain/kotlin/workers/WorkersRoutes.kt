@@ -1,10 +1,10 @@
-package de.peekandpoke.funktor.cluster.workers
+package io.peekandpoke.funktor.cluster.workers
 
-import de.peekandpoke.funktor.cluster.FunktorClusterUi
-import de.peekandpoke.funktor.cluster.workers.api.WorkerModel
-import de.peekandpoke.kraft.routing.Route1
-import de.peekandpoke.kraft.routing.RouterBuilder
-import de.peekandpoke.kraft.routing.Static
+import io.peekandpoke.funktor.cluster.FunktorClusterUi
+import io.peekandpoke.funktor.cluster.workers.api.WorkerModel
+import io.peekandpoke.kraft.routing.Route1
+import io.peekandpoke.kraft.routing.RouterBuilder
+import io.peekandpoke.kraft.routing.Static
 
 class WorkersRoutes(mount: String) {
 

@@ -1,16 +1,16 @@
-package de.peekandpoke.karango
+package io.peekandpoke.karango
 
 import com.arangodb.ArangoDB
 import com.arangodb.ArangoDatabaseAsync
-import de.peekandpoke.karango.config.ArangoDbConfig
-import de.peekandpoke.karango.slumber.KarangoCodec
-import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
-import de.peekandpoke.ultra.kontainer.module
-import de.peekandpoke.ultra.slumber.SlumberConfig
-import de.peekandpoke.ultra.vault.Database
-import de.peekandpoke.ultra.vault.EntityCache
-import de.peekandpoke.ultra.vault.slumber.VaultSlumberModule
+import io.peekandpoke.karango.config.ArangoDbConfig
+import io.peekandpoke.karango.slumber.KarangoCodec
+import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.module
+import io.peekandpoke.ultra.slumber.SlumberConfig
+import io.peekandpoke.ultra.vault.Database
+import io.peekandpoke.ultra.vault.EntityCache
+import io.peekandpoke.ultra.vault.slumber.VaultSlumberModule
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.security.KeyStore

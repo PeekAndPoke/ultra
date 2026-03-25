@@ -1,14 +1,14 @@
-package de.peekandpoke.ultra.security.jwt
+package io.peekandpoke.ultra.security.jwt
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
-import de.peekandpoke.ultra.security.user.UserPermissions
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.security.user.UserPermissions
 
 class JwtGeneratorSpec : StringSpec() {
 

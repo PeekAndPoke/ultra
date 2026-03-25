@@ -1,10 +1,10 @@
-package de.peekandpoke.karango.e2e.functions.pqr
+package io.peekandpoke.karango.e2e.functions.pqr
 
-import de.peekandpoke.karango.aql.RAND
-import de.peekandpoke.karango.aql.RETURN
-import de.peekandpoke.karango.e2e.karangoDriver
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.doubles.shouldBeBetween
+import io.peekandpoke.karango.aql.RAND
+import io.peekandpoke.karango.aql.RETURN
+import io.peekandpoke.karango.e2e.karangoDriver
 
 @Suppress("ClassName")
 class E2E_Func_RAND_Spec : StringSpec({

@@ -1,8 +1,8 @@
-package de.peekandpoke.kraft.examples.jsaddons.pdfjs
+package io.peekandpoke.kraft.examples.jsaddons.pdfjs
 
-import de.peekandpoke.kraft.routing.RootRouterBuilder
-import de.peekandpoke.kraft.routing.Route1
-import de.peekandpoke.kraft.routing.Static
+import io.peekandpoke.kraft.routing.RootRouterBuilder
+import io.peekandpoke.kraft.routing.Route1
+import io.peekandpoke.kraft.routing.Static
 
 class PdfJsRoutes {
     val index = Static("/example/pdfjs")

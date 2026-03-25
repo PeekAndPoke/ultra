@@ -1,7 +1,7 @@
-package de.peekandpoke.kraft.messages
+package io.peekandpoke.kraft.messages
 
-import de.peekandpoke.ultra.streams.Stream
-import de.peekandpoke.ultra.streams.StreamSource
+import io.peekandpoke.ultra.streams.Stream
+import io.peekandpoke.ultra.streams.StreamSource
 
 class MessagesHandler {
     private val _stream = StreamSource<Message<*>?>(null)

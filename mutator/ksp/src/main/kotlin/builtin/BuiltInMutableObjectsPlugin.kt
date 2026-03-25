@@ -1,26 +1,26 @@
 @file:Suppress("detekt:ReturnCount")
 
-package de.peekandpoke.mutator.ksp.builtin
+package io.peekandpoke.mutator.ksp.builtin
 
 import com.google.devtools.ksp.getDeclaredProperties
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
-import de.peekandpoke.mutator.ksp.GenericsUtil
-import de.peekandpoke.mutator.ksp.MutatorCodeBlocks.Companion.ListMutatorName
-import de.peekandpoke.mutator.ksp.MutatorCodeBlocks.Companion.MapMutatorName
-import de.peekandpoke.mutator.ksp.MutatorCodeBlocks.Companion.ObjectMutatorName
-import de.peekandpoke.mutator.ksp.MutatorCodeBlocks.Companion.SetMutatorName
-import de.peekandpoke.mutator.ksp.MutatorKspPlugin
-import de.peekandpoke.mutator.ksp.MutatorKspPlugin.MutatorGeneratorContext
-import de.peekandpoke.mutator.ksp.MutatorKspPlugins
-import de.peekandpoke.mutator.ksp.MutatorKspProcessor
-import de.peekandpoke.mutator.ksp.declaresKotlinList
-import de.peekandpoke.mutator.ksp.declaresKotlinMap
-import de.peekandpoke.mutator.ksp.declaresKotlinSet
-import de.peekandpoke.mutator.ksp.isData
-import de.peekandpoke.mutator.ksp.isPrimaryCtorParameter
-import de.peekandpoke.mutator.ksp.isSealed
+import io.peekandpoke.mutator.ksp.GenericsUtil
+import io.peekandpoke.mutator.ksp.MutatorCodeBlocks.Companion.ListMutatorName
+import io.peekandpoke.mutator.ksp.MutatorCodeBlocks.Companion.MapMutatorName
+import io.peekandpoke.mutator.ksp.MutatorCodeBlocks.Companion.ObjectMutatorName
+import io.peekandpoke.mutator.ksp.MutatorCodeBlocks.Companion.SetMutatorName
+import io.peekandpoke.mutator.ksp.MutatorKspPlugin
+import io.peekandpoke.mutator.ksp.MutatorKspPlugin.MutatorGeneratorContext
+import io.peekandpoke.mutator.ksp.MutatorKspPlugins
+import io.peekandpoke.mutator.ksp.MutatorKspProcessor
+import io.peekandpoke.mutator.ksp.declaresKotlinList
+import io.peekandpoke.mutator.ksp.declaresKotlinMap
+import io.peekandpoke.mutator.ksp.declaresKotlinSet
+import io.peekandpoke.mutator.ksp.isData
+import io.peekandpoke.mutator.ksp.isPrimaryCtorParameter
+import io.peekandpoke.mutator.ksp.isSealed
 
 class BuiltInMutableObjectsPlugin : MutatorKspPlugin {
 

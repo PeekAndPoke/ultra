@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.vault
+package io.peekandpoke.ultra.vault
 
 import java.lang.reflect.Type
 

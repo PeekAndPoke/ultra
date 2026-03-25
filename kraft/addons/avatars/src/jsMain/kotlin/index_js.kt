@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.addons.avatars
+package io.peekandpoke.kraft.addons.avatars
 
-import de.peekandpoke.kraft.addons.avatars.js.JsMinIdenticons
+import io.peekandpoke.kraft.addons.avatars.js.JsMinIdenticons
 import kotlin.random.Random
 
 object Avatars {

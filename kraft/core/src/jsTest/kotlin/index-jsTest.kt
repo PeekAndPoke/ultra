@@ -1,1 +1,1 @@
-package de.peekandpoke.kraft
+package io.peekandpoke.kraft

@@ -1,7 +1,7 @@
-package de.peekandpoke.kraft.routing
+package io.peekandpoke.kraft.routing
 
-import de.peekandpoke.kraft.routing.RouteBase.Companion.replacePlaceholder
-import de.peekandpoke.ultra.common.encodeUriComponent
+import io.peekandpoke.kraft.routing.RouteBase.Companion.replacePlaceholder
+import io.peekandpoke.ultra.common.encodeUriComponent
 
 /**
  * Common Route representation

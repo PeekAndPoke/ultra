@@ -1,7 +1,7 @@
-package de.peekandpoke.kraft.utils
+package io.peekandpoke.kraft.utils
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.ultra.common.TypedKey
 import kotlinx.coroutines.Deferred
 
 fun <T> Component<T>.doubleClickProtection() = DoubleClickProtection(this)

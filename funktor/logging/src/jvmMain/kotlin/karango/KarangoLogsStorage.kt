@@ -1,14 +1,14 @@
-package de.peekandpoke.funktor.logging.karango
+package io.peekandpoke.funktor.logging.karango
 
-import de.peekandpoke.funktor.logging.LogsFilter
-import de.peekandpoke.funktor.logging.LogsStorage
-import de.peekandpoke.funktor.logging.api.LogEntryModel
-import de.peekandpoke.funktor.logging.api.LogsRequest
-import de.peekandpoke.karango.aql.FOR
-import de.peekandpoke.karango.aql.RETURN_COUNT
-import de.peekandpoke.karango.aql.UPDATE
-import de.peekandpoke.karango.aql.aql
-import de.peekandpoke.ultra.model.Paged
+import io.peekandpoke.funktor.logging.LogsFilter
+import io.peekandpoke.funktor.logging.LogsStorage
+import io.peekandpoke.funktor.logging.api.LogEntryModel
+import io.peekandpoke.funktor.logging.api.LogsRequest
+import io.peekandpoke.karango.aql.FOR
+import io.peekandpoke.karango.aql.RETURN_COUNT
+import io.peekandpoke.karango.aql.UPDATE
+import io.peekandpoke.karango.aql.aql
+import io.peekandpoke.ultra.model.Paged
 
 class KarangoLogsStorage(
     private val repo: KarangoLogRepository,

@@ -16,7 +16,7 @@ import { Code } from 'astro:components';
 
 <p>Emits a <code>TickerFrame</code> on every <code>requestAnimationFrame</code> callback (~60fps). Perfect for animations and frame-based game loops:</p>
 
-<Code code={`import de.peekandpoke.ultra.streams.ops.animTicker
+    <Code code={`import io.peekandpoke.ultra.streams.ops.animTicker
 
 val tick = animTicker()
 
@@ -34,7 +34,7 @@ unsub()  // stops requesting animation frames`} lang="kotlin" theme="vitesse-dar
 
 <p>Persists a stream's value in localStorage. On page reload, the stream initializes from storage:</p>
 
-<Code code={`import de.peekandpoke.ultra.streams.ops.persistInLocalStorage
+    <Code code={`import io.peekandpoke.ultra.streams.ops.persistInLocalStorage
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
 
@@ -53,8 +53,8 @@ val prefs = StreamSource(Preferences())
 
 <p>Standalone debounced function wrappers using browser <code>setTimeout</code>. Useful outside of streams:</p>
 
-<Code code={`import de.peekandpoke.ultra.streams.ops.debouncedFunc
-import de.peekandpoke.ultra.streams.ops.debouncedFuncExceptFirst
+    <Code code={`import io.peekandpoke.ultra.streams.ops.debouncedFunc
+import io.peekandpoke.ultra.streams.ops.debouncedFuncExceptFirst
 
 val saveSearch = debouncedFunc(delayMs = 200) {
     performSearch(inputField.value)

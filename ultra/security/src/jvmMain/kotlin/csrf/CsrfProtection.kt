@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.security.csrf
+package io.peekandpoke.ultra.security.csrf
 
 interface CsrfProtection {
 

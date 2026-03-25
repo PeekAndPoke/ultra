@@ -1,13 +1,13 @@
-package de.peekandpoke.ultra.security.csrf
+package io.peekandpoke.ultra.security.csrf
 
-import de.peekandpoke.ultra.common.fromBase64
-import de.peekandpoke.ultra.common.toBase64
-import de.peekandpoke.ultra.security.user.UserProvider
-import de.peekandpoke.ultra.security.user.UserRecord
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldMatch
+import io.peekandpoke.ultra.common.fromBase64
+import io.peekandpoke.ultra.common.toBase64
+import io.peekandpoke.ultra.security.user.UserProvider
+import io.peekandpoke.ultra.security.user.UserRecord
 import kotlinx.coroutines.delay
 
 class StatelessCsrfProtectionSpec : StringSpec({

@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.log
+package io.peekandpoke.ultra.log
 
-import de.peekandpoke.ultra.kontainer.InjectionContext
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
-import de.peekandpoke.ultra.kontainer.module
+import io.peekandpoke.ultra.kontainer.InjectionContext
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.module
 
 @Suppress("unused")
 fun KontainerBuilder.ultraLogging() = module(Ultra_Logging)

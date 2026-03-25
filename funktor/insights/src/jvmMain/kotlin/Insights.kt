@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.insights
+package io.peekandpoke.funktor.insights
 
-import de.peekandpoke.funktor.core.metrics.RequestMetricsProvider
-import de.peekandpoke.funktor.core.model.InsightsConfig
 import io.ktor.server.application.*
+import io.peekandpoke.funktor.core.metrics.RequestMetricsProvider
+import io.peekandpoke.funktor.core.model.InsightsConfig
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds

@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.kontainer.examples
+package io.peekandpoke.ultra.kontainer.examples
 
-import de.peekandpoke.ultra.kontainer.examples.defining_services.DefiningASingletonExample
-import de.peekandpoke.ultra.kontainer.examples.defining_services.SharedSingletonExample
-import de.peekandpoke.ultra.kontainer.examples.defining_services.SingletonVsDynamicVsPrototypeExample
-import de.peekandpoke.ultra.tooling.ExampleRunner
+import io.peekandpoke.ultra.kontainer.examples.defining_services.DefiningASingletonExample
+import io.peekandpoke.ultra.kontainer.examples.defining_services.SharedSingletonExample
+import io.peekandpoke.ultra.kontainer.examples.defining_services.SingletonVsDynamicVsPrototypeExample
+import io.peekandpoke.ultra.tooling.ExampleRunner
 
 fun main() {
     ExampleRunner().run(examples)

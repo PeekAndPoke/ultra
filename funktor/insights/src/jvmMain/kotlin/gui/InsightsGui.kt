@@ -1,15 +1,15 @@
-package de.peekandpoke.funktor.insights.gui
+package io.peekandpoke.funktor.insights.gui
 
-import de.peekandpoke.funktor.core.broker.TypedRouteRenderer
-import de.peekandpoke.funktor.core.broker.get
-import de.peekandpoke.funktor.core.config.AppConfig
-import de.peekandpoke.funktor.core.kontainer
-import de.peekandpoke.funktor.core.model.AppInfo
-import de.peekandpoke.funktor.insights.InsightsDataLoader
 import io.ktor.http.*
 import io.ktor.server.html.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.peekandpoke.funktor.core.broker.TypedRouteRenderer
+import io.peekandpoke.funktor.core.broker.get
+import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.funktor.core.kontainer
+import io.peekandpoke.funktor.core.model.AppInfo
+import io.peekandpoke.funktor.insights.InsightsDataLoader
 
 class InsightsGui(
     private val routes: InsightsGuiRoutes,

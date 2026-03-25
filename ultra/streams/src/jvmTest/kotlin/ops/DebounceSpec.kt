@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.streams.ops
+package io.peekandpoke.ultra.streams.ops
 
-import de.peekandpoke.ultra.streams.StreamSource
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.streams.StreamSource
 import kotlinx.coroutines.delay
 
 // Debounce tests require multithreading (the debounce coroutine and the test's delay

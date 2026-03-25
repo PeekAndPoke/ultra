@@ -1,9 +1,9 @@
-package de.peekandpoke.kraft.examples.fomanticui
+package io.peekandpoke.kraft.examples.fomanticui
 
-import de.peekandpoke.kraft.examples.fomanticui.pages.NotFoundPage
-import de.peekandpoke.kraft.kraftApp
-import de.peekandpoke.kraft.semanticui.semanticUI
-import de.peekandpoke.kraft.vdom.preact.PreactVDomEngine
+import io.peekandpoke.kraft.examples.fomanticui.pages.NotFoundPage
+import io.peekandpoke.kraft.kraftApp
+import io.peekandpoke.kraft.semanticui.semanticUI
+import io.peekandpoke.kraft.vdom.preact.PreactVDomEngine
 
 /** Create the routes */
 val routes = Routes()

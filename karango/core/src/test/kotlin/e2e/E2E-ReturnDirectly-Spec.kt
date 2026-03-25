@@ -1,16 +1,16 @@
-package de.peekandpoke.karango.e2e
+package io.peekandpoke.karango.e2e
 
-import de.peekandpoke.karango.aql.ARRAY
-import de.peekandpoke.karango.aql.OBJECT
-import de.peekandpoke.karango.aql.RETURN
-import de.peekandpoke.karango.aql.aql
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.reflection.kMapType
-import de.peekandpoke.ultra.reflection.kType
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.karango.aql.ARRAY
+import io.peekandpoke.karango.aql.OBJECT
+import io.peekandpoke.karango.aql.RETURN
+import io.peekandpoke.karango.aql.aql
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.kMapType
+import io.peekandpoke.ultra.reflection.kType
 
 @Suppress("ClassName")
 class `E2E-ReturnDirectly-Spec` : StringSpec() {

@@ -1,9 +1,9 @@
 @file:Suppress("FunctionName")
 
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.vault.lang.VaultTypeConversionMarker
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.vault.lang.VaultTypeConversionMarker
 
 // //  TO_BOOL  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

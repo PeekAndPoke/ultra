@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.auth
+package io.peekandpoke.funktor.auth
 
-import de.peekandpoke.monko.MongoDbConfig
-import de.peekandpoke.monko.monko
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.monko.MongoDbConfig
+import io.peekandpoke.monko.monko
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
 
 class AuthRecordStorageMonkoSpec : AuthRecordStorageBaseSpec() {
 

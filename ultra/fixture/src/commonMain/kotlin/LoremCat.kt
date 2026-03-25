@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.fixture
+package io.peekandpoke.ultra.fixture
 
 object LoremCat {
     operator fun invoke(width: Int, height: Int, uuid: String? = null) = imageUrl(

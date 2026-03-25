@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.remote
+package io.peekandpoke.ultra.remote
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec

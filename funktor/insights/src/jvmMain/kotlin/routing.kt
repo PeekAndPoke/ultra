@@ -1,12 +1,12 @@
-package de.peekandpoke.funktor.insights
+package io.peekandpoke.funktor.insights
 
-import de.peekandpoke.funktor.core.fullUrl
-import de.peekandpoke.funktor.core.model.InsightsConfig
-import de.peekandpoke.funktor.insights.collectors.RoutingCollector
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.routing.*
 import io.ktor.util.*
+import io.peekandpoke.funktor.core.fullUrl
+import io.peekandpoke.funktor.core.model.InsightsConfig
+import io.peekandpoke.funktor.insights.collectors.RoutingCollector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.fixture
+package io.peekandpoke.ultra.fixture
 
 import kotlin.random.Random
 

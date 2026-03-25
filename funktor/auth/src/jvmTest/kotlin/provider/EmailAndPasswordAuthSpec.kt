@@ -1,24 +1,24 @@
-package de.peekandpoke.funktor.auth.provider
+package io.peekandpoke.funktor.auth.provider
 
-import de.peekandpoke.funktor.auth.AuthError
-import de.peekandpoke.funktor.auth.MinimalTestDeps
-import de.peekandpoke.funktor.auth.MinimalTestRealm
-import de.peekandpoke.funktor.auth.TestMessaging
-import de.peekandpoke.funktor.auth.domain.AuthRecord
-import de.peekandpoke.funktor.auth.model.AuthProviderModel
-import de.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
-import de.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
-import de.peekandpoke.funktor.auth.model.AuthSignInRequest
-import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
-import de.peekandpoke.funktor.auth.model.PasswordPolicy
-import de.peekandpoke.funktor.messaging.api.EmailResult
-import de.peekandpoke.ultra.datetime.MpInstant
-import de.peekandpoke.ultra.log.NullLog
-import de.peekandpoke.ultra.vault.Stored
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.funktor.auth.AuthError
+import io.peekandpoke.funktor.auth.MinimalTestDeps
+import io.peekandpoke.funktor.auth.MinimalTestRealm
+import io.peekandpoke.funktor.auth.TestMessaging
+import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.model.AuthProviderModel
+import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
+import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
+import io.peekandpoke.funktor.auth.model.AuthSignInRequest
+import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
+import io.peekandpoke.funktor.auth.model.PasswordPolicy
+import io.peekandpoke.funktor.messaging.api.EmailResult
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.log.NullLog
+import io.peekandpoke.ultra.vault.Stored
 
 class EmailAndPasswordAuthSpec : FreeSpec() {
 

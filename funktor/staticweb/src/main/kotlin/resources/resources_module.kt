@@ -1,13 +1,13 @@
-package de.peekandpoke.funktor.staticweb.resources
+package io.peekandpoke.funktor.staticweb.resources
 
-import de.peekandpoke.funktor.core.kontainer
-import de.peekandpoke.funktor.staticweb.resources.common.funktorCommonWebResources
-import de.peekandpoke.funktor.staticweb.resources.prismjs.funktorPrismJs
-import de.peekandpoke.ultra.kontainer.KontainerAware
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
-import de.peekandpoke.ultra.kontainer.module
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
+import io.peekandpoke.funktor.core.kontainer
+import io.peekandpoke.funktor.staticweb.resources.common.funktorCommonWebResources
+import io.peekandpoke.funktor.staticweb.resources.prismjs.funktorPrismJs
+import io.peekandpoke.ultra.kontainer.KontainerAware
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.module
 
 internal fun KontainerBuilder.funktorResources() = module(Funktor_Resources)
 

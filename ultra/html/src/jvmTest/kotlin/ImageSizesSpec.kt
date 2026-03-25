@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.html
+package io.peekandpoke.ultra.html
 
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe

@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.rest
+package io.peekandpoke.funktor.rest
 
 /**
  * Helper classes for query params and query bodies

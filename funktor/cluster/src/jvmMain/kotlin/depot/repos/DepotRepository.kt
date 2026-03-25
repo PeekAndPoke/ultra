@@ -1,9 +1,9 @@
-package de.peekandpoke.funktor.cluster.depot.repos
+package io.peekandpoke.funktor.cluster.depot.repos
 
-import de.peekandpoke.funktor.cluster.depot.api.DepotItemModel.Meta
-import de.peekandpoke.funktor.cluster.depot.domain.DepotFileContent
-import de.peekandpoke.funktor.cluster.depot.domain.DepotItem
 import depot.api.DepotRepositoryModel
+import io.peekandpoke.funktor.cluster.depot.api.DepotItemModel.Meta
+import io.peekandpoke.funktor.cluster.depot.domain.DepotFileContent
+import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
 
 /**
  * Definition of a depot repository

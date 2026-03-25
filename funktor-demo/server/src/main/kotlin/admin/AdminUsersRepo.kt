@@ -1,21 +1,21 @@
 package io.peekandpoke.funktor.demo.server.admin
 
-import de.peekandpoke.funktor.auth.AuthRecordStorage
-import de.peekandpoke.funktor.auth.domain.AuthRecord
-import de.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
-import de.peekandpoke.karango.aql.EQ
-import de.peekandpoke.karango.aql.FOR
-import de.peekandpoke.karango.aql.RETURN
-import de.peekandpoke.karango.vault.EntityRepository
-import de.peekandpoke.karango.vault.IndexBuilder
-import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.security.password.PasswordHasher
-import de.peekandpoke.ultra.vault.Repository
-import de.peekandpoke.ultra.vault.Storable
-import de.peekandpoke.ultra.vault.Stored
-import de.peekandpoke.ultra.vault.hooks.TimestampedHook
+import io.peekandpoke.funktor.auth.AuthRecordStorage
+import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import io.peekandpoke.funktor.demo.common.AdminUserModel
+import io.peekandpoke.karango.aql.EQ
+import io.peekandpoke.karango.aql.FOR
+import io.peekandpoke.karango.aql.RETURN
+import io.peekandpoke.karango.vault.EntityRepository
+import io.peekandpoke.karango.vault.IndexBuilder
+import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.security.password.PasswordHasher
+import io.peekandpoke.ultra.vault.Repository
+import io.peekandpoke.ultra.vault.Storable
+import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.hooks.TimestampedHook
 
 class AdminUsersRepo(
     driver: KarangoDriver,

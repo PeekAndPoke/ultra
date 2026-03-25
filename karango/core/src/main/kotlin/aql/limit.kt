@@ -1,4 +1,4 @@
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
 internal data class AqlOffsetAndLimitStmt(val offset: Int, val limit: Int?) : AqlStatement {
 

@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.staticweb.flashsession
+package io.peekandpoke.funktor.staticweb.flashsession
 
 import io.ktor.server.sessions.*
 import kotlinx.serialization.Serializable

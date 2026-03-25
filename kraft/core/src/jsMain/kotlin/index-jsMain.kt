@@ -1,19 +1,19 @@
-package de.peekandpoke.kraft
+package io.peekandpoke.kraft
 
-import de.peekandpoke.kraft.components.AutoMountedUi
-import de.peekandpoke.kraft.modals.modals
-import de.peekandpoke.kraft.popups.popups
-import de.peekandpoke.kraft.routing.RootRouterBuilder
-import de.peekandpoke.kraft.routing.Router
-import de.peekandpoke.kraft.toasts.toasts
-import de.peekandpoke.kraft.utils.DocumentController
-import de.peekandpoke.kraft.utils.ResponsiveController
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.kraft.vdom.VDomEngine
-import de.peekandpoke.ultra.common.MutableTypedAttributes
-import de.peekandpoke.ultra.common.TypedAttributes
-import de.peekandpoke.ultra.common.TypedKey
-import de.peekandpoke.ultra.datetime.kotlinx.initializeJsJodaTimezones
+import io.peekandpoke.kraft.components.AutoMountedUi
+import io.peekandpoke.kraft.modals.modals
+import io.peekandpoke.kraft.popups.popups
+import io.peekandpoke.kraft.routing.RootRouterBuilder
+import io.peekandpoke.kraft.routing.Router
+import io.peekandpoke.kraft.toasts.toasts
+import io.peekandpoke.kraft.utils.DocumentController
+import io.peekandpoke.kraft.utils.ResponsiveController
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.kraft.vdom.VDomEngine
+import io.peekandpoke.ultra.common.MutableTypedAttributes
+import io.peekandpoke.ultra.common.TypedAttributes
+import io.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.ultra.datetime.kotlinx.initializeJsJodaTimezones
 import kotlinx.browser.document
 import org.w3c.dom.HTMLElement
 

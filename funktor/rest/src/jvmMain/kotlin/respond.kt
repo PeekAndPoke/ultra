@@ -1,17 +1,17 @@
-package de.peekandpoke.funktor.rest
+package io.peekandpoke.funktor.rest
 
-import de.peekandpoke.funktor.core.appConfig
-import de.peekandpoke.funktor.core.kontainerOrNull
-import de.peekandpoke.funktor.core.metrics.RequestMetricsProvider
-import de.peekandpoke.funktor.rest.auth.AuthRule
-import de.peekandpoke.ultra.common.encodeUriComponent
-import de.peekandpoke.ultra.common.network.NetworkUtils
-import de.peekandpoke.ultra.remote.ApiResponse
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
+import io.peekandpoke.funktor.core.appConfig
+import io.peekandpoke.funktor.core.kontainerOrNull
+import io.peekandpoke.funktor.core.metrics.RequestMetricsProvider
+import io.peekandpoke.funktor.rest.auth.AuthRule
+import io.peekandpoke.ultra.common.encodeUriComponent
+import io.peekandpoke.ultra.common.network.NetworkUtils
+import io.peekandpoke.ultra.remote.ApiResponse
 import java.time.Instant
 
 /**

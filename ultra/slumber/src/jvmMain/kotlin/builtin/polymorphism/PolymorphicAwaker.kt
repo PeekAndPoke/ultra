@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.slumber.builtin.polymorphism
+package io.peekandpoke.ultra.slumber.builtin.polymorphism
 
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.slumber.Awaker
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.slumber.Awaker
 import kotlin.reflect.KClass
 
 class PolymorphicAwaker(

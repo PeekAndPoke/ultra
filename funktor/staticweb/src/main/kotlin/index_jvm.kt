@@ -1,10 +1,10 @@
-package de.peekandpoke.funktor.staticweb
+package io.peekandpoke.funktor.staticweb
 
-import de.peekandpoke.funktor.staticweb.flashsession.funktorFlashSession
-import de.peekandpoke.funktor.staticweb.resources.funktorResources
-import de.peekandpoke.funktor.staticweb.templating.funktorTemplating
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
-import de.peekandpoke.ultra.kontainer.module
+import io.peekandpoke.funktor.staticweb.flashsession.funktorFlashSession
+import io.peekandpoke.funktor.staticweb.resources.funktorResources
+import io.peekandpoke.funktor.staticweb.templating.funktorTemplating
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.module
 
 fun KontainerBuilder.funktorStaticWeb() = module(Funktor_StaticWeb)
 

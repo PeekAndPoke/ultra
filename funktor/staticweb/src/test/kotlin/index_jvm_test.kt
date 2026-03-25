@@ -1,1 +1,1 @@
-package de.peekandpoke.funktor.staticweb
+package io.peekandpoke.funktor.staticweb

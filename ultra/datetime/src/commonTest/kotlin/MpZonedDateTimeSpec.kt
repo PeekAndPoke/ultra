@@ -1,7 +1,5 @@
-package de.peekandpoke.ultra.datetime
+package io.peekandpoke.ultra.datetime
 
-import de.peekandpoke.ultra.datetime.TestConstants.tsBucharest_20220405_121314
-import de.peekandpoke.ultra.datetime.TestConstants.tsUtc_20220405_121314
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeEqualComparingTo
@@ -9,6 +7,8 @@ import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.datetime.TestConstants.tsBucharest_20220405_121314
+import io.peekandpoke.ultra.datetime.TestConstants.tsUtc_20220405_121314
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone

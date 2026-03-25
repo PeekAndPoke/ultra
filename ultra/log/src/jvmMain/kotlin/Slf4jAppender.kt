@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.log
+package io.peekandpoke.ultra.log
 
 import org.slf4j.Logger
 import java.time.ZonedDateTime

@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.cluster.locks
+package io.peekandpoke.funktor.cluster.locks
 
-import de.peekandpoke.ultra.vault.Repository
-import de.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.Repository
+import io.peekandpoke.ultra.vault.Stored
 import kotlin.time.Duration
 
 class LockedStored<out T>(

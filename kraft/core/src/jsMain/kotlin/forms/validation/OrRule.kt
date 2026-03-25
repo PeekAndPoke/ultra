@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.forms.validation
+package io.peekandpoke.kraft.forms.validation
 
 class OrRule<T>(private val rules: List<Rule<T>>) : Rule<T> {
 

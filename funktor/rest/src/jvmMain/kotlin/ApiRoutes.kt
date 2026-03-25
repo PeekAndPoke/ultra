@@ -1,17 +1,17 @@
-package de.peekandpoke.funktor.rest
+package io.peekandpoke.funktor.rest
 
-import de.peekandpoke.funktor.core.broker.OutgoingConverter
-import de.peekandpoke.funktor.core.broker.Routes
-import de.peekandpoke.funktor.core.broker.TypedRoute
-import de.peekandpoke.funktor.core.broker.UriPattern
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.remote.ApiResponse
-import de.peekandpoke.ultra.remote.TypedApiEndpoint
 import io.ktor.http.*
 import io.ktor.http.HttpMethod.Companion.Delete
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.HttpMethod.Companion.Put
+import io.peekandpoke.funktor.core.broker.OutgoingConverter
+import io.peekandpoke.funktor.core.broker.Routes
+import io.peekandpoke.funktor.core.broker.TypedRoute
+import io.peekandpoke.funktor.core.broker.UriPattern
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.remote.ApiResponse
+import io.peekandpoke.ultra.remote.TypedApiEndpoint
 import kotlin.reflect.KClass
 
 @DslMarker

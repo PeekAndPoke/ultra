@@ -1,10 +1,10 @@
-package de.peekandpoke.kraft.vdom.preact
+package io.peekandpoke.kraft.vdom.preact
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.ComponentRef
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.vdom.VDomElement
-import de.peekandpoke.kraft.vdom.VDomTagConsumer
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.ComponentRef
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.vdom.VDomElement
+import io.peekandpoke.kraft.vdom.VDomTagConsumer
 import kotlinx.html.Entities
 import kotlinx.html.Tag
 import kotlinx.html.Unsafe

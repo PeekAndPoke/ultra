@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.streams
+package io.peekandpoke.ultra.streams
 
 /**
  * Base class for stream wrappers that keep the value type

@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.tooling
+package io.peekandpoke.ultra.tooling
 
-import de.peekandpoke.ultra.common.child
-import de.peekandpoke.ultra.common.cleanDirectory
-import de.peekandpoke.ultra.common.getRelativePackagePath
-import de.peekandpoke.ultra.common.toUri
+import io.peekandpoke.ultra.common.child
+import io.peekandpoke.ultra.common.cleanDirectory
+import io.peekandpoke.ultra.common.getRelativePackagePath
+import io.peekandpoke.ultra.common.toUri
 import java.io.File
 
 abstract class ExamplesToDocs(

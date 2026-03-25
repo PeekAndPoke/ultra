@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.kontainer
+package io.peekandpoke.ultra.kontainer
 
 /**
  * Makes any object aware of the Kontainer

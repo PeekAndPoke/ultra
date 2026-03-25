@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.addons
+package io.peekandpoke.kraft.addons
 
-import de.peekandpoke.kraft.utils.jsObjectToMap
+import io.peekandpoke.kraft.utils.jsObjectToMap
 import js.objects.Object
 
 /**

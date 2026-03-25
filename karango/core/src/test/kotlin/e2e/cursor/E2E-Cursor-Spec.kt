@@ -1,14 +1,14 @@
-package de.peekandpoke.karango.e2e.cursor
+package io.peekandpoke.karango.e2e.cursor
 
-import de.peekandpoke.karango.e2e.database
-import de.peekandpoke.karango.e2e.karangoDriver
-import de.peekandpoke.karango.testdomain.TestPerson
-import de.peekandpoke.karango.testdomain.testPersons
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeSameSizeAs
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.karango.e2e.database
+import io.peekandpoke.karango.e2e.karangoDriver
+import io.peekandpoke.karango.testdomain.TestPerson
+import io.peekandpoke.karango.testdomain.testPersons
 
 @Suppress("ClassName")
 class `E2E-Cursor-Spec` : StringSpec() {

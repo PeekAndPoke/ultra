@@ -1,11 +1,11 @@
 @file:Suppress("FunctionName")
 
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.reflection.kListType
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.vault.lang.VaultInputValueMarker
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.kListType
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.vault.lang.VaultInputValueMarker
 
 /**
  * Guard function to prevent calls to .aql() on existing AqlExpressions

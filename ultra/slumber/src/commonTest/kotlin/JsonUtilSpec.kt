@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.slumber
+package io.peekandpoke.ultra.slumber
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe

@@ -1,21 +1,21 @@
-package de.peekandpoke.funktor.cluster
+package io.peekandpoke.funktor.cluster
 
-import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsRoutes
-import de.peekandpoke.funktor.cluster.backgroundjobs.mountFunktorBackgroundJobs
-import de.peekandpoke.funktor.cluster.depot.DepotRoutes
-import de.peekandpoke.funktor.cluster.depot.mountFunktorDepot
-import de.peekandpoke.funktor.cluster.devtools.DevtoolsRoutes
-import de.peekandpoke.funktor.cluster.devtools.mountFunktorDevtools
-import de.peekandpoke.funktor.cluster.locks.LocksRoutes
-import de.peekandpoke.funktor.cluster.locks.mountFunktorLocks
-import de.peekandpoke.funktor.cluster.storage.StorageRoutes
-import de.peekandpoke.funktor.cluster.storage.mountFunktorStorage
-import de.peekandpoke.funktor.cluster.vault.VaultRoutes
-import de.peekandpoke.funktor.cluster.vault.mountFunktorVault
-import de.peekandpoke.funktor.cluster.workers.WorkersRoutes
-import de.peekandpoke.funktor.cluster.workers.mountFunktorWorkers
-import de.peekandpoke.kraft.routing.RouterBuilder
-import de.peekandpoke.kraft.routing.Static
+import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsRoutes
+import io.peekandpoke.funktor.cluster.backgroundjobs.mountFunktorBackgroundJobs
+import io.peekandpoke.funktor.cluster.depot.DepotRoutes
+import io.peekandpoke.funktor.cluster.depot.mountFunktorDepot
+import io.peekandpoke.funktor.cluster.devtools.DevtoolsRoutes
+import io.peekandpoke.funktor.cluster.devtools.mountFunktorDevtools
+import io.peekandpoke.funktor.cluster.locks.LocksRoutes
+import io.peekandpoke.funktor.cluster.locks.mountFunktorLocks
+import io.peekandpoke.funktor.cluster.storage.StorageRoutes
+import io.peekandpoke.funktor.cluster.storage.mountFunktorStorage
+import io.peekandpoke.funktor.cluster.vault.VaultRoutes
+import io.peekandpoke.funktor.cluster.vault.mountFunktorVault
+import io.peekandpoke.funktor.cluster.workers.WorkersRoutes
+import io.peekandpoke.funktor.cluster.workers.mountFunktorWorkers
+import io.peekandpoke.kraft.routing.RouterBuilder
+import io.peekandpoke.kraft.routing.Static
 
 class FunktorClusterRoutes(val mount: String = "/_/funktor/cluster") {
 

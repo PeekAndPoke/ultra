@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.logging
+package io.peekandpoke.funktor.logging
 
-import de.peekandpoke.funktor.logging.api.LogEntryModel
-import de.peekandpoke.funktor.logging.api.LogsRequest
-import de.peekandpoke.ultra.model.Paged
+import io.peekandpoke.funktor.logging.api.LogEntryModel
+import io.peekandpoke.funktor.logging.api.LogsRequest
+import io.peekandpoke.ultra.model.Paged
 
 interface LogsStorage {
 

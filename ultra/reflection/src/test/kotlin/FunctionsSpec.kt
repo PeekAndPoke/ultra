@@ -1,10 +1,10 @@
-package de.peekandpoke.ultra.reflection
+package io.peekandpoke.ultra.reflection
 
-import de.peekandpoke.ultra.common.tuple
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
+import io.peekandpoke.ultra.common.tuple
 import kotlin.reflect.KParameter.Kind
 
 class FunctionsSpec : StringSpec() {

@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.routing
+package io.peekandpoke.kraft.routing
 
 /**
  * A route that matches a regex, f.e. used as a fallback route.

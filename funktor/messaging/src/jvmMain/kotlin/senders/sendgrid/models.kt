@@ -1,6 +1,6 @@
 @file:Suppress("PropertyName", "EnumEntryName")
 
-package de.peekandpoke.funktor.messaging.senders.sendgrid
+package io.peekandpoke.funktor.messaging.senders.sendgrid
 
 //@Serializable
 //data class SendgridEmail(val email: String, val name: String? = null)

@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.html
+package io.peekandpoke.ultra.html
 
-import de.peekandpoke.ultra.html.ImageSizes.Companion.breakpoints
-import de.peekandpoke.ultra.html.ImageSizes.Companion.mobileBreakpoint
+import io.peekandpoke.ultra.html.ImageSizes.Companion.breakpoints
+import io.peekandpoke.ultra.html.ImageSizes.Companion.mobileBreakpoint
 
 /**
  * Helper function for building [ImageSizes]

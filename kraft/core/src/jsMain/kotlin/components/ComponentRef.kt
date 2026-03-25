@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.components
+package io.peekandpoke.kraft.components
 
-import de.peekandpoke.kraft.utils.launch
+import io.peekandpoke.kraft.utils.launch
 import kotlinx.coroutines.delay
 
 interface ComponentRef<C : Component<*>> {

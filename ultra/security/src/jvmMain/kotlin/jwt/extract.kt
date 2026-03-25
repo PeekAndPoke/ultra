@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.security.jwt
+package io.peekandpoke.ultra.security.jwt
 
 import com.auth0.jwt.interfaces.Claim
 import com.auth0.jwt.interfaces.Payload
-import de.peekandpoke.ultra.security.user.UserPermissions
+import io.peekandpoke.ultra.security.user.UserPermissions
 
 fun Claim.asStringSet(): Set<String> = asList(String::class.java)?.toSet() ?: emptySet()
 

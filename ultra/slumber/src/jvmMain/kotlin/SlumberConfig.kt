@@ -1,10 +1,10 @@
-package de.peekandpoke.ultra.slumber
+package io.peekandpoke.ultra.slumber
 
-import de.peekandpoke.ultra.common.TypedAttributes
-import de.peekandpoke.ultra.slumber.builtin.BuiltInModule
-import de.peekandpoke.ultra.slumber.builtin.datetime.javatime.JavaTimeModule
-import de.peekandpoke.ultra.slumber.builtin.datetime.kotlinx.KotlinxTimeModule
-import de.peekandpoke.ultra.slumber.builtin.datetime.mp.MpDateTimeModule
+import io.peekandpoke.ultra.common.TypedAttributes
+import io.peekandpoke.ultra.slumber.builtin.BuiltInModule
+import io.peekandpoke.ultra.slumber.builtin.datetime.javatime.JavaTimeModule
+import io.peekandpoke.ultra.slumber.builtin.datetime.kotlinx.KotlinxTimeModule
+import io.peekandpoke.ultra.slumber.builtin.datetime.mp.MpDateTimeModule
 import kotlin.reflect.KType
 
 /**

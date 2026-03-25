@@ -1,7 +1,7 @@
-package de.peekandpoke.kraft.routing
+package io.peekandpoke.kraft.routing
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.utils.SimpleAsyncQueue
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.utils.SimpleAsyncQueue
 import kotlinx.browser.window
 import org.w3c.dom.PopStateEvent
 import org.w3c.dom.events.Event

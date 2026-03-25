@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.core.broker
+package io.peekandpoke.funktor.core.broker
 
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.vault.Stored
 
 /**
  * Creates crud routes for the given type [T] and the given [uri]

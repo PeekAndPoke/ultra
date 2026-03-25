@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.kontainer.examples.defining_services
+package io.peekandpoke.ultra.kontainer.examples.defining_services
 
-import de.peekandpoke.ultra.kontainer.ServiceNotFound
-import de.peekandpoke.ultra.kontainer.kontainer
-import de.peekandpoke.ultra.tooling.SimpleExample
+import io.peekandpoke.ultra.kontainer.ServiceNotFound
+import io.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.ultra.tooling.SimpleExample
 
 class HidingTheConcreteImplementationOfAServiceExample : SimpleExample() {
 

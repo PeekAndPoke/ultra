@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.security.password
+package io.peekandpoke.ultra.security.password
 
-import de.peekandpoke.ultra.common.fromBase64
-import de.peekandpoke.ultra.common.toBase64
+import io.peekandpoke.ultra.common.fromBase64
+import io.peekandpoke.ultra.common.toBase64
 import java.security.MessageDigest
 import java.security.spec.KeySpec
 import javax.crypto.SecretKeyFactory

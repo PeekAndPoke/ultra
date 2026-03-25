@@ -1,9 +1,9 @@
-package de.peekandpoke.funktor.core.lifecycle
+package io.peekandpoke.funktor.core.lifecycle
 
-import de.peekandpoke.ultra.kontainer.Kontainer
 import io.ktor.events.EventDefinition
 import io.ktor.events.EventHandler
 import io.ktor.server.application.*
+import io.peekandpoke.ultra.kontainer.Kontainer
 import kotlinx.coroutines.runBlocking
 
 class AppLifeCycleBuilder internal constructor(private val app: Application) {

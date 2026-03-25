@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.addons.styling
+package io.peekandpoke.kraft.addons.styling
 
 open class CssRule(val name: String) {
     /** The formatted CSS selector, e.g., ".my-class_1a2b3c" */

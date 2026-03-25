@@ -1,14 +1,14 @@
-package de.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.modals
+package io.peekandpoke.kraft.examples.fomanticui.pages.howto.blocks.modals
 
-import de.peekandpoke.kraft.components.NoProps
-import de.peekandpoke.kraft.components.PureComponent
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.modals.ModalsManager.Companion.modals
-import de.peekandpoke.kraft.routing.PageTitle
-import de.peekandpoke.kraft.semanticui.modals.OkCancelModal.Companion.mini
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.html.onClick
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.components.NoProps
+import io.peekandpoke.kraft.components.PureComponent
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.modals.ModalsManager.Companion.modals
+import io.peekandpoke.kraft.routing.PageTitle
+import io.peekandpoke.kraft.semanticui.modals.OkCancelModal.Companion.mini
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.onClick
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.browser.window
 import kotlinx.html.Tag
 

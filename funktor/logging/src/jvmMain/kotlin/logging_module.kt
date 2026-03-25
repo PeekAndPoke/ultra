@@ -1,18 +1,18 @@
-package de.peekandpoke.funktor.logging
+package io.peekandpoke.funktor.logging
 
-import de.peekandpoke.funktor.core.kontainer
-import de.peekandpoke.funktor.logging.api.LoggingApiFeature
-import de.peekandpoke.funktor.logging.karango.KarangoLogAppender
-import de.peekandpoke.funktor.logging.karango.KarangoLogRepository
-import de.peekandpoke.funktor.logging.karango.KarangoLogsStorage
-import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ultra.kontainer.KontainerAware
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
-import de.peekandpoke.ultra.kontainer.module
-import de.peekandpoke.ultra.log.LogLevel
-import de.peekandpoke.ultra.log.Slf4jAppender
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
+import io.peekandpoke.funktor.core.kontainer
+import io.peekandpoke.funktor.logging.api.LoggingApiFeature
+import io.peekandpoke.funktor.logging.karango.KarangoLogAppender
+import io.peekandpoke.funktor.logging.karango.KarangoLogRepository
+import io.peekandpoke.funktor.logging.karango.KarangoLogsStorage
+import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.ultra.kontainer.KontainerAware
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.module
+import io.peekandpoke.ultra.log.LogLevel
+import io.peekandpoke.ultra.log.Slf4jAppender
 import org.slf4j.LoggerFactory
 
 fun KontainerBuilder.funktorLogging(

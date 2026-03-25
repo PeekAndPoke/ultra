@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.common
+package io.peekandpoke.ultra.common
 
 @Suppress("Detekt.TooGenericExceptionCaught")
 inline fun <reified T : Enum<T>> safeEnumOf(input: String?, default: T): T {

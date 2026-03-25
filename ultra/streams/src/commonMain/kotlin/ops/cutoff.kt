@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.streams.ops
+package io.peekandpoke.ultra.streams.ops
 
-import de.peekandpoke.ultra.streams.Stream
-import de.peekandpoke.ultra.streams.StreamHandler
-import de.peekandpoke.ultra.streams.Unsubscribe
-import de.peekandpoke.ultra.streams.notifyHandlers
+import io.peekandpoke.ultra.streams.Stream
+import io.peekandpoke.ultra.streams.StreamHandler
+import io.peekandpoke.ultra.streams.Unsubscribe
+import io.peekandpoke.ultra.streams.notifyHandlers
 
 /**
  * Cuts off the stream when the [predicate] is true.

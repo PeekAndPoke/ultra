@@ -1,10 +1,10 @@
-package de.peekandpoke.kraft.components
+package io.peekandpoke.kraft.components
 
-import de.peekandpoke.kraft.KraftDsl
-import de.peekandpoke.kraft.components.state.FunctionalComponentStateProperty
-import de.peekandpoke.kraft.components.state.FunctionalComponentStreamProperty
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.streams.Stream
+import io.peekandpoke.kraft.KraftDsl
+import io.peekandpoke.kraft.components.state.FunctionalComponentStateProperty
+import io.peekandpoke.kraft.components.state.FunctionalComponentStreamProperty
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.streams.Stream
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.typeOf
 

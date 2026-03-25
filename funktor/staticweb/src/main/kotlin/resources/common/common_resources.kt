@@ -1,11 +1,11 @@
-package de.peekandpoke.funktor.staticweb.resources.common
+package io.peekandpoke.funktor.staticweb.resources.common
 
-import de.peekandpoke.funktor.core.model.CacheBuster
-import de.peekandpoke.funktor.staticweb.resources.WebResourceGroup
-import de.peekandpoke.funktor.staticweb.resources.WebResources
-import de.peekandpoke.funktor.staticweb.resources.prismjs.funktorPrismJs
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
-import de.peekandpoke.ultra.kontainer.module
+import io.peekandpoke.funktor.core.model.CacheBuster
+import io.peekandpoke.funktor.staticweb.resources.WebResourceGroup
+import io.peekandpoke.funktor.staticweb.resources.WebResources
+import io.peekandpoke.funktor.staticweb.resources.prismjs.funktorPrismJs
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.module
 
 internal fun KontainerBuilder.funktorCommonWebResources() = module(Funktor_CommonWebResources)
 

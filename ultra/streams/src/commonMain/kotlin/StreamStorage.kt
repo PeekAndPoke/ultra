@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.streams
+package io.peekandpoke.ultra.streams
 
 /**
  * Define a storage backend for a persistent stream

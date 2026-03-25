@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.core.lifecycle
+package io.peekandpoke.funktor.core.lifecycle
 
 import io.ktor.server.application.*
 

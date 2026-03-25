@@ -1,6 +1,6 @@
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.vault.lang.VaultDslMarker
+import io.peekandpoke.ultra.vault.lang.VaultDslMarker
 
 @VaultDslMarker
 val <T> AqlExpression<T>.ASC: AqlSorting

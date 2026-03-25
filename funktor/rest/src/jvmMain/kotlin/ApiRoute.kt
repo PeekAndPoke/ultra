@@ -1,19 +1,19 @@
-package de.peekandpoke.funktor.rest
+package io.peekandpoke.funktor.rest
 
-import de.peekandpoke.funktor.core.broker.TypedRoute
-import de.peekandpoke.funktor.core.broker.UriPattern
-import de.peekandpoke.funktor.rest.auth.AuthResult
-import de.peekandpoke.funktor.rest.auth.AuthRule
-import de.peekandpoke.funktor.rest.auth.AuthRuleBuilder
-import de.peekandpoke.ultra.common.TypedAttributes
-import de.peekandpoke.ultra.common.TypedKey
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.remote.ApiAccessLevel
-import de.peekandpoke.ultra.remote.ApiResponse
-import de.peekandpoke.ultra.security.user.UserPermissions
 import io.ktor.http.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
+import io.peekandpoke.funktor.core.broker.TypedRoute
+import io.peekandpoke.funktor.core.broker.UriPattern
+import io.peekandpoke.funktor.rest.auth.AuthResult
+import io.peekandpoke.funktor.rest.auth.AuthRule
+import io.peekandpoke.funktor.rest.auth.AuthRuleBuilder
+import io.peekandpoke.ultra.common.TypedAttributes
+import io.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.remote.ApiAccessLevel
+import io.peekandpoke.ultra.remote.ApiResponse
+import io.peekandpoke.ultra.security.user.UserPermissions
 
 /**
  * Base class for api routes representations

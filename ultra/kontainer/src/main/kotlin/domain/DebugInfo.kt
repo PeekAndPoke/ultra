@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.kontainer.domain
+package io.peekandpoke.ultra.kontainer.domain
 
-import de.peekandpoke.ultra.kontainer.InjectionType
-import de.peekandpoke.ultra.kontainer.ServiceProvider
+import io.peekandpoke.ultra.kontainer.InjectionType
+import io.peekandpoke.ultra.kontainer.ServiceProvider
 import java.time.Instant
 import kotlin.reflect.KClass
 import kotlin.reflect.KType

@@ -1,4 +1,4 @@
-package de.peekandpoke.monko
+package io.peekandpoke.monko
 
 data class MongoDbConfig(
     val connectionString: String,

@@ -1,28 +1,28 @@
-package de.peekandpoke.mutator.e2e
+package io.peekandpoke.mutator.e2e
 
-import de.peekandpoke.mutator.domain.Address
-import de.peekandpoke.mutator.domain.AddressBook
-import de.peekandpoke.mutator.domain.OneBoundedGenericParam
-import de.peekandpoke.mutator.domain.OneGenericParam
-import de.peekandpoke.mutator.domain.Outer
-import de.peekandpoke.mutator.domain.Person
-import de.peekandpoke.mutator.domain.SealedInterface
-import de.peekandpoke.mutator.domain.TwoGenericParams
-import de.peekandpoke.mutator.domain.address
-import de.peekandpoke.mutator.domain.addresses
-import de.peekandpoke.mutator.domain.city
-import de.peekandpoke.mutator.domain.firstName
-import de.peekandpoke.mutator.domain.inner
-import de.peekandpoke.mutator.domain.lastName
-import de.peekandpoke.mutator.domain.mutate
-import de.peekandpoke.mutator.domain.mutator
-import de.peekandpoke.mutator.domain.street
-import de.peekandpoke.mutator.domain.value
-import de.peekandpoke.mutator.domain.value1
-import de.peekandpoke.mutator.domain.value2
-import de.peekandpoke.mutator.domain.zip
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.mutator.domain.Address
+import io.peekandpoke.mutator.domain.AddressBook
+import io.peekandpoke.mutator.domain.OneBoundedGenericParam
+import io.peekandpoke.mutator.domain.OneGenericParam
+import io.peekandpoke.mutator.domain.Outer
+import io.peekandpoke.mutator.domain.Person
+import io.peekandpoke.mutator.domain.SealedInterface
+import io.peekandpoke.mutator.domain.TwoGenericParams
+import io.peekandpoke.mutator.domain.address
+import io.peekandpoke.mutator.domain.addresses
+import io.peekandpoke.mutator.domain.city
+import io.peekandpoke.mutator.domain.firstName
+import io.peekandpoke.mutator.domain.inner
+import io.peekandpoke.mutator.domain.lastName
+import io.peekandpoke.mutator.domain.mutate
+import io.peekandpoke.mutator.domain.mutator
+import io.peekandpoke.mutator.domain.street
+import io.peekandpoke.mutator.domain.value
+import io.peekandpoke.mutator.domain.value1
+import io.peekandpoke.mutator.domain.value2
+import io.peekandpoke.mutator.domain.zip
 
 class DomainSpec : StringSpec() {
 

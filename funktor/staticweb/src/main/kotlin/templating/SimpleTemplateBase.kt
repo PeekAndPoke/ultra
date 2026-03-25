@@ -1,14 +1,14 @@
-package de.peekandpoke.funktor.staticweb.templating
+package io.peekandpoke.funktor.staticweb.templating
 
-import de.peekandpoke.funktor.staticweb.flashsession.FlashSession
-import de.peekandpoke.funktor.staticweb.resources.WebResources
-import de.peekandpoke.funktor.staticweb.resources.common.fomanticUi
-import de.peekandpoke.funktor.staticweb.resources.common.jQuery
-import de.peekandpoke.funktor.staticweb.resources.common.lazySizes
-import de.peekandpoke.funktor.staticweb.resources.css
-import de.peekandpoke.funktor.staticweb.resources.js
-import de.peekandpoke.ultra.semanticui.SemanticTag
 import io.ktor.server.html.*
+import io.peekandpoke.funktor.staticweb.flashsession.FlashSession
+import io.peekandpoke.funktor.staticweb.resources.WebResources
+import io.peekandpoke.funktor.staticweb.resources.common.fomanticUi
+import io.peekandpoke.funktor.staticweb.resources.common.jQuery
+import io.peekandpoke.funktor.staticweb.resources.common.lazySizes
+import io.peekandpoke.funktor.staticweb.resources.css
+import io.peekandpoke.funktor.staticweb.resources.js
+import io.peekandpoke.ultra.semanticui.SemanticTag
 import kotlinx.html.FlowContent
 import kotlinx.html.HEAD
 

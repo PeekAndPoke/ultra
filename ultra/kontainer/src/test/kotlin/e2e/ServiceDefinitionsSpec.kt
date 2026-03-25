@@ -1,13 +1,13 @@
-package de.peekandpoke.ultra.kontainer.e2e
+package io.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
-import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.kontainer
 
 class ServiceDefinitionsSpec : StringSpec() {
 

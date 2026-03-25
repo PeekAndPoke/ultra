@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.datetime
+package io.peekandpoke.ultra.datetime
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

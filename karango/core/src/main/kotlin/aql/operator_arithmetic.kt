@@ -1,6 +1,6 @@
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.TypeRef
 
 enum class AqlArithmeticOperator(val op: String) {
     PLUS("+"),

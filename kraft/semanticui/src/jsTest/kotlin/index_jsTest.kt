@@ -1,1 +1,1 @@
-package de.peekandpoke.kraft.semanticui
+package io.peekandpoke.kraft.semanticui

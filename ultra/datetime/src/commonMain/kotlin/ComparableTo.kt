@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.datetime
+package io.peekandpoke.ultra.datetime
 
 interface ComparableTo<T> : Comparable<T> {
 

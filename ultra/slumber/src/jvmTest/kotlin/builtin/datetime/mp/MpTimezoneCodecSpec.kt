@@ -1,12 +1,12 @@
-package de.peekandpoke.ultra.slumber.builtin.datetime.mp
+package io.peekandpoke.ultra.slumber.builtin.datetime.mp
 
-import de.peekandpoke.ultra.datetime.MpTimezone
-import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.awake
-import de.peekandpoke.ultra.slumber.slumber
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.datetime.MpTimezone
+import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.awake
+import io.peekandpoke.ultra.slumber.slumber
 import kotlinx.datetime.TimeZone
 
 class MpTimezoneCodecSpec : StringSpec({

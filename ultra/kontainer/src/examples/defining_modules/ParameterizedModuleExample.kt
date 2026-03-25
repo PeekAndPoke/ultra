@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.kontainer.examples.defining_modules
+package io.peekandpoke.ultra.kontainer.examples.defining_modules
 
-import de.peekandpoke.ultra.kontainer.kontainer
-import de.peekandpoke.ultra.kontainer.module
-import de.peekandpoke.ultra.tooling.SimpleExample
+import io.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.ultra.kontainer.module
+import io.peekandpoke.ultra.tooling.SimpleExample
 
 class ParameterizedModuleExample : SimpleExample() {
 

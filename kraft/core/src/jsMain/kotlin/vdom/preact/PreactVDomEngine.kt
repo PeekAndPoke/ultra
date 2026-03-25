@@ -1,13 +1,13 @@
-package de.peekandpoke.kraft.vdom.preact
+package io.peekandpoke.kraft.vdom.preact
 
-import de.peekandpoke.kraft.KraftApp
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.utils.jsObject
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.kraft.vdom.VDomEngine
-import de.peekandpoke.kraft.vdom.VDomTagConsumer
+import io.peekandpoke.kraft.KraftApp
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.utils.jsObject
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.kraft.vdom.VDomEngine
+import io.peekandpoke.kraft.vdom.VDomTagConsumer
 import org.w3c.dom.HTMLElement
-import de.peekandpoke.kraft.components.Component as KraftComponent
+import io.peekandpoke.kraft.components.Component as KraftComponent
 import preact.Component as PreactComponent
 
 class PreactVDomEngine(

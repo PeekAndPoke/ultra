@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.slumber
+package io.peekandpoke.ultra.slumber
 
-import de.peekandpoke.ultra.reflection.kType
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
+import io.peekandpoke.ultra.reflection.kType
 import kotlin.reflect.typeOf
 
 class CodecSpec : StringSpec({

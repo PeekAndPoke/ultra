@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.model
+package io.peekandpoke.ultra.model
 
-import de.peekandpoke.ultra.common.ComparableTo
-import de.peekandpoke.ultra.model.Operators.Comparison
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.common.ComparableTo
+import io.peekandpoke.ultra.model.Operators.Comparison
 
 class OperatorsComparisonSpec : StringSpec({
 

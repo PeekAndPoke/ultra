@@ -82,7 +82,7 @@ dependencies {
 Annotate data classes with `@Vault`. KSP generates type-safe property accessors at compile time.
 
 ```kotlin
-import de.peekandpoke.ultra.vault.Vault
+import io.peekandpoke.ultra.vault.Vault
 
 @Vault
 data class Person(
@@ -95,9 +95,9 @@ data class Person(
 ## 3. Create a repository
 
 ```kotlin
-import de.peekandpoke.karango.vault.EntityRepository
-import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.karango.vault.EntityRepository
+import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.ultra.reflection.kType
 
 class PersonsRepo(driver: KarangoDriver) : EntityRepository<Person>(
     name = "persons",          // ArangoDB collection name
@@ -109,7 +109,7 @@ class PersonsRepo(driver: KarangoDriver) : EntityRepository<Person>(
 ## 4. Configure the connection
 
 ```kotlin
-import de.peekandpoke.karango.config.ArangoDbConfig
+import io.peekandpoke.karango.config.ArangoDbConfig
 
 val config = ArangoDbConfig(
     host = "localhost",
@@ -123,7 +123,7 @@ val config = ArangoDbConfig(
 With Kontainer (dependency injection):
 
 ```kotlin
-import de.peekandpoke.karango.karango
+import io.peekandpoke.karango.karango
 
 kontainer {
     karango(config)
@@ -900,9 +900,9 @@ Karango plugs into Kontainer for automatic repository discovery, dependency inje
 One line to register all Karango infrastructure:
 
 ```kotlin
-import de.peekandpoke.karango.karango
-import de.peekandpoke.karango.config.ArangoDbConfig
-import de.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.karango.karango
+import io.peekandpoke.karango.config.ArangoDbConfig
+import io.peekandpoke.ultra.kontainer.kontainer
 
 val blueprint = kontainer {
     // Register Karango module — sets up driver, codec, and DB connection

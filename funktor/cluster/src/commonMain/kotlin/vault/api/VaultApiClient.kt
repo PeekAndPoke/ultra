@@ -1,11 +1,11 @@
-package de.peekandpoke.funktor.cluster.vault.api
+package io.peekandpoke.funktor.cluster.vault.api
 
-import de.peekandpoke.ultra.remote.ApiClient
-import de.peekandpoke.ultra.remote.ApiResponse
-import de.peekandpoke.ultra.remote.TypedApiEndpoint
-import de.peekandpoke.ultra.remote.apiList
-import de.peekandpoke.ultra.remote.call
-import de.peekandpoke.ultra.vault.VaultModels
+import io.peekandpoke.ultra.remote.ApiClient
+import io.peekandpoke.ultra.remote.ApiResponse
+import io.peekandpoke.ultra.remote.TypedApiEndpoint
+import io.peekandpoke.ultra.remote.apiList
+import io.peekandpoke.ultra.remote.call
+import io.peekandpoke.ultra.vault.VaultModels
 import kotlinx.coroutines.flow.Flow
 
 class VaultApiClient(config: Config) : ApiClient(config) {

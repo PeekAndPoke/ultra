@@ -5,22 +5,22 @@
     "Detekt:LongMethod",
 )
 
-package de.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
+package io.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 
-import de.peekandpoke.kraft.components.NoProps
-import de.peekandpoke.kraft.components.PureComponent
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.examples.fomanticui.helpers.invoke
-import de.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
-import de.peekandpoke.kraft.forms.formController
-import de.peekandpoke.kraft.semanticui.forms.UiDateField
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.datetime.MpLocalDate
-import de.peekandpoke.ultra.datetime.MpLocalDateTime
-import de.peekandpoke.ultra.datetime.MpTimezone
-import de.peekandpoke.ultra.datetime.MpZonedDateTime
-import de.peekandpoke.ultra.html.onClick
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.components.NoProps
+import io.peekandpoke.kraft.components.PureComponent
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.fomanticui.helpers.invoke
+import io.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
+import io.peekandpoke.kraft.forms.formController
+import io.peekandpoke.kraft.semanticui.forms.UiDateField
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.datetime.MpLocalDate
+import io.peekandpoke.ultra.datetime.MpLocalDateTime
+import io.peekandpoke.ultra.datetime.MpTimezone
+import io.peekandpoke.ultra.datetime.MpZonedDateTime
+import io.peekandpoke.ultra.html.onClick
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.Tag
 
 @Suppress("FunctionName")

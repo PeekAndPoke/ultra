@@ -1,9 +1,9 @@
-package de.peekandpoke.funktor.logging.karango
+package io.peekandpoke.funktor.logging.karango
 
-import de.peekandpoke.funktor.logging.api.LogEntryModel
-import de.peekandpoke.ultra.log.LogLevel
-import de.peekandpoke.ultra.vault.Storable
-import de.peekandpoke.ultra.vault.Vault
+import io.peekandpoke.funktor.logging.api.LogEntryModel
+import io.peekandpoke.ultra.log.LogLevel
+import io.peekandpoke.ultra.vault.Storable
+import io.peekandpoke.ultra.vault.Vault
 
 @Vault
 data class KarangoLogEntry(

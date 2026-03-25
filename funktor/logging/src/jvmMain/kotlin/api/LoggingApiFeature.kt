@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.logging.api
+package io.peekandpoke.funktor.logging.api
 
-import de.peekandpoke.funktor.core.broker.OutgoingConverter
-import de.peekandpoke.funktor.rest.ApiFeature
+import io.peekandpoke.funktor.core.broker.OutgoingConverter
+import io.peekandpoke.funktor.rest.ApiFeature
 
 /**
  * Api feature for UpNext

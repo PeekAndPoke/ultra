@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.datetime
+package io.peekandpoke.ultra.datetime
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec

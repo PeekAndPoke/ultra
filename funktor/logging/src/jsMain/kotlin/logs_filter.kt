@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.logging
+package io.peekandpoke.funktor.logging
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.routing.urlParams
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.routing.urlParams
 import kotlin.properties.ReadWriteProperty
 
 fun <C> Component<C>.logsFilter(

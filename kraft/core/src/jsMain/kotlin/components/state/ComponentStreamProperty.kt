@@ -1,7 +1,7 @@
-package de.peekandpoke.kraft.components.state
+package io.peekandpoke.kraft.components.state
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.ultra.streams.StreamSource
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.ultra.streams.StreamSource
 import kotlin.properties.ObservableProperty
 import kotlin.reflect.KProperty
 

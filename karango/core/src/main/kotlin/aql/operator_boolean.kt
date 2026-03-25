@@ -1,11 +1,11 @@
 @file:Suppress("FunctionName")
 
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.vault.lang.Aliased
-import de.peekandpoke.ultra.vault.lang.VaultFunctionMarker
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.vault.lang.Aliased
+import io.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
 enum class AqlBooleanOperator(val op: String) {
     EQ("=="),

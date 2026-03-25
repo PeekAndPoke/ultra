@@ -1,10 +1,10 @@
-package de.peekandpoke.funktor.cluster.locks
+package io.peekandpoke.funktor.cluster.locks
 
-import de.peekandpoke.funktor.cluster.locks.domain.ServerBeacon
-import de.peekandpoke.funktor.core.model.AppInfo
-import de.peekandpoke.ultra.datetime.MpInstant
-import de.peekandpoke.ultra.vault.New
-import de.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.funktor.cluster.locks.domain.ServerBeacon
+import io.peekandpoke.funktor.core.model.AppInfo
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.vault.New
+import io.peekandpoke.ultra.vault.Stored
 
 interface ServerBeaconRepository {
 

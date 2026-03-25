@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.remote
+package io.peekandpoke.ultra.remote
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec

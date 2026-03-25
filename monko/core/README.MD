@@ -3,9 +3,9 @@
 Running ArangoDB in docker container
 
 ```bash
-sudo docker run --name "de.peekandpoke.demos.karango" -e ARANGO_ROOT_PASSWORD= -p 8529:8529 -d arangodb 
+sudo docker run --name "io.peekandpoke.demos.karango" -e ARANGO_ROOT_PASSWORD= -p 8529:8529 -d arangodb 
 sleep 30
-sudo docker exec -t de.peekandpoke.demos.karango arangosh --server.username=root --server.password= --javascript.execute-string="db._createDatabase('kotlindev')"
+sudo docker exec -t io.peekandpoke.demos.karango arangosh --server.username=root --server.password= --javascript.execute-string="db._createDatabase('kotlindev')"
 
 ```
 

@@ -1,13 +1,13 @@
-package de.peekandpoke.funktor.insights.gui
+package io.peekandpoke.funktor.insights.gui
 
-import de.peekandpoke.funktor.core.broker.TypedRoute
-import de.peekandpoke.funktor.core.broker.TypedRouteRenderer
-import de.peekandpoke.funktor.core.config.AppConfig
-import de.peekandpoke.funktor.core.model.AppInfo
-import de.peekandpoke.ultra.semanticui.icon
-import de.peekandpoke.ultra.semanticui.ui
 import io.ktor.http.*
 import io.ktor.server.html.*
+import io.peekandpoke.funktor.core.broker.TypedRoute
+import io.peekandpoke.funktor.core.broker.TypedRouteRenderer
+import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.funktor.core.model.AppInfo
+import io.peekandpoke.ultra.semanticui.icon
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 import kotlinx.html.TagConsumer
 import kotlinx.html.a

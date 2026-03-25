@@ -1,11 +1,11 @@
-package de.peekandpoke.kraft.popups
+package io.peekandpoke.kraft.popups
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.utils.Vector2D
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.html.css
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.utils.Vector2D
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.css
 import kotlinx.css.Display
 import kotlinx.css.Padding
 import kotlinx.css.display

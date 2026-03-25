@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.slumber.builtin.datetime.javatime
+package io.peekandpoke.ultra.slumber.builtin.datetime.javatime
 
-import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.Slumberer
+import io.peekandpoke.ultra.slumber.Awaker
+import io.peekandpoke.ultra.slumber.Slumberer
 import java.time.ZoneId
 
 object ZoneIdAwaker : Awaker {

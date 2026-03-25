@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.cluster.locks.domain
+package io.peekandpoke.funktor.cluster.locks.domain
 
-import de.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.MpInstant
 
 /**
  * Global lock entry that can be stored.

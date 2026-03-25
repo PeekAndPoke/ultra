@@ -1,10 +1,10 @@
-package de.peekandpoke.ultra.model
+package io.peekandpoke.ultra.model
 
-import de.peekandpoke.ultra.datetime.MpInstant
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.datetime.MpInstant
 
 class AuditLogSpec : StringSpec({
 

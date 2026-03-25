@@ -1,12 +1,12 @@
 @file:Suppress("FunctionName", "NOTHING_TO_INLINE")
 
-package de.peekandpoke.kraft.addons.prismjs
+package io.peekandpoke.kraft.addons.prismjs
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.utils.launch
-import de.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.utils.launch
+import io.peekandpoke.kraft.vdom.VDom
 import kotlinx.browser.document
 import kotlinx.dom.clear
 import kotlinx.html.Tag

@@ -1,13 +1,13 @@
-package de.peekandpoke.karango.vault
+package io.peekandpoke.karango.vault
 
-import de.peekandpoke.karango.aql.AqlExpression
-import de.peekandpoke.karango.aql.AqlIterableExpr
-import de.peekandpoke.karango.aql.AqlNameExpr
-import de.peekandpoke.karango.aql.AqlPathExpr
-import de.peekandpoke.karango.aql.AqlPrinter
-import de.peekandpoke.karango.aql.property
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.vault.Repository
+import io.peekandpoke.karango.aql.AqlExpression
+import io.peekandpoke.karango.aql.AqlIterableExpr
+import io.peekandpoke.karango.aql.AqlNameExpr
+import io.peekandpoke.karango.aql.AqlPathExpr
+import io.peekandpoke.karango.aql.AqlPrinter
+import io.peekandpoke.karango.aql.property
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.vault.Repository
 
 /** Base interface for all karango repositories */
 interface KarangoRepository<T : Any> : Repository<T>, AqlExpression<List<T>> {

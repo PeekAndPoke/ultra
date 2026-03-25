@@ -1,14 +1,14 @@
-package de.peekandpoke.ultra.slumber.builtin.collections
+package io.peekandpoke.ultra.slumber.builtin.collections
 
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.slumber.AwakerException
-import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.awake
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.slumber.AwakerException
+import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.awake
 
 class CollectionAwakerSpec : StringSpec({
 

@@ -1,15 +1,15 @@
-package de.peekandpoke.ultra.slumber.builtin.datetime.mp
+package io.peekandpoke.ultra.slumber.builtin.datetime.mp
 
-import de.peekandpoke.ultra.common.TypedAttributes
-import de.peekandpoke.ultra.datetime.MpInstant
-import de.peekandpoke.ultra.datetime.MpLocalDate
-import de.peekandpoke.ultra.datetime.MpLocalDateTime
-import de.peekandpoke.ultra.datetime.MpLocalTime
-import de.peekandpoke.ultra.datetime.MpTimezone
-import de.peekandpoke.ultra.datetime.MpZonedDateTime
-import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.SlumberModule
-import de.peekandpoke.ultra.slumber.Slumberer
+import io.peekandpoke.ultra.common.TypedAttributes
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.MpLocalDate
+import io.peekandpoke.ultra.datetime.MpLocalDateTime
+import io.peekandpoke.ultra.datetime.MpLocalTime
+import io.peekandpoke.ultra.datetime.MpTimezone
+import io.peekandpoke.ultra.datetime.MpZonedDateTime
+import io.peekandpoke.ultra.slumber.Awaker
+import io.peekandpoke.ultra.slumber.SlumberModule
+import io.peekandpoke.ultra.slumber.Slumberer
 import kotlin.reflect.KType
 
 object MpDateTimeModule : SlumberModule {

@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.vault.hooks
+package io.peekandpoke.ultra.vault.hooks
 
 interface TimestampedMillis {
     val createdMs: Long

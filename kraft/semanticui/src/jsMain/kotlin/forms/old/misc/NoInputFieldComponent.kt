@@ -1,12 +1,12 @@
-package de.peekandpoke.kraft.semanticui.forms.old.misc
+package io.peekandpoke.kraft.semanticui.forms.old.misc
 
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.forms.FormFieldComponent
-import de.peekandpoke.kraft.forms.validation.Rule
-import de.peekandpoke.kraft.semanticui.forms.renderErrors
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.html.key
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.forms.FormFieldComponent
+import io.peekandpoke.kraft.forms.validation.Rule
+import io.peekandpoke.kraft.semanticui.forms.renderErrors
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.key
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.div
 
 open class NoInputFieldComponent<T>(ctx: Ctx<Props<T>>) :

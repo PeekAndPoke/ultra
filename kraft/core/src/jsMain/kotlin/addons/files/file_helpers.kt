@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.addons.files
+package io.peekandpoke.kraft.addons.files
 
 import kotlinx.coroutines.asDeferred
 import org.w3c.files.FileList

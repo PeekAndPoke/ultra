@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.cache
+package io.peekandpoke.ultra.cache
 
-import de.peekandpoke.ultra.common.WeakSet
-import de.peekandpoke.ultra.cache.ObjectSizeEstimatorImpl.EstimatorConfig
+import io.peekandpoke.ultra.cache.ObjectSizeEstimatorImpl.EstimatorConfig
+import io.peekandpoke.ultra.common.WeakSet
 
 interface ObjectSizeEstimator {
     companion object {

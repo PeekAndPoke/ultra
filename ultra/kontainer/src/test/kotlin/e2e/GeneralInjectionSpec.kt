@@ -1,11 +1,5 @@
-package de.peekandpoke.ultra.kontainer.e2e
+package io.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.Kontainer
-import de.peekandpoke.ultra.kontainer.KontainerBlueprint
-import de.peekandpoke.ultra.kontainer.KontainerInconsistent
-import de.peekandpoke.ultra.kontainer.ServiceNotFound
-import de.peekandpoke.ultra.kontainer.ServiceProvider
-import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
@@ -15,6 +9,12 @@ import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
+import io.peekandpoke.ultra.kontainer.Kontainer
+import io.peekandpoke.ultra.kontainer.KontainerBlueprint
+import io.peekandpoke.ultra.kontainer.KontainerInconsistent
+import io.peekandpoke.ultra.kontainer.ServiceNotFound
+import io.peekandpoke.ultra.kontainer.ServiceProvider
+import io.peekandpoke.ultra.kontainer.kontainer
 
 class GeneralInjectionSpec : StringSpec({
 

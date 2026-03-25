@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.log
+package io.peekandpoke.ultra.log
 
-import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.peekandpoke.ultra.kontainer.kontainer
 
 class LoggingKontainerModuleSpec : StringSpec() {
 

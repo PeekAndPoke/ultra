@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.core.repair
+package io.peekandpoke.funktor.core.repair
 
-import de.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
 import io.ktor.server.application.*
+import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
 
 class RepairManOnAppStartingHook(
     private val repairMan: RepairMan,

@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.datetime
+package io.peekandpoke.ultra.datetime
 
-import de.peekandpoke.ultra.datetime.TestConstants.tsUtc_20220405_121314
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.datetime.TestConstants.tsUtc_20220405_121314
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.serialization.json.Json

@@ -1,19 +1,19 @@
-package de.peekandpoke.karango.e2e.crud
+package io.peekandpoke.karango.e2e.crud
 
-import de.peekandpoke.karango.aql.CONCAT
-import de.peekandpoke.karango.aql.FOR
-import de.peekandpoke.karango.aql.RETURN_NEW
-import de.peekandpoke.karango.aql.UPDATE
-import de.peekandpoke.karango.aql.aql
-import de.peekandpoke.karango.e2e.database
-import de.peekandpoke.karango.testdomain.details
-import de.peekandpoke.karango.testdomain.middleName
-import de.peekandpoke.karango.testdomain.name
-import de.peekandpoke.karango.testdomain.testPersons
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.karango.aql.CONCAT
+import io.peekandpoke.karango.aql.FOR
+import io.peekandpoke.karango.aql.RETURN_NEW
+import io.peekandpoke.karango.aql.UPDATE
+import io.peekandpoke.karango.aql.aql
+import io.peekandpoke.karango.e2e.database
+import io.peekandpoke.karango.testdomain.details
+import io.peekandpoke.karango.testdomain.middleName
+import io.peekandpoke.karango.testdomain.name
+import io.peekandpoke.karango.testdomain.testPersons
 
 @Suppress("ClassName")
 class `E2E-Crud-Update-Spec` : StringSpec({

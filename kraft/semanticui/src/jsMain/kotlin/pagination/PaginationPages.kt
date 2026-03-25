@@ -1,14 +1,14 @@
-package de.peekandpoke.kraft.semanticui.pagination
+package io.peekandpoke.kraft.semanticui.pagination
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.html.key
-import de.peekandpoke.ultra.html.onClick
-import de.peekandpoke.ultra.semanticui.icon
-import de.peekandpoke.ultra.semanticui.noui
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.key
+import io.peekandpoke.ultra.html.onClick
+import io.peekandpoke.ultra.semanticui.icon
+import io.peekandpoke.ultra.semanticui.noui
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.Tag
 import kotlin.math.max
 import kotlin.math.min

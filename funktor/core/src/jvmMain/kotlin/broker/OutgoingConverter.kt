@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.core.broker
+package io.peekandpoke.funktor.core.broker
 
-import de.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.TypeRef
 import kotlin.reflect.KType
 
 /**

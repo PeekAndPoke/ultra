@@ -1,10 +1,10 @@
-package de.peekandpoke.funktor.cluster.locks.api
+package io.peekandpoke.funktor.cluster.locks.api
 
-import de.peekandpoke.ultra.remote.ApiClient
-import de.peekandpoke.ultra.remote.ApiResponse
-import de.peekandpoke.ultra.remote.TypedApiEndpoint.Get
-import de.peekandpoke.ultra.remote.apiList
-import de.peekandpoke.ultra.remote.call
+import io.peekandpoke.ultra.remote.ApiClient
+import io.peekandpoke.ultra.remote.ApiResponse
+import io.peekandpoke.ultra.remote.TypedApiEndpoint.Get
+import io.peekandpoke.ultra.remote.apiList
+import io.peekandpoke.ultra.remote.call
 import kotlinx.coroutines.flow.Flow
 
 class GlobalLocksApiClient(config: Config) : ApiClient(config) {

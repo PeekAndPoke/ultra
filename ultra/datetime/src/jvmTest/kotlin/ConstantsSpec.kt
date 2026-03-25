@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.datetime
+package io.peekandpoke.ultra.datetime
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.FreeSpec

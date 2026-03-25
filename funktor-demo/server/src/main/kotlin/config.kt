@@ -1,14 +1,14 @@
 package io.peekandpoke.funktor.demo.server
 
-import de.peekandpoke.funktor.core.config.AppConfig
-import de.peekandpoke.funktor.core.config.funktor.FunktorConfig
-import de.peekandpoke.funktor.core.config.ktor.KtorConfig
-import de.peekandpoke.funktor.core.model.InsightsConfig
-import de.peekandpoke.funktor.messaging.MailingDevConfig
-import de.peekandpoke.funktor.messaging.senders.aws.AwsSesConfig
-import de.peekandpoke.funktor.messaging.senders.sendgrid.SendgridConfig
-import de.peekandpoke.karango.config.ArangoDbConfig
-import de.peekandpoke.monko.MongoDbConfig
+import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.funktor.core.config.funktor.FunktorConfig
+import io.peekandpoke.funktor.core.config.ktor.KtorConfig
+import io.peekandpoke.funktor.core.model.InsightsConfig
+import io.peekandpoke.funktor.messaging.MailingDevConfig
+import io.peekandpoke.funktor.messaging.senders.aws.AwsSesConfig
+import io.peekandpoke.funktor.messaging.senders.sendgrid.SendgridConfig
+import io.peekandpoke.karango.config.ArangoDbConfig
+import io.peekandpoke.monko.MongoDbConfig
 
 data class FunktorDemoConfig(
     override val ktor: KtorConfig,

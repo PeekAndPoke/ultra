@@ -1,9 +1,9 @@
-package de.peekandpoke.funktor.cluster.backgroundjobs.workers
+package io.peekandpoke.funktor.cluster.backgroundjobs.workers
 
-import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
-import de.peekandpoke.funktor.cluster.workers.StateProvider
-import de.peekandpoke.funktor.cluster.workers.Worker
-import de.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
+import io.peekandpoke.funktor.cluster.workers.StateProvider
+import io.peekandpoke.funktor.cluster.workers.Worker
+import io.peekandpoke.ultra.datetime.MpInstant
 
 class BackgroundJobsWorker(
     private val backgroundJobs: BackgroundJobs,

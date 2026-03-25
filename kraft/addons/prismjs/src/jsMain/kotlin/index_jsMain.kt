@@ -1,1 +1,1 @@
-package de.peekandpoke.kraft.addons.prismjs
+package io.peekandpoke.kraft.addons.prismjs

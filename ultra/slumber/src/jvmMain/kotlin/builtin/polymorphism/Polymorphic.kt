@@ -1,11 +1,11 @@
-package de.peekandpoke.ultra.slumber.builtin.polymorphism
+package io.peekandpoke.ultra.slumber.builtin.polymorphism
 
-import de.peekandpoke.ultra.common.TypedAttributes
-import de.peekandpoke.ultra.slumber.AdditionalSerialName
-import de.peekandpoke.ultra.slumber.Polymorphic
-import de.peekandpoke.ultra.slumber.builtin.objects.DataClassSlumberer
-import de.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicChildUtil.getAdditionalIdentifiers
-import de.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicChildUtil.getIdentifier
+import io.peekandpoke.ultra.common.TypedAttributes
+import io.peekandpoke.ultra.slumber.AdditionalSerialName
+import io.peekandpoke.ultra.slumber.Polymorphic
+import io.peekandpoke.ultra.slumber.builtin.objects.DataClassSlumberer
+import io.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicChildUtil.getAdditionalIdentifiers
+import io.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicChildUtil.getIdentifier
 import kotlinx.serialization.SerialName
 import kotlin.reflect.KClass
 import kotlin.reflect.KType

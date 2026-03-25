@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.core
+package io.peekandpoke.funktor.core
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -7,8 +7,8 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.slumber
+import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.slumber
 
 object JsonPrinter {
 

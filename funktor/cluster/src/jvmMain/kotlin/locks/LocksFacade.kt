@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.cluster.locks
+package io.peekandpoke.funktor.cluster.locks
 
 class LocksFacade(
     global: Lazy<GlobalLocksProvider>,

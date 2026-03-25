@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.cluster.workers
+package io.peekandpoke.funktor.cluster.workers
 
-import de.peekandpoke.funktor.core.lifecycle.AppLifeCycleBuilder
-import de.peekandpoke.ultra.kontainer.Kontainer
+import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleBuilder
+import io.peekandpoke.ultra.kontainer.Kontainer
 
 /**
  * Call this function to launch the background workers

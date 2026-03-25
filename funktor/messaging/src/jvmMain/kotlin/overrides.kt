@@ -1,9 +1,9 @@
-package de.peekandpoke.funktor.messaging
+package io.peekandpoke.funktor.messaging
 
-import de.peekandpoke.funktor.core.config.AppConfig
-import de.peekandpoke.funktor.messaging.api.EmailBody
-import de.peekandpoke.funktor.messaging.api.EmailDestination
-import de.peekandpoke.ultra.common.isEmail
+import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.funktor.messaging.api.EmailBody
+import io.peekandpoke.funktor.messaging.api.EmailDestination
+import io.peekandpoke.ultra.common.isEmail
 
 class MailingOverrides(
     val overrides: List<MailingOverride>,

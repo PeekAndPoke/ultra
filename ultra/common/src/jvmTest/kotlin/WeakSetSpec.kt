@@ -1,5 +1,5 @@
 // language: kotlin
-package de.peekandpoke.ultra.common
+package io.peekandpoke.ultra.common
 
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec

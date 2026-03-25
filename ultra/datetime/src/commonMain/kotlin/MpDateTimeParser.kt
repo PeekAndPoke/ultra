@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.datetime
+package io.peekandpoke.ultra.datetime
 
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone

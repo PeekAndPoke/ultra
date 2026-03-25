@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.rest.docs
+package io.peekandpoke.funktor.rest.docs
 
 annotation class Docs {
     annotation class Description(

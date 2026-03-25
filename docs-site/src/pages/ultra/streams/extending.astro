@@ -16,8 +16,8 @@ import { Code } from 'astro:components';
 
 <p>Build operators by extending <code>StreamMapper</code> (transform) or <code>StreamWrapper</code> (pass-through):</p>
 
-<Code code={`import de.peekandpoke.ultra.streams.Stream
-import de.peekandpoke.ultra.streams.StreamMapper
+    <Code code={`import io.peekandpoke.ultra.streams.Stream
+import io.peekandpoke.ultra.streams.StreamMapper
 
 fun Stream<Int>.clamp(min: Int, max: Int): Stream<Int> =
     StreamMapper(
@@ -37,7 +37,7 @@ println(clamped())  // 100`} lang="kotlin" theme="vitesse-dark" />
 
 <p>Convert any stream to a Kotlin <code>Flow</code>:</p>
 
-<Code code={`import de.peekandpoke.ultra.streams.ops.asFlow
+    <Code code={`import io.peekandpoke.ultra.streams.ops.asFlow
 
 val source = StreamSource(1)
 

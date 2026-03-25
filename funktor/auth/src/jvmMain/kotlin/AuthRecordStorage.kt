@@ -1,11 +1,11 @@
-package de.peekandpoke.funktor.auth
+package io.peekandpoke.funktor.auth
 
-import de.peekandpoke.funktor.auth.domain.AuthRecord
-import de.peekandpoke.ultra.datetime.Kronos
-import de.peekandpoke.ultra.slumber.Polymorphic
-import de.peekandpoke.ultra.vault.RemoveResult
-import de.peekandpoke.ultra.vault.Repository
-import de.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.slumber.Polymorphic
+import io.peekandpoke.ultra.vault.RemoveResult
+import io.peekandpoke.ultra.vault.Repository
+import io.peekandpoke.ultra.vault.Stored
 
 class AuthRecordStorage(
     adapter: Lazy<Adapter>,

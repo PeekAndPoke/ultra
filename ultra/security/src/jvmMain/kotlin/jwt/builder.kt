@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.security.jwt
+package io.peekandpoke.ultra.security.jwt
 
 import com.auth0.jwt.JWTCreator
-import de.peekandpoke.ultra.common.plusMinutes
-import de.peekandpoke.ultra.security.user.UserPermissions
+import io.peekandpoke.ultra.common.plusMinutes
+import io.peekandpoke.ultra.security.user.UserPermissions
 import java.util.*
 
 /**

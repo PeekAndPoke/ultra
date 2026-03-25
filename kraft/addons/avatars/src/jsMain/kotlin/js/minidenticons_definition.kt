@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.addons.avatars.js
+package io.peekandpoke.kraft.addons.avatars.js
 
 @JsModule("minidenticons")
 @JsNonModule

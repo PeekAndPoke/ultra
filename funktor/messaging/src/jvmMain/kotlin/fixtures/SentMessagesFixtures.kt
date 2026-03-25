@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.messaging.fixtures
+package io.peekandpoke.funktor.messaging.fixtures
 
-import de.peekandpoke.funktor.core.fixtures.FixtureLoader
-import de.peekandpoke.funktor.messaging.storage.SentMessagesStorage
+import io.peekandpoke.funktor.core.fixtures.FixtureLoader
+import io.peekandpoke.funktor.messaging.storage.SentMessagesStorage
 
 class SentMessagesFixtures(
     private val repo: SentMessagesStorage,

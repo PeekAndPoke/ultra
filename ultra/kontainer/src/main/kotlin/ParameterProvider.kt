@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.kontainer
+package io.peekandpoke.ultra.kontainer
 
-import de.peekandpoke.ultra.kontainer.ParameterProvider.ProvisionType.Direct
-import de.peekandpoke.ultra.kontainer.ParameterProvider.ProvisionType.Lazy
+import io.peekandpoke.ultra.kontainer.ParameterProvider.ProvisionType.Direct
+import io.peekandpoke.ultra.kontainer.ParameterProvider.ProvisionType.Lazy
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType

@@ -1,11 +1,11 @@
-package de.peekandpoke.funktor.messaging.storage
+package io.peekandpoke.funktor.messaging.storage
 
-import de.peekandpoke.funktor.messaging.Email
-import de.peekandpoke.funktor.messaging.EmailHooks
-import de.peekandpoke.funktor.messaging.api.EmailBody
-import de.peekandpoke.funktor.messaging.api.EmailResult
-import de.peekandpoke.funktor.messaging.api.SentMessageModel
-import de.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.storing
+import io.peekandpoke.funktor.messaging.Email
+import io.peekandpoke.funktor.messaging.EmailHooks
+import io.peekandpoke.funktor.messaging.api.EmailBody
+import io.peekandpoke.funktor.messaging.api.EmailResult
+import io.peekandpoke.funktor.messaging.api.SentMessageModel
+import io.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.storing
 
 class StoringEmailHook(
     private val repo: SentMessagesStorage,

@@ -1,13 +1,13 @@
-package de.peekandpoke.kraft.routing
+package io.peekandpoke.kraft.routing
 
-import de.peekandpoke.kraft.KraftApp
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.getAttributeRecursive
-import de.peekandpoke.kraft.routing.Router.RouterStrategy.Companion.HASH_PREFIX
-import de.peekandpoke.ultra.common.TypedKey
-import de.peekandpoke.ultra.common.isUrlWithProtocol
-import de.peekandpoke.ultra.streams.Stream
-import de.peekandpoke.ultra.streams.StreamSource
+import io.peekandpoke.kraft.KraftApp
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.getAttributeRecursive
+import io.peekandpoke.kraft.routing.Router.RouterStrategy.Companion.HASH_PREFIX
+import io.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.ultra.common.isUrlWithProtocol
+import io.peekandpoke.ultra.streams.Stream
+import io.peekandpoke.ultra.streams.StreamSource
 import kotlinx.browser.window
 import org.w3c.dom.HTMLAnchorElement
 import org.w3c.dom.Node

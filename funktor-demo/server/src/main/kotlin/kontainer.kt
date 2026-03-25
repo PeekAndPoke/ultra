@@ -1,23 +1,23 @@
 package io.peekandpoke.funktor.demo.server
 
-import de.peekandpoke.funktor.core.App
-import de.peekandpoke.funktor.core.installKontainer
-import de.peekandpoke.funktor.core.model.InsightsConfig
-import de.peekandpoke.funktor.funktor
-import de.peekandpoke.funktor.insights.instrumentWithInsights
-import de.peekandpoke.funktor.messaging.EmailSender
-import de.peekandpoke.funktor.messaging.senders.applyDevConfig
-import de.peekandpoke.funktor.messaging.senders.aws.AwsSesSender
-import de.peekandpoke.funktor.messaging.senders.withHooks
-import de.peekandpoke.funktor.messaging.storage.StoringEmailHook
-import de.peekandpoke.funktor.rest.auth.jwtUserProvider
-import de.peekandpoke.karango.karango
-import de.peekandpoke.monko.monko
-import de.peekandpoke.ultra.kontainer.kontainer
-import de.peekandpoke.ultra.log.Log
 import io.ktor.server.routing.*
+import io.peekandpoke.funktor.core.App
+import io.peekandpoke.funktor.core.installKontainer
+import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.demo.server.admin.AdminUserModule
 import io.peekandpoke.funktor.demo.server.api.ApiApp
+import io.peekandpoke.funktor.funktor
+import io.peekandpoke.funktor.insights.instrumentWithInsights
+import io.peekandpoke.funktor.messaging.EmailSender
+import io.peekandpoke.funktor.messaging.senders.applyDevConfig
+import io.peekandpoke.funktor.messaging.senders.aws.AwsSesSender
+import io.peekandpoke.funktor.messaging.senders.withHooks
+import io.peekandpoke.funktor.messaging.storage.StoringEmailHook
+import io.peekandpoke.funktor.rest.auth.jwtUserProvider
+import io.peekandpoke.karango.karango
+import io.peekandpoke.monko.monko
+import io.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.ultra.log.Log
 
 fun Route.installWwwKontainer(app: App<FunktorDemoConfig>, insights: InsightsConfig?) {
     installKontainer {

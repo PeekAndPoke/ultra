@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.auth
+package io.peekandpoke.funktor.auth
 
-import de.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
 import io.ktor.server.application.*
+import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
 
 class AuthSystemAppHooks(
     authSystem: Lazy<AuthSystem>,

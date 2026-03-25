@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.core.fixtures
+package io.peekandpoke.funktor.core.fixtures
 
-import de.peekandpoke.ultra.log.Log
+import io.peekandpoke.ultra.log.Log
 import kotlin.time.measureTimedValue
 
 /**

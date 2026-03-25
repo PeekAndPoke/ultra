@@ -1,6 +1,4 @@
-package de.peekandpoke.ultra.datetime
-
-import de.peekandpoke.ultra.common.tuple
+package io.peekandpoke.ultra.datetime
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
@@ -10,6 +8,7 @@ import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.peekandpoke.ultra.common.tuple
 
 @Suppress("unused")
 class MpLocalTimeSpec : StringSpec({

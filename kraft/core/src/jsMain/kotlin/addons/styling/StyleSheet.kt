@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.addons.styling
+package io.peekandpoke.kraft.addons.styling
 
 import kotlinx.css.CssBuilder
 import org.w3c.dom.HTMLElement

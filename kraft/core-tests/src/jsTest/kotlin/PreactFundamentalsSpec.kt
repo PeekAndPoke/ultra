@@ -1,11 +1,11 @@
-package de.peekandpoke.kraft.coretests
+package io.peekandpoke.kraft.coretests
 
-import de.peekandpoke.kraft.testing.TestBed
-import de.peekandpoke.kraft.testing.textContent
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.peekandpoke.kraft.testing.TestBed
+import io.peekandpoke.kraft.testing.textContent
 import kotlinx.html.h1
 import org.w3c.dom.HTMLHeadingElement
 

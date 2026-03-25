@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.security.user
+package io.peekandpoke.ultra.security.user
 
-import de.peekandpoke.ultra.common.tuple
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.common.tuple
 
 class UserPermissionsSpec : FreeSpec() {
 

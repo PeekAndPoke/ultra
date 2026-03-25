@@ -1,6 +1,6 @@
 package coroutines
 
-import de.peekandpoke.funktor.core.model.CpuProfile
+import io.peekandpoke.funktor.core.model.CpuProfile
 import kotlinx.coroutines.CopyableThreadContextElement
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineName

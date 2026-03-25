@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.cluster.storage
+package io.peekandpoke.funktor.cluster.storage
 
 class StorageFacade(
     randomData: Lazy<RandomDataStorage>,

@@ -1,6 +1,6 @@
 @file:Suppress("Detekt:LongParameterList")
 
-package de.peekandpoke.ultra.kontainer
+package io.peekandpoke.ultra.kontainer
 
 import kotlin.reflect.KClass
 

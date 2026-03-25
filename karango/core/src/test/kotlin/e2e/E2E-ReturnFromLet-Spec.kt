@@ -1,14 +1,14 @@
-package de.peekandpoke.karango.e2e
+package io.peekandpoke.karango.e2e
 
-import de.peekandpoke.karango.KarangoCursor
-import de.peekandpoke.karango.aql.LET
-import de.peekandpoke.karango.aql.RETURN
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.reflection.kMapType
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.karango.KarangoCursor
+import io.peekandpoke.karango.aql.LET
+import io.peekandpoke.karango.aql.RETURN
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.kMapType
 
 @Suppress("ClassName")
 class `E2E-ReturnFromLet-Spec` : StringSpec({

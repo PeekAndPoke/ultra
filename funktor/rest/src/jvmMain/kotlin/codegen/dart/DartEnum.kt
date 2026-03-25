@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.rest.codegen.dart
+package io.peekandpoke.funktor.rest.codegen.dart
 
-import de.peekandpoke.funktor.rest.codegen.Tags
-import de.peekandpoke.funktor.rest.codegen.dart.DartNameSanitizer.sanitizeVariableName
-import de.peekandpoke.funktor.rest.codegen.dart.printer.DartCodePrinter
+import io.peekandpoke.funktor.rest.codegen.Tags
+import io.peekandpoke.funktor.rest.codegen.dart.DartNameSanitizer.sanitizeVariableName
+import io.peekandpoke.funktor.rest.codegen.dart.printer.DartCodePrinter
 
 class DartEnum(
     override val file: DartFile.Definition,

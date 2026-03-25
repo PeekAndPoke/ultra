@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.remote
+package io.peekandpoke.ultra.remote
 
-import de.peekandpoke.ultra.model.Message
+import io.peekandpoke.ultra.model.Message
 import kotlinx.serialization.Serializable
 
 /**

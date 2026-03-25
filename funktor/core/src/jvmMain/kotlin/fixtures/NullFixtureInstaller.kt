@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.core.fixtures
+package io.peekandpoke.funktor.core.fixtures
 
 /**
  * This installer is doing nothing.

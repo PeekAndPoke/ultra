@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.common
+package io.peekandpoke.ultra.common
 
 typealias OnChange<T> = (T) -> Unit
 typealias Unsubscribe = () -> Unit

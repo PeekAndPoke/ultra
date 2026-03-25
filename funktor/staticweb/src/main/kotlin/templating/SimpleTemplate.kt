@@ -1,10 +1,10 @@
-package de.peekandpoke.funktor.staticweb.templating
+package io.peekandpoke.funktor.staticweb.templating
 
-import de.peekandpoke.funktor.core.broker.TypedRoute
-import de.peekandpoke.funktor.staticweb.flashsession.FlashSession
-import de.peekandpoke.funktor.staticweb.resources.WebResources
-import de.peekandpoke.ultra.semanticui.SemanticTag
 import io.ktor.server.html.*
+import io.peekandpoke.funktor.core.broker.TypedRoute
+import io.peekandpoke.funktor.staticweb.flashsession.FlashSession
+import io.peekandpoke.funktor.staticweb.resources.WebResources
+import io.peekandpoke.ultra.semanticui.SemanticTag
 import kotlinx.html.FlowContent
 import kotlinx.html.HEAD
 import kotlinx.html.HTML

@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.rest.codegen.dart.printer
+package io.peekandpoke.funktor.rest.codegen.dart.printer
 
-import de.peekandpoke.funktor.rest.codegen.dart.DartModifier
+import io.peekandpoke.funktor.rest.codegen.dart.DartModifier
 
 fun DartCodePrinter.appendDocBlock(doc: String?) = apply {
 

@@ -1,9 +1,9 @@
-package de.peekandpoke.funktor.logging
+package io.peekandpoke.funktor.logging
 
-import de.peekandpoke.funktor.logging.api.LogEntryModel
-import de.peekandpoke.ultra.common.safeEnumOf
-import de.peekandpoke.ultra.common.safeEnumsOf
-import de.peekandpoke.ultra.log.LogLevel
+import io.peekandpoke.funktor.logging.api.LogEntryModel
+import io.peekandpoke.ultra.common.safeEnumOf
+import io.peekandpoke.ultra.common.safeEnumsOf
+import io.peekandpoke.ultra.log.LogLevel
 import kotlinx.serialization.Serializable
 
 @Serializable

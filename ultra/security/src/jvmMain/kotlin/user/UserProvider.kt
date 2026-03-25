@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.security.user
+package io.peekandpoke.ultra.security.user
 
 import java.net.InetAddress
 import java.net.UnknownHostException

@@ -1,12 +1,12 @@
-package de.peekandpoke.ultra.kontainer.e2e
+package io.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.ServiceProvider
-import de.peekandpoke.ultra.kontainer.kontainer
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
+import io.peekandpoke.ultra.kontainer.ServiceProvider
+import io.peekandpoke.ultra.kontainer.kontainer
 
 class PrototypeServicesSpec : StringSpec({
 

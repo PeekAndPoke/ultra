@@ -1,9 +1,9 @@
 @file:Suppress("FunctionName")
 
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.vault.lang.VaultFunctionMarker
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
 /**
  * Return the greatest element of anyArray. The array is not limited to numbers. Also see type and value order.

@@ -1,6 +1,6 @@
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.vault.lang.VaultInputValueMarker
+import io.peekandpoke.ultra.vault.lang.VaultInputValueMarker
 
 enum class AqlPercentileMethod(val method: String) {
     @VaultInputValueMarker

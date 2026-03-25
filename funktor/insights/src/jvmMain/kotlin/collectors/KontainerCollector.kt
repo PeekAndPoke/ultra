@@ -1,20 +1,20 @@
 @file:Suppress("detekt:all")
 
-package de.peekandpoke.funktor.insights.collectors
+package io.peekandpoke.funktor.insights.collectors
 
-import de.peekandpoke.funktor.insights.InsightsCollector
-import de.peekandpoke.funktor.insights.InsightsCollectorData
-import de.peekandpoke.funktor.insights.gui.InsightsBarTemplate
-import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
-import de.peekandpoke.ultra.common.recursion.recurse
-import de.peekandpoke.ultra.kontainer.Kontainer
-import de.peekandpoke.ultra.kontainer.KontainerBlueprint
-import de.peekandpoke.ultra.kontainer.ServiceProvider
-import de.peekandpoke.ultra.kontainer.domain.DebugInfo
-import de.peekandpoke.ultra.semanticui.icon
-import de.peekandpoke.ultra.semanticui.noui
-import de.peekandpoke.ultra.semanticui.ui
 import io.ktor.server.application.*
+import io.peekandpoke.funktor.insights.InsightsCollector
+import io.peekandpoke.funktor.insights.InsightsCollectorData
+import io.peekandpoke.funktor.insights.gui.InsightsBarTemplate
+import io.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
+import io.peekandpoke.ultra.common.recursion.recurse
+import io.peekandpoke.ultra.kontainer.Kontainer
+import io.peekandpoke.ultra.kontainer.KontainerBlueprint
+import io.peekandpoke.ultra.kontainer.ServiceProvider
+import io.peekandpoke.ultra.kontainer.domain.DebugInfo
+import io.peekandpoke.ultra.semanticui.icon
+import io.peekandpoke.ultra.semanticui.noui
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.Unsafe
 import kotlinx.html.div
 import kotlinx.html.id

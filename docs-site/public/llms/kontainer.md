@@ -123,7 +123,7 @@ A **blueprint** is an immutable description of all your services and their lifec
 to stamp out container instances.
 
 ```kotlin
-import de.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.ultra.kontainer.kontainer
 
 // Define some services
 class Greeter {
@@ -739,7 +739,7 @@ For large sets of implementations where you only need specific ones at a time, u
 Lookup creates services on demand:
 
 ```kotlin
-import de.peekandpoke.ultra.common.Lookup
+import io.peekandpoke.ultra.common.Lookup
 
 class Database(val repos: Lookup<Repository>)
 
@@ -791,7 +791,7 @@ Modules are useful for:
 ## Defining a simple module
 
 ```kotlin
-import de.peekandpoke.ultra.kontainer.module
+import io.peekandpoke.ultra.kontainer.module
 
 // Some services
 interface Storage {

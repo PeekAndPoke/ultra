@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.security.user
+package io.peekandpoke.ultra.security.user
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldNotBeNull

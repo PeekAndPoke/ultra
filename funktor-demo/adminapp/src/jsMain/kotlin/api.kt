@@ -1,14 +1,14 @@
-package de.peekandpoke.funktor.demo.adminapp
+package io.peekandpoke.funktor.demo.adminapp
 
-import de.peekandpoke.funktor.auth.api.AuthApiClient
-import de.peekandpoke.funktor.cluster.devtools.DevtoolsApiResponseInterceptor
-import de.peekandpoke.ultra.remote.ApiClient.Config
-import de.peekandpoke.ultra.remote.ErrorLoggingResponseInterceptor
-import de.peekandpoke.ultra.remote.SetBearerRequestInterceptor
 import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.sse.*
 import io.ktor.serialization.kotlinx.json.*
+import io.peekandpoke.funktor.auth.api.AuthApiClient
+import io.peekandpoke.funktor.cluster.devtools.DevtoolsApiResponseInterceptor
+import io.peekandpoke.ultra.remote.ApiClient.Config
+import io.peekandpoke.ultra.remote.ErrorLoggingResponseInterceptor
+import io.peekandpoke.ultra.remote.SetBearerRequestInterceptor
 import kotlinx.serialization.json.Json
 
 class AdminAppApis(appConfig: AdminAppConfig, tokenProvider: () -> String?) {

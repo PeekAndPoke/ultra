@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.html
+package io.peekandpoke.ultra.html
 
 private val srcSetCache = mutableMapOf<SrcSetCacheEntry, ImageSrcSet>()
 

@@ -1,1 +1,1 @@
-package de.peekandpoke.slumberTestClasses
+package io.peekandpoke.slumberTestClasses

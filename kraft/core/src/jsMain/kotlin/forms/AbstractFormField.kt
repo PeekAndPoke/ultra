@@ -1,9 +1,9 @@
-package de.peekandpoke.kraft.forms
+package io.peekandpoke.kraft.forms
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.messages.sendMessage
-import de.peekandpoke.ultra.html.onClick
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.messages.sendMessage
+import io.peekandpoke.ultra.html.onClick
 import kotlinx.html.FlowContent
 import kotlinx.html.label
 import org.w3c.dom.HTMLElement

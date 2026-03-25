@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package de.peekandpoke.kraft.ext
+package io.peekandpoke.kraft.ext
 
 import org.w3c.dom.DOMRectReadOnly
 import org.w3c.dom.Element

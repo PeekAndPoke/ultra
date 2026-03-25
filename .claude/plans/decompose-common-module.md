@@ -50,7 +50,7 @@ No "common-" prefix. Example: `:ultra:datetime`, `:ultra:reflection`.
 
 **What moves here:**
 
-- `de.peekandpoke.ultra.common.model.*`
+- `io.peekandpoke.ultra.common.model.*`
 - `Message`, `MessageCollection` / `Messages`, `ResultWithMessages`
 - `Paged`, `PagedSearchFilter`
 - `Operators` (comparison enum + functions)
@@ -67,7 +67,7 @@ No "common-" prefix. Example: `:ultra:datetime`, `:ultra:reflection`.
 
 **What moves here:**
 
-- `de.peekandpoke.ultra.common.datetime.*`
+- `io.peekandpoke.ultra.common.datetime.*`
 - Core types: `MpInstant`, `MpLocalDate`, `MpLocalTime`, `MpLocalDateTime`, `MpZonedDateTime`
 - `MpTimezone`, `MpLocalTimeSlot`
 - Range types: `MpInstantRange`, `MpLocalDateRange`, `MpClosedLocalDateRange`, `MpZonedDateTimeRange`
@@ -92,7 +92,7 @@ modules that actually need date/time.
 
 **What moves here:**
 
-- `de.peekandpoke.ultra.common.cache.*`
+- `io.peekandpoke.ultra.common.cache.*`
 - `Cache<K, V>` interface
 - `FastCache` + `Builder` + `Action` types + `ActionUpdates`
 - Behaviours: `ExpireAfterAccessBehaviour`, `MaxEntriesBehaviour`, `MaxMemoryUsageBehaviour`
@@ -109,7 +109,7 @@ modules that actually need date/time.
 
 **What moves here:**
 
-- `de.peekandpoke.ultra.common.remote.*`
+- `io.peekandpoke.ultra.common.remote.*`
 - `ApiClient` + `Config`
 - `RemoteRequest`, `RemoteResponse` (expect/actual + platform impls)
 - `RequestInterceptor`, `ResponseInterceptor` + built-in interceptors
@@ -131,7 +131,7 @@ modules that actually need date/time.
 
 **What moves here:**
 
-- `de.peekandpoke.ultra.common.reflection.*` (JVM only, not multiplatform)
+- `io.peekandpoke.ultra.common.reflection.*` (JVM only, not multiplatform)
 - `TypeRef<T>` + pre-cached primitive type refs
 - `ReifiedKType`
 - `kType.kt`, `types.kt`, `functions.kt` extension utils
@@ -149,7 +149,7 @@ modules that actually need date/time.
 
 **What moves here:**
 
-- `de.peekandpoke.ultra.common.fixture.*` — `LoremIpsum`, `LoremCat`, `LoremPicsum`
+- `io.peekandpoke.ultra.common.fixture.*` — `LoremIpsum`, `LoremCat`, `LoremPicsum`
 
 **Dependencies:** `:ultra:common`
 
@@ -162,9 +162,9 @@ but not needed by production code.
 
 **What moves here:**
 
-- `de.peekandpoke.ultra.common.markup.*` — `ImageSrcSet`, `ImageSizes`, `CloudinaryImage`,
+- `io.peekandpoke.ultra.common.markup.*` — `ImageSrcSet`, `ImageSizes`, `CloudinaryImage`,
   `CloudinaryImageSrcSetGenerator`, `placeholders.kt`
-- `de.peekandpoke.ultra.common.docs.*` (JVM) — `ExampleCodeExtractor`, `ExampleRunner`, `ExamplesToDocs`
+- `io.peekandpoke.ultra.common.docs.*` (JVM) — `ExampleCodeExtractor`, `ExampleRunner`, `ExamplesToDocs`
 
 **Dependencies:** `:ultra:common`
 
@@ -230,8 +230,8 @@ of `Kronos` to break this coupling entirely.
 
 ## Open Questions
 
-- **Package names:** Should moved classes keep their `de.peekandpoke.ultra.common.*` package or
-  get new packages like `de.peekandpoke.ultra.datetime.*`? User said backward compat is not an issue
+- **Package names:** Should moved classes keep their `io.peekandpoke.ultra.common.*` package or
+  get new packages like `io.peekandpoke.ultra.datetime.*`? User said backward compat is not an issue
   for package names, so new packages are preferred for clarity.
 - **`:ultra:extras` granularity:** Is it worth splitting markup/fixture/docs into 3 separate modules,
   or is one grab-bag sufficient?

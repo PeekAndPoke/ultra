@@ -176,7 +176,7 @@ println(kontainer.get(ServiceTwo::class).greet())  // "I know one"`} lang="kotli
 
 <p>For large sets of implementations where you only need specific ones at a time, use <code>Lookup&lt;T&gt;</code>. Unlike <code>List&lt;T&gt;</code>, a Lookup creates services on demand:</p>
 
-<Code code={`import de.peekandpoke.ultra.common.Lookup
+    <Code code={`import io.peekandpoke.ultra.common.Lookup
 
 class Database(val repos: Lookup<Repository>)
 

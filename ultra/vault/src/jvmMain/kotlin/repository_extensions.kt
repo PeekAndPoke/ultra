@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.vault
+package io.peekandpoke.ultra.vault
 
 /**
  * Defines a repository that supports batch inserts

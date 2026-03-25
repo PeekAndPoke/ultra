@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.rest.docs.postman
+package io.peekandpoke.funktor.rest.docs.postman
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

@@ -1,14 +1,14 @@
-package de.peekandpoke.mutator
+package io.peekandpoke.mutator
 
-import de.peekandpoke.mutator.domain.Address
-import de.peekandpoke.mutator.domain.Person
-import de.peekandpoke.mutator.domain.address
-import de.peekandpoke.mutator.domain.age
-import de.peekandpoke.mutator.domain.city
-import de.peekandpoke.mutator.domain.mutator
-import de.peekandpoke.mutator.domain.street
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.mutator.domain.Address
+import io.peekandpoke.mutator.domain.Person
+import io.peekandpoke.mutator.domain.address
+import io.peekandpoke.mutator.domain.age
+import io.peekandpoke.mutator.domain.city
+import io.peekandpoke.mutator.domain.mutator
+import io.peekandpoke.mutator.domain.street
 
 class DataClassMutatorNotificationsSpec : StringSpec({
 
@@ -125,7 +125,7 @@ class DataClassMutatorNotificationsSpec : StringSpec({
             age = 43
         }
 
-        // It notified 1 time for street, 1 time for city (which bubbles up), 
+        // It notified 1 time for street, 1 time for city (which bubbles up),
         // and 1 time for age. Total = 3 notifications.
         notified shouldBe 3
     }

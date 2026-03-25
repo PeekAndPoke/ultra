@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.cluster.depot
+package io.peekandpoke.funktor.cluster.depot
 
-import de.peekandpoke.funktor.cluster.depot.domain.DepotUri
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.funktor.cluster.depot.domain.DepotUri
 
 class DepotUriSpec : FreeSpec() {
 

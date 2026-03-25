@@ -1,11 +1,11 @@
-package de.peekandpoke.kraft.coretests.component
+package io.peekandpoke.kraft.coretests.component
 
-import de.peekandpoke.kraft.components.component
-import de.peekandpoke.kraft.components.value
-import de.peekandpoke.kraft.testing.TestBed
-import de.peekandpoke.kraft.testing.textContent
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.kraft.components.component
+import io.peekandpoke.kraft.components.value
+import io.peekandpoke.kraft.testing.TestBed
+import io.peekandpoke.kraft.testing.textContent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.html.div

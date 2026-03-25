@@ -1,13 +1,13 @@
-package de.peekandpoke.kraft.examples.fomanticui.helpers
+package io.peekandpoke.kraft.examples.fomanticui.helpers
 
-import de.peekandpoke.kraft.addons.prismjs.PrismHtml
-import de.peekandpoke.kraft.addons.prismjs.PrismKotlin
-import de.peekandpoke.kraft.addons.prismjs.PrismPlugin.CopyToClipboard.Companion.copyToClipboard
-import de.peekandpoke.kraft.addons.prismjs.PrismPlugin.LineNumbers.Companion.lineNumbers
-import de.peekandpoke.kraft.addons.prismjs.PrismPlugin.ShowLanguage.Companion.showLanguage
-import de.peekandpoke.ultra.semanticui.icon
-import de.peekandpoke.ultra.semanticui.noui
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.addons.prismjs.PrismHtml
+import io.peekandpoke.kraft.addons.prismjs.PrismKotlin
+import io.peekandpoke.kraft.addons.prismjs.PrismPlugin.CopyToClipboard.Companion.copyToClipboard
+import io.peekandpoke.kraft.addons.prismjs.PrismPlugin.LineNumbers.Companion.lineNumbers
+import io.peekandpoke.kraft.addons.prismjs.PrismPlugin.ShowLanguage.Companion.showLanguage
+import io.peekandpoke.ultra.semanticui.icon
+import io.peekandpoke.ultra.semanticui.noui
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.DIV
 import kotlinx.html.FlowContent
 import kotlinx.html.a

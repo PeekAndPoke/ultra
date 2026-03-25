@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.auth
+package io.peekandpoke.funktor.auth
 
-import de.peekandpoke.karango.config.ArangoDbConfig
-import de.peekandpoke.karango.karango
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.karango.config.ArangoDbConfig
+import io.peekandpoke.karango.karango
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
 
 class AuthRecordStorageKarangoSpec : AuthRecordStorageBaseSpec() {
 

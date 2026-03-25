@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.demo.adminapp
+package io.peekandpoke.funktor.demo.adminapp
 
 data class AdminAppConfig(
     val orgId: String = "",

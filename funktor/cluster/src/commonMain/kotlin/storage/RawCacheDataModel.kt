@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.cluster.storage
+package io.peekandpoke.funktor.cluster.storage
 
-import de.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.MpInstant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration

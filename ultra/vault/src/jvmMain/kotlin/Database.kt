@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.vault
+package io.peekandpoke.ultra.vault
 
-import de.peekandpoke.ultra.common.Lookup
-import de.peekandpoke.ultra.common.SimpleLookup
+import io.peekandpoke.ultra.common.Lookup
+import io.peekandpoke.ultra.common.SimpleLookup
 import kotlin.reflect.KClass
 
 class Database(

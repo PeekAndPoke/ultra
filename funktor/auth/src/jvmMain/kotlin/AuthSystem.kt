@@ -1,20 +1,20 @@
-package de.peekandpoke.funktor.auth
+package io.peekandpoke.funktor.auth
 
-import de.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
-import de.peekandpoke.funktor.auth.model.AuthActivateActivateResponse
-import de.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
-import de.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
-import de.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
-import de.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
-import de.peekandpoke.funktor.auth.model.AuthSignInRequest
-import de.peekandpoke.funktor.auth.model.AuthSignInResponse
-import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
-import de.peekandpoke.funktor.auth.model.AuthSignUpResponse
-import de.peekandpoke.funktor.core.config.AppConfig
-import de.peekandpoke.funktor.messaging.MessagingServices
-import de.peekandpoke.ultra.datetime.Kronos
-import de.peekandpoke.ultra.security.jwt.JwtGenerator
-import de.peekandpoke.ultra.security.password.PasswordHasher
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
+import io.peekandpoke.funktor.auth.model.AuthActivateActivateResponse
+import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
+import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
+import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
+import io.peekandpoke.funktor.auth.model.AuthSignInRequest
+import io.peekandpoke.funktor.auth.model.AuthSignInResponse
+import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
+import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
+import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.funktor.messaging.MessagingServices
+import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.security.jwt.JwtGenerator
+import io.peekandpoke.ultra.security.password.PasswordHasher
 
 /**
  * AuthSystem manages and provides access to multiple authentication realms.

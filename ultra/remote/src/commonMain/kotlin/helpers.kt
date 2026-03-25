@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.remote
+package io.peekandpoke.ultra.remote
 
-import de.peekandpoke.ultra.common.encodeUriComponent
-import de.peekandpoke.ultra.model.Paged
+import io.peekandpoke.ultra.common.encodeUriComponent
+import io.peekandpoke.ultra.model.Paged
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.ListSerializer
 import kotlin.jvm.JvmName

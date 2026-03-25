@@ -1,11 +1,11 @@
-package de.peekandpoke.ultra.slumber.builtin.polymorphism
+package io.peekandpoke.ultra.slumber.builtin.polymorphism
 
-import de.peekandpoke.ultra.reflection.kListType
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.awake
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.reflection.kListType
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.awake
 
 class PolymorphicAwakerSpec : StringSpec({
 

@@ -1,10 +1,10 @@
-package de.peekandpoke.ultra.vault
+package io.peekandpoke.ultra.vault
 
-import de.peekandpoke.ultra.datetime.Kronos
-import de.peekandpoke.ultra.kontainer.kontainer
-import de.peekandpoke.ultra.log.ultraLogging
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.ultra.log.ultraLogging
 
 class DatabaseSpec : StringSpec() {
 

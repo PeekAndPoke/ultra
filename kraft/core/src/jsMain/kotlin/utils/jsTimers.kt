@@ -1,7 +1,6 @@
-package de.peekandpoke.kraft.utils
+package io.peekandpoke.kraft.utils
 
 import kotlinx.browser.window
-import org.w3c.dom.Window
 
 /**
  * Helper function for a nicer use of [Window.setTimeout] returning an Int.

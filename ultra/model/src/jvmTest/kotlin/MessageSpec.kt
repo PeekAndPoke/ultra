@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.model
+package io.peekandpoke.ultra.model
 
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.comparables.shouldBeLessThan

@@ -1,14 +1,14 @@
-package de.peekandpoke.funktor.cluster.locks.karango
+package io.peekandpoke.funktor.cluster.locks.karango
 
-import de.peekandpoke.funktor.cluster.locks.ServerBeaconRepository
-import de.peekandpoke.funktor.cluster.locks.domain.ServerBeacon
-import de.peekandpoke.funktor.core.fixtures.FixtureLoader
-import de.peekandpoke.funktor.core.model.AppInfo
-import de.peekandpoke.karango.vault.EntityRepository
-import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ultra.datetime.MpInstant
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.funktor.cluster.locks.ServerBeaconRepository
+import io.peekandpoke.funktor.cluster.locks.domain.ServerBeacon
+import io.peekandpoke.funktor.core.fixtures.FixtureLoader
+import io.peekandpoke.funktor.core.model.AppInfo
+import io.peekandpoke.karango.vault.EntityRepository
+import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.vault.Stored
 
 class KarangoServerBeaconRepo(driver: KarangoDriver, repoName: String) :
     EntityRepository<ServerBeacon>(name = repoName, kType(), driver), ServerBeaconRepository.Vault.Repo {

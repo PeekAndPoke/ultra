@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.common
+package io.peekandpoke.ultra.common
 
 fun <X> Set<X>.toggle(value: X) = when (value in this) {
     true -> this.minus(value)

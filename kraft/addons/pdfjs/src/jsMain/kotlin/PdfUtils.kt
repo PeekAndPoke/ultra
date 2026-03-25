@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.addons.pdfjs
+package io.peekandpoke.kraft.addons.pdfjs
 
 import org.w3c.dom.HTMLCanvasElement
 

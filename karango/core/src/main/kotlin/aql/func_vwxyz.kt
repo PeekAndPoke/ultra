@@ -1,8 +1,8 @@
 @file:Suppress("FunctionName")
 
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.vault.lang.VaultFunctionMarker
+import io.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
 /**
  * Return the population variance of the values in array.

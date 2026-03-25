@@ -1,11 +1,11 @@
-package de.peekandpoke.ultra.remote
+package io.peekandpoke.ultra.remote
 
-import de.peekandpoke.ultra.model.Message
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.peekandpoke.ultra.model.Message
 
 class ApiResponseSpec : StringSpec() {
 

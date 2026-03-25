@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.tooling
+package io.peekandpoke.ultra.tooling
 
 interface Example {
     /** The title of the example */

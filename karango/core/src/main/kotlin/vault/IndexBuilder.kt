@@ -1,16 +1,15 @@
-package de.peekandpoke.karango.vault
+package io.peekandpoke.karango.vault
 
 import com.arangodb.ArangoCollectionAsync
 import com.arangodb.ArangoDBException
 import com.arangodb.entity.IndexEntity
 import com.arangodb.model.PersistentIndexOptions
 import com.arangodb.model.TtlIndexOptions
-import de.peekandpoke.karango.aql.AqlIterableExpr
-import de.peekandpoke.karango.aql.AqlPrinter.Companion.printQuery
-import de.peekandpoke.karango.aql.AqlPropertyPath
-import de.peekandpoke.karango.vault.IndexBuilder.Companion.matchesAny
-import de.peekandpoke.ultra.vault.Repository
-import de.peekandpoke.ultra.vault.VaultModels
+import io.peekandpoke.karango.aql.AqlIterableExpr
+import io.peekandpoke.karango.aql.AqlPrinter.Companion.printQuery
+import io.peekandpoke.karango.aql.AqlPropertyPath
+import io.peekandpoke.ultra.vault.Repository
+import io.peekandpoke.ultra.vault.VaultModels
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlin.time.Duration.Companion.milliseconds

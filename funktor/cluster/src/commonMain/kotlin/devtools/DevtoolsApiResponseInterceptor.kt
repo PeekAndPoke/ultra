@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.cluster.devtools
+package io.peekandpoke.funktor.cluster.devtools
 
-import de.peekandpoke.ultra.remote.EmptyApiResponse
-import de.peekandpoke.ultra.remote.RemoteResponse
-import de.peekandpoke.ultra.remote.ResponseInterceptor
+import io.peekandpoke.ultra.remote.EmptyApiResponse
+import io.peekandpoke.ultra.remote.RemoteResponse
+import io.peekandpoke.ultra.remote.ResponseInterceptor
 import kotlinx.serialization.json.Json
 
 class DevtoolsApiResponseInterceptor : ResponseInterceptor {

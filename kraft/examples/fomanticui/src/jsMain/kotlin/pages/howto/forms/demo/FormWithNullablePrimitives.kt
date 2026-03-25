@@ -5,18 +5,18 @@
     "Detekt:LongMethod",
 )
 
-package de.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
+package io.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 
-import de.peekandpoke.kraft.components.NoProps
-import de.peekandpoke.kraft.components.PureComponent
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.examples.fomanticui.helpers.invoke
-import de.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
-import de.peekandpoke.kraft.forms.formController
-import de.peekandpoke.kraft.semanticui.forms.UiInputField
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.html.onClick
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.components.NoProps
+import io.peekandpoke.kraft.components.PureComponent
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.fomanticui.helpers.invoke
+import io.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
+import io.peekandpoke.kraft.forms.formController
+import io.peekandpoke.kraft.semanticui.forms.UiInputField
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.onClick
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 
@@ -60,8 +60,8 @@ class FormWithNullablePrimitives(ctx: NoProps) : PureComponent(ctx) {
                             step(3)
 
                             accepts(
-                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.greaterThan(6.0),
-                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.lessThan(15.0)
+                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.greaterThan(6.0),
+                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.lessThan(15.0)
                             )
                         }
                     }
@@ -72,8 +72,8 @@ class FormWithNullablePrimitives(ctx: NoProps) : PureComponent(ctx) {
                             placeholder("Enter a number")
 
                             accepts(
-                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.greaterThan(5.0),
-                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.lessThan(20.0)
+                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.greaterThan(5.0),
+                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.lessThan(20.0)
                             )
                         }
 
@@ -83,8 +83,8 @@ class FormWithNullablePrimitives(ctx: NoProps) : PureComponent(ctx) {
                             step(0.5)
 
                             accepts(
-                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.greaterThan(3.0),
-                                _root_ide_package_.de.peekandpoke.kraft.forms.validation.numbers.lessThan(10.0)
+                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.greaterThan(3.0),
+                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.lessThan(10.0)
                             )
                         }
                     }

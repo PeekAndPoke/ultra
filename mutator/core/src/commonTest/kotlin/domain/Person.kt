@@ -1,6 +1,6 @@
-package de.peekandpoke.mutator.domain
+package io.peekandpoke.mutator.domain
 
-import de.peekandpoke.mutator.Mutable
+import io.peekandpoke.mutator.Mutable
 
 @Mutable
 data class Person(

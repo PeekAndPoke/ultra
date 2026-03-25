@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.forms.validation
+package io.peekandpoke.kraft.forms.validation
 
 data class GenericRule<T>(
     private val checkFn: (value: T) -> Boolean,

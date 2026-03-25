@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.cache
+package io.peekandpoke.ultra.cache
 
-import de.peekandpoke.ultra.common.RunSync
-import de.peekandpoke.ultra.common.WeakReference
-import de.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.common.RunSync
+import io.peekandpoke.ultra.common.WeakReference
+import io.peekandpoke.ultra.datetime.Kronos
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

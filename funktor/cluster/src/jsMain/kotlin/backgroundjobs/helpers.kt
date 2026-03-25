@@ -1,12 +1,12 @@
-package de.peekandpoke.funktor.cluster.backgroundjobs
+package io.peekandpoke.funktor.cluster.backgroundjobs
 
-import de.peekandpoke.ultra.common.roundWithPrecision
-import de.peekandpoke.ultra.datetime.formatDdMmmYyyyHhMmSs
-import de.peekandpoke.ultra.html.css
-import de.peekandpoke.ultra.semanticui.SemanticIconFn
-import de.peekandpoke.ultra.semanticui.icon
-import de.peekandpoke.ultra.semanticui.noui
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.ultra.common.roundWithPrecision
+import io.peekandpoke.ultra.datetime.formatDdMmmYyyyHhMmSs
+import io.peekandpoke.ultra.html.css
+import io.peekandpoke.ultra.semanticui.SemanticIconFn
+import io.peekandpoke.ultra.semanticui.icon
+import io.peekandpoke.ultra.semanticui.noui
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.css.Color
 import kotlinx.css.Overflow
 import kotlinx.css.Padding

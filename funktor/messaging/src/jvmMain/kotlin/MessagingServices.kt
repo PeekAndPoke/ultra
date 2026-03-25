@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.messaging
+package io.peekandpoke.funktor.messaging
 
-import de.peekandpoke.funktor.messaging.storage.SentMessagesStorage
+import io.peekandpoke.funktor.messaging.storage.SentMessagesStorage
 
 class MessagingServices(
     mailing: Lazy<Mailing>,

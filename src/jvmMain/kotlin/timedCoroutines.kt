@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.playground
+package io.peekandpoke.ultra.playground
 
 import coroutines.measureCoroutine
 import kotlinx.coroutines.CoroutineName

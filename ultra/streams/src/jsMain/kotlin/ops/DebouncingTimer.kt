@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.streams.ops
+package io.peekandpoke.ultra.streams.ops
 
 import kotlinx.browser.window
 

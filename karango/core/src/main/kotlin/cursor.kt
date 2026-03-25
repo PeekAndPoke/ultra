@@ -1,12 +1,12 @@
-package de.peekandpoke.karango
+package io.peekandpoke.karango
 
 import com.arangodb.ArangoCursorAsync
-import de.peekandpoke.karango.slumber.KarangoCodec
-import de.peekandpoke.karango.vault.AqlTypedQuery
-import de.peekandpoke.ultra.vault.Cursor
-import de.peekandpoke.ultra.vault.EntityCache
-import de.peekandpoke.ultra.vault.Stored
-import de.peekandpoke.ultra.vault.profiling.QueryProfiler
+import io.peekandpoke.karango.slumber.KarangoCodec
+import io.peekandpoke.karango.vault.AqlTypedQuery
+import io.peekandpoke.ultra.vault.Cursor
+import io.peekandpoke.ultra.vault.EntityCache
+import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.profiling.QueryProfiler
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
 import java.io.Closeable

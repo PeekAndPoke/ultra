@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.streams
+package io.peekandpoke.ultra.streams
 
 /**
  * Collects stream subscriptions for batch cleanup.

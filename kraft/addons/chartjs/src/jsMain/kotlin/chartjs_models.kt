@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.addons.chartjs
+package io.peekandpoke.kraft.addons.chartjs
 
 external interface ChartConfig {
 

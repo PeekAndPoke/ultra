@@ -1,10 +1,10 @@
-package de.peekandpoke.funktor.insights.gui
+package io.peekandpoke.funktor.insights.gui
 
-import de.peekandpoke.funktor.insights.Insights
-import de.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector
-import de.peekandpoke.funktor.staticweb.resources.css
-import de.peekandpoke.funktor.staticweb.resources.lazyJs
-import de.peekandpoke.funktor.staticweb.templating.SimpleTemplate
+import io.peekandpoke.funktor.insights.Insights
+import io.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector
+import io.peekandpoke.funktor.staticweb.resources.css
+import io.peekandpoke.funktor.staticweb.resources.lazyJs
+import io.peekandpoke.funktor.staticweb.templating.SimpleTemplate
 import kotlinx.html.div
 import kotlinx.html.style
 import kotlin.system.measureNanoTime

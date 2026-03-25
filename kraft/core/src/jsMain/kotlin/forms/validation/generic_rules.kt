@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.forms.validation
+package io.peekandpoke.kraft.forms.validation
 
-import de.peekandpoke.kraft.forms.KraftFormsRuleDsl
+import io.peekandpoke.kraft.forms.KraftFormsRuleDsl
 
 fun <T> anyRuleOf(rule: Rule<T>, vararg rules: Rule<T>): Rule<T> {
     val allRules = listOf(rule) + rules

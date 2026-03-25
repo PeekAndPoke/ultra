@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.streams.ops
+package io.peekandpoke.ultra.streams.ops
 
-import de.peekandpoke.ultra.streams.Stream
-import de.peekandpoke.ultra.streams.StreamMapper
+import io.peekandpoke.ultra.streams.Stream
+import io.peekandpoke.ultra.streams.StreamMapper
 
 /**
  * Map the stream to pairs of index to value.

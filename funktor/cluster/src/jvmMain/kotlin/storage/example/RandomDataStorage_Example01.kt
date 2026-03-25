@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.cluster.storage.example
+package io.peekandpoke.funktor.cluster.storage.example
 
-import de.peekandpoke.funktor.cluster.storage.RandomDataStorage
+import io.peekandpoke.funktor.cluster.storage.RandomDataStorage
 
 @Suppress("ClassName")
 class RandomDataStorage_Example01(

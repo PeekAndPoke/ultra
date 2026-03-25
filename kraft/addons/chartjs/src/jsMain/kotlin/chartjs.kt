@@ -1,7 +1,7 @@
 @file:JsModule("chart.js")
 @file:JsNonModule
 
-package de.peekandpoke.kraft.addons.chartjs
+package io.peekandpoke.kraft.addons.chartjs
 
 import org.w3c.dom.CanvasRenderingContext2D
 

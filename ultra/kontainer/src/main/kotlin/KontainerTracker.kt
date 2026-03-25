@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.kontainer
+package io.peekandpoke.ultra.kontainer
 
 import java.time.Instant
 import java.util.*

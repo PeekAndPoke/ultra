@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.core
+package io.peekandpoke.funktor.core
 
-import de.peekandpoke.ultra.log.Log
 import io.ktor.server.application.*
 import io.ktor.server.plugins.*
+import io.peekandpoke.ultra.log.Log
 
 fun ApplicationCall.logNotFound(cause: Throwable? = null, hint: String? = null) {
     val content = listOfNotNull(

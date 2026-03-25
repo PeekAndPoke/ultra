@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.cluster.locks
+package io.peekandpoke.funktor.cluster.locks
 
-import de.peekandpoke.funktor.core.config.AppConfig
-import de.peekandpoke.ultra.common.network.NetworkUtils
+import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.ultra.common.network.NetworkUtils
 
 class GlobalServerId(config: AppConfig) {
     companion object {

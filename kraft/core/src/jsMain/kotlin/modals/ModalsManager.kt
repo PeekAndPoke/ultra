@@ -1,13 +1,13 @@
-package de.peekandpoke.kraft.modals
+package io.peekandpoke.kraft.modals
 
-import de.peekandpoke.kraft.components.AutoMountedUi
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.getAttributeRecursive
-import de.peekandpoke.kraft.modals.ModalsManager.Handle
-import de.peekandpoke.ultra.common.TypedKey
-import de.peekandpoke.ultra.streams.Stream
-import de.peekandpoke.ultra.streams.StreamSource
-import de.peekandpoke.ultra.streams.Unsubscribe
+import io.peekandpoke.kraft.components.AutoMountedUi
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.getAttributeRecursive
+import io.peekandpoke.kraft.modals.ModalsManager.Handle
+import io.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.ultra.streams.Stream
+import io.peekandpoke.ultra.streams.StreamSource
+import io.peekandpoke.ultra.streams.Unsubscribe
 import kotlinx.html.FlowContent
 
 /**

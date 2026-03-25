@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.core.websocket
+package io.peekandpoke.funktor.core.websocket
 
-import de.peekandpoke.ultra.model.EmptyObject
+import io.peekandpoke.ultra.model.EmptyObject
 import kotlinx.serialization.KSerializer
 import kotlin.reflect.KClass
 

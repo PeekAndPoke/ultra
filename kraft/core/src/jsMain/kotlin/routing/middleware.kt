@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.routing
+package io.peekandpoke.kraft.routing
 
 /**
  * A router middleware function

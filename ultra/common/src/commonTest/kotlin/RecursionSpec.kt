@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.common
+package io.peekandpoke.ultra.common
 
-import de.peekandpoke.ultra.common.recursion.flattenTreeToSet
-import de.peekandpoke.ultra.common.recursion.recurse
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.common.recursion.flattenTreeToSet
+import io.peekandpoke.ultra.common.recursion.recurse
 
 private class Node(val name: String, var parent: Node? = null)
 

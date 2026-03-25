@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.addons.browserdetect.js
+package io.peekandpoke.kraft.addons.browserdetect.js
 
 @JsModule("bowser")
 @JsNonModule

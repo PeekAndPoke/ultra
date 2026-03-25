@@ -1,11 +1,11 @@
-package de.peekandpoke.funktor.messaging.senders
+package io.peekandpoke.funktor.messaging.senders
 
-import de.peekandpoke.funktor.core.config.AppConfig
-import de.peekandpoke.funktor.messaging.EmailHooks
-import de.peekandpoke.funktor.messaging.EmailSender
-import de.peekandpoke.funktor.messaging.MailingDevConfig
-import de.peekandpoke.funktor.messaging.MailingOverrides
-import de.peekandpoke.ultra.log.Log
+import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.funktor.messaging.EmailHooks
+import io.peekandpoke.funktor.messaging.EmailSender
+import io.peekandpoke.funktor.messaging.MailingDevConfig
+import io.peekandpoke.funktor.messaging.MailingOverrides
+import io.peekandpoke.ultra.log.Log
 
 fun EmailSender.applyDevConfig(config: AppConfig, devConfig: MailingDevConfig?): EmailSender {
     devConfig ?: return this

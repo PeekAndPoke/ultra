@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.insights.gui
+package io.peekandpoke.funktor.insights.gui
 
-import de.peekandpoke.funktor.core.broker.OutgoingConverter
-import de.peekandpoke.funktor.core.broker.Routes
-import de.peekandpoke.funktor.core.broker.TypedRoute
+import io.peekandpoke.funktor.core.broker.OutgoingConverter
+import io.peekandpoke.funktor.core.broker.Routes
+import io.peekandpoke.funktor.core.broker.TypedRoute
 
 class InsightsGuiRoutes(converter: OutgoingConverter) : Routes(converter, "/_") {
 

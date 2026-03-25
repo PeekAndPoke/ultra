@@ -1,4 +1,4 @@
-package de.peekandpoke.mutator
+package io.peekandpoke.mutator
 
 @MutatorDsl
 class ObjectMutator<V>(value: V) : Mutator.Base<V>(value) {

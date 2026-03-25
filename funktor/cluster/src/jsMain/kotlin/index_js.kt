@@ -1,1 +1,1 @@
-package de.peekandpoke.funktor.cluster
+package io.peekandpoke.funktor.cluster

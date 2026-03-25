@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.slumber.builtin.kotlinx
+package io.peekandpoke.ultra.slumber.builtin.kotlinx
 
-import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.JsonUtil.toJsonElement
-import de.peekandpoke.ultra.slumber.JsonUtil.unwrap
-import de.peekandpoke.ultra.slumber.Slumberer
+import io.peekandpoke.ultra.slumber.Awaker
+import io.peekandpoke.ultra.slumber.JsonUtil.toJsonElement
+import io.peekandpoke.ultra.slumber.JsonUtil.unwrap
+import io.peekandpoke.ultra.slumber.Slumberer
 import kotlinx.serialization.json.JsonElement
 import kotlin.reflect.KClass
 

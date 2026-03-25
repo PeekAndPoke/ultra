@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.datetime
+package io.peekandpoke.ultra.datetime
 
 /**
  * The earliest timestamp used is considered to be '-10000-01-01T00:00:00Z'

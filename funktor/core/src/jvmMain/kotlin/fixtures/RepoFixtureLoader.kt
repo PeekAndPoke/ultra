@@ -1,11 +1,11 @@
-package de.peekandpoke.funktor.core.fixtures
+package io.peekandpoke.funktor.core.fixtures
 
-import de.peekandpoke.ultra.vault.BatchInsertRepository
-import de.peekandpoke.ultra.vault.LazyRef
-import de.peekandpoke.ultra.vault.Ref
-import de.peekandpoke.ultra.vault.Repository
-import de.peekandpoke.ultra.vault.Storable
-import de.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.BatchInsertRepository
+import io.peekandpoke.ultra.vault.LazyRef
+import io.peekandpoke.ultra.vault.Ref
+import io.peekandpoke.ultra.vault.Repository
+import io.peekandpoke.ultra.vault.Storable
+import io.peekandpoke.ultra.vault.Stored
 import kotlinx.coroutines.runBlocking
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty

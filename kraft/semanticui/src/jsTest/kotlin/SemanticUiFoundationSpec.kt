@@ -1,10 +1,10 @@
-package de.peekandpoke.kraft.semanticui
+package io.peekandpoke.kraft.semanticui
 
-import de.peekandpoke.kraft.testing.TestBed
-import de.peekandpoke.ultra.semanticui.ui
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.kraft.testing.TestBed
+import io.peekandpoke.ultra.semanticui.ui
 
 class SemanticUiFoundationSpec : StringSpec({
 

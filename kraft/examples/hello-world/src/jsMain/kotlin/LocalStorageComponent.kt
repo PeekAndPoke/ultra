@@ -1,12 +1,12 @@
-package de.peekandpoke.kraft.examples.helloworld
+package io.peekandpoke.kraft.examples.helloworld
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.semanticui.forms.UiInputField
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.streams.StreamSource
-import de.peekandpoke.ultra.streams.ops.persistInLocalStorage
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.semanticui.forms.UiInputField
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.streams.StreamSource
+import io.peekandpoke.ultra.streams.ops.persistInLocalStorage
 import kotlinx.html.Tag
 import kotlinx.html.div
 import kotlinx.serialization.Serializable

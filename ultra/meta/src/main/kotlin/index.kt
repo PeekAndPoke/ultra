@@ -1,1 +1,1 @@
-package de.peekandpoke.ultra.meta
+package io.peekandpoke.ultra.meta

@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.utils
+package io.peekandpoke.kraft.utils
 
-import de.peekandpoke.ultra.streams.StreamSource
+import io.peekandpoke.ultra.streams.StreamSource
 
 class SimpleAsyncQueue {
     data class State(

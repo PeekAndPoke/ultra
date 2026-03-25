@@ -1,11 +1,11 @@
 @file:Suppress("ObjectPropertyName")
 
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.reflection.unList
-import de.peekandpoke.ultra.vault.lang.L2
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.reflection.unList
+import io.peekandpoke.ultra.vault.lang.L2
 
 typealias AqlPathExpr<P> = AqlPropertyPath<P, P>
 

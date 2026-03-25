@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.reflection
+package io.peekandpoke.ultra.reflection
 
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter

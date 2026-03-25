@@ -1,14 +1,14 @@
-package de.peekandpoke.funktor.cluster.devtools
+package io.peekandpoke.funktor.cluster.devtools
 
-import de.peekandpoke.funktor.cluster.FunktorClusterUi
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.routing.JoinedPageTitle
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.common.roundWithPrecision
-import de.peekandpoke.ultra.html.onClick
-import de.peekandpoke.ultra.semanticui.icon
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.funktor.cluster.FunktorClusterUi
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.routing.JoinedPageTitle
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.common.roundWithPrecision
+import io.peekandpoke.ultra.html.onClick
+import io.peekandpoke.ultra.semanticui.icon
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.browser.window
 import kotlinx.html.tbody
 import kotlinx.html.td

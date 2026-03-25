@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.core.repair
+package io.peekandpoke.funktor.core.repair
 
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
-import de.peekandpoke.ultra.kontainer.module
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.module
 
 internal fun KontainerBuilder.funktorRepair() = module(Funktor_Repair)
 

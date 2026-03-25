@@ -1,6 +1,5 @@
-package de.peekandpoke.ultra.datetime
+package io.peekandpoke.ultra.datetime
 
-import de.peekandpoke.ultra.datetime.ComparableTo
 import korlibs.time.Date
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.DateTimeUnit

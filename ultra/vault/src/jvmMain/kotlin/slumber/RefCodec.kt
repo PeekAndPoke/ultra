@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.vault.slumber
+package io.peekandpoke.ultra.vault.slumber
 
-import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.Slumberer
-import de.peekandpoke.ultra.vault.NullEntityCache
-import de.peekandpoke.ultra.vault.Ref
+import io.peekandpoke.ultra.slumber.Awaker
+import io.peekandpoke.ultra.slumber.Slumberer
+import io.peekandpoke.ultra.vault.NullEntityCache
+import io.peekandpoke.ultra.vault.Ref
 import kotlinx.coroutines.runBlocking
 
 object RefCodec : Awaker, Slumberer {

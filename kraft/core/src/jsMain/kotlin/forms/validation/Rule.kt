@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.forms.validation
+package io.peekandpoke.kraft.forms.validation
 
 interface Rule<T> {
     companion object

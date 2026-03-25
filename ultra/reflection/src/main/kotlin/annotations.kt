@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.reflection
+package io.peekandpoke.ultra.reflection
 
-import de.peekandpoke.ultra.common.recursion.flattenTreeToSet
+import io.peekandpoke.ultra.common.recursion.flattenTreeToSet
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty

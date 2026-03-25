@@ -1,11 +1,11 @@
-package de.peekandpoke.funktor.core
+package io.peekandpoke.funktor.core
 
-import de.peekandpoke.ultra.kontainer.Kontainer
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
+import io.peekandpoke.ultra.kontainer.Kontainer
 
 fun ApplicationRequest.fullUrl() = when (val port = origin.serverPort) {
     80 -> "${origin.scheme}://${host()}${path()}"

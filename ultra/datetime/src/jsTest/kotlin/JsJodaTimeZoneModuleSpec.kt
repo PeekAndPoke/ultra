@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.datetime.kotlinx
+package io.peekandpoke.ultra.datetime.kotlinx
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldNotBeNull

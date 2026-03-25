@@ -1,10 +1,10 @@
-package de.peekandpoke.ultra.slumber.builtin.collections
+package io.peekandpoke.ultra.slumber.builtin.collections
 
-import de.peekandpoke.ultra.common.Tuple2
-import de.peekandpoke.ultra.common.tuple
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
-import de.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
+import io.peekandpoke.ultra.common.Tuple2
+import io.peekandpoke.ultra.common.tuple
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
+import io.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
 
 /**
  * Samples that map to null. Converting to Byte must throw. Converting must not throw.

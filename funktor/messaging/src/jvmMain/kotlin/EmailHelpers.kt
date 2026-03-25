@@ -1,6 +1,6 @@
-package de.peekandpoke.funktor.messaging
+package io.peekandpoke.funktor.messaging
 
-import de.peekandpoke.funktor.messaging.api.EmailBody
+import io.peekandpoke.funktor.messaging.api.EmailBody
 import kotlinx.html.HTML
 
 /**

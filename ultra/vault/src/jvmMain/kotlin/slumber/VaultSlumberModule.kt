@@ -1,16 +1,16 @@
-package de.peekandpoke.ultra.vault.slumber
+package io.peekandpoke.ultra.vault.slumber
 
-import de.peekandpoke.ultra.common.TypedAttributes
-import de.peekandpoke.ultra.common.TypedKey
-import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.SlumberModule
-import de.peekandpoke.ultra.slumber.Slumberer
-import de.peekandpoke.ultra.vault.Database
-import de.peekandpoke.ultra.vault.EntityCache
-import de.peekandpoke.ultra.vault.LazyRef
-import de.peekandpoke.ultra.vault.New
-import de.peekandpoke.ultra.vault.Ref
-import de.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.common.TypedAttributes
+import io.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.ultra.slumber.Awaker
+import io.peekandpoke.ultra.slumber.SlumberModule
+import io.peekandpoke.ultra.slumber.Slumberer
+import io.peekandpoke.ultra.vault.Database
+import io.peekandpoke.ultra.vault.EntityCache
+import io.peekandpoke.ultra.vault.LazyRef
+import io.peekandpoke.ultra.vault.New
+import io.peekandpoke.ultra.vault.Ref
+import io.peekandpoke.ultra.vault.Stored
 import kotlin.reflect.KType
 
 object VaultSlumberModule : SlumberModule {

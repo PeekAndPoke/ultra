@@ -1,1 +1,1 @@
-package de.peekandpoke.ultra.slumber
+package io.peekandpoke.ultra.slumber

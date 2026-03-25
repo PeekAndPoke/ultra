@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.security.jwt
+package io.peekandpoke.ultra.security.jwt
 
 import kotlinx.serialization.Serializable
 

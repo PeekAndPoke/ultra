@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.rest.codegen.dart
+package io.peekandpoke.funktor.rest.codegen.dart
 
-import de.peekandpoke.funktor.rest.codegen.dart.printer.DartCodePrinter
-import de.peekandpoke.ultra.common.ensureDirectory
+import io.peekandpoke.funktor.rest.codegen.dart.printer.DartCodePrinter
+import io.peekandpoke.ultra.common.ensureDirectory
 import java.io.File
 
 class DartProject(

@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.utils
+package io.peekandpoke.kraft.utils
 
 fun <T> List<T>.setAt(idx: Int, item: T): List<T> {
     return replaceAt(idx, item)

@@ -1,12 +1,12 @@
-package de.peekandpoke.ultra.kontainer.e2e
+package io.peekandpoke.ultra.kontainer.e2e
 
-import de.peekandpoke.ultra.kontainer.KontainerDslModule
-import de.peekandpoke.ultra.kontainer.KontainerModule
-import de.peekandpoke.ultra.kontainer.kontainer
-import de.peekandpoke.ultra.kontainer.module
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.kontainer.KontainerDslModule
+import io.peekandpoke.ultra.kontainer.KontainerModule
+import io.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.ultra.kontainer.module
 
 class ModulesSpec : StringSpec({
 

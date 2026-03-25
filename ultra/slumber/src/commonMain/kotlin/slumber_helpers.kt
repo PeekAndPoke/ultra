@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.slumber
+package io.peekandpoke.ultra.slumber
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.PolymorphicModuleBuilder

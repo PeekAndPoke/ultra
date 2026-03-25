@@ -1,8 +1,8 @@
 @file:Suppress("FunctionName")
 
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.TypeRef
 
 data class AqlFilterStatement(private val predicate: AqlExpression<Boolean>) : AqlStatement {
     override fun print(p: AqlPrinter) {

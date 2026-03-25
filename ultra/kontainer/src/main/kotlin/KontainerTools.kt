@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.kontainer
+package io.peekandpoke.ultra.kontainer
 
-import de.peekandpoke.ultra.common.maxLineLength
-import de.peekandpoke.ultra.kontainer.domain.DebugInfo
+import io.peekandpoke.ultra.common.maxLineLength
+import io.peekandpoke.ultra.kontainer.domain.DebugInfo
 
 class KontainerTools internal constructor(
     val kontainer: Kontainer,

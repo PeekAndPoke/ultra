@@ -1,13 +1,10 @@
-package de.peekandpoke.funktor.messaging.senders.sendgrid
+package io.peekandpoke.funktor.messaging.senders.sendgrid
 
 import com.sendgrid.helpers.mail.Mail
 import com.sendgrid.helpers.mail.objects.Attachments
 import com.sendgrid.helpers.mail.objects.Content
 import com.sendgrid.helpers.mail.objects.Email
 import com.sendgrid.helpers.mail.objects.Personalization
-import de.peekandpoke.funktor.messaging.EmailSender
-import de.peekandpoke.funktor.messaging.api.EmailBody
-import de.peekandpoke.funktor.messaging.api.EmailResult
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -15,8 +12,11 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
+import io.peekandpoke.funktor.messaging.EmailSender
+import io.peekandpoke.funktor.messaging.api.EmailBody
+import io.peekandpoke.funktor.messaging.api.EmailResult
 import kotlinx.io.IOException
-import de.peekandpoke.funktor.messaging.Email as LibEmail
+import io.peekandpoke.funktor.messaging.Email as LibEmail
 
 class SendgridSender(private val client: SendGridClientV3) : EmailSender {
 

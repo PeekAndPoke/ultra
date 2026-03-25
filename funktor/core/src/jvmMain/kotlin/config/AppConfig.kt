@@ -1,13 +1,13 @@
-package de.peekandpoke.funktor.core.config
+package io.peekandpoke.funktor.core.config
 
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
-import de.peekandpoke.funktor.core.config.funktor.FunktorConfig
-import de.peekandpoke.funktor.core.config.ktor.KtorConfig
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.awake
+import io.peekandpoke.funktor.core.config.funktor.FunktorConfig
+import io.peekandpoke.funktor.core.config.ktor.KtorConfig
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.awake
 import java.io.File
 
 /**

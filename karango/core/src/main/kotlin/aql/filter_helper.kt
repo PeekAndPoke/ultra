@@ -1,4 +1,4 @@
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
 fun anyOf(vararg exp: AqlExpression<Boolean>) = exp.toList().any
 

@@ -1,9 +1,9 @@
-package de.peekandpoke.funktor.cluster.backgroundjobs.domain
+package io.peekandpoke.funktor.cluster.backgroundjobs.domain
 
-import de.peekandpoke.ultra.datetime.MpInstant
-import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.slumber
-import de.peekandpoke.ultra.vault.Vault
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.slumber
+import io.peekandpoke.ultra.vault.Vault
 import kotlin.time.Duration
 
 @Vault

@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.semanticui.forms
+package io.peekandpoke.kraft.semanticui.forms
 
-import de.peekandpoke.kraft.utils.jsObject
+import io.peekandpoke.kraft.utils.jsObject
 import org.w3c.dom.events.InputEvent
 import org.w3c.dom.events.KeyboardEvent
 

@@ -1,1 +1,1 @@
-package de.peekandpoke.funktor.logging
+package io.peekandpoke.funktor.logging

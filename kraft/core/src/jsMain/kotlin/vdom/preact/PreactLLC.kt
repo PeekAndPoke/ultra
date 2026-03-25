@@ -1,12 +1,12 @@
 @file:Suppress("detekt:VariableNaming")
 
-package de.peekandpoke.kraft.vdom.preact
+package io.peekandpoke.kraft.vdom.preact
 
-import de.peekandpoke.kraft.utils.jsObject
-import de.peekandpoke.kraft.vdom.preact.PreactLLC.Companion.getLowLevelComponentCtor
+import io.peekandpoke.kraft.utils.jsObject
+import io.peekandpoke.kraft.vdom.preact.PreactLLC.Companion.getLowLevelComponentCtor
 import org.w3c.dom.HTMLElement
 import kotlin.reflect.KClass
-import de.peekandpoke.kraft.components.Component as KraftComponent
+import io.peekandpoke.kraft.components.Component as KraftComponent
 import preact.Component as PreactComponent
 
 /**

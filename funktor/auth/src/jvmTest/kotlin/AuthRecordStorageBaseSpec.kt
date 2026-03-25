@@ -1,14 +1,14 @@
-package de.peekandpoke.funktor.auth
+package io.peekandpoke.funktor.auth
 
-import de.peekandpoke.funktor.auth.domain.AuthRecord
-import de.peekandpoke.ultra.datetime.Kronos
-import de.peekandpoke.ultra.kontainer.Kontainer
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.kontainer.Kontainer
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds

@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.slumber.builtin.polymorphism
+package io.peekandpoke.ultra.slumber.builtin.polymorphism
 
-import de.peekandpoke.ultra.slumber.AdditionalSerialName
-import de.peekandpoke.ultra.slumber.Polymorphic
-import de.peekandpoke.ultra.slumber.indexedSubClasses
+import io.peekandpoke.ultra.slumber.AdditionalSerialName
+import io.peekandpoke.ultra.slumber.Polymorphic
+import io.peekandpoke.ultra.slumber.indexedSubClasses
 import kotlinx.serialization.SerialName
 import org.atteo.classindex.IndexSubclasses
 import kotlin.reflect.KClass

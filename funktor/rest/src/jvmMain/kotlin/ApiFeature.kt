@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.rest
+package io.peekandpoke.funktor.rest
 
 /**
  * Common interface for all Api features

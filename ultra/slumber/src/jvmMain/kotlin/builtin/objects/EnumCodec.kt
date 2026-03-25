@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.slumber.builtin.objects
+package io.peekandpoke.ultra.slumber.builtin.objects
 
-import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.Slumberer
+import io.peekandpoke.ultra.slumber.Awaker
+import io.peekandpoke.ultra.slumber.Slumberer
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 

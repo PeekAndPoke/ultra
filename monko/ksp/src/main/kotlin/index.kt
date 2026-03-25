@@ -1,1 +1,1 @@
-package de.peekandpoke.monko.ksp
+package io.peekandpoke.monko.ksp

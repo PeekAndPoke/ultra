@@ -1,7 +1,7 @@
-package de.peekandpoke.kraft.vdom.preact
+package io.peekandpoke.kraft.vdom.preact
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
 
 /**
  * Properties passed to [PreactLLCProps].

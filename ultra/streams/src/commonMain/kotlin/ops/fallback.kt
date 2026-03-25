@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.streams.ops
+package io.peekandpoke.ultra.streams.ops
 
-import de.peekandpoke.ultra.streams.Stream
+import io.peekandpoke.ultra.streams.Stream
 
 /**
  * Publishes the [fallback] whenever the value on the stream is null.

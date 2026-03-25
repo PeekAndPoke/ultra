@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.kontainer
+package io.peekandpoke.ultra.kontainer
 
 /** Base exception for all Kontainer errors */
 open class KontainerException(message: String) : Throwable(message)

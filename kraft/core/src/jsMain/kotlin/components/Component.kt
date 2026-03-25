@@ -1,14 +1,14 @@
-package de.peekandpoke.kraft.components
+package io.peekandpoke.kraft.components
 
-import de.peekandpoke.kraft.components.state.ComponentStateProperty
-import de.peekandpoke.kraft.components.state.ComponentStreamProperty
-import de.peekandpoke.kraft.utils.launch
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.kraft.vdom.VDomEngine
-import de.peekandpoke.ultra.common.MutableTypedAttributes
-import de.peekandpoke.ultra.streams.Stream
-import de.peekandpoke.ultra.streams.StreamSource
-import de.peekandpoke.ultra.streams.Unsubscribe
+import io.peekandpoke.kraft.components.state.ComponentStateProperty
+import io.peekandpoke.kraft.components.state.ComponentStreamProperty
+import io.peekandpoke.kraft.utils.launch
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.kraft.vdom.VDomEngine
+import io.peekandpoke.ultra.common.MutableTypedAttributes
+import io.peekandpoke.ultra.streams.Stream
+import io.peekandpoke.ultra.streams.StreamSource
+import io.peekandpoke.ultra.streams.Unsubscribe
 import kotlinx.coroutines.delay
 import org.w3c.dom.HTMLElement
 import kotlin.properties.ReadOnlyProperty

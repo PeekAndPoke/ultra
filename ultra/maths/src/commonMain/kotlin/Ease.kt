@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.maths
+package io.peekandpoke.ultra.maths
 
-import de.peekandpoke.ultra.datetime.Kronos
-import de.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.datetime.MpInstant
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.pow

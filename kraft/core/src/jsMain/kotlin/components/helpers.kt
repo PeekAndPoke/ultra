@@ -1,7 +1,7 @@
-package de.peekandpoke.kraft.components
+package io.peekandpoke.kraft.components
 
-import de.peekandpoke.kraft.KraftDsl
-import de.peekandpoke.kraft.vdom.VDomTagConsumer
+import io.peekandpoke.kraft.KraftDsl
+import io.peekandpoke.kraft.vdom.VDomTagConsumer
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 

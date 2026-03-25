@@ -163,11 +163,11 @@ Create `src/jsMain/resources/index.html`:
 Create `src/jsMain/kotlin/main.kt`:
 
 ```kotlin
-import de.peekandpoke.kraft.components.*
-import de.peekandpoke.kraft.routing.Static
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.kraft.vdom.preact.PreactVDomEngine
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.components.*
+import io.peekandpoke.kraft.routing.Static
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.kraft.vdom.preact.PreactVDomEngine
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.*
 
 // Define the app and its routes
@@ -191,9 +191,9 @@ fun main() {
 Create `src/jsMain/kotlin/HomePage.kt`:
 
 ```kotlin
-import de.peekandpoke.kraft.components.*
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.components.*
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.*
 
 // Factory function — this is how other components use yours

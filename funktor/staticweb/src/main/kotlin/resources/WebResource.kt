@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.staticweb.resources
+package io.peekandpoke.funktor.staticweb.resources
 
 /**
  * A single web resource

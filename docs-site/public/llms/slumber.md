@@ -104,7 +104,7 @@ Slumber requires **Kotlin reflection** (included transitively) and runs on the *
 ## 2. Create a codec
 
 ```kotlin
-import de.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.Codec
 
 // The default codec handles: primitives, data classes, enums, collections,
 // sealed classes, java.time.*, kotlinx.datetime.*, and MpDateTime types.
@@ -133,7 +133,7 @@ database driver.
 ## 4. Deserialize (awake)
 
 ```kotlin
-import de.peekandpoke.ultra.slumber.awake
+import io.peekandpoke.ultra.slumber.awake
 
 val input = mapOf(
     "name" to "Bob",
@@ -697,7 +697,7 @@ codec.slumber(dateTime)
 Ultra's own multiplatform datetime types follow the same format:
 
 ```kotlin
-import de.peekandpoke.ultra.common.datetime.*
+import io.peekandpoke.ultra.common.datetime.*
 
 val codec = Codec.default
 

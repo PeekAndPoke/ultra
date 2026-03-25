@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.cluster.workers.vault
+package io.peekandpoke.funktor.cluster.workers.vault
 
-import de.peekandpoke.funktor.cluster.workers.api.WorkerModel
-import de.peekandpoke.funktor.cluster.workers.domain.WorkerRun
-import de.peekandpoke.ultra.vault.Vault
+import io.peekandpoke.funktor.cluster.workers.api.WorkerModel
+import io.peekandpoke.funktor.cluster.workers.domain.WorkerRun
+import io.peekandpoke.ultra.vault.Vault
 
 @Vault
 data class VaultWorkerRun(

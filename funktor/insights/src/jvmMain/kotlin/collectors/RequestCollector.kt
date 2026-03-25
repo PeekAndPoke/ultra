@@ -1,14 +1,14 @@
-package de.peekandpoke.funktor.insights.collectors
+package io.peekandpoke.funktor.insights.collectors
 
-import de.peekandpoke.funktor.insights.InsightsCollector
-import de.peekandpoke.funktor.insights.InsightsCollectorData
-import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
-import de.peekandpoke.ultra.semanticui.icon
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.util.*
+import io.peekandpoke.funktor.insights.InsightsCollector
+import io.peekandpoke.funktor.insights.InsightsCollectorData
+import io.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
+import io.peekandpoke.ultra.semanticui.icon
 
 class RequestCollector : InsightsCollector {
 

@@ -1,14 +1,14 @@
-package de.peekandpoke.funktor.cluster
+package io.peekandpoke.funktor.cluster
 
-import de.peekandpoke.funktor.cluster.backgroundjobs.api.BackgroundJobsApi
-import de.peekandpoke.funktor.cluster.depot.api.DepotApi
-import de.peekandpoke.funktor.cluster.locks.api.GlobalLocksApi
-import de.peekandpoke.funktor.cluster.storage.api.RandomCacheStorageApi
-import de.peekandpoke.funktor.cluster.storage.api.RandomDataStorageApi
-import de.peekandpoke.funktor.cluster.vault.api.VaultApi
-import de.peekandpoke.funktor.cluster.workers.api.WorkersApi
-import de.peekandpoke.funktor.core.broker.OutgoingConverter
-import de.peekandpoke.funktor.rest.ApiFeature
+import io.peekandpoke.funktor.cluster.backgroundjobs.api.BackgroundJobsApi
+import io.peekandpoke.funktor.cluster.depot.api.DepotApi
+import io.peekandpoke.funktor.cluster.locks.api.GlobalLocksApi
+import io.peekandpoke.funktor.cluster.storage.api.RandomCacheStorageApi
+import io.peekandpoke.funktor.cluster.storage.api.RandomDataStorageApi
+import io.peekandpoke.funktor.cluster.vault.api.VaultApi
+import io.peekandpoke.funktor.cluster.workers.api.WorkersApi
+import io.peekandpoke.funktor.core.broker.OutgoingConverter
+import io.peekandpoke.funktor.rest.ApiFeature
 
 /**
  * Api feature for UpNext

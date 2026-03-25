@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.auth
+package io.peekandpoke.funktor.auth
 
-import de.peekandpoke.kraft.routing.Route2
-import de.peekandpoke.kraft.routing.Static
+import io.peekandpoke.kraft.routing.Route2
+import io.peekandpoke.kraft.routing.Static
 
 class AuthFrontendRoutes(mountPoint: String = DEFAULT_MOUNT_POINT) {
 

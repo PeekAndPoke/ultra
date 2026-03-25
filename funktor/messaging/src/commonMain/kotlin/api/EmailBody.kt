@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.messaging.api
+package io.peekandpoke.funktor.messaging.api
 
 import kotlinx.html.HTML
 import kotlinx.html.html

@@ -1,10 +1,10 @@
-package de.peekandpoke.mutator.ksp.builtin
+package io.peekandpoke.mutator.ksp.builtin
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSDeclaration
-import de.peekandpoke.mutator.ksp.MutatorKspPlugin
-import de.peekandpoke.mutator.ksp.MutatorKspProcessor
-import de.peekandpoke.mutator.ksp.isPrimitiveOrString
+import io.peekandpoke.mutator.ksp.MutatorKspPlugin
+import io.peekandpoke.mutator.ksp.MutatorKspProcessor
+import io.peekandpoke.mutator.ksp.isPrimitiveOrString
 
 class BuiltInPlatformTypesVetoingPlugin : MutatorKspPlugin {
     companion object {

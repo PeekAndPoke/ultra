@@ -1,15 +1,15 @@
-package de.peekandpoke.ultra.slumber.builtin.objects
+package io.peekandpoke.ultra.slumber.builtin.objects
 
-import de.peekandpoke.ultra.common.TypedAttributes
-import de.peekandpoke.ultra.common.TypedKey
-import de.peekandpoke.ultra.cache.Cache
-import de.peekandpoke.ultra.cache.FastCache
-import de.peekandpoke.ultra.reflection.ReifiedKType
-import de.peekandpoke.ultra.reflection.hasAnyAnnotationOnPropertyDefinedOnSuperTypes
-import de.peekandpoke.ultra.reflection.hasAnyAnnotationRecursive
-import de.peekandpoke.ultra.slumber.Slumber
-import de.peekandpoke.ultra.slumber.SlumberConfig
-import de.peekandpoke.ultra.slumber.Slumberer
+import io.peekandpoke.ultra.cache.Cache
+import io.peekandpoke.ultra.cache.FastCache
+import io.peekandpoke.ultra.common.TypedAttributes
+import io.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.ultra.reflection.ReifiedKType
+import io.peekandpoke.ultra.reflection.hasAnyAnnotationOnPropertyDefinedOnSuperTypes
+import io.peekandpoke.ultra.reflection.hasAnyAnnotationRecursive
+import io.peekandpoke.ultra.slumber.Slumber
+import io.peekandpoke.ultra.slumber.SlumberConfig
+import io.peekandpoke.ultra.slumber.Slumberer
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.jvm.isAccessible

@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.core.lifecycle
+package io.peekandpoke.funktor.core.lifecycle
 
-import de.peekandpoke.ultra.kontainer.Kontainer
 import io.ktor.server.application.*
+import io.peekandpoke.ultra.kontainer.Kontainer
 
 private val appRegistry = mutableMapOf<Application, AppLifeCycle>()
 

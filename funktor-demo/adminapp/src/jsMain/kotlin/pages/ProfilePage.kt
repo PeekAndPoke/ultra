@@ -1,14 +1,14 @@
-package de.peekandpoke.funktor.demo.adminapp.pages
+package io.peekandpoke.funktor.demo.adminapp.pages
 
-import de.peekandpoke.funktor.auth.widgets.ChangePasswordWidget
-import de.peekandpoke.funktor.demo.adminapp.State
-import de.peekandpoke.kraft.components.NoProps
-import de.peekandpoke.kraft.components.PureComponent
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.toasts.ToastsManager.Companion.toasts
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.semanticui.noui
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.funktor.auth.widgets.ChangePasswordWidget
+import io.peekandpoke.funktor.demo.adminapp.State
+import io.peekandpoke.kraft.components.NoProps
+import io.peekandpoke.kraft.components.PureComponent
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.toasts.ToastsManager.Companion.toasts
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.semanticui.noui
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.Tag
 
 @Suppress("FunctionName")

@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.slumber
+package io.peekandpoke.ultra.slumber
 
 /**
  * Provides an additional serial name alias for polymorphic type discrimination.

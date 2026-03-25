@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.auth.model
+package io.peekandpoke.funktor.auth.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

@@ -1,6 +1,6 @@
-package de.peekandpoke.ultra.vault
+package io.peekandpoke.ultra.vault
 
-import de.peekandpoke.ultra.slumber.Slumber
+import io.peekandpoke.ultra.slumber.Slumber
 import kotlin.annotation.AnnotationTarget.*
 
 @Target(CLASS)

@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.common
+package io.peekandpoke.ultra.common
 
 import kotlin.math.pow
 import kotlin.math.roundToLong

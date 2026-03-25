@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.rest.codegen
+package io.peekandpoke.funktor.rest.codegen
 
 import kotlin.reflect.KClass
 

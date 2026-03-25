@@ -1,9 +1,9 @@
-package de.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.code
+package io.peekandpoke.kraft.examples.fomanticui.pages.howto.kraft.code
 
 // <CodeBlock code>
-import de.peekandpoke.kraft.components.component
-import de.peekandpoke.kraft.components.value
-import de.peekandpoke.ultra.html.onClick
+import io.peekandpoke.kraft.components.component
+import io.peekandpoke.kraft.components.value
+import io.peekandpoke.ultra.html.onClick
 import kotlinx.html.button
 import kotlinx.html.div
 

@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.datetime
+package io.peekandpoke.ultra.datetime
 
 internal fun <T> T.recurse(getParent: T.() -> T?): List<T> {
 

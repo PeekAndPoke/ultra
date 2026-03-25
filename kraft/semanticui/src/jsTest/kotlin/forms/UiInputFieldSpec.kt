@@ -1,10 +1,10 @@
-package de.peekandpoke.kraft.semanticui.forms
+package io.peekandpoke.kraft.semanticui.forms
 
-import de.peekandpoke.kraft.components.ComponentRef
-import de.peekandpoke.kraft.testing.TestBed
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.kraft.components.ComponentRef
+import io.peekandpoke.kraft.testing.TestBed
 
 class UiInputFieldSpec : StringSpec({
 

@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.reflection
+package io.peekandpoke.ultra.reflection
 
-import de.peekandpoke.ultra.common.prepend
-import de.peekandpoke.ultra.reflection.ChildFinder.Companion.find
+import io.peekandpoke.ultra.common.prepend
+import io.peekandpoke.ultra.reflection.ChildFinder.Companion.find
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible

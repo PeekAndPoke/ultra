@@ -1,12 +1,12 @@
-package de.peekandpoke.kraft.examples.fomanticui
+package io.peekandpoke.kraft.examples.fomanticui
 
-import de.peekandpoke.kraft.components.NoProps
-import de.peekandpoke.kraft.components.PureComponent
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.routing.href
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.semanticui.noui
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.components.NoProps
+import io.peekandpoke.kraft.components.PureComponent
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.routing.href
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.semanticui.noui
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 import kotlinx.html.a

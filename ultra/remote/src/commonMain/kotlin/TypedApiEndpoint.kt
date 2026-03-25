@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.remote
+package io.peekandpoke.ultra.remote
 
-import de.peekandpoke.ultra.common.TypedAttributes
-import de.peekandpoke.ultra.common.TypedKey
-import de.peekandpoke.ultra.model.EmptyObject
 import io.ktor.client.plugins.sse.*
+import io.peekandpoke.ultra.common.TypedAttributes
+import io.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.ultra.model.EmptyObject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.KSerializer
 

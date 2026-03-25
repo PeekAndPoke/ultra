@@ -1,8 +1,8 @@
 @file:Suppress("Detekt:TooManyFunctions", "detekt:LongParameterList")
 
-package de.peekandpoke.ultra.kontainer
+package io.peekandpoke.ultra.kontainer
 
-import de.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.reflection.kType
 import kotlin.reflect.KClass
 
 class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit) {

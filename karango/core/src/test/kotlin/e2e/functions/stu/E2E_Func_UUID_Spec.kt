@@ -1,13 +1,13 @@
-package de.peekandpoke.karango.e2e.functions.stu
+package io.peekandpoke.karango.e2e.functions.stu
 
-import de.peekandpoke.karango.aql.LET
-import de.peekandpoke.karango.aql.RETURN
-import de.peekandpoke.karango.aql.UUID
-import de.peekandpoke.karango.e2e.karangoDriver
-import de.peekandpoke.karango.e2e.withDetailedClue
-import de.peekandpoke.ultra.common.tuple
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.string.shouldMatch
+import io.peekandpoke.karango.aql.LET
+import io.peekandpoke.karango.aql.RETURN
+import io.peekandpoke.karango.aql.UUID
+import io.peekandpoke.karango.e2e.karangoDriver
+import io.peekandpoke.karango.e2e.withDetailedClue
+import io.peekandpoke.ultra.common.tuple
 
 @Suppress("ClassName")
 class E2E_Func_UUID_Spec : StringSpec({

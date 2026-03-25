@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.routing
+package io.peekandpoke.kraft.routing
 
-import de.peekandpoke.ultra.html.renderFn
+import io.peekandpoke.ultra.html.renderFn
 import kotlinx.html.FlowContent
 
 /**

@@ -1,14 +1,14 @@
-package de.peekandpoke.kraft.forms.validation.comparable
+package io.peekandpoke.kraft.forms.validation.comparable
 
-import de.peekandpoke.kraft.forms.KraftFormsRuleDsl
-import de.peekandpoke.kraft.forms.validation.GenericRule
+import io.peekandpoke.kraft.forms.KraftFormsRuleDsl
+import io.peekandpoke.kraft.forms.validation.GenericRule
 
 @KraftFormsRuleDsl
 fun <T : Comparable<T>> inRange(
     from: T,
     to: T,
     message: (T) -> String,
-): de.peekandpoke.kraft.forms.validation.Rule<T> = GenericRule(
+): io.peekandpoke.kraft.forms.validation.Rule<T> = GenericRule(
     messageFn = message,
     checkFn = { it in from..to },
 )
@@ -17,7 +17,7 @@ fun <T : Comparable<T>> inRange(
 fun <T : Comparable<T>> greaterThan(
     value: T,
     message: (T) -> String,
-): de.peekandpoke.kraft.forms.validation.Rule<T> = GenericRule(
+): io.peekandpoke.kraft.forms.validation.Rule<T> = GenericRule(
     messageFn = message,
     checkFn = { it > value },
 )
@@ -26,7 +26,7 @@ fun <T : Comparable<T>> greaterThan(
 fun <T : Comparable<T>> greaterThanOrEqual(
     value: T,
     message: (T) -> String,
-): de.peekandpoke.kraft.forms.validation.Rule<T> = GenericRule(
+): io.peekandpoke.kraft.forms.validation.Rule<T> = GenericRule(
     messageFn = message,
     checkFn = { it >= value }
 )
@@ -35,7 +35,7 @@ fun <T : Comparable<T>> greaterThanOrEqual(
 fun <T : Comparable<T>> lessThan(
     value: T,
     message: (T) -> String,
-): de.peekandpoke.kraft.forms.validation.Rule<T> = GenericRule(
+): io.peekandpoke.kraft.forms.validation.Rule<T> = GenericRule(
     messageFn = message,
     checkFn = { it < value }
 )
@@ -44,7 +44,7 @@ fun <T : Comparable<T>> lessThan(
 fun <T : Comparable<T>> lessThanOrEqual(
     value: T,
     message: (T) -> String,
-): de.peekandpoke.kraft.forms.validation.Rule<T> = GenericRule(
+): io.peekandpoke.kraft.forms.validation.Rule<T> = GenericRule(
     messageFn = message,
     checkFn = { it <= value }
 )

@@ -1,9 +1,9 @@
-package de.peekandpoke.kraft.forms
+package io.peekandpoke.kraft.forms
 
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.forms.validation.Rule
-import de.peekandpoke.kraft.messages.sendMessage
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.forms.validation.Rule
+import io.peekandpoke.kraft.messages.sendMessage
 
 abstract class FormFieldComponent<T, P : FormFieldComponent.Props<T>>(
     ctx: Ctx<P>,

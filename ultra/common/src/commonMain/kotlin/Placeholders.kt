@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.common
+package io.peekandpoke.ultra.common
 
 /**
  * Defines a system for replacing placeholders in text with dynamic values.

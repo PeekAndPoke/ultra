@@ -1,12 +1,12 @@
-package de.peekandpoke.funktor.messaging.storage
+package io.peekandpoke.funktor.messaging.storage
 
-import de.peekandpoke.funktor.messaging.api.EmailAttachment
-import de.peekandpoke.funktor.messaging.api.EmailResult
-import de.peekandpoke.funktor.messaging.api.SentMessageModel
-import de.peekandpoke.ultra.datetime.MpInstant
-import de.peekandpoke.ultra.vault.Stored
-import de.peekandpoke.ultra.vault.Vault
-import de.peekandpoke.ultra.vault.hooks.Timestamped
+import io.peekandpoke.funktor.messaging.api.EmailAttachment
+import io.peekandpoke.funktor.messaging.api.EmailResult
+import io.peekandpoke.funktor.messaging.api.SentMessageModel
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.Vault
+import io.peekandpoke.ultra.vault.hooks.Timestamped
 
 @Vault
 data class SentMessage(

@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.cluster.vault
+package io.peekandpoke.funktor.cluster.vault
 
-import de.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
-import de.peekandpoke.ultra.vault.Database
 import io.ktor.server.application.*
+import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
+import io.peekandpoke.ultra.vault.Database
 
 class EnsureRepositoriesOnAppStarting(
     private val database: Database,

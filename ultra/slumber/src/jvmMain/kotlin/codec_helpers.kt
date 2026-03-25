@@ -1,8 +1,8 @@
-package de.peekandpoke.ultra.slumber
+package io.peekandpoke.ultra.slumber
 
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.slumber.Codec.Companion.createType
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.slumber.Codec.Companion.createType
 import kotlin.reflect.KClass
 
 /** Returns the [Awaker] for the type represented by [type]. */

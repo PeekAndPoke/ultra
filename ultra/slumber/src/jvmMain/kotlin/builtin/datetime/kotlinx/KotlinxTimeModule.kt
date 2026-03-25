@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.slumber.builtin.datetime.kotlinx
+package io.peekandpoke.ultra.slumber.builtin.datetime.kotlinx
 
-import de.peekandpoke.ultra.common.TypedAttributes
-import de.peekandpoke.ultra.slumber.Awaker
-import de.peekandpoke.ultra.slumber.SlumberModule
-import de.peekandpoke.ultra.slumber.Slumberer
+import io.peekandpoke.ultra.common.TypedAttributes
+import io.peekandpoke.ultra.slumber.Awaker
+import io.peekandpoke.ultra.slumber.SlumberModule
+import io.peekandpoke.ultra.slumber.Slumberer
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlin.reflect.KType

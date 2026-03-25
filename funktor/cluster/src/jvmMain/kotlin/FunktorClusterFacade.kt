@@ -1,12 +1,12 @@
-package de.peekandpoke.funktor.cluster
+package io.peekandpoke.funktor.cluster
 
-import de.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
-import de.peekandpoke.funktor.cluster.depot.DepotFacade
-import de.peekandpoke.funktor.cluster.locks.GlobalServerId
-import de.peekandpoke.funktor.cluster.locks.GlobalServerList
-import de.peekandpoke.funktor.cluster.locks.LocksFacade
-import de.peekandpoke.funktor.cluster.storage.StorageFacade
-import de.peekandpoke.funktor.cluster.workers.WorkersFacade
+import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
+import io.peekandpoke.funktor.cluster.depot.DepotFacade
+import io.peekandpoke.funktor.cluster.locks.GlobalServerId
+import io.peekandpoke.funktor.cluster.locks.GlobalServerList
+import io.peekandpoke.funktor.cluster.locks.LocksFacade
+import io.peekandpoke.funktor.cluster.storage.StorageFacade
+import io.peekandpoke.funktor.cluster.workers.WorkersFacade
 
 class FunktorClusterFacade(
     serverId: Lazy<GlobalServerId>,

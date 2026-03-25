@@ -1,9 +1,8 @@
-package de.peekandpoke.ultra.datetime
-
-import de.peekandpoke.ultra.common.tuple
+package io.peekandpoke.ultra.datetime
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.common.tuple
 import kotlin.time.Duration.Companion.minutes
 
 @Suppress("unused")

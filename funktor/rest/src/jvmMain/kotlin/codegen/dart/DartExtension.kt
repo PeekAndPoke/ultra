@@ -1,9 +1,9 @@
-package de.peekandpoke.funktor.rest.codegen.dart
+package io.peekandpoke.funktor.rest.codegen.dart
 
-import de.peekandpoke.funktor.rest.codegen.CodeGenDsl
-import de.peekandpoke.funktor.rest.codegen.Tags
-import de.peekandpoke.funktor.rest.codegen.dart.printer.DartCodePrinter
-import de.peekandpoke.funktor.rest.codegen.dart.printer.appendDocBlock
+import io.peekandpoke.funktor.rest.codegen.CodeGenDsl
+import io.peekandpoke.funktor.rest.codegen.Tags
+import io.peekandpoke.funktor.rest.codegen.dart.printer.DartCodePrinter
+import io.peekandpoke.funktor.rest.codegen.dart.printer.appendDocBlock
 
 class DartExtension(
     override val tags: Tags,

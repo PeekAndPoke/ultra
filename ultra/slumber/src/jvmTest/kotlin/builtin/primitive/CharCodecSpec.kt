@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.slumber.builtin.primitive
+package io.peekandpoke.ultra.slumber.builtin.primitive
 
-import de.peekandpoke.ultra.common.tuple
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
-import de.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
+import io.peekandpoke.ultra.common.tuple
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
+import io.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
 
 class CharAwakerSpec : AwakerSpecHelper(
     type = TypeRef.Char, nonNullSamples = nonNull, nullableSamples = nullable

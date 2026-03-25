@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.security.csrf
+package io.peekandpoke.ultra.security.csrf
 
-import de.peekandpoke.ultra.common.fromBase64
-import de.peekandpoke.ultra.common.sha384
-import de.peekandpoke.ultra.common.toBase64
-import de.peekandpoke.ultra.security.user.UserProvider
+import io.peekandpoke.ultra.common.fromBase64
+import io.peekandpoke.ultra.common.sha384
+import io.peekandpoke.ultra.common.toBase64
+import io.peekandpoke.ultra.security.user.UserProvider
 
 class StatelessCsrfProtection(
     private val csrfSecret: String,

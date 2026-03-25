@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.utils
+package io.peekandpoke.kraft.utils
 
 import kotlinx.browser.document
 import org.w3c.dom.DOMRect

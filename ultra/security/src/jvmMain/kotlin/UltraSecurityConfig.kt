@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.security
+package io.peekandpoke.ultra.security
 
 data class UltraSecurityConfig(
     // TODO: [Issue][https://github.com/PeekAndPoke/ultra/issues/4]

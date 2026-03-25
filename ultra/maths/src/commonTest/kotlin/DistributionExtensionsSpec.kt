@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.maths.stochastic
+package io.peekandpoke.ultra.maths.stochastic
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue

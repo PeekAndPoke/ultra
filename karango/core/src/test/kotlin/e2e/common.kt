@@ -1,23 +1,23 @@
-package de.peekandpoke.karango.e2e
+package io.peekandpoke.karango.e2e
 
 import com.arangodb.ArangoDatabaseAsync
-import de.peekandpoke.karango.aql.AqlExpression
-import de.peekandpoke.karango.aql.AqlPrinter.Companion.print
-import de.peekandpoke.karango.config.ArangoDbConfig
-import de.peekandpoke.karango.slumber.KarangoCodec
-import de.peekandpoke.karango.testdomain.TestPersonsRepository
-import de.peekandpoke.karango.testdomain.TestTimestampedRepository
-import de.peekandpoke.karango.toArangoDb
-import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ultra.common.surround
-import de.peekandpoke.ultra.datetime.Kronos
-import de.peekandpoke.ultra.slumber.SlumberConfig
-import de.peekandpoke.ultra.vault.Database
-import de.peekandpoke.ultra.vault.DefaultEntityCache
-import de.peekandpoke.ultra.vault.Repository
-import de.peekandpoke.ultra.vault.hooks.TimestampedHook
-import de.peekandpoke.ultra.vault.slumber.VaultSlumberModule
 import io.kotest.assertions.withClue
+import io.peekandpoke.karango.aql.AqlExpression
+import io.peekandpoke.karango.aql.AqlPrinter.Companion.print
+import io.peekandpoke.karango.config.ArangoDbConfig
+import io.peekandpoke.karango.slumber.KarangoCodec
+import io.peekandpoke.karango.testdomain.TestPersonsRepository
+import io.peekandpoke.karango.testdomain.TestTimestampedRepository
+import io.peekandpoke.karango.toArangoDb
+import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.ultra.common.surround
+import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.slumber.SlumberConfig
+import io.peekandpoke.ultra.vault.Database
+import io.peekandpoke.ultra.vault.DefaultEntityCache
+import io.peekandpoke.ultra.vault.Repository
+import io.peekandpoke.ultra.vault.hooks.TimestampedHook
+import io.peekandpoke.ultra.vault.slumber.VaultSlumberModule
 import kotlinx.coroutines.runBlocking
 
 private val arangoConfig: ArangoDbConfig = ArangoDbConfig.forUnitTests

@@ -1,13 +1,13 @@
-package de.peekandpoke.funktor.cluster.locks
+package io.peekandpoke.funktor.cluster.locks
 
-import de.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.vault.Cursor
-import de.peekandpoke.ultra.vault.New
-import de.peekandpoke.ultra.vault.RemoveResult
-import de.peekandpoke.ultra.vault.Repository
-import de.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.vault.Cursor
+import io.peekandpoke.ultra.vault.New
+import io.peekandpoke.ultra.vault.RemoveResult
+import io.peekandpoke.ultra.vault.Repository
+import io.peekandpoke.ultra.vault.Stored
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 class VaultGlobalLockProviderSpec : GlobalLockProviderSpecBase() {

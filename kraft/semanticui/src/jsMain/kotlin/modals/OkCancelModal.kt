@@ -1,14 +1,14 @@
-package de.peekandpoke.kraft.semanticui.modals
+package io.peekandpoke.kraft.semanticui.modals
 
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.modals.ModalsManager
-import de.peekandpoke.ultra.html.RenderFn
-import de.peekandpoke.ultra.html.debugId
-import de.peekandpoke.ultra.html.onClick
-import de.peekandpoke.ultra.semanticui.SemanticTag
-import de.peekandpoke.ultra.semanticui.noui
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.modals.ModalsManager
+import io.peekandpoke.ultra.html.RenderFn
+import io.peekandpoke.ultra.html.debugId
+import io.peekandpoke.ultra.html.onClick
+import io.peekandpoke.ultra.semanticui.SemanticTag
+import io.peekandpoke.ultra.semanticui.noui
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 

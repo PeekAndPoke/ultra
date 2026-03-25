@@ -1,11 +1,11 @@
 @file:Suppress("PrivatePropertyName", "detekt:ConstructorParameterNaming")
 
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.reflection.unList
-import de.peekandpoke.ultra.vault.lang.Expression
-import de.peekandpoke.ultra.vault.lang.VaultTypeConversionMarker
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.unList
+import io.peekandpoke.ultra.vault.lang.Expression
+import io.peekandpoke.ultra.vault.lang.VaultTypeConversionMarker
 
 /**
  * Base for all AQL expressions

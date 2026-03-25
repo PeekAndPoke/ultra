@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.core.repair
+package io.peekandpoke.funktor.core.repair
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context

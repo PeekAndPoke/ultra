@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.addons.styling
+package io.peekandpoke.kraft.addons.styling
 
 import kotlinx.browser.document
 import kotlin.random.Random

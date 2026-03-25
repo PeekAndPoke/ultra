@@ -1,4 +1,4 @@
-package de.peekandpoke.funktor.messaging
+package io.peekandpoke.funktor.messaging
 
 data class MailingDevConfig(
     val disableEmails: Boolean = false,

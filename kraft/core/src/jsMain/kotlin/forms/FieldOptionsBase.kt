@@ -1,10 +1,10 @@
-package de.peekandpoke.kraft.forms
+package io.peekandpoke.kraft.forms
 
-import de.peekandpoke.kraft.forms.validation.Rule
-import de.peekandpoke.kraft.utils.ResponsiveController
-import de.peekandpoke.ultra.common.MutableTypedAttributes
-import de.peekandpoke.ultra.common.TypedKey
-import de.peekandpoke.ultra.html.RenderFunc
+import io.peekandpoke.kraft.forms.validation.Rule
+import io.peekandpoke.kraft.utils.ResponsiveController
+import io.peekandpoke.ultra.common.MutableTypedAttributes
+import io.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.ultra.html.RenderFunc
 import kotlinx.html.InputType
 import kotlinx.html.LABEL
 import kotlinx.html.TEXTAREA

@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.vault.profiling
+package io.peekandpoke.ultra.vault.profiling
 
 class DefaultQueryProfiler(
     override val explainQueries: Boolean,

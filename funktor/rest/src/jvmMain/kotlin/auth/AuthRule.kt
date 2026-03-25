@@ -1,15 +1,15 @@
-package de.peekandpoke.funktor.rest.auth
+package io.peekandpoke.funktor.rest.auth
 
-import de.peekandpoke.funktor.core.kontainer
-import de.peekandpoke.funktor.rest.auth.AuthRule.CheckCtx
-import de.peekandpoke.funktor.rest.auth.AuthRule.EstimateCtx
-import de.peekandpoke.ultra.kontainer.KontainerAware
-import de.peekandpoke.ultra.remote.ApiAccessLevel
-import de.peekandpoke.ultra.security.user.User
-import de.peekandpoke.ultra.security.user.UserPermissions
-import de.peekandpoke.ultra.security.user.UserProvider
-import de.peekandpoke.ultra.security.user.UserRecord
 import io.ktor.server.application.*
+import io.peekandpoke.funktor.core.kontainer
+import io.peekandpoke.funktor.rest.auth.AuthRule.CheckCtx
+import io.peekandpoke.funktor.rest.auth.AuthRule.EstimateCtx
+import io.peekandpoke.ultra.kontainer.KontainerAware
+import io.peekandpoke.ultra.remote.ApiAccessLevel
+import io.peekandpoke.ultra.security.user.User
+import io.peekandpoke.ultra.security.user.UserPermissions
+import io.peekandpoke.ultra.security.user.UserProvider
+import io.peekandpoke.ultra.security.user.UserRecord
 
 /**
  * Definition for all auth rules.

@@ -1,10 +1,10 @@
-package de.peekandpoke.funktor.core
+package io.peekandpoke.funktor.core
 
-import de.peekandpoke.funktor.core.config.AppConfig
-import de.peekandpoke.ultra.kontainer.Kontainer
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import io.ktor.util.*
+import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.ultra.kontainer.Kontainer
 
 val AppKey = AttributeKey<App<*>>("app")
 

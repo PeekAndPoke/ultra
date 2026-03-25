@@ -1,9 +1,9 @@
-package de.peekandpoke.funktor.core.broker
+package io.peekandpoke.funktor.core.broker
 
-import de.peekandpoke.ultra.reflection.TypeRef
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.reflection.TypeRef
 import kotlin.reflect.KType
 
 class OutgoingConverterSpec : StringSpec({

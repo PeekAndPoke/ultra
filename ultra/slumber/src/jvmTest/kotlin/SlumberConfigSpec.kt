@@ -1,16 +1,16 @@
-package de.peekandpoke.ultra.slumber
+package io.peekandpoke.ultra.slumber
 
-import de.peekandpoke.ultra.common.TypedAttributes
-import de.peekandpoke.ultra.common.TypedKey
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.slumber.builtin.BuiltInModule
-import de.peekandpoke.ultra.slumber.builtin.datetime.javatime.JavaTimeModule
-import de.peekandpoke.ultra.slumber.builtin.datetime.kotlinx.KotlinxTimeModule
-import de.peekandpoke.ultra.slumber.builtin.datetime.mp.MpDateTimeModule
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
+import io.peekandpoke.ultra.common.TypedAttributes
+import io.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.slumber.builtin.BuiltInModule
+import io.peekandpoke.ultra.slumber.builtin.datetime.javatime.JavaTimeModule
+import io.peekandpoke.ultra.slumber.builtin.datetime.kotlinx.KotlinxTimeModule
+import io.peekandpoke.ultra.slumber.builtin.datetime.mp.MpDateTimeModule
 
 class SlumberConfigSpec : StringSpec({
 

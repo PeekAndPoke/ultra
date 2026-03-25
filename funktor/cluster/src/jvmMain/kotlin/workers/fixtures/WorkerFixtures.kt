@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.cluster.workers.fixtures
+package io.peekandpoke.funktor.cluster.workers.fixtures
 
-import de.peekandpoke.funktor.cluster.workers.services.WorkerHistory
-import de.peekandpoke.funktor.cluster.workers.services.WorkerTracker
-import de.peekandpoke.funktor.core.fixtures.FixtureLoader
+import io.peekandpoke.funktor.cluster.workers.services.WorkerHistory
+import io.peekandpoke.funktor.cluster.workers.services.WorkerTracker
+import io.peekandpoke.funktor.core.fixtures.FixtureLoader
 
 class WorkerFixtures(
     private val history: WorkerHistory,

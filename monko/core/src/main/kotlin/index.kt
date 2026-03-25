@@ -1,13 +1,13 @@
-package de.peekandpoke.monko
+package io.peekandpoke.monko
 
 import com.mongodb.kotlin.client.coroutine.MongoClient
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
-import de.peekandpoke.ultra.kontainer.module
-import de.peekandpoke.ultra.slumber.SlumberConfig
-import de.peekandpoke.ultra.vault.Database
-import de.peekandpoke.ultra.vault.EntityCache
-import de.peekandpoke.ultra.vault.slumber.VaultSlumberModule
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.module
+import io.peekandpoke.ultra.slumber.SlumberConfig
+import io.peekandpoke.ultra.vault.Database
+import io.peekandpoke.ultra.vault.EntityCache
+import io.peekandpoke.ultra.vault.slumber.VaultSlumberModule
 
 fun KontainerBuilder.monko(config: MongoDbConfig) = module(MonkoModule, config)
 

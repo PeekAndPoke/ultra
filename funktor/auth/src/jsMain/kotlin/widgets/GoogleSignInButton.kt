@@ -1,12 +1,12 @@
-package de.peekandpoke.funktor.auth.widgets
+package io.peekandpoke.funktor.auth.widgets
 
 import com.benasher44.uuid.uuid4
-import de.peekandpoke.kraft.components.Component
-import de.peekandpoke.kraft.components.Ctx
-import de.peekandpoke.kraft.components.comp
-import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.html.data
-import de.peekandpoke.ultra.semanticui.noui
+import io.peekandpoke.kraft.components.Component
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.data
+import io.peekandpoke.ultra.semanticui.noui
 import kotlinx.browser.window
 import kotlinx.html.Tag
 import kotlinx.html.classes

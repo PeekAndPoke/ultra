@@ -1,4 +1,4 @@
-package de.peekandpoke.ultra.datetime.kotlinx
+package io.peekandpoke.ultra.datetime.kotlinx
 
 @JsModule("@js-joda/timezone")
 @JsNonModule

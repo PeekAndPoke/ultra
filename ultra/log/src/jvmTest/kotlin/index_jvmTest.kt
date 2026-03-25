@@ -1,1 +1,1 @@
-package de.peekandpoke.ultra.log
+package io.peekandpoke.ultra.log

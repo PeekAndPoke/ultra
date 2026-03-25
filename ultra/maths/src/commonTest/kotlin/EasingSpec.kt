@@ -1,13 +1,13 @@
-package de.peekandpoke.ultra.maths
+package io.peekandpoke.ultra.maths
 
-import de.peekandpoke.ultra.datetime.Kronos
-import de.peekandpoke.ultra.maths.Ease.bindFromTo
-import de.peekandpoke.ultra.maths.Ease.timed
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.maths.Ease.bindFromTo
+import io.peekandpoke.ultra.maths.Ease.timed
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 

@@ -1,9 +1,9 @@
-package de.peekandpoke.kraft.toasts
+package io.peekandpoke.kraft.toasts
 
-import de.peekandpoke.kraft.KraftApp
-import de.peekandpoke.kraft.KraftDsl
-import de.peekandpoke.ultra.common.safeEnumOrNull
-import de.peekandpoke.ultra.model.Message
+import io.peekandpoke.kraft.KraftApp
+import io.peekandpoke.kraft.KraftDsl
+import io.peekandpoke.ultra.common.safeEnumOrNull
+import io.peekandpoke.ultra.model.Message
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds

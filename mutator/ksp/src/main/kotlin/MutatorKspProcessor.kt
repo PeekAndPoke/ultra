@@ -1,4 +1,4 @@
-package de.peekandpoke.mutator.ksp
+package io.peekandpoke.mutator.ksp
 
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
@@ -10,10 +10,10 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSTypeArgument
-import de.peekandpoke.mutator.Mutable
-import de.peekandpoke.mutator.NotMutable
-import de.peekandpoke.mutator.ksp.builtin.BuiltInMutableObjectsPlugin
-import de.peekandpoke.mutator.ksp.builtin.BuiltInPlatformTypesVetoingPlugin
+import io.peekandpoke.mutator.Mutable
+import io.peekandpoke.mutator.NotMutable
+import io.peekandpoke.mutator.ksp.builtin.BuiltInMutableObjectsPlugin
+import io.peekandpoke.mutator.ksp.builtin.BuiltInPlatformTypesVetoingPlugin
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -102,7 +102,7 @@ class MutatorKspProcessor(
     
                     package $packageName
             
-                    import de.peekandpoke.mutator.*
+                    import io.peekandpoke.mutator.*
             
                 """.trimIndent()
             )

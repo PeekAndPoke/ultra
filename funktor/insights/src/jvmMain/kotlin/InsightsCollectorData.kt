@@ -1,8 +1,8 @@
-package de.peekandpoke.funktor.insights
+package io.peekandpoke.funktor.insights
 
-import de.peekandpoke.funktor.insights.gui.InsightsBarTemplate
-import de.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
-import de.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.funktor.insights.gui.InsightsBarTemplate
+import io.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.DIV
 import kotlinx.html.Unsafe
 import kotlinx.html.div

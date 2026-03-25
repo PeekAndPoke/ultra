@@ -1,9 +1,9 @@
-package de.peekandpoke.ultra.slumber.builtin.collections
+package io.peekandpoke.ultra.slumber.builtin.collections
 
-import de.peekandpoke.ultra.slumber.Codec
-import de.peekandpoke.ultra.slumber.slumber
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.slumber
 import java.time.LocalDateTime
 
 class MapSlumbererSpec : StringSpec({

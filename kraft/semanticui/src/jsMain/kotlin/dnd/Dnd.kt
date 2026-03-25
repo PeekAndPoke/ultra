@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.semanticui.dnd
+package io.peekandpoke.kraft.semanticui.dnd
 
 import org.w3c.dom.events.Event
 import kotlin.reflect.KClass

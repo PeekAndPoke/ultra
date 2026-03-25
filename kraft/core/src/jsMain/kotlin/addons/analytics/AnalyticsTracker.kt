@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.addons.analytics
+package io.peekandpoke.kraft.addons.analytics
 
 data class AnalyticsTracker(private val handlers: List<AnalyticsHandler>) {
 

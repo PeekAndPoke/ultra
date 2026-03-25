@@ -1,9 +1,9 @@
-package de.peekandpoke.karango.vault
+package io.peekandpoke.karango.vault
 
 import com.arangodb.ArangoCollection
 import com.arangodb.ArangoCollectionAsync
 import com.arangodb.model.CollectionCreateOptions
-import de.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.TypeRef
 
 abstract class BaseRepository<T : Any>(
     override val name: String,

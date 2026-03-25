@@ -1,7 +1,7 @@
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.kType
 
 inline fun <reified R> aqlFunc(name: String) = AqlFunctionDefinition<R>(name = name, type = kType())
 

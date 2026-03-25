@@ -1,7 +1,7 @@
-package de.peekandpoke.funktor.cluster.workers.services
+package io.peekandpoke.funktor.cluster.workers.services
 
-import de.peekandpoke.funktor.cluster.workers.Worker
-import de.peekandpoke.ultra.common.Lookup
+import io.peekandpoke.funktor.cluster.workers.Worker
+import io.peekandpoke.ultra.common.Lookup
 
 /**
  * Registry that injects all [Worker] instances.

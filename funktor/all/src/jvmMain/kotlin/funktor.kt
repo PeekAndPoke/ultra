@@ -1,24 +1,24 @@
-package de.peekandpoke.funktor
+package io.peekandpoke.funktor
 
-import de.peekandpoke.funktor.auth.FunktorAuthBuilder
-import de.peekandpoke.funktor.auth.funktorAuth
-import de.peekandpoke.funktor.cluster.FunktorClusterBuilder
-import de.peekandpoke.funktor.cluster.funktorCluster
-import de.peekandpoke.funktor.core.broker.funktorBroker
-import de.peekandpoke.funktor.core.config.AppConfig
-import de.peekandpoke.funktor.core.funktorCore
-import de.peekandpoke.funktor.core.model.AppInfo
-import de.peekandpoke.funktor.core.model.default
-import de.peekandpoke.funktor.insights.funktorInsights
-import de.peekandpoke.funktor.logging.FunktorLoggingBuilder
-import de.peekandpoke.funktor.logging.funktorLogging
-import de.peekandpoke.funktor.messaging.FunktorMessagingBuilder
-import de.peekandpoke.funktor.messaging.funktorMessaging
-import de.peekandpoke.funktor.rest.FunktorRestBuilder
-import de.peekandpoke.funktor.rest.funktorRest
-import de.peekandpoke.funktor.staticweb.funktorStaticWeb
-import de.peekandpoke.ultra.kontainer.KontainerBuilder
-import de.peekandpoke.ultra.kontainer.module
+import io.peekandpoke.funktor.auth.FunktorAuthBuilder
+import io.peekandpoke.funktor.auth.funktorAuth
+import io.peekandpoke.funktor.cluster.FunktorClusterBuilder
+import io.peekandpoke.funktor.cluster.funktorCluster
+import io.peekandpoke.funktor.core.broker.funktorBroker
+import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.funktor.core.funktorCore
+import io.peekandpoke.funktor.core.model.AppInfo
+import io.peekandpoke.funktor.core.model.default
+import io.peekandpoke.funktor.insights.funktorInsights
+import io.peekandpoke.funktor.logging.FunktorLoggingBuilder
+import io.peekandpoke.funktor.logging.funktorLogging
+import io.peekandpoke.funktor.messaging.FunktorMessagingBuilder
+import io.peekandpoke.funktor.messaging.funktorMessaging
+import io.peekandpoke.funktor.rest.FunktorRestBuilder
+import io.peekandpoke.funktor.rest.funktorRest
+import io.peekandpoke.funktor.staticweb.funktorStaticWeb
+import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.module
 
 // Kontainer module
 /** Module definition */

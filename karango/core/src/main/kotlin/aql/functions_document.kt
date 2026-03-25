@@ -1,13 +1,13 @@
 @file:Suppress("FunctionName")
 
-package de.peekandpoke.karango.aql
+package io.peekandpoke.karango.aql
 
-import de.peekandpoke.karango.vault.KarangoRepository
-import de.peekandpoke.ultra.reflection.TypeRef
-import de.peekandpoke.ultra.reflection.kType
-import de.peekandpoke.ultra.reflection.unList
-import de.peekandpoke.ultra.vault.ensureKey
-import de.peekandpoke.ultra.vault.lang.VaultFunctionMarker
+import io.peekandpoke.karango.vault.KarangoRepository
+import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.reflection.unList
+import io.peekandpoke.ultra.vault.ensureKey
+import io.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
 @VaultFunctionMarker val DOCUMENT = aqlFunc<Any?>("DOCUMENT")
 

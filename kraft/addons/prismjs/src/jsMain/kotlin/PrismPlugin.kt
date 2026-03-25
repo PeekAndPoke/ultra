@@ -1,4 +1,4 @@
-package de.peekandpoke.kraft.addons.prismjs
+package io.peekandpoke.kraft.addons.prismjs
 
 import org.w3c.dom.HTMLPreElement
 import org.w3c.dom.set

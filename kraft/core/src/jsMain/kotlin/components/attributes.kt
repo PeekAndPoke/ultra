@@ -1,6 +1,6 @@
-package de.peekandpoke.kraft.components
+package io.peekandpoke.kraft.components
 
-import de.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.ultra.common.TypedKey
 
 fun <T> Component<*>.getAttributeOrNull(key: TypedKey<T>): T? {
     return attributes[key]

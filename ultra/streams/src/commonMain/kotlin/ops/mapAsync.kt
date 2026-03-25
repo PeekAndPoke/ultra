@@ -1,7 +1,7 @@
-package de.peekandpoke.ultra.streams.ops
+package io.peekandpoke.ultra.streams.ops
 
-import de.peekandpoke.ultra.streams.AsyncStreamWrapper
-import de.peekandpoke.ultra.streams.Stream
+import io.peekandpoke.ultra.streams.AsyncStreamWrapper
+import io.peekandpoke.ultra.streams.Stream
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

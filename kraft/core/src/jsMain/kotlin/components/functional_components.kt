@@ -1,8 +1,8 @@
 @file:Suppress("Detekt.TooManyFunctions")
 
-package de.peekandpoke.kraft.components
+package io.peekandpoke.kraft.components
 
-import de.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.kraft.vdom.VDom
 import kotlinx.html.Tag
 
 /**

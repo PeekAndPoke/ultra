@@ -1,16 +1,16 @@
-package de.peekandpoke.funktor.rest.codegen.dart.e2e
+package io.peekandpoke.funktor.rest.codegen.dart.e2e
 
-import de.peekandpoke.funktor.rest.codegen.dart.DartDouble
-import de.peekandpoke.funktor.rest.codegen.dart.DartDynamic
-import de.peekandpoke.funktor.rest.codegen.dart.DartListType
-import de.peekandpoke.funktor.rest.codegen.dart.DartMapType
-import de.peekandpoke.funktor.rest.codegen.dart.DartString
-import de.peekandpoke.funktor.rest.codegen.dart.addClass
-import de.peekandpoke.funktor.rest.codegen.dart.addProperty
-import de.peekandpoke.funktor.rest.codegen.dartProject
-import de.peekandpoke.funktor.rest.codegen.shouldHaveNoDiffs
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
+import io.peekandpoke.funktor.rest.codegen.dart.DartDouble
+import io.peekandpoke.funktor.rest.codegen.dart.DartDynamic
+import io.peekandpoke.funktor.rest.codegen.dart.DartListType
+import io.peekandpoke.funktor.rest.codegen.dart.DartMapType
+import io.peekandpoke.funktor.rest.codegen.dart.DartString
+import io.peekandpoke.funktor.rest.codegen.dart.addClass
+import io.peekandpoke.funktor.rest.codegen.dart.addProperty
+import io.peekandpoke.funktor.rest.codegen.dartProject
+import io.peekandpoke.funktor.rest.codegen.shouldHaveNoDiffs
 
 class DartClassGeneratorSpec : StringSpec({
 
