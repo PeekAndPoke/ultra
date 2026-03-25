@@ -1,4 +1,4 @@
-# Karango Library Audit: Code Fixes, KDoc, Missing Tests
+# Karango Library Audit: Code Fixes, KDoc, Missing Tests — COMPLETED
 
 ## Context
 
@@ -6,75 +6,64 @@ Karango is a type-safe Kotlin DSL for ArangoDB with 47 source files, 131 test fi
 TODOs. The code is generally clean but lacks KDoc on public APIs and has some dead code. Tests are strong on AQL
 functions (85+ covered) but weak on infrastructure (driver, codec, indexes, repository methods).
 
-## Batch 1: Code Fixes (small, safe)
+## Batch 1: Code Fixes (small, safe) — DONE (prior session)
 
-| File                     | Fix                                                                                                                      |
-|--------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| `entity.kt`              | Entire file is commented-out dead code — remove the file or clean it up                                                  |
-| `cursor.kt:14,51`        | 2 TODOs about async — leave as-is (architectural, not a quick fix), but add a comment explaining the blocking constraint |
-| `vault/IndexBuilder.kt`  | Remove commented debug code (lines 41-43), address unused `deleted` var (line 160)                                       |
-| `vault/KarangoDriver.kt` | Remove commented debug code (lines 98-100, 114-115)                                                                      |
-| `index.kt:61`            | TODO about DB shutdown check — leave as-is, it's an enhancement                                                          |
+| File                     | Fix                                                          |
+|--------------------------|--------------------------------------------------------------|
+| `entity.kt`              | Removed (was commented-out dead code)                        |
+| `cursor.kt:14,51`        | 2 TODOs about async — left as-is (architectural), KDoc added |
+| `vault/IndexBuilder.kt`  | Debug code removed, unused var addressed                     |
+| `vault/KarangoDriver.kt` | Debug code removed                                           |
+| `index.kt:61`            | TODO about DB shutdown check — left as-is (enhancement)      |
 
-## Batch 2: KDoc for Public API
+## Batch 2: KDoc for Public API — DONE (prior session)
 
-Add concise KDoc to these public-facing files only:
+All files documented. `vault/base.kt` already had KDoc added.
 
-| File                        | What to document                                                                              |
-|-----------------------------|-----------------------------------------------------------------------------------------------|
-| `config/ArangoDbConfig.kt`  | Data class, connection parameters, `forUnitTests`                                             |
-| `vault/EntityRepository.kt` | Class, key methods: insert, save, remove, find*, batchInsert, modifyById, hooks, buildIndexes |
-| `vault/KarangoDriver.kt`    | Class purpose, query execution                                                                |
-| `vault/base.kt`             | KarangoRepository interface                                                                   |
-| `vault/IndexBuilder.kt`     | Index types (persistent, TTL), field DSL                                                      |
-| `slumber/KarangoCodec.kt`   | Class purpose, Slumber integration                                                            |
-| `cursor.kt`                 | KarangoCursor, iteration, count                                                               |
-| `query.kt`                  | buildAqlQuery, AqlTypedQuery                                                                  |
-| `exceptions.kt`             | KarangoException, KarangoQueryException                                                       |
-| `aql/for.kt`                | FOR loop DSL                                                                                  |
-| `aql/filter.kt`             | FILTER, comparison operators                                                                  |
-| `aql/return.kt`             | RETURN variants                                                                               |
-| `aql/insert.kt`             | INSERT INTO                                                                                   |
-| `aql/update.kt`             | UPDATE DSL                                                                                    |
-| `aql/remove.kt`             | REMOVE IN                                                                                     |
+## Batch 3: Missing Tests — Query Building (unit tests, no DB needed) — DONE
 
-Skip KDoc for: internal expression classes, function implementations (func_*.kt), printer, base classes.
+- `SortSpec.kt` — SORT ASC/DESC/multi-field/sort() helper/default direction
+- `LimitSpec.kt` — LIMIT(n), LIMIT(offset, n), PAGE(page, epp), PAGE clamping, SKIP(n)
+- `CollectSpec.kt` — COLLECT, COLLECT_WITH(COUNT), COLLECT_INTO, COLLECT_AGGREGATE
+- `ReturnVariantsSpec.kt` — RETURN, RETURN_DISTINCT, RETURN_COUNT (with custom var name), FILTER_ANY
 
-## Batch 3: Missing Tests — Query Building (unit tests, no DB needed)
+## Batch 4: Missing Tests — Repository Methods (E2E, needs ArangoDB) — DONE
 
-These test that the AQL DSL generates correct query strings via `AqlPrinter.print()`:
+- `E2E-Crud-Count-Spec.kt` — count() on empty, after inserts, after remove, after removeAll
+- `E2E-Crud-FindByIds-Spec.kt` — findByIds varargs/collection, non-existing, by key, findById
+- `E2E-Crud-BatchInsert-Spec.kt` — multiple items, empty list, reloadable
+- `E2E-Crud-ModifyById-Spec.kt` — modifyById, non-existing, modifyByIdWhen true/false condition
 
-**New file: `SortSpec.kt`** — test SORT ASC/DESC/multi-field
-**New file: `LimitSpec.kt`** — test LIMIT(n), LIMIT(offset, n), PAGE(page, epp), SKIP(n)
-**New file: `CollectSpec.kt`** — test COLLECT, COLLECT_WITH(COUNT), COLLECT_AGGREGATE
+## Batch 5: Missing Tests — Boolean Operators (resolves TODOs) — DONE
 
-## Batch 4: Missing Tests — Repository Methods (E2E, needs ArangoDB)
+Added to `OperationBooleanSpec.kt`:
 
-Extend existing E2E test structure. Follow `E2E-Crud-Insert-Spec.kt` pattern.
+- `ANY_IN` — TODO removed from operator_boolean.kt
+- `NONE_IN` — TODO removed from operator_boolean.kt
+- `ALL_IN` — TODO removed from operator_boolean.kt
 
-**New file: `E2E-Crud-Count-Spec.kt`** — test count() after inserts/removes
-**New file: `E2E-Crud-FindByIds-Spec.kt`** — test findByIds(), findFirst(), findList()
-**New file: `E2E-Crud-BatchInsert-Spec.kt`** — test batchInsert() with hooks
-**New file: `E2E-Crud-ModifyById-Spec.kt`** — test modifyById(), modifyByIdWhen()
+## Batch 6: Untested Public Functions — DONE
 
-## Batch 5: Missing Tests — Boolean Operators (resolves TODOs)
+Identified 11 public functions with zero test coverage, then wrote tests for all of them:
 
-Extend `OperationBooleanSpec.kt` or create new specs:
+**Unit tests:**
 
-- `ANY_IN` — resolves TODO at operator_boolean.kt:57
-- `NONE_IN` — resolves TODO at operator_boolean.kt:70
-- `ALL_IN` — resolves TODO at operator_boolean.kt:83
+- `ReturnVariantsSpec.kt` — RETURN_DISTINCT, RETURN_COUNT, FILTER_ANY
+
+**E2E function tests:**
+
+- `E2E_Func_STARTS_WITH_Spec.kt` — matching, non-matching, empty prefix, empty string (TODO removed from func_stu.kt)
+- `E2E_Func_MERGE_Spec.kt` — merge two docs, via LET, overwrite behavior
+- `E2E_Func_UNSET_Spec.kt` — remove single/multiple attributes
+
+**E2E CRUD tests:**
+
+- `E2E-Crud-Remove-Query-Spec.kt` — REMOVE by stored entity, by key, via FOR loop
+- `E2E-Crud-Upsert-Spec.kt` — UPSERT insert new, update existing, UPSERT_REPLACE
+- `E2E-Crud-Document-Spec.kt` — DOCUMENT by collection+key, multiple keys, full ID
+
+**Note:** RETURN_OLD / RETURN_NEW have implicit coverage (REMOVE always returns OLD, UPSERT always returns NEW).
 
 ## Verification
 
-- Batch 1-2: `./gradlew :karango:core:compileKotlinJvm` (no DB needed)
-- Batch 3: Unit tests only if they don't import `database` — verify with compile
-- Batch 4-5: `./gradlew :karango:core:test` (requires ArangoDB running)
-
-## Execution Order
-
-1. Batch 1 (code fixes) — safe, no test dependency
-2. Batch 2 (KDoc) — safe, no test dependency
-3. Batch 3 (query building unit tests) — may or may not need DB
-4. Batch 4 (repository E2E tests) — needs ArangoDB
-5. Batch 5 (boolean operator E2E tests) — needs ArangoDB
+All tests pass: `./gradlew :karango:core:test` — 1644+ tests, 0 failures.

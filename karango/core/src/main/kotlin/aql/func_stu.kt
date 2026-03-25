@@ -155,7 +155,6 @@ fun <T : Number> SQRT(value: AqlExpression<T>): AqlExpression<Number?> = SQRT.ca
  *
  * See https://www.arangodb.com/docs/stable/aql/functions-string.html#starts_with
  */
-// TODO: write tests
 @VaultFunctionMarker val STARTS_WITH = aqlFunc<Boolean>("STARTS_WITH")
 
 @VaultFunctionMarker
