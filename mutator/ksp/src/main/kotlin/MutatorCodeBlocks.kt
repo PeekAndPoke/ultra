@@ -26,7 +26,24 @@ class MutatorCodeBlocks {
 
     fun build() = blocks.joinToString("\n")
 
-    fun wrapWithBackticks(str: String) = str.surround("`")
+    fun wrapWithBackticks(str: String): String {
+        return if (str in kotlinKeywords) str.surround("`") else str
+    }
+
+    private val kotlinKeywords = setOf(
+        // Hard keywords
+        "as", "break", "class", "continue", "do", "else", "false", "for", "fun", "if", "in",
+        "interface", "is", "null", "object", "package", "return", "super", "this", "throw",
+        "true", "try", "typealias", "typeof", "val", "var", "when", "while",
+        // Soft keywords (context-dependent, but can clash in generated code)
+        "by", "catch", "constructor", "delegate", "dynamic", "field", "file", "finally",
+        "get", "import", "init", "param", "property", "receiver", "set", "setparam", "where",
+        // Modifier keywords
+        "actual", "abstract", "annotation", "companion", "const", "crossinline", "data",
+        "enum", "expect", "external", "final", "infix", "inline", "inner", "internal",
+        "lateinit", "noinline", "open", "operator", "out", "override", "private", "protected",
+        "public", "reified", "sealed", "suspend", "tailrec", "value", "vararg",
+    )
 
     fun getClassName(cls: KSClassDeclaration): String {
         return cls.getSimpleNames().joinToString(".") { wrapWithBackticks(it.asString()) }

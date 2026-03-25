@@ -1,0 +1,266 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {mutatorSidebar} from '../../../data/mutator-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Real-World Examples" sidebar={mutatorSidebar}
+            description="Nested forms, dirty tracking, undo/reset, and collection editing patterns">
+
+    <h1>Real-World Examples</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Patterns for nested forms, dirty tracking, undo/reset, and collection editing.
+    </p>
+
+    <h2>Pattern 1: The nested form</h2>
+
+    <p>This is the primary use case. You have a deeply nested domain model and need to bind each field to a form input.
+        Without Mutator, you'd pass <code>onChange</code> callbacks through every level. With Mutator, each sub-form
+        just receives its sub-mutator.</p>
+
+    <Code code={`@Mutable
+data class OrderForm(
+    val customer: Customer,
+    val shippingAddress: Address,
+    val billingAddress: Address,
+    val items: List<LineItem>,
+)
+
+@Mutable
+data class Customer(val name: String, val email: String)
+
+@Mutable
+data class Address(val street: String, val city: String, val zip: String)
+
+@Mutable
+data class LineItem(val product: String, val quantity: Int, val price: Double)
+
+// In your form component:
+val mutator = orderForm.mutator()
+
+// Observe the root to re-render on ANY change, no matter how deep:
+mutator.onChange { updatedOrder ->
+    renderForm(updatedOrder)
+}
+
+// Each sub-form binds directly to its sub-mutator:
+fun renderCustomerFields(m: Mutator<OrderForm>) {
+    // Changing m.customer.name triggers onChange all the way to the root
+    textInput(value = m.customer.name, onChange = { m.customer.name = it })
+    textInput(value = m.customer.email, onChange = { m.customer.email = it })
+}
+
+fun renderAddressFields(m: Mutator<Address>) {
+    textInput(value = m.street, onChange = { m.street = it })
+    textInput(value = m.city,   onChange = { m.city = it })
+    textInput(value = m.zip,    onChange = { m.zip = it })
+}
+
+// No callback wiring between levels!
+// renderAddressFields doesn't know or care that it's inside an OrderForm.`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Pattern 2: Save / discard with dirty tracking</h2>
+
+    <p>Use <code>isModified()</code> to enable/disable a save button, and <code>commit()</code> after a successful save:
+    </p>
+
+    <Code code={`val mutator = loadedEntity.mutator()
+
+// In your UI:
+saveButton.enabled = mutator.isModified()
+discardButton.enabled = mutator.isModified()
+
+// On save:
+fun onSave() {
+    val current = mutator()
+    repository.save(current)
+    mutator.commit()  // "Oak Ave" is now the baseline
+    // isModified() is now false — save button disabled
+}
+
+// On discard — reset to the last committed state:
+fun onDiscard() {
+    mutator.set(mutator.getInitialValue())
+    // isModified() is now false — all changes reverted
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Pattern 3: Before/after comparison</h2>
+
+    <p>Use <code>getInitialValue()</code> and <code>get()</code> to show what changed:</p>
+
+    <Code code={`val mutator = person.mutator()
+
+// ... user makes edits ...
+
+val before = mutator.getInitialValue()
+val after = mutator()
+
+if (before.firstName != after.firstName) {
+    showDiff("First name", before.firstName, after.firstName)
+}
+if (before.address != after.address) {
+    showDiff("Address", before.address, after.address)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Pattern 4: Editing a list of items</h2>
+
+    <p>A common UI pattern: a list of editable rows with add/remove buttons.</p>
+
+    <Code code={`@Mutable
+data class TodoList(
+    val title: String,
+    val items: List<TodoItem>,
+)
+
+@Mutable
+data class TodoItem(
+    val text: String,
+    val done: Boolean,
+)
+
+val mutator = todoList.mutator()
+
+// Render each item as an editable row:
+mutator.items.forEachIndexed { index, itemMutator ->
+    // Each row binds to its own mutator
+    textInput(value = itemMutator.text, onChange = { itemMutator.text = it })
+    checkbox(checked = itemMutator.done, onChange = { itemMutator.done = it })
+    deleteButton(onClick = { mutator.items.removeAt(index) })
+}
+
+// Add a new item:
+addButton(onClick = {
+    mutator.items.add(TodoItem(text = "", done = false))
+})`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Pattern 5: The copy() vs Mutator comparison</h2>
+
+    <p>Side by side, to make the value proposition visceral. Given this model:</p>
+
+    <Code code={`@Mutable
+data class Company(
+    val name: String,
+    val ceo: Person,
+    val departments: List<Department>,
+)
+
+@Mutable
+data class Department(
+    val name: String,
+    val head: Person,
+    val employees: List<Person>,
+)
+
+@Mutable
+data class Person(
+    val firstName: String,
+    val lastName: String,
+    val address: Address,
+)
+
+@Mutable
+data class Address(
+    val street: String,
+    val city: String,
+    val zip: String,
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p><strong>Task:</strong> Change the street of the first employee in the second department.</p>
+
+    <Code code={`// With copy():
+val updated = company.copy(
+    departments = company.departments.mapIndexed { deptIndex, dept ->
+        if (deptIndex == 1) {
+            dept.copy(
+                employees = dept.employees.mapIndexed { empIndex, emp ->
+                    if (empIndex == 0) {
+                        emp.copy(
+                            address = emp.address.copy(
+                                street = "New Street"
+                            )
+                        )
+                    } else emp
+                }
+            )
+        } else dept
+    }
+)
+// 13 lines. Good luck getting that right on the first try.`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Code code={`// With Mutator:
+val updated = company.mutate {
+    departments[1].employees[0].address.street = "New Street"
+}
+// 1 line. Done.`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Pattern 6: Structural identity for efficient rendering</h2>
+
+    <p>Because Mutator returns the exact same instance when nothing changed, you get free optimizations in UI
+        frameworks:</p>
+
+    <Code code={`val company = Company(/* ... */)
+val mutator = company.mutator()
+
+// Mutate only the CEO's name
+mutator.ceo.firstName = "Jane"
+
+val updated = mutator()
+
+// The CEO changed, but departments didn't:
+updated.ceo === company.ceo                  // false (changed)
+updated.departments === company.departments  // true  (same reference!)
+
+// A UI framework can skip re-rendering the departments entirely,
+// because the reference didn't change.`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Pattern 7: Polymorphic list editing</h2>
+
+    <p>Editing a list that contains mixed types from a sealed hierarchy:</p>
+
+    <Code code={`@Mutable
+sealed interface ContentBlock {
+    data class Text(val body: String) : ContentBlock
+    data class Image(val url: String, val alt: String) : ContentBlock
+    data class Code(val source: String, val language: String) : ContentBlock
+}
+
+@Mutable
+data class Article(
+    val title: String,
+    val blocks: List<ContentBlock>,
+)
+
+val mutator = article.mutator()
+
+// Render each block based on its type:
+mutator.blocks.forEach { blockMutator ->
+    when (val block = blockMutator.get()) {
+        is ContentBlock.Text -> blockMutator.cast(block) {
+            textArea(value = body, onChange = { body = it })
+        }
+        is ContentBlock.Image -> blockMutator.cast(block) {
+            textInput(value = url, onChange = { url = it })
+            textInput(value = alt, onChange = { alt = it })
+        }
+        is ContentBlock.Code -> blockMutator.cast(block) {
+            codeEditor(value = source, language = language, onChange = { source = it })
+        }
+    }
+}
+
+// Add a new text block:
+mutator.blocks.add(ContentBlock.Text(body = ""))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/mutator/"
+           class="inline-flex items-center px-6 py-3 border border-white/20 text-white font-semibold rounded-lg hover:bg-white/5 transition-colors">
+            &larr; Back to overview
+        </a>
+        <a href="/ultra/mutator/getting-started"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Getting started &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

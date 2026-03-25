@@ -54,7 +54,6 @@ inline infix fun <reified T> AqlExpression<out Collection<T>>.ANY(
 ): AqlExpression<Boolean> =
     partial(AqlArrayOpExpr(this, AqlArrayOperator.ANY, kType()))
 
-// TODO: Write unit tests
 @VaultFunctionMarker
 inline infix fun <reified T> AqlExpression<out Collection<T>>.ANY_IN(
     other: AqlExpression<out Collection<T>>,
@@ -67,7 +66,6 @@ inline infix fun <reified T> AqlExpression<out Collection<T>>.NONE(
 ): AqlExpression<Boolean> =
     partial(AqlArrayOpExpr(this, AqlArrayOperator.NONE, kType()))
 
-// TODO: Write unit tests
 @VaultFunctionMarker
 inline infix fun <reified T> AqlExpression<out Collection<T>>.NONE_IN(
     other: AqlExpression<out Collection<T>>,
@@ -80,7 +78,6 @@ inline infix fun <reified T> AqlExpression<out Collection<T>>.ALL(
 ): AqlExpression<Boolean> =
     partial(AqlArrayOpExpr(this, AqlArrayOperator.ALL, kType()))
 
-// TODO: Write unit tests
 @VaultFunctionMarker
 inline infix fun <reified T> AqlExpression<out Collection<T>>.ALL_IN(
     other: AqlExpression<out Collection<T>>,

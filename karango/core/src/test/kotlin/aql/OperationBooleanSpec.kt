@@ -96,6 +96,11 @@ class OperationBooleanSpec : StringSpec({
         tuple("NONE", ARRAY(1.aql, 2.aql, 3.aql) NONE EQ(1.aql), "[1, 2, 3] NONE == 1"),
         tuple("ANY", ARRAY(1.aql, 2.aql, 3.aql) ANY EQ(1.aql), "[1, 2, 3] ANY == 1"),
 
+        // ANY_IN, NONE_IN, ALL_IN Operations
+        tuple("ANY_IN", ARRAY(1.aql, 2.aql) ANY_IN ARRAY(2.aql, 3.aql), "[1, 2] ANY IN [2, 3]"),
+        tuple("NONE_IN", ARRAY(1.aql, 2.aql) NONE_IN ARRAY(3.aql, 4.aql), "[1, 2] NONE IN [3, 4]"),
+        tuple("ALL_IN", ARRAY(1.aql, 2.aql) ALL_IN ARRAY(1.aql, 2.aql, 3.aql), "[1, 2] ALL IN [1, 2, 3]"),
+
         // Combinations
         tuple("a AND b EQ c", true.aql AND (false.aql EQ false), "(true) AND (false == false)"),
         tuple("a AND b OR c", true.aql AND false.aql OR false, "((true) AND (false)) OR (false)")

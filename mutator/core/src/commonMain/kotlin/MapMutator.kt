@@ -35,10 +35,43 @@ class MapMutatorImpl<K, V>(
             }
         }.toMutableSet()
 
-    override val keys: MutableSet<K> get() = doGet().keys
+    override val keys: MutableSet<K>
+        get() = object : AbstractMutableSet<K>() {
+            private val delegate = doGet().keys.toSet()
+            override val size: Int get() = delegate.size
+            override fun iterator(): MutableIterator<K> = object : MutableIterator<K> {
+                private val inner = delegate.iterator()
+                override fun hasNext(): Boolean = inner.hasNext()
+                override fun next(): K = inner.next()
+                override fun remove() {
+                    throw UnsupportedOperationException("MapMutator.keys is a read-only view")
+                }
+            }
+
+            override fun add(element: K): Boolean {
+                throw UnsupportedOperationException("MapMutator.keys is a read-only view")
+            }
+        }
+
     override val size: Int get() = doGet().size
+
     override val values: MutableCollection<Mutator<V>>
-        get() = entries.map { it.value }.toMutableList()
+        get() = object : AbstractMutableCollection<Mutator<V>>() {
+            private val delegate = entries.map { it.value }
+            override val size: Int get() = delegate.size
+            override fun iterator(): MutableIterator<Mutator<V>> = object : MutableIterator<Mutator<V>> {
+                private val inner = delegate.iterator()
+                override fun hasNext(): Boolean = inner.hasNext()
+                override fun next(): Mutator<V> = inner.next()
+                override fun remove() {
+                    throw UnsupportedOperationException("MapMutator.values is a read-only view")
+                }
+            }
+
+            override fun add(element: Mutator<V>): Boolean {
+                throw UnsupportedOperationException("MapMutator.values is a read-only view")
+            }
+        }
 
     override fun clear() {
         if (doGet().isNotEmpty()) {

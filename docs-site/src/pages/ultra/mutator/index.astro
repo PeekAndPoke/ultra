@@ -1,0 +1,150 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {mutatorSidebar} from '../../../data/mutator-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Mutator" sidebar={mutatorSidebar}
+            description="Stateful mutable wrappers for immutable Kotlin data classes">
+
+    <h1>Mutator — Mutate the Immutable</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        KSP-generated mutable wrappers for immutable data classes.
+        Inspired by <a href="https://immerjs.github.io/immer/" target="_blank" rel="noopener">immer.js</a>.
+        Nested mutations, automatic change propagation, dirty tracking — zero boilerplate.
+    </p>
+
+    <h2>The problem: nested copy() chains</h2>
+
+    <p>Kotlin data classes are immutable by default, which is great. But updating a deeply nested field is painful:</p>
+
+    <Code code={`@Mutable
+data class Company(val name: String, val ceo: Person)
+
+@Mutable
+data class Person(val firstName: String, val lastName: String, val address: Address)
+
+@Mutable
+data class Address(val street: String, val city: String, val zip: String)
+
+// Create a company
+val company = Company(
+    name = "ACME",
+    ceo = Person(
+        firstName = "Jane",
+        lastName = "Doe",
+        address = Address(street = "123 Main St", city = "Springfield", zip = "62701")
+    )
+)
+
+// Now change the CEO's street. With copy():
+val updated = company.copy(
+    ceo = company.ceo.copy(
+        address = company.ceo.address.copy(
+            street = "456 Oak Ave"
+        )
+    )
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>That's <strong>5 lines of nesting</strong> to change one leaf field. Now imagine a form with 20 fields across 4
+        levels of nesting. Every field needs its own copy() chain. Every chain must be wired through callbacks to
+        propagate changes back up. It's tedious, error-prone, and the noise completely obscures the intent.</p>
+
+    <h2>The Mutator way</h2>
+
+    <Code code={`// Same update with Mutator:
+val updated = company.mutate {
+    ceo {
+        address {
+            street = "456 Oak Ave"
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>One block. The intent is immediately clear: <em>change the CEO's street</em>. Mutator handles all the copy()
+        calls under the hood. The result is a new immutable instance — your original data is never touched.</p>
+
+    <h2>When you DON'T need Mutator</h2>
+
+    <p>Be honest with yourself: <strong>if your data classes are flat or shallow, you don't need this library</strong>.
+        A single <code>copy()</code> call is perfectly fine:</p>
+
+    <Code code={`// For flat data classes, copy() is great. Don't add Mutator for this.
+val updated = address.copy(street = "456 Oak Ave")`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Mutator's value is <strong>proportional to nesting depth</strong>. The deeper your data structures, the more
+        copy() chains you avoid, and the more callback wiring Mutator eliminates. The sweet spot is 2+ levels of
+        nesting, especially when combined with collections.</p>
+
+    <h2>What you get</h2>
+
+    <div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Sub-Mutators</h3>
+            <p class="text-sm text-gray-400">Every property of a mutator is itself a mutator. Changes propagate
+                automatically from leaf to root via <code>onChange</code>.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Dirty Tracking</h3>
+            <p class="text-sm text-gray-400"><code>isModified()</code> tells you if anything changed.
+                <code>commit()</code> accepts the current state as the new baseline.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Collection Mutators</h3>
+            <p class="text-sm text-gray-400"><code>ListMutator</code>, <code>SetMutator</code>, <code>MapMutator</code>
+                — mutate elements in place. Add, remove, iterate and modify.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Sealed Class Support</h3>
+            <p class="text-sm text-gray-400">Mutate polymorphic hierarchies with <code>cast()</code> and <code>filterMutatorsOf&lt;T&gt;()</code>.
+            </p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">KSP Code Generation</h3>
+            <p class="text-sm text-gray-400">Annotate with <code>@Mutable</code>, and KSP generates
+                <code>.mutator()</code>, <code>.mutate {'{}'}</code>, and typed property accessors at compile time.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Structural Equality</h3>
+            <p class="text-sm text-gray-400">Setting a field to its current value is a no-op. Reverting all changes
+                returns the exact same instance (identity equality).</p>
+        </div>
+    </div>
+
+    <h2>Quick taste</h2>
+
+    <Code code={`val person = Person(
+    firstName = "John",
+    lastName = "Doe",
+    age = 42,
+    address = Address(street = "Main St", city = "Springfield", zip = "62701")
+)
+
+// One-shot mutation — returns a new immutable Person
+val updated = person.mutate {
+    firstName = "Jane"
+    address {
+        city = "Shelbyville"
+    }
+}
+// updated == Person("Jane", "Doe", 42, Address("Main St", "Shelbyville", "62701"))
+
+// Long-lived mutator — for forms, editors, stateful UIs
+val mutator = person.mutator()
+
+mutator.address.street = "Oak Ave"
+mutator.isModified()    // true
+mutator()               // Person with street = "Oak Ave"
+
+mutator.commit()        // Accept changes as new baseline
+mutator.isModified()    // false`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/mutator/getting-started"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Get started &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

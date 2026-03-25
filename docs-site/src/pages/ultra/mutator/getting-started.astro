@@ -1,0 +1,181 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {mutatorSidebar} from '../../../data/mutator-sidebar';
+import {Code} from 'astro:components';
+import {ultraVersion, ultraGroup, mavenCentralUrl} from '../../../data/site';
+---
+
+<DocsLayout title="Getting Started with Mutator" sidebar={mutatorSidebar}
+            description="Set up Mutator with KSP in your Kotlin project">
+
+    <h1>Getting Started</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Add Mutator to your project, annotate your data classes, and start mutating.
+    </p>
+
+    <h2>1. Add the dependencies</h2>
+
+    <p>Mutator uses <a href="https://kotlinlang.org/docs/ksp-overview.html" target="_blank" rel="noopener">KSP (Kotlin
+        Symbol Processing)</a> to generate code at compile time. You need two dependencies: the runtime library and the
+        KSP processor.</p>
+
+    <p>In your <code>build.gradle.kts</code>:</p>
+
+    <Code code={`plugins {
+    id("com.google.devtools.ksp") version "<ksp-version>"
+}
+
+dependencies {
+    // Runtime library
+    implementation("${ultraGroup}:mutator-core:${ultraVersion}")
+    // KSP processor — generates .mutator() and .mutate {} extensions
+    ksp("${ultraGroup}:mutator-ksp:${ultraVersion}")
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Find the latest version on <a href={mavenCentralUrl} target="_blank" rel="noopener">Maven Central</a>.</p>
+
+    <h2>2. Annotate your data classes</h2>
+
+    <p>Add <code>@Mutable</code> to any data class you want to mutate:</p>
+
+    <Code code={`import io.peekandpoke.mutator.Mutable
+
+@Mutable
+data class Address(
+    val street: String,
+    val city: String,
+    val zip: String,
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Build your project. KSP generates extension functions for every <code>@Mutable</code> class:</p>
+
+    <ul>
+        <li><code>Address.mutator()</code> — creates a long-lived <code>Mutator&lt;Address&gt;</code></li>
+        <li><code>Address.mutate {'{ ... }'}</code> — one-shot mutation, returns a new <code>Address</code></li>
+        <li>Typed property setters: <code>mutator.street = "..."</code>, <code>mutator.city = "..."</code>, etc.</li>
+        <li>Collection extensions: <code>List&lt;Address&gt;.mutator()</code>, <code>Set&lt;Address&gt;.mutator()</code>,
+            <code>Map&lt;K, Address&gt;.mutator()</code></li>
+    </ul>
+
+    <h2>3. Your first mutation</h2>
+
+    <p>The simplest way to use Mutator is the <code>mutate {'{ }'}</code> function. It creates a mutator, applies your
+        changes, and returns a new immutable instance:</p>
+
+    <Code code={`val address = Address(street = "123 Main St", city = "Springfield", zip = "62701")
+
+val updated = address.mutate {
+    street = "456 Oak Ave"
+    city = "Shelbyville"
+}
+
+// updated == Address("456 Oak Ave", "Shelbyville", "62701")
+// address is unchanged — still Address("123 Main St", "Springfield", "62701")`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>4. Nested mutations</h2>
+
+    <p>When data classes reference other <code>@Mutable</code> data classes, their mutators compose automatically:</p>
+
+    <Code code={`@Mutable
+data class Person(
+    val firstName: String,
+    val lastName: String,
+    val age: Int,
+    val address: Address,
+)
+
+val person = Person(
+    firstName = "John",
+    lastName = "Doe",
+    age = 42,
+    address = Address(street = "Main St", city = "Springfield", zip = "62701")
+)
+
+// Nested mutation — no copy() chains
+val updated = person.mutate {
+    firstName = "Jane"
+    address {
+        street = "456 Oak Ave"
+        city = "Shelbyville"
+    }
+}
+
+// updated == Person("Jane", "Doe", 42, Address("456 Oak Ave", "Shelbyville", "62701"))`} lang="kotlin"
+          theme="vitesse-dark"/>
+
+    <p>The <code>address {'{ }'}</code> block opens a sub-mutator. Any changes inside it automatically propagate back up
+        to the parent <code>Person</code>.</p>
+
+    <h2>5. Long-lived mutators</h2>
+
+    <p>For form state management, you typically keep a mutator alive across multiple interactions:</p>
+
+    <Code code={`val mutator = person.mutator()
+
+// User edits the name field
+mutator.firstName = "Jane"
+
+// User edits the address
+mutator.address.street = "456 Oak Ave"
+
+// Check if anything changed
+mutator.isModified()    // true
+
+// Read the current state
+val current = mutator()
+// current == Person("Jane", "Doe", 42, Address("456 Oak Ave", "Springfield", "62701"))
+
+// Save: accept changes as the new baseline
+mutator.commit()
+mutator.isModified()    // false`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>What KSP generates</h2>
+
+    <p>For a data class like <code>Address</code>, KSP generates code equivalent to:</p>
+
+    <Code code={`// Generated: mutator creator
+fun Address.mutator() = ObjectMutator(this)
+
+// Generated: one-shot mutation
+fun Address.mutate(mutation: ObjectMutator<Address>.() -> Unit): Address =
+    mutator().apply(mutation).get()
+
+// Generated: typed property accessors on Mutator<Address>
+var Mutator<Address>.street
+    get() = get().street
+    set(v) = modifyIfChanged(get().street, v) { it.copy(street = v) }
+
+var Mutator<Address>.city
+    get() = get().city
+    set(v) = modifyIfChanged(get().city, v) { it.copy(city = v) }
+
+var Mutator<Address>.zip
+    get() = get().zip
+    set(v) = modifyIfChanged(get().zip, v) { it.copy(zip = v) }
+
+// Generated: collection mutators
+fun List<Address>.mutator() = mutator(child = { mutator() })
+fun Set<Address>.mutator() = mutator(child = { mutator() })
+fun <K> Map<K, Address>.mutator() = mutator(child = { mutator() })`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>For nested <code>@Mutable</code> properties (like <code>Person.address</code>), KSP generates a sub-mutator with
+        <code>onChange</code> propagation:</p>
+
+    <Code code={`// Generated: sub-mutator with automatic back-propagation
+val Mutator<Person>.address
+    get() = get().address.mutator()
+        .onChange { address -> modifyValue { get().copy(address = address) } }`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>This is the magic: when you set <code>mutator.address.street = "..."</code>, the address mutator notifies the
+        person mutator via <code>onChange</code>, which rebuilds the person with the new address. All of this happens
+        automatically.</p>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/mutator/core-concepts"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Core concepts &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

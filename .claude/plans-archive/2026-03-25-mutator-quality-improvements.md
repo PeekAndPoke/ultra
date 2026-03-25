@@ -165,15 +165,11 @@ fun replace(old: V, new: V) {
 
 **File:** `mutator/core/src/commonMain/kotlin/SetMutator.kt` (line ~158-164)
 
-### 4.2 Fix `MapMutator.entries` snapshot semantics
+### ~~4.2 `MapMutator.entries` snapshot semantics~~ — Won't fix
 
-**Problem:** Every access to `entries` creates new wrapper objects with new `onChange` handlers.
-`map.entries === map.entries` is always false.
-
-**Fix:** Cache the entries wrapper and invalidate on structural changes, or document the
-limitation clearly. Caching is preferred.
-
-**File:** `mutator/core/src/commonMain/kotlin/MapMutator.kt` (line ~16-36)
+Each `entries` access creates fresh wrappers, so `entries === entries` is false. Caching would
+save allocations but introduces stale-reference risks for minimal practical benefit. The current
+behavior is always correct.
 
 ## Verification
 
@@ -192,7 +188,7 @@ After each phase:
 | `mutator/ksp/src/main/kotlin/MutatorCodeBlocks.kt`                     | 2.1      |
 | `mutator/ksp/src/main/kotlin/MutatorKspProcessor.kt`                   | 2.2, 2.3 |
 | `mutator/core/src/commonMain/kotlin/ListMutator.kt`                    | 1.2      |
-| `mutator/core/src/commonMain/kotlin/MapMutator.kt`                     | 1.3, 4.2 |
+| `mutator/core/src/commonMain/kotlin/MapMutator.kt`                     | 1.3      |
 | `mutator/core/src/commonMain/kotlin/SetMutator.kt`                     | 4.1      |
 | `mutator/core/src/commonTest/kotlin/domain/domain.kt`                  | 3.1, 3.2 |
 | New: `mutator/core/src/jvmTest/kotlin/NullableMutatorSpec.kt`          | 3.1      |

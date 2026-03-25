@@ -91,8 +91,8 @@
 
 ### Blockers for Public Launch (PR engineer findings)
 
-1. **No LICENSE file** in the repo — legally nobody can use it
-2. **Root README.MD is stale** — wrong Kotlin version, broken links, doesn't mention docs site
+1. ~~**No LICENSE file**~~ — **DONE.** Apache 2.0, copyright 2019-2026 PeekAndPoke
+2. ~~**Root README.MD is stale**~~ — **DONE.** Mentions peekandpoke.io, Kotlin 2.3.10, all 5 libs, llms.txt
 3. **No CI/CD visible** — no GitHub Actions, no green badges
 4. **No CHANGELOG** — 320 commits in 2025 with no release notes
 
@@ -108,8 +108,8 @@
 
 ### Immediate (before any public announcement)
 
-1. **Add LICENSE file** (MIT or Apache 2.0) to repo root
-2. **Rewrite root README.MD** — mention all 5 documented libs, link to peekandpoke.io, fix version badges
+1. ~~**Add LICENSE file**~~ — **DONE.** Apache 2.0
+2. ~~**Rewrite root README.MD**~~ — **DONE.**
 3. **Add GitHub Actions CI** — run tests for the GREEN modules, show badges
 
 ### Short-term (next sprint)

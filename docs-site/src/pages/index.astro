@@ -16,7 +16,7 @@ const libraries = [
     tagline: 'Mutate the immutable',
     description: 'KSP-generated code that lets you mutate deeply nested immutable data structures without copy() hell.',
     href: '/ultra/mutator/',
-    ready: false,
+    ready: true,
   },
   {
     name: 'Kontainer',
@@ -63,9 +63,9 @@ const libraries = [
   <section class="pt-32 pb-20 px-4">
     <div class="mx-auto max-w-4xl text-center">
       <h1 class="text-5xl sm:text-6xl font-extrabold tracking-tight text-white mb-6">
-        Kotlin libraries that
+        Tools that
         <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 to-brand-500">
-          get out of your way
+          earn their keep
         </span>
       </h1>
       <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
@@ -79,7 +79,6 @@ const libraries = [
   <!-- Libraries Grid -->
   <section class="pb-32 px-4">
     <div class="mx-auto max-w-6xl">
-      <h2 class="text-2xl font-bold text-white mb-8 text-center">The Libraries</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {libraries.map(lib => {
           const classes = lib.ready

@@ -237,6 +237,30 @@ class SetMutatorSpec : StringSpec() {
             )
         }
 
+        "mutation preserves iteration order" {
+            val set = setOf(
+                Address("A", "City", "Zip"),
+                Address("B", "City", "Zip"),
+                Address("C", "City", "Zip")
+            )
+
+            val mutator = set.mutator()
+
+            // Modify the middle element
+            mutator.forEach { item ->
+                if (item.get().street == "B") {
+                    item.street = "B-modified"
+                }
+            }
+
+            // The modified element should stay in the same position
+            mutator.get().toList() shouldBe listOf(
+                Address("A", "City", "Zip"),
+                Address("B-modified", "City", "Zip"),
+                Address("C", "City", "Zip")
+            )
+        }
+
         "iterator should allow multiple modifications to the same element without duplicating" {
             val set = setOf(Address("A", "C", "Z"))
             val mutator = set.mutator()

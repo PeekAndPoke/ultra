@@ -2,8 +2,8 @@
 // Update these when releasing — all pages reference this file.
 
 // Versions
-export const ultraVersion = '0.102.0';
-export const kraftVersion = '0.102.0';
+export const ultraVersion = '0.103.0';
+export const kraftVersion = '0.103.0';
 export const kotlinVersion = '2.3.10';
 export const fomanticVersion = '2.8.8';
 
@@ -30,6 +30,16 @@ export const kraftLiveExamples = {
     fomanticui: '/kraft-examples/fomanticui/index.html',
 };
 
+// GitHub source links for each library
+export const githubSource = {
+    kraft: `${githubRepo}/tree/master/kraft`,
+    kontainer: `${githubRepo}/tree/master/ultra/kontainer`,
+    slumber: `${githubRepo}/tree/master/ultra/slumber`,
+    mutator: `${githubRepo}/tree/master/mutator`,
+    streams: `${githubRepo}/tree/master/ultra/streams`,
+    karango: `${githubRepo}/tree/master/karango`,
+};
+
 // Helpers for dependency strings used in code examples
 export const dep = {
     kontainer: `${ultraGroup}:kontainer:${ultraVersion}`,
@@ -39,6 +49,8 @@ export const dep = {
     kraftSemanticUi: `${kraftGroup}:semanticui:${kraftVersion}`,
     kraftAddonChartJs: `${kraftGroup}:addons-chartjs:${kraftVersion}`,
     kraftAddonPrismJs: `${kraftGroup}:addons-prismjs:${kraftVersion}`,
+    mutatorCore: `${ultraGroup}:mutator-core:${ultraVersion}`,
+    mutatorKsp: `${ultraGroup}:mutator-ksp:${ultraVersion}`,
     karangoCore: `${ultraGroup}:karango-core:${ultraVersion}`,
     karangoKsp: `${ultraGroup}:karango-ksp:${ultraVersion}`,
 };

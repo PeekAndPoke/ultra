@@ -1,15 +1,48 @@
-# ultra::slumber
+# Slumber — Serialization That Understands Kotlin
 
-Slumber is a serialization framework that is aware of the Null Safety that is built into Kotlin.
+A serialization framework built for Kotlin's type system. Nullable types, default values, sealed classes — Slumber
+handles them all without annotations.
 
-It is IMHO a much better option for Kotlin than e.g. Jackson or Gson is.
+## Why Slumber?
 
-## Examples
+Jackson and Gson were built for Java. They don't understand Kotlin's null safety, default parameter values, or sealed
+class hierarchies. Slumber does — out of the box, with zero configuration for common cases.
 
-Code says more than a thousand words. So let's look at the [Examples](docs/ultra::docs/index.md)!
+## Quick example
 
-For more inspiration you can also have a look at the [Test](src/test/kotlin)!
+```kotlin
+data class User(
+    val name: String,
+    val email: String,
+    val role: Role = Role.Viewer,   // default values just work
+    val tags: List<String> = listOf()
+)
 
-## TODO:
+// Serialize
+val map = Slumber.awake(user)
 
-( ) unit tests for DateTimeModule
+// Deserialize — missing fields use defaults, null safety is respected
+val user = Slumber.unawake(User::class, map)
+```
+
+## Key features
+
+- **Kotlin-first** — Nullable types, default values, and data classes just work
+- **Sealed class polymorphism** — Automatic discriminators, no annotations needed
+- **Codec system** — Pluggable codecs for custom type handling
+- **Date/time support** — java.time, kotlinx.datetime, and MpDateTime out of the box
+- **Error tracking** — Path-aware error reporting with graceful degradation
+- **Extensible** — Custom modules for project-specific types
+
+## Documentation
+
+Full docs at **[peekandpoke.io/ultra/slumber](https://peekandpoke.io/ultra/slumber/)**.
+
+## Installation
+
+```kotlin
+// build.gradle.kts
+dependencies {
+    implementation("io.peekandpoke.ultra:slumber:<version>")
+}
+```

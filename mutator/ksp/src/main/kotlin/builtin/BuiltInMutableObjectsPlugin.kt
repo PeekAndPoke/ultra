@@ -18,6 +18,7 @@ import io.peekandpoke.mutator.ksp.MutatorKspProcessor
 import io.peekandpoke.mutator.ksp.declaresKotlinList
 import io.peekandpoke.mutator.ksp.declaresKotlinMap
 import io.peekandpoke.mutator.ksp.declaresKotlinSet
+import io.peekandpoke.mutator.ksp.isAbstract
 import io.peekandpoke.mutator.ksp.isData
 import io.peekandpoke.mutator.ksp.isPrimaryCtorParameter
 import io.peekandpoke.mutator.ksp.isSealed
@@ -81,14 +82,15 @@ class BuiltInMutableObjectsPlugin : MutatorKspPlugin {
         val ctorFields = allFields.filter { it.isPrimaryCtorParameter() }
 
         val boundObjectMutatorName = "$ObjectMutatorName<$clsName>"
+        val hasSubtypes = cls.isSealed() || cls.isAbstract()
 
         codeBlocks.append(
             """
                 // Mutator creators ////////////////////////////////////////////////////////////////////////////////////
-                
+
                 @MutatorDsl
                 inline fun $typeParams$clsName.mutator() = $ObjectMutatorName(this)
-                
+
                 @MutatorDsl
                 inline fun $typeParams$clsName.mutate(
                     mutation: $boundObjectMutatorName.() -> Unit,
@@ -98,11 +100,40 @@ class BuiltInMutableObjectsPlugin : MutatorKspPlugin {
 
                 @MutatorDsl
                 inline fun ${typeParams}List<$clsName>.mutator() = mutator(child = { mutator() })
-                
+
                 @MutatorDsl
                 inline fun ${typeParams}List<$clsName>.mutate(
                     mutation: $ListMutatorName<$clsName>.() -> Unit,
                 ): List<$clsName> = mutator().apply(mutation).get()
+
+                // Set Mutators ////////////////////////////////////////////////////////////////////////////////////////
+
+                @MutatorDsl
+                inline fun ${typeParams}Set<$clsName>.mutator() = mutator(child = { mutator() })
+
+                @MutatorDsl
+                inline fun ${typeParams}Set<$clsName>.mutate(
+                    mutation: $SetMutatorName<$clsName>.() -> Unit,
+                ): Set<$clsName> = mutator().apply(mutation).get()
+
+                // Map Mutators ////////////////////////////////////////////////////////////////////////////////////////
+
+                @MutatorDsl
+                inline fun ${mapTypeParams}Map<K, $clsName>.mutator() = mutator(child = { mutator() })
+
+                @MutatorDsl
+                inline fun ${mapTypeParams}Map<K, $clsName>.mutate(
+                    mutation: $MapMutatorName<K, $clsName>.() -> Unit,
+                ): Map<K, $clsName> = mutator().apply(mutation).get()
+
+
+            """.trimIndent()
+        )
+
+        if (hasSubtypes) {
+            codeBlocks.append(
+                """
+                // filterMutatorsOf — only generated for sealed/abstract classes that have subtypes
 
                 /**
                  * Returns a list containing only the mutators whose underlying value is an instance of specified type parameter [X].
@@ -119,16 +150,6 @@ class BuiltInMutableObjectsPlugin : MutatorKspPlugin {
                     }
                 }
 
-                // Set Mutators ////////////////////////////////////////////////////////////////////////////////////////
-
-                @MutatorDsl
-                inline fun ${typeParams}Set<$clsName>.mutator() = mutator(child = { mutator() })
-
-                @MutatorDsl
-                inline fun ${typeParams}Set<$clsName>.mutate(
-                    mutation: $SetMutatorName<$clsName>.() -> Unit,
-                ): Set<$clsName> = mutator().apply(mutation).get()
-                
                 /**
                  * Returns a list containing only the mutators whose underlying value is an instance of specified type parameter [X].
                  */
@@ -144,19 +165,9 @@ class BuiltInMutableObjectsPlugin : MutatorKspPlugin {
                     }
                 }
 
-                // Map Mutators ////////////////////////////////////////////////////////////////////////////////////////
-                
-                @MutatorDsl
-                inline fun ${mapTypeParams}Map<K, $clsName>.mutator() = mutator(child = { mutator() })
-
-                @MutatorDsl
-                inline fun ${mapTypeParams}Map<K, $clsName>.mutate(
-                    mutation: $MapMutatorName<K, $clsName>.() -> Unit,
-                ): Map<K, $clsName> = mutator().apply(mutation).get()
-                
-                
-            """.trimIndent()
-        )
+                """.trimIndent()
+            )
+        }
 
         if (cls.isData()) {
             ctorFields.forEach { field ->

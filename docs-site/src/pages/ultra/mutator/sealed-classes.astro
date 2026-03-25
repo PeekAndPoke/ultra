@@ -1,0 +1,123 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {mutatorSidebar} from '../../../data/mutator-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Sealed Classes" sidebar={mutatorSidebar}
+            description="Polymorphic mutation with sealed interfaces, cast(), and filterMutatorsOf">
+
+    <h1>Sealed Classes</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Mutate polymorphic hierarchies with <code>cast()</code> for individual elements
+        and <code>filterMutatorsOf&lt;T&gt;()</code> for typed collection access.
+    </p>
+
+    <h2>Defining a sealed hierarchy</h2>
+
+    <p>Annotate the sealed interface (or sealed class) with <code>@Mutable</code>. The subtypes don't need separate
+        annotations — KSP generates mutators for the entire hierarchy:</p>
+
+    <Code code={`@Mutable
+sealed interface PaymentMethod {
+    data class CreditCard(
+        val number: String,
+        val expiry: String,
+    ) : PaymentMethod
+
+    data class BankTransfer(
+        val iban: String,
+        val bic: String,
+    ) : PaymentMethod
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Mutating with cast()</h2>
+
+    <p>When you have a <code>Mutator&lt;PaymentMethod&gt;</code>, you don't know the concrete type at compile time. Use
+        <code>cast()</code> to narrow the type and mutate:</p>
+
+    <Code code={`val methods: List<PaymentMethod> = listOf(
+    PaymentMethod.CreditCard("4111-1111-1111-1111", "12/25"),
+    PaymentMethod.BankTransfer("DE89370400440532013000", "COBADEFFXXX"),
+)
+
+val updated = methods.mutate {
+    forEach { mutator ->
+        when (val value = mutator.get()) {
+            is PaymentMethod.CreditCard ->
+                mutator.cast(value) { expiry = "12/28" }
+
+            is PaymentMethod.BankTransfer ->
+                mutator.cast(value) { bic = "NEWBICXXX" }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The <code>cast(value)</code> call narrows the mutator's type parameter. Inside the lambda, you get typed property
+        access — <code>expiry</code>, <code>bic</code>, etc. — with full IDE completion and compile-time safety.</p>
+
+    <h2>Filtering with filterMutatorsOf&lt;T&gt;()</h2>
+
+    <p>For <code>ListMutator</code> and <code>SetMutator</code> of sealed types, KSP generates <code>filterMutatorsOf&lt;T&gt;()</code>.
+        This returns only the mutators whose underlying value matches the specified subtype:</p>
+
+    <Code code={`val methods: List<PaymentMethod> = listOf(
+    PaymentMethod.CreditCard("4111-1111-1111-1111", "12/25"),
+    PaymentMethod.BankTransfer("DE89...", "COBADEFFXXX"),
+    PaymentMethod.CreditCard("5500-0000-0000-0004", "06/26"),
+)
+
+val mutator = methods.mutator()
+
+// Get only the credit card mutators — fully typed as Mutator<CreditCard>
+val cards = mutator.filterMutatorsOf<PaymentMethod.CreditCard>()
+
+cards.forEach { cardMutator ->
+    cardMutator.expiry = "12/30"  // Typed access — no cast needed
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Indexed iteration with cast()</h2>
+
+    <p>You can use <code>forEachIndexed</code> with sealed types just as you'd expect:</p>
+
+    <Code code={`val items: List<SealedInterface> = listOf(
+    SealedInterface.One("hello"),
+    SealedInterface.Two(42),
+)
+
+val updated = items.mutate {
+    forEachIndexed { index, mutator ->
+        when (val v = mutator.get()) {
+            is SealedInterface.One -> mutator.cast(v) { value += "-${'$'}index" }
+            is SealedInterface.Two -> mutator.cast(v) { value += index }
+        }
+    }
+}
+// Result: [One("hello-0"), Two(43)]`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Generated code for sealed types</h2>
+
+    <p>For a <code>@Mutable sealed interface</code>, KSP generates the same <code>.mutator()</code>,
+        <code>.mutate {'{ }'}</code>, and collection extensions as for data classes. It additionally generates <code>filterMutatorsOf</code>
+        for <code>ListMutator</code> and <code>SetMutator</code>:</p>
+
+    <Code code={`// Generated for List<PaymentMethod>:
+inline fun <reified X : PaymentMethod>
+    ListMutator<PaymentMethod>.filterMutatorsOf(): List<Mutator<X>>
+
+// Generated for Set<PaymentMethod>:
+inline fun <reified X : PaymentMethod>
+    SetMutator<PaymentMethod>.filterMutatorsOf(): List<Mutator<X>>`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Each subtype also gets its own property accessors, so <code>Mutator&lt;CreditCard&gt;.number</code> and <code>Mutator&lt;BankTransfer&gt;.iban</code>
+        are fully typed.</p>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/mutator/examples"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Real-world examples &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

@@ -256,7 +256,7 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
     }
 
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<Mutator<V>> {
-        TODO("Not yet implemented")
+        throw UnsupportedOperationException("ListMutator does not support subList()")
     }
 
     //  HELPERS  ///////////////////////////////////////////////////////////////////////////////////////////////////////

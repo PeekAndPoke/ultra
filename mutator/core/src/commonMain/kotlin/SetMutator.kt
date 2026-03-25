@@ -156,11 +156,14 @@ class SetMutatorImpl<V>(initial: Set<V>, private val childToMutator: V.() -> Mut
     //  HELPERS  ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private fun replace(old: V, new: V) {
-        val didRemove = get().remove(old)
-        if (didRemove) {
-            get().add(new)
-            notifyObservers()
-        }
+        val set = get()
+        if (old !in set) return
+
+        // Rebuild set with replacement in the original position to preserve iteration order
+        val rebuilt = set.mapTo(mutableSetOf()) { if (it == old) new else it }
+        set.clear()
+        set.addAll(rebuilt)
+        notifyObservers()
     }
 
     /**

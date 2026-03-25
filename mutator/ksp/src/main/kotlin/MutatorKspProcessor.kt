@@ -57,7 +57,7 @@ class MutatorKspProcessor(
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
 
-        // Find all types that have a Karango Annotation
+        // Find all types that have a @Mutable annotation
         val withAnnotations = resolver
             .getSymbolsWithAnnotation(Mutable::class.qualifiedName!!)
             .filterIsInstance<KSClassDeclaration>()
@@ -98,12 +98,19 @@ class MutatorKspProcessor(
         ctx.codeBlocks.takeIf { it.isNotEmpty() }?.let { codeBlocks ->
             codeBlocks.prepend(
                 """
-                    @file:Suppress("RemoveRedundantBackticks", "unused", "NOTHING_TO_INLINE")
-    
+                    @file:Suppress("NOTHING_TO_INLINE")
+
                     package $packageName
-            
-                    import io.peekandpoke.mutator.*
-            
+
+                    import io.peekandpoke.mutator.ListMutator
+                    import io.peekandpoke.mutator.MapMutator
+                    import io.peekandpoke.mutator.Mutator
+                    import io.peekandpoke.mutator.MutatorDsl
+                    import io.peekandpoke.mutator.ObjectMutator
+                    import io.peekandpoke.mutator.SetMutator
+                    import io.peekandpoke.mutator.mutator
+                    import io.peekandpoke.mutator.onChange
+
                 """.trimIndent()
             )
 

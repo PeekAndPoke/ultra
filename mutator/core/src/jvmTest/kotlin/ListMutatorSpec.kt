@@ -1,5 +1,6 @@
 package io.peekandpoke.mutator
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.mutator.domain.Address
@@ -286,6 +287,20 @@ class ListMutatorSpec : StringSpec() {
             )
 
             iterator.nextIndex() shouldBe 2 // Because we added one element before B
+        }
+
+        "subList() throws UnsupportedOperationException" {
+            val list = listOf(
+                Address("A", "C", "Z"),
+                Address("B", "C", "Z"),
+                Address("C", "C", "Z")
+            )
+
+            val mutator = list.mutator()
+
+            shouldThrow<UnsupportedOperationException> {
+                mutator.subList(0, 2)
+            }
         }
 
         "iterator should not crash when list is structurally modified during iteration" {

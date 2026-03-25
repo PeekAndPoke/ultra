@@ -1,0 +1,193 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {mutatorSidebar} from '../../../data/mutator-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Core Concepts" sidebar={mutatorSidebar}
+            description="Mutators, sub-mutators, onChange propagation, isModified, and commit">
+
+    <h1>Core Concepts</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Mutators, sub-mutators, change propagation, dirty tracking, and structural equality.
+    </p>
+
+    <h2>The Mutator interface</h2>
+
+    <p>At its core, a <code>Mutator&lt;V&gt;</code> wraps an immutable value and provides a mutable API over it:</p>
+
+    <Code code={`interface Mutator<V> {
+    fun get(): V              // Read the current value
+    fun set(input: V): V     // Replace the entire value
+    operator fun invoke(): V  // Shorthand for get()
+
+    fun isModified(): Boolean // Has the value changed since creation / last commit?
+    fun getInitialValue(): V  // The value at creation / last commit
+    fun commit()              // Accept current value as new baseline
+
+    fun modifyValue(block: (V) -> V)  // Transform the value
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>You rarely interact with this interface directly. KSP generates typed extensions that let you write <code>mutator.street
+        = "..."</code> instead of <code>mutator.modifyValue {'{ it.copy(street = "...") }'}</code>.</p>
+
+    <h2>Two ways to mutate</h2>
+
+    <h3>One-shot: <code>mutate {'{ }'}</code></h3>
+
+    <p>Creates a mutator, applies your block, and returns the new immutable value. Use this when you just need the
+        result:</p>
+
+    <Code code={`val updated = address.mutate {
+    street = "456 Oak Ave"
+    city = "Shelbyville"
+}
+// updated is a new Address; the original is untouched`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Long-lived: <code>mutator()</code></h3>
+
+    <p>Creates a mutator you keep around. Use this for forms, editors, or any UI that accumulates changes over time:</p>
+
+    <Code code={`val mutator = address.mutator()
+
+// Later, on user input:
+mutator.street = "456 Oak Ave"
+
+// Read the current state at any time:
+val current = mutator()
+
+// Check if anything changed:
+mutator.isModified()  // true`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Sub-mutators and onChange propagation</h2>
+
+    <p>This is the key insight that makes Mutator powerful. When a <code>@Mutable</code> data class contains another
+        <code>@Mutable</code> data class, KSP generates a <strong>sub-mutator</strong> for that property.</p>
+
+    <Code code={`val person = Person(
+    firstName = "John",
+    lastName = "Doe",
+    age = 42,
+    address = Address(street = "Main St", city = "Springfield", zip = "62701")
+)
+
+val mutator = person.mutator()
+
+// mutator.address is a sub-mutator for Address.
+// When you modify it, the change automatically propagates to the Person:
+mutator.address.street = "Oak Ave"
+
+// The person mutator now reflects the change:
+mutator().address.street  // "Oak Ave"
+mutator.isModified()      // true`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Under the hood, the generated code wires <code>onChange</code> callbacks from child to parent:</p>
+
+    <Code code={`// KSP generates this for Person.address:
+val Mutator<Person>.address
+    get() = get().address.mutator()
+        .onChange { address -> modifyValue { get().copy(address = address) } }
+
+// When you set mutator.address.street = "Oak Ave":
+// 1. The Address mutator calls copy(street = "Oak Ave")
+// 2. This triggers the Address mutator's onChange
+// 3. The Person mutator receives the new Address
+// 4. The Person mutator calls copy(address = newAddress)
+// 5. The Person mutator's onChange fires (if anyone is listening)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>This chain works at any depth. A 5-level deep mutation propagates all the way to the root — you never write a
+        single <code>copy()</code> call.</p>
+
+    <h2>Observing changes with onChange</h2>
+
+    <p>You can observe a mutator to react to any change:</p>
+
+    <Code code={`val mutator = person.mutator()
+
+mutator.onChange { newPerson ->
+    println("Person changed: ${'$'}newPerson")
+}
+
+mutator.address.street = "Oak Ave"
+// prints: "Person changed: Person(firstName=John, ..., address=Address(street=Oak Ave, ...))"
+
+mutator.firstName = "Jane"
+// prints: "Person changed: Person(firstName=Jane, ...)"
+
+// Setting to the same value does NOT trigger onChange:
+mutator.firstName = "Jane"
+// (nothing printed)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Dirty tracking: isModified() and commit()</h2>
+
+    <p><code>isModified()</code> compares the current value to the initial value (or the last committed value). This is
+        perfect for form "save" buttons and "unsaved changes" warnings.</p>
+
+    <Code code={`val mutator = address.mutator()
+
+mutator.isModified()  // false — nothing changed yet
+
+mutator.street = "Oak Ave"
+mutator.isModified()  // true — street differs from initial
+
+mutator.street = "Main St"  // revert to original
+mutator.isModified()  // false — back to initial state!
+
+mutator.street = "Oak Ave"
+mutator.isModified()  // true
+
+mutator.commit()      // Accept "Oak Ave" as the new baseline
+mutator.isModified()  // false
+mutator.getInitialValue().street  // "Oak Ave"`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Structural equality guarantees</h2>
+
+    <p>Mutator is careful about identity. If a mutation results in a value equal to the initial value, Mutator returns
+        the <strong>exact same instance</strong> (reference equality):</p>
+
+    <Code code={`val address = Address(street = "Main St", city = "Springfield", zip = "62701")
+
+// Empty mutation — returns the exact same object
+val result1 = address.mutate { }
+result1 === address  // true (same reference!)
+
+// Set to same value — still the same object
+val result2 = address.mutate { street = "Main St" }
+result2 === address  // true
+
+// Change and revert — still the same object
+val result3 = address.mutate {
+    street = "Oak Ave"
+    street = "Main St"
+}
+result3 === address  // true`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>This matters for UI frameworks that use reference equality to skip re-renders. If nothing actually changed, you
+        get the same object back, and downstream equality checks short-circuit immediately.</p>
+
+    <h2>The modifyIfChanged optimization</h2>
+
+    <p>Generated property setters use <code>modifyIfChanged</code> to avoid unnecessary work:</p>
+
+    <Code code={`// Generated code:
+var Mutator<Address>.street
+    get() = get().street
+    set(v) = modifyIfChanged(get().street, v) { it.copy(street = v) }
+
+// modifyIfChanged only calls the copy() lambda when previous != next.
+// This means:
+//   mutator.street = "Main St"  // (same value — no copy, no notification)
+//   mutator.street = "Oak Ave"  // (different — copies and notifies)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>This is important for performance: setting a property to its current value is literally free — no allocation, no
+        notification, no propagation.</p>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/mutator/collections"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Collections &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

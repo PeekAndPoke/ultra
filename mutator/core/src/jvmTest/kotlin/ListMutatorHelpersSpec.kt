@@ -2,30 +2,11 @@ package io.peekandpoke.mutator
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeInstanceOf
-import io.peekandpoke.mutator.domain.Address
 import io.peekandpoke.mutator.domain.SealedInterface
 import io.peekandpoke.mutator.domain.filterMutatorsOf
 import io.peekandpoke.mutator.domain.mutator
 
 class ListMutatorHelpersSpec : StringSpec({
-
-    "filterMutatorsOf should return only mutators matching the given type" {
-        val list = listOf(
-            Address("Street 1", "City 1", "Zip 1"),
-            Address("Street 2", "City 2", "Zip 2")
-        )
-
-        val mutator = list.mutator()
-
-        val filtered = mutator.filterMutatorsOf<Address>()
-
-        filtered.size shouldBe 2
-        filtered[0].get().shouldBeInstanceOf<Address>()
-        filtered[1].get().shouldBeInstanceOf<Address>()
-        filtered[0].get().street shouldBe "Street 1"
-        filtered[1].get().street shouldBe "Street 2"
-    }
 
     "filterMutatorsOf should work with sealed interfaces" {
         val list = listOf(
@@ -66,7 +47,7 @@ class ListMutatorHelpersSpec : StringSpec({
         )
     }
 
-    "filterMutatorsOf should return empty list when no elements match" {
+    "filterMutatorsOf should return only matching elements" {
         val list = listOf(
             SealedInterface.One("2"),
             SealedInterface.Two(4)

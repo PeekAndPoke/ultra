@@ -1,0 +1,207 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {mutatorSidebar} from '../../../data/mutator-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Collection Mutators" sidebar={mutatorSidebar}
+            description="ListMutator, SetMutator, and MapMutator for mutating collections in place">
+
+    <h1>Collection Mutators</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        <code>ListMutator</code>, <code>SetMutator</code>, and <code>MapMutator</code> let you
+        add, remove, and modify elements in immutable collections — with full change propagation.
+    </p>
+
+    <h2>The problem</h2>
+
+    <p>Mutating a list of nested data classes with pure <code>copy()</code> is where things get truly ugly:</p>
+
+    <Code code={`@Mutable
+data class AddressBook(val addresses: List<Address>)
+
+val book = AddressBook(
+    addresses = listOf(
+        Address("Main St", "Springfield", "62701"),
+        Address("Oak Ave", "Shelbyville", "62702"),
+    )
+)
+
+// Change the city of the SECOND address using copy():
+val updated = book.copy(
+    addresses = book.addresses.mapIndexed { index, addr ->
+        if (index == 1) addr.copy(city = "Capital City")
+        else addr
+    }
+)
+// That's 5 lines for one field change. In a list. Of nested objects.`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>With Mutator:</p>
+
+    <Code code={`val updated = book.mutate {
+    addresses[1].city = "Capital City"
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>ListMutator</h2>
+
+    <p>KSP generates <code>List&lt;T&gt;.mutator()</code> and <code>List&lt;T&gt;.mutate {'{ }'}</code> for every <code>@Mutable</code>
+        class. The <code>ListMutator</code> implements <code>MutableList&lt;Mutator&lt;T&gt;&gt;</code>, so you can use
+        all familiar list operations.</p>
+
+    <h3>Iterating and modifying elements</h3>
+
+    <Code code={`val addresses = listOf(
+    Address("Street 1", "City 1", "Zip 1"),
+    Address("Street 2", "City 2", "Zip 2"),
+)
+
+val updated = addresses.mutate {
+    forEach { it.street += " (verified)" }
+}
+// Result: [Address("Street 1 (verified)", ...), Address("Street 2 (verified)", ...)]`} lang="kotlin"
+          theme="vitesse-dark"/>
+
+    <h3>Indexed access</h3>
+
+    <Code code={`val updated = addresses.mutate {
+    this[0].city = "New City"
+    this[1].street = "New Street"
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Adding and removing</h3>
+
+    <Code code={`val mutator = addresses.mutator()
+
+// Add an element (use the add() extension)
+mutator.add(Address("Street 3", "City 3", "Zip 3"))
+
+// Remove by index
+mutator.removeAt(0)
+
+// Clear the list
+mutator.clear()
+
+// Check the result
+mutator.get()  // [Address("Street 3", "City 3", "Zip 3")]`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Nested list in a data class</h3>
+
+    <p>When a <code>@Mutable</code> data class has a <code>List</code> property, the sub-mutator is a
+        <code>ListMutator</code> with full propagation:</p>
+
+    <Code code={`val book = AddressBook(
+    addresses = listOf(
+        Address("Main St", "Springfield", "62701"),
+        Address("Oak Ave", "Shelbyville", "62702"),
+    )
+)
+
+val updated = book.mutate {
+    // Modify an existing element
+    addresses[0].city = "Capital City"
+
+    // Add a new address
+    addresses.add(Address("Elm St", "Portland", "97201"))
+}
+
+// The AddressBook is rebuilt with the updated list — all immutable`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>SetMutator</h2>
+
+    <p><code>SetMutator</code> works similarly, implementing <code>MutableSet&lt;Mutator&lt;T&gt;&gt;</code>.</p>
+
+    <Code code={`@Mutable
+data class WithCollections(
+    val tags: Set<Address>,
+    val lookup: Map<String, Address>,
+)
+
+val obj = WithCollections(
+    tags = setOf(
+        Address("Street 1", "City 1", "Zip 1"),
+        Address("Street 2", "City 2", "Zip 2"),
+    ),
+    lookup = emptyMap(),
+)
+
+// Modify elements via iteration
+val updated = obj.mutate {
+    tags.forEach { mutator ->
+        if (mutator.get().street == "Street 1") {
+            mutator.street = "Modified Street"
+        }
+    }
+}
+
+// Add to a set
+val added = obj.mutate {
+    tags.add(Address("Street 3", "City 3", "Zip 3"))
+}
+
+// Clear a set
+val cleared = obj.mutate {
+    tags.clear()
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>MapMutator</h2>
+
+    <p><code>MapMutator</code> implements <code>MutableMap&lt;K, Mutator&lt;V&gt;&gt;</code>. Keys are immutable; values
+        are mutators.</p>
+
+    <Code code={`val obj = WithCollections(
+    tags = emptySet(),
+    lookup = mapOf(
+        "home" to Address("Main St", "Springfield", "62701"),
+        "work" to Address("Office Rd", "Capital City", "62702"),
+    ),
+)
+
+// Modify a value by key
+val updated = obj.mutate {
+    lookup["home"]?.street = "New Main St"
+}
+
+// Modify via entries
+val updated2 = obj.mutate {
+    lookup.entries.forEach { entry ->
+        if (entry.key == "work") {
+            entry.value.city = "Metro City"
+        }
+    }
+}
+
+// Remove an entry
+val updated3 = obj.mutate {
+    lookup.remove("work")
+}
+
+// Clear the map
+val updated4 = obj.mutate {
+    lookup.clear()
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>How collection propagation works</h2>
+
+    <p>When you access an element from a <code>ListMutator</code> (via index, <code>forEach</code>, or iterator), you
+        get a <code>Mutator&lt;T&gt;</code> with an <code>onChange</code> callback wired to the list. Modifying any
+        property of that element triggers:</p>
+
+    <ol>
+        <li>The element's <code>copy()</code> — producing a new immutable element</li>
+        <li>The element's <code>onChange</code> — which updates the element in the list</li>
+        <li>The list's <code>onChange</code> — which propagates to the parent data class</li>
+        <li>And so on up the chain</li>
+    </ol>
+
+    <p>This means <code>addresses[0].city = "X"</code> inside a <code>book.mutate {'{ }'}</code> block triggers a
+        cascade that rebuilds the entire <code>AddressBook</code> with the updated list — all automatically.</p>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/mutator/sealed-classes"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Sealed classes &rarr;
+        </a>
+    </div>
+
+</DocsLayout>
