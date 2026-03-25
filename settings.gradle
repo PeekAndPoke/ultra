@@ -1,11 +1,13 @@
 rootProject.name = 'ultra'
 
 include(
+        // tooling for building this repo
+        ":tooling",
+
         // ULTRA ////////////////////////////////////////////////////////////////////////////////
         ":ultra:common",
         ":ultra:cache",
         ":ultra:datetime",
-        ":ultra:tooling",
         ":ultra:fixture",
         ":ultra:maths",
         ":ultra:model",

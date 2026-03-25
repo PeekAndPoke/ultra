@@ -25,7 +25,7 @@ dependencies {
     implementation(project(":ultra:reflection"))
 
     // Tests /////////////////////////
-    testImplementation(project(":ultra:tooling"))
+    testImplementation(project(":tooling"))
     Deps.Test {
         jvmTestDeps()
     }

@@ -86,6 +86,8 @@
       <module name="ultra.ultra.mutator.test" target="17" />
       <module name="ultra.ultra.slumber.main" target="17" />
       <module name="ultra.ultra.slumber.test" target="17" />
+      <module name="ultra.ultra.tooling.main" target="17" />
+      <module name="ultra.ultra.tooling.test" target="17" />
       <module name="ultra.vault" target="17" />
       <module name="ultra.z-playground-js" target="17" />
       <module name="ultra.z-playground-jvm" target="17" />

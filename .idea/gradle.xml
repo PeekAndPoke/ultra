@@ -65,6 +65,7 @@
             <option value="$PROJECT_DIR$/mutator" />
             <option value="$PROJECT_DIR$/mutator/core" />
             <option value="$PROJECT_DIR$/mutator/ksp" />
+            <option value="$PROJECT_DIR$/tooling" />
             <option value="$PROJECT_DIR$/ultra" />
             <option value="$PROJECT_DIR$/ultra/cache" />
             <option value="$PROJECT_DIR$/ultra/common" />
@@ -83,7 +84,6 @@
             <option value="$PROJECT_DIR$/ultra/slumber" />
             <option value="$PROJECT_DIR$/ultra/slumber-test-classes" />
             <option value="$PROJECT_DIR$/ultra/streams" />
-            <option value="$PROJECT_DIR$/ultra/tooling" />
             <option value="$PROJECT_DIR$/ultra/vault" />
           </set>
         </option>
