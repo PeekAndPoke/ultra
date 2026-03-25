@@ -48,4 +48,4 @@
 
 //! @version @js-joda/core - 3.2.0
 
-//! @version @js-joda/timezone - 2.22.0-2025b
+//! @version @js-joda/timezone - 2.23.0-2025b
