@@ -1,45 +1,25 @@
-# peekandpoke.io
+# PeekAndPoke Ultra
 
-> A collection of open-source Kotlin multiplatform libraries for building modern applications.
+> A suite of open-source Kotlin libraries for building modern applications.
+> Published on Maven Central as `io.peekandpoke.ultra`. Version: 0.102.0. Kotlin: 2.3.10.
 
-## Libraries
+- Website: https://peekandpoke.io
+- Source: https://github.com/PeekAndPoke/ultra
+- Maven Central: https://central.sonatype.com/namespace/io.peekandpoke.ultra
 
-### Kraft — Build SPAs in Pure Kotlin
-- Docs: https://peekandpoke.io/ultra/kraft/
-- Source: https://github.com/PeekAndPoke/ultra/tree/master/kraft
-- Maven: io.peekandpoke.kraft:core
+## Docs
 
-Component-based SPA framework using Preact as rendering engine. Features: reactive state management, type-safe routing, form validation, SemanticUI DSL, 12 addon integrations (ChartJS, PDF viewer, syntax highlighting, etc.).
+- [Kraft](https://peekandpoke.io/llms/kraft.md): Build SPAs in pure Kotlin — components, reactive state, routing, forms, SemanticUI DSL, 12 addons
+- [Kontainer](https://peekandpoke.io/llms/kontainer.md): Lightweight DI container — per-request scoping, singleton/dynamic/prototype services, modules
+- [Slumber](https://peekandpoke.io/llms/slumber.md): Kotlin-first serialization — nullable-aware, sealed class polymorphism, two-pass error handling
+- [Streams](https://peekandpoke.io/llms/streams.md): Reactive streams — always-has-a-value, composable operators, lazy subscriptions
+- [Karango](https://peekandpoke.io/llms/karango.md): Type-safe ArangoDB — Kotlin query DSL, KSP codegen, repository pattern, CRUD, indexes, hooks
 
-### Mutator — Mutate the Immutable
-- Source: https://github.com/PeekAndPoke/ultra/tree/master/mutator
-- Maven: io.peekandpoke.ultra:mutator-core
+## Optional: Complete docs in one file
 
-KSP-generated code for mutating deeply nested immutable data structures without copy() chains.
+- [llms-full.txt](https://peekandpoke.io/llms-full.txt): All documentation in a single file (153KB)
 
-### Kontainer — Dependency Injection
-- Source: https://github.com/PeekAndPoke/ultra/tree/master/ultra/kontainer
-- Maven: io.peekandpoke.ultra:kontainer
+## Libraries not yet documented
 
-Compile-time verified DI container. No reflection, no runtime surprises.
-
-### Slumber — Serialization
-- Source: https://github.com/PeekAndPoke/ultra/tree/master/ultra/slumber
-- Maven: io.peekandpoke.ultra:slumber
-
-Flexible codec-based serialization and deserialization.
-
-### Karango — Type-safe ArangoDB
-- Source: https://github.com/PeekAndPoke/ultra/tree/master/karango
-- Maven: io.peekandpoke.ultra:karango-core
-
-Type-safe ArangoDB queries in Kotlin with KSP code generation.
-
-### Funktor — Full-stack Kotlin on Ktor
-- Source: https://github.com/PeekAndPoke/ultra/tree/master/funktor
-- Maven: io.peekandpoke.ultra:funktor-core
-
-Client-server framework with auth, REST, clustering, and static web serving.
-
-## Full Documentation
-- https://peekandpoke.io/llms-full.txt
+- **Mutator** (io.peekandpoke.mutator:core) — KSP-generated code for mutating nested immutable data. Source: https://github.com/PeekAndPoke/ultra/tree/master/mutator
+- **Funktor** (io.peekandpoke.funktor:core) — Full-stack Kotlin on Ktor. Source: https://github.com/PeekAndPoke/ultra/tree/master/funktor

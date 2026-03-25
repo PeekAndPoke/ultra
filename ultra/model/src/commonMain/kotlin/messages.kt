@@ -33,7 +33,6 @@ data class MessageCollection(
     /**
      * Helps building [Messages]
      */
-    // TODO: test me
     class Builder @PublishedApi internal constructor(var title: String = "") {
 
         private val messages: MutableList<Message> = mutableListOf()

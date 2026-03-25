@@ -1,0 +1,5899 @@
+# PeekAndPoke Ultra — Complete Documentation
+
+> A Kotlin multiplatform monorepo. Six libraries, one ecosystem.
+> Published on Maven Central as `io.peekandpoke.ultra`.
+> Version: 0.102.0 | Kotlin: 2.3.10
+> GitHub: https://github.com/PeekAndPoke/ultra
+> Maven Central: https://central.sonatype.com/namespace/io.peekandpoke.ultra
+
+## Table of Contents
+
+- [Kraft — Build SPAs in Pure Kotlin](#kraft)
+  - [Overview](#kraft-overview)
+  - [Getting Started](#kraft-getting-started)
+  - [Components](#kraft-components)
+  - [State Management](#kraft-state-management)
+  - [Routing](#kraft-routing)
+  - [Forms & Validation](#kraft-forms)
+  - [SemanticUI DSL](#kraft-semantic-ui)
+  - [Addons](#kraft-addons)
+- [Kontainer — Dependency Injection](#kontainer)
+  - [Overview](#kontainer-overview)
+  - [Getting Started](#kontainer-getting-started)
+  - [Defining Services](#kontainer-services)
+  - [Service Lifecycle](#kontainer-lifecycle)
+  - [Service Injection](#kontainer-injection)
+  - [Modules](#kontainer-modules)
+  - [Advanced Topics](#kontainer-advanced)
+- [Slumber — Serialization](#slumber)
+  - [Overview](#slumber-overview)
+  - [Getting Started](#slumber-getting-started)
+  - [Data Classes](#slumber-data-classes)
+  - [Polymorphism](#slumber-polymorphism)
+  - [Collections & Maps](#slumber-collections)
+  - [Date & Time](#slumber-datetime)
+  - [Error Handling](#slumber-error-handling)
+  - [Custom Modules](#slumber-custom-modules)
+- [Streams — Reactive Values](#streams)
+  - [Overview](#streams-overview)
+  - [Getting Started](#streams-getting-started)
+  - [Operators](#streams-operators)
+  - [Combining & Accumulating](#streams-combining)
+  - [Control & Timing](#streams-control)
+  - [Subscriptions & Resilience](#streams-subscriptions)
+  - [JS-Specific Operators](#streams-js-specific)
+  - [Extending Streams](#streams-extending)
+- [Karango — Type-Safe ArangoDB](#karango)
+  - [Overview](#karango-overview)
+  - [Getting Started](#karango-getting-started)
+  - [Entity Model](#karango-entity-model)
+  - [Query DSL](#karango-query-dsl)
+  - [Repositories](#karango-repositories)
+  - [Indexes & Hooks](#karango-indexes-and-hooks)
+  - [Kontainer Integration](#karango-kontainer-integration)
+  - [Advanced Queries](#karango-advanced-queries)
+
+---
+
+## Kraft — Build SPAs in Pure Kotlin {#kraft}
+
+### Overview {#kraft-overview}
+
+# Kraft — Build SPAs in Pure Kotlin
+
+A component-based framework for building single-page applications.
+Kotlin all the way down — no JavaScript, no template engines, no compromises.
+
+## What is Kraft?
+
+Kraft lets you build reactive web applications using **only Kotlin**. It compiles to JavaScript and uses [Preact](https://preactjs.com) (a 3KB React alternative) as its rendering engine — but you never touch Preact directly.
+
+Instead, you write components like this:
+
+```kotlin
+class Counter(ctx: Ctx<Props>) : Component<Counter.Props>(ctx) {
+    data class Props(val start: Int)
+
+    private var count by value(props.start)
+
+    override fun VDom.render() {
+        div {
+            h2 { +"Count: $count" }
+            ui.blue.button {
+                onClick { count++ }
+                +"Increment"
+            }
+        }
+    }
+}
+```
+
+That's a complete, working component. State management (`value()`), event handling (`onClick`), and type-safe HTML — all in one place.
+
+## Why Kraft?
+
+**Not another React wrapper.** Kotlin/JS React wrappers try to map React's API to Kotlin. Kraft takes a different approach: it provides its own component model designed for Kotlin, then uses Preact as a lightweight rendering layer underneath.
+
+This means:
+
+- **Zero JavaScript dependencies** beyond Preact (which itself has zero dependencies)
+- **Kotlin idioms** everywhere — data classes for props, delegated properties for state, extension functions for the DSL
+- **Type safety** from props to HTML to CSS — your IDE catches errors before the browser does
+- **No template engine** — kotlinx.html gives you type-safe markup as code
+
+## What you get
+
+- **Components** — Class-based and functional components with props, state, and lifecycle hooks.
+- **Reactive State** — `var x by value(0)` — change the value, the UI updates. Built-in stream support.
+- **Routing** — Type-safe routes with params, middleware for auth guards, and nested layouts.
+- **Forms & Validation** — Two-way binding, field validation, draft/commit pattern — all type-safe.
+- **SemanticUI DSL** — `ui.blue.button { +"Click" }` — a beautiful, fluent API for FomanticUI.
+- **12 Addons** — ChartJS, PDF viewer, syntax highlighting, signature pad, and more — wrapped for Kotlin.
+
+## Quick taste
+
+Here's a complete app with routing:
+
+```kotlin
+fun main() {
+    val app = kraftApp {
+        semanticUI()
+        routing {
+            usePathStrategy()
+            mount(Static("/")) { HomePage() }
+            mount(Route1("/users/{id}")) { route ->
+                UserPage(route["id"])
+            }
+        }
+    }
+
+    app.mount("#app", PreactVDomEngine()) {
+        RouterComponent()
+    }
+}
+```
+
+## Example Projects
+
+Clone and run these standalone example repos to see Kraft in action:
+
+- **Hello World** — Minimal project — mount a component, see it render. https://github.com/PeekAndPoke/kraft-example-helloworld
+- **Router Demo** — Multi-page app with parameterized routes and form handling with Mutator. https://github.com/PeekAndPoke/kraft-example-router
+- **Remote API** — Consume REST APIs and display results with routing and SemanticUI. https://github.com/PeekAndPoke/kraft-example-remote
+
+---
+
+### Getting Started {#kraft-getting-started}
+
+# Getting Started
+
+From zero to a working Kraft app in five minutes.
+
+## Prerequisites
+
+- **JDK 17+** — Kraft compiles Kotlin to JavaScript, but the build runs on the JVM
+- **Gradle** — the build system (wrapper included in most projects)
+
+## 1. Set up your Gradle project
+
+In your `build.gradle.kts`:
+
+```kotlin
+plugins {
+    kotlin("multiplatform") version "2.3.10"
+    kotlin("plugin.serialization") version "2.3.10"
+}
+
+kotlin {
+    js {
+        browser {
+            testTask { }
+        }
+        binaries.executable()
+    }
+
+    sourceSets {
+        jsMain {
+            dependencies {
+                // Kraft core
+                implementation("io.peekandpoke.kraft:core:0.102.0")
+
+                // SemanticUI integration (optional but recommended)
+                implementation("io.peekandpoke.kraft:semanticui:0.102.0")
+            }
+        }
+    }
+}
+```
+
+## 2. Create your entry point
+
+Create `src/jsMain/resources/index.html`:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Kraft App</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.8/dist/semantic.min.css">
+</head>
+<body>
+    <div id="app"></div>
+    <script src="your-project-name.js"></script>
+</body>
+</html>
+```
+
+## 3. Write your first app
+
+Create `src/jsMain/kotlin/main.kt`:
+
+```kotlin
+import de.peekandpoke.kraft.components.*
+import de.peekandpoke.kraft.routing.Static
+import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.kraft.vdom.preact.PreactVDomEngine
+import de.peekandpoke.ultra.semanticui.ui
+import kotlinx.html.*
+
+// Define the app and its routes
+val app = kraftApp {
+    semanticUI()
+    routing {
+        mount(Static("")) { HomePage() }
+    }
+}
+
+// Entry point
+fun main() {
+    app.mount("#app", PreactVDomEngine()) {
+        RouterComponent()
+    }
+}
+```
+
+## 4. Create your first component
+
+Create `src/jsMain/kotlin/HomePage.kt`:
+
+```kotlin
+import de.peekandpoke.kraft.components.*
+import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.semanticui.ui
+import kotlinx.html.*
+
+// Factory function — this is how other components use yours
+@Suppress("FunctionName")
+fun Tag.HomePage() = comp {
+    HomePage(it)
+}
+
+// The component class
+class HomePage(ctx: NoProps) : PureComponent(ctx) {
+
+    // Reactive state — changing this redraws the component
+    private var count by value(0)
+
+    override fun VDom.render() {
+        ui.container {
+            ui.segment {
+                ui.header H1 { +"Hello from Kraft!" }
+
+                p { +"You clicked the button $count times." }
+
+                ui.blue.button {
+                    onClick { count++ }
+                    +"Click me"
+                }
+            }
+        }
+    }
+}
+```
+
+## 5. Run it
+
+```bash
+./gradlew -t --parallel jsRun
+```
+
+The `-t` flag enables continuous build — save a file and the browser refreshes.
+
+## What just happened?
+
+Let's break down the patterns you just used:
+
+### The factory function pattern
+
+```kotlin
+@Suppress("FunctionName")
+fun Tag.HomePage() = comp {
+    HomePage(it)
+}
+```
+
+Every component has a **factory function** — an extension on `Tag` that creates the component via `comp { }`. This is how you compose components in the HTML DSL:
+
+```kotlin
+override fun VDom.render() {
+    div {
+        HomePage()           // Just call the factory function
+        Counter(start = 5)   // With props
+    }
+}
+```
+
+### Reactive state with `value()`
+
+```kotlin
+private var count by value(0)
+```
+
+`value()` creates a **delegated property** that automatically triggers a redraw when changed. No `setState()`, no actions, no dispatchers — just assign a new value.
+
+### The HTML DSL
+
+```kotlin
+ui.container {
+    ui.segment {
+        ui.header H1 { +"Hello" }
+    }
+}
+```
+
+This is [kotlinx.html](https://github.com/Kotlin/kotlinx.html) with the SemanticUI DSL layered on top. Standard HTML tags (`div`, `p`, `button`) work alongside SemanticUI helpers (`ui.segment`, `ui.button`).
+
+---
+
+### Components {#kraft-components}
+
+# Components
+
+Everything in Kraft is a component. Here's how they work.
+
+## The component model
+
+Every Kraft component is a Kotlin class that extends `Component<PROPS>` and implements one method: `render()`.
+
+```kotlin
+class Greeting(ctx: Ctx<Props>) : Component<Greeting.Props>(ctx) {
+    data class Props(val name: String)
+
+    override fun VDom.render() {
+        h2 { +"Hello, ${props.name}!" }
+    }
+}
+```
+
+Alongside the class, you define a **factory function** so other components can use it in the HTML DSL:
+
+```kotlin
+@Suppress("FunctionName")
+fun Tag.Greeting(name: String) = comp(
+    Greeting.Props(name = name)
+) { Greeting(it) }
+```
+
+Now any parent component can write:
+
+```kotlin
+override fun VDom.render() {
+    Greeting(name = "World")
+}
+```
+
+## Component types
+
+### Component with props
+
+The most common type. Props are a `data class` — immutable, type-safe, and IDE-friendly.
+
+```kotlin
+class UserCard(ctx: Ctx<Props>) : Component<UserCard.Props>(ctx) {
+    data class Props(
+        val name: String,
+        val email: String,
+        val role: String = "member",  // Default values work
+    )
+
+    override fun VDom.render() {
+        ui.card {
+            noui.content {
+                ui.header { +props.name }
+                noui.description { +props.email }
+            }
+            noui.extra.content {
+                ui.label { +props.role }
+            }
+        }
+    }
+}
+```
+
+### PureComponent (no props)
+
+For components that don't need external data — pages, layouts, root components:
+
+```kotlin
+class DashboardPage(ctx: NoProps) : PureComponent(ctx) {
+    override fun VDom.render() {
+        ui.container {
+            ui.header H1 { +"Dashboard" }
+            // ...
+        }
+    }
+}
+```
+
+`PureComponent` is a convenience alias for `Component<Any?>` with `NoProps` context.
+
+### Functional components
+
+For simple, stateless rendering — no class needed:
+
+```kotlin
+val Badge = component { name: String, color: String ->
+    ui.with(color).label { +name }
+}
+
+// Usage
+override fun VDom.render() {
+    Badge("Admin", "red")
+    Badge("Active", "green")
+}
+```
+
+Functional components support up to 10 parameters.
+
+## Lifecycle hooks
+
+Components have four lifecycle hooks:
+
+```kotlin
+class LiveSearch(ctx: Ctx<Props>) : Component<LiveSearch.Props>(ctx) {
+    data class Props(val query: String)
+
+    init {
+        lifecycle {
+            onMount {
+                // Component is now in the DOM
+                // `dom` property gives you the HTMLElement
+                console.log("Mounted at", dom?.tagName)
+            }
+
+            onUpdate {
+                // Component re-rendered (props or state changed)
+            }
+
+            onUnmount {
+                // Component removed from DOM
+                // Streams auto-unsubscribe, but clean up other resources here
+            }
+
+            onNextProps { newProps, oldProps ->
+                // Parent sent new props
+                if (newProps.query != oldProps.query) {
+                    reload()
+                }
+            }
+        }
+    }
+
+    override fun VDom.render() {
+        // ...
+    }
+}
+```
+
+**Key point:** Stream subscriptions (via `subscribingTo()`) auto-unsubscribe when the component unmounts. You don't need to clean them up manually.
+
+## Component references
+
+Sometimes a parent needs to call methods on a child. Use `ComponentRef`:
+
+```kotlin
+class DrawingApp(ctx: NoProps) : PureComponent(ctx) {
+
+    // Create a ref tracker for the SignaturePad component
+    private val padRef = ComponentRef.Tracker<SignaturePad>()
+
+    override fun VDom.render() {
+        // The SignaturePad component, tracked by our ref
+        SignaturePad {
+            // configuration...
+        }.track(padRef)
+
+        // Use the ref to access the child component
+        padRef { pad ->
+            ui.button {
+                onClick { pad.clear() }
+                +"Clear signature"
+            }
+
+            if (pad.isEmpty()) {
+                ui.red.label { +"No signature yet" }
+            }
+        }
+    }
+}
+```
+
+The `padRef { ... }` block only renders when the ref is attached — it's safe by design.
+
+## Composing components
+
+Components compose naturally through the HTML DSL:
+
+```kotlin
+class App(ctx: NoProps) : PureComponent(ctx) {
+    override fun VDom.render() {
+        div(classes = "app") {
+            NavBar()
+            ui.container {
+                Sidebar()
+                MainContent()
+            }
+            Footer()
+        }
+    }
+}
+```
+
+### Passing callbacks
+
+Components communicate upward through callback props:
+
+```kotlin
+class TodoItem(ctx: Ctx<Props>) : Component<TodoItem.Props>(ctx) {
+    data class Props(
+        val text: String,
+        val done: Boolean,
+        val onToggle: () -> Unit,
+        val onDelete: () -> Unit,
+    )
+
+    override fun VDom.render() {
+        ui.item {
+            ui.checkbox {
+                input(type = InputType.checkBox) {
+                    checked = props.done
+                    onChange { props.onToggle() }
+                }
+                label { +props.text }
+            }
+            ui.red.icon.button {
+                onClick { props.onDelete() }
+                icon.trash()
+            }
+        }
+    }
+}
+```
+
+### The `shouldRedraw` optimization
+
+By default, components redraw whenever props change. Override `shouldRedraw` to skip unnecessary renders:
+
+```kotlin
+override fun shouldRedraw(nextProps: Props): Boolean {
+    return nextProps != props  // Only redraw if props actually changed
+}
+```
+
+Since `Props` is a data class, `!=` does a structural comparison — this is efficient and correct.
+
+## Accessing app services
+
+Components can access app-level services through the attribute system:
+
+```kotlin
+override fun VDom.render() {
+    // These are available in any component
+    val router = router           // Navigation
+    val modals = modals           // Show modals
+    val toasts = toasts           // Show notifications
+    val responsive = responsive   // Screen size info
+}
+```
+
+These are injected via Kraft's attribute system — no manual wiring needed.
+
+---
+
+### State Management {#kraft-state-management}
+
+# State Management
+
+Three mechanisms, each for a different job. No ceremony, no boilerplate.
+
+## 1. Local state with `value()`
+
+The simplest and most common pattern. Declare a property with `value()`, change it, and the component redraws:
+
+```kotlin
+class Counter(ctx: NoProps) : PureComponent(ctx) {
+    private var count by value(0)
+
+    override fun VDom.render() {
+        div { +"Count: $count" }
+        ui.button {
+            onClick { count++ }  // This triggers a redraw
+            +"Increment"
+        }
+    }
+}
+```
+
+`value()` uses Kotlin's **delegated properties**. Under the hood, the setter calls `triggerRedraw()` — you don't need to think about it.
+
+### With change callbacks
+
+React to state changes:
+
+```kotlin
+private var query by value("") { newValue ->
+    console.log("Query changed to: $newValue")
+    search(newValue)
+}
+```
+
+### Complex state
+
+Use a data class when you have related state:
+
+```kotlin
+data class State(
+    val name: String = "",
+    val email: String = "",
+    val agreed: Boolean = false,
+)
+
+private var state by value(State())
+
+// Update one field — immutable copy, automatic redraw
+onClick { state = state.copy(agreed = true) }
+```
+
+## 2. Stream-backed state
+
+For state that should be debounced, throttled, or transformed before triggering a redraw:
+
+```kotlin
+class SearchBox(ctx: NoProps) : PureComponent(ctx) {
+
+    // Debounce input by 300ms before searching
+    private var query by stream("") {
+        it.debounce(300.milliseconds)
+    } handler { debouncedQuery ->
+        performSearch(debouncedQuery)
+    }
+
+    override fun VDom.render() {
+        ui.input {
+            input {
+                value = query
+                onInput { query = it.target.asDynamic().value as String }
+            }
+        }
+    }
+}
+```
+
+The stream config lambda lets you apply operators from the Ultra streams library — `debounce`, `throttle`, `map`, `filter`, and more.
+
+## 3. Subscribing to external streams
+
+When state lives outside the component — global state, shared data, tickers:
+
+```kotlin
+class LiveDashboard(ctx: NoProps) : PureComponent(ctx) {
+
+    // Subscribe to a global auth state
+    private val auth by subscribingTo(AppState.auth)
+
+    // Subscribe to a ticker that emits every second
+    private val tick by subscribingTo(ticker(1.seconds))
+
+    override fun VDom.render() {
+        div { +"Logged in as: ${auth.user?.name}" }
+        div { +"Uptime: ${tick.count}s" }
+    }
+}
+```
+
+**Key behaviors:**
+
+- The component redraws whenever the stream emits a new value
+- Subscriptions auto-unsubscribe when the component unmounts — no memory leaks
+- You can subscribe to any `Stream<T>` from the Ultra streams library
+
+### Reactive transformations
+
+Combine streams with operators:
+
+```kotlin
+// A sine wave that updates every 100ms
+private val wave by subscribingTo(
+    ticker(100.milliseconds).map { tick ->
+        sin(tick.count * 10 * PI / 180.0)
+    }
+)
+```
+
+## Persisting state in local storage
+
+Kraft integrates with browser local storage for state that should survive page reloads:
+
+```kotlin
+@Serializable
+data class UserPreferences(val theme: String = "dark", val lang: String = "en")
+
+class SettingsPage(ctx: NoProps) : PureComponent(ctx) {
+
+    // This state persists in localStorage under key "user-prefs"
+    private val prefs = StreamSource(UserPreferences())
+        .persistInLocalStorage("user-prefs", UserPreferences.serializer())
+
+    private val currentPrefs by subscribingTo(prefs)
+
+    override fun VDom.render() {
+        div { +"Theme: ${currentPrefs.theme}" }
+
+        ui.button {
+            onClick {
+                prefs(currentPrefs.copy(theme = "light"))
+            }
+            +"Switch to light"
+        }
+    }
+}
+```
+
+The value is serialized to JSON and stored in `localStorage`. On next page load, it's restored automatically.
+
+## Async data loading
+
+The `dataLoader` pattern handles the loading/error/loaded lifecycle:
+
+```kotlin
+class UserProfile(ctx: Ctx<Props>) : Component<UserProfile.Props>(ctx) {
+    data class Props(val userId: String)
+
+    private val loader = dataLoader {
+        flow {
+            val user = api.getUser(props.userId)
+            emit(user)
+        }
+    }
+
+    override fun VDom.render() {
+        loader(this) {
+            loading {
+                ui.placeholder.segment {
+                    ui.active.loader { }
+                }
+            }
+            error { err ->
+                ui.negative.message {
+                    +"Failed to load user: ${err.message}"
+                }
+            }
+            loaded { user ->
+                ui.card {
+                    noui.content {
+                        ui.header { +user.name }
+                        noui.description { +user.email }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+This gives you:
+
+- Automatic loading state on first render
+- Error handling if the flow throws
+- Type-safe access to the loaded data
+- A `reload()` method to refresh
+
+## Patterns summary
+
+| What you need | Use this | Example |
+|---|---|---|
+| Simple local state | `var x by value(0)` | Counter, toggles |
+| Debounced/throttled state | `stream("") { it.debounce(300.ms) }` | Search input |
+| Global/shared state | `val x by subscribingTo(stream)` | Auth, preferences |
+| Persistent state | `StreamSource().persistInLocalStorage()` | User settings |
+| Async data | `dataLoader { flow { emit(data) } }` | API calls |
+
+---
+
+### Routing {#kraft-routing}
+
+# Routing
+
+Type-safe routes with parameters, middleware for auth guards, and nested layouts.
+
+## Defining routes
+
+Routes are objects — not strings scattered across your codebase:
+
+```kotlin
+object Nav {
+    val home = Static("/")
+    val about = Static("/about")
+    val userProfile = Route1("/users/{id}")
+    val userPost = Route2("/users/{id}/posts/{postId}")
+}
+```
+
+`Static` is for routes with no parameters. `Route1` through `Route7` support 1-7 typed parameters.
+
+## Setting up the router
+
+```kotlin
+val app = kraftApp {
+    routing {
+        usePathStrategy()  // Clean URLs: /users/123
+        // or useHashStrategy() for hash URLs: /#/users/123
+
+        mount(Nav.home) { HomePage() }
+        mount(Nav.about) { AboutPage() }
+
+        mount(Nav.userProfile) { route ->
+            val userId = route["id"]
+            UserProfilePage(userId)
+        }
+
+        catchAll { NotFoundPage() }
+    }
+}
+```
+
+The `catchAll` block handles any URL that doesn't match a defined route.
+
+## Rendering the current route
+
+Drop `RouterComponent()` wherever you want the active page to appear:
+
+```kotlin
+class App(ctx: NoProps) : PureComponent(ctx) {
+    override fun VDom.render() {
+        NavBar()
+        div(classes = "content") {
+            RouterComponent()  // Active page renders here
+        }
+        Footer()
+    }
+}
+```
+
+## Navigation
+
+### Programmatic navigation
+
+```kotlin
+// Navigate to a static route
+router.navToUri(Nav.about())
+
+// Navigate with parameters
+router.navToUri(Nav.userProfile("alice"))
+
+// Navigate handling a click event (prevents default, uses router)
+ui.button {
+    onClick { evt -> router.navToUri(evt, Nav.home()) }
+    +"Go home"
+}
+
+// Go back
+router.navBack()
+
+// Replace current URL (no history entry)
+router.replaceUri(Nav.home())
+```
+
+### Link-style navigation
+
+In SemanticUI menus, use the `href` helper:
+
+```kotlin
+ui.menu {
+    noui.item A {
+        onClick { evt -> router.navToUri(evt, Nav.home()) }
+        +"Home"
+    }
+    noui.item A {
+        onClick { evt -> router.navToUri(evt, Nav.about()) }
+        +"About"
+    }
+}
+```
+
+## Layouts
+
+Wrap groups of routes in a shared layout:
+
+```kotlin
+routing {
+    layout({ content ->
+        div(classes = "app-shell") {
+            NavBar()
+            div(classes = "main") {
+                Sidebar()
+                div(classes = "content") { content() }
+            }
+            Footer()
+        }
+    }) {
+        mount(Nav.home) { HomePage() }
+        mount(Nav.about) { AboutPage() }
+        mount(Nav.userProfile) { route -> UserProfilePage(route["id"]) }
+    }
+}
+```
+
+The layout receives a `content` function — call it where you want the page to render. You can nest layouts too.
+
+## Middleware
+
+Middleware intercepts navigation before a page renders. The most common use case: auth guards.
+
+```kotlin
+routing {
+    // Public routes
+    mount(Nav.login) { LoginPage() }
+
+    // Protected routes
+    middleware({ ctx ->
+        if (AppState.auth.isLoggedIn) {
+            RouterMiddlewareResult.Proceed
+        } else {
+            RouterMiddlewareResult.Redirect(Nav.login())
+        }
+    }) {
+        layout({ LoggedInLayout(it) }) {
+            mount(Nav.dashboard) { DashboardPage() }
+            mount(Nav.profile) { ProfilePage() }
+        }
+    }
+
+    catchAll { NotFoundPage() }
+}
+```
+
+Middleware returns one of:
+
+- `RouterMiddlewareResult.Proceed` — allow navigation
+- `RouterMiddlewareResult.Redirect(uri)` — redirect to another route
+
+## Reacting to route changes
+
+Subscribe to the router's `current` stream from any component:
+
+```kotlin
+class BreadCrumb(ctx: NoProps) : PureComponent(ctx) {
+    private val currentRoute by subscribingTo(router.current)
+
+    override fun VDom.render() {
+        ui.breadcrumb {
+            div(classes = "section") { +"Home" }
+            div(classes = "divider") { +"/" }
+            div(classes = "active section") {
+                +currentRoute.uri
+            }
+        }
+    }
+}
+```
+
+## Setting the page title
+
+Kraft provides a `PageTitle` component:
+
+```kotlin
+class AboutPage(ctx: NoProps) : PureComponent(ctx) {
+    override fun VDom.render() {
+        PageTitle("About Us")
+
+        ui.segment {
+            // page content
+        }
+    }
+}
+```
+
+## Real-world example
+
+Here's the routing setup from the funktor-demo admin app:
+
+```kotlin
+object Nav {
+    val auth = AuthFrontendRoutes()
+    val dashboard = Static("")
+    val profile = Static("/profile")
+}
+
+fun RootRouterBuilder.mountNav(authState: AuthState<AdminUserModel>) {
+    // Auth module mounts its own routes (login, logout, etc.)
+    authState.mount(this)
+
+    // Auth middleware protects everything below
+    val authMiddleware = authState.routerMiddleWare(Nav.auth.login())
+
+    middleware(authMiddleware) {
+        layout({ LoggedInLayout(it) }) {
+            mount(Nav.dashboard) { DashboardPage() }
+            mount(Nav.profile) { ProfilePage() }
+        }
+    }
+
+    catchAll { NotFoundPage() }
+}
+```
+
+This pattern — defining routes as objects, mounting them with middleware and layouts — scales well from small apps to large ones.
+
+---
+
+### Forms & Validation {#kraft-forms}
+
+# Forms & Validation
+
+Type-safe form fields, built-in validation rules, and the draft/commit pattern.
+
+## The basics
+
+Every form field follows the same pattern: **current value + onChange callback**.
+
+```kotlin
+class ContactForm(ctx: NoProps) : PureComponent(ctx) {
+    private var name by value("")
+    private var email by value("")
+
+    override fun VDom.render() {
+        ui.form {
+            UiInputField(name, { name = it }) {
+                label("Name")
+                placeholder("Enter your name")
+            }
+
+            UiInputField(email, { email = it }) {
+                label("Email")
+                placeholder("you@example.com")
+            }
+
+            ui.blue.button {
+                onClick { submit() }
+                +"Send"
+            }
+        }
+    }
+}
+```
+
+`UiInputField` is the workhorse — it handles strings, numbers, dates, and more.
+
+## Field types
+
+### Text input
+
+```kotlin
+UiInputField(value, { value = it }) {
+    label("Username")
+    placeholder("Choose a username")
+    rightClearingIcon()  // Shows an X to clear the field
+}
+```
+
+### Number input
+
+```kotlin
+UiInputField(price, { price = it }) {
+    label("Price")
+    step(0.01)
+    leftIcon { icon.dollar_sign() }
+}
+```
+
+The type is inferred from the value — pass an `Int`, get an integer field. Pass a `Double`, get a decimal field.
+
+### Password
+
+```kotlin
+UiPasswordField(password, { password = it }) {
+    label("Password")
+    revealPasswordIcon()  // Toggle visibility
+}
+```
+
+### Date and time
+
+```kotlin
+UiDateField(::birthday) {
+    label("Birthday")
+}
+
+UiDateTimeField(::appointmentTime) {
+    label("Appointment")
+}
+
+UiTimeField(::startTime) {
+    label("Start time")
+}
+```
+
+These work with Ultra's multiplatform date types (`MpLocalDate`, `MpLocalDateTime`, `MpLocalTime`).
+
+### Textarea
+
+```kotlin
+UiTextArea(notes, { notes = it }) {
+    label("Notes")
+    placeholder("Additional information...")
+}
+```
+
+### Checkbox
+
+```kotlin
+// Simple boolean
+UiCheckboxField(agreed, { agreed = it }) {
+    label("I agree to the terms")
+}
+
+// Toggle style
+UiCheckboxField(notifications, { notifications = it }) {
+    label("Enable notifications")
+    toggle()
+}
+
+// Slider style with custom values
+UiCheckboxField(
+    value = status,
+    off = "inactive",
+    on = "active",
+    onChange = { status = it },
+) {
+    label("Status")
+    slider()
+}
+```
+
+### Nullable fields
+
+Fields that can be empty/null:
+
+```kotlin
+UiInputField.nullable(middleName, { middleName = it }) {
+    label("Middle name (optional)")
+}
+```
+
+## Validation
+
+Add validation rules with `accepts()`:
+
+```kotlin
+UiInputField(username, { username = it }) {
+    label("Username")
+    accepts(
+        notBlank(),
+        minLength(3),
+        maxLength(20),
+        matchesPattern(Regex("^[a-z0-9_]+$")) {
+            "Only lowercase letters, numbers, and underscores"
+        },
+    )
+}
+
+UiInputField(age, { age = it }) {
+    label("Age")
+    accepts(
+        greaterThan(0.0),
+        lessThan(150.0),
+    )
+}
+```
+
+### Built-in validators
+
+| Validator | What it checks |
+|---|---|
+| `notBlank()` | Not empty or whitespace |
+| `minLength(n)` | Minimum character count |
+| `maxLength(n)` | Maximum character count |
+| `greaterThan(n)` | Numeric minimum (exclusive) |
+| `lessThan(n)` | Numeric maximum (exclusive) |
+| `matchesPattern(regex)` | Regex match |
+
+Each validator can take a custom error message:
+
+```kotlin
+accepts(
+    notBlank() { "This field is required" },
+    minLength(3) { "Must be at least 3 characters" },
+)
+```
+
+Validation errors render automatically below the field as red labels.
+
+## The form controller
+
+Use `formController()` to track the overall form validity:
+
+```kotlin
+class RegistrationForm(ctx: NoProps) : PureComponent(ctx) {
+    private var name by value("")
+    private var email by value("")
+    private val formCtrl = formController()
+
+    override fun VDom.render() {
+        ui.form {
+            UiInputField(name, { name = it }) {
+                label("Name")
+                accepts(notBlank())
+            }
+
+            UiInputField(email, { email = it }) {
+                label("Email")
+                accepts(notBlank())
+            }
+
+            // Button disabled when form is invalid
+            ui.blue.button.given(!formCtrl.isValid) { disabled }.then {
+                onClick {
+                    if (formCtrl.validate()) {
+                        // All fields passed validation
+                        submitForm()
+                    }
+                }
+                +"Register"
+            }
+        }
+    }
+}
+```
+
+`formCtrl.isValid` reactively reflects whether all fields pass validation.
+`formCtrl.validate()` triggers validation on all fields and returns `true` if everything passes.
+
+## The draft/commit pattern
+
+For forms where you want to edit a copy and only commit changes on submit:
+
+```kotlin
+class ProfileEditor(ctx: NoProps) : PureComponent(ctx) {
+    data class Profile(
+        val name: String = "",
+        val bio: String = "",
+        val website: String = "",
+    )
+
+    // The committed state
+    private var profile by value(Profile())
+    // The editing copy
+    private var draft by value(profile)
+    // Tracks validity
+    private val formCtrl = formController()
+
+    override fun VDom.render() {
+        ui.form {
+            UiInputField(draft.name, { draft = draft.copy(name = it) }) {
+                label("Name")
+                accepts(notBlank())
+            }
+
+            UiInputField(draft.bio, { draft = draft.copy(bio = it) }) {
+                label("Bio")
+            }
+
+            UiInputField(draft.website, { draft = draft.copy(website = it) }) {
+                label("Website")
+            }
+
+            // Only enable submit when valid AND changed
+            val canSubmit = formCtrl.isValid && draft != profile
+
+            ui.buttons {
+                ui.blue.button.given(!canSubmit) { disabled }.then {
+                    onClick {
+                        if (formCtrl.validate()) {
+                            profile = draft  // Commit changes
+                        }
+                    }
+                    +"Save"
+                }
+
+                ui.basic.button {
+                    onClick {
+                        draft = profile  // Discard changes
+                        formCtrl.resetAllFields()
+                    }
+                    +"Reset"
+                }
+            }
+        }
+    }
+}
+```
+
+This pattern gives you:
+
+- **Edit isolation** — changes don't affect the real state until committed
+- **Dirty detection** — `draft != profile` tells you if anything changed
+- **Easy reset** — just copy the committed state back to draft
+- **Structural equality** — data classes give you correct comparison for free
+
+## Field appearance
+
+### Icons
+
+```kotlin
+UiInputField(search, { search = it }) {
+    leftIcon { icon.search() }
+}
+
+UiInputField(amount, { amount = it }) {
+    leftIcon { green.percent() }
+    rightClearingIcon()
+}
+```
+
+### Labels (attached)
+
+```kotlin
+UiInputField(weight, { weight = it }) {
+    rightLabel { +"kg" }
+}
+
+UiInputField(url, { url = it }) {
+    leftLabel { +"https://" }
+}
+```
+
+### Disabled state
+
+```kotlin
+UiInputField(readonly, { readonly = it }) {
+    label("Read-only field")
+    disabled(true)
+}
+```
+
+### Auto-focus
+
+```kotlin
+UiInputField(query, { query = it }) {
+    autofocusOnDesktop(responsive)  // Only auto-focus on desktop
+}
+```
+
+---
+
+### SemanticUI DSL {#kraft-semantic-ui}
+
+# SemanticUI DSL
+
+A fluent, type-safe Kotlin DSL for the [FomanticUI](https://fomantic-ui.com/) CSS framework.
+Write `ui.blue.button` instead of `class="ui blue button"`.
+
+## How it works
+
+The DSL starts with `ui` (or `noui` for non-UI classes) and chains modifiers using Kotlin properties:
+
+```kotlin
+// This:
+ui.inverted.blue.segment {
+    ui.header H2 { +"Welcome" }
+    ui.basic.button { +"Click me" }
+}
+
+// Generates this HTML:
+// <div class="ui inverted blue segment">
+//   <h2 class="ui header">Welcome</h2>
+//   <button class="ui basic button">Click me</button>
+// </div>
+```
+
+Every modifier is a Kotlin property that adds a CSS class. The final call (`segment {}`, `button {}`, `header H2 {}`) creates the HTML element and opens a block for its children.
+
+## Core elements
+
+### Buttons
+
+```kotlin
+ui.button { +"Default" }
+ui.blue.button { +"Blue" }
+ui.basic.green.button { +"Outlined green" }
+ui.icon.button { icon.heart() }
+ui.labeled.icon.button { icon.download(); +"Download" }
+
+// Button group
+ui.buttons {
+    ui.button { +"One" }
+    ui.button { +"Two" }
+    ui.button { +"Three" }
+}
+```
+
+### Segments
+
+```kotlin
+ui.segment { +"Basic segment" }
+ui.raised.segment { +"Raised" }
+ui.padded.segment { +"Extra padding" }
+ui.inverted.segment { +"Dark background" }
+ui.placeholder.segment { +"Empty state placeholder" }
+
+// Stacked segments
+ui.segments {
+    ui.segment { +"First" }
+    ui.segment { +"Second" }
+}
+```
+
+### Headers
+
+```kotlin
+ui.header H1 { +"Page title" }
+ui.header H2 { +"Section header" }
+ui.sub.header { +"Sub-header" }
+ui.icon.header {
+    icon.settings()
+    noui.content { +"Settings" }
+}
+```
+
+### Grid system
+
+```kotlin
+ui.two.column.grid {
+    noui.column {
+        +"Left column"
+    }
+    noui.column {
+        +"Right column"
+    }
+}
+
+// Responsive
+ui.four.column.doubling.stackable.grid {
+    noui.column { +"A" }
+    noui.column { +"B" }
+    noui.column { +"C" }
+    noui.column { +"D" }
+}
+```
+
+### Cards
+
+```kotlin
+ui.three.cards {
+    noui.card {
+        noui.content {
+            ui.header { +"Card title" }
+            noui.description { +"Card content" }
+        }
+        noui.extra.content {
+            icon.user()
+            +"4 members"
+        }
+    }
+}
+```
+
+### Labels
+
+```kotlin
+ui.label { +"Default" }
+ui.red.label { +"Error" }
+ui.green.label { +"Success" }
+ui.circular.blue.label { +"42" }
+```
+
+### Menus
+
+```kotlin
+ui.vertical.inverted.menu {
+    noui.item A {
+        onClick { evt -> router.navToUri(evt, Nav.home()) }
+        +"Home"
+    }
+    noui.item A {
+        onClick { evt -> router.navToUri(evt, Nav.about()) }
+        +"About"
+    }
+}
+```
+
+### Tables
+
+```kotlin
+ui.celled.table Table {
+    thead {
+        tr {
+            th { +"Name" }
+            th { +"Status" }
+        }
+    }
+    tbody {
+        users.forEach { user ->
+            tr {
+                td { +user.name }
+                td { ui.green.label { +"Active" } }
+            }
+        }
+    }
+}
+```
+
+## Conditional styling
+
+The `given()` modifier applies styles based on a condition:
+
+```kotlin
+// Disable button when form is invalid
+ui.blue.button.given(!isValid) { disabled }.then {
+    onClick { submit() }
+    +"Submit"
+}
+
+// Highlight active menu item
+ui.item.given(isActive) { active }.then A {
+    +"Dashboard"
+}
+
+// Add loading state
+ui.button.given(isLoading) { loading }.then {
+    +"Save"
+}
+```
+
+**How it reads:** "A blue button, given it's not valid, make it disabled, then render it."
+
+## Colors
+
+16 named colors plus brand colors:
+
+```kotlin
+ui.red.label { +"Red" }
+ui.orange.label { +"Orange" }
+ui.yellow.label { +"Yellow" }
+ui.olive.label { +"Olive" }
+ui.green.label { +"Green" }
+ui.teal.label { +"Teal" }
+ui.blue.label { +"Blue" }
+ui.violet.label { +"Violet" }
+ui.purple.label { +"Purple" }
+ui.pink.label { +"Pink" }
+ui.brown.label { +"Brown" }
+ui.grey.label { +"Grey" }
+ui.black.label { +"Black" }
+ui.white.label { +"White" }
+```
+
+## Sizes
+
+```kotlin
+ui.mini.button { +"Mini" }
+ui.tiny.button { +"Tiny" }
+ui.small.button { +"Small" }
+ui.medium.button { +"Medium" }
+ui.large.button { +"Large" }
+ui.big.button { +"Big" }
+ui.huge.button { +"Huge" }
+ui.massive.button { +"Massive" }
+```
+
+## Icons
+
+FomanticUI includes Font Awesome icons:
+
+```kotlin
+icon.home()
+icon.user()
+icon.search()
+icon.trash()
+icon.check_circle()
+icon.exclamation_circle()
+icon.sign_out_alternate()
+icon.grip_vertical()
+icon.eraser()
+icon.dollar_sign()
+icon.heart()
+icon.settings()
+icon.download()
+```
+
+## Modals
+
+```kotlin
+ui.button {
+    onClick {
+        modals.show { handle ->
+            OkCancelModal {
+                mini(
+                    handle = handle,
+                    header = { ui.header { +"Confirm" } },
+                    content = {
+                        ui.content {
+                            +"Are you sure you want to delete this?"
+                        }
+                    },
+                ) { result ->
+                    when (result) {
+                        OkCancelModal.Result.Ok -> deleteItem()
+                        OkCancelModal.Result.Cancel -> { /* do nothing */ }
+                    }
+                }
+            }
+        }
+    }
+    +"Delete"
+}
+```
+
+Modal sizes: `mini()`, `tiny()`, `small()`, `large()`, and full-size.
+
+## Toast notifications
+
+```kotlin
+// Info toast
+toasts.info("Settings saved successfully")
+
+// Warning
+toasts.warning("Your session expires in 5 minutes")
+
+// Error
+toasts.error("Failed to save changes")
+
+// Random type
+toasts.append(Message.Type.entries.random(), "Some message")
+```
+
+## Context menus and popups
+
+```kotlin
+// Context menu on right-click
+ui.segment {
+    onContextMenuStoppingEvent { evt ->
+        popups.showContextMenu(evt, PopupsManager.Positioning.BottomLeft) {
+            ui.vertical.menu {
+                noui.item { +"Copy" }
+                noui.item { +"Paste" }
+                noui.item { +"Delete" }
+            }
+        }
+    }
+    +"Right-click me"
+}
+
+// Hover popup
+ui.button {
+    popups.showHoverPopup.topLeft(tag = this) {
+        +"This is a tooltip"
+    }
+    +"Hover me"
+}
+```
+
+## Custom CSS
+
+Combine the DSL with inline CSS when needed:
+
+```kotlin
+div {
+    css {
+        marginTop = 16.px
+        marginLeft = 250.px
+        width = 100.pct
+        height = 50.vh
+    }
+    +"Styled content"
+}
+```
+
+---
+
+### Addons {#kraft-addons}
+
+# Addons
+
+Kraft wraps popular JavaScript libraries so you can use them from Kotlin without touching JS.
+
+## Available addons
+
+| Addon | Wraps | What it does |
+|---|---|---|
+| `chartjs` | [Chart.js](https://www.chartjs.org/) | Bar, line, pie, radar charts |
+| `pdfjs` | [pdf.js](https://mozilla.github.io/pdf.js/) | Render PDFs in-browser |
+| `prismjs` | [Prism](https://prismjs.com/) | Syntax highlighting |
+| `konva` | [Konva](https://konvajs.org/) | 2D canvas graphics |
+| `marked` | [marked](https://marked.js.org/) + DOMPurify | Markdown rendering |
+| `signaturepad` | SignaturePad | Capture handwritten signatures |
+| `avatars` | MinIdenticons | Generate SVG avatars from strings |
+| `browserdetect` | Bowser | Browser and OS detection |
+| `jwtdecode` | jwt-decode | Decode JWT tokens client-side |
+| `nxcompile` | @nx-js/compiler-util | Sandbox JS code execution |
+| `sourcemappedstacktrace` | sourcemapped-stacktrace | Map minified stack traces |
+
+## Adding addons
+
+In your `build.gradle.kts`:
+
+```kotlin
+jsMain {
+    dependencies {
+        implementation("io.peekandpoke.kraft:addons-chartjs:0.102.0")
+        implementation("io.peekandpoke.kraft:addons-prismjs:0.102.0")
+        // ... add the ones you need
+    }
+}
+```
+
+## Chart.js — Data visualization
+
+Render reactive charts that update with your component state:
+
+```kotlin
+class SalesChart(ctx: NoProps) : PureComponent(ctx) {
+
+    // Animate the chart — multiply data by a sine wave
+    private val factor by subscribingTo(
+        ticker(1.seconds).map { 1.0 + sin(it.count * 10 * PI / 180.0) }
+    )
+
+    override fun VDom.render() {
+        div {
+            css { height = 50.vh }
+
+            ChartJs(chartJsData {
+                jsObject {
+                    type = "bar"
+                    data = jsObject {
+                        labels = arrayOf("Jan", "Feb", "Mar", "Apr", "May")
+                        datasets = arrayOf(jsObject {
+                            label = "Sales"
+                            data = arrayOf(12, 19, 3, 5, 8)
+                                .map { it * factor }
+                                .toTypedArray()
+                            backgroundColor = value(
+                                "rgba(99, 132, 255, 0.5)",
+                            )
+                        })
+                    }
+                }
+            })
+        }
+    }
+}
+```
+
+The chart re-renders whenever `factor` changes — reactive charts with no extra wiring.
+
+## Prism.js — Syntax highlighting
+
+Display code with syntax highlighting:
+
+```kotlin
+override fun VDom.render() {
+    PrismKotlin("""
+        fun greet(name: String) = "Hello, $name!"
+    """.trimIndent()) {
+        lineNumbers()
+        copyToClipboard()
+    }
+
+    PrismJson("""{ "status": "ok" }""") {
+        lineNumbers(start = 1)
+    }
+
+    PrismHtml("<div>Hello</div>") {
+        lineNumbers(softWrap = true)
+    }
+}
+```
+
+Available language components: `PrismKotlin`, `PrismJava`, `PrismJavascript`, `PrismJson`, `PrismHtml`, `PrismCss`, and more.
+
+Plugins: `lineNumbers()`, `copyToClipboard()`, `inlineColor()`.
+
+## PDF.js — PDF viewer
+
+Embed a scrollable PDF viewer:
+
+```kotlin
+override fun VDom.render() {
+    ScrollingPdfViewer(
+        src = PdfSource.Url("https://example.com/document.pdf"),
+        options = ScrollingPdfViewer.Options(
+            maxHeightLandscapeVh = 80,
+            maxHeightPortraitVh = 80,
+            scaleRange = 0.1..3.0,
+        ),
+        onChange = { state ->
+            console.log("Page ${state.currentPage} of ${state.totalPages}")
+        },
+    )
+}
+```
+
+## Konva — 2D canvas
+
+Full access to the Konva canvas library for graphics-heavy applications:
+
+```kotlin
+class CanvasDemo(ctx: NoProps) : PureComponent(ctx) {
+    init {
+        lifecycle {
+            onMount {
+                dom?.let { container ->
+                    val stage = Stage(jsObject {
+                        this.container = container
+                        width = container.clientWidth
+                        height = container.clientHeight
+                    })
+
+                    val layer = Layer(jsObject<LayerConfig> {
+                        listening = true
+                    })
+                    stage.add(layer)
+
+                    layer.add(Circle(jsObject {
+                        x = 200; y = 200
+                        radius = 50
+                        fill = "#5c7cfa"
+                    }))
+                }
+            }
+        }
+    }
+
+    override fun VDom.render() {
+        div { css { width = 100.pct; height = 400.px } }
+    }
+}
+```
+
+## Signature Pad — Capture signatures
+
+```kotlin
+class SignatureCapture(ctx: NoProps) : PureComponent(ctx) {
+    private var signaturePng: FileBase64? by value(null)
+    private val padRef = ComponentRef.Tracker<SignaturePad>()
+
+    override fun VDom.render() {
+        div {
+            css { position = Position.relative; height = 200.px }
+
+            SignaturePad {
+                it.export {
+                    signaturePng = toPng()
+                }
+            }.track(padRef)
+        }
+
+        padRef { pad ->
+            ui.buttons {
+                ui.button {
+                    onClick { pad.clear() }
+                    icon.eraser(); +"Clear"
+                }
+            }
+        }
+
+        signaturePng?.let { png ->
+            img { src = png.asDataUrl() }
+        }
+    }
+}
+```
+
+Export as PNG, JPG, or SVG with `toPng()`, `toJpg(quality)`, `toSvg()`.
+
+## Marked — Markdown rendering
+
+Render markdown to HTML with sanitization:
+
+```kotlin
+override fun VDom.render() {
+    val markdownSource = """
+        # Hello World
+        - Item 1
+        - Item 2
+
+        ```kotlin
+        fun main() = println("Hello!")
+        ```
+    """.trimIndent()
+
+    ui.segment {
+        unsafe {
+            marked.use(jsObject { mangle = false; headerIds = false })
+            +markdown2html(markdownSource)
+        }
+    }
+}
+```
+
+`marked.use()` configures the parser. `markdown2html()` renders and sanitizes the output via DOMPurify.
+
+## Avatars — Generated identicons
+
+Generate unique SVG avatars from any string:
+
+```kotlin
+// Get an SVG string
+val svg = Avatars.MinIdenticon.get(name = "alice@example.com")
+
+// Get a data URL for use in <img> tags
+val dataUrl = Avatars.MinIdenticon.getDataUrl(name = "alice@example.com")
+
+img { src = dataUrl }
+```
+
+## Script Loader
+
+Need a JS library that doesn't have a Kraft addon? Load it dynamically:
+
+```kotlin
+ui.button {
+    onClick {
+        launch {
+            val result = ScriptLoader.loadJavascript(
+                "https://js.stripe.com/v3/"
+            ).await()
+
+            val stripe = window.asDynamic().Stripe("pk_test_...")
+        }
+    }
+    +"Load Stripe"
+}
+```
+
+For ES modules:
+
+```kotlin
+val module = ScriptLoader.load(
+    ScriptLoader.Javascript.Module<MyModuleType>(
+        src = "https://esm.sh/my-library@1.0"
+    )
+).await()
+```
+
+---
+
+## Kontainer — Dependency Injection {#kontainer}
+
+### Overview {#kontainer-overview}
+
+# Kontainer — Dependency Injection, Done Right
+
+A lightweight DI container for Kotlin. Constructor injection, lifecycle management,
+and compile-time verification — no magic, no annotations, no surprises.
+
+## What is Kontainer?
+
+Kontainer is a dependency injection container that uses a **two-stage architecture**: you define a blueprint, then create container instances from it. Services are injected via constructors — no annotations, no reflection tricks, no runtime surprises.
+
+```kotlin
+val blueprint = kontainer {
+    singleton(UserRepository::class)
+    singleton(UserService::class)
+    dynamic(RequestContext::class)
+}
+
+val kontainer = blueprint.create()
+val service = kontainer.get(UserService::class)
+```
+
+That's it. Define services, create a container, get what you need.
+
+## The core idea: stateful, scoped containers
+
+Most DI containers give you a single, long-lived container. Kontainer is different — it's built around the idea that **you create a fresh container for every unit of work**.
+
+On the server side, every incoming HTTP request, CLI command, or scheduled job gets its own container instance, created from a shared blueprint. Singletons (database pools, configuration) are shared. But **dynamic services are fresh per container** — they can carry state that lives exactly as long as the request does, then gets garbage collected. Clean slate, every time.
+
+This unlocks powerful patterns:
+
+- **Inject the current user everywhere** — set it once when the request starts, every service that needs it gets it via constructor injection. No parameter threading.
+- **Per-request metrics and audit logs** — collect database query counts, timings, and log entries throughout a request. Flush at the end. No manual cleanup.
+- **Request-scoped caching** — cache expensive lookups for the duration of one request without worrying about stale data across requests.
+
+Think of it as PHP's "shared nothing" model, but selective — you choose which services are global and which are per-request.
+
+## Why Kontainer?
+
+**Not another Dagger clone.** Kontainer doesn't generate code at compile time or scan classpath at runtime. Instead, it validates the entire dependency graph on first use and gives you clear error messages when something doesn't wire up.
+
+- **Pure Kotlin DSL** — no annotations, no XML, no YAML. Your DI config is code.
+- **Three lifecycles** — Singleton (global), Dynamic (per-container), Prototype (per-injection). Choose what fits.
+- **Validated on first use** — missing dependencies, ambiguous services, and inconsistencies are caught immediately with clear messages.
+- **Constructor injection** — services declare what they need in their constructor. Kontainer fills it in.
+- **No classpath scanning** — you control exactly what goes into the container.
+
+## What you get
+
+- **Service Lifecycles** — Singleton, Dynamic, and Prototype — each with clear, predictable behavior.
+- **Constructor Injection** — Declare dependencies in your constructor. Kontainer resolves them automatically.
+- **Factory Methods** — When constructors aren't enough, use factory lambdas with up to 10 injected parameters.
+- **Lazy & List Injection** — `Lazy<T>`, `List<T>`, `Lookup<T>` — inject one, many, or defer.
+- **Modules** — Group services into reusable modules. Libraries ship a module, apps include it.
+- **Debug Tools** — Code location tracking, container dumps, and debug info for every service.
+
+## Quick taste
+
+A service with dependencies, resolved automatically:
+
+```kotlin
+class UserRepository {
+    fun findById(id: String) = "User #$id"
+}
+
+class UserService(private val repo: UserRepository) {
+    fun greet(id: String) = "Hello, ${repo.findById(id)}!"
+}
+
+val blueprint = kontainer {
+    singleton(UserRepository::class)
+    singleton(UserService::class)
+}
+
+val kontainer = blueprint.create()
+println(kontainer.get(UserService::class).greet("42"))
+// "Hello, User #42!"
+```
+
+---
+
+### Getting Started {#kontainer-getting-started}
+
+# Getting Started
+
+Add Kontainer to your project and wire up your first services.
+
+## Prerequisites
+
+- **JDK 17+**
+- **Gradle** with Kotlin JVM or multiplatform plugin
+
+## 1. Add the dependency
+
+In your `build.gradle.kts`:
+
+```kotlin
+dependencies {
+    implementation("io.peekandpoke.ultra:kontainer:0.102.0")
+}
+```
+
+Find the latest version on [Maven Central](https://central.sonatype.com/namespace/io.peekandpoke.ultra).
+
+## 2. Define a blueprint
+
+A **blueprint** is an immutable description of all your services and their lifecycles. You create it once, then use it to stamp out container instances.
+
+```kotlin
+import de.peekandpoke.ultra.kontainer.kontainer
+
+// Define some services
+class Greeter {
+    fun sayHello() = "Hello!"
+}
+
+// Create a blueprint
+val blueprint = kontainer {
+    singleton(Greeter::class)
+}
+```
+
+## 3. Create a container and use it
+
+```kotlin
+// Create a container from the blueprint
+val kontainer = blueprint.create()
+
+// Retrieve a service
+val greeter = kontainer.get(Greeter::class)
+println(greeter.sayHello())  // "Hello!"
+```
+
+## 4. Add dependencies between services
+
+Services declare their dependencies in the constructor. Kontainer resolves them automatically.
+
+```kotlin
+class Counter {
+    private var count = 0
+    fun next() = ++count
+}
+
+class MyService(val counter: Counter)
+
+val blueprint = kontainer {
+    singleton(Counter::class)
+    singleton(MyService::class)
+}
+
+val kontainer = blueprint.create()
+val service = kontainer.get(MyService::class)
+
+println(service.counter.next())  // 1
+println(service.counter.next())  // 2
+```
+
+Kontainer inspects the primary constructor of `MyService`, sees it needs a `Counter`, and injects it. No annotations needed.
+
+## 5. Use factory methods when constructors aren't enough
+
+Sometimes a service needs parameters the container doesn't know about. Use a factory lambda:
+
+```kotlin
+class MyService(private val counter: Counter, private val offset: Int) {
+    fun next() = counter.next() + offset
+}
+
+val blueprint = kontainer {
+    singleton(Counter::class)
+
+    // Factory: Kontainer injects Counter, you provide the offset
+    singleton(MyService::class) { counter: Counter ->
+        MyService(counter, 100)
+    }
+}
+```
+
+## What happens on first use?
+
+The first time you call `blueprint.create()`, Kontainer validates the entire dependency graph:
+
+- Are all required dependencies registered?
+- Are there ambiguous services (multiple implementations for one type)?
+- Can all constructors be satisfied?
+
+If anything is wrong, you get a `KontainerInconsistent` exception with a clear message listing every problem — not a cryptic runtime error later.
+
+---
+
+### Defining Services {#kontainer-services}
+
+# Defining Services
+
+Kontainer supports three service lifecycles — Singleton, Dynamic, and Prototype — plus existing instances and interface-based registration.
+
+## Singleton
+
+A singleton is created **once** and shared across all container instances created from the same blueprint.
+
+```kotlin
+class Counter {
+    private var count = 0
+    fun next() = ++count
+}
+
+val blueprint = kontainer {
+    singleton(Counter::class)
+}
+
+// Same instance across all containers from this blueprint
+val k1 = blueprint.create()
+val k2 = blueprint.create()
+
+println(k1.get(Counter::class).next())  // 1
+println(k2.get(Counter::class).next())  // 2  (same instance!)
+```
+
+## Dynamic
+
+A dynamic service is a **singleton within a single container instance**. Each new container gets its own fresh instance.
+
+```kotlin
+val blueprint = kontainer {
+    dynamic(Counter::class)
+}
+
+val k1 = blueprint.create()
+val k2 = blueprint.create()
+
+println(k1.get(Counter::class).next())  // 1
+println(k1.get(Counter::class).next())  // 2  (same instance within k1)
+println(k2.get(Counter::class).next())  // 1  (fresh instance in k2)
+```
+
+Dynamic services are the key to per-request scoping.
+
+## Prototype
+
+A prototype creates a **new instance every time** it is requested — whether retrieved directly or injected.
+
+```kotlin
+val blueprint = kontainer {
+    prototype(Counter::class)
+}
+
+val kontainer = blueprint.create()
+
+println(kontainer.get(Counter::class).next())  // 1
+println(kontainer.get(Counter::class).next())  // 1  (new instance each time!)
+```
+
+## Existing instances
+
+Register an already-created object as a singleton:
+
+```kotlin
+object AppConfig {
+    val dbUrl = "jdbc:postgresql://localhost/mydb"
+}
+
+val blueprint = kontainer {
+    instance(AppConfig)
+}
+```
+
+## Hiding implementations behind interfaces
+
+Register a service under its interface so consumers never see the concrete class:
+
+```kotlin
+interface GreeterInterface {
+    fun sayHello(): String
+}
+
+class Greeter : GreeterInterface {
+    override fun sayHello() = "Hello!"
+}
+
+val blueprint = kontainer {
+    // Registered as GreeterInterface — Greeter is hidden
+    singleton(GreeterInterface::class, Greeter::class)
+}
+
+val kontainer = blueprint.create()
+
+kontainer.get(GreeterInterface::class)  // works
+kontainer.get(Greeter::class)           // throws ServiceNotFound
+```
+
+This pattern works with all lifecycle types: `singleton`, `dynamic`, `prototype`, `instance`, and factory methods.
+
+---
+
+### Service Lifecycle {#kontainer-lifecycle}
+
+# Service Lifecycle
+
+How Kontainer's lifecycle model enables per-request scoping, stateful dynamic services, and automatic cleanup — without manual wiring.
+
+## Per-request containers
+
+The real power of Kontainer's lifecycle model shows up on the server side. The pattern is simple and inspired by PHP's request model:
+
+1. Define a **blueprint once** at application startup
+2. For every incoming request (or CLI command, scheduled job, etc.), **create a fresh container** from the blueprint
+3. Dynamic services carry **per-request state** — the current user, collected metrics, audit context
+4. When the request is done, the container and all its dynamic services are **garbage collected** — clean slate, no leaks
+
+Singletons survive across requests (database pools, caches, configuration). Dynamic services are scoped to exactly one unit of work. This gives you the simplicity of "everything is fresh per request" without the cost of recreating stateless services.
+
+```kotlin
+// Define once at app startup
+val blueprint = kontainer {
+    // Shared across all requests
+    singleton(DatabasePool::class)
+    singleton(UserRepository::class)
+    singleton(AuditLogRepository::class)
+
+    // Fresh per request — carry request-scoped state
+    dynamic(RequestContext::class)
+    dynamic(RequestInsights::class)
+    dynamic(AuditLog::class)
+}
+
+// On each incoming request:
+val kontainer = blueprint.create {
+    with(RequestContext::class) {
+        RequestContext(userId = authenticatedUser.id, traceId = request.traceId)
+    }
+}
+```
+
+### Example: Injecting the current user everywhere
+
+Since `RequestContext` is a dynamic service, any service can inject it and access the current user — without passing it through every method call:
+
+```kotlin
+class RequestContext(val userId: String, val traceId: String)
+
+class AuditLog(private val ctx: RequestContext) {
+    private val entries = mutableListOf<String>()
+
+    fun record(action: String) {
+        entries.add("[${ctx.traceId}] User ${ctx.userId}: $action")
+    }
+
+    fun getEntries() = entries.toList()
+}
+
+class OrderService(
+    private val ctx: RequestContext,
+    private val auditLog: AuditLog,
+    private val repo: OrderRepository,
+) {
+    fun placeOrder(item: String) {
+        repo.save(Order(item, ctx.userId))
+        auditLog.record("placed order for $item")
+    }
+}
+```
+
+The `AuditLog` and `OrderService` both get the same `RequestContext` instance — scoped to this request. Next request, fresh instances.
+
+### Example: Per-request metrics collection
+
+Collect metrics throughout request processing, then flush them at the end. This pattern is used extensively in **Funktor Insights**:
+
+```kotlin
+class RequestInsights {
+    private val dbQueries = mutableListOf<QueryRecord>()
+    private val logs = mutableListOf<LogEntry>()
+    private val timings = mutableMapOf<String, Long>()
+
+    fun recordDbQuery(query: String, durationMs: Long) {
+        dbQueries.add(QueryRecord(query, durationMs))
+    }
+
+    fun recordLog(level: String, message: String) {
+        logs.add(LogEntry(level, message))
+    }
+
+    fun recordTiming(label: String, durationMs: Long) {
+        timings[label] = durationMs
+    }
+
+    fun summary() = InsightsSummary(
+        totalDbQueries = dbQueries.size,
+        totalDbTimeMs = dbQueries.sumOf { it.durationMs },
+        logs = logs.toList(),
+        timings = timings.toMap(),
+    )
+}
+
+// Any service in the request can record metrics
+class UserRepository(private val insights: RequestInsights) {
+    fun findById(id: String): User {
+        val start = System.currentTimeMillis()
+        val result = db.query("SELECT * FROM users WHERE id = ?", id)
+        insights.recordDbQuery("findById", System.currentTimeMillis() - start)
+        return result
+    }
+}
+
+// At the end of the request, flush the collected insights
+val summary = kontainer.get(RequestInsights::class).summary()
+metricsService.report(summary)
+```
+
+Because `RequestInsights` is dynamic, every service in the request writes to the same instance. When the request ends and the container is garbage collected, all that state goes with it — no manual cleanup needed.
+
+## Lifecycles side by side
+
+The best way to understand the three lifecycles is to see them running together:
+
+```kotlin
+abstract class Counter {
+    private var count = 0
+    fun next() = ++count
+}
+
+class SingletonCounter : Counter()
+class DynamicCounter : Counter()
+class PrototypeCounter : Counter()
+
+val blueprint = kontainer {
+    singleton(SingletonCounter::class)
+    dynamic(DynamicCounter::class)
+    prototype(PrototypeCounter::class)
+}
+
+for (round in 1..3) {
+    println("Round #$round")
+    val kontainer = blueprint.create()
+
+    repeat(3) {
+        val s = kontainer.get(SingletonCounter::class).next()
+        val d = kontainer.get(DynamicCounter::class).next()
+        val p = kontainer.get(PrototypeCounter::class).next()
+        println("  singleton: $s  dynamic: $d  prototype: $p")
+    }
+}
+```
+
+Output:
+
+| Container | Call | singleton | dynamic | prototype |
+|---|---|---|---|---|
+| Round #1 | 1st | 1 | 1 | 1 |
+| | 2nd | 2 | 2 | 1 |
+| | 3rd | 3 | 3 | 1 |
+| Round #2 | 1st | 4 | 1 | 1 |
+| | 2nd | 5 | 2 | 1 |
+| | 3rd | 6 | 3 | 1 |
+| Round #3 | 1st | 7 | 1 | 1 |
+| | 2nd | 8 | 2 | 1 |
+| | 3rd | 9 | 3 | 1 |
+
+Notice the pattern:
+
+- **Singleton** keeps counting globally (1 to 9) — same instance across all three containers
+- **Dynamic** resets to 1 each round — fresh instance per container, but stable within it
+- **Prototype** is always 1 — brand new instance on every `.get()` call
+
+## Automatic lifecycle promotion (semi-dynamic)
+
+There's a subtle but important problem with mixing singletons and dynamic services. Consider this:
+
+```kotlin
+class RequestContext(val userId: String)   // dynamic — fresh per request
+
+class OrderService(val ctx: RequestContext)  // singleton — shared globally?
+```
+
+If `OrderService` were a true singleton, it would be created once and hold a reference to the `RequestContext` from the *first* request forever. Every subsequent request would see the wrong user. That's a bug.
+
+Kontainer prevents this automatically. When a service is defined as `singleton` but injects a `dynamic` service (directly or transitively), Kontainer **promotes** it to **semi-dynamic** — it behaves like a dynamic service, getting a fresh instance per container.
+
+```kotlin
+val blueprint = kontainer {
+    dynamic(RequestContext::class)
+
+    // Defined as singleton, but Kontainer detects that it injects
+    // a dynamic service and promotes it to semi-dynamic automatically.
+    singleton(OrderService::class)
+    singleton(AuditLog::class)
+}
+```
+
+You don't need to do anything — Kontainer analyzes the dependency graph and makes the right call. The rule is simple:
+
+**If you depend on something that must be cleaned up per unit of work, you must be cleaned up too.**
+
+This promotion **bubbles up the dependency tree**. If service A injects service B, and B injects a dynamic service C, then both A and B become semi-dynamic — even though only C was explicitly marked as dynamic.
+
+```kotlin
+class RequestContext(val userId: String)        // dynamic
+
+class AuditLog(val ctx: RequestContext)           // singleton -> semi-dynamic (injects dynamic)
+
+class OrderService(val audit: AuditLog)           // singleton -> semi-dynamic (injects semi-dynamic)
+
+class OrderController(val orders: OrderService)   // singleton -> semi-dynamic (injects semi-dynamic)
+```
+
+The only services that remain true singletons are those with **no transitive dependency** on any dynamic service — like a database pool or a configuration object. Everything else is automatically scoped correctly.
+
+## Comparison
+
+| Lifecycle | Created | Shared across containers | Use case |
+|---|---|---|---|
+| `singleton` | Once, globally | Yes | Stateless services, DB pools, configs |
+| `dynamic` | Once per container | No | Request context, user, audit logs, metrics |
+| `prototype` | Every injection / get() | No | Disposable, short-lived objects |
+| *semi-dynamic* | Once per container | No | Auto-promoted singletons that inject dynamic services |
+
+---
+
+### Service Injection {#kontainer-injection}
+
+# Service Injection
+
+Kontainer supports constructor injection, factory methods, lazy injection, and injecting multiple implementations of an interface.
+
+## Constructor injection
+
+The simplest and most common pattern. Declare dependencies in your constructor:
+
+```kotlin
+class Counter {
+    private var count = 0
+    fun next() = ++count
+}
+
+class MyService(val counter: Counter)
+
+val blueprint = kontainer {
+    singleton(Counter::class)
+    singleton(MyService::class)
+}
+
+val kontainer = blueprint.create()
+val service = kontainer.get(MyService::class)
+
+println(service.counter.next())  // 1
+println(service.counter.next())  // 2
+```
+
+## Factory method injection
+
+When a service needs parameters that Kontainer doesn't know about, use a factory lambda. The lambda's parameters are injected; you handle the rest.
+
+```kotlin
+class MyService(private val counter: Counter, private val offset: Int) {
+    fun next() = counter.next() + offset
+}
+
+val blueprint = kontainer {
+    singleton(Counter::class)
+
+    // Kontainer injects Counter; you provide the offset
+    singleton(MyService::class) { counter: Counter ->
+        MyService(counter, 100)
+    }
+}
+```
+
+Factories support up to 10 injected parameters.
+
+## Inject by super type
+
+A service can be injected by any of its supertypes — interface or parent class:
+
+```kotlin
+interface CounterInterface {
+    fun next(): Int
+}
+
+class Counter : CounterInterface {
+    private var count = 0
+    override fun next() = ++count
+}
+
+// MyService depends on the interface, not the concrete class
+class MyService(val counter: CounterInterface)
+
+val blueprint = kontainer {
+    singleton(Counter::class)
+    singleton(MyService::class)
+}
+```
+
+If two services implement the same interface, injection becomes **ambiguous** and Kontainer reports an error. Use `List<T>` injection instead (see below).
+
+## Nullable injection
+
+Mark a dependency as nullable to make it optional. If the service isn't registered, `null` is injected instead of throwing:
+
+```kotlin
+class SomeOptionalService
+
+// Will receive null if SomeOptionalService is not registered
+class MyService(val optional: SomeOptionalService?)
+
+val blueprint = kontainer {
+    singleton(MyService::class)
+    // SomeOptionalService is NOT registered
+}
+
+val kontainer = blueprint.create()
+println(kontainer.get(MyService::class).optional)  // null
+```
+
+## Inject all implementations
+
+Inject all services that implement a given type as a `List`. This is powerful for building extensible, plugin-style architectures:
+
+```kotlin
+interface Repository {
+    val name: String
+}
+
+class UserRepository : Repository {
+    override val name = "users"
+}
+
+class OrderRepository : Repository {
+    override val name = "orders"
+}
+
+// Injects ALL Repository implementations
+class Database(val repos: List<Repository>)
+
+val blueprint = kontainer {
+    singleton(Database::class)
+    singleton(UserRepository::class)
+    singleton(OrderRepository::class)
+}
+
+val kontainer = blueprint.create()
+kontainer.get(Database::class).repos.forEach {
+    println(it.name)  // "users", "orders"
+}
+```
+
+## Lazy injection
+
+Wrap a dependency in `Lazy<T>` to defer its creation until first use:
+
+```kotlin
+class ExpensiveService {
+    init { println("ExpensiveService created!") }
+    fun doWork() = "done"
+}
+
+class MyService(private val lazy: Lazy<ExpensiveService>) {
+    fun run() = lazy.value.doWork()
+}
+
+val blueprint = kontainer {
+    singleton(ExpensiveService::class)
+    singleton(MyService::class)
+}
+
+val kontainer = blueprint.create()
+val service = kontainer.get(MyService::class)
+// ExpensiveService is NOT created yet
+
+service.run()
+// NOW ExpensiveService is created
+```
+
+## Breaking circular dependencies with Lazy
+
+When two services need each other, make one of them lazy to break the cycle:
+
+```kotlin
+class ServiceOne(private val two: ServiceTwo) {
+    val name = "one"
+    fun greet() = "I know ${two.name}"
+}
+
+class ServiceTwo(private val one: Lazy<ServiceOne>) {
+    val name = "two"
+    fun greet() = "I know ${one.value.name}"
+}
+
+val blueprint = kontainer {
+    singleton(ServiceOne::class)
+    singleton(ServiceTwo::class)
+}
+
+val kontainer = blueprint.create()
+println(kontainer.get(ServiceOne::class).greet())  // "I know two"
+println(kontainer.get(ServiceTwo::class).greet())  // "I know one"
+```
+
+## Lookup injection
+
+For large sets of implementations where you only need specific ones at a time, use `Lookup<T>`. Unlike `List<T>`, a Lookup creates services on demand:
+
+```kotlin
+import de.peekandpoke.ultra.common.Lookup
+
+class Database(val repos: Lookup<Repository>)
+
+val blueprint = kontainer {
+    singleton(Database::class)
+    dynamic(UserRepository::class)
+    dynamic(OrderRepository::class)
+}
+
+val kontainer = blueprint.create()
+val db = kontainer.get(Database::class)
+
+// Only UserRepository is created — OrderRepository stays untouched
+val users = db.repos.get(UserRepository::class)
+println(users.name)  // "users"
+```
+
+## Injection patterns summary
+
+| Pattern | Constructor type | Behavior |
+|---|---|---|
+| Direct | `val x: Service` | Injected immediately |
+| Nullable | `val x: Service?` | Null if not registered |
+| List | `val x: List<Base>` | All implementations |
+| Lookup | `val x: Lookup<Base>` | Lazy, on-demand access |
+| Lazy | `val x: Lazy<Service>` | Created on first `.value` |
+| Lazy List | `val x: Lazy<List<Base>>` | Deferred list of all impls |
+
+---
+
+### Modules {#kontainer-modules}
+
+# Modules
+
+Group related services into reusable modules. Libraries ship a module, applications include it — with optional overrides.
+
+## What are modules?
+
+A Kontainer module is a reusable block of service definitions. Instead of copying service registrations across projects, you define them once in a module and include it.
+
+Modules are useful for:
+
+- **Library authors** — bundle your library's services into a module users can drop in
+- **Large applications** — organize services by feature area
+- **Customization** — provide sensible defaults that users can override
+
+## Defining a simple module
+
+```kotlin
+import de.peekandpoke.ultra.kontainer.module
+
+// Some services
+interface Storage {
+    val name: String
+}
+
+class FileStorage : Storage {
+    override val name = "FileStorage"
+}
+
+class Database(val storage: Storage)
+
+// Define the module
+val databaseModule = module {
+    singleton(Database::class)
+    singleton(Storage::class, FileStorage::class)
+}
+```
+
+## Using a module
+
+```kotlin
+val blueprint = kontainer {
+    module(databaseModule)
+}
+
+val kontainer = blueprint.create()
+println(kontainer.get(Database::class).storage.name)  // "FileStorage"
+```
+
+## Overriding module services
+
+Any service defined by a module can be overridden. Just register the same type after including the module:
+
+```kotlin
+class MemoryStorage : Storage {
+    override val name = "MemoryStorage"
+}
+
+val blueprint = kontainer {
+    module(databaseModule)
+
+    // Override the Storage implementation
+    singleton(Storage::class, MemoryStorage::class)
+}
+
+val kontainer = blueprint.create()
+println(kontainer.get(Database::class).storage.name)  // "MemoryStorage"
+```
+
+## Parameterized modules
+
+Modules can accept parameters — up to 5 — for configuration at inclusion time:
+
+```kotlin
+class Service(val sum: Int)
+
+// Module with three parameters
+val configModule = module { a: Int, b: Int, c: Int ->
+    instance(Service(a + b + c))
+}
+
+val blueprint = kontainer {
+    module(configModule, 1, 10, 100)
+}
+
+val kontainer = blueprint.create()
+println(kontainer.get(Service::class).sum)  // 111
+```
+
+## Composing modules
+
+Modules can include other modules, enabling layered architectures:
+
+```kotlin
+val coreModule = module {
+    singleton(Counter::class)
+}
+
+val appModule = module {
+    module(coreModule)
+    singleton(MyService::class)
+}
+
+val blueprint = kontainer {
+    module(appModule)
+}
+```
+
+---
+
+### Advanced Topics {#kontainer-advanced}
+
+# Advanced Topics
+
+Dynamic overrides, blueprint extension, injection context, semi-dynamic services, and debugging tools.
+
+## Dynamic overrides
+
+When creating a container from a blueprint, you can override dynamic services with specific instances. This is essential for request-scoped data in web applications:
+
+```kotlin
+class RequestContext(val userId: String)
+
+class UserService(val ctx: RequestContext) {
+    fun currentUser() = "User: ${ctx.userId}"
+}
+
+val blueprint = kontainer {
+    dynamic(RequestContext::class)
+    singleton(UserService::class)
+}
+
+// Override the dynamic service when creating a container
+val kontainer = blueprint.create {
+    with(RequestContext::class) { RequestContext("user-42") }
+}
+
+println(kontainer.get(UserService::class).currentUser())
+// "User: user-42"
+```
+
+## Semi-dynamic services
+
+If a singleton injects a dynamic service, Kontainer automatically promotes it to **semi-dynamic** — it becomes a singleton within each container instance rather than global. This happens transparently; you don't need to do anything.
+
+```kotlin
+class RequestContext(val userId: String)
+
+// UserService is defined as singleton, but it injects a dynamic service.
+// Kontainer promotes it to semi-dynamic automatically.
+class UserService(val ctx: RequestContext)
+
+val blueprint = kontainer {
+    dynamic(RequestContext::class)
+    singleton(UserService::class)  // automatically becomes semi-dynamic
+}
+```
+
+## Blueprint extension
+
+Create a new blueprint by extending an existing one. The original is not modified:
+
+```kotlin
+val base = kontainer {
+    singleton(Counter::class)
+}
+
+val extended = base.extend {
+    singleton(MyService::class)
+}
+
+// 'extended' has both Counter and MyService
+// 'base' still only has Counter
+```
+
+## Cloning containers
+
+Clone a container to get a fresh instance with reset dynamic services. Optionally apply new overrides:
+
+```kotlin
+val kontainer = blueprint.create {
+    with(RequestContext::class) { RequestContext("user-1") }
+}
+
+// Clone with different dynamic overrides
+val cloned = kontainer.clone {
+    with(RequestContext::class) { RequestContext("user-2") }
+}
+```
+
+## Injecting the container and blueprint
+
+The `Kontainer` itself and the `KontainerBlueprint` are automatically available as services. Any service can inject them:
+
+```kotlin
+class ServiceLocator(val kontainer: Kontainer) {
+    fun <T : Any> resolve(cls: KClass<T>): T = kontainer.get(cls)
+}
+
+class BlueprintAware(val blueprint: KontainerBlueprint) {
+    fun createChild() = blueprint.create()
+}
+
+val blueprint = kontainer {
+    singleton(ServiceLocator::class)
+    singleton(BlueprintAware::class)
+}
+```
+
+## Injection context
+
+Services can inject `InjectionContext` to know who is requesting them and what is being injected. Useful for logging and context-aware behavior:
+
+```kotlin
+class ContextAwareService(val ctx: InjectionContext) {
+    fun whoAsked() = ctx.requestingClass.simpleName
+}
+```
+
+## Retrieving services
+
+Kontainer provides several ways to get services:
+
+```kotlin
+val kontainer = blueprint.create()
+
+// Get — throws if not found
+val service = kontainer.get(MyService::class)
+
+// Get with reified type
+val service2 = kontainer.get<MyService>()
+
+// GetOrNull — returns null if not found
+val maybe = kontainer.getOrNull(MyService::class)
+
+// Use — runs block only if service exists
+kontainer.use(MyService::class) {
+    println(this.doSomething())
+}
+
+// GetAll — all implementations of a type
+val allRepos: List<Repository> = kontainer.getAll(Repository::class)
+
+// GetLookup — lazy lookup of implementations
+val lookup: LazyServiceLookup<Repository> = kontainer.getLookup(Repository::class)
+```
+
+## Debug tools
+
+Every container comes with debugging tools:
+
+```kotlin
+val kontainer = blueprint.create()
+
+// Dump all services, their types, and instances
+println(kontainer.tools.dumpKontainer())
+
+// Get structured debug info
+val debugInfo = kontainer.tools.getDebugInfo()
+debugInfo.services.forEach { service ->
+    println("${service.cls.fqn} [type=${service.type}]")
+    service.definition.injects.forEach { param ->
+        println("  -> ${param.name}: ${param.classes.map { it.fqn }}")
+    }
+}
+```
+
+## Error handling
+
+Kontainer throws specific exceptions for different problems:
+
+| Exception | When |
+|---|---|
+| `KontainerInconsistent` | Dependency graph has problems (missing deps, configuration errors) |
+| `ServiceNotFound` | Requested service is not registered |
+| `ServiceAmbiguous` | Multiple services match the requested type |
+| `InvalidClassProvided` | Tried to register an interface or abstract class directly |
+| `InvalidServiceFactory` | Factory method is invalid |
+
+---
+
+## Slumber — Serialization {#slumber}
+
+### Overview {#slumber-overview}
+
+# Slumber — Serialization That Understands Kotlin
+
+A serialization framework built for Kotlin's type system. Nullable types, default values, sealed classes — Slumber handles them all without annotations or configuration.
+
+## The Problem
+
+You have a Kotlin data class. You want to serialize it to a Map (for a database, an API, a cache). Jackson needs annotations. Gson ignores nullability. kotlinx.serialization needs a compiler plugin.
+
+And when deserialization fails, you get a cryptic exception with no idea which nested field caused it.
+
+## The Solution
+
+```kotlin
+data class User(val name: String, val age: Int, val email: String? = null)
+
+val codec = Codec.default
+
+// Serialize ("slumber")
+val map = codec.slumber(User("Alice", 30))
+// -> { "name": "Alice", "age": 30, "email": null }
+
+// Deserialize ("awake")
+val user = codec.awake<User>(mapOf("name" to "Bob", "age" to 25))
+// -> User(name="Bob", age=25, email=null)
+```
+
+That's it. No annotations needed. No compiler plugin. Slumber uses Kotlin reflection to understand your data classes — nullable fields, default values, generics, and all.
+
+## What Makes It Different
+
+- **Kotlin-First** — Understands `String` vs `String?`, default parameters, data classes, sealed classes — at the type level.
+- **Graceful Degradation** — Nullable field receives bad data? Returns `null` instead of crashing. Required field fails? Detailed path in the error.
+- **Two-Pass Error Handling** — Fast pass first, no overhead. Only builds full diagnostic path on failure — performance when it works, clarity when it doesn't.
+- **Format-Agnostic** — Works with Maps and Lists, not JSON strings. Use it for databases, REST APIs, caches, or any storage backend.
+- **Pluggable Modules** — Custom type handling via `SlumberModule`. No annotation processors — just implement an interface.
+- **Polymorphism Built-In** — Sealed classes auto-detected. Custom discriminators, migration aliases, default fallback types — all supported.
+
+## The Naming
+
+Slumber uses a playful metaphor:
+
+- **Slumber** = serialize. Put your objects to sleep as raw data.
+- **Awake** = deserialize. Wake your data back up as typed objects.
+
+## Quick Taste
+
+Polymorphic sealed classes — zero configuration:
+
+```kotlin
+sealed class Event {
+    data class UserCreated(val userId: String) : Event()
+    data class UserDeleted(val userId: String, val reason: String?) : Event()
+}
+
+val codec = Codec.default
+
+// Slumber a list of mixed types
+val data = codec.slumber(listOf(
+    Event.UserCreated("alice"),
+    Event.UserDeleted("bob", reason = "inactive"),
+))
+// -> [
+//   { "_type": "...UserCreated", "userId": "alice" },
+//   { "_type": "...UserDeleted", "userId": "bob", "reason": "inactive" }
+// ]
+
+// Awake it back — types are restored automatically
+val events = codec.awake<List<Event>>(data)
+```
+
+---
+
+### Getting Started {#slumber-getting-started}
+
+# Getting Started
+
+Add the dependency, create a codec, serialize your first object.
+
+## 1. Add the dependency
+
+In your `build.gradle.kts`:
+
+```kotlin
+dependencies {
+    implementation("io.peekandpoke.ultra:slumber:0.102.0")
+}
+```
+
+Slumber requires **Kotlin reflection** (included transitively) and runs on the **JVM**.
+
+## 2. Create a codec
+
+```kotlin
+import de.peekandpoke.ultra.slumber.Codec
+
+// The default codec handles: primitives, data classes, enums, collections,
+// sealed classes, java.time.*, kotlinx.datetime.*, and MpDateTime types.
+val codec = Codec.default
+```
+
+## 3. Serialize (slumber)
+
+```kotlin
+data class Address(val city: String, val zip: String)
+data class Person(val name: String, val age: Int, val address: Address)
+
+val alice = Person("Alice", 30, Address("Berlin", "10115"))
+
+val data = codec.slumber(alice)
+// -> {
+//   "name": "Alice",
+//   "age": 30,
+//   "address": { "city": "Berlin", "zip": "10115" }
+// }
+```
+
+The result is a `Map<String, Any?>` — not a JSON string. You can pass it to any storage backend, JSON encoder, or database driver.
+
+## 4. Deserialize (awake)
+
+```kotlin
+import de.peekandpoke.ultra.slumber.awake
+
+val input = mapOf(
+    "name" to "Bob",
+    "age" to 25,
+    "address" to mapOf("city" to "Munich", "zip" to "80331"),
+)
+
+val person = codec.awake<Person>(input)
+// -> Person(name="Bob", age=25, address=Address(city="Munich", zip="80331"))
+```
+
+## 5. Round-trip
+
+```kotlin
+val original = Person("Alice", 30, Address("Berlin", "10115"))
+val restored = codec.awake<Person>(codec.slumber(original))
+
+assert(restored == original) // true
+```
+
+## How it handles Kotlin features
+
+### Nullable fields
+
+```kotlin
+data class Profile(val name: String, val bio: String?)
+
+// Missing nullable field -> null
+codec.awake<Profile>(mapOf("name" to "Alice"))
+// -> Profile(name="Alice", bio=null)
+
+// Explicit null -> null
+codec.awake<Profile>(mapOf("name" to "Alice", "bio" to null))
+// -> Profile(name="Alice", bio=null)
+
+// Invalid data on nullable field -> null (graceful degradation)
+codec.awake<Profile>(mapOf("name" to "Alice", "bio" to listOf(1, 2, 3)))
+// -> Profile(name="Alice", bio=null)
+```
+
+### Default parameters
+
+```kotlin
+data class Config(
+    val host: String = "localhost",
+    val port: Int = 8080,
+    val debug: Boolean = false,
+)
+
+// Missing fields use defaults
+codec.awake<Config>(mapOf("debug" to true))
+// -> Config(host="localhost", port=8080, debug=true)
+
+// Empty map -> all defaults
+codec.awake<Config>(emptyMap<String, Any>())
+// -> Config(host="localhost", port=8080, debug=false)
+```
+
+### Type coercion
+
+```kotlin
+data class Stats(val count: Int, val label: String)
+
+// String "42" -> Int 42, Number 100L -> Int 100
+codec.awake<Stats>(mapOf("count" to "42", "label" to 100))
+// -> Stats(count=42, label="100")
+
+// Works for all numeric types: Int, Long, Double, Float, Short, Byte
+```
+
+---
+
+### Data Classes {#slumber-data-classes}
+
+# Data Classes
+
+Slumber serializes data classes by reflecting on the primary constructor. No annotations needed for standard cases.
+
+## Basic data classes
+
+Every constructor parameter becomes a field in the serialized output:
+
+```kotlin
+data class User(val name: String, val age: Int)
+
+val codec = Codec.default
+
+codec.slumber(User("Alice", 30))
+// -> { "name": "Alice", "age": 30 }
+
+codec.awake<User>(mapOf("name" to "Bob", "age" to 25))
+// -> User(name="Bob", age=25)
+```
+
+## Nested data classes
+
+Nesting works recursively — no depth limit:
+
+```kotlin
+data class Address(val city: String, val zip: String)
+data class Company(val name: String, val hq: Address)
+data class Employee(val name: String, val company: Company)
+
+val emp = Employee("Alice", Company("ACME", Address("Berlin", "10115")))
+
+codec.slumber(emp)
+// -> {
+//   "name": "Alice",
+//   "company": {
+//     "name": "ACME",
+//     "hq": { "city": "Berlin", "zip": "10115" }
+//   }
+// }
+```
+
+## Enums
+
+Enums serialize to their name as a string:
+
+```kotlin
+enum class Role { ADMIN, USER, GUEST }
+data class Account(val name: String, val role: Role)
+
+codec.slumber(Account("Alice", Role.ADMIN))
+// -> { "name": "Alice", "role": "ADMIN" }
+
+codec.awake<Account>(mapOf("name" to "Bob", "role" to "USER"))
+// -> Account(name="Bob", role=Role.USER)
+```
+
+## Kotlin object singletons
+
+Kotlin `object` singletons are preserved — the same instance is returned on deserialization:
+
+```kotlin
+object AppConfig {
+    val version = "1.0"
+}
+
+val data = codec.slumber(AppConfig)
+// -> {} (empty map)
+
+val restored = codec.awake<AppConfig>(data)
+// restored === AppConfig (same instance)
+```
+
+## Computed fields with @Slumber.Field
+
+By default, only constructor parameters are serialized. To include computed properties, use `@Slumber.Field`:
+
+```kotlin
+data class Invoice(val items: List<Double>, val taxRate: Double) {
+    @Slumber.Field
+    val subtotal get() = items.sum()
+
+    @Slumber.Field
+    val tax get() = subtotal * taxRate
+
+    @Slumber.Field
+    val total get() = subtotal + tax
+}
+
+codec.slumber(Invoice(listOf(10.0, 20.0, 30.0), 0.19))
+// -> {
+//   "items": [10.0, 20.0, 30.0],
+//   "taxRate": 0.19,
+//   "subtotal": 60.0,
+//   "tax": 11.4,
+//   "total": 71.4
+// }
+```
+
+`@Slumber.Field` works on properties, getters, and `lazy` fields. Only serialization is affected — deserialization still uses the constructor.
+
+## Private constructors
+
+Data classes with private constructors still work — Slumber uses Kotlin reflection to access them:
+
+```kotlin
+data class UserId private constructor(val value: String) {
+    companion object {
+        fun of(raw: String) = UserId(raw.trim().lowercase())
+    }
+}
+
+// Deserialization bypasses the companion factory
+codec.awake<UserId>(mapOf("value" to "ABC-123"))
+// -> UserId(value="ABC-123")
+```
+
+## Generic data classes
+
+Full generic support — type parameters are preserved through serialization:
+
+```kotlin
+data class Wrapper<T>(val value: T)
+data class Pair<A, B>(val first: A, val second: B)
+
+codec.awake<Wrapper<Int>>(mapOf("value" to 42))
+// -> Wrapper(value=42)
+
+codec.awake<Pair<String, Int>>(mapOf("first" to "hello", "second" to 99))
+// -> Pair(first="hello", second=99)
+```
+
+---
+
+### Polymorphism {#slumber-polymorphism}
+
+# Polymorphism
+
+Slumber auto-detects sealed classes, adds type discriminators, and supports custom identifiers, default fallback types, and migration aliases.
+
+## Sealed classes — zero config
+
+Sealed classes just work. Slumber adds a `_type` discriminator automatically:
+
+```kotlin
+sealed class Shape {
+    data class Circle(val radius: Double) : Shape()
+    data class Rectangle(val width: Double, val height: Double) : Shape()
+}
+
+val codec = Codec.default
+
+// Slumber adds "_type" with the fully qualified class name
+codec.slumber(Shape.Circle(5.0))
+// -> { "_type": "com.example.Shape.Circle", "radius": 5.0 }
+
+// Awake reads "_type" and instantiates the correct subclass
+codec.awake<Shape>(mapOf(
+    "_type" to "com.example.Shape.Circle",
+    "radius" to 5.0,
+))
+// -> Shape.Circle(radius=5.0)
+```
+
+## Custom identifiers with @SerialName
+
+Fully qualified names are verbose. Use `@SerialName` for cleaner discriminator values:
+
+```kotlin
+import kotlinx.serialization.SerialName
+
+sealed class Event {
+    @SerialName("user.created")
+    data class UserCreated(val userId: String) : Event()
+
+    @SerialName("user.deleted")
+    data class UserDeleted(val userId: String) : Event()
+}
+
+codec.slumber(Event.UserCreated("alice"))
+// -> { "_type": "user.created", "userId": "alice" }
+```
+
+## Custom discriminator field
+
+Don't want `_type`? Implement `Polymorphic.Parent` on the companion:
+
+```kotlin
+sealed class Vehicle {
+    companion object : Polymorphic.Parent {
+        override val discriminator = "kind"
+    }
+
+    data class Car(val seats: Int) : Vehicle() {
+        companion object : Polymorphic.Child {
+            override val identifier = "car"
+        }
+    }
+
+    data class Bike(val gears: Int) : Vehicle() {
+        companion object : Polymorphic.Child {
+            override val identifier = "bike"
+        }
+    }
+}
+
+codec.slumber(Vehicle.Car(5))
+// -> { "kind": "car", "seats": 5 }
+```
+
+## Default fallback type
+
+When the discriminator is missing or unknown, fall back to a default type:
+
+```kotlin
+sealed class Message {
+    companion object : Polymorphic.Parent {
+        override val defaultType = Text::class
+    }
+
+    data class Text(val body: String) : Message()
+    data class Image(val url: String) : Message()
+}
+
+// No _type field? Falls back to Text
+codec.awake<Message>(mapOf("body" to "Hello!"))
+// -> Message.Text(body="Hello!")
+```
+
+## Migration aliases with @AdditionalSerialName
+
+Renamed a type? Old discriminator values still work:
+
+```kotlin
+sealed class Notification {
+    @SerialName("email")
+    @AdditionalSerialName("email_notification")  // old name
+    @AdditionalSerialName("EmailNotification")   // even older name
+    data class Email(val to: String) : Notification()
+}
+
+// All three discriminators resolve to the same class:
+codec.awake<Notification>(mapOf("_type" to "email", "to" to "a@b.com"))
+codec.awake<Notification>(mapOf("_type" to "email_notification", "to" to "a@b.com"))
+codec.awake<Notification>(mapOf("_type" to "EmailNotification", "to" to "a@b.com"))
+// -> all return Notification.Email(to="a@b.com")
+```
+
+## Polymorphic collections
+
+Lists and maps of polymorphic types work naturally:
+
+```kotlin
+sealed class Shape {
+    data class Circle(val radius: Double) : Shape()
+    data class Rectangle(val width: Double, val height: Double) : Shape()
+}
+
+data class Drawing(val shapes: List<Shape>)
+
+val drawing = Drawing(listOf(
+    Shape.Circle(5.0),
+    Shape.Rectangle(10.0, 20.0),
+))
+
+val data = codec.slumber(drawing)
+// -> { "shapes": [
+//     { "_type": "...Circle", "radius": 5.0 },
+//     { "_type": "...Rectangle", "width": 10.0, "height": 20.0 }
+// ]}
+
+val restored = codec.awake<Drawing>(data)
+// -> Drawing with the correct subtypes restored
+```
+
+## Nested sealed hierarchies
+
+Sealed hierarchies can be nested — Slumber traverses them correctly:
+
+```kotlin
+sealed class Animal {
+    sealed class Domestic : Animal() {
+        data class Dog(val name: String) : Domestic()
+        data class Cat(val name: String) : Domestic()
+    }
+    sealed class Wild : Animal() {
+        data class Wolf(val pack: String) : Wild()
+    }
+}
+
+// All leaf types serialize and deserialize correctly
+codec.awake<Animal>(mapOf(
+    "_type" to Animal.Domestic.Dog::class.qualifiedName,
+    "name" to "Rex",
+))
+// -> Animal.Domestic.Dog(name="Rex")
+```
+
+---
+
+### Collections & Maps {#slumber-collections}
+
+# Collections & Maps
+
+Lists, sets, maps, and nested collections — all with full type awareness.
+
+## Lists and Sets
+
+```kotlin
+data class Team(
+    val members: List<String>,
+    val tags: Set<String>,
+)
+
+val codec = Codec.default
+
+codec.slumber(Team(listOf("Alice", "Bob"), setOf("eng", "frontend")))
+// -> { "members": ["Alice", "Bob"], "tags": ["eng", "frontend"] }
+
+codec.awake<Team>(mapOf(
+    "members" to listOf("Alice", "Bob"),
+    "tags" to listOf("eng", "frontend"),
+))
+// -> Team(members=["Alice", "Bob"], tags={"eng", "frontend"})
+```
+
+Slumber supports `List`, `MutableList`, `Set`, `MutableSet`, and `Iterable`. Arrays are automatically converted to Lists on deserialization.
+
+## Typed collections
+
+Inner types are fully preserved — a `List<Int>` will coerce string values to integers:
+
+```kotlin
+data class Scores(val values: List<Int>)
+
+// String "42" is coerced to Int 42
+codec.awake<Scores>(mapOf("values" to listOf("42", 100, 7)))
+// -> Scores(values=[42, 100, 7])
+```
+
+## Collections of data classes
+
+```kotlin
+data class User(val name: String, val age: Int)
+data class Directory(val users: List<User>)
+
+codec.awake<Directory>(mapOf(
+    "users" to listOf(
+        mapOf("name" to "Alice", "age" to 30),
+        mapOf("name" to "Bob", "age" to 25),
+    )
+))
+// -> Directory(users=[User("Alice", 30), User("Bob", 25)])
+```
+
+## Maps
+
+```kotlin
+data class Config(val settings: Map<String, Int>)
+
+codec.slumber(Config(mapOf("timeout" to 30, "retries" to 3)))
+// -> { "settings": { "timeout": 30, "retries": 3 } }
+
+codec.awake<Config>(mapOf(
+    "settings" to mapOf("timeout" to 30, "retries" to 3)
+))
+// -> Config(settings={"timeout": 30, "retries": 3})
+```
+
+Both `Map` and `MutableMap` are supported. Key and value types are preserved through serialization.
+
+## Nullable elements
+
+```kotlin
+data class NullableItems(val items: List<String?>)
+
+codec.awake<NullableItems>(mapOf(
+    "items" to listOf("hello", null, "world")
+))
+// -> NullableItems(items=["hello", null, "world"])
+
+// Non-nullable List<String> with a null element -> error
+data class StrictItems(val items: List<String>)
+
+codec.awake<StrictItems>(mapOf(
+    "items" to listOf("hello", null)
+))
+// -> AwakerException: "root.items.1 must not be null"
+```
+
+## Nested collections
+
+```kotlin
+data class Matrix(val rows: List<List<Int>>)
+
+codec.awake<Matrix>(mapOf(
+    "rows" to listOf(
+        listOf(1, 2, 3),
+        listOf(4, 5, 6),
+    )
+))
+// -> Matrix(rows=[[1, 2, 3], [4, 5, 6]])
+```
+
+---
+
+### Date & Time {#slumber-datetime}
+
+# Date & Time
+
+Slumber supports three datetime libraries out of the box: `java.time`, `kotlinx.datetime`, and Ultra's multiplatform `MpDateTime`.
+
+## The format
+
+All datetime types serialize to the same structure:
+
+```json
+{
+    "ts": 1649116800000,
+    "timezone": "Europe/Berlin",
+    "human": "2022-04-05T..."
+}
+```
+
+This format stores both the precise timestamp and the timezone, so no information is lost. The `human` field is for debugging — deserialization uses only `ts` and `timezone`.
+
+## java.time types
+
+```kotlin
+import java.time.*
+
+val codec = Codec.default
+
+// Instant — absolute point in time
+val instant = Instant.ofEpochMilli(1649116800000L)
+codec.slumber(instant)
+// -> { "ts": 1649116800000, "timezone": "UTC", "human": "2022-04-05T00:00:00Z" }
+
+// ZonedDateTime — instant + timezone
+val zdt = ZonedDateTime.ofInstant(instant, ZoneId.of("Europe/Berlin"))
+codec.slumber(zdt)
+// -> { "ts": 1649116800000, "timezone": "Europe/Berlin", "human": "2022-04-05T02:00+02:00[Europe/Berlin]" }
+
+// LocalDate — date without time, stored as start-of-day UTC
+val date = LocalDate.of(2022, 4, 5)
+codec.slumber(date)
+// -> { "ts": 1649116800000, "timezone": "UTC", "human": "2022-04-05T00:00Z[UTC]" }
+
+// LocalDateTime — date + time without timezone, stored as UTC
+val dateTime = LocalDateTime.of(2022, 4, 5, 10, 30, 0)
+codec.slumber(dateTime)
+// -> { "ts": 1649154600000, "timezone": "UTC", "human": "2022-04-05T10:30Z[UTC]" }
+
+// LocalTime — time of day, stored as second-of-day
+val time = LocalTime.of(14, 30, 15)
+codec.slumber(time)
+// -> 52215 (seconds since midnight)
+```
+
+Supported `java.time` types: `Instant`, `ZonedDateTime`, `LocalDate`, `LocalDateTime`, `LocalTime`, `ZoneId`, and `java.util.Date`.
+
+## kotlinx.datetime types
+
+```kotlin
+import kotlinx.datetime.*
+
+val codec = Codec.default
+
+// LocalDate
+val date = LocalDate(2022, Month.APRIL, 5)
+codec.slumber(date)
+// -> { "ts": 1649116800000, "timezone": "UTC", "human": "2022-04-05T00:00:00Z" }
+
+// LocalDateTime
+val dateTime = LocalDateTime(2022, Month.APRIL, 5, 10, 30, 0)
+codec.slumber(dateTime)
+// -> { "ts": ..., "timezone": "UTC", "human": "..." }
+```
+
+## MpDateTime types (Ultra multiplatform)
+
+Ultra's own multiplatform datetime types follow the same format:
+
+```kotlin
+import de.peekandpoke.ultra.common.datetime.*
+
+val codec = Codec.default
+
+val instant = MpLocalDate.of(2022, kotlinx.datetime.Month.APRIL, 5)
+    .atStartOfDay(kotlinx.datetime.TimeZone.UTC)
+    .toInstant()
+
+codec.slumber(instant)
+// -> { "ts": 1649116800000, "timezone": "UTC", "human": "2022-04-05T00:00:00.000Z" }
+```
+
+Supported MpDateTime types: `MpInstant`, `MpZonedDateTime`, `MpLocalDate`, `MpLocalDateTime`, `MpLocalTime`, `MpTimezone`.
+
+## DateTime in data classes
+
+```kotlin
+data class Event(
+    val name: String,
+    val startTime: Instant,
+    val endTime: Instant?,
+)
+
+val event = Event(
+    name = "Conference",
+    startTime = Instant.ofEpochMilli(1649116800000L),
+    endTime = null,
+)
+
+codec.slumber(event)
+// -> {
+//   "name": "Conference",
+//   "startTime": { "ts": 1649116800000, "timezone": "UTC", "human": "..." },
+//   "endTime": null
+// }
+```
+
+## Timezone preservation
+
+`ZonedDateTime` preserves the original timezone through serialization:
+
+```kotlin
+val berlin = ZonedDateTime.ofInstant(
+    Instant.ofEpochMilli(1649116800000L),
+    ZoneId.of("Europe/Berlin"),
+)
+
+val restored = codec.awake<ZonedDateTime>(codec.slumber(berlin))
+// restored.zone == ZoneId.of("Europe/Berlin")
+```
+
+---
+
+### Error Handling {#slumber-error-handling}
+
+# Error Handling
+
+Slumber's two-pass strategy gives you speed when things work and precision when they don't.
+
+## The two-pass strategy
+
+When you call `codec.awake()`, two things happen:
+
+1. **Fast pass** — Deserializes with no path tracking. Minimal overhead. If it succeeds, you're done.
+2. **Tracking pass** — Only runs if the fast pass throws. Re-deserializes with full path tracking, collecting diagnostic information at every level.
+
+This means you pay zero cost for path tracking in the success case — which is the common case.
+
+## Nullable vs non-nullable errors
+
+The key design decision: **nullable fields absorb errors, non-nullable fields report them**.
+
+```kotlin
+data class Profile(val name: String, val bio: String?)
+
+// Non-nullable field with bad data -> AwakerException
+codec.awake<Profile>(mapOf("name" to listOf(1, 2, 3), "bio" to "hello"))
+// -> AwakerException: "Value at path 'root.name' must not be null"
+
+// Nullable field with bad data -> graceful null
+codec.awake<Profile>(mapOf("name" to "Alice", "bio" to listOf(1, 2, 3)))
+// -> Profile(name="Alice", bio=null)   <- no crash
+```
+
+## Path tracking in nested structures
+
+Error messages include the full path to the failing field:
+
+```kotlin
+data class Address(val zip: String)
+data class Company(val address: Address)
+data class Employee(val company: Company)
+
+codec.awake<Employee>(mapOf(
+    "company" to mapOf(
+        "address" to mapOf(
+            "zip" to null  // null for non-nullable String
+        )
+    )
+))
+// -> AwakerException: "Value at path 'root.company.address.zip' must not be null"
+```
+
+## Collection index in error paths
+
+When an error occurs inside a collection, the index is included in the path:
+
+```kotlin
+data class Container(val items: List<Int>)
+
+codec.awake<Container>(mapOf(
+    "items" to listOf(1, null, 3)
+))
+// -> AwakerException: "Value at path 'root.items.1' must not be null"
+//                                              ^ index 1
+```
+
+## Missing required parameters
+
+When a non-nullable, non-default parameter is missing from the input:
+
+```kotlin
+data class User(val name: String, val age: Int)
+
+codec.awake<User>(mapOf("name" to "Alice"))
+// -> AwakerException with message containing:
+//   "Value at path 'root' must not be null"
+//   "'root': User misses parameters 'age'"
+```
+
+## Exception types
+
+Slumber defines three exception classes:
+
+```kotlin
+// Base class for all Slumber errors
+open class SlumberException(message: String) : Throwable(message)
+
+// Thrown when deserialization fails
+class AwakerException(
+    message: String,
+    val logs: List<String>,     // Diagnostic messages from nested levels
+    val rootType: KType?,       // The type being deserialized
+    val input: Any?,            // The input data that caused the error
+) : SlumberException(message)
+
+// Thrown when serialization fails (e.g. null for non-nullable type)
+class SlumbererException(
+    message: String,
+    val input: Any?,            // The data that caused the error
+) : SlumberException(message)
+```
+
+## Catching and handling errors
+
+```kotlin
+try {
+    val user = codec.awake<User>(untrustedData)
+} catch (e: AwakerException) {
+    println("Deserialization failed at: extracted from message")
+    println("Root type: ${e.rootType}")
+    println("Input: ${e.input}")
+    println("Diagnostics: ${e.logs.joinToString("\n")}")
+}
+```
+
+## Default parameter fallback
+
+When a field has a default value and the input provides invalid data, the default is used:
+
+```kotlin
+data class Config(
+    val host: String = "localhost",
+    val port: Int = 8080,
+)
+
+// Invalid data for "port" -> falls back to default
+codec.awake<Config>(mapOf("host" to "myserver", "port" to "not_a_number"))
+// -> Config(host="myserver", port=8080)
+```
+
+---
+
+### Custom Modules {#slumber-custom-modules}
+
+# Custom Modules
+
+Teach Slumber to handle your own types by implementing `SlumberModule`. No annotation processors — just an interface.
+
+## How modules work
+
+A `SlumberConfig` holds an ordered list of `SlumberModule`s. When Slumber needs to serialize or deserialize a type, it asks each module in order. The first module to return a non-null handler wins.
+
+```kotlin
+interface SlumberModule {
+    fun getAwaker(type: KType, attributes: TypedAttributes): Awaker?
+    fun getSlumberer(type: KType, attributes: TypedAttributes): Slumberer?
+}
+```
+
+Return `null` to pass — "I don't handle this type." Return an `Awaker` or `Slumberer` to claim it.
+
+## Example: Custom Money type
+
+```kotlin
+data class Money(val amount: Long, val currency: String)
+
+object MoneyModule : SlumberModule {
+
+    override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? {
+        if (type.classifier != Money::class) return null
+
+        return type.wrapIfNonNull(object : Awaker {
+            override fun awake(data: Any?, context: Awaker.Context): Money? {
+                val map = data as? Map<*, *> ?: return null
+                val amount = (map["amount"] as? Number)?.toLong() ?: return null
+                val currency = map["currency"] as? String ?: return null
+                return Money(amount, currency)
+            }
+        })
+    }
+
+    override fun getSlumberer(type: KType, attributes: TypedAttributes): Slumberer? {
+        if (type.classifier != Money::class) return null
+
+        return type.wrapIfNonNull(object : Slumberer {
+            override fun slumber(data: Any?, context: Slumberer.Context): Any? {
+                val money = data as? Money ?: return null
+                return mapOf("amount" to money.amount, "currency" to money.currency)
+            }
+        })
+    }
+}
+```
+
+## Registering a custom module
+
+```kotlin
+// Prepend to give your module highest priority
+val config = SlumberConfig.default.prependModules(MoneyModule)
+val codec = config.codec()
+
+// Now Money is handled by your module
+codec.slumber(Money(1099, "EUR"))
+// -> { "amount": 1099, "currency": "EUR" }
+
+codec.awake<Money>(mapOf("amount" to 1099, "currency" to "EUR"))
+// -> Money(amount=1099, currency="EUR")
+```
+
+## wrapIfNonNull
+
+Notice the `type.wrapIfNonNull(awaker)` call. This is a helper on `SlumberModule` that wraps your awaker in a `NonNullAwaker` when the type is non-nullable. This ensures that:
+
+- `Money` (non-nullable) — throws `AwakerException` if your awaker returns null
+- `Money?` (nullable) — returns null gracefully
+
+Always use `wrapIfNonNull` unless you have a specific reason not to.
+
+## Module ordering
+
+Modules are queried in order. Use `prependModules` when your module should override built-in behavior, and `appendModules` when it's a fallback:
+
+```kotlin
+// Override: your module takes priority over built-in handlers
+val config = SlumberConfig.default.prependModules(MoneyModule)
+
+// Fallback: your module only handles types the built-in modules don't
+val config = SlumberConfig.default.appendModules(FallbackModule)
+```
+
+## Passing context via attributes
+
+Modules receive `TypedAttributes` — a typed key-value store. Use this to pass runtime context:
+
+```kotlin
+// Define a typed key
+val DatabaseKey = TypedKey<Database>("database")
+
+// Add it to the config
+val config = SlumberConfig.default
+    .prependModules(MyDbModule)
+    .plusAttributes(TypedAttributes.of { add(DatabaseKey, myDatabase) })
+
+// Access it in your module
+object MyDbModule : SlumberModule {
+    override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? {
+        val db = attributes[DatabaseKey] // Access the database
+        // ... use db to resolve references
+    }
+}
+```
+
+This is how the Vault and Karango integrations work — they pass `Database` and `EntityCache` references through attributes so their custom modules can resolve entity references during serialization.
+
+## The default module stack
+
+`SlumberConfig.default` includes these modules in order:
+
+1. **MpDateTimeModule** — Ultra's multiplatform datetime types
+2. **KotlinxTimeModule** — kotlinx.datetime types
+3. **JavaTimeModule** — java.time types
+4. **BuiltInModule** — primitives, strings, collections, maps, data classes, enums, sealed classes, singletons
+
+DateTime modules come first because they handle specific types that the BuiltInModule would otherwise catch as generic data classes.
+
+---
+
+## Streams — Reactive Values {#streams}
+
+### Overview {#streams-overview}
+
+# Streams — Reactive Values, Simplified
+
+A lightweight reactive streams library for Kotlin Multiplatform. Every stream always has a value. No marble diagrams required.
+
+## The core idea: streams always have a value
+
+Most reactive libraries (RxJava, RxJS, Kotlin Flow) model streams as sequences that *might eventually emit* something. You subscribe, wait, and hope. This creates a maze of operators for handling the "not yet" state — `startWith`, `defaultIfEmpty`, `firstOrDefault`, `onErrorResumeNext` — each with its own marble diagram.
+
+Streams takes a radically simpler approach: **every stream always has a current value**. You can read it at any time with `stream()`. When you subscribe, you immediately get the current value — no waiting, no special handling.
+
+```kotlin
+val source = StreamSource(42)
+
+// Always has a value — read it anytime
+println(source())  // 42
+
+// Subscribe — immediately called with current value
+source.subscribeToStream { value ->
+    println("Got: $value")
+}
+// prints "Got: 42" immediately
+
+// Update — all subscribers notified
+source(99)
+// prints "Got: 99"
+```
+
+This is what makes Streams perfect for UI programming. In Kraft, components subscribe to streams and re-render when values change. Because streams always have a value, the first render always has data — no loading spinners, no null checks, no "initial state" boilerplate.
+
+## Two types
+
+The entire library is built on two types:
+
+- **`Stream<T>`** — read-only. Has `invoke(): T` (get value) and `subscribeToStream()` (observe changes).
+- **`StreamSource<T>`** — read-write. Adds `invoke(next: T)` (set value), `modify()`, and `reset()`.
+
+Operators transform a `Stream` into another `Stream`. The chain is lazy — operators only subscribe upstream when they have downstream subscribers.
+
+## What you get
+
+- **Always Has a Value** — `stream()` never blocks, never returns null (unless T is nullable). No marble diagrams needed.
+- **Composable Operators** — `map`, `filter`, `combine`, `debounce`, `fold`, `distinct`, `history`, and more.
+- **Lazy Subscriptions** — Operators only subscribe upstream when they have downstream subscribers. No wasted work.
+- **Kotlin Multiplatform** — Core + all operators work on JVM and JS. Plus JS-specific extras like `animTicker()` and localStorage persistence.
+- **Resilient** — A failing subscriber never prevents other subscribers from being notified. Streams keep flowing.
+- **Flow Interop** — `stream.asFlow()` bridges into Kotlin's Flow world when you need it.
+
+## Quick taste
+
+```kotlin
+val name = StreamSource("World")
+val greeting = name.map { "Hello, $it!" }
+
+greeting.subscribeToStream { println(it) }
+// prints "Hello, World!"
+
+name("Kotlin")
+// prints "Hello, Kotlin!"
+
+// Combine two streams
+val firstName = StreamSource("Jane")
+val lastName = StreamSource("Doe")
+
+val fullName = firstName.pairedWith(lastName).map { (f, l) -> "$f $l" }
+println(fullName())  // "Jane Doe"
+
+firstName("John")
+println(fullName())  // "John Doe"
+```
+
+---
+
+### Getting Started {#streams-getting-started}
+
+# Getting Started
+
+Add Streams to your project and create your first reactive values.
+
+## 1. Add the dependency
+
+In your `build.gradle.kts`:
+
+```kotlin
+dependencies {
+    implementation("io.peekandpoke.ultra:streams:0.102.0")
+}
+```
+
+Find the latest version on [Maven Central](https://central.sonatype.com/namespace/io.peekandpoke.ultra).
+
+Streams is a Kotlin Multiplatform library — it works in `commonMain`, `jvmMain`, and `jsMain`.
+
+## 2. Create a StreamSource
+
+A `StreamSource` is a mutable reactive value. It always has a current value.
+
+```kotlin
+import de.peekandpoke.ultra.streams.StreamSource
+
+val counter = StreamSource(0)
+
+// Read the current value
+println(counter())  // 0
+
+// Set a new value
+counter(1)
+println(counter())  // 1
+
+// Modify based on current value
+counter.modify { this + 1 }
+println(counter())  // 2
+
+// Reset to initial
+counter.reset()
+println(counter())  // 0
+```
+
+## 3. Subscribe to changes
+
+Subscribing immediately delivers the current value, then every subsequent change:
+
+```kotlin
+val name = StreamSource("Alice")
+
+val unsubscribe = name.subscribeToStream { value ->
+    println("Name is: $value")
+}
+// prints "Name is: Alice" immediately
+
+name("Bob")
+// prints "Name is: Bob"
+
+name("Charlie")
+// prints "Name is: Charlie"
+
+// Stop listening
+unsubscribe()
+```
+
+## 4. Transform with operators
+
+Operators create new read-only streams derived from a source:
+
+```kotlin
+val source = StreamSource(5)
+
+// map — transform each value
+val doubled = source.map { it * 2 }
+println(doubled())  // 10
+
+// filter — only pass values matching a predicate
+val big = source.filter(initial = 0) { it > 10 }
+println(big())  // 0 (initial, since 5 doesn't match)
+
+source(20)
+println(big())     // 20
+println(doubled()) // 40
+```
+
+## 5. Combine streams
+
+Merge two streams into one:
+
+```kotlin
+val a = StreamSource(1)
+val b = StreamSource(10)
+
+val sum = a.combinedWith(b) { x, y -> x + y }
+println(sum())  // 11
+
+a(5)
+println(sum())  // 15
+
+b(100)
+println(sum())  // 105
+```
+
+## How subscriptions work
+
+Streams use **lazy subscriptions**. When you chain operators like `source.map { }.filter { }`, no work happens until someone subscribes to the end of the chain. The subscription propagates upstream — and when the last subscriber unsubscribes, the entire chain tears down.
+
+This means unused streams cost nothing.
+
+---
+
+### Operators {#streams-operators}
+
+# Operators
+
+Every operator takes a stream and returns a new stream. Chain them freely.
+
+## map
+
+Transform each value:
+
+```kotlin
+val source = StreamSource(5)
+val doubled = source.map { it * 2 }
+
+println(doubled())  // 10
+
+source(10)
+println(doubled())  // 20
+```
+
+## onEach
+
+Execute a side effect for each value without changing it. Useful for logging:
+
+```kotlin
+val source = StreamSource(1)
+
+val stream = source
+    .onEach { println("Saw: $it") }
+    .map { it * 10 }
+```
+
+## indexed
+
+Pairs each value with its index (starting at 0):
+
+```kotlin
+val source = StreamSource("a")
+val indexed = source.indexed()
+
+// Pair(0, "a"), then Pair(1, "b"), Pair(2, "c")...
+```
+
+## filter
+
+Only pass values matching a predicate. Since streams always have a value, you provide an initial value for when nothing matches yet:
+
+```kotlin
+val source = StreamSource(3)
+
+val big = source.filter(initial = 0) { it > 10 }
+println(big())  // 0
+
+source(20)
+println(big())  // 20
+
+source(5)
+println(big())  // 20 (keeps last matching value)
+```
+
+Variants:
+
+```kotlin
+// Nullable — returns null when no value matches yet
+val nullable = source.filter { it > 10 }  // Stream<Int?>
+
+// Filter nulls out of a nullable stream
+val nonNull = nullableStream.filterNotNull()
+
+// Filter by type
+val strings = mixedStream.filterIsInstance<String>()
+```
+
+## distinct
+
+Only publish when the value actually changes:
+
+```kotlin
+val source = StreamSource(1)
+val distinct = source.distinct()
+
+val received = mutableListOf<Int>()
+distinct.subscribeToStream { received.add(it) }
+
+source(1)  // same — skipped
+source(2)  // different — published
+source(2)  // same — skipped
+source(3)  // different — published
+
+// received = [1, 2, 3]
+```
+
+Use `distinctStrict()` for reference equality (`!==`) instead of structural equality (`!=`).
+
+## fallback
+
+Replace null values with a default:
+
+```kotlin
+val source = StreamSource<String?>(null)
+
+val safe = source.fallbackTo("default")
+println(safe())  // "default"
+
+source("hello")
+println(safe())  // "hello"
+
+// Or compute the fallback dynamically
+val computed = source.fallbackBy { "fallback-value" }
+```
+
+---
+
+### Combining & Accumulating {#streams-combining}
+
+# Combining & Accumulating
+
+Merge streams together and build up state over time.
+
+## combinedWith
+
+Merge two streams with a combinator function. Publishes whenever either source changes:
+
+```kotlin
+val a = StreamSource(1)
+val b = StreamSource(10)
+
+val sum = a.combinedWith(b) { x, y -> x + y }
+println(sum())  // 11
+
+a(5)
+println(sum())  // 15
+
+b(100)
+println(sum())  // 105
+```
+
+## pairedWith
+
+Shorthand for combining into a `Pair`:
+
+```kotlin
+val pair = a.pairedWith(b)
+println(pair())  // Pair(1, 10)
+```
+
+## fold
+
+Accumulate values over time, like `List.fold()` but reactive:
+
+```kotlin
+val clicks = StreamSource("click")
+val count = clicks.fold(0) { acc, _ -> acc + 1 }
+
+// count is 1 after initial subscribe, increments on each "click"
+```
+
+`foldNotNull()` skips null values in the accumulation.
+
+## history
+
+Keep a sliding window of recent values:
+
+```kotlin
+val source = StreamSource(1)
+val recent = source.history(3)
+
+source(2)
+source(3)
+source(4)
+
+println(recent())  // [2, 3, 4] — oldest values dropped
+```
+
+`historyOfNonNull(capacity)` only keeps non-null values.
+
+---
+
+### Control & Timing {#streams-control}
+
+# Control & Timing
+
+Rate-limit, pause, and schedule stream emissions.
+
+## debounce
+
+Only publish after a quiet period. When values arrive rapidly, only the last one is emitted after the delay:
+
+```kotlin
+val search = StreamSource("")
+val debounced = search.debounce(300)  // 300ms delay
+
+// Typing rapidly: "h", "he", "hel", "hell", "hello"
+// Only "hello" is published — 300ms after the last keystroke
+```
+
+## cutoffWhen / cutoffWhenNot
+
+Pause a stream based on a boolean predicate stream. While paused, the source is fully unsubscribed. When resumed, the current value is published immediately:
+
+```kotlin
+val source = StreamSource(1)
+val paused = StreamSource(false)
+
+val stream = source.cutoffWhen(paused)
+
+// stream publishes values while paused() is false
+source(2)  // published
+
+paused(true)
+source(3)  // NOT published — stream is cut off
+
+paused(false)
+// immediately publishes source's current value (3)
+```
+
+## ticker
+
+Emits a `TickerFrame` at regular intervals. Only runs while subscribed:
+
+```kotlin
+import de.peekandpoke.ultra.streams.ops.ticker
+
+val tick = ticker(1000)  // every 1000ms
+
+val unsub = tick.subscribeToStream { frame ->
+    println("Tick #${frame.count}, delta: ${frame.deltaTime}ms")
+}
+
+// ... later
+unsub()  // stops the ticker
+```
+
+Also accepts a `Duration`: `ticker(1.seconds)`.
+
+## mapAsync
+
+Maps values asynchronously. The result stream is nullable — `null` until the first async operation completes:
+
+```kotlin
+val userId = StreamSource("user-1")
+
+val user = userId.mapAsync { id ->
+    api.fetchUser(id)  // suspend function
+}
+
+// user() is null initially, then the fetched User object
+```
+
+---
+
+### Subscriptions & Resilience {#streams-subscriptions}
+
+# Subscriptions & Resilience
+
+Batch cleanup of subscriptions and protection against failing handlers.
+
+## The Subscriptions collector
+
+Forgetting to unsubscribe is the most common source of leaks in reactive code. The `Subscriptions` class collects all your subscriptions and cleans them up in a single call:
+
+```kotlin
+import de.peekandpoke.ultra.streams.Subscriptions
+
+val subs = Subscriptions()
+
+// Subscribe via the collector
+subs.subscribe(nameStream) { println("Name: $it") }
+subs.subscribe(ageStream) { println("Age: $it") }
+
+// Or use the += operator
+subs += counterStream.subscribeToStream { println("Count: $it") }
+
+println(subs.size)  // 3
+
+// Clean up everything at once
+subs.unsubscribeAll()
+```
+
+This is especially useful in UI components:
+
+```kotlin
+class UserDashboard {
+    private val subs = Subscriptions()
+
+    fun mount(userStream: Stream<User>, notificationsStream: Stream<List<Notification>>) {
+        subs.subscribe(userStream) { renderHeader(it) }
+        subs.subscribe(notificationsStream) { renderNotifications(it) }
+    }
+
+    fun unmount() {
+        subs.unsubscribeAll()
+    }
+}
+```
+
+`unsubscribeAll()` can be called multiple times safely.
+
+## Error resilience
+
+A failing subscriber never breaks other subscribers. If one handler throws during a publish cycle, the remaining handlers still receive the value:
+
+```kotlin
+val source = StreamSource(1)
+
+source.subscribeToStream { throw RuntimeException("oops") }
+source.subscribeToStream { println("Got: $it") }
+
+source(2)  // prints "Got: 2"
+```
+
+The exception is logged as `[Streams] ERROR: subscriber threw ...` so it shows up in your console during development, but it never takes down the stream.
+
+## Lazy subscription chains
+
+Operator chains are fully lazy. No work happens until someone subscribes to the end of the chain:
+
+```kotlin
+val source = StreamSource(1)
+
+// No subscriptions created yet — this chain is inert
+val result = source
+    .map { it * 2 }
+    .filter(0) { it > 5 }
+    .distinct()
+
+// NOW the chain subscribes upstream
+val unsub = result.subscribeToStream { println(it) }
+
+// Unsubscribing tears down the entire chain
+unsub()
+// source has zero subscribers again
+```
+
+Each operator only subscribes to its upstream when it gains its first subscriber, and unsubscribes when its last subscriber leaves. Unused branches cost nothing.
+
+---
+
+### JS-Specific Operators {#streams-js-specific}
+
+# JS-Specific Operators
+
+These operators are only available in `jsMain` because they use browser APIs.
+
+## animTicker()
+
+Emits a `TickerFrame` on every `requestAnimationFrame` callback (~60fps). Perfect for animations and frame-based game loops:
+
+```kotlin
+import de.peekandpoke.ultra.streams.ops.animTicker
+
+val tick = animTicker()
+
+val unsub = tick.subscribeToStream { frame ->
+    // frame.count     — frames since start
+    // frame.deltaTime — ms since last frame
+    updateAnimation(frame.deltaTime)
+}
+
+unsub()  // stops requesting animation frames
+```
+
+Unlike `ticker(intervalMs)` (available on all platforms), `animTicker()` synchronizes with the browser's display refresh rate.
+
+## persistInLocalStorage()
+
+Persists a stream's value in localStorage. On page reload, the stream initializes from storage:
+
+```kotlin
+import de.peekandpoke.ultra.streams.ops.persistInLocalStorage
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.serializer
+
+val theme = StreamSource("light")
+    .persistInLocalStorage("app.theme", String.serializer())
+
+@Serializable
+data class Preferences(val fontSize: Int = 14, val darkMode: Boolean = false)
+
+val prefs = StreamSource(Preferences())
+    .persistInLocalStorage("app.prefs", Preferences.serializer())
+```
+
+Falls back to in-memory storage silently if localStorage is unavailable or the quota is exceeded. Accepts a custom `StringFormat` codec (defaults to JSON with `ignoreUnknownKeys = true`).
+
+## debouncedFunc() / debouncedFuncExceptFirst()
+
+Standalone debounced function wrappers using browser `setTimeout`. Useful outside of streams:
+
+```kotlin
+import de.peekandpoke.ultra.streams.ops.debouncedFunc
+import de.peekandpoke.ultra.streams.ops.debouncedFuncExceptFirst
+
+val saveSearch = debouncedFunc(delayMs = 200) {
+    performSearch(inputField.value)
+}
+
+inputField.onInput { saveSearch() }
+
+// Execute first call immediately, debounce the rest
+val autoSave = debouncedFuncExceptFirst(delayMs = 1000) {
+    saveDraft()
+}
+```
+
+---
+
+### Extending Streams {#streams-extending}
+
+# Extending Streams
+
+Build your own operators, bridge to Kotlin Flow, and understand the platform matrix.
+
+## Custom operators
+
+Build operators by extending `StreamMapper` (transform) or `StreamWrapper` (pass-through):
+
+```kotlin
+import de.peekandpoke.ultra.streams.Stream
+import de.peekandpoke.ultra.streams.StreamMapper
+
+fun Stream<Int>.clamp(min: Int, max: Int): Stream<Int> =
+    StreamMapper(
+        wrapped = this,
+        mapper = { it.coerceIn(min, max) }
+    )
+
+val source = StreamSource(50)
+val clamped = source.clamp(0, 100)
+
+source(150)
+println(clamped())  // 100
+```
+
+For operators with internal state, extend `StreamWrapperBase` directly and override `handleIncoming()` and `invoke()`.
+
+## Flow interop
+
+Convert any stream to a Kotlin `Flow`:
+
+```kotlin
+import de.peekandpoke.ultra.streams.ops.asFlow
+
+val source = StreamSource(1)
+
+source.asFlow()
+    .filter { it > 5 }
+    .take(3)
+    .collect { println(it) }
+```
+
+The Flow emits the current value immediately on collection, then subsequent values. Cancelling the collector unsubscribes automatically.
+
+## Platform summary
+
+| Operator | Platform |
+|---|---|
+| map, filter, combine, fold, distinct, fallback, history, indexed, onEach, cutoff | All platforms |
+| ticker, debounce, mapAsync, asFlow | All platforms (coroutine-based) |
+| `animTicker()` | JS only (`requestAnimationFrame`) |
+| `persistInLocalStorage()` | JS only (`localStorage`) |
+| `debouncedFunc()`, `debouncedFuncExceptFirst()` | JS only (`setTimeout`) |
+
+---
+
+## Karango — Type-Safe ArangoDB {#karango}
+
+### Overview {#karango-overview}
+
+# Karango — Type-Safe ArangoDB in Kotlin
+
+Write AQL queries in Kotlin with full type safety. Your IDE catches query errors before ArangoDB does.
+
+## The Problem
+
+ArangoDB's query language (AQL) is powerful, but building queries as strings is error-prone. Typos in field names, wrong collection references, mismatched types — you only find out at runtime. And refactoring? Good luck finding all the queries that reference a renamed field.
+
+## The Solution
+
+```kotlin
+@Vault
+data class Person(val name: String, val age: Int)
+
+class PersonsRepo(driver: KarangoDriver) : EntityRepository<Person>(
+    name = "persons", storedType = kType(), driver = driver
+)
+
+// Type-safe query — field names are checked at compile time
+val adults = repo.findList {
+    FOR(repo) { person ->
+        FILTER(person.name EQ "Alice")   // person.name is type-safe
+        FILTER(person.age GTE 18)        // person.age is type-safe
+        SORT(person.age.DESC)
+        LIMIT(10)
+        RETURN(person)
+    }
+}
+```
+
+Rename `name` to `fullName` in the data class? The compiler tells you every query that needs updating. Misspell a field? Red squiggle before you even run the code.
+
+## How It Works
+
+1. Annotate your data class with `@Vault`
+2. KSP generates type-safe property accessors at compile time
+3. Write queries using a Kotlin DSL that mirrors AQL syntax
+4. Karango compiles the DSL to AQL strings and executes them against ArangoDB
+
+## What You Get
+
+- **Type-Safe Queries** — Field names, types, and operators checked at compile time via KSP-generated accessors.
+- **Repository Pattern** — Full CRUD: insert, save, remove, find, batch insert. With lifecycle hooks and index management.
+- **100+ AQL Functions** — Math, string, array, type-check, and aggregate functions — all available in the Kotlin DSL.
+- **Async & Coroutines** — All operations are `suspend` functions. Streaming cursors for large result sets.
+- **Slumber Integration** — Serialization via Slumber — polymorphic types, entity references, and graceful error handling built in.
+- **Battle-Tested** — 131 test files. Used in production across authentication, logging, cluster management, and more.
+
+---
+
+### Getting Started {#karango-getting-started}
+
+# Getting Started
+
+Connect to ArangoDB, define an entity, and run your first type-safe query.
+
+## 1. Add dependencies
+
+```kotlin
+plugins {
+    kotlin("jvm")
+    id("com.google.devtools.ksp") // For type-safe property generation
+}
+
+dependencies {
+    implementation("io.peekandpoke.ultra:karango-core:0.102.0")
+    ksp("io.peekandpoke.ultra:karango-ksp:0.102.0")
+}
+```
+
+## 2. Define your entity
+
+Annotate data classes with `@Vault`. KSP generates type-safe property accessors at compile time.
+
+```kotlin
+import de.peekandpoke.ultra.vault.Vault
+
+@Vault
+data class Person(
+    val name: String,
+    val age: Int,
+    val email: String? = null,
+)
+```
+
+## 3. Create a repository
+
+```kotlin
+import de.peekandpoke.karango.vault.EntityRepository
+import de.peekandpoke.karango.vault.KarangoDriver
+import de.peekandpoke.ultra.reflection.kType
+
+class PersonsRepo(driver: KarangoDriver) : EntityRepository<Person>(
+    name = "persons",          // ArangoDB collection name
+    storedType = kType(),      // Type reference for serialization
+    driver = driver,
+)
+```
+
+## 4. Configure the connection
+
+```kotlin
+import de.peekandpoke.karango.config.ArangoDbConfig
+
+val config = ArangoDbConfig(
+    host = "localhost",
+    port = 8529,
+    user = "root",
+    password = "",
+    database = "my_app",
+)
+```
+
+With Kontainer (dependency injection):
+
+```kotlin
+import de.peekandpoke.karango.karango
+
+kontainer {
+    karango(config)
+
+    // Register your repositories
+    singleton(PersonsRepo::class)
+}
+```
+
+## 5. Basic CRUD
+
+```kotlin
+// Insert
+val stored = repo.insert(Person("Alice", 30, "alice@example.com"))
+// stored._id = "persons/abc123"
+// stored._key = "abc123"
+// stored.value = Person(name="Alice", age=30, ...)
+
+// Find by ID
+val found = repo.findById(stored._id)
+
+// Update
+repo.save(found!!.map { it.copy(age = 31) })
+
+// Delete
+repo.remove(found)
+
+// Find all
+val everyone = repo.findAll().toList()
+```
+
+## 6. Your first query
+
+```kotlin
+// Type-safe query with the Karango DSL
+val results = repo.findList {
+    FOR(repo) { person ->
+        FILTER(person.age GTE 18)
+        SORT(person.name.ASC)
+        RETURN(person)
+    }
+}
+
+// results: List<Stored<Person>>
+```
+
+The `person.age` and `person.name` accessors are generated by KSP — they're compile-time checked. If you rename a field in the data class, the compiler catches every query that references it.
+
+---
+
+### Entity Model {#karango-entity-model}
+
+# Entity Model
+
+Any Kotlin data class can become a database entity. Karango wraps it with metadata (IDs, revisions) using the `Storable<T>` hierarchy — your data stays clean, the database details live in the wrapper.
+
+## The core idea
+
+Your data class is just data. ArangoDB metadata (`_id`, `_key`, `_rev`) lives in the wrapper, not in your class:
+
+```kotlin
+// Your data — no database concerns
+@Vault
+data class Person(val name: String, val age: Int)
+
+// After inserting into ArangoDB:
+val stored: Stored<Person> = repo.insert(Person("Alice", 30))
+
+stored.value  // Person(name="Alice", age=30) — your data
+stored._id    // "persons/abc123" — database ID
+stored._key   // "abc123" — document key
+stored._rev   // "_abc123def" — revision for optimistic locking
+```
+
+## The Storable hierarchy
+
+`Storable<T>` is the sealed base class. Four concrete types represent different entity states:
+
+| Type | When to use | Has value? | Has ID? |
+|---|---|---|---|
+| `New<T>` | Entity not yet persisted | Yes | Empty until inserted |
+| `Stored<T>` | Entity loaded from or saved to the database | Yes | Yes (_id, _key, _rev) |
+| `Ref<T>` | Reference to another entity (eagerly loaded) | Yes | Yes |
+| `LazyRef<T>` | Reference loaded on first access | Lazy | Yes (value loaded on demand) |
+
+## New<T> — entities before persistence
+
+```kotlin
+// Wrap your data for explicit insertion
+val newPerson = New(Person("Alice", 30))
+
+// Or just pass the value directly — insert() wraps it for you
+repo.insert(Person("Alice", 30))
+
+// With an explicit key
+repo.insert("alice-key", Person("Alice", 30))
+```
+
+## Stored<T> — the main entity wrapper
+
+`Stored<T>` is what you work with most. It wraps your data with database metadata:
+
+```kotlin
+val stored: Stored<Person> = repo.findById("persons/abc123")!!
+
+// Access data
+stored.value.name  // "Alice"
+stored.value.age   // 30
+
+// Access metadata
+stored._id         // "persons/abc123"
+stored._key        // "abc123"
+stored._rev        // revision string
+stored.collection  // "persons"
+
+// Modify the value — creates a new Stored with the same metadata
+val updated = stored.modify { it.copy(age = 31) }
+// updated._id is still "persons/abc123"
+
+// Or use withValue for a direct replacement
+val replaced = stored.withValue(Person("Bob", 25))
+```
+
+### Modify and save pattern
+
+```kotlin
+// Load -> modify -> save
+val person = repo.findById(id)!!
+
+val updated = person.modify { it.copy(name = "Alice Smith") }
+
+repo.save(updated)
+```
+
+## Ref<T> — eager entity references
+
+A `Ref<T>` points to another entity by ID. The value is loaded eagerly:
+
+```kotlin
+@Vault
+data class Comment(
+    val text: String,
+    val author: Ref<Person>,  // Reference to a Person
+)
+
+// The Ref has both the ID and the loaded value
+val comment: Stored<Comment> = repo.findById(commentId)!!
+comment.value.author._id     // "persons/abc123"
+comment.value.author.value   // Person(name="Alice", age=30)
+```
+
+When serialized to ArangoDB, `Ref<T>` is stored as just the ID string. When deserialized, the entity is loaded from the cache or database.
+
+## LazyRef<T> — lazy entity references
+
+Like `Ref<T>` but the referenced entity is only loaded when first accessed:
+
+```kotlin
+@Vault
+data class BlogPost(
+    val title: String,
+    val author: LazyRef<Person>,  // Only loaded when accessed
+)
+
+val post: Stored<BlogPost> = repo.findById(postId)!!
+// author not loaded yet
+
+post.value.author._id    // "persons/abc123" — available immediately
+post.value.author.value  // Person(...) — NOW the entity is loaded
+```
+
+## Converting between types
+
+```kotlin
+val stored: Stored<Person> = repo.findById(id)!!
+
+// Stored -> Ref
+val ref: Ref<Person> = stored.asRef
+
+// Stored -> LazyRef
+val lazyRef: LazyRef<Person> = stored.asLazyRef
+
+// Any Storable -> Stored
+val backToStored: Stored<Person> = ref.asStored
+```
+
+## Identity comparisons
+
+```kotlin
+val a: Stored<Person> = repo.findById("id1")!!
+val b: Stored<Person> = repo.findById("id2")!!
+
+a hasSameIdAs b    // false — different IDs
+a hasOtherIdThan b // true
+
+val list = listOf(a, b)
+a hasIdIn list     // true
+```
+
+## Type-safe casting
+
+```kotlin
+sealed class Animal {
+    data class Dog(val name: String) : Animal()
+    data class Cat(val name: String) : Animal()
+}
+
+val stored: Stored<Animal> = repo.findById(id)!!
+
+// Safe downcast — returns null if the type doesn't match
+val dog: Stored<Dog>? = stored.castTyped<Dog>()
+val cat: Stored<Cat>? = stored.castTyped<Cat>()
+```
+
+---
+
+### Query DSL {#karango-query-dsl}
+
+# Query DSL
+
+A Kotlin DSL that mirrors AQL syntax. Reads like a query, compiles like code.
+
+## FOR loops
+
+Every query starts with `FOR` — iterate over a collection:
+
+```kotlin
+repo.findList {
+    FOR(repo) { person ->
+        // person is a type-safe expression — its properties are compile-time checked
+        RETURN(person)
+    }
+}
+```
+
+## Filtering
+
+Use comparison operators directly on typed fields:
+
+```kotlin
+FOR(repo) { person ->
+    FILTER(person.name EQ "Alice")          // equals
+    FILTER(person.age NE 0)                 // not equals
+    FILTER(person.age GT 18)                // greater than
+    FILTER(person.age GTE 18)               // greater than or equal
+    FILTER(person.age LT 65)               // less than
+    FILTER(person.age LTE 65)              // less than or equal
+    RETURN(person)
+}
+```
+
+### String matching
+
+```kotlin
+FILTER(person.name LIKE "Ali%")            // SQL-like pattern
+FILTER(person.email REGEX "^[a-z]+@")     // regex match
+```
+
+### Collection operators
+
+```kotlin
+FILTER(person.age IN listOf(25, 30, 35))
+FILTER(person.name NOT_IN listOf("test", "admin"))
+```
+
+### Logical operators
+
+```kotlin
+FILTER((person.age GTE 18) AND (person.age LTE 65))
+FILTER((person.name EQ "Alice") OR (person.name EQ "Bob"))
+```
+
+## Sorting
+
+```kotlin
+FOR(repo) { person ->
+    SORT(person.name.ASC)                  // ascending
+    SORT(person.age.DESC)                  // descending
+    SORT(person.name.ASC, person.age.DESC) // multi-field sort
+    RETURN(person)
+}
+```
+
+## Pagination
+
+```kotlin
+FOR(repo) { person ->
+    LIMIT(10)                 // first 10
+    LIMIT(20, 10)             // skip 20, take 10
+    SKIP(5)                   // skip first 5
+    PAGE(page = 2, epp = 20) // page 2, 20 entries per page
+    RETURN(person)
+}
+```
+
+## Nested property access
+
+KSP generates accessors for nested types. Access nested fields with dots:
+
+```kotlin
+@Vault
+data class Address(val city: String, val zip: String)
+
+@Vault
+data class Person(
+    val name: String,
+    val address: Address,
+    val tags: List<String> = emptyList(),
+)
+
+FOR(repo) { person ->
+    // Nested field access — compile-time checked
+    FILTER(person.address.city EQ "Berlin")
+    FILTER(person.address.zip EQ "10115")
+
+    // Array expansion — access fields inside lists
+    FILTER(person.tags.expand() EQ "vip")
+    // Generates: person.tags[*] == "vip"
+
+    RETURN(person)
+}
+```
+
+## LET variables
+
+Bind values or sub-queries to variables:
+
+```kotlin
+repo.findList {
+    val searchTerm = LET("search", "alice")
+
+    FOR(repo) { person ->
+        FILTER(CONTAINS(LOWER(person.name), searchTerm))
+        RETURN(person)
+    }
+}
+```
+
+## INSERT, UPDATE, REMOVE
+
+### Insert
+
+```kotlin
+repo.findList {
+    val docs = LET("docs", listOf(
+        Person("Alice", 30),
+        Person("Bob", 25),
+    ))
+
+    FOR(docs) { doc ->
+        INSERT(doc) INTO repo
+    }
+}
+```
+
+### Update fields
+
+```kotlin
+repo.findList {
+    FOR(repo) { person ->
+        FILTER(person.name EQ "Alice")
+        UPDATE(person, repo) {
+            put({ name }) { CONCAT(name, " Updated".aql) }
+        }
+        RETURN_NEW(person)
+    }
+}
+```
+
+### Remove
+
+```kotlin
+repo.find {
+    FOR(repo) { person ->
+        FILTER(person.age LT 18)
+        REMOVE(person._key).IN(repo)
+    }
+}
+```
+
+## Return variants
+
+```kotlin
+RETURN(person)              // return the document
+RETURN_NEW(person)          // return the document after UPDATE/INSERT
+RETURN_OLD(person)          // return the document before UPDATE/REMOVE
+RETURN_DISTINCT(person)     // return unique results
+RETURN_COUNT()              // return the count instead of documents
+```
+
+## AQL functions
+
+Karango wraps 100+ AQL functions. A few examples:
+
+```kotlin
+// String functions
+FILTER(CONTAINS(LOWER(person.name), "alice"))
+FILTER(LENGTH(person.name) GT 3)
+
+// Math functions
+val total = LET("total") { SUM(prices) }
+
+// Array functions
+val unique = LET("unique") { UNIQUE(person.tags) }
+
+// Type checking
+FILTER(IS_NOT_NULL(person.email))
+
+// Document lookup
+val doc = DOCUMENT(repo, "persons/abc123")
+```
+
+---
+
+### Repositories {#karango-repositories}
+
+# Repositories
+
+EntityRepository gives you CRUD, batch operations, custom queries, and cursor streaming — all as `suspend` functions.
+
+## Defining a repository
+
+```kotlin
+@Vault
+data class BlogPost(
+    val title: String,
+    val content: String,
+    val author: String,
+    val published: Boolean = false,
+)
+
+class BlogPostsRepo(driver: KarangoDriver) : EntityRepository<BlogPost>(
+    name = "blog_posts",
+    storedType = kType(),
+    driver = driver,
+)
+```
+
+That's it. You get full CRUD, queries, batch operations, and index management for free.
+
+## Insert
+
+```kotlin
+val post = BlogPost("Hello World", "My first post", "Alice")
+
+// Insert and get the stored version (with _id, _key, _rev)
+val stored: Stored<BlogPost> = repo.insert(post)
+
+println(stored._id)         // "blog_posts/abc123"
+println(stored._key)        // "abc123"
+println(stored.value.title) // "Hello World"
+
+// Insert with explicit key
+val stored2 = repo.insert("my-key", post)
+```
+
+## Find
+
+```kotlin
+// By ID
+val post: Stored<BlogPost>? = repo.findById("blog_posts/abc123")
+
+// By multiple IDs
+val posts: Cursor<Stored<BlogPost>> = repo.findByIds("id1", "id2", "id3")
+
+// All documents
+val all: Cursor<Stored<BlogPost>> = repo.findAll()
+
+// Custom query — returns a cursor
+val published = repo.find {
+    FOR(repo) { post ->
+        FILTER(post.published EQ true)
+        SORT(post.title.ASC)
+        RETURN(post)
+    }
+}
+
+// Convenience: returns a List directly
+val list = repo.findList {
+    FOR(repo) { post ->
+        FILTER(post.author EQ "Alice")
+        RETURN(post)
+    }
+}
+
+// Convenience: returns the first match
+val first = repo.findFirst {
+    FOR(repo) { post ->
+        FILTER(post.title EQ "Hello World")
+        LIMIT(1)
+        RETURN(post)
+    }
+}
+```
+
+## Update
+
+```kotlin
+// Save a modified entity
+val updated = repo.save(stored.map { it.copy(published = true) })
+
+// Modify by ID — atomic read-modify-write
+repo.modifyById(stored._id) { post ->
+    post.copy(published = true)
+}
+
+// Conditional modify — only if the condition holds
+// condition receives Stored<T>, modify receives T
+repo.modifyByIdWhen(
+    stored._id,
+    condition = { !it.value.published },
+    modify = { it.copy(published = true) },
+)
+```
+
+## Remove
+
+```kotlin
+// By stored entity
+repo.remove(stored)
+
+// By ID or key
+repo.remove("blog_posts/abc123")
+
+// Remove all documents
+repo.removeAll()
+```
+
+## Batch insert
+
+```kotlin
+val posts = listOf(
+    BlogPost("Post 1", "Content 1", "Alice"),
+    BlogPost("Post 2", "Content 2", "Bob"),
+    BlogPost("Post 3", "Content 3", "Alice"),
+)
+
+val stored: List<Stored<BlogPost>> = repo.batchInsertValues(posts)
+```
+
+Batch insert runs hooks on each entity, just like single inserts.
+
+## Cursors
+
+Queries return `KarangoCursor<T>` — a streaming iterator that deserializes results on demand:
+
+```kotlin
+val cursor = repo.findAll()
+
+cursor.count      // number of results in current batch
+cursor.fullCount  // total count (when using PAGE)
+
+// Iterate
+cursor.toList()
+cursor.forEach { stored -> println(stored.value.title) }
+cursor.map { it.value.title }
+```
+
+Results are deserialized lazily. `Stored<T>` entities are automatically cached in the `EntityCache` for deduplication.
+
+## The Stored<T> wrapper
+
+Every entity loaded from ArangoDB is wrapped in `Stored<T>`:
+
+```kotlin
+val stored: Stored<BlogPost> = repo.findById(id)!!
+
+stored._id     // ArangoDB document ID: "blog_posts/abc123"
+stored._key    // Document key: "abc123"
+stored._rev    // Revision: "_abc123"
+stored.value   // The actual BlogPost data class
+
+// Create a modified version
+val modified = stored.map { it.copy(title = "New Title") }
+
+// Save it back
+repo.save(modified)
+```
+
+## Accessing the repository from Database
+
+Use extension properties to access repositories through the Database:
+
+```kotlin
+// Define an accessor
+val Database.blogPosts get() = getRepository<BlogPostsRepo>()
+
+// Use it
+database.blogPosts.findAll()
+database.blogPosts.insert(New(post))
+```
+
+---
+
+### Indexes & Hooks {#karango-indexes-and-hooks}
+
+# Indexes & Hooks
+
+Define indexes with a type-safe DSL and hook into entity lifecycle events.
+
+## Persistent indexes
+
+Override `buildIndexes()` in your repository to define indexes. Field paths are type-safe — the same KSP-generated accessors used in queries:
+
+```kotlin
+class PersonsRepo(driver: KarangoDriver) : EntityRepository<Person>(
+    name = "persons", storedType = kType(), driver = driver
+) {
+    override fun IndexBuilder<Person>.buildIndexes() {
+        // Single-field index
+        persistentIndex {
+            field { name }
+        }
+
+        // Compound index
+        persistentIndex {
+            field { age }
+            field { name }
+        }
+
+        // Named index with options
+        persistentIndex {
+            name("idx_email_unique")
+            field { email }
+            options { unique(true) }
+        }
+    }
+}
+```
+
+Indexes are automatically created when the repository is ensured. If an index with the same name exists but different fields, Karango drops and recreates it.
+
+## TTL indexes
+
+For documents that should expire automatically:
+
+```kotlin
+@Vault
+data class Session(
+    val userId: String,
+    val token: String,
+    val expiresAt: Long,  // epoch seconds
+)
+
+class SessionsRepo(driver: KarangoDriver) : EntityRepository<Session>(
+    name = "sessions", storedType = kType(), driver = driver
+) {
+    override fun IndexBuilder<Session>.buildIndexes() {
+        ttlIndex {
+            field { expiresAt }
+            options { expireAfter(0) }  // expire at the exact timestamp
+        }
+    }
+}
+```
+
+## Nested field indexes
+
+```kotlin
+@Vault
+data class Address(val city: String, val zip: String)
+
+@Vault
+data class Person(val name: String, val address: Address)
+
+override fun IndexBuilder<Person>.buildIndexes() {
+    persistentIndex {
+        field { address.city }
+        field { address.zip }
+    }
+}
+```
+
+## Lifecycle hooks
+
+Hooks run on insert, save, and remove operations. The most common use case: automatic timestamps.
+
+### Timestamped entities
+
+```kotlin
+@Vault
+data class Article(
+    val title: String,
+    val content: String,
+    override val createdAt: MpInstant = MpInstant.Epoch,
+    override val updatedAt: MpInstant = MpInstant.Epoch,
+) : Timestamped {
+    override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
+    override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+}
+
+class ArticlesRepo(
+    driver: KarangoDriver,
+    timestamped: TimestampedHook,
+) : EntityRepository<Article>(
+    name = "articles",
+    storedType = kType(),
+    driver = driver,
+    hooks = Hooks.of<Article>(timestamped.onBeforeSave()),
+)
+```
+
+Now `createdAt` is set on first insert and `updatedAt` is updated on every save — automatically.
+
+### Custom hooks
+
+```kotlin
+class AuditHook : Hooks.OnAfterSave<Article> {
+    override suspend fun <X : Article> onAfterSave(
+        repo: Repository<Article>,
+        stored: Stored<X>,
+    ) {
+        println("Article saved: ${stored._id}")
+    }
+}
+
+class DeleteHook : Hooks.OnAfterDelete<Article> {
+    override suspend fun <X : Article> onAfterDelete(
+        repo: Repository<Article>,
+        deleted: Stored<X>,
+    ) {
+        println("Article deleted: ${deleted._id}")
+    }
+}
+
+// Register hooks
+hooks = Hooks.of<Article>()
+    .plus(AuditHook())
+    .plus(DeleteHook())
+```
+
+### OnBeforeSave — transforming data
+
+```kotlin
+class NormalizeHook : Hooks.OnBeforeSave<Article> {
+    override fun <X : Article> onBeforeSave(
+        repo: Repository<Article>,
+        storable: Storable<Article>,
+    ): Storable<X> {
+        @Suppress("UNCHECKED_CAST")
+        return storable.map { article ->
+            article.copy(title = article.title.trim())
+        } as Storable<X>
+    }
+}
+```
+
+`OnBeforeSave` can modify the entity before it's persisted — use it for normalization, validation, or computed fields.
+
+## Hook execution order
+
+- **insert()**: OnBeforeSave -> persist -> OnAfterSave
+- **save()**: OnBeforeSave -> persist -> OnAfterSave
+- **remove()**: delete -> OnAfterDelete
+- **batchInsert()**: OnBeforeSave (each) -> persist all -> OnAfterSave (each)
+
+---
+
+### Kontainer Integration {#karango-kontainer-integration}
+
+# Kontainer Integration
+
+Karango plugs into Kontainer for automatic repository discovery, dependency injection, and per-request database scoping.
+
+## Setting up Karango with Kontainer
+
+One line to register all Karango infrastructure:
+
+```kotlin
+import de.peekandpoke.karango.karango
+import de.peekandpoke.karango.config.ArangoDbConfig
+import de.peekandpoke.ultra.kontainer.kontainer
+
+val blueprint = kontainer {
+    // Register Karango module — sets up driver, codec, and DB connection
+    karango(ArangoDbConfig(
+        host = "localhost",
+        port = 8529,
+        database = "my_app",
+    ))
+
+    // Register your repositories as singletons
+    singleton(PersonsRepo::class)
+    singleton(BlogPostsRepo::class)
+    singleton(CommentsRepo::class)
+}
+```
+
+The `karango(config)` call registers:
+
+- `ArangoDatabaseAsync` — the raw ArangoDB connection (cached per config)
+- `KarangoDriver` — query executor (dynamic, created per request)
+- `KarangoCodec` — serialization with Vault + Slumber integration (dynamic)
+
+## How the Database discovers repositories
+
+The `Database` class receives all registered `Repository<*>` instances via a `Lookup<Repository<*>>`. Kontainer automatically collects all services that implement `Repository<*>` and injects them:
+
+```kotlin
+// Kontainer automatically discovers all Repository<*> implementations
+// and passes them to the Database class as a Lookup<Repository<*>>
+
+// You DON'T need to register the Database manually — it's wired automatically.
+// Just register your repositories:
+
+val blueprint = kontainer {
+    karango(config)
+
+    singleton(PersonsRepo::class)
+    singleton(ArticlesRepo::class)
+}
+
+// When creating a kontainer instance:
+val kontainer = blueprint.create()
+
+// The Database now knows about PersonsRepo and ArticlesRepo
+val database: Database = kontainer.get(Database::class)
+
+database.getRepositories()
+// -> [PersonsRepo, ArticlesRepo]
+```
+
+## Accessing repositories through Database
+
+Define extension properties for convenient typed access:
+
+```kotlin
+// Define accessors (typically next to your repository class)
+val Database.persons get() = getRepository<PersonsRepo>()
+val Database.articles get() = getRepository<ArticlesRepo>()
+val Database.comments get() = getRepository<CommentsRepo>()
+
+// Use them anywhere you have a Database
+suspend fun getActiveUsers(database: Database): List<Stored<Person>> {
+    return database.persons.findList {
+        FOR(database.persons) { person ->
+            FILTER(person.age GTE 18)
+            RETURN(person)
+        }
+    }
+}
+```
+
+## Repository by type lookup
+
+The Database can also find which repository stores a given entity type:
+
+```kotlin
+// Find the repository that stores Person entities
+val repo = database.getRepositoryStoring(Person::class.java)
+// -> PersonsRepo
+
+// Check if any repository handles a type
+database.hasRepositoryStoring(Person::class.java)  // true
+database.hasRepositoryStoring(Unknown::class.java)  // false
+
+// Find by collection name
+val repo = database.getRepository("persons")
+// -> PersonsRepo
+```
+
+## Database lifecycle
+
+On startup, ensure all collections and indexes exist:
+
+```kotlin
+val database: Database = kontainer.get(Database::class)
+
+// Create collections if they don't exist
+database.ensureRepositories()
+
+// Create indexes defined in buildIndexes()
+database.ensureIndexes()
+
+// Or validate without creating
+database.validateIndexes()
+```
+
+## Real-world example: Funktor app setup
+
+Here's how the Funktor demo app wires everything together:
+
+```kotlin
+fun createBlueprint(config: AppConfig) = kontainer {
+    // Mount Funktor modules — each can opt into Karango storage
+    funktor(
+        config = config,
+        logging = { useKarango() },    // Logs stored in ArangoDB
+        cluster = { useKarango() },    // Job queues, locks in ArangoDB
+        auth = { useKarango() },       // Auth records in ArangoDB
+    )
+
+    // Mount the ArangoDB connection
+    karango(config.arangodb)
+
+    // Application-specific repositories
+    singleton(AdminUsersRepo::class)
+}
+
+// On application startup:
+val app = createBlueprint(config)
+val kontainer = app.create()
+
+// Ensure all collections and indexes exist
+kontainer.get(Database::class).ensureRepositories()
+kontainer.get(Database::class).ensureIndexes()
+```
+
+Each Funktor module (`logging`, `cluster`, `auth`) registers its own repositories when `useKarango()` is called. The Database automatically discovers all of them.
+
+## Dynamic vs singleton repositories
+
+Repositories are typically registered as **singletons** — they hold no per-request state. The `KarangoDriver` and `KarangoCodec` are registered as **dynamic** (created per kontainer instance) because they carry per-request context like the `EntityCache`:
+
+```kotlin
+// This is what karango(config) registers internally:
+val KarangoModule = module { config: ArangoDbConfig ->
+    // Shared connection — created once
+    instance(ArangoDatabaseAsync::class, config.toArangoDb())
+
+    // Per-request driver and codec
+    dynamic(KarangoDriver::class)
+    dynamic(KarangoCodec::class) { database: Database, cache: EntityCache ->
+        KarangoCodec(config = slumberConfig, database = database, entityCache = cache)
+    }
+}
+```
+
+---
+
+### Advanced Queries {#karango-advanced-queries}
+
+# Advanced Queries
+
+Aggregation, sub-queries, atomic updates, and patterns from production code.
+
+## COLLECT (aggregation)
+
+```kotlin
+// Count documents
+repo.findList {
+    FOR(repo) { person ->
+        COLLECT_WITH(COUNT) AS "total"
+        RETURN("total")
+    }
+}
+
+// Group by a field
+repo.findList {
+    FOR(repo) { person ->
+        COLLECT(city, person.address.city)
+        RETURN(city)
+    }
+}
+```
+
+## Sub-queries with LET
+
+Use `LET` to bind sub-query results to variables:
+
+```kotlin
+repo.find {
+    // First query: find IDs to delete
+    val toDelete = LET("toDelete",
+        FOR(repo) { entry ->
+            FILTER(entry.status EQ "completed")
+            SORT(entry.createdAt.DESC)
+            SKIP(100)  // keep the latest 100
+            RETURN(entry)
+        }
+    )
+
+    // Second query: delete them
+    FOR(toDelete) { entry ->
+        REMOVE(entry._key).IN(repo) { ignoreErrors = true }
+    }
+}
+```
+
+## Atomic claim pattern
+
+UPDATE + RETURN_NEW in a single query — perfect for job queues:
+
+```kotlin
+@Vault
+data class Job(
+    val type: String,
+    val state: State,
+    val dueAt: MpInstant,
+) {
+    enum class State { WAITING, PROCESSING, DONE }
+}
+
+// Atomically claim the next due job
+val claimed = repo.findFirst {
+    FOR(repo) { job ->
+        FILTER(job.dueAt.ts LTE now.toEpochMillis())
+        FILTER(job.state EQ Job.State.WAITING)
+        SORT(job.dueAt.ts.ASC)
+        LIMIT(1)
+        UPDATE(job, repo) {
+            put({ state }) { Job.State.PROCESSING.aql }
+        }
+        RETURN_NEW(job)
+    }
+}
+```
+
+This is a real pattern from the Funktor cluster module — it atomically finds and claims background jobs.
+
+## Full-text search pattern
+
+Dynamic search across multiple fields:
+
+```kotlin
+suspend fun search(query: String, page: Int, epp: Int): Cursor<Stored<LogEntry>> {
+    return repo.find {
+        val searchLower = LET("search", query.lowercase())
+
+        FOR(repo) { entry ->
+            if (query.isNotBlank()) {
+                val parts = query.trim().lowercase().split(" ")
+                FILTER(
+                    parts.map { part ->
+                        listOf(
+                            CONTAINS(LOWER(entry.message), part.aql),
+                            CONTAINS(LOWER(entry.loggerName), part.aql),
+                        ).anyOrTrueIfEmpty
+                    }.anyOrTrueIfEmpty
+                )
+            }
+
+            SORT(entry.createdAt.DESC)
+            PAGE(page = page, epp = epp)
+            RETURN(entry)
+        }
+    }
+}
+```
+
+This is from the Funktor logging module — it searches log entries across message and logger name fields, splitting the search query into words and matching each independently.
+
+## UPSERT
+
+```kotlin
+// Insert or replace the entire document
+repo.find {
+    UPSERT_REPLACE(person) INTO repo
+}
+```
+
+## Arithmetic in queries
+
+```kotlin
+repo.findList {
+    val a = LET("a", 10)
+    val b = LET("b", 20)
+
+    RETURN((a + b) / 2.aql)  // -> 15
+}
+```
+
+Operators `+`, `-`, `*`, `/`, `%` work on AQL expressions and produce AQL arithmetic.
+
+## Document lookups
+
+```kotlin
+// Fetch a specific document by ID
+val doc = DOCUMENT(repo, "persons/abc123")
+
+// Fetch multiple documents
+val docs = DOCUMENT(repo, listOf("id1", "id2", "id3"))
+```
+
+## Type checking and casting
+
+```kotlin
+FOR(repo) { person ->
+    FILTER(IS_NOT_NULL(person.email))
+    FILTER(IS_STRING(person.name))
+
+    // Type casting
+    val ageStr = TO_STRING(person.age)
+    val count = TO_NUMBER(person.tags.LENGTH())
+    RETURN(person)
+}
+```
+
+## Array operations in queries
+
+```kotlin
+@Vault
+data class Team(val name: String, val members: List<String>)
+
+FOR(repo) { team ->
+    // Check if any member matches
+    FILTER(team.members ANY EQ("Alice"))
+
+    // Check all members
+    FILTER(team.members ALL NE(""))
+
+    // Array functions
+    val count = LENGTH(team.members)
+    val sorted = SORTED(team.members)
+    val unique = UNIQUE(team.members)
+
+    RETURN(team)
+}
+```
+
+## Real-world example: complete repository
+
+A production repository combining CRUD, custom queries, indexes, hooks, and TTL:
+
+```kotlin
+@Vault
+data class AuthRecord(
+    val realm: String,
+    val ownerId: String,
+    val type: String,
+    val data: Map<String, Any?> = emptyMap(),
+    val expiresAt: Long? = null,
+    override val createdAt: MpInstant = MpInstant.Epoch,
+    override val updatedAt: MpInstant = MpInstant.Epoch,
+) : Timestamped {
+    override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
+    override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+}
+
+class AuthRecordsRepo(
+    driver: KarangoDriver,
+    timestamped: TimestampedHook,
+) : EntityRepository<AuthRecord>(
+    name = "auth_records",
+    storedType = kType(),
+    driver = driver,
+    hooks = Hooks.of<AuthRecord>(timestamped.onBeforeSave()),
+) {
+    override fun IndexBuilder<AuthRecord>.buildIndexes() {
+        persistentIndex {
+            field { realm }
+            field { ownerId }
+            field { type }
+        }
+        ttlIndex {
+            field { expiresAt }
+        }
+    }
+
+    suspend fun findLatest(
+        realm: String,
+        type: String,
+        owner: String,
+    ): Stored<AuthRecord>? = findFirst {
+        FOR(repo) { r ->
+            FILTER(r.type EQ type)
+            FILTER(r.realm EQ realm)
+            FILTER(r.ownerId EQ owner)
+            SORT(r.createdAt.ts.DESC)
+            LIMIT(1)
+            RETURN(r)
+        }
+    }
+}
+```

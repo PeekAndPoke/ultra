@@ -1,7 +1,6 @@
 package de.peekandpoke.ultra.cache
 
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
-// TODO: test me JS
 actual object ObjectSizeEstimatorPlatform {
     actual fun getFieldsOf(obj: Any): List<Any?>? {
         val dyn = obj.asDynamic()

@@ -3,7 +3,6 @@ package de.peekandpoke.ultra.model
 import de.peekandpoke.ultra.datetime.MpInstant
 import kotlinx.serialization.Serializable
 
-// TODO: [TESTS] write some tests for me
 @Serializable
 data class AuditLog(
     val entries: List<Entry>

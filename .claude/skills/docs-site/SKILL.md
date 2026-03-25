@@ -95,7 +95,18 @@ When adding a new library, add its dependency string to `site.ts` first.
 
 5. **Update navigation** — add to `src/components/Nav.astro` navLinks array.
 
-6. **Build and verify** — run `pnpm run build` from the `docs-site/` directory. Check page count and zero errors.
+6. **Update `llms.txt`** — add or update the library's entry in `public/llms.txt` with:
+   - Library name, tagline, docs URL, source URL, Maven coordinates
+   - One-paragraph description
+   - List of all documentation page URLs
+
+7. **Update `llms-full.txt`** — regenerate `public/llms-full.txt` to include content from the new pages.
+   - Extract content from all .astro pages, convert to plain markdown
+   - Strip Astro template syntax, convert `<Code>` blocks to markdown code fences
+   - Convert `${'$'}` escapes back to plain `$`
+   - Include ALL code examples in full
+
+8. **Build and verify** — run `pnpm run build` from the `docs-site/` directory. Check page count and zero errors.
 
 ## Page Content Guidelines
 
@@ -114,6 +125,18 @@ When adding a new library, add its dependency string to `site.ts` first.
 
 - Use **pnpm** for all package management, never npm.
 - Use "PeekAndPoke" or "peekandpoke" for branding, never "peek&poke".
-- The `_drafts/` directory contains unpublished pages — don't modify unless asked.
 - Sidebar sections group items visually: use 'Overview', 'Core', 'Usage', 'Advanced' as section names.
 - The build command is `pnpm run build` from the `docs-site/` directory. Dev server is `pnpm run dev`.
+
+## LLM Files (`llms.txt` and `llms-full.txt`)
+
+The site serves two files for LLM consumption at the root:
+
+- **`public/llms.txt`** — lightweight index: library names, descriptions, Maven coordinates, and page URLs. Keep under
+  200 lines.
+- **`public/llms-full.txt`** — complete documentation content in plain markdown. One file an LLM can read to understand
+  everything.
+- **`<link rel="llms" href="/llms.txt" />`** is in BaseLayout.astro's `<head>`.
+
+**CRITICAL**: When adding or updating documentation pages, ALWAYS update both files. The `llms.txt` needs the new page
+URLs. The `llms-full.txt` needs the actual content.
