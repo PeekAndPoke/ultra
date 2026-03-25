@@ -25,4 +25,3 @@ external interface ResizeObserverSize {
     val inlineSize: Double
     val blockSize: Double
 }
-

@@ -56,7 +56,6 @@ open class Codec(
     open val secondPassSlumbererContext: Slumberer.Context
         get() = Slumberer.Context.Tracking(this, attributes, "root")
 
-
     fun getAwaker(type: KType): Awaker = config.getAwaker(type)
 
     @OptIn(ExperimentalContracts::class, ExperimentalExtendedContracts::class)

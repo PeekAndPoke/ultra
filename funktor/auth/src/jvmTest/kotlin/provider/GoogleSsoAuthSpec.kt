@@ -18,7 +18,6 @@ import io.kotest.matchers.shouldBe
 import kotlinx.serialization.json.jsonPrimitive
 import java.security.GeneralSecurityException
 
-
 class GoogleSsoAuthSpec : FreeSpec() {
 
     init {
@@ -219,7 +218,6 @@ class GoogleSsoAuthSpec : FreeSpec() {
 
                 result shouldBe storedUser
             }
-
         }
 
         "signUp" - {

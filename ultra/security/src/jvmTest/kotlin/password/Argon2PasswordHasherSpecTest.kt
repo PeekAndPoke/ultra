@@ -11,10 +11,10 @@ class Argon2PasswordHasherSpec : StringSpec({
 
         // We use the minimum parameters for testing to ensure the tests run fast.
         val hasher = Argon2PasswordHasher(
-            memory = 8,          // Minimum memory in KB
-            iterations = 1,      // Minimum iterations
-            parallelism = 1,     // Minimum parallelism
-            outputLength = 16,   // A smaller output length for tests is fine
+            memory = 8, // Minimum memory in KB
+            iterations = 1, // Minimum iterations
+            parallelism = 1, // Minimum parallelism
+            outputLength = 16, // A smaller output length for tests is fine
             type = Argon2.ID,
         )
 

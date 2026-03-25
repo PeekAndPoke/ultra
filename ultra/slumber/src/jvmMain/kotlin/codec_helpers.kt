@@ -38,7 +38,6 @@ inline fun <reified T> Codec.awake(data: Any?): T? {
     return awake(kType<T>().type, data) as T?
 }
 
-
 fun <T> Codec.getSlumberer(type: TypeRef<T>): Slumberer {
     return getSlumberer(type.type)
 }

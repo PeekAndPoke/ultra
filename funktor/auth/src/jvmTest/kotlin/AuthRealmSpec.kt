@@ -44,7 +44,6 @@ class AuthRealmSpec : FreeSpec() {
         }
 
         "Registering multiple realms" {
-
         }
     }
 }

@@ -118,5 +118,4 @@ interface DataClassAwaker : Awaker {
             }
         }
     }
-
 }

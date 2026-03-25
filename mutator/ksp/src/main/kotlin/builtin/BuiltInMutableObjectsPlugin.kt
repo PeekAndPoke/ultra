@@ -8,7 +8,6 @@ import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import de.peekandpoke.mutator.ksp.GenericsUtil
 import de.peekandpoke.mutator.ksp.MutatorCodeBlocks.Companion.ListMutatorName
-import de.peekandpoke.mutator.ksp.MutatorCodeBlocks.Companion.MapMutatorName
 import de.peekandpoke.mutator.ksp.MutatorCodeBlocks.Companion.ObjectMutatorName
 import de.peekandpoke.mutator.ksp.MutatorCodeBlocks.Companion.SetMutatorName
 import de.peekandpoke.mutator.ksp.MutatorKspPlugin
@@ -151,7 +150,7 @@ class BuiltInMutableObjectsPlugin : MutatorKspPlugin {
 
                 @MutatorDsl
                 inline fun ${mapTypeParams}Map<K, $clsName>.mutate(
-                    mutation: ${MapMutatorName}<K, $clsName>.() -> Unit,
+                    mutation: $MapMutatorName<K, $clsName>.() -> Unit,
                 ): Map<K, $clsName> = mutator().apply(mutation).get()
                 
                 

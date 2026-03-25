@@ -57,5 +57,4 @@ class PBKDF2WithHmacSHA256PasswordHasher(
 
         return f.generateSecret(spec).encoded
     }
-
 }

@@ -134,7 +134,6 @@ class GithubSsoAuth(
 
             return response.body<JsonObject?>()
         }
-
     }
 
     /** Remote client talking to the Github API */

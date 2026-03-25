@@ -153,7 +153,6 @@ class MinimalTestRealm(
     override suspend fun serializeUser(user: Stored<Any>) = error("Not needed for test")
 }
 
-
 @Vault
 data class TestAppUser(
     val name: String,

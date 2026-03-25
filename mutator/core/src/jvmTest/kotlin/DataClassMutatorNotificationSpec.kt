@@ -125,7 +125,7 @@ class DataClassMutatorNotificationsSpec : StringSpec({
             age = 43
         }
 
-        // It notified 1 time for street, 1 time for city (which bubbles up), 
+        // It notified 1 time for street, 1 time for city (which bubbles up),
         // and 1 time for age. Total = 3 notifications.
         notified shouldBe 3
     }

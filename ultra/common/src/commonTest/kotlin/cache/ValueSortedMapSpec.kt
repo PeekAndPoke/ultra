@@ -162,9 +162,9 @@ class ValueSortedMapSpec : StringSpec() {
             val m = ValueSortedMap<String, Person, Int> { it.age }
 
             // all same age -> tie broken by insertion id
-            m.put("a", Person("Anna", 20))   // id 0
-            m.put("b", Person("Ben", 20))    // id 1
-            m.put("c", Person("Cara", 20))   // id 2
+            m.put("a", Person("Anna", 20)) // id 0
+            m.put("b", Person("Ben", 20)) // id 1
+            m.put("c", Person("Cara", 20)) // id 2
 
             m.ascending().toList().map { it.first } shouldContainExactly listOf("a", "b", "c")
             m.descending().toList().map { it.first } shouldContainExactly listOf("c", "b", "a")

@@ -49,4 +49,3 @@ fun EmailSender.withHooks(log: Log, hooks: EmailHooks.Builder.() -> Unit): Email
         wrapped = this
     )
 }
-
