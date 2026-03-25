@@ -44,6 +44,11 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.primaryConstructor
 
+/**
+ * Default [SlumberModule] that provides awakers and slumberers for all built-in types:
+ * primitives, strings, collections, maps, enums, data classes, object singletons,
+ * polymorphic hierarchies, and KotlinX JSON elements.
+ */
 object BuiltInModule : SlumberModule {
 
     @Suppress("Detekt:ComplexMethod")

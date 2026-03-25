@@ -3,13 +3,24 @@ package io.peekandpoke.ultra.kontainer
 import io.peekandpoke.ultra.common.maxLineLength
 import io.peekandpoke.ultra.kontainer.domain.DebugInfo
 
+/**
+ * Debugging and introspection tools for a [Kontainer].
+ *
+ * Accessible via [Kontainer.tools].
+ */
 class KontainerTools internal constructor(
+    /** The kontainer being inspected */
     val kontainer: Kontainer,
 ) {
+    /** The underlying service provider factory */
     val factory: ServiceProviderFactory get() = kontainer.getServiceProviderFactory()
 
+    /** The blueprint that created the kontainer */
     val blueprint: KontainerBlueprint get() = kontainer.blueprint
 
+    /**
+     * Collects structured debug information about all services in the kontainer.
+     */
     fun getDebugInfo(): DebugInfo {
 
         fun ServiceDefinition.toInfo(): DebugInfo.ServiceDefinitionInfo {
@@ -52,6 +63,9 @@ class KontainerTools internal constructor(
         return DebugInfo(services = services)
     }
 
+    /**
+     * Returns a human-readable table of all services, their types, and current instances.
+     */
     fun dumpKontainer(): String {
 
         val rows = mutableListOf(

@@ -5,8 +5,10 @@ import io.peekandpoke.ultra.slumber.Slumberer
 import kotlinx.serialization.json.JsonNull
 import kotlin.reflect.KClass
 
+/** Codec for [JsonNull]. Deserializes any input to [JsonNull]; serializes to null. */
 object KotlinXJsonNullCodec : Awaker, Slumberer {
 
+    /** Returns true if [cls] is [JsonNull]. */
     fun appliesTo(cls: KClass<*>): Boolean {
         return JsonNull::class.java.isAssignableFrom(cls.java)
     }

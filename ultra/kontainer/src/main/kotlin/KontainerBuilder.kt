@@ -5,12 +5,21 @@ package io.peekandpoke.ultra.kontainer
 import io.peekandpoke.ultra.reflection.kType
 import kotlin.reflect.KClass
 
+/**
+ * Builder for defining services and modules in a [Kontainer].
+ *
+ * Used internally by [kontainer] and [KontainerModule] to collect service definitions
+ * before creating a [KontainerBlueprint].
+ */
 class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit) {
 
     private val definitions = mutableMapOf<KClass<*>, ServiceDefinition>()
 
     private val injectionTypeUpgrade = InjectionTypeUpgrade()
 
+    /**
+     * Ensures that overriding a service definition preserves the injection type of the original.
+     */
     class InjectionTypeUpgrade {
 
         fun adjust(def: ServiceDefinition): ServiceDefinition {
@@ -42,6 +51,11 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         }
     }
 
+    /**
+     * DSL helper for registering services with the builder.
+     *
+     * Provides overloaded [invoke] operators to register services by class or factory function.
+     */
     class ServiceBuilder internal constructor(
         private val fn: (cls: KClass<out Any>, producer: ServiceProducer<out Any>) -> Unit,
     ) {
@@ -461,6 +475,9 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     // Singleton Services
     // //
 
+    /**
+     * DSL entry point for registering singleton services.
+     */
     @KontainerDslSingleton
     val singleton = ServiceBuilder { cls, producer ->
         @Suppress("UNCHECKED_CAST")
@@ -471,6 +488,11 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     // Prototype Services
     // //
 
+    /**
+     * DSL entry point for registering prototype services.
+     *
+     * Prototype services create a new instance on every injection.
+     */
     @KontainerDslPrototype
     val prototype = ServiceBuilder { cls, producer ->
         @Suppress("UNCHECKED_CAST")
@@ -481,6 +503,11 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     // Dynamic Services
     // //
 
+    /**
+     * DSL entry point for registering dynamic services.
+     *
+     * Dynamic services are re-created each time a new [Kontainer] is cloned from the blueprint.
+     */
     @KontainerDslDynamic
     val dynamic = ServiceBuilder { cls, producer ->
         @Suppress("UNCHECKED_CAST")

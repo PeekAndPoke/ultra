@@ -3,9 +3,15 @@ package io.peekandpoke.ultra.streams.ops
 import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamWrapper
 
+/**
+ * Performs the given [block] on each incoming value and then passes it through.
+ */
 fun <T> Stream<T>.onEach(block: (T) -> Unit): Stream<T> =
     StreamOnEachOperator(wrapped = this, block = block)
 
+/**
+ * OnEach operator impl
+ */
 private class StreamOnEachOperator<T>(
     wrapped: Stream<T>,
     private val block: (T) -> Unit,

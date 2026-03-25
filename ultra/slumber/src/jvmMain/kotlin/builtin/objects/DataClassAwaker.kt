@@ -10,9 +10,15 @@ import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.javaConstructor
 import kotlin.reflect.jvm.javaMethod
 
+/**
+ * Deserializes Maps into data class instances by matching map keys to constructor parameters.
+ *
+ * Handles nullable parameters, optional parameters with defaults, and reports missing required parameters.
+ */
 interface DataClassAwaker : Awaker {
 
     companion object {
+        /** Creates a [DataClassAwaker] for the given data class [type]. */
         operator fun invoke(type: KType): DataClassAwaker = Default(type)
     }
 

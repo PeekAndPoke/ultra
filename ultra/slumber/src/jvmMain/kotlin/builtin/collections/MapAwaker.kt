@@ -5,6 +5,11 @@ import io.peekandpoke.ultra.slumber.Awaker
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability
 
+/**
+ * Deserializes raw Maps into typed Kotlin Maps.
+ *
+ * Both keys and values are recursively awakened using the map's type arguments.
+ */
 class MapAwaker(
     private val keyType: KType,
     private val valueType: KType,
@@ -12,6 +17,7 @@ class MapAwaker(
 ) : Awaker {
 
     companion object {
+        /** Creates a [MapAwaker] for the given map [type], extracting key and value types from type arguments. */
         fun forMap(type: KType): MapAwaker {
             val keyType = type.arguments.getOrNull(0)?.type ?: TypeRef.String.type
 

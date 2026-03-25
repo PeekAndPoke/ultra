@@ -16,11 +16,17 @@ import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.javaConstructor
 import kotlin.reflect.jvm.javaMethod
 
+/**
+ * Serializes data class instances into Maps by iterating over constructor and annotated properties.
+ *
+ * Supports optional caching of serialization results via [SlumberCache] for performance.
+ */
 interface DataClassSlumberer : Slumberer {
 
     companion object {
         private val slumberCacheKey = TypedKey<SlumberCache>("DataClassSlumber.ValueCache")
 
+        /** Creates a [DataClassSlumberer] for the given [type], optionally backed by a [SlumberCache]. */
         operator fun invoke(type: KType, attributes: TypedAttributes): DataClassSlumberer {
             val default = Default(type)
 
@@ -57,6 +63,7 @@ interface DataClassSlumberer : Slumberer {
         fun TypedAttributes.getSlumberCache(): Cache<Any?, Any?>? = this[slumberCacheKey]
     }
 
+    /** Cache wrapper that delegates to an inner [Cache] and skips entries for [excludedClasses]. */
     class SlumberCache(
         val wrapped: Cache<Any?, Any?>,
         val excludedClasses: Set<KClass<*>> = emptySet(),

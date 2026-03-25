@@ -7,8 +7,10 @@ import io.peekandpoke.ultra.slumber.Slumberer
 import kotlinx.serialization.json.JsonElement
 import kotlin.reflect.KClass
 
+/** Codec for KotlinX [JsonElement] types. Converts between raw data (Maps/Lists/primitives) and [JsonElement]. */
 object KotlinXJsonCodec : Awaker, Slumberer {
 
+    /** Returns true if [cls] is a [JsonElement] subtype. */
     fun appliesTo(cls: KClass<*>): Boolean {
         return JsonElement::class.java.isAssignableFrom(cls.java)
     }

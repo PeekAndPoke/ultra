@@ -3,6 +3,7 @@ package io.peekandpoke.ultra.slumber.builtin.objects
 import io.peekandpoke.ultra.slumber.Awaker
 import io.peekandpoke.ultra.slumber.Slumberer
 
+/** Codec for Kotlin `object` singletons. Deserializes to the singleton [instance]; serializes to an empty map. */
 class ObjectInstanceCodec(private val instance: Any) : Awaker, Slumberer {
 
     override fun awake(data: Any?, context: Awaker.Context): Any? {

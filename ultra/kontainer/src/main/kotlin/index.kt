@@ -10,15 +10,19 @@ import kotlin.reflect.KClass
 @DslMarker
 annotation class KontainerDsl
 
+/** DSL marker for module registration functions */
 @DslMarker
 annotation class KontainerDslModule
 
+/** DSL marker for singleton service registration */
 @DslMarker
 annotation class KontainerDslSingleton
 
+/** DSL marker for dynamic service registration */
 @DslMarker
 annotation class KontainerDslDynamic
 
+/** DSL marker for prototype service registration */
 @DslMarker
 annotation class KontainerDslPrototype
 

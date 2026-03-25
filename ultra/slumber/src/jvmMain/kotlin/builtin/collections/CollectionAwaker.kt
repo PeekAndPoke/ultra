@@ -3,6 +3,11 @@ package io.peekandpoke.ultra.slumber.builtin.collections
 import io.peekandpoke.ultra.slumber.Awaker
 import kotlin.reflect.KType
 
+/**
+ * Deserializes arrays and iterables into typed List or Set collections.
+ *
+ * Each element is recursively awakened using the collection's type argument.
+ */
 class CollectionAwaker(
     private val innerType: KType,
     private val creator: List<*>.() -> Any
@@ -10,10 +15,12 @@ class CollectionAwaker(
 
     companion object {
 
+        /** Creates a [CollectionAwaker] that produces a [MutableList]. */
         fun forList(type: KType) = CollectionAwaker(type.arguments[0].type!!) {
             toMutableList()
         }
 
+        /** Creates a [CollectionAwaker] that produces a [MutableSet]. */
         fun forSet(type: KType) = CollectionAwaker(type.arguments[0].type!!) {
             toMutableSet()
         }

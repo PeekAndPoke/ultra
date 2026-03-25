@@ -3,6 +3,10 @@ package io.peekandpoke.ultra.slumber.builtin.polymorphism
 import io.peekandpoke.ultra.slumber.Slumberer
 import kotlin.reflect.KClass
 
+/**
+ * Serializes a polymorphic parent type by appending the [discriminator] field
+ * with the child class identifier to the slumbered result map.
+ */
 class PolymorphicParentSlumberer(
     private val discriminator: String,
     private val map: Map<KClass<*>, String>

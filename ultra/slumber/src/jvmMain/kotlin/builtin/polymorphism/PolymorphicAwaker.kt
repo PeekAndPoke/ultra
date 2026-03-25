@@ -4,6 +4,10 @@ import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.slumber.Awaker
 import kotlin.reflect.KClass
 
+/**
+ * Deserializes polymorphic types by reading a [discriminator] field from the data map
+ * and dispatching to the corresponding child class.
+ */
 class PolymorphicAwaker(
     private val discriminator: String,
     private val map: Map<String, KClass<*>>,

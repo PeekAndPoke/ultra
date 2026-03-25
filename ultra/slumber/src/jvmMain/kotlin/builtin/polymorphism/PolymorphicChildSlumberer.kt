@@ -2,6 +2,10 @@ package io.peekandpoke.ultra.slumber.builtin.polymorphism
 
 import io.peekandpoke.ultra.slumber.Slumberer
 
+/**
+ * Serializes a specific polymorphic child type by delegating to [childSlumberer]
+ * and appending the [discriminator]/[identifier] pair to the result map.
+ */
 class PolymorphicChildSlumberer(
     private val discriminator: String,
     private val identifier: String,

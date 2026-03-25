@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.slumber.builtin.collections
 
 import io.peekandpoke.ultra.slumber.Slumberer
 
+/** Serializes Maps by recursively slumbering both keys and values. */
 object MapSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<*, *>? {
