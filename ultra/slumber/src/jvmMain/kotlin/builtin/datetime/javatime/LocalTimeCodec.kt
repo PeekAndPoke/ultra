@@ -4,6 +4,7 @@ import io.peekandpoke.ultra.slumber.Awaker
 import io.peekandpoke.ultra.slumber.Slumberer
 import java.time.LocalTime
 
+/** Awaker for [java.time.LocalTime] values. */
 object LocalTimeAwaker : Awaker {
 
     private val validRange = (0L..86399L)
@@ -21,6 +22,7 @@ object LocalTimeAwaker : Awaker {
     }
 }
 
+/** Slumberer for [java.time.LocalTime] values. */
 object LocalTimeSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Int? {

@@ -13,13 +13,16 @@ import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.long
 import kotlinx.serialization.json.longOrNull
 
+/** Utilities for converting between kotlinx.serialization [JsonElement] trees and plain Kotlin types. */
 object JsonUtil {
+    /** Unwraps a [JsonObject] into a plain [Map] of string keys to native Kotlin values. */
     fun JsonObject.unwrap(): Map<String, Any?> {
         return entries.associate { (k, v) ->
             k to v.unwrap()
         }
     }
 
+    /** Recursively unwraps a [JsonElement] into its plain Kotlin equivalent (null, Map, List, String, Boolean, Long, or Double). */
     fun JsonElement.unwrap(): Any? = when (this) {
         is JsonNull -> null
         is JsonObject -> unwrap()
@@ -33,6 +36,7 @@ object JsonUtil {
         }
     }
 
+    /** Converts a plain [Map] of string keys to native values into a [JsonObject]. */
     fun Map<String, Any?>.toJsonObject(): JsonObject {
         return buildJsonObject {
             forEach { (key, value) ->
@@ -41,7 +45,7 @@ object JsonUtil {
         }
     }
 
-    // Helper function to convert any value to JsonElement
+    /** Converts any nullable value to its [JsonElement] representation. */
     fun Any?.toJsonElement(): JsonElement {
         @Suppress("UNCHECKED_CAST")
         return when (this) {

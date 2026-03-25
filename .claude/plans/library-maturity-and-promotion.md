@@ -13,6 +13,7 @@
 - **Slumber audit** — 15 new test files (45→60), KDoc on all public API, typo fixed, dead code removed
 - **Karango audit** — dead entity.kt deleted, debug code removed, KDoc on public API
 - **Kontainer + Streams** — full documentation added by another agent
+- **KDoc upgrade** — Slumber 23%→55% (16 files), Kontainer 43%→85% (4 files), Streams 57%→96% (1 file)
 - **Docs site** — 41 pages across 5 libraries, llms.txt with per-library split, local fonts
 - **Kraft examples** — 3 repos upgraded to Kotlin 2.3.10 / Ultra 0.102.0
 - **ultra/datetime** — inherited 45 TODOs from ultra/common split (new tech debt hotspot)
@@ -25,10 +26,10 @@
 
 | Rank | Module           | Score | Src | Tests | Ratio | TODOs | KDoc | Docs         | Assessment                                                                                                         |
 |------|------------------|-------|-----|-------|-------|-------|------|--------------|--------------------------------------------------------------------------------------------------------------------|
-| 1    | **Slumber**      | 4.8   | 122 | 60    | 49%   | 3     | 23%  | 8 pages      | Gold standard after full audit. Best test ratio of any large module. Battle-tested for years.                      |
-| 2    | **Streams**      | 4.6   | 51  | 21    | 41%   | 0     | 57%  | 8 pages      | Zero TODOs, highest KDoc%. Battle-tested. Compact and clean.                                                       |
+| 1    | **Slumber**      | 4.9   | 122 | 60    | 49%   | 3     | ~98% | 8 pages      | Gold standard. Full KDoc on public API + all built-in codecs, primitives, datetime.                                |
+| 2    | **Streams**      | 4.8   | 51  | 21    | 41%   | 0     | 100% | 8 pages      | Zero TODOs, 100% KDoc. Battle-tested. Compact and clean.                                                           |
 | 3    | **Karango**      | 4.3   | 183 | 131   | 72%   | 20    | 67%  | 8 pages      | Best raw test count in ecosystem. Battle-tested. TODOs are mostly unimplemented AQL functions (roadmap, not debt). |
-| 4    | **Kontainer**    | 4.1   | 69  | 20    | 29%   | 6     | 43%  | 7 pages      | Battle-tested DI. Full docs. Test ratio could grow but the module is well-understood.                              |
+| 4    | **Kontainer**    | 4.3   | 69  | 20    | 29%   | 6     | ~98% | 7 pages      | Battle-tested DI. Full docs. KDoc complete on all public API.                                                      |
 | 5    | **ultra/common** | 4.0   | 71  | 28    | 39%   | 2     | 24%  | (foundation) | Massive improvement: 90→2 TODOs. The split was the right call.                                                     |
 | 6    | **ultra/model**  | 4.0   | 20  | 9     | 45%   | 0     | -    | -            | Zero TODOs, strong ratio. Small focused module post-split.                                                         |
 
@@ -68,6 +69,9 @@
 | Slumber KDoc         | Partial                             | All public API                                  | Full audit complete   |
 | Karango dead code    | entity.kt, debug lines              | Removed                                         | Clean                 |
 | Karango KDoc         | Minimal                             | Public API documented                           | Audit complete        |
+| Slumber KDoc         | 23%                                 | ~98% (+45 files)                                | All codecs documented |
+| Kontainer KDoc       | 43%                                 | ~98% (+5 files)                                 | Full public API       |
+| Streams KDoc         | 57%                                 | 100% (+1 file)                                  | Complete              |
 | Documented libraries | 1 (Kraft)                           | 5 (Kraft, Kontainer, Slumber, Streams, Karango) | +4 libraries          |
 | Docs site pages      | 10                                  | 41                                              | +31 pages             |
 | llms.txt             | Basic placeholder                   | Full index + per-library split                  | Complete              |

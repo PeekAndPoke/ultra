@@ -7,6 +7,7 @@ import io.peekandpoke.ultra.slumber.builtin.datetime.toMap
 import io.peekandpoke.ultra.slumber.builtin.datetime.utc
 import java.util.*
 
+/** Awaker for [java.util.Date] values. */
 object DateAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): Date? {
@@ -22,6 +23,7 @@ object DateAwaker : Awaker {
     }
 }
 
+/** Slumberer for [java.util.Date] values. */
 object DateSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {

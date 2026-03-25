@@ -3,6 +3,8 @@ package io.peekandpoke.ultra.slumber.builtin.datetime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+/** Shared utilities for date/time codec serialization and deserialization. */
+
 internal val format: DateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME
 
 internal val utc = ZoneId.of("UTC")

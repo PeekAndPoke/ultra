@@ -9,6 +9,7 @@ import io.peekandpoke.ultra.slumber.builtin.datetime.TS
 import io.peekandpoke.ultra.slumber.builtin.datetime.toMap
 import kotlinx.datetime.TimeZone
 
+/** Awaker for [MpZonedDateTime] values. */
 object MpZonedDateTimeAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): MpZonedDateTime? {
@@ -30,6 +31,7 @@ object MpZonedDateTimeAwaker : Awaker {
     }
 }
 
+/** Slumberer for [MpZonedDateTime] values. */
 object MpZonedDateTimeSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {

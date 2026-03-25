@@ -1,0 +1,65 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {kraftSidebar} from '../../../data/kraft-sidebar';
+import ExampleEmbed from '../../../components/ExampleEmbed.astro';
+import {githubRepo, kraftLiveExamples, kraftExamples} from '../../../data/site';
+
+const exampleSourceBase = `${githubRepo}/tree/master/kraft/examples`;
+---
+
+<DocsLayout title="Kraft Live Examples" sidebar={kraftSidebar}
+            description="Live, runnable Kraft SPA examples in your browser">
+
+    <h1>Live Examples</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Complete Kraft SPAs running right here in your browser. No setup needed.
+    </p>
+
+    <h2>Hello World</h2>
+
+    <p>A minimal Kraft app — counter, ticker, local storage, and data loading. Great starting point to see the
+        basics.</p>
+
+    <ExampleEmbed src={kraftLiveExamples.helloWorld} title="Kraft Hello World Example" height="600px"
+                  sourceUrl={`${exampleSourceBase}/hello-world`}/>
+
+    <h2>Addons</h2>
+
+    <p>Showcases Kraft's addon ecosystem — ChartJS, Markdown rendering, syntax highlighting, signature pad, PDF viewer,
+        and more.</p>
+
+    <ExampleEmbed src={kraftLiveExamples.addons} title="Kraft Addons Example" height="800px"
+                  sourceUrl={`${exampleSourceBase}/addons`}/>
+
+    <h2>SemanticUI Components</h2>
+
+    <p>A comprehensive showcase of Kraft's SemanticUI DSL — buttons, forms, modals, tables, menus, and every other
+        FomanticUI component, all in pure Kotlin.</p>
+
+    <ExampleEmbed src={kraftLiveExamples.fomanticui} title="Kraft SemanticUI Example" height="800px"
+                  sourceUrl={`${exampleSourceBase}/fomanticui`}/>
+
+    <h2>Source Code</h2>
+
+    <p>Want to dig into the code? Check out the standalone example repositories:</p>
+
+    <div class="not-prose grid grid-cols-1 sm:grid-cols-3 gap-4 my-8">
+        <a href={kraftExamples.helloworld} target="_blank" rel="noopener"
+           class="block p-4 rounded-lg border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
+            <h3 class="text-white font-semibold mb-1">Hello World</h3>
+            <p class="text-sm text-gray-400">Minimal project on GitHub</p>
+        </a>
+        <a href={kraftExamples.router} target="_blank" rel="noopener"
+           class="block p-4 rounded-lg border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
+            <h3 class="text-white font-semibold mb-1">Router Demo</h3>
+            <p class="text-sm text-gray-400">Multi-page app with routes</p>
+        </a>
+        <a href={kraftExamples.remote} target="_blank" rel="noopener"
+           class="block p-4 rounded-lg border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
+            <h3 class="text-white font-semibold mb-1">Remote API</h3>
+            <p class="text-sm text-gray-400">REST API consumption</p>
+        </a>
+    </div>
+
+</DocsLayout>

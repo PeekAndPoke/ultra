@@ -8,6 +8,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlin.reflect.KType
 
+/** SlumberModule for Kotlinx DateTime types. */
 object KotlinxTimeModule : SlumberModule {
 
     override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? {

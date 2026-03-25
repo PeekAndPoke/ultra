@@ -23,6 +23,13 @@ export const kraftExamples = {
     remote: 'https://github.com/PeekAndPoke/kraft-example-remote',
 };
 
+// Live example paths (served from public/kraft-examples via symlinks)
+export const kraftLiveExamples = {
+    helloWorld: '/kraft-examples/hello-world/index.html',
+    addons: '/kraft-examples/addons/index.html',
+    fomanticui: '/kraft-examples/fomanticui/index.html',
+};
+
 // Helpers for dependency strings used in code examples
 export const dep = {
     kontainer: `${ultraGroup}:kontainer:${ultraVersion}`,

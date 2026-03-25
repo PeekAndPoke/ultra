@@ -14,6 +14,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.isSuperclassOf
 
+/** SlumberModule for Java Time date/time types. */
 object JavaTimeModule : SlumberModule {
 
     override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? {

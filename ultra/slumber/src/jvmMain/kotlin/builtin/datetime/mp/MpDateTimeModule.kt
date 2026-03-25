@@ -12,6 +12,7 @@ import io.peekandpoke.ultra.slumber.SlumberModule
 import io.peekandpoke.ultra.slumber.Slumberer
 import kotlin.reflect.KType
 
+/** SlumberModule for multiplatform date/time types. */
 object MpDateTimeModule : SlumberModule {
 
     override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? {

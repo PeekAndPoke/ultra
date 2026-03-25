@@ -4,6 +4,7 @@ import io.peekandpoke.ultra.slumber.Awaker
 import io.peekandpoke.ultra.slumber.Slumberer
 import java.time.ZoneId
 
+/** Awaker for [java.time.ZoneId] values. */
 object ZoneIdAwaker : Awaker {
 
     private val ids = ZoneId.getAvailableZoneIds()
@@ -21,6 +22,7 @@ object ZoneIdAwaker : Awaker {
     }
 }
 
+/** Slumberer for [java.time.ZoneId] values. */
 object ZoneIdSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): String? {

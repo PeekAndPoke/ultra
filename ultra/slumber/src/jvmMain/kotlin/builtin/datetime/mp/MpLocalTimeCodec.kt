@@ -4,6 +4,7 @@ import io.peekandpoke.ultra.datetime.MpLocalTime
 import io.peekandpoke.ultra.slumber.Awaker
 import io.peekandpoke.ultra.slumber.Slumberer
 
+/** Awaker for [MpLocalTime] values. */
 object MpLocalTimeAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): MpLocalTime? {
@@ -16,6 +17,7 @@ object MpLocalTimeAwaker : Awaker {
     }
 }
 
+/** Slumberer for [MpLocalTime] values. */
 object MpLocalTimeSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Long? {

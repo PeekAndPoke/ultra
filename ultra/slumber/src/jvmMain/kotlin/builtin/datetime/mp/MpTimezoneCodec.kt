@@ -4,6 +4,7 @@ import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.slumber.Awaker
 import io.peekandpoke.ultra.slumber.Slumberer
 
+/** Awaker for [MpTimezone] values. */
 object MpTimezoneAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): MpTimezone? {
@@ -16,6 +17,7 @@ object MpTimezoneAwaker : Awaker {
     }
 }
 
+/** Slumberer for [MpTimezone] values. */
 object MpTimezoneSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): String? {

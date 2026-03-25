@@ -8,6 +8,7 @@ import io.peekandpoke.ultra.slumber.builtin.datetime.utc
 import java.time.Instant
 import java.time.LocalDateTime
 
+/** Awaker for [java.time.LocalDateTime] values. */
 object LocalDateTimeAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): LocalDateTime? {
@@ -23,6 +24,7 @@ object LocalDateTimeAwaker : Awaker {
     }
 }
 
+/** Slumberer for [java.time.LocalDateTime] values. */
 object LocalDateTimeSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {

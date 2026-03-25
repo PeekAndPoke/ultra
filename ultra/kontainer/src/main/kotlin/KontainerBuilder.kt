@@ -22,10 +22,12 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      */
     class InjectionTypeUpgrade {
 
+        /** Adjusts the injection type of [def] based on the definition it overwrites. */
         fun adjust(def: ServiceDefinition): ServiceDefinition {
             return adjust(newDef = def, existingDef = def.overwrites)
         }
 
+        /** Adjusts [newDef] so its injection type is at least as broad as the [existingDef] it replaces. */
         fun adjust(newDef: ServiceDefinition, existingDef: ServiceDefinition?): ServiceDefinition {
             return when (existingDef) {
                 // When there is no existing definition, we can use the new definition as is
@@ -608,19 +610,19 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     // Modules
     // //
 
-    /** Imports a module */
+    /** Imports a [KontainerModule], applying all its service definitions to this builder. */
     @KontainerDslModule
     fun module(
         module: KontainerModule,
     ): KontainerBuilder = apply { module.apply(this) }
 
-    /** Imports a parameterized module */
+    /** Imports a parameterized [module] with one configuration parameter. */
     @KontainerDslModule
     fun <P> module(module: ParameterizedKontainerModule<P>, p1: P): KontainerBuilder = apply {
         module.apply(this, p1)
     }
 
-    /** Imports a parameterized module */
+    /** Imports a parameterized [module] with two configuration parameters. */
     @KontainerDslModule
     fun <P1, P2> module(
         module: ParameterizedKontainerModule2<P1, P2>,
@@ -628,7 +630,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         p2: P2,
     ): KontainerBuilder = apply { module.apply(this, p1, p2) }
 
-    /** Imports a parameterized module */
+    /** Imports a parameterized [module] with three configuration parameters. */
     @KontainerDslModule
     fun <P1, P2, P3> module(
         module: ParameterizedKontainerModule3<P1, P2, P3>,
@@ -639,7 +641,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         module.apply(this, p1, p2, p3)
     }
 
-    /** Imports a parameterized module */
+    /** Imports a parameterized [module] with four configuration parameters. */
     @KontainerDslModule
     fun <P1, P2, P3, P4> module(
         module: ParameterizedKontainerModule4<P1, P2, P3, P4>,
@@ -651,7 +653,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         module.apply(this, p1, p2, p3, p4)
     }
 
-    /** Imports a parameterized module */
+    /** Imports a parameterized [module] with five configuration parameters. */
     @KontainerDslModule
     fun <P1, P2, P3, P4, P5> module(
         module: ParameterizedKontainerModule5<P1, P2, P3, P4, P5>,

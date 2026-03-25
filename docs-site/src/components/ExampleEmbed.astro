@@ -1,0 +1,28 @@
+---
+interface Props {
+    src: string;
+    title: string;
+    height?: string;
+    sourceUrl?: string;
+}
+const {src, title, height = '600px', sourceUrl} = Astro.props;
+---
+<div class="not-prose my-6">
+    <iframe
+            src={src}
+            title={title}
+            class="w-full border border-white/10 rounded-lg bg-white"
+            style={`height: ${height};`}
+            loading="lazy"
+    ></iframe>
+    <div class="mt-2 flex gap-4 text-sm">
+        <a href={src} target="_blank" rel="noopener" class="text-brand-400 hover:underline">
+            Open in new tab &nearr;
+        </a>
+        {sourceUrl && (
+                <a href={sourceUrl} target="_blank" rel="noopener" class="text-brand-400 hover:underline">
+                    View source &nearr;
+                </a>
+        )}
+    </div>
+</div>

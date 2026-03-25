@@ -11,6 +11,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 
+/** Awaker for [kotlinx.datetime.LocalDateTime] values. */
 object LocalDateTimeAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): LocalDateTime? {
@@ -33,6 +34,7 @@ object LocalDateTimeAwaker : Awaker {
     }
 }
 
+/** Slumberer for [kotlinx.datetime.LocalDateTime] values. */
 object LocalDateTimeSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {

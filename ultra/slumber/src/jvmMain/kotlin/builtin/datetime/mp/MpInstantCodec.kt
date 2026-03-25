@@ -7,6 +7,7 @@ import io.peekandpoke.ultra.slumber.builtin.datetime.TS
 import io.peekandpoke.ultra.slumber.builtin.datetime.toMap
 import io.peekandpoke.ultra.slumber.builtin.datetime.utc
 
+/** Awaker for [MpInstant] values. */
 object MpInstantAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): MpInstant? {
@@ -22,6 +23,7 @@ object MpInstantAwaker : Awaker {
     }
 }
 
+/** Slumberer for [MpInstant] values. */
 object MpInstantSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {

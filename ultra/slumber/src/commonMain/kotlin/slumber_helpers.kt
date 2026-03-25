@@ -7,6 +7,9 @@ import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 
+/**
+ * Registers all polymorphic subclasses defined in [c2s] with this [SerializersModuleBuilder].
+ */
 // TODO: Test me
 fun <T : Any> SerializersModuleBuilder.polymorphic(c2s: PolymorphicChildrenToSerializers<T>) {
     polymorphic(baseClass = c2s.base) {
@@ -14,6 +17,9 @@ fun <T : Any> SerializersModuleBuilder.polymorphic(c2s: PolymorphicChildrenToSer
     }
 }
 
+/**
+ * Adds all child subclasses from [items] to this [PolymorphicModuleBuilder].
+ */
 // TODO: Test me
 fun <T : Any> PolymorphicModuleBuilder<T>.addChildren(items: PolymorphicChildrenToSerializers<T>) {
     items.entries.forEach {
@@ -22,12 +28,18 @@ fun <T : Any> PolymorphicModuleBuilder<T>.addChildren(items: PolymorphicChildren
     }
 }
 
+/**
+ * Maps a polymorphic [base] class to its child types and their serializers.
+ *
+ * Implements [Set] over the child [KClass] types for easy membership checks.
+ */
 // TODO: Test me
 data class PolymorphicChildrenToSerializers<T : Any>(
     val base: KClass<T>,
     val entries: List<TypeAndSerializer<T>>,
 ) : Set<KClass<out T>> {
 
+    /** Builder for constructing a [PolymorphicChildrenToSerializers] instance. */
     class Builder<T : Any>(
         val base: KClass<T>,
     ) {
@@ -50,6 +62,7 @@ data class PolymorphicChildrenToSerializers<T : Any>(
             TypeAndSerializer(this, serializer)
     }
 
+    /** Pairs a child [type] with its [serializer]. */
     data class TypeAndSerializer<out T : Any>(
         val type: KClass<out T>,
         val serializer: KSerializer<out T>,

@@ -10,6 +10,7 @@ import io.peekandpoke.ultra.slumber.builtin.datetime.toMap
 import io.peekandpoke.ultra.slumber.builtin.datetime.utc
 import kotlinx.datetime.TimeZone
 
+/** Awaker for [MpLocalDateTime] values. */
 object MpLocalDateTimeAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): MpLocalDateTime? {
@@ -28,6 +29,7 @@ object MpLocalDateTimeAwaker : Awaker {
     }
 }
 
+/** Slumberer for [MpLocalDateTime] values. */
 object MpLocalDateTimeSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {

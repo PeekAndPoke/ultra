@@ -3,10 +3,12 @@ package io.peekandpoke.ultra.slumber.builtin.primitive
 import io.peekandpoke.ultra.slumber.Awaker
 import io.peekandpoke.ultra.slumber.Slumberer
 
+/** Awaker for [Int] values. */
 object IntAwaker : Awaker {
     override fun awake(data: Any?, context: Awaker.Context) = map(data)
 }
 
+/** Slumberer for [Int] values. */
 object IntSlumberer : Slumberer {
     override fun slumber(data: Any?, context: Slumberer.Context) = map(data)
 }

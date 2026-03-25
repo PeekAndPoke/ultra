@@ -9,6 +9,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+/** Awaker for [java.time.LocalDate] values. */
 object LocalDateAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): LocalDate? {
@@ -27,6 +28,7 @@ object LocalDateAwaker : Awaker {
     }
 }
 
+/** Slumberer for [java.time.LocalDate] values. */
 object LocalDateSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {
