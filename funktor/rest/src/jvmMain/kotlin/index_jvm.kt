@@ -30,7 +30,6 @@ inline val KontainerAware.restCodec: RestCodec get() = kontainer.get()
 inline val ApplicationCall.restCodec: RestCodec get() = kontainer.restCodec
 inline val RoutingContext.restCodec: RestCodec get() = call.restCodec
 
-
 val Funktor_Rest = module { config: AppConfig, builder: FunktorRestBuilder.() -> Unit ->
 
     val codecConfig = SlumberConfig.default.prependModules(VaultSlumberModule)

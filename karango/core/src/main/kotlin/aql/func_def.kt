@@ -196,4 +196,3 @@ fun <T1 : Number, T2 : Number> FIND_LAST(
 /** Return the integer closest but not greater than value. */
 @VaultFunctionMarker
 fun <T : Number> FLOOR(value: AqlExpression<T>): AqlExpression<Number> = FLOOR.call(value)
-

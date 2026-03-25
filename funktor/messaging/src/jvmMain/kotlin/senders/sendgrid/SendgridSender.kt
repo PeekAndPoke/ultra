@@ -92,7 +92,6 @@ class SendgridSender(private val client: SendGridClientV3) : EmailSender {
             is EmailBody.Html -> Content("text/html", email.body.content)
         }
 
-
         val attachments = email.attachments.map { attachment ->
             Attachments.Builder(attachment.mimeType, attachment.dataBase64)
         }

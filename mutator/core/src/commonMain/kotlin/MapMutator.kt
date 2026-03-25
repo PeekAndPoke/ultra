@@ -107,5 +107,4 @@ class MapMutatorImpl<K, V>(
      */
     @Suppress("USELESS_CAST", "NOTHING_TO_INLINE")
     private inline fun doGet(): MutableMap<K, V> = get() as MutableMap<K, V>
-
 }
