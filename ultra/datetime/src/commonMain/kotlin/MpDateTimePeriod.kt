@@ -7,7 +7,6 @@ import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
 @Serializable
-// TODO: Test me
 data class MpDateTimePeriod(
     override val years: Int = 0,
     override val months: Int = 0,

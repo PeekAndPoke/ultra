@@ -36,7 +36,6 @@ data class MpInstantRange(
         fun endingAt(to: MpInstant): MpInstantRange = MpInstantRange(forever.from, to)
     }
 
-    // TODO: test me
     @Serializable
     data class Partial(
         val from: MpInstant?,
@@ -90,7 +89,6 @@ data class MpInstantRange(
     /**
      * The range is not valid when [from] is not before [to]
      */
-    // TODO: Test
     val isNotValid: Boolean get() = !isValid
 
     /**
@@ -143,7 +141,6 @@ data class MpInstantRange(
                 (from <= other.from && to >= other.to)
     }
 
-    // TODO: Test
     fun intersects(other: MpInstantRange): Boolean {
         return (isValid && other.isValid) && (
                 (other.from >= from && other.from < to) ||
@@ -193,7 +190,6 @@ data class MpInstantRange(
     /**
      * Adds the [duration] in absolute terms.
      */
-    // TODO: Test
     fun plus(duration: Duration): MpInstantRange {
         return MpInstantRange(
             from = from.plus(duration),
@@ -210,7 +206,6 @@ data class MpInstantRange(
      * Will result in              2022-03-28T00:00:00[Europe/Berlin]
      * while the difference between both instants is only 23 hours.
      */
-    // TODO: Test
     fun plus(unit: DateTimeUnit, timezone: TimeZone): MpInstantRange {
         return plus(value = 1, unit = unit, timezone = timezone)
     }
@@ -224,7 +219,6 @@ data class MpInstantRange(
      * Will result in              2022-03-28T00:00:00[Europe/Berlin]
      * while the difference between both instants is only 23 hours.
      */
-    // TODO: Test
     fun plus(value: Int, unit: DateTimeUnit, timezone: TimeZone): MpInstantRange {
         return MpInstantRange(
             from = from.plus(value = value, unit = unit, timezone = timezone),
@@ -235,7 +229,6 @@ data class MpInstantRange(
     /**
      * Subtracts the [duration] in absolute terms.
      */
-    // TODO: Test
     fun minus(duration: Duration): MpInstantRange {
         return plus(duration.unaryMinus())
     }
@@ -249,7 +242,6 @@ data class MpInstantRange(
      * Will result in                   2022-03-27T00:00:00[Europe/Berlin]
      * while the difference between both instants is only 23 hours.
      */
-    // TODO: Test
     fun minus(unit: DateTimeUnit, timezone: TimeZone): MpInstantRange {
         return minus(1, unit, timezone)
     }
@@ -263,7 +255,6 @@ data class MpInstantRange(
      * Will result in                   2022-03-27T00:00:00[Europe/Berlin]
      * while the difference between both instants is only 23 hours.
      */
-    // TODO: Test
     fun minus(value: Int, unit: DateTimeUnit, timezone: TimeZone): MpInstantRange {
         return plus(-value, unit, timezone)
     }

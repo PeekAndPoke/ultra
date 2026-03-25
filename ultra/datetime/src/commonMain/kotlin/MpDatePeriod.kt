@@ -4,7 +4,6 @@ import kotlinx.datetime.DatePeriod
 import kotlinx.serialization.Serializable
 
 @Serializable
-// TODO: Test me
 data class MpDatePeriod(
     override val years: Int = 0,
     override val months: Int = 0,

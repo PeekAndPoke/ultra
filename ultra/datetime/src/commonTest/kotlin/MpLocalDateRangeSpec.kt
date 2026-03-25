@@ -339,4 +339,58 @@ class MpLocalDateRangeSpec : StringSpec({
 
         zoned.to shouldBe MpZonedDateTime.parse("2024-10-27T21:22:23.024[Europe/Berlin]")
     }
+
+    // contains / intersects ///////////////////////////////////////////////////////////////////////
+
+    "contains(date) - open range semantics (from inclusive, to exclusive)" {
+        val range = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-01-31"),
+        )
+
+        range.contains(MpLocalDate.parse("2024-01-01")) shouldBe true
+        range.contains(MpLocalDate.parse("2024-01-15")) shouldBe true
+        range.contains(MpLocalDate.parse("2024-01-30")) shouldBe true
+        range.contains(MpLocalDate.parse("2024-01-31")) shouldBe false  // to is exclusive
+        range.contains(MpLocalDate.parse("2023-12-31")) shouldBe false
+    }
+
+    "intersects with overlapping closed range" {
+        val openRange = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-06-30"),
+        )
+        val closedRange = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-09-30"),
+        )
+
+        openRange.intersects(closedRange) shouldBe true
+    }
+
+    "intersects with non-overlapping closed range" {
+        val openRange = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-03-31"),
+        )
+        val closedRange = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-06-01"),
+            to = MpLocalDate.parse("2024-09-30"),
+        )
+
+        openRange.intersects(closedRange) shouldBe false
+    }
+
+    // asPartialRange //////////////////////////////////////////////////////////////////////////////
+
+    "asPartialRange converts to Partial with same from and to" {
+        val from = MpLocalDate.parse("2024-01-01")
+        val to = MpLocalDate.parse("2024-12-31")
+        val range = MpLocalDateRange(from, to)
+
+        val partial = range.asPartialRange()
+
+        partial.from shouldBe from
+        partial.to shouldBe to
+    }
 })

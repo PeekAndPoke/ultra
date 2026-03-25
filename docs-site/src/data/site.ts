@@ -16,6 +16,13 @@ export const githubRepo = 'https://github.com/PeekAndPoke/ultra';
 export const mavenCentralUrl = 'https://central.sonatype.com/namespace/io.peekandpoke.ultra';
 export const fomanticCdnUrl = `https://cdn.jsdelivr.net/npm/fomantic-ui@${fomanticVersion}/dist/semantic.min.css`;
 
+// Example project repos
+export const kraftExamples = {
+    helloworld: 'https://github.com/PeekAndPoke/kraft-example-helloworld',
+    router: 'https://github.com/PeekAndPoke/kraft-example-router',
+    remote: 'https://github.com/PeekAndPoke/kraft-example-remote',
+};
+
 // Helpers for dependency strings used in code examples
 export const dep = {
     kontainer: `${ultraGroup}:kontainer:${ultraVersion}`,
@@ -25,4 +32,6 @@ export const dep = {
     kraftSemanticUi: `${kraftGroup}:semanticui:${kraftVersion}`,
     kraftAddonChartJs: `${kraftGroup}:addons-chartjs:${kraftVersion}`,
     kraftAddonPrismJs: `${kraftGroup}:addons-prismjs:${kraftVersion}`,
+    karangoCore: `${ultraGroup}:karango-core:${ultraVersion}`,
+    karangoKsp: `${ultraGroup}:karango-ksp:${ultraVersion}`,
 };

@@ -1,14 +1,12 @@
 package de.peekandpoke.ultra.datetime
 
 import common.datetime.DateTimeRangeConverter
-import de.peekandpoke.ultra.datetime.ComparableTo
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.serialization.Serializable
 import kotlin.math.max
 import kotlin.math.round
 
 @Serializable
-// TODO: test all of me
 data class MpLocalDateRange(
     val from: MpLocalDate,
     val to: MpLocalDate,
@@ -135,12 +133,10 @@ data class MpLocalDateRange(
         to = to.minusDays(1),
     )
 
-    // TODO: Test me
     fun contains(date: MpLocalDate): Boolean {
         return date in from..<to
     }
 
-    // TODO: Test me
     fun intersects(other: MpClosedLocalDateRange): Boolean {
         // TODO: improve this code
         return toZonedTimeRange(MpTimezone.UTC).fromNoonToNoon

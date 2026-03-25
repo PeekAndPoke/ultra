@@ -310,6 +310,90 @@ class MpClosedLocalDateRangeSpec : StringSpec({
             .plus(21.hours).plus(22.minutes).plus(23.seconds).plus(24.milliseconds)
     }
 
+    // Partial ////////////////////////////////////////////////////////////////////////////////////
+
+    "Partial.empty" {
+        val partial = MpClosedLocalDateRange.Partial.empty
+
+        partial.from shouldBe null
+        partial.to shouldBe null
+    }
+
+    "Partial.asValidRange returns valid range" {
+        val from = MpLocalDate.parse("2024-01-01")
+        val to = MpLocalDate.parse("2024-01-10")
+
+        MpClosedLocalDateRange.Partial(from, to).asValidRange() shouldBe MpClosedLocalDateRange(from, to)
+    }
+
+    "Partial.asValidRange returns null for invalid or incomplete ranges" {
+        val from = MpLocalDate.parse("2024-01-10")
+        val to = MpLocalDate.parse("2024-01-01")
+
+        MpClosedLocalDateRange.Partial(from, to).asValidRange() shouldBe null
+        MpClosedLocalDateRange.Partial(from, null).asValidRange() shouldBe null
+        MpClosedLocalDateRange.Partial(null, to).asValidRange() shouldBe null
+        MpClosedLocalDateRange.Partial.empty.asValidRange() shouldBe null
+    }
+
+    // contains / intersects ///////////////////////////////////////////////////////////////////////
+
+    "contains(date) within range" {
+        val range = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-01-31"),
+        )
+
+        range.contains(MpLocalDate.parse("2024-01-01")) shouldBe true
+        range.contains(MpLocalDate.parse("2024-01-15")) shouldBe true
+        range.contains(MpLocalDate.parse("2024-01-31")) shouldBe true
+        range.contains(MpLocalDate.parse("2023-12-31")) shouldBe false
+        range.contains(MpLocalDate.parse("2024-02-01")) shouldBe false
+    }
+
+    "contains(other range)" {
+        val outer = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-12-31"),
+        )
+        val inner = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-06-30"),
+        )
+
+        outer.contains(inner) shouldBe true
+        inner.contains(outer) shouldBe false
+        outer.contains(outer) shouldBe true
+    }
+
+    "intersects overlapping ranges" {
+        val a = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-06-30"),
+        )
+        val b = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-09-30"),
+        )
+
+        a.intersects(b) shouldBe true
+        b.intersects(a) shouldBe true
+    }
+
+    "intersects non-overlapping ranges" {
+        val a = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-03-31"),
+        )
+        val b = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-06-01"),
+            to = MpLocalDate.parse("2024-09-30"),
+        )
+
+        a.intersects(b) shouldBe false
+        b.intersects(a) shouldBe false
+    }
+
     "asListOfDates()" {
 
         withClue("Invalid range must return an empty list") {
@@ -343,5 +427,18 @@ class MpClosedLocalDateRangeSpec : StringSpec({
                 start.plusDays(2),
             )
         }
+    }
+
+    // asPartialRange //////////////////////////////////////////////////////////////////////////////
+
+    "asPartialRange converts to Partial with same from and to" {
+        val from = MpLocalDate.parse("2024-01-01")
+        val to = MpLocalDate.parse("2024-12-31")
+        val range = MpClosedLocalDateRange(from, to)
+
+        val partial = range.asPartialRange()
+
+        partial.from shouldBe from
+        partial.to shouldBe to
     }
 })

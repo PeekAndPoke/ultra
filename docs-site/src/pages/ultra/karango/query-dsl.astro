@@ -1,0 +1,185 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {karangoSidebar} from '../../../data/karango-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Karango Query DSL" sidebar={karangoSidebar}
+            description="Build type-safe AQL queries with Karango's Kotlin DSL">
+
+    <h1>Query DSL</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        A Kotlin DSL that mirrors AQL syntax. Reads like a query, compiles like code.
+    </p>
+
+    <h2>FOR loops</h2>
+
+    <p>Every query starts with <code>FOR</code> — iterate over a collection:</p>
+
+    <Code code={`repo.findList {
+    FOR(repo) { person ->
+        // person is a type-safe expression — its properties are compile-time checked
+        RETURN(person)
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Filtering</h2>
+
+    <p>Use comparison operators directly on typed fields:</p>
+
+    <Code code={`FOR(repo) { person ->
+    FILTER(person.name EQ "Alice")          // equals
+    FILTER(person.age NE 0)                 // not equals
+    FILTER(person.age GT 18)                // greater than
+    FILTER(person.age GTE 18)               // greater than or equal
+    FILTER(person.age LT 65)               // less than
+    FILTER(person.age LTE 65)              // less than or equal
+    RETURN(person)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>String matching</h3>
+
+    <Code code={`FILTER(person.name LIKE "Ali%")            // SQL-like pattern
+FILTER(person.email REGEX "^[a-z]+@")     // regex match`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Collection operators</h3>
+
+    <Code code={`FILTER(person.age IN listOf(25, 30, 35))
+FILTER(person.name NOT_IN listOf("test", "admin"))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Logical operators</h3>
+
+    <Code code={`FILTER((person.age GTE 18) AND (person.age LTE 65))
+FILTER((person.name EQ "Alice") OR (person.name EQ "Bob"))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Sorting</h2>
+
+    <Code code={`FOR(repo) { person ->
+    SORT(person.name.ASC)                  // ascending
+    SORT(person.age.DESC)                  // descending
+    SORT(person.name.ASC, person.age.DESC) // multi-field sort
+    RETURN(person)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Pagination</h2>
+
+    <Code code={`FOR(repo) { person ->
+    LIMIT(10)                 // first 10
+    LIMIT(20, 10)             // skip 20, take 10
+    SKIP(5)                   // skip first 5
+    PAGE(page = 2, epp = 20) // page 2, 20 entries per page
+    RETURN(person)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Nested property access</h2>
+
+    <p>KSP generates accessors for nested types. Access nested fields with dots:</p>
+
+    <Code code={`@Vault
+data class Address(val city: String, val zip: String)
+
+@Vault
+data class Person(
+    val name: String,
+    val address: Address,
+    val tags: List<String> = emptyList(),
+)
+
+FOR(repo) { person ->
+    // Nested field access — compile-time checked
+    FILTER(person.address.city EQ "Berlin")
+    FILTER(person.address.zip EQ "10115")
+
+    // Array expansion — access fields inside lists
+    FILTER(person.tags.expand() EQ "vip")
+    // Generates: person.tags[*] == "vip"
+
+    RETURN(person)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>LET variables</h2>
+
+    <p>Bind values or sub-queries to variables:</p>
+
+    <Code code={`repo.findList {
+    val searchTerm = LET("search", "alice")
+
+    FOR(repo) { person ->
+        FILTER(CONTAINS(LOWER(person.name), searchTerm))
+        RETURN(person)
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>INSERT, UPDATE, REMOVE</h2>
+
+    <h3>Insert</h3>
+
+    <Code code={`repo.findList {
+    val docs = LET("docs", listOf(
+        Person("Alice", 30),
+        Person("Bob", 25),
+    ))
+
+    FOR(docs) { doc ->
+        INSERT(doc) INTO repo
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Update fields</h3>
+
+    <Code code={`repo.findList {
+    FOR(repo) { person ->
+        FILTER(person.name EQ "Alice")
+        UPDATE(person, repo) {
+            put({ name }) { CONCAT(name, " Updated".aql) }
+        }
+        RETURN_NEW(person)
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Remove</h3>
+
+    <Code code={`repo.find {
+    FOR(repo) { person ->
+        FILTER(person.age LT 18)
+        REMOVE(person._key).IN(repo)
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Return variants</h2>
+
+    <Code code={`RETURN(person)              // return the document
+RETURN_NEW(person)          // return the document after UPDATE/INSERT
+RETURN_OLD(person)          // return the document before UPDATE/REMOVE
+RETURN_DISTINCT(person)     // return unique results
+RETURN_COUNT()              // return the count instead of documents`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>AQL functions</h2>
+
+    <p>Karango wraps 100+ AQL functions. A few examples:</p>
+
+    <Code code={`// String functions
+FILTER(CONTAINS(LOWER(person.name), "alice"))
+FILTER(LENGTH(person.name) GT 3)
+
+// Math functions
+val total = LET("total") { SUM(prices) }
+
+// Array functions
+val unique = LET("unique") { UNIQUE(person.tags) }
+
+// Type checking
+FILTER(IS_NOT_NULL(person.email))
+
+// Document lookup
+val doc = DOCUMENT(repo, "persons/abc123")`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/karango/repositories"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Repositories &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

@@ -12,7 +12,6 @@ import kotlin.reflect.jvm.javaField
  *
  * Use the [find] methods to initiate the search.
  *
- * TODO: tests
  */
 class ChildFinder<C : Any, T : Any> private constructor(
     private val searchedClass: KClass<C>,

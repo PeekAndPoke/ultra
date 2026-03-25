@@ -5,6 +5,8 @@ import de.peekandpoke.ultra.common.tuple
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -292,5 +294,200 @@ class MpInstantRangeSpec : StringSpec({
 
             source.cutAway(other) shouldBe expected
         }
+    }
+
+    // isNotValid ////////////////////////////////////////////////////////////////////////////////
+
+    "isNotValid is the inverse of isValid" {
+        val valid = now.toRange(1.hours)
+        valid.isNotValid shouldBe false
+
+        val invalid = MpInstantRange(from = now, to = now.minus(1.minutes))
+        invalid.isNotValid shouldBe true
+
+        val zero = MpInstantRange(from = now, to = now)
+        zero.isNotValid shouldBe true
+    }
+
+    // Partial ////////////////////////////////////////////////////////////////////////////////
+
+    "Partial.empty has null from and to" {
+        MpInstantRange.Partial.empty.from shouldBe null
+        MpInstantRange.Partial.empty.to shouldBe null
+    }
+
+    "Partial.asValidRange returns valid range" {
+        val from = MpInstant.parse("2024-01-01T00:00:00Z")
+        val to = MpInstant.parse("2024-01-02T00:00:00Z")
+
+        MpInstantRange.Partial(from, to).asValidRange() shouldBe MpInstantRange(from, to)
+    }
+
+    "Partial.asValidRange returns null for invalid range" {
+        val from = MpInstant.parse("2024-01-02T00:00:00Z")
+        val to = MpInstant.parse("2024-01-01T00:00:00Z")
+
+        MpInstantRange.Partial(from, to).asValidRange() shouldBe null
+    }
+
+    "Partial.asValidRange returns null when from or to is null" {
+        val instant = MpInstant.parse("2024-01-01T00:00:00Z")
+
+        MpInstantRange.Partial(instant, null).asValidRange() shouldBe null
+        MpInstantRange.Partial(null, instant).asValidRange() shouldBe null
+        MpInstantRange.Partial.empty.asValidRange() shouldBe null
+    }
+
+    // intersects ////////////////////////////////////////////////////////////////////////////////
+
+    "intersects - overlapping ranges" {
+        val a = now.toRange(2.hours)
+        val b = MpInstantRange(from = now.plus(1.hours), to = now.plus(3.hours))
+
+        a.intersects(b) shouldBe true
+        b.intersects(a) shouldBe true
+    }
+
+    "intersects - non-overlapping ranges" {
+        val a = now.toRange(1.hours)
+        val b = MpInstantRange(from = now.plus(2.hours), to = now.plus(3.hours))
+
+        a.intersects(b) shouldBe false
+        b.intersects(a) shouldBe false
+    }
+
+    "intersects - adjacent ranges do not intersect" {
+        val a = now.toRange(1.hours)
+        val b = MpInstantRange(from = now.plus(1.hours), to = now.plus(2.hours))
+
+        a.intersects(b) shouldBe false
+    }
+
+    "intersects - one contains the other" {
+        val outer = now.toRange(4.hours)
+        val inner = MpInstantRange(from = now.plus(1.hours), to = now.plus(2.hours))
+
+        outer.intersects(inner) shouldBe true
+        inner.intersects(outer) shouldBe true
+    }
+
+    "intersects - invalid range returns false" {
+        val valid = now.toRange(1.hours)
+        val invalid = MpInstantRange(from = now.plus(1.hours), to = now)
+
+        valid.intersects(invalid) shouldBe false
+    }
+
+    // plus / minus ////////////////////////////////////////////////////////////////////////////////
+
+    "plus(duration) shifts both from and to" {
+        val range = MpInstantRange(
+            from = MpInstant.parse("2024-01-01T00:00:00Z"),
+            to = MpInstant.parse("2024-01-01T01:00:00Z"),
+        )
+
+        val shifted = range.plus(2.hours)
+
+        shifted.from shouldBe MpInstant.parse("2024-01-01T02:00:00Z")
+        shifted.to shouldBe MpInstant.parse("2024-01-01T03:00:00Z")
+    }
+
+    "minus(duration) shifts both from and to backwards" {
+        val range = MpInstantRange(
+            from = MpInstant.parse("2024-01-01T04:00:00Z"),
+            to = MpInstant.parse("2024-01-01T05:00:00Z"),
+        )
+
+        val shifted = range.minus(2.hours)
+
+        shifted.from shouldBe MpInstant.parse("2024-01-01T02:00:00Z")
+        shifted.to shouldBe MpInstant.parse("2024-01-01T03:00:00Z")
+    }
+
+    "plus(unit, timezone) shifts by calendar unit" {
+        val utc = TimeZone.UTC
+
+        val range = MpInstantRange(
+            from = MpInstant.parse("2024-01-15T10:00:00Z"),
+            to = MpInstant.parse("2024-01-15T11:00:00Z"),
+        )
+
+        val shifted = range.plus(DateTimeUnit.DAY, utc)
+
+        shifted.from shouldBe MpInstant.parse("2024-01-16T10:00:00Z")
+        shifted.to shouldBe MpInstant.parse("2024-01-16T11:00:00Z")
+    }
+
+    "plus(value, unit, timezone) shifts by multiple calendar units" {
+        val utc = TimeZone.UTC
+
+        val range = MpInstantRange(
+            from = MpInstant.parse("2024-01-15T10:00:00Z"),
+            to = MpInstant.parse("2024-01-15T11:00:00Z"),
+        )
+
+        val shifted = range.plus(3, DateTimeUnit.DAY, utc)
+
+        shifted.from shouldBe MpInstant.parse("2024-01-18T10:00:00Z")
+        shifted.to shouldBe MpInstant.parse("2024-01-18T11:00:00Z")
+    }
+
+    "minus(unit, timezone) shifts backwards by calendar unit" {
+        val utc = TimeZone.UTC
+
+        val range = MpInstantRange(
+            from = MpInstant.parse("2024-01-15T10:00:00Z"),
+            to = MpInstant.parse("2024-01-15T11:00:00Z"),
+        )
+
+        val shifted = range.minus(DateTimeUnit.DAY, utc)
+
+        shifted.from shouldBe MpInstant.parse("2024-01-14T10:00:00Z")
+        shifted.to shouldBe MpInstant.parse("2024-01-14T11:00:00Z")
+    }
+
+    "minus(value, unit, timezone) shifts backwards by multiple calendar units" {
+        val utc = TimeZone.UTC
+
+        val range = MpInstantRange(
+            from = MpInstant.parse("2024-01-15T10:00:00Z"),
+            to = MpInstant.parse("2024-01-15T11:00:00Z"),
+        )
+
+        val shifted = range.minus(3, DateTimeUnit.DAY, utc)
+
+        shifted.from shouldBe MpInstant.parse("2024-01-12T10:00:00Z")
+        shifted.to shouldBe MpInstant.parse("2024-01-12T11:00:00Z")
+    }
+
+    "plus preserves duration" {
+        val range = now.toRange(1.hours)
+        val shifted = range.plus(5.days)
+
+        shifted.duration shouldBe range.duration
+    }
+
+    // Partial.asDateRange /////////////////////////////////////////////////////////////////////////
+
+    "Partial.asDateRange converts to MpClosedLocalDateRange.Partial" {
+        val from = MpInstant.parse("2024-06-15T10:00:00Z")
+        val to = MpInstant.parse("2024-06-20T10:00:00Z")
+        val timezone = MpTimezone.UTC
+
+        val partial = MpInstantRange.Partial(from, to)
+        val dateRange = partial.asDateRange(timezone)
+
+        dateRange.from shouldBe from.toLocalDate(timezone)
+        dateRange.to shouldBe to.toLocalDate(timezone)
+    }
+
+    "Partial.asDateRange with null values produces null dates" {
+        val timezone = MpTimezone.UTC
+
+        val partial = MpInstantRange.Partial.empty
+        val dateRange = partial.asDateRange(timezone)
+
+        dateRange.from shouldBe null
+        dateRange.to shouldBe null
     }
 })

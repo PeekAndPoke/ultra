@@ -28,6 +28,12 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
 
+/**
+ * Executes AQL queries against ArangoDB and returns typed [KarangoCursor] results.
+ *
+ * Uses [KarangoCodec] for serializing query variables and deserializing results.
+ * Supports query profiling via [QueryProfiler] and logging via [Log].
+ */
 class KarangoDriver(
     private val lazyCodec: Lazy<KarangoCodec>,
     private val lazyArangoDb: Lazy<ArangoDatabaseAsync>,
@@ -95,10 +101,6 @@ class KarangoDriver(
 
             profilerEntry.vars = vars
 
-//            log.trace("Arango query:\n${query.query}\nVars:\n${vars}\n")
-//            println(query.query)
-//            println(query.vars)
-
             // Get the options configured on the query
             val optionsProvider: AqlQueryOptionProvider? = (query.root as? AqlRootExpression<T>)?.builder?.queryOptions
 
@@ -110,10 +112,6 @@ class KarangoDriver(
             val result = coroutineScope {
                 val queryDeferred = async(Dispatchers.IO) {
                     profilerEntry.measureQuery.async {
-
-//                        println(query.query)
-//                        println(query.vars)
-
                         try {
                             arangoDb.query(
                                 /* query = */ query.query,

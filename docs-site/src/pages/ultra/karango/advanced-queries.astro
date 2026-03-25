@@ -1,0 +1,228 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {karangoSidebar} from '../../../data/karango-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Advanced Queries" sidebar={karangoSidebar}
+            description="COLLECT, sub-queries, UPSERT, atomic updates, and real-world Karango patterns">
+
+    <h1>Advanced Queries</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Aggregation, sub-queries, atomic updates, and patterns from production code.
+    </p>
+
+    <h2>COLLECT (aggregation)</h2>
+
+    <Code code={`// Count documents
+repo.findList {
+    FOR(repo) { person ->
+        COLLECT_WITH(COUNT) AS "total"
+        RETURN("total")
+    }
+}
+
+// Group by a field
+repo.findList {
+    FOR(repo) { person ->
+        COLLECT(city, person.address.city)
+        RETURN(city)
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Sub-queries with LET</h2>
+
+    <p>Use <code>LET</code> to bind sub-query results to variables:</p>
+
+    <Code code={`repo.find {
+    // First query: find IDs to delete
+    val toDelete = LET("toDelete",
+        FOR(repo) { entry ->
+            FILTER(entry.status EQ "completed")
+            SORT(entry.createdAt.DESC)
+            SKIP(100)  // keep the latest 100
+            RETURN(entry)
+        }
+    )
+
+    // Second query: delete them
+    FOR(toDelete) { entry ->
+        REMOVE(entry._key).IN(repo) { ignoreErrors = true }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Atomic claim pattern</h2>
+
+    <p>UPDATE + RETURN_NEW in a single query — perfect for job queues:</p>
+
+    <Code code={`@Vault
+data class Job(
+    val type: String,
+    val state: State,
+    val dueAt: MpInstant,
+) {
+    enum class State { WAITING, PROCESSING, DONE }
+}
+
+// Atomically claim the next due job
+val claimed = repo.findFirst {
+    FOR(repo) { job ->
+        FILTER(job.dueAt.ts LTE now.toEpochMillis())
+        FILTER(job.state EQ Job.State.WAITING)
+        SORT(job.dueAt.ts.ASC)
+        LIMIT(1)
+        UPDATE(job, repo) {
+            put({ state }) { Job.State.PROCESSING.aql }
+        }
+        RETURN_NEW(job)
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>This is a real pattern from the Funktor cluster module — it atomically finds and claims background jobs.</p>
+
+    <h2>Full-text search pattern</h2>
+
+    <p>Dynamic search across multiple fields:</p>
+
+    <Code code={`suspend fun search(query: String, page: Int, epp: Int): Cursor<Stored<LogEntry>> {
+    return repo.find {
+        val searchLower = LET("search", query.lowercase())
+
+        FOR(repo) { entry ->
+            if (query.isNotBlank()) {
+                val parts = query.trim().lowercase().split(" ")
+                FILTER(
+                    parts.map { part ->
+                        listOf(
+                            CONTAINS(LOWER(entry.message), part.aql),
+                            CONTAINS(LOWER(entry.loggerName), part.aql),
+                        ).anyOrTrueIfEmpty
+                    }.anyOrTrueIfEmpty
+                )
+            }
+
+            SORT(entry.createdAt.DESC)
+            PAGE(page = page, epp = epp)
+            RETURN(entry)
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>This is from the Funktor logging module — it searches log entries across message and logger name fields,
+        splitting the search query into words and matching each independently.</p>
+
+    <h2>UPSERT</h2>
+
+    <Code code={`// Insert or replace the entire document
+repo.find {
+    UPSERT_REPLACE(person) INTO repo
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Arithmetic in queries</h2>
+
+    <Code code={`repo.findList {
+    val a = LET("a", 10)
+    val b = LET("b", 20)
+
+    RETURN((a + b) / 2.aql)  // → 15
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Operators <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>%</code> work on AQL expressions
+        and produce AQL arithmetic.</p>
+
+    <h2>Document lookups</h2>
+
+    <Code code={`// Fetch a specific document by ID
+val doc = DOCUMENT(repo, "persons/abc123")
+
+// Fetch multiple documents
+val docs = DOCUMENT(repo, listOf("id1", "id2", "id3"))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Type checking and casting</h2>
+
+    <Code code={`FOR(repo) { person ->
+    FILTER(IS_NOT_NULL(person.email))
+    FILTER(IS_STRING(person.name))
+
+    // Type casting
+    val ageStr = TO_STRING(person.age)
+    val count = TO_NUMBER(person.tags.LENGTH())
+    RETURN(person)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Array operations in queries</h2>
+
+    <Code code={`@Vault
+data class Team(val name: String, val members: List<String>)
+
+FOR(repo) { team ->
+    // Check if any member matches
+    FILTER(team.members ANY EQ("Alice"))
+
+    // Check all members
+    FILTER(team.members ALL NE(""))
+
+    // Array functions
+    val count = LENGTH(team.members)
+    val sorted = SORTED(team.members)
+    val unique = UNIQUE(team.members)
+
+    RETURN(team)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Real-world example: complete repository</h2>
+
+    <p>A production repository combining CRUD, custom queries, indexes, hooks, and TTL:</p>
+
+    <Code code={`@Vault
+data class AuthRecord(
+    val realm: String,
+    val ownerId: String,
+    val type: String,
+    val data: Map<String, Any?> = emptyMap(),
+    val expiresAt: Long? = null,
+    override val createdAt: MpInstant = MpInstant.Epoch,
+    override val updatedAt: MpInstant = MpInstant.Epoch,
+) : Timestamped {
+    override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
+    override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+}
+
+class AuthRecordsRepo(
+    driver: KarangoDriver,
+    timestamped: TimestampedHook,
+) : EntityRepository<AuthRecord>(
+    name = "auth_records",
+    storedType = kType(),
+    driver = driver,
+    hooks = Hooks.of<AuthRecord>(timestamped.onBeforeSave()),
+) {
+    override fun IndexBuilder<AuthRecord>.buildIndexes() {
+        persistentIndex {
+            field { realm }
+            field { ownerId }
+            field { type }
+        }
+        ttlIndex {
+            field { expiresAt }
+        }
+    }
+
+    suspend fun findLatest(
+        realm: String,
+        type: String,
+        owner: String,
+    ): Stored<AuthRecord>? = findFirst {
+        FOR(repo) { r ->
+            FILTER(r.type EQ type)
+            FILTER(r.realm EQ realm)
+            FILTER(r.ownerId EQ owner)
+            SORT(r.createdAt.ts.DESC)
+            LIMIT(1)
+            RETURN(r)
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+</DocsLayout>

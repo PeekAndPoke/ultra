@@ -1,11 +1,9 @@
 package de.peekandpoke.ultra.datetime
 
 import common.datetime.DateTimeRangeConverter
-import de.peekandpoke.ultra.datetime.ComparableTo
 import kotlinx.serialization.Serializable
 
 @Serializable
-// TODO: test all of me
 data class MpClosedLocalDateRange(
     val from: MpLocalDate,
     val to: MpLocalDate,
@@ -36,7 +34,6 @@ data class MpClosedLocalDateRange(
             MpClosedLocalDateRange(from = from, to = forever.to)
     }
 
-    // TODO: test me
     @Serializable
     data class Partial(
         val from: MpLocalDate?,
@@ -90,18 +87,15 @@ data class MpClosedLocalDateRange(
         to = to,
     )
 
-    // TODO: Test me
     fun contains(date: MpLocalDate): Boolean {
         return date in from..to
     }
 
-    // TODO: Test me
     fun contains(other: MpClosedLocalDateRange): Boolean {
         return (isValid && other.isValid) &&
                 (from <= other.from && to >= other.to)
     }
 
-    // TODO: Test me
     fun intersects(other: MpClosedLocalDateRange): Boolean {
         return (isValid && other.isValid) && (
                 (other.from >= from && other.from < to) ||

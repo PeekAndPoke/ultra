@@ -37,6 +37,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * Full-featured ArangoDB repository with CRUD operations, batch inserts, hooks, and index management.
+ *
+ * Extend this class and provide a collection name, stored type, and driver.
+ * Override [IndexBuilder.buildIndexes] to define persistent and TTL indexes.
+ *
+ * Lifecycle hooks ([Hooks.OnBeforeSaveHook], [Hooks.OnAfterSaveHook], [Hooks.OnAfterDeleteHook])
+ * are called on insert, save, and remove operations.
+ */
 abstract class EntityRepository<T : Any>(
     name: String,
     storedType: TypeRef<T>,

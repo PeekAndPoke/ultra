@@ -2,6 +2,7 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import { kraftSidebar } from '../../../data/kraft-sidebar';
 import { Code } from 'astro:components';
+import {kraftExamples} from '../../../data/site';
 ---
 
 <DocsLayout title="Kraft" sidebar={kraftSidebar} description="Build single-page applications in pure Kotlin with Kraft">
@@ -100,7 +101,30 @@ import { Code } from 'astro:components';
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<div class="not-prose mt-8">
+    <h2>Example Projects</h2>
+
+    <p>Clone and run these standalone example repos to see Kraft in action:</p>
+
+    <div class="not-prose grid grid-cols-1 sm:grid-cols-3 gap-4 my-8">
+        <a href={kraftExamples.helloworld} target="_blank" rel="noopener"
+           class="block p-4 rounded-lg border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
+            <h3 class="text-white font-semibold mb-1">Hello World</h3>
+            <p class="text-sm text-gray-400">Minimal project — mount a component, see it render.</p>
+        </a>
+        <a href={kraftExamples.router} target="_blank" rel="noopener"
+           class="block p-4 rounded-lg border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
+            <h3 class="text-white font-semibold mb-1">Router Demo</h3>
+            <p class="text-sm text-gray-400">Multi-page app with parameterized routes and form handling with
+                Mutator.</p>
+        </a>
+        <a href={kraftExamples.remote} target="_blank" rel="noopener"
+           class="block p-4 rounded-lg border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
+            <h3 class="text-white font-semibold mb-1">Remote API</h3>
+            <p class="text-sm text-gray-400">Consume REST APIs and display results with routing and SemanticUI.</p>
+        </a>
+    </div>
+
+    <div class="not-prose mt-8">
   <a href="/ultra/kraft/getting-started" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
     Get started &rarr;
   </a>

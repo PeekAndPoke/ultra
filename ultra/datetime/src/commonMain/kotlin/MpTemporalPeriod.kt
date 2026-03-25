@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.datetime
 
-// TODO: Test me
 interface MpTemporalPeriod {
     val years: Int
     val months: Int
