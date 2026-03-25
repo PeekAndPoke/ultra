@@ -91,9 +91,27 @@ class Counter(ctx: NoProps) : PureComponent(ctx) {
 [Router Demo](https://github.com/PeekAndPoke/kraft-example-router) |
 [Remote API](https://github.com/PeekAndPoke/kraft-example-remote)
 
+### [Mutator](https://peekandpoke.io/ultra/mutator/) — Mutate the Immutable
+
+KSP-generated mutable wrappers for immutable data classes. Inspired by immer.js. Nested mutations, automatic change
+propagation, dirty tracking — zero boilerplate.
+
+```kotlin
+// Without Mutator: nested copy() hell
+val updated = company.copy(
+    ceo = company.ceo.copy(
+        address = company.ceo.address.copy(city = "Amsterdam")
+    )
+)
+
+// With Mutator: just mutate it
+val updated = company.mutate {
+    ceo.address.city = "Amsterdam"
+}
+```
+
 ### Coming Soon
 
-- **Mutator** — KSP-generated code for mutating deeply nested immutable data structures
 - **Funktor** — Full-stack Kotlin framework on Ktor (auth, REST, clustering, static web)
 
 ## Getting Started
@@ -102,11 +120,13 @@ All libraries are published on [Maven Central](https://central.sonatype.com/name
 
 ```kotlin
 dependencies {
-    implementation("io.peekandpoke.ultra:kontainer:0.102.0")
-    implementation("io.peekandpoke.ultra:slumber:0.102.0")
-    implementation("io.peekandpoke.ultra:streams:0.102.0")
-    implementation("io.peekandpoke.ultra:karango-core:0.102.0")
-    implementation("io.peekandpoke.kraft:core:0.102.0")
+    implementation("io.peekandpoke.ultra:mutator-core:0.103.0")
+    ksp("io.peekandpoke.ultra:mutator-ksp:0.103.0")
+    implementation("io.peekandpoke.ultra:kontainer:0.103.0")
+    implementation("io.peekandpoke.ultra:slumber:0.103.0")
+    implementation("io.peekandpoke.ultra:streams:0.103.0")
+    implementation("io.peekandpoke.ultra:karango-core:0.103.0")
+    implementation("io.peekandpoke.kraft:core:0.103.0")
 }
 ```
 

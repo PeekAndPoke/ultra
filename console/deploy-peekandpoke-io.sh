@@ -7,5 +7,5 @@ pnpm run build
 
 cd ..
 
-echo "Uploading JS files"
-scp -r ./docs-site/dist/* finzo:/www/htdocs/w0057ac0/peekandpoke.io
+echo "Deploying to peekandpoke.io"
+rsync -av --delete ./docs-site/dist/ finzo:/www/htdocs/w0057ac0/peekandpoke.io/
