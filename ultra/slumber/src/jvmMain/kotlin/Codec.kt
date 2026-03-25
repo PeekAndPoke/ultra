@@ -1,6 +1,9 @@
 package de.peekandpoke.ultra.slumber
 
 import de.peekandpoke.ultra.common.TypedAttributes
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.ExperimentalExtendedContracts
+import kotlin.contracts.contract
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection
@@ -56,10 +59,11 @@ open class Codec(
 
     fun getAwaker(type: KType): Awaker = config.getAwaker(type)
 
+    @OptIn(ExperimentalContracts::class, ExperimentalExtendedContracts::class)
     fun awake(type: KType, data: Any?): Any? {
-//        contract {
-//            (data != null) implies (returnsNotNull())
-//        }
+        contract {
+            (data != null) implies (returnsNotNull())
+        }
 
         return awakeInternal(type, data)
     }

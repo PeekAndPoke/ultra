@@ -1,0 +1,238 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { kraftSidebar } from '../../../data/kraft-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="State Management in Kraft" sidebar={kraftSidebar} description="Reactive state with value(), streams, and subscriptions in Kraft">
+
+<h1>State Management</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Three mechanisms, each for a different job. No ceremony, no boilerplate.
+</p>
+
+<h2>1. Local state with <code>value()</code></h2>
+
+<p>The simplest and most common pattern. Declare a property with <code>value()</code>, change it, and the component redraws:</p>
+
+<Code code={`class Counter(ctx: NoProps) : PureComponent(ctx) {
+    private var count by value(0)
+
+    override fun VDom.render() {
+        div { +"Count: ${'$'}count" }
+        ui.button {
+            onClick { count++ }  // This triggers a redraw
+            +"Increment"
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p><code>value()</code> uses Kotlin's <strong>delegated properties</strong>. Under the hood, the setter calls <code>triggerRedraw()</code> — you don't need to think about it.</p>
+
+<h3>With change callbacks</h3>
+
+<p>React to state changes:</p>
+
+<Code code={`private var query by value("") { newValue ->
+    console.log("Query changed to: ${'$'}newValue")
+    search(newValue)
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h3>Complex state</h3>
+
+<p>Use a data class when you have related state:</p>
+
+<Code code={`data class State(
+    val name: String = "",
+    val email: String = "",
+    val agreed: Boolean = false,
+)
+
+private var state by value(State())
+
+// Update one field — immutable copy, automatic redraw
+onClick { state = state.copy(agreed = true) }`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>2. Stream-backed state</h2>
+
+<p>For state that should be debounced, throttled, or transformed before triggering a redraw:</p>
+
+<Code code={`class SearchBox(ctx: NoProps) : PureComponent(ctx) {
+
+    // Debounce input by 300ms before searching
+    private var query by stream("") {
+        it.debounce(300.milliseconds)
+    } handler { debouncedQuery ->
+        performSearch(debouncedQuery)
+    }
+
+    override fun VDom.render() {
+        ui.input {
+            input {
+                value = query
+                onInput { query = it.target.asDynamic().value as String }
+            }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>The stream config lambda lets you apply operators from the Ultra streams library — <code>debounce</code>, <code>throttle</code>, <code>map</code>, <code>filter</code>, and more.</p>
+
+<h2>3. Subscribing to external streams</h2>
+
+<p>When state lives outside the component — global state, shared data, tickers:</p>
+
+<Code code={`class LiveDashboard(ctx: NoProps) : PureComponent(ctx) {
+
+    // Subscribe to a global auth state
+    private val auth by subscribingTo(AppState.auth)
+
+    // Subscribe to a ticker that emits every second
+    private val tick by subscribingTo(ticker(1.seconds))
+
+    override fun VDom.render() {
+        div { +"Logged in as: ${'$'}{auth.user?.name}" }
+        div { +"Uptime: ${'$'}{tick.count}s" }
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p><strong>Key behaviors:</strong></p>
+<ul>
+  <li>The component redraws whenever the stream emits a new value</li>
+  <li>Subscriptions auto-unsubscribe when the component unmounts — no memory leaks</li>
+  <li>You can subscribe to any <code>Stream&lt;T&gt;</code> from the Ultra streams library</li>
+</ul>
+
+<h3>Reactive transformations</h3>
+
+<p>Combine streams with operators:</p>
+
+<Code code={`// A sine wave that updates every 100ms
+private val wave by subscribingTo(
+    ticker(100.milliseconds).map { tick ->
+        sin(tick.count * 10 * PI / 180.0)
+    }
+)`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Persisting state in local storage</h2>
+
+<p>Kraft integrates with browser local storage for state that should survive page reloads:</p>
+
+<Code code={`@Serializable
+data class UserPreferences(val theme: String = "dark", val lang: String = "en")
+
+class SettingsPage(ctx: NoProps) : PureComponent(ctx) {
+
+    // This state persists in localStorage under key "user-prefs"
+    private val prefs = StreamSource(UserPreferences())
+        .persistInLocalStorage("user-prefs", UserPreferences.serializer())
+
+    private val currentPrefs by subscribingTo(prefs)
+
+    override fun VDom.render() {
+        div { +"Theme: ${'$'}{currentPrefs.theme}" }
+
+        ui.button {
+            onClick {
+                prefs(currentPrefs.copy(theme = "light"))
+            }
+            +"Switch to light"
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>The value is serialized to JSON and stored in <code>localStorage</code>. On next page load, it's restored automatically.</p>
+
+<h2>Async data loading</h2>
+
+<p>The <code>dataLoader</code> pattern handles the loading/error/loaded lifecycle:</p>
+
+<Code code={`class UserProfile(ctx: Ctx<Props>) : Component<UserProfile.Props>(ctx) {
+    data class Props(val userId: String)
+
+    private val loader = dataLoader {
+        flow {
+            val user = api.getUser(props.userId)
+            emit(user)
+        }
+    }
+
+    override fun VDom.render() {
+        loader(this) {
+            loading {
+                ui.placeholder.segment {
+                    ui.active.loader { }
+                }
+            }
+            error { err ->
+                ui.negative.message {
+                    +"Failed to load user: ${'$'}{err.message}"
+                }
+            }
+            loaded { user ->
+                ui.card {
+                    noui.content {
+                        ui.header { +user.name }
+                        noui.description { +user.email }
+                    }
+                }
+            }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>This gives you:</p>
+<ul>
+  <li>Automatic loading state on first render</li>
+  <li>Error handling if the flow throws</li>
+  <li>Type-safe access to the loaded data</li>
+  <li>A <code>reload()</code> method to refresh</li>
+</ul>
+
+<h2>Patterns summary</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>What you need</th>
+      <th>Use this</th>
+      <th>Example</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Simple local state</td>
+      <td><code>var x by value(0)</code></td>
+      <td>Counter, toggles</td>
+    </tr>
+    <tr>
+      <td>Debounced/throttled state</td>
+      <td><code>stream("") &#123; it.debounce(300.ms) &#125;</code></td>
+      <td>Search input</td>
+    </tr>
+    <tr>
+      <td>Global/shared state</td>
+      <td><code>val x by subscribingTo(stream)</code></td>
+      <td>Auth, preferences</td>
+    </tr>
+    <tr>
+      <td>Persistent state</td>
+      <td><code>StreamSource().persistInLocalStorage()</code></td>
+      <td>User settings</td>
+    </tr>
+    <tr>
+      <td>Async data</td>
+      <td><code>dataLoader &#123; flow &#123; emit(data) &#125; &#125;</code></td>
+      <td>API calls</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/kraft/routing" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Routing &rarr;
+  </a>
+</div>
+
+</DocsLayout>

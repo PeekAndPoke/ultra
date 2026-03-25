@@ -1,0 +1,182 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { kraftSidebar } from '../../../data/kraft-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Getting Started with Kraft" sidebar={kraftSidebar} description="Set up a Kraft project and build your first component">
+
+<h1>Getting Started</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  From zero to a working Kraft app in five minutes.
+</p>
+
+<h2>Prerequisites</h2>
+
+<ul>
+  <li><strong>JDK 17+</strong> — Kraft compiles Kotlin to JavaScript, but the build runs on the JVM</li>
+  <li><strong>Gradle</strong> — the build system (wrapper included in most projects)</li>
+</ul>
+
+<h2>1. Set up your Gradle project</h2>
+
+<p>In your <code>build.gradle.kts</code>:</p>
+
+<Code code={`plugins {
+    kotlin("multiplatform") version "2.2.20"
+    kotlin("plugin.serialization") version "2.2.20"
+}
+
+kotlin {
+    js {
+        browser {
+            testTask { }
+        }
+        binaries.executable()
+    }
+
+    sourceSets {
+        jsMain {
+            dependencies {
+                // Kraft core
+                implementation("io.peekandpoke.kraft:core:0.102.0")
+
+                // SemanticUI integration (optional but recommended)
+                implementation("io.peekandpoke.kraft:semanticui:0.102.0")
+            }
+        }
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<h2>2. Create your entry point</h2>
+
+<p>Create <code>src/jsMain/resources/index.html</code>:</p>
+
+<Code code={`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Kraft App</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.8/dist/semantic.min.css">
+</head>
+<body>
+    <div id="app"></div>
+    <script src="your-project-name.js"></script>
+</body>
+</html>`} lang="html" theme="github-dark" />
+
+<h2>3. Write your first app</h2>
+
+<p>Create <code>src/jsMain/kotlin/main.kt</code>:</p>
+
+<Code code={`import de.peekandpoke.kraft.components.*
+import de.peekandpoke.kraft.routing.Static
+import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.kraft.vdom.preact.PreactVDomEngine
+import de.peekandpoke.ultra.semanticui.ui
+import kotlinx.html.*
+
+// Define the app and its routes
+val app = kraftApp {
+    semanticUI()
+    routing {
+        mount(Static("")) { HomePage() }
+    }
+}
+
+// Entry point
+fun main() {
+    app.mount("#app", PreactVDomEngine()) {
+        RouterComponent()
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<h2>4. Create your first component</h2>
+
+<p>Create <code>src/jsMain/kotlin/HomePage.kt</code>:</p>
+
+<Code code={`import de.peekandpoke.kraft.components.*
+import de.peekandpoke.kraft.vdom.VDom
+import de.peekandpoke.ultra.semanticui.ui
+import kotlinx.html.*
+
+// Factory function — this is how other components use yours
+@Suppress("FunctionName")
+fun Tag.HomePage() = comp {
+    HomePage(it)
+}
+
+// The component class
+class HomePage(ctx: NoProps) : PureComponent(ctx) {
+
+    // Reactive state — changing this redraws the component
+    private var count by value(0)
+
+    override fun VDom.render() {
+        ui.container {
+            ui.segment {
+                ui.header H1 { +"Hello from Kraft!" }
+
+                p { +"You clicked the button ${'$'}count times." }
+
+                ui.blue.button {
+                    onClick { count++ }
+                    +"Click me"
+                }
+            }
+        }
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<h2>5. Run it</h2>
+
+<Code code={`./gradlew -t --parallel jsRun`} lang="bash" theme="github-dark" />
+
+<p>The <code>-t</code> flag enables continuous build — save a file and the browser refreshes.</p>
+
+<h2>What just happened?</h2>
+
+<p>Let's break down the patterns you just used:</p>
+
+<h3>The factory function pattern</h3>
+
+<Code code={`@Suppress("FunctionName")
+fun Tag.HomePage() = comp {
+    HomePage(it)
+}`} lang="kotlin" theme="github-dark" />
+
+<p>Every component has a <strong>factory function</strong> — an extension on <code>Tag</code> that creates the component via <code>comp &#123; &#125;</code>. This is how you compose components in the HTML DSL:</p>
+
+<Code code={`override fun VDom.render() {
+    div {
+        HomePage()           // Just call the factory function
+        Counter(start = 5)   // With props
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>Reactive state with <code>value()</code></h3>
+
+<Code code={`private var count by value(0)`} lang="kotlin" theme="github-dark" />
+
+<p><code>value()</code> creates a <strong>delegated property</strong> that automatically triggers a redraw when changed. No <code>setState()</code>, no actions, no dispatchers — just assign a new value.</p>
+
+<h3>The HTML DSL</h3>
+
+<Code code={`ui.container {
+    ui.segment {
+        ui.header H1 { +"Hello" }
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<p>This is <a href="https://github.com/Kotlin/kotlinx.html">kotlinx.html</a> with the SemanticUI DSL layered on top. Standard HTML tags (<code>div</code>, <code>p</code>, <code>button</code>) work alongside SemanticUI helpers (<code>ui.segment</code>, <code>ui.button</code>).</p>
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/kraft/components" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Learn about components &rarr;
+  </a>
+</div>
+
+</DocsLayout>

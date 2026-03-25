@@ -1,0 +1,343 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { kraftSidebar } from '../../../data/kraft-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Forms & Validation in Kraft" sidebar={kraftSidebar} description="Type-safe forms with validation, draft/commit pattern, and SemanticUI fields in Kraft">
+
+<h1>Forms &amp; Validation</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Type-safe form fields, built-in validation rules, and the draft/commit pattern.
+</p>
+
+<h2>The basics</h2>
+
+<p>Every form field follows the same pattern: <strong>current value + onChange callback</strong>.</p>
+
+<Code code={`class ContactForm(ctx: NoProps) : PureComponent(ctx) {
+    private var name by value("")
+    private var email by value("")
+
+    override fun VDom.render() {
+        ui.form {
+            UiInputField(name, { name = it }) {
+                label("Name")
+                placeholder("Enter your name")
+            }
+
+            UiInputField(email, { email = it }) {
+                label("Email")
+                placeholder("you@example.com")
+            }
+
+            ui.blue.button {
+                onClick { submit() }
+                +"Send"
+            }
+        }
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<p><code>UiInputField</code> is the workhorse — it handles strings, numbers, dates, and more.</p>
+
+<h2>Field types</h2>
+
+<h3>Text input</h3>
+
+<Code code={`UiInputField(value, { value = it }) {
+    label("Username")
+    placeholder("Choose a username")
+    rightClearingIcon()  // Shows an X to clear the field
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>Number input</h3>
+
+<Code code={`UiInputField(price, { price = it }) {
+    label("Price")
+    step(0.01)
+    leftIcon { icon.dollar_sign() }
+}`} lang="kotlin" theme="github-dark" />
+
+<p>The type is inferred from the value — pass an <code>Int</code>, get an integer field. Pass a <code>Double</code>, get a decimal field.</p>
+
+<h3>Password</h3>
+
+<Code code={`UiPasswordField(password, { password = it }) {
+    label("Password")
+    revealPasswordIcon()  // Toggle visibility
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>Date and time</h3>
+
+<Code code={`UiDateField(::birthday) {
+    label("Birthday")
+}
+
+UiDateTimeField(::appointmentTime) {
+    label("Appointment")
+}
+
+UiTimeField(::startTime) {
+    label("Start time")
+}`} lang="kotlin" theme="github-dark" />
+
+<p>These work with Ultra's multiplatform date types (<code>MpLocalDate</code>, <code>MpLocalDateTime</code>, <code>MpLocalTime</code>).</p>
+
+<h3>Textarea</h3>
+
+<Code code={`UiTextArea(notes, { notes = it }) {
+    label("Notes")
+    placeholder("Additional information...")
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>Checkbox</h3>
+
+<Code code={`// Simple boolean
+UiCheckboxField(agreed, { agreed = it }) {
+    label("I agree to the terms")
+}
+
+// Toggle style
+UiCheckboxField(notifications, { notifications = it }) {
+    label("Enable notifications")
+    toggle()
+}
+
+// Slider style with custom values
+UiCheckboxField(
+    value = status,
+    off = "inactive",
+    on = "active",
+    onChange = { status = it },
+) {
+    label("Status")
+    slider()
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>Nullable fields</h3>
+
+<p>Fields that can be empty/null:</p>
+
+<Code code={`UiInputField.nullable(middleName, { middleName = it }) {
+    label("Middle name (optional)")
+}`} lang="kotlin" theme="github-dark" />
+
+<h2>Validation</h2>
+
+<p>Add validation rules with <code>accepts()</code>:</p>
+
+<Code code={`UiInputField(username, { username = it }) {
+    label("Username")
+    accepts(
+        notBlank(),
+        minLength(3),
+        maxLength(20),
+        matchesPattern(Regex("^[a-z0-9_]+${'$'}")) {
+            "Only lowercase letters, numbers, and underscores"
+        },
+    )
+}
+
+UiInputField(age, { age = it }) {
+    label("Age")
+    accepts(
+        greaterThan(0.0),
+        lessThan(150.0),
+    )
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>Built-in validators</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Validator</th>
+      <th>What it checks</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>notBlank()</code></td>
+      <td>Not empty or whitespace</td>
+    </tr>
+    <tr>
+      <td><code>minLength(n)</code></td>
+      <td>Minimum character count</td>
+    </tr>
+    <tr>
+      <td><code>maxLength(n)</code></td>
+      <td>Maximum character count</td>
+    </tr>
+    <tr>
+      <td><code>greaterThan(n)</code></td>
+      <td>Numeric minimum (exclusive)</td>
+    </tr>
+    <tr>
+      <td><code>lessThan(n)</code></td>
+      <td>Numeric maximum (exclusive)</td>
+    </tr>
+    <tr>
+      <td><code>matchesPattern(regex)</code></td>
+      <td>Regex match</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Each validator can take a custom error message:</p>
+
+<Code code={`accepts(
+    notBlank() { "This field is required" },
+    minLength(3) { "Must be at least 3 characters" },
+)`} lang="kotlin" theme="github-dark" />
+
+<p>Validation errors render automatically below the field as red labels.</p>
+
+<h2>The form controller</h2>
+
+<p>Use <code>formController()</code> to track the overall form validity:</p>
+
+<Code code={`class RegistrationForm(ctx: NoProps) : PureComponent(ctx) {
+    private var name by value("")
+    private var email by value("")
+    private val formCtrl = formController()
+
+    override fun VDom.render() {
+        ui.form {
+            UiInputField(name, { name = it }) {
+                label("Name")
+                accepts(notBlank())
+            }
+
+            UiInputField(email, { email = it }) {
+                label("Email")
+                accepts(notBlank())
+            }
+
+            // Button disabled when form is invalid
+            ui.blue.button.given(!formCtrl.isValid) { disabled }.then {
+                onClick {
+                    if (formCtrl.validate()) {
+                        // All fields passed validation
+                        submitForm()
+                    }
+                }
+                +"Register"
+            }
+        }
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<p><code>formCtrl.isValid</code> reactively reflects whether all fields pass validation.
+<code>formCtrl.validate()</code> triggers validation on all fields and returns <code>true</code> if everything passes.</p>
+
+<h2>The draft/commit pattern</h2>
+
+<p>For forms where you want to edit a copy and only commit changes on submit:</p>
+
+<Code code={`class ProfileEditor(ctx: NoProps) : PureComponent(ctx) {
+    data class Profile(
+        val name: String = "",
+        val bio: String = "",
+        val website: String = "",
+    )
+
+    // The committed state
+    private var profile by value(Profile())
+    // The editing copy
+    private var draft by value(profile)
+    // Tracks validity
+    private val formCtrl = formController()
+
+    override fun VDom.render() {
+        ui.form {
+            UiInputField(draft.name, { draft = draft.copy(name = it) }) {
+                label("Name")
+                accepts(notBlank())
+            }
+
+            UiInputField(draft.bio, { draft = draft.copy(bio = it) }) {
+                label("Bio")
+            }
+
+            UiInputField(draft.website, { draft = draft.copy(website = it) }) {
+                label("Website")
+            }
+
+            // Only enable submit when valid AND changed
+            val canSubmit = formCtrl.isValid && draft != profile
+
+            ui.buttons {
+                ui.blue.button.given(!canSubmit) { disabled }.then {
+                    onClick {
+                        if (formCtrl.validate()) {
+                            profile = draft  // Commit changes
+                        }
+                    }
+                    +"Save"
+                }
+
+                ui.basic.button {
+                    onClick {
+                        draft = profile  // Discard changes
+                        formCtrl.resetAllFields()
+                    }
+                    +"Reset"
+                }
+            }
+        }
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<p>This pattern gives you:</p>
+<ul>
+  <li><strong>Edit isolation</strong> — changes don't affect the real state until committed</li>
+  <li><strong>Dirty detection</strong> — <code>draft != profile</code> tells you if anything changed</li>
+  <li><strong>Easy reset</strong> — just copy the committed state back to draft</li>
+  <li><strong>Structural equality</strong> — data classes give you correct comparison for free</li>
+</ul>
+
+<h2>Field appearance</h2>
+
+<h3>Icons</h3>
+
+<Code code={`UiInputField(search, { search = it }) {
+    leftIcon { icon.search() }
+}
+
+UiInputField(amount, { amount = it }) {
+    leftIcon { green.percent() }
+    rightClearingIcon()
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>Labels (attached)</h3>
+
+<Code code={`UiInputField(weight, { weight = it }) {
+    rightLabel { +"kg" }
+}
+
+UiInputField(url, { url = it }) {
+    leftLabel { +"https://" }
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>Disabled state</h3>
+
+<Code code={`UiInputField(readonly, { readonly = it }) {
+    label("Read-only field")
+    disabled(true)
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>Auto-focus</h3>
+
+<Code code={`UiInputField(query, { query = it }) {
+    autofocusOnDesktop(responsive)  // Only auto-focus on desktop
+}`} lang="kotlin" theme="github-dark" />
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/kraft/semantic-ui" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    SemanticUI DSL &rarr;
+  </a>
+</div>
+
+</DocsLayout>

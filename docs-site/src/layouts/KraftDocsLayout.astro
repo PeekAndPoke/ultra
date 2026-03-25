@@ -1,0 +1,10 @@
+---
+import DocsLayout from './DocsLayout.astro';
+import { kraftSidebar } from '../data/kraft-sidebar';
+
+const { frontmatter } = Astro.props;
+---
+
+<DocsLayout title={frontmatter.title} description={frontmatter.description} sidebar={kraftSidebar}>
+  <slot />
+</DocsLayout>

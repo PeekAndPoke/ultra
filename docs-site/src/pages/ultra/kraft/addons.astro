@@ -1,0 +1,308 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { kraftSidebar } from '../../../data/kraft-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Kraft Addons" sidebar={kraftSidebar} description="Kotlin wrappers for Chart.js, PDF.js, Prism, Konva, and more in Kraft">
+
+<h1>Addons</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Kraft wraps popular JavaScript libraries so you can use them from Kotlin without touching JS.
+</p>
+
+<h2>Available addons</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Addon</th>
+      <th>Wraps</th>
+      <th>What it does</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>chartjs</code></td>
+      <td><a href="https://www.chartjs.org/">Chart.js</a></td>
+      <td>Bar, line, pie, radar charts</td>
+    </tr>
+    <tr>
+      <td><code>pdfjs</code></td>
+      <td><a href="https://mozilla.github.io/pdf.js/">pdf.js</a></td>
+      <td>Render PDFs in-browser</td>
+    </tr>
+    <tr>
+      <td><code>prismjs</code></td>
+      <td><a href="https://prismjs.com/">Prism</a></td>
+      <td>Syntax highlighting</td>
+    </tr>
+    <tr>
+      <td><code>konva</code></td>
+      <td><a href="https://konvajs.org/">Konva</a></td>
+      <td>2D canvas graphics</td>
+    </tr>
+    <tr>
+      <td><code>marked</code></td>
+      <td><a href="https://marked.js.org/">marked</a> + DOMPurify</td>
+      <td>Markdown rendering</td>
+    </tr>
+    <tr>
+      <td><code>signaturepad</code></td>
+      <td><a href="https://github.com/nicklone/signature-pad">SignaturePad</a></td>
+      <td>Capture handwritten signatures</td>
+    </tr>
+    <tr>
+      <td><code>avatars</code></td>
+      <td>MinIdenticons</td>
+      <td>Generate SVG avatars from strings</td>
+    </tr>
+    <tr>
+      <td><code>browserdetect</code></td>
+      <td><a href="https://github.com/nicklone/bowser">Bowser</a></td>
+      <td>Browser and OS detection</td>
+    </tr>
+    <tr>
+      <td><code>jwtdecode</code></td>
+      <td>jwt-decode</td>
+      <td>Decode JWT tokens client-side</td>
+    </tr>
+    <tr>
+      <td><code>nxcompile</code></td>
+      <td>@nx-js/compiler-util</td>
+      <td>Sandbox JS code execution</td>
+    </tr>
+    <tr>
+      <td><code>sourcemappedstacktrace</code></td>
+      <td>sourcemapped-stacktrace</td>
+      <td>Map minified stack traces</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Adding addons</h2>
+
+<p>In your <code>build.gradle.kts</code>:</p>
+
+<Code code={`jsMain {
+    dependencies {
+        implementation("io.peekandpoke.kraft:addons-chartjs:0.102.0")
+        implementation("io.peekandpoke.kraft:addons-prismjs:0.102.0")
+        // ... add the ones you need
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Chart.js — Data visualization</h2>
+
+<p>Render reactive charts that update with your component state:</p>
+
+<Code code={`class SalesChart(ctx: NoProps) : PureComponent(ctx) {
+
+    // Animate the chart — multiply data by a sine wave
+    private val factor by subscribingTo(
+        ticker(1.seconds).map { 1.0 + sin(it.count * 10 * PI / 180.0) }
+    )
+
+    override fun VDom.render() {
+        div {
+            css { height = 50.vh }
+
+            ChartJs(chartJsData {
+                jsObject {
+                    type = "bar"
+                    data = jsObject {
+                        labels = arrayOf("Jan", "Feb", "Mar", "Apr", "May")
+                        datasets = arrayOf(jsObject {
+                            label = "Sales"
+                            data = arrayOf(12, 19, 3, 5, 8)
+                                .map { it * factor }
+                                .toTypedArray()
+                            backgroundColor = value(
+                                "rgba(99, 132, 255, 0.5)",
+                            )
+                        })
+                    }
+                }
+            })
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>The chart re-renders whenever <code>factor</code> changes — reactive charts with no extra wiring.</p>
+
+<h2>Prism.js — Syntax highlighting</h2>
+
+<p>Display code with syntax highlighting:</p>
+
+<Code code={`override fun VDom.render() {
+    PrismKotlin(""${'"'}
+        fun greet(name: String) = "Hello, ${'$'}{'${'$'}'}name!"
+    ""${'"'}.trimIndent()) {
+        lineNumbers()
+        copyToClipboard()
+    }
+
+    PrismJson(""${'"'}{ "status": "ok" }""${'"'}) {
+        lineNumbers(start = 1)
+    }
+
+    PrismHtml("<div>Hello</div>") {
+        lineNumbers(softWrap = true)
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Available language components: <code>PrismKotlin</code>, <code>PrismJava</code>, <code>PrismJavascript</code>, <code>PrismJson</code>, <code>PrismHtml</code>, <code>PrismCss</code>, and more.</p>
+
+<p>Plugins: <code>lineNumbers()</code>, <code>copyToClipboard()</code>, <code>inlineColor()</code>.</p>
+
+<h2>PDF.js — PDF viewer</h2>
+
+<p>Embed a scrollable PDF viewer:</p>
+
+<Code code={`override fun VDom.render() {
+    ScrollingPdfViewer(
+        src = PdfSource.Url("https://example.com/document.pdf"),
+        options = ScrollingPdfViewer.Options(
+            maxHeightLandscapeVh = 80,
+            maxHeightPortraitVh = 80,
+            scaleRange = 0.1..3.0,
+        ),
+        onChange = { state ->
+            console.log("Page ${'$'}{state.currentPage} of ${'$'}{state.totalPages}")
+        },
+    )
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Konva — 2D canvas</h2>
+
+<p>Full access to the Konva canvas library for graphics-heavy applications:</p>
+
+<Code code={`class CanvasDemo(ctx: NoProps) : PureComponent(ctx) {
+    init {
+        lifecycle {
+            onMount {
+                dom?.let { container ->
+                    val stage = Stage(jsObject {
+                        this.container = container
+                        width = container.clientWidth
+                        height = container.clientHeight
+                    })
+
+                    val layer = Layer(jsObject<LayerConfig> {
+                        listening = true
+                    })
+                    stage.add(layer)
+
+                    layer.add(Circle(jsObject {
+                        x = 200; y = 200
+                        radius = 50
+                        fill = "#5c7cfa"
+                    }))
+                }
+            }
+        }
+    }
+
+    override fun VDom.render() {
+        div { css { width = 100.pct; height = 400.px } }
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Signature Pad — Capture signatures</h2>
+
+<Code code={`class SignatureCapture(ctx: NoProps) : PureComponent(ctx) {
+    private var signaturePng: FileBase64? by value(null)
+    private val padRef = ComponentRef.Tracker<SignaturePad>()
+
+    override fun VDom.render() {
+        div {
+            css { position = Position.relative; height = 200.px }
+
+            SignaturePad {
+                it.export {
+                    signaturePng = toPng()
+                }
+            }.track(padRef)
+        }
+
+        padRef { pad ->
+            ui.buttons {
+                ui.button {
+                    onClick { pad.clear() }
+                    icon.eraser(); +"Clear"
+                }
+            }
+        }
+
+        signaturePng?.let { png ->
+            img { src = png.asDataUrl() }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Export as PNG, JPG, or SVG with <code>toPng()</code>, <code>toJpg(quality)</code>, <code>toSvg()</code>.</p>
+
+<h2>Marked — Markdown rendering</h2>
+
+<p>Render markdown to HTML with sanitization:</p>
+
+<Code code={`override fun VDom.render() {
+    val markdownSource = ""${'"'}
+        # Hello World
+        - Item 1
+        - Item 2
+
+        ${'`'}${'`'}${'`'}kotlin
+        fun main() = println("Hello!")
+        ${'`'}${'`'}${'`'}
+    ""${'"'}.trimIndent()
+
+    ui.segment {
+        unsafe {
+            marked.use(jsObject { mangle = false; headerIds = false })
+            +markdown2html(markdownSource)
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p><code>marked.use()</code> configures the parser. <code>markdown2html()</code> renders and sanitizes the output via DOMPurify.</p>
+
+<h2>Avatars — Generated identicons</h2>
+
+<p>Generate unique SVG avatars from any string:</p>
+
+<Code code={`// Get an SVG string
+val svg = Avatars.MinIdenticon.get(name = "alice@example.com")
+
+// Get a data URL for use in <img> tags
+val dataUrl = Avatars.MinIdenticon.getDataUrl(name = "alice@example.com")
+
+img { src = dataUrl }`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Script Loader</h2>
+
+<p>Need a JS library that doesn't have a Kraft addon? Load it dynamically:</p>
+
+<Code code={`ui.button {
+    onClick {
+        launch {
+            val result = ScriptLoader.loadJavascript(
+                "https://js.stripe.com/v3/"
+            ).await()
+
+            val stripe = window.asDynamic().Stripe("pk_test_...")
+        }
+    }
+    +"Load Stripe"
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>For ES modules:</p>
+
+<Code code={`val module = ScriptLoader.load(
+    ScriptLoader.Javascript.Module<MyModuleType>(
+        src = "https://esm.sh/my-library@1.0"
+    )
+).await()`} lang="kotlin" theme="vitesse-dark" />
+
+</DocsLayout>

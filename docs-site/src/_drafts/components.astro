@@ -1,0 +1,244 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { kraftSidebar } from '../../../data/kraft-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Kraft Components" sidebar={kraftSidebar} description="Component model, props, lifecycle hooks, and composition in Kraft">
+
+<h1>Components</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Everything in Kraft is a component. Here's how they work.
+</p>
+
+<h2>The component model</h2>
+
+<p>Every Kraft component is a Kotlin class that extends <code>Component&lt;PROPS&gt;</code> and implements one method: <code>render()</code>.</p>
+
+<Code code={`class Greeting(ctx: Ctx<Props>) : Component<Greeting.Props>(ctx) {
+    data class Props(val name: String)
+
+    override fun VDom.render() {
+        h2 { +"Hello, ${'$'}{props.name}!" }
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<p>Alongside the class, you define a <strong>factory function</strong> so other components can use it in the HTML DSL:</p>
+
+<Code code={`@Suppress("FunctionName")
+fun Tag.Greeting(name: String) = comp(
+    Greeting.Props(name = name)
+) { Greeting(it) }`} lang="kotlin" theme="github-dark" />
+
+<p>Now any parent component can write:</p>
+
+<Code code={`override fun VDom.render() {
+    Greeting(name = "World")
+}`} lang="kotlin" theme="github-dark" />
+
+<h2>Component types</h2>
+
+<h3>Component with props</h3>
+
+<p>The most common type. Props are a <code>data class</code> — immutable, type-safe, and IDE-friendly.</p>
+
+<Code code={`class UserCard(ctx: Ctx<Props>) : Component<UserCard.Props>(ctx) {
+    data class Props(
+        val name: String,
+        val email: String,
+        val role: String = "member",  // Default values work
+    )
+
+    override fun VDom.render() {
+        ui.card {
+            noui.content {
+                ui.header { +props.name }
+                noui.description { +props.email }
+            }
+            noui.extra.content {
+                ui.label { +props.role }
+            }
+        }
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>PureComponent (no props)</h3>
+
+<p>For components that don't need external data — pages, layouts, root components:</p>
+
+<Code code={`class DashboardPage(ctx: NoProps) : PureComponent(ctx) {
+    override fun VDom.render() {
+        ui.container {
+            ui.header H1 { +"Dashboard" }
+            // ...
+        }
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<p><code>PureComponent</code> is a convenience alias for <code>Component&lt;Any?&gt;</code> with <code>NoProps</code> context.</p>
+
+<h3>Functional components</h3>
+
+<p>For simple, stateless rendering — no class needed:</p>
+
+<Code code={`val Badge = component { name: String, color: String ->
+    ui.with(color).label { +name }
+}
+
+// Usage
+override fun VDom.render() {
+    Badge("Admin", "red")
+    Badge("Active", "green")
+}`} lang="kotlin" theme="github-dark" />
+
+<p>Functional components support up to 10 parameters.</p>
+
+<h2>Lifecycle hooks</h2>
+
+<p>Components have four lifecycle hooks:</p>
+
+<Code code={`class LiveSearch(ctx: Ctx<Props>) : Component<LiveSearch.Props>(ctx) {
+    data class Props(val query: String)
+
+    init {
+        lifecycle {
+            onMount {
+                // Component is now in the DOM
+                // ${'`'}dom${'`'} property gives you the HTMLElement
+                console.log("Mounted at", dom?.tagName)
+            }
+
+            onUpdate {
+                // Component re-rendered (props or state changed)
+            }
+
+            onUnmount {
+                // Component removed from DOM
+                // Streams auto-unsubscribe, but clean up other resources here
+            }
+
+            onNextProps { newProps, oldProps ->
+                // Parent sent new props
+                if (newProps.query != oldProps.query) {
+                    reload()
+                }
+            }
+        }
+    }
+
+    override fun VDom.render() {
+        // ...
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<p><strong>Key point:</strong> Stream subscriptions (via <code>subscribingTo()</code>) auto-unsubscribe when the component unmounts. You don't need to clean them up manually.</p>
+
+<h2>Component references</h2>
+
+<p>Sometimes a parent needs to call methods on a child. Use <code>ComponentRef</code>:</p>
+
+<Code code={`class DrawingApp(ctx: NoProps) : PureComponent(ctx) {
+
+    // Create a ref tracker for the SignaturePad component
+    private val padRef = ComponentRef.Tracker<SignaturePad>()
+
+    override fun VDom.render() {
+        // The SignaturePad component, tracked by our ref
+        SignaturePad {
+            // configuration...
+        }.track(padRef)
+
+        // Use the ref to access the child component
+        padRef { pad ->
+            ui.button {
+                onClick { pad.clear() }
+                +"Clear signature"
+            }
+
+            if (pad.isEmpty()) {
+                ui.red.label { +"No signature yet" }
+            }
+        }
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<p>The <code>padRef &#123; ... &#125;</code> block only renders when the ref is attached — it's safe by design.</p>
+
+<h2>Composing components</h2>
+
+<p>Components compose naturally through the HTML DSL:</p>
+
+<Code code={`class App(ctx: NoProps) : PureComponent(ctx) {
+    override fun VDom.render() {
+        div(classes = "app") {
+            NavBar()
+            ui.container {
+                Sidebar()
+                MainContent()
+            }
+            Footer()
+        }
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>Passing callbacks</h3>
+
+<p>Components communicate upward through callback props:</p>
+
+<Code code={`class TodoItem(ctx: Ctx<Props>) : Component<TodoItem.Props>(ctx) {
+    data class Props(
+        val text: String,
+        val done: Boolean,
+        val onToggle: () -> Unit,
+        val onDelete: () -> Unit,
+    )
+
+    override fun VDom.render() {
+        ui.item {
+            ui.checkbox {
+                input(type = InputType.checkBox) {
+                    checked = props.done
+                    onChange { props.onToggle() }
+                }
+                label { +props.text }
+            }
+            ui.red.icon.button {
+                onClick { props.onDelete() }
+                icon.trash()
+            }
+        }
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>The <code>shouldRedraw</code> optimization</h3>
+
+<p>By default, components redraw whenever props change. Override <code>shouldRedraw</code> to skip unnecessary renders:</p>
+
+<Code code={`override fun shouldRedraw(nextProps: Props): Boolean {
+    return nextProps != props  // Only redraw if props actually changed
+}`} lang="kotlin" theme="github-dark" />
+
+<p>Since <code>Props</code> is a data class, <code>!=</code> does a structural comparison — this is efficient and correct.</p>
+
+<h2>Accessing app services</h2>
+
+<p>Components can access app-level services through the attribute system:</p>
+
+<Code code={`override fun VDom.render() {
+    // These are available in any component
+    val router = router           // Navigation
+    val modals = modals           // Show modals
+    val toasts = toasts           // Show notifications
+    val responsive = responsive   // Screen size info
+}`} lang="kotlin" theme="github-dark" />
+
+<p>These are injected via Kraft's attribute system — no manual wiring needed.</p>
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/kraft/state" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    State management &rarr;
+  </a>
+</div>
+
+</DocsLayout>

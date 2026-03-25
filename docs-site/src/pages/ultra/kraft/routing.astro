@@ -1,0 +1,221 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { kraftSidebar } from '../../../data/kraft-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Routing in Kraft" sidebar={kraftSidebar} description="Type-safe routing with params, middleware, and layouts in Kraft">
+
+<h1>Routing</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Type-safe routes with parameters, middleware for auth guards, and nested layouts.
+</p>
+
+<h2>Defining routes</h2>
+
+<p>Routes are objects — not strings scattered across your codebase:</p>
+
+<Code code={`object Nav {
+    val home = Static("/")
+    val about = Static("/about")
+    val userProfile = Route1("/users/{id}")
+    val userPost = Route2("/users/{id}/posts/{postId}")
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p><code>Static</code> is for routes with no parameters. <code>Route1</code> through <code>Route7</code> support 1-7 typed parameters.</p>
+
+<h2>Setting up the router</h2>
+
+<Code code={`val app = kraftApp {
+    routing {
+        usePathStrategy()  // Clean URLs: /users/123
+        // or useHashStrategy() for hash URLs: /#/users/123
+
+        mount(Nav.home) { HomePage() }
+        mount(Nav.about) { AboutPage() }
+
+        mount(Nav.userProfile) { route ->
+            val userId = route["id"]
+            UserProfilePage(userId)
+        }
+
+        catchAll { NotFoundPage() }
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>The <code>catchAll</code> block handles any URL that doesn't match a defined route.</p>
+
+<h2>Rendering the current route</h2>
+
+<p>Drop <code>RouterComponent()</code> wherever you want the active page to appear:</p>
+
+<Code code={`class App(ctx: NoProps) : PureComponent(ctx) {
+    override fun VDom.render() {
+        NavBar()
+        div(classes = "content") {
+            RouterComponent()  // Active page renders here
+        }
+        Footer()
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Navigation</h2>
+
+<h3>Programmatic navigation</h3>
+
+<Code code={`// Navigate to a static route
+router.navToUri(Nav.about())
+
+// Navigate with parameters
+router.navToUri(Nav.userProfile("alice"))
+
+// Navigate handling a click event (prevents default, uses router)
+ui.button {
+    onClick { evt -> router.navToUri(evt, Nav.home()) }
+    +"Go home"
+}
+
+// Go back
+router.navBack()
+
+// Replace current URL (no history entry)
+router.replaceUri(Nav.home())`} lang="kotlin" theme="vitesse-dark" />
+
+<h3>Link-style navigation</h3>
+
+<p>In SemanticUI menus, use the <code>href</code> helper:</p>
+
+<Code code={`ui.menu {
+    noui.item A {
+        onClick { evt -> router.navToUri(evt, Nav.home()) }
+        +"Home"
+    }
+    noui.item A {
+        onClick { evt -> router.navToUri(evt, Nav.about()) }
+        +"About"
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Layouts</h2>
+
+<p>Wrap groups of routes in a shared layout:</p>
+
+<Code code={`routing {
+    layout({ content ->
+        div(classes = "app-shell") {
+            NavBar()
+            div(classes = "main") {
+                Sidebar()
+                div(classes = "content") { content() }
+            }
+            Footer()
+        }
+    }) {
+        mount(Nav.home) { HomePage() }
+        mount(Nav.about) { AboutPage() }
+        mount(Nav.userProfile) { route -> UserProfilePage(route["id"]) }
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>The layout receives a <code>content</code> function — call it where you want the page to render. You can nest layouts too.</p>
+
+<h2>Middleware</h2>
+
+<p>Middleware intercepts navigation before a page renders. The most common use case: auth guards.</p>
+
+<Code code={`routing {
+    // Public routes
+    mount(Nav.login) { LoginPage() }
+
+    // Protected routes
+    middleware({ ctx ->
+        if (AppState.auth.isLoggedIn) {
+            RouterMiddlewareResult.Proceed
+        } else {
+            RouterMiddlewareResult.Redirect(Nav.login())
+        }
+    }) {
+        layout({ LoggedInLayout(it) }) {
+            mount(Nav.dashboard) { DashboardPage() }
+            mount(Nav.profile) { ProfilePage() }
+        }
+    }
+
+    catchAll { NotFoundPage() }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Middleware returns one of:</p>
+<ul>
+  <li><code>RouterMiddlewareResult.Proceed</code> — allow navigation</li>
+  <li><code>RouterMiddlewareResult.Redirect(uri)</code> — redirect to another route</li>
+</ul>
+
+<h2>Reacting to route changes</h2>
+
+<p>Subscribe to the router's <code>current</code> stream from any component:</p>
+
+<Code code={`class BreadCrumb(ctx: NoProps) : PureComponent(ctx) {
+    private val currentRoute by subscribingTo(router.current)
+
+    override fun VDom.render() {
+        ui.breadcrumb {
+            div(classes = "section") { +"Home" }
+            div(classes = "divider") { +"/" }
+            div(classes = "active section") {
+                +currentRoute.uri
+            }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Setting the page title</h2>
+
+<p>Kraft provides a <code>PageTitle</code> component:</p>
+
+<Code code={`class AboutPage(ctx: NoProps) : PureComponent(ctx) {
+    override fun VDom.render() {
+        PageTitle("About Us")
+
+        ui.segment {
+            // page content
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Real-world example</h2>
+
+<p>Here's the routing setup from the funktor-demo admin app:</p>
+
+<Code code={`object Nav {
+    val auth = AuthFrontendRoutes()
+    val dashboard = Static("")
+    val profile = Static("/profile")
+}
+
+fun RootRouterBuilder.mountNav(authState: AuthState<AdminUserModel>) {
+    // Auth module mounts its own routes (login, logout, etc.)
+    authState.mount(this)
+
+    // Auth middleware protects everything below
+    val authMiddleware = authState.routerMiddleWare(Nav.auth.login())
+
+    middleware(authMiddleware) {
+        layout({ LoggedInLayout(it) }) {
+            mount(Nav.dashboard) { DashboardPage() }
+            mount(Nav.profile) { ProfilePage() }
+        }
+    }
+
+    catchAll { NotFoundPage() }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>This pattern — defining routes as objects, mounting them with middleware and layouts — scales well from small apps to large ones.</p>
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/kraft/forms" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Forms &amp; validation &rarr;
+  </a>
+</div>
+
+</DocsLayout>

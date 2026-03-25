@@ -1,0 +1,42 @@
+---
+const currentPath = Astro.url.pathname;
+
+const navLinks = [
+  { href: '/', label: 'Home' },
+  { href: '/ultra/', label: 'Ultra' },
+  { href: '/ultra/kraft/', label: 'Kraft' },
+];
+---
+
+<nav class="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-surface-900/80 backdrop-blur-xl">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="flex h-16 items-center justify-between">
+      <a href="/" class="flex items-center gap-2 text-lg font-bold text-white hover:text-brand-400 transition-colors">
+        PeekAndPoke
+      </a>
+      <div class="flex items-center gap-1">
+        {navLinks.map(link => (
+          <a
+            href={link.href}
+            class:list={[
+              'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+              currentPath === link.href || (link.href !== '/' && currentPath.startsWith(link.href))
+                ? 'text-brand-400 bg-brand-400/10'
+                : 'text-gray-400 hover:text-white hover:bg-white/5',
+            ]}
+          >
+            {link.label}
+          </a>
+        ))}
+        <a
+          href="https://github.com/PeekAndPoke/ultra"
+          target="_blank"
+          rel="noopener"
+          class="ml-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+        >
+          GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>

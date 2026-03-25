@@ -1,0 +1,304 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { kraftSidebar } from '../../../data/kraft-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="SemanticUI DSL" sidebar={kraftSidebar} description="A fluent Kotlin DSL for building FomanticUI interfaces in Kraft">
+
+<h1>SemanticUI DSL</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  A fluent, type-safe Kotlin DSL for the <a href="https://fomantic-ui.com/" target="_blank" rel="noopener">FomanticUI</a> CSS framework.
+  Write <code>ui.blue.button</code> instead of <code>class="ui blue button"</code>.
+</p>
+
+<h2>How it works</h2>
+
+<p>The DSL starts with <code>ui</code> (or <code>noui</code> for non-UI classes) and chains modifiers using Kotlin properties:</p>
+
+<Code code={`// This:
+ui.inverted.blue.segment {
+    ui.header H2 { +"Welcome" }
+    ui.basic.button { +"Click me" }
+}
+
+// Generates this HTML:
+// <div class="ui inverted blue segment">
+//   <h2 class="ui header">Welcome</h2>
+//   <button class="ui basic button">Click me</button>
+// </div>`} lang="kotlin" theme="github-dark" />
+
+<p>Every modifier is a Kotlin property that adds a CSS class. The final call (<code>segment &#123;&#125;</code>, <code>button &#123;&#125;</code>, <code>header H2 &#123;&#125;</code>) creates the HTML element and opens a block for its children.</p>
+
+<h2>Core elements</h2>
+
+<h3>Buttons</h3>
+
+<Code code={`ui.button { +"Default" }
+ui.blue.button { +"Blue" }
+ui.basic.green.button { +"Outlined green" }
+ui.icon.button { icon.heart() }
+ui.labeled.icon.button { icon.download(); +"Download" }
+
+// Button group
+ui.buttons {
+    ui.button { +"One" }
+    ui.button { +"Two" }
+    ui.button { +"Three" }
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>Segments</h3>
+
+<Code code={`ui.segment { +"Basic segment" }
+ui.raised.segment { +"Raised" }
+ui.padded.segment { +"Extra padding" }
+ui.inverted.segment { +"Dark background" }
+ui.placeholder.segment { +"Empty state placeholder" }
+
+// Stacked segments
+ui.segments {
+    ui.segment { +"First" }
+    ui.segment { +"Second" }
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>Headers</h3>
+
+<Code code={`ui.header H1 { +"Page title" }
+ui.header H2 { +"Section header" }
+ui.sub.header { +"Sub-header" }
+ui.icon.header {
+    icon.settings()
+    noui.content { +"Settings" }
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>Grid system</h3>
+
+<Code code={`ui.two.column.grid {
+    noui.column {
+        +"Left column"
+    }
+    noui.column {
+        +"Right column"
+    }
+}
+
+// Responsive
+ui.four.column.doubling.stackable.grid {
+    noui.column { +"A" }
+    noui.column { +"B" }
+    noui.column { +"C" }
+    noui.column { +"D" }
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>Cards</h3>
+
+<Code code={`ui.three.cards {
+    noui.card {
+        noui.content {
+            ui.header { +"Card title" }
+            noui.description { +"Card content" }
+        }
+        noui.extra.content {
+            icon.user()
+            +"4 members"
+        }
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>Labels</h3>
+
+<Code code={`ui.label { +"Default" }
+ui.red.label { +"Error" }
+ui.green.label { +"Success" }
+ui.circular.blue.label { +"42" }`} lang="kotlin" theme="github-dark" />
+
+<h3>Menus</h3>
+
+<Code code={`ui.vertical.inverted.menu {
+    noui.item A {
+        onClick { evt -> router.navToUri(evt, Nav.home()) }
+        +"Home"
+    }
+    noui.item A {
+        onClick { evt -> router.navToUri(evt, Nav.about()) }
+        +"About"
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<h3>Tables</h3>
+
+<Code code={`ui.celled.table Table {
+    thead {
+        tr {
+            th { +"Name" }
+            th { +"Status" }
+        }
+    }
+    tbody {
+        users.forEach { user ->
+            tr {
+                td { +user.name }
+                td { ui.green.label { +"Active" } }
+            }
+        }
+    }
+}`} lang="kotlin" theme="github-dark" />
+
+<h2>Conditional styling</h2>
+
+<p>The <code>given()</code> modifier applies styles based on a condition:</p>
+
+<Code code={`// Disable button when form is invalid
+ui.blue.button.given(!isValid) { disabled }.then {
+    onClick { submit() }
+    +"Submit"
+}
+
+// Highlight active menu item
+ui.item.given(isActive) { active }.then A {
+    +"Dashboard"
+}
+
+// Add loading state
+ui.button.given(isLoading) { loading }.then {
+    +"Save"
+}`} lang="kotlin" theme="github-dark" />
+
+<p><strong>How it reads:</strong> "A blue button, given it's not valid, make it disabled, then render it."</p>
+
+<h2>Colors</h2>
+
+<p>16 named colors plus brand colors:</p>
+
+<Code code={`ui.red.label { +"Red" }
+ui.orange.label { +"Orange" }
+ui.yellow.label { +"Yellow" }
+ui.olive.label { +"Olive" }
+ui.green.label { +"Green" }
+ui.teal.label { +"Teal" }
+ui.blue.label { +"Blue" }
+ui.violet.label { +"Violet" }
+ui.purple.label { +"Purple" }
+ui.pink.label { +"Pink" }
+ui.brown.label { +"Brown" }
+ui.grey.label { +"Grey" }
+ui.black.label { +"Black" }
+ui.white.label { +"White" }`} lang="kotlin" theme="github-dark" />
+
+<h2>Sizes</h2>
+
+<Code code={`ui.mini.button { +"Mini" }
+ui.tiny.button { +"Tiny" }
+ui.small.button { +"Small" }
+ui.medium.button { +"Medium" }
+ui.large.button { +"Large" }
+ui.big.button { +"Big" }
+ui.huge.button { +"Huge" }
+ui.massive.button { +"Massive" }`} lang="kotlin" theme="github-dark" />
+
+<h2>Icons</h2>
+
+<p>FomanticUI includes Font Awesome icons:</p>
+
+<Code code={`icon.home()
+icon.user()
+icon.search()
+icon.trash()
+icon.check_circle()
+icon.exclamation_circle()
+icon.sign_out_alternate()
+icon.grip_vertical()
+icon.eraser()
+icon.dollar_sign()
+icon.heart()
+icon.settings()
+icon.download()`} lang="kotlin" theme="github-dark" />
+
+<h2>Modals</h2>
+
+<Code code={`ui.button {
+    onClick {
+        modals.show { handle ->
+            OkCancelModal {
+                mini(
+                    handle = handle,
+                    header = { ui.header { +"Confirm" } },
+                    content = {
+                        ui.content {
+                            +"Are you sure you want to delete this?"
+                        }
+                    },
+                ) { result ->
+                    when (result) {
+                        OkCancelModal.Result.Ok -> deleteItem()
+                        OkCancelModal.Result.Cancel -> { /* do nothing */ }
+                    }
+                }
+            }
+        }
+    }
+    +"Delete"
+}`} lang="kotlin" theme="github-dark" />
+
+<p>Modal sizes: <code>mini()</code>, <code>tiny()</code>, <code>small()</code>, <code>large()</code>, and full-size.</p>
+
+<h2>Toast notifications</h2>
+
+<Code code={`// Info toast
+toasts.info("Settings saved successfully")
+
+// Warning
+toasts.warning("Your session expires in 5 minutes")
+
+// Error
+toasts.error("Failed to save changes")
+
+// Random type
+toasts.append(Message.Type.entries.random(), "Some message")`} lang="kotlin" theme="github-dark" />
+
+<h2>Context menus and popups</h2>
+
+<Code code={`// Context menu on right-click
+ui.segment {
+    onContextMenuStoppingEvent { evt ->
+        popups.showContextMenu(evt, PopupsManager.Positioning.BottomLeft) {
+            ui.vertical.menu {
+                noui.item { +"Copy" }
+                noui.item { +"Paste" }
+                noui.item { +"Delete" }
+            }
+        }
+    }
+    +"Right-click me"
+}
+
+// Hover popup
+ui.button {
+    popups.showHoverPopup.topLeft(tag = this) {
+        +"This is a tooltip"
+    }
+    +"Hover me"
+}`} lang="kotlin" theme="github-dark" />
+
+<h2>Custom CSS</h2>
+
+<p>Combine the DSL with inline CSS when needed:</p>
+
+<Code code={`div {
+    css {
+        marginTop = 16.px
+        marginLeft = 250.px
+        width = 100.pct
+        height = 50.vh
+    }
+    +"Styled content"
+}`} lang="kotlin" theme="github-dark" />
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/kraft/addons" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Addons &rarr;
+  </a>
+</div>
+
+</DocsLayout>
