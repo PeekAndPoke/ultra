@@ -268,4 +268,3 @@ infix fun AqlExpression<Boolean>.OR(value: Boolean): AqlExpression<Boolean> =
 @VaultFunctionMarker
 infix fun AqlExpression<Boolean>.OR(value: AqlExpression<Boolean>): AqlExpression<Boolean> =
     AqlFilterLogicExpression(left = this, op = AqlLogicOperator.OR, right = value)
-

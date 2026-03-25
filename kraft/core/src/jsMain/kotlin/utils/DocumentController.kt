@@ -15,7 +15,6 @@ class DocumentController {
         val key = TypedKey<DocumentController>("DocumentController")
     }
 
-
     private val hasFocusSource = StreamSource(document.hasFocus())
     val hasFocus = hasFocusSource.readonly
 

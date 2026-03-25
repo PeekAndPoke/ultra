@@ -66,7 +66,6 @@ open class Codec(
     open val secondPassSlumbererContext: Slumberer.Context
         get() = Slumberer.Context.Tracking(this, attributes, "root")
 
-
     /** Returns the [Awaker] registered for the given [type]. Throws if no awaker is found. */
     fun getAwaker(type: KType): Awaker = config.getAwaker(type)
 

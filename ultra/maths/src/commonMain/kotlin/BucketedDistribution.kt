@@ -36,9 +36,9 @@ data class BucketedDistribution(val xs: List<Double>, val pdf: List<Double>) : D
          * A normal curve truncated to [0,1], sampled via bucketed inverse‐CDF.
          */
         fun createTruncatedNormal(
-            mean: Double = 0.5,    // center inside [0,1]
-            std: Double = 0.15,   // standard deviation
-            count: Int = DEFAULT_SIZE,    // number of intervals
+            mean: Double = 0.5, // center inside [0,1]
+            std: Double = 0.15, // standard deviation
+            count: Int = DEFAULT_SIZE, // number of intervals
         ): BucketedDistribution {
             require(mean in 0.0..1.0) { "mean must lie in [0,1]" }
             require(std > 0.0) { "std must be positive" }
@@ -208,7 +208,7 @@ data class BucketedDistribution(val xs: List<Double>, val pdf: List<Double>) : D
         val arr = this
 
         var lo = 0
-        var hi = arr.size     // search in [0 .. size]
+        var hi = arr.size // search in [0 .. size]
 
         while (lo < hi) {
             val mid = (lo + hi) ushr 1

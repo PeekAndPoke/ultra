@@ -26,8 +26,8 @@ internal class ValueSortedMap<K, V, T : Comparable<T>>(
         }
     }
 
-    private val byKey = HashMap<K, Node<K, V, T>>()    // O(1) lookups by key
-    private val sorted = ArrayList<Node<K, V, T>>()    // kept sorted by (sort, id)
+    private val byKey = HashMap<K, Node<K, V, T>>() // O(1) lookups by key
+    private val sorted = ArrayList<Node<K, V, T>>() // kept sorted by (sort, id)
 
     private var nextId = 0L
 

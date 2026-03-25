@@ -151,7 +151,7 @@ class BuiltInMutableObjectsPlugin : MutatorKspPlugin {
 
                 @MutatorDsl
                 inline fun ${mapTypeParams}Map<K, $clsName>.mutate(
-                    mutation: ${MapMutatorName}<K, $clsName>.() -> Unit,
+                    mutation: $MapMutatorName<K, $clsName>.() -> Unit,
                 ): Map<K, $clsName> = mutator().apply(mutation).get()
                 
                 

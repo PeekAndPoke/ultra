@@ -18,7 +18,6 @@ import io.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.jsonPrimitive
 import java.security.GeneralSecurityException
 
-
 class GoogleSsoAuthSpec : FreeSpec() {
 
     init {
@@ -219,7 +218,6 @@ class GoogleSsoAuthSpec : FreeSpec() {
 
                 result shouldBe storedUser
             }
-
         }
 
         "signUp" - {

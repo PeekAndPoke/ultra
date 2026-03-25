@@ -74,8 +74,7 @@ interface AqlFunctionCall<T> : AqlExpression<T> {
         override fun getType() = type
 
         override fun print(p: AqlPrinter) {
-            p.append("${func}(").join(args).append(")")
+            p.append("$func(").join(args).append(")")
         }
     }
 }
-
