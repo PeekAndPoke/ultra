@@ -1,6 +1,5 @@
 package io.peekandpoke.funktor.cluster.backgroundjobs
 
-import de.peekandpoke.ultra.streams.ops.debouncedFuncExceptFirst
 import io.peekandpoke.funktor.cluster.FunktorClusterUi
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
@@ -10,6 +9,7 @@ import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.datetime.formatDdMmmYyyyHhMmSs
 import io.peekandpoke.ultra.semanticui.noui
 import io.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.ultra.streams.ops.debouncedFuncExceptFirst
 import kotlinx.html.FlowContent
 
 class BackgroundJobsArchivedViewPage(ctx: Ctx<Props>) : Component<BackgroundJobsArchivedViewPage.Props>(ctx) {
