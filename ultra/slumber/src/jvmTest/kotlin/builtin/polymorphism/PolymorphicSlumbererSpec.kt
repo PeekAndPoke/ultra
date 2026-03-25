@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin.polymorphism
 
-import de.peekandpoke.ultra.common.reflection.kListType
-import de.peekandpoke.ultra.common.reflection.kMapType
+import de.peekandpoke.ultra.reflection.kListType
+import de.peekandpoke.ultra.reflection.kMapType
 import de.peekandpoke.ultra.slumber.Codec
 import de.peekandpoke.ultra.slumber.slumber
 import io.kotest.core.spec.style.StringSpec

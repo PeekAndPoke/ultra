@@ -1,0 +1,92 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { streamsSidebar } from '../../../data/streams-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Subscriptions & Resilience" sidebar={streamsSidebar} description="Managing subscriptions and error resilience in Streams">
+
+<h1>Subscriptions &amp; Resilience</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Batch cleanup of subscriptions and protection against failing handlers.
+</p>
+
+<h2>The Subscriptions collector</h2>
+
+<p>Forgetting to unsubscribe is the most common source of leaks in reactive code. The <code>Subscriptions</code> class collects all your subscriptions and cleans them up in a single call:</p>
+
+<Code code={`import de.peekandpoke.ultra.streams.Subscriptions
+
+val subs = Subscriptions()
+
+// Subscribe via the collector
+subs.subscribe(nameStream) { println("Name: ${'$'}it") }
+subs.subscribe(ageStream) { println("Age: ${'$'}it") }
+
+// Or use the += operator
+subs += counterStream.subscribeToStream { println("Count: ${'$'}it") }
+
+println(subs.size)  // 3
+
+// Clean up everything at once
+subs.unsubscribeAll()`} lang="kotlin" theme="vitesse-dark" />
+
+<p>This is especially useful in UI components:</p>
+
+<Code code={`class UserDashboard {
+    private val subs = Subscriptions()
+
+    fun mount(userStream: Stream<User>, notificationsStream: Stream<List<Notification>>) {
+        subs.subscribe(userStream) { renderHeader(it) }
+        subs.subscribe(notificationsStream) { renderNotifications(it) }
+    }
+
+    fun unmount() {
+        subs.unsubscribeAll()
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p><code>unsubscribeAll()</code> can be called multiple times safely.</p>
+
+<h2>Error resilience</h2>
+
+<p>A failing subscriber never breaks other subscribers. If one handler throws during a publish cycle, the remaining handlers still receive the value:</p>
+
+<Code code={`val source = StreamSource(1)
+
+source.subscribeToStream { throw RuntimeException("oops") }
+source.subscribeToStream { println("Got: ${'$'}it") }
+
+source(2)  // prints "Got: 2"`} lang="kotlin" theme="vitesse-dark" />
+
+<p>The exception is logged as <code>[Streams] ERROR: subscriber threw ...</code> so it shows up in your console during development, but it never takes down the stream.</p>
+
+<h2>Lazy subscription chains</h2>
+
+<p>Operator chains are fully lazy. No work happens until someone subscribes to the end of the chain:</p>
+
+<Code code={`val source = StreamSource(1)
+
+// No subscriptions created yet — this chain is inert
+val result = source
+    .map { it * 2 }
+    .filter(0) { it > 5 }
+    .distinct()
+
+// NOW the chain subscribes upstream
+val unsub = result.subscribeToStream { println(it) }
+
+// Unsubscribing tears down the entire chain
+unsub()
+// source has zero subscribers again`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Each operator only subscribes to its upstream when it gains its first subscriber, and unsubscribes when its last subscriber leaves. Unused branches cost nothing.</p>
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/streams/js-specific" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    JS-specific operators &rarr;
+  </a>
+</div>
+
+</DocsLayout>

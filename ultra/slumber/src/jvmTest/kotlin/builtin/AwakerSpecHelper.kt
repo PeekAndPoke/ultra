@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin
 
-import de.peekandpoke.ultra.common.model.Tuple2
-import de.peekandpoke.ultra.common.reflection.TypeRef
+import de.peekandpoke.ultra.common.Tuple2
+import de.peekandpoke.ultra.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Codec
 import io.kotest.assertions.throwables.shouldThrow

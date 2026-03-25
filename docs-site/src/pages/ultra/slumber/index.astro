@@ -1,0 +1,105 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { slumberSidebar } from '../../../data/slumber-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Slumber" sidebar={slumberSidebar} description="Kotlin-first serialization that understands your types">
+
+<h1>Slumber — Serialization That Understands Kotlin</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  A serialization framework built for Kotlin's type system. Nullable types, default values,
+  sealed classes — Slumber handles them all without annotations or configuration.
+</p>
+
+<h2>The Problem</h2>
+
+<p>You have a Kotlin data class. You want to serialize it to a Map (for a database, an API, a cache). Jackson needs annotations. Gson ignores nullability. kotlinx.serialization needs a compiler plugin.</p>
+
+<p>And when deserialization fails, you get a cryptic exception with no idea which nested field caused it.</p>
+
+<h2>The Solution</h2>
+
+<Code code={`data class User(val name: String, val age: Int, val email: String? = null)
+
+val codec = Codec.default
+
+// Serialize ("slumber")
+val map = codec.slumber(User("Alice", 30))
+// → { "name": "Alice", "age": 30, "email": null }
+
+// Deserialize ("awake")
+val user = codec.awake<User>(mapOf("name" to "Bob", "age" to 25))
+// → User(name="Bob", age=25, email=null)`} lang="kotlin" theme="vitesse-dark" />
+
+<p>That's it. No annotations needed. No compiler plugin. Slumber uses Kotlin reflection to understand your data classes — nullable fields, default values, generics, and all.</p>
+
+<h2>What Makes It Different</h2>
+
+<div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Kotlin-First</h3>
+    <p class="text-sm text-gray-400">Understands <code>String</code> vs <code>String?</code>, default parameters, data classes, sealed classes — at the type level.</p>
+  </div>
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Graceful Degradation</h3>
+    <p class="text-sm text-gray-400">Nullable field receives bad data? Returns <code>null</code> instead of crashing. Required field fails? Detailed path in the error.</p>
+  </div>
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Two-Pass Error Handling</h3>
+    <p class="text-sm text-gray-400">Fast pass first, no overhead. Only builds full diagnostic path on failure — performance when it works, clarity when it doesn't.</p>
+  </div>
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Format-Agnostic</h3>
+    <p class="text-sm text-gray-400">Works with Maps and Lists, not JSON strings. Use it for databases, REST APIs, caches, or any storage backend.</p>
+  </div>
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Pluggable Modules</h3>
+    <p class="text-sm text-gray-400">Custom type handling via <code>SlumberModule</code>. No annotation processors — just implement an interface.</p>
+  </div>
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Polymorphism Built-In</h3>
+    <p class="text-sm text-gray-400">Sealed classes auto-detected. Custom discriminators, migration aliases, default fallback types — all supported.</p>
+  </div>
+</div>
+
+<h2>The Naming</h2>
+
+<p>Slumber uses a playful metaphor:</p>
+<ul>
+  <li><strong>Slumber</strong> = serialize. Put your objects to sleep as raw data.</li>
+  <li><strong>Awake</strong> = deserialize. Wake your data back up as typed objects.</li>
+</ul>
+
+<h2>Quick Taste</h2>
+
+<p>Polymorphic sealed classes — zero configuration:</p>
+
+<Code code={`sealed class Event {
+    data class UserCreated(val userId: String) : Event()
+    data class UserDeleted(val userId: String, val reason: String?) : Event()
+}
+
+val codec = Codec.default
+
+// Slumber a list of mixed types
+val data = codec.slumber(listOf(
+    Event.UserCreated("alice"),
+    Event.UserDeleted("bob", reason = "inactive"),
+))
+// → [
+//   { "_type": "...UserCreated", "userId": "alice" },
+//   { "_type": "...UserDeleted", "userId": "bob", "reason": "inactive" }
+// ]
+
+// Awake it back — types are restored automatically
+val events = codec.awake<List<Event>>(data)`} lang="kotlin" theme="vitesse-dark" />
+
+<div class="not-prose mt-8">
+  <a href="/ultra/slumber/getting-started" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Get started &rarr;
+  </a>
+</div>
+
+</DocsLayout>

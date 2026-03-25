@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.slumber
 
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.kType
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs

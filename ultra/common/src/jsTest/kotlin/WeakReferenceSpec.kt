@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.common
 
-import de.peekandpoke.ultra.common.datetime.Kronos
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -9,7 +8,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class WeakReferenceSpec : StringSpec() {
 
-    private fun createSomething() = Kronos.systemUtc.instantNow()
+    private fun createSomething(): Any = kotlin.random.Random.nextLong().toString()
 
     init {
         "Creating a weak ref must work" {

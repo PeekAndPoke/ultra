@@ -1,6 +1,6 @@
 package de.peekandpoke.funktor.core.broker.vault
 
-import de.peekandpoke.ultra.common.model.tuple
+import de.peekandpoke.ultra.common.tuple
 import de.peekandpoke.ultra.common.reflection.kType
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe

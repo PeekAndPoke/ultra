@@ -3,6 +3,14 @@ rootProject.name = 'ultra'
 include(
         // ULTRA ////////////////////////////////////////////////////////////////////////////////
         ":ultra:common",
+        ":ultra:cache",
+        ":ultra:datetime",
+        ":ultra:extras",
+        ":ultra:fixture",
+        ":ultra:maths",
+        ":ultra:model",
+        ":ultra:reflection",
+        ":ultra:remote",
         ":ultra:html",
         ":ultra:kontainer",
         ":ultra:log",

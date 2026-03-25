@@ -1,0 +1,76 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { streamsSidebar } from '../../../data/streams-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="JS-Specific Operators" sidebar={streamsSidebar} description="Browser-only operators: animTicker, localStorage persistence, and debounced functions">
+
+<h1>JS-Specific Operators</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  These operators are only available in <code>jsMain</code> because they use browser APIs.
+</p>
+
+<h2>animTicker()</h2>
+
+<p>Emits a <code>TickerFrame</code> on every <code>requestAnimationFrame</code> callback (~60fps). Perfect for animations and frame-based game loops:</p>
+
+<Code code={`import de.peekandpoke.ultra.streams.ops.animTicker
+
+val tick = animTicker()
+
+val unsub = tick.subscribeToStream { frame ->
+    // frame.count     — frames since start
+    // frame.deltaTime — ms since last frame
+    updateAnimation(frame.deltaTime)
+}
+
+unsub()  // stops requesting animation frames`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Unlike <code>ticker(intervalMs)</code> (available on all platforms), <code>animTicker()</code> synchronizes with the browser's display refresh rate.</p>
+
+<h2>persistInLocalStorage()</h2>
+
+<p>Persists a stream's value in localStorage. On page reload, the stream initializes from storage:</p>
+
+<Code code={`import de.peekandpoke.ultra.streams.ops.persistInLocalStorage
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.serializer
+
+val theme = StreamSource("light")
+    .persistInLocalStorage("app.theme", String.serializer())
+
+@Serializable
+data class Preferences(val fontSize: Int = 14, val darkMode: Boolean = false)
+
+val prefs = StreamSource(Preferences())
+    .persistInLocalStorage("app.prefs", Preferences.serializer())`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Falls back to in-memory storage silently if localStorage is unavailable or the quota is exceeded. Accepts a custom <code>StringFormat</code> codec (defaults to JSON with <code>ignoreUnknownKeys = true</code>).</p>
+
+<h2>debouncedFunc() / debouncedFuncExceptFirst()</h2>
+
+<p>Standalone debounced function wrappers using browser <code>setTimeout</code>. Useful outside of streams:</p>
+
+<Code code={`import de.peekandpoke.ultra.streams.ops.debouncedFunc
+import de.peekandpoke.ultra.streams.ops.debouncedFuncExceptFirst
+
+val saveSearch = debouncedFunc(delayMs = 200) {
+    performSearch(inputField.value)
+}
+
+inputField.onInput { saveSearch() }
+
+// Execute first call immediately, debounce the rest
+val autoSave = debouncedFuncExceptFirst(delayMs = 1000) {
+    saveDraft()
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/streams/extending" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Extending Streams &rarr;
+  </a>
+</div>
+
+</DocsLayout>

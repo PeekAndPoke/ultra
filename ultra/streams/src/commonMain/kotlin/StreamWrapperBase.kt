@@ -39,8 +39,6 @@ abstract class StreamWrapperBase<WRAPPED, RESULT>(
 
         // Subscribe to the wrapped stream if necessary
         if (wrappedUnsubscribe == null) {
-            // console.log("Subscribing to wrapped")
-
             wrappedUnsubscribe = wrapped.subscribeToStream {
                 handleIncoming(it)
             }
@@ -55,8 +53,6 @@ abstract class StreamWrapperBase<WRAPPED, RESULT>(
 
             // Unsubscribe from the wrapped stream if necessary
             if (subscriptions.isEmpty()) {
-                // console.log("Un-Subscribing from wrapped")
-
                 wrappedUnsubscribe?.invoke()
                 wrappedUnsubscribe = null
             }
@@ -64,9 +60,11 @@ abstract class StreamWrapperBase<WRAPPED, RESULT>(
     }
 
     /**
-     * Publishes the next value
+     * Publishes the next value to all subscribers.
+     *
+     * A failing handler will not prevent other handlers from being notified.
      */
     protected fun publish(value: RESULT) {
-        subscriptions.forEach { it(value) }
+        notifyHandlers(subscriptions, value)
     }
 }

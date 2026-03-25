@@ -2,6 +2,7 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import { kontainerSidebar } from '../../../data/kontainer-sidebar';
 import { Code } from 'astro:components';
+import { dep, mavenCentralUrl } from '../../../data/site';
 ---
 
 <DocsLayout title="Getting Started with Kontainer" sidebar={kontainerSidebar} description="Set up Kontainer in your Kotlin project">
@@ -24,10 +25,10 @@ import { Code } from 'astro:components';
 <p>In your <code>build.gradle.kts</code>:</p>
 
 <Code code={`dependencies {
-    implementation("io.peekandpoke.ultra:kontainer:latest-version")
+    implementation("${dep.kontainer}")
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p>Find the latest version on <a href="https://search.maven.org/search?q=io.peekandpoke.ultra" target="_blank" rel="noopener">Maven Central</a>.</p>
+<p>Find the latest version on <a href={mavenCentralUrl} target="_blank" rel="noopener">Maven Central</a>.</p>
 
 <h2>2. Define a blueprint</h2>
 

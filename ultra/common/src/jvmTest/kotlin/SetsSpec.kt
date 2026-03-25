@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.common
 
-import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
 

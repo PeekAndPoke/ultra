@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin.objects
 
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.kType
 import de.peekandpoke.ultra.slumber.Codec
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe

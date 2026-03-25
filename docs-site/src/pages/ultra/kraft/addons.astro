@@ -2,6 +2,7 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import { kraftSidebar } from '../../../data/kraft-sidebar';
 import { Code } from 'astro:components';
+import { dep } from '../../../data/site';
 ---
 
 <DocsLayout title="Kraft Addons" sidebar={kraftSidebar} description="Kotlin wrappers for Chart.js, PDF.js, Prism, Konva, and more in Kraft">
@@ -87,8 +88,8 @@ import { Code } from 'astro:components';
 
 <Code code={`jsMain {
     dependencies {
-        implementation("io.peekandpoke.kraft:addons-chartjs:0.102.0")
-        implementation("io.peekandpoke.kraft:addons-prismjs:0.102.0")
+        implementation("${dep.kraftAddonChartJs}")
+        implementation("${dep.kraftAddonPrismJs}")
         // ... add the ones you need
     }
 }`} lang="kotlin" theme="vitesse-dark" />

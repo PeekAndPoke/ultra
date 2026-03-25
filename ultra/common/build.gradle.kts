@@ -7,7 +7,6 @@ import Deps.Test.jvmTestDeps
 
 plugins {
     kotlin("multiplatform")
-    kotlin("plugin.serialization")
     id("io.kotest")
     id("com.google.devtools.ksp")
     id("com.vanniktech.maven.publish")
@@ -40,32 +39,17 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(kotlin("reflect"))
-                implementation(Deps.KotlinX.coroutines_core)
-                implementation(Deps.KotlinX.serialization_core)
-                implementation(Deps.KotlinX.serialization_json)
-
-                implementation(Deps.Ktor.Client.core)
-
-                api(Deps.KotlinX.datetime)
-
-                // TODO: Remove this dependency
-                //       It is still needed for formatting dates
-                implementation(Deps.KotlinLibs.korlibs_time)
             }
         }
 
         commonTest {
             dependencies {
-                implementation(Deps.KotlinX.coroutines_test)
                 commonTestDeps()
             }
         }
 
         jsMain {
             dependencies {
-//                api(Deps.Npm { polyfillFetch() })
-//                api(Deps.Npm { jsJodaCore() })
-                api(Deps.Npm { jsJodaTimezone() })
             }
         }
 

@@ -64,7 +64,9 @@ kotlin {
             dependencies {
                 api(Deps.JavaLibs.classindex)
 
-                implementation(Deps.KotlinX.datetime)
+                implementation(project(":ultra:cache"))
+                implementation(project(":ultra:datetime"))
+                implementation(project(":ultra:reflection"))
             }
         }
 

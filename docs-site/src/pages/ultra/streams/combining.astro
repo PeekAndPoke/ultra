@@ -1,0 +1,70 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { streamsSidebar } from '../../../data/streams-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Combining & Accumulating" sidebar={streamsSidebar} description="Combine multiple streams and accumulate values over time">
+
+<h1>Combining &amp; Accumulating</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Merge streams together and build up state over time.
+</p>
+
+<h2>combinedWith</h2>
+
+<p>Merge two streams with a combinator function. Publishes whenever either source changes:</p>
+
+<Code code={`val a = StreamSource(1)
+val b = StreamSource(10)
+
+val sum = a.combinedWith(b) { x, y -> x + y }
+println(sum())  // 11
+
+a(5)
+println(sum())  // 15
+
+b(100)
+println(sum())  // 105`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>pairedWith</h2>
+
+<p>Shorthand for combining into a <code>Pair</code>:</p>
+
+<Code code={`val pair = a.pairedWith(b)
+println(pair())  // Pair(1, 10)`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>fold</h2>
+
+<p>Accumulate values over time, like <code>List.fold()</code> but reactive:</p>
+
+<Code code={`val clicks = StreamSource("click")
+val count = clicks.fold(0) { acc, _ -> acc + 1 }
+
+// count is 1 after initial subscribe, increments on each "click"`} lang="kotlin" theme="vitesse-dark" />
+
+<p><code>foldNotNull()</code> skips null values in the accumulation.</p>
+
+<h2>history</h2>
+
+<p>Keep a sliding window of recent values:</p>
+
+<Code code={`val source = StreamSource(1)
+val recent = source.history(3)
+
+source(2)
+source(3)
+source(4)
+
+println(recent())  // [2, 3, 4] — oldest values dropped`} lang="kotlin" theme="vitesse-dark" />
+
+<p><code>historyOfNonNull(capacity)</code> only keeps non-null values.</p>
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/streams/control" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Control &amp; timing &rarr;
+  </a>
+</div>
+
+</DocsLayout>

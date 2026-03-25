@@ -1,0 +1,127 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { slumberSidebar } from '../../../data/slumber-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Custom Modules" sidebar={slumberSidebar} description="Extend Slumber with custom type handling via SlumberModule">
+
+<h1>Custom Modules</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Teach Slumber to handle your own types by implementing <code>SlumberModule</code>.
+  No annotation processors — just an interface.
+</p>
+
+<h2>How modules work</h2>
+
+<p>A <code>SlumberConfig</code> holds an ordered list of <code>SlumberModule</code>s. When Slumber needs to serialize or deserialize a type, it asks each module in order. The first module to return a non-null handler wins.</p>
+
+<Code code={`interface SlumberModule {
+    fun getAwaker(type: KType, attributes: TypedAttributes): Awaker?
+    fun getSlumberer(type: KType, attributes: TypedAttributes): Slumberer?
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Return <code>null</code> to pass — "I don't handle this type." Return an <code>Awaker</code> or <code>Slumberer</code> to claim it.</p>
+
+<h2>Example: Custom Money type</h2>
+
+<Code code={`data class Money(val amount: Long, val currency: String)
+
+object MoneyModule : SlumberModule {
+
+    override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? {
+        if (type.classifier != Money::class) return null
+
+        return type.wrapIfNonNull(object : Awaker {
+            override fun awake(data: Any?, context: Awaker.Context): Money? {
+                val map = data as? Map<*, *> ?: return null
+                val amount = (map["amount"] as? Number)?.toLong() ?: return null
+                val currency = map["currency"] as? String ?: return null
+                return Money(amount, currency)
+            }
+        })
+    }
+
+    override fun getSlumberer(type: KType, attributes: TypedAttributes): Slumberer? {
+        if (type.classifier != Money::class) return null
+
+        return type.wrapIfNonNull(object : Slumberer {
+            override fun slumber(data: Any?, context: Slumberer.Context): Any? {
+                val money = data as? Money ?: return null
+                return mapOf("amount" to money.amount, "currency" to money.currency)
+            }
+        })
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Registering a custom module</h2>
+
+<Code code={`// Prepend to give your module highest priority
+val config = SlumberConfig.default.prependModules(MoneyModule)
+val codec = config.codec()
+
+// Now Money is handled by your module
+codec.slumber(Money(1099, "EUR"))
+// → { "amount": 1099, "currency": "EUR" }
+
+codec.awake<Money>(mapOf("amount" to 1099, "currency" to "EUR"))
+// → Money(amount=1099, currency="EUR")`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>wrapIfNonNull</h2>
+
+<p>Notice the <code>type.wrapIfNonNull(awaker)</code> call. This is a helper on <code>SlumberModule</code> that wraps your awaker in a <code>NonNullAwaker</code> when the type is non-nullable. This ensures that:</p>
+
+<ul>
+  <li><code>Money</code> (non-nullable) — throws <code>AwakerException</code> if your awaker returns null</li>
+  <li><code>Money?</code> (nullable) — returns null gracefully</li>
+</ul>
+
+<p>Always use <code>wrapIfNonNull</code> unless you have a specific reason not to.</p>
+
+<h2>Module ordering</h2>
+
+<p>Modules are queried in order. Use <code>prependModules</code> when your module should override built-in behavior, and <code>appendModules</code> when it's a fallback:</p>
+
+<Code code={`// Override: your module takes priority over built-in handlers
+val config = SlumberConfig.default.prependModules(MoneyModule)
+
+// Fallback: your module only handles types the built-in modules don't
+val config = SlumberConfig.default.appendModules(FallbackModule)`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Passing context via attributes</h2>
+
+<p>Modules receive <code>TypedAttributes</code> — a typed key-value store. Use this to pass runtime context:</p>
+
+<Code code={`// Define a typed key
+val DatabaseKey = TypedKey<Database>("database")
+
+// Add it to the config
+val config = SlumberConfig.default
+    .prependModules(MyDbModule)
+    .plusAttributes(TypedAttributes.of { add(DatabaseKey, myDatabase) })
+
+// Access it in your module
+object MyDbModule : SlumberModule {
+    override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? {
+        val db = attributes[DatabaseKey] // Access the database
+        // ... use db to resolve references
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>This is how the Vault and Karango integrations work — they pass <code>Database</code> and <code>EntityCache</code> references through attributes so their custom modules can resolve entity references during serialization.</p>
+
+<h2>The default module stack</h2>
+
+<p><code>SlumberConfig.default</code> includes these modules in order:</p>
+
+<ol>
+  <li><strong>MpDateTimeModule</strong> — Ultra's multiplatform datetime types</li>
+  <li><strong>KotlinxTimeModule</strong> — kotlinx.datetime types</li>
+  <li><strong>JavaTimeModule</strong> — java.time types</li>
+  <li><strong>BuiltInModule</strong> — primitives, strings, collections, maps, data classes, enums, sealed classes, singletons</li>
+</ol>
+
+<p>DateTime modules come first because they handle specific types that the BuiltInModule would otherwise catch as generic data classes.</p>
+
+</DocsLayout>

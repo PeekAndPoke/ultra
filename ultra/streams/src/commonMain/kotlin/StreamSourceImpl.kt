@@ -27,7 +27,7 @@ open class StreamSourceImpl<T>(initial: T) : StreamSource<T> {
      */
     override operator fun invoke(next: T) {
         current = next
-        subscriptions.forEach { it(current) }
+        notifyHandlers(subscriptions, current)
     }
 
     /**

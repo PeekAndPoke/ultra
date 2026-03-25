@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.slumber
 
-import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.kType
 import de.peekandpoke.ultra.slumber.Codec.Companion.createType
 import kotlin.reflect.KClass
 

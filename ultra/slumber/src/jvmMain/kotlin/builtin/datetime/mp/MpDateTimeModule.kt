@@ -1,12 +1,12 @@
 package de.peekandpoke.ultra.slumber.builtin.datetime.mp
 
 import de.peekandpoke.ultra.common.TypedAttributes
-import de.peekandpoke.ultra.common.datetime.MpInstant
-import de.peekandpoke.ultra.common.datetime.MpLocalDate
-import de.peekandpoke.ultra.common.datetime.MpLocalDateTime
-import de.peekandpoke.ultra.common.datetime.MpLocalTime
-import de.peekandpoke.ultra.common.datetime.MpTimezone
-import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
+import de.peekandpoke.ultra.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpLocalDate
+import de.peekandpoke.ultra.datetime.MpLocalDateTime
+import de.peekandpoke.ultra.datetime.MpLocalTime
+import de.peekandpoke.ultra.datetime.MpTimezone
+import de.peekandpoke.ultra.datetime.MpZonedDateTime
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.SlumberModule
 import de.peekandpoke.ultra.slumber.Slumberer

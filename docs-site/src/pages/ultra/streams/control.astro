@@ -1,0 +1,78 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { streamsSidebar } from '../../../data/streams-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Control & Timing" sidebar={streamsSidebar} description="Debounce, cutoff, ticker, and async mapping in Streams">
+
+<h1>Control &amp; Timing</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Rate-limit, pause, and schedule stream emissions.
+</p>
+
+<h2>debounce</h2>
+
+<p>Only publish after a quiet period. When values arrive rapidly, only the last one is emitted after the delay:</p>
+
+<Code code={`val search = StreamSource("")
+val debounced = search.debounce(300)  // 300ms delay
+
+// Typing rapidly: "h", "he", "hel", "hell", "hello"
+// Only "hello" is published — 300ms after the last keystroke`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>cutoffWhen / cutoffWhenNot</h2>
+
+<p>Pause a stream based on a boolean predicate stream. While paused, the source is fully unsubscribed. When resumed, the current value is published immediately:</p>
+
+<Code code={`val source = StreamSource(1)
+val paused = StreamSource(false)
+
+val stream = source.cutoffWhen(paused)
+
+// stream publishes values while paused() is false
+source(2)  // published
+
+paused(true)
+source(3)  // NOT published — stream is cut off
+
+paused(false)
+// immediately publishes source's current value (3)`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>ticker</h2>
+
+<p>Emits a <code>TickerFrame</code> at regular intervals. Only runs while subscribed:</p>
+
+<Code code={`import de.peekandpoke.ultra.streams.ops.ticker
+
+val tick = ticker(1000)  // every 1000ms
+
+val unsub = tick.subscribeToStream { frame ->
+    println("Tick #${'$'}{frame.count}, delta: ${'$'}{frame.deltaTime}ms")
+}
+
+// ... later
+unsub()  // stops the ticker`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Also accepts a <code>Duration</code>: <code>ticker(1.seconds)</code>.</p>
+
+<h2>mapAsync</h2>
+
+<p>Maps values asynchronously. The result stream is nullable — <code>null</code> until the first async operation completes:</p>
+
+<Code code={`val userId = StreamSource("user-1")
+
+val user = userId.mapAsync { id ->
+    api.fetchUser(id)  // suspend function
+}
+
+// user() is null initially, then the fetched User object`} lang="kotlin" theme="vitesse-dark" />
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/streams/subscriptions" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Subscriptions &amp; resilience &rarr;
+  </a>
+</div>
+
+</DocsLayout>

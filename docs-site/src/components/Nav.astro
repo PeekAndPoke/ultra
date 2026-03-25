@@ -1,4 +1,5 @@
 ---
+import { githubRepo } from '../data/site';
 const currentPath = Astro.url.pathname;
 
 const navLinks = [
@@ -6,6 +7,8 @@ const navLinks = [
   { href: '/ultra/', label: 'Ultra' },
   { href: '/ultra/kraft/', label: 'Kraft' },
   { href: '/ultra/kontainer/', label: 'Kontainer' },
+  { href: '/ultra/slumber/', label: 'Slumber' },
+  { href: '/ultra/streams/', label: 'Streams' },
 ];
 ---
 
@@ -30,7 +33,7 @@ const navLinks = [
           </a>
         ))}
         <a
-          href="https://github.com/PeekAndPoke/ultra"
+          href={githubRepo}
           target="_blank"
           rel="noopener"
           class="ml-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors"

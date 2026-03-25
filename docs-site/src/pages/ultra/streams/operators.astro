@@ -1,0 +1,112 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { streamsSidebar } from '../../../data/streams-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Operators" sidebar={streamsSidebar} description="Transform and filter operators in Streams">
+
+<h1>Operators</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Every operator takes a stream and returns a new stream. Chain them freely.
+</p>
+
+<h2>map</h2>
+
+<p>Transform each value:</p>
+
+<Code code={`val source = StreamSource(5)
+val doubled = source.map { it * 2 }
+
+println(doubled())  // 10
+
+source(10)
+println(doubled())  // 20`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>onEach</h2>
+
+<p>Execute a side effect for each value without changing it. Useful for logging:</p>
+
+<Code code={`val source = StreamSource(1)
+
+val stream = source
+    .onEach { println("Saw: ${'$'}it") }
+    .map { it * 10 }`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>indexed</h2>
+
+<p>Pairs each value with its index (starting at 0):</p>
+
+<Code code={`val source = StreamSource("a")
+val indexed = source.indexed()
+
+// Pair(0, "a"), then Pair(1, "b"), Pair(2, "c")...`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>filter</h2>
+
+<p>Only pass values matching a predicate. Since streams always have a value, you provide an initial value for when nothing matches yet:</p>
+
+<Code code={`val source = StreamSource(3)
+
+val big = source.filter(initial = 0) { it > 10 }
+println(big())  // 0
+
+source(20)
+println(big())  // 20
+
+source(5)
+println(big())  // 20 (keeps last matching value)`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Variants:</p>
+
+<Code code={`// Nullable — returns null when no value matches yet
+val nullable = source.filter { it > 10 }  // Stream<Int?>
+
+// Filter nulls out of a nullable stream
+val nonNull = nullableStream.filterNotNull()
+
+// Filter by type
+val strings = mixedStream.filterIsInstance<String>()`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>distinct</h2>
+
+<p>Only publish when the value actually changes:</p>
+
+<Code code={`val source = StreamSource(1)
+val distinct = source.distinct()
+
+val received = mutableListOf<Int>()
+distinct.subscribeToStream { received.add(it) }
+
+source(1)  // same — skipped
+source(2)  // different — published
+source(2)  // same — skipped
+source(3)  // different — published
+
+// received = [1, 2, 3]`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Use <code>distinctStrict()</code> for reference equality (<code>!==</code>) instead of structural equality (<code>!=</code>).</p>
+
+<h2>fallback</h2>
+
+<p>Replace null values with a default:</p>
+
+<Code code={`val source = StreamSource<String?>(null)
+
+val safe = source.fallbackTo("default")
+println(safe())  // "default"
+
+source("hello")
+println(safe())  // "hello"
+
+// Or compute the fallback dynamically
+val computed = source.fallbackBy { "fallback-value" }`} lang="kotlin" theme="vitesse-dark" />
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/streams/combining" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Combining &amp; accumulating &rarr;
+  </a>
+</div>
+
+</DocsLayout>

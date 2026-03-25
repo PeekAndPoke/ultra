@@ -1,0 +1,107 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { slumberSidebar } from '../../../data/slumber-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Collections & Maps" sidebar={slumberSidebar} description="Serializing lists, sets, maps, and nested collections with Slumber">
+
+<h1>Collections &amp; Maps</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Lists, sets, maps, and nested collections — all with full type awareness.
+</p>
+
+<h2>Lists and Sets</h2>
+
+<Code code={`data class Team(
+    val members: List<String>,
+    val tags: Set<String>,
+)
+
+val codec = Codec.default
+
+codec.slumber(Team(listOf("Alice", "Bob"), setOf("eng", "frontend")))
+// → { "members": ["Alice", "Bob"], "tags": ["eng", "frontend"] }
+
+codec.awake<Team>(mapOf(
+    "members" to listOf("Alice", "Bob"),
+    "tags" to listOf("eng", "frontend"),
+))
+// → Team(members=["Alice", "Bob"], tags={"eng", "frontend"})`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Slumber supports <code>List</code>, <code>MutableList</code>, <code>Set</code>, <code>MutableSet</code>, and <code>Iterable</code>. Arrays are automatically converted to Lists on deserialization.</p>
+
+<h2>Typed collections</h2>
+
+<p>Inner types are fully preserved — a <code>List&lt;Int&gt;</code> will coerce string values to integers:</p>
+
+<Code code={`data class Scores(val values: List<Int>)
+
+// String "42" is coerced to Int 42
+codec.awake<Scores>(mapOf("values" to listOf("42", 100, 7)))
+// → Scores(values=[42, 100, 7])`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Collections of data classes</h2>
+
+<Code code={`data class User(val name: String, val age: Int)
+data class Directory(val users: List<User>)
+
+codec.awake<Directory>(mapOf(
+    "users" to listOf(
+        mapOf("name" to "Alice", "age" to 30),
+        mapOf("name" to "Bob", "age" to 25),
+    )
+))
+// → Directory(users=[User("Alice", 30), User("Bob", 25)])`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Maps</h2>
+
+<Code code={`data class Config(val settings: Map<String, Int>)
+
+codec.slumber(Config(mapOf("timeout" to 30, "retries" to 3)))
+// → { "settings": { "timeout": 30, "retries": 3 } }
+
+codec.awake<Config>(mapOf(
+    "settings" to mapOf("timeout" to 30, "retries" to 3)
+))
+// → Config(settings={"timeout": 30, "retries": 3})`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Both <code>Map</code> and <code>MutableMap</code> are supported. Key and value types are preserved through serialization.</p>
+
+<h2>Nullable elements</h2>
+
+<Code code={`data class NullableItems(val items: List<String?>)
+
+codec.awake<NullableItems>(mapOf(
+    "items" to listOf("hello", null, "world")
+))
+// → NullableItems(items=["hello", null, "world"])
+
+// Non-nullable List<String> with a null element → error
+data class StrictItems(val items: List<String>)
+
+codec.awake<StrictItems>(mapOf(
+    "items" to listOf("hello", null)
+))
+// → AwakerException: "root.items.1 must not be null"`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Nested collections</h2>
+
+<Code code={`data class Matrix(val rows: List<List<Int>>)
+
+codec.awake<Matrix>(mapOf(
+    "rows" to listOf(
+        listOf(1, 2, 3),
+        listOf(4, 5, 6),
+    )
+))
+// → Matrix(rows=[[1, 2, 3], [4, 5, 6]])`} lang="kotlin" theme="vitesse-dark" />
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/slumber/datetime" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Date &amp; Time &rarr;
+  </a>
+</div>
+
+</DocsLayout>

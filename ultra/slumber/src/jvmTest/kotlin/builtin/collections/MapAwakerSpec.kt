@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin.collections
 
-import de.peekandpoke.ultra.common.reflection.kMapType
-import de.peekandpoke.ultra.common.reflection.kMutableMapType
+import de.peekandpoke.ultra.reflection.kMapType
+import de.peekandpoke.ultra.reflection.kMutableMapType
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Codec
 import de.peekandpoke.ultra.slumber.awake

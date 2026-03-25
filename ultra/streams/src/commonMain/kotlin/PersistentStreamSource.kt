@@ -17,8 +17,8 @@ internal class PersistentStreamSource<T>(
             storage.read()?.let {
                 wrapped(it)
             }
-        } catch (e: Throwable) {
-            println("ERROR: Could not read from storage\n${e.stackTraceToString()}")
+        } catch (_: Throwable) {
+            // Storage read failed — proceed with the wrapped stream's current value
         }
     }
 

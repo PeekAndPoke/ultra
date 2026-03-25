@@ -1,16 +1,15 @@
 package de.peekandpoke.ultra.common
 
-import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 class ListsSpec : StringSpec({
 
-    val old = Pair(1, 2)
-    val old2 = Pair(1, 2)
-    val new = Pair(3, 4)
-    val other = Pair(5, 6)
+    val old = tuple(1, 2)
+    val old2 = tuple(1, 2)
+    val new = tuple(3, 4)
+    val other = tuple(5, 6)
 
     //  List.replace  //////////////////////////////////////////////////////////////////////////////////////////////////
 

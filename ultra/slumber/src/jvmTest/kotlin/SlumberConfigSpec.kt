@@ -2,7 +2,7 @@ package de.peekandpoke.ultra.slumber
 
 import de.peekandpoke.ultra.common.TypedAttributes
 import de.peekandpoke.ultra.common.TypedKey
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.kType
 import de.peekandpoke.ultra.slumber.builtin.BuiltInModule
 import de.peekandpoke.ultra.slumber.builtin.datetime.javatime.JavaTimeModule
 import de.peekandpoke.ultra.slumber.builtin.datetime.kotlinx.KotlinxTimeModule

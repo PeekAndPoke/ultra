@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin.datetime.mp
 
-import de.peekandpoke.ultra.common.datetime.MpInstant
-import de.peekandpoke.ultra.common.datetime.MpLocalDate
+import de.peekandpoke.ultra.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpLocalDate
 import de.peekandpoke.ultra.slumber.Codec
 import de.peekandpoke.ultra.slumber.awake
 import de.peekandpoke.ultra.slumber.slumber

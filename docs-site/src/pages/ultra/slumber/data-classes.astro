@@ -1,0 +1,135 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { slumberSidebar } from '../../../data/slumber-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Data Class Serialization" sidebar={slumberSidebar} description="How Slumber handles Kotlin data classes, nested objects, enums, and computed fields">
+
+<h1>Data Classes</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Slumber serializes data classes by reflecting on the primary constructor.
+  No annotations needed for standard cases.
+</p>
+
+<h2>Basic data classes</h2>
+
+<p>Every constructor parameter becomes a field in the serialized output:</p>
+
+<Code code={`data class User(val name: String, val age: Int)
+
+val codec = Codec.default
+
+codec.slumber(User("Alice", 30))
+// → { "name": "Alice", "age": 30 }
+
+codec.awake<User>(mapOf("name" to "Bob", "age" to 25))
+// → User(name="Bob", age=25)`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Nested data classes</h2>
+
+<p>Nesting works recursively — no depth limit:</p>
+
+<Code code={`data class Address(val city: String, val zip: String)
+data class Company(val name: String, val hq: Address)
+data class Employee(val name: String, val company: Company)
+
+val emp = Employee("Alice", Company("ACME", Address("Berlin", "10115")))
+
+codec.slumber(emp)
+// → {
+//   "name": "Alice",
+//   "company": {
+//     "name": "ACME",
+//     "hq": { "city": "Berlin", "zip": "10115" }
+//   }
+// }`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Enums</h2>
+
+<p>Enums serialize to their name as a string:</p>
+
+<Code code={`enum class Role { ADMIN, USER, GUEST }
+data class Account(val name: String, val role: Role)
+
+codec.slumber(Account("Alice", Role.ADMIN))
+// → { "name": "Alice", "role": "ADMIN" }
+
+codec.awake<Account>(mapOf("name" to "Bob", "role" to "USER"))
+// → Account(name="Bob", role=Role.USER)`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Kotlin object singletons</h2>
+
+<p>Kotlin <code>object</code> singletons are preserved — the same instance is returned on deserialization:</p>
+
+<Code code={`object AppConfig {
+    val version = "1.0"
+}
+
+val data = codec.slumber(AppConfig)
+// → {} (empty map)
+
+val restored = codec.awake<AppConfig>(data)
+// restored === AppConfig (same instance)`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Computed fields with @Slumber.Field</h2>
+
+<p>By default, only constructor parameters are serialized. To include computed properties, use <code>@Slumber.Field</code>:</p>
+
+<Code code={`data class Invoice(val items: List<Double>, val taxRate: Double) {
+    @Slumber.Field
+    val subtotal get() = items.sum()
+
+    @Slumber.Field
+    val tax get() = subtotal * taxRate
+
+    @Slumber.Field
+    val total get() = subtotal + tax
+}
+
+codec.slumber(Invoice(listOf(10.0, 20.0, 30.0), 0.19))
+// → {
+//   "items": [10.0, 20.0, 30.0],
+//   "taxRate": 0.19,
+//   "subtotal": 60.0,
+//   "tax": 11.4,
+//   "total": 71.4
+// }`} lang="kotlin" theme="vitesse-dark" />
+
+<p><code>@Slumber.Field</code> works on properties, getters, and <code>lazy</code> fields. Only serialization is affected — deserialization still uses the constructor.</p>
+
+<h2>Private constructors</h2>
+
+<p>Data classes with private constructors still work — Slumber uses Kotlin reflection to access them:</p>
+
+<Code code={`data class UserId private constructor(val value: String) {
+    companion object {
+        fun of(raw: String) = UserId(raw.trim().lowercase())
+    }
+}
+
+// Deserialization bypasses the companion factory
+codec.awake<UserId>(mapOf("value" to "ABC-123"))
+// → UserId(value="ABC-123")`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Generic data classes</h2>
+
+<p>Full generic support — type parameters are preserved through serialization:</p>
+
+<Code code={`data class Wrapper<T>(val value: T)
+data class Pair<A, B>(val first: A, val second: B)
+
+codec.awake<Wrapper<Int>>(mapOf("value" to 42))
+// → Wrapper(value=42)
+
+codec.awake<Pair<String, Int>>(mapOf("first" to "hello", "second" to 99))
+// → Pair(first="hello", second=99)`} lang="kotlin" theme="vitesse-dark" />
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/slumber/polymorphism" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Polymorphism &rarr;
+  </a>
+</div>
+
+</DocsLayout>

@@ -1,0 +1,120 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { slumberSidebar } from '../../../data/slumber-sidebar';
+import { Code } from 'astro:components';
+import { dep } from '../../../data/site';
+---
+
+<DocsLayout title="Getting Started with Slumber" sidebar={slumberSidebar} description="Set up Slumber and serialize your first data class">
+
+<h1>Getting Started</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Add the dependency, create a codec, serialize your first object.
+</p>
+
+<h2>1. Add the dependency</h2>
+
+<p>In your <code>build.gradle.kts</code>:</p>
+
+<Code code={`dependencies {
+    implementation("${dep.slumber}")
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Slumber requires <strong>Kotlin reflection</strong> (included transitively) and runs on the <strong>JVM</strong>.</p>
+
+<h2>2. Create a codec</h2>
+
+<Code code={`import de.peekandpoke.ultra.slumber.Codec
+
+// The default codec handles: primitives, data classes, enums, collections,
+// sealed classes, java.time.*, kotlinx.datetime.*, and MpDateTime types.
+val codec = Codec.default`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>3. Serialize (slumber)</h2>
+
+<Code code={`data class Address(val city: String, val zip: String)
+data class Person(val name: String, val age: Int, val address: Address)
+
+val alice = Person("Alice", 30, Address("Berlin", "10115"))
+
+val data = codec.slumber(alice)
+// → {
+//   "name": "Alice",
+//   "age": 30,
+//   "address": { "city": "Berlin", "zip": "10115" }
+// }`} lang="kotlin" theme="vitesse-dark" />
+
+<p>The result is a <code>Map&lt;String, Any?&gt;</code> — not a JSON string. You can pass it to any storage backend, JSON encoder, or database driver.</p>
+
+<h2>4. Deserialize (awake)</h2>
+
+<Code code={`import de.peekandpoke.ultra.slumber.awake
+
+val input = mapOf(
+    "name" to "Bob",
+    "age" to 25,
+    "address" to mapOf("city" to "Munich", "zip" to "80331"),
+)
+
+val person = codec.awake<Person>(input)
+// → Person(name="Bob", age=25, address=Address(city="Munich", zip="80331"))`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>5. Round-trip</h2>
+
+<Code code={`val original = Person("Alice", 30, Address("Berlin", "10115"))
+val restored = codec.awake<Person>(codec.slumber(original))
+
+assert(restored == original) // true`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>How it handles Kotlin features</h2>
+
+<h3>Nullable fields</h3>
+
+<Code code={`data class Profile(val name: String, val bio: String?)
+
+// Missing nullable field → null
+codec.awake<Profile>(mapOf("name" to "Alice"))
+// → Profile(name="Alice", bio=null)
+
+// Explicit null → null
+codec.awake<Profile>(mapOf("name" to "Alice", "bio" to null))
+// → Profile(name="Alice", bio=null)
+
+// Invalid data on nullable field → null (graceful degradation)
+codec.awake<Profile>(mapOf("name" to "Alice", "bio" to listOf(1, 2, 3)))
+// → Profile(name="Alice", bio=null)`} lang="kotlin" theme="vitesse-dark" />
+
+<h3>Default parameters</h3>
+
+<Code code={`data class Config(
+    val host: String = "localhost",
+    val port: Int = 8080,
+    val debug: Boolean = false,
+)
+
+// Missing fields use defaults
+codec.awake<Config>(mapOf("debug" to true))
+// → Config(host="localhost", port=8080, debug=true)
+
+// Empty map → all defaults
+codec.awake<Config>(emptyMap<String, Any>())
+// → Config(host="localhost", port=8080, debug=false)`} lang="kotlin" theme="vitesse-dark" />
+
+<h3>Type coercion</h3>
+
+<Code code={`data class Stats(val count: Int, val label: String)
+
+// String "42" → Int 42, Number 100L → Int 100
+codec.awake<Stats>(mapOf("count" to "42", "label" to 100))
+// → Stats(count=42, label="100")
+
+// Works for all numeric types: Int, Long, Double, Float, Short, Byte`} lang="kotlin" theme="vitesse-dark" />
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/slumber/data-classes" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Data classes &rarr;
+  </a>
+</div>
+
+</DocsLayout>

@@ -38,7 +38,6 @@ class StreamCombinator<FIRST, SECOND, RESULT>(
 
         // Subscribe to the first wrapped stream if necessary
         if (firstUnsubscribe == null) {
-            // console.log("Subscribing to wrapped")
             firstUnsubscribe = first.subscribeToStream {
                 handleInComing()
             }
@@ -46,7 +45,6 @@ class StreamCombinator<FIRST, SECOND, RESULT>(
 
         // Subscribe to the second wrapped stream if necessary
         if (secondUnsubscribe == null) {
-            // console.log("Subscribing to wrapped")
             secondUnsubscribe = second.subscribeToStream {
                 handleInComing()
             }
@@ -61,8 +59,6 @@ class StreamCombinator<FIRST, SECOND, RESULT>(
 
             // When there are no subscriptions left we unsubscribe from the wrapped streams
             if (subscriptions.isEmpty()) {
-                // console.log("Un-Subscribing from wrapped")
-
                 // Unsubscribe from the first stream
                 firstUnsubscribe?.invoke()
                 firstUnsubscribe = null
@@ -84,9 +80,11 @@ class StreamCombinator<FIRST, SECOND, RESULT>(
     }
 
     /**
-     * Publishes the next value
+     * Publishes the next value to all subscribers.
+     *
+     * A failing handler will not prevent other handlers from being notified.
      */
     private fun publish(value: RESULT) {
-        subscriptions.forEach { it(value) }
+        notifyHandlers(subscriptions, value)
     }
 }

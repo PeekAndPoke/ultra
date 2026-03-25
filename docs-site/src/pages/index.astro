@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Nav from '../components/Nav.astro';
+import { githubRepo, mavenCentralUrl, ultraGroup } from '../data/site';
 
 const libraries = [
   {
@@ -27,9 +28,16 @@ const libraries = [
   {
     name: 'Slumber',
     tagline: 'Serialization that sleeps easy',
-    description: 'Flexible serialization and deserialization with codec support. Maps, transforms, and validates your data.',
+    description: 'Kotlin-first serialization that understands nullable types, default values, and sealed classes. No annotations needed.',
     href: '/ultra/slumber/',
-    ready: false,
+    ready: true,
+  },
+  {
+    name: 'Streams',
+    tagline: 'Reactive streams that always have a value',
+    description: 'A lightweight reactive streams library for Kotlin Multiplatform. Always-has-a-value semantics, lazy subscriptions, and composable operators — no marble diagrams required.',
+    href: '/ultra/streams/',
+    ready: true,
   },
   {
     name: 'Karango',
@@ -72,7 +80,7 @@ const libraries = [
           Get started with Kraft
         </a>
         <a
-          href="https://github.com/PeekAndPoke/ultra"
+          href={githubRepo}
           target="_blank"
           rel="noopener"
           class="px-6 py-3 border border-white/20 text-gray-300 font-semibold rounded-lg hover:bg-white/5 transition-colors"
@@ -121,7 +129,7 @@ const libraries = [
     <div class="mx-auto max-w-4xl text-center">
       <p class="text-gray-500 text-sm">
         Published on Maven Central as
-        <a href="https://search.maven.org/search?q=io.peekandpoke.ultra" target="_blank" rel="noopener" class="text-brand-400 hover:text-brand-300 transition-colors"><code>io.peekandpoke.ultra</code></a>
+        <a href={mavenCentralUrl} target="_blank" rel="noopener" class="text-brand-400 hover:text-brand-300 transition-colors"><code>{ultraGroup}</code></a>
       </p>
     </div>
   </section>
