@@ -1,0 +1,117 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { kontainerSidebar } from '../../../data/kontainer-sidebar';
+import { Code } from 'astro:components';
+import { dep, mavenCentralUrl } from '../../../data/site';
+---
+
+<DocsLayout title="Getting Started with Kontainer" sidebar={kontainerSidebar} description="Set up Kontainer in your Kotlin project">
+
+<h1>Getting Started</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Add Kontainer to your project and wire up your first services.
+</p>
+
+<h2>Prerequisites</h2>
+
+<ul>
+  <li><strong>JDK 17+</strong></li>
+  <li><strong>Gradle</strong> with Kotlin JVM or multiplatform plugin</li>
+</ul>
+
+<h2>1. Add the dependency</h2>
+
+<p>In your <code>build.gradle.kts</code>:</p>
+
+<Code code={`dependencies {
+    implementation("${dep.kontainer}")
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Find the latest version on <a href={mavenCentralUrl} target="_blank" rel="noopener">Maven Central</a>.</p>
+
+<h2>2. Define a blueprint</h2>
+
+<p>A <strong>blueprint</strong> is an immutable description of all your services and their lifecycles. You create it once, then use it to stamp out container instances.</p>
+
+<Code code={`import de.peekandpoke.ultra.kontainer.kontainer
+
+// Define some services
+class Greeter {
+    fun sayHello() = "Hello!"
+}
+
+// Create a blueprint
+val blueprint = kontainer {
+    singleton(Greeter::class)
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>3. Create a container and use it</h2>
+
+<Code code={`// Create a container from the blueprint
+val kontainer = blueprint.create()
+
+// Retrieve a service
+val greeter = kontainer.get(Greeter::class)
+println(greeter.sayHello())  // "Hello!"`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>4. Add dependencies between services</h2>
+
+<p>Services declare their dependencies in the constructor. Kontainer resolves them automatically.</p>
+
+<Code code={`class Counter {
+    private var count = 0
+    fun next() = ++count
+}
+
+class MyService(val counter: Counter)
+
+val blueprint = kontainer {
+    singleton(Counter::class)
+    singleton(MyService::class)
+}
+
+val kontainer = blueprint.create()
+val service = kontainer.get(MyService::class)
+
+println(service.counter.next())  // 1
+println(service.counter.next())  // 2`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Kontainer inspects the primary constructor of <code>MyService</code>, sees it needs a <code>Counter</code>, and injects it. No annotations needed.</p>
+
+<h2>5. Use factory methods when constructors aren't enough</h2>
+
+<p>Sometimes a service needs parameters the container doesn't know about. Use a factory lambda:</p>
+
+<Code code={`class MyService(private val counter: Counter, private val offset: Int) {
+    fun next() = counter.next() + offset
+}
+
+val blueprint = kontainer {
+    singleton(Counter::class)
+
+    // Factory: Kontainer injects Counter, you provide the offset
+    singleton(MyService::class) { counter: Counter ->
+        MyService(counter, 100)
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>What happens on first use?</h2>
+
+<p>The first time you call <code>blueprint.create()</code>, Kontainer validates the entire dependency graph:</p>
+
+<ul>
+  <li>Are all required dependencies registered?</li>
+  <li>Are there ambiguous services (multiple implementations for one type)?</li>
+  <li>Can all constructors be satisfied?</li>
+</ul>
+
+<p>If anything is wrong, you get a <code>KontainerInconsistent</code> exception with a clear message listing every problem — not a cryptic runtime error later.</p>
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/kontainer/services" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Learn about defining services &rarr;
+  </a>
+</div>
+
+</DocsLayout>

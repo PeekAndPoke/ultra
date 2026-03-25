@@ -1,7 +1,7 @@
 package de.peekandpoke.funktor.cluster.storage
 
-import de.peekandpoke.ultra.common.datetime.MpInstant
-import de.peekandpoke.ultra.common.datetime.formatDdMmmYyyyHhMmSs
+import de.peekandpoke.ultra.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.formatDdMmmYyyyHhMmSs
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent

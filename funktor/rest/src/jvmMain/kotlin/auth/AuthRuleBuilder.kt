@@ -2,7 +2,7 @@ package de.peekandpoke.funktor.rest.auth
 
 import de.peekandpoke.funktor.rest.ApiRoute
 import de.peekandpoke.funktor.rest.RestAuthRuleMarker
-import de.peekandpoke.ultra.common.remote.ApiAccessLevel
+import de.peekandpoke.ultra.remote.ApiAccessLevel
 import de.peekandpoke.ultra.security.user.UserPermissions
 import io.ktor.server.application.*
 

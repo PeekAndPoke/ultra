@@ -6,7 +6,7 @@ import de.peekandpoke.karango.aql.AqlNameExpr
 import de.peekandpoke.karango.aql.AqlPathExpr
 import de.peekandpoke.karango.aql.AqlPrinter
 import de.peekandpoke.karango.aql.property
-import de.peekandpoke.ultra.common.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.TypeRef
 import de.peekandpoke.ultra.vault.Repository
 
 /** Base interface for all karango repositories */

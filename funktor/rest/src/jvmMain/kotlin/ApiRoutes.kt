@@ -4,9 +4,9 @@ import de.peekandpoke.funktor.core.broker.OutgoingConverter
 import de.peekandpoke.funktor.core.broker.Routes
 import de.peekandpoke.funktor.core.broker.TypedRoute
 import de.peekandpoke.funktor.core.broker.UriPattern
-import de.peekandpoke.ultra.common.reflection.kType
-import de.peekandpoke.ultra.common.remote.ApiResponse
-import de.peekandpoke.ultra.common.remote.TypedApiEndpoint
+import de.peekandpoke.ultra.reflection.kType
+import de.peekandpoke.ultra.remote.ApiResponse
+import de.peekandpoke.ultra.remote.TypedApiEndpoint
 import io.ktor.http.*
 import io.ktor.http.HttpMethod.Companion.Delete
 import io.ktor.http.HttpMethod.Companion.Get

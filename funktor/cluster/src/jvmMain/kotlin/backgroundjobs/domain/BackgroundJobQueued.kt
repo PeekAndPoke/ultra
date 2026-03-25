@@ -1,6 +1,6 @@
 package de.peekandpoke.funktor.cluster.backgroundjobs.domain
 
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpInstant
 import de.peekandpoke.ultra.slumber.Codec
 import de.peekandpoke.ultra.slumber.slumber
 import de.peekandpoke.ultra.vault.Vault

@@ -16,9 +16,9 @@ import de.peekandpoke.kraft.forms.formController
 import de.peekandpoke.kraft.semanticui.forms.UiDateField
 import de.peekandpoke.kraft.semanticui.forms.UiTimeField
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.common.datetime.Kronos
-import de.peekandpoke.ultra.common.datetime.MpLocalDateTime
-import de.peekandpoke.ultra.common.datetime.MpLocalTime
+import de.peekandpoke.ultra.datetime.Kronos
+import de.peekandpoke.ultra.datetime.MpLocalDateTime
+import de.peekandpoke.ultra.datetime.MpLocalTime
 import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.Tag

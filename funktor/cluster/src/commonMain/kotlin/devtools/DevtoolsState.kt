@@ -1,7 +1,7 @@
 package de.peekandpoke.funktor.cluster.devtools
 
 import de.peekandpoke.ultra.common.addAt
-import de.peekandpoke.ultra.common.remote.ApiResponse
+import de.peekandpoke.ultra.remote.ApiResponse
 import de.peekandpoke.ultra.streams.Stream
 import de.peekandpoke.ultra.streams.StreamSource
 import de.peekandpoke.ultra.streams.Unsubscribe

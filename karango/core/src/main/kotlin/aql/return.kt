@@ -2,7 +2,7 @@
 
 package de.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.common.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.TypeRef
 import de.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
 
 @Suppress("UnusedReceiverParameter")

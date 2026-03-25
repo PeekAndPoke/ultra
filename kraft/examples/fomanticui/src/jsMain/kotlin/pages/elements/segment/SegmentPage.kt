@@ -18,7 +18,7 @@ import de.peekandpoke.kraft.examples.fomanticui.routes
 import de.peekandpoke.kraft.routing.PageTitle
 import de.peekandpoke.kraft.routing.href
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.common.fixture.LoremIpsum
+import de.peekandpoke.ultra.fixture.LoremIpsum
 import de.peekandpoke.ultra.semanticui.icon
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui

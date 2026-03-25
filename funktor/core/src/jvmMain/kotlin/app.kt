@@ -2,11 +2,11 @@ package de.peekandpoke.funktor.core
 
 import de.peekandpoke.funktor.core.cli.CliRunner
 import de.peekandpoke.funktor.core.config.AppConfig
-import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.kontainer.DynamicOverrides
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.kontainer.KontainerBlueprint
+import de.peekandpoke.ultra.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.kType
 import de.peekandpoke.ultra.security.user.UserProvider
 import de.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 import io.ktor.server.application.*

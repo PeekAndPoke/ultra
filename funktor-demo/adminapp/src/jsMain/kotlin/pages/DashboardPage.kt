@@ -12,10 +12,10 @@ import de.peekandpoke.kraft.semanticui.popups.topLeft
 import de.peekandpoke.kraft.semanticui.popups.topRight
 import de.peekandpoke.kraft.toasts.ToastsManager.Companion.toasts
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.common.fixture.LoremIpsum
-import de.peekandpoke.ultra.common.model.Message
+import de.peekandpoke.ultra.fixture.LoremIpsum
 import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.html.onContextMenu
+import de.peekandpoke.ultra.model.Message
 import de.peekandpoke.ultra.semanticui.noui
 import de.peekandpoke.ultra.semanticui.ui
 import kotlinx.browser.window

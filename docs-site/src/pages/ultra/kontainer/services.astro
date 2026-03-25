@@ -1,0 +1,108 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { kontainerSidebar } from '../../../data/kontainer-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Defining Services" sidebar={kontainerSidebar} description="How to register services in Kontainer: Singleton, Dynamic, Prototype, instances, and interfaces">
+
+<h1>Defining Services</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Kontainer supports three service lifecycles — Singleton, Dynamic, and Prototype —
+  plus existing instances and interface-based registration.
+</p>
+
+<h2>Singleton</h2>
+
+<p>A singleton is created <strong>once</strong> and shared across all container instances created from the same blueprint.</p>
+
+<Code code={`class Counter {
+    private var count = 0
+    fun next() = ++count
+}
+
+val blueprint = kontainer {
+    singleton(Counter::class)
+}
+
+// Same instance across all containers from this blueprint
+val k1 = blueprint.create()
+val k2 = blueprint.create()
+
+println(k1.get(Counter::class).next())  // 1
+println(k2.get(Counter::class).next())  // 2  (same instance!)`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Dynamic</h2>
+
+<p>A dynamic service is a <strong>singleton within a single container instance</strong>. Each new container gets its own fresh instance.</p>
+
+<Code code={`val blueprint = kontainer {
+    dynamic(Counter::class)
+}
+
+val k1 = blueprint.create()
+val k2 = blueprint.create()
+
+println(k1.get(Counter::class).next())  // 1
+println(k1.get(Counter::class).next())  // 2  (same instance within k1)
+println(k2.get(Counter::class).next())  // 1  (fresh instance in k2)`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Dynamic services are the key to <a href="/ultra/kontainer/lifecycle">per-request scoping</a>.</p>
+
+<h2>Prototype</h2>
+
+<p>A prototype creates a <strong>new instance every time</strong> it is requested — whether retrieved directly or injected.</p>
+
+<Code code={`val blueprint = kontainer {
+    prototype(Counter::class)
+}
+
+val kontainer = blueprint.create()
+
+println(kontainer.get(Counter::class).next())  // 1
+println(kontainer.get(Counter::class).next())  // 1  (new instance each time!)`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Existing instances</h2>
+
+<p>Register an already-created object as a singleton:</p>
+
+<Code code={`object AppConfig {
+    val dbUrl = "jdbc:postgresql://localhost/mydb"
+}
+
+val blueprint = kontainer {
+    instance(AppConfig)
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Hiding implementations behind interfaces</h2>
+
+<p>Register a service under its interface so consumers never see the concrete class:</p>
+
+<Code code={`interface GreeterInterface {
+    fun sayHello(): String
+}
+
+class Greeter : GreeterInterface {
+    override fun sayHello() = "Hello!"
+}
+
+val blueprint = kontainer {
+    // Registered as GreeterInterface — Greeter is hidden
+    singleton(GreeterInterface::class, Greeter::class)
+}
+
+val kontainer = blueprint.create()
+
+kontainer.get(GreeterInterface::class)  // works
+kontainer.get(Greeter::class)           // throws ServiceNotFound`} lang="kotlin" theme="vitesse-dark" />
+
+<p>This pattern works with all lifecycle types: <code>singleton</code>, <code>dynamic</code>, <code>prototype</code>, <code>instance</code>, and factory methods.</p>
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/kontainer/lifecycle" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Understand the lifecycle model &rarr;
+  </a>
+</div>
+
+</DocsLayout>

@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin.objects
 
 import de.peekandpoke.slumberTestClasses.DataClassWithPrivateCtor
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.kType
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.slumber.Codec
 import de.peekandpoke.ultra.slumber.awake
@@ -454,6 +454,58 @@ class DataClassAwakerSpec : StringSpec() {
             codec.awake(
                 intStringType, mapOf("map" to mapOf(1 to "hello", 2 to "you"))
             ) shouldBe DataClass(mapOf(1 to "hello", 2 to "you"))
+        }
+
+        "Awaking a data class with many fields" {
+
+            data class ManyFields(
+                val a: String,
+                val b: Int,
+                val c: Boolean,
+                val d: Double,
+                val e: String?,
+                val f: Long = 99L,
+            )
+
+            val codec = Codec.default
+
+            codec.awake(
+                ManyFields::class,
+                mapOf("a" to "hello", "b" to 1, "c" to true, "d" to 3.14, "e" to null)
+            ) shouldBe ManyFields("hello", 1, true, 3.14, null, 99L)
+
+            codec.awake(
+                ManyFields::class,
+                mapOf("a" to "hello", "b" to 1, "c" to true, "d" to 3.14, "e" to "world", "f" to 42)
+            ) shouldBe ManyFields("hello", 1, true, 3.14, "world", 42L)
+        }
+
+        "Awaking deeply nested data classes (3 levels)" {
+
+            data class Level3(val value: String)
+            data class Level2(val inner: Level3, val tag: Int)
+            data class Level1(val nested: Level2, val name: String)
+
+            val codec = Codec.default
+
+            codec.awake(
+                Level1::class,
+                mapOf(
+                    "name" to "top",
+                    "nested" to mapOf(
+                        "tag" to 42,
+                        "inner" to mapOf(
+                            "value" to "deep"
+                        )
+                    )
+                )
+            ) shouldBe Level1(
+                name = "top",
+                nested = Level2(
+                    tag = 42,
+                    inner = Level3(value = "deep")
+                )
+            )
         }
     }
 }

@@ -2,7 +2,7 @@ package de.peekandpoke.monko.vault.vault
 
 import de.peekandpoke.monko.lang.MongoExpression
 import de.peekandpoke.monko.lang.MongoPrinter
-import de.peekandpoke.ultra.common.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.TypeRef
 import de.peekandpoke.ultra.vault.TypedQuery
 
 data class MongoTypedQuery<T>(

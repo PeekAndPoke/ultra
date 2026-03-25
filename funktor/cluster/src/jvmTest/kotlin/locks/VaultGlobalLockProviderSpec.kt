@@ -1,8 +1,8 @@
 package de.peekandpoke.funktor.cluster.locks
 
 import de.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
-import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.kType
 import de.peekandpoke.ultra.vault.Cursor
 import de.peekandpoke.ultra.vault.New
 import de.peekandpoke.ultra.vault.RemoveResult

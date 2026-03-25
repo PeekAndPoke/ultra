@@ -1,0 +1,180 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {karangoSidebar} from '../../../data/karango-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Kontainer Integration" sidebar={karangoSidebar}
+            description="How Karango integrates with Kontainer for dependency injection, repository discovery, and database lifecycle">
+
+    <h1>Kontainer Integration</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Karango plugs into Kontainer for automatic repository discovery, dependency injection,
+        and per-request database scoping.
+    </p>
+
+    <h2>Setting up Karango with Kontainer</h2>
+
+    <p>One line to register all Karango infrastructure:</p>
+
+    <Code code={`import de.peekandpoke.karango.karango
+import de.peekandpoke.karango.config.ArangoDbConfig
+import de.peekandpoke.ultra.kontainer.kontainer
+
+val blueprint = kontainer {
+    // Register Karango module — sets up driver, codec, and DB connection
+    karango(ArangoDbConfig(
+        host = "localhost",
+        port = 8529,
+        database = "my_app",
+    ))
+
+    // Register your repositories as singletons
+    singleton(PersonsRepo::class)
+    singleton(BlogPostsRepo::class)
+    singleton(CommentsRepo::class)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The <code>karango(config)</code> call registers:</p>
+    <ul>
+        <li><code>ArangoDatabaseAsync</code> — the raw ArangoDB connection (cached per config)</li>
+        <li><code>KarangoDriver</code> — query executor (dynamic, created per request)</li>
+        <li><code>KarangoCodec</code> — serialization with Vault + Slumber integration (dynamic)</li>
+    </ul>
+
+    <h2>How the Database discovers repositories</h2>
+
+    <p>The <code>Database</code> class receives all registered <code>Repository&lt;*&gt;</code> instances via a <code>Lookup&lt;Repository&lt;*&gt;&gt;</code>.
+        Kontainer automatically collects all services that implement <code>Repository&lt;*&gt;</code> and injects them:
+    </p>
+
+    <Code code={`// Kontainer automatically discovers all Repository<*> implementations
+// and passes them to the Database class as a Lookup<Repository<*>>
+
+// You DON'T need to register the Database manually — it's wired automatically.
+// Just register your repositories:
+
+val blueprint = kontainer {
+    karango(config)
+
+    singleton(PersonsRepo::class)
+    singleton(ArticlesRepo::class)
+}
+
+// When creating a kontainer instance:
+val kontainer = blueprint.create()
+
+// The Database now knows about PersonsRepo and ArticlesRepo
+val database: Database = kontainer.get(Database::class)
+
+database.getRepositories()
+// → [PersonsRepo, ArticlesRepo]`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Accessing repositories through Database</h2>
+
+    <p>Define extension properties for convenient typed access:</p>
+
+    <Code code={`// Define accessors (typically next to your repository class)
+val Database.persons get() = getRepository<PersonsRepo>()
+val Database.articles get() = getRepository<ArticlesRepo>()
+val Database.comments get() = getRepository<CommentsRepo>()
+
+// Use them anywhere you have a Database
+suspend fun getActiveUsers(database: Database): List<Stored<Person>> {
+    return database.persons.findList {
+        FOR(database.persons) { person ->
+            FILTER(person.age GTE 18)
+            RETURN(person)
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Repository by type lookup</h2>
+
+    <p>The Database can also find which repository stores a given entity type:</p>
+
+    <Code code={`// Find the repository that stores Person entities
+val repo = database.getRepositoryStoring(Person::class.java)
+// → PersonsRepo
+
+// Check if any repository handles a type
+database.hasRepositoryStoring(Person::class.java)  // true
+database.hasRepositoryStoring(Unknown::class.java)  // false
+
+// Find by collection name
+val repo = database.getRepository("persons")
+// → PersonsRepo`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Database lifecycle</h2>
+
+    <p>On startup, ensure all collections and indexes exist:</p>
+
+    <Code code={`val database: Database = kontainer.get(Database::class)
+
+// Create collections if they don't exist
+database.ensureRepositories()
+
+// Create indexes defined in buildIndexes()
+database.ensureIndexes()
+
+// Or validate without creating
+database.validateIndexes()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Real-world example: Funktor app setup</h2>
+
+    <p>Here's how the Funktor demo app wires everything together:</p>
+
+    <Code code={`fun createBlueprint(config: AppConfig) = kontainer {
+    // Mount Funktor modules — each can opt into Karango storage
+    funktor(
+        config = config,
+        logging = { useKarango() },    // Logs stored in ArangoDB
+        cluster = { useKarango() },    // Job queues, locks in ArangoDB
+        auth = { useKarango() },       // Auth records in ArangoDB
+    )
+
+    // Mount the ArangoDB connection
+    karango(config.arangodb)
+
+    // Application-specific repositories
+    singleton(AdminUsersRepo::class)
+}
+
+// On application startup:
+val app = createBlueprint(config)
+val kontainer = app.create()
+
+// Ensure all collections and indexes exist
+kontainer.get(Database::class).ensureRepositories()
+kontainer.get(Database::class).ensureIndexes()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Each Funktor module (<code>logging</code>, <code>cluster</code>, <code>auth</code>) registers its own
+        repositories when <code>useKarango()</code> is called. The Database automatically discovers all of them.</p>
+
+    <h2>Dynamic vs singleton repositories</h2>
+
+    <p>Repositories are typically registered as <strong>singletons</strong> — they hold no per-request state. The <code>KarangoDriver</code>
+        and <code>KarangoCodec</code> are registered as <strong>dynamic</strong> (created per kontainer instance)
+        because they carry per-request context like the <code>EntityCache</code>:</p>
+
+    <Code code={`// This is what karango(config) registers internally:
+val KarangoModule = module { config: ArangoDbConfig ->
+    // Shared connection — created once
+    instance(ArangoDatabaseAsync::class, config.toArangoDb())
+
+    // Per-request driver and codec
+    dynamic(KarangoDriver::class)
+    dynamic(KarangoCodec::class) { database: Database, cache: EntityCache ->
+        KarangoCodec(config = slumberConfig, database = database, entityCache = cache)
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/karango/advanced-queries"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Advanced queries &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

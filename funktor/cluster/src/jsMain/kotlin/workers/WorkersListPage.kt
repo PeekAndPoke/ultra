@@ -10,9 +10,9 @@ import de.peekandpoke.kraft.routing.JoinedPageTitle
 import de.peekandpoke.kraft.routing.Router.Companion.router
 import de.peekandpoke.kraft.utils.dataLoader
 import de.peekandpoke.kraft.vdom.VDom
-import de.peekandpoke.ultra.common.datetime.MpDateTimePeriod
 import de.peekandpoke.ultra.common.roundWithPrecision
 import de.peekandpoke.ultra.common.toFixed
+import de.peekandpoke.ultra.datetime.MpDateTimePeriod
 import de.peekandpoke.ultra.html.onClick
 import de.peekandpoke.ultra.semanticui.SemanticColor
 import de.peekandpoke.ultra.semanticui.icon

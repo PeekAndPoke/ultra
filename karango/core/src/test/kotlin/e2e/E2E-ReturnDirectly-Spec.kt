@@ -4,9 +4,9 @@ import de.peekandpoke.karango.aql.ARRAY
 import de.peekandpoke.karango.aql.OBJECT
 import de.peekandpoke.karango.aql.RETURN
 import de.peekandpoke.karango.aql.aql
-import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.common.reflection.kMapType
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.kMapType
+import de.peekandpoke.ultra.reflection.kType
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec

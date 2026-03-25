@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.slumber.builtin.datetime.mp
 
-import de.peekandpoke.ultra.common.datetime.MpLocalTime
+import de.peekandpoke.ultra.datetime.MpLocalTime
 import de.peekandpoke.ultra.slumber.Awaker
 import de.peekandpoke.ultra.slumber.Slumberer
 

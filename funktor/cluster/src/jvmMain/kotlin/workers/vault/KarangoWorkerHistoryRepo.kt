@@ -16,8 +16,8 @@ import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.IndexBuilder
 import de.peekandpoke.karango.vault.KarangoDriver
 import de.peekandpoke.karango.vault._key
-import de.peekandpoke.ultra.common.datetime.MpInstant
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.datetime.MpInstant
+import de.peekandpoke.ultra.reflection.kType
 import de.peekandpoke.ultra.vault.Cursor
 import de.peekandpoke.ultra.vault.Stored
 

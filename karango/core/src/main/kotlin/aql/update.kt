@@ -2,7 +2,7 @@ package de.peekandpoke.karango.aql
 
 import de.peekandpoke.karango.aql.AqlPrinter.Companion.printQuery
 import de.peekandpoke.karango.vault.KarangoRepository
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.kType
 
 @Suppress("FunctionName")
 fun <T : Any> AqlStatementBuilder.UPDATE(

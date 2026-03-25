@@ -2,10 +2,10 @@
 
 package de.peekandpoke.ultra.vault.tools
 
-import de.peekandpoke.ultra.common.reflection.ReifiedKType
-import de.peekandpoke.ultra.common.reflection.kType
 import de.peekandpoke.ultra.common.startsWithAny
 import de.peekandpoke.ultra.log.Log
+import de.peekandpoke.ultra.reflection.ReifiedKType
+import de.peekandpoke.ultra.reflection.kType
 import de.peekandpoke.ultra.vault.Database
 import de.peekandpoke.ultra.vault.LazyRef
 import de.peekandpoke.ultra.vault.Ref

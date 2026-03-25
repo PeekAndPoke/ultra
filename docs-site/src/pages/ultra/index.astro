@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Nav from '../../components/Nav.astro';
+import { ultraGroup } from '../../data/site';
 
 const libs = [
   {
@@ -10,9 +11,10 @@ const libs = [
     ready: true,
   },
   { name: 'Mutator', tagline: 'Mutate the immutable', href: '/ultra/mutator/', ready: false },
-  { name: 'Kontainer', tagline: 'Dependency injection', href: '/ultra/kontainer/', ready: false },
-  { name: 'Slumber', tagline: 'Serialization', href: '/ultra/slumber/', ready: false },
-  { name: 'Karango', tagline: 'Type-safe ArangoDB', href: '/ultra/karango/', ready: false },
+  { name: 'Kontainer', tagline: 'Dependency injection', href: '/ultra/kontainer/', ready: true },
+  { name: 'Slumber', tagline: 'Serialization', href: '/ultra/slumber/', ready: true },
+  { name: 'Streams', tagline: 'Reactive streams, simplified', href: '/ultra/streams/', ready: true },
+  {name: 'Karango', tagline: 'Type-safe ArangoDB', href: '/ultra/karango/', ready: true},
   { name: 'Funktor', tagline: 'Full-stack Kotlin on Ktor', href: '/ultra/funktor/', ready: false },
 ];
 ---
@@ -25,7 +27,7 @@ const libs = [
       <h1 class="text-4xl font-extrabold text-white mb-4">Ultra</h1>
       <p class="text-xl text-gray-400 mb-12">
         A Kotlin multiplatform monorepo. Six libraries, one ecosystem.
-        Published on Maven Central as <code>io.peekandpoke.ultra</code>.
+        Published on Maven Central as <code>{ultraGroup}</code>.
       </p>
 
       <div class="space-y-4">
@@ -36,7 +38,7 @@ const libs = [
               'flex items-center justify-between p-5 rounded-xl border transition-all',
               lib.ready
                 ? 'border-brand-400/30 bg-brand-400/5 hover:border-brand-400/60'
-                : 'border-white/10 bg-white/[0.02] hover:border-white/20',
+                  : 'border-white/10 bg-white/2 hover:border-white/20',
             ]}
           >
             <div>

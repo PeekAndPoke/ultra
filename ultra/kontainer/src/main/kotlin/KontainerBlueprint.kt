@@ -9,6 +9,7 @@ class KontainerBlueprint internal constructor(
     val config: Config,
     internal val definitions: Map<KClass<*>, ServiceDefinition>,
 ) {
+    /** Configuration options for the blueprint */
     data class Config(
         val trackKontainers: Boolean = false,
     ) {
@@ -17,6 +18,7 @@ class KontainerBlueprint internal constructor(
         }
     }
 
+    /** Tracker for monitoring live [Kontainer] instances created from this blueprint */
     val tracker = when (config.trackKontainers) {
         true -> KontainerTracker.live()
         else -> KontainerTracker.dummy()
@@ -72,9 +74,8 @@ class KontainerBlueprint internal constructor(
      * Or which inject services that themselves inject dynamic services etc...
      */
     private val semiDynamicDefinitions: Map<KClass<*>, ServiceDefinition> =
-        // prototype cannot be "downgraded" to be semi dynamic singletons
         dependencyLookUp.getAllDependents(dynamicsClasses)
-            // prototype cannot be "downgraded" to be semi dynamic singletons
+            // prototypes cannot be "downgraded" to semi-dynamic singletons
             .filter { !prototypeDefinitions.contains(it) }
             .associateWith { definitions.getValue(it) }
 

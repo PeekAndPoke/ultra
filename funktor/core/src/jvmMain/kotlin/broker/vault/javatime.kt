@@ -3,7 +3,7 @@ package de.peekandpoke.funktor.core.broker.vault
 import de.peekandpoke.funktor.core.broker.CouldNotConvertException
 import de.peekandpoke.funktor.core.broker.IncomingParamConverter
 import de.peekandpoke.funktor.core.broker.OutgoingParamConverter
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.kType
 import java.time.DateTimeException
 import java.time.Instant
 import java.time.LocalDate

@@ -1,0 +1,95 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {karangoSidebar} from '../../../data/karango-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Karango" sidebar={karangoSidebar} description="Type-safe ArangoDB queries in Kotlin">
+
+    <h1>Karango — Type-Safe ArangoDB in Kotlin</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Write AQL queries in Kotlin with full type safety. Your IDE catches query errors before ArangoDB does.
+    </p>
+
+    <h2>The Problem</h2>
+
+    <p>ArangoDB's query language (AQL) is powerful, but building queries as strings is error-prone. Typos in field
+        names, wrong collection references, mismatched types — you only find out at runtime. And refactoring? Good luck
+        finding all the queries that reference a renamed field.</p>
+
+    <h2>The Solution</h2>
+
+    <Code code={`@Vault
+data class Person(val name: String, val age: Int)
+
+class PersonsRepo(driver: KarangoDriver) : EntityRepository<Person>(
+    name = "persons", storedType = kType(), driver = driver
+)
+
+// Type-safe query — field names are checked at compile time
+val adults = repo.findList {
+    FOR(repo) { person ->
+        FILTER(person.name EQ "Alice")   // person.name is type-safe
+        FILTER(person.age GTE 18)        // person.age is type-safe
+        SORT(person.age.DESC)
+        LIMIT(10)
+        RETURN(person)
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Rename <code>name</code> to <code>fullName</code> in the data class? The compiler tells you every query that
+        needs updating. Misspell a field? Red squiggle before you even run the code.</p>
+
+    <h2>How It Works</h2>
+
+    <ol>
+        <li>Annotate your data class with <code>@Vault</code></li>
+        <li>KSP generates type-safe property accessors at compile time</li>
+        <li>Write queries using a Kotlin DSL that mirrors AQL syntax</li>
+        <li>Karango compiles the DSL to AQL strings and executes them against ArangoDB</li>
+    </ol>
+
+    <h2>What You Get</h2>
+
+    <div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Type-Safe Queries</h3>
+            <p class="text-sm text-gray-400">Field names, types, and operators checked at compile time via KSP-generated
+                accessors.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Repository Pattern</h3>
+            <p class="text-sm text-gray-400">Full CRUD: insert, save, remove, find, batch insert. With lifecycle hooks
+                and index management.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">100+ AQL Functions</h3>
+            <p class="text-sm text-gray-400">Math, string, array, type-check, and aggregate functions — all available in
+                the Kotlin DSL.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Async &amp; Coroutines</h3>
+            <p class="text-sm text-gray-400">All operations are <code>suspend</code> functions. Streaming cursors for
+                large result sets.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Slumber Integration</h3>
+            <p class="text-sm text-gray-400">Serialization via Slumber — polymorphic types, entity references, and
+                graceful error handling built in.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Battle-Tested</h3>
+            <p class="text-sm text-gray-400">131 test files. Used in production across authentication, logging, cluster
+                management, and more.</p>
+        </div>
+    </div>
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/karango/getting-started"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Get started &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

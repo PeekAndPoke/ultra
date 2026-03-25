@@ -2,7 +2,6 @@ package de.peekandpoke.ultra.common
 
 import kotlin.reflect.KType
 
-// TODO: test me
 val KType.isPrimitive
     get(): Boolean = classifier in listOf(
         Boolean::class,
@@ -15,5 +14,4 @@ val KType.isPrimitive
         Double::class
     )
 
-// TODO: test me
 val KType.isPrimitiveOrString get(): Boolean = classifier == String::class || isPrimitive

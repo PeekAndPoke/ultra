@@ -7,8 +7,8 @@ import de.peekandpoke.funktor.auth.model.AuthSignInResponse
 import de.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import de.peekandpoke.funktor.auth.provider.GithubSsoAuth
 import de.peekandpoke.funktor.auth.provider.GoogleSsoAuth
-import de.peekandpoke.ultra.common.datetime.Kronos
-import de.peekandpoke.ultra.common.datetime.jvm
+import de.peekandpoke.ultra.datetime.Kronos
+import de.peekandpoke.ultra.datetime.jvm
 import de.peekandpoke.ultra.security.jwt.JwtUserData
 import de.peekandpoke.ultra.security.user.UserPermissions
 import de.peekandpoke.ultra.vault.Stored

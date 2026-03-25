@@ -3,6 +3,7 @@ package de.peekandpoke.ultra.streams.ops
 import de.peekandpoke.ultra.streams.Stream
 import de.peekandpoke.ultra.streams.StreamHandler
 import de.peekandpoke.ultra.streams.Unsubscribe
+import de.peekandpoke.ultra.streams.notifyHandlers
 
 /**
  * Cuts off the stream when the [predicate] is true.
@@ -106,6 +107,6 @@ private class CutoffStream<T>(
     }
 
     private fun publish(value: T) {
-        subscriptions.toList().forEach { it(value) }
+        notifyHandlers(subscriptions, value)
     }
 }

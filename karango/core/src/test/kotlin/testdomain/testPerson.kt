@@ -2,7 +2,7 @@ package de.peekandpoke.karango.testdomain
 
 import de.peekandpoke.karango.vault.EntityRepository
 import de.peekandpoke.karango.vault.KarangoDriver
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.kType
 import de.peekandpoke.ultra.vault.Database
 import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.Repository.Hooks

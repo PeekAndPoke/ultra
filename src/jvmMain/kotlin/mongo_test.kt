@@ -5,10 +5,10 @@ import de.peekandpoke.monko.MongoDbConfig
 import de.peekandpoke.monko.MonkoDriver
 import de.peekandpoke.monko.MonkoRepository
 import de.peekandpoke.monko.monko
-import de.peekandpoke.ultra.common.datetime.Kronos
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.datetime.Kronos
 import de.peekandpoke.ultra.kontainer.kontainer
 import de.peekandpoke.ultra.log.ultraLogging
+import de.peekandpoke.ultra.reflection.kType
 import de.peekandpoke.ultra.vault.VaultConfig
 import de.peekandpoke.ultra.vault.ultraVault
 import io.github.serpro69.kfaker.faker

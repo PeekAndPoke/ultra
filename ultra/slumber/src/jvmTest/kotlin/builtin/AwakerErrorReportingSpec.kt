@@ -83,4 +83,50 @@ class AwakerErrorReportingSpec : StringSpec({
         ex.message shouldContain "'root.child' must not be null"
         ex.message shouldContain "'root.child': ${typeOf<Child>()} misses parameters 'b'"
     }
+
+    "Error in collection element reports path with index" {
+
+        data class Container(
+            val items: List<Int>,
+        )
+
+        val codec = Codec.default
+
+        val ex = shouldThrow<AwakerException> {
+            codec.awake(
+                Container::class,
+                mapOf(
+                    "items" to listOf(1, null, 3)
+                )
+            )
+        }
+
+        ex.message shouldContain "root.items.1"
+        ex.message shouldContain "must not be null"
+    }
+
+    "Error in deeply nested structure (3+ levels) reports full path" {
+
+        data class Level3(val value: Int)
+        data class Level2(val level3: Level3)
+        data class Level1(val level2: Level2)
+
+        val codec = Codec.default
+
+        val ex = shouldThrow<AwakerException> {
+            codec.awake(
+                Level1::class,
+                mapOf(
+                    "level2" to mapOf(
+                        "level3" to mapOf(
+                            "value" to "not_an_int"
+                        )
+                    )
+                )
+            )
+        }
+
+        ex.message shouldContain "root.level2.level3.value"
+        ex.message shouldContain "must not be null"
+    }
 })

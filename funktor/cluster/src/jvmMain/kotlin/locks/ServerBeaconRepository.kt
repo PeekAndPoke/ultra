@@ -2,7 +2,7 @@ package de.peekandpoke.funktor.cluster.locks
 
 import de.peekandpoke.funktor.cluster.locks.domain.ServerBeacon
 import de.peekandpoke.funktor.core.model.AppInfo
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpInstant
 import de.peekandpoke.ultra.vault.New
 import de.peekandpoke.ultra.vault.Stored
 

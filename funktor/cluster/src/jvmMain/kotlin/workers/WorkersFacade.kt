@@ -4,8 +4,8 @@ import de.peekandpoke.funktor.cluster.workers.api.WorkerModel
 import de.peekandpoke.funktor.cluster.workers.services.WorkerHistory
 import de.peekandpoke.funktor.cluster.workers.services.WorkerRegistry
 import de.peekandpoke.funktor.cluster.workers.services.WorkerTracker
-import de.peekandpoke.ultra.common.datetime.Kronos
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.Kronos
+import de.peekandpoke.ultra.datetime.MpInstant
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.log.Log
 import kotlinx.coroutines.Deferred

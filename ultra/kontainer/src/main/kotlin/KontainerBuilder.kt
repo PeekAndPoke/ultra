@@ -2,7 +2,7 @@
 
 package de.peekandpoke.ultra.kontainer
 
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.kType
 import kotlin.reflect.KClass
 
 class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit) {

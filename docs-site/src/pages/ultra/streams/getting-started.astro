@@ -1,0 +1,117 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { streamsSidebar } from '../../../data/streams-sidebar';
+import { Code } from 'astro:components';
+import { dep, mavenCentralUrl } from '../../../data/site';
+---
+
+<DocsLayout title="Getting Started with Streams" sidebar={streamsSidebar} description="Set up Streams in your Kotlin project">
+
+<h1>Getting Started</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Add Streams to your project and create your first reactive values.
+</p>
+
+<h2>1. Add the dependency</h2>
+
+<p>In your <code>build.gradle.kts</code>:</p>
+
+<Code code={`dependencies {
+    implementation("${dep.streams}")
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Find the latest version on <a href={mavenCentralUrl} target="_blank" rel="noopener">Maven Central</a>.</p>
+
+<p>Streams is a Kotlin Multiplatform library — it works in <code>commonMain</code>, <code>jvmMain</code>, and <code>jsMain</code>.</p>
+
+<h2>2. Create a StreamSource</h2>
+
+<p>A <code>StreamSource</code> is a mutable reactive value. It always has a current value.</p>
+
+<Code code={`import de.peekandpoke.ultra.streams.StreamSource
+
+val counter = StreamSource(0)
+
+// Read the current value
+println(counter())  // 0
+
+// Set a new value
+counter(1)
+println(counter())  // 1
+
+// Modify based on current value
+counter.modify { this + 1 }
+println(counter())  // 2
+
+// Reset to initial
+counter.reset()
+println(counter())  // 0`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>3. Subscribe to changes</h2>
+
+<p>Subscribing immediately delivers the current value, then every subsequent change:</p>
+
+<Code code={`val name = StreamSource("Alice")
+
+val unsubscribe = name.subscribeToStream { value ->
+    println("Name is: ${'$'}value")
+}
+// prints "Name is: Alice" immediately
+
+name("Bob")
+// prints "Name is: Bob"
+
+name("Charlie")
+// prints "Name is: Charlie"
+
+// Stop listening
+unsubscribe()`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>4. Transform with operators</h2>
+
+<p>Operators create new read-only streams derived from a source:</p>
+
+<Code code={`val source = StreamSource(5)
+
+// map — transform each value
+val doubled = source.map { it * 2 }
+println(doubled())  // 10
+
+// filter — only pass values matching a predicate
+val big = source.filter(initial = 0) { it > 10 }
+println(big())  // 0 (initial, since 5 doesn't match)
+
+source(20)
+println(big())     // 20
+println(doubled()) // 40`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>5. Combine streams</h2>
+
+<p>Merge two streams into one:</p>
+
+<Code code={`val a = StreamSource(1)
+val b = StreamSource(10)
+
+val sum = a.combinedWith(b) { x, y -> x + y }
+println(sum())  // 11
+
+a(5)
+println(sum())  // 15
+
+b(100)
+println(sum())  // 105`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>How subscriptions work</h2>
+
+<p>Streams use <strong>lazy subscriptions</strong>. When you chain operators like <code>source.map { }.filter { }</code>, no work happens until someone subscribes to the end of the chain. The subscription propagates upstream — and when the last subscriber unsubscribes, the entire chain tears down.</p>
+
+<p>This means unused streams cost nothing.</p>
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/streams/operators" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    See all operators &rarr;
+  </a>
+</div>
+
+</DocsLayout>

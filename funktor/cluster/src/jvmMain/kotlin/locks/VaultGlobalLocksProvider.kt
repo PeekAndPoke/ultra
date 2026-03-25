@@ -2,7 +2,7 @@ package de.peekandpoke.funktor.cluster.locks
 
 import de.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
 import de.peekandpoke.funktor.core.Retry.retry
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpInstant
 import de.peekandpoke.ultra.vault.RemoveResult
 import de.peekandpoke.ultra.vault.Repository
 import kotlinx.coroutines.delay

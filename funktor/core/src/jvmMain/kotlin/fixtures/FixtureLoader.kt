@@ -1,6 +1,6 @@
 package de.peekandpoke.funktor.core.fixtures
 
-import de.peekandpoke.ultra.common.model.Message
+import de.peekandpoke.ultra.model.Message
 
 /**
  * Common interface for all Fixture loaders

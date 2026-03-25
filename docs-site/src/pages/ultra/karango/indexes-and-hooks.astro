@@ -1,0 +1,173 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {karangoSidebar} from '../../../data/karango-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Indexes & Hooks" sidebar={karangoSidebar}
+            description="Index management and entity lifecycle hooks in Karango">
+
+    <h1>Indexes &amp; Hooks</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Define indexes with a type-safe DSL and hook into entity lifecycle events.
+    </p>
+
+    <h2>Persistent indexes</h2>
+
+    <p>Override <code>buildIndexes()</code> in your repository to define indexes. Field paths are type-safe — the same
+        KSP-generated accessors used in queries:</p>
+
+    <Code code={`class PersonsRepo(driver: KarangoDriver) : EntityRepository<Person>(
+    name = "persons", storedType = kType(), driver = driver
+) {
+    override fun IndexBuilder<Person>.buildIndexes() {
+        // Single-field index
+        persistentIndex {
+            field { name }
+        }
+
+        // Compound index
+        persistentIndex {
+            field { age }
+            field { name }
+        }
+
+        // Named index with options
+        persistentIndex {
+            name("idx_email_unique")
+            field { email }
+            options { unique(true) }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Indexes are automatically created when the repository is ensured. If an index with the same name exists but
+        different fields, Karango drops and recreates it.</p>
+
+    <h2>TTL indexes</h2>
+
+    <p>For documents that should expire automatically:</p>
+
+    <Code code={`@Vault
+data class Session(
+    val userId: String,
+    val token: String,
+    val expiresAt: Long,  // epoch seconds
+)
+
+class SessionsRepo(driver: KarangoDriver) : EntityRepository<Session>(
+    name = "sessions", storedType = kType(), driver = driver
+) {
+    override fun IndexBuilder<Session>.buildIndexes() {
+        ttlIndex {
+            field { expiresAt }
+            options { expireAfter(0) }  // expire at the exact timestamp
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Nested field indexes</h2>
+
+    <Code code={`@Vault
+data class Address(val city: String, val zip: String)
+
+@Vault
+data class Person(val name: String, val address: Address)
+
+override fun IndexBuilder<Person>.buildIndexes() {
+    persistentIndex {
+        field { address.city }
+        field { address.zip }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Lifecycle hooks</h2>
+
+    <p>Hooks run on insert, save, and remove operations. The most common use case: automatic timestamps.</p>
+
+    <h3>Timestamped entities</h3>
+
+    <Code code={`@Vault
+data class Article(
+    val title: String,
+    val content: String,
+    override val createdAt: MpInstant = MpInstant.Epoch,
+    override val updatedAt: MpInstant = MpInstant.Epoch,
+) : Timestamped {
+    override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
+    override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+}
+
+class ArticlesRepo(
+    driver: KarangoDriver,
+    timestamped: TimestampedHook,
+) : EntityRepository<Article>(
+    name = "articles",
+    storedType = kType(),
+    driver = driver,
+    hooks = Hooks.of<Article>(timestamped.onBeforeSave()),
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Now <code>createdAt</code> is set on first insert and <code>updatedAt</code> is updated on every save —
+        automatically.</p>
+
+    <h3>Custom hooks</h3>
+
+    <Code code={`class AuditHook : Hooks.OnAfterSave<Article> {
+    override suspend fun <X : Article> onAfterSave(
+        repo: Repository<Article>,
+        stored: Stored<X>,
+    ) {
+        println("Article saved: ${'$'}{stored._id}")
+    }
+}
+
+class DeleteHook : Hooks.OnAfterDelete<Article> {
+    override suspend fun <X : Article> onAfterDelete(
+        repo: Repository<Article>,
+        deleted: Stored<X>,
+    ) {
+        println("Article deleted: ${'$'}{deleted._id}")
+    }
+}
+
+// Register hooks
+hooks = Hooks.of<Article>()
+    .plus(AuditHook())
+    .plus(DeleteHook())`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>OnBeforeSave — transforming data</h3>
+
+    <Code code={`class NormalizeHook : Hooks.OnBeforeSave<Article> {
+    override fun <X : Article> onBeforeSave(
+        repo: Repository<Article>,
+        storable: Storable<Article>,
+    ): Storable<X> {
+        @Suppress("UNCHECKED_CAST")
+        return storable.map { article ->
+            article.copy(title = article.title.trim())
+        } as Storable<X>
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p><code>OnBeforeSave</code> can modify the entity before it's persisted — use it for normalization, validation, or
+        computed fields.</p>
+
+    <h2>Hook execution order</h2>
+
+    <ul>
+        <li><strong>insert()</strong>: OnBeforeSave → persist → OnAfterSave</li>
+        <li><strong>save()</strong>: OnBeforeSave → persist → OnAfterSave</li>
+        <li><strong>remove()</strong>: delete → OnAfterDelete</li>
+        <li><strong>batchInsert()</strong>: OnBeforeSave (each) → persist all → OnAfterSave (each)</li>
+    </ul>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/karango/kontainer-integration"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Kontainer integration &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

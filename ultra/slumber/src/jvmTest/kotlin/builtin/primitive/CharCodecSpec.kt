@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.slumber.builtin.primitive
 
-import de.peekandpoke.ultra.common.model.tuple
-import de.peekandpoke.ultra.common.reflection.TypeRef
+import de.peekandpoke.ultra.common.tuple
+import de.peekandpoke.ultra.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.builtin.AwakerSpecHelper
 import de.peekandpoke.ultra.slumber.builtin.SlumbererSpecHelper
 

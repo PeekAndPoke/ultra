@@ -12,7 +12,7 @@ import de.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import de.peekandpoke.funktor.auth.model.AuthSignUpResponse
 import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.funktor.messaging.MessagingServices
-import de.peekandpoke.ultra.common.datetime.Kronos
+import de.peekandpoke.ultra.datetime.Kronos
 import de.peekandpoke.ultra.security.jwt.JwtGenerator
 import de.peekandpoke.ultra.security.password.PasswordHasher
 

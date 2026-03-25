@@ -1,8 +1,8 @@
 package de.peekandpoke.ultra.kontainer.examples.defining_modules
 
-import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.kontainer
 import de.peekandpoke.ultra.kontainer.module
+import de.peekandpoke.ultra.tooling.SimpleExample
 
 class SimpleModuleExample : SimpleExample() {
 

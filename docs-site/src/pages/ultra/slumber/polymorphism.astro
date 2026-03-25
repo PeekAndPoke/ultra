@@ -1,0 +1,166 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { slumberSidebar } from '../../../data/slumber-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Polymorphism in Slumber" sidebar={slumberSidebar} description="Sealed classes, custom discriminators, and type migration in Slumber">
+
+<h1>Polymorphism</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Slumber auto-detects sealed classes, adds type discriminators, and supports
+  custom identifiers, default fallback types, and migration aliases.
+</p>
+
+<h2>Sealed classes — zero config</h2>
+
+<p>Sealed classes just work. Slumber adds a <code>_type</code> discriminator automatically:</p>
+
+<Code code={`sealed class Shape {
+    data class Circle(val radius: Double) : Shape()
+    data class Rectangle(val width: Double, val height: Double) : Shape()
+}
+
+val codec = Codec.default
+
+// Slumber adds "_type" with the fully qualified class name
+codec.slumber(Shape.Circle(5.0))
+// → { "_type": "com.example.Shape.Circle", "radius": 5.0 }
+
+// Awake reads "_type" and instantiates the correct subclass
+codec.awake<Shape>(mapOf(
+    "_type" to "com.example.Shape.Circle",
+    "radius" to 5.0,
+))
+// → Shape.Circle(radius=5.0)`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Custom identifiers with @SerialName</h2>
+
+<p>Fully qualified names are verbose. Use <code>@SerialName</code> for cleaner discriminator values:</p>
+
+<Code code={`import kotlinx.serialization.SerialName
+
+sealed class Event {
+    @SerialName("user.created")
+    data class UserCreated(val userId: String) : Event()
+
+    @SerialName("user.deleted")
+    data class UserDeleted(val userId: String) : Event()
+}
+
+codec.slumber(Event.UserCreated("alice"))
+// → { "_type": "user.created", "userId": "alice" }`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Custom discriminator field</h2>
+
+<p>Don't want <code>_type</code>? Implement <code>Polymorphic.Parent</code> on the companion:</p>
+
+<Code code={`sealed class Vehicle {
+    companion object : Polymorphic.Parent {
+        override val discriminator = "kind"
+    }
+
+    data class Car(val seats: Int) : Vehicle() {
+        companion object : Polymorphic.Child {
+            override val identifier = "car"
+        }
+    }
+
+    data class Bike(val gears: Int) : Vehicle() {
+        companion object : Polymorphic.Child {
+            override val identifier = "bike"
+        }
+    }
+}
+
+codec.slumber(Vehicle.Car(5))
+// → { "kind": "car", "seats": 5 }`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Default fallback type</h2>
+
+<p>When the discriminator is missing or unknown, fall back to a default type:</p>
+
+<Code code={`sealed class Message {
+    companion object : Polymorphic.Parent {
+        override val defaultType = Text::class
+    }
+
+    data class Text(val body: String) : Message()
+    data class Image(val url: String) : Message()
+}
+
+// No _type field? Falls back to Text
+codec.awake<Message>(mapOf("body" to "Hello!"))
+// → Message.Text(body="Hello!")`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Migration aliases with @AdditionalSerialName</h2>
+
+<p>Renamed a type? Old discriminator values still work:</p>
+
+<Code code={`sealed class Notification {
+    @SerialName("email")
+    @AdditionalSerialName("email_notification")  // old name
+    @AdditionalSerialName("EmailNotification")   // even older name
+    data class Email(val to: String) : Notification()
+}
+
+// All three discriminators resolve to the same class:
+codec.awake<Notification>(mapOf("_type" to "email", "to" to "a@b.com"))
+codec.awake<Notification>(mapOf("_type" to "email_notification", "to" to "a@b.com"))
+codec.awake<Notification>(mapOf("_type" to "EmailNotification", "to" to "a@b.com"))
+// → all return Notification.Email(to="a@b.com")`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Polymorphic collections</h2>
+
+<p>Lists and maps of polymorphic types work naturally:</p>
+
+<Code code={`sealed class Shape {
+    data class Circle(val radius: Double) : Shape()
+    data class Rectangle(val width: Double, val height: Double) : Shape()
+}
+
+data class Drawing(val shapes: List<Shape>)
+
+val drawing = Drawing(listOf(
+    Shape.Circle(5.0),
+    Shape.Rectangle(10.0, 20.0),
+))
+
+val data = codec.slumber(drawing)
+// → { "shapes": [
+//     { "_type": "...Circle", "radius": 5.0 },
+//     { "_type": "...Rectangle", "width": 10.0, "height": 20.0 }
+// ]}
+
+val restored = codec.awake<Drawing>(data)
+// → Drawing with the correct subtypes restored`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Nested sealed hierarchies</h2>
+
+<p>Sealed hierarchies can be nested — Slumber traverses them correctly:</p>
+
+<Code code={`sealed class Animal {
+    sealed class Domestic : Animal() {
+        data class Dog(val name: String) : Domestic()
+        data class Cat(val name: String) : Domestic()
+    }
+    sealed class Wild : Animal() {
+        data class Wolf(val pack: String) : Wild()
+    }
+}
+
+// All leaf types serialize and deserialize correctly
+codec.awake<Animal>(mapOf(
+    "_type" to Animal.Domestic.Dog::class.qualifiedName,
+    "name" to "Rex",
+))
+// → Animal.Domestic.Dog(name="Rex")`} lang="kotlin" theme="vitesse-dark" />
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/slumber/collections" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Collections &amp; Maps &rarr;
+  </a>
+</div>
+
+</DocsLayout>

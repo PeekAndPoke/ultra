@@ -27,6 +27,7 @@ kotlin {
         api(Deps.Ktor.Server.html_builder)
         api(Deps.KotlinX.wrappers_css)
 
+        api(project(":ultra:html"))
         api(project(":ultra:semanticui"))
         api(project(":funktor:core"))
 

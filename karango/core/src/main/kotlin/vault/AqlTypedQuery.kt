@@ -2,7 +2,7 @@ package de.peekandpoke.karango.vault
 
 import de.peekandpoke.karango.aql.AqlPrinter
 import de.peekandpoke.karango.aql.AqlTerminalExpr
-import de.peekandpoke.ultra.common.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.TypeRef
 import de.peekandpoke.ultra.vault.TypedQuery
 
 data class AqlTypedQuery<T>(

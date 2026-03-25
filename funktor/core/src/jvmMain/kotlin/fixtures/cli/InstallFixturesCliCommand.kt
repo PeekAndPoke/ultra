@@ -3,7 +3,7 @@ package de.peekandpoke.funktor.core.fixtures.cli
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import de.peekandpoke.funktor.core.fixtures.FixtureInstaller
-import de.peekandpoke.ultra.common.datetime.Kronos
+import de.peekandpoke.ultra.datetime.Kronos
 import de.peekandpoke.ultra.kontainer.Kontainer
 import de.peekandpoke.ultra.log.Log
 import de.peekandpoke.ultra.vault.Database
@@ -31,9 +31,7 @@ class InstallFixturesCliCommand(
 
             it.use(FixtureInstaller::class) {
                 log.info("Clearing database repos")
-                runBlocking {
-                    clear()
-                }
+                clear()
             }
         }
 
@@ -46,11 +44,9 @@ class InstallFixturesCliCommand(
         kontainer.clone().let {
 
             it.use(FixtureInstaller::class) {
-                val result = runBlocking {
-                    clearAndInstall()
-                }
+                val result = clearAndInstall()
 
-                runBlocking {
+                run {
                     delay(100)
 
                     log.info("Done installing fixtures!")

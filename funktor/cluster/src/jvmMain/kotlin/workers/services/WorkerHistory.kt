@@ -5,8 +5,8 @@ import de.peekandpoke.funktor.cluster.workers.Worker
 import de.peekandpoke.funktor.cluster.workers.api.WorkerModel
 import de.peekandpoke.funktor.cluster.workers.domain.WorkerRun
 import de.peekandpoke.funktor.cluster.workers.vault.VaultWorkerRun
-import de.peekandpoke.ultra.common.datetime.Kronos
-import de.peekandpoke.ultra.common.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.Kronos
+import de.peekandpoke.ultra.datetime.MpInstant
 import de.peekandpoke.ultra.vault.BatchInsertRepository
 import de.peekandpoke.ultra.vault.Cursor
 import de.peekandpoke.ultra.vault.Repository

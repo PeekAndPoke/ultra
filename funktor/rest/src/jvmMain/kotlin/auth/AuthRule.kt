@@ -3,8 +3,8 @@ package de.peekandpoke.funktor.rest.auth
 import de.peekandpoke.funktor.core.kontainer
 import de.peekandpoke.funktor.rest.auth.AuthRule.CheckCtx
 import de.peekandpoke.funktor.rest.auth.AuthRule.EstimateCtx
-import de.peekandpoke.ultra.common.remote.ApiAccessLevel
 import de.peekandpoke.ultra.kontainer.KontainerAware
+import de.peekandpoke.ultra.remote.ApiAccessLevel
 import de.peekandpoke.ultra.security.user.User
 import de.peekandpoke.ultra.security.user.UserPermissions
 import de.peekandpoke.ultra.security.user.UserProvider

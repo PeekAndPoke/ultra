@@ -5,8 +5,8 @@ import de.peekandpoke.funktor.cluster.depot.domain.DepotFileContent
 import de.peekandpoke.funktor.cluster.depot.domain.DepotItem
 import de.peekandpoke.funktor.cluster.depot.repos.DepotPutFileOptions
 import de.peekandpoke.funktor.cluster.depot.repos.DepotRepository
-import de.peekandpoke.ultra.common.datetime.MpInstant
 import de.peekandpoke.ultra.common.ensureDirectory
+import de.peekandpoke.ultra.datetime.MpInstant
 import java.io.File
 
 abstract class FileSystemRepository(override val name: String, dir: String) : DepotRepository {
@@ -38,7 +38,7 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
         override val size: Long? by lazy(LazyThreadSafetyMode.NONE) {
             try {
                 file.length()
-            } catch (e: SecurityException) {
+            } catch (_: SecurityException) {
                 null
             }
         }
@@ -46,7 +46,7 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
         override val lastModifiedAt: MpInstant? by lazy(LazyThreadSafetyMode.NONE) {
             try {
                 MpInstant.fromEpochMillis(file.lastModified())
-            } catch (e: SecurityException) {
+            } catch (_: SecurityException) {
                 null
             }
         }
@@ -67,7 +67,7 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
         override val lastModifiedAt: MpInstant? by lazy(LazyThreadSafetyMode.NONE) {
             try {
                 MpInstant.fromEpochMillis(file.lastModified())
-            } catch (e: SecurityException) {
+            } catch (_: SecurityException) {
                 null
             }
         }

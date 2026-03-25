@@ -28,6 +28,7 @@ kotlin {
                 implementation(Deps.Ktor.Client.content_negotiation)
                 implementation(Deps.Ktor.Common.serialization_kotlinx_json)
 
+                implementation(project(":ultra:fixture"))
                 implementation(project(":kraft:semanticui"))
                 implementation(project(":funktor:all"))
 

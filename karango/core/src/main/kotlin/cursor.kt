@@ -11,8 +11,15 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
 import java.io.Closeable
 
-// TODO: [KARANGO] make the cursor fully async by getting rid of the internal [Iterator]
-//                 make use of Kotlin's Sequence api
+/**
+ * Streams query results from ArangoDB with lazy deserialization.
+ *
+ * Results are deserialized on demand via [KarangoCodec]. [Stored] entities are automatically
+ * added to the [EntityCache] on deserialization.
+ *
+ * NOTE: Cursor iteration currently uses a blocking call for batch pagination.
+ * TODO: [KARANGO] make the cursor fully async by getting rid of the internal [Iterator].
+ */
 class KarangoCursor<T>(
     arangoCursor: ArangoCursorAsync<*>,
     override val query: AqlTypedQuery<T>,

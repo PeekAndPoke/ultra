@@ -7,7 +7,7 @@ import de.peekandpoke.monko.lang.MongoNameExpr
 import de.peekandpoke.monko.lang.MongoPrinter
 import de.peekandpoke.monko.lang.MongoPrinter.Companion.printQuery
 import de.peekandpoke.monko.lang.MongoPropertyPath
-import de.peekandpoke.ultra.common.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.TypeRef
 import de.peekandpoke.ultra.vault.New
 import de.peekandpoke.ultra.vault.RemoveResult
 import de.peekandpoke.ultra.vault.Repository

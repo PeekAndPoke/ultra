@@ -1,6 +1,5 @@
 package de.peekandpoke.ultra.common
 
-import de.peekandpoke.ultra.common.model.tuple
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe

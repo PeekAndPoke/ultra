@@ -8,6 +8,7 @@ import com.arangodb.model.TtlIndexOptions
 import de.peekandpoke.karango.aql.AqlIterableExpr
 import de.peekandpoke.karango.aql.AqlPrinter.Companion.printQuery
 import de.peekandpoke.karango.aql.AqlPropertyPath
+import de.peekandpoke.karango.vault.IndexBuilder.Companion.matchesAny
 import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.VaultModels
 import kotlinx.coroutines.delay
@@ -37,11 +38,6 @@ class IndexBuilder<T : Any>(private val repo: BaseRepository<T>) {
         }
 
         fun <T : Any> BaseBuilder<T>.matches(index: IndexEntity): Boolean {
-
-//            println("--- ${getEffectiveName()} VS ${index.name} -------------------------------------------------------------------")
-//            println(this.getFieldPaths().toString())
-//            println(index.fields.toList().toString())
-
             return this.getEffectiveName() == index.name &&
                     this.getFieldPaths() == index.fields.toList()
         }
@@ -157,8 +153,7 @@ class IndexBuilder<T : Any>(private val repo: BaseRepository<T>) {
                                     EnsureResult.Kept(repo = repo, idx = existing)
                                 } else {
                                     // No. Drop the clashing index and try to re-create the index
-                                    @Suppress("UNUSED_VARIABLE", "unused")
-                                    val deleted: String = coll.deleteIndex(existing.id).await()
+                                    coll.deleteIndex(existing.id).await()
 
                                     // Wait for the index actually being deleted on the cluster
                                     delay(1000.milliseconds)

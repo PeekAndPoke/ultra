@@ -2,6 +2,7 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import { kraftSidebar } from '../../../data/kraft-sidebar';
 import { Code } from 'astro:components';
+import { kotlinVersion, dep, fomanticCdnUrl } from '../../../data/site';
 ---
 
 <DocsLayout title="Getting Started with Kraft" sidebar={kraftSidebar} description="Set up a Kraft project and build your first component">
@@ -24,8 +25,8 @@ import { Code } from 'astro:components';
 <p>In your <code>build.gradle.kts</code>:</p>
 
 <Code code={`plugins {
-    kotlin("multiplatform") version "2.2.20"
-    kotlin("plugin.serialization") version "2.2.20"
+    kotlin("multiplatform") version "${kotlinVersion}"
+    kotlin("plugin.serialization") version "${kotlinVersion}"
 }
 
 kotlin {
@@ -40,10 +41,10 @@ kotlin {
         jsMain {
             dependencies {
                 // Kraft core
-                implementation("io.peekandpoke.kraft:core:0.102.0")
+                implementation("${dep.kraftCore}")
 
                 // SemanticUI integration (optional but recommended)
-                implementation("io.peekandpoke.kraft:semanticui:0.102.0")
+                implementation("${dep.kraftSemanticUi}")
             }
         }
     }
@@ -60,7 +61,7 @@ kotlin {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>My Kraft App</title>
     <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.8/dist/semantic.min.css">
+          href="${fomanticCdnUrl}">
 </head>
 <body>
     <div id="app"></div>

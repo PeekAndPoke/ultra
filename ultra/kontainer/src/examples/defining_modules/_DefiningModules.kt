@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.kontainer.examples.defining_modules
 
-import de.peekandpoke.ultra.common.docs.Example
-import de.peekandpoke.ultra.common.docs.ExampleChapter
+import de.peekandpoke.ultra.tooling.Example
+import de.peekandpoke.ultra.tooling.ExampleChapter
 
 @Suppress("ClassName")
 class _DefiningModules : ExampleChapter {

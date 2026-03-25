@@ -1,5 +1,6 @@
 package de.peekandpoke.ultra.kontainer
 
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 
 /**
@@ -14,7 +15,7 @@ class DynamicsChecker internal constructor(val dynamics: Set<KClass<*>>) {
      *
      * A set of classes will have the same hash for the same classes, so we can do some caching here
      */
-    private val unexpectedLookUp = mutableMapOf<Set<KClass<*>>, Set<KClass<*>>>()
+    private val unexpectedLookUp = ConcurrentHashMap<Set<KClass<*>>, Set<KClass<*>>>()
 
     /**
      * Checks if all [given] are contained in all [dynamics]

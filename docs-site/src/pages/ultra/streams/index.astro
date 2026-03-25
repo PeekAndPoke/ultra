@@ -1,0 +1,106 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { streamsSidebar } from '../../../data/streams-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Streams" sidebar={streamsSidebar} description="Lightweight reactive streams for Kotlin Multiplatform">
+
+<h1>Streams — Reactive Values, Simplified</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  A lightweight reactive streams library for Kotlin Multiplatform.
+  Every stream always has a value. No marble diagrams required.
+</p>
+
+<h2>The core idea: streams always have a value</h2>
+
+<p>Most reactive libraries (RxJava, RxJS, Kotlin Flow) model streams as sequences that <em>might eventually emit</em> something. You subscribe, wait, and hope. This creates a maze of operators for handling the "not yet" state — <code>startWith</code>, <code>defaultIfEmpty</code>, <code>firstOrDefault</code>, <code>onErrorResumeNext</code> — each with its own marble diagram.</p>
+
+<p>Streams takes a radically simpler approach: <strong>every stream always has a current value</strong>. You can read it at any time with <code>stream()</code>. When you subscribe, you immediately get the current value — no waiting, no special handling.</p>
+
+<Code code={`val source = StreamSource(42)
+
+// Always has a value — read it anytime
+println(source())  // 42
+
+// Subscribe — immediately called with current value
+source.subscribeToStream { value ->
+    println("Got: ${'$'}value")
+}
+// prints "Got: 42" immediately
+
+// Update — all subscribers notified
+source(99)
+// prints "Got: 99"`} lang="kotlin" theme="vitesse-dark" />
+
+<p>This is what makes Streams perfect for UI programming. In <a href="/ultra/kraft/">Kraft</a>, components subscribe to streams and re-render when values change. Because streams always have a value, the first render always has data — no loading spinners, no null checks, no "initial state" boilerplate.</p>
+
+<h2>Two types</h2>
+
+<p>The entire library is built on two types:</p>
+
+<ul>
+  <li><strong><code>Stream&lt;T&gt;</code></strong> — read-only. Has <code>invoke(): T</code> (get value) and <code>subscribeToStream()</code> (observe changes).</li>
+  <li><strong><code>StreamSource&lt;T&gt;</code></strong> — read-write. Adds <code>invoke(next: T)</code> (set value), <code>modify()</code>, and <code>reset()</code>.</li>
+</ul>
+
+<p>Operators transform a <code>Stream</code> into another <code>Stream</code>. The chain is lazy — operators only subscribe upstream when they have downstream subscribers.</p>
+
+<h2>What you get</h2>
+
+<div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Always Has a Value</h3>
+    <p class="text-sm text-gray-400"><code>stream()</code> never blocks, never returns null (unless T is nullable). No marble diagrams needed.</p>
+  </div>
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Composable Operators</h3>
+    <p class="text-sm text-gray-400"><code>map</code>, <code>filter</code>, <code>combine</code>, <code>debounce</code>, <code>fold</code>, <code>distinct</code>, <code>history</code>, and more.</p>
+  </div>
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Lazy Subscriptions</h3>
+    <p class="text-sm text-gray-400">Operators only subscribe upstream when they have downstream subscribers. No wasted work.</p>
+  </div>
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Kotlin Multiplatform</h3>
+    <p class="text-sm text-gray-400">Core + all operators work on JVM and JS. Plus JS-specific extras like <code>animTicker()</code> and localStorage persistence.</p>
+  </div>
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Resilient</h3>
+    <p class="text-sm text-gray-400">A failing subscriber never prevents other subscribers from being notified. Streams keep flowing.</p>
+  </div>
+  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+    <h3 class="text-white font-semibold mb-1">Flow Interop</h3>
+    <p class="text-sm text-gray-400"><code>stream.asFlow()</code> bridges into Kotlin's Flow world when you need it.</p>
+  </div>
+</div>
+
+<h2>Quick taste</h2>
+
+<Code code={`val name = StreamSource("World")
+val greeting = name.map { "Hello, ${'$'}it!" }
+
+greeting.subscribeToStream { println(it) }
+// prints "Hello, World!"
+
+name("Kotlin")
+// prints "Hello, Kotlin!"
+
+// Combine two streams
+val firstName = StreamSource("Jane")
+val lastName = StreamSource("Doe")
+
+val fullName = firstName.pairedWith(lastName).map { (f, l) -> "${'$'}f ${'$'}l" }
+println(fullName())  // "Jane Doe"
+
+firstName("John")
+println(fullName())  // "John Doe"`} lang="kotlin" theme="vitesse-dark" />
+
+<div class="not-prose mt-8">
+  <a href="/ultra/streams/getting-started" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Get started &rarr;
+  </a>
+</div>
+
+</DocsLayout>

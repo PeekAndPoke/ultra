@@ -5,7 +5,7 @@ import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.funktor.core.kontainerOrNull
 import de.peekandpoke.funktor.core.logInternalError
 import de.peekandpoke.funktor.core.logNotFound
-import de.peekandpoke.ultra.common.remote.ApiResponse
+import de.peekandpoke.ultra.remote.ApiResponse
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*

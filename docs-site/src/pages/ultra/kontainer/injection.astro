@@ -1,0 +1,248 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { kontainerSidebar } from '../../../data/kontainer-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Service Injection" sidebar={kontainerSidebar} description="Constructor injection, lazy injection, and multi-service injection in Kontainer">
+
+<h1>Service Injection</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Kontainer supports constructor injection, factory methods, lazy injection,
+  and injecting multiple implementations of an interface.
+</p>
+
+<h2>Constructor injection</h2>
+
+<p>The simplest and most common pattern. Declare dependencies in your constructor:</p>
+
+<Code code={`class Counter {
+    private var count = 0
+    fun next() = ++count
+}
+
+class MyService(val counter: Counter)
+
+val blueprint = kontainer {
+    singleton(Counter::class)
+    singleton(MyService::class)
+}
+
+val kontainer = blueprint.create()
+val service = kontainer.get(MyService::class)
+
+println(service.counter.next())  // 1
+println(service.counter.next())  // 2`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Factory method injection</h2>
+
+<p>When a service needs parameters that Kontainer doesn't know about, use a factory lambda. The lambda's parameters are injected; you handle the rest.</p>
+
+<Code code={`class MyService(private val counter: Counter, private val offset: Int) {
+    fun next() = counter.next() + offset
+}
+
+val blueprint = kontainer {
+    singleton(Counter::class)
+
+    // Kontainer injects Counter; you provide the offset
+    singleton(MyService::class) { counter: Counter ->
+        MyService(counter, 100)
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Factories support up to 10 injected parameters.</p>
+
+<h2>Inject by super type</h2>
+
+<p>A service can be injected by any of its supertypes — interface or parent class:</p>
+
+<Code code={`interface CounterInterface {
+    fun next(): Int
+}
+
+class Counter : CounterInterface {
+    private var count = 0
+    override fun next() = ++count
+}
+
+// MyService depends on the interface, not the concrete class
+class MyService(val counter: CounterInterface)
+
+val blueprint = kontainer {
+    singleton(Counter::class)
+    singleton(MyService::class)
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>If two services implement the same interface, injection becomes <strong>ambiguous</strong> and Kontainer reports an error. Use <code>List&lt;T&gt;</code> injection instead (see below).</p>
+
+<h2>Nullable injection</h2>
+
+<p>Mark a dependency as nullable to make it optional. If the service isn't registered, <code>null</code> is injected instead of throwing:</p>
+
+<Code code={`class SomeOptionalService
+
+// Will receive null if SomeOptionalService is not registered
+class MyService(val optional: SomeOptionalService?)
+
+val blueprint = kontainer {
+    singleton(MyService::class)
+    // SomeOptionalService is NOT registered
+}
+
+val kontainer = blueprint.create()
+println(kontainer.get(MyService::class).optional)  // null`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Inject all implementations</h2>
+
+<p>Inject all services that implement a given type as a <code>List</code>. This is powerful for building extensible, plugin-style architectures:</p>
+
+<Code code={`interface Repository {
+    val name: String
+}
+
+class UserRepository : Repository {
+    override val name = "users"
+}
+
+class OrderRepository : Repository {
+    override val name = "orders"
+}
+
+// Injects ALL Repository implementations
+class Database(val repos: List<Repository>)
+
+val blueprint = kontainer {
+    singleton(Database::class)
+    singleton(UserRepository::class)
+    singleton(OrderRepository::class)
+}
+
+val kontainer = blueprint.create()
+kontainer.get(Database::class).repos.forEach {
+    println(it.name)  // "users", "orders"
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Lazy injection</h2>
+
+<p>Wrap a dependency in <code>Lazy&lt;T&gt;</code> to defer its creation until first use:</p>
+
+<Code code={`class ExpensiveService {
+    init { println("ExpensiveService created!") }
+    fun doWork() = "done"
+}
+
+class MyService(private val lazy: Lazy<ExpensiveService>) {
+    fun run() = lazy.value.doWork()
+}
+
+val blueprint = kontainer {
+    singleton(ExpensiveService::class)
+    singleton(MyService::class)
+}
+
+val kontainer = blueprint.create()
+val service = kontainer.get(MyService::class)
+// ExpensiveService is NOT created yet
+
+service.run()
+// NOW ExpensiveService is created`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Breaking circular dependencies with Lazy</h2>
+
+<p>When two services need each other, make one of them lazy to break the cycle:</p>
+
+<Code code={`class ServiceOne(private val two: ServiceTwo) {
+    val name = "one"
+    fun greet() = "I know ${'$'}{two.name}"
+}
+
+class ServiceTwo(private val one: Lazy<ServiceOne>) {
+    val name = "two"
+    fun greet() = "I know ${'$'}{one.value.name}"
+}
+
+val blueprint = kontainer {
+    singleton(ServiceOne::class)
+    singleton(ServiceTwo::class)
+}
+
+val kontainer = blueprint.create()
+println(kontainer.get(ServiceOne::class).greet())  // "I know two"
+println(kontainer.get(ServiceTwo::class).greet())  // "I know one"`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Lookup injection</h2>
+
+<p>For large sets of implementations where you only need specific ones at a time, use <code>Lookup&lt;T&gt;</code>. Unlike <code>List&lt;T&gt;</code>, a Lookup creates services on demand:</p>
+
+<Code code={`import de.peekandpoke.ultra.common.Lookup
+
+class Database(val repos: Lookup<Repository>)
+
+val blueprint = kontainer {
+    singleton(Database::class)
+    dynamic(UserRepository::class)
+    dynamic(OrderRepository::class)
+}
+
+val kontainer = blueprint.create()
+val db = kontainer.get(Database::class)
+
+// Only UserRepository is created — OrderRepository stays untouched
+val users = db.repos.get(UserRepository::class)
+println(users.name)  // "users"`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Injection patterns summary</h2>
+
+<div class="not-prose my-8">
+  <table class="w-full text-sm text-left">
+    <thead>
+      <tr class="border-b border-white/10">
+        <th class="py-2 text-white font-semibold">Pattern</th>
+        <th class="py-2 text-white font-semibold">Constructor type</th>
+        <th class="py-2 text-white font-semibold">Behavior</th>
+      </tr>
+    </thead>
+    <tbody class="text-gray-400">
+      <tr class="border-b border-white/5">
+        <td class="py-2">Direct</td>
+        <td class="py-2"><code>val x: Service</code></td>
+        <td class="py-2">Injected immediately</td>
+      </tr>
+      <tr class="border-b border-white/5">
+        <td class="py-2">Nullable</td>
+        <td class="py-2"><code>val x: Service?</code></td>
+        <td class="py-2">Null if not registered</td>
+      </tr>
+      <tr class="border-b border-white/5">
+        <td class="py-2">List</td>
+        <td class="py-2"><code>val x: List&lt;Base&gt;</code></td>
+        <td class="py-2">All implementations</td>
+      </tr>
+      <tr class="border-b border-white/5">
+        <td class="py-2">Lookup</td>
+        <td class="py-2"><code>val x: Lookup&lt;Base&gt;</code></td>
+        <td class="py-2">Lazy, on-demand access</td>
+      </tr>
+      <tr class="border-b border-white/5">
+        <td class="py-2">Lazy</td>
+        <td class="py-2"><code>val x: Lazy&lt;Service&gt;</code></td>
+        <td class="py-2">Created on first <code>.value</code></td>
+      </tr>
+      <tr>
+        <td class="py-2">Lazy List</td>
+        <td class="py-2"><code>val x: Lazy&lt;List&lt;Base&gt;&gt;</code></td>
+        <td class="py-2">Deferred list of all impls</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/kontainer/modules" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Learn about modules &rarr;
+  </a>
+</div>
+
+</DocsLayout>

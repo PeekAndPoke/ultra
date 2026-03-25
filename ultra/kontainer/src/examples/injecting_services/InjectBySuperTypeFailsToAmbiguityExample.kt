@@ -1,8 +1,8 @@
 package de.peekandpoke.ultra.kontainer.examples.injecting_services
 
-import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.KontainerInconsistent
 import de.peekandpoke.ultra.kontainer.kontainer
+import de.peekandpoke.ultra.tooling.SimpleExample
 
 @Suppress("unused")
 class InjectBySuperTypeFailsToAmbiguityExample : SimpleExample() {

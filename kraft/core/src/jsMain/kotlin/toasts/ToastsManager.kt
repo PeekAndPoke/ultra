@@ -5,11 +5,11 @@ import de.peekandpoke.kraft.components.Component
 import de.peekandpoke.kraft.components.getAttributeRecursive
 import de.peekandpoke.kraft.toasts.ToastsManager.Handle
 import de.peekandpoke.ultra.common.TypedKey
-import de.peekandpoke.ultra.common.model.Message
-import de.peekandpoke.ultra.common.model.Messages
 import de.peekandpoke.ultra.html.css
 import de.peekandpoke.ultra.html.key
 import de.peekandpoke.ultra.html.onClick
+import de.peekandpoke.ultra.model.Message
+import de.peekandpoke.ultra.model.Messages
 import de.peekandpoke.ultra.streams.Stream
 import de.peekandpoke.ultra.streams.StreamSource
 import de.peekandpoke.ultra.streams.Unsubscribe

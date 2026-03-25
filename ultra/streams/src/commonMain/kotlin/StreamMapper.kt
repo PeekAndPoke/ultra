@@ -30,9 +30,8 @@ open class StreamMapper<WRAPPED, RESULT>(
     }
 
     override fun handleIncoming(value: WRAPPED) {
-        mapper(value)?.let {
-            latest = it
-            publish(it)
-        }
+        val mapped = mapper(value)
+        latest = mapped
+        publish(mapped)
     }
 }

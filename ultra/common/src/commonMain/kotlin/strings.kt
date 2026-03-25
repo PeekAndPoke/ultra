@@ -123,7 +123,7 @@ fun String.camelCaseSplit(): List<String> {
  */
 fun String.camelCaseDivide(divider: String = " "): String = camelCaseSplit().joinToString(divider)
 
-// TODO: Test me
+
 /**
  * Checks if the string is a url with a protocol, e.g. https://...
  */
@@ -131,7 +131,7 @@ fun String.isUrlWithProtocol(): Boolean {
     return UrlWithProtocolRegex.matches(this)
 }
 
-// TODO: Test me
+
 /**
  * Checks if the string is a valid email
  */
@@ -139,7 +139,7 @@ fun String.isEmail(): Boolean {
     return EmailRegex.matches(this)
 }
 
-// TODO: Test me
+
 /**
  * Splits the string, trims all and creates a set of the elements.
  */

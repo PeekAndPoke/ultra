@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Nav from '../components/Nav.astro';
+import { githubRepo, mavenCentralUrl, ultraGroup } from '../data/site';
 
 const libraries = [
   {
@@ -20,23 +21,30 @@ const libraries = [
   {
     name: 'Kontainer',
     tagline: 'Dependency injection, done right',
-    description: 'A compile-time verified DI container. No reflection, no runtime surprises. Define your dependencies, get type-safe injection.',
+    description: 'A lightweight DI container built around per-request scoping. Fresh containers per unit of work, stateful dynamic services, and validated dependency graphs — no annotations, no surprises.',
     href: '/ultra/kontainer/',
-    ready: false,
+    ready: true,
   },
   {
     name: 'Slumber',
     tagline: 'Serialization that sleeps easy',
-    description: 'Flexible serialization and deserialization with codec support. Maps, transforms, and validates your data.',
+    description: 'Kotlin-first serialization that understands nullable types, default values, and sealed classes. No annotations needed.',
     href: '/ultra/slumber/',
-    ready: false,
+    ready: true,
+  },
+  {
+    name: 'Streams',
+    tagline: 'Reactive streams that always have a value',
+    description: 'A lightweight reactive streams library for Kotlin Multiplatform. Always-has-a-value semantics, lazy subscriptions, and composable operators — no marble diagrams required.',
+    href: '/ultra/streams/',
+    ready: true,
   },
   {
     name: 'Karango',
     tagline: 'Type-safe ArangoDB',
     description: 'Write ArangoDB queries in Kotlin with full type safety. KSP generates the boilerplate, you write the logic.',
     href: '/ultra/karango/',
-    ready: false,
+    ready: true,
   },
   {
     name: 'Funktor',
@@ -55,31 +63,16 @@ const libraries = [
   <section class="pt-32 pb-20 px-4">
     <div class="mx-auto max-w-4xl text-center">
       <h1 class="text-5xl sm:text-6xl font-extrabold tracking-tight text-white mb-6">
-        Build with
+        Kotlin libraries that
         <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 to-brand-500">
-          Kotlin
+          get out of your way
         </span>
       </h1>
       <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-        A collection of battle-tested Kotlin libraries for building modern applications.
-        From single-page apps to database access — type-safe, expressive, and ready to use.
+        Open-source tools for building real applications in Kotlin.
+        Dependency injection, serialization, reactive state, immutable data mutation, SPAs, database access
+        — designed to work together, type-safe, and free of ceremony.
       </p>
-      <div class="flex gap-4 justify-center">
-        <a
-          href="/ultra/kraft/"
-          class="px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors"
-        >
-          Get started with Kraft
-        </a>
-        <a
-          href="https://github.com/PeekAndPoke/ultra"
-          target="_blank"
-          rel="noopener"
-          class="px-6 py-3 border border-white/20 text-gray-300 font-semibold rounded-lg hover:bg-white/5 transition-colors"
-        >
-          View on GitHub
-        </a>
-      </div>
     </div>
   </section>
 
@@ -121,7 +114,7 @@ const libraries = [
     <div class="mx-auto max-w-4xl text-center">
       <p class="text-gray-500 text-sm">
         Published on Maven Central as
-        <a href="https://search.maven.org/search?q=io.peekandpoke.ultra" target="_blank" rel="noopener" class="text-brand-400 hover:text-brand-300 transition-colors"><code>io.peekandpoke.ultra</code></a>
+        <a href={mavenCentralUrl} target="_blank" rel="noopener" class="text-brand-400 hover:text-brand-300 transition-colors"><code>{ultraGroup}</code></a>
       </p>
     </div>
   </section>

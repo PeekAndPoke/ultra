@@ -11,11 +11,11 @@ import de.peekandpoke.funktor.core.websocket.WsServerMessage
 import de.peekandpoke.funktor.rest.ApiRoute
 import de.peekandpoke.funktor.rest.codec.RestCodec
 import de.peekandpoke.funktor.rest.restCodec
-import de.peekandpoke.ultra.common.model.EmptyObject
-import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.common.reflection.kType
-import de.peekandpoke.ultra.common.remote.ApiResponse
 import de.peekandpoke.ultra.kontainer.Kontainer
+import de.peekandpoke.ultra.model.EmptyObject
+import de.peekandpoke.ultra.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.kType
+import de.peekandpoke.ultra.remote.ApiResponse
 import io.kotest.assertions.fail
 import io.kotest.assertions.withClue
 import io.ktor.client.plugins.websocket.*

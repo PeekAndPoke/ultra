@@ -1,14 +1,14 @@
 package de.peekandpoke.funktor.logging.api
 
 import de.peekandpoke.funktor.logging.LogsFilter
-import de.peekandpoke.ultra.common.model.Paged
-import de.peekandpoke.ultra.common.remote.ApiClient
-import de.peekandpoke.ultra.common.remote.ApiResponse
-import de.peekandpoke.ultra.common.remote.TypedApiEndpoint.Get
-import de.peekandpoke.ultra.common.remote.TypedApiEndpoint.Put
-import de.peekandpoke.ultra.common.remote.api
-import de.peekandpoke.ultra.common.remote.apiPaged
-import de.peekandpoke.ultra.common.remote.call
+import de.peekandpoke.ultra.model.Paged
+import de.peekandpoke.ultra.remote.ApiClient
+import de.peekandpoke.ultra.remote.ApiResponse
+import de.peekandpoke.ultra.remote.TypedApiEndpoint.Get
+import de.peekandpoke.ultra.remote.TypedApiEndpoint.Put
+import de.peekandpoke.ultra.remote.api
+import de.peekandpoke.ultra.remote.apiPaged
+import de.peekandpoke.ultra.remote.call
 import kotlinx.coroutines.flow.Flow
 
 class LoggingApiClient(config: Config) : ApiClient(config) {

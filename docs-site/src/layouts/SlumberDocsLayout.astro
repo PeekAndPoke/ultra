@@ -1,0 +1,10 @@
+---
+import DocsLayout from './DocsLayout.astro';
+import { slumberSidebar } from '../data/slumber-sidebar';
+
+const { frontmatter } = Astro.props;
+---
+
+<DocsLayout title={frontmatter.title} description={frontmatter.description} sidebar={slumberSidebar}>
+  <slot />
+</DocsLayout>

@@ -1,0 +1,86 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { streamsSidebar } from '../../../data/streams-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Extending Streams" sidebar={streamsSidebar} description="Custom operators, Flow interop, and platform summary">
+
+<h1>Extending Streams</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Build your own operators, bridge to Kotlin Flow, and understand the platform matrix.
+</p>
+
+<h2>Custom operators</h2>
+
+<p>Build operators by extending <code>StreamMapper</code> (transform) or <code>StreamWrapper</code> (pass-through):</p>
+
+<Code code={`import de.peekandpoke.ultra.streams.Stream
+import de.peekandpoke.ultra.streams.StreamMapper
+
+fun Stream<Int>.clamp(min: Int, max: Int): Stream<Int> =
+    StreamMapper(
+        wrapped = this,
+        mapper = { it.coerceIn(min, max) }
+    )
+
+val source = StreamSource(50)
+val clamped = source.clamp(0, 100)
+
+source(150)
+println(clamped())  // 100`} lang="kotlin" theme="vitesse-dark" />
+
+<p>For operators with internal state, extend <code>StreamWrapperBase</code> directly and override <code>handleIncoming()</code> and <code>invoke()</code>.</p>
+
+<h2>Flow interop</h2>
+
+<p>Convert any stream to a Kotlin <code>Flow</code>:</p>
+
+<Code code={`import de.peekandpoke.ultra.streams.ops.asFlow
+
+val source = StreamSource(1)
+
+source.asFlow()
+    .filter { it > 5 }
+    .take(3)
+    .collect { println(it) }`} lang="kotlin" theme="vitesse-dark" />
+
+<p>The Flow emits the current value immediately on collection, then subsequent values. Cancelling the collector unsubscribes automatically.</p>
+
+<h2>Platform summary</h2>
+
+<div class="not-prose my-8">
+  <table class="w-full text-sm text-left">
+    <thead>
+      <tr class="border-b border-white/10">
+        <th class="py-2 text-white font-semibold">Operator</th>
+        <th class="py-2 text-white font-semibold">Platform</th>
+      </tr>
+    </thead>
+    <tbody class="text-gray-400">
+      <tr class="border-b border-white/5">
+        <td class="py-2">map, filter, combine, fold, distinct, fallback, history, indexed, onEach, cutoff</td>
+        <td class="py-2">All platforms</td>
+      </tr>
+      <tr class="border-b border-white/5">
+        <td class="py-2">ticker, debounce, mapAsync, asFlow</td>
+        <td class="py-2">All platforms (coroutine-based)</td>
+      </tr>
+      <tr class="border-b border-white/5">
+        <td class="py-2"><code>animTicker()</code></td>
+        <td class="py-2">JS only (<code>requestAnimationFrame</code>)</td>
+      </tr>
+      <tr class="border-b border-white/5">
+        <td class="py-2"><code>persistInLocalStorage()</code></td>
+        <td class="py-2">JS only (<code>localStorage</code>)</td>
+      </tr>
+      <tr>
+        <td class="py-2"><code>debouncedFunc()</code>, <code>debouncedFuncExceptFirst()</code></td>
+        <td class="py-2">JS only (<code>setTimeout</code>)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</DocsLayout>

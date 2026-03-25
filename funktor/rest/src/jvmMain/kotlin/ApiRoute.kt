@@ -7,9 +7,9 @@ import de.peekandpoke.funktor.rest.auth.AuthRule
 import de.peekandpoke.funktor.rest.auth.AuthRuleBuilder
 import de.peekandpoke.ultra.common.TypedAttributes
 import de.peekandpoke.ultra.common.TypedKey
-import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.common.remote.ApiAccessLevel
-import de.peekandpoke.ultra.common.remote.ApiResponse
+import de.peekandpoke.ultra.reflection.TypeRef
+import de.peekandpoke.ultra.remote.ApiAccessLevel
+import de.peekandpoke.ultra.remote.ApiResponse
 import de.peekandpoke.ultra.security.user.UserPermissions
 import io.ktor.http.*
 import io.ktor.server.routing.*

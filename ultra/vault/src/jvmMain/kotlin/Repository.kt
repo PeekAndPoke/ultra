@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.vault
 
-import de.peekandpoke.ultra.common.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.TypeRef
 import de.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicParentUtil
 import de.peekandpoke.ultra.vault.lang.Aliased
 import de.peekandpoke.ultra.vault.lang.Expression

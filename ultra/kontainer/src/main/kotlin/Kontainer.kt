@@ -4,7 +4,10 @@ import de.peekandpoke.ultra.common.Lookup
 import kotlin.reflect.KClass
 
 /**
- * The container
+ * The dependency injection container.
+ *
+ * Created from a [KontainerBlueprint] via [KontainerBlueprint.create].
+ * Provides service retrieval, cloning, and debug tools.
  */
 @Suppress("Detekt.TooManyFunctions")
 class Kontainer internal constructor(

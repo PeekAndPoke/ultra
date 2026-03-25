@@ -2,8 +2,8 @@ package de.peekandpoke.funktor.core.broker
 
 import de.peekandpoke.funktor.core.broker.vault.IncomingPrimitiveConverter
 import de.peekandpoke.ultra.common.SimpleLookup
-import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.kType
 import de.peekandpoke.ultra.security.csrf.StatelessCsrfProtection
 import de.peekandpoke.ultra.security.user.UserProvider
 import io.kotest.assertions.assertSoftly

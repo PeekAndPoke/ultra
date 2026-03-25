@@ -32,12 +32,12 @@ import de.peekandpoke.funktor.rest.codegen.dart.initialize
 import de.peekandpoke.funktor.rest.codegen.dart.returnType
 import de.peekandpoke.funktor.rest.codegen.joinSimpleNames
 import de.peekandpoke.funktor.rest.codegen.tagged
-import de.peekandpoke.ultra.common.datetime.MpInstant
-import de.peekandpoke.ultra.common.datetime.MpLocalDate
-import de.peekandpoke.ultra.common.datetime.MpLocalDateTime
-import de.peekandpoke.ultra.common.datetime.MpLocalTime
-import de.peekandpoke.ultra.common.datetime.MpZonedDateTime
 import de.peekandpoke.ultra.common.ucFirst
+import de.peekandpoke.ultra.datetime.MpInstant
+import de.peekandpoke.ultra.datetime.MpLocalDate
+import de.peekandpoke.ultra.datetime.MpLocalDateTime
+import de.peekandpoke.ultra.datetime.MpLocalTime
+import de.peekandpoke.ultra.datetime.MpZonedDateTime
 import de.peekandpoke.ultra.slumber.Slumber
 import kotlinx.serialization.SerialName
 import kotlin.reflect.KAnnotatedElement

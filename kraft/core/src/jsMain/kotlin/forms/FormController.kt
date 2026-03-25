@@ -7,10 +7,10 @@ open class FormController(private val component: Component<*>, val stopEvents: B
 
     companion object {
         fun watcher(component: Component<*>) =
-            _root_ide_package_.de.peekandpoke.kraft.forms.FormController(component = component, stopEvents = false)
+            FormController(component = component, stopEvents = false)
     }
 
-    private val _fields = mutableSetOf<de.peekandpoke.kraft.forms.FormField<*>>()
+    private val _fields = mutableSetOf<FormField<*>>()
 
     val fields get() = _fields
 
@@ -76,7 +76,7 @@ open class FormController(private val component: Component<*>, val stopEvents: B
     }
 
     init {
-        component.onMessage<de.peekandpoke.kraft.forms.FormFieldInputChanged<*>> {
+        component.onMessage<FormFieldInputChanged<*>> {
             component.triggerRedraw()
 
             if (stopEvents) {
@@ -84,7 +84,7 @@ open class FormController(private val component: Component<*>, val stopEvents: B
             }
         }
 
-        component.onMessage<de.peekandpoke.kraft.forms.FormFieldMountedMessage<*>> {
+        component.onMessage<FormFieldMountedMessage<*>> {
             _fields.add(it.field)
 
             if (stopEvents) {
@@ -92,7 +92,7 @@ open class FormController(private val component: Component<*>, val stopEvents: B
             }
         }
 
-        component.onMessage<de.peekandpoke.kraft.forms.FormFieldUnmountedMessage<*>> {
+        component.onMessage<FormFieldUnmountedMessage<*>> {
             _fields.remove(it.sender)
 
             if (stopEvents) {

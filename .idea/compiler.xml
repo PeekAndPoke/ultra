@@ -75,9 +75,9 @@
       <module name="ultra.slumber.main" target="17" />
       <module name="ultra.slumber.test" target="17" />
       <module name="ultra.test" target="17" />
-      <module name="ultra.ultra.datetime" target="17" />
-      <module name="ultra.ultra.datetime.jvmMain" target="17" />
-      <module name="ultra.ultra.datetime.jvmTest" target="17" />
+      <module name="ultra.ultra.extras" target="17" />
+      <module name="ultra.ultra.extras.jvmMain" target="17" />
+      <module name="ultra.ultra.extras.jvmTest" target="17" />
       <module name="ultra.ultra.logging" target="17" />
       <module name="ultra.ultra.logging.jvmMain" target="17" />
       <module name="ultra.ultra.logging.jvmTest" target="17" />
@@ -86,6 +86,8 @@
       <module name="ultra.ultra.mutator.test" target="17" />
       <module name="ultra.ultra.slumber.main" target="17" />
       <module name="ultra.ultra.slumber.test" target="17" />
+      <module name="ultra.ultra.tooling.main" target="17" />
+      <module name="ultra.ultra.tooling.test" target="17" />
       <module name="ultra.vault" target="17" />
       <module name="ultra.z-playground-js" target="17" />
       <module name="ultra.z-playground-jvm" target="17" />

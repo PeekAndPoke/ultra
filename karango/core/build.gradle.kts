@@ -31,6 +31,8 @@ kotlin {
         api(Deps.JavaLibs.ArangoDb.java_driver)
 
         implementation(project(":ultra:common"))
+        implementation(project(":ultra:datetime"))
+        implementation(project(":ultra:reflection"))
         implementation(project(":ultra:kontainer"))
         implementation(project(":ultra:log"))
         implementation(project(":ultra:slumber"))

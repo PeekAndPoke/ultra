@@ -47,6 +47,7 @@ kotlin {
                 implementation(Deps.Ktor.Client.core)
 
                 api(project(":ultra:common"))
+                api(project(":ultra:datetime"))
                 api(project(":ultra:slumber"))
             }
         }
@@ -75,6 +76,7 @@ kotlin {
 
                 api(project(":ultra:log"))
                 api(project(":ultra:kontainer"))
+                api(project(":ultra:reflection"))
                 api(project(":ultra:slumber"))
             }
         }

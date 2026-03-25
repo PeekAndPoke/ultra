@@ -1,7 +1,7 @@
 package de.peekandpoke.karango.aql
 
 import de.peekandpoke.karango.aql.AqlPrinter.Companion.print
-import de.peekandpoke.ultra.common.model.tuple
+import de.peekandpoke.ultra.common.tuple
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe

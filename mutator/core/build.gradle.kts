@@ -59,6 +59,7 @@ kotlin {
             kotlin.srcDir("src/examples")
 
             dependencies {
+                implementation(project(":tooling"))
                 Deps.Test {
                     jvmTestDeps()
                 }

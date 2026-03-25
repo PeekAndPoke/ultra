@@ -2,7 +2,7 @@ package de.peekandpoke.funktor.logging
 
 import de.peekandpoke.funktor.logging.api.LogEntryModel
 import de.peekandpoke.funktor.logging.api.LogsRequest
-import de.peekandpoke.ultra.common.model.Paged
+import de.peekandpoke.ultra.model.Paged
 
 interface LogsStorage {
 

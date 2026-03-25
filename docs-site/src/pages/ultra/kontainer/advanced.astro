@@ -1,0 +1,188 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { kontainerSidebar } from '../../../data/kontainer-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Advanced Topics" sidebar={kontainerSidebar} description="Dynamic overrides, blueprints, injection context, and debugging in Kontainer">
+
+<h1>Advanced Topics</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Dynamic overrides, blueprint extension, injection context, semi-dynamic services,
+  and debugging tools.
+</p>
+
+<h2>Dynamic overrides</h2>
+
+<p>When creating a container from a blueprint, you can override dynamic services with specific instances. This is essential for request-scoped data in web applications:</p>
+
+<Code code={`class RequestContext(val userId: String)
+
+class UserService(val ctx: RequestContext) {
+    fun currentUser() = "User: ${'$'}{ctx.userId}"
+}
+
+val blueprint = kontainer {
+    dynamic(RequestContext::class)
+    singleton(UserService::class)
+}
+
+// Override the dynamic service when creating a container
+val kontainer = blueprint.create {
+    with(RequestContext::class) { RequestContext("user-42") }
+}
+
+println(kontainer.get(UserService::class).currentUser())
+// "User: user-42"`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Semi-dynamic services</h2>
+
+<p>If a singleton injects a dynamic service, Kontainer automatically promotes it to <strong>semi-dynamic</strong> — it becomes a singleton within each container instance rather than global. This happens transparently; you don't need to do anything.</p>
+
+<Code code={`class RequestContext(val userId: String)
+
+// UserService is defined as singleton, but it injects a dynamic service.
+// Kontainer promotes it to semi-dynamic automatically.
+class UserService(val ctx: RequestContext)
+
+val blueprint = kontainer {
+    dynamic(RequestContext::class)
+    singleton(UserService::class)  // automatically becomes semi-dynamic
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Blueprint extension</h2>
+
+<p>Create a new blueprint by extending an existing one. The original is not modified:</p>
+
+<Code code={`val base = kontainer {
+    singleton(Counter::class)
+}
+
+val extended = base.extend {
+    singleton(MyService::class)
+}
+
+// 'extended' has both Counter and MyService
+// 'base' still only has Counter`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Cloning containers</h2>
+
+<p>Clone a container to get a fresh instance with reset dynamic services. Optionally apply new overrides:</p>
+
+<Code code={`val kontainer = blueprint.create {
+    with(RequestContext::class) { RequestContext("user-1") }
+}
+
+// Clone with different dynamic overrides
+val cloned = kontainer.clone {
+    with(RequestContext::class) { RequestContext("user-2") }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Injecting the container and blueprint</h2>
+
+<p>The <code>Kontainer</code> itself and the <code>KontainerBlueprint</code> are automatically available as services. Any service can inject them:</p>
+
+<Code code={`class ServiceLocator(val kontainer: Kontainer) {
+    fun <T : Any> resolve(cls: KClass<T>): T = kontainer.get(cls)
+}
+
+class BlueprintAware(val blueprint: KontainerBlueprint) {
+    fun createChild() = blueprint.create()
+}
+
+val blueprint = kontainer {
+    singleton(ServiceLocator::class)
+    singleton(BlueprintAware::class)
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Injection context</h2>
+
+<p>Services can inject <code>InjectionContext</code> to know who is requesting them and what is being injected. Useful for logging and context-aware behavior:</p>
+
+<Code code={`class ContextAwareService(val ctx: InjectionContext) {
+    fun whoAsked() = ctx.requestingClass.simpleName
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Retrieving services</h2>
+
+<p>Kontainer provides several ways to get services:</p>
+
+<Code code={`val kontainer = blueprint.create()
+
+// Get — throws if not found
+val service = kontainer.get(MyService::class)
+
+// Get with reified type
+val service2 = kontainer.get<MyService>()
+
+// GetOrNull — returns null if not found
+val maybe = kontainer.getOrNull(MyService::class)
+
+// Use — runs block only if service exists
+kontainer.use(MyService::class) {
+    println(this.doSomething())
+}
+
+// GetAll — all implementations of a type
+val allRepos: List<Repository> = kontainer.getAll(Repository::class)
+
+// GetLookup — lazy lookup of implementations
+val lookup: LazyServiceLookup<Repository> = kontainer.getLookup(Repository::class)`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Debug tools</h2>
+
+<p>Every container comes with debugging tools:</p>
+
+<Code code={`val kontainer = blueprint.create()
+
+// Dump all services, their types, and instances
+println(kontainer.tools.dumpKontainer())
+
+// Get structured debug info
+val debugInfo = kontainer.tools.getDebugInfo()
+debugInfo.services.forEach { service ->
+    println("${'$'}{service.cls.fqn} [type=${'$'}{service.type}]")
+    service.definition.injects.forEach { param ->
+        println("  -> ${'$'}{param.name}: ${'$'}{param.classes.map { it.fqn }}")
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Error handling</h2>
+
+<p>Kontainer throws specific exceptions for different problems:</p>
+
+<div class="not-prose my-8">
+  <table class="w-full text-sm text-left">
+    <thead>
+      <tr class="border-b border-white/10">
+        <th class="py-2 text-white font-semibold">Exception</th>
+        <th class="py-2 text-white font-semibold">When</th>
+      </tr>
+    </thead>
+    <tbody class="text-gray-400">
+      <tr class="border-b border-white/5">
+        <td class="py-2"><code>KontainerInconsistent</code></td>
+        <td class="py-2">Dependency graph has problems (missing deps, configuration errors)</td>
+      </tr>
+      <tr class="border-b border-white/5">
+        <td class="py-2"><code>ServiceNotFound</code></td>
+        <td class="py-2">Requested service is not registered</td>
+      </tr>
+      <tr class="border-b border-white/5">
+        <td class="py-2"><code>ServiceAmbiguous</code></td>
+        <td class="py-2">Multiple services match the requested type</td>
+      </tr>
+      <tr class="border-b border-white/5">
+        <td class="py-2"><code>InvalidClassProvided</code></td>
+        <td class="py-2">Tried to register an interface or abstract class directly</td>
+      </tr>
+      <tr>
+        <td class="py-2"><code>InvalidServiceFactory</code></td>
+        <td class="py-2">Factory method is invalid</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</DocsLayout>

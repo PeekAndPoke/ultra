@@ -4,8 +4,8 @@ import com.arangodb.ArangoDatabaseAsync
 import com.arangodb.Request
 import com.arangodb.Request.Method
 import com.arangodb.Response
-import de.peekandpoke.ultra.common.datetime.Kronos
 import de.peekandpoke.ultra.common.encodeUriComponent
+import de.peekandpoke.ultra.datetime.Kronos
 import kotlinx.coroutines.future.await
 
 class ArangoDbRequestUtils(

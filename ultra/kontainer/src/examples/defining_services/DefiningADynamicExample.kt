@@ -1,9 +1,8 @@
 package de.peekandpoke.ultra.kontainer.examples.defining_services
 
-import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.kontainer
+import de.peekandpoke.ultra.tooling.SimpleExample
 
-@Suppress("ComplexRedundantLet")
 class DefiningADynamicExample : SimpleExample() {
 
     override val title = "Defining a Dynamic service"

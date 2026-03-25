@@ -1,10 +1,9 @@
 package de.peekandpoke.ultra.kontainer.examples.defining_services
 
-import de.peekandpoke.ultra.common.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.ServiceNotFound
 import de.peekandpoke.ultra.kontainer.kontainer
+import de.peekandpoke.ultra.tooling.SimpleExample
 
-@Suppress("ComplexRedundantLet")
 class HidingTheConcreteImplementationOfAServiceExample : SimpleExample() {
 
     override val title = "Hiding the concrete implementation of a service"

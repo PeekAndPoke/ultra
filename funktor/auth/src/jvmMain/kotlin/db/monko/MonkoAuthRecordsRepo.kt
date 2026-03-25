@@ -13,7 +13,7 @@ import de.peekandpoke.monko.MonkoDriver
 import de.peekandpoke.monko.MonkoRepository
 import de.peekandpoke.monko.lang._type
 import de.peekandpoke.monko.lang.ts
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.reflection.kType
 import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.Stored
 import de.peekandpoke.ultra.vault.hooks.TimestampedHook

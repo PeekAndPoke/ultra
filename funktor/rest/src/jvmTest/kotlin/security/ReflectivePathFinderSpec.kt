@@ -1,9 +1,9 @@
 package de.peekandpoke.funktor.rest.security
 
 import de.peekandpoke.funktor.rest.security.ReflectivePathFinder.Companion.findAnnotatedElementPaths
-import de.peekandpoke.ultra.common.model.Paged
-import de.peekandpoke.ultra.common.reflection.kType
-import de.peekandpoke.ultra.common.remote.ApiResponse
+import de.peekandpoke.ultra.model.Paged
+import de.peekandpoke.ultra.reflection.kType
+import de.peekandpoke.ultra.remote.ApiResponse
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlin.reflect.full.starProjectedType

@@ -8,7 +8,7 @@ import de.peekandpoke.funktor.core.model.AppInfo
 import de.peekandpoke.funktor.core.model.CacheBuster
 import de.peekandpoke.funktor.core.repair.funktorRepair
 import de.peekandpoke.funktor.core.session.NullCurrentSession
-import de.peekandpoke.ultra.common.datetime.Kronos
+import de.peekandpoke.ultra.datetime.Kronos
 import de.peekandpoke.ultra.kontainer.KontainerAware
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module

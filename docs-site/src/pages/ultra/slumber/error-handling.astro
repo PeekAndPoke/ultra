@@ -1,0 +1,131 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { slumberSidebar } from '../../../data/slumber-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Error Handling in Slumber" sidebar={slumberSidebar} description="How Slumber reports errors with path tracking and graceful degradation">
+
+<h1>Error Handling</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Slumber's two-pass strategy gives you speed when things work and precision when they don't.
+</p>
+
+<h2>The two-pass strategy</h2>
+
+<p>When you call <code>codec.awake()</code>, two things happen:</p>
+
+<ol>
+  <li><strong>Fast pass</strong> — Deserializes with no path tracking. Minimal overhead. If it succeeds, you're done.</li>
+  <li><strong>Tracking pass</strong> — Only runs if the fast pass throws. Re-deserializes with full path tracking, collecting diagnostic information at every level.</li>
+</ol>
+
+<p>This means you pay zero cost for path tracking in the success case — which is the common case.</p>
+
+<h2>Nullable vs non-nullable errors</h2>
+
+<p>The key design decision: <strong>nullable fields absorb errors, non-nullable fields report them</strong>.</p>
+
+<Code code={`data class Profile(val name: String, val bio: String?)
+
+// Non-nullable field with bad data → AwakerException
+codec.awake<Profile>(mapOf("name" to listOf(1, 2, 3), "bio" to "hello"))
+// → AwakerException: "Value at path 'root.name' must not be null"
+
+// Nullable field with bad data → graceful null
+codec.awake<Profile>(mapOf("name" to "Alice", "bio" to listOf(1, 2, 3)))
+// → Profile(name="Alice", bio=null)   ← no crash`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Path tracking in nested structures</h2>
+
+<p>Error messages include the full path to the failing field:</p>
+
+<Code code={`data class Address(val zip: String)
+data class Company(val address: Address)
+data class Employee(val company: Company)
+
+codec.awake<Employee>(mapOf(
+    "company" to mapOf(
+        "address" to mapOf(
+            "zip" to null  // null for non-nullable String
+        )
+    )
+))
+// → AwakerException: "Value at path 'root.company.address.zip' must not be null"`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Collection index in error paths</h2>
+
+<p>When an error occurs inside a collection, the index is included in the path:</p>
+
+<Code code={`data class Container(val items: List<Int>)
+
+codec.awake<Container>(mapOf(
+    "items" to listOf(1, null, 3)
+))
+// → AwakerException: "Value at path 'root.items.1' must not be null"
+//                                              ^ index 1`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Missing required parameters</h2>
+
+<p>When a non-nullable, non-default parameter is missing from the input:</p>
+
+<Code code={`data class User(val name: String, val age: Int)
+
+codec.awake<User>(mapOf("name" to "Alice"))
+// → AwakerException with message containing:
+//   "Value at path 'root' must not be null"
+//   "'root': User misses parameters 'age'"`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Exception types</h2>
+
+<p>Slumber defines three exception classes:</p>
+
+<Code code={`// Base class for all Slumber errors
+open class SlumberException(message: String) : Throwable(message)
+
+// Thrown when deserialization fails
+class AwakerException(
+    message: String,
+    val logs: List<String>,     // Diagnostic messages from nested levels
+    val rootType: KType?,       // The type being deserialized
+    val input: Any?,            // The input data that caused the error
+) : SlumberException(message)
+
+// Thrown when serialization fails (e.g. null for non-nullable type)
+class SlumbererException(
+    message: String,
+    val input: Any?,            // The data that caused the error
+) : SlumberException(message)`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Catching and handling errors</h2>
+
+<Code code={`try {
+    val user = codec.awake<User>(untrustedData)
+} catch (e: AwakerException) {
+    println("Deserialization failed at: extracted from message")
+    println("Root type: ${'$'}{e.rootType}")
+    println("Input: ${'$'}{e.input}")
+    println("Diagnostics: ${'$'}{e.logs.joinToString("\\n")}")
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>Default parameter fallback</h2>
+
+<p>When a field has a default value and the input provides invalid data, the default is used:</p>
+
+<Code code={`data class Config(
+    val host: String = "localhost",
+    val port: Int = 8080,
+)
+
+// Invalid data for "port" → falls back to default
+codec.awake<Config>(mapOf("host" to "myserver", "port" to "not_a_number"))
+// → Config(host="myserver", port=8080)`} lang="kotlin" theme="vitesse-dark" />
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/slumber/custom-modules" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Custom modules &rarr;
+  </a>
+</div>
+
+</DocsLayout>

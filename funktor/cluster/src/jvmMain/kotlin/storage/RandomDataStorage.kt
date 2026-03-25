@@ -2,9 +2,9 @@ package de.peekandpoke.funktor.cluster.storage
 
 import de.peekandpoke.funktor.cluster.storage.domain.RawRandomData
 import de.peekandpoke.funktor.cluster.storage.domain.TypedRandomData
-import de.peekandpoke.ultra.common.datetime.MpInstant
-import de.peekandpoke.ultra.common.reflection.TypeRef
-import de.peekandpoke.ultra.common.reflection.kType
+import de.peekandpoke.ultra.datetime.MpInstant
+import de.peekandpoke.ultra.reflection.TypeRef
+import de.peekandpoke.ultra.reflection.kType
 import de.peekandpoke.ultra.slumber.AwakerException
 import de.peekandpoke.ultra.vault.Cursor
 import de.peekandpoke.ultra.vault.Repository

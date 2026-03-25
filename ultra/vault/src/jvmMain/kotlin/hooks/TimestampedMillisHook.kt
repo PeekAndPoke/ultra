@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.vault.hooks
 
-import de.peekandpoke.ultra.common.datetime.Kronos
+import de.peekandpoke.ultra.datetime.Kronos
 import de.peekandpoke.ultra.vault.Repository
 import de.peekandpoke.ultra.vault.Storable
 

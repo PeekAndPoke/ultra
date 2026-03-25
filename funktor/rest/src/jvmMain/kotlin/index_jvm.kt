@@ -4,12 +4,12 @@ import de.peekandpoke.funktor.core.config.AppConfig
 import de.peekandpoke.funktor.core.kontainer
 import de.peekandpoke.funktor.rest.codec.RestCodec
 import de.peekandpoke.funktor.rest.codec.SlumberRestCodec
+import de.peekandpoke.ultra.cache.FastCache
 import de.peekandpoke.ultra.common.TypedAttributes
-import de.peekandpoke.ultra.common.cache.FastCache
-import de.peekandpoke.ultra.common.remote.ApiResponse
 import de.peekandpoke.ultra.kontainer.KontainerAware
 import de.peekandpoke.ultra.kontainer.KontainerBuilder
 import de.peekandpoke.ultra.kontainer.module
+import de.peekandpoke.ultra.remote.ApiResponse
 import de.peekandpoke.ultra.security.jwt.JwtConfig
 import de.peekandpoke.ultra.security.jwt.JwtGenerator
 import de.peekandpoke.ultra.slumber.SlumberConfig

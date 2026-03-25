@@ -2,9 +2,9 @@ package de.peekandpoke.funktor.demo.adminapp
 
 import de.peekandpoke.funktor.auth.api.AuthApiClient
 import de.peekandpoke.funktor.cluster.devtools.DevtoolsApiResponseInterceptor
-import de.peekandpoke.ultra.common.remote.ApiClient.Config
-import de.peekandpoke.ultra.common.remote.ErrorLoggingResponseInterceptor
-import de.peekandpoke.ultra.common.remote.SetBearerRequestInterceptor
+import de.peekandpoke.ultra.remote.ApiClient.Config
+import de.peekandpoke.ultra.remote.ErrorLoggingResponseInterceptor
+import de.peekandpoke.ultra.remote.SetBearerRequestInterceptor
 import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.sse.*

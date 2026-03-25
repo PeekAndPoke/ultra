@@ -2,7 +2,7 @@
 
 package de.peekandpoke.karango.aql
 
-import de.peekandpoke.ultra.common.reflection.nthParamName
+import de.peekandpoke.ultra.reflection.nthParamName
 import de.peekandpoke.ultra.vault.lang.VaultDslMarker
 import kotlin.math.max
 

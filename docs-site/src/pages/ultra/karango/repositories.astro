@@ -1,0 +1,180 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {karangoSidebar} from '../../../data/karango-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Karango Repositories" sidebar={karangoSidebar}
+            description="CRUD operations, batch inserts, and entity lifecycle with Karango repositories">
+
+    <h1>Repositories</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        EntityRepository gives you CRUD, batch operations, custom queries, and cursor streaming — all as
+        <code>suspend</code> functions.
+    </p>
+
+    <h2>Defining a repository</h2>
+
+    <Code code={`@Vault
+data class BlogPost(
+    val title: String,
+    val content: String,
+    val author: String,
+    val published: Boolean = false,
+)
+
+class BlogPostsRepo(driver: KarangoDriver) : EntityRepository<BlogPost>(
+    name = "blog_posts",
+    storedType = kType(),
+    driver = driver,
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>That's it. You get full CRUD, queries, batch operations, and index management for free.</p>
+
+    <h2>Insert</h2>
+
+    <Code code={`val post = BlogPost("Hello World", "My first post", "Alice")
+
+// Insert and get the stored version (with _id, _key, _rev)
+val stored: Stored<BlogPost> = repo.insert(post)
+
+println(stored._id)         // "blog_posts/abc123"
+println(stored._key)        // "abc123"
+println(stored.value.title) // "Hello World"
+
+// Insert with explicit key
+val stored2 = repo.insert("my-key", post)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Find</h2>
+
+    <Code code={`// By ID
+val post: Stored<BlogPost>? = repo.findById("blog_posts/abc123")
+
+// By multiple IDs
+val posts: Cursor<Stored<BlogPost>> = repo.findByIds("id1", "id2", "id3")
+
+// All documents
+val all: Cursor<Stored<BlogPost>> = repo.findAll()
+
+// Custom query — returns a cursor
+val published = repo.find {
+    FOR(repo) { post ->
+        FILTER(post.published EQ true)
+        SORT(post.title.ASC)
+        RETURN(post)
+    }
+}
+
+// Convenience: returns a List directly
+val list = repo.findList {
+    FOR(repo) { post ->
+        FILTER(post.author EQ "Alice")
+        RETURN(post)
+    }
+}
+
+// Convenience: returns the first match
+val first = repo.findFirst {
+    FOR(repo) { post ->
+        FILTER(post.title EQ "Hello World")
+        LIMIT(1)
+        RETURN(post)
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Update</h2>
+
+    <Code code={`// Save a modified entity
+val updated = repo.save(stored.map { it.copy(published = true) })
+
+// Modify by ID — atomic read-modify-write
+repo.modifyById(stored._id) { post ->
+    post.copy(published = true)
+}
+
+// Conditional modify — only if the condition holds
+// condition receives Stored<T>, modify receives T
+repo.modifyByIdWhen(
+    stored._id,
+    condition = { !it.value.published },
+    modify = { it.copy(published = true) },
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Remove</h2>
+
+    <Code code={`// By stored entity
+repo.remove(stored)
+
+// By ID or key
+repo.remove("blog_posts/abc123")
+
+// Remove all documents
+repo.removeAll()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Batch insert</h2>
+
+    <Code code={`val posts = listOf(
+    BlogPost("Post 1", "Content 1", "Alice"),
+    BlogPost("Post 2", "Content 2", "Bob"),
+    BlogPost("Post 3", "Content 3", "Alice"),
+)
+
+val stored: List<Stored<BlogPost>> = repo.batchInsertValues(posts)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Batch insert runs hooks on each entity, just like single inserts.</p>
+
+    <h2>Cursors</h2>
+
+    <p>Queries return <code>KarangoCursor&lt;T&gt;</code> — a streaming iterator that deserializes results on demand:
+    </p>
+
+    <Code code={`val cursor = repo.findAll()
+
+cursor.count      // number of results in current batch
+cursor.fullCount  // total count (when using PAGE)
+
+// Iterate
+cursor.toList()
+cursor.forEach { stored -> println(stored.value.title) }
+cursor.map { it.value.title }`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Results are deserialized lazily. <code>Stored&lt;T&gt;</code> entities are automatically cached in the <code>EntityCache</code>
+        for deduplication.</p>
+
+    <h2>The Stored&lt;T&gt; wrapper</h2>
+
+    <p>Every entity loaded from ArangoDB is wrapped in <code>Stored&lt;T&gt;</code>:</p>
+
+    <Code code={`val stored: Stored<BlogPost> = repo.findById(id)!!
+
+stored._id     // ArangoDB document ID: "blog_posts/abc123"
+stored._key    // Document key: "abc123"
+stored._rev    // Revision: "_abc123"
+stored.value   // The actual BlogPost data class
+
+// Create a modified version
+val modified = stored.map { it.copy(title = "New Title") }
+
+// Save it back
+repo.save(modified)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Accessing the repository from Database</h2>
+
+    <p>Use extension properties to access repositories through the Database:</p>
+
+    <Code code={`// Define an accessor
+val Database.blogPosts get() = getRepository<BlogPostsRepo>()
+
+// Use it
+database.blogPosts.findAll()
+database.blogPosts.insert(New(post))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/karango/indexes-and-hooks"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Indexes &amp; Hooks &rarr;
+        </a>
+    </div>
+
+</DocsLayout>
