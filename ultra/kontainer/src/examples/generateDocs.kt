@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.kontainer.examples
 
-import de.peekandpoke.ultra.common.docs.ExamplesToDocs
+import de.peekandpoke.ultra.extras.docs.ExamplesToDocs
 import de.peekandpoke.ultra.kontainer.examples.defining_modules._DefiningModules
 import de.peekandpoke.ultra.kontainer.examples.defining_services._DefiningServices
 import de.peekandpoke.ultra.kontainer.examples.injecting_services._InjectingServices

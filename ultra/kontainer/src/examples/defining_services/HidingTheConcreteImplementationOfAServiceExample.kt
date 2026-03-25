@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.kontainer.examples.defining_services
 
-import de.peekandpoke.ultra.common.docs.SimpleExample
+import de.peekandpoke.ultra.extras.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.ServiceNotFound
 import de.peekandpoke.ultra.kontainer.kontainer
 

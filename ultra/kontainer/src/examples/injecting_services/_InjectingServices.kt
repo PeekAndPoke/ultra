@@ -1,6 +1,6 @@
 package de.peekandpoke.ultra.kontainer.examples.injecting_services
 
-import de.peekandpoke.ultra.common.docs.ExampleChapter
+import de.peekandpoke.ultra.extras.docs.ExampleChapter
 
 @Suppress("ClassName")
 class _InjectingServices : ExampleChapter {

@@ -1,7 +1,7 @@
 package de.peekandpoke.ultra.kontainer.examples.injecting_services
 
 import de.peekandpoke.ultra.common.Lookup
-import de.peekandpoke.ultra.common.docs.SimpleExample
+import de.peekandpoke.ultra.extras.docs.SimpleExample
 import de.peekandpoke.ultra.kontainer.kontainer
 
 class LazyInjectAllBySuperTypeWithLookUpExample : SimpleExample() {

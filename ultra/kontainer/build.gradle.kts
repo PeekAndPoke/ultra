@@ -22,6 +22,8 @@ dependencies {
     implementation(Deps.KotlinX.coroutines_core)
 
     api(project(":ultra:common"))
+    implementation(project(":ultra:extras"))
+    implementation(project(":ultra:reflection"))
 
     // Tests /////////////////////////
     Deps.Test {
