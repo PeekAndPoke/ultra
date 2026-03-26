@@ -8,6 +8,16 @@ import kotlinx.datetime.UtcOffset
 @Suppress("unused")
 class ExtensionsSpec : StringSpec({
 
+    "TimeZone.mp" {
+        val kotlinxTz = TimeZone.of("Europe/Berlin")
+        val mpTz = kotlinxTz.mp
+
+        mpTz shouldBe MpTimezone.of("Europe/Berlin")
+        mpTz.id shouldBe "Europe/Berlin"
+
+        TimeZone.UTC.mp shouldBe MpTimezone.of("UTC")
+    }
+
     "UtcOffset.totalMillis" {
 
         TimeZone.UTC.offset.totalMillis shouldBe 0

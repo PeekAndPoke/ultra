@@ -15,10 +15,8 @@ data class MpTimezone private constructor(val id: String) {
             else -> MpTimezone(id = id)
         }
 
-        // TODO: test me
         val UTC: MpTimezone get() = MpTimezone(id = "UTC")
 
-        // TODO: test me
         val systemDefault: MpTimezone get() = MpTimezone(id = TimeZone.currentSystemDefault().id)
 
         val supportedIds = setOf(
@@ -615,6 +613,5 @@ data class MpTimezone private constructor(val id: String) {
     /**
      * Converts to a kotlinx-datetime [TimeZone]
      */
-    // TODO: test me
     val kotlinx: TimeZone get() = TimeZone.of(id)
 }

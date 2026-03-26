@@ -4,7 +4,6 @@ import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
 @Serializable
-// TODO: test me
 data class MpLocalTimeSlot(
     val from: MpLocalTime,
     val to: MpLocalTime,

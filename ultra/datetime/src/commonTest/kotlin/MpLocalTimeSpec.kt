@@ -9,8 +9,11 @@ import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.peekandpoke.ultra.common.tuple
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
-@Suppress("unused")
 class MpLocalTimeSpec : StringSpec({
 
     "parsing" {
@@ -171,5 +174,27 @@ class MpLocalTimeSpec : StringSpec({
     "formatHhMmSs" {
         MpLocalTime.of(12, 13, 14, 123)
             .formatHhMmSs() shouldBe "12:13:14"
+    }
+
+    "plus(duration)" {
+        MpLocalTime.of(12, 0, 0).plus(1.hours) shouldBe MpLocalTime.of(13, 0, 0)
+        MpLocalTime.of(12, 0, 0).plus(30.minutes) shouldBe MpLocalTime.of(12, 30, 0)
+        MpLocalTime.of(12, 0, 0).plus(90.seconds) shouldBe MpLocalTime.of(12, 1, 30)
+        MpLocalTime.of(23, 0, 0).plus(2.hours) shouldBe MpLocalTime.of(1, 0, 0)
+    }
+
+    "minus(duration)" {
+        MpLocalTime.of(12, 0, 0).minus(1.hours) shouldBe MpLocalTime.of(11, 0, 0)
+        MpLocalTime.of(12, 30, 0).minus(30.minutes) shouldBe MpLocalTime.of(12, 0, 0)
+        MpLocalTime.of(12, 1, 30).minus(90.seconds) shouldBe MpLocalTime.of(12, 0, 0)
+    }
+
+    "minus(other: MpLocalTime)" {
+        val a = MpLocalTime.of(13, 0, 0)
+        val b = MpLocalTime.of(12, 0, 0)
+
+        (a - b) shouldBe 1.hours
+        (b - a) shouldBe (-1).hours
+        (a - a) shouldBe 0.milliseconds
     }
 })

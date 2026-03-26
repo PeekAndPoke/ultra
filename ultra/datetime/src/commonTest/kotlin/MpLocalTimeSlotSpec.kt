@@ -3,9 +3,9 @@ package io.peekandpoke.ultra.datetime
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.common.tuple
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
-@Suppress("unused")
 class MpLocalTimeSlotSpec : StringSpec({
 
     "Creation - via constructor" {
@@ -25,6 +25,17 @@ class MpLocalTimeSlotSpec : StringSpec({
 
         subject.from shouldBe MpLocalTime.Min
         subject.to shouldBe MpLocalTime.Max
+    }
+
+    "Creation - via of(from, duration)" {
+
+        val subject = MpLocalTimeSlot.of(
+            from = MpLocalTime.of(10, 0),
+            duration = 1.hours,
+        )
+
+        subject.from shouldBe MpLocalTime.of(10, 0)
+        subject.to shouldBe MpLocalTime.of(11, 0)
     }
 
     "Creation - via ofSecondsOfDay" {
@@ -307,5 +318,23 @@ class MpLocalTimeSlotSpec : StringSpec({
 
             initial.splitWithGaps(duration.minutes, gap.minutes) shouldBe expected
         }
+    }
+
+    "formatHhMm" {
+        val subject = MpLocalTimeSlot(
+            from = MpLocalTime.of(10, 15),
+            to = MpLocalTime.of(12, 30),
+        )
+
+        subject.formatHhMm() shouldBe "10:15 - 12:30"
+    }
+
+    "formatHhMmSs" {
+        val subject = MpLocalTimeSlot(
+            from = MpLocalTime.of(10, 15, 30),
+            to = MpLocalTime.of(12, 30, 45),
+        )
+
+        subject.formatHhMmSs() shouldBe "10:15:30 - 12:30:45"
     }
 })

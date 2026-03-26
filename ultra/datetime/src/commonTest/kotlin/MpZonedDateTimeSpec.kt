@@ -8,14 +8,16 @@ import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.datetime.TestConstants.tsBucharest_20220405_121314
+import io.peekandpoke.ultra.datetime.TestConstants.tsUTC_20220405_000000
 import io.peekandpoke.ultra.datetime.TestConstants.tsUtc_20220405_121314
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
-@Suppress("unused")
 class MpZonedDateTimeSpec : StringSpec({
 
     "Construction - parse(isoString, timezone)" {
@@ -105,11 +107,11 @@ class MpZonedDateTimeSpec : StringSpec({
     }
 
     "Construction from epoch" {
-        MpZonedDateTime.fromEpochMillis(TestConstants.tsUTC_20220405_000000, TimeZone.UTC) shouldBe
+        MpZonedDateTime.fromEpochMillis(tsUTC_20220405_000000, TimeZone.UTC) shouldBe
                 MpZonedDateTime.parse("2022-04-05T00:00:00.000Z")
 
         MpZonedDateTime.fromEpochSeconds(
-            seconds = TestConstants.tsUTC_20220405_000000 / 1_000,
+            seconds = tsUTC_20220405_000000 / 1_000,
             timezone = TimeZone.of("Europe/Bucharest")
         ) shouldBe MpZonedDateTime.parse("2022-04-05T03:00:00.000[Europe/Bucharest]")
     }
@@ -510,5 +512,188 @@ class MpZonedDateTimeSpec : StringSpec({
 
         (source.plus(duration) - source) shouldBe duration
         (source.minus(duration) - source) shouldBe duration.unaryMinus()
+    }
+
+    "Construction - fromEpochMillis(millis, MpTimezone)" {
+        MpZonedDateTime.fromEpochMillis(tsUTC_20220405_000000, MpTimezone.UTC) shouldBe
+                MpZonedDateTime.parse("2022-04-05T00:00:00.000Z")
+
+        MpZonedDateTime.fromEpochMillis(tsUTC_20220405_000000, MpTimezone.of("Europe/Bucharest")) shouldBe
+                MpZonedDateTime.parse("2022-04-05T03:00:00.000[Europe/Bucharest]")
+
+        MpZonedDateTime.fromEpochMillis(tsUtc_20220405_121314, MpTimezone.UTC) shouldBe
+                MpZonedDateTime.parse("2022-04-05T12:13:14.000Z")
+    }
+
+    "Construction - fromEpochSeconds(seconds, MpTimezone)" {
+        MpZonedDateTime.fromEpochSeconds(tsUTC_20220405_000000 / 1_000, MpTimezone.UTC) shouldBe
+                MpZonedDateTime.parse("2022-04-05T00:00:00.000Z")
+
+        MpZonedDateTime.fromEpochSeconds(tsUTC_20220405_000000 / 1_000, MpTimezone.of("Europe/Bucharest")) shouldBe
+                MpZonedDateTime.parse("2022-04-05T03:00:00.000[Europe/Bucharest]")
+
+        MpZonedDateTime.fromEpochSeconds(tsUtc_20220405_121314 / 1_000, MpTimezone.UTC) shouldBe
+                MpZonedDateTime.parse("2022-04-05T12:13:14.000Z")
+    }
+
+    "toRange(duration)" {
+        val subject = MpZonedDateTime.parse("2022-04-05T12:00:00.000Z")
+        val duration = 2.hours
+
+        val result = subject.toRange(duration)
+
+        result.from shouldBe subject
+        result.to shouldBe MpZonedDateTime.parse("2022-04-05T14:00:00.000Z")
+
+        val subjectBucharest = MpZonedDateTime.parse("2022-04-05T12:00:00.000[Europe/Bucharest]")
+        val resultBucharest = subjectBucharest.toRange(1.days)
+
+        resultBucharest.from shouldBe subjectBucharest
+        resultBucharest.to shouldBe MpZonedDateTime.parse("2022-04-06T12:00:00.000[Europe/Bucharest]")
+    }
+
+    "toRange(period)" {
+        val subject = MpZonedDateTime.parse("2022-04-05T12:00:00.000Z")
+        val period = MpDateTimePeriod(days = 1, hours = 2)
+
+        val result = subject.toRange(period)
+
+        result.from shouldBe subject
+        result.to shouldBe MpZonedDateTime.parse("2022-04-06T14:00:00.000Z")
+
+        val subjectBucharest = MpZonedDateTime.parse("2022-04-05T12:00:00.000[Europe/Bucharest]")
+        val resultBucharest = subjectBucharest.toRange(MpDateTimePeriod(months = 1))
+
+        resultBucharest.from shouldBe subjectBucharest
+        resultBucharest.to shouldBe MpZonedDateTime.parse("2022-05-05T12:00:00.000[Europe/Bucharest]")
+    }
+
+    "atTime(time)" {
+        val subject = MpZonedDateTime.parse("2022-04-05T12:13:14.123Z")
+        val time = MpLocalTime.of(hour = 8, minute = 30, second = 0, milliSecond = 0)
+
+        val result = subject.atTime(time)
+
+        result shouldBe MpZonedDateTime.parse("2022-04-05T08:30:00.000Z")
+        result.timezone shouldBe MpTimezone.UTC
+
+        val subjectBucharest = MpZonedDateTime.parse("2022-04-05T12:13:14.123[Europe/Bucharest]")
+        val resultBucharest = subjectBucharest.atTime(MpLocalTime.of(hour = 0, minute = 0))
+
+        resultBucharest shouldBe MpZonedDateTime.parse("2022-04-05T00:00:00.000[Europe/Bucharest]")
+        resultBucharest.timezone shouldBe MpTimezone.of("Europe/Bucharest")
+    }
+
+    "plus(unit)" {
+        MpZonedDateTime.parse("2022-04-05T12:00:00.000Z").plus(DateTimeUnit.HOUR) shouldBe
+                MpZonedDateTime.parse("2022-04-05T13:00:00.000Z")
+
+        MpZonedDateTime.parse("2022-04-05T12:00:00.000Z").plus(DateTimeUnit.DAY) shouldBe
+                MpZonedDateTime.parse("2022-04-06T12:00:00.000Z")
+
+        // DST: adding 1 day across DST boundary in Berlin
+        MpZonedDateTime.parse("2022-03-27T00:00:00.000[Europe/Berlin]").plus(DateTimeUnit.DAY) shouldBe
+                MpZonedDateTime.parse("2022-03-28T00:00:00.000[Europe/Berlin]")
+    }
+
+    "plus(value, unit)" {
+        MpZonedDateTime.parse("2022-04-05T12:00:00.000Z").plus(3, DateTimeUnit.HOUR) shouldBe
+                MpZonedDateTime.parse("2022-04-05T15:00:00.000Z")
+
+        MpZonedDateTime.parse("2022-04-05T12:00:00.000Z").plus(2, DateTimeUnit.DAY) shouldBe
+                MpZonedDateTime.parse("2022-04-07T12:00:00.000Z")
+
+        MpZonedDateTime.parse("2022-04-05T12:00:00.000[Europe/Bucharest]").plus(1, DateTimeUnit.MONTH) shouldBe
+                MpZonedDateTime.parse("2022-05-05T12:00:00.000[Europe/Bucharest]")
+
+        // DST: adding 1 day across DST boundary in Berlin
+        MpZonedDateTime.parse("2022-03-27T00:00:00.000[Europe/Berlin]").plus(1, DateTimeUnit.DAY) shouldBe
+                MpZonedDateTime.parse("2022-03-28T00:00:00.000[Europe/Berlin]")
+    }
+
+    "plus(period)" {
+        val subject = MpZonedDateTime.parse("2022-04-05T12:00:00.000Z")
+        val period = MpDateTimePeriod(years = 1, months = 2, days = 3, hours = 4)
+
+        subject.plus(period) shouldBe MpZonedDateTime.parse("2023-06-08T16:00:00.000Z")
+
+        val subjectBucharest = MpZonedDateTime.parse("2022-04-05T12:00:00.000[Europe/Bucharest]")
+
+        subjectBucharest.plus(MpDateTimePeriod(days = 1, hours = 2)) shouldBe
+                MpZonedDateTime.parse("2022-04-06T14:00:00.000[Europe/Bucharest]")
+    }
+
+    "minus(unit)" {
+        MpZonedDateTime.parse("2022-04-05T12:00:00.000Z").minus(DateTimeUnit.HOUR) shouldBe
+                MpZonedDateTime.parse("2022-04-05T11:00:00.000Z")
+
+        MpZonedDateTime.parse("2022-04-05T12:00:00.000Z").minus(DateTimeUnit.DAY) shouldBe
+                MpZonedDateTime.parse("2022-04-04T12:00:00.000Z")
+
+        // DST: subtracting 1 day across DST boundary in Berlin
+        MpZonedDateTime.parse("2022-03-28T00:00:00.000[Europe/Berlin]").minus(DateTimeUnit.DAY) shouldBe
+                MpZonedDateTime.parse("2022-03-27T00:00:00.000[Europe/Berlin]")
+    }
+
+    "minus(value, unit)" {
+        MpZonedDateTime.parse("2022-04-05T12:00:00.000Z").minus(3, DateTimeUnit.HOUR) shouldBe
+                MpZonedDateTime.parse("2022-04-05T09:00:00.000Z")
+
+        MpZonedDateTime.parse("2022-04-05T12:00:00.000Z").minus(2, DateTimeUnit.DAY) shouldBe
+                MpZonedDateTime.parse("2022-04-03T12:00:00.000Z")
+
+        MpZonedDateTime.parse("2022-04-05T12:00:00.000[Europe/Bucharest]").minus(1, DateTimeUnit.MONTH) shouldBe
+                MpZonedDateTime.parse("2022-03-05T12:00:00.000[Europe/Bucharest]")
+
+        // DST: subtracting 1 day across DST boundary in Berlin
+        MpZonedDateTime.parse("2022-03-28T00:00:00.000[Europe/Berlin]").minus(1, DateTimeUnit.DAY) shouldBe
+                MpZonedDateTime.parse("2022-03-27T00:00:00.000[Europe/Berlin]")
+    }
+
+    "minus(period)" {
+        val subject = MpZonedDateTime.parse("2023-06-08T16:00:00.000Z")
+        val period = MpDateTimePeriod(years = 1, months = 2, days = 3, hours = 4)
+
+        subject.minus(period) shouldBe MpZonedDateTime.parse("2022-04-05T12:00:00.000Z")
+
+        val subjectBucharest = MpZonedDateTime.parse("2022-04-06T14:00:00.000[Europe/Bucharest]")
+
+        subjectBucharest.minus(MpDateTimePeriod(days = 1, hours = 2)) shouldBe
+                MpZonedDateTime.parse("2022-04-05T12:00:00.000[Europe/Bucharest]")
+    }
+
+    "format extensions - formatDdMmmYyyy, formatHhMm, formatDdMmmYyyyHhMm, formatDdMmmYyyyHhMmSs" {
+        val subject = MpZonedDateTime.parse("2022-04-05T12:13:14.000Z")
+
+        subject.formatDdMmmYyyy() shouldBe "05 Apr 2022"
+        subject.formatHhMm() shouldBe "12:13"
+        subject.formatDdMmmYyyyHhMm() shouldBe "05 Apr 2022 12:13"
+        subject.formatDdMmmYyyyHhMmSs() shouldBe "05 Apr 2022 12:13:14"
+
+        val subjectBucharest = MpZonedDateTime.parse("2022-04-05T12:13:14.000[Europe/Bucharest]")
+
+        subjectBucharest.formatDdMmmYyyy() shouldBe "05 Apr 2022"
+        subjectBucharest.formatHhMm() shouldBe "12:13"
+        subjectBucharest.formatDdMmmYyyyHhMm() shouldBe "05 Apr 2022 12:13"
+        subjectBucharest.formatDdMmmYyyyHhMmSs() shouldBe "05 Apr 2022 12:13:14"
+    }
+
+    "atUTC" {
+        val source = MpZonedDateTime.parse("2022-04-05T12:13:14.000[Europe/Bucharest]")
+
+        val result = source.atUTC()
+
+        result shouldBe source.toInstant().atZone(TimeZone.UTC)
+        result.timezone.id shouldBe "UTC"
+        result.toEpochMillis() shouldBe source.toEpochMillis()
+    }
+
+    "atSystemDefaultZone" {
+        val source = MpZonedDateTime.parse("2022-04-05T12:13:14.000Z")
+
+        val result = source.atSystemDefaultZone()
+
+        result shouldBe source.toInstant().atZone(TimeZone.currentSystemDefault())
+        result.toEpochMillis() shouldBe source.toEpochMillis()
     }
 })

@@ -7,7 +7,6 @@ import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.serialization.json.Json
 
-@Suppress("unused")
 class MpLocalDateTimeSerializationSpec : StringSpec({
 
     val json = Json

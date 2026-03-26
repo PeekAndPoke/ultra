@@ -5,7 +5,6 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.TimeZone
 
-@Suppress("unused")
 class MpDateTimeParserSpec : StringSpec({
 
     "parseInstant with Z (UTC)" {

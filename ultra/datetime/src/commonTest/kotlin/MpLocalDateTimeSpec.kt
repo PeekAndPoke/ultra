@@ -11,7 +11,6 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 
-@Suppress("unused")
 class MpLocalDateTimeSpec : StringSpec({
 
     "Construction" {
@@ -21,6 +20,23 @@ class MpLocalDateTimeSpec : StringSpec({
 
         MpLocalDateTime.of(year = 2022, month = Month.APRIL, day = 1) shouldBe
                 MpLocalDateTime.parse("2022-04-01T00:00:00.000")
+    }
+
+    "Construction - of(date, time)" {
+        val date = MpLocalDate.of(2022, Month.APRIL, 5)
+        val time = MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 123)
+
+        val result = MpLocalDateTime.of(date, time)
+
+        result shouldBe MpLocalDateTime.of(
+            year = 2022,
+            month = Month.APRIL,
+            day = 5,
+            hour = 12,
+            minute = 13,
+            second = 14,
+            milliSecond = 123,
+        )
     }
 
     "Genesis and Doomsday" {
@@ -158,6 +174,20 @@ class MpLocalDateTimeSpec : StringSpec({
         subject.minute shouldBe 13
         subject.second shouldBe 14
         subject.milliSecond shouldBe 15
+    }
+
+    "dayOfWeek" {
+        MpLocalDateTime.of(2022, Month.APRIL, 4, 10, 0, 0).dayOfWeek shouldBe DayOfWeek.MONDAY
+        MpLocalDateTime.of(2022, Month.APRIL, 5, 10, 0, 0).dayOfWeek shouldBe DayOfWeek.TUESDAY
+        MpLocalDateTime.of(2022, Month.APRIL, 6, 10, 0, 0).dayOfWeek shouldBe DayOfWeek.WEDNESDAY
+        MpLocalDateTime.of(2022, Month.APRIL, 10, 10, 0, 0).dayOfWeek shouldBe DayOfWeek.SUNDAY
+    }
+
+    "dayOfYear" {
+        MpLocalDateTime.of(2022, Month.JANUARY, 1, 10, 0, 0).dayOfYear shouldBe 1
+        MpLocalDateTime.of(2022, Month.APRIL, 5, 10, 0, 0).dayOfYear shouldBe 95
+        MpLocalDateTime.of(2022, Month.DECEMBER, 31, 10, 0, 0).dayOfYear shouldBe 365
+        MpLocalDateTime.of(2024, Month.DECEMBER, 31, 10, 0, 0).dayOfYear shouldBe 366
     }
 
     "toDate" {

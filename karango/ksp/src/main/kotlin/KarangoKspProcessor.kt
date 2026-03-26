@@ -123,16 +123,10 @@ class KarangoKspProcessor(
 
         val ctorFields = allFields.filter { it.isPrimaryCtorParameter() }
 
-        // TODO:
-        //  - test that ctor parameters are picked up properly
         ctorFields.forEach { field ->
             logger.info("  --> Found ctor field ${field.simpleName.asString()} with annotations ${field.annotations.print()}")
         }
 
-        // TODO:
-        //  - test that @Vault.Field and @Slumber.Field are picked up and will get code generated
-        //  - test that @Vault.Ignore does not get code generated
-        //  - test that non-ctor fields do not get code generated, unless annotated
         val annotatedFields = allFields
             .filterNot { it.isPrimaryCtorParameter() }
             .filter { it.hasAnyAnnotation(Vault.Field::class, Slumber.Field::class) }
@@ -218,9 +212,6 @@ class KarangoKspProcessor(
     private fun KSType.toFullyQualifiedString(): String {
         val fqn = declaration.qualifiedName?.asString()
 
-        // TODO:
-        //  - test for Ref and LazyRef
-        //  - tests for Type Parameters
         return when (fqn) {
             null -> "kotlin.Any?"
             // References are treated as just strings

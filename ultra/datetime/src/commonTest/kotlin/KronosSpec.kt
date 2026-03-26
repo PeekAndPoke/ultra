@@ -13,7 +13,6 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-@Suppress("unused")
 class KronosSpec : StringSpec({
 
     val fixedLocalDateTime = MpLocalDateTime.parse("2022-02-16T12:00:00.000Z")

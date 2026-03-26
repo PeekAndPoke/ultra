@@ -2,10 +2,13 @@ package io.peekandpoke.ultra.datetime
 
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
+import kotlinx.datetime.TimeZone
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.Month
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
@@ -101,6 +104,93 @@ class ConversionSpec : FreeSpec() {
                 mp.toEpochMillis() shouldBe jvm.toInstant().toEpochMilli()
                 mp.toLocalDateTime().jvm shouldBe jvm.toLocalDateTime()
                 mp.timezone.id shouldBe jvm.zone.id
+            }
+
+            "OffsetDateTime.mp (to MpInstant)" {
+                val odt: OffsetDateTime = OffsetDateTime.of(
+                    2022, 4, 5, 12, 13, 14, 0, ZoneOffset.ofHours(3)
+                )
+
+                val result: MpInstant = odt.mp
+
+                result shouldBe MpInstant.parse("2022-04-05T09:13:14.000Z")
+                result.toEpochMillis() shouldBe odt.toInstant().toEpochMilli()
+            }
+
+            "OffsetDateTime.mp(zone) (to MpZonedDateTime)" {
+                val odt: OffsetDateTime = OffsetDateTime.of(
+                    2022, 4, 5, 12, 13, 14, 0, ZoneOffset.ofHours(3)
+                )
+                val zone = MpTimezone.of("Europe/Berlin")
+
+                val result: MpZonedDateTime = odt.mp(zone)
+
+                result shouldBe odt.mp.atZone(zone)
+                result.toEpochMillis() shouldBe odt.toInstant().toEpochMilli()
+            }
+
+            "LocalTime.mp (to MpLocalTime)" {
+                val jvm: LocalTime = LocalTime.of(12, 13, 14)
+
+                val result: MpLocalTime = jvm.mp
+
+                result shouldBe MpLocalTime.of(hour = 12, minute = 13, second = 14)
+                result.hour shouldBe 12
+                result.minute shouldBe 13
+                result.second shouldBe 14
+            }
+
+            "MpLocalTime.jvm (to java LocalTime)" {
+                val mp: MpLocalTime = MpLocalTime.of(hour = 12, minute = 13, second = 14)
+
+                val result: LocalTime = mp.jvm
+
+                result shouldBe LocalTime.of(12, 13, 14)
+            }
+
+            "ZoneId.kotlinx (to kotlinx TimeZone)" {
+                val zoneId: ZoneId = ZoneId.of("Europe/Berlin")
+
+                val result: TimeZone = zoneId.kotlinx
+
+                result shouldBe TimeZone.of("Europe/Berlin")
+                result.id shouldBe "Europe/Berlin"
+            }
+
+            "TimeZone.of(ZoneId) (factory)" {
+                val zoneId: ZoneId = ZoneId.of("Europe/Berlin")
+
+                val result: TimeZone = TimeZone.of(zoneId)
+
+                result shouldBe TimeZone.of("Europe/Berlin")
+                result.id shouldBe "Europe/Berlin"
+            }
+
+            "TimeZone.jvm (to java ZoneId)" {
+                val tz: TimeZone = TimeZone.of("Europe/Berlin")
+
+                val result: ZoneId = tz.jvm
+
+                result shouldBe ZoneId.of("Europe/Berlin")
+                result.id shouldBe "Europe/Berlin"
+            }
+
+            "ZoneId.mp (to MpTimezone)" {
+                val zoneId: ZoneId = ZoneId.of("Europe/Berlin")
+
+                val result: MpTimezone = zoneId.mp
+
+                result shouldBe MpTimezone.of("Europe/Berlin")
+                result.id shouldBe "Europe/Berlin"
+            }
+
+            "MpTimezone.jvm (to java ZoneId)" {
+                val mp: MpTimezone = MpTimezone.of("Europe/Berlin")
+
+                val result: ZoneId = mp.jvm
+
+                result shouldBe ZoneId.of("Europe/Berlin")
+                result.id shouldBe "Europe/Berlin"
             }
         }
     }

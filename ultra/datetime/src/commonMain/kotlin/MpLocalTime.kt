@@ -5,7 +5,6 @@ import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-// TODO: test all of me
 @Serializable(with = MpLocalTimeSerializer::class)
 data class MpLocalTime(
     private val milliSeconds: Long,

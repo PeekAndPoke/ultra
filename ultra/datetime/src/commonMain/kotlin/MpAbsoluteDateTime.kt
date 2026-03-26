@@ -26,7 +26,6 @@ interface MpAbsoluteDateTime {
     /**
      * Converts to an [MpZonedDateTime] at UTC.
      */
-    // TODO: test me for all implementing classes
     fun atUTC(): MpZonedDateTime {
         return atZone(TimeZone.UTC)
     }
@@ -34,7 +33,6 @@ interface MpAbsoluteDateTime {
     /**
      * Converts to an [MpZonedDateTime] at the systems current timezone.
      */
-    // TODO: test me for all implementing classes
     fun atSystemDefaultZone(): MpZonedDateTime {
         return atZone(TimeZone.currentSystemDefault())
     }

@@ -16,7 +16,6 @@ import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlin.time.Duration.Companion.hours
 
-@Suppress("unused")
 class MpLocalDateSpec : StringSpec() {
 
     init {
@@ -690,15 +689,44 @@ class MpLocalDateSpec : StringSpec() {
                     MpLocalDate.of(1600, Month.FEBRUARY, 29)
         }
 
+        "toClosedRange(period: MpDatePeriod)" {
+            val start = MpLocalDate.of(2022, Month.APRIL, 5)
+            val period = MpDatePeriod(months = 1)
+
+            val result = start.toClosedRange(period)
+
+            result.from shouldBe MpLocalDate.of(2022, Month.APRIL, 5)
+            result.to shouldBe MpLocalDate.of(2022, Month.MAY, 4)
+        }
+
+        "toRange(period: MpTemporalPeriod, timezone: MpTimezone)" {
+            val start = MpLocalDate.of(2022, Month.APRIL, 5)
+            val period = MpDateTimePeriod(days = 3, hours = 6)
+            val timezone = MpTimezone.of("Europe/Berlin")
+
+            val result = start.toRange(period, timezone)
+
+            result.from shouldBe start.atStartOfDay(timezone)
+            result.to shouldBe start.atStartOfDay(timezone).plus(period)
+        }
+
         "plus(period: MpTemporalPeriod)" {
             MpLocalDate.of(2022, Month.APRIL, 5)
                 .plus(MpDatePeriod(years = 1, months = 2, days = 3)) shouldBe
+                    MpLocalDate.of(2023, Month.JUNE, 8)
+
+            MpLocalDate.of(2022, Month.APRIL, 5)
+                .plus(MpDateTimePeriod(years = 1, months = 2, days = 3, hours = 6)) shouldBe
                     MpLocalDate.of(2023, Month.JUNE, 8)
         }
 
         "minus(period: MpTemporalPeriod)" {
             MpLocalDate.of(2022, Month.APRIL, 5)
                 .minus(MpDatePeriod(years = 1, months = 2, days = 3)) shouldBe
+                    MpLocalDate.of(2021, Month.FEBRUARY, 2)
+
+            MpLocalDate.of(2022, Month.APRIL, 5)
+                .minus(MpDateTimePeriod(years = 1, months = 2, days = 3, hours = 6)) shouldBe
                     MpLocalDate.of(2021, Month.FEBRUARY, 2)
         }
 

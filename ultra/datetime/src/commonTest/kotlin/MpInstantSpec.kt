@@ -16,7 +16,6 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
-@Suppress("unused")
 class MpInstantSpec : StringSpec({
 
     "Construction" {
@@ -133,6 +132,49 @@ class MpInstantSpec : StringSpec({
         atZone.toIsoString() shouldBe "2022-04-05T03:00:00.000[Europe/Bucharest]"
     }
 
+    "toLocalDate(timezone)" {
+        val instant = MpInstant.parse("2022-04-05T23:00:00.000Z")
+
+        val resultUtc = instant.toLocalDate(MpTimezone.UTC)
+        resultUtc shouldBe MpLocalDate.of(2022, 4, 5)
+
+        val resultBerlin = instant.toLocalDate(MpTimezone.of("Europe/Berlin"))
+        resultBerlin shouldBe MpLocalDate.of(2022, 4, 6)
+    }
+
+    "toRange(period, timezone)" {
+        val instant = MpInstant.parse("2022-04-01T12:00:00.000Z")
+        val period = MpDateTimePeriod(days = 2)
+        val timezone = MpTimezone.UTC
+
+        val result = instant.toRange(period, timezone)
+
+        result shouldBe MpInstantRange(
+            from = MpInstant.parse("2022-04-01T12:00:00.000Z"),
+            to = MpInstant.parse("2022-04-03T12:00:00.000Z"),
+        )
+    }
+
+    "plus(period, timezone)" {
+        val instant = MpInstant.parse("2022-04-01T12:00:00.000Z")
+        val period = MpDateTimePeriod(years = 1, months = 2, days = 3)
+        val timezone = MpTimezone.UTC
+
+        val result = instant.plus(period, timezone)
+
+        result shouldBe MpInstant.parse("2023-06-04T12:00:00.000Z")
+    }
+
+    "minus(period, timezone)" {
+        val instant = MpInstant.parse("2023-06-04T12:00:00.000Z")
+        val period = MpDateTimePeriod(years = 1, months = 2, days = 3)
+        val timezone = MpTimezone.UTC
+
+        val result = instant.minus(period, timezone)
+
+        result shouldBe MpInstant.parse("2022-04-01T12:00:00.000Z")
+    }
+
     "toRange" {
         val result1 = MpInstant.parse("2022-04-01T12:13:14.123Z").toRange(2.days)
 
@@ -189,5 +231,24 @@ class MpInstantSpec : StringSpec({
         val result = MpInstant.parse("2022-04-01T01:00:00Z") - MpInstant.parse("2022-04-01T00:00:00Z")
 
         result shouldBe 1.hours
+    }
+
+    "atUTC" {
+        val source = MpInstant.parse("2022-04-05T12:13:14.000Z")
+
+        val result = source.atUTC()
+
+        result shouldBe source.atZone(TimeZone.UTC)
+        result.timezone.id shouldBe "UTC"
+        result.toEpochMillis() shouldBe source.toEpochMillis()
+    }
+
+    "atSystemDefaultZone" {
+        val source = MpInstant.parse("2022-04-05T12:13:14.000Z")
+
+        val result = source.atSystemDefaultZone()
+
+        result shouldBe source.atZone(TimeZone.currentSystemDefault())
+        result.toEpochMillis() shouldBe source.toEpochMillis()
     }
 })

@@ -48,7 +48,6 @@ data class MpZonedDateTime(
         /**
          * Creates from the given epoch [millis] and [timezone].
          */
-        // TODO: test me
         fun fromEpochMillis(millis: Long, timezone: MpTimezone): MpZonedDateTime {
             return MpInstant.fromEpochMillis(millis).atZone(timezone)
         }
@@ -63,7 +62,6 @@ data class MpZonedDateTime(
         /**
          * Creates from the given epoch [seconds] and [timezone].
          */
-        // TODO: test me
         fun fromEpochSeconds(seconds: Long, timezone: MpTimezone): MpZonedDateTime {
             return MpInstant.fromEpochSeconds(seconds).atZone(timezone)
         }
@@ -252,7 +250,6 @@ data class MpZonedDateTime(
     /**
      * Creates a [MpZonedDateTimeRange] with this as the start and the given [duration].
      */
-    // TODO: test me
     fun toRange(duration: Duration): MpZonedDateTimeRange {
         return MpZonedDateTimeRange.of(from = this, duration = duration)
     }
@@ -260,7 +257,6 @@ data class MpZonedDateTime(
     /**
      * Creates a [MpZonedDateTimeRange] with this as the start and the given [period].
      */
-    // TODO: test me
     fun toRange(period: MpTemporalPeriod): MpZonedDateTimeRange {
         return MpZonedDateTimeRange.of(from = this, period = period)
     }
@@ -338,7 +334,6 @@ data class MpZonedDateTime(
     /**
      * Sets the time of the day to the given [time].
      */
-    // TODO: test me
     fun atTime(time: MpLocalTime): MpZonedDateTime {
         return MpLocalDateTime.of(
             date = toLocalDate(),
@@ -362,7 +357,6 @@ data class MpZonedDateTime(
      * Will result in              2022-03-28T00:00:00[Europe/Berlin]
      * while the difference between both instants is only 23 hours.
      */
-    // TODO: Test me
     fun plus(unit: DateTimeUnit): MpZonedDateTime {
         return plus(1, unit)
     }
@@ -376,7 +370,6 @@ data class MpZonedDateTime(
      * Will result in              2022-03-28T00:00:00[Europe/Berlin]
      * while the difference between both instants is only 23 hours.
      */
-    // TODO: Test me
     fun plus(value: Int, unit: DateTimeUnit): MpZonedDateTime {
         return toInstant().plus(value, unit, timezone).atZone(timezone)
     }
@@ -386,7 +379,6 @@ data class MpZonedDateTime(
      *
      * Each component is added individually starting with years, months, ..., milliseconds
      */
-    // TODO: test me
     fun plus(period: MpTemporalPeriod): MpZonedDateTime {
         return toInstant().plus(period, timezone).atZone(timezone)
     }
@@ -407,7 +399,6 @@ data class MpZonedDateTime(
      * Will result in                   2022-03-27T00:00:00[Europe/Berlin]
      * while the difference between both instants is only 23 hours.
      */
-    // TODO: test me
     fun minus(unit: DateTimeUnit): MpZonedDateTime {
         return minus(1, unit)
     }
@@ -421,7 +412,6 @@ data class MpZonedDateTime(
      * Will result in                   2022-03-27T00:00:00[Europe/Berlin]
      * while the difference between both instants is only 23 hours.
      */
-    // TODO: test me
     fun minus(value: Int, unit: DateTimeUnit): MpZonedDateTime {
         return plus(-value, unit)
     }
@@ -438,28 +428,23 @@ data class MpZonedDateTime(
      *
      * Each component is added individually starting with years, months, ..., milliseconds
      */
-    // TODO: test me
     fun minus(period: MpTemporalPeriod): MpZonedDateTime {
         return plus(-period)
     }
 }
 
-// TODO: test me
 fun MpZonedDateTime.formatDdMmmYyyy(): String {
     return format("dd MMM yyyy")
 }
 
-// TODO: test me
 fun MpZonedDateTime.formatHhMm(): String {
     return format("HH:mm")
 }
 
-// TODO: test me
 fun MpZonedDateTime.formatDdMmmYyyyHhMm(): String {
     return format("dd MMM yyyy HH:mm")
 }
 
-// TODO: test me
 fun MpZonedDateTime.formatDdMmmYyyyHhMmSs(): String {
     return format("dd MMM yyyy HH:mm:ss")
 }

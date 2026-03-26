@@ -64,13 +64,11 @@ val LocalDateTime.mp: MpLocalDateTime
 /**
  * Converts a [java.time.OffsetDateTime] into an [MpInstant]
  */
-// TODO: test me
 val OffsetDateTime.mp get(): MpInstant = toInstant().mp
 
 /**
  * Converts a [java.time.OffsetDateTime] into an [MpZonedDateTime]
  */
-// TODO: test me
 fun OffsetDateTime.mp(zone: MpTimezone): MpZonedDateTime = mp.atZone(zone)
 
 /**
@@ -111,7 +109,6 @@ val ZonedDateTime.mp: MpZonedDateTime
 /**
  * Converts a [java.time.LocalTime] into an [MpLocalTime]
  */
-// TODO: test me
 val LocalTime.mp: MpLocalTime
     get() =
         MpLocalTime.ofMilliSeconds(milliSecondsOfDay = 1000L * (hour * 60 * 60 + minute * 60 + second))
@@ -119,35 +116,29 @@ val LocalTime.mp: MpLocalTime
 /**
  * Converts an [MpLocalTime] into a [java.time.LocalDate]
  */
-// TODO: test me
 val MpLocalTime.jvm get(): LocalTime = LocalTime.ofSecondOfDay(inWholeMilliSeconds() / 1000)
 
 /**
  * Converts a [java.time.ZoneId] to a [TimeZone].
  */
-// TODO: test me
 val ZoneId.kotlinx: TimeZone get() = TimeZone.of(id)
 
 /**
  * Converts a [java.time.ZoneId] to a [TimeZone].
  */
-// TODO: test me
 fun TimeZone.Companion.of(zone: ZoneId): TimeZone = of(zone.id)
 
 /**
  * Converts a [TimeZone] into a [java.time.ZoneId].
  */
-// TODO: test me
 val TimeZone.jvm: ZoneId get() = ZoneId.of(id)
 
 /**
  * Converts [java.time.ZoneId] into an [MpTimezone].
  */
-// TODO: test me
 val ZoneId.mp: MpTimezone get() = MpTimezone.of(id)
 
 /**
  * Converts an [MpTimezone] into a [java.time.ZoneId]
  */
-// TODO: test me
 val MpTimezone.jvm: ZoneId get() = ZoneId.of(id)

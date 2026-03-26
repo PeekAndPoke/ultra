@@ -6,7 +6,6 @@ import io.peekandpoke.ultra.datetime.TestConstants.tsUTC_20220405_000000
 import kotlinx.datetime.Month
 import kotlinx.serialization.json.Json
 
-@Suppress("unused")
 class MpLocalDateSerializationSpec : StringSpec({
 
     val json = Json

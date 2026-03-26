@@ -114,7 +114,6 @@ data class MpInstant(
     /**
      * Creates a [MpLocalDate] at the given timezone
      */
-    // TODO: Test me
     fun toLocalDate(timezone: MpTimezone): MpLocalDate {
         return atZone(timezone).toLocalDate()
     }
@@ -150,7 +149,6 @@ data class MpInstant(
     /**
      * Creates a [MpZonedDateTimeRange] with this as the start and the given [period].
      */
-    // TODO: test me
     fun toRange(period: MpTemporalPeriod, timezone: MpTimezone): MpInstantRange {
         return MpInstantRange(from = this, to = plus(period, timezone).toInstant())
     }
@@ -229,7 +227,6 @@ data class MpInstant(
      *
      * Each component is added individually starting with years, months, ..., milliseconds
      */
-    // TODO: test me
     fun plus(period: MpTemporalPeriod, timezone: MpTimezone): MpInstant {
 
         val tz = timezone.kotlinx
@@ -314,7 +311,6 @@ data class MpInstant(
      *
      * Each component is added individually starting with years, months, ..., milliseconds
      */
-    // TODO: test me
     fun minus(period: MpTemporalPeriod, timezone: MpTimezone): MpInstant {
         return plus(-period, timezone)
     }

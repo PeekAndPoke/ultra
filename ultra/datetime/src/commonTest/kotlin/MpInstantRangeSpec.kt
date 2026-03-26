@@ -13,7 +13,6 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-@Suppress("unused")
 class MpInstantRangeSpec : StringSpec({
 
     val now = MpInstant.now()

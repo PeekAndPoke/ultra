@@ -10,7 +10,6 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 
-// TODO: test all of me
 @Suppress("Detekt.LongParameterList")
 @Serializable(with = MpLocalDateTimeSerializer::class)
 data class MpLocalDateTime(
@@ -56,7 +55,6 @@ data class MpLocalDateTime(
             milliSecond = milliSecond,
         )
 
-        // TODO: Test me
         fun of(date: MpLocalDate, time: MpLocalTime): MpLocalDateTime = of(
             year = date.year,
             month = date.month,
@@ -131,10 +129,8 @@ data class MpLocalDateTime(
     /** The millisecond */
     val milliSecond: Int get() = value.nanosecond / 1_000_000
 
-    // TODO: test me
     /** The day of the week */
     val dayOfWeek: DayOfWeek get() = value.dayOfWeek
-    // TODO: test me
     /** The day of the year */
     val dayOfYear: Int get() = value.dayOfYear
 

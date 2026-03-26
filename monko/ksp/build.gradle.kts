@@ -32,6 +32,7 @@ kotlin {
 
         testImplementation(Deps.Ksp.compiletesting_ksp)
         kspTest(project(":monko:ksp"))
+        testImplementation(project(":ultra:meta"))
 
         Deps.Test {
             jvmTestDeps()

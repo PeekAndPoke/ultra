@@ -4,7 +4,6 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.serialization.json.Json
 
-@Suppress("unused")
 class MpLocalTimeSerializerSpec : StringSpec({
 
     val json = Json
