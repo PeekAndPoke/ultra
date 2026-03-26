@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import { kraftSidebar } from '../../../data/kraft-sidebar';
 import { Code } from 'astro:components';
 ---
@@ -213,7 +214,12 @@ fun RootRouterBuilder.mountNav(authState: AuthState<AdminUserModel>) {
     catchAll { NotFoundPage() }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p>This pattern — defining routes as objects, mounting them with middleware and layouts — scales well from small apps to large ones.</p>
+  <p>This pattern — defining routes as objects, mounting them with middleware and layouts — is how we structure all our
+    apps.</p>
+
+  <Aside>It's a client-side SPA router. No server-side rendering, no SEO magic. If you need those, Kraft is probably not
+    the right tool. It's built for admin panels, dashboards, and internal tools where SEO doesn't matter.
+  </Aside>
 
 <div class="not-prose mt-8 flex gap-4">
   <a href="/ultra/kraft/forms" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">

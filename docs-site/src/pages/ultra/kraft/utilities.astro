@@ -19,10 +19,12 @@ import {Code} from 'astro:components';
         reactive <a href="/ultra/streams/">Stream</a>. Access it from any component:</p>
 
     <Code code={`class MyComponent(ctx: Ctx<Props>) : Component<Props>(ctx) {
-    override fun VDom.render() {
-        val state = responsiveCtrl()
 
-        when (state.displayType) {
+    // Subscribe to the responsive controller — redraws when the breakpoint changes
+    private val responsive by subscribingTo(responsiveCtrl)
+
+    override fun VDom.render() {
+        when (responsive.displayType) {
             DisplayType.Mobile -> renderMobileLayout()
             DisplayType.Tablet -> renderTabletLayout()
             DisplayType.Desktop -> renderDesktopLayout()
@@ -30,9 +32,27 @@ import {Code} from 'astro:components';
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <h3>Breakpoints</h3>
+    <h3>Custom breakpoints</h3>
 
-    <p>Default breakpoints:</p>
+    <p>By default, Kraft registers a <code>ResponsiveController</code> with standard breakpoints.
+        You can override it in the app builder:</p>
+
+    <Code code={`val app = kraftApp {
+    responsive(
+        ResponsiveController(
+            breakpoints = ResponsiveController.Breakpoints(
+                tablet = 600,   // default: 768
+                desktop = 1024, // default: 1200
+            )
+        )
+    )
+
+    routing { /* ... */ }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Default breakpoints</h3>
+
+    <p>If you don't configure anything, the defaults are:</p>
 
     <div class="not-prose my-8">
         <table class="w-full text-sm text-left">
@@ -61,13 +81,11 @@ import {Code} from 'astro:components';
 
     <p>Convenience checks on the state:</p>
 
-    <Code code={`val state = responsiveCtrl()
-
-state.isDesktop      // true when >= 1200px
-state.isMobile       // true when < 768px
-state.isNotDesktop   // tablet or mobile
-state.isNotMobile    // tablet or desktop
-state.windowSize     // Vector2D with current width and height`} lang="kotlin" theme="vitesse-dark"/>
+    <Code code={`responsive.isDesktop      // true when >= 1200px
+responsive.isMobile       // true when < 768px
+responsive.isNotDesktop   // tablet or mobile
+responsive.isNotMobile    // tablet or desktop
+responsive.windowSize     // Vector2D with current width and height`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>CSS &amp; Styling</h2>
 

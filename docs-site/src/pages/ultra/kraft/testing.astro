@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import {kraftSidebar} from '../../../data/kraft-sidebar';
 import {Code} from 'astro:components';
 ---
@@ -14,8 +15,11 @@ import {Code} from 'astro:components';
     </p>
 
     <p>The <code>kraft-testing</code> module provides two main tools: <code>TestBed</code> for rendering components into
-        a real DOM, and <code>KQuery</code> for querying and interacting with the rendered elements. Together they give
-        you a jQuery-like API for component testing.</p>
+        a real DOM, and <code>KQuery</code> for querying and interacting with the rendered elements.</p>
+
+    <Aside>KQuery is inspired by jQuery's "select and act" model. Tests run in a real browser via Karma/ChromeHeadless —
+        so you're testing actual DOM behavior, not a mock. The flip side: tests are slower than pure unit tests.
+    </Aside>
 
     <Code code={`// build.gradle.kts
 jsTest {
@@ -58,6 +62,10 @@ fun clicking_plus_increments() = TestBed.preact(
     <Code code={`// Select by CSS selector
 val buttons = root.selectCss("button")
 val inputs = root.selectCss<HTMLInputElement>("input[type=text]")
+
+// Select by debug-id attribute (set via debugId() in ultra:html)
+val header = root.selectDebugId("page-header")
+val emailInput = root.selectDebugId<HTMLInputElement>("email-field")
 
 // Select within results (chaining)
 val submitBtn = root.selectCss("form").selectCss("button.submit")`} lang="kotlin" theme="vitesse-dark"/>

@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import ExampleEmbed from '../../../components/ExampleEmbed.astro';
 import { kraftSidebar } from '../../../data/kraft-sidebar';
 import { Code } from 'astro:components';
@@ -11,10 +12,14 @@ import {dep, kraftLiveExamples, githubRepo} from '../../../data/site';
 <h1>Addons</h1>
 
 <p class="text-xl text-gray-400 !mt-2 !mb-8">
-  Kraft wraps popular JavaScript libraries so you can use them from Kotlin without touching JS.
+  Kotlin wrappers for popular JavaScript libraries.
 </p>
 
-<h2>Available addons</h2>
+  <Aside>These are thin wrappers — just enough to call from Kotlin with type safety. They don't cover every feature of
+    the underlying library, but they cover what we needed. PRs welcome for the rest.
+  </Aside>
+
+  <h2>Available addons</h2>
 
 <table>
   <thead>

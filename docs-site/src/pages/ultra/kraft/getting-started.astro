@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import { kraftSidebar } from '../../../data/kraft-sidebar';
 import { Code } from 'astro:components';
 import { kotlinVersion, dep, fomanticCdnUrl } from '../../../data/site';
@@ -10,10 +11,12 @@ import { kotlinVersion, dep, fomanticCdnUrl } from '../../../data/site';
 <h1>Getting Started</h1>
 
 <p class="text-xl text-gray-400 !mt-2 !mb-8">
-  From zero to a working Kraft app in five minutes.
+    Set up a Kraft project and build your first component.
 </p>
 
-<h2>Prerequisites</h2>
+    <Aside>The Gradle setup is the hardest part. Once that compiles, everything else follows naturally.</Aside>
+
+    <h2>Prerequisites</h2>
 
 <ul>
   <li><strong>JDK 17+</strong> — Kraft compiles Kotlin to JavaScript, but the build runs on the JVM</li>

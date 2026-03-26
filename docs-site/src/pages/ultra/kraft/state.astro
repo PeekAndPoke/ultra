@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import ExampleEmbed from '../../../components/ExampleEmbed.astro';
 import { kraftSidebar } from '../../../data/kraft-sidebar';
 import { Code } from 'astro:components';
@@ -11,10 +12,14 @@ import {kraftLiveExamples, githubRepo} from '../../../data/site';
 <h1>State Management</h1>
 
 <p class="text-xl text-gray-400 !mt-2 !mb-8">
-  Three mechanisms, each for a different job. No ceremony, no boilerplate.
+  Three mechanisms, each for a different job.
 </p>
 
-<h2>1. Local state with <code>value()</code></h2>
+  <Aside>We started with just value(). Then we needed debouncing, so we added streams. Then we needed shared state, so
+    we added subscriptions. Three mechanisms is more than we planned — but each one solves a distinct problem.
+  </Aside>
+
+  <h2>1. Local state with <code>value()</code></h2>
 
 <p>The simplest and most common pattern. Declare a property with <code>value()</code>, change it, and the component redraws:</p>
 

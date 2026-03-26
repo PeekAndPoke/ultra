@@ -29,6 +29,20 @@ private object TestStyles : StyleSheet(autoMount = false) {
     }
 }
 
+private object NestedStyles : StyleSheet(autoMount = false) {
+    val card by rule {
+        display = Display.flex
+
+        "h2" {
+            color = Color.red
+        }
+
+        "> .content" {
+            color = Color.blue
+        }
+    }
+}
+
 private object ContextStyles : StyleSheet(autoMount = false) {
     val parent by rule {
         display = Display.block
@@ -90,6 +104,22 @@ class StyleSheetSpec : StringSpec({
         css shouldContain "display"
         css shouldContain "flex"
         css shouldContain "color"
+    }
+
+    "StyleSheet rule with nested string selectors generates scoped CSS" {
+        val css = NestedStyles.css
+
+        // The card rule itself
+        css shouldContain ".${NestedStyles.card.name}"
+        css shouldContain "display"
+        css shouldContain "flex"
+
+        // Nested h2 selector
+        css shouldContain "h2"
+        css shouldContain "color"
+
+        // Nested > .content selector
+        css shouldContain "> .content"
     }
 
     "StyleSheet rule with context rule scopes the selector" {

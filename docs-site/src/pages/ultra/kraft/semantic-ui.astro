@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import ExampleEmbed from '../../../components/ExampleEmbed.astro';
 import { kraftSidebar } from '../../../data/kraft-sidebar';
 import { Code } from 'astro:components';
@@ -11,11 +12,15 @@ import {kraftLiveExamples, githubRepo} from '../../../data/site';
 <h1>SemanticUI DSL</h1>
 
 <p class="text-xl text-gray-400 !mt-2 !mb-8">
-  A fluent, type-safe Kotlin DSL for the <a href="https://fomantic-ui.com/" target="_blank" rel="noopener">FomanticUI</a> CSS framework.
+    A Kotlin DSL for the <a href="https://fomantic-ui.com/" target="_blank" rel="noopener">FomanticUI</a> CSS framework.
   Write <code>ui.blue.button</code> instead of <code>class="ui blue button"</code>.
 </p>
 
-<h2>How it works</h2>
+    <Aside>We chose FomanticUI because it looks decent out of the box and doesn't require a build pipeline for its CSS.
+        Could we support Tailwind or other frameworks? Sure. We just haven't needed to yet.
+    </Aside>
+
+    <h2>How it works</h2>
 
 <p>The DSL starts with <code>ui</code> (or <code>noui</code> for non-UI classes) and chains modifiers using Kotlin properties:</p>
 
