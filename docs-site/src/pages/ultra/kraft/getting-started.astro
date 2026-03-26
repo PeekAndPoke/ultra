@@ -172,7 +172,43 @@ fun Tag.HomePage() = comp {
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p>This is <a href="https://github.com/Kotlin/kotlinx.html">kotlinx.html</a> with the SemanticUI DSL layered on top. Standard HTML tags (<code>div</code>, <code>p</code>, <code>button</code>) work alongside SemanticUI helpers (<code>ui.segment</code>, <code>ui.button</code>).</p>
+    <p>This is <a href="https://github.com/Kotlin/kotlinx.html" target="_blank" rel="noopener">kotlinx.html</a> with the
+        SemanticUI DSL layered on top. Standard HTML tags (<code>div</code>, <code>p</code>, <code>button</code>) work
+        alongside SemanticUI helpers (<code>ui.segment</code>, <code>ui.button</code>).</p>
+
+    <h2>App configuration</h2>
+
+    <p>The <code>kraftApp</code> builder is where you configure routing, UI frameworks, and app-level services. Here's a
+        complete setup:</p>
+
+    <Code code={`val app = kraftApp {
+    // Registers modals, toasts, popups with SemanticUI styling
+    semanticUI {
+        // Optional: customize toast defaults
+        defaultDuration = 5.seconds
+    }
+
+    // Set up routing
+    routing {
+        usePathStrategy()  // clean URLs: /users/123
+        // or useHashStrategy() for: /#/users/123
+
+        mount(Nav.home) { HomePage() }
+        mount(Nav.users) { route -> UsersPage(route["id"]) }
+
+        catchAll { NotFoundPage() }
+    }
+}
+
+fun main() {
+    app.mount("#spa", PreactVDomEngine()) {
+        App()  // your root component
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The <code>semanticUI()</code> call registers modals, toasts, and popups with FomanticUI styling. If you want the
+        core overlay systems without SemanticUI, register them individually with <code>modals()</code>,
+        <code>toasts()</code>, and <code>popups()</code>.</p>
 
 <div class="not-prose mt-8 flex gap-4">
   <a href="/ultra/kraft/components" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">

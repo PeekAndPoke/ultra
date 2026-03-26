@@ -1,0 +1,524 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {kraftSidebar} from '../../../data/kraft-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="DOM Events" sidebar={kraftSidebar} description="Typed event handlers for all DOM events in Kraft">
+
+    <h1>DOM Events</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        onClick, onInput, onKeyDown, and 50+ more — typed event handlers for every DOM event.
+    </p>
+
+    <p>Kraft provides extension functions on <code>CommonAttributeGroupFacade</code> for all standard DOM events. Each
+        handler receives a properly typed event object — <code>MouseEvent</code> for clicks, <code>KeyboardEvent</code>
+        for key presses, and so on.</p>
+
+    <Code code={`div {
+    onClick { evt ->
+        // evt is PointerEvent
+        console.log("Clicked at ${'$'}{evt.clientX}, ${'$'}{evt.clientY}")
+    }
+    onKeyDown { evt ->
+        // evt is KeyboardEvent
+        if (evt.key == "Enter") submit()
+    }
+    onMouseEnter { evt ->
+        // evt is MouseEvent
+        showTooltip()
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>One handler per event</h2>
+
+    <p>Each element supports <strong>one handler per event type</strong>. Calling the same event function twice on the
+        same element replaces the previous handler — the last one wins:</p>
+
+    <Code code={`div {
+    onClick { console.log("first") }   // this is replaced
+    onClick { console.log("second") }  // only this one runs
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>This is how the underlying Preact/kotlinx.html property model works — event handlers are property assignments,
+        not listener registrations. If you need multiple behaviors, compose them in a single handler:</p>
+
+    <Code code={`div {
+    onClick { evt ->
+        logAnalytics(evt)
+        doNavigation(evt)
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Alternatively, nest elements and give each its own handler:</p>
+
+    <Code code={`div {
+    onClick { logAnalytics(it) }
+    button {
+        onClick { doNavigation(it) }
+        +"Go"
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Mouse events</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Handler</th>
+                <th class="py-2 text-gray-400">Event type</th>
+                <th class="py-2 text-gray-400">When it fires</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onClick</code></td>
+                <td>PointerEvent</td>
+                <td>Primary button click</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onAuxClick</code></td>
+                <td>PointerEvent</td>
+                <td>Non-primary button (middle, right)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onDblClick</code></td>
+                <td>MouseEvent</td>
+                <td>Double-click</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onContextMenu</code></td>
+                <td>PointerEvent</td>
+                <td>Right-click (context menu)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onMouseDown</code></td>
+                <td>MouseEvent</td>
+                <td>Button pressed</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onMouseUp</code></td>
+                <td>MouseEvent</td>
+                <td>Button released</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onMouseEnter</code></td>
+                <td>MouseEvent</td>
+                <td>Pointer enters element (no bubble)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onMouseLeave</code></td>
+                <td>MouseEvent</td>
+                <td>Pointer leaves element (no bubble)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onMouseOver</code></td>
+                <td>MouseEvent</td>
+                <td>Pointer enters element (bubbles)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onMouseOut</code></td>
+                <td>MouseEvent</td>
+                <td>Pointer leaves element (bubbles)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onMouseMove</code></td>
+                <td>MouseEvent</td>
+                <td>Pointer moves over element</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onWheel</code></td>
+                <td>WheelEvent</td>
+                <td>Mouse wheel / trackpad scroll</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Click helpers</h3>
+
+    <Code code={`// Prevents default and stops propagation before calling your handler
+onClickStoppingEvent { evt -> doSomething() }
+
+// Fires on both primary click AND auxiliary click (middle-click, etc.)
+onClickOrAuxClick { evt -> navigate(evt) }`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Smart navigation with modifier keys</h3>
+
+    <p>When you pass the mouse event to <code>router.navToUri</code>, Kraft detects modifier keys and opens a new tab on
+        Ctrl+Click (Cmd+Click on Mac) — just like native links:</p>
+
+    <Code code={`ui.item A {
+    onClick { evt -> router.navToUri(evt, Nav.about()) }
+    +"About"
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Keyboard events</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Handler</th>
+                <th class="py-2 text-gray-400">Event type</th>
+                <th class="py-2 text-gray-400">When it fires</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onKeyDown</code></td>
+                <td>KeyboardEvent</td>
+                <td>Key is pressed</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onKeyUp</code></td>
+                <td>KeyboardEvent</td>
+                <td>Key is released</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <Code code={`input {
+    onKeyDown { evt ->
+        when (evt.key) {
+            "Enter" -> submit()
+            "Escape" -> cancel()
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Focus events</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Handler</th>
+                <th class="py-2 text-gray-400">Event type</th>
+                <th class="py-2 text-gray-400">Bubbles?</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onFocus</code></td>
+                <td>FocusEvent</td>
+                <td>No</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onBlur</code></td>
+                <td>Event</td>
+                <td>No</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onFocusIn</code></td>
+                <td>FocusEvent</td>
+                <td>Yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onFocusOut</code></td>
+                <td>FocusEvent</td>
+                <td>Yes</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p>Use <code>onFocusIn</code>/<code>onFocusOut</code> when you need to detect focus changes on child elements from a
+        parent container (they bubble). Use <code>onFocus</code>/<code>onBlur</code> when you only care about the
+        element itself.</p>
+
+    <h2>Form &amp; input events</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Handler</th>
+                <th class="py-2 text-gray-400">Event type</th>
+                <th class="py-2 text-gray-400">When it fires</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onInput</code></td>
+                <td>InputEvent</td>
+                <td>Value changes (fires immediately)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onChange</code></td>
+                <td>Event</td>
+                <td>Value committed (on blur or Enter)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onBeforeInput</code></td>
+                <td>InputEvent</td>
+                <td>Before the value is modified</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onSelect</code></td>
+                <td>Event</td>
+                <td>Text is selected in input/textarea</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onSubmit</code></td>
+                <td>Event</td>
+                <td>Form submitted (preventDefault is called automatically)</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <Code code={`form {
+    onSubmit { evt ->
+        // preventDefault is already called — no page reload
+        saveData()
+    }
+
+    input {
+        onInput { evt ->
+            // fires on every keystroke
+            val value = (evt.target as HTMLInputElement).value
+            updateSearch(value)
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Pointer events</h2>
+
+    <p>Pointer events unify mouse, touch, and pen input into a single API:</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Handler</th>
+                <th class="py-2 text-gray-400">Bubbles?</th>
+                <th class="py-2 text-gray-400">When it fires</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onPointerDown</code></td>
+                <td>Yes</td>
+                <td>Pointer becomes active</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onPointerUp</code></td>
+                <td>Yes</td>
+                <td>Pointer released</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onPointerMove</code></td>
+                <td>Yes</td>
+                <td>Pointer moves</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onPointerEnter</code></td>
+                <td>No</td>
+                <td>Enters element</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onPointerLeave</code></td>
+                <td>No</td>
+                <td>Leaves element</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onPointerOver</code></td>
+                <td>Yes</td>
+                <td>Enters element (bubbles)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onPointerOut</code></td>
+                <td>Yes</td>
+                <td>Leaves element (bubbles)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onPointerCancel</code></td>
+                <td>Yes</td>
+                <td>Pointer interrupted</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Touch events</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Handler</th>
+                <th class="py-2 text-gray-400">When it fires</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onTouchStart</code></td>
+                <td>Finger placed on screen</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onTouchMove</code></td>
+                <td>Finger moves on screen</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onTouchEnd</code></td>
+                <td>Finger lifted from screen</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onTouchCancel</code></td>
+                <td>Touch interrupted</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Drag events</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Handler</th>
+                <th class="py-2 text-gray-400">Event type</th>
+                <th class="py-2 text-gray-400">When it fires</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onDragStart</code></td>
+                <td>DragEvent</td>
+                <td>User starts dragging</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onDrag</code></td>
+                <td>DragEvent</td>
+                <td>While dragging (continuous)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onDragEnd</code></td>
+                <td>DragEvent</td>
+                <td>Drag ends (drop or cancel)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onDragEnter</code></td>
+                <td>DragEvent</td>
+                <td>Enters a drop target</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onDragOver</code></td>
+                <td>DragEvent</td>
+                <td>Over a drop target (continuous)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onDragLeave</code></td>
+                <td>DragEvent</td>
+                <td>Leaves a drop target</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onDrop</code></td>
+                <td>DragEvent</td>
+                <td>Dropped on a target</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p>For Kraft's higher-level type-safe drag &amp; drop system, see <a href="/ultra/kraft/drag-and-drop">Drag &amp;
+        Drop</a>.</p>
+
+    <h2>Clipboard events</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Handler</th>
+                <th class="py-2 text-gray-400">Event type</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onCopy</code></td>
+                <td>ClipboardEvent</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onCut</code></td>
+                <td>ClipboardEvent</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onPaste</code></td>
+                <td>ClipboardEvent</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Animation &amp; transition events</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Handler</th>
+                <th class="py-2 text-gray-400">When it fires</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onAnimationStart</code></td>
+                <td>CSS animation starts</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onAnimationEnd</code></td>
+                <td>CSS animation completes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onAnimationIteration</code></td>
+                <td>CSS animation completes one cycle</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onTransitionEnd</code></td>
+                <td>CSS transition completes</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Other events</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Handler</th>
+                <th class="py-2 text-gray-400">When it fires</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onScroll</code></td>
+                <td>Element is scrolled</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onLoad</code></td>
+                <td>Resource finished loading (img, iframe)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>onError</code></td>
+                <td>Resource failed to load</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/kraft/messaging"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Messaging &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

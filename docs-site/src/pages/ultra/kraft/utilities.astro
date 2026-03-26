@@ -194,44 +194,10 @@ val externalCss = StyleSheetTag {
     alt = "A photo",
 )`} lang="kotlin" theme="vitesse-dark"/>
 
-    <h2>Testing</h2>
-
-    <p>The <code>kraft-testing</code> module provides <code>TestBed</code> for rendering components and
-        <code>KQuery</code> for querying the rendered DOM.</p>
-
-    <h3>Rendering a component</h3>
-
-    <Code code={`@Test
-fun counter_increments() = TestBed.preact(
-    view = { Counter(start = 0) },
-) { root ->
-    // root is a KQuery<Element> wrapping the rendered DOM
-    root.selectCss("h2").textContent() shouldBe "Count: 0"
-
-    root.selectCss<HTMLButtonElement>("button").click()
-
-    root.selectCss("h2").textContent() shouldBe "Count: 1"
-}`} lang="kotlin" theme="vitesse-dark"/>
-
-    <h3>KQuery API</h3>
-
-    <p>KQuery provides jQuery-like element querying:</p>
-
-    <Code code={`// Select elements by CSS selector
-val buttons = root.selectCss("button")
-val inputs = root.selectCss<HTMLInputElement>("input[type=text]")
-
-// Get text content of matched elements
-buttons.textContent()           // combined text of all matches
-buttons.containsText("Save")   // true if any match contains "Save"
-
-// Simulate clicks
-buttons.click()`} lang="kotlin" theme="vitesse-dark"/>
-
     <div class="not-prose mt-8">
-        <a href="/ultra/kraft/addons"
+        <a href="/ultra/kraft/testing"
            class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
-            Addons &rarr;
+            Testing &rarr;
         </a>
     </div>
 

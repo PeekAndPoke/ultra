@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import ExampleEmbed from '../../../components/ExampleEmbed.astro';
 import { kraftSidebar } from '../../../data/kraft-sidebar';
 import { Code } from 'astro:components';
@@ -238,6 +239,75 @@ override fun VDom.render() {
 
     <p>These are injected via Kraft's attribute system — no manual wiring needed. See <a href="/ultra/kraft/overlays">Overlays</a>
         for modals, toasts, and popups. See <a href="/ultra/kraft/utilities">Utilities</a> for responsive design.</p>
+
+    <h2>Keys for list rendering</h2>
+
+    <p>When rendering a list of items, set a <code>key</code> on each element so Preact can efficiently track which
+        items changed, moved, or were removed:</p>
+
+    <Code code={`ui.list {
+    items.forEach { item ->
+        noui.item {
+            key = item.id  // stable, unique identifier
+            +item.name
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Without keys, Preact re-creates every element on each render. With keys, it only updates what actually changed.
+        Use a stable identifier (database ID, unique string) — not the list index.</p>
+
+    <Code code={`// Also works on components
+users.forEach { user ->
+    UserCard(user) // implicit key from props
+
+    // Or set explicitly on the wrapper
+    div {
+        key = user.id
+        UserCard(user)
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Raw HTML with <code>unsafe</code></h2>
+
+    <p>The <code>unsafe</code> block injects raw HTML strings directly into the DOM, bypassing the type-safe DSL:</p>
+
+    <Code code={`div {
+    unsafe {
+        +"""<em>This is raw HTML</em>"""
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>The name is a hint. Raw HTML means raw risk. If the content comes from user input, an API, or a database, you
+        are one unsanitized string away from an XSS attack. Always sanitize with a library like DOMPurify before
+        injecting untrusted content.
+    </Aside>
+
+    <Code code={`// SAFE: sanitize untrusted content before injecting
+import io.peekandpoke.kraft.addons.marked.markdown2html
+
+div {
+    unsafe {
+        // markdown2html uses DOMPurify internally
+        +markdown2html(untrustedMarkdown)
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Key the parent of <code>unsafe</code></h3>
+
+    <p>Preact cannot diff raw HTML — it treats the entire <code>unsafe</code> block as an opaque blob. On each
+        re-render, the raw DOM is destroyed and recreated from scratch. To prevent this, set a <code>key</code> on the
+        parent element. If the key doesn't change, Preact preserves the DOM subtree:</p>
+
+    <Code code={`div {
+    key = "article-${'$'}{article.id}"
+    unsafe {
+        +article.htmlContent
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Without the key, every component re-render rebuilds the raw HTML DOM — which is wasteful for large content and
+        causes visible flicker. With a stable key, the DOM is only rebuilt when the key changes.</p>
 
     <h2>See it in action</h2>
 

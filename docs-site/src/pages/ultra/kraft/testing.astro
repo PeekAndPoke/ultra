@@ -1,0 +1,370 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {kraftSidebar} from '../../../data/kraft-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Testing" sidebar={kraftSidebar}
+            description="TestBed, KQuery, and event simulation for testing Kraft components">
+
+    <h1>Testing</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Render components with TestBed, query the DOM with KQuery, simulate events, and assert results.
+    </p>
+
+    <p>The <code>kraft-testing</code> module provides two main tools: <code>TestBed</code> for rendering components into
+        a real DOM, and <code>KQuery</code> for querying and interacting with the rendered elements. Together they give
+        you a jQuery-like API for component testing.</p>
+
+    <Code code={`// build.gradle.kts
+jsTest {
+    dependencies {
+        implementation("io.peekandpoke.kraft:testing:${'$'}kraftVersion")
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>TestBed</h2>
+
+    <p>Render a component (or raw HTML) into a real browser DOM and run assertions against it:</p>
+
+    <Code code={`@Test
+fun counter_shows_initial_value() = TestBed.preact(
+    view = { Counter(start = 5) },
+) { root ->
+    root.selectCss(".value").textContent() shouldBe "5"
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The <code>root</code> parameter is a <code>KQuery&lt;Element&gt;</code> wrapping the rendered DOM tree. The test
+        block is a suspend function — you can use <code>delay()</code> to wait for async state changes.</p>
+
+    <Code code={`@Test
+fun clicking_plus_increments() = TestBed.preact(
+    view = { Counter(start = 0) },
+) { root ->
+    // Click the button
+    root.selectCss("button.plus").click()
+    delay(10)  // wait for re-render
+
+    // Assert the result
+    root.selectCss(".value").textContent() shouldBe "1"
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>KQuery — selecting elements</h2>
+
+    <p>KQuery wraps a list of DOM elements. Every operation works on all matched elements — like jQuery. An empty query
+        is safe: methods return empty lists or no-op on mutations.</p>
+
+    <Code code={`// Select by CSS selector
+val buttons = root.selectCss("button")
+val inputs = root.selectCss<HTMLInputElement>("input[type=text]")
+
+// Select within results (chaining)
+val submitBtn = root.selectCss("form").selectCss("button.submit")`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>KQuery — text &amp; HTML</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Method</th>
+                <th class="py-2 text-gray-400">Returns</th>
+                <th class="py-2 text-gray-400">Description</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>textContent(glue)</code></td>
+                <td>String</td>
+                <td>Combined text of all elements</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>containsText(text)</code></td>
+                <td>Boolean</td>
+                <td>Any element contains the text</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>innerHTML()</code></td>
+                <td>List&lt;String&gt;</td>
+                <td>Inner HTML of each element</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>outerHTML()</code></td>
+                <td>List&lt;String&gt;</td>
+                <td>Outer HTML of each element</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>KQuery — attributes &amp; classes</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Method</th>
+                <th class="py-2 text-gray-400">Returns</th>
+                <th class="py-2 text-gray-400">Description</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>attr(name)</code></td>
+                <td>List&lt;String?&gt;</td>
+                <td>Attribute value for each element</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>allHaveAttr(name)</code></td>
+                <td>Boolean</td>
+                <td>Every element has the attribute</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>anyHasAttr(name)</code></td>
+                <td>Boolean</td>
+                <td>Any element has the attribute</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>classes()</code></td>
+                <td>List&lt;Set&lt;String&gt;&gt;</td>
+                <td>CSS classes for each element</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>allHaveClass(cls)</code></td>
+                <td>Boolean</td>
+                <td>Every element has the class</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>anyHasClass(cls)</code></td>
+                <td>Boolean</td>
+                <td>Any element has the class</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>KQuery — form state</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Method</th>
+                <th class="py-2 text-gray-400">Returns</th>
+                <th class="py-2 text-gray-400">Description</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>values()</code></td>
+                <td>List&lt;String?&gt;</td>
+                <td>Value of each input/textarea/select</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>setValue(val)</code></td>
+                <td>KQuery</td>
+                <td>Set value on all elements (no events fired)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>typeText(text)</code></td>
+                <td>KQuery</td>
+                <td>Set value + fire input and change events</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>checkedStates()</code></td>
+                <td>List&lt;Boolean&gt;</td>
+                <td>Checked state of each input</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>allChecked()</code></td>
+                <td>Boolean</td>
+                <td>All inputs are checked</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>check() / uncheck()</code></td>
+                <td>KQuery</td>
+                <td>Set checked + fire change event</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>disabledStates()</code></td>
+                <td>List&lt;Boolean&gt;</td>
+                <td>Disabled state of each element</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>allDisabled() / allEnabled()</code></td>
+                <td>Boolean</td>
+                <td>Check enabled/disabled state</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <Code code={`// Type into an input and verify the component reacts
+root.selectCss("#search-input").typeText("hello")
+delay(10)
+root.selectCss(".results").textContent() shouldContain "hello"
+
+// Check a checkbox
+root.selectCss("#agree-checkbox").check()
+delay(10)
+root.selectCss("button.submit").allEnabled() shouldBe true`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>KQuery — traversal</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Method</th>
+                <th class="py-2 text-gray-400">Returns</th>
+                <th class="py-2 text-gray-400">Description</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>parents()</code></td>
+                <td>KQuery</td>
+                <td>Parent elements (deduplicated)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>children()</code></td>
+                <td>KQuery</td>
+                <td>All direct children</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>first()</code></td>
+                <td>KQuery</td>
+                <td>First element only</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>last()</code></td>
+                <td>KQuery</td>
+                <td>Last element only</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>nth(index)</code></td>
+                <td>KQuery</td>
+                <td>Element at index</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>filterElements &#123; ... &#125;</code></td>
+                <td>KQuery</td>
+                <td>Filter by predicate</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <Code code={`// Get the third list item
+root.selectCss("li").nth(2).textContent() shouldBe "Third"
+
+// Get children of a container
+root.selectCss("#list").children().size shouldBe 5
+
+// Filter active items
+root.selectCss(".item").filterElements { it.classList.contains("active") }`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>KQuery — event simulation</h2>
+
+    <p>Every standard DOM event has a dispatch helper on KQuery. Events fire on all matched elements:</p>
+
+    <Code code={`// Mouse events
+root.selectCss("#btn").click()
+root.selectCss("#area").dblClick()
+root.selectCss("#handle").mouseDown()
+root.selectCss("#target").mouseEnter()
+root.selectCss("#target").mouseLeave()
+root.selectCss("#menu").contextMenu()
+
+// Keyboard events (with optional key/code)
+root.selectCss("input").keyDown(key = "Enter")
+root.selectCss("input").keyUp(key = "Escape")
+
+// Focus
+root.selectCss("input").focus()
+root.selectCss("input").blur()
+
+// Pointer events
+root.selectCss("#canvas").pointerDown()
+root.selectCss("#canvas").pointerMove()
+root.selectCss("#canvas").pointerUp()
+
+// Drag events
+root.selectCss("#draggable").dragStart()
+root.selectCss("#dropzone").dragEnter()
+root.selectCss("#dropzone").drop()
+
+// Touch events
+root.selectCss("#slider").touchStart()
+root.selectCss("#slider").touchMove()
+root.selectCss("#slider").touchEnd()
+
+// Clipboard
+root.selectCss("#editor").copy()
+root.selectCss("#editor").paste()
+
+// Animation / transition
+root.selectCss(".animated").animationEnd()
+root.selectCss(".fading").transitionEnd()
+
+// Scroll / load
+root.selectCss(".scrollable").scroll()
+
+// Low-level (any event type)
+root.selectCss("#target").dispatch("customevent", bubbles = true)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Waiting for async content</h2>
+
+    <p>Use <code>awaitCss</code> to poll for elements that appear after async operations:</p>
+
+    <Code code={`// Wait up to 2 seconds for a loading spinner to disappear and content to appear
+val items = root.awaitCss(".item-list", timeoutMs = 2000)
+items.size shouldBeGreaterThan 0`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Full example</h2>
+
+    <Code code={`class TodoAppSpec : StringSpec({
+
+    "adding a todo shows it in the list" {
+        TestBed.preact({ TodoApp() }) { root ->
+            // Type a new todo
+            root.selectCss("input.new-todo").typeText("Write tests")
+            delay(10)
+
+            // Submit the form
+            root.selectCss("form").submit()
+            delay(50)
+
+            // Verify it appears in the list
+            val items = root.selectCss(".todo-item")
+            items.size shouldBe 1
+            items.textContent() shouldContain "Write tests"
+        }
+    }
+
+    "checking a todo marks it as done" {
+        TestBed.preact({ TodoApp() }) { root ->
+            // Add a todo first
+            root.selectCss("input.new-todo").typeText("Test this")
+            root.selectCss("form").submit()
+            delay(50)
+
+            // Check the checkbox
+            root.selectCss(".todo-item input[type=checkbox]").check()
+            delay(10)
+
+            // Verify the done class is applied
+            root.selectCss(".todo-item").allHaveClass("done") shouldBe true
+        }
+    }
+})`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/kraft/addons"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Addons &rarr;
+        </a>
+    </div>
+
+</DocsLayout>
