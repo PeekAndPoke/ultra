@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.peekandpoke.mutator.domain.Address
 import io.peekandpoke.mutator.domain.city
 import io.peekandpoke.mutator.domain.mutate
+import io.peekandpoke.mutator.domain.mutator
 import io.peekandpoke.mutator.domain.street
 
 class MutatorBaseSpec : StringSpec({
@@ -177,7 +178,7 @@ class MutatorBaseSpec : StringSpec({
         val mutator = map.mutator()
 
         mutator.isModified() shouldBe false
-        mutator.put("b", mutator.getChildMutator(Address("Street 2", "City", "Zip")))
+        mutator["b"] = mutator.getChildMutator(Address("Street 2", "City", "Zip"))
         mutator.isModified() shouldBe true
     }
 
@@ -217,7 +218,7 @@ class MutatorBaseSpec : StringSpec({
         )
         val mutator = map.mutator()
 
-        mutator.put("b", mutator.getChildMutator(Address("Street 2", "City", "Zip")))
+        mutator["b"] = mutator.getChildMutator(Address("Street 2", "City", "Zip"))
         mutator.isModified() shouldBe true
 
         mutator.reset()

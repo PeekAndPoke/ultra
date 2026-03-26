@@ -28,7 +28,7 @@ class E2E_Func_MERGE_Spec : StringSpec({
             list.size shouldBe 1
 
             @Suppress("UNCHECKED_CAST")
-            val merged = list[0] as Map<String, Any?>
+            val merged = list[0]
             merged["a"] shouldBe 1
             merged["b"] shouldBe 2
         }
@@ -51,7 +51,7 @@ class E2E_Func_MERGE_Spec : StringSpec({
             list.size shouldBe 1
 
             @Suppress("UNCHECKED_CAST")
-            val merged = list[0] as Map<String, Any?>
+            val merged = list[0]
             merged["x"] shouldBe "hello"
             merged["y"] shouldBe "world"
         }
@@ -73,7 +73,7 @@ class E2E_Func_MERGE_Spec : StringSpec({
             list.size shouldBe 1
 
             @Suppress("UNCHECKED_CAST")
-            val merged = list[0] as Map<String, Any?>
+            val merged = list[0]
             merged["a"] shouldBe 1
             merged["b"] shouldBe 99
             merged["c"] shouldBe 3

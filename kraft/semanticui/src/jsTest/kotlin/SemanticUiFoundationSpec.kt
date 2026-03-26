@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.kraft.testing.TestBed
+import io.peekandpoke.kraft.testing.selectCss
 import io.peekandpoke.ultra.semanticui.ui
 
 class SemanticUiFoundationSpec : StringSpec({
