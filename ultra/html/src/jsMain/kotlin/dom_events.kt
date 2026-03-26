@@ -332,7 +332,6 @@ fun CommonAttributeGroupFacade.onKeyDown(handler: (KeyboardEvent) -> Unit) {
     onKeyDownFunction = handler.asDynamic()
 }
 
-
 /**
  * Adds an onKeyUp handler.
  *
