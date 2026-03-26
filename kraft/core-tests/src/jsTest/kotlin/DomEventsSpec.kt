@@ -46,6 +46,7 @@ import io.peekandpoke.kraft.testing.pointerOver
 import io.peekandpoke.kraft.testing.pointerUp
 import io.peekandpoke.kraft.testing.scroll
 import io.peekandpoke.kraft.testing.select
+import io.peekandpoke.kraft.testing.selectCss
 import io.peekandpoke.kraft.testing.submit
 import io.peekandpoke.kraft.testing.textContent
 import io.peekandpoke.kraft.testing.touchCancel

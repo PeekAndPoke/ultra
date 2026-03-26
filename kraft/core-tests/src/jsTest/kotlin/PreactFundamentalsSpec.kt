@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.peekandpoke.kraft.testing.TestBed
+import io.peekandpoke.kraft.testing.selectCss
 import io.peekandpoke.kraft.testing.textContent
 import kotlinx.html.h1
 import org.w3c.dom.HTMLHeadingElement

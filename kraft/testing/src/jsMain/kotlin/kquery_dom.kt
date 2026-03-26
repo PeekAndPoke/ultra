@@ -1,6 +1,5 @@
 package io.peekandpoke.kraft.testing
 
-import kotlinx.coroutines.delay
 import org.w3c.dom.Element
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLInputElement
@@ -8,6 +7,21 @@ import org.w3c.dom.HTMLSelectElement
 import org.w3c.dom.HTMLTextAreaElement
 import org.w3c.dom.asList
 import org.w3c.dom.events.Event
+
+// =====================================================================================================================
+// Text content
+// =====================================================================================================================
+
+/** Returns the concatenated text content of all elements, joined by [glue]. */
+fun <E : Element> KQuery<E>.textContent(glue: String = ""): String {
+    return mapNotNull { it.textContent }
+        .joinToString(glue) { it }
+}
+
+/** Returns true if any element's text content contains the given [text]. */
+fun <E : Element> KQuery<E>.containsText(text: String): Boolean {
+    return any { it.textContent?.contains(text) ?: false }
+}
 
 // =====================================================================================================================
 // Attributes
@@ -221,30 +235,3 @@ fun <E : Element> KQuery<E>.nth(index: Int): KQuery<E> =
 /** Filters matched elements by a predicate, returning a new KQuery. */
 fun <E : Element> KQuery<E>.filterElements(predicate: (E) -> Boolean): KQuery<E> =
     KQuery(filter(predicate))
-
-// =====================================================================================================================
-// Waiting for async content
-// =====================================================================================================================
-
-/**
- * Waits for elements matching [css] to appear inside the current query.
- *
- * Polls every [intervalMs] milliseconds up to [timeoutMs]. Returns the matching query
- * once found, or an empty query if the timeout is reached.
- */
-suspend fun <E : Element> KQuery<E>.awaitCss(
-    css: String,
-    timeoutMs: Int = 2000,
-    intervalMs: Int = 50,
-): KQuery<Element> {
-    var remaining = timeoutMs
-
-    while (remaining > 0) {
-        val result = selectCss(css)
-        if (result.isNotEmpty()) return result
-        delay(intervalMs.toLong())
-        remaining -= intervalMs
-    }
-
-    return selectCss(css)
-}

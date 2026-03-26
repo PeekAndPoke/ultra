@@ -7,6 +7,7 @@ import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.testing.TestBed
 import io.peekandpoke.kraft.testing.click
+import io.peekandpoke.kraft.testing.selectCss
 import io.peekandpoke.kraft.testing.textContent
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick

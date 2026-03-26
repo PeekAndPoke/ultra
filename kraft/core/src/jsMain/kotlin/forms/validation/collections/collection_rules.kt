@@ -35,7 +35,7 @@ fun <T : Collection<*>> minCount(count: Int, message: String = "Must have at lea
 fun <T : Collection<*>> maxCount(count: Int, message: (T) -> String): Rule<T> =
     GenericRule(
         messageFn = message,
-        checkFn = { it.size >= count }
+        checkFn = { it.size <= count }
     )
 
 /** @see maxCount */
@@ -54,4 +54,4 @@ fun <T : Collection<*>> exactCount(count: Int, message: (T) -> String): Rule<T> 
 /** @see exactCount */
 @KraftFormsRuleDsl
 fun <T : Collection<*>> exactCount(count: Int, message: String = "Must have $count items"): Rule<T> =
-    maxCount(count) { message }
+    exactCount(count) { message }

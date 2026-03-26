@@ -6,11 +6,14 @@ import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.kraft.vdom.VDomEngine
 import io.peekandpoke.kraft.vdom.preact.PreactVDomEngine
 import kotlinx.browser.document
-import kotlinx.coroutines.delay
+import kotlinx.browser.window
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.dom.appendElement
 import org.w3c.dom.Element
 import org.w3c.dom.HTMLBodyElement
 import org.w3c.dom.HTMLDivElement
+import kotlin.coroutines.resume
 
 /**
  * Test harness for rendering Kraft components in a real browser DOM.
@@ -18,6 +21,11 @@ import org.w3c.dom.HTMLDivElement
  * Creates a temporary `<div>` in the document body, mounts a Kraft app into it,
  * and provides a [KQuery] handle for assertions. The test element is removed after the test.
  */
+/** Suspends until the next browser animation frame. */
+private suspend fun awaitAnimationFrame() = suspendCancellableCoroutine { cont ->
+    window.requestAnimationFrame { cont.resume(Unit) }
+}
+
 class TestBed<E : VDomEngine> private constructor(
     private val engine: E,
 ) {
@@ -61,11 +69,16 @@ class TestBed<E : VDomEngine> private constructor(
         try {
             app.mount(element = testBed, engine = engine, view = view)
 
-            delay(1)
+            awaitAnimationFrame()
 
-            test(KQuery(listOf(testBed)))
+            coroutineScope {
+                test(KQuery(listOf(testBed)))
+            }
 
-            delay(1)
+            awaitAnimationFrame()
+        } catch (e: Throwable) {
+            console.error("[TestBed] Caught exception:", e)
+            throw e
         } finally {
             testBed.remove()
         }

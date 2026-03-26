@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.peekandpoke.kraft.components.component
 import io.peekandpoke.kraft.components.value
 import io.peekandpoke.kraft.testing.TestBed
+import io.peekandpoke.kraft.testing.selectCss
 import io.peekandpoke.kraft.testing.textContent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow

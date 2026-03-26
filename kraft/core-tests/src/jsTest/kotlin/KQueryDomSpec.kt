@@ -3,6 +3,7 @@ package io.peekandpoke.kraft.coretests
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.peekandpoke.kraft.testing.TestBed
 import io.peekandpoke.kraft.testing.allChecked
 import io.peekandpoke.kraft.testing.allDisabled
@@ -23,6 +24,7 @@ import io.peekandpoke.kraft.testing.checkedStates
 import io.peekandpoke.kraft.testing.children
 import io.peekandpoke.kraft.testing.classes
 import io.peekandpoke.kraft.testing.click
+import io.peekandpoke.kraft.testing.containsText
 import io.peekandpoke.kraft.testing.disabledStates
 import io.peekandpoke.kraft.testing.filterElements
 import io.peekandpoke.kraft.testing.first
@@ -31,6 +33,8 @@ import io.peekandpoke.kraft.testing.last
 import io.peekandpoke.kraft.testing.nth
 import io.peekandpoke.kraft.testing.outerHTML
 import io.peekandpoke.kraft.testing.parents
+import io.peekandpoke.kraft.testing.selectCss
+import io.peekandpoke.kraft.testing.selectDebugId
 import io.peekandpoke.kraft.testing.setValue
 import io.peekandpoke.kraft.testing.textContent
 import io.peekandpoke.kraft.testing.typeText
@@ -430,6 +434,122 @@ class KQueryDomSpec : StringSpec({
             val result = root.awaitCss(".exists", timeoutMs = 100)
             result.size shouldBe 1
             result.textContent() shouldBe "here"
+        }
+    }
+
+    // =========================================================================================================
+    // selectCss - typed variant
+    // =========================================================================================================
+
+    "selectCss<T>() filters by element type" {
+        TestBed.preact({
+            span {
+                id = "wrapper"
+                input { type = InputType.text }
+                input { type = InputType.password }
+            }
+        }) { root ->
+            val wrapper = root.selectCss("#wrapper")
+            val inputs = wrapper.selectCss<HTMLInputElement>("input")
+            inputs.size shouldBe 2
+            inputs.forEach { it.shouldBeInstanceOf<HTMLInputElement>() }
+        }
+    }
+
+    "selectCss() returns empty when no elements match" {
+        TestBed.preact({
+            div { +"only a div" }
+        }) { root ->
+            val result = root.selectCss(".nonexistent")
+            result.size shouldBe 0
+        }
+    }
+
+    "selectCss() with wildcard returns all descendants" {
+        TestBed.preact({
+            div { span { +"a" }; span { +"b" } }
+        }) { root ->
+            val all = root.selectCss("*")
+            all.isNotEmpty() shouldBe true
+        }
+    }
+
+    "select() with custom Selector works" {
+        TestBed.preact({
+            div(classes = "target") { +"found" }
+            div { +"not found" }
+        }) { root ->
+            val result = root.selectCss(".target")
+            result.size shouldBe 1
+            result.textContent() shouldBe "found"
+        }
+    }
+
+    // =========================================================================================================
+    // selectDebugId
+    // =========================================================================================================
+
+    "selectDebugId() finds element by debug-id attribute" {
+        TestBed.preact({
+            div { attributes["debug-id"] = "header"; +"Header" }
+            div { attributes["debug-id"] = "footer"; +"Footer" }
+            div { +"No debug id" }
+        }) { root ->
+            val header = root.selectDebugId("header")
+            header.size shouldBe 1
+            header.textContent() shouldBe "Header"
+
+            val footer = root.selectDebugId("footer")
+            footer.size shouldBe 1
+            footer.textContent() shouldBe "Footer"
+        }
+    }
+
+    "selectDebugId<T>() finds and filters by element type" {
+        TestBed.preact({
+            input { attributes["debug-id"] = "email"; type = InputType.email }
+            div { attributes["debug-id"] = "label"; +"Email:" }
+        }) { root ->
+            val emailInput = root.selectDebugId<HTMLInputElement>("email")
+            emailInput.size shouldBe 1
+            emailInput[0].shouldBeInstanceOf<HTMLInputElement>()
+            emailInput[0].type shouldBe "email"
+        }
+    }
+
+    "selectDebugId() returns empty when no match" {
+        TestBed.preact({
+            div { attributes["debug-id"] = "exists"; +"Here" }
+        }) { root ->
+            val result = root.selectDebugId("nonexistent")
+            result.size shouldBe 0
+        }
+    }
+
+    // =========================================================================================================
+    // textContent and containsText (moved from testbed_helpers)
+    // =========================================================================================================
+
+    "textContent() concatenates text from all matched elements" {
+        TestBed.preact({
+            span { +"Hello" }
+            span { +" " }
+            span { +"World" }
+        }) { root ->
+            root.selectCss("span").textContent() shouldBe "Hello World"
+            root.selectCss("span").textContent(", ") shouldBe "Hello,  , World"
+        }
+    }
+
+    "containsText() checks for text in any matched element" {
+        TestBed.preact({
+            div { +"first item" }
+            div { +"second item" }
+        }) { root ->
+            val divs = root.selectCss("div")
+            divs.containsText("first") shouldBe true
+            divs.containsText("second") shouldBe true
+            divs.containsText("third") shouldBe false
         }
     }
 })

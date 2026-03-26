@@ -12,6 +12,7 @@ import io.peekandpoke.kraft.messages.onMessage
 import io.peekandpoke.kraft.messages.sendMessage
 import io.peekandpoke.kraft.testing.TestBed
 import io.peekandpoke.kraft.testing.click
+import io.peekandpoke.kraft.testing.selectCss
 import io.peekandpoke.kraft.testing.textContent
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick

@@ -1,19 +1,18 @@
 package io.peekandpoke.kraft.testing
 
-import io.peekandpoke.kraft.testing.KQuery.Selector.Companion.cssSelector
 import org.w3c.dom.Element
 import org.w3c.dom.asList
 
 /**
  * Lightweight DOM query wrapper for test assertions.
  *
- * Wraps a list of DOM [Element]s and provides CSS-selector-based querying via [select] and [selectCss].
+ * Wraps a list of DOM [Element]s and provides querying via extension functions in kquery_select.kt.
  * Implements [List] by delegation so standard collection operations work directly.
  */
-class KQuery<E : Element>(private val elements: List<E>) : List<E> by elements {
+class KQuery<out E : Element>(internal val elements: List<E>) : List<E> by elements {
 
     /** Strategy for selecting elements from a [KQuery]. */
-    interface Selector<T : Element> {
+    interface Selector<out T : Element> {
 
         companion object {
             /** Converts a CSS selector string to a [Selector] returning generic [Element]s. */
@@ -24,15 +23,15 @@ class KQuery<E : Element>(private val elements: List<E>) : List<E> by elements {
         }
 
         /** Applies this selector to the given [input] query and returns matching elements. */
-        suspend fun <E : Element> applyTo(input: KQuery<E>): KQuery<T>
+        suspend fun applyTo(input: KQuery<Element>): KQuery<T>
 
         /** A [Selector] that uses `querySelectorAll` with a CSS selector string. */
-        class Css<T : Element>(
+        class Css<out T : Element>(
             private val selector: String,
             private val filter: List<Any>.() -> List<T>,
         ) : Selector<T> {
 
-            override suspend fun <E : Element> applyTo(input: KQuery<E>): KQuery<T> {
+            override suspend fun applyTo(input: KQuery<Element>): KQuery<T> {
                 val found = input.elements
                     .flatMap { it.querySelectorAll(selector).asList().filter() }
                     .distinct()
@@ -40,20 +39,5 @@ class KQuery<E : Element>(private val elements: List<E>) : List<E> by elements {
                 return KQuery(elements = found)
             }
         }
-    }
-
-    /** Queries the current elements using the given [selector] and returns a new [KQuery] of matches. */
-    suspend fun <T : Element> select(selector: Selector<T>): KQuery<T> {
-        return selector.applyTo(this)
-    }
-
-    /** Queries the current elements using a CSS selector string. */
-    suspend fun selectCss(css: String): KQuery<Element> {
-        return select(css.cssSelector)
-    }
-
-    /** Queries the current elements using a CSS selector string, filtering to type [T]. */
-    suspend inline fun <reified T : Element> selectCss(css: String = "*"): KQuery<T> {
-        return select(css.cssSelector<T>())
     }
 }

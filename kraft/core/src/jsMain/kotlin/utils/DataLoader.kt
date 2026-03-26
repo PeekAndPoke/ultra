@@ -8,7 +8,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.html.FlowContent
@@ -194,12 +193,7 @@ class DataLoader<T>(
             }
 
             try {
-                val result = options.load()
-                    .catch {
-                        handleFinished()
-                        handleException(it)
-                    }
-                    .first()
+                val result = options.load().first()
 
                 onComplete(result)
             } catch (e: Throwable) {
