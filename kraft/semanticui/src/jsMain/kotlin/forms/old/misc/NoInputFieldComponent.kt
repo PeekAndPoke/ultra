@@ -9,9 +9,15 @@ import io.peekandpoke.ultra.html.key
 import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.div
 
+/**
+ * A form field component that has no user input element.
+ *
+ * Useful for displaying validation errors on computed or derived values that are not directly editable.
+ */
 open class NoInputFieldComponent<T>(ctx: Ctx<Props<T>>) :
     FormFieldComponent<T, NoInputFieldComponent.Props<T>>(ctx) {
 
+    /** Props for [NoInputFieldComponent]. */
     data class Props<P>(
         val config: Config<P>,
     ) : FormFieldComponent.Props<P> {
@@ -22,6 +28,7 @@ open class NoInputFieldComponent<T>(ctx: Ctx<Props<T>>) :
         val render: VDom.(field: NoInputFieldComponent<P>) -> Unit = config.render
     }
 
+    /** Configuration DSL for [NoInputFieldComponent], including validation rules and custom rendering. */
     class Config<T>(
         var value: T,
     ) {

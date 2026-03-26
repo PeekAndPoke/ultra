@@ -32,13 +32,21 @@ import kotlinx.html.label
 import org.w3c.dom.HTMLInputElement
 import org.w3c.dom.events.Event
 
+/** Filter function applied to select field options based on a search string. */
 typealias OptionFilterFn<T> = List<SelectFieldComponent.Option<T>>.(search: String) -> List<SelectFieldComponent.Option<T>>
 
+/** Async function that provides auto-suggest options for a search query. */
 typealias AutoSuggestFn<T> = suspend (search: String) -> Flow<List<SelectFieldComponent.Option<T>>>
 
+/**
+ * Semantic UI dropdown select field with support for searchable and auto-suggest modes.
+ *
+ * Use [Config] to configure options, placeholder, validation rules, and search behavior.
+ */
 class SelectFieldComponent<T>(ctx: Ctx<Props<T>>) :
     FormFieldComponent<T, SelectFieldComponent.Props<T>>(ctx) {
 
+    /** Props for [SelectFieldComponent]. */
     data class Props<P>(
         val config: Config<P>,
     ) : FormFieldComponent.Props<P> {
@@ -48,12 +56,18 @@ class SelectFieldComponent<T>(ctx: Ctx<Props<T>>) :
         override val rules: List<Rule<P>> get() = config.rules
     }
 
+    /** Represents a single selectable option in the dropdown. */
     data class Option<out T>(
         val realValue: T,
         val formValue: String,
         val display: FlowContent.() -> Unit = { +formValue },
     )
 
+    /**
+     * Configuration DSL for [SelectFieldComponent].
+     *
+     * Allows setting options, label, placeholder, validation rules, search/auto-suggest behavior, and styling.
+     */
     class Config<T>(
         var value: T,
         val onChange: (T) -> Unit,

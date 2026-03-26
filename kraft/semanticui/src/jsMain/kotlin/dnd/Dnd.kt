@@ -3,6 +3,12 @@ package io.peekandpoke.kraft.semanticui.dnd
 import org.w3c.dom.events.Event
 import kotlin.reflect.KClass
 
+/**
+ * Central drag-and-drop coordinator.
+ *
+ * Manages the global registry of drop targets and orchestrates drag sessions,
+ * including filtering eligible targets and dispatching mouse events.
+ */
 internal object Dnd {
 
     private data class CurrentDrag<PAYLOAD : Any>(
@@ -79,14 +85,17 @@ internal object Dnd {
 
     private var currentDrag: CurrentDrag<*>? = null
 
+    /** Registers a drop target so it can be discovered during drag sessions. */
     internal fun registerDropTarget(target: DndDropTargetComponent<*>) {
         dropTargets.add(target)
     }
 
+    /** Unregisters a drop target when it is unmounted. */
     internal fun removeDropTarget(target: DndDropTargetComponent<*>) {
         dropTargets.remove(target)
     }
 
+    /** Starts a drag session, filtering eligible drop targets by payload type and acceptance. */
     internal fun <PAYLOAD : Any> onDragStart(payload: PAYLOAD, type: KClass<PAYLOAD>) {
 
         @Suppress("UNCHECKED_CAST")
@@ -98,6 +107,7 @@ internal object Dnd {
         currentDrag = CurrentDrag(payload, filtered).apply { start() }
     }
 
+    /** Ends the current drag session, dropping onto the hovered target if any. */
     internal fun onDragEnd() {
         currentDrag?.apply { end() }
     }

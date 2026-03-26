@@ -1,0 +1,175 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {kraftSidebar} from '../../../data/kraft-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Data Loading" sidebar={kraftSidebar}
+            description="Async data loading with loading, loaded, and error states in Kraft">
+
+    <h1>Data Loading</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Load async data with built-in loading, loaded, and error states.
+    </p>
+
+    <p>The <code>DataLoader</code> wraps an async operation and tracks its state. You define what to load, and it gives
+        you a sealed state you can render against — no manual boolean flags.</p>
+
+    <h2>Basic usage</h2>
+
+    <p>Create a loader in your component with <code>dataLoader</code>. It starts loading immediately on mount:</p>
+
+    <Code code={`class UserList(ctx: NoProps) : PureComponent(ctx) {
+
+    private val loader = dataLoader {
+        flow {
+            val users = api.fetchUsers()
+            emit(users)
+        }
+    }
+
+    override fun VDom.render() {
+        loader(this) {
+            loading {
+                ui.loading.segment { +"Loading users..." }
+            }
+            loaded { users ->
+                ui.list {
+                    users.forEach { user ->
+                        noui.item { +user.name }
+                    }
+                }
+            }
+            error { err ->
+                ui.error.message { +"Failed: ${'$'}{err.message}" }
+            }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The <code>loader(this)</code> call renders the appropriate block based on the current state. Only one block runs
+        at a time.</p>
+
+    <h2>Fixed values</h2>
+
+    <p>When you already have the data and don't need to load it asynchronously, use <code>dataLoaderOf</code>:</p>
+
+    <Code code={`private val loader = dataLoaderOf(listOf("Alice", "Bob", "Charlie"))`} lang="kotlin"
+          theme="vitesse-dark"/>
+
+    <p>This creates a loader that starts in the <code>Loaded</code> state immediately.</p>
+
+    <h2>Reloading</h2>
+
+    <p>Trigger a reload from a button click or any event. Two variants:</p>
+
+    <Code code={`// Standard reload — resets to Loading state, shows loading UI
+loader.reload()
+
+// Silent reload — refetches without showing loading state
+loader.reloadSilently()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>We added reloadSilently because users hate seeing a loading spinner flash when the data refresh takes 200ms.
+        If the reload is fast enough, they never notice it happened.
+    </Aside>
+
+    <p>Both methods accept an optional debounce in milliseconds (default: 200ms):</p>
+
+    <Code code={`// Debounce rapid reloads (e.g. from a search input)
+loader.reload(debounceMs = 500)
+loader.reloadSilently(debounceMs = 500)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>State inspection</h2>
+
+    <p>Check the current state programmatically:</p>
+
+    <Code code={`loader.isLoading()     // true during initial load or after reload()
+loader.isLoaded()      // true when data is available
+loader.isError()       // true when the flow threw an exception
+
+// Negated versions for convenience
+loader.isNotLoading()
+loader.isNotLoaded()
+loader.isNotError()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Modifying loaded data</h2>
+
+    <p>Update the loaded value without triggering a full reload:</p>
+
+    <Code code={`// Transform the current value
+loader.modifyValue { users ->
+    users.filter { it.isActive }
+}
+
+// Replace the value entirely
+loader.setLoaded(newUsers)
+
+// Set an arbitrary state
+loader.setState(DataLoader.State.Loading())`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Stream access</h2>
+
+    <p>The loader exposes its state and value as <a href="/ultra/streams/">Streams</a>, so you can subscribe to changes
+        or compose with other reactive sources:</p>
+
+    <Code code={`// The full state (Loading | Loaded | Error)
+val stateStream: Stream<DataLoader.State<T>> = loader.state
+
+// Just the loaded value (null when not loaded)
+val valueStream: Stream<T?> = loader.value`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Full example</h2>
+
+    <p>A component that loads data, shows a refresh button, and handles all three states:</p>
+
+    <Code code={`class ProductList(ctx: NoProps) : PureComponent(ctx) {
+
+    private val loader = dataLoader {
+        flow { emit(api.fetchProducts()) }
+    }
+
+    override fun VDom.render() {
+        ui.segment {
+            ui.blue.button {
+                onClick { loader.reloadSilently() }
+                icon.sync_alternate.render()
+                +"Refresh"
+            }
+
+            loader(this) {
+                loading {
+                    ui.active.centered.inline.loader {}
+                }
+                loaded { products ->
+                    ui.relaxed.divided.list {
+                        products.forEach { product ->
+                            noui.item {
+                                noui.content {
+                                    noui.header { +product.name }
+                                    noui.description { +product.description }
+                                }
+                            }
+                        }
+                    }
+                }
+                error { err ->
+                    ui.error.message {
+                        noui.header { +"Could not load products" }
+                        p { +err.message.orEmpty() }
+                    }
+                }
+            }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/kraft/messaging"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Messaging &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

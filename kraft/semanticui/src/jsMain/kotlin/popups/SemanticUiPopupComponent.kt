@@ -23,6 +23,7 @@ import kotlinx.css.zIndex
 import kotlinx.html.Tag
 import org.w3c.dom.HTMLElement
 
+/** Factory function that renders a [SemanticUiPopupComponent] with absolute positioning. */
 @Suppress("FunctionName")
 fun Tag.SemanticUiPopupComponent(
     target: HTMLElement,
@@ -40,10 +41,16 @@ fun Tag.SemanticUiPopupComponent(
     SemanticUiPopupComponent(it)
 }
 
+/**
+ * Renders a Semantic UI popup that is absolutely positioned relative to a target element.
+ *
+ * The popup automatically captures its own size and recalculates position on every update.
+ */
 class SemanticUiPopupComponent(ctx: Ctx<Props>) : Component<SemanticUiPopupComponent.Props>(ctx) {
 
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /** Props for [SemanticUiPopupComponent]. */
     data class Props(
         val target: HTMLElement,
         val positioning: (target: HTMLElement, contentSize: Vector2D) -> Vector2D,

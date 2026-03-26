@@ -7,9 +7,11 @@
 
 package io.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 
+import generated.ExtractedCodeBlocks
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.fomanticui.helpers.CodePanelColumn
 import io.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import io.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
 import io.peekandpoke.kraft.forms.formController
@@ -45,9 +47,10 @@ class FormWithCheckboxes(ctx: NoProps) : PureComponent(ctx) {
 
     override fun VDom.render() {
 
-        ui.two.column.grid {
+        ui.stackable.two.column.grid {
             ui.column {
                 ui.form {
+                    // <CodeBlock checkboxes>
                     ui.three.fields {
                         UiCheckboxField(draft.boolean, { draft = draft.copy(boolean = it) }) {
                             label { +State::boolean.name }
@@ -73,6 +76,7 @@ class FormWithCheckboxes(ctx: NoProps) : PureComponent(ctx) {
                             slider()
                         }
                     }
+                    // </CodeBlock>
                 }
 
                 ui.divider {}
@@ -95,9 +99,9 @@ class FormWithCheckboxes(ctx: NoProps) : PureComponent(ctx) {
                     }
                     +"Reset form"
                 }
-            }
 
-            ui.column {
+                ui.divider {}
+
                 renderStateAndDraftTable(
                     state,
                     draft,
@@ -108,6 +112,8 @@ class FormWithCheckboxes(ctx: NoProps) : PureComponent(ctx) {
                     )
                 )
             }
+
+            CodePanelColumn(ExtractedCodeBlocks.pages_howto_forms_demo_FormWithCheckboxes_kt_checkboxes)
         }
     }
 }

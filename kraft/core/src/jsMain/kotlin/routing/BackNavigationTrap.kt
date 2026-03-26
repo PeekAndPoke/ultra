@@ -6,6 +6,12 @@ import kotlinx.browser.window
 import org.w3c.dom.PopStateEvent
 import org.w3c.dom.events.Event
 
+/**
+ * Intercepts browser back navigation to give the component a chance to cancel or handle it.
+ *
+ * Pushes a dummy history state and listens for popstate events. The [block] callback
+ * decides whether to [TrapResult.Stop] the navigation or [TrapResult.Continue].
+ */
 class BackNavigationTrap(
     private val component: Component<*>,
     private val block: () -> TrapResult,
@@ -13,14 +19,19 @@ class BackNavigationTrap(
     companion object {
         private var counter = 0
 
+        /** Extension to set up a back-navigation trap on a component. */
         fun Component<*>.trapBackNavigation(block: () -> TrapResult) = BackNavigationTrap(
             component = this,
             block = block,
         )
     }
 
+    /** Result returned by the trap callback to control navigation behavior. */
     enum class TrapResult {
+        /** Prevents the back navigation. */
         Stop,
+
+        /** Allows the back navigation to proceed. */
         Continue,
     }
 
@@ -63,6 +74,7 @@ class BackNavigationTrap(
         }
     }
 
+    /** Activates the trap by pushing a history state and listening for popstate events. */
     fun activate() {
         if (!isActive) {
             isActive = true
@@ -74,6 +86,7 @@ class BackNavigationTrap(
         }
     }
 
+    /** Deactivates the trap and navigates back to remove the dummy history entry. */
     fun deactivate() {
         deactivateInternal {
             goBack()

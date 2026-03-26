@@ -7,13 +7,16 @@ import kotlinx.coroutines.await
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
+/** Wrapper around the pdf.js library that handles lazy loading and document retrieval. */
 class PdfJs private constructor(private val lib: PdfjsLib) {
 
     companion object {
         private var instance: PdfJs? = null
 
+        /** The CDN source for the pdf.js library. Change before first use to override. */
         var librarySource: LibrarySrc = LibrarySrc.CdnJs.v4_7_76
 
+        /** Returns the singleton [PdfJs] instance, loading the library on first call. */
         suspend fun instance(): PdfJs {
             instance?.let { return it }
 
@@ -46,6 +49,7 @@ class PdfJs private constructor(private val lib: PdfjsLib) {
         }
     }
 
+    /** Describes where to load the pdf.js library and worker from. */
     interface LibrarySrc {
         val src: ScriptLoader.Javascript.Default
         val workerSrc: String
@@ -82,6 +86,7 @@ class PdfJs private constructor(private val lib: PdfjsLib) {
         }
     }
 
+    /** Loads a PDF document from a URL [src] and emits the document proxy. */
     fun getDocument(src: String): Flow<PdfjsLib.PDFDocumentProxy> {
         return flow {
             emit(
@@ -90,6 +95,7 @@ class PdfJs private constructor(private val lib: PdfjsLib) {
         }
     }
 
+    /** Loads a PDF document from [src] parameters (e.g. binary data) and emits the document proxy. */
     fun getDocument(src: PdfjsLib.GetDocumentParameters): Flow<PdfjsLib.PDFDocumentProxy> {
         return flow {
             emit(

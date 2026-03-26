@@ -19,6 +19,12 @@ import kotlinx.css.overflowY
 import kotlinx.html.FlowContent
 import kotlinx.html.style
 
+/**
+ * Abstract base class for Semantic UI modals with fade-in/fade-out transitions.
+ *
+ * Subclasses implement [renderContent] to define the modal body. The modal automatically
+ * traps back-navigation, disables body scrolling while open, and animates in/out.
+ */
 abstract class FadingModal<P : FadingModal.Props>(ctx: Ctx<P>) : Component<P>(ctx) {
 
     companion object {
@@ -37,11 +43,13 @@ abstract class FadingModal<P : FadingModal.Props>(ctx: Ctx<P>) : Component<P>(ct
 
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /** Base props for [FadingModal] subclasses. */
     abstract class Props {
         abstract val handle: ModalsManager.Handle
         open val transition: Transition = Transition()
     }
 
+    /** Configures fade-in and fade-out animation durations in milliseconds. */
     data class Transition(
         val fadeInTimeMs: Int = 500,
         val fadeOutTimeMs: Int = 500,
@@ -73,6 +81,7 @@ abstract class FadingModal<P : FadingModal.Props>(ctx: Ctx<P>) : Component<P>(ct
         }
     }
 
+    /** Renders the modal content inside the dimmer overlay. Implemented by subclasses. */
     abstract fun FlowContent.renderContent()
 
     final override fun VDom.render() {
@@ -93,6 +102,7 @@ abstract class FadingModal<P : FadingModal.Props>(ctx: Ctx<P>) : Component<P>(ct
             }
     }
 
+    /** Closes the modal with a fade-out animation, optionally running [onClose] after a short delay. */
     open fun close(onClose: (suspend () -> Unit)? = null) {
         doClose(onClose)
     }

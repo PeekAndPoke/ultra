@@ -3,11 +3,16 @@ package io.peekandpoke.kraft.addons.prismjs
 import org.w3c.dom.HTMLPreElement
 import org.w3c.dom.set
 
+/** Base class for PrismJS plugins that can be loaded dynamically and applied to `<pre>` elements. */
 sealed class PrismPlugin {
 
+    /** Loads the plugin's JS and CSS assets. */
     abstract suspend fun load()
+
+    /** Applies the plugin's configuration to the given [pre] element. */
     abstract fun applyTo(pre: HTMLPreElement)
 
+    /** Plugin that adds a "Copy to Clipboard" button to code blocks. */
     data class CopyToClipboard(
         val copy: String,
     ) : PrismPlugin() {
@@ -31,6 +36,7 @@ sealed class PrismPlugin {
         }
     }
 
+    /** Plugin that renders inline color previews for CSS color values. */
     data class InlineColor(
         val enabled: Boolean = true,
     ) : PrismPlugin() {
@@ -49,6 +55,7 @@ sealed class PrismPlugin {
         }
     }
 
+    /** Plugin that displays line numbers alongside code. */
     data class LineNumbers(
         val start: Int,
         val softWrap: Boolean,
@@ -75,6 +82,7 @@ sealed class PrismPlugin {
         }
     }
 
+    /** Plugin that displays the language name in the toolbar. */
     data class ShowLanguage(
         val language: String?,
     ) : PrismPlugin() {

@@ -8,6 +8,7 @@ import kotlinx.html.Tag
 import kotlinx.html.classes
 import kotlinx.html.div
 
+/** Renders the [ToastsStage] component that displays all active toasts. */
 @Suppress("FunctionName")
 fun Tag.ToastsStage(
     toasts: ToastsManager,
@@ -21,6 +22,7 @@ fun Tag.ToastsStage(
     ToastsStage(it)
 }
 
+/** Component that subscribes to a [ToastsManager] and renders all active toast notifications. */
 class ToastsStage(ctx: Ctx<Props>) : Component<ToastsStage.Props>(ctx) {
 
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////

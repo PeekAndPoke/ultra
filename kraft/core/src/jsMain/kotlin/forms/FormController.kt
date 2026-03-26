@@ -3,15 +3,23 @@ package io.peekandpoke.kraft.forms
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.messages.onMessage
 
+/**
+ * Controls form field registration, validation, and event handling for a component.
+ *
+ * Listens for form field mount/unmount/change messages and tracks all registered fields.
+ * When [stopEvents] is true, form events are consumed and not propagated to parent components.
+ */
 open class FormController(private val component: Component<*>, val stopEvents: Boolean = true) {
 
     companion object {
+        /** Creates a form controller that observes but does not stop form events. */
         fun watcher(component: Component<*>) =
             FormController(component = component, stopEvents = false)
     }
 
     private val _fields = mutableSetOf<FormField<*>>()
 
+    /** All form fields currently registered with this controller. */
     val fields get() = _fields
 
     /**

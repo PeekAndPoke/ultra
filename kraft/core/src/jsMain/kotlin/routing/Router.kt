@@ -24,14 +24,18 @@ class Router(
     private var enabled: Boolean,
 ) {
     companion object {
+        /** Typed attribute key used to store the router on components. */
         val key = TypedKey<Router>("router")
 
+        /** Gets the [Router] from a [KraftApp]. */
         @RouterDsl
         val KraftApp.router: Router get() = appAttributes[key]!!
 
+        /** Gets the [Router] by looking up the component tree. */
         @RouterDsl
         val Component<*>.router get() = getAttributeRecursive(key)
 
+        /** Returns true if the mouse event indicates the link should open in a new tab. */
         fun willOpenNewTab(evt: MouseEvent?): Boolean {
             return when (evt) {
                 null -> false
@@ -44,20 +48,26 @@ class Router(
         }
     }
 
+    /** Strategy interface that controls how the router interacts with the browser's URL. */
     interface RouterStrategy : Route.Renderer {
         companion object {
             const val HASH_PREFIX = "#"
         }
 
+        /** Initializes the strategy by installing browser event listeners. */
         fun init()
 
+        /** Navigates to the given [uri], updating the browser location. */
         fun navigateToUri(uri: String)
 
+        /** Replaces the current URI in the browser history without adding a new entry. */
         fun replaceUri(uri: String)
 
+        /** Returns the current URI from the browser's location. */
         fun getUriFromWindowLocation(): String
     }
 
+    /** Hash-based routing strategy using the URL fragment (e.g. `#/path`). */
     class HashRoutingStrategy(private val router: Router) : RouterStrategy {
 
         override fun init() {
@@ -103,6 +113,7 @@ class Router(
         }
     }
 
+    /** Path-based routing strategy using the browser's History API. */
     class PathRoutingStrategy(private val router: Router) : RouterStrategy {
         override fun init() {
             window.addEventListener("popstate", ::popstateListener)
@@ -210,26 +221,34 @@ class Router(
         }
     }
 
+    /** Represents the navigation history of the router. */
     data class History(
         val router: Router,
         val entries: List<ActiveRoute>,
     ) {
+        /** True when there is a previous route to navigate back to. */
         val canGoBack: Boolean = entries.size > 1
 
+        /** Navigates back to the previous route. */
         fun navBack() {
             router.navBack()
         }
     }
 
+    /** The active routing strategy (hash or path based). */
     val strategy: RouterStrategy = strategyProvider(this)
 
     /** Writable stream with the current [ActiveRoute] */
     private val _current = StreamSource(ActiveRoute("", Route.Match.default, MountedRoute.default))
+
+    /** Stream that emits the currently active route whenever navigation occurs. */
     val current: Stream<ActiveRoute> = _current
 
     /** Writable stream with the history of [ActiveRoute]s */
     private val _historyEntries: MutableList<ActiveRoute> = mutableListOf()
     private val _history = StreamSource(History(this, _historyEntries.toList()))
+
+    /** Stream that emits the navigation history whenever it changes. */
     val history: Stream<History> = _history
 
     init {
@@ -241,10 +260,12 @@ class Router(
         }
     }
 
+    /** Disables the router, preventing it from reacting to browser navigation events. */
     fun disable() {
         enabled = false
     }
 
+    /** Enables the router, allowing it to react to browser navigation events. */
     fun enable() {
         enabled = true
     }

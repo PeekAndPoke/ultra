@@ -7,9 +7,11 @@
 
 package io.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 
+import generated.ExtractedCodeBlocks
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.fomanticui.helpers.CodePanelColumn
 import io.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import io.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
 import io.peekandpoke.kraft.forms.formController
@@ -42,13 +44,15 @@ class FormWithTestArea(ctx: NoProps) : PureComponent(ctx) {
 
     override fun VDom.render() {
 
-        ui.two.column.grid {
+        ui.stackable.two.column.grid {
             ui.column {
                 ui.form {
+                    // <CodeBlock textarea>
                     UiTextArea(draft.input, { draft = draft.copy(input = it) }) {
                         label { +"Text Input" }
                         placeholder("Enter some text")
                     }
+                    // </CodeBlock>
                 }
 
                 ui.divider {}
@@ -71,11 +75,13 @@ class FormWithTestArea(ctx: NoProps) : PureComponent(ctx) {
                     }
                     +"Reset form"
                 }
-            }
 
-            ui.column {
+                ui.divider {}
+
                 renderDataTable()
             }
+
+            CodePanelColumn(ExtractedCodeBlocks.pages_howto_forms_demo_FormWithTextArea_kt_textarea)
         }
     }
 

@@ -7,12 +7,16 @@
 
 package io.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 
+import generated.ExtractedCodeBlocks
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.fomanticui.helpers.CodePanelColumn
 import io.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import io.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
 import io.peekandpoke.kraft.forms.formController
+import io.peekandpoke.kraft.forms.validation.numbers.greaterThan
+import io.peekandpoke.kraft.forms.validation.numbers.lessThan
 import io.peekandpoke.kraft.semanticui.forms.UiInputField
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick
@@ -45,9 +49,10 @@ class FormWithNullablePrimitives(ctx: NoProps) : PureComponent(ctx) {
 
     override fun VDom.render() {
 
-        ui.two.column.grid {
+        ui.stackable.two.column.grid {
             ui.column {
                 ui.form {
+                    // <CodeBlock nullablePrimitives>
                     ui.two.fields {
                         UiInputField.nullable(draft.textInput, { draft = draft.copy(textInput = it) }) {
                             label { +"Text Input" }
@@ -60,8 +65,8 @@ class FormWithNullablePrimitives(ctx: NoProps) : PureComponent(ctx) {
                             step(3)
 
                             accepts(
-                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.greaterThan(6.0),
-                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.lessThan(15.0)
+                                greaterThan(6.0),
+                                lessThan(15.0)
                             )
                         }
                     }
@@ -72,8 +77,8 @@ class FormWithNullablePrimitives(ctx: NoProps) : PureComponent(ctx) {
                             placeholder("Enter a number")
 
                             accepts(
-                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.greaterThan(5.0),
-                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.lessThan(20.0)
+                                greaterThan(5.0),
+                                lessThan(20.0)
                             )
                         }
 
@@ -83,11 +88,12 @@ class FormWithNullablePrimitives(ctx: NoProps) : PureComponent(ctx) {
                             step(0.5)
 
                             accepts(
-                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.greaterThan(3.0),
-                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.lessThan(10.0)
+                                greaterThan(3.0),
+                                lessThan(10.0)
                             )
                         }
                     }
+                    // </CodeBlock>
                 }
 
                 ui.divider {}
@@ -110,11 +116,13 @@ class FormWithNullablePrimitives(ctx: NoProps) : PureComponent(ctx) {
                     }
                     +"Reset form"
                 }
-            }
 
-            ui.column {
+                ui.divider {}
+
                 renderDataTable()
             }
+
+            CodePanelColumn(ExtractedCodeBlocks.pages_howto_forms_demo_FormWithNullablePrimitives_kt_nullablePrimitives)
         }
     }
 

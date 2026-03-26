@@ -18,6 +18,7 @@ import kotlinx.html.Tag
 import kotlinx.html.div
 import org.w3c.dom.HTMLElement
 
+/** Renders a [PopupComponent] positioned relative to a [target] element. */
 @Suppress("FunctionName")
 fun Tag.PopupComponent(
     target: HTMLElement,
@@ -35,6 +36,7 @@ fun Tag.PopupComponent(
     PopupComponent(it)
 }
 
+/** Default popup component that positions itself using a [Props.positioning] function. */
 class PopupComponent(ctx: Ctx<Props>) : Component<PopupComponent.Props>(ctx) {
 
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////

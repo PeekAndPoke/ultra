@@ -1,7 +1,10 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import ExampleEmbed from '../../../components/ExampleEmbed.astro';
 import { kraftSidebar } from '../../../data/kraft-sidebar';
 import { Code } from 'astro:components';
+import {kraftLiveExamples, githubRepo} from '../../../data/site';
 ---
 
 <DocsLayout title="Forms & Validation in Kraft" sidebar={kraftSidebar} description="Type-safe forms with validation, draft/commit pattern, and SemanticUI fields in Kraft">
@@ -9,12 +12,13 @@ import { Code } from 'astro:components';
 <h1>Forms &amp; Validation</h1>
 
 <p class="text-xl text-gray-400 !mt-2 !mb-8">
-  Type-safe form fields, built-in validation rules, and the draft/commit pattern.
+    Type-safe form fields, built-in validation rules, and the draft/commit pattern.
 </p>
 
 <h2>The basics</h2>
 
-<p>Every form field follows the same pattern: <strong>current value + onChange callback</strong>.</p>
+    <p>Every form field follows the same pattern: <strong>current value + onChange callback</strong>, with an options
+        builder for configuration.</p>
 
 <Code code={`class ContactForm(ctx: NoProps) : PureComponent(ctx) {
     private var name by value("")
@@ -30,6 +34,7 @@ import { Code } from 'astro:components';
             UiInputField(email, { email = it }) {
                 label("Email")
                 placeholder("you@example.com")
+                accepts(notBlank(), validEmail())
             }
 
             ui.blue.button {
@@ -40,8 +45,6 @@ import { Code } from 'astro:components';
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p><code>UiInputField</code> is the workhorse — it handles strings, numbers, dates, and more.</p>
-
 <h2>Field types</h2>
 
 <h3>Text input</h3>
@@ -49,50 +52,86 @@ import { Code } from 'astro:components';
 <Code code={`UiInputField(value, { value = it }) {
     label("Username")
     placeholder("Choose a username")
-    rightClearingIcon()  // Shows an X to clear the field
+    rightClearingIcon()  // shows an X to clear the field
 }`} lang="kotlin" theme="vitesse-dark" />
 
 <h3>Number input</h3>
 
-<Code code={`UiInputField(price, { price = it }) {
+    <Code code={`// Int field — type is inferred, renders as type="number"
+UiInputField(age, { age = it }) {
+    label("Age")
+    accepts(greaterThanOrEqual(0))
+}
+
+// Double field with step
+UiInputField(price, { price = it }) {
     label("Price")
     step(0.01)
-    leftIcon { icon.dollar_sign() }
+    leftIcon { icon.dollar_sign }
+}
+
+// Nullable number — empty input returns null
+UiInputField.nullable(weight, { weight = it }) {
+    label("Weight (optional)")
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p>The type is inferred from the value — pass an <code>Int</code>, get an integer field. Pass a <code>Double</code>, get a decimal field.</p>
+    <p>The input type is inferred from the value — pass an <code>Int</code>, get an integer field. Pass a
+        <code>Double</code>, get a decimal field.</p>
 
 <h3>Password</h3>
 
 <Code code={`UiPasswordField(password, { password = it }) {
     label("Password")
-    revealPasswordIcon()  // Toggle visibility
+    revealPasswordIcon()  // eye icon to toggle visibility
+}
+
+// Or bind directly to a property
+UiPasswordField(::password) {
+    label("Password")
 }`} lang="kotlin" theme="vitesse-dark" />
 
 <h3>Date and time</h3>
 
-<Code code={`UiDateField(::birthday) {
+    <Code code={`// Date — works with MpLocalDate
+UiDateField(birthday, { birthday = it }) {
     label("Birthday")
 }
 
-UiDateTimeField(::appointmentTime) {
+// DateTime — works with MpLocalDateTime, MpInstant, MpZonedDateTime
+UiDateTimeField(appointmentTime, { appointmentTime = it }) {
     label("Appointment")
 }
 
-UiTimeField(::startTime) {
+// Time — works with MpLocalTime
+UiTimeField(startTime, { startTime = it }) {
     label("Start time")
+}
+
+// Nullable date — empty returns null
+UiDateField.nullable(endDate, { endDate = it }) {
+    label("End date (optional)")
+}
+
+// ZonedDateTime with explicit timezone
+UiDateTimeField(timestamp, timezone, { timestamp = it }) {
+    label("Event time")
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p>These work with Ultra's multiplatform date types (<code>MpLocalDate</code>, <code>MpLocalDateTime</code>, <code>MpLocalTime</code>).</p>
+    <p>These work with Ultra's multiplatform date types (<code>MpLocalDate</code>, <code>MpLocalDateTime</code>, <code>MpLocalTime</code>,
+        <code>MpZonedDateTime</code>, <code>MpInstant</code>).</p>
 
 <h3>Textarea</h3>
 
 <Code code={`UiTextArea(notes, { notes = it }) {
     label("Notes")
     placeholder("Additional information...")
+    verticalAutoResize(true)  // grows with content (default: true)
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<h3>Checkbox</h3>
+    <p>The textarea auto-resizes vertically by default. Use <code>replaceSelection(text)</code> on the component to
+        insert text at the cursor position.</p>
+
+    <h3>Checkbox</h3>
 
 <Code code={`// Simple boolean
 UiCheckboxField(agreed, { agreed = it }) {
@@ -105,26 +144,273 @@ UiCheckboxField(notifications, { notifications = it }) {
     toggle()
 }
 
-// Slider style with custom values
+// Slider style with custom on/off values
 UiCheckboxField(
     value = status,
-    off = "inactive",
     on = "active",
+    off = "inactive",
     onChange = { status = it },
 ) {
     label("Status")
     slider()
 }`} lang="kotlin" theme="vitesse-dark" />
 
+    <h3>Select / Dropdown</h3>
+
+    <Code code={`SelectField(selectedCountry, { selectedCountry = it }) {
+    label("Country")
+    placeholder("Choose a country")
+    option(realValue = "de", formValue = "de", display = "Germany")
+    option(realValue = "us", formValue = "us", display = "United States")
+    option(realValue = "jp", formValue = "jp", display = "Japan")
+    searchableBy { option, query -> option.formValue.contains(query, ignoreCase = true) }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
 <h3>Nullable fields</h3>
 
-<p>Fields that can be empty/null:</p>
+    <p>Most field types have a <code>.nullable()</code> variant that returns <code>null</code> when the input is empty:
+    </p>
 
 <Code code={`UiInputField.nullable(middleName, { middleName = it }) {
     label("Middle name (optional)")
+}
+
+UiDateField.nullable(endDate, { endDate = it }) {
+    label("End date (optional)")
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>List fields</h3>
+
+    <p>For editing a list of items with add/remove/reorder:</p>
+
+    <Code code={`ListField(
+    items = tags,
+    onChange = { tags = it },
+) {
+    renderItem { ctx ->
+        UiInputField(ctx.item, { ctx.modify(it) }) {
+            label("Tag #${'$'}{ctx.idx + 1}")
+            rightIcon({ red.times }) { component ->
+                component.onClick { ctx.remove() }
+            }
+        }
+    }
+    renderAdd { ctx ->
+        ui.button {
+            onClick { ctx.add("") }
+            +"Add tag"
+        }
+    }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<h2>Validation</h2>
+    <p>Each <code>ItemCtx</code> provides: <code>idx</code>, <code>item</code>, <code>all</code>, <code>modify()</code>,
+        <code>remove()</code>, <code>copy()</code>, and <code>swapWith(idx)</code>.</p>
+
+    <h2>Common field options</h2>
+
+    <p>All field types share these options from the base <code>FieldOptions</code> interface:</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Option</th>
+                <th class="py-2 text-gray-400">What it does</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>label("Text")</code></td>
+                <td>Field label above the input</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>placeholder("Text")</code></td>
+                <td>Placeholder text inside the input</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>name("field_name")</code></td>
+                <td>HTML name attribute</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>disabled()</code></td>
+                <td>Disable the field</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>required()</code></td>
+                <td>Mark as required</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>accepts(rule1, rule2, ...)</code></td>
+                <td>Add validation rules</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>appear &#123; orange &#125;</code></td>
+                <td>SemanticUI appearance/color</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Input-specific options</h3>
+
+    <p>Available on <code>UiInputField</code>, <code>UiPasswordField</code>, and date/time fields:</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Option</th>
+                <th class="py-2 text-gray-400">What it does</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>autofocus()</code></td>
+                <td>Focus on mount</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>autofocusOnDesktop(responsive)</code></td>
+                <td>Focus on mount only on desktop (avoids mobile keyboard pop-up)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>step(0.01)</code></td>
+                <td>Step increment for number inputs</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>leftIcon &#123; icon.search &#125;</code></td>
+                <td>Icon on the left side</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>rightIcon &#123; icon.check &#125;</code></td>
+                <td>Icon on the right side</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>rightIcon(&#123; icon.times &#125;) &#123; it.onClick &#123; clear() &#125;
+                    &#125;</code></td>
+                <td>Right icon with click handler</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>rightClearingIcon()</code></td>
+                <td>Built-in clear button (grey X icon)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>revealPasswordIcon()</code></td>
+                <td>Toggle password visibility (eye icon)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>leftLabel &#123; +"https://" &#125;</code></td>
+                <td>Attached label on the left</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>rightLabel &#123; +"kg" &#125;</code></td>
+                <td>Attached label on the right</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>wrapFieldWith &#123; fluid &#125;</code></td>
+                <td>Wrap the input in a SemanticUI modifier</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Checkbox-specific options</h3>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Option</th>
+                <th class="py-2 text-gray-400">What it does</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>toggle()</code></td>
+                <td>Render as a toggle switch</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>slider()</code></td>
+                <td>Render as a slider</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>style &#123; fitted &#125;</code></td>
+                <td>Custom SemanticUI checkbox styling</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>autofocus()</code></td>
+                <td>Focus on mount</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Textarea-specific options</h3>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Option</th>
+                <th class="py-2 text-gray-400">What it does</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>verticalAutoResize(true)</code></td>
+                <td>Auto-grow height with content (default: on)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>customize &#123; rows = 5 &#125;</code></td>
+                <td>Custom textarea attributes (rows, cols, etc.)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>autofocus()</code></td>
+                <td>Focus on mount</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Select-specific options</h3>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Option</th>
+                <th class="py-2 text-gray-400">What it does</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>option(realValue, formValue, display)</code></td>
+                <td>Add a selectable option</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>searchableBy &#123; option, query -> ... &#125;</code></td>
+                <td>Enable filtering with a predicate</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>autoSuggest &#123; query -> ... &#125;</code></td>
+                <td>Async option suggestions</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>compareBy &#123; a, b -> ... &#125;</code></td>
+                <td>Custom equality for selected value</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>inverted()</code></td>
+                <td>Inverted styling</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>css &#123; ... &#125;</code></td>
+                <td>Custom CSS</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Validation</h2>
 
 <p>Add validation rules with <code>accepts()</code>:</p>
 
@@ -134,69 +420,206 @@ UiCheckboxField(
         notBlank(),
         minLength(3),
         maxLength(20),
-        matchesPattern(Regex("^[a-z0-9_]+${'$'}")) {
-            "Only lowercase letters, numbers, and underscores"
-        },
     )
 }
 
 UiInputField(age, { age = it }) {
     label("Age")
     accepts(
-        greaterThan(0.0),
-        lessThan(150.0),
+        greaterThanOrEqual(18, "Must be 18 or older"),
+        lessThan(150),
     )
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<h3>Built-in validators</h3>
+    <p>Validation errors render automatically as red pointing labels below the field, but only after the field has been
+        touched (edited by the user).</p>
 
-<table>
-  <thead>
-    <tr>
-      <th>Validator</th>
-      <th>What it checks</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>notBlank()</code></td>
-      <td>Not empty or whitespace</td>
-    </tr>
-    <tr>
-      <td><code>minLength(n)</code></td>
-      <td>Minimum character count</td>
-    </tr>
-    <tr>
-      <td><code>maxLength(n)</code></td>
-      <td>Maximum character count</td>
-    </tr>
-    <tr>
-      <td><code>greaterThan(n)</code></td>
-      <td>Numeric minimum (exclusive)</td>
-    </tr>
-    <tr>
-      <td><code>lessThan(n)</code></td>
-      <td>Numeric maximum (exclusive)</td>
-    </tr>
-    <tr>
-      <td><code>matchesPattern(regex)</code></td>
-      <td>Regex match</td>
-    </tr>
-  </tbody>
-</table>
+    <h3>Built-in validators</h3>
 
-<p>Each validator can take a custom error message:</p>
+    <h4>String rules</h4>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Rule</th>
+                <th class="py-2 text-gray-400">What it checks</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>notBlank()</code></td>
+                <td>Not empty or whitespace-only</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>notEmpty()</code></td>
+                <td>Not empty string</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>minLength(n)</code></td>
+                <td>At least n characters</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>maxLength(n)</code></td>
+                <td>At most n characters</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>exactLength(n)</code></td>
+                <td>Exactly n characters</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>validEmail()</code></td>
+                <td>Valid email format</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>validUrlWithProtocol()</code></td>
+                <td>Valid URL with protocol</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h4>Number rules</h4>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Rule</th>
+                <th class="py-2 text-gray-400">What it checks</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>greaterThan(n)</code></td>
+                <td>Value &gt; n</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>greaterThanOrEqual(n)</code></td>
+                <td>Value &ge; n</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>lessThan(n)</code></td>
+                <td>Value &lt; n</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>lessThanOrEqual(n)</code></td>
+                <td>Value &le; n</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>inRange(from, to)</code></td>
+                <td>Value between from and to</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h4>Collection rules</h4>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Rule</th>
+                <th class="py-2 text-gray-400">What it checks</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>notEmpty()</code></td>
+                <td>Collection is not empty</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>minCount(n)</code></td>
+                <td>At least n items</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>maxCount(n)</code></td>
+                <td>At most n items</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>exactCount(n)</code></td>
+                <td>Exactly n items</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h4>Generic rules</h4>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Rule</th>
+                <th class="py-2 text-gray-400">What it checks</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>equalTo(value)</code></td>
+                <td>Exact equality</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>notEqualTo(value)</code></td>
+                <td>Not equal</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>anyOf(collection)</code></td>
+                <td>Value is in the collection</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>noneOf(collection)</code></td>
+                <td>Value is not in the collection</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>given(&#123; check &#125;) &#123; "msg" &#125;</code></td>
+                <td>Custom predicate</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>nonNull()</code></td>
+                <td>Value is not null</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>nullOrElse(innerRule)</code></td>
+                <td>Null is ok, otherwise must pass inner rule</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Custom messages</h3>
+
+    <p>Every rule accepts a custom error message — either a static string or a lambda that receives the current
+        value:</p>
 
 <Code code={`accepts(
-    notBlank() { "This field is required" },
-    minLength(3) { "Must be at least 3 characters" },
+    notBlank("This field is required"),
+    minLength(3) { "Must be at least 3 characters, got ${'$'}{it.length}" },
 )`} lang="kotlin" theme="vitesse-dark" />
 
-<p>Validation errors render automatically below the field as red labels.</p>
+    <h3>Composing rules</h3>
 
-<h2>The form controller</h2>
+    <Code code={`// OR — passes if either rule passes
+accepts(empty() or validEmail())
 
-<p>Use <code>formController()</code> to track the overall form validity:</p>
+// Any of — passes if any rule passes
+accepts(anyRuleOf(empty(), validEmail(), validUrlWithProtocol()))
+
+// All of — all must pass (same as listing them individually)
+accepts(allRulesOf(notBlank(), minLength(3), maxLength(50)))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>FormController and FormObserver</h2>
+
+    <p>The <code>FormController</code> tracks validity across all form fields in a component. It works through <a
+            href="/ultra/kraft/messaging">messaging</a> — form fields send <code>FormFieldMountedMessage</code>, <code>FormFieldUnmountedMessage</code>,
+        and <code>FormFieldInputChanged</code> messages that bubble up the component tree. The FormController listens
+        for these messages and tracks each field's state.</p>
+
+    <h3>formController()</h3>
+
+    <p>Creates a controller that <strong>stops message propagation</strong>. Form field messages won't bubble past this
+        component. Use this when the component owns its form:</p>
 
 <Code code={`class RegistrationForm(ctx: NoProps) : PureComponent(ctx) {
     private var name by value("")
@@ -212,14 +635,13 @@ UiInputField(age, { age = it }) {
 
             UiInputField(email, { email = it }) {
                 label("Email")
-                accepts(notBlank())
+                accepts(notBlank(), validEmail())
             }
 
-            // Button disabled when form is invalid
+            // Disable button when form is invalid
             ui.blue.button.given(!formCtrl.isValid) { disabled }.then {
                 onClick {
                     if (formCtrl.validate()) {
-                        // All fields passed validation
                         submitForm()
                     }
                 }
@@ -229,8 +651,92 @@ UiInputField(age, { age = it }) {
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p><code>formCtrl.isValid</code> reactively reflects whether all fields pass validation.
-<code>formCtrl.validate()</code> triggers validation on all fields and returns <code>true</code> if everything passes.</p>
+    <h3>formObserver()</h3>
+
+    <p>Creates a controller that <strong>does not stop message propagation</strong>. Form field messages continue
+        bubbling to parent components. Use this when a parent component also needs to track validity — for example, a
+        page that contains multiple sub-forms:</p>
+
+    <Code code={`class FormPage(ctx: NoProps) : PureComponent(ctx) {
+    // Observes fields from child components without blocking their messages
+    private val pageFormCtrl = formObserver()
+
+    override fun VDom.render() {
+        AddressForm()
+        PaymentForm()
+
+        // Tracks validity across both sub-forms
+        ui.green.button.given(!pageFormCtrl.isValid) { disabled }.then {
+            onClick { pageFormCtrl.ifValidate { submitAll() } }
+            +"Submit order"
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>FormController API</h3>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Method / Property</th>
+                <th class="py-2 text-gray-400">What it does</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>isValid</code></td>
+                <td>True when all tracked fields pass validation</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>isNotValid</code></td>
+                <td>True when any field has errors</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>numErrors</code></td>
+                <td>Count of fields with validation errors</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>fields</code></td>
+                <td>Set of all tracked FormField instances</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>validate()</code></td>
+                <td>Touch and validate all fields, returns true if all pass</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>ifValidate &#123; ... &#125;</code></td>
+                <td>Validate, execute callback only if all pass</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>resetAllFields()</code></td>
+                <td>Reset all fields: clear errors, mark untouched</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>How it works under the hood</h3>
+
+    <p>Form fields communicate with the FormController through <a href="/ultra/kraft/messaging">component messages</a>:
+    </p>
+
+    <ol>
+        <li>When a field <strong>mounts</strong>, it sends a <code>FormFieldMountedMessage</code> up the tree. The
+            FormController registers the field.
+        </li>
+        <li>When a field <strong>value changes</strong>, it sends a <code>FormFieldInputChanged</code> message. The
+            FormController re-evaluates validity.
+        </li>
+        <li>When a field <strong>unmounts</strong>, it sends a <code>FormFieldUnmountedMessage</code>. The
+            FormController unregisters the field.
+        </li>
+    </ol>
+
+    <p>This means the FormController automatically discovers fields — you don't register them manually. Any field that's
+        a descendant in the component tree is tracked. A <code>formController()</code> stops these messages from
+        propagating further. A <code>formObserver()</code> lets them continue, so a parent controller can also track
+        them.</p>
 
 <h2>The draft/commit pattern</h2>
 
@@ -257,12 +763,14 @@ UiInputField(age, { age = it }) {
                 accepts(notBlank())
             }
 
-            UiInputField(draft.bio, { draft = draft.copy(bio = it) }) {
+            UiTextArea(draft.bio, { draft = draft.copy(bio = it) }) {
                 label("Bio")
+                accepts(maxLength(500))
             }
 
             UiInputField(draft.website, { draft = draft.copy(website = it) }) {
                 label("Website")
+                accepts(nullOrElse(validUrlWithProtocol()))
             }
 
             // Only enable submit when valid AND changed
@@ -271,8 +779,8 @@ UiInputField(age, { age = it }) {
             ui.buttons {
                 ui.blue.button.given(!canSubmit) { disabled }.then {
                     onClick {
-                        if (formCtrl.validate()) {
-                            profile = draft  // Commit changes
+                        formCtrl.ifValidate {
+                            profile = draft  // commit
                         }
                     }
                     +"Save"
@@ -280,7 +788,7 @@ UiInputField(age, { age = it }) {
 
                 ui.basic.button {
                     onClick {
-                        draft = profile  // Discard changes
+                        draft = profile  // discard
                         formCtrl.resetAllFields()
                     }
                     +"Reset"
@@ -292,52 +800,39 @@ UiInputField(age, { age = it }) {
 
 <p>This pattern gives you:</p>
 <ul>
-  <li><strong>Edit isolation</strong> — changes don't affect the real state until committed</li>
-  <li><strong>Dirty detection</strong> — <code>draft != profile</code> tells you if anything changed</li>
-  <li><strong>Easy reset</strong> — just copy the committed state back to draft</li>
-  <li><strong>Structural equality</strong> — data classes give you correct comparison for free</li>
+    <li><strong>Edit isolation</strong> — changes don't affect the real state until committed</li>
+    <li><strong>Dirty detection</strong> — <code>draft != profile</code> tells you if anything changed</li>
+    <li><strong>Easy reset</strong> — copy the committed state back to draft</li>
+    <li><strong>Structural equality</strong> — data classes give you correct comparison for free</li>
 </ul>
 
-<h2>Field appearance</h2>
+    <h2>Programmatic field access</h2>
 
-<h3>Icons</h3>
+    <p>Each field component exposes methods for direct interaction:</p>
 
-<Code code={`UiInputField(search, { search = it }) {
-    leftIcon { icon.search() }
-}
+    <Code code={`// All input-type fields provide:
+field.focus()            // set focus
+field.hasFocus()         // check focus
+field.currentValue       // get the effective value
+field.inputElement       // direct DOM element access
 
-UiInputField(amount, { amount = it }) {
-    leftIcon { green.percent() }
-    rightClearingIcon()
-}`} lang="kotlin" theme="vitesse-dark" />
+// UiTextArea also provides:
+textarea.replaceSelection("inserted text")  // insert at cursor`} lang="kotlin" theme="vitesse-dark"/>
 
-<h3>Labels (attached)</h3>
+    <h2>See it in action</h2>
 
-<Code code={`UiInputField(weight, { weight = it }) {
-    rightLabel { +"kg" }
-}
-
-UiInputField(url, { url = it }) {
-    leftLabel { +"https://" }
-}`} lang="kotlin" theme="vitesse-dark" />
-
-<h3>Disabled state</h3>
-
-<Code code={`UiInputField(readonly, { readonly = it }) {
-    label("Read-only field")
-    disabled(true)
-}`} lang="kotlin" theme="vitesse-dark" />
-
-<h3>Auto-focus</h3>
-
-<Code code={`UiInputField(query, { query = it }) {
-    autofocusOnDesktop(responsive)  // Only auto-focus on desktop
-}`} lang="kotlin" theme="vitesse-dark" />
+    <ExampleEmbed
+            src={`${kraftLiveExamples.fomanticui}#/howto/forms/demo`}
+            title="Kraft Forms Demo"
+            height="800px"
+            sourceUrl={`${githubRepo}/tree/master/kraft/examples/fomanticui/src/jsMain/kotlin/pages/howto/forms/demo`}
+    />
 
 <div class="not-prose mt-8 flex gap-4">
-  <a href="/ultra/kraft/semantic-ui" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
-    SemanticUI DSL &rarr;
-  </a>
+    <a href="/ultra/kraft/semantic-ui"
+       class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+        SemanticUI DSL &rarr;
+    </a>
 </div>
 
 </DocsLayout>

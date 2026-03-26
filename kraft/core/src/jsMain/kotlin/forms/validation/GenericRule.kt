@@ -1,5 +1,6 @@
 package io.peekandpoke.kraft.forms.validation
 
+/** A [Rule] implementation backed by lambda functions for check and message. */
 data class GenericRule<T>(
     private val checkFn: (value: T) -> Boolean,
     private val messageFn: (value: T) -> String = { "Invalid input" },

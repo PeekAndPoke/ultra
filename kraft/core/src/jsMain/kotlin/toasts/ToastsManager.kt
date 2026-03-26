@@ -30,8 +30,12 @@ import kotlinx.html.span
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+/** Renders a toast notification, receiving the [Handle] to allow closing. */
 typealias ToastRenderer = FlowContent.(Handle) -> Unit
 
+/**
+ * Manages toast notifications: displaying, auto-dismissing, and closing them.
+ */
 class ToastsManager(
     val settings: Settings,
 ) : Stream<List<Handle>>, AutoMountedUi {
@@ -39,8 +43,10 @@ class ToastsManager(
     companion object {
         val key = TypedKey<ToastsManager>("toasts")
 
+        /** Retrieves the [ToastsManager] from the component tree. */
         val Component<*>.toasts: ToastsManager get() = getAttributeRecursive(key)
 
+        /** A basic fallback toast renderer using colored divs. */
         val DefaultToastsRenderer: ToastRenderer = { handle ->
 
             div {
@@ -64,12 +70,14 @@ class ToastsManager(
         }
     }
 
+    /** Configuration for the toasts manager. */
     data class Settings(
         val defaultDuration: Duration?,
         val defaultRenderer: ToastRenderer,
         val stageOptions: ToastsStage.Options,
     )
 
+    /** Builder for configuring [ToastsManager] settings. */
     class Builder internal constructor() {
         var defaultDuration: Duration? = 7.seconds
         var defaultRenderer: ToastRenderer = DefaultToastsRenderer
@@ -84,12 +92,14 @@ class ToastsManager(
         )
     }
 
+    /** A handle to an active toast notification. */
     data class Handle(
         val id: Int,
         val message: Toast,
         val view: ToastRenderer,
         internal val flashMessages: ToastsManager,
     ) {
+        /** Closes this toast. */
         fun close() = flashMessages.close(this)
     }
 
@@ -109,6 +119,7 @@ class ToastsManager(
         }
     }
 
+    /** Shows an info toast with the given [text]. */
     fun info(
         text: String,
         duration: Duration? = settings.defaultDuration,
@@ -120,6 +131,7 @@ class ToastsManager(
         )
     }
 
+    /** Shows a warning toast with the given [text]. */
     fun warning(
         text: String,
         duration: Duration? = settings.defaultDuration,
@@ -131,6 +143,7 @@ class ToastsManager(
         )
     }
 
+    /** Shows an error toast with the given [text]. */
     fun error(
         text: String,
         duration: Duration? = settings.defaultDuration,
@@ -142,6 +155,7 @@ class ToastsManager(
         )
     }
 
+    /** Appends a toast with the specified [type] and [text]. */
     fun append(
         type: Message.Type,
         text: String,
@@ -152,6 +166,7 @@ class ToastsManager(
         renderer = renderer,
     )
 
+    /** Appends toasts for all messages in the given [messages] container. */
     fun append(
         messages: Messages,
         duration: Duration? = settings.defaultDuration,
@@ -160,6 +175,7 @@ class ToastsManager(
         messages.getAllMessages().forEach { append(it, duration, renderer) }
     }
 
+    /** Appends a toast from a [Message] model object. */
     fun append(
         message: Message,
         duration: Duration? = settings.defaultDuration,
@@ -171,6 +187,7 @@ class ToastsManager(
         )
     }
 
+    /** Appends a [Toast] and schedules auto-dismissal if a duration is set. */
     fun append(
         message: Toast,
         renderer: ToastRenderer = settings.defaultRenderer,
@@ -188,6 +205,7 @@ class ToastsManager(
         }
     }
 
+    /** Removes the toast identified by the given [handle]. */
     fun close(handle: Handle) {
         source.modify {
             filterNot { it.id == handle.id }

@@ -1,0 +1,66 @@
+---
+/**
+    * Voice 2 — the honest, slightly self-ironic commentary.
+    *
+    * Usage:
+    *   <Aside>Because writing five levels of copy() is nobody's idea of a good time.</Aside>
+    *   <Aside inline>We know.</Aside>
+    */
+interface Props {
+    inline?: boolean;
+}
+const {inline = false} = Astro.props;
+---
+
+{inline ? (
+<span class="aside-inline">
+    <slot/>
+  </span>
+    ) : (
+<div class="aside-block not-prose">
+    <div class="aside-block-inner">
+        <slot/>
+    </div>
+</div>
+    )}
+
+<style>
+    .aside-inline {
+        color: var(--color-brand-300);
+        font-style: italic;
+        font-size: 0.9em;
+        opacity: 0.85;
+    }
+
+    .aside-block {
+        position: relative;
+        margin: 1rem 0 1.5rem 0;
+        padding-left: 1rem;
+    }
+
+    .aside-block-inner {
+        position: relative;
+        background: rgba(212, 160, 58, 0.04);
+        border: 1px solid rgba(212, 160, 58, 0.15);
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        color: var(--color-brand-200);
+        font-size: 0.875rem;
+        font-style: italic;
+        line-height: 1.5;
+    }
+
+    .aside-block-inner::before {
+        content: "\201E";
+        color: var(--color-brand-400);
+        font-size: 1.2em;
+        opacity: 0.6;
+    }
+
+    .aside-block-inner::after {
+        content: "\201C";
+        color: var(--color-brand-400);
+        font-size: 1.2em;
+        opacity: 0.6;
+    }
+</style>

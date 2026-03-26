@@ -45,21 +45,35 @@ import kotlinx.html.input
 import org.w3c.dom.HTMLInputElement
 import kotlin.reflect.KMutableProperty0
 
+/** Provides a [UiInputFieldRenderer] for rendering text and number input fields. */
 @KraftFormsDsl
 val Tag.UiInputField get() = UiInputFieldRenderer(this)
 
+/** Provides a [UiPasswordFieldRenderer] for rendering password input fields. */
 @KraftFormsDsl
 val Tag.UiPasswordField get() = UiPasswordFieldRenderer(this)
 
+/** Provides a [UiDateFieldRenderer] for rendering date input fields. */
 @KraftFormsDsl
 val Tag.UiDateField get() = UiDateFieldRenderer(this)
 
+/** Provides a [UiDateTimeFieldRenderer] for rendering date-time input fields. */
 @KraftFormsDsl
 val Tag.UiDateTimeField get() = UiDateTimeFieldRenderer(this)
 
+/** Provides a [UiTimeFieldRenderer] for rendering time input fields. */
 @KraftFormsDsl
 val Tag.UiTimeField get() = UiTimeFieldRenderer(this)
 
+/**
+ * Generic input field factory that renders a [UiInputFieldComponent] with custom serialization.
+ *
+ * @param value The current value.
+ * @param onChange Callback invoked when the value changes.
+ * @param toStr Converts [T] to the string displayed in the input.
+ * @param fromStr Parses user input back to [T].
+ * @param builder Optional configuration for field options.
+ */
 @Suppress("FunctionName")
 fun <T> Tag.UiInputField(
     value: T,
@@ -79,11 +93,18 @@ fun <T> Tag.UiInputField(
     UiInputFieldComponent(it)
 }
 
+/**
+ * Semantic UI input field component with validation, formatting, and type support.
+ *
+ * Wraps an HTML `<input>` element and integrates with the Kraft forms system.
+ */
 class UiInputFieldComponent<T, P : UiInputFieldComponent.Props<T>>(ctx: Ctx<P>) :
     AbstractFormField<T, Options<T>, P>(ctx) {
 
+    /** Configuration options for [UiInputFieldComponent], combining field and Semantic UI options. */
     class Options<T> : FieldOptions.Base<T>(), SemanticOptions<T>, SemanticOptions.Input<T>
 
+    /** Props for [UiInputFieldComponent]. */
     data class Props<X>(
         override val value: X,
         override val onChange: (X) -> Unit,
@@ -92,6 +113,7 @@ class UiInputFieldComponent<T, P : UiInputFieldComponent.Props<T>>(ctx: Ctx<P>) 
         val fromStr: (String) -> X,
     ) : AbstractFormField.Props<X, Options<X>>
 
+    /** The underlying HTML input element. */
     val inputElement: HTMLInputElement get() = dom!!.querySelector("input") as HTMLInputElement
 
     private var userInput: String by value(props.toStr(props.value))
@@ -163,6 +185,7 @@ class UiInputFieldComponent<T, P : UiInputFieldComponent.Props<T>>(ctx: Ctx<P>) 
         }
     }
 
+    /** Parses and applies the raw [input] string, updating the field value or showing validation errors. */
     fun setInput(input: String) {
         try {
             userInput = input
@@ -247,6 +270,11 @@ class UiInputFieldComponent<T, P : UiInputFieldComponent.Props<T>>(ctx: Ctx<P>) 
     }
 }
 
+/**
+ * DSL renderer for [UiInputFieldComponent], providing overloads for String, Int, Float, and Double types.
+ *
+ * Accessed via [Tag.UiInputField].
+ */
 class UiInputFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a String
@@ -419,6 +447,7 @@ class UiInputFieldRenderer(private val tag: Tag) {
     }
 }
 
+/** DSL renderer for password input fields. Accessed via [Tag.UiPasswordField]. */
 class UiPasswordFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a String
@@ -443,6 +472,11 @@ class UiPasswordFieldRenderer(private val tag: Tag) {
     }
 }
 
+/**
+ * DSL renderer for date input fields, supporting MpLocalDate, MpLocalDateTime, and MpZonedDateTime.
+ *
+ * Accessed via [Tag.UiDateField].
+ */
 class UiDateFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpLocalDate
@@ -618,6 +652,11 @@ class UiDateFieldRenderer(private val tag: Tag) {
     )
 }
 
+/**
+ * DSL renderer for date-time input fields, supporting MpLocalDateTime, MpInstant, and MpZonedDateTime.
+ *
+ * Accessed via [Tag.UiDateTimeField].
+ */
 class UiDateTimeFieldRenderer(private val tag: Tag) {
 
     // MpLocalDateTime /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -807,6 +846,7 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
     }
 }
 
+/** DSL renderer for time input fields. Accessed via [Tag.UiTimeField]. */
 class UiTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpLocalTime

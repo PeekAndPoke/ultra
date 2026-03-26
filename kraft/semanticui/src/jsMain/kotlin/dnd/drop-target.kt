@@ -13,12 +13,23 @@ import org.w3c.dom.get
 import org.w3c.dom.set
 import kotlin.reflect.KClass
 
+/**
+ * Factory function that creates a drop target for drag-and-drop operations (reified variant).
+ *
+ * Place this inside a component to make it accept drops of the given [PAYLOAD] type.
+ */
 @Suppress("FunctionName")
 inline fun <reified PAYLOAD : Any> Tag.DndDropTarget(
     noinline builder: DndDropTargetBuilder<PAYLOAD>.() -> Unit,
 ) =
     DndDropTarget(PAYLOAD::class, builder)
 
+/**
+ * Factory function that creates a drop target for drag-and-drop operations.
+ *
+ * @param payloadType The KClass of the accepted payload type.
+ * @param builder Configuration for acceptance, drop handling, and visual feedback callbacks.
+ */
 @Suppress("FunctionName")
 fun <PAYLOAD : Any> Tag.DndDropTarget(
     payloadType: KClass<PAYLOAD>,
@@ -26,6 +37,11 @@ fun <PAYLOAD : Any> Tag.DndDropTarget(
 ) =
     comp(DndDropTargetBuilder(payloadType).apply(builder).build()) { DndDropTargetComponent(it) }
 
+/**
+ * Builder DSL for configuring a [DndDropTargetComponent].
+ *
+ * Set [accepts], [onDrop], and visual feedback callbacks ([onMouseOver], [onDragStart], etc.).
+ */
 class DndDropTargetBuilder<PAYLOAD : Any>(private val payloadType: KClass<PAYLOAD>) {
     var accepts: (PAYLOAD) -> Boolean = { true }
     var onDrop: (PAYLOAD) -> Unit = {}
@@ -47,6 +63,7 @@ class DndDropTargetBuilder<PAYLOAD : Any>(private val payloadType: KClass<PAYLOA
     )
 }
 
+/** Applies green background highlight feedback to the drop target during drag operations. */
 fun <P : Any> DndDropTargetBuilder<P>.greenHighlights() {
     onMouseOver = {
         it.dom?.apply {
@@ -72,6 +89,7 @@ fun <P : Any> DndDropTargetBuilder<P>.greenHighlights() {
     }
 }
 
+/** Applies blue background highlight feedback to the drop target during drag operations. */
 fun <P : Any> DndDropTargetBuilder<P>.blueHighlights() {
     onMouseOver = {
         it.dom?.apply {
@@ -97,9 +115,15 @@ fun <P : Any> DndDropTargetBuilder<P>.blueHighlights() {
     }
 }
 
+/**
+ * Component that registers itself as a drop target with the global [Dnd] coordinator.
+ *
+ * Renders a hidden element; visual feedback is applied to the parent component's DOM.
+ */
 class DndDropTargetComponent<PAYLOAD : Any>(ctx: Ctx<Props<PAYLOAD>>) :
     Component<DndDropTargetComponent.Props<PAYLOAD>>(ctx) {
 
+    /** Props for [DndDropTargetComponent]. */
     data class Props<PAYLOAD : Any>(
         val payloadType: KClass<PAYLOAD>,
         val accepts: (PAYLOAD) -> Boolean,

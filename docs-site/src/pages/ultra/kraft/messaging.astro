@@ -1,0 +1,134 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {kraftSidebar} from '../../../data/kraft-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Messaging" sidebar={kraftSidebar} description="Type-safe message passing between Kraft components">
+
+    <h1>Messaging</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Type-safe message passing between components, bubbling up the tree.
+    </p>
+
+    <p>Messages let a deeply nested child component notify an ancestor without threading callbacks through every
+        intermediate component. A message bubbles up from child to parent until it reaches the root or is stopped.</p>
+
+    <h2>Defining a message</h2>
+
+    <p>A message is a data class that extends <code>MessageBase</code>:</p>
+
+    <Code code={`data class ItemSelected(
+    override val sender: Component<*>,
+    val itemId: String,
+) : MessageBase<Component<*>>(sender)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The <code>sender</code> field tracks which component sent the message. Add any payload fields you need — here
+        it's <code>itemId</code>.</p>
+
+    <h2>Sending a message</h2>
+
+    <p>Call <code>sendMessage</code> from any component:</p>
+
+    <Code code={`class ItemCard(ctx: Ctx<Props>) : Component<ItemCard.Props>(ctx) {
+    data class Props(val item: Item)
+
+    override fun VDom.render() {
+        ui.card {
+            onClick {
+                sendMessage(ItemSelected(sender = this@ItemCard, itemId = props.item.id))
+            }
+            noui.content {
+                noui.header { +props.item.name }
+            }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The message dispatches on the sender's parent, then continues up the tree. The sender itself does not receive its
+        own message.</p>
+
+    <h2>Listening for messages</h2>
+
+    <p>Register a listener in your component's <code>init</code> block with <code>onMessage</code>:</p>
+
+    <Code code={`class ItemBrowser(ctx: NoProps) : PureComponent(ctx) {
+
+    private var selectedId: String? by value(null)
+
+    init {
+        onMessage<ItemSelected> { msg ->
+            selectedId = msg.itemId
+        }
+    }
+
+    override fun VDom.render() {
+        ui.cards {
+            items.forEach { item ->
+                ItemCard(item)
+            }
+        }
+        selectedId?.let { id ->
+            p { +"Selected: ${'$'}id" }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The type parameter on <code>onMessage&lt;ItemSelected&gt;</code> filters by message type — only <code>ItemSelected</code>
+        messages trigger this handler.</p>
+
+    <h2>Stopping propagation</h2>
+
+    <p>By default, messages continue bubbling after a handler processes them. To stop a message from reaching further
+        ancestors, call <code>stop()</code>:</p>
+
+    <Code code={`onMessage<ItemSelected> { msg ->
+    selectedId = msg.itemId
+    msg.stop()  // no ancestor will see this message
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>When to use messaging</h2>
+
+    <Aside>Messaging exists for the cases where callbacks are awkward — three or four levels of nesting, or when a
+        generic container shouldn't need to know about the specific events its children emit. For direct parent-child
+        communication, a callback prop is simpler and more explicit.
+    </Aside>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Pattern</th>
+                <th class="py-2 text-gray-400">When to use</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><strong>Callback prop</strong></td>
+                <td>Direct parent-child. The parent passes <code>onSelect: (String) -&gt; Unit</code> as a prop.</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><strong>Message</strong></td>
+                <td>Deeply nested child needs to notify a distant ancestor. Intermediaries don't need to know.</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><strong>Stream</strong></td>
+                <td>Cross-cutting state that multiple unrelated components observe. See <a href="/ultra/kraft/state"
+                                                                                           class="text-brand-400">State
+                    Management</a>.
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/kraft/routing"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Routing &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

@@ -8,6 +8,7 @@ import kotlinx.html.CommonAttributeGroupFacade
 import kotlinx.html.DIV
 import org.w3c.dom.HTMLElement
 
+/** Shows a hover popup positioned at the top-left of the target element. */
 fun PopupsManager.ShowHoverPopup.topLeft(
     tag: CommonAttributeGroupFacade,
     appearance: SemanticTag.() -> SemanticTag = { this },
@@ -30,6 +31,7 @@ fun PopupsManager.ShowHoverPopup.topLeft(
     }
 }
 
+/** Shows a hover popup positioned at the top-center of the target element. */
 fun PopupsManager.ShowHoverPopup.topCenter(
     tag: CommonAttributeGroupFacade,
     appearance: SemanticTag.() -> SemanticTag = { this },
@@ -53,6 +55,7 @@ fun PopupsManager.ShowHoverPopup.topCenter(
     }
 }
 
+/** Shows a hover popup positioned at the top-right of the target element. */
 fun PopupsManager.ShowHoverPopup.topRight(
     tag: CommonAttributeGroupFacade,
     appearance: SemanticTag.() -> SemanticTag = { this },

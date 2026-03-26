@@ -27,6 +27,7 @@ class PopupsManager(
     companion object {
         val key = TypedKey<PopupsManager>("popups")
 
+        /** Retrieves the [PopupsManager] from the component tree. */
         val Component<*>.popups: PopupsManager get() = getAttributeRecursive(key)
 
         val DefaultPopupFactory: PopupComponentFactory = { target, positioning, handle, content ->
@@ -203,6 +204,7 @@ class PopupsManager(
         }
     }
 
+    /** Shows a context menu popup anchored to the [event] target with bottom-left positioning. */
     fun showContextMenu(event: UIEvent, view: PopupContentRenderer): Handle {
         return showContextMenu(
             event = event,
@@ -211,6 +213,7 @@ class PopupsManager(
         )
     }
 
+    /** Shows a context menu popup at the given [anchor] position with the specified [positioning]. */
     fun showContextMenu(
         anchor: Vector2D,
         positioning: Positioning,
@@ -270,22 +273,26 @@ class PopupsManager(
         return temp
     }
 
+    /** Closes all open popups. */
     fun closeAll() {
         streamSource.modify { emptyList() }
     }
 
+    /** Adds a popup anchored to [element] with the given [positioning] function and [content]. */
     fun add(element: HTMLElement, content: PopupContentRenderer, positioning: PopupPositionFn): Handle {
         return add { handle ->
             settings.popupRenderer(this, element, positioning, handle, content)
         }
     }
 
+    /** Adds a popup with the given content [view] and returns a handle. */
     fun add(view: PopupContentRenderer): Handle {
         return Handle(id = ++handleCounter, view = view, manager = this).also {
             streamSource.modify { plus(it) }
         }
     }
 
+    /** Closes the popup identified by the given [handle] and invokes its onClose handlers. */
     fun close(handle: Handle) {
         // call onClose handlers
         streamSource()

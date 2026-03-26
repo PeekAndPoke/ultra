@@ -10,8 +10,14 @@ import kotlinx.browser.document
 import kotlinx.browser.window
 import org.w3c.dom.events.Event
 
+/** Retrieves the [ResponsiveController] from the component's attribute hierarchy. */
 val Component<*>.responsiveCtrl: ResponsiveController get() = getAttributeRecursive(ResponsiveController.key)
 
+/**
+ * Tracks the browser window size and determines the current [DisplayType] based on configurable [Breakpoints].
+ *
+ * Emits a new [State] whenever the window is resized.
+ */
 class ResponsiveController(
     private val breakpoints: Breakpoints = Breakpoints.default,
 ) : Stream<ResponsiveController.State> {
@@ -20,18 +26,27 @@ class ResponsiveController(
         val key = TypedKey<ResponsiveController>("ResponsiveCtrl")
     }
 
+    /** Categorizes the viewport width into desktop, tablet, or mobile. */
     enum class DisplayType {
         Desktop,
         Tablet,
         Mobile;
 
+        /** True when the display type is [Desktop]. */
         val isDesktop get() = this == Desktop
         val isNotDesktop = !isDesktop
 
+        /** True when the display type is [Mobile]. */
         val isMobile get() = this == Mobile
         val isNotMobile = !isMobile
     }
 
+    /**
+     * Width breakpoints for determining the [DisplayType].
+     *
+     * @param tablet minimum width in pixels for the tablet breakpoint
+     * @param desktop minimum width in pixels for the desktop breakpoint
+     */
     data class Breakpoints(
         val tablet: Int,
         val desktop: Int,
@@ -41,6 +56,9 @@ class ResponsiveController(
         }
     }
 
+    /**
+     * Snapshot of the current window dimensions and resolved [DisplayType].
+     */
     data class State(
         val windowSize: Vector2D,
         val displayType: DisplayType,
@@ -54,6 +72,7 @@ class ResponsiveController(
 
     private val stream = StreamSource(createState())
 
+    /** Returns the current [State]. */
     override fun invoke(): State = stream()
 
     override fun subscribeToStream(sub: (State) -> Unit): Unsubscribe = stream.subscribeToStream(sub)

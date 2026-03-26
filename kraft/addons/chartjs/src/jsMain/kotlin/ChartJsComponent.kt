@@ -10,6 +10,7 @@ import kotlinx.html.style
 import org.w3c.dom.CanvasRenderingContext2D
 import org.w3c.dom.HTMLCanvasElement
 
+/** Renders a Chart.js chart from the given [data] configuration. */
 @Suppress("FunctionName")
 fun Tag.ChartJs(
     data: ChartConfig,
@@ -19,6 +20,7 @@ fun Tag.ChartJs(
     ChartJsComponent(it)
 }
 
+/** Kraft component that wraps a Chart.js canvas and manages the chart lifecycle. */
 class ChartJsComponent(ctx: Ctx<Props>) : Component<ChartJsComponent.Props>(ctx) {
 
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////

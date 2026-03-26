@@ -7,6 +7,7 @@ import kotlinx.html.A
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
+/** Sets the href attribute of an anchor tag from a bound route. */
 fun A.href(route: Route.Bound) {
     val c = consumer as? VDomTagConsumer ?: error("Consumer must be a VDomTagConsumer")
     val router = c.host.router
@@ -14,6 +15,7 @@ fun A.href(route: Route.Bound) {
     href = router.strategy.render(route)
 }
 
+/** Creates a delegated property backed by an integer URL query parameter. */
 fun <C> Component<C>.urlParam(
     name: String, default: Int, onChange: ((Int) -> Unit)? = null,
 ) = urlParams(
@@ -22,6 +24,7 @@ fun <C> Component<C>.urlParam(
     onChange = onChange,
 )
 
+/** Creates a delegated property backed by a string URL query parameter. */
 fun <C> Component<C>.urlParam(
     name: String, default: String, onChange: ((String) -> Unit)? = null,
 ) = urlParams(
@@ -30,6 +33,11 @@ fun <C> Component<C>.urlParam(
     onChange = onChange,
 )
 
+/**
+ * Creates a delegated property backed by URL query parameters.
+ *
+ * Changes to the property automatically update the URL without adding a history entry.
+ */
 fun <C, T> Component<C>.urlParams(
     fromParams: (Map<String, String>) -> T,
     toParams: (T) -> Map<String, Any?>,

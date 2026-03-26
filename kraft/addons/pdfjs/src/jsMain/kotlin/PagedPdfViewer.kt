@@ -26,6 +26,7 @@ import kotlinx.html.div
 import org.w3c.dom.CanvasRenderingContext2D
 import org.w3c.dom.HTMLCanvasElement
 
+/** Renders a single page of a PDF at a time with page navigation. */
 @Suppress("FunctionName")
 fun Tag.PagedPdfViewer(
     src: PdfSource,
@@ -41,6 +42,7 @@ fun Tag.PagedPdfViewer(
     PagedPdfViewer(it)
 }
 
+/** Kraft component that renders one PDF page at a time with navigation and zoom controls. */
 class PagedPdfViewer(ctx: Ctx<Props>) : Component<PagedPdfViewer.Props>(ctx) {
 
     //  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,6 +53,7 @@ class PagedPdfViewer(ctx: Ctx<Props>) : Component<PagedPdfViewer.Props>(ctx) {
         val onChange: (State) -> Unit,
     )
 
+    /** Display options for the paged PDF viewer. */
     data class Options(
         val maxHeightLandscapeVh: Int = 80,
         val maxHeightPortraitVh: Int = 80,
@@ -59,6 +62,7 @@ class PagedPdfViewer(ctx: Ctx<Props>) : Component<PagedPdfViewer.Props>(ctx) {
 
     //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /** Observable state of the paged PDF viewer. */
     data class State(
         val doc: PdfjsLib.PDFDocumentProxy? = null,
         val page: Int = 1,
@@ -104,12 +108,16 @@ class PagedPdfViewer(ctx: Ctx<Props>) : Component<PagedPdfViewer.Props>(ctx) {
         }
     }
 
+    /** Returns the current viewer state. */
     fun getState(): State = state
 
+    /** Returns the currently displayed page number. */
     fun getCurrentPage(): Int = state.page
 
+    /** Returns the total number of pages, or null if the document is not yet loaded. */
     fun getNumPages(): Int? = state.doc?.numPages
 
+    /** Adjusts the zoom scale by applying [block] to the current scale, clamped to [Options.scaleRange]. */
     fun modifyScale(block: (Double) -> Double) {
         modifyState {
             copy(
@@ -124,6 +132,7 @@ class PagedPdfViewer(ctx: Ctx<Props>) : Component<PagedPdfViewer.Props>(ctx) {
         }
     }
 
+    /** Navigates to the previous page, clamped to page 1. */
     fun gotoPreviousPage() {
         modifyState {
             copy(
@@ -132,6 +141,7 @@ class PagedPdfViewer(ctx: Ctx<Props>) : Component<PagedPdfViewer.Props>(ctx) {
         }
     }
 
+    /** Navigates to the next page, clamped to the last page. */
     fun gotoNextPage() {
         modifyState {
             copy(

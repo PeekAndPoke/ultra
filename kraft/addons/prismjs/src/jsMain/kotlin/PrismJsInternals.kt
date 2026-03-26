@@ -283,4 +283,5 @@ class PrismJsInternals {
     internal val plugins = PluginsLoader(styles)
 }
 
+/** Global singleton for PrismJS asset loading (styles, languages, plugins). */
 val prismJsInternals = PrismJsInternals()

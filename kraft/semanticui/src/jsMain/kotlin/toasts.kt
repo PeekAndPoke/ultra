@@ -12,6 +12,11 @@ import io.peekandpoke.ultra.semanticui.semantic
 import io.peekandpoke.ultra.semanticui.semanticIcon
 import io.peekandpoke.ultra.semanticui.ui
 
+/**
+ * Default [ToastRenderer] that renders toast notifications using Semantic UI styling.
+ *
+ * Maps [Message.Type] to appropriate Semantic UI colors and icons (green/info, warning, error).
+ */
 val SemanticUiToastsRenderer: ToastRenderer = { handle ->
 
     val styleFn: SemanticFn = when (handle.message.type) {

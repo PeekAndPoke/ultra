@@ -65,6 +65,7 @@ class RootRouterBuilder : RouterBuilder {
             builder.scope()
         }
 
+        /** Uses a layout. */
         override fun layout(layout: LayoutFn, scope: RouterBuilder.() -> Unit) {
             val builder = RouterBuilderImpl(
                 router = router,
@@ -82,6 +83,7 @@ class RootRouterBuilder : RouterBuilder {
 
     private val root = RouterBuilderImpl(router = this, parents = emptyList())
 
+    /** Builds and returns the configured [Router] instance. */
     fun build() = Router(
         mountedRoutes = mounted.toList(),
         strategyProvider = strategy,

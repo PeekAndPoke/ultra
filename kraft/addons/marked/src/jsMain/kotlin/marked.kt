@@ -5,6 +5,7 @@ package io.peekandpoke.kraft.addons.marked
 @Suppress("ClassName")
 @JsModule("marked")
 @JsNonModule
+/** External binding for the marked.js Markdown parser. */
 external object marked {
     /**
      * Configure marked https://marked.js.org/using_advanced#options

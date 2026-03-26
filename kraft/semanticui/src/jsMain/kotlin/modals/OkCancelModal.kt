@@ -12,6 +12,14 @@ import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 
+/**
+ * Factory function that renders an [OkCancelModal] dialog.
+ *
+ * @param handle The modal handle from [ModalsManager] used to control the modal lifecycle.
+ * @param transition Fade-in/out transition timing.
+ * @param view Defines the modal's appearance, header, content, and button labels.
+ * @param onResult Callback invoked with [OkCancelModal.Result.Ok] or [OkCancelModal.Result.Cancel].
+ */
 @Suppress("FunctionName")
 fun Tag.OkCancelModal(
     handle: ModalsManager.Handle,
@@ -29,6 +37,7 @@ fun Tag.OkCancelModal(
     OkCancelModal(it)
 }
 
+/** A confirmation modal with Ok and Cancel buttons, built on [FadingModal]. */
 class OkCancelModal(ctx: Ctx<Props>) : FadingModal<OkCancelModal.Props>(ctx) {
 
     companion object {
@@ -99,6 +108,7 @@ class OkCancelModal(ctx: Ctx<Props>) : FadingModal<OkCancelModal.Props>(ctx) {
 
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /** Props for [OkCancelModal]. */
     data class Props(
         override val handle: ModalsManager.Handle,
         override val transition: Transition = Transition(),
@@ -106,6 +116,7 @@ class OkCancelModal(ctx: Ctx<Props>) : FadingModal<OkCancelModal.Props>(ctx) {
         val onResult: (Result) -> Unit,
     ) : FadingModal.Props()
 
+    /** The result of the Ok/Cancel modal interaction. */
     enum class Result {
         Ok,
         Cancel;
@@ -113,6 +124,7 @@ class OkCancelModal(ctx: Ctx<Props>) : FadingModal<OkCancelModal.Props>(ctx) {
         val isOk: Boolean get() = this == Ok
         val isCancelled: Boolean get() = this == Cancel
 
+        /** Dispatches to [onOk] or [onCancel] based on the result. */
         fun <R> handle(onOk: () -> R, onCancel: () -> R): R {
             return if (isOk) {
                 onOk()
@@ -121,6 +133,7 @@ class OkCancelModal(ctx: Ctx<Props>) : FadingModal<OkCancelModal.Props>(ctx) {
             }
         }
 
+        /** Executes [onOk] only if the result is [Ok], returning null otherwise. */
         fun <R> ifOk(onOk: () -> R): R? {
             return if (isOk) {
                 onOk()
@@ -129,6 +142,7 @@ class OkCancelModal(ctx: Ctx<Props>) : FadingModal<OkCancelModal.Props>(ctx) {
             }
         }
 
+        /** Executes [onCancel] only if the result is [Cancel], returning null otherwise. */
         fun <R> ifCancelled(onCancel: () -> R): R? {
             return if (isCancelled) {
                 onCancel()
@@ -138,6 +152,7 @@ class OkCancelModal(ctx: Ctx<Props>) : FadingModal<OkCancelModal.Props>(ctx) {
         }
     }
 
+    /** Defines the visual structure of the Ok/Cancel modal: appearance, header, content, and button labels. */
     data class View(
         val appearance: SemanticTag.() -> SemanticTag,
         val header: RenderFn,

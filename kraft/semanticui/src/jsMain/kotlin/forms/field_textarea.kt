@@ -19,6 +19,13 @@ import kotlinx.html.Tag
 import kotlinx.html.textArea
 import org.w3c.dom.HTMLTextAreaElement
 
+/**
+ * Factory function that renders a [UiTextAreaComponent] for multi-line text input.
+ *
+ * @param value The current text value.
+ * @param onChange Callback invoked when the text changes.
+ * @param builder Optional configuration for field options.
+ */
 @Suppress("FunctionName")
 @io.peekandpoke.kraft.forms.KraftFormsDsl
 fun Tag.UiTextArea(
@@ -35,18 +42,26 @@ fun Tag.UiTextArea(
     UiTextAreaComponent(it)
 }
 
+/**
+ * Semantic UI textarea component with automatic vertical resize and validation support.
+ *
+ * Wraps an HTML `<textarea>` element and integrates with the Kraft forms system.
+ */
 class UiTextAreaComponent(ctx: Ctx<Props>) :
     io.peekandpoke.kraft.forms.AbstractFormField<String, Options, UiTextAreaComponent.Props>(ctx) {
 
+    /** Configuration options for [UiTextAreaComponent]. */
     class Options : io.peekandpoke.kraft.forms.FieldOptions.Base<String>(),
         io.peekandpoke.kraft.forms.TextAreaOptions<String>, SemanticOptions<String>
 
+    /** Props for [UiTextAreaComponent]. */
     data class Props(
         override val value: String,
         override val onChange: (String) -> Unit,
         override val options: Options,
     ) : io.peekandpoke.kraft.forms.AbstractFormField.Props<String, Options>
 
+    /** The underlying HTML textarea element. */
     val inputElement: HTMLTextAreaElement get() = dom!!.querySelector("textarea") as HTMLTextAreaElement
 
     private val isVerticalAutoResize get() = options.verticalAutoResize.getOrDefault(true)

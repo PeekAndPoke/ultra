@@ -7,9 +7,11 @@
 
 package io.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 
+import generated.ExtractedCodeBlocks
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.fomanticui.helpers.CodePanelColumn
 import io.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import io.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
 import io.peekandpoke.kraft.forms.formController
@@ -52,9 +54,10 @@ class FormWithDisabledFields(ctx: NoProps) : PureComponent(ctx) {
 
     override fun VDom.render() {
 
-        ui.two.column.grid {
+        ui.stackable.two.column.grid {
             ui.column {
                 ui.form {
+                    // <CodeBlock disabledFields>
                     ui.three.fields {
                         UiCheckboxField(draft.checkbox, { draft = draft.copy(checkbox = it) }) {
                             label { +State::checkbox.name }
@@ -103,6 +106,7 @@ class FormWithDisabledFields(ctx: NoProps) : PureComponent(ctx) {
                             disabled()
                         }
                     }
+                    // </CodeBlock>
                 }
 
                 ui.divider {}
@@ -125,9 +129,9 @@ class FormWithDisabledFields(ctx: NoProps) : PureComponent(ctx) {
                     }
                     +"Reset form"
                 }
-            }
 
-            ui.column {
+                ui.divider {}
+
                 renderStateAndDraftTable(
                     state,
                     draft,
@@ -140,6 +144,8 @@ class FormWithDisabledFields(ctx: NoProps) : PureComponent(ctx) {
                     ),
                 )
             }
+
+            CodePanelColumn(ExtractedCodeBlocks.pages_howto_forms_demo_FormWithDisabledFields_kt_disabledFields)
         }
     }
 }

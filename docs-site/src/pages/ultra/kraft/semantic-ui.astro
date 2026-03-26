@@ -1,7 +1,9 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import ExampleEmbed from '../../../components/ExampleEmbed.astro';
 import { kraftSidebar } from '../../../data/kraft-sidebar';
 import { Code } from 'astro:components';
+import {kraftLiveExamples, githubRepo} from '../../../data/site';
 ---
 
 <DocsLayout title="SemanticUI DSL" sidebar={kraftSidebar} description="A fluent Kotlin DSL for building FomanticUI interfaces in Kraft">
@@ -295,7 +297,18 @@ ui.button {
     +"Styled content"
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<div class="not-prose mt-8 flex gap-4">
+    <h2>See it in action</h2>
+
+    <p>The full SemanticUI component showcase — buttons, cards, menus, tables, grids, and more:</p>
+
+    <ExampleEmbed
+            src={`${kraftLiveExamples.fomanticui}#/elements/button`}
+            title="Kraft SemanticUI Components"
+            height="800px"
+            sourceUrl={`${githubRepo}/tree/master/kraft/examples/fomanticui/src/jsMain/kotlin/pages`}
+    />
+
+    <div class="not-prose mt-8 flex gap-4">
   <a href="/ultra/kraft/addons" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
     Addons &rarr;
   </a>

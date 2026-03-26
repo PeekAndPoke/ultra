@@ -9,18 +9,25 @@ import kotlinx.html.label
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.MouseEvent
 
+/**
+ * Base class for form field components that use [FieldOptions] for configuration and validation.
+ *
+ * Handles mount/unmount lifecycle, value tracking, validation, and label rendering.
+ */
 abstract class AbstractFormField<T, O : FieldOptions<T>, P : AbstractFormField.Props<T, O>>(
     ctx: Ctx<P>,
 ) : Component<P>(ctx), FormField<T> {
 
     //  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /** Props for an [AbstractFormField], providing the current value, change callback, and options. */
     interface Props<T, O : FieldOptions<T>> {
         val value: T
         val onChange: (T) -> Unit
         val options: O
     }
 
+    /** The field options controlling label, placeholder, validation rules, etc. */
     val options: O get() = props.options
 
     //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,10 +108,12 @@ abstract class AbstractFormField<T, O : FieldOptions<T>, P : AbstractFormField.P
         return errors.isEmpty()
     }
 
+    /** Focuses the DOM element matching the given [cssSelector] within this component. */
     fun focus(cssSelector: String) {
         (dom?.querySelector(cssSelector) as? HTMLElement)?.focus()
     }
 
+    /** Sets a new value, notifies the form controller, and re-validates. */
     fun setValue(value: T) {
 //        console.log("setValue", value, (value as Any)::class)
 
@@ -124,6 +133,7 @@ abstract class AbstractFormField<T, O : FieldOptions<T>, P : AbstractFormField.P
 
     // Label Helpers
 
+    /** Renders the field label; optionally focuses the element at [focusCssSelector] on click. */
     fun FlowContent.renderLabel(focusCssSelector: String? = null) {
 
         renderLabel(
@@ -133,6 +143,7 @@ abstract class AbstractFormField<T, O : FieldOptions<T>, P : AbstractFormField.P
         )
     }
 
+    /** Renders the field label with an optional [onClick] handler. */
     fun FlowContent.renderLabel(onClick: ((evt: MouseEvent) -> Unit)? = null) {
         options.label()?.let { l ->
             label {

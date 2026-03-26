@@ -16,8 +16,10 @@ fun routerMiddleware(func: RouterMiddlewareFn): RouterMiddlewareFn = func
 data class RouterMiddlewareContext(
     val uri: String,
 ) {
+    /** Returns a result that redirects the router to the given [uri]. */
     fun redirect(uri: String) = RouterMiddlewareResult.Redirect(uri)
 
+    /** Returns a result that allows routing to continue normally. */
     fun proceed() = RouterMiddlewareResult.Proceed
 }
 

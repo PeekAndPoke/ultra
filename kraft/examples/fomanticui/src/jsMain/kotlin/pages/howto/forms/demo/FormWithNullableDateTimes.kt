@@ -7,12 +7,15 @@
 
 package io.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 
+import generated.ExtractedCodeBlocks
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.fomanticui.helpers.CodePanelColumn
 import io.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import io.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
 import io.peekandpoke.kraft.forms.formController
+import io.peekandpoke.kraft.forms.validation.nonNull
 import io.peekandpoke.kraft.semanticui.forms.UiDateTimeField
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.datetime.MpLocalDateTime
@@ -45,22 +48,24 @@ class FormWithNullableDateTimes(ctx: NoProps) : PureComponent(ctx) {
 
     override fun VDom.render() {
 
-        ui.two.column.grid {
+        ui.stackable.two.column.grid {
             ui.column {
                 ui.form {
+                    // <CodeBlock nullableDateTimes>
                     ui.two.fields {
                         UiDateTimeField.nullable(draft.localDateTime, { draft = draft.copy(localDateTime = it) }) {
                             label { +State::localDateTime.name }
-                            accepts(_root_ide_package_.io.peekandpoke.kraft.forms.validation.nonNull())
+                            accepts(nonNull())
                         }
 
                         val tz = MpTimezone.of("Europe/Berlin")
 
                         UiDateTimeField.nullable(draft.zonedDateTime, tz, { draft = draft.copy(zonedDateTime = it) }) {
                             label { +State::zonedDateTime.name }
-                            accepts(_root_ide_package_.io.peekandpoke.kraft.forms.validation.nonNull())
+                            accepts(nonNull())
                         }
                     }
+                    // </CodeBlock>
                 }
 
                 ui.divider {}
@@ -83,9 +88,9 @@ class FormWithNullableDateTimes(ctx: NoProps) : PureComponent(ctx) {
                     }
                     +"Reset form"
                 }
-            }
 
-            ui.column {
+                ui.divider {}
+
                 renderStateAndDraftTable(
                     state,
                     draft,
@@ -95,6 +100,8 @@ class FormWithNullableDateTimes(ctx: NoProps) : PureComponent(ctx) {
                     )
                 )
             }
+
+            CodePanelColumn(ExtractedCodeBlocks.pages_howto_forms_demo_FormWithNullableDateTimes_kt_nullableDateTimes)
         }
     }
 }

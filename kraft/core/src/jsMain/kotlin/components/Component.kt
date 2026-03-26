@@ -22,6 +22,7 @@ abstract class Component<PROPS>(val ctx: Ctx<PROPS>) {
     companion object {
         private var nextDomKey = 1
 
+        /** Generates a unique DOM key for component instances. */
         fun getNextDomKey() = "--component-$nextDomKey--".also { nextDomKey += 1 }
     }
 

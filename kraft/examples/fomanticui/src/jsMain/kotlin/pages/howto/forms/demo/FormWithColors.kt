@@ -7,9 +7,11 @@
 
 package io.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 
+import generated.ExtractedCodeBlocks
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.fomanticui.helpers.CodePanelColumn
 import io.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import io.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
 import io.peekandpoke.kraft.forms.formController
@@ -48,9 +50,10 @@ class FormWithColors(ctx: NoProps) : PureComponent(ctx) {
 
     override fun VDom.render() {
 
-        ui.two.column.grid {
+        ui.stackable.two.column.grid {
             ui.column {
                 ui.form {
+                    // <CodeBlock colors>
                     ui.three.fields {
                         UiInputField(draft.color, modifyColor) {
                             label { +State::color.name }
@@ -62,6 +65,7 @@ class FormWithColors(ctx: NoProps) : PureComponent(ctx) {
                             type(InputType.color)
                         }
                     }
+                    // </CodeBlock>
                 }
 
                 ui.divider {}
@@ -84,9 +88,9 @@ class FormWithColors(ctx: NoProps) : PureComponent(ctx) {
                     }
                     +"Reset form"
                 }
-            }
 
-            ui.column {
+                ui.divider {}
+
                 renderStateAndDraftTable(
                     state,
                     draft,
@@ -96,6 +100,8 @@ class FormWithColors(ctx: NoProps) : PureComponent(ctx) {
                     )
                 )
             }
+
+            CodePanelColumn(ExtractedCodeBlocks.pages_howto_forms_demo_FormWithColors_kt_colors)
         }
     }
 }

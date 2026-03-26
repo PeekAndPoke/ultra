@@ -3,6 +3,7 @@ package io.peekandpoke.kraft.forms.validation.numbers
 import io.peekandpoke.kraft.forms.KraftFormsRuleDsl
 import io.peekandpoke.kraft.forms.validation.GenericRule
 
+/** Validates that the number is within the range [from]..[to] (inclusive). */
 @KraftFormsRuleDsl
 fun <T : Number?> inRange(
     from: Number,
@@ -15,6 +16,7 @@ fun <T : Number?> inRange(
     },
 )
 
+/** @see inRange */
 @KraftFormsRuleDsl
 fun <T : Number?> inRange(
     from: Number,
@@ -23,6 +25,7 @@ fun <T : Number?> inRange(
 ): io.peekandpoke.kraft.forms.validation.Rule<T> =
     inRange(from, to) { message }
 
+/** Validates that the number is strictly greater than [value]. */
 @KraftFormsRuleDsl
 fun <T : Number?> greaterThan(
     value: Number,
@@ -32,6 +35,7 @@ fun <T : Number?> greaterThan(
     checkFn = { value.toDouble() < (it ?: 0).toDouble() },
 )
 
+/** @see greaterThan */
 @KraftFormsRuleDsl
 fun <T : Number?> greaterThan(
     value: Number,
@@ -39,6 +43,7 @@ fun <T : Number?> greaterThan(
 ): io.peekandpoke.kraft.forms.validation.Rule<T> =
     greaterThan(value) { message }
 
+/** Validates that the number is greater than or equal to [value]. */
 @KraftFormsRuleDsl
 fun <T : Number?> greaterThanOrEqual(
     value: Number,
@@ -48,6 +53,7 @@ fun <T : Number?> greaterThanOrEqual(
     checkFn = { value.toDouble() <= (it ?: 0).toDouble() }
 )
 
+/** @see greaterThanOrEqual */
 @KraftFormsRuleDsl
 fun <T : Number?> greaterThanOrEqual(
     value: Number,
@@ -55,6 +61,7 @@ fun <T : Number?> greaterThanOrEqual(
 ): io.peekandpoke.kraft.forms.validation.Rule<T> =
     greaterThanOrEqual(value) { message }
 
+/** Validates that the number is strictly less than [value]. */
 @KraftFormsRuleDsl
 fun <T : Number?> lessThan(
     value: Number,
@@ -64,6 +71,7 @@ fun <T : Number?> lessThan(
     checkFn = { value.toDouble() > (it ?: 0).toDouble() }
 )
 
+/** @see lessThan */
 @KraftFormsRuleDsl
 fun <T : Number?> lessThan(
     value: Number,
@@ -71,6 +79,7 @@ fun <T : Number?> lessThan(
 ): io.peekandpoke.kraft.forms.validation.Rule<T> =
     lessThan(value) { message }
 
+/** Validates that the number is less than or equal to [value]. */
 @KraftFormsRuleDsl
 fun <T : Number?> lessThanOrEqual(
     value: Number,
@@ -80,6 +89,7 @@ fun <T : Number?> lessThanOrEqual(
     checkFn = { value.toDouble() >= (it ?: 0).toDouble() }
 )
 
+/** @see lessThanOrEqual */
 @KraftFormsRuleDsl
 fun <T : Number?> lessThanOrEqual(
     value: Number,

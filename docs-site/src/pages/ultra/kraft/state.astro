@@ -1,7 +1,9 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import ExampleEmbed from '../../../components/ExampleEmbed.astro';
 import { kraftSidebar } from '../../../data/kraft-sidebar';
 import { Code } from 'astro:components';
+import {kraftLiveExamples, githubRepo} from '../../../data/site';
 ---
 
 <DocsLayout title="State Management in Kraft" sidebar={kraftSidebar} description="Reactive state with value(), streams, and subscriptions in Kraft">
@@ -146,49 +148,26 @@ class SettingsPage(ctx: NoProps) : PureComponent(ctx) {
 
 <h2>Async data loading</h2>
 
-<p>The <code>dataLoader</code> pattern handles the loading/error/loaded lifecycle:</p>
+    <p>For loading async data with loading/error/loaded states, Kraft provides the <code>dataLoader</code> pattern.
+        Here's a quick example:</p>
 
-<Code code={`class UserProfile(ctx: Ctx<Props>) : Component<UserProfile.Props>(ctx) {
-    data class Props(val userId: String)
-
-    private val loader = dataLoader {
-        flow {
-            val user = api.getUser(props.userId)
-            emit(user)
-        }
+    <Code code={`private val loader = dataLoader {
+    flow {
+        val user = api.getUser(props.userId)
+        emit(user)
     }
+}
 
-    override fun VDom.render() {
-        loader(this) {
-            loading {
-                ui.placeholder.segment {
-                    ui.active.loader { }
-                }
-            }
-            error { err ->
-                ui.negative.message {
-                    +"Failed to load user: ${'$'}{err.message}"
-                }
-            }
-            loaded { user ->
-                ui.card {
-                    noui.content {
-                        ui.header { +user.name }
-                        noui.description { +user.email }
-                    }
-                }
-            }
-        }
+override fun VDom.render() {
+    loader(this) {
+        loading { ui.active.loader { } }
+        error { err -> ui.negative.message { +"Failed: ${'$'}{err.message}" } }
+        loaded { user -> ui.header { +user.name } }
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p>This gives you:</p>
-<ul>
-  <li>Automatic loading state on first render</li>
-  <li>Error handling if the flow throws</li>
-  <li>Type-safe access to the loaded data</li>
-  <li>A <code>reload()</code> method to refresh</li>
-</ul>
+    <p>This covers the basics — reloading, silent refresh, state inspection, and more are documented in the dedicated <a
+            href="/ultra/kraft/data-loading">Data Loading</a> page.</p>
 
 <h2>Patterns summary</h2>
 
@@ -229,7 +208,16 @@ class SettingsPage(ctx: NoProps) : PureComponent(ctx) {
   </tbody>
 </table>
 
-<div class="not-prose mt-8 flex gap-4">
+    <h2>See it in action</h2>
+
+    <ExampleEmbed
+            src={`${kraftLiveExamples.fomanticui}#/howto/kraft/components/state`}
+            title="Kraft State Management Demo"
+            height="600px"
+            sourceUrl={`${githubRepo}/tree/master/kraft/examples/fomanticui/src/jsMain/kotlin/pages/howto/kraft`}
+    />
+
+    <div class="not-prose mt-8 flex gap-4">
   <a href="/ultra/kraft/routing" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
     Routing &rarr;
   </a>

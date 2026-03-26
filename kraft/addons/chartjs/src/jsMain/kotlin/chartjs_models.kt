@@ -1,9 +1,12 @@
 package io.peekandpoke.kraft.addons.chartjs
 
+/** External interface representing a complete Chart.js configuration (type, data, options). */
 external interface ChartConfig {
 
+    /** The data section of a Chart.js configuration, containing labels and datasets. */
     interface ChartData {
 
+        /** A single dataset within a chart, including data points and styling. */
         interface Dataset {
             // Labeling
             var label: String
@@ -30,6 +33,7 @@ external interface ChartConfig {
         var datasets: Array<Dataset>
     }
 
+    /** Chart-level options (elements, plugins, scales). */
     interface Options {
         var elements: dynamic
         var plugins: dynamic

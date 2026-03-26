@@ -7,9 +7,11 @@
 
 package io.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 
+import generated.ExtractedCodeBlocks
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.fomanticui.helpers.CodePanelColumn
 import io.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import io.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
 import io.peekandpoke.kraft.forms.formController
@@ -48,9 +50,10 @@ class FormWithDateTimes(ctx: NoProps) : PureComponent(ctx) {
 
     override fun VDom.render() {
 
-        ui.two.column.grid {
+        ui.stackable.two.column.grid {
             ui.column {
                 ui.form {
+                    // <CodeBlock dateTimes>
                     ui.two.fields {
                         UiDateTimeField(draft.localDateTime, { draft = draft.copy(localDateTime = it) }) {
                             label { +State::localDateTime.name }
@@ -60,6 +63,7 @@ class FormWithDateTimes(ctx: NoProps) : PureComponent(ctx) {
                             label { +State::zonedDateTime.name }
                         }
                     }
+                    // </CodeBlock>
                 }
 
                 ui.divider {}
@@ -82,9 +86,9 @@ class FormWithDateTimes(ctx: NoProps) : PureComponent(ctx) {
                     }
                     +"Reset form"
                 }
-            }
 
-            ui.column {
+                ui.divider {}
+
                 renderStateAndDraftTable(
                     state,
                     draft,
@@ -94,6 +98,8 @@ class FormWithDateTimes(ctx: NoProps) : PureComponent(ctx) {
                     )
                 )
             }
+
+            CodePanelColumn(ExtractedCodeBlocks.pages_howto_forms_demo_FormWithDateTimes_kt_dateTimes)
         }
     }
 }

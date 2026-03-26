@@ -693,50 +693,28 @@ The value is serialized to JSON and stored in `localStorage`. On next page load,
 
 ## Async data loading
 
-The `dataLoader` pattern handles the loading/error/loaded lifecycle:
+For loading async data with loading/error/loaded states, Kraft provides the `dataLoader` pattern. Here's a quick
+example:
 
 ```kotlin
-class UserProfile(ctx: Ctx<Props>) : Component<UserProfile.Props>(ctx) {
-    data class Props(val userId: String)
-
-    private val loader = dataLoader {
-        flow {
-            val user = api.getUser(props.userId)
-            emit(user)
-        }
+private val loader = dataLoader {
+    flow {
+        val user = api.getUser(props.userId)
+        emit(user)
     }
+}
 
-    override fun VDom.render() {
-        loader(this) {
-            loading {
-                ui.placeholder.segment {
-                    ui.active.loader { }
-                }
-            }
-            error { err ->
-                ui.negative.message {
-                    +"Failed to load user: ${err.message}"
-                }
-            }
-            loaded { user ->
-                ui.card {
-                    noui.content {
-                        ui.header { +user.name }
-                        noui.description { +user.email }
-                    }
-                }
-            }
-        }
+override fun VDom.render() {
+    loader(this) {
+        loading { ui.active.loader { } }
+        error { err -> ui.negative.message { +"Failed: ${err.message}" } }
+        loaded { user -> ui.header { +user.name } }
     }
 }
 ```
 
-This gives you:
-
-- Automatic loading state on first render
-- Error handling if the flow throws
-- Type-safe access to the loaded data
-- A `reload()` method to refresh
+This covers the basics -- reloading, silent refresh, state inspection, and more are documented in the dedicated Data
+Loading section below.
 
 ## Patterns summary
 
@@ -747,6 +725,274 @@ This gives you:
 | Global/shared state       | `val x by subscribingTo(stream)`         | Auth, preferences |
 | Persistent state          | `StreamSource().persistInLocalStorage()` | User settings     |
 | Async data                | `dataLoader { flow { emit(data) } }`     | API calls         |
+
+---
+
+### Data Loading {#kraft-data-loading}
+
+# Data Loading
+
+Load async data with built-in loading, loaded, and error states.
+
+The `DataLoader` wraps an async operation and tracks its state. You define what to load, and it gives you a sealed state
+you can render against -- no manual boolean flags.
+
+## Basic usage
+
+Create a loader in your component with `dataLoader`. It starts loading immediately on mount:
+
+```kotlin
+class UserList(ctx: NoProps) : PureComponent(ctx) {
+
+    private val loader = dataLoader {
+        flow {
+            val users = api.fetchUsers()
+            emit(users)
+        }
+    }
+
+    override fun VDom.render() {
+        loader(this) {
+            loading {
+                ui.loading.segment { +"Loading users..." }
+            }
+            loaded { users ->
+                ui.list {
+                    users.forEach { user ->
+                        noui.item { +user.name }
+                    }
+                }
+            }
+            error { err ->
+                ui.error.message { +"Failed: ${err.message}" }
+            }
+        }
+    }
+}
+```
+
+The `loader(this)` call renders the appropriate block based on the current state. Only one block runs at a time.
+
+## Fixed values
+
+When you already have the data and don't need to load it asynchronously, use `dataLoaderOf`:
+
+```kotlin
+private val loader = dataLoaderOf(listOf("Alice", "Bob", "Charlie"))
+```
+
+This creates a loader that starts in the `Loaded` state immediately.
+
+## Reloading
+
+Trigger a reload from a button click or any event. Two variants:
+
+```kotlin
+// Standard reload — resets to Loading state, shows loading UI
+loader.reload()
+
+// Silent reload — refetches without showing loading state
+loader.reloadSilently()
+```
+
+Both methods accept an optional debounce in milliseconds (default: 200ms):
+
+```kotlin
+// Debounce rapid reloads (e.g. from a search input)
+loader.reload(debounceMs = 500)
+loader.reloadSilently(debounceMs = 500)
+```
+
+## State inspection
+
+Check the current state programmatically:
+
+```kotlin
+loader.isLoading()     // true during initial load or after reload()
+loader.isLoaded()      // true when data is available
+loader.isError()       // true when the flow threw an exception
+
+// Negated versions for convenience
+loader.isNotLoading()
+loader.isNotLoaded()
+loader.isNotError()
+```
+
+## Modifying loaded data
+
+Update the loaded value without triggering a full reload:
+
+```kotlin
+// Transform the current value
+loader.modifyValue { users ->
+    users.filter { it.isActive }
+}
+
+// Replace the value entirely
+loader.setLoaded(newUsers)
+
+// Set an arbitrary state
+loader.setState(DataLoader.State.Loading())
+```
+
+## Stream access
+
+The loader exposes its state and value as Streams, so you can subscribe to changes or compose with other reactive
+sources:
+
+```kotlin
+// The full state (Loading | Loaded | Error)
+val stateStream: Stream<DataLoader.State<T>> = loader.state
+
+// Just the loaded value (null when not loaded)
+val valueStream: Stream<T?> = loader.value
+```
+
+## Full example
+
+A component that loads data, shows a refresh button, and handles all three states:
+
+```kotlin
+class ProductList(ctx: NoProps) : PureComponent(ctx) {
+
+    private val loader = dataLoader {
+        flow { emit(api.fetchProducts()) }
+    }
+
+    override fun VDom.render() {
+        ui.segment {
+            ui.blue.button {
+                onClick { loader.reloadSilently() }
+                icon.sync_alternate.render()
+                +"Refresh"
+            }
+
+            loader(this) {
+                loading {
+                    ui.active.centered.inline.loader {}
+                }
+                loaded { products ->
+                    ui.relaxed.divided.list {
+                        products.forEach { product ->
+                            noui.item {
+                                noui.content {
+                                    noui.header { +product.name }
+                                    noui.description { +product.description }
+                                }
+                            }
+                        }
+                    }
+                }
+                error { err ->
+                    ui.error.message {
+                        noui.header { +"Could not load products" }
+                        p { +err.message.orEmpty() }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+---
+
+### Messaging {#kraft-messaging}
+
+# Messaging
+
+Type-safe message passing between components, bubbling up the tree.
+
+Messages let a deeply nested child component notify an ancestor without threading callbacks through every intermediate
+component. A message bubbles up from child to parent until it reaches the root or is stopped.
+
+## Defining a message
+
+A message is a data class that extends `MessageBase`:
+
+```kotlin
+data class ItemSelected(
+    override val sender: Component<*>,
+    val itemId: String,
+) : MessageBase<Component<*>>(sender)
+```
+
+The `sender` field tracks which component sent the message. Add any payload fields you need -- here it's `itemId`.
+
+## Sending a message
+
+Call `sendMessage` from any component:
+
+```kotlin
+class ItemCard(ctx: Ctx<Props>) : Component<ItemCard.Props>(ctx) {
+    data class Props(val item: Item)
+
+    override fun VDom.render() {
+        ui.card {
+            onClick {
+                sendMessage(ItemSelected(sender = this@ItemCard, itemId = props.item.id))
+            }
+            noui.content {
+                noui.header { +props.item.name }
+            }
+        }
+    }
+}
+```
+
+The message dispatches on the sender's parent, then continues up the tree. The sender itself does not receive its own
+message.
+
+## Listening for messages
+
+Register a listener in your component's `init` block with `onMessage`:
+
+```kotlin
+class ItemBrowser(ctx: NoProps) : PureComponent(ctx) {
+
+    private var selectedId: String? by value(null)
+
+    init {
+        onMessage<ItemSelected> { msg ->
+            selectedId = msg.itemId
+        }
+    }
+
+    override fun VDom.render() {
+        ui.cards {
+            items.forEach { item ->
+                ItemCard(item)
+            }
+        }
+        selectedId?.let { id ->
+            p { +"Selected: $id" }
+        }
+    }
+}
+```
+
+The type parameter on `onMessage<ItemSelected>` filters by message type -- only `ItemSelected` messages trigger this
+handler.
+
+## Stopping propagation
+
+By default, messages continue bubbling after a handler processes them. To stop a message from reaching further
+ancestors, call `stop()`:
+
+```kotlin
+onMessage<ItemSelected> { msg ->
+    selectedId = msg.itemId
+    msg.stop()  // no ancestor will see this message
+}
+```
+
+## When to use messaging
+
+| Pattern           | When to use                                                                                |
+|-------------------|--------------------------------------------------------------------------------------------|
+| **Callback prop** | Direct parent-child. The parent passes `onSelect: (String) -> Unit` as a prop.             |
+| **Message**       | Deeply nested child needs to notify a distant ancestor. Intermediaries don't need to know. |
+| **Stream**        | Cross-cutting state that multiple unrelated components observe. See State Management.      |
 
 ---
 
@@ -1639,6 +1885,339 @@ div {
 
 ---
 
+### Overlays {#kraft-overlays}
+
+# Overlays
+
+Modal dialogs, toast notifications, popup menus, and context menus.
+
+Kraft provides three overlay systems that share the same pattern: a manager you access from any component, a stage that
+renders the overlays, and handles for controlling individual overlays. All three are registered automatically when you
+call `semanticUI()` in your app setup.
+
+```kotlin
+val app = kraftApp {
+    semanticUI()  // registers modals, toasts, and popups with SemanticUI styling
+}
+```
+
+Each system is accessible from any component via a delegated property:
+
+```kotlin
+class MyComponent(ctx: Ctx<Props>) : Component<Props>(ctx) {
+    override fun VDom.render() {
+        // modals, toasts, and popups are available on every component
+        modals.show { handle -> /* ... */ }
+        toasts.info("Saved")
+        popups.showContextMenu(event) { handle -> /* ... */ }
+    }
+}
+```
+
+## Modals
+
+Show a modal by calling `modals.show` with a render function. You receive a `Handle` that lets you close the modal and
+register close callbacks:
+
+```kotlin
+modals.show { handle ->
+    div {
+        h2 { +"Confirm deletion" }
+        p { +"This cannot be undone." }
+        ui.red.button {
+            onClick {
+                performDelete()
+                handle.close()
+            }
+            +"Delete"
+        }
+        ui.button {
+            onClick { handle.close() }
+            +"Cancel"
+        }
+    }
+}.onClose {
+    // called after the modal closes, regardless of how
+}
+```
+
+Close all open modals at once:
+
+```kotlin
+modals.closeAll()
+```
+
+### OkCancelModal
+
+For the common confirm/cancel pattern, use the built-in `OkCancelModal`. It comes in three sizes:
+
+```kotlin
+modals.show { handle ->
+    OkCancelModal.mini(
+        handle = handle,
+        header = { ui.header { +"Are you sure?" } },
+        content = { +"This action cannot be undone." },
+        okText = { +"Delete" },
+        cancelText = { +"Cancel" },
+    ) { result ->
+        when (result) {
+            OkCancelModal.Result.Ok -> performDelete()
+            OkCancelModal.Result.Cancel -> { /* nothing */ }
+        }
+    }
+}
+
+// Also available:
+// OkCancelModal.tiny(...)
+// OkCancelModal.small(...)
+```
+
+## Toasts
+
+Toast notifications appear in the top-right corner and auto-dismiss after a configurable duration (default: 7 seconds).
+Three convenience methods cover the common types:
+
+```kotlin
+toasts.info("Changes saved")
+toasts.warning("Session expires in 5 minutes")
+toasts.error("Failed to save — check your connection")
+```
+
+Control the duration per toast, or pass `null` to keep it visible until clicked:
+
+```kotlin
+import kotlin.time.Duration.Companion.seconds
+
+toasts.info("Quick note", duration = 3.seconds)
+toasts.error("Read this carefully", duration = null)  // stays until clicked
+```
+
+### Custom toast settings
+
+Configure defaults when setting up the app:
+
+```kotlin
+val app = kraftApp {
+    semanticUI {
+        // this block configures the ToastsManager.Builder
+        defaultDuration = 5.seconds
+    }
+}
+```
+
+### Appending messages
+
+For API responses that return typed `Message` objects, append them directly:
+
+```kotlin
+// Single message
+toasts.append(Message.Type.info, "Item created")
+
+// From a Messages collection (e.g. from an API response)
+toasts.append(apiResponse.messages)
+```
+
+## Popups & Context Menus
+
+Context menus appear near the triggering element. Pass a `UIEvent` and the menu renders at the event position:
+
+```kotlin
+ui.button {
+    onClick { evt ->
+        popups.showContextMenu(evt, PopupsManager.Positioning.BottomLeft) { handle ->
+            ui.vertical.menu {
+                noui.item A {
+                    onClick { handle.close() }
+                    +"Edit"
+                }
+                noui.item A {
+                    onClick { handle.close() }
+                    +"Delete"
+                }
+            }
+        }
+    }
+    +"Actions"
+}
+```
+
+### Positioning
+
+Six positioning options control where the popup appears relative to the anchor:
+
+| Value                      | Position             |
+|----------------------------|----------------------|
+| `Positioning.TopLeft`      | Above, left-aligned  |
+| `Positioning.TopCenter`    | Above, centered      |
+| `Positioning.TopRight`     | Above, right-aligned |
+| `Positioning.BottomLeft`   | Below, left-aligned  |
+| `Positioning.BottomCenter` | Below, centered      |
+| `Positioning.BottomRight`  | Below, right-aligned |
+
+### Hover popups
+
+For tooltips that appear on hover, use the `showHoverPopup` helpers. These attach to an element and manage show/hide
+automatically:
+
+```kotlin
+ui.blue.label {
+    popups.showHoverPopup.topCenter(this) {
+        +"This is a tooltip"
+    }
+    +"Hover me"
+}
+```
+
+Close all open popups programmatically:
+
+```kotlin
+popups.closeAll()
+```
+
+---
+
+### Drag & Drop {#kraft-drag-and-drop}
+
+# Drag & Drop
+
+Type-safe drag and drop with typed payloads and accept predicates.
+
+Kraft's DnD system uses two components: a `DndDragHandle` that makes an element draggable, and a `DndDropTarget` that
+accepts drops. Both are generic over a payload type, so the compiler ensures you only drop compatible items.
+
+DnD is part of the `kraft-semanticui` module.
+
+## Drag handles
+
+Wrap any element in a `DndDragHandle` to make it draggable. The `payload` parameter is the data object that travels with
+the drag:
+
+```kotlin
+data class Task(val id: String, val title: String)
+
+// Inside your component's render:
+val task = Task("1", "Write docs")
+
+DndDragHandle(payload = task) {
+    ui.segment {
+        icon.bars.render()
+        +task.title
+    }
+}
+```
+
+When the user starts dragging, a visual clone follows the cursor. The payload type (`Task`) is inferred from the
+argument.
+
+## Drop targets
+
+Define a drop zone with `DndDropTarget`. The type parameter must match the drag handle's payload type:
+
+```kotlin
+DndDropTarget<Task> {
+    accepts = { task -> task.id != currentTask.id }  // filter what's accepted
+    onDrop = { task ->
+        // handle the dropped task
+        moveTask(task, targetColumn)
+    }
+}
+```
+
+The `accepts` predicate controls which payloads this target will highlight for and accept. If it returns `false`, the
+target ignores the drag.
+
+## Visual feedback
+
+Use the built-in highlight helpers for standard visual feedback during drag operations:
+
+```kotlin
+DndDropTarget<Task> {
+    greenHighlights()  // green border on valid hover
+    onDrop = { task -> moveTask(task) }
+}
+
+// Or blue:
+DndDropTarget<Task> {
+    blueHighlights()
+    onDrop = { task -> moveTask(task) }
+}
+```
+
+For custom feedback, use the individual callbacks:
+
+```kotlin
+DndDropTarget<Task> {
+    onDragStart = { target ->
+        // a compatible drag started somewhere — highlight this zone
+    }
+    onDragEnd = { target ->
+        // drag ended (dropped or cancelled) — remove highlight
+    }
+    onMouseOver = { target ->
+        // dragged item is hovering over this target
+    }
+    onMouseOut = { target ->
+        // dragged item left this target
+    }
+    onDrop = { task ->
+        // item was dropped here
+    }
+}
+```
+
+## Full example
+
+A Kanban-style board with draggable cards and two columns:
+
+```kotlin
+data class Card(val id: String, val title: String)
+
+class KanbanBoard(ctx: NoProps) : PureComponent(ctx) {
+
+    private var todo by value(listOf(Card("1", "Design"), Card("2", "Implement")))
+    private var done by value(listOf<Card>())
+
+    override fun VDom.render() {
+        ui.two.column.grid {
+            noui.column {
+                h3 { +"To Do" }
+                DndDropTarget<Card> {
+                    greenHighlights()
+                    accepts = { card -> card !in todo }
+                    onDrop = { card ->
+                        done = done - card
+                        todo = todo + card
+                    }
+                }
+                todo.forEach { card ->
+                    DndDragHandle(payload = card) {
+                        ui.segment { +card.title }
+                    }
+                }
+            }
+            noui.column {
+                h3 { +"Done" }
+                DndDropTarget<Card> {
+                    blueHighlights()
+                    accepts = { card -> card !in done }
+                    onDrop = { card ->
+                        todo = todo - card
+                        done = done + card
+                    }
+                }
+                done.forEach { card ->
+                    DndDragHandle(payload = card) {
+                        ui.segment { +card.title }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+---
+
 ### Addons {#kraft-addons}
 
 # Addons
@@ -1904,6 +2483,208 @@ val module = ScriptLoader.load(
         src = "https://esm.sh/my-library@1.0"
     )
 ).await()
+```
+
+---
+
+### Utilities & Testing {#kraft-utilities}
+
+# Utilities & Testing
+
+Responsive design, CSS-in-Kotlin, file handling, and component testing.
+
+## Responsive design
+
+The `ResponsiveController` tracks the browser window size and exposes the current display type as a reactive Stream.
+Access it from any component:
+
+```kotlin
+class MyComponent(ctx: Ctx<Props>) : Component<Props>(ctx) {
+    override fun VDom.render() {
+        val state = responsiveCtrl()
+
+        when (state.displayType) {
+            DisplayType.Mobile -> renderMobileLayout()
+            DisplayType.Tablet -> renderTabletLayout()
+            DisplayType.Desktop -> renderDesktopLayout()
+        }
+    }
+}
+```
+
+### Breakpoints
+
+Default breakpoints:
+
+| Display type | Window width    |
+|--------------|-----------------|
+| `Mobile`     | < 768px         |
+| `Tablet`     | 768px -- 1199px |
+| `Desktop`    | >= 1200px       |
+
+Convenience checks on the state:
+
+```kotlin
+val state = responsiveCtrl()
+
+state.isDesktop      // true when >= 1200px
+state.isMobile       // true when < 768px
+state.isNotDesktop   // tablet or mobile
+state.isNotMobile    // tablet or desktop
+state.windowSize     // Vector2D with current width and height
+```
+
+## CSS & Styling
+
+Kraft supports CSS-in-Kotlin through the `StyleSheet` class. Define rules as delegated properties -- class names are
+automatically mangled to avoid collisions:
+
+```kotlin
+object MyStyles : StyleSheet("my-component") {
+    val container by rule {
+        display = Display.flex
+        justifyContent = JustifyContent.center
+        padding = Padding(16.px)
+    }
+
+    val highlight by rule {
+        backgroundColor = Color("#fff3cd")
+        borderRadius = BorderRadius(4.px)
+    }
+}
+```
+
+Use the generated class names in your components:
+
+```kotlin
+override fun VDom.render() {
+    div {
+        className = MyStyles.container.selector
+        div {
+            className = MyStyles.highlight.selector
+            +"Highlighted content"
+        }
+    }
+}
+```
+
+### Scoped rules
+
+Create nested rules that apply within a parent selector:
+
+```kotlin
+val card by rule {
+    padding = Padding(12.px)
+}
+
+val cardTitle by rule(card) {
+    // generates: .card-abc123 .cardTitle-def456
+    fontSize = FontSize(1.2.em)
+    fontWeight = FontWeight.bold
+}
+```
+
+### Mounting stylesheets
+
+Mount a stylesheet to inject its CSS into the page. Unmount to remove it:
+
+```kotlin
+import de.peekandpoke.kraft.addons.styling.StyleSheets
+
+StyleSheets.mount(MyStyles)    // injects CSS
+StyleSheets.unmount(MyStyles)  // removes CSS
+```
+
+### Raw CSS and external stylesheets
+
+For raw CSS strings or external stylesheet links:
+
+```kotlin
+// Inject a raw CSS string
+val rawCss = RawStyleSheet("""
+    .custom-class { color: red; }
+""")
+StyleSheets.mount(rawCss)
+
+// Link an external stylesheet
+val externalCss = StyleSheetTag {
+    rel = "stylesheet"
+    href = "https://cdn.example.com/styles.css"
+}
+StyleSheets.mount(externalCss)
+```
+
+## File handling
+
+Read files from a file input as Base64-encoded data:
+
+```kotlin
+input {
+    type = InputType.file
+    multiple = true
+    onChange { evt ->
+        launch {
+            val files = evt.target.unsafeCast<HTMLInputElement>().files!!
+            val loaded: List<LoadedFileBase64> = files.loadAllAsBase64()
+
+            loaded.forEach { file ->
+                println(file.file.name)      // original filename
+                println(file.mimeType)       // e.g. "image/png"
+                println(file.dataBase64)     // base64 content
+                println(file.dataUrl)        // full data URL
+            }
+        }
+    }
+}
+```
+
+### Responsive images
+
+The `SrcSetImage` component generates `srcset` and `sizes` attributes automatically from a single image URL:
+
+```kotlin
+SrcSetImage(
+    src = "https://cdn.example.com/photo.jpg",
+    sizes = ImageSizes.default,
+    alt = "A photo",
+)
+```
+
+## Testing
+
+The `kraft-testing` module provides `TestBed` for rendering components and `KQuery` for querying the rendered DOM.
+
+### Rendering a component
+
+```kotlin
+@Test
+fun counter_increments() = TestBed.preact(
+    view = { Counter(start = 0) },
+) { root ->
+    // root is a KQuery<Element> wrapping the rendered DOM
+    root.selectCss("h2").textContent() shouldBe "Count: 0"
+
+    root.selectCss<HTMLButtonElement>("button").click()
+
+    root.selectCss("h2").textContent() shouldBe "Count: 1"
+}
+```
+
+### KQuery API
+
+KQuery provides jQuery-like element querying:
+
+```kotlin
+// Select elements by CSS selector
+val buttons = root.selectCss("button")
+val inputs = root.selectCss<HTMLInputElement>("input[type=text]")
+
+// Get text content of matched elements
+buttons.textContent()           // combined text of all matches
+buttons.containsText("Save")   // true if any match contains "Save"
+
+// Simulate clicks
+buttons.click()
 ```
 
 ---

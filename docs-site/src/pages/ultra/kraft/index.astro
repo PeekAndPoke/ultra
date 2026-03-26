@@ -4,6 +4,94 @@ import Aside from '../../../components/Aside.astro';
 import { kraftSidebar } from '../../../data/kraft-sidebar';
 import { Code } from 'astro:components';
 import {kraftExamples} from '../../../data/site';
+
+const sections = [
+    {
+        title: 'Overview',
+        items: [
+            {
+                href: '/ultra/kraft/getting-started',
+                title: 'Getting Started',
+                description: 'From zero to a working Kraft app. Gradle setup, entry point, first component.'
+            },
+            {
+                href: '/ultra/kraft/examples',
+                title: 'Live Examples',
+                description: 'Hello World, Addons, and SemanticUI running in your browser.'
+            },
+        ],
+    },
+    {
+        title: 'Core',
+        items: [
+            {
+                href: '/ultra/kraft/components',
+                title: 'Components',
+                description: 'Class-based and functional components with props, state, and lifecycle hooks.'
+            },
+            {
+                href: '/ultra/kraft/state',
+                title: 'State Management',
+                description: 'Reactive state with value(), stream-backed state, and external stream subscriptions.'
+            },
+            {
+                href: '/ultra/kraft/data-loading',
+                title: 'Data Loading',
+                description: 'Async data loading with loading, loaded, and error states. Reload and silent refresh.'
+            },
+            {
+                href: '/ultra/kraft/messaging',
+                title: 'Messaging',
+                description: 'Type-safe message passing between components, bubbling up the tree.'
+            },
+            {
+                href: '/ultra/kraft/routing',
+                title: 'Routing',
+                description: 'Type-safe routes with parameters, middleware for auth guards, and nested layouts.'
+            },
+            {
+                href: '/ultra/kraft/forms',
+                title: 'Forms & Validation',
+                description: 'Two-way binding, field validation, and the draft/commit pattern.'
+            },
+        ],
+    },
+    {
+        title: 'UI',
+        items: [
+            {
+                href: '/ultra/kraft/semantic-ui',
+                title: 'SemanticUI DSL',
+                description: 'A fluent Kotlin DSL for FomanticUI. Write ui.blue.button instead of CSS class strings.'
+            },
+            {
+                href: '/ultra/kraft/overlays',
+                title: 'Overlays',
+                description: 'Modal dialogs, toast notifications, popup menus, and context menus.'
+            },
+            {
+                href: '/ultra/kraft/drag-and-drop',
+                title: 'Drag & Drop',
+                description: 'Type-safe drag and drop with typed payloads and accept predicates.'
+            },
+        ],
+    },
+    {
+        title: 'Ecosystem',
+        items: [
+            {
+                href: '/ultra/kraft/utilities',
+                title: 'Utilities & Testing',
+                description: 'Responsive design, CSS-in-Kotlin, file handling, and component testing.'
+            },
+            {
+                href: '/ultra/kraft/addons',
+                title: 'Addons',
+                description: 'ChartJS, PDF viewer, syntax highlighting, signature pad, and 8 more JS libraries wrapped for Kotlin.'
+            },
+        ],
+    },
+];
 ---
 
 <DocsLayout title="Kraft" sidebar={kraftSidebar} description="Build single-page applications in pure Kotlin with Kraft">
@@ -14,22 +102,11 @@ import {kraftExamples} from '../../../data/site';
     A component-based framework for building single-page applications in Kotlin.
 </p>
 
-    <h2>Why Kotlin in the browser?</h2>
+    <p>Kraft lets you build reactive web applications using <strong>only Kotlin</strong>. It compiles to JavaScript and
+        uses <a href="https://preactjs.com" target="_blank" rel="noopener">Preact</a> (a 3KB React alternative) as its
+        rendering engine — but you never touch Preact directly.</p>
 
-    <p>If you're already writing your backend, your domain model, and your tests in Kotlin — switching to TypeScript
-        for the frontend means maintaining two mental models, two build systems, and two type systems that don't talk to
-        each other.
-        Shared code between client and server becomes copy-paste. Refactoring stops at the language boundary.</p>
-
-    <Aside>We wanted to share data classes, validation logic, and API types between server and browser. Kotlin/JS makes
-        that possible. Kraft is what we built on top of it.
-    </Aside>
-
-    <h2>What is Kraft?</h2>
-
-<p>Kraft lets you build reactive web applications using <strong>only Kotlin</strong>. It compiles to JavaScript and uses <a href="https://preactjs.com">Preact</a> (a 3KB React alternative) as its rendering engine — but you never touch Preact directly.</p>
-
-<p>Instead, you write components like this:</p>
+    <p>You write components like this:</p>
 
 <Code code={`class Counter(ctx: Ctx<Props>) : Component<Counter.Props>(ctx) {
     data class Props(val start: Int)
@@ -47,82 +124,29 @@ import {kraftExamples} from '../../../data/site';
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p>That's a complete, working component. State management (<code>value()</code>), event handling (<code>onClick</code>), and type-safe HTML — all in one place.</p>
-
-<h2>Why Kraft?</h2>
-
-    <p>Kotlin/JS React wrappers try to map React's API to Kotlin. Kraft takes a different approach: it provides its own
-        component model designed for Kotlin, then uses Preact as a lightweight rendering layer underneath.</p>
-
     <Aside>We didn't set out to write a framework. We just wanted to write Kotlin in the browser and the existing
         wrappers didn't quite fit.
     </Aside>
 
-<p>This means:</p>
-
-<ul>
-    <li><strong>Minimal JavaScript dependencies</strong> — just Preact (which itself has zero dependencies)</li>
-    <li><strong>Kotlin idioms</strong> — data classes for props, delegated properties for state, extension functions for
-        the DSL
-    </li>
-    <li><strong>Type safety</strong> from props to HTML to CSS</li>
-  <li><strong>No template engine</strong> — kotlinx.html gives you type-safe markup as code</li>
-</ul>
-
-<h2>What you get</h2>
-
-<div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
-  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
-    <h3 class="text-white font-semibold mb-1">Components</h3>
-    <p class="text-sm text-gray-400">Class-based and functional components with props, state, and lifecycle hooks.</p>
-  </div>
-  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
-    <h3 class="text-white font-semibold mb-1">Reactive State</h3>
-    <p class="text-sm text-gray-400"><code>var x by value(0)</code> — change the value, the UI updates. Built-in stream support.</p>
-  </div>
-  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
-    <h3 class="text-white font-semibold mb-1">Routing</h3>
-    <p class="text-sm text-gray-400">Type-safe routes with params, middleware for auth guards, and nested layouts.</p>
-  </div>
-  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
-    <h3 class="text-white font-semibold mb-1">Forms &amp; Validation</h3>
-    <p class="text-sm text-gray-400">Two-way binding, field validation, draft/commit pattern — all type-safe.</p>
-  </div>
-  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
-    <h3 class="text-white font-semibold mb-1">SemanticUI DSL</h3>
-    <p class="text-sm text-gray-400"><code>ui.blue.button &#123; +"Click" &#125;</code> — a beautiful, fluent API for FomanticUI.</p>
-  </div>
-  <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
-    <h3 class="text-white font-semibold mb-1">12 Addons</h3>
-    <p class="text-sm text-gray-400">ChartJS, PDF viewer, syntax highlighting, signature pad, and more — wrapped for Kotlin.</p>
-  </div>
-</div>
-
-<h2>Quick taste</h2>
-
-<p>Here's a complete app with routing:</p>
-
-<Code code={`fun main() {
-    val app = kraftApp {
-        semanticUI()
-        routing {
-            usePathStrategy()
-            mount(Static("/")) { HomePage() }
-            mount(Route1("/users/{id}")) { route ->
-                UserPage(route["id"])
-            }
-        }
-    }
-
-    app.mount("#app", PreactVDomEngine()) {
-        RouterComponent()
-    }
-}`} lang="kotlin" theme="vitesse-dark" />
+    {sections.map(section => (
+            <>
+                <h2>{section.title}</h2>
+                <div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
+                    {section.items.map(item => (
+                            <a href={item.href}
+                               class="block p-4 rounded-lg border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
+                                <h3 class="text-white font-semibold mb-1">{item.title}</h3>
+                                <p class="text-sm text-gray-400">{item.description}</p>
+                            </a>
+                    ))}
+                </div>
+            </>
+    ))}
 
     <h2>Example Projects</h2>
 
-    <p>See Kraft in action — <a href="/ultra/kraft/examples">live examples</a> running right in your browser, or clone
-        the repos to explore the code:</p>
+    <p>See Kraft in action — <a href="/ultra/kraft/examples">live examples</a> running in your browser, or clone the
+        repos to explore the code:</p>
 
     <div class="not-prose grid grid-cols-1 sm:grid-cols-3 gap-4 my-8">
         <a href="/ultra/kraft/examples"
@@ -144,9 +168,10 @@ import {kraftExamples} from '../../../data/site';
     </div>
 
     <div class="not-prose mt-8">
-  <a href="/ultra/kraft/getting-started" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
-    Get started &rarr;
-  </a>
+        <a href="/ultra/kraft/getting-started"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Get started &rarr;
+        </a>
 </div>
 
 </DocsLayout>

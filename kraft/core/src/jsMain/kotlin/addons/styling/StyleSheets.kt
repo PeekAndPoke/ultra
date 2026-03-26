@@ -3,18 +3,23 @@ package io.peekandpoke.kraft.addons.styling
 import kotlinx.browser.document
 import kotlin.random.Random
 
+/**
+ * Global registry for mounting and unmounting [StyleSheetDefinition] instances into the document head.
+ */
 object StyleSheets {
 
     private val mangleMap = mutableMapOf<String, MutableSet<String>>()
 
     private val random = Random(1)
 
+    /** Mounts the given [style] sheet into the document head. */
     fun mount(style: StyleSheetDefinition) {
         document.head?.let {
             style.mount(it)
         }
     }
 
+    /** Unmounts the given [style] sheet from the DOM. */
     fun unmount(style: StyleSheetDefinition) {
         style.unmount()
     }

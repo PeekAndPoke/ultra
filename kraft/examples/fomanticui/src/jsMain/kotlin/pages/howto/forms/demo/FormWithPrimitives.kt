@@ -7,12 +7,18 @@
 
 package io.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 
+import generated.ExtractedCodeBlocks
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.fomanticui.helpers.CodePanelColumn
 import io.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import io.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
 import io.peekandpoke.kraft.forms.formController
+import io.peekandpoke.kraft.forms.validation.comparable.greaterThan
+import io.peekandpoke.kraft.forms.validation.numbers.greaterThan
+import io.peekandpoke.kraft.forms.validation.numbers.lessThan
+import io.peekandpoke.kraft.forms.validation.strings.notBlank
 import io.peekandpoke.kraft.semanticui.forms.UiCheckboxField
 import io.peekandpoke.kraft.semanticui.forms.UiInputField
 import io.peekandpoke.kraft.utils.responsiveCtrl
@@ -51,9 +57,10 @@ class FormWithPrimitives(ctx: NoProps) : PureComponent(ctx) {
 
     override fun VDom.render() {
 
-        ui.two.column.grid {
+        ui.stackable.two.column.grid {
             ui.column {
                 ui.form {
+                    // <CodeBlock primitives>
                     ui.two.fields {
                         UiCheckboxField(::disableFields) {
                             toggle()
@@ -70,8 +77,8 @@ class FormWithPrimitives(ctx: NoProps) : PureComponent(ctx) {
                             rightClearingIcon()
 
                             accepts(
-                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.strings.notBlank(),
-                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.comparable.greaterThan("abc") { "Must be greater than 'abc'" },
+                                notBlank(),
+                                greaterThan("abc") { "Must be greater than 'abc'" },
                             )
                         }
 
@@ -83,8 +90,8 @@ class FormWithPrimitives(ctx: NoProps) : PureComponent(ctx) {
                             leftIcon { green.percent }
 
                             accepts(
-                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.greaterThan(6.0),
-                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.lessThan(20.0)
+                                greaterThan(6.0),
+                                lessThan(20.0)
                             )
                         }
                     }
@@ -103,8 +110,8 @@ class FormWithPrimitives(ctx: NoProps) : PureComponent(ctx) {
                             }
 
                             accepts(
-                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.greaterThan(5.0),
-                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.lessThan(20.0)
+                                greaterThan(5.0),
+                                lessThan(20.0)
                             )
                         }
 
@@ -121,11 +128,12 @@ class FormWithPrimitives(ctx: NoProps) : PureComponent(ctx) {
                             }
 
                             accepts(
-                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.greaterThan(3.0),
-                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.numbers.lessThan(20.0)
+                                greaterThan(3.0),
+                                lessThan(20.0)
                             )
                         }
                     }
+                    // </CodeBlock>
                 }
 
                 ui.divider {}
@@ -148,11 +156,13 @@ class FormWithPrimitives(ctx: NoProps) : PureComponent(ctx) {
                     }
                     +"Reset form"
                 }
-            }
 
-            ui.column {
+                ui.divider {}
+
                 renderDataTable()
             }
+
+            CodePanelColumn(ExtractedCodeBlocks.pages_howto_forms_demo_FormWithPrimitives_kt_primitives)
         }
     }
 

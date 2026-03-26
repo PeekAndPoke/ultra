@@ -21,6 +21,7 @@ import org.w3c.dom.CanvasRenderingContext2D
 import org.w3c.dom.HTMLCanvasElement
 import org.w3c.dom.events.Event
 
+/** Renders a signature pad canvas for capturing handwritten signatures. */
 @Suppress("FunctionName")
 fun Tag.SignaturePad(
     options: SignaturePadJs.Options = jsObject { },
@@ -34,6 +35,7 @@ fun Tag.SignaturePad(
     SignaturePad(it)
 }
 
+/** Kraft component wrapping signature_pad.js for capturing hand-drawn signatures. */
 class SignaturePad(ctx: Ctx<Props>) : Component<SignaturePad.Props>(ctx) {
 
     //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -43,6 +45,7 @@ class SignaturePad(ctx: Ctx<Props>) : Component<SignaturePad.Props>(ctx) {
         val onChange: (SignaturePad) -> Unit,
     )
 
+    /** Provides export capabilities for the signature canvas (PNG, SVG, JPG). */
     class Export(canvas: Lazy<HTMLCanvasElement?>) {
         val canvas by canvas
 
@@ -80,18 +83,24 @@ class SignaturePad(ctx: Ctx<Props>) : Component<SignaturePad.Props>(ctx) {
 
     //  Public interface  ///////////////////////////////////////////////////////////////////////////////////////
 
+    /** Exports the full canvas content. */
     val export get() = Export(lazy { getCanvas() })
+
+    /** Exports the canvas content trimmed to the signature bounds. */
     val trimmed get() = Export(lazy { getCanvasTrimmed() })
 
+    /** Clears the signature pad. */
     fun clear() {
         pad?.clear()
         onChange()
     }
 
+    /** Returns true if the pad has no strokes. */
     fun isEmpty(): Boolean {
         return pad?.isEmpty() ?: false
     }
 
+    /** Returns true if the pad has at least one stroke. */
     fun isNotEmpty(): Boolean {
         return !isEmpty()
     }

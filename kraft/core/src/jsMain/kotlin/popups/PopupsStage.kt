@@ -18,6 +18,7 @@ import kotlinx.html.Tag
 import kotlinx.html.div
 import org.w3c.dom.events.Event
 
+/** Renders the [PopupsStage] component that displays all active popups. */
 @Suppress("FunctionName")
 fun Tag.PopupsStage(
     popups: PopupsManager,
@@ -27,6 +28,7 @@ fun Tag.PopupsStage(
     PopupsStage(it)
 }
 
+/** Component that subscribes to a [PopupsManager] and renders all open popups. Closes all on document click. */
 class PopupsStage(ctx: Ctx<Props>) : Component<PopupsStage.Props>(ctx) {
 
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////

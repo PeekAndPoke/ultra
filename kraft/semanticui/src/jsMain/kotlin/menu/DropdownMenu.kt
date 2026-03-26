@@ -25,6 +25,7 @@ import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 import org.w3c.dom.events.Event
 
+/** Convenience factory that renders a text-style [DropdownMenu]. */
 @Suppress("FunctionName")
 fun Tag.TextDropdownMenu(
     display: RenderFn,
@@ -37,6 +38,7 @@ fun Tag.TextDropdownMenu(
     )
 )
 
+/** Factory function that renders a [DropdownMenu] component. */
 @Suppress("FunctionName")
 fun Tag.DropdownMenu(
     props: DropdownMenu.Props,
@@ -44,6 +46,11 @@ fun Tag.DropdownMenu(
     DropdownMenu(it)
 }
 
+/**
+ * Semantic UI dropdown menu component with nested sub-menu support.
+ *
+ * Automatically closes on outside click or after a hover-leave timeout.
+ */
 class DropdownMenu(ctx: Ctx<Props>) : Component<DropdownMenu.Props>(ctx) {
 
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,12 +68,14 @@ class DropdownMenu(ctx: Ctx<Props>) : Component<DropdownMenu.Props>(ctx) {
         }
     }
 
+    /** Props for [DropdownMenu]. */
     data class Props(
         val content: RenderFn,
         val style: Style,
         val items: List<Item>,
     )
 
+    /** Builder DSL for constructing [DropdownMenu.Props]. */
     class PropsBuilder internal constructor(
         var style: Style,
     ) {
@@ -91,6 +100,7 @@ class DropdownMenu(ctx: Ctx<Props>) : Component<DropdownMenu.Props>(ctx) {
         }
     }
 
+    /** Builder DSL for constructing a single [DropdownMenu.Item] with optional nested sub-items. */
     class ItemBuilder internal constructor() {
         private var content: RenderFunc<DIV> = {}
         private var items = mutableListOf<ItemBuilder>()
@@ -111,10 +121,13 @@ class DropdownMenu(ctx: Ctx<Props>) : Component<DropdownMenu.Props>(ctx) {
         }
     }
 
+    /** Available visual styles for the dropdown menu. */
     sealed class Style {
+        /** Renders the dropdown as a text-style menu. */
         data object TextMenu : Style()
     }
 
+    /** A single menu item, optionally containing nested sub-items. */
     data class Item(
         val content: RenderFunc<DIV>,
         val items: List<Item> = emptyList(),

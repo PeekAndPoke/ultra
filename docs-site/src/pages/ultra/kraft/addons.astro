@@ -1,8 +1,9 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import ExampleEmbed from '../../../components/ExampleEmbed.astro';
 import { kraftSidebar } from '../../../data/kraft-sidebar';
 import { Code } from 'astro:components';
-import { dep } from '../../../data/site';
+import {dep, kraftLiveExamples, githubRepo} from '../../../data/site';
 ---
 
 <DocsLayout title="Kraft Addons" sidebar={kraftSidebar} description="Kotlin wrappers for Chart.js, PDF.js, Prism, Konva, and more in Kraft">
@@ -26,57 +27,60 @@ import { dep } from '../../../data/site';
   <tbody>
     <tr>
       <td><code>chartjs</code></td>
-      <td><a href="https://www.chartjs.org/">Chart.js</a></td>
+        <td><a href="https://www.npmjs.com/package/chart.js" target="_blank" rel="noopener">Chart.js</a></td>
       <td>Bar, line, pie, radar charts</td>
     </tr>
     <tr>
       <td><code>pdfjs</code></td>
-      <td><a href="https://mozilla.github.io/pdf.js/">pdf.js</a></td>
+        <td><a href="https://www.npmjs.com/package/pdfjs-dist" target="_blank" rel="noopener">pdf.js</a></td>
       <td>Render PDFs in-browser</td>
     </tr>
     <tr>
       <td><code>prismjs</code></td>
-      <td><a href="https://prismjs.com/">Prism</a></td>
+        <td><a href="https://www.npmjs.com/package/prismjs" target="_blank" rel="noopener">Prism</a></td>
       <td>Syntax highlighting</td>
     </tr>
     <tr>
       <td><code>konva</code></td>
-      <td><a href="https://konvajs.org/">Konva</a></td>
+        <td><a href="https://www.npmjs.com/package/konva" target="_blank" rel="noopener">Konva</a></td>
       <td>2D canvas graphics</td>
     </tr>
     <tr>
       <td><code>marked</code></td>
-      <td><a href="https://marked.js.org/">marked</a> + DOMPurify</td>
+        <td><a href="https://www.npmjs.com/package/marked" target="_blank" rel="noopener">marked</a> + <a
+                href="https://www.npmjs.com/package/dompurify" target="_blank" rel="noopener">DOMPurify</a></td>
       <td>Markdown rendering</td>
     </tr>
     <tr>
       <td><code>signaturepad</code></td>
-      <td><a href="https://github.com/nicklone/signature-pad">SignaturePad</a></td>
+        <td><a href="https://www.npmjs.com/package/signature_pad" target="_blank" rel="noopener">signature_pad</a></td>
       <td>Capture handwritten signatures</td>
     </tr>
     <tr>
       <td><code>avatars</code></td>
-      <td>MinIdenticons</td>
+        <td><a href="https://www.npmjs.com/package/minidenticons" target="_blank" rel="noopener">minidenticons</a></td>
       <td>Generate SVG avatars from strings</td>
     </tr>
     <tr>
       <td><code>browserdetect</code></td>
-      <td><a href="https://github.com/nicklone/bowser">Bowser</a></td>
+        <td><a href="https://www.npmjs.com/package/bowser" target="_blank" rel="noopener">Bowser</a></td>
       <td>Browser and OS detection</td>
     </tr>
     <tr>
       <td><code>jwtdecode</code></td>
-      <td>jwt-decode</td>
+        <td><a href="https://www.npmjs.com/package/jwt-decode" target="_blank" rel="noopener">jwt-decode</a></td>
       <td>Decode JWT tokens client-side</td>
     </tr>
     <tr>
       <td><code>nxcompile</code></td>
-      <td>@nx-js/compiler-util</td>
+        <td><a href="https://www.npmjs.com/package/@aspect-build/rules_js" target="_blank" rel="noopener">@nx-js/compiler-util</a>
+        </td>
       <td>Sandbox JS code execution</td>
     </tr>
     <tr>
       <td><code>sourcemappedstacktrace</code></td>
-      <td>sourcemapped-stacktrace</td>
+        <td><a href="https://www.npmjs.com/package/sourcemapped-stacktrace" target="_blank" rel="noopener">sourcemapped-stacktrace</a>
+        </td>
       <td>Map minified stack traces</td>
     </tr>
   </tbody>
@@ -305,5 +309,14 @@ img { src = dataUrl }`} lang="kotlin" theme="vitesse-dark" />
         src = "https://esm.sh/my-library@1.0"
     )
 ).await()`} lang="kotlin" theme="vitesse-dark" />
+
+    <h2>See it in action</h2>
+
+    <ExampleEmbed
+            src={kraftLiveExamples.addons}
+            title="Kraft Addons Demo"
+            height="800px"
+            sourceUrl={`${githubRepo}/tree/master/kraft/examples/addons/src/jsMain/kotlin`}
+    />
 
 </DocsLayout>

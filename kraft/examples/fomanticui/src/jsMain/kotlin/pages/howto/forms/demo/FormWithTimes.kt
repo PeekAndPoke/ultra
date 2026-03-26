@@ -7,9 +7,11 @@
 
 package io.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 
+import generated.ExtractedCodeBlocks
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.fomanticui.helpers.CodePanelColumn
 import io.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import io.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
 import io.peekandpoke.kraft.forms.formController
@@ -51,9 +53,10 @@ class FormWithTimes(ctx: NoProps) : PureComponent(ctx) {
 
     override fun VDom.render() {
 
-        ui.two.column.grid {
+        ui.stackable.two.column.grid {
             ui.column {
                 ui.form {
+                    // <CodeBlock times>
                     ui.three.fields {
                         UiTimeField(draft.time, modifyTime) {
                             label { +State::time.name }
@@ -72,11 +75,8 @@ class FormWithTimes(ctx: NoProps) : PureComponent(ctx) {
                         ) {
                             label { +"${State::datetime.name} - time" }
                         }
-
-//                        UiDateField(draft.zonedDateTime, modifyZonedDateTime) {
-//                            label { +State::zonedDateTime.name }
-//                        }
                     }
+                    // </CodeBlock>
                 }
 
                 ui.divider {}
@@ -99,9 +99,9 @@ class FormWithTimes(ctx: NoProps) : PureComponent(ctx) {
                     }
                     +"Reset form"
                 }
-            }
 
-            ui.column {
+                ui.divider {}
+
                 renderStateAndDraftTable(
                     state,
                     draft,
@@ -111,6 +111,8 @@ class FormWithTimes(ctx: NoProps) : PureComponent(ctx) {
                     )
                 )
             }
+
+            CodePanelColumn(ExtractedCodeBlocks.pages_howto_forms_demo_FormWithTimes_kt_times)
         }
     }
 }

@@ -1,0 +1,238 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {kraftSidebar} from '../../../data/kraft-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Utilities & Testing" sidebar={kraftSidebar}
+            description="Responsive design, CSS-in-Kotlin, file handling, and component testing in Kraft">
+
+    <h1>Utilities &amp; Testing</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Responsive design, CSS-in-Kotlin, file handling, and component testing.
+    </p>
+
+    <h2>Responsive design</h2>
+
+    <p>The <code>ResponsiveController</code> tracks the browser window size and exposes the current display type as a
+        reactive <a href="/ultra/streams/">Stream</a>. Access it from any component:</p>
+
+    <Code code={`class MyComponent(ctx: Ctx<Props>) : Component<Props>(ctx) {
+    override fun VDom.render() {
+        val state = responsiveCtrl()
+
+        when (state.displayType) {
+            DisplayType.Mobile -> renderMobileLayout()
+            DisplayType.Tablet -> renderTabletLayout()
+            DisplayType.Desktop -> renderDesktopLayout()
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Breakpoints</h3>
+
+    <p>Default breakpoints:</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Display type</th>
+                <th class="py-2 text-gray-400">Window width</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Mobile</code></td>
+                <td>&lt; 768px</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Tablet</code></td>
+                <td>768px – 1199px</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Desktop</code></td>
+                <td>&ge; 1200px</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p>Convenience checks on the state:</p>
+
+    <Code code={`val state = responsiveCtrl()
+
+state.isDesktop      // true when >= 1200px
+state.isMobile       // true when < 768px
+state.isNotDesktop   // tablet or mobile
+state.isNotMobile    // tablet or desktop
+state.windowSize     // Vector2D with current width and height`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>CSS &amp; Styling</h2>
+
+    <p>Kraft supports CSS-in-Kotlin through the <code>StyleSheet</code> class. Define rules as delegated properties —
+        class names are automatically mangled to avoid collisions:</p>
+
+    <Code code={`object MyStyles : StyleSheet() {
+    val container by rule {
+        display = Display.flex
+        justifyContent = JustifyContent.center
+        padding = Padding(16.px)
+    }
+
+    val highlight by rule {
+        backgroundColor = Color("#fff3cd")
+        borderRadius = BorderRadius(4.px)
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>All three stylesheet types (<code>StyleSheet</code>, <code>RawStyleSheet</code>, <code>StyleSheetTag</code>)
+        auto-mount by default — they inject their CSS into the page as soon as the object is initialized. No manual
+        <code>StyleSheets.mount()</code> call needed.</p>
+
+    <p>To opt out, pass <code>autoMount = false</code> and mount manually when needed:</p>
+
+    <Code code={`object LazyStyles : StyleSheet(autoMount = false) {
+    val card by rule { padding = Padding(12.px) }
+}
+
+// Mount later
+StyleSheets.mount(LazyStyles)
+// Unmount to remove
+StyleSheets.unmount(LazyStyles)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Use the generated class names in your components. Each rule gets a mangled class name to avoid collisions:</p>
+
+    <Code code={`override fun VDom.render() {
+    div(MyStyles.container.name) {
+        div(MyStyles.highlight.name) {
+            +"Highlighted content"
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Nested rules</h3>
+
+    <p>Target child elements within a rule using nested CSS selectors:</p>
+
+    <Code code={`object CardStyles : StyleSheet() {
+    val card by rule {
+        padding = Padding(12.px)
+
+        // nested: targets h2 elements inside .card
+        "h2" {
+            fontSize = FontSize(1.2.em)
+            fontWeight = FontWeight.bold
+        }
+
+        // nested: targets > .content children
+        "> .content" {
+            marginTop = 8.px
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Scoped rules</h3>
+
+    <p>Create rules scoped to a parent rule using the <code>rule(contextRule)</code> overload:</p>
+
+    <Code code={`val card by rule {
+    padding = Padding(12.px)
+}
+
+// generates: .card_abc123.cardTitle_def456
+val cardTitle by rule(card) {
+    fontSize = FontSize(1.2.em)
+    fontWeight = FontWeight.bold
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Raw CSS and external stylesheets</h3>
+
+    <p>For raw CSS strings or external stylesheet links — both auto-mount by default:</p>
+
+    <Code code={`// Inject a raw CSS string (auto-mounts immediately)
+val rawCss = RawStyleSheet("""
+    .custom-class { color: red; }
+""")
+
+// Link an external stylesheet (auto-mounts immediately)
+val externalCss = StyleSheetTag {
+    href = "https://cdn.example.com/styles.css"
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>File handling</h2>
+
+    <p>Read files from a file input as Base64-encoded data:</p>
+
+    <Code code={`input {
+    type = InputType.file
+    multiple = true
+    onChange { evt ->
+        launch {
+            val files = evt.target.unsafeCast<HTMLInputElement>().files!!
+            val loaded: List<LoadedFileBase64> = files.loadAllAsBase64()
+
+            loaded.forEach { file ->
+                println(file.file.name)      // original filename
+                println(file.mimeType)       // e.g. "image/png"
+                println(file.dataBase64)     // base64 content
+                println(file.dataUrl)        // full data URL
+            }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Responsive images</h3>
+
+    <p>The <code>SrcSetImage</code> component generates <code>srcset</code> and <code>sizes</code> attributes
+        automatically from a single image URL:</p>
+
+    <Code code={`SrcSetImage(
+    src = "https://cdn.example.com/photo.jpg",
+    sizes = ImageSizes.default,
+    alt = "A photo",
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Testing</h2>
+
+    <p>The <code>kraft-testing</code> module provides <code>TestBed</code> for rendering components and
+        <code>KQuery</code> for querying the rendered DOM.</p>
+
+    <h3>Rendering a component</h3>
+
+    <Code code={`@Test
+fun counter_increments() = TestBed.preact(
+    view = { Counter(start = 0) },
+) { root ->
+    // root is a KQuery<Element> wrapping the rendered DOM
+    root.selectCss("h2").textContent() shouldBe "Count: 0"
+
+    root.selectCss<HTMLButtonElement>("button").click()
+
+    root.selectCss("h2").textContent() shouldBe "Count: 1"
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>KQuery API</h3>
+
+    <p>KQuery provides jQuery-like element querying:</p>
+
+    <Code code={`// Select elements by CSS selector
+val buttons = root.selectCss("button")
+val inputs = root.selectCss<HTMLInputElement>("input[type=text]")
+
+// Get text content of matched elements
+buttons.textContent()           // combined text of all matches
+buttons.containsText("Save")   // true if any match contains "Save"
+
+// Simulate clicks
+buttons.click()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/kraft/addons"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Addons &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

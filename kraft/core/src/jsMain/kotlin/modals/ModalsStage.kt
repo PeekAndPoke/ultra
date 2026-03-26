@@ -7,6 +7,7 @@ import io.peekandpoke.kraft.vdom.VDom
 import kotlinx.html.Tag
 import kotlinx.html.div
 
+/** Renders the [ModalsStage] component that displays all currently open modals. */
 @Suppress("FunctionName")
 fun Tag.ModalsStage(
     modals: ModalsManager,
@@ -16,6 +17,7 @@ fun Tag.ModalsStage(
     ModalsStage(it)
 }
 
+/** Component that subscribes to a [ModalsManager] and renders all open modal dialogs. */
 class ModalsStage(ctx: Ctx<Props>) : Component<ModalsStage.Props>(ctx) {
 
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////

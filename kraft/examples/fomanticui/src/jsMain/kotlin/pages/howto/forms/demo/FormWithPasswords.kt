@@ -7,12 +7,15 @@
 
 package io.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 
+import generated.ExtractedCodeBlocks
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.fomanticui.helpers.CodePanelColumn
 import io.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import io.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
 import io.peekandpoke.kraft.forms.formController
+import io.peekandpoke.kraft.forms.validation.equalTo
 import io.peekandpoke.kraft.semanticui.forms.UiPasswordField
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick
@@ -43,9 +46,10 @@ class FormWithPasswords(ctx: NoProps) : PureComponent(ctx) {
 
     override fun VDom.render() {
 
-        ui.two.column.grid {
+        ui.stackable.two.column.grid {
             ui.column {
                 ui.form {
+                    // <CodeBlock passwords>
                     ui.three.fields {
                         UiPasswordField(draft.password, { draft = draft.copy(password = it) }) {
                             label { +"Password" }
@@ -55,7 +59,7 @@ class FormWithPasswords(ctx: NoProps) : PureComponent(ctx) {
                             label { +"Repeat" }
 
                             accepts(
-                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.equalTo(
+                                equalTo(
                                     { draft.password },
                                     "Passwords must match"
                                 )
@@ -68,13 +72,14 @@ class FormWithPasswords(ctx: NoProps) : PureComponent(ctx) {
                             revealPasswordIcon()
 
                             accepts(
-                                _root_ide_package_.io.peekandpoke.kraft.forms.validation.equalTo(
+                                equalTo(
                                     { draft.password },
                                     "Passwords must match"
                                 )
                             )
                         }
                     }
+                    // </CodeBlock>
                 }
 
                 ui.divider {}
@@ -97,9 +102,9 @@ class FormWithPasswords(ctx: NoProps) : PureComponent(ctx) {
                     }
                     +"Reset form"
                 }
-            }
 
-            ui.column {
+                ui.divider {}
+
                 renderStateAndDraftTable(
                     state,
                     draft,
@@ -109,6 +114,8 @@ class FormWithPasswords(ctx: NoProps) : PureComponent(ctx) {
                     )
                 )
             }
+
+            CodePanelColumn(ExtractedCodeBlocks.pages_howto_forms_demo_FormWithPasswords_kt_passwords)
         }
     }
 }

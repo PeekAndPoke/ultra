@@ -3,14 +3,20 @@ package io.peekandpoke.kraft.examples.fomanticui.helpers
 import io.peekandpoke.kraft.addons.prismjs.PrismKotlin
 import io.peekandpoke.kraft.addons.prismjs.PrismPlugin.CopyToClipboard.Companion.copyToClipboard
 import io.peekandpoke.kraft.addons.prismjs.PrismPlugin.LineNumbers.Companion.lineNumbers
+import io.peekandpoke.kraft.addons.styling.RawStyleSheet
+import io.peekandpoke.kraft.addons.styling.StyleSheet
+import io.peekandpoke.kraft.addons.styling.StyleSheets
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.semanticui.semantic
 import io.peekandpoke.ultra.semanticui.ui
+import kotlinx.css.Overflow
+import kotlinx.css.overflow
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
+import kotlinx.html.div
 
 @Suppress("FunctionName")
 fun Tag.HorizontalContentAndCode(
@@ -45,6 +51,48 @@ fun Tag.ContentAndCode(
     )
 ) {
     ContentAndCode(it)
+}
+
+private object CodePanelStyles : StyleSheet() {
+    val container by rule {
+        put("display", "flex")
+        put("flex-direction", "column")
+        put("flex", "1")
+        overflow = Overflow.auto
+    }
+
+    // Descendant rules need raw CSS — kotlinx-css nested blocks don't produce descendant selectors.
+    private val descendants = RawStyleSheet(
+        autoMount = false,
+        css = """
+            .${container.name} > div { flex: 1; display: flex; flex-direction: column; }
+            .${container.name} .code-toolbar { flex: 1; display: flex; flex-direction: column; }
+            .${container.name} pre[class*="language"] { flex: 1 1 0%; min-height: 0; margin: 0; }
+        """.trimIndent(),
+    )
+
+    init {
+        StyleSheets.mount(descendants)
+    }
+}
+
+/**
+ * Renders a SemanticUI column containing a PrismKotlin code block that fills the available row height.
+ *
+ * This emits a `ui.column` with flex styling, so call it directly inside a grid — not inside another column.
+ */
+@Suppress("FunctionName")
+fun FlowContent.CodePanelColumn(code: String) {
+    ui.column {
+        attributes["style"] = "display: flex; flex-direction: column;"
+
+        div(CodePanelStyles.container.name) {
+            PrismKotlin(code.trimIndent()) {
+                lineNumbers()
+                copyToClipboard()
+            }
+        }
+    }
 }
 
 class ContentAndCode(ctx: Ctx<Props>) : Component<ContentAndCode.Props>(ctx) {

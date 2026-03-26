@@ -9,6 +9,14 @@ import io.peekandpoke.kraft.toasts.ToastsManager
 import io.peekandpoke.kraft.toasts.ToastsStage
 import io.peekandpoke.kraft.toasts.toasts
 
+/**
+ * Configures a Kraft application to use Semantic UI for modals, popups, and toasts.
+ *
+ * Call this in the [KraftApp.Builder] to wire up [SemanticUiPopupComponent] as the popup factory
+ * and [SemanticUiToastsRenderer] as the default toast renderer.
+ *
+ * @param toasts Optional additional toast configuration.
+ */
 @KraftDsl
 fun KraftApp.Builder.semanticUI(
     toasts: ToastsManager.Builder.() -> Unit = {},

@@ -1,7 +1,9 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import ExampleEmbed from '../../../components/ExampleEmbed.astro';
 import { kraftSidebar } from '../../../data/kraft-sidebar';
 import { Code } from 'astro:components';
+import {kraftLiveExamples, githubRepo} from '../../../data/site';
 ---
 
 <DocsLayout title="Kraft Components" sidebar={kraftSidebar} description="Component model, props, lifecycle hooks, and composition in Kraft">
@@ -227,13 +229,24 @@ override fun VDom.render() {
 
 <Code code={`override fun VDom.render() {
     // These are available in any component
-    val router = router           // Navigation
-    val modals = modals           // Show modals
-    val toasts = toasts           // Show notifications
-    val responsive = responsive   // Screen size info
+    val router = router                 // Navigation
+    val modals = modals                 // Show modals
+    val toasts = toasts                 // Show notifications
+    val popups = popups                 // Show popups and context menus
+    val responsive = responsiveCtrl()   // Screen size info
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p>These are injected via Kraft's attribute system — no manual wiring needed.</p>
+    <p>These are injected via Kraft's attribute system — no manual wiring needed. See <a href="/ultra/kraft/overlays">Overlays</a>
+        for modals, toasts, and popups. See <a href="/ultra/kraft/utilities">Utilities</a> for responsive design.</p>
+
+    <h2>See it in action</h2>
+
+    <ExampleEmbed
+            src={`${kraftLiveExamples.fomanticui}#/howto/kraft/components/basics`}
+            title="Kraft Components Demo"
+            height="600px"
+            sourceUrl={`${githubRepo}/tree/master/kraft/examples/fomanticui/src/jsMain/kotlin/pages/howto/kraft`}
+    />
 
 <div class="not-prose mt-8 flex gap-4">
   <a href="/ultra/kraft/state" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">

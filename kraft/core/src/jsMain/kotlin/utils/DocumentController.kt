@@ -7,8 +7,14 @@ import io.peekandpoke.ultra.streams.StreamSource
 import kotlinx.browser.document
 import kotlinx.browser.window
 
+/** Retrieves the [DocumentController] from the component's attribute hierarchy. */
 val Component<*>.documentCtrl: DocumentController get() = getAttributeRecursive(DocumentController.key)
 
+/**
+ * Tracks whether the browser document currently has focus.
+ *
+ * Listens to visibility-change, focus, and blur events to keep the [hasFocus] stream up to date.
+ */
 class DocumentController {
 
     companion object {
@@ -16,6 +22,8 @@ class DocumentController {
     }
 
     private val hasFocusSource = StreamSource(document.hasFocus())
+
+    /** Stream that emits true when the document has focus, false otherwise. */
     val hasFocus = hasFocusSource.readonly
 
     init {

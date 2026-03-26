@@ -7,9 +7,11 @@
 
 package io.peekandpoke.kraft.examples.fomanticui.pages.howto.forms.demo
 
+import generated.ExtractedCodeBlocks
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.fomanticui.helpers.CodePanelColumn
 import io.peekandpoke.kraft.examples.fomanticui.helpers.invoke
 import io.peekandpoke.kraft.examples.fomanticui.helpers.renderStateAndDraftTable
 import io.peekandpoke.kraft.forms.formController
@@ -47,9 +49,10 @@ class FormWithNullableDates(ctx: NoProps) : PureComponent(ctx) {
 
     override fun VDom.render() {
 
-        ui.two.column.grid {
+        ui.stackable.two.column.grid {
             ui.column {
                 ui.form {
+                    // <CodeBlock nullableDates>
                     ui.three.fields {
                         UiDateField.nullable(draft.localDate, { draft = draft.copy(localDate = it) }) {
                             label { +State::localDate.name }
@@ -65,6 +68,7 @@ class FormWithNullableDates(ctx: NoProps) : PureComponent(ctx) {
                             label { +State::zonedDateTime.name }
                         }
                     }
+                    // </CodeBlock>
                 }
 
                 ui.divider {}
@@ -87,9 +91,9 @@ class FormWithNullableDates(ctx: NoProps) : PureComponent(ctx) {
                     }
                     +"Reset form"
                 }
-            }
 
-            ui.column {
+                ui.divider {}
+
                 renderStateAndDraftTable(
                     state, draft, listOf(
                         State::localDate { it?.toIsoString() },
@@ -98,6 +102,8 @@ class FormWithNullableDates(ctx: NoProps) : PureComponent(ctx) {
                     )
                 )
             }
+
+            CodePanelColumn(ExtractedCodeBlocks.pages_howto_forms_demo_FormWithNullableDates_kt_nullableDates)
         }
     }
 }

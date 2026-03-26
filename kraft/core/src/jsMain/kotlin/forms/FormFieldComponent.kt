@@ -5,12 +5,18 @@ import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.forms.validation.Rule
 import io.peekandpoke.kraft.messages.sendMessage
 
+/**
+ * Alternative form field base class that converts string input via [Props.fromStr].
+ *
+ * Suitable for fields where the raw DOM input is a string that needs parsing.
+ */
 abstract class FormFieldComponent<T, P : FormFieldComponent.Props<T>>(
     ctx: Ctx<P>,
 ) : FormField<P>, Component<P>(ctx) {
 
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /** Props providing the initial value, string parser, change callback, and validation rules. */
     interface Props<P> {
         val initialValue: P
         val fromStr: (String) -> P
@@ -26,6 +32,7 @@ abstract class FormFieldComponent<T, P : FormFieldComponent.Props<T>>(
 
     private var inputValue: T? = null
 
+    /** The effective value: user input if set, otherwise the initial value from props. */
     val currentValue
         get() = when (val input = inputValue) {
             null -> props.initialValue
@@ -64,6 +71,7 @@ abstract class FormFieldComponent<T, P : FormFieldComponent.Props<T>>(
         errors = emptyList()
     }
 
+    /** Parses a string input via [Props.fromStr] and sets the resulting value. */
     fun setInput(input: String) {
         try {
             val newValue = props.fromStr(input)
@@ -78,6 +86,7 @@ abstract class FormFieldComponent<T, P : FormFieldComponent.Props<T>>(
         sendMessage(FormFieldInputChanged(this))
     }
 
+    /** Sets the value directly, touches the field, validates, and notifies via [Props.onChange]. */
     fun setValue(value: T) {
         touch()
 

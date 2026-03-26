@@ -1,0 +1,245 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import ExampleEmbed from '../../../components/ExampleEmbed.astro';
+import {kraftSidebar} from '../../../data/kraft-sidebar';
+import {Code} from 'astro:components';
+import {kraftLiveExamples, githubRepo} from '../../../data/site';
+---
+
+<DocsLayout title="Overlays" sidebar={kraftSidebar}
+            description="Modal dialogs, toast notifications, and popup menus in Kraft">
+
+    <h1>Overlays</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Modal dialogs, toast notifications, popup menus, and context menus.
+    </p>
+
+    <p>Kraft provides three overlay systems that share the same pattern: a manager you access from any component, a
+        stage that renders the overlays, and handles for controlling individual overlays. All three are registered
+        automatically when you call <code>semanticUI()</code> in your app setup.</p>
+
+    <Code code={`val app = kraftApp {
+    semanticUI()  // registers modals, toasts, and popups with SemanticUI styling
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Each system is accessible from any component via a delegated property:</p>
+
+    <Code code={`class MyComponent(ctx: Ctx<Props>) : Component<Props>(ctx) {
+    override fun VDom.render() {
+        // modals, toasts, and popups are available on every component
+        modals.show { handle -> /* ... */ }
+        toasts.info("Saved")
+        popups.showContextMenu(event) { handle -> /* ... */ }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>Every framework ends up reinventing modals. We tried to keep the API small and get out of your way.</Aside>
+
+    <h2>Modals</h2>
+
+    <p>Show a modal by calling <code>modals.show</code> with a render function. You receive a <code>Handle</code> that
+        lets you close the modal and register close callbacks:</p>
+
+    <Code code={`modals.show { handle ->
+    div {
+        h2 { +"Confirm deletion" }
+        p { +"This cannot be undone." }
+        ui.red.button {
+            onClick {
+                performDelete()
+                handle.close()
+            }
+            +"Delete"
+        }
+        ui.button {
+            onClick { handle.close() }
+            +"Cancel"
+        }
+    }
+}.onClose {
+    // called after the modal closes, regardless of how
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Close all open modals at once:</p>
+
+    <Code code={`modals.closeAll()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>OkCancelModal</h3>
+
+    <p>For the common confirm/cancel pattern, use the built-in <code>OkCancelModal</code>. It comes in three sizes:</p>
+
+    <Code code={`modals.show { handle ->
+    OkCancelModal.mini(
+        handle = handle,
+        header = { ui.header { +"Are you sure?" } },
+        content = { +"This action cannot be undone." },
+        okText = { +"Delete" },
+        cancelText = { +"Cancel" },
+    ) { result ->
+        when (result) {
+            OkCancelModal.Result.Ok -> performDelete()
+            OkCancelModal.Result.Cancel -> { /* nothing */ }
+        }
+    }
+}
+
+// Also available:
+// OkCancelModal.tiny(...)
+// OkCancelModal.small(...)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Toasts</h2>
+
+    <p>Toast notifications appear in the top-right corner and auto-dismiss after a configurable duration (default: 7
+        seconds). Three convenience methods cover the common types:</p>
+
+    <Code code={`toasts.info("Changes saved")
+toasts.warning("Session expires in 5 minutes")
+toasts.error("Failed to save — check your connection")`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Control the duration per toast, or pass <code>null</code> to keep it visible until clicked:</p>
+
+    <Code code={`import kotlin.time.Duration.Companion.seconds
+
+toasts.info("Quick note", duration = 3.seconds)
+toasts.error("Read this carefully", duration = null)  // stays until clicked`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Custom toast settings</h3>
+
+    <p>Configure defaults when setting up the app:</p>
+
+    <Code code={`val app = kraftApp {
+    semanticUI {
+        // this block configures the ToastsManager.Builder
+        defaultDuration = 5.seconds
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Appending messages</h3>
+
+    <p>For API responses that return typed <code>Message</code> objects, append them directly:</p>
+
+    <Code code={`// Single message
+toasts.append(Message.Type.info, "Item created")
+
+// From a Messages collection (e.g. from an API response)
+toasts.append(apiResponse.messages)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Popups &amp; Context Menus</h2>
+
+    <p>Context menus appear near the triggering element. Pass a <code>UIEvent</code> and the menu renders at the event
+        position:</p>
+
+    <Code code={`ui.button {
+    onClick { evt ->
+        popups.showContextMenu(evt, PopupsManager.Positioning.BottomLeft) { handle ->
+            ui.vertical.menu {
+                noui.item A {
+                    onClick { handle.close() }
+                    +"Edit"
+                }
+                noui.item A {
+                    onClick { handle.close() }
+                    +"Delete"
+                }
+            }
+        }
+    }
+    +"Actions"
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Positioning</h3>
+
+    <p>Six positioning options control where the popup appears relative to the anchor:</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Value</th>
+                <th class="py-2 text-gray-400">Position</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-300">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Positioning.TopLeft</code></td>
+                <td>Above, left-aligned</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Positioning.TopCenter</code></td>
+                <td>Above, centered</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Positioning.TopRight</code></td>
+                <td>Above, right-aligned</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Positioning.BottomLeft</code></td>
+                <td>Below, left-aligned</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Positioning.BottomCenter</code></td>
+                <td>Below, centered</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Positioning.BottomRight</code></td>
+                <td>Below, right-aligned</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Hover popups</h3>
+
+    <p>For tooltips that appear on hover, use the <code>showHoverPopup</code> helpers. These attach to an element and
+        manage show/hide automatically:</p>
+
+    <Code code={`ui.blue.label {
+    popups.showHoverPopup.topCenter(this) {
+        +"This is a tooltip"
+    }
+    +"Hover me"
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Close all open popups programmatically:</p>
+
+    <Code code={`popups.closeAll()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>See it in action</h2>
+
+    <h3>Modals</h3>
+
+    <ExampleEmbed
+            src={`${kraftLiveExamples.fomanticui}#/howto/blocks/modal-dialogs`}
+            title="Kraft Modals Demo"
+            height="600px"
+            sourceUrl={`${githubRepo}/tree/master/kraft/examples/fomanticui/src/jsMain/kotlin/pages/howto/blocks/modals`}
+    />
+
+    <h3>Popups &amp; Context Menus</h3>
+
+    <ExampleEmbed
+            src={`${kraftLiveExamples.fomanticui}#/howto/blocks/popups-and-context-menus`}
+            title="Kraft Popups Demo"
+            height="600px"
+            sourceUrl={`${githubRepo}/tree/master/kraft/examples/fomanticui/src/jsMain/kotlin/pages/howto/blocks/popups`}
+    />
+
+    <h3>Toasts</h3>
+
+    <ExampleEmbed
+            src={`${kraftLiveExamples.fomanticui}#/howto/blocks/toasts`}
+            title="Kraft Toasts Demo"
+            height="400px"
+            sourceUrl={`${githubRepo}/tree/master/kraft/examples/fomanticui/src/jsMain/kotlin/pages/howto/blocks/flashmessages`}
+    />
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/kraft/drag-and-drop"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Drag &amp; Drop &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

@@ -1,5 +1,8 @@
 package io.peekandpoke.kraft.forms
 
+/**
+ * Represents a single form field with validation, touch tracking, and error state.
+ */
 interface FormField<T> {
 
     /**

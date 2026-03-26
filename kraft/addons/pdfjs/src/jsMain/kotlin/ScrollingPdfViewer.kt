@@ -31,6 +31,7 @@ import org.w3c.dom.CanvasRenderingContext2D
 import org.w3c.dom.HTMLCanvasElement
 import org.w3c.dom.asList
 
+/** Renders all pages of a PDF in a scrollable container. */
 @Suppress("FunctionName")
 fun Tag.ScrollingPdfViewer(
     src: PdfSource,
@@ -46,6 +47,7 @@ fun Tag.ScrollingPdfViewer(
     ScrollingPdfViewer(it)
 }
 
+/** Kraft component that renders all PDF pages stacked vertically with scroll support. */
 class ScrollingPdfViewer(ctx: Ctx<Props>) : Component<ScrollingPdfViewer.Props>(ctx) {
 
     //  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -56,6 +58,7 @@ class ScrollingPdfViewer(ctx: Ctx<Props>) : Component<ScrollingPdfViewer.Props>(
         val onChange: (State) -> Unit,
     )
 
+    /** Display options for the scrolling PDF viewer. */
     data class Options(
         val maxHeightLandscapeVh: Int = 80,
         val maxHeightPortraitVh: Int = 80,
@@ -64,6 +67,7 @@ class ScrollingPdfViewer(ctx: Ctx<Props>) : Component<ScrollingPdfViewer.Props>(
 
     //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /** Observable state of the scrolling PDF viewer. */
     data class State(
         val doc: PdfjsLib.PDFDocumentProxy? = null,
         val scale: Double = 1.0,
@@ -102,10 +106,13 @@ class ScrollingPdfViewer(ctx: Ctx<Props>) : Component<ScrollingPdfViewer.Props>(
         }
     }
 
+    /** Returns the current viewer state. */
     fun getState(): State = state
 
+    /** Returns the total number of pages, or null if the document is not yet loaded. */
     fun getNumPages(): Int? = state.doc?.numPages
 
+    /** Adjusts the zoom scale by applying [block] to the current scale, clamped to [Options.scaleRange]. */
     fun modifyScale(block: (Double) -> Double) {
         modifyState {
             copy(

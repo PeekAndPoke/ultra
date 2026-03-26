@@ -30,35 +30,55 @@ fun <T, C> Component<C>.dataLoaderOf(value: T): DataLoader<T> = dataLoader {
     flowOf(value)
 }
 
+/**
+ * Asynchronous data loader that manages loading, loaded, and error states for a component.
+ *
+ * Automatically triggers the initial load on creation and supports debounced reloading.
+ */
 class DataLoader<T>(
     component: Component<*>,
     val options: Options<T>,
 ) {
+    /** Configuration options for the data loader. */
     data class Options<T>(
         val load: suspend () -> Flow<T>,
     )
 
+    /**
+     * DSL builder for rendering the data loader's current state.
+     *
+     * Provides callbacks for each possible state: [loading], [loaded], and [error].
+     */
     class Render<T> {
         internal var loading: FlowContent.() -> Unit = {}
         internal var loaded: FlowContent.(data: T) -> Unit = {}
         internal var error: FlowContent.(error: Throwable) -> Unit = {}
 
+        /** Sets the render block for the loading state. */
         fun loading(block: FlowContent.() -> Unit) {
             loading = block
         }
 
+        /** Sets the render block for the loaded state. */
         fun loaded(block: FlowContent.(data: T) -> Unit) {
             loaded = block
         }
 
+        /** Sets the render block for the error state. */
         fun error(block: FlowContent.(error: Throwable) -> Unit) {
             error = block
         }
     }
 
+    /** Represents the current state of the data loader. */
     sealed class State<T> {
+        /** Data is currently being loaded. */
         class Loading<T> : State<T>()
+
+        /** Data has been successfully loaded. */
         class Loaded<T>(val data: T) : State<T>()
+
+        /** Loading failed with an [error]. */
         class Error<T>(val error: Throwable) : State<T>()
     }
 
@@ -68,10 +88,10 @@ class DataLoader<T>(
 
     private var stateStream: StreamSource<State<T>> = StreamSource(currentState)
 
-    /** The current state of the loader */
+    /** The current state of the loader as a stream. */
     val state: Stream<State<T>> = stateStream.readonly
 
-    /** The current value of the loader */
+    /** The current loaded value, or null if not yet loaded or in error state. */
     val value: Stream<T?> = state.map { (it as? State.Loaded<T>)?.data }
 
     private var requestsCounter = 0
@@ -99,6 +119,9 @@ class DataLoader<T>(
     /** Returns true when the loader is NOT in the [State.Loaded] */
     fun isNotLoaded(): Boolean = !isLoaded()
 
+    /**
+     * Renders the current state into the given [flow] content using the [Render] DSL.
+     */
     operator fun invoke(flow: FlowContent, block: Render<T>.() -> Unit) {
 
         val render = Render<T>().apply(block)
@@ -110,6 +133,7 @@ class DataLoader<T>(
         }
     }
 
+    /** Modifies the currently loaded value using the given [block] transformation. Does nothing if not loaded. */
     fun modifyValue(block: (T) -> T) {
         value()?.let {
             setLoaded(
@@ -118,19 +142,31 @@ class DataLoader<T>(
         }
     }
 
+    /** Transitions the loader to the [State.Loaded] state with the given [data]. */
     fun setLoaded(data: T) {
         setState(State.Loaded(data))
     }
 
+    /** Directly sets the loader to the given [state]. */
     fun setState(state: State<T>) {
         currentState = state
     }
 
+    /**
+     * Reloads the data, first transitioning to the [State.Loading] state.
+     *
+     * @param debounceMs debounce delay in milliseconds to avoid rapid successive requests
+     */
     fun reload(debounceMs: Long = 200) {
         currentState = State.Loading()
         reloadSilently(debounceMs)
     }
 
+    /**
+     * Reloads the data without transitioning to the loading state, keeping the current value visible.
+     *
+     * @param debounceMs debounce delay in milliseconds to avoid rapid successive requests
+     */
     fun reloadSilently(debounceMs: Long = 200) {
         jobs.forEach {
             try {

@@ -11,6 +11,7 @@ import io.peekandpoke.ultra.common.addAt
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 
+/** Renders a [ListFieldComponent] for editing a list of items with add/remove/reorder support. */
 @Suppress("FunctionName")
 fun <T> Tag.ListField(
     items: List<T>,
@@ -22,9 +23,13 @@ fun <T> Tag.ListField(
     ListFieldComponent(it)
 }
 
+/**
+ * Component for editing a mutable list of items, supporting per-item modification, reordering, removal, and addition.
+ */
 class ListFieldComponent<T>(ctx: Ctx<Props<T>>) :
     Component<ListFieldComponent.Props<T>>(ctx) {
 
+    /** Props for [ListFieldComponent]. */
     data class Props<T>(
         val items: List<T>,
         val onChange: (List<T>) -> Unit,
@@ -32,6 +37,7 @@ class ListFieldComponent<T>(ctx: Ctx<Props<T>>) :
         val renderAdd: FlowContent.(AddCtx<T>) -> Unit,
     )
 
+    /** Builder for configuring [Props] with item and add renderers. */
     class PropsBuilder<T>(
         val items: List<T>,
         val onChange: (List<T>) -> Unit,
@@ -50,6 +56,7 @@ class ListFieldComponent<T>(ctx: Ctx<Props<T>>) :
         }
     }
 
+    /** Context passed to the item renderer, providing the item, its index, and mutation callbacks. */
     data class ItemCtx<T>(
         val idx: Int,
         val item: T,
@@ -71,6 +78,7 @@ class ListFieldComponent<T>(ctx: Ctx<Props<T>>) :
         }
     }
 
+    /** Context passed to the add-item renderer, providing an [add] callback. */
     data class AddCtx<T>(
         val add: (T) -> Unit,
     ) {

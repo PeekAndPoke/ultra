@@ -20,6 +20,16 @@ import org.w3c.dom.events.Event
 import org.w3c.dom.events.MouseEvent
 import kotlin.reflect.KClass
 
+/**
+ * Factory function that creates a drag handle for drag-and-drop operations.
+ *
+ * Place this inside a component to make it (or its [host]) draggable. The handle renders
+ * a hidden DOM element and attaches mouse event listeners to initiate dragging.
+ *
+ * @param payload The data payload carried during the drag operation.
+ * @param host Optional explicit host component to drag; defaults to the parent component.
+ * @param key Optional component key for reconciliation.
+ */
 @Suppress("FunctionName")
 inline fun <reified PAYLOAD : Any> Tag.DndDragHandle(
     payload: PAYLOAD,
@@ -36,9 +46,15 @@ inline fun <reified PAYLOAD : Any> Tag.DndDragHandle(
     DndDragHandleComponent(it)
 }
 
+/**
+ * Component that acts as a drag handle, cloning the host element and tracking mouse movement.
+ *
+ * Renders a hidden element to hook into the DOM; all drag visuals are handled by cloning the host.
+ */
 class DndDragHandleComponent<PAYLOAD : Any>(ctx: Ctx<Props<PAYLOAD>>) :
     Component<DndDragHandleComponent.Props<PAYLOAD>>(ctx) {
 
+    /** Props for [DndDragHandleComponent]. */
     data class Props<PAYLOAD : Any>(
         val payloadType: KClass<PAYLOAD>,
         val payload: PAYLOAD,

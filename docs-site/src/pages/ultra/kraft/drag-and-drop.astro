@@ -1,0 +1,160 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import ExampleEmbed from '../../../components/ExampleEmbed.astro';
+import {kraftSidebar} from '../../../data/kraft-sidebar';
+import {Code} from 'astro:components';
+import {kraftLiveExamples, githubRepo} from '../../../data/site';
+---
+
+<DocsLayout title="Drag & Drop" sidebar={kraftSidebar}
+            description="Type-safe drag and drop with typed payloads in Kraft">
+
+    <h1>Drag &amp; Drop</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Type-safe drag and drop with typed payloads and accept predicates.
+    </p>
+
+    <p>Kraft's DnD system uses two components: a <code>DndDragHandle</code> that makes an element draggable, and a
+        <code>DndDropTarget</code> that accepts drops. Both are generic over a payload type, so the compiler ensures you
+        only drop compatible items.</p>
+
+    <p>DnD is part of the <code>kraft-semanticui</code> module.</p>
+
+    <h2>Drag handles</h2>
+
+    <p>Wrap any element in a <code>DndDragHandle</code> to make it draggable. The <code>payload</code> parameter is the
+        data object that travels with the drag:</p>
+
+    <Code code={`data class Task(val id: String, val title: String)
+
+// Inside your component's render:
+val task = Task("1", "Write docs")
+
+DndDragHandle(payload = task) {
+    ui.segment {
+        icon.bars.render()
+        +task.title
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>When the user starts dragging, a visual clone follows the cursor. The payload type (<code>Task</code>) is
+        inferred from the argument.</p>
+
+    <h2>Drop targets</h2>
+
+    <p>Define a drop zone with <code>DndDropTarget</code>. The type parameter must match the drag handle's payload type:
+    </p>
+
+    <Code code={`DndDropTarget<Task> {
+    accepts = { task -> task.id != currentTask.id }  // filter what's accepted
+    onDrop = { task ->
+        // handle the dropped task
+        moveTask(task, targetColumn)
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The <code>accepts</code> predicate controls which payloads this target will highlight for and accept. If it
+        returns <code>false</code>, the target ignores the drag.</p>
+
+    <h2>Visual feedback</h2>
+
+    <p>Use the built-in highlight helpers for standard visual feedback during drag operations:</p>
+
+    <Code code={`DndDropTarget<Task> {
+    greenHighlights()  // green border on valid hover
+    onDrop = { task -> moveTask(task) }
+}
+
+// Or blue:
+DndDropTarget<Task> {
+    blueHighlights()
+    onDrop = { task -> moveTask(task) }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>For custom feedback, use the individual callbacks:</p>
+
+    <Code code={`DndDropTarget<Task> {
+    onDragStart = { target ->
+        // a compatible drag started somewhere — highlight this zone
+    }
+    onDragEnd = { target ->
+        // drag ended (dropped or cancelled) — remove highlight
+    }
+    onMouseOver = { target ->
+        // dragged item is hovering over this target
+    }
+    onMouseOut = { target ->
+        // dragged item left this target
+    }
+    onDrop = { task ->
+        // item was dropped here
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Full example</h2>
+
+    <p>A Kanban-style board with draggable cards and two columns:</p>
+
+    <Code code={`data class Card(val id: String, val title: String)
+
+class KanbanBoard(ctx: NoProps) : PureComponent(ctx) {
+
+    private var todo by value(listOf(Card("1", "Design"), Card("2", "Implement")))
+    private var done by value(listOf<Card>())
+
+    override fun VDom.render() {
+        ui.two.column.grid {
+            noui.column {
+                h3 { +"To Do" }
+                DndDropTarget<Card> {
+                    greenHighlights()
+                    accepts = { card -> card !in todo }
+                    onDrop = { card ->
+                        done = done - card
+                        todo = todo + card
+                    }
+                }
+                todo.forEach { card ->
+                    DndDragHandle(payload = card) {
+                        ui.segment { +card.title }
+                    }
+                }
+            }
+            noui.column {
+                h3 { +"Done" }
+                DndDropTarget<Card> {
+                    blueHighlights()
+                    accepts = { card -> card !in done }
+                    onDrop = { card ->
+                        todo = todo - card
+                        done = done + card
+                    }
+                }
+                done.forEach { card ->
+                    DndDragHandle(payload = card) {
+                        ui.segment { +card.title }
+                    }
+                }
+            }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>See it in action</h2>
+
+    <ExampleEmbed
+            src={`${kraftLiveExamples.fomanticui}#/howto/blocks/drag-and-drop`}
+            title="Kraft Drag & Drop Demo"
+            height="600px"
+            sourceUrl={`${githubRepo}/tree/master/kraft/examples/fomanticui/src/jsMain/kotlin/pages/howto/blocks/dnd`}
+    />
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/kraft/utilities"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Utilities &amp; Testing &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

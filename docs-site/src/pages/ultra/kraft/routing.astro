@@ -70,11 +70,14 @@ router.navToUri(Nav.about())
 // Navigate with parameters
 router.navToUri(Nav.userProfile("alice"))
 
-// Navigate handling a click event (prevents default, uses router)
+// Navigate handling a click event
 ui.button {
     onClick { evt -> router.navToUri(evt, Nav.home()) }
     +"Go home"
 }
+// When you pass the MouseEvent, Kraft detects modifier keys:
+// Ctrl+Click (Cmd+Click on Mac) opens in a new tab,
+// just like a native link. No platform-specific code needed.
 
 // Go back
 router.navBack()

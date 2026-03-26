@@ -1,7 +1,10 @@
 package io.peekandpoke.kraft.addons.nxcompile
 
-// see https://blog.risingstack.com/writing-a-javascript-framework-sandboxed-code-evaluation/
-
+/**
+ * External binding for @nx-js/compiler-util, a sandboxed JavaScript code evaluation library.
+ *
+ * See: https://blog.risingstack.com/writing-a-javascript-framework-sandboxed-code-evaluation/
+ */
 @JsModule("@nx-js/compiler-util")
 @JsNonModule
 external object NxCompile {
