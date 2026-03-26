@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import { streamsSidebar } from '../../../data/streams-sidebar';
 import { Code } from 'astro:components';
 ---
@@ -61,7 +62,11 @@ unsub()  // stops the ticker`} lang="kotlin" theme="vitesse-dark" />
 
 <p>Maps values asynchronously. The result stream is nullable — <code>null</code> until the first async operation completes:</p>
 
-<Code code={`val userId = StreamSource("user-1")
+    <Aside>And there it is — the one place where "always has a value" meets async reality. The value is null until the
+        coroutine finishes. We're not going to pretend otherwise.
+    </Aside>
+
+    <Code code={`val userId = StreamSource("user-1")
 
 val user = userId.mapAsync { id ->
     api.fetchUser(id)  // suspend function

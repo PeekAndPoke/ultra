@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import { kontainerSidebar } from '../../../data/kontainer-sidebar';
 import { Code } from 'astro:components';
 ---
@@ -208,11 +209,15 @@ class OrderService(val ctx: RequestContext)  // singleton — shared globally?`}
     singleton(AuditLog::class)
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p>You don't need to do anything — Kontainer analyzes the dependency graph and makes the right call. The rule is simple:</p>
+    <p>You don't need to do anything — Kontainer analyzes the dependency graph and handles it. The rule is simple:</p>
 
 <p><strong>If you depend on something that must be cleaned up per unit of work, you must be cleaned up too.</strong></p>
 
-<p>This promotion <strong>bubbles up the dependency tree</strong>. If service A injects service B, and B injects a dynamic service C, then both A and B become semi-dynamic — even though only C was explicitly marked as dynamic. The "contamination" flows from the leaves to the root, ensuring that no singleton accidentally holds onto stale per-request state.</p>
+    <Aside>This one was born from a bug. A singleton held onto a stale request context, and we spent an afternoon
+        wondering why user A was seeing user B's data. Never again.
+    </Aside>
+
+    <p>This promotion <strong>bubbles up the dependency tree</strong>. If service A injects service B, and B injects a dynamic service C, then both A and B become semi-dynamic — even though only C was explicitly marked as dynamic. The "contamination" flows from the leaves to the root, ensuring that no singleton accidentally holds onto stale per-request state.</p>
 
 <Code code={`class RequestContext(val userId: String)        // dynamic
 

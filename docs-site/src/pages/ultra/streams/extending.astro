@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import { streamsSidebar } from '../../../data/streams-sidebar';
 import { Code } from 'astro:components';
 ---
@@ -48,7 +49,11 @@ source.asFlow()
 
 <p>The Flow emits the current value immediately on collection, then subsequent values. Cancelling the collector unsubscribes automatically.</p>
 
-<h2>Platform summary</h2>
+    <Aside>We didn't try to replace Flow. Sometimes you need the full coroutines ecosystem. This bridge lets you get
+        there without rewriting everything.
+    </Aside>
+
+    <h2>Platform summary</h2>
 
 <div class="not-prose my-8">
   <table class="w-full text-sm text-left">

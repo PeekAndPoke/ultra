@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import { streamsSidebar } from '../../../data/streams-sidebar';
 import { Code } from 'astro:components';
 ---
@@ -60,7 +61,12 @@ source.subscribeToStream { println("Got: ${'$'}it") }
 
 source(2)  // prints "Got: 2"`} lang="kotlin" theme="vitesse-dark" />
 
-<p>The exception is logged as <code>[Streams] ERROR: subscriber threw ...</code> so it shows up in your console during development, but it never takes down the stream.</p>
+    <p>The exception is logged as <code>[Streams] ERROR: subscriber threw ...</code> so it shows up in your console
+        during development, but it doesn't take down the stream.</p>
+
+    <Aside>We debated whether to swallow exceptions silently. We didn't. They're logged. You'll see them. You just won't
+        lose your other subscribers over it.
+    </Aside>
 
 <h2>Lazy subscription chains</h2>
 

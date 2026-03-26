@@ -1,22 +1,31 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import {karangoSidebar} from '../../../data/karango-sidebar';
 import {Code} from 'astro:components';
 ---
 
 <DocsLayout title="Karango" sidebar={karangoSidebar} description="Type-safe ArangoDB queries in Kotlin">
 
-    <h1>Karango — Type-Safe ArangoDB in Kotlin</h1>
+    <h1>Karango</h1>
 
     <p class="text-xl text-gray-400 !mt-2 !mb-8">
-        Write AQL queries in Kotlin with full type safety. Your IDE catches query errors before ArangoDB does.
+        A type-safe Kotlin DSL for ArangoDB queries.
     </p>
 
-    <h2>The Problem</h2>
+    <Aside>If you're not using ArangoDB, this page is not for you. But if you are — well, you probably know how it feels
+        to debug AQL strings at 2am.
+    </Aside>
 
-    <p>ArangoDB's query language (AQL) is powerful, but building queries as strings is error-prone. Typos in field
-        names, wrong collection references, mismatched types — you only find out at runtime. And refactoring? Good luck
-        finding all the queries that reference a renamed field.</p>
+    <h2>String-based queries don't scale</h2>
+
+    <p>Building database queries as strings works until the project grows. Then you rename a field in your data class
+        and spend an hour hunting down all the query strings that still reference the old name. Typos in field names,
+        wrong collection references, mismatched types — you only find out at runtime, usually in production.</p>
+
+    <p>This isn't unique to ArangoDB. SQL has the same problem, and ORMs exist for exactly this reason.
+        Karango is the same idea for AQL: move query construction into Kotlin's type system so the compiler
+        catches mistakes before the database does.</p>
 
     <h2>The Solution</h2>
 

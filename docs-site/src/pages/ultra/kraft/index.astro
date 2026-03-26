@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import { kraftSidebar } from '../../../data/kraft-sidebar';
 import { Code } from 'astro:components';
 import {kraftExamples} from '../../../data/site';
@@ -7,14 +8,24 @@ import {kraftExamples} from '../../../data/site';
 
 <DocsLayout title="Kraft" sidebar={kraftSidebar} description="Build single-page applications in pure Kotlin with Kraft">
 
-<h1>Kraft — Build SPAs in Pure Kotlin</h1>
+    <h1>Kraft</h1>
 
 <p class="text-xl text-gray-400 !mt-2 !mb-8">
-  A component-based framework for building single-page applications.
-  Kotlin all the way down — no JavaScript, no template engines, no compromises.
+    A component-based framework for building single-page applications in Kotlin.
 </p>
 
-<h2>What is Kraft?</h2>
+    <h2>Why Kotlin in the browser?</h2>
+
+    <p>If you're already writing your backend, your domain model, and your tests in Kotlin — switching to TypeScript
+        for the frontend means maintaining two mental models, two build systems, and two type systems that don't talk to
+        each other.
+        Shared code between client and server becomes copy-paste. Refactoring stops at the language boundary.</p>
+
+    <Aside>We wanted to share data classes, validation logic, and API types between server and browser. Kotlin/JS makes
+        that possible. Kraft is what we built on top of it.
+    </Aside>
+
+    <h2>What is Kraft?</h2>
 
 <p>Kraft lets you build reactive web applications using <strong>only Kotlin</strong>. It compiles to JavaScript and uses <a href="https://preactjs.com">Preact</a> (a 3KB React alternative) as its rendering engine — but you never touch Preact directly.</p>
 
@@ -40,14 +51,21 @@ import {kraftExamples} from '../../../data/site';
 
 <h2>Why Kraft?</h2>
 
-<p><strong>Not another React wrapper.</strong> Kotlin/JS React wrappers try to map React's API to Kotlin. Kraft takes a different approach: it provides its own component model designed for Kotlin, then uses Preact as a lightweight rendering layer underneath.</p>
+    <p>Kotlin/JS React wrappers try to map React's API to Kotlin. Kraft takes a different approach: it provides its own
+        component model designed for Kotlin, then uses Preact as a lightweight rendering layer underneath.</p>
+
+    <Aside>We didn't set out to write a framework. We just wanted to write Kotlin in the browser and the existing
+        wrappers didn't quite fit.
+    </Aside>
 
 <p>This means:</p>
 
 <ul>
-  <li><strong>Zero JavaScript dependencies</strong> beyond Preact (which itself has zero dependencies)</li>
-  <li><strong>Kotlin idioms</strong> everywhere — data classes for props, delegated properties for state, extension functions for the DSL</li>
-  <li><strong>Type safety</strong> from props to HTML to CSS — your IDE catches errors before the browser does</li>
+    <li><strong>Minimal JavaScript dependencies</strong> — just Preact (which itself has zero dependencies)</li>
+    <li><strong>Kotlin idioms</strong> — data classes for props, delegated properties for state, extension functions for
+        the DSL
+    </li>
+    <li><strong>Type safety</strong> from props to HTML to CSS</li>
   <li><strong>No template engine</strong> — kotlinx.html gives you type-safe markup as code</li>
 </ul>
 

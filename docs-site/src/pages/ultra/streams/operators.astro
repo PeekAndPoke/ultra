@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import { streamsSidebar } from '../../../data/streams-sidebar';
 import { Code } from 'astro:components';
 ---
@@ -45,7 +46,12 @@ val indexed = source.indexed()
 
 <h2>filter</h2>
 
-<p>Only pass values matching a predicate. Since streams always have a value, you provide an initial value for when nothing matches yet:</p>
+    <p>Only pass values matching a predicate. Since streams always have a value, you must provide an initial value for
+        when nothing matches yet:</p>
+
+    <Aside>This is the "always has a value" contract showing its teeth. You pay with one extra parameter. Honestly, it's
+        worth it.
+    </Aside>
 
 <Code code={`val source = StreamSource(3)
 

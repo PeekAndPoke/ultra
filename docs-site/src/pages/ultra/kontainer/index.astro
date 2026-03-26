@@ -1,21 +1,35 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import { kontainerSidebar } from '../../../data/kontainer-sidebar';
 import { Code } from 'astro:components';
 ---
 
 <DocsLayout title="Kontainer" sidebar={kontainerSidebar} description="Lightweight dependency injection for Kotlin">
 
-<h1>Kontainer — Dependency Injection, Done Right</h1>
+    <h1>Kontainer</h1>
 
 <p class="text-xl text-gray-400 !mt-2 !mb-8">
-  A lightweight DI container for Kotlin. Constructor injection, lifecycle management,
-  and compile-time verification — no magic, no annotations, no surprises.
+    A lightweight dependency injection container for Kotlin.
+    Constructor injection, lifecycle management, and validation at startup.
 </p>
 
-<h2>What is Kontainer?</h2>
+    <h2>Why another DI container?</h2>
 
-<p>Kontainer is a dependency injection container that uses a <strong>two-stage architecture</strong>: you define a blueprint, then create container instances from it. Services are injected via constructors — no annotations, no reflection tricks, no runtime surprises.</p>
+    <p>Dependency injection solves a real problem: it decouples your code from the concrete implementations it uses,
+        making it testable and composable. But most DI containers are designed for long-lived application scopes.
+        On a server handling hundreds of requests per second, you often need state that lives exactly as long as one
+        request —
+        the current user, collected metrics, an audit trail — and then disappears cleanly.</p>
+
+    <Aside>We tried other containers first. They worked fine for singletons. But scoping state to a request without
+        manual cleanup? That's what made us write our own.
+    </Aside>
+
+    <h2>What is Kontainer?</h2>
+
+    <p>Kontainer is a dependency injection container that uses a <strong>two-stage architecture</strong>: you define a
+        blueprint, then create container instances from it. Services are injected via constructors.</p>
 
 <Code code={`val blueprint = kontainer {
     singleton(UserRepository::class)
@@ -48,14 +62,20 @@ val service = kontainer.get(UserService::class)`} lang="kotlin" theme="vitesse-d
 
 <h2>Why Kontainer?</h2>
 
-<p><strong>Not another Dagger clone.</strong> Kontainer doesn't generate code at compile time or scan classpath at runtime. Instead, it validates the entire dependency graph on first use and gives you clear error messages when something doesn't wire up.</p>
+    <p>Kontainer doesn't generate code at compile time or scan the classpath at runtime. Instead, it validates the
+        entire dependency graph on first use and tells you clearly when something doesn't wire up.</p>
+
+    <Aside>It's not trying to compete with Dagger or Koin. It grew out of a specific need: per-request containers with
+        scoped state. If that's not your problem, those other tools might serve you better.
+    </Aside>
 
 <ul>
-  <li><strong>Pure Kotlin DSL</strong> — no annotations, no XML, no YAML. Your DI config is code.</li>
-  <li><strong>Three lifecycles</strong> — Singleton (global), Dynamic (per-container), Prototype (per-injection). Choose what fits.</li>
-  <li><strong>Validated on first use</strong> — missing dependencies, ambiguous services, and inconsistencies are caught immediately with clear messages.</li>
-  <li><strong>Constructor injection</strong> — services declare what they need in their constructor. Kontainer fills it in.</li>
-  <li><strong>No classpath scanning</strong> — you control exactly what goes into the container.</li>
+    <li><strong>Pure Kotlin DSL</strong> — your DI config is code, not annotations or XML.</li>
+    <li><strong>Three lifecycles</strong> — Singleton (global), Dynamic (per-container), Prototype (per-injection).</li>
+    <li><strong>Validated on first use</strong> — missing dependencies and inconsistencies are caught with clear
+        messages.
+    </li>
+    <li><strong>Constructor injection</strong> — services declare what they need in their constructor.</li>
 </ul>
 
 <h2>What you get</h2>

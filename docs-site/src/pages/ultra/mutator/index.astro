@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import {mutatorSidebar} from '../../../data/mutator-sidebar';
 import {Code} from 'astro:components';
 ---
@@ -7,17 +8,27 @@ import {Code} from 'astro:components';
 <DocsLayout title="Mutator" sidebar={mutatorSidebar}
             description="Stateful mutable wrappers for immutable Kotlin data classes">
 
-    <h1>Mutator — Mutate the Immutable</h1>
+    <h1>Mutator</h1>
 
     <p class="text-xl text-gray-400 !mt-2 !mb-8">
         KSP-generated mutable wrappers for immutable data classes.
         Inspired by <a href="https://immerjs.github.io/immer/" target="_blank" rel="noopener">immer.js</a>.
-        Nested mutations, automatic change propagation, dirty tracking — zero boilerplate.
     </p>
+
+    <h2>Immutability is worth it</h2>
+
+    <p>Immutable data structures eliminate an entire class of bugs — no shared mutable state, no defensive copying,
+        no wondering whether some other part of the code changed your object while you weren't looking.
+        Kotlin's <code>val</code> and <code>data class</code> make this the natural default, and that's a good thing.
+    </p>
+
+    <Aside>Seriously. If you've ever spent hours tracking down a bug caused by something mutating a list that was passed
+        three function calls ago — you know why immutability matters.
+    </Aside>
 
     <h2>The problem: nested copy() chains</h2>
 
-    <p>Kotlin data classes are immutable by default, which is great. But updating a deeply nested field is painful:</p>
+    <p>But updating a deeply nested immutable field is painful:</p>
 
     <Code code={`@Mutable
 data class Company(val name: String, val ceo: Person)
@@ -62,12 +73,16 @@ val updated = company.mutate {
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>One block. The intent is immediately clear: <em>change the CEO's street</em>. Mutator handles all the copy()
-        calls under the hood. The result is a new immutable instance — your original data is never touched.</p>
+    <p>One block. Mutator handles all the copy() calls under the hood. The result is a new immutable instance — your
+        original data is never touched.</p>
 
     <h2>When you DON'T need Mutator</h2>
 
-    <p>Be honest with yourself: <strong>if your data classes are flat or shallow, you don't need this library</strong>.
+    <Aside>Honestly? Most of the time. If your data classes are two levels deep or less, copy() is fine. We use Mutator
+        in exactly the places where copy() becomes unreadable.
+    </Aside>
+
+    <p>If your data classes are flat or shallow, you don't need this library.
         A single <code>copy()</code> call is perfectly fine:</p>
 
     <Code code={`// For flat data classes, copy() is great. Don't add Mutator for this.

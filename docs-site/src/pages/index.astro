@@ -1,55 +1,63 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Nav from '../components/Nav.astro';
+import Aside from '../components/Aside.astro';
 import { githubRepo, mavenCentralUrl, ultraGroup } from '../data/site';
 
 const libraries = [
   {
     name: 'Kraft',
-    tagline: 'Build SPAs in pure Kotlin',
-    description: 'A component-based SPA framework using Preact under the hood. Type-safe HTML DSL, reactive state, routing, forms, and a beautiful SemanticUI integration.',
+    tagline: 'SPAs in pure Kotlin',
+    description: 'A component-based SPA framework using Preact under the hood. Type-safe HTML DSL, reactive state, routing, forms, and SemanticUI integration.',
+    aside: 'Kotlin in the browser. No JavaScript was harmed.',
     href: '/ultra/kraft/',
     ready: true,
   },
   {
     name: 'Mutator',
-    tagline: 'Mutate the immutable',
-    description: 'KSP-generated code that lets you mutate deeply nested immutable data structures without copy() hell.',
+    tagline: 'Modify immutable data structures',
+    description: 'KSP-generated code that lets you modify deeply nested immutable data structures with simple property assignments.',
+    aside: 'Because copy()-hell makes developers yell.',
     href: '/ultra/mutator/',
     ready: true,
   },
   {
     name: 'Kontainer',
-    tagline: 'Dependency injection, done right',
-    description: 'A lightweight DI container built around per-request scoping. Fresh containers per unit of work, stateful dynamic services, and validated dependency graphs — no annotations, no surprises.',
+    tagline: 'Lightweight dependency injection',
+    description: 'A DI container built around per-request scoping. Fresh containers per unit of work, dynamic services, and validated dependency graphs.',
+    aside: 'Yes, we know there are other DI containers.',
     href: '/ultra/kontainer/',
     ready: true,
   },
   {
     name: 'Slumber',
-    tagline: 'Serialization that sleeps easy',
-    description: 'Kotlin-first serialization that understands nullable types, default values, and sealed classes. No annotations needed.',
+    tagline: 'Kotlin-first serialization',
+    description: 'Serialization that understands nullable types, default values, and sealed classes without annotation clutter.',
+    aside: 'The name is a pun. We chose it anyway.',
     href: '/ultra/slumber/',
     ready: true,
   },
   {
     name: 'Streams',
-    tagline: 'Reactive streams that always have a value',
-    description: 'A lightweight reactive streams library for Kotlin Multiplatform. Always-has-a-value semantics, lazy subscriptions, and composable operators — no marble diagrams required.',
+    tagline: 'Reactive values',
+    description: 'A lightweight reactive streams library for Kotlin Multiplatform. Always-has-a-value semantics, lazy subscriptions, and composable operators.',
+    aside: 'Like RxJS, but smaller. Much, much smaller.',
     href: '/ultra/streams/',
     ready: true,
   },
   {
     name: 'Karango',
-    tagline: 'Type-safe ArangoDB',
-    description: 'Write ArangoDB queries in Kotlin with full type safety. KSP generates the boilerplate, you write the logic.',
+    tagline: 'Type-safe ArangoDB queries',
+    description: 'Write ArangoDB queries in Kotlin with compile-time safety. KSP generates the boilerplate.',
+    aside: 'For the three of us who use ArangoDB and Kotlin.',
     href: '/ultra/karango/',
     ready: true,
   },
   {
     name: 'Funktor',
     tagline: 'Full-stack Kotlin on Ktor',
-    description: 'Everything you need for client-server apps. Auth, REST, clustering, and static web — all in Kotlin.',
+    description: 'Building blocks for client-server apps. Auth, REST, clustering, and static web.',
+    aside: 'We needed glue. So we wrote a framework. As one does.',
     href: '/ultra/funktor/',
     ready: false,
   },
@@ -63,15 +71,18 @@ const libraries = [
   <section class="pt-32 pb-20 px-4">
     <div class="mx-auto max-w-4xl text-center">
       <h1 class="text-5xl sm:text-6xl font-extrabold tracking-tight text-white mb-6">
-        Tools that
+        The tools
         <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 to-brand-500">
-          earn their keep
+          we use
         </span>
       </h1>
-      <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-        Open-source tools for building real applications in Kotlin.
-        Dependency injection, serialization, reactive state, immutable data mutation, SPAs, database access
-        — designed to work together, type-safe, and free of ceremony.
+      <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-4 leading-relaxed">
+        Open-source Kotlin libraries for dependency injection, serialization, reactive state,
+        immutable data mutation, SPAs, and database access.
+        We built them for our own projects &mdash; and you can use them too.
+      </p>
+      <p class="text-sm text-brand-300/60 italic max-w-lg mx-auto">
+        Started as one library. Things got a little out of hand.
       </p>
     </div>
   </section>
@@ -82,8 +93,8 @@ const libraries = [
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {libraries.map(lib => {
           const classes = lib.ready
-              ? 'group block p-6 rounded-xl border transition-all duration-200 border-brand-400/30 bg-brand-400/5 hover:border-brand-400/60 hover:bg-brand-400/10'
-              : 'block p-6 rounded-xl border transition-all duration-200 border-white/10 bg-white/[0.02] cursor-default';
+              ? 'group flex flex-col p-6 rounded-xl border transition-all duration-200 border-brand-400/30 bg-brand-400/5 hover:border-brand-400/60 hover:bg-brand-400/10'
+              : 'flex flex-col p-6 rounded-xl border transition-all duration-200 border-white/10 bg-white/[0.02] cursor-default';
           const content = (
               <>
                 <div class="flex items-center justify-between mb-3">
@@ -105,6 +116,13 @@ const libraries = [
                 <p class:list={['text-sm leading-relaxed', lib.ready ? 'text-gray-400' : 'text-gray-600']}>
                   {lib.description}
                 </p>
+                {lib.aside && (
+                    <div class="mt-auto pt-4">
+                      <p class="text-xs text-brand-300/50 italic pt-3 border-t border-white/5">
+                        &ldquo;{lib.aside}&rdquo;
+                      </p>
+                    </div>
+                )}
               </>
           );
           return lib.ready

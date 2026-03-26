@@ -1,23 +1,40 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import { slumberSidebar } from '../../../data/slumber-sidebar';
 import { Code } from 'astro:components';
 ---
 
 <DocsLayout title="Slumber" sidebar={slumberSidebar} description="Kotlin-first serialization that understands your types">
 
-<h1>Slumber — Serialization That Understands Kotlin</h1>
+    <h1>Slumber</h1>
 
 <p class="text-xl text-gray-400 !mt-2 !mb-8">
-  A serialization framework built for Kotlin's type system. Nullable types, default values,
-  sealed classes — Slumber handles them all without annotations or configuration.
+    A serialization framework built for Kotlin's type system.
+    Nullable types, default values, sealed classes — handled without annotations.
 </p>
 
-<h2>The Problem</h2>
+    <h2>Kotlin has a rich type system — serialization should use it</h2>
 
-<p>You have a Kotlin data class. You want to serialize it to a Map (for a database, an API, a cache). Jackson needs annotations. Gson ignores nullability. kotlinx.serialization needs a compiler plugin.</p>
+    <p>Kotlin distinguishes <code>String</code> from <code>String?</code> at the type level. Data classes have default
+        parameters.
+        Sealed classes define closed hierarchies. These are powerful features for modeling data correctly.
+        But most serialization frameworks predate Kotlin or target multiple languages — they don't see these
+        distinctions.
+        So you annotate, configure, and work around.</p>
 
-<p>And when deserialization fails, you get a cryptic exception with no idea which nested field caused it.</p>
+    <Aside>We hit this exact problem while building Karango. We needed something that understood Kotlin types natively.
+        So we wrote one. Whether that was wise is a separate question.
+    </Aside>
+
+    <h2>What Slumber does differently</h2>
+
+    <p>You have a Kotlin data class. You want to serialize it to a Map (for a database, an API, a cache).
+        Slumber uses Kotlin reflection to understand your types — nullable fields, default values, generics, sealed
+        classes —
+        and handles them without annotations or compiler plugins.</p>
+
+    <p>When deserialization fails, it tells you exactly which nested field caused it, with the full path.</p>
 
 <h2>The Solution</h2>
 

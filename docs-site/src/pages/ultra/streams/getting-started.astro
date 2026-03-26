@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import { streamsSidebar } from '../../../data/streams-sidebar';
 import { Code } from 'astro:components';
 import { dep, mavenCentralUrl } from '../../../data/site';
@@ -108,7 +109,9 @@ println(sum())  // 105`} lang="kotlin" theme="vitesse-dark" />
 
 <p>This means unused streams cost nothing.</p>
 
-<div class="not-prose mt-8 flex gap-4">
+    <Aside>Well, almost nothing. The objects exist in memory. But no callbacks fire, no upstream work happens.</Aside>
+
+    <div class="not-prose mt-8 flex gap-4">
   <a href="/ultra/streams/operators" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
     See all operators &rarr;
   </a>

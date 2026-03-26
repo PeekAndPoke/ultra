@@ -1,23 +1,44 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import { streamsSidebar } from '../../../data/streams-sidebar';
 import { Code } from 'astro:components';
 ---
 
 <DocsLayout title="Streams" sidebar={streamsSidebar} description="Lightweight reactive streams for Kotlin Multiplatform">
 
-<h1>Streams — Reactive Values, Simplified</h1>
+    <h1>Streams</h1>
 
 <p class="text-xl text-gray-400 !mt-2 !mb-8">
   A lightweight reactive streams library for Kotlin Multiplatform.
-  Every stream always has a value. No marble diagrams required.
+    Every stream always has a value.
 </p>
 
-<h2>The core idea: streams always have a value</h2>
+    <h2>Reactive state shouldn't be complicated</h2>
 
-<p>Most reactive libraries (RxJava, RxJS, Kotlin Flow) model streams as sequences that <em>might eventually emit</em> something. You subscribe, wait, and hope. This creates a maze of operators for handling the "not yet" state — <code>startWith</code>, <code>defaultIfEmpty</code>, <code>firstOrDefault</code>, <code>onErrorResumeNext</code> — each with its own marble diagram.</p>
+    <p>Reactive programming is a genuinely good idea: instead of manually updating every place that depends on some
+        value,
+        you declare the dependency and let changes propagate automatically. But many reactive libraries were designed
+        for
+        event streams and async sequences — problems where values arrive over time and might never arrive at all.
+        For UI state, that model adds ceremony you don't need.</p>
 
-<p>Streams takes a radically simpler approach: <strong>every stream always has a current value</strong>. You can read it at any time with <code>stream()</code>. When you subscribe, you immediately get the current value — no waiting, no special handling.</p>
+    <Aside>We needed reactive state for Kraft components. Flow was too heavy, and RxJS is a different universe. So we
+        built the smallest thing that worked.
+    </Aside>
+
+    <h2>The core idea: streams always have a value</h2>
+
+    <p>Most reactive libraries model streams as sequences that <em>might eventually emit</em> something. You subscribe,
+        wait, and handle the "not yet" state with operators like <code>startWith</code>, <code>defaultIfEmpty</code>, or
+        <code>onErrorResumeNext</code>.</p>
+
+    <p>Streams takes a simpler approach: <strong>every stream always has a current value</strong>. You can read it at
+        any time with <code>stream()</code>. When you subscribe, you immediately get the current value.</p>
+
+    <Aside>This makes certain things easier. It also means you can't model "no value yet" without making T nullable.
+        Trade-offs.
+    </Aside>
 
 <Code code={`val source = StreamSource(42)
 
@@ -34,7 +55,8 @@ source.subscribeToStream { value ->
 source(99)
 // prints "Got: 99"`} lang="kotlin" theme="vitesse-dark" />
 
-<p>This is what makes Streams perfect for UI programming. In <a href="/ultra/kraft/">Kraft</a>, components subscribe to streams and re-render when values change. Because streams always have a value, the first render always has data — no loading spinners, no null checks, no "initial state" boilerplate.</p>
+    <p>This works well for UI programming. In <a href="/ultra/kraft/">Kraft</a>, components subscribe to streams and
+        re-render when values change. Because streams always have a value, the first render always has data.</p>
 
 <h2>Two types</h2>
 
@@ -52,7 +74,8 @@ source(99)
 <div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
   <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
     <h3 class="text-white font-semibold mb-1">Always Has a Value</h3>
-    <p class="text-sm text-gray-400"><code>stream()</code> never blocks, never returns null (unless T is nullable). No marble diagrams needed.</p>
+      <p class="text-sm text-gray-400"><code>stream()</code> never blocks, never returns null (unless T is nullable).
+      </p>
   </div>
   <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
     <h3 class="text-white font-semibold mb-1">Composable Operators</h3>
@@ -60,7 +83,7 @@ source(99)
   </div>
   <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
     <h3 class="text-white font-semibold mb-1">Lazy Subscriptions</h3>
-    <p class="text-sm text-gray-400">Operators only subscribe upstream when they have downstream subscribers. No wasted work.</p>
+      <p class="text-sm text-gray-400">Operators only subscribe upstream when they have downstream subscribers.</p>
   </div>
   <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
     <h3 class="text-white font-semibold mb-1">Kotlin Multiplatform</h3>
