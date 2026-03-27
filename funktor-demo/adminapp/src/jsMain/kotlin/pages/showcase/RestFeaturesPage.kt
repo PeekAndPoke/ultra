@@ -76,7 +76,7 @@ class RestFeaturesPage(ctx: NoProps) : PureComponent(ctx) {
         ui.segment {
             ui.header H1 { +"REST API Explorer" }
             ui.dividing.header H3 {
-                +"Demonstrates typed API routes, endpoint listing, and interactive " Try It" forms"
+                +"Demonstrates typed API routes, endpoint listing, and interactive 'Try It' forms"
             }
         }
 

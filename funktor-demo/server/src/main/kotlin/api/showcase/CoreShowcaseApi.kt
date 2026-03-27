@@ -16,6 +16,8 @@ import io.peekandpoke.funktor.demo.common.showcase.RetryAttemptLog
 import io.peekandpoke.funktor.demo.common.showcase.RetryDemoResponse
 import io.peekandpoke.funktor.demo.common.showcase.ShowcaseApiClient
 import io.peekandpoke.funktor.rest.ApiRoutes
+import io.peekandpoke.funktor.rest.docs.codeGen
+import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 import kotlinx.coroutines.delay
 
@@ -70,9 +72,9 @@ class CoreShowcaseApi(converter: OutgoingConverter) : ApiRoutes("showcase-core",
             val config = call.kontainer.get(AppConfig::class)
 
             val result = listOf(
-                ConfigInfoEntry("environment", config.ktor.env),
-                ConfigInfoEntry("host", config.ktor.host),
-                ConfigInfoEntry("port", config.ktor.port.toString()),
+                ConfigInfoEntry("environment", config.ktor.deployment.environment),
+                ConfigInfoEntry("host", config.ktor.deployment.host),
+                ConfigInfoEntry("port", config.ktor.deployment.port.toString()),
                 ConfigInfoEntry("isProduction", config.ktor.isProduction.toString()),
                 ConfigInfoEntry("isDevelopment", config.ktor.isDevelopment.toString()),
             )
@@ -89,12 +91,12 @@ class CoreShowcaseApi(converter: OutgoingConverter) : ApiRoutes("showcase-core",
         }.authorize {
             public()
         }.handle {
-            val commands = call.kontainer.getOrNull(List::class) as? List<*>
+            val commands = call.kontainer.getOrNull(List::class)
             val cliktCommands = commands?.filterIsInstance<CliktCommand>() ?: emptyList()
 
             val result = cliktCommands
                 .sortedBy { it.commandName }
-                .map { CliCommandInfo(name = it.commandName, help = it.commandHelp) }
+                .map { CliCommandInfo(name = it.commandName, help = "") }
 
             ApiResponse.ok(result)
         }

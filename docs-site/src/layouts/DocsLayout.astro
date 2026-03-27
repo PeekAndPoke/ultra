@@ -10,7 +10,7 @@ interface Props {
 }
 
 const { title, description, sidebar } = Astro.props;
-const currentPath = Astro.url.pathname;
+const currentPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
 
 // Derive GitHub source link from current path
 const pathToSource: Record<string, string> = {
@@ -52,7 +52,7 @@ const sections = sidebar.reduce((acc, item) => {
                     href={item.href}
                     class:list={[
                       'block px-3 py-1.5 rounded-md text-sm transition-colors',
-                      currentPath === item.href
+                      currentPath === (item.href.replace(/\/+$/, '') || '/')
                         ? 'text-brand-400 bg-brand-400/10 font-medium'
                         : 'text-gray-400 hover:text-white hover:bg-white/5',
                     ]}

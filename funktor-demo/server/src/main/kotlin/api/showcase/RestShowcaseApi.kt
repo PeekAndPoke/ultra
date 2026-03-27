@@ -10,6 +10,8 @@ import io.peekandpoke.funktor.demo.common.showcase.ShowcaseApiClient
 import io.peekandpoke.funktor.demo.common.showcase.TransformResponse
 import io.peekandpoke.funktor.demo.server.api.ApiApp
 import io.peekandpoke.funktor.rest.ApiRoutes
+import io.peekandpoke.funktor.rest.docs.codeGen
+import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 import java.time.Instant
 import java.time.ZoneOffset
@@ -36,9 +38,9 @@ class RestShowcaseApi(converter: OutgoingConverter) : ApiRoutes("showcase-rest",
                         EndpointInfo(
                             feature = feature.name,
                             group = group.name,
-                            method = route.method?.value ?: "GET",
-                            uri = route.route.pattern.uri,
-                            authDescription = route.authRule?.description ?: "none",
+                            method = route.method.value,
+                            uri = route.pattern.pattern,
+                            authDescription = route.authRules.joinToString(", ") { it.description },
                         )
                     }
                 }

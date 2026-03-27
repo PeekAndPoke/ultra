@@ -1,6 +1,6 @@
 ---
 import { githubRepo } from '../data/site';
-const currentPath = Astro.url.pathname;
+const currentPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -18,7 +18,7 @@ const navLinks = [
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="flex h-16 items-center justify-between">
       <a href="/" class="flex items-center gap-2 text-lg font-bold text-white hover:text-brand-400 transition-colors">
-        PeekAndPoke
+        peekandpoke.io
       </a>
       <div class="flex items-center gap-1">
         {navLinks.map(link => (

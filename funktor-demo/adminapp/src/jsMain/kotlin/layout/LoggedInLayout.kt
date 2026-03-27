@@ -23,7 +23,6 @@ import kotlinx.css.marginLeft
 import kotlinx.css.marginRight
 import kotlinx.css.marginTop
 import kotlinx.css.opacity
-import kotlinx.css.padding
 import kotlinx.css.px
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
@@ -93,7 +92,7 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
 
             noui.item A {
                 onClick { evt -> router.navToUri(evt, Nav.showcase.rest()) }
-                icon.exchange()
+                icon.code()
                 +"REST API Explorer"
             }
 
@@ -129,7 +128,6 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
     private fun FlowContent.renderMenuHeader(title: String) {
         noui.item {
             css {
-                padding = "8px 16px"
                 opacity = 0.7
                 fontSize = 11.px
                 fontWeight = FontWeight.bold
