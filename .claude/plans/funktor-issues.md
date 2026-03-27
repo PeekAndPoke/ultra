@@ -1,8 +1,26 @@
 # Funktor & Monko — Known Issues
 
-**Date:** 2026-03-26
-**Source:** Senior engineer + QA engineer code reviews after Monko repo creation
+**Date:** 2026-03-26 (updated with coroutine + logic review)
+**Source:** Senior engineer, QA engineer, coroutine expert code reviews
 **Related:** [funktor-v1-roadmap.md](funktor-v1-roadmap.md), [monko-query-dsl.md](monko-query-dsl.md)
+
+---
+
+## Summary
+
+| Category                | CRITICAL | HIGH  | MEDIUM | LOW   | Fixed |
+|-------------------------|----------|-------|--------|-------|-------|
+| Monko / MonkoRepository | 0        | 0     | 2      | 3     | 6     |
+| Coroutine / Concurrency | 1        | 4     | 4      | 2     | 0     |
+| Security / Auth Logic   | 1        | 2     | 0      | 1     | 0     |
+| Funktor Logic           | 0        | 2     | 4      | 3     | 0     |
+| **Total**               | **2**    | **8** | **10** | **9** | **6** |
+
+**Top 3 priorities:**
+
+1. VaultScope `runBlocking` blocks every after-save/after-delete hook (CRITICAL coroutine)
+2. Password recovery token not invalidated after use (CRITICAL security)
+3. WorkerTracker cancellation broken — running workers can't be stopped (HIGH coroutine)
 
 ---
 
@@ -64,7 +82,133 @@
 
 ---
 
-## Open Issues — Funktor (pre-existing, not caused by Monko work)
+## Open Issues — Coroutine / Concurrency (from deep review)
+
+### CRITICAL: VaultScope.launch uses `runBlocking` — blocks caller thread
+
+- **File:** `ultra/vault/src/jvmMain/kotlin/vault_module.kt` (lines 62-73)
+- **Impact:** `VaultScope.launch` wraps a coroutine launch in `runBlocking`, which blocks the calling
+  thread until the hook completes. Called from `Repository.Hooks.applyOnAfterSaveHooks` and
+  `applyOnAfterDeleteHooks` on every save/delete with after-hooks. Defeats the purpose of async hooks
+  and can cause thread starvation or deadlocks if the caller is already inside `runBlocking`.
+- **Fix:** Replace with `CoroutineScope(SupervisorJob() + Dispatchers.IO).launch { block() }`.
+  Add lifecycle management — cancel the scope on app shutdown.
+
+### HIGH: VaultScope has no lifecycle management — scope leak
+
+- **File:** `ultra/vault/src/jvmMain/kotlin/vault_module.kt` (lines 62-73)
+- **Impact:** The `SupervisorJob()` is never cancelled. On app shutdown, in-flight hook coroutines
+  continue running against torn-down infrastructure (closed DB connections etc.), causing exceptions.
+- **Fix:** Cancel `VaultScope.job` during application stop via an `OnAppStopped` hook.
+
+### HIGH: `runBlocking` inside Ktor lifecycle event handlers — nested blocking risk
+
+- **File:** `funktor/core/src/jvmMain/kotlin/lifecycle/AppLifeCycleBuilder.kt` (lines 37-122)
+- **Impact:** All lifecycle hook dispatchers use `runBlocking` to call suspend functions. If hooks
+  themselves trigger `VaultScope.launch` (which also uses `runBlocking`), nested `runBlocking` on the
+  same thread pool can deadlock. Also, `onAppStarting` (line 122) runs `runBlocking` eagerly during
+  builder construction, not during an event.
+- **Fix:** Ensure inner `runBlocking` uses distinct dispatchers (`Dispatchers.IO`). Consider migrating
+  to suspending lifecycle events if Ktor supports them.
+
+### HIGH: WorkerTracker.lastRuns not synchronized
+
+- **File:** `funktor/cluster/src/jvmMain/kotlin/workers/services/WorkerTracker.kt` (lines 119-129)
+- **Impact:** `putLastRunInstant` and `getLastRunInstant` read/write `lastRuns` (a `HashMap`) without
+  synchronization, while other methods (`clear`, `clearFutureRuns`, `lockWorker`) do synchronize.
+  Workers run concurrently on `Dispatchers.IO`, causing data races.
+- **Fix:** Wrap in `sync {}` blocks, or replace `lastRuns` with `ConcurrentHashMap`.
+
+### HIGH: WorkerTracker.lockWorker — job reference set after completion, cancellation broken
+
+- **File:** `funktor/cluster/src/jvmMain/kotlin/workers/services/WorkerTracker.kt` (lines 98-108)
+- **Impact:** `coroutineScope { async(context) { block() } }` waits for completion, so
+  `runningWorkers[workerId]?.job = job` only executes AFTER the block finishes. During execution,
+  `job` is always `null`. `clear()` calls `job?.cancel()` which always hits `null` — running workers
+  **cannot be cancelled during shutdown**.
+- **Fix:** Use `CoroutineScope(context).async { ... }` and set the job reference before awaiting.
+
+### MEDIUM: WorkersRunner.state — non-volatile shared variable
+
+- **File:** `funktor/cluster/src/jvmMain/kotlin/workers/WorkersRunner.kt` (line 25)
+- **Impact:** `var state = State.Running` is read by IO dispatcher coroutine and written by
+  `onAppStopping` handler. No `@Volatile`, no atomic. JVM memory model doesn't guarantee visibility.
+- **Fix:** Add `@Volatile` or use `AtomicReference<State>`.
+
+### MEDIUM: TimingInterceptor.children — unsynchronized mutable list
+
+- **File:** `funktor/core/src/jvmMain/kotlin/coroutines/timing.kt` (line 50)
+- **Impact:** `mutableListOf<TimingInterceptor>()` mutated in `copyForChild()` and read in
+  `getCpuProfile()` from different threads. `ConcurrentModificationException` possible.
+- **Fix:** Use `ConcurrentLinkedQueue` or `Collections.synchronizedList()`.
+
+### MEDIUM: WorkerHistory.Vault — lastFlush/lastCleanup not synchronized
+
+- **File:** `funktor/cluster/src/jvmMain/kotlin/workers/services/WorkerHistory.kt` (lines 64-68)
+- **Impact:** `lastFlush` is written inside `synchronized(buffer)` but read outside it. `lastCleanup`
+  similarly inconsistent. Multiple worker coroutines race on these fields.
+- **Fix:** Access under same lock, or use `AtomicReference<MpInstant>`.
+
+### MEDIUM: WorkerHistory.Vault.putRun — `coroutineScope { launch }` blocks the caller
+
+- **File:** `funktor/cluster/src/jvmMain/kotlin/workers/services/WorkerHistory.kt` (lines 96-106)
+- **Impact:** `coroutineScope` waits for all children, so this is not async — the caller is suspended
+  until flush/cleanup completes. If intent was fire-and-forget, this is wrong. If intent was to switch
+  to IO, `withContext(Dispatchers.IO)` would be clearer.
+- **Fix:** Clarify intent. Use `withContext` if synchronous, separate scope if async.
+
+### LOW: PrimitiveGlobalLocksProvider.Storage — static singleton, never cleaned up
+
+- **File:** `funktor/cluster/src/jvmMain/kotlin/locks/PrimitiveGlobalLocksProvider.kt` (lines 16-18)
+- **Impact:** `lockMap` keys never removed when lists become empty. Memory leak over time. Shared
+  across instances and tests.
+- **Fix:** Remove empty entries. Consider instance-scoped storage.
+
+### LOW: LogbackKarangoLogAppender.append — fire-and-forget without error handling
+
+- **File:** `funktor/logging/src/jvmMain/kotlin/karango/LogbackKarangoLogAppender.kt` (line 103)
+- **Impact:** `application.launch(Dispatchers.IO) { repository.tryInsert(entry) }` — if tryInsert
+  throws, exception propagates to Application's handler. If this triggers another log event that fails,
+  recursive loop possible.
+- **Fix:** Wrap in `try/catch` to swallow errors silently.
+
+---
+
+## Open Issues — Security / Auth Logic
+
+### CRITICAL: Password recovery token not invalidated after use
+
+- **File:** `funktor/auth/src/jvmMain/kotlin/provider/EmailAndPasswordAuth.kt` (lines 339-360)
+- **Impact:** After `recoverAccountSetPasswordWithToken()` resets the password, the recovery token is
+  NOT deleted or marked consumed. An attacker who intercepts the reset link can reuse it within the
+  1-hour expiry window to reset the password again, taking over the account.
+- **Fix:** Delete or invalidate the `PasswordRecoveryToken` record after successful password reset.
+  Also invalidate all other outstanding recovery tokens for the same user/realm.
+
+### HIGH: `setPassword` does not verify caller authorization or current password
+
+- **File:** `funktor/auth/src/jvmMain/kotlin/provider/EmailAndPasswordAuth.kt` (lines 253-278)
+- **Impact:** Accepts `userId` + `newPassword` without requiring the current password or verifying
+  the caller is the target user. If exposed without proper route-level authorization, any authenticated
+  user could change any other user's password.
+- **Fix:** Require current password in request, or ensure calling API strictly enforces identity match.
+
+### HIGH: Sign-up race condition — duplicate users possible
+
+- **File:** `funktor/auth/src/jvmMain/kotlin/provider/EmailAndPasswordAuth.kt` (lines 222-248)
+- **Impact:** Check `loadUserByEmail != null` then `createUserForSignup` is a TOCTOU race. Two
+  concurrent sign-ups with the same email can both pass the check and both create a user.
+- **Fix:** Enforce email uniqueness at database level with a unique index.
+
+### LOW: Wrong log message in password recovery email failure
+
+- **File:** `funktor/auth/src/jvmMain/kotlin/provider/EmailAndPasswordAuth.kt` (line 313)
+- **Impact:** Says "Sending 'Password Changed' Email failed" — should say "Password Recovery".
+- **Fix:** Correct the string.
+
+---
+
+## Open Issues — Funktor Logic (pre-existing, not caused by Monko work)
 
 ### HIGH: `queueIfNotPresent` has TOCTOU race across JVMs
 
@@ -105,6 +249,37 @@
 - **Fix:** Move these fields to instance properties. For test isolation, either reset them in test
   setup or use a fresh adapter per test.
 
+### MEDIUM: Attack detection delay creates thread-holding DoS vector
+
+- **File:** `funktor/rest/src/jvmMain/kotlin/ApiStatusPages.kt` (lines 98-105)
+- **Impact:** `.php`/`/wp-admin` requests get a `delay(500ms)` before responding. While `delay` doesn't
+  block a thread, it holds coroutine resources. At 2000 req/s, ~1000 coroutines suspended simultaneously
+  — could exhaust memory.
+- **Fix:** Immediately return 404 for blacklisted patterns. Do rate limiting at reverse proxy level.
+
+### MEDIUM: Lock cleanup can release locks held by alive servers
+
+- **File:** `funktor/cluster/src/jvmMain/kotlin/locks/workers/GlobalLocksCleanupWorker.kt` (lines 28-48)
+- **Impact:** Releases locks where `serverId !in aliveServerIds`. If `getAll()` returns empty list
+  (transient DB error), ALL locks are released. Also, a newly started server that hasn't sent its first
+  beacon yet could have its locks released.
+- **Fix:** Skip dead-server cleanup if `aliveServerIds` is empty. Require at least one historical beacon
+  before cleanup.
+
+### MEDIUM: `archiveJob` deletes before archiving — data loss on archive failure
+
+- **File:** `funktor/cluster/src/jvmMain/kotlin/backgroundjobs/BackgroundJobs.kt` (lines 572-582)
+- **Impact:** Removes job from queue first, then saves to archive. If archive save fails (DB timeout),
+  job is permanently lost — removed from queue but never archived.
+- **Fix:** Archive first, then remove from queue. Or wrap in a transaction.
+
+### MEDIUM: `dataHash` collision risk in `queueIfNotPresent`
+
+- **File:** `funktor/cluster/src/jvmMain/kotlin/backgroundjobs/domain/BackgroundJobQueued.kt` (lines 21-29)
+- **Impact:** 32-bit `Int.hashCode()` has birthday-problem collisions at ~65K distinct values per type.
+  Collision prevents legitimate distinct job from being enqueued — silent job loss.
+- **Fix:** Store full serialized data or SHA-256 hash for secondary verification alongside the int hash.
+
 ### LOW: `page=0` vs `page=1` inconsistency in LogsFilter
 
 - **File:** `funktor/logging/src/commonMain/kotlin/LogsFilter.kt`
@@ -113,6 +288,19 @@
   the first page.
 - **Fix:** Decide on 0-indexed or 1-indexed convention and enforce it everywhere. Document it in
   LogsFilter.
+
+### LOW: `WorkerHistory.Adapter.InMemory` is not thread-safe
+
+- **File:** `funktor/cluster/src/jvmMain/kotlin/workers/services/WorkerHistory.kt` (lines 36-59)
+- **Impact:** Singleton `object` with unsynchronized `mutableMapOf` and `mutableListOf`. Workers run
+  on `Dispatchers.IO` concurrently. `ConcurrentModificationException` possible.
+- **Fix:** Add synchronization or use concurrent collections. Likely only used in dev/test.
+
+### LOW: `BackgroundJobRetryPolicy` only has `LinearDelay` — no exponential backoff
+
+- **File:** `funktor/cluster/src/jvmMain/kotlin/backgroundjobs/domain/BackgroundJobRetryPolicy.kt`
+- **Impact:** Under failure conditions, linear retry can overwhelm external services.
+- **Fix:** Add `ExponentialBackoff` policy variant.
 
 ---
 
