@@ -14,9 +14,16 @@ import io.peekandpoke.ultra.html.onClick
 import io.peekandpoke.ultra.semanticui.icon
 import io.peekandpoke.ultra.semanticui.noui
 import io.peekandpoke.ultra.semanticui.ui
+import kotlinx.css.Color
+import kotlinx.css.FontWeight
+import kotlinx.css.color
+import kotlinx.css.fontSize
+import kotlinx.css.fontWeight
 import kotlinx.css.marginLeft
 import kotlinx.css.marginRight
 import kotlinx.css.marginTop
+import kotlinx.css.opacity
+import kotlinx.css.padding
 import kotlinx.css.px
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
@@ -65,24 +72,43 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
 
         ui.inverted.sidebar.vertical.visible.menu {
             noui.item A {
-                onClick { evt -> router.navToUri(evt, Nav.profile()) }
-                +"Profile"
-            }
-
-            noui.item A {
                 onClick { evt -> router.navToUri(evt, Nav.dashboard()) }
+                icon.home()
                 +"Dashboard"
             }
 
+            noui.item A {
+                onClick { evt -> router.navToUri(evt, Nav.profile()) }
+                icon.user()
+                +"Profile"
+            }
+
+            renderMenuHeader("Showcase")
+
+            noui.item A {
+                onClick { evt -> router.navToUri(evt, Nav.showcase.core()) }
+                icon.cogs()
+                +"Core Features"
+            }
+
+            noui.item A {
+                onClick { evt -> router.navToUri(evt, Nav.showcase.rest()) }
+                icon.exchange()
+                +"REST API Explorer"
+            }
+
             if (auth.user?.isSuperUser == true) {
-                noui.item()
+                renderMenuHeader("System")
 
                 noui.item A {
                     onClick { evt -> router.navToUri(evt, funktorLogging.routes.list()) }
+                    icon.file_alternate()
                     +"Server Logs"
                 }
+
                 noui.item A {
                     onClick { evt -> router.navToUri(evt, funktorCluster.routes.overview()) }
+                    icon.server()
                     +"Server Internals"
                 }
             }
@@ -97,6 +123,19 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
                 icon.sign_out_alternate()
                 +"Logout"
             }
+        }
+    }
+
+    private fun FlowContent.renderMenuHeader(title: String) {
+        noui.item {
+            css {
+                padding = "8px 16px"
+                opacity = 0.7
+                fontSize = 11.px
+                fontWeight = FontWeight.bold
+                color = Color("#aaa")
+            }
+            +title.uppercase()
         }
     }
 }
