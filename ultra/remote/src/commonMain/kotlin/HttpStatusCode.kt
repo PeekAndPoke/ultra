@@ -1,7 +1,17 @@
 package io.peekandpoke.ultra.remote
 
+import io.peekandpoke.ultra.remote.HttpStatusCode.Companion.of
 import kotlinx.serialization.Serializable
 
+/**
+ * Multiplatform-safe representation of an HTTP status code.
+ *
+ * Equality and [hashCode] are based solely on [value], so two instances
+ * with the same numeric code are considered equal regardless of [description].
+ *
+ * The companion object provides well-known status code constants (1xx through 5xx)
+ * and the [of] factory for looking up a code by its numeric value.
+ */
 @Serializable
 data class HttpStatusCode(val value: Int, val description: String) {
 
@@ -142,6 +152,10 @@ data class HttpStatusCode(val value: Int, val description: String) {
                 NetworkAuthenticationRequired,
             )
 
+        /**
+         * Returns the well-known [HttpStatusCode] whose [value] matches [status],
+         * or [fallback] if no match is found.
+         */
         fun of(status: Int, fallback: HttpStatusCode): HttpStatusCode =
             allStatusCodes.firstOrNull { it.value == status } ?: fallback
     }
@@ -156,13 +170,18 @@ data class HttpStatusCode(val value: Int, val description: String) {
         return value.hashCode()
     }
 
+    /** Returns `true` when the status code is in the 1xx (Informational) range. */
     fun isInformational(): Boolean = value in (100 until 200)
 
+    /** Returns `true` when the status code is in the 2xx (Success) range. */
     fun isSuccess(): Boolean = value in (200 until 300)
 
+    /** Returns `true` when the status code is in the 3xx (Redirection) range. */
     fun isRedirect(): Boolean = value in (300 until 400)
 
+    /** Returns `true` when the status code is in the 4xx (Client Error) range. */
     fun isClientError(): Boolean = value in (400 until 500)
 
+    /** Returns `true` when the status code is in the 5xx (Server Error) range. */
     fun isServerError(): Boolean = value in (500 until 600)
 }

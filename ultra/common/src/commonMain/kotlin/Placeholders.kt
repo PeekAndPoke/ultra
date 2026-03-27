@@ -9,20 +9,31 @@ interface Placeholders<T> {
     /**
      * [Filled] [Placeholders] can be used to [replace] patterns in a text.
      */
+    /**
+     * A set of placeholders that have been filled with a replacement function.
+     *
+     * Use [replace] or [invoke] to substitute all placeholder patterns in a text.
+     */
     class Filled<T>(private val mapping: Map<String, T>, private val replace: (T) -> String) {
 
+        /** Replaces all placeholder patterns in the given [text] with their computed values. */
         fun replace(text: String) = mapping.entries.fold(text) { acc, (pattern, value) ->
             acc.replace(pattern, replace(value))
         }
 
+        /** Shorthand for [replace]. */
         operator fun invoke(text: String) = replace(text)
     }
 
+    /** Associates a human-readable [name] with a placeholder [pattern]. */
     data class NameToPattern(
         val name: String,
         val pattern: String,
     )
 
+    /**
+     * Base implementation of [Placeholders] that derives patterns and names from a [toStr] function.
+     */
     abstract class Abstract<T>(override val values: Set<T>, val toStr: (T) -> String) : Placeholders<T> {
         override val patterns: Set<String> by lazy {
             values.map(::renderPattern).toSet()
@@ -38,6 +49,9 @@ interface Placeholders<T> {
     /**
      * Triple Hash Tag Placeholders, like ###Name###, ###age###, ...
      */
+    /**
+     * Double-curly-brace placeholders, e.g. `{{Name}}`, `{{age}}`.
+     */
     class DoubleCurly<T>(values: Set<T>, toStr: (T) -> String) : Abstract<T>(values, toStr) {
 
         companion object {
@@ -45,21 +59,26 @@ interface Placeholders<T> {
             @Suppress("RegExpRedundantEscape")
             private val regex = "\\{\\{[a-zA-Z0-9_-]+\\}\\}".toRegex()
 
+            /** Creates a [DoubleCurly] for all constants of the enum type [E], using enum names. */
             inline operator fun <reified E : Enum<E>> invoke(): DoubleCurly<E> {
                 return invoke { it.name }
             }
 
+            /** Creates a [DoubleCurly] for all constants of the enum type [E], using [toStr] for naming. */
             inline operator fun <reified E : Enum<E>> invoke(noinline toStr: (E) -> String): DoubleCurly<E> {
                 return invoke(enumValues<E>().toSet(), toStr)
             }
 
+            /** Creates a [DoubleCurly] from arbitrary [values], using [toStr] for naming. */
             operator fun <T> invoke(values: Iterable<T>, toStr: (T) -> String): DoubleCurly<T> {
                 return DoubleCurly(values.toSet(), toStr)
             }
         }
 
+        /** Renders the [value] as a `{{...}}` placeholder pattern. */
         override fun renderPattern(value: T): String = "{{${toStr(value)}}}"
 
+        /** Finds any `{{...}}` patterns in the [text] that are not valid placeholders. */
         override fun findErrorsIn(text: String): Set<String> {
             return regex.findAll(text)
                 .map { it.value }
@@ -71,26 +90,34 @@ interface Placeholders<T> {
     /**
      * Triple Hash Tag Placeholders, like ###Name###, ###age###, ...
      */
+    /**
+     * Triple-hash placeholders, e.g. `###Name###`, `###age###`.
+     */
     class TripleHash<T>(values: Set<T>, toStr: (T) -> String) : Abstract<T>(values, toStr) {
 
         companion object {
             private val regex = "###[a-zA-Z0-9_-]+###".toRegex()
 
+            /** Creates a [TripleHash] for all constants of the enum type [E], using enum names. */
             inline operator fun <reified E : Enum<E>> invoke(): TripleHash<E> {
                 return invoke { it.name }
             }
 
+            /** Creates a [TripleHash] for all constants of the enum type [E], using [toStr] for naming. */
             inline operator fun <reified E : Enum<E>> invoke(noinline toStr: (E) -> String): TripleHash<E> {
                 return invoke(enumValues<E>().toSet(), toStr)
             }
 
+            /** Creates a [TripleHash] from arbitrary [values], using [toStr] for naming. */
             operator fun <T> invoke(values: Iterable<T>, toStr: (T) -> String): TripleHash<T> {
                 return TripleHash(values.toSet(), toStr)
             }
         }
 
+        /** Renders the [value] as a `###...###` placeholder pattern. */
         override fun renderPattern(value: T): String = "###${toStr(value)}###"
 
+        /** Finds any `###...###` patterns in the [text] that are not valid placeholders. */
         override fun findErrorsIn(text: String): Set<String> {
             return regex.findAll(text)
                 .map { it.value }

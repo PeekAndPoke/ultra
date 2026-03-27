@@ -3,6 +3,11 @@ package io.peekandpoke.ultra.common
 import java.io.File
 import kotlin.reflect.KClass
 
+/**
+ * Computes the relative file-system path from this class's package to [that] class's package.
+ *
+ * For example, from `com.a.b` to `com.a.c.d` the result is `../c/d`.
+ */
 fun KClass<*>.getRelativePackagePath(that: KClass<*>): File {
 
     return this.java.`package`.name.getRelativePackagePath(

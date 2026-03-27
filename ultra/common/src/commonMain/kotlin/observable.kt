@@ -1,8 +1,16 @@
 package io.peekandpoke.ultra.common
 
+/** Callback type for change notifications. */
 typealias OnChange<T> = (T) -> Unit
+
+/** A function that, when invoked, cancels a subscription. */
 typealias Unsubscribe = () -> Unit
 
+/**
+ * An observable that allows observers to subscribe to value changes.
+ *
+ * @param T The type of value being observed.
+ */
 interface Observable<T> {
 
     private class Subscription<T, O>(
@@ -11,6 +19,7 @@ interface Observable<T> {
         val subscription: OnChange<T>,
     )
 
+    /** Default implementation of [Observable] that manages a set of weak-referenced subscriptions. */
     class Subscriptions<T> : Observable<T> {
 
         /** Sync lock */
@@ -98,8 +107,19 @@ interface Observable<T> {
     fun <O> observe(observer: O, block: OnChange<T>): Unsubscribe
 }
 
+/**
+ * Marker interface for objects that can conveniently observe [Observable] instances.
+ *
+ * Provides an extension that automatically passes `this` as the observer.
+ */
 interface Observer {
+    /** Subscribes this observer to the given [Observable] with the callback [block]. */
     fun <T> Observable<T>.observe(block: OnChange<T>) = observe(this, block)
 }
 
+/**
+ * Subscribes [this] object as an observer of the given [observable], invoking [block] on each change.
+ *
+ * @return An [Unsubscribe] function that cancels the subscription when invoked.
+ */
 fun <O : Any, T> O.observe(observable: Observable<T>, block: OnChange<T>) = observable.observe(this, block)

@@ -2,7 +2,9 @@ package io.peekandpoke.monko
 
 import com.mongodb.ExplainVerbosity
 import com.mongodb.client.model.DropIndexOptions
+import com.mongodb.client.model.Filters
 import com.mongodb.client.model.IndexOptions
+import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.client.result.InsertOneResult
 import com.mongodb.kotlin.client.coroutine.FindFlow
 import com.mongodb.kotlin.client.coroutine.MongoClient
@@ -40,7 +42,8 @@ class MonkoDriver(
     }
 
     class FindQueryBuilder internal constructor() {
-        private var filter: Bson? = null
+        internal var filter: Bson? = null
+            private set
         private var sort: Bson? = null
         private var limit: Int? = null
         private var skip: Int? = null
@@ -172,6 +175,51 @@ class MonkoDriver(
         )
     }
 
+    suspend fun <T : Any> replaceOne(collection: String, stored: Stored<T>): Stored<T> {
+        @Suppress("UNCHECKED_CAST")
+        val slumbered = codec.slumber(stored.value) as Map<String, Any?>
+
+        val document = Document(slumbered)
+        document["_id"] = stored._key
+
+        val coll = database.getCollection<Document>(collection)
+
+        coll.replaceOne(
+            Filters.eq("_id", stored._key),
+            document,
+            ReplaceOptions().upsert(true),
+        )
+
+        return stored
+    }
+
+    suspend fun deleteOne(collection: String, idOrKey: String): RemoveResult {
+        val coll = database.getCollection<Document>(collection)
+        val result = coll.deleteOne(Filters.eq("_id", idOrKey))
+
+        return RemoveResult(
+            count = result.deletedCount,
+            query = null,
+        )
+    }
+
+    suspend fun deleteMany(collection: String, filter: Bson): RemoveResult {
+        val coll = database.getCollection<Document>(collection)
+        val result = coll.deleteMany(filter)
+
+        return RemoveResult(
+            count = result.deletedCount,
+            query = null,
+        )
+    }
+
+    suspend fun updateMany(collection: String, filter: Bson, update: Bson): Long {
+        val coll = database.getCollection<Document>(collection)
+        val result = coll.updateMany(filter, update)
+
+        return result.modifiedCount
+    }
+
     suspend fun <T> findStored(
         collection: String,
         type: TypeRef<T>,
@@ -245,6 +293,11 @@ class MonkoDriver(
             mapped.toList()
         }
 
+        // Count total matching documents (for pagination) when skip/limit are used
+        val fullCount: Long? = builder.filter?.let { filter ->
+            database.getCollection<Document>(collection).countDocuments(filter)
+        }
+
         val cursor = MonkoCursor(
             entries = entries,
             query = MongoTypedQuery.of(
@@ -253,6 +306,7 @@ class MonkoDriver(
                 vars = emptyMap(),
             ),
             entityCache = codec.entityCache,
+            _fullCount = fullCount,
         )
 
         profile.count = cursor.count

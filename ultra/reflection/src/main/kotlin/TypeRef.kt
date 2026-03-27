@@ -26,6 +26,11 @@ data class TypeRef<T> private constructor(val type: KType) {
         /** Cache for [KClass] to [TypeRef] */
         private val cachedNonNullKClasses = mutableMapOf<KClass<*>, TypeRef<*>>()
 
+        /**
+         * Creates or retrieves a cached [TypeRef] for the given [KType].
+         *
+         * This is the primary factory for constructing a [TypeRef] from an already-known [KType].
+         */
         fun <T> createForKType(type: KType): TypeRef<T> {
             @Suppress("UNCHECKED_CAST")
             return cachedKTypes.getOrPut(type) {
@@ -33,6 +38,12 @@ data class TypeRef<T> private constructor(val type: KType) {
             } as TypeRef<T>
         }
 
+        /**
+         * Creates or retrieves a cached [TypeRef] for the given [KClass].
+         *
+         * Generic type parameters of the class are filled with `Any` projections.
+         * Set [nullable] to `true` to produce a nullable type.
+         */
         fun <T> createForKClass(cls: KClass<*>, nullable: Boolean): TypeRef<T> {
 
             val cache = if (nullable) {
@@ -54,40 +65,76 @@ data class TypeRef<T> private constructor(val type: KType) {
             } as TypeRef<T>
         }
 
+        /** Pre-built [TypeRef] for [kotlin.Unit]. */
         val Unit = kType<Unit>()
+
+        /** Pre-built nullable [TypeRef] for [kotlin.Unit]?. */
         val UnitNull = kType<Unit?>()
 
+        /** Pre-built [TypeRef] for [kotlin.Any]. */
         val Any = kType<Any>()
+
+        /** Pre-built nullable [TypeRef] for [kotlin.Any]?. */
         val AnyNull = kType<Any?>()
 
+        /** Pre-built [TypeRef] for [kotlin.Boolean]. */
         val Boolean = kType<Boolean>()
+
+        /** Pre-built nullable [TypeRef] for [kotlin.Boolean]?. */
         val BooleanNull = kType<Boolean?>()
 
+        /** Pre-built [TypeRef] for [kotlin.Byte]. */
         val Byte = kType<Byte>()
+
+        /** Pre-built nullable [TypeRef] for [kotlin.Byte]?. */
         val ByteNull = kType<Byte?>()
 
+        /** Pre-built [TypeRef] for [kotlin.Char]. */
         val Char = kType<Char>()
+
+        /** Pre-built nullable [TypeRef] for [kotlin.Char]?. */
         val CharNull = kType<Char?>()
 
+        /** Pre-built [TypeRef] for [kotlin.Double]. */
         val Double = kType<Double>()
+
+        /** Pre-built nullable [TypeRef] for [kotlin.Double]?. */
         val DoubleNull = kType<Double?>()
 
+        /** Pre-built [TypeRef] for [kotlin.Float]. */
         val Float = kType<Float>()
+
+        /** Pre-built nullable [TypeRef] for [kotlin.Float]?. */
         val FloatNull = kType<Float?>()
 
+        /** Pre-built [TypeRef] for [kotlin.Int]. */
         val Int = kType<Int>()
+
+        /** Pre-built nullable [TypeRef] for [kotlin.Int]?. */
         val IntNull = kType<Int?>()
 
+        /** Pre-built [TypeRef] for [kotlin.Long]. */
         val Long = kType<Long>()
+
+        /** Pre-built nullable [TypeRef] for [kotlin.Long]?. */
         val LongNull = kType<Long?>()
 
+        /** Pre-built [TypeRef] for [kotlin.Number]. */
         val Number = kType<Number>()
+
+        /** Pre-built nullable [TypeRef] for [kotlin.Number]?. */
         val NumberNull = kType<Number?>()
 
+        /** Pre-built [TypeRef] for [kotlin.Short]. */
         val Short = kType<Short>()
+
+        /** Pre-built nullable [TypeRef] for [kotlin.Short]?. */
         val ShortNull = kType<Short?>()
 
+        /** Pre-built [TypeRef] for [kotlin.String]. */
         val String = kType<String>()
+
+        /** Pre-built nullable [TypeRef] for [kotlin.String]?. */
         val StringNull = kType<String?>()
     }
 

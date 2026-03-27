@@ -2,6 +2,9 @@ package io.peekandpoke.ultra.remote
 
 import org.w3c.fetch.Response
 
+/**
+ * JS-platform implementation of [RemoteResponse] backed by a browser Fetch API [Response].
+ */
 class RemoteResponseImpl(
     override val request: RemoteRequest,
     override val body: String,

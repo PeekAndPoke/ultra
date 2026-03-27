@@ -4,6 +4,7 @@ import com.auth0.jwt.interfaces.Claim
 import com.auth0.jwt.interfaces.DecodedJWT
 import java.util.*
 
+/** A [DecodedJWT] stub representing an anonymous (unauthenticated) JWT with no claims. */
 class JwtAnonymous(private val issuer: String) : DecodedJWT {
     override fun getIssuer(): String = issuer
 

@@ -1,7 +1,12 @@
 package io.peekandpoke.ultra.vault
 
 /**
- * Defines a repository that supports batch inserts
+ * Extension interface for repositories that support inserting multiple documents in a single operation.
+ *
+ * Implementations should execute a single database round-trip for all values, making batch inserts
+ * significantly more efficient than inserting documents one by one.
+ *
+ * @param T the entity type managed by this repository.
  */
 interface BatchInsertRepository<T> {
 

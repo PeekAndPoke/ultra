@@ -30,10 +30,12 @@ external fun atob(value: String): Uint8Array
  */
 external fun btoa(value: Uint8Array): String
 
+/** Encodes this string as a URI component using the browser's `encodeURIComponent`. */
 actual fun String.encodeUriComponent(): String {
     return encodeURIComponent(this)
 }
 
+/** Decodes a percent-encoded URI component using the browser's `decodeURIComponent`. */
 actual fun String.decodeUriComponent(): String {
     return decodeURIComponent(this)
 }

@@ -24,9 +24,16 @@ class ChildFinder<C : Any, T : Any> private constructor(
     /** A set of nodes that match the filter criteria */
     private val found = mutableSetOf<Found<C>>()
 
+    /**
+     * Represents a single search result.
+     *
+     * @property item The matched child object.
+     * @property path A dot-separated path describing how the item was reached from the root.
+     * @property parents The chain of ancestor objects traversed to reach [item], nearest parent first.
+     */
     data class Found<C>(val item: C, val path: String, val parents: List<Any>) {
         /**
-         * Get's the parent at the given [idx] or null
+         * Gets the parent at the given [idx], or `null` if the index is out of range.
          */
         fun parent(idx: Int): Any? {
             return parents.getOrNull(idx)
@@ -46,6 +53,9 @@ class ChildFinder<C : Any, T : Any> private constructor(
             ChildFinder(cls, target, predicate).run()
     }
 
+    /**
+     * Executes the search and returns all matching children as a list of [Found] results.
+     */
     fun run(): List<Found<C>> {
         visited.clear()
         found.clear()
@@ -57,8 +67,7 @@ class ChildFinder<C : Any, T : Any> private constructor(
 
     private fun visit(target: Any?, path: String, parents: List<Any>) {
 
-        // TODO: We need special tests for this, because data class collide with their own hashcode.
-        //       Still if we have multiple data classes with same hashCode the identityHashCode should be different.
+        // Uses identity hash code so that data classes with equal content are still visited individually.
         val idHashCode = System.identityHashCode(target)
 
         if (target == null || visited.contains(idHashCode)) {

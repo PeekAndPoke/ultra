@@ -7,8 +7,14 @@ import java.net.SocketException
 import java.net.UnknownHostException
 import java.time.Instant
 
+/**
+ * JVM network utility functions for host identification and fingerprinting.
+ */
 object NetworkUtils {
 
+    /**
+     * Returns the local host name, or [default] if it cannot be determined.
+     */
     fun getHostNameOrDefault(default: String = "unknown") = try {
         InetAddress.getLocalHost()?.hostName ?: default
     } catch (e: UnknownHostException) {
@@ -16,6 +22,11 @@ object NetworkUtils {
         default
     }
 
+    /**
+     * Returns an MD5 fingerprint derived from all network interface names and addresses.
+     *
+     * Falls back to a time-based fingerprint if the network interfaces cannot be read.
+     */
     fun getNetworkFingerPrint() = try {
 
         NetworkInterface.getNetworkInterfaces().toList()

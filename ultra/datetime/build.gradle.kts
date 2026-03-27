@@ -43,10 +43,6 @@ kotlin {
                 implementation(Deps.KotlinX.serialization_json)
 
                 api(Deps.KotlinX.datetime)
-
-                // TODO: Remove this dependency
-                //       It is still needed for formatting dates
-                implementation(Deps.KotlinLibs.korlibs_time)
             }
         }
 

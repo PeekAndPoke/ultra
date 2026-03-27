@@ -1,7 +1,5 @@
 package io.peekandpoke.funktor.auth.db.monko
 
-import com.mongodb.client.model.Filters
-import com.mongodb.client.model.Sorts
 import io.peekandpoke.funktor.auth.AuthRecordStorage
 import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.domain.createdAt
@@ -12,6 +10,9 @@ import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import io.peekandpoke.monko.MonkoDriver
 import io.peekandpoke.monko.MonkoRepository
 import io.peekandpoke.monko.lang._type
+import io.peekandpoke.monko.lang.dsl.and
+import io.peekandpoke.monko.lang.dsl.desc
+import io.peekandpoke.monko.lang.dsl.eq
 import io.peekandpoke.monko.lang.ts
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Repository
@@ -48,19 +49,15 @@ class MonkoAuthRecordsRepo(
     }
 
     override suspend fun findLatest(realm: String, type: String, owner: String): Stored<AuthRecord>? {
-        val found = find {
+        val found = find { r ->
             filter(
-                Filters.and(
-                    Filters.eq(field { it._type }, type),
-                    Filters.eq(field { it.realm }, realm),
-                    Filters.eq(field { it.ownerId }, owner),
+                and(
+                    r._type eq type,
+                    r.realm eq realm,
+                    r.ownerId eq owner,
                 )
             )
-
-            sort(
-                Sorts.descending(field { it.createdAt.ts })
-            )
-
+            sort(r.createdAt.ts.desc)
             limit(1)
         }
 
@@ -68,15 +65,14 @@ class MonkoAuthRecordsRepo(
     }
 
     override suspend fun findByToken(realm: String, type: String, token: String): Stored<AuthRecord>? {
-        val found = find {
+        val found = find { r ->
             filter(
-                Filters.and(
-                    Filters.eq(field { it._type }, type),
-                    Filters.eq(field { it.realm }, realm),
-                    Filters.eq(field { it.token }, token),
+                and(
+                    r._type eq type,
+                    r.realm eq realm,
+                    r.token eq token,
                 )
             )
-
             limit(1)
         }
 

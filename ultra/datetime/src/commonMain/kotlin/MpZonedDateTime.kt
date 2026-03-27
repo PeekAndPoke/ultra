@@ -1,7 +1,5 @@
 package io.peekandpoke.ultra.datetime
 
-import korlibs.time.DateTime
-import korlibs.time.format
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Month
@@ -187,12 +185,32 @@ data class MpZonedDateTime(
      * See https://help.gooddata.com/cloudconnect/manual/date-and-time-format.html
      */
     fun format(formatString: String): String {
-        val ts = toEpochMillis() + timezone.offsetMillisAt(instant)
+        val offsetMillis = timezone.offsetMillisAt(instant)
 
-        val klock = DateTime.fromUnixMillis(ts)
+        val offsetString = when {
+            offsetMillis == 0L -> "Z"
+            else -> {
+                val sign = if (offsetMillis >= 0) "+" else "-"
+                val absMillis = kotlin.math.abs(offsetMillis)
+                val h = (absMillis / 3_600_000).toInt()
+                val m = ((absMillis % 3_600_000) / 60_000).toInt()
+                "$sign${h.toString().padStart(2, '0')}${m.toString().padStart(2, '0')}"
+            }
+        }
 
-        return klock.format(formatString)
+        return MpDateTimeFormatter.format(
+            pattern = formatString,
+            year = year,
+            month = monthNumber,
+            day = dayOfMonth,
+            hour = hour,
+            minute = minute,
+            second = second,
+            millis = milliSecond,
+            offsetString = offsetString,
+        )
     }
+
 
     /**
      * Converts to an iso date string.

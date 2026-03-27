@@ -5,8 +5,8 @@ import io.peekandpoke.monko.lang.MongoExpression
 import io.peekandpoke.monko.lang.MongoIterableExpr
 import io.peekandpoke.monko.lang.MongoNameExpr
 import io.peekandpoke.monko.lang.MongoPrinter
-import io.peekandpoke.monko.lang.MongoPrinter.Companion.printQuery
 import io.peekandpoke.monko.lang.MongoPropertyPath
+import io.peekandpoke.monko.lang.dsl.toFieldPath
 import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.vault.New
 import io.peekandpoke.ultra.vault.RemoveResult
@@ -38,14 +38,9 @@ abstract class MonkoRepository<T : Any>(
         )
     }
 
+    /** Extracts a dot-notation field path string from a KSP-generated property path. */
     fun <R> field(block: (MongoIterableExpr<T>) -> MongoPropertyPath<R, *>): String {
-        val path = block(repoExpr)
-
-        val dropped = path.dropRoot() ?: return ""
-
-        return dropped.getAsList().joinToString(".") {
-            it.printQuery().replace("`", "")
-        }
+        return block(repoExpr).toFieldPath()
     }
 
     override suspend fun getStats(): VaultModels.RepositoryStats {
@@ -92,7 +87,11 @@ abstract class MonkoRepository<T : Any>(
         val indexes = driver.listIndexes(collection = name)
 
         indexes.forEach { index ->
-            driver.dropIndex(collection = name, indexName = index["name"].toString())
+            val indexName = index["name"].toString()
+            // MongoDB forbids dropping the _id_ index
+            if (indexName != "_id_") {
+                driver.dropIndex(collection = name, indexName = indexName)
+            }
         }
 
         ensureIndexes()
@@ -104,10 +103,16 @@ abstract class MonkoRepository<T : Any>(
         return result
     }
 
+    /** Find documents using the raw [FindQueryBuilder] API. */
     suspend fun find(query: MonkoDriver.FindQueryBuilder.() -> Unit): MonkoCursor<Stored<T>> {
-        val result = driver.findStored(collection = name, type = storedType, query = query)
+        return driver.findStored(collection = name, type = storedType, query = query)
+    }
 
-        return result
+    /** Find documents using the type-safe DSL. The [repoExpr] is passed as lambda parameter for property path access. */
+    suspend fun find(query: MonkoDriver.FindQueryBuilder.(r: MongoIterableExpr<T>) -> Unit): MonkoCursor<Stored<T>> {
+        return driver.findStored(collection = name, type = storedType) {
+            query(repoExpr)
+        }
     }
 
     override suspend fun findById(id: String?): Stored<T>? {
@@ -133,12 +138,35 @@ abstract class MonkoRepository<T : Any>(
         return hooks.applyOnAfterSaveHooks(this, storedInDb)
     }
 
+    @Suppress("UNCHECKED_CAST")
     override suspend fun <X : T> save(stored: Stored<X>): Stored<X> {
-        TODO("Not yet implemented")
+        val beforeHookApplied = hooks.applyOnBeforeSaveHooks(this, stored) as Stored<X>
+
+        driver.replaceOne(collection = name, stored = beforeHookApplied)
+
+        return hooks.applyOnAfterSaveHooks(this, beforeHookApplied)
     }
 
     override suspend fun remove(idOrKey: String): RemoveResult {
-        TODO("Not yet implemented")
+        return driver.deleteOne(collection = name, idOrKey = idOrKey)
+    }
+
+    @JvmName("removeStored")
+    suspend fun remove(stored: Stored<T>): RemoveResult {
+        val result = remove(stored._key)
+        hooks.applyOnAfterDeleteHooks(this, stored)
+        return result
+    }
+
+    suspend fun modifyById(id: String, block: (T) -> T): Stored<T>? {
+        val existing = findById(id) ?: return null
+        val modified = existing.modify(block)
+        return save(modified)
+    }
+
+    @JvmName("insertWithKey")
+    suspend fun insert(key: String, value: T): Stored<T> {
+        return insert(New(_key = key, value = value))
     }
 
     override suspend fun removeAll(): RemoveResult {

@@ -325,6 +325,44 @@ class TypeRefSpec : StringSpec({
         }
     }
 
+    "Creating a MutableMap<String, Int>-type must work" {
+
+        val result = kMutableMapType<String, Int>()
+
+        assertSoftly {
+            result.type.classifier shouldBe MutableMap::class
+            result.type.isMarkedNullable shouldBe false
+            result.type.arguments[0].type!!.classifier shouldBe String::class
+            result.type.arguments[0].type!!.isMarkedNullable shouldBe false
+            result.type.arguments[1].type!!.classifier shouldBe Int::class
+            result.type.arguments[1].type!!.isMarkedNullable shouldBe false
+        }
+    }
+
+    "Wrapping with a class that has zero type parameters must throw" {
+
+        shouldThrow<IllegalStateException> {
+            kType<String>().wrapWith(String::class, false)
+        }
+    }
+
+    "Wrapping with a class that has two type parameters must throw" {
+
+        shouldThrow<IllegalStateException> {
+            kType<String>().wrapWith(Map::class, false)
+        }
+    }
+
+    "TypeRef nullable produces a nullable type" {
+
+        val result = kType<String>().nullable
+
+        assertSoftly {
+            result.type.classifier shouldBe String::class
+            result.type.isMarkedNullable shouldBe true
+        }
+    }
+
     "TypeRef.reified - creation" {
 
         data class ExampleClass<P1, P2>(

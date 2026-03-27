@@ -7,6 +7,8 @@ import io.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJo
 import io.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler02
 import io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsArchiveRepo
 import io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsQueueRepo
+import io.peekandpoke.funktor.cluster.backgroundjobs.monko.MonkoBackgroundJobsArchiveRepo
+import io.peekandpoke.funktor.cluster.backgroundjobs.monko.MonkoBackgroundJobsQueueRepo
 import io.peekandpoke.funktor.cluster.backgroundjobs.workers.BackgroundJobsWorker
 import io.peekandpoke.funktor.cluster.depot.DepotFacade
 import io.peekandpoke.funktor.cluster.locks.GlobalLocksProvider
@@ -21,6 +23,8 @@ import io.peekandpoke.funktor.cluster.locks.karango.KarangoGlobalLocksRepo
 import io.peekandpoke.funktor.cluster.locks.karango.KarangoServerBeaconRepo
 import io.peekandpoke.funktor.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStarting
 import io.peekandpoke.funktor.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStopped
+import io.peekandpoke.funktor.cluster.locks.monko.MonkoGlobalLocksRepo
+import io.peekandpoke.funktor.cluster.locks.monko.MonkoServerBeaconRepo
 import io.peekandpoke.funktor.cluster.locks.workers.GlobalLocksCleanupWorker
 import io.peekandpoke.funktor.cluster.locks.workers.ServerBeaconCleanupWorker
 import io.peekandpoke.funktor.cluster.locks.workers.ServerBeaconUpdateWorker
@@ -32,15 +36,19 @@ import io.peekandpoke.funktor.cluster.storage.fixtures.RandomCacheStorageFixture
 import io.peekandpoke.funktor.cluster.storage.fixtures.RandomDataStorageFixtures
 import io.peekandpoke.funktor.cluster.storage.karango.KarangoRandomCacheRepository
 import io.peekandpoke.funktor.cluster.storage.karango.KarangoRandomDataRepository
+import io.peekandpoke.funktor.cluster.storage.monko.MonkoRandomCacheRepository
+import io.peekandpoke.funktor.cluster.storage.monko.MonkoRandomDataRepository
 import io.peekandpoke.funktor.cluster.vault.EnsureRepositoriesOnAppStarting
 import io.peekandpoke.funktor.cluster.workers.WorkersFacade
 import io.peekandpoke.funktor.cluster.workers.fixtures.WorkerFixtures
+import io.peekandpoke.funktor.cluster.workers.monko.MonkoWorkerHistoryRepo
 import io.peekandpoke.funktor.cluster.workers.services.WorkerHistory
 import io.peekandpoke.funktor.cluster.workers.services.WorkerRegistry
 import io.peekandpoke.funktor.cluster.workers.services.WorkerTracker
 import io.peekandpoke.funktor.cluster.workers.vault.KarangoWorkerHistoryRepo
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.monko.MonkoDriver
 import io.peekandpoke.ultra.kontainer.KontainerAware
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.module
@@ -248,6 +256,117 @@ class FunktorClusterBuilder internal constructor(private val kontainer: Kontaine
 
             singleton(WorkerHistory.Adapter.Vault.Repo::class) { driver: KarangoDriver ->
                 KarangoWorkerHistoryRepo(driver = driver, repoName = workerHistoryRepoName)
+            }
+
+            singleton(WorkerFixtures::class)
+
+            singleton(WorkerHistory.Adapter::class, WorkerHistory.Adapter.Vault::class)
+        }
+    }
+
+    fun useMonko(
+        globalLockRepoName: String = "system_global_locks",
+        serverBeaconRepoName: String = "system_server_beacons",
+        workerHistoryRepoName: String = "system_worker_history",
+        backgroundJobsQueueRepoName: String = "system_background_jobs_queue",
+        backgroundJobsArchiveRepoName: String = "system_background_jobs_archive",
+        storageRandomDataRepoName: String = "system_random_data",
+        storageRandomCacheRepoName: String = "system_random_cache",
+    ) {
+        with(kontainer) {
+
+            // ////////////////////////////////////////////////////////////////////////////////////////////////
+            // Background Jobs
+            // //
+
+            // Job Queue //////////////////////////////////////////////////////////////////////////////////////
+            singleton(MonkoBackgroundJobsQueueRepo::class) { driver: MonkoDriver ->
+                MonkoBackgroundJobsQueueRepo(
+                    driver = driver,
+                    repoName = backgroundJobsQueueRepoName,
+                )
+            }
+
+            singleton(MonkoBackgroundJobsQueueRepo.Fixtures::class)
+
+            singleton(BackgroundJobs.Queue::class, BackgroundJobs.Queue.Vault::class)
+
+            // Job Archive ////////////////////////////////////////////////////////////////////////////////////
+            singleton(MonkoBackgroundJobsArchiveRepo::class) { driver: MonkoDriver ->
+                MonkoBackgroundJobsArchiveRepo(
+                    driver = driver,
+                    repoName = backgroundJobsArchiveRepoName,
+                )
+            }
+
+            singleton(MonkoBackgroundJobsArchiveRepo.Fixtures::class)
+
+            singleton(BackgroundJobs.Archive::class, BackgroundJobs.Archive.Vault::class)
+
+            // ////////////////////////////////////////////////////////////////////////////////////////////////
+            // Global Locks
+            // //
+
+            singleton(MonkoGlobalLocksRepo::class) { driver: MonkoDriver ->
+                MonkoGlobalLocksRepo(
+                    driver = driver,
+                    repoName = globalLockRepoName,
+                )
+            }
+
+            singleton(MonkoGlobalLocksRepo.Fixtures::class)
+
+            singleton(GlobalLocksProvider::class) { repository: MonkoGlobalLocksRepo, serverId: GlobalServerId ->
+                VaultGlobalLocksProvider(
+                    repository = repository,
+                    serverId = serverId,
+                    retryDelayMs = 100,
+                )
+            }
+
+            singleton(MonkoServerBeaconRepo::class) { driver: MonkoDriver ->
+                MonkoServerBeaconRepo(
+                    driver = driver,
+                    repoName = serverBeaconRepoName,
+                )
+            }
+
+            singleton(MonkoServerBeaconRepo.Fixtures::class)
+
+            singleton(ServerBeaconRepository::class, ServerBeaconRepository.Vault::class)
+
+            // /////////////////////////////////////////////////////////////////////////////////////////////////
+            // Storage
+            // //
+
+            // Random data /////////////////////////////////////////////////////////////////////////////////////
+            singleton(RandomDataStorage.Adapter.Vault.Repo::class) { driver: MonkoDriver, timestamped: TimestampedHook ->
+                MonkoRandomDataRepository(
+                    driver = driver,
+                    repoName = storageRandomDataRepoName,
+                    timestamped = timestamped,
+                )
+            }
+
+            singleton(RandomDataStorage.Adapter::class, RandomDataStorage.Adapter.Vault::class)
+
+            // Random cache ////////////////////////////////////////////////////////////////////////////////////
+            singleton(RandomCacheStorage.Adapter.Vault.Repo::class) { driver: MonkoDriver, timestamped: TimestampedHook ->
+                MonkoRandomCacheRepository(
+                    driver = driver,
+                    repoName = storageRandomCacheRepoName,
+                    timestamped = timestamped,
+                )
+            }
+
+            singleton(RandomCacheStorage.Adapter::class, RandomCacheStorage.Adapter.Vault::class)
+
+            // /////////////////////////////////////////////////////////////////////////////////////////////////
+            // Workers
+            // //
+
+            singleton(WorkerHistory.Adapter.Vault.Repo::class) { driver: MonkoDriver ->
+                MonkoWorkerHistoryRepo(driver = driver, repoName = workerHistoryRepoName)
             }
 
             singleton(WorkerFixtures::class)

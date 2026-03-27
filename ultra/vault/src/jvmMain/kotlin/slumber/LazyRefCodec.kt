@@ -7,6 +7,15 @@ import io.peekandpoke.ultra.vault.NullEntityCache
 import io.peekandpoke.ultra.vault.Storable
 import kotlinx.coroutines.runBlocking
 
+/**
+ * Slumber codec for [LazyRef] instances.
+ *
+ * **Awaking:** expects a document-id string (e.g. `"collection/key"`) and creates a [LazyRef]
+ * whose value is resolved lazily from the database on first access, using an [EntityCache]
+ * when available.
+ *
+ * **Slumbering:** serializes a [LazyRef] back to its `_id` string.
+ */
 object LazyRefCodec : Awaker, Slumberer {
 
     override fun awake(data: Any?, context: Awaker.Context): Any? {

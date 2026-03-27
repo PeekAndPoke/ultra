@@ -80,6 +80,7 @@ kotlin {
                 implementation(Deps.Ktor.Common.serialization_jackson)
 
                 implementation(project(":karango:core"))
+                implementation(project(":monko:core"))
             }
         }
 
@@ -93,6 +94,9 @@ kotlin {
 
 dependencies {
     add("kspJvm", project(":karango:ksp"))
+    add("kspJvmTest", project(":karango:ksp"))
+    add("kspJvm", project(":monko:ksp"))
+    add("kspJvmTest", project(":monko:ksp"))
 }
 
 tasks {

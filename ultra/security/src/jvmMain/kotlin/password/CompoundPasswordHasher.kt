@@ -11,8 +11,10 @@ class CompoundPasswordHasher(
 ) : PasswordHasher {
 
     companion object {
+        /** Creates a [CompoundPasswordHasher] from the given [hashers]. */
         operator fun invoke(vararg hashers: PasswordHasher) = CompoundPasswordHasher(hashers.toList())
 
+        /** Default compound hasher with Argon2, Bcrypt, and PBKDF2 variants. */
         val default = CompoundPasswordHasher(
             hashers = listOf(
                 Argon2PasswordHasher.id_m65536i2p4o32,
