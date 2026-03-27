@@ -14,8 +14,8 @@ import io.peekandpoke.karango.aql.aql
 import io.peekandpoke.karango.aql.expand
 import io.peekandpoke.karango.aql.ts
 import io.peekandpoke.karango.vault.EntityRepository
-import io.peekandpoke.karango.vault.IndexBuilder
 import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.ultra.model.PagedSearchFilter
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Cursor
@@ -35,7 +35,7 @@ class KarangoSentMessagesRepo(
         timestamped.onBeforeSave(),
     ),
 ) {
-    override fun IndexBuilder<SentMessage>.buildIndexes() {
+    override fun KarangoIndexBuilder<SentMessage>.buildIndexes() {
         persistentIndex {
             field { lookup.refs.expand() }
         }

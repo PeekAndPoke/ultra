@@ -12,28 +12,31 @@
 |-------------------------|----------|-------|--------|-------|-------|
 | Monko / MonkoRepository | 0        | 0     | 2      | 3     | 6     |
 | Coroutine / Concurrency | 1        | 4     | 4      | 2     | 0     |
-| Security / Auth Logic   | 1        | 2     | 0      | 1     | 0     |
+| Security / Auth Logic   | 0        | 2     | 0      | 0     | 2     |
 | Funktor Logic           | 0        | 2     | 4      | 3     | 0     |
-| **Total**               | **2**    | **8** | **10** | **9** | **6** |
+| **Total**               | **1**    | **8** | **10** | **8** | **8** |
 
-**Top 3 priorities:**
+**Top priorities (remaining):**
 
 1. VaultScope `runBlocking` blocks every after-save/after-delete hook (CRITICAL coroutine)
-2. Password recovery token not invalidated after use (CRITICAL security)
-3. WorkerTracker cancellation broken — running workers can't be stopped (HIGH coroutine)
+2. WorkerTracker cancellation broken — running workers can't be stopped (HIGH coroutine)
+3. `setPassword` does not verify caller authorization (HIGH security)
+4. Sign-up race condition — duplicate users possible (HIGH security)
 
 ---
 
 ## Fixed Issues (2026-03-26)
 
-| # | Severity | Issue                                                   | Fix Applied                                                        |
-|---|----------|---------------------------------------------------------|--------------------------------------------------------------------|
-| 1 | CRITICAL | `MonkoCursor.fullCount` always null — pagination broken | `fullCount` passed via constructor, driver runs `countDocuments()` |
-| 2 | HIGH     | N+1 delete in `removeAllButLastSuccessful`              | Refactored to use `deleteMany` with ID exclusion                   |
-| 3 | HIGH     | N+1 delete in `removeAllEndedAfter`                     | Refactored to use `deleteMany` with time filter                    |
-| 4 | MEDIUM   | `recreateIndexes()` crashes on `_id_` index             | Skips `_id_` in the drop loop                                      |
-| 5 | MEDIUM   | TTL index double-counts retention in log repo           | Changed to `expireAfter(0, SECONDS)`                               |
-| 6 | MEDIUM   | `remove(Stored)` doesn't fire after-delete hooks        | Added `hooks.applyOnAfterDeleteHooks()`                            |
+| # | Severity | Issue                                                   | Fix Applied                                                               |
+|---|----------|---------------------------------------------------------|---------------------------------------------------------------------------|
+| 1 | CRITICAL | `MonkoCursor.fullCount` always null — pagination broken | `fullCount` passed via constructor, driver runs `countDocuments()`        |
+| 2 | HIGH     | N+1 delete in `removeAllButLastSuccessful`              | Refactored to use `deleteMany` with ID exclusion                          |
+| 3 | HIGH     | N+1 delete in `removeAllEndedAfter`                     | Refactored to use `deleteMany` with time filter                           |
+| 4 | MEDIUM   | `recreateIndexes()` crashes on `_id_` index             | Skips `_id_` in the drop loop                                             |
+| 5 | MEDIUM   | TTL index double-counts retention in log repo           | Changed to `expireAfter(0, SECONDS)`                                      |
+| 6 | MEDIUM   | `remove(Stored)` doesn't fire after-delete hooks        | Added `hooks.applyOnAfterDeleteHooks()`                                   |
+| 7 | CRITICAL | Password recovery token not invalidated after use       | Token deleted immediately after successful reset via `removeAuthRecord()` |
+| 8 | LOW      | Wrong log message in password recovery email failure    | Changed "Password Changed" to "Password Recovery"                         |
 
 ---
 
@@ -176,14 +179,9 @@
 
 ## Open Issues — Security / Auth Logic
 
-### CRITICAL: Password recovery token not invalidated after use
+### ~~CRITICAL: Password recovery token not invalidated after use~~ FIXED
 
-- **File:** `funktor/auth/src/jvmMain/kotlin/provider/EmailAndPasswordAuth.kt` (lines 339-360)
-- **Impact:** After `recoverAccountSetPasswordWithToken()` resets the password, the recovery token is
-  NOT deleted or marked consumed. An attacker who intercepts the reset link can reuse it within the
-  1-hour expiry window to reset the password again, taking over the account.
-- **Fix:** Delete or invalidate the `PasswordRecoveryToken` record after successful password reset.
-  Also invalidate all other outstanding recovery tokens for the same user/realm.
+- **FIXED:** Token is now deleted via `removeAuthRecord()` immediately after successful password reset.
 
 ### HIGH: `setPassword` does not verify caller authorization or current password
 
@@ -200,11 +198,9 @@
   concurrent sign-ups with the same email can both pass the check and both create a user.
 - **Fix:** Enforce email uniqueness at database level with a unique index.
 
-### LOW: Wrong log message in password recovery email failure
+### ~~LOW: Wrong log message in password recovery email failure~~ FIXED
 
-- **File:** `funktor/auth/src/jvmMain/kotlin/provider/EmailAndPasswordAuth.kt` (line 313)
-- **Impact:** Says "Sending 'Password Changed' Email failed" — should say "Password Recovery".
-- **Fix:** Correct the string.
+- **FIXED:** Changed "Password Changed" to "Password Recovery" in the log message.
 
 ---
 

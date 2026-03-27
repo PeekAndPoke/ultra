@@ -8,6 +8,7 @@ import io.peekandpoke.funktor.auth.domain.realm
 import io.peekandpoke.funktor.auth.domain.token
 import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import io.peekandpoke.monko.MonkoDriver
+import io.peekandpoke.monko.MonkoIndexBuilder
 import io.peekandpoke.monko.MonkoRepository
 import io.peekandpoke.monko.lang._type
 import io.peekandpoke.monko.lang.dsl.and
@@ -18,7 +19,6 @@ import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.hooks.TimestampedHook
-import org.bson.Document
 
 class MonkoAuthRecordsRepo(
     name: String = "system_auth_records",
@@ -35,17 +35,12 @@ class MonkoAuthRecordsRepo(
 ) {
     class Fixtures(repo: MonkoAuthRecordsRepo) : RepoFixtureLoader<AuthRecord>(repo)
 
-    override suspend fun ensureIndexes() {
-        driver.createIndex(
-            collection = name,
-            keys = Document(
-                mapOf(
-                    field { it.realm } to 1,
-                    field { it.ownerId } to 1,
-                    field { it._type } to 1,
-                )
-            ),
-        )
+    override fun MonkoIndexBuilder<AuthRecord>.buildIndexes() {
+        persistentIndex {
+            field { it.realm }
+            field { it.ownerId }
+            field { it._type }
+        }
     }
 
     override suspend fun findLatest(realm: String, type: String, owner: String): Stored<AuthRecord>? {

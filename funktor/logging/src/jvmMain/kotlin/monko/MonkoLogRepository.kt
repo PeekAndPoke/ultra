@@ -1,6 +1,5 @@
 package io.peekandpoke.funktor.logging.monko
 
-import com.mongodb.client.model.IndexOptions
 import io.peekandpoke.funktor.logging.LogsFilter
 import io.peekandpoke.funktor.logging.api.LogEntryModel
 import io.peekandpoke.funktor.logging.api.LogsRequest
@@ -14,6 +13,7 @@ import io.peekandpoke.funktor.logging.karango.stackTrace
 import io.peekandpoke.funktor.logging.karango.state
 import io.peekandpoke.monko.MonkoCursor
 import io.peekandpoke.monko.MonkoDriver
+import io.peekandpoke.monko.MonkoIndexBuilder
 import io.peekandpoke.monko.MonkoRepository
 import io.peekandpoke.monko.lang.dsl.and
 import io.peekandpoke.monko.lang.dsl.desc
@@ -30,7 +30,6 @@ import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 import org.bson.Document
 import org.bson.conversions.Bson
-import java.util.concurrent.TimeUnit
 
 class MonkoLogRepository(
     driver: MonkoDriver,
@@ -42,25 +41,17 @@ class MonkoLogRepository(
     driver = driver.withLog(NullLog).withProfiler(NullQueryProfiler),
 ) {
 
-    override suspend fun ensureIndexes() {
-        // Compound index on createdAt, severity, state
-        driver.createIndex(
-            collection = name,
-            keys = Document(
-                mapOf(
-                    field { it.createdAt } to 1,
-                    field { it.severity } to 1,
-                    field { it.state } to 1,
-                )
-            ),
-        )
+    override fun MonkoIndexBuilder<KarangoLogEntry>.buildIndexes() {
+        persistentIndex {
+            field { it.createdAt }
+            field { it.severity }
+            field { it.state }
+        }
 
-        // TTL index on expiresAt
-        driver.createIndex(
-            collection = name,
-            keys = Document(field { it.expiresAt }, 1),
-            options = IndexOptions().expireAfter(0, TimeUnit.SECONDS),
-        )
+        ttlIndex {
+            field { it.expiresAt }
+            expireAfter(0)
+        }
     }
 
     suspend fun findBy(filter: LogsFilter): MonkoCursor<Stored<KarangoLogEntry>> = find { r ->

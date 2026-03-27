@@ -8,13 +8,13 @@ functions (85+ covered) but weak on infrastructure (driver, codec, indexes, repo
 
 ## Batch 1: Code Fixes (small, safe) — DONE (prior session)
 
-| File                     | Fix                                                          |
-|--------------------------|--------------------------------------------------------------|
-| `entity.kt`              | Removed (was commented-out dead code)                        |
-| `cursor.kt:14,51`        | 2 TODOs about async — left as-is (architectural), KDoc added |
-| `vault/IndexBuilder.kt`  | Debug code removed, unused var addressed                     |
-| `vault/KarangoDriver.kt` | Debug code removed                                           |
-| `index.kt:61`            | TODO about DB shutdown check — left as-is (enhancement)      |
+| File                           | Fix                                                          |
+|--------------------------------|--------------------------------------------------------------|
+| `entity.kt`                    | Removed (was commented-out dead code)                        |
+| `cursor.kt:14,51`              | 2 TODOs about async — left as-is (architectural), KDoc added |
+| `vault/KarangoIndexBuilder.kt` | Debug code removed, unused var addressed                     |
+| `vault/KarangoDriver.kt`       | Debug code removed                                           |
+| `index.kt:61`                  | TODO about DB shutdown check — left as-is (enhancement)      |
 
 ## Batch 2: KDoc for Public API — DONE (prior session)
 

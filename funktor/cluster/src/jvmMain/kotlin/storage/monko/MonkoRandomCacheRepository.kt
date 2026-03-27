@@ -1,6 +1,5 @@
 package io.peekandpoke.funktor.cluster.storage.monko
 
-import com.mongodb.client.model.IndexOptions
 import com.mongodb.client.model.Projections
 import io.peekandpoke.funktor.cluster.storage.RandomCacheStorage
 import io.peekandpoke.funktor.cluster.storage.domain.RawCacheData
@@ -9,6 +8,7 @@ import io.peekandpoke.funktor.cluster.storage.domain.category
 import io.peekandpoke.funktor.cluster.storage.domain.dataId
 import io.peekandpoke.funktor.cluster.storage.domain.expiresAt
 import io.peekandpoke.monko.MonkoDriver
+import io.peekandpoke.monko.MonkoIndexBuilder
 import io.peekandpoke.monko.MonkoRepository
 import io.peekandpoke.monko.lang.dsl.and
 import io.peekandpoke.monko.lang.dsl.eq
@@ -22,8 +22,6 @@ import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.hooks.TimestampedHook
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
-import org.bson.Document
-import java.util.concurrent.TimeUnit
 import kotlin.reflect.full.withNullability
 
 class MonkoRandomCacheRepository(
@@ -38,24 +36,16 @@ class MonkoRandomCacheRepository(
         timestamped.onBeforeSave(),
     ),
 ) {
-    override suspend fun ensureIndexes() {
-        driver.createIndex(
-            collection = name,
-            keys = Document(
-                mapOf(
-                    field { it.category } to 1,
-                    field { it.dataId } to 1,
-                )
-            ),
-            options = IndexOptions().unique(true),
-        )
+    override fun MonkoIndexBuilder<RawCacheData>.buildIndexes() {
+        uniqueIndex {
+            field { it.category }
+            field { it.dataId }
+        }
 
-        // TTL index on expiresAt
-        driver.createIndex(
-            collection = name,
-            keys = Document(field { it.expiresAt }, 1),
-            options = IndexOptions().expireAfter(0, TimeUnit.SECONDS),
-        )
+        ttlIndex {
+            field { it.expiresAt }
+            expireAfter(0)
+        }
     }
 
     override suspend fun find(search: String, page: Int, epp: Int): Cursor<Stored<RawCacheData>> = find { r ->

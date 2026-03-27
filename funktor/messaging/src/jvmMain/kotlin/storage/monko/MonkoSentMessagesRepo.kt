@@ -7,6 +7,7 @@ import io.peekandpoke.funktor.messaging.storage.createdAt
 import io.peekandpoke.funktor.messaging.storage.lookup
 import io.peekandpoke.funktor.messaging.storage.refs
 import io.peekandpoke.monko.MonkoDriver
+import io.peekandpoke.monko.MonkoIndexBuilder
 import io.peekandpoke.monko.MonkoRepository
 import io.peekandpoke.monko.lang.dsl.desc
 import io.peekandpoke.monko.lang.ts
@@ -16,7 +17,6 @@ import io.peekandpoke.ultra.vault.Cursor
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.hooks.TimestampedHook
-import org.bson.Document
 
 class MonkoSentMessagesRepo(
     name: String = "system_sent_messages",
@@ -30,24 +30,14 @@ class MonkoSentMessagesRepo(
         timestamped.onBeforeSave(),
     ),
 ) {
-    override suspend fun ensureIndexes() {
-        driver.createIndex(
-            collection = name,
-            keys = Document(
-                mapOf(
-                    field { it.lookup.refs } to 1,
-                )
-            ),
-        )
+    override fun MonkoIndexBuilder<SentMessage>.buildIndexes() {
+        persistentIndex {
+            field { it.lookup.refs }
+        }
 
-        driver.createIndex(
-            collection = name,
-            keys = Document(
-                mapOf(
-                    field { it.createdAt.ts } to -1,
-                )
-            ),
-        )
+        persistentIndex {
+            field { it.createdAt.ts }
+        }
     }
 
     override suspend fun findByRef(refs: Set<String>, filter: PagedSearchFilter): Cursor<Stored<SentMessage>> {

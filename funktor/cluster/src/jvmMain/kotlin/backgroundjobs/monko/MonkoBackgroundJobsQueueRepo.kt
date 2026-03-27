@@ -11,6 +11,7 @@ import io.peekandpoke.funktor.cluster.backgroundjobs.domain.state
 import io.peekandpoke.funktor.cluster.backgroundjobs.domain.type
 import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import io.peekandpoke.monko.MonkoDriver
+import io.peekandpoke.monko.MonkoIndexBuilder
 import io.peekandpoke.monko.MonkoRepository
 import io.peekandpoke.monko.lang.dsl.and
 import io.peekandpoke.monko.lang.dsl.asc
@@ -38,26 +39,16 @@ class MonkoBackgroundJobsQueueRepo(
      */
     class Fixtures(repo: MonkoBackgroundJobsQueueRepo) : RepoFixtureLoader<BackgroundJobQueued>(repo)
 
-    override suspend fun ensureIndexes() {
-        driver.createIndex(
-            collection = name,
-            keys = Document(
-                mapOf(
-                    field { it.dueAt.ts } to 1,
-                    field { it.state } to 1,
-                )
-            ),
-        )
+    override fun MonkoIndexBuilder<BackgroundJobQueued>.buildIndexes() {
+        persistentIndex {
+            field { it.dueAt.ts }
+            field { it.state }
+        }
 
-        driver.createIndex(
-            collection = name,
-            keys = Document(
-                mapOf(
-                    field { it.type } to 1,
-                    field { it.dataHash } to 1,
-                )
-            ),
-        )
+        persistentIndex {
+            field { it.type }
+            field { it.dataHash }
+        }
     }
 
     override suspend fun findAllSorted(page: Int?, epp: Int?): Cursor<Stored<BackgroundJobQueued>> = find { r ->

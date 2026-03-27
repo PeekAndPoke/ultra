@@ -18,8 +18,8 @@ import io.peekandpoke.karango.aql.RETURN
 import io.peekandpoke.karango.aql.anyOrTrueIfEmpty
 import io.peekandpoke.karango.aql.aql
 import io.peekandpoke.karango.vault.EntityRepository
-import io.peekandpoke.karango.vault.IndexBuilder
 import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.ultra.log.NullLog
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Stored
@@ -35,7 +35,7 @@ class KarangoLogRepository(
     driver = driver.withLog(NullLog).withProfiler(NullQueryProfiler),
 ) {
 
-    override fun IndexBuilder<KarangoLogEntry>.buildIndexes() {
+    override fun KarangoIndexBuilder<KarangoLogEntry>.buildIndexes() {
         persistentIndex {
             field { createdAt }
             field { severity }

@@ -738,7 +738,7 @@ accessors used in queries:
 class PersonsRepo(driver: KarangoDriver) : EntityRepository<Person>(
     name = "persons", storedType = kType(), driver = driver
 ) {
-    override fun IndexBuilder<Person>.buildIndexes() {
+    override fun KarangoIndexBuilder<Person>.buildIndexes() {
         // Single-field index
         persistentIndex {
             field { name }
@@ -778,7 +778,7 @@ data class Session(
 class SessionsRepo(driver: KarangoDriver) : EntityRepository<Session>(
     name = "sessions", storedType = kType(), driver = driver
 ) {
-    override fun IndexBuilder<Session>.buildIndexes() {
+    override fun KarangoIndexBuilder<Session>.buildIndexes() {
         ttlIndex {
             field { expiresAt }
             options { expireAfter(0) }  // expire at the exact timestamp
@@ -796,7 +796,7 @@ data class Address(val city: String, val zip: String)
 @Vault
 data class Person(val name: String, val address: Address)
 
-override fun IndexBuilder<Person>.buildIndexes() {
+override fun KarangoIndexBuilder<Person>.buildIndexes() {
     persistentIndex {
         field { address.city }
         field { address.zip }
@@ -1277,7 +1277,7 @@ class AuthRecordsRepo(
     driver = driver,
     hooks = Hooks.of<AuthRecord>(timestamped.onBeforeSave()),
 ) {
-    override fun IndexBuilder<AuthRecord>.buildIndexes() {
+    override fun KarangoIndexBuilder<AuthRecord>.buildIndexes() {
         persistentIndex {
             field { realm }
             field { ownerId }

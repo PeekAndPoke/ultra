@@ -198,7 +198,7 @@ class AuthRecordsRepo(
     driver = driver,
     hooks = Hooks.of<AuthRecord>(timestamped.onBeforeSave()),
 ) {
-    override fun IndexBuilder<AuthRecord>.buildIndexes() {
+    override fun KarangoIndexBuilder<AuthRecord>.buildIndexes() {
         persistentIndex {
             field { realm }
             field { ownerId }

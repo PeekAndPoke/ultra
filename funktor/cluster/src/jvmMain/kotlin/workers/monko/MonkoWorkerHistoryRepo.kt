@@ -8,6 +8,7 @@ import io.peekandpoke.funktor.cluster.workers.vault.VaultWorkerRun
 import io.peekandpoke.funktor.cluster.workers.vault.run
 import io.peekandpoke.funktor.cluster.workers.vault.status
 import io.peekandpoke.monko.MonkoDriver
+import io.peekandpoke.monko.MonkoIndexBuilder
 import io.peekandpoke.monko.MonkoRepository
 import io.peekandpoke.monko.lang.dsl.and
 import io.peekandpoke.monko.lang.dsl.desc
@@ -20,7 +21,6 @@ import io.peekandpoke.ultra.vault.BatchInsertRepository
 import io.peekandpoke.ultra.vault.Cursor
 import io.peekandpoke.ultra.vault.New
 import io.peekandpoke.ultra.vault.Stored
-import org.bson.Document
 
 class MonkoWorkerHistoryRepo(
     driver: MonkoDriver,
@@ -31,17 +31,12 @@ class MonkoWorkerHistoryRepo(
     driver = driver,
 ), BatchInsertRepository<VaultWorkerRun> {
 
-    override suspend fun ensureIndexes() {
-        driver.createIndex(
-            collection = name,
-            keys = Document(
-                mapOf(
-                    field { it.`run`.endTs } to 1,
-                    field { it.`run`.workerId } to 1,
-                    field { it.status } to 1,
-                )
-            ),
-        )
+    override fun MonkoIndexBuilder<VaultWorkerRun>.buildIndexes() {
+        persistentIndex {
+            field { it.`run`.endTs }
+            field { it.`run`.workerId }
+            field { it.status }
+        }
     }
 
     override suspend fun getHistoryByWorker(workerId: String, limit: Int): Cursor<Stored<VaultWorkerRun>> = find { r ->

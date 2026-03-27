@@ -17,7 +17,7 @@ import kotlin.time.Duration.Companion.milliseconds
 /**
  * Index builder for [BaseRepository]s
  */
-class IndexBuilder<T : Any>(private val repo: BaseRepository<T>) {
+class KarangoIndexBuilder<T : Any>(private val repo: BaseRepository<T>) {
 
     companion object {
         fun <T : Any> BaseBuilder<T>.matchesAny(indexes: Collection<IndexEntity>): Boolean {

@@ -1,11 +1,11 @@
 package io.peekandpoke.funktor.cluster.storage.monko
 
-import com.mongodb.client.model.IndexOptions
 import io.peekandpoke.funktor.cluster.storage.RandomDataStorage
 import io.peekandpoke.funktor.cluster.storage.domain.RawRandomData
 import io.peekandpoke.funktor.cluster.storage.domain.category
 import io.peekandpoke.funktor.cluster.storage.domain.dataId
 import io.peekandpoke.monko.MonkoDriver
+import io.peekandpoke.monko.MonkoIndexBuilder
 import io.peekandpoke.monko.MonkoRepository
 import io.peekandpoke.monko.lang.dsl.and
 import io.peekandpoke.monko.lang.dsl.eq
@@ -17,7 +17,6 @@ import io.peekandpoke.ultra.vault.Cursor
 import io.peekandpoke.ultra.vault.Repository.Hooks
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.hooks.TimestampedHook
-import org.bson.Document
 import kotlin.reflect.full.withNullability
 
 class MonkoRandomDataRepository(
@@ -32,17 +31,11 @@ class MonkoRandomDataRepository(
         timestamped.onBeforeSave(),
     ),
 ) {
-    override suspend fun ensureIndexes() {
-        driver.createIndex(
-            collection = name,
-            keys = Document(
-                mapOf(
-                    field { it.category } to 1,
-                    field { it.dataId } to 1,
-                )
-            ),
-            options = IndexOptions().unique(true),
-        )
+    override fun MonkoIndexBuilder<RawRandomData>.buildIndexes() {
+        uniqueIndex {
+            field { it.category }
+            field { it.dataId }
+        }
     }
 
     override suspend fun find(search: String, page: Int, epp: Int): Cursor<Stored<RawRandomData>> = find { r ->

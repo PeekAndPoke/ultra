@@ -38,9 +38,39 @@ abstract class MonkoRepository<T : Any>(
         )
     }
 
+    /** Override this to define indexes using the DSL. */
+    protected open fun MonkoIndexBuilder<T>.buildIndexes() {}
+
     /** Extracts a dot-notation field path string from a KSP-generated property path. */
     fun <R> field(block: (MongoIterableExpr<T>) -> MongoPropertyPath<R, *>): String {
         return block(repoExpr).toFieldPath()
+    }
+
+    override suspend fun validateIndexes(): VaultModels.IndexesInfo {
+        val builder = MonkoIndexBuilder(this).apply { buildIndexes() }
+        return builder.validate(driver, name)
+    }
+
+    override suspend fun ensureIndexes() {
+        val builder = MonkoIndexBuilder(this).apply { buildIndexes() }
+        val results = builder.create(driver, name)
+
+        results.forEach { result ->
+            when (result) {
+                is MonkoIndexBuilder.EnsureResult.Ensured -> { /* created */
+                }
+
+                is MonkoIndexBuilder.EnsureResult.Kept -> { /* already exists */
+                }
+
+                is MonkoIndexBuilder.EnsureResult.ReCreated -> { /* recreated with new fields */
+                }
+
+                is MonkoIndexBuilder.EnsureResult.Error -> {
+                    driver.log.warning("Failed to create index ${result.name} on $name: ${result.error.message}")
+                }
+            }
+        }
     }
 
     override suspend fun getStats(): VaultModels.RepositoryStats {

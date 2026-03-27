@@ -31,7 +31,7 @@ class MonkoDriver(
     private val lazyClient: Lazy<MongoClient>,
     private val lazyDatabase: Lazy<MongoDatabase>,
     private val lazyProfiler: Lazy<QueryProfiler> = lazy { NullQueryProfiler },
-    private val log: Log = NullLog,
+    val log: Log = NullLog,
 ) {
     companion object {
         private val prettyJsonWriterSettings = JsonWriterSettings.builder().indent(true).build()

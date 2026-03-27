@@ -18,8 +18,8 @@ import io.peekandpoke.karango.aql.UPDATE
 import io.peekandpoke.karango.aql.aql
 import io.peekandpoke.karango.aql.ts
 import io.peekandpoke.karango.vault.EntityRepository
-import io.peekandpoke.karango.vault.IndexBuilder
 import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Cursor
@@ -39,7 +39,7 @@ class KarangoBackgroundJobsQueueRepo(
      */
     class Fixtures(repo: KarangoBackgroundJobsQueueRepo) : RepoFixtureLoader<BackgroundJobQueued>(repo)
 
-    override fun IndexBuilder<BackgroundJobQueued>.buildIndexes() {
+    override fun KarangoIndexBuilder<BackgroundJobQueued>.buildIndexes() {
         this.persistentIndex {
             field { dueAt.ts }
             field { state }

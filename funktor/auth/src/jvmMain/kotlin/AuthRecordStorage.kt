@@ -20,6 +20,10 @@ class AuthRecordStorage(
                 error("Not yet implemented")
             }
 
+            override suspend fun removeById(id: String): RemoveResult {
+                return RemoveResult.empty
+            }
+
             override suspend fun removeAll(): RemoveResult {
                 return RemoveResult.empty
             }
@@ -41,6 +45,10 @@ class AuthRecordStorage(
                 suspend fun findByToken(realm: String, type: String, token: String): Stored<AuthRecord>?
             }
 
+            override suspend fun removeById(id: String): RemoveResult {
+                return inner.remove(id)
+            }
+
             override suspend fun removeAll(): RemoveResult {
                 return inner.removeAll()
             }
@@ -60,6 +68,8 @@ class AuthRecordStorage(
 
         suspend fun <T : AuthRecord> createRecord(new: T): Stored<T>
 
+        suspend fun removeById(id: String): RemoveResult
+
         suspend fun removeAll(): RemoveResult
 
         suspend fun findLatest(realm: String, type: String, owner: String): Stored<AuthRecord>?
@@ -78,6 +88,11 @@ class AuthRecordStorage(
     /** Create a [new] auth record */
     suspend fun <T : AuthRecord> create(new: T): Stored<T> {
         return adapter.createRecord(new)
+    }
+
+    /** Remove an auth record by its [id] */
+    suspend fun removeById(id: String): RemoveResult {
+        return adapter.removeById(id)
     }
 
     /** Find the latest auth record of type [type], [realm] and [owner] */
