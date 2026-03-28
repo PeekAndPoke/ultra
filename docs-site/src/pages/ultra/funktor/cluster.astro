@@ -1,0 +1,117 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {funktorSidebar} from '../../../data/funktor-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Cluster Module" sidebar={funktorSidebar}
+            description="Background jobs, file storage, locks, and workers">
+
+    <h1>Cluster</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Background jobs, file depot, distributed locks, scheduled workers, and key-value storage.
+    </p>
+
+    <p>The cluster module provides server-side infrastructure that goes beyond request handling.
+        Everything is accessible through <code>cluster</code> &mdash; a facade available in any handler.</p>
+
+    <h2>Background jobs</h2>
+
+    <p>Queue work for asynchronous execution with typed input/output and retry policies.</p>
+
+    <Code code={`class SendWelcomeEmail(
+    backgroundJobs: Lazy<BackgroundJobs>,
+) : BackgroundJobs.Handler<SendWelcomeEmail.Input, SendWelcomeEmail.Output>(
+    backgroundJobs, kType()
+) {
+    data class Input(val userId: String, val email: String)
+    data class Output(val sent: Boolean)
+
+    override val jobType = "send-welcome-email"
+
+    override suspend fun execute(job: BackgroundJobQueued, data: Input): Output {
+        mailService.send(data.email, "Welcome!")
+        return Output(sent = true)
+    }
+}
+
+// Queue a job from any handler:
+welcomeEmailHandler.queue(
+    data = SendWelcomeEmail.Input(userId = "123", email = "user@example.com"),
+    retryPolicy = BackgroundJobRetryPolicy.LinearDelay(delayInMs = 5000, maxTries = 3),
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>File depot</h2>
+
+    <p>Abstract file storage with pluggable backends. Same API for local filesystem and AWS S3.</p>
+
+    <Code code={`val repo = cluster.depot.getRepo("uploads")
+
+// Upload
+repo?.putFile("photos/avatar.jpg", imageBytes)
+
+// List
+val files = repo?.listItems("photos/")
+
+// Download
+val content = cluster.depot.getContent(DepotUri("uploads", "photos/avatar.jpg"))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Distributed locks</h2>
+
+    <p>Coordinate work across server instances with database-backed global locks.</p>
+
+    <Code code={`// Acquire lock, run work, release automatically
+cluster.locks.global.lock("invoice-generation", timeout = 10.seconds) {
+    generateMonthlyInvoices()
+}
+
+// Try to acquire (returns null on timeout)
+val result = cluster.locks.global.tryToLock("resource", timeout = 5.seconds) {
+    doWork()
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Workers</h2>
+
+    <p>Scheduled background tasks that run at defined intervals.</p>
+
+    <Code code={`class CleanupWorker : Worker {
+    override val id = "cleanup-old-sessions"
+    override val shouldRun = Worker.Every.hours(1)
+
+    override suspend fun execute(state: StateProvider) {
+        sessionRepo.deleteOlderThan(Duration.ofDays(30))
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Key-value storage</h2>
+
+    <p>Typed persistent storage and volatile caching with TTL policies.</p>
+
+    <Code code={`// Persistent storage
+val category = RandomDataStorage.category<UserPrefs>("prefs")
+cluster.storage.randomData.save(category, "user-123", prefs)
+val loaded = cluster.storage.randomData.load(category, "user-123")
+
+// Cache with TTL
+val cacheCategory = RandomCacheStorage.category<PricingData>(
+    "pricing",
+    RawCacheDataModel.Policy.ServeCacheAndRefresh(ttl = 3600, refreshAfter = 1800)
+)
+val pricing = cluster.storage.randomCache.getOrPut(cacheCategory.bind("EUR")) {
+    fetchPricingFromApi()
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>All cluster features use the same pluggable storage backends as auth &mdash;
+        Karango or Monko. Jobs, locks, files, and cache entries are all persisted to your database of choice.
+    </Aside>
+
+    <div class="mt-12">
+        <a href="/ultra/funktor/messaging"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-brand-400/10 text-brand-400 border border-brand-400/30 hover:bg-brand-400/20 transition-all font-medium">
+            Messaging Module &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

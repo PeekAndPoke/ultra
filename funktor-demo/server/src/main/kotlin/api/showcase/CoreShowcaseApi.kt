@@ -1,12 +1,12 @@
 package io.peekandpoke.funktor.demo.server.api.showcase
 
-import com.github.ajalt.clikt.core.CliktCommand
+import io.peekandpoke.funktor.core.appConfig
 import io.peekandpoke.funktor.core.broker.OutgoingConverter
-import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.funktor.core.cli.cliServices
 import io.peekandpoke.funktor.core.fixtures.FixtureInstaller
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
-import io.peekandpoke.funktor.core.repair.RepairMan
+import io.peekandpoke.funktor.core.repair.repairMan
 import io.peekandpoke.funktor.demo.common.showcase.CliCommandInfo
 import io.peekandpoke.funktor.demo.common.showcase.ConfigInfoEntry
 import io.peekandpoke.funktor.demo.common.showcase.FixtureInfo
@@ -69,7 +69,7 @@ class CoreShowcaseApi(converter: OutgoingConverter) : ApiRoutes("showcase-core",
         }.authorize {
             public()
         }.handle {
-            val config = call.kontainer.get(AppConfig::class)
+            val config = appConfig
 
             val result = listOf(
                 ConfigInfoEntry("environment", config.ktor.deployment.environment),
@@ -91,10 +91,7 @@ class CoreShowcaseApi(converter: OutgoingConverter) : ApiRoutes("showcase-core",
         }.authorize {
             public()
         }.handle {
-            val commands = call.kontainer.getOrNull(List::class)
-            val cliktCommands = commands?.filterIsInstance<CliktCommand>() ?: emptyList()
-
-            val result = cliktCommands
+            val result = cliServices.commands
                 .sortedBy { it.commandName }
                 .map { CliCommandInfo(name = it.commandName, help = "") }
 
@@ -132,19 +129,7 @@ class CoreShowcaseApi(converter: OutgoingConverter) : ApiRoutes("showcase-core",
         }.authorize {
             public()
         }.handle {
-            val repairMan = call.kontainer.getOrNull(RepairMan::class)
-
-            // RepairMan doesn't expose its repairs list publicly, so we reflect on it
-            val repairs = try {
-                val field = RepairMan::class.java.getDeclaredField("repairs")
-                field.isAccessible = true
-                @Suppress("UNCHECKED_CAST")
-                (field.get(repairMan) as? List<RepairMan.Repair>) ?: emptyList()
-            } catch (_: Exception) {
-                emptyList()
-            }
-
-            val result = repairs.map { RepairInfo(className = it::class.simpleName ?: "?") }
+            val result = repairMan.repairs.map { RepairInfo(className = it::class.simpleName ?: "?") }
 
             ApiResponse.ok(result)
         }

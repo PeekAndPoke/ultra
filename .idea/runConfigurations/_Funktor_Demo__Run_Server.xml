@@ -4,7 +4,7 @@
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$/funktor-demo/server" />
       <option name="externalSystemIdString" value="GRADLE" />
-      <option name="scriptParameters" value="--configuration-cache --configure-on-demand --parallel" />
+      <option name="scriptParameters" value="--configuration-cache --parallel" />
       <option name="taskDescriptions">
         <list />
       </option>
@@ -17,8 +17,11 @@
     </ExternalSystemSettings>
     <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
     <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+    <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
     <DebugAllEnabled>false</DebugAllEnabled>
     <RunAsTest>false</RunAsTest>
+    <GradleProfilingDisabled>false</GradleProfilingDisabled>
+    <GradleCoverageDisabled>false</GradleCoverageDisabled>
     <method v="2" />
   </configuration>
 </component>

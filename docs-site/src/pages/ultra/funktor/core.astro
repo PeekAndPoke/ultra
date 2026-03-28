@@ -1,0 +1,105 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {funktorSidebar} from '../../../data/funktor-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Core Module" sidebar={funktorSidebar} description="App lifecycle, routing, CLI, and configuration">
+
+    <h1>Core</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Application lifecycle, type-safe routing, CLI framework, fixtures, configuration, and repair system.
+    </p>
+
+    <h2>App lifecycle</h2>
+
+    <p>Funktor provides hooks for every stage of the application lifecycle. Implement the hook interface,
+        register it in Kontainer, and it runs automatically.</p>
+
+    <Code code={`class MyStartupHook : AppLifeCycleHooks.OnAppStarted {
+    override val executionOrder = ExecutionOrder.Normal
+
+    override suspend fun onAppStarted(application: Application) {
+        // Run after the app has started
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Available hooks: <code>OnAppStarting</code>, <code>OnAppStarted</code>, <code>OnAppStopPreparing</code>,
+        <code>OnAppStopping</code>, <code>OnAppStopped</code>. Each supports <code>ExecutionOrder</code> for
+        priority control (ExtremelyEarly through ExtremelyLate).</p>
+
+    <h2>Type-safe routing</h2>
+
+    <p>Routes carry their parameter types at compile time. No stringly-typed path extraction.</p>
+
+    <Code code={`data class UserParams(val id: String)
+
+val getUserRoute = route<UserParams>("/users/{id}")
+
+// In routing setup:
+get(getUserRoute) { params ->
+    val user = userService.get(params.id)
+    call.respond(user)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>CLI framework</h2>
+
+    <p>Register <a href="https://ajalt.github.io/clikt/" target="_blank" rel="noopener">Clikt</a> commands in
+        Kontainer. Run them with <code>--cli</code>. Built-in commands include <code>app:info</code>,
+        <code>app:config</code>, <code>fixtures:install</code>, and <code>fixtures:list</code>.</p>
+
+    <Code code={`class MyCommand : CliktCommand(name = "my:command") {
+    val count by option().int().default(10)
+
+    override fun run() {
+        echo("Running with count=${'$'}count")
+    }
+}
+
+// Register in module:
+val MyModule = module {
+    singleton(MyCommand::class)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Fixtures</h2>
+
+    <p>Load test data with dependency ordering. Fixtures declare what they depend on,
+        and the installer resolves the correct execution order.</p>
+
+    <Code code={`class UserFixtures(
+    repo: UserRepo,
+    private val authRecords: AuthRecordStorage,
+) : RepoFixtureLoader<User>(repo = repo) {
+
+    val admin = singleFix {
+        repo.insert("admin", User(name = "Admin", email = "admin@example.com"))
+            .also { user -> authRecords.createPassword(user, "password123") }
+    }
+
+    override val dependsOn = listOf<FixtureLoader>()
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Configuration</h2>
+
+    <p>Type-safe configuration via Typesafe Config. Environment-specific files
+        (<code>application.dev.conf</code>, <code>application.prod.conf</code>) are merged automatically.</p>
+
+    <h2>Repair system</h2>
+
+    <p>Register <code>RepairMan.Repair</code> implementations to run data migrations or fixes on startup.
+        Failures are logged but don't prevent the app from starting.</p>
+
+    <Aside>Fixtures are for dev/test. Repairs are for production.
+        Both run automatically &mdash; fixtures via CLI, repairs on every startup.
+    </Aside>
+
+    <div class="mt-12">
+        <a href="/ultra/funktor/rest"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-brand-400/10 text-brand-400 border border-brand-400/30 hover:bg-brand-400/20 transition-all font-medium">
+            REST Module &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

@@ -1,0 +1,97 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {funktorSidebar} from '../../../data/funktor-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Auth Module" sidebar={funktorSidebar}
+            description="Multi-realm authentication with pluggable providers">
+
+    <h1>Auth</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Multi-realm authentication with email/password, Google SSO, GitHub SSO, and JWT tokens.
+    </p>
+
+    <h2>Realms</h2>
+
+    <p>An auth realm represents a user population with its own providers, password policy, and user model.
+        An app can have multiple realms &mdash; one for admin users, another for customers.</p>
+
+    <Code code={`class AdminUserRealm(
+    override val deps: AuthSystem.Deps,
+    private val usersRepo: AdminUsersRepo,
+) : AuthRealm<AdminUser> {
+
+    override val id = "admin-user"
+
+    override val providers = listOf(
+        EmailAndPasswordAuth(deps),
+        GoogleSsoAuth(deps, clientId = "..."),
+        GithubSsoAuth(deps, clientId = "...", clientSecret = "..."),
+    )
+
+    override val passwordPolicy = PasswordPolicy.default
+
+    override suspend fun loadUserByEmail(email: String) =
+        usersRepo.findByEmail(email)
+
+    override suspend fun generateJwt(user: Stored<AdminUser>) =
+        AuthSignInResponse.Token(/* JWT generation */)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Providers</h2>
+
+    <p>Each provider handles a specific authentication mechanism:</p>
+
+    <div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
+        <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">EmailAndPasswordAuth</h3>
+            <p class="text-sm text-gray-400">Sign up, sign in, password recovery, password change. Passwords are hashed
+                and stored separately.</p>
+        </div>
+        <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">GoogleSsoAuth</h3>
+            <p class="text-sm text-gray-400">Google OAuth flow. Verifies ID tokens and creates or matches users by
+                email.</p>
+        </div>
+        <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">GithubSsoAuth</h3>
+            <p class="text-sm text-gray-400">GitHub OAuth flow. Exchanges authorization codes for access tokens.</p>
+        </div>
+    </div>
+
+    <h2>Auth API</h2>
+
+    <p>The auth module provides pre-built API endpoints for all auth operations:
+        sign up, sign in, activate account, set password, and password recovery.
+        A matching client library (<code>AuthApiClient</code>) is available for Kotlin/JS frontends.</p>
+
+    <h2>Frontend support</h2>
+
+    <p>Pre-built <a href="/ultra/kraft/">Kraft</a> components for login pages, password reset, and password change
+        widgets.
+        Auth state management with router middleware that redirects unauthenticated users to the login page.</p>
+
+    <Aside>The auth module handles the plumbing &mdash; token storage, JWT generation, password hashing,
+        recovery tokens. You implement the user model and the realm. That's it.
+    </Aside>
+
+    <h2>Storage backends</h2>
+
+    <p>Auth records (passwords, recovery tokens) are stored via pluggable backends:</p>
+
+    <ul>
+        <li><code>useKarango()</code> &mdash; ArangoDB via <a href="/ultra/karango/">Karango</a></li>
+        <li><code>useMonko()</code> &mdash; MongoDB via <a href="/ultra/monko/">Monko</a></li>
+    </ul>
+
+    <div class="mt-12">
+        <a href="/ultra/funktor/cluster"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-brand-400/10 text-brand-400 border border-brand-400/30 hover:bg-brand-400/20 transition-all font-medium">
+            Cluster Module &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

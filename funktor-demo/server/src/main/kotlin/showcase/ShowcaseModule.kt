@@ -5,4 +5,5 @@ import io.peekandpoke.ultra.kontainer.module
 
 val ShowcaseModule = module {
     singleton(ShowcaseApiFeature::class)
+    dynamic(DemoBackgroundJobHandler::class)
 }

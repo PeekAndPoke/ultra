@@ -1,0 +1,60 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {funktorSidebar} from '../../../data/funktor-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Static Web Module" sidebar={funktorSidebar}
+            description="Server-rendered templates, flash sessions, and web resources">
+
+    <h1>Static Web</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Server-rendered HTML templates, flash sessions, web resources with cache busting,
+        and Semantic UI integration.
+    </p>
+
+    <h2>Templates</h2>
+
+    <p>Kotlinx HTML-based templates with placeholder support. Built-in templates for Semantic UI admin panels.</p>
+
+    <Code code={`class MyTemplate : SimpleTemplateBase() {
+    val content = placeholder<FlowContent>()
+
+    override fun FlowContent.apply() {
+        head { /* styles, scripts */ }
+        body {
+            insert(content)
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Flash sessions</h2>
+
+    <p>One-time messages that survive a redirect. Set a message, redirect, and the message
+        appears on the next page load then disappears.</p>
+
+    <Code code={`// Set a flash message
+call.flashSession.success("User created successfully")
+call.flashSession.warning("Email not verified")
+
+// Pull messages (clears them)
+val messages = call.flashSession.pull()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Web resources</h2>
+
+    <p>Manage CSS and JavaScript bundles with automatic cache busting via content hashing.
+        Subresource integrity (SRI) hashes are computed automatically.</p>
+
+    <h2>PrismJS integration</h2>
+
+    <p>Built-in support for PrismJS syntax highlighting in server-rendered pages.</p>
+
+    <div class="mt-12">
+        <a href="/ultra/funktor/testing"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-brand-400/10 text-brand-400 border border-brand-400/30 hover:bg-brand-400/20 transition-all font-medium">
+            Testing Module &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

@@ -1,0 +1,113 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {monkoSidebar} from '../../../data/monko-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Repositories" sidebar={monkoSidebar}
+            description="CRUD operations, queries, cursors, and batch operations">
+
+    <h1>Repositories</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        MonkoRepository provides typed CRUD, queries, cursors, and atomic operations.
+    </p>
+
+    <h2>Defining a repository</h2>
+
+    <Code code={`class PersonsRepo(driver: MonkoDriver) : MonkoRepository<Person>(
+    name = "persons",
+    storedType = kType(),
+    driver = driver,
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The repository is a singleton registered in <a href="/ultra/kontainer/">Kontainer</a>.
+        The <code>MonkoDriver</code> is injected as a dynamic (per-request) dependency.</p>
+
+    <h2>CRUD operations</h2>
+
+    <Code code={`// Insert with explicit key
+val stored = repo.insert("alice-1", Person(name = "Alice", age = 30, email = "alice@example.com"))
+
+// Insert with auto-generated ObjectId
+val stored = repo.insert(New(Person(name = "Bob", age = 25, email = "bob@example.com")))
+
+// Find by ID
+val person = repo.findById("persons/alice-1")  // returns Stored<Person>?
+
+// Find all
+val everyone = repo.findAll()  // returns MonkoCursor<Stored<Person>>
+
+// Save (update)
+val modified = person!!.modify { copy(age = 31) }
+repo.save(modified)
+
+// Atomic read-modify-write
+repo.modifyById("persons/alice-1") { copy(age = it.age + 1) }
+
+// Delete
+repo.remove("persons/alice-1")
+
+// Delete all
+repo.removeAll()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Custom queries</h2>
+
+    <Code code={`// Type-safe query with builder
+val berliners = repo.find { r ->
+    filter(r.address.city.eq("Berlin"))
+    filter(r.age.gte(18))
+    sort(r.name.asc)
+    limit(50)
+}
+
+// Access results
+berliners.toList()       // List<Stored<Person>>
+berliners.count           // number of results returned
+berliners.fullCount       // total matching (for pagination)
+berliners.forEach { ... } // iterate`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Cursors</h2>
+
+    <p><code>MonkoCursor&lt;T&gt;</code> wraps query results with metadata:</p>
+
+    <Code code={`val cursor = repo.find { r ->
+    filter(r.status.eq("active"))
+    sort(r.createdAt.desc)
+    skip(20)
+    limit(10)
+}
+
+cursor.count       // 10 (results in this page)
+cursor.fullCount   // 253 (total matching documents)
+cursor.entries     // List<Stored<Person>>`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Batch operations</h2>
+
+    <Code code={`// Insert multiple
+val people = listOf(
+    Person("Alice", 30, "alice@example.com"),
+    Person("Bob", 25, "bob@example.com"),
+    Person("Charlie", 35, "charlie@example.com"),
+)
+
+repo.batchInsertValues(people)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Collection stats</h2>
+
+    <Code code={`val stats = repo.getStats()
+// stats.documentCount, stats.indexes, etc.`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>Repositories are the access layer. Domain logic stays in services.
+        A repository handles persistence &mdash; queries, indexes, and hooks. Nothing more.
+    </Aside>
+
+    <div class="mt-12">
+        <a href="/ultra/monko/indexes-and-hooks"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-brand-400/10 text-brand-400 border border-brand-400/30 hover:bg-brand-400/20 transition-all font-medium">
+            Indexes & Hooks &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

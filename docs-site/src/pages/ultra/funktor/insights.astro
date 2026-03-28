@@ -1,0 +1,66 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {funktorSidebar} from '../../../data/funktor-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Insights Module" sidebar={funktorSidebar} description="Request profiling and performance monitoring">
+
+    <h1>Insights</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Request profiling, performance metrics, and a built-in debug GUI.
+    </p>
+
+    <h2>What it collects</h2>
+
+    <p>Insights uses per-request <a href="/ultra/kontainer/">Kontainer</a> scoping to collect data throughout
+        a request's lifecycle. Each collector gathers one kind of data:</p>
+
+    <div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
+        <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">RequestCollector</h3>
+            <p class="text-sm text-gray-400">HTTP method, URI, headers, query parameters.</p>
+        </div>
+        <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">ResponseCollector</h3>
+            <p class="text-sm text-gray-400">Status code, response time, content type.</p>
+        </div>
+        <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">VaultCollector</h3>
+            <p class="text-sm text-gray-400">Database queries executed, query times, results.</p>
+        </div>
+        <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">RuntimeCollector</h3>
+            <p class="text-sm text-gray-400">JVM heap, thread count, GC stats.</p>
+        </div>
+        <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">KontainerCollector</h3>
+            <p class="text-sm text-gray-400">Services created, injection times.</p>
+        </div>
+        <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">UserCollector</h3>
+            <p class="text-sm text-gray-400">Authenticated user info for the request.</p>
+        </div>
+    </div>
+
+    <h2>Insights GUI</h2>
+
+    <p>The module includes a web-based debug toolbar, mounted at <code>/_/insights/</code>.
+        Browse recent requests, inspect database queries, view timing breakdowns, and check container usage &mdash;
+        all without external tools.</p>
+
+    <Aside>Insights is the reason Kontainer has per-request scoping.
+        Each collector is a dynamic service that accumulates data throughout one request,
+        then gets serialized and stored.
+    </Aside>
+
+    <div class="mt-12">
+        <a href="/ultra/funktor/logging"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-brand-400/10 text-brand-400 border border-brand-400/30 hover:bg-brand-400/20 transition-all font-medium">
+            Logging Module &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

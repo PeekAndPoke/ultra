@@ -96,9 +96,43 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
                 +"REST API Explorer"
             }
 
-            if (auth.user?.isSuperUser == true) {
-                renderMenuHeader("System")
+            noui.item A {
+                onClick { evt -> router.navToUri(evt, Nav.showcase.auth()) }
+                icon.shield_alternate()
+                +"Auth & Authorization"
+            }
 
+            renderMenuHeader("Cluster")
+
+            noui.item A {
+                onClick { evt -> router.navToUri(evt, Nav.showcase.cluster()) }
+                icon.cubes()
+                +"Cluster Features"
+            }
+
+            renderMenuHeader("Messaging & Real-Time")
+
+            noui.item A {
+                onClick { evt -> router.navToUri(evt, Nav.showcase.messaging()) }
+                icon.envelope()
+                +"Messaging"
+            }
+
+            noui.item A {
+                onClick { evt -> router.navToUri(evt, Nav.showcase.sse()) }
+                icon.bolt()
+                +"SSE Demo"
+            }
+
+            renderMenuHeader("System")
+
+            noui.item A {
+                onClick { evt -> router.navToUri(evt, Nav.showcase.system()) }
+                icon.info_circle()
+                +"App Lifecycle"
+            }
+
+            if (auth.user?.isSuperUser == true) {
                 noui.item A {
                     onClick { evt -> router.navToUri(evt, funktorLogging.routes.list()) }
                     icon.file_alternate()

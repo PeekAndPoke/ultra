@@ -14,9 +14,19 @@ class ShowcaseApiFeature(converter: OutgoingConverter) : ApiFeature {
 
     val core = CoreShowcaseApi(converter)
     val rest = RestShowcaseApi(converter)
+    val auth = AuthShowcaseApi(converter)
+    val cluster = ClusterShowcaseApi(converter)
+    val messaging = MessagingShowcaseApi(converter)
+    val sse = SseShowcaseApi(converter)
+    val system = SystemShowcaseApi(converter)
 
     override fun getRouteGroups(): List<ApiRoutes> = listOf(
         core,
         rest,
+        auth,
+        cluster,
+        messaging,
+        sse,
+        system,
     )
 }
