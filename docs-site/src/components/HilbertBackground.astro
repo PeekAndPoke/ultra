@@ -1,0 +1,369 @@
+---
+// WebGL engraved Hilbert curve background with normal-map lighting that follows the mouse
+---
+
+<canvas id="hilbert-bg" class="fixed inset-0 -z-10 w-full h-full" style="background-color: #0e0d0b;"></canvas>
+
+<script>
+    import * as THREE from 'three';
+
+    function initHilbertBackground() {
+        const canvas = document.getElementById('hilbert-bg') as HTMLCanvasElement;
+        if (!canvas) return;
+
+        // Skip on mobile for performance
+        if (window.innerWidth < 768) return;
+
+        const renderer = new THREE.WebGLRenderer({canvas, alpha: false, antialias: false});
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0e0d0b);
+
+        let aspect = window.innerWidth / window.innerHeight;
+        const camSize = 1;
+        const camera = new THREE.OrthographicCamera(
+            -camSize * aspect, camSize * aspect,
+            camSize, -camSize,
+            0.1, 10
+        );
+        camera.position.z = 1;
+
+        // Square texture — Hilbert curve is inherently square, tile via UV repeat
+        const texSize = 1024;
+        const normalMap = generateTruchetNormalMap(texSize);
+        normalMap.wrapS = THREE.RepeatWrapping;
+        normalMap.wrapT = THREE.RepeatWrapping;
+        normalMap.repeat.set(aspect, 1);
+
+        let geometry = new THREE.PlaneGeometry(2 * aspect, 2);
+        const material = new THREE.MeshStandardMaterial({
+            color: 0x1a1611,
+            roughness: 0.42,
+            metalness: 0.55,
+            normalMap: normalMap,
+            normalScale: new THREE.Vector2(1.0, 1.0),
+        });
+        const plane = new THREE.Mesh(geometry, material);
+        scene.add(plane);
+
+        const ambientLight = new THREE.AmbientLight(0x0e0d0b, 0.1);
+        scene.add(ambientLight);
+
+        // High Z = wide spread, low decay = gentle falloff — between point and directional
+        const mainLight = new THREE.PointLight(0xffd4a8, 0.45, 0, 0.8);
+        mainLight.position.set(0, 0, 3.5);
+        scene.add(mainLight);
+
+        const fillLight = new THREE.DirectionalLight(0x6677aa, 0.1);
+        fillLight.position.set(-1, -0.5, 0.5);
+        scene.add(fillLight);
+
+        // Light color transitions
+        const defaultColor = new THREE.Color(0xffd4a8);
+        const hoverColor = new THREE.Color(0xffd4a8);
+        const targetColor = new THREE.Color(0xffd4a8);
+        const defaultIntensity = 0.45;
+        const hoverIntensity = 0.9;
+        let targetIntensity = defaultIntensity;
+
+        document.addEventListener('pointerover', (e) => {
+            if ((e.target as HTMLElement).closest?.('a, button')) {
+                targetColor.copy(hoverColor);
+                targetIntensity = hoverIntensity;
+            }
+        });
+        document.addEventListener('pointerout', (e) => {
+            if ((e.target as HTMLElement).closest?.('a, button')) {
+                targetColor.copy(defaultColor);
+                targetIntensity = defaultIntensity;
+            }
+        });
+
+        // Mouse tracking
+        let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            targetX = (e.clientX / window.innerWidth) * 2 - 1;
+            targetY = -(e.clientY / window.innerHeight) * 2 + 1;
+            lastInteraction = performance.now();
+            wasIdle = false;
+        });
+
+        if (typeof DeviceOrientationEvent !== 'undefined') {
+            window.addEventListener('deviceorientation', (e) => {
+                if (e.gamma !== null && e.beta !== null) {
+                    targetX = e.gamma / 45;
+                    targetY = (e.beta - 45) / 45;
+                }
+            });
+        }
+
+        // Resize — texture stays square, just update UV repeat
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth, h = window.innerHeight;
+            aspect = w / h;
+            renderer.setSize(w, h);
+            camera.left = -camSize * aspect;
+            camera.right = camSize * aspect;
+            camera.updateProjectionMatrix();
+            plane.geometry.dispose();
+            plane.geometry = new THREE.PlaneGeometry(2 * aspect, 2);
+            normalMap.repeat.set(aspect, 1);
+        });
+
+        // Idle wandering
+        let lastInteraction = 0;
+        let wasIdle = false;
+        let bP0x = 0, bP0y = 0, bP1x = 0, bP1y = 0;
+        let bP2x = 0, bP2y = 0, bP3x = 0, bP3y = 0;
+        let bStart = 0;
+        const bDuration = 4000;
+        let wanderAngle = Math.random() * Math.PI * 2;
+
+        function pickNextCurve() {
+            bP0x = bP3x;
+            bP0y = bP3y;
+            wanderAngle += (Math.PI * 0.5) + Math.random() * Math.PI;
+            const radius = 0.6 + Math.random() * 0.3;
+            bP3x = Math.cos(wanderAngle) * radius;
+            bP3y = Math.sin(wanderAngle) * radius * 0.7;
+            const midAngle = wanderAngle - Math.PI * 0.3 + Math.random() * Math.PI * 0.6;
+            bP1x = bP0x + Math.cos(midAngle) * 0.5;
+            bP1y = bP0y + Math.sin(midAngle) * 0.4;
+            bP2x = bP3x + Math.cos(midAngle + Math.PI) * 0.5;
+            bP2y = bP3y + Math.sin(midAngle + Math.PI) * 0.4;
+            bStart = performance.now();
+        }
+
+        function bez(t: number, a: number, b: number, c: number, d: number): number {
+            const u = 1 - t;
+            return u * u * u * a + 3 * u * u * t * b + 3 * u * t * t * c + t * t * t * d;
+        }
+
+        let lastFrameTime = performance.now();
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                lastFrameTime = performance.now();
+                lastInteraction = 0;
+                wasIdle = false;
+            }
+        });
+
+        canvas.addEventListener('webglcontextlost', (e) => {
+            e.preventDefault();
+        });
+        canvas.addEventListener('webglcontextrestored', () => {
+            animate();
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const now = performance.now();
+            lastFrameTime = now;
+
+            if (now - lastInteraction > 3000) {
+                if (!wasIdle) {
+                    wasIdle = true;
+                    bP0x = targetX;
+                    bP0y = targetY;
+                    bP3x = targetX;
+                    bP3y = targetY;
+                    pickNextCurve();
+                }
+                let t = Math.min((now - bStart) / bDuration, 1.0);
+                if (t >= 0.75) {
+                    const st = t * t * (3 - 2 * t);
+                    bP0x = bez(st, bP0x, bP1x, bP2x, bP3x);
+                    bP0y = bez(st, bP0y, bP1y, bP2y, bP3y);
+                    bP3x = bP0x;
+                    bP3y = bP0y;
+                    pickNextCurve();
+                    t = 0;
+                }
+                const st = t * t * (3 - 2 * t);
+                targetX = bez(st, bP0x, bP1x, bP2x, bP3x);
+                targetY = bez(st, bP0y, bP1y, bP2y, bP3y);
+            }
+
+            mouseX += (targetX - mouseX) * 0.18;
+            mouseY += (targetY - mouseY) * 0.18;
+            mainLight.position.x = mouseX * aspect;
+            mainLight.position.y = mouseY;
+
+            mainLight.color.lerp(targetColor, 0.05);
+            mainLight.intensity += (targetIntensity - mainLight.intensity) * 0.05;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    }
+
+    // ── Normal map generation ──────────────────────────────────────────
+
+    function n2c(n: number): number {
+        return Math.max(0, Math.min(255, (n + 1.0) * 127.5));
+    }
+
+    /**
+     * Hilbert curve d → (x,y).
+     * n = side length of grid (must be power of 2, e.g. 32 for order 5).
+     * d ∈ [0, n*n). Returns (x,y) ∈ [0, n). Every cell visited exactly once.
+     */
+    function hilbertD2xy(n: number, d: number): [number, number] {
+        let rx: number, ry: number, t = d;
+        let x = 0, y = 0;
+        for (let s = 1; s < n; s *= 2) {
+            rx = 1 & (t / 2);
+            ry = 1 & (t ^ rx);
+            if (ry === 0) {
+                if (rx === 1) {
+                    x = s - 1 - x;
+                    y = s - 1 - y;
+                }
+                const tmp = x;
+                x = y;
+                y = tmp;
+            }
+            x += s * rx;
+            y += s * ry;
+            t = Math.floor(t / 4);
+        }
+        return [x, y];
+    }
+
+    /**
+     * Distance from point (px,py) to segment (x1,y1)-(x2,y2).
+     */
+    function distToSeg(px: number, py: number, x1: number, y1: number, x2: number, y2: number) {
+        const dx = x2 - x1, dy = y2 - y1;
+        const lenSq = dx * dx + dy * dy;
+        let t = lenSq > 0 ? ((px - x1) * dx + (py - y1) * dy) / lenSq : 0;
+        if (t < 0) t = 0; else if (t > 1) t = 1;
+        const vx = px - (x1 + t * dx), vy = py - (y1 + t * dy);
+        return {dist: Math.sqrt(vx * vx + vy * vy), dx: vx, dy: vy};
+    }
+
+    /**
+     * Generate a Hilbert curve normal map.
+     * Order 5 = 32×32 grid = 1024 cells, 1023 segments. Visits every cell exactly once.
+     * Square texture, tiled via UV repeat to fill viewport.
+     */
+    function generateTruchetNormalMap(size: number): THREE.Texture {
+        const cvs = document.createElement('canvas');
+        cvs.width = size;
+        cvs.height = size;
+        const ctx = cvs.getContext('2d')!;
+        const imageData = ctx.createImageData(size, size);
+        const data = imageData.data;
+
+        const gridSize = 32; // 2^5, order 5
+        const totalPoints = gridSize * gridSize; // 1024
+        const cellSize = size / gridSize;
+        const channelWidth = cellSize * 0.22;
+        const wallWidth = channelWidth * 0.35;
+
+        // Generate all segments in pixel space
+        const numSegs = totalPoints - 1;
+        const segX1 = new Float32Array(numSegs);
+        const segY1 = new Float32Array(numSegs);
+        const segX2 = new Float32Array(numSegs);
+        const segY2 = new Float32Array(numSegs);
+
+        let [prevX, prevY] = hilbertD2xy(gridSize, 0);
+        for (let i = 1; i < totalPoints; i++) {
+            const [cx, cy] = hilbertD2xy(gridSize, i);
+            segX1[i - 1] = (prevX + 0.5) * cellSize;
+            segY1[i - 1] = (prevY + 0.5) * cellSize;
+            segX2[i - 1] = (cx + 0.5) * cellSize;
+            segY2[i - 1] = (cy + 0.5) * cellSize;
+            prevX = cx;
+            prevY = cy;
+        }
+
+        // Spatial grid — each cell stores indices of segments passing through it
+        const spatialCols = gridSize;
+        const spatialRows = gridSize;
+        const spatialGrid: number[][] = new Array(spatialCols * spatialRows);
+        for (let i = 0; i < spatialGrid.length; i++) spatialGrid[i] = [];
+
+        const margin = channelWidth + 4;
+        for (let si = 0; si < numSegs; si++) {
+            const minGx = Math.max(0, Math.floor((Math.min(segX1[si], segX2[si]) - margin) / cellSize));
+            const maxGx = Math.min(spatialCols - 1, Math.floor((Math.max(segX1[si], segX2[si]) + margin) / cellSize));
+            const minGy = Math.max(0, Math.floor((Math.min(segY1[si], segY2[si]) - margin) / cellSize));
+            const maxGy = Math.min(spatialRows - 1, Math.floor((Math.max(segY1[si], segY2[si]) + margin) / cellSize));
+            for (let gy = minGy; gy <= maxGy; gy++) {
+                for (let gx = minGx; gx <= maxGx; gx++) {
+                    spatialGrid[gy * spatialCols + gx].push(si);
+                }
+            }
+        }
+
+        // Generate normal map
+        for (let py = 0; py < size; py++) {
+            const gy = Math.min(spatialRows - 1, Math.floor(py / cellSize));
+
+            for (let px = 0; px < size; px++) {
+                const idx = (py * size + px) * 4;
+                const gx = Math.min(spatialCols - 1, Math.floor(px / cellSize));
+
+                const candidates = spatialGrid[gy * spatialCols + gx];
+                let minDist = Infinity;
+                let nearDx = 0, nearDy = 0;
+
+                for (let ci = 0; ci < candidates.length; ci++) {
+                    const si = candidates[ci];
+                    const r = distToSeg(px, py, segX1[si], segY1[si], segX2[si], segY2[si]);
+                    if (r.dist < minDist) {
+                        minDist = r.dist;
+                        nearDx = r.dx;
+                        nearDy = r.dy;
+                    }
+                }
+
+                let nx: number, ny: number, nz: number;
+
+                const innerFlat = channelWidth * 0.65;
+
+                if (minDist < innerFlat) {
+                    nx = 0;
+                    ny = 0;
+                    nz = 1.0;
+                } else if (minDist < channelWidth) {
+                    const t = (minDist - innerFlat) / wallWidth;
+                    const slope = 6.0 * t * (1.0 - t);
+                    const tiltStrength = slope * 0.15;
+                    const len = Math.sqrt(nearDx * nearDx + nearDy * nearDy) || 1;
+                    nx = (nearDx / len) * tiltStrength;
+                    ny = (nearDy / len) * tiltStrength;
+                    nz = Math.sqrt(Math.max(0.01, 1 - nx * nx - ny * ny));
+                } else {
+                    nx = (Math.random() - 0.5) * 0.006;
+                    ny = (Math.random() - 0.5) * 0.006;
+                    nz = 1.0;
+                }
+
+                data[idx] = n2c(nx);
+                data[idx + 1] = n2c(-ny);
+                data[idx + 2] = n2c(nz);
+                data[idx + 3] = 255;
+            }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+
+        const texture = new THREE.CanvasTexture(cvs);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        return texture;
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initHilbertBackground);
+    } else {
+        initHilbertBackground();
+    }
+</script>
