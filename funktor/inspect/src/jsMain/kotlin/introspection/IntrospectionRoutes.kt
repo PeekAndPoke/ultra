@@ -5,11 +5,9 @@ import io.peekandpoke.kraft.routing.Static
 
 class IntrospectionRoutes(mount: String = "/_/funktor/introspection") {
 
-    val overview = Static(mount)
-
     val lifecycleHooks = Static("$mount/lifecycle-hooks")
 
-    val configInfo = Static("$mount/config-info")
+    val config = Static("$mount/config")
 
     val cliCommands = Static("$mount/cli-commands")
 
@@ -21,16 +19,14 @@ class IntrospectionRoutes(mount: String = "/_/funktor/introspection") {
 
     val authRealms = Static("$mount/auth-realms")
 
-    val systemInfo = Static("$mount/system-info")
+    val system = Static("$mount/system")
 }
 
 fun RouterBuilder.mountFunktorIntrospection(ui: IntrospectionUi) {
 
-    mount(ui.routes.overview) { ui { IntrospectionOverviewPage() } }
-
     mount(ui.routes.lifecycleHooks) { ui { LifecycleHooksPage() } }
 
-    mount(ui.routes.configInfo) { ui { ConfigInfoPage() } }
+    mount(ui.routes.config) { ui { ConfigInfoPage() } }
 
     mount(ui.routes.cliCommands) { ui { CliCommandsPage() } }
 
@@ -42,5 +38,5 @@ fun RouterBuilder.mountFunktorIntrospection(ui: IntrospectionUi) {
 
     mount(ui.routes.authRealms) { ui { AuthRealmsPage() } }
 
-    mount(ui.routes.systemInfo) { ui { SystemInfoPage() } }
+    mount(ui.routes.system) { ui { SystemInfoPage() } }
 }

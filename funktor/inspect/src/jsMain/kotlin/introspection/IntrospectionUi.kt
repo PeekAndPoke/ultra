@@ -15,15 +15,6 @@ class IntrospectionUi(
         this.block()
     }
 
-    // // Overview /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    @Suppress("FunctionName")
-    fun Tag.IntrospectionOverviewPage() = comp(
-        IntrospectionOverviewPage.Props(ui = this@IntrospectionUi)
-    ) {
-        IntrospectionOverviewPage(it)
-    }
-
     // // Lifecycle Hooks ///////////////////////////////////////////////////////////////////////////////////////////////
 
     @Suppress("FunctionName")

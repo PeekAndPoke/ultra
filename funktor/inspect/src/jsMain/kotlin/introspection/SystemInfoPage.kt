@@ -9,11 +9,15 @@ import io.peekandpoke.kraft.utils.dataLoader
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick
 import io.peekandpoke.ultra.semanticui.icon
-import io.peekandpoke.ultra.semanticui.noui
 import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.coroutines.flow.map
 import kotlinx.html.FlowContent
 import kotlinx.html.div
+import kotlinx.html.tbody
+import kotlinx.html.td
+import kotlinx.html.th
+import kotlinx.html.thead
+import kotlinx.html.tr
 
 class SystemInfoPage(ctx: Ctx<Props>) : Component<SystemInfoPage.Props>(ctx) {
 
@@ -47,31 +51,36 @@ class SystemInfoPage(ctx: Ctx<Props>) : Component<SystemInfoPage.Props>(ctx) {
             }
 
             loader.renderDefault(this) { data ->
-                renderStats(data)
+                renderTable(data)
             }
         }
     }
 
-    private fun FlowContent.renderStats(info: AppLifecycleInfo) {
-        ui.four.doubling.stackable.statistics {
-            ui.statistic {
-                noui.value { +info.startedAt }
-                noui.label { +"Started At" }
+    private fun FlowContent.renderTable(info: AppLifecycleInfo) {
+        ui.definition.table Table {
+            thead {
+                tr {
+                    th { +"Property" }
+                    th { +"Value" }
+                }
             }
-
-            ui.statistic {
-                noui.value { +"${info.uptimeSeconds}s" }
-                noui.label { +"Uptime" }
-            }
-
-            ui.statistic {
-                noui.value { +info.jvmVersion }
-                noui.label { +"JVM Version" }
-            }
-
-            ui.statistic {
-                noui.value { +info.kotlinVersion }
-                noui.label { +"Kotlin Version" }
+            tbody {
+                tr {
+                    td { +"Started At" }
+                    td { +info.startedAt }
+                }
+                tr {
+                    td { +"Uptime" }
+                    td { +"${info.uptimeSeconds}s" }
+                }
+                tr {
+                    td { +"JVM Version" }
+                    td { +info.jvmVersion }
+                }
+                tr {
+                    td { +"Kotlin Version" }
+                    td { +info.kotlinVersion }
+                }
             }
         }
     }

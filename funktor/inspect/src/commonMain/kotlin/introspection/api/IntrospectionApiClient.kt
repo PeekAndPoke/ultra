@@ -59,6 +59,11 @@ class IntrospectionApiClient(config: Config) : ApiClient(config) {
             uri = "$base/system",
             response = AppLifecycleInfo.serializer().api(),
         )
+
+        val GetApiAccessMatrix = Get(
+            uri = "$base/api-access-matrix",
+            response = ApiAccessMatrixModel.serializer().api(),
+        )
     }
 
     fun getLifecycleHooks(): Flow<ApiResponse<List<LifecycleHookInfo>>> = call(
@@ -95,5 +100,9 @@ class IntrospectionApiClient(config: Config) : ApiClient(config) {
 
     fun getAppLifecycle(): Flow<ApiResponse<AppLifecycleInfo>> = call(
         GetAppLifecycle()
+    )
+
+    fun getApiAccessMatrix(): Flow<ApiResponse<ApiAccessMatrixModel>> = call(
+        GetApiAccessMatrix()
     )
 }

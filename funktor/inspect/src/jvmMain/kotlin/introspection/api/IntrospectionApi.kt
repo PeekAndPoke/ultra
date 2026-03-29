@@ -8,6 +8,7 @@ import io.peekandpoke.funktor.core.fixtures.FixtureInstaller
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
 import io.peekandpoke.funktor.core.repair.repairMan
+import io.peekandpoke.funktor.inspect.introspection.services.ApiAccessDescriptor
 import io.peekandpoke.funktor.rest.ApiFeature
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
@@ -89,7 +90,14 @@ class IntrospectionApi(converter: OutgoingConverter) : ApiRoutes("introspection"
         }.handle {
             val result = cliServices.commands
                 .sortedBy { it.commandName }
-                .map { CliCommandInfo(name = it.commandName, help = "") }
+                .map { cmd ->
+                    val help = try {
+                        cmd.getFormattedHelp() ?: ""
+                    } catch (_: Exception) {
+                        ""
+                    }
+                    CliCommandInfo(name = cmd.commandName, help = help)
+                }
 
             ApiResponse.ok(result)
         }
@@ -108,8 +116,8 @@ class IntrospectionApi(converter: OutgoingConverter) : ApiRoutes("introspection"
 
             val result = loaders.map { loader ->
                 FixtureInfo(
-                    className = loader::class.simpleName ?: "?",
-                    dependsOn = loader.dependsOn.map { it::class.simpleName ?: "?" },
+                    className = loader::class.qualifiedName ?: loader::class.simpleName ?: "?",
+                    dependsOn = loader.dependsOn.map { it::class.qualifiedName ?: it::class.simpleName ?: "?" },
                 )
             }
 
@@ -227,6 +235,20 @@ class IntrospectionApi(converter: OutgoingConverter) : ApiRoutes("introspection"
                     kotlinVersion = KotlinVersion.CURRENT.toString(),
                 )
             )
+        }
+    }
+
+    val getApiAccessMatrix = IntrospectionApiClient.GetApiAccessMatrix.mount {
+        docs {
+            name = "API Access Matrix"
+        }.codeGen {
+            funcName = "getApiAccessMatrix"
+        }.authorize {
+            isSuperUser()
+        }.handle {
+            val descriptor = call.kontainer.get(ApiAccessDescriptor::class)
+
+            ApiResponse.ok(descriptor.describe())
         }
     }
 }

@@ -22,18 +22,123 @@ class FunktorInspectOverviewPage(ctx: Ctx<Props>) : Component<FunktorInspectOver
         ui.padded.segment {
             ui.header H2 { +"Funktor Inspect" }
 
-            renderLogging()
             renderDevtools()
-            renderCluster()
-            renderStorage()
             renderAppIntrospection()
+            renderLocks()
+            renderWorkersAndJobs()
+            renderStorage()
         }
     }
 
-    private fun FlowContent.renderLogging() {
-        ui.dividing.header { +"Logging" }
+    private fun FlowContent.renderAppIntrospection() {
+        ui.dividing.header { +"App Introspection" }
 
         ui.four.doubling.stackable.cards {
+            ui.card A {
+                href(props.ui.routes.app.endpoints())
+
+                ui.center.aligned.content {
+                    icon.large.sitemap()
+                }
+                ui.center.aligned.content {
+                    noui.header { +"API Access Matrix" }
+                }
+            }
+
+            ui.card A {
+                href(props.ui.routes.app.system())
+
+                ui.center.aligned.content {
+                    icon.large.server()
+                }
+                ui.center.aligned.content {
+                    noui.header { +"System Info" }
+                }
+            }
+
+            ui.card A {
+                href(props.ui.routes.app.config())
+
+                ui.center.aligned.content {
+                    icon.large.cog()
+                }
+                ui.center.aligned.content {
+                    noui.header { +"Configuration" }
+                }
+            }
+
+            ui.card A {
+                href(props.ui.routes.app.lifecycleHooks())
+
+                ui.center.aligned.content {
+                    icon.large.heartbeat()
+                }
+                ui.center.aligned.content {
+                    noui.header { +"Lifecycle Hooks" }
+                }
+            }
+
+            ui.card A {
+                href(props.ui.routes.app.cliCommands())
+
+                ui.center.aligned.content {
+                    icon.large.terminal()
+                }
+                ui.center.aligned.content {
+                    noui.header { +"CLI Commands" }
+                }
+            }
+
+            ui.card A {
+                href(props.ui.routes.app.authRealms())
+
+                ui.center.aligned.content {
+                    icon.large.shield_alternate()
+                }
+                ui.center.aligned.content {
+                    noui.header { +"Auth Realms" }
+                }
+            }
+
+            ui.card A {
+                href(props.ui.routes.app.fixtures())
+
+                ui.center.aligned.content {
+                    icon.large.puzzle_piece()
+                }
+                ui.center.aligned.content {
+                    noui.header { +"Fixtures" }
+                }
+            }
+
+            ui.card A {
+                href(props.ui.routes.app.repairs())
+
+                ui.center.aligned.content {
+                    icon.large.wrench()
+                }
+                ui.center.aligned.content {
+                    noui.header { +"Repairs" }
+                }
+            }
+        }
+    }
+
+    private fun FlowContent.renderDevtools() {
+        ui.dividing.header { +"Dev Tools" }
+
+        ui.four.doubling.stackable.cards {
+            ui.card A {
+                href(props.ui.routes.cluster.devtools.requestHistory())
+
+                ui.center.aligned.content {
+                    icon.large.cloud_upload_alternate()
+                }
+                ui.center.aligned.content {
+                    noui.header { +"Request History" }
+                }
+            }
+
             ui.card A {
                 href(props.ui.routes.logging.list())
 
@@ -47,24 +152,7 @@ class FunktorInspectOverviewPage(ctx: Ctx<Props>) : Component<FunktorInspectOver
         }
     }
 
-    private fun FlowContent.renderDevtools() {
-        ui.dividing.header { +"Devtools" }
-
-        ui.four.doubling.stackable.cards {
-            ui.card A {
-                href(props.ui.routes.cluster.devtools.requestHistory())
-
-                ui.center.aligned.content {
-                    icon.large.cloud_upload_alternate()
-                }
-                ui.center.aligned.content {
-                    noui.header { +"Request History" }
-                }
-            }
-        }
-    }
-
-    private fun FlowContent.renderCluster() {
+    private fun FlowContent.renderLocks() {
         ui.dividing.header { +"Server and Global Locks" }
 
         ui.four.doubling.stackable.cards {
@@ -90,7 +178,9 @@ class FunktorInspectOverviewPage(ctx: Ctx<Props>) : Component<FunktorInspectOver
                 }
             }
         }
+    }
 
+    private fun FlowContent.renderWorkersAndJobs() {
         ui.dividing.header { +"Workers and Background Jobs" }
 
         ui.four.doubling.stackable.cards {
@@ -174,23 +264,6 @@ class FunktorInspectOverviewPage(ctx: Ctx<Props>) : Component<FunktorInspectOver
                 }
                 ui.center.aligned.content {
                     noui.header { +"Random Cache" }
-                }
-            }
-        }
-    }
-
-    private fun FlowContent.renderAppIntrospection() {
-        ui.dividing.header { +"App Introspection" }
-
-        ui.four.doubling.stackable.cards {
-            ui.card A {
-                href(props.ui.routes.app.overview())
-
-                ui.center.aligned.content {
-                    icon.large.search()
-                }
-                ui.center.aligned.content {
-                    noui.header { +"App Overview" }
                 }
             }
         }
