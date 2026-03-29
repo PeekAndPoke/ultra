@@ -9,7 +9,7 @@ import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 
 // TODO: make common multiplatform and consolidate duplicates
-internal fun <T> DataLoader<T>.renderDefault(flow: FlowContent, loadedBlock: FlowContent.(data: T) -> Unit) {
+fun <T> DataLoader<T>.renderDefault(flow: FlowContent, loadedBlock: FlowContent.(data: T) -> Unit) {
     val loader = this
     loader(flow) {
         loading {

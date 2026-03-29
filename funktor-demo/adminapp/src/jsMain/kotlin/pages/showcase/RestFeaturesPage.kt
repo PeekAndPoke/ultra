@@ -2,7 +2,6 @@ package io.peekandpoke.funktor.demo.adminapp.pages.showcase
 
 import io.peekandpoke.funktor.demo.adminapp.Apis
 import io.peekandpoke.funktor.demo.common.showcase.EchoResponse
-import io.peekandpoke.funktor.demo.common.showcase.EndpointInfo
 import io.peekandpoke.funktor.demo.common.showcase.ItemResponse
 import io.peekandpoke.funktor.demo.common.showcase.ServerTimeResponse
 import io.peekandpoke.funktor.demo.common.showcase.TransformRequest
@@ -26,11 +25,6 @@ import kotlinx.html.input
 import kotlinx.html.option
 import kotlinx.html.pre
 import kotlinx.html.select
-import kotlinx.html.tbody
-import kotlinx.html.td
-import kotlinx.html.th
-import kotlinx.html.thead
-import kotlinx.html.tr
 import org.w3c.dom.HTMLInputElement
 import org.w3c.dom.HTMLSelectElement
 
@@ -42,8 +36,6 @@ fun Tag.RestFeaturesPage() = comp {
 class RestFeaturesPage(ctx: NoProps) : PureComponent(ctx) {
 
     //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
-
-    private var allEndpoints: List<EndpointInfo> by value(emptyList())
 
     // Plain route demo
     private var plainResult: ServerTimeResponse? by value(null)
@@ -64,82 +56,20 @@ class RestFeaturesPage(ctx: NoProps) : PureComponent(ctx) {
 
     //  INIT  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    init {
-        launch {
-            allEndpoints = Apis.showcase.getAllEndpoints().first().data ?: emptyList()
-        }
-    }
-
     //  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
         ui.segment {
             ui.header H1 { +"REST API Explorer" }
             ui.dividing.header H3 {
-                +"Demonstrates typed API routes, endpoint listing, and interactive 'Try It' forms"
+                +"Demonstrates typed API routes and interactive 'Try It' forms"
             }
         }
 
-        renderEndpointListing()
         renderPlainRouteDemo()
         renderEchoRouteDemo()
         renderTransformRouteDemo()
         renderItemRouteDemo()
-    }
-
-    private fun FlowContent.renderEndpointListing() {
-        ui.segment {
-            ui.header H2 {
-                icon.list()
-                noui.content { +"All Registered Endpoints" }
-            }
-
-            if (allEndpoints.isEmpty()) {
-                ui.placeholder.segment { ui.header { +"Loading..." } }
-            } else {
-                ui.small.striped.table Table {
-                    thead {
-                        tr {
-                            th { +"Feature" }
-                            th { +"Group" }
-                            th { +"Method" }
-                            th { +"URI" }
-                            th { +"Authorization" }
-                        }
-                    }
-                    tbody {
-                        allEndpoints.forEach { ep ->
-                            tr {
-                                td { +ep.feature }
-                                td { +ep.group }
-                                td {
-                                    ui.label.apply {
-                                        when (ep.method) {
-                                            "GET" -> blue()
-                                            "POST" -> green()
-                                            "PUT" -> orange()
-                                            "DELETE" -> red()
-                                            else -> grey()
-                                        }
-                                    }.then {
-                                        +ep.method
-                                    }
-                                }
-                                td {
-                                    ui.label { +ep.uri }
-                                }
-                                td { +ep.authDescription }
-                            }
-                        }
-                    }
-                }
-
-                ui.label {
-                    icon.info_circle()
-                    +"${allEndpoints.size} endpoints registered"
-                }
-            }
-        }
     }
 
     private fun FlowContent.renderPlainRouteDemo() {

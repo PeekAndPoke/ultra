@@ -4,10 +4,10 @@ import io.peekandpoke.funktor.auth.authState
 import io.peekandpoke.funktor.auth.pages.AuthFrontend
 import io.peekandpoke.funktor.auth.pages.AuthFrontendConfig
 import io.peekandpoke.funktor.cluster.FunktorClusterApiClient
-import io.peekandpoke.funktor.cluster.FunktorClusterUi
 import io.peekandpoke.funktor.demo.adminapp.state.AdminAppState
 import io.peekandpoke.funktor.demo.common.AdminUserModel
-import io.peekandpoke.funktor.logging.LoggingUi
+import io.peekandpoke.funktor.inspect.FunktorInspectUi
+import io.peekandpoke.funktor.inspect.introspection.api.IntrospectionApiClient
 import io.peekandpoke.funktor.logging.api.LoggingApiClient
 import io.peekandpoke.kraft.kraftApp
 import io.peekandpoke.kraft.routing.Router.Companion.router
@@ -43,12 +43,10 @@ val State: AdminAppState = AdminAppState(
     ),
 )
 
-val funktorCluster = FunktorClusterUi(
-    api = FunktorClusterApiClient(Apis.config),
-)
-
-val funktorLogging = LoggingUi(
-    api = LoggingApiClient(Apis.config),
+val funktorInspect = FunktorInspectUi(
+    loggingApi = LoggingApiClient(Apis.config),
+    clusterApi = FunktorClusterApiClient(Apis.config),
+    introspectionApi = IntrospectionApiClient(Apis.config),
 )
 
 val kraft = kraftApp {

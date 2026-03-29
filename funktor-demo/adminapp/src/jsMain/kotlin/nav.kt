@@ -2,7 +2,6 @@ package io.peekandpoke.funktor.demo.adminapp
 
 import io.peekandpoke.funktor.auth.AuthFrontendRoutes
 import io.peekandpoke.funktor.auth.AuthState
-import io.peekandpoke.funktor.cluster.mountFunktorCluster
 import io.peekandpoke.funktor.demo.adminapp.layout.LoggedInLayout
 import io.peekandpoke.funktor.demo.adminapp.pages.DashboardPage
 import io.peekandpoke.funktor.demo.adminapp.pages.NotFoundPage
@@ -13,9 +12,8 @@ import io.peekandpoke.funktor.demo.adminapp.pages.showcase.CoreFeaturesPage
 import io.peekandpoke.funktor.demo.adminapp.pages.showcase.MessagingDemoPage
 import io.peekandpoke.funktor.demo.adminapp.pages.showcase.RestFeaturesPage
 import io.peekandpoke.funktor.demo.adminapp.pages.showcase.SseDemoPage
-import io.peekandpoke.funktor.demo.adminapp.pages.showcase.SystemPage
 import io.peekandpoke.funktor.demo.common.AdminUserModel
-import io.peekandpoke.funktor.logging.mountFunktorLogging
+import io.peekandpoke.funktor.inspect.mountFunktorInspect
 import io.peekandpoke.kraft.routing.RootRouterBuilder
 import io.peekandpoke.kraft.routing.Static
 
@@ -34,7 +32,6 @@ object Nav {
         val cluster = Static("/showcase/cluster")
         val messaging = Static("/showcase/messaging")
         val sse = Static("/showcase/sse")
-        val system = Static("/showcase/system")
     }
 }
 
@@ -60,11 +57,9 @@ fun RootRouterBuilder.mountNav(authState: AuthState<AdminUserModel>) {
             mount(Nav.showcase.cluster) { ClusterDemoPage() }
             mount(Nav.showcase.messaging) { MessagingDemoPage() }
             mount(Nav.showcase.sse) { SseDemoPage() }
-            mount(Nav.showcase.system) { SystemPage() }
 
-            // Mount funktor routes
-            funktorLogging { mountFunktorLogging(this) }
-            funktorCluster { mountFunktorCluster(this) }
+            // Mount unified funktor inspect routes
+            funktorInspect { mountFunktorInspect(this) }
         }
     }
 

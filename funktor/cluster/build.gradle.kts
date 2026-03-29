@@ -32,14 +32,9 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(Deps.KotlinX.html)
-                implementation(Deps.KotlinX.wrappers_css)
-
-                implementation(project(":kraft:semanticui"))
-                implementation(project(":ultra:semanticui"))
-
                 implementation(project(":funktor:core"))
                 implementation(project(":funktor:rest"))
+                implementation(project(":funktor:inspect"))
             }
         }
 

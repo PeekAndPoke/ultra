@@ -2,8 +2,7 @@ package io.peekandpoke.funktor.demo.adminapp.layout
 
 import io.peekandpoke.funktor.demo.adminapp.Nav
 import io.peekandpoke.funktor.demo.adminapp.State
-import io.peekandpoke.funktor.demo.adminapp.funktorCluster
-import io.peekandpoke.funktor.demo.adminapp.funktorLogging
+import io.peekandpoke.funktor.demo.adminapp.funktorInspect
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
@@ -124,25 +123,13 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
                 +"SSE Demo"
             }
 
-            renderMenuHeader("System")
-
-            noui.item A {
-                onClick { evt -> router.navToUri(evt, Nav.showcase.system()) }
-                icon.info_circle()
-                +"App Lifecycle"
-            }
-
             if (auth.user?.isSuperUser == true) {
-                noui.item A {
-                    onClick { evt -> router.navToUri(evt, funktorLogging.routes.list()) }
-                    icon.file_alternate()
-                    +"Server Logs"
-                }
+                renderMenuHeader("Admin Tools")
 
                 noui.item A {
-                    onClick { evt -> router.navToUri(evt, funktorCluster.routes.overview()) }
-                    icon.server()
-                    +"Server Internals"
+                    onClick { evt -> router.navToUri(evt, funktorInspect.routes.overview()) }
+                    icon.search()
+                    +"Funktor Inspect"
                 }
             }
 

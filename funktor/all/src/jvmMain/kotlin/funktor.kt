@@ -10,6 +10,7 @@ import io.peekandpoke.funktor.core.funktorCore
 import io.peekandpoke.funktor.core.model.AppInfo
 import io.peekandpoke.funktor.core.model.default
 import io.peekandpoke.funktor.insights.funktorInsights
+import io.peekandpoke.funktor.inspect.introspection.funktorIntrospection
 import io.peekandpoke.funktor.logging.FunktorLoggingBuilder
 import io.peekandpoke.funktor.logging.funktorLogging
 import io.peekandpoke.funktor.messaging.FunktorMessagingBuilder
@@ -32,6 +33,7 @@ val Funktor = module { params: FunktorParams ->
     funktorStaticWeb()
     funktorMessaging(params.messaging)
     funktorInsights()
+    funktorIntrospection()
 }
 
 fun KontainerBuilder.funktor(

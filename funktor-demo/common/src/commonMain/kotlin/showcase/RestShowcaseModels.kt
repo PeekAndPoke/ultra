@@ -3,15 +3,6 @@ package io.peekandpoke.funktor.demo.common.showcase
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class EndpointInfo(
-    val feature: String,
-    val group: String,
-    val method: String,
-    val uri: String,
-    val authDescription: String,
-)
-
-@Serializable
 data class ServerTimeResponse(
     val timestamp: String,
     val epochMs: Long,

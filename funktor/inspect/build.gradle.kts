@@ -37,9 +37,14 @@ kotlin {
 
         commonMain {
             dependencies {
+                implementation(Deps.KotlinX.html)
+                implementation(Deps.KotlinX.wrappers_css)
+
+                implementation(project(":kraft:semanticui"))
+                implementation(project(":ultra:semanticui"))
+
                 api(project(":funktor:core"))
                 api(project(":funktor:rest"))
-                api(project(":funktor:inspect"))
             }
         }
 
@@ -64,10 +69,7 @@ kotlin {
 
         jvmMain {
             dependencies {
-                implementation(Deps.JavaLibs.logback_classic)
-
-                implementation(project(":karango:core"))
-                implementation(project(":monko:core"))
+                implementation(project(":funktor:auth"))
             }
         }
 
@@ -79,13 +81,6 @@ kotlin {
             }
         }
     }
-}
-
-dependencies {
-    add("kspJvm", project(":karango:ksp"))
-    add("kspJvmTest", project(":karango:ksp"))
-    add("kspJvm", project(":monko:ksp"))
-    add("kspJvmTest", project(":monko:ksp"))
 }
 
 tasks {

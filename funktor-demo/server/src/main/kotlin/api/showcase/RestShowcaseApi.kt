@@ -1,14 +1,11 @@
 package io.peekandpoke.funktor.demo.server.api.showcase
 
 import io.peekandpoke.funktor.core.broker.OutgoingConverter
-import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.demo.common.showcase.EchoResponse
-import io.peekandpoke.funktor.demo.common.showcase.EndpointInfo
 import io.peekandpoke.funktor.demo.common.showcase.ItemResponse
 import io.peekandpoke.funktor.demo.common.showcase.ServerTimeResponse
 import io.peekandpoke.funktor.demo.common.showcase.ShowcaseApiClient
 import io.peekandpoke.funktor.demo.common.showcase.TransformResponse
-import io.peekandpoke.funktor.demo.server.api.ApiApp
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
@@ -21,34 +18,6 @@ class RestShowcaseApi(converter: OutgoingConverter) : ApiRoutes("showcase-rest",
 
     data class EchoParams(val message: String)
     data class ItemParams(val id: String)
-
-    val getAllEndpoints = ShowcaseApiClient.GetAllEndpoints.mount {
-        docs {
-            name = "List all API endpoints"
-        }.codeGen {
-            funcName = "getAllEndpoints"
-        }.authorize {
-            public()
-        }.handle {
-            val apiApp = call.kontainer.get(ApiApp::class)
-
-            val result = apiApp.features.flatMap { feature ->
-                feature.getRouteGroups().flatMap { group ->
-                    group.all.map { route ->
-                        EndpointInfo(
-                            feature = feature.name,
-                            group = group.name,
-                            method = route.method.value,
-                            uri = route.pattern.pattern,
-                            authDescription = route.authRules.joinToString(", ") { it.description },
-                        )
-                    }
-                }
-            }
-
-            ApiResponse.ok(result)
-        }
-    }
 
     val getPlain = ShowcaseApiClient.GetPlain.mount {
         docs {

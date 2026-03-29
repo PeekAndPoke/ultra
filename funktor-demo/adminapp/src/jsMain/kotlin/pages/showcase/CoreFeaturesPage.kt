@@ -1,11 +1,6 @@
 package io.peekandpoke.funktor.demo.adminapp.pages.showcase
 
 import io.peekandpoke.funktor.demo.adminapp.Apis
-import io.peekandpoke.funktor.demo.common.showcase.CliCommandInfo
-import io.peekandpoke.funktor.demo.common.showcase.ConfigInfoEntry
-import io.peekandpoke.funktor.demo.common.showcase.FixtureInfo
-import io.peekandpoke.funktor.demo.common.showcase.LifecycleHookInfo
-import io.peekandpoke.funktor.demo.common.showcase.RepairInfo
 import io.peekandpoke.funktor.demo.common.showcase.RetryDemoRequest
 import io.peekandpoke.funktor.demo.common.showcase.RetryDemoResponse
 import io.peekandpoke.kraft.components.NoProps
@@ -35,33 +30,8 @@ class CoreFeaturesPage(ctx: NoProps) : PureComponent(ctx) {
 
     //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private var lifecycleHooks: List<LifecycleHookInfo> by value(emptyList())
-    private var configInfo: List<ConfigInfoEntry> by value(emptyList())
-    private var cliCommands: List<CliCommandInfo> by value(emptyList())
-    private var fixtures: List<FixtureInfo> by value(emptyList())
-    private var repairs: List<RepairInfo> by value(emptyList())
     private var retryResult: RetryDemoResponse? by value(null)
     private var retryRunning: Boolean by value(false)
-
-    //  INIT  ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-    init {
-        launch {
-            lifecycleHooks = Apis.showcase.getLifecycleHooks().first().data ?: emptyList()
-        }
-        launch {
-            configInfo = Apis.showcase.getConfigInfo().first().data ?: emptyList()
-        }
-        launch {
-            cliCommands = Apis.showcase.getCliCommands().first().data ?: emptyList()
-        }
-        launch {
-            fixtures = Apis.showcase.getFixtures().first().data ?: emptyList()
-        }
-        launch {
-            repairs = Apis.showcase.getRepairs().first().data ?: emptyList()
-        }
-    }
 
     //  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -73,172 +43,7 @@ class CoreFeaturesPage(ctx: NoProps) : PureComponent(ctx) {
             }
         }
 
-        renderLifecycleHooks()
-        renderConfigInfo()
-        renderCliCommands()
-        renderFixtures()
-        renderRepairs()
         renderRetryDemo()
-    }
-
-    private fun FlowContent.renderLifecycleHooks() {
-        ui.segment {
-            ui.header H2 {
-                icon.heartbeat()
-                noui.content { +"Lifecycle Hooks" }
-            }
-
-            if (lifecycleHooks.isEmpty()) {
-                ui.placeholder.segment { ui.header { +"Loading..." } }
-            } else {
-                ui.striped.table Table {
-                    thead {
-                        tr {
-                            th { +"Phase" }
-                            th { +"Hook Class" }
-                            th { +"Execution Order" }
-                        }
-                    }
-                    tbody {
-                        lifecycleHooks.forEach { hook ->
-                            tr {
-                                td { +hook.phase }
-                                td { +hook.className }
-                                td { +"${hook.executionOrder}" }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun FlowContent.renderConfigInfo() {
-        ui.segment {
-            ui.header H2 {
-                icon.cog()
-                noui.content { +"Configuration" }
-            }
-
-            if (configInfo.isEmpty()) {
-                ui.placeholder.segment { ui.header { +"Loading..." } }
-            } else {
-                ui.striped.table Table {
-                    thead {
-                        tr {
-                            th { +"Key" }
-                            th { +"Value" }
-                        }
-                    }
-                    tbody {
-                        configInfo.forEach { entry ->
-                            tr {
-                                td { +entry.key }
-                                td { +entry.value }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun FlowContent.renderCliCommands() {
-        ui.segment {
-            ui.header H2 {
-                icon.terminal()
-                noui.content { +"CLI Commands" }
-            }
-
-            if (cliCommands.isEmpty()) {
-                ui.placeholder.segment { ui.header { +"No CLI commands registered" } }
-            } else {
-                ui.striped.table Table {
-                    thead {
-                        tr {
-                            th { +"Command" }
-                            th { +"Help" }
-                        }
-                    }
-                    tbody {
-                        cliCommands.forEach { cmd ->
-                            tr {
-                                td {
-                                    ui.label { +cmd.name }
-                                }
-                                td { +cmd.help }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun FlowContent.renderFixtures() {
-        ui.segment {
-            ui.header H2 {
-                icon.database()
-                noui.content { +"Fixture Loaders" }
-            }
-
-            if (fixtures.isEmpty()) {
-                ui.placeholder.segment { ui.header { +"No fixtures registered" } }
-            } else {
-                ui.striped.table Table {
-                    thead {
-                        tr {
-                            th { +"Fixture Class" }
-                            th { +"Depends On" }
-                        }
-                    }
-                    tbody {
-                        fixtures.forEach { fix ->
-                            tr {
-                                td { +fix.className }
-                                td {
-                                    if (fix.dependsOn.isEmpty()) {
-                                        +"(none)"
-                                    } else {
-                                        fix.dependsOn.forEach { dep ->
-                                            ui.label { +dep }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun FlowContent.renderRepairs() {
-        ui.segment {
-            ui.header H2 {
-                icon.wrench()
-                noui.content { +"Repair System" }
-            }
-
-            if (repairs.isEmpty()) {
-                ui.placeholder.segment { ui.header { +"No repairs registered" } }
-            } else {
-                ui.striped.table Table {
-                    thead {
-                        tr {
-                            th { +"Repair Class" }
-                        }
-                    }
-                    tbody {
-                        repairs.forEach { repair ->
-                            tr {
-                                td { +repair.className }
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 
     private fun FlowContent.renderRetryDemo() {

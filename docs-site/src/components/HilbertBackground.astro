@@ -52,7 +52,7 @@
         scene.add(ambientLight);
 
         // High Z = wide spread, low decay = gentle falloff — between point and directional
-        const mainLight = new THREE.PointLight(0xffd4a8, 0.45, 0, 0.8);
+        const mainLight = new THREE.PointLight(0xffd4a8, 0.65, 0, 0.8);
         mainLight.position.set(0, 0, 3.5);
         scene.add(mainLight);
 
@@ -64,8 +64,8 @@
         const defaultColor = new THREE.Color(0xffd4a8);
         const hoverColor = new THREE.Color(0xffd4a8);
         const targetColor = new THREE.Color(0xffd4a8);
-        const defaultIntensity = 0.45;
-        const hoverIntensity = 0.9;
+        const defaultIntensity = 0.65;
+        const hoverIntensity = 1.2;
         let targetIntensity = defaultIntensity;
 
         document.addEventListener('pointerover', (e) => {
