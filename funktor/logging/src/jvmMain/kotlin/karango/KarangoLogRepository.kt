@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.logging.karango
 
-import io.peekandpoke.funktor.logging.LogsFilter
-import io.peekandpoke.funktor.logging.api.LogsRequest
+import io.peekandpoke.funktor.inspect.logging.LogsFilter
+import io.peekandpoke.funktor.inspect.logging.api.LogsRequest
 import io.peekandpoke.karango.KarangoCursor
 import io.peekandpoke.karango.aql.AqlForLoop
 import io.peekandpoke.karango.aql.AqlIterableExpr

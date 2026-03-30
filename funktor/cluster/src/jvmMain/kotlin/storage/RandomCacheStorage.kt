@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.cluster.storage
 
 import io.peekandpoke.funktor.cluster.storage.domain.RawCacheData
 import io.peekandpoke.funktor.cluster.storage.domain.TypedCacheData
+import io.peekandpoke.funktor.inspect.cluster.storage.RawCacheDataModel
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.reflection.kType

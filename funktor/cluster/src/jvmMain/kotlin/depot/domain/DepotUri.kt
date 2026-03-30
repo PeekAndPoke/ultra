@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.cluster.depot.domain
 
-import io.peekandpoke.funktor.cluster.depot.api.DepotUriModel
+import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotUriModel
 
 @Suppress("DataClassPrivateConstructor", "DATA_CLASS_COPY_VISIBILITY_WILL_BE_CHANGED_WARNING")
 data class DepotUri private constructor(

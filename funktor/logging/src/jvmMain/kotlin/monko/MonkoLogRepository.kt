@@ -1,8 +1,8 @@
 package io.peekandpoke.funktor.logging.monko
 
-import io.peekandpoke.funktor.logging.LogsFilter
-import io.peekandpoke.funktor.logging.api.LogEntryModel
-import io.peekandpoke.funktor.logging.api.LogsRequest
+import io.peekandpoke.funktor.inspect.logging.LogsFilter
+import io.peekandpoke.funktor.inspect.logging.api.LogEntryModel
+import io.peekandpoke.funktor.inspect.logging.api.LogsRequest
 import io.peekandpoke.funktor.logging.karango.KarangoLogEntry
 import io.peekandpoke.funktor.logging.karango.createdAt
 import io.peekandpoke.funktor.logging.karango.expiresAt

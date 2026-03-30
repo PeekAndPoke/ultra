@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.cluster.depot.domain
 
-import io.peekandpoke.funktor.cluster.depot.api.DepotItemModel
 import io.peekandpoke.funktor.cluster.depot.repos.DepotRepository
+import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotItemModel
 import io.peekandpoke.ultra.datetime.MpInstant
 
 /**

@@ -1,11 +1,11 @@
 package io.peekandpoke.funktor.cluster.depot.repos.aws
 
-import io.peekandpoke.funktor.cluster.depot.api.DepotItemModel
 import io.peekandpoke.funktor.cluster.depot.domain.DepotFileContent
 import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
 import io.peekandpoke.funktor.cluster.depot.repos.DepotPutFileOptions
 import io.peekandpoke.funktor.cluster.depot.repos.DepotRepository
 import io.peekandpoke.funktor.cluster.depot.repos.depotPutFileOptions
+import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotItemModel
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.mp
 import kotlinx.coroutines.future.await

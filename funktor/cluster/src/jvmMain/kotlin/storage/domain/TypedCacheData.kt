@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.cluster.storage.domain
 
-import io.peekandpoke.funktor.cluster.storage.RawCacheDataModel
+import io.peekandpoke.funktor.inspect.cluster.storage.RawCacheDataModel
 import io.peekandpoke.ultra.datetime.MpInstant
 
 data class TypedCacheData<T>(

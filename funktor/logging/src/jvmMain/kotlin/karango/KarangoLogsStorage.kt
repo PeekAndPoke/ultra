@@ -1,9 +1,9 @@
 package io.peekandpoke.funktor.logging.karango
 
-import io.peekandpoke.funktor.logging.LogsFilter
+import io.peekandpoke.funktor.inspect.logging.LogsFilter
+import io.peekandpoke.funktor.inspect.logging.api.LogEntryModel
+import io.peekandpoke.funktor.inspect.logging.api.LogsRequest
 import io.peekandpoke.funktor.logging.LogsStorage
-import io.peekandpoke.funktor.logging.api.LogEntryModel
-import io.peekandpoke.funktor.logging.api.LogsRequest
 import io.peekandpoke.karango.aql.FOR
 import io.peekandpoke.karango.aql.RETURN_COUNT
 import io.peekandpoke.karango.aql.UPDATE

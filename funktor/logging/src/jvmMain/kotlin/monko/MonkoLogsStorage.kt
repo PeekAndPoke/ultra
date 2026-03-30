@@ -1,9 +1,9 @@
 package io.peekandpoke.funktor.logging.monko
 
-import io.peekandpoke.funktor.logging.LogsFilter
+import io.peekandpoke.funktor.inspect.logging.LogsFilter
+import io.peekandpoke.funktor.inspect.logging.api.LogEntryModel
+import io.peekandpoke.funktor.inspect.logging.api.LogsRequest
 import io.peekandpoke.funktor.logging.LogsStorage
-import io.peekandpoke.funktor.logging.api.LogEntryModel
-import io.peekandpoke.funktor.logging.api.LogsRequest
 import io.peekandpoke.funktor.logging.karango.asApiModel
 import io.peekandpoke.ultra.model.Paged
 
