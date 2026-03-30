@@ -1,8 +1,8 @@
-package io.peekandpoke.funktor.cluster.locks
+package io.peekandpoke.funktor.inspect.cluster.locks
 
-import io.peekandpoke.funktor.cluster.FunktorClusterUi
-import io.peekandpoke.funktor.cluster.locks.api.GlobalLockEntryModel
-import io.peekandpoke.funktor.cluster.renderDefault
+import io.peekandpoke.funktor.inspect.cluster.FunktorInspectClusterUi
+import io.peekandpoke.funktor.inspect.cluster.locks.api.GlobalLockEntryModel
+import io.peekandpoke.funktor.inspect.logging.renderDefault
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.routing.JoinedPageTitle
@@ -26,7 +26,7 @@ class GlobalLocksListPage(ctx: Ctx<Props>) : Component<GlobalLocksListPage.Props
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: FunktorClusterUi,
+        val ui: FunktorInspectClusterUi,
     )
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////

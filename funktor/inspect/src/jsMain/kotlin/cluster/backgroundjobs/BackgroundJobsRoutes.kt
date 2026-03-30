@@ -1,6 +1,6 @@
-package io.peekandpoke.funktor.cluster.backgroundjobs
+package io.peekandpoke.funktor.inspect.cluster.backgroundjobs
 
-import io.peekandpoke.funktor.cluster.FunktorClusterUi
+import io.peekandpoke.funktor.inspect.cluster.FunktorInspectClusterUi
 import io.peekandpoke.kraft.routing.Route1
 import io.peekandpoke.kraft.routing.RouterBuilder
 import io.peekandpoke.kraft.routing.Static
@@ -17,7 +17,7 @@ class BackgroundJobsRoutes(mount: String) {
 }
 
 internal fun RouterBuilder.mountFunktorBackgroundJobs(
-    ui: FunktorClusterUi,
+    ui: FunktorInspectClusterUi,
 ) {
     mount(ui.routes.backgroundJobs.listQueued) { ui { BackgroundJobsQueuedListPage() } }
     mount(ui.routes.backgroundJobs.viewQueued) { ui { BackgroundJobsQueuedViewPage(it["id"]) } }

@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.cluster.devtools
+package io.peekandpoke.funktor.inspect.cluster.devtools
 
 import io.peekandpoke.ultra.common.addAt
 import io.peekandpoke.ultra.remote.ApiResponse

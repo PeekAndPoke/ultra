@@ -1,6 +1,6 @@
-package io.peekandpoke.funktor.cluster.devtools
+package io.peekandpoke.funktor.inspect.cluster.devtools
 
-import io.peekandpoke.funktor.cluster.FunktorClusterUi
+import io.peekandpoke.funktor.inspect.cluster.FunktorInspectClusterUi
 import io.peekandpoke.kraft.routing.RouterBuilder
 import io.peekandpoke.kraft.routing.Static
 
@@ -9,7 +9,7 @@ class DevtoolsRoutes(mount: String) {
 }
 
 internal fun RouterBuilder.mountFunktorDevtools(
-    ui: FunktorClusterUi,
+    ui: FunktorInspectClusterUi,
 ) {
     mount(ui.routes.devtools.requestHistory) { ui { DevtoolsRequestHistoryPage() } }
 }

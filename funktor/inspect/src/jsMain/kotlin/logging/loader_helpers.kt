@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.logging
+package io.peekandpoke.funktor.inspect.logging
 
 import io.peekandpoke.kraft.utils.DataLoader
 import io.peekandpoke.ultra.html.debugId

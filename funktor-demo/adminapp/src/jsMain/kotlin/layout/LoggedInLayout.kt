@@ -81,6 +81,26 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
                 +"Profile"
             }
 
+            renderMenuHeader("FunktorConf")
+
+            noui.item A {
+                onClick { evt -> router.navToUri(evt, Nav.funktorConf.events()) }
+                icon.calendar()
+                +"Events"
+            }
+
+            noui.item A {
+                onClick { evt -> router.navToUri(evt, Nav.funktorConf.speakers()) }
+                icon.microphone()
+                +"Speakers"
+            }
+
+            noui.item A {
+                onClick { evt -> router.navToUri(evt, Nav.funktorConf.attendees()) }
+                icon.users()
+                +"Attendees"
+            }
+
             renderMenuHeader("Showcase")
 
             noui.item A {

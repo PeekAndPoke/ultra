@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.cluster.backgroundjobs
+package io.peekandpoke.funktor.inspect.cluster.backgroundjobs
 
 import io.peekandpoke.funktor.core.model.CpuProfile
 import io.peekandpoke.ultra.datetime.MpInstant

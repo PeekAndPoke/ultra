@@ -1,7 +1,7 @@
-package io.peekandpoke.funktor.logging
+package io.peekandpoke.funktor.inspect.logging
 
-import io.peekandpoke.funktor.logging.api.LogEntryModel
-import io.peekandpoke.funktor.logging.api.LogsRequest
+import io.peekandpoke.funktor.inspect.logging.api.LogEntryModel
+import io.peekandpoke.funktor.inspect.logging.api.LogsRequest
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.routing.JoinedPageTitle

@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.cluster.locks.api
+package io.peekandpoke.funktor.inspect.cluster.locks.api
 
 import io.peekandpoke.ultra.datetime.MpInstant
 import kotlinx.serialization.Serializable

@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.cluster.depot.api
+package io.peekandpoke.funktor.inspect.cluster.depot.api
 
 import kotlinx.serialization.Serializable
 

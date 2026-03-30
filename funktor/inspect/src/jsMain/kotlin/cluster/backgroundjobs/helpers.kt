@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.cluster.backgroundjobs
+package io.peekandpoke.funktor.inspect.cluster.backgroundjobs
 
 import io.peekandpoke.ultra.common.roundWithPrecision
 import io.peekandpoke.ultra.datetime.formatDdMmmYyyyHhMmSs

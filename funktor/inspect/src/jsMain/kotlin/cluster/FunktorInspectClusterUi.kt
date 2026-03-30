@@ -1,27 +1,27 @@
-package io.peekandpoke.funktor.cluster
+package io.peekandpoke.funktor.inspect.cluster
 
-import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsArchivedListPage
-import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsArchivedViewPage
-import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsQueuedListPage
-import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsQueuedViewPage
-import io.peekandpoke.funktor.cluster.depot.DepotBrowsePage
-import io.peekandpoke.funktor.cluster.depot.DepotRepositoriesListPage
-import io.peekandpoke.funktor.cluster.devtools.DevtoolsRequestHistoryPage
-import io.peekandpoke.funktor.cluster.locks.GlobalLocksListPage
-import io.peekandpoke.funktor.cluster.locks.ServerBeaconsListPage
-import io.peekandpoke.funktor.cluster.storage.RandomCacheStorageListPage
-import io.peekandpoke.funktor.cluster.storage.RandomCacheStorageViewPage
-import io.peekandpoke.funktor.cluster.storage.RandomDataStorageListPage
-import io.peekandpoke.funktor.cluster.storage.RandomDataStorageViewPage
-import io.peekandpoke.funktor.cluster.vault.VaultIndexPage
-import io.peekandpoke.funktor.cluster.workers.WorkerDetailsPage
-import io.peekandpoke.funktor.cluster.workers.WorkersListPage
+import io.peekandpoke.funktor.inspect.cluster.backgroundjobs.BackgroundJobsArchivedListPage
+import io.peekandpoke.funktor.inspect.cluster.backgroundjobs.BackgroundJobsArchivedViewPage
+import io.peekandpoke.funktor.inspect.cluster.backgroundjobs.BackgroundJobsQueuedListPage
+import io.peekandpoke.funktor.inspect.cluster.backgroundjobs.BackgroundJobsQueuedViewPage
+import io.peekandpoke.funktor.inspect.cluster.depot.DepotBrowsePage
+import io.peekandpoke.funktor.inspect.cluster.depot.DepotRepositoriesListPage
+import io.peekandpoke.funktor.inspect.cluster.devtools.DevtoolsRequestHistoryPage
+import io.peekandpoke.funktor.inspect.cluster.locks.GlobalLocksListPage
+import io.peekandpoke.funktor.inspect.cluster.locks.ServerBeaconsListPage
+import io.peekandpoke.funktor.inspect.cluster.storage.RandomCacheStorageListPage
+import io.peekandpoke.funktor.inspect.cluster.storage.RandomCacheStorageViewPage
+import io.peekandpoke.funktor.inspect.cluster.storage.RandomDataStorageListPage
+import io.peekandpoke.funktor.inspect.cluster.storage.RandomDataStorageViewPage
+import io.peekandpoke.funktor.inspect.cluster.vault.VaultIndexPage
+import io.peekandpoke.funktor.inspect.cluster.workers.WorkerDetailsPage
+import io.peekandpoke.funktor.inspect.cluster.workers.WorkersListPage
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.html.RenderFn
 import kotlinx.html.Tag
 
-class FunktorClusterUi(
+class FunktorInspectClusterUi(
     kronos: () -> Kronos = { Kronos.systemUtc },
     val api: FunktorClusterApiClient,
     val routes: FunktorClusterRoutes = FunktorClusterRoutes(),
@@ -35,9 +35,9 @@ class FunktorClusterUi(
     // // Helpers ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Small helper to get [FunktorClusterUi] as this pointer into the scope
+     * Small helper to get [FunktorInspectClusterUi] as this pointer into the scope
      */
-    operator fun invoke(block: FunktorClusterUi.() -> Unit) {
+    operator fun invoke(block: FunktorInspectClusterUi.() -> Unit) {
         this.block()
     }
 
@@ -45,26 +45,26 @@ class FunktorClusterUi(
 
     @Suppress("FunctionName")
     fun Tag.FunktorClusterOverviewPage() = comp(
-        FunktorClusterOverviewPage.Props(
-            ui = this@FunktorClusterUi,
+        FunktorInspectClusterOverviewPage.Props(
+            ui = this@FunktorInspectClusterUi,
             customInternals = customInternals,
         )
     ) {
-        FunktorClusterOverviewPage(it)
+        FunktorInspectClusterOverviewPage(it)
     }
 
     // // Locks Ui Components ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Suppress("FunctionName")
     fun Tag.ServerBeaconsListPage() = comp(
-        ServerBeaconsListPage.Props(ui = this@FunktorClusterUi)
+        ServerBeaconsListPage.Props(ui = this@FunktorInspectClusterUi)
     ) {
         ServerBeaconsListPage(it)
     }
 
     @Suppress("FunctionName")
     fun Tag.GlobalLocksListPage() = comp(
-        GlobalLocksListPage.Props(ui = this@FunktorClusterUi)
+        GlobalLocksListPage.Props(ui = this@FunktorInspectClusterUi)
     ) {
         GlobalLocksListPage(it)
     }
@@ -73,28 +73,28 @@ class FunktorClusterUi(
 
     @Suppress("FunctionName")
     fun Tag.BackgroundJobsQueuedListPage() = comp(
-        BackgroundJobsQueuedListPage.Props(ui = this@FunktorClusterUi)
+        BackgroundJobsQueuedListPage.Props(ui = this@FunktorInspectClusterUi)
     ) {
         BackgroundJobsQueuedListPage(it)
     }
 
     @Suppress("FunctionName")
     fun Tag.BackgroundJobsQueuedViewPage(id: String) = comp(
-        BackgroundJobsQueuedViewPage.Props(ui = this@FunktorClusterUi, id = id)
+        BackgroundJobsQueuedViewPage.Props(ui = this@FunktorInspectClusterUi, id = id)
     ) {
         BackgroundJobsQueuedViewPage(it)
     }
 
     @Suppress("FunctionName")
     fun Tag.BackgroundJobsArchivedListPage() = comp(
-        BackgroundJobsArchivedListPage.Props(ui = this@FunktorClusterUi)
+        BackgroundJobsArchivedListPage.Props(ui = this@FunktorInspectClusterUi)
     ) {
         BackgroundJobsArchivedListPage(it)
     }
 
     @Suppress("FunctionName")
     fun Tag.BackgroundJobsArchivedViewPage(id: String) = comp(
-        BackgroundJobsArchivedViewPage.Props(ui = this@FunktorClusterUi, id = id)
+        BackgroundJobsArchivedViewPage.Props(ui = this@FunktorInspectClusterUi, id = id)
     ) {
         BackgroundJobsArchivedViewPage(it)
     }
@@ -103,14 +103,14 @@ class FunktorClusterUi(
 
     @Suppress("FunctionName")
     fun Tag.DepotRepositoriesListPage() = comp(
-        DepotRepositoriesListPage.Props(ui = this@FunktorClusterUi)
+        DepotRepositoriesListPage.Props(ui = this@FunktorInspectClusterUi)
     ) {
         DepotRepositoriesListPage(it)
     }
 
     @Suppress("FunctionName")
     fun Tag.DepotBrowsePage(repo: String, path: String) = comp(
-        DepotBrowsePage.Props(ui = this@FunktorClusterUi, repo = repo, path = path)
+        DepotBrowsePage.Props(ui = this@FunktorInspectClusterUi, repo = repo, path = path)
     ) {
         DepotBrowsePage(it)
     }
@@ -119,7 +119,7 @@ class FunktorClusterUi(
 
     @Suppress("FunctionName")
     fun Tag.RandomDataStorageListPage() = comp(
-        RandomDataStorageListPage.Props(ui = this@FunktorClusterUi)
+        RandomDataStorageListPage.Props(ui = this@FunktorInspectClusterUi)
     ) {
         RandomDataStorageListPage(it)
     }
@@ -128,14 +128,14 @@ class FunktorClusterUi(
     fun Tag.RandomDataStorageViewPage(
         id: String,
     ) = comp(
-        RandomDataStorageViewPage.Props(ui = this@FunktorClusterUi, id = id)
+        RandomDataStorageViewPage.Props(ui = this@FunktorInspectClusterUi, id = id)
     ) {
         RandomDataStorageViewPage(it)
     }
 
     @Suppress("FunctionName")
     fun Tag.RandomCacheStorageListPage() = comp(
-        RandomCacheStorageListPage.Props(ui = this@FunktorClusterUi)
+        RandomCacheStorageListPage.Props(ui = this@FunktorInspectClusterUi)
     ) {
         RandomCacheStorageListPage(it)
     }
@@ -144,7 +144,7 @@ class FunktorClusterUi(
     fun Tag.RandomCacheStorageViewPage(
         id: String,
     ) = comp(
-        RandomCacheStorageViewPage.Props(ui = this@FunktorClusterUi, id = id)
+        RandomCacheStorageViewPage.Props(ui = this@FunktorInspectClusterUi, id = id)
     ) {
         RandomCacheStorageViewPage(it)
     }
@@ -153,7 +153,7 @@ class FunktorClusterUi(
 
     @Suppress("FunctionName")
     fun Tag.VaultIndexPage() = comp(
-        VaultIndexPage.Props(ui = this@FunktorClusterUi)
+        VaultIndexPage.Props(ui = this@FunktorInspectClusterUi)
     ) {
         VaultIndexPage(it)
     }
@@ -162,14 +162,14 @@ class FunktorClusterUi(
 
     @Suppress("FunctionName")
     fun Tag.WorkersListPage() = comp(
-        WorkersListPage.Props(ui = this@FunktorClusterUi)
+        WorkersListPage.Props(ui = this@FunktorInspectClusterUi)
     ) {
         WorkersListPage(it)
     }
 
     @Suppress("FunctionName")
     fun Tag.WorkerDetailsPage(id: String) = comp(
-        WorkerDetailsPage.Props(ui = this@FunktorClusterUi, id = id)
+        WorkerDetailsPage.Props(ui = this@FunktorInspectClusterUi, id = id)
     ) {
         WorkerDetailsPage(it)
     }
@@ -179,7 +179,7 @@ class FunktorClusterUi(
     @Suppress("FunctionName")
     fun Tag.DevtoolsRequestHistoryPage() = comp(
         DevtoolsRequestHistoryPage.Props(
-            ui = this@FunktorClusterUi,
+            ui = this@FunktorInspectClusterUi,
         )
     ) {
         DevtoolsRequestHistoryPage(it)

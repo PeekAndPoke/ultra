@@ -1,6 +1,6 @@
-package io.peekandpoke.funktor.cluster.devtools
+package io.peekandpoke.funktor.inspect.cluster.devtools
 
-import io.peekandpoke.funktor.cluster.FunktorClusterUi
+import io.peekandpoke.funktor.inspect.cluster.FunktorInspectClusterUi
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.routing.JoinedPageTitle
@@ -20,7 +20,7 @@ import kotlin.js.Date
 class DevtoolsRequestHistoryPage(ctx: Ctx<Props>) : Component<DevtoolsRequestHistoryPage.Props>(ctx) {
 
     data class Props(
-        val ui: FunktorClusterUi,
+        val ui: FunktorInspectClusterUi,
     )
 
     // //  STATE  ///////////////////////////////////////////////////////////////////////////////////////////////////////

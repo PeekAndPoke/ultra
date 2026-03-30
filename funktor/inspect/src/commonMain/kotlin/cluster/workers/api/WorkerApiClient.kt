@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.cluster.workers.api
+package io.peekandpoke.funktor.inspect.cluster.workers.api
 
 import io.peekandpoke.ultra.remote.ApiClient
 import io.peekandpoke.ultra.remote.ApiResponse

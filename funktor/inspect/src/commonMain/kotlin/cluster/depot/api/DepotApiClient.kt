@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.cluster.depot.api
+package io.peekandpoke.funktor.inspect.cluster.depot.api
 
 import depot.api.DepotRepositoryModel
 import io.peekandpoke.ultra.remote.ApiClient

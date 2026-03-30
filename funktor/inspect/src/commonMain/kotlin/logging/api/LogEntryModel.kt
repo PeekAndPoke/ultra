@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.logging.api
+package io.peekandpoke.funktor.inspect.logging.api
 
 import io.peekandpoke.ultra.log.LogLevel
 import kotlinx.serialization.Serializable

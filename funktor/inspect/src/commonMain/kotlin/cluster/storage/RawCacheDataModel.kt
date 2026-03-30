@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.cluster.storage
+package io.peekandpoke.funktor.inspect.cluster.storage
 
 import io.peekandpoke.ultra.datetime.MpInstant
 import kotlinx.serialization.SerialName

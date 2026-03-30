@@ -1,7 +1,7 @@
-package io.peekandpoke.funktor.cluster.storage
+package io.peekandpoke.funktor.inspect.cluster.storage
 
-import io.peekandpoke.funktor.cluster.FunktorClusterUi
-import io.peekandpoke.funktor.cluster.renderDefault
+import io.peekandpoke.funktor.inspect.cluster.FunktorInspectClusterUi
+import io.peekandpoke.funktor.inspect.renderDefault
 import io.peekandpoke.kraft.addons.pagination.pagedSearchFilter
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
@@ -34,7 +34,7 @@ class RandomDataStorageListPage(ctx: Ctx<Props>) : Component<RandomDataStorageLi
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: FunktorClusterUi,
+        val ui: FunktorInspectClusterUi,
     )
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////

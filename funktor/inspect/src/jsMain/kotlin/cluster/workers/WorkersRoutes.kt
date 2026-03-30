@@ -1,7 +1,7 @@
-package io.peekandpoke.funktor.cluster.workers
+package io.peekandpoke.funktor.inspect.cluster.workers
 
-import io.peekandpoke.funktor.cluster.FunktorClusterUi
-import io.peekandpoke.funktor.cluster.workers.api.WorkerModel
+import io.peekandpoke.funktor.inspect.cluster.FunktorInspectClusterUi
+import io.peekandpoke.funktor.inspect.cluster.workers.api.WorkerModel
 import io.peekandpoke.kraft.routing.Route1
 import io.peekandpoke.kraft.routing.RouterBuilder
 import io.peekandpoke.kraft.routing.Static
@@ -15,7 +15,7 @@ class WorkersRoutes(mount: String) {
 }
 
 internal fun RouterBuilder.mountFunktorWorkers(
-    ui: FunktorClusterUi,
+    ui: FunktorInspectClusterUi,
 ) {
     mount(ui.routes.workers.list) { ui { WorkersListPage() } }
     mount(ui.routes.workers.view) { ui { WorkerDetailsPage(it["id"]) } }

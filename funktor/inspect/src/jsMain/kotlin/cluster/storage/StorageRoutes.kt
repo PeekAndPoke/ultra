@@ -1,6 +1,6 @@
-package io.peekandpoke.funktor.cluster.storage
+package io.peekandpoke.funktor.inspect.cluster.storage
 
-import io.peekandpoke.funktor.cluster.FunktorClusterUi
+import io.peekandpoke.funktor.inspect.cluster.FunktorInspectClusterUi
 import io.peekandpoke.kraft.routing.Route1
 import io.peekandpoke.kraft.routing.RouterBuilder
 import io.peekandpoke.kraft.routing.Static
@@ -26,7 +26,7 @@ class StorageRoutes(mount: String) {
 }
 
 internal fun RouterBuilder.mountFunktorStorage(
-    ui: FunktorClusterUi,
+    ui: FunktorInspectClusterUi,
 ) {
     mount(ui.routes.storage.randomData.list) { ui { RandomDataStorageListPage() } }
     mount(ui.routes.storage.randomData.view) { ui { RandomDataStorageViewPage(it["id"]) } }

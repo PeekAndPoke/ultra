@@ -1,8 +1,8 @@
-package io.peekandpoke.funktor.cluster.depot
+package io.peekandpoke.funktor.inspect.cluster.depot
 
 import depot.api.DepotRepositoryModel
-import io.peekandpoke.funktor.cluster.FunktorClusterUi
-import io.peekandpoke.funktor.cluster.renderDefault
+import io.peekandpoke.funktor.inspect.cluster.FunktorInspectClusterUi
+import io.peekandpoke.funktor.inspect.renderDefault
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.routing.JoinedPageTitle
@@ -26,7 +26,7 @@ class DepotRepositoriesListPage(ctx: Ctx<Props>) : Component<DepotRepositoriesLi
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: FunktorClusterUi,
+        val ui: FunktorInspectClusterUi,
     )
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////

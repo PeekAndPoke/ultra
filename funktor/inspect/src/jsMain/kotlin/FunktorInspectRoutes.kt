@@ -1,17 +1,17 @@
 package io.peekandpoke.funktor.inspect
 
-import io.peekandpoke.funktor.cluster.FunktorClusterRoutes
-import io.peekandpoke.funktor.cluster.backgroundjobs.mountFunktorBackgroundJobs
-import io.peekandpoke.funktor.cluster.depot.mountFunktorDepot
-import io.peekandpoke.funktor.cluster.devtools.mountFunktorDevtools
-import io.peekandpoke.funktor.cluster.locks.mountFunktorLocks
-import io.peekandpoke.funktor.cluster.storage.mountFunktorStorage
-import io.peekandpoke.funktor.cluster.vault.mountFunktorVault
-import io.peekandpoke.funktor.cluster.workers.mountFunktorWorkers
+import io.peekandpoke.funktor.inspect.cluster.FunktorClusterRoutes
+import io.peekandpoke.funktor.inspect.cluster.backgroundjobs.mountFunktorBackgroundJobs
+import io.peekandpoke.funktor.inspect.cluster.depot.mountFunktorDepot
+import io.peekandpoke.funktor.inspect.cluster.devtools.mountFunktorDevtools
+import io.peekandpoke.funktor.inspect.cluster.locks.mountFunktorLocks
+import io.peekandpoke.funktor.inspect.cluster.storage.mountFunktorStorage
+import io.peekandpoke.funktor.inspect.cluster.vault.mountFunktorVault
+import io.peekandpoke.funktor.inspect.cluster.workers.mountFunktorWorkers
 import io.peekandpoke.funktor.inspect.introspection.IntrospectionRoutes
 import io.peekandpoke.funktor.inspect.introspection.mountFunktorIntrospection
-import io.peekandpoke.funktor.logging.LoggingRoutes
-import io.peekandpoke.funktor.logging.mountFunktorLogging
+import io.peekandpoke.funktor.inspect.logging.LoggingRoutes
+import io.peekandpoke.funktor.inspect.logging.mountFunktorLogging
 import io.peekandpoke.kraft.routing.RouterBuilder
 import io.peekandpoke.kraft.routing.Static
 

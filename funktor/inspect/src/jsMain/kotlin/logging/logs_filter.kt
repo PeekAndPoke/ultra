@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.logging
+package io.peekandpoke.funktor.inspect.logging
 
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.routing.urlParams

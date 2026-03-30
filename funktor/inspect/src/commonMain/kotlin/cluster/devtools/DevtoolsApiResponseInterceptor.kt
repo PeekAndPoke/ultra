@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.cluster.devtools
+package io.peekandpoke.funktor.inspect.cluster.devtools
 
 import io.peekandpoke.ultra.remote.EmptyApiResponse
 import io.peekandpoke.ultra.remote.RemoteResponse

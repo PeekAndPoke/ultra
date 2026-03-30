@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.inspect.introspection
 
-import io.peekandpoke.funktor.cluster.renderDefault
 import io.peekandpoke.funktor.inspect.introspection.api.ApiAccessMatrixModel
+import io.peekandpoke.funktor.inspect.renderDefault
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.routing.JoinedPageTitle

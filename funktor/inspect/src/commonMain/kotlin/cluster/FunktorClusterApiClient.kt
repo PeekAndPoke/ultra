@@ -1,11 +1,11 @@
-package io.peekandpoke.funktor.cluster
+package io.peekandpoke.funktor.inspect.cluster
 
-import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsApiClient
-import io.peekandpoke.funktor.cluster.depot.api.DepotApiClient
-import io.peekandpoke.funktor.cluster.locks.api.GlobalLocksApiClient
-import io.peekandpoke.funktor.cluster.storage.StorageApiClient
-import io.peekandpoke.funktor.cluster.vault.api.VaultApiClient
-import io.peekandpoke.funktor.cluster.workers.api.WorkersApiClient
+import io.peekandpoke.funktor.inspect.cluster.backgroundjobs.BackgroundJobsApiClient
+import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotApiClient
+import io.peekandpoke.funktor.inspect.cluster.locks.api.GlobalLocksApiClient
+import io.peekandpoke.funktor.inspect.cluster.storage.StorageApiClient
+import io.peekandpoke.funktor.inspect.cluster.vault.api.VaultApiClient
+import io.peekandpoke.funktor.inspect.cluster.workers.api.WorkersApiClient
 import io.peekandpoke.ultra.remote.ApiClient
 
 class FunktorClusterApiClient(config: ApiClient.Config) {

@@ -1,9 +1,9 @@
-package io.peekandpoke.funktor.cluster.workers
+package io.peekandpoke.funktor.inspect.cluster.workers
 
-import io.peekandpoke.funktor.cluster.FunktorClusterUi
-import io.peekandpoke.funktor.cluster.formatNonZeroComponents
-import io.peekandpoke.funktor.cluster.renderDefault
-import io.peekandpoke.funktor.cluster.workers.api.WorkerModel
+import io.peekandpoke.funktor.inspect.cluster.FunktorInspectClusterUi
+import io.peekandpoke.funktor.inspect.cluster.workers.api.WorkerModel
+import io.peekandpoke.funktor.inspect.formatNonZeroComponents
+import io.peekandpoke.funktor.inspect.renderDefault
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.routing.JoinedPageTitle
@@ -35,7 +35,7 @@ class WorkersListPage(ctx: Ctx<Props>) : Component<WorkersListPage.Props>(ctx) {
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: FunktorClusterUi,
+        val ui: FunktorInspectClusterUi,
     )
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////

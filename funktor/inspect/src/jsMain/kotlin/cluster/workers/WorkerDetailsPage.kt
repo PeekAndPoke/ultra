@@ -1,8 +1,8 @@
-package io.peekandpoke.funktor.cluster.workers
+package io.peekandpoke.funktor.inspect.cluster.workers
 
-import io.peekandpoke.funktor.cluster.FunktorClusterUi
-import io.peekandpoke.funktor.cluster.formatNonZeroComponents
-import io.peekandpoke.funktor.cluster.workers.api.WorkerModel
+import io.peekandpoke.funktor.inspect.cluster.FunktorInspectClusterUi
+import io.peekandpoke.funktor.inspect.cluster.workers.api.WorkerModel
+import io.peekandpoke.funktor.inspect.formatNonZeroComponents
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.routing.JoinedPageTitle
@@ -25,7 +25,7 @@ class WorkerDetailsPage(ctx: Ctx<Props>) : Component<WorkerDetailsPage.Props>(ct
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: FunktorClusterUi,
+        val ui: FunktorInspectClusterUi,
         val id: String,
     )
 

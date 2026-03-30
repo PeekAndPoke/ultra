@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.cluster
+package io.peekandpoke.funktor.inspect.cluster
 
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
@@ -11,12 +11,12 @@ import io.peekandpoke.ultra.semanticui.noui
 import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 
-class FunktorClusterOverviewPage(ctx: Ctx<Props>) : Component<FunktorClusterOverviewPage.Props>(ctx) {
+class FunktorInspectClusterOverviewPage(ctx: Ctx<Props>) : Component<FunktorInspectClusterOverviewPage.Props>(ctx) {
 
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: FunktorClusterUi,
+        val ui: FunktorInspectClusterUi,
         val customInternals: RenderFn,
     )
 

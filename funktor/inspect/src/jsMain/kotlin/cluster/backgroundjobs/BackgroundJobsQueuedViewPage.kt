@@ -1,6 +1,6 @@
-package io.peekandpoke.funktor.cluster.backgroundjobs
+package io.peekandpoke.funktor.inspect.cluster.backgroundjobs
 
-import io.peekandpoke.funktor.cluster.FunktorClusterUi
+import io.peekandpoke.funktor.inspect.cluster.FunktorInspectClusterUi
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.routing.JoinedPageTitle
@@ -17,7 +17,7 @@ class BackgroundJobsQueuedViewPage(ctx: Ctx<Props>) : Component<BackgroundJobsQu
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: FunktorClusterUi,
+        val ui: FunktorInspectClusterUi,
         val id: String,
     )
 

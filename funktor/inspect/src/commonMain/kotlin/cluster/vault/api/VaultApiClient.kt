@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.cluster.vault.api
+package io.peekandpoke.funktor.inspect.cluster.vault.api
 
 import io.peekandpoke.ultra.remote.ApiClient
 import io.peekandpoke.ultra.remote.ApiResponse

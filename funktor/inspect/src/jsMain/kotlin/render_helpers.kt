@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.cluster
+package io.peekandpoke.funktor.inspect
 
 import io.peekandpoke.kraft.utils.DataLoader
 import io.peekandpoke.ultra.datetime.MpTemporalPeriod
@@ -8,7 +8,6 @@ import io.peekandpoke.ultra.semanticui.icon
 import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 
-// TODO: make common multiplatform and consolidate duplicates
 fun <T> DataLoader<T>.renderDefault(flow: FlowContent, loadedBlock: FlowContent.(data: T) -> Unit) {
     val loader = this
     loader(flow) {
@@ -25,14 +24,12 @@ fun <T> DataLoader<T>.renderDefault(flow: FlowContent, loadedBlock: FlowContent.
     }
 }
 
-// TODO: make common multiplatform and consolidate duplicates
 internal fun FlowContent.basicLoader() {
     ui.basic.center.aligned.segment {
         ui.active.inline.loader {}
     }
 }
 
-// TODO: make common multiplatform and consolidate duplicates
 internal fun FlowContent.basicError(onRetry: () -> Unit) {
     ui.very.padded.center.aligned.basic.massive.segment {
         debugId("data-not-loading")

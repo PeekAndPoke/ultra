@@ -1,6 +1,6 @@
-package io.peekandpoke.funktor.logging
+package io.peekandpoke.funktor.inspect.logging
 
-import io.peekandpoke.funktor.logging.api.LogEntryModel
+import io.peekandpoke.funktor.inspect.logging.api.LogEntryModel
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.log.LogLevel
 import io.peekandpoke.ultra.semanticui.ui

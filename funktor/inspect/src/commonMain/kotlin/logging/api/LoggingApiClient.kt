@@ -1,6 +1,6 @@
-package io.peekandpoke.funktor.logging.api
+package io.peekandpoke.funktor.inspect.logging.api
 
-import io.peekandpoke.funktor.logging.LogsFilter
+import io.peekandpoke.funktor.inspect.logging.LogsFilter
 import io.peekandpoke.ultra.model.Paged
 import io.peekandpoke.ultra.remote.ApiClient
 import io.peekandpoke.ultra.remote.ApiResponse

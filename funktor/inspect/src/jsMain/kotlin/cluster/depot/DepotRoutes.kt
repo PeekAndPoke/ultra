@@ -1,6 +1,6 @@
-package io.peekandpoke.funktor.cluster.depot
+package io.peekandpoke.funktor.inspect.cluster.depot
 
-import io.peekandpoke.funktor.cluster.FunktorClusterUi
+import io.peekandpoke.funktor.inspect.cluster.FunktorInspectClusterUi
 import io.peekandpoke.kraft.routing.Route1
 import io.peekandpoke.kraft.routing.RouterBuilder
 import io.peekandpoke.kraft.routing.Static
@@ -14,7 +14,7 @@ class DepotRoutes(mount: String) {
 }
 
 internal fun RouterBuilder.mountFunktorDepot(
-    ui: FunktorClusterUi,
+    ui: FunktorInspectClusterUi,
 ) {
     mount(ui.routes.depot.listRepositories) { ui { DepotRepositoriesListPage() } }
     mount(ui.routes.depot.browse) { ui { DepotBrowsePage(repo = it["repo"], path = it["path"]) } }

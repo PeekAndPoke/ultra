@@ -1,6 +1,6 @@
-package io.peekandpoke.funktor.cluster.storage
+package io.peekandpoke.funktor.inspect.cluster.storage
 
-import io.peekandpoke.funktor.cluster.FunktorClusterUi
+import io.peekandpoke.funktor.inspect.cluster.FunktorInspectClusterUi
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.routing.JoinedPageTitle
@@ -23,7 +23,7 @@ class RandomCacheStorageViewPage(ctx: Ctx<Props>) : Component<RandomCacheStorage
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: FunktorClusterUi,
+        val ui: FunktorInspectClusterUi,
         val id: String,
     )
 

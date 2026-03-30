@@ -1,7 +1,7 @@
-package io.peekandpoke.funktor.cluster.vault
+package io.peekandpoke.funktor.inspect.cluster.vault
 
-import io.peekandpoke.funktor.cluster.FunktorClusterUi
-import io.peekandpoke.funktor.cluster.renderDefault
+import io.peekandpoke.funktor.inspect.cluster.FunktorInspectClusterUi
+import io.peekandpoke.funktor.inspect.renderDefault
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.routing.JoinedPageTitle
@@ -28,7 +28,7 @@ class VaultIndexPage(ctx: Ctx<Props>) : Component<VaultIndexPage.Props>(ctx) {
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        val ui: FunktorClusterUi,
+        val ui: FunktorInspectClusterUi,
     )
 
     private enum class Sorting {
@@ -47,8 +47,6 @@ class VaultIndexPage(ctx: Ctx<Props>) : Component<VaultIndexPage.Props>(ctx) {
     private val loader = dataLoader {
         props.ui.api.vault.listRepositories().map { it.data!! }
     }
-
-    private fun Int.formatWithDots(dot: String = "."): String = toLong().formatWithDots(dot)
 
     private fun Long.formatWithDots(dot: String = "."): String {
         return toString()
