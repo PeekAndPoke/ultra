@@ -1,25 +1,44 @@
 # PeekAndPoke Ultra
 
 > A suite of open-source Kotlin libraries for building modern applications.
-> Published on Maven Central as `io.peekandpoke.ultra`. Version: 0.102.0. Kotlin: 2.3.10.
+> Published on Maven Central as `io.peekandpoke.ultra`. Version: 0.104.2. Kotlin: 2.3.10.
 
 - Website: https://peekandpoke.io
 - Source: https://github.com/PeekAndPoke/ultra
 - Maven Central: https://central.sonatype.com/namespace/io.peekandpoke.ultra
 
-## Docs
+## General Tools
 
-- [Kraft](https://peekandpoke.io/llms/kraft.md): Build SPAs in pure Kotlin — components, reactive state, routing, forms, SemanticUI DSL, 12 addons
 - [Kontainer](https://peekandpoke.io/llms/kontainer.md): Lightweight DI container — per-request scoping, singleton/dynamic/prototype services, modules
 - [Slumber](https://peekandpoke.io/llms/slumber.md): Kotlin-first serialization — nullable-aware, sealed class polymorphism, two-pass error handling
+- [Mutator](https://peekandpoke.io/ultra/mutator/): KSP-generated code for mutating nested immutable data structures
 - [Streams](https://peekandpoke.io/llms/streams.md): Reactive streams — always-has-a-value, composable operators, lazy subscriptions
-- [Karango](https://peekandpoke.io/llms/karango.md): Type-safe ArangoDB — Kotlin query DSL, KSP codegen, repository pattern, CRUD, indexes, hooks
+
+## Kraft
+
+- [Kraft](https://peekandpoke.io/llms/kraft.md): Build SPAs in pure Kotlin — components, reactive state, routing, forms, SemanticUI DSL, 12 addons
+
+## Funktor
+
+- [Funktor](https://peekandpoke.io/ultra/funktor/): Modular server framework on Ktor — auth, REST, clustering, messaging, insights
+  - [Core](https://peekandpoke.io/ultra/funktor/core): App lifecycle, routing, CLI, fixtures, configuration, repair
+  - [REST](https://peekandpoke.io/ultra/funktor/rest): Typed API routes, authorization DSL, SSE, endpoint docs
+  - [Auth](https://peekandpoke.io/ultra/funktor/auth): Multi-realm auth, email/password, Google SSO, GitHub SSO, JWT
+  - [Cluster](https://peekandpoke.io/ultra/funktor/cluster): Background jobs, file depot, locks, workers, key-value storage
+  - [Messaging](https://peekandpoke.io/ultra/funktor/messaging): Email sending, SendGrid, AWS SES, sent message storage
+  - [Insights](https://peekandpoke.io/ultra/funktor/insights): Request profiling, performance metrics, debug GUI
+  - [Logging](https://peekandpoke.io/ultra/funktor/logging): Structured logging with DB persistence and web UI
+  - [Static Web](https://peekandpoke.io/ultra/funktor/staticweb): Templates, flash sessions, web resources, cache busting
+  - [Testing](https://peekandpoke.io/ultra/funktor/testing): Test harness with fixtures, service injection, route testing
+- [Karango](https://peekandpoke.io/llms/karango.md): Type-safe ArangoDB — Kotlin query DSL, KSP codegen, repository pattern
+- [Monko](https://peekandpoke.io/ultra/monko/): Type-safe MongoDB repositories — entity hooks, Funktor integration
+  - [Getting Started](https://peekandpoke.io/ultra/monko/getting-started): Dependencies, entity, repository, CRUD, first query
+  - [Entity Model](https://peekandpoke.io/ultra/monko/entity-model): Stored, New, Ref, LazyRef wrappers from Vault
+  - [Query DSL](https://peekandpoke.io/ultra/monko/query-dsl): Filters, sorts, pagination, logical operators, nested paths
+  - [Repositories](https://peekandpoke.io/ultra/monko/repositories): CRUD, custom queries, cursors, batch operations
+  - [Indexes & Hooks](https://peekandpoke.io/ultra/monko/indexes-and-hooks): Persistent, unique, TTL, sparse indexes; lifecycle hooks
+  - [Kontainer Integration](https://peekandpoke.io/ultra/monko/kontainer-integration): DI setup, Funktor integration, mixing databases
 
 ## Optional: Complete docs in one file
 
-- [llms-full.txt](https://peekandpoke.io/llms-full.txt): All documentation in a single file (153KB)
-
-## Libraries not yet documented
-
-- **Mutator** (io.peekandpoke.mutator:core) — KSP-generated code for mutating nested immutable data. Source: https://github.com/PeekAndPoke/ultra/tree/master/mutator
-- **Funktor** (io.peekandpoke.funktor:core) — Full-stack Kotlin on Ktor. Source: https://github.com/PeekAndPoke/ultra/tree/master/funktor
+- [llms-full.txt](https://peekandpoke.io/llms-full.txt): All documentation in a single file

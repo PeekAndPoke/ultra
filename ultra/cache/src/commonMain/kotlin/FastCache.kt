@@ -9,6 +9,14 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * Creates a [FastCache] using the DSL-style [configure] block.
+ *
+ * @param scope       the [CoroutineScope] for the internal processing loop
+ * @param loopDelay   the delay between processing-loop iterations
+ * @param configure   builder DSL to add behaviours such as TTL, max-entries or memory limits
+ * @return a configured [FastCache] instance
+ */
 fun <K, V> fastCache(
     scope: CoroutineScope = Cache.defaultCoroutineScope,
     loopDelay: Duration = FastCache.defaultLoopDelay,
@@ -18,9 +26,6 @@ fun <K, V> fastCache(
 
     return builder.apply(configure).build()
 }
-
-// TODO:
-//  - MaxMemory behavior ... tests that the memory usage is updated correctly
 
 /**
  * Cache implementation that focuses on performance.
@@ -39,6 +44,7 @@ class FastCache<K, V>(
 ) : Cache<K, V> {
 
     companion object {
+        /** Default delay between processing-loop iterations. */
         val defaultLoopDelay = 50.milliseconds
     }
 
@@ -75,30 +81,56 @@ class FastCache<K, V>(
         )
     }
 
+    /** Represents a cache action recorded for deferred processing by behaviours. */
     sealed interface Action<K, V> {
+        /** The key involved in this action. */
         val key: K
     }
 
+    /** Records that a value was read from the cache. */
     class ReadAction<K, V>(override val key: K, val value: V) : Action<K, V>
+
+    /** Records that a value was inserted or updated in the cache. */
     class PutAction<K, V>(override val key: K, val value: V) : Action<K, V>
+
+    /** Records that a key was removed from the cache. */
     class RemoveAction<K, V>(override val key: K) : Action<K, V>
 
+    /**
+     * A batch of [actions] collected between processing-loop iterations.
+     *
+     * Provides lazy groupings so behaviours can efficiently inspect the most
+     * recent action per key without re-scanning the list.
+     */
     data class ActionUpdates<K, V>(
         val actions: List<Action<K, V>>,
     ) {
+        /** Actions grouped by their key. */
         val byKey: Map<K, List<Action<K, V>>> by lazy {
             actions.groupBy { it.key }
         }
 
+        /** The most recent action for each key. */
         val lastByKey: Map<K, Action<K, V>> by lazy {
             byKey.mapValues { (_, actions) -> actions.last() }
         }
     }
 
+    /**
+     * A pluggable behaviour that is invoked by the processing loop to inspect
+     * recent cache actions and perform eviction or bookkeeping.
+     */
     interface Behaviour<K, V> {
+        /** Processes one batch of [updates] collected since the last loop iteration. */
         fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>)
     }
 
+    /**
+     * Behaviour that expires entries after a fixed [ttl] since their last access.
+     *
+     * Each read or put resets the TTL clock for the affected entry.
+     * Expired entries are evicted during the next processing-loop iteration.
+     */
     @Suppress("DuplicatedCode")
     class ExpireAfterAccessBehaviour<K, V>(ttl: Duration) : Behaviour<K, V> {
         private data class Entry<K, V>(
@@ -256,6 +288,7 @@ class FastCache<K, V>(
             val size: Long,
         )
 
+        /** The total estimated memory usage (in bytes) of all entries tracked by this behaviour. */
         var totalSize = 0L
             private set
 
@@ -426,18 +459,27 @@ class FastCache<K, V>(
         } != null
     }
 
+    /** Returns the value for [key], or `null` if absent, and records a [ReadAction]. */
     override fun get(key: K): V? = sync {
         map[key]?.also {
             addAction(ReadAction(key, it))
         }
     }
 
+    /** Inserts or updates the [value] for [key] and records a [PutAction]. */
     override fun put(key: K, value: V) = sync {
         map[key] = value
 
         addAction(PutAction(key, value))
     }
 
+    /**
+     * Returns the cached value for [key] if present.
+     *
+     * Otherwise invokes [producer] outside the lock, stores the result, and returns it.
+     * Under contention the producer may be called more than once, but only the first
+     * value that lands in the map is returned.
+     */
     override fun getOrPut(key: K, producer: () -> V): V {
         // Fast path: try to get the existing value
         get(key)?.let { return it }
@@ -455,6 +497,7 @@ class FastCache<K, V>(
         }
     }
 
+    /** Removes and returns the value for [key], or `null` if absent. Records a [RemoveAction]. */
     override fun remove(key: K): V? = sync {
         map.remove(key).also {
             addAction(RemoveAction(key))

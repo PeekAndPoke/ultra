@@ -2,9 +2,9 @@ package io.peekandpoke.funktor.cluster.workers.services
 
 import io.peekandpoke.funktor.cluster.locks.GlobalServerId
 import io.peekandpoke.funktor.cluster.workers.Worker
-import io.peekandpoke.funktor.cluster.workers.api.WorkerModel
 import io.peekandpoke.funktor.cluster.workers.domain.WorkerRun
 import io.peekandpoke.funktor.cluster.workers.vault.VaultWorkerRun
+import io.peekandpoke.funktor.inspect.cluster.workers.api.WorkerModel
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.vault.BatchInsertRepository

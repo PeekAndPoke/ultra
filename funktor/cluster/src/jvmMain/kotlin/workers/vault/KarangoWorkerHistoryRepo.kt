@@ -13,8 +13,8 @@ import io.peekandpoke.karango.aql.OR
 import io.peekandpoke.karango.aql.REMOVE
 import io.peekandpoke.karango.aql.RETURN
 import io.peekandpoke.karango.vault.EntityRepository
-import io.peekandpoke.karango.vault.IndexBuilder
 import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.karango.vault._key
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.reflection.kType
@@ -29,7 +29,7 @@ class KarangoWorkerHistoryRepo(
     storedType = kType(),
     driver = driver,
 ) {
-    override fun IndexBuilder<VaultWorkerRun>.buildIndexes() {
+    override fun KarangoIndexBuilder<VaultWorkerRun>.buildIndexes() {
         persistentIndex {
             field { run.endTs }
             field { run.workerId }

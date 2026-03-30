@@ -1,9 +1,9 @@
 package io.peekandpoke.funktor.cluster.depot.repos
 
 import depot.api.DepotRepositoryModel
-import io.peekandpoke.funktor.cluster.depot.api.DepotItemModel.Meta
 import io.peekandpoke.funktor.cluster.depot.domain.DepotFileContent
 import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
+import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotItemModel
 
 /**
  * Definition of a depot repository
@@ -45,7 +45,7 @@ interface DepotRepository {
     suspend fun getContent(path: String): DepotFileContent?
 
     /** Get the meta information of the file with the given [path] */
-    suspend fun getMeta(path: String): Meta?
+    suspend fun getMeta(path: String): DepotItemModel.Meta?
 
     /** Puts a file with the given [path] and [content] */
     suspend fun putFile(

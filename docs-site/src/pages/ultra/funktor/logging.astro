@@ -1,0 +1,43 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {funktorSidebar} from '../../../data/funktor-sidebar';
+---
+
+<DocsLayout title="Logging Module" sidebar={funktorSidebar} description="Structured logging with database persistence">
+
+    <h1>Logging</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Structured logging with database persistence, filtering, and a web UI.
+    </p>
+
+    <h2>How it works</h2>
+
+    <p>The logging module provides a Logback appender that persists log entries to your database.
+        Entries are searchable, filterable, and viewable through a built-in web UI.</p>
+
+    <h2>Features</h2>
+
+    <ul>
+        <li><strong>Database-backed</strong> &mdash; log entries stored in Karango (ArangoDB) or Monko (MongoDB)</li>
+        <li><strong>Web UI</strong> &mdash; browse, search, and filter logs from the admin panel</li>
+        <li><strong>Bulk actions</strong> &mdash; acknowledge, archive, or delete log entries in batch</li>
+        <li><strong>REST API</strong> &mdash; query logs programmatically via <code>LoggingApiClient</code></li>
+        <li><strong>Kraft frontend</strong> &mdash; pre-built components for log list and detail views</li>
+    </ul>
+
+    <h2>Storage backends</h2>
+
+    <ul>
+        <li><code>useKarango()</code> &mdash; stores logs in ArangoDB</li>
+        <li><code>useMonko()</code> &mdash; stores logs in MongoDB</li>
+    </ul>
+
+    <div class="mt-12">
+        <a href="/ultra/funktor/staticweb"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-brand-400/10 text-brand-400 border border-brand-400/30 hover:bg-brand-400/20 transition-all font-medium">
+            Static Web Module &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

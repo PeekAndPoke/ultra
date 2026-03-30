@@ -9,8 +9,8 @@ import io.peekandpoke.karango.aql.DESC
 import io.peekandpoke.karango.aql.FOR
 import io.peekandpoke.karango.aql.RETURN
 import io.peekandpoke.karango.vault.EntityRepository
-import io.peekandpoke.karango.vault.IndexBuilder
 import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Cursor
 import io.peekandpoke.ultra.vault.Stored
@@ -27,7 +27,7 @@ class KarangoBackgroundJobsArchiveRepo(
      */
     class Fixtures(repo: KarangoBackgroundJobsArchiveRepo) : RepoFixtureLoader<BackgroundJobArchived>(repo)
 
-    override fun IndexBuilder<BackgroundJobArchived>.buildIndexes() {
+    override fun KarangoIndexBuilder<BackgroundJobArchived>.buildIndexes() {
         ttlIndex {
             field { expiresAt }
         }

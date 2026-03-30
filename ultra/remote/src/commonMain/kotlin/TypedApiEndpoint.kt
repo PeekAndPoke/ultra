@@ -7,24 +7,36 @@ import io.peekandpoke.ultra.model.EmptyObject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.KSerializer
 
+/**
+ * Executes a bound GET endpoint, returning a [Flow] of the deserialized response.
+ */
 fun <RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Get.Bound<RESPONSE>): Flow<RESPONSE> {
     return remote.get(
         uri = buildUri(pattern = bound.uri, params = bound.params)
     ).body { it decodedBy bound.responseSerializer }
 }
 
+/**
+ * Executes a bound HEAD endpoint, returning a [Flow] of the deserialized response.
+ */
 fun <RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Head.Bound<RESPONSE>): Flow<RESPONSE> {
     return remote.head(
         uri = buildUri(pattern = bound.endpoint.uri, params = bound.params)
     ).body { it decodedBy bound.endpoint.response }
 }
 
+/**
+ * Opens a Server-Sent Events session for a bound SSE endpoint.
+ */
 suspend fun ApiClient.call(bound: TypedApiEndpoint.Sse.Bound): ClientSSESession {
     return remote.sse(
         uri = buildUri(pattern = bound.uri, params = bound.params)
     )
 }
 
+/**
+ * Executes a bound POST endpoint, serializing the body and returning a [Flow] of the deserialized response.
+ */
 fun <BODY, RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Post.Bound<BODY, RESPONSE>): Flow<RESPONSE> {
     @Suppress("UNCHECKED_CAST")
     return remote.post(
@@ -34,6 +46,9 @@ fun <BODY, RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Post.Bound<BODY, RES
     ).body { it decodedBy bound.responseSerializer }
 }
 
+/**
+ * Executes a bound PUT endpoint, serializing the body and returning a [Flow] of the deserialized response.
+ */
 fun <BODY, RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Put.Bound<BODY, RESPONSE>): Flow<RESPONSE> {
     @Suppress("UNCHECKED_CAST")
     return remote.put(
@@ -43,19 +58,37 @@ fun <BODY, RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Put.Bound<BODY, RESP
     ).body { it decodedBy bound.responseSerializer }
 }
 
+/**
+ * Executes a bound DELETE endpoint, returning a [Flow] of the deserialized response.
+ */
 fun <RESPONSE> ApiClient.call(bound: TypedApiEndpoint.Delete.Bound<RESPONSE>): Flow<RESPONSE> {
     return remote.delete(
         uri = buildUri(pattern = bound.endpoint.uri, params = bound.params)
     ).body { it decodedBy bound.endpoint.response }
 }
 
+/**
+ * Sealed hierarchy of type-safe API endpoint definitions.
+ *
+ * Unlike [ApiEndpoint], each subclass carries [KSerializer] references for the
+ * request body and/or response type so that serialization can be performed
+ * automatically by [ApiClient.call].
+ *
+ * Every endpoint also holds [TypedAttributes] for attaching arbitrary metadata
+ * (e.g., required permissions, feature flags).
+ */
 sealed class TypedApiEndpoint {
 
+    /** The URI pattern for the endpoint, may contain `{placeholder}` segments. */
     abstract val uri: String
+
+    /** Arbitrary typed attributes attached to this endpoint definition. */
     abstract val attributes: TypedAttributes
 
+    /** Retrieves a typed attribute by its [key], or `null` if not present. */
     fun <T : Any> getAttribute(key: TypedKey<T>): T? = attributes[key]
 
+    /** A typed HTTP DELETE endpoint with a deserializer for [RESPONSE]. */
     data class Delete<RESPONSE>(
         override val uri: String,
         val response: KSerializer<RESPONSE>,
@@ -84,6 +117,7 @@ sealed class TypedApiEndpoint {
         )
     }
 
+    /** A typed HTTP GET endpoint with a deserializer for [RESPONSE]. */
     data class Get<out RESPONSE>(
         override val uri: String,
         val response: KSerializer<out RESPONSE>,
@@ -121,6 +155,7 @@ sealed class TypedApiEndpoint {
         )
     }
 
+    /** A typed Server-Sent Events endpoint. */
     data class Sse(
         override val uri: String,
         override val attributes: TypedAttributes = TypedAttributes.empty,
@@ -152,6 +187,7 @@ sealed class TypedApiEndpoint {
         )
     }
 
+    /** A typed HTTP HEAD endpoint with a deserializer for [RESPONSE]. */
     data class Head<RESPONSE>(
         override val uri: String,
         val response: KSerializer<RESPONSE>,
@@ -180,6 +216,7 @@ sealed class TypedApiEndpoint {
         )
     }
 
+    /** A typed HTTP POST endpoint with serializers for [BODY] and [RESPONSE]. */
     data class Post<out BODY, out RESPONSE>(
         override val uri: String,
         val body: KSerializer<out BODY>,
@@ -236,6 +273,7 @@ sealed class TypedApiEndpoint {
         )
     }
 
+    /** A typed HTTP PUT endpoint with serializers for [BODY] and [RESPONSE]. */
     data class Put<out BODY, out RESPONSE>(
         override val uri: String,
         val body: KSerializer<out BODY>,

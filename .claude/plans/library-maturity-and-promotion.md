@@ -25,6 +25,13 @@
 - **Docs site tone** — Two-voice system (neutral Voice 1 + honest Voice 2 in Aside components). Motivation sections
   added to all library overview pages. Landing page reworked with humble tone and quoted Voice 2 on every card
 - **Version** — Released 0.104.0 and 0.104.1
+- **Monko query DSL** — Type-safe MongoDB query DSL using KSP-generated property paths. 4 new files
+  (`filters.kt`, `sorts.kt`, `updates.kt`, `path_utils.kt`) in `monko/core/lang/dsl/`. Infix operators
+  (`eq`, `gt`, `isIn`, `.desc`, `setTo`, etc.) bridge property paths to standard `Bson`. New typed
+  `find { r -> }` overload on MonkoRepository. MonkoAuthRecordsRepo migrated as proof.
+- **Funktor v1.0 roadmap** — Full feature inventory of all 10 Funktor submodules. 328 src files, 28 tests
+  (9% ratio). 4 modules DB-dependent. 7 repos need porting to Monko + Exposed. Plan at
+  `.claude/plans/funktor-v1-roadmap.md`
 
 ## What Changed (March 26, earlier)
 
@@ -78,24 +85,24 @@
 | Rank | Module               | Score | Src  | Tests | Ratio | TODOs | KDoc | Docs                  | Assessment                                                                                                          |
 |------|----------------------|-------|------|-------|-------|-------|------|-----------------------|---------------------------------------------------------------------------------------------------------------------|
 | 7    | **Mutator**          | 4.2   | 43   | 28    | 65%   | 0     | 30%  | 6 pages               | Major quality pass: isModified/reset fixed for collections, filterMutatorsOf only for sealed, clean generated code. |
-| 8    | **ultra/security**   | 3.8   | 33   | 12    | 36%   | 1     | -    | -                     | Clean, active. Security-sensitive code warrants higher test coverage.                                               |
+| 8    | **ultra/security**   | 4.0   | 33   | 12    | 36%   | 1     | ~90% | -                     | KDoc added to all 12 undocumented files (User, JWT, CSRF, password hashers). Tests already solid.                   |
 | 9    | **ultra/cache**      | 3.5   | 17   | 6     | 35%   | 1     | 24%  | -                     | Clean post-split. Caching correctness needs more tests.                                                             |
 | 10   | **ultra/reflection** | 3.4   | 14   | 6     | 43%   | 5     | 63%  | -                     | Good ratio and KDoc but 5 TODOs in 14 files is high density.                                                        |
 | 11   | **ultra/maths**      | 3.2   | 12   | 4     | 33%   | 1     | -    | -                     | Small, clean. Needs precision edge-case tests.                                                                      |
 | 12   | **ultra/log**        | 3.3   | 14   | 4     | 29%   | 1     | -    | -                     | Small, adequate.                                                                                                    |
 | 13   | **ultra/remote**     | 3.0   | 33   | 7     | 21%   | 1     | -    | -                     | Network code at 21% test ratio is thin.                                                                             |
-| 14   | **Kraft**            | 3.8   | ~192 | 92    | 48%   | -     | ~80% | 16 pages + 3 examples | Major upgrade: 16 doc pages, 92 tests, KDoc on all public API, 18 READMEs, live embeds. Test ratio 48% (was 10%).   |
+| 14   | **Kraft**            | 4.2   | ~192 | 319   | 166%  | -     | ~80% | 16 pages + 3 examples | 319 tests (was 92). DataLoader bug fixed, collection_rules bug fixed. KQuery 50+ helpers. DOM events 56 handlers.   |
 
 ### Tier 3: RED — Not Ready for Promotion
 
-| Rank | Module               | Score | Src | Tests | Ratio  | TODOs  | Assessment                                                                                         |
-|------|----------------------|-------|-----|-------|--------|--------|----------------------------------------------------------------------------------------------------|
-| 15   | **ultra/datetime**   | 2.8   | 64  | 28    | 44%    | **45** | Inherited tech debt from common split. Good test ratio but 45 TODOs is the worst in the ecosystem. |
-| 16   | **ultra/vault**      | 2.5   | 45  | 5     | 11%    | 6      | **Critical gap.** Persistence/entity module at 11% test coverage. Used by Karango and Funktor.     |
-| 17   | **ultra/html**       | 2.7   | 13  | 2     | 15%    | 0      | Near-zero coverage.                                                                                |
-| 18   | **ultra/semanticui** | 2.6   | 15  | 4     | 27%    | 0      | Stale (last commit March 10). UI module, lower blast radius.                                       |
-| 19   | **Funktor**          | 2.0   | 438 | 20    | **5%** | ~15    | **Blocker.** Largest module, lowest test ratio. Cannot be promoted.                                |
-| 20   | **Monko**            | 1.5   | 15  | **0** | 0%     | 5      | **Blocker.** Zero tests. Incubating.                                                               |
+| Rank | Module               | Score | Src | Tests | Ratio  | TODOs | Assessment                                                                                                                       |
+|------|----------------------|-------|-----|-------|--------|-------|----------------------------------------------------------------------------------------------------------------------------------|
+| 15   | **ultra/datetime**   | 4.0   | 64  | 28    | 44%    | **1** | 44 test TODOs resolved (was 45). Only 1 code-quality TODO remains. Tests added across 9 spec files.                              |
+| 16   | **ultra/vault**      | 3.5   | 45  | 8     | 18%    | 6     | KDoc on core domain (Storable/Stored/Ref/LazyRef/New) + slumber codecs. 3 new test files (EntityCache, Expression, Timestamped). |
+| 17   | **ultra/html**       | 2.7   | 13  | 2     | 15%    | 0     | Near-zero coverage.                                                                                                              |
+| 18   | **ultra/semanticui** | 2.6   | 15  | 4     | 27%    | 0     | Stale (last commit March 10). UI module, lower blast radius.                                                                     |
+| 19   | **Funktor**          | 2.0   | 438 | 20    | **5%** | ~15   | **Blocker.** Largest module, lowest test ratio. Cannot be promoted.                                                              |
+| 20   | **Monko**            | 2.2   | 19  | 3     | 16%    | 2     | Type-safe query DSL added (filters, sorts, updates). Auth repo migrated. save()/remove() still TODO.                             |
 
 ---
 
@@ -170,7 +177,7 @@ sets, strings, strings_mp, WeakReference (JVM+JS), WeakSet (JVM), classes, encod
 2. **Slumber** — audited serialization, 8 doc pages, 60 tests
 3. **Streams** — zero TODOs, 8 doc pages, battle-tested
 4. **Karango** — 145 tests, 8 doc pages, battle-tested
-5. **Kraft** — 16 doc pages, 92 tests, 18 READMEs, KDoc on all public API, 3 example repos, live embeds
+5. **Kraft** — 16 doc pages, 319 tests, 18 READMEs, KDoc on all public API, 3 example repos, live embeds
 6. **Mutator** — 28 tests, 6 doc pages, quality pass complete (was Not Ready)
 
 ### Blockers for Public Launch (PR engineer findings)
@@ -183,7 +190,7 @@ sets, strings, strings_mp, WeakReference (JVM+JS), WeakSet (JVM), classes, encod
 ### Not Ready
 
 - **Funktor** — 5% test ratio, needs major test investment
-- **Monko** — zero tests, incubating
+- **Monko** — 3 KSP tests added, core still untested, incubating
 
 ---
 
@@ -197,7 +204,7 @@ sets, strings, strings_mp, WeakReference (JVM+JS), WeakSet (JVM), classes, encod
 
 ### Short-term (next sprint)
 
-4. **Triage ultra/datetime's 45 TODOs** — the new tech debt hotspot from the common split
+4. ~~**Triage ultra/datetime's 45 TODOs**~~ — **DONE.** 44 test TODOs resolved, 1 code-quality TODO remains.
 5. **Invest in ultra/vault tests** — 11% coverage on the entity/persistence layer is a risk for Karango
 
 ### Medium-term
@@ -206,6 +213,7 @@ sets, strings, strings_mp, WeakReference (JVM+JS), WeakSet (JVM), classes, encod
 7. ~~**Write Mutator docs + tests**~~ — **DONE.** 28 tests, 6 doc pages, quality pass complete. Promoted to GREEN.
 8. **Implement full MutableList/Set/Map contracts in Mutator** — subList() and any other gaps (noted as critical)
 9. **Funktor test sprint** — start with core + rest modules
-10. **Expand Kraft tests further** — component lifecycle tests, routing tests, form validation tests
+10. ~~**Expand Kraft tests further**~~ — **DONE.** 319 tests covering components, lifecycle, validation, DataLoader,
+    StyleSheet, DOM events, KQuery.
 11. **ultra/common KDoc gaps** — WeakRef/WeakSet, numbers, enums, ComparableTo (audit done, ~67% coverage)
 12. **ultra/common test gaps** — dates.kt, files.kt, NetworkUtils.kt, JS WeakSet (audit done, ~72% coverage)

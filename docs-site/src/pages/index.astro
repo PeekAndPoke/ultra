@@ -2,69 +2,97 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Nav from '../components/Nav.astro';
 import Aside from '../components/Aside.astro';
+import HilbertBackground from '../components/HilbertBackground.astro';
 import { githubRepo, mavenCentralUrl, ultraGroup } from '../data/site';
 
-const libraries = [
+const groups = [
   {
-    name: 'Kraft',
-    tagline: 'SPAs in pure Kotlin',
-    description: 'A component-based SPA framework using Preact under the hood. Type-safe HTML DSL, reactive state, routing, forms, and SemanticUI integration.',
-    aside: 'Kotlin in the browser. No JavaScript was harmed.',
-    href: '/ultra/kraft/',
-    ready: true,
+      title: 'General Tools',
+      subtitle: 'Kotlin multiplatform libraries that work anywhere.',
+      libraries: [
+          {
+              name: 'Kontainer',
+              tagline: 'Lightweight dependency injection',
+              description: 'A DI container built around per-request scoping. Fresh containers per unit of work, dynamic services, and validated dependency graphs.',
+              aside: 'Yes, we know there are other DI containers.',
+              href: '/ultra/kontainer/',
+              ready: true,
+          },
+          {
+              name: 'Slumber',
+              tagline: 'Kotlin-first serialization',
+              description: 'Serialization that understands nullable types, default values, and sealed classes without annotation clutter.',
+              aside: 'The name is a pun. We chose it anyway.',
+              href: '/ultra/slumber/',
+              ready: true,
+          },
+          {
+              name: 'Mutator',
+              tagline: 'Modify immutable data structures',
+              description: 'KSP-generated code that lets you modify deeply nested immutable data structures with simple property assignments.',
+              aside: 'Because copy()-hell makes developers yell.',
+              href: '/ultra/mutator/',
+              ready: true,
+          },
+          {
+              name: 'Streams',
+              tagline: 'Reactive values',
+              description: 'A lightweight reactive streams library for Kotlin Multiplatform. Always-has-a-value semantics, lazy subscriptions, and composable operators.',
+              aside: 'Like RxJS, but smaller. Much, much smaller.',
+              href: '/ultra/streams/',
+              ready: true,
+          },
+      ],
   },
-  {
-    name: 'Mutator',
-    tagline: 'Modify immutable data structures',
-    description: 'KSP-generated code that lets you modify deeply nested immutable data structures with simple property assignments.',
-    aside: 'Because copy()-hell makes developers yell.',
-    href: '/ultra/mutator/',
-    ready: true,
-  },
-  {
-    name: 'Kontainer',
-    tagline: 'Lightweight dependency injection',
-    description: 'A DI container built around per-request scoping. Fresh containers per unit of work, dynamic services, and validated dependency graphs.',
-    aside: 'Yes, we know there are other DI containers.',
-    href: '/ultra/kontainer/',
-    ready: true,
-  },
-  {
-    name: 'Slumber',
-    tagline: 'Kotlin-first serialization',
-    description: 'Serialization that understands nullable types, default values, and sealed classes without annotation clutter.',
-    aside: 'The name is a pun. We chose it anyway.',
-    href: '/ultra/slumber/',
-    ready: true,
-  },
-  {
-    name: 'Streams',
-    tagline: 'Reactive values',
-    description: 'A lightweight reactive streams library for Kotlin Multiplatform. Always-has-a-value semantics, lazy subscriptions, and composable operators.',
-    aside: 'Like RxJS, but smaller. Much, much smaller.',
-    href: '/ultra/streams/',
-    ready: true,
-  },
-  {
-    name: 'Karango',
-    tagline: 'Type-safe ArangoDB queries',
-    description: 'Write ArangoDB queries in Kotlin with compile-time safety. KSP generates the boilerplate.',
-    aside: 'For the three of us who use ArangoDB and Kotlin.',
-    href: '/ultra/karango/',
-    ready: true,
-  },
-  {
-    name: 'Funktor',
-    tagline: 'Full-stack Kotlin on Ktor',
-    description: 'Building blocks for client-server apps. Auth, REST, clustering, and static web.',
-    aside: 'We needed glue. So we wrote a framework. As one does.',
-    href: '/ultra/funktor/',
-    ready: false,
+    {
+        title: 'Kraft',
+        subtitle: 'Build SPAs in pure Kotlin.',
+        libraries: [
+            {
+                name: 'Kraft',
+                tagline: 'SPAs in pure Kotlin',
+                description: 'A component-based SPA framework using Preact under the hood. Type-safe HTML DSL, reactive state, routing, forms, and SemanticUI integration.',
+                aside: 'Kotlin in the browser. No JavaScript was harmed.',
+                href: '/ultra/kraft/',
+                ready: true,
+            },
+        ],
+    },
+    {
+        title: 'Funktor',
+        subtitle: 'Server-side building blocks on Ktor.',
+        libraries: [
+            {
+                name: 'Funktor',
+                tagline: 'Full-stack Kotlin on Ktor',
+                description: 'A modular server framework. Auth, REST APIs, clustering, messaging, insights, and more — wired together with Kontainer.',
+                aside: 'We needed glue. So we wrote a framework. As one does.',
+                href: '/ultra/funktor/',
+                ready: true,
+            },
+            {
+                name: 'Karango',
+                tagline: 'Type-safe ArangoDB queries',
+                description: 'Write ArangoDB queries in Kotlin with compile-time safety. KSP generates the boilerplate.',
+                aside: 'For the three of us who use ArangoDB and Kotlin.',
+                href: '/ultra/karango/',
+                ready: true,
+            },
+            {
+                name: 'Monko',
+                tagline: 'Type-safe MongoDB',
+                description: 'Typed MongoDB repositories with entity hooks, lifecycle management, and Funktor integration.',
+                aside: 'Same philosophy as Karango. Different database.',
+                href: '/ultra/monko/',
+                ready: true,
+            },
+        ],
   },
 ];
 ---
 
 <BaseLayout title="Home">
+  <HilbertBackground/>
   <Nav />
 
   <!-- Hero -->
@@ -78,7 +106,7 @@ const libraries = [
       </h1>
       <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-4 leading-relaxed">
         Open-source Kotlin libraries for dependency injection, serialization, reactive state,
-        immutable data mutation, SPAs, and database access.
+          SPAs, server frameworks, and database access.
         We built them for our own projects &mdash; and you can use them too.
       </p>
       <p class="text-sm text-brand-300/60 italic max-w-lg mx-auto">
@@ -87,52 +115,58 @@ const libraries = [
     </div>
   </section>
 
-  <!-- Libraries Grid -->
-  <section class="pb-32 px-4">
-    <div class="mx-auto max-w-6xl">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {libraries.map(lib => {
-          const classes = lib.ready
-              ? 'group flex flex-col p-6 rounded-xl border transition-all duration-200 border-brand-400/30 bg-brand-400/5 hover:border-brand-400/60 hover:bg-brand-400/10'
-              : 'flex flex-col p-6 rounded-xl border transition-all duration-200 border-white/10 bg-white/[0.02] cursor-default';
-          const content = (
-              <>
-                <div class="flex items-center justify-between mb-3">
-                  <h3 class:list={[
-                    'text-lg font-bold transition-colors',
-                    lib.ready ? 'text-white group-hover:text-brand-400' : 'text-gray-500',
-                  ]}>
-                    {lib.name}
-                  </h3>
-                  {!lib.ready && (
-                      <span class="text-xs text-gray-500 border border-white/10 px-2 py-0.5 rounded-full">
-                    coming soon
-                  </span>
-                  )}
-                </div>
-                <p class:list={['text-sm font-medium mb-2', lib.ready ? 'text-brand-400' : 'text-brand-400/50']}>
-                  {lib.tagline}
-                </p>
-                <p class:list={['text-sm leading-relaxed', lib.ready ? 'text-gray-400' : 'text-gray-600']}>
-                  {lib.description}
-                </p>
-                {lib.aside && (
-                    <div class="mt-auto pt-4">
-                      <p class="text-xs text-brand-100/60 italic pt-3 border-t border-white/5">
-                        &ldquo;{lib.aside}&rdquo;
-                      </p>
+    <!-- Grouped Libraries -->
+  {groups.map((group, gi) => (
+      <section class="pb-16 px-4 reveal-on-scroll" style={`transition-delay: ${gi * 100}ms`}>
+                <div class="mx-auto max-w-6xl">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-white">{group.title}</h2>
+                        <p class="text-sm text-gray-500 mt-1">{group.subtitle}</p>
                     </div>
-                )}
-              </>
-          );
-          return lib.ready
-              ? <a href={lib.href} class={classes}>{content}</a>
-              :
-              <div class={classes}>{content}</div>;
-        })}
-      </div>
-    </div>
-  </section>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {group.libraries.map(lib => {
+                            const classes = lib.ready
+                                ? 'group flex flex-col p-6 rounded-xl border transition-all duration-300 border-brand-400/20 bg-[#161a2a]/65 hover:border-brand-400/50 hover:bg-[#161a2a]/75 hover:-translate-y-0.5 hover:shadow-[0_0_25px_rgba(212,160,58,0.15),0_0_8px_rgba(212,160,58,0.1)]'
+                                : 'flex flex-col p-6 rounded-xl border transition-all duration-300 border-white/10 bg-[#161a2a]/65 cursor-default';
+                            const content = (
+                                    <>
+                                        <div class="flex items-center justify-between mb-3">
+                                            <h3 class:list={[
+                                              'text-lg font-bold',
+                                              lib.ready ? 'text-white' : 'text-gray-500',
+                                            ]}>
+                                                {lib.name}
+                                            </h3>
+                                            {!lib.ready && (
+                                                    <span class="text-xs text-gray-500 border border-white/10 px-2 py-0.5 rounded-full">
+                      coming soon
+                    </span>
+                                            )}
+                                        </div>
+                                        <p class:list={['text-sm font-medium mb-2', lib.ready ? 'text-brand-400' : 'text-brand-400/50']}>
+                                            {lib.tagline}
+                                        </p>
+                                        <p class:list={['text-sm leading-relaxed', lib.ready ? 'text-gray-400' : 'text-gray-600']}>
+                                            {lib.description}
+                                        </p>
+                                        {lib.aside && (
+                                                <div class="mt-auto pt-4">
+                                                  <p class:list={['text-xs italic pt-3 border-t border-white/5', lib.ready ? 'text-gray-500' : 'text-gray-600']}>
+                                                        &ldquo;{lib.aside}&rdquo;
+                                                    </p>
+                                                </div>
+                                        )}
+                                    </>
+                            );
+                            return lib.ready
+                                ? <a href={lib.href} class={classes}>{content}</a>
+                                :
+                                    <div class={classes}>{content}</div>;
+                        })}
+                    </div>
+                </div>
+            </section>
+    ))}
 
   <!-- Maven Central -->
   <section class="pb-20 px-4">
@@ -143,4 +177,20 @@ const libraries = [
       </p>
     </div>
   </section>
+  <script>
+    // Reveal sections on scroll
+    const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('revealed');
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        {threshold: 0.1, rootMargin: '0px 0px -40px 0px'}
+    );
+
+    document.querySelectorAll('.reveal-on-scroll').forEach((el) => observer.observe(el));
+  </script>
 </BaseLayout>

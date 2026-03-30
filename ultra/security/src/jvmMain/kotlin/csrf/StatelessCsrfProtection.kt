@@ -5,6 +5,7 @@ import io.peekandpoke.ultra.common.sha384
 import io.peekandpoke.ultra.common.toBase64
 import io.peekandpoke.ultra.security.user.UserProvider
 
+/** Stateless [CsrfProtection] that signs tokens with a secret, user identity, and TTL. */
 class StatelessCsrfProtection(
     private val csrfSecret: String,
     private val csrfTtlMillis: Int,

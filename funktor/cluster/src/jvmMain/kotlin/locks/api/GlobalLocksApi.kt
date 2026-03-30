@@ -2,6 +2,9 @@ package io.peekandpoke.funktor.cluster.locks.api
 
 import io.peekandpoke.funktor.cluster.cluster
 import io.peekandpoke.funktor.core.broker.OutgoingConverter
+import io.peekandpoke.funktor.inspect.cluster.locks.api.GlobalLockEntryModel
+import io.peekandpoke.funktor.inspect.cluster.locks.api.GlobalLocksApiClient
+import io.peekandpoke.funktor.inspect.cluster.locks.api.ServerBeaconModel
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs

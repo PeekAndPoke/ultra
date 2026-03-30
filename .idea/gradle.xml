@@ -30,6 +30,7 @@
             <option value="$PROJECT_DIR$/funktor/cluster" />
             <option value="$PROJECT_DIR$/funktor/core" />
             <option value="$PROJECT_DIR$/funktor/insights" />
+            <option value="$PROJECT_DIR$/funktor/inspect" />
             <option value="$PROJECT_DIR$/funktor/logging" />
             <option value="$PROJECT_DIR$/funktor/messaging" />
             <option value="$PROJECT_DIR$/funktor/rest" />

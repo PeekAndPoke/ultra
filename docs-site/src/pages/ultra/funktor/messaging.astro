@@ -1,0 +1,85 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {funktorSidebar} from '../../../data/funktor-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Messaging Module" sidebar={funktorSidebar} description="Email sending with pluggable backends">
+
+    <h1>Messaging</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Email sending with pluggable backends, sent message storage, and dev-friendly overrides.
+    </p>
+
+    <h2>Sending email</h2>
+
+    <Code code={`val result = funktorMessaging.mailing.send(
+    Email(
+        source = "noreply@example.com",
+        destination = EmailDestination.to("user@example.com"),
+        subject = "Your order has shipped",
+        body = EmailBody.Html {
+            body { p { +"Your package is on the way." } }
+        },
+    )
+)
+
+if (result.success) {
+    log.info("Sent email: ${'$'}{result.messageId}")
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Email senders</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Sender</th>
+                <th class="py-2 text-gray-400">Use case</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>SendgridSender</code></td>
+                <td class="py-2 text-gray-400">SendGrid API</td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>AwsSesSender</code></td>
+                <td class="py-2 text-gray-400">AWS Simple Email Service</td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>NullEmailSender</code></td>
+                <td class="py-2 text-gray-400">No-op for development and testing</td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>OverridingEmailSender</code></td>
+                <td class="py-2 text-gray-400">Redirects all emails to a dev address</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <Aside>In development, the <code>OverridingEmailSender</code> wraps your real sender and redirects all
+        emails to your dev inbox. No accidental emails to real users.
+    </Aside>
+
+    <h2>Sent message storage</h2>
+
+    <p>Every sent email is persisted to a <code>SentMessagesStorage</code> for auditing and debugging.
+        Query by reference (e.g. user ID) to see what was sent and when.</p>
+
+    <h2>Email hooks</h2>
+
+    <p>The <code>HooksEmailSender</code> wraps any sender and calls your hooks before and after sending.
+        Use hooks for logging, metrics, or custom storage logic.</p>
+
+    <div class="mt-12">
+        <a href="/ultra/funktor/insights"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-brand-400/10 text-brand-400 border border-brand-400/30 hover:bg-brand-400/20 transition-all font-medium">
+            Insights Module &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

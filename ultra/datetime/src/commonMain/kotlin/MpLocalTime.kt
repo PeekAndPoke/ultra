@@ -1,6 +1,5 @@
 package io.peekandpoke.ultra.datetime
 
-import korlibs.time.Time
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -163,10 +162,15 @@ data class MpLocalTime(
      * See https://help.gooddata.com/cloudconnect/manual/date-and-time-format.html
      */
     fun format(format: String): String {
-        val klock = Time(hour = hour, minute = minute, second = second, millisecond = milliSecond)
-
-        return klock.format(format)
+        return MpDateTimeFormatter.format(
+            pattern = format,
+            hour = hour,
+            minute = minute,
+            second = second,
+            millis = milliSecond,
+        )
     }
+
 
     /**
      * Get the milliseconds of day represented by this time.

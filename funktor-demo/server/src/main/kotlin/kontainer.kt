@@ -6,6 +6,8 @@ import io.peekandpoke.funktor.core.installKontainer
 import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.demo.server.admin.AdminUserModule
 import io.peekandpoke.funktor.demo.server.api.ApiApp
+import io.peekandpoke.funktor.demo.server.funktorconf.FunktorConfModule
+import io.peekandpoke.funktor.demo.server.showcase.ShowcaseModule
 import io.peekandpoke.funktor.funktor
 import io.peekandpoke.funktor.insights.instrumentWithInsights
 import io.peekandpoke.funktor.messaging.EmailSender
@@ -91,4 +93,6 @@ fun createBlueprint(config: FunktorDemoConfig) = kontainer {
 
     // Modules
     module(AdminUserModule)
+    module(ShowcaseModule)
+    module(FunktorConfModule)
 }

@@ -8,18 +8,21 @@ import com.auth0.jwt.interfaces.Payload
 import io.peekandpoke.ultra.security.user.User
 import io.peekandpoke.ultra.security.user.UserPermissions
 
+/** Creates, signs, and verifies JWTs encoding user data and permissions. */
 class JwtGenerator(
     /** The configuration */
     val config: JwtConfig,
     /** Signing algorithm to be used */
     private val signingAlgorithm: Algorithm = Algorithm.HMAC512(config.signingKey),
 ) {
+    /** Verifier configured with the issuer and audience from [config]. */
     val verifier: JWTVerifier = JWT
         .require(signingAlgorithm)
         .withIssuer(config.issuer)
         .withAudience(config.audience)
         .build()
 
+    /** Creates a signed JWT string for the given [user] and [permissions]. */
     fun createJwt(
         user: JwtUserData,
         permissions: UserPermissions = UserPermissions(),
@@ -36,14 +39,17 @@ class JwtGenerator(
         .encodePermissions(config.permissionsNs, permissions)
         .sign(signingAlgorithm)
 
+    /** Extracts [JwtUserData] from the given JWT [payload]. */
     fun extractUserData(payload: Payload): JwtUserData {
         return payload.extractUser(config.userNs)
     }
 
+    /** Extracts [UserPermissions] from the given JWT [payload]. */
     fun extractPermissions(payload: Payload): UserPermissions {
         return payload.extractPermissions(config.permissionsNs)
     }
 
+    /** Extracts a full [User] from the given [jwt] payload, attaching the [clientIp]. */
     fun extractUser(clientIp: String, jwt: Payload): User {
         return User(
             record = extractUserData(jwt).toUserRecord(clientIp),

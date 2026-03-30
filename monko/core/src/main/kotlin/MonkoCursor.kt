@@ -8,6 +8,8 @@ class MonkoCursor<T>(
     val entries: List<T>,
     override val query: TypedQuery<T>,
     override val entityCache: EntityCache,
+    private val _fullCount: Long? = null,
+    private val _timeMs: Double = 0.0,
 ) : Cursor<T> {
 
     override fun iterator(): Iterator<T> {
@@ -18,8 +20,8 @@ class MonkoCursor<T>(
         get() = entries.size.toLong()
 
     override val fullCount: Long?
-        get() = null // TODO
+        get() = _fullCount
 
     override val timeMs: Double
-        get() = 0.0 // TODO
+        get() = _timeMs
 }

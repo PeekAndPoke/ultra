@@ -3,7 +3,7 @@ package io.peekandpoke.funktor.core.repair
 import io.peekandpoke.ultra.log.Log
 
 class RepairMan(
-    private val repairs: List<Repair>,
+    val repairs: List<Repair>,
     private val log: Log,
 ) {
     interface Repair {

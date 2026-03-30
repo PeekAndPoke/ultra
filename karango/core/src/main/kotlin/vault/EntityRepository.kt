@@ -20,8 +20,8 @@ import io.peekandpoke.karango.aql.REMOVE
 import io.peekandpoke.karango.aql.RETURN
 import io.peekandpoke.karango.aql.UPSERT_REPLACE
 import io.peekandpoke.karango.aql.aql
-import io.peekandpoke.karango.vault.IndexBuilder.Companion.matchesAny
-import io.peekandpoke.karango.vault.IndexBuilder.Companion.matchesNone
+import io.peekandpoke.karango.vault.KarangoIndexBuilder.Companion.matchesAny
+import io.peekandpoke.karango.vault.KarangoIndexBuilder.Companion.matchesNone
 import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.BatchInsertRepository
@@ -41,7 +41,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * Full-featured ArangoDB repository with CRUD operations, batch inserts, hooks, and index management.
  *
  * Extend this class and provide a collection name, stored type, and driver.
- * Override [IndexBuilder.buildIndexes] to define persistent and TTL indexes.
+ * Override [KarangoIndexBuilder.buildIndexes] to define persistent and TTL indexes.
  *
  * Lifecycle hooks ([Hooks.OnBeforeSaveHook], [Hooks.OnAfterSaveHook], [Hooks.OnAfterDeleteHook])
  * are called on insert, save, and remove operations.
@@ -121,7 +121,7 @@ abstract class EntityRepository<T : Any>(
 
     override suspend fun validateIndexes(): VaultModels.IndexesInfo {
 
-        val definitions = IndexBuilder(this).apply { buildIndexes() }.getIndexDefinitions()
+        val definitions = KarangoIndexBuilder(this).apply { buildIndexes() }.getIndexDefinitions()
 
         val indexes = getArangoCollection().indexes.await().filter { it.type != IndexType.primary }
 
@@ -163,32 +163,32 @@ abstract class EntityRepository<T : Any>(
         val maxAttempts = 3
 
         while (attempts++ < maxAttempts) {
-            val results = IndexBuilder(this).apply { buildIndexes() }.create()
+            val results = KarangoIndexBuilder(this).apply { buildIndexes() }.create()
 
             results.forEach { r ->
                 when (r) {
-                    is IndexBuilder.EnsureResult.Ensured -> {
+                    is KarangoIndexBuilder.EnsureResult.Ensured -> {
                         driver.log.info(
                             "[OK] Ensured index '${r.qualifiedName()}' (${r.idx.type}) on fields ${r.fields}"
                         )
                         return
                     }
 
-                    is IndexBuilder.EnsureResult.Kept -> {
+                    is KarangoIndexBuilder.EnsureResult.Kept -> {
                         driver.log.info(
                             "[OK] Kept index '${r.qualifiedName()}' (${r.idx.type}) on fields ${r.fields}"
                         )
                         return
                     }
 
-                    is IndexBuilder.EnsureResult.ReCreated -> {
+                    is KarangoIndexBuilder.EnsureResult.ReCreated -> {
                         driver.log.info(
                             "[OK] Re-Created index '${r.qualifiedName()}' (${r.idx.type}) on fields ${r.fields}"
                         )
                         return
                     }
 
-                    is IndexBuilder.EnsureResult.Error -> {
+                    is KarangoIndexBuilder.EnsureResult.Error -> {
                         if (attempts < maxAttempts) {
                             driver.log.warning(
                                 "[WARNING] Will retry to crate index '${r.qualifiedName()}' on fields ${r.fields}, " +
@@ -237,7 +237,7 @@ abstract class EntityRepository<T : Any>(
     /**
      * Override this function to ensure indexes on the repo
      */
-    protected open fun IndexBuilder<T>.buildIndexes() {}
+    protected open fun KarangoIndexBuilder<T>.buildIndexes() {}
 
     // //  Common Queries  ////////////////////////////////////////////////////////////////////////////////////////////////////
 

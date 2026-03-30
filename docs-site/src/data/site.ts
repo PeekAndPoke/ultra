@@ -38,6 +38,8 @@ export const githubSource = {
     mutator: `${githubRepo}/tree/master/mutator`,
     streams: `${githubRepo}/tree/master/ultra/streams`,
     karango: `${githubRepo}/tree/master/karango`,
+    funktor: `${githubRepo}/tree/master/funktor`,
+    monko: `${githubRepo}/tree/master/monko`,
 };
 
 // Helpers for dependency strings used in code examples
@@ -53,4 +55,15 @@ export const dep = {
     mutatorKsp: `${ultraGroup}:mutator-ksp:${ultraVersion}`,
     karangoCore: `${ultraGroup}:karango-core:${ultraVersion}`,
     karangoKsp: `${ultraGroup}:karango-ksp:${ultraVersion}`,
+    funktorAll: `${ultraGroup}:funktor-all:${ultraVersion}`,
+    funktorCore: `${ultraGroup}:funktor-core:${ultraVersion}`,
+    funktorRest: `${ultraGroup}:funktor-rest:${ultraVersion}`,
+    funktorAuth: `${ultraGroup}:funktor-auth:${ultraVersion}`,
+    funktorCluster: `${ultraGroup}:funktor-cluster:${ultraVersion}`,
+    funktorMessaging: `${ultraGroup}:funktor-messaging:${ultraVersion}`,
+    funktorInsights: `${ultraGroup}:funktor-insights:${ultraVersion}`,
+    funktorLogging: `${ultraGroup}:funktor-logging:${ultraVersion}`,
+    funktorStaticWeb: `${ultraGroup}:funktor-staticweb:${ultraVersion}`,
+    funktorTesting: `${ultraGroup}:funktor-testing:${ultraVersion}`,
+    monko: `${ultraGroup}:monko:${ultraVersion}`,
 };

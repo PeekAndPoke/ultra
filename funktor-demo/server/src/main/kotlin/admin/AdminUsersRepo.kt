@@ -8,8 +8,8 @@ import io.peekandpoke.karango.aql.EQ
 import io.peekandpoke.karango.aql.FOR
 import io.peekandpoke.karango.aql.RETURN
 import io.peekandpoke.karango.vault.EntityRepository
-import io.peekandpoke.karango.vault.IndexBuilder
 import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.password.PasswordHasher
 import io.peekandpoke.ultra.vault.Repository
@@ -72,7 +72,7 @@ class AdminUsersRepo(
         }
     }
 
-    override fun IndexBuilder<AdminUser>.buildIndexes() {
+    override fun KarangoIndexBuilder<AdminUser>.buildIndexes() {
         persistentIndex {
             field { email }
 

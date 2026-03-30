@@ -2,14 +2,27 @@ package io.peekandpoke.ultra.common
 
 import kotlin.reflect.KMutableProperty0
 
+/**
+ * An observable property accessor that combines a getter and setter into a single interface.
+ *
+ * Implements [Observable] so observers can be notified of value changes.
+ *
+ * @param P The type of the property value.
+ */
 interface GetAndSet<P> : Observable<P> {
 
     companion object {
+        /**
+         * Creates a [GetAndSet] from the given [getter] and [setter] functions.
+         */
         fun <P> of(getter: () -> P, setter: (P) -> Unit): GetAndSet<P> = Impl(
             getter = getter,
             setter = { input -> input.also { setter(it) } },
         )
 
+        /**
+         * Creates a [GetAndSet] backed by the given mutable [property].
+         */
         fun <P> of(property: KMutableProperty0<P>): GetAndSet<P> = of(
             getter = { property.get() },
             setter = { property.set(it) }

@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.cluster.workers.vault
 
-import io.peekandpoke.funktor.cluster.workers.api.WorkerModel
 import io.peekandpoke.funktor.cluster.workers.domain.WorkerRun
+import io.peekandpoke.funktor.inspect.cluster.workers.api.WorkerModel
 import io.peekandpoke.ultra.vault.Vault
 
 @Vault

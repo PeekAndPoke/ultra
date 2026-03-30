@@ -7,7 +7,11 @@ import io.peekandpoke.funktor.logging.api.LoggingApiFeature
 import io.peekandpoke.funktor.logging.karango.KarangoLogAppender
 import io.peekandpoke.funktor.logging.karango.KarangoLogRepository
 import io.peekandpoke.funktor.logging.karango.KarangoLogsStorage
+import io.peekandpoke.funktor.logging.monko.MonkoLogAppender
+import io.peekandpoke.funktor.logging.monko.MonkoLogRepository
+import io.peekandpoke.funktor.logging.monko.MonkoLogsStorage
 import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.monko.MonkoDriver
 import io.peekandpoke.ultra.kontainer.KontainerAware
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.module
@@ -63,6 +67,24 @@ class FunktorLoggingBuilder internal constructor(private val kontainer: Kontaine
             }
             // Add logs reader
             singleton(LogsStorage::class, KarangoLogsStorage::class)
+        }
+    }
+
+    fun useMonko(repoName: String = defaultLogCollectionName) {
+        with(kontainer) {
+            // Add a log appender for the database
+            singleton(MonkoLogAppender::class) { repo: Lazy<MonkoLogRepository> ->
+                MonkoLogAppender(
+                    repo = repo,
+                    minLevel = LogLevel.INFO,
+                )
+            }
+            // Add the repository for the log entries
+            singleton(MonkoLogRepository::class) { driver: MonkoDriver ->
+                MonkoLogRepository(driver = driver, repoName = repoName)
+            }
+            // Add logs reader
+            singleton(LogsStorage::class, MonkoLogsStorage::class)
         }
     }
 }

@@ -1,0 +1,123 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {monkoSidebar} from '../../../data/monko-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Entity Model" sidebar={monkoSidebar} description="Stored, New, Ref, LazyRef — the Vault wrappers">
+
+    <h1>Entity Model</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Your data classes stay clean. Database metadata lives in wrappers.
+    </p>
+
+    <p>Monko uses the same entity model as <a href="/ultra/karango/entity-model">Karango</a> &mdash;
+        the <code>Storable&lt;T&gt;</code> hierarchy from the shared Vault module.
+        This means you can switch between MongoDB and ArangoDB without changing your domain classes.</p>
+
+    <h2>The wrapper types</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Type</th>
+                <th class="py-2 text-gray-400">When to use</th>
+                <th class="py-2 text-gray-400">Has value?</th>
+                <th class="py-2 text-gray-400">Has ID?</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>New&lt;T&gt;</code></td>
+                <td class="py-2 text-gray-400">Entity not yet persisted</td>
+                <td class="py-2 text-gray-400">Yes</td>
+                <td class="py-2 text-gray-400">Empty until inserted</td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>Stored&lt;T&gt;</code></td>
+                <td class="py-2 text-gray-400">Loaded from or saved to database</td>
+                <td class="py-2 text-gray-400">Yes</td>
+                <td class="py-2 text-gray-400">Yes (<code>_id</code>, <code>_key</code>)</td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>Ref&lt;T&gt;</code></td>
+                <td class="py-2 text-gray-400">Eager entity reference</td>
+                <td class="py-2 text-gray-400">Yes</td>
+                <td class="py-2 text-gray-400">Yes</td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>LazyRef&lt;T&gt;</code></td>
+                <td class="py-2 text-gray-400">Lazy entity reference</td>
+                <td class="py-2 text-gray-400">Loaded on demand</td>
+                <td class="py-2 text-gray-400">Yes</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Defining entities</h2>
+
+    <p>Annotate with <code>@Vault</code>. Your data class contains only domain fields.
+        The wrapper adds <code>_id</code>, <code>_key</code>, and <code>_rev</code>.</p>
+
+    <Code code={`@Vault
+data class Person(
+    val name: String,
+    val age: Int,
+    val email: String,
+    val address: Address = Address(),
+)
+
+@Vault
+data class Address(
+    val city: String = "",
+    val zip: String = "",
+    val country: String = "",
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Working with Stored</h2>
+
+    <Code code={`val stored: Stored<Person> = repo.insert("key-1", Person("Alice", 30, "alice@example.com"))
+
+// Access metadata
+stored._id      // "persons/key-1"
+stored._key     // "key-1"
+stored.value    // Person(name="Alice", age=30, ...)
+
+// Modify (creates new Stored with same metadata)
+val updated = stored.modify { copy(age = 31) }
+repo.save(updated)
+
+// Map to a different type
+val nameOnly = stored.map { it.name }  // Stored<String>
+
+// Identity checks
+stored.hasSameIdAs(other)
+stored.hasIdIn(listOf(other1, other2))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>The wrapper pattern keeps your domain model free of database concerns.
+        <code>Person</code> is a plain data class. <code>Stored&lt;Person&gt;</code> adds the database identity.
+    </Aside>
+
+    <h2>MongoDB document IDs</h2>
+
+    <p>Monko generates MongoDB document IDs as follows:</p>
+
+    <ul>
+        <li>If you provide a key via <code>insert(key, value)</code>, the document gets <code>_id =
+            "collection/key"</code></li>
+        <li>If no key is provided, Monko generates an <code>ObjectId</code> and converts it to a hex string</li>
+        <li>The <code>_key</code> is always the portion after the slash in <code>_id</code></li>
+    </ul>
+
+    <div class="mt-12">
+        <a href="/ultra/monko/query-dsl"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-brand-400/10 text-brand-400 border border-brand-400/30 hover:bg-brand-400/20 transition-all font-medium">
+            Query DSL &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

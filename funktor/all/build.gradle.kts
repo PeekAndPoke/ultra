@@ -36,8 +36,9 @@ kotlin {
                 api(project(":funktor:core"))
                 api(project(":funktor:auth"))
                 api(project(":funktor:cluster"))
-                api(project(":funktor:logging"))
+                api(project(":funktor:inspect"))
                 api(project(":funktor:insights"))
+                api(project(":funktor:logging"))
                 api(project(":funktor:rest"))
                 api(project(":funktor:messaging"))
             }

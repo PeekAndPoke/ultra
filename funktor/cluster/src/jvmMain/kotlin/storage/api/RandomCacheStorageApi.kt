@@ -2,11 +2,11 @@ package io.peekandpoke.funktor.cluster.storage.api
 
 import io.ktor.server.routing.*
 import io.peekandpoke.funktor.cluster.cluster
-import io.peekandpoke.funktor.cluster.storage.RandomCacheStorageApiClient
-import io.peekandpoke.funktor.cluster.storage.RawCacheDataModel
 import io.peekandpoke.funktor.cluster.storage.domain.RawCacheData
 import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.core.jsonPrinter
+import io.peekandpoke.funktor.inspect.cluster.storage.RandomCacheStorageApiClient
+import io.peekandpoke.funktor.inspect.cluster.storage.RawCacheDataModel
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.QueryParams
 import io.peekandpoke.funktor.rest.docs.codeGen

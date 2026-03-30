@@ -83,5 +83,37 @@ class ChildFinderSpec : StringSpec() {
 
             results[0].parent(999) shouldBe null
         }
+
+        "find distinguishes data classes with equal content using identity hash code" {
+            val a = Named("same")
+            val b = Named("same")
+
+            // a and b are equal by data class equals, but are distinct instances
+            data class TwoChildren(val first: Named, val second: Named)
+
+            val target = TwoChildren(a, b)
+            val results = ChildFinder.find(Named::class, target)
+
+            // Both distinct instances must be found even though they have the same hashCode
+            results shouldHaveSize 2
+        }
+
+        "find handles cyclic references without infinite loop" {
+            class Leaf(val label: String)
+            class Node(val leaf: Leaf) {
+                var next: Node? = null
+            }
+
+            val a = Node(Leaf("A"))
+            val b = Node(Leaf("B"))
+            a.next = b
+            b.next = a
+
+            // Should terminate without stack overflow; search for Leaf inside the cyclic graph
+            val results = ChildFinder.find(Leaf::class, a)
+
+            results shouldHaveSize 2
+            results.map { it.item.label }.toSet() shouldBe setOf("A", "B")
+        }
     }
 }

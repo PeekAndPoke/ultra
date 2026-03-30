@@ -6,10 +6,16 @@ import kotlin.math.pow
 import kotlin.random.Random
 
 /**
- * Bucketed distribution
+ * A discrete approximation of a continuous probability distribution using buckets.
  *
- * @param xs   sorted list of x-values (size = N+1)
- * @param pdf  Probability density values at each x
+ * The distribution is defined by a sorted grid of x-values and corresponding probability
+ * density values. Internally, a CDF is computed via the trapezoid rule, and sampling uses
+ * inverse-CDF interpolation.
+ *
+ * @property xs  sorted list of x-values defining bucket boundaries (size = N+1).
+ * @property pdf probability density values at each x-value (same size as [xs]).
+ *
+ * @see Distribution
  */
 @SerialName("bucketed")
 data class BucketedDistribution(val xs: List<Double>, val pdf: List<Double>) : Distribution {
@@ -140,9 +146,18 @@ data class BucketedDistribution(val xs: List<Double>, val pdf: List<Double>) : D
         }
     }
 
+    /** The number of buckets (intervals) in this distribution, equal to `xs.size - 1`. */
     val numBuckets = _xs.size - 1
+
+    /** The cumulative distribution function computed from [pdf] via the trapezoid rule. */
     val cdf = computeCdf(_xs, _pdf)
 
+    /**
+     * Draws a random sample from this distribution using inverse-CDF interpolation.
+     *
+     * @param random the random number generator to use.
+     * @return a sampled value within the range defined by [xs].
+     */
     override fun sample(random: Random): Double {
         // 1) Draw uniform [0,1) from the instance Random
         val u = random.nextDouble()
@@ -166,6 +181,14 @@ data class BucketedDistribution(val xs: List<Double>, val pdf: List<Double>) : D
         return x0 + (u - f0) * (x1 - x0) / (f1 - f0)
     }
 
+    /**
+     * Creates the inverse of this distribution.
+     *
+     * The inverse mirrors the PDF so that high-probability regions become low-probability
+     * and vice-versa. Specifically, `inversePdf[i] = (pMax + pMin) - pdf[i]`.
+     *
+     * @return a new [BucketedDistribution] with the inverted PDF.
+     */
     fun inverse(): BucketedDistribution {
         val pMax = _pdf.max()
         val pMin = _pdf.min()
@@ -178,10 +201,31 @@ data class BucketedDistribution(val xs: List<Double>, val pdf: List<Double>) : D
         return BucketedDistribution(xs = xs, pdf = invPdf)
     }
 
+    /**
+     * Creates a reversed copy of this distribution.
+     *
+     * The x-values remain unchanged, but the PDF values are reversed so that the
+     * distribution's shape is mirrored.
+     *
+     * @return a new [BucketedDistribution] with the reversed PDF.
+     */
     fun reversed(): BucketedDistribution {
         return BucketedDistribution(xs = xs, pdf = pdf.reversed())
     }
 
+    /**
+     * Blends this distribution with [other] using the given [ratio].
+     *
+     * Both xs and pdf values are linearly interpolated:
+     * - At `ratio = 0.0`, the result equals this distribution.
+     * - At `ratio = 1.0`, the result equals [other].
+     * - The ratio is clamped to [0, 1].
+     *
+     * @param other the distribution to blend with; must have the same [numBuckets].
+     * @param ratio the blend weight toward [other], clamped to [0, 1]. Default is 0.5.
+     * @return a new blended [BucketedDistribution].
+     * @throws IllegalArgumentException if the two distributions have different bucket counts.
+     */
     fun blend(other: BucketedDistribution, ratio: Double = 0.5): BucketedDistribution {
         // TODO: interpolate other, when size is different
         require(numBuckets == other.numBuckets) { "buckets must have same size" }

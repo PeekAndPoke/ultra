@@ -6,6 +6,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 
+/**
+ * Base class for type-safe API clients.
+ *
+ * Subclasses define domain-specific endpoint methods that delegate to the
+ * operator overloads provided here for [ApiEndpoint.Get], [ApiEndpoint.Post],
+ * [ApiEndpoint.Put], and [ApiEndpoint.Delete].
+ *
+ * Serialization / deserialization is driven by the [Json] codec in [Config].
+ */
 @Suppress("Detekt.TooManyFunctions")
 abstract class ApiClient(val config: Config) {
 
@@ -31,12 +40,14 @@ abstract class ApiClient(val config: Config) {
 
     //  GET  ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /** Invokes a GET endpoint with vararg [params] and a [decode] function. */
     operator fun <RESPONSE> ApiEndpoint.Get.invoke(
         vararg params: Pair<String, String?>,
         decode: Json.(String) -> RESPONSE,
     ): Flow<RESPONSE> =
         invoke(params = params.toMap(), decode = decode)
 
+    /** Invokes a GET endpoint with a [params] map and a [decode] function. */
     operator fun <RESPONSE> ApiEndpoint.Get.invoke(
         params: Map<String, String?>,
         decode: Json.(String) -> RESPONSE,
@@ -47,6 +58,7 @@ abstract class ApiClient(val config: Config) {
 
     //  POST  //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /** Invokes a POST endpoint with vararg [params], an optional [body], and a [decode] function. */
     operator fun <RESPONSE> ApiEndpoint.Post.invoke(
         vararg params: Pair<String, String?>,
         body: String? = null,
@@ -54,6 +66,7 @@ abstract class ApiClient(val config: Config) {
     ): Flow<RESPONSE> =
         invoke(params = params.toMap(), body = body, decode = decode)
 
+    /** Invokes a POST endpoint with a [params] map, an optional [body], and a [decode] function. */
     operator fun <RESPONSE> ApiEndpoint.Post.invoke(
         params: Map<String, String?>,
         body: String?,
@@ -65,6 +78,7 @@ abstract class ApiClient(val config: Config) {
 
     //  PUT  ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /** Invokes a PUT endpoint with vararg [params], an optional [body], and a [decode] function. */
     operator fun <RESPONSE> ApiEndpoint.Put.invoke(
         vararg params: Pair<String, String?>,
         body: String? = null,
@@ -72,6 +86,7 @@ abstract class ApiClient(val config: Config) {
     ): Flow<RESPONSE> =
         invoke(params = params.toMap(), body = body, decode = decode)
 
+    /** Invokes a PUT endpoint with a [params] map, an optional [body], and a [decode] function. */
     operator fun <RESPONSE> ApiEndpoint.Put.invoke(
         params: Map<String, String?>,
         body: String?,
@@ -83,6 +98,7 @@ abstract class ApiClient(val config: Config) {
 
     //  DELETE  ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /** Invokes a DELETE endpoint with vararg [params], an optional [body], and a [decode] function. */
     operator fun <RESPONSE> ApiEndpoint.Delete.invoke(
         vararg params: Pair<String, String?>,
         body: String? = null,
@@ -90,6 +106,7 @@ abstract class ApiClient(val config: Config) {
     ): Flow<RESPONSE> =
         invoke(params = params.toMap(), body = body, decode = decode)
 
+    /** Invokes a DELETE endpoint with a [params] map, an optional [body], and a [decode] function. */
     operator fun <RESPONSE> ApiEndpoint.Delete.invoke(
         params: Map<String, String?>,
         body: String?,

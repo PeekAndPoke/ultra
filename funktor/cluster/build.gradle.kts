@@ -32,14 +32,9 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(Deps.KotlinX.html)
-                implementation(Deps.KotlinX.wrappers_css)
-
-                implementation(project(":kraft:semanticui"))
-                implementation(project(":ultra:semanticui"))
-
                 implementation(project(":funktor:core"))
                 implementation(project(":funktor:rest"))
+                implementation(project(":funktor:inspect"))
             }
         }
 
@@ -67,6 +62,7 @@ kotlin {
                 implementation(Deps.JavaLibs.Aws.s3)
 
                 implementation(project(":karango:core"))
+                implementation(project(":monko:core"))
             }
         }
 
@@ -82,6 +78,9 @@ kotlin {
 
 dependencies {
     add("kspJvm", project(":karango:ksp"))
+    add("kspJvmTest", project(":karango:ksp"))
+    add("kspJvm", project(":monko:ksp"))
+    add("kspJvmTest", project(":monko:ksp"))
 }
 
 tasks {

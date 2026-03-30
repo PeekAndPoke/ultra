@@ -1,0 +1,77 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {funktorSidebar} from '../../../data/funktor-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Testing Module" sidebar={funktorSidebar}
+            description="Test harness with fixtures and service injection">
+
+    <h1>Testing</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Test your Funktor app with fixtures, service injection, and route testing utilities.
+    </p>
+
+    <h2>AppSpec</h2>
+
+    <p>Extend <code>AppSpec</code> to get a running test server with full Kontainer support.
+        Uses <a href="https://kotest.io/" target="_blank" rel="noopener">Kotest</a> FreeSpec style.</p>
+
+    <Code code={`class UserApiSpec : AppSpec<MyConfig>(testBed) {
+
+    init {
+        installAllFixturesBeforeSpec()
+
+        "GET /api/users" - {
+            "returns user list" {
+                val response = engine.handleRequest(HttpMethod.Get, "/api/users")
+                response.status() shouldBe HttpStatusCode.OK
+            }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Service injection in tests</h2>
+
+    <p>Access any service from the test Kontainer using delegated properties.</p>
+
+    <Code code={`class UserServiceSpec : AppSpec<MyConfig>(testBed) {
+    val userService: UserService by service()
+    val userRepo: UserRepo by service()
+
+    init {
+        "UserService" - {
+            "creates user" {
+                val user = userService.create("test@example.com")
+                user.email shouldBe "test@example.com"
+            }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Fixtures in tests</h2>
+
+    <p>Install fixtures before each spec or before individual tests.
+        Fixtures are cleared and re-installed to ensure a clean state.</p>
+
+    <Code code={`class OrderSpec : AppSpec<MyConfig>(testBed) {
+    init {
+        installFixturesBeforeSpec(UserFixtures::class, OrderFixtures::class)
+
+        "order processing" - {
+            "calculates total" {
+                val fixtures = kontainer().get(OrderFixtures::class)
+                val order = fixtures.sampleOrder.get()
+                order.total shouldBe 42.0
+            }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>The test harness starts a real Ktor engine and connects to a real database.
+        No mocking, no in-memory fakes. If it passes in tests, it works in production.
+    </Aside>
+
+</DocsLayout>

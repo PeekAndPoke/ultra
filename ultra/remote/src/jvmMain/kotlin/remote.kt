@@ -24,6 +24,9 @@ actual fun createRequest(
     responseInterceptors = responseInterceptors,
 )
 
+/**
+ * JVM-platform implementation of [RemoteResponse] backed by a Ktor [HttpResponse].
+ */
 class RemoteResponseImpl(
     override val request: RemoteRequest,
     private val response: HttpResponse,
@@ -42,6 +45,9 @@ class RemoteResponseImpl(
     override val is5xx: Boolean get() = status in 500..599
 }
 
+/**
+ * JVM-platform implementation of [RemoteRequest] using a Ktor [HttpClient].
+ */
 class RemoteRequestImpl(
     private val baseUrl: String,
     override val requestInterceptors: List<RequestInterceptor>,

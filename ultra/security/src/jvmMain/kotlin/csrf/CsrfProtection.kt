@@ -1,5 +1,6 @@
 package io.peekandpoke.ultra.security.csrf
 
+/** Provides CSRF token creation and validation. */
 interface CsrfProtection {
 
     /**

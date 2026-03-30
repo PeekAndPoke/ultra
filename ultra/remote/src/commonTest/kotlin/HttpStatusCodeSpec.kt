@@ -4,6 +4,7 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import kotlinx.serialization.json.Json
 
 class HttpStatusCodeSpec : StringSpec({
 
@@ -156,6 +157,44 @@ class HttpStatusCodeSpec : StringSpec({
             HttpStatusCode(499, "Too Low").isServerError() shouldBe false
             HttpStatusCode(600, "Too High").isServerError() shouldBe false
         }
+    }
+
+    "of() should return matching well-known status code" {
+        val result = HttpStatusCode.of(200, HttpStatusCode.InternalServerError)
+
+        result shouldBe HttpStatusCode.OK
+        result.value shouldBe 200
+        result.description shouldBe "OK"
+    }
+
+    "of() should return fallback for unknown status code" {
+        val fallback = HttpStatusCode(999, "Fallback")
+        val result = HttpStatusCode.of(999, fallback)
+
+        result shouldBe fallback
+        result.value shouldBe 999
+    }
+
+    "of() should find various well-known codes" {
+        assertSoftly {
+            HttpStatusCode.of(100, HttpStatusCode.OK).value shouldBe 100
+            HttpStatusCode.of(201, HttpStatusCode.OK).value shouldBe 201
+            HttpStatusCode.of(301, HttpStatusCode.OK).value shouldBe 301
+            HttpStatusCode.of(404, HttpStatusCode.OK).value shouldBe 404
+            HttpStatusCode.of(500, HttpStatusCode.OK).value shouldBe 500
+            HttpStatusCode.of(511, HttpStatusCode.OK).value shouldBe 511
+        }
+    }
+
+    "serialization round-trip should preserve value and description" {
+        val codec = Json
+        val original = HttpStatusCode(200, "OK")
+
+        val json = codec.encodeToString(HttpStatusCode.serializer(), original)
+        val restored = codec.decodeFromString(HttpStatusCode.serializer(), json)
+
+        restored.value shouldBe original.value
+        restored.description shouldBe original.description
     }
 
     "Edge and boundary cases should be handled correctly" {

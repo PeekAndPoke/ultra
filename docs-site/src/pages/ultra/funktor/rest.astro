@@ -1,0 +1,142 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {funktorSidebar} from '../../../data/funktor-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="REST Module" sidebar={funktorSidebar} description="Typed API routes with authorization DSL">
+
+    <h1>REST</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Type-safe API routes, authorization DSL, endpoint documentation, and SSE support.
+    </p>
+
+    <h2>Typed API routes</h2>
+
+    <p>Every route carries its parameter types, request body type, and response type at compile time.
+        Four route variants cover all REST patterns:</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Variant</th>
+                <th class="py-2 text-gray-400">Use case</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>ApiRoute.Plain</code></td>
+                <td class="py-2 text-gray-400">GET without parameters</td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>ApiRoute.WithParams</code></td>
+                <td class="py-2 text-gray-400">GET/DELETE with path or query parameters</td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>ApiRoute.WithBody</code></td>
+                <td class="py-2 text-gray-400">POST/PUT with a request body</td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>ApiRoute.WithBodyAndParams</code></td>
+                <td class="py-2 text-gray-400">POST/PUT with both params and body</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <Code code={`// Define endpoints in shared code (client + server)
+companion object {
+    val GetUsers = TypedApiEndpoint.Get(
+        uri = "/api/users",
+        response = UserModel.serializer().apiList(),
+    )
+    val CreateUser = TypedApiEndpoint.Post(
+        uri = "/api/users",
+        body = CreateUserRequest.serializer(),
+        response = UserModel.serializer().api(),
+    )
+}
+
+// Mount on the server with handler, docs, and auth
+val getUsers = GetUsers.mount {
+    docs { name = "List users" }
+    .codeGen { funcName = "getUsers" }
+    .authorize { public() }
+    .handle {
+        ApiResponse.ok(userService.listAll())
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Authorization DSL</h2>
+
+    <p>Every route declares its authorization rules. Rules compose with <code>and</code> / <code>or</code>.</p>
+
+    <Code code={`.authorize {
+    // Single rule
+    isSuperUser()
+
+    // Combine rules
+    forRole("admin") or forGroup("staff")
+
+    // Custom rule
+    forCall("owns resource") { params ->
+        user.id == params.ownerId
+    }
+}
+
+// Built-in rules:
+// public()              — allow all authenticated users
+// forbidden()           — deny all
+// isSuperUser()         — super user check
+// forRole("admin")      — role-based
+// forGroup("staff")     — group-based
+// forPermission("edit") — permission-based
+// forOrganisation("x")  — org membership`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>Authorization rules are also used for access estimation &mdash; the admin UI can grey out actions
+        a user cannot perform, without making the actual API call.
+    </Aside>
+
+    <h2>SSE routes</h2>
+
+    <p>Server-Sent Events routes stream data from server to client. Same type-safe pattern,
+        but the handler receives a <code>ServerSSESession</code>.</p>
+
+    <Code code={`val SseEvents = TypedApiEndpoint.Sse(uri = "/api/events")
+
+val sseEvents = SseEvents.mount(Unit::class) {
+    authorize { public() }
+    .handle {
+        while (true) {
+            send(ServerSentEvent(data = Json.encodeToString(payload), event = "update"))
+            delay(1000)
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>API features</h2>
+
+    <p>Group related routes into <code>ApiFeature</code> implementations. Register them in Kontainer and they
+        are auto-discovered and mounted.</p>
+
+    <Code code={`class UserApiFeature(converter: OutgoingConverter) : ApiFeature {
+    override val name = "Users"
+    override val description = "User management endpoints"
+
+    val users = UserApi(converter)
+    val profiles = ProfileApi(converter)
+
+    override fun getRouteGroups() = listOf(users, profiles)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="mt-12">
+        <a href="/ultra/funktor/auth"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-brand-400/10 text-brand-400 border border-brand-400/30 hover:bg-brand-400/20 transition-all font-medium">
+            Auth Module &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

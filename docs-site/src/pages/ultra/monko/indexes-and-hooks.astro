@@ -1,0 +1,176 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {monkoSidebar} from '../../../data/monko-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Indexes & Hooks" sidebar={monkoSidebar}
+            description="Type-safe index definitions and lifecycle hooks">
+
+    <h1>Indexes & Hooks</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Define indexes with the same type-safe property paths you use in queries.
+        Hook into entity lifecycle for timestamps, validation, and side effects.
+    </p>
+
+    <h2>Defining indexes</h2>
+
+    <p>Override <code>buildIndexes()</code> in your repository. Index fields use the same
+        KSP-generated property paths as queries.</p>
+
+    <Code code={`class PersonsRepo(driver: MonkoDriver) : MonkoRepository<Person>(
+    name = "persons",
+    storedType = kType(),
+    driver = driver,
+) {
+    override fun MonkoIndexBuilder<Person>.buildIndexes() {
+        // Single field index
+        persistentIndex {
+            field { it.email }
+        }
+
+        // Compound index
+        persistentIndex {
+            field { it.address.city }
+            field { it.address.zip }
+        }
+
+        // Unique index with custom name
+        uniqueIndex {
+            name("idx_email_unique")
+            field { it.email }
+        }
+
+        // TTL index — auto-delete expired documents
+        ttlIndex {
+            field { it.expiresAt }
+            expireAfter(0)  // delete when expiresAt is in the past
+        }
+
+        // Sparse index — only index documents where the field exists
+        sparseIndex {
+            field { it.middleName }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Index types</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Builder</th>
+                <th class="py-2 text-gray-400">MongoDB Type</th>
+                <th class="py-2 text-gray-400">Use case</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>persistentIndex</code></td>
+                <td class="py-2 text-gray-400">Standard index</td>
+                <td class="py-2 text-gray-400">Query optimization</td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>uniqueIndex</code></td>
+                <td class="py-2 text-gray-400">Unique index</td>
+                <td class="py-2 text-gray-400">Enforce uniqueness</td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>ttlIndex</code></td>
+                <td class="py-2 text-gray-400">TTL index</td>
+                <td class="py-2 text-gray-400">Auto-expire documents</td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>sparseIndex</code></td>
+                <td class="py-2 text-gray-400">Sparse index</td>
+                <td class="py-2 text-gray-400">Index only non-null fields</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Index management</h2>
+
+    <Code code={`// Ensure indexes exist (create if missing, skip if present)
+repo.ensureIndexes()
+
+// Drop and recreate all indexes
+repo.recreateIndexes()
+
+// Validate without creating
+val info = repo.validateIndexes()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>On application startup, Funktor calls <code>ensureIndexes()</code> automatically via the
+        <code>EnsureRepositoriesOnAppStarting</code> lifecycle hook. You don't need to manage this manually.
+    </Aside>
+
+    <h2>Lifecycle hooks</h2>
+
+    <p>Hooks run during entity lifecycle events. They use the same Vault hook interfaces as Karango.</p>
+
+    <h3>Timestamped</h3>
+
+    <p>The most common hook. Automatically sets <code>createdAt</code> and <code>updatedAt</code>.</p>
+
+    <Code code={`@Vault
+data class Article(
+    val title: String,
+    val body: String,
+    override val createdAt: MpInstant = MpInstant.Epoch,
+    override val updatedAt: MpInstant = MpInstant.Epoch,
+) : Timestamped {
+    override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
+    override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Custom hooks</h3>
+
+    <Code code={`class ArticlesRepo(driver: MonkoDriver) : MonkoRepository<Article>(
+    name = "articles",
+    storedType = kType(),
+    driver = driver,
+    hooks = Hooks.of(
+        onBeforeSave = listOf(TimestampedOnBeforeSaveHook()),
+        onAfterSave = listOf(MyAfterSaveHook()),
+        onAfterDelete = listOf(MyAfterDeleteHook()),
+    ),
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Hook execution order</h3>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Operation</th>
+                <th class="py-2 text-gray-400">Hook sequence</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>insert()</code></td>
+                <td class="py-2 text-gray-400">OnBeforeSave &rarr; persist &rarr; OnAfterSave</td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>save()</code></td>
+                <td class="py-2 text-gray-400">OnBeforeSave &rarr; persist &rarr; OnAfterSave</td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>remove()</code></td>
+                <td class="py-2 text-gray-400">delete &rarr; OnAfterDelete</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-12">
+        <a href="/ultra/monko/kontainer-integration"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-brand-400/10 text-brand-400 border border-brand-400/30 hover:bg-brand-400/20 transition-all font-medium">
+            Kontainer Integration &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

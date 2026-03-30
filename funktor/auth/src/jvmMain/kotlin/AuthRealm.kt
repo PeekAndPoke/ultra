@@ -20,6 +20,7 @@ import io.peekandpoke.funktor.messaging.api.EmailDestination
 import io.peekandpoke.funktor.messaging.api.EmailResult
 import io.peekandpoke.funktor.messaging.storage.EmailStoring
 import io.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.store
+import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Stored
 import kotlinx.html.a
 import kotlinx.html.body
@@ -29,6 +30,16 @@ import kotlinx.html.p
 import kotlinx.serialization.json.JsonObject
 
 interface AuthRealm<USER> {
+
+    /**
+     * Represents a known role with a display name and its associated permissions.
+     *
+     * Used by introspection tools to build API access matrices.
+     */
+    data class KnownRole(
+        val name: String,
+        val permissions: UserPermissions,
+    )
 
     interface Messaging<USER> {
         suspend fun sendPasswordChangedEmail(user: Stored<USER>): EmailResult
@@ -162,6 +173,17 @@ interface AuthRealm<USER> {
 
     /** Creates a new user during sign-up. Providers call this to create a user for the given email/displayName. */
     suspend fun createUserForSignup(params: CreateUserForSignupParams): Stored<USER>
+
+    /**
+     * Returns all known user roles for this realm.
+     *
+     * Override this to provide application-specific roles for the API access matrix in funktor:inspect.
+     * The default includes SuperUser and Anonymous.
+     */
+    fun getKnownRoles(): List<KnownRole> = listOf(
+        KnownRole("SuperUser", UserPermissions(isSuperUser = true)),
+        KnownRole("Anonymous", UserPermissions()),
+    )
 
     /**
      * Signs in a user. Providers should check their SignIn capability internally.

@@ -15,8 +15,8 @@ import io.peekandpoke.karango.aql.RETURN
 import io.peekandpoke.karango.aql._type
 import io.peekandpoke.karango.aql.ts
 import io.peekandpoke.karango.vault.EntityRepository
-import io.peekandpoke.karango.vault.IndexBuilder
 import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
@@ -37,7 +37,7 @@ class KarangoAuthRecordsRepo(
 ) {
     class Fixtures(repo: KarangoAuthRecordsRepo) : RepoFixtureLoader<AuthRecord>(repo)
 
-    override fun IndexBuilder<AuthRecord>.buildIndexes() {
+    override fun KarangoIndexBuilder<AuthRecord>.buildIndexes() {
         persistentIndex {
             field { realm }
             field { ownerId }

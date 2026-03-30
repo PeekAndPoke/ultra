@@ -3,19 +3,30 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Nav from '../../components/Nav.astro';
 import { ultraGroup } from '../../data/site';
 
-const libs = [
+const groups = [
   {
-    name: 'Kraft',
-    tagline: 'Build SPAs in pure Kotlin',
-    href: '/ultra/kraft/',
-    ready: true,
+      title: 'General Tools',
+      libs: [
+          {name: 'Kontainer', tagline: 'Dependency injection', href: '/ultra/kontainer/', ready: true},
+          {name: 'Slumber', tagline: 'Serialization', href: '/ultra/slumber/', ready: true},
+          {name: 'Mutator', tagline: 'Modify immutable data structures', href: '/ultra/mutator/', ready: true},
+          {name: 'Streams', tagline: 'Reactive values', href: '/ultra/streams/', ready: true},
+      ],
   },
-  {name: 'Mutator', tagline: 'Modify immutable data structures', href: '/ultra/mutator/', ready: true},
-  { name: 'Kontainer', tagline: 'Dependency injection', href: '/ultra/kontainer/', ready: true },
-  { name: 'Slumber', tagline: 'Serialization', href: '/ultra/slumber/', ready: true },
-  {name: 'Streams', tagline: 'Reactive values', href: '/ultra/streams/', ready: true},
-  {name: 'Karango', tagline: 'Type-safe ArangoDB', href: '/ultra/karango/', ready: true},
-  { name: 'Funktor', tagline: 'Full-stack Kotlin on Ktor', href: '/ultra/funktor/', ready: false },
+    {
+        title: 'Kraft',
+        libs: [
+            {name: 'Kraft', tagline: 'Build SPAs in pure Kotlin', href: '/ultra/kraft/', ready: true},
+        ],
+    },
+    {
+        title: 'Funktor',
+        libs: [
+            {name: 'Funktor', tagline: 'Full-stack Kotlin on Ktor', href: '/ultra/funktor/', ready: true},
+            {name: 'Karango', tagline: 'Type-safe ArangoDB', href: '/ultra/karango/', ready: true},
+            {name: 'Monko', tagline: 'Type-safe MongoDB', href: '/ultra/monko/', ready: true},
+        ],
+    },
 ];
 ---
 
@@ -26,34 +37,39 @@ const libs = [
     <div class="mx-auto max-w-4xl">
       <h1 class="text-4xl font-extrabold text-white mb-4">Ultra</h1>
       <p class="text-xl text-gray-400 mb-12">
-        A Kotlin multiplatform monorepo. Six libraries, one ecosystem.
+          A Kotlin multiplatform monorepo. Nine libraries, one ecosystem.
         Published on Maven Central as <code>{ultraGroup}</code>.
       </p>
 
-      <div class="space-y-4">
-        {libs.map(lib => (
-          <a
-            href={lib.href}
-            class:list={[
-              'flex items-center justify-between p-5 rounded-xl border transition-all',
-              lib.ready
-                ? 'border-brand-400/30 bg-brand-400/5 hover:border-brand-400/60'
-                  : 'border-white/10 bg-white/2 hover:border-white/20',
-            ]}
-          >
-            <div>
-              <h2 class="text-lg font-bold text-white">{lib.name}</h2>
-              <p class="text-sm text-gray-400">{lib.tagline}</p>
-            </div>
-            <span class:list={[
-              'text-xs px-2 py-1 rounded-full',
-              lib.ready ? 'text-brand-400 bg-brand-400/10' : 'text-gray-500 border border-white/10',
-            ]}>
-              {lib.ready ? 'docs ready' : 'coming soon'}
-            </span>
-          </a>
+        {groups.map(group => (
+                <div class="mb-10">
+                    <h2 class="text-lg font-bold text-gray-500 uppercase tracking-wide mb-3">{group.title}</h2>
+                    <div class="space-y-3">
+                        {group.libs.map(lib => (
+                                <a
+                                        href={lib.href}
+                                        class:list={[
+                                            'flex items-center justify-between p-5 rounded-xl border transition-all',
+                                            lib.ready
+                                                ? 'border-brand-400/30 bg-brand-400/5 hover:border-brand-400/60'
+                                                : 'border-white/10 bg-white/2 hover:border-white/20',
+                                        ]}
+                                >
+                                    <div>
+                                        <h3 class="text-lg font-bold text-white">{lib.name}</h3>
+                                        <p class="text-sm text-gray-400">{lib.tagline}</p>
+                                    </div>
+                                    <span class:list={[
+                                        'text-xs px-2 py-1 rounded-full',
+                                        lib.ready ? 'text-brand-400 bg-brand-400/10' : 'text-gray-500 border border-white/10',
+                                    ]}>
+                  {lib.ready ? 'docs ready' : 'coming soon'}
+                </span>
+                                </a>
+                        ))}
+                    </div>
+                </div>
         ))}
-      </div>
     </div>
   </section>
 </BaseLayout>

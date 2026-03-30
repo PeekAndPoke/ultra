@@ -104,6 +104,9 @@ class EmailAndPasswordAuth(
 
         /** Find the password recovery token for the given [realm] and [token] */
         suspend fun findPasswordRecoveryToken(realm: String, token: String): Stored<AuthRecord.PasswordRecoveryToken>?
+
+        /** Remove an auth record by its [id] */
+        suspend fun removeAuthRecord(id: String)
     }
 
     /** Default implementation of the [Services] interface. */
@@ -156,6 +159,11 @@ class EmailAndPasswordAuth(
         ): Stored<AuthRecord.PasswordRecoveryToken>? {
             return authRecordStorage
                 .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = realm, token = token)
+        }
+
+        /** @{inheritDoc} */
+        override suspend fun removeAuthRecord(id: String) {
+            authRecordStorage.removeById(id)
         }
     }
 
@@ -311,7 +319,7 @@ class EmailAndPasswordAuth(
 
         if (emailResult.success.not()) {
             log.warning(
-                "Sending 'Password Changed' Email failed for user ${user._id} ${realm.getUserEmail(user)}"
+                "Sending 'Password Recovery' Email failed for user ${user._id} ${realm.getUserEmail(user)}"
             )
         }
 
@@ -343,6 +351,9 @@ class EmailAndPasswordAuth(
         val tokenRecord = services
             .findPasswordRecoveryToken(realm = realm.id, token = request.token)
             ?: return AuthRecoverAccountResponse.SetPasswordWithToken(success = false)
+
+        // Invalidate the token immediately so it cannot be reused
+        services.removeAuthRecord(tokenRecord._id)
 
         // Write a new password entry into the auth records storage
         services.createAuthRecord {

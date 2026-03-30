@@ -1,0 +1,27 @@
+package io.peekandpoke.funktor.inspect.cluster.backgroundjobs
+
+import io.peekandpoke.funktor.inspect.cluster.FunktorInspectClusterUi
+import io.peekandpoke.kraft.routing.Route1
+import io.peekandpoke.kraft.routing.RouterBuilder
+import io.peekandpoke.kraft.routing.Static
+
+class BackgroundJobsRoutes(mount: String) {
+
+    val listQueued = Static("$mount/queued")
+    val viewQueued = Route1("$mount/queued/{id}")
+    fun viewQueued(id: String) = viewQueued.bind(id)
+
+    val listArchived = Static("$mount/archived")
+    val viewArchived = Route1("$mount/archived/{id}")
+    fun viewArchived(id: String) = viewArchived.bind(id)
+}
+
+internal fun RouterBuilder.mountFunktorBackgroundJobs(
+    ui: FunktorInspectClusterUi,
+) {
+    mount(ui.routes.backgroundJobs.listQueued) { ui { BackgroundJobsQueuedListPage() } }
+    mount(ui.routes.backgroundJobs.viewQueued) { ui { BackgroundJobsQueuedViewPage(it["id"]) } }
+
+    mount(ui.routes.backgroundJobs.listArchived) { ui { BackgroundJobsArchivedListPage() } }
+    mount(ui.routes.backgroundJobs.viewArchived) { ui { BackgroundJobsArchivedViewPage(it["id"]) } }
+}

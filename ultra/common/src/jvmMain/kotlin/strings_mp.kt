@@ -18,6 +18,7 @@ private val specialChars = listOf(
     '~',
 ).map { it.code }.toSet()
 
+/** Encodes this string as a URI component, percent-encoding special characters. */
 actual fun String.encodeUriComponent(): String {
     return this.toByteArray(StandardCharsets.UTF_8).joinToString("") { byte ->
         val unsignedByte = byte.toInt() and 0xFF
@@ -37,6 +38,7 @@ actual fun String.encodeUriComponent(): String {
     }
 }
 
+/** Decodes a percent-encoded URI component string back to its original form. */
 actual fun String.decodeUriComponent(): String {
     val result = StringBuilder()
     var i = 0

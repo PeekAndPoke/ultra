@@ -64,11 +64,6 @@ object Deps {
         private const val uuid_version = "0.8.4"
         const val uuid = "com.benasher44:uuid:$uuid_version"
 
-        // TODO: get rid of this ... still needed for date formatting
-        // https://mvnrepository.com/artifact/com.soywiz/korlibs-time
-        private const val korlibs_time_version = "6.0.0"
-        const val korlibs_time = "com.soywiz:korlibs-time:$korlibs_time_version"
-
         // https://mvnrepository.com/artifact/io.github.g0dkar/qrcode-kotlin
         private const val qrcode_version = "4.5.0"
         const val qrcode = "io.github.g0dkar:qrcode-kotlin:$qrcode_version"

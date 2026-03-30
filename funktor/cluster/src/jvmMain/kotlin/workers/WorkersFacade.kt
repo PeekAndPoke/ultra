@@ -1,9 +1,9 @@
 package io.peekandpoke.funktor.cluster.workers
 
-import io.peekandpoke.funktor.cluster.workers.api.WorkerModel
 import io.peekandpoke.funktor.cluster.workers.services.WorkerHistory
 import io.peekandpoke.funktor.cluster.workers.services.WorkerRegistry
 import io.peekandpoke.funktor.cluster.workers.services.WorkerTracker
+import io.peekandpoke.funktor.inspect.cluster.workers.api.WorkerModel
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.kontainer.Kontainer

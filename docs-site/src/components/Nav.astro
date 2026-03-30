@@ -1,24 +1,27 @@
 ---
 import { githubRepo } from '../data/site';
-const currentPath = Astro.url.pathname;
+const currentPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const normalize = (p: string) => p.replace(/\/+$/, '') || '/';
 
 const navLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/ultra/', label: 'Ultra' },
-  { href: '/ultra/kraft/', label: 'Kraft' },
-    {href: '/ultra/mutator/', label: 'Mutator'},
-  { href: '/ultra/kontainer/', label: 'Kontainer' },
-  { href: '/ultra/slumber/', label: 'Slumber' },
-  { href: '/ultra/streams/', label: 'Streams' },
-  {href: '/ultra/karango/', label: 'Karango'},
+  {href: '/', label: 'Home', exact: true},
+  {href: '/ultra/kraft/', label: 'Kraft', exact: false},
+  {href: '/ultra/funktor/', label: 'Funktor', exact: false},
 ];
+
+function isActive(link: typeof navLinks[number]) {
+  const norm = normalize(link.href);
+  if (link.exact) return currentPath === norm;
+  return currentPath === norm || currentPath.startsWith(norm + '/');
+}
 ---
 
-<nav class="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-surface-900/80 backdrop-blur-xl">
+<nav id="main-nav"
+     class="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-surface-900/65 transition-shadow duration-300">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="flex h-16 items-center justify-between">
       <a href="/" class="flex items-center gap-2 text-lg font-bold text-white hover:text-brand-400 transition-colors">
-        PeekAndPoke
+        peekandpoke.io
       </a>
       <div class="flex items-center gap-1">
         {navLinks.map(link => (
@@ -26,9 +29,9 @@ const navLinks = [
             href={link.href}
             class:list={[
               'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              currentPath === link.href || (link.href !== '/' && currentPath.startsWith(link.href))
-                ? 'text-brand-400 bg-brand-400/10'
-                : 'text-gray-400 hover:text-white hover:bg-white/5',
+              isActive(link)
+                  ? 'text-brand-400 underline underline-offset-4 decoration-brand-400/60'
+                  : 'text-gray-400 hover:text-white',
             ]}
           >
             {link.label}
@@ -46,3 +49,26 @@ const navLinks = [
     </div>
   </div>
 </nav>
+
+<script>
+  const nav = document.getElementById('main-nav');
+  if (nav) {
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollY = window.scrollY;
+          if (scrollY > 40) {
+            nav.style.boxShadow = '0 4px 24px rgba(212, 160, 58, 0.06), 0 1px 4px rgba(0, 0, 0, 0.3)';
+            nav.style.borderBottomColor = 'rgba(212, 160, 58, 0.15)';
+          } else {
+            nav.style.boxShadow = 'none';
+            nav.style.borderBottomColor = 'rgba(255, 255, 255, 0.1)';
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+  }
+</script>

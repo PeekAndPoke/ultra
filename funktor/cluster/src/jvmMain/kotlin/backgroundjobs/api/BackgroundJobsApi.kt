@@ -1,11 +1,6 @@
 package io.peekandpoke.funktor.cluster.backgroundjobs.api
 
 import io.ktor.server.routing.*
-import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobArchivedModel
-import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobQueuedModel
-import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobResultModel
-import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobRetryPolicyModel
-import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobsApiClient
 import io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobArchived
 import io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobExecutionResult
 import io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobQueued
@@ -13,6 +8,11 @@ import io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobRetryPo
 import io.peekandpoke.funktor.cluster.cluster
 import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.core.jsonPrinter
+import io.peekandpoke.funktor.inspect.cluster.backgroundjobs.BackgroundJobArchivedModel
+import io.peekandpoke.funktor.inspect.cluster.backgroundjobs.BackgroundJobQueuedModel
+import io.peekandpoke.funktor.inspect.cluster.backgroundjobs.BackgroundJobResultModel
+import io.peekandpoke.funktor.inspect.cluster.backgroundjobs.BackgroundJobRetryPolicyModel
+import io.peekandpoke.funktor.inspect.cluster.backgroundjobs.BackgroundJobsApiClient
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs

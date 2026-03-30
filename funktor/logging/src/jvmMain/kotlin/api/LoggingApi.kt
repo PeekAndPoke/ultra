@@ -1,7 +1,9 @@
 package io.peekandpoke.funktor.logging.api
 
 import io.peekandpoke.funktor.core.broker.OutgoingConverter
-import io.peekandpoke.funktor.logging.LogsFilter
+import io.peekandpoke.funktor.inspect.logging.LogsFilter
+import io.peekandpoke.funktor.inspect.logging.api.LoggingApiClient
+import io.peekandpoke.funktor.inspect.logging.api.LogsRequest
 import io.peekandpoke.funktor.logging.logging
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen

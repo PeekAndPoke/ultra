@@ -11,11 +11,25 @@ import io.peekandpoke.ultra.vault.LazyRef
 import io.peekandpoke.ultra.vault.New
 import io.peekandpoke.ultra.vault.Ref
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.slumber.VaultSlumberModule.DatabaseKey
+import io.peekandpoke.ultra.vault.slumber.VaultSlumberModule.EntityCacheKey
 import kotlin.reflect.KType
 
+/**
+ * Slumber module that registers codecs for Vault domain types.
+ *
+ * Provides [Awaker] and [Slumberer] implementations for [Ref], [LazyRef], [Stored], and [New].
+ *
+ * Context attributes:
+ * - [DatabaseKey] -- the [Database] used by [RefCodec] and [LazyRefCodec] to resolve references.
+ * - [EntityCacheKey] -- an optional [EntityCache] for deduplicating entity lookups during awakening.
+ */
 object VaultSlumberModule : SlumberModule {
 
+    /** Attribute key for the [Database] instance used during deserialization. */
     val DatabaseKey = TypedKey<Database>("vault_Database")
+
+    /** Attribute key for the [EntityCache] used to cache resolved entities during deserialization. */
     val EntityCacheKey = TypedKey<EntityCache>("vault_EntityCache")
 
     override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? {

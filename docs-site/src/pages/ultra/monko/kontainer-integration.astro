@@ -1,0 +1,95 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {monkoSidebar} from '../../../data/monko-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Kontainer Integration" sidebar={monkoSidebar}
+            description="Wire Monko into your dependency injection container">
+
+    <h1>Kontainer Integration</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Register MongoDB connections and repositories in <a href="/ultra/kontainer/">Kontainer</a>.
+    </p>
+
+    <h2>Setup</h2>
+
+    <Code code={`import io.peekandpoke.monko.MongoDbConfig
+import io.peekandpoke.monko.monko
+
+val blueprint = kontainer {
+    monko(MongoDbConfig(
+        connectionString = "mongodb://root:root@localhost:27017",
+        database = "my_app",
+    ))
+
+    // Register your repositories
+    singleton(PersonsRepo::class)
+    singleton(ArticlesRepo::class)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The <code>monko(config)</code> call registers:</p>
+
+    <ul>
+        <li><code>MongoClient</code> &mdash; singleton, shared connection pool</li>
+        <li><code>MongoDatabase</code> &mdash; singleton, database handle</li>
+        <li><code>MonkoDriver</code> &mdash; dynamic, created per request (carries profiler context)</li>
+        <li><code>MonkoCodec</code> &mdash; dynamic, created per request (carries EntityCache)</li>
+    </ul>
+
+    <Aside>The <code>MongoClient</code> is cached and reused across container instances.
+        Only the driver and codec are created fresh per request &mdash; they carry per-request state
+        like query profiling and entity deduplication.
+    </Aside>
+
+    <h2>With Funktor</h2>
+
+    <p>In a <a href="/ultra/funktor/">Funktor</a> application, Monko integrates as a pluggable backend.
+        Each module declares its storage needs independently:</p>
+
+    <Code code={`fun createBlueprint(config: MyAppConfig) = kontainer {
+    funktor(
+        config = config,
+        auth = { useMonko() },       // Auth records in MongoDB
+        logging = { useMonko() },    // Logs in MongoDB
+        cluster = { useMonko() },    // Jobs, locks, storage in MongoDB
+        messaging = { useMonko() },  // Sent messages in MongoDB
+    )
+
+    // MongoDB connection
+    monko(config.mongodb)
+
+    // Your repositories
+    singleton(UsersRepo::class)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Mixing databases</h2>
+
+    <p>You can use both Monko and <a href="/ultra/karango/">Karango</a> in the same application.
+        Each Funktor module chooses its backend independently:</p>
+
+    <Code code={`funktor(
+    config = config,
+    auth = { useKarango() },     // Auth in ArangoDB
+    logging = { useMonko() },    // Logs in MongoDB
+    cluster = { useKarango() },  // Cluster in ArangoDB
+    messaging = { useMonko() },  // Messages in MongoDB
+)
+
+karango(config.arangodb)
+monko(config.mongodb)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Database lifecycle</h2>
+
+    <Code code={`// Access through Kontainer
+val driver = kontainer.get(MonkoDriver::class)
+
+// Or in Funktor handlers, repositories are available via Database
+val Database.persons get() = getRepository<PersonsRepo>()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>On startup, Funktor's <code>EnsureRepositoriesOnAppStarting</code> hook automatically calls
+        <code>ensureIndexes()</code> on all registered repositories.</p>
+
+</DocsLayout>

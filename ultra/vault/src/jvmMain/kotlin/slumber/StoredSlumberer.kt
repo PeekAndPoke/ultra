@@ -3,6 +3,12 @@ package io.peekandpoke.ultra.vault.slumber
 import io.peekandpoke.ultra.slumber.Slumberer
 import io.peekandpoke.ultra.vault.Storable
 
+/**
+ * Slumber [Slumberer] that serializes [Storable] instances into a flat map.
+ *
+ * The inner value is slumbered first, then `_id` and `_key` are added to the resulting map
+ * when they are non-empty. This produces the structure expected by the database driver.
+ */
 object StoredSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any?>? {

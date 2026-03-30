@@ -8,9 +8,12 @@ import kotlin.reflect.jvm.ExperimentalReflectionOnLambdas
 import kotlin.reflect.jvm.reflect
 
 /**
- * Gets the name of the n'th parameter
+ * Gets the name of the n-th value parameter of this function or lambda.
  *
- * Notice: the first parameter has index 0
+ * The first value parameter has index 0. If the name cannot be determined
+ * (e.g. for some lambdas), a deterministic fallback name is returned.
+ *
+ * Results are cached internally because reflective parameter lookup can be expensive.
  */
 @OptIn(ExperimentalReflectionOnLambdas::class)
 fun <R, T : Function<R>> T.nthParamName(n: Int): String {

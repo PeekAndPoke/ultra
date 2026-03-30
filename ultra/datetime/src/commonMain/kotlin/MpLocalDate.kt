@@ -1,6 +1,5 @@
 package io.peekandpoke.ultra.datetime
 
-import korlibs.time.Date
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
@@ -136,9 +135,12 @@ data class MpLocalDate(
      * See https://help.gooddata.com/cloudconnect/manual/date-and-time-format.html
      */
     fun format(formatString: String): String {
-        val klock = Date(year = year, month = monthNumber, day = day)
-
-        return klock.format(formatString)
+        return MpDateTimeFormatter.format(
+            pattern = formatString,
+            year = year,
+            month = monthNumber,
+            day = day,
+        )
     }
 
     /**

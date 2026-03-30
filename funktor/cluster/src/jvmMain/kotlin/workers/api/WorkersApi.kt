@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.cluster.workers.api
 
 import io.peekandpoke.funktor.cluster.cluster
 import io.peekandpoke.funktor.core.broker.OutgoingConverter
+import io.peekandpoke.funktor.inspect.cluster.workers.api.WorkersApiClient
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs

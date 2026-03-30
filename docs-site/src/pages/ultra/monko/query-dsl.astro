@@ -1,0 +1,180 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {monkoSidebar} from '../../../data/monko-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Query DSL" sidebar={monkoSidebar} description="Type-safe MongoDB filters, sorts, and pagination">
+
+    <h1>Query DSL</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Type-safe filters and sorts using KSP-generated property paths.
+    </p>
+
+    <h2>Building queries</h2>
+
+    <p>Queries use the <code>find</code> method with a builder lambda. The builder receives a
+        typed expression <code>r</code> representing your entity, with KSP-generated property accessors.</p>
+
+    <Code code={`val results = repo.find { r ->
+    filter(r.age.gte(18))
+    filter(r.address.city.eq("Berlin"))
+    sort(r.name.asc)
+    limit(20)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Comparison operators</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-gray-400">Operator</th>
+                <th class="py-2 text-gray-400">MongoDB</th>
+                <th class="py-2 text-gray-400">Example</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>eq</code></td>
+                <td class="py-2 text-gray-400">$eq</td>
+                <td class="py-2 text-gray-400"><code>r.name.eq("Alice")</code></td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>ne</code></td>
+                <td class="py-2 text-gray-400">$ne</td>
+                <td class="py-2 text-gray-400"><code>r.status.ne("deleted")</code></td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>gt</code></td>
+                <td class="py-2 text-gray-400">$gt</td>
+                <td class="py-2 text-gray-400"><code>r.age.gt(18)</code></td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>gte</code></td>
+                <td class="py-2 text-gray-400">$gte</td>
+                <td class="py-2 text-gray-400"><code>r.age.gte(18)</code></td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>lt</code></td>
+                <td class="py-2 text-gray-400">$lt</td>
+                <td class="py-2 text-gray-400"><code>r.score.lt(50)</code></td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>lte</code></td>
+                <td class="py-2 text-gray-400">$lte</td>
+                <td class="py-2 text-gray-400"><code>r.score.lte(100)</code></td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>isIn</code></td>
+                <td class="py-2 text-gray-400">$in</td>
+                <td class="py-2 text-gray-400"><code>r.status.isIn(listOf("active", "pending"))</code></td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>nin</code></td>
+                <td class="py-2 text-gray-400">$nin</td>
+                <td class="py-2 text-gray-400"><code>r.status.nin(listOf("deleted"))</code></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>String operators</h2>
+
+    <Code code={`// Regex matching
+filter(r.email.regex(".*@example\\.com"))
+filter(r.name.regex(Regex("^A", RegexOption.IGNORE_CASE)))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Logical operators</h2>
+
+    <Code code={`import io.peekandpoke.monko.lang.dsl.and
+import io.peekandpoke.monko.lang.dsl.or
+import io.peekandpoke.monko.lang.dsl.not
+
+// AND (implicit — multiple filter() calls are AND-ed)
+filter(r.age.gte(18))
+filter(r.status.eq("active"))
+
+// Explicit AND / OR
+filter(
+    or(
+        r.status.eq("active"),
+        r.status.eq("pending"),
+    )
+)
+
+filter(
+    and(
+        r.age.gte(18),
+        or(
+            r.address.city.eq("Berlin"),
+            r.address.city.eq("Munich"),
+        ),
+    )
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Array operators</h2>
+
+    <Code code={`// Element match
+filter(r.tags.elemMatch(Filters.eq("kotlin")))
+
+// Array size
+filter(r.tags.size(3))
+
+// All elements in array
+filter(r.tags.all(listOf("kotlin", "mongodb")))
+
+// Existence check
+filter(r.middleName.exists(true))
+filter(r.deletedAt.exists(false))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Sorting</h2>
+
+    <Code code={`// Single field
+sort(r.name.asc)
+sort(r.createdAt.desc)
+
+// Multiple fields
+sort(orderBy(r.name.asc, r.age.desc))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Pagination</h2>
+
+    <Code code={`// Limit results
+limit(20)
+
+// Skip + limit
+skip(40)
+limit(20)
+
+// The cursor provides fullCount for pagination UI
+val cursor = repo.find { r ->
+    filter(r.status.eq("active"))
+    sort(r.createdAt.desc)
+    skip((page - 1) * pageSize)
+    limit(pageSize)
+}
+// cursor.fullCount -> total matching documents`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Nested property access</h2>
+
+    <p>KSP generates accessors for nested types. Access deeply nested fields with dot notation:</p>
+
+    <Code code={`// r.address is generated because Person has an Address field
+filter(r.address.city.eq("Berlin"))
+filter(r.address.zip.regex("^10"))
+sort(r.address.country.asc)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>Every property path in a query is validated at compile time.
+        If <code>Address</code> no longer has a <code>city</code> field, the query won't compile.
+    </Aside>
+
+    <div class="mt-12">
+        <a href="/ultra/monko/repositories"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-brand-400/10 text-brand-400 border border-brand-400/30 hover:bg-brand-400/20 transition-all font-medium">
+            Repositories &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

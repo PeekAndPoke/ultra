@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.logging.karango
 
-import io.peekandpoke.funktor.logging.api.LogEntryModel
+import io.peekandpoke.funktor.inspect.logging.api.LogEntryModel
 import io.peekandpoke.ultra.log.LogLevel
 import io.peekandpoke.ultra.vault.Storable
 import io.peekandpoke.ultra.vault.Vault

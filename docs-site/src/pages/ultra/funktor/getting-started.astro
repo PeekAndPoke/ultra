@@ -1,0 +1,115 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {funktorSidebar} from '../../../data/funktor-sidebar';
+import {Code} from 'astro:components';
+import {dep, kotlinVersion} from '../../../data/site';
+---
+
+<DocsLayout title="Getting Started" sidebar={funktorSidebar} description="Set up a Funktor application">
+
+    <h1>Getting Started</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Set up a Funktor application from scratch.
+    </p>
+
+    <h2>Add the dependency</h2>
+
+    <p>The easiest way to get all modules is the <code>funktor-all</code> meta-dependency. Or pick individual modules.
+    </p>
+
+    <Code code={`// build.gradle.kts
+dependencies {
+    // All modules at once
+    implementation("${dep.funktorAll}")
+
+    // Or pick what you need
+    implementation("${dep.funktorCore}")
+    implementation("${dep.funktorRest}")
+    implementation("${dep.funktorAuth}")
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Define your app</h2>
+
+    <p>A Funktor app starts with <code>funktorApp</code>. You configure the server modules and define your Kontainer
+        blueprint.</p>
+
+    <Code code={`fun main(args: Array<String>) = funktorApp {
+    server {
+        // Wire up funktor modules
+        funktorCore()
+        funktorRest()
+        funktorAuth {
+            useKarango()
+        }
+
+        // Your own modules
+        module(MyAppModule)
+    }
+
+    cli {
+        // CLI commands run with --cli flag
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Define your Kontainer blueprint</h2>
+
+    <p>Services are registered in <a href="/ultra/kontainer/">Kontainer</a> modules. Each Funktor module registers its
+        own
+        services. You add your application services alongside them.</p>
+
+    <Code code={`val MyAppModule = module {
+    // Your services
+    singleton(UserRepository::class)
+    dynamic(UserService::class)
+
+    // Your API feature
+    singleton(MyApiFeature::class)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Define API routes</h2>
+
+    <p>Routes use the typed API system from the <a href="/ultra/funktor/rest">REST module</a>. Define endpoints with
+        type-safe parameters, request bodies, and response types.</p>
+
+    <Code code={`class MyApi(converter: OutgoingConverter) : ApiRoutes("my-api", converter) {
+
+    val getUsers = MyApiClient.GetUsers.mount {
+        docs { name = "List users" }
+        .authorize { public() }
+        .handle {
+            val users = userService.listAll()
+            ApiResponse.ok(users)
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Configure the server</h2>
+
+    <p>The Ktor server module configures routing, CORS, and mounts your API features.</p>
+
+    <Code code={`fun Application.module() = app.module(this) { app, config, init ->
+    install(SSE)
+    install(CORS) {
+        // your CORS config
+    }
+
+    routing {
+        // API features are auto-discovered from Kontainer
+        apiApp.mountAll(this)
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>All <code>ApiFeature</code> instances registered in Kontainer are automatically discovered and mounted.
+        You never manually wire route groups.
+    </Aside>
+
+    <div class="mt-12">
+        <a href="/ultra/funktor/core"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-brand-400/10 text-brand-400 border border-brand-400/30 hover:bg-brand-400/20 transition-all font-medium">
+            Core Module &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

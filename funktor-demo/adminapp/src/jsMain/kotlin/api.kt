@@ -5,7 +5,9 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.sse.*
 import io.ktor.serialization.kotlinx.json.*
 import io.peekandpoke.funktor.auth.api.AuthApiClient
-import io.peekandpoke.funktor.cluster.devtools.DevtoolsApiResponseInterceptor
+import io.peekandpoke.funktor.demo.common.funktorconf.FunktorConfApiClient
+import io.peekandpoke.funktor.demo.common.showcase.ShowcaseApiClient
+import io.peekandpoke.funktor.inspect.cluster.devtools.DevtoolsApiResponseInterceptor
 import io.peekandpoke.ultra.remote.ApiClient.Config
 import io.peekandpoke.ultra.remote.ErrorLoggingResponseInterceptor
 import io.peekandpoke.ultra.remote.SetBearerRequestInterceptor
@@ -43,4 +45,8 @@ class AdminAppApis(appConfig: AdminAppConfig, tokenProvider: () -> String?) {
     )
 
     val auth = AuthApiClient(realm = "admin-user", config = config)
+
+    val showcase = ShowcaseApiClient(config = config)
+
+    val funktorConf = FunktorConfApiClient(config = config)
 }

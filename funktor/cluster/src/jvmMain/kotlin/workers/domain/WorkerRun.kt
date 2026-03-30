@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.cluster.workers.domain
 
-import io.peekandpoke.funktor.cluster.workers.api.WorkerModel
+import io.peekandpoke.funktor.inspect.cluster.workers.api.WorkerModel
 
 data class WorkerRun(
     /** The id of the worker */

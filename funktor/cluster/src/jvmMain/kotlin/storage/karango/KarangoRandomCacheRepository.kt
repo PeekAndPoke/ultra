@@ -16,8 +16,8 @@ import io.peekandpoke.karango.aql.UNSET
 import io.peekandpoke.karango.aql.anyOrTrueIfEmpty
 import io.peekandpoke.karango.aql.aql
 import io.peekandpoke.karango.vault.EntityRepository
-import io.peekandpoke.karango.vault.IndexBuilder
 import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Cursor
@@ -38,7 +38,7 @@ class KarangoRandomCacheRepository(
         timestamped.onBeforeSave(),
     ),
 ) {
-    override fun IndexBuilder<RawCacheData>.buildIndexes() {
+    override fun KarangoIndexBuilder<RawCacheData>.buildIndexes() {
         persistentIndex {
             field { category }
             field { dataId }

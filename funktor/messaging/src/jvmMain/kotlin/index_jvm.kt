@@ -8,7 +8,9 @@ import io.peekandpoke.funktor.messaging.senders.NullEmailSender
 import io.peekandpoke.funktor.messaging.storage.SentMessagesStorage
 import io.peekandpoke.funktor.messaging.storage.StoringEmailHook
 import io.peekandpoke.funktor.messaging.storage.karango.KarangoSentMessagesRepo
+import io.peekandpoke.funktor.messaging.storage.monko.MonkoSentMessagesRepo
 import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.monko.MonkoDriver
 import io.peekandpoke.ultra.kontainer.KontainerAware
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.module
@@ -58,6 +60,24 @@ class FunktorMessagingBuilder internal constructor(private val kontainer: Kontai
             }
 
             singleton(SentMessagesStorage::class) { repo: KarangoSentMessagesRepo ->
+                SentMessagesStorage.Vault(repo = repo)
+            }
+        }
+    }
+
+    fun useMonko(
+        sentMessageRepoName: String = "system_sent_messages",
+    ) {
+        with(kontainer) {
+            singleton(MonkoSentMessagesRepo::class) { driver: MonkoDriver, timestamped: TimestampedHook ->
+                MonkoSentMessagesRepo(
+                    name = sentMessageRepoName,
+                    driver = driver,
+                    timestamped = timestamped,
+                )
+            }
+
+            singleton(SentMessagesStorage::class) { repo: MonkoSentMessagesRepo ->
                 SentMessagesStorage.Vault(repo = repo)
             }
         }

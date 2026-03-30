@@ -4,6 +4,7 @@ import com.auth0.jwt.exceptions.JWTDecodeException
 import com.auth0.jwt.interfaces.Claim
 import java.util.*
 
+/** A [Claim] implementation that represents a missing or null claim, returning null for all accessors. */
 object JwtNullClaim : Claim {
     override fun isNull(): Boolean = true
     override fun isMissing(): Boolean = true

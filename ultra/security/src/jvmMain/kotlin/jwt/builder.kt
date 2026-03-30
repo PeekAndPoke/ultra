@@ -12,6 +12,7 @@ fun JWTCreator.Builder.expiresInMinutes(minutes: Long) = apply {
     withExpiresAt(Date().plusMinutes(minutes))
 }
 
+/** Encodes [user] data as claims under the given [namespace]. */
 fun JWTCreator.Builder.encodeUser(namespace: String = "user", user: JwtUserData) = apply {
     withClaim("$namespace/id", user.id)
     withClaim("$namespace/desc", user.desc)
@@ -20,6 +21,7 @@ fun JWTCreator.Builder.encodeUser(namespace: String = "user", user: JwtUserData)
     user.email?.let { withClaim("$namespace/email", it) }
 }
 
+/** Encodes [permissions] as claims under the given [namespace]. */
 fun JWTCreator.Builder.encodePermissions(namespace: String = "permissions", permissions: UserPermissions) = apply {
 
     if (permissions.isSuperUser) {

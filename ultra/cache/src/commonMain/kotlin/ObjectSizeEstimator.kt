@@ -3,34 +3,76 @@ package io.peekandpoke.ultra.cache
 import io.peekandpoke.ultra.cache.ObjectSizeEstimatorImpl.EstimatorConfig
 import io.peekandpoke.ultra.common.WeakSet
 
+/**
+ * Estimates the in-memory size of an object graph in bytes.
+ *
+ * Used by [FastCache.MaxMemoryUsageBehaviour] to track cumulative memory
+ * consumption and trigger eviction when a threshold is exceeded.
+ */
 interface ObjectSizeEstimator {
     companion object {
+        /** Creates a default [ObjectSizeEstimatorImpl] with the given [cfg]. */
         operator fun invoke(cfg: EstimatorConfig = EstimatorConfig()): ObjectSizeEstimator {
             return ObjectSizeEstimatorImpl(cfg)
         }
     }
 
+    /** Returns the estimated size of [obj] in bytes, traversing the object graph recursively. */
     fun estimate(obj: Any?): Long
 }
 
+/**
+ * Default [ObjectSizeEstimator] implementation.
+ *
+ * Walks the object graph using platform-specific reflection
+ * (see [ObjectSizeEstimatorPlatform]) and sums up estimated sizes for
+ * primitives, strings, arrays, collections, maps, and arbitrary objects.
+ *
+ * A [WeakSet] guards against infinite loops caused by circular references.
+ *
+ * @param cfg tuning knobs for header and pointer sizes
+ */
 class ObjectSizeEstimatorImpl(
     val cfg: EstimatorConfig = EstimatorConfig(),
 ) : ObjectSizeEstimator {
     companion object {
+        /** Estimated size of a null reference. */
         const val NULL_SIZE = 4L
 
+        /** Estimated size of a [Boolean] value. */
         const val BOOL_SIZE = 1L
+
+        /** Estimated size of a [Byte] value. */
         const val BYTE_SIZE = 1L
+
+        /** Estimated size of a [Char] value. */
         const val CHAR_SIZE = 2L
+
+        /** Estimated size of a [Short] value. */
         const val SHORT_SIZE = 2L
+
+        /** Estimated size of an [Int] value. */
         const val INT_SIZE = 4L
+
+        /** Estimated size of a [Long] value. */
         const val LONG_SIZE = 8L
+
+        /** Estimated size of a [Float] value. */
         const val FLOAT_SIZE = 4L
+
+        /** Estimated size of a [Double] value. */
         const val DOUBLE_SIZE = 8L
     }
 
     private val seen = WeakSet<Any?>()
 
+    /**
+     * Configuration for the size-estimation heuristics.
+     *
+     * @property objectHeader overhead per heap object (e.g. 16 bytes on HotSpot 64-bit)
+     * @property arrayHeader  overhead per array object (includes length field)
+     * @property pointerSize  size of a single reference / pointer
+     */
     data class EstimatorConfig(
         val objectHeader: Long = 16L,
         val arrayHeader: Long = 24L,
