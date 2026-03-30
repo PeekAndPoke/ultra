@@ -1,6 +1,5 @@
 package io.peekandpoke.funktor.demo.server.api.showcase
 
-import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.core.user
 import io.peekandpoke.funktor.demo.common.showcase.AuthRuleCheckResult
 import io.peekandpoke.funktor.demo.common.showcase.ShowcaseApiClient
@@ -9,7 +8,7 @@ import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 
-class AuthShowcaseApi(converter: OutgoingConverter) : ApiRoutes("showcase-auth", converter) {
+class AuthShowcaseApi : ApiRoutes("showcase-auth") {
 
     val getAuthRuleChecks = ShowcaseApiClient.GetAuthRuleChecks.mount {
         docs {

@@ -17,6 +17,7 @@ import io.peekandpoke.ultra.slumber.awake
 import io.peekandpoke.ultra.slumber.slumber
 import io.peekandpoke.ultra.vault.RemoveResult
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.ensureKey
 import io.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 import io.peekandpoke.ultra.vault.profiling.QueryProfiler
 import kotlinx.coroutines.flow.map
@@ -25,6 +26,7 @@ import kotlinx.coroutines.runBlocking
 import org.bson.Document
 import org.bson.conversions.Bson
 import org.bson.json.JsonWriterSettings
+import org.bson.types.ObjectId
 
 class MonkoDriver(
     private val lazyCodec: Lazy<MonkoCodec>,
@@ -38,6 +40,17 @@ class MonkoDriver(
 
         private fun Document.toPrettyJson(): String {
             return toBsonDocument().toJson(prettyJsonWriterSettings)
+        }
+
+        /**
+         * Converts a string key to the appropriate BSON id type.
+         *
+         * When MongoDB auto-generates an _id, it uses ObjectId. The key stored in [Stored._key]
+         * is the hex string representation. This method converts it back to an ObjectId when
+         * appropriate, so that filters match the original document.
+         */
+        internal fun toBsonId(key: String): Any {
+            return if (ObjectId.isValid(key)) ObjectId(key) else key
         }
     }
 
@@ -62,6 +75,11 @@ class MonkoDriver(
 
         fun skip(skip: Int) {
             this.skip = skip
+        }
+
+        fun page(page: Int = 1, epp: Int = 20) {
+            skip(maxOf(0, page - 1) * epp)
+            limit(epp)
         }
 
         fun <T : Any> applyTo(flow: FindFlow<T>): FindFlow<T> {
@@ -179,13 +197,15 @@ class MonkoDriver(
         @Suppress("UNCHECKED_CAST")
         val slumbered = codec.slumber(stored.value) as Map<String, Any?>
 
+        val bsonId = toBsonId(stored._key)
+
         val document = Document(slumbered)
-        document["_id"] = stored._key
+        document["_id"] = bsonId
 
         val coll = database.getCollection<Document>(collection)
 
         coll.replaceOne(
-            Filters.eq("_id", stored._key),
+            Filters.eq("_id", bsonId),
             document,
             ReplaceOptions().upsert(true),
         )
@@ -195,7 +215,7 @@ class MonkoDriver(
 
     suspend fun deleteOne(collection: String, idOrKey: String): RemoveResult {
         val coll = database.getCollection<Document>(collection)
-        val result = coll.deleteOne(Filters.eq("_id", idOrKey))
+        val result = coll.deleteOne(Filters.eq("_id", toBsonId(idOrKey.ensureKey)))
 
         return RemoveResult(
             count = result.deletedCount,

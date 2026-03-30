@@ -4,6 +4,7 @@ import io.peekandpoke.ultra.common.fromBase64
 import io.peekandpoke.ultra.common.sha384
 import io.peekandpoke.ultra.common.toBase64
 import io.peekandpoke.ultra.security.user.UserProvider
+import java.security.MessageDigest
 
 /** Stateless [CsrfProtection] that signs tokens with a secret, user identity, and TTL. */
 class StatelessCsrfProtection(
@@ -11,6 +12,10 @@ class StatelessCsrfProtection(
     private val csrfTtlMillis: Int,
     userProvider: UserProvider,
 ) : CsrfProtection {
+
+    init {
+        require(csrfSecret.isNotBlank()) { "CSRF secret must not be blank" }
+    }
 
     internal val glue = "#"
 
@@ -44,11 +49,16 @@ class StatelessCsrfProtection(
             return false
         }
 
-        // Validate the signature
+        // Validate the signature using constant-time comparison to prevent timing attacks
         val expectedSignature = sign(salt, receivedTtlLong)
 
-        return expectedSignature == receivedSignature
+        return MessageDigest.isEqual(
+            expectedSignature.toByteArray(),
+            receivedSignature.toByteArray(),
+        )
     }
 
-    private fun sign(salt: String, ttl: Long) = "$salt$userId$clientIp$ttl$csrfSecret".sha384().toBase64()
+    // Use null byte delimiters between fields to prevent field-boundary collisions
+    private fun sign(salt: String, ttl: Long) =
+        "$salt\u0000$userId\u0000$clientIp\u0000$ttl\u0000$csrfSecret".sha384().toBase64()
 }

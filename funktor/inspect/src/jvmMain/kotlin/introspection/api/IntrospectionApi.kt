@@ -2,7 +2,6 @@ package io.peekandpoke.funktor.inspect.introspection.api
 
 import io.peekandpoke.funktor.auth.funktorAuth
 import io.peekandpoke.funktor.core.appConfig
-import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.core.cli.cliServices
 import io.peekandpoke.funktor.core.fixtures.FixtureInstaller
 import io.peekandpoke.funktor.core.kontainer
@@ -18,7 +17,7 @@ import java.lang.management.ManagementFactory
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
-class IntrospectionApi(converter: OutgoingConverter) : ApiRoutes("introspection", converter) {
+class IntrospectionApi : ApiRoutes("introspection") {
 
     val getLifecycleHooks = IntrospectionApiClient.GetLifecycleHooks.mount {
         docs {

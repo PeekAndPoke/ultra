@@ -1,6 +1,5 @@
 package io.peekandpoke.funktor.demo.server.api.showcase
 
-import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.demo.common.showcase.EmailSenderInfo
 import io.peekandpoke.funktor.demo.common.showcase.SendTestEmailResponse
 import io.peekandpoke.funktor.demo.common.showcase.SentMessageInfo
@@ -15,7 +14,7 @@ import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 
-class MessagingShowcaseApi(converter: OutgoingConverter) : ApiRoutes("showcase-messaging", converter) {
+class MessagingShowcaseApi : ApiRoutes("showcase-messaging") {
 
     val sendTestEmail = ShowcaseApiClient.PostSendTestEmail.mount {
         docs {

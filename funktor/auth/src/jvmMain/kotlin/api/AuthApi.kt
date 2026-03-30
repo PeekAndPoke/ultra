@@ -8,7 +8,6 @@ import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
-import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.core.user
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
@@ -17,7 +16,7 @@ import io.peekandpoke.ultra.remote.ApiResponse
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-class AuthApi(converter: OutgoingConverter) : ApiRoutes("login", converter) {
+class AuthApi : ApiRoutes("login") {
 
     val getRealm = AuthApiClient.GetRealm.mount(RealmParam::class) {
         docs {

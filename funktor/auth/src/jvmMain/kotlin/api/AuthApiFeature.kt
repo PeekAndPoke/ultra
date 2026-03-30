@@ -1,10 +1,9 @@
 package io.peekandpoke.funktor.auth.api
 
-import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.rest.ApiFeature
 import io.peekandpoke.funktor.rest.ApiRoutes
 
-class AuthApiFeature(converter: OutgoingConverter) : ApiFeature {
+class AuthApiFeature : ApiFeature {
 
     data class RealmParam(
         val realm: String,
@@ -16,7 +15,7 @@ class AuthApiFeature(converter: OutgoingConverter) : ApiFeature {
         Endpoints for authentication.
     """.trimIndent()
 
-    val auth = AuthApi(converter)
+    val auth = AuthApi()
 
     override fun getRouteGroups(): List<ApiRoutes> = listOf(
         auth,

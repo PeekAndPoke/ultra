@@ -11,9 +11,6 @@ import kotlin.reflect.KParameter
  */
 sealed class TypedRoute<PARAMS> {
 
-    /** Reference to the [OutgoingConverter] */
-    abstract val converter: OutgoingConverter
-
     /** TypeRefs of all route and query parameters */
     abstract val paramsType: TypeRef<PARAMS>
 
@@ -53,7 +50,6 @@ sealed class TypedRoute<PARAMS> {
      * Plain route without input params or input body
      */
     data class Plain(
-        override val converter: OutgoingConverter,
         override val pattern: UriPattern,
     ) : TypedRoute<Unit>() {
         override val paramsType: TypeRef<Unit> = TypeRef.Unit
@@ -73,7 +69,6 @@ sealed class TypedRoute<PARAMS> {
          */
         inline fun <reified PARAMS> withParams(): WithParams<PARAMS> =
             WithParams(
-                converter = converter,
                 paramsType = kType(),
                 pattern = pattern,
             )
@@ -83,12 +78,11 @@ sealed class TypedRoute<PARAMS> {
      * Route with input params
      */
     data class Sse<PARAMS>(
-        override val converter: OutgoingConverter,
         override val paramsType: TypeRef<PARAMS>,
         override val pattern: UriPattern,
     ) : TypedRoute<PARAMS>() {
         init {
-            validateParams()
+            validateUriPattern()
         }
 
         /**
@@ -106,12 +100,11 @@ sealed class TypedRoute<PARAMS> {
      * Route with input params
      */
     data class WithParams<PARAMS>(
-        override val converter: OutgoingConverter,
         override val paramsType: TypeRef<PARAMS>,
         override val pattern: UriPattern,
     ) : TypedRoute<PARAMS>() {
         init {
-            validateParams()
+            validateUriPattern()
         }
 
         /**
@@ -129,13 +122,12 @@ sealed class TypedRoute<PARAMS> {
      * Route with input params and input body
      */
     data class WithParamsAndBody<PARAMS, BODY>(
-        override val converter: OutgoingConverter,
         override val paramsType: TypeRef<PARAMS>,
         val bodyType: TypeRef<BODY>,
         override val pattern: UriPattern,
     ) : TypedRoute<PARAMS>() {
         init {
-            validateParams()
+            validateUriPattern()
         }
 
         /**
@@ -159,13 +151,9 @@ sealed class TypedRoute<PARAMS> {
     }
 
     /**
-     * Validates all params of the route.
-     *
-     * - The [OutgoingConverter] must be able to handle all parameter types.
-     * - All properties of the parameter class without default value must be found in the [pattern].
+     * Validates that the [OutgoingConverter] can handle all parameter types of this route.
      */
-    protected fun validateParams() {
-        // Check that all properties of the route object can be handled by the outgoing converter
+    fun validateConverterCompatibility(converter: OutgoingConverter) {
         val unhandled = reifiedParamsType.ctorParams2Types.filter { !converter.canHandle(it.second) }
 
         if (unhandled.isNotEmpty()) {
@@ -174,8 +162,12 @@ sealed class TypedRoute<PARAMS> {
                         "${unhandled.map { it.first.name }} of route object '${reifiedParamsType.cls}'"
             )
         }
+    }
 
-        // Check that all non optional parameters are present in the route
+    /**
+     * Validates that all non-optional parameters are present in the URI [pattern].
+     */
+    protected fun validateUriPattern() {
         val params: List<KParameter> = reifiedParamsType.ctor?.parameters ?: emptyList()
 
         val missingInUri = params

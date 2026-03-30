@@ -165,41 +165,37 @@ abstract class EntityRepository<T : Any>(
         while (attempts++ < maxAttempts) {
             val results = KarangoIndexBuilder(this).apply { buildIndexes() }.create()
 
+            var hasErrors = false
+
             results.forEach { r ->
                 when (r) {
                     is KarangoIndexBuilder.EnsureResult.Ensured -> {
                         driver.log.info(
                             "[OK] Ensured index '${r.qualifiedName()}' (${r.idx.type}) on fields ${r.fields}"
                         )
-                        return
                     }
 
                     is KarangoIndexBuilder.EnsureResult.Kept -> {
                         driver.log.info(
                             "[OK] Kept index '${r.qualifiedName()}' (${r.idx.type}) on fields ${r.fields}"
                         )
-                        return
                     }
 
                     is KarangoIndexBuilder.EnsureResult.ReCreated -> {
                         driver.log.info(
                             "[OK] Re-Created index '${r.qualifiedName()}' (${r.idx.type}) on fields ${r.fields}"
                         )
-                        return
                     }
 
                     is KarangoIndexBuilder.EnsureResult.Error -> {
+                        hasErrors = true
+
                         if (attempts < maxAttempts) {
                             driver.log.warning(
-                                "[WARNING] Will retry to crate index '${r.qualifiedName()}' on fields ${r.fields}, " +
+                                "[WARNING] Will retry to create index '${r.qualifiedName()}' on fields ${r.fields}, " +
                                         "ErrNum: ${r.error.errorNum} ResponseCode: ${r.error.responseCode} " +
                                         "Message: ${r.error.errorMessage}",
                             )
-
-                            // Reload all indexes
-                            getArangoCollection().indexes.await()
-                            // And wait a bit
-                            delay(1000.milliseconds)
                         } else {
                             driver.log.error(
                                 "[ERROR] Creating index '${r.qualifiedName()}' on fields ${r.fields} failed, " +
@@ -209,6 +205,17 @@ abstract class EntityRepository<T : Any>(
                         }
                     }
                 }
+            }
+
+            // All indexes processed successfully — no need to retry
+            if (!hasErrors) {
+                return
+            }
+
+            // Reload all indexes and wait before retrying (once per attempt, not per error)
+            if (attempts < maxAttempts) {
+                getArangoCollection().indexes.await()
+                delay(1000.milliseconds)
             }
         }
     }

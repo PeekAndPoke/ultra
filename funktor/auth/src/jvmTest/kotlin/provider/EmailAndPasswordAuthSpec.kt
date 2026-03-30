@@ -31,6 +31,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
         val onInstantNow: () -> MpInstant = { error("instantNow not implemented") },
         val onFindPasswordRecoveryToken: suspend (String, String) -> Stored<AuthRecord.PasswordRecoveryToken>? =
             { _, _ -> error("findPasswordRecoveryToken not implemented") },
+        val onRemoveAuthRecord: suspend (String) -> Unit = { error("removeAuthRecord not implemented") },
     ) : EmailAndPasswordAuth.Services {
         override fun hashPassword(password: String): String = onHashPassword(password)
         override fun checkPassword(plaintext: String, hash: String): Boolean = onCheckPassword(plaintext, hash)
@@ -49,6 +50,8 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             realm: String,
             token: String,
         ): Stored<AuthRecord.PasswordRecoveryToken>? = onFindPasswordRecoveryToken(realm, token)
+
+        override suspend fun removeAuthRecord(id: String) = onRemoveAuthRecord(id)
     }
 
     init {

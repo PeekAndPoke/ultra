@@ -1,6 +1,5 @@
 package io.peekandpoke.funktor.logging.api
 
-import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.inspect.logging.LogsFilter
 import io.peekandpoke.funktor.inspect.logging.api.LoggingApiClient
 import io.peekandpoke.funktor.inspect.logging.api.LogsRequest
@@ -11,7 +10,7 @@ import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.log.LogLevel
 import io.peekandpoke.ultra.remote.ApiResponse
 
-class LoggingApi(converter: OutgoingConverter) : ApiRoutes("logging", converter) {
+class LoggingApi : ApiRoutes("logging") {
 
     data class ListParam(
         val search: String = "",

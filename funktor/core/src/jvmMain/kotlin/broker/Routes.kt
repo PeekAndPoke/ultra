@@ -7,7 +7,6 @@ import io.peekandpoke.ultra.reflection.kType
  * Base class for all route collections
  */
 abstract class Routes(
-    val converter: OutgoingConverter,
     val mountPoint: String = "",
 ) {
     /**
@@ -15,7 +14,6 @@ abstract class Routes(
      */
     fun route(uri: String) =
         TypedRoute.Plain(
-            converter = converter,
             pattern = uri.asPattern
         )
 
@@ -24,7 +22,6 @@ abstract class Routes(
      */
     fun <PARAMS : Any> route(type: TypeRef<PARAMS>, uri: String): TypedRoute.WithParams<PARAMS> =
         TypedRoute.WithParams(
-            converter = converter,
             paramsType = type,
             pattern = uri.asPattern
         )
@@ -34,7 +31,6 @@ abstract class Routes(
      */
     fun <PARAMS : Any, BODY : Any> route(paramsType: TypeRef<PARAMS>, bodyType: TypeRef<BODY>, uri: String) =
         TypedRoute.WithParamsAndBody(
-            converter = converter,
             paramsType = paramsType,
             bodyType = bodyType,
             pattern = uri.asPattern

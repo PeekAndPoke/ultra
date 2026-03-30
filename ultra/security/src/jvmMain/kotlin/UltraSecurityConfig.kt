@@ -8,9 +8,9 @@ data class UltraSecurityConfig(
     val csrfTtlMillis: Int,
 ) {
     companion object {
-        /** Empty configuration with no CSRF secret and a default 5-minute TTL. */
-        val empty = UltraSecurityConfig(
-            csrfSecret = "",
+        /** Test-only configuration with a placeholder CSRF secret and a default 5-minute TTL. */
+        val testOnly = UltraSecurityConfig(
+            csrfSecret = "test-only-csrf-secret",
             csrfTtlMillis = 300_000,
         )
     }

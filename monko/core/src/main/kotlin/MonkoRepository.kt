@@ -133,11 +133,6 @@ abstract class MonkoRepository<T : Any>(
         return result
     }
 
-    /** Find documents using the raw [FindQueryBuilder] API. */
-    suspend fun find(query: MonkoDriver.FindQueryBuilder.() -> Unit): MonkoCursor<Stored<T>> {
-        return driver.findStored(collection = name, type = storedType, query = query)
-    }
-
     /** Find documents using the type-safe DSL. The [repoExpr] is passed as lambda parameter for property path access. */
     suspend fun find(query: MonkoDriver.FindQueryBuilder.(r: MongoIterableExpr<T>) -> Unit): MonkoCursor<Stored<T>> {
         return driver.findStored(collection = name, type = storedType) {
@@ -146,8 +141,9 @@ abstract class MonkoRepository<T : Any>(
     }
 
     override suspend fun findById(id: String?): Stored<T>? {
+        val key = id?.ensureKey ?: return null
         val result = driver.findStored(collection = name, type = storedType) {
-            filter(eq("_id", id?.ensureKey))
+            filter(eq("_id", MonkoDriver.toBsonId(key)))
             limit(1)
         }
 

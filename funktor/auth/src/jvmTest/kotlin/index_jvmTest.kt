@@ -70,7 +70,7 @@ suspend fun createAuthTestContainer(
 
         ultraLogging()
         ultraVault(VaultConfig.default)
-        ultraSecurity(UltraSecurityConfig.empty)
+        ultraSecurity(UltraSecurityConfig.testOnly)
 
         funktorBroker()
         funktorRest(testAppConfig) { jwt() }

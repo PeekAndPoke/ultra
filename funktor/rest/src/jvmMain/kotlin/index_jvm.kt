@@ -32,6 +32,8 @@ inline val RoutingContext.restCodec: RestCodec get() = call.restCodec
 
 val Funktor_Rest = module { config: AppConfig, builder: FunktorRestBuilder.() -> Unit ->
 
+    singleton(ValidateRoutesOnAppStarting::class)
+
     val codecConfig = SlumberConfig.default.prependModules(VaultSlumberModule)
 
     val cacheMemory = Runtime.getRuntime().maxMemory() / 10
