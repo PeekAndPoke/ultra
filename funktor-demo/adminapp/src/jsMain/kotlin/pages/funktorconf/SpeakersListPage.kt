@@ -3,10 +3,13 @@ package io.peekandpoke.funktor.demo.adminapp.pages.funktorconf
 import io.peekandpoke.funktor.demo.adminapp.Apis
 import io.peekandpoke.funktor.demo.adminapp.Nav
 import io.peekandpoke.funktor.demo.common.funktorconf.SpeakerModel
+import io.peekandpoke.funktor.inspect.renderDefault
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.routing.Router.Companion.router
+import io.peekandpoke.kraft.toasts.ToastsManager.Companion.toasts
+import io.peekandpoke.kraft.utils.dataLoader
 import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick
@@ -14,6 +17,7 @@ import io.peekandpoke.ultra.semanticui.icon
 import io.peekandpoke.ultra.semanticui.noui
 import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 import kotlinx.html.tbody
@@ -31,18 +35,8 @@ class SpeakersListPage(ctx: NoProps) : PureComponent(ctx) {
 
     //  STATE  ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private var speakers: List<SpeakerModel> by value(emptyList())
-
-    //  INIT  /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    init {
-        loadSpeakers()
-    }
-
-    private fun loadSpeakers() {
-        launch {
-            speakers = Apis.funktorConf.listSpeakers().first().data ?: emptyList()
-        }
+    private val loader = dataLoader {
+        Apis.funktorConf.listSpeakers().map { it.data ?: emptyList() }
     }
 
     //  IMPL  /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,10 +55,12 @@ class SpeakersListPage(ctx: NoProps) : PureComponent(ctx) {
             }
         }
 
-        renderSpeakersTable()
+        loader.renderDefault(this) { speakers ->
+            renderSpeakersTable(speakers)
+        }
     }
 
-    private fun FlowContent.renderSpeakersTable() {
+    private fun FlowContent.renderSpeakersTable(speakers: List<SpeakerModel>) {
         ui.segment {
             if (speakers.isEmpty()) {
                 ui.message { +"No speakers found. Add one to get started." }
@@ -99,8 +95,17 @@ class SpeakersListPage(ctx: NoProps) : PureComponent(ctx) {
                                     ui.small.red.button {
                                         onClick {
                                             launch {
-                                                Apis.funktorConf.deleteSpeaker(speaker.id).first()
-                                                loadSpeakers()
+                                                try {
+                                                    val response = Apis.funktorConf.deleteSpeaker(speaker.id).first()
+                                                    if (response.isSuccess()) {
+                                                        toasts.info("Speaker deleted")
+                                                        loader.reload()
+                                                    } else {
+                                                        toasts.error("Failed to delete speaker")
+                                                    }
+                                                } catch (e: Exception) {
+                                                    toasts.error("Failed to delete speaker: ${e.message}")
+                                                }
                                             }
                                         }
                                         icon.trash()

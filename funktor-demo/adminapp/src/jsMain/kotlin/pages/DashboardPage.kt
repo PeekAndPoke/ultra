@@ -5,17 +5,18 @@ import io.peekandpoke.funktor.demo.adminapp.Nav
 import io.peekandpoke.funktor.demo.common.funktorconf.AttendeeModel
 import io.peekandpoke.funktor.demo.common.funktorconf.EventModel
 import io.peekandpoke.funktor.demo.common.funktorconf.SpeakerModel
+import io.peekandpoke.funktor.inspect.renderDefault
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.routing.Router.Companion.router
-import io.peekandpoke.kraft.utils.launch
+import io.peekandpoke.kraft.utils.dataLoader
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick
 import io.peekandpoke.ultra.semanticui.icon
 import io.peekandpoke.ultra.semanticui.noui
 import io.peekandpoke.ultra.semanticui.ui
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 import kotlinx.html.tbody
@@ -33,16 +34,24 @@ class DashboardPage(ctx: NoProps) : PureComponent(ctx) {
 
     //  STATE  ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private var events: List<EventModel> by value(emptyList())
-    private var speakers: List<SpeakerModel> by value(emptyList())
-    private var attendees: List<AttendeeModel> by value(emptyList())
+    data class State(
+        val events: List<EventModel> = emptyList(),
+        val speakers: List<SpeakerModel> = emptyList(),
+        val attendees: List<AttendeeModel> = emptyList(),
+    )
 
-    //  INIT  /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    init {
-        launch { events = Apis.funktorConf.listEvents().first().data ?: emptyList() }
-        launch { speakers = Apis.funktorConf.listSpeakers().first().data ?: emptyList() }
-        launch { attendees = Apis.funktorConf.listAttendees().first().data ?: emptyList() }
+    private val loader = dataLoader {
+        combine(
+            Apis.funktorConf.listEvents(),
+            Apis.funktorConf.listSpeakers(),
+            Apis.funktorConf.listAttendees(),
+        ) { events, speakers, attendees ->
+            State(
+                events = events.data ?: emptyList(),
+                speakers = speakers.data ?: emptyList(),
+                attendees = attendees.data ?: emptyList(),
+            )
+        }
     }
 
     //  IMPL  /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -55,34 +64,38 @@ class DashboardPage(ctx: NoProps) : PureComponent(ctx) {
             }
         }
 
-        renderStats()
-        renderUpcomingEvents()
-        renderRecentSpeakers()
+        loader.renderDefault(this) { data ->
+            renderStats(data)
+            renderUpcomingEvents(data.events)
+            renderRecentSpeakers(data.speakers)
+        }
     }
 
-    private fun FlowContent.renderStats() {
-        ui.three.statistics {
-            ui.statistic {
-                onClick { evt -> router.navToUri(evt, Nav.funktorConf.events()) }
-                noui.value { +"${events.size}" }
-                noui.label { +"Events" }
-            }
+    private fun FlowContent.renderStats(data: State) {
+        ui.segment {
+            ui.three.statistics {
+                ui.statistic {
+                    onClick { evt -> router.navToUri(evt, Nav.funktorConf.events()) }
+                    noui.value { +"${data.events.size}" }
+                    noui.label { +"Events" }
+                }
 
-            ui.statistic {
-                onClick { evt -> router.navToUri(evt, Nav.funktorConf.speakers()) }
-                noui.value { +"${speakers.size}" }
-                noui.label { +"Speakers" }
-            }
+                ui.statistic {
+                    onClick { evt -> router.navToUri(evt, Nav.funktorConf.speakers()) }
+                    noui.value { +"${data.speakers.size}" }
+                    noui.label { +"Speakers" }
+                }
 
-            ui.statistic {
-                onClick { evt -> router.navToUri(evt, Nav.funktorConf.attendees()) }
-                noui.value { +"${attendees.size}" }
-                noui.label { +"Attendees" }
+                ui.statistic {
+                    onClick { evt -> router.navToUri(evt, Nav.funktorConf.attendees()) }
+                    noui.value { +"${data.attendees.size}" }
+                    noui.label { +"Attendees" }
+                }
             }
         }
     }
 
-    private fun FlowContent.renderUpcomingEvents() {
+    private fun FlowContent.renderUpcomingEvents(events: List<EventModel>) {
         ui.segment {
             ui.header H2 {
                 icon.calendar()
@@ -130,7 +143,7 @@ class DashboardPage(ctx: NoProps) : PureComponent(ctx) {
         }
     }
 
-    private fun FlowContent.renderRecentSpeakers() {
+    private fun FlowContent.renderRecentSpeakers(speakers: List<SpeakerModel>) {
         ui.segment {
             ui.header H2 {
                 icon.microphone()

@@ -3,10 +3,13 @@ package io.peekandpoke.funktor.demo.adminapp.pages.funktorconf
 import io.peekandpoke.funktor.demo.adminapp.Apis
 import io.peekandpoke.funktor.demo.adminapp.Nav
 import io.peekandpoke.funktor.demo.common.funktorconf.AttendeeModel
+import io.peekandpoke.funktor.inspect.renderDefault
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.routing.Router.Companion.router
+import io.peekandpoke.kraft.toasts.ToastsManager.Companion.toasts
+import io.peekandpoke.kraft.utils.dataLoader
 import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick
@@ -14,6 +17,7 @@ import io.peekandpoke.ultra.semanticui.icon
 import io.peekandpoke.ultra.semanticui.noui
 import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 import kotlinx.html.tbody
@@ -31,18 +35,8 @@ class AttendeesListPage(ctx: NoProps) : PureComponent(ctx) {
 
     //  STATE  ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private var attendees: List<AttendeeModel> by value(emptyList())
-
-    //  INIT  /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    init {
-        loadAttendees()
-    }
-
-    private fun loadAttendees() {
-        launch {
-            attendees = Apis.funktorConf.listAttendees().first().data ?: emptyList()
-        }
+    private val loader = dataLoader {
+        Apis.funktorConf.listAttendees().map { it.data ?: emptyList() }
     }
 
     //  IMPL  /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,10 +55,12 @@ class AttendeesListPage(ctx: NoProps) : PureComponent(ctx) {
             }
         }
 
-        renderAttendeesTable()
+        loader.renderDefault(this) { attendees ->
+            renderAttendeesTable(attendees)
+        }
     }
 
-    private fun FlowContent.renderAttendeesTable() {
+    private fun FlowContent.renderAttendeesTable(attendees: List<AttendeeModel>) {
         ui.segment {
             if (attendees.isEmpty()) {
                 ui.message { +"No attendees found. Register one to get started." }
@@ -113,8 +109,18 @@ class AttendeesListPage(ctx: NoProps) : PureComponent(ctx) {
                                     ui.small.red.button {
                                         onClick {
                                             launch {
-                                                Apis.funktorConf.deleteAttendee(attendee.id).first()
-                                                loadAttendees()
+                                                try {
+                                                    val response =
+                                                        Apis.funktorConf.deleteAttendee(attendee.id).first()
+                                                    if (response.isSuccess()) {
+                                                        toasts.info("Attendee deleted")
+                                                        loader.reload()
+                                                    } else {
+                                                        toasts.error("Failed to delete attendee")
+                                                    }
+                                                } catch (e: Exception) {
+                                                    toasts.error("Failed to delete attendee: ${e.message}")
+                                                }
                                             }
                                         }
                                         icon.trash()

@@ -3,10 +3,13 @@ package io.peekandpoke.funktor.demo.adminapp.pages.funktorconf
 import io.peekandpoke.funktor.demo.adminapp.Apis
 import io.peekandpoke.funktor.demo.adminapp.Nav
 import io.peekandpoke.funktor.demo.common.funktorconf.EventModel
+import io.peekandpoke.funktor.inspect.renderDefault
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.routing.Router.Companion.router
+import io.peekandpoke.kraft.toasts.ToastsManager.Companion.toasts
+import io.peekandpoke.kraft.utils.dataLoader
 import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick
@@ -14,6 +17,7 @@ import io.peekandpoke.ultra.semanticui.icon
 import io.peekandpoke.ultra.semanticui.noui
 import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 import kotlinx.html.tbody
@@ -31,18 +35,8 @@ class EventsListPage(ctx: NoProps) : PureComponent(ctx) {
 
     //  STATE  ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private var events: List<EventModel> by value(emptyList())
-
-    //  INIT  /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    init {
-        loadEvents()
-    }
-
-    private fun loadEvents() {
-        launch {
-            events = Apis.funktorConf.listEvents().first().data ?: emptyList()
-        }
+    private val loader = dataLoader {
+        Apis.funktorConf.listEvents().map { it.data ?: emptyList() }
     }
 
     //  IMPL  /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,10 +55,12 @@ class EventsListPage(ctx: NoProps) : PureComponent(ctx) {
             }
         }
 
-        renderEventsTable()
+        loader.renderDefault(this) { events ->
+            renderEventsTable(events)
+        }
     }
 
-    private fun FlowContent.renderEventsTable() {
+    private fun FlowContent.renderEventsTable(events: List<EventModel>) {
         ui.segment {
             if (events.isEmpty()) {
                 ui.message { +"No events found. Create one to get started." }
@@ -105,8 +101,17 @@ class EventsListPage(ctx: NoProps) : PureComponent(ctx) {
                                     ui.small.red.button {
                                         onClick {
                                             launch {
-                                                Apis.funktorConf.deleteEvent(event.id).first()
-                                                loadEvents()
+                                                try {
+                                                    val response = Apis.funktorConf.deleteEvent(event.id).first()
+                                                    if (response.isSuccess()) {
+                                                        toasts.info("Event deleted")
+                                                        loader.reload()
+                                                    } else {
+                                                        toasts.error("Failed to delete event")
+                                                    }
+                                                } catch (e: Exception) {
+                                                    toasts.error("Failed to delete event: ${e.message}")
+                                                }
                                             }
                                         }
                                         icon.trash()
