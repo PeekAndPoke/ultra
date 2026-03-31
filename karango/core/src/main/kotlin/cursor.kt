@@ -101,7 +101,8 @@ class KarangoCursor<T>(
     override fun close() {
         try {
             inner.close()
-        } finally {
+        } catch (e: Exception) {
+            System.err.println("[KarangoCursor] Error closing cursor: ${e.message}")
         }
     }
 }

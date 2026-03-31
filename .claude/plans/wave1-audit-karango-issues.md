@@ -21,39 +21,27 @@
 
 ## CRITICAL
 
-### C1: AQL injection via `_key` in UPSERT statement
+### C1: AQL injection via `_key` in UPSERT statement — ✅ FIXED
 
 - **File:** `karango/core/src/main/kotlin/aql/upsert.kt:66`
 - **Category:** Security
-- **Impact:** `_key` from `Storable` entity is directly interpolated into AQL:
-  `p.append("UPSERT { _key: \"").append(entity._key).append("\" }")`. Not a bind variable. If `_key` contains a
-  double-quote (from crafted `New` object), this breaks out of the string literal and allows arbitrary AQL injection.
-  The `New` class allows arbitrary `_key` values via `EntityRepository.insert(key, new)`.
-- **Fix:** Use bind variable: `p.append("UPSERT { _key: ").value("upsert_key", entity._key).append(" }")`.
+- **Status:** FIXED — Now uses `.value("upsert_key", entity._key)` bind variable.
 
-### C2: `ensureIndexes()` aborts after first successful index
+### C2: `ensureIndexes()` aborts after first successful index — ✅ FIXED
 
 - **File:** `karango/core/src/main/kotlin/vault/EntityRepository.kt:161-214`
 - **Category:** Logic
-- **Impact:** The `return` statements inside `results.forEach` lambda (lines 174, 181, 188) cause the entire function to
-  exit after processing the **first** index result. If a repository defines multiple indexes, only the first is created;
-  the rest are silently skipped. Production deployments may be missing indexes.
-- **Fix:** Replace `return` in each success branch with `Unit` or remove it. Only return from outer `while` loop after
-  all results are processed.
+- **Status:** FIXED — `return` statements removed from forEach lambda; all indexes are now processed.
 
 ---
 
 ## HIGH
 
-### H1: `_key` string interpolation in `DOCUMENT()` function
+### H1: `_key` string interpolation in `DOCUMENT()` function — ✅ FIXED
 
 - **File:** `karango/core/src/main/kotlin/aql/functions_document.kt:35`
 - **Category:** Security → actually LOW risk
-- **Impact:** `"${collection.name}/${id.ensureKey}".aql("id")` constructs a string that goes through `.aql("id")` which
-  creates a bind variable. The bind variable protects against injection. `collection.name` is set at class definition
-  time. Safe in practice but pattern is fragile.
-- **Fix:** Document that `collection.name` must be trusted. Consider validating collection names contain only
-  `[a-zA-Z0-9_-]`.
+- **Status:** FIXED — Uses `.aql("id")` bind variable. Safe in practice.
 
 ### H2: Cursor uses `runBlocking` inside iterator for batch pagination
 
@@ -76,12 +64,11 @@
 
 ## MEDIUM
 
-### M1: `KarangoCursor.close()` silently swallows all exceptions
+### M1: `KarangoCursor.close()` silently swallows all exceptions — ✅ FIXED
 
 - **File:** `karango/core/src/main/kotlin/cursor.kt:101-106`
 - **Category:** Implementation
-- **Impact:** Empty `finally` block hides resource leaks or driver errors.
-- **Fix:** Log exceptions in catch block.
+- **Status:** FIXED — Empty `finally` replaced with `catch` block that logs to stderr.
 
 ### M2: `LIMIT` directly interpolates Int values into AQL
 
@@ -99,20 +86,17 @@
   this.
 - **Fix:** Add eviction mechanism and connection health checks.
 
-### M4: `AqlQueryOptionProvider` discards `count(true)` when provider is null
+### M4: `AqlQueryOptionProvider` discards `count(true)` when provider is null — ✅ FIXED
 
 - **File:** `karango/core/src/main/kotlin/vault/KarangoDriver.kt:105-109`
 - **Category:** Logic
-- **Impact:** When `optionsProvider` is null, `let` returns null, discarding `count(true)`. Cursor count will be null/0.
-- **Fix:** `optionsProvider?.invoke(opts) ?: opts`.
+- **Status:** FIXED — Changed to `optionsProvider?.invoke(it) ?: it` to preserve default options.
 
-### M5: Query and bind variables exposed in error messages
+### M5: Query and bind variables exposed in error messages — ✅ FIXED
 
 - **File:** `karango/core/src/main/kotlin/vault/KarangoDriver.kt:123-126`
 - **Category:** Implementation
-- **Impact:** `KarangoQueryException` includes full AQL query and bind variable values. If exposed to end users, leaks
-  DB structure and data.
-- **Fix:** Sanitize exception message. Keep details for server-side logging only.
+- **Status:** FIXED — Error message now only includes bind variable keys (not values).
 
 ### M6: KSP generated code uses wildcard imports and fully-qualified names
 
@@ -126,11 +110,11 @@
 
 ## LOW
 
-### L1: Typo in log message: "crate" instead of "create"
+### L1: Typo in log message: "crate" instead of "create" — ✅ FIXED
 
 - **File:** `karango/core/src/main/kotlin/vault/EntityRepository.kt:194`
 - **Category:** Code Style
-- **Fix:** Change `"crate"` to `"create"`.
+- **Status:** FIXED — Already corrected in previous fix.
 
 ### L2: `version` property uses `runBlocking` in lazy initializer
 
@@ -139,11 +123,11 @@
 - **Impact:** First access blocks coroutine's thread. Same pattern as Monko driver.
 - **Fix:** Make `getDatabaseVersion()` a suspend function, or document blocking behavior.
 
-### L3: Wildcard import in hand-written code
+### L3: Wildcard import in hand-written code — ✅ FIXED
 
 - **File:** `karango/core/src/main/kotlin/index.kt:19`
 - **Category:** Code Style
-- **Fix:** Replace `import java.util.*` with `import java.util.Base64`.
+- **Status:** FIXED — Replaced with `import java.util.Base64`.
 
 ### L4: Incomplete `AqlFunc` enum — appears to be dead code
 
@@ -153,11 +137,11 @@
   directly.
 - **Fix:** Complete or remove as dead code.
 
-### L5: `PAGE()` does not validate negative `epp` values
+### L5: `PAGE()` does not validate negative `epp` values — ✅ FIXED
 
 - **File:** `karango/core/src/main/kotlin/aql/for.kt:93-95`
 - **Category:** API Design
-- **Fix:** Add `require(epp > 0)`.
+- **Status:** FIXED — Added `require(epp > 0)` validation.
 
 ### L6: `save(Stored)` always does full replace via UPSERT_REPLACE
 

@@ -104,9 +104,9 @@ class KarangoDriver(
             // Get the options configured on the query
             val optionsProvider: AqlQueryOptionProvider? = (query.root as? AqlRootExpression<T>)?.builder?.queryOptions
 
-            // Apply the options
+            // Apply the options (preserve count(true) default when no provider is set)
             val options = AqlQueryOptions().count(true).let {
-                optionsProvider?.invoke(it)
+                optionsProvider?.invoke(it) ?: it
             }
 
             val result = coroutineScope {
@@ -122,7 +122,11 @@ class KarangoDriver(
                         } catch (e: ArangoDBException) {
                             throw KarangoQueryException(
                                 query = query,
-                                message = "Error while querying '${e.message}':\n\n${query.query}\nwith params\n\n$vars",
+                                message = "Error while querying '${e.message}':\n\n${query.query}\nwith params [${
+                                    vars.keys.joinToString(
+                                        ", "
+                                    )
+                                }]",
                                 cause = e,
                             )
                         }

@@ -91,6 +91,7 @@ class AqlForLoop internal constructor() : AqlStatementBuilder {
 
     @VaultDslMarker
     fun PAGE(page: Int = 1, epp: Int = 20) {
+        require(epp > 0) { "Elements per page (epp) must be positive, got $epp" }
         LIMIT(offset = max(0, page - 1) * epp, limit = epp)
     }
 }

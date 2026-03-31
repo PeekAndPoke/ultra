@@ -62,8 +62,7 @@ class Database(
 
     fun <T : Any> getRepositoryStoring(type: Class<T>): Repository<T> {
         return getRepositoryStoringOrNull(type)
-        // TODO: use customer exception
-            ?: error("No repository stores the type '$type'")
+            ?: throw VaultException("No repository stores the type '$type'")
     }
 
     fun <T : Any> getRepositoryStoringOrNull(type: Class<T>): Repository<T>? {
@@ -98,7 +97,6 @@ class Database(
             return getRepository(cls)
         }
 
-        // TODO: use customer exception
-        error("No repository with name '$name' was found")
+        throw VaultException("No repository with name '$name' was found")
     }
 }

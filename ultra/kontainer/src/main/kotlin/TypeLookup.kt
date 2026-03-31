@@ -1,5 +1,6 @@
 package io.peekandpoke.ultra.kontainer
 
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 
 /**
@@ -45,7 +46,7 @@ abstract class TypeLookup {
         /**
          * Internal cache map from classes to their base types
          */
-        private val cache = mutableMapOf<KClass<*>, Set<KClass<*>>>()
+        private val cache = ConcurrentHashMap<KClass<*>, Set<KClass<*>>>()
 
         /**
          * Gets all [baseTypes] that are base types of the given super [type]
@@ -68,12 +69,12 @@ abstract class TypeLookup {
         /**
          * Internal cache map from classes to their super types
          */
-        private val candidatesCache = mutableMapOf<KClass<*>, Set<KClass<*>>>()
+        private val candidatesCache = ConcurrentHashMap<KClass<*>, Set<KClass<*>>>()
 
         /**
          * Internal cache map from classes to [LazyServiceLookupBlueprint]
          */
-        private val lookupBlueprintCache = mutableMapOf<KClass<*>, LazyServiceLookupBlueprint<*>>()
+        private val lookupBlueprintCache = ConcurrentHashMap<KClass<*>, LazyServiceLookupBlueprint<*>>()
 
         /**
          * Gets all [superTypes] for the given base [type]

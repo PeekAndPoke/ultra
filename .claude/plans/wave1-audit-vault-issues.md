@@ -21,70 +21,55 @@
 
 ## CRITICAL
 
-### C1: `DefaultEntityCache.getOrPut` is not thread-safe — can return wrong values
+### C1: `DefaultEntityCache.getOrPut` is not thread-safe — ✅ FIXED
 
 - **File:** `ultra/vault/src/jvmMain/kotlin/caching.kt:80-91`
 - **Category:** Logic
-- **Impact:** Reads from `entries` without holding the lock, then acquires lock inside `put()`. Two threads can race:
-  both see the key missing, both call the provider, both store results. Worse, the initial `entries[id]` read outside
-  the lock can see partially-constructed state from a concurrent `put()` (HashMap is not thread-safe for concurrent
-  read/write). Can cause `ClassCastException`, map corruption, or wrong entities returned.
-- **Fix:** Wrap the entire `getOrPut` body in `synchronized(lock)`, or use `ConcurrentHashMap.computeIfAbsent`.
+- **Status:** FIXED — Entire `getOrPut` body now wrapped in `synchronized(lock)`.
 
-### C2: `VaultScope.launch` uses `runBlocking` (already tracked)
+### C2: `VaultScope.launch` uses `runBlocking` — ✅ FIXED
 
 - **File:** `ultra/vault/src/jvmMain/kotlin/vault_module.kt:62-73`
 - **Category:** Implementation
-- **Impact:** After-save/delete hooks execute synchronously on caller's thread. Already tracked in funktor-issues.md.
-- **Fix:** Replace with `CoroutineScope(SupervisorJob() + Dispatchers.IO).launch`.
+- **Status:** FIXED — Now uses `scope.launch { block() }` instead of `runBlocking`.
 
 ---
 
 ## HIGH
 
-### H1: `DefaultEntityCache.getOrPut` unconditionally calls `put` even for null provider results
+### H1: `DefaultEntityCache.getOrPut` unconditionally calls `put` even for null — ✅ FIXED
 
 - **File:** `ultra/vault/src/jvmMain/kotlin/caching.kt:88-90`
 - **Category:** Logic
-- **Impact:** Null results are stored but never served (null check fails on next access). If T is non-nullable, a cached
-  null will produce a null value for a non-nullable type, causing downstream NPEs.
-- **Fix:** Only call `put` when provider result is non-null.
+- **Status:** FIXED — Now checks `if (value != null)` before storing.
 
-### H2: `SharedRepoClassLookup` uses unsynchronized `mutableMapOf`
+### H2: `SharedRepoClassLookup` uses unsynchronized `mutableMapOf` — ✅ FIXED
 
 - **File:** `ultra/vault/src/jvmMain/kotlin/caching.kt:94-105`
 - **Category:** Implementation
-- **Impact:** Registered as singleton in Kontainer, shared across all requests. Both `typeLookup` and `nameLookup` are
-  plain `HashMap` with `getOrPut` and no synchronization. Concurrent access can corrupt the map or throw
-  `ConcurrentModificationException`.
-- **Fix:** Use `ConcurrentHashMap`.
+- **Status:** FIXED — Both maps now use `ConcurrentHashMap`.
 
-### H3: `DefaultQueryProfiler.entries` is a mutable `var List` with no synchronization
+### H3: `DefaultQueryProfiler.entries` is a mutable `var List` with no synchronization — ✅ FIXED
 
 - **File:** `ultra/vault/src/jvmMain/kotlin/profiling/DefaultQueryProfiler.kt:6`
 - **Category:** Implementation
-- **Impact:** Re-assigned via `entries = entries.plus(entry)`. Two concurrent calls cause lost-update race — profiling
-  entries silently dropped.
-- **Fix:** Use `mutableListOf` with synchronized access, or an atomic reference.
+- **Status:** FIXED — Added `synchronized(lock)` around entries mutation. Made setter `private`.
 
-### H4: `LazyRefCodec.awake` force-unwraps nullable cache result with `!!`
+### H4: `LazyRefCodec.awake` force-unwraps nullable cache result with `!!` — ✅ FIXED
 
 - **File:** `ultra/vault/src/jvmMain/kotlin/slumber/LazyRefCodec.kt:41`
 - **Category:** API Design
-- **Impact:** If entity was deleted, `cache.getOrPut` returns null, and `!!` throws NPE with no context. Dangling
-  references are normal in eventually-consistent systems.
-- **Fix:** Throw `VaultException("Referenced entity not found: $id")` or handle null gracefully.
+- **Status:** FIXED — Replaced `!!` with `?: throw VaultException("Referenced entity not found: $id")`.
 
 ---
 
 ## MEDIUM
 
-### M1: `StoredSlumberer.slumber` performs unchecked cast to `Map<String, Any?>`
+### M1: `StoredSlumberer.slumber` performs unchecked cast to `Map<String, Any?>` — ✅ FIXED
 
 - **File:** `ultra/vault/src/jvmMain/kotlin/slumber/StoredSlumberer.kt:23-24`
 - **Category:** Logic
-- **Impact:** If `context.slumber(data.value)` returns non-Map, throws ClassCastException with no context.
-- **Fix:** Add type check and throw descriptive `VaultException`.
+- **Status:** FIXED — Added explicit `is Map<*, *>` check with descriptive `VaultException`.
 
 ### M2: `DatabaseGraphBuilder` sets `connection = ""` instead of `repo.connection`
 
@@ -93,12 +78,11 @@
 - **Impact:** Graph model's `Repo.connection` field is always blank.
 - **Fix:** Replace `connection = ""` with `connection = repo.connection`.
 
-### M3: `Repository.stores()` unsafe cast of `type` to `KClass<*>`
+### M3: `Repository.stores()` unsafe cast of `type` to `KClass<*>` — ✅ FIXED
 
 - **File:** `ultra/vault/src/jvmMain/kotlin/Repository.kt:181`
 - **Category:** Implementation
-- **Impact:** If `type` is `KTypeParameter`, cast throws ClassCastException.
-- **Fix:** Use safe cast: `(type as? KClass<*>)?.supertypes...`.
+- **Status:** FIXED — Uses safe cast `(type as? KClass<*>)?.supertypes?.any {...}`.
 
 ### M4: `RefCodec` and `LazyRefCodec` use `runBlocking` inside deserialization
 
@@ -107,36 +91,33 @@
 - **Impact:** Can deadlock with limited thread pools. Exceptions may leak DB details.
 - **Fix:** Wrap in try-catch mapping to `VaultException`. Long-term: make codec system async-aware.
 
-### M5: `Storable.hasIdIn` creates intermediate list allocation
+### M5: `Storable.hasIdIn` creates intermediate list allocation — ✅ FIXED
 
 - **File:** `ultra/vault/src/jvmMain/kotlin/domain.kt:82`
 - **Category:** API Design
-- **Impact:** `others.map { it._id }` allocates O(n) list on every call.
-- **Fix:** Use `others.any { it._id == this._id }`.
+- **Status:** FIXED — Replaced with `others.any { it._id == _id }`.
 
-### M6: `VaultSlumberModule.getAwaker` NPE on star projection
+### M6: `VaultSlumberModule.getAwaker` NPE on star projection — ✅ FIXED
 
-- **File:** `ultra/vault/src/jvmMain/kotlin/slumber/` (getAwaker method)
+- **File:** `ultra/vault/src/jvmMain/kotlin/slumber/VaultSlumberModule.kt`
 - **Category:** Implementation
-- **Impact:** `type.arguments[0].type!!` will NPE if type argument is `Stored<*>`.
-- **Fix:** Handle star projection case explicitly.
+- **Status:** FIXED — Uses safe navigation `type.arguments.firstOrNull()?.type?.let {...}` instead of `!!`.
 
 ---
 
 ## LOW
 
-### L1: Wildcard import in `annotations.kt`
+### L1: Wildcard import in `annotations.kt` — ✅ FIXED
 
 - **File:** `ultra/vault/src/commonMain/kotlin/annotations.kt:4`
 - **Category:** Code Style
-- **Fix:** Replace `import kotlin.annotation.AnnotationTarget.*` with explicit imports.
+- **Status:** FIXED — Uses explicit imports.
 
-### L2: `Database` methods use `error()` instead of `VaultException`
+### L2: `Database` methods use `error()` instead of `VaultException` — ✅ FIXED
 
 - **File:** `ultra/vault/src/jvmMain/kotlin/Database.kt:66,102`
 - **Category:** Code Style
-- **Impact:** Inconsistent exception types. TODO comments acknowledge this.
-- **Fix:** Replace `error(...)` with `throw VaultException(...)`.
+- **Status:** FIXED — Replaced with `throw VaultException(...)`. TODOs removed.
 
 ### L3: `LazyRef` is a `data class` with lambda in equals/hashCode
 

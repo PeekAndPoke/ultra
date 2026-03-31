@@ -159,6 +159,7 @@ interface ServiceProvider {
          */
         override val instances = mutableListOf<CreatedInstance>()
 
+        @Volatile
         private var instance: Any? = null
 
         /**

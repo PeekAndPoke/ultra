@@ -3,7 +3,10 @@ package io.peekandpoke.ultra.vault.profiling
 class DefaultQueryProfiler(
     override val explainQueries: Boolean,
 ) : QueryProfiler {
+    private val lock = Any()
+
     override var entries: List<QueryProfiler.Entry> = emptyList()
+        private set
 
     override suspend fun <R> profile(
         connection: String,
@@ -17,7 +20,9 @@ class DefaultQueryProfiler(
             query = query
         )
 
-        entries = entries.plus(entry)
+        synchronized(lock) {
+            entries = entries.plus(entry)
+        }
 
         return block(entry)
     }

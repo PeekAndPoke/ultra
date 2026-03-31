@@ -36,7 +36,7 @@ object VaultSlumberModule : SlumberModule {
         return when (type.classifier) {
             Ref::class -> RefCodec
             LazyRef::class -> LazyRefCodec
-            Stored::class -> StoredAwaker(type.arguments[0].type!!)
+            Stored::class -> type.arguments.firstOrNull()?.type?.let { StoredAwaker(it) }
             else -> null
         }
     }

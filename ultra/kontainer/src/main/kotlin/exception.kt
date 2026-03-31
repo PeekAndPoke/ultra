@@ -1,7 +1,7 @@
 package io.peekandpoke.ultra.kontainer
 
 /** Base exception for all Kontainer errors */
-open class KontainerException(message: String) : Throwable(message)
+open class KontainerException(message: String) : RuntimeException(message)
 
 /** Thrown when a service factory is invalid */
 class InvalidServiceFactory(message: String) : KontainerException(message)

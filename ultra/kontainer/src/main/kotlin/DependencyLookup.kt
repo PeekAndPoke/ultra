@@ -11,57 +11,97 @@ class DependencyLookup internal constructor(
 ) {
 
     /**
-     * The lookup map
-     *
-     * It is built by the init method.
+     * The reverse dependency lookup map (built by init).
      *
      * Map Key:   A service class that other services might inject
      * Map Value: A set of services class that directly inject the key service
      */
     private val dependencies: Map<KClass<*>, Set<KClass<*>>>
 
+    /**
+     * Forward dependency map of non-lazy dependencies (for cycle detection).
+     *
+     * Map Key:   A service class
+     * Map Value: The set of service classes it directly depends on (excluding lazy/list/lookup)
+     */
+    private val directDependencies: Map<KClass<*>, Set<KClass<*>>>
+
     init {
-        /**
-         * Temporary map for building the lookup
-         */
         val tmp = mutableMapOf<KClass<*>, MutableSet<KClass<*>>>()
+        val forwardTmp = mutableMapOf<KClass<*>, MutableSet<KClass<*>>>()
 
         fun MutableMap<KClass<*>, MutableSet<KClass<*>>>.add(master: KClass<*>, dependsOn: KClass<*>) =
             getOrPut(master) { mutableSetOf() }.add(dependsOn)
 
-        /**
-         * Records the injected types of the given cls
-         */
-        val record = { def: ServiceDefinition ->
+        definitions.values.forEach { def ->
 
             def.producer.params.forEach { parameter ->
 
                 val type = parameter.type
                 val paramCls = type.classifier as KClass<*>
 
-                val candidates = when {
-                    // lazy list of types
-                    type.isLazyListType() -> superTypeLookUp.getAllCandidatesFor(type.getInnerInnerClass())
+                val isLazy = type.isLazyListType() || type.isLazyServiceType()
 
-                    // list of lazy types
+                val candidates = when {
+                    type.isLazyListType() -> superTypeLookUp.getAllCandidatesFor(type.getInnerInnerClass())
                     type.isListType() || type.isLazyServiceType() || type.isLookupType() ->
                         superTypeLookUp.getAllCandidatesFor(type.getInnerClass())
-
-                    // default service type
                     paramCls.isServiceType() -> superTypeLookUp.getAllCandidatesFor(paramCls)
-
                     else -> setOf()
                 }
 
                 candidates.forEach { superType ->
                     tmp.add(superType, def.serviceCls)
+                    // Only track non-lazy, non-list, non-lookup deps for cycle detection
+                    if (!isLazy && !type.isListType() && !type.isLookupType()) {
+                        forwardTmp.add(def.serviceCls, superType)
+                    }
                 }
             }
         }
 
-        definitions.values.forEach { record(it) }
-
         dependencies = tmp
+        directDependencies = forwardTmp
+    }
+
+    /**
+     * Detects circular dependencies among non-lazy injections.
+     *
+     * Returns a list of cycle descriptions, or an empty list if no cycles exist.
+     * Lazy injections are excluded since they break cycles by design.
+     */
+    fun detectCircularDependencies(): List<String> {
+        val errors = mutableListOf<String>()
+        val visited = mutableSetOf<KClass<*>>()
+        val inStack = mutableSetOf<KClass<*>>()
+
+        fun dfs(node: KClass<*>, path: List<KClass<*>>) {
+            if (node in inStack) {
+                val cycleStart = path.indexOf(node)
+                val cycle = path.subList(cycleStart, path.size) + node
+                errors.add(
+                    "Circular dependency detected: " +
+                            cycle.joinToString(" -> ") { it.getName() }
+                )
+                return
+            }
+            if (node in visited) return
+
+            visited.add(node)
+            inStack.add(node)
+
+            for (dep in directDependencies[node] ?: emptySet()) {
+                dfs(dep, path + node)
+            }
+
+            inStack.remove(node)
+        }
+
+        for (node in directDependencies.keys) {
+            dfs(node, emptyList())
+        }
+
+        return errors
     }
 
     /**

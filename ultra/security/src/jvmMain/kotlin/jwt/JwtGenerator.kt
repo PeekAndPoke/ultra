@@ -11,16 +11,25 @@ import io.peekandpoke.ultra.security.user.UserPermissions
 /** Creates, signs, and verifies JWTs encoding user data and permissions. */
 class JwtGenerator(
     /** The configuration */
-    val config: JwtConfig,
+    internal val config: JwtConfig,
     /** Signing algorithm to be used */
     private val signingAlgorithm: Algorithm = Algorithm.HMAC512(config.signingKey),
 ) {
+    /** The namespace for permissions claims */
+    val permissionsNs: String get() = config.permissionsNs
+
+    /** The namespace for user data claims */
+    val userNs: String get() = config.userNs
+
     /** Verifier configured with the issuer and audience from [config]. */
     val verifier: JWTVerifier = JWT
         .require(signingAlgorithm)
         .withIssuer(config.issuer)
         .withAudience(config.audience)
         .build()
+
+    /** Verifies the given [token] and returns the decoded payload. */
+    fun verify(token: String): Payload = verifier.verify(token)
 
     /** Creates a signed JWT string for the given [user] and [permissions]. */
     fun createJwt(

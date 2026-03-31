@@ -79,7 +79,7 @@ sealed class Storable<out T> {
      * Checks if this [Storable] has an id that is equal to one of the [others]
      */
     @VaultDslMarker
-    infix fun hasIdIn(others: List<Storable<@UnsafeVariance T>>) = _id in others.map { it._id }
+    infix fun hasIdIn(others: List<Storable<@UnsafeVariance T>>) = others.any { it._id == _id }
 }
 
 /**

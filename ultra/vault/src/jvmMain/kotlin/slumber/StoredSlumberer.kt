@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.vault.slumber
 
 import io.peekandpoke.ultra.slumber.Slumberer
 import io.peekandpoke.ultra.vault.Storable
+import io.peekandpoke.ultra.vault.VaultException
 
 /**
  * Slumber [Slumberer] that serializes [Storable] instances into a flat map.
@@ -19,10 +20,16 @@ object StoredSlumberer : Slumberer {
 
         val slumbered = mutableMapOf<String, Any?>()
 
+        val inner = context.slumber(data.value)
+
+        if (inner !is Map<*, *>) {
+            throw VaultException(
+                "Expected slumbered value to be a Map but got ${inner?.let { it::class.qualifiedName } ?: "null"}"
+            )
+        }
+
         @Suppress("UNCHECKED_CAST")
-        slumbered.putAll(
-            context.slumber(data.value) as Map<String, Any?>
-        )
+        slumbered.putAll(inner as Map<String, Any?>)
 
         if (data._id.isNotEmpty()) {
             slumbered["_id"] = data._id

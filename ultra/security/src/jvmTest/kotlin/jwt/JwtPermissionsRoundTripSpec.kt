@@ -17,11 +17,11 @@ class JwtPermissionsRoundTripSpec : FreeSpec() {
 
             val permissions = UserPermissions(
                 isSuperUser = true,
-                organisations = setOf("o1, o2"),
-                branches = setOf("b1, b2"),
-                groups = setOf("g1, g2"),
-                roles = setOf("r1, r2"),
-                permissions = setOf("p1, p2"),
+                organisations = setOf("o1", "o2"),
+                branches = setOf("b1", "b2"),
+                groups = setOf("g1", "g2"),
+                roles = setOf("r1", "r2"),
+                permissions = setOf("p1", "p2"),
             )
 
             val jwt = JWT.create()
@@ -43,11 +43,11 @@ class JwtPermissionsRoundTripSpec : FreeSpec() {
 
             val permissions = UserPermissions(
                 isSuperUser = false,
-                organisations = setOf("o1, o2"),
-                branches = setOf("b1, b2"),
-                groups = setOf("g1, g2"),
-                roles = setOf("r1, r2"),
-                permissions = setOf("p1, p2"),
+                organisations = setOf("o1", "o2"),
+                branches = setOf("b1", "b2"),
+                groups = setOf("g1", "g2"),
+                roles = setOf("r1", "r2"),
+                permissions = setOf("p1", "p2"),
             )
 
             val jwt = JWT.create()

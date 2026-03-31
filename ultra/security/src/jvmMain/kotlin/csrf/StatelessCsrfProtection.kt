@@ -9,7 +9,7 @@ import java.security.MessageDigest
 /** Stateless [CsrfProtection] that signs tokens with a secret, user identity, and TTL. */
 class StatelessCsrfProtection(
     private val csrfSecret: String,
-    private val csrfTtlMillis: Int,
+    private val csrfTtlMillis: Long,
     userProvider: UserProvider,
 ) : CsrfProtection {
 

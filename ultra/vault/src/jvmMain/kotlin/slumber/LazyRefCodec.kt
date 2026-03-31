@@ -5,6 +5,7 @@ import io.peekandpoke.ultra.slumber.Slumberer
 import io.peekandpoke.ultra.vault.LazyRef
 import io.peekandpoke.ultra.vault.NullEntityCache
 import io.peekandpoke.ultra.vault.Storable
+import io.peekandpoke.ultra.vault.VaultException
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -38,7 +39,7 @@ object LazyRefCodec : Awaker, Slumberer {
                     runBlocking {
                         database.getRepository(coll).findById(id) as Storable<*>
                     }
-                }!!
+                } ?: throw VaultException("Referenced entity not found: $id")
             }
         } else {
             null

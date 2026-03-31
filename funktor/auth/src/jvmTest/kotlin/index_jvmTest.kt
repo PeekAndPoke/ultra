@@ -265,8 +265,8 @@ class TestAppUserRealm(
 
         return AuthSignInResponse.Token(
             token = token,
-            permissionsNs = gen.config.permissionsNs,
-            userNs = gen.config.userNs,
+            permissionsNs = gen.permissionsNs,
+            userNs = gen.userNs,
         )
     }
 
