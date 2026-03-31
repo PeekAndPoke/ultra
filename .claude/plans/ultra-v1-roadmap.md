@@ -171,18 +171,18 @@ family.
 
 **Goal:** Resolve all CRITICAL and HIGH issues. Apply ES2015 migration.
 
-| #  | Task                                                                  | Severity | Key File(s)                                                           |
-|----|-----------------------------------------------------------------------|----------|-----------------------------------------------------------------------|
-| 1  | ~~Fix VaultScope `runBlocking`~~ **DONE (Wave 1)**                    | CRITICAL | `ultra/vault/src/jvmMain/kotlin/vault_module.kt:62-73`                |
-| 2  | Fix WorkerTracker cancellation — set job reference before awaiting    | HIGH     | `funktor/cluster/.../workers/services/WorkerTracker.kt:98-108`        |
-| 3  | Fix `setPassword` — require current password or caller identity check | HIGH     | `funktor/auth/.../provider/EmailAndPasswordAuth.kt:253-278`           |
-| 4  | Fix sign-up race — add unique index on email                          | HIGH     | `funktor/auth/.../provider/EmailAndPasswordAuth.kt:222-248`           |
-| 5  | Fix lock expiration — check `expires` field during acquire            | HIGH     | `funktor/cluster/.../locks/VaultGlobalLocksProvider.kt`               |
-| 6  | Fix archive data loss — archive before delete                         | HIGH     | `funktor/cluster/.../backgroundjobs/BackgroundJobs.kt:572-582`        |
-| 7  | Fix `queueIfNotPresent` TOCTOU — unique compound index                | HIGH     | `funktor/cluster/.../backgroundjobs/BackgroundJobs.kt:186-193`        |
-| 8  | Fix lock cleanup — skip if `aliveServerIds` is empty                  | HIGH     | `funktor/cluster/.../locks/workers/GlobalLocksCleanupWorker.kt:28-48` |
-| 9  | Fix attack detection DoS — remove delay, return 404 immediately       | HIGH     | `funktor/rest/.../ApiStatusPages.kt:98-105`                           |
-| 10 | Apply ES2015 migration (single-file change)                           | GATE G7  | `build.gradle.kts` (root)                                             |
+| #  | Task                                                                     | Severity | Key File(s)                                                           |
+|----|--------------------------------------------------------------------------|----------|-----------------------------------------------------------------------|
+| 1  | ~~Fix VaultScope `runBlocking`~~ **DONE (Wave 1)**                       | CRITICAL | `ultra/vault/src/jvmMain/kotlin/vault_module.kt:62-73`                |
+| 2  | Fix WorkerTracker cancellation — set job reference before awaiting       | HIGH     | `funktor/cluster/.../workers/services/WorkerTracker.kt:98-108`        |
+| 3  | ~~Fix `setPassword` — require current password~~ **DONE**                | HIGH     | `funktor/auth/.../provider/EmailAndPasswordAuth.kt:253-278`           |
+| 4  | ~~Fix sign-up race — catch duplicate key on concurrent signup~~ **DONE** | HIGH     | `funktor/auth/.../provider/EmailAndPasswordAuth.kt:222-248`           |
+| 5  | Fix lock expiration — check `expires` field during acquire               | HIGH     | `funktor/cluster/.../locks/VaultGlobalLocksProvider.kt`               |
+| 6  | Fix archive data loss — archive before delete                            | HIGH     | `funktor/cluster/.../backgroundjobs/BackgroundJobs.kt:572-582`        |
+| 7  | Fix `queueIfNotPresent` TOCTOU — unique compound index                   | HIGH     | `funktor/cluster/.../backgroundjobs/BackgroundJobs.kt:186-193`        |
+| 8  | Fix lock cleanup — skip if `aliveServerIds` is empty                     | HIGH     | `funktor/cluster/.../locks/workers/GlobalLocksCleanupWorker.kt:28-48` |
+| 9  | Fix attack detection DoS — remove delay, return 404 immediately          | HIGH     | `funktor/rest/.../ApiStatusPages.kt:98-105`                           |
+| 10 | Apply ES2015 migration (single-file change)                              | GATE G7  | `build.gradle.kts` (root)                                             |
 
 **Parallelism:** Items 1, 2, 3-4, 5-9, 10 can be worked in parallel (vault, workers, auth, cluster, build).
 

@@ -53,6 +53,7 @@ class ChangePasswordWidget<USER>(ctx: Ctx<Props<USER>>) : Component<ChangePasswo
     private val provider get() = auth().realm?.providers?.first { it.type == AuthProviderModel.TYPE_EMAIL_PASSWORD }
     private val userId get() = auth().tokenUserId
 
+    private var currentPassword by value("")
     private var newPassword by value("")
 
     private var state: State by value(
@@ -70,6 +71,7 @@ class ChangePasswordWidget<USER>(ctx: Ctx<Props<USER>>) : Component<ChangePasswo
             AuthSetPasswordRequest(
                 provider = provider?.id ?: "",
                 userId = userId ?: "",
+                currentPassword = currentPassword,
                 newPassword = newPassword,
             )
         )
@@ -113,6 +115,11 @@ class ChangePasswordWidget<USER>(ctx: Ctx<Props<USER>>) : Component<ChangePasswo
                         updatePassword()
                     }
                 }
+            }
+
+            UiPasswordField(::currentPassword) {
+                label("Current Password")
+                revealPasswordIcon()
             }
 
             UiPasswordField(::newPassword) {

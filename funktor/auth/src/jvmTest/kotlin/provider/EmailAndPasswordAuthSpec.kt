@@ -477,7 +477,8 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 val request = AuthSetPasswordRequest(
                     provider = subject.id,
                     userId = "user-id",
-                    newPassword = "weak"
+                    currentPassword = "old-password",
+                    newPassword = "weak",
                 )
                 val realm = MinimalTestRealm(
                     passwordPolicy = PasswordPolicy.default
@@ -502,7 +503,8 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 val request = AuthSetPasswordRequest(
                     provider = subject.id,
                     userId = "user-id",
-                    newPassword = "A-valid-password-123!"
+                    currentPassword = "old-password",
+                    newPassword = "A-valid-password-123!",
                 )
 
                 val realm = MinimalTestRealm(
@@ -519,27 +521,25 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 error.message shouldBe "User 'user-id' not found"
             }
 
-            "should set the password successfully" {
+            "should throw invalidCredentials when current password is wrong" {
                 // Setup
                 val storedUser = Stored(_id = "user-id", value = Any())
-                var passwordEmailSent = false
-                val newPassword = "Strong-password-123!"
-                val hashedPassword = "hashed-new-password"
 
                 val services = lazy {
                     TestServices(
-                        onHashPassword = {
-                            it shouldBe newPassword
-                            hashedPassword // return
+                        onFindLatestPasswordRecord = { realm, owner ->
+                            Stored(
+                                _id = "password-record",
+                                value = AuthRecord.Password(
+                                    realm = realm,
+                                    ownerId = owner,
+                                    token = "hashed-current-password",
+                                )
+                            )
                         },
-                        onCreateAuthRecord = { create ->
-                            val record = create() as AuthRecord.Password
-                            record.realm shouldBe "test-realm"
-                            record.ownerId shouldBe storedUser._id
-                            record.token shouldBe hashedPassword
-
-                            Stored(_id = "new-password-record", value = record)
-                        }
+                        onCheckPassword = { plaintext, hash ->
+                            false // wrong password
+                        },
                     )
                 }
                 val subject = EmailAndPasswordAuth(
@@ -550,7 +550,70 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 val request = AuthSetPasswordRequest(
                     provider = subject.id,
                     userId = storedUser._id,
-                    newPassword = newPassword
+                    currentPassword = "wrong-password",
+                    newPassword = "Strong-password-123!",
+                )
+                val realm = MinimalTestRealm(
+                    onLoadUserById = {
+                        it shouldBe storedUser._id
+                        storedUser
+                    },
+                )
+
+                // Execute & Verify
+                val error = shouldThrow<AuthError> {
+                    subject.setPassword(realm, request)
+                }
+                error.message shouldBe "Invalid credentials"
+            }
+
+            "should set the password successfully when current password is correct" {
+                // Setup
+                val storedUser = Stored(_id = "user-id", value = Any())
+                var passwordEmailSent = false
+                val currentPassword = "Current-password-123!"
+                val newPassword = "Strong-password-123!"
+                val hashedPassword = "hashed-new-password"
+
+                val services = lazy {
+                    TestServices(
+                        onFindLatestPasswordRecord = { realm, owner ->
+                            Stored(
+                                _id = "password-record",
+                                value = AuthRecord.Password(
+                                    realm = realm,
+                                    ownerId = owner,
+                                    token = "hashed-current-password",
+                                )
+                            )
+                        },
+                        onCheckPassword = { plaintext, _ ->
+                            plaintext == currentPassword
+                        },
+                        onHashPassword = {
+                            it shouldBe newPassword
+                            hashedPassword
+                        },
+                        onCreateAuthRecord = { create ->
+                            val record = create() as AuthRecord.Password
+                            record.realm shouldBe "test-realm"
+                            record.ownerId shouldBe storedUser._id
+                            record.token shouldBe hashedPassword
+
+                            Stored(_id = "new-password-record", value = record)
+                        },
+                    )
+                }
+                val subject = EmailAndPasswordAuth(
+                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
+                    log = NullLog,
+                    services = services,
+                )
+                val request = AuthSetPasswordRequest(
+                    provider = subject.id,
+                    userId = storedUser._id,
+                    currentPassword = currentPassword,
+                    newPassword = newPassword,
                 )
                 val realm = MinimalTestRealm(
                     onLoadUserById = {

@@ -12,16 +12,16 @@
 |-------------------------|----------|-------|--------|-------|--------|
 | Monko / MonkoRepository | 0        | 0     | 2      | 3     | 6      |
 | Coroutine / Concurrency | 0        | 3     | 4      | 2     | 2      |
-| Security / Auth Logic   | 0        | 2     | 0      | 0     | 2      |
+| Security / Auth Logic   | 0        | 0     | 0      | 0     | 4      |
 | Funktor Logic           | 0        | 2     | 4      | 3     | 0      |
-| **Total**               | **0**    | **7** | **10** | **8** | **10** |
+| **Total**               | **0**    | **5** | **10** | **8** | **12** |
 
 **Top priorities (remaining):**
 
 1. ~~VaultScope `runBlocking`~~ **FIXED (Wave 1, 2026-03-31)**
 2. WorkerTracker cancellation broken — running workers can't be stopped (HIGH coroutine)
-3. `setPassword` does not verify caller authorization (HIGH security)
-4. Sign-up race condition — duplicate users possible (HIGH security)
+3. ~~`setPassword` does not verify caller authorization~~ **FIXED (2026-03-31)**
+4. ~~Sign-up race condition — duplicate users possible~~ **FIXED (2026-03-31)**
 
 ---
 
@@ -174,20 +174,17 @@
 
 - **FIXED:** Token is now deleted via `removeAuthRecord()` immediately after successful password reset.
 
-### HIGH: `setPassword` does not verify caller authorization or current password
+### ~~HIGH: `setPassword` does not verify caller authorization or current password~~ FIXED (2026-03-31)
 
-- **File:** `funktor/auth/src/jvmMain/kotlin/provider/EmailAndPasswordAuth.kt` (lines 253-278)
-- **Impact:** Accepts `userId` + `newPassword` without requiring the current password or verifying
-  the caller is the target user. If exposed without proper route-level authorization, any authenticated
-  user could change any other user's password.
-- **Fix:** Require current password in request, or ensure calling API strictly enforces identity match.
+- **FIXED:** Added `currentPassword` field to `AuthSetPasswordRequest`. `setPassword()` now validates
+  the current password before allowing a change. Frontend `ChangePasswordWidget` updated to collect it.
+  Route handler already had identity check (`userId` match). Tests added for wrong-password case.
 
-### HIGH: Sign-up race condition — duplicate users possible
+### ~~HIGH: Sign-up race condition — duplicate users possible~~ FIXED (2026-03-31)
 
-- **File:** `funktor/auth/src/jvmMain/kotlin/provider/EmailAndPasswordAuth.kt` (lines 222-248)
-- **Impact:** Check `loadUserByEmail != null` then `createUserForSignup` is a TOCTOU race. Two
-  concurrent sign-ups with the same email can both pass the check and both create a user.
-- **Fix:** Enforce email uniqueness at database level with a unique index.
+- **FIXED:** `signUp()` now wraps `createUserForSignup()` in try-catch to handle duplicate key
+  exceptions from concurrent sign-ups. Returns `AuthError("User already exists")` on race.
+  Comment documents that a unique index on email in the user repository is required.
 
 ### ~~LOW: Wrong log message in password recovery email failure~~ FIXED
 
