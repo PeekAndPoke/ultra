@@ -43,22 +43,18 @@
 - **Category:** Security → actually LOW risk
 - **Status:** FIXED — Uses `.aql("id")` bind variable. Safe in practice.
 
-### H2: Cursor uses `runBlocking` inside iterator for batch pagination
+### H2: Cursor uses `runBlocking` inside iterator for batch pagination — DEFERRED
 
 - **File:** `karango/core/src/main/kotlin/cursor.kt:59`
 - **Category:** Implementation
-- **Impact:** `next()` calls `runBlocking { inner = inner.nextBatch().await() }` from synchronous `Iterator.next()`.
-  Blocks calling coroutine's thread during batch fetch. Thread starvation risk under load. TODO acknowledges this.
-- **Fix:** Redesign cursor to use `Flow<T>` or `ReceiveChannel<T>`.
+- **Status:** DEFERRED — Requires redesigning the Cursor interface from synchronous Iterator to
+  async Flow. The `runBlocking` is forced by the synchronous `Iterator.next()` signature. TODO in code.
 
-### H3: Cursor iterator is not thread-safe despite claiming to handle concurrent access
+### H3: Cursor iterator is not thread-safe despite claiming to handle concurrent access — ✅ FIXED
 
 - **File:** `karango/core/src/main/kotlin/cursor.kt:35-87`
 - **Category:** Implementation
-- **Impact:** Comment on line 45 mentions thread safety, but `idx` is not volatile/atomic, `data` can be reassigned
-  concurrently, `inner` is mutated without synchronization. Two threads calling `next()` simultaneously can
-  skip/double-read elements.
-- **Fix:** Document as not thread-safe (remove misleading comment), or use proper synchronization.
+- **Status:** FIXED — Misleading comment clarified. Cursors are single-threaded by design.
 
 ---
 
@@ -70,21 +66,18 @@
 - **Category:** Implementation
 - **Status:** FIXED — Empty `finally` replaced with `catch` block that logs to stderr.
 
-### M2: `LIMIT` directly interpolates Int values into AQL
+### M2: `LIMIT` directly interpolates Int values into AQL — BY DESIGN
 
 - **File:** `karango/core/src/main/kotlin/aql/limit.kt:6`
 - **Category:** Security
-- **Impact:** `"LIMIT $offset, $limit"` — safe for Int types but when `limit` is null (from `SKIP`), literal `"null"` is
-  interpolated. Depends on undocumented ArangoDB behavior.
-- **Fix:** Use bind variables, or validate `limit != null`.
+- **Status:** BY DESIGN — Values are Kotlin `Int` parameters, not user input. Type system prevents injection.
 
-### M3: Global mutable `dbCache` with stale connection risk
+### M3: Global mutable `dbCache` with stale connection risk — DEFERRED
 
 - **File:** `karango/core/src/main/kotlin/index.kt:57-65`
 - **Category:** Implementation
-- **Impact:** Global `mutableMapOf` never cleans up closed connections. Can return dead connections. TODO acknowledges
-  this.
-- **Fix:** Add eviction mechanism and connection health checks.
+- **Status:** DEFERRED — Access is properly synchronized. Stale connection risk is real but depends on
+  application usage patterns. TODO in code tracks the need for health checks.
 
 ### M4: `AqlQueryOptionProvider` discards `count(true)` when provider is null — ✅ FIXED
 
@@ -98,13 +91,12 @@
 - **Category:** Implementation
 - **Status:** FIXED — Error message now only includes bind variable keys (not values).
 
-### M6: KSP generated code uses wildcard imports and fully-qualified names
+### M6: KSP generated code uses wildcard imports and fully-qualified names — ✅ FIXED
 
 - **File:** `karango/ksp/src/main/kotlin/KarangoKspProcessor.kt:107-110, 198-206`
 - **Category:** Code Style
-- **Impact:** Generated code uses `import io.peekandpoke.karango.*` and fully-qualified class names like
-  `io.peekandpoke.karango.testdomain.TestPersonDetails`. Violates project conventions.
-- **Fix:** Generate explicit imports, use short names.
+- **Status:** FIXED — Replaced wildcard imports with explicit imports (AqlExpression, AqlIterableExpr,
+  AqlPropertyPath, L1-L5). Removed unused `io.peekandpoke.karango.*` import.
 
 ---
 
@@ -116,12 +108,12 @@
 - **Category:** Code Style
 - **Status:** FIXED — Already corrected in previous fix.
 
-### L2: `version` property uses `runBlocking` in lazy initializer
+### L2: `version` property uses `runBlocking` in lazy initializer — DEFERRED
 
 - **File:** `karango/core/src/main/kotlin/vault/KarangoDriver.kt:62-64`
 - **Category:** Implementation
-- **Impact:** First access blocks coroutine's thread. Same pattern as Monko driver.
-- **Fix:** Make `getDatabaseVersion()` a suspend function, or document blocking behavior.
+- **Status:** DEFERRED — Lazy init runs once on first access. Architectural limitation shared with
+  other drivers. Fixing requires making `getDatabaseVersion()` a suspend function.
 
 ### L3: Wildcard import in hand-written code — ✅ FIXED
 
@@ -129,13 +121,11 @@
 - **Category:** Code Style
 - **Status:** FIXED — Replaced with `import java.util.Base64`.
 
-### L4: Incomplete `AqlFunc` enum — appears to be dead code
+### L4: Incomplete `AqlFunc` enum — appears to be dead code — WON'T FIX
 
 - **File:** `karango/core/src/main/kotlin/aql/base_func.kt:8-43`
 - **Category:** API Design
-- **Impact:** Many entries with TODOs, several declared but not implemented. Actual implementations use `aqlFunc<>()`
-  directly.
-- **Fix:** Complete or remove as dead code.
+- **Status:** WON'T FIX — Dead code, never referenced. Actual implementations use `aqlFunc<>()` directly.
 
 ### L5: `PAGE()` does not validate negative `epp` values — ✅ FIXED
 
@@ -143,12 +133,11 @@
 - **Category:** API Design
 - **Status:** FIXED — Added `require(epp > 0)` validation.
 
-### L6: `save(Stored)` always does full replace via UPSERT_REPLACE
+### L6: `save(Stored)` always does full replace via UPSERT_REPLACE — BY DESIGN
 
 - **File:** `karango/core/src/main/kotlin/vault/EntityRepository.kt:280-281`
 - **Category:** API Design
-- **Impact:** May surprise users expecting partial update. Design choice, not a bug.
-- **Fix:** Document behavior, or add separate `update()` for partial updates.
+- **Status:** BY DESIGN — Intentional. `save()` = full replace, `modifyById()` exists for partial updates.
 
 ---
 

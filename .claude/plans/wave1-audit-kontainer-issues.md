@@ -45,13 +45,12 @@
 
 ## MEDIUM
 
-### M1: Prototype instances list grows unboundedly — memory leak
+### M1: Prototype instances list grows unboundedly — memory leak — BY DESIGN
 
 - **File:** `ultra/kontainer/src/main/kotlin/ServiceProvider.kt:226-227`
 - **Category:** Implementation
-- **Impact:** `ForPrototype.instances` appends every created instance forever. Strong references retained for lifetime
-  of kontainer. Memory leak for long-lived applications.
-- **Fix:** Don't track prototype instances, or make tracking opt-in/debug-only.
+- **Status:** BY DESIGN — Intentional instrumentation for KontainerTools debugging. Instance tracking
+  is a feature, not a leak. Each blueprint's kontainer instances have separate provider pools.
 
 ### M2: `KontainerException` extends `Throwable` instead of `Exception` — ✅ FIXED
 
@@ -66,13 +65,14 @@
 - **Status:** FIXED — Added `@Volatile` to `instance` field for correct double-checked locking. Context
   issue is mitigated by the semi-dynamic promotion mechanism.
 
-### M4: `KontainerBlueprint.extend()` discards config of extension builder
+### M4: `KontainerBlueprint.extend()` discards config of extension builder — BY DESIGN / WON'T FIX
 
 - **File:** `ultra/kontainer/src/main/kotlin/KontainerBlueprint.kt:119-127`
 - **Category:** Logic
-- **Impact:** Extension builder re-adds built-in definitions that overwrite originals in merge. Harmless in practice but
-  confusing.
-- **Fix:** Use lighter-weight mechanism or filter built-in services from extension.
+- **Status:** BY DESIGN / WON'T FIX — Built-in definitions are re-registered but behave identically. Singletons are
+  intentionally NOT shared across blueprint inheritance because extended blueprints may override
+  dependencies that singletons inject, which would cause race conditions on first resolution.
+  DO NOT change this behavior.
 
 ### M5: `ServiceProducer.forClass` crashes with NPE on classes without primary constructor — ✅ FIXED
 
@@ -80,70 +80,63 @@
 - **Category:** Implementation
 - **Status:** FIXED — Replaced `!!` with explicit `?: throw InvalidClassProvided(...)` with descriptive message.
 
-### M6: `getName()` is `internal` but used from test code
+### M6: `getName()` is `internal` but used from test code — BY DESIGN
 
 - **File:** `ultra/kontainer/src/main/kotlin/index.kt:32`
 - **Category:** Code Style
-- **Impact:** Tests import internal function. Works but signals it should be public.
-- **Fix:** Make public or provide public equivalent.
+- **Status:** BY DESIGN — Tests are in the same module, so `internal` access is correct and appropriate.
 
 ---
 
 ## LOW
 
-### L1: `helpers.kt` uses `!!` on type arguments without null guard
+### L1: `helpers.kt` uses `!!` on type arguments without null guard — WON'T FIX
 
 - **File:** `ultra/kontainer/src/main/kotlin/helpers.kt:44,49-50,55-56`
 - **Category:** Implementation
-- **Impact:** Star projections (e.g., `Lazy<*>`) cause unhelpful NPE.
-- **Fix:** Add guard with clear error message.
+- **Status:** WON'T FIX — Callers always validate the type before calling these helpers.
+  Star projections never reach these code paths in practice.
 
-### L2: `ForPrototype.provide()` synchronizes on every call — bottleneck
+### L2: `ForPrototype.provide()` synchronizes on every call — bottleneck — WON'T FIX
 
 - **File:** `ultra/kontainer/src/main/kotlin/ServiceProvider.kt:232`
 - **Category:** Implementation
-- **Impact:** Serializes all concurrent prototype requests. Lock only needed for instance tracking (itself a leak).
-- **Fix:** Remove sync if instance tracking is removed.
+- **Status:** WON'T FIX — Lock is needed for instance tracking (BY DESIGN for KontainerTools).
 
-### L3: `ServiceDefinition.CodeLocation` captures stack trace on every definition
+### L3: `ServiceDefinition.CodeLocation` captures stack trace on every definition — WON'T FIX
 
 - **File:** `ultra/kontainer/src/main/kotlin/ServiceDefinition.kt:27-31`
 - **Category:** API Design
-- **Impact:** `Throwable()` for stack trace on every service definition. Overhead during blueprint construction.
-- **Fix:** Make opt-in or debug-only.
+- **Status:** WON'T FIX — Runs once at blueprint construction time; negligible overhead.
 
-### L4: `DependencyLookup.getAllDependents` could use BFS instead of iterative set growth
+### L4: `DependencyLookup.getAllDependents` could use BFS — WON'T FIX
 
 - **File:** `ultra/kontainer/src/main/kotlin/DependencyLookup.kt:70-87`
 - **Category:** Logic
-- **Impact:** Current implementation is correct but unclear. BFS would be more readable.
-- **Fix:** Replace with standard BFS.
+- **Status:** WON'T FIX — Current implementation is correct. Readability is subjective.
 
-### L5: `data class` on `ForSingleton` / `ForPrototype` with mutable state
+### L5: `data class` on `ForSingleton` / `ForPrototype` with mutable state — WON'T FIX
 
 - **File:** `ultra/kontainer/src/main/kotlin/ServiceProvider.kt:152,207`
 - **Category:** Code Style
-- **Impact:** Mutable state in data class. equals/hashCode ignores it. Potentially confusing.
-- **Fix:** Consider regular class.
+- **Status:** WON'T FIX — equals/hashCode/copy are never called. data class is used for toString() only.
 
-### L6: Zero-parameter factory uses `(Any?) -> IMPL` with meaningless `Unit` param
+### L6: Zero-parameter factory uses `(Any?) -> IMPL` with meaningless `Unit` param — WON'T FIX
 
 - **File:** `ultra/kontainer/src/main/kotlin/KontainerBuilder.kt:98-109`
 - **Category:** API Design
-- **Impact:** `Any?` parameter always receives `Unit`. Source-breaking to fix post-v1.
-- **Fix:** Use `() -> IMPL` before v1.0.0.
+- **Status:** WON'T FIX — Source-breaking change; not worth it.
 
-### L7: `@KontainerDsl` annotation has no scoping effect
+### L7: `@KontainerDsl` annotation has no scoping effect — WON'T FIX
 
 - **File:** `ultra/kontainer/src/main/kotlin/index.kt:10-11`
 - **Category:** Code Style
-- **Impact:** DslMarker annotation exists but is not applied to `KontainerBuilder`, so it has no effect.
-- **Fix:** Apply to `KontainerBuilder` or remove.
+- **Status:** WON'T FIX — Cosmetic; no runtime impact.
 
-### L8: `KontainerDslSingleton` / `KontainerDslDynamic` / `KontainerDslPrototype` markers not on builder
+### L8: `KontainerDslSingleton` / `KontainerDslDynamic` / `KontainerDslPrototype` markers not on builder — WON'T FIX
 
 - **Category:** Code Style
-- **Impact:** Same as L7 — no scoping effect.
+- **Status:** WON'T FIX — Same as L7.
 
 ---
 

@@ -71,12 +71,11 @@
 - **Category:** Logic
 - **Status:** FIXED — Added explicit `is Map<*, *>` check with descriptive `VaultException`.
 
-### M2: `DatabaseGraphBuilder` sets `connection = ""` instead of `repo.connection`
+### M2: `DatabaseGraphBuilder` sets `connection = ""` instead of `repo.connection` — ✅ FIXED
 
 - **File:** `ultra/vault/src/jvmMain/kotlin/tools/DatabaseGraphBuilder.kt:165`
 - **Category:** Implementation
-- **Impact:** Graph model's `Repo.connection` field is always blank.
-- **Fix:** Replace `connection = ""` with `connection = repo.connection`.
+- **Status:** FIXED — Changed to `connection = repo.connection`.
 
 ### M3: `Repository.stores()` unsafe cast of `type` to `KClass<*>` — ✅ FIXED
 
@@ -84,12 +83,12 @@
 - **Category:** Implementation
 - **Status:** FIXED — Uses safe cast `(type as? KClass<*>)?.supertypes?.any {...}`.
 
-### M4: `RefCodec` and `LazyRefCodec` use `runBlocking` inside deserialization
+### M4: `RefCodec` and `LazyRefCodec` use `runBlocking` inside deserialization — DEFERRED
 
 - **File:** `ultra/vault/src/jvmMain/kotlin/slumber/RefCodec.kt:35`, `LazyRefCodec.kt:38`
 - **Category:** Implementation
-- **Impact:** Can deadlock with limited thread pools. Exceptions may leak DB details.
-- **Fix:** Wrap in try-catch mapping to `VaultException`. Long-term: make codec system async-aware.
+- **Status:** DEFERRED — Removing `runBlocking` requires making the entire Slumber codec system async.
+  Architectural limitation; TODO comments in code track this.
 
 ### M5: `Storable.hasIdIn` creates intermediate list allocation — ✅ FIXED
 
@@ -119,12 +118,12 @@
 - **Category:** Code Style
 - **Status:** FIXED — Replaced with `throw VaultException(...)`. TODOs removed.
 
-### L3: `LazyRef` is a `data class` with lambda in equals/hashCode
+### L3: `LazyRef` is a `data class` with lambda in equals/hashCode — WON'T FIX
 
 - **File:** `ultra/vault/src/jvmMain/kotlin/domain.kt:173-175`
 - **Category:** API Design
-- **Impact:** Two LazyRefs with same `_id` but different providers are not equal. Counter-intuitive.
-- **Fix:** Override equals/hashCode to use only `_id`, or make it a regular class.
+- **Status:** WON'T FIX — equals/hashCode are never called on LazyRef in practice.
+  No code stores LazyRef in Sets or uses them as Map keys.
 
 ---
 
