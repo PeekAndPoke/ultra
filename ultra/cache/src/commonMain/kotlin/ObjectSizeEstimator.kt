@@ -80,23 +80,25 @@ class ObjectSizeEstimatorImpl(
     )
 
     override fun estimate(obj: Any?): Long {
-        // avoid cycles
-        if (seen.contains(obj)) return 0L
+        // Primitives: no cycle detection needed (they can't form reference cycles,
+        // and JS WeakSet does not support primitive values)
+        when (obj) {
+            null -> return NULL_SIZE
+            is Boolean -> return BOOL_SIZE
+            is Byte -> return BYTE_SIZE
+            is Char -> return CHAR_SIZE
+            is Short -> return SHORT_SIZE
+            is Int -> return INT_SIZE
+            is Long -> return LONG_SIZE
+            is Float -> return FLOAT_SIZE
+            is Double -> return DOUBLE_SIZE
+        }
 
+        // For reference types: avoid cycles
+        if (seen.contains(obj)) return 0L
         seen.add(obj)
 
         return when (obj) {
-            null -> NULL_SIZE
-
-            is Boolean -> BOOL_SIZE
-            is Byte -> BYTE_SIZE
-            is Char -> CHAR_SIZE
-            is Short -> SHORT_SIZE
-            is Int -> INT_SIZE
-            is Long -> LONG_SIZE
-            is Float -> FLOAT_SIZE
-            is Double -> DOUBLE_SIZE
-
             is String -> {
                 val chars = obj.length.toLong() * CHAR_SIZE
                 // return

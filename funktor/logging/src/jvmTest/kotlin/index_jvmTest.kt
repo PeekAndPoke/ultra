@@ -8,6 +8,8 @@ import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.kontainer
 import io.peekandpoke.ultra.log.ultraLogging
+import io.peekandpoke.ultra.security.UltraSecurityConfig
+import io.peekandpoke.ultra.security.ultraSecurity
 import io.peekandpoke.ultra.vault.Database
 import io.peekandpoke.ultra.vault.VaultConfig
 import io.peekandpoke.ultra.vault.ultraVault
@@ -20,6 +22,7 @@ suspend fun createLoggingTestContainer(
         instance(Kronos::class, Kronos.systemUtc)
 
         ultraLogging()
+        ultraSecurity(UltraSecurityConfig.testOnly)
         ultraVault(VaultConfig.default)
 
         funktorBroker()
