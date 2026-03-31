@@ -30,6 +30,35 @@ if (result.success) {
     log.info("Sent email: ${'$'}{result.messageId}")
 }`} lang="kotlin" theme="vitesse-dark"/>
 
+    <h2>Configuring a sender</h2>
+
+    <p>Wire your email sender in the Kontainer blueprint. The sender is wrapped with hooks for
+        storage and logging.</p>
+
+    <Code code={`val blueprint = kontainer {
+    funktor(
+        config = config,
+        messaging = { useKarango() },  // persist sent messages
+        // ...
+    )
+
+    // AWS SES sender with hooks
+    val mailSender: AwsSesSender by lazy {
+        AwsSesSender.of(config = config.aws.ses)
+    }
+
+    singleton(EmailSender::class) { log: Log, storing: StoringEmailHook ->
+        mailSender
+            .applyDevConfig(config = config, devConfig = config.devOverrides?.mailing)
+            .withHooks(log) {
+                onAfterSend(storing)
+                onAfterSend { email, result ->
+                    log.debug("Email sent to ${'$'}{email.destination}")
+                }
+            }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
     <h2>Email senders</h2>
 
     <div class="not-prose my-8">
@@ -42,38 +71,46 @@ if (result.success) {
             </thead>
             <tbody>
             <tr class="border-b border-white/10">
-                <td class="py-2 text-white"><code>SendgridSender</code></td>
-                <td class="py-2 text-gray-400">SendGrid API</td>
+                <td class="py-2 text-white"><code>AwsSesSender</code></td>
+                <td class="py-2 text-gray-400">AWS Simple Email Service. Production-grade delivery.</td>
             </tr>
             <tr class="border-b border-white/10">
-                <td class="py-2 text-white"><code>AwsSesSender</code></td>
-                <td class="py-2 text-gray-400">AWS Simple Email Service</td>
+                <td class="py-2 text-white"><code>SendgridSender</code></td>
+                <td class="py-2 text-gray-400">SendGrid API. Alternative cloud provider.</td>
             </tr>
             <tr class="border-b border-white/10">
                 <td class="py-2 text-white"><code>NullEmailSender</code></td>
-                <td class="py-2 text-gray-400">No-op for development and testing</td>
+                <td class="py-2 text-gray-400">No-op. Discards all emails silently.</td>
             </tr>
             <tr class="border-b border-white/10">
                 <td class="py-2 text-white"><code>OverridingEmailSender</code></td>
-                <td class="py-2 text-gray-400">Redirects all emails to a dev address</td>
+                <td class="py-2 text-gray-400">Wraps another sender and redirects all emails to a dev inbox.</td>
             </tr>
             </tbody>
         </table>
     </div>
 
-    <Aside>In development, the <code>OverridingEmailSender</code> wraps your real sender and redirects all
-        emails to your dev inbox. No accidental emails to real users.
+    <h2>Dev overrides</h2>
+
+    <p>In development, <code>applyDevConfig()</code> wraps your real sender with an
+        <code>OverridingEmailSender</code> that redirects all emails to your dev inbox.
+        No accidental emails to real users.</p>
+
+    <Aside>The override is applied based on your app config. In production, the real sender is used directly.
+        In dev/staging, all emails go to the address you configure &mdash; with the original recipient
+        noted in the subject line.
     </Aside>
-
-    <h2>Sent message storage</h2>
-
-    <p>Every sent email is persisted to a <code>SentMessagesStorage</code> for auditing and debugging.
-        Query by reference (e.g. user ID) to see what was sent and when.</p>
 
     <h2>Email hooks</h2>
 
-    <p>The <code>HooksEmailSender</code> wraps any sender and calls your hooks before and after sending.
-        Use hooks for logging, metrics, or custom storage logic.</p>
+    <p>The <code>withHooks()</code> builder wraps any sender and calls your hooks after sending.
+        The built-in <code>StoringEmailHook</code> persists every sent email to the database for auditing.</p>
+
+    <h2>Sent message storage</h2>
+
+    <p>Every sent email is persisted to a <code>SentMessagesStorage</code> via the storing hook.
+        Query by reference (e.g. user ID) to see what was sent and when.
+        Storage backends: <code>useKarango()</code> for ArangoDB, <code>useMonko()</code> for MongoDB.</p>
 
     <div class="mt-12">
         <a href="/ultra/funktor/insights"

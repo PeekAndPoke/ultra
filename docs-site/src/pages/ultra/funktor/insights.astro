@@ -13,6 +13,38 @@ import {Code} from 'astro:components';
         Request profiling, performance metrics, and a built-in debug GUI.
     </p>
 
+    <h2>Enabling insights</h2>
+
+    <p>Insights is enabled per-route group by calling <code>instrumentWithInsights()</code> after
+        installing the Kontainer. The insights config controls whether collection is active.</p>
+
+    <Code code={`fun Route.installApiKontainer(app: App<MyConfig>, insights: InsightsConfig?) {
+    installKontainer { call ->
+        app.kontainers.create {
+            with { call.jwtUserProvider() }
+            insights?.let { with { insights } }
+        }
+    }
+
+    instrumentWithInsights(insights)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Mounting the GUI</h2>
+
+    <p>Mount the built-in debug toolbar on your admin host. It provides a web UI for browsing
+        recent requests, database queries, and timing breakdowns.</p>
+
+    <Code code={`routing {
+    host("admin.*".toRegex()) {
+        installWwwKontainer(app, config.api.insights)
+
+        // Mount insights GUI at /_/insights/
+        init.use(InsightsGui::class) {
+            mount()
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
     <h2>What it collects</h2>
 
     <p>Insights uses per-request <a href="/ultra/kontainer/">Kontainer</a> scoping to collect data throughout
@@ -45,15 +77,15 @@ import {Code} from 'astro:components';
         </div>
     </div>
 
-    <h2>Insights GUI</h2>
+    <h2>How it works</h2>
 
-    <p>The module includes a web-based debug toolbar, mounted at <code>/_/insights/</code>.
-        Browse recent requests, inspect database queries, view timing breakdowns, and check container usage &mdash;
-        all without external tools.</p>
+    <p>Each collector is a <strong>dynamic</strong> Kontainer service &mdash; a new instance is created for
+        every request. Throughout the request lifecycle, collectors accumulate data. At the end of the
+        request, the collected data is serialized into the API response as metadata.</p>
 
     <Aside>Insights is the reason Kontainer has per-request scoping.
         Each collector is a dynamic service that accumulates data throughout one request,
-        then gets serialized and stored.
+        then gets serialized and stored. No external APM tools required.
     </Aside>
 
     <div class="mt-12">
