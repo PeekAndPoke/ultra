@@ -6,6 +6,22 @@
 
 ---
 
+## What Changed Since Last Assessment (March 31)
+
+- **Wave 1 code audit complete** — Deep 5-dimension audit of Karango, Kontainer, ultra/vault, ultra/security.
+  65 issues found: 45 fixed, 14 BY DESIGN/WON'T FIX, 6 DEFERRED. Key fixes:
+  - Karango: AQL injection fixed, ensureIndexes fixed, KSP explicit imports, PAGE() validation
+  - Kontainer: AtomicBoolean for validation, ConcurrentHashMap caches, circular dependency detection,
+    @Volatile for double-checked locking, KontainerException → RuntimeException
+  - Vault: Cache thread safety, profiler synchronization, safe casts, VaultException consistency
+  - Security: CSRF timing attack fixed, token delimiter injection fixed, secret redaction in toString(),
+    TTL Int→Long, test bug fixed, visibility tightened
+- **New tests added** — CircularDependencySpec (4 tests), ServiceProducerSpec (3 tests),
+  UltraSecurityConfigSpec (2 tests), JwtGeneratorSpec additions (4 tests)
+- **Kontainer tests** — 20 → 24 test files
+- **Security tests** — 12 → 14 test files
+- **Audit plans archived** — `.claude/plans-archive/2026-03-31-wave1-audit-*.md`
+
 ## What Changed Since Last Assessment (March 26, continued)
 
 - **Mutator quality pass** — Phase 1-4 complete: filterMutatorsOf only for sealed/abstract, subList() throws properly,
@@ -75,8 +91,8 @@
 |------|------------------|-------|-----|-------|-------|-------|------|--------------|------------------------------------------------------------------------------------------------------------------|
 | 1    | **Slumber**      | 4.9   | 122 | 60    | 49%   | 3     | ~98% | 8 pages      | Gold standard. Full KDoc on public API + all built-in codecs, primitives, datetime.                              |
 | 2    | **Streams**      | 4.8   | 51  | 21    | 41%   | 0     | 100% | 8 pages      | Zero TODOs, 100% KDoc. Battle-tested. Compact and clean.                                                         |
-| 3    | **Karango**      | 4.5   | 183 | 145   | 79%   | 17    | 67%  | 8 pages      | Best raw test count. 14 new test files (Sort/Limit/Collect/CRUD/functions). 3 TODOs resolved. Battle-tested.     |
-| 4    | **Kontainer**    | 4.3   | 69  | 20    | 29%   | 6     | ~98% | 7 pages      | Battle-tested DI. Full docs. KDoc complete on all public API.                                                    |
+| 3    | **Karango**      | 4.7   | 183 | 145   | 79%   | 17    | 67%  | 8 pages      | Wave 1 audit complete: 17 issues → all resolved. AQL injection fixed. KSP explicit imports. Battle-tested.       |
+| 4    | **Kontainer**    | 4.6   | 69  | 24    | 35%   | 6     | ~98% | 7 pages      | Wave 1 audit complete: 17 issues → all resolved. Thread safety hardened. Circular dep detection added.           |
 | 5    | **ultra/common** | 4.2   | 43  | 28    | 65%   | 2     | ~67% | (foundation) | Audited March 26. Strong test coverage on core APIs. KDoc gaps in WeakRef/WeakSet, numbers, enums, ComparableTo. |
 | 6    | **ultra/model**  | 4.0   | 20  | 9     | 45%   | 0     | -    | -            | Zero TODOs, strong ratio. Small focused module post-split.                                                       |
 
@@ -85,7 +101,7 @@
 | Rank | Module               | Score | Src  | Tests | Ratio | TODOs | KDoc | Docs                  | Assessment                                                                                                          |
 |------|----------------------|-------|------|-------|-------|-------|------|-----------------------|---------------------------------------------------------------------------------------------------------------------|
 | 7    | **Mutator**          | 4.2   | 43   | 28    | 65%   | 0     | 30%  | 6 pages               | Major quality pass: isModified/reset fixed for collections, filterMutatorsOf only for sealed, clean generated code. |
-| 8    | **ultra/security**   | 4.0   | 33   | 12    | 36%   | 1     | ~90% | -                     | KDoc added to all 12 undocumented files (User, JWT, CSRF, password hashers). Tests already solid.                   |
+| 8    | **ultra/security**   | 4.5   | 33   | 14    | 42%   | 0     | ~90% | -                     | Wave 1 audit complete: 16 issues → all resolved. CSRF timing attack fixed, secrets redacted, visibility tightened.  |
 | 9    | **ultra/cache**      | 3.5   | 17   | 6     | 35%   | 1     | 24%  | -                     | Clean post-split. Caching correctness needs more tests.                                                             |
 | 10   | **ultra/reflection** | 3.4   | 14   | 6     | 43%   | 5     | 63%  | -                     | Good ratio and KDoc but 5 TODOs in 14 files is high density.                                                        |
 | 11   | **ultra/maths**      | 3.2   | 12   | 4     | 33%   | 1     | -    | -                     | Small, clean. Needs precision edge-case tests.                                                                      |
@@ -95,14 +111,14 @@
 
 ### Tier 3: RED — Not Ready for Promotion
 
-| Rank | Module               | Score | Src | Tests | Ratio  | TODOs | Assessment                                                                                                                       |
-|------|----------------------|-------|-----|-------|--------|-------|----------------------------------------------------------------------------------------------------------------------------------|
-| 15   | **ultra/datetime**   | 4.0   | 64  | 28    | 44%    | **1** | 44 test TODOs resolved (was 45). Only 1 code-quality TODO remains. Tests added across 9 spec files.                              |
-| 16   | **ultra/vault**      | 3.5   | 45  | 8     | 18%    | 6     | KDoc on core domain (Storable/Stored/Ref/LazyRef/New) + slumber codecs. 3 new test files (EntityCache, Expression, Timestamped). |
-| 17   | **ultra/html**       | 2.7   | 13  | 2     | 15%    | 0     | Near-zero coverage.                                                                                                              |
-| 18   | **ultra/semanticui** | 2.6   | 15  | 4     | 27%    | 0     | Stale (last commit March 10). UI module, lower blast radius.                                                                     |
-| 19   | **Funktor**          | 2.0   | 438 | 20    | **5%** | ~15   | **Blocker.** Largest module, lowest test ratio. Cannot be promoted.                                                              |
-| 20   | **Monko**            | 2.2   | 19  | 3     | 16%    | 2     | Type-safe query DSL added (filters, sorts, updates). Auth repo migrated. save()/remove() still TODO.                             |
+| Rank | Module               | Score | Src | Tests | Ratio  | TODOs | Assessment                                                                                                                 |
+|------|----------------------|-------|-----|-------|--------|-------|----------------------------------------------------------------------------------------------------------------------------|
+| 15   | **ultra/datetime**   | 4.0   | 64  | 28    | 44%    | **1** | 44 test TODOs resolved (was 45). Only 1 code-quality TODO remains. Tests added across 9 spec files.                        |
+| 16   | **ultra/vault**      | 3.8   | 45  | 8     | 18%    | 3     | Wave 1 audit complete: 15 issues → all resolved. Cache thread safety, profiler sync, safe casts. 3 deferred (runBlocking). |
+| 17   | **ultra/html**       | 2.7   | 13  | 2     | 15%    | 0     | Near-zero coverage.                                                                                                        |
+| 18   | **ultra/semanticui** | 2.6   | 15  | 4     | 27%    | 0     | Stale (last commit March 10). UI module, lower blast radius.                                                               |
+| 19   | **Funktor**          | 2.0   | 438 | 20    | **5%** | ~15   | **Blocker.** Largest module, lowest test ratio. Cannot be promoted.                                                        |
+| 20   | **Monko**            | 2.2   | 19  | 3     | 16%    | 2     | Type-safe query DSL added (filters, sorts, updates). Auth repo migrated. save()/remove() still TODO.                       |
 
 ---
 

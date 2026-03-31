@@ -1,6 +1,6 @@
 # Funktor v1.0 Roadmap — Feature Inventory, Maturity & TODO Analysis
 
-**Date:** 2026-03-25
+**Date:** 2026-03-25 (updated 2026-03-31)
 **Scope:** Funktor framework, Monko (MongoDB), database portability
 
 ---
