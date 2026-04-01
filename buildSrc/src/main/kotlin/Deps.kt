@@ -122,7 +122,7 @@ object Deps {
     object Ktor {
         // https://kotlinlang.org/docs/releases.html
         // https://github.com/ktorio/ktor/releases
-        const val ktor_version = "3.4.1"
+        const val ktor_version = "3.4.2"
 
         object Server {
             object Test {
