@@ -1,0 +1,155 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Nav from '../../components/Nav.astro';
+---
+
+<BaseLayout title="Impressum & Datenschutz" description="Impressum und Datenschutzhinweise für peekandpoke.io">
+    <Nav/>
+
+    <main class="pt-28 pb-16 px-4 sm:px-6">
+        <div class="max-w-3xl mx-auto">
+
+            <h1 class="text-4xl font-bold text-white mb-2">Impressum</h1>
+            <p class="text-sm text-gray-500 mb-10">
+                Rechtsverbindliche Fassung. Eine <a href="/legal"
+                                                    class="text-brand-400 hover:text-brand-300 transition-colors">englische
+                Fassung</a> ist ebenfalls verfügbar.
+            </p>
+
+            <!-- Verantwortlich -->
+            <section class="p-6 sm:p-8 mb-6 rounded-xl border border-white/10 bg-white/[0.02]">
+                <h2 class="text-xl font-semibold mb-4 text-brand-400">Angaben gemäß &sect; 5 DDG</h2>
+                <p class="text-gray-400">
+                    Karsten J. Gerber<br/>
+                    Leipzig, Deutschland
+                </p>
+                <h3 class="text-base font-semibold mt-6 mb-2 text-white">Kontakt</h3>
+                <p class="text-gray-400">
+                    E-Mail: <span id="legal-email" class="text-brand-400">[JavaScript aktivieren, um die E-Mail-Adresse zu sehen]</span>
+                </p>
+            </section>
+
+            <!-- Haftung für Inhalte -->
+            <section class="p-6 sm:p-8 mb-6 rounded-xl border border-white/10 bg-white/[0.02]">
+                <h2 class="text-xl font-semibold mb-4 text-brand-400">Haftung für Inhalte</h2>
+                <p class="text-gray-400">
+                    Die Inhalte dieser Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit
+                    und Aktualität der Inhalte kann ich jedoch keine Gewähr übernehmen. Als Diensteanbieter bin ich
+                    gemäß
+                    &sect; 7 Abs. 1 DDG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen
+                    verantwortlich.
+                    Nach &sect;&sect; 8 bis 10 DDG bin ich als Diensteanbieter jedoch nicht verpflichtet, übermittelte
+                    oder
+                    gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine
+                    rechtswidrige Tätigkeit hinweisen. Verpflichtungen zur Entfernung oder Sperrung der Nutzung von
+                    Informationen nach den allgemeinen Gesetzen bleiben hiervon unberührt. Eine diesbezügliche Haftung
+                    ist
+                    jedoch erst ab dem Zeitpunkt der Kenntnis einer konkreten Rechtsverletzung möglich. Bei
+                    Bekanntwerden
+                    von entsprechenden Rechtsverletzungen werde ich diese Inhalte umgehend entfernen.
+                </p>
+            </section>
+
+            <!-- Haftung für Links -->
+            <section class="p-6 sm:p-8 mb-6 rounded-xl border border-white/10 bg-white/[0.02]">
+                <h2 class="text-xl font-semibold mb-4 text-brand-400">Haftung für Links</h2>
+                <p class="text-gray-400">
+                    Dieses Angebot enthält Links zu externen Webseiten Dritter, auf deren Inhalte ich keinen Einfluss
+                    habe.
+                    Deshalb kann ich für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der
+                    verlinkten
+                    Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich. Die verlinkten
+                    Seiten
+                    wurden zum Zeitpunkt der Verlinkung auf mögliche Rechtsverstöße überprüft. Rechtswidrige Inhalte
+                    waren
+                    zum Zeitpunkt der Verlinkung nicht erkennbar. Eine permanente inhaltliche Kontrolle der verlinkten
+                    Seiten ist jedoch ohne konkrete Anhaltspunkte einer Rechtsverletzung nicht zumutbar. Bei
+                    Bekanntwerden
+                    von Rechtsverletzungen werde ich derartige Links umgehend entfernen.
+                </p>
+            </section>
+
+            <!-- Urheberrecht -->
+            <section class="p-6 sm:p-8 mb-6 rounded-xl border border-white/10 bg-white/[0.02]">
+                <h2 class="text-xl font-semibold mb-4 text-brand-400">Urheberrecht</h2>
+                <p class="text-gray-400">
+                    Die durch den Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem
+                    deutschen
+                    Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb
+                    der
+                    Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw.
+                    Erstellers.
+                    Downloads und Kopien dieser Seite sind nur für den privaten, nicht kommerziellen Gebrauch gestattet.
+                    Soweit die Inhalte auf dieser Seite nicht vom Betreiber erstellt wurden, werden die Urheberrechte
+                    Dritter beachtet. Insbesondere werden Inhalte Dritter als solche gekennzeichnet. Sollten Sie
+                    trotzdem
+                    auf eine Urheberrechtsverletzung aufmerksam werden, bitte ich um einen entsprechenden Hinweis. Bei
+                    Bekanntwerden von Rechtsverletzungen werde ich derartige Inhalte umgehend entfernen.
+                </p>
+            </section>
+
+            <!-- Open-Source-Lizenz -->
+            <section class="p-6 sm:p-8 mb-6 rounded-xl border border-white/10 bg-white/[0.02]">
+                <h2 class="text-xl font-semibold mb-4 text-brand-400">Open-Source-Lizenz</h2>
+                <p class="text-gray-400">
+                    Die auf dieser Seite dokumentierten Ultra-Bibliotheken werden unter der
+                    <a href="https://github.com/PeekAndPoke/ultra/blob/master/LICENSE" target="_blank" rel="noopener"
+                       class="text-brand-400 hover:text-brand-300 transition-colors">MIT-Lizenz</a>
+                    veröffentlicht. Sie dürfen sie gemäß den Lizenzbedingungen frei verwenden, verändern und
+                    weitergeben.
+                </p>
+            </section>
+
+            <!-- Datenschutz -->
+            <section class="p-6 sm:p-8 mb-6 rounded-xl border border-white/10 bg-white/[0.02]">
+                <h2 class="text-xl font-semibold mb-4 text-brand-400">Datenschutz</h2>
+                <p class="text-gray-400 mb-4">
+                    Die Nutzung dieser Webseite ist in der Regel ohne Angabe personenbezogener Daten möglich. Soweit auf
+                    diesen Seiten personenbezogene Daten (beispielsweise Name, Anschrift oder E-Mail-Adressen) erhoben
+                    werden, erfolgt dies, soweit möglich, stets auf freiwilliger Basis. Diese Daten werden ohne Ihre
+                    ausdrückliche Zustimmung nicht an Dritte weitergegeben.
+                </p>
+                <p class="text-gray-400 mb-4">
+                    Ich weise darauf hin, dass die Datenübertragung im Internet (z.B. bei der Kommunikation per E-Mail)
+                    Sicherheitslücken aufweisen kann. Ein lückenloser Schutz der Daten vor dem Zugriff durch Dritte ist
+                    nicht möglich.
+                </p>
+                <p class="text-gray-400">
+                    Der Nutzung von im Rahmen der Impressumspflicht veröffentlichten Kontaktdaten durch Dritte zur
+                    Übersendung von nicht ausdrücklich angeforderter Werbung und Informationsmaterialien wird hiermit
+                    ausdrücklich widersprochen. Der Betreiber der Seiten behält sich ausdrücklich rechtliche Schritte im
+                    Falle der unverlangten Zusendung von Werbeinformationen, etwa durch Spam-Mails, vor.
+                </p>
+            </section>
+
+            <!-- Hosting -->
+            <section class="p-6 sm:p-8 rounded-xl border border-white/10 bg-white/[0.02]">
+                <h2 class="text-xl font-semibold mb-4 text-brand-400">Hosting</h2>
+                <p class="text-gray-400">
+                    Diese Webseite wird als statische Seite gehostet. Der Hosting-Anbieter kann Server-Log-Dateien
+                    erheben
+                    und speichern, die Ihr Browser automatisch übermittelt. Dies sind: Browsertyp und Browserversion,
+                    verwendetes Betriebssystem, Referrer URL, Hostname des zugreifenden Rechners und Uhrzeit der
+                    Serveranfrage. Diese Daten sind nicht bestimmten Personen zuordenbar. Eine Zusammenführung dieser
+                    Daten mit anderen Datenquellen wird nicht vorgenommen.
+                </p>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Email obfuscation -->
+    <script>
+        const _d = [114, 118, 117, 123, 104, 114, 123, 71, 114, 104, 121, 122, 123, 108, 117, 52, 110, 108, 121, 105, 108, 121, 53, 107, 108];
+
+        function _r() {
+            return _d.map(c => String.fromCharCode(c - 7)).join('');
+        }
+
+        const el = document.getElementById('legal-email');
+        if (el) {
+            const a = _r();
+            el.innerHTML = '<a href="' + ['m', 'a', 'i', 'l', 't', 'o', ':'].join('') + a + '" class="text-brand-400 hover:text-brand-300 transition-colors">' + a + '</a>';
+        }
+    </script>
+</BaseLayout>

@@ -1,6 +1,6 @@
 # Funktor & Monko — Known Issues
 
-**Date:** 2026-03-26 (updated with coroutine + logic review)
+**Date:** 2026-03-26 (updated 2026-03-31: VaultScope CRITICAL + HIGH fixed in Wave 1)
 **Source:** Senior engineer, QA engineer, coroutine expert code reviews
 **Related:** [funktor-v1-roadmap.md](funktor-v1-roadmap.md), [monko-query-dsl.md](monko-query-dsl.md)
 
@@ -8,20 +8,20 @@
 
 ## Summary
 
-| Category                | CRITICAL | HIGH  | MEDIUM | LOW   | Fixed |
-|-------------------------|----------|-------|--------|-------|-------|
-| Monko / MonkoRepository | 0        | 0     | 2      | 3     | 6     |
-| Coroutine / Concurrency | 1        | 4     | 4      | 2     | 0     |
-| Security / Auth Logic   | 0        | 2     | 0      | 0     | 2     |
-| Funktor Logic           | 0        | 2     | 4      | 3     | 0     |
-| **Total**               | **1**    | **8** | **10** | **8** | **8** |
+| Category                | CRITICAL | HIGH  | MEDIUM | LOW   | Fixed  |
+|-------------------------|----------|-------|--------|-------|--------|
+| Monko / MonkoRepository | 0        | 0     | 2      | 3     | 6      |
+| Coroutine / Concurrency | 0        | 3     | 4      | 2     | 2      |
+| Security / Auth Logic   | 0        | 0     | 0      | 0     | 4      |
+| Funktor Logic           | 0        | 2     | 4      | 3     | 0      |
+| **Total**               | **0**    | **5** | **10** | **8** | **12** |
 
 **Top priorities (remaining):**
 
-1. VaultScope `runBlocking` blocks every after-save/after-delete hook (CRITICAL coroutine)
+1. ~~VaultScope `runBlocking`~~ **FIXED (Wave 1, 2026-03-31)**
 2. WorkerTracker cancellation broken — running workers can't be stopped (HIGH coroutine)
-3. `setPassword` does not verify caller authorization (HIGH security)
-4. Sign-up race condition — duplicate users possible (HIGH security)
+3. ~~`setPassword` does not verify caller authorization~~ **FIXED (2026-03-31)**
+4. ~~Sign-up race condition — duplicate users possible~~ **FIXED (2026-03-31)**
 
 ---
 
@@ -87,22 +87,13 @@
 
 ## Open Issues — Coroutine / Concurrency (from deep review)
 
-### CRITICAL: VaultScope.launch uses `runBlocking` — blocks caller thread
+### ~~CRITICAL: VaultScope.launch uses `runBlocking`~~ FIXED (Wave 1, 2026-03-31)
 
-- **File:** `ultra/vault/src/jvmMain/kotlin/vault_module.kt` (lines 62-73)
-- **Impact:** `VaultScope.launch` wraps a coroutine launch in `runBlocking`, which blocks the calling
-  thread until the hook completes. Called from `Repository.Hooks.applyOnAfterSaveHooks` and
-  `applyOnAfterDeleteHooks` on every save/delete with after-hooks. Defeats the purpose of async hooks
-  and can cause thread starvation or deadlocks if the caller is already inside `runBlocking`.
-- **Fix:** Replace with `CoroutineScope(SupervisorJob() + Dispatchers.IO).launch { block() }`.
-  Add lifecycle management — cancel the scope on app shutdown.
+- **FIXED:** Now uses `CoroutineScope(SupervisorJob() + Dispatchers.IO).launch { block() }`.
 
-### HIGH: VaultScope has no lifecycle management — scope leak
+### ~~HIGH: VaultScope has no lifecycle management~~ FIXED (Wave 1, 2026-03-31)
 
-- **File:** `ultra/vault/src/jvmMain/kotlin/vault_module.kt` (lines 62-73)
-- **Impact:** The `SupervisorJob()` is never cancelled. On app shutdown, in-flight hook coroutines
-  continue running against torn-down infrastructure (closed DB connections etc.), causing exceptions.
-- **Fix:** Cancel `VaultScope.job` during application stop via an `OnAppStopped` hook.
+- **FIXED:** `VaultScope.shutdown()` cancels the `SupervisorJob`.
 
 ### HIGH: `runBlocking` inside Ktor lifecycle event handlers — nested blocking risk
 
@@ -183,20 +174,17 @@
 
 - **FIXED:** Token is now deleted via `removeAuthRecord()` immediately after successful password reset.
 
-### HIGH: `setPassword` does not verify caller authorization or current password
+### ~~HIGH: `setPassword` does not verify caller authorization or current password~~ FIXED (2026-03-31)
 
-- **File:** `funktor/auth/src/jvmMain/kotlin/provider/EmailAndPasswordAuth.kt` (lines 253-278)
-- **Impact:** Accepts `userId` + `newPassword` without requiring the current password or verifying
-  the caller is the target user. If exposed without proper route-level authorization, any authenticated
-  user could change any other user's password.
-- **Fix:** Require current password in request, or ensure calling API strictly enforces identity match.
+- **FIXED:** Added `currentPassword` field to `AuthSetPasswordRequest`. `setPassword()` now validates
+  the current password before allowing a change. Frontend `ChangePasswordWidget` updated to collect it.
+  Route handler already had identity check (`userId` match). Tests added for wrong-password case.
 
-### HIGH: Sign-up race condition — duplicate users possible
+### ~~HIGH: Sign-up race condition — duplicate users possible~~ FIXED (2026-03-31)
 
-- **File:** `funktor/auth/src/jvmMain/kotlin/provider/EmailAndPasswordAuth.kt` (lines 222-248)
-- **Impact:** Check `loadUserByEmail != null` then `createUserForSignup` is a TOCTOU race. Two
-  concurrent sign-ups with the same email can both pass the check and both create a user.
-- **Fix:** Enforce email uniqueness at database level with a unique index.
+- **FIXED:** `signUp()` now wraps `createUserForSignup()` in try-catch to handle duplicate key
+  exceptions from concurrent sign-ups. Returns `AuthError("User already exists")` on race.
+  Comment documents that a unique index on email in the user repository is required.
 
 ### ~~LOW: Wrong log message in password recovery email failure~~ FIXED
 

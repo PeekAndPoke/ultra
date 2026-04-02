@@ -1,0 +1,127 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {datetimeSidebar} from '../../../data/datetime-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Kronos Clock" sidebar={datetimeSidebar}
+            description="Injectable, testable time source for production and tests">
+
+    <h1>Kronos Clock</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        An injectable time source. System clock in production, fixed or advancing clock in tests.
+    </p>
+
+    <h2>The problem with "now"</h2>
+
+    <p>Calling <code>Clock.System.now()</code> directly makes code hard to test. You can't control what "now" means, so
+        you end up with flaky tests, <code>Thread.sleep()</code> hacks, or mocking libraries. Kronos solves this by
+        making
+        the clock an explicit dependency.</p>
+
+    <Aside>If you've ever written a test that passes at 11:59 PM but fails at midnight, you know why this matters.
+    </Aside>
+
+    <h2>System clock</h2>
+
+    <p>In production, use the system clock:</p>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.Kronos
+
+val kronos = Kronos.systemUtc
+
+val now = kronos.instantNow()
+val today = kronos.localDateNow()
+val currentTime = kronos.localDateTimeNow()
+val zoned = kronos.zonedDateTimeNow(MpTimezone.of("Europe/Berlin"))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Fixed clock</h2>
+
+    <p>In tests, freeze time at a specific instant:</p>
+
+    <Code code={`val frozen = Kronos.fixed(MpInstant.parse("2025-06-15T12:00:00Z"))
+
+println(frozen.instantNow())  // always 2025-06-15T12:00:00Z
+println(frozen.instantNow())  // still 2025-06-15T12:00:00Z
+
+// Fix to "now" at construction time
+val frozenNow = Kronos.fixedNow()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Advancing clock</h2>
+
+    <p>Simulate time passing in tests:</p>
+
+    <Code code={`import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.days
+
+val kronos = Kronos.fixed(MpInstant.parse("2025-06-15T12:00:00Z"))
+
+println(kronos.instantNow())  // 2025-06-15T12:00:00Z
+
+val advanced = kronos.advanceBy(2.hours)
+println(advanced.instantNow())  // 2025-06-15T14:00:00Z
+
+val nextDay = advanced.advanceBy(1.days)
+println(nextDay.instantNow())  // 2025-06-16T14:00:00Z`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Mutable clock</h2>
+
+    <p>For tests that need to change time mid-execution:</p>
+
+    <Code code={`val mutable = Kronos.fixed(MpInstant.parse("2025-01-01T00:00:00Z")).mutable()
+
+println(mutable.instantNow())  // 2025-01-01T00:00:00Z
+
+// Advance the same instance
+mutable.advanceBy(1.hours)
+println(mutable.instantNow())  // 2025-01-01T01:00:00Z`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Injecting with Kontainer</h2>
+
+    <p>Kronos works naturally with <a href="/ultra/kontainer/">Kontainer</a> for dependency injection:</p>
+
+    <Code code={`// Production setup
+val blueprint = kontainer {
+    singleton(Kronos::class) { Kronos.systemUtc }
+}
+
+// Test setup — override with a fixed clock
+val testBlueprint = kontainer {
+    singleton(Kronos::class) {
+        Kronos.fixed(MpInstant.parse("2025-06-15T12:00:00Z"))
+    }
+}
+
+// Services just inject Kronos
+class EventService(private val kronos: Kronos) {
+    fun createEvent(name: String) = Event(
+        name = name,
+        createdAt = kronos.instantNow(),
+    )
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>KronosDescriptor</h2>
+
+    <p>Kronos instances can be described with a serializable <code>KronosDescriptor</code>, useful for persisting or
+        transmitting clock configuration:</p>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.KronosDescriptor
+
+// System clock descriptor
+val desc = KronosDescriptor.SystemClock
+
+// Advanced-by descriptor
+val advancedDesc = KronosDescriptor.AdvancedBy(
+    millis = 3_600_000L  // +1 hour
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/datetime/"
+           class="inline-flex items-center px-6 py-3 bg-white/5 text-gray-300 font-semibold rounded-lg hover:bg-white/10 transition-colors">
+            &larr; Overview
+        </a>
+    </div>
+
+</DocsLayout>

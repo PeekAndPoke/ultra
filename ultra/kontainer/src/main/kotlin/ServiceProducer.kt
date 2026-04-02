@@ -51,7 +51,10 @@ class ServiceProducer<T : Any> internal constructor(
                 throw InvalidClassProvided("A service cannot be an interface or abstract class")
             }
 
-            val ctor = cls.primaryConstructor!!
+            val ctor = cls.primaryConstructor
+                ?: throw InvalidClassProvided(
+                    "Class '${cls.qualifiedName}' has no primary constructor and cannot be used as a service"
+                )
             val ctorParams = ctor.parameters.map { ParameterProvider.of(it) }
 
             return when {

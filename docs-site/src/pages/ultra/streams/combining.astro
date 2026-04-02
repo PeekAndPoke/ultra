@@ -44,7 +44,23 @@ val count = clicks.fold(0) { acc, _ -> acc + 1 }
 
 // count is 1 after initial subscribe, increments on each "click"`} lang="kotlin" theme="vitesse-dark" />
 
-<p><code>foldNotNull()</code> skips null values in the accumulation.</p>
+    <h3>foldNotNull</h3>
+
+    <p>Like <code>fold</code>, but skips null values in the source stream:</p>
+
+    <Code code={`val source = StreamSource<String?>(null)
+val lengths = source.foldNotNull(0) { acc, next -> acc + next.length }
+
+println(lengths())  // 0
+
+source("hello")
+println(lengths())  // 5
+
+source(null)        // skipped
+println(lengths())  // 5
+
+source("world")
+println(lengths())  // 10`} lang="kotlin" theme="vitesse-dark"/>
 
 <h2>history</h2>
 
@@ -59,7 +75,20 @@ source(4)
 
 println(recent())  // [2, 3, 4] — oldest values dropped`} lang="kotlin" theme="vitesse-dark" />
 
-<p><code>historyOfNonNull(capacity)</code> only keeps non-null values.</p>
+    <h3>historyOfNonNull</h3>
+
+    <p>Like <code>history</code>, but only keeps non-null values in the window:</p>
+
+    <Code code={`val source = StreamSource<String?>("a")
+val recent = source.historyOfNonNull(3)
+
+source("b")
+source(null)   // skipped
+source("c")
+source(null)   // skipped
+source("d")
+
+println(recent())  // ["b", "c", "d"] — nulls excluded`} lang="kotlin" theme="vitesse-dark"/>
 
 <div class="not-prose mt-8 flex gap-4">
   <a href="/ultra/streams/control" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">

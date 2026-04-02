@@ -1,7 +1,6 @@
 package io.peekandpoke.funktor.cluster.vault.api
 
 import io.peekandpoke.funktor.cluster.database
-import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.inspect.cluster.vault.api.VaultApiClient
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
@@ -9,7 +8,7 @@ import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.VaultModels
 
-class VaultApi(converter: OutgoingConverter) : ApiRoutes("vault", converter) {
+class VaultApi : ApiRoutes("vault") {
 
     val listRepositories = VaultApiClient.ListRepositories.mount {
         docs {

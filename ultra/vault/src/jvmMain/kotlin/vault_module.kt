@@ -13,10 +13,10 @@ import io.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 import io.peekandpoke.ultra.vault.profiling.QueryProfiler
 import io.peekandpoke.ultra.vault.tools.DatabaseGraphBuilder
 import io.peekandpoke.ultra.vault.tools.DatabaseTools
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 fun KontainerBuilder.ultraVault(config: VaultConfig) = module(Ultra_Vault, config)
 
@@ -61,13 +61,15 @@ val Ultra_Vault = module { config: VaultConfig ->
 
 object VaultScope {
     private val job = SupervisorJob()
-    internal val scope = job + Dispatchers.IO
+    private val scope = CoroutineScope(job + Dispatchers.IO)
 
     fun launch(block: suspend () -> Unit) {
-        runBlocking {
-            launch(scope) {
-                block()
-            }
+        scope.launch {
+            block()
         }
+    }
+
+    fun shutdown() {
+        job.cancel()
     }
 }

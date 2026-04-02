@@ -1,12 +1,11 @@
 package io.peekandpoke.funktor.logging.api
 
-import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.rest.ApiFeature
 
 /**
  * Api feature for UpNext
  */
-class LoggingApiFeature(converter: OutgoingConverter) : ApiFeature {
+class LoggingApiFeature : ApiFeature {
 
     override val name = "Funktor Logging"
 
@@ -15,7 +14,7 @@ class LoggingApiFeature(converter: OutgoingConverter) : ApiFeature {
     """.trimIndent()
 
     /** The Api endpoints for the workers */
-    val logging = LoggingApi(converter)
+    val logging = LoggingApi()
 
     override fun getRouteGroups() = listOf(
         logging

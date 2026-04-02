@@ -1,0 +1,105 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {datetimeSidebar} from '../../../data/datetime-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="MpTimezone" sidebar={datetimeSidebar}
+            description="IANA timezone identifiers — wraps 600+ zones for multiplatform use">
+
+    <h1>MpTimezone</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Wraps an IANA timezone identifier. The context required whenever you cross the boundary
+        between local and absolute time.
+    </p>
+
+    <h2>When to use MpTimezone</h2>
+
+    <ul>
+        <li>User timezone preferences ("this user is in Europe/Berlin")</li>
+        <li>Converting between MpInstant and local types</li>
+        <li>DST-aware calendar arithmetic on MpInstant</li>
+        <li>Storing timezone choices in databases and APIs</li>
+    </ul>
+
+    <h2>Creating</h2>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.MpTimezone
+
+val berlin = MpTimezone.of("Europe/Berlin")
+val newYork = MpTimezone.of("America/New_York")
+val utc = MpTimezone.UTC
+val system = MpTimezone.systemDefault`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Querying offsets</h2>
+
+    <p>Timezone offsets change with DST. Query the offset at a specific instant to get the correct value:</p>
+
+    <Code code={`val berlin = MpTimezone.of("Europe/Berlin")
+
+val summer = MpInstant.parse("2025-06-15T12:00:00Z")
+val winter = MpInstant.parse("2025-12-15T12:00:00Z")
+
+berlin.offsetAt(summer)          // +02:00 (CEST)
+berlin.offsetAt(winter)          // +01:00 (CET)
+
+berlin.offsetSecondsAt(summer)   // 7200
+berlin.offsetMillisAt(summer)    // 7200000`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Supported timezones</h2>
+
+    <p>MpTimezone supports 600+ IANA timezone identifiers from the standard database, including:</p>
+
+    <ul>
+        <li><strong>Africa</strong> — 76 zones (Africa/Cairo, Africa/Nairobi, ...)</li>
+        <li><strong>Americas</strong> — 150+ zones (America/New_York, America/Los_Angeles, America/Sao_Paulo, ...)</li>
+        <li><strong>Asia</strong> — 100+ zones (Asia/Tokyo, Asia/Shanghai, Asia/Kolkata, ...)</li>
+        <li><strong>Europe</strong> — 60+ zones (Europe/London, Europe/Berlin, Europe/Moscow, ...)</li>
+        <li><strong>Pacific/Atlantic/Indian/Antarctica</strong> — 50+ zones each</li>
+        <li><strong>UTC variants</strong> — UTC, Etc/GMT, Etc/GMT+1 through Etc/GMT-14</li>
+    </ul>
+
+    <p>Query the full list at runtime:</p>
+
+    <Code code={`val allIds: Set<String> = MpTimezone.supportedIds
+println(allIds.size)  // 600+`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>kotlinx-datetime interop</h2>
+
+    <Code code={`import kotlinx.datetime.TimeZone
+
+// MpTimezone -> kotlinx TimeZone
+val kotlinxTz: TimeZone = mpTimezone.kotlinx
+
+// kotlinx TimeZone -> MpTimezone
+val mpTz: MpTimezone = kotlinxTimezone.mp`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>JVM interop</h2>
+
+    <Code code={`// MpTimezone -> java.time.ZoneId
+val zoneId: java.time.ZoneId = java.time.ZoneId.of(mpTimezone.id)
+
+// java.time.ZoneId -> MpTimezone
+val mpTz = MpTimezone.of(zoneId.id)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Serialization</h2>
+
+    <p>MpTimezone serializes as its string ID, making it trivial to store and transmit:</p>
+
+    <Code code={`@Serializable
+data class UserPreferences(
+    val timezone: MpTimezone,
+)
+
+// Serialized as: {"timezone": "Europe/Berlin"}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/datetime/operations"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Formatting &amp; Parsing &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

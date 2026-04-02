@@ -68,7 +68,7 @@ interface SentMessagesStorage {
 
     suspend fun findByRefs(
         refs: Set<String>,
-        filter: PagedSearchFilter = PagedSearchFilter(search = "", page = 0, epp = 50),
+        filter: PagedSearchFilter = PagedSearchFilter(search = "", page = 1, epp = 50),
     ): Cursor<Stored<SentMessage>>
 
     suspend fun storeSentEmail(

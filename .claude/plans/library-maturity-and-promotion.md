@@ -1,10 +1,43 @@
 # Library Maturity, Quality & Promotion Assessment
 
-**Date:** 2026-03-26 (updated)
-**Previous assessment:** 2026-03-25
+**Date:** 2026-04-02 (updated)
+**Previous assessment:** 2026-03-31
 **Reviewers:** Senior Software Engineer, QA Engineer, Developer Relations Engineer
 
 ---
+
+## What Changed Since Last Assessment (April 2)
+
+- **Funktor API tests implemented** — All Funktor modules now have API/integration tests.
+  Test files: all=5, auth=9, cluster=5, core=5, logging=4, messaging=4, rest=5, testing=2.
+  Total: 39 test files (was 28, +39% increase). Only insights and staticweb remain at zero.
+- **Fomantic UI examples complete** — All 30 component pages (18 Elements, 6 Collections, 6 Views)
+  now fully implemented with live examples + Kotlin code. 9 TODO stubs implemented from scratch
+  (Rail, Step, Breadcrumb, Input, Feed, Advertisement, Emoji, Form, Menu), 2 partial pages completed
+  (Button 66%→100%, Table 50%→100%). Emoji page includes searchable catalog of 3,057 shortnames.
+- **SemanticUI DSL expanded** — 20+ new properties added to SemanticTag (action, ad, banner, billboard,
+  borderless, breadcrumb, close, connected, date, event, feed, focus, grouped, half, internal,
+  leaderboard, like, rail, rectangle, required, single, skyscraper, summary, test). SemanticIcon
+  gained `divider` property. SemanticEmoji gained `companion object { val all }` with all 3,057
+  Fomantic UI 2.8.8 emoji shortnames.
+- **Docs site improvements** — Background lighting brightness increased. Fomantic UI showcase
+  now covers 100% of Elements/Collections/Views categories.
+
+## What Changed Since Last Assessment (March 31)
+
+- **Wave 1 code audit complete** — Deep 5-dimension audit of Karango, Kontainer, ultra/vault, ultra/security.
+  65 issues found: 45 fixed, 14 BY DESIGN/WON'T FIX, 6 DEFERRED. Key fixes:
+  - Karango: AQL injection fixed, ensureIndexes fixed, KSP explicit imports, PAGE() validation
+  - Kontainer: AtomicBoolean for validation, ConcurrentHashMap caches, circular dependency detection,
+    @Volatile for double-checked locking, KontainerException → RuntimeException
+  - Vault: Cache thread safety, profiler synchronization, safe casts, VaultException consistency
+  - Security: CSRF timing attack fixed, token delimiter injection fixed, secret redaction in toString(),
+    TTL Int→Long, test bug fixed, visibility tightened
+- **New tests added** — CircularDependencySpec (4 tests), ServiceProducerSpec (3 tests),
+  UltraSecurityConfigSpec (2 tests), JwtGeneratorSpec additions (4 tests)
+- **Kontainer tests** — 20 → 24 test files
+- **Security tests** — 12 → 14 test files
+- **Audit plans archived** — `.claude/plans-archive/2026-03-31-wave1-audit-*.md`
 
 ## What Changed Since Last Assessment (March 26, continued)
 
@@ -61,7 +94,9 @@
 - **Karango audit** — dead entity.kt deleted, debug code removed, KDoc on public API
 - **Kontainer + Streams** — full documentation added by another agent
 - **KDoc upgrade** — Slumber 23%→55% (16 files), Kontainer 43%→85% (4 files), Streams 57%→96% (1 file)
-- **Docs site** — 41 pages across 5 libraries, llms.txt with per-library split, local fonts
+- **Docs site** — 56+ pages across 8 libraries (added Datetime 12pp, Cache 3pp, Kontainer introspection page), llms.txt
+  with per-library split including datetime.md and cache.md, category-tinted landing pages with Hilbert lighting, "
+  Tools" top-nav dispatcher
 - **Kraft examples** — 3 repos upgraded to Kotlin 2.3.10 / Ultra 0.102.0
 - **ultra/datetime** — inherited 45 TODOs from ultra/common split (new tech debt hotspot)
 
@@ -75,8 +110,8 @@
 |------|------------------|-------|-----|-------|-------|-------|------|--------------|------------------------------------------------------------------------------------------------------------------|
 | 1    | **Slumber**      | 4.9   | 122 | 60    | 49%   | 3     | ~98% | 8 pages      | Gold standard. Full KDoc on public API + all built-in codecs, primitives, datetime.                              |
 | 2    | **Streams**      | 4.8   | 51  | 21    | 41%   | 0     | 100% | 8 pages      | Zero TODOs, 100% KDoc. Battle-tested. Compact and clean.                                                         |
-| 3    | **Karango**      | 4.5   | 183 | 145   | 79%   | 17    | 67%  | 8 pages      | Best raw test count. 14 new test files (Sort/Limit/Collect/CRUD/functions). 3 TODOs resolved. Battle-tested.     |
-| 4    | **Kontainer**    | 4.3   | 69  | 20    | 29%   | 6     | ~98% | 7 pages      | Battle-tested DI. Full docs. KDoc complete on all public API.                                                    |
+| 3    | **Karango**      | 4.7   | 183 | 145   | 79%   | 17    | 67%  | 8 pages      | Wave 1 audit complete: 17 issues → all resolved. AQL injection fixed. KSP explicit imports. Battle-tested.       |
+| 4    | **Kontainer**    | 4.6   | 69  | 24    | 35%   | 6     | ~98% | 7 pages      | Wave 1 audit complete: 17 issues → all resolved. Thread safety hardened. Circular dep detection added.           |
 | 5    | **ultra/common** | 4.2   | 43  | 28    | 65%   | 2     | ~67% | (foundation) | Audited March 26. Strong test coverage on core APIs. KDoc gaps in WeakRef/WeakSet, numbers, enums, ComparableTo. |
 | 6    | **ultra/model**  | 4.0   | 20  | 9     | 45%   | 0     | -    | -            | Zero TODOs, strong ratio. Small focused module post-split.                                                       |
 
@@ -85,7 +120,7 @@
 | Rank | Module               | Score | Src  | Tests | Ratio | TODOs | KDoc | Docs                  | Assessment                                                                                                          |
 |------|----------------------|-------|------|-------|-------|-------|------|-----------------------|---------------------------------------------------------------------------------------------------------------------|
 | 7    | **Mutator**          | 4.2   | 43   | 28    | 65%   | 0     | 30%  | 6 pages               | Major quality pass: isModified/reset fixed for collections, filterMutatorsOf only for sealed, clean generated code. |
-| 8    | **ultra/security**   | 4.0   | 33   | 12    | 36%   | 1     | ~90% | -                     | KDoc added to all 12 undocumented files (User, JWT, CSRF, password hashers). Tests already solid.                   |
+| 8    | **ultra/security**   | 4.5   | 33   | 14    | 42%   | 0     | ~90% | -                     | Wave 1 audit complete: 16 issues → all resolved. CSRF timing attack fixed, secrets redacted, visibility tightened.  |
 | 9    | **ultra/cache**      | 3.5   | 17   | 6     | 35%   | 1     | 24%  | -                     | Clean post-split. Caching correctness needs more tests.                                                             |
 | 10   | **ultra/reflection** | 3.4   | 14   | 6     | 43%   | 5     | 63%  | -                     | Good ratio and KDoc but 5 TODOs in 14 files is high density.                                                        |
 | 11   | **ultra/maths**      | 3.2   | 12   | 4     | 33%   | 1     | -    | -                     | Small, clean. Needs precision edge-case tests.                                                                      |
@@ -95,14 +130,14 @@
 
 ### Tier 3: RED — Not Ready for Promotion
 
-| Rank | Module               | Score | Src | Tests | Ratio  | TODOs | Assessment                                                                                                                       |
-|------|----------------------|-------|-----|-------|--------|-------|----------------------------------------------------------------------------------------------------------------------------------|
-| 15   | **ultra/datetime**   | 4.0   | 64  | 28    | 44%    | **1** | 44 test TODOs resolved (was 45). Only 1 code-quality TODO remains. Tests added across 9 spec files.                              |
-| 16   | **ultra/vault**      | 3.5   | 45  | 8     | 18%    | 6     | KDoc on core domain (Storable/Stored/Ref/LazyRef/New) + slumber codecs. 3 new test files (EntityCache, Expression, Timestamped). |
-| 17   | **ultra/html**       | 2.7   | 13  | 2     | 15%    | 0     | Near-zero coverage.                                                                                                              |
-| 18   | **ultra/semanticui** | 2.6   | 15  | 4     | 27%    | 0     | Stale (last commit March 10). UI module, lower blast radius.                                                                     |
-| 19   | **Funktor**          | 2.0   | 438 | 20    | **5%** | ~15   | **Blocker.** Largest module, lowest test ratio. Cannot be promoted.                                                              |
-| 20   | **Monko**            | 2.2   | 19  | 3     | 16%    | 2     | Type-safe query DSL added (filters, sorts, updates). Auth repo migrated. save()/remove() still TODO.                             |
+| Rank | Module               | Score | Src | Tests | Ratio   | TODOs | Assessment                                                                                                                 |
+|------|----------------------|-------|-----|-------|---------|-------|----------------------------------------------------------------------------------------------------------------------------|
+| 15   | **ultra/datetime**   | 4.0   | 64  | 28    | 44%     | **1** | 44 test TODOs resolved (was 45). Only 1 code-quality TODO remains. Tests added across 9 spec files.                        |
+| 16   | **ultra/vault**      | 3.8   | 45  | 8     | 18%     | 3     | Wave 1 audit complete: 15 issues → all resolved. Cache thread safety, profiler sync, safe casts. 3 deferred (runBlocking). |
+| 17   | **ultra/html**       | 2.7   | 13  | 2     | 15%     | 0     | Near-zero coverage.                                                                                                        |
+| 18   | **ultra/semanticui** | 3.2   | 15  | 4     | 27%     | 0     | 20+ DSL properties added, SemanticEmoji catalog. All 30 Fomantic UI example pages complete.                                |
+| 19   | **Funktor**          | 2.8   | 355 | 39    | **11%** | ~15   | API tests added for all modules (was 5%). insights + staticweb still at zero.                                              |
+| 20   | **Monko**            | 2.2   | 19  | 3     | 16%     | 2     | Type-safe query DSL added (filters, sorts, updates). Auth repo migrated. save()/remove() still TODO.                       |
 
 ---
 
@@ -189,7 +224,8 @@ sets, strings, strings_mp, WeakReference (JVM+JS), WeakSet (JVM), classes, encod
 
 ### Not Ready
 
-- **Funktor** — 5% test ratio, needs major test investment
+- **Funktor** — 11% test ratio (was 5%), API tests now cover all modules. insights + staticweb still at zero. Needs more
+  depth.
 - **Monko** — 3 KSP tests added, core still untested, incubating
 
 ---

@@ -29,6 +29,9 @@ sealed class ApiRoute<RESPONSE> {
     /** The data type of the return [RESPONSE] */
     abstract val responseType: TypeRef<RESPONSE>
 
+    /** The typed route */
+    abstract val typedRoute: TypedRoute<*>
+
     /** The authorization rules */
     abstract val authRules: List<AuthRule<*, *>>
 
@@ -67,6 +70,7 @@ sealed class ApiRoute<RESPONSE> {
         },
     ) : ApiRoute<RESPONSE>() {
 
+        override val typedRoute get() = route
         override val pattern get() = route.pattern
 
         /**
@@ -126,6 +130,7 @@ sealed class ApiRoute<RESPONSE> {
         },
     ) : ApiRoute<Unit>() {
 
+        override val typedRoute get() = route
         override val method: HttpMethod = HttpMethod.Get
 
         override val pattern get() = route.pattern
@@ -186,6 +191,7 @@ sealed class ApiRoute<RESPONSE> {
         },
     ) : ApiRoute<RESPONSE>() {
 
+        override val typedRoute get() = route
         override val pattern get() = route.pattern
 
         /**
@@ -252,6 +258,7 @@ sealed class ApiRoute<RESPONSE> {
         },
     ) : ApiRoute<RESPONSE>() {
 
+        override val typedRoute get() = route
         override val pattern get() = route.pattern
 
         /**
@@ -313,6 +320,7 @@ sealed class ApiRoute<RESPONSE> {
         },
     ) : ApiRoute<RESPONSE>() {
 
+        override val typedRoute get() = route
         override val pattern get() = route.pattern
 
         /**

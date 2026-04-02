@@ -78,24 +78,28 @@ class DefaultEntityCache : EntityCache {
      * @see EntityCache.getOrPut
      */
     override fun <T> getOrPut(id: String, provider: () -> T?): T? {
-        @Suppress("UNCHECKED_CAST")
-        val exists = entries[id] as T
+        return synchronized(lock) {
+            @Suppress("UNCHECKED_CAST")
+            val exists = entries[id] as? T
 
-        if (exists != null) {
-            return exists
-        }
-
-        return provider().apply {
-            put(id, this)
+            if (exists != null) {
+                exists
+            } else {
+                val value = provider()
+                if (value != null) {
+                    entries[id] = value
+                }
+                value
+            }
         }
     }
 }
 
 class SharedRepoClassLookup {
 
-    private val typeLookup = mutableMapOf<Type, Class<out Repository<*>>?>()
+    private val typeLookup = java.util.concurrent.ConcurrentHashMap<Type, Class<out Repository<*>>?>()
 
-    private val nameLookup = mutableMapOf<String, Class<out Repository<*>>?>()
+    private val nameLookup = java.util.concurrent.ConcurrentHashMap<String, Class<out Repository<*>>?>()
 
     fun getOrPut(type: Type, defaultValue: () -> Class<out Repository<*>>?) =
         typeLookup.getOrPut(type, defaultValue)

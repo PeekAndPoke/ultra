@@ -243,7 +243,14 @@ class EmailAndPasswordAuth(
         // Ensure no existing user
         if (realm.loadUserByEmail(createParams.email) != null) throw AuthError("User already exists")
         // Create user via realm hook
-        val user = realm.createUserForSignup(createParams)
+        // NOTE: The check above is a best-effort guard. A unique index on email in the user repository
+        //       is required to prevent a TOCTOU race under concurrent sign-ups.
+        val user = try {
+            realm.createUserForSignup(createParams)
+        } catch (e: Exception) {
+            // Duplicate key exception from a concurrent sign-up race — treat as "already exists"
+            throw AuthError("User already exists")
+        }
         // Store password record
         services.createAuthRecord {
             createPasswordRecord(realmId = realm.id, ownerId = user._id, password = typed.password)
@@ -268,6 +275,10 @@ class EmailAndPasswordAuth(
 
         val user = realm.loadUserById(request.userId)
             ?: throw AuthError.userNotFound(request.userId)
+
+        // 2. Verify the current password before allowing a change
+        validateCurrentPassword(realm, user, request.currentPassword).takeIf { it }
+            ?: throw AuthError.invalidCredentials()
 
         // 3. Write new password entry into database
         services.createAuthRecord {

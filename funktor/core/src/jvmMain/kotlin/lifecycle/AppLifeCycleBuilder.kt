@@ -43,6 +43,8 @@ class AppLifeCycleBuilder internal constructor(private val app: Application) {
 
                     try {
                         hook.onAppStarting(app)
+                    } catch (e: AppStartException) {
+                        throw e
                     } catch (e: Throwable) {
                         app.log.error("OnAppStarting hook $name failed!", e)
                     }

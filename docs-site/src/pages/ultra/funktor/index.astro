@@ -1,132 +1,149 @@
 ---
-import DocsLayout from '../../../layouts/DocsLayout.astro';
-import Aside from '../../../components/Aside.astro';
-import {funktorSidebar} from '../../../data/funktor-sidebar';
-import {Code} from 'astro:components';
-import {dep} from '../../../data/site';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Nav from '../../../components/Nav.astro';
+import HilbertBackground from '../../../components/HilbertBackground.astro';
+import {categoryTints} from '../../../data/site';
+
+const t = categoryTints.funktor;
+
+const modules = [
+    {
+        href: '/ultra/funktor/core',
+        title: 'Core',
+        description: 'App lifecycle, type-safe routing, CLI framework, fixtures, configuration, and the repair system.',
+    },
+    {
+        href: '/ultra/funktor/rest',
+        title: 'REST',
+        description: 'Typed API routes with automatic parameter extraction, authorization DSL, endpoint documentation, SSE support.',
+    },
+    {
+        href: '/ultra/funktor/auth',
+        title: 'Auth',
+        description: 'Multi-realm authentication. Email/password, Google SSO, GitHub SSO, JWT tokens, and session management.',
+    },
+    {
+        href: '/ultra/funktor/cluster',
+        title: 'Cluster',
+        description: 'Background jobs with retry and scheduling, file depot, distributed locks, workers, and key-value storage.',
+    },
+    {
+        href: '/ultra/funktor/messaging',
+        title: 'Messaging',
+        description: 'Email sending with pluggable backends — SendGrid, AWS SES, or custom. Sent message storage and retry.',
+    },
+    {
+        href: '/ultra/funktor/insights',
+        title: 'Insights',
+        description: 'Zero-config per-request profiling, performance metrics, and a built-in debug GUI for every request.',
+    },
+    {
+        href: '/ultra/funktor/logging',
+        title: 'Logging',
+        description: 'Structured logging with database persistence, filtering, log levels, and a web UI for browsing logs.',
+    },
+    {
+        href: '/ultra/funktor/staticweb',
+        title: 'Static Web',
+        description: 'Server-rendered templates, flash sessions, static web resources, cache busting, and asset pipelines.',
+    },
+    {
+        href: '/ultra/funktor/testing',
+        title: 'Testing',
+        description: 'Test harness with fixtures, Kontainer service injection, and route testing utilities.',
+    },
+];
+
+const databases = [
+    {
+        href: '/ultra/karango/',
+        title: 'Karango',
+        tagline: 'Type-safe ArangoDB',
+        description: 'Write ArangoDB queries in Kotlin with compile-time safety. KSP generates the boilerplate. Repository pattern with entity hooks.',
+    },
+    {
+        href: '/ultra/monko/',
+        title: 'Monko',
+        tagline: 'Type-safe MongoDB',
+        description: 'Typed MongoDB repositories with entity lifecycle hooks, index management, and Funktor integration.',
+    },
+];
 ---
 
-<DocsLayout title="Funktor" sidebar={funktorSidebar} description="A modular Ktor-based server framework for Kotlin">
+<BaseLayout title="Funktor" description="A modular Ktor-based server framework for Kotlin">
+    <HilbertBackground tint={categoryTints.funktor.light}/>
+    <Nav/>
 
-    <h1>Funktor</h1>
+    <section class="pt-32 pb-12 px-4">
+        <div class="mx-auto max-w-5xl">
+            <h1 class="text-4xl font-extrabold text-white mb-4">Funktor</h1>
+            <p class="text-xl text-gray-400 mb-2">
+                A modular server framework built on Ktor.
+            </p>
+            <p class="text-sm text-gray-500 mb-12">
+                Auth, REST APIs, background jobs, messaging, profiling, and more —
+                wired together with Kontainer for per-request dependency injection.
+                Use what you need, ignore the rest.
+            </p>
 
-    <p class="text-xl text-gray-400 !mt-2 !mb-8">
-        A modular server framework built on Ktor. Auth, REST APIs, clustering, messaging,
-        and more &mdash; wired together with Kontainer.
-    </p>
+            <div class="mb-10">
+                <h2 class="text-lg font-bold text-gray-500 uppercase tracking-wide mb-3">Modules</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {modules.map(mod => (
+                            <a
+                                    href={mod.href}
+                                    class="group block p-5 rounded-xl border border-brand-400/20 bg-[#161a2a]/65 hover:border-brand-400/50 hover:bg-[#161a2a]/75 hover:-translate-y-0.5 transition-all duration-300"
+                                    style={`--glow: ${t.glow}; --glow-sm: ${t.glowSm};`}
+                                    onmouseover="this.style.boxShadow='0 0 25px var(--glow), 0 0 8px var(--glow-sm)'"
+                                    onmouseout="this.style.boxShadow='none'"
+                            >
+                                <h3 class="text-white font-bold mb-1">{mod.title}</h3>
+                                <p class="text-sm text-gray-400">{mod.description}</p>
+                            </a>
+                    ))}
+                </div>
+            </div>
 
-    <h2>Why Funktor?</h2>
+            <div class="mb-10">
+                <h2 class="text-lg font-bold text-gray-500 uppercase tracking-wide mb-3">Databases</h2>
+                <p class="text-sm text-gray-500 mb-4">
+                    Funktor modules are database-agnostic. Each module declares what it needs; you choose
+                    which backend provides it. Mix Karango and Monko in the same app.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {databases.map(db => (
+                            <a
+                                    href={db.href}
+                                    class="group block p-5 rounded-xl border border-brand-400/20 bg-[#161a2a]/65 hover:border-brand-400/50 hover:bg-[#161a2a]/75 hover:-translate-y-0.5 transition-all duration-300"
+                                    style={`--glow: ${t.glow}; --glow-sm: ${t.glowSm};`}
+                                    onmouseover="this.style.boxShadow='0 0 25px var(--glow), 0 0 8px var(--glow-sm)'"
+                                    onmouseout="this.style.boxShadow='none'"
+                            >
+                                <div class="flex items-baseline gap-2 mb-1">
+                                    <h3 class="text-white font-bold">{db.title}</h3>
+                                    <span class="text-sm text-brand-400 font-medium">{db.tagline}</span>
+                                </div>
+                                <p class="text-sm text-gray-400">{db.description}</p>
+                            </a>
+                    ))}
+                </div>
+            </div>
 
-    <p>Ktor gives you an HTTP server. It does not give you authentication, background jobs, file storage, distributed
-        locks,
-        email sending, request profiling, or a CLI framework. You wire all of that up yourself, every time.</p>
-
-    <Aside>We built about five Ktor apps before extracting Funktor. Each one had its own auth middleware, its own retry
-        logic,
-        its own &ldquo;just throw it in a coroutine&rdquo; job runner. Funktor is what those five apps wished they had.
-    </Aside>
-
-    <p>Funktor is a set of modules that snap together. Use what you need, ignore the rest. Every module integrates with
-        <a href="/ultra/kontainer/">Kontainer</a> for dependency injection, giving you per-request scoping across the
-        entire
-        stack.</p>
-
-    <Code code={`funktorApp {
-    server {
-        funktorCore()
-        funktorRest()
-        funktorAuth {
-            useKarango()
-        }
-        funktorCluster {
-            useKarango()
-        }
-        funktorMessaging {
-            useKarango()
-        }
-    }
-}`} lang="kotlin" theme="vitesse-dark"/>
-
-    <h2>The modules</h2>
-
-    <div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
-        <a href="/ultra/funktor/core"
-           class="block p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
-            <h3 class="text-white font-semibold mb-1">Core</h3>
-            <p class="text-sm text-gray-400">App lifecycle, type-safe routing, CLI, fixtures, configuration, repair
-                system.</p>
-        </a>
-        <a href="/ultra/funktor/rest"
-           class="block p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
-            <h3 class="text-white font-semibold mb-1">REST</h3>
-            <p class="text-sm text-gray-400">Typed API routes, authorization DSL, endpoint documentation, SSE
-                support.</p>
-        </a>
-        <a href="/ultra/funktor/auth"
-           class="block p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
-            <h3 class="text-white font-semibold mb-1">Auth</h3>
-            <p class="text-sm text-gray-400">Multi-realm authentication. Email/password, Google SSO, GitHub SSO,
-                JWT.</p>
-        </a>
-        <a href="/ultra/funktor/cluster"
-           class="block p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
-            <h3 class="text-white font-semibold mb-1">Cluster</h3>
-            <p class="text-sm text-gray-400">Background jobs, file depot, distributed locks, workers, key-value
-                storage.</p>
-        </a>
-        <a href="/ultra/funktor/messaging"
-           class="block p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
-            <h3 class="text-white font-semibold mb-1">Messaging</h3>
-            <p class="text-sm text-gray-400">Email sending with pluggable backends. SendGrid, AWS SES, or roll your
-                own.</p>
-        </a>
-        <a href="/ultra/funktor/insights"
-           class="block p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
-            <h3 class="text-white font-semibold mb-1">Insights</h3>
-            <p class="text-sm text-gray-400">Request profiling, performance metrics, and a built-in debug GUI.</p>
-        </a>
-        <a href="/ultra/funktor/logging"
-           class="block p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
-            <h3 class="text-white font-semibold mb-1">Logging</h3>
-            <p class="text-sm text-gray-400">Structured logging with database persistence, filtering, and a web UI.</p>
-        </a>
-        <a href="/ultra/funktor/staticweb"
-           class="block p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
-            <h3 class="text-white font-semibold mb-1">Static Web</h3>
-            <p class="text-sm text-gray-400">Server-rendered templates, flash sessions, web resources, cache
-                busting.</p>
-        </a>
-        <a href="/ultra/funktor/testing"
-           class="block p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
-            <h3 class="text-white font-semibold mb-1">Testing</h3>
-            <p class="text-sm text-gray-400">Test harness with fixtures, service injection, and route testing
-                utilities.</p>
-        </a>
+            <div class="mb-10">
+                <h2 class="text-lg font-bold text-gray-500 uppercase tracking-wide mb-3">Getting Started</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <a
+                            href="/ultra/funktor/getting-started"
+                            class="group block p-5 rounded-xl border border-brand-400/20 bg-[#161a2a]/65 hover:border-brand-400/50 hover:bg-[#161a2a]/75 hover:-translate-y-0.5 transition-all duration-300"
+                            style={`--glow: ${t.glow}; --glow-sm: ${t.glowSm};`}
+                            onmouseover="this.style.boxShadow='0 0 25px var(--glow), 0 0 8px var(--glow-sm)'"
+                            onmouseout="this.style.boxShadow='none'"
+                    >
+                        <h3 class="text-white font-bold mb-1">Set up Funktor</h3>
+                        <p class="text-sm text-gray-400">Dependencies, configuration, first module, first route.</p>
+                    </a>
+                </div>
+            </div>
     </div>
-
-    <h2>How it fits together</h2>
-
-    <p>Every Funktor module registers its services in
-        <a href="/ultra/kontainer/">Kontainer</a>. When a request arrives, Ktor creates a fresh container instance.
-        Services
-        that need the current user, request metrics, or audit context get them via constructor injection &mdash; no
-        parameter
-        threading, no thread-locals.</p>
-
-    <p>Data persistence uses <a href="/ultra/karango/">Karango</a> (ArangoDB) or <a href="/ultra/monko/">Monko</a>
-        (MongoDB).
-        Both are pluggable per module &mdash; the auth module can use Karango while the logging module uses Monko, or
-        vice versa.</p>
-
-    <Aside>Funktor is opinionated about architecture but not about databases.
-        Each module declares what it needs; you choose which backend provides it.
-    </Aside>
-
-    <div class="mt-12">
-        <a href="/ultra/funktor/getting-started"
-           class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-brand-400/10 text-brand-400 border border-brand-400/30 hover:bg-brand-400/20 transition-all font-medium">
-            Getting Started &rarr;
-        </a>
-    </div>
-
-</DocsLayout>
+    </section>
+</BaseLayout>

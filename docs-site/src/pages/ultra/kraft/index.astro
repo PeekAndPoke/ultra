@@ -1,9 +1,10 @@
 ---
-import DocsLayout from '../../../layouts/DocsLayout.astro';
-import Aside from '../../../components/Aside.astro';
-import { kraftSidebar } from '../../../data/kraft-sidebar';
-import { Code } from 'astro:components';
-import {kraftExamples} from '../../../data/site';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Nav from '../../../components/Nav.astro';
+import HilbertBackground from '../../../components/HilbertBackground.astro';
+import {categoryTints, kraftExamples} from '../../../data/site';
+
+const t = categoryTints.kraft;
 
 const sections = [
     {
@@ -12,12 +13,12 @@ const sections = [
             {
                 href: '/ultra/kraft/getting-started',
                 title: 'Getting Started',
-                description: 'From zero to a working Kraft app. Gradle setup, entry point, first component.'
+                description: 'From zero to a working Kraft app. Gradle setup, entry point, first component.',
             },
             {
                 href: '/ultra/kraft/examples',
                 title: 'Live Examples',
-                description: 'Hello World, Addons, and SemanticUI running in your browser.'
+                description: 'Hello World, Addons, and SemanticUI running in your browser.',
             },
         ],
     },
@@ -27,37 +28,37 @@ const sections = [
             {
                 href: '/ultra/kraft/components',
                 title: 'Components',
-                description: 'Class-based and functional components with props, state, and lifecycle hooks.'
+                description: 'Class-based and functional components with props, state, and lifecycle hooks.',
             },
             {
                 href: '/ultra/kraft/state',
                 title: 'State Management',
-                description: 'Reactive state with value(), stream-backed state, and external stream subscriptions.'
+                description: 'Reactive state with value(), stream-backed state, and external stream subscriptions.',
             },
             {
                 href: '/ultra/kraft/data-loading',
                 title: 'Data Loading',
-                description: 'Async data loading with loading, loaded, and error states. Reload and silent refresh.'
+                description: 'Async data loading with loading, loaded, and error states. Reload and silent refresh.',
             },
             {
                 href: '/ultra/kraft/dom-events',
                 title: 'DOM Events',
-                description: 'onClick, onInput, onKeyDown, and 50+ more — typed event handlers for every DOM event.'
+                description: 'onClick, onInput, onKeyDown, and 50+ more — typed event handlers for every DOM event.',
             },
             {
                 href: '/ultra/kraft/messaging',
                 title: 'Messaging',
-                description: 'Type-safe message passing between components, bubbling up the tree.'
+                description: 'Type-safe message passing between components, bubbling up the tree.',
             },
             {
                 href: '/ultra/kraft/routing',
                 title: 'Routing',
-                description: 'Type-safe routes with parameters, middleware for auth guards, and nested layouts.'
+                description: 'Type-safe routes with parameters, middleware for auth guards, and nested layouts.',
             },
             {
                 href: '/ultra/kraft/forms',
                 title: 'Forms & Validation',
-                description: 'Two-way binding, field validation, and the draft/commit pattern.'
+                description: 'Two-way binding, field validation, and the draft/commit pattern.',
             },
         ],
     },
@@ -67,17 +68,17 @@ const sections = [
             {
                 href: '/ultra/kraft/semantic-ui',
                 title: 'SemanticUI DSL',
-                description: 'A fluent Kotlin DSL for FomanticUI. Write ui.blue.button instead of CSS class strings.'
+                description: 'A fluent Kotlin DSL for FomanticUI. Write ui.blue.button instead of CSS class strings.',
             },
             {
                 href: '/ultra/kraft/overlays',
                 title: 'Overlays',
-                description: 'Modal dialogs, toast notifications, popup menus, and context menus.'
+                description: 'Modal dialogs, toast notifications, popup menus, and context menus.',
             },
             {
                 href: '/ultra/kraft/drag-and-drop',
                 title: 'Drag & Drop',
-                description: 'Type-safe drag and drop with typed payloads and accept predicates.'
+                description: 'Type-safe drag and drop with typed payloads and accept predicates.',
             },
         ],
     },
@@ -87,101 +88,88 @@ const sections = [
             {
                 href: '/ultra/kraft/utilities',
                 title: 'Utilities',
-                description: 'Responsive design, CSS-in-Kotlin, file handling, and responsive images.'
+                description: 'Responsive design, CSS-in-Kotlin, file handling, and responsive images.',
             },
             {
                 href: '/ultra/kraft/testing',
                 title: 'Testing',
-                description: 'TestBed for rendering components, KQuery for DOM querying, event dispatch, and assertions.'
+                description: 'TestBed for rendering components, KQuery for DOM querying, event dispatch, and assertions.',
             },
             {
                 href: '/ultra/kraft/addons',
                 title: 'Addons',
-                description: 'ChartJS, PDF viewer, syntax highlighting, signature pad, and 8 more JS libraries wrapped for Kotlin.'
+                description: 'ChartJS, PDF viewer, syntax highlighting, signature pad, and 8 more JS libraries wrapped for Kotlin.',
             },
         ],
     },
 ];
 ---
 
-<DocsLayout title="Kraft" sidebar={kraftSidebar} description="Build single-page applications in pure Kotlin with Kraft">
+<BaseLayout title="Kraft" description="Build single-page applications in pure Kotlin with Kraft">
+    <HilbertBackground tint={categoryTints.kraft.light}/>
+    <Nav/>
 
-    <h1>Kraft</h1>
+    <section class="pt-32 pb-12 px-4">
+        <div class="mx-auto max-w-5xl">
+            <h1 class="text-4xl font-extrabold text-white mb-4">Kraft</h1>
+            <p class="text-xl text-gray-400 mb-2">
+                Build single-page applications in pure Kotlin.
+            </p>
+            <p class="text-sm text-gray-500 mb-12">
+                A component-based SPA framework using Preact under the hood.
+                Type-safe HTML DSL, reactive state, routing, forms, and SemanticUI integration.
+            </p>
 
-<p class="text-xl text-gray-400 !mt-2 !mb-8">
-    A component-based framework for building single-page applications in Kotlin.
-</p>
+            {sections.map(section => (
+                    <div class="mb-10">
+                        <h2 class="text-lg font-bold text-gray-500 uppercase tracking-wide mb-3">{section.title}</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {section.items.map(item => (
+                                    <a
+                                            href={item.href}
+                                            class="group block p-5 rounded-xl border border-brand-400/20 bg-[#161a2a]/65 hover:border-brand-400/50 hover:bg-[#161a2a]/75 hover:-translate-y-0.5 transition-all duration-300"
+                                            style={`--glow: ${t.glow}; --glow-sm: ${t.glowSm};`}
+                                            onmouseover="this.style.boxShadow='0 0 25px var(--glow), 0 0 8px var(--glow-sm)'"
+                                            onmouseout="this.style.boxShadow='none'"
+                                    >
+                                        <h3 class="text-white font-bold mb-1">{item.title}</h3>
+                                        <p class="text-sm text-gray-400">{item.description}</p>
+                                    </a>
+                            ))}
+                        </div>
+                    </div>
+            ))}
 
-    <p>Kraft lets you build reactive web applications using <strong>only Kotlin</strong>. It compiles to JavaScript and
-        uses <a href="https://preactjs.com" target="_blank" rel="noopener">Preact</a> (a 3KB React alternative) as its
-        rendering engine — but you never touch Preact directly.</p>
-
-    <p>You write components like this:</p>
-
-<Code code={`class Counter(ctx: Ctx<Props>) : Component<Counter.Props>(ctx) {
-    data class Props(val start: Int)
-
-    private var count by value(props.start)
-
-    override fun VDom.render() {
-        div {
-            h2 { +"Count: ${'$'}count" }
-            ui.blue.button {
-                onClick { count++ }
-                +"Increment"
-            }
-        }
-    }
-}`} lang="kotlin" theme="vitesse-dark" />
-
-    <Aside>We didn't set out to write a framework. We just wanted to write Kotlin in the browser and the existing
-        wrappers didn't quite fit.
-    </Aside>
-
-    {sections.map(section => (
-            <>
-                <h2>{section.title}</h2>
-                <div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
-                    {section.items.map(item => (
-                            <a href={item.href}
-                               class="block p-4 rounded-lg border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
-                                <h3 class="text-white font-semibold mb-1">{item.title}</h3>
-                                <p class="text-sm text-gray-400">{item.description}</p>
-                            </a>
-                    ))}
-                </div>
-            </>
-    ))}
-
-    <h2>Example Projects</h2>
-
-    <p>See Kraft in action — <a href="/ultra/kraft/examples">live examples</a> running in your browser, or clone the
-        repos to explore the code:</p>
-
-    <div class="not-prose grid grid-cols-1 sm:grid-cols-3 gap-4 my-8">
-        <a href="/ultra/kraft/examples"
-           class="block p-4 rounded-lg border border-brand-400/30 bg-brand-400/5 hover:border-brand-400/60 transition-all">
-            <h3 class="text-white font-semibold mb-1">Live Examples</h3>
+            <div class="mb-10">
+                <h2 class="text-lg font-bold text-gray-500 uppercase tracking-wide mb-3">Example Projects</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <a href="/ultra/kraft/examples"
+                       class="group block p-5 rounded-xl border border-brand-400/20 bg-[#161a2a]/65 hover:border-brand-400/50 hover:bg-[#161a2a]/75 hover:-translate-y-0.5 transition-all duration-300"
+                       style={`--glow: ${t.glow}; --glow-sm: ${t.glowSm};`}
+                       onmouseover="this.style.boxShadow='0 0 25px var(--glow), 0 0 8px var(--glow-sm)'"
+                       onmouseout="this.style.boxShadow='none'">
+                        <h3 class="text-white font-bold mb-1">Live Examples</h3>
             <p class="text-sm text-gray-400">Hello World, Addons, and SemanticUI — running in your browser.</p>
-        </a>
-        <a href={kraftExamples.router} target="_blank" rel="noopener"
-           class="block p-4 rounded-lg border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
-            <h3 class="text-white font-semibold mb-1">Router Demo</h3>
-            <p class="text-sm text-gray-400">Multi-page app with parameterized routes and form handling with
-                Mutator.</p>
-        </a>
-        <a href={kraftExamples.remote} target="_blank" rel="noopener"
-           class="block p-4 rounded-lg border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
-            <h3 class="text-white font-semibold mb-1">Remote API</h3>
+                    </a>
+                    <a href={kraftExamples.router} target="_blank" rel="noopener"
+                       class="group block p-5 rounded-xl border border-brand-400/20 bg-[#161a2a]/65 hover:border-brand-400/50 hover:bg-[#161a2a]/75 hover:-translate-y-0.5 transition-all duration-300"
+                       style={`--glow: ${t.glow}; --glow-sm: ${t.glowSm};`}
+                       onmouseover="this.style.boxShadow='0 0 25px var(--glow), 0 0 8px var(--glow-sm)'"
+                       onmouseout="this.style.boxShadow='none'">
+                        <h3 class="text-white font-bold mb-1">Router Demo</h3>
+                        <p class="text-sm text-gray-400">Multi-page app with parameterized routes and form handling with
+                            Mutator.</p>
+                    </a>
+                    <a href={kraftExamples.remote} target="_blank" rel="noopener"
+                       class="group block p-5 rounded-xl border border-brand-400/20 bg-[#161a2a]/65 hover:border-brand-400/50 hover:bg-[#161a2a]/75 hover:-translate-y-0.5 transition-all duration-300"
+                       style={`--glow: ${t.glow}; --glow-sm: ${t.glowSm};`}
+                       onmouseover="this.style.boxShadow='0 0 25px var(--glow), 0 0 8px var(--glow-sm)'"
+                       onmouseout="this.style.boxShadow='none'">
+                        <h3 class="text-white font-bold mb-1">Remote API</h3>
             <p class="text-sm text-gray-400">Consume REST APIs and display results with routing and SemanticUI.</p>
-        </a>
-    </div>
-
-    <div class="not-prose mt-8">
-        <a href="/ultra/kraft/getting-started"
-           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
-            Get started &rarr;
-        </a>
-</div>
-
-</DocsLayout>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+</BaseLayout>

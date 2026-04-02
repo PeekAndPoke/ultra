@@ -1,0 +1,122 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {datetimeSidebar} from '../../../data/datetime-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="MpLocalDateTime" sidebar={datetimeSidebar}
+            description="A date and time without timezone — deliberately restricted to prevent DST mistakes">
+
+    <h1>MpLocalDateTime</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        A date and time without timezone. Deliberately the most restricted type —
+        it exists to represent "what the user typed" before a timezone is known.
+    </p>
+
+    <h2>When to use MpLocalDateTime</h2>
+
+    <ul>
+        <li>Form input: a user picks "March 15 at 2:30 PM" in a date-time picker</li>
+        <li>Display purposes where the timezone is shown separately</li>
+        <li>Intermediate value before the timezone is determined</li>
+        <li>Calendar events in a "floating" timezone (the same local time everywhere)</li>
+    </ul>
+
+    <h2>Creating</h2>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.MpLocalDateTime
+
+val dt = MpLocalDateTime.of(2025, 3, 15, 14, 30, 0)
+val withMonth = MpLocalDateTime.of(2025, Month.MARCH, 15, 14, 30)
+val fromParts = MpLocalDateTime.of(
+    date = MpLocalDate.of(2025, 3, 15),
+    time = MpLocalTime.of(14, 30),
+)
+val parsed = MpLocalDateTime.parse("2025-03-15T14:30:00")
+val maybe = MpLocalDateTime.tryParse("not-valid")  // null
+
+// Boundaries
+val genesis = MpLocalDateTime.Genesis
+val doomsday = MpLocalDateTime.Doomsday`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Properties</h2>
+
+    <Code code={`val dt = MpLocalDateTime.of(2025, 3, 15, 14, 30, 45)
+
+dt.year          // 2025
+dt.monthNumber   // 3
+dt.month         // Month.MARCH
+dt.dayOfMonth    // 15
+dt.hour          // 14
+dt.minute        // 30
+dt.second        // 45
+dt.milliSecond   // 0
+dt.dayOfWeek     // DayOfWeek.SATURDAY
+dt.dayOfYear     // 74`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>What MpLocalDateTime deliberately does not have</h2>
+
+    <p>This is the key design decision: <strong>MpLocalDateTime has no arithmetic operations</strong>.
+        No <code>plusDays()</code>, no <code>plusHours()</code>, no <code>plusMonths()</code>.</p>
+
+    <p>This is not an oversight. Adding time to a local datetime is ambiguous near DST transitions.
+        "2:30 AM + 1 hour" on the night clocks spring forward is undefined without knowing which timezone.
+        Rather than giving wrong answers silently, the library makes you choose the right type first.</p>
+
+    <Aside>If you want calendar arithmetic, use MpLocalDate (no DST issue for pure dates) or
+        MpZonedDateTime (carries its timezone, handles DST automatically).
+        If you want absolute-time arithmetic, convert to MpInstant first.
+    </Aside>
+
+    <p>Also missing, for the same reason:</p>
+    <ul>
+        <li>No anchoring operations (<code>atStartOfMonth()</code>, etc.) — use MpLocalDate or MpZonedDateTime</li>
+        <li>No duration addition — convert to MpInstant or MpZonedDateTime first</li>
+    </ul>
+
+    <h2>Decomposing</h2>
+
+    <Code code={`val dt = MpLocalDateTime.of(2025, 3, 15, 14, 30)
+
+val date = dt.toDate()  // MpLocalDate(2025-03-15)
+val time = dt.toTime()  // MpLocalTime(14:30:00)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Converting to absolute types (requires timezone)</h2>
+
+    <p>The moment you need to pin this datetime to a real moment in time, you must provide a timezone:</p>
+
+    <Code code={`val dt = MpLocalDateTime.of(2025, 3, 15, 14, 30)
+
+// To MpInstant — REQUIRES timezone
+val instant = dt.toInstant(MpTimezone.of("Europe/Berlin"))
+val instantUtc = dt.toInstant(MpTimezone.UTC)
+
+// To MpZonedDateTime — REQUIRES timezone
+val zoned = dt.atZone(MpTimezone.of("Europe/Berlin"))
+val utc = dt.atUTC()  // shorthand for atZone(UTC)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>These are the only escape routes from "local" to "absolute," and both require a timezone.
+        This is the guard rail that prevents the most common class of timezone bugs.
+    </Aside>
+
+    <h2>Formatting</h2>
+
+    <Code code={`val dt = MpLocalDateTime.of(2025, 3, 15, 14, 30)
+
+dt.toIsoString()  // "2025-03-15T14:30:00"`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>JVM interop</h2>
+
+    <Code code={`// MpLocalDateTime -> java.time.LocalDateTime
+val javaDateTime: java.time.LocalDateTime = mpDateTime.jvm`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/datetime/mp-zoned-date-time"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            MpZonedDateTime &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

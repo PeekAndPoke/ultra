@@ -42,7 +42,8 @@ class KarangoCursor<T>(
 
         override fun next(): T {
 
-            // Make a copy of local state to avoid error, when multiple threads call next() in parallel
+            // NOTE: This iterator is NOT thread-safe. Do not call from multiple threads concurrently.
+            // Local copies are taken as a defensive measure, not as a synchronization mechanism.
             val currentIdx = idx
             val currentData = data
 
@@ -101,7 +102,8 @@ class KarangoCursor<T>(
     override fun close() {
         try {
             inner.close()
-        } finally {
+        } catch (e: Exception) {
+            System.err.println("[KarangoCursor] Error closing cursor: ${e.message}")
         }
     }
 }

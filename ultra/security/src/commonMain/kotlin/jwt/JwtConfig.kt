@@ -14,4 +14,8 @@ data class JwtConfig(
     val permissionsNs: String,
     /** The namespace for user data */
     val userNs: String,
-)
+) {
+    /** Redacts [signingKey] to prevent accidental exposure in logs or error messages. */
+    override fun toString(): String =
+        "JwtConfig(signingKey=REDACTED, issuer=$issuer, audience=$audience, permissionsNs=$permissionsNs, userNs=$userNs)"
+}

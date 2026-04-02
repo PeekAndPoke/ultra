@@ -1,6 +1,5 @@
 package io.peekandpoke.funktor.demo.server.api.showcase
 
-import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.demo.common.showcase.RetryAttemptLog
 import io.peekandpoke.funktor.demo.common.showcase.RetryDemoResponse
 import io.peekandpoke.funktor.demo.common.showcase.ShowcaseApiClient
@@ -10,7 +9,7 @@ import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 import kotlinx.coroutines.delay
 
-class CoreShowcaseApi(converter: OutgoingConverter) : ApiRoutes("showcase-core", converter) {
+class CoreShowcaseApi : ApiRoutes("showcase-core") {
 
     val postRetryDemo = ShowcaseApiClient.PostRetryDemo.mount {
         docs {

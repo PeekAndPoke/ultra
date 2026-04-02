@@ -1,10 +1,9 @@
 @file:Suppress("detekt:all")
 
-package de.kotlincook.karango.ksp
+package io.peekandpoke.karango.ksp
 
 import io.kotest.common.ExperimentalKotest
 import io.kotest.core.spec.style.StringSpec
-import io.peekandpoke.karango.ksp.KarangoKspProcessorProvider
 import io.peekandpoke.ultra.meta.testing.expectFileToMatch
 import io.peekandpoke.ultra.meta.testing.kspCompileTest
 import io.peekandpoke.ultra.vault.Vault
@@ -40,9 +39,14 @@ class NestedClassCodeGenSpec : StringSpec() {
                     contents = """
                         package karango.compile
                         
-                        import io.peekandpoke.karango.*
-                        import io.peekandpoke.karango.aql.*
-                        import io.peekandpoke.ultra.vault.lang.*
+                        import io.peekandpoke.karango.aql.AqlExpression
+                        import io.peekandpoke.karango.aql.AqlIterableExpr
+                        import io.peekandpoke.karango.aql.AqlPropertyPath
+                        import io.peekandpoke.ultra.vault.lang.L1
+                        import io.peekandpoke.ultra.vault.lang.L2
+                        import io.peekandpoke.ultra.vault.lang.L3
+                        import io.peekandpoke.ultra.vault.lang.L4
+                        import io.peekandpoke.ultra.vault.lang.L5
                         
                         //// generic property
                         inline fun <reified T> AqlIterableExpr<Outer>.property(name: String) = AqlPropertyPath.start(this).append<T, T>(name)
@@ -72,9 +76,14 @@ class NestedClassCodeGenSpec : StringSpec() {
                     contents = """
                         package karango.compile
 
-                        import io.peekandpoke.karango.*
-                        import io.peekandpoke.karango.aql.*
-                        import io.peekandpoke.ultra.vault.lang.*
+                        import io.peekandpoke.karango.aql.AqlExpression
+                        import io.peekandpoke.karango.aql.AqlIterableExpr
+                        import io.peekandpoke.karango.aql.AqlPropertyPath
+                        import io.peekandpoke.ultra.vault.lang.L1
+                        import io.peekandpoke.ultra.vault.lang.L2
+                        import io.peekandpoke.ultra.vault.lang.L3
+                        import io.peekandpoke.ultra.vault.lang.L4
+                        import io.peekandpoke.ultra.vault.lang.L5
 
                         //// generic property
                         inline fun <reified T> AqlIterableExpr<Outer.Inner>.property(name: String) = AqlPropertyPath.start(this).append<T, T>(name)

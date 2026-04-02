@@ -1,8 +1,6 @@
 package io.peekandpoke.funktor.testing
 
 import io.kotest.assertions.fail
-import io.kotest.core.listeners.AfterSpecListener
-import io.kotest.core.listeners.BeforeProjectListener
 import io.kotest.core.listeners.BeforeSpecListener
 import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.FreeSpec
@@ -62,26 +60,23 @@ abstract class AppSpec<C : AppConfig>(val app: App.Definition<C>) : FreeSpec(), 
     }
 
     init {
-        extension(object : BeforeProjectListener {
-            override suspend fun beforeProject() {
+        var dbInitialized = false
+
+        beforeSpec {
+            if (!dbInitialized) {
                 database?.let {
                     it.ensureRepositories()
                     it.recreateIndexes()
                 }
+                dbInitialized = true
             }
-        })
 
-        extension(object : BeforeSpecListener {
-            override suspend fun beforeSpec(spec: Spec) {
-                clearFixtures()
-            }
-        })
+            clearFixtures()
+        }
 
-        extension(object : AfterSpecListener {
-            override suspend fun afterSpec(spec: Spec) {
-                stopApplication()
-            }
-        })
+        afterSpec {
+            stopApplication()
+        }
     }
 
     /**

@@ -28,8 +28,8 @@ import {Code} from 'astro:components';
 
     override val providers = listOf(
         EmailAndPasswordAuth(deps),
-        GoogleSsoAuth(deps, clientId = "..."),
-        GithubSsoAuth(deps, clientId = "...", clientSecret = "..."),
+        GoogleSsoAuth(deps, clientId = "your-google-client-id"),
+        GithubSsoAuth(deps, clientId = "your-github-id", clientSecret = "your-github-secret"),
     )
 
     override val passwordPolicy = PasswordPolicy.default
@@ -37,8 +37,37 @@ import {Code} from 'astro:components';
     override suspend fun loadUserByEmail(email: String) =
         usersRepo.findByEmail(email)
 
-    override suspend fun generateJwt(user: Stored<AdminUser>) =
-        AuthSignInResponse.Token(/* JWT generation */)
+    override suspend fun createUser(email: String): Stored<AdminUser> {
+        return usersRepo.insert(AdminUser(email = email, name = ""))
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>JWT generation</h2>
+
+    <p>Each realm generates JWT tokens for authenticated users. The token includes user data
+        and permissions, signed with HMAC-512.</p>
+
+    <Code code={`override suspend fun generateJwt(
+    user: Stored<AdminUser>,
+): AuthSignInResponse.Token {
+    val gen: JwtGenerator = deps.jwtGenerator
+
+    val token = gen.createJwt(
+        user = JwtUserData(
+            id = user._key,
+            desc = user.value.name,
+            type = "admin",
+        ),
+        permissions = UserPermissions(isSuperUser = true),
+    ) {
+        withExpiresAt(Kronos.systemUtc.instantNow().plus(1.hours).jvm)
+    }
+
+    return AuthSignInResponse.Token(
+        token = token,
+        permissionsNs = gen.permissionsNs,
+        userNs = gen.userNs,
+    )
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Providers</h2>
@@ -49,7 +78,7 @@ import {Code} from 'astro:components';
         <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">EmailAndPasswordAuth</h3>
             <p class="text-sm text-gray-400">Sign up, sign in, password recovery, password change. Passwords are hashed
-                and stored separately.</p>
+                with Argon2/Bcrypt and stored separately from user records.</p>
         </div>
         <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">GoogleSsoAuth</h3>
@@ -61,6 +90,27 @@ import {Code} from 'astro:components';
             <p class="text-sm text-gray-400">GitHub OAuth flow. Exchanges authorization codes for access tokens.</p>
         </div>
     </div>
+
+    <h2>Wiring in Kontainer</h2>
+
+    <p>Register your realm and its dependencies as a Kontainer module:</p>
+
+    <Code code={`val AdminUserModule = module {
+    dynamic(AdminUsersRepo::class)
+    dynamic(AdminUserRealm::class)
+    dynamic(AdminUserServices::class)
+}
+
+// In your main blueprint:
+val blueprint = kontainer {
+    funktor(
+        config = config,
+        auth = { useKarango() },
+        // ...
+    )
+
+    module(AdminUserModule)
+}`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Auth API</h2>
 

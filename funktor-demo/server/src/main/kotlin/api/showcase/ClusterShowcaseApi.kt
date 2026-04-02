@@ -3,7 +3,6 @@ package io.peekandpoke.funktor.demo.server.api.showcase
 import io.peekandpoke.funktor.cluster.cluster
 import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
 import io.peekandpoke.funktor.cluster.storage.RandomDataStorage
-import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.demo.common.showcase.DepotFileInfo
 import io.peekandpoke.funktor.demo.common.showcase.DepotRepoInfo
@@ -24,7 +23,7 @@ import io.peekandpoke.ultra.remote.ApiResponse
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 
-class ClusterShowcaseApi(converter: OutgoingConverter) : ApiRoutes("showcase-cluster", converter) {
+class ClusterShowcaseApi : ApiRoutes("showcase-cluster") {
 
     data class RepoParams(val repo: String)
 

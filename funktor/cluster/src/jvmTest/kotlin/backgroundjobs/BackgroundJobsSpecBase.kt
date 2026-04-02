@@ -15,9 +15,9 @@ import io.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJo
 import io.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler02
 import io.peekandpoke.funktor.cluster.workers.WorkersRunner
 import io.peekandpoke.ultra.kontainer.Kontainer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -38,10 +38,10 @@ abstract class BackgroundJobsSpecBase : FreeSpec() {
     private val exampleJob02: ExampleBackgroundJobHandler02
         get() = kontainer.get(ExampleBackgroundJobHandler02::class)
 
-    private suspend fun runJobsInBackground(): Job = coroutineScope {
-        launch(SupervisorJob()) {
+    private fun runJobsInBackground(): Job {
+        return CoroutineScope(Dispatchers.IO).launch {
             backgroundJobs.runQueuedJobs { WorkersRunner.State.Running }
-        }.also { it.start() }
+        }
     }
 
     private suspend fun runJobsAndWaitForAll() {

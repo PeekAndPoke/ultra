@@ -1,0 +1,151 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {cacheSidebar} from '../../../data/cache-sidebar';
+import {Code} from 'astro:components';
+import {dep, mavenCentralUrl} from '../../../data/site';
+---
+
+<DocsLayout title="Getting Started with Cache" sidebar={cacheSidebar} description="Set up Cache in your Kotlin project">
+
+    <h1>Getting Started</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Add Cache to your project and start caching in three lines.
+    </p>
+
+    <h2>1. Add the dependency</h2>
+
+    <p>In your <code>build.gradle.kts</code>:</p>
+
+    <Code code={`dependencies {
+    implementation("${dep.cache}")
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Find the latest version on <a href={mavenCentralUrl} target="_blank" rel="noopener">Maven Central</a>.</p>
+
+    <p>Cache is a Kotlin Multiplatform library — it works in <code>commonMain</code>, <code>jvmMain</code>, and <code>jsMain</code>.
+    </p>
+
+    <h2>2. Create a cache</h2>
+
+    <p>Use the <code>fastCache</code> builder to create a cache with the eviction policies you need:</p>
+
+    <Code code={`import io.peekandpoke.ultra.cache.fastCache
+import kotlin.time.Duration.Companion.minutes
+
+val cache = fastCache<String, String> {
+    expireAfterAccess(10.minutes)
+    maxEntries(1000)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>3. Use it</h2>
+
+    <Code code={`// Put a value
+cache.put("greeting", "Hello, World!")
+
+// Get a value
+val value = cache.get("greeting")  // "Hello, World!"
+
+// Get-or-put — the most common pattern
+val user = cache.getOrPut("user:42") {
+    // Only called on cache miss
+    database.findUser("42")
+}
+
+// Check existence
+cache.has("greeting")  // true
+
+// Remove
+cache.remove("greeting")
+
+// Clear everything
+cache.clear()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>The Cache interface</h2>
+
+    <p>All caches implement the <code>Cache&lt;K, V&gt;</code> interface:</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold">Method</th>
+                <th class="py-2 text-white font-semibold">Returns</th>
+                <th class="py-2 text-white font-semibold">Behavior</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>get(key)</code></td>
+                <td class="py-2"><code>V?</code></td>
+                <td class="py-2">Returns the value or null if not present</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>put(key, value)</code></td>
+                <td class="py-2"><code>Unit</code></td>
+                <td class="py-2">Stores a value, replacing any existing entry</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>remove(key)</code></td>
+                <td class="py-2"><code>V?</code></td>
+                <td class="py-2">Removes and returns the value, or null</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>has(key)</code></td>
+                <td class="py-2"><code>Boolean</code></td>
+                <td class="py-2">Checks if a key exists</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>getOrPut(key) {'{ ... }'}</code></td>
+                <td class="py-2"><code>V</code></td>
+                <td class="py-2">Returns existing or computes and stores a new value</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>clear()</code></td>
+                <td class="py-2"><code>Unit</code></td>
+                <td class="py-2">Removes all entries</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>size</code></td>
+                <td class="py-2"><code>Int</code></td>
+                <td class="py-2">Number of entries</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>keys</code></td>
+                <td class="py-2"><code>Set&lt;K&gt;</code></td>
+                <td class="py-2">Snapshot of current keys</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>values</code></td>
+                <td class="py-2"><code>List&lt;V&gt;</code></td>
+                <td class="py-2">Snapshot of current values</td>
+            </tr>
+            <tr>
+                <td class="py-2"><code>entries</code></td>
+                <td class="py-2"><code>Map&lt;K, V&gt;</code></td>
+                <td class="py-2">Immutable snapshot of all entries</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Thread safety</h2>
+
+    <p>All operations on <code>FastCache</code> are synchronized internally. You can safely call <code>get()</code>,
+        <code>put()</code>, and <code>getOrPut()</code> from multiple coroutines or threads without external locking.
+    </p>
+
+    <Aside>The cache uses a coroutine-based background loop for eviction processing. Eviction doesn't happen on the
+        calling
+        thread — it's deferred to the loop, which runs every 50ms by default.
+    </Aside>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/cache/eviction"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Eviction policies &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

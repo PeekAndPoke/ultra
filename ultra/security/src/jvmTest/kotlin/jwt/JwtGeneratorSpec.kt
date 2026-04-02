@@ -8,6 +8,8 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.peekandpoke.ultra.security.user.UserPermissions
 
 class JwtGeneratorSpec : StringSpec() {
@@ -28,8 +30,33 @@ class JwtGeneratorSpec : StringSpec() {
     private val jwtGenerator = JwtGenerator(config = mockConfig)
 
     init {
-        "Config must be public" {
+        "Config must be accessible internally" {
             jwtGenerator.config shouldBe mockConfig
+        }
+
+        "JwtConfig.toString must redact signingKey" {
+            val str = mockConfig.toString()
+            str shouldContain "REDACTED"
+            str shouldNotContain "testSigningKey"
+            str shouldContain "testIssuer"
+            str shouldContain "testAudience"
+        }
+
+        "verify() should work as shorthand for verifier.verify()" {
+            val userData = JwtUserData(id = "v1", desc = "Verify Test", type = "Test")
+            val token = jwtGenerator.createJwt(user = userData)
+            val payload = jwtGenerator.verify(token)
+            payload.subject shouldBe "v1"
+        }
+
+        "verify() should throw JWTVerificationException for invalid token" {
+            val invalidToken = JWT.create()
+                .withIssuer("invalidIssuer")
+                .sign(Algorithm.HMAC512("invalidKey"))
+
+            shouldThrow<JWTVerificationException> {
+                jwtGenerator.verify(invalidToken)
+            }
         }
 
         "createJwt should generate a valid token for provided user data" {

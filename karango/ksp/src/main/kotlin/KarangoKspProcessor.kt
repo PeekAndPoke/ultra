@@ -104,9 +104,14 @@ class KarangoKspProcessor(
             """
                 package $packageName
         
-                import io.peekandpoke.karango.*
-                import io.peekandpoke.karango.aql.*
-                import io.peekandpoke.ultra.vault.lang.*
+                import io.peekandpoke.karango.aql.AqlExpression
+                import io.peekandpoke.karango.aql.AqlIterableExpr
+                import io.peekandpoke.karango.aql.AqlPropertyPath
+                import io.peekandpoke.ultra.vault.lang.L1
+                import io.peekandpoke.ultra.vault.lang.L2
+                import io.peekandpoke.ultra.vault.lang.L3
+                import io.peekandpoke.ultra.vault.lang.L4
+                import io.peekandpoke.ultra.vault.lang.L5
         
             """.trimIndent()
         )

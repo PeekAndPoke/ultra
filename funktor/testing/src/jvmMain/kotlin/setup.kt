@@ -31,8 +31,8 @@ class TestBed<C : AppConfig>(
 
             /**
              * TODO: fix this
-             * NOTICE: DIRTY-HACK work-around to make the [backend] available tp [App.Definition.module]
-             * @see App.Definition.module()
+             * NOTICE: DIRTY-HACK work-around to make the [app] available tp [App.Definition.module]
+             * @see App.Definition.module
              */
             App.Definition.testApp = app
 

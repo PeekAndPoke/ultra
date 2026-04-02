@@ -6,5 +6,6 @@ import kotlinx.serialization.Serializable
 data class AuthSetPasswordRequest(
     val provider: String,
     val userId: String,
+    val currentPassword: String,
     val newPassword: String,
 )

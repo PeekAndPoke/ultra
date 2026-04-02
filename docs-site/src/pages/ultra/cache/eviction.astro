@@ -1,0 +1,168 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {cacheSidebar} from '../../../data/cache-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Eviction Policies" sidebar={cacheSidebar}
+            description="TTL expiration, max entries, and memory-based eviction in Cache">
+
+    <h1>Eviction Policies</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Three pluggable behaviors — use one, two, or all three together.
+    </p>
+
+    <h2>Expire after access</h2>
+
+    <p>Evicts entries that haven't been read or written within a time-to-live window. The timer resets on every
+        access:</p>
+
+    <Code code={`import io.peekandpoke.ultra.cache.fastCache
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
+
+val cache = fastCache<String, String> {
+    expireAfterAccess(5.minutes)
+}
+
+cache.put("session", "abc123")
+
+// Reading resets the TTL
+cache.get("session")  // resets the 5-minute timer
+
+// After 5 minutes of no access, the entry is evicted`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>Eviction is processed in the background loop, not on the calling thread. An expired entry might survive
+        briefly
+        past its TTL until the next loop iteration (default: 50ms).
+    </Aside>
+
+    <h2>Max entries</h2>
+
+    <p>Caps the number of entries. When the limit is exceeded, the least-recently-accessed entries are evicted first
+        (LRU):</p>
+
+    <Code code={`val cache = fastCache<String, String> {
+    maxEntries(100)
+}
+
+// After 100 entries, the oldest-accessed entry is evicted
+// when a new one is added`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Max memory usage</h2>
+
+    <p>Caps the total estimated memory usage. Uses an <code>ObjectSizeEstimator</code> to recursively measure object
+        graphs. When the budget is exceeded, LRU eviction kicks in:</p>
+
+    <Code code={`import io.peekandpoke.ultra.cache.ObjectSizeEstimator
+
+val estimator = ObjectSizeEstimator()
+
+val cache = fastCache<String, MyData> {
+    maxMemoryUsage(
+        maxMemorySize = 50 * 1024 * 1024,  // 50 MB
+        estimator = estimator,
+    )
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The estimator walks the object graph recursively, accounting for:</p>
+
+    <ul>
+        <li>Object headers (16 bytes on 64-bit HotSpot)</li>
+        <li>Primitive fields (1–8 bytes each)</li>
+        <li>String content (header + char array)</li>
+        <li>Collections and maps (header + pointers + elements)</li>
+        <li>Nested objects (recursive traversal with cycle detection)</li>
+    </ul>
+
+    <Aside>Memory estimation is exactly that — an estimate. It's close enough for cache budgeting but don't treat it as
+        a precise memory profiler.
+    </Aside>
+
+    <h2>Combining behaviors</h2>
+
+    <p>Stack multiple behaviors for fine-grained control. All active behaviors are checked during each eviction
+        cycle:</p>
+
+    <Code code={`val cache = fastCache<String, ExpensiveResult> {
+    expireAfterAccess(10.minutes)     // remove stale entries
+    maxEntries(5000)                   // hard cap on count
+    maxMemoryUsage(                    // hard cap on memory
+        maxMemorySize = 100 * 1024 * 1024,
+        estimator = ObjectSizeEstimator(),
+    )
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Custom loop delay</h2>
+
+    <p>The background eviction loop runs every 50ms by default. Adjust it for your use case:</p>
+
+    <Code code={`import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+
+// Faster eviction checks (more CPU)
+val responsive = fastCache<String, String>(loopDelay = 10.milliseconds) {
+    expireAfterAccess(1.seconds)
+}
+
+// Slower checks (less CPU)
+val relaxed = fastCache<String, String>(loopDelay = 1.seconds) {
+    expireAfterAccess(5.minutes)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Custom coroutine scope</h2>
+
+    <p>By default the eviction loop runs in a global scope. Pass a custom scope if you need lifecycle control:</p>
+
+    <Code code={`import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+
+val scope = CoroutineScope(Dispatchers.Default)
+
+val cache = fastCache<String, String>(scope = scope) {
+    expireAfterAccess(5.minutes)
+}
+
+// When the scope is cancelled, the eviction loop stops`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Eviction summary</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold">Behavior</th>
+                <th class="py-2 text-white font-semibold">Trigger</th>
+                <th class="py-2 text-white font-semibold">Strategy</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>expireAfterAccess</code></td>
+                <td class="py-2">No read or write within TTL</td>
+                <td class="py-2">Time-based, resets on access</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>maxEntries</code></td>
+                <td class="py-2">Entry count exceeds limit</td>
+                <td class="py-2">LRU (least recently accessed)</td>
+            </tr>
+            <tr>
+                <td class="py-2"><code>maxMemoryUsage</code></td>
+                <td class="py-2">Estimated memory exceeds budget</td>
+                <td class="py-2">LRU (least recently accessed)</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/cache/"
+           class="inline-flex items-center px-6 py-3 bg-white/5 text-gray-300 font-semibold rounded-lg hover:bg-white/10 transition-colors">
+            &larr; Overview
+        </a>
+    </div>
+
+</DocsLayout>

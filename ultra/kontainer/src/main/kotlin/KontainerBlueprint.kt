@@ -1,5 +1,6 @@
 package io.peekandpoke.ultra.kontainer
 
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
 
 /**
@@ -25,9 +26,9 @@ class KontainerBlueprint internal constructor(
     }
 
     /**
-     * Counts how often times the blueprint was used
+     * Tracks whether the blueprint has been validated
      */
-    private var usages = 0
+    private val validated = AtomicBoolean(false)
 
     /**
      * Collect dynamic service definitions
@@ -136,8 +137,7 @@ class KontainerBlueprint internal constructor(
     fun create(dynamics: DynamicOverrides.Builder.() -> Unit = {}): Kontainer {
 
         // On the first usage we validate the consistency of the container
-        if (usages++ == 0) {
-            // Validate the overall consistency
+        if (validated.compareAndSet(false, true)) {
             validate()
         }
 
@@ -172,6 +172,16 @@ class KontainerBlueprint internal constructor(
     }
 
     private fun validate() {
+
+        // Check for circular dependencies among non-lazy injections
+        val cycles = dependencyLookUp.detectCircularDependencies()
+        if (cycles.isNotEmpty()) {
+            throw KontainerInconsistent(
+                "Kontainer has circular dependencies!\n\n" +
+                        cycles.joinToString("\n") { "  - $it" } + "\n\n" +
+                        "Hint: Use Lazy<T> injection to break the cycle."
+            )
+        }
 
         // Create a container with NO overwritten dynamic services to check to overall consistency
         val container = instantiate(DynamicOverrides(emptyMap()))

@@ -1,6 +1,5 @@
 package io.peekandpoke.funktor.demo.server.api.showcase
 
-import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.demo.common.showcase.EchoResponse
 import io.peekandpoke.funktor.demo.common.showcase.ItemResponse
 import io.peekandpoke.funktor.demo.common.showcase.ServerTimeResponse
@@ -14,7 +13,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-class RestShowcaseApi(converter: OutgoingConverter) : ApiRoutes("showcase-rest", converter) {
+class RestShowcaseApi : ApiRoutes("showcase-rest") {
 
     data class EchoParams(val message: String)
     data class ItemParams(val id: String)

@@ -30,11 +30,11 @@ class CompoundPasswordHasher(
     override val id = "compound"
 
     /** Primary hasher */
-    val primary: PasswordHasher = hashers.firstOrNull()
+    internal val primary: PasswordHasher = hashers.firstOrNull()
         ?: error("You must provide at least one hasher")
 
     /** Maps hasher ids to hashers */
-    val hashers = hashers.associateBy { it.id }
+    internal val hashers = hashers.associateBy { it.id }
 
     /** Uses the first of the [hashers] */
     override fun hash(password: String): PasswordHasher.Hash {

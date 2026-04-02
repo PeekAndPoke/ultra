@@ -1,6 +1,7 @@
 @file:Suppress("PropertyName")
 
 import Deps.Test.configureJvmTests
+import Deps.Test.jvmTestDeps
 import Deps.createVersionFile
 
 plugins {
@@ -51,6 +52,9 @@ kotlin {
         ksp(project(":monko:ksp"))
 
         implementation(project(":funktor-demo:common"))
+
+        // Testing
+        jvmTestDeps()
     }
 }
 

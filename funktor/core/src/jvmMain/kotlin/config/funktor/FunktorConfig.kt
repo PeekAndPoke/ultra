@@ -7,7 +7,7 @@ import io.peekandpoke.ultra.security.jwt.JwtConfig
 import io.peekandpoke.ultra.vault.VaultConfig
 
 data class FunktorConfig(
-    val security: UltraSecurityConfig = UltraSecurityConfig("CHANGE_ME", 0),
+    val security: UltraSecurityConfig = UltraSecurityConfig("CHANGE_ME", 0L),
     val tracking: TrackingConfig = TrackingConfig(),
     val cookieConsent: CookieConsentConfig = CookieConsentConfig(),
     val vault: VaultConfig = VaultConfig(),

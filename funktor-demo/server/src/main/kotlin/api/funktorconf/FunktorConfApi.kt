@@ -1,6 +1,5 @@
 package io.peekandpoke.funktor.demo.server.api.funktorconf
 
-import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.demo.common.funktorconf.FunktorConfApiClient
 import io.peekandpoke.funktor.demo.server.funktorconf.Attendee
 import io.peekandpoke.funktor.demo.server.funktorconf.AttendeesRepo.Companion.asApiModel
@@ -16,9 +15,8 @@ import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.New
 
 class FunktorConfApi(
-    converter: OutgoingConverter,
     private val services: FunktorConfServices,
-) : ApiRoutes("funktor-conf", converter) {
+) : ApiRoutes("funktor-conf") {
 
     data class IdParams(val id: String)
 

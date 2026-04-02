@@ -48,8 +48,7 @@ class MonkoSentMessagesRepo(
         return find { r ->
             filter(Filters.`in`(field { it.lookup.refs }, refs))
             sort(r.createdAt.ts.desc)
-            skip(filter.page * filter.epp)
-            limit(filter.epp)
+            page(page = filter.page, epp = filter.epp)
         }
     }
 }

@@ -1,7 +1,6 @@
 package io.peekandpoke.funktor.demo.server.api.showcase
 
 import io.ktor.sse.*
-import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.demo.common.showcase.ShowcaseApiClient
 import io.peekandpoke.funktor.demo.common.showcase.SseClockEvent
 import io.peekandpoke.funktor.demo.common.showcase.SseMetricsEvent
@@ -14,7 +13,7 @@ import java.lang.management.ManagementFactory
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
-class SseShowcaseApi(converter: OutgoingConverter) : ApiRoutes("showcase-sse", converter) {
+class SseShowcaseApi : ApiRoutes("showcase-sse") {
 
     val sseClock = ShowcaseApiClient.SseClock.mount(Unit::class) {
         docs {

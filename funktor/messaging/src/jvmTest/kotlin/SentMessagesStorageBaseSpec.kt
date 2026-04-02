@@ -133,12 +133,6 @@ abstract class SentMessagesStorageBaseSpec : FreeSpec() {
                 delay(2.milliseconds)
             }
 
-            val page0 = storage.findByRefs(
-                refs = setOf("ref-page"),
-                filter = PagedSearchFilter(search = "", page = 0, epp = 2),
-            ).toList()
-            page0 shouldHaveSize 2
-
             val page1 = storage.findByRefs(
                 refs = setOf("ref-page"),
                 filter = PagedSearchFilter(search = "", page = 1, epp = 2),
@@ -149,7 +143,13 @@ abstract class SentMessagesStorageBaseSpec : FreeSpec() {
                 refs = setOf("ref-page"),
                 filter = PagedSearchFilter(search = "", page = 2, epp = 2),
             ).toList()
-            page2 shouldHaveSize 1
+            page2 shouldHaveSize 2
+
+            val page3 = storage.findByRefs(
+                refs = setOf("ref-page"),
+                filter = PagedSearchFilter(search = "", page = 3, epp = 2),
+            ).toList()
+            page3 shouldHaveSize 1
         }
     }
 }

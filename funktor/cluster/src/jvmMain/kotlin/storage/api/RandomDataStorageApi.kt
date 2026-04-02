@@ -3,7 +3,6 @@ package io.peekandpoke.funktor.cluster.storage.api
 import io.ktor.server.routing.*
 import io.peekandpoke.funktor.cluster.cluster
 import io.peekandpoke.funktor.cluster.storage.domain.RawRandomData
-import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.core.jsonPrinter
 import io.peekandpoke.funktor.inspect.cluster.storage.RandomDataStorageApiClient
 import io.peekandpoke.funktor.inspect.cluster.storage.RawRandomDataModel
@@ -15,7 +14,7 @@ import io.peekandpoke.ultra.model.Paged
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.Stored
 
-class RandomDataStorageApi(converter: OutgoingConverter) : ApiRoutes("random-data", converter) {
+class RandomDataStorageApi : ApiRoutes("random-data") {
 
     val list = RandomDataStorageApiClient.List.mount(QueryParams.List::class) {
         docs {

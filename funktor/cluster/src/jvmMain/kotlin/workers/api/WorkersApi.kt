@@ -1,14 +1,13 @@
 package io.peekandpoke.funktor.cluster.workers.api
 
 import io.peekandpoke.funktor.cluster.cluster
-import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.inspect.cluster.workers.api.WorkersApiClient
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 
-class WorkersApi(converter: OutgoingConverter) : ApiRoutes("workers", converter) {
+class WorkersApi : ApiRoutes("workers") {
 
     data class WorkerParam(
         val worker: String,

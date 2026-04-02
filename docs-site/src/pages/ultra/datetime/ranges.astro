@@ -1,0 +1,316 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {datetimeSidebar} from '../../../data/datetime-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Ranges & Time Slots" sidebar={datetimeSidebar}
+            description="Date ranges, instant ranges, zoned datetime ranges, and time slots with set operations">
+
+    <h1>Ranges &amp; Time Slots</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Time intervals at every level — from calendar date ranges to intra-day time slots —
+        with containment checks, intersection tests, and set operations.
+    </p>
+
+    <h2>MpLocalDateRange</h2>
+
+    <p>An open-ended date range <code>[from, to)</code> — the end date is <em>excluded</em>. This is the natural model
+        for hotel stays, billing periods, and date iteration:</p>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.MpLocalDateRange
+import io.peekandpoke.ultra.datetime.MpLocalDate
+
+val range = MpLocalDateRange(
+    from = MpLocalDate.of(2025, 3, 10),
+    to = MpLocalDate.of(2025, 3, 15),
+)
+
+println(range.numberOfDays)    // 5
+println(range.numberOfNights)  // 5
+
+// Iterate over all dates in the range
+val dates = range.asListOfDates()
+// [2025-03-10, 2025-03-11, 2025-03-12, 2025-03-13, 2025-03-14]
+
+// As a period
+val period = range.asDatePeriod  // MpDatePeriod(0y, 0m, 5d)
+
+// Convert to closed
+val closed = range.asClosedRange  // [2025-03-10, 2025-03-14]
+
+// Boundaries
+val forever = MpLocalDateRange.forever  // Genesis to Doomsday`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>Open-ended ranges are the right default for most business logic. A 3-night hotel stay from March 10 to March
+        13 has <code>from=10, to=13</code> — you check out on the 13th, not stay through it.
+    </Aside>
+
+    <h3>MpLocalDateRange.Partial</h3>
+
+    <p>All range types (except MpLocalTimeSlot) have a <strong>Partial</strong> variant for when only one boundary is
+        known.
+        This is common in search filters, open-ended subscriptions, and "from now on" queries.
+        Convert to a concrete range via <code>asValidRange()</code>, which fills in Genesis or Doomsday for the missing
+        boundary.</p>
+
+    <p>When only one boundary is known — "from March 1 onwards" or "up until June":</p>
+
+    <Code code={`// Only a start — open-ended into the future
+val fromMarch = MpLocalDateRange.Partial(
+    from = MpLocalDate.of(2025, 3, 1),
+    to = null,
+)
+
+// Only an end — open-ended into the past
+val untilJune = MpLocalDateRange.Partial(
+    from = null,
+    to = MpLocalDate.of(2025, 6, 1),
+)
+
+// Both null — represents "any time"
+val anytime = MpLocalDateRange.Partial(from = null, to = null)
+
+// Convert to a concrete range (fills in Genesis/Doomsday)
+val concrete = fromMarch.asValidRange()
+// MpLocalDateRange(2025-03-01, +10000-01-01)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>MpClosedLocalDateRange</h2>
+
+    <p>A closed date range <code>[from, to]</code> — the end date is <em>included</em>:</p>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.MpClosedLocalDateRange
+
+val closed = MpClosedLocalDateRange(
+    from = MpLocalDate.of(2025, 3, 10),
+    to = MpLocalDate.of(2025, 3, 14),
+)
+
+println(closed.numberOfDays)  // 5 (includes both endpoints)
+
+// Convert between range types
+val open = closed.asOpenRange    // MpLocalDateRange [10, 15)
+val back = open.asClosedRange    // MpClosedLocalDateRange [10, 14]`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>MpClosedLocalDateRange.Partial</h3>
+
+    <Code code={`val partial = MpClosedLocalDateRange.Partial(
+    from = MpLocalDate.of(2025, 3, 10),
+    to = null,
+)
+
+val concrete = partial.asValidRange()
+// MpClosedLocalDateRange(2025-03-10, +10000-01-01)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>MpInstantRange</h2>
+
+    <p>A range of absolute timestamps. Supports containment checks, intersection tests, and set subtraction:</p>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.MpInstantRange
+import io.peekandpoke.ultra.datetime.MpInstant
+
+val start = MpInstant.parse("2025-03-15T08:00:00Z")
+val end = MpInstant.parse("2025-03-15T17:00:00Z")
+
+val workday = MpInstantRange(from = start, to = end)
+
+// Containment — is a specific instant inside this range?
+val noon = MpInstant.parse("2025-03-15T12:00:00Z")
+println(workday.contains(noon))   // true
+
+val midnight = MpInstant.parse("2025-03-15T00:00:00Z")
+println(workday.contains(midnight))  // false
+
+// Intersection — do two ranges overlap?
+val afternoon = MpInstantRange(
+    from = MpInstant.parse("2025-03-15T13:00:00Z"),
+    to = MpInstant.parse("2025-03-15T20:00:00Z"),
+)
+println(workday.intersects(afternoon))  // true
+
+val nextDay = MpInstantRange(
+    from = MpInstant.parse("2025-03-16T08:00:00Z"),
+    to = MpInstant.parse("2025-03-16T17:00:00Z"),
+)
+println(workday.intersects(nextDay))  // false
+
+// Cut — subtract one range from another
+val remaining = workday.cutAway(afternoon)
+// result covers 08:00–13:00 only
+
+// Boundaries
+val forever = MpInstantRange.forever  // Genesis to Doomsday`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>MpInstantRange.Partial</h3>
+
+    <Code code={`val partial = MpInstantRange.Partial(
+    from = MpInstant.parse("2025-03-15T08:00:00Z"),
+    to = null,  // open-ended
+)
+
+val concrete = partial.asValidRange()
+// MpInstantRange(2025-03-15T08:00:00Z, +10000-01-01T00:00:00Z)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>MpZonedDateTimeRange</h2>
+
+    <p>A timezone-aware datetime range. Knows its duration and whether it has open boundaries:</p>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.MpZonedDateTimeRange
+import io.peekandpoke.ultra.datetime.MpTimezone
+
+val berlin = MpTimezone.of("Europe/Berlin")
+
+val range = MpZonedDateTimeRange(
+    from = MpInstant.parse("2025-03-15T08:00:00Z").atZone(berlin),
+    to = MpInstant.parse("2025-03-15T17:00:00Z").atZone(berlin),
+)
+
+println(range.isValid)    // true — from is before to
+println(range.hasStart)   // true
+println(range.hasEnd)     // true
+println(range.isOpen)     // false — both boundaries present
+println(range.duration)   // 9 hours`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>MpZonedDateTimeRange.Partial</h3>
+
+    <Code code={`val partial = MpZonedDateTimeRange.Partial(
+    from = MpInstant.parse("2025-03-15T08:00:00Z").atZone(berlin),
+    to = null,  // open-ended
+)
+
+val concrete = partial.asValidRange()
+// fills in Doomsday as the end`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>MpLocalTimeSlot</h2>
+
+    <p>A time range within a single day. Supports merging, gap detection, splitting, and set subtraction — purpose-built
+        for scheduling and availability calendars:</p>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.MpLocalTimeSlot
+import io.peekandpoke.ultra.datetime.MpLocalTime
+
+val morning = MpLocalTimeSlot(
+    from = MpLocalTime.of(9, 0),
+    to = MpLocalTime.of(12, 0),
+)
+
+val afternoon = MpLocalTimeSlot(
+    from = MpLocalTime.of(13, 0),
+    to = MpLocalTime.of(17, 0),
+)
+
+// Do they touch or overlap?
+println(morning.touches(afternoon))  // false (gap from 12:00 to 13:00)
+
+// Merge adjacent/overlapping slots
+val extended = MpLocalTimeSlot(
+    from = MpLocalTime.of(11, 0),
+    to = MpLocalTime.of(14, 0),
+)
+val merged = morning.mergeWith(extended)
+// MpLocalTimeSlot(09:00, 14:00)
+
+// Cut — remove one slot from another
+val remaining = afternoon.cutAway(extended)
+// MpLocalTimeSlot(14:00, 17:00)
+
+// Find gaps between multiple slots
+val slots = listOf(morning, afternoon)
+val withGaps = MpLocalTimeSlot.splitWithGaps(slots)
+// includes the gap from 12:00 to 13:00
+
+// Formatting
+println(morning.formatHhMm())    // "09:00 - 12:00"
+println(morning.formatHhMmSs())  // "09:00:00 - 12:00:00"`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Range operations summary</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold">Operation</th>
+                <th class="py-2 text-white font-semibold text-center">DateRange</th>
+                <th class="py-2 text-white font-semibold text-center">InstantRange</th>
+                <th class="py-2 text-white font-semibold text-center">ZonedRange</th>
+                <th class="py-2 text-white font-semibold text-center">TimeSlot</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>contains()</code></td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>intersects()</code></td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>cutAway()</code></td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>touches()</code></td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>mergeWith()</code></td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>splitWithGaps()</code></td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>asListOfDates()</code></td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>duration</code></td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center">-</td>
+            </tr>
+            <tr>
+                <td class="py-2">Partial variant</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center">-</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/datetime/kronos"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Kronos Clock &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

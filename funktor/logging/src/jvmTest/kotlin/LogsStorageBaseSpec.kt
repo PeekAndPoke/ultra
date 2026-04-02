@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.logging
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.funktor.inspect.logging.LogsFilter
 import io.peekandpoke.funktor.logging.karango.KarangoLogEntry
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBuilder

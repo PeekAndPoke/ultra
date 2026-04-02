@@ -55,7 +55,7 @@ class TablePage(ctx: NoProps) : PureComponent(ctx) {
             renderDefinition()
             renderStructured()
 
-            ui.dividing.header H2 { +"Types" }
+            ui.dividing.header H2 { +"States" }
 
             renderPositiveOrNegative()
             renderError()
@@ -67,7 +67,15 @@ class TablePage(ctx: NoProps) : PureComponent(ctx) {
 
             ui.dividing.header H2 { +"Variations" }
 
-            readTheFomanticUiDocs("https://fomantic-ui.com/collections/table.html#single-line")
+            renderSingleLine()
+            renderStriped()
+            renderBasic()
+            renderCompact()
+            renderPadded()
+            renderSelectable()
+            renderInverted()
+            renderCollapsing()
+            renderFixed()
         }
     }
 
@@ -642,5 +650,422 @@ class TablePage(ctx: NoProps) : PureComponent(ctx) {
         ui.dividing.header H3 { +"Marked" }
 
         readTheFomanticUiDocs("https://fomantic-ui.com/collections/table.html#marked")
+    }
+
+    private fun FlowContent.renderSingleLine() = example {
+        ui.header H3 { +"Single Line" }
+
+        p { +"A table can specify that its cell contents should remain on a single line and not wrap" }
+
+        HorizontalContentAndCode(
+            ExtractedCodeBlocks.pages_collections_table_TablePage_kt_renderSingleLine,
+        ) {
+            // <CodeBlock renderSingleLine>
+            ui.single.line.table Table {
+                thead {
+                    tr {
+                        th { +"Name" }
+                        th { +"Registration Date" }
+                        th { +"E-mail" }
+                    }
+                }
+                tbody {
+                    tr {
+                        td { +"John" }
+                        td { +"September 14, 2014" }
+                        td { +"john@example.com" }
+                    }
+                    tr {
+                        td { +"Jamie" }
+                        td { +"January 11, 2014" }
+                        td { +"jamie@example.com" }
+                    }
+                    tr {
+                        td { +"Jill" }
+                        td { +"May 22, 2014" }
+                        td { +"jill@example.com" }
+                    }
+                }
+            }
+            // </CodeBlock>
+        }
+    }
+
+    private fun FlowContent.renderStriped() = example {
+        ui.header H3 { +"Striped" }
+
+        p { +"A table can stripe alternate rows of content with a darker color to increase contrast" }
+
+        HorizontalContentAndCode(
+            ExtractedCodeBlocks.pages_collections_table_TablePage_kt_renderStriped,
+        ) {
+            // <CodeBlock renderStriped>
+            ui.striped.table Table {
+                thead {
+                    tr {
+                        th { +"Name" }
+                        th { +"Age" }
+                        th { +"Job" }
+                    }
+                }
+                tbody {
+                    tr {
+                        td { +"James" }
+                        td { +"24" }
+                        td { +"Engineer" }
+                    }
+                    tr {
+                        td { +"Jill" }
+                        td { +"26" }
+                        td { +"Designer" }
+                    }
+                    tr {
+                        td { +"Elyse" }
+                        td { +"30" }
+                        td { +"Manager" }
+                    }
+                }
+            }
+            // </CodeBlock>
+        }
+    }
+
+    private fun FlowContent.renderBasic() = example {
+        ui.header H3 { +"Basic" }
+
+        p { +"A table can reduce its complexity to increase readability" }
+
+        HorizontalContentAndCode(
+            ExtractedCodeBlocks.pages_collections_table_TablePage_kt_renderBasic_1,
+        ) {
+            // <CodeBlock renderBasic_1>
+            ui.basic.table Table {
+                thead {
+                    tr {
+                        th { +"Name" }
+                        th { +"Age" }
+                        th { +"Job" }
+                    }
+                }
+                tbody {
+                    tr {
+                        td { +"James" }
+                        td { +"24" }
+                        td { +"Engineer" }
+                    }
+                    tr {
+                        td { +"Jill" }
+                        td { +"26" }
+                        td { +"Designer" }
+                    }
+                    tr {
+                        td { +"Elyse" }
+                        td { +"30" }
+                        td { +"Manager" }
+                    }
+                }
+            }
+            // </CodeBlock>
+        }
+
+        HorizontalContentAndCode(
+            ExtractedCodeBlocks.pages_collections_table_TablePage_kt_renderBasic_2,
+        ) {
+            // <CodeBlock renderBasic_2>
+            ui.very.basic.table Table {
+                thead {
+                    tr {
+                        th { +"Name" }
+                        th { +"Age" }
+                        th { +"Job" }
+                    }
+                }
+                tbody {
+                    tr {
+                        td { +"James" }
+                        td { +"24" }
+                        td { +"Engineer" }
+                    }
+                    tr {
+                        td { +"Jill" }
+                        td { +"26" }
+                        td { +"Designer" }
+                    }
+                    tr {
+                        td { +"Elyse" }
+                        td { +"30" }
+                        td { +"Manager" }
+                    }
+                }
+            }
+            // </CodeBlock>
+        }
+    }
+
+    private fun FlowContent.renderCompact() = example {
+        ui.header H3 { +"Compact" }
+
+        p { +"A table may sometimes need to be more compact to make more rows visible at a time" }
+
+        HorizontalContentAndCode(
+            ExtractedCodeBlocks.pages_collections_table_TablePage_kt_renderCompact,
+        ) {
+            // <CodeBlock renderCompact>
+            ui.compact.table Table {
+                thead {
+                    tr {
+                        th { +"Name" }
+                        th { +"Age" }
+                        th { +"Job" }
+                    }
+                }
+                tbody {
+                    tr {
+                        td { +"James" }
+                        td { +"24" }
+                        td { +"Engineer" }
+                    }
+                    tr {
+                        td { +"Jill" }
+                        td { +"26" }
+                        td { +"Designer" }
+                    }
+                    tr {
+                        td { +"Elyse" }
+                        td { +"30" }
+                        td { +"Manager" }
+                    }
+                }
+            }
+            // </CodeBlock>
+        }
+    }
+
+    private fun FlowContent.renderPadded() = example {
+        ui.header H3 { +"Padded" }
+
+        p { +"A table may sometimes need to be more padded for legibility" }
+
+        HorizontalContentAndCode(
+            ExtractedCodeBlocks.pages_collections_table_TablePage_kt_renderPadded_1,
+        ) {
+            // <CodeBlock renderPadded_1>
+            ui.padded.table Table {
+                thead {
+                    tr {
+                        th { +"Name" }
+                        th { +"Age" }
+                        th { +"Job" }
+                    }
+                }
+                tbody {
+                    tr {
+                        td { +"James" }
+                        td { +"24" }
+                        td { +"Engineer" }
+                    }
+                    tr {
+                        td { +"Jill" }
+                        td { +"26" }
+                        td { +"Designer" }
+                    }
+                    tr {
+                        td { +"Elyse" }
+                        td { +"30" }
+                        td { +"Manager" }
+                    }
+                }
+            }
+            // </CodeBlock>
+        }
+
+        HorizontalContentAndCode(
+            ExtractedCodeBlocks.pages_collections_table_TablePage_kt_renderPadded_2,
+        ) {
+            // <CodeBlock renderPadded_2>
+            ui.very.padded.table Table {
+                thead {
+                    tr {
+                        th { +"Name" }
+                        th { +"Age" }
+                        th { +"Job" }
+                    }
+                }
+                tbody {
+                    tr {
+                        td { +"James" }
+                        td { +"24" }
+                        td { +"Engineer" }
+                    }
+                    tr {
+                        td { +"Jill" }
+                        td { +"26" }
+                        td { +"Designer" }
+                    }
+                    tr {
+                        td { +"Elyse" }
+                        td { +"30" }
+                        td { +"Manager" }
+                    }
+                }
+            }
+            // </CodeBlock>
+        }
+    }
+
+    private fun FlowContent.renderSelectable() = example {
+        ui.header H3 { +"Selectable" }
+
+        p { +"A table can have its rows appear selectable" }
+
+        HorizontalContentAndCode(
+            ExtractedCodeBlocks.pages_collections_table_TablePage_kt_renderSelectable,
+        ) {
+            // <CodeBlock renderSelectable>
+            ui.selectable.celled.table Table {
+                thead {
+                    tr {
+                        th { +"Name" }
+                        th { +"Age" }
+                        th { +"Job" }
+                    }
+                }
+                tbody {
+                    tr {
+                        td { +"James" }
+                        td { +"24" }
+                        td { +"Engineer" }
+                    }
+                    tr {
+                        td { +"Jill" }
+                        td { +"26" }
+                        td { +"Designer" }
+                    }
+                    tr {
+                        td { +"Elyse" }
+                        td { +"30" }
+                        td { +"Manager" }
+                    }
+                }
+            }
+            // </CodeBlock>
+        }
+    }
+
+    private fun FlowContent.renderInverted() = example {
+        ui.header H3 { +"Inverted" }
+
+        p { +"A table's colors can be inverted" }
+
+        HorizontalContentAndCode(
+            ExtractedCodeBlocks.pages_collections_table_TablePage_kt_renderInverted,
+        ) {
+            // <CodeBlock renderInverted>
+            ui.inverted.table Table {
+                thead {
+                    tr {
+                        th { +"Name" }
+                        th { +"Age" }
+                        th { +"Job" }
+                    }
+                }
+                tbody {
+                    tr {
+                        td { +"James" }
+                        td { +"24" }
+                        td { +"Engineer" }
+                    }
+                    tr {
+                        td { +"Jill" }
+                        td { +"26" }
+                        td { +"Designer" }
+                    }
+                    tr {
+                        td { +"Elyse" }
+                        td { +"30" }
+                        td { +"Manager" }
+                    }
+                }
+            }
+            // </CodeBlock>
+        }
+    }
+
+    private fun FlowContent.renderCollapsing() = example {
+        ui.header H3 { +"Collapsing" }
+
+        p { +"A table can be collapsing, taking up only as much space as its rows" }
+
+        HorizontalContentAndCode(
+            ExtractedCodeBlocks.pages_collections_table_TablePage_kt_renderCollapsing,
+        ) {
+            // <CodeBlock renderCollapsing>
+            ui.collapsing.table Table {
+                thead {
+                    tr {
+                        th { +"Name" }
+                        th { +"Age" }
+                        th { +"Job" }
+                    }
+                }
+                tbody {
+                    tr {
+                        td { +"James" }
+                        td { +"24" }
+                        td { +"Engineer" }
+                    }
+                    tr {
+                        td { +"Jill" }
+                        td { +"26" }
+                        td { +"Designer" }
+                    }
+                    tr {
+                        td { +"Elyse" }
+                        td { +"30" }
+                        td { +"Manager" }
+                    }
+                }
+            }
+            // </CodeBlock>
+        }
+    }
+
+    private fun FlowContent.renderFixed() = example {
+        ui.header H3 { +"Fixed" }
+
+        p { +"A table can use fixed a special faster form of table rendering that does not resize table cells based on content" }
+
+        HorizontalContentAndCode(
+            ExtractedCodeBlocks.pages_collections_table_TablePage_kt_renderFixed,
+        ) {
+            // <CodeBlock renderFixed>
+            ui.fixed.table Table {
+                thead {
+                    tr {
+                        th { +"Name" }
+                        th { +"Age" }
+                        th { +"Job" }
+                    }
+                }
+                tbody {
+                    tr {
+                        td { +"James" }
+                        td { +"24" }
+                        td { +"Engineer" }
+                    }
+                    tr {
+                        td { +"Jill" }
+                        td { +"26" }
+                        td { +"Designer" }
+                    }
+                    tr {
+                        td { +"Elyse" }
+                        td { +"30" }
+                        td { +"Manager" }
+                    }
+                }
+            }
+            // </CodeBlock>
+        }
     }
 }

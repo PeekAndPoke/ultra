@@ -178,7 +178,7 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
         // Is this the exact type that we store?
         return type == storedType.type.classifier ||
                 // Or is the stored type a super type?
-                storedType.type.classifier in (type as KClass<*>).supertypes.map { it.classifier }
+                (type as? KClass<*>)?.supertypes?.any { it.classifier == storedType.type.classifier } == true
     }
 
     /**

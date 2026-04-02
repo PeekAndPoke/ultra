@@ -89,7 +89,25 @@ unsub()
 
 <p>Each operator only subscribes to its upstream when it gains its first subscriber, and unsubscribes when its last subscriber leaves. Unused branches cost nothing.</p>
 
-<div class="not-prose mt-8 flex gap-4">
+    <h2>Permanent subscriptions</h2>
+
+    <p>Sometimes you want a stream to stay subscribed to its upstream forever — for example, a derived stream that must
+        always
+        be ready. Use <code>permanent()</code> to pin a subscription that never tears down:</p>
+
+    <Code code={`val source = StreamSource(0)
+
+// Always-active derived stream with a side effect
+val logged = source
+    .map { it * 2 }
+    .permanent { println("Value changed: ${'$'}it") }
+
+// Or just pin the subscription without a handler
+val pinned = source.map { it + 1 }.permanent()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Use this sparingly — permanent subscriptions bypass the lazy teardown that keeps unused branches free.</p>
+
+    <div class="not-prose mt-8 flex gap-4">
   <a href="/ultra/streams/js-specific" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
     JS-specific operators &rarr;
   </a>

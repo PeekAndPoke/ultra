@@ -162,7 +162,7 @@ class DatabaseGraphBuilder(
 
             DatabaseGraphModel.Repo(
                 id = DatabaseGraphModel.Repo.Id(name = repo.name, connection = repo.connection),
-                connection = "",
+                connection = repo.connection,
                 storedClasses = storedClasses,
             )
         }

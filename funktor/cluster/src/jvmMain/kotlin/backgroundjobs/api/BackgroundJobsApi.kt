@@ -6,7 +6,6 @@ import io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobExecuti
 import io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobQueued
 import io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobRetryPolicy
 import io.peekandpoke.funktor.cluster.cluster
-import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.core.jsonPrinter
 import io.peekandpoke.funktor.inspect.cluster.backgroundjobs.BackgroundJobArchivedModel
 import io.peekandpoke.funktor.inspect.cluster.backgroundjobs.BackgroundJobQueuedModel
@@ -20,7 +19,7 @@ import io.peekandpoke.ultra.model.Paged
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.Stored
 
-class BackgroundJobsApi(converter: OutgoingConverter) : ApiRoutes("background-jobs", converter) {
+class BackgroundJobsApi : ApiRoutes("background-jobs") {
 
     data class PagingParam(
         val page: Int = 1,

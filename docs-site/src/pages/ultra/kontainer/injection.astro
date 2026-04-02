@@ -149,7 +149,15 @@ val service = kontainer.get(MyService::class)
 service.run()
 // NOW ExpensiveService is created`} lang="kotlin" theme="vitesse-dark" />
 
-<h2>Breaking circular dependencies with Lazy</h2>
+  <p>For a more idiomatic Kotlin style, use <code>by</code> delegation to unwrap the lazy automatically:</p>
+
+  <Code code={`class MyService(lazyService: Lazy<ExpensiveService>) {
+    private val service by lazyService
+
+    fun run() = service.doWork()
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+  <h2>Breaking circular dependencies with Lazy</h2>
 
 <p>When two services need each other, make one of them lazy to break the cycle:</p>
 

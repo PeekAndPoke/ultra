@@ -5,7 +5,6 @@ import io.ktor.http.HttpMethod.Companion.Delete
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.HttpMethod.Companion.Put
-import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.core.broker.Routes
 import io.peekandpoke.funktor.core.broker.TypedRoute
 import io.peekandpoke.funktor.core.broker.UriPattern
@@ -29,13 +28,13 @@ annotation class RestSecurityRuleMarker
 /**
  * Base class for creating api routes
  */
-abstract class ApiRoutes(val name: String, converter: OutgoingConverter, mountPoint: String = "") :
-    Routes(converter, mountPoint) {
+abstract class ApiRoutes(val name: String, mountPoint: String = "") :
+    Routes(mountPoint) {
 
     /** list with all registered routes */
     private val allRoutes = mutableListOf<ApiRoute<*>>()
 
-    val routeBuilder = RouteBuilder(converter, mountPoint)
+    val routeBuilder = RouteBuilder(mountPoint)
 
     /** A list with all registered routes */
     val all get(): List<ApiRoute<*>> = allRoutes.toList()
@@ -163,7 +162,7 @@ abstract class ApiRoutes(val name: String, converter: OutgoingConverter, mountPo
         allRoutes.add(route)
     }
 
-    class RouteBuilder(val converter: OutgoingConverter, private val mountPoint: String) {
+    class RouteBuilder(private val mountPoint: String) {
 
         ////  GET  ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -324,7 +323,7 @@ abstract class ApiRoutes(val name: String, converter: OutgoingConverter, mountPo
         inline fun <reified RESPONSE> routePlain(method: HttpMethod, uri: String) =
             ApiRoute.Plain<RESPONSE>(
                 method = method,
-                route = TypedRoute.Plain(converter, uri.asPattern),
+                route = TypedRoute.Plain(uri.asPattern),
                 responseType = kType()
             )
 
@@ -333,7 +332,7 @@ abstract class ApiRoutes(val name: String, converter: OutgoingConverter, mountPo
          */
         inline fun <reified PARAMS> routeSse(uri: String) =
             ApiRoute.Sse<PARAMS>(
-                route = TypedRoute.Sse(converter, kType(), uri.asPattern),
+                route = TypedRoute.Sse(kType(), uri.asPattern),
                 responseType = kType()
             )
 
@@ -343,7 +342,7 @@ abstract class ApiRoutes(val name: String, converter: OutgoingConverter, mountPo
         inline fun <reified PARAMS, reified RESPONSE> routeParams(method: HttpMethod, uri: String) =
             ApiRoute.WithParams<PARAMS, RESPONSE>(
                 method = method,
-                route = TypedRoute.WithParams(converter, kType(), uri.asPattern),
+                route = TypedRoute.WithParams(kType(), uri.asPattern),
                 responseType = kType()
             )
 
@@ -353,7 +352,7 @@ abstract class ApiRoutes(val name: String, converter: OutgoingConverter, mountPo
         inline fun <reified BODY, reified RESPONSE> routeBody(method: HttpMethod, uri: String) =
             ApiRoute.WithBody<BODY, RESPONSE>(
                 method = method,
-                route = TypedRoute.Plain(converter, uri.asPattern),
+                route = TypedRoute.Plain(uri.asPattern),
                 bodyType = kType(),
                 responseType = kType()
             )
@@ -364,7 +363,7 @@ abstract class ApiRoutes(val name: String, converter: OutgoingConverter, mountPo
         inline fun <reified PARAMS, reified BODY, reified RESPONSE> routeParamsBody(method: HttpMethod, uri: String) =
             ApiRoute.WithBodyAndParams<PARAMS, BODY, RESPONSE>(
                 method = method,
-                route = TypedRoute.WithParams(converter, kType(), uri.asPattern),
+                route = TypedRoute.WithParams(kType(), uri.asPattern),
                 bodyType = kType(),
                 responseType = kType()
             )

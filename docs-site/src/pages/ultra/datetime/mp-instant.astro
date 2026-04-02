@@ -1,0 +1,173 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {datetimeSidebar} from '../../../data/datetime-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="MpInstant" sidebar={datetimeSidebar}
+            description="Absolute point in time — timestamps, epoch millis, and timezone-aware arithmetic">
+
+    <h1>MpInstant</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        An absolute point in time, independent of any timezone. The right type for timestamps,
+        database storage, and event ordering.
+    </p>
+
+    <h2>When to use MpInstant</h2>
+
+    <ul>
+        <li>Recording when something happened ("this order was placed at ...")</li>
+        <li>Storing timestamps in databases and APIs</li>
+        <li>Comparing events across timezones</li>
+        <li>Measuring durations between events</li>
+    </ul>
+
+    <Aside>If the question is "when did this happen?" the answer is an MpInstant. If the question is "what date is it?"
+        you need a timezone first.
+    </Aside>
+
+    <h2>Creating</h2>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.MpInstant
+
+// From the clock (see Kronos)
+val now = kronos.instantNow()
+
+// From an ISO string
+val parsed = MpInstant.parse("2025-03-15T10:30:00Z")
+
+// Safe parsing — returns null on failure
+val maybe = MpInstant.tryParse("not-valid")  // null
+
+// From epoch
+val fromMillis = MpInstant.fromEpochMillis(1710499800000L)
+val fromSeconds = MpInstant.fromEpochSeconds(1710499800L)
+
+// Boundary constants
+val beginning = MpInstant.Genesis   // -10000-01-01T00:00:00Z
+val end = MpInstant.Doomsday        // +10000-01-01T00:00:00Z
+val epoch = MpInstant.Epoch          // 1970-01-01T00:00:00Z`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Converting</h2>
+
+    <Code code={`val instant = MpInstant.parse("2025-06-15T12:00:00Z")
+
+// To ISO string and epoch
+instant.toIsoString()     // "2025-06-15T12:00:00Z"
+instant.toEpochMillis()   // epoch milliseconds
+instant.toEpochSeconds()  // epoch seconds
+
+// To zoned — REQUIRES a timezone
+val berlin = instant.atZone(MpTimezone.of("Europe/Berlin"))  // 14:00 CEST
+val tokyo = instant.atZone(MpTimezone.of("Asia/Tokyo"))      // 21:00 JST
+val utc = instant.atUTC()                                     // 12:00 UTC
+val local = instant.atSystemDefaultZone()                     // system tz
+
+// To local date — REQUIRES a timezone
+val date = instant.toLocalDate(MpTimezone.of("Europe/Berlin"))  // 2025-06-15`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>What MpInstant does not have</h2>
+
+    <p>An instant has no concept of "day", "month", "hour", or "day of week" — those are local concepts that depend on
+        where you are.
+        You will not find properties like <code>.year</code>, <code>.dayOfWeek</code>, or <code>.hour</code> on
+        MpInstant.
+        To access those, convert to a zoned or local type first.</p>
+
+    <Code code={`val instant = MpInstant.parse("2025-06-15T12:00:00Z")
+
+// WRONG: instant.year — does not compile
+// WRONG: instant.dayOfWeek — does not compile
+
+// RIGHT: convert first, then access
+val zoned = instant.atZone(MpTimezone.of("Europe/Berlin"))
+println(zoned.year)       // 2025
+println(zoned.dayOfWeek)  // SUNDAY`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Arithmetic with Duration (timezone-free)</h2>
+
+    <p>Adding or subtracting a <code>Duration</code> is always unambiguous — it's absolute time, no timezone needed:</p>
+
+    <Code code={`import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.days
+
+val instant = MpInstant.parse("2025-03-09T06:00:00Z")
+
+val later = instant + 2.hours       // 2025-03-09T08:00:00Z
+val earlier = instant - 30.minutes  // 2025-03-09T05:30:00Z
+
+// Duration between two instants
+val other = MpInstant.parse("2025-03-10T06:00:00Z")
+val diff = other - instant  // 24 hours exactly`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Calendar arithmetic (requires timezone)</h2>
+
+    <p>Adding "1 day" in calendar terms can be 23, 24, or 25 hours depending on DST.
+        The library requires you to specify which timezone you mean:</p>
+
+    <p><strong>Important:</strong> <code>plus(1.days)</code> and <code>plus(1, DateTimeUnit.DAY, tz)</code> are
+        different operations.
+        The first adds exactly 24 hours. The second adds one calendar day in the given timezone — which is DST-aware and
+        may be 23 or 25 hours:</p>
+
+    <Code code={`val instant = MpInstant.parse("2025-03-09T07:00:00Z")
+val nyTz = MpTimezone.of("America/New_York")
+
+// plus(1.days) — exactly 24 hours, always, no timezone needed
+val exactly24h = instant + 1.days
+
+// plus(1, DateTimeUnit.DAY, tz) — one calendar day, DST-aware
+val oneCalendarDay = instant.plus(1, DateTimeUnit.DAY, nyTz)
+// On this date in New York, DST springs forward — so "one day" is only 23 real hours`} lang="kotlin"
+          theme="vitesse-dark"/>
+
+    <p>More calendar arithmetic examples:</p>
+
+    <Code code={`import kotlinx.datetime.DateTimeUnit
+
+val instant = MpInstant.parse("2025-03-09T07:00:00Z")
+val nyTz = MpTimezone.of("America/New_York")
+
+// Add 3 calendar months
+val threeMonths = instant.plus(3, DateTimeUnit.MONTH, nyTz)
+
+// Using a period
+val period = MpDateTimePeriod.of(months = 1, days = 15, hours = 6)
+val future = instant.plus(period, nyTz)
+
+// Subtraction works the same way
+val yesterday = instant.minus(1, DateTimeUnit.DAY, nyTz)
+val past = instant.minus(period, nyTz)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>If you forget the timezone, the code won't compile. That's the point.</Aside>
+
+    <h2>Creating ranges</h2>
+
+    <Code code={`// Range from a duration
+val range = instant.toRange(2.hours)  // MpInstantRange
+
+// Range from a period (requires timezone for calendar math)
+val monthRange = instant.toRange(
+    MpDateTimePeriod.of(months = 1),
+    MpTimezone.of("Europe/Berlin"),
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>JVM interop</h2>
+
+    <Code code={`// MpInstant -> java.time.Instant
+val javaInstant: java.time.Instant = mpInstant.jvm
+
+// java.time.Instant -> MpInstant
+val mpInstant: MpInstant = javaInstant.mp`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/datetime/mp-local-date"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            MpLocalDate &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

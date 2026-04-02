@@ -1,8 +1,13 @@
 ---
 // WebGL engraved Hilbert curve background with normal-map lighting that follows the mouse
+interface Props {
+    tint?: string; // hex color for the main light, e.g. "#ffd4a8"
+}
+const {tint} = Astro.props;
 ---
 
-<canvas id="hilbert-bg" class="fixed inset-0 -z-10 w-full h-full" style="background-color: #0e0d0b;"></canvas>
+<canvas id="hilbert-bg" class="fixed inset-0 -z-10 w-full h-full" style="background-color: #0e0d0b;"
+        data-tint={tint}></canvas>
 
 <script>
     import * as THREE from 'three';
@@ -60,12 +65,14 @@
         fillLight.position.set(-1, -0.5, 0.5);
         scene.add(fillLight);
 
-        // Light color transitions
-        const defaultColor = new THREE.Color(0xffd4a8);
-        const hoverColor = new THREE.Color(0xffd4a8);
-        const targetColor = new THREE.Color(0xffd4a8);
-        const defaultIntensity = 0.65;
-        const hoverIntensity = 1.2;
+        // Light color transitions — optionally tinted via data attribute
+        const tintHex = canvas.dataset.tint;
+        const baseColor = tintHex ? new THREE.Color(tintHex) : new THREE.Color(0xffd4a8);
+        const defaultColor = baseColor.clone();
+        const hoverColor = baseColor.clone();
+        const targetColor = baseColor.clone();
+        const defaultIntensity = 0.85;
+        const hoverIntensity = 1.5;
         let targetIntensity = defaultIntensity;
 
         document.addEventListener('pointerover', (e) => {

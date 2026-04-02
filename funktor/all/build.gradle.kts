@@ -4,6 +4,7 @@ import Deps.Test.configureJvmTests
 
 plugins {
     kotlin("multiplatform")
+    kotlin("plugin.serialization")
     id("io.kotest")
     id("com.google.devtools.ksp")
     id("com.vanniktech.maven.publish")
@@ -33,14 +34,15 @@ kotlin {
         commonMain {
             dependencies {
                 // add all funktor sub-projects
-                api(project(":funktor:core"))
                 api(project(":funktor:auth"))
                 api(project(":funktor:cluster"))
+                api(project(":funktor:core"))
                 api(project(":funktor:inspect"))
                 api(project(":funktor:insights"))
                 api(project(":funktor:logging"))
-                api(project(":funktor:rest"))
                 api(project(":funktor:messaging"))
+                api(project(":funktor:rest"))
+                api(project(":funktor:testing"))
             }
         }
 
@@ -76,9 +78,16 @@ kotlin {
                 Deps.Test {
                     jvmTestDeps()
                 }
+                implementation(project(":karango:core"))
+                implementation(project(":monko:core"))
             }
         }
     }
+}
+
+dependencies {
+    add("kspJvmTest", project(":karango:ksp"))
+    add("kspJvmTest", project(":monko:ksp"))
 }
 
 tasks {

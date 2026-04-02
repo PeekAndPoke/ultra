@@ -1,0 +1,152 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {datetimeSidebar} from '../../../data/datetime-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="MpLocalTime" sidebar={datetimeSidebar}
+            description="A time of day without date or timezone — for schedules, business hours, and time patterns">
+
+    <h1>MpLocalTime</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        A time of day — no date, no timezone. The right type for business hours, alarm times, and recurring schedule
+        patterns.
+    </p>
+
+    <h2>When to use MpLocalTime</h2>
+
+    <ul>
+        <li>Business hours ("open 9:00 to 17:00")</li>
+        <li>Alarm or reminder times</li>
+        <li>Time-of-day patterns in scheduling</li>
+        <li>Time slots and availability windows (see <a href="/ultra/datetime/ranges">MpLocalTimeSlot</a>)</li>
+    </ul>
+
+    <h2>Creating</h2>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.MpLocalTime
+
+val time = MpLocalTime.of(14, 30, 15)             // 14:30:15
+val withMillis = MpLocalTime.of(14, 30, 15, 500)  // 14:30:15.500
+val parsed = MpLocalTime.parse("14:30:15")
+val maybe = MpLocalTime.tryParse("not-a-time")    // null
+
+// From raw units
+val fromMillis = MpLocalTime.ofMilliSeconds(52_215_000L)  // 14:30:15
+val fromSeconds = MpLocalTime.ofSecondOfDay(52_215L)       // 14:30:15
+
+// Constants
+val midnight = MpLocalTime.Min   // 00:00:00.000
+val endOfDay = MpLocalTime.Max   // 23:59:59.999
+val noon = MpLocalTime.Noon      // 12:00:00.000`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Properties</h2>
+
+    <Code code={`val time = MpLocalTime.of(14, 30, 15, 500)
+
+time.hour          // 14
+time.minute        // 30
+time.second        // 15
+time.milliSecond   // 500`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>What MpLocalTime can do</h2>
+
+    <p>MpLocalTime is deliberately small. A time of day without a date can only support a few operations safely:</p>
+
+    <Code code={`import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+
+val time = MpLocalTime.of(14, 30)
+
+// Add and subtract Duration — wraps around midnight
+val later = time.plus(2.hours)       // 16:30
+val earlier = time.minus(30.minutes) // 14:00
+val wrapped = time.plus(12.hours)    // 02:30 (next day, wraps)
+
+// Duration between two times
+val other = MpLocalTime.of(17, 0)
+val diff = other - time  // 2h 30m
+
+// Convert to raw milliseconds of day
+time.inWholeMilliSeconds()  // 52200000`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>What MpLocalTime does not have</h2>
+
+    <p>A time of day has no calendar context, so these operations are not available:</p>
+
+    <ul>
+        <li>No date components (<code>.year</code>, <code>.month</code>, <code>.day</code>)</li>
+        <li>No calendar arithmetic (<code>plusDays</code>, <code>plusMonths</code>)</li>
+        <li>No conversion to instant or zoned datetime (where would it go without a date?)</li>
+        <li>No timezone offset information</li>
+    </ul>
+
+    <p>To combine a time with a date, use <code>MpLocalDate.atTime()</code>:</p>
+
+    <Code code={`val date = MpLocalDate.of(2025, 3, 15)
+val time = MpLocalTime.of(14, 30)
+
+// Combine into a LocalDateTime
+val dt = date.atTime(time)  // 2025-03-15T14:30
+
+// Or directly into a ZonedDateTime
+val zoned = date.atTime(time, MpTimezone.of("Europe/Berlin"))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Formatting</h2>
+
+    <Code code={`val time = MpLocalTime.of(14, 30, 15)
+
+time.toIsoString()     // "14:30:15.000"
+time.formatHhMm()      // "14:30"
+time.formatHhMmSs()    // "14:30:15"
+time.format("HH:mm")   // "14:30"`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Time constants</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold">Constant</th>
+                <th class="py-2 text-white font-semibold">Value</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>MILLIS_PER_SECOND</code></td>
+                <td class="py-2">1,000</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>MILLIS_PER_MINUTE</code></td>
+                <td class="py-2">60,000</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>MILLIS_PER_HOUR</code></td>
+                <td class="py-2">3,600,000</td>
+            </tr>
+            <tr>
+                <td class="py-2"><code>MILLIS_PER_DAY</code></td>
+                <td class="py-2">86,400,000</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>JVM interop</h2>
+
+    <Code code={`// MpLocalTime -> java.time.LocalTime
+val javaTime: java.time.LocalTime = mpTime.jvm
+
+// java.time.LocalTime -> MpLocalTime
+val mpTime: MpLocalTime = javaTime.mp`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/datetime/mp-local-date-time"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            MpLocalDateTime &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

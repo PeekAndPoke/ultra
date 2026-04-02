@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import {funktorSidebar} from '../../../data/funktor-sidebar';
 import {Code} from 'astro:components';
 ---
@@ -16,7 +17,8 @@ import {Code} from 'astro:components';
 
     <h2>Templates</h2>
 
-    <p>Kotlinx HTML-based templates with placeholder support. Built-in templates for Semantic UI admin panels.</p>
+    <p>Kotlinx HTML-based templates with placeholder support. Define a layout once, fill
+        placeholders per page.</p>
 
     <Code code={`class MyTemplate : SimpleTemplateBase() {
     val content = placeholder<FlowContent>()
@@ -24,8 +26,31 @@ import {Code} from 'astro:components';
     override fun FlowContent.apply() {
         head { /* styles, scripts */ }
         body {
-            insert(content)
+            div("ui container") {
+                insert(content)
+            }
         }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Virtual host routing</h2>
+
+    <p>Serve different apps on different subdomains from the same server. Each host gets its
+        own Kontainer scope, routes, and static assets.</p>
+
+    <Code code={`routing {
+    // API on api.*
+    host("api.*".toRegex()) {
+        installApiKontainer(app, config.api.insights)
+        init.get(ApiApp::class).apply { mountApiAppModule() }
+    }
+
+    // Admin panel on admin.*
+    host("admin.*".toRegex()) {
+        installWwwKontainer(app, config.api.insights)
+        staticResources(remotePath = "assets", basePackage = "assets")
+
+        init.use(InsightsGui::class) { mount() }
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
@@ -34,21 +59,27 @@ import {Code} from 'astro:components';
     <p>One-time messages that survive a redirect. Set a message, redirect, and the message
         appears on the next page load then disappears.</p>
 
-    <Code code={`// Set a flash message
+    <Code code={`// Set a flash message before redirecting
 call.flashSession.success("User created successfully")
 call.flashSession.warning("Email not verified")
 
-// Pull messages (clears them)
+// On the next page, pull messages (clears them)
 val messages = call.flashSession.pull()`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Web resources</h2>
 
     <p>Manage CSS and JavaScript bundles with automatic cache busting via content hashing.
-        Subresource integrity (SRI) hashes are computed automatically.</p>
+        Subresource integrity (SRI) hashes are computed automatically. Reference resources
+        in templates and the correct versioned URL is generated.</p>
+
+    <Aside>Cache busting means browsers always fetch the latest version after a deploy,
+        while caching indefinitely otherwise. No more "clear your cache" instructions.
+    </Aside>
 
     <h2>PrismJS integration</h2>
 
-    <p>Built-in support for PrismJS syntax highlighting in server-rendered pages.</p>
+    <p>Built-in support for PrismJS syntax highlighting in server-rendered pages.
+        Useful for documentation sites or admin panels that display code.</p>
 
     <div class="mt-12">
         <a href="/ultra/funktor/testing"

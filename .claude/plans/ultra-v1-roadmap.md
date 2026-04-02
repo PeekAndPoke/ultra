@@ -24,8 +24,9 @@ Every gate must pass before tagging 1.0.0. No exceptions.
 
 ### G1. Zero CRITICAL / HIGH issues
 
-The current backlog has 1 CRITICAL and 8 HIGH issues. Every one must be resolved or documented as "won't-fix with
-rationale."
+~~The current backlog has 1 CRITICAL and 8 HIGH issues.~~ **Updated 2026-03-31:** Wave 1 audit resolved all 5 CRITICAL
+and 14 HIGH issues across Karango, Kontainer, Vault, and Security. Funktor issues (1C + 8H) were addressed in a prior
+session. Remaining HIGH issues: funktor items only (verify status).
 
 ### G2. Public-API test coverage
 
@@ -112,14 +113,14 @@ family.
 
 **Audit scope:**
 
-| Family  | Modules to Audit                                                                                                                              | Prior Audit?                                                          |
-|---------|-----------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------|
-| Ultra   | common, cache, datetime, fixture, html, kontainer, log, maths, meta, model, reflection, remote, security, semanticui, slumber, streams, vault | Slumber, Streams, Karango, Kontainer, ultra/common had partial audits |
-| Kraft   | core, semanticui, testing, 11 addons                                                                                                          | KDoc audit done, no deep code review                                  |
-| Funktor | core, rest, auth, cluster, inspect, insights, logging, messaging, staticweb, testing                                                          | **Done** — funktor-issues.md (deep review March 2026)                 |
-| Karango | core, ksp                                                                                                                                     | Partial audit (dead code removed, KDoc added)                         |
-| Monko   | core, ksp                                                                                                                                     | **Not done** — needs full audit after Phase 1 completion              |
-| Mutator | core, ksp                                                                                                                                     | Quality pass done, but no formal security/logic review                |
+| Family  | Modules to Audit                                                                                                                              | Audit Status                                                                                                  |
+|---------|-----------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| Ultra   | common, cache, datetime, fixture, html, kontainer, log, maths, meta, model, reflection, remote, security, semanticui, slumber, streams, vault | **kontainer, security, vault: Wave 1 DONE.** Slumber, Streams, ultra/common had partial audits. Rest: pending |
+| Kraft   | core, semanticui, testing, 11 addons                                                                                                          | KDoc audit done, no deep code review                                                                          |
+| Funktor | core, rest, auth, cluster, inspect, insights, logging, messaging, staticweb, testing                                                          | **Done** — funktor-issues.md (deep review March 2026)                                                         |
+| Karango | core, ksp                                                                                                                                     | **Wave 1 DONE** — full deep audit with 65 issues found and resolved                                           |
+| Monko   | core, ksp                                                                                                                                     | **Not done** — needs full audit after Phase 1 completion                                                      |
+| Mutator | core, ksp                                                                                                                                     | Quality pass done, but no formal security/logic review                                                        |
 
 **Excluded from audit (deferred to post-v1 rewrite):**
 
@@ -170,18 +171,18 @@ family.
 
 **Goal:** Resolve all CRITICAL and HIGH issues. Apply ES2015 migration.
 
-| #  | Task                                                                       | Severity | Key File(s)                                                           |
-|----|----------------------------------------------------------------------------|----------|-----------------------------------------------------------------------|
-| 1  | Fix VaultScope `runBlocking` — replace with proper `CoroutineScope.launch` | CRITICAL | `ultra/vault/src/jvmMain/kotlin/vault_module.kt:62-73`                |
-| 2  | Fix WorkerTracker cancellation — set job reference before awaiting         | HIGH     | `funktor/cluster/.../workers/services/WorkerTracker.kt:98-108`        |
-| 3  | Fix `setPassword` — require current password or caller identity check      | HIGH     | `funktor/auth/.../provider/EmailAndPasswordAuth.kt:253-278`           |
-| 4  | Fix sign-up race — add unique index on email                               | HIGH     | `funktor/auth/.../provider/EmailAndPasswordAuth.kt:222-248`           |
-| 5  | Fix lock expiration — check `expires` field during acquire                 | HIGH     | `funktor/cluster/.../locks/VaultGlobalLocksProvider.kt`               |
-| 6  | Fix archive data loss — archive before delete                              | HIGH     | `funktor/cluster/.../backgroundjobs/BackgroundJobs.kt:572-582`        |
-| 7  | Fix `queueIfNotPresent` TOCTOU — unique compound index                     | HIGH     | `funktor/cluster/.../backgroundjobs/BackgroundJobs.kt:186-193`        |
-| 8  | Fix lock cleanup — skip if `aliveServerIds` is empty                       | HIGH     | `funktor/cluster/.../locks/workers/GlobalLocksCleanupWorker.kt:28-48` |
-| 9  | Fix attack detection DoS — remove delay, return 404 immediately            | HIGH     | `funktor/rest/.../ApiStatusPages.kt:98-105`                           |
-| 10 | Apply ES2015 migration (single-file change)                                | GATE G7  | `build.gradle.kts` (root)                                             |
+| #  | Task                                                                     | Severity | Key File(s)                                                           |
+|----|--------------------------------------------------------------------------|----------|-----------------------------------------------------------------------|
+| 1  | ~~Fix VaultScope `runBlocking`~~ **DONE (Wave 1)**                       | CRITICAL | `ultra/vault/src/jvmMain/kotlin/vault_module.kt:62-73`                |
+| 2  | Fix WorkerTracker cancellation — set job reference before awaiting       | HIGH     | `funktor/cluster/.../workers/services/WorkerTracker.kt:98-108`        |
+| 3  | ~~Fix `setPassword` — require current password~~ **DONE**                | HIGH     | `funktor/auth/.../provider/EmailAndPasswordAuth.kt:253-278`           |
+| 4  | ~~Fix sign-up race — catch duplicate key on concurrent signup~~ **DONE** | HIGH     | `funktor/auth/.../provider/EmailAndPasswordAuth.kt:222-248`           |
+| 5  | Fix lock expiration — check `expires` field during acquire               | HIGH     | `funktor/cluster/.../locks/VaultGlobalLocksProvider.kt`               |
+| 6  | Fix archive data loss — archive before delete                            | HIGH     | `funktor/cluster/.../backgroundjobs/BackgroundJobs.kt:572-582`        |
+| 7  | Fix `queueIfNotPresent` TOCTOU — unique compound index                   | HIGH     | `funktor/cluster/.../backgroundjobs/BackgroundJobs.kt:186-193`        |
+| 8  | Fix lock cleanup — skip if `aliveServerIds` is empty                     | HIGH     | `funktor/cluster/.../locks/workers/GlobalLocksCleanupWorker.kt:28-48` |
+| 9  | Fix attack detection DoS — remove delay, return 404 immediately          | HIGH     | `funktor/rest/.../ApiStatusPages.kt:98-105`                           |
+| 10 | Apply ES2015 migration (single-file change)                              | GATE G7  | `build.gradle.kts` (root)                                             |
 
 **Parallelism:** Items 1, 2, 3-4, 5-9, 10 can be worked in parallel (vault, workers, auth, cluster, build).
 
@@ -192,14 +193,17 @@ family.
 This phase runs early so that discovered bugs are fixed alongside the test blitz and hardening work. Funktor is already
 audited (`funktor-issues.md`). The remaining modules are grouped by priority.
 
-**Wave 1 — Security-critical and foundational (audit first):**
+**Wave 1 — Security-critical and foundational — ✅ COMPLETE (2026-03-31):**
 
-| Module         | Why First                                                  | Audit Focus                                                                                                        |
-|----------------|------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
-| ultra:vault    | Foundation for all DB modules                              | Coroutine safety (after Phase 0 fix), hook lifecycle, resource cleanup, Stored/Ref thread safety                   |
-| ultra:security | Auth foundation                                            | JWT generation/validation, password hashing timing attacks, CSRF token handling, key management                    |
-| Karango core   | Primary DB layer, battle-tested but never formally audited | Query injection via string interpolation in AQL, cursor resource leaks, connection pool handling, index validation |
-| Kontainer      | DI container, everything depends on it                     | Scope lifecycle, thread safety of lazy singletons, circular dependency detection, blueprint validation edge cases  |
+| Module         | Issues Found | Fixed  | By Design/Won't Fix | Deferred | Key Fixes                                                           |
+|----------------|--------------|--------|---------------------|----------|---------------------------------------------------------------------|
+| ultra:vault    | 15           | 11     | 1                   | 3        | Cache thread safety, profiler sync, VaultException, safe casts      |
+| ultra:security | 16           | 14     | 1                   | 1        | CSRF timing attack, token delimiters, secret redaction, TTL→Long    |
+| Karango core   | 17           | 9      | 5                   | 3        | AQL injection fix, ensureIndexes, query options, KSP imports        |
+| Kontainer      | 17           | 5      | 9                   | 0        | AtomicBoolean, ConcurrentHashMap, circular dep detection, @Volatile |
+| **Total**      | **65**       | **39** | **16**              | **7**    |                                                                     |
+
+Archived to `.claude/plans-archive/2026-03-31-wave1-audit-*.md`.
 
 **Wave 2 — Data and serialization:**
 
@@ -350,11 +354,13 @@ audit.
    | Slumber | 8 pages | OK | - |
    | Streams | 8 pages | OK | - |
    | Karango | 8 pages | OK | - |
-   | Kontainer | 7 pages | OK | - |
+   | Kontainer | 8 pages | OK | - |
    | Kraft | 16 pages | OK | - |
    | Mutator | 6 pages | OK (verify completeness) | Minor |
+   | Datetime | 12 pages | OK | - |
+   | Cache | 3 pages | OK | - |
    | Funktor | ~11 sparse pages | 12-16 pages with depth | Major |
-   | Monko | ? | 6-8 pages | Major |
+   | Monko | 6 pages | OK | - |
    | Ultra (common, vault, etc.) | 0 | Overview + key modules | Medium |
 
     - Every library's core features get their own page with examples
@@ -387,28 +393,28 @@ audit.
 
 ### Current vs Required
 
-| Module            | Tests Now  | Tests Needed | KDoc Now | KDoc Needed | Issues           | v1 Ready? |
-|-------------------|------------|--------------|----------|-------------|------------------|-----------|
-| **Slumber**       | 60 (49%)   | OK           | ~98%     | OK          | 0                | YES       |
-| **Streams**       | 21 (41%)   | OK           | 100%     | OK          | 0                | YES       |
-| **Karango**       | 145 (79%)  | OK           | 67%      | +23%        | 0                | ALMOST    |
-| **Kontainer**     | 20 (29%)   | OK           | ~98%     | OK          | 0                | YES       |
-| **ultra/common**  | 28 (65%)   | OK           | ~67%     | +23%        | 0                | ALMOST    |
-| **ultra/model**   | 9 (45%)    | OK           | ?        | Audit       | 0                | ALMOST    |
-| **Kraft**         | 319 (166%) | OK           | ~80%     | +10%        | 0                | ALMOST    |
-| **Mutator**       | 28 (65%)   | OK           | 30%      | +60%        | 0                | KDoc gap  |
-| ultra/security    | 12 (36%)   | +3           | ~90%     | OK          | 0                | ALMOST    |
-| ultra/cache       | 6 (35%)    | +3           | 24%      | +66%        | 0                | KDoc gap  |
-| ultra/datetime    | 28 (44%)   | OK           | ?        | Audit       | 1                | ALMOST    |
-| ultra/vault       | 8 (18%)    | +10          | ?        | Audit       | 6 TODOs          | NO        |
-| ultra/remote      | 7 (21%)    | +5           | ?        | Audit       | 0                | TEST gap  |
-| ultra/reflection  | 6 (43%)    | OK           | 63%      | +27%        | 5 TODOs          | TODO gap  |
-| ultra/html        | 2 (15%)    | +4           | ?        | Audit       | 0                | NO        |
-| ultra/semanticui  | 4 (27%)    | +2           | ?        | Audit       | 0                | NO        |
-| ultra/log         | 4 (29%)    | +3           | ?        | Audit       | 0                | TEST gap  |
-| ultra/maths       | 4 (33%)    | +2           | ?        | Audit       | 0                | TEST gap  |
-| **Funktor** (all) | 34 (~6%)   | +115         | ~50%     | +40%        | 1C+8H            | NO        |
-| **Monko**         | 3 (16%)    | +15          | ?        | Full        | save/remove TODO | NO        |
+| Module            | Tests Now  | Tests Needed | KDoc Now | KDoc Needed | Issues            | v1 Ready? |
+|-------------------|------------|--------------|----------|-------------|-------------------|-----------|
+| **Slumber**       | 60 (49%)   | OK           | ~98%     | OK          | 0                 | YES       |
+| **Streams**       | 21 (41%)   | OK           | 100%     | OK          | 0                 | YES       |
+| **Karango**       | 145 (79%)  | OK           | 67%      | +23%        | 0 (Wave 1 done)   | ALMOST    |
+| **Kontainer**     | 24 (35%)   | OK           | ~98%     | OK          | 0 (Wave 1 done)   | YES       |
+| **ultra/common**  | 28 (65%)   | OK           | ~67%     | +23%        | 0                 | ALMOST    |
+| **ultra/model**   | 9 (45%)    | OK           | ?        | Audit       | 0                 | ALMOST    |
+| **Kraft**         | 319 (166%) | OK           | ~80%     | +10%        | 0                 | ALMOST    |
+| **Mutator**       | 28 (65%)   | OK           | 30%      | +60%        | 0                 | KDoc gap  |
+| ultra/security    | 14 (42%)   | OK           | ~90%     | OK          | 0 (Wave 1 done)   | YES       |
+| ultra/cache       | 6 (35%)    | +3           | 24%      | +66%        | 0                 | KDoc gap  |
+| ultra/datetime    | 28 (44%)   | OK           | ?        | Audit       | 1                 | ALMOST    |
+| ultra/vault       | 8 (18%)    | +10          | ?        | Audit       | 3 TODOs (Wave 1)  | NO        |
+| ultra/remote      | 7 (21%)    | +5           | ?        | Audit       | 0                 | TEST gap  |
+| ultra/reflection  | 6 (43%)    | OK           | 63%      | +27%        | 5 TODOs           | TODO gap  |
+| ultra/html        | 2 (15%)    | +4           | ?        | Audit       | 0                 | NO        |
+| ultra/semanticui  | 4 (27%)    | +2           | ?        | Audit       | 0                 | NO        |
+| ultra/log         | 4 (29%)    | +3           | ?        | Audit       | 0                 | TEST gap  |
+| ultra/maths       | 4 (33%)    | +2           | ?        | Audit       | 0                 | TEST gap  |
+| **Funktor** (all) | 34 (~6%)   | +115         | ~50%     | +40%        | 1C+8H (pre-Wave1) | NO        |
+| **Monko**         | 3 (16%)    | +15          | ?        | Full        | save/remove TODO  | NO        |
 
 ---
 

@@ -63,7 +63,7 @@ internal class AqlUpsertIntoExpr<T : Any, X : T>(
     override fun getType() = repo.getType()
 
     override fun print(p: AqlPrinter) {
-        p.append("UPSERT { _key: \"").append(entity._key).append("\" }").appendLine()
+        p.append("UPSERT { _key: ").value("upsert_key", entity._key).append(" }").appendLine()
 
         p.indent {
             append("INSERT ").value("v", entity).appendLine()

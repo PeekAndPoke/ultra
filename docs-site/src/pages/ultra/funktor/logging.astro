@@ -1,6 +1,8 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
 import {funktorSidebar} from '../../../data/funktor-sidebar';
+import {Code} from 'astro:components';
 ---
 
 <DocsLayout title="Logging Module" sidebar={funktorSidebar} description="Structured logging with database persistence">
@@ -16,22 +18,64 @@ import {funktorSidebar} from '../../../data/funktor-sidebar';
     <p>The logging module provides a Logback appender that persists log entries to your database.
         Entries are searchable, filterable, and viewable through a built-in web UI.</p>
 
+    <h2>Setting up the appender</h2>
+
+    <p>Add the database log appender in your Ktor application module. It captures Logback events
+        at or above the specified level and writes them to the configured storage backend.</p>
+
+    <Code code={`fun Application.module() = app.module(this) { app, config, init ->
+    // Persist log entries at INFO level and above to ArangoDB
+    addKarangoAppender(config = config.arangodb, minLevel = Level.INFO)
+
+    // ... rest of your server setup
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Choosing a storage backend</h2>
+
+    <p>Configure the storage backend in your Kontainer blueprint. The logging module supports
+        ArangoDB and MongoDB out of the box.</p>
+
+    <Code code={`val blueprint = kontainer {
+    funktor(
+        config = config,
+        logging = {
+            useKarango()   // ArangoDB via Karango
+            // or
+            // useMonko()  // MongoDB via Monko
+        },
+        // ... other modules
+    )
+}`} lang="kotlin" theme="vitesse-dark"/>
+
     <h2>Features</h2>
 
-    <ul>
-        <li><strong>Database-backed</strong> &mdash; log entries stored in Karango (ArangoDB) or Monko (MongoDB)</li>
-        <li><strong>Web UI</strong> &mdash; browse, search, and filter logs from the admin panel</li>
-        <li><strong>Bulk actions</strong> &mdash; acknowledge, archive, or delete log entries in batch</li>
-        <li><strong>REST API</strong> &mdash; query logs programmatically via <code>LoggingApiClient</code></li>
-        <li><strong>Kraft frontend</strong> &mdash; pre-built components for log list and detail views</li>
-    </ul>
+    <div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
+        <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Database-backed</h3>
+            <p class="text-sm text-gray-400">Log entries stored in ArangoDB or MongoDB. Survives
+                restarts. Searchable by level, logger, message, and timestamp.</p>
+        </div>
+        <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Web UI</h3>
+            <p class="text-sm text-gray-400">Browse, search, and filter logs from the admin panel.
+                Pre-built <a href="/ultra/kraft/" class="text-brand-400">Kraft</a> components for
+                log list and detail views.</p>
+        </div>
+        <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Bulk actions</h3>
+            <p class="text-sm text-gray-400">Acknowledge, archive, or delete log entries in batch
+                through the web UI or REST API.</p>
+        </div>
+        <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">REST API</h3>
+            <p class="text-sm text-gray-400">Query logs programmatically via <code>LoggingApiClient</code>.
+                Filter by severity, date range, or search text.</p>
+        </div>
+    </div>
 
-    <h2>Storage backends</h2>
-
-    <ul>
-        <li><code>useKarango()</code> &mdash; stores logs in ArangoDB</li>
-        <li><code>useMonko()</code> &mdash; stores logs in MongoDB</li>
-    </ul>
+    <Aside>The appender hooks into Logback, so any library that logs through SLF4J
+        automatically gets its entries persisted. No code changes needed in your application logic.
+    </Aside>
 
     <div class="mt-12">
         <a href="/ultra/funktor/staticweb"

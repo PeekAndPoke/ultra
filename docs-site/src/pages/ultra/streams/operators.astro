@@ -64,16 +64,49 @@ println(big())  // 20
 source(5)
 println(big())  // 20 (keeps last matching value)`} lang="kotlin" theme="vitesse-dark" />
 
-<p>Variants:</p>
+    <h3>Nullable filter</h3>
 
-<Code code={`// Nullable — returns null when no value matches yet
-val nullable = source.filter { it > 10 }  // Stream<Int?>
+    <p>When you don't want to provide an initial value, use the nullable variant. It returns <code>null</code> until a
+        value matches:</p>
 
-// Filter nulls out of a nullable stream
-val nonNull = nullableStream.filterNotNull()
+    <Code code={`val source = StreamSource(3)
+val big = source.filter { it > 10 }  // Stream<Int?>
 
-// Filter by type
-val strings = mixedStream.filterIsInstance<String>()`} lang="kotlin" theme="vitesse-dark" />
+println(big())  // null (nothing matched yet)
+
+source(20)
+println(big())  // 20`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>filterNotNull</h3>
+
+    <p>Remove nulls from a nullable stream. The result is still <code>Stream&lt;String?&gt;</code> because the current
+        value may be null if no non-null value has arrived yet:</p>
+
+    <Code code={`val source = StreamSource<String?>(null)
+val safe = source.filterNotNull()  // Stream<String?>
+
+println(safe())  // null (no non-null value yet)
+
+source("hello")
+println(safe())  // "hello"
+
+source(null)
+println(safe())  // "hello" (keeps last non-null)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>filterIsInstance</h3>
+
+    <p>Filter by type, using Kotlin's reified type parameter:</p>
+
+    <Code code={`val source = StreamSource<Any>("text")
+val strings = source.filterIsInstance<String>()  // Stream<String?>
+
+println(strings())  // "text"
+
+source(42)
+println(strings())  // "text" (42 is not a String, keeps last match)
+
+source("new text")
+println(strings())  // "new text"`} lang="kotlin" theme="vitesse-dark"/>
 
 <h2>distinct</h2>
 
