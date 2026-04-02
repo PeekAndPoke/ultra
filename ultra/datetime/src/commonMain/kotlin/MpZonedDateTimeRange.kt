@@ -64,6 +64,10 @@ data class MpZonedDateTimeRange(
         )
     }
 
+    fun asPartialRange(): Partial {
+        return Partial(from = from, to = to)
+    }
+
     val duration: Duration by lazy { to - from }
 
     val hasStart: Boolean get() = from > MpZonedDateTime.Genesis
@@ -75,6 +79,8 @@ data class MpZonedDateTimeRange(
     val isNotOpen: Boolean get() = !isOpen
 
     val isValid: Boolean get() = from < to
+
+    val isNotValid: Boolean get() = !isValid
 
     /**
      * Compares the duration to the given period.
@@ -105,18 +111,29 @@ data class MpZonedDateTimeRange(
         return atZone(timezone.kotlinx)
     }
 
-    fun contains(datetime: MpZonedDateTime): Boolean {
-        return contains(datetime.toInstant())
+    /**
+     * Checks if this range contains the given [datetime].
+     *
+     * Returns `true` when all conditions are true:
+     * 1. the range is valid
+     * 2. [datetime] >= [from]
+     * 3. [datetime] < [to]
+     */
+    fun contains(datetime: MpAbsoluteDateTime): Boolean {
+        val instant = datetime.toInstant()
+        return isValid && instant >= from.toInstant() && instant < to.toInstant()
     }
 
-    fun contains(date: MpLocalDateTime, timezone: TimeZone): Boolean {
-        return contains(date.toInstant(timezone))
+    /**
+     * Checks if this range contains the given [datetime] at the given [timezone].
+     */
+    fun contains(datetime: MpLocalDateTime, timezone: TimeZone): Boolean {
+        return contains(datetime.toInstant(timezone))
     }
 
-    fun contains(instant: MpInstant): Boolean {
-        return instant >= from.toInstant() && instant < to.toInstant()
-    }
-
+    /**
+     * Checks if this range fully contains the [other] range.
+     */
     fun contains(other: MpZonedDateTimeRange): Boolean {
         return (isValid && other.isValid) &&
                 (from <= other.from && to >= other.to)
@@ -129,6 +146,40 @@ data class MpZonedDateTimeRange(
                         contains(other) ||
                         other.contains(this)
                 )
+    }
+
+    /**
+     * Returns `true` when this range touches or overlaps the [other] range.
+     *
+     * In other words, returns `true` when the union of both ranges is contiguous (has no gap).
+     */
+    fun touches(other: MpZonedDateTimeRange): Boolean {
+        return to >= other.from && from <= other.to
+    }
+
+    /**
+     * Returns `true` when this range is adjacent to the [other] range without overlapping.
+     *
+     * Two ranges are adjacent when one ends exactly where the other begins.
+     */
+    fun isAdjacentTo(other: MpZonedDateTimeRange): Boolean {
+        return to == other.from || other.to == from
+    }
+
+    /**
+     * Merges this range with the [other] one, by taking the minimal [from] and the maximal [to].
+     *
+     * If the ranges do not touch, returns both ranges sorted by [from].
+     */
+    fun mergeWith(other: MpZonedDateTimeRange): List<MpZonedDateTimeRange> = when {
+        touches(other) -> listOf(
+            MpZonedDateTimeRange(
+                from = minOf(from, other.from),
+                to = maxOf(to, other.to),
+            )
+        )
+
+        else -> listOf(this, other).sortedBy { it.from }
     }
 
     /**

@@ -429,6 +429,124 @@ class MpClosedLocalDateRangeSpec : StringSpec({
         }
     }
 
+    // cutAway /////////////////////////////////////////////////////////////////////////////////////
+
+    "cutAway - all eaten up exactly" {
+        val range = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-03-10"),
+        )
+
+        range.cutAway(range) shouldBe emptyList()
+    }
+
+    "cutAway - all eaten up surrounding" {
+        val range = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-03-10"),
+        )
+        val other = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-02-28"),
+            to = MpLocalDate.parse("2024-03-12"),
+        )
+
+        range.cutAway(other) shouldBe emptyList()
+    }
+
+    "cutAway - in the middle" {
+        val range = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-03-10"),
+        )
+        val other = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-03-04"),
+            to = MpLocalDate.parse("2024-03-06"),
+        )
+
+        val result = range.cutAway(other)
+
+        result shouldHaveSize 2
+        result[0].from shouldBe MpLocalDate.parse("2024-03-01")
+        result[0].to shouldBe MpLocalDate.parse("2024-03-03")
+        result[1].from shouldBe MpLocalDate.parse("2024-03-07")
+        result[1].to shouldBe MpLocalDate.parse("2024-03-10")
+    }
+
+    "cutAway - on the left side" {
+        val range = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-03-10"),
+        )
+        val other = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-02-28"),
+            to = MpLocalDate.parse("2024-03-04"),
+        )
+
+        val result = range.cutAway(other)
+
+        result shouldHaveSize 1
+        result[0].from shouldBe MpLocalDate.parse("2024-03-05")
+        result[0].to shouldBe MpLocalDate.parse("2024-03-10")
+    }
+
+    "cutAway - on the right side" {
+        val range = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-03-10"),
+        )
+        val other = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-03-07"),
+            to = MpLocalDate.parse("2024-03-15"),
+        )
+
+        val result = range.cutAway(other)
+
+        result shouldHaveSize 1
+        result[0].from shouldBe MpLocalDate.parse("2024-03-01")
+        result[0].to shouldBe MpLocalDate.parse("2024-03-06")
+    }
+
+    "cutAway - no overlap" {
+        val range = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-03-10"),
+        )
+        val other = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-04-01"),
+            to = MpLocalDate.parse("2024-04-10"),
+        )
+
+        range.cutAway(other) shouldBe listOf(range)
+    }
+
+    // intersects with open range //////////////////////////////////////////////////////////////////
+
+    "intersects(MpLocalDateRange) - overlapping" {
+        val closed = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-06-30"),
+        )
+        val open = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-09-30"),
+        )
+
+        closed.intersects(open) shouldBe true
+    }
+
+    "intersects(MpLocalDateRange) - non-overlapping" {
+        val closed = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-03-31"),
+        )
+        val open = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-06-01"),
+            to = MpLocalDate.parse("2024-09-30"),
+        )
+
+        closed.intersects(open) shouldBe false
+    }
+
     // asPartialRange //////////////////////////////////////////////////////////////////////////////
 
     "asPartialRange converts to Partial with same from and to" {

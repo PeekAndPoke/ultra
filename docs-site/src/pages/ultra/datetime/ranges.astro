@@ -50,11 +50,9 @@ val forever = MpLocalDateRange.forever  // Genesis to Doomsday`} lang="kotlin" t
 
     <h3>MpLocalDateRange.Partial</h3>
 
-    <p>All range types (except MpLocalTimeSlot) have a <strong>Partial</strong> variant for when only one boundary is
-        known.
+    <p>All range types have a <strong>Partial</strong> variant for when only one boundary is known.
         This is common in search filters, open-ended subscriptions, and "from now on" queries.
-        Convert to a concrete range via <code>asValidRange()</code>, which fills in Genesis or Doomsday for the missing
-        boundary.</p>
+        Convert to a concrete range via <code>asValidRange()</code>.</p>
 
     <p>When only one boundary is known — "from March 1 onwards" or "up until June":</p>
 
@@ -190,6 +188,7 @@ val concrete = partial.asValidRange()
 
     <Code code={`import io.peekandpoke.ultra.datetime.MpLocalTimeSlot
 import io.peekandpoke.ultra.datetime.MpLocalTime
+import kotlin.time.Duration.Companion.minutes
 
 val morning = MpLocalTimeSlot(
     from = MpLocalTime.of(9, 0),
@@ -216,16 +215,46 @@ val merged = morning.mergeWith(extended)
 val remaining = afternoon.cutAway(extended)
 // MpLocalTimeSlot(14:00, 17:00)
 
-// Find gaps between multiple slots
-val slots = listOf(morning, afternoon)
-val withGaps = MpLocalTimeSlot.splitWithGaps(slots)
-// includes the gap from 12:00 to 13:00
+// Split a slot into chunks with gaps
+val chunks = morning.splitWithGaps(
+    duration = 30.minutes,  // 30-minute slots
+    gap = 10.minutes,       // 10-minute gaps
+)
+// [09:00-09:30, 09:40-10:10, 10:20-10:50]
+
+// Containment — is a specific time inside this slot?
+println(morning.contains(MpLocalTime.of(10, 30)))  // true
+println(morning.contains(MpLocalTime.of(13, 0)))   // false
+
+// Intersection — do two slots overlap?
+println(morning.intersects(afternoon))  // false (gap between them)
+
+// Adjacency — do they border without overlapping?
+val lunchEnd = MpLocalTimeSlot(
+    from = MpLocalTime.of(12, 0),
+    to = MpLocalTime.of(13, 0),
+)
+println(morning.isAdjacentTo(lunchEnd))  // true
 
 // Formatting
 println(morning.formatHhMm())    // "09:00 - 12:00"
 println(morning.formatHhMmSs())  // "09:00:00 - 12:00:00"`} lang="kotlin" theme="vitesse-dark"/>
 
-    <h2>Range operations summary</h2>
+    <h3>MpLocalTimeSlot.Partial</h3>
+
+    <Code code={`val partial = MpLocalTimeSlot.Partial(
+    from = MpLocalTime.of(9, 0),
+    to = null,  // open-ended
+)
+
+val concrete = partial.asValidRange()
+// null — both boundaries are needed for a valid time slot`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Set operations summary</h2>
+
+    <p>Every range type supports containment checks, intersection tests, set subtraction, adjacency detection, and
+        merging.
+        These operations follow consistent semantics across all types:</p>
 
     <div class="not-prose my-8">
         <table class="w-full text-sm text-left">
@@ -240,46 +269,95 @@ println(morning.formatHhMmSs())  // "09:00:00 - 12:00:00"`} lang="kotlin" theme=
             </thead>
             <tbody class="text-gray-400">
             <tr class="border-b border-white/5">
-                <td class="py-2"><code>contains()</code></td>
-                <td class="py-2 text-center">-</td>
+                <td class="py-2"><code>contains(point)</code></td>
                 <td class="py-2 text-center text-green-400">yes</td>
-                <td class="py-2 text-center">-</td>
-                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>contains(range)</code></td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>intersects()</code></td>
-                <td class="py-2 text-center">-</td>
                 <td class="py-2 text-center text-green-400">yes</td>
-                <td class="py-2 text-center">-</td>
-                <td class="py-2 text-center">-</td>
-            </tr>
-            <tr class="border-b border-white/5">
-                <td class="py-2"><code>cutAway()</code></td>
-                <td class="py-2 text-center">-</td>
                 <td class="py-2 text-center text-green-400">yes</td>
-                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
                 <td class="py-2 text-center text-green-400">yes</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>touches()</code></td>
-                <td class="py-2 text-center">-</td>
-                <td class="py-2 text-center">-</td>
-                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>isAdjacentTo()</code></td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
                 <td class="py-2 text-center text-green-400">yes</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>mergeWith()</code></td>
-                <td class="py-2 text-center">-</td>
-                <td class="py-2 text-center">-</td>
-                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
                 <td class="py-2 text-center text-green-400">yes</td>
             </tr>
             <tr class="border-b border-white/5">
-                <td class="py-2"><code>splitWithGaps()</code></td>
-                <td class="py-2 text-center">-</td>
-                <td class="py-2 text-center">-</td>
+                <td class="py-2"><code>cutAway()</code></td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr>
+                <td class="py-2"><code>Partial</code> variant</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Type-specific operations</h2>
+
+    <p>Some operations are only available on certain range types, either because they require type-specific
+        information (like a timezone) or because they only make sense in a particular domain:</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold">Operation</th>
+                <th class="py-2 text-white font-semibold text-center">DateRange</th>
+                <th class="py-2 text-white font-semibold text-center">InstantRange</th>
+                <th class="py-2 text-white font-semibold text-center">ZonedRange</th>
+                <th class="py-2 text-white font-semibold text-center">TimeSlot</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>duration</code></td>
                 <td class="py-2 text-center">-</td>
                 <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>plus()</code> / <code>minus()</code></td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center">-</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>asListOfDates()</code></td>
@@ -289,22 +367,35 @@ println(morning.formatHhMmSs())  // "09:00:00 - 12:00:00"`} lang="kotlin" theme=
                 <td class="py-2 text-center">-</td>
             </tr>
             <tr class="border-b border-white/5">
-                <td class="py-2"><code>duration</code></td>
-                <td class="py-2 text-center">-</td>
-                <td class="py-2 text-center">-</td>
+                <td class="py-2"><code>numberOfDays</code> / <code>numberOfNights</code></td>
                 <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>asDatePeriod</code></td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
                 <td class="py-2 text-center">-</td>
             </tr>
             <tr>
-                <td class="py-2">Partial variant</td>
-                <td class="py-2 text-center text-green-400">yes</td>
-                <td class="py-2 text-center text-green-400">yes</td>
-                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2"><code>splitWithGaps()</code></td>
                 <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
             </tr>
             </tbody>
         </table>
     </div>
+
+    <Aside>Date ranges don't expose <code>duration</code> because a day is not always 24 hours (DST transitions).
+        Use <code>numberOfDays</code> or <code>asDatePeriod</code> instead.
+        Similarly, <code>plus()</code>/<code>minus()</code> are not on date ranges because shifting by
+        a duration would require timezone context &mdash; use the individual date's arithmetic methods instead.
+    </Aside>
 
     <div class="not-prose mt-8 flex gap-4">
         <a href="/ultra/datetime/kronos"

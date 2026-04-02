@@ -1,6 +1,5 @@
 package io.peekandpoke.ultra.datetime
 
-import common.datetime.DateTimeRangeConverter
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.serialization.Serializable
 import kotlin.math.max
@@ -137,9 +136,94 @@ data class MpLocalDateRange(
         return date in from..<to
     }
 
+    /**
+     * Checks if this range fully contains the [other] range.
+     */
+    fun contains(other: MpLocalDateRange): Boolean {
+        return (isValid && other.isValid) &&
+                (from <= other.from && to >= other.to)
+    }
+
+    fun intersects(other: MpLocalDateRange): Boolean {
+        return (isValid && other.isValid) && (
+                (other.from >= from && other.from < to) ||
+                        (other.to > from && other.to <= to) ||
+                        contains(other) ||
+                        other.contains(this)
+                )
+    }
+
     fun intersects(other: MpClosedLocalDateRange): Boolean {
-        // TODO: improve this code
-        return toZonedTimeRange(MpTimezone.UTC).fromNoonToNoon
-            .intersects(other.toZonedTimeRange(MpTimezone.UTC).fromNoonToNoon)
+        return intersects(other.asOpenRange)
+    }
+
+    /**
+     * Returns `true` when this range touches or overlaps the [other] range.
+     *
+     * In other words, returns `true` when the union of both ranges is contiguous (has no gap).
+     */
+    fun touches(other: MpLocalDateRange): Boolean {
+        return to >= other.from && from <= other.to
+    }
+
+    /**
+     * Returns `true` when this range is adjacent to the [other] range without overlapping.
+     *
+     * Two ranges are adjacent when one ends exactly where the other begins.
+     */
+    fun isAdjacentTo(other: MpLocalDateRange): Boolean {
+        return to == other.from || other.to == from
+    }
+
+    /**
+     * Merges this range with the [other] one, by taking the minimal [from] and the maximal [to].
+     *
+     * If the ranges do not touch, returns both ranges sorted by [from].
+     */
+    fun mergeWith(other: MpLocalDateRange): List<MpLocalDateRange> = when {
+        touches(other) -> listOf(
+            MpLocalDateRange(
+                from = minOf(from, other.from),
+                to = maxOf(to, other.to),
+            )
+        )
+
+        else -> listOf(this, other).sortedBy { it.from }
+    }
+
+    /**
+     * Cuts [other] from this range.
+     *
+     * Results in:
+     * 1. An empty list, when other fully covers this range.
+     * 2. A list with one entry, when other cuts at the left or the right side only.
+     * 3. A list with two entries, when other lies in between this range.
+     */
+    fun cutAway(other: MpLocalDateRange): List<MpLocalDateRange> {
+        return when {
+            this.isNotValid || other.isNotValid -> listOf(this)
+
+            // all eaten up
+            other.from <= from && to <= other.to -> emptyList()
+
+            // the other one is inside and cuts the range into two pieces
+            from < other.from && other.to < to -> listOf(
+                MpLocalDateRange(from = from, to = other.from),
+                MpLocalDateRange(from = other.to, to = to),
+            )
+
+            // eating away on the right side
+            other.from < to && to <= other.to -> listOf(
+                MpLocalDateRange(from = from, to = other.from),
+            )
+
+            // eating away on the left side
+            other.from <= from && from < other.to -> listOf(
+                MpLocalDateRange(from = other.to, to = to),
+            )
+
+            // Nothing happened
+            else -> listOf(this)
+        }
     }
 }
