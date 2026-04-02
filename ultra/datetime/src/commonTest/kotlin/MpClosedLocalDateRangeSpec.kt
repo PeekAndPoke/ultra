@@ -559,4 +559,125 @@ class MpClosedLocalDateRangeSpec : StringSpec({
         partial.from shouldBe from
         partial.to shouldBe to
     }
+
+    // endingAt / beginningAt /////////////////////////////////////////////////////////////////////
+
+    "endingAt creates range from Genesis to the given date" {
+        val to = MpLocalDate.parse("2024-06-15")
+        val range = MpClosedLocalDateRange.endingAt(to)
+
+        range.from shouldBe MpLocalDate.Genesis
+        range.to shouldBe to
+    }
+
+    "beginningAt creates range from the given date to Doomsday" {
+        val from = MpLocalDate.parse("2024-06-15")
+        val range = MpClosedLocalDateRange.beginningAt(from)
+
+        range.from shouldBe from
+        range.to shouldBe MpLocalDate.Doomsday
+    }
+
+    // hasStart / hasEnd / isNotOpen / isNotValid //////////////////////////////////////////////////
+
+    "hasStart is false for Genesis, true otherwise" {
+        MpClosedLocalDateRange.forever.hasStart.shouldBeFalse()
+
+        MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-12-31"),
+        ).hasStart.shouldBeTrue()
+    }
+
+    "hasEnd is false for Doomsday, true otherwise" {
+        MpClosedLocalDateRange.forever.hasEnd.shouldBeFalse()
+
+        MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-12-31"),
+        ).hasEnd.shouldBeTrue()
+    }
+
+    "isNotOpen is true when both boundaries are set" {
+        MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-12-31"),
+        ).isNotOpen.shouldBeTrue()
+
+        MpClosedLocalDateRange.forever.isNotOpen.shouldBeFalse()
+    }
+
+    "isNotValid is true when from is after to" {
+        MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-12-31"),
+            to = MpLocalDate.parse("2024-01-01"),
+        ).isNotValid.shouldBeTrue()
+
+        MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-12-31"),
+        ).isNotValid.shouldBeFalse()
+    }
+
+    // isAdjacentTo ////////////////////////////////////////////////////////////////////////////////
+
+    "isAdjacentTo - adjacent ranges" {
+        val a = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-01-10"),
+        )
+        val b = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-01-11"),
+            to = MpLocalDate.parse("2024-01-20"),
+        )
+
+        a.touches(b).shouldBeTrue()
+    }
+
+    "isAdjacentTo - non-adjacent ranges" {
+        val a = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-01-10"),
+        )
+        val b = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-01-15"),
+            to = MpLocalDate.parse("2024-01-20"),
+        )
+
+        a.isAdjacentTo(b).shouldBeFalse()
+    }
+
+    // mergeWith ///////////////////////////////////////////////////////////////////////////////////
+
+    "mergeWith - overlapping ranges" {
+        val a = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-01-15"),
+        )
+        val b = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-01-10"),
+            to = MpLocalDate.parse("2024-01-25"),
+        )
+
+        val result = a.mergeWith(b)
+        result shouldHaveSize 1
+        result[0].from shouldBe MpLocalDate.parse("2024-01-01")
+        result[0].to shouldBe MpLocalDate.parse("2024-01-25")
+    }
+
+    "mergeWith - non-touching ranges returns both sorted" {
+        val a = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-03-10"),
+        )
+        val b = MpClosedLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-01-10"),
+        )
+
+        val result = a.mergeWith(b)
+        result shouldHaveSize 2
+        result[0].from shouldBe MpLocalDate.parse("2024-01-01")
+        result[1].from shouldBe MpLocalDate.parse("2024-03-01")
+    }
 })

@@ -97,7 +97,7 @@ data class MpClosedLocalDateRange(
 
     fun intersects(other: MpClosedLocalDateRange): Boolean {
         return (isValid && other.isValid) && (
-                (other.from >= from && other.from < to) ||
+                (other.from in from..<to) ||
                         (other.to > from && other.to <= to) ||
                         contains(other) ||
                         other.contains(this)

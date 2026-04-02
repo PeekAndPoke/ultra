@@ -712,4 +712,52 @@ class MpLocalDateRangeSpec : StringSpec({
         partial.from shouldBe from
         partial.to shouldBe to
     }
+
+    // endingAt / beginningAt /////////////////////////////////////////////////////////////////////
+
+    "endingAt creates range from Genesis to the given date" {
+        val to = MpLocalDate.parse("2024-06-15")
+        val range = MpLocalDateRange.endingAt(to)
+
+        range.from shouldBe MpLocalDate.Genesis
+        range.to shouldBe to
+    }
+
+    "beginningAt creates range from the given date to Doomsday" {
+        val from = MpLocalDate.parse("2024-06-15")
+        val range = MpLocalDateRange.beginningAt(from)
+
+        range.from shouldBe from
+        range.to shouldBe MpLocalDate.Doomsday
+    }
+
+    // Partial.asValidRange ///////////////////////////////////////////////////////////////////////
+
+    "Partial.asValidRange returns valid range" {
+        val from = MpLocalDate.parse("2024-01-01")
+        val to = MpLocalDate.parse("2024-01-10")
+
+        MpLocalDateRange.Partial(from, to).asValidRange() shouldBe MpLocalDateRange(from, to)
+    }
+
+    "Partial.asValidRange returns null for invalid or incomplete ranges" {
+        val from = MpLocalDate.parse("2024-01-10")
+        val to = MpLocalDate.parse("2024-01-01")
+
+        MpLocalDateRange.Partial(from, to).asValidRange() shouldBe null
+        MpLocalDateRange.Partial(from, null).asValidRange() shouldBe null
+        MpLocalDateRange.Partial(null, to).asValidRange() shouldBe null
+        MpLocalDateRange.Partial.empty.asValidRange() shouldBe null
+    }
+
+    // isNotOpen //////////////////////////////////////////////////////////////////////////////////
+
+    "isNotOpen is true when both boundaries are concrete" {
+        MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-12-31"),
+        ).isNotOpen.shouldBeTrue()
+
+        MpLocalDateRange.forever.isNotOpen.shouldBeFalse()
+    }
 })

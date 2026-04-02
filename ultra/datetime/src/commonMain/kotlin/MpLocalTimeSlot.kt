@@ -61,7 +61,7 @@ data class MpLocalTimeSlot(
      * [time] >= [from] and [time] < [to].
      */
     fun contains(time: MpLocalTime): Boolean {
-        return isValid && time >= from && time < to
+        return isValid && time in from..<to
     }
 
     /**
@@ -82,7 +82,7 @@ data class MpLocalTimeSlot(
      */
     fun intersects(other: MpLocalTimeSlot): Boolean {
         return (isValid && other.isValid) && (
-                (other.from >= from && other.from < to) ||
+                (other.from in from..<to) ||
                         (other.to > from && other.to <= to) ||
                         contains(other) ||
                         other.contains(this)

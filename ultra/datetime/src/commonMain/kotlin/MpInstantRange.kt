@@ -128,7 +128,7 @@ data class MpInstantRange(
      * 3. [datetime] < [to]
      */
     fun contains(datetime: MpAbsoluteDateTime): Boolean {
-        return isValid && datetime.toInstant() >= from && datetime.toInstant() < to
+        return isValid && datetime.toInstant().let { it in from..<to }
     }
 
     /**
@@ -147,7 +147,7 @@ data class MpInstantRange(
 
     fun intersects(other: MpInstantRange): Boolean {
         return (isValid && other.isValid) && (
-                (other.from >= from && other.from < to) ||
+                (other.from in from..<to) ||
                         (other.to > from && other.to <= to) ||
                         contains(other) ||
                         other.contains(this)

@@ -189,12 +189,27 @@ a.isLessThanOrEqualTo(b)       // true
 
 ## Ranges
 
-- **MpLocalDateRange** — open-ended `[from, to)`, with `numberOfDays`, `asListOfDates()`, `asDatePeriod`,
-  `asClosedRange`
-- **MpClosedLocalDateRange** — closed `[from, to]`, with `numberOfDays`, `asOpenRange`
-- **MpInstantRange** — absolute time range with `contains()`, `intersects()`, `cutAway()`, `MpInstantRange.forever`
-- **MpZonedDateTimeRange** — timezone-aware range with `duration`, `isValid`, `hasStart`/`hasEnd`
-- **MpLocalTimeSlot** — intra-day time range with `touches()`, `mergeWith()`, `cutAway()`, `splitWithGaps()`
+All range types share these common properties: `hasStart`, `hasEnd`, `isOpen`, `isNotOpen`, `isValid`, `isNotValid`.
+
+All range types support these set operations: `contains(point)`, `contains(range)`, `intersects()`, `touches()`,
+`isAdjacentTo()`, `mergeWith()`, `cutAway()`.
+
+- **MpLocalDateRange** — open-ended `[from, to)`, with `numberOfDays`, `numberOfNights`, `asListOfDates()`,
+  `asDatePeriod`, `asClosedRange`, `toZonedTimeRange(tz)`, `asPartialRange()`
+  - Factory: `MpLocalDateRange.of()`, `.forever`, `.beginningAt()`, `.endingAt()`
+- **MpClosedLocalDateRange** — closed `[from, to]`, with `numberOfDays`, `numberOfNights`, `asOpenRange`,
+  `asDatePeriod`, `asListOfDates()`, `toZonedTimeRange(tz)`
+  - Factory: `MpClosedLocalDateRange.of()`, `.forever`, `.beginningAt()`, `.endingAt()`
+- **MpInstantRange** — absolute time range with `duration`, `atZone(tz)`, `atSystemDefaultZone()`, `plus(Duration)`,
+  `minus(Duration)`, `plus(value, DateTimeUnit, TimeZone)`, `minus(value, DateTimeUnit, TimeZone)`
+  - Factory: `MpInstantRange.of(from, duration)`, `.forever`, `.beginningAt()`, `.endingAt()`
+- **MpZonedDateTimeRange** — timezone-aware range with `duration`, `asDateRange()`, `toInstantRange()`, `atZone(tz)`,
+  `plus(Duration)`, `minus(Duration)`, `plus(value, DateTimeUnit)`, `minus(value, DateTimeUnit)`,
+  `compareTo(MpTemporalPeriod)`
+  - Factory: `MpZonedDateTimeRange.of(from, duration)`, `.of(from, period)`, `.forever`, `.beginningAt()`, `.endingAt()`
+- **MpLocalTimeSlot** — intra-day time range with `duration`, `splitWithGaps(duration, gap)`, `formatHhMm()`,
+  `formatHhMmSs()`
+  - Factory: `MpLocalTimeSlot.of(from, duration)`, `.ofSecondsOfDay(from, to)`, `.completeDay`
 
 All range types (except MpLocalTimeSlot) have a **Partial** variant with optional start/end, convertible via
 `asValidRange()`:
@@ -205,6 +220,8 @@ val partial = MpLocalDateRange.Partial(from = someDate, to = null)
 val concrete = partial.asValidRange()  // fills Doomsday as end
 
 // Also available: MpClosedLocalDateRange.Partial, MpInstantRange.Partial, MpZonedDateTimeRange.Partial
+// MpInstantRange.Partial also has: asDateRange(timezone) -> MpClosedLocalDateRange.Partial
+// MpZonedDateTimeRange.Partial also has: asDateRange() -> MpClosedLocalDateRange.Partial
 ```
 
 Create ranges from types:

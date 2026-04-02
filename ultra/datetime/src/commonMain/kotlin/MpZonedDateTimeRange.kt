@@ -121,7 +121,7 @@ data class MpZonedDateTimeRange(
      */
     fun contains(datetime: MpAbsoluteDateTime): Boolean {
         val instant = datetime.toInstant()
-        return isValid && instant >= from.toInstant() && instant < to.toInstant()
+        return isValid && instant in from.toInstant()..<to.toInstant()
     }
 
     /**
@@ -141,7 +141,7 @@ data class MpZonedDateTimeRange(
 
     fun intersects(other: MpZonedDateTimeRange): Boolean {
         return (isValid && other.isValid) && (
-                (other.from >= from && other.from < to) ||
+                (other.from in from..<to) ||
                         (other.to > from && other.to <= to) ||
                         contains(other) ||
                         other.contains(this)
