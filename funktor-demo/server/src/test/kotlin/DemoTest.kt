@@ -8,7 +8,7 @@ import io.peekandpoke.funktor.testing.AppSpec
 
 class DemoTest : AppSpec<FunktorDemoConfig>(testApp) {
 
-    private val api get() = kontainer.get(AuthApiFeature::class)
+    private val api by service(AuthApiFeature::class)
 
     init {
         api.auth.getRealm { route ->

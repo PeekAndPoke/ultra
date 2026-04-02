@@ -1,0 +1,200 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {datetimeSidebar} from '../../../data/datetime-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="MpZonedDateTime" sidebar={datetimeSidebar}
+            description="Date, time, and timezone — the full package with DST-aware arithmetic">
+
+    <h1>MpZonedDateTime</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        The full package: date, time, and timezone. Has the richest feature set of any datetime type
+        because it has all the information needed to do everything correctly.
+    </p>
+
+    <h2>When to use MpZonedDateTime</h2>
+
+    <ul>
+        <li>Displaying dates and times to users (with timezone context)</li>
+        <li>Scheduling across timezones ("meeting at 3 PM Berlin time")</li>
+        <li>Any arithmetic where DST must be handled correctly</li>
+        <li>Formatting with timezone offsets</li>
+    </ul>
+
+    <Aside>If MpInstant answers "when," MpZonedDateTime answers "when, and what does the clock say?"</Aside>
+
+    <h2>Creating</h2>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.MpZonedDateTime
+import io.peekandpoke.ultra.datetime.MpTimezone
+
+// From components
+val zoned = MpZonedDateTime.of(
+    MpLocalDateTime.of(2025, 6, 15, 14, 0),
+    MpTimezone.of("Europe/Berlin"),
+)
+
+// From an ISO string with timezone
+val parsed = MpZonedDateTime.parse("2025-06-15T14:00:00+02:00[Europe/Berlin]")
+val maybe = MpZonedDateTime.tryParse("not-valid")  // null
+
+// From epoch with timezone
+val fromMillis = MpZonedDateTime.fromEpochMillis(
+    millis = 1718452800000L,
+    timezone = MpTimezone.of("Europe/Berlin"),
+)
+
+// Boundaries
+val genesis = MpZonedDateTime.Genesis
+val doomsday = MpZonedDateTime.Doomsday`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Properties</h2>
+
+    <p>MpZonedDateTime exposes all date and time components — because it has a timezone, these are always
+        unambiguous:</p>
+
+    <Code code={`val zoned = MpZonedDateTime.of(
+    MpLocalDateTime.of(2025, 6, 15, 14, 30, 45),
+    MpTimezone.of("Europe/Berlin"),
+)
+
+zoned.year          // 2025
+zoned.monthNumber   // 6
+zoned.month         // Month.JUNE
+zoned.dayOfMonth    // 15
+zoned.hour          // 14
+zoned.minute        // 30
+zoned.second        // 45
+zoned.milliSecond   // 0
+zoned.dayOfWeek     // DayOfWeek.SUNDAY
+zoned.dayOfYear     // 166
+zoned.timezone      // MpTimezone("Europe/Berlin")`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>DST-aware arithmetic</h2>
+
+    <p>MpZonedDateTime carries its timezone, so all arithmetic handles DST transitions automatically:</p>
+
+    <Code code={`import kotlinx.datetime.DateTimeUnit
+import kotlin.time.Duration.Companion.hours
+
+val zoned = MpZonedDateTime.of(
+    MpLocalDateTime.of(2025, 3, 30, 1, 0),  // 1 AM
+    MpTimezone.of("Europe/Berlin"),           // DST spring-forward at 2 AM
+)
+
+// Calendar "1 day" — same local time tomorrow (24h? 23h? handled correctly)
+val tomorrow = zoned.plus(1, DateTimeUnit.DAY)
+println(tomorrow.hour)  // 1 (same local time, DST-adjusted)
+
+// Absolute "24 hours" — might land on a different local time
+val plus24h = zoned.plus(24.hours)
+
+// Months and years
+val nextMonth = zoned.plus(1, DateTimeUnit.MONTH)
+val nextYear = zoned.plus(1, DateTimeUnit.YEAR)
+
+// Periods
+val period = MpDateTimePeriod.of(months = 2, days = 10, hours = 3)
+val future = zoned.plus(period)
+
+// Subtraction
+val yesterday = zoned.minus(1, DateTimeUnit.DAY)
+val past = zoned.minus(period)
+
+// Duration between two zoned datetimes
+val other = zoned.plus(3, DateTimeUnit.HOUR)
+val diff = other - zoned  // Duration`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Anchoring</h2>
+
+    <p>Snap to calendar boundaries — all timezone-aware:</p>
+
+    <Code code={`val zoned = MpZonedDateTime.of(
+    MpLocalDateTime.of(2025, 7, 18, 14, 35, 22),
+    MpTimezone.of("Europe/Berlin"),
+)
+
+// Time anchoring
+zoned.atStartOfDay()       // 2025-07-18T00:00 Europe/Berlin
+zoned.atStartOfHour()      // 2025-07-18T14:00
+zoned.atStartOfMinute()    // 2025-07-18T14:35:00
+zoned.atStartOfSecond()    // 2025-07-18T14:35:22
+
+// Date anchoring
+zoned.atStartOfMonth()     // 2025-07-01T00:00
+zoned.atStartOfYear()      // 2025-01-01T00:00
+
+// Day of week navigation
+zoned.atStartOfNext(DayOfWeek.MONDAY)
+zoned.atStartOfPrevious(DayOfWeek.FRIDAY)
+
+// Set a specific time
+zoned.atTime(MpLocalTime.of(9, 0))  // 2025-07-18T09:00`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Converting</h2>
+
+    <Code code={`val zoned = MpZonedDateTime.of(
+    MpLocalDateTime.of(2025, 6, 15, 14, 0),
+    MpTimezone.of("Europe/Berlin"),
+)
+
+// To absolute time
+val instant = zoned.toInstant()          // MpInstant (UTC)
+val millis = zoned.toEpochMillis()
+val seconds = zoned.toEpochSeconds()
+
+// To local types (drops timezone)
+val date = zoned.toLocalDate()           // MpLocalDate
+val time = zoned.toLocalTime()           // MpLocalTime
+val dateTime = zoned.toLocalDateTime()   // MpLocalDateTime
+
+// ISO string
+val iso = zoned.toIsoString()
+// "2025-06-15T14:00:00.000+02:00[Europe/Berlin]"`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Formatting</h2>
+
+    <p>MpZonedDateTime is the only type that can format timezone offsets:</p>
+
+    <Code code={`val zoned = MpZonedDateTime.of(
+    MpLocalDateTime.of(2025, 6, 15, 14, 0),
+    MpTimezone.of("Europe/Berlin"),
+)
+
+// Pattern-based formatting
+zoned.format("dd MMM yyyy HH:mm Z")     // "15 Jun 2025 14:00 +02:00"
+zoned.format("yyyy-MM-dd HH:mm:ss")     // "2025-06-15 14:00:00"
+
+// Convenience methods
+zoned.formatDdMmmYyyy()                  // "15 Jun 2025"
+zoned.formatHhMm()                       // "14:00"
+zoned.formatDdMmmYyyyHhMm()             // "15 Jun 2025 14:00"
+zoned.formatDdMmmYyyyHhMmSs()           // "15 Jun 2025 14:00:00"`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Creating ranges</h2>
+
+    <Code code={`// Range from a duration
+val range = zoned.toRange(2.hours)  // MpZonedDateTimeRange
+
+// Range from a period
+val monthRange = zoned.toRange(MpDateTimePeriod.of(months = 1))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>JVM interop</h2>
+
+    <Code code={`// MpZonedDateTime -> java.time.ZonedDateTime
+val javaZoned: java.time.ZonedDateTime = mpZoned.jvm
+
+// java.time.ZonedDateTime -> MpZonedDateTime
+val mpZoned: MpZonedDateTime = javaZoned.mp`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/datetime/mp-timezone"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            MpTimezone &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

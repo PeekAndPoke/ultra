@@ -7,23 +7,10 @@ import io.peekandpoke.funktor.cluster.backgroundjobs.api.BackgroundJobsApi
 import io.peekandpoke.funktor.cluster.depot.api.DepotApi
 import io.peekandpoke.funktor.cluster.workers.api.WorkersApi
 import io.peekandpoke.funktor.rest.QueryParams
-import io.peekandpoke.funktor.testing.AppSpec
-import kotlinx.coroutines.runBlocking
 
-class ClusterApiSpec : AppSpec<FunktorAllTestConfig>(testApp) {
+class ClusterApiSpec : FunktorApiSpec() {
 
     private val api by service(FunktorClusterApiFeature::class)
-    private val realm by service(TestUserRealm::class)
-    private val usersRepo by service(TestUsersRepo::class)
-
-    private val superUserToken: String by lazy {
-        runBlocking {
-            val user = usersRepo.insert(
-                TestUser(name = "Super User", email = "cluster-super@test.com", isSuperUser = true)
-            )
-            realm.generateJwt(user).token
-        }
-    }
 
     init {
         // GlobalLocksApi

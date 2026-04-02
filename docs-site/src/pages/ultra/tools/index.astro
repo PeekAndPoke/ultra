@@ -1,0 +1,98 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Nav from '../../../components/Nav.astro';
+import HilbertBackground from '../../../components/HilbertBackground.astro';
+import {categoryTints} from '../../../data/site';
+
+const t = categoryTints.tools;
+
+const libraries = [
+    {
+        name: 'Kontainer',
+        tagline: 'Lightweight dependency injection',
+        href: '/ultra/kontainer/',
+        description: 'A DI container built around per-request scoping. Define a blueprint, create container instances with fresh dynamic services per unit of work. Constructor injection, validated dependency graphs, three lifecycles (Singleton, Dynamic, Prototype), lazy injection, and full introspection.',
+        highlights: ['Per-request container instances', 'Validated at startup', 'Lazy & list injection', 'Module system'],
+    },
+    {
+        name: 'Slumber',
+        tagline: 'Kotlin-first serialization',
+        href: '/ultra/slumber/',
+        description: 'Serialization that understands nullable types, default values, and sealed classes without annotation clutter. Codec-based architecture with pluggable modules for datetime, polymorphism, and custom types. Designed to serialize to and from maps/lists rather than a specific wire format.',
+        highlights: ['Nullable-aware', 'Polymorphic sealed classes', 'Codec modules', 'Map-based, format-agnostic'],
+    },
+    {
+        name: 'Mutator',
+        tagline: 'Modify immutable data structures',
+        href: '/ultra/mutator/',
+        description: 'KSP-generated code that lets you modify deeply nested immutable data structures with simple property assignments. Mark your data classes with @Mutable and get type-safe mutator functions that compose across nesting levels — including lists, sets, and maps.',
+        highlights: ['KSP code generation', 'Deep nesting support', 'Collection mutators', 'No runtime reflection'],
+    },
+    {
+        name: 'Streams',
+        tagline: 'Reactive values',
+        href: '/ultra/streams/',
+        description: 'A lightweight reactive streams library where every stream always has a current value. Lazy subscription chains, composable operators (map, filter, combine, debounce, fold, history), error-resilient subscribers, and Flow interop. Built for UI state in Kraft.',
+        highlights: ['Always-has-a-value', 'Lazy subscriptions', 'JS: localStorage, animTicker', 'Flow bridge'],
+    },
+    {
+        name: 'Datetime',
+        tagline: 'Multiplatform date and time',
+        href: '/ultra/datetime/',
+        description: 'Date, time, timezone, and range types for Kotlin Multiplatform. Built on kotlinx-datetime with a type system designed to prevent common mistakes: MpLocalDateTime has no arithmetic (DST-ambiguous), MpInstant requires a timezone for calendar ops. Rich anchoring, formatting, and a testable Kronos clock.',
+        highlights: ['Guard-rail type system', '600+ IANA timezones', 'Kronos testable clock', 'Ranges & time slots'],
+    },
+    {
+        name: 'Cache',
+        tagline: 'In-memory caching',
+        href: '/ultra/cache/',
+        description: 'A coroutine-based in-memory cache with pluggable eviction: TTL after last access, max entries (LRU), or max memory with recursive object size estimation. Thread-safe, multiplatform, and designed for hot paths like serialization caches.',
+        highlights: ['TTL / LRU / memory-aware', 'Pluggable behaviors', 'Coroutine background loop', 'Object size estimation'],
+    },
+];
+---
+
+<BaseLayout title="Tools">
+    <HilbertBackground tint={categoryTints.tools.light}/>
+    <Nav/>
+
+    <section class="pt-32 pb-12 px-4">
+        <div class="mx-auto max-w-5xl">
+            <h1 class="text-4xl font-extrabold text-white mb-4">Tools</h1>
+            <p class="text-xl text-gray-400 mb-2">
+                Kotlin multiplatform libraries that work anywhere.
+            </p>
+            <p class="text-sm text-gray-500 mb-12">
+                Dependency injection, serialization, reactive state, immutable data, date/time, and caching —
+                the building blocks behind Kraft and Funktor.
+            </p>
+
+            <div class="space-y-6">
+                {libraries.map(lib => (
+                        <a
+                                href={lib.href}
+                                class="group block p-6 rounded-xl border border-brand-400/20 bg-[#161a2a]/65 hover:border-brand-400/50 hover:bg-[#161a2a]/75 hover:-translate-y-0.5 transition-all duration-300"
+                                style={`--glow: ${t.glow}; --glow-sm: ${t.glowSm};`}
+                                onmouseover="this.style.boxShadow='0 0 25px var(--glow), 0 0 8px var(--glow-sm)'"
+                                onmouseout="this.style.boxShadow='none'"
+                        >
+                            <div class="flex items-baseline gap-3 mb-2">
+                                <h2 class="text-lg font-bold text-white">{lib.name}</h2>
+                                <span class="text-sm text-brand-400 font-medium">{lib.tagline}</span>
+                            </div>
+                            <p class="text-sm text-gray-400 leading-relaxed mb-3">
+                                {lib.description}
+                            </p>
+                            <div class="flex flex-wrap gap-2">
+                                {lib.highlights.map(h => (
+                                        <span class="text-xs px-2 py-0.5 rounded-full bg-white/5 text-gray-500 border border-white/5">
+                  {h}
+                </span>
+                                ))}
+                            </div>
+                        </a>
+                ))}
+            </div>
+        </div>
+    </section>
+</BaseLayout>

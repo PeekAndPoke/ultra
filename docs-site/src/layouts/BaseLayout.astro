@@ -21,5 +21,14 @@ const { title, description = 'Open source Kotlin libraries for building modern a
   </head>
   <body class="bg-surface-900 text-gray-200 font-sans antialiased">
     <slot />
+    <footer class="py-8 px-6 border-t border-white/5">
+        <div class="max-w-4xl mx-auto text-center text-sm text-gray-600">
+            <p>
+                &copy; {new Date().getFullYear()} Karsten J. Gerber
+                <span class="mx-2 text-white/10">|</span>
+                <a href="/legal" class="text-gray-600 hover:text-brand-400 transition-colors">Legal / Impressum</a>
+            </p>
+        </div>
+    </footer>
   </body>
 </html>

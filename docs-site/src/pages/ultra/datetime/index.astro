@@ -1,0 +1,112 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {datetimeSidebar} from '../../../data/datetime-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Datetime" sidebar={datetimeSidebar}
+            description="Multiplatform date, time, timezone, and range types for Kotlin" hilbert>
+
+    <h1>Datetime</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Date, time, timezone, and range types for Kotlin Multiplatform.
+        Built on kotlinx-datetime with rich arithmetic, formatting, and a testable clock.
+    </p>
+
+    <h2>Why another date/time library?</h2>
+
+    <p><code>kotlinx-datetime</code> gives you the foundation: <code>Instant</code>, <code>LocalDate</code>, <code>TimeZone</code>.
+        But real-world code needs more — date ranges, time slots, formatting, DST-aware arithmetic, anchoring to
+        start-of-month
+        or start-of-week, and a clock you can freeze in tests.</p>
+
+    <Aside>We didn't set out to wrap kotlinx-datetime. We just kept writing the same extension functions in every
+        project
+        until it was obvious they belonged in a library.
+    </Aside>
+
+    <h2>The core idea: rich types, multiplatform</h2>
+
+    <p>Datetime provides a set of <code>Mp*</code> types — <code>MpInstant</code>, <code>MpLocalDate</code>,
+        <code>MpLocalDateTime</code>, <code>MpLocalTime</code>, <code>MpZonedDateTime</code>, <code>MpTimezone</code> —
+        that wrap kotlinx-datetime internally but expose a much richer API. They work identically on JVM and JS.</p>
+
+    <Code code={`val now = kronos.instantNow()
+
+val nextWeek = now.plusDays(7)
+val startOfMonth = now.atStartOfMonth()
+val formatted = now.atZone(MpTimezone.of("Europe/Berlin"))
+    .format("dd MMM yyyy HH:mm")
+
+val range = MpLocalDateRange(
+    from = now.toLocalDate(),
+    to = nextWeek.toLocalDate(),
+)
+println(range.numberOfDays)  // 7`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>What you get</h2>
+
+    <div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Rich Date/Time Types</h3>
+            <p class="text-sm text-gray-400">Instant, LocalDate, LocalDateTime, LocalTime, ZonedDateTime, Timezone — all
+                multiplatform.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Date Arithmetic</h3>
+            <p class="text-sm text-gray-400">Add days, months, years. DST-aware. Anchor to start of month, week,
+                quarter, year.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Ranges &amp; Time Slots</h3>
+            <p class="text-sm text-gray-400">Date ranges, instant ranges, zoned datetime ranges, and time-of-day slots
+                with set operations.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Formatting &amp; Parsing</h3>
+            <p class="text-sm text-gray-400">Pattern-based formatting (<code>dd MMM yyyy HH:mm</code>) and ISO string
+                parsing.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Kronos Clock</h3>
+            <p class="text-sm text-gray-400">An injectable, freezable time source. System clock in production, fixed
+                clock in tests.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">JVM Interop</h3>
+            <p class="text-sm text-gray-400">Seamless conversion to and from <code>java.time</code> types via
+                <code>.jvm</code> and <code>.mp</code> properties.</p>
+        </div>
+    </div>
+
+    <h2>Quick taste</h2>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.MpLocalDate
+import io.peekandpoke.ultra.datetime.MpTimezone
+import io.peekandpoke.ultra.datetime.Kronos
+
+// Parse and manipulate
+val date = MpLocalDate.parse("2025-03-15")
+val nextMonth = date.plusMonths(1)           // 2025-04-15
+val startOfWeek = date.atStartOfPrevious(DayOfWeek.MONDAY)
+
+// Timezone-aware
+val instant = MpInstant.parse("2025-03-15T10:30:00Z")
+val berlin = instant.atZone(MpTimezone.of("Europe/Berlin"))
+val tokyo = instant.atZone(MpTimezone.of("Asia/Tokyo"))
+
+// Testable clock
+val kronos = Kronos.fixed(MpInstant.parse("2025-01-01T00:00:00Z"))
+println(kronos.instantNow())  // always 2025-01-01T00:00:00Z`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/datetime/getting-started"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Get started &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

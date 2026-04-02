@@ -13,6 +13,8 @@
 - [Slumber](https://peekandpoke.io/llms/slumber.md): Kotlin-first serialization — nullable-aware, sealed class polymorphism, two-pass error handling
 - [Mutator](https://peekandpoke.io/ultra/mutator/): KSP-generated code for mutating nested immutable data structures
 - [Streams](https://peekandpoke.io/llms/streams.md): Reactive streams — always-has-a-value, composable operators, lazy subscriptions
+- [Datetime](https://peekandpoke.io/llms/datetime.md): Multiplatform date/time — guard-rail type system, 600+ timezones, DST-aware arithmetic, testable Kronos clock
+- [Cache](https://peekandpoke.io/llms/cache.md): In-memory caching — TTL/LRU/memory-aware eviction, coroutine-based, multiplatform
 
 ## Kraft
 

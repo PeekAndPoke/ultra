@@ -6,4 +6,5 @@ export const kontainerSidebar = [
     {href: '/ultra/kontainer/injection', label: 'Service Injection', section: 'Core'},
     {href: '/ultra/kontainer/modules', label: 'Modules', section: 'Core'},
     {href: '/ultra/kontainer/advanced', label: 'Advanced Topics', section: 'Advanced'},
+    {href: '/ultra/kontainer/introspection', label: 'Debugging / Introspection', section: 'Advanced'},
 ];

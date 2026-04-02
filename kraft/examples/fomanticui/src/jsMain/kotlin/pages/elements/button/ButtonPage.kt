@@ -22,8 +22,8 @@ import io.peekandpoke.ultra.semanticui.noui
 import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
-import kotlinx.html.a
 import kotlinx.html.div
+import kotlinx.html.p
 
 @Suppress("FunctionName")
 fun Tag.ButtonPage() = comp {
@@ -61,6 +61,11 @@ class ButtonPage(ctx: NoProps) : PureComponent(ctx) {
             ui.dividing.header H2 { +"Groups" }
 
             renderButtonGroup()
+            renderIconButtonGroup()
+            renderConditionalGroup()
+            renderEqualWidthGroup()
+            renderStackableGroup()
+            renderVerticalGroup()
 
             ui.dividing.header H2 { +"Variations" }
 
@@ -70,12 +75,8 @@ class ButtonPage(ctx: NoProps) : PureComponent(ctx) {
             renderFluidButtons()
             renderCompactButtons()
             renderCircularButtons()
-
-            ui.dividing.header H2 { +"... more ..." }
-
-            a(href = "https://fomantic-ui.com/elements/button.html#vertical-buttons") {
-                +"See more"
-            }
+            renderLoadingButton()
+            renderAttachedButton()
         }
     }
 
@@ -491,12 +492,13 @@ class ButtonPage(ctx: NoProps) : PureComponent(ctx) {
     private fun FlowContent.renderButtonGroup() = example {
         ui.header { +"Button Group" }
 
+        p { +"Buttons can exist together as a group." }
+
         VerticalContentAndCode(
             ExtractedCodeBlocks.pages_elements_button_ButtonPage_kt_renderButtonGroup_1,
         ) {
             // <CodeBlock renderButtonGroup_1>
             ui.buttons {
-
                 ui.button { +"One" }
                 ui.button { +"Two" }
                 ui.button { +"Three" }
@@ -508,27 +510,10 @@ class ButtonPage(ctx: NoProps) : PureComponent(ctx) {
             ExtractedCodeBlocks.pages_elements_button_ButtonPage_kt_renderButtonGroup_2,
         ) {
             // <CodeBlock renderButtonGroup_2>
-            ui.icon.buttons {
-                ui.button { icon.align_left() }
-                ui.button { icon.align_center() }
-                ui.button { icon.align_justify() }
-            }
-            ui.icon.buttons {
-                ui.button { icon.bold() }
-                ui.button { icon.underline() }
-                ui.button { icon.text_width() }
-            }
-            // </CodeBlock>
-        }
-
-        VerticalContentAndCode(
-            ExtractedCodeBlocks.pages_elements_button_ButtonPage_kt_renderButtonGroup_3,
-        ) {
-            // <CodeBlock renderButtonGroup_3>
-            ui.buttons {
-                ui.button { +"Cancel" }
-                div("or") {}
-                ui.positive.button { +"Save" }
+            ui.blue.buttons {
+                ui.button { +"One" }
+                ui.button { +"Two" }
+                ui.button { +"Three" }
             }
             // </CodeBlock>
         }
@@ -652,6 +637,149 @@ class ButtonPage(ctx: NoProps) : PureComponent(ctx) {
             }
             ui.circular.green.icon.button {
                 icon.envelope()
+            }
+            // </CodeBlock>
+        }
+    }
+
+    private fun FlowContent.renderLoadingButton() = example {
+        ui.header { +"Loading" }
+
+        p { +"A button can show a loading indicator." }
+
+        VerticalContentAndCode(
+            ExtractedCodeBlocks.pages_elements_button_ButtonPage_kt_renderLoadingButton,
+        ) {
+            // <CodeBlock renderLoadingButton>
+            ui.loading.button { +"Loading" }
+            ui.loading.basic.button { +"Loading" }
+            ui.loading.primary.button { +"Loading" }
+            ui.loading.secondary.button { +"Loading" }
+            // </CodeBlock>
+        }
+    }
+
+    private fun FlowContent.renderAttachedButton() = example {
+        ui.header { +"Attached" }
+
+        p { +"A button can be attached to the top or bottom of other content." }
+
+        VerticalContentAndCode(
+            ExtractedCodeBlocks.pages_elements_button_ButtonPage_kt_renderAttachedButton,
+        ) {
+            // <CodeBlock renderAttachedButton>
+            ui.top.attached.button { +"Top" }
+            ui.attached.segment {
+                p { +"Segment content" }
+            }
+            ui.bottom.attached.button { +"Bottom" }
+            // </CodeBlock>
+        }
+    }
+
+    private fun FlowContent.renderIconButtonGroup() = example {
+        ui.header { +"Icon Button Group" }
+
+        VerticalContentAndCode(
+            ExtractedCodeBlocks.pages_elements_button_ButtonPage_kt_renderIconButtonGroup,
+        ) {
+            // <CodeBlock renderIconButtonGroup>
+            ui.icon.buttons {
+                ui.button { icon.align_left() }
+                ui.button { icon.align_center() }
+                ui.button { icon.align_justify() }
+            }
+            ui.icon.buttons {
+                ui.button { icon.bold() }
+                ui.button { icon.underline() }
+                ui.button { icon.text_width() }
+            }
+            // </CodeBlock>
+        }
+    }
+
+    private fun FlowContent.renderConditionalGroup() = example {
+        ui.header { +"Conditional" }
+
+        p { +"Button groups can contain conditionals." }
+
+        VerticalContentAndCode(
+            ExtractedCodeBlocks.pages_elements_button_ButtonPage_kt_renderConditionalGroup,
+        ) {
+            // <CodeBlock renderConditionalGroup>
+            ui.buttons {
+                ui.button { +"Cancel" }
+                div("or") {}
+                ui.positive.button { +"Save" }
+            }
+
+            ui.buttons {
+                ui.button { +"un" }
+                div("or") { attributes["data-text"] = "ou" }
+                ui.positive.button { +"deux" }
+            }
+            // </CodeBlock>
+        }
+    }
+
+    private fun FlowContent.renderEqualWidthGroup() = example {
+        ui.header { +"Equal Width" }
+
+        p { +"Groups can have their widths divided evenly." }
+
+        VerticalContentAndCode(
+            ExtractedCodeBlocks.pages_elements_button_ButtonPage_kt_renderEqualWidthGroup,
+        ) {
+            // <CodeBlock renderEqualWidthGroup>
+            ui.three.buttons {
+                ui.button { +"One" }
+                ui.button { +"Two" }
+                ui.button { +"Three" }
+            }
+
+            ui.five.buttons {
+                ui.button { +"One" }
+                ui.button { +"Two" }
+                ui.button { +"Three" }
+                ui.button { +"Four" }
+                ui.button { +"Five" }
+            }
+            // </CodeBlock>
+        }
+    }
+
+    private fun FlowContent.renderStackableGroup() = example {
+        ui.header { +"Stackable" }
+
+        p { +"Groups can be stackable on mobile." }
+
+        VerticalContentAndCode(
+            ExtractedCodeBlocks.pages_elements_button_ButtonPage_kt_renderStackableGroup,
+        ) {
+            // <CodeBlock renderStackableGroup>
+            ui.stackable.buttons {
+                ui.button { +"One" }
+                ui.button { +"Two" }
+                ui.button { +"Three" }
+            }
+            // </CodeBlock>
+        }
+    }
+
+    private fun FlowContent.renderVerticalGroup() = example {
+        ui.header { +"Vertical Buttons" }
+
+        p { +"Groups can be formatted to appear vertically." }
+
+        VerticalContentAndCode(
+            ExtractedCodeBlocks.pages_elements_button_ButtonPage_kt_renderVerticalGroup,
+        ) {
+            // <CodeBlock renderVerticalGroup>
+            ui.vertical.buttons {
+                ui.button { +"Feed" }
+                ui.button { +"Messages" }
+                ui.button { +"Events" }
+                ui.button { +"Photos" }
             }
             // </CodeBlock>
         }

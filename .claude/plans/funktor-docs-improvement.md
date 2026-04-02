@@ -70,6 +70,22 @@ Currently ~60 lines, 2 code examples. Add:
 - `docs-site/public/llms.txt` — update Funktor section
 - `docs-site/public/llms-full.txt` — regenerate
 
+## Related Work Completed (April 2026)
+
+Outside this plan's scope, additional docs-site work has been completed:
+
+- **Datetime section** — 12 pages: overview, getting-started, type system & guard rails, 6 dedicated type pages (
+  MpInstant, MpLocalDate, MpLocalTime, MpLocalDateTime, MpZonedDateTime, MpTimezone), formatting & parsing, ranges &
+  time slots, Kronos clock
+- **Cache section** — 3 pages: overview, getting-started, eviction policies
+- **Kontainer** — added introspection/debugging page, lazy `by` delegation example
+- **Streams** — added foldNotNull, historyOfNonNull, filterIsInstance, permanent() examples
+- **LLMs** — created datetime.md, cache.md; updated llms.txt index
+- **Navigation** — "Tools" top-nav dispatcher page, category-tinted Hilbert backgrounds on all landing pages, subtle
+  body tints on detail pages
+- **Landing pages** — Kraft and Funktor index pages converted to standalone card-based dispatchers (matching Tools
+  style)
+
 ## Verification
 
 - `cd docs-site && pnpm run build` — zero errors, correct page count

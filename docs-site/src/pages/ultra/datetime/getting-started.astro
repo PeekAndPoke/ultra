@@ -1,0 +1,126 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {datetimeSidebar} from '../../../data/datetime-sidebar';
+import {Code} from 'astro:components';
+import {dep, mavenCentralUrl} from '../../../data/site';
+---
+
+<DocsLayout title="Getting Started with Datetime" sidebar={datetimeSidebar}
+            description="Set up Datetime in your Kotlin project">
+
+    <h1>Getting Started</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Add Datetime to your project and start working with dates, times, and timezones.
+    </p>
+
+    <h2>1. Add the dependency</h2>
+
+    <p>In your <code>build.gradle.kts</code>:</p>
+
+    <Code code={`dependencies {
+    implementation("${dep.datetime}")
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Find the latest version on <a href={mavenCentralUrl} target="_blank" rel="noopener">Maven Central</a>.</p>
+
+    <p>Datetime is a Kotlin Multiplatform library — it works in <code>commonMain</code>, <code>jvmMain</code>, and
+        <code>jsMain</code>.</p>
+
+    <h2>2. Create dates and times</h2>
+
+    <p>All types have factory methods and ISO-string parsing:</p>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.MpLocalDate
+import io.peekandpoke.ultra.datetime.MpLocalTime
+import io.peekandpoke.ultra.datetime.MpLocalDateTime
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.MpTimezone
+
+// From components
+val date = MpLocalDate.of(2025, 3, 15)
+val time = MpLocalTime.of(14, 30, 0)
+val dateTime = MpLocalDateTime.of(2025, 3, 15, 14, 30, 0)
+
+// From ISO strings
+val parsed = MpLocalDate.parse("2025-03-15")
+val instant = MpInstant.parse("2025-03-15T14:30:00Z")
+
+// Safe parsing
+val maybe = MpLocalDate.tryParse("not-a-date")  // null`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>3. Arithmetic</h2>
+
+    <p>Add and subtract days, months, years, and more:</p>
+
+    <Code code={`val date = MpLocalDate.of(2025, 1, 31)
+
+val nextMonth = date.plusMonths(1)    // 2025-02-28 (clamped)
+val nextYear = date.plusYears(1)      // 2026-01-31
+val lastWeek = date.minusDays(7)     // 2025-01-24
+
+// Anchoring
+val startOfMonth = date.atStartOfMonth()     // 2025-01-01
+val startOfYear = date.atStartOfYear()       // 2025-01-01
+val startOfQuarter = date.atStartOfQuarterOfYear()  // 2025-01-01`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>4. Timezones</h2>
+
+    <p>Convert between absolute and local representations:</p>
+
+    <Code code={`val instant = MpInstant.parse("2025-06-15T12:00:00Z")
+val berlin = MpTimezone.of("Europe/Berlin")
+val tokyo = MpTimezone.of("Asia/Tokyo")
+
+val inBerlin = instant.atZone(berlin)
+println(inBerlin.toLocalDateTime())  // 2025-06-15T14:00 (UTC+2 in summer)
+
+val inTokyo = instant.atZone(tokyo)
+println(inTokyo.toLocalDateTime())   // 2025-06-15T21:00 (UTC+9)
+
+// Back to instant
+val backToUtc = inBerlin.toInstant()
+println(backToUtc == instant)  // true`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>5. Formatting</h2>
+
+    <p>Format dates and times with pattern strings:</p>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.MpDateTimeFormatter
+
+val formatter = MpDateTimeFormatter("dd MMM yyyy HH:mm")
+val zoned = instant.atZone(berlin)
+
+println(zoned.format("dd MMM yyyy"))       // "15 Jun 2025"
+println(zoned.format("yyyy-MM-dd HH:mm"))  // "2025-06-15 14:00"
+
+// Convenience methods
+println(date.formatDdMmmYyyy())  // "15 Jun 2025"`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>The formatter never throws — malformed patterns degrade gracefully. You'll get output, just maybe not what
+        you expected.
+    </Aside>
+
+    <h2>6. JVM interop</h2>
+
+    <p>On the JVM, convert seamlessly to and from <code>java.time</code>:</p>
+
+    <Code code={`// Mp -> java.time
+val javaInstant: java.time.Instant = mpInstant.jvm
+val javaDate: java.time.LocalDate = mpDate.jvm
+val javaZoned: java.time.ZonedDateTime = mpZoned.jvm
+
+// java.time -> Mp
+val mpInstant: MpInstant = javaInstant.mp
+val mpDate: MpLocalDate = javaDate.mp
+val mpZoned: MpZonedDateTime = javaZoned.mp`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/datetime/types"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Core types &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

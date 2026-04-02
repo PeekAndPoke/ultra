@@ -354,11 +354,13 @@ audit.
    | Slumber | 8 pages | OK | - |
    | Streams | 8 pages | OK | - |
    | Karango | 8 pages | OK | - |
-   | Kontainer | 7 pages | OK | - |
+   | Kontainer | 8 pages | OK | - |
    | Kraft | 16 pages | OK | - |
    | Mutator | 6 pages | OK (verify completeness) | Minor |
+   | Datetime | 12 pages | OK | - |
+   | Cache | 3 pages | OK | - |
    | Funktor | ~11 sparse pages | 12-16 pages with depth | Major |
-   | Monko | ? | 6-8 pages | Major |
+   | Monko | 6 pages | OK | - |
    | Ultra (common, vault, etc.) | 0 | Overview + key modules | Medium |
 
     - Every library's core features get their own page with examples

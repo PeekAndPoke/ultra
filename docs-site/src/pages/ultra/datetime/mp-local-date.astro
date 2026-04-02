@@ -1,0 +1,191 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {datetimeSidebar} from '../../../data/datetime-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="MpLocalDate" sidebar={datetimeSidebar}
+            description="A calendar date without time or timezone — the richest type for pure date operations">
+
+    <h1>MpLocalDate</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        A calendar date — no time, no timezone. The right type for birthdays, billing periods, and date pickers.
+        Has the richest set of calendar operations of any type.
+    </p>
+
+    <h2>When to use MpLocalDate</h2>
+
+    <ul>
+        <li>Dates that are inherently timezone-independent (birthdays, holidays)</li>
+        <li>Date pickers and calendar UIs</li>
+        <li>Billing periods, subscription dates</li>
+        <li>Any "what day" question that doesn't need "what time"</li>
+    </ul>
+
+    <h2>Creating</h2>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.MpLocalDate
+
+val date = MpLocalDate.of(2025, 3, 15)
+val withMonth = MpLocalDate.of(2025, Month.MARCH, 15)
+val parsed = MpLocalDate.parse("2025-03-15")
+val maybe = MpLocalDate.tryParse("not-a-date")  // null
+
+// Boundaries
+val genesis = MpLocalDate.Genesis    // -10000-01-01
+val doomsday = MpLocalDate.Doomsday  // +10000-01-01`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Properties</h2>
+
+    <Code code={`val date = MpLocalDate.of(2025, 3, 15)
+
+date.year            // 2025
+date.monthNumber     // 3
+date.month           // Month.MARCH
+date.day             // 15
+date.dayOfWeek       // DayOfWeek.SATURDAY
+date.dayOfYear       // 74
+date.numDaysInMonth  // 31`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Calendar arithmetic</h2>
+
+    <p>Because MpLocalDate has no time component, calendar arithmetic is unambiguous — no DST to worry about:</p>
+
+    <Code code={`val date = MpLocalDate.of(2025, 1, 31)
+
+// Days and weeks
+date.plusDays(1)       // 2025-02-01
+date.minusDays(10)     // 2025-01-21
+date.plusWeeks(2)      // 2025-02-14
+date.minusWeeks(1)     // 2025-01-24
+
+// Months — clamped to valid days
+date.plusMonths(1)     // 2025-02-28 (not Feb 31!)
+date.minusMonths(1)    // 2024-12-31
+
+// Years
+date.plusYears(1)      // 2026-01-31
+date.minusYears(5)     // 2020-01-31
+
+// Centuries
+date.plusCenturies(1)  // 2125-01-31`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>Month-end clamping is important: January 31 plus one month is February 28 (or 29 in a leap year), not an
+        error.
+        The library does the right thing instead of throwing.
+    </Aside>
+
+    <p>You can also use <code>DateTimeUnit</code> and periods:</p>
+
+    <Code code={`import kotlinx.datetime.DateTimeUnit
+
+date.plus(3, DateTimeUnit.MONTH)   // 2025-04-30
+date.minus(1, DateTimeUnit.YEAR)   // 2024-01-31
+
+val period = MpDatePeriod.of(years = 1, months = 2, days = 5)
+date.plus(period)   // 2026-04-05
+date.minus(period)  // 2023-11-26`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Anchoring</h2>
+
+    <p>Snap to calendar boundaries:</p>
+
+    <Code code={`val date = MpLocalDate.of(2025, 7, 18)
+
+// Month boundaries
+date.atFirstOfMonth()            // 2025-07-01
+date.atLastOfMonth()             // 2025-07-31
+date.atNthOfMonth(15)            // 2025-07-15
+date.atStartOfMonth()            // 2025-07-01 (alias)
+
+// Year, quarter, half
+date.atStartOfYear()             // 2025-01-01
+date.atStartOfQuarterOfYear()    // 2025-07-01 (Q3 starts July)
+date.atStartOfHalfOfYear()       // 2025-07-01 (H2 starts July)
+
+// Decade and century
+date.atStartOfDecade()           // 2020-01-01
+date.atStartOfCentury()          // 2000-01-01`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Week navigation</h2>
+
+    <Code code={`val date = MpLocalDate.of(2025, 3, 12)  // Wednesday
+
+// Find specific days of the week
+date.atStartOfNext(DayOfWeek.FRIDAY)      // 2025-03-14
+date.atStartOfPrevious(DayOfWeek.MONDAY)  // 2025-03-10
+
+// Get all Mondays in the month
+val mondays = date.getDatesInMonth(listOf(DayOfWeek.MONDAY))
+// [2025-03-03, 2025-03-10, 2025-03-17, 2025-03-24, 2025-03-31]
+
+// Get specific day-of-month values
+val paydays = date.getDatesInMonth(listOf(1, 15))
+// [2025-03-01, 2025-03-15]`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Converting to other types</h2>
+
+    <p>A date alone is not enough to pinpoint a moment in time. The conversions reflect this:</p>
+
+    <Code code={`val date = MpLocalDate.of(2025, 3, 15)
+
+// To LocalDateTime — just adds midnight, no timezone needed
+val startOfDay = date.toLocalDateTime()             // 2025-03-15T00:00
+val atTime = date.atTime(MpLocalTime.of(14, 30))    // 2025-03-15T14:30
+
+// To ZonedDateTime — REQUIRES a timezone
+val zonedStart = date.atStartOfDay(MpTimezone.of("Europe/Berlin"))
+val zonedNoon = date.atNoon(MpTimezone.of("Europe/Berlin"))
+val zonedTime = date.atTime(
+    MpLocalTime.of(14, 30),
+    MpTimezone.of("Europe/Berlin"),
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Creating ranges</h2>
+
+    <Code code={`val start = MpLocalDate.of(2025, 3, 10)
+val end = MpLocalDate.of(2025, 3, 20)
+
+// Open range [from, to)
+val open = start.toRange(end)
+
+// Closed range [from, to]
+val closed = start.toClosedRange(end)
+
+// Range from a period
+val week = start.toRange(MpDatePeriod.of(days = 7))
+
+// Entire month
+val march = start.toEnclosingMonthRange()  // [March 1, March 31]
+
+// Zoned range from a time slot
+val slot = MpLocalTimeSlot(MpLocalTime.of(9, 0), MpLocalTime.of(17, 0))
+val zonedRange = start.toRange(slot, MpTimezone.of("Europe/Berlin"))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Formatting</h2>
+
+    <Code code={`val date = MpLocalDate.of(2025, 3, 15)
+
+date.toIsoString()            // "2025-03-15"
+date.formatDdMmmYyyy()        // "15 Mar 2025"
+date.format("dd/MM/yyyy")     // "15/03/2025"
+date.format("yyyy-MM-dd")     // "2025-03-15"`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>JVM interop</h2>
+
+    <Code code={`// MpLocalDate -> java.time.LocalDate
+val javaDate: java.time.LocalDate = mpDate.jvm
+
+// java.time.LocalDate -> MpLocalDate
+val mpDate: MpLocalDate = javaDate.mp`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/datetime/mp-local-time"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            MpLocalTime &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

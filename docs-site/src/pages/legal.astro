@@ -1,0 +1,146 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Nav from '../components/Nav.astro';
+---
+
+<BaseLayout title="Legal Notice / Impressum"
+            description="Legal notice and data protection information for peekandpoke.io">
+    <Nav/>
+
+    <main class="pt-28 pb-16 px-4 sm:px-6">
+        <div class="max-w-3xl mx-auto">
+
+            <h1 class="text-4xl font-bold text-white mb-2">Legal Notice / Impressum</h1>
+            <p class="text-sm text-gray-500 mb-10">
+                Courtesy translation. The <a href="/de/legal"
+                                             class="text-brand-400 hover:text-brand-300 transition-colors">German
+                version</a> is legally binding.
+            </p>
+
+            <!-- Responsible party -->
+            <section class="p-6 sm:p-8 mb-6 rounded-xl border border-white/10 bg-white/[0.02]">
+                <h2 class="text-xl font-semibold mb-4 text-brand-400">Information pursuant to &sect; 5 DDG</h2>
+                <p class="text-gray-400">
+                    Karsten J. Gerber<br/>
+                    Leipzig, Germany
+                </p>
+                <h3 class="text-base font-semibold mt-6 mb-2 text-white">Contact</h3>
+                <p class="text-gray-400">
+                    E-Mail: <span id="legal-email" class="text-brand-400">[Enable JavaScript to see email]</span>
+                </p>
+            </section>
+
+            <!-- Liability for content -->
+            <section class="p-6 sm:p-8 mb-6 rounded-xl border border-white/10 bg-white/[0.02]">
+                <h2 class="text-xl font-semibold mb-4 text-brand-400">Liability for Content</h2>
+                <p class="text-gray-400">
+                    The contents of this website have been created with the utmost care. However, I cannot guarantee the
+                    accuracy, completeness, or timeliness of the content. As a service provider, I am responsible for my
+                    own content on these pages in accordance with general legislation pursuant to &sect; 7 (1) DDG.
+                    According to &sect;&sect; 8 to 10 DDG, however, I am not obligated to monitor transmitted or stored
+                    third-party information or to investigate circumstances indicating illegal activity. Obligations to
+                    remove or block the use of information under general law remain unaffected. Liability in this
+                    regard,
+                    however, is only possible from the point in time at which a concrete infringement becomes known.
+                    Upon
+                    becoming aware of such violations, I will remove this content immediately.
+                </p>
+            </section>
+
+            <!-- Liability for links -->
+            <section class="p-6 sm:p-8 mb-6 rounded-xl border border-white/10 bg-white/[0.02]">
+                <h2 class="text-xl font-semibold mb-4 text-brand-400">Liability for Links</h2>
+                <p class="text-gray-400">
+                    This website contains links to external third-party websites over whose content I have no influence.
+                    Therefore, I cannot accept any liability for this external content. The respective provider or
+                    operator
+                    of the linked pages is always responsible for the content of those pages. The linked pages were
+                    checked
+                    for possible legal violations at the time of linking. Illegal content was not recognisable at the
+                    time
+                    of linking. Permanent monitoring of the content of linked pages is not reasonable without concrete
+                    evidence of a violation. Upon becoming aware of legal violations, I will remove such links
+                    immediately.
+                </p>
+            </section>
+
+            <!-- Copyright -->
+            <section class="p-6 sm:p-8 mb-6 rounded-xl border border-white/10 bg-white/[0.02]">
+                <h2 class="text-xl font-semibold mb-4 text-brand-400">Copyright</h2>
+                <p class="text-gray-400">
+                    The content and works created by the site operator on these pages are subject to German copyright
+                    law.
+                    Duplication, processing, distribution, or any form of commercialisation of such material beyond the
+                    scope of copyright law requires the prior written consent of its respective author or creator.
+                    Downloads and copies of this site are only permitted for private, non-commercial use. Insofar as the
+                    content on this site was not created by the operator, the copyrights of third parties are respected.
+                    In particular, third-party content is identified as such. Should you nevertheless become aware of a
+                    copyright infringement, please inform me accordingly. Upon becoming aware of legal violations, I
+                    will
+                    remove such content immediately.
+                </p>
+            </section>
+
+            <!-- Open-source license -->
+            <section class="p-6 sm:p-8 mb-6 rounded-xl border border-white/10 bg-white/[0.02]">
+                <h2 class="text-xl font-semibold mb-4 text-brand-400">Open-Source License</h2>
+                <p class="text-gray-400">
+                    The Ultra libraries documented on this site are published under the
+                    <a href="https://github.com/PeekAndPoke/ultra/blob/master/LICENSE" target="_blank" rel="noopener"
+                       class="text-brand-400 hover:text-brand-300 transition-colors">MIT License</a>.
+                    You are free to use, modify, and distribute them in accordance with the license terms.
+                </p>
+            </section>
+
+            <!-- Data protection -->
+            <section class="p-6 sm:p-8 mb-6 rounded-xl border border-white/10 bg-white/[0.02]">
+                <h2 class="text-xl font-semibold mb-4 text-brand-400">Data Protection</h2>
+                <p class="text-gray-400 mb-4">
+                    The use of this website is generally possible without providing personal data. Insofar as personal
+                    data (such as name, address, or email addresses) is collected on these pages, this is always done
+                    on a voluntary basis as far as possible. This data will not be passed on to third parties without
+                    your explicit consent.
+                </p>
+                <p class="text-gray-400 mb-4">
+                    Please note that data transmission over the Internet (e.g. communication by email) may have security
+                    gaps. Complete protection of data against access by third parties is not possible.
+                </p>
+                <p class="text-gray-400">
+                    The use of contact data published within the framework of the imprint obligation by third parties
+                    for the purpose of sending unsolicited advertising and information material is hereby expressly
+                    prohibited. The operator of this website expressly reserves the right to take legal action in the
+                    event of the unsolicited sending of advertising information, such as spam emails.
+                </p>
+            </section>
+
+            <!-- Hosting -->
+            <section class="p-6 sm:p-8 rounded-xl border border-white/10 bg-white/[0.02]">
+                <h2 class="text-xl font-semibold mb-4 text-brand-400">Hosting</h2>
+                <p class="text-gray-400">
+                    This website is hosted as a static site. The hosting provider may collect and store server log files
+                    that your browser automatically transmits. These include: browser type and version, operating
+                    system,
+                    referrer URL, hostname of the accessing computer, and time of the server request. This data cannot
+                    be
+                    assigned to specific persons. This data is not merged with other data sources.
+                </p>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Email obfuscation -->
+    <script>
+        const _d = [114, 118, 117, 123, 104, 114, 123, 71, 114, 104, 121, 122, 123, 108, 117, 52, 110, 108, 121, 105, 108, 121, 53, 107, 108];
+
+        function _r() {
+            return _d.map(c => String.fromCharCode(c - 7)).join('');
+        }
+
+        const el = document.getElementById('legal-email');
+        if (el) {
+            const a = _r();
+            el.innerHTML = '<a href="' + ['m', 'a', 'i', 'l', 't', 'o', ':'].join('') + a + '" class="text-brand-400 hover:text-brand-300 transition-colors">' + a + '</a>';
+        }
+    </script>
+</BaseLayout>

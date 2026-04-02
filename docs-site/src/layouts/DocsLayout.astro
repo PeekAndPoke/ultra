@@ -1,15 +1,17 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import Nav from '../components/Nav.astro';
-import {githubSource} from '../data/site';
+import HilbertBackground from '../components/HilbertBackground.astro';
+import {githubSource, categoryTints, pathToCategory} from '../data/site';
 
 interface Props {
   title: string;
   description?: string;
   sidebar: { href: string; label: string; section?: string }[];
+    hilbert?: boolean; // show the lit Hilbert background (for landing pages)
 }
 
-const { title, description, sidebar } = Astro.props;
+const {title, description, sidebar, hilbert = false} = Astro.props;
 const currentPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
 
 // Derive GitHub source link from current path
@@ -19,9 +21,20 @@ const pathToSource: Record<string, string> = {
     '/ultra/kontainer/': githubSource.kontainer,
     '/ultra/slumber/': githubSource.slumber,
     '/ultra/streams/': githubSource.streams,
+    '/ultra/datetime/': githubSource.datetime,
+    '/ultra/cache/': githubSource.cache,
     '/ultra/karango/': githubSource.karango,
+    '/ultra/funktor/': githubSource.funktor,
+    '/ultra/monko/': githubSource.monko,
 };
 const githubUrl = Object.entries(pathToSource).find(([prefix]) => currentPath.startsWith(prefix))?.[1];
+
+// Resolve category tint from centralized constants
+const categoryKey = Object.entries(pathToCategory).find(([prefix]) => currentPath.startsWith(prefix))?.[1];
+const colors = categoryKey ? categoryTints[categoryKey] : undefined;
+const lightTint = colors?.light;
+const bodyBg = colors?.bg ?? '#0e0d0b';
+const borderTint = colors?.border ?? 'rgba(255,255,255,0.1)';
 
 // Group sidebar items by section
 const sections = sidebar.reduce((acc, item) => {
@@ -33,10 +46,13 @@ const sections = sidebar.reduce((acc, item) => {
 ---
 
 <BaseLayout title={title} description={description}>
+    {hilbert && lightTint &&
+            <HilbertBackground tint={lightTint}/>}
   <Nav />
-  <div class="pt-16 flex">
+    <div class="pt-16 flex" style={`background-color: ${bodyBg};`}>
     <!-- Sidebar -->
-    <aside class="fixed top-16 left-0 bottom-0 w-64 border-r border-white/10 overflow-y-auto p-4 hidden lg:block">
+        <aside class="fixed top-16 left-0 bottom-0 w-64 overflow-y-auto p-4 hidden lg:block"
+               style={`border-right: 1px solid ${borderTint}; background-color: ${hilbert ? 'transparent' : bodyBg};`}>
       <nav class="space-y-6">
         {Object.entries(sections).map(([section, items]) => (
           <div>
@@ -79,7 +95,7 @@ const sections = sidebar.reduce((acc, item) => {
     </aside>
 
     <!-- Main content -->
-    <main class="flex-1 lg:ml-64 min-h-screen">
+        <main class="flex-1 lg:ml-64 min-h-screen" style={hilbert ? '' : `background-color: ${bodyBg};`}>
       <article class="mx-auto max-w-4xl px-6 py-12 prose prose-invert prose-headings:text-white prose-a:text-brand-400 prose-code:text-brand-300 prose-strong:text-white max-w-none">
         <slot />
       </article>

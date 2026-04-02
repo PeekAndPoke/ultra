@@ -37,9 +37,51 @@ export const githubSource = {
     slumber: `${githubRepo}/tree/master/ultra/slumber`,
     mutator: `${githubRepo}/tree/master/mutator`,
     streams: `${githubRepo}/tree/master/ultra/streams`,
+    datetime: `${githubRepo}/tree/master/ultra/datetime`,
+    cache: `${githubRepo}/tree/master/ultra/cache`,
     karango: `${githubRepo}/tree/master/karango`,
     funktor: `${githubRepo}/tree/master/funktor`,
     monko: `${githubRepo}/tree/master/monko`,
+};
+
+// Category color tints — Hilbert light, detail-page bg, sidebar border, card hover glow
+// Each category gets a subtle visual identity across landing and detail pages
+export const categoryTints = {
+    tools: {
+        light: '#c8dca8',
+        bg: '#0c0e0b',
+        border: 'rgba(160,190,120,0.08)',
+        glow: 'rgba(160,190,120,0.15)',
+        glowSm: 'rgba(160,190,120,0.08)'
+    },
+    kraft: {
+        light: '#ffb8a8',
+        bg: '#110d0c',
+        border: 'rgba(220,140,120,0.08)',
+        glow: 'rgba(220,140,120,0.15)',
+        glowSm: 'rgba(220,140,120,0.08)'
+    },
+    funktor: {
+        light: '#c8a8e8',
+        bg: '#0e0c11',
+        border: 'rgba(170,140,200,0.08)',
+        glow: 'rgba(170,140,200,0.15)',
+        glowSm: 'rgba(170,140,200,0.08)'
+    },
+} as const;
+
+// Maps URL prefixes to their category tint
+export const pathToCategory: Record<string, keyof typeof categoryTints> = {
+    '/ultra/kontainer/': 'tools',
+    '/ultra/slumber/': 'tools',
+    '/ultra/mutator/': 'tools',
+    '/ultra/streams/': 'tools',
+    '/ultra/datetime/': 'tools',
+    '/ultra/cache/': 'tools',
+    '/ultra/kraft/': 'kraft',
+    '/ultra/funktor/': 'funktor',
+    '/ultra/karango/': 'funktor',
+    '/ultra/monko/': 'funktor',
 };
 
 // Helpers for dependency strings used in code examples
@@ -47,6 +89,8 @@ export const dep = {
     kontainer: `${ultraGroup}:kontainer:${ultraVersion}`,
     slumber: `${ultraGroup}:slumber:${ultraVersion}`,
     streams: `${ultraGroup}:streams:${ultraVersion}`,
+    datetime: `${ultraGroup}:datetime:${ultraVersion}`,
+    cache: `${ultraGroup}:cache:${ultraVersion}`,
     kraftCore: `${kraftGroup}:core:${kraftVersion}`,
     kraftSemanticUi: `${kraftGroup}:semanticui:${kraftVersion}`,
     kraftAddonChartJs: `${kraftGroup}:addons-chartjs:${kraftVersion}`,

@@ -3,15 +3,32 @@ import { githubRepo } from '../data/site';
 const currentPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
 const normalize = (p: string) => p.replace(/\/+$/, '') || '/';
 
+const toolPrefixes = [
+    '/ultra/tools/', '/ultra/kontainer/', '/ultra/slumber/', '/ultra/mutator/',
+    '/ultra/streams/', '/ultra/datetime/', '/ultra/cache/',
+];
+
 const navLinks = [
-  {href: '/', label: 'Home', exact: true},
-  {href: '/ultra/kraft/', label: 'Kraft', exact: false},
-  {href: '/ultra/funktor/', label: 'Funktor', exact: false},
+    {href: '/', label: 'Home', exact: true, prefixes: [] as string[]},
+    {href: '/ultra/tools/', label: 'Tools', exact: false, prefixes: toolPrefixes},
+    {href: '/ultra/kraft/', label: 'Kraft', exact: false, prefixes: ['/ultra/kraft/']},
+    {
+        href: '/ultra/funktor/',
+        label: 'Funktor',
+        exact: false,
+        prefixes: ['/ultra/funktor/', '/ultra/karango/', '/ultra/monko/']
+    },
 ];
 
 function isActive(link: typeof navLinks[number]) {
   const norm = normalize(link.href);
   if (link.exact) return currentPath === norm;
+    if (link.prefixes.length > 0) {
+        return link.prefixes.some(p => {
+            const np = normalize(p);
+            return currentPath === np || currentPath.startsWith(np + '/');
+        });
+    }
   return currentPath === norm || currentPath.startsWith(norm + '/');
 }
 ---

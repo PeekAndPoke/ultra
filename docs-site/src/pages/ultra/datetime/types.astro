@@ -1,0 +1,406 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {datetimeSidebar} from '../../../data/datetime-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Type System & Guard Rails" sidebar={datetimeSidebar}
+            description="How Datetime's type system prevents common date/time mistakes by design">
+
+    <h1>Type System &amp; Guard Rails</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Date and time code is hard. The Datetime library is designed to make wrong code difficult to write
+        by restricting what each type can do.
+    </p>
+
+    <h2>The problem</h2>
+
+    <p>Most date/time bugs come from the same root cause: <strong>treating dates and times as interchangeable</strong>.
+        A local time shown on a calendar is not the same thing as an absolute point in time.
+        Adding "one day" to a datetime can give you 23, 24, or 25 hours depending on DST.
+        Formatting an instant as a date without specifying a timezone silently picks one for you.</p>
+
+    <p>These are not edge cases. They are the normal behavior of time, and they bite every codebase eventually.</p>
+
+    <Aside>We've seen production bugs where "tomorrow" was 23 hours away because of a DST transition,
+        and where a date range was off by one because someone compared instants without accounting for timezone offsets.
+        This library exists because we got tired of fixing those.
+    </Aside>
+
+    <h2>The design principle</h2>
+
+    <p>Datetime uses its type system to enforce a simple rule: <strong>if an operation would be ambiguous without a
+        timezone,
+        the type won't let you do it without one.</strong></p>
+
+    <p>This means:</p>
+
+    <ul>
+        <li>You cannot do calendar arithmetic on an <code>MpInstant</code> without providing a timezone.</li>
+        <li>You cannot convert an <code>MpLocalDateTime</code> to an instant without specifying which timezone it's in.
+        </li>
+        <li><code>MpLocalDateTime</code> deliberately has <strong>no arithmetic operations</strong> — you must choose
+            the right type first.
+        </li>
+        <li><code>MpLocalDate</code> has calendar arithmetic (days, months, years) because those operations are
+            unambiguous for pure dates.
+        </li>
+        <li><code>MpZonedDateTime</code> has full arithmetic because it carries its timezone — DST is handled
+            automatically.
+        </li>
+    </ul>
+
+    <h2>The six types</h2>
+
+    <p>Each type represents a different concept. Choosing the right type for your use case is the first guard rail:</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold">Type</th>
+                <th class="py-2 text-white font-semibold">Represents</th>
+                <th class="py-2 text-white font-semibold">Use when</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><a href="/ultra/datetime/mp-instant" class="text-brand-400 hover:text-brand-300"><code>MpInstant</code></a>
+                </td>
+                <td class="py-2">An absolute point in time (UTC)</td>
+                <td class="py-2">Timestamps, database storage, event ordering, API communication</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><a href="/ultra/datetime/mp-local-date"
+                                    class="text-brand-400 hover:text-brand-300"><code>MpLocalDate</code></a></td>
+                <td class="py-2">A calendar date (no time, no timezone)</td>
+                <td class="py-2">Birthdays, holidays, billing periods, date pickers</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><a href="/ultra/datetime/mp-local-time"
+                                    class="text-brand-400 hover:text-brand-300"><code>MpLocalTime</code></a></td>
+                <td class="py-2">A time of day (no date, no timezone)</td>
+                <td class="py-2">Business hours, alarm times, schedule patterns</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><a href="/ultra/datetime/mp-local-date-time"
+                                    class="text-brand-400 hover:text-brand-300"><code>MpLocalDateTime</code></a></td>
+                <td class="py-2">A date and time (no timezone)</td>
+                <td class="py-2">Calendar events, user-facing display, data entry before timezone is known</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><a href="/ultra/datetime/mp-zoned-date-time"
+                                    class="text-brand-400 hover:text-brand-300"><code>MpZonedDateTime</code></a></td>
+                <td class="py-2">A date, time, and timezone together</td>
+                <td class="py-2">Scheduling across timezones, display with offset, DST-aware arithmetic</td>
+            </tr>
+            <tr>
+                <td class="py-2"><a href="/ultra/datetime/mp-timezone"
+                                    class="text-brand-400 hover:text-brand-300"><code>MpTimezone</code></a></td>
+                <td class="py-2">An IANA timezone identifier</td>
+                <td class="py-2">User timezone preferences, conversion context</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>What each type can and cannot do</h2>
+
+    <p>This is the core of the guard rails. Missing cells are not accidents — they are deliberate design choices:</p>
+
+    <div class="not-prose my-8 overflow-x-auto">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold">Capability</th>
+                <th class="py-2 text-white font-semibold text-center">Instant</th>
+                <th class="py-2 text-white font-semibold text-center">LocalDate</th>
+                <th class="py-2 text-white font-semibold text-center">LocalTime</th>
+                <th class="py-2 text-white font-semibold text-center">LocalDateTime</th>
+                <th class="py-2 text-white font-semibold text-center">ZonedDateTime</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2">Add/subtract Duration</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-red-400/60">no</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-red-400/60">no</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2">Add days/months/years</td>
+                <td class="py-2 text-center text-brand-400">+ tz</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-red-400/60">no</td>
+                <td class="py-2 text-center text-red-400/60">no</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2">Anchor (start of month, etc.)</td>
+                <td class="py-2 text-center text-red-400/60">no</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-red-400/60">no</td>
+                <td class="py-2 text-center text-red-400/60">no</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2">Convert to instant</td>
+                <td class="py-2 text-center text-gray-600">is one</td>
+                <td class="py-2 text-center text-red-400/60">no</td>
+                <td class="py-2 text-center text-red-400/60">no</td>
+                <td class="py-2 text-center text-brand-400">+ tz</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2">Access date components</td>
+                <td class="py-2 text-center text-red-400/60">no</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-red-400/60">no</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2">Access time components</td>
+                <td class="py-2 text-center text-red-400/60">no</td>
+                <td class="py-2 text-center text-red-400/60">no</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr>
+                <td class="py-2">Format with timezone offset</td>
+                <td class="py-2 text-center text-red-400/60">no</td>
+                <td class="py-2 text-center text-red-400/60">no</td>
+                <td class="py-2 text-center text-red-400/60">no</td>
+                <td class="py-2 text-center text-red-400/60">no</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p class="text-sm text-gray-500"><span class="text-brand-400">+ tz</span> = available, but requires you to provide a
+        timezone explicitly.</p>
+
+    <h2>Why MpLocalDateTime has no arithmetic</h2>
+
+    <p>This is the most surprising restriction and the one we get asked about most. Consider this question:
+        what is "March 9, 2025 at 2:30 AM" plus one hour in New York?</p>
+
+    <p>The answer depends on whether DST has happened yet. On March 9, 2025, clocks in New York spring forward from 2:00
+        AM to 3:00 AM.
+        So "2:30 AM + 1 hour" could be 3:30 AM (if you mean absolute time) or it could not exist at all (2:30 AM is
+        skipped).</p>
+
+    <p><code>MpLocalDateTime</code> has no timezone, so it cannot answer this question correctly.
+        Rather than guessing, the library simply doesn't offer the operation. You have two correct paths:</p>
+
+    <Code code={`val dt = MpLocalDateTime.of(2025, 3, 9, 2, 30)
+
+// Path 1: Convert to zoned first, then do arithmetic (DST-aware)
+val zoned = dt.atZone(MpTimezone.of("America/New_York"))
+val later = zoned.plus(1, DateTimeUnit.HOUR)
+
+// Path 2: Work with the date part only (no DST issue)
+val nextDay = dt.toDate().plusDays(1)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>We could have added arithmetic to MpLocalDateTime and documented "be careful near DST transitions."
+        But documentation gets skipped. Compiler errors don't.
+    </Aside>
+
+    <h2>Why MpInstant requires a timezone for calendar operations</h2>
+
+    <p>An <code>MpInstant</code> is an absolute point in time — it has no concept of "day" or "month" without a
+        timezone.
+        Adding "1 day" to an instant should give you the same time tomorrow, but DST can make that 23 or 25 hours. The
+        library
+        makes you say which timezone you mean:</p>
+
+    <Code code={`val instant = MpInstant.parse("2025-03-09T07:00:00Z")
+val nyTz = MpTimezone.of("America/New_York")
+
+// This adds calendar "1 day" — DST-aware, so it's 23 real hours
+val tomorrow = instant.plus(1, DateTimeUnit.DAY, nyTz)
+
+// This adds exactly 24 hours — regardless of DST
+val later = instant.plus(24.hours)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Duration vs DateTimeUnit — a critical difference</h2>
+
+    <p>Kotlin offers two ways to express "one day": <code>1.days</code> (a <code>Duration</code>) and
+        <code>DateTimeUnit.DAY</code> (a calendar unit). They look similar but mean fundamentally different things:</p>
+
+    <Code code={`import kotlin.time.Duration.Companion.days
+import kotlinx.datetime.DateTimeUnit
+
+val instant = MpInstant.parse("2025-03-09T07:00:00Z")
+val nyTz = MpTimezone.of("America/New_York")
+
+// Duration: adds exactly 24 hours, always
+val plus24h = instant.plus(1.days)
+// Result: 2025-03-10T07:00:00Z — exactly 86,400 seconds later
+
+// DateTimeUnit: adds one calendar day in the given timezone (DST-aware)
+val plusOneDay = instant.plus(1, DateTimeUnit.DAY, nyTz)
+// Result: 2025-03-10T06:00:00Z — only 23 real hours!
+// Because on March 9 in New York, clocks spring forward (UTC-5 -> UTC-4),
+// "same local time tomorrow" is one hour closer in UTC`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The difference:</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold"></th>
+                <th class="py-2 text-white font-semibold"><code>plus(1.days)</code></th>
+                <th class="py-2 text-white font-semibold"><code>plus(1, DateTimeUnit.DAY, tz)</code></th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2 text-white font-medium">Means</td>
+                <td class="py-2">Add exactly 24 hours</td>
+                <td class="py-2">Add one calendar day</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2 text-white font-medium">DST-aware</td>
+                <td class="py-2">No — always 86,400 seconds</td>
+                <td class="py-2">Yes — 23, 24, or 25 hours depending on DST</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2 text-white font-medium">Timezone required</td>
+                <td class="py-2">No</td>
+                <td class="py-2">Yes</td>
+            </tr>
+            <tr>
+                <td class="py-2 text-white font-medium">Use when</td>
+                <td class="py-2">You need a precise physical duration</td>
+                <td class="py-2">You need "same time tomorrow" for a user</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <Aside>This is the kind of bug that only shows up twice a year, on the exact days DST transitions happen,
+        and only for users in affected timezones. The type system makes you choose explicitly.
+    </Aside>
+
+    <p>The same distinction applies to <code>MpZonedDateTime</code>:</p>
+
+    <Code code={`val zoned = instant.atZone(nyTz)
+
+// Duration: exactly 24 hours — local time may shift
+val a = zoned.plus(1.days)
+
+// DateTimeUnit: same local time tomorrow — actual duration varies
+val b = zoned.plus(1, DateTimeUnit.DAY)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Note that on <code>MpZonedDateTime</code>, <code>DateTimeUnit</code> operations don't require a separate timezone
+        parameter —
+        the zoned datetime already carries one.</p>
+
+    <h2>Why MpLocalDate has calendar arithmetic without a timezone</h2>
+
+    <p><code>MpLocalDate</code> represents a pure calendar date — no time component, no timezone.
+        "March 15 plus one month" is always April 15, regardless of timezone.
+        There's no DST to worry about because there's no clock involved.</p>
+
+    <Code code={`val date = MpLocalDate.of(2025, 3, 15)
+
+// Unambiguous — pure calendar math
+val nextMonth = date.plusMonths(1)  // April 15
+val nextYear = date.plusYears(1)    // March 15, 2026
+
+// Month-end clamping is handled: Jan 31 + 1 month = Feb 28
+val jan31 = MpLocalDate.of(2025, 1, 31)
+val feb = jan31.plusMonths(1)  // Feb 28 (not Feb 31!)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Conversion paths</h2>
+
+    <p>The types form a directed graph of conversions. Each arrow represents a conversion that's always safe and
+        unambiguous:</p>
+
+    <div class="not-prose my-8 p-6 rounded-xl border border-white/10 bg-white/[0.02] text-sm text-gray-400 font-mono">
+  <pre class="leading-relaxed">MpInstant ──atZone(tz)──────> MpZonedDateTime
+                                    │
+                                    ├── toLocalDate()     -> MpLocalDate
+                                    ├── toLocalTime()     -> MpLocalTime
+                                    └── toLocalDateTime() -> MpLocalDateTime
+
+MpLocalDate ──atTime(time)──> MpLocalDateTime
+                                    │
+                                    ├── toInstant(tz)  -> MpInstant
+                                    └── atZone(tz)     -> MpZonedDateTime</pre>
+    </div>
+
+    <p>Notice: every conversion that crosses the local/absolute boundary requires a timezone.
+        Going from <code>MpLocalDateTime</code> to <code>MpInstant</code> requires <code>toInstant(timezone)</code>.
+        Going from <code>MpInstant</code> to any local type requires <code>atZone(timezone)</code> first.
+        These aren't convenience overloads we forgot — they're guard rails.</p>
+
+    <h2>Periods and comparisons</h2>
+
+    <h3>Periods</h3>
+
+    <p>Represent a span of time in calendar units:</p>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.MpDatePeriod
+import io.peekandpoke.ultra.datetime.MpDateTimePeriod
+
+// Date-only period (years, months, days)
+val datePeriod = MpDatePeriod.of(years = 1, months = 2, days = 15)
+val parsed = MpDatePeriod.parse("P1Y2M15D")
+
+// Full period with time components
+val fullPeriod = MpDateTimePeriod.of(
+    years = 0, months = 0, days = 5,
+    hours = 3, minutes = 30, seconds = 0
+)
+
+// Apply to a date
+val date = MpLocalDate.of(2025, 1, 1)
+val future = date.plus(datePeriod)  // 2026-03-16`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Comparisons</h3>
+
+    <p>All types support standard comparison operators and readable infix functions:</p>
+
+    <Code code={`val a = MpLocalDate.of(2025, 1, 1)
+val b = MpLocalDate.of(2025, 6, 15)
+
+// Standard operators
+println(a < b)   // true
+println(a >= b)  // false
+
+// Readable infix
+println(a.isLessThan(b))              // true
+println(b.isGreaterThan(a))           // true
+println(a.isLessThanOrEqualTo(b))     // true`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Serialization</h2>
+
+    <p>All types are <code>@Serializable</code> with kotlinx.serialization and have Slumber codec support:</p>
+
+    <Code code={`@Serializable
+data class Event(
+    val name: String,
+    val start: MpInstant,
+    val date: MpLocalDate,
+    val timezone: MpTimezone,
+)
+
+val json = Json.encodeToString(Event.serializer(), event)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/datetime/mp-instant"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            MpInstant &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

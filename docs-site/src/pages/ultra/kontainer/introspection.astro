@@ -1,0 +1,172 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {kontainerSidebar} from '../../../data/kontainer-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Debugging / Introspection" sidebar={kontainerSidebar}
+            description="Inspect the full service graph, track overrides, and debug your Kontainer at runtime">
+
+    <h1>Debugging / Introspection</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Every Kontainer is fully introspectable. Query the complete service graph at runtime &mdash;
+        what is registered, how it's wired, what overrides what, and whether instances have been created.
+    </p>
+
+    <h2>Dumping the container</h2>
+
+    <p>For a quick overview, <code>dumpKontainer()</code> returns a human-readable table of all services, their types,
+        and current instances:</p>
+
+    <Code code={`val kontainer = blueprint.create()
+
+println(kontainer.tools.dumpKontainer())
+// Kontainer dump:
+//
+// Service ID       | Type      | Instances
+// Counter          | Singleton |
+// MyService        | Singleton |
+// RequestContext   | Dynamic   | 2024-01-15T10:30:00Z: RequestContext`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Structured debug info</h2>
+
+    <p>For programmatic access, <code>getDebugInfo()</code> returns the full service graph as structured data. Each
+        service entry includes its type, what it creates, what it injects, and whether it overrides another definition:
+    </p>
+
+    <Code code={`val debugInfo = kontainer.tools.getDebugInfo()
+
+debugInfo.services.forEach { service ->
+    println("${'$'}{service.cls.fqn} [type=${'$'}{service.type}]")
+
+    // What does this service inject?
+    service.definition.injects.forEach { param ->
+        val lazy = if (param.provisionType == DebugInfo.ParamInfo.ProvisionType.Lazy) " (lazy)" else ""
+        println("  -> ${'$'}{param.name}: ${'$'}{param.classes.map { it.fqn }}${'$'}{lazy}")
+    }
+
+    // Does this service override another definition?
+    service.definition.overwrites?.let { overridden ->
+        println("  overrides: ${'$'}{overridden.creates.fqn}")
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Service types</h2>
+
+    <p>Each service in the debug info carries a type that tells you exactly how the container manages it:</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold">Type</th>
+                <th class="py-2 text-white font-semibold">Meaning</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Singleton</code></td>
+                <td class="py-2">Shared across all container instances created from the same blueprint</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Dynamic</code></td>
+                <td class="py-2">Lives only within a single container instance</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>SemiDynamic</code></td>
+                <td class="py-2">Defined as singleton but injects a dynamic service, so promoted automatically</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Prototype</code></td>
+                <td class="py-2">New instance created for every injection</td>
+            </tr>
+            <tr>
+                <td class="py-2"><code>DynamicOverride</code></td>
+                <td class="py-2">A dynamic service overridden at container creation time</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Querying the provider factory</h2>
+
+    <p>For lower-level access, the <code>tools.factory</code> exposes the raw service providers:</p>
+
+    <Code code={`val factory = kontainer.tools.factory
+
+// All registered service providers
+val allProviders = factory.getAllProviders()
+
+allProviders.forEach { (cls, provider) ->
+    println("${'$'}{cls.simpleName}: ${'$'}{provider.type}")
+    println("  instances created: ${'$'}{provider.instances.size}")
+    println("  dependencies: ${'$'}{provider.definition.producer.params.map { it.name }}")
+}
+
+// Check if a specific service has been instantiated
+val isCreated = factory.isProviderCreated(MyService::class)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Tracking overrides</h2>
+
+    <p>When a module or blueprint extension overrides a service, the override chain is preserved. Walk the <code>overwrites</code>
+        chain to see the full history:</p>
+
+    <Code code={`val debugInfo = kontainer.tools.getDebugInfo()
+
+debugInfo.services.forEach { service ->
+    var def = service.definition
+    var depth = 0
+
+    while (def.overwrites != null) {
+        depth++
+        def = def.overwrites!!
+        println("${'$'}{service.cls.fqn} override #${'$'}{depth}: was ${'$'}{def.creates.fqn}")
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Error handling</h2>
+
+    <p>Kontainer throws specific exceptions for different problems:</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold">Exception</th>
+                <th class="py-2 text-white font-semibold">When</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>KontainerInconsistent</code></td>
+                <td class="py-2">Dependency graph has problems (missing deps, configuration errors)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>ServiceNotFound</code></td>
+                <td class="py-2">Requested service is not registered</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>ServiceAmbiguous</code></td>
+                <td class="py-2">Multiple services match the requested type</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>InvalidClassProvided</code></td>
+                <td class="py-2">Tried to register an interface or abstract class directly</td>
+            </tr>
+            <tr>
+                <td class="py-2"><code>InvalidServiceFactory</code></td>
+                <td class="py-2">Factory method is invalid</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/kontainer/advanced"
+           class="inline-flex items-center px-6 py-3 bg-white/5 text-gray-300 font-semibold rounded-lg hover:bg-white/10 transition-colors">
+            &larr; Advanced Topics
+        </a>
+    </div>
+
+</DocsLayout>

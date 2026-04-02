@@ -1,0 +1,168 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {datetimeSidebar} from '../../../data/datetime-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Formatting & Parsing" sidebar={datetimeSidebar}
+            description="Pattern-based formatting, ISO parsing, and type conversion operations">
+
+    <h1>Formatting &amp; Parsing</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Pattern-based formatting, ISO parsing, type conversions, and range conversions.
+        For arithmetic and anchoring, see the individual type pages.
+    </p>
+
+    <h2>Formatting</h2>
+
+    <p>Format dates and times using pattern strings. Supported tokens:</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold">Token</th>
+                <th class="py-2 text-white font-semibold">Output</th>
+                <th class="py-2 text-white font-semibold">Example</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>yyyy</code></td>
+                <td class="py-2">4-digit year</td>
+                <td class="py-2">2025</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>yy</code></td>
+                <td class="py-2">2-digit year</td>
+                <td class="py-2">25</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>MM</code></td>
+                <td class="py-2">Zero-padded month</td>
+                <td class="py-2">03</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>MMM</code></td>
+                <td class="py-2">Abbreviated month name</td>
+                <td class="py-2">Mar</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>dd</code></td>
+                <td class="py-2">Zero-padded day</td>
+                <td class="py-2">05</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>HH</code></td>
+                <td class="py-2">24-hour hour</td>
+                <td class="py-2">14</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>mm</code></td>
+                <td class="py-2">Minutes</td>
+                <td class="py-2">30</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>ss</code></td>
+                <td class="py-2">Seconds</td>
+                <td class="py-2">05</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>SSS</code></td>
+                <td class="py-2">Milliseconds</td>
+                <td class="py-2">042</td>
+            </tr>
+            <tr>
+                <td class="py-2"><code>Z</code></td>
+                <td class="py-2">Timezone offset</td>
+                <td class="py-2">+02:00</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <Code code={`val zoned = instant.atZone(MpTimezone.of("Europe/Berlin"))
+
+zoned.format("dd MMM yyyy")         // "15 Mar 2025"
+zoned.format("yyyy-MM-dd HH:mm:ss") // "2025-03-15 14:30:00"
+zoned.format("dd/MM/yy")            // "15/03/25"
+zoned.format("HH:mm Z")             // "14:30 +01:00"`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>The formatter never throws exceptions. It handles malformed patterns gracefully — you'll get output, just
+        maybe not what you expected.
+    </Aside>
+
+    <h2>Parsing</h2>
+
+    <p>All types support ISO-string parsing with both strict and safe variants:</p>
+
+    <Code code={`// Strict — throws on invalid input
+val instant = MpInstant.parse("2025-03-15T10:30:00Z")
+val date = MpLocalDate.parse("2025-03-15")
+val time = MpLocalTime.parse("14:30:00")
+
+// Safe — returns null on invalid input
+val maybe = MpLocalDate.tryParse("not-a-date")  // null
+val ok = MpLocalDate.tryParse("2025-03-15")      // MpLocalDate
+
+// Custom parser
+val parser = MpDateTimeParser("dd/MM/yyyy")
+val parsed = parser.parse("15/03/2025")`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Conversions</h2>
+
+    <p>Move freely between types:</p>
+
+    <Code code={`val instant = MpInstant.parse("2025-03-15T10:30:00Z")
+
+// Instant -> Zoned
+val zoned = instant.atZone(MpTimezone.of("Europe/Berlin"))
+val utc = instant.atUTC()
+
+// Instant -> Local (drops timezone info)
+val localDate = instant.toLocalDate()
+val localDateTime = instant.toLocalDateTime()
+
+// Zoned -> Instant (recovers absolute time)
+val backToInstant = zoned.toInstant()
+
+// Local -> Instant (requires timezone)
+val fromLocal = localDateTime.toInstant(MpTimezone.UTC)
+
+// Epoch conversions
+val millis = instant.toEpochMillis()
+val seconds = instant.toEpochSeconds()
+val fromMillis = MpInstant.fromEpochMillis(millis)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Range conversions</h2>
+
+    <p>Convert local date ranges to timezone-aware datetime ranges for different use cases:</p>
+
+    <Code code={`import io.peekandpoke.ultra.datetime.DateTimeRangeConverter
+
+val dateRange = MpLocalDateRange(
+    from = MpLocalDate.of(2025, 3, 15),
+    to = MpLocalDate.of(2025, 3, 20),
+)
+val tz = MpTimezone.of("Europe/Berlin")
+
+// Noon to noon (hotel-style)
+val noonToNoon = DateTimeRangeConverter.fromNoonToNoon(dateRange, tz)
+
+// Morning to evening
+val dayTime = DateTimeRangeConverter.fromMorningToEvening(dateRange, tz)
+
+// Custom hour range
+val custom = DateTimeRangeConverter.fromHourToHour(dateRange, tz, fromHour = 8, toHour = 18)`} lang="kotlin"
+          theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/datetime/ranges"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Ranges &amp; time slots &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

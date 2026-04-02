@@ -1,46 +1,43 @@
 package io.peekandpoke.funktor
 
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.ktor.http.*
 import io.peekandpoke.funktor.inspect.logging.api.LogEntryModel
 import io.peekandpoke.funktor.inspect.logging.api.LogsRequest
 import io.peekandpoke.funktor.logging.api.LoggingApi
 import io.peekandpoke.funktor.logging.api.LoggingApiFeature
-import io.peekandpoke.funktor.testing.AppSpec
-import kotlinx.coroutines.runBlocking
+import io.peekandpoke.ultra.model.Paged
 
-class LoggingApiSpec : AppSpec<FunktorAllTestConfig>(testApp) {
+class LoggingApiSpec : FunktorApiSpec() {
 
     private val api by service(LoggingApiFeature::class)
-    private val realm by service(TestUserRealm::class)
-    private val usersRepo by service(TestUsersRepo::class)
-
-    private val superUserToken: String by lazy {
-        runBlocking {
-            val user = usersRepo.insert(
-                TestUser(name = "Super User", email = "logging-super@test.com", isSuperUser = true)
-            )
-            realm.generateJwt(user).token
-        }
-    }
 
     init {
         api.logging.list { route ->
             "Anonymous request must be unauthorized" {
                 apiApp {
                     anonymous {
-                        route(LoggingApi.ListParam()) {
-                            status shouldBe HttpStatusCode.Unauthorized
-                        }
+                        route(LoggingApi.ListParam()) { status shouldBe HttpStatusCode.Unauthorized }
                     }
                 }
             }
 
-            "Super user request must succeed" {
+            "Regular user request must be unauthorized" {
+                apiApp {
+                    authenticate(regularUserToken) {
+                        route(LoggingApi.ListParam()) { status shouldBe HttpStatusCode.Unauthorized }
+                    }
+                }
+            }
+
+            "Super user request must return paged result" {
                 apiApp {
                     authenticate(superUserToken) {
                         route(LoggingApi.ListParam()) {
                             status shouldBe HttpStatusCode.OK
+                            val paged = apiResponseData<Paged<LogEntryModel>>()
+                            paged.shouldNotBeNull()
                         }
                     }
                 }
@@ -51,9 +48,15 @@ class LoggingApiSpec : AppSpec<FunktorAllTestConfig>(testApp) {
             "Anonymous request must be unauthorized" {
                 apiApp {
                     anonymous {
-                        route(LoggingApi.GetParam(id = "non-existent")) {
-                            status shouldBe HttpStatusCode.Unauthorized
-                        }
+                        route(LoggingApi.GetParam(id = "non-existent")) { status shouldBe HttpStatusCode.Unauthorized }
+                    }
+                }
+            }
+
+            "Regular user request must be unauthorized" {
+                apiApp {
+                    authenticate(regularUserToken) {
+                        route(LoggingApi.GetParam(id = "non-existent")) { status shouldBe HttpStatusCode.Unauthorized }
                     }
                 }
             }
@@ -61,9 +64,7 @@ class LoggingApiSpec : AppSpec<FunktorAllTestConfig>(testApp) {
             "Super user request for non-existent id must return not found" {
                 apiApp {
                     authenticate(superUserToken) {
-                        route(LoggingApi.GetParam(id = "non-existent")) {
-                            status shouldBe HttpStatusCode.NotFound
-                        }
+                        route(LoggingApi.GetParam(id = "non-existent")) { status shouldBe HttpStatusCode.NotFound }
                     }
                 }
             }
@@ -77,14 +78,24 @@ class LoggingApiSpec : AppSpec<FunktorAllTestConfig>(testApp) {
                             filter = LogsRequest.BulkAction.Filter(from = null, to = null),
                             action = LogsRequest.Action.SetState(state = LogEntryModel.State.Ack),
                         )
-                        request(route, body = body) {
-                            status shouldBe HttpStatusCode.Unauthorized
-                        }
+                        request(route, body = body) { status shouldBe HttpStatusCode.Unauthorized }
                     }
                 }
             }
 
-            "Super user request must succeed" {
+            "Regular user request must be unauthorized" {
+                apiApp {
+                    authenticate(regularUserToken) {
+                        val body = LogsRequest.BulkAction(
+                            filter = LogsRequest.BulkAction.Filter(from = null, to = null),
+                            action = LogsRequest.Action.SetState(state = LogEntryModel.State.Ack),
+                        )
+                        request(route, body = body) { status shouldBe HttpStatusCode.Unauthorized }
+                    }
+                }
+            }
+
+            "Super user request must return bulk response" {
                 apiApp {
                     authenticate(superUserToken) {
                         val body = LogsRequest.BulkAction(
@@ -93,6 +104,8 @@ class LoggingApiSpec : AppSpec<FunktorAllTestConfig>(testApp) {
                         )
                         request(route, body = body) {
                             status shouldBe HttpStatusCode.OK
+                            val result = apiResponseData<LogsRequest.BulkResponse>()
+                            result.shouldNotBeNull()
                         }
                     }
                 }
@@ -106,9 +119,18 @@ class LoggingApiSpec : AppSpec<FunktorAllTestConfig>(testApp) {
                         route(
                             LoggingApi.GetParam(id = "non-existent"),
                             body = LogsRequest.Action.SetState(state = LogEntryModel.State.Ack),
-                        ) {
-                            status shouldBe HttpStatusCode.Unauthorized
-                        }
+                        ) { status shouldBe HttpStatusCode.Unauthorized }
+                    }
+                }
+            }
+
+            "Regular user request must be unauthorized" {
+                apiApp {
+                    authenticate(regularUserToken) {
+                        route(
+                            LoggingApi.GetParam(id = "non-existent"),
+                            body = LogsRequest.Action.SetState(state = LogEntryModel.State.Ack),
+                        ) { status shouldBe HttpStatusCode.Unauthorized }
                     }
                 }
             }
@@ -119,9 +141,7 @@ class LoggingApiSpec : AppSpec<FunktorAllTestConfig>(testApp) {
                         route(
                             LoggingApi.GetParam(id = "non-existent"),
                             body = LogsRequest.Action.SetState(state = LogEntryModel.State.Ack),
-                        ) {
-                            status shouldBe HttpStatusCode.NotFound
-                        }
+                        ) { status shouldBe HttpStatusCode.NotFound }
                     }
                 }
             }

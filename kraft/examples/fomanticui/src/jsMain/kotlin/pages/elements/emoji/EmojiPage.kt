@@ -35,7 +35,10 @@ class EmojiPage(ctx: NoProps) : PureComponent(ctx) {
 
             readTheFomanticUiDocs("https://fomantic-ui.com/elements/emoji.html")
 
-            ui.dividing.header H2 { +"Types" }
+            EmojiExamples()
+
+            ui.dividing.header H2 { +"Emoji search" }
+            EmojiSearch()
         }
     }
 }

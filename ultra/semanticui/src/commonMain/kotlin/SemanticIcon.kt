@@ -1789,6 +1789,8 @@ class SemanticIcon(private val parent: FlowContent) {
 
     @SemanticUiCssMarker val disabled: SemanticIcon get() = this + "disabled"
 
+    @SemanticUiCssMarker val divider: SemanticIcon get() = this + "divider"
+
     @SemanticUiCssMarker val fitted: SemanticIcon get() = this + "fitted"
 
     @SemanticUiCssMarker val flipped: SemanticIcon get() = this + "flipped"
