@@ -49,21 +49,24 @@ feature-complete across all modules that use persistence.
 └─────────────────────────────────────────────┘
 ```
 
-### Module Statistics
+### Module Statistics (updated April 2)
 
 | Module    | Src Files | Test Files | Test Ratio | KDoc | TODOs  | DB-Dependent                |
 |-----------|-----------|------------|------------|------|--------|-----------------------------|
-| core      | 57        | 5          | 9%         | 61%  | 0      | No (uses Vault abstraction) |
-| rest      | 52        | 6          | 12%        | ~50% | 6      | No                          |
+| core      | 73        | 5          | 7%         | 61%  | 0      | No (uses Vault abstraction) |
+| rest      | 53        | 5          | 9%         | ~50% | 6      | No                          |
 | auth      | 44        | 9          | 20%        | 65%  | 5      | **Yes** (Karango + Monko)   |
-| cluster   | 76        | 7          | 9%         | 55%  | 2      | **Yes** (Karango only)      |
+| cluster   | 83        | 5          | 6%         | 55%  | 2      | **Yes** (Karango only)      |
 | insights  | 30        | 0          | 0%         | ~40% | 0      | No                          |
-| logging   | 15        | 0          | 0%         | ~40% | 1      | **Yes** (Karango only)      |
-| messaging | 25        | 0          | 0%         | ~40% | 0      | **Yes** (Karango only)      |
-| staticweb | 22        | 1          | 5%         | ~30% | 0      | No                          |
-| testing   | 6         | 0          | 0%         | ~20% | 0      | No                          |
-| all       | 1         | 0          | -          | -    | 0      | No                          |
-| **TOTAL** | **328**   | **28**     | **9%**     | ~50% | **14** | 4 modules                   |
+| logging   | 13        | 4          | 31%        | ~40% | 1      | **Yes** (Karango only)      |
+| messaging | 32        | 4          | 13%        | ~40% | 0      | **Yes** (Karango only)      |
+| staticweb | 22        | 0          | 0%         | ~30% | 0      | No                          |
+| testing   | 4         | 2          | 50%        | ~20% | 0      | No                          |
+| all       | 1         | 5          | -          | -    | 0      | No                          |
+| **TOTAL** | **355**   | **39**     | **11%**    | ~50% | **14** | 4 modules                   |
+
+**Changes since March 31:** API tests implemented across all modules. Test files increased from 28→39.
+logging (0→4), messaging (0→4), testing (0→2), all (0→5) gained tests. insights and staticweb remain at zero.
 
 ### Database-Dependent Modules
 

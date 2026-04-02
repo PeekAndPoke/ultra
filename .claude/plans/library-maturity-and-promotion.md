@@ -1,10 +1,27 @@
 # Library Maturity, Quality & Promotion Assessment
 
-**Date:** 2026-03-26 (updated)
-**Previous assessment:** 2026-03-25
+**Date:** 2026-04-02 (updated)
+**Previous assessment:** 2026-03-31
 **Reviewers:** Senior Software Engineer, QA Engineer, Developer Relations Engineer
 
 ---
+
+## What Changed Since Last Assessment (April 2)
+
+- **Funktor API tests implemented** — All Funktor modules now have API/integration tests.
+  Test files: all=5, auth=9, cluster=5, core=5, logging=4, messaging=4, rest=5, testing=2.
+  Total: 39 test files (was 28, +39% increase). Only insights and staticweb remain at zero.
+- **Fomantic UI examples complete** — All 30 component pages (18 Elements, 6 Collections, 6 Views)
+  now fully implemented with live examples + Kotlin code. 9 TODO stubs implemented from scratch
+  (Rail, Step, Breadcrumb, Input, Feed, Advertisement, Emoji, Form, Menu), 2 partial pages completed
+  (Button 66%→100%, Table 50%→100%). Emoji page includes searchable catalog of 3,057 shortnames.
+- **SemanticUI DSL expanded** — 20+ new properties added to SemanticTag (action, ad, banner, billboard,
+  borderless, breadcrumb, close, connected, date, event, feed, focus, grouped, half, internal,
+  leaderboard, like, rail, rectangle, required, single, skyscraper, summary, test). SemanticIcon
+  gained `divider` property. SemanticEmoji gained `companion object { val all }` with all 3,057
+  Fomantic UI 2.8.8 emoji shortnames.
+- **Docs site improvements** — Background lighting brightness increased. Fomantic UI showcase
+  now covers 100% of Elements/Collections/Views categories.
 
 ## What Changed Since Last Assessment (March 31)
 
@@ -113,14 +130,14 @@
 
 ### Tier 3: RED — Not Ready for Promotion
 
-| Rank | Module               | Score | Src | Tests | Ratio  | TODOs | Assessment                                                                                                                 |
-|------|----------------------|-------|-----|-------|--------|-------|----------------------------------------------------------------------------------------------------------------------------|
-| 15   | **ultra/datetime**   | 4.0   | 64  | 28    | 44%    | **1** | 44 test TODOs resolved (was 45). Only 1 code-quality TODO remains. Tests added across 9 spec files.                        |
-| 16   | **ultra/vault**      | 3.8   | 45  | 8     | 18%    | 3     | Wave 1 audit complete: 15 issues → all resolved. Cache thread safety, profiler sync, safe casts. 3 deferred (runBlocking). |
-| 17   | **ultra/html**       | 2.7   | 13  | 2     | 15%    | 0     | Near-zero coverage.                                                                                                        |
-| 18   | **ultra/semanticui** | 2.6   | 15  | 4     | 27%    | 0     | Stale (last commit March 10). UI module, lower blast radius.                                                               |
-| 19   | **Funktor**          | 2.0   | 438 | 20    | **5%** | ~15   | **Blocker.** Largest module, lowest test ratio. Cannot be promoted.                                                        |
-| 20   | **Monko**            | 2.2   | 19  | 3     | 16%    | 2     | Type-safe query DSL added (filters, sorts, updates). Auth repo migrated. save()/remove() still TODO.                       |
+| Rank | Module               | Score | Src | Tests | Ratio   | TODOs | Assessment                                                                                                                 |
+|------|----------------------|-------|-----|-------|---------|-------|----------------------------------------------------------------------------------------------------------------------------|
+| 15   | **ultra/datetime**   | 4.0   | 64  | 28    | 44%     | **1** | 44 test TODOs resolved (was 45). Only 1 code-quality TODO remains. Tests added across 9 spec files.                        |
+| 16   | **ultra/vault**      | 3.8   | 45  | 8     | 18%     | 3     | Wave 1 audit complete: 15 issues → all resolved. Cache thread safety, profiler sync, safe casts. 3 deferred (runBlocking). |
+| 17   | **ultra/html**       | 2.7   | 13  | 2     | 15%     | 0     | Near-zero coverage.                                                                                                        |
+| 18   | **ultra/semanticui** | 3.2   | 15  | 4     | 27%     | 0     | 20+ DSL properties added, SemanticEmoji catalog. All 30 Fomantic UI example pages complete.                                |
+| 19   | **Funktor**          | 2.8   | 355 | 39    | **11%** | ~15   | API tests added for all modules (was 5%). insights + staticweb still at zero.                                              |
+| 20   | **Monko**            | 2.2   | 19  | 3     | 16%     | 2     | Type-safe query DSL added (filters, sorts, updates). Auth repo migrated. save()/remove() still TODO.                       |
 
 ---
 
@@ -207,7 +224,8 @@ sets, strings, strings_mp, WeakReference (JVM+JS), WeakSet (JVM), classes, encod
 
 ### Not Ready
 
-- **Funktor** — 5% test ratio, needs major test investment
+- **Funktor** — 11% test ratio (was 5%), API tests now cover all modules. insights + staticweb still at zero. Needs more
+  depth.
 - **Monko** — 3 KSP tests added, core still untested, incubating
 
 ---

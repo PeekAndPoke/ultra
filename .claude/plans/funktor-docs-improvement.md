@@ -70,7 +70,13 @@ Currently ~60 lines, 2 code examples. Add:
 - `docs-site/public/llms.txt` — update Funktor section
 - `docs-site/public/llms-full.txt` — regenerate
 
-## Related Work Completed (April 2026)
+## Related Work Completed (April 2, 2026)
+
+- **Fomantic UI examples 100% complete** — All 30 component pages (18 Elements, 6 Collections,
+  6 Views) fully implemented with live Kotlin code examples. 9 stubs built from scratch (Rail, Step,
+  Breadcrumb, Input, Feed, Advertisement, Emoji, Form, Menu). 2 partial pages completed (Button
+  66%→100%, Table 50%→100%). Emoji page has searchable catalog of 3,057 shortnames.
+- **Funktor API tests** — All modules now have test coverage. 39 test files total (was 28).
 
 Outside this plan's scope, additional docs-site work has been completed:
 
