@@ -358,7 +358,7 @@ audit.
    | Kraft | 16 pages | OK | - |
    | Mutator | 6 pages | OK (verify completeness) | Minor |
    | Datetime | 12 pages | OK | - |
-   | Cache | 3 pages | OK | - |
+   | Cache | 5 pages | OK | - |
    | Funktor | ~11 sparse pages | 12-16 pages with depth | Major |
    | Monko | 6 pages | OK | - |
    | Ultra (common, vault, etc.) | 0 | Overview + key modules | Medium |

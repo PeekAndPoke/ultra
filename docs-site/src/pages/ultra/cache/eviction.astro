@@ -6,12 +6,12 @@ import {Code} from 'astro:components';
 ---
 
 <DocsLayout title="Eviction Policies" sidebar={cacheSidebar}
-            description="TTL expiration, max entries, and memory-based eviction in Cache">
+            description="Four eviction behaviours: TTL by access, TTL by write, max entries, and max memory">
 
     <h1>Eviction Policies</h1>
 
     <p class="text-xl text-gray-400 !mt-2 !mb-8">
-        Three pluggable behaviors — use one, two, or all three together.
+        Four eviction behaviours — use one, several, or all together.
     </p>
 
     <h2>Expire after access</h2>
@@ -37,6 +37,31 @@ cache.get("session")  // resets the 5-minute timer
     <Aside>Eviction is processed in the background loop, not on the calling thread. An expired entry might survive
         briefly
         past its TTL until the next loop iteration (default: 50ms).
+    </Aside>
+
+    <h2>Expire after write</h2>
+
+    <p>Evicts entries that haven't been <em>written</em> within a TTL window. Unlike <code>expireAfterAccess</code>,
+        reading an entry does NOT reset the timer — only <code>put()</code> does:</p>
+
+    <Code code={`val cache = fastCache<String, String> {
+    expireAfterWrite(5.minutes)
+}
+
+cache.put("token", "abc123")
+
+// Reading does NOT reset the TTL
+cache.get("token")  // timer keeps ticking from the original put
+
+// Only a new put resets the TTL
+cache.put("token", "xyz789")  // timer resets now`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Use <code>expireAfterWrite</code> when the data has a known staleness window regardless of how often
+        it's read — API tokens, DNS lookups, config values fetched from a remote service, exchange rates.</p>
+
+    <Aside>If you need stale data to be refreshed rather than evicted, see
+        <a href="/ultra/cache/refresh">Background Refresh</a> — it serves the old value while reloading in the
+        background.
     </Aside>
 
     <h2>Max entries</h2>
@@ -142,7 +167,12 @@ val cache = fastCache<String, String>(scope = scope) {
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>expireAfterAccess</code></td>
                 <td class="py-2">No read or write within TTL</td>
-                <td class="py-2">Time-based, resets on access</td>
+                <td class="py-2">Time-based, resets on read + write</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>expireAfterWrite</code></td>
+                <td class="py-2">No write within TTL</td>
+                <td class="py-2">Time-based, resets on write only</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>maxEntries</code></td>
@@ -159,9 +189,9 @@ val cache = fastCache<String, String>(scope = scope) {
     </div>
 
     <div class="not-prose mt-8 flex gap-4">
-        <a href="/ultra/cache/"
-           class="inline-flex items-center px-6 py-3 bg-white/5 text-gray-300 font-semibold rounded-lg hover:bg-white/10 transition-colors">
-            &larr; Overview
+        <a href="/ultra/cache/refresh"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Background Refresh &rarr;
         </a>
     </div>
 
