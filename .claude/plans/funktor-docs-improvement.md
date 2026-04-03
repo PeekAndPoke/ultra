@@ -80,6 +80,10 @@ Currently ~60 lines, 2 code examples. Add:
 
 Outside this plan's scope, additional docs-site work has been completed:
 
+- **Cache section** — 5 pages: overview (behaviour matrix), getting-started, eviction (4 behaviours), background
+  refresh (stale-while-revalidate), observability (onEviction + statistics)
+- **Cache behaviours** — 4 new: expireAfterWrite, onEviction, statistics, refreshAfterWrite. Plus MissAction tracking
+  and eviction listener infrastructure.
 - **Datetime section** — 12 pages: overview, getting-started, type system & guard rails, 6 dedicated type pages (
   MpInstant, MpLocalDate, MpLocalTime, MpLocalDateTime, MpZonedDateTime, MpTimezone), formatting & parsing, ranges &
   time slots, Kronos clock

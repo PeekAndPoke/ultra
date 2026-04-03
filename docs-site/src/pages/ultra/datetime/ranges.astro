@@ -15,6 +15,12 @@ import {Code} from 'astro:components';
         with containment checks, intersection tests, and set operations.
     </p>
 
+    <p>All range types (except MpLocalTimeSlot) have a <strong>Partial</strong> variant for when only one boundary is
+        known.
+        This is common in search filters, open-ended subscriptions, and "from now on" queries.
+        Convert to a concrete range via <code>asValidRange()</code>, which fills in Genesis or Doomsday for the missing
+        boundary.</p>
+
     <h2>MpLocalDateRange</h2>
 
     <p>An open-ended date range <code>[from, to)</code> — the end date is <em>excluded</em>. This is the natural model
@@ -35,28 +41,60 @@ println(range.numberOfNights)  // 5
 val dates = range.asListOfDates()
 // [2025-03-10, 2025-03-11, 2025-03-12, 2025-03-13, 2025-03-14]
 
-// As a period
-val period = range.asDatePeriod  // MpDatePeriod(0y, 0m, 5d)
+// Properties
+range.asDatePeriod     // MpDatePeriod(0y, 0m, 5d)
+range.asClosedRange    // MpClosedLocalDateRange [2025-03-10, 2025-03-14]
+range.hasStart         // true (from is after Genesis)
+range.hasEnd           // true (to is before Doomsday)
+range.isOpen           // false (both boundaries set)
+range.isValid          // true (from < to)
 
-// Convert to closed
-val closed = range.asClosedRange  // [2025-03-10, 2025-03-14]
+// Factory methods
+val forever = MpLocalDateRange.forever        // Genesis to Doomsday
+val from = MpLocalDateRange.beginningAt(date) // date to Doomsday
+val until = MpLocalDateRange.endingAt(date)   // Genesis to date
 
-// Boundaries
-val forever = MpLocalDateRange.forever  // Genesis to Doomsday`} lang="kotlin" theme="vitesse-dark"/>
+// Convert to timezone-aware range
+val zoned = range.toZonedTimeRange(MpTimezone.of("Europe/Berlin"))
+    .fromNoonToNoon  // MpZonedDateTimeRange
+
+// Convert to Partial
+val partial = range.asPartialRange()  // Partial(from, to)`} lang="kotlin" theme="vitesse-dark"/>
 
     <Aside>Open-ended ranges are the right default for most business logic. A 3-night hotel stay from March 10 to March
         13 has <code>from=10, to=13</code> — you check out on the 13th, not stay through it.
     </Aside>
 
+    <h3>Set operations</h3>
+
+    <Code code={`val a = MpLocalDateRange(
+    from = MpLocalDate.parse("2024-01-01"),
+    to = MpLocalDate.parse("2024-06-30"),
+)
+val b = MpLocalDateRange(
+    from = MpLocalDate.parse("2024-03-01"),
+    to = MpLocalDate.parse("2024-09-30"),
+)
+
+// Containment
+a.contains(MpLocalDate.parse("2024-03-15"))  // true
+a.contains(b)                                 // false (b extends past a)
+
+// Intersection and touching
+a.intersects(b)                               // true
+a.touches(b)                                  // true
+a.isAdjacentTo(b)                             // false (they overlap)
+
+// Merge overlapping ranges
+a.mergeWith(b)  // [MpLocalDateRange(2024-01-01, 2024-09-30)]
+
+// Cut — subtract one range from another
+a.cutAway(b)    // [MpLocalDateRange(2024-01-01, 2024-03-01)]
+
+// Also works with closed ranges
+a.intersects(closedRange)`} lang="kotlin" theme="vitesse-dark"/>
+
     <h3>MpLocalDateRange.Partial</h3>
-
-    <p>All range types (except MpLocalTimeSlot) have a <strong>Partial</strong> variant for when only one boundary is
-        known.
-        This is common in search filters, open-ended subscriptions, and "from now on" queries.
-        Convert to a concrete range via <code>asValidRange()</code>, which fills in Genesis or Doomsday for the missing
-        boundary.</p>
-
-    <p>When only one boundary is known — "from March 1 onwards" or "up until June":</p>
 
     <Code code={`// Only a start — open-ended into the future
 val fromMarch = MpLocalDateRange.Partial(
@@ -88,11 +126,37 @@ val closed = MpClosedLocalDateRange(
     to = MpLocalDate.of(2025, 3, 14),
 )
 
-println(closed.numberOfDays)  // 5 (includes both endpoints)
+println(closed.numberOfDays)    // 5 (includes both endpoints)
+println(closed.numberOfNights)  // 4
 
-// Convert between range types
-val open = closed.asOpenRange    // MpLocalDateRange [10, 15)
-val back = open.asClosedRange    // MpClosedLocalDateRange [10, 14]`} lang="kotlin" theme="vitesse-dark"/>
+// Properties
+closed.asOpenRange      // MpLocalDateRange [2025-03-10, 2025-03-15)
+closed.asDatePeriod     // MpDatePeriod(0y, 0m, 5d)
+closed.hasStart         // true
+closed.hasEnd           // true
+closed.isOpen           // false
+closed.isValid          // true
+
+// Factory methods
+val forever = MpClosedLocalDateRange.forever
+val from = MpClosedLocalDateRange.beginningAt(date) // date to Doomsday
+val until = MpClosedLocalDateRange.endingAt(date)   // Genesis to date
+
+// Convert to timezone-aware range
+val zoned = closed.toZonedTimeRange(MpTimezone.of("Europe/Berlin"))
+
+// Iterate dates
+closed.asListOfDates()  // [2025-03-10, ..., 2025-03-14]
+
+// Set operations (same as MpLocalDateRange)
+closed.contains(date)
+closed.contains(otherClosed)
+closed.intersects(otherClosed)
+closed.intersects(openRange)   // works with open ranges too
+closed.touches(otherClosed)
+closed.isAdjacentTo(otherClosed)
+closed.mergeWith(otherClosed)
+closed.cutAway(otherClosed)`} lang="kotlin" theme="vitesse-dark"/>
 
     <h3>MpClosedLocalDateRange.Partial</h3>
 
@@ -106,7 +170,8 @@ val concrete = partial.asValidRange()
 
     <h2>MpInstantRange</h2>
 
-    <p>A range of absolute timestamps. Supports containment checks, intersection tests, and set subtraction:</p>
+    <p>A range of absolute timestamps. Supports containment checks, intersection tests, set subtraction, and
+        timezone-aware arithmetic:</p>
 
     <Code code={`import io.peekandpoke.ultra.datetime.MpInstantRange
 import io.peekandpoke.ultra.datetime.MpInstant
@@ -116,32 +181,67 @@ val end = MpInstant.parse("2025-03-15T17:00:00Z")
 
 val workday = MpInstantRange(from = start, to = end)
 
-// Containment — is a specific instant inside this range?
+// Properties
+workday.duration    // 9 hours (kotlin.time.Duration)
+workday.hasStart    // true (from is after Genesis)
+workday.hasEnd      // true (to is before Doomsday)
+workday.isOpen      // false
+workday.isValid     // true (from < to)
+
+// Factory methods
+val fromDuration = MpInstantRange.of(start, 2.hours)  // start + 2h
+val forever = MpInstantRange.forever
+val from = MpInstantRange.beginningAt(start)           // start to Doomsday
+val until = MpInstantRange.endingAt(end)               // Genesis to end
+
+// Convert to zoned
+val zoned = workday.atZone(MpTimezone.of("Europe/Berlin"))
+val utc = workday.atZone(MpTimezone.UTC)
+val local = workday.atSystemDefaultZone()
+
+// Convert to Partial
+val partial = workday.asPartialRange()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Set operations</h3>
+
+    <Code code={`// Containment — is a specific instant inside this range?
 val noon = MpInstant.parse("2025-03-15T12:00:00Z")
-println(workday.contains(noon))   // true
+workday.contains(noon)   // true
 
-val midnight = MpInstant.parse("2025-03-15T00:00:00Z")
-println(workday.contains(midnight))  // false
+// Also works with MpZonedDateTime and other MpAbsoluteDateTime types
+workday.contains(zonedDateTime)  // true/false
 
-// Intersection — do two ranges overlap?
+// Range containment
+workday.contains(otherRange)     // true if other is fully inside
+
+// Intersection
 val afternoon = MpInstantRange(
     from = MpInstant.parse("2025-03-15T13:00:00Z"),
     to = MpInstant.parse("2025-03-15T20:00:00Z"),
 )
-println(workday.intersects(afternoon))  // true
+workday.intersects(afternoon)    // true
+workday.touches(afternoon)       // true
+workday.isAdjacentTo(afternoon)  // false (they overlap)
 
-val nextDay = MpInstantRange(
-    from = MpInstant.parse("2025-03-16T08:00:00Z"),
-    to = MpInstant.parse("2025-03-16T17:00:00Z"),
-)
-println(workday.intersects(nextDay))  // false
+// Merge
+workday.mergeWith(afternoon)     // one merged range
 
 // Cut — subtract one range from another
-val remaining = workday.cutAway(afternoon)
-// result covers 08:00–13:00 only
+workday.cutAway(afternoon)       // [08:00-13:00]`} lang="kotlin" theme="vitesse-dark"/>
 
-// Boundaries
-val forever = MpInstantRange.forever  // Genesis to Doomsday`} lang="kotlin" theme="vitesse-dark"/>
+    <h3>Arithmetic</h3>
+
+    <Code code={`import kotlin.time.Duration.Companion.hours
+import kotlinx.datetime.DateTimeUnit
+
+// Shift by absolute Duration
+val shifted = workday.plus(2.hours)
+val earlier = workday.minus(1.hours)
+
+// Shift by calendar unit (DST-aware, requires timezone)
+val tomorrow = workday.plus(1, DateTimeUnit.DAY, MpTimezone.of("Europe/Berlin").kotlinx)
+val lastWeek = workday.minus(7, DateTimeUnit.DAY, MpTimezone.of("Europe/Berlin").kotlinx)`} lang="kotlin"
+          theme="vitesse-dark"/>
 
     <h3>MpInstantRange.Partial</h3>
 
@@ -151,11 +251,16 @@ val forever = MpInstantRange.forever  // Genesis to Doomsday`} lang="kotlin" the
 )
 
 val concrete = partial.asValidRange()
-// MpInstantRange(2025-03-15T08:00:00Z, +10000-01-01T00:00:00Z)`} lang="kotlin" theme="vitesse-dark"/>
+// MpInstantRange(2025-03-15T08:00:00Z, +10000-01-01T00:00:00Z)
+
+// Convert partial to a date range in a specific timezone
+val dateRange = partial.asDateRange(MpTimezone.of("Europe/Berlin"))
+// MpClosedLocalDateRange.Partial`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>MpZonedDateTimeRange</h2>
 
-    <p>A timezone-aware datetime range. Knows its duration and whether it has open boundaries:</p>
+    <p>A timezone-aware datetime range. Knows its duration, supports set operations, and can be shifted with
+        DST-aware arithmetic:</p>
 
     <Code code={`import io.peekandpoke.ultra.datetime.MpZonedDateTimeRange
 import io.peekandpoke.ultra.datetime.MpTimezone
@@ -167,11 +272,52 @@ val range = MpZonedDateTimeRange(
     to = MpInstant.parse("2025-03-15T17:00:00Z").atZone(berlin),
 )
 
-println(range.isValid)    // true — from is before to
-println(range.hasStart)   // true
-println(range.hasEnd)     // true
-println(range.isOpen)     // false — both boundaries present
-println(range.duration)   // 9 hours`} lang="kotlin" theme="vitesse-dark"/>
+// Properties
+range.duration      // 9 hours
+range.hasStart      // true
+range.hasEnd        // true
+range.isOpen        // false — both boundaries present
+range.isValid       // true — from is before to
+
+// Factory methods
+val fromDuration = MpZonedDateTimeRange.of(zonedStart, 2.hours)
+val fromPeriod = MpZonedDateTimeRange.of(zonedStart, MpDateTimePeriod.of(months = 1))
+val forever = MpZonedDateTimeRange.forever
+val from = MpZonedDateTimeRange.beginningAt(zonedStart)
+val until = MpZonedDateTimeRange.endingAt(zonedEnd)
+
+// Conversions
+range.asDateRange()         // MpClosedLocalDateRange
+range.toInstantRange()      // MpInstantRange (drops timezone)
+range.atZone(otherTimezone) // re-zone to different timezone
+range.asPartialRange()      // Partial(from, to)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Set operations</h3>
+
+    <Code code={`// Containment
+range.contains(zonedDateTime)                // MpAbsoluteDateTime
+range.contains(localDateTime, timezone)      // MpLocalDateTime + timezone
+range.contains(otherRange)                   // full range containment
+
+// Intersection and touching
+range.intersects(otherRange)
+range.touches(otherRange)
+range.isAdjacentTo(otherRange)
+
+// Merge and cut
+range.mergeWith(otherRange)
+range.cutAway(otherRange)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Arithmetic</h3>
+
+    <Code code={`// Shift by absolute Duration
+val shifted = range.plus(2.hours)
+val earlier = range.minus(1.hours)
+
+// Shift by calendar unit (DST-aware — uses the range's own timezone)
+val tomorrow = range.plus(1, DateTimeUnit.DAY)
+val nextMonth = range.plus(1, DateTimeUnit.MONTH)
+val lastWeek = range.minus(7, DateTimeUnit.DAY)`} lang="kotlin" theme="vitesse-dark"/>
 
     <h3>MpZonedDateTimeRange.Partial</h3>
 
@@ -181,12 +327,13 @@ println(range.duration)   // 9 hours`} lang="kotlin" theme="vitesse-dark"/>
 )
 
 val concrete = partial.asValidRange()
-// fills in Doomsday as the end`} lang="kotlin" theme="vitesse-dark"/>
+
+// Convert to a date range partial
+val datePartial = partial.asDateRange()  // MpClosedLocalDateRange.Partial`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>MpLocalTimeSlot</h2>
 
-    <p>A time range within a single day. Supports merging, gap detection, splitting, and set subtraction — purpose-built
-        for scheduling and availability calendars:</p>
+    <p>A time range within a single day. Purpose-built for scheduling, availability calendars, and business hours:</p>
 
     <Code code={`import io.peekandpoke.ultra.datetime.MpLocalTimeSlot
 import io.peekandpoke.ultra.datetime.MpLocalTime
@@ -196,43 +343,63 @@ val morning = MpLocalTimeSlot(
     to = MpLocalTime.of(12, 0),
 )
 
-val afternoon = MpLocalTimeSlot(
+// Properties
+morning.duration    // 3 hours
+morning.isValid     // true (duration > 0)
+
+// Factory methods
+val fromDuration = MpLocalTimeSlot.of(MpLocalTime.of(9, 0), 3.hours)
+val fromSeconds = MpLocalTimeSlot.ofSecondsOfDay(32400, 43200)  // 9:00-12:00
+val wholeDay = MpLocalTimeSlot.completeDay  // 00:00 to 23:59:59.999
+
+// Formatting
+morning.formatHhMm()    // "09:00 - 12:00"
+morning.formatHhMmSs()  // "09:00:00 - 12:00:00"`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Set operations</h3>
+
+    <Code code={`val afternoon = MpLocalTimeSlot(
     from = MpLocalTime.of(13, 0),
     to = MpLocalTime.of(17, 0),
 )
 
-// Do they touch or overlap?
-println(morning.touches(afternoon))  // false (gap from 12:00 to 13:00)
+// Containment
+morning.contains(MpLocalTime.of(10, 30))  // true
+morning.contains(afternoon)                // false
 
-// Merge adjacent/overlapping slots
+// Intersection and touching
+morning.intersects(afternoon)              // false (gap between them)
+morning.touches(afternoon)                 // false (12:00 to 13:00 gap)
+
 val extended = MpLocalTimeSlot(
     from = MpLocalTime.of(11, 0),
     to = MpLocalTime.of(14, 0),
 )
-val merged = morning.mergeWith(extended)
-// MpLocalTimeSlot(09:00, 14:00)
+morning.intersects(extended)               // true
+morning.touches(extended)                  // true
+morning.isAdjacentTo(extended)             // false (they overlap)
+
+// Merge overlapping slots
+morning.mergeWith(extended)
+// [MpLocalTimeSlot(09:00, 14:00)]
 
 // Cut — remove one slot from another
-val remaining = afternoon.cutAway(extended)
-// MpLocalTimeSlot(14:00, 17:00)
+afternoon.cutAway(extended)
+// [MpLocalTimeSlot(14:00, 17:00)]
 
-// Find gaps between multiple slots
-val slots = listOf(morning, afternoon)
-val withGaps = MpLocalTimeSlot.splitWithGaps(slots)
-// includes the gap from 12:00 to 13:00
-
-// Formatting
-println(morning.formatHhMm())    // "09:00 - 12:00"
-println(morning.formatHhMmSs())  // "09:00:00 - 12:00:00"`} lang="kotlin" theme="vitesse-dark"/>
+// Split into fixed-duration slots with gaps
+morning.splitWithGaps(duration = 1.hours, gap = 15.minutes)
+// [09:00-10:00, 10:15-11:15]`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Range operations summary</h2>
 
-    <div class="not-prose my-8">
+    <div class="not-prose my-8 overflow-x-auto">
         <table class="w-full text-sm text-left">
             <thead>
             <tr class="border-b border-white/10">
                 <th class="py-2 text-white font-semibold">Operation</th>
                 <th class="py-2 text-white font-semibold text-center">DateRange</th>
+                <th class="py-2 text-white font-semibold text-center">ClosedDateRange</th>
                 <th class="py-2 text-white font-semibold text-center">InstantRange</th>
                 <th class="py-2 text-white font-semibold text-center">ZonedRange</th>
                 <th class="py-2 text-white font-semibold text-center">TimeSlot</th>
@@ -240,38 +407,59 @@ println(morning.formatHhMmSs())  // "09:00:00 - 12:00:00"`} lang="kotlin" theme=
             </thead>
             <tbody class="text-gray-400">
             <tr class="border-b border-white/5">
-                <td class="py-2"><code>contains()</code></td>
-                <td class="py-2 text-center">-</td>
+                <td class="py-2"><code>contains(point)</code></td>
                 <td class="py-2 text-center text-green-400">yes</td>
-                <td class="py-2 text-center">-</td>
-                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>contains(range)</code></td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>intersects()</code></td>
-                <td class="py-2 text-center">-</td>
                 <td class="py-2 text-center text-green-400">yes</td>
-                <td class="py-2 text-center">-</td>
-                <td class="py-2 text-center">-</td>
-            </tr>
-            <tr class="border-b border-white/5">
-                <td class="py-2"><code>cutAway()</code></td>
-                <td class="py-2 text-center">-</td>
                 <td class="py-2 text-center text-green-400">yes</td>
-                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
                 <td class="py-2 text-center text-green-400">yes</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>touches()</code></td>
-                <td class="py-2 text-center">-</td>
-                <td class="py-2 text-center">-</td>
-                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>isAdjacentTo()</code></td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
                 <td class="py-2 text-center text-green-400">yes</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>mergeWith()</code></td>
-                <td class="py-2 text-center">-</td>
-                <td class="py-2 text-center">-</td>
-                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>cutAway()</code></td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
                 <td class="py-2 text-center text-green-400">yes</td>
             </tr>
             <tr class="border-b border-white/5">
@@ -279,10 +467,12 @@ println(morning.formatHhMmSs())  // "09:00:00 - 12:00:00"`} lang="kotlin" theme=
                 <td class="py-2 text-center">-</td>
                 <td class="py-2 text-center">-</td>
                 <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
                 <td class="py-2 text-center text-green-400">yes</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>asListOfDates()</code></td>
+                <td class="py-2 text-center text-green-400">yes</td>
                 <td class="py-2 text-center text-green-400">yes</td>
                 <td class="py-2 text-center">-</td>
                 <td class="py-2 text-center">-</td>
@@ -293,10 +483,20 @@ println(morning.formatHhMmSs())  // "09:00:00 - 12:00:00"`} lang="kotlin" theme=
                 <td class="py-2 text-center">-</td>
                 <td class="py-2 text-center">-</td>
                 <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>plus() / minus()</code></td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center">-</td>
+                <td class="py-2 text-center text-green-400">yes</td>
+                <td class="py-2 text-center text-green-400">yes</td>
                 <td class="py-2 text-center">-</td>
             </tr>
             <tr>
                 <td class="py-2">Partial variant</td>
+                <td class="py-2 text-center text-green-400">yes</td>
                 <td class="py-2 text-center text-green-400">yes</td>
                 <td class="py-2 text-center text-green-400">yes</td>
                 <td class="py-2 text-center text-green-400">yes</td>

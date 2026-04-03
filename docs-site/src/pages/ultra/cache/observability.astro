@@ -1,0 +1,190 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {cacheSidebar} from '../../../data/cache-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Observability" sidebar={cacheSidebar}
+            description="Eviction callbacks and statistics for monitoring and debugging your cache">
+
+    <h1>Observability</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Two behaviours for knowing what your cache is doing: eviction callbacks and statistics.
+    </p>
+
+    <h2>onEviction</h2>
+
+    <p>Register a callback that fires when entries are <strong>automatically evicted</strong> by other behaviours
+        (TTL expiry, LRU eviction, memory pressure). Does NOT fire on explicit <code>remove()</code> calls.</p>
+
+    <Code code={`val cache = fastCache<String, DatabaseConnection> {
+    expireAfterAccess(5.minutes)
+    onEviction { key, value ->
+        value.close()  // clean up the connection
+        logger.info("Evicted: ${'$'}key")
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Use cases:</p>
+
+    <ul>
+        <li><strong>Resource cleanup</strong> — close connections, release file handles, cancel timers</li>
+        <li><strong>Logging</strong> — track what the cache is dropping and when</li>
+        <li><strong>Metrics</strong> — feed eviction events into Prometheus, Micrometer, or custom dashboards</li>
+    </ul>
+
+    <Aside>The handler is called synchronously during the processing loop. Keep it fast and non-blocking —
+        if you need to do I/O, launch a coroutine from the handler.
+    </Aside>
+
+    <h3>What counts as eviction?</h3>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold">Operation</th>
+                <th class="py-2 text-white font-semibold">Fires onEviction?</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2">TTL expires (<code>expireAfterAccess</code> / <code>expireAfterWrite</code>)</td>
+                <td class="py-2 text-green-400">Yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2">LRU eviction (<code>maxEntries</code> / <code>maxMemoryUsage</code>)</td>
+                <td class="py-2 text-green-400">Yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2">Hard TTL eviction (<code>refreshAfterWrite</code> with <code>hardTtl</code>)</td>
+                <td class="py-2 text-green-400">Yes</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2">Explicit <code>cache.remove(key)</code></td>
+                <td class="py-2 text-red-400/60">No</td>
+            </tr>
+            <tr>
+                <td class="py-2"><code>cache.clear()</code></td>
+                <td class="py-2 text-red-400/60">No</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>statistics</h2>
+
+    <p>Track hits, misses, puts, and evictions. The <code>statistics()</code> builder method returns a
+        <code>StatisticsBehaviour</code> handle — hold onto it to call <code>snapshot()</code> later:</p>
+
+    <Code code={`import io.peekandpoke.ultra.cache.FastCache
+import io.peekandpoke.ultra.cache.fastCache
+
+lateinit var stats: FastCache.StatisticsBehaviour<String, String>
+
+val cache = fastCache<String, String> {
+    expireAfterAccess(10.minutes)
+    maxEntries(1000)
+    stats = statistics()
+}
+
+// Use the cache...
+cache.put("a", "1")
+cache.getOrPut("b") { "2" }
+cache.get("a")        // hit
+cache.get("missing")  // miss
+
+// Take a snapshot
+val snapshot = stats.snapshot()
+println(snapshot.hitCount)       // 1
+println(snapshot.missCount)      // 1
+println(snapshot.putCount)       // 2
+println(snapshot.evictionCount)  // 0
+println(snapshot.requestCount)   // 2 (hits + misses)
+println(snapshot.hitRate)        // 0.5`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>CacheStats data class</h3>
+
+    <p>The <code>snapshot()</code> method returns an immutable <code>CacheStats</code> instance. Old snapshots
+        are not affected by subsequent cache operations.</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold">Property</th>
+                <th class="py-2 text-white font-semibold">Type</th>
+                <th class="py-2 text-white font-semibold">Description</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>hitCount</code></td>
+                <td class="py-2"><code>Long</code></td>
+                <td class="py-2">Successful <code>get()</code> / <code>has()</code> lookups</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>missCount</code></td>
+                <td class="py-2"><code>Long</code></td>
+                <td class="py-2">Failed <code>get()</code> / <code>has()</code> lookups</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>putCount</code></td>
+                <td class="py-2"><code>Long</code></td>
+                <td class="py-2">Total <code>put()</code> calls (including <code>getOrPut</code> misses)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>evictionCount</code></td>
+                <td class="py-2"><code>Long</code></td>
+                <td class="py-2">Entries removed by behaviours (not explicit <code>remove()</code>)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>requestCount</code></td>
+                <td class="py-2"><code>Long</code></td>
+                <td class="py-2">hitCount + missCount</td>
+            </tr>
+            <tr>
+                <td class="py-2"><code>hitRate</code></td>
+                <td class="py-2"><code>Double</code></td>
+                <td class="py-2">hitCount / requestCount (NaN if no requests)</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>How statistics counts</h3>
+
+    <p>Statistics processes every action in every batch, not just the last-per-key. If a key is read
+        5 times in one batch, that's 5 hits. Evictions are counted via the eviction listener — the same
+        mechanism used by <code>onEviction</code>.</p>
+
+    <h2>Combining both</h2>
+
+    <Code code={`lateinit var stats: FastCache.StatisticsBehaviour<String, String>
+
+val cache = fastCache<String, String> {
+    expireAfterWrite(10.minutes)
+    maxEntries(5000)
+    onEviction { key, _ ->
+        logger.debug("Evicted: ${'$'}key")
+    }
+    stats = statistics()
+}
+
+// Periodic monitoring
+fun reportCacheHealth() {
+    val s = stats.snapshot()
+    metrics.gauge("cache.hit_rate", s.hitRate)
+    metrics.counter("cache.evictions", s.evictionCount)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/cache/"
+           class="inline-flex items-center px-6 py-3 bg-white/5 text-gray-300 font-semibold rounded-lg hover:bg-white/10 transition-colors">
+            &larr; Overview
+        </a>
+    </div>
+
+</DocsLayout>

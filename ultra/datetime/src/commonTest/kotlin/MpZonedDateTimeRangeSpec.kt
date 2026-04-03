@@ -385,6 +385,108 @@ class MpZonedDateTimeRangeSpec : StringSpec({
         }
     }
 
+    // isNotValid ///////////////////////////////////////////////////////////////////////////////////
+
+    "isNotValid is the inverse of isValid" {
+        val valid = now.toRange(1.hours)
+        valid.isNotValid shouldBe false
+
+        val invalid = MpZonedDateTimeRange(now.plus(3.hours), now)
+        invalid.isNotValid shouldBe true
+    }
+
+    // asPartialRange ///////////////////////////////////////////////////////////////////////////////
+
+    "asPartialRange converts to Partial with same from and to" {
+        val range = now.toRange(3.hours)
+
+        val partial = range.asPartialRange()
+
+        partial.from shouldBe range.from
+        partial.to shouldBe range.to
+    }
+
+    // touches //////////////////////////////////////////////////////////////////////////////////////
+
+    "touches - adjacent ranges touch" {
+        val a = now.toRange(1.hours)
+        val b = now.plus(1.hours).toRange(1.hours)
+
+        a.touches(b) shouldBe true
+        b.touches(a) shouldBe true
+    }
+
+    "touches - overlapping ranges touch" {
+        val a = now.toRange(2.hours)
+        val b = MpZonedDateTimeRange(now.plus(1.hours), now.plus(3.hours))
+
+        a.touches(b) shouldBe true
+        b.touches(a) shouldBe true
+    }
+
+    "touches - separated ranges do not touch" {
+        val a = now.toRange(1.hours)
+        val b = now.plus(2.hours).toRange(1.hours)
+
+        a.touches(b) shouldBe false
+        b.touches(a) shouldBe false
+    }
+
+    // isAdjacentTo /////////////////////////////////////////////////////////////////////////////////
+
+    "isAdjacentTo - adjacent ranges" {
+        val a = now.toRange(1.hours)
+        val b = now.plus(1.hours).toRange(1.hours)
+
+        a.isAdjacentTo(b) shouldBe true
+        b.isAdjacentTo(a) shouldBe true
+    }
+
+    "isAdjacentTo - overlapping ranges are not adjacent" {
+        val a = now.toRange(2.hours)
+        val b = MpZonedDateTimeRange(now.plus(1.hours), now.plus(3.hours))
+
+        a.isAdjacentTo(b) shouldBe false
+    }
+
+    "isAdjacentTo - separated ranges are not adjacent" {
+        val a = now.toRange(1.hours)
+        val b = now.plus(2.hours).toRange(1.hours)
+
+        a.isAdjacentTo(b) shouldBe false
+    }
+
+    // mergeWith ////////////////////////////////////////////////////////////////////////////////////
+
+    "mergeWith - overlapping ranges merge into one" {
+        val a = now.toRange(2.hours)
+        val b = MpZonedDateTimeRange(now.plus(1.hours), now.plus(3.hours))
+
+        val result = a.mergeWith(b)
+
+        result shouldBe listOf(MpZonedDateTimeRange(now, now.plus(3.hours)))
+    }
+
+    "mergeWith - adjacent ranges merge into one" {
+        val a = now.toRange(1.hours)
+        val b = now.plus(1.hours).toRange(1.hours)
+
+        val result = a.mergeWith(b)
+
+        result shouldBe listOf(MpZonedDateTimeRange(now, now.plus(2.hours)))
+    }
+
+    "mergeWith - non-touching ranges stay separate and sorted" {
+        val later = now.plus(2.hours).toRange(1.hours)
+        val earlier = now.toRange(1.hours)
+
+        val result = later.mergeWith(earlier)
+
+        result shouldBe listOf(earlier, later)
+    }
+
+    // toInstantRange ///////////////////////////////////////////////////////////////////////////////
+
     "toInstantRange() - converts MpZonedDateTimeRange to MpInstantRange" {
         val range = now.toRange(3.hours)
         val instantRange = range.toInstantRange()
@@ -426,6 +528,20 @@ class MpZonedDateTimeRangeSpec : StringSpec({
         val convertedRange = range.atZone(someZone)
 
         (convertedRange.from < convertedRange.to) shouldBe true
+    }
+
+    "contains() - accepts MpInstant directly" {
+        val range = now.toRange(3.hours)
+        val instant: MpInstant = now.plus(1.hours).toInstant()
+
+        range.contains(instant).shouldBeTrue()
+    }
+
+    "contains() - invalid range returns false" {
+        val invalid = MpZonedDateTimeRange(now.plus(3.hours), now)
+        val datetime = now.plus(1.hours)
+
+        invalid.contains(datetime).shouldBeFalse()
     }
 
     "contains() - datetime within range" {

@@ -465,6 +465,98 @@ class MpInstantRangeSpec : StringSpec({
         shifted.duration shouldBe range.duration
     }
 
+    // asPartialRange ////////////////////////////////////////////////////////////////////////////////
+
+    "asPartialRange converts to Partial with same from and to" {
+        val from = MpInstant.parse("2024-01-01T00:00:00Z")
+        val to = MpInstant.parse("2024-01-02T00:00:00Z")
+        val range = MpInstantRange(from, to)
+
+        val partial = range.asPartialRange()
+
+        partial.from shouldBe from
+        partial.to shouldBe to
+    }
+
+    // touches ///////////////////////////////////////////////////////////////////////////////////////
+
+    "touches - adjacent ranges touch" {
+        val a = now.toRange(1.hours)
+        val b = MpInstantRange(from = now.plus(1.hours), to = now.plus(2.hours))
+
+        a.touches(b) shouldBe true
+        b.touches(a) shouldBe true
+    }
+
+    "touches - overlapping ranges touch" {
+        val a = now.toRange(2.hours)
+        val b = MpInstantRange(from = now.plus(1.hours), to = now.plus(3.hours))
+
+        a.touches(b) shouldBe true
+        b.touches(a) shouldBe true
+    }
+
+    "touches - separated ranges do not touch" {
+        val a = now.toRange(1.hours)
+        val b = MpInstantRange(from = now.plus(2.hours), to = now.plus(3.hours))
+
+        a.touches(b) shouldBe false
+        b.touches(a) shouldBe false
+    }
+
+    // isAdjacentTo //////////////////////////////////////////////////////////////////////////////////
+
+    "isAdjacentTo - adjacent ranges" {
+        val a = now.toRange(1.hours)
+        val b = MpInstantRange(from = now.plus(1.hours), to = now.plus(2.hours))
+
+        a.isAdjacentTo(b) shouldBe true
+        b.isAdjacentTo(a) shouldBe true
+    }
+
+    "isAdjacentTo - overlapping ranges are not adjacent" {
+        val a = now.toRange(2.hours)
+        val b = MpInstantRange(from = now.plus(1.hours), to = now.plus(3.hours))
+
+        a.isAdjacentTo(b) shouldBe false
+    }
+
+    "isAdjacentTo - separated ranges are not adjacent" {
+        val a = now.toRange(1.hours)
+        val b = MpInstantRange(from = now.plus(2.hours), to = now.plus(3.hours))
+
+        a.isAdjacentTo(b) shouldBe false
+    }
+
+    // mergeWith /////////////////////////////////////////////////////////////////////////////////////
+
+    "mergeWith - overlapping ranges merge into one" {
+        val a = now.toRange(2.hours)
+        val b = MpInstantRange(from = now.plus(1.hours), to = now.plus(3.hours))
+
+        val result = a.mergeWith(b)
+
+        result shouldBe listOf(MpInstantRange(from = now, to = now.plus(3.hours)))
+    }
+
+    "mergeWith - adjacent ranges merge into one" {
+        val a = now.toRange(1.hours)
+        val b = MpInstantRange(from = now.plus(1.hours), to = now.plus(2.hours))
+
+        val result = a.mergeWith(b)
+
+        result shouldBe listOf(MpInstantRange(from = now, to = now.plus(2.hours)))
+    }
+
+    "mergeWith - non-touching ranges stay separate and sorted" {
+        val a = now.plus(2.hours).toRange(1.hours)
+        val b = now.toRange(1.hours)
+
+        val result = a.mergeWith(b)
+
+        result shouldBe listOf(b, a)
+    }
+
     // Partial.asDateRange /////////////////////////////////////////////////////////////////////////
 
     "Partial.asDateRange converts to MpClosedLocalDateRange.Partial" {

@@ -1,6 +1,5 @@
 package io.peekandpoke.ultra.datetime
 
-import common.datetime.DateTimeRangeConverter
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -98,10 +97,53 @@ data class MpClosedLocalDateRange(
 
     fun intersects(other: MpClosedLocalDateRange): Boolean {
         return (isValid && other.isValid) && (
-                (other.from >= from && other.from < to) ||
+                (other.from in from..<to) ||
                         (other.to > from && other.to <= to) ||
                         contains(other) ||
                         other.contains(this)
                 )
+    }
+
+    fun intersects(other: MpLocalDateRange): Boolean {
+        return asOpenRange.intersects(other)
+    }
+
+    /**
+     * Returns `true` when this range touches or overlaps the [other] range.
+     *
+     * In other words, returns `true` when the union of both ranges is contiguous (has no gap).
+     */
+    fun touches(other: MpClosedLocalDateRange): Boolean {
+        return asOpenRange.touches(other.asOpenRange)
+    }
+
+    /**
+     * Returns `true` when this range is adjacent to the [other] range without overlapping.
+     *
+     * Two ranges are adjacent when one ends exactly where the other begins (the day after the last).
+     */
+    fun isAdjacentTo(other: MpClosedLocalDateRange): Boolean {
+        return asOpenRange.isAdjacentTo(other.asOpenRange)
+    }
+
+    /**
+     * Merges this range with the [other] one, by taking the minimal [from] and the maximal [to].
+     *
+     * If the ranges do not touch, returns both ranges sorted by [from].
+     */
+    fun mergeWith(other: MpClosedLocalDateRange): List<MpClosedLocalDateRange> {
+        return asOpenRange.mergeWith(other.asOpenRange).map { it.asClosedRange }
+    }
+
+    /**
+     * Cuts [other] from this range.
+     *
+     * Results in:
+     * 1. An empty list, when other fully covers this range.
+     * 2. A list with one entry, when other cuts at the left or the right side only.
+     * 3. A list with two entries, when other lies in between this range.
+     */
+    fun cutAway(other: MpClosedLocalDateRange): List<MpClosedLocalDateRange> {
+        return asOpenRange.cutAway(other.asOpenRange).map { it.asClosedRange }
     }
 }

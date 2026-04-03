@@ -320,6 +320,155 @@ class MpLocalTimeSlotSpec : StringSpec({
         }
     }
 
+    // Partial ////////////////////////////////////////////////////////////////////////////////////////
+
+    "Partial.empty has null from and to" {
+        MpLocalTimeSlot.Partial.empty.from shouldBe null
+        MpLocalTimeSlot.Partial.empty.to shouldBe null
+    }
+
+    "Partial.asValidRange returns valid range" {
+        val from = MpLocalTime.of(10, 0)
+        val to = MpLocalTime.of(11, 0)
+
+        MpLocalTimeSlot.Partial(from, to).asValidRange() shouldBe MpLocalTimeSlot(from, to)
+    }
+
+    "Partial.asValidRange returns null for invalid range" {
+        val from = MpLocalTime.of(11, 0)
+        val to = MpLocalTime.of(10, 0)
+
+        MpLocalTimeSlot.Partial(from, to).asValidRange() shouldBe null
+    }
+
+    "Partial.asValidRange returns null when from or to is null" {
+        val time = MpLocalTime.of(10, 0)
+
+        MpLocalTimeSlot.Partial(time, null).asValidRange() shouldBe null
+        MpLocalTimeSlot.Partial(null, time).asValidRange() shouldBe null
+        MpLocalTimeSlot.Partial.empty.asValidRange() shouldBe null
+    }
+
+    // asPartialRange //////////////////////////////////////////////////////////////////////////////////
+
+    "asPartialRange converts to Partial with same from and to" {
+        val from = MpLocalTime.of(9, 0)
+        val to = MpLocalTime.of(17, 0)
+        val slot = MpLocalTimeSlot(from, to)
+
+        val partial = slot.asPartialRange()
+
+        partial.from shouldBe from
+        partial.to shouldBe to
+    }
+
+    // contains ////////////////////////////////////////////////////////////////////////////////////////
+
+    "contains(time) - within slot" {
+        val slot = ts(10, 0, 12, 0)
+
+        slot.contains(MpLocalTime.of(10, 0)) shouldBe true  // from is inclusive
+        slot.contains(MpLocalTime.of(11, 0)) shouldBe true
+        slot.contains(MpLocalTime.of(11, 59)) shouldBe true
+        slot.contains(MpLocalTime.of(12, 0)) shouldBe false // to is exclusive
+        slot.contains(MpLocalTime.of(9, 59)) shouldBe false
+        slot.contains(MpLocalTime.of(12, 1)) shouldBe false
+    }
+
+    "contains(time) - invalid slot returns false" {
+        val slot = ts(12, 0, 10, 0)
+
+        slot.contains(MpLocalTime.of(11, 0)) shouldBe false
+    }
+
+    "contains(other) - one slot fully contains another" {
+        val outer = ts(9, 0, 17, 0)
+        val inner = ts(10, 0, 12, 0)
+
+        outer.contains(inner) shouldBe true
+        inner.contains(outer) shouldBe false
+    }
+
+    "contains(other) - slot contains itself" {
+        val slot = ts(10, 0, 12, 0)
+
+        slot.contains(slot) shouldBe true
+    }
+
+    "contains(other) - invalid slots return false" {
+        val valid = ts(10, 0, 12, 0)
+        val invalid = ts(12, 0, 10, 0)
+
+        valid.contains(invalid) shouldBe false
+        invalid.contains(valid) shouldBe false
+    }
+
+    // intersects //////////////////////////////////////////////////////////////////////////////////////
+
+    "intersects - overlapping slots" {
+        val a = ts(10, 0, 12, 0)
+        val b = ts(11, 0, 13, 0)
+
+        a.intersects(b) shouldBe true
+        b.intersects(a) shouldBe true
+    }
+
+    "intersects - non-overlapping slots" {
+        val a = ts(10, 0, 11, 0)
+        val b = ts(12, 0, 13, 0)
+
+        a.intersects(b) shouldBe false
+        b.intersects(a) shouldBe false
+    }
+
+    "intersects - adjacent slots do NOT intersect" {
+        val a = ts(10, 0, 11, 0)
+        val b = ts(11, 0, 12, 0)
+
+        a.intersects(b) shouldBe false
+    }
+
+    "intersects - one contains the other" {
+        val outer = ts(9, 0, 17, 0)
+        val inner = ts(10, 0, 12, 0)
+
+        outer.intersects(inner) shouldBe true
+        inner.intersects(outer) shouldBe true
+    }
+
+    "intersects - invalid slot returns false" {
+        val valid = ts(10, 0, 12, 0)
+        val invalid = ts(12, 0, 10, 0)
+
+        valid.intersects(invalid) shouldBe false
+    }
+
+    // isAdjacentTo ////////////////////////////////////////////////////////////////////////////////////
+
+    "isAdjacentTo - adjacent slots" {
+        val a = ts(10, 0, 11, 0)
+        val b = ts(11, 0, 12, 0)
+
+        a.isAdjacentTo(b) shouldBe true
+        b.isAdjacentTo(a) shouldBe true
+    }
+
+    "isAdjacentTo - overlapping slots are not adjacent" {
+        val a = ts(10, 0, 12, 0)
+        val b = ts(11, 0, 13, 0)
+
+        a.isAdjacentTo(b) shouldBe false
+    }
+
+    "isAdjacentTo - separated slots are not adjacent" {
+        val a = ts(10, 0, 11, 0)
+        val b = ts(12, 0, 13, 0)
+
+        a.isAdjacentTo(b) shouldBe false
+    }
+
+    // formatHhMm / formatHhMmSs ///////////////////////////////////////////////////////////////////////
+
     "formatHhMm" {
         val subject = MpLocalTimeSlot(
             from = MpLocalTime.of(10, 15),

@@ -94,9 +94,12 @@
 - **Karango audit** — dead entity.kt deleted, debug code removed, KDoc on public API
 - **Kontainer + Streams** — full documentation added by another agent
 - **KDoc upgrade** — Slumber 23%→55% (16 files), Kontainer 43%→85% (4 files), Streams 57%→96% (1 file)
-- **Docs site** — 56+ pages across 8 libraries (added Datetime 12pp, Cache 3pp, Kontainer introspection page), llms.txt
+- **Docs site** — 95 pages across 8+ libraries (added Datetime 12pp, Cache 5pp, Kontainer introspection page), llms.txt
   with per-library split including datetime.md and cache.md, category-tinted landing pages with Hilbert lighting, "
-  Tools" top-nav dispatcher
+  Tools" top-nav dispatcher, legal pages (EN/DE)
+- **Cache behaviours** — 4 new behaviours: expireAfterWrite, onEviction, statistics (CacheStats snapshots),
+  refreshAfterWrite (stale-while-revalidate with dedup, hard TTL, error retry). MissAction tracking for accurate
+  statistics. Eviction listener infrastructure.
 - **Kraft examples** — 3 repos upgraded to Kotlin 2.3.10 / Ultra 0.102.0
 - **ultra/datetime** — inherited 45 TODOs from ultra/common split (new tech debt hotspot)
 

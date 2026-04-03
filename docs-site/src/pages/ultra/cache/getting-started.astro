@@ -97,7 +97,7 @@ cache.clear()`} lang="kotlin" theme="vitesse-dark"/>
                 <td class="py-2">Checks if a key exists</td>
             </tr>
             <tr class="border-b border-white/5">
-                <td class="py-2"><code>getOrPut(key) {'{ ... }'}</code></td>
+                <td class="py-2"><code>getOrPut(key) &lbrace; ... &rbrace;</code></td>
                 <td class="py-2"><code>V</code></td>
                 <td class="py-2">Returns existing or computes and stores a new value</td>
             </tr>
@@ -137,9 +137,27 @@ cache.clear()`} lang="kotlin" theme="vitesse-dark"/>
     </p>
 
     <Aside>The cache uses a coroutine-based background loop for eviction processing. Eviction doesn't happen on the
-        calling
-        thread — it's deferred to the loop, which runs every 50ms by default.
+        calling thread — it's deferred to the loop, which runs every 50ms by default.
     </Aside>
+
+    <h2>Builder methods that return a handle</h2>
+
+    <p>Most builder methods return the builder itself (for chaining). One exception:
+        <code>statistics()</code> returns a <code>StatisticsBehaviour</code> handle that you hold onto to
+        call <code>snapshot()</code> later:</p>
+
+    <Code code={`lateinit var stats: FastCache.StatisticsBehaviour<String, String>
+
+val cache = fastCache<String, String> {
+    expireAfterAccess(10.minutes)
+    stats = statistics()  // returns the handle, not the builder
+}
+
+// Later...
+val snapshot = stats.snapshot()
+println(snapshot.hitRate)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>See <a href="/ultra/cache/observability">Observability</a> for full details on statistics.</p>
 
     <div class="not-prose mt-8 flex gap-4">
         <a href="/ultra/cache/eviction"

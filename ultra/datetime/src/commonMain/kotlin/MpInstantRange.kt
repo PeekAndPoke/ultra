@@ -56,6 +56,10 @@ data class MpInstantRange(
         )
     }
 
+    fun asPartialRange(): Partial {
+        return Partial(from = from, to = to)
+    }
+
     /**
      * The [Duration] of the range.
      */
@@ -124,7 +128,7 @@ data class MpInstantRange(
      * 3. [datetime] < [to]
      */
     fun contains(datetime: MpAbsoluteDateTime): Boolean {
-        return isValid && datetime.toInstant() >= from && datetime.toInstant() < to
+        return isValid && datetime.toInstant().let { it in from..<to }
     }
 
     /**
@@ -143,11 +147,45 @@ data class MpInstantRange(
 
     fun intersects(other: MpInstantRange): Boolean {
         return (isValid && other.isValid) && (
-                (other.from >= from && other.from < to) ||
+                (other.from in from..<to) ||
                         (other.to > from && other.to <= to) ||
                         contains(other) ||
                         other.contains(this)
                 )
+    }
+
+    /**
+     * Returns `true` when this range touches or overlaps the [other] range.
+     *
+     * In other words, returns `true` when the union of both ranges is contiguous (has no gap).
+     */
+    fun touches(other: MpInstantRange): Boolean {
+        return to >= other.from && from <= other.to
+    }
+
+    /**
+     * Returns `true` when this range is adjacent to the [other] range without overlapping.
+     *
+     * Two ranges are adjacent when one ends exactly where the other begins.
+     */
+    fun isAdjacentTo(other: MpInstantRange): Boolean {
+        return to == other.from || other.to == from
+    }
+
+    /**
+     * Merges this range with the [other] one, by taking the minimal [from] and the maximal [to].
+     *
+     * If the ranges do not touch, returns both ranges sorted by [from].
+     */
+    fun mergeWith(other: MpInstantRange): List<MpInstantRange> = when {
+        touches(other) -> listOf(
+            MpInstantRange(
+                from = minOf(from, other.from),
+                to = maxOf(to, other.to),
+            )
+        )
+
+        else -> listOf(this, other).sortedBy { it.from }
     }
 
     /**

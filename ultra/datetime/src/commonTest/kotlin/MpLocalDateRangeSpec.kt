@@ -355,6 +355,80 @@ class MpLocalDateRangeSpec : StringSpec({
         range.contains(MpLocalDate.parse("2023-12-31")) shouldBe false
     }
 
+    // contains(range) ////////////////////////////////////////////////////////////////////////////
+
+    "contains(other range) - open range semantics" {
+        val outer = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-12-31"),
+        )
+        val inner = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-06-30"),
+        )
+
+        outer.contains(inner) shouldBe true
+        inner.contains(outer) shouldBe false
+        outer.contains(outer) shouldBe true
+    }
+
+    "contains(other range) - invalid ranges return false" {
+        val valid = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-12-31"),
+        )
+        val invalid = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-12-31"),
+            to = MpLocalDate.parse("2024-01-01"),
+        )
+
+        valid.contains(invalid) shouldBe false
+        invalid.contains(valid) shouldBe false
+    }
+
+    // intersects //////////////////////////////////////////////////////////////////////////////////
+
+    "intersects with overlapping open range" {
+        val a = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-06-30"),
+        )
+        val b = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-09-30"),
+        )
+
+        a.intersects(b) shouldBe true
+        b.intersects(a) shouldBe true
+    }
+
+    "intersects with non-overlapping open range" {
+        val a = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-03-31"),
+        )
+        val b = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-06-01"),
+            to = MpLocalDate.parse("2024-09-30"),
+        )
+
+        a.intersects(b) shouldBe false
+        b.intersects(a) shouldBe false
+    }
+
+    "intersects with adjacent open ranges do NOT intersect" {
+        val a = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-03-01"),
+        )
+        val b = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-06-01"),
+        )
+
+        a.intersects(b) shouldBe false
+    }
+
     "intersects with overlapping closed range" {
         val openRange = MpLocalDateRange(
             from = MpLocalDate.parse("2024-01-01"),
@@ -381,6 +455,251 @@ class MpLocalDateRangeSpec : StringSpec({
         openRange.intersects(closedRange) shouldBe false
     }
 
+    // touches /////////////////////////////////////////////////////////////////////////////////////
+
+    "touches - overlapping ranges touch" {
+        val a = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-06-30"),
+        )
+        val b = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-09-30"),
+        )
+
+        a.touches(b) shouldBe true
+        b.touches(a) shouldBe true
+    }
+
+    "touches - adjacent ranges touch" {
+        val a = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-03-01"),
+        )
+        val b = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-06-01"),
+        )
+
+        a.touches(b) shouldBe true
+        b.touches(a) shouldBe true
+    }
+
+    "touches - separated ranges do not touch" {
+        val a = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-03-01"),
+        )
+        val b = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-06-01"),
+            to = MpLocalDate.parse("2024-09-01"),
+        )
+
+        a.touches(b) shouldBe false
+        b.touches(a) shouldBe false
+    }
+
+    // isAdjacentTo ////////////////////////////////////////////////////////////////////////////////
+
+    "isAdjacentTo - adjacent ranges" {
+        val a = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-03-01"),
+        )
+        val b = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-06-01"),
+        )
+
+        a.isAdjacentTo(b) shouldBe true
+        b.isAdjacentTo(a) shouldBe true
+    }
+
+    "isAdjacentTo - overlapping ranges are not adjacent" {
+        val a = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-06-30"),
+        )
+        val b = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-09-30"),
+        )
+
+        a.isAdjacentTo(b) shouldBe false
+    }
+
+    "isAdjacentTo - separated ranges are not adjacent" {
+        val a = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-03-01"),
+        )
+        val b = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-06-01"),
+            to = MpLocalDate.parse("2024-09-01"),
+        )
+
+        a.isAdjacentTo(b) shouldBe false
+    }
+
+    // mergeWith ///////////////////////////////////////////////////////////////////////////////////
+
+    "mergeWith - overlapping ranges merge into one" {
+        val a = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-06-30"),
+        )
+        val b = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-09-30"),
+        )
+
+        a.mergeWith(b) shouldBe listOf(
+            MpLocalDateRange(
+                from = MpLocalDate.parse("2024-01-01"),
+                to = MpLocalDate.parse("2024-09-30"),
+            ),
+        )
+    }
+
+    "mergeWith - adjacent ranges merge into one" {
+        val a = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-03-01"),
+        )
+        val b = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-06-01"),
+        )
+
+        a.mergeWith(b) shouldBe listOf(
+            MpLocalDateRange(
+                from = MpLocalDate.parse("2024-01-01"),
+                to = MpLocalDate.parse("2024-06-01"),
+            ),
+        )
+    }
+
+    "mergeWith - non-touching ranges stay separate and sorted" {
+        val later = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-06-01"),
+            to = MpLocalDate.parse("2024-09-01"),
+        )
+        val earlier = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-03-01"),
+        )
+
+        later.mergeWith(earlier) shouldBe listOf(earlier, later)
+    }
+
+    // cutAway /////////////////////////////////////////////////////////////////////////////////////
+
+    "cutAway - all eaten up exactly" {
+        val range = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-03-10"),
+        )
+
+        range.cutAway(range) shouldBe emptyList()
+    }
+
+    "cutAway - all eaten up surrounding" {
+        val range = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-03-10"),
+        )
+        val other = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-02-28"),
+            to = MpLocalDate.parse("2024-03-12"),
+        )
+
+        range.cutAway(other) shouldBe emptyList()
+    }
+
+    "cutAway - in the middle" {
+        val range = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-03-10"),
+        )
+        val other = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-04"),
+            to = MpLocalDate.parse("2024-03-07"),
+        )
+
+        range.cutAway(other) shouldBe listOf(
+            MpLocalDateRange(
+                from = MpLocalDate.parse("2024-03-01"),
+                to = MpLocalDate.parse("2024-03-04"),
+            ),
+            MpLocalDateRange(
+                from = MpLocalDate.parse("2024-03-07"),
+                to = MpLocalDate.parse("2024-03-10"),
+            ),
+        )
+    }
+
+    "cutAway - on the left side" {
+        val range = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-03-10"),
+        )
+        val other = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-02-28"),
+            to = MpLocalDate.parse("2024-03-05"),
+        )
+
+        range.cutAway(other) shouldBe listOf(
+            MpLocalDateRange(
+                from = MpLocalDate.parse("2024-03-05"),
+                to = MpLocalDate.parse("2024-03-10"),
+            ),
+        )
+    }
+
+    "cutAway - on the right side" {
+        val range = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-03-10"),
+        )
+        val other = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-07"),
+            to = MpLocalDate.parse("2024-03-15"),
+        )
+
+        range.cutAway(other) shouldBe listOf(
+            MpLocalDateRange(
+                from = MpLocalDate.parse("2024-03-01"),
+                to = MpLocalDate.parse("2024-03-07"),
+            ),
+        )
+    }
+
+    "cutAway - no overlap" {
+        val range = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-03-10"),
+        )
+        val other = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-04-01"),
+            to = MpLocalDate.parse("2024-04-10"),
+        )
+
+        range.cutAway(other) shouldBe listOf(range)
+    }
+
+    "cutAway - invalid other returns self" {
+        val range = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-01"),
+            to = MpLocalDate.parse("2024-03-10"),
+        )
+        val invalid = MpLocalDateRange(
+            from = MpLocalDate.parse("2024-03-10"),
+            to = MpLocalDate.parse("2024-03-01"),
+        )
+
+        range.cutAway(invalid) shouldBe listOf(range)
+    }
+
     // asPartialRange //////////////////////////////////////////////////////////////////////////////
 
     "asPartialRange converts to Partial with same from and to" {
@@ -392,5 +711,53 @@ class MpLocalDateRangeSpec : StringSpec({
 
         partial.from shouldBe from
         partial.to shouldBe to
+    }
+
+    // endingAt / beginningAt /////////////////////////////////////////////////////////////////////
+
+    "endingAt creates range from Genesis to the given date" {
+        val to = MpLocalDate.parse("2024-06-15")
+        val range = MpLocalDateRange.endingAt(to)
+
+        range.from shouldBe MpLocalDate.Genesis
+        range.to shouldBe to
+    }
+
+    "beginningAt creates range from the given date to Doomsday" {
+        val from = MpLocalDate.parse("2024-06-15")
+        val range = MpLocalDateRange.beginningAt(from)
+
+        range.from shouldBe from
+        range.to shouldBe MpLocalDate.Doomsday
+    }
+
+    // Partial.asValidRange ///////////////////////////////////////////////////////////////////////
+
+    "Partial.asValidRange returns valid range" {
+        val from = MpLocalDate.parse("2024-01-01")
+        val to = MpLocalDate.parse("2024-01-10")
+
+        MpLocalDateRange.Partial(from, to).asValidRange() shouldBe MpLocalDateRange(from, to)
+    }
+
+    "Partial.asValidRange returns null for invalid or incomplete ranges" {
+        val from = MpLocalDate.parse("2024-01-10")
+        val to = MpLocalDate.parse("2024-01-01")
+
+        MpLocalDateRange.Partial(from, to).asValidRange() shouldBe null
+        MpLocalDateRange.Partial(from, null).asValidRange() shouldBe null
+        MpLocalDateRange.Partial(null, to).asValidRange() shouldBe null
+        MpLocalDateRange.Partial.empty.asValidRange() shouldBe null
+    }
+
+    // isNotOpen //////////////////////////////////////////////////////////////////////////////////
+
+    "isNotOpen is true when both boundaries are concrete" {
+        MpLocalDateRange(
+            from = MpLocalDate.parse("2024-01-01"),
+            to = MpLocalDate.parse("2024-12-31"),
+        ).isNotOpen.shouldBeTrue()
+
+        MpLocalDateRange.forever.isNotOpen.shouldBeFalse()
     }
 })

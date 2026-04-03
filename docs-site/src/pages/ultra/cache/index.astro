@@ -11,58 +11,129 @@ import {Code} from 'astro:components';
     <h1>Cache</h1>
 
     <p class="text-xl text-gray-400 !mt-2 !mb-8">
-        A coroutine-based in-memory cache with pluggable eviction policies.
-        Thread-safe, multiplatform, and allocation-aware.
+        A coroutine-based in-memory cache with composable behaviours.
+        Thread-safe, multiplatform, and designed for hot paths.
     </p>
 
     <h2>Why a custom cache?</h2>
 
     <p>Most JVM caches (Caffeine, Guava) are excellent but JVM-only. When you need the same caching API in
         <code>commonMain</code> for code shared between JVM and JS, your options narrow quickly. Cache fills that gap
-        with a clean builder API and pluggable behaviors that work on all Kotlin platforms.</p>
+        with a clean builder DSL and composable behaviours that work on all Kotlin platforms.</p>
 
     <Aside>We needed caching in Slumber's serialization hot path. It had to be fast, multiplatform, and not pull
         in a JVM-only dependency. So here we are.
     </Aside>
 
-    <h2>The core idea: pluggable behaviors, async eviction</h2>
+    <h2>The core idea: composable behaviours, async eviction</h2>
 
-    <p>Instead of one cache with many configuration flags, Cache uses composable <strong>behaviors</strong>. Stack them
-        to get exactly the eviction policy you need.</p>
+    <p>Instead of one cache with many configuration flags, Cache uses composable <strong>behaviours</strong>. Stack them
+        to get exactly the policy you need. Eviction runs asynchronously in a coroutine background loop — reading and
+        writing the cache is fast because the calling thread never pays for eviction work.</p>
 
-    <p>Eviction runs asynchronously in a Kotlin coroutine background loop — reading and writing the cache is
-        fast because the calling thread never pays for eviction work. The loop integrates naturally with
-        structured concurrency: cancel the coroutine scope and the evictor stops cleanly.</p>
+    <Code code={`val cache = fastCache<String, UserProfile> {
+    expireAfterWrite(10.minutes)         // evict 10 min after last write
+    maxEntries(1000)                      // LRU after 1000 entries
+    onEviction { key, _ ->                // react to evictions
+        logger.debug("evicted ${'$'}key")
+    }
+}
 
-    <Code code={`import io.peekandpoke.ultra.cache.fastCache
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
+cache.put("user:42", fetchUser("42"))
 
-val cache = fastCache<String, UserProfile> {
-    expireAfterAccess(5.minutes)
-    maxEntries(1000)
+val user = cache.getOrPut("user:99") {
+    fetchUser("99")  // only called on miss
 }`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Behaviour matrix</h2>
+
+    <p>Seven behaviours, four eviction strategies, two observers, one async refresh:</p>
+
+    <div class="not-prose my-8 overflow-x-auto">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold">Behaviour</th>
+                <th class="py-2 text-white font-semibold">Builder DSL</th>
+                <th class="py-2 text-white font-semibold">Trigger</th>
+                <th class="py-2 text-white font-semibold">TTL resets on</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><a href="/ultra/cache/eviction" class="text-brand-400 hover:text-brand-300">expireAfterAccess</a>
+                </td>
+                <td class="py-2"><code>expireAfterAccess(5.minutes)</code></td>
+                <td class="py-2">No read or write within TTL</td>
+                <td class="py-2">Read + Write</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><a href="/ultra/cache/eviction" class="text-brand-400 hover:text-brand-300">expireAfterWrite</a>
+                </td>
+                <td class="py-2"><code>expireAfterWrite(5.minutes)</code></td>
+                <td class="py-2">No write within TTL</td>
+                <td class="py-2">Write only</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><a href="/ultra/cache/eviction"
+                                    class="text-brand-400 hover:text-brand-300">maxEntries</a></td>
+                <td class="py-2"><code>maxEntries(1000)</code></td>
+                <td class="py-2">Entry count exceeds limit</td>
+                <td class="py-2">n/a (LRU by access)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><a href="/ultra/cache/eviction" class="text-brand-400 hover:text-brand-300">maxMemoryUsage</a>
+                </td>
+                <td class="py-2"><code>maxMemoryUsage(50_000_000)</code></td>
+                <td class="py-2">Estimated bytes exceed budget</td>
+                <td class="py-2">n/a (LRU by access)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><a href="/ultra/cache/refresh" class="text-brand-400 hover:text-brand-300">refreshAfterWrite</a>
+                </td>
+                <td class="py-2"><code>refreshAfterWrite(ttl) &lbrace; ... &rbrace;</code></td>
+                <td class="py-2">Soft: async reload; Hard: evicts</td>
+                <td class="py-2">Write only</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><a href="/ultra/cache/observability" class="text-brand-400 hover:text-brand-300">onEviction</a>
+                </td>
+                <td class="py-2"><code>onEviction &lbrace; k, v -&gt; ... &rbrace;</code></td>
+                <td class="py-2">Observer — no eviction</td>
+                <td class="py-2">n/a</td>
+            </tr>
+            <tr>
+                <td class="py-2"><a href="/ultra/cache/observability" class="text-brand-400 hover:text-brand-300">statistics</a>
+                </td>
+                <td class="py-2"><code>statistics()</code></td>
+                <td class="py-2">Observer — no eviction</td>
+                <td class="py-2">n/a</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 
     <h2>What you get</h2>
 
     <div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
-            <h3 class="text-white font-semibold mb-1">TTL Expiration</h3>
-            <p class="text-sm text-gray-400">Expire entries after a configurable idle time. Resets on every access.</p>
+            <h3 class="text-white font-semibold mb-1">Four Eviction Strategies</h3>
+            <p class="text-sm text-gray-400">TTL by access, TTL by write, max entry count (LRU), and max memory with
+                object size estimation.</p>
         </div>
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
-            <h3 class="text-white font-semibold mb-1">Max Entries</h3>
-            <p class="text-sm text-gray-400">LRU eviction when the entry count exceeds a limit.</p>
+            <h3 class="text-white font-semibold mb-1">Background Refresh</h3>
+            <p class="text-sm text-gray-400">Stale-while-revalidate: serve old values while refreshing in the
+                background. No reader ever waits.</p>
         </div>
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
-            <h3 class="text-white font-semibold mb-1">Max Memory</h3>
-            <p class="text-sm text-gray-400">Evict based on estimated object size. LRU when memory budget is
-                exceeded.</p>
+            <h3 class="text-white font-semibold mb-1">Observability</h3>
+            <p class="text-sm text-gray-400">Eviction callbacks and statistics (hit rate, miss count, eviction count)
+                for tuning and debugging.</p>
         </div>
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Thread-Safe</h3>
-            <p class="text-sm text-gray-400">All operations are synchronized. Safe for concurrent access from multiple
-                coroutines.</p>
+            <p class="text-sm text-gray-400">All operations are safe for concurrent access from multiple coroutines.</p>
         </div>
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Kotlin Multiplatform</h3>
@@ -71,38 +142,10 @@ val cache = fastCache<String, UserProfile> {
         </div>
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Coroutine-Based</h3>
-            <p class="text-sm text-gray-400">Background processing loop for eviction. Cleans up automatically via
-                WeakReference.</p>
+            <p class="text-sm text-gray-400">Eviction loop integrates with structured concurrency. Cancel the scope, the
+                evictor stops cleanly.</p>
         </div>
     </div>
-
-    <h2>Quick taste</h2>
-
-    <Code code={`import io.peekandpoke.ultra.cache.fastCache
-import kotlin.time.Duration.Companion.minutes
-
-val cache = fastCache<String, String> {
-    expireAfterAccess(10.minutes)
-    maxEntries(500)
-}
-
-// Put and get
-cache.put("key", "value")
-println(cache.get("key"))  // "value"
-
-// Get-or-put pattern
-val result = cache.getOrPut("user:42") {
-    fetchUserFromDatabase("42")  // only called on cache miss
-}
-
-// Check and remove
-println(cache.has("key"))    // true
-cache.remove("key")
-println(cache.has("key"))    // false
-
-// Inspect
-println(cache.size)          // number of entries
-println(cache.keys)          // current key set`} lang="kotlin" theme="vitesse-dark"/>
 
     <div class="not-prose mt-8">
         <a href="/ultra/cache/getting-started"

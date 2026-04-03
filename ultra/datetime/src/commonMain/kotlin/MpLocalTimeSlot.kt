@@ -29,17 +29,82 @@ data class MpLocalTimeSlot(
         }
     }
 
+    @Serializable
+    data class Partial(
+        val from: MpLocalTime?,
+        val to: MpLocalTime?,
+    ) {
+        companion object {
+            val empty = Partial(from = null, to = null)
+        }
+
+        fun asValidRange(): MpLocalTimeSlot? = when (from != null && to != null) {
+            true -> MpLocalTimeSlot(from = from, to = to).takeIf { it.isValid }
+            false -> null
+        }
+    }
+
     val duration: Duration by lazy { to - from }
 
     val isValid: Boolean get() = duration > Duration.ZERO
 
     val isNotValid: Boolean get() = !isValid
 
+    fun asPartialRange(): Partial {
+        return Partial(from = from, to = to)
+    }
+
     /**
-     * Returns 'true' when this timeslot touches or intersects the [other] time slot.
+     * Checks if this time slot contains the given [time].
+     *
+     * Returns `true` when the time slot is valid and
+     * [time] >= [from] and [time] < [to].
+     */
+    fun contains(time: MpLocalTime): Boolean {
+        return isValid && time in from..<to
+    }
+
+    /**
+     * Checks if this time slot fully contains the [other] time slot.
+     *
+     * Returns `true` when both are valid and
+     * this [from] <= other [from] and this [to] >= other [to].
+     */
+    fun contains(other: MpLocalTimeSlot): Boolean {
+        return (isValid && other.isValid) &&
+                (from <= other.from && to >= other.to)
+    }
+
+    /**
+     * Checks if this time slot intersects the [other] time slot.
+     *
+     * Adjacent time slots (one ends where the other begins) do NOT intersect.
+     */
+    fun intersects(other: MpLocalTimeSlot): Boolean {
+        return (isValid && other.isValid) && (
+                (other.from in from..<to) ||
+                        (other.to > from && other.to <= to) ||
+                        contains(other) ||
+                        other.contains(this)
+                )
+    }
+
+    /**
+     * Returns `true` when this time slot touches or overlaps the [other] time slot.
+     *
+     * In other words, returns `true` when the union of both time slots is contiguous (has no gap).
      */
     fun touches(other: MpLocalTimeSlot): Boolean {
         return to >= other.from && from <= other.to
+    }
+
+    /**
+     * Returns `true` when this time slot is adjacent to the [other] without overlapping.
+     *
+     * Two time slots are adjacent when one ends exactly where the other begins.
+     */
+    fun isAdjacentTo(other: MpLocalTimeSlot): Boolean {
+        return to == other.from || other.to == from
     }
 
     /**

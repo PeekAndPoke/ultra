@@ -1,0 +1,123 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {cacheSidebar} from '../../../data/cache-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Background Refresh" sidebar={cacheSidebar}
+            description="Stale-while-revalidate: serve old values while refreshing in the background">
+
+    <h1>Background Refresh</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Stale-while-revalidate for your cache. When an entry gets old, refresh it in the background —
+        no reader ever sees a miss, no reader ever waits.
+    </p>
+
+    <h2>The problem with expiry</h2>
+
+    <p>With <code>expireAfterWrite</code>, when the TTL passes the entry is gone. The next reader pays the full cost
+        of reloading it — a database query, an API call, whatever. Under high traffic, many readers can hit that gap
+        simultaneously.</p>
+
+    <p><code>refreshAfterWrite</code> flips this: when the TTL passes, the <strong>stale value keeps being
+        served</strong>
+        while a background coroutine quietly reloads it. No reader ever sees a miss.</p>
+
+    <Aside>This is the stale-while-revalidate pattern from HTTP caching, applied to an in-memory cache.
+        If you've used Caffeine's <code>refreshAfterWrite</code>, it's the same idea.
+    </Aside>
+
+    <h2>Basic usage</h2>
+
+    <Code code={`import io.peekandpoke.ultra.cache.fastCache
+import kotlin.time.Duration.Companion.minutes
+
+val cache = fastCache<String, UserProfile> {
+    refreshAfterWrite(ttl = 5.minutes) { key ->
+        // This is a suspend function — runs in a background coroutine
+        userService.fetchProfile(key)
+    }
+}
+
+// First put — starts the TTL clock
+cache.put("user:42", initialProfile)
+
+// After 5 minutes:
+// - Reader A gets the old profile instantly (no wait)
+// - A background coroutine calls userService.fetchProfile("user:42")
+// - Reader B (moments later) gets the new profile`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The loader function receives the key and returns the new value. It runs in the cache's
+        <code>CoroutineScope</code>, so it integrates with structured concurrency.</p>
+
+    <h2>Hard TTL</h2>
+
+    <p>What if the loader is slow or keeps failing? You might not want to serve infinitely stale data.
+        The optional <code>hardTtl</code> parameter evicts entries past a hard deadline, even during a refresh:</p>
+
+    <Code code={`val cache = fastCache<String, String> {
+    refreshAfterWrite(
+        ttl = 5.minutes,          // start refreshing after 5 minutes
+        hardTtl = 30.minutes,     // evict completely after 30 minutes
+    ) { key ->
+        fetchFromApi(key)
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Without <code>hardTtl</code>, stale entries are served indefinitely as long as a refresh is in-flight or
+        pending. With it, you get a backstop.</p>
+
+    <h2>Deduplication</h2>
+
+    <p>Only one refresh runs per key at a time. If the cache detects that key <code>"x"</code> is stale and a
+        refresh is already in-flight, it skips launching another one. When the refresh completes and calls
+        <code>cache.put()</code>, the write timestamp resets and the entry is fresh again.</p>
+
+    <h2>Error handling</h2>
+
+    <p>If the loader throws, the refresh is considered failed. The key is marked as eligible for retry on the
+        next processing loop iteration (~50ms later). This means a transient failure (network blip, temporary
+        API error) will self-heal on the next loop cycle.</p>
+
+    <Code code={`var attempt = 0
+
+val cache = fastCache<String, String> {
+    refreshAfterWrite(ttl = 5.minutes) { key ->
+        attempt++
+        if (attempt == 1) error("transient failure")
+        fetchFromApi(key)  // succeeds on retry
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>There is no built-in exponential backoff. If you need it, implement it in your loader function.
+        The cache just retries on every loop iteration until the loader succeeds or the hard TTL evicts the entry.
+    </Aside>
+
+    <h2>Combining with other behaviours</h2>
+
+    <p>Stack <code>refreshAfterWrite</code> with other behaviours for fine-grained control:</p>
+
+    <Code code={`val cache = fastCache<String, UserProfile> {
+    refreshAfterWrite(ttl = 5.minutes) { key ->
+        userService.fetchProfile(key)
+    }
+    maxEntries(10_000)               // hard cap on entry count
+    onEviction { key, _ ->            // log evictions
+        logger.info("evicted ${'$'}key")
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Note: <code>refreshAfterWrite</code> and <code>expireAfterWrite</code> are independent behaviours.
+        If you use both, the write-TTL eviction happens regardless of whether a refresh is pending. Use
+        <code>hardTtl</code> on the refresh behaviour instead if you want the refresh to have a deadline.</p>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/cache/observability"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Observability &rarr;
+        </a>
+    </div>
+
+</DocsLayout>
