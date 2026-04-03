@@ -152,13 +152,13 @@ val cache = fastCache<String, String>(scope = scope) {
 
 // When the scope is cancelled, the eviction loop stops`} lang="kotlin" theme="vitesse-dark"/>
 
-    <h2>Eviction summary</h2>
+    <h2>All behaviours at a glance</h2>
 
     <div class="not-prose my-8">
         <table class="w-full text-sm text-left">
             <thead>
             <tr class="border-b border-white/10">
-                <th class="py-2 text-white font-semibold">Behavior</th>
+                <th class="py-2 text-white font-semibold">Behaviour</th>
                 <th class="py-2 text-white font-semibold">Trigger</th>
                 <th class="py-2 text-white font-semibold">Strategy</th>
             </tr>
@@ -179,10 +179,28 @@ val cache = fastCache<String, String>(scope = scope) {
                 <td class="py-2">Entry count exceeds limit</td>
                 <td class="py-2">LRU (least recently accessed)</td>
             </tr>
-            <tr>
+            <tr class="border-b border-white/5">
                 <td class="py-2"><code>maxMemoryUsage</code></td>
                 <td class="py-2">Estimated memory exceeds budget</td>
                 <td class="py-2">LRU (least recently accessed)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><a href="/ultra/cache/refresh" class="text-brand-400 hover:text-brand-300"><code>refreshAfterWrite</code></a>
+                </td>
+                <td class="py-2">Write age exceeds soft TTL</td>
+                <td class="py-2">Async reload; optional hard TTL evicts</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><a href="/ultra/cache/observability" class="text-brand-400 hover:text-brand-300"><code>onEviction</code></a>
+                </td>
+                <td class="py-2">Another behaviour evicts an entry</td>
+                <td class="py-2">Observer — fires callback</td>
+            </tr>
+            <tr>
+                <td class="py-2"><a href="/ultra/cache/observability" class="text-brand-400 hover:text-brand-300"><code>statistics</code></a>
+                </td>
+                <td class="py-2">Every cache operation</td>
+                <td class="py-2">Observer — counts hits, misses, puts, evictions</td>
             </tr>
             </tbody>
         </table>

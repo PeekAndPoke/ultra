@@ -91,14 +91,14 @@ val user = cache.getOrPut("user:99") {
             <tr class="border-b border-white/5">
                 <td class="py-2"><a href="/ultra/cache/refresh" class="text-brand-400 hover:text-brand-300">refreshAfterWrite</a>
                 </td>
-                <td class="py-2"><code>refreshAfterWrite(ttl) {'{ ... }'}</code></td>
+                <td class="py-2"><code>refreshAfterWrite(ttl) &lbrace; ... &rbrace;</code></td>
                 <td class="py-2">Soft: async reload; Hard: evicts</td>
                 <td class="py-2">Write only</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><a href="/ultra/cache/observability" class="text-brand-400 hover:text-brand-300">onEviction</a>
                 </td>
-                <td class="py-2"><code>onEviction {'{ k, v -> ... }'}</code></td>
+                <td class="py-2"><code>onEviction &lbrace; k, v -&gt; ... &rbrace;</code></td>
                 <td class="py-2">Observer — no eviction</td>
                 <td class="py-2">n/a</td>
             </tr>
