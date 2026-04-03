@@ -199,3 +199,33 @@ shim gets a **time-boxed spike** (2-4 weeks, one library, hard go/no-go).
 | Solo maintainer bandwidth               | Phase 1 first (highest impact), Phase 2 opportunistic |
 | FomanticUI users feel abandoned         | Pluggable backend preserves their API exactly         |
 | Generated externals are awkward         | Karakum baseline + hand-curation pass                 |
+
+---
+
+## Progress (April 3, 2026)
+
+### Completed: AddonRegistry PoC
+
+**Core infrastructure** (5 files in `kraft/core/src/jsMain/kotlin/addons/registry/`):
+
+- `Addon<T> : Stream<T?>` — lazy-loadable addon that IS a stream (null while loading, value when ready)
+- `AddonKey<T>`, `AddonRegistry`, `AddonRegistryBuilder`, `addons_dsl.kt`
+- Configurable per-addon: `lazy = true` defers loading until first subscribe, default is eager
+
+**Addon facades** (lazy-loaded via `js("import()")`):
+
+- `MarkedAddon` — `markdown2html()`, `use()`. Dynamic import of marked + dompurify.
+- `SignaturePadAddon` — `create()`, `trimCanvas()`. Dynamic import of signature_pad + trim-canvas.
+
+**TestBed enhanced** with `appSetup` parameter for testing components that need kraftApp features.
+
+**9 tests** in `AddonRegistrySpec.kt` using `eventually(timeout, poll)` helper (no flaky delays).
+
+### Remaining for Phase 2
+
+- Fully-fledged external type declarations (replace `dynamic` internals with typed APIs)
+- Update addons example app to demonstrate registry pattern
+- Verify webpack chunk splitting
+- Karakum pipeline setup
+- More addon facades: chartjs, konva, prismjs
+- React shim PoC (time-boxed spike)

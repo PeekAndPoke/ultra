@@ -100,6 +100,9 @@
 - **Cache behaviours** — 4 new behaviours: expireAfterWrite, onEviction, statistics (CacheStats snapshots),
   refreshAfterWrite (stale-while-revalidate with dedup, hard TTL, error retry). MissAction tracking for accurate
   statistics. Eviction listener infrastructure.
+- **Kraft AddonRegistry** — new addon infrastructure with lazy-loading via dynamic JS imports. `Addon<T> : Stream<T?>`,
+  configurable eager/lazy per addon, `kraftApp { addons { marked(); signaturePad(lazy = true) } }`. Facades for marked +
+  signaturepad. TestBed enhanced with `appSetup` parameter. 9 tests.
 - **Kraft examples** — 3 repos upgraded to Kotlin 2.3.10 / Ultra 0.102.0
 - **ultra/datetime** — inherited 45 TODOs from ultra/common split (new tech debt hotspot)
 
