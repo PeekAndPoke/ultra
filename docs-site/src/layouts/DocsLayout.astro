@@ -27,7 +27,10 @@ const pathToSource: Record<string, string> = {
     '/ultra/funktor/': githubSource.funktor,
     '/ultra/monko/': githubSource.monko,
 };
-const githubUrl = Object.entries(pathToSource).find(([prefix]) => currentPath.startsWith(prefix))?.[1];
+const githubUrl = Object.entries(pathToSource).find(([prefix]) => {
+  const norm = prefix.replace(/\/+$/, '');
+  return currentPath === norm || currentPath.startsWith(norm + '/');
+})?.[1];
 
 // Resolve category tint from centralized constants
 const categoryKey = Object.entries(pathToCategory).find(([prefix]) => currentPath.startsWith(prefix))?.[1];
