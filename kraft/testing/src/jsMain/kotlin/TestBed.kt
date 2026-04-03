@@ -1,5 +1,6 @@
 package io.peekandpoke.kraft.testing
 
+import io.peekandpoke.kraft.KraftApp
 import io.peekandpoke.kraft.kraftApp
 import io.peekandpoke.kraft.testing.TestBed.Companion.preact
 import io.peekandpoke.kraft.vdom.VDom
@@ -51,12 +52,41 @@ class TestBed<E : VDomEngine> private constructor(
             options: VDomEngine.Options = defaultVDomEngineOptions,
             test: suspend (element: KQuery<Element>) -> Unit,
         ) {
-            preact(options = options).render(view, test)
+            preact(options = options).render(view = view, test = test)
+        }
+
+        /**
+         * Convenience: creates a Preact test bed with a configured [KraftApp], renders [view], runs [test], and cleans up.
+         *
+         * Use this when your components need app-level features like addons, routing, or modals:
+         * ```
+         * TestBed.preact(
+         *     appSetup = {
+         *         addons { marked() }
+         *         routing { ... }
+         *     },
+         *     view = { MyComponent() },
+         * ) { root ->
+         *     root.selectCss(".output").textContent() shouldBe "expected"
+         * }
+         * ```
+         */
+        suspend fun preact(
+            appSetup: KraftApp.Builder.() -> Unit,
+            view: VDom.() -> Any?,
+            options: VDomEngine.Options = defaultVDomEngineOptions,
+            test: suspend (element: KQuery<Element>) -> Unit,
+        ) {
+            preact(options = options).render(appSetup = appSetup, view = view, test = test)
         }
     }
 
     /** Mounts the [view] into a temporary DOM element, runs [test] with a [KQuery] handle, then cleans up. */
-    suspend fun render(view: VDom.() -> Any?, test: suspend (element: KQuery<Element>) -> Unit) {
+    suspend fun render(
+        appSetup: KraftApp.Builder.() -> Unit = {},
+        view: VDom.() -> Any?,
+        test: suspend (element: KQuery<Element>) -> Unit,
+    ) {
 
         val body = document.querySelector("body") as HTMLBodyElement
 
@@ -64,7 +94,7 @@ class TestBed<E : VDomEngine> private constructor(
             id = "kraft-testbed"
         } as HTMLDivElement
 
-        val app = kraftApp { }
+        val app = kraftApp(appSetup)
 
         try {
             app.mount(element = testBed, engine = engine, view = view)

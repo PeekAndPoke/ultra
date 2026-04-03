@@ -31,7 +31,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-//                implementation(project(":kraft:core"))
+                implementation(project(":kraft:core"))
             }
         }
 
