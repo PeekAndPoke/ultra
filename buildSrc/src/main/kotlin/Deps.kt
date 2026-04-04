@@ -508,6 +508,11 @@ object Deps {
             implementation(kotest_framework_engine)
         }
 
+        fun KotlinDependencyHandler.nativeTestDeps() {
+            implementation(kotest_assertions_core)
+            implementation(kotest_framework_engine)
+        }
+
         fun KotlinDependencyHandler.jvmTestDeps() {
             implementation(logback_classic)
             implementation(kotest_runner_junit_jvm)

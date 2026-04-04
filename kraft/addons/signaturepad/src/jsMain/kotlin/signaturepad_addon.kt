@@ -28,10 +28,13 @@ class SignaturePadAddon internal constructor(
      * @return a [SignaturePadJs] instance
      */
     fun create(canvas: HTMLCanvasElement, options: SignaturePadJs.Options? = null): SignaturePadJs {
+        // Local variable needed: js() blocks capture locals but not Kotlin's `this`.
+        val ctor = signaturePadConstructor
+
         return if (options != null) {
-            js("new this.signaturePadConstructor(canvas, options)").unsafeCast<SignaturePadJs>()
+            js("new ctor(canvas, options)").unsafeCast<SignaturePadJs>()
         } else {
-            js("new this.signaturePadConstructor(canvas)").unsafeCast<SignaturePadJs>()
+            js("new ctor(canvas)").unsafeCast<SignaturePadJs>()
         }
     }
 

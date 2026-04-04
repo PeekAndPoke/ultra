@@ -4,6 +4,7 @@ import Deps.Test.commonTestDeps
 import Deps.Test.configureJvmTests
 import Deps.Test.jsTestDeps
 import Deps.Test.jvmTestDeps
+import Deps.Test.nativeTestDeps
 
 plugins {
     kotlin("multiplatform")
@@ -34,6 +35,12 @@ kotlin {
 
     jvm {
     }
+
+    linuxX64()
+    linuxArm64()
+    macosX64()
+    macosArm64()
+    mingwX64()
 
     sourceSets {
         commonMain {
@@ -67,6 +74,17 @@ kotlin {
         jvmTest {
             dependencies {
                 jvmTestDeps()
+            }
+        }
+
+        nativeMain {
+            dependencies {
+            }
+        }
+
+        nativeTest {
+            dependencies {
+                nativeTestDeps()
             }
         }
     }

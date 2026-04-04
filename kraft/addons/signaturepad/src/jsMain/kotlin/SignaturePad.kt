@@ -1,7 +1,7 @@
 package io.peekandpoke.kraft.addons.signaturepad
 
+import io.peekandpoke.kraft.addons.registry.AddonRegistry.Companion.addons
 import io.peekandpoke.kraft.addons.signaturepad.js.SignaturePadJs
-import io.peekandpoke.kraft.addons.signaturepad.js.trim_canvas
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
@@ -79,6 +79,8 @@ class SignaturePad(ctx: Ctx<Props>) : Component<SignaturePad.Props>(ctx) {
         fun toJpg(quality: Double = 0.9): FileBase64? = toDataUrl("image/jpeg", quality)
     }
 
+    private val sigPadAddon: SignaturePadAddon? by subscribingTo(addons.signaturePad)
+
     private var pad: SignaturePadJs? = null
 
     //  Public interface  ///////////////////////////////////////////////////////////////////////////////////////
@@ -111,18 +113,11 @@ class SignaturePad(ctx: Ctx<Props>) : Component<SignaturePad.Props>(ctx) {
         lifecycle {
             onMount {
                 window.addEventListener("resize", ::onWindowResize)
+                tryCreatePad()
+            }
 
-                dom?.let {
-                    getCanvas()?.let { canvas ->
-                        console.log("signature-pad", ::SignaturePadJs)
-
-                        pad = SignaturePadJs(canvas, props.options)
-
-                        pad?.addEventListener("endStroke", ::onPadEndStroke)
-
-                        resize()
-                    }
-                }
+            onUpdate {
+                tryCreatePad()
             }
 
             onUnmount {
@@ -153,29 +148,38 @@ class SignaturePad(ctx: Ctx<Props>) : Component<SignaturePad.Props>(ctx) {
 
     // Helpers /////////////////////////////////////////////////////////////////////////////////////////
 
+    private fun tryCreatePad() {
+        val addon = sigPadAddon ?: return
+        val canvas = getCanvas() ?: return
+
+        if (pad != null) return
+
+        pad = addon.create(canvas, props.options).also { newPad ->
+            newPad.addEventListener("endStroke", ::onPadEndStroke)
+        }
+
+        resize()
+    }
+
     private fun getCanvas(): HTMLCanvasElement? {
         return dom?.querySelector("canvas") as? HTMLCanvasElement
     }
 
     private fun getCanvasTrimmed(): HTMLCanvasElement? {
+        val addon = sigPadAddon ?: return null
 
         return getCanvas()?.let { original ->
-
             val cloned = original.cloneNode() as HTMLCanvasElement
-
             (cloned.getContext("2d") as CanvasRenderingContext2D).drawImage(original, 0.0, 0.0)
-
-            trim_canvas.trimCanvas(cloned)
+            addon.trimCanvas(cloned)
         }
     }
 
     private fun resize() {
         dom?.let { dom ->
             getCanvas()?.let { canvas ->
-
                 canvas.width = dom.offsetWidth
                 canvas.height = dom.offsetHeight
-
                 pad?.clear()
             }
         }

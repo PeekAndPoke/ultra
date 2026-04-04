@@ -9,7 +9,6 @@ import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.PasswordPolicy
 import io.peekandpoke.funktor.auth.pages.AuthFrontend
-import io.peekandpoke.kraft.addons.decodeJwtAsMap
 import io.peekandpoke.kraft.routing.Route
 import io.peekandpoke.kraft.routing.Router
 import io.peekandpoke.kraft.routing.RouterBuilder
@@ -33,11 +32,13 @@ inline fun <reified USER> authState(
     frontend: AuthFrontend,
     api: AuthApiClient,
     noinline router: () -> Router,
+    noinline jwtDecoder: (String) -> Map<String, Any?> = { emptyMap() },
 ) = AuthState<USER>(
     userSerializer = serializer(),
     frontend = frontend,
     api = api,
     router = router,
+    jwtDecoder = jwtDecoder,
 )
 
 class AuthState<USER>(
@@ -45,6 +46,7 @@ class AuthState<USER>(
     val frontend: AuthFrontend,
     val api: AuthApiClient,
     val router: () -> Router,
+    val jwtDecoder: (String) -> Map<String, Any?> = { emptyMap() },
 ) : Stream<AuthState.Data<USER>> {
 
     @Serializable
@@ -185,7 +187,7 @@ class AuthState<USER>(
     }
 
     private fun readJwt(response: AuthSignInResponse, user: USER): Data<USER> {
-        val claims = decodeJwtAsMap(response.token.token)
+        val claims = jwtDecoder(response.token.token)
 
         // extract the permission from the token
         val permissions = response.token.permissionsNs.let { ns ->

@@ -2,7 +2,9 @@
 
 package io.peekandpoke.kraft.examples.jsaddons
 
-import io.peekandpoke.kraft.addons.avatars.Avatars
+import io.peekandpoke.kraft.addons.avatars.AvatarsAddon
+import io.peekandpoke.kraft.addons.avatars.avatars
+import io.peekandpoke.kraft.addons.registry.AddonRegistry.Companion.addons
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
@@ -26,6 +28,8 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
 
     //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
+    private val avatarsAddon: AvatarsAddon? by subscribingTo(addons.avatars)
+
     //  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
@@ -43,8 +47,9 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
                 href(routes.avatars.index())
 
                 noui.center.aligned.content {
+                    val avatarSrc = avatarsAddon?.getDataUrl("alienHead66.svg") ?: ""
                     renderLogo(
-                        src = Avatars.MinIdenticon.getDataUrl("alienHead66.svg"),
+                        src = avatarSrc,
                         alt = "Avatars",
                     )
                 }
