@@ -13,6 +13,10 @@ version = VERSION_NAME
 
 kotlin {
     js {
+        compilerOptions {
+            target.set("es2015")
+        }
+
         browser {
             testTask {
             }
@@ -37,7 +41,6 @@ kotlin {
                 api(project(":kraft:addons:browserdetect"))
                 api(project(":kraft:addons:chartjs"))
                 api(project(":kraft:addons:jwtdecode"))
-                api(project(":kraft:addons:konva"))
                 api(project(":kraft:addons:marked"))
                 api(project(":kraft:addons:nxcompile"))
                 api(project(":kraft:addons:pdfjs"))

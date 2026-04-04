@@ -2,7 +2,6 @@
 
 package io.peekandpoke.kraft.vdom.preact
 
-import io.peekandpoke.kraft.utils.jsObject
 import io.peekandpoke.kraft.vdom.preact.PreactLLC.Companion.getLowLevelComponentCtor
 import org.w3c.dom.HTMLElement
 import kotlin.reflect.KClass
@@ -42,25 +41,29 @@ internal abstract class PreactLLC(
         internal fun getLowLevelComponentCtor(cls: KClass<out KraftComponent<*>>): dynamic {
             return compClass2LLC.getOrPut(cls) {
 
-                // console.log("===== component classes: ${compClass2LLC.size} ==")
-                // console.log("++ ", cls.js)
-
                 //
                 // NOTICE: This needs to be exactly here. Only like this we get a unique subclass for every cls.
                 //
                 class Impl(props: PreactLLCProps, context: dynamic) : PreactLLC(props, context)
 
-                // Return the newly created ctor
-                ::Impl.also { ctor ->
-                    // We need to do this to trick, so Preact will see this as a component type:
-                    // see https://github.com/preactjs/preact/blob/10.5.14/src/diff/index.js#L75
-                    ctor.asDynamic().prototype = jsObject {
-                        render = {}
-                    }
+                // ::Impl is a callable that invokes the Kotlin constructor (ES5) or static factory (ES2015).
+                // Either way, it returns a properly initialized Impl instance.
+                @Suppress("UNUSED_VARIABLE", "unused")
+                val factory = ::Impl
 
-                    // console.log(">> $ctor")
-                    // console.log(">> ${ctor.hashCode()}")
-                }
+                // The real prototype chain: Impl -> PreactLLC -> preact.Component.
+                // Has render() through inheritance, so Preact detects it as a class component.
+                // see https://github.com/preactjs/preact/blob/10.5.14/src/diff/index.js#L75
+                @Suppress("UNUSED_VARIABLE", "unused")
+                val proto = (Impl::class.js).asDynamic().prototype
+
+                // Create a plain JS function (always new-able, unlike ES2015 classes or KFunction objects).
+                // When Preact does `new bridge(props, ctx)`:
+                //   1. JS creates a dummy `this` with __proto__ = proto
+                //   2. Calls bridge(props, ctx) -> calls factory(props, ctx) -> returns initialized Impl
+                //   3. Since bridge returns an object (non-primitive), `new` uses it (discards dummy)
+                //   4. Preact gets the properly initialized instance
+                js("(function() { var C = function(p,c) { return factory(p,c); }; C.prototype = proto; return C; })()")
             }
         }
     }

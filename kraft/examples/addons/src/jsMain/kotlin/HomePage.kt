@@ -100,19 +100,6 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
                 }
             }
 
-            noui.card A {
-                href(routes.konva())
-
-                noui.center.aligned.content {
-                    renderLogo(
-                        src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAAeCAYAAADnydqVAAACxUlEQVRoQ+2aS1bDMAxFG8aUzcD2YEC3RzdDGROsnroYo89TaiUc4w5bR7Z09XUz7canawtMXWs3lNsNwJ07wQA8AHdugc7Vc0fw/vU4T8xT78+P128fDseZs9ucvj29fK8r12jPcPvRs+WepSzkjLRe2rOWK8nj9Nkf3uaJqXya7nSW+2TXO8au1nOWf64KWAKiGVtTQAScHExSDHFETi7qDOi6Wi/pOc2RLbj0+78DXBrMAwNdi67zAL4Fcp+AhTKSjUr145RKigcGupZbl/eTIk6L3uuZlfKmRXKXgKV6VhqC0jAKjZ5D6zAnUytNnvJkyeFANwcsGcJKM5Zh2MgQvBoBTM2Lt3mzHEJqsLy9B0U80kPE1GChgdEiIh/Eq6jVEM27OaXap1+2QAAvad4swB4nzPtLji05y2ei/yFMIm0iWOlQlxjNUjT/zmUGaYSIAmyNX1YWQhqrUifLoVaNYGkztG5YxrGMW+6vzZRSWq7rs6chyjpaOiCAS3t5dJbO66/BCyIYgWwZx6OsBPhcRlKHbQ2H3lKSKsXuPaVNSwc3YKUcItFLa1YB3KIG7x3KaoCRrlUDrHXTdXZYMh79iGCHzptGcBPAwBVp3scCbEG2Mk4dqVJH7pWDRqUlt5TTLIJzc7D0yg1Jb8gaUg4BrEG2DIhcTJD8VnJq8JbcUMBnwwl1LqLr5ZQNBwzUceRPAtRR/hxgb3TcMtZsAdhK8Uj0ttY5vAbXHuuZ4VorGx3BkYDri4wllyc3pWhxxqxulXoHrF3JIhGMTgUDcPGigaeL9pYRLgVKTozUX/Zmjrl63Q5wGvLm6XItfnl/o3xbozwY3RmfR27wLy/KEteZkpGNjhPR60jHUjc6KnpPzDailwuT8tyrA4422pDf1gLuObjt9kNatAUG4GgLbyx/AN4YQPT2A3C0hTeWPwBvDCB6+y9quqY9QKQ1sAAAAABJRU5ErkJggg==",
-                        alt = "Konva Logo",
-                    )
-                }
-                noui.center.aligned.content {
-                    +"Konva"
-                }
-            }
 
             noui.card A {
                 href(routes.marked())
