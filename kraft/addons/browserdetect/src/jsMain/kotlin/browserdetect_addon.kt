@@ -5,7 +5,9 @@ import io.peekandpoke.kraft.addons.registry.Addon
 import io.peekandpoke.kraft.addons.registry.AddonKey
 import io.peekandpoke.kraft.addons.registry.AddonRegistry
 import io.peekandpoke.kraft.addons.registry.AddonRegistryBuilder
+import kotlinx.browser.window
 import kotlinx.coroutines.await
+import org.w3c.dom.Navigator
 import kotlin.js.Promise
 
 /**
@@ -21,6 +23,12 @@ class BrowserDetectAddon internal constructor(
         val mod = bowserModule
         return mod.getParser(userAgent)
     }
+
+    /** Creates a [BrowserDetect] for the given [navigator]. */
+    fun forNavigator(navigator: Navigator): BrowserDetect = BrowserDetect.forNavigator(this, navigator)
+
+    /** Creates a [BrowserDetect] for the current browser window. */
+    fun forCurrentBrowser(): BrowserDetect = BrowserDetect.forNavigator(this, window.navigator)
 }
 
 /** Key for the browserdetect addon. */

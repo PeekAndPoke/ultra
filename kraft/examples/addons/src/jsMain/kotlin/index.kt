@@ -2,6 +2,7 @@ package io.peekandpoke.kraft.examples.jsaddons
 
 import io.peekandpoke.kraft.addons.avatars.avatars
 import io.peekandpoke.kraft.addons.browserdetect.browserDetect
+import io.peekandpoke.kraft.addons.chartjs.chartJs
 import io.peekandpoke.kraft.addons.jwtdecode.jwtDecode
 import io.peekandpoke.kraft.addons.marked.marked
 import io.peekandpoke.kraft.addons.registry.addons
@@ -18,6 +19,7 @@ val kraft = kraftApp {
     addons {
         avatars()
         browserDetect()
+        chartJs()
         jwtDecode()
         marked()
         signaturePad()

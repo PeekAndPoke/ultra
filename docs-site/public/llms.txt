@@ -12,9 +12,13 @@
 - [Kontainer](https://peekandpoke.io/llms/kontainer.md): Lightweight DI container — per-request scoping, singleton/dynamic/prototype services, modules
 - [Slumber](https://peekandpoke.io/llms/slumber.md): Kotlin-first serialization — nullable-aware, sealed class polymorphism, two-pass error handling
 - [Mutator](https://peekandpoke.io/ultra/mutator/): KSP-generated code for mutating nested immutable data structures
-- [Streams](https://peekandpoke.io/llms/streams.md): Reactive streams — always-has-a-value, composable operators, lazy subscriptions
-- [Datetime](https://peekandpoke.io/llms/datetime.md): Multiplatform date/time — guard-rail type system, 600+ timezones, DST-aware arithmetic, testable Kronos clock
-- [Cache](https://peekandpoke.io/llms/cache.md): In-memory caching — TTL/LRU/memory-aware eviction, coroutine-based, multiplatform
+- [Streams](https://peekandpoke.io/llms/streams.md): Reactive streams — always-has-a-value, composable operators, lazy subscriptions (JVM, JS, Native)
+- [Datetime](https://peekandpoke.io/llms/datetime.md): Multiplatform date/time — guard-rail type system, 600+ timezones, DST-aware arithmetic, testable Kronos clock (JVM, JS, Native)
+- [Cache](https://peekandpoke.io/llms/cache.md): In-memory caching — TTL/LRU/memory-aware eviction, coroutine-based, multiplatform (JVM, JS, Native)
+- [Maths](https://peekandpoke.io/ultra/maths/): Easing functions & distributions — 28 easing curves, 4 bucketed distributions, time-based animation (JVM, JS, Native)
+  - [Getting Started](https://peekandpoke.io/ultra/maths/getting-started): Dependency, basic usage, easing, distributions
+  - [Easing Functions](https://peekandpoke.io/ultra/maths/easing): 28 functions (In/Out/InOut), range binding, timed easing
+  - [Distributions](https://peekandpoke.io/ultra/maths/distributions): Uniform, normal, exponential, triangular, combinators
 
 ## Kraft
 

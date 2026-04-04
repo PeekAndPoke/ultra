@@ -1,0 +1,182 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {mathsSidebar} from '../../../data/maths-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Easing Functions" sidebar={mathsSidebar}
+            description="28 easing functions for animations and transitions">
+
+    <h1>Easing Functions</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        28 easing functions in four categories: basic, In, Out, and InOut.
+    </p>
+
+    <h2>The Ease.Fn interface</h2>
+
+    <p>Every easing function implements <code>Ease.Fn</code>, which takes a progress <code>Double</code>
+        (0.0&ndash;1.0) and returns the eased value. You can create custom easing functions with
+        <code>easeFn</code>:</p>
+
+    <Code code={`import io.peekandpoke.ultra.maths.Ease
+
+// Use a built-in function
+val result = Ease.Out.cubic(0.5)  // 0.875
+
+// Create a custom easing function
+val custom = Ease.easeFn { x -> x * x * x }  // same as cubic In`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Basic easing</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold">Function</th>
+                <th class="py-2 text-white font-semibold">Behavior</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Ease.linear</code></td>
+                <td class="py-2">Constant speed &mdash; output equals input</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Ease.stuck</code></td>
+                <td class="py-2">Always returns 0.0 &mdash; no progress</td>
+            </tr>
+            <tr>
+                <td class="py-2"><code>Ease.immediate</code></td>
+                <td class="py-2">Always returns 1.0 &mdash; instant completion</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Ease.In &mdash; start slow, accelerate</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold">Function</th>
+                <th class="py-2 text-white font-semibold">Curve</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Ease.In.sine</code></td>
+                <td class="py-2">Sinusoidal acceleration</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Ease.In.quad</code></td>
+                <td class="py-2">Power of 2 (x&sup2;)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Ease.In.cubic</code></td>
+                <td class="py-2">Power of 3 (x&sup3;)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Ease.In.quart</code></td>
+                <td class="py-2">Power of 4</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Ease.In.quint</code></td>
+                <td class="py-2">Power of 5</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Ease.In.pow(n)</code></td>
+                <td class="py-2">Custom power (x&#x207F;)</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Ease.In.circ</code></td>
+                <td class="py-2">Circular arc</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>Ease.In.elastic</code></td>
+                <td class="py-2">Oscillating spring overshoot</td>
+            </tr>
+            <tr>
+                <td class="py-2"><code>Ease.In.bounce</code></td>
+                <td class="py-2">Bouncing ball effect</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Ease.Out &mdash; start fast, decelerate</h2>
+
+    <p>Same set of curves, mirrored: <code>Ease.Out.sine</code>, <code>.quad</code>, <code>.cubic</code>,
+        <code>.quart</code>, <code>.quint</code>, <code>.pow(n)</code>, <code>.circ</code>,
+        <code>.elastic</code>, <code>.bounce</code>.</p>
+
+    <Code code={`// Ease.Out starts fast and decelerates
+val x = Ease.Out.bounce(0.7)  // bouncing deceleration at 70% progress`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Ease.InOut &mdash; accelerate then decelerate</h2>
+
+    <p>Combines In and Out: accelerates through the first half, decelerates through the second.
+        Available: <code>Ease.InOut.sine</code>, <code>.quad</code>, <code>.cubic</code>,
+        <code>.quart</code>, <code>.quint</code>, <code>.pow(n)</code>,
+        <code>.elastic</code>, <code>.bounce</code>.</p>
+
+    <Aside>InOut does not include <code>circ</code>. If you need it, compose it with <code>easeFn</code>.</Aside>
+
+    <Code code={`// Smooth start and end — good for UI transitions
+val opacity = Ease.calc(
+    from = 0.0,
+    to = 1.0,
+    progress = 0.5,
+    fn = Ease.InOut.cubic,
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Binding to a range</h2>
+
+    <p><code>bindFromTo</code> locks an easing function to a specific numeric range. The result is itself an
+        <code>Ease.Fn</code>, so it composes with everything else:</p>
+
+    <Code code={`val scroll = Ease.InOut.quad.bindFromTo(from = 0, to = 1000)
+
+// At various progress points:
+scroll(0.0)   // 0.0
+scroll(0.25)  // 125.0
+scroll(0.5)   // 500.0
+scroll(0.75)  // 875.0
+scroll(1.0)   // 1000.0`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Time-based easing</h2>
+
+    <p><code>timed()</code> creates an easing that uses wall-clock time via the
+        <a href="/ultra/datetime/kronos">Kronos</a> clock. Call it repeatedly to get the current eased value:</p>
+
+    <Code code={`import kotlin.time.Duration.Companion.milliseconds
+
+val anim = Ease.Out.elastic.timed(
+    from = 0,
+    to = 100,
+    duration = 600.milliseconds,
+)
+
+// In a render loop or coroutine:
+val value = anim { progress, done ->
+    // progress: 0.0 to 1.0
+    // done: true when duration has elapsed
+}
+
+// Or just check:
+if (anim.isDone) { /* animation complete */ }`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>Pass a test <code>Kronos</code> instance to <code>timed()</code> to control time in tests.
+        No flaky timing-dependent assertions.
+    </Aside>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/maths/distributions"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Distributions &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

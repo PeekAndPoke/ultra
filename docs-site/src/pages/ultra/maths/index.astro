@@ -1,0 +1,114 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {mathsSidebar} from '../../../data/maths-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Maths" sidebar={mathsSidebar}
+            description="Easing functions and probability distributions for Kotlin Multiplatform"
+            hilbert>
+
+    <h1>Maths</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Easing functions and probability distributions for Kotlin Multiplatform.
+    </p>
+
+    <h2>Animations and randomness, done right</h2>
+
+    <p>Two things come up constantly when building interactive UIs, simulations, or generative content:
+        smooth transitions and controlled randomness. Most projects end up copy-pasting easing formulas from
+        the web and rolling ad-hoc random distributions. Maths packages both into a small, tested library.</p>
+
+    <Aside>We needed easing for Kraft animations and distributions for procedural content. Bundling them
+        together made sense &mdash; they're both pure math, both multiplatform, and both small enough to
+        not justify separate libraries.
+    </Aside>
+
+    <h2>Easing functions</h2>
+
+    <p>28 easing functions organized into <code>Ease.In</code>, <code>Ease.Out</code>, and <code>Ease.InOut</code>,
+        plus basic ones like <code>linear</code>, <code>stuck</code>, and <code>immediate</code>.
+        All implement <code>Ease.Fn</code> &mdash; a functional interface that takes progress (0.0&ndash;1.0)
+        and returns the eased value.</p>
+
+    <Code code={`import io.peekandpoke.ultra.maths.Ease
+
+// Simple easing
+val progress = 0.5
+val eased = Ease.Out.cubic(progress)  // 0.875
+
+// Bind to a range: ease from 0 to 100
+val bound = Ease.InOut.sine.bindFromTo(0, 100)
+println(bound(0.5))  // 50.0 (midpoint of sine InOut)
+
+// Time-based: animate from 0 to 255 over 500ms
+val timed = Ease.Out.quad.timed(from = 0, to = 255, duration = 500.milliseconds)
+while (!timed.isDone) {
+    val value = timed()  // current eased value based on elapsed time
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Probability distributions</h2>
+
+    <p>Four bucketed distributions &mdash; uniform, truncated normal, exponential, and triangular &mdash; all
+        sampled via inverse-CDF interpolation. Distributions can be inverted, reversed, and blended.</p>
+
+    <Code code={`import io.peekandpoke.ultra.maths.stochastic.BucketedDistribution
+import kotlin.random.Random
+
+val normal = BucketedDistribution.createTruncatedNormal(mean = 0.5, std = 0.15)
+val sample = normal.sample(Random)  // values clustered around 0.5
+
+// Map to a custom range
+val damage = normal.sample(Random, from = 10.0, to = 50.0)
+
+// Blend two distributions
+val skewed = normal.blend(
+    BucketedDistribution.createExponential(lambda = 2.0),
+    ratio = 0.3,
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>What you get</h2>
+
+    <div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">28 Easing Functions</h3>
+            <p class="text-sm text-gray-400">Sine, quad, cubic, quart, quint, elastic, bounce, circ &mdash;
+                in In, Out, and InOut variants.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">4 Distribution Types</h3>
+            <p class="text-sm text-gray-400">Uniform, truncated normal, exponential, and triangular.
+                All bucketed with inverse-CDF sampling.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Range Binding & Timed Easing</h3>
+            <p class="text-sm text-gray-400">Bind easing to numeric ranges. Time-based easing with
+                <code>Kronos</code> integration for testable animations.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Kotlin Multiplatform</h3>
+            <p class="text-sm text-gray-400">Works on JVM, JS, and Native (linuxX64, linuxArm64, macosX64,
+                macosArm64, mingwX64).</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Distribution Combinators</h3>
+            <p class="text-sm text-gray-400"><code>inverse()</code>, <code>reversed()</code>, and
+                <code>blend()</code> let you reshape distributions without rebuilding from scratch.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Serializable</h3>
+            <p class="text-sm text-gray-400">Distributions are <code>kotlinx.serialization</code>-friendly.
+                Store and transmit distribution configs.</p>
+        </div>
+    </div>
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/maths/getting-started"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Get started &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

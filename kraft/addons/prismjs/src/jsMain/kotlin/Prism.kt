@@ -203,7 +203,7 @@ class Prism(ctx: Ctx<Props>) : Component<Prism.Props>(ctx) {
             d.clear()
             d.append(pre)
 
-            PrismJsDefinition.highlightAllUnder(d)
+            prismJsInternals.prism.highlightAllUnder(d)
         }
     }
 

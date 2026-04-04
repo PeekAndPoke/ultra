@@ -1,7 +1,6 @@
 package io.peekandpoke.kraft.examples.jsaddons.browserdetect
 
 import generated.ExtractedCodeBlocks
-import io.peekandpoke.kraft.addons.browserdetect.BrowserDetect
 import io.peekandpoke.kraft.addons.browserdetect.BrowserDetectAddon
 import io.peekandpoke.kraft.addons.browserdetect.browserDetect
 import io.peekandpoke.kraft.addons.registry.AddonRegistry.Companion.addons
@@ -63,7 +62,7 @@ class BrowserDetectExample(ctx: NoProps) : PureComponent(ctx) {
             ui.dividing.header { +"Usage" }
 
             // <CodeBlock usage>
-            val detect = BrowserDetect.forCurrentBrowser(addon)
+            val detect = addon.forCurrentBrowser()
             // </CodeBlock>
 
             HorizontalContentAndCode(

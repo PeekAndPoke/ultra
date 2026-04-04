@@ -66,22 +66,19 @@ class JwtDecodeExample(ctx: NoProps) : PureComponent(ctx) {
                 ExtractedCodeBlocks.jwtdecode_JwtDecodeExample_kt_usage,
             ) {
                 // <CodeBlock usage>
-                ui.two.column.grid {
-                    ui.column {
-                        ui.form {
-                            UiTextArea(jwt, { jwt = it }) {
-                                label("JWT")
-                            }
-                        }
+                ui.form {
+                    UiTextArea(jwt, { jwt = it }) {
+                        label("JWT")
                     }
-                    ui.column {
-                        pre {
-                            try {
-                                +JSON.stringify(addon.decodeJwt(jwt))
-                            } catch (e: Throwable) {
-                                +e.stackTraceToString()
-                            }
-                        }
+                }
+
+                ui.divider()
+
+                pre {
+                    try {
+                        +JSON.stringify(addon.decodeJwt(jwt))
+                    } catch (e: Throwable) {
+                        +e.stackTraceToString()
                     }
                 }
                 // </CodeBlock>
