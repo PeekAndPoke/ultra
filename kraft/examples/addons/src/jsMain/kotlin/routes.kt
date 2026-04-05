@@ -7,10 +7,10 @@ import io.peekandpoke.kraft.examples.jsaddons.chartjs.ChartJsExample
 import io.peekandpoke.kraft.examples.jsaddons.core.CoreRoutes
 import io.peekandpoke.kraft.examples.jsaddons.core.mount
 import io.peekandpoke.kraft.examples.jsaddons.jwtdecode.JwtDecodeExample
-import io.peekandpoke.kraft.examples.jsaddons.konva.KonvaExample
 import io.peekandpoke.kraft.examples.jsaddons.marked.MarkedExample
 import io.peekandpoke.kraft.examples.jsaddons.pdfjs.PdfJsRoutes
 import io.peekandpoke.kraft.examples.jsaddons.pdfjs.mount
+import io.peekandpoke.kraft.examples.jsaddons.pixijs.BreakoutExample
 import io.peekandpoke.kraft.examples.jsaddons.prismjs.PrismJsExample
 import io.peekandpoke.kraft.examples.jsaddons.signaturepad.SignaturePadExample
 import io.peekandpoke.kraft.routing.RootRouterBuilder
@@ -25,9 +25,9 @@ class Routes {
     val browserDetect = Static("/example/browser-detect")
     val chartJs = Static("/example/chart-js")
     val jwtDecode = Static("/example/jwt-decode")
-    val konva = Static("/example/konva")
     val marked = Static("/example/marked")
     val pdfjs = PdfJsRoutes()
+    val pixijs = Static("/example/pixi-js")
     val prismjs = Static("/example/prism-js")
     val signaturePad = Static("/example/signature-pad")
 
@@ -43,11 +43,11 @@ fun RootRouterBuilder.mount(routes: Routes) {
     mount(routes.browserDetect) { BrowserDetectExample() }
     mount(routes.chartJs) { ChartJsExample() }
     mount(routes.jwtDecode) { JwtDecodeExample() }
-    mount(routes.konva) { KonvaExample() }
     mount(routes.marked) { MarkedExample() }
 
     mount(routes.pdfjs)
 
+    mount(routes.pixijs) { BreakoutExample() }
     mount(routes.prismjs) { PrismJsExample() }
     mount(routes.signaturePad) { SignaturePadExample() }
 

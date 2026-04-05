@@ -31,7 +31,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-//                implementation(project(":kraft:core"))
+                implementation(project(":kraft:core"))
             }
         }
 
@@ -52,6 +52,7 @@ kotlin {
         jsTest {
             dependencies {
                 jsTestDeps()
+                implementation(project(":kraft:testing"))
             }
         }
     }

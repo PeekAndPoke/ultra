@@ -1,5 +1,6 @@
 package io.peekandpoke.kraft.addons.chartjs
 
+import io.peekandpoke.kraft.addons.registry.AddonRegistry.Companion.addons
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
@@ -31,22 +32,20 @@ class ChartJsComponent(ctx: Ctx<Props>) : Component<ChartJsComponent.Props>(ctx)
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
+    private val chartJsAddon: ChartJsAddon? by subscribingTo(addons.chartJs)
+
     private var chart: Chart? = null
 
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     init {
-        ChartJsUtils.registerAllModules()
-
         lifecycle {
             onMount {
-                val canvas = dom as HTMLCanvasElement
-                // console.log("chart-data", props.data)
+                tryCreateChart()
+            }
 
-                chart = Chart(
-                    ctx = canvas.getContext("2d") as CanvasRenderingContext2D,
-                    data = props.data,
-                )
+            onUpdate {
+                tryCreateChart()
             }
 
             onUnmount {
@@ -57,12 +56,8 @@ class ChartJsComponent(ctx: Ctx<Props>) : Component<ChartJsComponent.Props>(ctx)
     }
 
     override fun shouldRedraw(nextProps: Props): Boolean {
-//        return super.shouldRedraw(nextProps)
         chart?.let { c ->
             try {
-//                console.log(Chart)
-//                console.log(Object.getOwnPropertyNames(Chart))
-
                 // Update the options
                 c.options = nextProps.data.options
 
@@ -92,9 +87,22 @@ class ChartJsComponent(ctx: Ctx<Props>) : Component<ChartJsComponent.Props>(ctx)
     }
 
     override fun VDom.render() {
-
         canvas {
             style = "width: 100%; height: 100%;"
         }
+    }
+
+    private fun tryCreateChart() {
+        val addon = chartJsAddon ?: return
+        if (chart != null) return
+
+        val canvas = dom as? HTMLCanvasElement ?: return
+
+        addon.registerAll()
+
+        chart = addon.createChart(
+            ctx = canvas.getContext("2d") as CanvasRenderingContext2D,
+            config = props.data,
+        )
     }
 }

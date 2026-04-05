@@ -43,6 +43,11 @@
   - [Subscriptions & Resilience](#streams-subscriptions)
   - [JS-Specific Operators](#streams-js-specific)
   - [Extending Streams](#streams-extending)
+- [Maths — Easing & Distributions](#maths)
+  - [Overview](#maths-overview)
+  - [Getting Started](#maths-getting-started)
+  - [Easing Functions](#maths-easing)
+  - [Distributions](#maths-distributions)
 - [Karango — Type-Safe ArangoDB](#karango)
   - [Overview](#karango-overview)
   - [Getting Started](#karango-getting-started)
@@ -4051,7 +4056,7 @@ dependencies {
 
 Find the latest version on [Maven Central](https://central.sonatype.com/namespace/io.peekandpoke.ultra).
 
-Streams is a Kotlin Multiplatform library — it works in `commonMain`, `jvmMain`, and `jsMain`.
+Streams is a Kotlin Multiplatform library — it works in `commonMain`, `jvmMain`, `jsMain`, and `nativeMain` (linuxX64, linuxArm64, macosX64, macosArm64, mingwX64).
 
 ## 2. Create a StreamSource
 
@@ -5897,3 +5902,180 @@ class AuthRecordsRepo(
     }
 }
 ```
+
+---
+
+## Maths — Easing & Distributions {#maths}
+
+### Overview {#maths-overview}
+
+# Maths — Easing Functions and Probability Distributions
+
+Easing functions and probability distributions for Kotlin Multiplatform.
+Works on JVM, JS, and Native (linuxX64, linuxArm64, macosX64, macosArm64, mingwX64).
+
+28 easing functions organized into In, Out, and InOut categories, with range binding and
+time-based animation via the Kronos clock. Four bucketed probability distributions with
+inverse-CDF sampling and combinators for blending, inverting, and reversing.
+
+Maven: `io.peekandpoke.ultra:maths`
+
+---
+
+### Getting Started {#maths-getting-started}
+
+Add the dependency:
+
+```kotlin
+dependencies {
+    implementation("io.peekandpoke.ultra:maths:$version")
+}
+```
+
+Basic easing:
+
+```kotlin
+import io.peekandpoke.ultra.maths.Ease
+
+// Ease a progress value (0.0 to 1.0)
+val eased = Ease.Out.cubic(0.5)  // 0.875
+
+// Use calc() to ease between two values
+val opacity = Ease.calc(
+    from = 0.0,
+    to = 1.0,
+    progress = 0.5,
+    fn = Ease.InOut.sine,
+)
+```
+
+Bind to a range:
+
+```kotlin
+val fadeIn = Ease.Out.quad.bindFromTo(from = 0, to = 255)
+println(fadeIn(0.0))   // 0.0
+println(fadeIn(0.5))   // 191.25
+println(fadeIn(1.0))   // 255.0
+```
+
+Time-based easing:
+
+```kotlin
+import kotlin.time.Duration.Companion.milliseconds
+
+val anim = Ease.Out.elastic.timed(
+    from = 0,
+    to = 100,
+    duration = 800.milliseconds,
+)
+val current = anim()
+if (anim.isDone) { /* final value reached */ }
+```
+
+Timed easing uses the Kronos clock, so you can inject a test clock for unit tests.
+
+Sample a distribution:
+
+```kotlin
+import io.peekandpoke.ultra.maths.stochastic.BucketedDistribution
+import io.peekandpoke.ultra.maths.stochastic.sample
+import kotlin.random.Random
+
+val normal = BucketedDistribution.createTruncatedNormal(mean = 0.5, std = 0.15)
+val raw = normal.sample(Random)
+val damage = normal.sample(Random, from = 10.0, to = 50.0)
+```
+
+---
+
+### Easing Functions {#maths-easing}
+
+All easing functions implement `Ease.Fn`, a functional interface taking progress (0.0–1.0) and returning the eased value.
+
+**Basic:** `Ease.linear`, `Ease.stuck` (always 0), `Ease.immediate` (always 1)
+
+**Ease.In** — start slow, accelerate:
+- `sine`, `quad` (x²), `cubic` (x³), `quart` (x⁴), `quint` (x⁵), `pow(n)`, `circ`, `elastic`, `bounce`
+
+**Ease.Out** — start fast, decelerate:
+- `sine`, `quad`, `cubic`, `quart`, `quint`, `pow(n)`, `circ`, `elastic`, `bounce`
+
+**Ease.InOut** — accelerate then decelerate:
+- `sine`, `quad`, `cubic`, `quart`, `quint`, `pow(n)`, `elastic`, `bounce`
+
+Custom easing functions:
+
+```kotlin
+val custom = Ease.easeFn { x -> x * x * x }
+```
+
+Range binding:
+
+```kotlin
+val scroll = Ease.InOut.quad.bindFromTo(from = 0, to = 1000)
+scroll(0.5)  // 500.0
+```
+
+Time-based easing with progress callback:
+
+```kotlin
+val anim = Ease.Out.elastic.timed(from = 0, to = 100, duration = 600.milliseconds)
+val value = anim { progress, done ->
+    // progress: 0.0 to 1.0, done: true when elapsed
+}
+```
+
+---
+
+### Distributions {#maths-distributions}
+
+All distributions are `BucketedDistribution` — discrete approximations using a grid of x-values and PDF values, sampled via inverse-CDF interpolation (trapezoid rule).
+
+**Uniform** — equal probability across [0, 1]:
+
+```kotlin
+val uniform = BucketedDistribution.createUniform()
+```
+
+**Truncated Normal** — Gaussian bell curve on [0, 1]:
+
+```kotlin
+val normal = BucketedDistribution.createTruncatedNormal(mean = 0.5, std = 0.15)
+```
+
+Parameters: `mean` (0.5), `std` (0.15), `count` (100)
+
+**Exponential** — high near zero, decaying:
+
+```kotlin
+val exp = BucketedDistribution.createExponential(lambda = 2.0)
+```
+
+Parameters: `lambda` (1.0), `count` (100), `tailCut` (1e-3)
+
+**Triangular** — linear rise to mode, linear fall:
+
+```kotlin
+val tri = BucketedDistribution.createTriangular(min = 0.0, mode = 0.7, max = 1.0)
+```
+
+**Combinators:**
+
+- `inverse()` — flips PDF so high-probability regions become low-probability
+- `reversed()` — mirrors the PDF shape
+- `blend(other, ratio)` — linear interpolation between two distributions
+
+```kotlin
+val blended = normal.blend(uniform, ratio = 0.3)  // 70% normal, 30% uniform
+val inverted = normal.inverse()
+val mirrored = exp.reversed()
+```
+
+**RandomRange** — wraps a distribution with min/max bounds, or a constant:
+
+```kotlin
+val range = RandomRange.OfDistribution(distribution = normal, min = 10.0, max = 50.0)
+val fixed = RandomRange.OfConstant(constant = 42.0)
+```
+
+Both `Distribution` and `RandomRange` are `kotlinx.serialization`-friendly.

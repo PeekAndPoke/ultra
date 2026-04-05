@@ -2,7 +2,9 @@
 
 package io.peekandpoke.kraft.examples.jsaddons
 
-import io.peekandpoke.kraft.addons.avatars.Avatars
+import io.peekandpoke.kraft.addons.avatars.AvatarsAddon
+import io.peekandpoke.kraft.addons.avatars.avatars
+import io.peekandpoke.kraft.addons.registry.AddonRegistry.Companion.addons
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
@@ -26,6 +28,8 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
 
     //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
+    private val avatarsAddon: AvatarsAddon? by subscribingTo(addons.avatars)
+
     //  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
@@ -43,8 +47,9 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
                 href(routes.avatars.index())
 
                 noui.center.aligned.content {
+                    val avatarSrc = avatarsAddon?.getDataUrl("alienHead66.svg") ?: ""
                     renderLogo(
-                        src = Avatars.MinIdenticon.getDataUrl("alienHead66.svg"),
+                        src = avatarSrc,
                         alt = "Avatars",
                     )
                 }
@@ -72,7 +77,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
 
                 noui.center.aligned.content {
                     renderLogo(
-                        src = "https://www.chartjs.org/img/chartjs-logo.svg",
+                        src = "images/logos/chartjs.svg",
                         alt = "ChartJS Logo",
                     )
                 }
@@ -86,7 +91,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
 
                 noui.center.aligned.content {
                     renderLogo(
-                        src = "https://user-images.githubusercontent.com/83319/31722733-de95bbde-b3ea-11e7-96bf-4f4e8f915588.png",
+                        src = "images/logos/jwt.png",
                         alt = "JWT Decode Logo",
                     )
                 }
@@ -95,26 +100,13 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
                 }
             }
 
-            noui.card A {
-                href(routes.konva())
-
-                noui.center.aligned.content {
-                    renderLogo(
-                        src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAAeCAYAAADnydqVAAACxUlEQVRoQ+2aS1bDMAxFG8aUzcD2YEC3RzdDGROsnroYo89TaiUc4w5bR7Z09XUz7canawtMXWs3lNsNwJ07wQA8AHdugc7Vc0fw/vU4T8xT78+P128fDseZs9ucvj29fK8r12jPcPvRs+WepSzkjLRe2rOWK8nj9Nkf3uaJqXya7nSW+2TXO8au1nOWf64KWAKiGVtTQAScHExSDHFETi7qDOi6Wi/pOc2RLbj0+78DXBrMAwNdi67zAL4Fcp+AhTKSjUr145RKigcGupZbl/eTIk6L3uuZlfKmRXKXgKV6VhqC0jAKjZ5D6zAnUytNnvJkyeFANwcsGcJKM5Zh2MgQvBoBTM2Lt3mzHEJqsLy9B0U80kPE1GChgdEiIh/Eq6jVEM27OaXap1+2QAAvad4swB4nzPtLji05y2ei/yFMIm0iWOlQlxjNUjT/zmUGaYSIAmyNX1YWQhqrUifLoVaNYGkztG5YxrGMW+6vzZRSWq7rs6chyjpaOiCAS3t5dJbO66/BCyIYgWwZx6OsBPhcRlKHbQ2H3lKSKsXuPaVNSwc3YKUcItFLa1YB3KIG7x3KaoCRrlUDrHXTdXZYMh79iGCHzptGcBPAwBVp3scCbEG2Mk4dqVJH7pWDRqUlt5TTLIJzc7D0yg1Jb8gaUg4BrEG2DIhcTJD8VnJq8JbcUMBnwwl1LqLr5ZQNBwzUceRPAtRR/hxgb3TcMtZsAdhK8Uj0ttY5vAbXHuuZ4VorGx3BkYDri4wllyc3pWhxxqxulXoHrF3JIhGMTgUDcPGigaeL9pYRLgVKTozUX/Zmjrl63Q5wGvLm6XItfnl/o3xbozwY3RmfR27wLy/KEteZkpGNjhPR60jHUjc6KnpPzDailwuT8tyrA4422pDf1gLuObjt9kNatAUG4GgLbyx/AN4YQPT2A3C0hTeWPwBvDCB6+y9quqY9QKQ1sAAAAABJRU5ErkJggg==",
-                        alt = "Konva Logo",
-                    )
-                }
-                noui.center.aligned.content {
-                    +"Konva"
-                }
-            }
 
             noui.card A {
                 href(routes.marked())
 
                 noui.center.aligned.content {
                     renderLogo(
-                        src = "https://marked.js.org/img/logo-black.svg",
+                        src = "images/logos/marked.svg",
                         alt = "Marked Logo",
                     )
                 }
@@ -128,7 +120,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
 
                 noui.center.aligned.content {
                     renderLogo(
-                        src = "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Pdf-js_logo.svg/800px-Pdf-js_logo.svg.png",
+                        src = "images/logos/pdfjs.svg",
                         alt = "PDF JS",
                     )
                 }
@@ -138,11 +130,25 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
             }
 
             noui.card A {
+                href(routes.pixijs())
+
+                noui.center.aligned.content {
+                    renderLogo(
+                        src = "images/logos/pixijs.svg",
+                        alt = "PixiJS Logo",
+                    )
+                }
+                noui.center.aligned.content {
+                    +"PixiJS (Breakout)"
+                }
+            }
+
+            noui.card A {
                 href(routes.prismjs())
 
                 noui.center.aligned.content {
                     renderLogo(
-                        src = "https://pbs.twimg.com/profile_images/2451426554/Screen_Shot_2012-07-31_at_21.57.03__400x400.png",
+                        src = "images/logos/prismjs.png",
                         alt = "PrismJs Logo",
                     )
                 }
@@ -156,7 +162,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
 
                 noui.center.aligned.content {
                     renderLogo(
-                        src = "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Autograph_of_Benjamin_Franklin.svg/1920px-Autograph_of_Benjamin_Franklin.svg.png",
+                        src = "images/logos/signaturepad.png",
                         alt = "Signature Pad",
                     )
                 }

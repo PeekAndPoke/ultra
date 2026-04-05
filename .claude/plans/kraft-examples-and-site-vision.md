@@ -149,6 +149,45 @@ best treated as a separate, future initiative — not mixed into the current imp
 - `llms-full.txt` auto-generation at build time
 - Custom Kotlin/JS playground (only if postMessage approach proves insufficient)
 
+---
+
+## Progress (April 4, 2026) — examples restructured
+
+### hello-world thinned out
+
+`kraft/examples/hello-world` was doing too much — `MainPage.kt` alone was 449 lines of forms, modals, popups,
+context menus, DateTime fields, select fields, textareas, DataLoader, localStorage persistence, and a color
+playground. All of that belongs in the fomanticui example.
+
+**Now:** 4 files, ~100 lines total. Focused showcase of the core Kraft concepts a new user needs:
+
+- App bootstrap
+- `PureComponent` and `Component<Props>`
+- `by value()` reactive state
+- Props + `onClick` events
+- `subscribingTo(stream)` auto-unsubscribe
+
+Files: `index.kt`, `MainPage.kt`, `CounterComponent.kt`, `TickerComponent.kt`.
+
+### addons example — fully updated to the new AddonRegistry
+
+Every addon page in `kraft/examples/addons` now demonstrates the new `AddonRegistry` pattern with lazy loading
+via dynamic imports. CodeBlock-documented examples per addon: marked, signaturepad, jwtdecode, browserdetect,
+avatars, nxcompile, sourcemappedstacktrace, prismjs, chartjs, pdfjs, pixijs.
+
+### Breakout game — new pixijs demo
+
+`kraft/examples/addons/src/jsMain/kotlin/pixijs/BreakoutExample.kt` — a playable Breakout game with 5x10 bricks,
+paddle + ball physics, keyboard controls. Lazy-loaded pixi.js (~300KB) only fetches when the page is visited.
+Strongest "alive" demo in the examples — exactly the kind of embedded live thing the synthesis recommended.
+
+### ES2015 target enabled in all three example apps
+
+`hello-world`, `fomanticui`, and `addons` all compile with `target.set("es2015")` plus the required
+`fullySpecified: false` webpack rule. See `.claude/plans/es2015-migration.md`.
+
+---
+
 ### New Example Ideas (from the discussion)
 
 These examples would showcase Kraft's unique strengths beyond what's currently documented:

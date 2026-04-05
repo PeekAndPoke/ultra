@@ -13,6 +13,10 @@ version = VERSION_NAME
 
 kotlin {
     js {
+        compilerOptions {
+            target.set("es2015")
+        }
+
         browser {
             testTask {
             }
@@ -37,10 +41,10 @@ kotlin {
                 api(project(":kraft:addons:browserdetect"))
                 api(project(":kraft:addons:chartjs"))
                 api(project(":kraft:addons:jwtdecode"))
-                api(project(":kraft:addons:konva"))
                 api(project(":kraft:addons:marked"))
                 api(project(":kraft:addons:nxcompile"))
                 api(project(":kraft:addons:pdfjs"))
+                api(project(":kraft:addons:pixijs"))
                 api(project(":kraft:addons:prismjs"))
                 api(project(":kraft:addons:signaturepad"))
                 api(project(":kraft:addons:sourcemappedstacktrace"))
@@ -50,6 +54,8 @@ kotlin {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+apply<ExtractExampleCodePlugin>()
 
 Docs {
     distributeJsExample(dir = "docs/kraft/examples")

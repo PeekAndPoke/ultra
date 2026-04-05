@@ -16,7 +16,7 @@ fun Tag.AddonExamplesApp() = comp {
 class AddonExamplesApp(ctx: NoProps) : PureComponent(ctx) {
 
     override fun VDom.render() {
-        ui.container {
+        ui.fluid.container {
             ui.basic.segment {
                 ui.header H1 { +"KRAFT AddOns" }
             }

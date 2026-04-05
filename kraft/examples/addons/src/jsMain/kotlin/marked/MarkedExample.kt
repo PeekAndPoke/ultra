@@ -1,13 +1,16 @@
 package io.peekandpoke.kraft.examples.jsaddons.marked
 
-import io.peekandpoke.kraft.addons.marked.markdown2html
+import generated.ExtractedCodeBlocks
+import io.peekandpoke.kraft.addons.marked.MarkedAddon
 import io.peekandpoke.kraft.addons.marked.marked
+import io.peekandpoke.kraft.addons.registry.AddonRegistry.Companion.addons
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.examples.jsaddons.helpers.HorizontalContentAndCode
 import io.peekandpoke.kraft.semanticui.forms.UiTextArea
-import io.peekandpoke.kraft.utils.jsObject
 import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.semanticui.icon
 import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.Tag
 import kotlinx.html.a
@@ -23,20 +26,24 @@ class MarkedExample(ctx: NoProps) : PureComponent(ctx) {
 
     //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
+    // <CodeBlock subscribing>
+    private val markedAddon: MarkedAddon? by subscribingTo(addons.marked)
+    // </CodeBlock>
+
     private var input by value(
         """
-            # Header 1                         
-            ## Header 2                         
-            ### Header 3                         
+            # Header 1
+            ## Header 2
+            ### Header 3
 
             - item 1
             - item 2
-            
+
             1. item 1
             2. item 2
-            
+
             `code`
-            
+
             <div style="color: red; padding: 20px; border: 1px solid red;" onclick="window.alert('You have been pwnd!')">Evil div with onclick handler.</div>
         """.trimIndent()
     )
@@ -45,10 +52,10 @@ class MarkedExample(ctx: NoProps) : PureComponent(ctx) {
 
     override fun VDom.render() {
         ui.segment {
-            ui.header H2 { +"Markdown rendering" }
+            ui.header H2 { +"Markdown rendering (via AddonRegistry)" }
 
             p {
-                +"Uses marked.js to render Markdown to HTML and DOMPurify to sanitize the HTML."
+                +"Uses the AddonRegistry to lazy-load marked.js and DOMPurify."
             }
 
             p {
@@ -69,20 +76,40 @@ class MarkedExample(ctx: NoProps) : PureComponent(ctx) {
                 }
             }
 
-            ui.form {
-                UiTextArea(input, { input = it })
+            ui.dividing.header { +"Subscribing to the addon" }
+
+            HorizontalContentAndCode(
+                ExtractedCodeBlocks.marked_MarkedExample_kt_subscribing,
+            ) {
+                ui.label { +"MarkedAddon is loaded via subscribingTo(addons.marked)" }
             }
 
-            ui.segment {
-                unsafe {
-                    marked.use(jsObject {
-                        mangle = false
-                        headerIds = false
-                    })
+            ui.dividing.header { +"Usage" }
 
-                    val rendered = markdown2html(input)
+            HorizontalContentAndCode(
+                ExtractedCodeBlocks.marked_MarkedExample_kt_usage,
+            ) {
+                ui.form {
+                    UiTextArea(input, { input = it })
+                }
 
-                    +rendered
+                val addon = markedAddon
+
+                if (addon != null) {
+                    // <CodeBlock usage>
+                    ui.segment {
+                        unsafe {
+                            +addon.markdown2html(input)
+                        }
+                    }
+                    // </CodeBlock>
+                } else {
+                    ui.placeholder.segment {
+                        ui.icon.header {
+                            icon.spinner_loading()
+                            +"Loading marked addon..."
+                        }
+                    }
                 }
             }
         }

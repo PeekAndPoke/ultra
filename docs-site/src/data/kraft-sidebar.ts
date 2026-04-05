@@ -4,6 +4,7 @@ export const kraftSidebar = [
     {href: '/ultra/kraft/examples', label: 'Live Examples', section: 'Overview'},
 
     {href: '/ultra/kraft/components', label: 'Components', section: 'Core'},
+    {href: '/ultra/kraft/lifecycle-hooks', label: 'Lifecycle Hooks', section: 'Core'},
     {href: '/ultra/kraft/state', label: 'State Management', section: 'Core'},
     {href: '/ultra/kraft/data-loading', label: 'Data Loading', section: 'Core'},
     {href: '/ultra/kraft/dom-events', label: 'DOM Events', section: 'Core'},

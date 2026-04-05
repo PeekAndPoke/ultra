@@ -51,6 +51,7 @@ kotlin {
         jsTest {
             dependencies {
                 jsTestDeps()
+                implementation(project(":kraft:testing"))
             }
         }
     }

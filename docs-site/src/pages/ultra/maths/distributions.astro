@@ -1,0 +1,180 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {mathsSidebar} from '../../../data/maths-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Distributions" sidebar={mathsSidebar}
+            description="Probability distributions with bucketed inverse-CDF sampling">
+
+    <h1>Distributions</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Four probability distributions with inverse-CDF sampling, plus combinators for reshaping them.
+    </p>
+
+    <h2>BucketedDistribution</h2>
+
+    <p>All distributions are instances of <code>BucketedDistribution</code> &mdash; a discrete approximation of
+        a continuous PDF using a grid of x-values and probability densities. Sampling uses inverse-CDF
+        interpolation via the trapezoid rule.</p>
+
+    <Code code={`import io.peekandpoke.ultra.maths.stochastic.BucketedDistribution
+import io.peekandpoke.ultra.maths.stochastic.sample
+import kotlin.random.Random
+
+val dist = BucketedDistribution.createTruncatedNormal()
+
+// Raw sample in [0, 1]
+val raw = dist.sample(Random)
+
+// Mapped to a range
+val mapped = dist.sample(Random, from = 10.0, to = 50.0)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Distribution types</h2>
+
+    <h3>Uniform</h3>
+
+    <p>Equal probability across the entire range. Every value in [0, 1] is equally likely.</p>
+
+    <Code code={`val uniform = BucketedDistribution.createUniform()
+val value = uniform.sample(Random)  // any value in [0, 1] with equal probability`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Truncated normal</h3>
+
+    <p>A Gaussian bell curve truncated to [0, 1]. Values cluster around the <code>mean</code>,
+        with spread controlled by <code>std</code>.</p>
+
+    <Code code={`// Default: centered at 0.5, std = 0.15
+val normal = BucketedDistribution.createTruncatedNormal()
+
+// Custom: skewed toward the low end
+val skewed = BucketedDistribution.createTruncatedNormal(mean = 0.2, std = 0.1)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold">Parameter</th>
+                <th class="py-2 text-white font-semibold">Default</th>
+                <th class="py-2 text-white font-semibold">Meaning</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>mean</code></td>
+                <td class="py-2">0.5</td>
+                <td class="py-2">Center of the bell curve (must be in [0, 1])</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>std</code></td>
+                <td class="py-2">0.15</td>
+                <td class="py-2">Standard deviation &mdash; smaller = tighter clustering</td>
+            </tr>
+            <tr>
+                <td class="py-2"><code>count</code></td>
+                <td class="py-2">100</td>
+                <td class="py-2">Number of buckets (higher = more precision)</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Exponential</h3>
+
+    <p>High probability near zero, decaying exponentially. The tail is truncated at a configurable cutoff.</p>
+
+    <Code code={`// Default: lambda = 1.0
+val exp = BucketedDistribution.createExponential()
+
+// Steeper decay
+val steep = BucketedDistribution.createExponential(lambda = 3.0)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 text-white font-semibold">Parameter</th>
+                <th class="py-2 text-white font-semibold">Default</th>
+                <th class="py-2 text-white font-semibold">Meaning</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>lambda</code></td>
+                <td class="py-2">1.0</td>
+                <td class="py-2">Rate parameter &mdash; higher = steeper decay</td>
+            </tr>
+            <tr>
+                <td class="py-2"><code>tailCut</code></td>
+                <td class="py-2">1e-3</td>
+                <td class="py-2">Tail probability cutoff for truncation</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Triangular</h3>
+
+    <p>Probability rises linearly to the <code>mode</code>, then falls linearly. Useful when you want a
+        peak at a specific value with bounded tails.</p>
+
+    <Code code={`val tri = BucketedDistribution.createTriangular(
+    min = 0.0,
+    mode = 0.7,  // peak probability here
+    max = 1.0,
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Combinators</h2>
+
+    <p>Reshape existing distributions without creating new ones from scratch:</p>
+
+    <h3>inverse()</h3>
+
+    <p>Flips the PDF so high-probability regions become low-probability and vice versa.</p>
+
+    <Code code={`val normal = BucketedDistribution.createTruncatedNormal()
+val inverted = normal.inverse()  // rare values near 0.5, common at edges`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>reversed()</h3>
+
+    <p>Mirrors the PDF shape. An exponential that decays left-to-right becomes one that decays right-to-left.</p>
+
+    <Code code={`val exp = BucketedDistribution.createExponential(lambda = 2.0)
+val rev = exp.reversed()  // high probability at the right end instead of the left`} lang="kotlin"
+          theme="vitesse-dark"/>
+
+    <h3>blend()</h3>
+
+    <p>Linearly interpolates between two distributions. At <code>ratio = 0.0</code> you get this distribution;
+        at <code>ratio = 1.0</code> you get the other.</p>
+
+    <Code code={`val normal = BucketedDistribution.createTruncatedNormal()
+val uniform = BucketedDistribution.createUniform()
+
+// 70% normal, 30% uniform
+val blended = normal.blend(uniform, ratio = 0.3)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>Both distributions must have the same number of buckets to blend. The default bucket count is 100.</Aside>
+
+    <h2>RandomRange</h2>
+
+    <p><code>RandomRange</code> wraps a distribution with explicit min/max bounds, or represents a constant value.
+        Useful when you need a serializable "random or fixed" configuration:</p>
+
+    <Code code={`import io.peekandpoke.ultra.maths.stochastic.RandomRange
+
+// Distribution-backed range
+val range = RandomRange.OfDistribution(
+    distribution = BucketedDistribution.createTruncatedNormal(),
+    min = 10.0,
+    max = 50.0,
+)
+
+// Constant (always returns the same value)
+val fixed = RandomRange.OfConstant(constant = 42.0)
+println(fixed.min)  // 42.0
+println(fixed.max)  // 42.0`} lang="kotlin" theme="vitesse-dark"/>
+
+</DocsLayout>

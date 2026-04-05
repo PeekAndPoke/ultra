@@ -1,6 +1,5 @@
 package io.peekandpoke.kraft.addons.browserdetect
 
-import io.peekandpoke.kraft.addons.browserdetect.js.Bowser
 import kotlinx.browser.window
 import org.w3c.dom.MimeType
 import org.w3c.dom.Navigator
@@ -9,14 +8,17 @@ import org.w3c.dom.asList
 /** Detects browser, OS, platform, and engine details using the Bowser library. */
 @Suppress("MemberVisibilityCanBePrivate")
 class BrowserDetect private constructor(
+    val addon: BrowserDetectAddon,
     val navigator: Navigator,
 ) {
     companion object {
         /** Creates a [BrowserDetect] for the given [navigator]. */
-        fun forNavigator(navigator: Navigator): BrowserDetect = BrowserDetect(navigator)
+        fun forNavigator(addon: BrowserDetectAddon, navigator: Navigator): BrowserDetect =
+            BrowserDetect(addon, navigator)
 
         /** Creates a [BrowserDetect] for the current browser window. */
-        fun forCurrentBrowser(): BrowserDetect = forNavigator(window.navigator)
+        fun forCurrentBrowser(addon: BrowserDetectAddon): BrowserDetect =
+            forNavigator(addon, window.navigator)
     }
 
     /** Detected browser name and version. */
@@ -43,7 +45,7 @@ class BrowserDetect private constructor(
         val version: String,
     )
 
-    private val bowser = Bowser.getParser(navigator.userAgent)
+    private val bowser: dynamic = addon.getParser(navigator.userAgent)
 
     /** Returns the raw Bowser parser result. */
     fun getRawResult(): dynamic {
@@ -52,42 +54,38 @@ class BrowserDetect private constructor(
 
     /** Detects the browser name and version. */
     fun getBrowser(): Browser {
-        return bowser.getBrowser().let {
-            Browser(
-                name = it.name.orUnknown(),
-                version = it.version.orUnknown(),
-            )
-        }
+        val result: dynamic = bowser.getBrowser()
+        return Browser(
+            name = (result.name as? String).orUnknown(),
+            version = (result.version as? String).orUnknown(),
+        )
     }
 
     /** Detects the operating system. */
     fun getOs(): OS {
-        return bowser.getOS().let {
-            OS(
-                name = it.name.orUnknown(),
-                version = it.version.orUnknown(),
-                versionName = it.versionName.orUnknown(),
-            )
-        }
+        val result: dynamic = bowser.getOS()
+        return OS(
+            name = (result.name as? String).orUnknown(),
+            version = (result.version as? String).orUnknown(),
+            versionName = (result.versionName as? String).orUnknown(),
+        )
     }
 
     /** Detects the platform type. */
     fun getPlatform(): Platform {
-        return bowser.getPlatform().let {
-            Platform(
-                type = it.type.orUnknown()
-            )
-        }
+        val result: dynamic = bowser.getPlatform()
+        return Platform(
+            type = (result.type as? String).orUnknown(),
+        )
     }
 
     /** Detects the rendering engine. */
     fun getEngine(): Engine {
-        return bowser.getEngine().let {
-            Engine(
-                name = it.name.orUnknown(),
-                version = it.version.orUnknown(),
-            )
-        }
+        val result: dynamic = bowser.getEngine()
+        return Engine(
+            name = (result.name as? String).orUnknown(),
+            version = (result.version as? String).orUnknown(),
+        )
     }
 
     /** Returns all MIME types supported by the browser. */

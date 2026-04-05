@@ -1,0 +1,284 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {kraftSidebar} from '../../../data/kraft-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Kraft Lifecycle Hooks" sidebar={kraftSidebar}
+            description="Lifecycle hooks for Kraft components — mount, update, unmount, error boundaries, and window events">
+
+    <h1>Lifecycle Hooks</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Mount, update, unmount, error boundaries, and browser window events — all auto-cleaned on unmount.
+    </p>
+
+    <p>Components register lifecycle handlers in their <code>init</code> block via the <code>lifecycle {}</code> DSL.
+        Each hook can be registered multiple times; all handlers fire in registration order.</p>
+
+    <Code code={`class MyComponent(ctx: Ctx<Props>) : Component<Props>(ctx) {
+    init {
+        lifecycle {
+            onMount { /* ... */ }
+            onUpdate { /* ... */ }
+            onUnmount { /* ... */ }
+            onNextProps { new, old -> /* ... */ }
+            onError { e -> /* ... */ }
+            onResize { entries -> /* ... */ }
+            onWindowResize { v -> /* ... */ }
+            onWindowFocus { /* ... */ }
+            onWindowBlur { /* ... */ }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>Stream subscriptions (via <code>subscribingTo()</code>) auto-unsubscribe when the component unmounts. Window
+        and resize hooks registered through the lifecycle DSL also clean themselves up. You rarely need to track
+        unsubscribe functions manually.
+    </Aside>
+
+    <h2>Core hooks</h2>
+
+    <h3>onMount</h3>
+
+    <p>Fires after the component's DOM has been rendered. The <code>dom</code> property now points at the actual
+        <code>HTMLElement</code>.</p>
+
+    <Code code={`init {
+    lifecycle {
+        onMount {
+            // dom is available here
+            console.log("Mounted at", dom?.tagName)
+
+            // Attach third-party widgets that need a live element
+            val tooltip = Tooltip(dom!!)
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>onUpdate</h3>
+
+    <p>Fires after every re-render (state change, props change, parent redraw). Use this when you need to run code after
+        the DOM has been updated — for example, scrolling a container into view or syncing a third-party widget.</p>
+
+    <Code code={`init {
+    lifecycle {
+        onUpdate {
+            // Component re-rendered; DOM is in sync with state
+            console.log("child count", dom?.children?.length)
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>onUnmount</h3>
+
+    <p>Fires when the component is removed from the DOM. Clean up anything the lifecycle doesn't handle for you
+        (third-party widgets, manually-registered listeners).</p>
+
+    <Code code={`private var tooltip: Tooltip? = null
+
+init {
+    lifecycle {
+        onMount { tooltip = Tooltip(dom!!) }
+        onUnmount { tooltip?.destroy(); tooltip = null }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>onNextProps</h3>
+
+    <p>Fires when a parent passes new props. Receives both the new and old props, so you can react to specific
+        changes.</p>
+
+    <Code code={`init {
+    lifecycle {
+        onNextProps { new, old ->
+            if (new.query != old.query) {
+                reload()
+            }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>onError — error boundaries</h2>
+
+    <p>Errors thrown during render or by child components bubble up the component tree, looking for an
+        <code>onError</code>
+        handler. The nearest ancestor with an <code>onError</code> catches the error; if none do, the error propagates
+        to
+        Preact's default handling.</p>
+
+    <Code code={`class Dashboard(ctx: NoProps) : PureComponent(ctx) {
+    private var error: Throwable? by value(null)
+
+    init {
+        lifecycle {
+            onError { e ->
+                // Log, report to analytics, and show a fallback
+                console.error("Caught", e.message)
+                error = e
+            }
+        }
+    }
+
+    override fun VDom.render() {
+        val err = error
+        if (err != null) {
+            ui.negative.message {
+                +"Something went wrong: ${'$'}{err.message}"
+                ui.button {
+                    onClick { error = null }
+                    +"Retry"
+                }
+            }
+            return
+        }
+
+        // Any error thrown inside these children bubbles up to onError above
+        WidgetGrid()
+        SalesChart()
+        ActivityFeed()
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>Bubbling stops at the first component with an <code>onError</code> hook. If you want errors to bubble past a
+        component that already has a handler, don't catch them there — handle them higher up.
+    </Aside>
+
+    <h2>onResize — element resize (ResizeObserver)</h2>
+
+    <p>Wraps the browser's <code>ResizeObserver</code> API and observes <strong>this component's DOM element</strong>.
+        The observer is attached on mount and disconnected on unmount automatically.</p>
+
+    <Code code={`class ResponsiveCanvas(ctx: NoProps) : PureComponent(ctx) {
+    private var width: Double by value(0.0)
+    private var height: Double by value(0.0)
+
+    init {
+        lifecycle {
+            onResize { entries ->
+                val box = entries[0].contentRect
+                width = box.width
+                height = box.height
+            }
+        }
+    }
+
+    override fun VDom.render() {
+        div {
+            css {
+                this.width = 100.pct
+                this.height = 100.pct
+            }
+            +"${'$'}{width.toInt()} x ${'$'}{height.toInt()}"
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Useful for canvas games, responsive charts, or anything that needs to adapt when its container changes size —
+        fires even when the element is resized by a sibling layout change, not just window resize.</p>
+
+    <h2>onWindowResize / onWindowFocus / onWindowBlur — browser window events</h2>
+
+    <p>For events on the <strong>browser window</strong>, use these hooks. They dispatch through the app-level
+        <code>WindowController</code> (registered by default in every <code>kraftApp {}</code>) and auto-unsubscribe
+        on unmount.</p>
+
+    <Code code={`class WindowTracker(ctx: NoProps) : PureComponent(ctx) {
+    private var size: Vector2D? by value(null)
+    private var focused: Boolean by value(true)
+
+    init {
+        lifecycle {
+            onWindowResize { v: Vector2D ->
+                // v.x = window.innerWidth, v.y = window.innerHeight
+                size = v
+            }
+
+            onWindowFocus {
+                focused = true
+            }
+
+            onWindowBlur {
+                focused = false
+            }
+        }
+    }
+
+    override fun VDom.render() {
+        div {
+            +"window: ${'$'}{size?.x?.toInt()} x ${'$'}{size?.y?.toInt()}"
+            +" | focused: ${'$'}focused"
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside><strong>When to use which?</strong> Use <code>onResize</code> for layout-aware components that need to react
+        to
+        <em>their own</em> element changing size. Use <code>onWindowResize</code> for global concerns like
+        viewport-based
+        layout or responsive breakpoints.
+    </Aside>
+
+    <h2>Reference — all hooks</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr>
+                <th>Hook</th>
+                <th>Signature</th>
+                <th>Fires when</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td><code>onMount</code></td>
+                <td><code>() -&gt; Unit</code></td>
+                <td>Component inserted into the DOM</td>
+            </tr>
+            <tr>
+                <td><code>onUpdate</code></td>
+                <td><code>() -&gt; Unit</code></td>
+                <td>Component re-rendered (DOM updated)</td>
+            </tr>
+            <tr>
+                <td><code>onUnmount</code></td>
+                <td><code>() -&gt; Unit</code></td>
+                <td>Component removed from the DOM</td>
+            </tr>
+            <tr>
+                <td><code>onNextProps</code></td>
+                <td><code>(new, old) -&gt; Unit</code></td>
+                <td>Parent passes new props</td>
+            </tr>
+            <tr>
+                <td><code>onError</code></td>
+                <td><code>(Throwable) -&gt; Unit</code></td>
+                <td>Error thrown in render or child component</td>
+            </tr>
+            <tr>
+                <td><code>onResize</code></td>
+                <td><code>(Array&lt;ResizeObserverEntry&gt;) -&gt; Unit</code></td>
+                <td>Component's DOM element resized</td>
+            </tr>
+            <tr>
+                <td><code>onWindowResize</code></td>
+                <td><code>(Vector2D) -&gt; Unit</code></td>
+                <td>Browser window resized</td>
+            </tr>
+            <tr>
+                <td><code>onWindowFocus</code></td>
+                <td><code>() -&gt; Unit</code></td>
+                <td>Browser window gains focus</td>
+            </tr>
+            <tr>
+                <td><code>onWindowBlur</code></td>
+                <td><code>() -&gt; Unit</code></td>
+                <td>Browser window loses focus</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</DocsLayout>

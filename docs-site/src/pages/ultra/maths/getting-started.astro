@@ -1,0 +1,104 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {mathsSidebar} from '../../../data/maths-sidebar';
+import {Code} from 'astro:components';
+import {dep, mavenCentralUrl} from '../../../data/site';
+---
+
+<DocsLayout title="Getting Started with Maths" sidebar={mathsSidebar}
+            description="Set up Maths in your Kotlin project">
+
+    <h1>Getting Started</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Add Maths to your project and start using easing functions and distributions.
+    </p>
+
+    <h2>1. Add the dependency</h2>
+
+    <p>In your <code>build.gradle.kts</code>:</p>
+
+    <Code code={`dependencies {
+    implementation("${dep.maths}")
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Find the latest version on <a href={mavenCentralUrl} target="_blank" rel="noopener">Maven Central</a>.</p>
+
+    <p>Maths is a Kotlin Multiplatform library &mdash; it works in <code>commonMain</code>, <code>jvmMain</code>,
+        <code>jsMain</code>, and <code>nativeMain</code> (linuxX64, linuxArm64, macosX64, macosArm64, mingwX64).</p>
+
+    <h2>2. Use an easing function</h2>
+
+    <p>All easing functions live on the <code>Ease</code> object. Pass a progress value between 0.0 and 1.0:</p>
+
+    <Code code={`import io.peekandpoke.ultra.maths.Ease
+
+// Ease a progress value (0.0 to 1.0)
+val eased = Ease.Out.cubic(0.5)  // 0.875
+
+// Use calc() to ease between two values
+val opacity = Ease.calc(
+    from = 0.0,
+    to = 1.0,
+    progress = 0.5,
+    fn = Ease.InOut.sine,
+)  // 0.5`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>3. Bind to a range</h2>
+
+    <p>Use <code>bindFromTo</code> to create a reusable easing bound to a numeric range:</p>
+
+    <Code code={`val fadeIn = Ease.Out.quad.bindFromTo(from = 0, to = 255)
+
+println(fadeIn(0.0))   // 0.0
+println(fadeIn(0.5))   // 191.25
+println(fadeIn(1.0))   // 255.0`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>4. Time-based easing</h2>
+
+    <p>Use <code>timed()</code> to create an easing that progresses based on elapsed wall-clock time:</p>
+
+    <Code code={`import kotlin.time.Duration.Companion.milliseconds
+
+val anim = Ease.Out.elastic.timed(
+    from = 0,
+    to = 100,
+    duration = 800.milliseconds,
+)
+
+// Poll the current value (uses Kronos clock internally)
+val current = anim()
+
+// Check if the animation has completed
+if (anim.isDone) {
+    // final value reached
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>Timed easing uses the <a href="/ultra/datetime/kronos">Kronos</a> clock, so you can inject a
+        test clock and advance time manually in unit tests.
+    </Aside>
+
+    <h2>5. Sample a distribution</h2>
+
+    <Code code={`import io.peekandpoke.ultra.maths.stochastic.BucketedDistribution
+import io.peekandpoke.ultra.maths.stochastic.sample
+import kotlin.random.Random
+
+// Normal distribution centered at 0.5
+val normal = BucketedDistribution.createTruncatedNormal(mean = 0.5, std = 0.15)
+
+// Raw sample in [0, 1]
+val raw = normal.sample(Random)
+
+// Mapped to a custom range
+val damage = normal.sample(Random, from = 10.0, to = 50.0)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/maths/easing"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Easing functions &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

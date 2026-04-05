@@ -459,6 +459,9 @@ object Deps {
         @Suppress("UnusedReceiverParameter", "unused")
         fun KotlinDependencyHandler.pdfJs() = "4.10.38"
 
+        // https://www.npmjs.com/package/pixi.js
+        fun KotlinDependencyHandler.pixiJs() = npm("pixi.js", "8.17.1")
+
         // https://www.npmjs.com/package/preact
         fun KotlinDependencyHandler.preact() = npm("preact", "10.26.4")
 
@@ -504,6 +507,11 @@ object Deps {
         }
 
         fun KotlinDependencyHandler.jsTestDeps() {
+            implementation(kotest_assertions_core)
+            implementation(kotest_framework_engine)
+        }
+
+        fun KotlinDependencyHandler.nativeTestDeps() {
             implementation(kotest_assertions_core)
             implementation(kotest_framework_engine)
         }
