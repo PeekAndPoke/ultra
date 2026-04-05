@@ -221,11 +221,80 @@ shim gets a **time-boxed spike** (2-4 weeks, one library, hard go/no-go).
 
 **9 tests** in `AddonRegistrySpec.kt` using `eventually(timeout, poll)` helper (no flaky delays).
 
+---
+
+## Progress (April 4, 2026) — Phase 2 Addon Ecosystem: SHIPPED
+
+### All 11 addons migrated to the registry pattern
+
+Every existing addon moved from static `@JsModule` imports to `AddonRegistry` with dynamic `js("import(...)")`.
+Old `@JsModule`-based wiring is gone from the codebase.
+
+**Migrated addons** (each has: addon facade, TestBed tests, CodeBlock-documented examples):
+
+- marked, signaturepad, jwtdecode, browserdetect, avatars
+- nxcompile, sourcemappedstacktrace, prismjs
+- chartjs, pdfjs
+- **pixijs (new)**
+
+**Webpack** — `config.output.chunkFilename = "[id].[contenthash].js"` in every app for CDN-safe async chunks.
+
+**Test count:** 18 addon tests + 329 core tests, all green.
+
+### PixiJS — new addon with hand-written minimal externals
+
+Replaces the removed konva addon as the canvas/graphics demo. Located at `kraft/addons/pixijs/`.
+
+- ~100 lines of type-only externals: `Application`, `Container`, `Graphics`, `Text`, `Ticker`, `Rectangle`
+- `PixiJsAddon` facade with `createApplication()`, `createGraphics()`, `createText()`
+- TestBed tests validate the externals against the real pixi.js runtime
+- Registered with `pixiJs(lazy = true)` — pixi.js (~300KB) only loads when visiting the page that needs it
+- **Demo: Breakout game** at `kraft/examples/addons/src/jsMain/kotlin/pixijs/BreakoutExample.kt` — 5x10 bricks,
+  paddle + ball physics, keyboard controls. A real, playable game as the addon showcase.
+
+### Konva removed
+
+Deleted from `settings.gradle` listing, `kraft/addons/konva/` directory, and example code. Was unused, and its
+`@JsModule("konva")` generated invalid `import { default }` under ES2015 target. Pixi fills the same demo slot
+with better-curated externals.
+
+### Karakum pilot — findings
+
+Tried Karakum 1.0.0-alpha.50 (JVM 17 compatible; newer versions need JVM 21) to generate Kotlin externals from
+the pixi.js `.d.ts` bundle.
+
+**Result:** 708 files / ~65k lines generated — and the output is **unusable**:
+
+- 1,945 unhandled imports
+- TypeScript syntax leaked through (`Partial<T>`, references to kotlin-wrappers types)
+- Kotlin compiler crashed on the generated code
+
+**Verdict:** Karakum is alpha-quality. Fine for simple libraries but needs heavy per-library configuration for
+complex ones. Hand-written minimal externals (~100 lines for what we actually use) are cleaner than curating
+65k lines of generated code.
+
+Findings captured in the new `karakum-setup` skill at `.claude/skills/karakum-setup/` for anyone who wants to
+attempt it for a simpler library.
+
+### ES2015 migration: SOLVED (was Phase 2 blocker)
+
+The ES2015 blocker on the `PreactLLC` bridge is fixed. Full details in `.claude/plans/es2015-migration.md`.
+The fix is a plain JS function bridge that works under both ES5 and ES2015. Enabled and verified in
+`hello-world`, `fomanticui`, `addons`, and `funktor-demo:adminapp`.
+
+### Phase status
+
+- **Phase 1 (pluggable styling backend / Tailwind):** NOT STARTED. No implementation work done yet. Still the
+  strategic priority per original synthesis, but Phase 2 moved first because the addon ecosystem was already
+  in flight.
+- **Phase 2 (JS library ecosystem):** **Addon infrastructure complete.** 11 addons migrated, pixijs added,
+  Karakum evaluated (and deprioritized). Phase 2's remaining work: React shim PoC (time-boxed spike) and addon
+  protocol specification — both still open.
+- **Phase 3 (advanced Tailwind):** blocked on Phase 1.
+
 ### Remaining for Phase 2
 
-- Fully-fledged external type declarations (replace `dynamic` internals with typed APIs)
-- Update addons example app to demonstrate registry pattern
-- Verify webpack chunk splitting
-- Karakum pipeline setup
-- More addon facades: chartjs, konva, prismjs
-- React shim PoC (time-boxed spike)
+- React shim PoC (time-boxed spike) — still open
+- Addon protocol specification — still open
+- Revisit Karakum if it matures, or commit to hand-written externals as the canonical pattern
+- More addon candidates (date-fns, Framer Motion, Recharts) — evaluate against the hand-written-externals approach

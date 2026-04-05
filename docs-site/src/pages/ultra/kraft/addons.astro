@@ -7,21 +7,69 @@ import { Code } from 'astro:components';
 import {dep, kraftLiveExamples, githubRepo} from '../../../data/site';
 ---
 
-<DocsLayout title="Kraft Addons" sidebar={kraftSidebar} description="Kotlin wrappers for Chart.js, PDF.js, Prism, Konva, and more in Kraft">
+<DocsLayout title="Kraft Addons" sidebar={kraftSidebar}
+            description="Kotlin wrappers for popular JavaScript libraries — loaded on demand via the AddonRegistry">
 
 <h1>Addons</h1>
 
 <p class="text-xl text-gray-400 !mt-2 !mb-8">
-  Kotlin wrappers for popular JavaScript libraries.
+    Kotlin-friendly wrappers for JavaScript libraries, loaded on demand.
 </p>
 
-  <Aside>These are thin wrappers — just enough to call from Kotlin with type safety. They don't cover every feature of
-    the underlying library, but they cover what we needed. PRs welcome for the rest.
-  </Aside>
+    <Aside>Every addon is dynamically imported via <code>js("import(...)")</code>. The JS library ships in its own
+        webpack chunk and only downloads when a component needs it.
+    </Aside>
 
-  <h2>Available addons</h2>
+    <h2>The AddonRegistry pattern</h2>
 
-<table>
+    <p>An addon is a typed facade over a JavaScript library. Register it in your app, then subscribe to it from any
+        component:</p>
+
+    <Code code={`// 1. Register in your KraftApp builder
+val kraft = kraftApp {
+    semanticUI()
+
+    addons {
+        marked()
+        signaturePad()
+        pixiJs(lazy = true)   // only load when first component subscribes
+    }
+}
+
+// 2. Subscribe from any component
+class MarkdownView(ctx: NoProps) : PureComponent(ctx) {
+    private val marked: MarkedAddon? by subscribingTo(addons.marked)
+
+    override fun VDom.render() {
+        val addon = marked
+        if (addon == null) {
+            ui.placeholder.segment { +"Loading..." }
+            return
+        }
+
+        ui.segment {
+            unsafe { +addon.markdown2html("# Hello, Kraft!") }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The addon property is <code>null</code> until the JS library finishes loading. The component re-renders
+        automatically
+        when the addon becomes ready — subscribing is just like any other stream.</p>
+
+    <h3>Eager vs lazy loading</h3>
+
+    <ul>
+        <li><code>marked()</code> — <strong>eager</strong> (default). Loads immediately on app startup.</li>
+        <li><code>pixiJs(lazy = true)</code> — <strong>lazy</strong>. Loads only when the first component subscribes.
+            Good for heavy libraries (pixi.js is ~300 KB) that aren't needed on every page.
+        </li>
+    </ul>
+
+    <h2>Available addons</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
   <thead>
     <tr>
       <th>Addon</th>
@@ -30,6 +78,17 @@ import {dep, kraftLiveExamples, githubRepo} from '../../../data/site';
     </tr>
   </thead>
   <tbody>
+  <tr>
+      <td><code>marked</code></td>
+      <td><a href="https://www.npmjs.com/package/marked" target="_blank" rel="noopener">marked</a> + <a
+              href="https://www.npmjs.com/package/dompurify" target="_blank" rel="noopener">DOMPurify</a></td>
+      <td>Markdown → sanitized HTML</td>
+  </tr>
+  <tr>
+      <td><code>prismjs</code></td>
+      <td><a href="https://www.npmjs.com/package/prismjs" target="_blank" rel="noopener">Prism</a></td>
+      <td>Syntax highlighting with plugins</td>
+  </tr>
     <tr>
       <td><code>chartjs</code></td>
         <td><a href="https://www.npmjs.com/package/chart.js" target="_blank" rel="noopener">Chart.js</a></td>
@@ -38,33 +97,27 @@ import {dep, kraftLiveExamples, githubRepo} from '../../../data/site';
     <tr>
       <td><code>pdfjs</code></td>
         <td><a href="https://www.npmjs.com/package/pdfjs-dist" target="_blank" rel="noopener">pdf.js</a></td>
-      <td>Render PDFs in-browser</td>
+        <td>Render PDFs in-browser (CDN-loaded)</td>
     </tr>
     <tr>
-      <td><code>prismjs</code></td>
-        <td><a href="https://www.npmjs.com/package/prismjs" target="_blank" rel="noopener">Prism</a></td>
-      <td>Syntax highlighting</td>
-    </tr>
-    <tr>
-      <td><code>konva</code></td>
-        <td><a href="https://www.npmjs.com/package/konva" target="_blank" rel="noopener">Konva</a></td>
-      <td>2D canvas graphics</td>
-    </tr>
-    <tr>
-      <td><code>marked</code></td>
-        <td><a href="https://www.npmjs.com/package/marked" target="_blank" rel="noopener">marked</a> + <a
-                href="https://www.npmjs.com/package/dompurify" target="_blank" rel="noopener">DOMPurify</a></td>
-      <td>Markdown rendering</td>
+        <td><code>pixijs</code></td>
+        <td><a href="https://www.npmjs.com/package/pixi.js" target="_blank" rel="noopener">PixiJS v8</a></td>
+        <td>2D WebGL/WebGPU rendering</td>
     </tr>
     <tr>
       <td><code>signaturepad</code></td>
         <td><a href="https://www.npmjs.com/package/signature_pad" target="_blank" rel="noopener">signature_pad</a></td>
       <td>Capture handwritten signatures</td>
     </tr>
+  <tr>
+      <td><code>jwtdecode</code></td>
+      <td><a href="https://www.npmjs.com/package/jwt-decode" target="_blank" rel="noopener">jwt-decode</a></td>
+      <td>Decode JWT tokens client-side</td>
+    </tr>
     <tr>
       <td><code>avatars</code></td>
         <td><a href="https://www.npmjs.com/package/minidenticons" target="_blank" rel="noopener">minidenticons</a></td>
-      <td>Generate SVG avatars from strings</td>
+        <td>SVG identicons from strings</td>
     </tr>
     <tr>
       <td><code>browserdetect</code></td>
@@ -72,24 +125,20 @@ import {dep, kraftLiveExamples, githubRepo} from '../../../data/site';
       <td>Browser and OS detection</td>
     </tr>
     <tr>
-      <td><code>jwtdecode</code></td>
-        <td><a href="https://www.npmjs.com/package/jwt-decode" target="_blank" rel="noopener">jwt-decode</a></td>
-      <td>Decode JWT tokens client-side</td>
-    </tr>
-    <tr>
       <td><code>nxcompile</code></td>
-        <td><a href="https://www.npmjs.com/package/@aspect-build/rules_js" target="_blank" rel="noopener">@nx-js/compiler-util</a>
+        <td><a href="https://www.npmjs.com/package/@nx-js/compiler-util" target="_blank" rel="noopener">@nx-js/compiler-util</a>
         </td>
-      <td>Sandbox JS code execution</td>
+        <td>Sandboxed JS code execution</td>
     </tr>
     <tr>
       <td><code>sourcemappedstacktrace</code></td>
         <td><a href="https://www.npmjs.com/package/sourcemapped-stacktrace" target="_blank" rel="noopener">sourcemapped-stacktrace</a>
         </td>
-      <td>Map minified stack traces</td>
+        <td>Map minified stack traces to source</td>
     </tr>
   </tbody>
 </table>
+    </div>
 
 <h2>Adding addons</h2>
 
@@ -97,23 +146,65 @@ import {dep, kraftLiveExamples, githubRepo} from '../../../data/site';
 
 <Code code={`jsMain {
     dependencies {
-        implementation("${dep.kraftAddonChartJs}")
+        implementation("${dep.kraftAddonMarked}")
         implementation("${dep.kraftAddonPrismJs}")
+        implementation("${dep.kraftAddonChartJs}")
         // ... add the ones you need
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<h2>Chart.js — Data visualization</h2>
+    <h2>marked — Markdown rendering</h2>
 
-<p>Render reactive charts that update with your component state:</p>
+    <Code code={`class MarkdownView(ctx: NoProps) : PureComponent(ctx) {
+    private val marked: MarkedAddon? by subscribingTo(addons.marked)
+
+    override fun VDom.render() {
+        val addon = marked ?: return ui.placeholder.segment { +"Loading..." }
+
+        ui.segment {
+            unsafe {
+                +addon.markdown2html("""
+                    # Hello
+                    - item 1
+                    - item 2
+                    \`inline code\`
+                """.trimIndent())
+            }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p><code>markdown2html()</code> sanitizes the output through DOMPurify automatically, so user-generated markdown
+        can't inject <code>&lt;script&gt;</code> tags.</p>
+
+    <h2>prismjs — Syntax highlighting</h2>
+
+    <p>PrismJS is special — the <code>Prism</code> component handles loading internally, so you use it directly without
+        <code>subscribingTo</code>:</p>
+
+    <Code code={`override fun VDom.render() {
+    PrismKotlin("""
+        fun greet(name: String) = "Hello, ${'$'}name!"
+    """.trimIndent()) {
+        lineNumbers()
+        copyToClipboard()
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Language components: <code>PrismKotlin</code>, <code>PrismJava</code>, <code>PrismJavascript</code>,
+        <code>PrismJson</code>, <code>PrismHtml</code>, <code>PrismCss</code>, <code>PrismXml</code>,
+        <code>PrismRust</code>,
+        <code>PrismTypescript</code>, and more.</p>
+
+    <p>Plugins: <code>lineNumbers()</code>, <code>copyToClipboard()</code>, <code>inlineColor()</code>,
+        <code>showLanguage()</code>.</p>
+
+    <h2>chartjs — Data visualization</h2>
 
 <Code code={`class SalesChart(ctx: NoProps) : PureComponent(ctx) {
+    private val chart: ChartJsAddon? by subscribingTo(addons.chartJs)
 
-    // Animate the chart — multiply data by a sine wave
-    private val factor by subscribingTo(
-        ticker(1.seconds).map { 1.0 + sin(it.count * 10 * PI / 180.0) }
-    )
-
+    // ChartJsComponent subscribes to the addon internally — just use it directly
     override fun VDom.render() {
         div {
             css { height = 50.vh }
@@ -126,11 +217,7 @@ import {dep, kraftLiveExamples, githubRepo} from '../../../data/site';
                         datasets = arrayOf(jsObject {
                             label = "Sales"
                             data = arrayOf(12, 19, 3, 5, 8)
-                                .map { it * factor }
-                                .toTypedArray()
-                            backgroundColor = value(
-                                "rgba(99, 132, 255, 0.5)",
-                            )
+                            backgroundColor = value("rgba(99, 132, 255, 0.5)")
                         })
                     }
                 }
@@ -139,87 +226,87 @@ import {dep, kraftLiveExamples, githubRepo} from '../../../data/site';
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p>The chart re-renders whenever <code>factor</code> changes — reactive charts with no extra wiring.</p>
+    <h2>pixijs — 2D WebGL/WebGPU</h2>
 
-<h2>Prism.js — Syntax highlighting</h2>
+    <p>PixiJS is a hardware-accelerated 2D renderer for games and interactive graphics. Register it as lazy — it's a big
+        library and usually only needed on specific pages:</p>
 
-<p>Display code with syntax highlighting:</p>
+    <Code code={`addons {
+    pixiJs(lazy = true)
+}`} lang="kotlin" theme="vitesse-dark"/>
 
-<Code code={`override fun VDom.render() {
-    PrismKotlin(""${'"'}
-        fun greet(name: String) = "Hello, ${'$'}{'${'$'}'}name!"
-    ""${'"'}.trimIndent()) {
-        lineNumbers()
-        copyToClipboard()
-    }
+    <Code code={`class Scene(ctx: NoProps) : PureComponent(ctx) {
+    private val pixi: PixiJsAddon? by subscribingTo(addons.pixiJs)
+    private var app: Application? = null
+    private var starting: Boolean = false
 
-    PrismJson(""${'"'}{ "status": "ok" }""${'"'}) {
-        lineNumbers(start = 1)
-    }
-
-    PrismHtml("<div>Hello</div>") {
-        lineNumbers(softWrap = true)
-    }
-}`} lang="kotlin" theme="vitesse-dark" />
-
-<p>Available language components: <code>PrismKotlin</code>, <code>PrismJava</code>, <code>PrismJavascript</code>, <code>PrismJson</code>, <code>PrismHtml</code>, <code>PrismCss</code>, and more.</p>
-
-<p>Plugins: <code>lineNumbers()</code>, <code>copyToClipboard()</code>, <code>inlineColor()</code>.</p>
-
-<h2>PDF.js — PDF viewer</h2>
-
-<p>Embed a scrollable PDF viewer:</p>
-
-<Code code={`override fun VDom.render() {
-    ScrollingPdfViewer(
-        src = PdfSource.Url("https://example.com/document.pdf"),
-        options = ScrollingPdfViewer.Options(
-            maxHeightLandscapeVh = 80,
-            maxHeightPortraitVh = 80,
-            scaleRange = 0.1..3.0,
-        ),
-        onChange = { state ->
-            console.log("Page ${'$'}{state.currentPage} of ${'$'}{state.totalPages}")
-        },
-    )
-}`} lang="kotlin" theme="vitesse-dark" />
-
-<h2>Konva — 2D canvas</h2>
-
-<p>Full access to the Konva canvas library for graphics-heavy applications:</p>
-
-<Code code={`class CanvasDemo(ctx: NoProps) : PureComponent(ctx) {
     init {
         lifecycle {
-            onMount {
-                dom?.let { container ->
-                    val stage = Stage(jsObject {
-                        this.container = container
-                        width = container.clientWidth
-                        height = container.clientHeight
-                    })
-
-                    val layer = Layer(jsObject<LayerConfig> {
-                        listening = true
-                    })
-                    stage.add(layer)
-
-                    layer.add(Circle(jsObject {
-                        x = 200; y = 200
-                        radius = 50
-                        fill = "#5c7cfa"
-                    }))
-                }
+            onMount { tryStart() }
+            onUpdate { tryStart() }
+            onUnmount {
+                app?.destroy(rendererDestroy = true)
+                app = null
             }
         }
     }
 
+    private fun tryStart() {
+        val addon = pixi ?: return
+        if (app != null || starting) return
+        val container = dom as? HTMLDivElement ?: return
+
+        starting = true
+        launch {
+            val a = addon.createApplication()
+            a.init(jsObject {
+                width = 800
+                height = 600
+                backgroundColor = 0x1a1a2e
+            }).await()
+            container.append(a.canvas)
+            app = a
+
+            // Draw a red rectangle
+            val g = addon.createGraphics()
+            g.rect(100.0, 100.0, 200.0, 150.0).fill(0xff3355)
+            a.stage.addChild(g)
+        }
+    }
+
     override fun VDom.render() {
-        div { css { width = 100.pct; height = 400.px } }
+        div { css { width = 800.px; height = 600.px } }
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<h2>Signature Pad — Capture signatures</h2>
+    <Aside>The <code>starting</code> flag prevents a race: <code>onMount</code> and <code>onUpdate</code> both call
+        <code>tryStart()</code>, but the <code>launch {}</code> is async. Without a sync flag, you'd create two
+        Applications before the first finishes.
+    </Aside>
+
+    <h2>pdfjs — PDF viewer</h2>
+
+    <Code code={`class DocumentView(ctx: NoProps) : PureComponent(ctx) {
+    private val pdf: PdfJsAddon? by subscribingTo(addons.pdfJs)
+
+    override fun VDom.render() {
+        ScrollingPdfViewer(
+            src = PdfSource.Url("https://example.com/document.pdf"),
+            options = ScrollingPdfViewer.Options(
+                maxHeightLandscapeVh = 80,
+                maxHeightPortraitVh = 80,
+                scaleRange = 0.1..3.0,
+            ),
+            onChange = { state ->
+                console.log("Page ${'$'}{state.currentPage} of ${'$'}{state.totalPages}")
+            },
+        )
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+    <p>pdf.js is loaded from a CDN via <code>ScriptLoader</code>, not bundled with your app.</p>
+
+    <h2>signaturepad — Capture signatures</h2>
 
 <Code code={`class SignatureCapture(ctx: NoProps) : PureComponent(ctx) {
     private var signaturePng: FileBase64? by value(null)
@@ -237,11 +324,9 @@ import {dep, kraftLiveExamples, githubRepo} from '../../../data/site';
         }
 
         padRef { pad ->
-            ui.buttons {
-                ui.button {
-                    onClick { pad.clear() }
-                    icon.eraser(); +"Clear"
-                }
+            ui.button {
+                onClick { pad.clear() }
+                icon.eraser(); +"Clear"
             }
         }
 
@@ -251,71 +336,100 @@ import {dep, kraftLiveExamples, githubRepo} from '../../../data/site';
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p>Export as PNG, JPG, or SVG with <code>toPng()</code>, <code>toJpg(quality)</code>, <code>toSvg()</code>.</p>
+    <p>Export as PNG, JPG, or SVG via <code>toPng()</code>, <code>toJpg(quality)</code>, <code>toSvg()</code>.</p>
 
-<h2>Marked — Markdown rendering</h2>
+    <h2>jwtdecode — Decode JWTs</h2>
 
-<p>Render markdown to HTML with sanitization:</p>
+    <Code code={`class TokenInspector(ctx: NoProps) : PureComponent(ctx) {
+    private val jwt: JwtDecodeAddon? by subscribingTo(addons.jwtDecode)
+    private var token by value("eyJhbGc...")
 
-<Code code={`override fun VDom.render() {
-    val markdownSource = ""${'"'}
-        # Hello World
-        - Item 1
-        - Item 2
+    override fun VDom.render() {
+        val addon = jwt ?: return
+        val claims = addon.decodeJwtAsMap(token)
 
-        ${'`'}${'`'}${'`'}kotlin
-        fun main() = println("Hello!")
-        ${'`'}${'`'}${'`'}
-    ""${'"'}.trimIndent()
+        pre { +JSON.stringify(addon.decodeJwt(token)) }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
 
-    ui.segment {
-        unsafe {
-            marked.use(jsObject { mangle = false; headerIds = false })
-            +markdown2html(markdownSource)
+    <h2>avatars — SVG identicons</h2>
+
+    <Code code={`class UserAvatar(ctx: Ctx<Props>) : Component<UserAvatar.Props>(ctx) {
+    data class Props(val email: String)
+
+    private val avatars: AvatarsAddon? by subscribingTo(addons.avatars)
+
+    override fun VDom.render() {
+        val addon = avatars ?: return
+        img { src = addon.getDataUrl(props.email) }
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+    <h2>browserdetect — Browser & OS info</h2>
+
+    <Code code={`class Diagnostics(ctx: NoProps) : PureComponent(ctx) {
+    private val bd: BrowserDetectAddon? by subscribingTo(addons.browserDetect)
+
+    override fun VDom.render() {
+        val addon = bd ?: return
+        val detect = addon.forCurrentBrowser()
+
+        ui.list {
+            li { +"Browser: ${'$'}{detect.getBrowser().name}" }
+            li { +"OS: ${'$'}{detect.getOs().name}" }
+            li { +"Platform: ${'$'}{detect.getPlatform().type}" }
+            li { +"Supports PDF: ${'$'}{detect.supportsPdf()}" }
         }
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p><code>marked.use()</code> configures the parser. <code>markdown2html()</code> renders and sanitizes the output via DOMPurify.</p>
+    <h2>Writing your own addon</h2>
 
-<h2>Avatars — Generated identicons</h2>
+    <p>Not seeing what you need? The addon pattern is ~50 lines of Kotlin:</p>
 
-<p>Generate unique SVG avatars from any string:</p>
+    <Code code={`package my.app.addons.fuse
 
-<Code code={`// Get an SVG string
-val svg = Avatars.MinIdenticon.get(name = "alice@example.com")
+import io.peekandpoke.kraft.KraftDsl
+import io.peekandpoke.kraft.addons.registry.*
+import kotlinx.coroutines.await
+import kotlin.js.Promise
 
-// Get a data URL for use in <img> tags
-val dataUrl = Avatars.MinIdenticon.getDataUrl(name = "alice@example.com")
-
-img { src = dataUrl }`} lang="kotlin" theme="vitesse-dark" />
-
-<h2>Script Loader</h2>
-
-<p>Need a JS library that doesn't have a Kraft addon? Load it dynamically:</p>
-
-<Code code={`ui.button {
-    onClick {
-        launch {
-            val result = ScriptLoader.loadJavascript(
-                "https://js.stripe.com/v3/"
-            ).await()
-
-            val stripe = window.asDynamic().Stripe("pk_test_...")
-        }
+// Facade — the typed API your components will use
+class FuseAddon internal constructor(
+    private val fuseModule: dynamic,
+) {
+    fun <T> createSearch(items: Array<T>, options: dynamic): dynamic {
+        val ctor = fuseModule
+        return js("new ctor(items, options)")
     }
-    +"Load Stripe"
-}`} lang="kotlin" theme="vitesse-dark" />
+}
 
-<p>For ES modules:</p>
+// Registry key + DSL + accessor
+val fuseAddonKey = AddonKey<FuseAddon>("fuse")
 
-<Code code={`val module = ScriptLoader.load(
-    ScriptLoader.Javascript.Module<MyModuleType>(
-        src = "https://esm.sh/my-library@1.0"
-    )
-).await()`} lang="kotlin" theme="vitesse-dark" />
+@KraftDsl
+fun AddonRegistryBuilder.fuse(lazy: Boolean = false): Addon<FuseAddon> = register(
+    key = fuseAddonKey,
+    name = "fuse",
+    lazy = lazy,
+) {
+    @Suppress("UnsafeCastFromDynamic")
+    val module: dynamic = (js("import('fuse.js')") as Promise<dynamic>).await()
+
+    FuseAddon(fuseModule = module.default ?: module)
+}
+
+val AddonRegistry.fuse: Addon<FuseAddon>
+    get() = this[fuseAddonKey]`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>The <code>val ctor = fuseModule</code> pattern is important: <code>js("new this.x(...)")</code> doesn't work
+        because <code>this</code> inside <code>js()</code> refers to the JavaScript <code>this</code>, not the Kotlin
+        instance. Capture the reference into a local val first.
+    </Aside>
 
     <h2>See it in action</h2>
+
+    <p>The <code>kraft/examples/addons</code> project demos every addon, including the PixiJS Breakout game:</p>
 
     <ExampleEmbed
             src={kraftLiveExamples.addons}

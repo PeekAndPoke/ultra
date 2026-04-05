@@ -54,8 +54,14 @@ links to docs.
 
 ### G7. ES2015 for all Kotlin/JS
 
-All ~40 Kotlin/JS modules must compile with ES2015 target. Implementation: single-file change in root
-`build.gradle.kts` (plan at `.claude/plans/es2015-migration.md`). Verification: generated JS uses `class X extends Y`
+All ~40 Kotlin/JS modules must compile with ES2015 target. **Status: UNBLOCKED (2026-04-04).**
+The original blocker on the `PreactLLC` bridge has been resolved with a plain JS function bridge that works
+under both ES5 and ES2015 targets. Full details at `.claude/plans/es2015-migration.md`.
+
+Currently enabled and verified in 4 applications: `hello-world`, `fomanticui`, `addons`, `funktor-demo:adminapp`.
+Konva addon removed (was the only `@JsModule` producing invalid `import { default }` under ES2015). Remaining
+work: roll the target setting out to all ~40 modules (was originally planned as a single-file change in root
+`build.gradle.kts`, now being applied per-application). Verification: generated JS uses `class X extends Y`
 syntax, all tests pass, browser smoke test passes.
 
 ### G8. ApiRoute refactor — remove OutgoingConverter parameter
@@ -182,7 +188,7 @@ family.
 | 7  | Fix `queueIfNotPresent` TOCTOU — unique compound index                   | HIGH     | `funktor/cluster/.../backgroundjobs/BackgroundJobs.kt:186-193`        |
 | 8  | Fix lock cleanup — skip if `aliveServerIds` is empty                     | HIGH     | `funktor/cluster/.../locks/workers/GlobalLocksCleanupWorker.kt:28-48` |
 | 9  | Fix attack detection DoS — remove delay, return 404 immediately          | HIGH     | `funktor/rest/.../ApiStatusPages.kt:98-105`                           |
-| 10 | Apply ES2015 migration (single-file change)                              | GATE G7  | `build.gradle.kts` (root)                                             |
+| 10 | Apply ES2015 migration — **SOLVED** (bridge fix + per-app rollout)       | GATE G7  | `kraft/core/src/jsMain/kotlin/vdom/preact/PreactLLC.kt` + app configs |
 
 **Parallelism:** Items 1, 2, 3-4, 5-9, 10 can be worked in parallel (vault, workers, auth, cluster, build).
 

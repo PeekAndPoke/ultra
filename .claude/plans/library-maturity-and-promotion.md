@@ -6,6 +6,29 @@
 
 ---
 
+## What Changed Since Last Assessment (April 4)
+
+- **Kraft addon ecosystem shipped** — all 11 addons migrated from static `@JsModule` imports to the new
+  `AddonRegistry` pattern with dynamic `js("import(...)")`: marked, signaturepad, jwtdecode, browserdetect,
+  avatars, nxcompile, sourcemappedstacktrace, prismjs, chartjs, pdfjs, **pixijs (new)**. Each has a facade,
+  TestBed tests, and CodeBlock-documented examples. Old `@JsModule`-based code removed.
+- **pixijs addon added** — replaces konva. ~100 lines of hand-written minimal externals (Application, Container,
+  Graphics, Text, Ticker, Rectangle). `PixiJsAddon` facade. Demo: playable **Breakout game** at
+  `kraft/examples/addons/src/jsMain/kotlin/pixijs/BreakoutExample.kt`. Lazy-loaded (~300KB only fetched on demand).
+- **konva removed** — unused, and its `@JsModule("konva")` generated invalid `import { default }` under ES2015.
+  Deleted from `settings.gradle`, `kraft/addons/konva/`, and example code.
+- **ES2015 migration: SOLVED** — was blocked by Kotlin/JS IR static-factory generation conflicting with Preact's
+  `new Ctor(...)`. Fixed with a plain JS function bridge in `PreactLLC.kt` that works under both ES5 and ES2015.
+  Enabled in `hello-world`, `fomanticui`, `addons`, `funktor-demo:adminapp`. Plan updated at
+  `.claude/plans/es2015-migration.md`.
+- **Karakum evaluated and deprioritized** — 1.0.0-alpha.50 generated 708 files / ~65k lines from pixi.js .d.ts
+  but output was unusable (1,945 unhandled imports, TypeScript leakage, compiler crash). Hand-written minimal
+  externals beat generated ones for complex libraries. Findings captured in `.claude/skills/karakum-setup/`.
+- **hello-world example thinned out** — was 449 lines with forms, modals, DateTime fields, DataLoader (all
+  belongs in the fomanticui example). Now ~100 lines across 4 files, focused on core concepts only: app bootstrap,
+  PureComponent/Component<Props>, `by value()`, props, events, `subscribingTo(stream)`.
+- **Test counts** — all 18 addon tests + 329 core tests pass.
+
 ## What Changed Since Last Assessment (April 2)
 
 - **Funktor API tests implemented** — All Funktor modules now have API/integration tests.

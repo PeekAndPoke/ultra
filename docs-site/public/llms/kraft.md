@@ -56,7 +56,8 @@ This means:
 - **Routing** — Type-safe routes with params, middleware for auth guards, and nested layouts.
 - **Forms & Validation** — Two-way binding, field validation, draft/commit pattern — all type-safe.
 - **SemanticUI DSL** — `ui.blue.button { +"Click" }` — a beautiful, fluent API for FomanticUI.
-- **12 Addons** — ChartJS, PDF viewer, syntax highlighting, signature pad, and more — wrapped for Kotlin.
+- **11 Addons** — ChartJS, PrismJS, PDF viewer, PixiJS (2D WebGL), markdown, signature pad, and more — loaded on demand
+  via the AddonRegistry.
 
 ## Quick taste
 
@@ -2222,23 +2223,68 @@ class KanbanBoard(ctx: NoProps) : PureComponent(ctx) {
 
 # Addons
 
-Kraft wraps popular JavaScript libraries so you can use them from Kotlin without touching JS.
+Kotlin-friendly wrappers for JavaScript libraries, loaded on demand. Every addon is dynamically imported via
+`js("import(...)")`. The JS library ships in its own webpack chunk and only downloads when a component needs it.
+
+## The AddonRegistry pattern
+
+An addon is a typed facade over a JavaScript library. Register it in your app, then subscribe to it from any
+component:
+
+```kotlin
+// 1. Register in your KraftApp builder
+val kraft = kraftApp {
+    semanticUI()
+
+    addons {
+        marked()
+        signaturePad()
+        pixiJs(lazy = true)   // only load when first component subscribes
+    }
+}
+
+// 2. Subscribe from any component
+class MarkdownView(ctx: NoProps) : PureComponent(ctx) {
+    private val marked: MarkedAddon? by subscribingTo(addons.marked)
+
+    override fun VDom.render() {
+        val addon = marked
+        if (addon == null) {
+            ui.placeholder.segment { +"Loading..." }
+            return
+        }
+
+        ui.segment {
+            unsafe { +addon.markdown2html("# Hello, Kraft!") }
+        }
+    }
+}
+```
+
+The addon property is `null` until the JS library finishes loading. The component re-renders automatically when
+the addon becomes ready — subscribing is just like any other stream.
+
+### Eager vs lazy loading
+
+- `marked()` — **eager** (default). Loads immediately on app startup.
+- `pixiJs(lazy = true)` — **lazy**. Loads only when the first component subscribes. Good for heavy libraries (pixi.js
+  is ~300 KB) that aren't needed on every page.
 
 ## Available addons
 
-| Addon                    | Wraps                                        | What it does                      |
-|--------------------------|----------------------------------------------|-----------------------------------|
-| `chartjs`                | [Chart.js](https://www.chartjs.org/)         | Bar, line, pie, radar charts      |
-| `pdfjs`                  | [pdf.js](https://mozilla.github.io/pdf.js/)  | Render PDFs in-browser            |
-| `prismjs`                | [Prism](https://prismjs.com/)                | Syntax highlighting               |
-| `konva`                  | [Konva](https://konvajs.org/)                | 2D canvas graphics                |
-| `marked`                 | [marked](https://marked.js.org/) + DOMPurify | Markdown rendering                |
-| `signaturepad`           | SignaturePad                                 | Capture handwritten signatures    |
-| `avatars`                | MinIdenticons                                | Generate SVG avatars from strings |
-| `browserdetect`          | Bowser                                       | Browser and OS detection          |
-| `jwtdecode`              | jwt-decode                                   | Decode JWT tokens client-side     |
-| `nxcompile`              | @nx-js/compiler-util                         | Sandbox JS code execution         |
-| `sourcemappedstacktrace` | sourcemapped-stacktrace                      | Map minified stack traces         |
+| Addon                    | Wraps                                        | What it does                        |
+|--------------------------|----------------------------------------------|-------------------------------------|
+| `marked`                 | [marked](https://marked.js.org/) + DOMPurify | Markdown → sanitized HTML           |
+| `prismjs`                | [Prism](https://prismjs.com/)                | Syntax highlighting with plugins    |
+| `chartjs`                | [Chart.js](https://www.chartjs.org/)         | Bar, line, pie, radar charts        |
+| `pdfjs`                  | [pdf.js](https://mozilla.github.io/pdf.js/)  | Render PDFs in-browser (CDN-loaded) |
+| `pixijs`                 | [PixiJS v8](https://pixijs.com/)             | 2D WebGL/WebGPU rendering           |
+| `signaturepad`           | SignaturePad                                 | Capture handwritten signatures      |
+| `jwtdecode`              | jwt-decode                                   | Decode JWT tokens client-side       |
+| `avatars`                | MinIdenticons                                | SVG identicons from strings         |
+| `browserdetect`          | Bowser                                       | Browser and OS detection            |
+| `nxcompile`              | @nx-js/compiler-util                         | Sandboxed JS code execution         |
+| `sourcemappedstacktrace` | sourcemapped-stacktrace                      | Map minified stack traces to source |
 
 ## Adding addons
 
@@ -2254,9 +2300,9 @@ jsMain {
 }
 ```
 
-## Chart.js — Data visualization
+## chartjs — Data visualization
 
-Render reactive charts that update with your component state:
+The `ChartJs` component subscribes to the addon internally — just register `chartJs()` in your app and use it:
 
 ```kotlin
 class SalesChart(ctx: NoProps) : PureComponent(ctx) {
@@ -2280,9 +2326,7 @@ class SalesChart(ctx: NoProps) : PureComponent(ctx) {
                             data = arrayOf(12, 19, 3, 5, 8)
                                 .map { it * factor }
                                 .toTypedArray()
-                            backgroundColor = value(
-                                "rgba(99, 132, 255, 0.5)",
-                            )
+                            backgroundColor = value("rgba(99, 132, 255, 0.5)")
                         })
                     }
                 }
@@ -2342,42 +2386,64 @@ override fun VDom.render() {
 }
 ```
 
-## Konva — 2D canvas
+## pixijs — 2D WebGL/WebGPU
 
-Full access to the Konva canvas library for graphics-heavy applications:
+PixiJS is a hardware-accelerated 2D renderer for games and interactive graphics. Register it as lazy — it's a big
+library and usually only needed on specific pages:
 
 ```kotlin
-class CanvasDemo(ctx: NoProps) : PureComponent(ctx) {
+addons {
+    pixiJs(lazy = true)
+}
+```
+
+```kotlin
+class Scene(ctx: NoProps) : PureComponent(ctx) {
+    private val pixi: PixiJsAddon? by subscribingTo(addons.pixiJs)
+    private var app: Application? = null
+    private var starting: Boolean = false
+
     init {
         lifecycle {
-            onMount {
-                dom?.let { container ->
-                    val stage = Stage(jsObject {
-                        this.container = container
-                        width = container.clientWidth
-                        height = container.clientHeight
-                    })
-
-                    val layer = Layer(jsObject<LayerConfig> {
-                        listening = true
-                    })
-                    stage.add(layer)
-
-                    layer.add(Circle(jsObject {
-                        x = 200; y = 200
-                        radius = 50
-                        fill = "#5c7cfa"
-                    }))
-                }
+            onMount { tryStart() }
+            onUpdate { tryStart() }
+            onUnmount {
+                app?.destroy(rendererDestroy = true)
+                app = null
             }
         }
     }
 
+    private fun tryStart() {
+        val addon = pixi ?: return
+        if (app != null || starting) return
+        val container = dom as? HTMLDivElement ?: return
+
+        starting = true
+        launch {
+            val a = addon.createApplication()
+            a.init(jsObject {
+                width = 800
+                height = 600
+                backgroundColor = 0x1a1a2e
+            }).await()
+            container.append(a.canvas)
+            app = a
+
+            val g = addon.createGraphics()
+            g.rect(100.0, 100.0, 200.0, 150.0).fill(0xff3355)
+            a.stage.addChild(g)
+        }
+    }
+
     override fun VDom.render() {
-        div { css { width = 100.pct; height = 400.px } }
+        div { css { width = 800.px; height = 600.px } }
     }
 }
 ```
+
+The `starting` flag prevents a race: `onMount` and `onUpdate` both call `tryStart()`, but the `launch { }` is async.
+Without a sync flag, you'd create two Applications before the first finishes.
 
 ## Signature Pad — Capture signatures
 
@@ -2415,46 +2481,118 @@ class SignatureCapture(ctx: NoProps) : PureComponent(ctx) {
 
 Export as PNG, JPG, or SVG with `toPng()`, `toJpg(quality)`, `toSvg()`.
 
-## Marked — Markdown rendering
-
-Render markdown to HTML with sanitization:
+## marked — Markdown rendering
 
 ```kotlin
-override fun VDom.render() {
-    val markdownSource = """
-        # Hello World
-        - Item 1
-        - Item 2
+class MarkdownView(ctx: NoProps) : PureComponent(ctx) {
+    private val marked: MarkedAddon? by subscribingTo(addons.marked)
 
-        ```kotlin
-        fun main() = println("Hello!")
-        ```
-    """.trimIndent()
+    override fun VDom.render() {
+        val addon = marked ?: return ui.placeholder.segment { +"Loading..." }
 
-    ui.segment {
-        unsafe {
-            marked.use(jsObject { mangle = false; headerIds = false })
-            +markdown2html(markdownSource)
+        ui.segment {
+            unsafe { +addon.markdown2html("# Hello\n- item 1\n- item 2") }
         }
     }
 }
 ```
 
-`marked.use()` configures the parser. `markdown2html()` renders and sanitizes the output via DOMPurify.
+`markdown2html()` sanitizes the output through DOMPurify automatically, so user-generated markdown can't inject
+`<script>` tags.
 
-## Avatars — Generated identicons
+## jwtdecode — Decode JWTs
+
+```kotlin
+class TokenInspector(ctx: NoProps) : PureComponent(ctx) {
+    private val jwt: JwtDecodeAddon? by subscribingTo(addons.jwtDecode)
+    private var token by value("eyJhbGc...")
+
+    override fun VDom.render() {
+        val addon = jwt ?: return
+        val claims = addon.decodeJwtAsMap(token)
+
+        pre { +JSON.stringify(addon.decodeJwt(token)) }
+    }
+}
+```
+
+## avatars — SVG identicons
 
 Generate unique SVG avatars from any string:
 
 ```kotlin
-// Get an SVG string
-val svg = Avatars.MinIdenticon.get(name = "alice@example.com")
+class UserAvatar(ctx: Ctx<Props>) : Component<UserAvatar.Props>(ctx) {
+    data class Props(val email: String)
 
-// Get a data URL for use in <img> tags
-val dataUrl = Avatars.MinIdenticon.getDataUrl(name = "alice@example.com")
+    private val avatars: AvatarsAddon? by subscribingTo(addons.avatars)
 
-img { src = dataUrl }
+    override fun VDom.render() {
+        val addon = avatars ?: return
+        img { src = addon.getDataUrl(props.email) }
+    }
+}
 ```
+
+## browserdetect — Browser & OS info
+
+```kotlin
+class Diagnostics(ctx: NoProps) : PureComponent(ctx) {
+    private val bd: BrowserDetectAddon? by subscribingTo(addons.browserDetect)
+
+    override fun VDom.render() {
+        val addon = bd ?: return
+        val detect = addon.forCurrentBrowser()
+
+        ui.list {
+            li { +"Browser: ${detect.getBrowser().name}" }
+            li { +"OS: ${detect.getOs().name}" }
+            li { +"Platform: ${detect.getPlatform().type}" }
+        }
+    }
+}
+```
+
+## Writing your own addon
+
+The addon pattern is ~50 lines of Kotlin:
+
+```kotlin
+package my.app.addons.fuse
+
+import io.peekandpoke.kraft.KraftDsl
+import io.peekandpoke.kraft.addons.registry.*
+import kotlinx.coroutines.await
+import kotlin.js.Promise
+
+// Facade — the typed API your components will use
+class FuseAddon internal constructor(
+    private val fuseModule: dynamic,
+) {
+    fun <T> createSearch(items: Array<T>, options: dynamic): dynamic {
+        val ctor = fuseModule
+        return js("new ctor(items, options)")
+    }
+}
+
+// Registry key + DSL + accessor
+val fuseAddonKey = AddonKey<FuseAddon>("fuse")
+
+@KraftDsl
+fun AddonRegistryBuilder.fuse(lazy: Boolean = false): Addon<FuseAddon> = register(
+    key = fuseAddonKey,
+    name = "fuse",
+    lazy = lazy,
+) {
+    val module: dynamic = (js("import('fuse.js')") as Promise<dynamic>).await()
+    FuseAddon(fuseModule = module.default ?: module)
+}
+
+val AddonRegistry.fuse: Addon<FuseAddon>
+    get() = this[fuseAddonKey]
+```
+
+The `val ctor = fuseModule` pattern is important: `js("new this.x(...)")` doesn't work because `this` inside `js()`
+refers to the JavaScript `this`, not the Kotlin instance. Capture the reference into a local val first.
 
 ## Script Loader
 
