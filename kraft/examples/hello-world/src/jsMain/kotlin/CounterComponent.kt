@@ -5,9 +5,8 @@ import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.Tag
-import kotlinx.html.button
-import kotlinx.html.div
 
 @Suppress("FunctionName")
 fun Tag.CounterComponent(start: Int) = comp(
@@ -22,14 +21,24 @@ class CounterComponent(ctx: Ctx<Props>) : Component<CounterComponent.Props>(ctx)
         val start: Int,
     )
 
+    //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // `by value(...)` creates reactive state — changing it triggers a re-render.
     private var counter: Int by value(props.start)
 
+    //  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
+
     override fun VDom.render() {
-        div {
-            div { +"Value: $counter" }
-            div {
-                button { onClick { counter-- }; +"Minus" }
-                button { onClick { counter++ }; +"Plus" }
+        ui.segment {
+            ui.header H3 { +"Value: $counter" }
+
+            ui.button {
+                onClick { counter-- }
+                +"−"
+            }
+            ui.blue.button {
+                onClick { counter++ }
+                +"+"
             }
         }
     }
