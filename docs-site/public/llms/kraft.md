@@ -426,6 +426,23 @@ class LiveSearch(ctx: Ctx<Props>) : Component<LiveSearch.Props>(ctx) {
 **Key point:** Stream subscriptions (via `subscribingTo()`) auto-unsubscribe when the component unmounts. You don't need
 to clean them up manually.
 
+**Subscribing to the same hook multiple times is totally fine.** Handlers don't replace each other — they stack. When
+the event fires, each registered handler is called one after the other in the order it was registered. This lets you
+split unrelated concerns into separate blocks without merging them into a single handler:
+
+```kotlin
+init {
+    lifecycle {
+        onMount {
+            analytics.trackView("dashboard")
+        }
+        onMount {
+            tooltip = Tooltip(dom!!)
+        }
+    }
+}
+```
+
 ## Component references
 
 Sometimes a parent needs to call methods on a child. Use `ComponentRef`:

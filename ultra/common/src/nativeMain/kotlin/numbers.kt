@@ -12,6 +12,11 @@ internal actual fun Number.toFixedInternal(digits: Int): String {
     val fracPart = rounded % factor.toLong()
 
     val sign = if (dbl < 0.0) "-" else ""
+
+    if (digits == 0) {
+        return "$sign$intPart"
+    }
+
     val fracStr = fracPart.toString().padStart(digits, '0')
 
     return "$sign$intPart.$fracStr"

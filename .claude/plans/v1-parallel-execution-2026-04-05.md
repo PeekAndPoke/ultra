@@ -22,21 +22,45 @@
 
 ---
 
-## Critical Path (Sequential Bottleneck)
+## Critical Path — UPDATED 2026-04-05
 
-**Monko Phase 2 → Phase 3 portability → Phase 3 tests**
+**Monko Phase 2 and Phase 3 porting are effectively DONE.** The critical path dissolved once we looked
+at the actual code — Track B is ahead of where the plan assumed.
 
-Nothing else blocks this chain. All other work runs in parallel around it.
+### What's actually shipped
 
-```
-Monko: save() + remove() + cursor + hooks
-  ↓
-Port 7 repos to Monko (cluster × 5, logging × 1, messaging × 1)
-  ↓
-Funktor test blitz for those repos (Monko + Karango variants)
-```
+**Monko Phase 2 (core API):** DONE
 
-**Owner recommendation:** One dedicated agent/person. This is ~3-4 weeks of focused work.
+- `save()` / `update()` with hooks ✓
+- `remove()` with hooks ✓
+- `Repository.Hooks<T>` infrastructure (onBeforeSave, onAfterSave, onAfterDelete) ✓
+- `MonkoCursor.fullCount` and `MonkoCursor.timeMs` ✓
+- Index management basics (ensure/validate/recreate, TTL indexes) ✓
+
+**Monko Phase 2 (open items):**
+
+- `insertMany()` optimization in MonkoDriver — workaround (loop insert) exists, not blocking
+- Standalone Monko CRUD test suite — only 1 driver test today, target 15+
+
+**Portability Phase 3 (7 repos):** DONE — and then some
+| Repo | Monko impl |
+|------|-----------|
+| BackgroundJobsQueueRepo | ✓ |
+| BackgroundJobsArchiveRepo | ✓ |
+| GlobalLocksRepo | ✓ |
+| ServerBeaconRepo | ✓ |
+| LogRepository + LogsStorage | ✓ |
+| SentMessagesRepo | ✓ |
+| (3 bonus: RandomData, RandomCache, WorkerHistory) | ✓ |
+
+Each ported repo has at least one Monko-backed integration spec.
+
+### What Track B still needs for v1
+
+1. **Monko core test expansion** — 1 → 15+ test files covering CRUD, cursor, hooks, index management
+2. **Optional:** `insertMany()` optimization (quality-of-life, not blocking)
+
+**No more critical path.** All four tracks can run fully in parallel.
 
 ---
 
@@ -61,30 +85,23 @@ Funktor test blitz for those repos (Monko + Karango variants)
 
 ---
 
-### Track B — Database Portability (Critical Path)
+### Track B — Database Portability (Mostly Done)
 
-**Goal:** Ship Monko + port 7 funktor repos to enable database-agnostic architecture.
+**Status (2026-04-05):** Monko Phase 2 core API complete. All 7 target repos ported + 3 bonus repos.
+See "Critical Path" section above for the full shipped inventory.
 
-**Sub-tasks (sequential within track):**
+**Remaining work:**
 
-1. **Monko Phase 2 completion** (~2 weeks)
-    - `save()` / `update()`: TODO
-    - `remove()`: TODO
-    - Repository hooks: onBeforeSave, onAfterSave, onAfterDelete
-    - Cursor: fullCount, timeMs
-    - Batch insert, index management
-    - Tests: 3 → 15+ files
+1. **Monko core test expansion** — 1 → 15+ test files (driver CRUD, hooks, cursor, index management).
+   Owner: one agent, ~1 week.
 
-2. **Portability Phase 3** (~1-2 weeks, parallel across 7 repos once DSL stable)
-    - cluster/BackgroundJobsQueueRepo
-    - cluster/BackgroundJobsArchiveRepo
-    - cluster/Lock repos (3 repos)
-    - logging/LogRepository + Storage
-    - messaging/SentMessagesRepo
+2. **`insertMany()` optimization** in MonkoDriver — replace the loop-insert workaround with a bulk write.
+   Owner: quick task, ~0.5 day. Not blocking for v1.
 
-**Dependencies:** Phase 3 is **HARD BLOCKED** on Phase 2.
+3. **Funktor test blitz for ported repos** — depth coverage beyond the current 1 integration spec per
+   module. Joins Track C as test work rather than Track B as critical path.
 
-**Deliverables:** Monko feature-complete, 7 new `*MonkoRepo.kt` files, dual-backend auth pattern extended.
+**Deliverables:** Comprehensive Monko CRUD test suite, bulk insert, validated dual-backend architecture.
 
 ---
 
@@ -127,24 +144,32 @@ Funktor test blitz for those repos (Monko + Karango variants)
 
 ---
 
-## Agent Assignment Strategy
+## Agent Assignment Strategy — Updated 2026-04-05
+
+With Track B mostly shipped, the remaining work is pure parallelism — no critical path.
 
 ### 3-agent parallel mode
 
-| Agent       | Primary track                | Weeks 1-2                              | Weeks 3-4                        | Weeks 5+                      |
-|-------------|------------------------------|----------------------------------------|----------------------------------|-------------------------------|
-| **Agent 1** | Track B (DB portability)     | Monko save/remove/cursor/hooks + tests | Port 7 repos to Monko            | —                             |
-| **Agent 2** | Track A (audit + hardening)  | Wave 2 + Wave 3 audits                 | Wave 4 audit + Ultra hardening   | Wave 5 audit (Monko)          |
-| **Agent 3** | Track C + D (docs + release) | cache KDoc + FunktorConf showcase      | Funktor KDoc + ApiRoute refactor | ES2015 rollout + release prep |
+| Agent       | Primary track                | Weeks 1-2                          | Weeks 3-4                          | Weeks 5+                    |
+|-------------|------------------------------|------------------------------------|------------------------------------|-----------------------------|
+| **Agent 1** | Track A (audit + hardening)  | Wave 2 + Wave 3 audits             | Wave 4 audit + Ultra hardening     | Wave 5 audit (Monko)        |
+| **Agent 2** | Track B (Monko tests) + C    | Monko CRUD test suite + cache KDoc | Funktor KDoc pass                  | Funktor test blitz          |
+| **Agent 3** | Track C + D (docs + release) | FunktorConf showcase               | ApiRoute refactor + ES2015 rollout | Funktor docs + release prep |
 
 ### 2-agent parallel mode
 
-- **Agent 1:** Track B (critical path) + Track D release prep
-- **Agent 2:** Track A + Track C
+- **Agent 1:** Track A (audits → findings-driven fixes) + Track D (release prep)
+- **Agent 2:** Track B (Monko tests) + Track C (KDoc + FunktorConf)
 
-### Single-agent sequential mode
+### Single-agent sequential mode (recommended priority)
 
-Priority order: Monko save/remove → port 2-3 critical repos → Wave 2 audit → cache KDoc → ApiRoute refactor → release
+1. **Monko core test expansion** (~1 week) — closes the last real Track B gap
+2. **Wave 2 audit** of ultra/model, ultra/cache, ultra/datetime — findings feed Track A hardening
+3. **ultra/cache KDoc blitz** (24% → 90%) — largest single KDoc gap
+4. **ApiRoute refactor** (G8) — clean architecture before Funktor test blitz
+5. **Funktor test blitz** — raise coverage to 25%+ across auth/cluster/logging/messaging
+6. **ES2015 rollout** to remaining executable modules
+7. **Release prep** — clean build, funktor-demo E2E, version bump, publish
 
 ---
 

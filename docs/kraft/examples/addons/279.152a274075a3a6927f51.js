@@ -1,0 +1,2 @@
+(globalThis.webpackChunkkraft_examples_addons=globalThis.webpackChunkkraft_examples_addons||[]).push([[279],{1279:()=>{!function(a){var e=/("|')(?:\\(?:\r\n?|\n|.)|(?!\1)[^\\\r\n])*\1/;a.languages.json5=a.languages.extend("json",{property:[{pattern:RegExp(e.source+"(?=\\s*:)"),greedy:!0},{pattern:/(?!\s)[_$a-zA-Z\xA0-\uFFFF](?:(?!\s)[$\w\xA0-\uFFFF])*(?=\s*:)/,alias:"unquoted"}],string:{pattern:e,greedy:!0},number:/[+-]?\b(?:NaN|Infinity|0x[a-fA-F\d]+)\b|[+-]?(?:\b\d+(?:\.\d*)?|\B\.\d+)(?:[eE][+-]?\d+\b)?/})}(Prism)}}]);
+//# sourceMappingURL=279.152a274075a3a6927f51.js.map

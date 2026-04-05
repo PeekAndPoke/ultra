@@ -38,5 +38,3 @@
 //! @license BSD-3-Clause (see LICENSE in the root directory of this source tree)
 
 //! @version @js-joda/core - 3.2.0
-
-//! @version @js-joda/timezone - 2.23.0-2025b

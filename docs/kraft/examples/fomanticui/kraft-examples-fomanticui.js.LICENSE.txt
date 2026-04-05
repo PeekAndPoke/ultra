@@ -31,15 +31,6 @@
  * @license BSD-3-Clause (see LICENSE in the root directory of this source tree)
  */
 
-/**
- * Prism: Lightweight, robust, elegant syntax highlighting
- *
- * @license MIT <https://opensource.org/licenses/MIT>
- * @author Lea Verou <https://lea.verou.me>
- * @namespace
- * @public
- */
-
 //! @copyright (c) 2007-present, Stephen Colebourne & Michael Nascimento Santos
 
 //! @copyright (c) 2015-present, Philipp Thürwächter, Pattrick Hüper & js-joda contributors
@@ -47,5 +38,3 @@
 //! @license BSD-3-Clause (see LICENSE in the root directory of this source tree)
 
 //! @version @js-joda/core - 3.2.0
-
-//! @version @js-joda/timezone - 2.23.0-2025b

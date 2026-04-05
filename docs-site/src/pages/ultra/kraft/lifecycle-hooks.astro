@@ -17,6 +17,25 @@ import {Code} from 'astro:components';
     <p>Components register lifecycle handlers in their <code>init</code> block via the <code>lifecycle {}</code> DSL.
         Each hook can be registered multiple times; all handlers fire in registration order.</p>
 
+    <Aside><strong>Subscribing to the same hook multiple times is totally fine.</strong> Handlers don't replace each
+        other — they stack. When the event fires, each registered handler is called one after the other in the order it
+        was registered. This lets you split unrelated concerns into separate blocks (e.g. one <code>onMount</code> for
+        analytics, another for initializing a third-party widget) without having to merge them into a single handler.
+    </Aside>
+
+    <Code code={`init {
+    lifecycle {
+        onMount {
+            // First handler — runs first
+            analytics.trackView("dashboard")
+        }
+        onMount {
+            // Second handler — runs after the first
+            tooltip = Tooltip(dom!!)
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
     <Code code={`class MyComponent(ctx: Ctx<Props>) : Component<Props>(ctx) {
     init {
         lifecycle {
