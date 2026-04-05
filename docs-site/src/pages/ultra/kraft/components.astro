@@ -99,43 +99,26 @@ override fun VDom.render() {
 
 <h2>Lifecycle hooks</h2>
 
-<p>Components have four lifecycle hooks:</p>
+    <p>Components register lifecycle handlers in their <code>init</code> block via the <code>lifecycle {}</code> DSL —
+        <code>onMount</code>, <code>onUpdate</code>, <code>onUnmount</code>, <code>onNextProps</code>,
+        <code>onError</code>
+        (error boundaries), <code>onResize</code>, and browser window events.</p>
 
-<Code code={`class LiveSearch(ctx: Ctx<Props>) : Component<LiveSearch.Props>(ctx) {
-    data class Props(val query: String)
-
-    init {
-        lifecycle {
-            onMount {
-                // Component is now in the DOM
-                // ${'`'}dom${'`'} property gives you the HTMLElement
-                console.log("Mounted at", dom?.tagName)
-            }
-
-            onUpdate {
-                // Component re-rendered (props or state changed)
-            }
-
-            onUnmount {
-                // Component removed from DOM
-                // Streams auto-unsubscribe, but clean up other resources here
-            }
-
-            onNextProps { newProps, oldProps ->
-                // Parent sent new props
-                if (newProps.query != oldProps.query) {
-                    reload()
-                }
-            }
-        }
-    }
-
-    override fun VDom.render() {
-        // ...
+    <Code code={`init {
+    lifecycle {
+        onMount { /* component is in the DOM */ }
+        onUpdate { /* DOM updated after re-render */ }
+        onUnmount { /* component removed */ }
+        onNextProps { new, old -> /* parent sent new props */ }
+        onError { e -> /* caught from render or child */ }
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p><strong>Key point:</strong> Stream subscriptions (via <code>subscribingTo()</code>) auto-unsubscribe when the component unmounts. You don't need to clean them up manually.</p>
+    <p>See the <a href="/ultra/kraft/lifecycle-hooks">Lifecycle Hooks</a> page for the full reference with examples
+        for each hook.</p>
+
+    <p><strong>Key point:</strong> Stream subscriptions (via <code>subscribingTo()</code>) auto-unsubscribe when the
+        component unmounts. You don't need to clean them up manually.</p>
 
 <h2>Component references</h2>
 

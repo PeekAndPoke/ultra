@@ -141,13 +141,28 @@ internal abstract class PreactLLC(
     /**
      * Catches component errors.
      *
+     * Preact determines whether the error was handled by checking `_dirty` on this
+     * component after `componentDidCatch` returns — only then does it stop bubbling.
+     *
+     * - If a Kraft `onError` listener runs, we call `forceUpdate()` to mark `_dirty`,
+     *   which tells Preact "handled, stop bubbling".
+     * - If no listener is registered, we rethrow so Preact continues bubbling to the
+     *   next ancestor boundary.
+     *
      * See [PreactComponent.componentDidCatch]
      */
     override fun componentDidCatch(error: dynamic) {
-        console.log("componentDidCatch", component)
-        console.error("Error", error)
+        val throwable = error as? Throwable ?: RuntimeException("Non-Throwable error caught: $error")
 
-        super.componentDidCatch(error)
+        val handled = component?.onError(throwable) ?: false
+
+        if (handled) {
+            // Signal "handled" to Preact by marking this component dirty.
+            forceUpdate()
+        } else {
+            // Rethrow so Preact continues bubbling to the next ancestor with a handler.
+            throw throwable
+        }
     }
 
     /**

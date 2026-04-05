@@ -73,6 +73,33 @@ abstract class Component<PROPS>(val ctx: Ctx<PROPS>) {
         }
 
         /**
+         * Hook for errors thrown during rendering or in child components.
+         *
+         * Registered callbacks receive the thrown [Throwable] and can log it,
+         * report it to an error tracker, or update component state to show a fallback UI.
+         */
+        class ErrorHook {
+            private val listeners = mutableListOf<(Throwable) -> Unit>()
+
+            /**
+             * Registers a listener.
+             */
+            operator fun invoke(block: (Throwable) -> Unit) {
+                listeners.add(block)
+            }
+
+            /**
+             * Notifies all listeners.
+             */
+            fun notify(error: Throwable) {
+                listeners.forEach { it(error) }
+            }
+
+            /** Returns true if at least one listener is registered. */
+            fun hasListeners(): Boolean = listeners.isNotEmpty()
+        }
+
+        /**
          * Brings the [LifeCycle] object into scope.
          */
         operator fun invoke(block: LifeCycle<PROPS>.() -> Unit) {
@@ -90,6 +117,9 @@ abstract class Component<PROPS>(val ctx: Ctx<PROPS>) {
 
         /** Hook called when the component receives new props */
         val onNextProps = NextPropsHook<PROPS>()
+
+        /** Hook called when an error is thrown during rendering or by a child component */
+        val onError = ErrorHook()
     }
 
     /** The attributes of the component */
@@ -173,6 +203,21 @@ abstract class Component<PROPS>(val ctx: Ctx<PROPS>) {
         lifecycle.onUnmount.notify()
 
         _setDom(null)
+    }
+
+    /**
+     * Called when Preact catches an error thrown during rendering
+     * or bubbled up from a child component.
+     *
+     * Notifies [LifeCycle.ErrorHook] listeners registered via
+     * `lifecycle { onError { e -> ... } }`.
+     *
+     * @return true if at least one listener was registered (the component handled the error)
+     */
+    internal fun onError(error: Throwable): Boolean {
+        if (!lifecycle.onError.hasListeners()) return false
+        lifecycle.onError.notify(error)
+        return true
     }
 
     /**
