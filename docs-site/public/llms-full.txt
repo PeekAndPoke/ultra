@@ -897,20 +897,39 @@ router.navBack()
 router.replaceUri(Nav.home())
 ```
 
-### Link-style navigation
+### Link-style navigation with `A.href(route)`
 
-In SemanticUI menus, use the `href` helper:
+For anchor tags, use the `href` helper on `A` — it takes a bound route and writes the correct URL into the `href` attribute:
 
 ```kotlin
 ui.menu {
-    noui.item A {
-        onClick { evt -> router.navToUri(evt, Nav.home()) }
-        +"Home"
-    }
-    noui.item A {
-        onClick { evt -> router.navToUri(evt, Nav.about()) }
-        +"About"
-    }
+    noui.item A { href(Nav.home()); +"Home" }
+    noui.item A { href(Nav.about()); +"About" }
+    noui.item A { href(Nav.userProfile("alice")); +"Alice" }
+}
+```
+
+**Always use `A.href(route)` for links — don't hand-write `href = "/about"`.** The helper asks the active router to render the URL using the configured path strategy, so the same code produces `/about` under `usePathStrategy()` and `#/about` under `useHashStrategy()`. Hard-coded href strings bypass the strategy and break when you switch modes (or when the app is mounted under a non-root base path).
+
+The helper lives in `io.peekandpoke.kraft.routing`:
+
+```kotlin
+/** Sets the href attribute of an anchor tag from a bound route. */
+fun A.href(route: Route.Bound) {
+    val c = consumer as? VDomTagConsumer ?: error("Consumer must be a VDomTagConsumer")
+    val router = c.host.router
+
+    href = router.strategy.render(route)
+}
+```
+
+Because it sets a real `href`, the browser handles Ctrl/Cmd+Click, middle-click, right-click → "Open in new tab", and link previews natively. For clicks that should navigate in-place (and not reload the page), combine `href` with an `onClick` that calls `router.navToUri(evt, route)` — Kraft will detect modifier keys and let the browser handle new-tab clicks:
+
+```kotlin
+a {
+    href(Nav.userProfile("alice"))
+    onClick { evt -> router.navToUri(evt, Nav.userProfile("alice")) }
+    +"Alice"
 }
 ```
 

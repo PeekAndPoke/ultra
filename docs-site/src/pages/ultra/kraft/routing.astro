@@ -86,19 +86,49 @@ router.navBack()
 // Replace current URL (no history entry)
 router.replaceUri(Nav.home())`} lang="kotlin" theme="vitesse-dark" />
 
-<h3>Link-style navigation</h3>
+    <h3>Link-style navigation with <code>A.href(route)</code></h3>
 
-<p>In SemanticUI menus, use the <code>href</code> helper:</p>
+    <p>For anchor tags, use the <code>href</code> helper on <code>A</code> — it takes a bound route and writes the
+        correct
+        URL into the <code>href</code> attribute:</p>
 
 <Code code={`ui.menu {
-    noui.item A {
-        onClick { evt -> router.navToUri(evt, Nav.home()) }
-        +"Home"
-    }
-    noui.item A {
-        onClick { evt -> router.navToUri(evt, Nav.about()) }
-        +"About"
-    }
+    noui.item A { href(Nav.home()); +"Home" }
+    noui.item A { href(Nav.about()); +"About" }
+    noui.item A { href(Nav.userProfile("alice")); +"Alice" }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside><strong>Always use <code>A.href(route)</code> for links — don't hand-write <code>href =
+        "/about"</code>.</strong>
+        The helper asks the active router to render the URL using the configured path strategy, so the same code
+        produces
+        <code>/about</code> under <code>usePathStrategy()</code> and <code>#/about</code> under
+        <code>useHashStrategy()</code>. Hard-coded href strings bypass the strategy and break when you switch modes (or
+        when
+        the app is mounted under a non-root base path).
+    </Aside>
+
+    <p>The helper lives in <code>io.peekandpoke.kraft.routing</code>:</p>
+
+    <Code code={`/** Sets the href attribute of an anchor tag from a bound route. */
+fun A.href(route: Route.Bound) {
+    val c = consumer as? VDomTagConsumer ?: error("Consumer must be a VDomTagConsumer")
+    val router = c.host.router
+
+    href = router.strategy.render(route)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Because it sets a real <code>href</code>, the browser handles Ctrl/Cmd+Click, middle-click, right-click → "Open
+        in
+        new tab", and link previews natively. For clicks that should navigate in-place (and not reload the page),
+        combine
+        <code>href</code> with an <code>onClick</code> that calls <code>router.navToUri(evt, route)</code> — Kraft will
+        detect modifier keys and let the browser handle new-tab clicks:</p>
+
+    <Code code={`a {
+    href(Nav.userProfile("alice"))
+    onClick { evt -> router.navToUri(evt, Nav.userProfile("alice")) }
+    +"Alice"
 }`} lang="kotlin" theme="vitesse-dark" />
 
 <h2>Layouts</h2>
