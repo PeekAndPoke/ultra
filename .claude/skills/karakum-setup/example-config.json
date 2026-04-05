@@ -1,0 +1,26 @@
+{
+  "libraryName": "pixi.js",
+  "libraryNameOutputPrefix": true,
+  "inputRoots": "<nodeModules>/pixi.js/lib",
+  "input": "<nodeModules>/pixi.js/lib/**/*.d.ts",
+  "ignoreInput": [
+    "<nodeModules>/pixi.js/lib/**/*.min.d.ts"
+  ],
+  "output": "generated/karakum",
+  "packageJson": "<nodeModules>/pixi.js/package.json",
+  "granularity": "file",
+  "_doc_other_options": "Fields below are OPTIONAL — uncomment/adjust as needed",
+  "_moduleNameMapper": {
+    "^pixi.js/(.*)$": "pixi.js"
+  },
+  "_packageNameMapper": {
+    "^pixi\\.js\\.(.*)$": "io.example.pixijs.$1"
+  },
+  "_namespaceStrategy": {
+    "**": "package"
+  },
+  "_granularity_options": "bundle | file | top-level",
+  "_conflictResolutionStrategy": {
+    "**": "replace"
+  }
+}

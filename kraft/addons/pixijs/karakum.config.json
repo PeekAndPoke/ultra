@@ -1,0 +1,12 @@
+{
+  "libraryName": "pixi.js",
+  "libraryNameOutputPrefix": true,
+  "inputRoots": "<nodeModules>/pixi.js/lib",
+  "input": "<nodeModules>/pixi.js/lib/**/*.d.ts",
+  "ignoreInput": [
+    "<nodeModules>/pixi.js/lib/**/*.min.d.ts"
+  ],
+  "output": "generated/karakum",
+  "packageJson": "<nodeModules>/pixi.js/package.json",
+  "granularity": "file"
+}

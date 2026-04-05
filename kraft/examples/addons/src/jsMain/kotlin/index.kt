@@ -5,6 +5,7 @@ import io.peekandpoke.kraft.addons.browserdetect.browserDetect
 import io.peekandpoke.kraft.addons.chartjs.chartJs
 import io.peekandpoke.kraft.addons.jwtdecode.jwtDecode
 import io.peekandpoke.kraft.addons.marked.marked
+import io.peekandpoke.kraft.addons.pixijs.pixiJs
 import io.peekandpoke.kraft.addons.registry.addons
 import io.peekandpoke.kraft.addons.signaturepad.signaturePad
 import io.peekandpoke.kraft.kraftApp
@@ -22,6 +23,7 @@ val kraft = kraftApp {
         chartJs()
         jwtDecode()
         marked()
+        pixiJs(lazy = true)
         signaturePad()
     }
 

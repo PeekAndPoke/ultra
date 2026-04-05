@@ -48,6 +48,7 @@
             <option value="$PROJECT_DIR$/kraft/addons/marked" />
             <option value="$PROJECT_DIR$/kraft/addons/nxcompile" />
             <option value="$PROJECT_DIR$/kraft/addons/pdfjs" />
+            <option value="$PROJECT_DIR$/kraft/addons/pixijs" />
             <option value="$PROJECT_DIR$/kraft/addons/prismjs" />
             <option value="$PROJECT_DIR$/kraft/addons/signaturepad" />
             <option value="$PROJECT_DIR$/kraft/addons/sourcemappedstacktrace" />

@@ -44,6 +44,7 @@ kotlin {
                 api(project(":kraft:addons:marked"))
                 api(project(":kraft:addons:nxcompile"))
                 api(project(":kraft:addons:pdfjs"))
+                api(project(":kraft:addons:pixijs"))
                 api(project(":kraft:addons:prismjs"))
                 api(project(":kraft:addons:signaturepad"))
                 api(project(":kraft:addons:sourcemappedstacktrace"))

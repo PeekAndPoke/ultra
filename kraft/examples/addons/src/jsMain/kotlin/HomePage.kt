@@ -77,7 +77,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
 
                 noui.center.aligned.content {
                     renderLogo(
-                        src = "https://www.chartjs.org/img/chartjs-logo.svg",
+                        src = "images/logos/chartjs.svg",
                         alt = "ChartJS Logo",
                     )
                 }
@@ -91,7 +91,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
 
                 noui.center.aligned.content {
                     renderLogo(
-                        src = "https://user-images.githubusercontent.com/83319/31722733-de95bbde-b3ea-11e7-96bf-4f4e8f915588.png",
+                        src = "images/logos/jwt.png",
                         alt = "JWT Decode Logo",
                     )
                 }
@@ -106,7 +106,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
 
                 noui.center.aligned.content {
                     renderLogo(
-                        src = "https://marked.js.org/img/logo-black.svg",
+                        src = "images/logos/marked.svg",
                         alt = "Marked Logo",
                     )
                 }
@@ -120,7 +120,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
 
                 noui.center.aligned.content {
                     renderLogo(
-                        src = "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Pdf-js_logo.svg/800px-Pdf-js_logo.svg.png",
+                        src = "images/logos/pdfjs.svg",
                         alt = "PDF JS",
                     )
                 }
@@ -130,11 +130,25 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
             }
 
             noui.card A {
+                href(routes.pixijs())
+
+                noui.center.aligned.content {
+                    renderLogo(
+                        src = "images/logos/pixijs.svg",
+                        alt = "PixiJS Logo",
+                    )
+                }
+                noui.center.aligned.content {
+                    +"PixiJS (Breakout)"
+                }
+            }
+
+            noui.card A {
                 href(routes.prismjs())
 
                 noui.center.aligned.content {
                     renderLogo(
-                        src = "https://pbs.twimg.com/profile_images/2451426554/Screen_Shot_2012-07-31_at_21.57.03__400x400.png",
+                        src = "images/logos/prismjs.png",
                         alt = "PrismJs Logo",
                     )
                 }
@@ -148,7 +162,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
 
                 noui.center.aligned.content {
                     renderLogo(
-                        src = "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Autograph_of_Benjamin_Franklin.svg/1920px-Autograph_of_Benjamin_Franklin.svg.png",
+                        src = "images/logos/signaturepad.png",
                         alt = "Signature Pad",
                     )
                 }
