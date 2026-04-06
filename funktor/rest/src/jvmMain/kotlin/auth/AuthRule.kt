@@ -116,12 +116,21 @@ interface AuthRule<PARAMS, BODY> {
 
     /**
      * The context used to estimate the [ApiAccessLevel] of a rule.
+     *
+     * Carries the full [User] (not just permissions) so rules can distinguish anonymous from
+     * authenticated users and access user metadata (record, userId) in estimation logic.
      */
     class EstimateCtx(
-        val permissions: UserPermissions,
+        val user: User,
     ) {
+        /** Backward-compat accessor — existing rules using `ctx.permissions` still work. */
+        val permissions: UserPermissions get() = user.permissions
+
+        /** True if the user is not anonymous. */
+        val isAuthenticated: Boolean get() = !user.isAnonymous()
+
         companion object {
-            fun of(user: User) = EstimateCtx(user.permissions)
+            fun of(user: User) = EstimateCtx(user)
         }
     }
 

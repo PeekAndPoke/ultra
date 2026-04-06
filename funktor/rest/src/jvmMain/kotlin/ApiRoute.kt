@@ -13,7 +13,9 @@ import io.peekandpoke.ultra.common.TypedKey
 import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.remote.ApiAccessLevel
 import io.peekandpoke.ultra.remote.ApiResponse
+import io.peekandpoke.ultra.security.user.User
 import io.peekandpoke.ultra.security.user.UserPermissions
+import io.peekandpoke.ultra.security.user.UserRecord
 
 /**
  * Base class for api routes representations
@@ -39,16 +41,32 @@ sealed class ApiRoute<RESPONSE> {
     abstract val attributes: TypedAttributes
 
     /**
-     *  Estimate access level for the given user
+     * Estimate access level for the given [permission] set.
+     *
+     * Synthesizes a non-anonymous [User] (userId "role-eval") from the permissions — "evaluate what
+     * a user WITH THESE PERMISSIONS would have access to" semantically implies an authenticated user.
+     * Used by the per-role access matrix (admin dashboards).
      */
     fun estimateAccess(permission: UserPermissions): ApiAccessLevel {
-        return estimateAccess(
-            user = AuthRule.EstimateCtx(permissions = permission)
+        val synthetic = User(
+            record = UserRecord(userId = "role-eval"),
+            permissions = permission,
         )
+        return estimateAccess(user = AuthRule.EstimateCtx(user = synthetic))
     }
 
     /**
-     * Estimate access level for the given [user]
+     * Estimate access level for the given [user] (full User object, preferred).
+     *
+     * Used by the per-user access matrix (ApiAcl) which needs to distinguish anonymous from
+     * authenticated users.
+     */
+    fun estimateAccess(user: User): ApiAccessLevel {
+        return estimateAccess(user = AuthRule.EstimateCtx(user = user))
+    }
+
+    /**
+     * Estimate access level for the given estimation context.
      */
     fun estimateAccess(user: AuthRule.EstimateCtx): ApiAccessLevel {
         return authRules.fold(ApiAccessLevel.Granted) { level, rule ->

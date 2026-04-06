@@ -20,6 +20,10 @@ version = VERSION_NAME
 
 kotlin {
     js {
+        compilerOptions {
+            target.set("es2015")
+        }
+
         browser {
             testTask {
             }

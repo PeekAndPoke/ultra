@@ -23,6 +23,10 @@ Docs {
 
 kotlin {
     js {
+        compilerOptions {
+            target.set("es2015")
+        }
+
         browser {
             testTask {
             }

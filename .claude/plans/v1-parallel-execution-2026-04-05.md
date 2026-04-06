@@ -16,7 +16,7 @@
 | G4 — KDoc 90%+ public API      | 🟡 IN PROGRESS      | cache (24%→90%), Funktor (~50%)                              |
 | G5 — Clean build, no warnings  | ✅ ASSUMED PASSING   | Verify at release gate                                       |
 | G6 — README per library        | ✅ DONE              |                                                              |
-| G7 — ES2015 everywhere         | ✅ SOLVED, ⚠ ROLLOUT | Bridge fix works; 36 modules still ES5                       |
+| G7 — ES2015 everywhere         | ✅ DONE (2026-04-06) | All 48 JS modules target ES2015; jsJar + jsTest green        |
 | G8 — ApiRoute refactor         | 🟡 DESIGN DONE      | Implement `OutgoingConverter` removal + 17 ApiRoutes updates |
 | G9 — Code audit complete       | 🟡 Wave 1 DONE      | Waves 2-5 (data/network/UI/Monko)                            |
 
@@ -132,7 +132,7 @@ See "Critical Path" section above for the full shipped inventory.
 
 1. **ApiRoute refactor** — remove `OutgoingConverter` param, add `RouteValidationOnAppStartingHook`, update 17 ApiRoutes
    implementations
-2. **ES2015 rollout** — enable `target.set("es2015")` in remaining 36 Kotlin/JS modules, verify each
+2. ~~**ES2015 rollout**~~ — ✅ DONE (2026-04-06). All 48 JS modules target ES2015; jsJar + jsTest pass
 3. **User-specific API access matrix (ApiAcl)** — 7 files, design done
 4. **Clean build verification** — `./gradlew clean build` across all 79 modules
 5. **funktor-demo end-to-end test** — against both ArangoDB and MongoDB
