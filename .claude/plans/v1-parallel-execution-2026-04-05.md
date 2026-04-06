@@ -8,17 +8,17 @@
 
 ## Gate Status
 
-| Gate                           | Status              | What's left                                                  |
-|--------------------------------|---------------------|--------------------------------------------------------------|
-| G1 — Zero CRITICAL/HIGH issues | ✅ DONE              | Wave 1 resolved all                                          |
-| G2 — Public API tested (≥25%)  | 🟡 IN PROGRESS      | Funktor, ultra/vault, ultra/html, ultra/semanticui           |
-| G3 — TODOs resolved or tracked | 🟡 IN PROGRESS      | ~15 in Funktor, 5 reflection, 3 vault                        |
-| G4 — KDoc 90%+ public API      | 🟡 IN PROGRESS      | cache (24%→90%), Funktor (~50%)                              |
-| G5 — Clean build, no warnings  | ✅ ASSUMED PASSING   | Verify at release gate                                       |
-| G6 — README per library        | ✅ DONE              |                                                              |
-| G7 — ES2015 everywhere         | ✅ DONE (2026-04-06) | All 48 JS modules target ES2015; jsJar + jsTest green        |
-| G8 — ApiRoute refactor         | 🟡 DESIGN DONE      | Implement `OutgoingConverter` removal + 17 ApiRoutes updates |
-| G9 — Code audit complete       | 🟡 Wave 1 DONE      | Waves 2-5 (data/network/UI/Monko)                            |
+| Gate                           | Status              | What's left                                                               |
+|--------------------------------|---------------------|---------------------------------------------------------------------------|
+| G1 — Zero CRITICAL/HIGH issues | ✅ DONE              | Wave 1 resolved all                                                       |
+| G2 — Public API tested (≥25%)  | 🟡 IN PROGRESS      | Funktor, ultra/vault, ultra/html, ultra/semanticui                        |
+| G3 — TODOs resolved or tracked | 🟡 IN PROGRESS      | ~15 in Funktor, 5 reflection, 3 vault                                     |
+| G4 — KDoc 90%+ public API      | 🟡 IN PROGRESS      | cache ✅ ~90%, Funktor (~50%) remaining                                    |
+| G5 — Clean build, no warnings  | ✅ ASSUMED PASSING   | Verify at release gate                                                    |
+| G6 — README per library        | ✅ DONE              |                                                                           |
+| G7 — ES2015 everywhere         | ✅ DONE (2026-04-06) | All 48 JS modules target ES2015; jsJar + jsTest green                     |
+| G8 — ApiRoute refactor         | ✅ DONE (2026-04-03) | PRs #40+#41: OutgoingConverter removed, ValidateRoutesOnAppStarting added |
+| G9 — Code audit complete       | 🟡 Wave 1 DONE      | Waves 2-5 (data/network/UI/Monko)                                         |
 
 ---
 
@@ -92,8 +92,8 @@ See "Critical Path" section above for the full shipped inventory.
 
 **Remaining work:**
 
-1. **Monko core test expansion** — 1 → 15+ test files (driver CRUD, hooks, cursor, index management).
-   Owner: one agent, ~1 week.
+1. ~~**Monko core test expansion**~~ — ✅ DONE (2026-04-06). 23 test files, 234 tests covering driver, codec, cursor,
+   hooks, indexes, filter/sort/update DSL, property paths
 
 2. **`insertMany()` optimization** in MonkoDriver — replace the loop-insert workaround with a bulk write.
    Owner: quick task, ~0.5 day. Not blocking for v1.
@@ -130,8 +130,8 @@ See "Critical Path" section above for the full shipped inventory.
 
 **Sub-tasks:**
 
-1. **ApiRoute refactor** — remove `OutgoingConverter` param, add `RouteValidationOnAppStartingHook`, update 17 ApiRoutes
-   implementations
+1. ~~**ApiRoute refactor**~~ — ✅ DONE (2026-04-03). PRs #40+#41: OutgoingConverter removed, ValidateRoutesOnAppStarting
+   added, 16 implementations updated
 2. ~~**ES2015 rollout**~~ — ✅ DONE (2026-04-06). All 48 JS modules target ES2015; jsJar + jsTest pass
 3. **User-specific API access matrix (ApiAcl)** — 7 files, design done
 4. **Clean build verification** — `./gradlew clean build` across all 79 modules

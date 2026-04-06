@@ -236,6 +236,23 @@ class PermissionsCheck<PARAMS, BODY>(
 }
 
 /**
+ * Auth rule that returns [ApiAccessLevel] directly from a single rule function.
+ *
+ * Unlike [PermissionsCheck] (Boolean -> Granted/Denied) and [CallCheck] (separate check/estimate paths),
+ * this uses a single rule that returns [ApiAccessLevel] for both estimation and runtime checks.
+ * The [check] method considers any non-[ApiAccessLevel.Denied] result as granted.
+ */
+class AccessLevelCheck<PARAMS, BODY>(
+    override val description: String,
+    private val rule: EstimateCtx.() -> ApiAccessLevel,
+) : AuthRule<PARAMS, BODY> {
+
+    override fun check(ctx: CheckCtx<PARAMS, BODY>): Boolean = !rule(ctx.estimateCtx).isDenied()
+
+    override fun estimate(ctx: EstimateCtx): ApiAccessLevel = rule(ctx)
+}
+
+/**
  * Implements the logic OR for the given [rules]
  */
 class OrAuthRule<PARAMS, BODY>(internal val rules: List<AuthRule<PARAMS, BODY>>) : AuthRule<PARAMS, BODY> {

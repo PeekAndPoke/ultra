@@ -17,6 +17,8 @@ import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
+import io.peekandpoke.funktor.rest.acl.UserApiAccessMatrix
+import io.peekandpoke.ultra.remote.ApiAccessLevel
 
 class AuthApiSpec : FunktorApiSpec() {
 
@@ -238,6 +240,47 @@ class AuthApiSpec : FunktorApiSpec() {
                             ),
                         ) {
                             status shouldBe HttpStatusCode.BadRequest
+                        }
+                    }
+                }
+            }
+        }
+
+        api.auth.getMyApiAccess { route ->
+            "Anonymous request must be unauthorized" {
+                apiApp {
+                    anonymous {
+                        request(route) {
+                            status shouldBe HttpStatusCode.Unauthorized
+                        }
+                    }
+                }
+            }
+
+            "Regular user request must return access matrix" {
+                apiApp {
+                    authenticate(regularUserToken) {
+                        request(route) {
+                            status shouldBe HttpStatusCode.OK
+                            val matrix = apiResponseData<UserApiAccessMatrix>()
+                            matrix.shouldNotBeNull()
+                            matrix.entries.shouldNotBeEmpty()
+                        }
+                    }
+                }
+            }
+
+            "Super user request must return full access matrix with all Granted" {
+                apiApp {
+                    authenticate(superUserToken) {
+                        request(route) {
+                            status shouldBe HttpStatusCode.OK
+                            val matrix = apiResponseData<UserApiAccessMatrix>()
+                            matrix.shouldNotBeNull()
+                            matrix.entries.shouldNotBeEmpty()
+                            matrix.entries.forEach { entry ->
+                                entry.level shouldBe ApiAccessLevel.Granted
+                            }
                         }
                     }
                 }

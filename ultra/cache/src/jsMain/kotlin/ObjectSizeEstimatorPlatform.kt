@@ -1,5 +1,6 @@
 package io.peekandpoke.ultra.cache
 
+/** JS implementation that extracts fields via `Object.getOwnPropertyNames`. */
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual object ObjectSizeEstimatorPlatform {
     actual fun getFieldsOf(obj: Any): List<Any?>? {

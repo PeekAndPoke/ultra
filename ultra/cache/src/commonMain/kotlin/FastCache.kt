@@ -38,8 +38,11 @@ fun <K, V> fastCache(
  * evict entries until the memory usage is below the limit.
  */
 class FastCache<K, V>(
+    /** The coroutine scope used for the internal processing loop. */
     val scope: CoroutineScope = Cache.defaultCoroutineScope,
+    /** The list of behaviours applied during each processing-loop iteration. */
     val behaviours: List<Behaviour<K, V>>,
+    /** The delay between processing-loop iterations. */
     val loopDelay: Duration = defaultLoopDelay,
 ) : Cache<K, V> {
 
@@ -333,7 +336,9 @@ class FastCache<K, V>(
      */
     @Suppress("DuplicatedCode")
     class MaxMemoryUsageBehaviour<K, V>(
+        /** The maximum allowed total estimated memory size in bytes. */
         val maxMemorySize: Long,
+        /** The estimator used to calculate the in-memory size of keys and values. */
         val estimator: ObjectSizeEstimator = ObjectSizeEstimator(),
     ) : Behaviour<K, V> {
 
@@ -421,6 +426,7 @@ class FastCache<K, V>(
      * Does NOT fire on explicit [remove] calls — only on automatic eviction via the processing loop.
      */
     class OnEvictionBehaviour<K, V>(
+        /** The callback invoked with the key and value of each evicted entry. */
         internal val handler: (K, V) -> Unit,
     ) : Behaviour<K, V> {
         override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
@@ -437,9 +443,13 @@ class FastCache<K, V>(
 
         /** Immutable snapshot of cache statistics. */
         data class CacheStats(
+            /** Number of cache hits (successful lookups). */
             val hitCount: Long,
+            /** Number of cache misses (lookups for absent keys). */
             val missCount: Long,
+            /** Number of put operations (inserts and updates). */
             val putCount: Long,
+            /** Number of entries evicted by behaviours. */
             val evictionCount: Long,
         ) {
             /** Total number of get/has requests (hits + misses). */

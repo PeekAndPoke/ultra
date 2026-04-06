@@ -82,6 +82,9 @@ sealed class TypedApiEndpoint {
     /** The URI pattern for the endpoint, may contain `{placeholder}` segments. */
     abstract val uri: String
 
+    /** The HTTP method as an uppercase string (e.g., "GET", "POST"). */
+    abstract val httpMethod: String
+
     /** Arbitrary typed attributes attached to this endpoint definition. */
     abstract val attributes: TypedAttributes
 
@@ -94,6 +97,7 @@ sealed class TypedApiEndpoint {
         val response: KSerializer<RESPONSE>,
         override val attributes: TypedAttributes = TypedAttributes.empty,
     ) : TypedApiEndpoint() {
+        override val httpMethod: String get() = "DELETE"
         companion object {
             operator fun invoke(uri: String) = Delete(uri = uri, response = EmptyObject.serializer())
         }
@@ -123,6 +127,7 @@ sealed class TypedApiEndpoint {
         val response: KSerializer<out RESPONSE>,
         override val attributes: TypedAttributes = TypedAttributes.empty,
     ) : TypedApiEndpoint() {
+        override val httpMethod: String get() = "GET"
         class Bound<out RESPONSE>(
             val uri: String,
             val params: Map<String, String?>,
@@ -160,6 +165,7 @@ sealed class TypedApiEndpoint {
         override val uri: String,
         override val attributes: TypedAttributes = TypedAttributes.empty,
     ) : TypedApiEndpoint() {
+        override val httpMethod: String get() = "GET"
         class Bound(
             val uri: String,
             val params: Map<String, String?>,
@@ -193,6 +199,7 @@ sealed class TypedApiEndpoint {
         val response: KSerializer<RESPONSE>,
         override val attributes: TypedAttributes = TypedAttributes.empty,
     ) : TypedApiEndpoint() {
+        override val httpMethod: String get() = "HEAD"
         companion object {
             operator fun invoke(uri: String) = Head(uri = uri, response = EmptyObject.serializer())
         }
@@ -223,6 +230,7 @@ sealed class TypedApiEndpoint {
         val response: KSerializer<out RESPONSE>,
         override val attributes: TypedAttributes = TypedAttributes.empty,
     ) : TypedApiEndpoint() {
+        override val httpMethod: String get() = "POST"
         class Bound<out BODY, out RESPONSE>(
             val uri: String,
             val params: Map<String, String?>,
@@ -280,6 +288,7 @@ sealed class TypedApiEndpoint {
         val response: KSerializer<out RESPONSE>,
         override val attributes: TypedAttributes = TypedAttributes.empty,
     ) : TypedApiEndpoint() {
+        override val httpMethod: String get() = "PUT"
         class Bound<out BODY, out RESPONSE>(
             val uri: String,
             val params: Map<String, String?>,
