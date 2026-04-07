@@ -37,6 +37,15 @@ class AuthRuleBuilder<PARAMS, BODY>(
         ) { true }
 
     /**
+     * Auth rule that succeeds for any authenticated (non-anonymous) user.
+     */
+    @RestAuthRuleMarker
+    fun authenticated(): AuthRule<PARAMS, BODY> =
+        AccessLevelCheck(
+            description = "Any authenticated user",
+        ) { if (isAuthenticated) ApiAccessLevel.Granted else ApiAccessLevel.Denied }
+
+    /**
      * Combines all the given [rules] with a logic OR.
      *
      * If at least ONE of the given [rules] is accepted the combination is accepted.

@@ -11,6 +11,7 @@ import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
+import io.peekandpoke.funktor.rest.acl.UserApiAccessMatrix
 import io.peekandpoke.ultra.remote.ApiClient
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.TypedApiEndpoint
@@ -69,6 +70,16 @@ class AuthApiClient(private val realm: String, config: Config) : ApiClient(confi
             body = AuthRecoverAccountRequest.SetPasswordWithToken.serializer(),
             response = AuthRecoverAccountResponse.SetPasswordWithToken.serializer().api(),
         )
+
+        val GetMyApiAccess = TypedApiEndpoint.Get(
+            uri = "$BASE/my-api-access",
+            response = UserApiAccessMatrix.serializer().api(),
+        )
+
+        val RefreshToken = TypedApiEndpoint.Get(
+            uri = "$BASE/{realm}/refresh-token",
+            response = AuthSignInResponse.serializer().api(),
+        )
     }
 
     fun getRealm(): Flow<ApiResponse<AuthRealmModel>> = call(
@@ -107,5 +118,13 @@ class AuthApiClient(private val realm: String, config: Config) : ApiClient(confi
         request: AuthRecoverAccountRequest.SetPasswordWithToken,
     ): Flow<ApiResponse<AuthRecoverAccountResponse.SetPasswordWithToken>> = call(
         RecoverAccountSetPasswordWithToken("realm" to realm, body = request)
+    )
+
+    fun getMyApiAccess(): Flow<ApiResponse<UserApiAccessMatrix>> = call(
+        GetMyApiAccess()
+    )
+
+    fun refreshToken(): Flow<ApiResponse<AuthSignInResponse>> = call(
+        RefreshToken("realm" to realm)
     )
 }

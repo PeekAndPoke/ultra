@@ -5,18 +5,39 @@ import io.peekandpoke.funktor.inspect.introspection.api.ApiAccessMatrixModel
 import io.peekandpoke.funktor.rest.ApiFeature
 import io.peekandpoke.funktor.rest.ApiRoute
 import io.peekandpoke.funktor.rest.ApiRoutes
+import io.peekandpoke.funktor.rest.acl.UserApiAccessMatrix
+import io.peekandpoke.funktor.rest.acl.UserApiAccessProvider
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.funktor.rest.security.ReflectivePathFinder.Companion.findAnnotatedElementPaths
 import io.peekandpoke.funktor.rest.security.SensitiveData
 import io.peekandpoke.funktor.rest.security.security
+import io.peekandpoke.ultra.security.user.User
 import io.peekandpoke.ultra.security.user.UserPermissions
 
 class ApiAccessDescriptor(
     features: Lazy<List<ApiFeature>>,
     realms: Lazy<List<AuthRealm<*>>>,
-) {
+) : UserApiAccessProvider {
     private val features: List<ApiFeature> by features
     private val realms: List<AuthRealm<*>> by realms
+
+    override fun describeForUser(user: User): UserApiAccessMatrix {
+        val entries = features.flatMap { feature ->
+            feature.getRouteGroups().flatMap { group ->
+                group.all.mapNotNull { route ->
+                    val level = route.estimateAccess(user)
+                    // Filter out Denied entries to avoid exposing the full API surface
+                    if (level.isDenied()) null
+                    else UserApiAccessMatrix.Entry(
+                        method = route.method.value,
+                        uri = route.pattern.pattern,
+                        level = level,
+                    )
+                }
+            }
+        }
+        return UserApiAccessMatrix(entries = entries)
+    }
 
     fun describe(): ApiAccessMatrixModel {
 

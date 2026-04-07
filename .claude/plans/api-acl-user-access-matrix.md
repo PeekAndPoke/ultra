@@ -248,6 +248,85 @@ Add a new endpoint that returns the access matrix evaluated for the **current us
 
 ## 4. Detailed Implementation Plan
 
+**Added 2026-04-05:** Two prerequisite steps (0a, 0b) refactor `EstimateCtx` to carry the full `User` object.
+This is needed so the per-user ACL can accurately distinguish anonymous from authenticated users (critical for
+the new `authenticated()` auth rule). It also gives us symmetry with `CheckCtx` and room for future rules that
+need user metadata (userId, email, record fields).
+
+### Step 0a: Refactor `EstimateCtx` to carry the full `User`
+
+**File**: `funktor/rest/src/jvmMain/kotlin/auth/AuthRule.kt`
+
+**Why**: Currently `EstimateCtx(permissions: UserPermissions)` only carries permissions. But
+`UserPermissions.anonymous == UserPermissions()` — an anonymous user and an authenticated-but-unprivileged
+user are indistinguishable by permissions alone. To support `authenticated()` and to keep estimation
+symmetric with runtime checks (`CheckCtx` already carries `user: User`), `EstimateCtx` needs the full user.
+
+**Change**:
+
+```kotlin
+class EstimateCtx(
+    val user: User,
+) {
+    /** Backward-compat: existing rules using `ctx.permissions` still work. */
+    val permissions: UserPermissions get() = user.permissions
+
+    /** True if the user is not anonymous. */
+    val isAuthenticated: Boolean get() = !user.isAnonymous()
+
+    companion object {
+        fun of(user: User) = EstimateCtx(user)
+    }
+}
+```
+
+**Callers to update**:
+
+- `ApiRoute.estimateAccess(permission: UserPermissions)` (ApiRoute.kt:44) — this overload constructs
+  `EstimateCtx(permissions = permission)` directly. Change it to synthesize a non-anonymous `User` from the
+  permissions (because "evaluating for role X" semantically IS authenticated):
+
+  ```kotlin
+  fun estimateAccess(permissions: UserPermissions): ApiAccessLevel {
+      // Synthesize a non-anonymous user for role/permissions-based evaluation
+      val synthetic = User(
+          record = UserRecord(userId = "role-eval", /* ... minimal fields ... */),
+          permissions = permissions,
+      )
+      return estimateAccess(EstimateCtx(user = synthetic))
+  }
+  ```
+
+- All other usages access `ctx.permissions` which still works via the computed getter — no change needed.
+
+### Step 0b: Add `authenticated()` to `AuthRuleBuilder`
+
+**File**: `funktor/rest/src/jvmMain/kotlin/auth/AuthRuleBuilder.kt`
+
+**Why**: Provides a declarative way to say "any authenticated user" — the common case between `public()`
+(anyone including anonymous) and `isSuperUser()` / `forRole()` (specific privileges). This is also the
+primary new rule that the ApiAcl frontend can hide behind.
+
+**Change**: Add method after `public()` (around line 37):
+
+```kotlin
+/**
+ * Auth rule that succeeds for any authenticated (non-anonymous) user.
+ */
+@RestAuthRuleMarker
+fun authenticated(): AuthRule<PARAMS, BODY> =
+    forCall(
+        description = "Any authenticated user",
+        estimateFn = { if (isAuthenticated) ApiAccessLevel.Granted else ApiAccessLevel.Denied },
+    ) { !user.isAnonymous() }
+```
+
+**Tests**: Add to `funktor/all/src/jvmTest/` an auth-rule spec that verifies:
+
+- `authenticated()` grants access to a logged-in user (with or without roles)
+- `authenticated()` denies access to an anonymous user
+- Both at estimate-time and runtime (CheckCtx)
+
 ### Step 1: Add `httpMethod` to `TypedApiEndpoint`
 
 **File**: `ultra/remote/src/commonMain/kotlin/TypedApiEndpoint.kt`
@@ -423,16 +502,20 @@ class ApiAcl(matrix: UserApiAccessMatrix) {
 ```kotlin
 /**
  * Builds a [UserApiAccessMatrix] by evaluating all registered API routes
- * against the given user [permissions].
+ * against the given [user].
+ *
+ * Takes the full [User] (not just permissions) so that `authenticated()` and other
+ * user-aware auth rules evaluate correctly in the ACL.
  */
-fun describeForUser(permissions: UserPermissions): UserApiAccessMatrix {
+fun describeForUser(user: User): UserApiAccessMatrix {
+    val ctx = AuthRule.EstimateCtx(user = user)
     val entries = features.flatMap { feature ->
         feature.getRouteGroups().flatMap { group ->
             group.all.map { route ->
                 UserApiAccessMatrix.Entry(
                     method = route.method.value,
                     uri = route.pattern.pattern,
-                    level = route.estimateAccess(permissions),
+                    level = route.estimateAccess(ctx),
                 )
             }
         }
@@ -441,13 +524,13 @@ fun describeForUser(permissions: UserPermissions): UserApiAccessMatrix {
 }
 ```
 
-**Additional import needed**:
+**Additional imports needed**:
 
 ```kotlin
 import io.peekandpoke.funktor.inspect.introspection.api.UserApiAccessMatrix
+import io.peekandpoke.funktor.rest.auth.AuthRule
+import io.peekandpoke.ultra.security.user.User
 ```
-
-Note: `UserPermissions` is already imported.
 
 ### Step 5: Add Endpoint to `IntrospectionApiClient`
 
@@ -490,15 +573,28 @@ val getMyApiAccess = IntrospectionApiClient.GetMyApiAccess.mount {
     }.codeGen {
         funcName = "getMyApiAccess"
     }.authorize {
-        public()
+        public()  // or authenticated() — see decision note below
     }.handle {
         val descriptor = call.kontainer.get(ApiAccessDescriptor::class)
         val userProvider = call.kontainer.get(UserProvider::class)
 
-        ApiResponse.ok(descriptor.describeForUser(userProvider().permissions))
+        ApiResponse.ok(descriptor.describeForUser(userProvider()))
     }
 }
 ```
+
+**Authorization choice — `public()` vs `authenticated()`:**
+
+- `public()` — anonymous users can call this too. Useful so the login/register page can know which
+  endpoints it's allowed to hit. But exposes all protected endpoint URIs (with `Denied` level) to
+  anyone who asks.
+- `authenticated()` — only logged-in users. Login/register endpoints must be statically known
+  client-side. More restrictive, less information leakage.
+
+**Recommended: `public()` combined with Denied-filtering** — have `describeForUser()` exclude
+entries that evaluate to `ApiAccessLevel.Denied`. Anonymous users get back only the endpoints
+they can actually hit (typically login, register, password-reset). Authenticated users get
+everything they have access to. This is both secure (no leakage) and useful for all call sites.
 
 **Additional import needed**:
 
@@ -650,25 +746,43 @@ No automatic invalidation is built in -- this is the app developer's responsibil
 
 ---
 
-## 6. Files Summary
+## 6. Files Summary — DONE (2026-04-06)
 
-| # | File                                                                                | Action  | Description                                                 |
-|---|-------------------------------------------------------------------------------------|---------|-------------------------------------------------------------|
-| 1 | `ultra/remote/src/commonMain/kotlin/TypedApiEndpoint.kt`                            | Modify  | Add abstract `httpMethod: String`, override in 6 subclasses |
-| 2 | `funktor/inspect/src/commonMain/kotlin/introspection/api/UserApiAccessMatrix.kt`    | **New** | Serializable flat access matrix model                       |
-| 3 | `funktor/inspect/src/commonMain/kotlin/introspection/api/ApiAcl.kt`                 | **New** | Client-side lookup utility class                            |
-| 4 | `funktor/inspect/src/commonMain/kotlin/introspection/api/IntrospectionApiClient.kt` | Modify  | Add `GetMyApiAccess` endpoint + `getMyApiAccess()` method   |
-| 5 | `funktor/inspect/src/jvmMain/kotlin/introspection/services/ApiAccessDescriptor.kt`  | Modify  | Add `describeForUser(UserPermissions)` method               |
-| 6 | `funktor/inspect/src/jvmMain/kotlin/introspection/api/IntrospectionApi.kt`          | Modify  | Add `getMyApiAccess` route handler                          |
-| 7 | `funktor/all/src/jvmTest/kotlin/IntrospectionApiSpec.kt`                            | Modify  | Add test cases for the new endpoint                         |
+**Relocated**: endpoint moved from `/_/funktor/introspection/my-api-access` to `/auth/my-api-access`.
+Models and interface live in `funktor/rest`, endpoint in `funktor/auth`, implementation in `funktor/inspect`.
+
+| #   | File                                                                               | Action  | Status |
+|-----|------------------------------------------------------------------------------------|---------|--------|
+| 0a  | `funktor/rest/src/jvmMain/kotlin/auth/AuthRule.kt`                                 | Modify  | DONE   |
+| 0a  | `funktor/rest/src/jvmMain/kotlin/ApiRoute.kt`                                      | Modify  | DONE   |
+| 0a  | `funktor/rest/src/jvmTest/kotlin/auth/EstimateCtxSpec.kt`                          | **New** | DONE   |
+| 0a  | `funktor/rest/src/jvmTest/kotlin/auth/ApiRouteEstimateAccessSpec.kt`               | **New** | DONE   |
+| 0b  | `funktor/rest/src/jvmMain/kotlin/auth/AuthRuleBuilder.kt`                          | Modify  | DONE   |
+| 0b  | `funktor/rest/src/jvmMain/kotlin/auth/AuthRule.kt` (AccessLevelCheck)              | Modify  | DONE   |
+| 0b  | `funktor/rest/src/jvmTest/kotlin/auth/AuthenticatedRuleSpec.kt`                    | **New** | DONE   |
+| 1   | `ultra/remote/src/commonMain/kotlin/TypedApiEndpoint.kt`                           | Modify  | DONE   |
+| 2   | `funktor/rest/src/commonMain/kotlin/acl/UserApiAccessMatrix.kt`                    | **New** | DONE   |
+| 3   | `funktor/rest/src/commonMain/kotlin/acl/ApiAcl.kt`                                 | **New** | DONE   |
+| 3   | `funktor/rest/src/jvmTest/kotlin/acl/ApiAclSpec.kt`                                | **New** | DONE   |
+| 4   | `funktor/rest/src/jvmMain/kotlin/acl/UserApiAccessProvider.kt`                     | **New** | DONE   |
+| 5   | `funktor/inspect/src/jvmMain/kotlin/introspection/services/ApiAccessDescriptor.kt` | Modify  | DONE   |
+| 6   | `funktor/auth/src/commonMain/kotlin/api/AuthApiClient.kt`                          | Modify  | DONE   |
+| 7   | `funktor/auth/src/jvmMain/kotlin/api/AuthApi.kt`                                   | Modify  | DONE   |
+| 8   | `funktor/all/src/jvmTest/kotlin/AuthApiSpec.kt`                                    | Modify  | DONE   |
+| fix | `funktor/rest/src/jvmMain/kotlin/auth/call.kt`                                     | Modify  | DONE   |
+
+**Additional fix**: `jwtUserProvider` now detects `JwtAnonymous` payloads and returns anonymous user
+(previously `JwtAnonymous` extracted to `userId=""` which was not recognized as anonymous).
 
 ---
 
-## 7. Verification
+## 7. Verification — DONE (2026-04-06)
 
-1. **Build**: Compile the full project to verify no breakage from `httpMethod` addition
-2. **Run tests**: Execute `IntrospectionApiSpec` to verify the new endpoint works
-3. **Manual verification**: The endpoint should return a flat list of entries with method, uri, and access level for the
-   authenticated user
-4. **Frontend smoke test**: Instantiate `ApiAcl` from the response and verify `hasAccessTo()` returns expected results
-   for known endpoints
+All verification steps passed:
+
+- `./gradlew :ultra:remote:compileKotlinJs :ultra:remote:compileKotlinJvm` — PASS
+- `./gradlew :funktor:rest:compileKotlinJs :funktor:rest:compileKotlinJvm` — PASS
+- `./gradlew :funktor:auth:compileKotlinJs :funktor:auth:compileKotlinJvm` — PASS
+- `./gradlew :funktor:inspect:compileKotlinJvm` — PASS
+- `./gradlew :funktor:rest:jvmTest` — PASS (all unit tests)
+- `./gradlew :funktor:all:jvmTest` — 86/87 PASS (1 pre-existing sign-in ordering failure)

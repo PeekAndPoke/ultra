@@ -33,6 +33,7 @@ interface ObjectSizeEstimator {
  * @param cfg tuning knobs for header and pointer sizes
  */
 class ObjectSizeEstimatorImpl(
+    /** Configuration for header, array, and pointer size heuristics. */
     val cfg: EstimatorConfig = EstimatorConfig(),
 ) : ObjectSizeEstimator {
     companion object {
@@ -79,6 +80,7 @@ class ObjectSizeEstimatorImpl(
         val pointerSize: Long = 8L,
     )
 
+    /** Estimates the in-memory size of [obj] in bytes, recursively traversing the object graph. */
     override fun estimate(obj: Any?): Long {
         // Primitives: no cycle detection needed (they can't form reference cycles,
         // and JS WeakSet does not support primitive values)

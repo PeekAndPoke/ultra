@@ -8,8 +8,10 @@ import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
+import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.core.user
 import io.peekandpoke.funktor.rest.ApiRoutes
+import io.peekandpoke.funktor.rest.acl.UserApiAccessProvider
 import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
@@ -63,7 +65,7 @@ class AuthApi : ApiRoutes("login") {
         }.codeGen {
             funcName = "setPassword"
         }.authorize {
-            public()
+            authenticated()
         }.handle { params, body ->
             // Let the bots wait a bit
             letTheBotsWait()
@@ -193,6 +195,39 @@ class AuthApi : ApiRoutes("login") {
                 }
             }
         }
+
+    val refreshToken = AuthApiClient.RefreshToken.mount(RealmParam::class) {
+        docs {
+            name = "Refresh Token"
+        }.codeGen {
+            funcName = "refreshToken"
+        }.authorize {
+            authenticated()
+        }.handle { params ->
+            try {
+                funktorAuth
+                    .refreshToken(params.realm, user.record.userId, user.record.type)
+                    .let { ApiResponse.ok(it) }
+            } catch (e: AuthError) {
+                ApiResponse.forbidden<AuthSignInResponse>()
+                    .withInfo(e.message ?: "")
+            }
+        }
+    }
+
+    val getMyApiAccess = AuthApiClient.GetMyApiAccess.mount {
+        docs {
+            name = "My API Access"
+        }.codeGen {
+            funcName = "getMyApiAccess"
+        }.authorize {
+            authenticated()
+        }.handle {
+            val provider = call.kontainer.get(UserApiAccessProvider::class)
+
+            ApiResponse.ok(provider.describeForUser(user))
+        }
+    }
 
     private suspend fun letTheBotsWait() {
         delay(Random.nextLong(250, 500))

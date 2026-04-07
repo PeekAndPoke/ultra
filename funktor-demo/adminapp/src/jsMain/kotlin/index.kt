@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.demo.adminapp
 
+import io.peekandpoke.funktor.auth.AuthSessionConfig
 import io.peekandpoke.funktor.auth.authState
 import io.peekandpoke.funktor.auth.pages.AuthFrontend
 import io.peekandpoke.funktor.auth.pages.AuthFrontendConfig
@@ -40,6 +41,11 @@ val State: AdminAppState = AdminAppState(
         ),
         api = Apis.auth,
         router = { kraft.router },
+        sessionConfig = AuthSessionConfig(
+            onTokenRefreshed = {
+                console.log("[AuthState] Token refreshed")
+            },
+        ),
     ),
 )
 

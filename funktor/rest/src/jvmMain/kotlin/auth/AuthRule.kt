@@ -103,7 +103,7 @@ interface AuthRule<PARAMS, BODY> {
          * Creates a Rule that returns true when the current user has the given [permission]
          */
         fun <P, B> forPermission(permission: String): AuthRule<P, B> =
-            PermissionsCheck("Matches permission $permission") { permissions.hasRole(permission) }
+            PermissionsCheck("Matches permission $permission") { permissions.hasPermission(permission) }
 
         /**
          * Creates a Rules that returns true when the current user has any of the given [permissions]
@@ -116,12 +116,21 @@ interface AuthRule<PARAMS, BODY> {
 
     /**
      * The context used to estimate the [ApiAccessLevel] of a rule.
+     *
+     * Carries the full [User] (not just permissions) so rules can distinguish anonymous from
+     * authenticated users and access user metadata (record, userId) in estimation logic.
      */
     class EstimateCtx(
-        val permissions: UserPermissions,
+        val user: User,
     ) {
+        /** Backward-compat accessor — existing rules using `ctx.permissions` still work. */
+        val permissions: UserPermissions get() = user.permissions
+
+        /** True if the user is not anonymous. */
+        val isAuthenticated: Boolean get() = !user.isAnonymous()
+
         companion object {
-            fun of(user: User) = EstimateCtx(user.permissions)
+            fun of(user: User) = EstimateCtx(user)
         }
     }
 
@@ -224,6 +233,23 @@ class PermissionsCheck<PARAMS, BODY>(
         true -> ApiAccessLevel.Granted
         else -> ApiAccessLevel.Denied
     }
+}
+
+/**
+ * Auth rule that returns [ApiAccessLevel] directly from a single rule function.
+ *
+ * Unlike [PermissionsCheck] (Boolean -> Granted/Denied) and [CallCheck] (separate check/estimate paths),
+ * this uses a single rule that returns [ApiAccessLevel] for both estimation and runtime checks.
+ * The [check] method considers any non-[ApiAccessLevel.Denied] result as granted.
+ */
+class AccessLevelCheck<PARAMS, BODY>(
+    override val description: String,
+    private val rule: EstimateCtx.() -> ApiAccessLevel,
+) : AuthRule<PARAMS, BODY> {
+
+    override fun check(ctx: CheckCtx<PARAMS, BODY>): Boolean = !rule(ctx.estimateCtx).isDenied()
+
+    override fun estimate(ctx: EstimateCtx): ApiAccessLevel = rule(ctx)
 }
 
 /**
