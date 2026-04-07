@@ -154,7 +154,7 @@ class AuthApiSpec : FunktorApiSpec() {
         }
 
         api.auth.setPassword { route ->
-            "Set password with non-existent realm must return forbidden" {
+            "Anonymous set password must be unauthorized" {
                 apiApp {
                     anonymous {
                         route(
@@ -166,7 +166,7 @@ class AuthApiSpec : FunktorApiSpec() {
                                 newPassword = "new",
                             ),
                         ) {
-                            status shouldBe HttpStatusCode.Forbidden
+                            status shouldBe HttpStatusCode.Unauthorized
                         }
                     }
                 }
@@ -246,6 +246,50 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
+        api.auth.refreshToken { route ->
+            "Anonymous request must be unauthorized" {
+                apiApp {
+                    anonymous {
+                        route(existingRealm) {
+                            status shouldBe HttpStatusCode.Unauthorized
+                        }
+                    }
+                }
+            }
+
+            "Regular user request must return a refreshed token with user data" {
+                apiApp {
+                    authenticate(regularUserToken) {
+                        route(existingRealm) {
+                            status shouldBe HttpStatusCode.OK
+                            val response = apiResponseData<AuthSignInResponse>()
+                            response.shouldNotBeNull()
+                            response.token.token.shouldNotBeBlank()
+                            response.token.permissionsNs.shouldNotBeBlank()
+                            response.realm.shouldNotBeNull()
+                            response.user.shouldNotBeNull()
+                        }
+                    }
+                }
+            }
+
+            "Super user request must return a refreshed token with user data" {
+                apiApp {
+                    authenticate(superUserToken) {
+                        route(existingRealm) {
+                            status shouldBe HttpStatusCode.OK
+                            val response = apiResponseData<AuthSignInResponse>()
+                            response.shouldNotBeNull()
+                            response.token.token.shouldNotBeBlank()
+                            response.token.permissionsNs.shouldNotBeBlank()
+                            response.realm.shouldNotBeNull()
+                            response.user.shouldNotBeNull()
+                        }
+                    }
+                }
+            }
+        }
+
         api.auth.getMyApiAccess { route ->
             "Anonymous request must be unauthorized" {
                 apiApp {
@@ -257,7 +301,7 @@ class AuthApiSpec : FunktorApiSpec() {
                 }
             }
 
-            "Regular user request must return access matrix" {
+            "Regular user request must return access matrix with only non-denied entries" {
                 apiApp {
                     authenticate(regularUserToken) {
                         request(route) {
@@ -265,6 +309,8 @@ class AuthApiSpec : FunktorApiSpec() {
                             val matrix = apiResponseData<UserApiAccessMatrix>()
                             matrix.shouldNotBeNull()
                             matrix.entries.shouldNotBeEmpty()
+                            // Denied entries are filtered out server-side
+                            matrix.entries.none { it.level == ApiAccessLevel.Denied } shouldBe true
                         }
                     }
                 }

@@ -13,12 +13,16 @@ import io.peekandpoke.kraft.routing.Route
 import io.peekandpoke.kraft.routing.Router
 import io.peekandpoke.kraft.routing.RouterBuilder
 import io.peekandpoke.kraft.routing.routerMiddleware
+import io.peekandpoke.kraft.utils.clearInterval
+import io.peekandpoke.kraft.utils.launch
+import io.peekandpoke.kraft.utils.setInterval
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.slumber.JsonUtil.toJsonObject
 import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamSource
 import io.peekandpoke.ultra.streams.Unsubscribe
 import io.peekandpoke.ultra.streams.ops.persistInLocalStorage
+import kotlinx.browser.window
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
@@ -26,6 +30,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.serializer
+import org.w3c.dom.events.Event
 import kotlin.js.Date
 
 inline fun <reified USER> authState(
@@ -33,12 +38,14 @@ inline fun <reified USER> authState(
     api: AuthApiClient,
     noinline router: () -> Router,
     noinline jwtDecoder: (String) -> Map<String, Any?> = { emptyMap() },
+    sessionConfig: AuthSessionConfig = AuthSessionConfig(),
 ) = AuthState<USER>(
     userSerializer = serializer(),
     frontend = frontend,
     api = api,
     router = router,
     jwtDecoder = jwtDecoder,
+    sessionConfig = sessionConfig,
 )
 
 class AuthState<USER>(
@@ -47,6 +54,7 @@ class AuthState<USER>(
     val api: AuthApiClient,
     val router: () -> Router,
     val jwtDecoder: (String) -> Map<String, Any?> = { emptyMap() },
+    val sessionConfig: AuthSessionConfig = AuthSessionConfig(),
 ) : Stream<AuthState.Data<USER>> {
 
     @Serializable
@@ -82,6 +90,29 @@ class AuthState<USER>(
         .persistInLocalStorage("auth", Data.serializer(userSerializer))
 
     private var redirectAfterLoginUri: String? = null
+
+    // Session lifecycle state
+    private var checkTimerId: Int? = null
+    private var isRefreshing: Boolean = false
+    private val windowFocusListener: (Event) -> Unit = { checkAndRefreshToken() }
+
+    init {
+        if (sessionConfig.enabled) {
+            val data = streamSource()
+            if (data.isLoggedIn) {
+                val expiresMs = data.tokenExpires?.let { Date(it).getTime() }
+                val nowMs = Date.now()
+
+                if (expiresMs != null && nowMs >= expiresMs) {
+                    // Persisted token is expired — clear it immediately
+                    streamSource(Data.empty())
+                } else {
+                    // Token still valid — start lifecycle
+                    startSessionLifecycle()
+                }
+            }
+        }
+    }
 
     override fun invoke(): Data<USER> = streamSource()
 
@@ -128,6 +159,7 @@ class AuthState<USER>(
             val data = readJwt(response = it, user = user)
 
             streamSource(data)
+            startSessionLifecycle()
         }
 
         return streamSource()
@@ -170,6 +202,7 @@ class AuthState<USER>(
     }
 
     fun logout() {
+        stopSessionLifecycle()
         streamSource(Data.empty())
     }
 
@@ -185,6 +218,86 @@ class AuthState<USER>(
 
         return result?.success == true
     }
+
+    // Session lifecycle ////////////////////////////////////////////////////////////////////////////
+
+    private fun startSessionLifecycle() {
+        if (!sessionConfig.enabled) return
+        stopSessionLifecycle()
+
+        checkTimerId = setInterval(sessionConfig.checkIntervalMs) {
+            checkAndRefreshToken()
+        }
+
+        if (sessionConfig.checkOnWindowFocus) {
+            window.addEventListener("focus", windowFocusListener)
+        }
+    }
+
+    private fun stopSessionLifecycle() {
+        checkTimerId?.let { clearInterval(it) }
+        checkTimerId = null
+        window.removeEventListener("focus", windowFocusListener)
+    }
+
+    private fun checkAndRefreshToken() {
+        val data = streamSource()
+        if (data.isNotLoggedIn || isRefreshing) return
+
+        val expiresMs = data.tokenExpires?.let { Date(it).getTime() } ?: return
+        val nowMs = Date.now()
+
+        when {
+            nowMs >= expiresMs -> handleSessionExpired()
+            (expiresMs - nowMs) <= sessionConfig.refreshBeforeExpiryMs -> doRefreshToken()
+        }
+    }
+
+    private fun doRefreshToken() {
+        if (isRefreshing) return
+        isRefreshing = true
+
+        launch {
+            try {
+                val response = api.refreshToken()
+                    .map { it.data }
+                    .catch { emit(null) }
+                    .firstOrNull()
+
+                if (response != null) {
+                    val user = response.getTypedUser(userSerializer)
+                    val newData = readJwt(response = response, user = user)
+                    streamSource(newData)
+                    sessionConfig.onTokenRefreshed?.invoke()
+                } else {
+                    handleSessionExpired()
+                }
+            } finally {
+                isRefreshing = false
+            }
+        }
+    }
+
+    private fun handleSessionExpired() {
+        stopSessionLifecycle()
+
+        val customHandler = sessionConfig.onSessionExpired
+        if (customHandler != null) {
+            customHandler()
+            return
+        }
+
+        // Default: save current page for redirect-after-login, logout, navigate to login
+        val currentUri = window.location.let { it.pathname + it.search + it.hash }
+        val loginUri = router().strategy.render(frontend.routes.login())
+        if (currentUri != loginUri) {
+            redirectAfterLoginUri = currentUri
+        }
+        logout()
+        router().navToUri(loginUri)
+    }
+
+    // JWT parsing ////////////////////////////////////////////////////////////////////////////////
 
     private fun readJwt(response: AuthSignInResponse, user: USER): Data<USER> {
         val claims = jwtDecoder(response.token.token)

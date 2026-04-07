@@ -75,6 +75,11 @@ class AuthApiClient(private val realm: String, config: Config) : ApiClient(confi
             uri = "$BASE/my-api-access",
             response = UserApiAccessMatrix.serializer().api(),
         )
+
+        val RefreshToken = TypedApiEndpoint.Get(
+            uri = "$BASE/{realm}/refresh-token",
+            response = AuthSignInResponse.serializer().api(),
+        )
     }
 
     fun getRealm(): Flow<ApiResponse<AuthRealmModel>> = call(
@@ -117,5 +122,9 @@ class AuthApiClient(private val realm: String, config: Config) : ApiClient(confi
 
     fun getMyApiAccess(): Flow<ApiResponse<UserApiAccessMatrix>> = call(
         GetMyApiAccess()
+    )
+
+    fun refreshToken(): Flow<ApiResponse<AuthSignInResponse>> = call(
+        RefreshToken("realm" to realm)
     )
 }

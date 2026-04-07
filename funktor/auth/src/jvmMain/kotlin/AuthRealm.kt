@@ -262,6 +262,33 @@ interface AuthRealm<USER> {
     }
 
     /**
+     * Refreshes the token for the user with the given [userId].
+     * Loads the user, generates a new JWT, and returns a full sign-in response.
+     *
+     * [expectedUserType] is validated against the newly generated token to prevent
+     * cross-realm token refresh attacks (a user from realm A requesting a token from realm B).
+     */
+    suspend fun refreshToken(userId: String, expectedUserType: String?): AuthSignInResponse {
+        val user = loadUserById(userId)
+            ?: throw AuthError("User not found: $userId")
+
+        val response = user.toSignInResponse()
+
+        // Validate that the refreshed token's user type matches the original JWT's user type.
+        // This prevents cross-realm escalation when realms share a user store with overlapping IDs.
+        if (expectedUserType != null) {
+            val newToken = deps.jwtGenerator.extractUserData(
+                deps.jwtGenerator.verify(response.token.token)
+            )
+            if (newToken.type != expectedUserType) {
+                throw AuthError("Token refresh denied")
+            }
+        }
+
+        return response
+    }
+
+    /**
      * Converts a user to a sign in response.
      */
     suspend fun Stored<USER>.toSignInResponse() = AuthSignInResponse(

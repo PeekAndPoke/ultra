@@ -103,7 +103,7 @@ interface AuthRule<PARAMS, BODY> {
          * Creates a Rule that returns true when the current user has the given [permission]
          */
         fun <P, B> forPermission(permission: String): AuthRule<P, B> =
-            PermissionsCheck("Matches permission $permission") { permissions.hasRole(permission) }
+            PermissionsCheck("Matches permission $permission") { permissions.hasPermission(permission) }
 
         /**
          * Creates a Rules that returns true when the current user has any of the given [permissions]

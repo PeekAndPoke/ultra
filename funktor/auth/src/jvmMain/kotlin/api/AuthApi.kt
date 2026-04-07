@@ -65,7 +65,7 @@ class AuthApi : ApiRoutes("login") {
         }.codeGen {
             funcName = "setPassword"
         }.authorize {
-            public()
+            authenticated()
         }.handle { params, body ->
             // Let the bots wait a bit
             letTheBotsWait()
@@ -195,6 +195,25 @@ class AuthApi : ApiRoutes("login") {
                 }
             }
         }
+
+    val refreshToken = AuthApiClient.RefreshToken.mount(RealmParam::class) {
+        docs {
+            name = "Refresh Token"
+        }.codeGen {
+            funcName = "refreshToken"
+        }.authorize {
+            authenticated()
+        }.handle { params ->
+            try {
+                funktorAuth
+                    .refreshToken(params.realm, user.record.userId, user.record.type)
+                    .let { ApiResponse.ok(it) }
+            } catch (e: AuthError) {
+                ApiResponse.forbidden<AuthSignInResponse>()
+                    .withInfo(e.message ?: "")
+            }
+        }
+    }
 
     val getMyApiAccess = AuthApiClient.GetMyApiAccess.mount {
         docs {

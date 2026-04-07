@@ -24,11 +24,14 @@ class ApiAccessDescriptor(
     override fun describeForUser(user: User): UserApiAccessMatrix {
         val entries = features.flatMap { feature ->
             feature.getRouteGroups().flatMap { group ->
-                group.all.map { route ->
-                    UserApiAccessMatrix.Entry(
+                group.all.mapNotNull { route ->
+                    val level = route.estimateAccess(user)
+                    // Filter out Denied entries to avoid exposing the full API surface
+                    if (level.isDenied()) null
+                    else UserApiAccessMatrix.Entry(
                         method = route.method.value,
                         uri = route.pattern.pattern,
-                        level = route.estimateAccess(user),
+                        level = level,
                     )
                 }
             }

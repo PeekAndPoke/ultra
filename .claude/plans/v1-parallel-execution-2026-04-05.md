@@ -11,7 +11,7 @@
 | Gate                           | Status              | What's left                                                               |
 |--------------------------------|---------------------|---------------------------------------------------------------------------|
 | G1 — Zero CRITICAL/HIGH issues | ✅ DONE              | Wave 1 resolved all                                                       |
-| G2 — Public API tested (≥25%)  | 🟡 IN PROGRESS      | Funktor, ultra/vault, ultra/html, ultra/semanticui                        |
+| G2 — Public API tested (≥25%)  | 🟡 IN PROGRESS      | vault/html/semanticui ✅ hardened (2026-04-07); Funktor remaining          |
 | G3 — TODOs resolved or tracked | 🟡 IN PROGRESS      | ~15 in Funktor, 5 reflection, 3 vault                                     |
 | G4 — KDoc 90%+ public API      | 🟡 IN PROGRESS      | cache ✅ ~90%, Funktor (~50%) remaining                                    |
 | G5 — Clean build, no warnings  | ✅ ASSUMED PASSING   | Verify at release gate                                                    |
@@ -76,8 +76,8 @@ Each ported repo has at least one Monko-backed integration spec.
 2. **Wave 3 audit** — ultra/remote, ultra/log, ultra/html, Streams (re-check)
 3. **Wave 4 audit** — Kraft core, Kraft semanticui, 11 addons, Mutator, all KSP processors
 4. **Wave 5 audit** — Monko (after Phase 2 ships)
-5. **Hardening**: ultra/vault (18%→35%), ultra/html (15%→35%), ultra/semanticui (27%→35%), ultra/remote (21%→35%),
-   ultra/log (29%→35%), ultra/maths (33%→35%)
+5. ~~**Hardening**~~ — ✅ DONE (2026-04-07). vault (~105 tests), html (~26 tests), semanticui (~29 tests) all hardened to
+   35%+; remote/log/maths already above target
 
 **Dependencies:** None. Each wave and each module is independent.
 

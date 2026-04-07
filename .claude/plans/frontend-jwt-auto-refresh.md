@@ -1,6 +1,6 @@
 # Frontend JWT Auto-Refresh & Session Lifecycle
 
-**Status:** Deferred — dependent on ApiAcl landing first.
+**Status:** DONE (2026-04-06) — Implemented in the `funktor-apiacl-frontend-integration` branch.
 
 ## Context
 

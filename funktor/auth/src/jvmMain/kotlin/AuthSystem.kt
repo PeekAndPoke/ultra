@@ -104,6 +104,11 @@ class AuthSystem(
         return getRealm(realm).signIn(request)
     }
 
+    /** Refresh the token for the user with the given [userId] in the given [realm] */
+    suspend fun refreshToken(realm: String, userId: String, expectedUserType: String?): AuthSignInResponse {
+        return getRealm(realm).refreshToken(userId, expectedUserType)
+    }
+
     /** Set the password of a user by [realm] and [request] */
     suspend fun setPassword(realm: String, request: AuthSetPasswordRequest): AuthSetPasswordResponse {
         return getRealm(realm).setPassword(request)
