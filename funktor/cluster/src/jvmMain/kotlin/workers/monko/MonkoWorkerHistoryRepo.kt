@@ -21,6 +21,7 @@ import io.peekandpoke.ultra.vault.BatchInsertRepository
 import io.peekandpoke.ultra.vault.Cursor
 import io.peekandpoke.ultra.vault.New
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.map
 
 class MonkoWorkerHistoryRepo(
     driver: MonkoDriver,

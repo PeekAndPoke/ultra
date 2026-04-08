@@ -70,7 +70,7 @@ suspend fun main() {
     println()
     println("Found documents: ${loaded.count}")
 
-    loaded.forEachIndexed { idx, movie ->
+    loaded.toList().forEachIndexed { idx, movie ->
         println("Found document ${idx + 1}: $movie")
     }
 

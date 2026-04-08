@@ -88,7 +88,8 @@ val getUsers = GetUsers.mount {
 }
 
 // Built-in rules:
-// public()              — allow all authenticated users
+// public()              — allow everyone (including anonymous)
+// authenticated()       — any logged-in user (non-anonymous)
 // forbidden()           — deny all
 // isSuperUser()         — super user check
 // forRole("admin")      — role-based

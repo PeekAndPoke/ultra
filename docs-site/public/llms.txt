@@ -11,7 +11,7 @@
 
 - [Kontainer](https://peekandpoke.io/llms/kontainer.md): Lightweight DI container — per-request scoping, singleton/dynamic/prototype services, modules
 - [Slumber](https://peekandpoke.io/llms/slumber.md): Kotlin-first serialization — nullable-aware, sealed class polymorphism, two-pass error handling
-- [Mutator](https://peekandpoke.io/ultra/mutator/): KSP-generated code for mutating nested immutable data structures
+- [Mutator](https://peekandpoke.io/llms/mutator.md): KSP-generated code for mutating nested immutable data structures — @Mutable(deep) controls transitive discovery, @NotMutable excludes types, plugin-extensible
 - [Streams](https://peekandpoke.io/llms/streams.md): Reactive streams — always-has-a-value, composable operators, lazy subscriptions (JVM, JS, Native)
 - [Datetime](https://peekandpoke.io/llms/datetime.md): Multiplatform date/time — guard-rail type system, 600+ timezones, DST-aware arithmetic, testable Kronos clock (JVM, JS, Native)
 - [Cache](https://peekandpoke.io/llms/cache.md): In-memory caching — TTL/LRU/memory-aware eviction, coroutine-based, multiplatform (JVM, JS, Native)
@@ -26,10 +26,10 @@
 
 ## Funktor
 
-- [Funktor](https://peekandpoke.io/ultra/funktor/): Modular server framework on Ktor — auth, REST, clustering, messaging, insights
+- [Funktor](https://peekandpoke.io/llms/funktor.md): Modular server framework on Ktor — auth, REST, clustering, messaging, insights
   - [Core](https://peekandpoke.io/ultra/funktor/core): App lifecycle, routing, CLI, fixtures, configuration, repair
-  - [REST](https://peekandpoke.io/ultra/funktor/rest): Typed API routes, authorization DSL, SSE, endpoint docs
-  - [Auth](https://peekandpoke.io/ultra/funktor/auth): Multi-realm auth, email/password, Google SSO, GitHub SSO, JWT
+  - [REST](https://peekandpoke.io/ultra/funktor/rest): Typed API routes, authorization DSL (public, authenticated, role/group/permission), SSE, endpoint docs
+  - [Auth](https://peekandpoke.io/ultra/funktor/auth): Multi-realm auth, email/password, Google SSO, GitHub SSO, JWT, token refresh, API access matrix (ApiAcl), session lifecycle with auto-refresh
   - [Cluster](https://peekandpoke.io/ultra/funktor/cluster): Background jobs, file depot, locks, workers, key-value storage
   - [Messaging](https://peekandpoke.io/ultra/funktor/messaging): Email sending, SendGrid, AWS SES, sent message storage
   - [Insights](https://peekandpoke.io/ultra/funktor/insights): Request profiling, performance metrics, debug GUI

@@ -13,6 +13,7 @@ import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.model.Paged
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.map
 
 class RandomDataStorageApi : ApiRoutes("random-data") {
 

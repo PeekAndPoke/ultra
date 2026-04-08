@@ -11,6 +11,7 @@ import io.peekandpoke.ultra.vault.BatchInsertRepository
 import io.peekandpoke.ultra.vault.Cursor
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.map
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch

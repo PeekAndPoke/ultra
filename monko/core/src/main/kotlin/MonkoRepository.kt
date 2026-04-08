@@ -15,6 +15,7 @@ import io.peekandpoke.ultra.vault.Repository.Hooks
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.VaultModels
 import io.peekandpoke.ultra.vault.ensureKey
+import kotlinx.coroutines.flow.firstOrNull
 import org.bson.Document
 
 abstract class MonkoRepository<T : Any>(
@@ -147,7 +148,7 @@ abstract class MonkoRepository<T : Any>(
             limit(1)
         }
 
-        return result.firstOrNull()
+        return result.asFlow().firstOrNull()
     }
 
     override suspend fun <X : T> insert(new: New<X>): Stored<X> {

@@ -10,6 +10,7 @@ import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.NullEntityCache
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.TypedQuery
+import io.peekandpoke.ultra.vault.firstOrNull
 
 class MonkoCursorSpec : FreeSpec() {
 
@@ -141,10 +142,7 @@ class MonkoCursorSpec : FreeSpec() {
                     )
                     val cursor = createCursor(entries)
 
-                    val collected = mutableListOf<Stored<TestEntity>>()
-                    for (entry in cursor) {
-                        collected.add(entry)
-                    }
+                    val collected = cursor.toList()
 
                     collected shouldContainExactly entries
                 }

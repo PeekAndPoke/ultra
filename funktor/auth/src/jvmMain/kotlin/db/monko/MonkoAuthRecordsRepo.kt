@@ -18,6 +18,7 @@ import io.peekandpoke.monko.lang.ts
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.firstOrNull
 import io.peekandpoke.ultra.vault.hooks.TimestampedHook
 
 class MonkoAuthRecordsRepo(

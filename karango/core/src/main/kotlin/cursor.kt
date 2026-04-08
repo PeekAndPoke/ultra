@@ -1,109 +1,86 @@
 package io.peekandpoke.karango
 
 import com.arangodb.ArangoCursorAsync
+import com.arangodb.entity.CursorStats
 import io.peekandpoke.karango.slumber.KarangoCodec
 import io.peekandpoke.karango.vault.AqlTypedQuery
 import io.peekandpoke.ultra.vault.Cursor
 import io.peekandpoke.ultra.vault.EntityCache
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.profiling.QueryProfiler
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.runBlocking
 import java.io.Closeable
 
 /**
- * Streams query results from ArangoDB with lazy deserialization.
+ * Streams query results from ArangoDB via [Flow] with non-blocking batch pagination.
  *
- * Results are deserialized on demand via [KarangoCodec]. [Stored] entities are automatically
- * added to the [EntityCache] on deserialization.
+ * Results are deserialized via [KarangoCodec] as they are emitted. [Stored] entities are
+ * automatically added to the [EntityCache] on deserialization.
  *
- * NOTE: Cursor iteration currently uses a blocking call for batch pagination.
- * TODO: [KARANGO] make the cursor fully async by getting rid of the internal [Iterator].
+ * Chunk fetching is fully suspend-based — no runBlocking.
  */
 class KarangoCursor<T>(
-    arangoCursor: ArangoCursorAsync<*>,
+    private val itemFlow: Flow<T>,
     override val query: AqlTypedQuery<T>,
-    val codec: KarangoCodec,
+    override val entityCache: EntityCache,
+    override val count: Long,
+    override val fullCount: Long?,
+    val stats: CursorStats?,
     private val profiler: QueryProfiler.Entry,
 ) : Cursor<T>, Closeable {
-    private var inner = arangoCursor
-    private val type = query.root.innerType().type
 
-    /** List of pairs, where first is the raw data and second the deserialized data */
-    private var data = emptyList<T>()
+    companion object {
+        fun <T> create(
+            arangoCursor: ArangoCursorAsync<*>,
+            query: AqlTypedQuery<T>,
+            codec: KarangoCodec,
+            profiler: QueryProfiler.Entry,
+        ): KarangoCursor<T> {
+            val type = query.root.innerType().type
+            val count = arangoCursor.count?.toLong() ?: 0L
+            val fullCount = arangoCursor.extra?.stats?.fullCount
+            val stats = arangoCursor.extra?.stats
 
-    private inner class It : Iterator<T> {
+            val itemFlow = flow {
+                var cursor = arangoCursor
+                while (true) {
+                    for (raw in cursor.result) {
+                        val deserialized = profiler.measureDeserializer {
+                            @Suppress("UNCHECKED_CAST")
+                            codec.awake(type, raw) as T
+                        }
 
-        private var idx = 0
+                        if (deserialized is Stored<*>) {
+                            codec.entityCache.put(deserialized._id, deserialized)
+                        }
 
-        override fun hasNext(): Boolean {
-            return idx < count
-        }
-
-        override fun next(): T {
-
-            // NOTE: This iterator is NOT thread-safe. Do not call from multiple threads concurrently.
-            // Local copies are taken as a defensive measure, not as a synchronization mechanism.
-            val currentIdx = idx
-            val currentData = data
-
-            if (currentIdx >= currentData.size) {
-                data = currentData.plus(
-                    inner.result.map {
-                        deserialize(it)
+                        emit(deserialized)
                     }
-                )
 
-                // Is there another chunk available?
-                if (inner.hasMore()) {
-                    // TODO: [Karango] get rid of this blocking call
-                    runBlocking {
-                        inner = inner.nextBatch().await()
-                    }
+                    if (!cursor.hasMore()) break
+                    cursor = cursor.nextBatch().await()
                 }
             }
 
-            // Get the next entry from the low level iterator
-            val entry = data[currentIdx]
-            // increase the idx
-            idx = currentIdx + 1
-
-            return entry
-        }
-
-        private fun deserialize(raw: Any?): T {
-            val deserialized = profiler.measureDeserializer {
-                // Try to map the entry onto the target type
-                @Suppress("UNCHECKED_CAST")
-                codec.awake(type, raw) as T
-            }
-
-            // If the result is a Stored we put it into the EntityCache
-            if (deserialized is Stored<*>) {
-                codec.entityCache.put(deserialized._id, deserialized)
-            }
-
-            return deserialized
+            return KarangoCursor(
+                itemFlow = itemFlow,
+                query = query,
+                entityCache = codec.entityCache,
+                count = count,
+                fullCount = fullCount,
+                stats = stats,
+                profiler = profiler,
+            )
         }
     }
 
-    override val entityCache: EntityCache = codec.entityCache
-
-    override val count: Long = inner.count?.toLong() ?: 0L
-
-    override val fullCount: Long? get() = stats?.fullCount
-
-    val stats get() = inner.extra?.stats
-
-    override fun iterator(): Iterator<T> = It()
+    override fun asFlow(): Flow<T> = itemFlow
 
     override val timeMs get() = profiler.totalNs / 1_000_000.0
 
     override fun close() {
-        try {
-            inner.close()
-        } catch (e: Exception) {
-            System.err.println("[KarangoCursor] Error closing cursor: ${e.message}")
-        }
+        // No-op: the flow handles cursor lifecycle during collection
     }
 }
