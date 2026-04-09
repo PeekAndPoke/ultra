@@ -145,7 +145,7 @@ hooks = Hooks.of<Article>()
         storable: Storable<Article>,
     ): Storable<X> {
         @Suppress("UNCHECKED_CAST")
-        return storable.map { article ->
+        return storable.modify { article ->
             article.copy(title = article.title.trim())
         } as Storable<X>
     }

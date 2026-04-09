@@ -1,0 +1,106 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {vaultSidebar} from '../../../data/vault-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Vault" sidebar={vaultSidebar} description="Shared database abstraction layer for Karango and Monko"
+            hilbert>
+
+    <h1>Vault</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        The shared database abstraction layer underneath Karango (ArangoDB) and Monko (MongoDB).
+    </p>
+
+    <Aside>Vault is not a database driver. It defines the common types and interfaces that Karango and Monko
+        implement. If you use either of those libraries, you are already using Vault.
+    </Aside>
+
+    <h2>Why it matters</h2>
+
+    <p>Switch between ArangoDB and MongoDB without rewriting your domain model.
+        Your entities, queries, and repository patterns stay the same.
+        Vault gives you a single set of abstractions so that choosing or changing a database backend
+        is a wiring decision, not a rewrite.</p>
+
+    <h2>What Vault provides</h2>
+
+    <p>Every persistence layer needs the same building blocks: entity wrappers with metadata, lazy references,
+        cursor-based result iteration, a repository interface with hooks, and an entity cache for deduplication.
+        Rather than duplicating these across Karango and Monko, Vault defines them once.</p>
+
+    <p>Your data classes stay clean. Database metadata (<code>_id</code>, <code>_key</code>, <code>_rev</code>)
+        lives in the wrapper, not in your domain model:</p>
+
+    <Code code={`// Your data — no database concerns
+@Vault
+data class Person(val name: String, val age: Int)
+
+// After inserting into either ArangoDB or MongoDB:
+val stored: Stored<Person> = repo.insert(Person("Alice", 30))
+
+stored.value  // Person(name="Alice", age=30) — your data
+stored._id    // "persons/abc123" — database ID
+stored._key   // "abc123" — document key`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>The Storable hierarchy</h2>
+
+    <p>Three wrapper types represent different entity lifecycle stages:</p>
+
+    <ul>
+        <li><code>New&lt;T&gt;</code> — an entity before it has been persisted</li>
+        <li><code>Stored&lt;T&gt;</code> — an entity loaded from or saved to the database, carrying full metadata</li>
+        <li><code>Ref&lt;T&gt;</code> — a lazy reference to another entity, resolved on demand via <code>suspend
+            resolve()</code></li>
+    </ul>
+
+    <p>All three share a common base (<code>Storable&lt;T&gt;</code>) with uniform access via
+        <code>suspend resolve()</code> and <code>suspend invoke()</code>.
+        For <code>Stored</code> and <code>New</code>, resolution is instant.
+        For <code>Ref</code>, it may suspend to load from the database.</p>
+
+    <h2>What You Get</h2>
+
+    <div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Entity Wrappers</h3>
+            <p class="text-sm text-gray-400">Storable, Stored, New, and Ref — your data stays clean while database
+                metadata lives in the wrapper.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Flow Cursors</h3>
+            <p class="text-sm text-gray-400">Cursor&lt;T&gt; wraps Kotlin Flow with 29 suspend convenience extensions
+                that mirror stdlib collections.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Lazy References</h3>
+            <p class="text-sm text-gray-400">Ref&lt;T&gt; resolves on first access, with thread-safe caching.
+                Eager and lazy construction supported.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Suspend-First</h3>
+            <p class="text-sm text-gray-400">All repository and cursor operations are suspend functions.
+                No blocking calls, no callbacks.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Dual-Backend</h3>
+            <p class="text-sm text-gray-400">Same types and interfaces for ArangoDB (Karango) and MongoDB (Monko).
+                Switch backends without rewriting domain code.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Type-Safe</h3>
+            <p class="text-sm text-gray-400">Generic wrappers preserve your domain types end-to-end.
+                Safe downcasting via castTyped and castUntyped.</p>
+        </div>
+    </div>
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/vault/storable"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Storable Hierarchy &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

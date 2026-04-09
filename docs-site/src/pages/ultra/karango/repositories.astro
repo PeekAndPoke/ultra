@@ -86,7 +86,7 @@ val first = repo.findFirst {
     <h2>Update</h2>
 
     <Code code={`// Save a modified entity
-val updated = repo.save(stored.map { it.copy(published = true) })
+val updated = repo.save(stored.modify { it.copy(published = true) })
 
 // Modify by ID — atomic read-modify-write
 repo.modifyById(stored._id) { post ->
@@ -126,21 +126,32 @@ val stored: List<Stored<BlogPost>> = repo.batchInsertValues(posts)`} lang="kotli
 
     <h2>Cursors</h2>
 
-    <p>Queries return <code>KarangoCursor&lt;T&gt;</code> — a streaming iterator that deserializes results on demand:
-    </p>
+    <p>Queries return <code>Cursor&lt;T&gt;</code>, a Flow-based wrapper. Use <code>asFlow()</code> for streaming
+        or the suspend convenience extensions for common operations:</p>
 
     <Code code={`val cursor = repo.findAll()
 
 cursor.count      // number of results in current batch
 cursor.fullCount  // total count (when using PAGE)
 
+// Collect all results
+cursor.toList()                                      // suspend
+
 // Iterate
-cursor.toList()
-cursor.forEach { stored -> println(stored.value.title) }
-cursor.map { it.value.title }`} lang="kotlin" theme="vitesse-dark"/>
+cursor.forEach { stored -> println(stored.value.title) }  // suspend
+
+// Transform and filter (all suspend)
+cursor.map { it.value.title }
+cursor.filter { it.value.published }
+cursor.firstOrNull()
+cursor.groupBy { it.value.author }
+
+// Flow-based streaming
+cursor.asFlow().collect { ... }`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>Results are deserialized lazily. <code>Stored&lt;T&gt;</code> entities are automatically cached in the <code>EntityCache</code>
-        for deduplication.</p>
+        for deduplication. All cursor convenience methods (<code>map</code>, <code>filter</code>,
+        <code>forEach</code>, <code>toList</code>, etc.) are <code>suspend</code> functions.</p>
 
     <h2>The Stored&lt;T&gt; wrapper</h2>
 
@@ -154,7 +165,7 @@ stored._rev    // Revision: "_abc123"
 stored.value   // The actual BlogPost data class
 
 // Create a modified version
-val modified = stored.map { it.copy(title = "New Title") }
+val modified = stored.modify { it.copy(title = "New Title") }
 
 // Save it back
 repo.save(modified)`} lang="kotlin" theme="vitesse-dark"/>

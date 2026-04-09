@@ -36,14 +36,21 @@
   - [Logging](https://peekandpoke.io/ultra/funktor/logging): Structured logging with DB persistence and web UI
   - [Static Web](https://peekandpoke.io/ultra/funktor/staticweb): Templates, flash sessions, web resources, cache busting
   - [Testing](https://peekandpoke.io/ultra/funktor/testing): Test harness with fixtures, service injection, route testing
+- [Vault](https://peekandpoke.io/llms/vault.md): Shared DBAL foundation — Storable hierarchy, Flow cursors, repositories, entity cache
+  - [Storable Hierarchy](https://peekandpoke.io/ultra/vault/storable): Storable, Stored, New, Ref — entity wrappers with metadata
+  - [Cursors](https://peekandpoke.io/ultra/vault/cursor): Flow-based cursors with 29 suspend convenience extensions
+  - [Repositories](https://peekandpoke.io/ultra/vault/repository): Repository interface — CRUD, hooks, entity caching
 - [Karango](https://peekandpoke.io/llms/karango.md): Type-safe ArangoDB — Kotlin query DSL, KSP codegen, repository pattern
-- [Monko](https://peekandpoke.io/ultra/monko/): Type-safe MongoDB repositories — entity hooks, Funktor integration
-  - [Getting Started](https://peekandpoke.io/ultra/monko/getting-started): Dependencies, entity, repository, CRUD, first query
-  - [Entity Model](https://peekandpoke.io/ultra/monko/entity-model): Stored, New, Ref, LazyRef wrappers from Vault
-  - [Query DSL](https://peekandpoke.io/ultra/monko/query-dsl): Filters, sorts, pagination, logical operators, nested paths
-  - [Repositories](https://peekandpoke.io/ultra/monko/repositories): CRUD, custom queries, cursors, batch operations
-  - [Indexes & Hooks](https://peekandpoke.io/ultra/monko/indexes-and-hooks): Persistent, unique, TTL, sparse indexes; lifecycle hooks
-  - [Kontainer Integration](https://peekandpoke.io/ultra/monko/kontainer-integration): DI setup, Funktor integration, mixing databases
+  - [Entity Model](https://peekandpoke.io/ultra/karango/entity-model): Storable, Stored, New, Ref with ArangoDB-specific examples
+  - [Query DSL](https://peekandpoke.io/ultra/karango/query-dsl): Type-safe AQL query building
+  - [Repositories](https://peekandpoke.io/ultra/karango/repositories): ArangoDB repository setup, CRUD, custom queries
+  - [Indexes & Hooks](https://peekandpoke.io/ultra/karango/indexes-and-hooks): Persistent, hash, fulltext indexes + lifecycle hooks
+  - [Advanced Queries](https://peekandpoke.io/ultra/karango/advanced-queries): Joins, subqueries, graph traversals, aggregations
+- [Monko](https://peekandpoke.io/llms/monko.md): Type-safe MongoDB — query DSL, repositories, indexes
+  - [Entity Model](https://peekandpoke.io/ultra/monko/entity-model): Stored, New, Ref wrappers (shared with Vault)
+  - [Query DSL](https://peekandpoke.io/ultra/monko/query-dsl): Type-safe MongoDB filters, sorts, updates
+  - [Repositories](https://peekandpoke.io/ultra/monko/repositories): CRUD, cursors, custom queries
+  - [Indexes & Hooks](https://peekandpoke.io/ultra/monko/indexes-and-hooks): Persistent, unique, TTL indexes + lifecycle hooks
 
 ## Optional: Complete docs in one file
 

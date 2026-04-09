@@ -146,7 +146,7 @@ val stored = repo.insert(Person("Alice", 30, "alice@example.com"))
 val found = repo.findById(stored._id)
 
 // Update
-repo.save(found!!.map { it.copy(age = 31) })
+repo.save(found!!.modify { it.copy(age = 31) })
 
 // Delete
 repo.remove(found)
@@ -202,144 +202,23 @@ stored._rev   // "_abc123def" — revision for optimistic locking
 
 ## The Storable hierarchy
 
-`Storable<T>` is the sealed base class. Four concrete types represent different entity states:
-
-| Type         | When to use                                  | Has value? | Has ID?                      |
-|--------------|----------------------------------------------|------------|------------------------------|
-| `New<T>`     | Entity not yet persisted                     | Yes        | Empty until inserted         |
-| `Stored<T>`  | Entity loaded from or saved to the database  | Yes        | Yes (_id, _key, _rev)        |
-| `Ref<T>`     | Reference to another entity (eagerly loaded) | Yes        | Yes                          |
-| `LazyRef<T>` | Reference loaded on first access             | Lazy       | Yes (value loaded on demand) |
-
-## New<T> — entities before persistence
-
-```kotlin
-// Wrap your data for explicit insertion
-val newPerson = New(Person("Alice", 30))
-
-// Or just pass the value directly — insert() wraps it for you
-repo.insert(Person("Alice", 30))
-
-// With an explicit key
-repo.insert("alice-key", Person("Alice", 30))
-```
-
-## Stored<T> — the main entity wrapper
-
-`Stored<T>` is what you work with most. It wraps your data with database metadata:
-
-```kotlin
-val stored: Stored<Person> = repo.findById("persons/abc123")!!
-
-// Access data
-stored.value.name  // "Alice"
-stored.value.age   // 30
-
-// Access metadata
-stored._id         // "persons/abc123"
-stored._key        // "abc123"
-stored._rev        // revision string
-stored.collection  // "persons"
-
-// Modify the value — creates a new Stored with the same metadata
-val updated = stored.modify { it.copy(age = 31) }
-// updated._id is still "persons/abc123"
-
-// Or use withValue for a direct replacement
-val replaced = stored.withValue(Person("Bob", 25))
-```
-
-### Modify and save pattern
+Karango uses the `Storable<T>` sealed hierarchy from the shared Vault module. Three concrete types -- `New<T>`,
+`Stored<T>`, and `Ref<T>` -- represent different entity lifecycle states. Here is a quick example of the most common
+pattern:
 
 ```kotlin
 // Load -> modify -> save
-val person = repo.findById(id)!!
+val person: Stored<Person> = repo.findById(id)!!
+
+person.value.name  // "Alice" -- access your data
+person._id         // "persons/abc123" -- database metadata
 
 val updated = person.modify { it.copy(name = "Alice Smith") }
-
-repo.save(updated)
+repo.save(updated)  // updated._id is still "persons/abc123"
 ```
 
-## Ref<T> — eager entity references
-
-A `Ref<T>` points to another entity by ID. The value is loaded eagerly:
-
-```kotlin
-@Vault
-data class Comment(
-    val text: String,
-    val author: Ref<Person>,  // Reference to a Person
-)
-
-// The Ref has both the ID and the loaded value
-val comment: Stored<Comment> = repo.findById(commentId)!!
-comment.value.author._id     // "persons/abc123"
-comment.value.author.value   // Person(name="Alice", age=30)
-```
-
-When serialized to ArangoDB, `Ref<T>` is stored as just the ID string. When deserialized, the entity is loaded from the
-cache or database.
-
-## LazyRef<T> — lazy entity references
-
-Like `Ref<T>` but the referenced entity is only loaded when first accessed:
-
-```kotlin
-@Vault
-data class BlogPost(
-    val title: String,
-    val author: LazyRef<Person>,  // Only loaded when accessed
-)
-
-val post: Stored<BlogPost> = repo.findById(postId)!!
-// author not loaded yet
-
-post.value.author._id    // "persons/abc123" — available immediately
-post.value.author.value  // Person(...) — NOW the entity is loaded
-```
-
-## Converting between types
-
-```kotlin
-val stored: Stored<Person> = repo.findById(id)!!
-
-// Stored -> Ref
-val ref: Ref<Person> = stored.asRef
-
-// Stored -> LazyRef
-val lazyRef: LazyRef<Person> = stored.asLazyRef
-
-// Any Storable -> Stored
-val backToStored: Stored<Person> = ref.asStored
-```
-
-## Identity comparisons
-
-```kotlin
-val a: Stored<Person> = repo.findById("id1")!!
-val b: Stored<Person> = repo.findById("id2")!!
-
-a hasSameIdAs b    // false — different IDs
-a hasOtherIdThan b // true
-
-val list = listOf(a, b)
-a hasIdIn list     // true
-```
-
-## Type-safe casting
-
-```kotlin
-sealed class Animal {
-    data class Dog(val name: String) : Animal()
-    data class Cat(val name: String) : Animal()
-}
-
-val stored: Stored<Animal> = repo.findById(id)!!
-
-// Safe downcast — returns null if the type doesn't match
-val dog: Stored<Dog>? = stored.castTyped<Dog>()
-val cat: Stored<Cat>? = stored.castTyped<Cat>()
-```
+For the complete Storable hierarchy reference -- including `New`, `Stored`, `Ref`, type conversions, identity
+comparisons, and type-safe casting -- see the [Vault documentation](https://peekandpoke.io/llms/vault.md).
 
 ---
 
@@ -628,7 +507,7 @@ val first = repo.findFirst {
 
 ```kotlin
 // Save a modified entity
-val updated = repo.save(stored.map { it.copy(published = true) })
+val updated = repo.save(stored.modify { it.copy(published = true) })
 
 // Modify by ID — atomic read-modify-write
 repo.modifyById(stored._id) { post ->
@@ -673,7 +552,8 @@ Batch insert runs hooks on each entity, just like single inserts.
 
 ## Cursors
 
-Queries return `KarangoCursor<T>` — a streaming iterator that deserializes results on demand:
+Queries return `Cursor<T>`, a Flow-based wrapper. Use `asFlow()` for streaming or the suspend convenience extensions
+for common operations:
 
 ```kotlin
 val cursor = repo.findAll()
@@ -681,13 +561,24 @@ val cursor = repo.findAll()
 cursor.count      // number of results in current batch
 cursor.fullCount  // total count (when using PAGE)
 
+// Collect all results
+cursor.toList()                                           // suspend
+
 // Iterate
-cursor.toList()
-cursor.forEach { stored -> println(stored.value.title) }
+cursor.forEach { stored -> println(stored.value.title) }  // suspend
+
+// Transform and filter (all suspend)
 cursor.map { it.value.title }
+cursor.filter { it.value.published }
+cursor.firstOrNull()
+cursor.groupBy { it.value.author }
+
+// Flow-based streaming
+cursor.asFlow().collect { ... }
 ```
 
 Results are deserialized lazily. `Stored<T>` entities are automatically cached in the `EntityCache` for deduplication.
+All cursor convenience methods (`map`, `filter`, `forEach`, `toList`, etc.) are `suspend` functions.
 
 ## The Stored<T> wrapper
 
@@ -702,7 +593,7 @@ stored._rev    // Revision: "_abc123"
 stored.value   // The actual BlogPost data class
 
 // Create a modified version
-val modified = stored.map { it.copy(title = "New Title") }
+val modified = stored.modify { it.copy(title = "New Title") }
 
 // Save it back
 repo.save(modified)
@@ -871,7 +762,7 @@ class NormalizeHook : Hooks.OnBeforeSave<Article> {
         storable: Storable<Article>,
     ): Storable<X> {
         @Suppress("UNCHECKED_CAST")
-        return storable.map { article ->
+        return storable.modify { article ->
             article.copy(title = article.title.trim())
         } as Storable<X>
     }

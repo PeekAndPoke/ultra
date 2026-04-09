@@ -133,10 +133,12 @@ See "Critical Path" section above for the full shipped inventory.
 1. ~~**ApiRoute refactor**~~ — ✅ DONE (2026-04-03). PRs #40+#41: OutgoingConverter removed, ValidateRoutesOnAppStarting
    added, 16 implementations updated
 2. ~~**ES2015 rollout**~~ — ✅ DONE (2026-04-06). All 48 JS modules target ES2015; jsJar + jsTest pass
-3. **User-specific API access matrix (ApiAcl)** — 7 files, design done
-4. **Clean build verification** — `./gradlew clean build` across all 79 modules
-5. **funktor-demo end-to-end test** — against both ArangoDB and MongoDB
-6. **Version bump + release** — 0.104.2 → 1.0.0, CHANGELOG, Maven Central publish, v1.0.0 tag
+3. **User-specific API access matrix (ApiAcl)** — 7 files, design done (another agent in-flight)
+4. ~~**Non-blocking DBAL**~~ — ✅ DONE (2026-04-09). Flow Cursor, suspend Storable.resolve()/invoke(),
+   Ref/LazyRef unified (LazyRef deleted), RefCodec zero-runBlocking, EntityCache async. See archived plan.
+6. **Clean build verification** — `./gradlew clean build` across all 79 modules
+7. **funktor-demo end-to-end test** — against both ArangoDB and MongoDB
+8. **Version bump + release** — 0.104.2 → 1.0.0, CHANGELOG, Maven Central publish, v1.0.0 tag
 
 **Dependencies:** Step 5 depends on Track B being done. Steps 1-3 are independent.
 
