@@ -224,7 +224,8 @@ class Ref<out T>(
         // Fast path: already resolved
         _cached?.let { return it.resolve() }
 
-        // Slow path: resolve under mutex to ensure single resolver call
+        // Slow path: resolve under mutex to ensure single resolver call.
+        // NOTE: The mutex is non-reentrant. The resolver must NOT call resolve() on this same Ref instance.
         return mutex.withLock {
             _cached?.let { return it.resolve() }
             val result = resolver()

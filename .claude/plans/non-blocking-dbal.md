@@ -304,7 +304,12 @@ implementation — likely `suspend fun toRef()` / `suspend fun toStored()` as re
 
 ---
 
-## Part 3: Unified RefCodec — zero runBlocking
+## Part 3: Unified RefCodec — ✅ DONE (2026-04-09)
+
+**Shipped:** RefCodec rewritten as lazy — stores suspend resolver in Ref.lazy(), no runBlocking.
+LazyRefCodec deleted. Uses EntityCache.getOrPutAsync() for suspend-safe caching.
+
+### Original plan for Part 3 (below)
 
 **File:** `ultra/vault/src/jvmMain/kotlin/slumber/RefCodec.kt`
 
@@ -345,7 +350,12 @@ The resolver lambda is `suspend` — it calls `findById()` directly. Resolution 
 
 ---
 
-## Part 4: EntityCache suspend variant
+## Part 4: EntityCache suspend variant — ✅ DONE (2026-04-09)
+
+**Shipped:** Added `suspend getOrPutAsync()` to EntityCache interface. DefaultEntityCache uses Mutex.
+NullEntityCache delegates to provider directly. All tests pass.
+
+### Original plan for Part 4 (below)
 
 **File:** `ultra/vault/src/jvmMain/kotlin/caching.kt`
 

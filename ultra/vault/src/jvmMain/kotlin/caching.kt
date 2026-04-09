@@ -1,25 +1,25 @@
 package io.peekandpoke.ultra.vault
 
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.lang.reflect.Type
+import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Entity cache
+ * Entity cache for deduplicating entity lookups during deserialization.
  */
 interface EntityCache {
-    /**
-     * Clear all entries from the cache
-     */
+    /** Clear all entries from the cache. */
     fun clear()
 
-    /**
-     * Puts the [value] with the given [id] into the cache
-     */
+    /** Puts the [value] with the given [id] into the cache. */
     fun <T> put(id: String, value: T): T
 
-    /**
-     * Gets or puts the entry for the given [id] by using the [provider] if the [id] is not yet present.
-     */
+    /** Gets or puts the entry for the given [id] using the sync [provider]. */
     fun <T> getOrPut(id: String, provider: () -> T?): T?
+
+    /** Suspend variant of [getOrPut] for async resolution paths (e.g. RefCodec). */
+    suspend fun <T> getOrPutAsync(id: String, provider: suspend () -> T?): T?
 }
 
 /**
@@ -27,70 +27,64 @@ interface EntityCache {
  */
 object NullEntityCache : EntityCache {
 
-    /**
-     * @see EntityCache.clear
-     */
     override fun clear() {
         // noop
     }
 
-    /**
-     * @see EntityCache.put
-     */
     override fun <T> put(id: String, value: T): T = value
 
-    /**
-     * @see EntityCache.getOrPut
-     */
     override fun <T> getOrPut(id: String, provider: () -> T?): T? = provider()
+
+    override suspend fun <T> getOrPutAsync(id: String, provider: suspend () -> T?): T? = provider()
 }
 
 /**
- * A default implementation for [EntityCache]
+ * A default implementation for [EntityCache].
  *
- * The cache will hold as many [entries] as it is given.
- * There is no mechanism like TTL or LRU in place here.
+ * Uses [ConcurrentHashMap] for thread-safe map access. The sync [getOrPut] uses `synchronized`
+ * to prevent double provider calls. The suspend [getOrPutAsync] uses a [Mutex] for the same purpose.
+ * Both locking mechanisms are safe because the underlying map is concurrent.
  */
 class DefaultEntityCache : EntityCache {
 
-    private val lock = Any()
-    private val entries = mutableMapOf<String, Any?>()
+    private val syncLock = Any()
+    private val asyncMutex = Mutex()
+    private val entries = ConcurrentHashMap<String, Any>()
 
-    /**
-     * @see EntityCache.clear
-     */
-    override fun clear(): Unit = synchronized(lock) {
+    override fun clear() {
         entries.clear()
     }
 
-    /**
-     * @see EntityCache.put
-     */
     override fun <T> put(id: String, value: T): T {
-        return synchronized(lock) {
-            value.also {
-                entries[id] = value
-            }
+        if (value != null) entries[id] = value as Any
+        return value
+    }
+
+    override fun <T> getOrPut(id: String, provider: () -> T?): T? {
+        @Suppress("UNCHECKED_CAST")
+        (entries[id] as? T)?.let { return it }
+
+        return synchronized(syncLock) {
+            @Suppress("UNCHECKED_CAST")
+            (entries[id] as? T)?.let { return@synchronized it }
+
+            val value = provider()
+            if (value != null) entries[id] = value as Any
+            value
         }
     }
 
-    /**
-     * @see EntityCache.getOrPut
-     */
-    override fun <T> getOrPut(id: String, provider: () -> T?): T? {
-        return synchronized(lock) {
-            @Suppress("UNCHECKED_CAST")
-            val exists = entries[id] as? T
+    override suspend fun <T> getOrPutAsync(id: String, provider: suspend () -> T?): T? {
+        @Suppress("UNCHECKED_CAST")
+        (entries[id] as? T)?.let { return it }
 
-            if (exists != null) {
-                exists
-            } else {
-                val value = provider()
-                if (value != null) {
-                    entries[id] = value
-                }
-                value
-            }
+        return asyncMutex.withLock {
+            @Suppress("UNCHECKED_CAST")
+            (entries[id] as? T)?.let { return@withLock it }
+
+            val value = provider()
+            if (value != null) entries[id] = value as Any
+            value
         }
     }
 }

@@ -1,14 +1,26 @@
 package io.peekandpoke.ultra.vault
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 class StorableSpec : StringSpec({
 
     val stored = Stored(value = "hello", _id = "col/123", _key = "123", _rev = "rev1")
 
     // Stored /////////////////////////////////////////////////////////////////////////////////
+
+    "Stored.resolve returns value instantly" {
+        stored.resolve() shouldBe "hello"
+    }
+
+    "Stored.invoke returns value instantly" {
+        stored() shouldBe "hello"
+    }
 
     "Stored.collection extracts collection name from _id" {
         stored.collection shouldBe "col"
@@ -173,7 +185,44 @@ class StorableSpec : StringSpec({
         transformed._id shouldBe "c/1"
     }
 
+    "Ref.resolve is safe under concurrent access — resolver called exactly once" {
+        var callCount = 0
+        val ref = Ref.lazy<String>("c/1") {
+            callCount++
+            Stored("resolved", "c/1", "1", "r")
+        }
+
+        coroutineScope {
+            val results = (1..100).map {
+                async { ref.resolve() }
+            }.awaitAll()
+
+            results.forEach { it shouldBe "resolved" }
+        }
+
+        callCount shouldBe 1
+    }
+
+    "Ref.valueInternal throws when not yet resolved" {
+        val ref = Ref.lazy<String>("c/1") { Stored("x", "c/1", "1", "r") }
+
+        shouldThrow<IllegalStateException> {
+            @Suppress("UNCHECKED_CAST")
+            (ref as Storable<String>).valueInternal
+        }
+    }
+
     // New ////////////////////////////////////////////////////////////////////////////////////
+
+    "New.resolve returns value instantly" {
+        val new = New(value = "data")
+        new.resolve() shouldBe "data"
+    }
+
+    "New.invoke returns value instantly" {
+        val new = New(value = "data")
+        new() shouldBe "data"
+    }
 
     "New has empty defaults" {
         val new = New(value = "data")
