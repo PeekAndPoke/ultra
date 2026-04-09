@@ -176,7 +176,7 @@ class KarangoTestAppUsersRepo(driver: KarangoDriver) : EntityRepository<TestAppU
     driver = driver,
 ) {
     companion object {
-        fun Storable<TestAppUser>.asApiModel() = with(value) {
+        suspend fun Storable<TestAppUser>.asApiModel() = with(resolve()) {
             TestAppUserModel(
                 id = _id,
                 name = name,

@@ -157,7 +157,7 @@ abstract class MonkoRepository<T : Any>(
 
         val storedInDb = driver.insertOne(
             collection = name,
-            value = beforeHookApplied.value,
+            value = beforeHookApplied.resolve(),
             key = new._key.takeIf { it.isNotBlank() },
         )
 

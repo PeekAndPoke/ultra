@@ -20,7 +20,6 @@ import com.google.devtools.ksp.symbol.KSTypeArgument
 import com.google.devtools.ksp.symbol.Modifier
 import com.google.devtools.ksp.symbol.NonExistLocation
 import io.peekandpoke.ultra.slumber.Slumber
-import io.peekandpoke.ultra.vault.LazyRef
 import io.peekandpoke.ultra.vault.New
 import io.peekandpoke.ultra.vault.Ref
 import io.peekandpoke.ultra.vault.Storable
@@ -42,7 +41,6 @@ class MonkoKspProcessor(
         val blackListedClasses = listOf(
             New::class.qualifiedName!!,
             Ref::class.qualifiedName!!,
-            LazyRef::class.qualifiedName!!,
             Stored::class.qualifiedName!!,
             Storable::class.qualifiedName!!,
         )
@@ -158,7 +156,6 @@ class MonkoKspProcessor(
             "kotlin.collections.MutableMap" to Map::class.qualifiedName!!,
             // Vault types
             Ref::class.qualifiedName!! to "kotlin.String",
-            LazyRef::class.qualifiedName!! to "kotlin.String",
         )
 
         val prop = property.simpleName.asString()
@@ -210,8 +207,6 @@ class MonkoKspProcessor(
             null -> "kotlin.Any?"
             // References are treated as just strings
             Ref::class.qualifiedName -> "kotlin.String"
-            // Lazy References are treated as just strings
-            LazyRef::class.qualifiedName -> "kotlin.String"
 
             // otherwise we take the original type
             else -> when (arguments.isEmpty()) {

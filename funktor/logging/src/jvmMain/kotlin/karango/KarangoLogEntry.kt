@@ -24,7 +24,7 @@ data class KarangoLogEntry(
     )
 }
 
-fun Storable<KarangoLogEntry>.asApiModel() = with(value) {
+suspend fun Storable<KarangoLogEntry>.asApiModel() = with(resolve()) {
     LogEntryModel(
         id = _key,
         createdAt = createdAt,

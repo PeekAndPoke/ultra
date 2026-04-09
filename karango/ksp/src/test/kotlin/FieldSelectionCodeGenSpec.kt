@@ -7,7 +7,6 @@ import io.kotest.core.spec.style.StringSpec
 import io.peekandpoke.ultra.meta.testing.expectFileToMatch
 import io.peekandpoke.ultra.meta.testing.kspCompileTest
 import io.peekandpoke.ultra.slumber.Slumber
-import io.peekandpoke.ultra.vault.LazyRef
 import io.peekandpoke.ultra.vault.Ref
 import io.peekandpoke.ultra.vault.Vault
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
@@ -457,66 +456,6 @@ class FieldSelectionCodeGenSpec : StringSpec() {
             }
         }
 
-        "LazyRef properties are treated as kotlin.String" {
-
-            kspCompileTest {
-                inheritClassPath(true)
-
-                processor(KarangoKspProcessorProvider())
-
-                kotlin(
-                    file = "LazyRefProperty.kt",
-                    contents = """
-                        package karango.compile
-
-                        import ${Vault::class.qualifiedName}
-                        import ${LazyRef::class.qualifiedName}
-
-                        data class Another(val num: kotlin.Int)
-
-                        @Vault
-                        data class LazyRefProperty(val ref: LazyRef<Another>)
-
-                    """.trimIndent()
-                )
-
-                expectFileToMatch(
-                    file = "LazyRefProperty${"$$"}karango.kt",
-                    contents = """
-                        package karango.compile
-
-                        import io.peekandpoke.karango.aql.AqlExpression
-                        import io.peekandpoke.karango.aql.AqlIterableExpr
-                        import io.peekandpoke.karango.aql.AqlPropertyPath
-                        import io.peekandpoke.ultra.vault.lang.L1
-                        import io.peekandpoke.ultra.vault.lang.L2
-                        import io.peekandpoke.ultra.vault.lang.L3
-                        import io.peekandpoke.ultra.vault.lang.L4
-                        import io.peekandpoke.ultra.vault.lang.L5
-
-                        //// generic property
-                        inline fun <reified T> AqlIterableExpr<LazyRefProperty>.property(name: String) = AqlPropertyPath.start(this).append<T, T>(name)
-
-                        // ref /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                        // annotations:
-                        // defined as:   Primary Constructor Param
-                        // defined by:   Class karango.compile.LazyRefProperty
-                        // defined at:   Line 9
-                        // defined type: kotlin.String
-                        // cleaned type: kotlin.String
-
-                        inline val AqlIterableExpr<LazyRefProperty>.ref inline get() = AqlPropertyPath.start(this).append<kotlin.String, kotlin.String>("ref")
-                        inline val AqlExpression<LazyRefProperty>.ref inline get() = AqlPropertyPath.start(this).append<kotlin.String, kotlin.String>("ref")
-
-                        inline val AqlPropertyPath<LazyRefProperty, LazyRefProperty>.ref @JvmName("ref_0") inline get() = append<kotlin.String, kotlin.String>("ref")
-                        inline val AqlPropertyPath<LazyRefProperty, L1<LazyRefProperty>>.ref @JvmName("ref_1") inline get() = append<kotlin.String, L1<kotlin.String>>("ref")
-                        inline val AqlPropertyPath<LazyRefProperty, L2<LazyRefProperty>>.ref @JvmName("ref_2") inline get() = append<kotlin.String, L2<kotlin.String>>("ref")
-                        inline val AqlPropertyPath<LazyRefProperty, L3<LazyRefProperty>>.ref @JvmName("ref_3") inline get() = append<kotlin.String, L3<kotlin.String>>("ref")
-                        inline val AqlPropertyPath<LazyRefProperty, L4<LazyRefProperty>>.ref @JvmName("ref_4") inline get() = append<kotlin.String, L4<kotlin.String>>("ref")
-                        inline val AqlPropertyPath<LazyRefProperty, L5<LazyRefProperty>>.ref @JvmName("ref_5") inline get() = append<kotlin.String, L5<kotlin.String>>("ref")
-                    """.trimIndent()
-                )
-            }
-        }
+        // LazyRef was merged into Ref — all Refs are now lazy by default
     }
 }

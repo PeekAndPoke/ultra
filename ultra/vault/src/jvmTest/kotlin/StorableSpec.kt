@@ -41,7 +41,7 @@ class StorableSpec : StringSpec({
         val ref = stored.asRef
 
         ref.shouldBeInstanceOf<Ref<String>>()
-        ref.value shouldBe "hello"
+        ref.resolve() shouldBe "hello"
         ref._id shouldBe stored._id
     }
 
@@ -101,12 +101,76 @@ class StorableSpec : StringSpec({
 
     // Ref ////////////////////////////////////////////////////////////////////////////////////
 
+    "Ref.eager creates an immediately resolvable ref" {
+        val ref = Ref.eager(value = "hello", _id = "c/1", _key = "1", _rev = "r")
+
+        ref.resolve() shouldBe "hello"
+        ref._id shouldBe "c/1"
+    }
+
+    "Ref.lazy creates a ref resolved on first access" {
+        var callCount = 0
+        val ref = Ref.lazy<String>("c/1") {
+            callCount++
+            Stored("resolved", "c/1", "1", "r")
+        }
+
+        callCount shouldBe 0
+        ref.resolve() shouldBe "resolved"
+        callCount shouldBe 1
+    }
+
+    "Ref.resolve caches — resolver called only once" {
+        var callCount = 0
+        val ref = Ref.lazy<String>("c/1") {
+            callCount++
+            Stored("resolved", "c/1", "1", "r")
+        }
+
+        ref.resolve() shouldBe "resolved"
+        ref.resolve() shouldBe "resolved"
+        ref.resolve() shouldBe "resolved"
+        callCount shouldBe 1
+    }
+
+    "Ref.invoke is shorthand for resolve" {
+        val ref = Ref.eager(value = "hello", _id = "c/1", _key = "1", _rev = "r")
+
+        ref() shouldBe "hello"
+    }
+
+    "Ref equality is based on _id only" {
+        val ref1 = Ref.eager(value = "a", _id = "c/1", _key = "1", _rev = "r1")
+        val ref2 = Ref.eager(value = "b", _id = "c/1", _key = "1", _rev = "r2")
+        val ref3 = Ref.eager(value = "a", _id = "c/2", _key = "2", _rev = "r1")
+
+        (ref1 == ref2) shouldBe true
+        (ref1 == ref3) shouldBe false
+        ref1.hashCode() shouldBe ref2.hashCode()
+    }
+
     "Ref.modify maps the value" {
-        val ref = Ref(value = 10, _id = "c/1", _key = "1", _rev = "r")
+        val ref = Ref.eager(value = 10, _id = "c/1", _key = "1", _rev = "r")
         val modified = ref.modify { it * 2 }
 
-        modified.value shouldBe 20
+        modified.resolve() shouldBe 20
         modified._id shouldBe "c/1"
+    }
+
+    "Ref.withValue replaces the value eagerly" {
+        val ref = Ref.eager(value = "old", _id = "c/1", _key = "1", _rev = "r")
+        val replaced = ref.withValue("new")
+
+        replaced.resolve() shouldBe "new"
+        replaced._id shouldBe "c/1"
+    }
+
+    "Ref.transform creates new lazy ref" {
+        val ref = Ref.eager(value = "hello", _id = "c/1", _key = "1", _rev = "r")
+        val transformed = ref.transform { it.length }
+
+        transformed.resolve() shouldBe 5
+        transformed._id shouldBe "c/1"
     }
 
     // New ////////////////////////////////////////////////////////////////////////////////////

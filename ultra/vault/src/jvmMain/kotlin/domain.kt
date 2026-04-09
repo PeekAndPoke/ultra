@@ -4,6 +4,8 @@ package io.peekandpoke.ultra.vault
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.peekandpoke.ultra.vault.lang.VaultDslMarker
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 
 /**
@@ -12,16 +14,13 @@ import kotlinx.serialization.SerialName
  * A [Storable] wraps a domain value of type [T] together with database metadata
  * (`_id`, `_key`, `_rev`). Subclasses represent different lifecycle stages:
  * - [Stored] -- a persisted entity loaded from the database
- * - [Ref] -- an eager reference to a persisted entity
- * - [LazyRef] -- a lazy reference that resolves its value on first access
+ * - [Ref] -- a lazy reference to a persisted entity, resolved via [resolve] / [invoke]
  * - [New] -- an entity that has not yet been persisted
  *
- * All subclasses support functional transformations via [modify], [withValue], and [transform],
- * as well as identity comparisons via [hasSameIdAs], [hasOtherIdThan], and [hasIdIn].
+ * Access the wrapped value via [resolve] (suspend) or [invoke] (shorthand).
+ * For [Stored] and [New], resolution is instant. For [Ref], it may suspend to load from the database.
  */
 sealed class Storable<out T> {
-    /** The stored value of the document */
-    abstract val value: T
 
     /** The database id in the form "collection/key" of the document */
     abstract val _id: String
@@ -32,21 +31,25 @@ sealed class Storable<out T> {
     /** The revision of the document */
     abstract val _rev: String
 
+    /** Resolves the wrapped value. Instant for [Stored]/[New], may suspend for [Ref]. */
+    abstract suspend fun resolve(): T
+
+    /** Shorthand for [resolve]. */
+    suspend operator fun invoke(): T = resolve()
+
     /** The name of the collection the document is stored in */
     @get:JsonIgnore
     val collection get() = _id.split("/").first()
 
-    /** Converts to a [Ref] */
+    /** Converts to a [Ref] wrapping the already-resolved value. */
     @get:JsonIgnore
-    val asRef: Ref<T> get() = Ref(value, _id, _key, _rev)
-
-    /** Converts to a [LazyRef] */
-    @get:JsonIgnore
-    val asLazyRef: LazyRef<T> get() = LazyRef(_id) { this }
+    val asRef: Ref<T>
+        get() = Ref.eager(valueInternal, _id, _key, _rev)
 
     /** Converts to a [Stored] */
     @get:JsonIgnore
-    val asStored: Stored<T> get() = Stored(value, _id, _key, _rev)
+    val asStored: Stored<T>
+        get() = Stored(valueInternal, _id, _key, _rev)
 
     /**
      * Converts to Stored<X> where [X] : [T] by mapping the value with [fn].
@@ -80,6 +83,14 @@ sealed class Storable<out T> {
      */
     @VaultDslMarker
     infix fun hasIdIn(others: List<Storable<@UnsafeVariance T>>) = others.any { it._id == _id }
+
+    /**
+     * Internal non-suspend value access for subclasses that always have the value available.
+     *
+     * Must only be called on [Stored] and [New]. Calling on [Ref] that hasn't been resolved throws.
+     */
+    @PublishedApi
+    internal abstract val valueInternal: T
 }
 
 /**
@@ -93,7 +104,7 @@ sealed class Storable<out T> {
  */
 @SerialName(Stored.SERIAL_NAME)
 data class Stored<out T>(
-    override val value: T,
+    val value: T,
     override val _id: String,
     override val _key: String = _id.ensureKey,
     override val _rev: String = "",
@@ -102,6 +113,11 @@ data class Stored<out T>(
     companion object {
         const val SERIAL_NAME = "stored"
     }
+
+    @PublishedApi
+    override val valueInternal: T get() = value
+
+    override suspend fun resolve(): T = value
 
     override fun <X : @UnsafeVariance T> modify(fn: (oldValue: T) -> X): Stored<X> {
         return withValue(fn(value))
@@ -164,138 +180,116 @@ data class Stored<out T>(
 /**
  * A lazy reference to a persisted entity, identified by its [_id].
  *
- * The actual [value] is resolved on first access via the [provider] function and then cached.
- * This is useful for relationships between entities where eager loading is undesirable.
- *
- * [LazyRef] is typically created during deserialization by [io.peekandpoke.ultra.vault.slumber.LazyRefCodec].
- */
-@SerialName(LazyRef.SERIAL_NAME)
-data class LazyRef<out T>(
-    override val _id: String,
-    internal val provider: (id: String) -> Storable<T>,
-) : Storable<T>() {
-
-    companion object {
-        const val SERIAL_NAME = "lazy-ref"
-    }
-
-    private val provided by lazy { provider(_id) }
-
-    override val value: T get() = provided.value
-
-    override val _key: String = _id.ensureKey
-
-    override val _rev: String get() = provided._rev
-
-    override fun <X : @UnsafeVariance T> modify(fn: (oldValue: T) -> X): LazyRef<X> {
-        return withValue(fn(value))
-    }
-
-    override fun <X : @UnsafeVariance T> withValue(newValue: X): LazyRef<X> {
-        return LazyRef(
-            _id = _id,
-            provider = { provided.asStored.withValue(newValue) },
-        )
-    }
-
-    override fun <N> transform(fn: (current: T) -> N): LazyRef<N> {
-        return LazyRef(
-            _id = _id,
-            provider = { provided.asStored.transform(fn) },
-        )
-    }
-
-    /**
-     * Safely casts the value to [X] where [X] must be a subtype of [T].
-     *
-     * @return this instance retyped as `LazyRef<X>`, or `null` if the value is not an instance of [X].
-     */
-    inline fun <reified X : @UnsafeVariance T> castTyped(): LazyRef<X>? {
-        @Suppress("UNCHECKED_CAST")
-        return when (value) {
-            is X -> this as LazyRef<X>
-            else -> null
-        }
-    }
-
-    /**
-     * Casts the value to an unrelated type [X].
-     *
-     * @return this instance retyped as `LazyRef<X>`, or `null` if the value is not an instance of [X].
-     */
-    inline fun <reified X> castUntyped(): LazyRef<X>? {
-        @Suppress("UNCHECKED_CAST")
-        return when (value) {
-            is X -> this as LazyRef<X>
-            else -> null
-        }
-    }
-}
-
-/**
- * An eager reference to a persisted entity.
- *
- * Unlike [Stored], a [Ref] is typically used to represent a cross-reference to another entity
- * that has already been resolved. It carries the same metadata and value but serves a semantic
- * role as a "reference" rather than a "primary result."
+ * The actual value is resolved on first [resolve] / [invoke] call via the suspend [resolver]
+ * and then cached. This is useful for relationships between entities where eager loading
+ * is undesirable.
  *
  * [Ref] is typically created during deserialization by [io.peekandpoke.ultra.vault.slumber.RefCodec].
+ * Use [Ref.eager] for already-loaded values, and [Ref.lazy] for deferred resolution.
+ *
+ * Equality is based on [_id] only — two Refs with the same ID are equal regardless of
+ * their resolution state.
  */
 @SerialName(Ref.SERIAL_NAME)
-data class Ref<out T>(
-    override val value: T,
+class Ref<out T>(
     override val _id: String,
-    override val _key: String,
-    override val _rev: String,
+    private val resolver: suspend () -> Storable<T>,
 ) : Storable<T>() {
 
     companion object {
         const val SERIAL_NAME = "ref"
+
+        /** Wraps an already-loaded value. Used by [Storable.asRef], tests, save paths. */
+        fun <T> eager(value: T, _id: String, _key: String, _rev: String): Ref<T> {
+            val stored = Stored(value, _id, _key, _rev)
+            return Ref(_id) { stored }
+        }
+
+        /** Creates a lazy ref resolved on first access. Used by RefCodec during deserialization. */
+        fun <T> lazy(_id: String, resolver: suspend () -> Storable<T>): Ref<T> =
+            Ref(_id, resolver)
     }
+
+    private val mutex = Mutex()
+
+    @Volatile
+    private var _cached: Storable<T>? = null
+
+    @PublishedApi
+    override val valueInternal: T
+        get() = _cached?.valueInternal
+            ?: throw IllegalStateException("Ref($_id) not yet resolved. Call resolve() first.")
+
+    override suspend fun resolve(): T {
+        // Fast path: already resolved
+        _cached?.let { return it.resolve() }
+
+        // Slow path: resolve under mutex to ensure single resolver call
+        return mutex.withLock {
+            _cached?.let { return it.resolve() }
+            val result = resolver()
+            _cached = result
+            result.resolve()
+        }
+    }
+
+    override val _key: String get() = _id.ensureKey
+
+    override val _rev: String get() = _cached?._rev ?: ""
+
+    override fun equals(other: Any?): Boolean =
+        this === other || (other is Ref<*> && _id == other._id)
+
+    override fun hashCode(): Int = _id.hashCode()
+
+    override fun toString(): String = "Ref(_id=$_id)"
 
     override fun <X : @UnsafeVariance T> modify(fn: (oldValue: T) -> X): Ref<X> {
-        return withValue(fn(value))
+        val self = this
+        return lazy(_id) {
+            val resolved = self.resolve()
+            Stored(fn(resolved), _id, _key, _rev)
+        }
     }
 
-    override fun <X : @UnsafeVariance T> withValue(newValue: X): Ref<X> {
-        return Ref(
-            value = newValue,
-            _id = _id,
-            _key = _key,
-            _rev = _rev,
-        )
-    }
+    override fun <X : @UnsafeVariance T> withValue(newValue: X): Ref<X> =
+        eager(newValue, _id, _key, _rev)
 
     override fun <N> transform(fn: (current: T) -> N): Ref<N> {
-        return Ref(
-            value = fn(value),
-            _id = _id,
-            _key = _key,
-            _rev = _rev,
-        )
+        val self = this
+        return lazy(_id) {
+            val resolved = self.resolve()
+            Stored(fn(resolved), _id, _key, _rev)
+        }
     }
 
     /**
-     * Safely casts the value to [X] where [X] must be a subtype of [T].
+     * Safely casts the resolved value to [X] where [X] must be a subtype of [T].
+     *
+     * NOTE: This resolves the Ref if not already cached.
      *
      * @return this instance retyped as `Ref<X>`, or `null` if the value is not an instance of [X].
      */
-    inline fun <reified X : @UnsafeVariance T> castTyped(): Ref<X>? {
+    suspend inline fun <reified X : @UnsafeVariance T> castTyped(): Ref<X>? {
+        val resolved = resolve()
         @Suppress("UNCHECKED_CAST")
-        return when (value) {
+        return when (resolved) {
             is X -> this as Ref<X>
             else -> null
         }
     }
 
     /**
-     * Casts the value to an unrelated type [X].
+     * Casts the resolved value to an unrelated type [X].
+     *
+     * NOTE: This resolves the Ref if not already cached.
      *
      * @return this instance retyped as `Ref<X>`, or `null` if the value is not an instance of [X].
      */
-    inline fun <reified X> castUntyped(): Ref<X>? {
+    suspend inline fun <reified X> castUntyped(): Ref<X>? {
+        val resolved = resolve()
         @Suppress("UNCHECKED_CAST")
-        return when (value) {
+        return when (resolved) {
             is X -> this as Ref<X>
             else -> null
         }
@@ -310,7 +304,7 @@ data class Ref<out T>(
  */
 @SerialName(New.SERIAL_NAME)
 data class New<out T>(
-    override val value: T,
+    val value: T,
     override val _id: String = "",
     override val _key: String = "",
     override val _rev: String = "",
@@ -319,6 +313,11 @@ data class New<out T>(
     companion object {
         const val SERIAL_NAME = "new"
     }
+
+    @PublishedApi
+    override val valueInternal: T get() = value
+
+    override suspend fun resolve(): T = value
 
     override fun <X : @UnsafeVariance T> modify(fn: (oldValue: T) -> X): New<X> {
         return withValue(fn(value))

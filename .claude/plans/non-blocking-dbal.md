@@ -155,7 +155,14 @@ val paged = Paged(
 
 ---
 
-## Part 2: Storable hierarchy — suspend resolve(), private value
+## Part 2: Storable hierarchy — ✅ DONE (2026-04-09)
+
+**Shipped:** Storable gets `suspend fun resolve()` + `suspend operator fun invoke()`. `val value` removed from
+Storable abstract — kept on Stored/New (instant), hidden on Ref. LazyRef deleted entirely. Ref rewritten as
+lazy with suspend resolver, equality on `_id` only. LazyRefCodec deleted, VaultSlumberModule updated. KSP
+processors (karango/monko) cleaned of LazyRef. ~20 files changed, all tests pass.
+
+### Original plan for Part 2 (below)
 
 ### New Storable base
 

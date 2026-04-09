@@ -14,7 +14,7 @@ class TimestampedHook(
         override fun <X : T> onBeforeSave(repo: Repository<T>, storable: Storable<T>): Storable<X> {
             @Suppress("UNCHECKED_CAST")
             return storable.withValue(
-                storable.value.withTimestamps(
+                storable.valueInternal.withTimestamps(
                     kronos.instantNow()
                 ) as X
             )

@@ -251,9 +251,7 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
 
         is Stored<X> -> save(storable)
 
-        is Ref<X> -> save(storable.asStored)
-
-        is LazyRef<X> -> save(storable.asStored)
+        is Ref<X> -> save(Stored(storable.resolve(), storable._id, storable._key, storable._rev))
     }
 
     /**
@@ -263,7 +261,7 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
      */
     suspend fun <IN : T, OUT : T> save(storable: Storable<IN>, modify: suspend (IN) -> OUT): Stored<OUT> {
         val modified: Storable<OUT> = (storable as Storable<T>).withValue(
-            modify(storable.value)
+            modify(storable.resolve())
         )
 
         return save(modified)
@@ -276,7 +274,7 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
      */
     suspend fun <X : T> saveIfModified(stored: Storable<X>, modify: suspend (X) -> X): Stored<X> {
 
-        val originalValue = stored.value
+        val originalValue = stored.resolve()
         val modifiedValue = modify(originalValue)
 
         return when (originalValue != modifiedValue) {
