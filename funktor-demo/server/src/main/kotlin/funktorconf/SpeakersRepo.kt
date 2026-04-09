@@ -23,7 +23,7 @@ class SpeakersRepo(
         .plus(timestamped.onBeforeSave())
 ) {
     companion object {
-        fun Storable<Speaker>.asApiModel() = with(value) {
+        suspend fun Storable<Speaker>.asApiModel() = with(resolve()) {
             SpeakerModel(
                 id = _id,
                 name = name,

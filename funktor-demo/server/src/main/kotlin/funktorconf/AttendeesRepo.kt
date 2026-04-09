@@ -24,7 +24,7 @@ class AttendeesRepo(
         .plus(timestamped.onBeforeSave())
 ) {
     companion object {
-        fun Storable<Attendee>.asApiModel() = with(value) {
+        suspend fun Storable<Attendee>.asApiModel() = with(resolve()) {
             AttendeeModel(
                 id = _id,
                 name = name,
