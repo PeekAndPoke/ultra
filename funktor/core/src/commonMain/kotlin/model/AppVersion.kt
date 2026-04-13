@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.core.model
 
 import kotlinx.serialization.Serializable
 
+/** Version metadata for the application: project name, semantic version, and git info. */
 @Serializable
 data class AppVersion(
     val project: String = N_A,

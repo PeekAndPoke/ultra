@@ -97,14 +97,14 @@ sealed class Storable<out T> {
  * Represents a persisted entity that has been loaded from the database.
  *
  * A [Stored] carries the full database metadata ([_id], [_key], [_rev]) alongside
- * the domain [value]. It is the most common wrapper returned by repository queries.
+ * the domain [_value]. It is the most common wrapper returned by repository queries.
  *
  * Use [modify] or [withValue] to create a copy with an updated value while preserving
  * the database identity, and [castTyped] / [castUntyped] for safe downcasting of the value.
  */
 @SerialName(Stored.SERIAL_NAME)
 data class Stored<out T>(
-    val value: T,
+    @PublishedApi internal val _value: T,
     override val _id: String,
     override val _key: String = _id.ensureKey,
     override val _rev: String = "",
@@ -112,27 +112,31 @@ data class Stored<out T>(
 
     companion object {
         const val SERIAL_NAME = "stored"
+
+        /** Creates a Stored wrapping the given [value] with database metadata. */
+        operator fun <T> invoke(value: T, _id: String, _key: String = _id.ensureKey, _rev: String = ""): Stored<T> =
+            Stored(_value = value, _id = _id, _key = _key, _rev = _rev)
     }
 
     @PublishedApi
-    override val valueInternal: T get() = value
+    override val valueInternal: T get() = _value
 
-    override suspend fun resolve(): T = value
+    override suspend fun resolve(): T = _value
 
     override fun <X : @UnsafeVariance T> modify(fn: (oldValue: T) -> X): Stored<X> {
-        return withValue(fn(value))
+        return withValue(fn(_value))
     }
 
     /**
      * Suspending variant of [modify] that allows the mapping function to perform async work.
      */
     suspend fun <X : @UnsafeVariance T> modifyAsync(fn: suspend (oldValue: T) -> X): Stored<X> {
-        return withValue(fn(value))
+        return withValue(fn(_value))
     }
 
     override fun <X : @UnsafeVariance T> withValue(newValue: X): Stored<X> {
         return Stored(
-            value = newValue,
+            _value = newValue,
             _id = _id,
             _key = _key,
             _rev = _rev,
@@ -141,7 +145,7 @@ data class Stored<out T>(
 
     override fun <N> transform(fn: (current: T) -> N): Stored<N> {
         return Stored(
-            value = fn(value),
+            _value = fn(_value),
             _id = _id,
             _key = _key,
             _rev = _rev,
@@ -155,7 +159,7 @@ data class Stored<out T>(
      */
     inline fun <reified X : @UnsafeVariance T> castTyped(): Stored<X>? {
         @Suppress("UNCHECKED_CAST")
-        return when (value) {
+        return when (_value) {
             is X -> this as Stored<X>
             else -> null
         }
@@ -170,7 +174,7 @@ data class Stored<out T>(
      */
     inline fun <reified X> castUntyped(): Stored<X>? {
         @Suppress("UNCHECKED_CAST")
-        return when (value) {
+        return when (_value) {
             is X -> this as Stored<X>
             else -> null
         }
@@ -305,7 +309,7 @@ class Ref<out T>(
  */
 @SerialName(New.SERIAL_NAME)
 data class New<out T>(
-    val value: T,
+    @PublishedApi internal val _value: T,
     override val _id: String = "",
     override val _key: String = "",
     override val _rev: String = "",
@@ -313,20 +317,24 @@ data class New<out T>(
 
     companion object {
         const val SERIAL_NAME = "new"
+
+        /** Creates a New wrapping the given [value]. */
+        operator fun <T> invoke(value: T, _id: String = "", _key: String = "", _rev: String = ""): New<T> =
+            New(_value = value, _id = _id, _key = _key, _rev = _rev)
     }
 
     @PublishedApi
-    override val valueInternal: T get() = value
+    override val valueInternal: T get() = _value
 
-    override suspend fun resolve(): T = value
+    override suspend fun resolve(): T = _value
 
     override fun <X : @UnsafeVariance T> modify(fn: (oldValue: T) -> X): New<X> {
-        return withValue(fn(value))
+        return withValue(fn(_value))
     }
 
     override fun <X : @UnsafeVariance T> withValue(newValue: X): New<X> {
         return New(
-            value = newValue,
+            _value = newValue,
             _id = _id,
             _key = _key,
             _rev = _rev,
@@ -335,7 +343,7 @@ data class New<out T>(
 
     override fun <N> transform(fn: (current: T) -> N): New<N> {
         return New(
-            value = fn(value),
+            _value = fn(_value),
             _id = _id,
             _key = _key,
             _rev = _rev,
@@ -349,7 +357,7 @@ data class New<out T>(
      */
     inline fun <reified X : @UnsafeVariance T> castTyped(): New<X>? {
         @Suppress("UNCHECKED_CAST")
-        return when (value) {
+        return when (_value) {
             is X -> this as New<X>
             else -> null
         }
@@ -362,7 +370,7 @@ data class New<out T>(
      */
     inline fun <reified X> castUntyped(): New<X>? {
         @Suppress("UNCHECKED_CAST")
-        return when (value) {
+        return when (_value) {
             is X -> this as New<X>
             else -> null
         }

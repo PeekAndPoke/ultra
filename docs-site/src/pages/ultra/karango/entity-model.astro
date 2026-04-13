@@ -32,7 +32,7 @@ data class Person(val name: String, val age: Int)
 // After inserting into ArangoDB:
 val stored: Stored<Person> = repo.insert(Person("Alice", 30))
 
-stored.value  // Person(name="Alice", age=30) — your data
+stored()      // Person(name="Alice", age=30) — your data
 stored._id    // "persons/abc123" — database ID
 stored._key   // "abc123" — document key
 stored._rev   // "_abc123def" — revision for optimistic locking`} lang="kotlin" theme="vitesse-dark"/>
@@ -47,7 +47,7 @@ stored._rev   // "_abc123def" — revision for optimistic locking`} lang="kotlin
     <Code code={`// Load → modify → save
 val person: Stored<Person> = repo.findById(id)!!
 
-person.value.name  // "Alice" — access your data
+person().name  // "Alice" — access your data
 person._id         // "persons/abc123" — database metadata
 
 val updated = person.modify { it.copy(name = "Alice Smith") }

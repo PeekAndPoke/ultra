@@ -8,8 +8,10 @@ import io.peekandpoke.ultra.vault.Cursor
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
 
+/** Persistence layer for storing and querying sent messages. */
 interface SentMessagesStorage {
 
+    /** No-op implementation that discards all operations. */
     class Null : SentMessagesStorage {
 
         override suspend fun clear() {
@@ -31,8 +33,10 @@ interface SentMessagesStorage {
         }
     }
 
+    /** Vault-backed implementation delegating to a [Repo]. */
     class Vault(private val repo: Repo) : SentMessagesStorage {
 
+        /** Low-level repository operations for sent messages. */
         interface Repo : Repository<SentMessage> {
             suspend fun findByRef(refs: Set<String>, filter: PagedSearchFilter): Cursor<Stored<SentMessage>>
         }

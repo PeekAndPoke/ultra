@@ -457,7 +457,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 result.user shouldBe storedUser
                 result.requiresActivation shouldBe true
 
-                val createdPassword = createdAuthRecord!!.value as AuthRecord.Password
+                val createdPassword = createdAuthRecord!!.resolve() as AuthRecord.Password
                 createdPassword.ownerId shouldBe storedUser._id
                 createdPassword.token shouldBe hashedPassword
                 createdPassword.realm shouldBe realm.id

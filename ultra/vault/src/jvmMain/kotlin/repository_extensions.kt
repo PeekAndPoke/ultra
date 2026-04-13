@@ -25,7 +25,7 @@ interface BatchInsertRepository<T> {
      * The order of the [values] must match the order of the results.
      */
     suspend fun <X : T> batchInsertValues(values: List<X>): List<Stored<X>> {
-        val mapped = values.map { New(value = it) }
+        val mapped = values.map { New(_value = it) }
 
         return batchInsert(mapped)
     }
@@ -39,7 +39,7 @@ interface BatchInsertRepository<T> {
      * The order of the [values] must match the order of the results.
      */
     suspend fun <X : T> batchInsertPairs(values: List<Pair<String, X>>): List<Stored<X>> {
-        val mapped = values.map { New(_key = it.first.ensureKey, value = it.second) }
+        val mapped = values.map { New(_key = it.first.ensureKey, _value = it.second) }
 
         return batchInsert(mapped)
     }

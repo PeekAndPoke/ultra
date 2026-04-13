@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.karango.e2e.database
 import io.peekandpoke.karango.testdomain.testPersons
+import io.peekandpoke.ultra.vault.value
 
 @Suppress("ClassName")
 class `E2E-Crud-Remove-Spec` : StringSpec({

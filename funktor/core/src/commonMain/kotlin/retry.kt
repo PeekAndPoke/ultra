@@ -11,6 +11,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 // TODO move to ultra::common
+/** Utility for retrying suspending operations with eased back-off delays. */
 object Retry {
 
     suspend fun <T> retry(

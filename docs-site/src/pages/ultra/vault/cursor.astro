@@ -23,7 +23,7 @@ import {Code} from 'astro:components';
 
 // Flow-based streaming
 cursor.asFlow().collect { stored ->
-    println(stored.value.name)
+    println(stored().name)
 }
 
 // Metadata
@@ -48,24 +48,24 @@ val all: List<Stored<Person>> = cursor.toList()`} lang="kotlin" theme="vitesse-d
     <h3>Transform</h3>
 
     <Code code={`// map — transform each item
-val names: List<String> = cursor.map { it.value.name }
+val names: List<String> = cursor.map { it().name }
 
 // mapNotNull — transform, discarding nulls
-val emails: List<String> = cursor.mapNotNull { it.value.email }
+val emails: List<String> = cursor.mapNotNull { it().email }
 
 // mapIndexed — transform with index
-val indexed: List<String> = cursor.mapIndexed { i, it -> it.value.name }
+val indexed: List<String> = cursor.mapIndexed { i, it -> it().name }
 
 // flatMap — transform each item into a collection, then flatten
-val tags: List<String> = cursor.flatMap { it.value.tags }`} lang="kotlin" theme="vitesse-dark"/>
+val tags: List<String> = cursor.flatMap { it().tags }`} lang="kotlin" theme="vitesse-dark"/>
 
     <h3>Filter</h3>
 
     <Code code={`// filter — keep matching items
-val adults: List<Stored<Person>> = cursor.filter { it.value.age >= 18 }
+val adults: List<Stored<Person>> = cursor.filter { it().age >= 18 }
 
 // filterNot — keep non-matching items
-val minors: List<Stored<Person>> = cursor.filterNot { it.value.age >= 18 }
+val minors: List<Stored<Person>> = cursor.filterNot { it().age >= 18 }
 
 // filterIsInstance — keep items of a specific type
 val dogs: List<Stored<Dog>> = animalCursor.filterIsInstance<Stored<Dog>>()`} lang="kotlin" theme="vitesse-dark"/>
@@ -77,10 +77,10 @@ val first: Stored<Person> = cursor.first()
 val maybeFirst: Stored<Person>? = cursor.firstOrNull()
 
 // With predicate
-val alice: Stored<Person>? = cursor.firstOrNull { it.value.name == "Alice" }
+val alice: Stored<Person>? = cursor.firstOrNull { it().name == "Alice" }
 
 // find — alias for firstOrNull with predicate
-val found: Stored<Person>? = cursor.find { it.value.age > 30 }
+val found: Stored<Person>? = cursor.find { it().age > 30 }
 
 // lastOrNull
 val last: Stored<Person>? = cursor.lastOrNull()`} lang="kotlin" theme="vitesse-dark"/>
@@ -88,50 +88,50 @@ val last: Stored<Person>? = cursor.lastOrNull()`} lang="kotlin" theme="vitesse-d
     <h3>Iteration</h3>
 
     <Code code={`// forEach
-cursor.forEach { stored -> println(stored.value.name) }
+cursor.forEach { stored -> println(stored().name) }
 
 // forEachIndexed
 cursor.forEachIndexed { index, stored ->
-    println(stored.value.name)
+    println(stored().name)
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <h3>Predicates</h3>
 
     <Code code={`// any — true if at least one item matches
-val hasAdults: Boolean = cursor.any { it.value.age >= 18 }
+val hasAdults: Boolean = cursor.any { it().age >= 18 }
 
 // none — true if no item matches
-val noMinors: Boolean = cursor.none { it.value.age < 18 }
+val noMinors: Boolean = cursor.none { it().age < 18 }
 
 // all — true if every item matches
-val allAdults: Boolean = cursor.all { it.value.age >= 18 }`} lang="kotlin" theme="vitesse-dark"/>
+val allAdults: Boolean = cursor.all { it().age >= 18 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <h3>Aggregation</h3>
 
     <Code code={`// fold
-val totalAge: Int = cursor.fold(0) { acc, stored -> acc + stored.value.age }
+val totalAge: Int = cursor.fold(0) { acc, stored -> acc + stored().age }
 
 // groupBy
-val byCity: Map<String, List<Stored<Person>>> = cursor.groupBy { it.value.city }
+val byCity: Map<String, List<Stored<Person>>> = cursor.groupBy { it().city }
 
 // associateBy
 val byId: Map<String, Stored<Person>> = cursor.associateBy { it._id }
 
 // associate
-val nameToAge: Map<String, Int> = cursor.associate { it.value.name to it.value.age }
+val nameToAge: Map<String, Int> = cursor.associate { it().name to it().age }
 
 // partition
-val (adults, minors) = cursor.partition { it.value.age >= 18 }`} lang="kotlin" theme="vitesse-dark"/>
+val (adults, minors) = cursor.partition { it().age >= 18 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <h3>Sorting, distinct, take/drop</h3>
 
     <Code code={`// sortedBy / sortedByDescending
-val byAge: List<Stored<Person>> = cursor.sortedBy { it.value.age }
-val oldest: List<Stored<Person>> = cursor.sortedByDescending { it.value.age }
+val byAge: List<Stored<Person>> = cursor.sortedBy { it().age }
+val oldest: List<Stored<Person>> = cursor.sortedByDescending { it().age }
 
 // distinct / distinctBy
 val unique: List<Stored<Person>> = cursor.distinct()
-val uniqueNames: List<Stored<Person>> = cursor.distinctBy { it.value.name }
+val uniqueNames: List<Stored<Person>> = cursor.distinctBy { it().name }
 
 // take / drop
 val firstFive: List<Stored<Person>> = cursor.take(5)
@@ -165,13 +165,13 @@ val afterFive: List<Stored<Person>> = cursor.drop(5)`} lang="kotlin" theme="vite
             </thead>
             <tbody class="text-gray-400">
             <tr>
-                <td class="px-3 py-2 border border-white/10"><code>list.map {"{ ... }"}</code></td>
-                <td class="px-3 py-2 border border-white/10"><code>cursor.map {"{ ... }"}</code></td>
+                <td class="px-3 py-2 border border-white/10"><code>list.map &lbrace; ... &rbrace;</code></td>
+                <td class="px-3 py-2 border border-white/10"><code>cursor.map &lbrace; ... &rbrace;</code></td>
                 <td class="px-3 py-2 border border-white/10">suspend, lambda can be suspend</td>
             </tr>
             <tr>
-                <td class="px-3 py-2 border border-white/10"><code>list.filter {"{ ... }"}</code></td>
-                <td class="px-3 py-2 border border-white/10"><code>cursor.filter {"{ ... }"}</code></td>
+                <td class="px-3 py-2 border border-white/10"><code>list.filter &lbrace; ... &rbrace;</code></td>
+                <td class="px-3 py-2 border border-white/10"><code>cursor.filter &lbrace; ... &rbrace;</code></td>
                 <td class="px-3 py-2 border border-white/10">suspend, lambda can be suspend</td>
             </tr>
             <tr>
@@ -180,13 +180,13 @@ val afterFive: List<Stored<Person>> = cursor.drop(5)`} lang="kotlin" theme="vite
                 <td class="px-3 py-2 border border-white/10">suspend</td>
             </tr>
             <tr>
-                <td class="px-3 py-2 border border-white/10"><code>list.forEach {"{ ... }"}</code></td>
-                <td class="px-3 py-2 border border-white/10"><code>cursor.forEach {"{ ... }"}</code></td>
+                <td class="px-3 py-2 border border-white/10"><code>list.forEach &lbrace; ... &rbrace;</code></td>
+                <td class="px-3 py-2 border border-white/10"><code>cursor.forEach &lbrace; ... &rbrace;</code></td>
                 <td class="px-3 py-2 border border-white/10">suspend, lambda can be suspend</td>
             </tr>
             <tr>
-                <td class="px-3 py-2 border border-white/10"><code>list.groupBy {"{ ... }"}</code></td>
-                <td class="px-3 py-2 border border-white/10"><code>cursor.groupBy {"{ ... }"}</code></td>
+                <td class="px-3 py-2 border border-white/10"><code>list.groupBy &lbrace; ... &rbrace;</code></td>
+                <td class="px-3 py-2 border border-white/10"><code>cursor.groupBy &lbrace; ... &rbrace;</code></td>
                 <td class="px-3 py-2 border border-white/10">suspend, lambda can be suspend</td>
             </tr>
             <tr>

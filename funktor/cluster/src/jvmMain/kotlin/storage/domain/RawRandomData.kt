@@ -4,6 +4,7 @@ import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.vault.Vault
 import io.peekandpoke.ultra.vault.hooks.Timestamped
 
+/** Vault-storable raw random-data entry with untyped [data] payload. */
 @Vault
 data class RawRandomData(
     val category: String,

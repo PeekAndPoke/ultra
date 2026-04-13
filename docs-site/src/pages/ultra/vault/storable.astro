@@ -27,7 +27,7 @@ data class Person(val name: String, val age: Int)
 // After inserting into the database:
 val stored: Stored<Person> = repo.insert(Person("Alice", 30))
 
-stored.value  // Person(name="Alice", age=30) — your data
+stored()      // Person(name="Alice", age=30) — your data
 stored._id    // "persons/abc123" — database ID
 stored._key   // "abc123" — document key
 stored._rev   // "_abc123def" — revision for optimistic locking`} lang="kotlin" theme="vitesse-dark"/>
@@ -75,10 +75,16 @@ stored._rev   // "_abc123def" — revision for optimistic locking`} lang="kotlin
         For <code>Stored</code> and <code>New</code>, resolution is instant (they also expose <code>val value: T</code>).
         For <code>Ref</code>, resolution may suspend to load the entity from the database.</p>
 
-    <Code code={`// Access value
-stored.value.name    // direct on Stored
-stored.resolve()     // suspend, works on all Storable types
-stored()             // shorthand for resolve()
+    <Code code={`// Stored and New keep a public .value property for direct access:
+stored.value  // instant, no suspension
+
+// But the uniform way across all Storable types is:
+stored.resolve()  // suspend, works on Stored, New, AND Ref
+stored()          // shorthand for resolve()
+
+// Access fields via the uniform API
+stored().name       // preferred
+stored.resolve().name
 
 // Ref resolution
 val author = post.author.resolve()  // suspend, loads from DB
@@ -105,8 +111,8 @@ repo.insert("alice-key", Person("Alice", 30))`} lang="kotlin" theme="vitesse-dar
     <Code code={`val stored: Stored<Person> = repo.findById("persons/abc123")!!
 
 // Access data
-stored.value.name  // "Alice"
-stored.value.age   // 30
+stored().name  // "Alice"
+stored().age   // 30
 
 // Access metadata
 stored._id         // "persons/abc123"
@@ -142,9 +148,9 @@ data class Comment(
 )
 
 val comment: Stored<Comment> = repo.findById(commentId)!!
-comment.value.author._id          // "persons/abc123" — available immediately
-comment.value.author.resolve()    // Person(name="Alice", age=30) — resolves on demand
-comment.value.author()            // shorthand for resolve()
+comment().author._id          // "persons/abc123" — available immediately
+comment().author.resolve()    // Person(name="Alice", age=30) — resolves on demand
+comment().author()            // shorthand for resolve()
 
 // Create refs explicitly
 val eager = Ref.eager(person, id, key, rev)   // already-loaded value

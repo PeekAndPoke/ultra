@@ -115,14 +115,14 @@ class AuthRecordStorage(
     }
 
     /** Checks if the given record has not yet expired */
-    fun <T : AuthRecord> Stored<T>.hasNotExpired(): Boolean {
-        val expiresAt = value.expiresAt ?: return true
+    suspend fun <T : AuthRecord> Stored<T>.hasNotExpired(): Boolean {
+        val expiresAt = resolve().expiresAt ?: return true
 
         return expiresAt > kronos.secondsNow()
     }
 
     /** Checks if the given record has expired */
-    fun <T : AuthRecord> Stored<T>.hasExpired(): Boolean {
+    suspend fun <T : AuthRecord> Stored<T>.hasExpired(): Boolean {
         return hasNotExpired().not()
     }
 }

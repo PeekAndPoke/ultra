@@ -90,7 +90,7 @@ class WorkerHistory(
 
             override suspend fun getHistory(workerId: String, limit: Int): List<WorkerRun> {
                 return inner.getHistoryByWorker(workerId = workerId, limit = limit)
-                    .map { it.value.run }
+                    .map { it.resolve().run }
             }
 
             override suspend fun putRun(run: WorkerRun) {

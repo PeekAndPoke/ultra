@@ -5,6 +5,7 @@ import io.kotest.matchers.doubles.shouldBeBetween
 import io.peekandpoke.karango.aql.RAND
 import io.peekandpoke.karango.aql.RETURN
 import io.peekandpoke.karango.e2e.karangoDriver
+import io.peekandpoke.ultra.vault.first
 
 @Suppress("ClassName")
 class E2E_Func_RAND_Spec : StringSpec({

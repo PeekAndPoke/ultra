@@ -11,6 +11,7 @@ import io.peekandpoke.karango.aql.INSERT
 import io.peekandpoke.karango.aql.LET
 import io.peekandpoke.karango.e2e.database
 import io.peekandpoke.karango.testdomain.testPersons
+import io.peekandpoke.ultra.vault.value
 
 @Suppress("ClassName")
 class `E2E-Crud-Insert-Spec` : StringSpec({

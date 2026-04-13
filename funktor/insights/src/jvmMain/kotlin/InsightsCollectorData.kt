@@ -9,6 +9,7 @@ import kotlinx.html.div
 import kotlinx.html.script
 import kotlinx.html.unsafe
 
+/** Data produced by an [InsightsCollector], with rendering hooks for the bar and detail views. */
 interface InsightsCollectorData {
 
     val templateKey: String get() = (this::class.qualifiedName ?: "cls-${this::class.hashCode()}").toId()

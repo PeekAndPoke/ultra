@@ -6,6 +6,7 @@ import io.peekandpoke.funktor.cluster.workers.StateProvider
 import io.peekandpoke.funktor.cluster.workers.Worker
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.log.Log
+import io.peekandpoke.ultra.vault.value
 import kotlin.time.Duration.Companion.seconds
 
 class ServerBeaconCleanupWorker(

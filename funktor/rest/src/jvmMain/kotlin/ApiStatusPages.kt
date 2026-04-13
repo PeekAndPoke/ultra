@@ -18,6 +18,7 @@ import kotlinx.coroutines.delay
 import java.io.IOException
 import kotlin.random.Random
 
+/** Ktor status page handlers that map exceptions to typed [ApiResponse] errors. */
 object ApiStatusPages {
 
     fun isClientError(cause: Throwable): Boolean {

@@ -41,7 +41,7 @@ data class Person(val name: String, val age: Int)
 // After inserting into either ArangoDB or MongoDB:
 val stored: Stored<Person> = repo.insert(Person("Alice", 30))
 
-stored.value  // Person(name="Alice", age=30) — your data
+stored()      // Person(name="Alice", age=30) — your data
 stored._id    // "persons/abc123" — database ID
 stored._key   // "abc123" — document key`} lang="kotlin" theme="vitesse-dark"/>
 

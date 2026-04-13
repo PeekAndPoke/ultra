@@ -6,6 +6,7 @@ import io.peekandpoke.ultra.security.UltraSecurityConfig
 import io.peekandpoke.ultra.security.jwt.JwtConfig
 import io.peekandpoke.ultra.vault.VaultConfig
 
+/** Typed representation of the funktor configuration block (security, tracking, vault, auth). */
 data class FunktorConfig(
     val security: UltraSecurityConfig = UltraSecurityConfig("CHANGE_ME", 0L),
     val tracking: TrackingConfig = TrackingConfig(),

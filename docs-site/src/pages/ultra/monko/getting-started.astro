@@ -74,7 +74,7 @@ val config = MongoDbConfig(
 val stored = repo.insert("person-1", Person(name = "Alice", age = 30, email = "alice@example.com"))
 // stored._id   -> "persons/person-1"
 // stored._key  -> "person-1"
-// stored.value -> Person(name="Alice", ...)
+// stored() -> Person(name="Alice", ...)
 
 // Find by ID
 val found = repo.findById("persons/person-1")

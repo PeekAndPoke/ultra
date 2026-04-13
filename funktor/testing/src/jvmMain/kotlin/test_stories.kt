@@ -13,12 +13,15 @@ import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.reflection.kType
 import kotlinx.coroutines.delay
 
+/** DSL marker for story-level test definitions. */
 @DslMarker
 annotation class TestStoryMarker
 
+/** DSL marker for step-level test definitions. */
 @DslMarker
 annotation class TestStoryStepMarker
 
+/** Defines a sequential test story: steps execute in order, and a step failure skips remaining steps. */
 @TestStoryMarker
 suspend fun FreeSpecContainerScope.story(name: String, builder: TestStory.StoryBuilder.() -> Unit) {
     @Suppress("UNCHECKED_CAST")
@@ -82,12 +85,14 @@ suspend fun FreeSpecContainerScope.story(name: String, builder: TestStory.StoryB
     }
 }
 
+/** A named test story consisting of sequential steps with shared mutable state. */
 class TestStory(
     val name: String,
     val description: String?,
     val urls: List<String>,
     val steps: List<TestStoryStep>,
 ) {
+    /** Mutable state holder for passing data between story steps. */
     class State<T>(
         private val spec: AppSpec<*>,
         private val state: MutableTypedAttributes,
@@ -178,6 +183,7 @@ class TestStory(
     }
 }
 
+/** A single step or group of steps within a test story. */
 sealed class TestStoryStep {
     abstract val name: String
 

@@ -4,8 +4,7 @@ import io.peekandpoke.ultra.datetime.Kronos
 import kotlinx.serialization.Serializable
 import kotlin.math.absoluteValue
 
-/**
- */
+/** Derived application identity: version metadata, human-readable name, and content hash. */
 @Serializable
 data class AppInfo(
     val version: AppVersion,

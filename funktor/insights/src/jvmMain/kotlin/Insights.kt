@@ -7,8 +7,10 @@ import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 
+/** Per-request insights collector: gathers timing, profiling, and diagnostic data. */
 interface Insights : RequestMetricsProvider {
 
+    /** Base implementation providing wall-clock timing from construction. */
     abstract class Base : Insights {
         val startedNs: Long = System.nanoTime()
 

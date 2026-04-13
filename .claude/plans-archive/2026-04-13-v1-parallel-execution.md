@@ -118,6 +118,19 @@ See "Critical Path" section above for the full shipped inventory.
 5. **FunktorConf showcase** — design done, code pending (Event/Speaker/Attendee CRUD)
 6. **Funktor docs improvement Wave 1** — blocked on FunktorConf; adds real examples to thin pages
 
+### Track E — Funktor-demo Polish (NEW, 2026-04-09)
+
+**Goal:** Make funktor-demo a credible showcase app before v1.
+
+**Sub-tasks:**
+
+1. **DB backend decision** — 🟡 DECISION NEEDED. Currently mixing Monko and Karango repos in the same
+   demo, which is confusing. Pick one and migrate. Options: (a) all-Karango (proven, ship-ready),
+   (b) all-Monko (demonstrates portability story), (c) two demo configs (complex).
+2. **Admin UI polish pass** — systematic page-by-page walkthrough of every admin screen. Fix
+   layout, spacing, consistency, and general visual quality. Requires human-in-the-loop review —
+   cannot be automated. The demo is the first thing evaluators see; ugly pages undermine credibility.
+
 **Dependencies:** None. FunktorConf blocks Funktor docs improvement, but both are internal to this track.
 
 **Deliverables:** KDoc coverage at 90%+, FunktorConf demo deployed, 5 thin Funktor pages filled out.
@@ -198,6 +211,8 @@ With Track B mostly shipped, the remaining work is pure parallelism — no criti
 - [ ] ES2015 target set in all executable modules OR documented exception (G7)
 - [ ] ApiRoute refactor shipped, all 17 implementations updated (G8)
 - [ ] Wave 2-5 audits complete (G9)
+- [ ] funktor-demo uses a single DB backend consistently (Monko vs Karango decision made)
+- [ ] funktor-demo admin UI polish pass complete (every page reviewed)
 - [ ] funktor-demo runs end-to-end on both ArangoDB and MongoDB
 - [ ] Maven Central artifacts published for all 5 library roots
 - [ ] CHANGELOG.md written

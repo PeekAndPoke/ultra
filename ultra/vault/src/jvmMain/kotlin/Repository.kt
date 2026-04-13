@@ -217,7 +217,7 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
      */
     suspend fun <X : T> insert(key: String?, new: X): Stored<X> = when (key) {
         null -> insert(new)
-        else -> insert(New(_key = key, value = new))
+        else -> insert(New(_key = key, _value = new))
     }
 
     /**

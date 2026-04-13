@@ -23,12 +23,14 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.time.Duration.Companion.milliseconds
 
+/** Provides test-spec access to the app's kontainer and [AppUnderTest] factory. */
 interface AppSpecAware<C : AppConfig> : KontainerAware {
     val spec: AppSpec<C>
 
     fun testApp(host: String): AppUnderTest<C> = AppUnderTest(testBed = spec.testBed, host = host)
 }
 
+/** Base class for integration tests: boots a Funktor app in a [TestBed], provides fixture and service helpers. */
 @Suppress("EXPERIMENTAL_API_USAGE")
 abstract class AppSpec<C : AppConfig>(val app: App.Definition<C>) : FreeSpec(), AppSpecAware<C> {
 

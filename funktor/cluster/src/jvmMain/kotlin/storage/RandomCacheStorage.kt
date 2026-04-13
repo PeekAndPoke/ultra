@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.retry
 import kotlin.time.Duration.Companion.seconds
 
+/** Typed key-value cache with TTL and serve-stale-while-refresh semantics. */
 class RandomCacheStorage(
     private val kronos: Kronos,
     private val adapter: Adapter,
@@ -45,12 +46,14 @@ class RandomCacheStorage(
         )
     }
 
+    /** Typed key identifying a cache category, its eviction policy, and the data type. */
     class CategoryKey<T> internal constructor(
         val category: String,
         val policy: RawCacheDataModel.Policy,
         val type: TypeRef<T>,
     ) {
 
+        /** A [CategoryKey] bound to a specific data ID. */
         class Bound<T> internal constructor(val category: CategoryKey<T>, val dataId: String)
 
         fun bind(dataId: String): Bound<T> = Bound(category = this, dataId = dataId)
@@ -58,6 +61,7 @@ class RandomCacheStorage(
         fun <X> bind(storable: Storable<X>): Bound<T> = bind(storable._id)
     }
 
+    /** Backend adapter for persisting raw cache data entries. */
     interface Adapter {
 
         suspend fun list(search: String, page: Int, epp: Int): Cursor<Stored<RawCacheData>>
@@ -115,13 +119,12 @@ class RandomCacheStorage(
 
             override suspend fun <T> get(key: CategoryKey<T>, dataId: String): TypedCacheData<T>? {
                 return try {
-                    inner.findOneBy(key = key, dataId = dataId)
-                        ?.takeIf { raw ->
-                            raw.value.expiresAt >= kronos.millisNow() / 1_000
-                        }
-                        ?.let { raw ->
-                            inner.encode(key.type, raw.value)
-                        }
+                    val raw = inner.findOneBy(key = key, dataId = dataId) ?: return null
+                    val rawValue = raw.resolve()
+
+                    if (rawValue.expiresAt < kronos.millisNow() / 1_000) return null
+
+                    inner.encode(key.type, rawValue)
                 } catch (e: Throwable) {
                     e.printStackTrace()
                     null
@@ -161,9 +164,9 @@ class RandomCacheStorage(
                     true
                 }.firstOrNull()
 
-                return result?.let {
-                    inner.encode(key.type, it.value)
-                }
+                if (result == null) return null
+
+                return inner.encode(key.type, result.resolve())
             }
 
             override suspend fun clear() {

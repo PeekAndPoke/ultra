@@ -246,12 +246,14 @@ class TestAppUserRealm(
     override suspend fun generateJwt(user: Stored<TestAppUser>): AuthSignInResponse.Token {
         val gen = deps.jwtGenerator
 
+        val userValue = user.resolve()
+
         val token = gen.createJwt(
             user = JwtUserData(
                 id = user._id,
-                desc = user.value.name,
+                desc = userValue.name,
                 type = TestAppUser.USER_TYPE,
-                email = user.value.email,
+                email = userValue.email,
             ),
             permissions = UserPermissions(
                 isSuperUser = false,
@@ -271,7 +273,7 @@ class TestAppUserRealm(
     }
 
     override suspend fun getUserEmail(user: Stored<TestAppUser>): String {
-        return user.value.email
+        return user.resolve().email
     }
 
     override suspend fun serializeUser(user: Stored<TestAppUser>): JsonObject {

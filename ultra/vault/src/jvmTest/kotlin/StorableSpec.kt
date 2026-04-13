@@ -29,7 +29,7 @@ class StorableSpec : StringSpec({
     "Stored.modify maps the value" {
         val modified = stored.modify { it.uppercase() }
 
-        modified.value shouldBe "HELLO"
+        modified.resolve() shouldBe "HELLO"
         modified._id shouldBe "col/123"
         modified._key shouldBe "123"
         modified._rev shouldBe "rev1"
@@ -38,14 +38,14 @@ class StorableSpec : StringSpec({
     "Stored.withValue replaces the value, keeps metadata" {
         val replaced = stored.withValue("world")
 
-        replaced.value shouldBe "world"
+        replaced.resolve() shouldBe "world"
         replaced._id shouldBe stored._id
     }
 
     "Stored.transform maps to a different type" {
         val transformed = stored.transform { it.length }
 
-        transformed.value shouldBe 5
+        transformed.resolve() shouldBe 5
         transformed._id shouldBe stored._id
     }
 
@@ -236,6 +236,6 @@ class StorableSpec : StringSpec({
         val new = New(value = "hello")
         val modified = new.modify { it.uppercase() }
 
-        modified.value shouldBe "HELLO"
+        modified.resolve() shouldBe "HELLO"
     }
 })

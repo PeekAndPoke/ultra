@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.core.websocket
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+/** A message sent from the websocket server to the client: [Ack], [Nack], [Log], or [Data]. */
 @Serializable
 sealed class WsServerMessage {
 

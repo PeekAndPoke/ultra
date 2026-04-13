@@ -9,6 +9,7 @@ import io.peekandpoke.karango.e2e.database
 import io.peekandpoke.karango.e2e.kronos
 import io.peekandpoke.karango.testdomain.TestTimestamped
 import io.peekandpoke.karango.testdomain.testTimestamped
+import io.peekandpoke.ultra.vault.value
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 

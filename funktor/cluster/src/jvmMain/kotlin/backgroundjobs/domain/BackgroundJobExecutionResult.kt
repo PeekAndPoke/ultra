@@ -4,6 +4,7 @@ import io.peekandpoke.funktor.core.model.CpuProfile
 import io.peekandpoke.ultra.datetime.MpInstant
 import kotlinx.serialization.SerialName
 
+/** Outcome of executing a single background job: either [Success] or [Failed]. */
 sealed interface BackgroundJobExecutionResult {
 
     @SerialName("success")

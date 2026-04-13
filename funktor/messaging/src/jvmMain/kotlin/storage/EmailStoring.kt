@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.messaging.storage
 import io.peekandpoke.funktor.messaging.Email
 import io.peekandpoke.ultra.common.TypedKey
 
+/** Controls how a sent email is persisted: without content, with content, or with anonymized links. */
 sealed class EmailStoring {
     companion object {
         val emailStoringKey = TypedKey<EmailStoring>("storing")

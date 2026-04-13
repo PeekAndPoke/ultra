@@ -9,6 +9,7 @@ import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.ultra.kontainer.Kontainer
 import kotlin.system.exitProcess
 
+/** Executes CLI commands registered in the kontainer when the app is launched with `--cli`. */
 class CliRunner(
     commands: Lazy<List<CliktCommand>>,
 ) {

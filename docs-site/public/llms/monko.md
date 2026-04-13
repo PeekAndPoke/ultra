@@ -139,7 +139,7 @@ val config = MongoDbConfig(
 val stored = repo.insert("person-1", Person(name = "Alice", age = 30, email = "alice@example.com"))
 // stored._id   -> "persons/person-1"
 // stored._key  -> "person-1"
-// stored.value -> Person(name="Alice", ...)
+// stored() -> Person(name="Alice", ...)
 
 // Find by ID
 val found = repo.findById("persons/person-1")
@@ -213,7 +213,7 @@ val stored: Stored<Person> = repo.insert("key-1", Person("Alice", 30, "alice@exa
 // Access metadata
 stored._id      // "persons/key-1"
 stored._key     // "key-1"
-stored.value    // Person(name="Alice", age=30, ...)
+stored()        // Person(name="Alice", age=30, ...)
 
 // Modify (creates new Stored with same metadata)
 val updated = stored.modify { copy(age = 31) }

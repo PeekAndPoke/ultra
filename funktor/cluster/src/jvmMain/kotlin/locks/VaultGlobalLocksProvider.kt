@@ -110,14 +110,18 @@ open class VaultGlobalLocksProvider(
     }
 
     override suspend fun list(): List<GlobalLockEntry> {
-        return repository.findAll().map { it.value }
+        return repository.findAll().map { it.resolve() }
     }
 
     override suspend fun releaseBy(filter: (GlobalLockEntry) -> Boolean): List<GlobalLockEntry> {
-        val toBeReleased = repository.findAll().filter { filter(it.value) }
+        val toBeReleased = repository.findAll().filter { filter(it.resolve()) }
 
-        return toBeReleased
-            .onEach { repository.remove(it) }
-            .map { it.value }
+        val results = mutableListOf<GlobalLockEntry>()
+        for (stored in toBeReleased) {
+            repository.remove(stored)
+            results.add(stored.resolve())
+        }
+
+        return results
     }
 }

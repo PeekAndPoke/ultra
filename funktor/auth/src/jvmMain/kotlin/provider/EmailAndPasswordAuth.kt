@@ -21,6 +21,7 @@ import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.remote.buildUri
 import io.peekandpoke.ultra.security.password.PasswordHasher
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.value
 import kotlinx.serialization.json.buildJsonObject
 import kotlin.time.Duration.Companion.hours
 
@@ -372,7 +373,7 @@ class EmailAndPasswordAuth(
         }
 
         // Send email to the user to notify them that their password has been changed
-        realm.loadUserById(tokenRecord.value.ownerId)?.let { user ->
+        realm.loadUserById(tokenRecord.resolve().ownerId)?.let { user ->
             realm.messaging.sendPasswordChangedEmail(user)
         }
 
@@ -391,7 +392,7 @@ class EmailAndPasswordAuth(
             .findLatestPasswordRecord(realm = realm.id, owner = user._id)
             ?: return false
 
-        return services.checkPassword(plaintext = password, hash = record.value.token)
+        return services.checkPassword(plaintext = password, hash = record.resolve().token)
     }
 
     /**

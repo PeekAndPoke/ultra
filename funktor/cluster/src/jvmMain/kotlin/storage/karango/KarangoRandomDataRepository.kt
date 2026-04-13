@@ -79,8 +79,8 @@ class KarangoRandomDataRepository(
         }
     }
 
-    override fun <T> encode(type: TypeRef<T>, raw: Stored<RawRandomData>): T? {
+    override suspend fun <T> encode(type: TypeRef<T>, raw: Stored<RawRandomData>): T? {
         @Suppress("UNCHECKED_CAST")
-        return driver.codec.awake(type.type.withNullability(true), raw.value.data) as? T?
+        return driver.codec.awake(type.type.withNullability(true), raw.resolve().data) as? T?
     }
 }

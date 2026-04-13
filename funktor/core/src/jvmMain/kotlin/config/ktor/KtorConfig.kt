@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.core.config.ktor
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 
+/** Typed representation of the ktor configuration block (deployment, application, security). */
 data class KtorConfig(
     val deployment: Deployment = Deployment(),
     val application: Application = Application(),

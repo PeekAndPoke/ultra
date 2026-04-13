@@ -69,15 +69,17 @@ class AdminUserRealm(
     override suspend fun generateJwt(user: Stored<AdminUser>): AuthSignInResponse.Token {
         val gen = deps.jwtGenerator
 
+        val userValue = user.resolve()
+
         val token = gen.createJwt(
             user = JwtUserData(
                 id = user._id,
-                desc = user.value.name,
+                desc = userValue.name,
                 type = AdminUserModel.USER_TYPE,
-                email = user.value.email,
+                email = userValue.email,
             ),
             permissions = UserPermissions(
-                isSuperUser = user.value.isSuperUser,
+                isSuperUser = userValue.isSuperUser,
                 organisations = setOf(),
                 roles = setOf(),
             )
@@ -94,7 +96,7 @@ class AdminUserRealm(
     }
 
     override suspend fun getUserEmail(user: Stored<AdminUser>): String {
-        return user.value.email
+        return user.resolve().email
     }
 
     override suspend fun serializeUser(user: Stored<AdminUser>): JsonObject {

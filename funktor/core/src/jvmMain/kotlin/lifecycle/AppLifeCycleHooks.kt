@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.core.lifecycle
 
 import io.ktor.server.application.*
 
+/** Container for application lifecycle hook implementations, grouped by lifecycle phase. */
 class AppLifeCycleHooks(
     val onAppStarting: List<OnAppStarting>,
     val onAppStarted: List<OnAppStarted>,
@@ -9,6 +10,7 @@ class AppLifeCycleHooks(
     val onAppStopping: List<OnAppStopping>,
     val onAppStopped: List<OnAppStopped>,
 ) {
+    /** Determines when a hook runs relative to other hooks; higher priority runs first. */
     class ExecutionOrder private constructor(
         val priority: Int,
     ) : Comparable<ExecutionOrder> {
@@ -44,30 +46,35 @@ class AppLifeCycleHooks(
         }
     }
 
+    /** Hook invoked synchronously before the application starts (blocking). */
     interface OnAppStarting {
         val executionOrder: ExecutionOrder get() = ExecutionOrder.Normal
 
         suspend fun onAppStarting(application: Application)
     }
 
+    /** Hook invoked after the application has started. */
     interface OnAppStarted {
         val executionOrder: ExecutionOrder get() = ExecutionOrder.Normal
 
         suspend fun onAppStarted(application: Application)
     }
 
+    /** Hook invoked when the application is preparing to stop. */
     interface OnAppStopPreparing {
         val executionOrder: ExecutionOrder get() = ExecutionOrder.Normal
 
         suspend fun onAppStopPreparing(env: ApplicationEnvironment)
     }
 
+    /** Hook invoked when the application is stopping. */
     interface OnAppStopping {
         val executionOrder: ExecutionOrder get() = ExecutionOrder.Normal
 
         suspend fun onAppStopping(application: Application)
     }
 
+    /** Hook invoked after the application has stopped. */
     interface OnAppStopped {
         val executionOrder: ExecutionOrder get() = ExecutionOrder.Normal
 

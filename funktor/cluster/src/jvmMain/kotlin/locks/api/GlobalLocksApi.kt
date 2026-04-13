@@ -8,6 +8,7 @@ import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
+import io.peekandpoke.ultra.vault.value
 
 class GlobalLocksApi : ApiRoutes("global-locks") {
 

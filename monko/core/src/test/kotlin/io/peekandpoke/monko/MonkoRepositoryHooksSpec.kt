@@ -252,7 +252,7 @@ class MonkoRepositoryHooksSpec : FreeSpec() {
 
                 val result = hooks.applyOnBeforeSaveHooks(fakeRepo, entity)
 
-                result.resolve() shouldBe entity.value
+                result.resolve() shouldBe entity.resolve()
             }
         }
     }

@@ -7,6 +7,7 @@ import io.peekandpoke.karango.aql.FOR
 import io.peekandpoke.karango.aql.REMOVE
 import io.peekandpoke.karango.e2e.database
 import io.peekandpoke.karango.testdomain.testPersons
+import io.peekandpoke.ultra.vault.value
 
 @Suppress("ClassName")
 class `E2E-Crud-Remove-Query-Spec` : StringSpec({

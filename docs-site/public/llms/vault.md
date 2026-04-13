@@ -66,8 +66,8 @@ repo.insert("alice-key", Person("Alice", 30))
 val stored: Stored<Person> = repo.findById("persons/abc123")!!
 
 // Access data
-stored.value.name  // "Alice"
-stored.value.age   // 30
+stored().name  // "Alice"
+stored().age   // 30
 
 // Access metadata
 stored._id         // "persons/abc123"
@@ -104,12 +104,12 @@ data class Comment(
 )
 
 val comment: Stored<Comment> = repo.findById(commentId)!!
-comment.value.author._id              // "persons/abc123" -- available immediately
+comment().author._id              // "persons/abc123" -- available immediately
 
 // Resolve the referenced entity (suspend)
-val person: Person = comment.value.author.resolve()
+val person: Person = comment().author.resolve()
 // Or use invoke shorthand
-val person2: Person = comment.value.author()
+val person2: Person = comment().author()
 ```
 
 Creating refs explicitly:
@@ -176,11 +176,11 @@ result set upfront:
 ```kotlin
 val cursor = repo.findAll()
 
-cursor.map { it.value.name }
-cursor.filter { it.value.published }
+cursor.map { it().name }
+cursor.filter { it().published }
 cursor.firstOrNull()
-cursor.groupBy { it.value.author }
-cursor.forEach { stored -> println(stored.value.title) }
+cursor.groupBy { it().author }
+cursor.forEach { stored -> println(stored().title) }
 ```
 
 All cursor convenience methods are `suspend` functions. Results are deserialized lazily.

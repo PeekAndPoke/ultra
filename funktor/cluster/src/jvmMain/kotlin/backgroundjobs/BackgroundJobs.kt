@@ -25,6 +25,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 
+/** Manages background job queuing, scheduling, execution, and archival. */
 class BackgroundJobs(
     handlers: Lazy<List<Handler<Any?, *>>>,
     entityCache: Lazy<EntityCache?>,
@@ -300,6 +301,7 @@ class BackgroundJobs(
         }
     }
 
+    /** Base class for background job handlers. Subclasses define a [jobType] and [execute] logic. */
     abstract class Handler<D : Any?, R : Any?>(
         backgroundJobs: Lazy<BackgroundJobs>,
         val dataType: TypeRef<D>,
@@ -498,7 +500,7 @@ class BackgroundJobs(
                 when (result) {
                     is BackgroundJobExecutionResult.Failed -> {
                         when (val rescheduled =
-                            withResult.value.retryPolicy.scheduleRetry(withResult, MpInstant.now())) {
+                            withResult.resolve().retryPolicy.scheduleRetry(withResult, MpInstant.now())) {
                             // No retry
                             null -> archiveJob(withResult)
                             // Otherwise, schedule re-try
@@ -526,7 +528,9 @@ class BackgroundJobs(
         job: Stored<BackgroundJobQueued>,
     ): BackgroundJobExecutionResult {
         val result = try {
-            when (val handler = handlers.firstOrNull { it.canHandle(job.value) }) {
+            val jobValue = job.resolve()
+
+            when (val handler = handlers.firstOrNull { it.canHandle(jobValue) }) {
                 null -> {
                     BackgroundJobExecutionResult.Failed(
                         serverId = serverId.getId(),
@@ -540,8 +544,8 @@ class BackgroundJobs(
 
                 else -> {
                     val output = handler.execute(
-                        job = job.value,
-                        data = codec.awake(handler.dataType.type, job.value.data)
+                        job = jobValue,
+                        data = codec.awake(handler.dataType.type, jobValue.data)
                     )
 
                     BackgroundJobExecutionResult.Success(
@@ -574,7 +578,7 @@ class BackgroundJobs(
         queue.remove(job)
         // We create an entry in the archive
         archive.save(
-            job.value.toArchived(
+            job.resolve().toArchived(
                 archivedAt = Kronos.systemUtc.instantNow(),
                 expiresAfter = 7.days,
             )

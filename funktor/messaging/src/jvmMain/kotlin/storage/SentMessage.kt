@@ -4,10 +4,11 @@ import io.peekandpoke.funktor.messaging.api.EmailAttachment
 import io.peekandpoke.funktor.messaging.api.EmailResult
 import io.peekandpoke.funktor.messaging.api.SentMessageModel
 import io.peekandpoke.ultra.datetime.MpInstant
-import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.Storable
 import io.peekandpoke.ultra.vault.Vault
 import io.peekandpoke.ultra.vault.hooks.Timestamped
 
+/** Vault-storable record of a sent email, including result, tags, and content. */
 @Vault
 data class SentMessage(
     val result: EmailResult? = null,
@@ -20,6 +21,7 @@ data class SentMessage(
     override val updatedAt: MpInstant = MpInstant.Epoch,
 ) : Timestamped {
 
+    /** Pre-computed lookup index combining explicit refs and destination addresses. */
     data class Lookup(
         val refs: Set<String>,
     ) {
@@ -42,7 +44,8 @@ data class SentMessage(
     override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
 }
 
-fun Stored<SentMessage>.asApiModel() = with(value) {
+/** Converts a stored [SentMessage] to its API model representation. */
+suspend fun Storable<SentMessage>.asApiModel() = with(resolve()) {
     SentMessageModel(
         id = _id,
         refs = refs,

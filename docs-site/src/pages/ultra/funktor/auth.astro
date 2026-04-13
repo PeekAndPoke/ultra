@@ -55,7 +55,7 @@ import {Code} from 'astro:components';
     val token = gen.createJwt(
         user = JwtUserData(
             id = user._key,
-            desc = user.value.name,
+            desc = user().name,
             type = "admin",
         ),
         permissions = UserPermissions(isSuperUser = true),

@@ -7,10 +7,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 
+/** Manages post-send hooks that are invoked asynchronously after an email is sent. */
 class EmailHooks(
     private val onAfterSend: List<OnAfterSend>,
     private val log: Log,
 ) {
+    /** Hook invoked after an email is sent (e.g. for logging, storage, analytics). */
     interface OnAfterSend {
         suspend operator fun invoke(email: Email, result: EmailResult)
     }
@@ -23,6 +25,7 @@ class EmailHooks(
         }
     }
 
+    /** DSL builder for assembling [EmailHooks]. */
     class Builder(private val log: Log = NullLog) {
         private val onAfterSend = mutableListOf<OnAfterSend>()
 

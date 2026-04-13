@@ -65,7 +65,7 @@ abstract class BackgroundJobsSpecBase : FreeSpec() {
             exampleJob02.queue(ExampleBackgroundJobHandler02.Input(text = "ex02-02"))
             delay(10)
 
-            val jobs = backgroundJobs.listQueuedJobs().map { it.value }
+            val jobs = backgroundJobs.listQueuedJobs().map { it.resolve() }
 
             assertSoftly {
                 withClue("There should be three jobs queued") {
@@ -117,7 +117,7 @@ abstract class BackgroundJobsSpecBase : FreeSpec() {
             exampleJob02.queue(ExampleBackgroundJobHandler02.Input(text = "ex02-01"))
             delay(10)
 
-            val jobs = backgroundJobs.listQueuedJobs().map { it.value }
+            val jobs = backgroundJobs.listQueuedJobs().map { it.resolve() }
 
             assertSoftly {
                 withClue("There should be three jobs queued") {
@@ -160,14 +160,14 @@ abstract class BackgroundJobsSpecBase : FreeSpec() {
             // We wait for the job to go into PROCESSING state
             eventually(2000.milliseconds) {
                 val queued = backgroundJobs.listQueuedJobs()
-                queued.filter { it.value.state == BackgroundJobQueued.State.PROCESSING }.shouldNotBeEmpty()
+                queued.filter { it.resolve().state == BackgroundJobQueued.State.PROCESSING }.shouldNotBeEmpty()
             }
 
             // Queue the Job one more time
             exampleJob01.queueIfNotPresent(jobData)
 
             withClue("The Job must be in the queue twice, even though it has the same data / dataHash") {
-                val queuedJobs = backgroundJobs.listQueuedJobs().map { it.value }
+                val queuedJobs = backgroundJobs.listQueuedJobs().map { it.resolve() }
                 queuedJobs.shouldHaveSize(2)
             }
 
@@ -175,12 +175,12 @@ abstract class BackgroundJobsSpecBase : FreeSpec() {
             background.join()
 
             withClue("After the queued Jobs are processed there must be no more jobs in the queued") {
-                val queuedJobs = backgroundJobs.listQueuedJobs().map { it.value }
+                val queuedJobs = backgroundJobs.listQueuedJobs().map { it.resolve() }
                 queuedJobs.shouldBeEmpty()
             }
 
             withClue("After the queued Jobs are processed there must be two jobs in the archive") {
-                val queuedJobs = backgroundJobs.listArchivedJobs().map { it.value }
+                val queuedJobs = backgroundJobs.listArchivedJobs().map { it.resolve() }
                 queuedJobs.shouldHaveSize(2)
             }
         }
@@ -208,12 +208,12 @@ abstract class BackgroundJobsSpecBase : FreeSpec() {
                     runJobsAndWaitForAll()
 
                     withClue("The queue must be empty") {
-                        val queuedJobs = backgroundJobs.listQueuedJobs().map { it.value }
+                        val queuedJobs = backgroundJobs.listQueuedJobs().map { it.resolve() }
                         queuedJobs.shouldBeEmpty()
                     }
 
                     withClue("The archive must contain one failed job") {
-                        val archivedJobs = backgroundJobs.listArchivedJobs().map { it.value }
+                        val archivedJobs = backgroundJobs.listArchivedJobs().map { it.resolve() }
                         archivedJobs.shouldHaveSize(1)
                         archivedJobs[0].results.shouldHaveSize(1)
                         archivedJobs[0].didFinallySucceed() shouldBe false
@@ -252,7 +252,7 @@ abstract class BackgroundJobsSpecBase : FreeSpec() {
                     runJobsAndWaitForAll()
 
                     withClue("The queue must have one element after attempt #${attempt + 1}") {
-                        val queuedJobs = backgroundJobs.listQueuedJobs().map { it.value }
+                        val queuedJobs = backgroundJobs.listQueuedJobs().map { it.resolve() }
                         queuedJobs.shouldHaveSize(1)
                         queuedJobs[0].results.shouldHaveSize(attempt + 1)
                     }
@@ -264,12 +264,12 @@ abstract class BackgroundJobsSpecBase : FreeSpec() {
                 runJobsAndWaitForAll()
 
                 withClue("The queue must be empty after the final try") {
-                    val queuedJobs = backgroundJobs.listQueuedJobs().map { it.value }
+                    val queuedJobs = backgroundJobs.listQueuedJobs().map { it.resolve() }
                     queuedJobs.shouldBeEmpty()
                 }
 
                 withClue("The archive must contain one failed job") {
-                    val archivedJobs = backgroundJobs.listArchivedJobs().map { it.value }
+                    val archivedJobs = backgroundJobs.listArchivedJobs().map { it.resolve() }
                     archivedJobs.shouldHaveSize(1)
                     archivedJobs[0].results.shouldHaveSize(numFailures + 1)
                     archivedJobs[0].didFinallySucceed() shouldBe true
@@ -305,7 +305,7 @@ abstract class BackgroundJobsSpecBase : FreeSpec() {
                     runJobsAndWaitForAll()
 
                     withClue("The queue must have one element after attempt #${attempt + 1}") {
-                        val queuedJobs = backgroundJobs.listQueuedJobs().map { it.value }
+                        val queuedJobs = backgroundJobs.listQueuedJobs().map { it.resolve() }
                         queuedJobs.shouldHaveSize(1)
                         queuedJobs[0].results.shouldHaveSize(attempt + 1)
                     }
@@ -317,12 +317,12 @@ abstract class BackgroundJobsSpecBase : FreeSpec() {
                 runJobsAndWaitForAll()
 
                 withClue("The queue must be empty after the final try") {
-                    val queuedJobs = backgroundJobs.listQueuedJobs().map { it.value }
+                    val queuedJobs = backgroundJobs.listQueuedJobs().map { it.resolve() }
                     queuedJobs.shouldBeEmpty()
                 }
 
                 withClue("The archive must contain one failed job") {
-                    val archivedJobs = backgroundJobs.listArchivedJobs().map { it.value }
+                    val archivedJobs = backgroundJobs.listArchivedJobs().map { it.resolve() }
                     archivedJobs.shouldHaveSize(1)
                     archivedJobs[0].results.shouldHaveSize(maxTries)
                     archivedJobs[0].didFinallySucceed() shouldBe false

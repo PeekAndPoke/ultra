@@ -10,6 +10,7 @@ import io.peekandpoke.funktor.core.broker.convertIncomingParameters
 import io.peekandpoke.funktor.core.broker.handle
 import io.peekandpoke.funktor.rest.auth.AuthRule
 
+/** Dispatches to the correct handler based on the [ApiRoute] variant (plain, params, body, SSE). */
 fun <RESPONSE> Route.handle(route: ApiRoute<RESPONSE>) {
     when (route) {
         is ApiRoute.Plain<*> -> handlePlain(route)

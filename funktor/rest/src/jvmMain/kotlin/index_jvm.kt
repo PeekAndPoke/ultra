@@ -21,13 +21,19 @@ import io.peekandpoke.ultra.vault.Database
 import io.peekandpoke.ultra.vault.EntityCache
 import io.peekandpoke.ultra.vault.slumber.VaultSlumberModule
 
+/** Registers the Funktor REST module (codec, JWT) in the kontainer. */
 fun KontainerBuilder.funktorRest(
     config: AppConfig,
     builder: FunktorRestBuilder.() -> Unit = {},
 ) = module(Funktor_Rest, config, builder)
 
+/** Gets the [RestCodec] from the kontainer. */
 inline val KontainerAware.restCodec: RestCodec get() = kontainer.get()
+
+/** Gets the [RestCodec] from the kontainer. */
 inline val ApplicationCall.restCodec: RestCodec get() = kontainer.restCodec
+
+/** Gets the [RestCodec] from the kontainer. */
 inline val RoutingContext.restCodec: RestCodec get() = call.restCodec
 
 val Funktor_Rest = module { config: AppConfig, builder: FunktorRestBuilder.() -> Unit ->
@@ -66,6 +72,7 @@ val Funktor_Rest = module { config: AppConfig, builder: FunktorRestBuilder.() ->
     FunktorRestBuilder(kontainer = this, config = config).apply(builder)
 }
 
+/** DSL builder for configuring the REST module (JWT, etc.). */
 class FunktorRestBuilder internal constructor(
     private val kontainer: KontainerBuilder,
     val config: AppConfig,

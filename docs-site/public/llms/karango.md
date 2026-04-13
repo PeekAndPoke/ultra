@@ -140,7 +140,7 @@ kontainer {
 val stored = repo.insert(Person("Alice", 30, "alice@example.com"))
 // stored._id = "persons/abc123"
 // stored._key = "abc123"
-// stored.value = Person(name="Alice", age=30, ...)
+// stored() -> Person(name="Alice", age=30, ...)
 
 // Find by ID
 val found = repo.findById(stored._id)
@@ -194,7 +194,7 @@ data class Person(val name: String, val age: Int)
 // After inserting into ArangoDB:
 val stored: Stored<Person> = repo.insert(Person("Alice", 30))
 
-stored.value  // Person(name="Alice", age=30) — your data
+stored()      // Person(name="Alice", age=30) — your data
 stored._id    // "persons/abc123" — database ID
 stored._key   // "abc123" — document key
 stored._rev   // "_abc123def" — revision for optimistic locking
@@ -210,7 +210,7 @@ pattern:
 // Load -> modify -> save
 val person: Stored<Person> = repo.findById(id)!!
 
-person.value.name  // "Alice" -- access your data
+person().name  // "Alice" -- access your data
 person._id         // "persons/abc123" -- database metadata
 
 val updated = person.modify { it.copy(name = "Alice Smith") }
@@ -458,7 +458,7 @@ val stored: Stored<BlogPost> = repo.insert(post)
 
 println(stored._id)         // "blog_posts/abc123"
 println(stored._key)        // "abc123"
-println(stored.value.title) // "Hello World"
+println(stored().title) // "Hello World"
 
 // Insert with explicit key
 val stored2 = repo.insert("my-key", post)
@@ -518,7 +518,7 @@ repo.modifyById(stored._id) { post ->
 // condition receives Stored<T>, modify receives T
 repo.modifyByIdWhen(
     stored._id,
-    condition = { !it.value.published },
+    condition = { !it().published },
     modify = { it.copy(published = true) },
 )
 ```
@@ -565,13 +565,13 @@ cursor.fullCount  // total count (when using PAGE)
 cursor.toList()                                           // suspend
 
 // Iterate
-cursor.forEach { stored -> println(stored.value.title) }  // suspend
+cursor.forEach { stored -> println(stored().title) }  // suspend
 
 // Transform and filter (all suspend)
-cursor.map { it.value.title }
-cursor.filter { it.value.published }
+cursor.map { it().title }
+cursor.filter { it().published }
 cursor.firstOrNull()
-cursor.groupBy { it.value.author }
+cursor.groupBy { it().author }
 
 // Flow-based streaming
 cursor.asFlow().collect { ... }
@@ -590,7 +590,7 @@ val stored: Stored<BlogPost> = repo.findById(id)!!
 stored._id     // ArangoDB document ID: "blog_posts/abc123"
 stored._key    // Document key: "abc123"
 stored._rev    // Revision: "_abc123"
-stored.value   // The actual BlogPost data class
+stored()       // The actual BlogPost data class
 
 // Create a modified version
 val modified = stored.modify { it.copy(title = "New Title") }

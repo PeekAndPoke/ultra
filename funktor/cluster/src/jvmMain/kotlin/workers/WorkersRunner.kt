@@ -8,6 +8,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/** Lifecycle-aware runner that periodically ticks the [WorkersFacade] on a background coroutine. */
 class WorkersRunner(
     lifeCycleBuilder: AppLifeCycleBuilder,
     initialDelayMs: Long,

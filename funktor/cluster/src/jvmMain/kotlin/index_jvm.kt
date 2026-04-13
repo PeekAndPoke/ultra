@@ -55,16 +55,27 @@ import io.peekandpoke.ultra.kontainer.module
 import io.peekandpoke.ultra.vault.Database
 import io.peekandpoke.ultra.vault.hooks.TimestampedHook
 
+/** Registers the Funktor cluster module in the kontainer. */
 fun KontainerBuilder.funktorCluster(
     builder: FunktorClusterBuilder.() -> Unit = {},
 ) = module(Funktor_Cluster, builder)
 
+/** Gets the [FunktorClusterFacade] from the kontainer. */
 inline val KontainerAware.cluster: FunktorClusterFacade get() = kontainer.get()
+
+/** Gets the [FunktorClusterFacade] from the kontainer. */
 inline val ApplicationCall.cluster: FunktorClusterFacade get() = kontainer.cluster
+
+/** Gets the [FunktorClusterFacade] from the kontainer. */
 inline val RoutingContext.cluster: FunktorClusterFacade get() = call.cluster
 
+/** Gets the [Database] from the kontainer. */
 inline val KontainerAware.database: Database get() = kontainer.get(Database::class)
+
+/** Gets the [Database] from the kontainer. */
 inline val ApplicationCall.database: Database get() = kontainer.database
+
+/** Gets the [Database] from the kontainer. */
 inline val RoutingContext.database: Database get() = call.database
 
 /**
@@ -151,8 +162,10 @@ val Funktor_Cluster = module { builder: FunktorClusterBuilder.() -> Unit ->
     FunktorClusterBuilder(this).apply(builder)
 }
 
+/** DSL builder for configuring the Funktor cluster module (database backend, repo names, etc.). */
 class FunktorClusterBuilder internal constructor(private val kontainer: KontainerBuilder) {
 
+    /** Configures all cluster subsystems to use ArangoDB via Karango. */
     fun useKarango(
         globalLockRepoName: String = "system_global_locks",
         serverBeaconRepoName: String = "system_server_beacons",
@@ -264,6 +277,7 @@ class FunktorClusterBuilder internal constructor(private val kontainer: Kontaine
         }
     }
 
+    /** Configures all cluster subsystems to use MongoDB via Monko. */
     fun useMonko(
         globalLockRepoName: String = "system_global_locks",
         serverBeaconRepoName: String = "system_server_beacons",

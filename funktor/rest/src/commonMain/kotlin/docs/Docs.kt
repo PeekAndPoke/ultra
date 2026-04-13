@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.rest.docs
 
+/** Annotations for enriching API endpoint documentation. */
 annotation class Docs {
     annotation class Description(
         val description: String,

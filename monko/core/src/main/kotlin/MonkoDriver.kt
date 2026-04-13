@@ -195,7 +195,7 @@ class MonkoDriver(
 
     suspend fun <T : Any> replaceOne(collection: String, stored: Stored<T>): Stored<T> {
         @Suppress("UNCHECKED_CAST")
-        val slumbered = codec.slumber(stored.value) as Map<String, Any?>
+        val slumbered = codec.slumber(stored.resolve()) as Map<String, Any?>
 
         val bsonId = toBsonId(stored._key)
 

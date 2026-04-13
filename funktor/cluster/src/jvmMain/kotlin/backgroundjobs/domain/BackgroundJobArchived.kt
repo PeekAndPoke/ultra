@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.cluster.backgroundjobs.domain
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.vault.Vault
 
+/** A background job that has been executed and moved to the archive. */
 @Vault
 data class BackgroundJobArchived(
     val type: String,

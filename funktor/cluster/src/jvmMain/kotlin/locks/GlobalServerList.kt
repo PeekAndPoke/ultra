@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.cluster.locks
 
 import io.peekandpoke.funktor.cluster.locks.domain.ServerBeacon
 
+/** Tracks the list of alive and all known servers in the cluster, updated by [ServerBeaconCleanupWorker]. */
 class GlobalServerList {
 
     private var alive: List<ServerBeacon> = emptyList()

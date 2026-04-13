@@ -7,6 +7,7 @@ import io.peekandpoke.funktor.messaging.api.EmailResult
 import io.peekandpoke.funktor.messaging.api.SentMessageModel
 import io.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.storing
 
+/** Post-send hook that persists sent emails to [SentMessagesStorage] based on the [EmailStoring] policy. */
 class StoringEmailHook(
     private val repo: SentMessagesStorage,
 ) : EmailHooks.OnAfterSend {

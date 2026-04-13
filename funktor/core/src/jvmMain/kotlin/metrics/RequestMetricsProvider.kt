@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.core.metrics
 
 import kotlin.time.Duration
 
+/** Provides timing and detail-link information for the current HTTP request. */
 interface RequestMetricsProvider {
 
     fun getRequestDuration(): Duration

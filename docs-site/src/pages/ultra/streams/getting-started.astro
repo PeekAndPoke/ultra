@@ -50,7 +50,23 @@ println(counter())  // 2
 counter.reset()
 println(counter())  // 0`} lang="kotlin" theme="vitesse-dark" />
 
-<h2>3. Subscribe to changes</h2>
+    <p>For a stream that never changes — a constant value wrapped in a <code>Stream&lt;T&gt;</code> — use
+        <code>steady()</code>:</p>
+
+    <Code code={`import io.peekandpoke.ultra.streams.steady
+
+val pi = steady(3.14)
+
+println(pi())  // 3.14
+
+// Subscribers are called once with the value and never again
+pi.subscribeToStream { println(it) }  // prints "3.14"`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>Handy when an API wants a <code>Stream&lt;T&gt;</code> but you only have a plain value — no need to create a
+        <code>StreamSource</code> just to never update it.
+    </Aside>
+
+    <h2>3. Subscribe to changes</h2>
 
 <p>Subscribing immediately delivers the current value, then every subsequent change:</p>
 

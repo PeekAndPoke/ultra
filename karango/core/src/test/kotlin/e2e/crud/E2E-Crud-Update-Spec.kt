@@ -14,6 +14,7 @@ import io.peekandpoke.karango.testdomain.details
 import io.peekandpoke.karango.testdomain.middleName
 import io.peekandpoke.karango.testdomain.name
 import io.peekandpoke.karango.testdomain.testPersons
+import io.peekandpoke.ultra.vault.value
 
 @Suppress("ClassName")
 class `E2E-Crud-Update-Spec` : StringSpec({

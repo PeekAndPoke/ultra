@@ -5,6 +5,7 @@ import io.peekandpoke.ultra.log.LogLevel
 import io.peekandpoke.ultra.vault.Storable
 import io.peekandpoke.ultra.vault.Vault
 
+/** Vault-storable log entry for the Karango-backed logging backend. */
 @Vault
 data class KarangoLogEntry(
     val createdAt: Long,

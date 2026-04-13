@@ -31,7 +31,7 @@ class StoredAwaker(private val innerType: KType) : Awaker {
                 val value = context.awake(innerType, data)
 
                 return Stored(
-                    value = value,
+                    _value = value,
                     _id = id,
                     _key = key ?: id.ensureKey,
                     _rev = rev,

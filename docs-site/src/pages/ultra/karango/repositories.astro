@@ -41,7 +41,7 @@ val stored: Stored<BlogPost> = repo.insert(post)
 
 println(stored._id)         // "blog_posts/abc123"
 println(stored._key)        // "abc123"
-println(stored.value.title) // "Hello World"
+println(stored().title) // "Hello World"
 
 // Insert with explicit key
 val stored2 = repo.insert("my-key", post)`} lang="kotlin" theme="vitesse-dark"/>
@@ -97,7 +97,7 @@ repo.modifyById(stored._id) { post ->
 // condition receives Stored<T>, modify receives T
 repo.modifyByIdWhen(
     stored._id,
-    condition = { !it.value.published },
+    condition = { !it().published },
     modify = { it.copy(published = true) },
 )`} lang="kotlin" theme="vitesse-dark"/>
 
@@ -138,13 +138,13 @@ cursor.fullCount  // total count (when using PAGE)
 cursor.toList()                                      // suspend
 
 // Iterate
-cursor.forEach { stored -> println(stored.value.title) }  // suspend
+cursor.forEach { stored -> println(stored().title) }  // suspend
 
 // Transform and filter (all suspend)
-cursor.map { it.value.title }
-cursor.filter { it.value.published }
+cursor.map { it().title }
+cursor.filter { it().published }
 cursor.firstOrNull()
-cursor.groupBy { it.value.author }
+cursor.groupBy { it().author }
 
 // Flow-based streaming
 cursor.asFlow().collect { ... }`} lang="kotlin" theme="vitesse-dark"/>
@@ -162,7 +162,7 @@ cursor.asFlow().collect { ... }`} lang="kotlin" theme="vitesse-dark"/>
 stored._id     // ArangoDB document ID: "blog_posts/abc123"
 stored._key    // Document key: "abc123"
 stored._rev    // Revision: "_abc123"
-stored.value   // The actual BlogPost data class
+stored()       // The actual BlogPost data class
 
 // Create a modified version
 val modified = stored.modify { it.copy(title = "New Title") }

@@ -18,6 +18,7 @@ import io.peekandpoke.karango.e2e.name
 import io.peekandpoke.karango.e2e.withDetailedClue
 import io.peekandpoke.ultra.common.tuple
 import io.peekandpoke.ultra.reflection.TypeRef
+import io.peekandpoke.ultra.vault.first
 
 @Suppress("ClassName")
 class E2E_Func_APPEND_Spec : StringSpec({

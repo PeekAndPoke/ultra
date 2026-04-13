@@ -10,6 +10,7 @@ import io.peekandpoke.funktor.core.provideApp
 import io.peekandpoke.funktor.core.provideKontainer
 import io.peekandpoke.ultra.kontainer.Kontainer
 
+/** Encapsulates a running test application: the [App], its system [Kontainer], and the Ktor [TestApplication]. */
 class TestBed<C : AppConfig>(
     val app: App<C>,
     val kontainer: Kontainer,

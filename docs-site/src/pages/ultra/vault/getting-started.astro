@@ -43,7 +43,7 @@ val new: New<Article> = New(Article("Draft", "..."))
 val stored: Stored<Article> = repo.insert(Article("Hello", "World"))
 stored._id    // "articles/abc123"
 stored._key   // "abc123"
-stored.value  // Article(title="Hello", body="World")
+stored()      // Article(title="Hello", body="World")
 
 // A lazy reference — resolves on first access
 val ref: Ref<Article> = stored.asRef`} lang="kotlin" theme="vitesse-dark"/>
@@ -53,8 +53,8 @@ val ref: Ref<Article> = stored.asRef`} lang="kotlin" theme="vitesse-dark"/>
     <p>Use <code>modify</code> to create an updated copy that preserves database identity,
         or <code>transform</code> to change the value type entirely.</p>
 
-    <Code code={`// Access the value directly
-val article: Article = stored.value
+    <Code code={`// Access the value
+val article: Article = stored()
 
 // Create a modified copy — same _id, _key, _rev
 val updated: Stored<Article> = stored.modify { it.copy(title = "New Title") }
@@ -102,13 +102,13 @@ val cursor: Cursor<Stored<Article>> = repo.findAll()
 val all: List<Stored<Article>> = cursor.toList()
 
 // Transform
-val titles: List<String> = cursor.map { it.value.title }
+val titles: List<String> = cursor.map { it().title }
 
 // Filter
-val tagged: List<Stored<Article>> = cursor.filter { "kotlin" in it.value.tags }
+val tagged: List<Stored<Article>> = cursor.filter { "kotlin" in it().tags }
 
 // First match
-val first: Stored<Article>? = cursor.firstOrNull { it.value.title == "Hello" }`} lang="kotlin" theme="vitesse-dark"/>
+val first: Stored<Article>? = cursor.firstOrNull { it().title == "Hello" }`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>6. Choose your backend</h2>
 

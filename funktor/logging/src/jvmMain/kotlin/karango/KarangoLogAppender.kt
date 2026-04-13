@@ -5,6 +5,7 @@ import io.peekandpoke.ultra.log.LogAppender
 import io.peekandpoke.ultra.log.LogLevel
 import java.time.ZonedDateTime
 
+/** Log appender that persists entries to ArangoDB via [KarangoLogRepository]. */
 class KarangoLogAppender(
     repo: Lazy<KarangoLogRepository>,
     private val minLevel: LogLevel,

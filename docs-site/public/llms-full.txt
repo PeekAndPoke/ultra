@@ -4133,6 +4133,21 @@ counter.reset()
 println(counter())  // 0
 ```
 
+For a stream that never changes — a constant value wrapped in a `Stream<T>` — use `steady()`:
+
+```kotlin
+import io.peekandpoke.ultra.streams.steady
+
+val pi = steady(3.14)
+
+println(pi())  // 3.14
+
+// Subscribers are called once with the value and never again
+pi.subscribeToStream { println(it) }  // prints "3.14"
+```
+
+Handy when an API wants a `Stream<T>` but you only have a plain value — no need to create a `StreamSource` just to never update it.
+
 ## 3. Subscribe to changes
 
 Subscribing immediately delivers the current value, then every subsequent change:
@@ -4731,8 +4746,8 @@ repo.insert("alice-key", Person("Alice", 30))
 val stored: Stored<Person> = repo.findById("persons/abc123")!!
 
 // Access data
-stored.value.name  // "Alice"
-stored.value.age   // 30
+stored().name  // "Alice"
+stored().age   // 30
 
 // Access metadata
 stored._id         // "persons/abc123"
@@ -4769,12 +4784,12 @@ data class Comment(
 )
 
 val comment: Stored<Comment> = repo.findById(commentId)!!
-comment.value.author._id              // "persons/abc123" — available immediately
+comment().author._id              // "persons/abc123" — available immediately
 
 // Resolve the referenced entity (suspend)
-val person: Person = comment.value.author.resolve()
+val person: Person = comment().author.resolve()
 // Or use invoke shorthand
-val person2: Person = comment.value.author()
+val person2: Person = comment().author()
 ```
 
 Creating refs explicitly:
@@ -4841,11 +4856,11 @@ result set upfront:
 ```kotlin
 val cursor = repo.findAll()
 
-cursor.map { it.value.name }
-cursor.filter { it.value.published }
+cursor.map { it().name }
+cursor.filter { it().published }
 cursor.firstOrNull()
-cursor.groupBy { it.value.author }
-cursor.forEach { stored -> println(stored.value.title) }
+cursor.groupBy { it().author }
+cursor.forEach { stored -> println(stored().title) }
 ```
 
 All cursor convenience methods are `suspend` functions. Results are deserialized lazily.
@@ -5094,7 +5109,7 @@ kontainer {
 val stored = repo.insert(Person("Alice", 30, "alice@example.com"))
 // stored._id = "persons/abc123"
 // stored._key = "abc123"
-// stored.value = Person(name="Alice", age=30, ...)
+// stored() -> Person(name="Alice", age=30, ...)
 
 // Find by ID
 val found = repo.findById(stored._id)
@@ -5146,7 +5161,7 @@ data class Person(val name: String, val age: Int)
 // After inserting into ArangoDB:
 val stored: Stored<Person> = repo.insert(Person("Alice", 30))
 
-stored.value  // Person(name="Alice", age=30) — your data
+stored()      // Person(name="Alice", age=30) — your data
 stored._id    // "persons/abc123" — database ID
 stored._key   // "abc123" — document key
 stored._rev   // "_abc123def" — revision for optimistic locking
@@ -5162,7 +5177,7 @@ pattern:
 // Load -> modify -> save
 val person: Stored<Person> = repo.findById(id)!!
 
-person.value.name  // "Alice" -- access your data
+person().name  // "Alice" -- access your data
 person._id         // "persons/abc123" -- database metadata
 
 val updated = person.modify { it.copy(name = "Alice Smith") }
@@ -5408,7 +5423,7 @@ val stored: Stored<BlogPost> = repo.insert(post)
 
 println(stored._id)         // "blog_posts/abc123"
 println(stored._key)        // "abc123"
-println(stored.value.title) // "Hello World"
+println(stored().title) // "Hello World"
 
 // Insert with explicit key
 val stored2 = repo.insert("my-key", post)
@@ -5468,7 +5483,7 @@ repo.modifyById(stored._id) { post ->
 // condition receives Stored<T>, modify receives T
 repo.modifyByIdWhen(
     stored._id,
-    condition = { !it.value.published },
+    condition = { !it().published },
     modify = { it.copy(published = true) },
 )
 ```
@@ -5512,8 +5527,8 @@ cursor.fullCount  // total count (when using PAGE)
 
 // Iterate
 cursor.toList()
-cursor.forEach { stored -> println(stored.value.title) }
-cursor.map { it.value.title }
+cursor.forEach { stored -> println(stored().title) }
+cursor.map { it().title }
 ```
 
 Results are deserialized lazily. `Stored<T>` entities are automatically cached in the `EntityCache` for deduplication.
@@ -5528,7 +5543,7 @@ val stored: Stored<BlogPost> = repo.findById(id)!!
 stored._id     // ArangoDB document ID: "blog_posts/abc123"
 stored._key    // Document key: "abc123"
 stored._rev    // Revision: "_abc123"
-stored.value   // The actual BlogPost data class
+stored()       // The actual BlogPost data class
 
 // Create a modified version
 val modified = stored.map { it.copy(title = "New Title") }
@@ -6267,7 +6282,7 @@ val config = MongoDbConfig(
 val stored = repo.insert("person-1", Person(name = "Alice", age = 30, email = "alice@example.com"))
 // stored._id   -> "persons/person-1"
 // stored._key  -> "person-1"
-// stored.value -> Person(name="Alice", ...)
+// stored() -> Person(name="Alice", ...)
 
 // Find by ID
 val found = repo.findById("persons/person-1")
@@ -6340,7 +6355,7 @@ val stored: Stored<Person> = repo.insert("key-1", Person("Alice", 30, "alice@exa
 // Access metadata
 stored._id      // "persons/key-1"
 stored._key     // "key-1"
-stored.value    // Person(name="Alice", age=30, ...)
+stored()        // Person(name="Alice", age=30, ...)
 
 // Modify (creates new Stored with same metadata)
 val updated = stored.modify { copy(age = 31) }

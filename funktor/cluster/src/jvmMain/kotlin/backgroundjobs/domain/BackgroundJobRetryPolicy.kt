@@ -6,6 +6,7 @@ import kotlinx.serialization.SerialName
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
+/** Defines how and whether a failed background job should be retried. */
 sealed class BackgroundJobRetryPolicy {
 
     /**
@@ -13,13 +14,15 @@ sealed class BackgroundJobRetryPolicy {
      *
      * If the method returns 'null' then the Job will be archived.
      */
-    open fun scheduleRetry(job: Stored<BackgroundJobQueued>, now: MpInstant): MpInstant? {
+    open suspend fun scheduleRetry(job: Stored<BackgroundJobQueued>, now: MpInstant): MpInstant? {
         return null
     }
 
+    /** No retries; the job is archived on first failure. */
     @SerialName("none")
     data object None : BackgroundJobRetryPolicy()
 
+    /** Retries up to [maxTries] times with a fixed delay between attempts. */
     @SerialName("linear-delay")
     data class LinearDelay(val delayInMs: Long = 1_000, val maxTries: Int = 10) : BackgroundJobRetryPolicy() {
 
@@ -30,9 +33,9 @@ sealed class BackgroundJobRetryPolicy {
             )
         }
 
-        override fun scheduleRetry(job: Stored<BackgroundJobQueued>, now: MpInstant): MpInstant? {
+        override suspend fun scheduleRetry(job: Stored<BackgroundJobQueued>, now: MpInstant): MpInstant? {
 
-            if (job.value.results.size >= maxTries) {
+            if (job.resolve().results.size >= maxTries) {
                 return null
             }
 

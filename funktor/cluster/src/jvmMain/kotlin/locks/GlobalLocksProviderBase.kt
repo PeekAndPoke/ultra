@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
 import kotlin.time.Duration
 
+/** Base class for [GlobalLocksProvider] implementations that bridges [acquire] to a [FlowCollector]-based [doAcquire]. */
 abstract class GlobalLocksProviderBase : GlobalLocksProvider {
 
     @Throws(LocksException.Timeout::class, LocksException.Execution::class)
