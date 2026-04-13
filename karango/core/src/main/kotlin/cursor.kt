@@ -9,8 +9,11 @@ import io.peekandpoke.ultra.vault.EntityCache
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.profiling.QueryProfiler
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.Closeable
 
 /**
@@ -20,9 +23,14 @@ import java.io.Closeable
  * automatically added to the [EntityCache] on deserialization.
  *
  * Chunk fetching is fully suspend-based — no runBlocking.
+ *
+ * The cursor supports re-iteration: the first [asFlow] collection drains the server-side
+ * ArangoDB cursor and buffers deserialized items; subsequent collections replay from the
+ * buffer. A server-side ArangoDB cursor can only be consumed once, so without this buffering,
+ * re-iteration would fail with an ArangoDBException ("cursor not found").
  */
 class KarangoCursor<T>(
-    private val itemFlow: Flow<T>,
+    private val streamSource: Flow<T>,
     override val query: AqlTypedQuery<T>,
     override val entityCache: EntityCache,
     override val count: Long,
@@ -65,7 +73,7 @@ class KarangoCursor<T>(
             }
 
             return KarangoCursor(
-                itemFlow = itemFlow,
+                streamSource = itemFlow,
                 query = query,
                 entityCache = codec.entityCache,
                 count = count,
@@ -76,7 +84,24 @@ class KarangoCursor<T>(
         }
     }
 
-    override fun asFlow(): Flow<T> = itemFlow
+    private val buffer = mutableListOf<T>()
+
+    @Volatile
+    private var loaded = false
+
+    private val loadMutex = Mutex()
+
+    override fun asFlow(): Flow<T> = flow {
+        if (!loaded) {
+            loadMutex.withLock {
+                if (!loaded) {
+                    streamSource.collect { buffer.add(it) }
+                    loaded = true
+                }
+            }
+        }
+        buffer.asFlow().collect { emit(it) }
+    }
 
     override val timeMs get() = profiler.totalNs / 1_000_000.0
 
