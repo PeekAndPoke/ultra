@@ -21,3 +21,6 @@ datasources.xml
 
 # credential
 publishing.gradle.properties
+
+# Claude Code harness runtime files
+.claude/*.lock

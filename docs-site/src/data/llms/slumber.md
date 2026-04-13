@@ -95,7 +95,7 @@ In your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("io.peekandpoke.ultra:slumber:0.102.0")
+    implementation("io.peekandpoke.ultra:slumber:{{ultraVersion}}")
 }
 ```
 

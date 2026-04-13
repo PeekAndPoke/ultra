@@ -12,9 +12,9 @@ and funktor-v1-roadmap plans. All open work for v1 lives here.
 
 | Gate                           | Status              | What's left                                                                  |
 |--------------------------------|---------------------|------------------------------------------------------------------------------|
-| G1 — Zero CRITICAL/HIGH issues | 🟡 Wave 1 DONE      | 5 HIGH items still open in Funktor (see "Open Funktor Issues" below)         |
+| G1 — Zero CRITICAL/HIGH issues | 🟡 Wave 1 DONE      | 3 HIGH items still open in Funktor (see "Open Funktor Issues" below)         |
 | G2 — Public API tested (≥25%)  | 🟡 IN PROGRESS      | vault/html/semanticui ✅ hardened (2026-04-07); Funktor modules still thin    |
-| G3 — TODOs resolved or tracked | 🟡 IN PROGRESS      | ~15 in Funktor, 5 reflection, 3 vault                                        |
+| G3 — TODOs resolved or tracked | 🟡 IN PROGRESS      | ~15 in Funktor, 5 reflection, 0 vault                                        |
 | G4 — KDoc 90%+ public API      | 🟡 IN PROGRESS      | cache ✅, Funktor ✅ (~85% after 2026-04-13 pass); inspect/staticweb remaining |
 | G5 — Clean build, no warnings  | ✅ ASSUMED PASSING   | Verify at release gate                                                       |
 | G6 — README per library        | ✅ DONE              |                                                                              |
@@ -49,6 +49,13 @@ tooling.
 **Storable API consistency (DONE 2026-04-13):** `modifyAsync` and `transformAsync` lifted to
 `Storable` sealed class; implemented on all three subclasses (Stored/Ref/New) with correct
 eager/lazy semantics. 17 new tests in StorableSpec cover cast + modify + transform variants.
+
+**Vault API hardening (DONE 2026-04-13):** `Database` API migrated from `Class<T>` to `KClass<T>`
+(breaking: `hasRepositoryStoring`, `getRepositoryStoring`, `getRepositoryStoringOrNull`,
+`getRepository(cls)`). Fixed latent `SharedRepoClassLookup` NPE on unknown types (sentinel pattern
+caches negative lookups). Closed last vault TODO (`DatabaseGraphBuilder`). Added ~23 tests
+(StoredSlumberer, StoredAwaker, DatabaseGraphBuilder, Database negative paths,
+SharedRepoClassLookup null-provider). Docs-site updated.
 
 **Released:** 0.105.0 with Kraft lifecycle hooks.
 
@@ -152,13 +159,14 @@ Raise Funktor from ~11% to 25%+ test ratio. Focus on the modules with the thinne
 
 ### HIGH severity (must resolve for G1)
 
-1. **WorkerTracker.lockWorker** — job reference set after completion, cancellation broken.
-   `funktor/cluster/.../workers/services/WorkerTracker.kt:98-108`.
-   Fix: `CoroutineScope(context).async { ... }` and set job reference before awaiting.
+1. ~~**WorkerTracker.lockWorker** — job reference set after completion, cancellation broken.~~
+   **FIXED 2026-04-13** — swapped `coroutineScope { async }` for `CoroutineScope(context).async(LAZY)`;
+   reference set under `sync`, then `invokeOnCompletion`, then `job.start()`. Regression test in
+   `WorkerTrackerSpec`.
 
-2. **WorkerTracker.lastRuns** — not synchronized, data races on `Dispatchers.IO`.
-   `funktor/cluster/.../workers/services/WorkerTracker.kt:119-129`.
-   Fix: `sync {}` blocks or `ConcurrentHashMap`.
+2. ~~**WorkerTracker.lastRuns** — not synchronized, data races on `Dispatchers.IO`.~~
+   **FIXED 2026-04-13** — both accessors now use the existing `sync { }` helper. Regression test
+   in `WorkerTrackerSpec` (1000 concurrent `put` calls).
 
 3. **`runBlocking` in Ktor lifecycle event handlers** — nested blocking risk, potential deadlock.
    `funktor/core/src/jvmMain/kotlin/lifecycle/AppLifeCycleBuilder.kt:37-122`.

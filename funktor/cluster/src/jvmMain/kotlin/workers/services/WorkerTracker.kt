@@ -3,9 +3,10 @@ package io.peekandpoke.funktor.cluster.workers.services
 import io.peekandpoke.funktor.cluster.workers.Worker
 import io.peekandpoke.funktor.cluster.workers.WorkersFacade
 import io.peekandpoke.ultra.datetime.MpInstant
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.CoroutineContext
 
@@ -95,15 +96,16 @@ object WorkerTracker {
             }
         }
 
-        val job = coroutineScope {
-            async(context) {
-                block()
-            }
+        val job = CoroutineScope(context).async(start = CoroutineStart.LAZY) {
+            block()
         }
 
-        runningWorkers[workerId]?.job = job
+        sync {
+            runningWorkers[workerId]?.job = job
+        }
 
         job.invokeOnCompletion { release() }
+        job.start()
 
         return WorkersFacade.RunningWorker(worker, job)
     }
@@ -117,7 +119,9 @@ object WorkerTracker {
     }
 
     internal fun putLastRunInstant(worker: Worker, instant: MpInstant) {
-        lastRuns[worker.id] = instant
+        sync {
+            lastRuns[worker.id] = instant
+        }
     }
 
     internal fun getLastRunInstant(worker: Worker): MpInstant {
@@ -125,7 +129,9 @@ object WorkerTracker {
     }
 
     private fun getLastRunInstant(workerId: String): MpInstant {
-        return lastRuns[workerId] ?: MpInstant.Epoch
+        return sync {
+            lastRuns[workerId] ?: MpInstant.Epoch
+        }
     }
 
     private fun <T> sync(block: () -> T): T {

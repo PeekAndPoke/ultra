@@ -129,10 +129,10 @@ kotlin {
         jsMain {
             dependencies {
                 // Kraft core
-                implementation("io.peekandpoke.kraft:core:0.102.0")
+                implementation("io.peekandpoke.kraft:core:{{kraftVersion}}")
 
                 // SemanticUI integration (optional but recommended)
-                implementation("io.peekandpoke.kraft:semanticui:0.102.0")
+                implementation("io.peekandpoke.kraft:semanticui:{{kraftVersion}}")
             }
         }
     }
@@ -2338,8 +2338,8 @@ In your `build.gradle.kts`:
 ```kotlin
 jsMain {
     dependencies {
-        implementation("io.peekandpoke.kraft:addons-chartjs:0.102.0")
-        implementation("io.peekandpoke.kraft:addons-prismjs:0.102.0")
+        implementation("io.peekandpoke.kraft:addons-chartjs:{{kraftVersion}}")
+        implementation("io.peekandpoke.kraft:addons-prismjs:{{kraftVersion}}")
         // ... add the ones you need
     }
 }

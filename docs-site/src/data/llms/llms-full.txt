@@ -2,7 +2,7 @@
 
 > A Kotlin multiplatform monorepo. Six libraries, one ecosystem.
 > Published on Maven Central as `io.peekandpoke.ultra`.
-> Version: 0.102.0 | Kotlin: 2.3.10
+> Version: {{ultraVersion}} | Kotlin: 2.3.10
 > GitHub: https://github.com/PeekAndPoke/ultra
 > Maven Central: https://central.sonatype.com/namespace/io.peekandpoke.ultra
 
@@ -197,10 +197,10 @@ kotlin {
         jsMain {
             dependencies {
                 // Kraft core
-                implementation("io.peekandpoke.kraft:core:0.102.0")
+                implementation("io.peekandpoke.kraft:core:{{kraftVersion}}")
 
                 // SemanticUI integration (optional but recommended)
-                implementation("io.peekandpoke.kraft:semanticui:0.102.0")
+                implementation("io.peekandpoke.kraft:semanticui:{{kraftVersion}}")
             }
         }
     }
@@ -1764,8 +1764,8 @@ In your `build.gradle.kts`:
 ```kotlin
 jsMain {
     dependencies {
-        implementation("io.peekandpoke.kraft:addons-chartjs:0.102.0")
-        implementation("io.peekandpoke.kraft:addons-prismjs:0.102.0")
+        implementation("io.peekandpoke.kraft:addons-chartjs:{{kraftVersion}}")
+        implementation("io.peekandpoke.kraft:addons-prismjs:{{kraftVersion}}")
         // ... add the ones you need
     }
 }
@@ -2104,7 +2104,7 @@ In your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("io.peekandpoke.ultra:kontainer:0.102.0")
+    implementation("io.peekandpoke.ultra:kontainer:{{ultraVersion}}")
 }
 ```
 
@@ -3109,7 +3109,7 @@ In your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("io.peekandpoke.ultra:slumber:0.102.0")
+    implementation("io.peekandpoke.ultra:slumber:{{ultraVersion}}")
 }
 ```
 
@@ -4100,7 +4100,7 @@ In your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("io.peekandpoke.ultra:streams:0.102.0")
+    implementation("io.peekandpoke.ultra:streams:{{ultraVersion}}")
 }
 ```
 
@@ -5060,8 +5060,8 @@ plugins {
 }
 
 dependencies {
-    implementation("io.peekandpoke.ultra:karango-core:0.102.0")
-    ksp("io.peekandpoke.ultra:karango-ksp:0.102.0")
+    implementation("io.peekandpoke.ultra:karango-core:{{ultraVersion}}")
+    ksp("io.peekandpoke.ultra:karango-ksp:{{ultraVersion}}")
 }
 ```
 
@@ -6243,8 +6243,8 @@ plugins {
 }
 
 dependencies {
-    implementation("io.peekandpoke.ultra:monko:0.102.0")
-    ksp("io.peekandpoke.ultra:monko:0.102.0")  // KSP processor for type-safe property paths
+    implementation("io.peekandpoke.ultra:monko:{{ultraVersion}}")
+    ksp("io.peekandpoke.ultra:monko:{{ultraVersion}}")  // KSP processor for type-safe property paths
 }
 ```
 

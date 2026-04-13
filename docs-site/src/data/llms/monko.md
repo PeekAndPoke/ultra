@@ -81,8 +81,8 @@ plugins {
 }
 
 dependencies {
-    implementation("io.peekandpoke.ultra:monko:0.102.0")
-    ksp("io.peekandpoke.ultra:monko:0.102.0")  // KSP processor for type-safe property paths
+    implementation("io.peekandpoke.ultra:monko:{{ultraVersion}}")
+    ksp("io.peekandpoke.ultra:monko:{{ultraVersion}}")  // KSP processor for type-safe property paths
 }
 ```
 

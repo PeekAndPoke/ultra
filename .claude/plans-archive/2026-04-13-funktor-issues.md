@@ -19,7 +19,7 @@
 **Top priorities (remaining):**
 
 1. ~~VaultScope `runBlocking`~~ **FIXED (Wave 1, 2026-03-31)**
-2. WorkerTracker cancellation broken — running workers can't be stopped (HIGH coroutine)
+2. ~~WorkerTracker cancellation broken — running workers can't be stopped~~ **FIXED (2026-04-13)**
 3. ~~`setPassword` does not verify caller authorization~~ **FIXED (2026-03-31)**
 4. ~~Sign-up race condition — duplicate users possible~~ **FIXED (2026-03-31)**
 
@@ -105,22 +105,26 @@
 - **Fix:** Ensure inner `runBlocking` uses distinct dispatchers (`Dispatchers.IO`). Consider migrating
   to suspending lifecycle events if Ktor supports them.
 
-### HIGH: WorkerTracker.lastRuns not synchronized
+### HIGH: WorkerTracker.lastRuns not synchronized — ✅ FIXED 2026-04-13
 
 - **File:** `funktor/cluster/src/jvmMain/kotlin/workers/services/WorkerTracker.kt` (lines 119-129)
 - **Impact:** `putLastRunInstant` and `getLastRunInstant` read/write `lastRuns` (a `HashMap`) without
   synchronization, while other methods (`clear`, `clearFutureRuns`, `lockWorker`) do synchronize.
   Workers run concurrently on `Dispatchers.IO`, causing data races.
-- **Fix:** Wrap in `sync {}` blocks, or replace `lastRuns` with `ConcurrentHashMap`.
+- **Fix applied:** Wrapped both accessor methods in the existing `sync { }` helper. Regression
+  test added in `WorkerTrackerSpec` (1000 concurrent `put` calls on `Dispatchers.Default`).
 
-### HIGH: WorkerTracker.lockWorker — job reference set after completion, cancellation broken
+### HIGH: WorkerTracker.lockWorker — job reference set after completion, cancellation broken — ✅ FIXED 2026-04-13
 
 - **File:** `funktor/cluster/src/jvmMain/kotlin/workers/services/WorkerTracker.kt` (lines 98-108)
 - **Impact:** `coroutineScope { async(context) { block() } }` waits for completion, so
   `runningWorkers[workerId]?.job = job` only executes AFTER the block finishes. During execution,
   `job` is always `null`. `clear()` calls `job?.cancel()` which always hits `null` — running workers
   **cannot be cancelled during shutdown**.
-- **Fix:** Use `CoroutineScope(context).async { ... }` and set the job reference before awaiting.
+- **Fix applied:** Replaced `coroutineScope { async(context) { ... } }` with
+  `CoroutineScope(context).async(start = LAZY) { ... }`. Reference assignment (under `sync`),
+  `invokeOnCompletion`, and `job.start()` now happen in that order before the caller sees the
+  `RunningWorker`. Regression test added in `WorkerTrackerSpec` (`clear()` cancels a 60 s delay).
 
 ### MEDIUM: WorkersRunner.state — non-volatile shared variable
 

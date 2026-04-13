@@ -111,7 +111,7 @@ In your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("io.peekandpoke.ultra:kontainer:0.102.0")
+    implementation("io.peekandpoke.ultra:kontainer:{{ultraVersion}}")
 }
 ```
 

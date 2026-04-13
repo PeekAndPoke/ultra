@@ -1,7 +1,7 @@
 # PeekAndPoke Ultra
 
 > A suite of open-source Kotlin libraries for building modern applications.
-> Published on Maven Central as `io.peekandpoke.ultra`. Version: 0.104.2. Kotlin: 2.3.10.
+> Published on Maven Central as `io.peekandpoke.ultra`. Version: {{ultraVersion}}. Kotlin: 2.3.10.
 
 - Website: https://peekandpoke.io
 - Source: https://github.com/PeekAndPoke/ultra
