@@ -3,9 +3,11 @@ package io.peekandpoke.funktor.cluster.depot.repos
 import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotItemModel
 import kotlinx.serialization.SerialName
 
+/** Creates [DepotPutFileOptions] via a builder DSL. */
 fun depotPutFileOptions(block: DepotPutFileOptions.Builder.() -> Unit = {}) =
     DepotPutFileOptions.Builder().apply(block).build()
 
+/** Options for writing a file to a depot repository (metadata, optional encryption). */
 data class DepotPutFileOptions(
     val meta: DepotItemModel.Meta,
     val encryption: Encryption?,
@@ -14,6 +16,7 @@ data class DepotPutFileOptions(
         val default: DepotPutFileOptions = depotPutFileOptions()
     }
 
+    /** Encryption algorithm to apply to the stored file. */
     sealed class Encryption {
 
         abstract val algoName: String

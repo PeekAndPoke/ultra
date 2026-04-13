@@ -20,6 +20,7 @@ import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
+import io.peekandpoke.ultra.vault.map
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 
@@ -62,11 +63,12 @@ class ClusterShowcaseApi : ApiRoutes("showcase-cluster") {
             val jobs = cluster.backgroundJobs.listQueuedJobs(page = 1, epp = 20)
 
             val result = jobs.map {
+                val v = it.resolve()
                 JobInfo(
                     id = it._key,
-                    jobType = it.value.type,
+                    jobType = v.type,
                     status = "queued",
-                    createdAt = it.value.createdAt?.toIsoString() ?: "?",
+                    createdAt = v.createdAt?.toIsoString() ?: "?",
                 )
             }
 
@@ -85,11 +87,12 @@ class ClusterShowcaseApi : ApiRoutes("showcase-cluster") {
             val jobs = cluster.backgroundJobs.listArchivedJobs(page = 1, epp = 20)
 
             val result = jobs.map {
+                val v = it.resolve()
                 JobInfo(
                     id = it._key,
-                    jobType = it.value.type,
-                    status = if (it.value.didFinallySucceed()) "succeeded" else "failed",
-                    createdAt = it.value.createdAt?.toIsoString() ?: "?",
+                    jobType = v.type,
+                    status = if (v.didFinallySucceed()) "succeeded" else "failed",
+                    createdAt = v.createdAt?.toIsoString() ?: "?",
                 )
             }
 
@@ -178,12 +181,13 @@ class ClusterShowcaseApi : ApiRoutes("showcase-cluster") {
             val entries = cluster.storage.randomData.list(search = "", page = 1, epp = 20)
 
             val result = entries.map {
+                val v = it.resolve()
                 StorageEntry(
                     id = it._key,
-                    category = it.value.category,
-                    dataId = it.value.dataId,
-                    createdAt = it.value.createdAt.toIsoString(),
-                    updatedAt = it.value.updatedAt.toIsoString(),
+                    category = v.category,
+                    dataId = v.dataId,
+                    createdAt = v.createdAt.toIsoString(),
+                    updatedAt = v.updatedAt.toIsoString(),
                 )
             }
 

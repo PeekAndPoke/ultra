@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.core.websocket
 import com.benasher44.uuid.uuid4
 import kotlinx.serialization.Serializable
 
+/** A typed message sent from the websocket client to the server. */
 @Serializable
 data class WsClientMessage<T>(
     val uuid: String? = null,

@@ -8,6 +8,7 @@ import io.peekandpoke.karango.e2e.database
 import io.peekandpoke.karango.testdomain.TestPerson
 import io.peekandpoke.karango.testdomain.testPersons
 import io.peekandpoke.ultra.vault.New
+import io.peekandpoke.ultra.vault.value
 
 @Suppress("ClassName")
 class `E2E-Crud-BatchInsert-Spec` : StringSpec({

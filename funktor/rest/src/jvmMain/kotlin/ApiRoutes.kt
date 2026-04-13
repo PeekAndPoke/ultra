@@ -13,15 +13,19 @@ import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.TypedApiEndpoint
 import kotlin.reflect.KClass
 
+/** DSL marker for route definition scope. */
 @DslMarker
 annotation class RestDslMarkerRoute
 
+/** DSL marker for route configuration scope. */
 @DslMarker
 annotation class RestDslMarkerConfig
 
+/** DSL marker for auth rule builder scope. */
 @DslMarker
 annotation class RestAuthRuleMarker
 
+/** DSL marker for security rule builder scope. */
 @DslMarker
 annotation class RestSecurityRuleMarker
 

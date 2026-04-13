@@ -1,0 +1,57 @@
+# PeekAndPoke Ultra
+
+> A suite of open-source Kotlin libraries for building modern applications.
+> Published on Maven Central as `io.peekandpoke.ultra`. Version: {{ultraVersion}}. Kotlin: 2.3.10.
+
+- Website: https://peekandpoke.io
+- Source: https://github.com/PeekAndPoke/ultra
+- Maven Central: https://central.sonatype.com/namespace/io.peekandpoke.ultra
+
+## General Tools
+
+- [Kontainer](https://peekandpoke.io/llms/kontainer.md): Lightweight DI container — per-request scoping, singleton/dynamic/prototype services, modules
+- [Slumber](https://peekandpoke.io/llms/slumber.md): Kotlin-first serialization — nullable-aware, sealed class polymorphism, two-pass error handling
+- [Mutator](https://peekandpoke.io/llms/mutator.md): KSP-generated code for mutating nested immutable data structures — @Mutable(deep) controls transitive discovery, @NotMutable excludes types, plugin-extensible
+- [Streams](https://peekandpoke.io/llms/streams.md): Reactive streams — always-has-a-value, composable operators, lazy subscriptions (JVM, JS, Native)
+- [Datetime](https://peekandpoke.io/llms/datetime.md): Multiplatform date/time — guard-rail type system, 600+ timezones, DST-aware arithmetic, testable Kronos clock (JVM, JS, Native)
+- [Cache](https://peekandpoke.io/llms/cache.md): In-memory caching — TTL/LRU/memory-aware eviction, coroutine-based, multiplatform (JVM, JS, Native)
+- [Maths](https://peekandpoke.io/ultra/maths/): Easing functions & distributions — 28 easing curves, 4 bucketed distributions, time-based animation (JVM, JS, Native)
+  - [Getting Started](https://peekandpoke.io/ultra/maths/getting-started): Dependency, basic usage, easing, distributions
+  - [Easing Functions](https://peekandpoke.io/ultra/maths/easing): 28 functions (In/Out/InOut), range binding, timed easing
+  - [Distributions](https://peekandpoke.io/ultra/maths/distributions): Uniform, normal, exponential, triangular, combinators
+
+## Kraft
+
+- [Kraft](https://peekandpoke.io/llms/kraft.md): Build SPAs in pure Kotlin — components, reactive state, routing, forms, SemanticUI DSL, 12 lazy-loaded addons (AddonRegistry)
+
+## Funktor
+
+- [Funktor](https://peekandpoke.io/llms/funktor.md): Modular server framework on Ktor — auth, REST, clustering, messaging, insights
+  - [Core](https://peekandpoke.io/ultra/funktor/core): App lifecycle, routing, CLI, fixtures, configuration, repair
+  - [REST](https://peekandpoke.io/ultra/funktor/rest): Typed API routes, authorization DSL (public, authenticated, role/group/permission), SSE, endpoint docs
+  - [Auth](https://peekandpoke.io/ultra/funktor/auth): Multi-realm auth, email/password, Google SSO, GitHub SSO, JWT, token refresh, API access matrix (ApiAcl), session lifecycle with auto-refresh
+  - [Cluster](https://peekandpoke.io/ultra/funktor/cluster): Background jobs, file depot, locks, workers, key-value storage
+  - [Messaging](https://peekandpoke.io/ultra/funktor/messaging): Email sending, SendGrid, AWS SES, sent message storage
+  - [Insights](https://peekandpoke.io/ultra/funktor/insights): Request profiling, performance metrics, debug GUI
+  - [Logging](https://peekandpoke.io/ultra/funktor/logging): Structured logging with DB persistence and web UI
+  - [Static Web](https://peekandpoke.io/ultra/funktor/staticweb): Templates, flash sessions, web resources, cache busting
+  - [Testing](https://peekandpoke.io/ultra/funktor/testing): Test harness with fixtures, service injection, route testing
+- [Vault](https://peekandpoke.io/llms/vault.md): Shared DBAL foundation — Storable hierarchy, Flow cursors, repositories, entity cache
+  - [Storable Hierarchy](https://peekandpoke.io/ultra/vault/storable): Storable, Stored, New, Ref — entity wrappers with metadata
+  - [Cursors](https://peekandpoke.io/ultra/vault/cursor): Flow-based cursors with 29 suspend convenience extensions
+  - [Repositories](https://peekandpoke.io/ultra/vault/repository): Repository interface — CRUD, hooks, entity caching
+- [Karango](https://peekandpoke.io/llms/karango.md): Type-safe ArangoDB — Kotlin query DSL, KSP codegen, repository pattern
+  - [Entity Model](https://peekandpoke.io/ultra/karango/entity-model): Storable, Stored, New, Ref with ArangoDB-specific examples
+  - [Query DSL](https://peekandpoke.io/ultra/karango/query-dsl): Type-safe AQL query building
+  - [Repositories](https://peekandpoke.io/ultra/karango/repositories): ArangoDB repository setup, CRUD, custom queries
+  - [Indexes & Hooks](https://peekandpoke.io/ultra/karango/indexes-and-hooks): Persistent, hash, fulltext indexes + lifecycle hooks
+  - [Advanced Queries](https://peekandpoke.io/ultra/karango/advanced-queries): Joins, subqueries, graph traversals, aggregations
+- [Monko](https://peekandpoke.io/llms/monko.md): Type-safe MongoDB — query DSL, repositories, indexes
+  - [Entity Model](https://peekandpoke.io/ultra/monko/entity-model): Stored, New, Ref wrappers (shared with Vault)
+  - [Query DSL](https://peekandpoke.io/ultra/monko/query-dsl): Type-safe MongoDB filters, sorts, updates
+  - [Repositories](https://peekandpoke.io/ultra/monko/repositories): CRUD, cursors, custom queries
+  - [Indexes & Hooks](https://peekandpoke.io/ultra/monko/indexes-and-hooks): Persistent, unique, TTL indexes + lifecycle hooks
+
+## Optional: Complete docs in one file
+
+- [llms-full.txt](https://peekandpoke.io/llms-full.txt): All documentation in a single file

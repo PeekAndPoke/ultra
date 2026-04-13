@@ -1,0 +1,208 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {vaultSidebar} from '../../../data/vault-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Cursors" sidebar={vaultSidebar}
+            description="Flow-based cursors with 29 suspend convenience extensions">
+
+    <h1>Cursors</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        <code>Cursor&lt;T&gt;</code> is the result type for queries. It wraps a Kotlin <code>Flow&lt;T&gt;</code>
+        and provides 29 suspend convenience extensions that mirror stdlib collection operations.
+    </p>
+
+    <h2>Flow-based iteration</h2>
+
+    <p>At its core, a Cursor is a <code>Flow&lt;T&gt;</code>. Results are deserialized lazily, chunk by chunk,
+        so you can stream large result sets without loading everything into memory at once:</p>
+
+    <Code code={`val cursor: Cursor<Stored<Person>> = repo.findAll()
+
+// Flow-based streaming
+cursor.asFlow().collect { stored ->
+    println(stored().name)
+}
+
+// Metadata
+cursor.count      // number of results returned
+cursor.fullCount  // total matches (when using pagination)
+cursor.timeMs     // query execution time in milliseconds`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Convenience extensions</h2>
+
+    <p>You rarely need to call <code>asFlow()</code> directly. Vault provides 29 suspend extension functions
+        that work just like their counterparts in the Kotlin standard library.
+        The key difference: every operation is a <code>suspend</code> function, so it works safely
+        in coroutine contexts.</p>
+
+    <h3>Collect</h3>
+
+    <Code code={`val cursor = repo.findAll()
+
+// Collect all results into a list
+val all: List<Stored<Person>> = cursor.toList()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Transform</h3>
+
+    <Code code={`// map — transform each item
+val names: List<String> = cursor.map { it().name }
+
+// mapNotNull — transform, discarding nulls
+val emails: List<String> = cursor.mapNotNull { it().email }
+
+// mapIndexed — transform with index
+val indexed: List<String> = cursor.mapIndexed { i, it -> it().name }
+
+// flatMap — transform each item into a collection, then flatten
+val tags: List<String> = cursor.flatMap { it().tags }`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Filter</h3>
+
+    <Code code={`// filter — keep matching items
+val adults: List<Stored<Person>> = cursor.filter { it().age >= 18 }
+
+// filterNot — keep non-matching items
+val minors: List<Stored<Person>> = cursor.filterNot { it().age >= 18 }
+
+// filterIsInstance — keep items of a specific type
+val dogs: List<Stored<Dog>> = animalCursor.filterIsInstance<Stored<Dog>>()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Element access</h3>
+
+    <Code code={`// first / firstOrNull
+val first: Stored<Person> = cursor.first()
+val maybeFirst: Stored<Person>? = cursor.firstOrNull()
+
+// With predicate
+val alice: Stored<Person>? = cursor.firstOrNull { it().name == "Alice" }
+
+// find — alias for firstOrNull with predicate
+val found: Stored<Person>? = cursor.find { it().age > 30 }
+
+// lastOrNull
+val last: Stored<Person>? = cursor.lastOrNull()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Iteration</h3>
+
+    <Code code={`// forEach
+cursor.forEach { stored -> println(stored().name) }
+
+// forEachIndexed
+cursor.forEachIndexed { index, stored ->
+    println(stored().name)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Predicates</h3>
+
+    <Code code={`// any — true if at least one item matches
+val hasAdults: Boolean = cursor.any { it().age >= 18 }
+
+// none — true if no item matches
+val noMinors: Boolean = cursor.none { it().age < 18 }
+
+// all — true if every item matches
+val allAdults: Boolean = cursor.all { it().age >= 18 }`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Aggregation</h3>
+
+    <Code code={`// fold
+val totalAge: Int = cursor.fold(0) { acc, stored -> acc + stored().age }
+
+// groupBy
+val byCity: Map<String, List<Stored<Person>>> = cursor.groupBy { it().city }
+
+// associateBy
+val byId: Map<String, Stored<Person>> = cursor.associateBy { it._id }
+
+// associate
+val nameToAge: Map<String, Int> = cursor.associate { it().name to it().age }
+
+// partition
+val (adults, minors) = cursor.partition { it().age >= 18 }`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Sorting, distinct, take/drop</h3>
+
+    <Code code={`// sortedBy / sortedByDescending
+val byAge: List<Stored<Person>> = cursor.sortedBy { it().age }
+val oldest: List<Stored<Person>> = cursor.sortedByDescending { it().age }
+
+// distinct / distinctBy
+val unique: List<Stored<Person>> = cursor.distinct()
+val uniqueNames: List<Stored<Person>> = cursor.distinctBy { it().name }
+
+// take / drop
+val firstFive: List<Stored<Person>> = cursor.take(5)
+val afterFive: List<Stored<Person>> = cursor.drop(5)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Entity caching</h2>
+
+    <p>For <code>Cursor&lt;Stored&lt;T&gt;&gt;</code>, the <code>cache()</code> extension collects results
+        and registers each entity in the cursor's <code>EntityCache</code>. This is useful when you know
+        you will resolve <code>Ref</code> fields that point back to entities in the same result set:</p>
+
+    <Code code={`val persons: List<Stored<Person>> = repo.findAll().cache()
+// All persons are now in the EntityCache — Ref resolution can use them`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Comparison with stdlib</h2>
+
+    <p>If you already know Kotlin's standard collection operations, Vault cursors work the same way.
+        The only difference is that each operation is <code>suspend</code>:</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr>
+                <th class="px-3 py-2 border border-white/10 bg-white/[0.03] text-white font-semibold">
+                    Iterable&lt;T&gt;
+                </th>
+                <th class="px-3 py-2 border border-white/10 bg-white/[0.03] text-white font-semibold">Cursor&lt;T&gt;
+                </th>
+                <th class="px-3 py-2 border border-white/10 bg-white/[0.03] text-white font-semibold">Difference</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr>
+                <td class="px-3 py-2 border border-white/10"><code>list.map &lbrace; ... &rbrace;</code></td>
+                <td class="px-3 py-2 border border-white/10"><code>cursor.map &lbrace; ... &rbrace;</code></td>
+                <td class="px-3 py-2 border border-white/10">suspend, lambda can be suspend</td>
+            </tr>
+            <tr>
+                <td class="px-3 py-2 border border-white/10"><code>list.filter &lbrace; ... &rbrace;</code></td>
+                <td class="px-3 py-2 border border-white/10"><code>cursor.filter &lbrace; ... &rbrace;</code></td>
+                <td class="px-3 py-2 border border-white/10">suspend, lambda can be suspend</td>
+            </tr>
+            <tr>
+                <td class="px-3 py-2 border border-white/10"><code>list.first()</code></td>
+                <td class="px-3 py-2 border border-white/10"><code>cursor.first()</code></td>
+                <td class="px-3 py-2 border border-white/10">suspend</td>
+            </tr>
+            <tr>
+                <td class="px-3 py-2 border border-white/10"><code>list.forEach &lbrace; ... &rbrace;</code></td>
+                <td class="px-3 py-2 border border-white/10"><code>cursor.forEach &lbrace; ... &rbrace;</code></td>
+                <td class="px-3 py-2 border border-white/10">suspend, lambda can be suspend</td>
+            </tr>
+            <tr>
+                <td class="px-3 py-2 border border-white/10"><code>list.groupBy &lbrace; ... &rbrace;</code></td>
+                <td class="px-3 py-2 border border-white/10"><code>cursor.groupBy &lbrace; ... &rbrace;</code></td>
+                <td class="px-3 py-2 border border-white/10">suspend, lambda can be suspend</td>
+            </tr>
+            <tr>
+                <td class="px-3 py-2 border border-white/10"><code>list.toList()</code></td>
+                <td class="px-3 py-2 border border-white/10"><code>cursor.toList()</code></td>
+                <td class="px-3 py-2 border border-white/10">suspend</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/vault/repository"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Repositories &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

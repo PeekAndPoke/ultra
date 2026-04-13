@@ -68,6 +68,7 @@ suspend fun <T : Any?> ApplicationCall.apiRespondUnauthorized(
     apiRespond(response)
 }
 
+/** Enriches an [ApiResponse] with server timing, URL, and profiling insights. */
 fun <T : Any?> ApplicationCall.enrichApiResponseWithInsights(response: ApiResponse<T>): ApiResponse<T> {
 
     val metrics = kontainerOrNull?.getOrNull(RequestMetricsProvider::class)

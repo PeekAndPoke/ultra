@@ -23,7 +23,7 @@ class EventsRepo(
         .plus(timestamped.onBeforeSave())
 ) {
     companion object {
-        fun Storable<Event>.asApiModel() = with(value) {
+        suspend fun Storable<Event>.asApiModel() = with(resolve()) {
             EventModel(
                 id = _id,
                 name = name,
@@ -38,7 +38,7 @@ class EventsRepo(
         }
     }
 
-    @Suppress("unused", "CanBeParameter")
+    @Suppress("unused")
     class Fixtures(
         repo: EventsRepo,
     ) : RepoFixtureLoader<Event>(repo = repo) {

@@ -21,8 +21,7 @@ import io.peekandpoke.funktor.staticweb.funktorStaticWeb
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.module
 
-// Kontainer module
-/** Module definition */
+/** All-in-one Funktor kontainer module: registers core, auth, broker, rest, cluster, logging, messaging, and insights. */
 val Funktor = module { params: FunktorParams ->
     funktorCore(params.config, params.appInfo)
     funktorAuth(params.auth)
@@ -36,6 +35,7 @@ val Funktor = module { params: FunktorParams ->
     funktorIntrospection()
 }
 
+/** Convenience function for registering the full Funktor stack with config and builder lambdas. */
 fun KontainerBuilder.funktor(
     config: AppConfig,
     appInfo: AppInfo = AppInfo.default(),
@@ -57,6 +57,7 @@ fun KontainerBuilder.funktor(
     )
 )
 
+/** Parameters bundle for the all-in-one [Funktor] module. */
 @ConsistentCopyVisibility
 data class FunktorParams internal constructor(
     val config: AppConfig,

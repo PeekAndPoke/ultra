@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.core.model
 import io.peekandpoke.ultra.common.roundWithPrecision
 import kotlinx.serialization.Serializable
 
+/** Hierarchical CPU profiling data: wall-clock time, CPU time, and nested child profiles. */
 @Serializable
 data class CpuProfile(
     val names: List<String>,

@@ -6,6 +6,7 @@ import io.peekandpoke.ultra.slumber.slumber
 import io.peekandpoke.ultra.vault.Vault
 import kotlin.time.Duration
 
+/** A background job waiting in the queue to be executed. */
 @Vault
 data class BackgroundJobQueued(
     val type: String,

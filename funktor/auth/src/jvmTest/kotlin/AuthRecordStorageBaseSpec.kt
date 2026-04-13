@@ -58,9 +58,9 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
                 loaded.shouldNotBeNull()
                 loaded._id shouldBe owner1pw2._id
-                loaded.value.realm shouldBe owner1pw2.value.realm
-                loaded.value.ownerId shouldBe owner1pw2.value.ownerId
-                loaded.value.token shouldBe owner1pw2.value.token
+                loaded.resolve().realm shouldBe owner1pw2.resolve().realm
+                loaded.resolve().ownerId shouldBe owner1pw2.resolve().ownerId
+                loaded.resolve().token shouldBe owner1pw2.resolve().token
             }
 
             withClue("Loading latest password of owner2") {
@@ -69,9 +69,9 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
                 loaded.shouldNotBeNull()
                 loaded._id shouldBe owner2pw2._id
-                loaded.value.realm shouldBe owner2pw2.value.realm
-                loaded.value.ownerId shouldBe owner2pw2.value.ownerId
-                loaded.value.token shouldBe owner2pw2.value.token
+                loaded.resolve().realm shouldBe owner2pw2.resolve().realm
+                loaded.resolve().ownerId shouldBe owner2pw2.resolve().ownerId
+                loaded.resolve().token shouldBe owner2pw2.resolve().token
             }
 
             withClue("Loading from a realm that does not have password stored") {
@@ -119,10 +119,10 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
                 loaded.shouldNotBeNull()
                 loaded._id shouldBe token1._id
-                loaded.value.realm shouldBe token1.value.realm
-                loaded.value.ownerId shouldBe token1.value.ownerId
-                loaded.value.token shouldBe token1.value.token
-                loaded.value.expiresAt shouldBe token1.value.expiresAt
+                loaded.resolve().realm shouldBe token1.resolve().realm
+                loaded.resolve().ownerId shouldBe token1.resolve().ownerId
+                loaded.resolve().token shouldBe token1.resolve().token
+                loaded.resolve().expiresAt shouldBe token1.resolve().expiresAt
             }
 
             withClue("Loading password reset token of owner2") {
@@ -131,10 +131,10 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
                 loaded.shouldNotBeNull()
                 loaded._id shouldBe token2._id
-                loaded.value.realm shouldBe token2.value.realm
-                loaded.value.ownerId shouldBe token2.value.ownerId
-                loaded.value.token shouldBe token2.value.token
-                loaded.value.expiresAt shouldBe token2.value.expiresAt
+                loaded.resolve().realm shouldBe token2.resolve().realm
+                loaded.resolve().ownerId shouldBe token2.resolve().ownerId
+                loaded.resolve().token shouldBe token2.resolve().token
+                loaded.resolve().expiresAt shouldBe token2.resolve().expiresAt
             }
         }
 

@@ -14,6 +14,7 @@ import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.microseconds
 
+/** Measures wall-clock and CPU time of a coroutine block, returning a [CpuProfile.WithValue]. */
 suspend fun <T> measureCoroutine(
     name: String = "ROOT",
     block: suspend CoroutineScope.() -> T,
@@ -36,6 +37,7 @@ suspend fun <T> measureCoroutine(
 }
 
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
+/** Coroutine context element that tracks CPU time across thread switches and child coroutines. */
 class TimingInterceptor : CopyableThreadContextElement<TimingInterceptor.State>,
     AbstractCoroutineContextElement(TimingInterceptor) {
 

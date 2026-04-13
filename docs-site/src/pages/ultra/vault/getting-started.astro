@@ -1,0 +1,136 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {vaultSidebar} from '../../../data/vault-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Getting Started with Vault" sidebar={vaultSidebar}
+            description="Core Vault concepts end-to-end: entities, wrappers, cursors, and backends">
+
+    <h1>Getting Started</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Vault is the shared persistence foundation underneath Karango and Monko.
+        This page walks through the core concepts you need before choosing a backend.
+    </p>
+
+    <h2>1. Define your entity</h2>
+
+    <p>Annotate a data class with <code>@Vault</code>. Your domain model stays free of database concerns.</p>
+
+    <Code code={`import io.peekandpoke.ultra.vault.Vault
+
+@Vault
+data class Article(
+    val title: String,
+    val body: String,
+    val tags: List<String> = emptyList(),
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>2. The Storable wrappers</h2>
+
+    <p>Vault wraps every entity in one of three types, depending on its lifecycle stage.
+        Database metadata lives in the wrapper, never in your data class.</p>
+
+    <Code code={`import io.peekandpoke.ultra.vault.New
+import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.Ref
+
+// Before saving — no database metadata yet
+val new: New<Article> = New(Article("Draft", "..."))
+
+// After saving — carries _id, _key, _rev from the database
+val stored: Stored<Article> = repo.insert(Article("Hello", "World"))
+stored._id    // "articles/abc123"
+stored._key   // "abc123"
+stored()      // Article(title="Hello", body="World")
+
+// A lazy reference — resolves on first access
+val ref: Ref<Article> = stored.asRef`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>3. Working with Stored</h2>
+
+    <p>Use <code>modify</code> to create an updated copy that preserves database identity,
+        or <code>transform</code> to change the value type entirely.</p>
+
+    <Code code={`// Access the value
+val article: Article = stored()
+
+// Create a modified copy — same _id, _key, _rev
+val updated: Stored<Article> = stored.modify { it.copy(title = "New Title") }
+
+// Transform to a different type
+val titleOnly: Stored<String> = stored.transform { it.title }
+
+// Replace the value outright
+val replaced: Stored<Article> = stored.withValue(Article("Replaced", "Content"))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>4. Resolving values</h2>
+
+    <p><code>suspend fun resolve()</code> and its shorthand <code>suspend operator fun invoke()</code> work
+        uniformly on all Storable types. For <code>Stored</code> and <code>New</code>, resolution is instant.
+        For <code>Ref</code>, it may suspend to load from the database.</p>
+
+    <Code code={`import io.peekandpoke.ultra.vault.Storable
+
+suspend fun printTitle(storable: Storable<Article>) {
+    // Both forms are equivalent:
+    val a1: Article = storable.resolve()
+    val a2: Article = storable()  // shorthand
+
+    println(a1.title)
+}
+
+// Works the same for any wrapper type
+printTitle(new)     // instant
+printTitle(stored)  // instant
+printTitle(ref)     // may suspend to load from DB, then cached`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>5. Cursors</h2>
+
+    <p><code>Cursor&lt;T&gt;</code> wraps a Kotlin Flow and provides suspend-friendly collection operations.
+        Repository queries return cursors, so you can stream results lazily or collect them all at once.</p>
+
+    <Code code={`import io.peekandpoke.ultra.vault.Cursor
+import io.peekandpoke.ultra.vault.filter
+import io.peekandpoke.ultra.vault.map
+import io.peekandpoke.ultra.vault.firstOrNull
+
+val cursor: Cursor<Stored<Article>> = repo.findAll()
+
+// Collect everything
+val all: List<Stored<Article>> = cursor.toList()
+
+// Transform
+val titles: List<String> = cursor.map { it().title }
+
+// Filter
+val tagged: List<Stored<Article>> = cursor.filter { "kotlin" in it().tags }
+
+// First match
+val first: Stored<Article>? = cursor.firstOrNull { it().title == "Hello" }`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>6. Choose your backend</h2>
+
+    <p>Vault defines the abstractions. To actually persist data, pick a backend and follow its getting-started
+        guide.</p>
+
+    <div class="not-prose mt-4 flex flex-wrap gap-4">
+        <a href="/ultra/karango/getting-started"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Karango (ArangoDB) &rarr;
+        </a>
+        <a href="/ultra/monko/getting-started"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Monko (MongoDB) &rarr;
+        </a>
+    </div>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/vault/storable"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Storable Hierarchy &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

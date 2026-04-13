@@ -9,6 +9,8 @@ import io.peekandpoke.karango.aql.RETURN_COUNT
 import io.peekandpoke.karango.aql.UPDATE
 import io.peekandpoke.karango.aql.aql
 import io.peekandpoke.ultra.model.Paged
+import io.peekandpoke.ultra.vault.first
+import io.peekandpoke.ultra.vault.map
 
 class KarangoLogsStorage(
     private val repo: KarangoLogRepository,

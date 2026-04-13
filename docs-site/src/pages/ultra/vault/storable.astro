@@ -1,0 +1,214 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {vaultSidebar} from '../../../data/vault-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Storable Hierarchy" sidebar={vaultSidebar}
+            description="Storable, Stored, New, and Ref — how Vault wraps your data for persistence">
+
+    <h1>Storable Hierarchy</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Any Kotlin data class can become a database entity. Vault wraps it with metadata (IDs, revisions)
+        using the <code>Storable&lt;T&gt;</code> hierarchy — your data stays clean, the database details live in the
+        wrapper.
+    </p>
+
+    <h2>The core idea</h2>
+
+    <p>Your data class is just data. Database metadata (<code>_id</code>, <code>_key</code>, <code>_rev</code>) lives in
+        the wrapper, not in your class:</p>
+
+    <Code code={`// Your data — no database concerns
+@Vault
+data class Person(val name: String, val age: Int)
+
+// After inserting into the database:
+val stored: Stored<Person> = repo.insert(Person("Alice", 30))
+
+stored()      // Person(name="Alice", age=30) — your data
+stored._id    // "persons/abc123" — database ID
+stored._key   // "abc123" — document key
+stored._rev   // "_abc123def" — revision for optimistic locking`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>The Storable hierarchy</h2>
+
+    <p><code>Storable&lt;T&gt;</code> is the sealed base class. Three concrete types represent different entity states:
+    </p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr>
+                <th class="px-3 py-2 border border-white/10 bg-white/[0.03] text-white font-semibold">Type</th>
+                <th class="px-3 py-2 border border-white/10 bg-white/[0.03] text-white font-semibold">When to use</th>
+                <th class="px-3 py-2 border border-white/10 bg-white/[0.03] text-white font-semibold">Has value?</th>
+                <th class="px-3 py-2 border border-white/10 bg-white/[0.03] text-white font-semibold">Has ID?</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr>
+                <td class="px-3 py-2 border border-white/10"><code>New&lt;T&gt;</code></td>
+                <td class="px-3 py-2 border border-white/10">Entity not yet persisted</td>
+                <td class="px-3 py-2 border border-white/10">Yes</td>
+                <td class="px-3 py-2 border border-white/10">Empty until inserted</td>
+            </tr>
+            <tr>
+                <td class="px-3 py-2 border border-white/10"><code>Stored&lt;T&gt;</code></td>
+                <td class="px-3 py-2 border border-white/10">Entity loaded from or saved to the database</td>
+                <td class="px-3 py-2 border border-white/10">Yes</td>
+                <td class="px-3 py-2 border border-white/10">Yes (_id, _key, _rev)</td>
+            </tr>
+            <tr>
+                <td class="px-3 py-2 border border-white/10"><code>Ref&lt;T&gt;</code></td>
+                <td class="px-3 py-2 border border-white/10">Lazy entity reference (resolved on demand via suspend)</td>
+                <td class="px-3 py-2 border border-white/10">Via <code>resolve()</code></td>
+                <td class="px-3 py-2 border border-white/10">Yes</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p>All <code>Storable</code> subtypes provide <code>suspend fun resolve(): T</code> and
+        <code>suspend operator fun invoke(): T</code> for accessing the wrapped value.
+        For <code>Stored</code> and <code>New</code>, resolution is instant (they also expose <code>val value: T</code>).
+        For <code>Ref</code>, resolution may suspend to load the entity from the database.</p>
+
+    <Code code={`// Stored and New keep a public .value property for direct access:
+stored.value  // instant, no suspension
+
+// But the uniform way across all Storable types is:
+stored.resolve()  // suspend, works on Stored, New, AND Ref
+stored()          // shorthand for resolve()
+
+// Access fields via the uniform API
+stored().name       // preferred
+stored.resolve().name
+
+// Ref resolution
+val author = post.author.resolve()  // suspend, loads from DB
+val author = post.author()          // shorthand`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>New&lt;T&gt; — entities before persistence</h2>
+
+    <p>A <code>New&lt;T&gt;</code> wraps a domain value with empty metadata. It is passed to repository insert methods
+        and becomes a <code>Stored&lt;T&gt;</code> once persisted.</p>
+
+    <Code code={`// Wrap your data for explicit insertion
+val newPerson = New(Person("Alice", 30))
+
+// Or just pass the value directly — insert() wraps it for you
+repo.insert(Person("Alice", 30))
+
+// With an explicit key
+repo.insert("alice-key", Person("Alice", 30))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Stored&lt;T&gt; — the main entity wrapper</h2>
+
+    <p><code>Stored&lt;T&gt;</code> is what you work with most. It wraps your data with database metadata:</p>
+
+    <Code code={`val stored: Stored<Person> = repo.findById("persons/abc123")!!
+
+// Access data
+stored().name  // "Alice"
+stored().age   // 30
+
+// Access metadata
+stored._id         // "persons/abc123"
+stored._key        // "abc123"
+stored._rev        // revision string
+stored.collection  // "persons"
+
+// Modify the value — creates a new Stored with the same metadata
+val updated = stored.modify { it.copy(age = 31) }
+// updated._id is still "persons/abc123"
+
+// Or use withValue for a direct replacement
+val replaced = stored.withValue(Person("Bob", 25))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Modify and save pattern</h3>
+
+    <Code code={`// Load → modify → save
+val person = repo.findById(id)!!
+
+val updated = person.modify { it.copy(name = "Alice Smith") }
+
+repo.save(updated)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Ref&lt;T&gt; — lazy entity references</h2>
+
+    <p>A <code>Ref&lt;T&gt;</code> points to another entity by ID. The referenced value is resolved lazily
+        on first <code>resolve()</code> or <code>invoke()</code> call and then cached in a thread-safe manner:</p>
+
+    <Code code={`@Vault
+data class Comment(
+    val text: String,
+    val author: Ref<Person>,  // Reference to a Person
+)
+
+val comment: Stored<Comment> = repo.findById(commentId)!!
+comment().author._id          // "persons/abc123" — available immediately
+comment().author.resolve()    // Person(name="Alice", age=30) — resolves on demand
+comment().author()            // shorthand for resolve()
+
+// Create refs explicitly
+val eager = Ref.eager(person, id, key, rev)   // already-loaded value
+val lazy  = Ref.lazy(id) { loadFromDb(id) }   // deferred resolution`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>When serialized to the database, <code>Ref&lt;T&gt;</code> is stored as just the ID string. When deserialized,
+        a lazy resolver is attached that loads the entity from the cache or database on first access.</p>
+
+    <p>Equality for <code>Ref</code> is based on <code>_id</code> only. Two Refs with the same ID are equal
+        regardless of their resolution state.</p>
+
+    <h2>Converting between types</h2>
+
+    <Code code={`val stored: Stored<Person> = repo.findById(id)!!
+
+// Stored → Ref (wraps the already-loaded value)
+val ref: Ref<Person> = stored.asRef
+
+// Any Storable → Stored
+val backToStored: Stored<Person> = ref.asStored
+
+// Resolve any Storable to its value
+val person: Person = ref.resolve()   // suspend — may load from DB
+val same: Person = ref()             // shorthand for resolve()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Identity comparisons</h2>
+
+    <p>Vault provides infix functions for comparing entity identity by database ID:</p>
+
+    <Code code={`val a: Stored<Person> = repo.findById("id1")!!
+val b: Stored<Person> = repo.findById("id2")!!
+
+a hasSameIdAs b    // false — different IDs
+a hasOtherIdThan b // true
+
+val list = listOf(a, b)
+a hasIdIn list     // true`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Type-safe casting</h2>
+
+    <p>When you store a sealed hierarchy, you can safely downcast the wrapper to a more specific type:</p>
+
+    <Code code={`sealed class Animal {
+    data class Dog(val name: String) : Animal()
+    data class Cat(val name: String) : Animal()
+}
+
+val stored: Stored<Animal> = repo.findById(id)!!
+
+// Safe downcast — returns null if the type doesn't match
+val dog: Stored<Dog>? = stored.castTyped<Dog>()
+val cat: Stored<Cat>? = stored.castTyped<Cat>()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/vault/cursor"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Cursors &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

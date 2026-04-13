@@ -8,6 +8,7 @@ import io.peekandpoke.kraft.addons.marked.marked
 import io.peekandpoke.kraft.addons.pixijs.pixiJs
 import io.peekandpoke.kraft.addons.registry.addons
 import io.peekandpoke.kraft.addons.signaturepad.signaturePad
+import io.peekandpoke.kraft.addons.threejs.threeJs
 import io.peekandpoke.kraft.kraftApp
 import io.peekandpoke.kraft.semanticui.semanticUI
 import io.peekandpoke.kraft.vdom.preact.PreactVDomEngine
@@ -25,6 +26,7 @@ val kraft = kraftApp {
         marked()
         pixiJs(lazy = true)
         signaturePad()
+        threeJs(lazy = true)
     }
 
     routing {

@@ -88,7 +88,8 @@ val getUsers = GetUsers.mount {
 }
 
 // Built-in rules:
-// public()              — allow all authenticated users
+// public()              — allow everyone (including anonymous)
+// authenticated()       — any logged-in user (non-anonymous)
 // forbidden()           — deny all
 // isSuperUser()         — super user check
 // forRole("admin")      — role-based
@@ -122,12 +123,12 @@ val sseEvents = SseEvents.mount(Unit::class) {
     <p>Group related routes into <code>ApiFeature</code> implementations. Register them in Kontainer and they
         are auto-discovered and mounted.</p>
 
-    <Code code={`class UserApiFeature(converter: OutgoingConverter) : ApiFeature {
+    <Code code={`class UserApiFeature : ApiFeature {
     override val name = "Users"
     override val description = "User management endpoints"
 
-    val users = UserApi(converter)
-    val profiles = ProfileApi(converter)
+    val users = UserApi()
+    val profiles = ProfileApi()
 
     override fun getRouteGroups() = listOf(users, profiles)
 }`} lang="kotlin" theme="vitesse-dark"/>

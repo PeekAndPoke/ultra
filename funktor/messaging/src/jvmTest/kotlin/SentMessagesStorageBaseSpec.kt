@@ -59,9 +59,9 @@ abstract class SentMessagesStorageBaseSpec : FreeSpec() {
             val items = found.toList()
 
             items shouldHaveSize 1
-            items[0].value.refs shouldBe setOf("ref-1")
-            items[0].value.tags shouldBe setOf("tag-1")
-            items[0].value.content shouldBe content
+            items[0].resolve().refs shouldBe setOf("ref-1")
+            items[0].resolve().tags shouldBe setOf("tag-1")
+            items[0].resolve().content shouldBe content
         }
 
         "Finding sent messages by ref" {

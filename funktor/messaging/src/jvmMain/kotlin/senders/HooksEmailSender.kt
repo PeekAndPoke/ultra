@@ -5,6 +5,7 @@ import io.peekandpoke.funktor.messaging.EmailHooks
 import io.peekandpoke.funktor.messaging.EmailSender
 import io.peekandpoke.funktor.messaging.api.EmailResult
 
+/** Decorator that invokes [EmailHooks] after the wrapped sender delivers the email. */
 class HooksEmailSender(
     private val hooks: EmailHooks,
     private val wrapped: EmailSender,

@@ -22,7 +22,7 @@ const groups = [
               name: 'Slumber',
               tagline: 'Kotlin-first serialization',
               description: 'Serialization that understands nullable types, default values, and sealed classes without annotation clutter.',
-              aside: 'The name is a pun. We chose it anyway.',
+              aside: 'Lets your objects fall asleep.',
               href: '/ultra/slumber/',
               ready: true,
           },
@@ -62,7 +62,7 @@ const groups = [
               name: 'Maths',
               tagline: 'Easing functions and distributions',
               description: '28 easing functions (In, Out, InOut) with range binding and time-based animation. Four probability distributions with inverse-CDF sampling and combinators.',
-              aside: 'Math is just math. But typed math is better math.',
+              aside: 'Math is math and typed math is better math.',
               href: '/ultra/maths/',
               ready: true,
           },
@@ -90,8 +90,16 @@ const groups = [
                 name: 'Funktor',
                 tagline: 'Full-stack Kotlin on Ktor',
                 description: 'A modular server framework. Auth, REST APIs, clustering, messaging, insights, and more — wired together with Kontainer.',
-                aside: 'We needed glue. So we wrote a framework. As one does.',
+                aside: 'Fun + Ktor = Funktor.',
                 href: '/ultra/funktor/',
+                ready: true,
+            },
+            {
+                name: 'Vault',
+                tagline: 'Shared DBAL foundation',
+                description: 'The database abstraction layer underneath Karango and Monko. Storable wrappers, Flow-based cursors, lazy references, and a suspend-first repository interface.',
+                aside: 'The plumbing that makes the water flow.',
+                href: '/ultra/vault/',
                 ready: true,
             },
             {
@@ -175,7 +183,7 @@ const groups = [
                                         </p>
                                         {lib.aside && (
                                                 <div class="mt-auto pt-4">
-                                                  <p class:list={['text-xs italic pt-3 border-t border-white/5', lib.ready ? 'text-gray-500' : 'text-gray-600']}>
+                                                    <p class:list={['text-sm italic pt-3 border-t border-white/5', lib.ready ? 'text-gray-500' : 'text-gray-600']}>
                                                         &ldquo;{lib.aside}&rdquo;
                                                     </p>
                                                 </div>

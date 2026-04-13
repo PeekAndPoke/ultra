@@ -33,6 +33,8 @@ import io.peekandpoke.ultra.vault.Storable
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.VaultModels
 import io.peekandpoke.ultra.vault.ensureKey
+import io.peekandpoke.ultra.vault.firstOrNull
+import io.peekandpoke.ultra.vault.map
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlin.time.Duration.Companion.milliseconds

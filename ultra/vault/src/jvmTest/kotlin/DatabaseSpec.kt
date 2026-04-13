@@ -67,8 +67,21 @@ class DatabaseSpec : StringSpec() {
             found shouldBe repo
         }
 
-        // NOTE: getRepository(name) when not found hits a ConcurrentHashMap null-value NPE
-        // before reaching the VaultException throw. This is a known latent issue.
+        "getRepository by name throws VaultException when not found" {
+            val db = Database.withNoRepos
+
+            shouldThrow<VaultException> {
+                db.getRepository("missing")
+            }
+        }
+
+        "getRepository by name caches negative lookups without NPE" {
+            val db = Database.of { listOf(TestStringRepo()) }
+
+            // Two consecutive lookups for a missing name must both throw cleanly.
+            shouldThrow<VaultException> { db.getRepository("missing") }
+            shouldThrow<VaultException> { db.getRepository("missing") }
+        }
 
         // getRepository by class //////////////////////////////////////////////////////////////////
 
@@ -94,11 +107,45 @@ class DatabaseSpec : StringSpec() {
             val repo = TestStringRepo()
             val db = Database.of { listOf(repo) }
 
-            db.hasRepositoryStoring(String::class.java) shouldBe true
+            db.hasRepositoryStoring(String::class) shouldBe true
         }
 
-        // NOTE: hasRepositoryStoring with unknown type hits a ConcurrentHashMap null-value NPE
-        // because SharedRepoClassLookup uses ConcurrentHashMap which can't store null values.
+        "hasRepositoryStoring returns false for unknown type" {
+            val db = Database.of { listOf(TestStringRepo()) }
+
+            db.hasRepositoryStoring(Int::class) shouldBe false
+        }
+
+        "hasRepositoryStoring caches negative lookups without NPE" {
+            val db = Database.of { listOf(TestStringRepo()) }
+
+            // Two consecutive lookups for a missing type must return false without throwing.
+            db.hasRepositoryStoring(Int::class) shouldBe false
+            db.hasRepositoryStoring(Int::class) shouldBe false
+        }
+
+        // getRepositoryStoring / getRepositoryStoringOrNull ///////////////////////////////////////
+
+        "getRepositoryStoring returns the repo that stores the given type" {
+            val repo = TestStringRepo()
+            val db = Database.of { listOf(repo) }
+
+            db.getRepositoryStoring(String::class) shouldBe repo
+        }
+
+        "getRepositoryStoring throws VaultException when no repo stores the type" {
+            val db = Database.of { listOf(TestStringRepo()) }
+
+            shouldThrow<VaultException> {
+                db.getRepositoryStoring(Int::class)
+            }
+        }
+
+        "getRepositoryStoringOrNull returns null when no repo stores the type" {
+            val db = Database.of { listOf(TestStringRepo()) }
+
+            db.getRepositoryStoringOrNull(Int::class) shouldBe null
+        }
 
         // ensureId ////////////////////////////////////////////////////////////////////////////////
 

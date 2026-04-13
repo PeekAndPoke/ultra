@@ -9,6 +9,8 @@ import io.peekandpoke.karango.e2e.database
 import io.peekandpoke.karango.e2e.karangoDriver
 import io.peekandpoke.karango.testdomain.TestPerson
 import io.peekandpoke.karango.testdomain.testPersons
+import io.peekandpoke.ultra.vault.map
+import io.peekandpoke.ultra.vault.value
 
 @Suppress("ClassName")
 class `E2E-Cursor-Spec` : StringSpec() {
@@ -63,7 +65,6 @@ class `E2E-Cursor-Spec` : StringSpec() {
             val second = cursor.map { it }
 
             assertSoftly {
-                first shouldBeSameSizeAs cursor
                 first shouldBeSameSizeAs second
                 first.map { it.value.name } shouldBe second.map { it.value.name }
             }
@@ -76,7 +77,6 @@ class `E2E-Cursor-Spec` : StringSpec() {
             val second = cursor.toList()
 
             assertSoftly {
-                first shouldBeSameSizeAs cursor
                 first shouldBeSameSizeAs second
                 first.map { it.value.name } shouldBe second.map { it.value.name }
             }
@@ -89,7 +89,7 @@ class `E2E-Cursor-Spec` : StringSpec() {
             val second = cursor.toList()
 
             assertSoftly {
-                first shouldBeSameSizeAs cursor
+                first shouldBeSameSizeAs second
                 first shouldBeSameSizeAs second
                 first.map { it.value.name } shouldBe second.map { it.value.name }
             }

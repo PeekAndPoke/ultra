@@ -10,6 +10,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.peekandpoke.ultra.slumber.Codec
 import io.peekandpoke.ultra.slumber.slumber
 
+/** Utility for pretty-printing arbitrary objects as JSON (slumber-first, Jackson fallback). */
 object JsonPrinter {
 
     private val mapper = ObjectMapper().apply {

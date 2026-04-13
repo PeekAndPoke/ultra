@@ -5,6 +5,7 @@ import io.peekandpoke.funktor.insights.gui.InsightsGuiData
 import io.peekandpoke.ultra.log.Log
 import kotlin.reflect.full.allSuperclasses
 
+/** Loads serialized insights data from the depot and reconstitutes collector data objects. */
 class InsightsDataLoader(
     private val repository: InsightsRepository,
     private val mapper: InsightsMapper,

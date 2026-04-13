@@ -50,27 +50,21 @@ class Database(
         }
     }
 
-    fun <T : Any> hasRepositoryStoring(type: Class<T>): Boolean {
-
-        return null != repoClassLookup.getOrPut(type) {
-            @Suppress("UNCHECKED_CAST")
-            repositories.all()
-                .firstOrNull { it.stores(type.kotlin) }
-                ?.let { it::class.java as Class<Repository<*>> }
-        }
+    fun <T : Any> hasRepositoryStoring(type: KClass<T>): Boolean {
+        return getRepositoryStoringOrNull(type) != null
     }
 
-    fun <T : Any> getRepositoryStoring(type: Class<T>): Repository<T> {
+    fun <T : Any> getRepositoryStoring(type: KClass<T>): Repository<T> {
         return getRepositoryStoringOrNull(type)
             ?: throw VaultException("No repository stores the type '$type'")
     }
 
-    fun <T : Any> getRepositoryStoringOrNull(type: Class<T>): Repository<T>? {
+    fun <T : Any> getRepositoryStoringOrNull(type: KClass<T>): Repository<T>? {
 
         val cls = repoClassLookup.getOrPut(type) {
             repositories.all()
-                .firstOrNull { it.stores(type.kotlin) }
-                ?.let { it::class.java }
+                .firstOrNull { it.stores(type) }
+                ?.let { it::class }
         }
 
         return cls?.let {
@@ -79,18 +73,16 @@ class Database(
         }
     }
 
-    fun <T : Repository<*>> getRepository(cls: KClass<T>): T = getRepository(cls.java)
-
-    fun <T : Repository<*>> getRepository(cls: Class<T>): T {
-        return repositories.getOrNull(cls.kotlin)
+    fun <T : Repository<*>> getRepository(cls: KClass<T>): T {
+        return repositories.getOrNull(cls)
             ?: throw VaultException("No repository of class '$cls' is registered.")
     }
 
-    inline fun <reified T : Repository<*>> getRepository() = getRepository(T::class.java)
+    inline fun <reified T : Repository<*>> getRepository() = getRepository(T::class)
 
     fun getRepository(name: String): Repository<*> {
         val cls = repoClassLookup.getOrPut(name) {
-            repositories.all().firstOrNull { it.name == name }?.let { it::class.java }
+            repositories.all().firstOrNull { it.name == name }?.let { it::class }
         }
 
         if (cls != null) {

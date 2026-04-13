@@ -8,6 +8,7 @@ import io.peekandpoke.funktor.cluster.locks.LocksFacade
 import io.peekandpoke.funktor.cluster.storage.StorageFacade
 import io.peekandpoke.funktor.cluster.workers.WorkersFacade
 
+/** Central facade providing access to all cluster subsystems. */
 class FunktorClusterFacade(
     serverId: Lazy<GlobalServerId>,
     servers: Lazy<GlobalServerList>,

@@ -1,7 +1,6 @@
 package io.peekandpoke.funktor.core.fixtures
 
 import io.peekandpoke.ultra.vault.BatchInsertRepository
-import io.peekandpoke.ultra.vault.LazyRef
 import io.peekandpoke.ultra.vault.Ref
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Storable
@@ -46,9 +45,6 @@ abstract class RepoFixtureLoader<T : Any>(protected val repo: Repository<T>) : F
 
         /** Get the fixture value as a [Ref] */
         fun asRef(): Ref<F> = get().asRef
-
-        /** Get the fixture value as a [LazyRef] */
-        fun asLazyRef(): LazyRef<F> = get().asLazyRef
 
         /** Installs the fixture into the [repo] */
         internal abstract fun ensure(): Stored<F>

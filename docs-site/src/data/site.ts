@@ -2,8 +2,8 @@
 // Update these when releasing — all pages reference this file.
 
 // Versions
-export const ultraVersion = '0.104.2';
-export const kraftVersion = '0.104.2';
+export const ultraVersion = '0.106.0';
+export const kraftVersion = '0.106.0';
 export const kotlinVersion = '2.3.10';
 export const fomanticVersion = '2.8.8';
 
@@ -107,6 +107,7 @@ export const dep = {
     kraftAddonBrowserDetect: `${kraftGroup}:addons-browserdetect:${kraftVersion}`,
     kraftAddonNxCompile: `${kraftGroup}:addons-nxcompile:${kraftVersion}`,
     kraftAddonSourceMappedStacktrace: `${kraftGroup}:addons-sourcemappedstacktrace:${kraftVersion}`,
+    kraftAddonThreeJs: `${kraftGroup}:addons-threejs:${kraftVersion}`,
     mutatorCore: `${ultraGroup}:mutator-core:${ultraVersion}`,
     mutatorKsp: `${ultraGroup}:mutator-ksp:${ultraVersion}`,
     karangoCore: `${ultraGroup}:karango-core:${ultraVersion}`,

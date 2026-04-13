@@ -80,7 +80,7 @@ kontainer {
 val stored = repo.insert(Person("Alice", 30, "alice@example.com"))
 // stored._id = "persons/abc123"
 // stored._key = "abc123"
-// stored.value = Person(name="Alice", age=30, ...)
+// stored() -> Person(name="Alice", age=30, ...)
 
 // Find by ID
 val found = repo.findById(stored._id)

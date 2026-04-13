@@ -6,6 +6,7 @@ import io.peekandpoke.funktor.inspect.logging.api.LogsRequest
 import io.peekandpoke.funktor.logging.LogsStorage
 import io.peekandpoke.funktor.logging.karango.asApiModel
 import io.peekandpoke.ultra.model.Paged
+import io.peekandpoke.ultra.vault.map
 
 class MonkoLogsStorage(
     private val repo: MonkoLogRepository,

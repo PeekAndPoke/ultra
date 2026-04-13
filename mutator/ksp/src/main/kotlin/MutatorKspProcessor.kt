@@ -57,23 +57,33 @@ class MutatorKspProcessor(
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
 
-        // Find all types that have a @Mutable annotation
-        val withAnnotations = resolver
+        // Phase A: Collect all @Mutable annotated classes
+        val annotatedClasses = resolver
             .getSymbolsWithAnnotation(Mutable::class.qualifiedName!!)
             .filterIsInstance<KSClassDeclaration>()
+            .toList()
 
-        // Find all referenced classes
-        val allTypes = withAnnotations
-            .combineWithReferencedTypes()
+        // Phase B: Split into deep (transitive) and shallow (this class only)
+        val (deepClasses, shallowClasses) = annotatedClasses.partition { it.getMutableDeep() }
+
+        // Phase C: Transitively expand only deep classes
+        val expandedFromDeep = deepClasses.combineWithReferencedTypes()
+
+        // Phase D: Combine all annotated + transitive from deep, then filter
+        val allTypes = (shallowClasses + expandedFromDeep)
+            .toSet()
             .filterNot { it.hasAnnotation(NotMutable::class) }
             .filterNot { plugins.isVetoed(it) }
             .sortedBy { it.qualifiedName?.asString() }
 
-        allTypes.toSet().let { pool ->
-            pool.forEach { cls ->
-                logger.info("Generating code for type: ${cls.classKind} $cls : ${cls.qualifiedName?.asString()}")
-                generateCode(cls)
-            }
+        // Phase E: Populate the processing set before code generation
+        val processingSet = allTypes.toSet()
+        plugins.setProcessingSet(processingSet)
+
+        // Phase F: Generate code
+        processingSet.forEach { cls ->
+            logger.info("Generating code for type: ${cls.classKind} $cls : ${cls.qualifiedName?.asString()}")
+            generateCode(cls)
         }
 
         return listOf()
@@ -131,14 +141,21 @@ class MutatorKspProcessor(
         }
     }
 
-    private fun Sequence<KSClassDeclaration>.combineWithReferencedTypes(): Set<KSClassDeclaration> {
-        val list = toList()
+    private fun KSClassDeclaration.getMutableDeep(): Boolean {
+        val ann = annotations.firstOrNull { a ->
+            val type = a.annotationType.resolve().declaration as? KSClassDeclaration
+            type?.qualifiedName?.asString() == Mutable::class.qualifiedName
+        } ?: return true
 
-        val referenced = list
+        return ann.arguments.firstOrNull { it.name?.asString() == "deep" }?.value as? Boolean ?: true
+    }
+
+    private fun List<KSClassDeclaration>.combineWithReferencedTypes(): Set<KSClassDeclaration> {
+        val referenced = this
             .flatMap { it.asStarProjectedType().getReferencedTypesRecursive() }
             .mapNotNull { it.declaration as? KSClassDeclaration }
 
-        return list.plus(referenced).toSet()
+        return this.plus(referenced).toSet()
     }
 
     private fun KSType.getReferencedTypesRecursive(): Set<KSType> {

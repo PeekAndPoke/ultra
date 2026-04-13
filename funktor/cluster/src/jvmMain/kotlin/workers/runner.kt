@@ -17,6 +17,8 @@ fun AppLifeCycleBuilder.launchWorkers(
     kontainerProvider = kontainerProvider
 )
 
+/** Callback returning the current [WorkersRunner.State]; checked by workers to detect shutdown. */
 typealias StateProvider = () -> WorkersRunner.State
 
+/** Convenience: true when the state is [WorkersRunner.State.Running]. */
 val StateProvider.isRunning get() = this().isRunning

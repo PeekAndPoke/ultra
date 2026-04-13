@@ -2,8 +2,10 @@ package io.peekandpoke.funktor.cluster.locks
 
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.value
 import kotlin.time.Duration
 
+/** Wrapper around a [Stored] entity that was loaded under a global lock, enabling safe modify-and-save. */
 class LockedStored<out T>(
     stored: Stored<T>,
 ) {
@@ -18,6 +20,8 @@ class LockedStored<out T>(
     val rev: String get() = stored._rev
 
     val isModified get() = original != _stored
+
+    suspend fun resolve(): T = stored.resolve()
 
     fun modify(block: (T) -> @UnsafeVariance T): LockedStored<T> {
         _stored = _stored.modify(block)
@@ -34,12 +38,14 @@ class LockedStored<out T>(
     }
 }
 
+/** Result of a lock-reload-modify-save operation on a [Stored] entity. */
 data class LockedStoredResult<T, out R>(
     val value: Stored<T>,
     val result: R?,
     val success: Boolean,
 )
 
+/** Acquires a lock on the stored entity, reloads it from the repo, applies [handler], and saves if modified. */
 suspend fun <T : Any, X : T, R> GlobalLocksProvider.tryToLockReloadAndSave(
     stored: Stored<X>,
     repo: Repository<T>,

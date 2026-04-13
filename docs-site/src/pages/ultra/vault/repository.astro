@@ -1,0 +1,219 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {vaultSidebar} from '../../../data/vault-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Repositories" sidebar={vaultSidebar}
+            description="The Repository interface — CRUD, hooks, and entity caching">
+
+    <h1>Repositories</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        <code>Repository&lt;T&gt;</code> is the interface that both Karango and Monko implement.
+        It defines CRUD operations, lifecycle hooks, and entity cache integration.
+    </p>
+
+    <h2>The Repository&lt;T&gt; interface</h2>
+
+    <p>Every repository is parameterized by the entity type it stores. The interface provides
+        a standard set of operations that work the same way regardless of the underlying database:</p>
+
+    <Code code={`interface Repository<T : Any> {
+    val name: String                           // collection/table name
+    val storedType: TypeRef<T>                 // type information for deserialization
+
+    suspend fun findAll(): Cursor<Stored<T>>
+    suspend fun findById(id: String?): Stored<T>?
+
+    suspend fun <X : T> insert(new: X): Stored<X>
+    suspend fun <X : T> insert(key: String?, new: X): Stored<X>
+    suspend fun <X : T> insert(new: New<X>): Stored<X>
+
+    suspend fun <X : T> save(stored: Stored<X>): Stored<X>
+    suspend fun <X : T> save(storable: Storable<X>): Stored<X>
+
+    suspend fun <X : T> remove(entity: Stored<X>): RemoveResult
+    suspend fun remove(idOrKey: String): RemoveResult
+    suspend fun removeAll(): RemoveResult
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>CRUD operations</h2>
+
+    <h3>Insert</h3>
+
+    <Code code={`@Vault
+data class Person(val name: String, val age: Int)
+
+// Insert a value directly — wraps it in New<T> automatically
+val stored: Stored<Person> = repo.insert(Person("Alice", 30))
+
+// Insert with an explicit key
+val stored2: Stored<Person> = repo.insert("alice-key", Person("Alice", 30))
+
+// Insert with a modification before storing
+val stored3: Stored<Person> = repo.insert(Person("Alice", 30)) { person ->
+    person.copy(age = person.age + 1)
+}
+
+// Try inserting — returns null on failure instead of throwing
+val maybe: Stored<Person>? = repo.tryInsert(Person("Alice", 30))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Find</h3>
+
+    <Code code={`// Find by ID — returns null if not found
+val person: Stored<Person>? = repo.findById("persons/abc123")
+
+// Find all — returns a Cursor
+val all: Cursor<Stored<Person>> = repo.findAll()
+
+// Collect all into a list
+val list: List<Stored<Person>> = repo.findAll().toList()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Save</h3>
+
+    <p>Save accepts both <code>Stored&lt;T&gt;</code> and <code>Storable&lt;T&gt;</code>. When given a
+        <code>New&lt;T&gt;</code>, it delegates to insert. When given a <code>Ref&lt;T&gt;</code>, it resolves
+        the value first:</p>
+
+    <Code code={`// Save a modified entity
+val updated = stored.modify { it.copy(name = "Alice Smith") }
+val saved: Stored<Person> = repo.save(updated)
+
+// Save with inline modification
+val saved2: Stored<Person> = repo.save(stored) { person ->
+    person.copy(age = 31)
+}
+
+// Save only if modified — avoids unnecessary writes
+val saved3: Stored<Person> = repo.saveIfModified(stored) { person ->
+    person.copy(age = 31)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h3>Remove</h3>
+
+    <Code code={`// Remove by entity
+repo.remove(stored)
+
+// Remove by ID or key
+repo.remove("persons/abc123")
+
+// Remove all documents
+repo.removeAll()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Lifecycle hooks</h2>
+
+    <p>Repositories support three hook types that run at specific points in the entity lifecycle.
+        Hooks are composable — you can attach multiple hooks, and they run in order.</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr>
+                <th class="px-3 py-2 border border-white/10 bg-white/[0.03] text-white font-semibold">Hook</th>
+                <th class="px-3 py-2 border border-white/10 bg-white/[0.03] text-white font-semibold">When it runs</th>
+                <th class="px-3 py-2 border border-white/10 bg-white/[0.03] text-white font-semibold">Suspend?</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr>
+                <td class="px-3 py-2 border border-white/10"><code>OnBeforeSave&lt;T&gt;</code></td>
+                <td class="px-3 py-2 border border-white/10">Before insert or save. Can modify the entity.</td>
+                <td class="px-3 py-2 border border-white/10">No</td>
+            </tr>
+            <tr>
+                <td class="px-3 py-2 border border-white/10"><code>OnAfterSave&lt;T&gt;</code></td>
+                <td class="px-3 py-2 border border-white/10">After insert or save completes.</td>
+                <td class="px-3 py-2 border border-white/10">Yes</td>
+            </tr>
+            <tr>
+                <td class="px-3 py-2 border border-white/10"><code>OnAfterDelete&lt;T&gt;</code></td>
+                <td class="px-3 py-2 border border-white/10">After a remove completes.</td>
+                <td class="px-3 py-2 border border-white/10">Yes</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p><code>OnBeforeSave</code> runs synchronously and returns the (potentially modified) entity.
+        <code>OnAfterSave</code> and <code>OnAfterDelete</code> run asynchronously in the background
+        after the database operation completes.</p>
+
+    <Code code={`// Built-in hook: automatic timestamps
+class TimestampedHook<T : Timestamped> : Repository.Hooks.OnBeforeSave<T> {
+    override fun <X : T> onBeforeSave(
+        repo: Repository<T>,
+        storable: Storable<T>,
+    ): Storable<X> {
+        // Sets createdAt on first insert, updatedAt on every save
+        ...
+    }
+}
+
+// Composing hooks
+val hooks = Repository.Hooks.of(
+    TimestampedHook<MyEntity>(),
+    MyCustomHook(),
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>EntityCache</h2>
+
+    <p>The <code>EntityCache</code> deduplicates entity lookups during deserialization.
+        When a cursor deserializes entities, it can store them in the cache.
+        Subsequent <code>Ref&lt;T&gt;</code> resolutions check the cache before hitting the database.</p>
+
+    <Code code={`interface EntityCache {
+    fun clear()
+    fun <T> put(id: String, value: T): T
+    fun <T> getOrPut(id: String, provider: () -> T?): T?
+    suspend fun <T> getOrPutAsync(id: String, provider: suspend () -> T?): T?
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Vault ships two implementations:</p>
+
+    <ul>
+        <li><code>DefaultEntityCache</code> — thread-safe cache backed by <code>ConcurrentHashMap</code>,
+            with synchronized sync access and <code>Mutex</code>-based suspend access
+        </li>
+        <li><code>NullEntityCache</code> — no-op implementation that always calls through to the provider</li>
+    </ul>
+
+    <p>In practice, you rarely interact with the EntityCache directly. It is managed by the cursor
+        and used automatically during <code>Ref</code> resolution.</p>
+
+    <h2>Repository setup</h2>
+
+    <p>Repositories can ensure their own infrastructure (collections, indexes) exists:</p>
+
+    <Code code={`// Ensure the collection and indexes exist
+repo.ensure()
+
+// Or separately
+repo.ensureRepository()  // create the collection if missing
+repo.ensureIndexes()     // create defined indexes
+
+// Validate index state
+val info: IndexesInfo = repo.validateIndexes()
+info.healthyIndexes   // indexes that exist as defined
+info.missingIndexes   // defined but not yet created
+info.excessIndexes    // exist but not defined
+
+// Recreate all indexes (drop + re-create)
+repo.recreateIndexes()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Next steps</h2>
+
+    <p>Ready to connect to a database? Choose your backend:</p>
+
+    <div class="not-prose mt-4 flex flex-wrap gap-4">
+        <a href="/ultra/karango/getting-started"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Karango (ArangoDB) &rarr;
+        </a>
+        <a href="/ultra/monko/getting-started"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Monko (MongoDB) &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

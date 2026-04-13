@@ -20,7 +20,7 @@ object StoredSlumberer : Slumberer {
 
         val slumbered = mutableMapOf<String, Any?>()
 
-        val inner = context.slumber(data.value)
+        val inner = context.slumber(data.valueInternal)
 
         if (inner !is Map<*, *>) {
             throw VaultException(

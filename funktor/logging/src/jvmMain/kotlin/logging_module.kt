@@ -19,12 +19,18 @@ import io.peekandpoke.ultra.log.LogLevel
 import io.peekandpoke.ultra.log.Slf4jAppender
 import org.slf4j.LoggerFactory
 
+/** Registers the Funktor logging module in the kontainer. */
 fun KontainerBuilder.funktorLogging(
     builder: FunktorLoggingBuilder.() -> Unit = {},
 ) = module(Funktor_Logging, builder)
 
+/** Gets the [LoggingFacade] from the kontainer. */
 inline val KontainerAware.logging: LoggingFacade get() = kontainer.get()
+
+/** Gets the [LoggingFacade] from the kontainer. */
 inline val ApplicationCall.logging: LoggingFacade get() = kontainer.get(LoggingFacade::class)
+
+/** Gets the [LoggingFacade] from the kontainer. */
 inline val RoutingContext.logging: LoggingFacade get() = call.logging
 
 /**
@@ -46,12 +52,14 @@ val Funktor_Logging = module { builder: FunktorLoggingBuilder.() -> Unit ->
     instance(Slf4jAppender(LoggerFactory.getLogger(Application::class.java)))
 }
 
+/** DSL builder for configuring the logging module backend (Karango or Monko). */
 class FunktorLoggingBuilder internal constructor(private val kontainer: KontainerBuilder) {
 
     companion object {
         const val defaultLogCollectionName: String = "system_logs"
     }
 
+    /** Configures logging to persist entries in ArangoDB via Karango. */
     fun useKarango(repoName: String = defaultLogCollectionName) {
         with(kontainer) {
             // Add a log appender for the database
@@ -70,6 +78,7 @@ class FunktorLoggingBuilder internal constructor(private val kontainer: Kontaine
         }
     }
 
+    /** Configures logging to persist entries in MongoDB via Monko. */
     fun useMonko(repoName: String = defaultLogCollectionName) {
         with(kontainer) {
             // Add a log appender for the database

@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.core.broker
 
+/** Base exception for parameter conversion errors. */
 open class ConverterException(message: String, cause: Throwable? = null) : Throwable(message, cause)
 
 /**

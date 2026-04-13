@@ -171,6 +171,56 @@ val Mutator<Person>.address
         person mutator via <code>onChange</code>, which rebuilds the person with the new address. All of this happens
         automatically.</p>
 
+    <h2>Controlling discovery with <code>deep</code></h2>
+
+    <p>By default, <code>@Mutable</code> recursively discovers all referenced types and generates mutators for them. You
+        can control this with the <code>deep</code> parameter:</p>
+
+    <Code code={`// Default: deep = true — discovers and generates mutators for all referenced types
+@Mutable
+data class Person(val address: Address)
+// Address gets a mutator too, even without its own @Mutable annotation
+
+// Shallow: deep = false — only this class gets a mutator
+@Mutable(deep = false)
+data class Order(
+    val id: String,
+    val meta: ExternalConfig,    // simple get/set (ExternalConfig has no mutator)
+    val address: Address,        // .mutator() accessor (Address IS @Mutable)
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>With <code>deep = false</code>, referenced types only get <code>.mutator()</code> accessors if they are
+        independently marked <code>@Mutable</code> (or pulled in by another <code>deep = true</code> class). Otherwise,
+        they get simple get/set accessors — like a <code>String</code> or <code>Int</code>.</p>
+
+    <p>This is useful when you want to make a class with external types mutable without pulling in the entire type
+        graph.
+        Conversely, if you need mutators for external types not in your codebase, use the trigger pattern:</p>
+
+    <Code code={`// Trigger mutator generation for types you don't own
+@Mutable(deep = true)
+data class TriggerMutators(
+    val ext: SomeExternalLibraryType,
+)
+// SomeExternalLibraryType now gets a mutator generated`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Excluding types with <code>@NotMutable</code></h2>
+
+    <p>Use <code>@NotMutable</code> to explicitly prevent mutator generation for a type, even if it would be discovered
+        transitively:</p>
+
+    <Code code={`@NotMutable
+data class Secret(val key: String, val value: String)
+
+@Mutable
+data class Config(
+    val name: String,
+    val secret: Secret,  // simple get/set — Secret is @NotMutable
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p><code>@NotMutable</code> takes priority over transitive discovery. The property gets a simple get/set accessor
+        instead of a <code>.mutator()</code> accessor.</p>
+
     <div class="not-prose mt-8 flex gap-4">
         <a href="/ultra/mutator/core-concepts"
            class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">

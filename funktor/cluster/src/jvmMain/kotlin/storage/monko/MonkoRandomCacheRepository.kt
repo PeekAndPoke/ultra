@@ -19,6 +19,7 @@ import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Cursor
 import io.peekandpoke.ultra.vault.Repository.Hooks
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.firstOrNull
 import io.peekandpoke.ultra.vault.hooks.TimestampedHook
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList

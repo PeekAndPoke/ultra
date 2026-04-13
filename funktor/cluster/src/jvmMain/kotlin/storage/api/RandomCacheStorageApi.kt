@@ -14,6 +14,7 @@ import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.model.Paged
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.map
 
 class RandomCacheStorageApi : ApiRoutes("random-cache") {
 
@@ -50,13 +51,13 @@ class RandomCacheStorageApi : ApiRoutes("random-cache") {
 
             val result = cluster.storage.randomCache.get(id = params.id)
 
-            ApiResponse.okOrNotFound(
-                result?.let { asApiModel(it) }
-            )
+            val model = if (result != null) asApiModel(result) else null
+
+            ApiResponse.okOrNotFound(model)
         }
     }
 
-    private fun RoutingContext.asApiModel(raw: Stored<RawCacheData>) = with(raw.value) {
+    private suspend fun RoutingContext.asApiModel(raw: Stored<RawCacheData>) = with(raw.resolve()) {
         RawCacheDataModel(
             id = raw._key,
             category = category,

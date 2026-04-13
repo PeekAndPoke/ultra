@@ -32,7 +32,7 @@ class VaultGlobalLockProviderSpec : GlobalLockProviderSpecBase() {
         override val storedType: TypeRef<GlobalLockEntry> = kType()
 
         override suspend fun findAll(): Cursor<Stored<GlobalLockEntry>> {
-            return Cursor.of(entries.values)
+            return Cursor.of(entries.values.toList())
         }
 
         override suspend fun <X : GlobalLockEntry> insert(new: New<X>): Stored<X> {

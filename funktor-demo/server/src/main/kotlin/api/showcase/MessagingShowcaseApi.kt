@@ -13,6 +13,7 @@ import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
+import io.peekandpoke.ultra.vault.map
 
 class MessagingShowcaseApi : ApiRoutes("showcase-messaging") {
 
@@ -56,15 +57,16 @@ class MessagingShowcaseApi : ApiRoutes("showcase-messaging") {
             val messages = funktorMessaging.sentMessages.findByRefs(refs = emptySet())
 
             val result = messages.map { stored ->
-                val content = stored.value.content
+                val storedValue = stored.resolve()
+                val content = storedValue.content
                 val emailContent = content as? SentMessageModel.Content.EmailContent
 
                 SentMessageInfo(
                     id = stored._key,
                     to = emailContent?.destination?.toAddresses?.firstOrNull() ?: "?",
                     subject = emailContent?.subject ?: "?",
-                    success = stored.value.result?.success ?: false,
-                    sentAt = stored.value.createdAt.toIsoString(),
+                    success = storedValue.result?.success ?: false,
+                    sentAt = storedValue.createdAt.toIsoString(),
                 )
             }
 

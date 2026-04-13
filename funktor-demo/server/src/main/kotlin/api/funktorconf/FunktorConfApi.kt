@@ -13,6 +13,7 @@ import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.New
+import io.peekandpoke.ultra.vault.map
 
 class FunktorConfApi(
     private val services: FunktorConfServices,
@@ -32,7 +33,7 @@ class FunktorConfApi(
         }.authorize {
             public()
         }.handle {
-            val events = services.eventsRepo.findAll().toList().map { it.asApiModel() }
+            val events = services.eventsRepo.findAll().map { it.asApiModel() }
             ApiResponse.ok(events)
         }
     }
@@ -131,7 +132,7 @@ class FunktorConfApi(
         }.authorize {
             public()
         }.handle {
-            val speakers = services.speakersRepo.findAll().toList().map { it.asApiModel() }
+            val speakers = services.speakersRepo.findAll().map { it.asApiModel() }
             ApiResponse.ok(speakers)
         }
     }

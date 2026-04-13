@@ -6,6 +6,7 @@ import kotlinx.html.stream.createHTML
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+/** The body of an email: either plain [Text] or rendered [Html]. */
 @Serializable
 sealed class EmailBody {
 

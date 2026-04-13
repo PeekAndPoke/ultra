@@ -31,10 +31,12 @@ import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.createType
 
+/** Test harness for making HTTP and WebSocket requests against a running [TestBed]. */
 class AppUnderTest<C : AppConfig>(
     testBed: Lazy<TestBed<C>>,
     val host: String,
 ) {
+    /** Scope with an auth token (or anonymous) for issuing requests and checking responses. */
     inner class AuthenticationScope(
         private val token: String?,
         private val setupRequest: HttpRequestBuilder.() -> Unit,
@@ -232,6 +234,7 @@ class AppUnderTest<C : AppConfig>(
         }
     }
 
+    /** Helper for sending and receiving typed messages during a test WebSocket session. */
     class WebsocketConversation(
         val authToken: String?,
         val restCodec: RestCodec,

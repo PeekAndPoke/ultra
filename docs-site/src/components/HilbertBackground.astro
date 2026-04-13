@@ -45,10 +45,10 @@ const {tint} = Astro.props;
         let geometry = new THREE.PlaneGeometry(2 * aspect, 2);
         const material = new THREE.MeshStandardMaterial({
             color: 0x1a1611,
-            roughness: 0.42,
-            metalness: 0.55,
+            roughness: 0.38,
+            metalness: 0.7,
             normalMap: normalMap,
-            normalScale: new THREE.Vector2(1.0, 1.0),
+            normalScale: new THREE.Vector2(1.05, 1.05),
         });
         const plane = new THREE.Mesh(geometry, material);
         scene.add(plane);
@@ -73,12 +73,14 @@ const {tint} = Astro.props;
         const targetColor = baseColor.clone();
         const defaultIntensity = 0.85;
         const hoverIntensity = 1.5;
+        const cardHoverIntensity = 2.6;
         let targetIntensity = defaultIntensity;
 
         document.addEventListener('pointerover', (e) => {
-            if ((e.target as HTMLElement).closest?.('a, button')) {
+            const hit = (e.target as HTMLElement).closest?.('a, button') as HTMLElement | null;
+            if (hit) {
                 targetColor.copy(hoverColor);
-                targetIntensity = hoverIntensity;
+                targetIntensity = hit.classList.contains('rounded-xl') ? cardHoverIntensity : hoverIntensity;
             }
         });
         document.addEventListener('pointerout', (e) => {

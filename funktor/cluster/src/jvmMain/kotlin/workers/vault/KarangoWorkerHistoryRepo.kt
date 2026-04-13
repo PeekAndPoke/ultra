@@ -73,7 +73,7 @@ class KarangoWorkerHistoryRepo(
             }
         }
 
-        return result.count()
+        return result.count.toInt()
     }
 
     override suspend fun removeAllEndedAfter(after: MpInstant): Int {
@@ -84,6 +84,6 @@ class KarangoWorkerHistoryRepo(
             }
         }
 
-        return result.count()
+        return result.count.toInt()
     }
 }

@@ -189,7 +189,7 @@ class MonkoRepositoryHooksSpec : FreeSpec() {
 
                     val result = hooks.applyOnBeforeSaveHooks(fakeRepo, entity)
 
-                    result.value.counter shouldBe 1
+                    result.resolve().counter shouldBe 1
                 }
 
                 "should chain multiple before-save hooks" {
@@ -230,7 +230,7 @@ class MonkoRepositoryHooksSpec : FreeSpec() {
                     val result = hooks.applyOnBeforeSaveHooks(fakeRepo, entity)
 
                     // hook1: 0 + 1 = 1, then hook2: 1 * 10 = 10
-                    result.value.counter shouldBe 10
+                    result.resolve().counter shouldBe 10
                 }
             }
 
@@ -252,7 +252,7 @@ class MonkoRepositoryHooksSpec : FreeSpec() {
 
                 val result = hooks.applyOnBeforeSaveHooks(fakeRepo, entity)
 
-                result.value shouldBe entity.value
+                result.resolve() shouldBe entity.resolve()
             }
         }
     }

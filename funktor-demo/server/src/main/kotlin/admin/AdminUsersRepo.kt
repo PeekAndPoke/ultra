@@ -30,7 +30,7 @@ class AdminUsersRepo(
         .plus(timestamps.onBeforeSave())
 ) {
     companion object {
-        fun Storable<AdminUser>.asApiModel() = with(value) {
+        suspend fun Storable<AdminUser>.asApiModel() = with(resolve()) {
             AdminUserModel(
                 id = _id,
                 name = name,

@@ -11,6 +11,7 @@ import io.peekandpoke.ultra.vault.BatchInsertRepository
 import io.peekandpoke.ultra.vault.Cursor
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.map
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -89,7 +90,7 @@ class WorkerHistory(
 
             override suspend fun getHistory(workerId: String, limit: Int): List<WorkerRun> {
                 return inner.getHistoryByWorker(workerId = workerId, limit = limit)
-                    .map { it.value.run }
+                    .map { it.resolve().run }
             }
 
             override suspend fun putRun(run: WorkerRun) {

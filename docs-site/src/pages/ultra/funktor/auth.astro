@@ -55,7 +55,7 @@ import {Code} from 'astro:components';
     val token = gen.createJwt(
         user = JwtUserData(
             id = user._key,
-            desc = user.value.name,
+            desc = user().name,
             type = "admin",
         ),
         permissions = UserPermissions(isSuperUser = true),
@@ -115,8 +115,42 @@ val blueprint = kontainer {
     <h2>Auth API</h2>
 
     <p>The auth module provides pre-built API endpoints for all auth operations:
-        sign up, sign in, activate account, set password, and password recovery.
+        sign up, sign in, activate account, set password, password recovery, token refresh, and
+        user-specific API access queries.
         A matching client library (<code>AuthApiClient</code>) is available for Kotlin/JS frontends.</p>
+
+    <h2>Token refresh</h2>
+
+    <p>The <code>GET /auth/{'{realm}'}/refresh-token</code> endpoint issues a fresh JWT for authenticated users.
+        The server re-loads the user and regenerates the token, so permission changes are picked up automatically.</p>
+
+    <Code code={`// Frontend: the token is refreshed automatically by AuthState.
+// You can also call it manually:
+val response = api.auth.refreshToken().firstOrNull()
+// response.data?.token  — the new JWT`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>API access matrix (ApiAcl)</h2>
+
+    <p>The <code>GET /auth/my-api-access</code> endpoint returns a flat list of API endpoints the current user
+        can access, with their estimated access level (<code>Granted</code> or <code>Partial</code>).
+        Denied endpoints are filtered out &mdash; the response only reveals what the user CAN access.</p>
+
+    <Code code={`// Fetch the access matrix once after login
+val matrix = api.auth.getMyApiAccess().first().data!!
+val acl = ApiAcl(matrix)
+
+// Type-safe lookup using the same endpoint objects from your ApiClient
+if (acl.hasAccessTo(MyApiClient.CreateEvent)) {
+    button { +"Create Event" }
+}
+
+if (acl.hasAnyAccessTo(MyApiClient.GetEvent)) {
+    // Partial access — some fields may be redacted
+    navLink("/events") { +"Events" }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p><code>ApiAcl.empty</code> denies everything &mdash; safe default before data is loaded.
+        Unknown endpoints also default to <code>Denied</code> (secure-by-default).</p>
 
     <h2>Frontend support</h2>
 
@@ -124,8 +158,47 @@ val blueprint = kontainer {
         widgets.
         Auth state management with router middleware that redirects unauthenticated users to the login page.</p>
 
+    <h3>Session lifecycle</h3>
+
+    <p><code>AuthState</code> automatically manages the JWT session lifecycle. Enabled by default with zero
+        configuration:</p>
+
+    <ul>
+        <li><strong>Periodic refresh</strong> &mdash; checks token expiry every 60 seconds, refreshes 2 minutes before
+            it expires
+        </li>
+        <li><strong>Focus check</strong> &mdash; verifies token when the browser tab regains focus</li>
+        <li><strong>Graceful expiry</strong> &mdash; on expiry: saves the current page, logs out, redirects to login.
+            After re-login, navigates back to the previous page
+        </li>
+        <li><strong>Page reload</strong> &mdash; clears expired tokens from localStorage immediately on app init</li>
+    </ul>
+
+    <Code code={`// Zero-config: auto-refresh is enabled by default
+val auth = authState<MyUser>(
+    frontend = AuthFrontend.default(config = AuthFrontendConfig(redirectAfterLogin = Nav.dashboard())),
+    api = Apis.auth,
+    router = { kraft.router },
+)
+
+// With custom config:
+val auth = authState<MyUser>(
+    frontend = AuthFrontend.default(config = AuthFrontendConfig(redirectAfterLogin = Nav.dashboard())),
+    api = Apis.auth,
+    router = { kraft.router },
+    sessionConfig = AuthSessionConfig(
+        checkIntervalMs = 30_000,          // check every 30 seconds
+        refreshBeforeExpiryMs = 120_000L,  // refresh 2 minutes before expiry
+        onTokenRefreshed = { refreshApiAcl() },
+        onSessionExpired = { showLoginDialog() },
+    ),
+)
+
+// Disable auto-refresh entirely:
+sessionConfig = AuthSessionConfig.disabled`} lang="kotlin" theme="vitesse-dark"/>
+
     <Aside>The auth module handles the plumbing &mdash; token storage, JWT generation, password hashing,
-        recovery tokens. You implement the user model and the realm. That's it.
+        recovery tokens, session lifecycle. You implement the user model and the realm. That's it.
     </Aside>
 
     <h2>Storage backends</h2>

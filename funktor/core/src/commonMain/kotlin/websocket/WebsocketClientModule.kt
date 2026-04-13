@@ -4,14 +4,17 @@ import io.peekandpoke.ultra.model.EmptyObject
 import kotlinx.serialization.KSerializer
 import kotlin.reflect.KClass
 
+/** Base class for defining the message types a websocket client can send and receive. */
 abstract class WebsocketClientModule {
 
     val receivedTypes = mutableMapOf<String, Receives<*>>()
 
     val sentTypes = mutableMapOf<String, Sends<*>>()
 
+    /** Descriptor for a message type the client can send. */
     class Sends<T : Any>(val type: String, val serializer: KSerializer<T>, val cls: KClass<T>)
 
+    /** Descriptor for a message type the client can receive. */
     class Receives<T : Any>(val type: String, val serializer: KSerializer<T>, val cls: KClass<T>)
 
     // Methods for handling incoming messages

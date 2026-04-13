@@ -5,6 +5,7 @@ import io.peekandpoke.funktor.messaging.api.EmailBody
 import io.peekandpoke.funktor.messaging.api.EmailDestination
 import io.peekandpoke.ultra.common.isEmail
 
+/** Composite [MailingOverride] that applies a chain of overrides in order. */
 class MailingOverrides(
     val overrides: List<MailingOverride>,
 ) : MailingOverride {
@@ -62,13 +63,16 @@ class MailingOverrides(
     }
 }
 
+/** Transforms an [Email] before it is sent (e.g. redirect destination, prefix subject). */
 interface MailingOverride {
     operator fun invoke(email: Email): Email
 
+    /** No-op override that passes the email through unchanged. */
     object None : MailingOverride {
         override fun invoke(email: Email): Email = email
     }
 
+    /** Replaces the email destination (useful for dev/staging environments). */
     class ReplaceDestination(private val newDestination: EmailDestination) : MailingOverride {
 
         override operator fun invoke(email: Email): Email = email.copy(destination = newDestination)
@@ -78,6 +82,7 @@ interface MailingOverride {
         }
     }
 
+    /** Prepends a prefix to the email body (e.g. a dev-mode warning banner). */
     class PrefixBody(private val prefix: String) : MailingOverride {
         override operator fun invoke(email: Email): Email = email.copy(
             body = when (val body = email.body) {
@@ -97,6 +102,7 @@ interface MailingOverride {
         )
     }
 
+    /** Prepends a prefix to the email subject line. */
     class PrefixSubject(val prefix: String) : MailingOverride {
         override fun invoke(email: Email): Email = email.copy(subject = prefix + email.subject)
     }

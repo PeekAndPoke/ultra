@@ -34,7 +34,7 @@ class BuiltInMutableObjectsPlugin : MutatorKspPlugin {
     ): Boolean {
         if (declaration !is KSClassDeclaration) return false
 
-        return declaration.isData() || declaration.isSealed()
+        return plugins.isInProcessingSet(declaration)
     }
 
     override fun generatesMutatorFieldFor(
@@ -47,7 +47,7 @@ class BuiltInMutableObjectsPlugin : MutatorKspPlugin {
 
         if (decl !is KSClassDeclaration) return false
 
-        if (decl.isData() || decl.isSealed()) return true
+        if (plugins.isInProcessingSet(decl)) return true
 
         if (isSupportedCollection(property, plugins)) return true
         if (isSupportedMap(property, plugins)) return true

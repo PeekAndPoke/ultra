@@ -13,6 +13,7 @@ import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.model.Paged
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.map
 
 class RandomDataStorageApi : ApiRoutes("random-data") {
 
@@ -50,13 +51,13 @@ class RandomDataStorageApi : ApiRoutes("random-data") {
 
             val result = cluster.storage.randomData.get(id = params.id)
 
-            ApiResponse.okOrNotFound(
-                result?.let { asApiModel(it) }
-            )
+            val model = if (result != null) asApiModel(result) else null
+
+            ApiResponse.okOrNotFound(model)
         }
     }
 
-    private fun RoutingContext.asApiModel(raw: Stored<RawRandomData>) = with(raw.value) {
+    private suspend fun RoutingContext.asApiModel(raw: Stored<RawRandomData>) = with(raw.resolve()) {
         RawRandomDataModel(
             id = raw._key,
             category = category,

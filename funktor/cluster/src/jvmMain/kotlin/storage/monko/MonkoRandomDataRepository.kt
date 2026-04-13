@@ -16,6 +16,7 @@ import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Cursor
 import io.peekandpoke.ultra.vault.Repository.Hooks
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.firstOrNull
 import io.peekandpoke.ultra.vault.hooks.TimestampedHook
 import kotlin.reflect.full.withNullability
 
@@ -67,8 +68,8 @@ class MonkoRandomDataRepository(
         return found.firstOrNull()
     }
 
-    override fun <T> encode(type: TypeRef<T>, raw: Stored<RawRandomData>): T? {
+    override suspend fun <T> encode(type: TypeRef<T>, raw: Stored<RawRandomData>): T? {
         @Suppress("UNCHECKED_CAST")
-        return driver.codec.awake(type.type.withNullability(true), raw.value.data) as? T?
+        return driver.codec.awake(type.type.withNullability(true), raw.resolve().data) as? T?
     }
 }

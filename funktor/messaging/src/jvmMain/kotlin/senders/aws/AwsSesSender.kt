@@ -29,6 +29,7 @@ import javax.mail.internet.MimeMessage
 import javax.mail.internet.MimeMultipart
 import javax.mail.util.ByteArrayDataSource
 
+/** Sends emails via AWS SES, supporting HTML/text bodies and attachments (via raw email). */
 class AwsSesSender(private val client: SesAsyncClient) : EmailSender {
 
     companion object {

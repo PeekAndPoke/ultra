@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.testing
 
 import io.kotest.core.spec.style.scopes.FreeSpecContainerScope
 
+/** Runs a 1-dimensional matrix test: iterates over one dimension and dispatches to matching cases. */
 @JvmName("matrixTest1d")
 suspend fun <D1> FreeSpecContainerScope.matrixTest1d(builder: MatrixTest1d.Builder<D1>.() -> Unit) {
     io.peekandpoke.funktor.testing.MatrixTest1d.Builder<D1>(context = this)
@@ -10,6 +11,7 @@ suspend fun <D1> FreeSpecContainerScope.matrixTest1d(builder: MatrixTest1d.Build
         .run()
 }
 
+/** Runs a 2-dimensional matrix test: cross-product of two dimensions dispatched to matching cases. */
 @JvmName("matrixTest2d")
 suspend fun <D1, D2> FreeSpecContainerScope.matrixTest2d(builder: MatrixTest2d.Builder<D1, D2>.() -> Unit) {
     io.peekandpoke.funktor.testing.MatrixTest2d.Builder<D1, D2>(context = this)
@@ -18,6 +20,7 @@ suspend fun <D1, D2> FreeSpecContainerScope.matrixTest2d(builder: MatrixTest2d.B
         .run()
 }
 
+/** Runs a 3-dimensional matrix test: cross-product of three dimensions dispatched to matching cases. */
 @JvmName("matrixTest3d")
 suspend fun <D1, D2, D3> FreeSpecContainerScope.matrixTest3d(builder: MatrixTest3d.Builder<D1, D2, D3>.() -> Unit) {
     io.peekandpoke.funktor.testing.MatrixTest3d.Builder<D1, D2, D3>(context = this)
@@ -26,6 +29,7 @@ suspend fun <D1, D2, D3> FreeSpecContainerScope.matrixTest3d(builder: MatrixTest
         .run()
 }
 
+/** 1-dimensional parameterized test matrix: iterates [dim1] and dispatches to predicate-matched cases. */
 class MatrixTest1d<D1>(
     private val context: FreeSpecContainerScope,
     private val dim1: List<D1>,
@@ -110,6 +114,7 @@ class MatrixTest1d<D1>(
     }
 }
 
+/** 2-dimensional parameterized test matrix: cross-product of [dim1] x [dim2] dispatched to cases. */
 class MatrixTest2d<D1, D2>(
     private val context: FreeSpecContainerScope,
     private val dim1: List<D1>,
@@ -208,6 +213,7 @@ class MatrixTest2d<D1, D2>(
     }
 }
 
+/** 3-dimensional parameterized test matrix: cross-product of [dim1] x [dim2] x [dim3] dispatched to cases. */
 class MatrixTest3d<D1, D2, D3>(
     private val context: FreeSpecContainerScope,
     private val dim1: List<D1>,

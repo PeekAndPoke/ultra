@@ -6,12 +6,19 @@ import io.ktor.util.*
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.ultra.kontainer.Kontainer
 
+/** [AttributeKey] for storing the [App] instance in Ktor attributes. */
 val AppKey = AttributeKey<App<*>>("app")
 
+/** Stores the [App] in the [Attributes]. */
 fun <C : AppConfig> Attributes.provideApp(app: App<C>) = put(AppKey, app)
+
+/** Stores the [App] in the [Application]'s attributes. */
 fun <C : AppConfig> Application.provideApp(app: App<C>) = attributes.provideApp(app)
 
+/** Retrieves the [App] from the [Attributes] or throws if absent. */
 fun Attributes.getApp(): App<*> = getOrNull(AppKey) ?: throw IllegalStateException("No app found in attributes")
+
+/** Retrieves the [App] from the [Application]'s attributes. */
 fun Application.getApp(): App<*> = attributes.getApp()
 
 /**

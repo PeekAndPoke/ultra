@@ -41,6 +41,7 @@ include(
         ":kraft:addons:prismjs",
         ":kraft:addons:signaturepad",
         ":kraft:addons:sourcemappedstacktrace",
+        ":kraft:addons:threejs",
         // Examples
         ":kraft:examples:addons",
         ":kraft:examples:hello-world",

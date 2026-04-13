@@ -10,7 +10,7 @@ import io.peekandpoke.ultra.vault.slumber.VaultSlumberModule
 /**
  * Extends [Codec] with ArangoDB-specific context: [Database] for entity lookups and [EntityCache] for deduplication.
  *
- * Integrates [VaultSlumberModule] for serializing/deserializing entity references (Ref, LazyRef, Stored).
+ * Integrates [VaultSlumberModule] for serializing/deserializing entity references (Ref, Stored).
  */
 class KarangoCodec(
     config: SlumberConfig,

@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.core.websocket
 import io.peekandpoke.ultra.model.EmptyObject
 import kotlinx.serialization.KSerializer
 
+/** Client-side interface for sending typed messages over a websocket connection. */
 interface WebsocketClient {
 
     /**

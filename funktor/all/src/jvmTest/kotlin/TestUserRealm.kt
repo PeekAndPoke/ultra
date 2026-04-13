@@ -92,15 +92,17 @@ class TestUserRealm(
     override suspend fun generateJwt(user: Stored<TestUser>): AuthSignInResponse.Token {
         val gen = deps.jwtGenerator
 
+        val userValue = user.resolve()
+
         val token = gen.createJwt(
             user = JwtUserData(
                 id = user._id,
-                desc = user.value.name,
+                desc = userValue.name,
                 type = TestUser.USER_TYPE,
-                email = user.value.email,
+                email = userValue.email,
             ),
             permissions = UserPermissions(
-                isSuperUser = user.value.isSuperUser,
+                isSuperUser = userValue.isSuperUser,
             ),
         ) {
             withExpiresAt(Kronos.systemUtc.instantNow().plus(1.hours).jvm)
@@ -114,13 +116,13 @@ class TestUserRealm(
     }
 
     override suspend fun getUserEmail(user: Stored<TestUser>): String {
-        return user.value.email
+        return user.resolve().email
     }
 
     override suspend fun serializeUser(user: Stored<TestUser>): JsonObject {
         return Json.encodeToJsonElement(
             TestUser.serializer(),
-            user.value,
+            user.resolve(),
         ).jsonObject
     }
 

@@ -151,7 +151,7 @@ class KarangoDriver(
             profilerEntry.totalCount = result.extra?.stats?.fullCount
 
             // return the cursor
-            KarangoCursor(
+            KarangoCursor.create(
                 arangoCursor = result,
                 query = query,
                 codec = codec,

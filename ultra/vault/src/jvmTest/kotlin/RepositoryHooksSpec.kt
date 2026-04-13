@@ -106,14 +106,14 @@ class RepositoryHooksSpec : StringSpec({
 
         val result = hooks.applyOnBeforeSaveHooks(repo, storable)
 
-        result.value shouldBe "hello"
+        result.resolve() shouldBe "hello"
     }
 
     "applyOnBeforeSaveHooks applies hooks in order" {
         val hook = object : Repository.Hooks.OnBeforeSave<String> {
             override fun <X : String> onBeforeSave(repo: Repository<String>, storable: Storable<String>): Storable<X> {
                 @Suppress("UNCHECKED_CAST")
-                return storable.withValue(storable.value.uppercase()) as Storable<X>
+                return storable.withValue(storable.valueInternal.uppercase()) as Storable<X>
             }
         }
 
@@ -123,7 +123,7 @@ class RepositoryHooksSpec : StringSpec({
 
         val result = hooks.applyOnBeforeSaveHooks(repo, storable)
 
-        result.value shouldBe "HELLO"
+        result.resolve() shouldBe "HELLO"
     }
 })
 

@@ -73,7 +73,7 @@ dependencies {
     <p>Routes use the typed API system from the <a href="/ultra/funktor/rest">REST module</a>. Define endpoints with
         type-safe parameters, request bodies, and response types.</p>
 
-    <Code code={`class MyApi(converter: OutgoingConverter) : ApiRoutes("my-api", converter) {
+    <Code code={`class MyApi : ApiRoutes("my-api") {
 
     val getUsers = MyApiClient.GetUsers.mount {
         docs { name = "List users" }

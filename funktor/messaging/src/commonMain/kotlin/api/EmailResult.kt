@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.messaging.api
 
 import kotlinx.serialization.Serializable
 
+/** Result of sending an email: success/failure status, message ID, and additional attributes. */
 @Suppress("DATA_CLASS_COPY_VISIBILITY_WILL_BE_CHANGED_WARNING")
 @Serializable
 data class EmailResult internal constructor(

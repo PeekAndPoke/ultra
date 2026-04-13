@@ -2,6 +2,9 @@ package io.peekandpoke.ultra.vault
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 class EntityCacheSpec : StringSpec({
 
@@ -82,5 +85,62 @@ class EntityCacheSpec : StringSpec({
 
         result1 shouldBe "value1"
         result2 shouldBe "value2"
+    }
+
+    // getOrPutAsync //////////////////////////////////////////////////////////////////////////////
+
+    "NullEntityCache.getOrPutAsync always calls the provider" {
+        var callCount = 0
+
+        val result1 = NullEntityCache.getOrPutAsync("id1") { callCount++; "value" }
+        val result2 = NullEntityCache.getOrPutAsync("id1") { callCount++; "value" }
+
+        result1 shouldBe "value"
+        result2 shouldBe "value"
+        callCount shouldBe 2
+    }
+
+    "DefaultEntityCache.getOrPutAsync caches on first call" {
+        val cache = DefaultEntityCache()
+        var callCount = 0
+
+        val result1 = cache.getOrPutAsync("id1") { callCount++; "value" }
+        val result2 = cache.getOrPutAsync("id1") { callCount++; "other" }
+
+        result1 shouldBe "value"
+        result2 shouldBe "value"
+        callCount shouldBe 1
+    }
+
+    "DefaultEntityCache.getOrPutAsync returns value stored by sync put" {
+        val cache = DefaultEntityCache()
+
+        cache.put("id1", "stored")
+
+        var providerCalled = false
+        val result = cache.getOrPutAsync("id1") { providerCalled = true; "from-provider" }
+
+        result shouldBe "stored"
+        providerCalled shouldBe false
+    }
+
+    "DefaultEntityCache.getOrPutAsync is safe under concurrent access" {
+        val cache = DefaultEntityCache()
+        var callCount = 0
+
+        coroutineScope {
+            val results = (1..100).map {
+                async {
+                    cache.getOrPutAsync("id1") {
+                        callCount++
+                        "resolved"
+                    }
+                }
+            }.awaitAll()
+
+            results.forEach { it shouldBe "resolved" }
+        }
+
+        callCount shouldBe 1
     }
 })

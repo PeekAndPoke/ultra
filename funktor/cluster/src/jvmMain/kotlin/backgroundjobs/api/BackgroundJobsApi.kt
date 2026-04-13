@@ -18,6 +18,7 @@ import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.model.Paged
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.map
 
 class BackgroundJobsApi : ApiRoutes("background-jobs") {
 
@@ -105,7 +106,8 @@ class BackgroundJobsApi : ApiRoutes("background-jobs") {
         }
     }
 
-    private fun RoutingContext.asApiModel(job: Stored<BackgroundJobQueued>) = with(job.value) {
+    @JvmName("asApiModelQueued")
+    private suspend fun RoutingContext.asApiModel(job: Stored<BackgroundJobQueued>) = with(job.resolve()) {
         BackgroundJobQueuedModel(
             id = job._key,
             type = type,
@@ -119,7 +121,8 @@ class BackgroundJobsApi : ApiRoutes("background-jobs") {
         )
     }
 
-    private fun RoutingContext.asApiModel(job: Stored<BackgroundJobArchived>) = with(job.value) {
+    @JvmName("asApiModelArchived")
+    private suspend fun RoutingContext.asApiModel(job: Stored<BackgroundJobArchived>) = with(job.resolve()) {
         BackgroundJobArchivedModel(
             id = job._key,
             type = type,

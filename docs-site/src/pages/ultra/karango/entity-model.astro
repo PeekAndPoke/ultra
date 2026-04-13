@@ -5,7 +5,7 @@ import {Code} from 'astro:components';
 ---
 
 <DocsLayout title="Entity Model" sidebar={karangoSidebar}
-            description="Storable, Stored, New, Ref, and LazyRef — how Karango wraps your data for persistence">
+            description="Storable, Stored, New, and Ref — how Karango wraps your data for persistence">
 
     <h1>Entity Model</h1>
 
@@ -13,6 +13,11 @@ import {Code} from 'astro:components';
         Any Kotlin data class can become a database entity. Karango wraps it with metadata (IDs, revisions)
         using the <code>Storable&lt;T&gt;</code> hierarchy — your data stays clean, the database details live in the
         wrapper.
+    </p>
+
+    <p class="text-sm text-gray-500 border-l-2 border-white/10 pl-4 !mb-8">
+        Karango uses the <a href="/ultra/vault/storable">Storable&lt;T&gt; hierarchy</a> from the shared
+        Vault module. This page covers the same types with ArangoDB-specific examples.
     </p>
 
     <h2>The core idea</h2>
@@ -27,168 +32,30 @@ data class Person(val name: String, val age: Int)
 // After inserting into ArangoDB:
 val stored: Stored<Person> = repo.insert(Person("Alice", 30))
 
-stored.value  // Person(name="Alice", age=30) — your data
+stored()      // Person(name="Alice", age=30) — your data
 stored._id    // "persons/abc123" — database ID
 stored._key   // "abc123" — document key
 stored._rev   // "_abc123def" — revision for optimistic locking`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>The Storable hierarchy</h2>
 
-    <p><code>Storable&lt;T&gt;</code> is the sealed base class. Four concrete types represent different entity states:
-    </p>
-
-    <div class="not-prose my-8">
-        <table class="w-full text-sm text-left">
-            <thead>
-            <tr>
-                <th class="px-3 py-2 border border-white/10 bg-white/[0.03] text-white font-semibold">Type</th>
-                <th class="px-3 py-2 border border-white/10 bg-white/[0.03] text-white font-semibold">When to use</th>
-                <th class="px-3 py-2 border border-white/10 bg-white/[0.03] text-white font-semibold">Has value?</th>
-                <th class="px-3 py-2 border border-white/10 bg-white/[0.03] text-white font-semibold">Has ID?</th>
-            </tr>
-            </thead>
-            <tbody class="text-gray-400">
-            <tr>
-                <td class="px-3 py-2 border border-white/10"><code>New&lt;T&gt;</code></td>
-                <td class="px-3 py-2 border border-white/10">Entity not yet persisted</td>
-                <td class="px-3 py-2 border border-white/10">Yes</td>
-                <td class="px-3 py-2 border border-white/10">Empty until inserted</td>
-            </tr>
-            <tr>
-                <td class="px-3 py-2 border border-white/10"><code>Stored&lt;T&gt;</code></td>
-                <td class="px-3 py-2 border border-white/10">Entity loaded from or saved to the database</td>
-                <td class="px-3 py-2 border border-white/10">Yes</td>
-                <td class="px-3 py-2 border border-white/10">Yes (_id, _key, _rev)</td>
-            </tr>
-            <tr>
-                <td class="px-3 py-2 border border-white/10"><code>Ref&lt;T&gt;</code></td>
-                <td class="px-3 py-2 border border-white/10">Reference to another entity (eagerly loaded)</td>
-                <td class="px-3 py-2 border border-white/10">Yes</td>
-                <td class="px-3 py-2 border border-white/10">Yes</td>
-            </tr>
-            <tr>
-                <td class="px-3 py-2 border border-white/10"><code>LazyRef&lt;T&gt;</code></td>
-                <td class="px-3 py-2 border border-white/10">Reference loaded on first access</td>
-                <td class="px-3 py-2 border border-white/10">Lazy</td>
-                <td class="px-3 py-2 border border-white/10">Yes (value loaded on demand)</td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <h2>New&lt;T&gt; — entities before persistence</h2>
-
-    <Code code={`// Wrap your data for explicit insertion
-val newPerson = New(Person("Alice", 30))
-
-// Or just pass the value directly — insert() wraps it for you
-repo.insert(Person("Alice", 30))
-
-// With an explicit key
-repo.insert("alice-key", Person("Alice", 30))`} lang="kotlin" theme="vitesse-dark"/>
-
-    <h2>Stored&lt;T&gt; — the main entity wrapper</h2>
-
-    <p><code>Stored&lt;T&gt;</code> is what you work with most. It wraps your data with database metadata:</p>
-
-    <Code code={`val stored: Stored<Person> = repo.findById("persons/abc123")!!
-
-// Access data
-stored.value.name  // "Alice"
-stored.value.age   // 30
-
-// Access metadata
-stored._id         // "persons/abc123"
-stored._key        // "abc123"
-stored._rev        // revision string
-stored.collection  // "persons"
-
-// Modify the value — creates a new Stored with the same metadata
-val updated = stored.modify { it.copy(age = 31) }
-// updated._id is still "persons/abc123"
-
-// Or use withValue for a direct replacement
-val replaced = stored.withValue(Person("Bob", 25))`} lang="kotlin" theme="vitesse-dark"/>
-
-    <h3>Modify and save pattern</h3>
+    <p>Karango uses the <code>Storable&lt;T&gt;</code> sealed hierarchy from the shared Vault module.
+        Three concrete types &mdash; <code>New&lt;T&gt;</code>, <code>Stored&lt;T&gt;</code>, and
+        <code>Ref&lt;T&gt;</code>
+        &mdash; represent different entity lifecycle states. Here is a quick example of the most common pattern:</p>
 
     <Code code={`// Load → modify → save
-val person = repo.findById(id)!!
+val person: Stored<Person> = repo.findById(id)!!
+
+person().name  // "Alice" — access your data
+person._id         // "persons/abc123" — database metadata
 
 val updated = person.modify { it.copy(name = "Alice Smith") }
+repo.save(updated)  // updated._id is still "persons/abc123"`} lang="kotlin" theme="vitesse-dark"/>
 
-repo.save(updated)`} lang="kotlin" theme="vitesse-dark"/>
-
-    <h2>Ref&lt;T&gt; — eager entity references</h2>
-
-    <p>A <code>Ref&lt;T&gt;</code> points to another entity by ID. The value is loaded eagerly:</p>
-
-    <Code code={`@Vault
-data class Comment(
-    val text: String,
-    val author: Ref<Person>,  // Reference to a Person
-)
-
-// The Ref has both the ID and the loaded value
-val comment: Stored<Comment> = repo.findById(commentId)!!
-comment.value.author._id     // "persons/abc123"
-comment.value.author.value   // Person(name="Alice", age=30)`} lang="kotlin" theme="vitesse-dark"/>
-
-    <p>When serialized to ArangoDB, <code>Ref&lt;T&gt;</code> is stored as just the ID string. When deserialized, the
-        entity is loaded from the cache or database.</p>
-
-    <h2>LazyRef&lt;T&gt; — lazy entity references</h2>
-
-    <p>Like <code>Ref&lt;T&gt;</code> but the referenced entity is only loaded when first accessed:</p>
-
-    <Code code={`@Vault
-data class BlogPost(
-    val title: String,
-    val author: LazyRef<Person>,  // Only loaded when accessed
-)
-
-val post: Stored<BlogPost> = repo.findById(postId)!!
-// author not loaded yet
-
-post.value.author._id    // "persons/abc123" — available immediately
-post.value.author.value  // Person(...) — NOW the entity is loaded`} lang="kotlin" theme="vitesse-dark"/>
-
-    <h2>Converting between types</h2>
-
-    <Code code={`val stored: Stored<Person> = repo.findById(id)!!
-
-// Stored → Ref
-val ref: Ref<Person> = stored.asRef
-
-// Stored → LazyRef
-val lazyRef: LazyRef<Person> = stored.asLazyRef
-
-// Any Storable → Stored
-val backToStored: Stored<Person> = ref.asStored`} lang="kotlin" theme="vitesse-dark"/>
-
-    <h2>Identity comparisons</h2>
-
-    <Code code={`val a: Stored<Person> = repo.findById("id1")!!
-val b: Stored<Person> = repo.findById("id2")!!
-
-a hasSameIdAs b    // false — different IDs
-a hasOtherIdThan b // true
-
-val list = listOf(a, b)
-a hasIdIn list     // true`} lang="kotlin" theme="vitesse-dark"/>
-
-    <h2>Type-safe casting</h2>
-
-    <Code code={`sealed class Animal {
-    data class Dog(val name: String) : Animal()
-    data class Cat(val name: String) : Animal()
-}
-
-val stored: Stored<Animal> = repo.findById(id)!!
-
-// Safe downcast — returns null if the type doesn't match
-val dog: Stored<Dog>? = stored.castTyped<Dog>()
-val cat: Stored<Cat>? = stored.castTyped<Cat>()`} lang="kotlin" theme="vitesse-dark"/>
+    <p>For the complete Storable hierarchy reference &mdash; including <code>New</code>, <code>Stored</code>,
+        <code>Ref</code>, type conversions, identity comparisons, and type-safe casting &mdash; see the
+        <a href="/ultra/vault/storable">Vault: Storable Hierarchy</a> page.</p>
 
     <div class="not-prose mt-8 flex gap-4">
         <a href="/ultra/karango/query-dsl"

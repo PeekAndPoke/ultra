@@ -7,7 +7,6 @@ import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.reflection.ReifiedKType
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Database
-import io.peekandpoke.ultra.vault.LazyRef
 import io.peekandpoke.ultra.vault.Ref
 import io.peekandpoke.ultra.vault.domain.DatabaseGraphModel
 import kotlin.reflect.KClass
@@ -66,8 +65,7 @@ class DatabaseGraphBuilder(
             // Is this a direct ref?
             if (type.classifier == Ref::class) {
                 (type.arguments[0].type?.classifier as? KClass<*>)?.let { refClass ->
-                    // TODO: what if there is not repo ?
-                    database.getRepositoryStoringOrNull(refClass.java).let { repo ->
+                    database.getRepositoryStoringOrNull(refClass).let { repo ->
                         references.add(
                             DatabaseGraphModel.Reference(
                                 repo = repo?.let {
@@ -82,24 +80,7 @@ class DatabaseGraphBuilder(
                 return
             }
 
-            // Is this a lazy ref?
-            if (type.classifier == LazyRef::class) {
-                (type.arguments[0].type?.classifier as? KClass<*>)?.let { refClass ->
-                    // TODO: what if there is not repo ?
-                    database.getRepositoryStoringOrNull(refClass.java).let { repo ->
-                        references.add(
-                            DatabaseGraphModel.Reference(
-                                repo = repo?.let {
-                                    DatabaseGraphModel.Repo.Id(name = it.name, connection = it.connection)
-                                },
-                                fqn = refClass.java.name,
-                                type = DatabaseGraphModel.Reference.Type.Lazy,
-                            )
-                        )
-                    }
-                }
-                return
-            }
+            // LazyRef was merged into Ref — all Refs are now lazy by default
 
             // Blacklisted package? Stop!
             if (cls.java.`package`.name.startsWithAny(packageBlackList)) {

@@ -4,6 +4,7 @@ import io.ktor.server.application.*
 import io.ktor.server.plugins.*
 import io.peekandpoke.ultra.log.Log
 
+/** Logs a 404 not-found event with request details, optional hint, and cause. */
 fun ApplicationCall.logNotFound(cause: Throwable? = null, hint: String? = null) {
     val content = listOfNotNull(
         "Not found '${request.methodAndUrl()}'",
@@ -25,6 +26,7 @@ fun ApplicationCall.logNotFound(cause: Throwable? = null, hint: String? = null) 
     }
 }
 
+/** Logs a 400 bad-request event with request details and cause. */
 fun ApplicationCall.logBadRequest(cause: Throwable? = null) {
     val content = listOfNotNull(
         "Bad Request '${request.methodAndUrl()}'",
@@ -45,10 +47,12 @@ fun ApplicationCall.logBadRequest(cause: Throwable? = null) {
     }
 }
 
+/** Logs a 500 internal-error event with request details and cause. */
 fun ApplicationCall.logInternalError(cause: Throwable? = null) {
     logInternalError(null, cause)
 }
 
+/** Logs a 500 internal-error event with optional message, request details, and cause. */
 fun ApplicationCall.logInternalError(message: String? = null, cause: Throwable? = null) {
     val content = listOfNotNull(
         "Internal Error '${request.methodAndUrl()}'",

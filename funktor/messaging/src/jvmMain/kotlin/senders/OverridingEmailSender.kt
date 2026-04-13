@@ -5,6 +5,7 @@ import io.peekandpoke.funktor.messaging.EmailSender
 import io.peekandpoke.funktor.messaging.MailingOverride
 import io.peekandpoke.funktor.messaging.api.EmailResult
 
+/** Decorator that applies a [MailingOverride] to the email before delegating to the wrapped sender. */
 class OverridingEmailSender(
     private val override: MailingOverride,
     private val wrapped: EmailSender,

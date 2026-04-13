@@ -9,6 +9,7 @@ import io.peekandpoke.karango.aql.LET
 import io.peekandpoke.karango.aql.RETURN
 import io.peekandpoke.karango.e2e.database
 import io.peekandpoke.karango.testdomain.testPersons
+import io.peekandpoke.ultra.vault.value
 
 @Suppress("ClassName")
 class `E2E-Crud-Document-Spec` : StringSpec({

@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
+/** Converts the incoming request parameters to the typed route parameters object. */
 suspend fun <PARAMS> ApplicationCall.convertIncomingParameters(route: TypedRoute<PARAMS>): PARAMS {
     @Suppress("UNCHECKED_CAST")
     return incomingConverter.convert(

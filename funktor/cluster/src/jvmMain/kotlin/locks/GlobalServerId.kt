@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.cluster.locks
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.ultra.common.network.NetworkUtils
 
+/** Derives a stable, unique server identifier from the app configuration and network fingerprint. */
 class GlobalServerId(config: AppConfig) {
     companion object {
         fun withoutConfig() = GlobalServerId(AppConfig.empty)

@@ -48,6 +48,7 @@ kotlin {
                 api(project(":kraft:addons:prismjs"))
                 api(project(":kraft:addons:signaturepad"))
                 api(project(":kraft:addons:sourcemappedstacktrace"))
+                api(project(":kraft:addons:threejs"))
             }
         }
     }

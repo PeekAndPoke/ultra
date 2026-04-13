@@ -4,13 +4,15 @@ import io.peekandpoke.ultra.slumber.Awaker
 import io.peekandpoke.ultra.slumber.Slumberer
 import io.peekandpoke.ultra.vault.NullEntityCache
 import io.peekandpoke.ultra.vault.Ref
-import kotlinx.coroutines.runBlocking
+import io.peekandpoke.ultra.vault.Storable
+import io.peekandpoke.ultra.vault.VaultException
 
 /**
  * Slumber codec for [Ref] instances.
  *
- * **Awaking:** expects a document-id string (e.g. `"collection/key"`), looks up the entity
- * from the database (using an [EntityCache] when available), and returns a [Ref] wrapping it.
+ * **Awaking:** expects a document-id string (e.g. `"collection/key"`) and returns a lazy [Ref].
+ * The actual entity lookup is deferred to the [Ref.resolve] call, which runs in a suspend context.
+ * No `runBlocking` — the caller pays for the resolution on their own coroutine.
  *
  * **Slumbering:** serializes a [Ref] back to its `_id` string.
  */
@@ -22,29 +24,23 @@ object RefCodec : Awaker, Slumberer {
             return null
         }
 
-        val database = context.attributes[VaultSlumberModule.DatabaseKey]
+        val database = context.attributes[VaultSlumberModule.DatabaseKey] ?: return null
+        val cache = context.attributes[VaultSlumberModule.EntityCacheKey] ?: NullEntityCache
+        val coll = data.split("/").first()
 
-        return if (database != null) {
-            val cache = context.attributes[VaultSlumberModule.EntityCacheKey] ?: NullEntityCache
-
-            val coll = data.split("/").first()
-
-            cache.getOrPut(data) {
-                // TODO: [AsyncIO] can we get rid of this runBlocking ?
-                //       Probably the whole Slumber and all codecs would have to be async then ...
-                runBlocking {
-                    database.getRepository(coll).findById(data)
-                }
-            }?.asRef
-        } else {
-            null
+        // Lazy — the suspend resolver is stored, NOT executed during awake().
+        // Resolution happens when the user calls ref.resolve() or ref() in a suspend context.
+        @Suppress("UNCHECKED_CAST")
+        return Ref.lazy<Any>(_id = data) {
+            val found = cache.getOrPutAsync(data) {
+                database.getRepository(coll).findById(data)
+            }
+            found as? Storable<Any> ?: throw VaultException("Referenced entity not found: $data")
         }
     }
 
     override fun slumber(data: Any?, context: Slumberer.Context): Any? = when (data) {
-
         is Ref<*> -> data._id
-
         else -> null
     }
 }

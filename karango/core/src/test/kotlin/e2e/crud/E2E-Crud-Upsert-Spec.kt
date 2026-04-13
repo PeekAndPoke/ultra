@@ -13,6 +13,7 @@ import io.peekandpoke.karango.testdomain.TestPersonDetails
 import io.peekandpoke.karango.testdomain.testPersons
 import io.peekandpoke.ultra.vault.New
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.value
 
 @Suppress("ClassName")
 class `E2E-Crud-Upsert-Spec` : StringSpec({

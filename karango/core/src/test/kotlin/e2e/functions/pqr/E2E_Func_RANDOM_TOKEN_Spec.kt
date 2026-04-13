@@ -10,6 +10,7 @@ import io.peekandpoke.karango.aql.aql
 import io.peekandpoke.karango.e2e.karangoDriver
 import io.peekandpoke.karango.e2e.withDetailedClue
 import io.peekandpoke.ultra.common.tuple
+import io.peekandpoke.ultra.vault.first
 
 @Suppress("ClassName")
 class E2E_Func_RANDOM_TOKEN_Spec : StringSpec({

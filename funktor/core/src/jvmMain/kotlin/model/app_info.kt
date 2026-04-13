@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.core.model
 
 import kotlinx.serialization.json.Json
 
+/** Creates an [AppInfo] from the version.json resource on the classpath. */
 fun AppInfo.Companion.default(
     loader: ClassLoader = Thread.currentThread().contextClassLoader,
 ): AppInfo {
@@ -10,6 +11,7 @@ fun AppInfo.Companion.default(
     )
 }
 
+/** Creates an [AppVersion] from the version.json resource on the classpath. */
 fun AppVersion.Companion.default(
     loader: ClassLoader = Thread.currentThread().contextClassLoader,
 ): AppVersion {
@@ -18,6 +20,7 @@ fun AppVersion.Companion.default(
     )
 }
 
+/** Loads an [AppVersion] by parsing a JSON resource file. */
 fun AppVersion.Companion.fromResource(
     path: String = "version.json",
     loader: ClassLoader = Thread.currentThread().contextClassLoader,

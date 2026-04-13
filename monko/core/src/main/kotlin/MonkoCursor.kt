@@ -3,6 +3,8 @@ package io.peekandpoke.monko
 import io.peekandpoke.ultra.vault.Cursor
 import io.peekandpoke.ultra.vault.EntityCache
 import io.peekandpoke.ultra.vault.TypedQuery
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 
 class MonkoCursor<T>(
     val entries: List<T>,
@@ -12,9 +14,7 @@ class MonkoCursor<T>(
     private val _timeMs: Double = 0.0,
 ) : Cursor<T> {
 
-    override fun iterator(): Iterator<T> {
-        return entries.iterator()
-    }
+    override fun asFlow(): Flow<T> = entries.asFlow()
 
     override val count: Long
         get() = entries.size.toLong()

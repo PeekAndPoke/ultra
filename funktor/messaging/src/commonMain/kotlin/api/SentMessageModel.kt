@@ -4,6 +4,7 @@ import io.peekandpoke.ultra.datetime.MpInstant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+/** API model representing a sent message record. */
 @Serializable
 data class SentMessageModel(
     val id: String,
@@ -14,6 +15,7 @@ data class SentMessageModel(
     val createdAt: MpInstant,
     val updatedAt: MpInstant,
 ) {
+    /** Polymorphic content of a sent message. */
     @Serializable
     sealed class Content {
 

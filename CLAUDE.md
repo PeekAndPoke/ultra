@@ -37,8 +37,18 @@ snapshot. Stale plans are worse than no plans because they cause wrong prioritie
 ## Documentation
 
 - Library reference docs live in `docs-site/src/pages/ultra/*`.
-- LLM-readable mirror in `docs-site/public/llms.txt` + `docs-site/public/llms/*.md`.
-- Both files need updating when docs change. See `.claude/skills/docs-site/` for the workflow.
+- LLM-readable mirror templates live in `docs-site/src/data/llms/*.md` and `llms.txt` / `llms-full.txt` in the same dir.
+  Version strings in those templates use `{{ultraVersion}}` / `{{kraftVersion}}` placeholders, substituted at build time
+  by endpoints under `docs-site/src/pages/llms*.ts` (renderer: `docs-site/src/data/llmsTemplate.ts`).
+  **Edit the templates when docs change — never edit `docs-site/public/` for LLM mirrors.**
+- See `.claude/skills/docs-site/` for the docs workflow.
+
+## Releases
+
+- Canonical version lives in `gradle.properties` → `VERSION_NAME`. Bumping it flows through all Gradle modules.
+- Docs-site versions (`ultraVersion`, `kraftVersion` in `docs-site/src/data/site.ts`) must move in lockstep.
+- README dependency snippet (`README.MD` ~line 123) has its own hardcoded version list.
+- See `.claude/skills/release/` for the full release workflow and checklist.
 
 ## Key locations
 

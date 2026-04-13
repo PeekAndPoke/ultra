@@ -6,8 +6,10 @@ import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.vault.New
 import io.peekandpoke.ultra.vault.Stored
 
+/** Persistence layer for server beacon heartbeats. */
 interface ServerBeaconRepository {
 
+    /** No-op implementation returning in-memory defaults. */
     object Null : ServerBeaconRepository {
         override suspend fun update(serverId: String, appInfo: AppInfo): Stored<ServerBeacon> {
             val version = "${appInfo.version.describeGit()} ${appInfo.version.version}"
@@ -30,7 +32,9 @@ interface ServerBeaconRepository {
         }
     }
 
+    /** Vault-backed implementation delegating to a [Repo]. */
     class Vault(val inner: Repo) : ServerBeaconRepository {
+        /** Low-level repository operations for server beacons. */
         interface Repo {
             suspend fun update(serverId: String, appInfo: AppInfo): Stored<ServerBeacon>
 

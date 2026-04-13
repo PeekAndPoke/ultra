@@ -11,6 +11,7 @@ import io.peekandpoke.karango.aql.aql
 import io.peekandpoke.karango.e2e.E2ePerson
 import io.peekandpoke.karango.e2e.karangoDriver
 import io.peekandpoke.ultra.common.tuple
+import io.peekandpoke.ultra.vault.first
 
 @Suppress("ClassName")
 class E2E_Func_TO_LIST_Spec : StringSpec({

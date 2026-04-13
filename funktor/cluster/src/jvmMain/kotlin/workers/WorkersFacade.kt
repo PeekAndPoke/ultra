@@ -14,6 +14,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
+/** Orchestrates scheduling and execution of registered [Worker] instances. */
 class WorkersFacade(
     private val kontainer: Kontainer,
     private val kronos: Kronos,
@@ -22,6 +23,7 @@ class WorkersFacade(
     private val history: WorkerHistory,
     private val log: Log,
 ) {
+    /** A worker together with its running coroutine job. */
     class RunningWorker(
         val worker: Worker,
         val job: Deferred<*>,

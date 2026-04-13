@@ -57,18 +57,17 @@ private val dbAndDriver = createDatabase { driver ->
 val database: Database = dbAndDriver.first
 val karangoDriver: KarangoDriver = dbAndDriver.second
 
-fun <T, R : Any> withDetailedClue(expression: AqlExpression<T>, expected: Any?, block: () -> R): R {
+suspend fun <T, R : Any> withDetailedClue(expression: AqlExpression<T>, expected: Any?, block: suspend () -> R): R {
 
     val printerResult = expression.print()
 
-    return withClue(
-        listOf(
-            "Type:     $expression",
-            "AQL:      ${printerResult.query}",
-            "Vars:     ${printerResult.vars}",
-            "Readable: ${printerResult.raw}",
-            "Expected: $expected"
-        ).joinToString("\n").surround("\n"),
-        block
-    )
+    val clue = listOf(
+        "Type:     $expression",
+        "AQL:      ${printerResult.query}",
+        "Vars:     ${printerResult.vars}",
+        "Readable: ${printerResult.raw}",
+        "Expected: $expected"
+    ).joinToString("\n").surround("\n")
+
+    return withClue(clue) { block() }
 }
