@@ -396,5 +396,4 @@ private class BreakoutGame(
             }
         }
     }
-
 }

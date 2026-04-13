@@ -80,7 +80,7 @@ external class Ticker {
 }
 
 /** Base display object — can be added to the stage. */
-external open class Container {
+open external class Container {
     var x: Double
     var y: Double
     var visible: Boolean

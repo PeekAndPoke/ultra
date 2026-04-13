@@ -51,7 +51,7 @@ external class Color {
 }
 
 /** Base scene graph node. */
-external open class Object3D {
+open external class Object3D {
     val position: Vector3
     val rotation: Euler
     val scale: Vector3
@@ -74,7 +74,7 @@ external class Scene : Object3D {
 }
 
 /** Base camera. */
-external open class Camera : Object3D
+open external class Camera : Object3D
 
 /** Perspective camera — most common 3D camera. */
 external class PerspectiveCamera(
@@ -134,7 +134,7 @@ external class WebGLRenderer(parameters: WebGLRendererParameters = definedExtern
 }
 
 /** Base geometry. */
-external open class BufferGeometry {
+open external class BufferGeometry {
     fun dispose()
 }
 
@@ -180,7 +180,7 @@ external class TorusGeometry(
 ) : BufferGeometry
 
 /** Base material. */
-external open class Material {
+open external class Material {
     var transparent: Boolean
     var opacity: Double
     var visible: Boolean
@@ -239,7 +239,7 @@ external class Mesh(
 }
 
 /** Base light. */
-external open class Light : Object3D {
+open external class Light : Object3D {
     val color: Color
     var intensity: Double
 }

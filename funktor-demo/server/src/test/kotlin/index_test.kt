@@ -14,6 +14,5 @@ val testApp = funktorApp<FunktorDemoConfig>(
     },
 )
 
-
 inline fun <C : AppConfig> AppSpecAware<C>.apiApp(block: AppUnderTest<C>.() -> Unit) =
     testApp(host = "api.funktor-demo.local").block()
