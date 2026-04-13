@@ -276,8 +276,8 @@ formatting:
     active: true
     autoCorrect: true
   NoMultipleSpaces:
-    active: true
-    autoCorrect: true
+    active: false
+    autoCorrect: false
   NoSemicolons:
     active: true
     autoCorrect: true
