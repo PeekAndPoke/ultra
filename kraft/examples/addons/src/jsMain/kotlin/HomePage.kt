@@ -170,6 +170,20 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
                     +"Signature Pad"
                 }
             }
+
+            noui.card A {
+                href(routes.threejs())
+
+                noui.center.aligned.content {
+                    renderLogo(
+                        src = "images/logos/threejs.svg",
+                        alt = "Three.js Logo",
+                    )
+                }
+                noui.center.aligned.content {
+                    +"Three.js (Spinning Cube)"
+                }
+            }
         }
     }
 

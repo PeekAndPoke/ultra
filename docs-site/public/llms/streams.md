@@ -220,6 +220,25 @@ This means unused streams cost nothing.
 
 Every operator takes a stream and returns a new stream. Chain them freely.
 
+## steady
+
+Not an operator on an existing stream — a factory for a `Stream<T>` that always holds the same value. It never changes
+and never notifies beyond the initial delivery.
+
+```kotlin
+import io.peekandpoke.ultra.streams.steady
+
+val pi = steady(3.14)
+
+println(pi())  // 3.14
+
+// Subscribers are called once with the value and never again
+pi.subscribeToStream { println(it) }  // prints "3.14"
+```
+
+Handy when an API wants a `Stream<T>` but you only have a plain value — no need to spin up a `StreamSource` just to
+never update it.
+
 ## map
 
 Transform each value:

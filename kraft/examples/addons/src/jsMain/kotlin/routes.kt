@@ -13,6 +13,7 @@ import io.peekandpoke.kraft.examples.jsaddons.pdfjs.mount
 import io.peekandpoke.kraft.examples.jsaddons.pixijs.BreakoutExample
 import io.peekandpoke.kraft.examples.jsaddons.prismjs.PrismJsExample
 import io.peekandpoke.kraft.examples.jsaddons.signaturepad.SignaturePadExample
+import io.peekandpoke.kraft.examples.jsaddons.threejs.SpinningCubeExample
 import io.peekandpoke.kraft.routing.RootRouterBuilder
 import io.peekandpoke.kraft.routing.Static
 
@@ -30,6 +31,7 @@ class Routes {
     val pixijs = Static("/example/pixi-js")
     val prismjs = Static("/example/prism-js")
     val signaturePad = Static("/example/signature-pad")
+    val threejs = Static("/example/three-js")
 
     val core = CoreRoutes()
 }
@@ -50,6 +52,7 @@ fun RootRouterBuilder.mount(routes: Routes) {
     mount(routes.pixijs) { BreakoutExample() }
     mount(routes.prismjs) { PrismJsExample() }
     mount(routes.signaturePad) { SignaturePadExample() }
+    mount(routes.threejs) { SpinningCubeExample() }
 
     mount(routes.core)
 }

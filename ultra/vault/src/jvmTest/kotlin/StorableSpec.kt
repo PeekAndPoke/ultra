@@ -7,6 +7,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 
 class StorableSpec : StringSpec({
 
@@ -73,6 +74,32 @@ class StorableSpec : StringSpec({
         val cast = any.castTyped<String>()
 
         cast shouldBe null
+    }
+
+    "Stored.castUntyped returns typed when match" {
+        val any: Stored<Any> = Stored(value = "text", _id = "c/1", _key = "1", _rev = "")
+        val cast = any.castUntyped<String>()
+
+        cast shouldBe any
+    }
+
+    "Stored.castUntyped returns null when no match" {
+        val any: Stored<Any> = Stored(value = 42, _id = "c/1", _key = "1", _rev = "")
+        val cast = any.castUntyped<String>()
+
+        cast shouldBe null
+    }
+
+    "Stored.modifyAsync awaits the suspend fn and preserves metadata" {
+        val modified = stored.modifyAsync { value ->
+            delay(1)
+            value.uppercase()
+        }
+
+        modified.resolve() shouldBe "HELLO"
+        modified._id shouldBe "col/123"
+        modified._key shouldBe "123"
+        modified._rev shouldBe "rev1"
     }
 
     // hasSameIdAs / hasOtherIdThan / hasIdIn ///////////////////////////////////////////////////
@@ -203,6 +230,64 @@ class StorableSpec : StringSpec({
         callCount shouldBe 1
     }
 
+    "Ref.modifyAsync stays lazy — fn only runs on resolve" {
+        var fnCalls = 0
+        val ref = Ref.eager(value = 10, _id = "c/1", _key = "1", _rev = "r")
+
+        val modified = ref.modifyAsync { value ->
+            fnCalls++
+            delay(1)
+            value * 2
+        }
+
+        fnCalls shouldBe 0
+        modified.resolve() shouldBe 20
+        fnCalls shouldBe 1
+    }
+
+    "Ref.transformAsync stays lazy — fn only runs on resolve" {
+        var fnCalls = 0
+        val ref = Ref.eager(value = "hello", _id = "c/1", _key = "1", _rev = "r")
+
+        val transformed = ref.transformAsync { value ->
+            fnCalls++
+            delay(1)
+            value.length
+        }
+
+        fnCalls shouldBe 0
+        transformed.resolve() shouldBe 5
+        fnCalls shouldBe 1
+    }
+
+    "Ref.castTyped returns typed when match after resolve" {
+        val any: Ref<Any> = Ref.eager(value = "text", _id = "c/1", _key = "1", _rev = "")
+        val cast = any.castTyped<String>()
+
+        cast shouldBe any
+    }
+
+    "Ref.castTyped returns null when no match" {
+        val any: Ref<Any> = Ref.eager(value = 42, _id = "c/1", _key = "1", _rev = "")
+        val cast = any.castTyped<String>()
+
+        cast shouldBe null
+    }
+
+    "Ref.castUntyped returns typed when match after resolve" {
+        val any: Ref<Any> = Ref.eager(value = "text", _id = "c/1", _key = "1", _rev = "")
+        val cast = any.castUntyped<String>()
+
+        cast shouldBe any
+    }
+
+    "Ref.castUntyped returns null when no match" {
+        val any: Ref<Any> = Ref.eager(value = 42, _id = "c/1", _key = "1", _rev = "")
+        val cast = any.castUntyped<String>()
+
+        cast shouldBe null
+    }
+
     "Ref.valueInternal throws when not yet resolved" {
         val ref = Ref.lazy<String>("c/1") { Stored("x", "c/1", "1", "r") }
 
@@ -237,5 +322,86 @@ class StorableSpec : StringSpec({
         val modified = new.modify { it.uppercase() }
 
         modified.resolve() shouldBe "HELLO"
+    }
+
+    "New.modifyAsync awaits the suspend fn" {
+        val new = New(value = "hello")
+        val modified = new.modifyAsync { value ->
+            delay(1)
+            value.uppercase()
+        }
+
+        modified.resolve() shouldBe "HELLO"
+    }
+
+    "New.transform maps to a different type" {
+        val new = New(value = "hello")
+        val transformed = new.transform { it.length }
+
+        transformed.resolve() shouldBe 5
+    }
+
+    "New.transformAsync awaits the suspend fn" {
+        val new = New(value = "hello")
+        val transformed = new.transformAsync { value ->
+            delay(1)
+            value.length
+        }
+
+        transformed.resolve() shouldBe 5
+    }
+
+    "New.withValue replaces the value" {
+        val new = New(value = "old", _id = "c/1", _key = "1", _rev = "r")
+        val replaced = new.withValue("new")
+
+        replaced.resolve() shouldBe "new"
+        replaced._id shouldBe "c/1"
+    }
+
+    "New.castTyped returns typed when match" {
+        val any: New<Any> = New(value = "text")
+        val cast = any.castTyped<String>()
+
+        cast shouldBe any
+    }
+
+    "New.castTyped returns null when no match" {
+        val any: New<Any> = New(value = 42)
+        val cast = any.castTyped<String>()
+
+        cast shouldBe null
+    }
+
+    "New.castUntyped returns typed when match" {
+        val any: New<Any> = New(value = "text")
+        val cast = any.castUntyped<String>()
+
+        cast shouldBe any
+    }
+
+    "New.castUntyped returns null when no match" {
+        val any: New<Any> = New(value = 42)
+        val cast = any.castUntyped<String>()
+
+        cast shouldBe null
+    }
+
+    "New.asRef converts to Ref preserving metadata" {
+        val new = New(value = "hello", _id = "c/1", _key = "1", _rev = "r")
+        val ref = new.asRef
+
+        ref.shouldBeInstanceOf<Ref<String>>()
+        ref.resolve() shouldBe "hello"
+        ref._id shouldBe "c/1"
+    }
+
+    "New.asStored converts to Stored preserving metadata" {
+        val new = New(value = "hello", _id = "c/1", _key = "1", _rev = "r")
+        val asStored = new.asStored
+
+        asStored.shouldBeInstanceOf<Stored<String>>()
+        asStored.resolve() shouldBe "hello"
+        asStored._id shouldBe "c/1"
     }
 })

@@ -107,6 +107,7 @@ export const dep = {
     kraftAddonBrowserDetect: `${kraftGroup}:addons-browserdetect:${kraftVersion}`,
     kraftAddonNxCompile: `${kraftGroup}:addons-nxcompile:${kraftVersion}`,
     kraftAddonSourceMappedStacktrace: `${kraftGroup}:addons-sourcemappedstacktrace:${kraftVersion}`,
+    kraftAddonThreeJs: `${kraftGroup}:addons-threejs:${kraftVersion}`,
     mutatorCore: `${ultraGroup}:mutator-core:${ultraVersion}`,
     mutatorKsp: `${ultraGroup}:mutator-ksp:${ultraVersion}`,
     karangoCore: `${ultraGroup}:karango-core:${ultraVersion}`,

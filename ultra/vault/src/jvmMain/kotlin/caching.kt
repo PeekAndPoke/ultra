@@ -2,8 +2,8 @@ package io.peekandpoke.ultra.vault
 
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.lang.reflect.Type
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.reflect.KClass
 
 /**
  * Entity cache for deduplicating entity lookups during deserialization.
@@ -91,13 +91,39 @@ class DefaultEntityCache : EntityCache {
 
 class SharedRepoClassLookup {
 
-    private val typeLookup = java.util.concurrent.ConcurrentHashMap<Type, Class<out Repository<*>>?>()
+    private val typeLookup = ConcurrentHashMap<KClass<*>, Any>()
 
-    private val nameLookup = java.util.concurrent.ConcurrentHashMap<String, Class<out Repository<*>>?>()
+    private val nameLookup = ConcurrentHashMap<String, Any>()
 
-    fun getOrPut(type: Type, defaultValue: () -> Class<out Repository<*>>?) =
-        typeLookup.getOrPut(type, defaultValue)
+    fun getOrPut(type: KClass<*>, defaultValue: () -> KClass<out Repository<*>>?): KClass<out Repository<*>>? =
+        lookupOrPut(typeLookup, type, defaultValue)
 
-    fun getOrPut(name: String, defaultValue: () -> Class<out Repository<*>>?) =
-        nameLookup.getOrPut(name, defaultValue)
+    fun getOrPut(name: String, defaultValue: () -> KClass<out Repository<*>>?): KClass<out Repository<*>>? =
+        lookupOrPut(nameLookup, name, defaultValue)
+
+    private fun <K : Any> lookupOrPut(
+        map: ConcurrentHashMap<K, Any>,
+        key: K,
+        defaultValue: () -> KClass<out Repository<*>>?,
+    ): KClass<out Repository<*>>? {
+        // Sentinel pattern: ConcurrentHashMap forbids null values, so we store MISSING to cache
+        // negative lookups and avoid re-walking the repository list on every miss.
+        map[key]?.let { return it.decode() }
+
+        val computed = defaultValue()
+        // putIfAbsent so the first caller wins; decode whatever is actually stored.
+        return (map.putIfAbsent(key, computed ?: MISSING) ?: (computed ?: MISSING)).decode()
+    }
+
+    private fun Any.decode(): KClass<out Repository<*>>? {
+        if (this === MISSING) {
+            return null
+        }
+        @Suppress("UNCHECKED_CAST")
+        return this as KClass<out Repository<*>>
+    }
+
+    private companion object {
+        private val MISSING = Any()
+    }
 }

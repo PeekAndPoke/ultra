@@ -37,6 +37,9 @@ sealed class Storable<out T> {
     /** Shorthand for [resolve]. */
     suspend operator fun invoke(): T = resolve()
 
+    /** Alias for [resolve]. */
+    suspend fun value(): T = resolve()
+
     /** The name of the collection the document is stored in */
     @get:JsonIgnore
     val collection get() = _id.split("/").first()
@@ -57,6 +60,14 @@ sealed class Storable<out T> {
     abstract fun <X : @UnsafeVariance T> modify(fn: (oldValue: T) -> X): Storable<X>
 
     /**
+     * Suspending variant of [modify] that allows the mapping function to perform async work.
+     *
+     * For [Stored] / [New], [fn] is awaited immediately. For [Ref], [fn] runs lazily when
+     * the resulting ref is resolved (same laziness as [modify]).
+     */
+    abstract suspend fun <X : @UnsafeVariance T> modifyAsync(fn: suspend (oldValue: T) -> X): Storable<X>
+
+    /**
      * Converts to Stored<X> where [X] : [T] by setting the [newValue].
      */
     abstract fun <X : @UnsafeVariance T> withValue(newValue: X): Storable<X>
@@ -65,6 +76,14 @@ sealed class Storable<out T> {
      * Transforms to Storable<N> where [N] has no relation to [T]
      */
     abstract fun <N> transform(fn: (current: T) -> N): Storable<N>
+
+    /**
+     * Suspending variant of [transform] that allows the mapping function to perform async work.
+     *
+     * For [Stored] / [New], [fn] is awaited immediately. For [Ref], [fn] runs lazily when
+     * the resulting ref is resolved (same laziness as [transform]).
+     */
+    abstract suspend fun <N> transformAsync(fn: suspend (current: T) -> N): Storable<N>
 
     /**
      * Checks if this [Storable] has the same id as the [other]
@@ -127,10 +146,7 @@ data class Stored<out T>(
         return withValue(fn(_value))
     }
 
-    /**
-     * Suspending variant of [modify] that allows the mapping function to perform async work.
-     */
-    suspend fun <X : @UnsafeVariance T> modifyAsync(fn: suspend (oldValue: T) -> X): Stored<X> {
+    override suspend fun <X : @UnsafeVariance T> modifyAsync(fn: suspend (oldValue: T) -> X): Stored<X> {
         return withValue(fn(_value))
     }
 
@@ -144,6 +160,15 @@ data class Stored<out T>(
     }
 
     override fun <N> transform(fn: (current: T) -> N): Stored<N> {
+        return Stored(
+            _value = fn(_value),
+            _id = _id,
+            _key = _key,
+            _rev = _rev,
+        )
+    }
+
+    override suspend fun <N> transformAsync(fn: suspend (current: T) -> N): Stored<N> {
         return Stored(
             _value = fn(_value),
             _id = _id,
@@ -257,10 +282,26 @@ class Ref<out T>(
         }
     }
 
+    override suspend fun <X : @UnsafeVariance T> modifyAsync(fn: suspend (oldValue: T) -> X): Ref<X> {
+        val self = this
+        return lazy(_id) {
+            val resolved = self.resolve()
+            Stored(fn(resolved), _id, _key, _rev)
+        }
+    }
+
     override fun <X : @UnsafeVariance T> withValue(newValue: X): Ref<X> =
         eager(newValue, _id, _key, _rev)
 
     override fun <N> transform(fn: (current: T) -> N): Ref<N> {
+        val self = this
+        return lazy(_id) {
+            val resolved = self.resolve()
+            Stored(fn(resolved), _id, _key, _rev)
+        }
+    }
+
+    override suspend fun <N> transformAsync(fn: suspend (current: T) -> N): Ref<N> {
         val self = this
         return lazy(_id) {
             val resolved = self.resolve()
@@ -332,6 +373,10 @@ data class New<out T>(
         return withValue(fn(_value))
     }
 
+    override suspend fun <X : @UnsafeVariance T> modifyAsync(fn: suspend (oldValue: T) -> X): New<X> {
+        return withValue(fn(_value))
+    }
+
     override fun <X : @UnsafeVariance T> withValue(newValue: X): New<X> {
         return New(
             _value = newValue,
@@ -342,6 +387,15 @@ data class New<out T>(
     }
 
     override fun <N> transform(fn: (current: T) -> N): New<N> {
+        return New(
+            _value = fn(_value),
+            _id = _id,
+            _key = _key,
+            _rev = _rev,
+        )
+    }
+
+    override suspend fun <N> transformAsync(fn: suspend (current: T) -> N): New<N> {
         return New(
             _value = fn(_value),
             _id = _id,

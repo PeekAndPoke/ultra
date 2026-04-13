@@ -13,7 +13,25 @@ import { Code } from 'astro:components';
   Every operator takes a stream and returns a new stream. Chain them freely.
 </p>
 
-<h2>map</h2>
+    <h2>steady</h2>
+
+    <p>Not an operator on an existing stream — a factory for a <code>Stream&lt;T&gt;</code> that always
+        holds the same value. It never changes and never notifies beyond the initial delivery.</p>
+
+    <Code code={`import io.peekandpoke.ultra.streams.steady
+
+val pi = steady(3.14)
+
+println(pi())  // 3.14
+
+// Subscribers are called once with the value and never again
+pi.subscribeToStream { println(it) }  // prints "3.14"`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>Handy when an API wants a <code>Stream&lt;T&gt;</code> but you only have a plain value — no
+        need to spin up a <code>StreamSource</code> just to never update it.
+    </Aside>
+
+    <h2>map</h2>
 
 <p>Transform each value:</p>
 

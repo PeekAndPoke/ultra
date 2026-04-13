@@ -46,6 +46,10 @@ Ref/LazyRef unified (LazyRef deleted), RefCodec zero-runBlocking, EntityCache as
 messaging, core, rest, logging, testing, insights, all). inspect and staticweb deferred as internal
 tooling.
 
+**Storable API consistency (DONE 2026-04-13):** `modifyAsync` and `transformAsync` lifted to
+`Storable` sealed class; implemented on all three subclasses (Stored/Ref/New) with correct
+eager/lazy semantics. 17 new tests in StorableSpec cover cast + modify + transform variants.
+
 **Released:** 0.105.0 with Kraft lifecycle hooks.
 
 ---

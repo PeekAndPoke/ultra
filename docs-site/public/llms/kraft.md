@@ -56,7 +56,8 @@ This means:
 - **Routing** — Type-safe routes with params, middleware for auth guards, and nested layouts.
 - **Forms & Validation** — Two-way binding, field validation, draft/commit pattern — all type-safe.
 - **SemanticUI DSL** — `ui.blue.button { +"Click" }` — a beautiful, fluent API for FomanticUI.
-- **11 Addons** — ChartJS, PrismJS, PDF viewer, PixiJS (2D WebGL), markdown, signature pad, and more — loaded on demand
+- **12 Addons** — ChartJS, PrismJS, PDF viewer, PixiJS (2D WebGL), Three.js (3D WebGL), markdown, signature pad, and
+  more — loaded on demand
   via the AddonRegistry.
 
 ## Quick taste
@@ -2322,6 +2323,7 @@ the addon becomes ready — subscribing is just like any other stream.
 | `chartjs`                | [Chart.js](https://www.chartjs.org/)         | Bar, line, pie, radar charts        |
 | `pdfjs`                  | [pdf.js](https://mozilla.github.io/pdf.js/)  | Render PDFs in-browser (CDN-loaded) |
 | `pixijs`                 | [PixiJS v8](https://pixijs.com/)             | 2D WebGL/WebGPU rendering           |
+| `threejs`                | [Three.js](https://threejs.org/)             | 3D WebGL rendering                  |
 | `signaturepad`           | SignaturePad                                 | Capture handwritten signatures      |
 | `jwtdecode`              | jwt-decode                                   | Decode JWT tokens client-side       |
 | `avatars`                | MinIdenticons                                | SVG identicons from strings         |
@@ -2487,6 +2489,61 @@ class Scene(ctx: NoProps) : PureComponent(ctx) {
 
 The `starting` flag prevents a race: `onMount` and `onUpdate` both call `tryStart()`, but the `launch { }` is async.
 Without a sync flag, you'd create two Applications before the first finishes.
+
+## threejs — 3D WebGL
+
+Three.js is the standard 3D engine for the web. Register it as lazy — it's a large library and usually only needed on
+specific pages:
+
+```kotlin
+addons {
+    threeJs(lazy = true)
+}
+```
+
+The `ThreeJs` component wraps a canvas and runs the render loop for you. Build the scene in `onReady`; advance animation
+state in `onFrame`:
+
+```kotlin
+class SpinningCube(ctx: NoProps) : PureComponent(ctx) {
+    private val three: ThreeJsAddon? by subscribingTo(addons.threeJs)
+    private var cube: Mesh? = null
+
+    override fun VDom.render() {
+        val addon = three ?: return ui.placeholder.segment { +"Loading..." }
+
+        ThreeJs(
+            clearColor = 0x1a1a2e,
+            onReady = { ctx ->
+                ctx.scene.add(addon.createAmbientLight(0xffffff, 0.6))
+                val dir = addon.createDirectionalLight(0xffffff, 0.8)
+                dir.position.set(5.0, 10.0, 7.5)
+                ctx.scene.add(dir)
+
+                val mesh = addon.createMesh(
+                    addon.createBoxGeometry(1.5, 1.5, 1.5),
+                    addon.createMeshStandardMaterial(jsObject {
+                        this.color = 0xe94560
+                        this.metalness = 0.3
+                        this.roughness = 0.4
+                    }),
+                )
+                ctx.scene.add(mesh)
+                cube = mesh
+            },
+            onFrame = { f ->
+                val c = cube ?: return@ThreeJs
+                val r = f.deltaMs / 1000.0
+                c.rotation.x += 0.6 * r
+                c.rotation.y += 0.9 * r
+            },
+        )
+    }
+}
+```
+
+The component creates a default `PerspectiveCamera` at `z = 5`. Override via `createCamera = { aspect -> ... }` if you
+need an orthographic or repositioned camera.
 
 ## Signature Pad — Capture signatures
 

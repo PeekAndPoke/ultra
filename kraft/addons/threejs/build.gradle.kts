@@ -47,17 +47,15 @@ kotlin {
 
         jsMain {
             dependencies {
-                api(Deps.Npm { konva() })
+                api(Deps.Npm { threeJs() })
             }
         }
 
         jsTest {
             dependencies {
                 jsTestDeps()
+                implementation(project(":kraft:testing"))
             }
         }
     }
-}
-
-mavenPublishing {
 }

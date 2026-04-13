@@ -23,12 +23,12 @@ class IncomingVaultConverter(private val db: Database) : IncomingParamConverter 
 
         val inner = getStoredInner(type)
 
-        return inner != null && db.hasRepositoryStoring(inner.java)
+        return inner != null && db.hasRepositoryStoring(inner)
     }
 
     override suspend fun convert(value: String, type: KType): Stored<Any>? {
         return getStoredInner(type)?.let { inner ->
-            db.getRepositoryStoring(inner.java).findById(value)
+            db.getRepositoryStoring(inner).findById(value)
         }
     }
 

@@ -874,12 +874,12 @@ The Database can also find which repository stores a given entity type:
 
 ```kotlin
 // Find the repository that stores Person entities
-val repo = database.getRepositoryStoring(Person::class.java)
+val repo = database.getRepositoryStoring(Person::class)
 // -> PersonsRepo
 
 // Check if any repository handles a type
-database.hasRepositoryStoring(Person::class.java)  // true
-database.hasRepositoryStoring(Unknown::class.java)  // false
+database.hasRepositoryStoring(Person::class)  // true
+database.hasRepositoryStoring(Unknown::class)  // false
 
 // Find by collection name
 val repo = database.getRepository("persons")

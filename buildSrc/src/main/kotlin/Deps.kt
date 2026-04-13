@@ -474,6 +474,9 @@ object Deps {
         // https://www.npmjs.com/package/sourcemapped-stacktrace
         fun KotlinDependencyHandler.sourcemappedStacktrace() = npm("sourcemapped-stacktrace", "1.1.11")
 
+        // https://www.npmjs.com/package/three
+        fun KotlinDependencyHandler.threeJs() = npm("three", "0.183.2")
+
         // https://www.npmjs.com/package/trim-canvas
         fun KotlinDependencyHandler.trimCanvas() = npm("trim-canvas", "0.1.2")
     }

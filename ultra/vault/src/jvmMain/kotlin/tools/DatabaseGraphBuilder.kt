@@ -65,8 +65,7 @@ class DatabaseGraphBuilder(
             // Is this a direct ref?
             if (type.classifier == Ref::class) {
                 (type.arguments[0].type?.classifier as? KClass<*>)?.let { refClass ->
-                    // TODO: what if there is not repo ?
-                    database.getRepositoryStoringOrNull(refClass.java).let { repo ->
+                    database.getRepositoryStoringOrNull(refClass).let { repo ->
                         references.add(
                             DatabaseGraphModel.Reference(
                                 repo = repo?.let {
