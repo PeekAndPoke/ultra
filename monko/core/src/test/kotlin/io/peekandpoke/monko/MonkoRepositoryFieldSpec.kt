@@ -104,5 +104,4 @@ class MonkoRepositoryFieldSpec : FreeSpec() {
         this.print(printer)
         return printer.build().query
     }
-
 }
