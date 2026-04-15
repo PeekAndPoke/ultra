@@ -12,7 +12,7 @@ and funktor-v1-roadmap plans. All open work for v1 lives here.
 
 | Gate                           | Status              | What's left                                                                  |
 |--------------------------------|---------------------|------------------------------------------------------------------------------|
-| G1 — Zero CRITICAL/HIGH issues | 🟡 Wave 1 DONE      | 3 HIGH items still open in Funktor (see "Open Funktor Issues" below)         |
+| G1 — Zero CRITICAL/HIGH issues | 🟡 Wave 1 DONE      | 2 HIGH items still open in Funktor (see "Open Funktor Issues" below)         |
 | G2 — Public API tested (≥25%)  | 🟡 IN PROGRESS      | vault/html/semanticui ✅ hardened (2026-04-07); Funktor modules still thin    |
 | G3 — TODOs resolved or tracked | 🟡 IN PROGRESS      | ~15 in Funktor, 5 reflection, 0 vault                                        |
 | G4 — KDoc 90%+ public API      | 🟡 IN PROGRESS      | cache ✅, Funktor ✅ (~85% after 2026-04-13 pass); inspect/staticweb remaining |
@@ -168,9 +168,19 @@ Raise Funktor from ~11% to 25%+ test ratio. Focus on the modules with the thinne
    **FIXED 2026-04-13** — both accessors now use the existing `sync { }` helper. Regression test
    in `WorkerTrackerSpec` (1000 concurrent `put` calls).
 
-3. **`runBlocking` in Ktor lifecycle event handlers** — nested blocking risk, potential deadlock.
-   `funktor/core/src/jvmMain/kotlin/lifecycle/AppLifeCycleBuilder.kt:37-122`.
-   Fix: ensure inner `runBlocking` uses `Dispatchers.IO`.
+3. ~~**`runBlocking` in Ktor lifecycle event handlers** — nested blocking risk, potential deadlock.~~
+   **FIXED 2026-04-15** — `Application.lifeCycle(...)` builder callback is now `suspend`; outer
+   bridge uses `runBlocking(coroutineContext)` rooted in the Application's own scope; `register(...)`
+   and `onAppStarting(...)` became `suspend fun` so starting hooks run inline with no nested scope;
+   the four event-subscribed hooks use `runBlocking(app.coroutineContext)` (shared dispatcher,
+   shared parent job — no detached scope). Tear-down still blocks, preserving cleanup ordering.
+   Five near-identical hook-dispatch blocks extracted into a single `runHooks(...)` helper.
+   Regression tests in `AppLifeCycleSpec` cover inline suspend semantics, `yield()` under the
+   starting hooks, AppStartException propagation, swallow-behavior for non-fatal exceptions,
+   `ExecutionOrder` priority, and `ApplicationStarted` event firing.
+   `funktor/core/src/jvmMain/kotlin/lifecycle/AppLifeCycleBuilder.kt` +
+   `funktor/core/src/jvmMain/kotlin/lifecycle/lifecycle.kt` +
+   `funktor/core/src/jvmTest/kotlin/lifecycle/AppLifeCycleSpec.kt`.
 
 4. **`queueIfNotPresent` TOCTOU race across JVMs** — duplicate jobs possible in cluster.
    `funktor/cluster/.../backgroundjobs/BackgroundJobs.kt:186-193`.

@@ -100,6 +100,7 @@ kotlin {
                 Deps.Test {
                     jvmTestDeps()
                 }
+                implementation(Deps.Ktor.Server.Test.host)
             }
         }
     }

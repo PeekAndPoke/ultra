@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.core.lifecycle
 import io.ktor.events.EventDefinition
 import io.ktor.events.EventHandler
 import io.ktor.server.application.*
+import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks.ExecutionOrder
 import io.peekandpoke.ultra.kontainer.Kontainer
 import kotlinx.coroutines.runBlocking
 
@@ -25,94 +26,73 @@ class AppLifeCycleBuilder internal constructor(private val app: Application) {
     /**
      * Registers all hooks by getting the [AppLifeCycleHooks] service from the given [kontainer].
      */
-    fun register(kontainer: Kontainer) {
+    suspend fun register(kontainer: Kontainer) {
         kontainer.getOrNull(AppLifeCycleHooks::class)?.let { register(it) }
     }
 
     /**
      * Registers all [hooks] given.
      */
-    fun register(hooks: AppLifeCycleHooks) {
-        onAppStarting {
-            runBlocking {
-                hooks.onAppStarting.sortedByDescending { it.executionOrder }.forEach { hook ->
-
-                    val name = hook::class.qualifiedName
-
-                    app.log.info("Running OnAppStarting hook $name with priority ${hook.executionOrder.priority}")
-
-                    try {
-                        hook.onAppStarting(app)
-                    } catch (e: AppStartException) {
-                        throw e
-                    } catch (e: Throwable) {
-                        app.log.error("OnAppStarting hook $name failed!", e)
-                    }
-                }
-            }
+    suspend fun register(hooks: AppLifeCycleHooks) {
+        // onAppStarting fires inline during lifeCycle() — suspend hooks run directly.
+        // AppStartException is a fatal signal and must abort startup.
+        runHooks(hooks.onAppStarting, "OnAppStarting", { it.executionOrder }, rethrow = { it is AppStartException }) {
+            it.onAppStarting(app)
         }
 
+        // onAppStarted / StopPreparing / Stopping / Stopped fire via Ktor's non-suspend
+        // EventHandler. We bridge to suspend via runBlocking rooted in the Application's
+        // coroutineContext so we never create a detached scope.
         onAppStarted { application ->
-            runBlocking {
-                hooks.onAppStarted.sortedByDescending { it.executionOrder }.forEach { hook ->
-                    val name = hook::class.qualifiedName
-
-                    app.log.info("Running OnAppStarted hook $name with priority ${hook.executionOrder.priority}")
-
-                    try {
-                        hook.onAppStarted(application)
-                    } catch (e: Throwable) {
-                        app.log.error("OnAppStarted hook $name failed!", e)
-                    }
+            runBlocking(app.coroutineContext) {
+                runHooks(hooks.onAppStarted, "OnAppStarted", { it.executionOrder }) {
+                    it.onAppStarted(application)
                 }
             }
         }
 
-        onAppStopPreparing { application ->
-            runBlocking {
-                hooks.onAppStopPreparing.sortedByDescending { it.executionOrder }.forEach { hook ->
-                    val name = hook::class.qualifiedName
-
-                    app.log.info("Running OnAppStopPreparing hook $name with priority ${hook.executionOrder.priority}")
-
-                    try {
-                        hook.onAppStopPreparing(application)
-                    } catch (e: Throwable) {
-                        app.log.error("OnAppStopPreparing hook $name failed!", e)
-                    }
+        onAppStopPreparing { environment ->
+            runBlocking(app.coroutineContext) {
+                runHooks(hooks.onAppStopPreparing, "OnAppStopPreparing", { it.executionOrder }) {
+                    it.onAppStopPreparing(environment)
                 }
             }
         }
 
         onAppStopping { application ->
-            runBlocking {
-                hooks.onAppStopping.sortedByDescending { it.executionOrder }.forEach { hook ->
-                    val name = hook::class.qualifiedName
-
-                    app.log.info("Running OnAppStopping hook $name with priority ${hook.executionOrder.priority}")
-
-                    try {
-                        hook.onAppStopping(application)
-                    } catch (e: Throwable) {
-                        app.log.error("OnAppStopping hook $name failed!", e)
-                    }
+            runBlocking(app.coroutineContext) {
+                runHooks(hooks.onAppStopping, "OnAppStopping", { it.executionOrder }) {
+                    it.onAppStopping(application)
                 }
             }
         }
 
         onAppStopped { application ->
-            runBlocking {
-                hooks.onAppStopped.sortedByDescending { it.executionOrder }.forEach { hook ->
-                    val name = hook::class.qualifiedName
-
-                    app.log.info("Running OnAppStopped hook $name with priority ${hook.executionOrder.priority}")
-
-                    try {
-                        hook.onAppStopped(application)
-                    } catch (e: Throwable) {
-                        app.log.error("OnAppStopped hook $name failed!", e)
-                    }
+            runBlocking(app.coroutineContext) {
+                runHooks(hooks.onAppStopped, "OnAppStopped", { it.executionOrder }) {
+                    it.onAppStopped(application)
                 }
+            }
+        }
+    }
+
+    private suspend fun <T : Any> runHooks(
+        hooks: List<T>,
+        phase: String,
+        order: (T) -> ExecutionOrder,
+        rethrow: (Throwable) -> Boolean = { false },
+        invoke: suspend (T) -> Unit,
+    ) {
+        hooks.sortedByDescending(order).forEach { hook ->
+            val name = hook::class.qualifiedName
+
+            app.log.info("Running $phase hook $name with priority ${order(hook).priority}")
+
+            try {
+                invoke(hook)
+            } catch (e: Throwable) {
+                if (rethrow(e)) throw e
+                app.log.error("$phase hook $name failed!", e)
             }
         }
     }
@@ -120,10 +100,8 @@ class AppLifeCycleBuilder internal constructor(private val app: Application) {
     /**
      * Registers a hook that is run immediately, before the app is started.
      */
-    fun onAppStarting(handler: EventHandler<Application>) {
-        runBlocking {
-            handler(app)
-        }
+    suspend fun onAppStarting(handler: suspend (Application) -> Unit) {
+        handler(app)
     }
 
     /**

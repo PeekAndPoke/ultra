@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+    <title>three.js</title>
+    <polygon points="100,10 190,180 10,180" fill="none" stroke="#000" stroke-width="6" stroke-linejoin="round"/>
+    <polygon points="100,55 155,165 45,165" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="100,100 125,150 75,150" fill="#000"/>
+</svg>
