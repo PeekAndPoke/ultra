@@ -17,6 +17,17 @@ data class BackgroundJobQueued(
     val dueAt: MpInstant = MpInstant.now(),
     val state: State = State.WAITING,
     val results: List<BackgroundJobExecutionResult> = emptyList(),
+    /**
+     * Slot key for cross-JVM atomic deduplication. When non-null, the storage layer enforces
+     * uniqueness (partial unique index on Mongo, sparse unique index on Karango) so two
+     * concurrent `queueIfNotPresent` calls on different JVMs cannot both succeed.
+     * `create(...)` leaves this null so the unique constraint does not apply, allowing many
+     * same-type jobs to coexist.
+     *
+     * Cleared atomically when the job is claimed (state -> PROCESSING) so a new
+     * `queueIfNotPresent` for the same (type, dataHash) can succeed while the current one runs.
+     */
+    val dedupeKey: String? = null,
 ) {
     companion object {
         private fun calcHash(data: Any?): Int {
@@ -28,6 +39,9 @@ data class BackgroundJobQueued(
 
             return hash
         }
+
+        /** Builds the cross-JVM dedupe slot key from a job's type and data hash. */
+        fun makeDedupeKey(type: String, dataHash: Int): String = "$type:$dataHash"
     }
 
     private data class Hash(

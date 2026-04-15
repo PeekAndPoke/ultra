@@ -155,6 +155,44 @@ class MonkoIndexBuilderSpec : FreeSpec() {
                     val details = builder.getIndexDefinitions()[0].getIndexDetails()
                     details.type shouldBe "unique"
                 }
+
+                "should default to non-sparse" {
+                    val repo = TestRepo()
+                    val builder = MonkoIndexBuilder(repo)
+
+                    builder.uniqueIndex {
+                        field { it.property<String>("email") }
+                    }
+
+                    val indexDef = builder.getIndexDefinitions()[0] as MonkoIndexBuilder.UniqueIndexBuilder<*>
+                    indexDef.isSparse() shouldBe false
+                }
+
+                "sparse() should mark the index as sparse" {
+                    val repo = TestRepo()
+                    val builder = MonkoIndexBuilder(repo)
+
+                    builder.uniqueIndex {
+                        field { it.property<String>("dedupeKey") }
+                        sparse()
+                    }
+
+                    val indexDef = builder.getIndexDefinitions()[0] as MonkoIndexBuilder.UniqueIndexBuilder<*>
+                    indexDef.isSparse() shouldBe true
+                }
+
+                "sparse(false) should leave the index non-sparse" {
+                    val repo = TestRepo()
+                    val builder = MonkoIndexBuilder(repo)
+
+                    builder.uniqueIndex {
+                        field { it.property<String>("email") }
+                        sparse(false)
+                    }
+
+                    val indexDef = builder.getIndexDefinitions()[0] as MonkoIndexBuilder.UniqueIndexBuilder<*>
+                    indexDef.isSparse() shouldBe false
+                }
             }
 
             "ttlIndex" - {

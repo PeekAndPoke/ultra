@@ -1,13 +1,17 @@
 package io.peekandpoke.funktor.cluster.backgroundjobs.karango
 
+import com.arangodb.ArangoDBException
 import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
 import io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobQueued
 import io.peekandpoke.funktor.cluster.backgroundjobs.domain.dataHash
+import io.peekandpoke.funktor.cluster.backgroundjobs.domain.dedupeKey
 import io.peekandpoke.funktor.cluster.backgroundjobs.domain.dueAt
 import io.peekandpoke.funktor.cluster.backgroundjobs.domain.state
 import io.peekandpoke.funktor.cluster.backgroundjobs.domain.type
 import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import io.peekandpoke.karango.aql.ASC
+import io.peekandpoke.karango.aql.AqlExpression
+import io.peekandpoke.karango.aql.AqlValueExpr
 import io.peekandpoke.karango.aql.EQ
 import io.peekandpoke.karango.aql.FOR
 import io.peekandpoke.karango.aql.LTE
@@ -49,6 +53,17 @@ class KarangoBackgroundJobsQueueRepo(
             field { type }
             field { dataHash }
         }
+
+        // Sparse unique index that backs queueIfNotPresent's atomic dedupe across JVMs.
+        // create()-path jobs leave dedupeKey null and are excluded from the index entirely
+        // (ArangoDB sparse semantics treat null and missing as both "not indexed").
+        persistentIndex {
+            field { dedupeKey }
+            options {
+                unique(true)
+                sparse(true)
+            }
+        }
     }
 
     override suspend fun findAllSorted(page: Int?, epp: Int?): Cursor<Stored<BackgroundJobQueued>> = find {
@@ -86,9 +101,19 @@ class KarangoBackgroundJobsQueueRepo(
             FILTER(it.state EQ BackgroundJobQueued.State.WAITING)
             SORT(dueAt.ASC)
             LIMIT(1)
+            // Atomically transition state and clear dedupeKey so a new queueIfNotPresent for
+            // the same (type, dataHash) can succeed while this one runs. Sparse index treats
+            // null as not-indexed in ArangoDB, freeing the slot.
             UPDATE(it, repo) {
                 put({ state }) {
                     BackgroundJobQueued.State.PROCESSING.aql
+                }
+                put({ dedupeKey }) {
+                    // KSP-generated path is typed as String even though dedupeKey is String?,
+                    // so we have to cast a null literal to AqlExpression<String> to fit the
+                    // builder. ArangoDB sparse index excludes null values, freeing the slot.
+                    @Suppress("UNCHECKED_CAST")
+                    AqlValueExpr.Null() as AqlExpression<String>
                 }
             }
 
@@ -108,5 +133,26 @@ class KarangoBackgroundJobsQueueRepo(
         } as Int
 
         return result > 0
+    }
+
+    override suspend fun tryInsertWithDedupe(job: BackgroundJobQueued): Boolean {
+        return try {
+            insert(job)
+            true
+        } catch (e: Throwable) {
+            // Karango wraps the driver error in KarangoQueryException; unwrap to find the
+            // ArangoDBException with its errorNum. 1210 = unique constraint violated, which
+            // means our sparse unique index on dedupeKey rejected the insert because another
+            // JVM already enqueued the same (type, dataHash). Treat as no-op.
+            val arango = generateSequence<Throwable>(e) { it.cause }
+                .filterIsInstance<ArangoDBException>()
+                .firstOrNull()
+
+            if (arango?.errorNum == UNIQUE_CONSTRAINT_VIOLATED) false else throw e
+        }
+    }
+
+    private companion object {
+        const val UNIQUE_CONSTRAINT_VIOLATED = 1210
     }
 }

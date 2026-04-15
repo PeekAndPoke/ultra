@@ -6,7 +6,11 @@ import io.peekandpoke.monko.lang.MongoIterableExpr
 import io.peekandpoke.monko.lang.MongoPropertyPath
 import io.peekandpoke.monko.lang.dsl.toFieldPath
 import io.peekandpoke.ultra.vault.VaultModels
+import org.bson.BsonDocument
 import org.bson.Document
+import org.bson.codecs.configuration.CodecRegistries
+import org.bson.codecs.configuration.CodecRegistry
+import org.bson.conversions.Bson
 import java.util.concurrent.TimeUnit
 
 /**
@@ -86,22 +90,41 @@ class MonkoIndexBuilder<T : Any>(private val repo: MonkoRepository<T>) {
             return existingName == getEffectiveName()
         }
 
+        /**
+         * True when [existing] differs from this definition in fields, uniqueness, sparse, or
+         * partial-filter expression. Used to decide whether to drop and recreate.
+         */
+        private fun differsFrom(existing: Document, codecRegistry: CodecRegistry): Boolean {
+            val existingKeys = (existing["key"] as? Document)?.keys?.toList() ?: emptyList()
+            if (existingKeys != fields) return true
+
+            val desired = buildOptions()
+            if ((existing["unique"] as? Boolean ?: false) != (desired.isUnique)) return true
+            if ((existing["sparse"] as? Boolean ?: false) != (desired.isSparse)) return true
+
+            val existingFilter = existing["partialFilterExpression"] as? Document
+            val desiredFilter = desired.partialFilterExpression?.toBsonDocument(BsonDocument::class.java, codecRegistry)
+            if ((existingFilter?.toBsonDocument(BsonDocument::class.java, codecRegistry)) != desiredFilter) return true
+
+            return false
+        }
+
         /** Create this index on the given driver/collection. */
         internal suspend fun create(driver: MonkoDriver, collection: String): EnsureResult {
             return try {
                 driver.createIndex(collection, buildKeys(), buildOptions())
                 EnsureResult.Ensured(repo, getEffectiveName(), getFieldPaths())
             } catch (e: MongoCommandException) {
-                // Index already exists with same name — check if fields match
+                // Index already exists with same name — check if it still matches what we want.
                 val indexes = driver.listIndexes(collection)
                 val existing = indexes.firstOrNull { it["name"] == getEffectiveName() }
 
                 if (existing != null) {
-                    val existingKeys = (existing["key"] as? Document)?.keys?.toList() ?: emptyList()
-                    if (existingKeys == fields) {
+                    val codecRegistry = CodecRegistries.fromProviders(org.bson.codecs.DocumentCodecProvider())
+                    if (!differsFrom(existing, codecRegistry)) {
                         EnsureResult.Kept(repo, getEffectiveName(), getFieldPaths())
                     } else {
-                        // Fields differ — drop and recreate
+                        // Fields, uniqueness, sparse, or partial filter differ — drop and recreate.
                         driver.dropIndex(collection, getEffectiveName())
                         try {
                             driver.createIndex(collection, buildKeys(), buildOptions())
@@ -159,9 +182,42 @@ class MonkoIndexBuilder<T : Any>(private val repo: MonkoRepository<T>) {
     /** Builder for unique indexes. */
     class UniqueIndexBuilder<T : Any> internal constructor(repo: MonkoRepository<T>) : BaseBuilder<T>(repo) {
         override val typePrefix = "unique-"
+        private var isSparse: Boolean = false
+        private var partialFilter: Bson? = null
+
+        /**
+         * When true, only documents that have the indexed field at all are included in the
+         * index. Note: MongoDB's `sparse` only excludes documents where the field is *missing*;
+         * documents with the field set to `null` are still indexed. To exclude null values too,
+         * use [partial] with a `$type` or `$exists` filter.
+         */
+        fun sparse(value: Boolean = true) {
+            isSparse = value
+        }
+
+        /** Returns whether this index is configured as sparse. */
+        fun isSparse(): Boolean = isSparse
+
+        /**
+         * Restricts the index to documents matching [filter] (MongoDB partial filter expression).
+         *
+         * For opt-in deduplication patterns where a field is sometimes null and sometimes a
+         * value, prefer this over [sparse] so that null values are excluded too. Example:
+         * ```
+         * partial(Document("dedupeKey", Document("\$type", "string")))
+         * ```
+         */
+        fun partial(filter: Bson) {
+            partialFilter = filter
+        }
+
+        /** Returns the partial filter expression, or null if none. */
+        fun getPartialFilter(): Bson? = partialFilter
 
         override fun buildOptions(): IndexOptions {
-            return super.buildOptions().unique(true)
+            val opts = super.buildOptions().unique(true).sparse(isSparse)
+            partialFilter?.let { opts.partialFilterExpression(it) }
+            return opts
         }
     }
 

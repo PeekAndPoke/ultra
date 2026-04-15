@@ -12,7 +12,7 @@ and funktor-v1-roadmap plans. All open work for v1 lives here.
 
 | Gate                           | Status              | What's left                                                                  |
 |--------------------------------|---------------------|------------------------------------------------------------------------------|
-| G1 — Zero CRITICAL/HIGH issues | 🟡 Wave 1 DONE      | 2 HIGH items still open in Funktor (see "Open Funktor Issues" below)         |
+| G1 — Zero CRITICAL/HIGH issues | ✅ All HIGH FIXED    | All 5 HIGH items resolved (2026-04-15)                                       |
 | G2 — Public API tested (≥25%)  | 🟡 IN PROGRESS      | vault/html/semanticui ✅ hardened (2026-04-07); Funktor modules still thin    |
 | G3 — TODOs resolved or tracked | 🟡 IN PROGRESS      | ~15 in Funktor, 5 reflection, 0 vault                                        |
 | G4 — KDoc 90%+ public API      | 🟡 IN PROGRESS      | cache ✅, Funktor ✅ (~85% after 2026-04-13 pass); inspect/staticweb remaining |
@@ -182,14 +182,42 @@ Raise Funktor from ~11% to 25%+ test ratio. Focus on the modules with the thinne
    `funktor/core/src/jvmMain/kotlin/lifecycle/lifecycle.kt` +
    `funktor/core/src/jvmTest/kotlin/lifecycle/AppLifeCycleSpec.kt`.
 
-4. **`queueIfNotPresent` TOCTOU race across JVMs** — duplicate jobs possible in cluster.
-   `funktor/cluster/.../backgroundjobs/BackgroundJobs.kt:186-193`.
-   Fix: unique compound index on `(type, dataHash, state)` + catch duplicate key exception.
+4. ~~**`queueIfNotPresent` TOCTOU race across JVMs** — duplicate jobs possible in cluster.~~
+   **FIXED 2026-04-15** — replaced the read-then-write check with an atomic insert against a
+   per-backend uniqueness constraint:
+   - Domain: added nullable `BackgroundJobQueued.dedupeKey: String?`. `create(...)` leaves it
+     null; `queueIfNotPresent(...)` sets it to `"$type:$dataHash"`.
+   - Mongo: partial unique index `{ dedupeKey: { $type: "string" } }`. (Sparse alone is
+     insufficient because Mongo sparse indexes still include documents where the field is
+     present with a null value.) Required adding `partial(filter)` to Monko's
+     `UniqueIndexBuilder` DSL plus option-mismatch detection in `BaseBuilder.create()` so
+     existing sparse indexes are dropped and recreated as partial.
+   - Karango: sparse persistent unique index on `dedupeKey`. (Karango sparse correctly excludes
+     null values.)
+   - Claim path (`claimNextDue`) atomically transitions state and clears `dedupeKey` —
+     `$unset` on Mongo, `null` on Karango — so the next `queueIfNotPresent` for the same
+     (type, dataHash) succeeds while the current job runs.
+   - Backend-specific duplicate-key error mapped to `false` from `Repo.tryInsertWithDedupe`:
+     Mongo `MongoWriteException` code 11000; Karango `KarangoQueryException` wrapping
+     `ArangoDBException` errorNum 1210.
+   - Tests: existing `BackgroundJobsSpecBase` `queueIfNotQueued` tests + new
+     "queueIfNotPresent() under cross-JVM concurrency leaves at most one waiting job (TOCTOU
+     race)" — 50 concurrent calls, exactly one waiting job survives, on both backends.
+     `funktor/cluster/src/jvmMain/kotlin/backgroundjobs/{BackgroundJobs.kt,domain/BackgroundJobQueued.kt,monko/MonkoBackgroundJobsQueueRepo.kt,karango/KarangoBackgroundJobsQueueRepo.kt}` +
+     `monko/core/src/main/kotlin/MonkoIndexBuilder.kt`.
 
-5. **Global lock expiration not checked during acquisition** — crashed servers block cluster
-   until cleanup worker runs.
-   `funktor/cluster/.../locks/VaultGlobalLocksProvider.kt`.
-   Fix: check `expires` field during acquire; treat expired locks as free.
+5. ~~**Global lock expiration not checked during acquisition** — crashed servers block cluster
+   until cleanup worker runs.~~
+   **FIXED 2026-04-15** — `VaultGlobalLocksProvider.doAcquireInternal` now calls
+   `tryStealExpiredLock(key)` when its insert fails. The helper does `findById(key)` and, if
+   `expires` is in the past, removes the stale entry so the next retry iteration can acquire a
+   fresh lock. Race-safe: if two servers both try to steal, only one insert wins. Tests:
+   in-memory `VaultGlobalLockProviderSpec` + integration `MonkoGlobalLockProviderSpec` and
+   `KarangoGlobalLockProviderSpec` all assert expired locks can be acquired in under 500ms
+   (vs. up to 10s waiting for `GlobalLocksCleanupWorker`).
+   `funktor/cluster/src/jvmMain/kotlin/locks/VaultGlobalLocksProvider.kt` +
+   `funktor/cluster/src/jvmTest/kotlin/locks/VaultGlobalLockProviderSpec.kt` +
+   `funktor/cluster/src/jvmTest/kotlin/locks/{monko,karango}/*GlobalLockProviderSpec.kt`.
 
 ### MEDIUM severity (fix or document deferral)
 

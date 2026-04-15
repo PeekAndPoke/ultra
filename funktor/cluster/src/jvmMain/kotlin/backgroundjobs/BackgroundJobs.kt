@@ -168,8 +168,22 @@ class BackgroundJobs(
 
                 /**
                  * Checks if there already is a job in the queue with given [type] and [dataHash].
+                 *
+                 * Kept for diagnostics; the queueIfNotPresent path no longer relies on this and
+                 * instead uses an atomic insert against a sparse unique index on `dedupeKey`.
                  */
                 suspend fun hasWaitingByTypeAndDataHash(type: String, dataHash: Int): Boolean
+
+                /**
+                 * Atomically inserts the [job] iff no other job with the same `dedupeKey` is
+                 * currently in the WAITING state. Returns true on insert, false if a duplicate
+                 * was already present.
+                 *
+                 * Backed by a sparse unique index on `dedupeKey`. The implementation must
+                 * translate the backend-specific duplicate-key error into a `false` return
+                 * value and re-raise any other error.
+                 */
+                suspend fun tryInsertWithDedupe(job: BackgroundJobQueued): Boolean
             }
 
             override suspend fun create(job: BackgroundJobQueued) {
@@ -185,12 +199,10 @@ class BackgroundJobs(
             }
 
             override suspend fun queueIfNotPresent(job: BackgroundJobQueued) {
-                withRetry {
-                    if (!repo.hasWaitingByTypeAndDataHash(job.type, job.dataHash)) {
-                        // IMPORTANT: create without lock otherwise we have a deadlock
-                        create(job)
-                    }
-                }
+                val withDedupe = job.copy(
+                    dedupeKey = BackgroundJobQueued.makeDedupeKey(job.type, job.dataHash)
+                )
+                withRetry { repo.tryInsertWithDedupe(withDedupe) }
             }
 
             override suspend fun remove(job: Stored<BackgroundJobQueued>) {

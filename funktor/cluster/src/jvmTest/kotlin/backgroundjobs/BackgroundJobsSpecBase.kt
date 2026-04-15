@@ -20,6 +20,7 @@ import io.peekandpoke.ultra.vault.map
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -143,6 +144,33 @@ abstract class BackgroundJobsSpecBase : FreeSpec() {
                         )
                     }
                 }
+            }
+        }
+
+        "queueIfNotPresent() under cross-JVM concurrency leaves at most one waiting job (TOCTOU race)" {
+            prepareTest()
+
+            val jobData = ExampleBackgroundJobHandler01.Input(text = "race-key")
+
+            // Hammer the same dedupe key from many concurrent coroutines simulating different
+            // JVMs. Without the atomic insert-or-fail backing, the read-then-write window in
+            // the old implementation would let multiple inserts succeed.
+            val parallel = 50
+            coroutineScope {
+                repeat(parallel) {
+                    launch(Dispatchers.IO) {
+                        exampleJob01.queueIfNotPresent(jobData)
+                    }
+                }
+            }
+
+            withClue("Exactly one waiting job should exist for the deduped (type, dataHash)") {
+                val waiting = backgroundJobs.listQueuedJobs().map { it.resolve() }
+                    .filter {
+                        it.type == exampleJob01.jobType &&
+                                it.state == BackgroundJobQueued.State.WAITING
+                    }
+                waiting.shouldHaveSize(1)
             }
         }
 

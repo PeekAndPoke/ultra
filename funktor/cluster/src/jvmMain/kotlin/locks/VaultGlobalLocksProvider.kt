@@ -77,7 +77,11 @@ open class VaultGlobalLocksProvider(
                     )
                 )
             } catch (_: Throwable) {
-                // We could not save, which means that the lock is already present in the database
+                // We could not save, which means that the lock is already present in the database.
+                // If the existing entry has already expired, steal it so the next retry can acquire
+                // a fresh lock. Without this, a crashed server holding a lock blocks the cluster
+                // until GlobalLocksCleanupWorker runs (every 10s).
+                tryStealExpiredLock(key)
                 null
             }
 
@@ -106,6 +110,15 @@ open class VaultGlobalLocksProvider(
                     throw LocksException.Timeout(key = key, duration = timeout)
                 }
             }
+        }
+    }
+
+    private suspend fun tryStealExpiredLock(key: String) {
+        val existing = repository.findById(key)?.resolve() ?: return
+        if (MpInstant.now() > existing.expires) {
+            // Best-effort remove. If another server already stole it, our remove is a no-op
+            // (RemoveResult.count = 0) and the next insert attempt races normally.
+            repository.remove(key)
         }
     }
 
