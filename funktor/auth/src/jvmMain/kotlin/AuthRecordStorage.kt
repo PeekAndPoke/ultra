@@ -35,6 +35,16 @@ class AuthRecordStorage(
             override suspend fun findByToken(realm: String, type: String, token: String): Stored<AuthRecord>? {
                 return null
             }
+
+            override suspend fun findAllByOwner(realm: String, type: String, owner: String): List<Stored<AuthRecord>> {
+                return emptyList()
+            }
+
+            override suspend fun removeAllByOwner(
+                realm: String, type: String, owner: String, exceptId: String?,
+            ): RemoveResult {
+                return RemoveResult.empty
+            }
         }
 
         class Vault(val inner: Repo) : Adapter {
@@ -43,6 +53,12 @@ class AuthRecordStorage(
                 suspend fun findLatest(realm: String, type: String, owner: String): Stored<AuthRecord>?
 
                 suspend fun findByToken(realm: String, type: String, token: String): Stored<AuthRecord>?
+
+                suspend fun findAllByOwner(realm: String, type: String, owner: String): List<Stored<AuthRecord>>
+
+                suspend fun removeAllByOwner(
+                    realm: String, type: String, owner: String, exceptId: String?,
+                ): RemoveResult
             }
 
             override suspend fun removeById(id: String): RemoveResult {
@@ -64,6 +80,16 @@ class AuthRecordStorage(
             override suspend fun findByToken(realm: String, type: String, token: String): Stored<AuthRecord>? {
                 return inner.findByToken(realm, type, token)
             }
+
+            override suspend fun findAllByOwner(realm: String, type: String, owner: String): List<Stored<AuthRecord>> {
+                return inner.findAllByOwner(realm, type, owner)
+            }
+
+            override suspend fun removeAllByOwner(
+                realm: String, type: String, owner: String, exceptId: String?,
+            ): RemoveResult {
+                return inner.removeAllByOwner(realm, type, owner, exceptId)
+            }
         }
 
         suspend fun <T : AuthRecord> createRecord(new: T): Stored<T>
@@ -75,6 +101,14 @@ class AuthRecordStorage(
         suspend fun findLatest(realm: String, type: String, owner: String): Stored<AuthRecord>?
 
         suspend fun findByToken(realm: String, type: String, token: String): Stored<AuthRecord>?
+
+        /** Returns all records of [type] in [realm] owned by [owner], unsorted. */
+        suspend fun findAllByOwner(realm: String, type: String, owner: String): List<Stored<AuthRecord>>
+
+        /** Removes all records of [type] in [realm] owned by [owner], optionally excluding [exceptId]. */
+        suspend fun removeAllByOwner(
+            realm: String, type: String, owner: String, exceptId: String? = null,
+        ): RemoveResult
     }
 
     val adapter by adapter
@@ -112,6 +146,24 @@ class AuthRecordStorage(
             .findByToken(type = type.identifier, realm = realm, token = token)
             ?.takeIf { it.hasNotExpired() }
             ?.castTyped()
+    }
+
+    /** List all non-expired records of [type] for [realm] / [owner]. */
+    suspend inline fun <reified T : AuthRecord> findAllByOwner(
+        type: Polymorphic.TypedChild<T>, realm: String, owner: String,
+    ): List<Stored<T>> {
+        return adapter.findAllByOwner(type = type.identifier, realm = realm, owner = owner)
+            .filter { it.hasNotExpired() }
+            .mapNotNull { it.castTyped() }
+    }
+
+    /** Remove all records of [type] for [realm] / [owner], optionally keeping [exceptId]. */
+    suspend inline fun <reified T : AuthRecord> removeAllByOwner(
+        type: Polymorphic.TypedChild<T>, realm: String, owner: String, exceptId: String? = null,
+    ): RemoveResult {
+        return adapter.removeAllByOwner(
+            type = type.identifier, realm = realm, owner = owner, exceptId = exceptId,
+        )
     }
 
     /** Checks if the given record has not yet expired */

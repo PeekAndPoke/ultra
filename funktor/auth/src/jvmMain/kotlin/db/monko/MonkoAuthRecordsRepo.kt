@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.auth.db.monko
 
+import com.mongodb.client.model.Filters
 import io.peekandpoke.funktor.auth.AuthRecordStorage
 import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.domain.createdAt
@@ -14,12 +15,15 @@ import io.peekandpoke.monko.lang._type
 import io.peekandpoke.monko.lang.dsl.and
 import io.peekandpoke.monko.lang.dsl.desc
 import io.peekandpoke.monko.lang.dsl.eq
+import io.peekandpoke.monko.lang.dsl.toFieldPath
 import io.peekandpoke.monko.lang.ts
 import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.vault.RemoveResult
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.firstOrNull
 import io.peekandpoke.ultra.vault.hooks.TimestampedHook
+import org.bson.types.ObjectId
 
 class MonkoAuthRecordsRepo(
     name: String = "system_auth_records",
@@ -73,5 +77,44 @@ class MonkoAuthRecordsRepo(
         }
 
         return found.firstOrNull()
+    }
+
+    override suspend fun findAllByOwner(
+        realm: String, type: String, owner: String,
+    ): List<Stored<AuthRecord>> {
+        val cursor = find { r ->
+            filter(
+                and(
+                    r._type eq type,
+                    r.realm eq realm,
+                    r.ownerId eq owner,
+                )
+            )
+            sort(r.createdAt.ts.desc)
+        }
+        return cursor.toList()
+    }
+
+    override suspend fun removeAllByOwner(
+        realm: String, type: String, owner: String, exceptId: String?,
+    ): RemoveResult {
+        val coll = driver.database.getCollection<Map<String, Any?>>(name)
+
+        val filters = mutableListOf(
+            Filters.eq(repoExpr._type.toFieldPath(), type),
+            Filters.eq(repoExpr.realm.toFieldPath(), realm),
+            Filters.eq(repoExpr.ownerId.toFieldPath(), owner),
+        )
+        if (exceptId != null) {
+            // Stored._id is formatted "$collection/$stringKey"; the Mongo document's _id is
+            // either an ObjectId (auto-generated) or the raw string key. Try both shapes so
+            // the filter matches regardless of how the row was inserted.
+            val key = exceptId.substringAfter("/")
+            val idValue: Any = if (ObjectId.isValid(key)) ObjectId(key) else key
+            filters.add(Filters.ne("_id", idValue))
+        }
+
+        val result = coll.deleteMany(Filters.and(filters))
+        return RemoveResult(count = result.deletedCount, query = null)
     }
 }

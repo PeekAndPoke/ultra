@@ -43,6 +43,82 @@ sealed interface AuthRecord : Timestamped {
         override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
     }
 
+    /**
+     * Single-use token sent to a user's email address to verify ownership at sign-up time.
+     * Consumed by `AuthSystem.verifyEmail(realm, token)`.
+     */
+    data class EmailVerificationToken(
+        override val realm: String,
+        override val ownerId: String,
+        override val expiresAt: Long,
+        override val createdAt: MpInstant = MpInstant.Epoch,
+        override val updatedAt: MpInstant = createdAt,
+        /** Random secret token sent to the user's email. */
+        override val token: String,
+    ) : AuthRecord {
+        companion object : Polymorphic.TypedChild<EmailVerificationToken> {
+            override val identifier = "email-verification-token"
+        }
+
+        override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
+        override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+    }
+
+    /**
+     * Single-use token sent to the user's *new* email address when they request an email change.
+     * Carries the pending-new-email so it can be applied on confirmation. Consumed by
+     * `AuthSystem.confirmEmailChange(realm, token)`.
+     */
+    data class EmailChangeToken(
+        override val realm: String,
+        override val ownerId: String,
+        override val expiresAt: Long,
+        override val createdAt: MpInstant = MpInstant.Epoch,
+        override val updatedAt: MpInstant = createdAt,
+        /** Random secret token sent to the new email address. */
+        override val token: String,
+        /** The email the user wants to switch to. */
+        val pendingEmail: String,
+    ) : AuthRecord {
+        companion object : Polymorphic.TypedChild<EmailChangeToken> {
+            override val identifier = "email-change-token"
+        }
+
+        override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
+        override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+    }
+
+    /**
+     * An active login session. Each successful sign-in creates one row; the JWT issued to the
+     * client carries the row's `_id` as a `sessionId` claim and the auth middleware validates
+     * the session still exists on each request (cached). Revoking the row logs the user out.
+     */
+    data class Session(
+        override val realm: String,
+        override val ownerId: String,
+        override val expiresAt: Long,
+        override val createdAt: MpInstant = MpInstant.Epoch,
+        override val updatedAt: MpInstant = createdAt,
+        /**
+         * Random secret token (also the session id). Mirrored as the row's `_key` so the
+         * primary index is the lookup path.
+         */
+        override val token: String,
+        /** Hash of (userAgent + ipAddress). Used to detect new-device logins. */
+        val deviceFingerprint: String,
+        val userAgent: String?,
+        val ipAddress: String?,
+        /** Last time this session was observed making a request. Debounced write. */
+        val lastSeenAt: MpInstant,
+    ) : AuthRecord {
+        companion object : Polymorphic.TypedChild<Session> {
+            override val identifier = "session"
+        }
+
+        override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
+        override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+    }
+
     /** The realm that record belongs to */
     @Vault.Field
     val realm: String
