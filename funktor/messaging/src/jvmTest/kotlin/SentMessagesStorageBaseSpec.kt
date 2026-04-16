@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.messaging
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.funktor.messaging.api.EmailAttachment
 import io.peekandpoke.funktor.messaging.api.EmailBody
 import io.peekandpoke.funktor.messaging.api.EmailDestination
 import io.peekandpoke.funktor.messaging.api.EmailResult
@@ -150,6 +151,37 @@ abstract class SentMessagesStorageBaseSpec : FreeSpec() {
                 filter = PagedSearchFilter(search = "", page = 3, epp = 2),
             ).toList()
             page3 shouldHaveSize 1
+        }
+
+        "Attachments are persisted and round-trip correctly" {
+            val kontainer = createKontainer()
+            val storage = kontainer.get(SentMessagesStorage::class)
+            storage.clear()
+
+            val attachments = listOf(
+                EmailAttachment(
+                    mimeType = "application/pdf",
+                    filename = "invoice.pdf",
+                    dataBase64 = "UERGLWRhdGE=",
+                ),
+                EmailAttachment(
+                    mimeType = "image/png",
+                    filename = "logo.png",
+                    dataBase64 = "UE5HLWRhdGE=",
+                ),
+            )
+
+            storage.storeSentEmail(
+                result = EmailResult.ofMessageId("msg-att"),
+                refs = setOf("ref-att"),
+                tags = emptySet(),
+                content = emailContent(subject = "With Attachments", to = listOf("recipient@example.com")),
+                attachments = attachments,
+            )
+
+            val stored = storage.findByRefs(refs = setOf("ref-att")).toList()
+            stored shouldHaveSize 1
+            stored[0].resolve().attachments shouldBe attachments
         }
     }
 }

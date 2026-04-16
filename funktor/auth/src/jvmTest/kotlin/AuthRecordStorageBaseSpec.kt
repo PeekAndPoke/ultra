@@ -158,5 +158,55 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             loaded.shouldBeNull()
         }
+
+        "findByToken returns null for an unknown token" {
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+            val kronos = kontainer.get(Kronos::class)
+
+            // Populate the store so the backend isn't just returning null from an empty table.
+            authRecords.create(
+                AuthRecord.PasswordRecoveryToken(
+                    realm = "realm",
+                    ownerId = "owner1",
+                    token = "known-token",
+                    expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
+                )
+            )
+
+            val loaded = authRecords
+                .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = "realm", token = "unknown-token")
+
+            loaded.shouldBeNull()
+        }
+
+        "findByToken scopes lookups by realm" {
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+            val kronos = kontainer.get(Kronos::class)
+
+            authRecords.create(
+                AuthRecord.PasswordRecoveryToken(
+                    realm = "realm-a",
+                    ownerId = "owner1",
+                    token = "shared-token",
+                    expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
+                )
+            )
+
+            withClue("Same token in a different realm should not match") {
+                val loaded = authRecords
+                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = "realm-b", token = "shared-token")
+                loaded.shouldBeNull()
+            }
+
+            withClue("Same token in the right realm should match") {
+                val loaded = authRecords
+                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = "realm-a", token = "shared-token")
+                loaded.shouldNotBeNull()
+            }
+        }
     }
 }

@@ -83,18 +83,22 @@ block v1.
 
 Raise Funktor from ~11% to 25%+ test ratio. Focus on the modules with the thinnest coverage.
 
-| Module    | Current | Needed | Focus                                                 |
-|-----------|---------|--------|-------------------------------------------------------|
-| core      | 5 tests | +20    | App lifecycle, CLI, TypedRoute, converters, fixtures  |
-| rest      | 6 tests | +10    | Route security, SSE, codec                            |
-| auth      | 9 tests | +15    | AuthSystem, password flows, SSO, both DB backends     |
-| cluster   | 7 tests | +30    | Background jobs, locks, workers, depot, both backends |
-| messaging | 2 tests | +12    | Email senders, sent storage, both backends            |
-| logging   | 0 tests | +6     | Log storage, appender, filtering, both backends       |
-| insights  | 0 tests | +8     | Collectors, metrics                                   |
-| inspect   | 0 tests | +8     | API clients (commonMain)                              |
-| staticweb | 1 test  | +5     | Templates, flash session                              |
-| testing   | 0 tests | +2     | AppSpec, test harness                                 |
+| Module    | Current | Needed      | Focus                                                      |
+|-----------|---------|-------------|------------------------------------------------------------|
+| core      | 5 tests | +20         | App lifecycle, CLI, TypedRoute, converters, fixtures       |
+| rest      | 6 tests | +10         | Route security, SSE, codec                                 |
+| auth      | 9 tests | +15         | AuthSystem, password flows, SSO, both DB backends          |
+| cluster   | 7 tests | +30         | Background jobs, locks, workers, depot, both backends      |
+| messaging | 2 tests | +12         | Email senders, sent storage, both backends                 |
+| logging   | 0 tests | +6          | Log storage, appender, filtering, both backends            |
+| insights  | 0 tests | SKIP for v1 | Deprioritized — needs rework; high-level smoke only if any |
+| inspect   | 0 tests | +8          | API clients (commonMain)                                   |
+| staticweb | 1 test  | SKIP for v1 | Deprioritized — needs rework; high-level smoke only if any |
+| testing   | 0 tests | +2          | AppSpec, test harness                                      |
+
+**Deprioritized decision (2026-04-15):** `insights` and `staticweb` are slated for rework
+post-v1. We won't invest in deep tests; if anything, a single very-high-level smoke test each
+to prove the module loads and wires into a kontainer.
 
 **Specific test gaps** to address (from funktor-issues.md):
 
