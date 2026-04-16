@@ -10,7 +10,6 @@ import io.peekandpoke.ultra.vault.Stored
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 class SessionStoreCachedSpec : StringSpec({
 
@@ -102,6 +101,45 @@ class SessionStoreCachedSpec : StringSpec({
         cached.getById("r1", "same")?.resolve()?.ownerId shouldBe "u1"
         cached.getById("r2", "same")?.resolve()?.ownerId shouldBe "u2"
     }
+
+    "a session that expires while cached is dropped on the next lookup instead of being served" {
+        val inner = CountingInnerStore()
+        val clock = AtomicLong(1000L)
+        val cached = SessionStore.Cached(inner = inner, ttlMs = 60_000, nowMs = { clock.get() })
+
+        // Session expires at clock=2 sec, so it's valid while we prime the cache.
+        inner.setSessionFor(realm = "r", sessionId = "sid", ownerId = "u1", expiresAtSec = 2)
+        cached.getById("r", "sid").shouldNotBeNull()
+
+        // Advance past the session's expiresAt but stay within the cache TTL window.
+        clock.set(5_000L) // 5 seconds; session expired at 2 sec.
+
+        // The Cached layer must detect the expired row and refetch — not serve a stale session.
+        cached.getById("r", "sid").shouldBeNull()
+    }
+
+    "negative lookups use a shorter TTL than positive lookups" {
+        val inner = CountingInnerStore()
+        val clock = AtomicLong(1000L)
+        val ttl = 30_000L
+        val negTtl = 3_000L
+
+        val cached = SessionStore.Cached(
+            inner = inner, ttlMs = ttl, negativeTtlMs = negTtl, nowMs = { clock.get() },
+        )
+
+        // Negative lookup caches briefly.
+        cached.getById("r", "ghost").shouldBeNull()
+        inner.getByIdCalls.get() shouldBe 1
+
+        // Just past negative TTL — should refetch.
+        clock.set(clock.get() + negTtl + 1)
+        cached.getById("r", "ghost").shouldBeNull()
+        inner.getByIdCalls.get() shouldBe 2
+
+        // Still well before the positive TTL boundary.
+        clock.get() shouldBe 4_001L
+    }
 })
 
 /** Fake [SessionStore] that records call counts and serves in-memory state. */
@@ -115,7 +153,9 @@ private class CountingInnerStore : SessionStore {
 
     private val sessions = mutableMapOf<Key, Stored<AuthRecord.Session>>()
 
-    fun setSessionFor(realm: String, sessionId: String, ownerId: String) {
+    fun setSessionFor(
+        realm: String, sessionId: String, ownerId: String, expiresAtSec: Long = Long.MAX_VALUE,
+    ) {
         sessions[Key(realm, sessionId)] = Stored(
             _id = "sessions/$sessionId",
             _key = sessionId,
@@ -123,7 +163,7 @@ private class CountingInnerStore : SessionStore {
             value = AuthRecord.Session(
                 realm = realm,
                 ownerId = ownerId,
-                expiresAt = Long.MAX_VALUE,
+                expiresAt = expiresAtSec,
                 token = sessionId,
                 deviceFingerprint = "fp",
                 userAgent = null,
@@ -160,5 +200,3 @@ private class CountingInnerStore : SessionStore {
     }
 }
 
-@Suppress("unused") // Referenced via TTL test to avoid unused-import warning on Duration helper
-private val durationRef: Duration = 30.seconds

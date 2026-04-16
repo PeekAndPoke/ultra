@@ -109,7 +109,7 @@ sealed interface AuthRecord : Timestamped {
         val userAgent: String?,
         val ipAddress: String?,
         /** Last time this session was observed making a request. Debounced write. */
-        val lastSeenAt: MpInstant,
+        val lastSeenAt: MpInstant = MpInstant.Epoch,
     ) : AuthRecord {
         companion object : Polymorphic.TypedChild<Session> {
             override val identifier = "session"

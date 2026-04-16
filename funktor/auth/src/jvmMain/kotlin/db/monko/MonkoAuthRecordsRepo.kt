@@ -4,6 +4,7 @@ import com.mongodb.client.model.Filters
 import io.peekandpoke.funktor.auth.AuthRecordStorage
 import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.domain.createdAt
+import io.peekandpoke.funktor.auth.domain.expiresAt
 import io.peekandpoke.funktor.auth.domain.ownerId
 import io.peekandpoke.funktor.auth.domain.realm
 import io.peekandpoke.funktor.auth.domain.token
@@ -45,6 +46,15 @@ class MonkoAuthRecordsRepo(
             field { it.realm }
             field { it.ownerId }
             field { it._type }
+        }
+
+        // Mirror Karango's TTL index so expired auth records (sessions, password-recovery
+        // tokens, email-verification tokens, email-change tokens) are culled automatically.
+        // The code-level `hasNotExpired()` filter in AuthRecordStorage is then a safety net
+        // rather than the only boundary.
+        ttlIndex {
+            field { it.expiresAt }
+            expireAfter(0)
         }
     }
 
@@ -107,9 +117,10 @@ class MonkoAuthRecordsRepo(
         )
         if (exceptId != null) {
             // Stored._id is formatted "$collection/$stringKey"; the Mongo document's _id is
-            // either an ObjectId (auto-generated) or the raw string key. Try both shapes so
-            // the filter matches regardless of how the row was inserted.
-            val key = exceptId.substringAfter("/")
+            // either an ObjectId (auto-generated) or the raw string key. substringAfterLast
+            // rather than substringAfter so collection names containing '/' don't break the
+            // split. Try both ObjectId + raw string for the _id filter.
+            val key = exceptId.substringAfterLast("/")
             val idValue: Any = if (ObjectId.isValid(key)) ObjectId(key) else key
             filters.add(Filters.ne("_id", idValue))
         }

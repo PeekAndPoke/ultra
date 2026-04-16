@@ -4,6 +4,7 @@ import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.value
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
@@ -29,8 +30,20 @@ interface SessionStore {
         ttl: Duration,
     ): Stored<AuthRecord.Session>
 
+    /**
+     * Resolves a session by its id. Returns null if the id is unknown, expired, or the session
+     * belongs to a different realm. Implementations may cache.
+     */
     suspend fun getById(realm: String, sessionId: String): Stored<AuthRecord.Session>?
 
+    /**
+     * Updates the session's `lastSeenAt` to [now]. Implementations are expected to debounce
+     * writes (see `RealmTokenConfig.sessionTouchInterval`).
+     *
+     * Phase 1 note: [Vault.touch] is intentionally a no-op — persistence of `lastSeenAt` is
+     * wired in Phase 2 alongside the auth middleware that calls it per-request. Callers should
+     * not rely on `lastSeenAt` being current until then.
+     */
     suspend fun touch(realm: String, sessionId: String, now: MpInstant)
 
     suspend fun listForUser(realm: String, ownerId: String): List<Stored<AuthRecord.Session>>
@@ -85,18 +98,13 @@ interface SessionStore {
         }
 
         override suspend fun getById(realm: String, sessionId: String): Stored<AuthRecord.Session>? {
+            if (sessionId.length !in SESSION_ID_MIN_LEN..SESSION_ID_MAX_LEN) return null
             return storage.findByToken(type = AuthRecord.Session, realm = realm, token = sessionId)
         }
 
         override suspend fun touch(realm: String, sessionId: String, now: MpInstant) {
-            // Phase 1: write-through. Debouncing happens in [Cached].
-            val current = getById(realm, sessionId) ?: return
-            // Use modify on the storage adapter directly is non-trivial; for simplicity we
-            // create a transient updated copy and overwrite via the adapter's createRecord
-            // would duplicate. The adapter's underlying repo supports save() — wire when we
-            // need the throughput. For Phase 1 keep this a no-op when no change is needed.
-            if (current.resolve().lastSeenAt.toEpochMillis() >= now.toEpochMillis()) return
-            // Best-effort: leave for Phase 2 (write debounce + persistence).
+            // Intentional no-op for Phase 1 — see interface contract. Debounced write to
+            // `lastSeenAt` is wired when the auth middleware lands in Phase 2.
         }
 
         override suspend fun listForUser(realm: String, ownerId: String): List<Stored<AuthRecord.Session>> {
@@ -104,7 +112,6 @@ interface SessionStore {
         }
 
         override suspend fun revoke(realm: String, sessionId: String) {
-            // Find by token to discover the row id, then remove. The adapter's removeById uses _id.
             val found = storage.findByToken(type = AuthRecord.Session, realm = realm, token = sessionId)
                 ?: return
             storage.removeById(found._id)
@@ -124,31 +131,54 @@ interface SessionStore {
     /**
      * Wraps another [SessionStore] with a per-JVM TTL cache for [getById]. Hot path avoids the
      * DB. Revocation invalidates the local cache entry; cross-JVM revocation lags by [ttlMs].
+     *
+     * Positive and negative lookups are cached separately — negatives use [negativeTtlMs] which
+     * defaults to a much shorter window so a mistyped or race-acquired session id doesn't
+     * pollute the cache for the full positive TTL.
      */
     class Cached(
         private val inner: SessionStore,
         private val ttlMs: Long,
+        private val negativeTtlMs: Long = (ttlMs / 10).coerceAtLeast(1_000L),
         private val nowMs: () -> Long = { System.currentTimeMillis() },
     ) : SessionStore by inner {
 
         private data class Entry(val value: Stored<AuthRecord.Session>?, val expiresAtMs: Long)
 
-        // Key: "$realm::$sessionId". Value: cached lookup with absolute expiry.
+        /**
+         * Cache key uses a NUL delimiter so a realm or session-id containing `::` can't be
+         * crafted to collide with another (realm, sessionId) pair. Session ids are base64 and
+         * don't contain NUL, so this is collision-proof in practice.
+         */
         private val cache = ConcurrentHashMap<String, Entry>()
 
-        private fun key(realm: String, sessionId: String) = "$realm::$sessionId"
+        private fun key(realm: String, sessionId: String) = "$realm\u0000$sessionId"
 
         override suspend fun getById(realm: String, sessionId: String): Stored<AuthRecord.Session>? {
             val k = key(realm, sessionId)
             val now = nowMs()
             val cached = cache[k]
             if (cached != null && cached.expiresAtMs > now) {
-                return cached.value
+                // Defence-in-depth: a session row may have expired while cached; don't serve it.
+                val value = cached.value
+                if (value != null && isExpired(value, now)) {
+                    cache.remove(k, cached)
+                    // Fall through to refetch
+                } else {
+                    return value
+                }
             }
 
             val fresh = inner.getById(realm, sessionId)
-            cache[k] = Entry(value = fresh, expiresAtMs = now + ttlMs)
-            return fresh
+            // Defence-in-depth: even if inner returns a non-null row, reject if already expired.
+            val freshValid = fresh?.takeUnless { isExpired(it, now) }
+
+            val entryTtl = if (freshValid != null) ttlMs else negativeTtlMs
+            // putIfAbsent avoids a cache stampede overwrite when multiple threads miss on the
+            // same key concurrently — the first writer wins; the rest use their own fresh value
+            // for this call but don't re-poison the cache.
+            cache.putIfAbsent(k, Entry(value = freshValid, expiresAtMs = now + entryTtl))
+            return freshValid
         }
 
         override suspend fun revoke(realm: String, sessionId: String) {
@@ -163,11 +193,26 @@ interface SessionStore {
             cache.clear()
         }
 
+        private fun isExpired(session: Stored<AuthRecord.Session>, nowMs: Long): Boolean {
+            val expiresAtSec = session.value.expiresAt ?: return false
+            // Compare in seconds to avoid Long overflow when expiresAt is near Long.MAX_VALUE.
+            return expiresAtSec <= nowMs / 1000L
+        }
+
         /** Test/debugging helper. */
         internal fun cacheSize(): Int = cache.size
     }
 
     companion object {
+        /**
+         * Lower bound guards against a malformed or malicious session id causing a DB lookup
+         * with unreasonable input. Real tokens are ~344 base64 chars (256 random bytes).
+         */
+        const val SESSION_ID_MIN_LEN: Int = 16
+
+        /** Upper bound prevents oversized inputs from wasting DB work or cache memory. */
+        const val SESSION_ID_MAX_LEN: Int = 1024
+
         /**
          * Stable hash of (userAgent + ipAddress) used as a device fingerprint. SHA-256 hex.
          * If a real device-id strategy is needed later, swap this implementation.
