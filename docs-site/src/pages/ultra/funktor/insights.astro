@@ -21,7 +21,7 @@ import {Code} from 'astro:components';
     <Code code={`fun Route.installApiKontainer(app: App<MyConfig>, insights: InsightsConfig?) {
     installKontainer { call ->
         app.kontainers.create {
-            with { call.jwtUserProvider() }
+            with { call.currentUserProvider() }
             insights?.let { with { insights } }
         }
     }

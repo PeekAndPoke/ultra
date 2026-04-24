@@ -257,6 +257,44 @@ class AuthApiSpec : FunktorApiSpec() {
                 }
             }
 
+            "Garbage bearer token must fall through to anonymous and be unauthorized" {
+                apiApp {
+                    authenticate("not-a-real-jwt-or-key") {
+                        route(existingRealm) {
+                            status shouldBe HttpStatusCode.Unauthorized
+                        }
+                    }
+                }
+            }
+
+            "Structurally-valid JWT with a bad signature must be treated as anonymous and unauthorized" {
+                // A real JWT in shape (header.payload.signature) but signed with a different key —
+                // the verifier in jwtCaller's default validate must reject it, the request then
+                // falls through to AnonymousCaller, and refreshToken denies anonymous.
+                val forgedJwt =
+                    "eyJhbGciOiJIUzUxMiJ9." +
+                            "eyJpc3MiOiJmYWtlIiwic3ViIjoiYXR0YWNrZXIifQ." +
+                            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+
+                apiApp {
+                    authenticate(forgedJwt) {
+                        route(existingRealm) {
+                            status shouldBe HttpStatusCode.Unauthorized
+                        }
+                    }
+                }
+            }
+
+            "Empty bearer token must fall through to anonymous and be unauthorized" {
+                apiApp {
+                    authenticate("") {
+                        route(existingRealm) {
+                            status shouldBe HttpStatusCode.Unauthorized
+                        }
+                    }
+                }
+            }
+
             "Regular user request must return a refreshed token with user data" {
                 apiApp {
                     authenticate(regularUserToken) {

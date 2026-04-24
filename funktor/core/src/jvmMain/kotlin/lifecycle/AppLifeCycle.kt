@@ -12,31 +12,28 @@ internal class AppLifeCycle(val app: Application) {
     )
 
     private var registeredListeners = listOf<EventAndHandler<out Any?>>()
+    private var cleanupInstalled = false
 
     fun register(listeners: List<EventAndHandler<out Any?>>) {
 
-        // We remove all previous registered listeners.
-        // This is only necessary for development.
-        unsubscribeAll()
+        val toAdd = if (!cleanupInstalled) {
+            cleanupInstalled = true
+            listeners + EventAndHandler(ApplicationStopped) {
+                it.log.info("LifeCycle: cleaning up")
+                unsubscribeAll()
+            }
+        } else {
+            listeners
+        }
 
-        val withInternal = listeners
-            // Adding the internal cleanup listener
-            .plus(
-                EventAndHandler(ApplicationStopped) {
-                    it.log.info("LifeCycle: cleaning up")
-                    unsubscribeAll()
-                }
-            )
-
-        withInternal.forEach {
+        toAdd.forEach {
             @Suppress("UNCHECKED_CAST")
             app.monitor.subscribe(it.event, it.handler as EventHandler<Any?>)
         }
 
-        // Remember the listeners
-        registeredListeners = withInternal
+        registeredListeners = registeredListeners + toAdd
 
-        app.log.info("LifeCycle: added ${registeredListeners.size} listeners")
+        app.log.info("LifeCycle: added ${toAdd.size} listeners (total: ${registeredListeners.size})")
     }
 
     private fun unsubscribeAll() {
@@ -49,5 +46,6 @@ internal class AppLifeCycle(val app: Application) {
         }
 
         registeredListeners = emptyList()
+        cleanupInstalled = false
     }
 }

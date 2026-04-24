@@ -23,7 +23,7 @@ fun Application.module() = app.module(this) { app, config, init ->
     addKarangoAppender(config = config.arangodb, minLevel = Level.INFO)
 
     if (!config.ktor.isTest) {
-        lifeCycle(init) {
+        lifeCycle {
             // TODO: start and stop the workers by using LifeCycleHooks as well
             launchWorkers { init.clone() }
         }

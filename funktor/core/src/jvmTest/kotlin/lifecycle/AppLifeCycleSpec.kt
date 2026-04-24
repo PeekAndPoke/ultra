@@ -6,7 +6,6 @@ import io.kotest.matchers.shouldBe
 import io.ktor.server.application.*
 import io.ktor.server.testing.*
 import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks.*
-import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.kontainer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.yield
@@ -19,7 +18,7 @@ class AppLifeCycleSpec : StringSpec({
 
         testApplication {
             application {
-                lifeCycle(emptyKontainer()) {
+                lifeCycle {
                     onAppStarting {
                         delay(10)
                         counter.incrementAndGet()
@@ -42,7 +41,7 @@ class AppLifeCycleSpec : StringSpec({
 
         testApplication {
             application {
-                lifeCycle(emptyKontainer()) {
+                lifeCycle {
                     onAppStarting {
                         yield()
                         counter.incrementAndGet()
@@ -64,7 +63,7 @@ class AppLifeCycleSpec : StringSpec({
         shouldThrow<AppStartException> {
             testApplication {
                 application {
-                    lifeCycle(emptyKontainer()) {
+                    lifeCycle {
                         onAppStarting {
                             throw AppStartException("boom")
                         }
@@ -105,7 +104,7 @@ class AppLifeCycleSpec : StringSpec({
 
         testApplication {
             application {
-                lifeCycle(k) {}
+                setupLifecycle(k)
             }
             startApplication()
         }
@@ -143,7 +142,7 @@ class AppLifeCycleSpec : StringSpec({
 
         testApplication {
             application {
-                lifeCycle(k) {}
+                setupLifecycle(k)
             }
             startApplication()
         }
@@ -175,7 +174,7 @@ class AppLifeCycleSpec : StringSpec({
 
         testApplication {
             application {
-                lifeCycle(k) {}
+                setupLifecycle(k)
             }
             startApplication()
         }
@@ -183,5 +182,3 @@ class AppLifeCycleSpec : StringSpec({
         counter.get() shouldBe 1
     }
 })
-
-private fun emptyKontainer(): Kontainer = kontainer {}.create()

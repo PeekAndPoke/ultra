@@ -10,7 +10,7 @@ class EstimateCtxSpec : StringSpec({
 
     "EstimateCtx exposes the full User" {
         val user = User(
-            record = UserRecord(userId = "alice", email = "alice@example.com"),
+            record = UserRecord.LoggedIn(userId = "alice", email = "alice@example.com"),
             permissions = UserPermissions(roles = setOf("editor")),
         )
 
@@ -21,7 +21,7 @@ class EstimateCtxSpec : StringSpec({
 
     "EstimateCtx.permissions exposes UserPermissions via delegate" {
         val perms = UserPermissions(roles = setOf("editor"), groups = setOf("staff"))
-        val user = User(record = UserRecord(userId = "bob"), permissions = perms)
+        val user = User(record = UserRecord.LoggedIn(userId = "bob"), permissions = perms)
 
         val ctx = AuthRule.EstimateCtx(user = user)
 
@@ -32,7 +32,7 @@ class EstimateCtxSpec : StringSpec({
 
     "isAuthenticated is true for a non-anonymous user" {
         val user = User(
-            record = UserRecord(userId = "alice"),
+            record = UserRecord.LoggedIn(userId = "alice"),
             permissions = UserPermissions(),
         )
 
@@ -44,7 +44,7 @@ class EstimateCtxSpec : StringSpec({
     "isAuthenticated is true even for authenticated users with no permissions" {
         // Key case: a logged-in user with no roles is NOT the same as anonymous
         val user = User(
-            record = UserRecord(userId = "no-roles-user"),
+            record = UserRecord.LoggedIn(userId = "no-roles-user"),
             permissions = UserPermissions(),  // empty — no roles, no groups, no perms
         )
 
@@ -61,7 +61,7 @@ class EstimateCtxSpec : StringSpec({
 
     "EstimateCtx.of(user) factory creates context" {
         val user = User(
-            record = UserRecord(userId = "carol"),
+            record = UserRecord.LoggedIn(userId = "carol"),
             permissions = UserPermissions(isSuperUser = true),
         )
 

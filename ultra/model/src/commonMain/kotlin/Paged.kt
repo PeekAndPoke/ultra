@@ -19,7 +19,7 @@ data class Paged<T>(
         fun <T> empty() = Paged<T>(items = emptyList(), page = 1, epp = 20, fullItemCount = null)
     }
 
-    fun <X> map(block: (T) -> X): Paged<X> = Paged(
+    inline fun <X> map(block: (T) -> X): Paged<X> = Paged(
         items = items.map(block),
         page = page,
         epp = epp,

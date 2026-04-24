@@ -70,6 +70,69 @@ val getUsers = GetUsers.mount {
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
+    <h2>Authentication pipeline</h2>
+
+    <p>Funktor ships three Ktor auth providers that together produce a typed
+        <code>Caller</code> principal for every request. Install them in
+        <code>authentication &#123; &#125;</code> and list them on the route's
+        <code>authenticate(...)</code> block in the same order:</p>
+
+    <Code code={`authentication {
+    jwtCaller(AUTH_JWT, realm = "MyApp")             // Caller.JwtCaller   on a valid JWT
+    apiKeyCaller(AUTH_API_KEY, realm = "MyApp") {    // Caller.ApiKeyCaller on a valid key
+        token -> kontainer.get<ApiKeyService>().tryResolve(token)
+    }
+    anonymous(AUTH_ANON)                             // Caller.AnonymousCaller — terminal fallback
+}
+
+routing {
+    authenticate(AUTH_JWT, AUTH_API_KEY, AUTH_ANON) {
+        // ...routes
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Order matters &mdash; under Ktor's default <code>FirstSuccessful</code> strategy, the first
+        provider that returns a principal wins. <code>anonymous()</code> always succeeds, so it
+        <strong>must be listed last</strong>. Invalid credentials (expired JWT, revoked key) silently
+        fall through to <code>AnonymousCaller</code> rather than 401-ing &mdash; routes that require
+        real auth check <code>User.isAnonymous()</code>.</p>
+
+    <h3>UserRecord variants</h3>
+
+    <p><code>currentUserProvider()</code> dispatches on the <code>Caller</code> and produces a
+        sealed <code>UserRecord</code>:</p>
+
+    <Code code={`when (record) {
+    is UserRecord.Anonymous -> // no credentials
+    is UserRecord.System    -> // internal system actor (background jobs)
+    is UserRecord.LoggedIn  -> // JWT-authenticated end-user
+    is UserRecord.ApiKey    -> // API-key authenticated; carries keyId + keyName for audit
+}
+
+// Wire the provider into the per-call kontainer
+installKontainer { call ->
+    app.kontainers.create {
+        with { call.currentUserProvider() }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The default <code>jwtCaller</code> validates the bearer token via the kontainer-bound
+        <code>JwtGenerator</code>. Pass a custom <code>validate</code> lambda when you need extra
+        checks (revocation list, audience switching, multi-tenant verifier selection):</p>
+
+    <Code code={`jwtCaller(AUTH_JWT) { token ->
+    val payload = jwtGenerator.tryVerify(token) ?: return@jwtCaller null
+    if (kontainer.get<RevocationList>().isRevoked(payload.subject)) return@jwtCaller null
+    Caller.JwtCaller(payload)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside><strong>API-key resolver checklist:</strong> hashed storage (Argon2/HMAC, never plaintext),
+        constant-time comparison via <code>MessageDigest.isEqual</code>, fast-reject by prefix before
+        any DB lookup, never log the raw token. The <code>permissions</code> on
+        <code>Caller.ApiKeyCaller</code> defaults to <code>UserPermissions.anonymous</code> &mdash;
+        derive privileges from your authoritative store, never from the caller's input.
+    </Aside>
+
     <h2>Authorization DSL</h2>
 
     <p>Every route declares its authorization rules. Rules compose with <code>and</code> / <code>or</code>.</p>

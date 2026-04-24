@@ -2,48 +2,32 @@ package io.peekandpoke.funktor.demo.server.api
 
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
-import io.ktor.server.auth.jwt.*
 import io.ktor.server.plugins.*
 import io.ktor.server.routing.*
 import io.peekandpoke.funktor.core.appInfo
 import io.peekandpoke.funktor.core.broker.fallback
-import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.core.methodAndUrl
 import io.peekandpoke.funktor.rest.ApiFeature
 import io.peekandpoke.funktor.rest.ApiStatusPages.installApiStatusPages
 import io.peekandpoke.funktor.rest.apiRespond
+import io.peekandpoke.funktor.rest.auth.anonymous
+import io.peekandpoke.funktor.rest.auth.jwtCaller
 import io.peekandpoke.funktor.rest.handle
 import io.peekandpoke.ultra.remote.ApiResponse
-import io.peekandpoke.ultra.security.jwt.JwtAnonymous
-import io.peekandpoke.ultra.security.jwt.JwtGenerator
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-class ApiApp(
-    val features: List<ApiFeature>,
-    private val auth: JwtGenerator,
-    private val config: AppConfig,
-) {
+class ApiApp(val features: List<ApiFeature>) {
     companion object {
-        const val AUTH_REALM_ID = "api.funktor-demo.io"
+        const val AUTH_JWT = "api.funktor-demo.io.jwt"
+        const val AUTH_ANON = "api.funktor-demo.io.anon"
     }
 
     fun Application.configure() {
         authentication {
-            jwt(AUTH_REALM_ID) {
-                realm = "Funktor Demo"
-                verifier(auth.verifier)
-                validate { credential -> JWTPrincipal(credential.payload) }
-
-                // NOTICE: When the JWT is invalid or not present we fall back to an anonymous user
-                challenge { _, _ ->
-                    if (call.authentication.principal<JWTPrincipal>() == null) {
-                        call.authentication.principal(
-                            JWTPrincipal(JwtAnonymous(""))
-                        )
-                    }
-                }
-            }
+            jwtCaller(AUTH_JWT, realm = "Funktor Demo")
+            // Terminal fallback so requests without a JWT are admitted as anonymous.
+            anonymous(AUTH_ANON)
         }
     }
 
@@ -56,7 +40,7 @@ class ApiApp(
 
         route("/_/ping") {
             val handler: RoutingHandler = {
-                val pong = ApiResponse.Companion.ok(
+                val pong = ApiResponse.ok(
                     call.request.methodAndUrl()
                 )
 
@@ -80,11 +64,11 @@ class ApiApp(
 
         // Fallback for all routes that did not match
         fallback {
-            delay(Random.Default.nextLong(100, 300))
+            delay(Random.nextLong(100, 300))
             throw NotFoundException()
         }
 
-        authenticate(AUTH_REALM_ID) {
+        authenticate(AUTH_JWT, AUTH_ANON) {
             val allRoutes = features.flatMap { it.getRouteGroups() }.flatMap { it.all }
 
             // mount all protected routes

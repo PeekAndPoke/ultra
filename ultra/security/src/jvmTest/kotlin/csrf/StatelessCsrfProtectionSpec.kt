@@ -15,7 +15,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "Token patterns" {
 
         val subject = StatelessCsrfProtection(
-            "secret", 1000, UserProvider.static(UserRecord(userId = "USER", clientIp = "IP"))
+            "secret", 1000, UserProvider.static(UserRecord.LoggedIn(userId = "USER", clientIp = "IP"))
         )
 
         val token = subject.createToken("SALT")
@@ -26,7 +26,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "Validating a valid token must work" {
 
         val subject = StatelessCsrfProtection(
-            "secret", 1000, UserProvider.static(UserRecord(userId = "USER", clientIp = "IP"))
+            "secret", 1000, UserProvider.static(UserRecord.LoggedIn(userId = "USER", clientIp = "IP"))
         )
 
         val salt = "SALT"
@@ -50,7 +50,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "Validating a valid token must not work with a wrong salt" {
 
         val subject = StatelessCsrfProtection(
-            "secret", 1000, UserProvider.static(UserRecord(userId = "USER", clientIp = "IP"))
+            "secret", 1000, UserProvider.static(UserRecord.LoggedIn(userId = "USER", clientIp = "IP"))
         )
 
         val token = subject.createToken("SALT")
@@ -61,11 +61,11 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "Token must depend on the user id" {
 
         val creator = StatelessCsrfProtection(
-            "secret", 1000, UserProvider.static(UserRecord(userId = "USER", clientIp = "IP"))
+            "secret", 1000, UserProvider.static(UserRecord.LoggedIn(userId = "USER", clientIp = "IP"))
         )
 
         val validator = StatelessCsrfProtection(
-            "secret", 1000, UserProvider.static(UserRecord(userId = "X", clientIp = "IP"))
+            "secret", 1000, UserProvider.static(UserRecord.LoggedIn(userId = "X", clientIp = "IP"))
         )
 
         val salt = "SALT"
@@ -77,11 +77,11 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "Token must depend on the user ip" {
 
         val creator = StatelessCsrfProtection(
-            "secret", 1000, UserProvider.static(UserRecord(userId = "USER", clientIp = "IP"))
+            "secret", 1000, UserProvider.static(UserRecord.LoggedIn(userId = "USER", clientIp = "IP"))
         )
 
         val validator = StatelessCsrfProtection(
-            "secret", 1000, UserProvider.static(UserRecord(userId = "X", clientIp = "IP"))
+            "secret", 1000, UserProvider.static(UserRecord.LoggedIn(userId = "X", clientIp = "IP"))
         )
 
         val salt = "SALT"
@@ -93,7 +93,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "The ttl must be part of the tokens hash" {
 
         val creator = StatelessCsrfProtection(
-            "secret", 1000, UserProvider.static(UserRecord(userId = "USER", clientIp = "IP"))
+            "secret", 1000, UserProvider.static(UserRecord.LoggedIn(userId = "USER", clientIp = "IP"))
         )
 
         val salt = "SALT"
@@ -111,7 +111,7 @@ class StatelessCsrfProtectionSpec : StringSpec({
     "Token must become invalid after the its ttl" {
 
         val creator = StatelessCsrfProtection(
-            "secret", 10, UserProvider.static(UserRecord(userId = "USER", clientIp = "IP"))
+            "secret", 10, UserProvider.static(UserRecord.LoggedIn(userId = "USER", clientIp = "IP"))
         )
 
         val salt = "SALT"

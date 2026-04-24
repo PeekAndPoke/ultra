@@ -49,7 +49,7 @@ sealed class ApiRoute<RESPONSE> {
      */
     fun estimateAccess(permission: UserPermissions): ApiAccessLevel {
         val synthetic = User(
-            record = UserRecord(userId = "role-eval"),
+            record = UserRecord.LoggedIn(userId = "role-eval"),
             permissions = permission,
         )
         return estimateAccess(user = AuthRule.EstimateCtx(user = synthetic))

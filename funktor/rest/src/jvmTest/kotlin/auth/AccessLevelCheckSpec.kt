@@ -10,7 +10,7 @@ import io.peekandpoke.ultra.security.user.UserRecord
 class AccessLevelCheckSpec : StringSpec({
 
     val authenticatedUser = User(
-        record = UserRecord(userId = "alice"),
+        record = UserRecord.LoggedIn(userId = "alice"),
         permissions = UserPermissions(),
     )
 
@@ -68,15 +68,15 @@ class AccessLevelCheckSpec : StringSpec({
         }
 
         val superUser = User(
-            record = UserRecord(userId = "admin"),
+            record = UserRecord.LoggedIn(userId = "admin"),
             permissions = UserPermissions(isSuperUser = true),
         )
         val editor = User(
-            record = UserRecord(userId = "editor"),
+            record = UserRecord.LoggedIn(userId = "editor"),
             permissions = UserPermissions(roles = setOf("editor")),
         )
         val viewer = User(
-            record = UserRecord(userId = "viewer"),
+            record = UserRecord.LoggedIn(userId = "viewer"),
             permissions = UserPermissions(),
         )
 

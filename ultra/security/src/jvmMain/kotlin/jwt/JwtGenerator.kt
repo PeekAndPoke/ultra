@@ -3,6 +3,7 @@ package io.peekandpoke.ultra.security.jwt
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTCreator
 import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.interfaces.JWTVerifier
 import com.auth0.jwt.interfaces.Payload
 import io.peekandpoke.ultra.security.user.User
@@ -30,6 +31,13 @@ class JwtGenerator(
 
     /** Verifies the given [token] and returns the decoded payload. */
     fun verify(token: String): Payload = verifier.verify(token)
+
+    /** Verifies the given [token]; returns the decoded payload, or null if verification fails. */
+    fun tryVerify(token: String): Payload? = try {
+        verify(token)
+    } catch (_: JWTVerificationException) {
+        null
+    }
 
     /** Creates a signed JWT string for the given [user] and [permissions]. */
     fun createJwt(

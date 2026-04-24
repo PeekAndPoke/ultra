@@ -1,16 +1,62 @@
 package io.peekandpoke.ultra.security.user
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** Core identity record for a user, holding id, IP, email, description, and type. */
+/** Core identity record for a request, dispatched on the auth method that produced it. */
 @Serializable
-data class UserRecord(
-    val userId: String = ANONYMOUS_ID,
-    val clientIp: String? = null,
-    val email: String? = null,
-    val desc: String? = null,
-    val type: String? = null,
-) {
+sealed interface UserRecord {
+    val userId: String
+    val clientIp: String?
+    val email: String? get() = null
+    val desc: String? get() = null
+    val type: String? get() = null
+
+    fun isAnonymous(): Boolean = userId == ANONYMOUS_ID
+    fun isSystem(): Boolean = userId == SYSTEM_ID
+
+    /** Anonymous, unauthenticated caller. */
+    @Serializable
+    @SerialName("anonymous")
+    data class Anonymous(
+        override val clientIp: String? = null,
+    ) : UserRecord {
+        override val userId: String get() = ANONYMOUS_ID
+    }
+
+    /** Internal system actor (background jobs, internal calls). */
+    @Serializable
+    @SerialName("system")
+    data class System(
+        override val clientIp: String? = null,
+    ) : UserRecord {
+        override val userId: String get() = SYSTEM_ID
+    }
+
+    /** End-user authenticated via a JWT (or equivalent session). */
+    @Serializable
+    @SerialName("logged-in")
+    data class LoggedIn(
+        override val userId: String,
+        override val clientIp: String? = null,
+        override val email: String? = null,
+        override val desc: String? = null,
+        override val type: String? = null,
+    ) : UserRecord
+
+    /** Caller authenticated via an API key. */
+    @Serializable
+    @SerialName("api-key")
+    data class ApiKey(
+        override val userId: String,
+        override val clientIp: String? = null,
+        val keyId: String,
+        val keyName: String? = null,
+        override val email: String? = null,
+        override val desc: String? = null,
+        override val type: String? = null,
+    ) : UserRecord
+
     companion object {
         /** User id for anonymous users. */
         const val ANONYMOUS_ID = "anonymous"
@@ -19,27 +65,9 @@ data class UserRecord(
         const val SYSTEM_ID = "system"
 
         /** Singleton anonymous user record. */
-        val anonymous = UserRecord(
-            userId = ANONYMOUS_ID,
-            clientIp = null,
-            email = null,
-            desc = null,
-            type = null,
-        )
+        val anonymous: UserRecord = Anonymous()
 
         /** Creates a system user record with the given [ip] address. */
-        fun system(ip: String?) = UserRecord(
-            userId = SYSTEM_ID,
-            clientIp = ip,
-            email = null,
-            desc = null,
-            type = null,
-        )
+        fun system(ip: String?): UserRecord = System(clientIp = ip)
     }
-
-    /** Returns true if this record represents an anonymous user. */
-    fun isAnonymous() = userId == ANONYMOUS_ID
-
-    /** Returns true if this record represents the system user. */
-    fun isSystem() = userId == SYSTEM_ID
 }

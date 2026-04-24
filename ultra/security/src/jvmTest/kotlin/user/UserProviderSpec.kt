@@ -10,7 +10,7 @@ class UserProviderSpec : StringSpec({
     "UserRecordProvider.lazy should provide the UserRecord correctly" {
         val subject = UserProvider.lazy {
             User(
-                record = UserRecord(userId = "id", clientIp = "1.2.3.4"),
+                record = UserRecord.LoggedIn(userId = "id", clientIp = "1.2.3.4"),
                 permissions = UserPermissions.system,
             )
         }

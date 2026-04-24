@@ -61,7 +61,7 @@ class ApiRouteEstimateAccessSpec : StringSpec({
 
         val route = routeWithRules(authenticatedOnly)
         val alice = User(
-            record = UserRecord(userId = "alice"),
+            record = UserRecord.LoggedIn(userId = "alice"),
             permissions = UserPermissions(),
         )
 

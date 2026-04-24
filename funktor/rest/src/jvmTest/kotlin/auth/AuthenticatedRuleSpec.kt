@@ -36,7 +36,7 @@ class AuthenticatedRuleSpec : StringSpec({
 
     "authenticated() grants for a logged-in user with roles" {
         val user = User(
-            record = UserRecord(userId = "alice"),
+            record = UserRecord.LoggedIn(userId = "alice"),
             permissions = UserPermissions(roles = setOf("editor")),
         )
         val ctx = AuthRule.EstimateCtx(user = user)
@@ -46,7 +46,7 @@ class AuthenticatedRuleSpec : StringSpec({
 
     "authenticated() grants for a logged-in user without roles" {
         val user = User(
-            record = UserRecord(userId = "bob"),
+            record = UserRecord.LoggedIn(userId = "bob"),
             permissions = UserPermissions(),
         )
         val ctx = AuthRule.EstimateCtx(user = user)
@@ -56,7 +56,7 @@ class AuthenticatedRuleSpec : StringSpec({
 
     "authenticated() grants for a super user" {
         val user = User(
-            record = UserRecord(userId = "admin"),
+            record = UserRecord.LoggedIn(userId = "admin"),
             permissions = UserPermissions(isSuperUser = true),
         )
         val ctx = AuthRule.EstimateCtx(user = user)
@@ -74,7 +74,7 @@ class AuthenticatedRuleSpec : StringSpec({
         val route = routeWith(authenticatedRule())
 
         val authenticatedUser = User(
-            record = UserRecord(userId = "alice"),
+            record = UserRecord.LoggedIn(userId = "alice"),
             permissions = UserPermissions(),
         )
 

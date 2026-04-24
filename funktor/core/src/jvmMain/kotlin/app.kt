@@ -5,6 +5,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.peekandpoke.funktor.core.cli.CliRunner
 import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.funktor.core.lifecycle.setupLifecycle
 import io.peekandpoke.ultra.kontainer.DynamicOverrides
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBlueprint
@@ -134,8 +135,10 @@ class App<C : AppConfig>(
         ) {
             @Suppress("UNCHECKED_CAST")
             val app = (testApp ?: application.getApp()) as App<C>
+            val init = app.kontainers.system()
 
-            application.block(app, app.config, app.kontainers.system())
+            application.setupLifecycle(init)
+            application.block(app, app.config, init)
         }
     }
 }

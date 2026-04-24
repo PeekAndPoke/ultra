@@ -36,6 +36,56 @@ val getUsers = GetUsers.mount {
 `TypedApiEndpoint` subclasses: `Get`, `Post`, `Put`, `Delete`, `Head`, `Sse`. Each carries an `httpMethod` property
 and a `uri` pattern.
 
+### Authentication pipeline
+
+Three Ktor auth providers chain into a sealed `Caller` principal. Install them on
+`AuthenticationConfig` in the same order you list them in `authenticate(...)`:
+
+```kotlin
+authentication {
+    jwtCaller(AUTH_JWT, realm = "MyApp")             // Caller.JwtCaller
+    apiKeyCaller(AUTH_API_KEY, realm = "MyApp") {    // Caller.ApiKeyCaller
+        token -> kontainer.get<ApiKeyService>().tryResolve(token)
+    }
+    anonymous(AUTH_ANON)                             // Caller.AnonymousCaller (terminal)
+}
+
+routing {
+    authenticate(AUTH_JWT, AUTH_API_KEY, AUTH_ANON) { /* routes */ }
+}
+```
+
+Under Ktor's default `FirstSuccessful` strategy the first provider to return a principal wins.
+`anonymous()` always returns one, so it MUST be listed last. Invalid credentials (expired JWT,
+revoked key) silently fall through to `Caller.AnonymousCaller` rather than producing a 401 —
+routes that require real auth check `User.isAnonymous()`.
+
+`currentUserProvider()` (extension on `ApplicationCall`) dispatches the `Caller` into a sealed
+`UserRecord`:
+
+```kotlin
+when (record) {
+    is UserRecord.Anonymous -> // no credentials
+    is UserRecord.System    -> // internal system actor
+    is UserRecord.LoggedIn  -> // JWT-authenticated end-user
+    is UserRecord.ApiKey    -> // API-key authenticated; carries keyId + keyName for audit
+}
+
+installKontainer { call ->
+    app.kontainers.create { with { call.currentUserProvider() } }
+}
+```
+
+Default `jwtCaller(name, realm)` uses the kontainer-bound `JwtGenerator`. For extra checks
+(revocation list, audience switching) pass a custom `validate` lambda — the lambda has
+`ApplicationCall` as receiver so the per-call kontainer is in scope.
+
+**API-key resolver responsibilities (security-critical):** hashed storage (Argon2/HMAC, never
+plaintext), constant-time comparison via `MessageDigest.isEqual`, fast-reject by prefix before
+any DB lookup, never log the raw token. `Caller.ApiKeyCaller.permissions` defaults to
+`UserPermissions.anonymous` — derive privileges from your authoritative store, not from caller
+input.
+
 ### Authorization DSL
 
 Every route declares its authorization rules in the `.authorize { }` block:

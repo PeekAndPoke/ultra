@@ -15,7 +15,7 @@ import io.peekandpoke.funktor.messaging.senders.applyDevConfig
 import io.peekandpoke.funktor.messaging.senders.aws.AwsSesSender
 import io.peekandpoke.funktor.messaging.senders.withHooks
 import io.peekandpoke.funktor.messaging.storage.StoringEmailHook
-import io.peekandpoke.funktor.rest.auth.jwtUserProvider
+import io.peekandpoke.funktor.rest.auth.currentUserProvider
 import io.peekandpoke.karango.karango
 import io.peekandpoke.monko.monko
 import io.peekandpoke.ultra.kontainer.kontainer
@@ -36,7 +36,7 @@ fun Route.installApiKontainer(app: App<FunktorDemoConfig>, insights: InsightsCon
     installKontainer { call ->
         app.kontainers.create {
             // user record provider
-            with { call.jwtUserProvider() }
+            with { call.currentUserProvider() }
             // Insights config
             insights?.let { with { insights } }
         }

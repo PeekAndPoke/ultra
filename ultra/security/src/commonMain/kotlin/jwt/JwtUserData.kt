@@ -10,7 +10,7 @@ data class JwtUserData(
     val type: String,
     val email: String? = null,
 ) {
-    fun toUserRecord(clientIp: String?) = UserRecord(
+    fun toUserRecord(clientIp: String?): UserRecord = UserRecord.LoggedIn(
         userId = id,
         clientIp = clientIp,
         email = email,
