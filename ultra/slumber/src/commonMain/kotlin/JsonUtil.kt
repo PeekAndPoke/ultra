@@ -50,6 +50,7 @@ object JsonUtil {
         @Suppress("UNCHECKED_CAST")
         return when (this) {
             null -> JsonNull
+            is JsonElement -> this
             is Map<*, *> -> (this as Map<String, Any?>).toJsonObject()
             is List<*> -> JsonArray(map { it.toJsonElement() })
             is Boolean -> JsonPrimitive(this)

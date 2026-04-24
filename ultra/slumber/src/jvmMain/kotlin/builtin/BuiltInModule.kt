@@ -8,8 +8,11 @@ import io.peekandpoke.ultra.slumber.builtin.collections.CollectionAwaker
 import io.peekandpoke.ultra.slumber.builtin.collections.CollectionSlumberer
 import io.peekandpoke.ultra.slumber.builtin.collections.MapAwaker
 import io.peekandpoke.ultra.slumber.builtin.collections.MapSlumberer
-import io.peekandpoke.ultra.slumber.builtin.kotlinx.KotlinXJsonCodec
+import io.peekandpoke.ultra.slumber.builtin.kotlinx.KotlinXJsonArrayCodec
+import io.peekandpoke.ultra.slumber.builtin.kotlinx.KotlinXJsonElementCodec
 import io.peekandpoke.ultra.slumber.builtin.kotlinx.KotlinXJsonNullCodec
+import io.peekandpoke.ultra.slumber.builtin.kotlinx.KotlinXJsonObjectCodec
+import io.peekandpoke.ultra.slumber.builtin.kotlinx.KotlinXJsonPrimitiveCodec
 import io.peekandpoke.ultra.slumber.builtin.objects.AnyAwaker
 import io.peekandpoke.ultra.slumber.builtin.objects.AnySlumberer
 import io.peekandpoke.ultra.slumber.builtin.objects.DataClassAwaker
@@ -80,7 +83,10 @@ object BuiltInModule : SlumberModule {
                     cls == String::class -> StringAwaker
                     // KotlinX Json
                     KotlinXJsonNullCodec.appliesTo(cls) -> KotlinXJsonNullCodec as Awaker
-                    KotlinXJsonCodec.appliesTo(cls) -> KotlinXJsonCodec as Awaker
+                    KotlinXJsonObjectCodec.appliesTo(cls) -> KotlinXJsonObjectCodec as Awaker
+                    KotlinXJsonArrayCodec.appliesTo(cls) -> KotlinXJsonArrayCodec as Awaker
+                    KotlinXJsonPrimitiveCodec.appliesTo(cls) -> KotlinXJsonPrimitiveCodec as Awaker
+                    KotlinXJsonElementCodec.appliesTo(cls) -> KotlinXJsonElementCodec as Awaker
                     // Lists
                     cls == Iterable::class || cls == List::class || cls == MutableList::class ->
                         CollectionAwaker.forList(type)
@@ -140,7 +146,10 @@ object BuiltInModule : SlumberModule {
                     cls == Short::class -> ShortSlumberer
                     cls == String::class -> StringSlumberer
                     // KotlinX Json
-                    KotlinXJsonCodec.appliesTo(cls) -> KotlinXJsonCodec as Slumberer
+                    KotlinXJsonObjectCodec.appliesTo(cls) -> KotlinXJsonObjectCodec as Slumberer
+                    KotlinXJsonArrayCodec.appliesTo(cls) -> KotlinXJsonArrayCodec as Slumberer
+                    KotlinXJsonPrimitiveCodec.appliesTo(cls) -> KotlinXJsonPrimitiveCodec as Slumberer
+                    KotlinXJsonElementCodec.appliesTo(cls) -> KotlinXJsonElementCodec as Slumberer
                     // Iterables
                     Iterable::class.java.isAssignableFrom(cls.java) -> CollectionSlumberer
                     // Maps

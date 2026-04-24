@@ -21,13 +21,13 @@ import kotlinx.serialization.json.putJsonObject
 class KotlinxJsonCodecSpec : StringSpec() {
     init {
         "appliesTo should return true for JsonElement classes" {
-            KotlinXJsonCodec.appliesTo(JsonObject::class) shouldBe true
-            KotlinXJsonCodec.appliesTo(JsonArray::class) shouldBe true
-            KotlinXJsonCodec.appliesTo(JsonPrimitive::class) shouldBe true
+            KotlinXJsonElementCodec.appliesTo(JsonObject::class) shouldBe true
+            KotlinXJsonElementCodec.appliesTo(JsonArray::class) shouldBe true
+            KotlinXJsonElementCodec.appliesTo(JsonPrimitive::class) shouldBe true
 
-            KotlinXJsonCodec.appliesTo(Any::class) shouldBe false
-            KotlinXJsonCodec.appliesTo(Number::class) shouldBe false
-            KotlinXJsonCodec.appliesTo(Nothing::class) shouldBe false
+            KotlinXJsonElementCodec.appliesTo(Any::class) shouldBe false
+            KotlinXJsonElementCodec.appliesTo(Number::class) shouldBe false
+            KotlinXJsonElementCodec.appliesTo(Nothing::class) shouldBe false
         }
 
         "unwrap should handle primitive types correctly" {

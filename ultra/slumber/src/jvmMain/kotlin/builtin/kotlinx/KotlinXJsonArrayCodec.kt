@@ -4,26 +4,31 @@ import io.peekandpoke.ultra.slumber.Awaker
 import io.peekandpoke.ultra.slumber.JsonUtil.toJsonElement
 import io.peekandpoke.ultra.slumber.JsonUtil.unwrap
 import io.peekandpoke.ultra.slumber.Slumberer
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlin.reflect.KClass
 
-/** Codec for KotlinX [JsonElement] types. Converts between raw data (Maps/Lists/primitives) and [JsonElement]. */
-object KotlinXJsonCodec : Awaker, Slumberer {
+/** Codec for KotlinX [JsonArray]. Awakes a [List] into a [JsonArray]; slumbers back to a [List]. */
+object KotlinXJsonArrayCodec : Awaker, Slumberer {
 
-    /** Returns true if [cls] is a [JsonElement] subtype. */
+    /** Returns true if [cls] is [JsonArray]. */
     fun appliesTo(cls: KClass<*>): Boolean {
-        return JsonElement::class.java.isAssignableFrom(cls.java)
+        return JsonArray::class.java.isAssignableFrom(cls.java)
     }
 
     override fun awake(data: Any?, context: Awaker.Context): Any? {
-        return data.toJsonElement()
+        return when (data) {
+            is JsonArray -> data
+            is List<*> -> JsonArray(data.map { it.toJsonElement() })
+            else -> null
+        }
     }
 
     override fun slumber(data: Any?, context: Slumberer.Context): Any? {
-        if (data !is JsonElement) {
+        if (data !is JsonArray) {
             return null
         }
 
-        return data.unwrap()
+        return (data as JsonElement).unwrap()
     }
 }
