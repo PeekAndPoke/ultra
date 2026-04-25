@@ -43,6 +43,7 @@ kotlin {
                 implementation(Deps.KotlinX.serialization_core)
 
                 api(project(":ultra:common"))
+                implementation(project(":ultra:slumber"))
             }
         }
 

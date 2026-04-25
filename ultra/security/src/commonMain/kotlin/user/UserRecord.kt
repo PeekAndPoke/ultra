@@ -1,15 +1,25 @@
 package io.peekandpoke.ultra.security.user
 
+import io.peekandpoke.ultra.slumber.Slumber
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /** Core identity record for a request, dispatched on the auth method that produced it. */
 @Serializable
 sealed interface UserRecord {
+    @Slumber.Field
     val userId: String
+
+    @Slumber.Field
     val clientIp: String?
+
+    @Slumber.Field
     val email: String? get() = null
+
+    @Slumber.Field
     val desc: String? get() = null
+
+    @Slumber.Field
     val type: String? get() = null
 
     fun isAnonymous(): Boolean = userId == ANONYMOUS_ID
