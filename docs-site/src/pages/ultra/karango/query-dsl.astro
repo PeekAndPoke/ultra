@@ -157,7 +157,11 @@ RETURN_COUNT()              // return the count instead of documents`} lang="kot
 
     <h2>AQL functions</h2>
 
-    <p>Karango wraps 100+ AQL functions. A few examples:</p>
+    <p>
+        Karango wraps 100+ AQL functions. See
+        <a href="/ultra/karango/aql-functions" class="text-brand-400 hover:text-brand-300">AQL Functions</a>
+        for the full reference. A few examples:
+    </p>
 
     <Code code={`// String functions
 FILTER(CONTAINS(LOWER(person.name), "alice"))
@@ -176,9 +180,9 @@ FILTER(IS_NOT_NULL(person.email))
 val doc = DOCUMENT(repo, "persons/abc123")`} lang="kotlin" theme="vitesse-dark"/>
 
     <div class="not-prose mt-8 flex gap-4">
-        <a href="/ultra/karango/repositories"
+        <a href="/ultra/karango/aql-functions"
            class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
-            Repositories &rarr;
+            AQL Functions &rarr;
         </a>
     </div>
 

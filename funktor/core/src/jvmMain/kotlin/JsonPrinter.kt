@@ -39,11 +39,11 @@ object JsonPrinter {
         prettyPrinter.writeValueAsString(
             try {
                 codec.slumber(obj)
-            } catch (e: Throwable) {
+            } catch (_: Throwable) {
                 obj
             }
         )
     } catch (e: Throwable) {
-        "Could not pretty print: $obj"
+        "Could not pretty print: $obj \n" + e.stackTraceToString()
     }
 }

@@ -58,7 +58,7 @@ class MonkoGlobalLockProviderSpec : StringSpec() {
 
     init {
         beforeEach {
-            runBlocking { repo.removeAll() }
+            repo.removeAll()
         }
 
         "An acquire on a key whose existing lock has expired succeeds without waiting for cleanup" {

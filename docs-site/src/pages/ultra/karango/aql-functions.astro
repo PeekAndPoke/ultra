@@ -1,0 +1,629 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {karangoSidebar} from '../../../data/karango-sidebar';
+---
+
+<DocsLayout title="AQL Functions" sidebar={karangoSidebar}
+            description="Reference list of AQL functions wrapped by Karango's Kotlin DSL">
+
+    <h1>AQL Functions</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Karango wraps the AQL standard library as Kotlin DSL functions. Each function
+        is type-checked at compile time and emits the matching AQL call at runtime.
+    </p>
+
+    <p>
+        Use them inside any query block — <code>FILTER</code>, <code>LET</code>,
+        <code>RETURN</code>, etc. Names match the AQL spec one-to-one (uppercase),
+        so the
+        <a href="https://docs.arangodb.com/stable/aql/functions/" target="_blank"
+           rel="noopener" class="text-brand-400 hover:text-brand-300">official AQL reference</a>
+        applies directly.
+    </p>
+
+    <h2>Numeric</h2>
+
+    <table class="w-full text-sm text-left">
+        <thead>
+        <tr class="border-b border-white/10">
+            <th class="py-2 text-white font-semibold w-1/3">Function</th>
+            <th class="py-2 text-white font-semibold">Description</th>
+        </tr>
+        </thead>
+        <tbody class="text-gray-400">
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>ABS(value)</code></td>
+            <td class="py-2">Absolute value of a number</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>CEIL(value)</code></td>
+            <td class="py-2">Smallest integer not less than the value</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>FLOOR(value)</code></td>
+            <td class="py-2">Largest integer not greater than the value</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>ROUND(value)</code></td>
+            <td class="py-2">Integer closest to the value</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>POW(base, exp)</code></td>
+            <td class="py-2">Base raised to the given exponent</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>SQRT(value)</code></td>
+            <td class="py-2">Square root of the value</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>EXP(value)</code></td>
+            <td class="py-2">Euler's constant raised to the value</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>EXP2(value)</code></td>
+            <td class="py-2">2 raised to the value</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>LOG(value)</code></td>
+            <td class="py-2">Natural logarithm</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>LOG2(value)</code></td>
+            <td class="py-2">Base-2 logarithm</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>LOG10(value)</code></td>
+            <td class="py-2">Base-10 logarithm</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>SIN(value)</code></td>
+            <td class="py-2">Sine of the value (radians)</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>COS(value)</code></td>
+            <td class="py-2">Cosine of the value (radians)</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>TAN(value)</code></td>
+            <td class="py-2">Tangent of the value (radians)</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>ASIN(value)</code></td>
+            <td class="py-2">Arcsine of the value</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>ACOS(value)</code></td>
+            <td class="py-2">Arccosine of the value</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>ATAN(value)</code></td>
+            <td class="py-2">Arctangent of the value</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>ATAN2(x, y)</code></td>
+            <td class="py-2">Arctangent of <code>y / x</code></td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>DEGREES(value)</code></td>
+            <td class="py-2">Convert radians to degrees</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>RADIANS(value)</code></td>
+            <td class="py-2">Convert degrees to radians</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>PI()</code></td>
+            <td class="py-2">Constant π (3.14159…)</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>RAND()</code></td>
+            <td class="py-2">Pseudo-random number in [0, 1)</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>RANGE(start, stop)</code> / <code>RANGE(start, stop, step)</code></td>
+            <td class="py-2">Array of numbers in a range</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>SUM(numArray)</code></td>
+            <td class="py-2">Sum of array values</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>AVERAGE(numArray)</code> / <code>AVG(numArray)</code></td>
+            <td class="py-2">Arithmetic mean</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>MEDIAN(numArray)</code></td>
+            <td class="py-2">Median value</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>MIN(array)</code></td>
+            <td class="py-2">Smallest array element</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>MAX(array)</code></td>
+            <td class="py-2">Greatest array element</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>PERCENTILE(numArray, n)</code> / <code>PERCENTILE(numArray, n, method)</code></td>
+            <td class="py-2">n-th percentile</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>STDDEV(value)</code> / <code>STDDEV_POPULATION(value)</code></td>
+            <td class="py-2">Population standard deviation</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>STDDEV_SAMPLE(value)</code></td>
+            <td class="py-2">Sample standard deviation</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>VARIANCE(value)</code> / <code>VARIANCE_POPULATION(value)</code></td>
+            <td class="py-2">Population variance</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>VARIANCE_SAMPLE(value)</code></td>
+            <td class="py-2">Sample variance</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>String</h2>
+
+    <table class="w-full text-sm text-left">
+        <thead>
+        <tr class="border-b border-white/10">
+            <th class="py-2 text-white font-semibold w-1/3">Function</th>
+            <th class="py-2 text-white font-semibold">Description</th>
+        </tr>
+        </thead>
+        <tbody class="text-gray-400">
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>LENGTH(expr)</code></td>
+            <td class="py-2">Character length of a string</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>CHAR_LENGTH(expr)</code></td>
+            <td class="py-2">Number of characters (not bytes)</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>CONCAT(first, rest…)</code></td>
+            <td class="py-2">Concatenate strings</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>CONCAT_SEPARATOR(sep, first, rest…)</code></td>
+            <td class="py-2">Concatenate strings with a separator</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>CONTAINS(haystack, needle)</code></td>
+            <td class="py-2">Substring contained in another string (case-sensitive)</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>STARTS_WITH(text, prefix)</code></td>
+            <td class="py-2">String starts with a prefix</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>LIKE(text, search)</code> / <code>LIKE(text, search, caseInsensitive)</code></td>
+            <td class="py-2">SQL-style wildcard match</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>FIND_FIRST(haystack, needle, …)</code></td>
+            <td class="py-2">Position of the first occurrence</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>FIND_LAST(haystack, needle, …)</code></td>
+            <td class="py-2">Position of the last occurrence</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>SUBSTRING(value, offset)</code> / <code>SUBSTRING(value, offset, length)</code></td>
+            <td class="py-2">Substring at offset</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>LEFT(expr, n)</code></td>
+            <td class="py-2">N leftmost characters</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>RIGHT(value, n)</code></td>
+            <td class="py-2">N rightmost characters</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>LOWER(expr)</code></td>
+            <td class="py-2">Convert to lower case</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>UPPER(expr)</code></td>
+            <td class="py-2">Convert to upper case</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>TRIM(subject)</code> / <code>TRIM(subject, chars)</code></td>
+            <td class="py-2">Strip whitespace (or chars) from both ends</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>LTRIM(subject, …)</code></td>
+            <td class="py-2">Strip from the start</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>RTRIM(subject, …)</code></td>
+            <td class="py-2">Strip from the end</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>SPLIT(value, separator, …)</code></td>
+            <td class="py-2">Split a string into an array</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>SOUNDEX(value)</code></td>
+            <td class="py-2">Soundex fingerprint of a string</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>LEVENSHTEIN_DISTANCE(left, right)</code></td>
+            <td class="py-2">Edit distance between two strings</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>ENCODE_URI_COMPONENT(value)</code></td>
+            <td class="py-2">URI-encode a string</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>TO_BASE64(value)</code></td>
+            <td class="py-2">Base-64 representation of a string</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>TO_HEX(value)</code></td>
+            <td class="py-2">Hexadecimal representation of a string</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>Regex</h2>
+
+    <table class="w-full text-sm text-left">
+        <thead>
+        <tr class="border-b border-white/10">
+            <th class="py-2 text-white font-semibold w-1/3">Function</th>
+            <th class="py-2 text-white font-semibold">Description</th>
+        </tr>
+        </thead>
+        <tbody class="text-gray-400">
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>REGEX_TEST(text, regex, …)</code></td>
+            <td class="py-2">Test whether a regex matches</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>REGEX_MATCHES(text, regex, …)</code></td>
+            <td class="py-2">Return all matches</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>REGEX_SPLIT(text, regex, …)</code></td>
+            <td class="py-2">Split a string by regex</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>Array</h2>
+
+    <table class="w-full text-sm text-left">
+        <thead>
+        <tr class="border-b border-white/10">
+            <th class="py-2 text-white font-semibold w-1/3">Function</th>
+            <th class="py-2 text-white font-semibold">Description</th>
+        </tr>
+        </thead>
+        <tbody class="text-gray-400">
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>COUNT(expr)</code></td>
+            <td class="py-2">Number of elements (alias of <code>LENGTH</code>)</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>COUNT_DISTINCT(anyArray)</code> / <code>COUNT_UNIQUE(anyArray)</code></td>
+            <td class="py-2">Number of distinct elements</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>FIRST(anyArray)</code></td>
+            <td class="py-2">First element</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>LAST(anyArray)</code></td>
+            <td class="py-2">Last element</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>NTH(anyArray, position)</code></td>
+            <td class="py-2">Element at a position</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>POSITION(anyArray, search)</code></td>
+            <td class="py-2">Index of a value, or <code>-1</code></td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>CONTAINS_ARRAY(anyArray, search)</code></td>
+            <td class="py-2">Whether a value is in the array</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>CONTAINS_ARRAY_IDX(anyArray, search)</code></td>
+            <td class="py-2">Index of value in the array, or <code>-1</code></td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>APPEND(anyArray, values, …)</code></td>
+            <td class="py-2">Append all elements of one array to another</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>PUSH(anyArray, value, …)</code></td>
+            <td class="py-2">Append a single value</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>UNSHIFT(anyArray, value, …)</code></td>
+            <td class="py-2">Prepend a single value</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>POP(anyArray)</code></td>
+            <td class="py-2">Remove the last element</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>SHIFT(anyArray)</code></td>
+            <td class="py-2">Remove the first element</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>REMOVE_NTH(anyArray, position)</code></td>
+            <td class="py-2">Remove element at a position</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>REMOVE_VALUE(anyArray, value, …)</code></td>
+            <td class="py-2">Remove occurrences of a single value</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>REMOVE_VALUES(anyArray, values)</code></td>
+            <td class="py-2">Remove all occurrences of any of the values</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>SLICE(anyArray, start, …)</code></td>
+            <td class="py-2">Extract a slice</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>REVERSE(anyArray)</code></td>
+            <td class="py-2">Reverse the order of elements</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>SORTED(anyArray)</code></td>
+            <td class="py-2">Sort using default comparison</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>SORTED_UNIQUE(anyArray)</code></td>
+            <td class="py-2">Sort and remove duplicates</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>UNIQUE(anyArray)</code></td>
+            <td class="py-2">Distinct elements (preserves order)</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>FLATTEN(anyArray, …)</code></td>
+            <td class="py-2">Flatten nested arrays</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>UNION(arr1, arr2, …)</code></td>
+            <td class="py-2">Union of arrays (preserves duplicates)</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>UNION_DISTINCT(arr1, arr2, …)</code></td>
+            <td class="py-2">Union of arrays (distinct values)</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>INTERSECTION(arr1, arr2, …)</code></td>
+            <td class="py-2">Values present in all arrays</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>OUTERSECTION(arr1, arr2, …)</code></td>
+            <td class="py-2">Values present in only one array</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>MINUS(arr1, arr2, …)</code></td>
+            <td class="py-2">Difference of arrays</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>Document</h2>
+
+    <table class="w-full text-sm text-left">
+        <thead>
+        <tr class="border-b border-white/10">
+            <th class="py-2 text-white font-semibold w-1/3">Function</th>
+            <th class="py-2 text-white font-semibold">Description</th>
+        </tr>
+        </thead>
+        <tbody class="text-gray-400">
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>DOCUMENT(id)</code></td>
+            <td class="py-2">Get a single document by full id</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>DOCUMENT(collection, id)</code></td>
+            <td class="py-2">Get a document from a collection by key</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>DOCUMENT(cls, id)</code></td>
+            <td class="py-2">Get a document and deserialize to a Kotlin class</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>DOCUMENT(ids)</code> / <code>DOCUMENT(collection, ids)</code></td>
+            <td class="py-2">Get multiple documents at once</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>DOCUMENT(type, collection, ids)</code></td>
+            <td class="py-2">Get multiple documents with explicit type</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>MERGE(doc1, doc2, …)</code></td>
+            <td class="py-2">Merge documents into one</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>UNSET(document, attr1, …)</code></td>
+            <td class="py-2">Return a copy of the document without given attributes</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>Type checks</h2>
+
+    <table class="w-full text-sm text-left">
+        <thead>
+        <tr class="border-b border-white/10">
+            <th class="py-2 text-white font-semibold w-1/3">Function</th>
+            <th class="py-2 text-white font-semibold">Description</th>
+        </tr>
+        </thead>
+        <tbody class="text-gray-400">
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>IS_NULL(expr)</code></td>
+            <td class="py-2">Value is <code>null</code></td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>IS_NOT_NULL(expr)</code></td>
+            <td class="py-2">Value is not <code>null</code></td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>IS_BOOL(expr)</code></td>
+            <td class="py-2">Value is a boolean</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>IS_NUMBER(expr)</code></td>
+            <td class="py-2">Value is a number</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>IS_STRING(expr)</code></td>
+            <td class="py-2">Value is a string</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>IS_ARRAY(expr)</code> / <code>IS_LIST(expr)</code></td>
+            <td class="py-2">Value is an array</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>IS_OBJECT(expr)</code> / <code>IS_DOCUMENT(expr)</code></td>
+            <td class="py-2">Value is an object / document</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>IS_DATESTRING(expr)</code></td>
+            <td class="py-2">Value is a parseable date string</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>IS_KEY(expr)</code></td>
+            <td class="py-2">Value is a valid document key</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>TYPENAME(expr)</code></td>
+            <td class="py-2">Type name (<code>"null"</code>, <code>"bool"</code>, <code>"number"</code>, …)</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>Type conversion</h2>
+
+    <table class="w-full text-sm text-left">
+        <thead>
+        <tr class="border-b border-white/10">
+            <th class="py-2 text-white font-semibold w-1/3">Function</th>
+            <th class="py-2 text-white font-semibold">Description</th>
+        </tr>
+        </thead>
+        <tbody class="text-gray-400">
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>TO_BOOL(expr)</code></td>
+            <td class="py-2">Convert to boolean</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>TO_NUMBER(expr)</code></td>
+            <td class="py-2">Convert to number</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>TO_STRING(expr)</code></td>
+            <td class="py-2">Convert to string</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>TO_ARRAY(expr)</code> / <code>TO_LIST(expr)</code></td>
+            <td class="py-2">Convert to array</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>JSON</h2>
+
+    <table class="w-full text-sm text-left">
+        <thead>
+        <tr class="border-b border-white/10">
+            <th class="py-2 text-white font-semibold w-1/3">Function</th>
+            <th class="py-2 text-white font-semibold">Description</th>
+        </tr>
+        </thead>
+        <tbody class="text-gray-400">
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>JSON_PARSE(expr)</code></td>
+            <td class="py-2">Parse a JSON-encoded string into an AQL value</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>JSON_STRINGIFY(expr)</code></td>
+            <td class="py-2">Serialize an AQL value to a JSON string</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>Hash &amp; tokens</h2>
+
+    <table class="w-full text-sm text-left">
+        <thead>
+        <tr class="border-b border-white/10">
+            <th class="py-2 text-white font-semibold w-1/3">Function</th>
+            <th class="py-2 text-white font-semibold">Description</th>
+        </tr>
+        </thead>
+        <tbody class="text-gray-400">
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>MD5(value)</code></td>
+            <td class="py-2">MD5 checksum as hex string</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>SHA1(value)</code></td>
+            <td class="py-2">SHA-1 checksum as hex string</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>SHA512(value)</code></td>
+            <td class="py-2">SHA-512 checksum as hex string</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>RANDOM_TOKEN(length)</code></td>
+            <td class="py-2">Random token of the given length</td>
+        </tr>
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>UUID()</code></td>
+            <td class="py-2">Universally unique identifier</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>Logical</h2>
+
+    <table class="w-full text-sm text-left">
+        <thead>
+        <tr class="border-b border-white/10">
+            <th class="py-2 text-white font-semibold w-1/3">Function</th>
+            <th class="py-2 text-white font-semibold">Description</th>
+        </tr>
+        </thead>
+        <tbody class="text-gray-400">
+        <tr class="border-b border-white/5">
+            <td class="py-2"><code>NOT(expr)</code></td>
+            <td class="py-2">Boolean negation</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p class="!mt-8 text-gray-400 text-sm">
+        Missing a function you need? AQL has more — wrappers are added as use cases come up.
+        Open an issue or PR on
+        <a href="https://github.com/peekandpoke/ultra" target="_blank" rel="noopener"
+           class="text-brand-400 hover:text-brand-300">GitHub</a>.
+    </p>
+
+    <div class="not-prose mt-8 flex gap-4">
+        <a href="/ultra/karango/repositories"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Repositories &rarr;
+        </a>
+    </div>
+
+</DocsLayout>
