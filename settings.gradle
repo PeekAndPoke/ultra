@@ -33,6 +33,7 @@ include(
         ":kraft:addons:avatars",
         ":kraft:addons:browserdetect",
         ":kraft:addons:chartjs",
+        ":kraft:addons:datetime",
         ":kraft:addons:jwtdecode",
         ":kraft:addons:marked",
         ":kraft:addons:nxcompile",

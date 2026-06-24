@@ -11,6 +11,7 @@ import kotlinx.html.EM
 import kotlinx.html.FlowContent
 import kotlinx.html.em
 
+@SemanticEmojiMarker
 class SemanticEmoji(private val parent: FlowContent) {
 
     companion object {
@@ -3085,17 +3086,14 @@ class SemanticEmoji(private val parent: FlowContent) {
         }
     }
 
-    @SemanticUiConditionalMarker
     fun given(condition: Boolean, action: SemanticEmoji.() -> SemanticEmoji): SemanticEmoji =
         when (condition) {
             false -> this
             else -> this.action()
         }
 
-    @SemanticUiConditionalMarker
     fun givenNot(condition: Boolean, action: SemanticEmoji.() -> SemanticEmoji): SemanticEmoji =
         given(!condition, action)
 
-    @SemanticUiConditionalMarker
     val then: SemanticEmoji get() = this
 }

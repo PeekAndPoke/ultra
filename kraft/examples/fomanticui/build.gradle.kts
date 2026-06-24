@@ -39,6 +39,7 @@ kotlin {
                 api(project(":kraft:semanticui"))
                 api(project(":ultra:fixture"))
                 // addons
+                api(project(":kraft:addons:datetime"))
                 api(project(":kraft:addons:prismjs"))
             }
         }

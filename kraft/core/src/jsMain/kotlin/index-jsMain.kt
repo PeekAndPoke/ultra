@@ -13,7 +13,6 @@ import io.peekandpoke.kraft.vdom.VDomEngine
 import io.peekandpoke.ultra.common.MutableTypedAttributes
 import io.peekandpoke.ultra.common.TypedAttributes
 import io.peekandpoke.ultra.common.TypedKey
-import io.peekandpoke.ultra.datetime.kotlinx.initializeJsJodaTimezones
 import kotlinx.browser.document
 import org.w3c.dom.HTMLElement
 
@@ -71,10 +70,6 @@ class KraftApp internal constructor(
                 appAttributes = appAttributes.asImmutable(),
             )
         }
-    }
-
-    init {
-        initializeJsJodaTimezones()
     }
 
     private val autoMountedUis: List<AutoMountedUi> = run {

@@ -67,13 +67,15 @@ kotlin {
 
         jsMain {
             dependencies {
-                api(Deps.Npm { jsJodaTimezone() })
             }
         }
 
         jsTest {
             dependencies {
                 jsTestDeps()
+                // Test-only: the suite exercises named zones, so it needs the full IANA dataset.
+                // Production consumers opt in via the :kraft:addons:datetime module instead.
+                api(Deps.Npm { jsJodaTimezone() })
             }
         }
 

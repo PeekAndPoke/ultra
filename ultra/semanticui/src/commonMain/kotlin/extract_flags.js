@@ -7,7 +7,7 @@ console.log(
     $("table i[class$='flag']").map((idx, it) => {
         var classes = $(it).attr("class").split(" ").filter(it => it !== "flag");
         var prop = classes.map(it => it.replaceAll("-", "")).join("_")
-        return `@SemanticFlagMarker inline val ${prop}: SemanticFlag\n    get() = this + "${classes.join(" ")}"`;
+        return `inline val ${prop}: SemanticFlag\n    get() = this + "${classes.join(" ")}"`;
     }).get()
         // Distinct
         .filter((value, index, self) => self.indexOf(value) === index)
