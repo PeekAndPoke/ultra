@@ -1,6 +1,5 @@
 package io.peekandpoke.kraft.addons.threejs
 
-import io.peekandpoke.kraft.KraftDsl
 import io.peekandpoke.kraft.addons.registry.Addon
 import io.peekandpoke.kraft.addons.registry.AddonKey
 import io.peekandpoke.kraft.addons.registry.AddonRegistry
@@ -37,6 +36,7 @@ class ThreeJsAddon internal constructor(
     private val threeModule: dynamic,
 ) {
     /** Raw module handle — escape hatch for APIs not covered by the curated externals. */
+    @Suppress("unused")
     val raw: dynamic get() = threeModule
 
     //  Scene / Camera / Renderer  /////////////////////////////////////////////////////////////////////
@@ -47,6 +47,7 @@ class ThreeJsAddon internal constructor(
         return js("new ctor()").unsafeCast<Scene>()
     }
 
+    @Suppress("unused")
     fun createPerspectiveCamera(
         fov: Double = 50.0,
         aspect: Double = 1.0,
@@ -58,6 +59,7 @@ class ThreeJsAddon internal constructor(
         return js("new ctor(fov, aspect, near, far)").unsafeCast<PerspectiveCamera>()
     }
 
+    @Suppress("unused")
     fun createOrthographicCamera(
         left: Double, right: Double, top: Double, bottom: Double,
         near: Double = 0.1, far: Double = 2000.0,
@@ -67,6 +69,7 @@ class ThreeJsAddon internal constructor(
         return js("new ctor(left, right, top, bottom, near, far)").unsafeCast<OrthographicCamera>()
     }
 
+    @Suppress("unused")
     fun createWebGLRenderer(parameters: WebGLRendererParameters): WebGLRenderer {
         @Suppress("UnusedVariable", "unused")
         val ctor = threeModule.WebGLRenderer
@@ -75,24 +78,28 @@ class ThreeJsAddon internal constructor(
 
     //  Geometry  //////////////////////////////////////////////////////////////////////////////////////
 
+    @Suppress("unused")
     fun createBoxGeometry(width: Double = 1.0, height: Double = 1.0, depth: Double = 1.0): BoxGeometry {
         @Suppress("UnusedVariable", "unused")
         val ctor = threeModule.BoxGeometry
         return js("new ctor(width, height, depth)").unsafeCast<BoxGeometry>()
     }
 
+    @Suppress("unused")
     fun createSphereGeometry(radius: Double = 1.0, widthSegments: Int = 32, heightSegments: Int = 16): SphereGeometry {
         @Suppress("UnusedVariable", "unused")
         val ctor = threeModule.SphereGeometry
         return js("new ctor(radius, widthSegments, heightSegments)").unsafeCast<SphereGeometry>()
     }
 
+    @Suppress("unused")
     fun createPlaneGeometry(width: Double = 1.0, height: Double = 1.0): PlaneGeometry {
         @Suppress("UnusedVariable", "unused")
         val ctor = threeModule.PlaneGeometry
         return js("new ctor(width, height)").unsafeCast<PlaneGeometry>()
     }
 
+    @Suppress("unused")
     fun createCylinderGeometry(
         radiusTop: Double = 1.0, radiusBottom: Double = 1.0, height: Double = 1.0, radialSegments: Int = 32,
     ): CylinderGeometry {
@@ -101,6 +108,7 @@ class ThreeJsAddon internal constructor(
         return js("new ctor(radiusTop, radiusBottom, height, radialSegments)").unsafeCast<CylinderGeometry>()
     }
 
+    @Suppress("unused")
     fun createTorusGeometry(
         radius: Double = 1.0, tube: Double = 0.4, radialSegments: Int = 12, tubularSegments: Int = 48,
     ): TorusGeometry {
@@ -111,18 +119,21 @@ class ThreeJsAddon internal constructor(
 
     //  Materials  /////////////////////////////////////////////////////////////////////////////////////
 
+    @Suppress("unused")
     fun createMeshBasicMaterial(parameters: MaterialParameters): MeshBasicMaterial {
         @Suppress("UnusedVariable", "unused")
         val ctor = threeModule.MeshBasicMaterial
         return js("new ctor(parameters)").unsafeCast<MeshBasicMaterial>()
     }
 
+    @Suppress("unused")
     fun createMeshStandardMaterial(parameters: MaterialParameters): MeshStandardMaterial {
         @Suppress("UnusedVariable", "unused")
         val ctor = threeModule.MeshStandardMaterial
         return js("new ctor(parameters)").unsafeCast<MeshStandardMaterial>()
     }
 
+    @Suppress("unused")
     fun createMeshLambertMaterial(parameters: MaterialParameters): MeshLambertMaterial {
         @Suppress("UnusedVariable", "unused")
         val ctor = threeModule.MeshLambertMaterial
@@ -131,6 +142,7 @@ class ThreeJsAddon internal constructor(
 
     //  Mesh  //////////////////////////////////////////////////////////////////////////////////////////
 
+    @Suppress("unused")
     fun createMesh(geometry: dynamic, material: dynamic): Mesh {
         @Suppress("UnusedVariable", "unused")
         val ctor = threeModule.Mesh
@@ -139,18 +151,21 @@ class ThreeJsAddon internal constructor(
 
     //  Lights  ////////////////////////////////////////////////////////////////////////////////////////
 
+    @Suppress("unused")
     fun createAmbientLight(color: dynamic = 0xffffff, intensity: Double = 1.0): AmbientLight {
         @Suppress("UnusedVariable", "unused")
         val ctor = threeModule.AmbientLight
         return js("new ctor(color, intensity)").unsafeCast<AmbientLight>()
     }
 
+    @Suppress("unused")
     fun createDirectionalLight(color: dynamic = 0xffffff, intensity: Double = 1.0): DirectionalLight {
         @Suppress("UnusedVariable", "unused")
         val ctor = threeModule.DirectionalLight
         return js("new ctor(color, intensity)").unsafeCast<DirectionalLight>()
     }
 
+    @Suppress("unused")
     fun createPointLight(
         color: dynamic = 0xffffff, intensity: Double = 1.0, distance: Double = 0.0, decay: Double = 2.0,
     ): PointLight {
@@ -159,6 +174,7 @@ class ThreeJsAddon internal constructor(
         return js("new ctor(color, intensity, distance, decay)").unsafeCast<PointLight>()
     }
 
+    @Suppress("unused")
     fun createHemisphereLight(
         skyColor: dynamic = 0xffffff, groundColor: dynamic = 0x444444, intensity: Double = 1.0,
     ): HemisphereLight {
@@ -169,6 +185,7 @@ class ThreeJsAddon internal constructor(
 
     //  Math  //////////////////////////////////////////////////////////////////////////////////////////
 
+    @Suppress("unused")
     fun createVector3(x: Double = 0.0, y: Double = 0.0, z: Double = 0.0): Vector3 {
         @Suppress("UnusedVariable", "unused")
         val ctor = threeModule.Vector3
@@ -180,7 +197,6 @@ class ThreeJsAddon internal constructor(
 val threeJsAddonKey = AddonKey<ThreeJsAddon>("threejs")
 
 /** Registers the three.js addon for lazy loading via dynamic import. */
-@KraftDsl
 fun AddonRegistryBuilder.threeJs(lazy: Boolean = false): Addon<ThreeJsAddon> = register(
     key = threeJsAddonKey,
     name = "threejs",

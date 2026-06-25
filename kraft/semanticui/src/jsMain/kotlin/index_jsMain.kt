@@ -1,7 +1,6 @@
 package io.peekandpoke.kraft.semanticui
 
 import io.peekandpoke.kraft.KraftApp
-import io.peekandpoke.kraft.KraftDsl
 import io.peekandpoke.kraft.modals.modals
 import io.peekandpoke.kraft.popups.popups
 import io.peekandpoke.kraft.semanticui.popups.SemanticUiPopupComponent
@@ -17,7 +16,6 @@ import io.peekandpoke.kraft.toasts.toasts
  *
  * @param toasts Optional additional toast configuration.
  */
-@KraftDsl
 fun KraftApp.Builder.semanticUI(
     toasts: ToastsManager.Builder.() -> Unit = {},
 ) = apply {

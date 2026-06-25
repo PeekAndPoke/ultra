@@ -1,6 +1,5 @@
 package io.peekandpoke.kraft.addons.chartjs
 
-import io.peekandpoke.kraft.KraftDsl
 import io.peekandpoke.kraft.addons.registry.Addon
 import io.peekandpoke.kraft.addons.registry.AddonKey
 import io.peekandpoke.kraft.addons.registry.AddonRegistry
@@ -25,14 +24,21 @@ class ChartJsAddon internal constructor(
         if (registered) return
         registered = true
 
+        @Suppress("UnusedVariable", "unused")
         val ctor = chartConstructor
+
+        @Suppress("UnusedVariable", "unused")
         val regs = registerableModules
+
         js("ctor.register.apply(ctor, regs)")
     }
 
     /** Creates a new Chart instance on the given canvas [ctx] with the given [config]. */
+    @Suppress("unused")
     fun createChart(ctx: CanvasRenderingContext2D, config: ChartConfig): Chart {
+        @Suppress("UnusedVariable", "unused")
         val ctor = chartConstructor
+
         return js("new ctor(ctx, config)").unsafeCast<Chart>()
     }
 }
@@ -41,7 +47,6 @@ class ChartJsAddon internal constructor(
 val chartJsAddonKey = AddonKey<ChartJsAddon>("chartjs")
 
 /** Registers the chartjs addon for lazy loading via dynamic import. */
-@KraftDsl
 fun AddonRegistryBuilder.chartJs(lazy: Boolean = false): Addon<ChartJsAddon> = register(
     key = chartJsAddonKey,
     name = "chartjs",

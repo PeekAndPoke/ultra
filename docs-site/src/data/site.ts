@@ -2,8 +2,8 @@
 // Update these when releasing — all pages reference this file.
 
 // Versions
-export const ultraVersion = '0.107.2';
-export const kraftVersion = '0.107.2';
+export const ultraVersion = '0.108.0';
+export const kraftVersion = '0.108.0';
 export const kotlinVersion = '2.3.10';
 export const fomanticVersion = '2.8.8';
 
@@ -96,6 +96,7 @@ export const dep = {
     maths: `${ultraGroup}:maths:${ultraVersion}`,
     kraftCore: `${kraftGroup}:core:${kraftVersion}`,
     kraftSemanticUi: `${kraftGroup}:semanticui:${kraftVersion}`,
+    kraftAddonDatetime: `${kraftGroup}:addons-datetime:${kraftVersion}`,
     kraftAddonChartJs: `${kraftGroup}:addons-chartjs:${kraftVersion}`,
     kraftAddonPrismJs: `${kraftGroup}:addons-prismjs:${kraftVersion}`,
     kraftAddonMarked: `${kraftGroup}:addons-marked:${kraftVersion}`,

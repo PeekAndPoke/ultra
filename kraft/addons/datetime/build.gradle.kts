@@ -36,6 +36,8 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":kraft:core"))
+                // For re-exporting the native (Intl-backed, zero-data) timezone provider.
+                api(project(":ultra:datetime"))
             }
         }
 

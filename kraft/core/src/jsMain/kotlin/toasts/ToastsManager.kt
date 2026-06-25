@@ -1,6 +1,6 @@
 package io.peekandpoke.kraft.toasts
 
-import io.peekandpoke.kraft.components.AutoMountedUi
+import io.peekandpoke.kraft.KraftApp.AutoMountedUi
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.getAttributeRecursive
 import io.peekandpoke.kraft.toasts.ToastsManager.Handle

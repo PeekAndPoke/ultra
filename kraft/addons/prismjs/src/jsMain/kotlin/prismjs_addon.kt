@@ -1,6 +1,5 @@
 package io.peekandpoke.kraft.addons.prismjs
 
-import io.peekandpoke.kraft.KraftDsl
 import io.peekandpoke.kraft.addons.registry.Addon
 import io.peekandpoke.kraft.addons.registry.AddonKey
 import io.peekandpoke.kraft.addons.registry.AddonRegistry
@@ -18,7 +17,6 @@ class PrismJsAddon internal constructor()
 val prismJsAddonKey = AddonKey<PrismJsAddon>("prismjs")
 
 /** Registers the prismjs addon for loading via dynamic import. */
-@KraftDsl
 fun AddonRegistryBuilder.prismJs(lazy: Boolean = false): Addon<PrismJsAddon> = register(
     key = prismJsAddonKey,
     name = "prismjs",

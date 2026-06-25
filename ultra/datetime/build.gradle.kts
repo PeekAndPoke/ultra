@@ -73,9 +73,8 @@ kotlin {
         jsTest {
             dependencies {
                 jsTestDeps()
-                // Test-only: the suite exercises named zones, so it needs the full IANA dataset.
-                // Production consumers opt in via the :kraft:addons:datetime module instead.
-                api(Deps.Npm { jsJodaTimezone() })
+                // No @js-joda/timezone here: the suite runs against the native Intl-backed
+                // provider (installNativeTimezones) registered in ProjectConfig.
             }
         }
 

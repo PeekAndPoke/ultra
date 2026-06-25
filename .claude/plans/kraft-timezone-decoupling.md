@@ -58,15 +58,43 @@ to `kotlin.time` — so a version bump is a separate concern, out of scope here.
 - `build/dist` copies of adminapp/fomanticui were stale during measurement (only `jsBrowserProductionWebpack`
   ran, not the distribution copy) — cosmetic; a full `build` regenerates them.
 
-## Phase 2 — Native (Intl) timezone provider — STATUS: TODO
+## Phase 2 — Native (Intl) timezone provider — STATUS: DONE (2026-06-25)
 
-- [ ] Spike a custom js-joda `ZoneRulesProvider` whose offset lookups call `Intl.DateTimeFormat`
-  (Luxon approach) → zero bundled data, browser-native IANA DB.
-- [ ] Expose as `installNativeTimezones()` mode in the addon; handle DST gap/overlap edge cases.
-- [ ] **Gate**: run the full `ultra:datetime` JS test suite. All green → make Native the recommended
-  default for browser apps. Any failures → keep bundled-range modes as the reliable fallback.
+- [x] Custom js-joda `ZoneRulesProvider` backed by `Intl.DateTimeFormat`, zero bundled data:
+  `ultra/datetime/src/jsMain/kotlin/NativeTimeZones.kt` → `installNativeTimezones()` (pure Intl +
+  `@js-joda/core`, no npm dep). instant→offset read directly from Intl; local→offset (DST
+  gap/overlap) via binary-search for the nearby transition, then handed to js-joda.
+- [x] **Gate met**: `:ultra:datetime:jsTest` runs against the native provider (no
+  `@js-joda/timezone`; installed via `jsTest/.../ProjectConfig.kt`) — all 1732 tests pass (named
+  zones + DST: Berlin, Bucharest, US/Pacific, New_York, ancient dates). Removed the old
+  `JsJodaTimeZoneModule.kt` + spec.
+  - Two bugs found & fixed in `offsetSecondsAt`: JS `Date.UTC` remaps years 0–99 → 1900s (broke
+    year-39) — use `setUTCFullYear`; sub-second instants skewed the offset — floor to seconds first.
+- [x] Addon re-exports `installNativeTimezones()` alongside the js-joda loaders (native recommended).
+- [x] `kraft:examples:fomanticui` switched to native → ships 0 KB tz data (1,522→1,397 KB raw /
+  298→280 KB gzip), builds clean.
 - [ ] Future: revisit when kotlinx-datetime adopts Temporal (issue #501); Temporal is ES2026,
   shipping in Chrome 144 / Firefox 139, Safari stable expected late 2026.
+
+## Phase 3 — Builder-based init (native by default) — STATUS: DONE (2026-06-25)
+
+- [x] New `AppInitializer` marker interface (`kraft/core/.../components/helpers.kt`), parallel to
+  `AutoMountedUi`: `initialize()` + `initPriority`. Collected off `appAttributes` by type and run in
+  `KraftApp`'s init (before mount), highest priority first. (Chosen over the addons registry and an
+  annotation marker — same pattern as `AutoMountedUi`.)
+- [x] `kraft:core` installs **native timezone support by default** via a private
+  `NativeTimeZoneInitializer` (priority `Int.MAX_VALUE`), added in `Builder.init`. Zero bundle cost;
+  removes the per-app "forgot to install" footgun. Provider-conflict worry resolved: exactly one tz
+  initializer runs (stored under a private key), and bundled data is only imported when selected.
+- [x] Override via `kraftApp { fullTimezones() / timezones1970to2030() / timezones10YearRange() /
+  nativeTimezones() }` — `KraftApp.Builder` extensions in the addon. `Builder.timezones(AppInitializer)`
+  is the general hook; custom startup tasks implement `AppInitializer` on any app attribute.
+- [x] `fomanticui` needs **no** tz setup now (uses the default) — dropped the addon dep + call.
+- [x] `TimeZoneInitializerKey` + `NativeTimeZoneInitializer` are `private` (file-local).
+
+### Remaining
+
+- Manual smoke of fomanticui's date forms = final runtime confidence beyond the unit suite.
 
 ## Verification commands
 

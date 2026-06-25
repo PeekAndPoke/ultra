@@ -1,6 +1,5 @@
 package io.peekandpoke.kraft.addons.signaturepad
 
-import io.peekandpoke.kraft.KraftDsl
 import io.peekandpoke.kraft.addons.registry.Addon
 import io.peekandpoke.kraft.addons.registry.AddonKey
 import io.peekandpoke.kraft.addons.registry.AddonRegistry
@@ -27,9 +26,10 @@ class SignaturePadAddon internal constructor(
      * @param options optional configuration (penColor, minWidth, maxWidth, etc.)
      * @return a [SignaturePadJs] instance
      */
+    @Suppress("unused")
     fun create(canvas: HTMLCanvasElement, options: SignaturePadJs.Options? = null): SignaturePadJs {
         // Local variable needed: js() blocks capture locals but not Kotlin's `this`.
-        val ctor = signaturePadConstructor
+        @Suppress("UnusedVariable") val ctor = signaturePadConstructor
 
         return if (options != null) {
             js("new ctor(canvas, options)").unsafeCast<SignaturePadJs>()
@@ -53,7 +53,6 @@ class SignaturePadAddon internal constructor(
 val signaturePadAddonKey = AddonKey<SignaturePadAddon>("signaturepad")
 
 /** Registers the signaturepad addon for lazy loading via dynamic import. */
-@KraftDsl
 fun AddonRegistryBuilder.signaturePad(lazy: Boolean = false): Addon<SignaturePadAddon> = register(
     key = signaturePadAddonKey,
     name = "signaturepad",

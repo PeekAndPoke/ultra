@@ -1,6 +1,5 @@
 package io.peekandpoke.kraft.addons.marked
 
-import io.peekandpoke.kraft.KraftDsl
 import io.peekandpoke.kraft.addons.registry.Addon
 import io.peekandpoke.kraft.addons.registry.AddonKey
 import io.peekandpoke.kraft.addons.registry.AddonRegistry
@@ -41,7 +40,6 @@ class MarkedAddon internal constructor(
 val markedAddonKey = AddonKey<MarkedAddon>("marked")
 
 /** Registers the marked addon for lazy loading via dynamic import. */
-@KraftDsl
 fun AddonRegistryBuilder.marked(lazy: Boolean = false): Addon<MarkedAddon> = register(
     key = markedAddonKey,
     name = "marked",

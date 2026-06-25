@@ -158,6 +158,32 @@ berlin.offsetSecondsAt(instant)   // 7200
 MpTimezone.supportedIds  // 600+ IANA zones
 ```
 
+## Timezones on Kotlin/JS
+
+Named zones (`MpTimezone.of("Europe/Berlin")`) need a timezone provider on the JS target — JVM and Native have it built
+in. Register one **once at startup**, before any zone is resolved.
+
+- **Native (recommended, zero data):** `installNativeTimezones()` resolves offsets from the browser's IANA database via
+  `Intl` — no bundled timezone data, always up to date. Passes the full datetime test suite (named zones + DST).
+- **In a Kraft app:** automatic — `kraftApp { }` installs the native provider by default; nothing to do.
+- **Bundled fallback:** add `io.peekandpoke.kraft:addons-datetime` and call one js-joda loader (for pre-`Intl` engines
+  or
+  historical accuracy). Call only the one you need — DCE bundles just that dataset:
+  - `installNativeTimezones()` — browser Intl, ~0 KB
+  - `installFullTimezones()` — all zones, full history, ~713 KB / 37 KB gzip
+  - `installTimezones1970to2030()` — years 1970–2030, ~130 KB / 18 KB gzip
+  - `installTimezones10YearRange()` — ~±5 years from build, ~40 KB / 10 KB gzip
+- In a Kraft builder, override the default native provider with `fullTimezones()`, `timezones1970to2030()`, etc.
+
+```kotlin
+import io.peekandpoke.ultra.datetime.installNativeTimezones
+
+fun main() {
+  installNativeTimezones()  // before any zone is resolved
+  val berlin = MpTimezone.of("Europe/Berlin")
+}
+```
+
 ## Periods
 
 ```kotlin
