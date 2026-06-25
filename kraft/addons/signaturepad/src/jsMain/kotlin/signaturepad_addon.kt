@@ -66,7 +66,9 @@ fun AddonRegistryBuilder.signaturePad(lazy: Boolean = false): Addon<SignaturePad
 
     SignaturePadAddon(
         signaturePadConstructor = sigPadModule.default ?: sigPadModule,
-        trimCanvasFn = trimModule.default ?: trimModule,
+        // trim-canvas is a UMD bundle (`module.exports = { default: fn, __esModule: true }`) which
+        // webpack double-wraps, so the callable lives at `.default.default`. Handle both shapes.
+        trimCanvasFn = trimModule.default?.default ?: trimModule.default ?: trimModule,
     )
 }
 

@@ -191,9 +191,34 @@ exception or null per facade contract; a token with extra claims maps fully via 
       fixture + network/CDN access — write as an opt-in integration test (mount viewer with a tiny
       inline base64 PDF; assert state transitions, not pixels). Headless 2D canvas is fine; the
       blocker is CDN `ScriptLoader` reliability in CI.
-2. **P1 — deepen shallow:** `signaturepad`, `prismjs`, `chartjs` (builder), `marked`, `browserdetect`,
-   `avatars`. Biggest warning-reduction per line of test.
-3. **P2 — top up:** `pixijs`, `threejs`, `jwtdecode` edge cases.
+2. **P1 — deepen shallow — DONE (2026-06-25):**
+    - **prismjs** ✅ `PrismPluginSpec` — 6 pure-DOM tests: each plugin's `applyTo` (class + dataset +
+      soft-wrap style).
+    - **chartjs** ✅ `ChartJsDataBuilderSpec` — 3 pure tests: `numberLabels(count|range)`, `nextColor`
+      palette cycle + wrap.
+    - **avatars** ✅ `AvatarsLogicSpec` — determinism (`get(x)==get(x)`), name-sensitivity, `getRandom`
+      varies.
+    - **browserdetect** ✅ `BrowserDetectUaSpec` — deterministic detection from fixed UA strings via a
+      fake `Navigator` (`Chrome|Firefox|Windows|mobile`).
+    - **marked** ✅ `MarkedStructureSpec` — `markdown2html` renders headings/bold/lists/links to the
+      expected sanitized HTML.
+    - **signaturepad** ✅ `SignaturePadExportSpec` (Export → PNG/JPEG data URLs / null canvas) +
+      `SignaturePadFacadeSpec` (`create()` → empty pad, `isEmpty()`/`clear()`).
+        - **BUG FOUND & FIXED:** `SignaturePadAddon.trimCanvas()` threw `trimCanvasFn is not a function`
+          — `trim-canvas` is a UMD bundle webpack double-wraps, so the callable is at `.default.default`,
+          not `.default`. Fixed the capture in `signaturepad_addon.kt`
+          (`trimModule.default?.default ?: trimModule.default ?: trimModule`) and `trimCanvas` is now
+          covered (crops 200x100 → 100x50).
+3. **P2 — top up — DONE (2026-06-25):**
+    - **threejs** ✅ `ThreeJsFactoriesSpec` — orthographic/perspective cameras, sphere/plane/cylinder/
+      torus geometries, basic/lambert materials, directional/point/hemisphere lights, `Vector3`,
+      scene-graph add. Pure construction; `WebGLRenderer.render()` stays disabled (no GL headless).
+    - **pixijs** ✅ `PixiJsTextSpec` — `createText` builds a `Text` carrying the string.
+    - **jwtdecode** ✅ `JwtDecodeEdgeSpec` — `decodeJwt` raw object + full claim extraction (sub, iat).
+
+**Status: all 12 addons have real API coverage; only the documented integration gaps remain**
+(pdfjs CDN viewers, signaturepad stroke simulation, threejs/pixijs GPU render — all need fixtures or
+a GL context the headless runner lacks).
 
 ### Test-harness learnings (apply to remaining addons)
 
