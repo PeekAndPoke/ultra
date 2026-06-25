@@ -1,6 +1,5 @@
 package io.peekandpoke.kraft.addons.nxcompile
 
-import io.peekandpoke.kraft.KraftDsl
 import io.peekandpoke.kraft.addons.registry.Addon
 import io.peekandpoke.kraft.addons.registry.AddonKey
 import io.peekandpoke.kraft.addons.registry.AddonRegistry
@@ -28,7 +27,6 @@ class NxCompileAddon internal constructor(
 val nxCompileAddonKey = AddonKey<NxCompileAddon>("nxcompile")
 
 /** Registers the nxcompile addon for lazy loading via dynamic import. */
-@KraftDsl
 fun AddonRegistryBuilder.nxCompile(lazy: Boolean = false): Addon<NxCompileAddon> = register(
     key = nxCompileAddonKey,
     name = "nxcompile",

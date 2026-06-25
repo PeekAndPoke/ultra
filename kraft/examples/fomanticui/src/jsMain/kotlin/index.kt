@@ -20,6 +20,8 @@ val kraft = kraftApp {
 }
 
 fun main() {
+    // Named time zones (e.g. Europe/Berlin) just work — Kraft installs native, zero-data
+    // timezone support by default. Override in kraftApp { } with e.g. fullTimezones() if needed.
     kraft.mount(selector = "#spa", engine = PreactVDomEngine()) {
         App()
     }

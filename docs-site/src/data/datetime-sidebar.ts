@@ -11,4 +11,5 @@ export const datetimeSidebar = [
     {href: '/ultra/datetime/operations', label: 'Formatting & Parsing', section: 'Features'},
     {href: '/ultra/datetime/ranges', label: 'Ranges & Time Slots', section: 'Features'},
     {href: '/ultra/datetime/kronos', label: 'Kronos Clock', section: 'Features'},
+    {href: '/ultra/datetime/js-timezones', label: 'Timezones on Kotlin/JS', section: 'Platform'},
 ];

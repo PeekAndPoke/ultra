@@ -1,6 +1,5 @@
 package io.peekandpoke.kraft.addons.avatars
 
-import io.peekandpoke.kraft.KraftDsl
 import io.peekandpoke.kraft.addons.registry.Addon
 import io.peekandpoke.kraft.addons.registry.AddonKey
 import io.peekandpoke.kraft.addons.registry.AddonRegistry
@@ -54,7 +53,6 @@ class AvatarsAddon internal constructor(
 val avatarsAddonKey = AddonKey<AvatarsAddon>("avatars")
 
 /** Registers the avatars addon for lazy loading via dynamic import. */
-@KraftDsl
 fun AddonRegistryBuilder.avatars(lazy: Boolean = false): Addon<AvatarsAddon> = register(
     key = avatarsAddonKey,
     name = "avatars",

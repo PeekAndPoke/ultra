@@ -1,7 +1,6 @@
 package io.peekandpoke.kraft.popups
 
 import io.peekandpoke.kraft.KraftApp
-import io.peekandpoke.kraft.KraftDsl
 import io.peekandpoke.kraft.utils.Vector2D
 import kotlinx.html.FlowContent
 import org.w3c.dom.HTMLElement
@@ -23,7 +22,6 @@ typealias PopupComponentFactory = FlowContent.(
 /**
  * Register a [PopupsManager] in the [KraftApp]
  */
-@KraftDsl
 fun KraftApp.Builder.popups(settings: PopupsManager.Builder.() -> Unit = {}) = apply {
     setAttribute(
         key = PopupsManager.key,

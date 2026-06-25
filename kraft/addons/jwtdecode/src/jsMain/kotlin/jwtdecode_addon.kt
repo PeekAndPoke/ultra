@@ -1,6 +1,5 @@
 package io.peekandpoke.kraft.addons.jwtdecode
 
-import io.peekandpoke.kraft.KraftDsl
 import io.peekandpoke.kraft.addons.registry.Addon
 import io.peekandpoke.kraft.addons.registry.AddonKey
 import io.peekandpoke.kraft.addons.registry.AddonRegistry
@@ -35,7 +34,6 @@ class JwtDecodeAddon internal constructor(
 val jwtDecodeAddonKey = AddonKey<JwtDecodeAddon>("jwtdecode")
 
 /** Registers the jwt-decode addon for lazy loading via dynamic import. */
-@KraftDsl
 fun AddonRegistryBuilder.jwtDecode(lazy: Boolean = false): Addon<JwtDecodeAddon> = register(
     key = jwtDecodeAddonKey,
     name = "jwtdecode",

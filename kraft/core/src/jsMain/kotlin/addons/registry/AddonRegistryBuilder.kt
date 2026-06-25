@@ -11,7 +11,7 @@ import io.peekandpoke.kraft.KraftDsl
  * ```
  */
 @KraftDsl
-class AddonRegistryBuilder constructor() {
+class AddonRegistryBuilder {
     private val addons = mutableMapOf<AddonKey<*>, Addon<*>>()
 
     /**

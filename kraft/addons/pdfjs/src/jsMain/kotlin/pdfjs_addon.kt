@@ -1,6 +1,5 @@
 package io.peekandpoke.kraft.addons.pdfjs
 
-import io.peekandpoke.kraft.KraftDsl
 import io.peekandpoke.kraft.addons.registry.Addon
 import io.peekandpoke.kraft.addons.registry.AddonKey
 import io.peekandpoke.kraft.addons.registry.AddonRegistry
@@ -22,7 +21,6 @@ class PdfJsAddon internal constructor(
 val pdfJsAddonKey = AddonKey<PdfJsAddon>("pdfjs")
 
 /** Registers the pdfjs addon for lazy loading via CDN script. */
-@KraftDsl
 fun AddonRegistryBuilder.pdfJs(lazy: Boolean = false): Addon<PdfJsAddon> = register(
     key = pdfJsAddonKey,
     name = "pdfjs",

@@ -213,7 +213,12 @@ fun main() {
         core overlay systems without SemanticUI, register them individually with <code>modals()</code>,
         <code>toasts()</code>, and <code>popups()</code>.</p>
 
-<div class="not-prose mt-8 flex gap-4">
+    <Aside>Named time zones (<code>MpTimezone.of("Europe/Berlin")</code>) work out of the box — Kraft installs a
+        native, zero-data timezone provider by default. To bundle IANA data instead, see
+        <a href="/ultra/datetime/js-timezones">Timezones on Kotlin/JS</a>.
+    </Aside>
+
+    <div class="not-prose mt-8 flex gap-4">
   <a href="/ultra/kraft/components" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
     Learn about components &rarr;
   </a>

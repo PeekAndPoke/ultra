@@ -1,7 +1,6 @@
 package io.peekandpoke.kraft.toasts
 
 import io.peekandpoke.kraft.KraftApp
-import io.peekandpoke.kraft.KraftDsl
 import io.peekandpoke.ultra.common.safeEnumOrNull
 import io.peekandpoke.ultra.model.Message
 import kotlinx.serialization.Serializable
@@ -9,7 +8,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /** Registers a [ToastsManager] in the Kraft application with optional [settings]. */
-@KraftDsl
 fun KraftApp.Builder.toasts(settings: ToastsManager.Builder.() -> Unit = {}) = apply {
     setAttribute(
         key = ToastsManager.key,

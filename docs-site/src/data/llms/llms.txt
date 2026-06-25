@@ -13,7 +13,8 @@
 - [Slumber](https://peekandpoke.io/llms/slumber.md): Kotlin-first serialization — nullable-aware, sealed class polymorphism, two-pass error handling
 - [Mutator](https://peekandpoke.io/llms/mutator.md): KSP-generated code for mutating nested immutable data structures — @Mutable(deep) controls transitive discovery, @NotMutable excludes types, plugin-extensible
 - [Streams](https://peekandpoke.io/llms/streams.md): Reactive streams — always-has-a-value, composable operators, lazy subscriptions (JVM, JS, Native)
-- [Datetime](https://peekandpoke.io/llms/datetime.md): Multiplatform date/time — guard-rail type system, 600+ timezones, DST-aware arithmetic, testable Kronos clock (JVM, JS, Native)
+- [Datetime](https://peekandpoke.io/llms/datetime.md): Multiplatform date/time — guard-rail type system, 600+ timezones, DST-aware arithmetic, testable Kronos clock, native browser timezones via Intl (JVM, JS, Native)
+  - [Timezones on Kotlin/JS](https://peekandpoke.io/ultra/datetime/js-timezones): Native (Intl, zero-data) provider vs bundled IANA datasets; automatic in Kraft
 - [Cache](https://peekandpoke.io/llms/cache.md): In-memory caching — TTL/LRU/memory-aware eviction, coroutine-based, multiplatform (JVM, JS, Native)
 - [Maths](https://peekandpoke.io/ultra/maths/): Easing functions & distributions — 28 easing curves, 4 bucketed distributions, time-based animation (JVM, JS, Native)
   - [Getting Started](https://peekandpoke.io/ultra/maths/getting-started): Dependency, basic usage, easing, distributions

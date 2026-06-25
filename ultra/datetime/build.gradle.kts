@@ -67,13 +67,14 @@ kotlin {
 
         jsMain {
             dependencies {
-                api(Deps.Npm { jsJodaTimezone() })
             }
         }
 
         jsTest {
             dependencies {
                 jsTestDeps()
+                // No @js-joda/timezone here: the suite runs against the native Intl-backed
+                // provider (installNativeTimezones) registered in ProjectConfig.
             }
         }
 

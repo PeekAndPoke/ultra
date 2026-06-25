@@ -1,6 +1,5 @@
 package io.peekandpoke.kraft.addons.sourcemappedstacktrace
 
-import io.peekandpoke.kraft.KraftDsl
 import io.peekandpoke.kraft.addons.registry.Addon
 import io.peekandpoke.kraft.addons.registry.AddonKey
 import io.peekandpoke.kraft.addons.registry.AddonRegistry
@@ -38,7 +37,6 @@ class SourceMappedStackTraceAddon internal constructor(
 val sourceMappedStackTraceAddonKey = AddonKey<SourceMappedStackTraceAddon>("sourcemappedstacktrace")
 
 /** Registers the sourcemapped-stacktrace addon for lazy loading via dynamic import. */
-@KraftDsl
 fun AddonRegistryBuilder.sourceMappedStackTrace(lazy: Boolean = false): Addon<SourceMappedStackTraceAddon> = register(
     key = sourceMappedStackTraceAddonKey,
     name = "sourcemappedstacktrace",

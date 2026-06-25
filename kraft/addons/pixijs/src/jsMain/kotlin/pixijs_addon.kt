@@ -1,6 +1,5 @@
 package io.peekandpoke.kraft.addons.pixijs
 
-import io.peekandpoke.kraft.KraftDsl
 import io.peekandpoke.kraft.addons.pixijs.js.Application
 import io.peekandpoke.kraft.addons.pixijs.js.Graphics
 import io.peekandpoke.kraft.addons.pixijs.js.Text
@@ -35,6 +34,7 @@ class PixiJsAddon internal constructor(
     }
 
     /** Creates a new [Text] instance. */
+    @Suppress("unused")
     fun createText(options: TextOptions): Text {
         @Suppress("UnusedVariable", "unused")
         val ctor = pixiModule.Text
@@ -46,7 +46,6 @@ class PixiJsAddon internal constructor(
 val pixiJsAddonKey = AddonKey<PixiJsAddon>("pixijs")
 
 /** Registers the pixi.js addon for lazy loading via dynamic import. */
-@KraftDsl
 fun AddonRegistryBuilder.pixiJs(lazy: Boolean = false): Addon<PixiJsAddon> = register(
     key = pixiJsAddonKey,
     name = "pixijs",

@@ -1,6 +1,5 @@
 package io.peekandpoke.kraft.addons.browserdetect
 
-import io.peekandpoke.kraft.KraftDsl
 import io.peekandpoke.kraft.addons.registry.Addon
 import io.peekandpoke.kraft.addons.registry.AddonKey
 import io.peekandpoke.kraft.addons.registry.AddonRegistry
@@ -35,7 +34,6 @@ class BrowserDetectAddon internal constructor(
 val browserDetectAddonKey = AddonKey<BrowserDetectAddon>("browserdetect")
 
 /** Registers the browserdetect addon for lazy loading via dynamic import. */
-@KraftDsl
 fun AddonRegistryBuilder.browserDetect(lazy: Boolean = false): Addon<BrowserDetectAddon> = register(
     key = browserDetectAddonKey,
     name = "browserdetect",
