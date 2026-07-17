@@ -257,7 +257,6 @@ class TestAppUserRealm(
             ),
             permissions = UserPermissions(
                 isSuperUser = false,
-                organisations = setOf(),
                 roles = setOf(),
             )
         ) {

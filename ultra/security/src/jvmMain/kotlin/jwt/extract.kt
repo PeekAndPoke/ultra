@@ -24,7 +24,8 @@ fun Payload.extractUser(namespace: String = "user"): JwtUserData = JwtUserData(
 /** Extracts [UserPermissions] from this payload using claims under the given [namespace]. */
 fun Payload.extractPermissions(namespace: String = "permissions"): UserPermissions = UserPermissions(
     isSuperUser = getClaim("$namespace/superuser")?.asBoolean() ?: false,
-    organisations = getClaim("$namespace/organisations").asStringSet(),
+    org = getClaim("$namespace/org").asString(),
+    accessibleOrgs = getClaim("$namespace/accessibleOrgs").asStringSet(),
     branches = getClaim("$namespace/branches").asStringSet(),
     groups = getClaim("$namespace/groups").asStringSet(),
     roles = getClaim("$namespace/roles").asStringSet(),

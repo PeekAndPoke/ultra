@@ -80,7 +80,6 @@ class AdminUserRealm(
             ),
             permissions = UserPermissions(
                 isSuperUser = userValue.isSuperUser,
-                organisations = setOf(),
                 roles = setOf(),
             )
         ) {

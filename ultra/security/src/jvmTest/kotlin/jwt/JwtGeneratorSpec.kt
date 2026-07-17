@@ -146,7 +146,8 @@ class JwtGeneratorSpec : StringSpec() {
             val testCases = listOf(
                 UserPermissions(
                     isSuperUser = true,
-                    organisations = setOf("org1", "org2"),
+                    org = "org1",
+                    accessibleOrgs = setOf("org1", "org2"),
                     branches = setOf("branch1", "branch2"),
                     groups = setOf("group1", "group2"),
                     roles = setOf("role1", "role2"),
@@ -154,7 +155,8 @@ class JwtGeneratorSpec : StringSpec() {
                 ),
                 UserPermissions(
                     isSuperUser = false,
-                    organisations = setOf("orgA", "orgB"),
+                    org = "orgA",
+                    accessibleOrgs = setOf("orgA", "orgB"),
                     branches = emptySet(),
                     groups = setOf("groupX"),
                     roles = setOf("roleY", "roleZ"),
@@ -162,7 +164,8 @@ class JwtGeneratorSpec : StringSpec() {
                 ),
                 UserPermissions(
                     isSuperUser = false,
-                    organisations = emptySet(),
+                    org = null,
+                    accessibleOrgs = emptySet(),
                     branches = emptySet(),
                     groups = emptySet(),
                     roles = emptySet(),
@@ -181,7 +184,8 @@ class JwtGeneratorSpec : StringSpec() {
 
                     withClue("token should contain the expected permissions") {
                         extractedPermissions.isSuperUser shouldBe permissions.isSuperUser
-                        extractedPermissions.organisations shouldBe permissions.organisations
+                        extractedPermissions.org shouldBe permissions.org
+                        extractedPermissions.accessibleOrgs shouldBe permissions.accessibleOrgs
                         extractedPermissions.branches shouldBe permissions.branches
                         extractedPermissions.groups shouldBe permissions.groups
                         extractedPermissions.roles shouldBe permissions.roles
@@ -207,7 +211,8 @@ class JwtGeneratorSpec : StringSpec() {
             val extractedPermissions = decodedToken.extractPermissions(permissionsNs)
 
             extractedPermissions.isSuperUser shouldBe false
-            extractedPermissions.organisations shouldBe emptySet()
+            extractedPermissions.org shouldBe null
+            extractedPermissions.accessibleOrgs shouldBe emptySet()
             extractedPermissions.branches shouldBe emptySet()
             extractedPermissions.groups shouldBe emptySet()
             extractedPermissions.roles shouldBe emptySet()

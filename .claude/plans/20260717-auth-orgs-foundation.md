@@ -300,13 +300,15 @@ layer will read — see `20260717-saas-foundation.md`.)
 
 Each phase green + tested (both DB backends via the `MatrixTest2d`/`AppSpec` patterns) before the next.
 
-### Phase O0 — UserPermissions refactor (~½ day) — do first, everything builds on it
-- [ ] `organisations: Set<String>` → `org: String?` + add `accessibleOrgs: Set<String>`
-- [ ] Rewrite organisation helpers (`hasOrganisation` single-valued, `canAccessOrg`); drop the
-      set-variant org helpers; update `mergedWith`; leave branch/group/role/permission helpers untouched
-- [ ] `jwt/builder.kt` + `jwt/extract.kt`: `org` string claim + `accessibleOrgs` array claim
-- [ ] Update `UserPermissionsSpec` + JWT round-trip specs; fix the demo realm `generateJwt`
-- [ ] Green: `:ultra:security:jvmTest` + auth JWT specs
+### Phase O0 — UserPermissions refactor (~½ day) — DONE 2026-07-17 (task `20260717-userpermissions-org-refactor.md`)
+- [x] `organisations: Set<String>` → `org: String?` + add `accessibleOrgs: Set<String>`
+- [x] Rewrite organisation helpers (`hasOrganisation` single-valued, `canAccessOrg`); dropped
+      `hasAllOrganisations`; **kept** `hasAnyOrganisation` (redefined) so `AuthRule.forAnyOrganisation`
+      is unchanged; `mergedWith` org = `other.org ?: this.org`; branch/group/role/permission helpers untouched
+- [x] `jwt/builder.kt` + `jwt/extract.kt`: `org` string claim + `accessibleOrgs` array claim
+- [x] Updated `UserPermissionsSpec` + JWT round-trip specs; fixed demo `AdminUserRealm` + `AuthState.kt` JS decode
+- [x] Green: `:ultra:security:jvmTest`, `:funktor:rest:jvmTest`, `:funktor:auth:jvmTest`, JS + demo compile
+- [ ] `/feature-review` gate + red-team follow-up task (pending — see note below)
 
 ### Phase O1 — `funktor/saas` module (~1 day)
 - [ ] `Organisation` entity (embedded branches, plan) + `OrgModel`/`BranchModel` common models

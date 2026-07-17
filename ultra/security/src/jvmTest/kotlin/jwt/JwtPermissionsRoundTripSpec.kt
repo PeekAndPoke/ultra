@@ -17,7 +17,8 @@ class JwtPermissionsRoundTripSpec : FreeSpec() {
 
             val permissions = UserPermissions(
                 isSuperUser = true,
-                organisations = setOf("o1", "o2"),
+                org = "o1",
+                accessibleOrgs = setOf("o1", "o2"),
                 branches = setOf("b1", "b2"),
                 groups = setOf("g1", "g2"),
                 roles = setOf("r1", "r2"),
@@ -43,7 +44,8 @@ class JwtPermissionsRoundTripSpec : FreeSpec() {
 
             val permissions = UserPermissions(
                 isSuperUser = false,
-                organisations = setOf("o1", "o2"),
+                org = "o1",
+                accessibleOrgs = setOf("o1", "o2"),
                 branches = setOf("b1", "b2"),
                 groups = setOf("g1", "g2"),
                 roles = setOf("r1", "r2"),

@@ -306,7 +306,8 @@ class AuthState<USER>(
         val permissions = response.token.permissionsNs.let { ns ->
             @Suppress("UNCHECKED_CAST")
             UserPermissions(
-                organisations = (claims["$ns/organisations"] as? List<String> ?: emptyList()).toSet(),
+                org = claims["$ns/org"] as? String,
+                accessibleOrgs = (claims["$ns/accessibleOrgs"] as? List<String> ?: emptyList()).toSet(),
                 branches = (claims["$ns/branches"] as? List<String> ?: emptyList()).toSet(),
                 groups = (claims["$ns/groups"] as? List<String> ?: emptyList()).toSet(),
                 roles = (claims["$ns/roles"] as? List<String> ?: emptyList()).toSet(),
