@@ -299,8 +299,10 @@ Explicitly deferred:
 1. **Exposed (SQL) backend** — third DB backend for Funktor
 2. **CI/CD pipeline** — GitHub Actions for build/test/publish, green badges
 3. **Account activation flow** — `AuthSystem.activate()` full email verification
+   → absorbed into `20260717-auth-orgs-foundation.md` Phase F (2026-07-17)
 4. **Dart codegen rewrite** — needs proper rewrite; move to `funktor:dart-codegen` package first
 5. **Email template editor** — rich template system for messaging
+   → absorbed into `20260717-saas-foundation.md` Tracks C/D (2026-07-17)
 6. **API binary compatibility** — `kotlinx-binary-compatibility-validator`
 7. **Line-level code coverage** — metrics and floor beyond API-surface testing
 8. **Detekt rule tightening** — stricter static analysis

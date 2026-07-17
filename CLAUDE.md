@@ -28,11 +28,32 @@ snapshot. Stale plans are worse than no plans because they cause wrong prioritie
 - Use `pnpm`, never `npm`, for JavaScript package management.
 - Use "PeekAndPoke" or "peekandpoke" for branding, never "peek&poke".
 
+## Sub-agent orchestration
+
+- When fanning out work across sub-agents, pick model and effort per task — cheap tiers for
+  retrieval/mechanical work, strong tiers for coding/verification; the coordinator stays on the
+  user-selected model. See `.claude/skills/agent-fleet/` (provisional).
+
+## Development workflow
+
+- **Every feature gets a task file** in `.claude/tasks/`, named `YYYYMMDD-<slug>.md` (copy
+  `.claude/tasks/TEMPLATE.md`). Features usually come from plan phases — link the plan in the task.
+- Lifecycle: implement → run `/feature-review` (mandatory multi-agent review: 1. implementation &
+  code style, 2. domain expert, 3. security) → fix confirmed findings → tests green → mark DONE
+  and move the task file to `.claude/tasks-archive/` (filename is already dated).
+- **Security-critical features** get a follow-up red-team task (`YYYYMMDD-redteam-<slug>.md`) in
+  `.claude/tasks/`, describing concrete break-in/attack scenarios to attempt. These are COLLECTED,
+  not executed — dedicated penetration-test sessions sweep them later. Never run attack scenarios
+  as part of normal feature work.
+
 ## Testing
 
 - Addon tests live in each addon module's `src/jsTest/kotlin/`.
 - Kraft core tests are in `kraft/core-tests/src/jsTest/kotlin/`.
 - Test real browser behavior via `TestBed.preact { }` — don't mock what you can run.
+- **All backend (JVM) code needs end-to-end tests**: boot the app via the funktor testing harness
+  (`AppSpec`/`AppUnderTest` in `funktor/testing`) and exercise real endpoints, not just units.
+  Storage-touching features must run against both DB backends (`MatrixTest2d` pattern).
 
 ## Documentation
 
