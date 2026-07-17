@@ -57,6 +57,7 @@ include(
         ":funktor:insights",
         ":funktor:logging",
         ":funktor:rest",
+        ":funktor:saas",
         ":funktor:staticweb",
         ":funktor:messaging",
         ":funktor:testing",

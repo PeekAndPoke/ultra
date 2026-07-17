@@ -24,6 +24,10 @@
       <module name="root.test" target="1.8" />
       <module name="root.ultra.main" target="1.8" />
       <module name="root.ultra.test" target="1.8" />
+      <module name="ultra" target="17" />
+      <module name="ultra.buildSrc" target="21" />
+      <module name="ultra.buildSrc.main" target="21" />
+      <module name="ultra.buildSrc.test" target="21" />
       <module name="ultra.common" target="17" />
       <module name="ultra.common-mp" target="11" />
       <module name="ultra.common-mp.commonMain" target="1.8" />
@@ -36,36 +40,133 @@
       <module name="ultra.common.test" target="17" />
       <module name="ultra.commonmp.jvmMain~1" target="1.8" />
       <module name="ultra.commonmp.jvmTest~1" target="1.8" />
+      <module name="ultra.funktor-demo.adminapp" target="21" />
       <module name="ultra.funktor-demo.adminapp.jvmMain" target="17" />
       <module name="ultra.funktor-demo.adminapp.jvmTest" target="17" />
+      <module name="ultra.funktor-demo.common" target="17" />
+      <module name="ultra.funktor-demo.common.jvmMain" target="17" />
+      <module name="ultra.funktor-demo.common.jvmTest" target="17" />
+      <module name="ultra.funktor-demo.server" target="17" />
       <module name="ultra.funktor-demo.server.jvmMain" target="17" />
       <module name="ultra.funktor-demo.server.jvmTest" target="17" />
+      <module name="ultra.funktor-demo.server.main" target="17" />
+      <module name="ultra.funktor-demo.server.test" target="17" />
+      <module name="ultra.funktor.all" target="17" />
+      <module name="ultra.funktor.all.jvmMain" target="17" />
+      <module name="ultra.funktor.all.jvmTest" target="17" />
       <module name="ultra.funktor.all.main" target="17" />
       <module name="ultra.funktor.all.test" target="17" />
+      <module name="ultra.funktor.auth" target="17" />
+      <module name="ultra.funktor.auth.jvmMain" target="17" />
+      <module name="ultra.funktor.auth.jvmTest" target="17" />
+      <module name="ultra.funktor.cluster" target="17" />
+      <module name="ultra.funktor.cluster.jvmMain" target="17" />
+      <module name="ultra.funktor.cluster.jvmTest" target="17" />
       <module name="ultra.funktor.cluster.main" target="17" />
       <module name="ultra.funktor.cluster.test" target="17" />
+      <module name="ultra.funktor.core" target="17" />
+      <module name="ultra.funktor.core.jvmMain" target="17" />
+      <module name="ultra.funktor.core.jvmTest" target="17" />
+      <module name="ultra.funktor.insights" target="17" />
+      <module name="ultra.funktor.insights.jvmMain" target="17" />
+      <module name="ultra.funktor.insights.jvmTest" target="17" />
+      <module name="ultra.funktor.inspect" target="17" />
+      <module name="ultra.funktor.inspect.jvmMain" target="17" />
+      <module name="ultra.funktor.inspect.jvmTest" target="17" />
+      <module name="ultra.funktor.logging" target="17" />
+      <module name="ultra.funktor.logging.jvmMain" target="17" />
+      <module name="ultra.funktor.logging.jvmTest" target="17" />
       <module name="ultra.funktor.logging.main" target="17" />
       <module name="ultra.funktor.logging.test" target="17" />
+      <module name="ultra.funktor.messaging" target="17" />
+      <module name="ultra.funktor.messaging.jvmMain" target="17" />
+      <module name="ultra.funktor.messaging.jvmTest" target="17" />
       <module name="ultra.funktor.messaging.main" target="17" />
       <module name="ultra.funktor.messaging.test" target="17" />
+      <module name="ultra.funktor.rest" target="17" />
+      <module name="ultra.funktor.rest.jvmMain" target="17" />
+      <module name="ultra.funktor.rest.jvmTest" target="17" />
+      <module name="ultra.funktor.saas" target="17" />
+      <module name="ultra.funktor.saas.jvmMain" target="17" />
+      <module name="ultra.funktor.saas.jvmTest" target="17" />
+      <module name="ultra.funktor.staticweb" target="17" />
+      <module name="ultra.funktor.staticweb.main" target="17" />
+      <module name="ultra.funktor.staticweb.test" target="17" />
+      <module name="ultra.funktor.testing" target="17" />
+      <module name="ultra.funktor.testing.jvmMain" target="17" />
+      <module name="ultra.funktor.testing.jvmTest" target="17" />
       <module name="ultra.funktor.testing.main" target="17" />
       <module name="ultra.funktor.testing.test" target="17" />
+      <module name="ultra.jvmMain" target="17" />
+      <module name="ultra.jvmTest" target="17" />
       <module name="ultra.karango.addons" target="17" />
       <module name="ultra.karango.addons.jvmMain" target="17" />
       <module name="ultra.karango.addons.jvmTest" target="17" />
       <module name="ultra.karango.addons.main" target="17" />
       <module name="ultra.karango.addons.test" target="17" />
+      <module name="ultra.karango.core" target="17" />
+      <module name="ultra.karango.core.main" target="17" />
+      <module name="ultra.karango.core.test" target="17" />
+      <module name="ultra.karango.ksp" target="17" />
+      <module name="ultra.karango.ksp.main" target="17" />
+      <module name="ultra.karango.ksp.test" target="17" />
       <module name="ultra.kontainer" target="17" />
       <module name="ultra.kontainer.main" target="17" />
       <module name="ultra.kontainer.test" target="17" />
+      <module name="ultra.kraft.addons.avatars" target="21" />
+      <module name="ultra.kraft.addons.browserdetect" target="21" />
+      <module name="ultra.kraft.addons.chartjs" target="21" />
+      <module name="ultra.kraft.addons.datetime" target="21" />
+      <module name="ultra.kraft.addons.jwtdecode" target="21" />
       <module name="ultra.kraft.addons.konva" target="17" />
+      <module name="ultra.kraft.addons.marked" target="21" />
+      <module name="ultra.kraft.addons.nxcompile" target="21" />
+      <module name="ultra.kraft.addons.pdfjs" target="21" />
+      <module name="ultra.kraft.addons.pixijs" target="21" />
+      <module name="ultra.kraft.addons.prismjs" target="21" />
+      <module name="ultra.kraft.addons.signaturepad" target="21" />
+      <module name="ultra.kraft.addons.sourcemappedstacktrace" target="21" />
+      <module name="ultra.kraft.addons.threejs" target="21" />
+      <module name="ultra.kraft.core" target="17" />
+      <module name="ultra.kraft.core-tests" target="17" />
+      <module name="ultra.kraft.core-tests.jvmMain" target="17" />
+      <module name="ultra.kraft.core-tests.jvmTest" target="17" />
+      <module name="ultra.kraft.core.jvmMain" target="17" />
+      <module name="ultra.kraft.core.jvmTest" target="17" />
+      <module name="ultra.kraft.examples.addons" target="17" />
+      <module name="ultra.kraft.examples.addons.jvmMain" target="17" />
+      <module name="ultra.kraft.examples.addons.jvmTest" target="17" />
+      <module name="ultra.kraft.examples.fomanticui" target="17" />
+      <module name="ultra.kraft.examples.fomanticui.jvmMain" target="17" />
+      <module name="ultra.kraft.examples.fomanticui.jvmTest" target="17" />
+      <module name="ultra.kraft.examples.hello-world" target="17" />
+      <module name="ultra.kraft.examples.hello-world.jvmMain" target="17" />
+      <module name="ultra.kraft.examples.hello-world.jvmTest" target="17" />
+      <module name="ultra.kraft.semanticui" target="17" />
+      <module name="ultra.kraft.semanticui.jvmMain" target="17" />
+      <module name="ultra.kraft.semanticui.jvmTest" target="17" />
+      <module name="ultra.kraft.testing" target="17" />
+      <module name="ultra.kraft.testing.jvmMain" target="17" />
+      <module name="ultra.kraft.testing.jvmTest" target="17" />
       <module name="ultra.logging" target="17" />
       <module name="ultra.main" target="17" />
       <module name="ultra.meta" target="17" />
       <module name="ultra.meta.main" target="17" />
       <module name="ultra.meta.test" target="17" />
+      <module name="ultra.monko.core" target="17" />
+      <module name="ultra.monko.core.main" target="17" />
+      <module name="ultra.monko.core.test" target="17" />
+      <module name="ultra.monko.ksp" target="17" />
+      <module name="ultra.monko.ksp.main" target="17" />
+      <module name="ultra.monko.ksp.test" target="17" />
+      <module name="ultra.mutator.core" target="17" />
+      <module name="ultra.mutator.core.jvmMain" target="17" />
+      <module name="ultra.mutator.core.jvmTest" target="17" />
       <module name="ultra.mutator.core.main" target="17" />
       <module name="ultra.mutator.core.test" target="17" />
+      <module name="ultra.mutator.ksp" target="17" />
+      <module name="ultra.mutator.ksp.main" target="17" />
+      <module name="ultra.mutator.ksp.test" target="17" />
       <module name="ultra.mutator.main" target="17" />
       <module name="ultra.mutator.test" target="17" />
       <module name="ultra.security" target="17" />
@@ -76,19 +177,76 @@
       <module name="ultra.slumber.main" target="17" />
       <module name="ultra.slumber.test" target="17" />
       <module name="ultra.test" target="17" />
+      <module name="ultra.tooling" target="17" />
+      <module name="ultra.tooling.main" target="17" />
+      <module name="ultra.tooling.test" target="17" />
+      <module name="ultra.ultra.cache" target="17" />
+      <module name="ultra.ultra.cache.jvmMain" target="17" />
+      <module name="ultra.ultra.cache.jvmTest" target="17" />
+      <module name="ultra.ultra.common" target="17" />
+      <module name="ultra.ultra.common.jvmMain" target="17" />
+      <module name="ultra.ultra.common.jvmTest" target="17" />
+      <module name="ultra.ultra.datetime" target="17" />
+      <module name="ultra.ultra.datetime.jvmMain" target="17" />
+      <module name="ultra.ultra.datetime.jvmTest" target="17" />
       <module name="ultra.ultra.extras" target="17" />
       <module name="ultra.ultra.extras.jvmMain" target="17" />
       <module name="ultra.ultra.extras.jvmTest" target="17" />
+      <module name="ultra.ultra.fixture" target="17" />
+      <module name="ultra.ultra.fixture.jvmMain" target="17" />
+      <module name="ultra.ultra.fixture.jvmTest" target="17" />
+      <module name="ultra.ultra.html" target="17" />
+      <module name="ultra.ultra.html.jvmMain" target="17" />
+      <module name="ultra.ultra.html.jvmTest" target="17" />
+      <module name="ultra.ultra.kontainer" target="17" />
+      <module name="ultra.ultra.kontainer.main" target="17" />
+      <module name="ultra.ultra.kontainer.test" target="17" />
+      <module name="ultra.ultra.log" target="17" />
+      <module name="ultra.ultra.log.jvmMain" target="17" />
+      <module name="ultra.ultra.log.jvmTest" target="17" />
       <module name="ultra.ultra.logging" target="17" />
       <module name="ultra.ultra.logging.jvmMain" target="17" />
       <module name="ultra.ultra.logging.jvmTest" target="17" />
+      <module name="ultra.ultra.maths" target="17" />
+      <module name="ultra.ultra.maths.jvmMain" target="17" />
+      <module name="ultra.ultra.maths.jvmTest" target="17" />
+      <module name="ultra.ultra.meta" target="17" />
+      <module name="ultra.ultra.meta.main" target="17" />
+      <module name="ultra.ultra.meta.test" target="17" />
+      <module name="ultra.ultra.model" target="17" />
+      <module name="ultra.ultra.model.jvmMain" target="17" />
+      <module name="ultra.ultra.model.jvmTest" target="17" />
       <module name="ultra.ultra.mutator" target="17" />
       <module name="ultra.ultra.mutator.main" target="17" />
       <module name="ultra.ultra.mutator.test" target="17" />
+      <module name="ultra.ultra.reflection" target="17" />
+      <module name="ultra.ultra.reflection.main" target="17" />
+      <module name="ultra.ultra.reflection.test" target="17" />
+      <module name="ultra.ultra.remote" target="17" />
+      <module name="ultra.ultra.remote.jvmMain" target="17" />
+      <module name="ultra.ultra.remote.jvmTest" target="17" />
+      <module name="ultra.ultra.security" target="17" />
+      <module name="ultra.ultra.security.jvmMain" target="17" />
+      <module name="ultra.ultra.security.jvmTest" target="17" />
+      <module name="ultra.ultra.semanticui" target="17" />
+      <module name="ultra.ultra.semanticui.jvmMain" target="17" />
+      <module name="ultra.ultra.semanticui.jvmTest" target="17" />
+      <module name="ultra.ultra.slumber" target="17" />
+      <module name="ultra.ultra.slumber-test-classes" target="17" />
+      <module name="ultra.ultra.slumber-test-classes.main" target="17" />
+      <module name="ultra.ultra.slumber-test-classes.test" target="17" />
+      <module name="ultra.ultra.slumber.jvmMain" target="17" />
+      <module name="ultra.ultra.slumber.jvmTest" target="17" />
       <module name="ultra.ultra.slumber.main" target="17" />
       <module name="ultra.ultra.slumber.test" target="17" />
+      <module name="ultra.ultra.streams" target="17" />
+      <module name="ultra.ultra.streams.jvmMain" target="17" />
+      <module name="ultra.ultra.streams.jvmTest" target="17" />
       <module name="ultra.ultra.tooling.main" target="17" />
       <module name="ultra.ultra.tooling.test" target="17" />
+      <module name="ultra.ultra.vault" target="17" />
+      <module name="ultra.ultra.vault.jvmMain" target="17" />
+      <module name="ultra.ultra.vault.jvmTest" target="17" />
       <module name="ultra.vault" target="17" />
       <module name="ultra.z-playground-js" target="17" />
       <module name="ultra.z-playground-jvm" target="17" />

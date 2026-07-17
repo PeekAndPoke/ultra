@@ -35,6 +35,7 @@
             <option value="$PROJECT_DIR$/funktor/logging" />
             <option value="$PROJECT_DIR$/funktor/messaging" />
             <option value="$PROJECT_DIR$/funktor/rest" />
+            <option value="$PROJECT_DIR$/funktor/saas" />
             <option value="$PROJECT_DIR$/funktor/staticweb" />
             <option value="$PROJECT_DIR$/funktor/testing" />
             <option value="$PROJECT_DIR$/karango" />
