@@ -1,5 +1,7 @@
 package io.peekandpoke.funktor.saas
 
+import io.ktor.server.application.Application
+import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
 import io.peekandpoke.funktor.saas.storage.karango.KarangoOrgsRepo
 import io.peekandpoke.funktor.saas.storage.monko.MonkoOrgsRepo
@@ -61,5 +63,36 @@ class FunktorSaasBuilder internal constructor(private val kontainer: KontainerBu
                 OrgsStorage.Vault(repo = repo)
             }
         }
+    }
+
+    /**
+     * Ensures an organisation with the given [slug]/[name] exists on every app startup — the
+     * single-tenant / default-org story: users then always resolve exactly one org and never see
+     * an org picker.
+     *
+     * Registers an [EnsureOrganisationOnAppStarting] hook. Calling this more than once replaces the
+     * previously configured default organisation.
+     */
+    fun ensureOrganisation(slug: String, name: String) {
+        with(kontainer) {
+            singleton(EnsureOrganisationOnAppStarting::class) { orgs: OrgsStorage ->
+                EnsureOrganisationOnAppStarting(orgs = orgs, slug = slug, name = name)
+            }
+        }
+    }
+}
+
+/**
+ * Startup hook that idempotently ensures a default organisation exists (see
+ * [FunktorSaasBuilder.ensureOrganisation]). Runs at [AppLifeCycleHooks.ExecutionOrder.Normal], i.e.
+ * after the repositories have been ensured.
+ */
+class EnsureOrganisationOnAppStarting(
+    private val orgs: OrgsStorage,
+    private val slug: String,
+    private val name: String,
+) : AppLifeCycleHooks.OnAppStarting {
+    override suspend fun onAppStarting(application: Application) {
+        orgs.ensureBySlug(slug = slug, name = name)
     }
 }

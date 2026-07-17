@@ -315,9 +315,11 @@ Each phase green + tested (both DB backends via the `MatrixTest2d`/`AppSpec` pat
       (note: org `plan`/feature-switch model deferred to O2 where permissions are built)
 - [x] `OrgsStorage` + Karango/Monko repos (unique slug index) + builder DSL + kontainer module
 - [ ] Fixtures + registration
-- [ ] `OrgsApiFeature` CRUD (`isSuperUser`), wired into `funktor/all`
-- [ ] `EnsuredOrganisation` config + `OnAppStarting` upsert hook (single/default-org apps)
-- [x] Tests: repo CRUD both backends + slug uniqueness green (ensured-org idempotency pending)
+- [x] `funktor:saas` wired into `funktor/all` (`saas` builder param on `funktor()`)
+- [ ] `OrgsApiFeature` CRUD (`isSuperUser`), auto-mounted via `ApiFeature`
+- [x] `EnsuredOrganisation`: `ensureBySlug` upsert + `ensureOrganisation()` builder + `OnAppStarting` hook
+- [x] Tests: repo CRUD both backends + slug uniqueness + ensureBySlug idempotency green;
+      aggregate boots with saas + ensure-org hook (AuthApiSpec)
 
 ### Phase O2 — Membership + permissions plumbing (~½ day)
 - [ ] `OrgMembership` + `HasOrgMemberships` (commonMain)

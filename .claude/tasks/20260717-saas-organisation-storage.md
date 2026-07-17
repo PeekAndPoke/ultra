@@ -17,8 +17,12 @@ persisted to both ArangoDB (karango) and MongoDB (monko), with a unique slug.
 - [x] `Funktor_Saas` kontainer module + `FunktorSaasBuilder.useKarango()/useMonko()`
 - [x] Dual-backend storage spec (`OrgsStorageBaseSpec` + Karango/Monko subclasses)
 - [ ] Fixtures (`RepoFixtureLoader` per backend) + kontainer registration
-- [ ] `OrgsApiFeature` CRUD (`isSuperUser`), wire into `funktor/all`
-- [ ] `EnsuredOrganisation` config + `OnAppStarting` upsert hook (single/default-org apps) + idempotency test
+- [x] Wire `funktor:saas` into `funktor/all` (build dep + `funktor()` `saas` param + `Funktor` module + `FunktorParams`)
+- [ ] `OrgsApiFeature` CRUD (`isSuperUser`), auto-mounted via `ApiFeature`
+- [x] `OrgsStorage.ensureBySlug()` idempotent upsert (race-safe) + idempotency tests both backends
+- [x] `EnsureOrganisationOnAppStarting` hook + `FunktorSaasBuilder.ensureOrganisation(slug, name)`;
+      wired into the funktor/all test blueprint (`ensureOrganisation("system-default", ...)`)
+      — boots cleanly (verified via AuthApiSpec); explicit "org exists" assertion lands with the API list test
 
 ## Implementation notes
 

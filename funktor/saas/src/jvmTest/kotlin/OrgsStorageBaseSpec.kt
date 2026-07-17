@@ -76,5 +76,27 @@ abstract class OrgsStorageBaseSpec : FreeSpec() {
                 storage.create(Organisation(slug = "dupe", name = "Second"))
             }
         }
+
+        "ensureBySlug() creates once and is idempotent on repeated calls" {
+            val storage = createStorage()
+
+            val first = storage.ensureBySlug("default", "Default Org")
+            val second = storage.ensureBySlug("default", "Default Org")
+
+            second._id shouldBe first._id
+            storage.findAll() shouldHaveSize 1
+            first.value().name shouldBe "Default Org"
+        }
+
+        "ensureBySlug() returns the existing org without overwriting it" {
+            val storage = createStorage()
+
+            val created = storage.create(Organisation(slug = "acme", name = "Acme Original"))
+
+            val ensured = storage.ensureBySlug("acme", "Acme Renamed")
+
+            ensured._id shouldBe created._id
+            ensured.value().name shouldBe "Acme Original" // ensure does not rename an existing org
+        }
     }
 }

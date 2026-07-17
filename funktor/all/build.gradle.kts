@@ -46,6 +46,7 @@ kotlin {
                 api(project(":funktor:logging"))
                 api(project(":funktor:messaging"))
                 api(project(":funktor:rest"))
+                api(project(":funktor:saas"))
                 api(project(":funktor:testing"))
             }
         }
