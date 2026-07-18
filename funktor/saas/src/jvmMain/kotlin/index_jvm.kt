@@ -1,7 +1,12 @@
 package io.peekandpoke.funktor.saas
 
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.routing.RoutingContext
+import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
+import io.peekandpoke.funktor.saas.api.OrgsApiFeature
+import io.peekandpoke.funktor.saas.domain.normalizeSlug
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
 import io.peekandpoke.funktor.saas.storage.karango.KarangoOrgsRepo
 import io.peekandpoke.funktor.saas.storage.monko.MonkoOrgsRepo
@@ -17,10 +22,15 @@ fun KontainerBuilder.funktorSaas(
 ) = module(Funktor_Saas, builder)
 
 inline val KontainerAware.funktorSaas: OrgsStorage get() = kontainer.get()
+inline val ApplicationCall.funktorSaas: OrgsStorage get() = kontainer.funktorSaas
+inline val RoutingContext.funktorSaas: OrgsStorage get() = call.funktorSaas
 
 val Funktor_Saas = module { builder: FunktorSaasBuilder.() -> Unit ->
     // Organisation storage — no-op until a backend is selected
     singleton(OrgsStorage::class, OrgsStorage.Null::class)
+
+    // Api
+    singleton(OrgsApiFeature::class)
 
     /////////////////////////////////////////////////////////////////////////////////
     // Apply external configuration
@@ -44,6 +54,8 @@ class FunktorSaasBuilder internal constructor(private val kontainer: KontainerBu
             singleton(OrgsStorage::class) { repo: KarangoOrgsRepo ->
                 OrgsStorage.Vault(repo = repo)
             }
+
+            singleton(KarangoOrgsRepo.Fixtures::class)
         }
     }
 
@@ -62,6 +74,8 @@ class FunktorSaasBuilder internal constructor(private val kontainer: KontainerBu
             singleton(OrgsStorage::class) { repo: MonkoOrgsRepo ->
                 OrgsStorage.Vault(repo = repo)
             }
+
+            singleton(MonkoOrgsRepo.Fixtures::class)
         }
     }
 
@@ -74,9 +88,12 @@ class FunktorSaasBuilder internal constructor(private val kontainer: KontainerBu
      * previously configured default organisation.
      */
     fun ensureOrganisation(slug: String, name: String) {
+        val normalized = normalizeSlug(slug)
+        require(normalized.isNotBlank()) { "ensureOrganisation requires a non-blank slug" }
+
         with(kontainer) {
             singleton(EnsureOrganisationOnAppStarting::class) { orgs: OrgsStorage ->
-                EnsureOrganisationOnAppStarting(orgs = orgs, slug = slug, name = name)
+                EnsureOrganisationOnAppStarting(orgs = orgs, slug = normalized, name = name)
             }
         }
     }

@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.saas.storage.monko
 
+import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import io.peekandpoke.funktor.saas.domain.Organisation
 import io.peekandpoke.funktor.saas.domain.slug
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
@@ -25,6 +26,8 @@ class MonkoOrgsRepo(
         timestamped.onBeforeSave(),
     ),
 ) {
+    class Fixtures(repo: MonkoOrgsRepo) : RepoFixtureLoader<Organisation>(repo)
+
     override fun MonkoIndexBuilder<Organisation>.buildIndexes() {
         uniqueIndex {
             field { it.slug }

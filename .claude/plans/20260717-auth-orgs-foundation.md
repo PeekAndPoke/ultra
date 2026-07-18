@@ -229,6 +229,9 @@ Flow in `AuthRealm.signIn` (`AuthRealm.kt:191-204`), after `provider.signIn` ret
 - `Required`: resolve `getMemberships(user)` → accessible orgs (active only):
   - **0** → throw `AuthError.noOrganisationAccess` (credentials were valid; distinct from
     `invalidCredentials` on purpose — the user should see "no access", not "wrong password").
+    **From O1 review:** the active-org filter here is "active only" — account for the ensured
+    default org being `Archived` (single-tenant lockout / self-heal), so an archived default org
+    doesn't silently gate out every user of a single-tenant app.
   - **1** → auto-select, issue `Success(org = it)`.
   - **n** → persist `AuthRecord.OrgSelectionToken` (new variant; realm, ownerId, token, `expiresAt`
     from new `RealmTokenConfig.orgSelectionTokenLifetime` default 5 min, single-use — same pattern as
@@ -310,22 +313,26 @@ Each phase green + tested (both DB backends via the `MatrixTest2d`/`AppSpec` pat
 - [x] Green: `:ultra:security:jvmTest`, `:funktor:rest:jvmTest`, `:funktor:auth:jvmTest`, JS + demo compile
 - [ ] `/feature-review` gate + red-team follow-up task (pending — see note below)
 
-### Phase O1 — `funktor/saas` module (~1 day) — IN PROGRESS (task `20260717-saas-organisation-storage.md`)
+### Phase O1 — `funktor/saas` module — DONE 2026-07-18 (task `20260717-saas-organisation-storage.md`, pending /feature-review)
 - [x] `Organisation` entity (embedded branches) + `OrgModel`/`BranchModel` common models
       (note: org `plan`/feature-switch model deferred to O2 where permissions are built)
 - [x] `OrgsStorage` + Karango/Monko repos (unique slug index) + builder DSL + kontainer module
-- [ ] Fixtures + registration
+- [x] Fixtures + registration (also provides API-test isolation)
 - [x] `funktor:saas` wired into `funktor/all` (`saas` builder param on `funktor()`)
-- [ ] `OrgsApiFeature` CRUD (`isSuperUser`), auto-mounted via `ApiFeature`
+- [x] `OrgsApiFeature` CRUD (list/get/create/update, `isSuperUser`), auto-mounted via `ApiFeature`
 - [x] `EnsuredOrganisation`: `ensureBySlug` upsert + `ensureOrganisation()` builder + `OnAppStarting` hook
-- [x] Tests: repo CRUD both backends + slug uniqueness + ensureBySlug idempotency green;
-      aggregate boots with saas + ensure-org hook (AuthApiSpec)
+- [x] Tests: storage both backends (slug uniqueness + ensureBySlug idempotency); `OrgsApiSpec` (7/7,
+      incl. ensure-org hook verified e2e); full `funktor/all` suite green
 
 ### Phase O2 — Membership + permissions plumbing (~½ day)
 - [ ] `OrgMembership` + `HasOrgMemberships` (commonMain)
 - [ ] `AuthRealm.getMemberships` hook with `HasOrgMemberships` default
 - [ ] `OrgPolicy` + `SignupOrgBehavior` on `AuthRealm` (default `None`)
 - [ ] `buildOrgPermissions` helper (derives selected-org slice from membership + org plan)
+- [ ] **From O1 review (prerequisite):** branch ids must be server-minted on create, immutable on
+      update, and unique within an org — `OrgMembership.branchIds` references them, so they must be
+      stable. O1 added non-blank + in-org-uniqueness validation; add minting + update-immutability here.
+- [ ] Add the org `plan` field to `Organisation` (deferred from O1) — feeds `buildOrgPermissions`.
 - [ ] Tests: permissions builder (accessibleOrgs vs selected-org branches/roles/plan-perms), claim round-trip
 
 ### Phase O3 — Org-aware sign-in: 0/1/n (~1 day)

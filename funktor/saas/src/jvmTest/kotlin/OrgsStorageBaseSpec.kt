@@ -41,6 +41,9 @@ abstract class OrgsStorageBaseSpec : FreeSpec() {
             val byId = storage.findById(created._id)
             byId.shouldNotBeNull()
 
+            // The API references orgs by `_key` (see OrgModel.id); lock that lookup path on both backends.
+            storage.findById(created._key).shouldNotBeNull()
+
             val org = byId.value()
             org.name shouldBe "Acme Hotels"
             org.status shouldBe OrgStatus.Active

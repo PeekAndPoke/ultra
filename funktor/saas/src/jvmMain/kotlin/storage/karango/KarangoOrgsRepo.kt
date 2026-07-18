@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.saas.storage.karango
 
+import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import io.peekandpoke.funktor.saas.domain.Organisation
 import io.peekandpoke.funktor.saas.domain.slug
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
@@ -26,6 +27,8 @@ class KarangoOrgsRepo(
         timestamped.onBeforeSave(),
     ),
 ) {
+    class Fixtures(repo: KarangoOrgsRepo) : RepoFixtureLoader<Organisation>(repo)
+
     override fun KarangoIndexBuilder<Organisation>.buildIndexes() {
         persistentIndex {
             field { slug }

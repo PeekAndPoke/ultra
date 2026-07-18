@@ -42,6 +42,7 @@ kotlin {
         commonMain {
             dependencies {
                 api(project(":funktor:core"))
+                api(project(":funktor:rest"))
             }
         }
 
