@@ -20,6 +20,8 @@ import io.peekandpoke.funktor.messaging.api.EmailDestination
 import io.peekandpoke.funktor.messaging.api.EmailResult
 import io.peekandpoke.funktor.messaging.storage.EmailStoring
 import io.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.store
+import io.peekandpoke.ultra.security.user.HasOrgMemberships
+import io.peekandpoke.ultra.security.user.OrgMembership
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Stored
 import kotlinx.html.a
@@ -155,6 +157,18 @@ interface AuthRealm<USER> {
 
     /** The password policy for this realm */
     val passwordPolicy: PasswordPolicy get() = PasswordPolicy.default
+
+    /** How this realm relates to organisations. Default: [OrgPolicy.None] (org-less realm). */
+    val orgPolicy: OrgPolicy get() = OrgPolicy.None
+
+    /**
+     * Returns the user's organisation memberships.
+     *
+     * Default implementation reads them from the USER if it implements [HasOrgMemberships];
+     * override for a different membership source.
+     */
+    suspend fun getMemberships(user: Stored<USER>): Set<OrgMembership> =
+        (user.value() as? HasOrgMemberships)?.memberships ?: emptySet()
 
     /** Loads a user by its id. */
     suspend fun loadUserById(id: String): Stored<USER>?

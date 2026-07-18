@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.saas.domain
 
+import io.peekandpoke.funktor.saas.model.OrgPlan
 import io.peekandpoke.funktor.saas.model.OrgStatus
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.vault.Vault
@@ -16,6 +17,7 @@ data class Organisation(
     val slug: String,
     val name: String,
     val status: OrgStatus = OrgStatus.Active,
+    val plan: OrgPlan = OrgPlan.none,
     val branches: List<Branch> = emptyList(),
     override val createdAt: MpInstant = MpInstant.Epoch,
     override val updatedAt: MpInstant = createdAt,

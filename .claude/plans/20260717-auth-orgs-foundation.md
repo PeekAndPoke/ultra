@@ -324,16 +324,16 @@ Each phase green + tested (both DB backends via the `MatrixTest2d`/`AppSpec` pat
 - [x] Tests: storage both backends (slug uniqueness + ensureBySlug idempotency); `OrgsApiSpec` (7/7,
       incl. ensure-org hook verified e2e); full `funktor/all` suite green
 
-### Phase O2 — Membership + permissions plumbing (~½ day)
-- [ ] `OrgMembership` + `HasOrgMemberships` (commonMain)
-- [ ] `AuthRealm.getMemberships` hook with `HasOrgMemberships` default
-- [ ] `OrgPolicy` + `SignupOrgBehavior` on `AuthRealm` (default `None`)
-- [ ] `buildOrgPermissions` helper (derives selected-org slice from membership + org plan)
-- [ ] **From O1 review (prerequisite):** branch ids must be server-minted on create, immutable on
-      update, and unique within an org — `OrgMembership.branchIds` references them, so they must be
-      stable. O1 added non-blank + in-org-uniqueness validation; add minting + update-immutability here.
-- [ ] Add the org `plan` field to `Organisation` (deferred from O1) — feeds `buildOrgPermissions`.
-- [ ] Tests: permissions builder (accessibleOrgs vs selected-org branches/roles/plan-perms), claim round-trip
+### Phase O2 — Membership + permissions plumbing — DONE 2026-07-18 (task `20260718-o2-membership-permissions.md`, review batched w/ O3)
+- [x] `OrgMembership` + `HasOrgMemberships` — placed in **`ultra/security`** (not `funktor/saas`) to
+      avoid an inverted `auth → saas` dep (all layers see `ultra/security` via core)
+- [x] `AuthRealm.getMemberships` hook with `HasOrgMemberships` default
+- [x] `OrgPolicy` + `SignupOrgBehavior` on `AuthRealm` (default `None`)
+- [x] `buildOrgPermissions` helper (`SelectedOrg` = orgId + membership + planPermissions) + 3 unit tests
+- [x] Add the org `plan` field (`OrgPlan`) to `Organisation` — feeds `SelectedOrg.planPermissions`
+- [~] Branch-id minting/immutability: DEFERRED (not on the org-based login path; in-org uniqueness +
+      non-blank already enforced in O1). Revisit when branch-management UX is built.
+- [x] Tests: permissions builder green; auth + saas + full aggregate green (no regression)
 
 ### Phase O3 — Org-aware sign-in: 0/1/n (~1 day)
 - [ ] `AuthSignInResponse` → sealed (`Success` / `OrgSelectionRequired`); adapt `AuthSignUpResponse`
