@@ -4,7 +4,7 @@ import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicParentUtil
 import io.peekandpoke.ultra.vault.lang.Aliased
 import io.peekandpoke.ultra.vault.lang.Expression
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.yield
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
 
@@ -65,7 +65,7 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
 
         fun <X : T> applyOnAfterSaveHooks(repo: Repository<T>, stored: Stored<X>): Stored<X> {
             VaultScope.launch {
-                delay(1)
+                yield()
                 onAfterSave.forEach { hook -> hook.onAfterSave(repo, stored) }
             }
 
@@ -74,7 +74,7 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
 
         fun <X : T> applyOnAfterDeleteHooks(repo: Repository<T>, stored: Stored<X>): Stored<X> {
             VaultScope.launch {
-                delay(1)
+                yield()
                 onAfterDelete.forEach { hook -> hook.onAfterDelete(repo, stored) }
             }
 
@@ -233,7 +233,7 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
     suspend fun <X : T> tryInsert(entry: X): Stored<X>? {
         return try {
             insert(entry)
-        } catch (e: Throwable) {
+        } catch (_: Throwable) {
             null
         }
     }
