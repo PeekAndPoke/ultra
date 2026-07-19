@@ -1,7 +1,7 @@
 # <Feature name>
 
 **Status:** TODO | IN PROGRESS | IN REVIEW | DONE (archived YYYY-MM-DD)
-**Plan:** `.claude/plans/<plan>.md` → <phase / item>
+**Plan:** `.claude/tasks/<plan>.md` → <phase / item>
 **Security-critical:** yes | no  (yes → red-team follow-up task required, see below)
 
 ## Spec

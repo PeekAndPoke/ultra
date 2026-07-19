@@ -3,18 +3,22 @@
 This file is loaded automatically into every Claude Code session working on this repo. These are
 the project's working rules.
 
-## Plan maintenance
+## Plan & task maintenance
 
-**When you complete work that matches an item in `.claude/plans/*.md`, update that plan doc
-before finishing the task.**
+Plans and tasks live together in `.claude/tasks/`. A plan is just a longer-lived task doc that
+other tasks reference from their `**Plan:**` header.
+
+**When you complete work that matches an item in `.claude/tasks/*.md`, update that doc before
+finishing the task.**
 
 - Update status markers (TODO → DONE, add dates).
 - Update gate status tables if present.
 - Update the critical path section if an item unblocks.
-- Archive completed plans to `.claude/plans-archive/` with a `YYYY-MM-DD-` prefix.
+- Archive completed docs to `.claude/tasks-archive/<YYYY-MM>/` — one folder per month, based on the
+  date in the filename. Create the month folder if it does not exist.
 - Do NOT create new plan docs unless explicitly asked — just update existing ones.
 
-The goal is that anyone (human or agent) reading a plan sees the current state, not an outdated
+The goal is that anyone (human or agent) reading a doc sees the current state, not an outdated
 snapshot. Stale plans are worse than no plans because they cause wrong priorities.
 
 ## Code style
@@ -40,7 +44,7 @@ snapshot. Stale plans are worse than no plans because they cause wrong prioritie
   `.claude/tasks/TEMPLATE.md`). Features usually come from plan phases — link the plan in the task.
 - Lifecycle: implement → run `/feature-review` (mandatory multi-agent review: 1. implementation &
   code style, 2. domain expert, 3. security) → fix confirmed findings → tests green → mark DONE
-  and move the task file to `.claude/tasks-archive/` (filename is already dated).
+  and move the task file to `.claude/tasks-archive/<YYYY-MM>/` (filename is already dated).
 - **Security-critical features** get a follow-up red-team task (`YYYYMMDD-redteam-<slug>.md`) in
   `.claude/tasks/`, describing concrete break-in/attack scenarios to attempt. These are COLLECTED,
   not executed — dedicated penetration-test sessions sweep them later. Never run attack scenarios
@@ -73,7 +77,8 @@ snapshot. Stale plans are worse than no plans because they cause wrong prioritie
 
 ## Key locations
 
-- Active plans: `.claude/plans/`
-- Completed plans: `.claude/plans-archive/` (date-prefixed filenames)
+- Active tasks and plans: `.claude/tasks/` (task template: `.claude/tasks/TEMPLATE.md`)
+- Completed tasks and plans: `.claude/tasks-archive/<YYYY-MM>/` (grouped by month)
+- Not-yet-scheduled ideas: `.claude/future-plans/`
 - Skills: `.claude/skills/`
 - Agents: `.claude/agents/`

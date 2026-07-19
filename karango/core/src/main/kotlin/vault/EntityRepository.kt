@@ -274,7 +274,7 @@ abstract class EntityRepository<T : Any>(
         }!! as Stored<X>
 
         // Apply after save hooks
-        return hooks.applyOnAfterSaveHooks(this, storedInDb)
+        return fireOnAfterSaveHooks(storedInDb)
     }
 
     /**
@@ -291,7 +291,7 @@ abstract class EntityRepository<T : Any>(
         }!! as Stored<X>
 
         // Apply after save hooks
-        return hooks.applyOnAfterSaveHooks(this, storedInDb)
+        return fireOnAfterSaveHooks(storedInDb)
     }
 
     /**
@@ -299,7 +299,7 @@ abstract class EntityRepository<T : Any>(
      */
     override suspend fun <X : T> remove(entity: Stored<X>): RemoveResult {
         return remove(entity._id).also {
-            hooks.applyOnAfterDeleteHooks(this, entity)
+            fireOnAfterDeleteHooks(entity)
         }
     }
 
@@ -495,8 +495,32 @@ abstract class EntityRepository<T : Any>(
         }
 
         return result.map {
-            hooks.applyOnAfterSaveHooks(this, it)
+            fireOnAfterSaveHooks(it)
         }
+    }
+
+    /**
+     * Hands the after-save hooks to the driver hook scope, which decides whether they are awaited
+     * or launched, and returns [stored] unchanged.
+     */
+    private suspend fun <X : T> fireOnAfterSaveHooks(stored: Stored<X>): Stored<X> {
+        driver.hookScope.runHook("$name.onAfterSave") {
+            hooks.applyOnAfterSaveHooks(this, stored)
+        }
+
+        return stored
+    }
+
+    /**
+     * Hands the after-delete hooks to the driver hook scope, which decides whether they are awaited
+     * or launched, and returns [stored] unchanged.
+     */
+    private suspend fun <X : T> fireOnAfterDeleteHooks(stored: Stored<X>): Stored<X> {
+        driver.hookScope.runHook("$name.onAfterDelete") {
+            hooks.applyOnAfterDeleteHooks(this, stored)
+        }
+
+        return stored
     }
 
     // //  HELPERS  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////

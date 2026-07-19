@@ -76,7 +76,7 @@ SharedRepoClassLookup null-provider). Docs-site updated.
 4. **Wave 5 audit** — Monko core + ksp (after current test suite validated)
     - Focus: driver safety, query DSL correctness, index management, connection handling
 
-**Output per wave:** Issues document in `.claude/plans/` with severity ratings. All CRITICAL/HIGH
+**Output per wave:** Issues document in `.claude/tasks/` with severity ratings. All CRITICAL/HIGH
 block v1.
 
 ### Track B — Funktor Test Blitz (G2)

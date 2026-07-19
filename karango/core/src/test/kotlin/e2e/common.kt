@@ -16,6 +16,7 @@ import io.peekandpoke.ultra.slumber.SlumberConfig
 import io.peekandpoke.ultra.vault.Database
 import io.peekandpoke.ultra.vault.DefaultEntityCache
 import io.peekandpoke.ultra.vault.Repository
+import io.peekandpoke.ultra.vault.VaultHookScope
 import io.peekandpoke.ultra.vault.hooks.TimestampedHook
 import io.peekandpoke.ultra.vault.slumber.VaultSlumberModule
 import kotlinx.coroutines.runBlocking
@@ -25,7 +26,10 @@ private val arangoDatabase: ArangoDatabaseAsync = arangoConfig.toArangoDb()
 
 val kronos = Kronos.systemUtc
 
-fun createDatabase(repos: (driver: KarangoDriver) -> List<Repository<*>>): Pair<Database, KarangoDriver> = runBlocking {
+fun createDatabase(
+    hookScope: VaultHookScope = VaultHookScope.Inline(),
+    repos: (driver: KarangoDriver) -> List<Repository<*>>,
+): Pair<Database, KarangoDriver> = runBlocking {
 
     lateinit var driver: KarangoDriver
 
@@ -40,6 +44,7 @@ fun createDatabase(repos: (driver: KarangoDriver) -> List<Repository<*>>): Pair<
     driver = KarangoDriver(
         lazyCodec = lazy { codec },
         lazyArangoDb = lazy { arangoDatabase },
+        hookScope = hookScope,
     )
 
     db.ensureRepositories()

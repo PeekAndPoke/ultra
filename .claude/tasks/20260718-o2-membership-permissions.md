@@ -1,7 +1,7 @@
 # O2 — Membership + permissions plumbing
 
 **Status:** IN REVIEW — implementation complete + green (2026-07-18); review batched with O3
-**Plan:** `.claude/plans/20260717-auth-orgs-foundation.md` → Phase O2
+**Plan:** `.claude/tasks/20260717-auth-orgs-foundation.md` → Phase O2
 **Security-critical:** yes (permission construction) — review with O3, red-team covered by the auth-orgs sweep
 
 ## Spec / done

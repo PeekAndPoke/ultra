@@ -1,7 +1,7 @@
 # funktor/saas module + Organisation storage (Phase O1)
 
 **Status:** IN REVIEW — implementation complete + green (2026-07-18); pending `/feature-review` gate
-**Plan:** `.claude/plans/20260717-auth-orgs-foundation.md` → Phase O1
+**Plan:** `.claude/tasks/20260717-auth-orgs-foundation.md` → Phase O1
 **Security-critical:** yes (tenant entity + isolation — red-team follow-up required)
 
 ## Spec

@@ -13,10 +13,6 @@ import io.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 import io.peekandpoke.ultra.vault.profiling.QueryProfiler
 import io.peekandpoke.ultra.vault.tools.DatabaseGraphBuilder
 import io.peekandpoke.ultra.vault.tools.DatabaseTools
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 
 fun KontainerBuilder.ultraVault(config: VaultConfig) = module(Ultra_Vault, config)
 
@@ -39,6 +35,10 @@ val Ultra_Vault = module { config: VaultConfig ->
         dynamic(TimestampedHook::class)
         dynamic(TimestampedMillisHook::class)
 
+        // Runs after-save / after-delete hooks. Injectable as VaultHookScope as well.
+        // Stays inline until something binds an application scope to it.
+        singleton(DeferredVaultHookScope::class)
+
         // Profiling
     dynamic(QueryProfiler::class) {
         if (config.profile) {
@@ -58,18 +58,3 @@ val Ultra_Vault = module { config: VaultConfig ->
         singleton(VaultIndexesRecreateCommand::class)
         singleton(VaultIndexesValidateCommand::class)
     }
-
-object VaultScope {
-    private val job = SupervisorJob()
-    private val scope = CoroutineScope(job + Dispatchers.IO)
-
-    fun launch(block: suspend () -> Unit) {
-        scope.launch {
-            block()
-        }
-    }
-
-    fun shutdown() {
-        job.cancel()
-    }
-}

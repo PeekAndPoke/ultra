@@ -1,7 +1,7 @@
 # UserPermissions org refactor (Phase O0)
 
 **Status:** IN REVIEW — implementation complete + tests green (2026-07-17)
-**Plan:** `.claude/plans/20260717-auth-orgs-foundation.md` → Phase O0
+**Plan:** `.claude/tasks/20260717-auth-orgs-foundation.md` → Phase O0
 **Security-critical:** yes (auth permission model — red-team follow-up required)
 
 ## Spec

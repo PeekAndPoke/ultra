@@ -25,6 +25,7 @@ import io.peekandpoke.ultra.datetime.jvm
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.log.ultraLogging
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.UltraSecurityConfig
@@ -115,6 +116,8 @@ class MinimalTestDeps : AuthSystem.Deps {
 
     override val passwordHasher: PasswordHasher get() = error("Not needed for test")
 
+    override val log: Log = error("Not needed for test")
+
     override val random: AuthRandom get() = error("Not needed for test")
 }
 
@@ -203,7 +206,6 @@ class TestAppUserRealm(
     private val emailAndPassword: EmailAndPasswordAuth.Factory by emailAndPassword
     private val googleSso: GoogleSsoAuth.Factory by googleSso
     private val githubSso: GithubSsoAuth.Factory by githubSso
-    private val authConfig = this.deps.config.funktor.auth
 
     override val id: String = REALM
 

@@ -162,7 +162,7 @@ abstract class MonkoRepository<T : Any>(
         )
 
         // Apply after save hooks
-        return hooks.applyOnAfterSaveHooks(this, storedInDb)
+        return fireOnAfterSaveHooks(storedInDb)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -171,7 +171,7 @@ abstract class MonkoRepository<T : Any>(
 
         driver.replaceOne(collection = name, stored = beforeHookApplied)
 
-        return hooks.applyOnAfterSaveHooks(this, beforeHookApplied)
+        return fireOnAfterSaveHooks(beforeHookApplied)
     }
 
     override suspend fun remove(idOrKey: String): RemoveResult {
@@ -181,8 +181,32 @@ abstract class MonkoRepository<T : Any>(
     @JvmName("removeStored")
     suspend fun remove(stored: Stored<T>): RemoveResult {
         val result = remove(stored._key)
-        hooks.applyOnAfterDeleteHooks(this, stored)
+        fireOnAfterDeleteHooks(stored)
         return result
+    }
+
+    /**
+     * Hands the after-save hooks to the driver hook scope, which decides whether they are awaited
+     * or launched, and returns [stored] unchanged.
+     */
+    private suspend fun <X : T> fireOnAfterSaveHooks(stored: Stored<X>): Stored<X> {
+        driver.hookScope.runHook("$name.onAfterSave") {
+            hooks.applyOnAfterSaveHooks(this, stored)
+        }
+
+        return stored
+    }
+
+    /**
+     * Hands the after-delete hooks to the driver hook scope, which decides whether they are awaited
+     * or launched, and returns [stored] unchanged.
+     */
+    private suspend fun <X : T> fireOnAfterDeleteHooks(stored: Stored<X>): Stored<X> {
+        driver.hookScope.runHook("$name.onAfterDelete") {
+            hooks.applyOnAfterDeleteHooks(this, stored)
+        }
+
+        return stored
     }
 
     suspend fun modifyById(id: String, block: (T) -> T): Stored<T>? {
