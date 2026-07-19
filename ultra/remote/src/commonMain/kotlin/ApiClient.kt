@@ -1,6 +1,6 @@
 package io.peekandpoke.ultra.remote
 
-import io.ktor.client.*
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.KSerializer
@@ -21,16 +21,20 @@ abstract class ApiClient(val config: Config) {
     /**
      * Configuration for the api client.
      *
-     * [requestInterceptors] will be applied to all [RemoteRequest]s
+     * The [client] is the Ktor client used for all requests. Configure request headers / bearer
+     * tokens on it via `defaultRequest { }`. Non-2xx responses are surfaced as a decoded
+     * [ApiResponse] envelope, not thrown — the transport forces `expectSuccess = false` per request,
+     * so a client-level `expectSuccess = true` / `HttpResponseValidator` cannot silently reintroduce
+     * throw-on-error.
      *
-     * [responseInterceptors] will be applied to all [RemoteResponse]s
+     * [onResponse] observers are invoked (via `onEach`) for every [RemoteResponse] — used e.g. by
+     * the dev-tools request list. They must not throw.
      */
     data class Config(
         val baseUrl: String,
         val codec: Json,
-        val requestInterceptors: List<RequestInterceptor> = emptyList(),
-        val responseInterceptors: List<ResponseInterceptor> = emptyList(),
-        val client: HttpClient? = null,
+        val client: HttpClient,
+        val onResponse: List<suspend (RemoteResponse) -> Unit> = emptyList(),
     )
 
     /** Gets a net instance of a [RemoteRequest] */

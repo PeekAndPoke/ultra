@@ -83,11 +83,11 @@ class LogsBulkActionPopup(ctx: Ctx<Props>) : FadingModal<LogsBulkActionPopup.Pro
         lastResult = null
 
         props.ui.api.execBulkAction(action)
+            .map { Result.Success(it.data!!) }
             .catch { e ->
                 console.error("Could not execute bulk action", e)
                 lastResult = Result.Failed(e.stackTraceToString())
             }
-            .map { Result.Success(it.data!!) }
             .firstOrNull()
             ?.let {
                 lastResult = it

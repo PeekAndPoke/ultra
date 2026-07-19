@@ -212,7 +212,9 @@ object Deps {
             const val websockets = "io.ktor:ktor-client-websockets:$ktor_version"
             const val apache = "io.ktor:ktor-client-apache:$ktor_version"
             const val cio = "io.ktor:ktor-client-cio:$ktor_version"
+            const val js = "io.ktor:ktor-client-js:$ktor_version"
             const val json = "io.ktor:ktor-client-json:$ktor_version"
+            const val mock = "io.ktor:ktor-client-mock:$ktor_version"
             const val okhttp = "io.ktor:ktor-client-okhttp:$ktor_version"
 
             fun full(scope: DependencyHandlerScope) = with(scope) {
