@@ -13,6 +13,7 @@ import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.messaging.MessagingServices
 import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.security.jwt.JwtGenerator
 import io.peekandpoke.ultra.security.password.PasswordHasher
 
@@ -33,6 +34,7 @@ class AuthSystem(
         val jwtGenerator: JwtGenerator
         val storage: Storage
         val passwordHasher: PasswordHasher
+        val log: Log
         val random: AuthRandom
     }
 
@@ -43,6 +45,7 @@ class AuthSystem(
         jwtGenerator: Lazy<JwtGenerator>,
         storage: Lazy<Storage>,
         passwordHasher: Lazy<PasswordHasher>,
+        log: Lazy<Log>,
         random: Lazy<AuthRandom>,
     ) : Deps {
         override val kronos by kronos
@@ -50,6 +53,7 @@ class AuthSystem(
         override val jwtGenerator by jwtGenerator
         override val storage by storage
         override val passwordHasher by passwordHasher
+        override val log by log
         override val random by random
     }
 

@@ -40,7 +40,7 @@ val Funktor_Saas = module { builder: FunktorSaasBuilder.() -> Unit ->
 class FunktorSaasBuilder internal constructor(private val kontainer: KontainerBuilder) {
 
     fun useKarango(
-        orgsRepoName: String = "system_organisations",
+        orgsRepoName: String = "saas_organisations",
     ) {
         with(kontainer) {
             singleton(KarangoOrgsRepo::class) { driver: KarangoDriver, timestamped: TimestampedHook ->
@@ -60,7 +60,7 @@ class FunktorSaasBuilder internal constructor(private val kontainer: KontainerBu
     }
 
     fun useMonko(
-        orgsRepoName: String = "system_organisations",
+        orgsRepoName: String = "saas_organisations",
     ) {
         with(kontainer) {
             singleton(MonkoOrgsRepo::class) { driver: MonkoDriver, timestamped: TimestampedHook ->

@@ -46,12 +46,18 @@ interface AuthRealm<USER> {
         val permissions: UserPermissions,
     )
 
+    /**
+     * Messaging interface for sending emails.
+     */
     interface Messaging<USER> {
         suspend fun sendPasswordChangedEmail(user: Stored<USER>): EmailResult
 
         suspend fun sendPasswordRecoveryEmil(user: Stored<USER>, resetUrl: String): EmailResult
     }
 
+    /**
+     * Default implementation of the messaging interface.
+     */
     class DefaultMessaging<USER>(
         val senderEmail: String,
         val senderName: String,
@@ -254,6 +260,7 @@ interface AuthRealm<USER> {
         val signInResponse = try {
             issueSignIn(result.user)
         } catch (e: AuthError) {
+            deps.log.error("Failed to auto-sign-in after sign-up", e)
             null
         }
 
