@@ -46,6 +46,7 @@
       <module name="ultra.funktor-demo.common" target="17" />
       <module name="ultra.funktor-demo.common.jvmMain" target="17" />
       <module name="ultra.funktor-demo.common.jvmTest" target="17" />
+      <module name="ultra.funktor-demo.ops-app" target="21" />
       <module name="ultra.funktor-demo.server" target="17" />
       <module name="ultra.funktor-demo.server.jvmMain" target="17" />
       <module name="ultra.funktor-demo.server.jvmTest" target="17" />

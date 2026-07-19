@@ -63,7 +63,17 @@ Consequences:
       Operators are super-users → already able to use the auto-mounted `OrgsApiFeature` org CRUD.
       Boot-time confirmation (realm registration via `validateRealms` hook + the `Deps.log` provider)
       pending a server start.
-- [ ] ops-app frontend (next) — new module on 36590 + login + pages.
+- [x] **ops-app frontend (scaffold)** DONE 2026-07-19 — `funktor-demo/ops-app` kraft SPA on
+      dev-server `36590`. Wiring cloned from `adminapp`: `OpsAppConfig` (API host
+      `api.funktor-demo.localhost:36587`), `OpsAppApis` (`AuthApiClient(realm="operators")` +
+      `OrgsApiClient`, `_type` discriminator, bearer interceptor), `OpsAppState(auth)`,
+      `authState<OperatorUserModel>`, `kraftApp`/`mountNav`, `index.html` host
+      (`funktor-demo-ops-app.js`). Pages: `DashboardPage` (org count stat), `OrgsListPage`
+      (striped table + New/Edit), `OrgEditPage` (formController; name+status always, slug only when
+      new — slug immutable per `UpdateOrgRequest`), `NotFoundPage`; `LoggedInLayout` sidebar +
+      logout. Org CRUD via existing `OrgsApiFeature`. Compiles (`:funktor-demo:ops-app:compileKotlinJs`).
+      Deferred: users-by-org + real dashboard stats (need new `OperatorApiFeature`); `jwtDecoder`
+      wiring / unified `AuthContext` stream.
 
 ## ops-app — first increment scope
 
