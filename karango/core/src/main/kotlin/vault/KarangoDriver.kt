@@ -74,7 +74,10 @@ class KarangoDriver(
         val arangoColl = arangoDb.collection(name)
 
         if (!arangoColl.exists().await()) {
-            arangoDb.createCollection(name, options)
+            // IMPORTANT: await the creation future — otherwise ensureIndexes() runs before the
+            // collection exists on the server and fails with 404 (collection or view not found) on
+            // the first run of a brand-new collection.
+            arangoDb.createCollection(name, options).await()
         }
     }
 
