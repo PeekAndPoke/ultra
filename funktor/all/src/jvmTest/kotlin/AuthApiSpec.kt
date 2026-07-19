@@ -144,7 +144,7 @@ class AuthApiSpec : FunktorApiSpec() {
                             ),
                         ) {
                             status shouldBe HttpStatusCode.OK
-                            val response = apiResponseData<AuthSignInResponse>()
+                            val response = apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success
                             response.shouldNotBeNull()
                             response.token.token.shouldNotBeBlank()
                         }
@@ -300,7 +300,7 @@ class AuthApiSpec : FunktorApiSpec() {
                     authenticate(regularUserToken) {
                         route(existingRealm) {
                             status shouldBe HttpStatusCode.OK
-                            val response = apiResponseData<AuthSignInResponse>()
+                            val response = apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success
                             response.shouldNotBeNull()
                             response.token.token.shouldNotBeBlank()
                             response.token.permissionsNs.shouldNotBeBlank()
@@ -316,7 +316,7 @@ class AuthApiSpec : FunktorApiSpec() {
                     authenticate(superUserToken) {
                         route(existingRealm) {
                             status shouldBe HttpStatusCode.OK
-                            val response = apiResponseData<AuthSignInResponse>()
+                            val response = apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success
                             response.shouldNotBeNull()
                             response.token.token.shouldNotBeBlank()
                             response.token.permissionsNs.shouldNotBeBlank()

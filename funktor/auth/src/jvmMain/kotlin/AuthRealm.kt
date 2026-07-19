@@ -20,8 +20,11 @@ import io.peekandpoke.funktor.messaging.api.EmailDestination
 import io.peekandpoke.funktor.messaging.api.EmailResult
 import io.peekandpoke.funktor.messaging.storage.EmailStoring
 import io.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.store
+import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.ultra.security.user.HasOrgMemberships
 import io.peekandpoke.ultra.security.user.OrgMembership
+import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Stored
 import kotlinx.html.a
@@ -158,6 +161,9 @@ interface AuthRealm<USER> {
     /** The password policy for this realm */
     val passwordPolicy: PasswordPolicy get() = PasswordPolicy.default
 
+    /** Per-realm token/session lifetimes. */
+    val tokenConfig: RealmTokenConfig get() = RealmTokenConfig()
+
     /** How this realm relates to organisations. Default: [OrgPolicy.None] (org-less realm). */
     val orgPolicy: OrgPolicy get() = OrgPolicy.None
 
@@ -170,14 +176,28 @@ interface AuthRealm<USER> {
     suspend fun getMemberships(user: Stored<USER>): Set<OrgMembership> =
         (user.value() as? HasOrgMemberships)?.memberships ?: emptySet()
 
+    /**
+     * Resolves the organisations a user may sign into (active only), for the login org-picker.
+     *
+     * Default: none. Org realms override this (typically backed by the `saas` OrgsStorage) to map
+     * the user's [memberships] into [AuthOrgRef]s.
+     */
+    suspend fun getAccessibleOrgs(memberships: Set<OrgMembership>): List<AuthOrgRef> = emptyList()
+
+    /**
+     * Resolves a chosen [orgId] into the permission inputs for the session, or `null` if the user
+     * may not select it. Default: none. Org realms override this to load the org's plan permissions.
+     */
+    suspend fun resolveSelectedOrg(orgId: String, memberships: Set<OrgMembership>): SelectedOrg? = null
+
     /** Loads a user by its id. */
     suspend fun loadUserById(id: String): Stored<USER>?
 
     /** Loads a user by its email. */
     suspend fun loadUserByEmail(email: String): Stored<USER>?
 
-    /** Generates a JWT for the given user */
-    suspend fun generateJwt(user: Stored<USER>): AuthSignInResponse.Token
+    /** Generates a JWT for the given user and the org selected for this session (null for org-less realms). */
+    suspend fun generateJwt(user: Stored<USER>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token
 
     /** Loads the user email from the given user */
     suspend fun getUserEmail(user: Stored<USER>): String
@@ -214,7 +234,7 @@ interface AuthRealm<USER> {
 
         val user = provider.signIn<USER>(realm = this, request = request)
 
-        return user.toSignInResponse()
+        return issueSignIn(user)
     }
 
     /**
@@ -229,12 +249,18 @@ interface AuthRealm<USER> {
             // TODO: send account activation email
         }
 
-        val response = AuthSignUpResponse(
-            signIn = result.user.toSignInResponse(),
+        // Best-effort auto sign-in. For org realms the new user may have no org yet (e.g. invite-only),
+        // in which case issueSignIn throws noOrganisationAccess — the account exists but can't sign in yet.
+        val signInResponse = try {
+            issueSignIn(result.user)
+        } catch (e: AuthError) {
+            null
+        }
+
+        return AuthSignUpResponse(
+            signIn = signInResponse,
             requiresActivation = result.requiresActivation,
         )
-
-        return response
     }
 
     /**
@@ -282,11 +308,19 @@ interface AuthRealm<USER> {
      * [expectedUserType] is validated against the newly generated token to prevent
      * cross-realm token refresh attacks (a user from realm A requesting a token from realm B).
      */
-    suspend fun refreshToken(userId: String, expectedUserType: String?): AuthSignInResponse {
+    suspend fun refreshToken(userId: String, expectedUserType: String?, currentOrgId: String?): AuthSignInResponse {
         val user = loadUserById(userId)
             ?: throw AuthError("User not found: $userId")
 
-        val response = user.toSignInResponse()
+        // Re-derive the session's org slice from the DB (picks up membership/plan changes). Refresh
+        // keeps the SAME org — it never changes which org is active.
+        val memberships = if (currentOrgId != null) getMemberships(user) else emptySet()
+        val selected = currentOrgId?.let {
+            resolveSelectedOrg(it, memberships) ?: throw AuthError.noOrganisationAccess()
+        }
+        val org = currentOrgId?.let { oid -> getAccessibleOrgs(memberships).firstOrNull { it.id == oid } }
+
+        val response = successFor(user, selected, org)
 
         // Validate that the refreshed token's user type matches the original JWT's user type.
         // This prevents cross-realm escalation when realms share a user store with overlapping IDs.
@@ -303,12 +337,90 @@ interface AuthRealm<USER> {
     }
 
     /**
-     * Converts a user to a sign in response.
+     * Resolves the org-aware sign-in response for a just-authenticated [user] (the 0/1/n flow).
+     *
+     * - [OrgPolicy.None] → immediate success (org-less session).
+     * - [OrgPolicy.Required]: 0 accessible orgs → [AuthError.noOrganisationAccess]; 1 → auto-select;
+     *   many → [AuthSignInResponse.OrgSelectionRequired] backed by a single-use selection token.
      */
-    suspend fun Stored<USER>.toSignInResponse() = AuthSignInResponse(
-        token = generateJwt(this),
+    suspend fun issueSignIn(user: Stored<USER>): AuthSignInResponse {
+        return when (orgPolicy) {
+            is OrgPolicy.None -> successFor(user, selectedOrg = null, org = null)
+
+            is OrgPolicy.Required -> {
+                val memberships = getMemberships(user)
+                val orgs = getAccessibleOrgs(memberships)
+
+                when (orgs.size) {
+                    0 -> throw AuthError.noOrganisationAccess()
+
+                    1 -> {
+                        val ref = orgs.single()
+                        val selected = resolveSelectedOrg(ref.id, memberships)
+                            ?: throw AuthError.noOrganisationAccess()
+                        successFor(user, selected, ref)
+                    }
+
+                    else -> {
+                        val token = deps.random.getTokenAsBase64(tokenConfig.randomTokenByteLength)
+
+                        deps.storage.authRecords.create {
+                            AuthRecord.OrgSelectionToken(
+                                realm = id,
+                                ownerId = user._id,
+                                token = token,
+                                expiresAt = deps.kronos.instantNow()
+                                    .plus(tokenConfig.orgSelectionTokenLifetime).toEpochSeconds(),
+                            )
+                        }
+
+                        AuthSignInResponse.OrgSelectionRequired(
+                            realm = asApiModel(),
+                            selectionToken = token,
+                            organisations = orgs,
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Completes an org-selection sign-in: validates + consumes the single-use [selectionToken] and
+     * issues a session for the chosen [orgId].
+     */
+    suspend fun selectOrg(selectionToken: String, orgId: String): AuthSignInResponse {
+        val record = deps.storage.authRecords
+            .findByToken(AuthRecord.OrgSelectionToken, realm = id, token = selectionToken)
+            ?: throw AuthError.noOrganisationAccess()
+
+        // Single-use: consume the token.
+        deps.storage.authRecords.removeById(record._id)
+
+        val user = loadUserById(record.value().ownerId)
+            ?: throw AuthError.noOrganisationAccess()
+
+        val memberships = getMemberships(user)
+        val selected = resolveSelectedOrg(orgId, memberships)
+            ?: throw AuthError.noOrganisationAccess()
+        val ref = getAccessibleOrgs(memberships).firstOrNull { it.id == orgId }
+            ?: throw AuthError.noOrganisationAccess()
+
+        return successFor(user, selected, ref)
+    }
+
+    /**
+     * Builds a [AuthSignInResponse.Success] for the given [user] and [selectedOrg].
+     */
+    private suspend fun successFor(
+        user: Stored<USER>,
+        selectedOrg: SelectedOrg?,
+        org: AuthOrgRef?,
+    ): AuthSignInResponse.Success = AuthSignInResponse.Success(
+        token = generateJwt(user, selectedOrg),
         realm = asApiModel(),
-        user = serializeUser(this),
+        user = serializeUser(user),
+        org = org,
     )
 
     /**

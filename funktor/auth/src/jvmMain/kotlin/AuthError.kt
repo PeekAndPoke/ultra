@@ -18,6 +18,10 @@ open class AuthError(message: String, cause: Throwable? = null) : Throwable(mess
         fun invalidCredentials(cause: Throwable? = null) =
             AuthError("Invalid credentials", cause)
 
+        /** Credentials were valid, but the user has no organisation to sign into. */
+        fun noOrganisationAccess(cause: Throwable? = null) =
+            AuthError("No organisation access", cause)
+
         fun invalidRequest(cause: Throwable? = null) =
             AuthError("Invalid request", cause)
 

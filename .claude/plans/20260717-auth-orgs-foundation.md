@@ -335,17 +335,23 @@ Each phase green + tested (both DB backends via the `MatrixTest2d`/`AppSpec` pat
       non-blank already enforced in O1). Revisit when branch-management UX is built.
 - [x] Tests: permissions builder green; auth + saas + full aggregate green (no regression)
 
-### Phase O3 — Org-aware sign-in: 0/1/n (~1 day)
-- [ ] `AuthSignInResponse` → sealed (`Success` / `OrgSelectionRequired`); adapt `AuthSignUpResponse`
-- [ ] `AuthError.noOrganisationAccess`
-- [ ] `AuthRecord.OrgSelectionToken` + `RealmTokenConfig.orgSelectionTokenLifetime` (5 min)
-- [ ] 0/1/n resolution in `AuthRealm.signIn` behind the single `issueSignIn(user, selectedOrg)` seam
-- [ ] `generateJwt(user, selectedOrg)` signature change; `refreshToken` re-derives same org; `Session.org`
-- [ ] `select-org` endpoint; `forOrganisation`/`forSelectedOrganisation` rules read `permissions.org`
-- [ ] Signup behaviors: `AutoJoin` + `CreateOwnOrg` wired through `createUserForSignup`
-- [ ] Tests: 0→noOrganisationAccess; 1→auto-select; n→selection (token single-use, expiry, wrong-org
-      rejection); refresh keeps same org; `OrgPolicy.None` realm regression (admin login byte-identical);
-      SSO providers run the same 0/1/n path
+### Phase O3 — Org-aware sign-in: 0/1/n — BACKEND DONE 2026-07-18 (task `20260718-o3-org-signin.md`); tests + frontend + demo pending
+- [x] `AuthSignInResponse` → sealed (`Success(…, org?)` / `OrgSelectionRequired`); `AuthOrgRef` model.
+      `AuthSignUpResponse.signIn` stays nullable — best-effort auto sign-in (0-org case → null).
+- [x] `AuthError.noOrganisationAccess`
+- [x] `AuthRecord.OrgSelectionToken` + `RealmTokenConfig.orgSelectionTokenLifetime` (5 min)
+- [x] 0/1/n resolution behind `issueSignIn(user)` seam. **Auth↔saas boundary:** framework owns the
+      mechanism; realm owns org resolution via new hooks `getAccessibleOrgs` + `resolveSelectedOrg`
+      (default no-op → `None` realms unaffected). SSO runs the same path (single choke point).
+- [x] `generateJwt(user, selectedOrg)`; `refreshToken(…, currentOrgId)` re-derives same org from DB
+- [x] `select-org` endpoint (+ `AuthSelectOrgRequest`, `AuthSystem.selectOrg`, `AuthApiClient`)
+- [x] Frontend `AuthState`: handles the sealed response (`Success` → login; `OrgSelectionRequired` →
+      `pendingOrgSelection` + `selectOrg(orgId)`). Compiles; picker UI still to build.
+- [ ] `Session.org` field → deferred to **Phase F** (sessions not wired at sign-in yet)
+- [ ] `forSelectedOrganisation` AuthRule (`forOrganisation` already reads `permissions.org` via O0)
+- [ ] Signup behaviors `AutoJoin`/`CreateOwnOrg` wired into the demo realm's `createUserForSignup`
+- [ ] Tests: 0/1/n org flow with a `Required` test realm; refresh keeps org; single-use/expiry/wrong-org.
+      (Existing `OrgPolicy.None` regression verified — full `funktor/all` suite green, admin login unchanged.)
 
 ### Phase O4 — Frontend + demo wiring (~1 day)
 - [ ] `AuthState` sealed-response handling; org-selection view in `AuthFrontend`; accessibleOrgs read

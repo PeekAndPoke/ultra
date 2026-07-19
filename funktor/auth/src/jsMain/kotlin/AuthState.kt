@@ -4,6 +4,7 @@ import io.peekandpoke.funktor.auth.api.AuthApiClient
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthSelectOrgRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
@@ -147,6 +148,13 @@ class AuthState<USER>(
         redirectAfterLoginUri = null
     }
 
+    /**
+     * When a sign-in resolves to multiple organisations, this holds the pending selection (the
+     * selection token + the choices) until [selectOrg] is called. Null otherwise.
+     */
+    var pendingOrgSelection: AuthSignInResponse.OrgSelectionRequired? = null
+        private set
+
     suspend fun login(request: AuthSignInRequest): Data<USER> {
         val response = api
             .signIn(request)
@@ -154,15 +162,41 @@ class AuthState<USER>(
             .catch { streamSource(Data.empty()) }
             .firstOrNull()
 
-        response?.let {
-            val user = it.getTypedUser(userSerializer)
-            val data = readJwt(response = it, user = user)
-
-            streamSource(data)
-            startSessionLifecycle()
+        when (response) {
+            is AuthSignInResponse.Success -> applySuccess(response)
+            is AuthSignInResponse.OrgSelectionRequired -> pendingOrgSelection = response
+            null -> { /* sign-in failed */ }
         }
 
         return streamSource()
+    }
+
+    /**
+     * Completes a multi-org sign-in by choosing [orgId] against the [pendingOrgSelection] token.
+     */
+    suspend fun selectOrg(orgId: String): Data<USER> {
+        val pending = pendingOrgSelection ?: return streamSource()
+
+        val response = api
+            .selectOrg(AuthSelectOrgRequest(selectionToken = pending.selectionToken, orgId = orgId))
+            .map { it.data }
+            .catch { streamSource(Data.empty()) }
+            .firstOrNull()
+
+        if (response is AuthSignInResponse.Success) {
+            applySuccess(response)
+        }
+
+        return streamSource()
+    }
+
+    private fun applySuccess(response: AuthSignInResponse.Success) {
+        pendingOrgSelection = null
+        val user = response.getTypedUser(userSerializer)
+        val data = readJwt(response = response, user = user)
+
+        streamSource(data)
+        startSessionLifecycle()
     }
 
     suspend fun recoverAccountInitPasswordReset(
@@ -264,7 +298,7 @@ class AuthState<USER>(
                     .catch { emit(null) }
                     .firstOrNull()
 
-                if (response != null) {
+                if (response is AuthSignInResponse.Success) {
                     val user = response.getTypedUser(userSerializer)
                     val newData = readJwt(response = response, user = user)
                     streamSource(newData)
@@ -299,7 +333,7 @@ class AuthState<USER>(
 
     // JWT parsing ////////////////////////////////////////////////////////////////////////////////
 
-    private fun readJwt(response: AuthSignInResponse, user: USER): Data<USER> {
+    private fun readJwt(response: AuthSignInResponse.Success, user: USER): Data<USER> {
         val claims = jwtDecoder(response.token.token)
 
         // extract the permission from the token

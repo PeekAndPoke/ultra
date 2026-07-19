@@ -17,7 +17,7 @@ abstract class FunktorApiSpec : AppSpec<FunktorAllTestConfig>(testApp) {
                     isSuperUser = true,
                 )
             )
-            realm.generateJwt(user).token
+            realm.generateJwt(user, selectedOrg = null).token
         }
     }
 
@@ -30,7 +30,7 @@ abstract class FunktorApiSpec : AppSpec<FunktorAllTestConfig>(testApp) {
                     isSuperUser = false,
                 )
             )
-            realm.generateJwt(user).token
+            realm.generateJwt(user, selectedOrg = null).token
         }
     }
 }

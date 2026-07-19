@@ -12,6 +12,7 @@ import io.peekandpoke.funktor.demo.server.admin.AdminUsersRepo.Companion.asApiMo
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.datetime.jvm
 import io.peekandpoke.ultra.security.jwt.JwtUserData
+import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.Json
@@ -66,7 +67,7 @@ class AdminUserRealm(
 
     override suspend fun loadUserByEmail(email: String) = appUserRepo.findByEmail(email)
 
-    override suspend fun generateJwt(user: Stored<AdminUser>): AuthSignInResponse.Token {
+    override suspend fun generateJwt(user: Stored<AdminUser>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token {
         val gen = deps.jwtGenerator
 
         val userValue = user.resolve()

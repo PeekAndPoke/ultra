@@ -5,6 +5,7 @@ import io.peekandpoke.funktor.auth.model.AuthActivateActivateResponse
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthSelectOrgRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
@@ -32,6 +33,12 @@ class AuthApiClient(private val realm: String, config: Config) : ApiClient(confi
         val SignIn = TypedApiEndpoint.Post(
             uri = "$BASE/{realm}/signin",
             body = AuthSignInRequest.serializer(),
+            response = AuthSignInResponse.serializer().api(),
+        )
+
+        val SelectOrg = TypedApiEndpoint.Post(
+            uri = "$BASE/{realm}/select-org",
+            body = AuthSelectOrgRequest.serializer(),
             response = AuthSignInResponse.serializer().api(),
         )
 
@@ -88,6 +95,10 @@ class AuthApiClient(private val realm: String, config: Config) : ApiClient(confi
 
     fun signIn(request: AuthSignInRequest): Flow<ApiResponse<AuthSignInResponse>> = call(
         SignIn("realm" to realm, body = request)
+    )
+
+    fun selectOrg(request: AuthSelectOrgRequest): Flow<ApiResponse<AuthSignInResponse>> = call(
+        SelectOrg("realm" to realm, body = request)
     )
 
     fun signUp(request: AuthSignUpRequest): Flow<ApiResponse<AuthSignUpResponse>> = call(

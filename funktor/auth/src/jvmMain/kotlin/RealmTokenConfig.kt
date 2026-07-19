@@ -24,6 +24,8 @@ data class RealmTokenConfig(
     val emailVerificationTokenLifetime: Duration = 24.hours,
     /** Lifetime of password-recovery tokens. */
     val passwordRecoveryTokenLifetime: Duration = 1.hours,
+    /** Lifetime of the short-lived org-selection token issued between credential-check and org pick. */
+    val orgSelectionTokenLifetime: Duration = 5.minutes,
     /** Lifetime of email-change confirmation tokens sent to the *new* address. */
     val emailChangeTokenLifetime: Duration = 24.hours,
     /**

@@ -33,6 +33,7 @@ import io.peekandpoke.ultra.security.jwt.JwtGenerator
 import io.peekandpoke.ultra.security.jwt.JwtUserData
 import io.peekandpoke.ultra.security.password.PasswordHasher
 import io.peekandpoke.ultra.security.ultraSecurity
+import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Database
 import io.peekandpoke.ultra.vault.Storable
@@ -146,7 +147,7 @@ class MinimalTestRealm(
 
     override val providers get() = error("Not needed for test")
 
-    override suspend fun generateJwt(user: Stored<Any>) = error("Not needed for test")
+    override suspend fun generateJwt(user: Stored<Any>, selectedOrg: SelectedOrg?) = error("Not needed for test")
 
     override suspend fun getUserEmail(user: Stored<Any>) = onGetUserEmail(user)
 
@@ -243,7 +244,7 @@ class TestAppUserRealm(
         }
     }
 
-    override suspend fun generateJwt(user: Stored<TestAppUser>): AuthSignInResponse.Token {
+    override suspend fun generateJwt(user: Stored<TestAppUser>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token {
         val gen = deps.jwtGenerator
 
         val userValue = user.resolve()

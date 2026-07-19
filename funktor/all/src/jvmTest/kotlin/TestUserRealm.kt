@@ -15,6 +15,7 @@ import io.peekandpoke.ultra.datetime.jvm
 import io.peekandpoke.ultra.kontainer.module
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.jwt.JwtUserData
+import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.Vault
@@ -89,7 +90,7 @@ class TestUserRealm(
         }
     }
 
-    override suspend fun generateJwt(user: Stored<TestUser>): AuthSignInResponse.Token {
+    override suspend fun generateJwt(user: Stored<TestUser>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token {
         val gen = deps.jwtGenerator
 
         val userValue = user.resolve()

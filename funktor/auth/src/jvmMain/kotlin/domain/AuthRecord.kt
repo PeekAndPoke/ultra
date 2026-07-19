@@ -89,6 +89,27 @@ sealed interface AuthRecord : Timestamped {
     }
 
     /**
+     * Single-use, short-lived token issued when a sign-in resolves to multiple organisations.
+     * The user exchanges it (plus a chosen org id) at `select-org` for a full session.
+     */
+    data class OrgSelectionToken(
+        override val realm: String,
+        override val ownerId: String,
+        override val expiresAt: Long,
+        override val createdAt: MpInstant = MpInstant.Epoch,
+        override val updatedAt: MpInstant = createdAt,
+        /** Random secret token handed to the client between credential-check and org-selection. */
+        override val token: String,
+    ) : AuthRecord {
+        companion object : Polymorphic.TypedChild<OrgSelectionToken> {
+            override val identifier = "org-selection-token"
+        }
+
+        override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
+        override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+    }
+
+    /**
      * An active login session. Each successful sign-in creates one row; the JWT issued to the
      * client carries the row's `_id` as a `sessionId` claim and the auth middleware validates
      * the session still exists on each request (cached). Revoking the row logs the user out.

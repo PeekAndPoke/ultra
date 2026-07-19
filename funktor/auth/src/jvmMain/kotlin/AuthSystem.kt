@@ -104,9 +104,16 @@ class AuthSystem(
         return getRealm(realm).signIn(request)
     }
 
+    /** Completes an org-selection sign-in for [realm] using the selection token and chosen org. */
+    suspend fun selectOrg(realm: String, selectionToken: String, orgId: String): AuthSignInResponse {
+        return getRealm(realm).selectOrg(selectionToken, orgId)
+    }
+
     /** Refresh the token for the user with the given [userId] in the given [realm] */
-    suspend fun refreshToken(realm: String, userId: String, expectedUserType: String?): AuthSignInResponse {
-        return getRealm(realm).refreshToken(userId, expectedUserType)
+    suspend fun refreshToken(
+        realm: String, userId: String, expectedUserType: String?, currentOrgId: String?,
+    ): AuthSignInResponse {
+        return getRealm(realm).refreshToken(userId, expectedUserType, currentOrgId)
     }
 
     /** Set the password of a user by [realm] and [request] */

@@ -59,6 +59,28 @@ class AuthApi : ApiRoutes("login") {
         }
     }
 
+    val selectOrg = AuthApiClient.SelectOrg.mount(RealmParam::class) {
+        docs {
+            name = "Select organisation"
+        }.codeGen {
+            funcName = "selectOrg"
+        }.authorize {
+            // The single-use selection token is the credential here.
+            public()
+        }.handle { params, body ->
+            letTheBotsWait()
+
+            try {
+                funktorAuth
+                    .selectOrg(params.realm, body.selectionToken, body.orgId)
+                    .let { ApiResponse.ok(it) }
+            } catch (e: AuthError) {
+                ApiResponse.forbidden<AuthSignInResponse>()
+                    .withInfo(e.message ?: "")
+            }
+        }
+    }
+
     val setPassword = AuthApiClient.SetPassword.mount(RealmParam::class) {
         docs {
             name = "Set Password"
@@ -206,7 +228,7 @@ class AuthApi : ApiRoutes("login") {
         }.handle { params ->
             try {
                 funktorAuth
-                    .refreshToken(params.realm, user.record.userId, user.record.type)
+                    .refreshToken(params.realm, user.record.userId, user.record.type, user.permissions.org)
                     .let { ApiResponse.ok(it) }
             } catch (e: AuthError) {
                 ApiResponse.forbidden<AuthSignInResponse>()
