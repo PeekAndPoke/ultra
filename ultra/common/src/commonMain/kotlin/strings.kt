@@ -138,6 +138,14 @@ fun String.isEmail(): Boolean {
 }
 
 /**
+ * Checks if the string is a valid slug / DNS label: lowercase letters/digits and hyphens (only
+ * between alphanumerics), length 1..63. Useful for tenant slugs that double as subdomains.
+ */
+fun String.isSlug(): Boolean {
+    return SlugRegex.matches(this)
+}
+
+/**
  * Splits the string, trims all and creates a set of the elements.
  */
 fun String.splitAndTrimToSet(delimiter: String = ",") =

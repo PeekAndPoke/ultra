@@ -4,8 +4,8 @@ import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.funktor.saas.domain.Organisation
+import io.peekandpoke.funktor.saas.domain.Slugs
 import io.peekandpoke.funktor.saas.domain.asApiModel
-import io.peekandpoke.funktor.saas.domain.normalizeSlug
 import io.peekandpoke.funktor.saas.funktorSaas
 import io.peekandpoke.funktor.saas.model.BranchModel
 import io.peekandpoke.funktor.saas.model.OrgModel
@@ -50,12 +50,13 @@ class OrgsApi : ApiRoutes("orgs") {
         }.authorize {
             isSuperUser()
         }.handle { body ->
-            val slug = normalizeSlug(body.slug)
+            val slug = Slugs.normalize(body.slug)
+            val slugError = Slugs.validationError(slug)
             val branchError = validateBranches(body.branches)
 
             when {
-                slug.isBlank() ->
-                    ApiResponse.badRequest<OrgModel>().withError("slug must not be blank")
+                slugError != null ->
+                    ApiResponse.badRequest<OrgModel>().withError("slug $slugError")
 
                 branchError != null ->
                     ApiResponse.badRequest<OrgModel>().withError(branchError)
@@ -117,7 +118,11 @@ class OrgsApi : ApiRoutes("orgs") {
     /** Returns an error message if the branch list is invalid, or `null` when it is valid. */
     private fun validateBranches(branches: List<BranchModel>): String? {
         if (branches.any { it.id.isBlank() }) return "branch id must not be blank"
-        if (branches.any { it.slug.isBlank() }) return "branch slug must not be blank"
+
+        for (branch in branches) {
+            val slugError = Slugs.validationError(Slugs.normalize(branch.slug))
+            if (slugError != null) return "branch slug '${branch.slug}' $slugError"
+        }
 
         val ids = branches.map { it.id }
         if (ids.size != ids.toSet().size) return "branch ids must be unique within an organisation"
@@ -127,7 +132,7 @@ class OrgsApi : ApiRoutes("orgs") {
 
     private fun BranchModel.toDomain() = Organisation.Branch(
         id = id,
-        slug = normalizeSlug(slug),
+        slug = Slugs.normalize(slug),
         name = name.trim(),
         status = status,
     )

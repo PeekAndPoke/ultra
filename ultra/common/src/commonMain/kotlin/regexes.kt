@@ -8,6 +8,12 @@ val UrlWithProtocolRegex = Regex(
     options = setOf(RegexOption.IGNORE_CASE),
 )
 
+/**
+ * Regex that matches a slug / DNS label: lowercase ASCII letters and digits with hyphens allowed
+ * only between them (no leading or trailing hyphen), length 1..63.
+ */
+val SlugRegex = Regex("^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
+
 /** Regex that matches an email address per RFC 5322 (simplified). */
 @Suppress("RegExpRedundantEscape")
 val EmailRegex = Regex(

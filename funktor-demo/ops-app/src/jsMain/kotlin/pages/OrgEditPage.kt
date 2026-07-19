@@ -4,7 +4,9 @@ import io.peekandpoke.funktor.demo.opsapp.Apis
 import io.peekandpoke.funktor.demo.opsapp.Nav
 import io.peekandpoke.funktor.saas.api.CreateOrgRequest
 import io.peekandpoke.funktor.saas.api.UpdateOrgRequest
+import io.peekandpoke.funktor.saas.domain.Slugs
 import io.peekandpoke.funktor.saas.model.OrgStatus
+import io.peekandpoke.kraft.forms.validation.strings.validSlug
 import io.peekandpoke.funktor.inspect.renderDefault
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
@@ -115,9 +117,11 @@ class OrgEditPage(ctx: Ctx<Props>) : Component<OrgEditPage.Props>(ctx) {
                 }
 
                 if (isNew) {
-                    UiInputField(draft.slug, { modifyDraft { copy(slug = it) } }) {
+                    // Slug is subdomain-safe (validSlug) and shown as its canonical, normalized form.
+                    UiInputField(draft.slug, { modifyDraft { copy(slug = Slugs.normalize(it)) } }) {
                         label("Slug")
-                        accepts(notBlank())
+                        placeholder("e.g. acme-hotels — used as the tenant subdomain")
+                        accepts(validSlug())
                     }
                 }
 
