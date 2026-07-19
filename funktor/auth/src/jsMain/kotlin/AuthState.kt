@@ -60,31 +60,39 @@ class AuthState<USER>(
 
     @Serializable
     data class Data<USER>(
-        val token: AuthSignInResponse.Token?,
-        val realm: AuthRealmModel?,
-        val tokenUserId: String?,
-        val tokenExpires: String?,
-        val claims: JsonObject?,
-        val user: USER?,
-        val permissions: UserPermissions,
+        val session: Session<USER>? = null,
     ) {
+        /**
+         * An authenticated session. Every field is present together, or there is no [session] at
+         * all — so a half-logged-in state (a token without a user, etc.) is unrepresentable.
+         */
+        @Serializable
+        data class Session<USER>(
+            val token: AuthSignInResponse.Token,
+            val realm: AuthRealmModel,
+            val tokenUserId: String,
+            val tokenExpires: String?,
+            val claims: JsonObject,
+            val user: USER,
+            val permissions: UserPermissions,
+        )
+
         companion object {
-            fun <USER> empty() = Data<USER>(
-                token = null,
-                realm = null,
-                tokenUserId = null,
-                tokenExpires = null,
-                claims = null,
-                user = null,
-                permissions = UserPermissions()
-            )
+            fun <USER> empty() = Data<USER>(session = null)
         }
 
-        val isLoggedIn get() = token != null && user != null
+        val isLoggedIn get() = session != null
 
         val isNotLoggedIn get() = !isLoggedIn
 
-        val loggedInUser get() = user.takeIf { isLoggedIn }
+        // Nullable pass-throughs: callers keep reading the same names; all null when logged out.
+        val token get() = session?.token
+        val realm get() = session?.realm
+        val tokenUserId get() = session?.tokenUserId
+        val tokenExpires get() = session?.tokenExpires
+        val claims get() = session?.claims
+        val user get() = session?.user
+        val permissions get() = session?.permissions ?: UserPermissions()
     }
 
     private val streamSource = StreamSource<Data<USER>>(Data.empty())
@@ -246,8 +254,8 @@ class AuthState<USER>(
         if (auth.isNotLoggedIn) return false
 
         val result = api.setPassword(request)
-            .catch { /* noop */ }
             .map { it.data!! }
+            .catch { /* noop */ }
             .firstOrNull()
 
         return result?.success == true
@@ -354,13 +362,15 @@ class AuthState<USER>(
         val userId = claims["sub"] as? String ?: ""
 
         return Data(
-            token = response.token,
-            realm = response.realm,
-            tokenUserId = userId,
-            tokenExpires = expDate?.toISOString(),
-            claims = claims.toJsonObject(),
-            permissions = permissions,
-            user = user
+            session = Data.Session(
+                token = response.token,
+                realm = response.realm,
+                tokenUserId = userId,
+                tokenExpires = expDate?.toISOString(),
+                claims = claims.toJsonObject(),
+                permissions = permissions,
+                user = user,
+            )
         )
     }
 }
