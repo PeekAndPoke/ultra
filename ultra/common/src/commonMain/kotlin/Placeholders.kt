@@ -16,9 +16,27 @@ interface Placeholders<T> {
      */
     class Filled<T>(private val mapping: Map<String, T>, private val replace: (T) -> String) {
 
-        /** Replaces all placeholder patterns in the given [text] with their computed values. */
-        fun replace(text: String) = mapping.entries.fold(text) { acc, (pattern, value) ->
-            acc.replace(pattern, replace(value))
+        /**
+         * A single combined pattern over all placeholder strings, so substitution is **single-pass**:
+         * the replacement text is never re-scanned. Without this, [replace] was a `fold` of
+         * `String.replace` over the accumulating text, so a value substituted for one placeholder was
+         * re-examined by later iterations — a value that itself contained `{{other}}` (e.g. user input)
+         * got expanded into another placeholder's value. That is a second-order injection (and an
+         * exponential-amplification vector). Longest patterns first so overlapping patterns resolve
+         * to the intended one.
+         */
+        private val combined: Regex? = mapping.keys
+            .takeIf { it.isNotEmpty() }
+            ?.sortedByDescending { it.length }
+            ?.joinToString("|") { Regex.escape(it) }
+            ?.toRegex()
+
+        /** Replaces every placeholder pattern in [text] with its computed value, each exactly once. */
+        fun replace(text: String): String {
+            val regex = combined ?: return text
+            return regex.replace(text) { match ->
+                mapping[match.value]?.let { replace(it) } ?: match.value
+            }
         }
 
         /** Shorthand for [replace]. */

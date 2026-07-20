@@ -181,5 +181,57 @@ class PlaceholdersSpec : StringSpec() {
 
             filled("  {{FOO}}, {{BAR}}!  ") shouldBe "  foo, bar!  "
         }
+
+        // --- Adversarial / security regressions: substitution must be single-pass -----------------
+
+        "SECURITY: a substituted value containing a placeholder is NOT re-interpreted" {
+            // FOO's value is literally the BAR placeholder. It must be emitted verbatim, never
+            // expanded into BAR's (potentially secret) value. This is the second-order injection.
+            val placeholders = Placeholders.DoubleCurly<SmallEnum>()
+            val filled = placeholders.fill {
+                when (it) {
+                    SmallEnum.FOO -> "{{BAR}}"
+                    SmallEnum.BAR -> "SECRET"
+                }
+            }
+
+            filled("name={{FOO}} token={{BAR}}") shouldBe "name={{BAR}} token=SECRET"
+        }
+
+        "SECURITY: chained values are not amplified (no billion-laughs)" {
+            // Each value expands to two of the next placeholder. Single-pass => the nested
+            // placeholders are emitted literally, not recursively expanded.
+            val placeholders = Placeholders.DoubleCurly<TestEnum>()
+            val filled = placeholders.fill {
+                when (it) {
+                    TestEnum.ONE -> "{{TWO}}{{TWO}}"
+                    TestEnum.TWO -> "{{THREE}}{{THREE}}"
+                    TestEnum.THREE -> "x"
+                }
+            }
+
+            filled("{{ONE}}") shouldBe "{{TWO}}{{TWO}}"
+        }
+
+        "a value equal to its own placeholder is emitted literally, not looped" {
+            val placeholders = Placeholders.DoubleCurly<SmallEnum>()
+            val filled = placeholders.fill {
+                when (it) {
+                    SmallEnum.FOO -> "{{FOO}}"
+                    SmallEnum.BAR -> "bar"
+                }
+            }
+
+            filled("{{FOO}} {{BAR}}") shouldBe "{{FOO}} bar"
+        }
+
+        "overlapping placeholder names resolve to the intended (longest) pattern" {
+            data class V(val n: String)
+
+            val placeholders = Placeholders.DoubleCurly(setOf(V("a"), V("ab"))) { it.n }
+            val filled = placeholders.fill { it.n.uppercase() }
+
+            filled("{{a}}-{{ab}}") shouldBe "A-AB"
+        }
     }
 }

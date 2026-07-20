@@ -340,12 +340,11 @@ KSP** (input is a resource file, not Kotlin symbols; common-metadata KSP output 
   `kraft/core/.../string_rules_extra.kt`). i18n keys are the natural single source.
 - Two `// TODO: how to translate this?` markers already sit at the seam
   (`kraft/core/.../forms/FormFieldComponent.kt:82`, `kraft/semanticui/.../field_input.kt:196`).
-- **`ultra/common/.../Placeholders.kt:20-22` `Filled.replace` is multi-pass** — a substituted value is
-  re-scanned, so a value containing `{{other}}` can be re-interpreted (second-order injection + a
-  billion-laughs amplification). Found in the S1 security review. `ultra:i18n` no longer uses it (S1
-  does single-pass), but its **other callers (email templates) remain exposed**. Fix `Placeholders`
-  (or route those callers through a single-pass helper) **before user data flows through email
-  templates (S7)**. Small, but a real latent info-disclosure in shared code.
+- **`ultra/common/.../Placeholders.kt` `Filled.replace` multi-pass injection — FIXED (2026-07-20).**
+  Was a `fold` that re-scanned substituted text (second-order injection + billion-laughs). Now
+  single-pass (one combined literal regex). Adversarial regression tests added. Found in the S1
+  security review; fixed proactively (no production callers yet, but shared foundation). See
+  `.claude/tasks/20260720-placeholders-injection-fix.md`.
 
 ## Build steps (dependency order — one task file each, `/feature-review` gate per step)
 
