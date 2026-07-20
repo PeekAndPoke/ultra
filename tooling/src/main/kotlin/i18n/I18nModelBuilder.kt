@@ -30,7 +30,9 @@ object I18nModelBuilder {
             val placeholders = acc.templates
                 .flatMap { template -> PLACEHOLDER.findAll(template).map { it.groupValues[1] } }
                 .distinct()
-                .filter { it != "count" }
+                // `count` is the implicit plural driver ONLY for plural messages; for a non-plural
+                // message `{{count}}` is an ordinary placeholder and must stay a parameter.
+                .filter { !(acc.plural && it == "count") }
             I18nMessage(
                 name = path.substringAfterLast('.'),
                 key = path,
@@ -64,6 +66,12 @@ object I18nModelBuilder {
             } else {
                 byNext.getOrPut(segments.first()) { mutableListOf() }.add(leaf)
             }
+        }
+
+        val collisions = directMessages.map { it.name }.toSet() intersect byNext.keys
+        require(collisions.isEmpty()) {
+            val where = prefix.ifEmpty { "<root>" }
+            "i18n key collision under '$where': ${collisions.joinToString()} is both a message and a namespace."
         }
 
         val result = mutableListOf<I18nNode>()

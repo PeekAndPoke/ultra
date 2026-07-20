@@ -143,6 +143,15 @@ forms:
 - A **checker** (Gradle verification task) diffs every non-fallback language against the fallback and
   reports: **missing** keys, **superfluous** keys, and **placeholder mismatches**. Warn by default;
   fail under CI / `-Pi18n.strict`.
+- **Severity model (settled in S2 review, resolving a D8/D11 tension):** a dead/superfluous **KEY** →
+  WARNING for both base and regional (harmless, un-callable); an **introduced placeholder** → ERROR for
+  both (renders a broken `{{x}}` at runtime). Missing key → WARNING (base) / not flagged (regional,
+  inherits base). Plural placeholders are compared against the **union** of the fallback's `_one`/`_other`
+  forms, so a form legitimately using a union member is not falsely flagged.
+- **`requiredLangs(...)` (S2):** locales listed as required must be at full parity — an entirely absent
+  required locale, or a missing key in one, is an ERROR (not a warning). Placeholder *omission* stays
+  INFO even for required langs (D8's deliberate flexibility). Targets base languages; a regional variant
+  still inherits its base. Config: `I18nGenConfig.requiredLocales`.
 - **Placeholder rule** — `placeholders(non-default) ⊆ placeholders(default)`. The signature's params
   come from the default language only, so its placeholders are always a superset of every other
   language's and the resolver always has a value. Therefore:
