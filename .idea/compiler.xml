@@ -43,6 +43,7 @@
       <module name="ultra.funktor-demo.adminapp" target="21" />
       <module name="ultra.funktor-demo.adminapp.jvmMain" target="17" />
       <module name="ultra.funktor-demo.adminapp.jvmTest" target="17" />
+      <module name="ultra.funktor-demo.b2b-app" target="21" />
       <module name="ultra.funktor-demo.common" target="17" />
       <module name="ultra.funktor-demo.common.jvmMain" target="17" />
       <module name="ultra.funktor-demo.common.jvmTest" target="17" />

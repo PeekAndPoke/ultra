@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Funktor-Demo Run All Apps" type="CompoundRunConfigurationType">
+    <toRun name="[Funktor-Demo] Run B2B App" type="GradleRunConfiguration" />
+    <toRun name="[Funktor-Demo] Run Ops App" type="GradleRunConfiguration" />
+    <method v="2" />
+  </configuration>
+</component>
