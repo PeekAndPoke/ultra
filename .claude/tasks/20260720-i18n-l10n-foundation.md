@@ -153,6 +153,10 @@ forms:
     surfaced as an **info notice**, not a failure.
   - For plural keys the params are the **union** of placeholders across the default's `_one`/`_other`
     variants; each non-default variant must be a subset of that union (same rule, applied per form).
+- **Locale-aware checking (D11):** a **base** language (`de`) is checked for completeness against the
+  fallback `en` — missing keys → warn. A **regional variant** (`de-CH`) is checked against its **base**
+  (`de`), not the fallback: missing keys are **expected** (it inherits base, no warn); a value
+  byte-identical to base is a **redundant delta** (info). Introduced keys/placeholders → error in both.
 
 ### D9 — Deferred (planned, default impl now, filled later)
 
@@ -200,14 +204,111 @@ class I18nFormat(internal val i18n: I18n)
   `map { it.translate }` yields a distinct value each switch and no `distinct` operator can suppress
   the update.
 
+### D11 — Regional variants via a locale fallback chain
+
+Locales are language + optional region (BCP-47: `de`, `de-DE`, `de-CH`). The identifier type (sketched
+as `Lang`; name open — `Locale` reads truest but shadows `java.util.Locale` on JVM) carries an
+optional region and derives its base (`de-CH`.base = `de`) and fallback chain.
+
+- **Chain:** `de-CH → de → en(fallback)`. Files: `messages.de.yaml` = full base; `messages.de-CH.yaml`
+  = **sparse deltas only** (never a copy of base) — keeps baked size negligible (D5).
+- **Resolution walks two axes:** locale chain **outer** (most-specific first), catalog precedence
+  **inner** (app-before-framework, D3). First hit wins. For a `de-CH` user:
+  app-`de-CH` → framework-`de-CH` → app-`de` → framework-`de` → `en`. **Specificity beats source** —
+  the convention in Android/gettext/ICU.
+- **Override rule stays single:** to override a framework string for a locale, ship the key **at the
+  same specificity** (app + `de-CH` wins the inner axis). Shipping only `de` lets a framework `de-CH`
+  win for Swiss users — decided behavior, not a surprise.
+- **API surface unaffected:** only the fallback `en` defines keys → functions (D8). Regional variants
+  are data deltas and, like any non-fallback, **must not introduce keys** — no function can come from
+  `de-CH`.
+- **Formatting is locale-driven (not language):** `de-CH` → CHF + `1'000.00`; `de-DE` → EUR +
+  `1.000,00`. `I18nFormat` (D10) takes the region. Impl deferred (D9), region flows in now. This is a
+  primary motivation for regions — directly serves the German/Swiss-finance goal.
+
 ## Module layout
 
-- **New `funktor:i18n` KMP module** — the runtime types: `I18n` (state + stream + resolver),
-  `I18nCatalog`, `MessageResolver`, formatting interfaces with default impls. NOT `ultra:common`
-  (declares five native targets, no kotlinx.serialization).
-- **Generated code** lands in each module's `build/generated/i18n`, registered on `commonMain` as a
-  srcDir. Demo strings have a natural home in `funktor-demo:common` (KMP, commonMain-only, all four
-  apps already depend on it).
+**Dependency-direction fact (verified 2026-07-20):** kraft does NOT depend on funktor; funktor
+depends on kraft (`funktor/auth/build.gradle.kts:48` → `kraft:core`). kraft/core's commonMain already
+`api`s `ultra:common`, `ultra:streams`, `ultra:datetime`, `ultra:html`, `ultra:model`. Therefore the
+runtime **must live in `ultra/`** — a `funktor:i18n` home (the codegen agent's original suggestion)
+would be unreachable from kraft and is **rejected**.
+
+Three layers:
+
+1. **`ultra/i18n` (NEW module) — platform-neutral runtime.** `I18n`, `I18nTranslate`, `I18nFormat`,
+   `MessageResolver`, `I18nCatalog`, `Lang`, formatting interfaces + default impls. KMP jvm+js
+   (mirrors kraft/core), **not** inside `ultra:common` — so `ultra:common`'s five native targets are
+   irrelevant (a jvm+js module can depend on the wider-target `ultra:common`). Depends on
+   `ultra:common` (reuse `Placeholders` for `{{var}}`) and `ultra:streams` (`StreamSource<I18n>`). No
+   kotlinx.serialization in v1 (baked catalogs are `mapOf`); added only when lazy-load JSON lands (D5).
+2. **`kraft/core` (jsMain) — reactive glue + kraft's own strings.** The `Translations`/`Formatting`
+   delegate helpers (D10), registering the `I18n` stream as an app attribute (mirror
+   `ResponsiveController`), and an `I18nInitializer` for boot-language resolution (mirror
+   `NativeTimeZoneInitializer`). These need `subscribingTo`/`Component`/app-attributes, which live in
+   kraft, not ultra. kraft's own namespace (`KraftFormsI18n` + its yaml) lives here too — purely
+   additive (an `i18n/` dir + a generated srcDir + one `ultra:i18n` dependency), so no `kraft/i18n`
+   split. kraft yaml/accessors → `commonMain` for uniformity (jsMain can call commonMain accessors),
+   or `jsMain` if kraft strings stay strictly frontend.
+3. **`buildSrc` — the generator.** The Gradle plugin/task reading yaml → emitting Kotlin lives in
+   `buildSrc/src/main/kotlin/` (precedent: `ExtractExampleCodePlugin.kt`), applied by any module that
+   owns strings. It emits text referencing `ultra/i18n` FQNs, so buildSrc needs **no** dependency on
+   `ultra/i18n` — no cycle.
+
+**Generated code** lands in each owning module's `build/generated/i18n`, registered on the module's
+`commonMain` (or `jsMain` for kraft, if chosen) srcDir. Downstream string homes: `funktor/auth`
+(auth + email), `funktor-demo:common` (demo app strings — KMP, all four apps already depend on it).
+
+## Consumer wiring (how a module generates its own strings)
+
+**Plugin ≠ runtime.** `ultra:i18n` is a runtime dependency; the generator is a Gradle plugin on the
+plugin classpath — importing the library does NOT bring the generator. **Decision (confirmed):** ship
+the plugin via **`buildSrc` for the monorepo now** (works for all in-repo modules incl. b2b-app),
+**publish it as a standalone Gradle plugin later** for external SaaS-starter consumers (no
+precedent in-repo today: no `gradlePlugin{}`/`java-gradle-plugin` anywhere; `tooling/` is a plain
+library). Keep the **emitter core** (parse yaml → emit Kotlin) as a plain unit-testable library
+(natural home `tooling/`), wrapped by a **thin plugin** — so buildSrc→published is repackaging, not a
+rewrite.
+
+**yaml is a build INPUT, not a resource.** It lives in a **non-resource** dir (`src/<sourceSet>/i18n/`),
+read via `@InputFiles`, never packaged into the jar (strings are baked into Kotlin, D1). Convention by
+default, overridable via the plugin extension ("no magic, but defaults"). File names:
+`messages.<locale>.yaml` (`messages.en.yaml`, `messages.de.yaml`, `messages.de-CH.yaml` — D11).
+
+**KMP registration — pass the task, don't hardcode names** (fixes both `ExtractExampleCodePlugin`
+defects: hardcoded task names + `.firstOrNull()` source set):
+
+```kotlin
+val generateI18n = tasks.register<GenerateI18nTask>("generateI18n") {
+    sourceDir.set(layout.projectDirectory.dir("src/jsMain/i18n"))            // @InputFiles
+    outputDir.set(layout.buildDirectory.dir("generated/i18n/jsMain/kotlin")) // @OutputDirectory
+    fallbackLang.set("en")
+}
+kotlin.sourceSets.named("jsMain") { kotlin.srcDir(generateI18n) }  // task provider → Gradle infers the dep
+```
+
+- `srcDir(taskProvider)` (task has `@OutputDirectory`) auto-wires `generate → compileKotlinJs`; for a
+  module with `commonMain`, register there and Gradle fans the dep out to metadata + every platform
+  compile. No hardcoded compile-task names.
+- `@InputFiles` + `@OutputDirectory` → correct content-hash up-to-date + build cache. Verify from a
+  **clean** build (compile-on-save watcher can mask a missing wiring incrementally).
+
+**Example — funktor-demo b2b-app** (`kotlin("multiplatform")`, js-only, `jsMain`; gets `ultra:i18n`
+transitively via `kraft:semanticui → kraft:core`):
+
+```kotlin
+plugins {
+    kotlin("multiplatform")
+    kotlin("plugin.serialization")
+    id("io.peekandpoke.i18n")           // from buildSrc
+}
+i18n { fallbackLang.set("en"); sourceSet.set("jsMain") }   // sourceDir defaults to src/jsMain/i18n
+```
+
+Author drops `src/jsMain/i18n/messages.{en,de,de-CH}.yaml`, builds, gets `AppI18n` → `t.app.hello(...)`.
+**The build generates ONLY this module's namespace** — no aggregation/scanning (D2). Framework
+namespaces (`t.forms.*`, auth) arrive at runtime via default-installed catalogs (D3) + the extension
+properties kraft/funktor already publish; none of that touches the app's build.
 
 ## Codegen approach
 
