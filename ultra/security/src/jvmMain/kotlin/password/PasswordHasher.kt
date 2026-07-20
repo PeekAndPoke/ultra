@@ -24,13 +24,23 @@ interface PasswordHasher {
     ) {
         companion object {
             fun fromString(str: String): Hash {
-                val parts = str.split(":")
+                // The value is "id:salt:hash". The [id] and the encoded [hash] are colon-free, but
+                // the [salt] (raw password4j salt bytes) may contain ':'. So bind id to before the
+                // first ':' and hash to after the last ':' — everything between is the salt. A naive
+                // `split(":")` would misalign whenever a random salt happens to contain a colon,
+                // corrupting the parsed hash ("Invalid hashed value" on check).
+                val firstColon = str.indexOf(':')
+                val lastColon = str.lastIndexOf(':')
 
-                return Hash(
-                    id = parts.getOrNull(0) ?: "",
-                    salt = parts.getOrNull(1) ?: "",
-                    hash = parts.getOrNull(2) ?: "",
-                )
+                return if (firstColon < 0 || lastColon <= firstColon) {
+                    Hash(id = str.substringBefore(':'), salt = "", hash = str.substringAfter(':', ""))
+                } else {
+                    Hash(
+                        id = str.substring(0, firstColon),
+                        salt = str.substring(firstColon + 1, lastColon),
+                        hash = str.substring(lastColon + 1),
+                    )
+                }
             }
         }
 

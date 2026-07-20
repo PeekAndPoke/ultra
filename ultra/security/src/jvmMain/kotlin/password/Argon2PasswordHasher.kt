@@ -3,6 +3,7 @@ package io.peekandpoke.ultra.security.password
 import com.password4j.Argon2Function
 import com.password4j.Password
 import com.password4j.types.Argon2
+import io.peekandpoke.ultra.common.toBase64
 
 class Argon2PasswordHasher(
     private val memory: Int,
@@ -38,7 +39,10 @@ class Argon2PasswordHasher(
 
         return PasswordHasher.Hash(
             id = id,
-            salt = hash.salt,
+            // Base64 the raw password4j salt so the serialized "id:salt:hash" form can never contain
+            // the ':' delimiter (matches PBKDF2). The encoded [hash] already embeds the salt, so this
+            // field is not read back on check — this is purely a delimiter-safe, consistent format.
+            salt = hash.salt.toBase64(),
             hash = hash.result,
         )
     }
