@@ -79,6 +79,7 @@
             <option value="$PROJECT_DIR$/ultra/datetime" />
             <option value="$PROJECT_DIR$/ultra/fixture" />
             <option value="$PROJECT_DIR$/ultra/html" />
+            <option value="$PROJECT_DIR$/ultra/i18n" />
             <option value="$PROJECT_DIR$/ultra/kontainer" />
             <option value="$PROJECT_DIR$/ultra/log" />
             <option value="$PROJECT_DIR$/ultra/maths" />

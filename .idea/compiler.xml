@@ -200,6 +200,9 @@
       <module name="ultra.ultra.html" target="17" />
       <module name="ultra.ultra.html.jvmMain" target="17" />
       <module name="ultra.ultra.html.jvmTest" target="17" />
+      <module name="ultra.ultra.i18n" target="17" />
+      <module name="ultra.ultra.i18n.jvmMain" target="17" />
+      <module name="ultra.ultra.i18n.jvmTest" target="17" />
       <module name="ultra.ultra.kontainer" target="17" />
       <module name="ultra.ultra.kontainer.main" target="17" />
       <module name="ultra.ultra.kontainer.test" target="17" />
