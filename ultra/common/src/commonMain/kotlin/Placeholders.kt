@@ -26,6 +26,7 @@ interface Placeholders<T> {
          * to the intended one.
          */
         private val combined: Regex? = mapping.keys
+            .filter { it.isNotEmpty() } // drop any empty pattern: it would match zero-width everywhere
             .takeIf { it.isNotEmpty() }
             ?.sortedByDescending { it.length }
             ?.joinToString("|") { Regex.escape(it) }

@@ -233,5 +233,80 @@ class PlaceholdersSpec : StringSpec() {
 
             filled("{{a}}-{{ab}}") shouldBe "A-AB"
         }
+
+        "an empty placeholder set leaves the text untouched" {
+            data class V(val n: String)
+
+            val placeholders = Placeholders.DoubleCurly(emptySet<V>()) { it.n }
+            val filled = placeholders.fill { it.n }
+
+            filled("plain {{x}} text") shouldBe "plain {{x}} text"
+        }
+
+        "an unknown placeholder in the text is left untouched" {
+            val placeholders = Placeholders.DoubleCurly<SmallEnum>()
+            val filled = placeholders.fill { it.name.lowercase() }
+
+            filled("{{FOO}} and {{UNKNOWN}}") shouldBe "foo and {{UNKNOWN}}"
+        }
+
+        "adjacent placeholders are each substituted exactly once" {
+            val placeholders = Placeholders.DoubleCurly<SmallEnum>()
+            val filled = placeholders.fill { it.name.lowercase() }
+
+            filled("{{FOO}}{{BAR}}{{FOO}}") shouldBe "foobarfoo"
+        }
+
+        "a value mapping to empty string removes the placeholder" {
+            val placeholders = Placeholders.DoubleCurly<SmallEnum>()
+            val filled = placeholders.fill { if (it == SmallEnum.FOO) "" else "bar" }
+
+            filled("[{{FOO}}][{{BAR}}]") shouldBe "[][bar]"
+        }
+
+        "SECURITY: TripleHash substitution is also single-pass" {
+            val placeholders = Placeholders.TripleHash<SmallEnum>()
+            val filled = placeholders.fill {
+                when (it) {
+                    SmallEnum.FOO -> "###BAR###"
+                    SmallEnum.BAR -> "SECRET"
+                }
+            }
+
+            filled("name=###FOO### token=###BAR###") shouldBe "name=###BAR### token=SECRET"
+        }
+
+        "TripleHash overlapping names resolve to the intended (longest) pattern" {
+            data class V(val n: String)
+
+            val placeholders = Placeholders.TripleHash(setOf(V("a"), V("ab"))) { it.n }
+            val filled = placeholders.fill { it.n.uppercase() }
+
+            filled("###a###-###ab###") shouldBe "A-AB"
+        }
+
+        "a placeholder NAME containing a regex metachar is matched literally" {
+            data class V(val n: String)
+
+            // '|' is the alternation separator; it must be escaped, not treated as regex syntax.
+            val placeholders = Placeholders.DoubleCurly(setOf(V("a|b"), V("a"))) { it.n }
+            val filled = placeholders.fill { it.n.uppercase() }
+
+            filled("{{a|b}} {{a}}") shouldBe "A|B A"
+        }
+
+        "SECURITY: a value concatenating with following text to form a pattern is not expanded" {
+            // template `{{FOO}}AR}}` + FOO->`{{B` would concatenate to `{{BAR}}`; single-pass must
+            // NOT re-scan it. (Old multi-pass code produced "SECRET" here.)
+            val placeholders = Placeholders.DoubleCurly<SmallEnum>()
+            val filled = placeholders.fill {
+                when (it) {
+                    SmallEnum.FOO -> "{{B"
+                    SmallEnum.BAR -> "SECRET"
+                }
+            }
+
+            filled("{{FOO}}AR}}") shouldBe "{{BAR}}"
+        }
     }
 }

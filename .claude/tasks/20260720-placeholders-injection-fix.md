@@ -42,6 +42,24 @@ longest-first) and replace in a single scan — substituted text is never re-exa
 - [x] `:ultra:common:jvmTest :ultra:common:jsTest` green; `:ultra:common:compileCommonMainKotlinMetadata`
       green (valid for native targets too).
 
+## Review record (full 3-agent gate, at user request — security-critical)
+
+3 opus reviewers (impl & style, correctness/API, security). Gate **PASS**.
+
+| Reviewer | Verdict | Notes |
+|---|---|---|
+| 1. Implementation & code style | PASS | correct, linear (no ReDoS), KMP-safe (`Regex.escape` confirmed in common stdlib); LOW: add a metachar-in-name test |
+| 2. Correctness / API | PASS | single-pass is a determinism *improvement* (old nesting was iteration-order-dependent); LOW F1 `findErrorsIn`/`replace` alphabet divergence is **pre-existing**, out of scope |
+| 3. Security | PASS | actively tried to break it — injection closed, amplification eliminated, no ReDoS; tests genuinely fail vs old code; 2 nice-to-haves |
+
+Fixes applied post-gate:
+- **Defense-in-depth guard** `.filter { it.isNotEmpty() }` on the combined-regex build — a directly
+  constructed empty key would otherwise match zero-width everywhere (not reachable via `fill()`).
+- **Full test suite** rounded out: empty pattern-set, unknown/adjacent placeholders, empty-value,
+  cross-style **TripleHash** injection + overlap, regex-metachar-in-name, and a value/following-text
+  boundary-concat regression.
+- Not fixed (agreed out of scope): F1 alphabet divergence and pre-existing doc noise in `Placeholders.kt`.
+
 ## Notes
 
 - Adversarial tests double as the red-team scenarios for this fix (bypass attempts on single-pass), so
