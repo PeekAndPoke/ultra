@@ -20,6 +20,7 @@ val State: OpsAppState = OpsAppState(
         frontend = AuthFrontend.default(
             config = AuthFrontendConfig(
                 redirectAfterLogin = Nav.dashboard(),
+                title = "Funktor Ops",
             )
         ),
         api = Apis.auth,

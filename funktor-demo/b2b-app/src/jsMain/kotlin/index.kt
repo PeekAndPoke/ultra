@@ -20,6 +20,7 @@ val State: B2bAppState = B2bAppState(
         frontend = AuthFrontend.default(
             config = AuthFrontendConfig(
                 redirectAfterLogin = Nav.dashboard(),
+                title = "Funktor B2B",
             )
         ),
         api = Apis.auth,
