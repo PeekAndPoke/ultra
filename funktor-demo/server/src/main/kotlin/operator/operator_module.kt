@@ -18,4 +18,7 @@ val OperatorModule = module {
 
     dynamic(OperatorUsersRepo::class)
     dynamic(OperatorUsersRepo.Fixtures::class)
+
+    // Operator console API (collected by ApiApp as an ApiFeature)
+    singleton(OperatorApiFeature::class)
 }
