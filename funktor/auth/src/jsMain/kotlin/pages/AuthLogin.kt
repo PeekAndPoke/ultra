@@ -16,7 +16,7 @@ import kotlinx.html.Tag
  * chrome — so an app can embed it inside its own branded layout:
  *
  * ```
- * mount(Nav.auth.login()) {
+ * mount(Nav.auth.login) {
  *     MyLoggedOutLayout { AuthLogin(State.auth) }
  * }
  * ```

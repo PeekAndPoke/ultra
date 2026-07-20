@@ -31,7 +31,7 @@ headline, logo, layout — presentation, each app should own it).
 2. **Slot the chrome.** Same `content: FlowContent.() -> Unit` pattern already used by the apps'
    `LoggedInLayout`:
    ```kotlin
-   mount(Nav.auth.login()) {
+   mount(Nav.auth.login) {          // Static route def, not the bound Nav.auth.login()
        MyBrandedLoggedOutLayout {   // app logo / headline / background
            AuthLogin(State.auth)    // shared, stateful auth widget
        }
@@ -86,11 +86,41 @@ dev-time origin-mismatch assertion. Confirm in design.
 - [x] Chrome is a slot; `AuthFrontend.default`/`LoginPage` still works and gains `title` / `logoUrl` /
       `header{}` (custom header slot replaces logo+title). Apps can also embed `AuthLogin` in their
       own layout for full control.
-- [x] ops-app and b2b-app login pages are visibly distinct (`title = "Funktor Ops" / "Funktor B2B"`).
+- [x] ops-app and b2b-app login pages are visibly distinct: ops uses the default `LoginPage` with
+      `title = "Funktor Ops"`; b2b uses a dedicated `LoggedOutLayout` wrapping `AuthLogin` (POC of the
+      full-control path). Branding now renders on the reset page too (shared `renderBranding`).
 - [ ] **(Part 2)** Reset/activation links resolve to the correct frontend for their realm; the
       frontend base URL is single-sourced (no duplicated literal), with a drift check.
 - [ ] **(follow-up)** `TestBed.preact` test for `AuthLogin` — needs a net-new mock `AuthState`
       harness (no auth `jsTest` exists yet).
+
+## Review record (/feature-review, 2026-07-20, 3× Opus/high)
+
+All three reviewers independently confirmed one MEDIUM (stale org-selection). Verified + fixed:
+
+| Reviewer | Verdict | Key findings |
+|---|---|---|
+| 1. Impl & style | Faithful extraction, correct nav rewire | MEDIUM stale `pendingOrgSelection`; LOW KDoc parens; LOW two `AuthFrontendRoutes` instances |
+| 2. Domain | Right seam; 3 design gaps | MEDIUM stale selection (root cause: `login()` returns only `Data`); MEDIUM no first-class custom-chrome API (b2b re-copies the reset route contract); MEDIUM branding half-applied (login only) |
+| 3. Security | No CRIT/HIGH; 1 MEDIUM | MEDIUM stale selection → session-hijack window on a shared machine; else clean (picker unreachable without server `OrgSelectionRequired`, `selectOrg` sends server token, protection preserved, no injection) |
+
+**Fixed in this pass:**
+- **MEDIUM (security/correctness):** `AuthState.login()` now clears `pendingOrgSelection` at the start
+  (+ a `clearPendingOrgSelection()` called from the picker's Back link) so a failed attempt can't
+  resurface an earlier user's still-valid selection.
+- **MEDIUM (branding half-applied):** `renderBranding` moved to shared `AuthPageLayouts`; both the
+  default `LoginPage` and `ResetPasswordPage` render it now.
+- **LOW:** both apps pass `routes = Nav.auth` into `AuthFrontend.default` (one routes instance, no
+  mount/redirect drift); fixed the `mount(Nav.auth.login)` KDoc/example parens.
+
+**Deferred to follow-up (design; the POC is valid as-is):**
+- **First-class custom-chrome API** — replace the b2b hand-mount (which re-copies the reset-password
+  route contract, and b2b2c would re-copy again) with a `layout`/chrome slot on `AuthFrontend.mount`,
+  so `mount` keeps the route contract while the app injects chrome. Pairs with:
+- **Extract `AuthResetPassword`** (chrome-less reset widget, mirroring `AuthLogin`) so a custom
+  layout can wrap reset too — today b2b's reset still uses the default fullscreen chrome.
+- **Org-picker spinner** — `renderSelectOrgState` spins all org buttons at once (single shared
+  `noDblClick`); track the in-flight org id if the list can be long.
 
 ## Test evidence
 

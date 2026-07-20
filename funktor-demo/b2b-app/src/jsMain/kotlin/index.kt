@@ -19,9 +19,13 @@ val State: B2bAppState = B2bAppState(
     auth = authState<B2bUserModel>(
         frontend = AuthFrontend.default(
             config = AuthFrontendConfig(
+                // b2b uses a dedicated LoggedOutLayout (see nav.kt), so the default-chrome branding
+                // config (title/logo) is not used here.
                 redirectAfterLogin = Nav.dashboard(),
-                title = "Funktor B2B",
-            )
+            ),
+            // Share the one routes instance the hand-mounted auth routes use, so the session-expiry
+            // redirect (frontend.routes.login) targets the same path b2b mounts the login on.
+            routes = Nav.auth,
         ),
         api = Apis.auth,
         router = { kraft.router },

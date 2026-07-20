@@ -21,7 +21,9 @@ val State: OpsAppState = OpsAppState(
             config = AuthFrontendConfig(
                 redirectAfterLogin = Nav.dashboard(),
                 title = "Funktor Ops",
-            )
+            ),
+            // Share the one routes instance so mount + session-expiry redirect can't drift.
+            routes = Nav.auth,
         ),
         api = Apis.auth,
         router = { kraft.router },

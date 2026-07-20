@@ -116,6 +116,8 @@ class ResetPasswordPage<USER>(ctx: Ctx<Props<USER>>) : Component<ResetPasswordPa
     override fun VDom.render() {
         AuthPageLayouts {
             renderFullscreenBackgroundLayout(authState.frontend.config) {
+                renderBranding(authState.frontend.config)
+
                 ui.header { +"Reset Password" }
 
                 loader(this) {

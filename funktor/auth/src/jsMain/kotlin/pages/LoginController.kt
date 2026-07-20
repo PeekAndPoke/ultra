@@ -141,7 +141,17 @@ class LoginController<USER>(
                 ui.hidden.divider()
             }
 
-            renderBackLink(DisplayState.Login())
+            ui.field {
+                a {
+                    onClick { evt ->
+                        evt.preventDefault()
+                        // Cancel the pending selection so it can't be resurfaced by a later attempt.
+                        state.clearPendingOrgSelection()
+                        displayState = DisplayState.Login()
+                    }
+                    +"Back"
+                }
+            }
         }
 
         fun FlowContent.renderRecoverPasswordState(s: DisplayState.RecoverPassword) {

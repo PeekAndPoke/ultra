@@ -163,7 +163,18 @@ class AuthState<USER>(
     var pendingOrgSelection: AuthSignInResponse.OrgSelectionRequired? = null
         private set
 
+    /** Cancels a pending multi-org selection (e.g. the user backs out of the picker). */
+    fun clearPendingOrgSelection() {
+        pendingOrgSelection = null
+    }
+
     suspend fun login(request: AuthSignInRequest): Data<USER> {
+        // Clear any selection left over from a previous attempt BEFORE this one runs. Otherwise a
+        // failed login would leave the earlier attempt's still-valid selection token in place, and
+        // the UI (which branches on pendingOrgSelection) would resurface that user's org picker —
+        // letting a bystander whose own login just failed complete a sign-in as the earlier user.
+        pendingOrgSelection = null
+
         val response = api
             .signIn(request)
             .map { it.data }

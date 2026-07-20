@@ -5,10 +5,7 @@ import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.vdom.VDom
-import io.peekandpoke.ultra.semanticui.ui
-import kotlinx.html.FlowContent
 import kotlinx.html.Tag
-import kotlinx.html.img
 
 /**
  * Batteries-included default login page: the fullscreen-background chrome + optional branding from
@@ -39,22 +36,6 @@ class LoginPage<USER>(ctx: Ctx<Props<USER>>) : Component<LoginPage.Props<USER>>(
 
                 AuthLogin(props.state)
             }
-        }
-    }
-
-    private fun FlowContent.renderBranding(config: AuthFrontendConfig) {
-        // A custom header slot fully replaces the default logo + title.
-        config.header?.let { slot ->
-            slot()
-            return
-        }
-
-        config.logoUrl?.let { url ->
-            img(src = url, classes = "ui centered image") {}
-        }
-
-        config.title?.let { title ->
-            ui.header { +title }
         }
     }
 }
