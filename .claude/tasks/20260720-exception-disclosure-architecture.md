@@ -1,36 +1,72 @@
 # Exception architecture: separate client-safe message from diagnostic detail
 
-**Status:** TODO — design first, then implement
-**Plan:** none — umbrella for `.claude/tasks/20260720-error-response-disclosure-audit.md`
+**Status:** TODO — design decision first, then implement
+**Plan:** umbrella for `.claude/tasks/20260720-error-response-disclosure-audit.md`
 **Security-critical:** yes
 
 ## Problem
 
-Today an exception has exactly one human-readable channel — `Throwable.message` — and it is used for
-two incompatible purposes: telling a client what went wrong, and telling an operator enough to
-debug. `ApiStatusPages` then has to guess which audience it is serving, based on the environment.
+An exception has one human-readable channel — `Throwable.message` — used for two incompatible
+audiences: telling a client what went wrong, and telling an operator enough to debug.
+`ApiStatusPages` then guesses which audience it is serving from the environment string.
 
-That guess is the wrong shape:
+That guess is the wrong shape: it fails open on unknown environments, it is all-or-nothing, and it
+cannot distinguish "written for a user" (`"Invalid credentials"`) from "written for a developer"
+(`"Error while querying '…': FOR u IN users FILTER …"`).
 
-- It fails open when the environment is unknown (see
-  `.claude/tasks/20260720-env-classification-allowlist.md`).
-- It is all-or-nothing: either the full raw message or nothing.
-- It cannot distinguish "this message was written for a user" (`"Invalid credentials"`) from "this
-  message was written for a developer" (`"Error while querying '…': FOR u IN users FILTER …"`).
+## The finding that shapes the design: there are TWO disclosure channels, not one
 
-**Key constraint that shapes the whole design:** most of what leaks is *not* our exception. The
-audit's worst finding was `KarangoQueryException`, but the same channel carries `ConnectException`
-(host:port), `FileNotFoundException` (paths), kontainer `ServiceDefinition` errors (service FQCNs)
-and Slumber awaker errors (JSON field paths) — plus every JDK and third-party driver exception we
-will ever encounter. So a new base class for *our* exceptions cannot be the mechanism: anything that
-relies on exceptions opting **in** to being unsafe will be wrong by default.
+A full render-boundary audit found that exceptions reach clients through two structurally different
+paths. **A fix aimed only at the first does not touch the second.** This is the main reason this
+task exists as an umbrella rather than a one-line fix.
 
-## Design direction
+### Channel A — exception → error message
 
-Two independent decisions, and the second is the one that answers "how do we see errors in dev/qa
-but not prod".
+`ApiResponse.messages`, populated via `withError` / `withInfo`.
 
-### 1. Default-deny at the render boundary
+| Site | Gate | Status |
+|---|---|---|
+| `funktor/rest/src/jvmMain/kotlin/ApiStatusPages.kt:47-54` — `withCause` | environment (`exposesStackTraces`) | non-prod → `stackTraceToString()`; **prod → `cause.message`, which still leaks** (see `KarangoQueryException` below) |
+| `funktor/rest/src/jvmMain/kotlin/respond.kt:48-69` — `apiRespondUnauthorized` | environment (`isNotProduction`) | leaks failed auth-rule descriptions |
+| `funktor/auth/src/jvmMain/kotlin/api/AuthApi.kt:57,79,106,127,148,170,193,216,235` | **none** | `withInfo(e.message ?: "")` in *every* environment |
+
+Worst payload on this channel: `karango/core/src/main/kotlin/vault/KarangoDriver.kt:130-138` builds
+`KarangoQueryException.message` as `"Error while querying '${e.message}':\n\n${query.query}\nwith
+params [...]"` — so the production branch returns the full AQL, collection names and bind-var names.
+
+Confirmed sole exception→response plugin: no `install(StatusPages)`, no other `on(CallFailed)`, no
+`exception<`, no GraphQL, no server-side WebSocket routes anywhere in the repo.
+
+### Channel B — exception → persisted DTO field → API response
+
+Stack traces are **stored as data** and served as ordinary payload via `ApiResponse.data`. No
+environment gate applies to any of these, by design or otherwise:
+
+| DTO field | Written at | Served by | Gate |
+|---|---|---|---|
+| `WorkerModel.Run.Result.Failure.stack` (`funktor/inspect/src/commonMain/kotlin/cluster/workers/api/WorkerModel.kt:30-40`) — `stackTraceToString()` | `WorkersFacade.kt:103-115` | `WorkersApi.kt:16-42` | `isSuperUser()` |
+| `BackgroundJobs` result `data["stack"]` (`funktor/cluster/src/jvmMain/kotlin/backgroundjobs/BackgroundJobs.kt:500,578`) | job failure | `BackgroundJobsApi.kt:138-155` | `isSuperUser()` |
+| `LogEntryModel.stackTrace` (`funktor/inspect/src/commonMain/kotlin/logging/api/LogEntryModel.kt:17,23`) | `LogbackKarangoLogAppender.kt:93-101`, attached to the **root logger** | `LoggingApi.kt:33-92` | `isSuperUser()` |
+| `EmailResult.error["stackTrace"]` (`funktor/messaging/src/commonMain/kotlin/api/EmailResult.kt:20-26`) | `SendgridSender.kt:66-73` | latent — `SentMessageModel` embeds it; no core endpoint serialises it wholesale today | — |
+
+Superuser gating is a defensible answer for channel B and should be kept. Two problems remain:
+
+1. **A confirmed public leak on this channel.** `funktor-demo/server/src/main/kotlin/api/showcase/ClusterShowcaseApi.kt:271-292`
+   — `getWorkers` is `authorize { public() }` and returns `"failure: ${r.message}"`. Verified by
+   reading the file. Unauthenticated callers get worker exception messages. Demo app, but real.
+2. **`ultra/log/src/jvmMain/kotlin/Log.kt:37-39`** folds the stack trace into the *message* string
+   (`message + "\n" + e.stackTraceToString()`), so a stack trace lands in `LogEntryModel.message`
+   even for appenders that never touch the `stackTrace` field. Any "strip the stackTrace field"
+   fix that ignores this is incomplete.
+
+Also on this channel: `karango/core/src/main/kotlin/utils/ArangoDbRequestUtils.kt:39-41` stores
+`"ERROR: ${e.stackTraceToString()}"` into `queryExplained`, which the insights details page renders
+(`funktor/insights/src/jvmMain/kotlin/collectors/VaultCollector.kt:133-141`) — and that page has no
+auth at all (tracked separately in `.claude/tasks/20260720-insights-gui-auth-gate.md`).
+
+## Design
+
+### 1. Channel A — default-deny at the render boundary
 
 The renderer treats every `Throwable` as unsafe unless it explicitly declares a client-safe message.
 
@@ -41,100 +77,119 @@ interface HasClientMessage {
 }
 ```
 
-- Unknown exception → fixed generic string + correlation id. This is the default, so new code and
-  third-party exceptions are safe automatically.
+- Unknown exception → fixed generic string + correlation id. **This is the default**, so JDK,
+  driver and third-party exceptions — which are the bulk of what leaks — are safe automatically.
 - `HasClientMessage` → its `clientMessage` is rendered.
 - `Throwable.message` is **never** rendered to a client, in any environment.
 
-Our own exception hierarchy then carries both channels explicitly:
+Opting *in* to safety is the only workable polarity here: a base class for our own exceptions cannot
+help with `ConnectException`, `FileNotFoundException`, kontainer `ServiceDefinition` errors or
+Slumber awaker errors, all of which reach this boundary today.
+
+Our own hierarchy then carries both channels explicitly, with diagnostics as **structured fields**
+rather than string-concatenated into `message`:
 
 ```kotlin
 abstract class FunktorException(
-    override val clientMessage: String,   // safe: "The query could not be completed"
-    message: String,                      // diagnostic: includes AQL, params, ids
+    override val clientMessage: String,   // "The query could not be completed"
+    message: String,                      // diagnostic: ids, query, params
     cause: Throwable? = null,
 ) : Exception(message, cause), HasClientMessage
 ```
 
-Diagnostic context should be structured fields rather than string-concatenated into `message` — e.g.
-`KarangoQueryException` keeps `query` and `varNames` as properties (it already has `query`), so the
-logger can render them and nothing can accidentally interpolate them into a client-facing string.
+`KarangoQueryException` already has a `query` property — the fix is to stop interpolating it into
+`message`, not to add a new field.
 
-### 2. Make disclosure identity-dependent, not environment-dependent
+### 2. Channel B — keep the identity gate, add serialisation discipline
 
-This is the part worth deciding deliberately. Options:
+Do not try to environment-gate channel B. Instead:
 
-**Option A — keep the environment gate.** Non-production additionally inlines
-`message` + stack trace into the response.
-- Familiar, zero extra infrastructure.
-- Security posture depends on a config string being right, forever. Every new environment name is a
-  new chance to fail open. This is exactly the bug we just fixed.
+- Keep `isSuperUser()` on the admin APIs (already correct).
+- Diagnostic fields (`stack`, `stackTrace`, `data["stack"]`) move into a distinct nested type so
+  "contains a stack trace" is visible in the type system and greppable, rather than being an
+  ordinary `String` field that any new endpoint can accidentally serialise.
+- Fix the demo's public `getWorkers` to not include failure text (or require auth).
+- Decide what to do about `Log.kt:37-39` folding stack traces into `message`.
 
-**Option B — correlation id + server-side retrieval (recommended).** *Every* environment returns the
-same generic body plus an opaque `errorId`. The full detail lives server-side (log + optionally a
-short-TTL error store) and is retrievable through an existing superuser-gated API.
-- The response body no longer depends on the environment at all, so there is no gate to fail open
-  and no "staging is internet-facing" problem.
-- Dev convenience is preserved by a different route: locally the log is right there in the console,
-  and in qa/staging a superuser can fetch the detail by id.
-- Costs: an error store or a log-search path, and slightly worse ergonomics than "stack trace right
-  in the response".
+### 3. The environment-vs-identity decision — RECOMMENDATION
 
-**Option C — B, plus inline detail only for callers who are already superusers.** Identity-gated
-rather than environment-gated. Keeps the inline convenience for the people who could read the logs
-anyway, with no environment dependency.
+This is the load-bearing choice and the answer to "how do we see errors in dev/qa but not prod".
 
-Recommendation: **C**, falling back to B where there is no authenticated caller. The security
-property becomes "you see internals iff you are authorised to see internals", which is checkable and
-does not drift with deployment config.
+| Option | What it means | Verdict |
+|---|---|---|
+| **A** — keep the environment gate | non-prod additionally inlines `message` + stack trace | **Reject.** Security posture depends forever on a config string being right. Every new environment name is a fresh chance to fail open — that is the bug we just fixed, twice |
+| **B** — correlation id + server-side retrieval | every environment returns the same generic body + opaque `errorId`; detail lives in the log/error store | Sound. No gate to fail open. Costs a lookup step in dev |
+| **C** — B, plus inline detail for callers who are already superusers | identity-gated | **Recommended** |
 
-- [ ] Decide between A / B / C before writing code — this is the load-bearing decision
-- [ ] `HasClientMessage` (or equivalent) exists and the render boundary default-denies
+**Recommend C, degrading to B when there is no authenticated caller.** The security property becomes
+"you see internals iff you are authorised to see internals" — checkable, testable, and it does not
+drift with deployment config. Dev ergonomics are preserved because a local developer is a superuser
+and the log is in the console anyway.
+
+Honest cost of C: it needs an identity lookup on the error path (which must itself not throw), and
+"just read the stack trace in the response" stops working for an anonymous local curl. That is a
+real ergonomic regression for a small class of debugging, and it is the main argument for B-only.
+
+### Correlation id — reuse, don't invent
+
+**OPEN QUESTION — not verified.** The audit did not confirm whether a per-request id already exists.
+Before inventing one, check: `funktor/core/src/jvmMain/kotlin/coroutines/timing.kt` (`TimingInterceptor`
+is the only known `CoroutineContext` element in the repo), the insights request capture (which
+already mints a `bucket`/`file` identifier per request — see
+`funktor/insights/src/jvmMain/kotlin/`), and whether any MDC/logging context exists. The insights
+identifier looks like the strongest reuse candidate.
+
+## Spec
+
+- [ ] Decide A / B / C explicitly and record the decision here before writing code
+- [ ] `HasClientMessage` exists; the channel-A render boundary default-denies
 - [ ] `Throwable.message` is never rendered to a client in any environment
-- [ ] Correlation id is generated once per failure, returned to the client, and present on the log
-      line for the same failure
-- [ ] Our exception types carry diagnostic context as structured fields, not concatenated strings
-- [ ] `KarangoQueryException` no longer builds the AQL into `message`
-      (`karango/core/src/main/kotlin/vault/KarangoDriver.kt:130-138`)
-- [ ] A lint/test guard prevents reintroducing `withError(cause.message)` at the render boundary
-- [ ] Migration guide for downstream apps that currently rely on exception messages reaching clients
-
-## Relationship to the other tasks
-
-- `.claude/tasks/20260720-error-messages-generic-in-production.md` is the **tactical first slice** of
-  this: stop returning `cause.message`, add a correlation id. Doing it in the shape described here
-  means it will not need redoing. If this architecture task is picked up first, fold that one in.
-- `.claude/tasks/20260720-auth-error-account-enumeration.md` becomes an application of
-  `HasClientMessage`: `AuthError` declares client-safe codes, everything else defaults to generic.
-- `.claude/tasks/20260720-env-classification-allowlist.md` is still needed regardless — it also
-  gates fixtures and the insights GUI — but under option B/C it stops being load-bearing for error
-  disclosure, which is the point.
+- [ ] Correlation id generated once per failure, returned to the client, present on the matching log
+      line; reuses an existing request id if one exists
+- [ ] `KarangoQueryException` no longer builds the AQL into `message` (`KarangoDriver.kt:130-138`)
+- [ ] `AuthApi`'s nine `withInfo(e.message)` sites go through the same mechanism
+      (overlaps `.claude/tasks/20260720-auth-error-account-enumeration.md`)
+- [ ] Channel-B diagnostic fields are typed distinctly and cannot be serialised by accident
+- [ ] `ClusterShowcaseApi.getWorkers` no longer exposes failure text publicly
+- [ ] A test guard prevents reintroducing `withError(cause.message)` at a render boundary
+- [ ] Migration guide for downstream apps declaring their own client-safe exceptions
 
 ## Implementation notes
 
-- Inventory first: the audit lists ~20 `stackTraceToString()` sites (log-only) and the exception
-  types that currently reach responses. Re-derive that list as step one, since the fix is only as
-  good as its coverage.
-- The single render boundary today is `funktor/rest/src/jvmMain/kotlin/ApiStatusPages.kt` — the
-  audit confirmed there is no second status page. That makes this tractable: one choke point.
-  `funktor/rest/src/jvmMain/kotlin/respond.kt:57-66` (failed auth rule descriptions) is a second,
-  smaller one.
-- Watch `EntityRepository.kt:332-333`, which puts `e.query` into a returned `RemoveResult` — a
-  *success*-path disclosure that no environment gate would ever catch. Structured-fields discipline
-  should cover it, but verify.
-- Consider whether `clientMessage` should be a translation key rather than a literal string, if
-  client-facing errors are ever localised.
+- **Single choke point for channel A** makes this tractable: `ApiStatusPages.withCause` is the only
+  exception→response plugin in the repo (verified — no `install(StatusPages)`, no other
+  `on(CallFailed)`). `respond.kt:48-69` is a second, smaller one.
+- **Staged rollout:** ship the default-deny first with a log-only warning whenever an exception
+  without `HasClientMessage` reaches the boundary. That produces the real inventory of what
+  downstream apps rely on before anything breaks for them.
+- `karango/core/src/main/kotlin/vault/EntityRepository.kt:332-333` puts `e.query` into a returned
+  `RemoveResult` — a **success-path** disclosure no environment gate would ever catch. Verify
+  whether `RemoveResult.query` is serialised by any endpoint.
+- SSE (`funktor/rest/src/jvmMain/kotlin/routing.kt:164-181`) has no local exception handling; a
+  throw propagates to `CallFailed`, which is wrapped in `try { … } catch (_: Throwable) {}`. Almost
+  certainly swallowed once streaming has begun, but **unproven** — worth a defensive try/catch and a
+  test rather than an assumption.
+
+### Sequencing
+
+1. `.claude/tasks/20260720-env-classification-allowlist.md` — two lines, closes several fail-opens,
+   independent of this design.
+2. Channel A default-deny + correlation id (the tactical slice is
+   `.claude/tasks/20260720-error-messages-generic-in-production.md` — fold it in if this lands first).
+3. `KarangoQueryException` restructuring.
+4. Channel B typing discipline + the public `getWorkers` fix.
 
 ## Test evidence
 
-- [ ] Test that an arbitrary/unknown exception renders as the generic string in **every**
-      environment, including dev
-- [ ] Test that a `HasClientMessage` exception renders its `clientMessage` and nothing else
-- [ ] Test that no rendered body ever contains `Throwable.message` of a non-client-safe exception
-- [ ] Property/fuzz-style test over the repo's exception types asserting the render boundary output
-      contains none of: AQL keywords, file path separators, `java.`/`io.peekandpoke.` FQCNs
+- [ ] An arbitrary/unknown exception renders as the generic string in **every** environment
+- [ ] A `HasClientMessage` exception renders its `clientMessage` and nothing else
+- [ ] A `KarangoQueryException` never reaches a response body containing AQL, in any environment
+- [ ] Guard test: rendered bodies contain none of — AQL keywords, path separators, `java.` /
+      `io.peekandpoke.` FQCNs
+- [ ] Channel B: a non-superuser cannot retrieve worker/job/log diagnostics; the public showcase
+      endpoint exposes no failure text
 - [ ] End-to-end via `AppSpec`/`AppUnderTest`: force failures on real routes, assert bodies
-- [ ] Full test command(s) run + green: `./gradlew :funktor:rest:jvmTest :funktor:core:jvmTest
+- [ ] Full: `./gradlew :funktor:rest:jvmTest :funktor:core:jvmTest :funktor:cluster:jvmTest
       :karango:core:test`
 
 ## Review record (filled by /feature-review)
