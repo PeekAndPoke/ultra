@@ -1,0 +1,134 @@
+package io.peekandpoke.funktor.demo.server.b2b
+
+import io.peekandpoke.funktor.auth.AuthRealm
+import io.peekandpoke.funktor.auth.AuthSystem
+import io.peekandpoke.funktor.auth.OrgPolicy
+import io.peekandpoke.funktor.auth.model.AuthOrgRef
+import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
+import io.peekandpoke.funktor.auth.model.AuthSignInResponse
+import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
+import io.peekandpoke.funktor.demo.common.B2bUserModel
+import io.peekandpoke.funktor.demo.server.b2b.B2bUsersRepo.Companion.asApiModel
+import io.peekandpoke.funktor.saas.storage.OrgsStorage
+import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.datetime.jvm
+import io.peekandpoke.ultra.security.jwt.JwtUserData
+import io.peekandpoke.ultra.security.user.OrgMembership
+import io.peekandpoke.ultra.security.user.SelectedOrg
+import io.peekandpoke.ultra.security.user.buildOrgPermissions
+import io.peekandpoke.ultra.vault.Stored
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlin.time.Duration.Companion.hours
+
+/**
+ * Realm for b2b (customer-admin) tenant users. Every user belongs to one or more organisations, so
+ * [orgPolicy] is [OrgPolicy.Required] — the login flow resolves the user's accessible orgs and
+ * drives the 0 (no access) / 1 (auto-select) / n (selection step) behaviour generically in
+ * [AuthRealm.issueSignIn]. This realm only supplies the two org hooks (over [OrgsStorage]) and
+ * encodes the selected org into the session permissions.
+ */
+class B2bRealm(
+    deps: Lazy<AuthSystem.Deps>,
+    b2bUsersRepo: Lazy<B2bUsersRepo>,
+    orgs: Lazy<OrgsStorage>,
+    emailAndPassword: Lazy<EmailAndPasswordAuth.Factory>,
+) : AuthRealm<B2bUser> {
+    companion object {
+        const val REALM = "b2b"
+    }
+
+    override val deps: AuthSystem.Deps by deps
+    private val b2bUsersRepo: B2bUsersRepo by b2bUsersRepo
+    private val orgs: OrgsStorage by orgs
+    private val emailAndPassword: EmailAndPasswordAuth.Factory by emailAndPassword
+    private val authConfig = this.deps.config.funktor.auth
+
+    override val id: String = REALM
+
+    override val orgPolicy: OrgPolicy = OrgPolicy.Required()
+
+    override val messaging: AuthRealm.Messaging<B2bUser> = AuthRealm.DefaultMessaging(
+        senderEmail = "treore@jointhebase.co",
+        senderName = "Funktor B2B",
+        applicationName = "Funktor B2B",
+        realm = this,
+    )
+
+    override val providers by lazy {
+        listOf(
+            this.emailAndPassword(
+                frontendUrls = EmailAndPasswordAuth.FrontendUrls(
+                    baseUrl = authConfig.baseUrls["b2b"]!!.trimEnd('/') + "/auth",
+                ),
+                capabilities = setOf(Capability.SignIn),
+            ),
+        )
+    }
+
+    override suspend fun loadUserById(id: String) = b2bUsersRepo.findById(id)
+
+    override suspend fun loadUserByEmail(email: String) = b2bUsersRepo.findByEmail(email)
+
+    override suspend fun getAccessibleOrgs(memberships: Set<OrgMembership>): List<AuthOrgRef> {
+        return memberships.mapNotNull { membership ->
+            orgs.findById(membership.orgId)?.let { stored ->
+                val org = stored.value()
+                AuthOrgRef(id = stored._key, slug = org.slug, name = org.name)
+            }
+        }
+    }
+
+    override suspend fun resolveSelectedOrg(orgId: String, memberships: Set<OrgMembership>): SelectedOrg? {
+        val membership = memberships.firstOrNull { it.orgId == orgId } ?: return null
+        val org = orgs.findById(orgId)?.value() ?: return null
+
+        return SelectedOrg(
+            orgId = orgId,
+            membership = membership,
+            planPermissions = org.plan.featurePermissions,
+        )
+    }
+
+    override suspend fun generateJwt(user: Stored<B2bUser>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token {
+        val gen = deps.jwtGenerator
+
+        val userValue = user.resolve()
+
+        val token = gen.createJwt(
+            user = JwtUserData(
+                id = user._id,
+                desc = userValue.name,
+                type = B2bUserModel.USER_TYPE,
+                email = userValue.email,
+            ),
+            permissions = buildOrgPermissions(
+                memberships = getMemberships(user),
+                selected = selectedOrg,
+            ),
+        ) {
+            withExpiresAt(Kronos.systemUtc.instantNow().plus(1.hours).jvm)
+        }
+
+        return AuthSignInResponse.Token(
+            token = token,
+            permissionsNs = gen.permissionsNs,
+            userNs = gen.userNs,
+        )
+    }
+
+    override suspend fun getUserEmail(user: Stored<B2bUser>): String {
+        return user.resolve().email
+    }
+
+    override suspend fun serializeUser(user: Stored<B2bUser>): JsonObject {
+        return Json.encodeToJsonElement(
+            B2bUserModel.serializer(), user.asApiModel()
+        ).jsonObject
+    }
+
+    override suspend fun createUserForSignup(params: AuthRealm.CreateUserForSignupParams): Stored<B2bUser> {
+        error("B2B self-signup is not supported yet (users are invited into an organisation)")
+    }
+}
