@@ -258,6 +258,12 @@ object Deps {
             const val ses = "software.amazon.awssdk:ses:$awssdk_version"
         }
 
+        object Yaml {
+            // https://mvnrepository.com/artifact/org.yaml/snakeyaml (checked 2026-07-20: latest 2.4)
+            private const val snakeyaml_version = "2.4"
+            const val snakeyaml = "org.yaml:snakeyaml:$snakeyaml_version"
+        }
+
         object Google {
             // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
             private const val auto_service_version = "1.1.1"
