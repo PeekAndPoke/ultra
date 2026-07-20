@@ -69,6 +69,7 @@ class LoginPage<USER>(ctx: Ctx<Props<USER>>) : Component<LoginPage.Props<USER>>(
                         is DisplayState.Login -> renderLoginState(s)
                         is DisplayState.RecoverPassword -> renderRecoverPasswordState(s)
                         is DisplayState.SignUp -> renderSignUpState(s)
+                        is DisplayState.SelectOrg -> renderSelectOrgState(s)
                     }
                 }
             }

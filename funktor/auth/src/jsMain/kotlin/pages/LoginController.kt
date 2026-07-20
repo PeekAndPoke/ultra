@@ -6,6 +6,7 @@ import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
+import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.widgets.GithubSignInButton
 import io.peekandpoke.funktor.auth.widgets.GoogleSignInButton
@@ -68,10 +69,17 @@ class LoginController<USER>(
             val message: Message? = null,
         ) : DisplayState
 
+        // Credentials were valid but the user belongs to multiple orgs and must pick one.
+        data class SelectOrg(
+            val selection: AuthSignInResponse.OrgSelectionRequired,
+            val message: Message? = null,
+        ) : DisplayState
+
         fun withMessage(message: Message?) = when (this) {
             is Login -> copy(message = message)
             is RecoverPassword -> copy(message = message)
             is SignUp -> copy(message = message)
+            is SelectOrg -> copy(message = message)
         }
     }
 
@@ -118,6 +126,22 @@ class LoginController<USER>(
 
                 renderSignUpProvidersAsList()
             }
+        }
+
+        fun FlowContent.renderSelectOrgState(s: DisplayState.SelectOrg) {
+            renderMessage(s.message)
+
+            ui.header { +"Choose an organisation" }
+
+            s.selection.organisations.forEach { org ->
+                ui.fluid.givenNot(noDblClick.canRun) { loading }.button {
+                    onClick { selectOrg(org.id) }
+                    +org.name
+                }
+                ui.hidden.divider()
+            }
+
+            renderBackLink(DisplayState.Login())
         }
 
         fun FlowContent.renderRecoverPasswordState(s: DisplayState.RecoverPassword) {
@@ -449,6 +473,18 @@ class LoginController<USER>(
         }
     }
 
+    fun selectOrg(orgId: String) {
+        launch {
+            doSelectOrg(orgId)
+        }
+    }
+
+    private fun redirectAfterLogin() {
+        val uri = host.router.strategy.render(state.frontend.config.redirectAfterLogin)
+        console.info("Login success. Redirecting to $uri")
+        state.redirectAfterLogin(uri)
+    }
+
     suspend fun initPasswordReset(
         request: AuthRecoverAccountRequest.InitPasswordReset,
     ): AuthRecoverAccountResponse.InitPasswordReset? {
@@ -468,12 +504,27 @@ class LoginController<USER>(
 
         val result = state.login(request)
 
+        when {
+            result.isLoggedIn -> redirectAfterLogin()
+
+            // Valid credentials, multiple orgs — show the picker.
+            state.pendingOrgSelection != null -> {
+                displayState = DisplayState.SelectOrg(state.pendingOrgSelection!!)
+            }
+
+            else -> displayState = displayState.withMessage(Message.error("Login failed"))
+        }
+    }
+
+    private suspend fun doSelectOrg(orgId: String) = noDblClick.runBlocking {
+        displayState = displayState.withMessage(message = null)
+
+        val result = state.selectOrg(orgId)
+
         if (result.isLoggedIn) {
-            val uri = host.router.strategy.render(state.frontend.config.redirectAfterLogin)
-            console.info("Login success. Redirecting to $uri")
-            state.redirectAfterLogin(uri)
+            redirectAfterLogin()
         } else {
-            displayState = displayState.withMessage(Message.error("Login failed"))
+            displayState = displayState.withMessage(Message.error("Could not select organisation"))
         }
     }
 
