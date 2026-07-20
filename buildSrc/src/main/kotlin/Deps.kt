@@ -28,7 +28,6 @@ object Deps {
         // https://mvnrepository.com/artifact/dev.zacsweers.kctfork/core (checked 2026-07-21: latest 0.13.0)
         private const val compiletesting_version = "0.13.0"
         const val compiletesting_ksp = "dev.zacsweers.kctfork:ksp:$compiletesting_version"
-        const val compiletesting_core = "dev.zacsweers.kctfork:core:$compiletesting_version"
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////

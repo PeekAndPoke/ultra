@@ -1,15 +1,14 @@
-@file:OptIn(ExperimentalCompilerApi::class)
-
 package io.peekandpoke.ultra.tooling.i18n
 
-import com.tschuchort.compiletesting.KotlinCompilation
-import com.tschuchort.compiletesting.SourceFile
 import io.kotest.assertions.throwables.shouldThrow
-import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 
+/**
+ * Emitter identifier-safety checks. That the emitted Kotlin actually COMPILES (and is callable) is
+ * proven for real in the `:tooling:i18n-fixture` module, which runs the plugin and compiles the
+ * generated accessors on both jvm and js — including keyword/hyphen keys.
+ */
 class GeneratedCodeSpec : StringSpec({
 
     val config = I18nGenConfig(packageName = "io.peekandpoke.demo.i18n", moduleName = "Demo")
@@ -38,31 +37,5 @@ class GeneratedCodeSpec : StringSpec({
         shouldThrow<IllegalArgumentException> {
             KotlinEmitter.emit(config, en, listOf(en))
         }
-    }
-
-    "generated accessors + catalog compile against ultra:i18n" {
-        val en = YamlCatalogParser.parse(
-            "en",
-            """
-                forms:
-                  invalidValue: "Invalid"
-                  is: "reserved word key"
-                  my-key: "hyphen {{first-name}}"
-                  minLength_one: "at least {{count}}"
-                  minLength_other: "at least {{count}} chars in {{folder}}"
-                  address:
-                    street: "street {{n}}"
-            """.trimIndent(),
-        )
-        val de = YamlCatalogParser.parse("de", """forms:${'\n'}  invalidValue: "Ungültig"""")
-
-        val files = KotlinEmitter.emit(config, en, listOf(en, de))
-        val result = KotlinCompilation().apply {
-            sources = files.map { SourceFile.kotlin(it.fileName, it.content) }
-            inheritClassPath = true
-            messageOutputStream = System.out
-        }.compile()
-
-        result.exitCode shouldBe KotlinCompilation.ExitCode.OK
     }
 })

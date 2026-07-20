@@ -11,6 +11,17 @@ data class CheckFinding(
     val message: String,
 )
 
+/** Aggregate verdict over a set of findings at a given strictness (the build fail/pass decision). */
+data class CheckOutcome(val errors: Int, val warnings: Int, val infos: Int, val failed: Boolean)
+
+/** The build-failure decision: any ERROR fails; WARNINGs fail only in [strict] mode. */
+fun checkOutcome(findings: List<CheckFinding>, strict: Boolean): CheckOutcome {
+    val errors = findings.count { it.severity == CheckSeverity.ERROR }
+    val warnings = findings.count { it.severity == CheckSeverity.WARNING }
+    val infos = findings.count { it.severity == CheckSeverity.INFO }
+    return CheckOutcome(errors, warnings, infos, failed = errors > 0 || (strict && warnings > 0))
+}
+
 /**
  * Checks non-fallback catalogs against the fallback (the sole API-surface source, D8).
  *

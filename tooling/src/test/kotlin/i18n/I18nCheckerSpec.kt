@@ -129,4 +129,14 @@ class I18nCheckerSpec : StringSpec({
         result.any { it.severity == CheckSeverity.WARNING && it.key == "forms.b" } shouldBe true
         result.none { it.severity == CheckSeverity.ERROR && it.key == "forms.b" } shouldBe true
     }
+
+    "checkOutcome fails on any error, and on warnings only in strict mode" {
+        val error = listOf(CheckFinding(CheckSeverity.ERROR, "de", "k", "x"))
+        val warning = listOf(CheckFinding(CheckSeverity.WARNING, "de", "k", "x"))
+
+        checkOutcome(error, strict = false).failed shouldBe true
+        checkOutcome(warning, strict = false).failed shouldBe false
+        checkOutcome(warning, strict = true).failed shouldBe true
+        checkOutcome(emptyList(), strict = true).failed shouldBe false
+    }
 })

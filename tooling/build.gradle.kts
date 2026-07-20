@@ -18,9 +18,6 @@ dependencies {
     implementation(Deps.JavaLibs.Yaml.snakeyaml)
 
     jvmTestDeps()
-    // Compile emitted i18n Kotlin against the real runtime in tests (proves the output compiles).
-    testImplementation(project(":ultra:i18n"))
-    testImplementation(Deps.Ksp.compiletesting_core)
 }
 
 kotlin {
