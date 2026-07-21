@@ -3,7 +3,11 @@ package io.peekandpoke.kraft.forms
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.forms.validation.Rule
+import io.peekandpoke.kraft.i18n.generated.forms
+import io.peekandpoke.kraft.i18n.generated.invalidValue
+import io.peekandpoke.kraft.i18n.i18nCtrl
 import io.peekandpoke.kraft.messages.sendMessage
+import io.peekandpoke.ultra.i18n.I18nTranslate
 
 /**
  * Alternative form field base class that converts string input via [Props.fromStr].
@@ -31,6 +35,11 @@ abstract class FormFieldComponent<T, P : FormFieldComponent.Props<T>>(
     override var errors by value<List<String>>(emptyList())
 
     private var inputValue: T? = null
+
+    /** Current translations; re-validates on language switch so error messages update. */
+    private val translate: I18nTranslate by subscribingTo(i18nCtrl.translateStream) {
+        if (touched) validate()
+    }
 
     /** The effective value: user input if set, otherwise the initial value from props. */
     val currentValue
@@ -79,8 +88,7 @@ abstract class FormFieldComponent<T, P : FormFieldComponent.Props<T>>(
         } catch (t: Throwable) {
             console.error(t)
 
-            // TODO: how to translate this?
-            errors = listOf("Invalid value")
+            errors = listOf(translate.forms.invalidValue())
         }
 
         sendMessage(FormFieldInputChanged(this))
@@ -109,7 +117,7 @@ abstract class FormFieldComponent<T, P : FormFieldComponent.Props<T>>(
         if (touched) {
             errors = props.rules
                 .filter { !it.check(currentValue) }
-                .map { it.getMessage(currentValue) }
+                .map { it.getMessage(currentValue, translate) }
         }
 
         return errors.isEmpty()

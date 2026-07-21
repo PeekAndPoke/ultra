@@ -28,8 +28,6 @@ private val catalog = MapI18nCatalog(
     "de" to mapOf("greeting" to "Hallo"),
 )
 
-private fun base() = I18n(Locale("en"), fallback = Locale("en")) { install(catalog) }
-
 // Stands in for a generated accessor (the real ones are emitted per module by the S2/S3 codegen).
 private fun I18nTranslate.greeting(): String = i18n.resolve("greeting")
 
@@ -65,7 +63,7 @@ private suspend fun KQuery<Element>.awaitText(css: String, expected: String) {
 class I18nGlueSpec : StringSpec({
 
     "a component using `by Translations` re-renders in the new language after setLang" {
-        val ctrl = I18nController.inMemory(base(), initialLang = "en")
+        val ctrl = I18nController.inMemory(Locale("en"), Locale("en"), "en") { install(catalog) }
 
         TestBed.preact(appSetup = { i18n(ctrl) }, view = { LangLabel() }) { root ->
             root.awaitText(".label", "Hello")
@@ -75,7 +73,7 @@ class I18nGlueSpec : StringSpec({
     }
 
     "a component using `by Formatting` re-renders with the new locale after setLang" {
-        val ctrl = I18nController.inMemory(base(), initialLang = "en")
+        val ctrl = I18nController.inMemory(Locale("en"), Locale("en"), "en") { install(catalog) }
 
         TestBed.preact(appSetup = { i18n(ctrl) }, view = { LocaleTag() }) { root ->
             root.awaitText(".loc", "en")
@@ -95,7 +93,7 @@ class I18nGlueSpec : StringSpec({
         val key = "test.i18n.boot.stored"
         window.localStorage.setItem(key, "\"de\"") // JSON-encoded string
 
-        val ctrl = I18nController.create(base(), initialLang = "en", storageKey = key)
+        val ctrl = I18nController.create(Locale("en"), Locale("en"), "en", key) { install(catalog) }
 
         ctrl.locale shouldBe Locale("de")
         window.localStorage.removeItem(key)
@@ -105,7 +103,7 @@ class I18nGlueSpec : StringSpec({
         val key = "test.i18n.boot.empty"
         window.localStorage.removeItem(key)
 
-        val ctrl = I18nController.create(base(), initialLang = "de", storageKey = key)
+        val ctrl = I18nController.create(Locale("en"), Locale("en"), "de", key) { install(catalog) }
 
         ctrl.locale shouldBe Locale("de")
         window.localStorage.removeItem(key)

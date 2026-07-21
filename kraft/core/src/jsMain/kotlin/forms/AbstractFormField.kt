@@ -2,8 +2,10 @@ package io.peekandpoke.kraft.forms
 
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.i18n.i18nCtrl
 import io.peekandpoke.kraft.messages.sendMessage
 import io.peekandpoke.ultra.html.onClick
+import io.peekandpoke.ultra.i18n.I18nTranslate
 import kotlinx.html.FlowContent
 import kotlinx.html.label
 import org.w3c.dom.HTMLElement
@@ -49,6 +51,11 @@ abstract class AbstractFormField<T, O : FieldOptions<T>, P : AbstractFormField.P
      * The input value set by the user.
      */
     private var _value: T by value(props.value)
+
+    /** Current translations; re-validates on language switch so error messages update. */
+    protected val translate: I18nTranslate by subscribingTo(i18nCtrl.translateStream) {
+        if (touched) validate()
+    }
 
     /**
      * The effective value
@@ -102,7 +109,7 @@ abstract class AbstractFormField<T, O : FieldOptions<T>, P : AbstractFormField.P
         if (touched) {
             errors = props.options.rules
                 .filter { !it.check(currentValue) }
-                .map { it.getMessage(currentValue) }
+                .map { it.getMessage(currentValue, translate) }
         }
 
         return errors.isEmpty()

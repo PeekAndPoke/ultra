@@ -7,6 +7,8 @@ import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.forms.AbstractFormField
 import io.peekandpoke.kraft.forms.FieldOptions
 import io.peekandpoke.kraft.forms.KraftFormsDsl
+import io.peekandpoke.kraft.i18n.generated.forms
+import io.peekandpoke.kraft.i18n.generated.invalidValue
 import io.peekandpoke.kraft.semanticui.forms.UiInputFieldComponent.Options
 import io.peekandpoke.kraft.utils.dateToYmd
 import io.peekandpoke.kraft.utils.localDateTimeToYmdHms
@@ -193,8 +195,7 @@ class UiInputFieldComponent<T, P : UiInputFieldComponent.Props<T>>(ctx: Ctx<P>) 
             setValue(newValue)
         } catch (t: Throwable) {
             console.warn(t)
-            // TODO: how to translate this?
-            errors = listOf("Invalid value")
+            errors = listOf(translate.forms.invalidValue())
         }
     }
 

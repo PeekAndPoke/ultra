@@ -1,0 +1,43 @@
+# Deutsche Übersetzung der eingebauten kraft-Formularvalidierungs-Meldungen (volle Parität mit en).
+forms:
+  # --- string rules ---
+  empty: "Muss leer sein"
+  notEmpty: "Darf nicht leer sein"
+  blank: "Muss leer sein"
+  notBlank: "Darf nicht leer sein"
+  minLength_one: "Muss mindestens {{count}} Zeichen lang sein"
+  minLength_other: "Muss mindestens {{count}} Zeichen lang sein"
+  maxLength_one: "Darf höchstens {{count}} Zeichen lang sein"
+  maxLength_other: "Darf höchstens {{count}} Zeichen lang sein"
+  exactLength_one: "Muss genau {{count}} Zeichen lang sein"
+  exactLength_other: "Muss genau {{count}} Zeichen lang sein"
+  validEmail: "Muss eine gültige E-Mail-Adresse sein"
+  validUrl: "Muss eine gültige URL sein"
+  validSlug: "Muss aus Kleinbuchstaben, Ziffern und Bindestrichen bestehen (kein Bindestrich am Anfang oder Ende)"
+
+  # --- generic rules ---
+  nonNull: "Darf nicht leer sein"
+  equalTo: "Die Werte müssen übereinstimmen"
+  notEqualTo: "Die Werte dürfen nicht übereinstimmen"
+  anyOf: "Muss eine gültige Eingabe sein"
+  noneOf: "Muss eine gültige Eingabe sein"
+  invalidInput: "Ungültige Eingabe"
+  invalidValue: "Ungültiger Wert"
+  joinOr: " oder "
+  joinAnd: " und "
+
+  # --- number / comparable rules ---
+  inRange: "Muss im Bereich {{from}} .. {{to}} liegen"
+  greaterThan: "Muss größer als {{limit}} sein"
+  greaterThanOrEqual: "Muss größer oder gleich {{limit}} sein"
+  lessThan: "Muss kleiner als {{limit}} sein"
+  lessThanOrEqual: "Muss kleiner oder gleich {{limit}} sein"
+
+  # --- collection rules ---
+  collectionNotEmpty: "Darf nicht leer sein"
+  minCount_one: "Muss mindestens {{count}} Eintrag haben"
+  minCount_other: "Muss mindestens {{count}} Einträge haben"
+  maxCount_one: "Darf höchstens {{count}} Eintrag haben"
+  maxCount_other: "Darf höchstens {{count}} Einträge haben"
+  exactCount_one: "Muss genau {{count}} Eintrag haben"
+  exactCount_other: "Muss genau {{count}} Einträge haben"

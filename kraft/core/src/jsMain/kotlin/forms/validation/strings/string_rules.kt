@@ -1,95 +1,146 @@
 package io.peekandpoke.kraft.forms.validation.strings
 
 import io.peekandpoke.kraft.forms.KraftFormsRuleDsl
+import io.peekandpoke.kraft.forms.validation.GenericRule
 import io.peekandpoke.kraft.forms.validation.Rule
+import io.peekandpoke.kraft.i18n.generated.blank
+import io.peekandpoke.kraft.i18n.generated.empty
+import io.peekandpoke.kraft.i18n.generated.exactLength
+import io.peekandpoke.kraft.i18n.generated.forms
+import io.peekandpoke.kraft.i18n.generated.maxLength
+import io.peekandpoke.kraft.i18n.generated.minLength
+import io.peekandpoke.kraft.i18n.generated.notBlank
+import io.peekandpoke.kraft.i18n.generated.notEmpty
+
+/** Validates that the string is empty (custom message). */
+@KraftFormsRuleDsl
+fun <T : CharSequence?> empty(message: (T) -> String): Rule<T> =
+    GenericRule(checkFn = { (it ?: "").isEmpty() }, messageFn = message)
 
 /** Validates that the string is empty. */
 @KraftFormsRuleDsl
-fun <T : CharSequence?> empty(message: (T) -> String): Rule<T> =
-    _root_ide_package_.io.peekandpoke.kraft.forms.validation.GenericRule(
-        messageFn = message,
-        checkFn = { (it ?: "").isEmpty() }
+fun <T : CharSequence?> empty(): Rule<T> =
+    GenericRule(
+        checkFn = { (it ?: "").isEmpty() },
+        messageFn = { "Must be empty" },
+        i18nFn = { _, t -> t.forms.empty() },
     )
 
 /** @see empty */
 @KraftFormsRuleDsl
-fun <T : CharSequence?> empty(message: String = "Must be empty"): Rule<T> =
+fun <T : CharSequence?> empty(message: String): Rule<T> =
     empty { message }
+
+/** Validates that the string is not empty (custom message). */
+@KraftFormsRuleDsl
+fun <T : CharSequence?> notEmpty(message: (T) -> String): Rule<T> =
+    GenericRule(checkFn = { (it ?: "").isNotEmpty() }, messageFn = message)
 
 /** Validates that the string is not empty. */
 @KraftFormsRuleDsl
-fun <T : CharSequence?> notEmpty(message: (T) -> String): Rule<T> =
-    _root_ide_package_.io.peekandpoke.kraft.forms.validation.GenericRule(
-        messageFn = message,
-        checkFn = { (it ?: "").isNotEmpty() }
+fun <T : CharSequence?> notEmpty(): Rule<T> =
+    GenericRule(
+        checkFn = { (it ?: "").isNotEmpty() },
+        messageFn = { "Must not be empty" },
+        i18nFn = { _, t -> t.forms.notEmpty() },
     )
 
 /** @see notEmpty */
 @KraftFormsRuleDsl
-fun <T : CharSequence?> notEmpty(message: String = "Must not be empty"): Rule<T> =
+fun <T : CharSequence?> notEmpty(message: String): Rule<T> =
     notEmpty { message }
+
+/** Validates that the string is blank (empty or whitespace only) (custom message). */
+@KraftFormsRuleDsl
+fun <T : CharSequence?> blank(message: (T) -> String): Rule<T> =
+    GenericRule(checkFn = { (it ?: "").isBlank() }, messageFn = message)
 
 /** Validates that the string is blank (empty or whitespace only). */
 @KraftFormsRuleDsl
-fun <T : CharSequence?> blank(message: (T) -> String): Rule<T> =
-    _root_ide_package_.io.peekandpoke.kraft.forms.validation.GenericRule(
-        messageFn = message,
-        checkFn = { (it ?: "").isBlank() }
+fun <T : CharSequence?> blank(): Rule<T> =
+    GenericRule(
+        checkFn = { (it ?: "").isBlank() },
+        messageFn = { "Must be blank" },
+        i18nFn = { _, t -> t.forms.blank() },
     )
 
 /** @see blank */
 @KraftFormsRuleDsl
-fun <T : CharSequence?> blank(message: String = "Must be blank"): Rule<T> =
+fun <T : CharSequence?> blank(message: String): Rule<T> =
     blank { message }
+
+/** Validates that the string is not blank (custom message). */
+@KraftFormsRuleDsl
+fun <T : CharSequence?> notBlank(message: (T) -> String): Rule<T> =
+    GenericRule(checkFn = { (it ?: "").isNotBlank() }, messageFn = message)
 
 /** Validates that the string is not blank. */
 @KraftFormsRuleDsl
-fun <T : CharSequence?> notBlank(message: (T) -> String): Rule<T> =
-    _root_ide_package_.io.peekandpoke.kraft.forms.validation.GenericRule(
-        messageFn = message,
-        checkFn = { (it ?: "").isNotBlank() }
+fun <T : CharSequence?> notBlank(): Rule<T> =
+    GenericRule(
+        checkFn = { (it ?: "").isNotBlank() },
+        messageFn = { "Must not be blank" },
+        i18nFn = { _, t -> t.forms.notBlank() },
     )
 
 /** @see notBlank */
 @KraftFormsRuleDsl
-fun <T : CharSequence?> notBlank(message: String = "Must not be blank"): Rule<T> =
+fun <T : CharSequence?> notBlank(message: String): Rule<T> =
     notBlank { message }
+
+/** Validates that the string has at least [length] characters (custom message). */
+@KraftFormsRuleDsl
+fun <T : CharSequence?> minLength(length: Int, message: (T) -> String): Rule<T> =
+    GenericRule(checkFn = { (it ?: "").length >= length }, messageFn = message)
 
 /** Validates that the string has at least [length] characters. */
 @KraftFormsRuleDsl
-fun <T : CharSequence?> minLength(length: Int, message: (T) -> String): Rule<T> =
-    _root_ide_package_.io.peekandpoke.kraft.forms.validation.GenericRule(
-        messageFn = message,
-        checkFn = { (it ?: "").length >= length }
+fun <T : CharSequence?> minLength(length: Int): Rule<T> =
+    GenericRule(
+        checkFn = { (it ?: "").length >= length },
+        messageFn = { "Must be at least $length characters" },
+        i18nFn = { _, t -> t.forms.minLength(count = length) },
     )
 
 /** @see minLength */
 @KraftFormsRuleDsl
-fun <T : CharSequence?> minLength(length: Int, message: String = "Must be at least $length characters"): Rule<T> =
+fun <T : CharSequence?> minLength(length: Int, message: String): Rule<T> =
     minLength(length) { message }
+
+/** Validates that the string has at most [length] characters (custom message). */
+@KraftFormsRuleDsl
+fun <T : CharSequence?> maxLength(length: Int, message: (T) -> String): Rule<T> =
+    GenericRule(checkFn = { (it ?: "").length <= length }, messageFn = message)
 
 /** Validates that the string has at most [length] characters. */
 @KraftFormsRuleDsl
-fun <T : CharSequence?> maxLength(length: Int, message: (T) -> String): Rule<T> =
-    _root_ide_package_.io.peekandpoke.kraft.forms.validation.GenericRule(
-        messageFn = message,
-        checkFn = { (it ?: "").length <= length }
+fun <T : CharSequence?> maxLength(length: Int): Rule<T> =
+    GenericRule(
+        checkFn = { (it ?: "").length <= length },
+        messageFn = { "Must be at most $length characters" },
+        i18nFn = { _, t -> t.forms.maxLength(count = length) },
     )
 
 /** @see maxLength */
 @KraftFormsRuleDsl
-fun <T : CharSequence?> maxLength(length: Int, message: String = "Must be at most $length characters"): Rule<T> =
+fun <T : CharSequence?> maxLength(length: Int, message: String): Rule<T> =
     maxLength(length) { message }
+
+/** Validates that the string has exactly [length] characters (custom message). */
+@KraftFormsRuleDsl
+fun <T : CharSequence?> exactLength(length: Int, message: (T) -> String): Rule<T> =
+    GenericRule(checkFn = { (it ?: "").length == length }, messageFn = message)
 
 /** Validates that the string has exactly [length] characters. */
 @KraftFormsRuleDsl
-fun <T : CharSequence?> exactLength(length: Int, message: (T) -> String): Rule<T> =
-    _root_ide_package_.io.peekandpoke.kraft.forms.validation.GenericRule(
-        messageFn = message,
-        checkFn = { (it ?: "").length == length }
+fun <T : CharSequence?> exactLength(length: Int): Rule<T> =
+    GenericRule(
+        checkFn = { (it ?: "").length == length },
+        messageFn = { "Must be $length characters" },
+        i18nFn = { _, t -> t.forms.exactLength(count = length) },
     )
 
 /** @see exactLength */
 @KraftFormsRuleDsl
-fun <T : CharSequence?> exactLength(length: Int, message: String = "Must be $length characters"): Rule<T> =
+fun <T : CharSequence?> exactLength(length: Int, message: String): Rule<T> =
     exactLength(length) { message }

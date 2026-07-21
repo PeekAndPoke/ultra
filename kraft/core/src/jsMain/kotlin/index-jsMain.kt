@@ -83,8 +83,8 @@ class KraftApp internal constructor(
             responsive(ResponsiveController())
             // We always have the default window controller
             windowCtrl(WindowController())
-            // Default (empty, English) i18n so `by Translations` degrades to keys instead of crashing
-            // when an app registers no catalogs; override with i18n(...)
+            // Default English i18n with kraft's built-in form catalog, so form errors translate and
+            // `by Translations` never crashes; override with i18n(...)
             i18n(I18nController.default())
         }
 
@@ -99,7 +99,7 @@ class KraftApp internal constructor(
         /** Sets the window controller for the app. */
         fun windowCtrl(ctrl: WindowController) = setAttribute(WindowController.key, ctrl)
 
-        /** Sets the i18n controller for the app. Default: an empty English controller (keys render as-is). */
+        /** Sets the i18n controller for the app. Default: English with kraft's built-in form catalog. */
         fun i18n(controller: I18nController) = setAttribute(I18nController.key, controller)
 
         /**

@@ -28,28 +28,35 @@ class I18nController private constructor(
         val key = TypedKey<I18nController>("kraft.i18n")
 
         /**
-         * A localStorage-persisted controller. Boot language precedence: the previously stored value
+         * A localStorage-persisted controller. kraft's built-in form catalog is ALWAYS installed
+         * (lowest precedence), so form errors translate even if the app forgets; the app's [catalogs]
+         * install afterwards and win on shared keys (D3). Boot language precedence: the stored value
          * (via [persistInLocalStorage]) wins, otherwise [initialLang] (defaults to [browserLang]).
          */
         fun create(
-            base: I18n,
-            initialLang: String = browserLang(base.fallback.tag),
+            locale: Locale,
+            fallback: Locale,
+            initialLang: String = browserLang(fallback.tag),
             storageKey: String = "kraft.i18n.lang",
+            catalogs: I18n.Builder.() -> Unit = {},
         ): I18nController = I18nController(
-            base = base,
+            base = I18n(locale, fallback) { installKraftForms(); catalogs() },
             chosenTag = StreamSource(initialLang).persistInLocalStorage(storageKey, String.serializer()),
         )
 
-        /** A non-persisted controller (tests, SSR). */
-        fun inMemory(base: I18n, initialLang: String = base.locale.tag): I18nController =
-            I18nController(base, StreamSource(initialLang))
+        /** A non-persisted controller (tests, SSR); kraft's form catalog is always installed. */
+        fun inMemory(
+            locale: Locale,
+            fallback: Locale = locale,
+            initialLang: String = locale.tag,
+            catalogs: I18n.Builder.() -> Unit = {},
+        ): I18nController = I18nController(
+            base = I18n(locale, fallback) { installKraftForms(); catalogs() },
+            chosenTag = StreamSource(initialLang),
+        )
 
-        /**
-         * The framework default: an empty English controller so `by Translations` degrades to
-         * rendering the key (visible marker) instead of crashing when an app registers no catalogs.
-         * Registered by the kraft app builder; override with `kraftApp { i18n(...) }`.
-         */
-        fun default(): I18nController = inMemory(I18n(Locale("en"), fallback = Locale("en")))
+        /** The framework default: English with only kraft's form catalog. Overridden by `kraftApp { i18n(...) }`. */
+        fun default(): I18nController = inMemory(Locale("en"), Locale("en"))
 
         /** The browser's preferred language tag, or [fallback] when unavailable. */
         fun browserLang(fallback: String): String =
