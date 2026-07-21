@@ -1,5 +1,6 @@
 package io.peekandpoke.kraft
 
+import io.peekandpoke.kraft.i18n.I18nController
 import io.peekandpoke.kraft.modals.modals
 import io.peekandpoke.kraft.popups.popups
 import io.peekandpoke.kraft.routing.RootRouterBuilder
@@ -82,6 +83,9 @@ class KraftApp internal constructor(
             responsive(ResponsiveController())
             // We always have the default window controller
             windowCtrl(WindowController())
+            // Default (empty, English) i18n so `by Translations` degrades to keys instead of crashing
+            // when an app registers no catalogs; override with i18n(...)
+            i18n(I18nController.default())
         }
 
         /** Sets an attribute for the app. */
@@ -94,6 +98,9 @@ class KraftApp internal constructor(
 
         /** Sets the window controller for the app. */
         fun windowCtrl(ctrl: WindowController) = setAttribute(WindowController.key, ctrl)
+
+        /** Sets the i18n controller for the app. Default: an empty English controller (keys render as-is). */
+        fun i18n(controller: I18nController) = setAttribute(I18nController.key, controller)
 
         /**
          * Configures timezone support. Default: the native browser provider (Intl, zero data).

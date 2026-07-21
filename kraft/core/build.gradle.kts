@@ -56,6 +56,7 @@ kotlin {
                 api(project(":ultra:common"))
                 api(project(":ultra:datetime"))
                 api(project(":ultra:html"))
+                api(project(":ultra:i18n"))
                 api(project(":ultra:model"))
                 api(project(":ultra:streams"))
             }
