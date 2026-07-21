@@ -18,11 +18,7 @@ data class GenericRule<T>(
         return checkFn(value)
     }
 
-    override fun getMessage(value: T): String {
-        return messageFn(value)
-    }
-
-    override fun getMessage(value: T, translate: I18nTranslate): String {
-        return i18nFn?.invoke(value, translate) ?: messageFn(value)
+    override fun getMessage(value: T, translate: I18nTranslate?): String {
+        return translate?.let { i18nFn?.invoke(value, it) } ?: messageFn(value)
     }
 }

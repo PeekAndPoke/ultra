@@ -11,15 +11,9 @@ class OrRule<T>(private val rules: List<Rule<T>>) : Rule<T> {
         return rules.any { it.check(value) }
     }
 
-    override fun getMessage(value: T): String {
-        return rules.map { it.getMessage(value) }
-            .filter { it.isNotBlank() }
-            .joinToString(" or ")
-    }
-
-    override fun getMessage(value: T, translate: I18nTranslate): String {
+    override fun getMessage(value: T, translate: I18nTranslate?): String {
         return rules.map { it.getMessage(value, translate) }
             .filter { it.isNotBlank() }
-            .joinToString(translate.forms.joinOr())
+            .joinToString(translate?.forms?.joinOr() ?: " or ")
     }
 }

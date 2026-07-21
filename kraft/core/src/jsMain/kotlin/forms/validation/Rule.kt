@@ -11,16 +11,13 @@ interface Rule<T> {
     /** Returns true if [value] passes this rule. */
     fun check(value: T): Boolean
 
-    /** Returns the plain (default, non-translated) error message when [value] fails this rule. */
-    fun getMessage(value: T): String
-
     /**
-     * Returns the error message resolved against the current [translate] surface. Defaults to the
-     * plain [getMessage]; the built-in rules override it to resolve their default message from the
-     * kraft i18n catalog, so validation errors translate and re-render on language switch. A call-site
-     * custom message (string/lambda) is intentionally not translated — it falls through to [getMessage].
+     * Returns the error message when [value] fails this rule. With no [translate] the plain (default)
+     * English message is returned; with a translation surface the built-in rules resolve their default
+     * from the kraft i18n catalog, so errors translate and re-render on language switch. A call-site
+     * custom message (string/lambda) is intentionally not translated.
      */
-    fun getMessage(value: T, translate: I18nTranslate): String = getMessage(value)
+    fun getMessage(value: T, translate: I18nTranslate? = null): String
 }
 
 /** Combines two rules with logical OR: passes if either rule passes. */

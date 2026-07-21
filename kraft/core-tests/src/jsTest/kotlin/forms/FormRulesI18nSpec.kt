@@ -3,6 +3,7 @@ package io.peekandpoke.kraft.coretests.forms
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.kraft.forms.validation.equalTo
+import io.peekandpoke.kraft.forms.validation.given
 import io.peekandpoke.kraft.forms.validation.numbers.inRange
 import io.peekandpoke.kraft.forms.validation.or
 import io.peekandpoke.kraft.forms.validation.strings.minLength
@@ -11,6 +12,7 @@ import io.peekandpoke.kraft.forms.validation.strings.validEmail
 import io.peekandpoke.kraft.i18n.installKraftForms
 import io.peekandpoke.ultra.i18n.I18n
 import io.peekandpoke.ultra.i18n.Locale
+import io.peekandpoke.ultra.i18n.MapI18nCatalog
 
 class FormRulesI18nSpec : StringSpec({
 
@@ -63,5 +65,19 @@ class FormRulesI18nSpec : StringSpec({
         rule.getMessage("", i18n("en").translate) shouldBe "Must not be blank or Must be a valid email"
         rule.getMessage("", i18n("de").translate) shouldBe
                 "Darf nicht leer sein oder Muss eine gültige E-Mail-Adresse sein"
+    }
+
+    "the i18n given() overload resolves a custom translated message; the plain overload is unchanged" {
+        val custom = MapI18nCatalog("en" to mapOf("app.taken" to "Taken"), "de" to mapOf("app.taken" to "Vergeben"))
+        fun tFor(lang: String) = I18n(Locale.parse(lang), fallback = Locale("en")) {
+            installKraftForms(); install(custom)
+        }.translate
+
+        val rule = given<String>({ false }) { _, t -> t.i18n.resolve("app.taken") }
+        rule.getMessage("x", tFor("en")) shouldBe "Taken"
+        rule.getMessage("x", tFor("de")) shouldBe "Vergeben"
+
+        // plain given (1-param lambda / default) is untouched
+        given<String>({ false }).getMessage("x") shouldBe "Must be a valid input"
     }
 })
