@@ -7,6 +7,7 @@ import io.peekandpoke.kraft.i18n.generated.forms
 import io.peekandpoke.kraft.i18n.generated.invalidValue
 import io.peekandpoke.kraft.i18n.i18nCtrl
 import io.peekandpoke.kraft.messages.sendMessage
+import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.ultra.i18n.I18nTranslate
 
 /**
@@ -38,7 +39,7 @@ abstract class FormFieldComponent<T, P : FormFieldComponent.Props<T>>(
 
     /** Current translations; re-validates on language switch so error messages update. */
     private val translate: I18nTranslate by subscribingTo(i18nCtrl.translateStream) {
-        if (touched) validate()
+        if (touched) launch { validate() }
     }
 
     /** The effective value: user input if set, otherwise the initial value from props. */
@@ -100,9 +101,11 @@ abstract class FormFieldComponent<T, P : FormFieldComponent.Props<T>>(
 
         inputValue = value
 
-        if (validate()) {
-            props.onChange(currentValue)
-        }
+        // Propagate synchronously (controlled inputs must not lag a dispatch behind each keystroke);
+        // validate asynchronously since rules may suspend. Mirrors AbstractFormField.setValue.
+        props.onChange(currentValue)
+
+        launch { validate() }
     }
 
     override fun touch() {
@@ -113,14 +116,30 @@ abstract class FormFieldComponent<T, P : FormFieldComponent.Props<T>>(
         touched = false
     }
 
-    override fun validate(): Boolean {
-        if (touched) {
-            errors = props.rules
-                .filter { !it.check(currentValue) }
-                .map { it.getMessage(currentValue, translate) }
+    /** Monotonic token so out-of-order async validations (later keystroke) win over stale ones. */
+    private var validationSeq = 0
+
+    override suspend fun validate(): Boolean {
+        if (!touched) {
+            return errors.isEmpty()
         }
 
-        return errors.isEmpty()
+        val seq = ++validationSeq
+        // Snapshot the value/translation once — async rules suspend, and currentValue may change
+        // mid-flight; re-reading it would compute errors against a mix of values.
+        val value = currentValue
+        val t = translate
+
+        val newErrors = props.rules
+            .filter { !it.check(value) }
+            .map { it.getMessage(value, t) }
+
+        // Latest-wins: only publish if a newer validation hasn't started while we were suspended.
+        if (seq == validationSeq) {
+            errors = newErrors
+        }
+
+        return newErrors.isEmpty()
     }
 
     ////  RENDERING  ////////////////////////////////////////////////////////////////////////////////////////////////

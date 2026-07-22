@@ -211,7 +211,7 @@ class LoginController<USER>(
             ui.form Form {
                 onSubmit { evt ->
                     evt.preventDefault()
-                    if (formCtrl.validate()) {
+                    formCtrl.validate {
                         val req = AuthSignUpRequest.EmailAndPassword(
                             provider = s.provider.id,
                             email = s.email,

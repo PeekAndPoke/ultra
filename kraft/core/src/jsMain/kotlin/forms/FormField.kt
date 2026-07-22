@@ -41,6 +41,8 @@ interface FormField<T> {
 
     /**
      * Validates all rules and returns true if all rules are fulfilled.
+     *
+     * Suspends because rules may validate against async sources (see [io.peekandpoke.kraft.forms.validation.Rule]).
      */
-    fun validate(): Boolean
+    suspend fun validate(): Boolean
 }

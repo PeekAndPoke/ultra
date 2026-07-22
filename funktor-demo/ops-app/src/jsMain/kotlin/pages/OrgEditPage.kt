@@ -19,7 +19,6 @@ import io.peekandpoke.kraft.semanticui.forms.old.select.SelectField
 import io.peekandpoke.kraft.toasts.ToastsManager.Companion.toasts
 import io.peekandpoke.kraft.utils.dataLoader
 import io.peekandpoke.kraft.utils.doubleClickProtection
-import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick
 import io.peekandpoke.ultra.semanticui.icon
@@ -141,8 +140,8 @@ class OrgEditPage(ctx: Ctx<Props>) : Component<OrgEditPage.Props>(ctx) {
                 .givenNot(noDblClick.canRun) { loading }
                 .button {
                     onClick {
-                        if (formCtrl.validate()) {
-                            launch { saveOrg(draft) }
+                        formCtrl.validate {
+                            saveOrg(draft)
                         }
                     }
 

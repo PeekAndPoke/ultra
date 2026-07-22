@@ -1,6 +1,5 @@
 package io.peekandpoke.kraft.forms.validation
 
-import io.peekandpoke.kraft.forms.KraftFormsRuleDsl
 import io.peekandpoke.kraft.i18n.generated.anyOf
 import io.peekandpoke.kraft.i18n.generated.equalTo
 import io.peekandpoke.kraft.i18n.generated.forms
@@ -16,42 +15,32 @@ import io.peekandpoke.ultra.i18n.I18nTranslate
 fun <T> anyRuleOf(rule: Rule<T>, vararg rules: Rule<T>): Rule<T> {
     val allRules = listOf(rule) + rules
 
-    return GenericRule(
-        checkFn = { value -> allRules.any { it.check(value) } },
-        messageFn = { value ->
-            rules.filterNot { it.check(value) }
-                .map { it.getMessage(value) }
+    return object : Rule<T> {
+        override suspend fun check(value: T): Boolean =
+            allRules.any { it.check(value) }
+
+        override suspend fun getMessage(value: T, translate: I18nTranslate?): String =
+            allRules.filterNot { it.check(value) }
+                .map { it.getMessage(value, translate) }
                 .filter { it.isNotBlank() }
-                .joinToString(" or ")
-        },
-        i18nFn = { value, t ->
-            rules.filterNot { it.check(value) }
-                .map { it.getMessage(value, t) }
-                .filter { it.isNotBlank() }
-                .joinToString(t.forms.joinOr())
-        },
-    )
+                .joinToString(translate?.forms?.joinOr() ?: " or ")
+    }
 }
 
 /** Creates a rule that passes only if all given rules pass (logical AND). */
 fun <T> allRulesOf(rule: Rule<T>, vararg rules: Rule<T>): Rule<T> {
     val allRules = listOf(rule) + rules
 
-    return GenericRule(
-        checkFn = { value -> allRules.all { it.check(value) } },
-        messageFn = { value ->
-            rules.filterNot { it.check(value) }
-                .map { it.getMessage(value) }
+    return object : Rule<T> {
+        override suspend fun check(value: T): Boolean =
+            allRules.all { it.check(value) }
+
+        override suspend fun getMessage(value: T, translate: I18nTranslate?): String =
+            allRules.filterNot { it.check(value) }
+                .map { it.getMessage(value, translate) }
                 .filter { it.isNotBlank() }
-                .joinToString(" and ")
-        },
-        i18nFn = { value, t ->
-            rules.filterNot { it.check(value) }
-                .map { it.getMessage(value, t) }
-                .filter { it.isNotBlank() }
-                .joinToString(t.forms.joinAnd())
-        },
-    )
+                .joinToString(translate?.forms?.joinAnd() ?: " and ")
+    }
 }
 
 /** Validates that the value is not null. */
@@ -65,18 +54,24 @@ fun <T> nonNull(): Rule<T> = GenericRule(
 fun <T> nonNull(message: String): Rule<T> = GenericRule(messageFn = { message }, checkFn = { it != null })
 
 /** Passes if the value is null, otherwise delegates to [inner]. */
-fun <T> nullOrElse(inner: Rule<T>): Rule<T?> = GenericRule(
-    checkFn = { it == null || inner.check(it) },
-    messageFn = { if (it == null) "Invalid input" else inner.getMessage(it) },
-    i18nFn = { value, t -> if (value == null) t.forms.invalidInput() else inner.getMessage(value, t) },
-)
+fun <T> nullOrElse(inner: Rule<T>): Rule<T?> = object : Rule<T?> {
+    override suspend fun check(value: T?): Boolean =
+        value == null || inner.check(value)
+
+    override suspend fun getMessage(value: T?, translate: I18nTranslate?): String =
+        if (value == null) translate?.forms?.invalidInput() ?: "Invalid input"
+        else inner.getMessage(value, translate)
+}
 
 /** Validates that the value is not null and passes the [inner] rule. */
-fun <T> nonNullAnd(inner: Rule<T>): Rule<T?> = GenericRule(
-    checkFn = { it != null && inner.check(it) },
-    messageFn = { if (it == null) "Must not be empty" else inner.getMessage(it) },
-    i18nFn = { value, t -> if (value == null) t.forms.nonNull() else inner.getMessage(value, t) },
-)
+fun <T> nonNullAnd(inner: Rule<T>): Rule<T?> = object : Rule<T?> {
+    override suspend fun check(value: T?): Boolean =
+        value != null && inner.check(value)
+
+    override suspend fun getMessage(value: T?, translate: I18nTranslate?): String =
+        if (value == null) translate?.forms?.nonNull() ?: "Must not be empty"
+        else inner.getMessage(value, translate)
+}
 
 /** Validates that the value equals the result of [compareWith] (custom message). */
 fun <T> equalTo(compareWith: () -> T, message: (T) -> String): Rule<T> =
@@ -171,9 +166,12 @@ fun <T> noneOf(values: Collection<T>): Rule<T> =
 fun <T> noneOf(values: Collection<T>, message: String): Rule<T> =
     noneOf({ values }) { message }
 
-/** Creates a rule from a custom [check] predicate and error [message]. */
+/**
+ * Creates a rule from a custom [check] predicate and error [message]. The predicate is `suspend`, so
+ * this is the escape hatch for async rules — e.g. `given({ slug -> api.isSlugAvailable(slug) })`.
+ */
 fun <T> given(
-    check: (T) -> Boolean,
+    check: suspend (T) -> Boolean,
     message: (T) -> String = { "Must be a valid input" },
 ): Rule<T> = GenericRule(
     messageFn = message,
@@ -186,7 +184,7 @@ fun <T> given(
  * the plain [given] overload.
  */
 fun <T> given(
-    check: (T) -> Boolean,
+    check: suspend (T) -> Boolean,
     message: (value: T, translate: I18nTranslate) -> String,
 ): Rule<T> = GenericRule(
     checkFn = check,
