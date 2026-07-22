@@ -99,8 +99,10 @@ class FloorAuthRuleBuilder internal constructor() {
         val where = "ApiRoutes '$groupName' defaultAuth"
 
         check(rules.isNotEmpty()) {
-            "$where declared no rules — every ApiRoutes group must declare its floor; " +
-                    "use { public() } for a deliberately public group"
+            "$where declared no rules — every ApiRoutes group must declare its minimal auth floor. " +
+                    "Fix: defaultAuth = { isSuperUser() } for an admin group, " +
+                    "defaultAuth = { authenticated() } for any-logged-in-user, or " +
+                    "defaultAuth = { public() } for a deliberately public group."
         }
         validateChain(where, rules)
 

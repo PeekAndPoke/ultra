@@ -203,7 +203,10 @@ abstract class ApiRoutes(
         val at = "Route '${floored.method.value} ${floored.pattern.pattern}'"
 
         check(floored.authRules.isNotEmpty()) {
-            "$at has no auth rules — the group floor was not applied"
+            "$at ended up with no auth rules even though the group floor is non-empty — internal " +
+                    "invariant violation (the floor must be prepended to EVERY route). A normal " +
+                    "ApiRoutes group cannot cause this; if you see it, a framework registration path " +
+                    "bypassed withFloor — please report it."
         }
         validateChain("$at auth chain", floored.authRules)
 

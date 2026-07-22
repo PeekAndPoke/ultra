@@ -145,13 +145,16 @@ sealed class AuthRuleBuilder<PARAMS, BODY> {
             val soleBareConstant = rules.size == 1 &&
                     (rules[0] is PublicRule<*, *> || rules[0] is ForbiddenRule<*, *>)
             check(rules.none { it.containsConstant() } || soleBareConstant) {
-                "$where: constant rules (public/forbidden) must be the SOLE rule of the route chain " +
-                        "— nested in composites or combined with other rules they are silent no-ops " +
-                        "or always-allows"
+                "$where: public()/forbidden() must be the SOLE rule of the chain — combined with " +
+                        "(or nested inside) other rules they silently become a no-op or an " +
+                        "always-allow. Fix: make public()/forbidden() the only rule; to serve BOTH a " +
+                        "public and a protected audience, split them into SEPARATE ApiRoutes groups, " +
+                        "each with its own floor (an append-only floor cannot mix public() with a " +
+                        "restrictive rule)."
             }
             check(rules.none { it.containsEmptyComposite() }) {
-                "$where: contains an empty And/Or composite — an empty AND folds to allow-all, an " +
-                        "empty OR to a silent dead route"
+                "$where: contains an empty forAll{}/forAny{} — an empty AND allows everyone, an " +
+                        "empty OR denies everyone. Fix: remove the empty combinator, or add rules to it."
             }
         }
     }
@@ -183,7 +186,8 @@ class RootAuthRuleBuilder<PARAMS, BODY> internal constructor(
         val all = collected()
 
         check(all.isNotEmpty()) {
-            "$at declared no rules — declare public() explicitly for a public route"
+            "$at declared no rules. Fix: add at least one rule (e.g. isSuperUser()), or declare " +
+                    "public() explicitly for a public route."
         }
         validateChain(at, all)
 
@@ -206,12 +210,18 @@ class SubAuthRuleBuilder<PARAMS, BODY> internal constructor() : AuthRuleBuilder<
     private fun validated(where: String): List<AuthRule<PARAMS, BODY>> {
         val all = collected()
 
-        check(all.isNotEmpty()) { "$where {} declared no rules — a combinator of nothing must not silently resolve" }
+        check(all.isNotEmpty()) {
+            "$where {} declared no rules — a combinator of nothing must not silently resolve. " +
+                    "Fix: add rules to the $where {} block, or remove it."
+        }
         check(all.none { it.containsConstant() }) {
-            "$where {} must not contain constant rules (public/forbidden) — they make the combinator meaningless"
+            "$where {} must not contain the constant rules public()/forbidden() — they make the " +
+                    "combinator meaningless (an always-allow/deny). Fix: remove the constant; use it " +
+                    "as the sole rule of the route/floor instead."
         }
         check(all.none { it.containsEmptyComposite() }) {
-            "$where {} contains an empty And/Or composite — an empty AND folds to allow-all, an empty OR to deny-all"
+            "$where {} contains an empty And/Or composite — an empty AND allows everyone, an empty " +
+                    "OR denies everyone. Fix: remove the empty combinator, or add rules to it."
         }
 
         return all

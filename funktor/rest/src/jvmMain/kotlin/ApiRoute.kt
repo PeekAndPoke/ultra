@@ -122,7 +122,7 @@ sealed class ApiRoute<RESPONSE> {
          */
         fun authorize(builder: RootAuthRuleBuilder<Unit, Unit>.() -> Unit): Plain<RESPONSE> {
             check(attributes[UserAuthorizeDeclaredKey] != true) {
-                "authorize {} may only be declared once per route ('${method.value} ${pattern.pattern}')"
+                "authorize {} may only be declared once per route ('${method.value} ${pattern.pattern}'). Fix: merge the rules into a single authorize { } block (statements are ANDed)."
             }
             // Append (not replace): framework paths may have pre-populated the chain (floor seed).
             return copy(authRules = authRules + RootAuthRuleBuilder<Unit, Unit>(route = this).apply(builder).build())
@@ -188,7 +188,7 @@ sealed class ApiRoute<RESPONSE> {
          */
         fun authorize(builder: RootAuthRuleBuilder<PARAMS, Unit>.() -> Unit): Sse<PARAMS> {
             check(attributes[UserAuthorizeDeclaredKey] != true) {
-                "authorize {} may only be declared once per route ('${method.value} ${pattern.pattern}')"
+                "authorize {} may only be declared once per route ('${method.value} ${pattern.pattern}'). Fix: merge the rules into a single authorize { } block (statements are ANDed)."
             }
             // Append (not replace): framework paths may have pre-populated the chain (floor seed).
             return copy(authRules = authRules + RootAuthRuleBuilder<PARAMS, Unit>(route = this).apply(builder).build())
@@ -256,7 +256,7 @@ sealed class ApiRoute<RESPONSE> {
          */
         fun authorize(builder: RootAuthRuleBuilder<PARAMS, Unit>.() -> Unit): WithParams<PARAMS, RESPONSE> {
             check(attributes[UserAuthorizeDeclaredKey] != true) {
-                "authorize {} may only be declared once per route ('${method.value} ${pattern.pattern}')"
+                "authorize {} may only be declared once per route ('${method.value} ${pattern.pattern}'). Fix: merge the rules into a single authorize { } block (statements are ANDed)."
             }
             // Append (not replace): framework paths may have pre-populated the chain (floor seed).
             return copy(authRules = authRules + RootAuthRuleBuilder<PARAMS, Unit>(route = this).apply(builder).build())
@@ -322,7 +322,7 @@ sealed class ApiRoute<RESPONSE> {
          */
         fun authorize(builder: RootAuthRuleBuilder<Unit, BODY>.() -> Unit): WithBody<BODY, RESPONSE> {
             check(attributes[UserAuthorizeDeclaredKey] != true) {
-                "authorize {} may only be declared once per route ('${method.value} ${pattern.pattern}')"
+                "authorize {} may only be declared once per route ('${method.value} ${pattern.pattern}'). Fix: merge the rules into a single authorize { } block (statements are ANDed)."
             }
             // Append (not replace): framework paths may have pre-populated the chain (floor seed).
             return copy(authRules = authRules + RootAuthRuleBuilder<Unit, BODY>(route = this).apply(builder).build())
@@ -388,7 +388,7 @@ sealed class ApiRoute<RESPONSE> {
          */
         fun authorize(builder: RootAuthRuleBuilder<PARAMS, BODY>.() -> Unit): WithBodyAndParams<PARAMS, BODY, RESPONSE> {
             check(attributes[UserAuthorizeDeclaredKey] != true) {
-                "authorize {} may only be declared once per route ('${method.value} ${pattern.pattern}')"
+                "authorize {} may only be declared once per route ('${method.value} ${pattern.pattern}'). Fix: merge the rules into a single authorize { } block (statements are ANDed)."
             }
             // Append (not replace): framework paths may have pre-populated the chain (floor seed).
             return copy(authRules = authRules + RootAuthRuleBuilder<PARAMS, BODY>(route = this).apply(builder).build())
