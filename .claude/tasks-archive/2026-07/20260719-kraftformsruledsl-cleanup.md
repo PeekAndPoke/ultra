@@ -1,6 +1,9 @@
 # Remove the useless `@KraftFormsRuleDsl` marker
 
-**Status:** TODO (collected 2026-07-19)
+**Status:** DONE (2026-07-22) — completed by `f0abc8a9 refactor(forms): remove the KraftForms* DSL
+markers` (i18n-foundation branch, merged via PR #51). Scope exceeded this task in the right way: all
+three markers (`@KraftFormsDsl` / `@KraftFormsRuleDsl` / `@KraftFormsSettingDsl`) removed —
+definitions, all applications, dangling imports. Forms tests green per the commit.
 **Plan:** — (housekeeping)
 **Security-critical:** no
 
