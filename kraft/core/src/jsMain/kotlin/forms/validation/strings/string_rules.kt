@@ -1,6 +1,5 @@
 package io.peekandpoke.kraft.forms.validation.strings
 
-import io.peekandpoke.kraft.forms.KraftFormsRuleDsl
 import io.peekandpoke.kraft.forms.validation.GenericRule
 import io.peekandpoke.kraft.forms.validation.Rule
 import io.peekandpoke.kraft.i18n.generated.blank
@@ -13,12 +12,10 @@ import io.peekandpoke.kraft.i18n.generated.notBlank
 import io.peekandpoke.kraft.i18n.generated.notEmpty
 
 /** Validates that the string is empty (custom message). */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> empty(message: (T) -> String): Rule<T> =
     GenericRule(checkFn = { (it ?: "").isEmpty() }, messageFn = message)
 
 /** Validates that the string is empty. */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> empty(): Rule<T> =
     GenericRule(
         checkFn = { (it ?: "").isEmpty() },
@@ -27,17 +24,14 @@ fun <T : CharSequence?> empty(): Rule<T> =
     )
 
 /** @see empty */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> empty(message: String): Rule<T> =
     empty { message }
 
 /** Validates that the string is not empty (custom message). */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> notEmpty(message: (T) -> String): Rule<T> =
     GenericRule(checkFn = { (it ?: "").isNotEmpty() }, messageFn = message)
 
 /** Validates that the string is not empty. */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> notEmpty(): Rule<T> =
     GenericRule(
         checkFn = { (it ?: "").isNotEmpty() },
@@ -46,17 +40,14 @@ fun <T : CharSequence?> notEmpty(): Rule<T> =
     )
 
 /** @see notEmpty */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> notEmpty(message: String): Rule<T> =
     notEmpty { message }
 
 /** Validates that the string is blank (empty or whitespace only) (custom message). */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> blank(message: (T) -> String): Rule<T> =
     GenericRule(checkFn = { (it ?: "").isBlank() }, messageFn = message)
 
 /** Validates that the string is blank (empty or whitespace only). */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> blank(): Rule<T> =
     GenericRule(
         checkFn = { (it ?: "").isBlank() },
@@ -65,17 +56,14 @@ fun <T : CharSequence?> blank(): Rule<T> =
     )
 
 /** @see blank */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> blank(message: String): Rule<T> =
     blank { message }
 
 /** Validates that the string is not blank (custom message). */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> notBlank(message: (T) -> String): Rule<T> =
     GenericRule(checkFn = { (it ?: "").isNotBlank() }, messageFn = message)
 
 /** Validates that the string is not blank. */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> notBlank(): Rule<T> =
     GenericRule(
         checkFn = { (it ?: "").isNotBlank() },
@@ -84,17 +72,14 @@ fun <T : CharSequence?> notBlank(): Rule<T> =
     )
 
 /** @see notBlank */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> notBlank(message: String): Rule<T> =
     notBlank { message }
 
 /** Validates that the string has at least [length] characters (custom message). */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> minLength(length: Int, message: (T) -> String): Rule<T> =
     GenericRule(checkFn = { (it ?: "").length >= length }, messageFn = message)
 
 /** Validates that the string has at least [length] characters. */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> minLength(length: Int): Rule<T> =
     GenericRule(
         checkFn = { (it ?: "").length >= length },
@@ -103,17 +88,14 @@ fun <T : CharSequence?> minLength(length: Int): Rule<T> =
     )
 
 /** @see minLength */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> minLength(length: Int, message: String): Rule<T> =
     minLength(length) { message }
 
 /** Validates that the string has at most [length] characters (custom message). */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> maxLength(length: Int, message: (T) -> String): Rule<T> =
     GenericRule(checkFn = { (it ?: "").length <= length }, messageFn = message)
 
 /** Validates that the string has at most [length] characters. */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> maxLength(length: Int): Rule<T> =
     GenericRule(
         checkFn = { (it ?: "").length <= length },
@@ -122,17 +104,14 @@ fun <T : CharSequence?> maxLength(length: Int): Rule<T> =
     )
 
 /** @see maxLength */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> maxLength(length: Int, message: String): Rule<T> =
     maxLength(length) { message }
 
 /** Validates that the string has exactly [length] characters (custom message). */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> exactLength(length: Int, message: (T) -> String): Rule<T> =
     GenericRule(checkFn = { (it ?: "").length == length }, messageFn = message)
 
 /** Validates that the string has exactly [length] characters. */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> exactLength(length: Int): Rule<T> =
     GenericRule(
         checkFn = { (it ?: "").length == length },
@@ -141,6 +120,5 @@ fun <T : CharSequence?> exactLength(length: Int): Rule<T> =
     )
 
 /** @see exactLength */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> exactLength(length: Int, message: String): Rule<T> =
     exactLength(length) { message }

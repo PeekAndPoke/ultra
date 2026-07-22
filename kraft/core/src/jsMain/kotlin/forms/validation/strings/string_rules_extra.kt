@@ -1,6 +1,5 @@
 package io.peekandpoke.kraft.forms.validation.strings
 
-import io.peekandpoke.kraft.forms.KraftFormsRuleDsl
 import io.peekandpoke.kraft.forms.validation.GenericRule
 import io.peekandpoke.kraft.forms.validation.Rule
 import io.peekandpoke.kraft.i18n.generated.forms
@@ -12,7 +11,6 @@ import io.peekandpoke.ultra.common.isSlug
 import io.peekandpoke.ultra.common.isUrlWithProtocol
 
 /** Validates that the string is a valid email address (custom message). */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> validEmail(message: (T) -> String): Rule<T> =
     GenericRule(
         messageFn = message,
@@ -20,7 +18,6 @@ fun <T : CharSequence?> validEmail(message: (T) -> String): Rule<T> =
     )
 
 /** Validates that the string is a valid email address. */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> validEmail(): Rule<T> =
     GenericRule(
         checkFn = { (it ?: "").isNotBlank() && (it ?: "").toString().isEmail() },
@@ -29,12 +26,10 @@ fun <T : CharSequence?> validEmail(): Rule<T> =
     )
 
 /** @see validEmail */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> validEmail(message: String): Rule<T> =
     validEmail { message }
 
 /** Validates that the string is a valid URL including the protocol (custom message). */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> validUrlWithProtocol(message: (T) -> String): Rule<T> =
     GenericRule(
         messageFn = message,
@@ -42,7 +37,6 @@ fun <T : CharSequence?> validUrlWithProtocol(message: (T) -> String): Rule<T> =
     )
 
 /** Validates that the string is a valid URL including the protocol. */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> validUrlWithProtocol(): Rule<T> =
     GenericRule(
         checkFn = { (it ?: "").isNotBlank() && (it ?: "").toString().isUrlWithProtocol() },
@@ -51,7 +45,6 @@ fun <T : CharSequence?> validUrlWithProtocol(): Rule<T> =
     )
 
 /** @see validUrlWithProtocol */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> validUrlWithProtocol(message: String): Rule<T> =
     validUrlWithProtocol { message }
 
@@ -60,7 +53,6 @@ fun <T : CharSequence?> validUrlWithProtocol(message: String): Rule<T> =
  * no leading/trailing hyphen, length 1..63). Useful for tenant slugs that double as subdomains.
  * (custom message)
  */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> validSlug(message: (T) -> String): Rule<T> =
     GenericRule(
         messageFn = message,
@@ -68,7 +60,6 @@ fun <T : CharSequence?> validSlug(message: (T) -> String): Rule<T> =
     )
 
 /** @see validSlug */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> validSlug(): Rule<T> =
     GenericRule(
         checkFn = { it != null && it.toString().isSlug() },
@@ -77,6 +68,5 @@ fun <T : CharSequence?> validSlug(): Rule<T> =
     )
 
 /** @see validSlug */
-@KraftFormsRuleDsl
 fun <T : CharSequence?> validSlug(message: String): Rule<T> =
     validSlug { message }
