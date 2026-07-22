@@ -1,6 +1,7 @@
 # i18n / l10n foundation — design decisions
 
-**Status:** DESIGN AGREED — ready to cut into implementation tasks (design captured 2026-07-20)
+**Status:** IN PROGRESS — S1–S5 DONE (committed + gated, 2026-07-20/21); S6 folded into the
+exception-disclosure task; S7 design agreed → `20260722-i18n-s7-emails.md` (2026-07-22)
 **Plan:** umbrella; feeds email templates, form validation, and server error channels
 **Security-critical:** no (but interacts with `.claude/tasks/20260720-exception-disclosure-architecture.md` — see §Interactions)
 
@@ -373,8 +374,8 @@ cases), **S5** (integration synthesis), **S6** (security) — and run the S6 sec
 | S3 | **buildSrc plugin** — thin `GenerateI18nTask` (@InputFiles/@OutputDirectory) + extension + `srcDir(taskProvider)` KMP wiring + checker task | Apply to a fixture module: generated code compiles; up-to-date + cache correct from a **clean** build | impl&style (build pitfalls) | no |
 | S4 | **kraft reactive glue** (jsMain) — `I18n` stream app-attribute (mirror `ResponsiveController`), `Translations`/`Formatting` delegates (class+functional), `I18nInitializer`, persist lang | `TestBed.preact`: re-render on `suspend setLang`; delegate resolves | impl&style, domain | no |
 | S5 | **kraft forms — first vertical slice** — plugin on kraft/core + yaml (~28 defaults); route `Rule`/`GenericRule`/`FormFieldComponent` through `I18n`; kraft catalog installs by default; kill the two `// TODO: how to translate this?` | `TestBed.preact`: validation msg `en`→`de` on switch (full-stack proof) | **full 3** | no |
-| S6 | **Server error channel** — `Message`/`HasClientMessage` carry key+args (not `String`); AuthApi/OrgsApi emit keys; client resolves. **Merge into** exception-disclosure task | Backend e2e (`AppSpec`/`AppUnderTest`, both DB backends where storage); client-resolves test | **full 3, security decisive** | **yes → red-team** |
-| S7 | **Emails** — funktor/auth namespace; `AuthRealm` ~100 words → accessors; thread recipient locale | Backend e2e: render both emails `en`+`de` | impl&style, domain | no |
+| S6 | **Server error channel** — `Message`/`HasClientMessage` carry key+args (not `String`); AuthApi/OrgsApi emit keys; client resolves. **FOLDED INTO** `20260720-exception-disclosure-architecture.md` (decided 2026-07-22) — no separate S6 task file; the i18n key+args channel is the transport for that work | Backend e2e (`AppSpec`/`AppUnderTest`, both DB backends where storage); client-resolves test | **full 3, security decisive** | **yes → red-team** |
+| S7 | **Emails** — whole-template-per-locale Markdown (raw-HTML passthrough) + kotlinx.html layout slot; front-matter subject; codegen emails mode; HTML-escaped substitution; recipient locale. Design agreed 2026-07-22 → task file `20260722-i18n-s7-emails.md`. **Prereq:** `20260722-auth-user-seams-refactor.md` (AuthUser bound + LanguageSettings + AuthUserAdapter) | Backend e2e: render both emails `en`+`de`; escaping adversarial tests | impl&style, domain | no |
 
 **Deferred (D9), not in this build:** locale date/number/money formatting + `kotlinx-datetime` bump —
 separate later tasks once the text foundation lands.
