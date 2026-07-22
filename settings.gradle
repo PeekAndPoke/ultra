@@ -69,6 +69,7 @@ include(
         ":funktor-demo:adminapp",
         ":funktor-demo:ops-app",
         ":funktor-demo:b2b-app",
+        ":funktor-demo:b2b2c-app",
         ":funktor-demo:common",
 
         // KARANGO //////////////////////////////////////////////////////////////////////////////

@@ -7,6 +7,7 @@ import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.demo.server.admin.AdminUserModule
 import io.peekandpoke.funktor.demo.server.api.ApiApp
 import io.peekandpoke.funktor.demo.server.b2b.B2bModule
+import io.peekandpoke.funktor.demo.server.b2b2c.B2b2cModule
 import io.peekandpoke.funktor.demo.server.operator.OperatorModule
 import io.peekandpoke.funktor.demo.server.funktorconf.FunktorConfModule
 import io.peekandpoke.funktor.demo.server.showcase.ShowcaseModule
@@ -99,6 +100,7 @@ fun createBlueprint(config: FunktorDemoConfig) = kontainer {
     // Modules
     module(OperatorModule)
     module(B2bModule)
+    module(B2b2cModule)
     module(AdminUserModule)
     module(ShowcaseModule)
     module(FunktorConfModule)

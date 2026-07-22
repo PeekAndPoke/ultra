@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.demo.server.b2b
+package io.peekandpoke.funktor.demo.server.b2b2c
 
 import io.peekandpoke.funktor.auth.AuthError
 import io.peekandpoke.funktor.auth.AuthRealm
@@ -9,9 +9,9 @@ import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
-import io.peekandpoke.funktor.demo.common.B2bUserModel
+import io.peekandpoke.funktor.demo.common.B2b2cUserModel
 import io.peekandpoke.funktor.demo.server.accessibleActiveOrgs
-import io.peekandpoke.funktor.demo.server.b2b.B2bUsersRepo.Companion.asApiModel
+import io.peekandpoke.funktor.demo.server.b2b2c.B2b2cUsersRepo.Companion.asApiModel
 import io.peekandpoke.funktor.demo.server.buildVettedOrgPermissions
 import io.peekandpoke.funktor.demo.server.resolveActiveSelectedOrg
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
@@ -27,24 +27,23 @@ import kotlinx.serialization.json.jsonObject
 import kotlin.time.Duration.Companion.hours
 
 /**
- * Realm for b2b (customer-admin) tenant users. Every user belongs to one or more organisations, so
- * [orgPolicy] is [OrgPolicy.Required] — the login flow resolves the user's accessible orgs and
- * drives the 0 (no access) / 1 (auto-select) / n (selection step) behaviour generically in
- * [AuthRealm.issueSignIn]. This realm only supplies the two org hooks (over [OrgsStorage]) and
- * encodes the selected org into the session permissions.
+ * Realm for b2b2c (end-user) tenant users — the B2B customers' own end-users. Like [OrgPolicy.Required]
+ * sibling realm b2b, the generic 0/1/n flow lives in [AuthRealm.issueSignIn]; this realm only wires
+ * the shared org hooks (active-only, deduped — see `saas_org_hooks.kt`) and encodes the selected
+ * org into the session permissions.
  */
-class B2bRealm(
+class B2b2cRealm(
     deps: Lazy<AuthSystem.Deps>,
-    b2bUsersRepo: Lazy<B2bUsersRepo>,
+    b2b2cUsersRepo: Lazy<B2b2cUsersRepo>,
     orgs: Lazy<OrgsStorage>,
     emailAndPassword: Lazy<EmailAndPasswordAuth.Factory>,
-) : AuthRealm<B2bUser> {
+) : AuthRealm<B2b2cUser> {
     companion object {
-        const val REALM = "b2b"
+        const val REALM = "b2b2c"
     }
 
     override val deps: AuthSystem.Deps by deps
-    private val b2bUsersRepo: B2bUsersRepo by b2bUsersRepo
+    private val b2b2cUsersRepo: B2b2cUsersRepo by b2b2cUsersRepo
     private val orgs: OrgsStorage by orgs
     private val emailAndPassword: EmailAndPasswordAuth.Factory by emailAndPassword
     private val authConfig = this.deps.config.funktor.auth
@@ -53,10 +52,10 @@ class B2bRealm(
 
     override val orgPolicy: OrgPolicy = OrgPolicy.Required()
 
-    override val messaging: AuthRealm.Messaging<B2bUser> = AuthRealm.DefaultMessaging(
+    override val messaging: AuthRealm.Messaging<B2b2cUser> = AuthRealm.DefaultMessaging(
         senderEmail = "treore@jointhebase.co",
-        senderName = "Funktor B2B",
-        applicationName = "Funktor B2B",
+        senderName = "Funktor B2B2C",
+        applicationName = "Funktor B2B2C",
         realm = this,
     )
 
@@ -64,32 +63,31 @@ class B2bRealm(
         listOf(
             this.emailAndPassword(
                 frontendUrls = EmailAndPasswordAuth.FrontendUrls(
-                    baseUrl = authConfig.baseUrls["b2b"]!!.trimEnd('/') + "/auth",
+                    baseUrl = authConfig.baseUrls["b2b2c"]!!.trimEnd('/') + "/auth",
                 ),
                 capabilities = setOf(Capability.SignIn),
             ),
         )
     }
 
-    override val users = object : AuthUserAdapter<B2bUser> {
+    override val users = object : AuthUserAdapter<B2b2cUser> {
         // NOTE: qualified access — inside this initializer the unqualified name would resolve to the
         // constructor parameter (Lazy<...>), not the delegated property.
-        private val repo get() = this@B2bRealm.b2bUsersRepo
+        private val repo get() = this@B2b2cRealm.b2b2cUsersRepo
 
         override suspend fun loadById(id: String) = repo.findById(id)
 
         override suspend fun loadByEmail(email: String) = repo.findByEmail(email)
 
-        override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams): Stored<B2bUser> {
-            // B2B is invite-only (users are created inside an organisation). AuthError — not
-            // error() — so if a capability change ever exposes sign-up, the API fails closed as a
-            // 403, not a 500.
+        override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams): Stored<B2b2cUser> {
+            // End-users are provisioned by their organisation for now. AuthError — not error() — so
+            // if a capability change ever exposes sign-up, the API fails closed as a 403, not a 500.
             throw AuthError.notSupported()
         }
 
-        override suspend fun serialize(user: Stored<B2bUser>): JsonObject {
+        override suspend fun serialize(user: Stored<B2b2cUser>): JsonObject {
             return Json.encodeToJsonElement(
-                B2bUserModel.serializer(), user.asApiModel()
+                B2b2cUserModel.serializer(), user.asApiModel()
             ).jsonObject
         }
     }
@@ -102,7 +100,7 @@ class B2bRealm(
         return orgs.resolveActiveSelectedOrg(orgId, memberships)
     }
 
-    override suspend fun generateJwt(user: Stored<B2bUser>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token {
+    override suspend fun generateJwt(user: Stored<B2b2cUser>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token {
         val gen = deps.jwtGenerator
 
         val userValue = user.resolve()
@@ -111,7 +109,7 @@ class B2bRealm(
             user = JwtUserData(
                 id = user._id,
                 desc = userValue.name,
-                type = B2bUserModel.USER_TYPE,
+                type = B2b2cUserModel.USER_TYPE,
                 email = userValue.email,
             ),
             permissions = orgs.buildVettedOrgPermissions(
@@ -128,5 +126,4 @@ class B2bRealm(
             userNs = gen.userNs,
         )
     }
-
 }

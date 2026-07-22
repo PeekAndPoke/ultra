@@ -74,6 +74,22 @@ Consequences:
       logout. Org CRUD via existing `OrgsApiFeature`. Compiles (`:funktor-demo:ops-app:compileKotlinJs`).
       Deferred: users-by-org + real dashboard stats (need new `OperatorApiFeature`); `jwtDecoder`
       wiring / unified `AuthContext` stream.
+- [x] **operator dashboard stats** DONE 2026-07-20 (reviewed + hardened 2026-07-22) —
+      `OperatorApiFeature`; guard is `forAll(isSuperUser(), forUserType(OperatorUser))` after the
+      cross-realm review finding. See `tasks-archive/2026-07/20260720-operator-api-feature.md`.
+- [x] **b2b realm + b2b-app** DONE 2026-07-20 (reviewed + hardened 2026-07-22) — first
+      `OrgPolicy.Required` realm; org-selection UI in the shared login (`AuthLogin` extraction, POC
+      dedicated teal `LoggedOutLayout`); active-only org hooks after the review. See
+      `tasks-archive/2026-07/20260720-b2b-realm.md` and `20260720-auth-frontend-composability.md`.
+- [x] **b2b2c realm + b2b2c-app** DONE 2026-07-22 — end-user realm (`b2b2c`, `OrgPolicy.Required`),
+      `B2b2cUser`/repo (`b2b2c_users`, fixtures noorg/single/multi `@b2b2c.test` over acme/globex,
+      distinct `"end-user"` role vocabulary), realm delegating to the SHARED org hooks
+      (`saas_org_hooks.kt` — active-only, deduped, vetted JWT claim; extracted from the hardened
+      b2b hooks, b2b delegates too). `B2b2cAuthFlowTest` (0/1/n + cross-store + suspended-org).
+      Frontend `b2b2c-app` on dev-server **36592**: violet dedicated `LoggedOutLayout` ("End-user
+      portal"), dashboard + reset via default page, wired in `settings.gradle`. CORS/baseUrls were
+      pre-wired with the b2b step. Gate: 3-agent review PASS (security: zero findings) — see
+      `tasks-archive/2026-07/20260722-b2b2c-realm-and-app.md`.
 
 ## ops-app — first increment scope
 
