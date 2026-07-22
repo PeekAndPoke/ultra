@@ -7,6 +7,7 @@ import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.auth.AuthError
 import io.peekandpoke.funktor.auth.MinimalTestDeps
 import io.peekandpoke.funktor.auth.MinimalTestRealm
+import io.peekandpoke.funktor.auth.MinimalTestUser
 import io.peekandpoke.funktor.auth.TestMessaging
 import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
@@ -187,7 +188,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
             "should throw InvalidCredentials when password is wrong" {
 
-                val storedUser = Stored(_id = "user-id", value = Any())
+                val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
 
                 val services = lazy<EmailAndPasswordAuth.Services> {
                     TestServices(
@@ -231,7 +232,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
             "should return the user on successful sign in" {
 
-                val storedUser = Stored(_id = "user-id", value = Any())
+                val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
 
                 val services = lazy<EmailAndPasswordAuth.Services> {
                     TestServices(
@@ -389,7 +390,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                     passwordPolicy = PasswordPolicy.default,
                     onLoadUserByEmail = {
                         it shouldBe "test@example.com"
-                        Stored(_id = "existing-user", value = Any())
+                        Stored(_id = "existing-user", value = MinimalTestUser())
                     }
                 )
 
@@ -402,7 +403,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
             "should sign up user successfully" {
                 // Setup
-                val storedUser = Stored(_id = "user-id", value = Any())
+                val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
                 val password = "A-valid-password-123!"
                 val hashedPassword = "hashed-password"
                 val email = "test@example.com"
@@ -523,7 +524,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
             "should throw invalidCredentials when current password is wrong" {
                 // Setup
-                val storedUser = Stored(_id = "user-id", value = Any())
+                val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
 
                 val services = lazy {
                     TestServices(
@@ -569,7 +570,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
             "should set the password successfully when current password is correct" {
                 // Setup
-                val storedUser = Stored(_id = "user-id", value = Any())
+                val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
                 var passwordEmailSent = false
                 val currentPassword = "Current-password-123!"
                 val newPassword = "Strong-password-123!"
@@ -629,7 +630,6 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                             }
                         )
                     },
-                    onGetUserEmail = { "user@example.com" }
                 )
 
                 // Execute

@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.demo.server.operator
 
 import io.peekandpoke.funktor.auth.AuthRealm
 import io.peekandpoke.funktor.auth.AuthSystem
+import io.peekandpoke.funktor.auth.AuthUserAdapter
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
@@ -57,9 +58,25 @@ class OperatorRealm(
         )
     }
 
-    override suspend fun loadUserById(id: String) = operatorUsersRepo.findById(id)
+    override val users = object : AuthUserAdapter<OperatorUser> {
+        // NOTE: qualified access — inside this initializer the unqualified name would resolve to the
+        // constructor parameter (Lazy<...>), not the delegated property.
+        private val repo get() = this@OperatorRealm.operatorUsersRepo
 
-    override suspend fun loadUserByEmail(email: String) = operatorUsersRepo.findByEmail(email)
+        override suspend fun loadById(id: String) = repo.findById(id)
+
+        override suspend fun loadByEmail(email: String) = repo.findByEmail(email)
+
+        override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams): Stored<OperatorUser> {
+            error("Operator self-signup is not supported")
+        }
+
+        override suspend fun serialize(user: Stored<OperatorUser>): JsonObject {
+            return Json.encodeToJsonElement(
+                OperatorUserModel.serializer(), user.asApiModel()
+            ).jsonObject
+        }
+    }
 
     override suspend fun generateJwt(user: Stored<OperatorUser>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token {
         val gen = deps.jwtGenerator
@@ -87,17 +104,4 @@ class OperatorRealm(
         )
     }
 
-    override suspend fun getUserEmail(user: Stored<OperatorUser>): String {
-        return user.resolve().email
-    }
-
-    override suspend fun serializeUser(user: Stored<OperatorUser>): JsonObject {
-        return Json.encodeToJsonElement(
-            OperatorUserModel.serializer(), user.asApiModel()
-        ).jsonObject
-    }
-
-    override suspend fun createUserForSignup(params: AuthRealm.CreateUserForSignupParams): Stored<OperatorUser> {
-        error("Operator self-signup is not supported")
-    }
 }

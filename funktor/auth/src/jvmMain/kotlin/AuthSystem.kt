@@ -24,7 +24,7 @@ import io.peekandpoke.ultra.security.password.PasswordHasher
  *                  Realms must have unique identifiers to avoid duplication.
  */
 class AuthSystem(
-    realms: Lazy<List<AuthRealm<Any>>>,
+    realms: Lazy<List<AuthRealm<*>>>,
     deps: Lazy<Deps>,
 ) {
     interface Deps {

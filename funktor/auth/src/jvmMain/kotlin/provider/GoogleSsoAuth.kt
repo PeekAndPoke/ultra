@@ -6,9 +6,11 @@ import com.google.api.client.http.apache.v2.ApacheHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import io.peekandpoke.funktor.auth.AuthError
 import io.peekandpoke.funktor.auth.AuthRealm
+import io.peekandpoke.funktor.auth.AuthUserAdapter
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
+import io.peekandpoke.funktor.auth.model.AuthUser
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.vault.Stored
@@ -143,7 +145,7 @@ class GoogleSsoAuth(
     /**
      * @{inheritDoc}
      */
-    override suspend fun <USER> signIn(
+    override suspend fun <USER : AuthUser> signIn(
         realm: AuthRealm<USER>, request: AuthSignInRequest,
     ): Stored<USER> {
 
@@ -158,14 +160,14 @@ class GoogleSsoAuth(
 
         val payload = idToken.payload
 
-        return realm.loadUserByEmail(payload.email)
+        return realm.users.loadByEmail(payload.email)
             ?: throw AuthError.invalidCredentials()
     }
 
     /**
      * @{inheritDoc}
      */
-    override suspend fun <USER> signUp(
+    override suspend fun <USER : AuthUser> signUp(
         realm: AuthRealm<USER>, request: AuthSignUpRequest,
     ): AuthProvider.SignUpResult<USER> {
 
@@ -182,9 +184,9 @@ class GoogleSsoAuth(
         val email = payload.email ?: throw AuthError.invalidCredentials()
         val displayName = (payload["name"] as? String)
 
-        val existing = realm.loadUserByEmail(email)
-        val user = existing ?: realm.createUserForSignup(
-            AuthRealm.CreateUserForSignupParams.of(
+        val existing = realm.users.loadByEmail(email)
+        val user = existing ?: realm.users.createForSignup(
+            AuthUserAdapter.CreateUserForSignupParams.of(
                 email = email,
                 displayName = displayName,
             )

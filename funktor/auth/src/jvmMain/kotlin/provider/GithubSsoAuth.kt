@@ -8,9 +8,11 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.peekandpoke.funktor.auth.AuthError
 import io.peekandpoke.funktor.auth.AuthRealm
+import io.peekandpoke.funktor.auth.AuthUserAdapter
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
+import io.peekandpoke.funktor.auth.model.AuthUser
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.vault.Stored
@@ -159,7 +161,7 @@ class GithubSsoAuth(
     /**
      * @{inheritDoc}
      */
-    override suspend fun <USER> signIn(
+    override suspend fun <USER : AuthUser> signIn(
         realm: AuthRealm<USER>, request: AuthSignInRequest,
     ): Stored<USER> {
         val typed = (request as? AuthSignInRequest.OAuth)
@@ -174,14 +176,14 @@ class GithubSsoAuth(
         val email = ghUser["email"]?.jsonPrimitive?.content
             ?: throw AuthError.invalidCredentials()
 
-        return realm.loadUserByEmail(email)
+        return realm.users.loadByEmail(email)
             ?: throw AuthError.invalidCredentials()
     }
 
     /**
      * @{inheritDoc}
      */
-    override suspend fun <USER> signUp(
+    override suspend fun <USER : AuthUser> signUp(
         realm: AuthRealm<USER>, request: AuthSignUpRequest,
     ): AuthProvider.SignUpResult<USER> {
 
@@ -199,9 +201,9 @@ class GithubSsoAuth(
 
         val name = ghUser["name"]?.jsonPrimitive?.content
 
-        val existing = realm.loadUserByEmail(email)
-        val user = existing ?: realm.createUserForSignup(
-            AuthRealm.CreateUserForSignupParams.of(
+        val existing = realm.users.loadByEmail(email)
+        val user = existing ?: realm.users.createForSignup(
+            AuthUserAdapter.CreateUserForSignupParams.of(
                 email = email,
                 displayName = name,
             )

@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.demo.server.admin
 
 import io.peekandpoke.funktor.auth.AuthRealm
 import io.peekandpoke.funktor.auth.AuthSystem
+import io.peekandpoke.funktor.auth.AuthUserAdapter
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
@@ -63,9 +64,30 @@ class AdminUserRealm(
         )
     }
 
-    override suspend fun loadUserById(id: String) = appUserRepo.findById(id)
+    override val users = object : AuthUserAdapter<AdminUser> {
+        // NOTE: qualified access — inside this initializer the unqualified name would resolve to the
+        // constructor parameter (Lazy<...>), not the delegated property.
+        private val repo get() = this@AdminUserRealm.appUserRepo
 
-    override suspend fun loadUserByEmail(email: String) = appUserRepo.findByEmail(email)
+        override suspend fun loadById(id: String) = repo.findById(id)
+
+        override suspend fun loadByEmail(email: String) = repo.findByEmail(email)
+
+        override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams): Stored<AdminUser> {
+            return repo.insert(
+                AdminUser(
+                    name = params.displayName,
+                    email = params.email,
+                )
+            )
+        }
+
+        override suspend fun serialize(user: Stored<AdminUser>): JsonObject {
+            return Json.encodeToJsonElement(
+                AdminUserModel.serializer(), user.asApiModel()
+            ).jsonObject
+        }
+    }
 
     override suspend fun generateJwt(user: Stored<AdminUser>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token {
         val gen = deps.jwtGenerator
@@ -95,23 +117,4 @@ class AdminUserRealm(
         )
     }
 
-    override suspend fun getUserEmail(user: Stored<AdminUser>): String {
-        return user.resolve().email
-    }
-
-    override suspend fun serializeUser(user: Stored<AdminUser>): JsonObject {
-        return Json.encodeToJsonElement(
-            AdminUserModel.serializer(), user.asApiModel()
-        ).jsonObject
-    }
-
-    override suspend fun createUserForSignup(params: AuthRealm.CreateUserForSignupParams): Stored<AdminUser> {
-
-        return appUserRepo.insert(
-            AdminUser(
-                name = params.displayName,
-                email = params.email,
-            )
-        )
-    }
 }

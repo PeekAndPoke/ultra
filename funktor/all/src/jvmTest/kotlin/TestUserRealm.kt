@@ -2,8 +2,10 @@ package io.peekandpoke.funktor
 
 import io.peekandpoke.funktor.auth.AuthRealm
 import io.peekandpoke.funktor.auth.AuthSystem
+import io.peekandpoke.funktor.auth.AuthUserAdapter
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
+import io.peekandpoke.funktor.auth.model.AuthUser
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import io.peekandpoke.karango.aql.EQ
 import io.peekandpoke.karango.aql.FOR
@@ -29,12 +31,14 @@ import kotlin.time.Duration.Companion.hours
 @Serializable
 data class TestUser(
     val name: String,
-    val email: String,
+    override val email: String,
     val isSuperUser: Boolean = false,
-) {
+) : AuthUser {
     companion object {
         const val USER_TYPE = "test-user"
     }
+
+    override val displayName: String get() = name
 }
 
 class TestUsersRepo(driver: KarangoDriver) : EntityRepository<TestUser>(
@@ -76,17 +80,39 @@ class TestUserRealm(
         )
     }
 
-    override suspend fun loadUserById(id: String): Stored<TestUser>? {
-        return usersRepo.findById(id)
-    }
+    override val users = object : AuthUserAdapter<TestUser> {
+        // NOTE: qualified access — inside this initializer the unqualified name would resolve to the
+        // constructor parameter (Lazy<...>), not the delegated property.
+        private val repo get() = this@TestUserRealm.usersRepo
 
-    override suspend fun loadUserByEmail(email: String): Stored<TestUser>? {
-        return usersRepo.findFirst {
-            FOR(usersRepo) {
-                FILTER(it.email EQ email)
-                LIMIT(1)
-                RETURN(it)
+        override suspend fun loadById(id: String): Stored<TestUser>? {
+            return repo.findById(id)
+        }
+
+        override suspend fun loadByEmail(email: String): Stored<TestUser>? {
+            return repo.findFirst {
+                FOR(repo) {
+                    FILTER(it.email EQ email)
+                    LIMIT(1)
+                    RETURN(it)
+                }
             }
+        }
+
+        override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams): Stored<TestUser> {
+            return repo.insert(
+                TestUser(
+                    name = params.displayName,
+                    email = params.email,
+                )
+            )
+        }
+
+        override suspend fun serialize(user: Stored<TestUser>): JsonObject {
+            return Json.encodeToJsonElement(
+                TestUser.serializer(),
+                user.resolve(),
+            ).jsonObject
         }
     }
 
@@ -116,25 +142,6 @@ class TestUserRealm(
         )
     }
 
-    override suspend fun getUserEmail(user: Stored<TestUser>): String {
-        return user.resolve().email
-    }
-
-    override suspend fun serializeUser(user: Stored<TestUser>): JsonObject {
-        return Json.encodeToJsonElement(
-            TestUser.serializer(),
-            user.resolve(),
-        ).jsonObject
-    }
-
-    override suspend fun createUserForSignup(params: AuthRealm.CreateUserForSignupParams): Stored<TestUser> {
-        return usersRepo.insert(
-            TestUser(
-                name = params.displayName,
-                email = params.email,
-            )
-        )
-    }
 }
 
 val TestUserModule = module {
