@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.demo.server.b2b
 
+import io.peekandpoke.funktor.auth.AuthError
 import io.peekandpoke.funktor.auth.AuthRealm
 import io.peekandpoke.funktor.auth.AuthSystem
 import io.peekandpoke.funktor.auth.AuthUserAdapter
@@ -10,6 +11,7 @@ import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import io.peekandpoke.funktor.demo.common.B2bUserModel
 import io.peekandpoke.funktor.demo.server.b2b.B2bUsersRepo.Companion.asApiModel
+import io.peekandpoke.funktor.saas.model.OrgStatus
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.datetime.jvm
@@ -78,7 +80,10 @@ class B2bRealm(
         override suspend fun loadByEmail(email: String) = repo.findByEmail(email)
 
         override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams): Stored<B2bUser> {
-            error("B2B self-signup is not supported yet (users are invited into an organisation)")
+            // B2B is invite-only (users are created inside an organisation). AuthError — not
+            // error() — so if a capability change ever exposes sign-up, the API fails closed as a
+            // 403, not a 500.
+            throw AuthError.notSupported()
         }
 
         override suspend fun serialize(user: Stored<B2bUser>): JsonObject {
@@ -89,17 +94,40 @@ class B2bRealm(
     }
 
     override suspend fun getAccessibleOrgs(memberships: Set<OrgMembership>): List<AuthOrgRef> {
-        return memberships.mapNotNull { membership ->
-            orgs.findById(membership.orgId)?.let { stored ->
-                val org = stored.value()
-                AuthOrgRef(id = stored._key, slug = org.slug, name = org.name)
+        // Contract: active only — a Suspended/Archived org must not be sign-in-able. Dedupe by
+        // orgId first: nothing forbids multiple membership rows for the same org, and the picker
+        // must list each org once.
+        return memberships
+            .map { it.orgId }
+            .distinct()
+            .mapNotNull { orgId ->
+                orgs.findById(orgId)
+                    ?.takeIf { it.value().status == OrgStatus.Active }
+                    ?.let { stored ->
+                        val org = stored.value()
+                        AuthOrgRef(id = stored._key, slug = org.slug, name = org.name)
+                    }
             }
-        }
     }
 
     override suspend fun resolveSelectedOrg(orgId: String, memberships: Set<OrgMembership>): SelectedOrg? {
-        val membership = memberships.firstOrNull { it.orgId == orgId } ?: return null
-        val org = orgs.findById(orgId)?.value() ?: return null
+        val matching = memberships.filter { it.orgId == orgId }
+        if (matching.isEmpty()) return null
+
+        // Same active-only rule as getAccessibleOrgs — this hook also guards select-org + refresh,
+        // so a mid-session suspension takes effect on the next token refresh.
+        val org = orgs.findById(orgId)
+            ?.takeIf { it.value().status == OrgStatus.Active }
+            ?.value()
+            ?: return null
+
+        // Merge duplicate membership rows (union of roles/branches) so the grant is deterministic
+        // instead of depending on set iteration order.
+        val membership = OrgMembership(
+            orgId = orgId,
+            branchIds = matching.flatMap { it.branchIds }.toSet(),
+            roles = matching.flatMap { it.roles }.toSet(),
+        )
 
         return SelectedOrg(
             orgId = orgId,
@@ -113,6 +141,12 @@ class B2bRealm(
 
         val userValue = user.resolve()
 
+        // The token's accessibleOrgs claim must carry the same vetted set (existing + active orgs)
+        // the login picker shows — raw membership rows may reference deleted or suspended orgs,
+        // which must not authorize canAccessOrg().
+        val memberships = getMemberships(user)
+        val accessibleIds = getAccessibleOrgs(memberships).map { it.id }.toSet()
+
         val token = gen.createJwt(
             user = JwtUserData(
                 id = user._id,
@@ -121,7 +155,7 @@ class B2bRealm(
                 email = userValue.email,
             ),
             permissions = buildOrgPermissions(
-                memberships = getMemberships(user),
+                memberships = memberships.filter { it.orgId in accessibleIds }.toSet(),
                 selected = selectedOrg,
             ),
         ) {
