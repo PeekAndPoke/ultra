@@ -48,7 +48,11 @@ class ValidateRoutesOnAppStarting(
                     // An empty chain serves PUBLIC — post-floor it can never happen; a served route
                     // with no rules means the floor was bypassed. Fail closed.
                     if (route.authRules.isEmpty()) {
-                        errors.add("$at has no auth rules — the group floor was not applied")
+                        errors.add(
+                            "$at has no auth rules even though its group declares a floor — internal " +
+                                    "invariant violation (the floor must be prepended to every route); " +
+                                    "a normal ApiRoutes group cannot cause this. Please report it."
+                        )
                     }
                     try {
                         validateChain("$at auth chain", route.authRules)
@@ -61,7 +65,8 @@ class ValidateRoutesOnAppStarting(
 
         if (errors.isNotEmpty()) {
             throw AppStartException(
-                "Route validation failed:\n${errors.joinToString("\n") { "  - $it" }}"
+                "Route validation failed — the app cannot start until every item below is resolved " +
+                        "(each line states its fix):\n${errors.joinToString("\n") { "  - $it" }}"
             )
         }
     }
