@@ -50,6 +50,15 @@ sealed class ApiRoute<RESPONSE> {
     abstract val attributes: TypedAttributes
 
     /**
+     * Prepends the group's floor rules as the INITIAL chain state, before the per-route
+     * `authorize {}` (if any) appends. Called by the [io.peekandpoke.funktor.rest.ApiRoutes] mount
+     * machinery with the group's materialized [FloorAuthRuleBuilder] output. The floor rules are
+     * caller-only (they ignore request params/body), so the unchecked cast to this route's rule
+     * type in each override is behaviour-safe.
+     */
+    abstract fun withFloor(floor: List<AuthRule<*, *>>): ApiRoute<RESPONSE>
+
+    /**
      * Estimate access level for the given [permission] set.
      *
      * Synthesizes a non-anonymous [User] (userId "role-eval") from the permissions — "evaluate what
@@ -120,6 +129,10 @@ sealed class ApiRoute<RESPONSE> {
                 .withAttribute(UserAuthorizeDeclaredKey, true)
         }
 
+        @Suppress("UNCHECKED_CAST")
+        override fun withFloor(floor: List<AuthRule<*, *>>): Plain<RESPONSE> =
+            copy(authRules = (floor as List<AuthRule<Unit, Unit>>) + authRules)
+
         /**
          * Sets a handler that returns a raw response
          */
@@ -181,6 +194,10 @@ sealed class ApiRoute<RESPONSE> {
             return copy(authRules = authRules + RootAuthRuleBuilder<PARAMS, Unit>(route = this).apply(builder).build())
                 .withAttribute(UserAuthorizeDeclaredKey, true)
         }
+
+        @Suppress("UNCHECKED_CAST")
+        override fun withFloor(floor: List<AuthRule<*, *>>): Sse<PARAMS> =
+            copy(authRules = (floor as List<AuthRule<PARAMS, Unit>>) + authRules)
 
         /**
          * Sets a handler that returns a raw response
@@ -246,6 +263,10 @@ sealed class ApiRoute<RESPONSE> {
                 .withAttribute(UserAuthorizeDeclaredKey, true)
         }
 
+        @Suppress("UNCHECKED_CAST")
+        override fun withFloor(floor: List<AuthRule<*, *>>): WithParams<PARAMS, RESPONSE> =
+            copy(authRules = (floor as List<AuthRule<PARAMS, Unit>>) + authRules)
+
         /**
          * Sets a handler that returns a raw response
          */
@@ -308,6 +329,10 @@ sealed class ApiRoute<RESPONSE> {
                 .withAttribute(UserAuthorizeDeclaredKey, true)
         }
 
+        @Suppress("UNCHECKED_CAST")
+        override fun withFloor(floor: List<AuthRule<*, *>>): WithBody<BODY, RESPONSE> =
+            copy(authRules = (floor as List<AuthRule<Unit, BODY>>) + authRules)
+
         /**
          * Sets a handler that returns an ApiResponse with data of type [RESPONSE]
          */
@@ -369,6 +394,10 @@ sealed class ApiRoute<RESPONSE> {
             return copy(authRules = authRules + RootAuthRuleBuilder<PARAMS, BODY>(route = this).apply(builder).build())
                 .withAttribute(UserAuthorizeDeclaredKey, true)
         }
+
+        @Suppress("UNCHECKED_CAST")
+        override fun withFloor(floor: List<AuthRule<*, *>>): WithBodyAndParams<PARAMS, BODY, RESPONSE> =
+            copy(authRules = (floor as List<AuthRule<PARAMS, BODY>>) + authRules)
 
         /**
          * Sets a handler that returns an ApiResponse with data of type [RESPONSE]

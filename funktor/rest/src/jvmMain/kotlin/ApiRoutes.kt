@@ -8,6 +8,9 @@ import io.ktor.http.HttpMethod.Companion.Put
 import io.peekandpoke.funktor.core.broker.Routes
 import io.peekandpoke.funktor.core.broker.TypedRoute
 import io.peekandpoke.funktor.core.broker.UriPattern
+import io.peekandpoke.funktor.rest.auth.AuthRule
+import io.peekandpoke.funktor.rest.auth.AuthRuleBuilder.Companion.validateChain
+import io.peekandpoke.funktor.rest.auth.FloorAuthRuleBuilder
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.TypedApiEndpoint
@@ -31,22 +34,40 @@ import kotlin.reflect.KClass
 annotation class RestDsl
 
 /**
- * Base class for creating api routes
+ * Base class for creating api routes.
+ *
+ * Every group MUST declare a [defaultAuth] floor — the minimal auth every route in the group
+ * inherits as the INITIAL state of its rule chain (structural default-deny). A per-route
+ * `authorize {}` can only ADD to the floor (strengthen), never clear it; a genuinely public group
+ * declares `defaultAuth = { public() }`. The floor is caller-only by construction (see
+ * [FloorAuthRuleBuilder]) and is materialized + validated once, here, at group construction.
  */
-abstract class ApiRoutes(val name: String, mountPoint: String = "") :
-    Routes(mountPoint) {
+abstract class ApiRoutes(
+    val name: String,
+    mountPoint: String = "",
+    defaultAuth: FloorAuthRuleBuilder.() -> Unit,
+) : Routes(mountPoint) {
 
     /** list with all registered routes */
     private val allRoutes = mutableListOf<ApiRoute<*>>()
+
+    /**
+     * The group's floor rules — the initial auth chain prepended to every route. Materialized and
+     * validated (non-empty, constant-soleness, no empty composites) at construction, so a missing
+     * or malformed floor aborts app start.
+     */
+    @PublishedApi
+    internal val floorRules: List<AuthRule<Any?, Any?>> =
+        FloorAuthRuleBuilder().apply(defaultAuth).build(name)
 
     val routeBuilder = RouteBuilder(mountPoint)
 
     /** A list with all registered routes */
     val all get(): List<ApiRoute<*>> = allRoutes.toList()
 
-    /** Registers a route */
-    fun <RESULT, ROUTE : ApiRoute<RESULT>> route(block: RouteBuilder.() -> ROUTE) =
-        routeBuilder.block().apply { allRoutes.add(this) }
+    /** Registers a route through the single floor-applying choke point [addRoute]. */
+    fun <RESULT, ROUTE : ApiRoute<RESULT>> route(block: RouteBuilder.() -> ROUTE): ApiRoute<RESULT> =
+        addRoute(routeBuilder.block())
 
     /**
      * Mounts a typed get api endpoint
@@ -60,7 +81,7 @@ abstract class ApiRoutes(val name: String, mountPoint: String = "") :
             .delete<PARAMS, RESPONSE>(uri)
             .withAttributes(attributes)
             .block()
-            .apply { addRoute(this) }
+            .let { addRoute(it) }
     }
 
     /**
@@ -73,7 +94,7 @@ abstract class ApiRoutes(val name: String, mountPoint: String = "") :
             .get<RESPONSE>(uri)
             .withAttributes(attributes)
             .block()
-            .apply { addRoute(this) }
+            .let { addRoute(it) }
     }
 
     /**
@@ -88,7 +109,7 @@ abstract class ApiRoutes(val name: String, mountPoint: String = "") :
             .get<PARAMS, RESPONSE>(uri)
             .withAttributes(attributes)
             .block()
-            .apply { addRoute(this) }
+            .let { addRoute(it) }
     }
 
     /**
@@ -103,7 +124,7 @@ abstract class ApiRoutes(val name: String, mountPoint: String = "") :
             .sse<PARAMS>(uri)
             .withAttributes(attributes)
             .block()
-            .apply { addRoute(this) }
+            .let { addRoute(it) }
     }
 
     /**
@@ -116,7 +137,7 @@ abstract class ApiRoutes(val name: String, mountPoint: String = "") :
             .post<BODY, RESPONSE>(uri)
             .withAttributes(attributes)
             .block()
-            .apply { addRoute(this) }
+            .let { addRoute(it) }
     }
 
     /**
@@ -131,7 +152,7 @@ abstract class ApiRoutes(val name: String, mountPoint: String = "") :
             .post<PARAMS, BODY, RESPONSE>(uri)
             .withAttributes(attributes)
             .block()
-            .apply { addRoute(this) }
+            .let { addRoute(it) }
     }
 
     /**
@@ -144,7 +165,7 @@ abstract class ApiRoutes(val name: String, mountPoint: String = "") :
             .put<BODY, RESPONSE>(uri)
             .withAttributes(attributes)
             .block()
-            .apply { addRoute(this) }
+            .let { addRoute(it) }
     }
 
     /**
@@ -159,11 +180,35 @@ abstract class ApiRoutes(val name: String, mountPoint: String = "") :
             .put<PARAMS, BODY, RESPONSE>(uri)
             .withAttributes(attributes)
             .block()
-            .apply { addRoute(this) }
+            .let { addRoute(it) }
     }
 
-    fun <RESPONSE> addRoute(route: ApiRoute<RESPONSE>) {
-        allRoutes.add(route)
+    /**
+     * The SINGLE registration choke point. Applies the group [floorRules] itself (so a route can
+     * NEVER be registered without its floor — floor-presence is structural, not disciplinary),
+     * then validates the whole combined chain:
+     * - **non-empty** — an empty chain would serve PUBLIC (`checkAccess` grants when no rule fails);
+     *   post-floor every route has ≥1 rule, so this only ever fires if the floor was somehow
+     *   bypassed;
+     * - **constant-soleness / no empty composites** (`validateChain`) — a floor/route conflict
+     *   (e.g. a public-floored group whose route adds a restrictive rule) fails here at construction.
+     *
+     * `@PublishedApi internal` so the public inline `mount` overloads can call it; it is NOT public
+     * API — external code cannot register a route, so it cannot bypass the floor.
+     */
+    @PublishedApi
+    internal fun <RESPONSE, ROUTE : ApiRoute<RESPONSE>> addRoute(route: ROUTE): ROUTE {
+        @Suppress("UNCHECKED_CAST")
+        val floored = route.withFloor(floorRules) as ROUTE
+        val at = "Route '${floored.method.value} ${floored.pattern.pattern}'"
+
+        check(floored.authRules.isNotEmpty()) {
+            "$at has no auth rules — the group floor was not applied"
+        }
+        validateChain("$at auth chain", floored.authRules)
+
+        allRoutes.add(floored)
+        return floored
     }
 
     @RestDsl

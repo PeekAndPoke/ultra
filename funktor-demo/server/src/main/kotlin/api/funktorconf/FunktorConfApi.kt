@@ -15,36 +15,32 @@ import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.New
 import io.peekandpoke.ultra.vault.map
 
+data class FunktorConfIdParams(val id: String)
+
+/**
+ * Public conference reads (list / get events, speakers, attendees). Floor: `public()`.
+ * The super-user writes live in the separate [FunktorConfAdminApi] group.
+ */
 class FunktorConfApi(
     private val services: FunktorConfServices,
-) : ApiRoutes("funktor-conf") {
-
-    data class IdParams(val id: String)
-
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //  Events
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+) : ApiRoutes("funktor-conf", defaultAuth = { public() }) {
 
     val listEvents = FunktorConfApiClient.ListEvents.mount {
         docs {
             name = "List all events"
         }.codeGen {
             funcName = "listEvents"
-        }.authorize {
-            public()
         }.handle {
             val events = services.eventsRepo.findAll().map { it.asApiModel() }
             ApiResponse.ok(events)
         }
     }
 
-    val getEvent = FunktorConfApiClient.GetEvent.mount(IdParams::class) {
+    val getEvent = FunktorConfApiClient.GetEvent.mount(FunktorConfIdParams::class) {
         docs {
             name = "Get event by ID"
         }.codeGen {
             funcName = "getEvent"
-        }.authorize {
-            public()
         }.handle { params ->
             val event = services.eventsRepo.findById(params.id)
                 ?: return@handle ApiResponse.notFound()
@@ -53,13 +49,68 @@ class FunktorConfApi(
         }
     }
 
+    val listSpeakers = FunktorConfApiClient.ListSpeakers.mount {
+        docs {
+            name = "List all speakers"
+        }.codeGen {
+            funcName = "listSpeakers"
+        }.handle {
+            val speakers = services.speakersRepo.findAll().map { it.asApiModel() }
+            ApiResponse.ok(speakers)
+        }
+    }
+
+    val getSpeaker = FunktorConfApiClient.GetSpeaker.mount(FunktorConfIdParams::class) {
+        docs {
+            name = "Get speaker by ID"
+        }.codeGen {
+            funcName = "getSpeaker"
+        }.handle { params ->
+            val speaker = services.speakersRepo.findById(params.id)
+                ?: return@handle ApiResponse.notFound()
+
+            ApiResponse.ok(speaker.asApiModel())
+        }
+    }
+
+    val listAttendees = FunktorConfApiClient.ListAttendees.mount {
+        docs {
+            name = "List all attendees"
+        }.codeGen {
+            funcName = "listAttendees"
+        }.handle {
+            val attendees = services.attendeesRepo.findAll().toList().map { it.asApiModel() }
+            ApiResponse.ok(attendees)
+        }
+    }
+
+    val getAttendee = FunktorConfApiClient.GetAttendee.mount(FunktorConfIdParams::class) {
+        docs {
+            name = "Get attendee by ID"
+        }.codeGen {
+            funcName = "getAttendee"
+        }.handle { params ->
+            val attendee = services.attendeesRepo.findById(params.id)
+                ?: return@handle ApiResponse.notFound()
+
+            ApiResponse.ok(attendee.asApiModel())
+        }
+    }
+}
+
+/**
+ * Super-user conference writes (create / update / delete events, speakers, attendees).
+ * Floor: `isSuperUser()`.
+ */
+class FunktorConfAdminApi(
+    private val services: FunktorConfServices,
+) : ApiRoutes("funktor-conf-admin", defaultAuth = { isSuperUser() }) {
+
     val createEvent = FunktorConfApiClient.CreateEvent.mount {
         docs {
             name = "Create a new event"
         }.codeGen {
             funcName = "createEvent"
-        }.authorize {
-            isSuperUser()
         }.handle { body ->
             val event = services.eventsRepo.insert(
                 New(
@@ -77,13 +128,11 @@ class FunktorConfApi(
         }
     }
 
-    val updateEvent = FunktorConfApiClient.UpdateEvent.mount(IdParams::class) {
+    val updateEvent = FunktorConfApiClient.UpdateEvent.mount(FunktorConfIdParams::class) {
         docs {
             name = "Update an event"
         }.codeGen {
             funcName = "updateEvent"
-        }.authorize {
-            isSuperUser()
         }.handle { params, body ->
             val existing = services.eventsRepo.findById(params.id)
                 ?: return@handle ApiResponse.notFound()
@@ -104,13 +153,11 @@ class FunktorConfApi(
         }
     }
 
-    val deleteEvent = FunktorConfApiClient.DeleteEvent.mount(IdParams::class) {
+    val deleteEvent = FunktorConfApiClient.DeleteEvent.mount(FunktorConfIdParams::class) {
         docs {
             name = "Delete an event"
         }.codeGen {
             funcName = "deleteEvent"
-        }.authorize {
-            isSuperUser()
         }.handle { params ->
             val existing = services.eventsRepo.findById(params.id)
                 ?: return@handle ApiResponse.notFound()
@@ -120,45 +167,11 @@ class FunktorConfApi(
         }
     }
 
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //  Speakers
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    val listSpeakers = FunktorConfApiClient.ListSpeakers.mount {
-        docs {
-            name = "List all speakers"
-        }.codeGen {
-            funcName = "listSpeakers"
-        }.authorize {
-            public()
-        }.handle {
-            val speakers = services.speakersRepo.findAll().map { it.asApiModel() }
-            ApiResponse.ok(speakers)
-        }
-    }
-
-    val getSpeaker = FunktorConfApiClient.GetSpeaker.mount(IdParams::class) {
-        docs {
-            name = "Get speaker by ID"
-        }.codeGen {
-            funcName = "getSpeaker"
-        }.authorize {
-            public()
-        }.handle { params ->
-            val speaker = services.speakersRepo.findById(params.id)
-                ?: return@handle ApiResponse.notFound()
-
-            ApiResponse.ok(speaker.asApiModel())
-        }
-    }
-
     val createSpeaker = FunktorConfApiClient.CreateSpeaker.mount {
         docs {
             name = "Create a new speaker"
         }.codeGen {
             funcName = "createSpeaker"
-        }.authorize {
-            isSuperUser()
         }.handle { body ->
             val speaker = services.speakersRepo.insert(
                 New(
@@ -175,13 +188,11 @@ class FunktorConfApi(
         }
     }
 
-    val updateSpeaker = FunktorConfApiClient.UpdateSpeaker.mount(IdParams::class) {
+    val updateSpeaker = FunktorConfApiClient.UpdateSpeaker.mount(FunktorConfIdParams::class) {
         docs {
             name = "Update a speaker"
         }.codeGen {
             funcName = "updateSpeaker"
-        }.authorize {
-            isSuperUser()
         }.handle { params, body ->
             val existing = services.speakersRepo.findById(params.id)
                 ?: return@handle ApiResponse.notFound()
@@ -201,13 +212,11 @@ class FunktorConfApi(
         }
     }
 
-    val deleteSpeaker = FunktorConfApiClient.DeleteSpeaker.mount(IdParams::class) {
+    val deleteSpeaker = FunktorConfApiClient.DeleteSpeaker.mount(FunktorConfIdParams::class) {
         docs {
             name = "Delete a speaker"
         }.codeGen {
             funcName = "deleteSpeaker"
-        }.authorize {
-            isSuperUser()
         }.handle { params ->
             val existing = services.speakersRepo.findById(params.id)
                 ?: return@handle ApiResponse.notFound()
@@ -217,45 +226,11 @@ class FunktorConfApi(
         }
     }
 
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //  Attendees
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    val listAttendees = FunktorConfApiClient.ListAttendees.mount {
-        docs {
-            name = "List all attendees"
-        }.codeGen {
-            funcName = "listAttendees"
-        }.authorize {
-            public()
-        }.handle {
-            val attendees = services.attendeesRepo.findAll().toList().map { it.asApiModel() }
-            ApiResponse.ok(attendees)
-        }
-    }
-
-    val getAttendee = FunktorConfApiClient.GetAttendee.mount(IdParams::class) {
-        docs {
-            name = "Get attendee by ID"
-        }.codeGen {
-            funcName = "getAttendee"
-        }.authorize {
-            public()
-        }.handle { params ->
-            val attendee = services.attendeesRepo.findById(params.id)
-                ?: return@handle ApiResponse.notFound()
-
-            ApiResponse.ok(attendee.asApiModel())
-        }
-    }
-
     val createAttendee = FunktorConfApiClient.CreateAttendee.mount {
         docs {
             name = "Create a new attendee"
         }.codeGen {
             funcName = "createAttendee"
-        }.authorize {
-            isSuperUser()
         }.handle { body ->
             val attendee = services.attendeesRepo.insert(
                 New(
@@ -271,13 +246,11 @@ class FunktorConfApi(
         }
     }
 
-    val updateAttendee = FunktorConfApiClient.UpdateAttendee.mount(IdParams::class) {
+    val updateAttendee = FunktorConfApiClient.UpdateAttendee.mount(FunktorConfIdParams::class) {
         docs {
             name = "Update an attendee"
         }.codeGen {
             funcName = "updateAttendee"
-        }.authorize {
-            isSuperUser()
         }.handle { params, body ->
             val existing = services.attendeesRepo.findById(params.id)
                 ?: return@handle ApiResponse.notFound()
@@ -296,13 +269,11 @@ class FunktorConfApi(
         }
     }
 
-    val deleteAttendee = FunktorConfApiClient.DeleteAttendee.mount(IdParams::class) {
+    val deleteAttendee = FunktorConfApiClient.DeleteAttendee.mount(FunktorConfIdParams::class) {
         docs {
             name = "Delete an attendee"
         }.codeGen {
             funcName = "deleteAttendee"
-        }.authorize {
-            isSuperUser()
         }.handle { params ->
             val existing = services.attendeesRepo.findById(params.id)
                 ?: return@handle ApiResponse.notFound()

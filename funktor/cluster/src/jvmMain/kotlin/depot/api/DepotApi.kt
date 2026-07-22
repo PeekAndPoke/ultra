@@ -8,7 +8,7 @@ import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 
-class DepotApi : ApiRoutes("depot") {
+class DepotApi : ApiRoutes("depot", defaultAuth = { isSuperUser() }) {
 
     data class BrowseParam(
         val repo: String,
@@ -20,8 +20,6 @@ class DepotApi : ApiRoutes("depot") {
             name = "List repositories"
         }.codeGen {
             funcName = "listRepositories"
-        }.authorize {
-            isSuperUser()
         }.handle {
             val result = cluster.depot.getRepos()
 
@@ -36,8 +34,6 @@ class DepotApi : ApiRoutes("depot") {
             name = "Browse"
         }.codeGen {
             funcName = "browse"
-        }.authorize {
-            isSuperUser()
         }.handle { params ->
 
             val repository = cluster.depot.getRepo(params.repo)

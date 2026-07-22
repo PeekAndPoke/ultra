@@ -12,7 +12,7 @@ import io.peekandpoke.funktor.saas.model.OrgModel
 import io.peekandpoke.ultra.remote.ApiResponse
 
 /** Super-user CRUD endpoints for organisations. */
-class OrgsApi : ApiRoutes("orgs") {
+class OrgsApi : ApiRoutes("orgs", defaultAuth = { isSuperUser() }) {
 
     data class IdParam(val id: String)
 
@@ -21,8 +21,6 @@ class OrgsApi : ApiRoutes("orgs") {
             name = "List organisations"
         }.codeGen {
             funcName = "list"
-        }.authorize {
-            isSuperUser()
         }.handle {
             ApiResponse.ok(funktorSaas.findAll().map { it.asApiModel() })
         }
@@ -33,8 +31,6 @@ class OrgsApi : ApiRoutes("orgs") {
             name = "Get organisation"
         }.codeGen {
             funcName = "get"
-        }.authorize {
-            isSuperUser()
         }.handle { params ->
             val found = funktorSaas.findById(params.id)
 
@@ -47,8 +43,6 @@ class OrgsApi : ApiRoutes("orgs") {
             name = "Create organisation"
         }.codeGen {
             funcName = "create"
-        }.authorize {
-            isSuperUser()
         }.handle { body ->
             val slug = Slugs.normalize(body.slug)
             val slugError = Slugs.validationError(slug)
@@ -85,8 +79,6 @@ class OrgsApi : ApiRoutes("orgs") {
             name = "Update organisation"
         }.codeGen {
             funcName = "update"
-        }.authorize {
-            isSuperUser()
         }.handle { params, body ->
             val existing = funktorSaas.findById(params.id)
             val branchError = validateBranches(body.branches)

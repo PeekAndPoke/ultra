@@ -20,7 +20,7 @@ import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.map
 
-class BackgroundJobsApi : ApiRoutes("background-jobs") {
+class BackgroundJobsApi : ApiRoutes("background-jobs", defaultAuth = { isSuperUser() }) {
 
     data class PagingParam(
         val page: Int = 1,
@@ -36,8 +36,6 @@ class BackgroundJobsApi : ApiRoutes("background-jobs") {
             name = "Lists queued jobs"
         }.codeGen {
             funcName = "listQueued"
-        }.authorize {
-            isSuperUser()
         }.handle { params ->
             val result = cluster.backgroundJobs.listQueuedJobs(page = params.page, epp = params.epp)
 
@@ -57,8 +55,6 @@ class BackgroundJobsApi : ApiRoutes("background-jobs") {
             name = "Get queued job"
         }.codeGen {
             funcName = "getQueued"
-        }.authorize {
-            isSuperUser()
         }.handle { params ->
             val result = cluster.backgroundJobs.getQueuedJob(id = params.id)
 
@@ -73,8 +69,6 @@ class BackgroundJobsApi : ApiRoutes("background-jobs") {
             name = "List archived jobs"
         }.codeGen {
             funcName = "listArchived"
-        }.authorize {
-            isSuperUser()
         }.handle { params ->
             val result = cluster.backgroundJobs
                 .listArchivedJobs(page = params.page, epp = params.epp)
@@ -95,8 +89,6 @@ class BackgroundJobsApi : ApiRoutes("background-jobs") {
             name = "Get archived job"
         }.codeGen {
             funcName = "getArchived"
-        }.authorize {
-            isSuperUser()
         }.handle { params ->
             val result = cluster.backgroundJobs.getArchivedJob(id = params.id)
 

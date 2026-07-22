@@ -44,11 +44,14 @@ class ValidateRoutesOnAppStarting(
                     } catch (e: InvalidRouteParamsException) {
                         errors.add(e.message ?: "Unknown route validation error")
                     }
+                    val at = "Route '${route.method.value} ${route.pattern.pattern}'"
+                    // An empty chain serves PUBLIC — post-floor it can never happen; a served route
+                    // with no rules means the floor was bypassed. Fail closed.
+                    if (route.authRules.isEmpty()) {
+                        errors.add("$at has no auth rules — the group floor was not applied")
+                    }
                     try {
-                        validateChain(
-                            "Route '${route.method.value} ${route.pattern.pattern}' auth chain",
-                            route.authRules,
-                        )
+                        validateChain("$at auth chain", route.authRules)
                     } catch (e: IllegalStateException) {
                         errors.add(e.message ?: "Unknown auth-rule validation error")
                     }

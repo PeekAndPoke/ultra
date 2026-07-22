@@ -17,15 +17,13 @@ import java.lang.management.ManagementFactory
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
-class IntrospectionApi : ApiRoutes("introspection") {
+class IntrospectionApi : ApiRoutes("introspection", defaultAuth = { isSuperUser() }) {
 
     val getLifecycleHooks = IntrospectionApiClient.GetLifecycleHooks.mount {
         docs {
             name = "List lifecycle hooks"
         }.codeGen {
             funcName = "getLifecycleHooks"
-        }.authorize {
-            isSuperUser()
         }.handle {
             val hooks = call.kontainer.getOrNull(AppLifeCycleHooks::class)
 
@@ -62,8 +60,6 @@ class IntrospectionApi : ApiRoutes("introspection") {
             name = "Get sanitized config"
         }.codeGen {
             funcName = "getConfigInfo"
-        }.authorize {
-            isSuperUser()
         }.handle {
             val config = appConfig
 
@@ -84,8 +80,6 @@ class IntrospectionApi : ApiRoutes("introspection") {
             name = "List CLI commands"
         }.codeGen {
             funcName = "getCliCommands"
-        }.authorize {
-            isSuperUser()
         }.handle {
             val result = cliServices.commands
                 .sortedBy { it.commandName }
@@ -107,8 +101,6 @@ class IntrospectionApi : ApiRoutes("introspection") {
             name = "List fixture loaders"
         }.codeGen {
             funcName = "getFixtures"
-        }.authorize {
-            isSuperUser()
         }.handle {
             val installer = call.kontainer.getOrNull(FixtureInstaller::class)
             val loaders = installer?.getLoaders() ?: emptyList()
@@ -129,8 +121,6 @@ class IntrospectionApi : ApiRoutes("introspection") {
             name = "List registered repairs"
         }.codeGen {
             funcName = "getRepairs"
-        }.authorize {
-            isSuperUser()
         }.handle {
             val result = repairMan.repairs.map { RepairInfo(className = it::class.simpleName ?: "?") }
 
@@ -143,8 +133,6 @@ class IntrospectionApi : ApiRoutes("introspection") {
             name = "List all API endpoints"
         }.codeGen {
             funcName = "getAllEndpoints"
-        }.authorize {
-            isSuperUser()
         }.handle {
             val features = call.kontainer.getAll(ApiFeature::class)
 
@@ -171,8 +159,6 @@ class IntrospectionApi : ApiRoutes("introspection") {
             name = "List auth realms"
         }.codeGen {
             funcName = "getAuthRealms"
-        }.authorize {
-            isSuperUser()
         }.handle {
             val realms = funktorAuth.realms.map { realm ->
                 AuthRealmInfo(
@@ -198,8 +184,6 @@ class IntrospectionApi : ApiRoutes("introspection") {
             name = "Validate password against policy"
         }.codeGen {
             funcName = "validatePassword"
-        }.authorize {
-            isSuperUser()
         }.handle { body ->
             val realm = funktorAuth.realms.firstOrNull()
             val policy = realm?.passwordPolicy
@@ -220,8 +204,6 @@ class IntrospectionApi : ApiRoutes("introspection") {
             name = "Get app lifecycle info"
         }.codeGen {
             funcName = "getAppLifecycle"
-        }.authorize {
-            isSuperUser()
         }.handle {
             val mxBean = ManagementFactory.getRuntimeMXBean()
             val startTime = Instant.ofEpochMilli(mxBean.startTime)
@@ -242,8 +224,6 @@ class IntrospectionApi : ApiRoutes("introspection") {
             name = "API Access Matrix"
         }.codeGen {
             funcName = "getApiAccessMatrix"
-        }.authorize {
-            isSuperUser()
         }.handle {
             val descriptor = call.kontainer.get(ApiAccessDescriptor::class)
 

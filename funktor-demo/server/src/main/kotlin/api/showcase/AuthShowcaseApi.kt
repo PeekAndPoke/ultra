@@ -8,15 +8,13 @@ import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 
-class AuthShowcaseApi : ApiRoutes("showcase-auth") {
+class AuthShowcaseApi : ApiRoutes("showcase-auth", defaultAuth = { public() }) {
 
     val getAuthRuleChecks = ShowcaseApiClient.GetAuthRuleChecks.mount {
         docs {
             name = "Check authorization rules for current user"
         }.codeGen {
             funcName = "getAuthRuleChecks"
-        }.authorize {
-            public()
         }.handle {
             val currentUser = try {
                 user

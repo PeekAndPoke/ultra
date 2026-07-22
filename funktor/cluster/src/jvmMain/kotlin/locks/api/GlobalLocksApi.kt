@@ -10,15 +10,13 @@ import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.value
 
-class GlobalLocksApi : ApiRoutes("global-locks") {
+class GlobalLocksApi : ApiRoutes("global-locks", defaultAuth = { isSuperUser() }) {
 
     val listServerBeacons = GlobalLocksApiClient.ListServerBeacons.mount {
         docs {
             name = "List server beacons"
         }.codeGen {
             funcName = "listServerBeacons"
-        }.authorize {
-            isSuperUser()
         }.handle {
             val result = cluster.locks.beacons.list()
 
@@ -41,8 +39,6 @@ class GlobalLocksApi : ApiRoutes("global-locks") {
             name = "List global locks"
         }.codeGen {
             funcName = "listGlobalLocks"
-        }.authorize {
-            isSuperUser()
         }.handle {
 
             val result = cluster.locks.global.list()

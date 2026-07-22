@@ -1,6 +1,27 @@
 # Mandatory defaultAuthRule floor on ApiRoutes — structural default-deny
 
-**Status:** TODO (designed + agreed 2026-07-22) — depends on `20260722-authorize-rule-builder.md`
+**Status:** DONE (2026-07-22) — review loop terminated on round 3 (zero confirmed findings across
+all three reviewers). Mechanism + full 19→23-group sweep; all rounds' findings fixed; backend suites
+green. Depends on `20260722-authorize-rule-builder.md` (DONE).
+
+## Review record (review LOOP, 2026-07-22, 3× Opus per round)
+
+- **Round 1:** security+impl found the SAME MEDIUM (floor-presence was disciplinary: public
+  `addRoute` + empty chain = served public). Fixed structurally — `addRoute` is now the single
+  `@PublishedApi internal` floor-applying choke point (non-empty + whole-chain validation);
+  mount/route no longer pre-apply the floor; boot validator got a non-empty check. Domain MEDIUM:
+  realm-scoping flag was OrgsApi-only → broadened to all 10 framework `{ isSuperUser() }` groups +
+  recorded the missing app-strengthening seam. + 3 LOWs (FQCN/imports, distinct admin group names,
+  floor-combinator tests).
+- **Round 2:** security ZERO; domain 1 LOW (doc "6×"→"7×"); impl 1 LOW (`validateOrThrow`
+  throw/aggregation coverage lost in the R1 spec rewrite → restored via the converter path since
+  the auth path is now unreachable-by-construction) + 1 INFO (`java.util.Base64` FQCN). All fixed.
+- **Round 3:** impl, domain, security ALL ZERO — "the design is right; the loop should terminate
+  here." Loop terminated.
+
+Deferred (recorded, not part-2 blockers): the framework `{ isSuperUser() }` groups remain
+cross-realm-reachable (byte-identical to pre-floor; no NEW exposure) — per-group realm-scoping +
+an app-level floor-strengthening seam are owned by `20260719-cross-realm-authz-and-tests.md`.
 **Plan:** part 2 of the auth-hardening quartet
 **Security-critical:** YES — this decides the minimal auth of every API endpoint in the framework.
 
@@ -88,6 +109,57 @@ currently implicit. Known groups to sweep (complete during implementation with a
 - [ ] Unit: seed replay per route; strengthening appends; no weakening path exists.
 - [ ] e2e: a route with no per-route authorize is enforced at the floor (401/403 matrix).
 - [ ] Boot: missing/empty floor impossible (compile or boot failure, per part-1 decision).
+
+## Implementation notes (2026-07-22)
+
+- **Mechanism:** `FloorAuthRuleBuilder` (`funktor/rest/.../auth/`) — a RESTRICTED builder exposing
+  only caller-only factories (no `forCall`, no `appendRule`), so the floor is structurally phase-1
+  and type-agnostic (materialized as `List<AuthRule<Any?, Any?>>`, cast per route). `ApiRoutes`
+  gets a mandatory `defaultAuth` ctor param, materialized+validated once (`build(name)` → non-empty
+  + `validateChain`). `ApiRoute.withFloor(floor)` (abstract, covariant overrides) PREPENDS the
+  floor; injected in all 7 `mount` overloads AND the low-level `route {}` path (verified: 131
+  routes all use `.mount`, zero use `route {}` today, but both are covered). Reuses part-1's
+  whole-chain `validateChain` at boot, so a public-floored group + a route adding a restrictive
+  rule is a boot error.
+- **Audience decisions from the sweep:**
+  - 15 uniform groups → floor + removed the now-redundant per-route `authorize` (33 blocks in the
+    framework, ~8 in demo). Framework: OrgsApi, IntrospectionApi, LoggingApi, 7× cluster APIs →
+    `{ isSuperUser() }`. Demo showcase reads → `{ public() }`; OperatorApi →
+    `{ isSuperUser(); forUserType(OperatorUser) }`.
+  - **4 mixed groups SPLIT by audience** (user decision 2026-07-22, "honor hard floor"): `AuthApi`
+    → `AuthApi` (`{ public() }`, sign-in/up/recover/select-org) + `AuthUserApi`
+    (`{ authenticated() }`, set-password/refresh/my-api-access) — both under `AuthApiFeature`;
+    `MessagingShowcaseApi`/`ClusterShowcaseApi`/`FunktorConfApi` each split into a public reads
+    group + a super-user `*AdminApi`/`*AdminShowcaseApi` writes group. `authenticated()` is the
+    right cross-realm floor for the self-service auth routes (any logged-in user, realm in token).
+  - **Framework `{ isSuperUser() }` groups — realm-scoping FLAGGED, not guessed (broadened per R1
+    domain review):** OrgsApi AND IntrospectionApi, LoggingApi, and the 7 cluster APIs are all
+    floored `{ isSuperUser() }` — realm-agnostic. Since all realms share one JWT key, an
+    admin-realm super-user can reach every such surface cross-realm (same class as the part-1 HIGH;
+    IntrospectionApi is arguably the higher-value target). Behavior is byte-identical to the
+    pre-floor per-route `isSuperUser()`, and framework code genuinely cannot reference an app
+    realm's `USER_TYPE` — so this is a documented deployment decision, not a code defect. TWO gaps
+    to resolve (cross-ref `20260719-cross-realm-authz-and-tests.md`): (1) decide per framework group
+    whether it must be realm-scoped; (2) there is currently **no seam** for a mounting app to add
+    `forUserType` to a framework-owned group's floor (per-route `authorize` can only strengthen
+    within the group's own declarations, and the floor is a hard ctor seed) — either add such a
+    seam or adopt an explicit "framework admin APIs assume a single super-user-minting realm"
+    deployment contract.
+
+## Structural hardening (R1 security + impl finding, fixed)
+
+Both reviewers found: floor-PRESENCE rested on discipline (every mount path remembering `withFloor`),
+and `addRoute` was a public path that could register a route with an empty chain → served PUBLIC.
+Fixed by making **`addRoute` the single, `@PublishedApi internal` choke point** that applies the
+floor itself (`route.withFloor(floorRules)`), asserts the chain is **non-empty** (an empty chain
+serves public — now impossible for a registered route), then runs the whole-chain `validateChain`.
+`mount`/`route{}` no longer apply the floor — they only build the route and hand it to `addRoute`.
+The boot validator (`ValidateRoutesOnAppStarting`) gained the same non-empty check as defense-in-
+depth. Floor-presence is now structural: a route cannot be registered without its floor.
+
+Split-group `name`s made distinct for docs-matrix clarity (`showcase-cluster-admin`,
+`showcase-messaging-admin`, `funktor-conf-admin`); AuthApi's two groups keep `"login"` (one logical
+login API split by auth level). Names are display-only (routing is by URI), so this is cosmetic.
 
 ## Cross-references
 

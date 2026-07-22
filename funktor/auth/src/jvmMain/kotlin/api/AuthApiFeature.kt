@@ -17,7 +17,11 @@ class AuthApiFeature : ApiFeature {
 
     val auth = AuthApi()
 
+    /** The authenticated self-service routes (set-password, refresh, my-api-access). */
+    val authUser = AuthUserApi()
+
     override fun getRouteGroups(): List<ApiRoutes> = listOf(
         auth,
+        authUser,
     )
 }

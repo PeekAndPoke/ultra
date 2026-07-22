@@ -8,15 +8,13 @@ import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.VaultModels
 
-class VaultApi : ApiRoutes("vault") {
+class VaultApi : ApiRoutes("vault", defaultAuth = { isSuperUser() }) {
 
     val listRepositories = VaultApiClient.ListRepositories.mount {
         docs {
             name = "List repositories"
         }.codeGen {
             funcName = "listRepositories"
-        }.authorize {
-            isSuperUser()
         }.handle {
             val repositories = database.getRepositories()
                 .sortedWith(compareBy({ it.connection }, { it.name }))

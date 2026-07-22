@@ -18,15 +18,24 @@ import io.peekandpoke.ultra.remote.ApiResponse
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-class AuthApi : ApiRoutes("login") {
+/** Slows a request down by a random delay — evens the timing between hit/miss on public auth routes. */
+internal suspend fun letTheBotsWait() {
+    delay(Random.nextLong(250, 500))
+}
+
+/**
+ * The PUBLIC auth endpoints — reachable by anonymous callers (sign-in, sign-up, account recovery,
+ * org selection). The credential each carries (password, single-use token) IS the authorization,
+ * so the whole group floors `public()`. The authenticated self-service endpoints live in the
+ * separate [AuthUserApi] group (an append-only floor cannot mix `public()` with `authenticated()`).
+ */
+class AuthApi : ApiRoutes("login", defaultAuth = { public() }) {
 
     val getRealm = AuthApiClient.GetRealm.mount(RealmParam::class) {
         docs {
             name = "Get realm"
         }.codeGen {
             funcName = "getRealm"
-        }.authorize {
-            public()
         }.handle { params ->
             // Let the bots wait a bit
             val realm = funktorAuth.getRealmOrNull(params.realm)
@@ -42,8 +51,6 @@ class AuthApi : ApiRoutes("login") {
             name = "Sign in"
         }.codeGen {
             funcName = "signIn"
-        }.authorize {
-            public()
         }.handle { params, body ->
             // Let the bots wait a bit
             letTheBotsWait()
@@ -64,10 +71,8 @@ class AuthApi : ApiRoutes("login") {
             name = "Select organisation"
         }.codeGen {
             funcName = "selectOrg"
-        }.authorize {
-            // The single-use selection token is the credential here.
-            public()
         }.handle { params, body ->
+            // The single-use selection token is the credential here.
             letTheBotsWait()
 
             try {
@@ -81,40 +86,11 @@ class AuthApi : ApiRoutes("login") {
         }
     }
 
-    val setPassword = AuthApiClient.SetPassword.mount(RealmParam::class) {
-        docs {
-            name = "Set Password"
-        }.codeGen {
-            funcName = "setPassword"
-        }.authorize {
-            authenticated()
-        }.handle { params, body ->
-            // Let the bots wait a bit
-            letTheBotsWait()
-
-            // Check if the current user is able to do the update
-            if (user.record.userId != body.userId) {
-                return@handle ApiResponse.forbidden()
-            }
-
-            try {
-                funktorAuth
-                    .setPassword(params.realm, body)
-                    .let { ApiResponse.ok(it) }
-            } catch (e: AuthError) {
-                ApiResponse.badRequest(AuthSetPasswordResponse.failed)
-                    .withInfo(e.message ?: "")
-            }
-        }
-    }
-
     val signUp = AuthApiClient.SignUp.mount(RealmParam::class) {
         docs {
             name = "Sign up"
         }.codeGen {
             funcName = "signUp"
-        }.authorize {
-            public()
         }.handle { params, body ->
             letTheBotsWait()
 
@@ -134,8 +110,6 @@ class AuthApi : ApiRoutes("login") {
             name = "Activate Account"
         }.codeGen {
             funcName = "activateAccount"
-        }.authorize {
-            public()
         }.handle { params, body ->
             letTheBotsWait()
 
@@ -155,8 +129,6 @@ class AuthApi : ApiRoutes("login") {
             name = "Recover Account Init Password Reset"
         }.codeGen {
             funcName = "recoverAccountInitPasswordReset"
-        }.authorize {
-            public()
         }.handle { params, body ->
             // Let the bots wait a bit
             letTheBotsWait()
@@ -178,8 +150,6 @@ class AuthApi : ApiRoutes("login") {
                 name = "Recover Account Validate Password Reset Token"
             }.codeGen {
                 funcName = "recoverAccountValidatePasswordResetToken"
-            }.authorize {
-                public()
             }.handle { params, body ->
                 // Let the bots wait a bit
                 letTheBotsWait()
@@ -201,8 +171,6 @@ class AuthApi : ApiRoutes("login") {
                 name = "Recover Account Set Password With Token"
             }.codeGen {
                 funcName = "recoverAccountSetPasswordWithToken"
-            }.authorize {
-                public()
             }.handle { params, body ->
                 // Let the bots wait a bit
                 letTheBotsWait()
@@ -217,14 +185,45 @@ class AuthApi : ApiRoutes("login") {
                 }
             }
         }
+}
+
+/**
+ * The AUTHENTICATED self-service auth endpoints — any logged-in user managing their OWN session,
+ * regardless of realm (the realm is inside the token). The whole group floors `authenticated()`;
+ * per-route body checks (e.g. "userId matches the caller") stay in the handlers.
+ */
+class AuthUserApi : ApiRoutes("login", defaultAuth = { authenticated() }) {
+
+    val setPassword = AuthApiClient.SetPassword.mount(RealmParam::class) {
+        docs {
+            name = "Set Password"
+        }.codeGen {
+            funcName = "setPassword"
+        }.handle { params, body ->
+            // Let the bots wait a bit
+            letTheBotsWait()
+
+            // Check if the current user is able to do the update
+            if (user.record.userId != body.userId) {
+                return@handle ApiResponse.forbidden()
+            }
+
+            try {
+                funktorAuth
+                    .setPassword(params.realm, body)
+                    .let { ApiResponse.ok(it) }
+            } catch (e: AuthError) {
+                ApiResponse.badRequest(AuthSetPasswordResponse.failed)
+                    .withInfo(e.message ?: "")
+            }
+        }
+    }
 
     val refreshToken = AuthApiClient.RefreshToken.mount(RealmParam::class) {
         docs {
             name = "Refresh Token"
         }.codeGen {
             funcName = "refreshToken"
-        }.authorize {
-            authenticated()
         }.handle { params ->
             try {
                 funktorAuth
@@ -242,16 +241,10 @@ class AuthApi : ApiRoutes("login") {
             name = "My API Access"
         }.codeGen {
             funcName = "getMyApiAccess"
-        }.authorize {
-            authenticated()
         }.handle {
             val provider = call.kontainer.get(UserApiAccessProvider::class)
 
             ApiResponse.ok(provider.describeForUser(user))
         }
-    }
-
-    private suspend fun letTheBotsWait() {
-        delay(Random.nextLong(250, 500))
     }
 }

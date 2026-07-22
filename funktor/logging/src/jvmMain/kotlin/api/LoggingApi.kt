@@ -10,7 +10,7 @@ import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.log.LogLevel
 import io.peekandpoke.ultra.remote.ApiResponse
 
-class LoggingApi : ApiRoutes("logging") {
+class LoggingApi : ApiRoutes("logging", defaultAuth = { isSuperUser() }) {
 
     data class ListParam(
         val search: String = "",
@@ -35,8 +35,6 @@ class LoggingApi : ApiRoutes("logging") {
             name = "List log entries"
         }.codeGen {
             funcName = "list"
-        }.authorize {
-            isSuperUser()
         }.handle { params ->
 
             val filter = params.toFilter()
@@ -51,8 +49,6 @@ class LoggingApi : ApiRoutes("logging") {
             name = "Get log entry"
         }.codeGen {
             funcName = "get"
-        }.authorize {
-            isSuperUser()
         }.handle {
             val result = logging.logsStorage.getById(it.id)
 
@@ -65,8 +61,6 @@ class LoggingApi : ApiRoutes("logging") {
             name = "Exec bulk action"
         }.codeGen {
             funcName = "execBulkAction"
-        }.authorize {
-            isSuperUser()
         }.handle { body ->
 
             val result: LogsRequest.BulkResponse = logging.logsStorage.execBulkAction(body)
@@ -82,8 +76,6 @@ class LoggingApi : ApiRoutes("logging") {
             name = "Exec action"
         }.codeGen {
             funcName = "execAction"
-        }.authorize {
-            isSuperUser()
         }.handle { params, body ->
             val result = logging.logsStorage.execAction(params.id, body)
 

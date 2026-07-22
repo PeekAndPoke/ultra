@@ -7,7 +7,7 @@ import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 
-class WorkersApi : ApiRoutes("workers") {
+class WorkersApi : ApiRoutes("workers", defaultAuth = { isSuperUser() }) {
 
     data class WorkerParam(
         val worker: String,
@@ -18,8 +18,6 @@ class WorkersApi : ApiRoutes("workers") {
             name = "List workers"
         }.codeGen {
             funcName = "list"
-        }.authorize {
-            isSuperUser()
         }.handle {
             ApiResponse.ok(
                 cluster.workers.stats()
@@ -32,8 +30,6 @@ class WorkersApi : ApiRoutes("workers") {
             name = "Get worker"
         }.codeGen {
             funcName = "get"
-        }.authorize {
-            isSuperUser()
         }.handle { params ->
             ApiResponse.ok(
                 cluster.workers.stats(params.worker)

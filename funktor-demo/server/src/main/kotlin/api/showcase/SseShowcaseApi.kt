@@ -13,15 +13,13 @@ import java.lang.management.ManagementFactory
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
-class SseShowcaseApi : ApiRoutes("showcase-sse") {
+class SseShowcaseApi : ApiRoutes("showcase-sse", defaultAuth = { public() }) {
 
     val sseClock = ShowcaseApiClient.SseClock.mount(Unit::class) {
         docs {
             name = "SSE clock stream"
         }.codeGen {
             funcName = "sseClock"
-        }.authorize {
-            public()
         }.handle {
             while (true) {
                 val now = Instant.now()
@@ -40,8 +38,6 @@ class SseShowcaseApi : ApiRoutes("showcase-sse") {
             name = "SSE JVM metrics stream"
         }.codeGen {
             funcName = "sseMetrics"
-        }.authorize {
-            public()
         }.handle {
             val runtime = Runtime.getRuntime()
             val mxBean = ManagementFactory.getRuntimeMXBean()
