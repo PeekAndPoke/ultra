@@ -41,10 +41,9 @@ succeeds) or realm-agnostic (the operator-console cross-realm HIGH: `isSuperUser
 4. **Per-route `authorize {}` becomes OPTIONAL** — pure strengthening. A route needing only the
    floor declares nothing (today's `isSuperUser()`-on-every-route boilerplate in e.g.
    `IntrospectionApi` collapses into one seed).
-5. **Non-empty guarantee:** preferred form is the compiler-forced return on the seed initializer
-   (user decision) — subject to the factory-return-type OPEN point in part 1; if factories end up
-   Unit-returning, the guarantee is the boot-time non-empty check instead. Either way an
-   undeclared floor cannot exist.
+5. **Non-empty guarantee:** RESOLVED via part 1 (factories return Unit, block-style DSL): the
+   guarantee is the boot-time non-empty check on the seed chain — an undeclared or empty floor
+   aborts app start. (The compiler-forced-return variant died with value-style composition.)
 6. **Variance/shape:** the seed must apply to routes of any PARAMS/BODY, so it is a REPLAYABLE
    lambda over caller-only rule factories (`isSuperUser`, `forUserType`, roles/permissions —
    rules that read the caller, not the request data), replayed into each route's typed builder at

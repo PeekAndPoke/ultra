@@ -76,9 +76,11 @@ It *reads* as conjunction and *fails open*. `forAll(...)` exists only to work ar
    multi-statement block that exists today silently enforced only its last rule — under the new
    semantics it becomes stricter, i.e. latent fail-open bugs auto-heal fail-closed. Audit all
    `authorize {` blocks during migration anyway (grep; there are ~30).
-4. **Empty chain fails at mount/boot time** (interim, until the mandatory floor of
-   `20260722-apiroutes-auth-floor.md` makes emptiness impossible): a route whose chain is empty
-   aborts app start with a clear message ("declare public() explicitly").
+4. **Empty chain fails at mount/boot time**: a DECLARED `authorize {}` block that produces zero
+   rules (and any empty `forAll {}`/`forAny {}` sub-block) aborts app start with a clear message
+   ("declare public() explicitly"). NOTE the precise scope: routes that never call `authorize`
+   remain legal (and public) in THIS task — closing that gap repo-wide is exactly the mandatory
+   floor of `20260722-apiroutes-auth-floor.md`; flipping it here would front-run part 2's sweep.
 5. `public()` becomes a **typed marker rule** so later stages (floor suppression checks, docs)
    can recognize it structurally.
 
