@@ -7,7 +7,11 @@ import io.peekandpoke.funktor.core.broker.TypedRoute
 import io.peekandpoke.funktor.core.broker.UriPattern
 import io.peekandpoke.funktor.rest.auth.AuthResult
 import io.peekandpoke.funktor.rest.auth.AuthRule
+import io.peekandpoke.funktor.rest.auth.ForbiddenRule
+import io.peekandpoke.funktor.rest.auth.PublicRule
 import io.peekandpoke.funktor.rest.auth.RootAuthRuleBuilder
+import io.peekandpoke.funktor.rest.auth.flattenTopLevelAnds
+import io.peekandpoke.funktor.rest.auth.isCallerOnly
 import io.peekandpoke.ultra.common.TypedAttributes
 import io.peekandpoke.ultra.common.TypedKey
 import io.peekandpoke.ultra.reflection.TypeRef
@@ -93,6 +97,42 @@ sealed class ApiRoute<RESPONSE> {
     }
 
     /**
+     * Phase-1 evaluation (two-phase auth — see [io.peekandpoke.funktor.rest.auth.isCallerOnly]): the
+     * caller-only rules that DENY for this caller, evaluated via [AuthRule.estimate] (which needs no
+     * params). A non-empty result means the request is rejected BEFORE any param conversion runs —
+     * no pre-auth entity loads, no 404-vs-401 existence oracle. For every caller-only rule type,
+     * `estimate` and `check` agree, so this yields exactly the decision `check` would.
+     */
+    fun phase1Denials(ctx: AuthRule.EstimateCtx): List<AuthRule<*, *>> =
+        flattenTopLevelAnds(authRules).filter { it.isCallerOnly() && it.estimate(ctx).isDenied() }
+
+    /**
+     * True when the whole chain is a single bare constant rule ([PublicRule] / [ForbiddenRule]) —
+     * i.e. the route is intentionally public (or dead). The floor-applying choke point skips
+     * appending param auto-rules to such routes: a public route has no caller/org boundary to bind,
+     * and a constant must stay the SOLE rule of its chain (see the auth-rule `validateChain`).
+     *
+     * TRADE-OFF: because a public route gets no param auto-rule and phase 1 never denies it,
+     * conversion (a `findById`) runs for anonymous callers, so a public entity-param route DOES
+     * expose an existence oracle (200 vs 404) on its own entities. That is acceptable for genuinely
+     * public data — but declare `public()` on an entity-param group deliberately, never by accident.
+     */
+    fun isSoleConstantChain(): Boolean =
+        authRules.size == 1 && (authRules[0] is PublicRule<*, *> || authRules[0] is ForbiddenRule<*, *>)
+
+    /**
+     * Appends framework-computed phase-2 auto-rules after the existing chain. Called ONLY by the
+     * [io.peekandpoke.funktor.rest.ApiRoutes.addRoute] choke point, and ONLY with rules typed on the
+     * param interface they require (`ConsistentParamRule : AuthRule<ConsistentParam, *>`,
+     * `CallerScopedParamRule : AuthRule<OrgScopedParam, *>`) after `addRoute` has verified this
+     * route's PARAMS implements that interface. So the unchecked cast to this route's rule type in
+     * each override is the single place the "PARAMS is a ConsistentParam/OrgScopedParam" invariant is
+     * asserted, co-located with the detection — the rules themselves need no cast. Same unchecked-cast
+     * rationale as [withFloor].
+     */
+    abstract fun withAppendedRules(rules: List<AuthRule<*, *>>): ApiRoute<RESPONSE>
+
+    /**
      * Plain route with input params or input body
      */
     data class Plain<RESPONSE>(
@@ -110,11 +150,15 @@ sealed class ApiRoute<RESPONSE> {
         override val pattern get() = route.pattern
 
         /**
-         * Check access rules against the given context
+         * Phase-2 evaluation: the param-dependent rules ([isCallerOnly] false) that fail for this
+         * call. Caller-only rules are handled earlier by [phase1Denials], so each rule is evaluated
+         * exactly once, in its phase.
          */
-        fun checkAccess(ctx: AuthRule.CheckCtx<Unit, Unit>) = AuthResult(
-            failedRules = authRules.filter { !it.check(ctx) }
-        )
+        fun checkParamPhase(ctx: AuthRule.CheckCtx<Unit, Unit>): AuthResult<Unit, Unit> {
+            @Suppress("UNCHECKED_CAST")
+            val flat = flattenTopLevelAnds(authRules) as List<AuthRule<Unit, Unit>>
+            return AuthResult(failedRules = flat.filter { !it.isCallerOnly() && !it.check(ctx) })
+        }
 
         /**
          * Declares the route's auth rules. May be declared ONCE per route; every appended rule
@@ -132,6 +176,10 @@ sealed class ApiRoute<RESPONSE> {
         @Suppress("UNCHECKED_CAST")
         override fun withFloor(floor: List<AuthRule<*, *>>): Plain<RESPONSE> =
             copy(authRules = (floor as List<AuthRule<Unit, Unit>>) + authRules)
+
+        @Suppress("UNCHECKED_CAST")
+        override fun withAppendedRules(rules: List<AuthRule<*, *>>): Plain<RESPONSE> =
+            copy(authRules = authRules + (rules as List<AuthRule<Unit, Unit>>))
 
         /**
          * Sets a handler that returns a raw response
@@ -176,11 +224,15 @@ sealed class ApiRoute<RESPONSE> {
         override val pattern get() = route.pattern
 
         /**
-         * Check access rules against the given context
+         * Phase-2 evaluation: the param-dependent rules ([isCallerOnly] false) that fail for this
+         * call. Caller-only rules are handled earlier by [phase1Denials], so each rule is evaluated
+         * exactly once, in its phase.
          */
-        fun checkAccess(ctx: AuthRule.CheckCtx<PARAMS, Unit>) = AuthResult(
-            failedRules = authRules.filter { !it.check(ctx) }
-        )
+        fun checkParamPhase(ctx: AuthRule.CheckCtx<PARAMS, Unit>): AuthResult<PARAMS, Unit> {
+            @Suppress("UNCHECKED_CAST")
+            val flat = flattenTopLevelAnds(authRules) as List<AuthRule<PARAMS, Unit>>
+            return AuthResult(failedRules = flat.filter { !it.isCallerOnly() && !it.check(ctx) })
+        }
 
         /**
          * Declares the route's auth rules. May be declared ONCE per route; every appended rule
@@ -198,6 +250,10 @@ sealed class ApiRoute<RESPONSE> {
         @Suppress("UNCHECKED_CAST")
         override fun withFloor(floor: List<AuthRule<*, *>>): Sse<PARAMS> =
             copy(authRules = (floor as List<AuthRule<PARAMS, Unit>>) + authRules)
+
+        @Suppress("UNCHECKED_CAST")
+        override fun withAppendedRules(rules: List<AuthRule<*, *>>): Sse<PARAMS> =
+            copy(authRules = authRules + (rules as List<AuthRule<PARAMS, Unit>>))
 
         /**
          * Sets a handler that returns a raw response
@@ -239,11 +295,15 @@ sealed class ApiRoute<RESPONSE> {
         override val pattern get() = route.pattern
 
         /**
-         * Check access rules against the given context
+         * Phase-2 evaluation: the param-dependent rules ([isCallerOnly] false) that fail for this
+         * call. Caller-only rules are handled earlier by [phase1Denials], so each rule is evaluated
+         * exactly once, in its phase.
          */
-        fun checkAccess(ctx: AuthRule.CheckCtx<PARAMS, Unit>) = AuthResult(
-            failedRules = authRules.filter { !it.check(ctx) }
-        )
+        fun checkParamPhase(ctx: AuthRule.CheckCtx<PARAMS, Unit>): AuthResult<PARAMS, Unit> {
+            @Suppress("UNCHECKED_CAST")
+            val flat = flattenTopLevelAnds(authRules) as List<AuthRule<PARAMS, Unit>>
+            return AuthResult(failedRules = flat.filter { !it.isCallerOnly() && !it.check(ctx) })
+        }
 
         /**
          * Renders the route by replacing the placeholders with the given [parameters]
@@ -266,6 +326,10 @@ sealed class ApiRoute<RESPONSE> {
         @Suppress("UNCHECKED_CAST")
         override fun withFloor(floor: List<AuthRule<*, *>>): WithParams<PARAMS, RESPONSE> =
             copy(authRules = (floor as List<AuthRule<PARAMS, Unit>>) + authRules)
+
+        @Suppress("UNCHECKED_CAST")
+        override fun withAppendedRules(rules: List<AuthRule<*, *>>): WithParams<PARAMS, RESPONSE> =
+            copy(authRules = authRules + (rules as List<AuthRule<PARAMS, Unit>>))
 
         /**
          * Sets a handler that returns a raw response
@@ -310,11 +374,15 @@ sealed class ApiRoute<RESPONSE> {
         override val pattern get() = route.pattern
 
         /**
-         * Check access rules against the given context
+         * Phase-2 evaluation: the param-dependent rules ([isCallerOnly] false) that fail for this
+         * call. Caller-only rules are handled earlier by [phase1Denials], so each rule is evaluated
+         * exactly once, in its phase.
          */
-        fun checkAccess(ctx: AuthRule.CheckCtx<Unit, BODY>) = AuthResult(
-            failedRules = authRules.filter { !it.check(ctx) }
-        )
+        fun checkParamPhase(ctx: AuthRule.CheckCtx<Unit, BODY>): AuthResult<Unit, BODY> {
+            @Suppress("UNCHECKED_CAST")
+            val flat = flattenTopLevelAnds(authRules) as List<AuthRule<Unit, BODY>>
+            return AuthResult(failedRules = flat.filter { !it.isCallerOnly() && !it.check(ctx) })
+        }
 
         /**
          * Declares the route's auth rules. May be declared ONCE per route; every appended rule
@@ -332,6 +400,10 @@ sealed class ApiRoute<RESPONSE> {
         @Suppress("UNCHECKED_CAST")
         override fun withFloor(floor: List<AuthRule<*, *>>): WithBody<BODY, RESPONSE> =
             copy(authRules = (floor as List<AuthRule<Unit, BODY>>) + authRules)
+
+        @Suppress("UNCHECKED_CAST")
+        override fun withAppendedRules(rules: List<AuthRule<*, *>>): WithBody<BODY, RESPONSE> =
+            copy(authRules = authRules + (rules as List<AuthRule<Unit, BODY>>))
 
         /**
          * Sets a handler that returns an ApiResponse with data of type [RESPONSE]
@@ -376,11 +448,15 @@ sealed class ApiRoute<RESPONSE> {
         override val pattern get() = route.pattern
 
         /**
-         * Check access rules against the given context
+         * Phase-2 evaluation: the param-dependent rules ([isCallerOnly] false) that fail for this
+         * call. Caller-only rules are handled earlier by [phase1Denials], so each rule is evaluated
+         * exactly once, in its phase.
          */
-        fun checkAccess(ctx: AuthRule.CheckCtx<PARAMS, BODY>) = AuthResult(
-            failedRules = authRules.filter { !it.check(ctx) }
-        )
+        fun checkParamPhase(ctx: AuthRule.CheckCtx<PARAMS, BODY>): AuthResult<PARAMS, BODY> {
+            @Suppress("UNCHECKED_CAST")
+            val flat = flattenTopLevelAnds(authRules) as List<AuthRule<PARAMS, BODY>>
+            return AuthResult(failedRules = flat.filter { !it.isCallerOnly() && !it.check(ctx) })
+        }
 
         /**
          * Declares the route's auth rules. May be declared ONCE per route; every appended rule
@@ -398,6 +474,10 @@ sealed class ApiRoute<RESPONSE> {
         @Suppress("UNCHECKED_CAST")
         override fun withFloor(floor: List<AuthRule<*, *>>): WithBodyAndParams<PARAMS, BODY, RESPONSE> =
             copy(authRules = (floor as List<AuthRule<PARAMS, BODY>>) + authRules)
+
+        @Suppress("UNCHECKED_CAST")
+        override fun withAppendedRules(rules: List<AuthRule<*, *>>): WithBodyAndParams<PARAMS, BODY, RESPONSE> =
+            copy(authRules = authRules + (rules as List<AuthRule<PARAMS, BODY>>))
 
         /**
          * Sets a handler that returns an ApiResponse with data of type [RESPONSE]

@@ -5,11 +5,15 @@ import io.ktor.http.HttpMethod.Companion.Delete
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.HttpMethod.Companion.Put
+import io.peekandpoke.funktor.core.broker.ConsistentParam
+import io.peekandpoke.funktor.core.broker.OrgScopedParam
 import io.peekandpoke.funktor.core.broker.Routes
 import io.peekandpoke.funktor.core.broker.TypedRoute
 import io.peekandpoke.funktor.core.broker.UriPattern
 import io.peekandpoke.funktor.rest.auth.AuthRule
 import io.peekandpoke.funktor.rest.auth.AuthRuleBuilder.Companion.validateChain
+import io.peekandpoke.funktor.rest.auth.CallerScopedParamRule
+import io.peekandpoke.funktor.rest.auth.ConsistentParamRule
 import io.peekandpoke.funktor.rest.auth.FloorAuthRuleBuilder
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.remote.ApiResponse
@@ -187,7 +191,7 @@ abstract class ApiRoutes(
      * The SINGLE registration choke point. Applies the group [floorRules] itself (so a route can
      * NEVER be registered without its floor — floor-presence is structural, not disciplinary),
      * then validates the whole combined chain:
-     * - **non-empty** — an empty chain would serve PUBLIC (`checkAccess` grants when no rule fails);
+     * - **non-empty** — an empty chain would serve PUBLIC (the dispatch grants when no rule fails);
      *   post-floor every route has ≥1 rule, so this only ever fires if the floor was somehow
      *   bypassed;
      * - **constant-soleness / no empty composites** (`validateChain`) — a floor/route conflict
@@ -200,18 +204,47 @@ abstract class ApiRoutes(
     internal fun <RESPONSE, ROUTE : ApiRoute<RESPONSE>> addRoute(route: ROUTE): ROUTE {
         @Suppress("UNCHECKED_CAST")
         val floored = route.withFloor(floorRules) as ROUTE
-        val at = "Route '${floored.method.value} ${floored.pattern.pattern}'"
 
-        check(floored.authRules.isNotEmpty()) {
+        // Append the interface-triggered phase-2 auto-rules (referential consistency + caller-org
+        // binding). Structural, never author-declared — they cannot be forgotten.
+        val autoRules = paramAutoRules(floored)
+        @Suppress("UNCHECKED_CAST")
+        val withAuto = (if (autoRules.isEmpty()) floored else floored.withAppendedRules(autoRules)) as ROUTE
+
+        val at = "Route '${withAuto.method.value} ${withAuto.pattern.pattern}'"
+
+        check(withAuto.authRules.isNotEmpty()) {
             "$at ended up with no auth rules even though the group floor is non-empty — internal " +
                     "invariant violation (the floor must be prepended to EVERY route). A normal " +
                     "ApiRoutes group cannot cause this; if you see it, a framework registration path " +
                     "bypassed withFloor — please report it."
         }
-        validateChain("$at auth chain", floored.authRules)
+        validateChain("$at auth chain", withAuto.authRules)
 
-        allRoutes.add(floored)
-        return floored
+        allRoutes.add(withAuto)
+        return withAuto
+    }
+
+    /**
+     * The phase-2 auth rules the framework auto-appends to [route] based on its params type —
+     * [ConsistentParamRule] when the params implement [ConsistentParam], [CallerScopedParamRule]
+     * when they implement [OrgScopedParam]. Interface-triggered and structural, so a route can never
+     * be served without them.
+     *
+     * Skipped for a sole-constant (public/forbidden) chain: a public route has no caller/org
+     * boundary to bind, and a constant must remain the SOLE rule of its chain (`validateChain`).
+     * A ≥2-entity params type on a non-public route that does NOT implement [ConsistentParam] is
+     * caught at boot by `ValidateRoutesOnAppStarting`.
+     */
+    private fun paramAutoRules(route: ApiRoute<*>): List<AuthRule<*, *>> {
+        if (route.isSoleConstantChain()) return emptyList()
+
+        val paramsCls = route.typedRoute.reifiedParamsType.cls.java
+
+        return buildList {
+            if (ConsistentParam::class.java.isAssignableFrom(paramsCls)) add(ConsistentParamRule())
+            if (OrgScopedParam::class.java.isAssignableFrom(paramsCls)) add(CallerScopedParamRule())
+        }
     }
 
     @RestDsl

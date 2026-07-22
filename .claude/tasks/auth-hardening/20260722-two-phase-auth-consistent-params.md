@@ -1,6 +1,8 @@
-# Two-phase auth evaluation + ConsistentParam — no loads before auth, no cross-org param spoofing
+# Two-phase auth evaluation + org-isolation — no loads before auth, no cross-org param spoofing
 
-**Status:** TODO (designed + agreed 2026-07-22) — depends on `20260722-apiroutes-auth-floor.md`
+**Status:** IN PROGRESS (2026-07-22) — two-phase eval DONE + round-1 gate done; **reworking the
+Problem-B half** into a pluggable route-check architecture (design agreed with user 2026-07-22).
+Depends on `20260722-apiroutes-auth-floor.md`.
 **Plan:** part 3 of the auth-hardening quartet
 **Security-critical:** YES — request-data isolation (IDOR) + pre-auth resource access.
 
@@ -10,101 +12,156 @@ Same LOOP as `20260722-authorize-rule-builder.md`: full 3-agent gate → fix ALL
 → FULL re-review with fresh reviewers → repeat until a zero-findings round. One pass is not
 enough. ESCALATION: if a round shows the direction itself is wrong, stop and consult the user.
 
-## Problem A — everything is loaded before the auth checks (MUST fix; user-confirmed)
+Round 1 ran (3 Opus reviewers). Mechanism confirmed sound; two HIGH findings on the caller-binding
+half drove the rework below. A fresh **round 2** runs over the WHOLE reworked diff when this lands.
 
-`funktor/rest/src/jvmMain/kotlin/routing.kt:172-174` converts params BEFORE `checkAccess`.
-Param conversion includes `IncomingVaultConverter` (`funktor/core/.../broker/vault/vault.kt`),
-which does `repository.findById(value)` — a DB read. Consequences on any protected route with a
-`Stored<T>` param:
+## Problem A — everything is loaded before the auth checks (DONE)
 
-- **Pre-auth DB reads** for unauthenticated callers (cost + DoS amplification).
-- **Existence oracle:** unresolvable id ⇒ ktor `NotFoundException` ⇒ 404 (from
-  `IncomingConverter.kt:55-66`), while a valid id proceeds to auth ⇒ 401. An anonymous prober
-  enumerates entity ids by 404-vs-401. Latent today (no route uses Stored params yet); goes LIVE
-  with part 4's migration — therefore this task is a HARD prerequisite of part 4.
+`routing.kt` converted params (incl. `IncomingVaultConverter.findById` — a DB read) BEFORE
+`checkAccess`. Consequences on a `Stored<T>`-param route: pre-auth DB reads for unauthenticated
+callers, and a 404-vs-401 existence oracle. **Closed** by two-phase evaluation (below).
 
-## Problem B — referential consistency of multi-entity params is per-handler discipline
+## Problem B — cross-org param spoofing / referential consistency (REWORKING)
 
-`/orgs/{org}/entities/{entity}`: nothing forces the handler to verify `entity.org == org`.
-Forgetting the check = cross-org IDOR via param spoofing (consistent-looking request, foreign
-entity). The check must be structural, not remembered.
+`/orgs/{org}/entities/{entity}`: nothing forces `entity.org == org`, nor that the caller may access
+`{org}`. Forgetting either = cross-org IDOR. Must be structural, not remembered.
 
-## Design (DECIDED 2026-07-22)
+---
 
-### Two-phase rule evaluation (Problem A)
+## Design — two-phase eval (DONE) + pluggable route checks (TODO)
 
-1. **Phase 1 — caller-only rules, BEFORE param conversion.** The existing type split already
-   classifies: `PermissionsCheck` / `AccessLevelCheck` evaluate `EstimateCtx` (caller only, no
-   params). The mandatory floor (part 2) is caller-only by shape, so the floor ALWAYS runs before
-   any DB is touched. Phase-1 failure ⇒ 401/403, zero reads, nothing learned.
-2. **Param conversion second** (unchanged mechanics: concurrent per-param, not-found ⇒ 404 —
-   now only reachable by callers who passed the floor).
-3. **Phase 2 — param-dependent rules** (`CallCheck`, the auto-rules below) after conversion.
-4. **Composite classification:** an AND splits its members across phases (each member runs in its
-   natural phase); an OR containing any param-dependent member cannot be decided early ⇒ whole OR
-   is phase 2. Verify every existing rule impl classifies cleanly; document the law.
-5. **Failure semantics:** consistency/caller-binding failures (below) answer **404, byte-identical
-   to not-found** — a 403 here would be an existence oracle across orgs ("exists, just not
-   yours"). Other phase-2 rules keep their current failure shape.
+### Two-phase rule evaluation (Problem A) — DONE
 
-### ConsistentParam (Problem B)
+1. **Phase 1 — caller-only rules, BEFORE param conversion.** Classified by `isCallerOnly()`
+   (`AuthPhase.kt`): `PublicRule`/`ForbiddenRule`/`PermissionsCheck`/`AccessLevelCheck` and all-
+   caller-only composites. Evaluated via `AuthRule.estimate` (needs no params); `estimate ≡ check`
+   for every caller-only type. The mandatory floor (part 2) is caller-only, so it always gates here.
+2. **Param conversion** second (findById now only for callers past the floor).
+3. **Phase 2 — param-dependent rules** (`CallCheck`, the interface-triggered auto-rules, and the
+   injected guards below) after conversion.
+4. **Top-level AND flattening** (`flattenTopLevelAnds`): a top-level `forAll { caller; param }` is
+   split so the caller-only conjunct still gates phase 1 (realizes "an AND splits its members"; ORs
+   stay whole — not associative with the outer AND).
+5. **Failure semantics:** consistency / org-isolation failures answer **404 byte-identical to
+   not-found** (`HideFailureAsNotFound` throws the SAME `NotFoundException` a converter miss throws).
 
-6. **Interface** (place near the broker converters): `interface ConsistentParam { fun
-   isConsistent(): Boolean }` — **no default implementation** (a `= true` default would recreate
-   the silent hole; forced bodies keep review attention on the small, greppable implementations).
-   ```kotlin
-   data class MyParams(
-       val org: Stored<Organisation>,
-       val entity: Stored<Entity>,
-   ) : ConsistentParam {
-       override fun isConsistent(): Boolean = entity.value.orgId == org._key
-   }
-   ```
-7. **Auto-appended phase-2 rule** whenever `PARAMS : ConsistentParam` — appended by the
-   framework at mount, never by the author. No way to forget it.
-8. **Boot-time forcing** in `ValidateRoutesOnAppStarting` (precedent: it already validates
-   outgoing-converter compatibility per route): a param class with **≥ 2 resolved `Stored<*>` /
-   `Storable<*>` ctor fields MUST implement `ConsistentParam`** (reuse the converter's
-   type-inspection); otherwise boot fails. Trivial one-entity/no-entity params stay clean — no
-   rubber-stamp `= true` noise, and the requirement lands exactly where inconsistency is possible.
-9. **Caller-binding companion (the second half of IDOR):** `isConsistent()` checks the loaded
-   graph against itself — a foreign org's entity requested via the foreign org's own URL is
-   "consistent" yet cross-tenant. Add an org-carrying param interface (e.g. `OrgScopedParam {
-   val orgId: String }`-shaped; exact shape + module placement — `funktor/saas` knows
-   `Organisation`, the broker does not — is an implementation decision) with an auto-appended
-   phase-2 rule checking the param org against the CALLER's session (`permissions.org` /
-   `canAccessOrg`). Same trigger pattern as ConsistentParam: interface ⇒ rule, structural.
-   NOTE: this cannot live in the ctor seed (the seed is caller-only/param-agnostic) — it is
-   interface-triggered per param type, which is the precise mechanism anyway.
-10. **CSRF check item:** `IncomingConverter` validates CSRF tokens against `params.toString()`;
-    once params contain `Stored` entities the string includes entity content. Verify no
-    CSRF-protected broker route uses entity params (or fix the token basis) — rule it out, do
-    not assume it.
+### Pluggable route checks (Problem B) — the rework
 
-## Spec
+Two **extension points** replace the hard-coded checks + the org-specific auto-rules. The REST core
+stays org-agnostic; saas owns org semantics with CONCRETE types (no `Storable<*>` star projection,
+so `Storable.hasSameIdAs` is usable):
 
-- [ ] Phase-1/phase-2 evaluation in the REST dispatch (`routing.kt`): floor + caller-only rules
-      before conversion; conversion; param rules.
-- [ ] Composite phase classification implemented + documented (AND splits, OR promotes).
-- [ ] `ConsistentParam` + auto-rule; failure ⇒ 404 identical to not-found.
-- [ ] Caller-binding interface + auto-rule; failure ⇒ 404.
-- [ ] Boot validation: ≥ 2 resolved entities ⇒ interface required.
-- [ ] CSRF/toString interaction ruled out or fixed.
-- [ ] Full backend e2e suites green.
+```kotlin
+// funktor/rest — boot
+interface RouteBootCheck   { fun validate(route: ApiRoute<*>): List<String> }        // errors, empty = ok
+// funktor/rest — phase 2, per request
+interface RouteParamsGuard { fun guard(params: Any, permissions: UserPermissions): GuardVerdict }  // Pass | DenyAsNotFound
+```
+
+`ValidateRoutesOnAppStarting` becomes a thin **runner**: inject `Lazy<List<RouteBootCheck>>`, run
+each over every route, aggregate, throw one actionable `AppStartException`. The phase-2 dispatch runs
+`getAll(RouteParamsGuard)` (from the request kontainer) after `checkParamPhase`; any `DenyAsNotFound`
+→ `NotFoundException` (404).
+
+**Org-isolation lives in `funktor/saas`** (concrete `Organisation`), two separate classes:
+
+```kotlin
+// funktor/saas
+interface OrgAware      { val org: Ref<Organisation> }     // on ENTITIES (dev opt-in; review/linter enforces)
+interface OrgAwareParam { val org: Stored<Organisation> }  // on route PARAMS
+
+class OrgIsolationBootCheck : RouteBootCheck   // params resolving an OrgAware entity MUST be OrgAwareParam
+class OrgIsolationGuard     : RouteParamsGuard // caller-binding + org-consistency, DenyAsNotFound
+//   caller-binding : permissions.hasOrganisation(param.org._key)          (SELECTED session org, not accessibleOrgs)
+//   org-consistency: for each OrgAware entity field  entity.org hasSameIdAs param.org
+```
+
+### Decisions locked with user (2026-07-22)
+
+- **Two separate interfaces** (`RouteBootCheck` + `RouteParamsGuard`), and org-isolation ships as
+  **two separate classes**, not one implementing both — concerns fully separated.
+- **`ConsistentParam` = pure opt-in.** Keep the interface + its construction-appended auto-rule
+  (`ConsistentParamRule`, runs in phase 2), but **DROP the `≥2-entities` boot-forcing** and any
+  "uncovered params" auto-detection (too magic). A dev opts in; review/linter catches misses.
+- **Caller-binding binds the SELECTED org** (`hasOrganisation`), never `accessibleOrgs` (which is
+  documented "Non-authz"). Fixes round-1 finding.
+- **`OrgAware` on entities is opt-in** (the param-side forcing only fires once an entity is marked);
+  a lint/boot rule to flag org-owned entities missing `OrgAware` is **future scope** (follow-up task).
+- Migrate the boot-RESIDENT checks (converter-compat, auth-chain) onto `RouteBootCheck` now; the
+  construction-time `validateUriPattern` (param-names) moves in the follow-up (it's a behavior shift).
+
+---
+
+## Implementation plan (ordered)
+
+**A. Extension points (funktor/rest)**
+- [ ] `RouteBootCheck.kt` — the boot interface.
+- [ ] `RouteParamsGuard.kt` — the request interface + `GuardVerdict { Pass, DenyAsNotFound }`.
+
+**B. Migrate boot checks onto the runner (funktor/rest)**
+- [ ] `ConverterCompatBootCheck : RouteBootCheck` (takes `OutgoingConverter`) — wraps
+      `TypedRoute.validateConverterCompatibility`.
+- [ ] `AuthChainBootCheck : RouteBootCheck` — the empty-chain + `validateChain` checks.
+- [ ] Rewrite `ValidateRoutesOnAppStarting` as a runner injecting `Lazy<List<RouteBootCheck>>`;
+      keep the actionable aggregated `AppStartException` header + the multiline-indent formatting fix
+      (see `20260722-actionable-boot-error-messages.md`).
+- [ ] Register both checks in the rest module (`funktor/rest/.../index_jvm.kt`).
+
+**C. Request-time guard wiring (funktor/rest)**
+- [ ] `routing.kt` phase 2 (param-bearing variants only — WithParams/WithBodyAndParams/Sse): after
+      `checkParamPhase`, run `call.kontainer.getAll(RouteParamsGuard)`; `DenyAsNotFound` → throw
+      `NotFoundException`. Keep the existing `HideFailureAsNotFound`/401 handling for authRules.
+
+**D. Remove the org auto-rules + ConsistentParam forcing (funktor/rest + core)**
+- [ ] Delete `OrgScopedParam` (core `ConsistentParam.kt`) and `CallerScopedParamRule`
+      (`ParamAutoRules.kt`) and its append in `ApiRoutes.addRoute`.
+- [ ] Keep `ConsistentParam` + `ConsistentParamRule` + its opt-in append; delete
+      `consistencyForcingError` from the boot validator (no more `≥2` forcing).
+
+**E. Org-isolation (funktor/saas)**
+- [ ] `OrgAware` + `OrgAwareParam` interfaces (concrete `Ref<Organisation>` / `Stored<Organisation>`).
+- [ ] `OrgIsolationBootCheck` — reflect `route.typedRoute.reifiedParamsType` via
+      `entityRefParams()`; if any entity-ref inner type is `OrgAware` and the params type is not
+      `OrgAwareParam` → actionable error.
+- [ ] `OrgIsolationGuard` — `params as? OrgAwareParam ?: Pass`; caller-binding via
+      `hasOrganisation(param.org._key)`; org-consistency via reflected OrgAware entity fields (cache
+      the field list per params `KClass`), `entity.org hasSameIdAs param.org`; fail → `DenyAsNotFound`.
+- [ ] Register both in the saas module (`funktor/saas/.../index_jvm.kt`).
+
+**F. Tests**
+- [ ] Unit (rest): `RouteBootCheck` runner aggregation; `ConverterCompatBootCheck` +
+      `AuthChainBootCheck` still catch what the old inline checks did; `ConsistentParam` opt-in
+      (rule appended + runs, NO forcing); keep `AuthPhaseSpec` (flattening etc.).
+- [ ] Unit (saas): `OrgIsolationBootCheck.validate` (OrgAware entity w/o OrgAwareParam → error; with
+      → ok; non-org param → ok); `OrgIsolationGuard.guard` (wrong selected org → deny; foreign entity
+      org → deny; matching → pass; non-OrgAwareParam → pass/abstain).
+- [ ] e2e (funktor:all, BOTH backends): rework `ConsistentParamE2eSpec` → seed real `Organisation`s
+      (acme/globex) via `OrgsStorage`; `Widget : OrgAware(Ref<Organisation>)`; params
+      `: OrgAwareParam(Stored<Organisation>)`. Assert: anonymous → 401 identical + no read (oracle);
+      authed matching org → 200; caller selected other org (even if accessible) → 404; foreign
+      entity org spoofed into own-org URL → 404; boot-force: an OrgAware-entity route whose params
+      omit `OrgAwareParam` fails app start.
+
+**G. Docs + hygiene + gate**
+- [ ] Update `ConsistentParam.kt` KDoc (opt-in; point to saas `OrgAware` for isolation); saas
+      interface KDoc; the docs collector `20260722-docs-auth-dsl-and-floor.md`.
+- [ ] Create follow-up task: migrate `validateUriPattern` onto `RouteBootCheck` + the entity-`OrgAware`
+      linter (see Cross-references).
+- [ ] Run the FULL round-2 gate over the whole reworked diff; loop to zero findings.
 
 ## Test evidence
 
-- [ ] Unit: phase classification per rule type; composite laws.
-- [ ] e2e (AppSpec, BOTH DB backends — storage is touched): anonymous request to a protected
-      `Stored`-param route: (a) performs NO repository read (observable via a counting/spy repo
-      or insights), (b) returns identical 401 for existing and non-existing ids — the oracle test.
-- [ ] e2e: inconsistent param pair ⇒ 404 identical to not-found; consistent + authorized ⇒ 200;
-      consistent but foreign-org caller ⇒ 404 (caller-binding).
-- [ ] Boot test: two-entity param without `ConsistentParam` ⇒ app start fails.
+- [ ] Unit + saas-unit green (above).
+- [ ] e2e (AppSpec, BOTH DB backends) green (above).
+- [ ] Boot test: OrgAware-entity route without `OrgAwareParam` ⇒ app start fails (actionable).
+- [ ] Full backend suites green: `funktor:rest`, `funktor:all`, `funktor-demo:server`.
 
 ## Cross-references
 
 - Depends on parts 1+2 (`20260722-authorize-rule-builder.md`, `20260722-apiroutes-auth-floor.md`).
 - Prerequisite of part 4 (`20260722-stored-param-migration.md`) — the oracle goes live without this.
-- `20260718-redteam-saas-orgs.md` — org-IDOR scenarios this closes structurally; update the
-  red-team doc's assumptions when this lands.
+- Pairs with `20260722-actionable-boot-error-messages.md` (the runner owns the aggregated boot error;
+  fold the multiline-indent fix here).
+- FOLLOW-UP (to create): migrate construction-time `validateUriPattern` (param-names) onto
+  `RouteBootCheck`; add a lint/boot rule flagging org-owned entities missing `OrgAware`.
+- `20260718-redteam-saas-orgs.md` — org-IDOR scenarios this closes structurally; update its assumptions.
