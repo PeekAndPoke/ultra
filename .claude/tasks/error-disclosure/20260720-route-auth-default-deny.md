@@ -1,7 +1,7 @@
 # Routes without auth rules must not silently be public
 
 **Status:** TODO
-**Plan:** none — from `.claude/tasks/20260720-error-response-disclosure-audit.md` (finding 6)
+**Plan:** none — from `.claude/tasks/error-disclosure/20260720-error-response-disclosure-audit.md` (finding 6)
 **Security-critical:** yes
 
 ## Spec
@@ -325,4 +325,4 @@ locator obtainable and is enough to grep for. For SSE routes `method` is hardcod
 
 Fixes applied: ...
 
-**Red-team follow-up**: `.claude/tasks/20260720-redteam-error-disclosure.md`
+**Red-team follow-up**: `.claude/tasks/error-disclosure/20260720-redteam-error-disclosure.md`

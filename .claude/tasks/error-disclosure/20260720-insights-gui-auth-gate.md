@@ -1,7 +1,7 @@
 # Insights GUI must be authenticated and environment-gated
 
 **Status:** TODO
-**Plan:** none — from `.claude/tasks/20260720-error-response-disclosure-audit.md` (finding 2)
+**Plan:** none — from `.claude/tasks/error-disclosure/20260720-error-response-disclosure-audit.md` (finding 2)
 **Security-critical:** yes
 
 ## Spec
@@ -31,7 +31,7 @@ incident.
       question in that section must be resolved first, not just the check itself)
 - [ ] Both routes additionally refuse to serve unless the environment is recognised-development —
       written as an allow-list so unknown environments are denied (depends on
-      `.claude/tasks/20260720-env-classification-allowlist.md`; `AppConfig.ktor.isDevelopment` at
+      `.claude/tasks/error-disclosure/20260720-env-classification-allowlist.md`; `AppConfig.ktor.isDevelopment` at
       `funktor/core/src/jvmMain/kotlin/config/ktor/KtorConfig.kt:40` is already exactly this
       allow-list and is already reachable from `funktor:insights` — see below)
 - [ ] `detailsUri` / `detailsUrl` are omitted from API responses (`funktor/rest/src/jvmMain/kotlin/respond.kt:84-85`)
@@ -171,7 +171,7 @@ carries a live link to that response's own insights record.
 (Separately, `apiRespondUnauthorized`, `respond.kt:48-69`, already gates its extra `withInfo(...)`
 detail on `appConfig.ktor.isNotProduction` — the same shape of gate this task needs, just applied to
 a different field. That gate is exactly the one flagged as unsound in
-`.claude/tasks/20260720-env-classification-allowlist.md`, so don't copy its `isNotProduction` form —
+`.claude/tasks/error-disclosure/20260720-env-classification-allowlist.md`, so don't copy its `isNotProduction` form —
 use the allow-list `isDevelopment` instead, see below.)
 
 ### 4. How to actually gate a non-`ApiRoute` (the crux)
@@ -315,7 +315,7 @@ class InsightsGui(
   blocked on resolving the credential-transport design.
 - **Environment gate**: `AppConfig.ktor.isDevelopment` (`KtorConfig.kt:40`), already an allow-list
   (`isLocalDev || isTest || isQa`), fails closed on unrecognised environment strings. Do **not** use
-  `isNotProduction` (negation, unsound per `.claude/tasks/20260720-env-classification-allowlist.md`).
+  `isNotProduction` (negation, unsound per `.claude/tasks/error-disclosure/20260720-env-classification-allowlist.md`).
 - **Suppress `detailsUri`/`detailsUrl`**: in `enrichApiResponseWithInsights`
   (`respond.kt:72-88`), only populate them when the environment is development (mirrors the pattern
   already used for `apiRespondUnauthorized`'s extra detail at `respond.kt:56-66`, but on
@@ -405,4 +405,4 @@ not a hard refusal.
 
 Fixes applied: ...
 
-**Red-team follow-up**: `.claude/tasks/20260720-redteam-error-disclosure.md`
+**Red-team follow-up**: `.claude/tasks/error-disclosure/20260720-redteam-error-disclosure.md`

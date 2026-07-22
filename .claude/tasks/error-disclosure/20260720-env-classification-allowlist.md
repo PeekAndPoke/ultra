@@ -1,7 +1,7 @@
 # Environment classification must fail closed on unknown environments
 
 **Status:** TODO
-**Plan:** none — from `.claude/tasks/20260720-error-response-disclosure-audit.md` (finding 3)
+**Plan:** none — from `.claude/tasks/error-disclosure/20260720-error-response-disclosure-audit.md` (finding 3)
 **Security-critical:** yes
 
 ## Spec
@@ -74,7 +74,7 @@ ultra, monko, mutator — excluding `build/` output) for `isLocalDev|isTest|isQa
 
 | Site | Flag read | What the permissive/negative branch does | Unknown-env outcome |
 |---|---|---|---|
-| `funktor/core/src/jvmMain/kotlin/fixtures/fixtures_module.kt:16` | `isProduction` | `else` branch (i.e. `isProduction == false`) registers `SimpleFixtureInstaller` plus `InstallFixturesCliCommand` and `ListFixturesCliCommand` (`fixtures_module.kt:18-25`) | **FAIL OPEN**, and the worst instance: an unrecognised environment gets live, CLI-triggerable fixture installation — potentially data-destructive, not just a disclosure. Already tracked separately in `.claude/tasks/20260720-fixtures-env-gate.md`, which depends on this task fixing the flags it consults. |
+| `funktor/core/src/jvmMain/kotlin/fixtures/fixtures_module.kt:16` | `isProduction` | `else` branch (i.e. `isProduction == false`) registers `SimpleFixtureInstaller` plus `InstallFixturesCliCommand` and `ListFixturesCliCommand` (`fixtures_module.kt:18-25`) | **FAIL OPEN**, and the worst instance: an unrecognised environment gets live, CLI-triggerable fixture installation — potentially data-destructive, not just a disclosure. Already tracked separately in `.claude/tasks/error-disclosure/20260720-fixtures-env-gate.md`, which depends on this task fixing the flags it consults. |
 | `funktor/messaging/src/jvmMain/kotlin/senders/senders.kt:13` | `isTest` (exact-match allow-list, not negation) | `devConfig.disableEmails \|\| config.ktor.isTest` picks `NullEmailSender`; otherwise the real sender is used (`senders.kt:13-17`) | **FAIL OPEN** for real-send, but scoped: `applyDevConfig` is only invoked with a non-null `devConfig` from `config.devOverrides?.mailing` (`funktor-demo/server/src/main/kotlin/kontainer.kt:85`) — i.e. only when a config file explicitly opts into dev overrides. Risk case: a `staging` config cloned from `dev.conf` that keeps `devOverrides.mailing` but sets `environment = "staging"` would send real emails instead of nulling them, because `isTest` requires the literal string `"test"`. |
 | `funktor-demo/server/src/main/kotlin/server.kt:25` | `isTest` | `if (!config.ktor.isTest) { launchWorkers { ... } }` (`server.kt:25-30`) | Inverted risk profile: unrecognised/misspelled env → `isTest == false` → workers **do** launch. Not a disclosure issue (production is supposed to run workers), but an operational one — a genuine test environment with a typo'd `environment` value silently gets a full worker fleet instead of being suppressed. Worth a defensive test but lower severity than the fixtures/disclosure findings. |
 | `funktor/rest/src/jvmMain/kotlin/respond.kt:57` | `isNotProduction` (via non-null `appConfig`, which throws if no kontainer — `core_module.kt:55`) | `true` branch appends `"Failed auth rules: " + failedRules.joinToString(...)` to the 401 body (`respond.kt:57-65`) | **FAIL OPEN** (info disclosure): unrecognised env → `isProduction == false` → `isNotProduction == true` → auth-rule internals leak in every 401. |
@@ -249,7 +249,7 @@ recommendation already recorded in this file's original Spec section.
 **No existing test coverage at all** for the two riskiest call sites in the blast-radius table —
 confirmed by search: there is no `*fixtures*Spec*`/`*Fixtures*Test*` file and no
 `*senders*Spec*`/`*EmailSender*Spec*` file anywhere in the repo. `fixtures_module.kt:16` is owned by
-`.claude/tasks/20260720-fixtures-env-gate.md` (should add kontainer-resolution tests there, per that
+`.claude/tasks/error-disclosure/20260720-fixtures-env-gate.md` (should add kontainer-resolution tests there, per that
 task's own Test evidence section). `senders.kt:13` and `server.kt:25` have no task tracking new
 tests yet — recommend adding at least one regression test for `senders.kt`'s
 `applyDevConfig`/`isTest` interaction as part of this task's Test evidence, since it will silently
@@ -259,7 +259,7 @@ nothing currently watching it.
 ## Implementation notes
 
 Root cause shared with:
-- `.claude/tasks/20260720-fixtures-env-gate.md` (finding 4) — same inversion, different module;
+- `.claude/tasks/error-disclosure/20260720-fixtures-env-gate.md` (finding 4) — same inversion, different module;
   that task's gate should move from `isProduction` to `isDevelopment`, which only becomes trustworthy
   once this task lands (see item 2's table row for `fixtures_module.kt:16`)
 - finding 5 in the audit doc (`funktor/rest/src/jvmMain/kotlin/respond.kt:57`), which is fixed for
@@ -310,4 +310,4 @@ unilateral decisions here:
 
 Fixes applied: ...
 
-**Red-team follow-up**: `.claude/tasks/20260720-redteam-error-disclosure.md`
+**Red-team follow-up**: `.claude/tasks/error-disclosure/20260720-redteam-error-disclosure.md`

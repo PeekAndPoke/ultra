@@ -1,7 +1,7 @@
 # Fixtures must only install on recognised development environments
 
 **Status:** TODO
-**Plan:** none — from `.claude/tasks/20260720-error-response-disclosure-audit.md` (finding 4)
+**Plan:** none — from `.claude/tasks/error-disclosure/20260720-error-response-disclosure-audit.md` (finding 4)
 **Security-critical:** yes
 
 ## Spec
@@ -210,7 +210,7 @@ constructor signature).
 ## Dependency on the env-classification task — corrected
 
 The existing note here previously said this task and
-`.claude/tasks/20260720-env-classification-allowlist.md` are mutually required for soundness.
+`.claude/tasks/error-disclosure/20260720-env-classification-allowlist.md` are mutually required for soundness.
 **That is not accurate — verify at implementation time, but as read today this task is
 independent.** The other task's scope (per its own spec) is limited to `isProduction` /
 `isNotProduction` (`KtorConfig.kt:42,44`). It does **not** touch `isDevelopment`.
@@ -281,4 +281,4 @@ correctness.
 
 Fixes applied: ...
 
-**Red-team follow-up**: `.claude/tasks/20260720-redteam-error-disclosure.md`
+**Red-team follow-up**: `.claude/tasks/error-disclosure/20260720-redteam-error-disclosure.md`

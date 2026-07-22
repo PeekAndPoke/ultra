@@ -1,7 +1,7 @@
 # Fix: second-order placeholder injection in `ultra.common.Placeholders`
 
 **Status:** DONE — fixed, adversarial tests green on jvm+js+metadata (2026-07-20)
-**Plan:** prompted by the S1 review (`.claude/tasks/20260720-i18n-l10n-foundation.md` Interactions)
+**Plan:** prompted by the S1 review (`.claude/tasks/i18n/20260720-i18n-l10n-foundation.md` Interactions)
 **Security-critical:** yes (injection / information disclosure in a shared utility)
 
 ## Problem

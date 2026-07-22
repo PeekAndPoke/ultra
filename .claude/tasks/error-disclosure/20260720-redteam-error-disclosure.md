@@ -1,7 +1,7 @@
 # Red-team: error disclosure, environment gating, route auth
 
 **Status:** COLLECTED — do not execute during normal feature work
-**Origin:** `.claude/tasks/20260720-error-response-disclosure-audit.md`
+**Origin:** `.claude/tasks/error-disclosure/20260720-error-response-disclosure-audit.md`
 **Covers:** `20260720-env-classification-allowlist`, `20260720-error-messages-generic-in-production`,
 `20260720-insights-gui-auth-gate`, `20260720-fixtures-env-gate`,
 `20260720-route-auth-default-deny`, `20260720-auth-error-account-enumeration`

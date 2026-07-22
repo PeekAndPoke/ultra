@@ -3,7 +3,7 @@
 **Status:** IN PROGRESS — S1–S5 DONE (committed + gated, 2026-07-20/21); S6 folded into the
 exception-disclosure task; S7 design agreed → `20260722-i18n-s7-emails.md` (2026-07-22)
 **Plan:** umbrella; feeds email templates, form validation, and server error channels
-**Security-critical:** no (but interacts with `.claude/tasks/20260720-exception-disclosure-architecture.md` — see §Interactions)
+**Security-critical:** no (but interacts with `.claude/tasks/error-disclosure/20260720-exception-disclosure-architecture.md` — see §Interactions)
 
 ## Goal
 
@@ -340,7 +340,7 @@ KSP** (input is a resource file, not Kotlin symbols; common-metadata KSP output 
 
 ## Interactions
 
-- **`.claude/tasks/20260720-exception-disclosure-architecture.md`** proposes
+- **`.claude/tasks/error-disclosure/20260720-exception-disclosure-architecture.md`** proposes
   `interface HasClientMessage { val clientMessage: String }`. That `String` should become a
   key + args (a `TranslatableMessage`-shaped value) so server errors localize on the client, aligning
   with `ApiResponse.messages` being write-only today. Per user: **that task will be updated if i18n
@@ -354,7 +354,7 @@ KSP** (input is a resource file, not Kotlin symbols; common-metadata KSP output 
   Was a `fold` that re-scanned substituted text (second-order injection + billion-laughs). Now
   single-pass (one combined literal regex). Adversarial regression tests added. Found in the S1
   security review; fixed proactively (no production callers yet, but shared foundation). See
-  `.claude/tasks/20260720-placeholders-injection-fix.md`.
+  `.claude/tasks/i18n/20260720-placeholders-injection-fix.md`.
 
 ## Build steps (dependency order — one task file each, `/feature-review` gate per step)
 

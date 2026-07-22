@@ -1,7 +1,7 @@
 # S3 — i18n Gradle plugin (buildSrc)
 
 **Status:** DONE — gate APPROVE after fixes, fixture green jvm+js (2026-07-21)
-**Plan:** `.claude/tasks/20260720-i18n-l10n-foundation.md` → Build step S3
+**Plan:** `.claude/tasks/i18n/20260720-i18n-l10n-foundation.md` → Build step S3
 **Security-critical:** no
 
 ## Spec

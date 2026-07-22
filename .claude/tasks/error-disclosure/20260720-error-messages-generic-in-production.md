@@ -1,8 +1,8 @@
 # Error responses must not return `cause.message` in production
 
 **Status:** TODO — tactical slice; see
-`.claude/tasks/20260720-exception-disclosure-architecture.md` for the umbrella design
-**Plan:** none — from `.claude/tasks/20260720-error-response-disclosure-audit.md` (findings 1 + 2)
+`.claude/tasks/error-disclosure/20260720-exception-disclosure-architecture.md` for the umbrella design
+**Plan:** none — from `.claude/tasks/error-disclosure/20260720-error-response-disclosure-audit.md` (findings 1 + 2)
 **Security-critical:** yes
 
 > This is the first implementable slice of the architecture task (its sequencing step 2 + 3). The
@@ -256,7 +256,7 @@ this task and noting it in the architecture doc as closed-for-now.
 | `KarangoQueryException` | **Yes** | Covered above. Without it, DB errors become the generic string, which is the correct default anyway; declaring it explicitly makes the "no AQL" property greppable at the type. |
 | `NoConverterFoundException`, `InvalidRouteParamsException` (`broker/exception.kt:9,19`) | **No** | Server-side wiring faults, not caller faults. Their messages name internal converter/route types. Generic string is correct. |
 | `ConverterException` base (`broker/exception.kt:4`) | **No** | Marking the base would make the two above client-safe by inheritance. Mark leaves only — this is the reason for a marker interface rather than a base class. |
-| `AuthError` (`funktor/auth/src/jvmMain/kotlin/AuthError.kt:3-31`) | **Not in this task** | Eight of its nine factories already read as user-facing (`"Invalid credentials"`, `"Weak password"`), but `userNotFound(user)` (line 12-13) and `providerNotFound(provider)` (line 6-7) interpolate identifiers and are exactly the account-enumeration vector owned by `.claude/tasks/20260720-auth-error-account-enumeration.md`. Blanket-marking `AuthError` here would bless the enumeration leak. Coordinate: that task decides the per-factory client messages, this task provides the interface. |
+| `AuthError` (`funktor/auth/src/jvmMain/kotlin/AuthError.kt:3-31`) | **Not in this task** | Eight of its nine factories already read as user-facing (`"Invalid credentials"`, `"Weak password"`), but `userNotFound(user)` (line 12-13) and `providerNotFound(provider)` (line 6-7) interpolate identifiers and are exactly the account-enumeration vector owned by `.claude/tasks/error-disclosure/20260720-auth-error-account-enumeration.md`. Blanket-marking `AuthError` here would bless the enumeration leak. Coordinate: that task decides the per-factory client messages, this task provides the interface. |
 | `AppStartException` (`funktor/core/src/jvmMain/kotlin/lifecycle/AppStartException.kt:9`) | **No** | Never reaches a request boundary. |
 | Validation errors | **Unresolved** — see Open questions |
 
@@ -377,4 +377,4 @@ Commands:
 
 Fixes applied: ...
 
-**Red-team follow-up**: `.claude/tasks/20260720-redteam-error-disclosure.md`
+**Red-team follow-up**: `.claude/tasks/error-disclosure/20260720-redteam-error-disclosure.md`

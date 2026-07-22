@@ -1,7 +1,7 @@
 # S1 — `ultra/i18n` runtime core
 
 **Status:** DONE — gate PASS, fixes applied, tests green (2026-07-20)
-**Plan:** `.claude/tasks/20260720-i18n-l10n-foundation.md` → Build step S1
+**Plan:** `.claude/tasks/i18n/20260720-i18n-l10n-foundation.md` → Build step S1
 **Security-critical:** no
 
 ## Spec

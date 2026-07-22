@@ -1,7 +1,7 @@
 # S2 — i18n emitter core (`tooling/`)
 
 **Status:** DONE — gate PASS after fixes, all tests green (2026-07-21) — effort `xhigh`
-**Plan:** `.claude/tasks/20260720-i18n-l10n-foundation.md` → Build step S2
+**Plan:** `.claude/tasks/i18n/20260720-i18n-l10n-foundation.md` → Build step S2
 **Security-critical:** no
 
 ## Spec

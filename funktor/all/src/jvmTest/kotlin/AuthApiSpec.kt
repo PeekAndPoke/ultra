@@ -153,7 +153,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.setPassword { route ->
+        api.authUser.setPassword { route ->
             "Anonymous set password must be unauthorized" {
                 apiApp {
                     anonymous {
@@ -246,7 +246,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.refreshToken { route ->
+        api.authUser.refreshToken { route ->
             "Anonymous request must be unauthorized" {
                 apiApp {
                     anonymous {
@@ -328,7 +328,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.getMyApiAccess { route ->
+        api.authUser.getMyApiAccess { route ->
             "Anonymous request must be unauthorized" {
                 apiApp {
                     anonymous {

@@ -1,7 +1,7 @@
 # Fix: i18n codegen dual-source-root (IDE unresolved symbols)
 
 **Status:** TODO (diagnosed 2026-07-21) — cosmetic, IDE-only; build is green
-**Plan:** follow-up to S2/S3 (`.claude/tasks/20260720-i18n-l10n-foundation.md`)
+**Plan:** follow-up to S2/S3 (`.claude/tasks/i18n/20260720-i18n-l10n-foundation.md`)
 **Security-critical:** no
 
 ## Problem

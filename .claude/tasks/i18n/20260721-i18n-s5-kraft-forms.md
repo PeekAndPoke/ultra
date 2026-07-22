@@ -1,7 +1,7 @@
 # S5 — kraft forms i18n (first vertical slice)
 
 **Status:** DONE — gate PASS after fixes, all tests green + downstream compiles (2026-07-21) — effort `xhigh`
-**Plan:** `.claude/tasks/20260720-i18n-l10n-foundation.md` → Build step S5
+**Plan:** `.claude/tasks/i18n/20260720-i18n-l10n-foundation.md` → Build step S5
 **Security-critical:** no
 
 ## Spec

@@ -1,8 +1,8 @@
 # Auth API must not echo internal error messages on public routes
 
 **Status:** TODO
-**Plan:** none — from `.claude/tasks/20260720-error-response-disclosure-audit.md` (finding 7).
-Applies the design in `.claude/tasks/20260720-exception-disclosure-architecture.md` (default-deny at
+**Plan:** none — from `.claude/tasks/error-disclosure/20260720-error-response-disclosure-audit.md` (finding 7).
+Applies the design in `.claude/tasks/error-disclosure/20260720-exception-disclosure-architecture.md` (default-deny at
 the render boundary, `HasClientMessage` opt-in) to `AuthError` specifically. That design is settled —
 this task does not re-open it.
 **Security-critical:** yes
@@ -429,4 +429,4 @@ Not verified — do not treat as established.
 
 Fixes applied: ...
 
-**Red-team follow-up**: `.claude/tasks/20260720-redteam-error-disclosure.md`
+**Red-team follow-up**: `.claude/tasks/error-disclosure/20260720-redteam-error-disclosure.md`

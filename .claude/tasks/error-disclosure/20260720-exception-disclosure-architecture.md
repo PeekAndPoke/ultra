@@ -1,7 +1,7 @@
 # Exception architecture: separate client-safe message from diagnostic detail
 
 **Status:** TODO — design decision first, then implement
-**Plan:** umbrella for `.claude/tasks/20260720-error-response-disclosure-audit.md`
+**Plan:** umbrella for `.claude/tasks/error-disclosure/20260720-error-response-disclosure-audit.md`
 **Security-critical:** yes
 
 ## Problem
@@ -62,7 +62,7 @@ Superuser gating is a defensible answer for channel B and should be kept. Two pr
 Also on this channel: `karango/core/src/main/kotlin/utils/ArangoDbRequestUtils.kt:39-41` stores
 `"ERROR: ${e.stackTraceToString()}"` into `queryExplained`, which the insights details page renders
 (`funktor/insights/src/jvmMain/kotlin/collectors/VaultCollector.kt:133-141`) — and that page has no
-auth at all (tracked separately in `.claude/tasks/20260720-insights-gui-auth-gate.md`).
+auth at all (tracked separately in `.claude/tasks/error-disclosure/20260720-insights-gui-auth-gate.md`).
 
 ## Design
 
@@ -148,7 +148,7 @@ identifier looks like the strongest reuse candidate.
       line; reuses an existing request id if one exists
 - [ ] `KarangoQueryException` no longer builds the AQL into `message` (`KarangoDriver.kt:130-138`)
 - [ ] `AuthApi`'s nine `withInfo(e.message)` sites go through the same mechanism
-      (overlaps `.claude/tasks/20260720-auth-error-account-enumeration.md`)
+      (overlaps `.claude/tasks/error-disclosure/20260720-auth-error-account-enumeration.md`)
 - [ ] Channel-B diagnostic fields are typed distinctly and cannot be serialised by accident
 - [ ] `ClusterShowcaseApi.getWorkers` no longer exposes failure text publicly
 - [ ] A test guard prevents reintroducing `withError(cause.message)` at a render boundary
@@ -172,10 +172,10 @@ identifier looks like the strongest reuse candidate.
 
 ### Sequencing
 
-1. `.claude/tasks/20260720-env-classification-allowlist.md` — two lines, closes several fail-opens,
+1. `.claude/tasks/error-disclosure/20260720-env-classification-allowlist.md` — two lines, closes several fail-opens,
    independent of this design.
 2. Channel A default-deny + correlation id (the tactical slice is
-   `.claude/tasks/20260720-error-messages-generic-in-production.md` — fold it in if this lands first).
+   `.claude/tasks/error-disclosure/20260720-error-messages-generic-in-production.md` — fold it in if this lands first).
 3. `KarangoQueryException` restructuring.
 4. Channel B typing discipline + the public `getWorkers` fix.
 
@@ -202,4 +202,4 @@ identifier looks like the strongest reuse candidate.
 
 Fixes applied: ...
 
-**Red-team follow-up**: `.claude/tasks/20260720-redteam-error-disclosure.md`
+**Red-team follow-up**: `.claude/tasks/error-disclosure/20260720-redteam-error-disclosure.md`

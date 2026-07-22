@@ -2,7 +2,7 @@
 
 **Status:** IN PROGRESS — backend + frontend-compat done + green (2026-07-18); org-flow tests +
 picker UI + demo realm/fixtures pending
-**Plan:** `.claude/tasks/20260717-auth-orgs-foundation.md` → Phase O3
+**Plan:** `.claude/tasks/saas-orgs/20260717-auth-orgs-foundation.md` → Phase O3
 **Security-critical:** yes (login flow, selection token) — `/feature-review` + red-team when the
 demo login flow is complete
 

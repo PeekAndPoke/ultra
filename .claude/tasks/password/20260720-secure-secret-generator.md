@@ -12,7 +12,7 @@ There is **no shared secure generator** for random secrets — a repo-wide grep 
 
 This is a latent gap rather than a current bug — today's flows let users choose their own passwords,
 and account recovery uses `AuthRecord` tokens. But the **b2b invite flow** (see
-`.claude/tasks/20260720-b2b-realm.md` — "users are invited into an organisation", self-signup is
+`.claude/tasks-archive/2026-07/20260720-b2b-realm.md` — "users are invited into an organisation", self-signup is
 disabled) will need to provision a secret: an invite token or a one-time temp password. Without a
 vetted generator, each call site risks rolling its own with a weak RNG or a biased alphabet.
 
