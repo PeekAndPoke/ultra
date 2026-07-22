@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.rest.docs
 
 import io.peekandpoke.funktor.rest.ApiRoute
-import io.peekandpoke.funktor.rest.RestDslMarkerConfig
+import io.peekandpoke.funktor.rest.RestDsl
 import io.peekandpoke.ultra.common.TypedKey
 
 data class CodeGenHints(
@@ -15,6 +15,7 @@ data class CodeGenHints(
         )
     }
 
+    @RestDsl
     class Builder {
         var funcName: String? = null
 
@@ -35,35 +36,30 @@ val CodeGenHintsKey = TypedKey<CodeGenHints>("CodeGenHints")
 
 val ApiRoute<*>.codeGen get() = attributes[CodeGenHintsKey] ?: CodeGenHints.empty
 
-@RestDslMarkerConfig
 fun <RESPONSE> ApiRoute.Plain<RESPONSE>.codeGen(
     block: CodeGenHints.Builder.(ApiRoute.Plain<RESPONSE>) -> Unit,
 ): ApiRoute.Plain<RESPONSE> {
     return withAttribute(CodeGenHintsKey, CodeGenHints.Builder().also { it.block(this) }.build())
 }
 
-@RestDslMarkerConfig
 fun <PARAMS> ApiRoute.Sse<PARAMS>.codeGen(
     block: CodeGenHints.Builder.(ApiRoute.Sse<PARAMS>) -> Unit,
 ): ApiRoute.Sse<PARAMS> {
     return withAttribute(CodeGenHintsKey, CodeGenHints.Builder().also { it.block(this) }.build())
 }
 
-@RestDslMarkerConfig
 fun <PARAMS, RESPONSE> ApiRoute.WithParams<PARAMS, RESPONSE>.codeGen(
     block: CodeGenHints.Builder.(ApiRoute.WithParams<PARAMS, RESPONSE>) -> Unit,
 ): ApiRoute.WithParams<PARAMS, RESPONSE> {
     return withAttribute(CodeGenHintsKey, CodeGenHints.Builder().also { it.block(this) }.build())
 }
 
-@RestDslMarkerConfig
 fun <BODY, RESPONSE> ApiRoute.WithBody<BODY, RESPONSE>.codeGen(
     block: CodeGenHints.Builder.(ApiRoute.WithBody<BODY, RESPONSE>) -> Unit,
 ): ApiRoute.WithBody<BODY, RESPONSE> {
     return withAttribute(CodeGenHintsKey, CodeGenHints.Builder().also { it.block(this) }.build())
 }
 
-@RestDslMarkerConfig
 fun <PARAMS, BODY, RESPONSE> ApiRoute.WithBodyAndParams<PARAMS, BODY, RESPONSE>.codeGen(
     block: CodeGenHints.Builder.(ApiRoute.WithBodyAndParams<PARAMS, BODY, RESPONSE>) -> Unit,
 ): ApiRoute.WithBodyAndParams<PARAMS, BODY, RESPONSE> {

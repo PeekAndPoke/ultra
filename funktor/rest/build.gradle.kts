@@ -79,6 +79,8 @@ kotlin {
                 Deps.Test { jvmTestDeps() }
 
                 implementation(Deps.JavaLibs.diffutils)
+                // Compile-rejection tests for the auth-rule DSL (@DslMarker scoping)
+                implementation(Deps.Ksp.compiletesting_core)
             }
         }
     }

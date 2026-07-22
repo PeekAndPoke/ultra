@@ -7,7 +7,7 @@ import io.peekandpoke.funktor.core.broker.TypedRoute
 import io.peekandpoke.funktor.core.broker.UriPattern
 import io.peekandpoke.funktor.rest.auth.AuthResult
 import io.peekandpoke.funktor.rest.auth.AuthRule
-import io.peekandpoke.funktor.rest.auth.AuthRuleBuilder
+import io.peekandpoke.funktor.rest.auth.RootAuthRuleBuilder
 import io.peekandpoke.ultra.common.TypedAttributes
 import io.peekandpoke.ultra.common.TypedKey
 import io.peekandpoke.ultra.reflection.TypeRef
@@ -18,8 +18,17 @@ import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.security.user.UserRecord
 
 /**
+ * Marks that the USER declared an `authorize {}` block on the route. The once-per-route guard
+ * keys off THIS attribute — not off `authRules` being non-empty — so framework paths (the
+ * mandatory floor seed of part 2, interface-triggered auto-rules of part 3) can pre-populate or
+ * extend the chain without tripping it.
+ */
+private val UserAuthorizeDeclaredKey = TypedKey<Boolean>("UserAuthorizeDeclared")
+
+/**
  * Base class for api routes representations
  */
+@RestDsl
 sealed class ApiRoute<RESPONSE> {
 
     /** The http method of the route */
@@ -99,19 +108,21 @@ sealed class ApiRoute<RESPONSE> {
         )
 
         /**
-         * Adds an authorization rules to the route
+         * Declares the route's auth rules. May be declared ONCE per route; every appended rule
+         * must pass (statements are conjuncts). See [RootAuthRuleBuilder].
          */
-        @RestDslMarkerConfig
-        fun authorize(builder: AuthRuleBuilder<Unit, Unit>.() -> AuthRule<Unit, Unit>) = copy(
-            authRules = authRules.plus(
-                AuthRuleBuilder<Unit, Unit>(route = this).builder()
-            )
-        )
+        fun authorize(builder: RootAuthRuleBuilder<Unit, Unit>.() -> Unit): Plain<RESPONSE> {
+            check(attributes[UserAuthorizeDeclaredKey] != true) {
+                "authorize {} may only be declared once per route ('${method.value} ${pattern.pattern}')"
+            }
+            // Append (not replace): framework paths may have pre-populated the chain (floor seed).
+            return copy(authRules = authRules + RootAuthRuleBuilder<Unit, Unit>(route = this).apply(builder).build())
+                .withAttribute(UserAuthorizeDeclaredKey, true)
+        }
 
         /**
          * Sets a handler that returns a raw response
          */
-        @RestDslMarkerConfig
         fun handle(handler: suspend RoutingContext.() -> RESPONSE) = copy(
             handler = {
                 call.apiRespond(handler(this) ?: Unit)
@@ -121,7 +132,6 @@ sealed class ApiRoute<RESPONSE> {
         /**
          * Adds the [other] attributes.
          */
-        @RestDslMarkerConfig
         fun withAttributes(other: TypedAttributes) = copy(
             attributes = attributes.plus(other)
         )
@@ -129,7 +139,6 @@ sealed class ApiRoute<RESPONSE> {
         /**
          * Adds an entry to the [TypedAttributes]
          */
-        @RestDslMarkerConfig
         fun <T : Any> withAttribute(key: TypedKey<T>, value: T) = copy(
             attributes = attributes.plus(key, value)
         )
@@ -161,19 +170,21 @@ sealed class ApiRoute<RESPONSE> {
         )
 
         /**
-         * Adds an authorization rules to the route
+         * Declares the route's auth rules. May be declared ONCE per route; every appended rule
+         * must pass (statements are conjuncts). See [RootAuthRuleBuilder].
          */
-        @RestDslMarkerConfig
-        fun authorize(builder: AuthRuleBuilder<PARAMS, Unit>.() -> AuthRule<PARAMS, Unit>) = copy(
-            authRules = authRules.plus(
-                AuthRuleBuilder<PARAMS, Unit>(route = this).builder()
-            )
-        )
+        fun authorize(builder: RootAuthRuleBuilder<PARAMS, Unit>.() -> Unit): Sse<PARAMS> {
+            check(attributes[UserAuthorizeDeclaredKey] != true) {
+                "authorize {} may only be declared once per route ('${method.value} ${pattern.pattern}')"
+            }
+            // Append (not replace): framework paths may have pre-populated the chain (floor seed).
+            return copy(authRules = authRules + RootAuthRuleBuilder<PARAMS, Unit>(route = this).apply(builder).build())
+                .withAttribute(UserAuthorizeDeclaredKey, true)
+        }
 
         /**
          * Sets a handler that returns a raw response
          */
-        @RestDslMarkerConfig
         fun handle(handler: suspend ServerSSESession.(PARAMS) -> Unit) = copy(
             handler = handler
         )
@@ -181,7 +192,6 @@ sealed class ApiRoute<RESPONSE> {
         /**
          * Adds the [other] attributes.
          */
-        @RestDslMarkerConfig
         fun withAttributes(other: TypedAttributes) = copy(
             attributes = attributes.plus(other)
         )
@@ -189,7 +199,6 @@ sealed class ApiRoute<RESPONSE> {
         /**
          * Adds an entry to the [TypedAttributes]
          */
-        @RestDslMarkerConfig
         fun <T : Any> withAttribute(key: TypedKey<T>, value: T) = copy(
             attributes = attributes.plus(key, value)
         )
@@ -225,19 +234,21 @@ sealed class ApiRoute<RESPONSE> {
         fun render(vararg parameters: Pair<String, String>) = route.render(parameters.toList())
 
         /**
-         * Adds and authorization rule
+         * Declares the route's auth rules. May be declared ONCE per route; every appended rule
+         * must pass (statements are conjuncts). See [RootAuthRuleBuilder].
          */
-        @RestDslMarkerConfig
-        fun authorize(builder: AuthRuleBuilder<PARAMS, Unit>.() -> AuthRule<PARAMS, Unit>) = copy(
-            authRules = authRules.plus(
-                AuthRuleBuilder<PARAMS, Unit>(route = this).builder()
-            )
-        )
+        fun authorize(builder: RootAuthRuleBuilder<PARAMS, Unit>.() -> Unit): WithParams<PARAMS, RESPONSE> {
+            check(attributes[UserAuthorizeDeclaredKey] != true) {
+                "authorize {} may only be declared once per route ('${method.value} ${pattern.pattern}')"
+            }
+            // Append (not replace): framework paths may have pre-populated the chain (floor seed).
+            return copy(authRules = authRules + RootAuthRuleBuilder<PARAMS, Unit>(route = this).apply(builder).build())
+                .withAttribute(UserAuthorizeDeclaredKey, true)
+        }
 
         /**
          * Sets a handler that returns a raw response
          */
-        @RestDslMarkerConfig
         fun handle(handler: suspend RoutingContext.(PARAMS) -> RESPONSE) = copy(
             handler = { params ->
                 call.apiRespond(handler(this, params) ?: Unit)
@@ -247,7 +258,6 @@ sealed class ApiRoute<RESPONSE> {
         /**
          * Adds the [other] attributes.
          */
-        @RestDslMarkerConfig
         fun withAttributes(other: TypedAttributes) = copy(
             attributes = attributes.plus(other)
         )
@@ -255,7 +265,6 @@ sealed class ApiRoute<RESPONSE> {
         /**
          * Adds an entry to the [TypedAttributes]
          */
-        @RestDslMarkerConfig
         fun <T : Any> withAttribute(key: TypedKey<T>, value: T) = copy(
             attributes = attributes.plus(key, value)
         )
@@ -287,19 +296,21 @@ sealed class ApiRoute<RESPONSE> {
         )
 
         /**
-         * Adds an authorization rules to the route
+         * Declares the route's auth rules. May be declared ONCE per route; every appended rule
+         * must pass (statements are conjuncts). See [RootAuthRuleBuilder].
          */
-        @RestDslMarkerConfig
-        fun authorize(builder: AuthRuleBuilder<Unit, BODY>.() -> AuthRule<Unit, BODY>) = copy(
-            authRules = authRules.plus(
-                AuthRuleBuilder<Unit, BODY>(route = this).builder()
-            )
-        )
+        fun authorize(builder: RootAuthRuleBuilder<Unit, BODY>.() -> Unit): WithBody<BODY, RESPONSE> {
+            check(attributes[UserAuthorizeDeclaredKey] != true) {
+                "authorize {} may only be declared once per route ('${method.value} ${pattern.pattern}')"
+            }
+            // Append (not replace): framework paths may have pre-populated the chain (floor seed).
+            return copy(authRules = authRules + RootAuthRuleBuilder<Unit, BODY>(route = this).apply(builder).build())
+                .withAttribute(UserAuthorizeDeclaredKey, true)
+        }
 
         /**
          * Sets a handler that returns an ApiResponse with data of type [RESPONSE]
          */
-        @RestDslMarkerConfig
         fun handle(handler: suspend RoutingContext.(BODY) -> RESPONSE) = copy(
             handler = { body ->
                 call.apiRespond(handler(this, body))
@@ -309,7 +320,6 @@ sealed class ApiRoute<RESPONSE> {
         /**
          * Adds the [other] attributes.
          */
-        @RestDslMarkerConfig
         fun withAttributes(other: TypedAttributes) = copy(
             attributes = attributes.plus(other)
         )
@@ -317,7 +327,6 @@ sealed class ApiRoute<RESPONSE> {
         /**
          * Adds an entry to the [TypedAttributes]
          */
-        @RestDslMarkerConfig
         fun <T : Any> withAttribute(key: TypedKey<T>, value: T) = copy(
             attributes = attributes.plus(key, value)
         )
@@ -349,19 +358,21 @@ sealed class ApiRoute<RESPONSE> {
         )
 
         /**
-         * Adds an authorization rules to the route
+         * Declares the route's auth rules. May be declared ONCE per route; every appended rule
+         * must pass (statements are conjuncts). See [RootAuthRuleBuilder].
          */
-        @RestDslMarkerConfig
-        fun authorize(builder: AuthRuleBuilder<PARAMS, BODY>.() -> AuthRule<PARAMS, BODY>) = copy(
-            authRules = authRules.plus(
-                AuthRuleBuilder<PARAMS, BODY>(route = this).builder()
-            )
-        )
+        fun authorize(builder: RootAuthRuleBuilder<PARAMS, BODY>.() -> Unit): WithBodyAndParams<PARAMS, BODY, RESPONSE> {
+            check(attributes[UserAuthorizeDeclaredKey] != true) {
+                "authorize {} may only be declared once per route ('${method.value} ${pattern.pattern}')"
+            }
+            // Append (not replace): framework paths may have pre-populated the chain (floor seed).
+            return copy(authRules = authRules + RootAuthRuleBuilder<PARAMS, BODY>(route = this).apply(builder).build())
+                .withAttribute(UserAuthorizeDeclaredKey, true)
+        }
 
         /**
          * Sets a handler that returns an ApiResponse with data of type [RESPONSE]
          */
-        @RestDslMarkerConfig
         fun handle(handler: suspend RoutingContext.(PARAMS, BODY) -> RESPONSE) = copy(
             handler = { params, body ->
                 call.apiRespond(handler(this, params, body))
@@ -371,7 +382,6 @@ sealed class ApiRoute<RESPONSE> {
         /**
          * Adds the [other] attributes.
          */
-        @RestDslMarkerConfig
         fun withAttributes(other: TypedAttributes) = copy(
             attributes = attributes.plus(other)
         )
@@ -379,7 +389,6 @@ sealed class ApiRoute<RESPONSE> {
         /**
          * Adds an entry to the [TypedAttributes]
          */
-        @RestDslMarkerConfig
         fun <T : Any> withAttribute(key: TypedKey<T>, value: T) = copy(
             attributes = attributes.plus(key, value)
         )

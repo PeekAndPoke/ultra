@@ -13,21 +13,22 @@ import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.TypedApiEndpoint
 import kotlin.reflect.KClass
 
-/** DSL marker for route definition scope. */
+/**
+ * The single DSL marker for the route-building DSL receivers: [ApiRoute] (the mount-chain
+ * receiver, covering all its variants), [ApiRoutes.RouteBuilder], the docs/codeGen/security
+ * `Builder` classes, and the auth-rule builders.
+ *
+ * NOTE: `@DslMarker` only has an effect when the RECEIVER TYPES are annotated — annotating
+ * functions does nothing (the previous `RestDslMarker*` annotations sat on functions and were
+ * decorative). With these receivers sharing one marker, implicit access to an OUTER receiver
+ * from a nested block is a compile error: `docs {}` inside `authorize {}` fails to compile, as
+ * does the root-only `public()` inside `forAny {}` — the two silent-wrong-level traps this DSL
+ * had. Deliberately NOT marked: the enclosing [ApiRoutes] feature classes (routes are declared
+ * in class bodies, not marked lambdas) and lambdas whose receivers belong to other families
+ * (ktor's RoutingContext in `handle {}`, the rule-evaluation contexts in `forCall {}`).
+ */
 @DslMarker
-annotation class RestDslMarkerRoute
-
-/** DSL marker for route configuration scope. */
-@DslMarker
-annotation class RestDslMarkerConfig
-
-/** DSL marker for auth rule builder scope. */
-@DslMarker
-annotation class RestAuthRuleMarker
-
-/** DSL marker for security rule builder scope. */
-@DslMarker
-annotation class RestSecurityRuleMarker
+annotation class RestDsl
 
 /**
  * Base class for creating api routes
@@ -44,7 +45,6 @@ abstract class ApiRoutes(val name: String, mountPoint: String = "") :
     val all get(): List<ApiRoute<*>> = allRoutes.toList()
 
     /** Registers a route */
-    @RestDslMarkerRoute
     fun <RESULT, ROUTE : ApiRoute<RESULT>> route(block: RouteBuilder.() -> ROUTE) =
         routeBuilder.block().apply { allRoutes.add(this) }
 
@@ -166,6 +166,7 @@ abstract class ApiRoutes(val name: String, mountPoint: String = "") :
         allRoutes.add(route)
     }
 
+    @RestDsl
     class RouteBuilder(private val mountPoint: String) {
 
         ////  GET  ////////////////////////////////////////////////////////////////////////////////////////////////

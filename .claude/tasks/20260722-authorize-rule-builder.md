@@ -1,6 +1,7 @@
 # authorize {} builder-accumulator — kill the last-expression-wins footgun
 
-**Status:** TODO (designed + agreed 2026-07-22)
+**Status:** DONE (2026-07-22) — review loop terminated on round 4 (zero confirmed findings across
+all three reviewers). All 4 rounds' findings fixed; 27 funktor:rest specs + full backend suites green.
 **Plan:** part 1 of the auth-hardening quartet: this → `20260722-apiroutes-auth-floor.md` →
 `20260722-two-phase-auth-consistent-params.md` → `20260722-stored-param-migration.md`
 **Security-critical:** YES — this changes how every API auth rule is declared.
@@ -103,10 +104,10 @@ a compile error, or a boot error. Complete inventory; the review loop must re-au
 | 1 | Last-expression-wins (`forRule1(); forRule2()` enforces only the last) | Accumulator: statements append, all enforced |
 | 2 | Value/infix composition double-registers (written OR enforces AND) | Block-style only; infix `AuthRule.or`/`and` DELETED (zero call sites); no value-arg composers on builders |
 | 3 | Level-specific member binds to OUTER receiver (`public()` inside `forAny {}` silently appends always-allow at root) | `@DslMarker` on the receiver TYPES (compile error). **Finding:** the existing `RestDslMarker*`/`RestAuthRuleMarker` annotations are applied to FUNCTIONS, where `@DslMarker` has no scoping effect — they are decorative today. Move to ONE shared marker on all route-DSL receiver types (mount/docs/codeGen/authorize/auth-builders) so CROSS-family implicit access (`docs {}` inside `authorize {}`) errors too; delete the decorative function annotations |
-| 4 | Labeled-receiver escape (`this@authorize.public()` inside a nested block) — not compile-blockable | Neutralized by #5: the boot check runs on the final chain, catching any append path |
-| 5 | Constant rules as chain members: `public()` in an AND chain is an always-true NO-OP that looks meaningful; `public()` as an OR disjunct is always-allow; `forbidden()` in an OR is a no-op | Constant rules (`public`, `forbidden`) are valid ONLY as the SOLE rule of the entire route chain (public ⇒ the whole floor of a public group; forbidden ⇒ explicit dead-route). Any other position ⇒ boot error |
-| 6 | Empty root chain / empty `forAll {}` / `forAny {}` (OR-of-nothing) | Boot error |
-| 7 | Double `authorize` on one route — today silently APPENDS (`ApiRoute.kt:106` `authRules.plus`) | Exactly ONE user authorize block per route; a second ⇒ build error. Framework paths (floor seed, interface-triggered auto-rules) append internally, not via `authorize` |
+| 4 | Labeled-receiver escape (`this@authorize.public()` inside a nested block) — not compile-blockable | Neutralized by #5: the whole-chain `validateChain` runs on the final `authRules` at boot, catching any append path |
+| 5 | Constant rules as chain members: `public()` in an AND chain is an always-true NO-OP that looks meaningful; `public()` as an OR disjunct is always-allow; `forbidden()` in an OR is a no-op | Constant rules (`public`, `forbidden`) are valid ONLY as the SOLE, BARE rule of the entire route chain. Enforced in TWO places: `RootAuthRuleBuilder.build()` per-block for early feedback, AND `AuthRuleBuilder.validateChain(route.authRules)` at boot (`ValidateRoutesOnAppStarting`) over the WHOLE combined chain — so a constant surviving any path (seed + user block, direct `copy`, `appendRule` of a composite) is a boot error. Requires a BARE constant (`is PublicRule`/`is ForbiddenRule`), so a composite that merely *contains* one is rejected |
+| 6 | Empty root chain / empty `forAll {}` / `forAny {}` (OR-of-nothing) | Boot error. Also: empty And/Or nodes anywhere in the tree (an empty AND folds to allow-all) rejected by `containsEmptyComposite` in both `build()` and the boot `validateChain` |
+| 7 | Double `authorize` on one route — silently APPENDED before | Exactly ONE user authorize block per route; a second ⇒ build error, keyed off a file-private `UserAuthorizeDeclaredKey` attribute (NOT `authRules` emptiness, so framework paths — floor seed, auto-rules — that pre-populate the chain don't trip it). `authorize` APPENDS to the chain (seed → block → auto-rules) |
 | 8 | Undefined interleaving of seed / route block / auto-rules | Documented stable order: seed → route block → auto-rules (no semantic effect under AND; matters for docs + phase grouping) |
 | 9 | Programmatic escape hatch reintroducing traps | `appendRule(rule)` stays public and is SAFE by construction: `AuthRule.Companion` factories never auto-append, so nothing double-registers; the append is the single explicit act |
 
@@ -127,27 +128,67 @@ a follow-up decision; review round 1 may pull it in.
 
 ## Spec
 
-- [ ] Accumulating `AuthRuleBuilder` with child-builder lambda branches for `forAny`.
-- [ ] Value-arg composers removed from the builder; companion variants remain.
-- [ ] Two-statement block enforces BOTH rules (regression test for the footgun).
-- [ ] `forAny` branch semantics: AND within branch, OR across; nesting works.
-- [ ] Empty-chain route ⇒ boot failure with actionable message.
-- [ ] `public()` typed marker.
-- [ ] All existing authorize call sites compile; OperatorApi migrated; full backend e2e suites
-      green unchanged (funktor:auth, funktor:all, funktor-demo:server, saas, rest).
+- [x] Accumulating `AuthRuleBuilder` (sealed; `RootAuthRuleBuilder` + `SubAuthRuleBuilder`) with
+      block-style `forAll {}`/`forAny {}`.
+- [x] Value-arg composers + infix `AuthRule.or`/`and` removed; `AuthRule.Companion` factories +
+      `Or`/`AndAuthRule` node classes remain for programmatic use.
+- [x] Two-statement block enforces BOTH rules; a leading-deny/last-grant case proves it through the
+      decision path (would GRANT under old last-wins).
+- [x] `forAny`/`forAll` block semantics + nesting build the literal tree.
+- [x] Empty chain / empty sub-block / empty composite / misplaced constant ⇒ boot failure.
+- [x] `public()`/`forbidden()` typed `PublicRule`/`ForbiddenRule`.
+- [x] Whole-chain `validateChain` reused by `build()` (per-block) AND `ValidateRoutesOnAppStarting`
+      (boot backstop over final `authRules`) — catches seed+block combos and direct `copy`.
+- [x] One-per-route guard keyed off a file-private `UserAuthorizeDeclaredKey` attribute (part-2 seed
+      compatible); `authorize` appends.
+- [x] All existing authorize call sites compile; OperatorApi migrated; full backend suites green.
 
 ## Test evidence
 
-- [ ] Unit specs in funktor/rest jvmTest: accumulation, block composition (forAny/forAll nesting
-      builds the literal tree), boot failures (#5, #6, #7 from the inventory).
-- [ ] COMPILE-REJECTION tests via kctfork (precedent: i18n S2): `public()` inside `forAny {}`
-      does not compile (marker); cross-family implicit access (`docs {}` inside `authorize {}`)
-      does not compile.
-- [ ] The existing 401/403 e2e matrix (OperatorApiTest, B2bAuthFlowTest, B2b2cAuthFlowTest,
-      AuthApiSpec) green unchanged — proves no semantic drift on single-rule blocks.
+- [x] `AuthRuleBuilderSpec` (20 cases): accumulation, footgun-through-decision-path, block
+      composition/nesting, all boot failures (#5/#6/#7), whole-chain validator (seed+block, direct
+      copy), `appendRule` safety, `forbidden()` legal + rejected.
+- [x] `AuthRuleDslCompileSpec` (4 kctfork cases): valid nesting compiles; `public()` inside
+      `forAny {}` and `docs {}` inside `authorize {}` fail to compile with the marker-specific
+      "implicit receiver" diagnostic; chained-outside control compiles.
+- [x] Backend suites green (funktor:rest/auth/all, funktor-demo:server) — the boot validator now
+      runs against every real route at app start, so the e2e apps exercise it (no route reddened).
+
+## Review record (review LOOP, 2026-07-22, 3× Opus per round)
+
+**Round 1** — confirmed + fixed: HIGH soleness exception used deep `containsConstant()` (a composite
+burying a constant passed as "sole") → require a BARE constant; + empty-composite check; LOWs
+(compile-test diagnostic assertion, KDoc ×2, behavioral footgun test, snapshot invariant comment).
+Security drift audit: all 82 `authorize` blocks enumerated, OperatorApi the only multi-statement one,
+zero drift.
+
+**Round 2** — security: ZERO findings (TypedKey equality is by identity → attribute-guard spoof
+impossible; constants final; migration drift-free). impl/style: LOW `forbidden()` untested → added.
+domain: MEDIUM the soleness invariant was per-block, not whole-chain (my round-1 "seed+block boots
+clean" claim was right, contradicting an earlier note) → hoisted into the reusable `validateChain`
+run at boot over the final chain; part 2's "public-seeded group must not also seed restrictive rules"
+check now comes for free. Dead infix `Or/AndAuthRule.or/and` removed.
+
+**Round 3** — security + domain: ZERO findings (security independently traced that the boot
+validator is a kontainer-registered `OnAppStarting` hook firing inline on real prod boot via
+`App.module → setupLifecycle → runHooks`, aborting startup, over the same route set the dispatcher
+serves). impl/style: 2 LOWs → fixed: the `AppStartException` header said "converter validation
+failed" for auth failures too (→ "Route validation failed"); the boot backstop's failure path was
+untested → extracted `validateOrThrow()` (no `Application` dep) + `ValidateRoutesOnAppStartingSpec`
+(bad chain aborts, healthy+empty pass, two-bad aggregation). One INFO overload-consistency nit left
+as-is (mirrors `AuthRule.Companion`).
+
+**Round 4** — impl/style, domain, security ALL ZERO confirmed findings (fresh reviewers, whole
+diff). Verified: `validateOrThrow` extraction behavior-preserving; boot backstop fires on real prod
+boot and aborts startup; whole-chain validator covers every DSL-bypass path; constants/nodes final;
+TypedKey identity-equal + fail-closed guard; migration AND-identical, zero drift. **Loop terminated
+— zero-findings round reached.** One INFO (builder overload asymmetry mirroring `AuthRule.Companion`)
+consciously left as-is.
 
 ## Cross-references
 
 - `20260720-operator-api-feature.md` (archived) — the cross-realm HIGH that motivated structural
   enforcement; `20260719-cross-realm-authz-and-tests.md` — forUserType primitive this composes with.
-- Successor: `20260722-apiroutes-auth-floor.md` builds the mandatory seed ON this builder.
+- Successor: `20260722-apiroutes-auth-floor.md` builds the mandatory seed ON this builder — it
+  INHERITS `validateChain` (whole-chain boot check) as the seam for "public-seeded group must not
+  also carry restrictive rules"; the seed pre-populates `authRules` and the user block appends.

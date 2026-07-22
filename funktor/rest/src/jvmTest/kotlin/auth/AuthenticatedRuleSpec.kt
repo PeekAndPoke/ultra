@@ -14,16 +14,7 @@ import io.peekandpoke.ultra.security.user.UserRecord
 
 class AuthenticatedRuleSpec : StringSpec({
 
-    fun authenticatedRule(): AuthRule<Unit, Unit> {
-        val builder = AuthRuleBuilder<Unit, Unit>(
-            route = ApiRoute.Plain(
-                method = HttpMethod.Get,
-                route = TypedRoute.Plain(pattern = UriPattern("/test")),
-                responseType = kType<Unit>(),
-            )
-        )
-        return builder.authenticated()
-    }
+    fun authenticatedRule(): AuthRule<Unit, Unit> = AuthRule.authenticated()
 
     fun routeWith(rule: AuthRule<Unit, Unit>): ApiRoute<Unit> {
         return ApiRoute.Plain(

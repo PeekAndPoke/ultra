@@ -20,10 +20,8 @@ class OperatorApi : ApiRoutes("operator") {
         }.authorize {
             // All realms share one JWT signing key, and the admin realm also mints super-user
             // tokens — the user-type claim is what scopes this console to the operators realm.
-            forAll(
-                isSuperUser(),
-                forUserType(OperatorUserModel.USER_TYPE),
-            )
+            isSuperUser()
+            forUserType(OperatorUserModel.USER_TYPE)
         }.handle {
             val orgs = funktorSaas.findAll().map { it.value() }
 
