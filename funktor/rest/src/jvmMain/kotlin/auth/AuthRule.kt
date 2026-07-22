@@ -60,6 +60,17 @@ interface AuthRule<PARAMS, BODY> {
             PermissionsCheck("Is SuperUser") { permissions.isSuperUser }
 
         /**
+         * Creates a Rule that returns true when the current user's [UserRecord.type] equals [type].
+         *
+         * This is the realm-boundary primitive: all realms sign JWTs with the same key, so
+         * permission-based rules alone are realm-agnostic — e.g. an `isSuperUser=true` token minted
+         * by ANY realm passes an [isSuperUser] gate. Scope a realm-specific surface by combining
+         * both, e.g. `forAll(isSuperUser(), forUserType(OperatorUserModel.USER_TYPE))`.
+         */
+        fun <P, B> forUserType(type: String): AuthRule<P, B> =
+            PermissionsCheck("Is user of type '$type'") { user.record.type == type }
+
+        /**
          * Creates a Rule that returns true when the current user has given [organisation]
          */
         fun <P, B> forOrganisation(organisation: String): AuthRule<P, B> =

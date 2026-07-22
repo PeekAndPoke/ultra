@@ -11,12 +11,15 @@ import kotlinx.serialization.Serializable
 /** Aggregate stats shown on the operator console dashboard. */
 @Serializable
 data class OperatorDashboardStats(
-    val orgs: Int,
-    val branches: Int,
-    val activeOrgs: Int,
-    val suspendedOrgs: Int,
-    val archivedOrgs: Int,
-    val operators: Int,
+    val orgs: Int = 0,
+    val branches: Int = 0,
+    /**
+     * Org count per lifecycle status, keyed by the server-side `OrgStatus` name. A map (rather
+     * than one field per status) stays additive-safe when the status enum grows, and string keys
+     * keep an older client deserializing a newer server's payload.
+     */
+    val orgsByStatus: Map<String, Int> = emptyMap(),
+    val operators: Int = 0,
 )
 
 /** Typed client for the operator (platform super-user) console API. */

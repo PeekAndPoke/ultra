@@ -100,6 +100,13 @@ class AuthRuleBuilder<PARAMS, BODY>(
     fun isSuperUser(): AuthRule<PARAMS, BODY> = AuthRule.isSuperUser()
 
     /**
+     * Creates an auth rule that checks the current user's `type` claim — the realm-boundary
+     * primitive. See [AuthRule.forUserType] for why permission rules alone do not scope by realm.
+     */
+    @RestAuthRuleMarker
+    fun forUserType(type: String): AuthRule<PARAMS, BODY> = AuthRule.forUserType(type)
+
+    /**
      * Creates an auth rule that checks if the current user has the given [group] in the [UserPermissions]
      */
     @RestAuthRuleMarker

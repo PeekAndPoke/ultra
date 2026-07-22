@@ -23,7 +23,9 @@ fun Tag.DashboardPage() = comp {
 class DashboardPage(ctx: NoProps) : PureComponent(ctx) {
 
     private val loader = dataLoader {
-        Apis.operator.getDashboardStats().map { it.data }
+        // data!! so a non-2xx (expired session, server error) surfaces as the loader's error state
+        // with its retry affordance, instead of silently rendering a blank page.
+        Apis.operator.getDashboardStats().map { it.data!! }
     }
 
     override fun VDom.render() {
@@ -35,8 +37,6 @@ class DashboardPage(ctx: NoProps) : PureComponent(ctx) {
         }
 
         loader.renderDefault(this) { stats ->
-            stats ?: return@renderDefault
-
             renderStats(stats)
         }
     }
@@ -60,18 +60,24 @@ class DashboardPage(ctx: NoProps) : PureComponent(ctx) {
         ui.segment {
             ui.header H3 { +"Organisations by status" }
 
+            // Known statuses always render (zeros included); statuses the server adds later are
+            // appended, so the tiles keep summing to the org total without a client change.
+            val known = listOf("Active", "Suspended", "Archived")
+            val byStatus = known.associateWith { stats.orgsByStatus[it] ?: 0 }
+                .plus(stats.orgsByStatus.minus(known))
+
             ui.three.statistics {
-                ui.green.statistic {
-                    noui.value { +"${stats.activeOrgs}" }
-                    noui.label { +"Active" }
-                }
-                ui.yellow.statistic {
-                    noui.value { +"${stats.suspendedOrgs}" }
-                    noui.label { +"Suspended" }
-                }
-                ui.grey.statistic {
-                    noui.value { +"${stats.archivedOrgs}" }
-                    noui.label { +"Archived" }
+                byStatus.forEach { (status, count) ->
+                    val colored = when (status) {
+                        "Active" -> ui.green
+                        "Suspended" -> ui.yellow
+                        else -> ui.grey
+                    }
+
+                    colored.statistic {
+                        noui.value { +"$count" }
+                        noui.label { +status }
+                    }
                 }
             }
         }
