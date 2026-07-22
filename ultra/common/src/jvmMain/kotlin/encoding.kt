@@ -1,7 +1,7 @@
 package io.peekandpoke.ultra.common
 
 import java.nio.charset.Charset
-import java.util.*
+import java.util.Base64
 
 /**
  * Character lookup for [toHex]

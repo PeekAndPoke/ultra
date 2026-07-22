@@ -44,7 +44,26 @@ password. Adding a stronger hasher protects only new sign-ups. That is the core 
   modern kernels) unless there's a specific reason for the strong instance.
 - **Redundant `salt` field** for Argon2/Bcrypt — the encoded `hash` self-contains the salt and their
   `check()` ignores the stored salt (only PBKDF2 uses it). Now base64'd so it's delimiter-safe, but
-  it's dead data for two of three hashers; consider dropping it for self-contained encoders.
+  it's dead data for two of three hashers; consider dropping it for self-contained encoders. Note
+  (2026-07-22 review): the stored value is also a *lossy* re-encoding (`getSalt()` String →
+  UTF-8 → base64, not the raw salt bytes) — harmless while never read back, one more reason to drop
+  it rather than ever "wire it up".
+- **Malformed stored hash fails as a 500, not a failed check** (2026-07-22 catch-up review,
+  pre-existing): a corrupted/adversarial stored hash makes `check()` throw (`fromBase64` /
+  password4j `BadParametersException`) instead of returning false; the exception escapes the
+  `AuthError`-only catch in the sign-in handler → 500 + error-oracle (and stack trace outside prod).
+  Fails closed (never true), so no bypass — but wrap the string-verify boundary to treat
+  undecodable input as a normal verification failure when touching this code.
+
+## Colon-fix review record (2026-07-22)
+
+`3fcdfb26` (positional `Hash.fromString` + base64 salt) passed its 3-agent catch-up gate: no
+CRITICAL/HIGH; legacy raw-salt hashes verified as *repaired*, dispatch fail-closed, PBKDF2 salt
+round-trip symmetric. The one confirmed MEDIUM — the colon-free invariant on `Hash.id`/`hash` was
+implicit and unguarded (the same failure class, reintroducible by a future hasher) — is fixed:
+KDoc contract on `Hash`, `asString()` now rejects a colon-bearing id/hash at write time (parse stays
+total/fail-closed), plus end-to-end legacy-salt regression tests and guard tests in
+`PasswordHashRoundTripSpec`.
 
 ## Spec
 
