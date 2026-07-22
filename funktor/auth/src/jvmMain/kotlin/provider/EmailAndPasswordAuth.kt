@@ -6,6 +6,7 @@ import io.peekandpoke.funktor.auth.AuthRandom
 import io.peekandpoke.funktor.auth.AuthRealm
 import io.peekandpoke.funktor.auth.AuthRecordStorage
 import io.peekandpoke.funktor.auth.AuthSystem
+import io.peekandpoke.funktor.auth.AuthUserAdapter
 import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
@@ -14,6 +15,7 @@ import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
+import io.peekandpoke.funktor.auth.model.AuthUser
 import io.peekandpoke.ultra.common.isEmail
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.datetime.MpInstant
@@ -205,7 +207,7 @@ class EmailAndPasswordAuth(
     /**
      * {@inheritDoc}
      */
-    override suspend fun <USER> signIn(realm: AuthRealm<USER>, request: AuthSignInRequest): Stored<USER> {
+    override suspend fun <USER : AuthUser> signIn(realm: AuthRealm<USER>, request: AuthSignInRequest): Stored<USER> {
         // Validate request type
         val typed: AuthSignInRequest.EmailAndPassword = (request as? AuthSignInRequest.EmailAndPassword)
             ?: throw AuthError.invalidRequest()
@@ -216,7 +218,7 @@ class EmailAndPasswordAuth(
         val password = typed.password.takeIf { it.isNotBlank() }
             ?: throw AuthError.invalidCredentials()
         // Load user
-        val user = realm.loadUserByEmail(email.trim().lowercase())
+        val user = realm.users.loadByEmail(email.trim().lowercase())
             ?: throw AuthError.invalidCredentials()
         // Validate password
         validateCurrentPassword(realm, user, password).takeIf { it }
@@ -228,26 +230,26 @@ class EmailAndPasswordAuth(
     /**
      * {@inheritDoc}
      */
-    override suspend fun <USER> signUp(
+    override suspend fun <USER : AuthUser> signUp(
         realm: AuthRealm<USER>, request: AuthSignUpRequest,
     ): AuthProvider.SignUpResult<USER> {
         // Check request
         val typed = request as? AuthSignUpRequest.EmailAndPassword
             ?: throw AuthError.invalidRequest()
         // Create params for user creation
-        val createParams = AuthRealm.CreateUserForSignupParams
+        val createParams = AuthUserAdapter.CreateUserForSignupParams
             .of(email = typed.email, displayName = typed.displayName)
         // Validate email address
         if (createParams.email.isEmail().not()) throw AuthError.invalidRequest()
         // Enforce the password policy
         if (!realm.passwordPolicy.matches(typed.password)) throw AuthError.weakPassword()
         // Ensure no existing user
-        if (realm.loadUserByEmail(createParams.email) != null) throw AuthError("User already exists")
+        if (realm.users.loadByEmail(createParams.email) != null) throw AuthError("User already exists")
         // Create user via realm hook
         // NOTE: The check above is a best-effort guard. A unique index on email in the user repository
         //       is required to prevent a TOCTOU race under concurrent sign-ups.
         val user = try {
-            realm.createUserForSignup(createParams)
+            realm.users.createForSignup(createParams)
         } catch (e: Exception) {
             // Duplicate key exception from a concurrent sign-up race — treat as "already exists"
             throw AuthError("User already exists")
@@ -266,7 +268,7 @@ class EmailAndPasswordAuth(
     /**
      * {@inheritDoc}
      */
-    override suspend fun <USER> setPassword(
+    override suspend fun <USER : AuthUser> setPassword(
         realm: AuthRealm<USER>, request: AuthSetPasswordRequest,
     ): AuthSetPasswordResponse {
 
@@ -274,7 +276,7 @@ class EmailAndPasswordAuth(
         realm.passwordPolicy.matches(request.newPassword).takeIf { it }
             ?: throw AuthError.weakPassword()
 
-        val user = realm.loadUserById(request.userId)
+        val user = realm.users.loadById(request.userId)
             ?: throw AuthError.userNotFound(request.userId)
 
         // 2. Verify the current password before allowing a change
@@ -290,7 +292,7 @@ class EmailAndPasswordAuth(
 
         if (emailResult.success.not()) {
             log.warning(
-                "Sending 'Password Changed' Email failed for user ${user._id} ${realm.getUserEmail(user)}"
+                "Sending 'Password Changed' Email failed for user ${user._id} ${user.value.email}"
             )
         }
 
@@ -300,11 +302,11 @@ class EmailAndPasswordAuth(
     /**
      * {@inheritDoc}
      */
-    override suspend fun <USER> recoverAccountInitPasswordReset(
+    override suspend fun <USER : AuthUser> recoverAccountInitPasswordReset(
         realm: AuthRealm<USER>, request: AuthRecoverAccountRequest.InitPasswordReset,
     ): AuthRecoverAccountResponse.InitPasswordReset {
 
-        val user = realm.loadUserByEmail(request.email)
+        val user = realm.users.loadByEmail(request.email)
             ?: return AuthRecoverAccountResponse.InitPasswordReset
 
         // TODO: make length configurable
@@ -331,7 +333,7 @@ class EmailAndPasswordAuth(
 
         if (emailResult.success.not()) {
             log.warning(
-                "Sending 'Password Recovery' Email failed for user ${user._id} ${realm.getUserEmail(user)}"
+                "Sending 'Password Recovery' Email failed for user ${user._id} ${user.value.email}"
             )
         }
 
@@ -341,7 +343,7 @@ class EmailAndPasswordAuth(
     /**
      * Validate token for password reset
      */
-    override suspend fun <USER> recoverAccountValidatePasswordResetToken(
+    override suspend fun <USER : AuthUser> recoverAccountValidatePasswordResetToken(
         realm: AuthRealm<USER>, request: AuthRecoverAccountRequest.ValidatePasswordResetToken,
     ): AuthRecoverAccountResponse.ValidatePasswordResetToken {
 
@@ -356,7 +358,7 @@ class EmailAndPasswordAuth(
     /**
      * Validate token for password reset
      */
-    override suspend fun <USER> recoverAccountSetPasswordWithToken(
+    override suspend fun <USER : AuthUser> recoverAccountSetPasswordWithToken(
         realm: AuthRealm<USER>, request: AuthRecoverAccountRequest.SetPasswordWithToken,
     ): AuthRecoverAccountResponse.SetPasswordWithToken {
 
@@ -373,7 +375,7 @@ class EmailAndPasswordAuth(
         }
 
         // Send email to the user to notify them that their password has been changed
-        realm.loadUserById(tokenRecord.resolve().ownerId)?.let { user ->
+        realm.users.loadById(tokenRecord.resolve().ownerId)?.let { user ->
             realm.messaging.sendPasswordChangedEmail(user)
         }
 
@@ -385,7 +387,7 @@ class EmailAndPasswordAuth(
     /**
      * Validates the given [password] against the latest password for the given [user] in the [realm].
      */
-    private suspend fun <USER> validateCurrentPassword(
+    private suspend fun <USER : AuthUser> validateCurrentPassword(
         realm: AuthRealm<USER>, user: Stored<USER>, password: String,
     ): Boolean {
         val record = services

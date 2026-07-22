@@ -27,7 +27,6 @@ import org.w3c.dom.HTMLTextAreaElement
  * @param builder Optional configuration for field options.
  */
 @Suppress("FunctionName")
-@io.peekandpoke.kraft.forms.KraftFormsDsl
 fun Tag.UiTextArea(
     value: String,
     onChange: (String) -> Unit,

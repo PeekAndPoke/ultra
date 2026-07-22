@@ -11,7 +11,6 @@ import io.peekandpoke.kraft.modals.ModalsManager.Companion.modals
 import io.peekandpoke.kraft.semanticui.forms.UiDateTimeField
 import io.peekandpoke.kraft.semanticui.modals.FadingModal
 import io.peekandpoke.kraft.utils.doubleClickProtection
-import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.datetime.MpZonedDateTime
 import io.peekandpoke.ultra.html.debugId
@@ -145,17 +144,15 @@ class LogsBulkActionPopup(ctx: Ctx<Props>) : FadingModal<LogsBulkActionPopup.Pro
 
                 ui.givenNot(canProceed) { disabled }.givenNot(noDblClick.canRun) { loading.disabled }.orange.button {
                     onClick {
-                        if (formCtrl.validate()) {
-                            launch {
-                                execAction(
-                                    LogsRequest.BulkAction(
-                                        filter = getFilter().copy(
-                                            states = LogEntryModel.State.except(LogEntryModel.State.New),
-                                        ),
-                                        action = LogsRequest.Action.SetState(state = LogEntryModel.State.New),
+                        formCtrl.validate {
+                            execAction(
+                                LogsRequest.BulkAction(
+                                    filter = getFilter().copy(
+                                        states = LogEntryModel.State.except(LogEntryModel.State.New),
                                     ),
-                                )
-                            }
+                                    action = LogsRequest.Action.SetState(state = LogEntryModel.State.New),
+                                ),
+                            )
                         }
                     }
                     icon.square()
@@ -164,17 +161,15 @@ class LogsBulkActionPopup(ctx: Ctx<Props>) : FadingModal<LogsBulkActionPopup.Pro
 
                 ui.givenNot(canProceed) { disabled }.givenNot(noDblClick.canRun) { loading.disabled }.green.button {
                     onClick {
-                        if (formCtrl.validate()) {
-                            launch {
-                                execAction(
-                                    LogsRequest.BulkAction(
-                                        filter = getFilter().copy(
-                                            states = LogEntryModel.State.except(LogEntryModel.State.Ack),
-                                        ),
-                                        action = LogsRequest.Action.SetState(state = LogEntryModel.State.Ack),
+                        formCtrl.validate {
+                            execAction(
+                                LogsRequest.BulkAction(
+                                    filter = getFilter().copy(
+                                        states = LogEntryModel.State.except(LogEntryModel.State.Ack),
                                     ),
-                                )
-                            }
+                                    action = LogsRequest.Action.SetState(state = LogEntryModel.State.Ack),
+                                ),
+                            )
                         }
                     }
                     icon.check_square()

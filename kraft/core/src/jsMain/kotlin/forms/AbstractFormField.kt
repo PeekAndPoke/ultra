@@ -2,8 +2,11 @@ package io.peekandpoke.kraft.forms
 
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.i18n.i18nCtrl
 import io.peekandpoke.kraft.messages.sendMessage
+import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.ultra.html.onClick
+import io.peekandpoke.ultra.i18n.I18nTranslate
 import kotlinx.html.FlowContent
 import kotlinx.html.label
 import org.w3c.dom.HTMLElement
@@ -49,6 +52,11 @@ abstract class AbstractFormField<T, O : FieldOptions<T>, P : AbstractFormField.P
      * The input value set by the user.
      */
     private var _value: T by value(props.value)
+
+    /** Current translations; re-validates on language switch so error messages update. */
+    protected val translate: I18nTranslate by subscribingTo(i18nCtrl.translateStream) {
+        if (touched) launch { validate() }
+    }
 
     /**
      * The effective value
@@ -97,15 +105,31 @@ abstract class AbstractFormField<T, O : FieldOptions<T>, P : AbstractFormField.P
         touched = false
     }
 
-    override fun validate(): Boolean {
+    /** Monotonic token so out-of-order async validations (later keystroke) win over stale ones. */
+    private var validationSeq = 0
 
-        if (touched) {
-            errors = props.options.rules
-                .filter { !it.check(currentValue) }
-                .map { it.getMessage(currentValue) }
+    override suspend fun validate(): Boolean {
+
+        if (!touched) {
+            return errors.isEmpty()
         }
 
-        return errors.isEmpty()
+        val seq = ++validationSeq
+        // Snapshot the value/translation once — async rules suspend, and currentValue may change
+        // mid-flight; re-reading it would compute errors against a mix of values.
+        val value = currentValue
+        val t = translate
+
+        val newErrors = props.options.rules
+            .filter { !it.check(value) }
+            .map { it.getMessage(value, t) }
+
+        // Latest-wins: only publish if a newer validation hasn't started while we were suspended.
+        if (seq == validationSeq) {
+            errors = newErrors
+        }
+
+        return newErrors.isEmpty()
     }
 
     /** Focuses the DOM element matching the given [cssSelector] within this component. */
@@ -128,7 +152,7 @@ abstract class AbstractFormField<T, O : FieldOptions<T>, P : AbstractFormField.P
             props.onChange(value)
         }
 
-        validate()
+        launch { validate() }
     }
 
     // Label Helpers

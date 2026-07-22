@@ -1,0 +1,47 @@
+# kraft built-in form-validation messages. English is the fallback — it defines the API surface (D8).
+# Keys map 1:1 to the built-in rules; accessors are `t.forms.<key>(...)`.
+forms:
+  # --- string rules ---
+  empty: "Must be empty"
+  notEmpty: "Must not be empty"
+  blank: "Must be blank"
+  notBlank: "Must not be blank"
+  minLength_one: "Must be at least {{count}} character"
+  minLength_other: "Must be at least {{count}} characters"
+  maxLength_one: "Must be at most {{count}} character"
+  maxLength_other: "Must be at most {{count}} characters"
+  exactLength_one: "Must be {{count}} character"
+  exactLength_other: "Must be {{count}} characters"
+  validEmail: "Must be a valid email"
+  validUrl: "Must be a valid url"
+  validSlug: "Must be lowercase letters, digits and hyphens (no leading or trailing hyphen)"
+
+  # --- generic rules ---
+  nonNull: "Must not be empty"
+  # NOTE: no value is echoed here — for a confirm-password field the operand is a secret (D-review).
+  equalTo: "The values must match"
+  notEqualTo: "The values must not match"
+  anyOf: "Must be a valid input"
+  noneOf: "Must be a valid input"
+  invalidInput: "Invalid input"
+  # shown when a raw input string cannot be parsed into the field's value
+  invalidValue: "Invalid value"
+  # joiners for composite rules (or / and)
+  joinOr: " or "
+  joinAnd: " and "
+
+  # --- number / comparable rules ---
+  inRange: "Must be in range {{from}} .. {{to}}"
+  greaterThan: "Must be greater than {{limit}}"
+  greaterThanOrEqual: "Must be greater than {{limit}} or equal"
+  lessThan: "Must be less than {{limit}}"
+  lessThanOrEqual: "Must be less than {{limit}} or equal"
+
+  # --- collection rules ---
+  collectionNotEmpty: "Must not be empty"
+  minCount_one: "Must have at least {{count}} item"
+  minCount_other: "Must have at least {{count}} items"
+  maxCount_one: "Must have at most {{count}} item"
+  maxCount_other: "Must have at most {{count}} items"
+  exactCount_one: "Must have {{count}} item"
+  exactCount_other: "Must have {{count}} items"

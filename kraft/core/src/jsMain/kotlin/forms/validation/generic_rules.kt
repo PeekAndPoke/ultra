@@ -1,148 +1,193 @@
 package io.peekandpoke.kraft.forms.validation
 
-import io.peekandpoke.kraft.forms.KraftFormsRuleDsl
+import io.peekandpoke.kraft.i18n.generated.anyOf
+import io.peekandpoke.kraft.i18n.generated.equalTo
+import io.peekandpoke.kraft.i18n.generated.forms
+import io.peekandpoke.kraft.i18n.generated.invalidInput
+import io.peekandpoke.kraft.i18n.generated.joinAnd
+import io.peekandpoke.kraft.i18n.generated.joinOr
+import io.peekandpoke.kraft.i18n.generated.nonNull
+import io.peekandpoke.kraft.i18n.generated.noneOf
+import io.peekandpoke.kraft.i18n.generated.notEqualTo
+import io.peekandpoke.ultra.i18n.I18nTranslate
 
 /** Creates a rule that passes if any of the given rules passes (logical OR). */
 fun <T> anyRuleOf(rule: Rule<T>, vararg rules: Rule<T>): Rule<T> {
     val allRules = listOf(rule) + rules
 
-    return GenericRule(
-        checkFn = { value -> allRules.any { it.check(value) } },
-        messageFn = { value ->
-            rules.filterNot { it.check(value) }
-                .map { it.getMessage(value) }
+    return object : Rule<T> {
+        override suspend fun check(value: T): Boolean =
+            allRules.any { it.check(value) }
+
+        override suspend fun getMessage(value: T, translate: I18nTranslate?): String =
+            allRules.filterNot { it.check(value) }
+                .map { it.getMessage(value, translate) }
                 .filter { it.isNotBlank() }
-                .joinToString(" or ")
-        },
-    )
+                .joinToString(translate?.forms?.joinOr() ?: " or ")
+    }
 }
 
 /** Creates a rule that passes only if all given rules pass (logical AND). */
 fun <T> allRulesOf(rule: Rule<T>, vararg rules: Rule<T>): Rule<T> {
     val allRules = listOf(rule) + rules
 
-    return GenericRule(
-        checkFn = { value -> allRules.all { it.check(value) } },
-        messageFn = { value ->
-            rules.filterNot { it.check(value) }
-                .map { it.getMessage(value) }
+    return object : Rule<T> {
+        override suspend fun check(value: T): Boolean =
+            allRules.all { it.check(value) }
+
+        override suspend fun getMessage(value: T, translate: I18nTranslate?): String =
+            allRules.filterNot { it.check(value) }
+                .map { it.getMessage(value, translate) }
                 .filter { it.isNotBlank() }
-                .joinToString(" and ")
-        },
-    )
+                .joinToString(translate?.forms?.joinAnd() ?: " and ")
+    }
 }
 
 /** Validates that the value is not null. */
-@KraftFormsRuleDsl
-fun <T> nonNull(message: String = "Must not be empty"): Rule<T> =
-    GenericRule(
-        messageFn = { message },
-        checkFn = { it != null },
-    )
+fun <T> nonNull(): Rule<T> = GenericRule(
+    checkFn = { it != null },
+    messageFn = { "Must not be empty" },
+    i18nFn = { _, t -> t.forms.nonNull() },
+)
+
+/** @see nonNull */
+fun <T> nonNull(message: String): Rule<T> = GenericRule(messageFn = { message }, checkFn = { it != null })
 
 /** Passes if the value is null, otherwise delegates to [inner]. */
-@KraftFormsRuleDsl
-fun <T> nullOrElse(inner: Rule<T>): Rule<T?> =
-    GenericRule(
-        checkFn = { it == null || inner.check(it) },
-        messageFn = {
-            if (it == null) {
-                "Invalid input"
-            } else {
-                inner.getMessage(it)
-            }
-        }
-    )
+fun <T> nullOrElse(inner: Rule<T>): Rule<T?> = object : Rule<T?> {
+    override suspend fun check(value: T?): Boolean =
+        value == null || inner.check(value)
+
+    override suspend fun getMessage(value: T?, translate: I18nTranslate?): String =
+        if (value == null) translate?.forms?.invalidInput() ?: "Invalid input"
+        else inner.getMessage(value, translate)
+}
 
 /** Validates that the value is not null and passes the [inner] rule. */
-@KraftFormsRuleDsl
-fun <T> nonNullAnd(inner: Rule<T>): Rule<T?> =
-    GenericRule(
-        checkFn = { it != null && inner.check(it) },
-        messageFn = {
-            if (it == null) {
-                "Must not be empty"
-            } else {
-                inner.getMessage(it)
-            }
-        }
-    )
+fun <T> nonNullAnd(inner: Rule<T>): Rule<T?> = object : Rule<T?> {
+    override suspend fun check(value: T?): Boolean =
+        value != null && inner.check(value)
+
+    override suspend fun getMessage(value: T?, translate: I18nTranslate?): String =
+        if (value == null) translate?.forms?.nonNull() ?: "Must not be empty"
+        else inner.getMessage(value, translate)
+}
+
+/** Validates that the value equals the result of [compareWith] (custom message). */
+fun <T> equalTo(compareWith: () -> T, message: (T) -> String): Rule<T> =
+    GenericRule(messageFn = message, checkFn = { it == compareWith() })
 
 /** Validates that the value equals the result of [compareWith]. */
-@KraftFormsRuleDsl
-fun <T> equalTo(compareWith: () -> T, message: (T) -> String): Rule<T> =
-    GenericRule(
-        messageFn = message,
-        checkFn = { it == compareWith() }
-    )
+fun <T> equalTo(compareWith: () -> T): Rule<T> = GenericRule(
+    checkFn = { it == compareWith() },
+    // Never echo the operand — for a confirm-password field it is a secret (D-review).
+    messageFn = { "The values must match" },
+    i18nFn = { _, t -> t.forms.equalTo() },
+)
 
 /** @see equalTo */
-@KraftFormsRuleDsl
-fun <T> equalTo(compareWith: () -> T, message: String = "Must be equal to '$compareWith()'"): Rule<T> =
+fun <T> equalTo(compareWith: () -> T, message: String): Rule<T> =
     equalTo(compareWith) { message }
 
+/** Validates that the value equals [compareWith]. */
+fun <T> equalTo(compareWith: T): Rule<T> =
+    equalTo({ compareWith })
+
 /** @see equalTo */
-@KraftFormsRuleDsl
-fun <T> equalTo(compareWith: T, message: String = "Must be equal to '$compareWith()'"): Rule<T> =
+fun <T> equalTo(compareWith: T, message: String): Rule<T> =
     equalTo({ compareWith }) { message }
 
+/** Validates that the value does not equal the result of [compareWith] (custom message). */
+fun <T> notEqualTo(compareWith: () -> T, message: (T) -> String): Rule<T> =
+    GenericRule(messageFn = message, checkFn = { it != compareWith() })
+
 /** Validates that the value does not equal the result of [compareWith]. */
-@KraftFormsRuleDsl
-fun <T> notEqualTo(
-    compareWith: () -> T,
-    message: (T) -> String = { "Must not be equal to '$compareWith()'" },
-) = GenericRule(
-    messageFn = message,
-    checkFn = { it != compareWith() }
+fun <T> notEqualTo(compareWith: () -> T): Rule<T> = GenericRule(
+    checkFn = { it != compareWith() },
+    messageFn = { "The values must not match" },
+    i18nFn = { _, t -> t.forms.notEqualTo() },
 )
 
 /** @see notEqualTo */
-@KraftFormsRuleDsl
-fun <T> notEqualTo(compareWith: () -> T, message: String = "Must not be equal to '$compareWith()'"): Rule<T> =
+fun <T> notEqualTo(compareWith: () -> T, message: String): Rule<T> =
     notEqualTo(compareWith) { message }
 
+/** Validates that the value does not equal [compareWith]. */
+fun <T> notEqualTo(compareWith: T): Rule<T> =
+    notEqualTo({ compareWith })
+
 /** @see notEqualTo */
-@KraftFormsRuleDsl
-fun <T> notEqualTo(compareWith: T, message: String = "Must not be equal to '$compareWith()'"): Rule<T> =
+fun <T> notEqualTo(compareWith: T, message: String): Rule<T> =
     notEqualTo({ compareWith }) { message }
 
-/** Validates that the value is contained in the given [values] collection. */
-@KraftFormsRuleDsl
+/** Validates that the value is contained in the given [values] collection (custom message). */
 fun <T> anyOf(values: () -> Collection<T>, message: (T) -> String): Rule<T> =
-    GenericRule(
-        messageFn = message,
-        checkFn = { it in values() },
-    )
+    GenericRule(messageFn = message, checkFn = { it in values() })
+
+/** Validates that the value is contained in the given [values] collection. */
+fun <T> anyOf(values: () -> Collection<T>): Rule<T> = GenericRule(
+    checkFn = { it in values() },
+    messageFn = { "Must be a valid input" },
+    i18nFn = { _, t -> t.forms.anyOf() },
+)
 
 /** @see anyOf */
-@KraftFormsRuleDsl
-fun <T> anyOf(values: Collection<T>, message: String = "Must be a valid input"): Rule<T> =
+fun <T> anyOf(values: () -> Collection<T>, message: String): Rule<T> =
+    anyOf(values) { message }
+
+/** Validates that the value is contained in the given [values] collection. */
+fun <T> anyOf(values: Collection<T>): Rule<T> =
+    anyOf({ values })
+
+/** @see anyOf */
+fun <T> anyOf(values: Collection<T>, message: String): Rule<T> =
     anyOf({ values }) { message }
 
-/** Validates that the value is not contained in the given [values] collection. */
-@KraftFormsRuleDsl
+/** Validates that the value is not contained in the given [values] collection (custom message). */
 fun <T> noneOf(values: () -> Collection<T>, message: (T) -> String): Rule<T> =
-    GenericRule(
-        messageFn = message,
-        checkFn = { it !in values() },
-    )
+    GenericRule(messageFn = message, checkFn = { it !in values() })
+
+/** Validates that the value is not contained in the given [values] collection. */
+fun <T> noneOf(values: () -> Collection<T>): Rule<T> = GenericRule(
+    checkFn = { it !in values() },
+    messageFn = { "Must be a valid input" },
+    i18nFn = { _, t -> t.forms.noneOf() },
+)
 
 /** @see noneOf */
-@KraftFormsRuleDsl
-fun <T> noneOf(values: () -> Collection<T>, message: String = "Must be a valid input"): Rule<T> =
+fun <T> noneOf(values: () -> Collection<T>, message: String): Rule<T> =
     noneOf(values) { message }
 
+/** Validates that the value is not contained in the given [values] collection. */
+fun <T> noneOf(values: Collection<T>): Rule<T> =
+    noneOf({ values })
+
 /** @see noneOf */
-@KraftFormsRuleDsl
-fun <T> noneOf(values: Collection<T>, message: String = "Must be a valid input"): Rule<T> =
+fun <T> noneOf(values: Collection<T>, message: String): Rule<T> =
     noneOf({ values }) { message }
 
-/** Creates a rule from a custom [check] predicate and error [message]. */
-@KraftFormsRuleDsl
+/**
+ * Creates a rule from a custom [check] predicate and error [message]. The predicate is `suspend`, so
+ * this is the escape hatch for async rules — e.g. `given({ slug -> api.isSlugAvailable(slug) })`.
+ */
 fun <T> given(
-    check: (T) -> Boolean,
+    check: suspend (T) -> Boolean,
     message: (T) -> String = { "Must be a valid input" },
 ): Rule<T> = GenericRule(
     messageFn = message,
     checkFn = check,
+)
+
+/**
+ * Creates a rule from a custom [check] predicate and a translated [message] (resolve it via the
+ * supplied [I18nTranslate], e.g. `t.app.myError()`). The two-parameter lambda distinguishes this from
+ * the plain [given] overload.
+ */
+fun <T> given(
+    check: suspend (T) -> Boolean,
+    message: (value: T, translate: I18nTranslate) -> String,
+): Rule<T> = GenericRule(
+    checkFn = check,
+    messageFn = { "Must be a valid input" },
+    i18nFn = message,
 )

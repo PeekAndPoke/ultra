@@ -180,6 +180,9 @@
       <module name="ultra.slumber.test" target="17" />
       <module name="ultra.test" target="17" />
       <module name="ultra.tooling" target="17" />
+      <module name="ultra.tooling.i18n-fixture" target="17" />
+      <module name="ultra.tooling.i18n-fixture.jvmMain" target="17" />
+      <module name="ultra.tooling.i18n-fixture.jvmTest" target="17" />
       <module name="ultra.tooling.main" target="17" />
       <module name="ultra.tooling.test" target="17" />
       <module name="ultra.ultra.cache" target="17" />
@@ -200,6 +203,9 @@
       <module name="ultra.ultra.html" target="17" />
       <module name="ultra.ultra.html.jvmMain" target="17" />
       <module name="ultra.ultra.html.jvmTest" target="17" />
+      <module name="ultra.ultra.i18n" target="17" />
+      <module name="ultra.ultra.i18n.jvmMain" target="17" />
+      <module name="ultra.ultra.i18n.jvmTest" target="17" />
       <module name="ultra.ultra.kontainer" target="17" />
       <module name="ultra.ultra.kontainer.main" target="17" />
       <module name="ultra.ultra.kontainer.test" target="17" />

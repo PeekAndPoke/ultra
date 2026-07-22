@@ -4,6 +4,7 @@ import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.forms.FormFieldComponent
 import io.peekandpoke.kraft.forms.validation.Rule
 import io.peekandpoke.kraft.semanticui.forms.renderErrors
+import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.key
 import io.peekandpoke.ultra.semanticui.ui
@@ -64,7 +65,7 @@ open class NoInputFieldComponent<T>(ctx: Ctx<Props<T>>) :
         lifecycle {
             onNextProps { new, old ->
                 if (new.initialValue != old.initialValue) {
-                    validate()
+                    launch { validate() }
                 }
             }
         }

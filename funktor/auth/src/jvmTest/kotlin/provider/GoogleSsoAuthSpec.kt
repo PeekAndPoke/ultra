@@ -9,6 +9,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.auth.AuthError
 import io.peekandpoke.funktor.auth.MinimalTestRealm
+import io.peekandpoke.funktor.auth.MinimalTestUser
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
@@ -201,7 +202,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
                     remoteClient = lazy { remoteClient }
                 )
 
-                val storedUser = Stored(_id = "repo/user-id", value = Any())
+                val storedUser = Stored(_id = "repo/user-id", value = MinimalTestUser())
 
                 val request = AuthSignInRequest.OAuth(provider = subject.id, token = "some-token")
 
@@ -338,7 +339,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
                     remoteClient = lazy { remoteClient }
                 )
 
-                val newUser = Stored(_id = "new-user-id", value = Any())
+                val newUser = Stored(_id = "new-user-id", value = MinimalTestUser())
 
                 // A realm that creates a new user
                 val realm = MinimalTestRealm(
@@ -382,7 +383,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
                     remoteClient = lazy { remoteClient }
                 )
 
-                val existingUser = Stored(_id = "existing-user-id", value = Any())
+                val existingUser = Stored(_id = "existing-user-id", value = MinimalTestUser())
 
                 // A realm that finds an existing user
                 val realm = MinimalTestRealm(

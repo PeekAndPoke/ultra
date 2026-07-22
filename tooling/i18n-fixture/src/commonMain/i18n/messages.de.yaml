@@ -1,0 +1,9 @@
+fixture:
+  hello: "Hallo {{name}}!"
+  plain: "Nur Text"
+  is: "reserviertes Schlüsselwort"
+  greet-user: "Hallo {{first-name}}"
+  items_one: "{{count}} Element"
+  items_other: "{{count}} Elemente"
+  nested:
+    deep: "Tief {{value}}"

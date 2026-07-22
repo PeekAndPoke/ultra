@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.demo.server.b2b
 
 import io.peekandpoke.funktor.auth.AuthRealm
 import io.peekandpoke.funktor.auth.AuthSystem
+import io.peekandpoke.funktor.auth.AuthUserAdapter
 import io.peekandpoke.funktor.auth.OrgPolicy
 import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
@@ -67,9 +68,25 @@ class B2bRealm(
         )
     }
 
-    override suspend fun loadUserById(id: String) = b2bUsersRepo.findById(id)
+    override val users = object : AuthUserAdapter<B2bUser> {
+        // NOTE: qualified access — inside this initializer the unqualified name would resolve to the
+        // constructor parameter (Lazy<...>), not the delegated property.
+        private val repo get() = this@B2bRealm.b2bUsersRepo
 
-    override suspend fun loadUserByEmail(email: String) = b2bUsersRepo.findByEmail(email)
+        override suspend fun loadById(id: String) = repo.findById(id)
+
+        override suspend fun loadByEmail(email: String) = repo.findByEmail(email)
+
+        override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams): Stored<B2bUser> {
+            error("B2B self-signup is not supported yet (users are invited into an organisation)")
+        }
+
+        override suspend fun serialize(user: Stored<B2bUser>): JsonObject {
+            return Json.encodeToJsonElement(
+                B2bUserModel.serializer(), user.asApiModel()
+            ).jsonObject
+        }
+    }
 
     override suspend fun getAccessibleOrgs(memberships: Set<OrgMembership>): List<AuthOrgRef> {
         return memberships.mapNotNull { membership ->
@@ -118,17 +135,4 @@ class B2bRealm(
         )
     }
 
-    override suspend fun getUserEmail(user: Stored<B2bUser>): String {
-        return user.resolve().email
-    }
-
-    override suspend fun serializeUser(user: Stored<B2bUser>): JsonObject {
-        return Json.encodeToJsonElement(
-            B2bUserModel.serializer(), user.asApiModel()
-        ).jsonObject
-    }
-
-    override suspend fun createUserForSignup(params: AuthRealm.CreateUserForSignupParams): Stored<B2bUser> {
-        error("B2B self-signup is not supported yet (users are invited into an organisation)")
-    }
 }

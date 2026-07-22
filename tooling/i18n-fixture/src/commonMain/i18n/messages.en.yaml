@@ -1,0 +1,10 @@
+# Fixture catalog — exercises namespaces, placeholders, plurals and tricky (keyword/hyphen) keys.
+fixture:
+  hello: "Hello {{name}}!"
+  plain: "Just text"
+  is: "reserved word key"
+  greet-user: "Hi {{first-name}}"
+  items_one: "{{count}} item"
+  items_other: "{{count}} items"
+  nested:
+    deep: "Deep {{value}}"

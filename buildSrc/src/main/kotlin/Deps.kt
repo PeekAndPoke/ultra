@@ -25,7 +25,8 @@ object Deps {
         const val symbol_processing = "com.google.devtools.ksp:symbol-processing-api:$version"
 
         // https://mvnrepository.com/artifact/dev.zacsweers.kctfork/ksp
-        private const val compiletesting_version = "0.12.1"
+        // https://mvnrepository.com/artifact/dev.zacsweers.kctfork/core (checked 2026-07-21: latest 0.13.0)
+        private const val compiletesting_version = "0.13.0"
         const val compiletesting_ksp = "dev.zacsweers.kctfork:ksp:$compiletesting_version"
     }
 
@@ -256,6 +257,12 @@ object Deps {
 
             const val s3 = "software.amazon.awssdk:s3:$awssdk_version"
             const val ses = "software.amazon.awssdk:ses:$awssdk_version"
+        }
+
+        object Yaml {
+            // https://mvnrepository.com/artifact/org.yaml/snakeyaml (checked 2026-07-20: latest 2.4)
+            private const val snakeyaml_version = "2.4"
+            const val snakeyaml = "org.yaml:snakeyaml:$snakeyaml_version"
         }
 
         object Google {

@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.auth
 import io.peekandpoke.funktor.auth.KarangoTestAppUsersRepo.Companion.asApiModel
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
+import io.peekandpoke.funktor.auth.model.AuthUser
 import io.peekandpoke.funktor.auth.model.PasswordPolicy
 import io.peekandpoke.funktor.auth.provider.AuthProvider
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
@@ -88,18 +89,24 @@ suspend fun createAuthTestContainer(
     }
 }
 
+/** Minimal [AuthUser] stub for provider unit tests built on [MinimalTestRealm]. */
+data class MinimalTestUser(
+    override val email: String = "user@example.com",
+    val name: String = "Minimal Test User",
+) : AuthUser
+
 class TestMessaging(
-    val onSendPasswordChangedEmail: suspend (Stored<Any>) -> EmailResult = {
+    val onSendPasswordChangedEmail: suspend (Stored<MinimalTestUser>) -> EmailResult = {
         error("sendPasswordChangedEmail was not expected to be called")
     },
-    val onSendPasswordRecoveryEmil: suspend (Stored<Any>, String) -> EmailResult = { _, _ ->
+    val onSendPasswordRecoveryEmil: suspend (Stored<MinimalTestUser>, String) -> EmailResult = { _, _ ->
         error("sendPasswordRecoveryEmil was not expected to be called")
     },
-) : AuthRealm.Messaging<Any> {
-    override suspend fun sendPasswordChangedEmail(user: Stored<Any>): EmailResult =
+) : AuthRealm.Messaging<MinimalTestUser> {
+    override suspend fun sendPasswordChangedEmail(user: Stored<MinimalTestUser>): EmailResult =
         onSendPasswordChangedEmail(user)
 
-    override suspend fun sendPasswordRecoveryEmil(user: Stored<Any>, resetUrl: String): EmailResult =
+    override suspend fun sendPasswordRecoveryEmil(user: Stored<MinimalTestUser>, resetUrl: String): EmailResult =
         onSendPasswordRecoveryEmil(user, resetUrl)
 }
 
@@ -123,26 +130,29 @@ class MinimalTestDeps : AuthSystem.Deps {
 
 class MinimalTestRealm(
     override val passwordPolicy: PasswordPolicy = PasswordPolicy.default,
-    val getMessaging: () -> AuthRealm.Messaging<Any> = { TestMessaging() },
-    val onLoadUserByEmail: suspend (String) -> Stored<Any>? =
+    val getMessaging: () -> AuthRealm.Messaging<MinimalTestUser> = { TestMessaging() },
+    val onLoadUserByEmail: suspend (String) -> Stored<MinimalTestUser>? =
         { error("loadUserByEmail was not expected to be called") },
-    val onLoadUserById: suspend (String) -> Stored<Any>? =
+    val onLoadUserById: suspend (String) -> Stored<MinimalTestUser>? =
         { error("onLoadUserById was not expected to be called") },
-    val onCreateUserForSignup: suspend (params: AuthRealm.CreateUserForSignupParams) -> Stored<Any> =
+    val onCreateUserForSignup: suspend (params: AuthUserAdapter.CreateUserForSignupParams) -> Stored<MinimalTestUser> =
         { error("createUserForSignup was not expected to be called") },
-    val onGetUserEmail: suspend (user: Stored<Any>) -> String =
-        { error("getUserEmail was not expected to be called") },
-) : AuthRealm<Any> {
+) : AuthRealm<MinimalTestUser> {
     override val id: String get() = "test-realm"
 
-    override suspend fun loadUserByEmail(email: String): Stored<Any>? =
-        onLoadUserByEmail(email)
+    override val users = object : AuthUserAdapter<MinimalTestUser> {
+        override suspend fun loadById(id: String): Stored<MinimalTestUser>? =
+            onLoadUserById(id)
 
-    override suspend fun loadUserById(id: String): Stored<Any>? =
-        onLoadUserById(id)
+        override suspend fun loadByEmail(email: String): Stored<MinimalTestUser>? =
+            onLoadUserByEmail(email)
 
-    override suspend fun createUserForSignup(params: AuthRealm.CreateUserForSignupParams): Stored<Any> =
-        onCreateUserForSignup(params)
+        override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams): Stored<MinimalTestUser> =
+            onCreateUserForSignup(params)
+
+        override suspend fun serialize(user: Stored<MinimalTestUser>): JsonObject =
+            error("Not needed for test")
+    }
 
     override val messaging get() = getMessaging()
 
@@ -150,21 +160,20 @@ class MinimalTestRealm(
 
     override val providers get() = error("Not needed for test")
 
-    override suspend fun generateJwt(user: Stored<Any>, selectedOrg: SelectedOrg?) = error("Not needed for test")
-
-    override suspend fun getUserEmail(user: Stored<Any>) = onGetUserEmail(user)
-
-    override suspend fun serializeUser(user: Stored<Any>) = error("Not needed for test")
+    override suspend fun generateJwt(user: Stored<MinimalTestUser>, selectedOrg: SelectedOrg?) =
+        error("Not needed for test")
 }
 
 @Vault
 data class TestAppUser(
     val name: String,
-    val email: String,
-) {
+    override val email: String,
+) : AuthUser {
     companion object {
         const val USER_TYPE = "test-app-user"
     }
+
+    override val displayName: String get() = name
 }
 
 @Serializable
@@ -232,17 +241,38 @@ class TestAppUserRealm(
         )
     }
 
-    override suspend fun loadUserById(id: String): Stored<TestAppUser>? {
-        return appUserRepo.findById(id)
-    }
+    override val users = object : AuthUserAdapter<TestAppUser> {
+        // NOTE: qualified access — inside this initializer the unqualified name would resolve to the
+        // constructor parameter (Lazy<...>), not the delegated property.
+        private val repo get() = this@TestAppUserRealm.appUserRepo
 
-    override suspend fun loadUserByEmail(email: String): Stored<TestAppUser>? {
-        return appUserRepo.findFirst {
-            FOR(appUserRepo) {
-                FILTER(it.email EQ email)
-                LIMIT(1)
-                RETURN(it)
+        override suspend fun loadById(id: String): Stored<TestAppUser>? {
+            return repo.findById(id)
+        }
+
+        override suspend fun loadByEmail(email: String): Stored<TestAppUser>? {
+            return repo.findFirst {
+                FOR(repo) {
+                    FILTER(it.email EQ email)
+                    LIMIT(1)
+                    RETURN(it)
+                }
             }
+        }
+
+        override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams): Stored<TestAppUser> {
+            return repo.insert(
+                TestAppUser(
+                    name = params.displayName,
+                    email = params.email,
+                )
+            )
+        }
+
+        override suspend fun serialize(user: Stored<TestAppUser>): JsonObject {
+            return Json
+                .encodeToJsonElement(TestAppUserModel.serializer(), user.asApiModel())
+                .jsonObject
         }
     }
 
@@ -274,22 +304,4 @@ class TestAppUserRealm(
         )
     }
 
-    override suspend fun getUserEmail(user: Stored<TestAppUser>): String {
-        return user.resolve().email
-    }
-
-    override suspend fun serializeUser(user: Stored<TestAppUser>): JsonObject {
-        return Json
-            .encodeToJsonElement(TestAppUserModel.serializer(), user.asApiModel())
-            .jsonObject
-    }
-
-    override suspend fun createUserForSignup(params: AuthRealm.CreateUserForSignupParams): Stored<TestAppUser> {
-        return appUserRepo.insert(
-            TestAppUser(
-                name = params.displayName,
-                email = params.email,
-            )
-        )
-    }
 }

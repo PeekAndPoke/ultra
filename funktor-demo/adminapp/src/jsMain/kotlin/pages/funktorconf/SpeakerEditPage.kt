@@ -15,7 +15,6 @@ import io.peekandpoke.kraft.semanticui.forms.UiTextArea
 import io.peekandpoke.kraft.toasts.ToastsManager.Companion.toasts
 import io.peekandpoke.kraft.utils.dataLoader
 import io.peekandpoke.kraft.utils.doubleClickProtection
-import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick
 import io.peekandpoke.ultra.semanticui.icon
@@ -142,8 +141,8 @@ class SpeakerEditPage(ctx: Ctx<Props>) : Component<SpeakerEditPage.Props>(ctx) {
                 .givenNot(noDblClick.canRun) { loading }
                 .button {
                     onClick {
-                        if (formCtrl.validate()) {
-                            launch { saveSpeaker(draft) }
+                        formCtrl.validate {
+                            saveSpeaker(draft)
                         }
                     }
 

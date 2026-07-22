@@ -22,6 +22,7 @@ import io.peekandpoke.funktor.messaging.storage.EmailStoring
 import io.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.store
 import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.model.AuthOrgRef
+import io.peekandpoke.funktor.auth.model.AuthUser
 import io.peekandpoke.ultra.security.user.HasOrgMemberships
 import io.peekandpoke.ultra.security.user.OrgMembership
 import io.peekandpoke.ultra.security.user.SelectedOrg
@@ -32,9 +33,8 @@ import kotlinx.html.body
 import kotlinx.html.br
 import kotlinx.html.h1
 import kotlinx.html.p
-import kotlinx.serialization.json.JsonObject
 
-interface AuthRealm<USER> {
+interface AuthRealm<USER : AuthUser> {
 
     /**
      * Represents a known role with a display name and its associated permissions.
@@ -49,7 +49,7 @@ interface AuthRealm<USER> {
     /**
      * Messaging interface for sending emails.
      */
-    interface Messaging<USER> {
+    interface Messaging<USER : AuthUser> {
         suspend fun sendPasswordChangedEmail(user: Stored<USER>): EmailResult
 
         suspend fun sendPasswordRecoveryEmil(user: Stored<USER>, resetUrl: String): EmailResult
@@ -58,7 +58,7 @@ interface AuthRealm<USER> {
     /**
      * Default implementation of the messaging interface.
      */
-    class DefaultMessaging<USER>(
+    class DefaultMessaging<USER : AuthUser>(
         val senderEmail: String,
         val senderName: String,
         val applicationName: String,
@@ -66,7 +66,7 @@ interface AuthRealm<USER> {
     ) : Messaging<USER> {
 
         override suspend fun sendPasswordChangedEmail(user: Stored<USER>): EmailResult {
-            val userEmail = realm.getUserEmail(user)
+            val userEmail = user.value().email
 
             return realm.deps.messaging.mailing.send(
                 Email(
@@ -98,7 +98,7 @@ interface AuthRealm<USER> {
         }
 
         override suspend fun sendPasswordRecoveryEmil(user: Stored<USER>, resetUrl: String): EmailResult {
-            val userEmail = realm.getUserEmail(user)
+            val userEmail = user.value().email
 
             return realm.deps.messaging.mailing.send(
                 Email(
@@ -136,22 +136,6 @@ interface AuthRealm<USER> {
         }
     }
 
-    /**
-     * Parameters for creating a new user during sign-up, see [createUserForSignup]
-     */
-    @ConsistentCopyVisibility
-    data class CreateUserForSignupParams private constructor(
-        val email: String,
-        val displayName: String,
-    ) {
-        companion object {
-            fun of(email: String, displayName: String? = null) = CreateUserForSignupParams(
-                email = email.trim().lowercase(),
-                displayName = displayName?.trim() ?: email.substringBefore("@").trim(),
-            )
-        }
-    }
-
     /** Unique id of the realm */
     val id: String
 
@@ -163,6 +147,9 @@ interface AuthRealm<USER> {
 
     /** User messaging */
     val messaging: Messaging<USER>
+
+    /** Operations on this realm's users (loading, creating, serializing), see [AuthUserAdapter]. */
+    val users: AuthUserAdapter<USER>
 
     /** The password policy for this realm */
     val passwordPolicy: PasswordPolicy get() = PasswordPolicy.default
@@ -196,23 +183,8 @@ interface AuthRealm<USER> {
      */
     suspend fun resolveSelectedOrg(orgId: String, memberships: Set<OrgMembership>): SelectedOrg? = null
 
-    /** Loads a user by its id. */
-    suspend fun loadUserById(id: String): Stored<USER>?
-
-    /** Loads a user by its email. */
-    suspend fun loadUserByEmail(email: String): Stored<USER>?
-
     /** Generates a JWT for the given user and the org selected for this session (null for org-less realms). */
     suspend fun generateJwt(user: Stored<USER>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token
-
-    /** Loads the user email from the given user */
-    suspend fun getUserEmail(user: Stored<USER>): String
-
-    /** Serializes the given user */
-    suspend fun serializeUser(user: Stored<USER>): JsonObject
-
-    /** Creates a new user during sign-up. Providers call this to create a user for the given email/displayName. */
-    suspend fun createUserForSignup(params: CreateUserForSignupParams): Stored<USER>
 
     /**
      * Returns all known user roles for this realm.
@@ -316,7 +288,7 @@ interface AuthRealm<USER> {
      * cross-realm token refresh attacks (a user from realm A requesting a token from realm B).
      */
     suspend fun refreshToken(userId: String, expectedUserType: String?, currentOrgId: String?): AuthSignInResponse {
-        val user = loadUserById(userId)
+        val user = users.loadById(userId)
             ?: throw AuthError("User not found: $userId")
 
         // Re-derive the session's org slice from the DB (picks up membership/plan changes). Refresh
@@ -404,7 +376,7 @@ interface AuthRealm<USER> {
         // Single-use: consume the token.
         deps.storage.authRecords.removeById(record._id)
 
-        val user = loadUserById(record.value().ownerId)
+        val user = users.loadById(record.value().ownerId)
             ?: throw AuthError.noOrganisationAccess()
 
         val memberships = getMemberships(user)
@@ -426,7 +398,7 @@ interface AuthRealm<USER> {
     ): AuthSignInResponse.Success = AuthSignInResponse.Success(
         token = generateJwt(user, selectedOrg),
         realm = asApiModel(),
-        user = serializeUser(user),
+        user = users.serialize(user),
         org = org,
     )
 

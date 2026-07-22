@@ -29,6 +29,17 @@ Docs {
     useEmptyJavadoc()
 }
 
+// Built-in form-validation messages: src/jsMain/i18n/messages.*.yaml -> typed accessors + catalog.
+apply<I18nPlugin>()
+
+configure<I18nExtension> {
+    packageName.set("io.peekandpoke.kraft.i18n.generated")
+    moduleName.set("KraftForms")
+    fallbackLang.set("en")
+    requiredLangs("de")
+    sourceSet.set("jsMain")
+}
+
 kotlin {
     js {
         compilerOptions {
@@ -56,6 +67,7 @@ kotlin {
                 api(project(":ultra:common"))
                 api(project(":ultra:datetime"))
                 api(project(":ultra:html"))
+                api(project(":ultra:i18n"))
                 api(project(":ultra:model"))
                 api(project(":ultra:streams"))
             }

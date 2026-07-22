@@ -1,6 +1,7 @@
 # i18n / l10n foundation — design decisions
 
-**Status:** DESIGN AGREED — ready to cut into implementation tasks (design captured 2026-07-20)
+**Status:** IN PROGRESS — S1–S5 DONE (committed + gated, 2026-07-20/21); S6 folded into the
+exception-disclosure task; S7 design agreed → `20260722-i18n-s7-emails.md` (2026-07-22)
 **Plan:** umbrella; feeds email templates, form validation, and server error channels
 **Security-critical:** no (but interacts with `.claude/tasks/20260720-exception-disclosure-architecture.md` — see §Interactions)
 
@@ -143,6 +144,15 @@ forms:
 - A **checker** (Gradle verification task) diffs every non-fallback language against the fallback and
   reports: **missing** keys, **superfluous** keys, and **placeholder mismatches**. Warn by default;
   fail under CI / `-Pi18n.strict`.
+- **Severity model (settled in S2 review, resolving a D8/D11 tension):** a dead/superfluous **KEY** →
+  WARNING for both base and regional (harmless, un-callable); an **introduced placeholder** → ERROR for
+  both (renders a broken `{{x}}` at runtime). Missing key → WARNING (base) / not flagged (regional,
+  inherits base). Plural placeholders are compared against the **union** of the fallback's `_one`/`_other`
+  forms, so a form legitimately using a union member is not falsely flagged.
+- **`requiredLangs(...)` (S2):** locales listed as required must be at full parity — an entirely absent
+  required locale, or a missing key in one, is an ERROR (not a warning). Placeholder *omission* stays
+  INFO even for required langs (D8's deliberate flexibility). Targets base languages; a regional variant
+  still inherits its base. Config: `I18nGenConfig.requiredLocales`.
 - **Placeholder rule** — `placeholders(non-default) ⊆ placeholders(default)`. The signature's params
   come from the default language only, so its placeholders are always a superset of every other
   language's and the resolver always has a value. Therefore:
@@ -237,11 +247,13 @@ would be unreachable from kraft and is **rejected**.
 Three layers:
 
 1. **`ultra/i18n` (NEW module) — platform-neutral runtime.** `I18n`, `I18nTranslate`, `I18nFormat`,
-   `MessageResolver`, `I18nCatalog`, `Lang`, formatting interfaces + default impls. KMP jvm+js
-   (mirrors kraft/core), **not** inside `ultra:common` — so `ultra:common`'s five native targets are
-   irrelevant (a jvm+js module can depend on the wider-target `ultra:common`). Depends on
-   `ultra:common` (reuse `Placeholders` for `{{var}}`) and `ultra:streams` (`StreamSource<I18n>`). No
-   kotlinx.serialization in v1 (baked catalogs are `mapOf`); added only when lazy-load JSON lands (D5).
+   `MessageResolver`, `I18nCatalog`, `Locale`, formatting interfaces + default impls. KMP jvm+js
+   (mirrors kraft/core), **not** inside `ultra:common`. **Built in S1 (DONE).** Substitution is a
+   self-contained single-pass regex, so S1 has **no `ultra:common` dependency** (the earlier plan to
+   reuse `Placeholders` was dropped in review — its `Filled.replace` is multi-pass and injectable; see
+   Interactions). `ultra:common` returns when locale formatting (D9) needs it. No `ultra:streams` dep
+   either — the reactive stream is a kraft concern (S4). No kotlinx.serialization in v1 (baked catalogs
+   are `mapOf`); added only when lazy-load JSON lands (D5).
 2. **`kraft/core` (jsMain) — reactive glue + kraft's own strings.** The `Translations`/`Formatting`
    delegate helpers (D10), registering the `I18n` stream as an app attribute (mirror
    `ResponsiveController`), and an `I18nInitializer` for boot-language resolution (mirror
@@ -338,19 +350,35 @@ KSP** (input is a resource file, not Kotlin symbols; common-metadata KSP output 
   `kraft/core/.../string_rules_extra.kt`). i18n keys are the natural single source.
 - Two `// TODO: how to translate this?` markers already sit at the seam
   (`kraft/core/.../forms/FormFieldComponent.kt:82`, `kraft/semanticui/.../field_input.kt:196`).
+- **`ultra/common/.../Placeholders.kt` `Filled.replace` multi-pass injection — FIXED (2026-07-20).**
+  Was a `fold` that re-scanned substituted text (second-order injection + billion-laughs). Now
+  single-pass (one combined literal regex). Adversarial regression tests added. Found in the S1
+  security review; fixed proactively (no production callers yet, but shared foundation). See
+  `.claude/tasks/20260720-placeholders-injection-fix.md`.
 
-## Proposed task cut (dependency order)
+## Build steps (dependency order — one task file each, `/feature-review` gate per step)
 
-1. **`funktor:i18n` runtime module** — `I18n` (state/stream/resolver), `I18nCatalog`,
-   `MessageResolver`, `Lang`, formatting interfaces + default impls, `suspend setLang`.
-2. **Gradle codegen task** — yaml (fallback-lang-only key discovery) → accessor-surface +
-   catalog-data split (D5/D6), proper inputs/outputs, `commonMain` srcDir. Includes the D8 checker.
-3. **Kraft forms seam** — route `Rule`/`FormFieldComponent` messages through `I18n`; kraft catalogs
-   install by default; kraft ships `messages.*.yaml`.
-4. **Server error channel** — codes over the wire; client resolves. Merge into the
-   exception-disclosure task per the interaction note.
-5. **Email templates** — near-trivial; swap the ~100 words in `AuthRealm.kt` to generated accessors.
-6. **(Deferred)** date/number/money locale formatting — separate tasks (D9).
+Each step compiles and is tested in isolation, then goes through the mandatory 3-reviewer gate
+(`.claude/skills/feature-review/`) before DONE + archive. Branch: `i18n-foundation`, cut off the
+`auth-increments` HEAD (2026-07-20) so it carries this design doc + the auth context S6 needs; rebase
+onto master later if independent merge is wanted. One commit per step so each review diff is clean.
+Critical path: **S1 → S2 → S3 → S5**; S2 and S4 can run in parallel after S1.
+
+Coordinator effort (per user, 2026-07-20): `high` default; bump to `xhigh` for **S2** (codegen edge
+cases), **S5** (integration synthesis), **S6** (security) — and run the S6 security reviewer at `xhigh`.
+
+| # | Step | Test evidence | Reviewers | Sec-crit |
+|---|---|---|---|---|
+| S1 | **`ultra/i18n` runtime core** — `Locale` (lang+region+chain), `I18nCatalog`, `MessageResolver`, `I18n`, `I18nTranslate`/`I18nFormat`, `{{}}` subst. Hand-written test catalogs, no codegen | Unit (commonTest jvm+js): chain `de-CH→de→en`, app-before-framework precedence, plural, subst, missing-key fallback | impl&style, domain | no |
+| S2 | **Emitter core (`tooling/`)** — yaml → Kotlin (receiver + top-level ext accessors, forced named params, baked catalog) + checker (D8) | Golden-file diff tests; checker unit tests (missing/superfluous/placeholder, base-vs-regional) | impl&style, domain | no |
+| S3 | **buildSrc plugin** — thin `GenerateI18nTask` (@InputFiles/@OutputDirectory) + extension + `srcDir(taskProvider)` KMP wiring + checker task | Apply to a fixture module: generated code compiles; up-to-date + cache correct from a **clean** build | impl&style (build pitfalls) | no |
+| S4 | **kraft reactive glue** (jsMain) — `I18n` stream app-attribute (mirror `ResponsiveController`), `Translations`/`Formatting` delegates (class+functional), `I18nInitializer`, persist lang | `TestBed.preact`: re-render on `suspend setLang`; delegate resolves | impl&style, domain | no |
+| S5 | **kraft forms — first vertical slice** — plugin on kraft/core + yaml (~28 defaults); route `Rule`/`GenericRule`/`FormFieldComponent` through `I18n`; kraft catalog installs by default; kill the two `// TODO: how to translate this?` | `TestBed.preact`: validation msg `en`→`de` on switch (full-stack proof) | **full 3** | no |
+| S6 | **Server error channel** — `Message`/`HasClientMessage` carry key+args (not `String`); AuthApi/OrgsApi emit keys; client resolves. **FOLDED INTO** `20260720-exception-disclosure-architecture.md` (decided 2026-07-22) — no separate S6 task file; the i18n key+args channel is the transport for that work | Backend e2e (`AppSpec`/`AppUnderTest`, both DB backends where storage); client-resolves test | **full 3, security decisive** | **yes → red-team** |
+| S7 | **Emails** — whole-template-per-locale Markdown (raw-HTML passthrough) + kotlinx.html layout slot; front-matter subject; codegen emails mode; HTML-escaped substitution; recipient locale. Design agreed 2026-07-22 → task file `20260722-i18n-s7-emails.md`. **Prereq DONE 2026-07-22:** auth-user-seams refactor (AuthUser bound + LanguageSettings + AuthUserAdapter, archived) | Backend e2e: render both emails `en`+`de`; escaping adversarial tests | impl&style, domain | no |
+
+**Deferred (D9), not in this build:** locale date/number/money formatting + `kotlinx-datetime` bump —
+separate later tasks once the text foundation lands.
 
 ## Spec (foundation acceptance — refined per task above)
 

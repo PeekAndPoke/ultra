@@ -1,19 +1,29 @@
 package io.peekandpoke.kraft.forms.validation
 
-/** A [Rule] implementation backed by lambda functions for check and message. */
+import io.peekandpoke.ultra.i18n.I18nTranslate
+
+/**
+ * A [Rule] implementation backed by lambda functions for check and message.
+ *
+ * [checkFn] is `suspend` (so a rule can validate asynchronously); [messageFn]/[i18nFn] stay
+ * synchronous — building an error string never needs to suspend.
+ */
 data class GenericRule<T>(
-    private val checkFn: (value: T) -> Boolean,
+    private val checkFn: suspend (value: T) -> Boolean,
     private val messageFn: (value: T) -> String = { "Invalid input" },
+    /** Optional translation of the default message; `null` for a plain (non-translated) message. */
+    private val i18nFn: ((value: T, translate: I18nTranslate) -> String)? = null,
 ) : Rule<T> {
+    /** Replaces the message with a custom (non-translated) one. */
     operator fun invoke(message: (T) -> String): GenericRule<T> {
-        return copy(messageFn = message)
+        return copy(messageFn = message, i18nFn = null)
     }
 
-    override fun check(value: T): Boolean {
+    override suspend fun check(value: T): Boolean {
         return checkFn(value)
     }
 
-    override fun getMessage(value: T): String {
-        return messageFn(value)
+    override suspend fun getMessage(value: T, translate: I18nTranslate?): String {
+        return translate?.let { i18nFn?.invoke(value, it) } ?: messageFn(value)
     }
 }
