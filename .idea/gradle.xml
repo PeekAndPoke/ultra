@@ -73,6 +73,7 @@
             <option value="$PROJECT_DIR$/mutator/core" />
             <option value="$PROJECT_DIR$/mutator/ksp" />
             <option value="$PROJECT_DIR$/tooling" />
+            <option value="$PROJECT_DIR$/tooling/i18n-fixture" />
             <option value="$PROJECT_DIR$/ultra" />
             <option value="$PROJECT_DIR$/ultra/cache" />
             <option value="$PROJECT_DIR$/ultra/common" />
