@@ -15,10 +15,13 @@ import io.peekandpoke.ultra.vault.Stored
  * = {…})` module. Any app using these interfaces MUST install funktor saas.
  *
  * In practice a canonical [OrgAwareParam] route CANNOT function without saas anyway: its
- * `org: Stored<Organisation>` param needs the `Organisation` repository that saas registers, so
- * without it the `{org}` url segment fails to convert (and `ConverterCompatBootCheck` flags it at
- * boot). The only genuinely silent gap is the unusual shape that loads an `OrgAware` entity WITHOUT
- * an [OrgAwareParam] `org` param — covered by the entity-`OrgAware` linter follow-up.
+ * `org: Stored<Organisation>` param needs the `Organisation` repository that saas registers. Without
+ * it the app still BOOTS (the boot converter check only validates the OUTGOING converter, which
+ * handles any `Stored<*>` by shape), but every REQUEST fails when the INCOMING converter can't
+ * resolve `{org}` (`NoConverterFoundException` → HTTP 500) — non-functional, never a cross-org read.
+ * A proper boot-time backstop (fail start when a marker-typed param has no covering guard) is tracked
+ * in the route-check follow-ups. The only genuinely silent gap is the unusual shape that loads an
+ * `OrgAware` entity WITHOUT an [OrgAwareParam] `org` param — covered by the entity-`OrgAware` linter.
  *
  * Marking an entity `OrgAware` is the developer's OPT-IN (a lint/boot rule to flag org-owned entities
  * that forgot it is future scope). Once marked, any route resolving the entity is boot-forced to be

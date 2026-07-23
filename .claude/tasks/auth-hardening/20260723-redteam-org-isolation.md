@@ -17,7 +17,11 @@ These are the residual/edge scenarios to actively attempt.
    the SELECTED org, not `accessibleOrgs`).
 3. **Existence oracle** — anonymous + authenticated-wrong-org probing of `{widgetId}` — confirm 401
    (anon) / 404 (wrong org) are identical for existing vs non-existing ids; confirm NO repository read
-   for the phase-1-denied case (timing + a counting repo).
+   for the phase-1-denied case (timing + a counting repo). NOTE (accepted residual, round-3 review):
+   on the AUTHENTICATED 404 the status code + repo read-count are identical for exists-but-foreign vs
+   not-found, but DB-internal hit-vs-miss latency inherently differs (you must load the entity to
+   check its org). Not introduced by this work and not closable without loading; quantify only if a
+   timing side-channel is in scope.
 4. **Polymorphic/base-typed param** — a route param `Stored<Base>` where `Base` is not `OrgAware` but
    the concrete row is. Two sub-cases: (a) params ARE `OrgAwareParam` → guard's runtime-value check
    should still catch it; (b) params are NOT `OrgAwareParam` → boot check does NOT force it → attempt

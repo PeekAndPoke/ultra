@@ -7,7 +7,14 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UserPermissions(
     val isSuperUser: Boolean = false,
-    /** The single organisation selected for the current session, or `null` for org-less realms. */
+    /**
+     * The single organisation selected for the current session, or `null` for org-less realms.
+     *
+     * CONTRACT: this is the organisation's bare `_key` (matching how `{org}` url segments resolve),
+     * NOT the collection-qualified `_id`. [hasOrganisation] — and the org-scoped route caller-binding
+     * built on it — compares against this value, so populating it with an `_id` silently 404s every
+     * org-scoped request. Keep `SelectedOrg.orgId` / `OrgMembership.orgId` on the same `_key` basis.
+     */
     val org: String? = null,
     /** All organisations the user may log into. Non-authz — drives the login org picker. */
     val accessibleOrgs: Set<String> = emptySet(),

@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 
 /**
@@ -62,12 +63,19 @@ class OrgIsolationGuard : RouteParamsGuard {
         return GuardVerdict.Pass
     }
 
-    // Every entity-ref property — the ones the incoming converter turns into a findById. Org-ownership
-    // is decided per request by the runtime value, so this matches the LOADED set, not a static guess.
+    // The entity-ref properties the incoming converter actually loads: PRIMARY-CONSTRUCTOR params
+    // (the converter binds `ctor.callBy` from url segments — see IncomingConverter) that are
+    // `Stored`/`Storable`-typed. Keying off the ctor params (not all member properties) makes the
+    // guard's scanned set exactly the LOADED set the boot check forces coverage on — no computed /
+    // derived `Stored` getters (never loaded), and it aligns with `entityRefParams()`/ctorParams2Types.
+    // Org-ownership is then decided per request by the entity's runtime value.
     @Suppress("UNCHECKED_CAST")
-    private fun computeEntityRefFields(cls: KClass<*>): List<KProperty1<Any, *>> =
-        cls.memberProperties
+    private fun computeEntityRefFields(cls: KClass<*>): List<KProperty1<Any, *>> {
+        val ctorParamNames = cls.primaryConstructor?.parameters?.mapNotNull { it.name }?.toSet() ?: emptySet()
+        return cls.memberProperties
+            .filter { it.name in ctorParamNames }
             .filter { it.returnType.classifier == Stored::class || it.returnType.classifier == Storable::class }
             .onEach { it.isAccessible = true }
             .map { it as KProperty1<Any, *> }
+    }
 }
