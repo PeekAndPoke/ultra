@@ -23,7 +23,7 @@ class OrgsApi : ApiRoutes("orgs", defaultAuth = { isSuperUser() }) {
     // 500s (a degenerate misconfiguration — writes already fail loudly). A self-validating module
     // builder will turn this into an actionable boot failure — see
     // `.claude/future-plans/funktor-module-config-builder.md`.
-    data class IdParam(val id: Stored<Organisation>)
+    data class OrgParam(val id: Stored<Organisation>)
 
     val list = OrgsApiClient.List.mount {
         docs {
@@ -35,7 +35,7 @@ class OrgsApi : ApiRoutes("orgs", defaultAuth = { isSuperUser() }) {
         }
     }
 
-    val get = OrgsApiClient.Get.mount(IdParam::class) {
+    val get = OrgsApiClient.Get.mount(OrgParam::class) {
         docs {
             name = "Get organisation"
         }.codeGen {
@@ -81,7 +81,7 @@ class OrgsApi : ApiRoutes("orgs", defaultAuth = { isSuperUser() }) {
         }
     }
 
-    val update = OrgsApiClient.Update.mount(IdParam::class) {
+    val update = OrgsApiClient.Update.mount(OrgParam::class) {
         docs {
             name = "Update organisation"
         }.codeGen {

@@ -71,10 +71,17 @@ name; the param CLASS is server-side (jvmMain) only. Verify codegen output is by
   tradeoff). **Resolution (user, 2026-07-23):** don't bolt on a one-off boot check — redesign funktor
   module config as a self-validating composable builder (each builder asserts its own invariants,
   fails boot actionably). Follow-up: `.claude/future-plans/funktor-module-config-builder.md`. Interim:
-  loud KDoc on `OrgsApi.IdParam`.
+  loud KDoc on `OrgsApi.OrgParam`.
 - NO-ACTION (INFO, verified not part-4 regressions): 404 error echoes request-uri (pre-existing part-3
   `ApiStatusPages`); shared read-counter (mirrors accepted `OrgIsolationE2eSpec` pattern, kotest
   sequential); `id` field holding `Stored<T>` (required by name↔segment match, documented).
+
+**Naming (user feedback, 2026-07-23):** param classes named by ENTITY (not generic `IdParam`, which
+collides across modules and muddles imports): `OrgsApi.OrgParam`, `EventParam`/`SpeakerParam`/
+`AttendeeParam`. Confirmed `Organisation` is NOT `OrgAware` (it is the tenant root, not org-owned), so
+`OrgParam` is correctly NOT `OrgAwareParam` and the boot check does not force it; the super-user floor
+is the right guard for org-root CRUD. (Pre-existing `JobIdParam` in funktor/cluster is out of scope —
+flagged for a possible separate sweep.)
 
 **Round 2:** PENDING — full re-review over the whole diff with fresh reviewers; loop to zero findings.
 

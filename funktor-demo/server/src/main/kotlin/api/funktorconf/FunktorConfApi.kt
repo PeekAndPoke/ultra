@@ -18,9 +18,9 @@ import io.peekandpoke.ultra.vault.map
 
 // Entity-binding params: `{id}` resolves the `Stored<Entity>` in the param converter before the
 // handler runs, so a missing id 404s at the binding and the entity enters the request exactly once.
-data class EventIdParams(val id: Stored<Event>)
-data class SpeakerIdParams(val id: Stored<Speaker>)
-data class AttendeeIdParams(val id: Stored<Attendee>)
+data class EventParam(val id: Stored<Event>)
+data class SpeakerParam(val id: Stored<Speaker>)
+data class AttendeeParam(val id: Stored<Attendee>)
 
 /**
  * Public conference reads (list / get events, speakers, attendees). Floor: `public()`.
@@ -41,7 +41,7 @@ class FunktorConfApi(
         }
     }
 
-    val getEvent = FunktorConfApiClient.GetEvent.mount(EventIdParams::class) {
+    val getEvent = FunktorConfApiClient.GetEvent.mount(EventParam::class) {
         docs {
             name = "Get event by ID"
         }.codeGen {
@@ -62,7 +62,7 @@ class FunktorConfApi(
         }
     }
 
-    val getSpeaker = FunktorConfApiClient.GetSpeaker.mount(SpeakerIdParams::class) {
+    val getSpeaker = FunktorConfApiClient.GetSpeaker.mount(SpeakerParam::class) {
         docs {
             name = "Get speaker by ID"
         }.codeGen {
@@ -83,7 +83,7 @@ class FunktorConfApi(
         }
     }
 
-    val getAttendee = FunktorConfApiClient.GetAttendee.mount(AttendeeIdParams::class) {
+    val getAttendee = FunktorConfApiClient.GetAttendee.mount(AttendeeParam::class) {
         docs {
             name = "Get attendee by ID"
         }.codeGen {
@@ -124,7 +124,7 @@ class FunktorConfAdminApi(
         }
     }
 
-    val updateEvent = FunktorConfApiClient.UpdateEvent.mount(EventIdParams::class) {
+    val updateEvent = FunktorConfApiClient.UpdateEvent.mount(EventParam::class) {
         docs {
             name = "Update an event"
         }.codeGen {
@@ -146,7 +146,7 @@ class FunktorConfAdminApi(
         }
     }
 
-    val deleteEvent = FunktorConfApiClient.DeleteEvent.mount(EventIdParams::class) {
+    val deleteEvent = FunktorConfApiClient.DeleteEvent.mount(EventParam::class) {
         docs {
             name = "Delete an event"
         }.codeGen {
@@ -178,7 +178,7 @@ class FunktorConfAdminApi(
         }
     }
 
-    val updateSpeaker = FunktorConfApiClient.UpdateSpeaker.mount(SpeakerIdParams::class) {
+    val updateSpeaker = FunktorConfApiClient.UpdateSpeaker.mount(SpeakerParam::class) {
         docs {
             name = "Update a speaker"
         }.codeGen {
@@ -199,7 +199,7 @@ class FunktorConfAdminApi(
         }
     }
 
-    val deleteSpeaker = FunktorConfApiClient.DeleteSpeaker.mount(SpeakerIdParams::class) {
+    val deleteSpeaker = FunktorConfApiClient.DeleteSpeaker.mount(SpeakerParam::class) {
         docs {
             name = "Delete a speaker"
         }.codeGen {
@@ -230,7 +230,7 @@ class FunktorConfAdminApi(
         }
     }
 
-    val updateAttendee = FunktorConfApiClient.UpdateAttendee.mount(AttendeeIdParams::class) {
+    val updateAttendee = FunktorConfApiClient.UpdateAttendee.mount(AttendeeParam::class) {
         docs {
             name = "Update an attendee"
         }.codeGen {
@@ -250,7 +250,7 @@ class FunktorConfAdminApi(
         }
     }
 
-    val deleteAttendee = FunktorConfApiClient.DeleteAttendee.mount(AttendeeIdParams::class) {
+    val deleteAttendee = FunktorConfApiClient.DeleteAttendee.mount(AttendeeParam::class) {
         docs {
             name = "Delete an attendee"
         }.codeGen {

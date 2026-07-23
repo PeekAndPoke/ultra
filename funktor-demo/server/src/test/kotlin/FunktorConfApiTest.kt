@@ -10,7 +10,7 @@ import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.demo.common.funktorconf.EventModel
 import io.peekandpoke.funktor.demo.common.funktorconf.EventStatus
 import io.peekandpoke.funktor.demo.common.funktorconf.SaveEventRequest
-import io.peekandpoke.funktor.demo.server.api.funktorconf.EventIdParams
+import io.peekandpoke.funktor.demo.server.api.funktorconf.EventParam
 import io.peekandpoke.funktor.demo.server.api.funktorconf.FunktorConfApiFeature
 import io.peekandpoke.funktor.demo.server.funktorconf.Event
 import io.peekandpoke.funktor.demo.server.funktorconf.EventsRepo
@@ -62,7 +62,7 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
 
                 apiApp {
                     anonymous {
-                        getEvent(EventIdParams(id = seeded)) {
+                        getEvent(EventParam(id = seeded)) {
                             status shouldBe HttpStatusCode.OK
                             apiResponseData<EventModel>()!!.name shouldBe "Bound Event"
                         }
@@ -73,7 +73,7 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
             "public getEvent for an unknown id returns 404 at the binding (envelope parity)" {
                 apiApp {
                     anonymous {
-                        getEvent(EventIdParams(id = missingEventRef())) {
+                        getEvent(EventParam(id = missingEventRef())) {
                             status shouldBe HttpStatusCode.NotFound
                         }
                     }
@@ -87,7 +87,7 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
             "anonymous updateEvent is unauthorized (floor denies before the entity loads)" {
                 apiApp {
                     anonymous {
-                        updateEvent(EventIdParams(id = missingEventRef()), saveRequest("X")) {
+                        updateEvent(EventParam(id = missingEventRef()), saveRequest("X")) {
                             status shouldBe HttpStatusCode.Unauthorized
                         }
                     }
@@ -109,7 +109,7 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     }
 
                     authenticate(token) {
-                        updateEvent(EventIdParams(id = seeded), saveRequest("After")) {
+                        updateEvent(EventParam(id = seeded), saveRequest("After")) {
                             status shouldBe HttpStatusCode.OK
                             apiResponseData<EventModel>()!!.name shouldBe "After"
                         }
@@ -130,7 +130,7 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     }
 
                     authenticate(token) {
-                        updateEvent(EventIdParams(id = missingEventRef()), saveRequest("Nope")) {
+                        updateEvent(EventParam(id = missingEventRef()), saveRequest("Nope")) {
                             status shouldBe HttpStatusCode.NotFound
                         }
                     }
@@ -144,7 +144,7 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
             "anonymous deleteEvent is unauthorized" {
                 apiApp {
                     anonymous {
-                        deleteEvent(EventIdParams(id = missingEventRef())) {
+                        deleteEvent(EventParam(id = missingEventRef())) {
                             status shouldBe HttpStatusCode.Unauthorized
                         }
                     }
@@ -166,7 +166,7 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     }
 
                     authenticate(token) {
-                        deleteEvent(EventIdParams(id = seeded)) {
+                        deleteEvent(EventParam(id = seeded)) {
                             status shouldBe HttpStatusCode.OK
                         }
                     }

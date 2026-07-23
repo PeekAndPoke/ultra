@@ -123,7 +123,7 @@ class OrgsApiSpec : FunktorApiSpec() {
 
                 apiApp {
                     authenticate(superUserToken) {
-                        route(OrgsApi.IdParam(id = seeded)) {
+                        route(OrgsApi.OrgParam(id = seeded)) {
                             status shouldBe HttpStatusCode.OK
                             apiResponseData<OrgModel>()!!.slug shouldBe "acme-get"
                         }
@@ -135,7 +135,7 @@ class OrgsApiSpec : FunktorApiSpec() {
             "fetching an unknown organisation returns not found" {
                 apiApp {
                     authenticate(superUserToken) {
-                        route(OrgsApi.IdParam(id = orgRef("does-not-exist"))) {
+                        route(OrgsApi.OrgParam(id = orgRef("does-not-exist"))) {
                             status shouldBe HttpStatusCode.NotFound
                         }
                     }
@@ -145,7 +145,7 @@ class OrgsApiSpec : FunktorApiSpec() {
             "anonymous get request is unauthorized" {
                 apiApp {
                     anonymous {
-                        route(OrgsApi.IdParam(id = orgRef("anything"))) {
+                        route(OrgsApi.OrgParam(id = orgRef("anything"))) {
                             status shouldBe HttpStatusCode.Unauthorized
                         }
                     }
@@ -160,7 +160,7 @@ class OrgsApiSpec : FunktorApiSpec() {
                 apiApp {
                     authenticate(superUserToken) {
                         route(
-                            OrgsApi.IdParam(id = seeded),
+                            OrgsApi.OrgParam(id = seeded),
                             UpdateOrgRequest(name = "Acme Renamed", status = OrgStatus.Suspended),
                         ) {
                             status shouldBe HttpStatusCode.OK
@@ -176,7 +176,7 @@ class OrgsApiSpec : FunktorApiSpec() {
                 apiApp {
                     anonymous {
                         route(
-                            OrgsApi.IdParam(id = orgRef("anything")),
+                            OrgsApi.OrgParam(id = orgRef("anything")),
                             UpdateOrgRequest(name = "X", status = OrgStatus.Active),
                         ) {
                             status shouldBe HttpStatusCode.Unauthorized
