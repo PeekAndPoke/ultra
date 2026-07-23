@@ -7,13 +7,21 @@ import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
+import io.peekandpoke.funktor.demo.common.funktorconf.AttendeeModel
 import io.peekandpoke.funktor.demo.common.funktorconf.EventModel
 import io.peekandpoke.funktor.demo.common.funktorconf.EventStatus
 import io.peekandpoke.funktor.demo.common.funktorconf.SaveEventRequest
+import io.peekandpoke.funktor.demo.common.funktorconf.SpeakerModel
+import io.peekandpoke.funktor.demo.server.api.funktorconf.AttendeeParam
 import io.peekandpoke.funktor.demo.server.api.funktorconf.EventParam
 import io.peekandpoke.funktor.demo.server.api.funktorconf.FunktorConfApiFeature
+import io.peekandpoke.funktor.demo.server.api.funktorconf.SpeakerParam
+import io.peekandpoke.funktor.demo.server.funktorconf.Attendee
+import io.peekandpoke.funktor.demo.server.funktorconf.AttendeesRepo
 import io.peekandpoke.funktor.demo.server.funktorconf.Event
 import io.peekandpoke.funktor.demo.server.funktorconf.EventsRepo
+import io.peekandpoke.funktor.demo.server.funktorconf.Speaker
+import io.peekandpoke.funktor.demo.server.funktorconf.SpeakersRepo
 import io.peekandpoke.funktor.testing.AppSpec
 import io.peekandpoke.ultra.vault.Stored
 
@@ -32,6 +40,8 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
     private val api by service(FunktorConfApiFeature::class)
     private val authApi by service(AuthApiFeature::class)
     private val eventsRepo by service(EventsRepo::class)
+    private val speakersRepo by service(SpeakersRepo::class)
+    private val attendeesRepo by service(AttendeesRepo::class)
 
     private fun signIn(email: String) = AuthSignInRequest.EmailAndPassword(
         provider = "email-password",
@@ -40,9 +50,15 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
     )
 
     // A throwaway ref addressing a non-existent key — the typed-route renderer turns it into the url
-    // `_key`, and the server-side binding does the real (missing) lookup.
+    // `_key`, and the server-side binding does the real (missing) lookup. Only `_key` is used.
     private fun missingEventRef() =
         Stored(value = Event(name = "gone"), _id = "funktorconf_events/does-not-exist", _key = "does-not-exist")
+
+    private fun missingSpeakerRef() =
+        Stored(value = Speaker(name = "gone"), _id = "funktorconf_speakers/does-not-exist", _key = "does-not-exist")
+
+    private fun missingAttendeeRef() =
+        Stored(value = Attendee(name = "gone"), _id = "funktorconf_attendees/does-not-exist", _key = "does-not-exist")
 
     private fun saveRequest(name: String) = SaveEventRequest(
         name = name,
@@ -74,6 +90,58 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                 apiApp {
                     anonymous {
                         getEvent(EventParam(id = missingEventRef())) {
+                            status shouldBe HttpStatusCode.NotFound
+                        }
+                    }
+                }
+            }
+        }
+
+        // Speaker + Attendee use the identical entity-generic binding as Event; these lock per-group
+        // envelope parity AND catch a mis-wired/unregistered repo (a 200 proves the route + repo bind).
+        api.conf.getSpeaker { getSpeaker ->
+            "public getSpeaker binds and returns a seeded speaker (200)" {
+                val seeded = speakersRepo.insert(Speaker(name = "Bound Speaker"))
+
+                apiApp {
+                    anonymous {
+                        getSpeaker(SpeakerParam(id = seeded)) {
+                            status shouldBe HttpStatusCode.OK
+                            apiResponseData<SpeakerModel>()!!.name shouldBe "Bound Speaker"
+                        }
+                    }
+                }
+            }
+
+            "public getSpeaker for an unknown id returns 404 at the binding (envelope parity)" {
+                apiApp {
+                    anonymous {
+                        getSpeaker(SpeakerParam(id = missingSpeakerRef())) {
+                            status shouldBe HttpStatusCode.NotFound
+                        }
+                    }
+                }
+            }
+        }
+
+        api.conf.getAttendee { getAttendee ->
+            "public getAttendee binds and returns a seeded attendee (200)" {
+                val seeded = attendeesRepo.insert(Attendee(name = "Bound Attendee"))
+
+                apiApp {
+                    anonymous {
+                        getAttendee(AttendeeParam(id = seeded)) {
+                            status shouldBe HttpStatusCode.OK
+                            apiResponseData<AttendeeModel>()!!.name shouldBe "Bound Attendee"
+                        }
+                    }
+                }
+            }
+
+            "public getAttendee for an unknown id returns 404 at the binding (envelope parity)" {
+                apiApp {
+                    anonymous {
+                        getAttendee(AttendeeParam(id = missingAttendeeRef())) {
                             status shouldBe HttpStatusCode.NotFound
                         }
                     }
