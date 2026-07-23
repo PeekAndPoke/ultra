@@ -17,6 +17,12 @@ class OrgsApi : ApiRoutes("orgs", defaultAuth = { isSuperUser() }) {
 
     // The organisation is resolved by the entity-binding param converter: `{id}` loads the
     // `Stored<Organisation>` before the handler runs, 404-ing a missing id at the binding.
+    //
+    // NOTE: this requires a saas storage backend (`funktorSaas { useKarango()/useMonko() }`). Without
+    // one there is no Organisation repository, so `Stored<Organisation>` cannot convert and this route
+    // 500s (a degenerate misconfiguration — writes already fail loudly). A self-validating module
+    // builder will turn this into an actionable boot failure — see
+    // `.claude/future-plans/funktor-module-config-builder.md`.
     data class IdParam(val id: Stored<Organisation>)
 
     val list = OrgsApiClient.List.mount {

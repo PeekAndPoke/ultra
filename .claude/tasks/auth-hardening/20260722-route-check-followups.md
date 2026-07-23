@@ -11,6 +11,16 @@ Part 3 introduced two pluggable extension points and moved the boot-resident rou
 
 These three items were deliberately deferred so part 3 stayed reviewable.
 
+## 0. Incoming-converter convertibility boot check → folded into the module-builder redesign
+
+Surfaced by part 4 (`20260722-stored-param-migration.md`): a `Stored<T>` route param whose entity `T`
+has no registered repository (e.g. saas loaded without `useKarango()`/`useMonko()`) cannot convert and
+500s at request time instead of failing boot. `ConverterCompatBootCheck` only validates the OUTGOING
+converter (which passes by shape). Rather than ship a standalone incoming-convertibility boot check,
+the user's steer (2026-07-23) is to fix the configuration model: a self-validating composable module
+builder where each builder asserts its own invariants at boot. See
+`.claude/future-plans/funktor-module-config-builder.md`. Fold this check in there.
+
 ## 1. Migrate `validateUriPattern` onto `RouteBootCheck`
 
 `TypedRoute.validateUriPattern` (funktor/core `TypedRoute.kt`) checks that every non-optional route

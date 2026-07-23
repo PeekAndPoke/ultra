@@ -52,11 +52,31 @@ name; the param CLASS is server-side (jvmMain) only. Verify codegen output is by
 
 ## Spec
 
-- [ ] OrgsApi migrated (get + update) — params carry `Stored<Organisation>`.
-- [ ] FunktorConfApi migrated (11 sites) — entity params; ConsistentParam where ≥ 2 entities.
-- [ ] Sweep of remaining `findById(params.` sites: migrated or explicitly exempted with reason.
-- [ ] Envelope-parity e2e per migrated group; no-read-when-anonymous e2e on one migrated route.
-- [ ] Full backend suites green on both DB backends.
+- [x] OrgsApi migrated (get + update) — params carry `Stored<Organisation>`. (2026-07-23)
+- [x] FunktorConfApi migrated (11 sites) — entity params. No ≥2-entity route here → no `ConsistentParam`.
+- [x] Sweep of remaining `findById(params.` sites: ZERO remaining (13 targets migrated; insights/inspect
+      have no by-path-id handlers). Confirmed by grep + both domain & impl reviewers.
+- [x] Envelope-parity e2e per migrated group; no-read-when-anonymous e2e on the migrated pattern
+      (read + write shapes, both backends) — `StoredParamMigrationE2eSpec`.
+- [x] Full backend suites green on both DB backends: rest 105, saas 31, all 125, demo 31.
+
+## Review record
+
+**Round 1 (3-agent gate, 2026-07-23) — 0 CRITICAL/HIGH/MEDIUM.** All findings LOW/INFO.
+- FIXED (commit `aea7bfb2`, test-only): lock the no-double-load invariant (`counter==1` on the
+  authorized read); assert the response body is the bound entity (not just status); add a
+  `WithBodyAndParams` write-shape route with anonymous→401+`counter==0` ordering. `StoredParamMigrationE2eSpec` 6→10 tests.
+- ESCALATED → user (design direction): no-backend saas 500-vs-404. Both security + domain flagged it
+  (LOW, degenerate misconfig; framework already accepts the identical `OrgAwareParam`-without-saas
+  tradeoff). **Resolution (user, 2026-07-23):** don't bolt on a one-off boot check — redesign funktor
+  module config as a self-validating composable builder (each builder asserts its own invariants,
+  fails boot actionably). Follow-up: `.claude/future-plans/funktor-module-config-builder.md`. Interim:
+  loud KDoc on `OrgsApi.IdParam`.
+- NO-ACTION (INFO, verified not part-4 regressions): 404 error echoes request-uri (pre-existing part-3
+  `ApiStatusPages`); shared read-counter (mirrors accepted `OrgIsolationE2eSpec` pattern, kotest
+  sequential); `id` field holding `Stored<T>` (required by name↔segment match, documented).
+
+**Round 2:** PENDING — full re-review over the whole diff with fresh reviewers; loop to zero findings.
 
 ## Implementation plan (ordered, 2026-07-23)
 
