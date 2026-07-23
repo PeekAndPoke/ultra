@@ -54,7 +54,25 @@ Extend the `RouteParamsGuard`/`RouteBootCheck` mechanism from ORGS to per-USER-o
 - Compose with org isolation (an order belongs to a user AND an org).
 - **Deferred: think it through after this workstream** (user's call). Likely its own task.
 
-## 5. Round-2 security hardening notes (from the part-3 gate)
+## 5. Cross-org operations over-protected (user, 2026-07-23)
+
+The single-org `OrgAwareParam`/`OrgIsolationGuard` model has no vocabulary for a legitimate
+CROSS-org operation — e.g. moving an entity from org A to org B with both ids in the uri. The guard
+binds caller's selected org == the one addressed org == every entity's org; a move has three orgs
+(caller authority, source, target) and the entity is mid-transition. Anchoring `org` on the target
+404s (entity still belongs to source — even for super-user, since org-consistency does not
+short-circuit on `isSuperUser`); anchoring on the source leaves target-access unguarded. And
+boot-forcing makes it unavoidable — an `OrgAware` entity forces single-org `OrgAwareParam`.
+
+Direction (an explicit, greppable OPT-OUT, not a weakening of the common path):
+- `CrossOrgParam { val orgs: List<Stored<Organisation>> }` (source + target).
+- `OrgIsolationBootCheck`: an `OrgAware` entity ⟹ params must be `OrgAwareParam` OR `CrossOrgParam`.
+- `OrgIsolationGuard` abstains on `CrossOrgParam` (single-org consistency N/A); either a dedicated
+  `CrossOrgGuard` requires the caller may access EVERY declared org (under one-active-org that means
+  super-user / operator-scoped — correct: cross-tenant moves are an operator function), or the route
+  takes explicit authz. A skill/linter should flag a `CrossOrgParam` that isn't operator-floored.
+
+## 6. Round-2 security hardening notes (from the part-3 gate)
 
 Documented inline in the code KDoc; tracked here for hardening + red-team follow-up:
 
