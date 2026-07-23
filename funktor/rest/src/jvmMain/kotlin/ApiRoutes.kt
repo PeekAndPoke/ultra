@@ -38,7 +38,7 @@ annotation class RestDsl
 /**
  * Base class for creating api routes.
  *
- * Every group MUST declare a [authFloor] floor — the minimal auth every route in the group
+ * Every group MUST declare an [authFloor] — the minimal auth every route in the group
  * inherits as the INITIAL state of its rule chain (structural default-deny). A per-route
  * `authorize {}` can only ADD to the floor (strengthen), never clear it; a genuinely public group
  * declares `authFloor = { public() }`. The floor is caller-only by construction (see

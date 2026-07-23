@@ -1,8 +1,9 @@
 # Migrate framework APIs from handler findById to Stored params
 
-**Status:** IN PROGRESS (started 2026-07-23) — part 3 landed (DONE), the hard dependency is met.
-HARD dependency on `20260722-two-phase-auth-consistent-params.md` (shipping this first would turn
-the pre-auth load/oracle problem live)
+**Status:** DONE (2026-07-23) — review loop CLOSED at round 3 (zero findings across all three fresh
+reviewers). Migration + entity-based param naming + `defaultAuth`→`authFloor` floor rename. Green:
+rest 105, saas 31, all 125 (both DB backends), demo 35. 8 commits on `auth-increments`, all UNPUSHED.
+HARD dependency on `20260722-two-phase-auth-consistent-params.md` was met (part 3 DONE).
 **Plan:** part 4 of the auth-hardening quartet
 **Security-critical:** YES — changes when/where entities load relative to auth on real endpoints.
 
@@ -91,8 +92,12 @@ out of scope — flagged for a possible separate sweep.)
 floor route rules can only STRENGTHEN, not an overridable default) — commit `66e6f572`, ~23 groups +
 tests + the actionable error messages/KDoc; no behavior change.
 
-**Round 3:** final confirmation over the full diff (migration + strengthened e2e + both renames); loop
-to a zero-findings round to close.
+**Round 3 (fresh 3-agent gate over the full diff incl. both renames, 2026-07-23):** impl — 0; security
+— 0; domain — 0 (one editorial KDoc nit, fixed). **LOOP CLOSED — zero findings.** Confirmed the
+`authFloor` rename is name-only (every group's floor byte-identical; actionable messages/KDoc updated),
+the entity-param renames are clean, no org-owned route slips isolation, and the migration semantics
+(update precedence, delete-returns-entity, facade consistency, envelope parity, no pre-auth load on
+both route shapes) all hold.
 
 ## Implementation plan (ordered, 2026-07-23)
 
