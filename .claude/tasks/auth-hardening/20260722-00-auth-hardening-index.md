@@ -13,11 +13,13 @@ dependency on the previous one, so land them in order.
 |---|------|--------------|--------|
 | 1 | `20260722-authorize-rule-builder.md` | `authorize {}` becomes a builder-accumulator — kills the last-expression-wins footgun where only the final rule expression counted | **DONE** (2026-07-22, review loop ended round 4, zero findings) |
 | 2 | `20260722-apiroutes-auth-floor.md` | Mandatory `defaultAuthRule` floor on `ApiRoutes` — structural default-deny; a route with no rule is denied, not public | **DONE** (2026-07-22, review loop ended round 3, zero findings) |
-| 3 | `20260722-two-phase-auth-consistent-params.md` | Two-phase auth evaluation + `ConsistentParam` — no entity loads before auth passes, no cross-org param spoofing. Depends on part 2's caller-only floor | **TODO** (designed + agreed) |
-| 4 | `20260722-stored-param-migration.md` | Migrate framework APIs from in-handler `findById` to `Stored` params. Hard dependency on part 3 — without it the IDOR oracle goes live | **TODO** (designed + agreed) |
-| — | `20260722-docs-auth-dsl-and-floor.md` | Docs follow-up (collector) for the DSL rewrite + floor. Write the prose after 1–4 land | **TODO** (collector) |
+| 3 | `20260722-two-phase-auth-consistent-params.md` | Two-phase auth eval + pluggable `RouteBootCheck`/`RouteParamsGuard` + saas org-isolation (`OrgAware`/`OrgAwareParam`) — no entity loads before auth passes, structural cross-org isolation | **DONE** (2026-07-23, review loop: round-1 reworked on 2 HIGH direction findings, round-2 confirmed mechanism airtight, edge findings fixed) |
+| 4 | `20260722-stored-param-migration.md` | Migrate framework APIs from in-handler `findById` to `Stored` params. Hard dependency on part 3 — without it the IDOR oracle goes live | **TODO** (designed + agreed) — UNBLOCKED |
+| — | `20260722-docs-auth-dsl-and-floor.md` | Docs follow-up (collector) for the DSL rewrite + floor + part-3 checks/guards. Write the prose after 1–4 land | **TODO** (collector) |
+| — | `20260722-route-check-followups.md` | Part-3 spin-offs: `validateUriPattern`→`RouteBootCheck`, entity-`OrgAware` linter, branch-level isolation | **TODO** |
+| — | `20260723-redteam-org-isolation.md` | Red-team attack scenarios for the org-isolation (security-critical follow-up) | **TODO** (collected, not executed) |
 
-Dependency chain: **1 → 2 → 3 → 4**, docs last.
+Dependency chain: **1 → 2 → 3 → 4**, docs last. Part 3 done → part 4 unblocked.
 
 ## Shared review protocol (user directive, 2026-07-22 — applies to all four)
 

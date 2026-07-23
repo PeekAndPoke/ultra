@@ -43,7 +43,18 @@ Extend the saas isolation from organisations to **branches** (the sub-tenants em
   org-scoped; decide whether `BranchScopedParam` implies `OrgAwareParam` or they stack.
 - Same 404-hidden failure semantics, both DB backends in the e2e.
 
-## 4. Round-2 security hardening notes (from the part-3 gate)
+## 4. User-level isolation — same mechanism as org isolation (user idea, 2026-07-23)
+
+Extend the `RouteParamsGuard`/`RouteBootCheck` mechanism from ORGS to per-USER-owned resources
+(orders, payments, profile, …). Near-identical shape — this is the payoff of the pluggable design:
+- `CallerOwned` on entities (the owning user id) + `CallerOwnedParam` on route params (or infer the
+  owner directly from the resolved entity — no url param needed since the owner is the caller).
+- A `CallerOwnershipGuard : RouteParamsGuard` binding `entity.ownerId == caller.userId` (super-user
+  policy TBD), and a boot check forcing coverage where a `CallerOwned` entity is resolved.
+- Compose with org isolation (an order belongs to a user AND an org).
+- **Deferred: think it through after this workstream** (user's call). Likely its own task.
+
+## 5. Round-2 security hardening notes (from the part-3 gate)
 
 Documented inline in the code KDoc; tracked here for hardening + red-team follow-up:
 

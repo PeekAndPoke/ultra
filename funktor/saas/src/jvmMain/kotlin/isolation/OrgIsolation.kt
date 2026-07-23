@@ -12,8 +12,13 @@ import io.peekandpoke.ultra.vault.Stored
  *
  * `OrgAware` / [OrgAwareParam] are plain interfaces on the saas classpath, but the checks that make
  * them binding — `OrgIsolationBootCheck` + `OrgIsolationGuard` — are registered by the `funktor(saas
- * = {…})` module. An app that marks entities `OrgAware` but does NOT install the saas module gets
- * NO isolation and NO boot warning. Any app using these interfaces MUST install funktor saas.
+ * = {…})` module. Any app using these interfaces MUST install funktor saas.
+ *
+ * In practice a canonical [OrgAwareParam] route CANNOT function without saas anyway: its
+ * `org: Stored<Organisation>` param needs the `Organisation` repository that saas registers, so
+ * without it the `{org}` url segment fails to convert (and `ConverterCompatBootCheck` flags it at
+ * boot). The only genuinely silent gap is the unusual shape that loads an `OrgAware` entity WITHOUT
+ * an [OrgAwareParam] `org` param — covered by the entity-`OrgAware` linter follow-up.
  *
  * Marking an entity `OrgAware` is the developer's OPT-IN (a lint/boot rule to flag org-owned entities
  * that forgot it is future scope). Once marked, any route resolving the entity is boot-forced to be

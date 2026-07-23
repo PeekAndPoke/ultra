@@ -74,10 +74,26 @@ snippet won't compile. Capture the new model while it's fresh.
 - After: `class MyApi : ApiRoutes("my", defaultAuth = { isSuperUser() })` + drop the per-route blocks
   (or keep only strengthening ones). Public + protected routes → two groups.
 
-## When parts 3–4 land, add:
-- Part 3: two-phase evaluation (caller-only rules run BEFORE param conversion), `ConsistentParam`
-  (multi-entity route params validated for referential consistency), caller-binding.
-- Part 4: `Stored<T>` route params replacing handler-side `findById` (entity-resolving param binding).
+### Part 3 — two-phase auth + pluggable checks + org-isolation (LANDED 2026-07-23; anchors below)
+Document, with a mental-model diagram of the phase-1/phase-2 split:
+- **Two-phase evaluation** — caller-only rules (floor + permission checks) run in PHASE 1, BEFORE
+  param conversion (`findById`); param-dependent rules run in PHASE 2, after. Kills pre-auth DB reads
+  and the 404-vs-401 existence oracle. Anchors: `funktor/rest/.../auth/AuthPhase.kt` (`isCallerOnly`,
+  `flattenTopLevelAnds`), `routing.kt`, `ApiRoute.phase1Denials`/`checkParamPhase`.
+- **`RouteBootCheck`** (boot) + **`RouteParamsGuard`** (phase-2 per request) — the extension points.
+  `ValidateRoutesOnAppStarting` is a runner over `getAll(RouteBootCheck)`; modules add domain checks.
+  Anchors: `funktor/rest/.../RouteBootCheck.kt`, `RouteParamsGuard.kt`, `ConverterCompatBootCheck.kt`,
+  `AuthChainBootCheck.kt`.
+- **Org-isolation (saas)** — `OrgAware { val org: Ref<Organisation> }` on entities, `OrgAwareParam
+  { val org: Stored<Organisation> }` on route params. Boot-forced (`OrgIsolationBootCheck`: an
+  OrgAware entity ⟹ params must be `OrgAwareParam`) + runtime `OrgIsolationGuard` (caller-binds the
+  SELECTED session org; every OrgAware entity must belong to it). 404-hidden. Document the CONTRACT:
+  `OrgAware.org` carries the canonical `_id`; the interfaces are inert without the saas module.
+  Anchors: `funktor/saas/.../isolation/OrgIsolation.kt`, `OrgIsolationBootCheck.kt`, `OrgIsolationGuard.kt`.
+- **`ConsistentParam`** — now PURE OPT-IN, for NON-org referential consistency only (org isolation is
+  the separate, forced mechanism). Anchor: `funktor/core/.../broker/ConsistentParam.kt`.
+
+### Part 4 — `Stored<T>` route params replacing handler-side `findById` (entity-resolving param binding).
 
 ## Do NOT
 - Do not edit `docs-site/public/` LLM mirrors — edit `docs-site/src/data/llms/*.md` templates.
