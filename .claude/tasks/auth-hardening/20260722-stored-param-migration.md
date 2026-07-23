@@ -78,12 +78,21 @@ name; the param CLASS is server-side (jvmMain) only. Verify codegen output is by
 
 **Naming (user feedback, 2026-07-23):** param classes named by ENTITY (not generic `IdParam`, which
 collides across modules and muddles imports): `OrgsApi.OrgParam`, `EventParam`/`SpeakerParam`/
-`AttendeeParam`. Confirmed `Organisation` is NOT `OrgAware` (it is the tenant root, not org-owned), so
-`OrgParam` is correctly NOT `OrgAwareParam` and the boot check does not force it; the super-user floor
-is the right guard for org-root CRUD. (Pre-existing `JobIdParam` in funktor/cluster is out of scope —
-flagged for a possible separate sweep.)
+`AttendeeParam` (commit `8f7089c8`). Confirmed `Organisation` is NOT `OrgAware` (it is the tenant root,
+not org-owned), so `OrgParam` is correctly NOT `OrgAwareParam` and the boot check does not force it; the
+super-user floor is the right guard for org-root CRUD. (Pre-existing `JobIdParam` in funktor/cluster is
+out of scope — flagged for a possible separate sweep.)
 
-**Round 2:** PENDING — full re-review over the whole diff with fresh reviewers; loop to zero findings.
+**Round 2 (fresh 3-agent gate, 2026-07-23):** security — 0 findings; domain — 0 findings; impl — 1 LOW
+(per-group envelope-parity e2e covered only the Event group). FIXED (commit `af9488f4`): added
+`getSpeaker`/`getAttendee` binding (200) + envelope-parity (404) — `FunktorConfApiTest` 7→11 tests.
+
+**Floor param rename (user feedback, 2026-07-23):** `ApiRoutes(defaultAuth = …)` → `authFloor` (it is a
+floor route rules can only STRENGTHEN, not an overridable default) — commit `66e6f572`, ~23 groups +
+tests + the actionable error messages/KDoc; no behavior change.
+
+**Round 3:** final confirmation over the full diff (migration + strengthened e2e + both renames); loop
+to a zero-findings round to close.
 
 ## Implementation plan (ordered, 2026-07-23)
 
