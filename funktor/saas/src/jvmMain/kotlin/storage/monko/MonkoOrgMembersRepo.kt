@@ -9,6 +9,7 @@ import io.peekandpoke.funktor.saas.storage.OrgMembersStorage
 import io.peekandpoke.monko.MonkoDriver
 import io.peekandpoke.monko.MonkoIndexBuilder
 import io.peekandpoke.monko.MonkoRepository
+import io.peekandpoke.monko.lang.dsl.and
 import io.peekandpoke.monko.lang.dsl.eq
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Ref
@@ -37,6 +38,12 @@ class MonkoOrgMembersRepo(
             field { it.org }
             field { it.userId }
         }
+
+        // `findByUser` (the login / getMemberships path) filters on userId alone, which is NOT a
+        // leftmost prefix of the compound index above — so index it on its own to avoid a full scan.
+        persistentIndex {
+            field { it.userId }
+        }
     }
 
     override suspend fun findByUser(userId: String): List<Stored<OrgMember>> =
@@ -47,8 +54,12 @@ class MonkoOrgMembersRepo(
 
     override suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: String): Stored<OrgMember>? {
         val found = find { r ->
-            filter(r.org eq org._id)
-            filter(r.userId eq userId)
+            filter(
+                and(
+                    r.org eq org._id,
+                    r.userId eq userId,
+                )
+            )
             limit(1)
         }
         return found.firstOrNull()

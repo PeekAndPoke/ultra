@@ -37,6 +37,17 @@ class OrgRoleSpec : FreeSpec() {
             }
         }
 
+        "role-set predicates are the shared core (reused by the stored OrgMember row)" {
+            setOf(OrgRole.OWNER).isOrgOwner shouldBe true
+            setOf(OrgRole.ADMIN).isOrgOwner shouldBe false
+            setOf(OrgRole.ADMIN).isOrgAdmin shouldBe true
+            setOf(OrgRole.OWNER).isOrgAdmin shouldBe false
+            setOf(OrgRole.OWNER).canManageOrgMembers shouldBe true
+            setOf(OrgRole.ADMIN).canManageOrgMembers shouldBe true
+            setOf("member").canManageOrgMembers shouldBe false
+            emptySet<String>().canManageOrgMembers shouldBe false
+        }
+
         "ownerIdsOf selects only the members holding OWNER" {
             val members = mapOf(
                 "u1" to membership(OrgRole.OWNER),

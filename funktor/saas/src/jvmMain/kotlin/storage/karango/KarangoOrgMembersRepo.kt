@@ -43,6 +43,12 @@ class KarangoOrgMembersRepo(
                 unique(true)
             }
         }
+
+        // `findByUser` (the login / getMemberships path) filters on userId alone, which is NOT a
+        // leftmost prefix of the compound index above — so index it on its own to avoid a full scan.
+        persistentIndex {
+            field { userId }
+        }
     }
 
     override suspend fun findByUser(userId: String): List<Stored<OrgMember>> = find {

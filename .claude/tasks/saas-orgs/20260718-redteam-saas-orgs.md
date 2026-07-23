@@ -34,6 +34,27 @@
 - [ ] `ensureOrganisation` mis-config (empty slug, duplicate default across realms) — does boot fail
       safe or create garbage? Confirm an `AppStartException` path vs silent bad state.
 
+### Org membership management (OrgMember collection — from the 2026-07-23 Increment-1a review)
+- [ ] **Last-owner removal RACE**: two parallel requests (remove owner u1 + demote owner u2) both
+      pass a check-then-act `wouldRemoveLastOwner` → org ends with ZERO owners (owner-locked, no
+      principal passes `canManageOrgMembers`). Confirm the Increment-2 mutation path is atomic.
+- [ ] **Cross-org MOVE via `save` identity mutation**: a change-roles endpoint that echoes a
+      client body through `OrgMembersStorage.save` — try to reassign `OrgMember.org`/`userId` to
+      another org/user (only the `(org,userId)` unique collision is caught by storage).
+- [ ] **Ownerless-org lockout**: create an org (or accept an invite) without seeding an `OWNER`
+      `OrgMember` → permanently unmanageable org.
+- [ ] **Orphan-row enumeration**: delete a user, then confirm no stale `OrgMember` rows still surface
+      in `findByOrg` (operator/admin member lists) or inflate seat counts (cascade not yet built).
+- [ ] **Cross-org member enumeration/mutation**: as a tenant admin of org A, hit
+      `/orgs/{B}/members[/{member}]` — the `OrgIsolationGuard` (via `OrgMember` being `OrgAware`)
+      must 404 both the caller-binding and the member∈org check.
+- [ ] **Role escalation via changeRoles**: a non-owner/admin (or a member of another org) attempts
+      to grant themselves `OWNER`/`ADMIN`.
+- [ ] **Stale token after removal**: a removed member keeps acting until their ~1h JWT expires
+      (documented v1 behavior) — confirm no LONGER-lived acceptance.
+
 ## Notes
 - Current CRUD is platform-super-user only; per-tenant authorization does not exist yet, so the
   cross-org isolation items are pre-registered for after O2/O3 add memberships + org-scoped rules.
+- The OrgMember membership items are pre-registered for after Increment 2 (member-management API)
+  lands; collected here, NOT executed during feature work.

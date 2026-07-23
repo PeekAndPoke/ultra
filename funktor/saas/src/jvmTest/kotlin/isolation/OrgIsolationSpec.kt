@@ -120,6 +120,14 @@ class OrgIsolationSpec : StringSpec({
         guard.guard(p, UserPermissions(isSuperUser = true)) shouldBe GuardVerdict.Pass
     }
 
+    "guard: super-user is STILL subject to org-consistency (foreign-org entity denied)" {
+        // Only the ACCESS gate (caller-binding) has a super-user exception; the CONSISTENCY check
+        // does not. A super-user addressing org acme with an entity that belongs to globex is an
+        // inconsistent request and must be denied, exactly as for a normal caller.
+        val p = OwnedParams(org = org("acme"), thing = thingIn("globex"))
+        guard.guard(p, UserPermissions(isSuperUser = true)) shouldBe GuardVerdict.DenyAsNotFound
+    }
+
     "guard: non-OrgAwareParam params abstain (Pass)" {
         guard.guard(PlainParams("x"), UserPermissions(org = "acme")) shouldBe GuardVerdict.Pass
     }

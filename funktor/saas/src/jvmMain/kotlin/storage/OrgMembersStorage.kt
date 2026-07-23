@@ -28,8 +28,8 @@ interface OrgMembersStorage {
         ): Stored<OrgMember> = notConfigured()
 
         override suspend fun save(member: Storable<OrgMember>): Stored<OrgMember> = notConfigured()
-        override suspend fun remove(member: Stored<OrgMember>) { /* noop */ }
-        override suspend fun clear() { /* noop */ }
+        override suspend fun remove(member: Stored<OrgMember>) { notConfigured() } // a write — fail loud
+        override suspend fun clear() { /* noop — mirrors OrgsStorage.Null */ }
 
         private fun notConfigured(): Nothing =
             error("OrgMembersStorage backend not configured — call useKarango() or useMonko() on funktorSaas { }")
