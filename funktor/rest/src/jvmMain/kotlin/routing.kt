@@ -2,15 +2,18 @@
 
 package io.peekandpoke.funktor.rest
 
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
 import io.peekandpoke.funktor.core.broker.convertIncomingParameters
+import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.core.user
 import io.peekandpoke.funktor.rest.auth.AuthRule
 import io.peekandpoke.funktor.rest.auth.HideFailureAsNotFound
+import io.peekandpoke.ultra.security.user.UserPermissions
 
 /**
  * Two-phase authorization (part 3 of the auth-hardening quartet).
@@ -58,6 +61,20 @@ internal suspend fun RoutingContext.passesPhase1(route: ApiRoute<*>, uri: String
  * would — a byte-identical 404 that leaks nothing about existence or ownership. Any other failure
  * responds 401.
  */
+/**
+ * Runs every registered phase-2 [RouteParamsGuard] (from the request kontainer) against the resolved
+ * [params] + [permissions]. Returns true if any guard denies — the caller then throws the shared
+ * `NotFoundException` (404, byte-identical to not-found). Guards run only on param-bearing routes;
+ * `Unit`/null params abstain. Not a [RoutingContext] extension so the SSE path (a `ServerSSESession`)
+ * can reuse it — hence the explicit [call].
+ */
+private fun deniedByGuards(call: ApplicationCall, params: Any?, permissions: UserPermissions): Boolean {
+    if (params == null || params == Unit) return false
+    return call.kontainer.getAll(RouteParamsGuard::class).any {
+        it.guard(params, permissions) == GuardVerdict.DenyAsNotFound
+    }
+}
+
 @PublishedApi
 internal suspend fun RoutingContext.dispatchPhase2(
     route: ApiRoute<*>,
@@ -133,6 +150,7 @@ fun <PARAMS, RESPONSE> Route.handleWithParams(
             // Phase 2 — param-dependent rules
             val ctx: AuthRule.CheckCtx<PARAMS, Unit> = AuthRule.CheckCtx.paramsOnly(call = call, params = params)
             dispatchPhase2(route, uri, route.checkParamPhase(ctx).failedRules) {
+                if (deniedByGuards(call, params, ctx.permissions)) throw NotFoundException()
                 route.handler(this, params)
             }
         }
@@ -190,6 +208,7 @@ fun <PARAMS, BODY, RESPONSE> Route.handleWithBodyAndParams(
             val ctx: AuthRule.CheckCtx<PARAMS, BODY> =
                 AuthRule.CheckCtx.paramsAndBody(call = call, params = params, body = bodyAwoken)
             dispatchPhase2(route, uri, route.checkParamPhase(ctx).failedRules) {
+                if (deniedByGuards(call, params, ctx.permissions)) throw NotFoundException()
                 route.handler(this, params, bodyAwoken)
             }
         }
@@ -227,6 +246,7 @@ fun <PARAMS> Route.handleSse(route: ApiRoute.Sse<PARAMS>): Route {
         val ctx: AuthRule.CheckCtx<PARAMS, Unit> = AuthRule.CheckCtx.paramsOnly(call, params)
         val failed = route.checkParamPhase(ctx).failedRules
         when {
+            failed.isEmpty() && deniedByGuards(call, params, ctx.permissions) -> throw NotFoundException()
             failed.isEmpty() -> route.handler(session, params)
             failed.any { it is HideFailureAsNotFound } -> throw NotFoundException()
             else -> call.apiRespondUnauthorized<Unit>(route.method, uri, failed)

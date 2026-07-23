@@ -56,9 +56,8 @@ class AuthPhaseSpec : StringSpec({
         AuthRule.forCall<Unit, Unit>("custom") { true }.isCallerOnly().shouldBeFalse()
     }
 
-    "the framework param auto-rules are param-dependent (phase 2)" {
+    "the framework param auto-rule is param-dependent (phase 2)" {
         ConsistentParamRule().isCallerOnly().shouldBeFalse()
-        CallerScopedParamRule().isCallerOnly().shouldBeFalse()
     }
 
     "a composite of only caller-only rules is caller-only" {
@@ -75,14 +74,12 @@ class AuthPhaseSpec : StringSpec({
 
     //  Auto-rule contract  ////////////////////////////////////////////////////////////////////////
 
-    "param auto-rules hide their failure as not-found" {
+    "the param auto-rule hides its failure as not-found" {
         ConsistentParamRule().shouldBeInstanceOf<HideFailureAsNotFound>()
-        CallerScopedParamRule().shouldBeInstanceOf<HideFailureAsNotFound>()
     }
 
-    "param auto-rules estimate Granted (they are request-shape guards, not permissions)" {
+    "the param auto-rule estimates Granted (a request-shape guard, not a permission)" {
         ConsistentParamRule().estimate(AuthRule.EstimateCtx.of(plainUser)) shouldBe ApiAccessLevel.Granted
-        CallerScopedParamRule().estimate(AuthRule.EstimateCtx.of(plainUser)) shouldBe ApiAccessLevel.Granted
     }
 
     //  phase1Denials  /////////////////////////////////////////////////////////////////////////////

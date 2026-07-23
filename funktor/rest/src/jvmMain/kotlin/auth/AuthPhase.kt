@@ -10,8 +10,9 @@ package io.peekandpoke.funktor.rest.auth
  *   runs here — an unauthorized caller is rejected with ZERO entity loads (no pre-auth DB reads,
  *   no 404-vs-401 existence oracle).
  * - **Phase 2 — param-dependent rules, AFTER conversion.** Everything else: `forCall {}` closures
- *   and the framework-appended [ConsistentParamRule] / [CallerScopedParamRule], which need the
- *   resolved params to decide.
+ *   and the framework-appended [ConsistentParamRule], which need the resolved params to decide.
+ *   (Cross-cutting param guards like the saas `OrgIsolationGuard` also run in phase 2, but as
+ *   injected [io.peekandpoke.funktor.rest.RouteParamsGuard]s, not as auth rules.)
  *
  * Phase 1 is evaluated through [AuthRule.estimate] (caller-only by contract — it takes an
  * [AuthRule.EstimateCtx], which carries no params). For every rule type classified caller-only
@@ -66,7 +67,9 @@ internal fun flattenTopLevelAnds(rules: List<AuthRule<*, *>>): List<AuthRule<*, 
  * Marker for phase-2 rules whose failure must be indistinguishable from a genuine not-found. The
  * dispatch, on a failed rule carrying this marker, throws the SAME `NotFoundException` that param
  * conversion throws on a missing entity, so the response is byte-identical whether the entity does
- * not exist or exists-but-is-not-the-caller's. Only the framework-appended [ConsistentParamRule] /
- * [CallerScopedParamRule] carry it — an ordinary `authorize {}` rule fails as 401.
+ * not exist or exists-but-is-not-the-caller's. Only the framework-appended [ConsistentParamRule]
+ * carries it — an ordinary `authorize {}` rule fails as 401. (Injected
+ * [io.peekandpoke.funktor.rest.RouteParamsGuard]s achieve the same 404 hiding via
+ * [io.peekandpoke.funktor.rest.GuardVerdict.DenyAsNotFound].)
  */
 internal interface HideFailureAsNotFound

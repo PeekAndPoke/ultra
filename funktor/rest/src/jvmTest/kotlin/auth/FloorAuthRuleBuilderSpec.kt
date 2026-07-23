@@ -8,6 +8,8 @@ import io.kotest.matchers.string.shouldContain
 import io.peekandpoke.funktor.core.broker.OutgoingConverter
 import io.peekandpoke.funktor.rest.ApiFeature
 import io.peekandpoke.funktor.rest.ApiRoutes
+import io.peekandpoke.funktor.rest.AuthChainBootCheck
+import io.peekandpoke.funktor.rest.ConverterCompatBootCheck
 import io.peekandpoke.funktor.rest.ValidateRoutesOnAppStarting
 import io.peekandpoke.ultra.remote.ApiAccessLevel
 import io.peekandpoke.ultra.remote.ApiResponse
@@ -115,9 +117,9 @@ class FloorAuthRuleBuilderSpec : StringSpec({
             override fun getRouteGroups() = listOf<ApiRoutes>(group)
         }
         // Every route already passed addRoute's whole-chain validation at construction; the boot
-        // validator re-runs it as defense-in-depth and agrees.
+        // validator re-runs it (via the injected AuthChainBootCheck) as defense-in-depth and agrees.
         ValidateRoutesOnAppStarting(
-            converter = OutgoingConverter(emptyList()),
+            checks = lazy { listOf(ConverterCompatBootCheck(OutgoingConverter(emptyList())), AuthChainBootCheck()) },
             features = lazy { listOf(feature) },
         ).validateOrThrow()
     }

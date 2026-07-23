@@ -6,13 +6,11 @@ import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.HttpMethod.Companion.Put
 import io.peekandpoke.funktor.core.broker.ConsistentParam
-import io.peekandpoke.funktor.core.broker.OrgScopedParam
 import io.peekandpoke.funktor.core.broker.Routes
 import io.peekandpoke.funktor.core.broker.TypedRoute
 import io.peekandpoke.funktor.core.broker.UriPattern
 import io.peekandpoke.funktor.rest.auth.AuthRule
 import io.peekandpoke.funktor.rest.auth.AuthRuleBuilder.Companion.validateChain
-import io.peekandpoke.funktor.rest.auth.CallerScopedParamRule
 import io.peekandpoke.funktor.rest.auth.ConsistentParamRule
 import io.peekandpoke.funktor.rest.auth.FloorAuthRuleBuilder
 import io.peekandpoke.ultra.reflection.kType
@@ -227,14 +225,12 @@ abstract class ApiRoutes(
 
     /**
      * The phase-2 auth rules the framework auto-appends to [route] based on its params type —
-     * [ConsistentParamRule] when the params implement [ConsistentParam], [CallerScopedParamRule]
-     * when they implement [OrgScopedParam]. Interface-triggered and structural, so a route can never
-     * be served without them.
+     * [ConsistentParamRule] when the params opt into [ConsistentParam]. Interface-triggered, so once
+     * a params type declares the interface the check can never be forgotten.
      *
-     * Skipped for a sole-constant (public/forbidden) chain: a public route has no caller/org
-     * boundary to bind, and a constant must remain the SOLE rule of its chain (`validateChain`).
-     * A ≥2-entity params type on a non-public route that does NOT implement [ConsistentParam] is
-     * caught at boot by `ValidateRoutesOnAppStarting`.
+     * Skipped for a sole-constant (public/forbidden) chain: a constant must remain the SOLE rule of
+     * its chain (`validateChain`). Cross-org isolation is NOT handled here — it is a saas
+     * [RouteParamsGuard] run at request time (org semantics live in saas, not the REST core).
      */
     private fun paramAutoRules(route: ApiRoute<*>): List<AuthRule<*, *>> {
         if (route.isSoleConstantChain()) return emptyList()
@@ -243,7 +239,6 @@ abstract class ApiRoutes(
 
         return buildList {
             if (ConsistentParam::class.java.isAssignableFrom(paramsCls)) add(ConsistentParamRule())
-            if (OrgScopedParam::class.java.isAssignableFrom(paramsCls)) add(CallerScopedParamRule())
         }
     }
 

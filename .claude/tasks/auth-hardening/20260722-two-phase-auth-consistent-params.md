@@ -1,8 +1,11 @@
 # Two-phase auth evaluation + org-isolation — no loads before auth, no cross-org param spoofing
 
-**Status:** IN PROGRESS (2026-07-22) — two-phase eval DONE + round-1 gate done; **reworking the
-Problem-B half** into a pluggable route-check architecture (design agreed with user 2026-07-22).
-Depends on `20260722-apiroutes-auth-floor.md`.
+**Status:** IN PROGRESS (2026-07-22) — two-phase eval DONE (round-1 gate); Problem-B rework DONE;
+**round-2 gate done** — mechanism confirmed airtight (idiomatic org-scoped route has no cross-org
+read), all confirmed findings (edge/defense-in-depth) fixed: guard now checks org-ownership by
+RUNTIME value (polymorphic backstop), `OrgAware.org` `_id`-contract + fail-open-without-saas
+documented, FQCN + composed boot-fail + registration + ConsistentParam-dispatch tests added.
+Green: rest 105, saas 29, all 115, demo 24. Ready to commit. Depends on `20260722-apiroutes-auth-floor.md`.
 **Plan:** part 3 of the auth-hardening quartet
 **Security-critical:** YES — request-data isolation (IDOR) + pre-auth resource access.
 
@@ -162,6 +165,6 @@ class OrgIsolationGuard     : RouteParamsGuard // caller-binding + org-consisten
 - Prerequisite of part 4 (`20260722-stored-param-migration.md`) — the oracle goes live without this.
 - Pairs with `20260722-actionable-boot-error-messages.md` (the runner owns the aggregated boot error;
   fold the multiline-indent fix here).
-- FOLLOW-UP (to create): migrate construction-time `validateUriPattern` (param-names) onto
-  `RouteBootCheck`; add a lint/boot rule flagging org-owned entities missing `OrgAware`.
+- FOLLOW-UP: `20260722-route-check-followups.md` — migrate `validateUriPattern` onto `RouteBootCheck`,
+  the entity-`OrgAware` linter, and branch-level (sub-org) isolation.
 - `20260718-redteam-saas-orgs.md` — org-IDOR scenarios this closes structurally; update its assumptions.

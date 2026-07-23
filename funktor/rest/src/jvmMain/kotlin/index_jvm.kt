@@ -40,6 +40,11 @@ val Funktor_Rest = module { config: AppConfig, builder: FunktorRestBuilder.() ->
 
     singleton(ValidateRoutesOnAppStarting::class)
 
+    // Boot checks run by the validator above (getAll(RouteBootCheck)). Modules add their own
+    // (e.g. saas contributes org-isolation) without this module knowing their types.
+    singleton(ConverterCompatBootCheck::class)
+    singleton(AuthChainBootCheck::class)
+
     val codecConfig = SlumberConfig.default.prependModules(VaultSlumberModule)
 
     val cacheMemory = Runtime.getRuntime().maxMemory() / 10

@@ -123,12 +123,11 @@ sealed class ApiRoute<RESPONSE> {
     /**
      * Appends framework-computed phase-2 auto-rules after the existing chain. Called ONLY by the
      * [io.peekandpoke.funktor.rest.ApiRoutes.addRoute] choke point, and ONLY with rules typed on the
-     * param interface they require (`ConsistentParamRule : AuthRule<ConsistentParam, *>`,
-     * `CallerScopedParamRule : AuthRule<OrgScopedParam, *>`) after `addRoute` has verified this
-     * route's PARAMS implements that interface. So the unchecked cast to this route's rule type in
-     * each override is the single place the "PARAMS is a ConsistentParam/OrgScopedParam" invariant is
-     * asserted, co-located with the detection — the rules themselves need no cast. Same unchecked-cast
-     * rationale as [withFloor].
+     * param interface they require (`ConsistentParamRule : AuthRule<ConsistentParam, *>`) after
+     * `addRoute` has verified this route's PARAMS implements that interface. So the unchecked cast to
+     * this route's rule type in each override is the single place the "PARAMS is a ConsistentParam"
+     * invariant is asserted, co-located with the detection — the rules themselves need no cast. Same
+     * unchecked-cast rationale as [withFloor].
      */
     abstract fun withAppendedRules(rules: List<AuthRule<*, *>>): ApiRoute<RESPONSE>
 

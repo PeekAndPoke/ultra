@@ -7,6 +7,8 @@ import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
 import io.peekandpoke.funktor.saas.api.OrgsApiFeature
 import io.peekandpoke.funktor.saas.domain.normalizeSlug
+import io.peekandpoke.funktor.saas.isolation.OrgIsolationBootCheck
+import io.peekandpoke.funktor.saas.isolation.OrgIsolationGuard
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
 import io.peekandpoke.funktor.saas.storage.karango.KarangoOrgsRepo
 import io.peekandpoke.funktor.saas.storage.monko.MonkoOrgsRepo
@@ -31,6 +33,11 @@ val Funktor_Saas = module { builder: FunktorSaasBuilder.() -> Unit ->
 
     // Api
     singleton(OrgsApiFeature::class)
+
+    // Org-isolation: the boot check (RouteBootCheck) forces OrgAwareParam on org-owned routes; the
+    // guard (RouteParamsGuard) enforces caller-binding + entity-org consistency at request time.
+    singleton(OrgIsolationBootCheck::class)
+    singleton(OrgIsolationGuard::class)
 
     /////////////////////////////////////////////////////////////////////////////////
     // Apply external configuration
