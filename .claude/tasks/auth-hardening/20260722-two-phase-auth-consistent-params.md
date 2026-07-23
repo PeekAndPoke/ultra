@@ -1,11 +1,14 @@
 # Two-phase auth evaluation + org-isolation — no loads before auth, no cross-org param spoofing
 
-**Status:** IN PROGRESS (2026-07-22) — two-phase eval DONE (round-1 gate); Problem-B rework DONE;
-**round-2 gate done** — mechanism confirmed airtight (idiomatic org-scoped route has no cross-org
-read), all confirmed findings (edge/defense-in-depth) fixed: guard now checks org-ownership by
-RUNTIME value (polymorphic backstop), `OrgAware.org` `_id`-contract + fail-open-without-saas
-documented, FQCN + composed boot-fail + registration + ConsistentParam-dispatch tests added.
-Green: rest 105, saas 29, all 115, demo 24. Ready to commit. Depends on `20260722-apiroutes-auth-floor.md`.
+**Status:** DONE (2026-07-23) — two-phase eval + pluggable route checks + saas org-isolation.
+**Review LOOP CLOSED at round 5 (zero findings).** Rounds: 1 reworked on 2 HIGH direction findings
+(caller-binding authority + structural forcing); 2 confirmed the idiomatic route airtight, fixed
+edge/DiD (runtime-value org detection, docs, tests); 3 fixed LOW/INFO (guard↔loader reflection
+alignment, no-saas KDoc accuracy, `_key`/`_id` contracts); 4 caught a regression round-3 introduced
+(ctor-NAME filter dropped aliased non-`val` ctor entities) → fixed via backing-field superset +
+regression test; 5 empirically verified the superset closes it — EMPTY. Green: rest 105, saas 31,
+all 115 (both DB backends), demo 24. Commits 551e4364, 625b3d7a, f0038e1b, c5e63d06 (+ docs), all
+UNPUSHED. Depends on `20260722-apiroutes-auth-floor.md`.
 **Plan:** part 3 of the auth-hardening quartet
 **Security-critical:** YES — request-data isolation (IDOR) + pre-auth resource access.
 
