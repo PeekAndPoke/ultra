@@ -82,7 +82,7 @@ data class ThingUpdate(val note: String)
 
 // `isSuperUser()` is a caller-only (phase-1) floor, so a denied caller never reaches param conversion
 // — the binding's findById never runs. This mirrors the migrated admin routes (OrgsApi / conf writes).
-class StoredParamMigrationE2eApi : ApiRoutes("stored-param-e2e", defaultAuth = { isSuperUser() }) {
+class StoredParamMigrationE2eApi : ApiRoutes("stored-param-e2e", authFloor = { isSuperUser() }) {
     // Read shape (WithParams).
     val kaGet = route {
         get<KaThingParams, ApiResponse<String>>("/e2e/sp/ka/things/{id}").handle { ApiResponse.ok(it.id.value.name) }

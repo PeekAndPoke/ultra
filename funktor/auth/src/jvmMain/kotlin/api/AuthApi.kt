@@ -30,7 +30,7 @@ internal suspend fun letTheBotsWait() {
  * so the whole group floors `public()`. The authenticated self-service endpoints live in the
  * separate [AuthUserApi] group (an append-only floor cannot mix `public()` with `authenticated()`).
  */
-class AuthApi : ApiRoutes("login", defaultAuth = { public() }) {
+class AuthApi : ApiRoutes("login", authFloor = { public() }) {
 
     val getRealm = AuthApiClient.GetRealm.mount(RealmParam::class) {
         docs {
@@ -193,7 +193,7 @@ class AuthApi : ApiRoutes("login", defaultAuth = { public() }) {
  * regardless of realm (the realm is inside the token). The whole group floors `authenticated()`;
  * per-route body checks (e.g. "userId matches the caller") stay in the handlers.
  */
-class AuthUserApi : ApiRoutes("login", defaultAuth = { authenticated() }) {
+class AuthUserApi : ApiRoutes("login", authFloor = { authenticated() }) {
 
     val setPassword = AuthApiClient.SetPassword.mount(RealmParam::class) {
         docs {

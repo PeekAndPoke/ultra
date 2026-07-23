@@ -1,4 +1,8 @@
-# Mandatory defaultAuthRule floor on ApiRoutes — structural default-deny
+# Mandatory auth floor on ApiRoutes — structural default-deny
+
+**NOTE (2026-07-23, part 4):** the ctor param was renamed `defaultAuth` → `authFloor` (it is a floor
+route rules can only STRENGTHEN, not an overridable default). This doc's historical references to
+`defaultAuth` describe the API as originally built; the current name is `authFloor`.
 
 **Status:** DONE (2026-07-22) — review loop terminated on round 3 (zero confirmed findings across
 all three reviewers). Mechanism + full 19→23-group sweep; all rounds' findings fixed; backend suites

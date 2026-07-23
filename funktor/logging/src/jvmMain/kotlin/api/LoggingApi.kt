@@ -10,7 +10,7 @@ import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.log.LogLevel
 import io.peekandpoke.ultra.remote.ApiResponse
 
-class LoggingApi : ApiRoutes("logging", defaultAuth = { isSuperUser() }) {
+class LoggingApi : ApiRoutes("logging", authFloor = { isSuperUser() }) {
 
     data class ListParam(
         val search: String = "",

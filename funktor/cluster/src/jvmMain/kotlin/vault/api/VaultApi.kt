@@ -8,7 +8,7 @@ import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.VaultModels
 
-class VaultApi : ApiRoutes("vault", defaultAuth = { isSuperUser() }) {
+class VaultApi : ApiRoutes("vault", authFloor = { isSuperUser() }) {
 
     val listRepositories = VaultApiClient.ListRepositories.mount {
         docs {

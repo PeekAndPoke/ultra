@@ -5,7 +5,7 @@ import io.peekandpoke.funktor.rest.auth.AuthRuleBuilder.Companion.validateChain
 
 /**
  * Restricted builder for an [io.peekandpoke.funktor.rest.ApiRoutes] floor seed
- * (`ApiRoutes(defaultAuth = { ... })`).
+ * (`ApiRoutes(authFloor = { ... })`).
  *
  * It exposes ONLY caller-independent rule factories — rules that read the CALLER (permissions,
  * user-type, authentication state), never the request params or body. This restriction is
@@ -96,13 +96,13 @@ class FloorAuthRuleBuilder internal constructor() {
      * both boot errors here, not just at the top level).
      */
     internal fun build(groupName: String): List<AuthRule<Any?, Any?>> {
-        val where = "ApiRoutes '$groupName' defaultAuth"
+        val where = "ApiRoutes '$groupName' authFloor"
 
         check(rules.isNotEmpty()) {
             "$where declared no rules — every ApiRoutes group must declare its minimal auth floor. " +
-                    "Fix: defaultAuth = { isSuperUser() } for an admin group, " +
-                    "defaultAuth = { authenticated() } for any-logged-in-user, or " +
-                    "defaultAuth = { public() } for a deliberately public group."
+                    "Fix: authFloor = { isSuperUser() } for an admin group, " +
+                    "authFloor = { authenticated() } for any-logged-in-user, or " +
+                    "authFloor = { public() } for a deliberately public group."
         }
         validateChain(where, rules)
 

@@ -72,7 +72,7 @@ class OrgIsolationSpec : StringSpec({
     "boot: the runner + OrgIsolationBootCheck ABORTS app start on an unbound OrgAware route" {
         // End-to-end composition: a real ValidateRoutesOnAppStarting runner fed the boot check plus a
         // feature whose route resolves an OrgAware entity without OrgAwareParam → aggregated AppStartException.
-        val group = object : ApiRoutes("bad", defaultAuth = { authenticated() }) {
+        val group = object : ApiRoutes("bad", authFloor = { authenticated() }) {
             val r = route {
                 get<UnboundParams, ApiResponse<String>>("/o/{orgRef}/{thing}").handle { ApiResponse.ok("x") }
             }

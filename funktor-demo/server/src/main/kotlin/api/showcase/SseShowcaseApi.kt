@@ -13,7 +13,7 @@ import java.lang.management.ManagementFactory
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
-class SseShowcaseApi : ApiRoutes("showcase-sse", defaultAuth = { public() }) {
+class SseShowcaseApi : ApiRoutes("showcase-sse", authFloor = { public() }) {
 
     val sseClock = ShowcaseApiClient.SseClock.mount(Unit::class) {
         docs {

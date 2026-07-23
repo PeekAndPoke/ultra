@@ -16,7 +16,7 @@ import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.map
 
 /** Super-user showcase writes (send email). Split from the public reads to keep the floor clean. */
-class MessagingAdminShowcaseApi : ApiRoutes("showcase-messaging-admin", defaultAuth = { isSuperUser() }) {
+class MessagingAdminShowcaseApi : ApiRoutes("showcase-messaging-admin", authFloor = { isSuperUser() }) {
 
     val sendTestEmail = ShowcaseApiClient.PostSendTestEmail.mount {
         docs {
@@ -47,7 +47,7 @@ class MessagingAdminShowcaseApi : ApiRoutes("showcase-messaging-admin", defaultA
 }
 
 /** Public showcase reads (list sent messages, sender info). */
-class MessagingShowcaseApi : ApiRoutes("showcase-messaging", defaultAuth = { public() }) {
+class MessagingShowcaseApi : ApiRoutes("showcase-messaging", authFloor = { public() }) {
 
     val getSentMessages = ShowcaseApiClient.GetSentMessages.mount {
         docs {

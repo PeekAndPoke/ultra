@@ -8,7 +8,7 @@ import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 
-class DepotApi : ApiRoutes("depot", defaultAuth = { isSuperUser() }) {
+class DepotApi : ApiRoutes("depot", authFloor = { isSuperUser() }) {
 
     data class BrowseParam(
         val repo: String,

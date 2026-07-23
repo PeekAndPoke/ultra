@@ -17,7 +17,7 @@ import java.lang.management.ManagementFactory
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
-class IntrospectionApi : ApiRoutes("introspection", defaultAuth = { isSuperUser() }) {
+class IntrospectionApi : ApiRoutes("introspection", authFloor = { isSuperUser() }) {
 
     val getLifecycleHooks = IntrospectionApiClient.GetLifecycleHooks.mount {
         docs {

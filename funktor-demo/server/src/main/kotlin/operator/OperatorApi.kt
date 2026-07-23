@@ -18,7 +18,7 @@ import io.peekandpoke.ultra.remote.ApiResponse
  */
 class OperatorApi : ApiRoutes(
     name = "operator",
-    defaultAuth = {
+    authFloor = {
         isSuperUser()
         forUserType(OperatorUserModel.USER_TYPE)
     },

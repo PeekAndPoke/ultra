@@ -28,7 +28,7 @@ data class AttendeeParam(val id: Stored<Attendee>)
  */
 class FunktorConfApi(
     private val services: FunktorConfServices,
-) : ApiRoutes("funktor-conf", defaultAuth = { public() }) {
+) : ApiRoutes("funktor-conf", authFloor = { public() }) {
 
     val listEvents = FunktorConfApiClient.ListEvents.mount {
         docs {
@@ -100,7 +100,7 @@ class FunktorConfApi(
  */
 class FunktorConfAdminApi(
     private val services: FunktorConfServices,
-) : ApiRoutes("funktor-conf-admin", defaultAuth = { isSuperUser() }) {
+) : ApiRoutes("funktor-conf-admin", authFloor = { isSuperUser() }) {
 
     val createEvent = FunktorConfApiClient.CreateEvent.mount {
         docs {

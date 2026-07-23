@@ -21,7 +21,7 @@ import io.peekandpoke.ultra.security.user.UserRecord
 import kotlinx.serialization.builtins.serializer
 
 /**
- * Locks the ApiRoutes floor (`defaultAuth = { ... }`): every route inherits the floor as its
+ * Locks the ApiRoutes floor (`authFloor = { ... }`): every route inherits the floor as its
  * initial chain, a per-route `authorize {}` can only strengthen it, and a missing/empty floor
  * aborts group construction. See `.claude/tasks/20260722-apiroutes-auth-floor.md`.
  */
@@ -37,7 +37,7 @@ class FloorAuthRuleBuilderSpec : StringSpec({
     )
 
     "every route in a group inherits the floor with no per-route authorize" {
-        val group = object : ApiRoutes("g", defaultAuth = { isSuperUser() }) {
+        val group = object : ApiRoutes("g", authFloor = { isSuperUser() }) {
             val route = endpoint.mount { handle { ApiResponse.ok(Unit) } }
         }
 
@@ -48,7 +48,7 @@ class FloorAuthRuleBuilderSpec : StringSpec({
     }
 
     "a per-route authorize STRENGTHENS the floor (both floor and route rule enforced)" {
-        val group = object : ApiRoutes("g", defaultAuth = { isSuperUser() }) {
+        val group = object : ApiRoutes("g", authFloor = { isSuperUser() }) {
             val route = endpoint.mount {
                 authorize { forUserType("OperatorUser") }
                     .handle { ApiResponse.ok(Unit) }
@@ -66,7 +66,7 @@ class FloorAuthRuleBuilderSpec : StringSpec({
     }
 
     "the floor is PREPENDED (floor rule precedes the route rule in the chain)" {
-        val group = object : ApiRoutes("g", defaultAuth = { isSuperUser() }) {
+        val group = object : ApiRoutes("g", authFloor = { isSuperUser() }) {
             val route = endpoint.mount {
                 authorize { forUserType("X") }.handle { ApiResponse.ok(Unit) }
             }
@@ -77,7 +77,7 @@ class FloorAuthRuleBuilderSpec : StringSpec({
     }
 
     "a public floor makes routes public without any per-route authorize" {
-        val group = object : ApiRoutes("g", defaultAuth = { public() }) {
+        val group = object : ApiRoutes("g", authFloor = { public() }) {
             val route = endpoint.mount { handle { ApiResponse.ok(Unit) } }
         }
         group.all.single().estimateAccess(estimateCtx()) shouldBe ApiAccessLevel.Granted
@@ -85,13 +85,13 @@ class FloorAuthRuleBuilderSpec : StringSpec({
 
     "an empty floor aborts group construction" {
         shouldThrow<IllegalStateException> {
-            object : ApiRoutes("g", defaultAuth = { }) {}
+            object : ApiRoutes("g", authFloor = { }) {}
         }.message shouldContain "declared no rules"
     }
 
     "a floor combining public() with a restrictive rule aborts group construction" {
         shouldThrow<IllegalStateException> {
-            object : ApiRoutes("g", defaultAuth = { public(); isSuperUser() }) {}
+            object : ApiRoutes("g", authFloor = { public(); isSuperUser() }) {}
         }.message shouldContain "SOLE rule"
     }
 
@@ -99,7 +99,7 @@ class FloorAuthRuleBuilderSpec : StringSpec({
         // The route's authorize adds isSuperUser() on top of the public() floor → the whole chain
         // is [PublicRule, isSuperUser] → constant-not-sole → boot error at route construction.
         shouldThrow<IllegalStateException> {
-            object : ApiRoutes("g", defaultAuth = { public() }) {
+            object : ApiRoutes("g", authFloor = { public() }) {
                 val route = endpoint.mount {
                     authorize { isSuperUser() }.handle { ApiResponse.ok(Unit) }
                 }
@@ -108,7 +108,7 @@ class FloorAuthRuleBuilderSpec : StringSpec({
     }
 
     "a healthy floored group passes the boot validator" {
-        val group = object : ApiRoutes("g", defaultAuth = { isSuperUser() }) {
+        val group = object : ApiRoutes("g", authFloor = { isSuperUser() }) {
             val route = endpoint.mount { handle { ApiResponse.ok(Unit) } }
         }
         val feature = object : ApiFeature {
@@ -129,18 +129,18 @@ class FloorAuthRuleBuilderSpec : StringSpec({
         // this COMPILES — unlike authorize{}'s forAny{} where it's a compile error — but the floor's
         // build()->validateChain recurses and rejects the nested constant at construction.
         shouldThrow<IllegalStateException> {
-            object : ApiRoutes("g", defaultAuth = { forAny { public(); isSuperUser() } }) {}
+            object : ApiRoutes("g", authFloor = { forAny { public(); isSuperUser() } }) {}
         }.message shouldContain "SOLE rule"
     }
 
     "an empty floor forAny{} aborts group construction" {
         shouldThrow<IllegalStateException> {
-            object : ApiRoutes("g", defaultAuth = { forAny { } }) {}
+            object : ApiRoutes("g", authFloor = { forAny { } }) {}
         }.message shouldContain "empty"
     }
 
     "a route created via the low-level route{} path is also floored" {
-        val group = object : ApiRoutes("g", defaultAuth = { isSuperUser() }) {
+        val group = object : ApiRoutes("g", authFloor = { isSuperUser() }) {
             init {
                 route {
                     routeBuilder.get<Unit>("/x").handle { ApiResponse.ok(Unit) }

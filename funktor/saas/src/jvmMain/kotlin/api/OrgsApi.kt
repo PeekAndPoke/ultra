@@ -13,7 +13,7 @@ import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.Stored
 
 /** Super-user CRUD endpoints for organisations. */
-class OrgsApi : ApiRoutes("orgs", defaultAuth = { isSuperUser() }) {
+class OrgsApi : ApiRoutes("orgs", authFloor = { isSuperUser() }) {
 
     // The organisation is resolved by the entity-binding param converter: `{id}` loads the
     // `Stored<Organisation>` before the handler runs, 404-ing a missing id at the binding.

@@ -7,7 +7,7 @@ import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 
-class WorkersApi : ApiRoutes("workers", defaultAuth = { isSuperUser() }) {
+class WorkersApi : ApiRoutes("workers", authFloor = { isSuperUser() }) {
 
     data class WorkerParam(
         val worker: String,

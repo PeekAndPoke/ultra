@@ -13,7 +13,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-class RestShowcaseApi : ApiRoutes("showcase-rest", defaultAuth = { public() }) {
+class RestShowcaseApi : ApiRoutes("showcase-rest", authFloor = { public() }) {
 
     data class EchoParams(val message: String)
     data class ItemParams(val id: String)

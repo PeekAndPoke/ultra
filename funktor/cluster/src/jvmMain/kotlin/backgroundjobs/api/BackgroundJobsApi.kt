@@ -20,7 +20,7 @@ import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.map
 
-class BackgroundJobsApi : ApiRoutes("background-jobs", defaultAuth = { isSuperUser() }) {
+class BackgroundJobsApi : ApiRoutes("background-jobs", authFloor = { isSuperUser() }) {
 
     data class PagingParam(
         val page: Int = 1,

@@ -31,7 +31,7 @@ class ValidateRoutesOnAppStartingSpec : StringSpec({
 
     // Group floor is { isSuperUser() }; addRoute prepends it to every added route.
     fun groupWith(vararg routes: ApiRoute<*>): ApiRoutes =
-        object : ApiRoutes("test", defaultAuth = { isSuperUser() }) {
+        object : ApiRoutes("test", authFloor = { isSuperUser() }) {
             init {
                 routes.forEach { addRoute(it) }
             }

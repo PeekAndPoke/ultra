@@ -26,7 +26,7 @@ snippet won't compile. Capture the new model while it's fresh.
      forRole/forGroup/forPermission/forOrganisation) — plus NEW: `forUserType("...")`.
 2. **`docs-site/src/pages/ultra/funktor/rest.astro` → `<h2>API features</h2>` (~184)** — should
    mention that an `ApiFeature` can bundle MULTIPLE `ApiRoutes` groups (audience split), and that
-   each `ApiRoutes` now REQUIRES a `defaultAuth` floor.
+   each `ApiRoutes` now REQUIRES an `authFloor` floor.
 3. **`docs-site/src/pages/ultra/funktor/auth.astro`** — realms/JWT/providers sections are fine; add
    a pointer to the floor as the "default-deny" story if auth-model overview lives here.
 4. **`docs-site/src/data/llms/funktor.md`** (LLM mirror template — edit the TEMPLATE, never
@@ -55,11 +55,11 @@ snippet won't compile. Capture the new model while it's fresh.
 - `@RestDsl` `@DslMarker` makes wrong-level use (`public()` inside `forAny {}`, `docs {}` inside
   `authorize {}`) a COMPILE error.
 
-### Part 2 — mandatory `defaultAuth` floor (anchors: `funktor/rest/.../ApiRoutes.kt`, `auth/FloorAuthRuleBuilder.kt`, `ApiRoute.withFloor`, `ValidateRoutesOnAppStarting.kt`)
+### Part 2 — mandatory `authFloor` floor (renamed from `defaultAuth`, part 4) (anchors: `funktor/rest/.../ApiRoutes.kt`, `auth/FloorAuthRuleBuilder.kt`, `ApiRoute.withFloor`, `ValidateRoutesOnAppStarting.kt`)
 - **Structural default-deny.** Every `ApiRoutes` group MUST declare a floor:
-  `ApiRoutes("name", defaultAuth = { isSuperUser() })`. Omitting it is a compile error.
+  `ApiRoutes("name", authFloor = { isSuperUser() })`. Omitting it is a compile error.
 - The floor is the INITIAL auth chain PREPENDED to every route; per-route `authorize` can only
-  STRENGTHEN it (append/AND), never weaken. A public group declares `defaultAuth = { public() }`.
+  STRENGTHEN it (append/AND), never weaken. A public group declares `authFloor = { public() }`.
 - **Floor is caller-only** (`FloorAuthRuleBuilder` has no `forCall`/`appendRule`) → evaluated before
   request data (phase-1, matters for part 3).
 - **Mixed audiences → separate groups.** An append-only floor cannot mix `public()` with a
@@ -71,7 +71,7 @@ snippet won't compile. Capture the new model while it's fresh.
 
 ### Docs for consumers migrating their own ApiRoutes
 - Before: `class MyApi : ApiRoutes("my")` + per-route `authorize { isSuperUser() }` on each route.
-- After: `class MyApi : ApiRoutes("my", defaultAuth = { isSuperUser() })` + drop the per-route blocks
+- After: `class MyApi : ApiRoutes("my", authFloor = { isSuperUser() })` + drop the per-route blocks
   (or keep only strengthening ones). Public + protected routes → two groups.
 
 ### Part 3 — two-phase auth + pluggable checks + org-isolation (LANDED 2026-07-23; anchors below)

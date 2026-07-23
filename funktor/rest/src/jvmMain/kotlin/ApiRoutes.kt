@@ -38,16 +38,16 @@ annotation class RestDsl
 /**
  * Base class for creating api routes.
  *
- * Every group MUST declare a [defaultAuth] floor — the minimal auth every route in the group
+ * Every group MUST declare a [authFloor] floor — the minimal auth every route in the group
  * inherits as the INITIAL state of its rule chain (structural default-deny). A per-route
  * `authorize {}` can only ADD to the floor (strengthen), never clear it; a genuinely public group
- * declares `defaultAuth = { public() }`. The floor is caller-only by construction (see
+ * declares `authFloor = { public() }`. The floor is caller-only by construction (see
  * [FloorAuthRuleBuilder]) and is materialized + validated once, here, at group construction.
  */
 abstract class ApiRoutes(
     val name: String,
     mountPoint: String = "",
-    defaultAuth: FloorAuthRuleBuilder.() -> Unit,
+    authFloor: FloorAuthRuleBuilder.() -> Unit,
 ) : Routes(mountPoint) {
 
     /** list with all registered routes */
@@ -60,7 +60,7 @@ abstract class ApiRoutes(
      */
     @PublishedApi
     internal val floorRules: List<AuthRule<Any?, Any?>> =
-        FloorAuthRuleBuilder().apply(defaultAuth).build(name)
+        FloorAuthRuleBuilder().apply(authFloor).build(name)
 
     val routeBuilder = RouteBuilder(mountPoint)
 

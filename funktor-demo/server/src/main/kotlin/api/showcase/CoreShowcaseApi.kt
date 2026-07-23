@@ -9,7 +9,7 @@ import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 import kotlinx.coroutines.delay
 
-class CoreShowcaseApi : ApiRoutes("showcase-core", defaultAuth = { public() }) {
+class CoreShowcaseApi : ApiRoutes("showcase-core", authFloor = { public() }) {
 
     val postRetryDemo = ShowcaseApiClient.PostRetryDemo.mount {
         docs {

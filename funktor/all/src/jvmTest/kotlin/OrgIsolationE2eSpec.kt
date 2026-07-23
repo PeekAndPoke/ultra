@@ -98,7 +98,7 @@ data class KaConsistentParams(
     override fun isConsistent(): Boolean = a.value.name == b.value.name
 }
 
-class OrgIsolationE2eApi : ApiRoutes("org-iso-e2e", defaultAuth = { authenticated() }) {
+class OrgIsolationE2eApi : ApiRoutes("org-iso-e2e", authFloor = { authenticated() }) {
     // Handlers only read the already-resolved params; the group needs no repo dependency.
     val kaGet = route {
         get<KaWidgetParams, ApiResponse<String>>("/e2e/ka/orgs/{org}/widgets/{w}").handle { ApiResponse.ok(it.w.value.name) }

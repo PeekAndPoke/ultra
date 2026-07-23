@@ -10,7 +10,7 @@ import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.value
 
-class GlobalLocksApi : ApiRoutes("global-locks", defaultAuth = { isSuperUser() }) {
+class GlobalLocksApi : ApiRoutes("global-locks", authFloor = { isSuperUser() }) {
 
     val listServerBeacons = GlobalLocksApiClient.ListServerBeacons.mount {
         docs {

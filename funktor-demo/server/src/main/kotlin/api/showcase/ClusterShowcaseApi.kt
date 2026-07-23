@@ -31,7 +31,7 @@ data class ClusterShowcaseRepoParams(val repo: String)
  * Public cluster showcase reads (list jobs / depot files / storage / locks / workers).
  * Floor: `public()`. The super-user actions live in the separate [ClusterAdminShowcaseApi] group.
  */
-class ClusterShowcaseApi : ApiRoutes("showcase-cluster", defaultAuth = { public() }) {
+class ClusterShowcaseApi : ApiRoutes("showcase-cluster", authFloor = { public() }) {
 
     val getQueuedJobs = ShowcaseApiClient.GetQueuedJobs.mount {
         docs {
@@ -195,7 +195,7 @@ class ClusterShowcaseApi : ApiRoutes("showcase-cluster", defaultAuth = { public(
  * Super-user cluster showcase actions (queue job, upload, save storage, acquire lock).
  * Floor: `isSuperUser()`.
  */
-class ClusterAdminShowcaseApi : ApiRoutes("showcase-cluster-admin", defaultAuth = { isSuperUser() }) {
+class ClusterAdminShowcaseApi : ApiRoutes("showcase-cluster-admin", authFloor = { isSuperUser() }) {
 
     val queueJob = ShowcaseApiClient.PostQueueJob.mount {
         docs {

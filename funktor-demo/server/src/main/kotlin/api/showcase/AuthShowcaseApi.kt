@@ -8,7 +8,7 @@ import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 
-class AuthShowcaseApi : ApiRoutes("showcase-auth", defaultAuth = { public() }) {
+class AuthShowcaseApi : ApiRoutes("showcase-auth", authFloor = { public() }) {
 
     val getAuthRuleChecks = ShowcaseApiClient.GetAuthRuleChecks.mount {
         docs {
