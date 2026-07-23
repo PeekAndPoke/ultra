@@ -29,19 +29,32 @@ in shipping the feature.
 - **No ownership concept** — `"owner"`/`"admin"`/`"member"` are bare role strings; nothing enforces
   an invariant. (`getKnownRoles()` on `AuthRealm` is the role-catalog seam, per backlog §4.)
 
-## Core modeling decision (DECIDED — fork A)
+## Core modeling decision (DECIDED — fork B, user 2026-07-23)
 
-**Membership stays ON the user record** (fork A), NOT a new first-class saas entity (fork B).
-- Rationale: consistent with the deliberate O2 architecture (membership is a claim on identity; the
-  realm owns the user store) and the "realm = identity boundary" decision
-  (`20260719-demo-restructure-three-apps.md`). Smaller, reversible (extract an entity later iff
-  cross-realm querying actually hurts — YAGNI). Fork B would re-plumb the just-hardened
-  session/isolation path and invert the dep O2 avoided.
-- Consequence to accept + document: **membership is realm-partitioned** (each realm's user store);
-  a member-mgmt mechanism operating on the caller's own realm is fine, but a cross-realm "all members
-  of org X" (operator view) needs a store-union — deferred to the operator leaf.
-- **Ownership** = a reserved structural role (`OrgRole.OWNER`, plus `OrgRole.ADMIN`) inside
-  `OrgMembership.roles`, with the invariant enforced at the mutation boundary.
+The user first proposed elevating memberships onto the `AuthUser` interface (embedded), then chose
+the cleaner separation: **a first-class `OrgMember` collection in `funktor/saas`, unique key
+`(orgId, userId)`** (fork B). Embedded-on-`AuthUser` (fork A) was rejected.
+
+- **Why B:** the leaves this feeds (operator "users-by-org" ACROSS realms, invitations with a status
+  lifecycle, seat limits, billing seats) all want the org↔user relationship first-class and
+  realm-agnostic — one indexed query lists an org's members for a tenant admin OR an operator, any
+  realm. Embedded made "members of org X" a nested-array scan per realm store, unioned for operators.
+- **`OrgMember` (saas entity):** `{ org: Ref<Organisation>, userId: String, roles: Set<String>,
+  branchIds: Set<String> }`, Timestamped, and **`OrgAware`** (so a `/orgs/{org}/members/{member}`
+  route gets BOTH part-3 guard checks free — caller-binding on `{org}` AND member∈{org}). `userId` is
+  the realm-qualified user `_id` (globally unique across realm stores). `org: Ref<Organisation>`
+  serializes to its `_id` string (verified in vault `RefCodec` — single ref → string, `Set`/`List`
+  → collection of strings), so it stores/indexes/filters as a string; the guard reads `org._id`
+  without resolving.
+- **Layering keeps auth independent of saas:** the SESSION model is unchanged — `getMemberships()`
+  stays THE seam; the org realms OVERRIDE it to query `OrgMembersStorage.findByUser(user._id)` and
+  map each `OrgMember` → the `ultra/security.OrgMembership` session value object
+  (`orgId = member.org._key`). The JWT still carries the selected org's roles exactly as today. Auth
+  never references saas; the demo realm (which already depends on both) wires the override.
+- **Ownership** = reserved structural role (`OrgRole.OWNER`/`ADMIN`) inside the row's `roles`, with
+  the invariant enforced at the mutation boundary (Increment 2). Primitives already landed (`6aa49132`).
+- **Cost accepted:** bigger refactor of the (just-hardened) login path + referential integrity —
+  cascade-remove `OrgMember` rows when a user or org is deleted (embedded got this for free).
 
 ## Framework gaps this slice surfaces (the point of the exercise — verify/triage each)
 
@@ -61,22 +74,38 @@ in shipping the feature.
 6. **Cross-realm membership** (operator view) — an org's members span realms; no framework support.
    Deferred to the operator leaf; recorded here.
 
-## First slice (Increment 1) — scope
+## Route-scoping decision (user 2026-07-23): URL-org / OrgAwareParam
 
-Smallest coherent core slice that exercises the isolation/two-phase machinery on a real app route:
+Tenant self-service routes carry the org in the URL (`/orgs/{org}/members/...`), params implement
+`OrgAwareParam` → the hardened part-3 `OrgIsolationGuard` caller-binds `{org}` to the session org.
+The operator surface (cross-tenant) later reuses the SAME pattern (super-user passes any org). Not
+session-org-implicit. With `OrgMember` being `OrgAware`, the guard also auto-checks member∈{org}.
 
-- [ ] **Ownership primitives** (`ultra/security`, fork-independent): `OrgRole` reserved constants
-      (`OWNER`, `ADMIN`) + pure invariant helpers over a member set (`owners`, `isSoleOwner`,
-      `wouldRemoveLastOwner`). Unit-tested.
-- [ ] **Member query seam**: a way to list the members of an org from the caller's realm user store
-      (`B2bUsersRepo.findMembersOfOrg(orgId)` Karango query + a framework seam it satisfies).
-- [ ] **Member-management API** scoped to the caller's **selected org** (owner/admin-gated,
-      invariant-enforced): `listMembers`, `changeRoles`, `removeMember`. Answers gap #5 (how to scope
-      to the session org). First cut may live in the b2b demo with reusable bits noted for a
-      `funktor/saas` extraction (the demo-restructure "streamlining goal").
-- [ ] **b2b-app Members page**: list the selected org's members + roles; change-role / remove
-      (owner/admin only).
-- [ ] Document gap #4 (staleness) — likely accept + document for v1.
+## Increment 1 (core spine) — introduce OrgMember + migrate login off embedded memberships
+
+- [x] **Ownership primitives** (`ultra/security`): `OrgRole` (`OWNER`/`ADMIN`) + `isOwner`/`isAdmin`/
+      `canManageMembers` + `ownerIdsOf`/`wouldRemoveLastOwner`. 9 unit tests. (`6aa49132`)
+- [x] **`OrgMember` entity + `OrgMembersStorage`** in `funktor/saas` (Null + Vault + Repo; Karango +
+      Monko), unique `(org, userId)` index; queries `findByUser`, `findByOrgAndUser`, `findByOrg`;
+      `add`/`save`/`remove`. Registered in the module (default Null; `useKarango`/`useMonko` swap in
+      Vault + repo + Fixtures). Both-backend base spec `OrgMembersStorage{Karango,Monko}Spec` — 5
+      tests each, green. (2026-07-23) NOTE: a `Ref<Organisation>` field is modelled by KSP as an
+      `AqlExpression<String>` (its `_id`), so filter on `org._id` — confirms refs serialize to
+      strings. Cascade `removeByUser`/`removeByOrg` deferred until org/user deletion is wired.
+- [ ] **Migrate login**: b2b/b2b2c realms override `getMemberships` → query `OrgMembersStorage`;
+      drop the embedded `memberships` field from `B2bUser`/`B2b2cUser`; remove `HasOrgMemberships`
+      (fold intent into the seam; default `getMemberships` → `emptySet()`); seed `OrgMember` rows in
+      fixtures. Keep `B2bAuthFlowTest`/`B2b2cAuthFlowTest`/`OrgIsolationE2eSpec` green (both backends).
+
+## Increment 2 (leaf) — member-management API + b2b Members page
+
+- [ ] **Member API** `/orgs/{org}/members` (list) + `/orgs/{org}/members/{member}` (roles/remove),
+      `OrgAwareParam`, owner/admin-gated (`authorize { forAny { hasRole(OWNER); hasRole(ADMIN) } }`),
+      last-owner invariant enforced. Client + models. Lives in `funktor/saas` (core mechanism).
+- [ ] **b2b-app Members page**: list the selected org's members + roles; change-role / remove.
+- [ ] Document gap #4 (staleness: membership change bites on next ~1h token refresh) — accept for v1.
+- [ ] e2e (both backends): list; foreign-org/non-member blocked (404 via guard); last-owner
+      removal/demotion rejected; role change reflected; anonymous → 401 before load.
 
 ## Test evidence
 

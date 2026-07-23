@@ -9,8 +9,11 @@ import io.peekandpoke.funktor.saas.api.OrgsApiFeature
 import io.peekandpoke.funktor.saas.domain.normalizeSlug
 import io.peekandpoke.funktor.saas.isolation.OrgIsolationBootCheck
 import io.peekandpoke.funktor.saas.isolation.OrgIsolationGuard
+import io.peekandpoke.funktor.saas.storage.OrgMembersStorage
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
+import io.peekandpoke.funktor.saas.storage.karango.KarangoOrgMembersRepo
 import io.peekandpoke.funktor.saas.storage.karango.KarangoOrgsRepo
+import io.peekandpoke.funktor.saas.storage.monko.MonkoOrgMembersRepo
 import io.peekandpoke.funktor.saas.storage.monko.MonkoOrgsRepo
 import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.monko.MonkoDriver
@@ -27,9 +30,16 @@ inline val KontainerAware.funktorSaas: OrgsStorage get() = kontainer.get()
 inline val ApplicationCall.funktorSaas: OrgsStorage get() = kontainer.funktorSaas
 inline val RoutingContext.funktorSaas: OrgsStorage get() = call.funktorSaas
 
+inline val KontainerAware.funktorOrgMembers: OrgMembersStorage get() = kontainer.get()
+inline val ApplicationCall.funktorOrgMembers: OrgMembersStorage get() = kontainer.funktorOrgMembers
+inline val RoutingContext.funktorOrgMembers: OrgMembersStorage get() = call.funktorOrgMembers
+
 val Funktor_Saas = module { builder: FunktorSaasBuilder.() -> Unit ->
     // Organisation storage — no-op until a backend is selected
     singleton(OrgsStorage::class, OrgsStorage.Null::class)
+
+    // Org membership storage (the org↔user collection) — no-op until a backend is selected
+    singleton(OrgMembersStorage::class, OrgMembersStorage.Null::class)
 
     // Api
     singleton(OrgsApiFeature::class)
@@ -48,6 +58,7 @@ class FunktorSaasBuilder internal constructor(private val kontainer: KontainerBu
 
     fun useKarango(
         orgsRepoName: String = "saas_organisations",
+        orgMembersRepoName: String = "saas_org_members",
     ) {
         with(kontainer) {
             singleton(KarangoOrgsRepo::class) { driver: KarangoDriver, timestamped: TimestampedHook ->
@@ -63,11 +74,26 @@ class FunktorSaasBuilder internal constructor(private val kontainer: KontainerBu
             }
 
             singleton(KarangoOrgsRepo.Fixtures::class)
+
+            singleton(KarangoOrgMembersRepo::class) { driver: KarangoDriver, timestamped: TimestampedHook ->
+                KarangoOrgMembersRepo(
+                    driver = driver,
+                    timestamped = timestamped,
+                    repoName = orgMembersRepoName,
+                )
+            }
+
+            singleton(OrgMembersStorage::class) { repo: KarangoOrgMembersRepo ->
+                OrgMembersStorage.Vault(repo = repo)
+            }
+
+            singleton(KarangoOrgMembersRepo.Fixtures::class)
         }
     }
 
     fun useMonko(
         orgsRepoName: String = "saas_organisations",
+        orgMembersRepoName: String = "saas_org_members",
     ) {
         with(kontainer) {
             singleton(MonkoOrgsRepo::class) { driver: MonkoDriver, timestamped: TimestampedHook ->
@@ -83,6 +109,20 @@ class FunktorSaasBuilder internal constructor(private val kontainer: KontainerBu
             }
 
             singleton(MonkoOrgsRepo.Fixtures::class)
+
+            singleton(MonkoOrgMembersRepo::class) { driver: MonkoDriver, timestamped: TimestampedHook ->
+                MonkoOrgMembersRepo(
+                    name = orgMembersRepoName,
+                    driver = driver,
+                    timestamped = timestamped,
+                )
+            }
+
+            singleton(OrgMembersStorage::class) { repo: MonkoOrgMembersRepo ->
+                OrgMembersStorage.Vault(repo = repo)
+            }
+
+            singleton(MonkoOrgMembersRepo.Fixtures::class)
         }
     }
 
