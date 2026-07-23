@@ -1,6 +1,9 @@
 package io.peekandpoke.funktor
 
 import io.kotest.matchers.shouldBe
+import io.ktor.client.request.header
+import io.ktor.client.request.setBody
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.peekandpoke.funktor.core.AppKontainers
@@ -26,6 +29,7 @@ import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.Vault
 import io.peekandpoke.ultra.vault.value
+import kotlinx.serialization.Serializable
 import java.util.concurrent.atomic.AtomicInteger
 
 //  Plain (org-agnostic) entities with read-counting repos  /////////////////////////////////////////
@@ -73,14 +77,31 @@ class MoThingsRepo(driver: MonkoDriver) : MonkoRepository<MoThing>(
 data class KaThingParams(val id: Stored<KaThing>)
 data class MoThingParams(val id: Stored<MoThing>)
 
+@Serializable
+data class ThingUpdate(val note: String)
+
 // `isSuperUser()` is a caller-only (phase-1) floor, so a denied caller never reaches param conversion
 // — the binding's findById never runs. This mirrors the migrated admin routes (OrgsApi / conf writes).
 class StoredParamMigrationE2eApi : ApiRoutes("stored-param-e2e", defaultAuth = { isSuperUser() }) {
+    // Read shape (WithParams).
     val kaGet = route {
         get<KaThingParams, ApiResponse<String>>("/e2e/sp/ka/things/{id}").handle { ApiResponse.ok(it.id.value.name) }
     }
     val moGet = route {
         get<MoThingParams, ApiResponse<String>>("/e2e/sp/mo/things/{id}").handle { ApiResponse.ok(it.id.value.name) }
+    }
+
+    // Write shape (WithBodyAndParams): proves the floor still gates before the entity binding when a
+    // body is present, and that the bound entity loads exactly once (no double-load) on the write path.
+    val kaUpdate = route {
+        put<KaThingParams, ThingUpdate, ApiResponse<String>>("/e2e/sp/ka/things/{id}").handle { params, _ ->
+            ApiResponse.ok(params.id.value.name)
+        }
+    }
+    val moUpdate = route {
+        put<MoThingParams, ThingUpdate, ApiResponse<String>>("/e2e/sp/mo/things/{id}").handle { params, _ ->
+            ApiResponse.ok(params.id.value.name)
+        }
     }
 }
 
@@ -173,16 +194,24 @@ class StoredParamMigrationE2eSpec : AppSpec<FunktorAllTestConfig>(storedParamTes
                 counter.get() shouldBe 0
             }
 
-            "$backend: super-user + real id → 200 (entity bound and read in the handler)" {
+            "$backend: super-user + real id → 200, body is the bound entity, loaded exactly once" {
                 val id = seed(backend, "hello")
+                counter.set(0)
 
                 apiApp {
                     authenticate(superUserToken()) {
                         request(HttpMethod.Get, "$prefix/things/$id") {
                             status shouldBe HttpStatusCode.OK
+                            // The handler returns `it.id.value.name` — proves the converter bound the
+                            // CORRECT entity, not merely that some 200 came back.
+                            apiResponseData<String>() shouldBe "hello"
                         }
                     }
                 }
+
+                // Exactly one load: the binding's findById, with NO handler-side re-read — this is the
+                // double-load the migration removes. A reintroduced handler findById would make it 2.
+                counter.get() shouldBe 1
             }
 
             "$backend: super-user + missing id → 404 at the binding (envelope parity)" {
@@ -193,6 +222,52 @@ class StoredParamMigrationE2eSpec : AppSpec<FunktorAllTestConfig>(storedParamTes
                         }
                     }
                 }
+            }
+
+            "$backend: anonymous PUT (write shape) → 401 with NO pre-auth read (ordering on body+params)" {
+                val id = seed(backend, "thing")
+                counter.set(0)
+
+                apiApp {
+                    anonymous {
+                        request(
+                            HttpMethod.Put,
+                            "$prefix/things/$id",
+                            setup = {
+                                setBody("""{"note":"x"}""")
+                                header(HttpHeaders.ContentType, "application/json")
+                            },
+                        ) {
+                            status shouldBe HttpStatusCode.Unauthorized
+                        }
+                    }
+                }
+
+                // The caller-only floor denies in phase 1 — neither the body nor the entity binding is reached.
+                counter.get() shouldBe 0
+            }
+
+            "$backend: super-user PUT (write shape) + real id → 200, entity loaded exactly once" {
+                val id = seed(backend, "world")
+                counter.set(0)
+
+                apiApp {
+                    authenticate(superUserToken()) {
+                        request(
+                            HttpMethod.Put,
+                            "$prefix/things/$id",
+                            setup = {
+                                setBody("""{"note":"x"}""")
+                                header(HttpHeaders.ContentType, "application/json")
+                            },
+                        ) {
+                            status shouldBe HttpStatusCode.OK
+                            apiResponseData<String>() shouldBe "world"
+                        }
+                    }
+                }
+
+                counter.get() shouldBe 1
             }
         }
     }
