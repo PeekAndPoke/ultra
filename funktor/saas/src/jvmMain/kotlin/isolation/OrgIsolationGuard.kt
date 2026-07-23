@@ -10,8 +10,8 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
-import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.jvm.javaField
 
 /**
  * Request guard (a [RouteParamsGuard]) that enforces org-isolation for [OrgAwareParam] routes:
@@ -26,7 +26,8 @@ import kotlin.reflect.jvm.isAccessible
  * Org-ownership is decided by the entity's RUNTIME value (`value is OrgAware`), NOT the declared
  * `Stored<X>` type argument — so a polymorphic/base-typed param (`Stored<Base>` where `Base` is not
  * itself `OrgAware` but the concrete row is) is still checked. The cached field list is every
- * entity-ref (`Stored`/`Storable`-typed) property — the set the incoming converter loads.
+ * `Stored`/`Storable`-typed STORED property (with a backing field) — a SUPERSET of the converter's
+ * loaded set, so no readable loaded entity escapes; over-checking only ever fails closed.
  *
  * Any failure → [GuardVerdict.DenyAsNotFound] (404, hidden). Abstains on non-[OrgAwareParam] params.
  * No DB access: entity `org` refs and the loaded `param.org` expose `_id`/`_key` without resolving.
@@ -63,19 +64,17 @@ class OrgIsolationGuard : RouteParamsGuard {
         return GuardVerdict.Pass
     }
 
-    // The entity-ref properties the incoming converter actually loads: PRIMARY-CONSTRUCTOR params
-    // (the converter binds `ctor.callBy` from url segments — see IncomingConverter) that are
-    // `Stored`/`Storable`-typed. Keying off the ctor params (not all member properties) makes the
-    // guard's scanned set exactly the LOADED set the boot check forces coverage on — no computed /
-    // derived `Stored` getters (never loaded), and it aligns with `entityRefParams()`/ctorParams2Types.
-    // Org-ownership is then decided per request by the entity's runtime value.
+    // Every `Stored`/`Storable`-typed STORED property (one with a backing field): the url-loaded ctor
+    // params AND any property that re-holds a loaded entity (e.g. an aliased non-`val` ctor param).
+    // This is a SUPERSET of the incoming converter's loaded set, so no handler-readable loaded
+    // OrgAware entity can escape the org check — over-checking only ever DENIES (fail-closed), never
+    // an IDOR. The backing-field filter drops computed/derived `Stored` getters, which are never a
+    // url-loaded entity and must not be executed here (keeping the guard's "no DB access" invariant).
     @Suppress("UNCHECKED_CAST")
-    private fun computeEntityRefFields(cls: KClass<*>): List<KProperty1<Any, *>> {
-        val ctorParamNames = cls.primaryConstructor?.parameters?.mapNotNull { it.name }?.toSet() ?: emptySet()
-        return cls.memberProperties
-            .filter { it.name in ctorParamNames }
+    private fun computeEntityRefFields(cls: KClass<*>): List<KProperty1<Any, *>> =
+        cls.memberProperties
             .filter { it.returnType.classifier == Stored::class || it.returnType.classifier == Storable::class }
+            .filter { it.javaField != null }
             .onEach { it.isAccessible = true }
             .map { it as KProperty1<Any, *> }
-    }
 }

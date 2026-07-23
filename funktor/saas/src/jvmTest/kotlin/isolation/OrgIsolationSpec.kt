@@ -31,6 +31,14 @@ private data class UnboundParams(val orgRef: Stored<Organisation>, val thing: St
 // No org-owned entity at all.
 private data class PlainParams(val id: String)
 
+// A hand-written (non-data) params where the loaded entity `w` is a NON-`val` ctor param aliased to
+// a differently-named readable property. The guard must still check it — regression guard for the
+// round-3→4 narrowing (a ctor-param-NAME filter would have dropped `thing`).
+private class AliasedParams(override val org: Stored<Organisation>, w: Stored<OwnedThing>) : OrgAwareParam {
+    @Suppress("unused")
+    val thing: Stored<OwnedThing> = w
+}
+
 class OrgIsolationSpec : StringSpec({
 
     fun <P : Any> paramRoute(paramsType: TypeRef<P>, pattern: String) =
@@ -114,5 +122,15 @@ class OrgIsolationSpec : StringSpec({
 
     "guard: non-OrgAwareParam params abstain (Pass)" {
         guard.guard(PlainParams("x"), UserPermissions(org = "acme")) shouldBe GuardVerdict.Pass
+    }
+
+    "guard: an aliased (non-val ctor) OrgAware entity is still checked — foreign org denied" {
+        guard.guard(AliasedParams(org = org("acme"), w = thingIn("globex")), UserPermissions(org = "acme")) shouldBe
+                GuardVerdict.DenyAsNotFound
+    }
+
+    "guard: an aliased consistent entity passes" {
+        guard.guard(AliasedParams(org = org("acme"), w = thingIn("acme")), UserPermissions(org = "acme")) shouldBe
+                GuardVerdict.Pass
     }
 })
