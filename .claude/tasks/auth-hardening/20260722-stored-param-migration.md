@@ -81,8 +81,9 @@ name; the param CLASS is server-side (jvmMain) only. Verify codegen output is by
 collides across modules and muddles imports): `OrgsApi.OrgParam`, `EventParam`/`SpeakerParam`/
 `AttendeeParam` (commit `8f7089c8`). Confirmed `Organisation` is NOT `OrgAware` (it is the tenant root,
 not org-owned), so `OrgParam` is correctly NOT `OrgAwareParam` and the boot check does not force it; the
-super-user floor is the right guard for org-root CRUD. (Pre-existing `JobIdParam` in funktor/cluster is
-out of scope — flagged for a possible separate sweep.)
+super-user floor is the right guard for org-root CRUD. (Pre-existing `JobIdParam` in funktor/cluster +
+showcase `ItemParams`/`EchoParams`: user decided 2026-07-23 to KEEP as-is — `JobIdParam` is a fine name
+for completion/import; the showcase may be reworked anyway. No sweep.)
 
 **Round 2 (fresh 3-agent gate, 2026-07-23):** security — 0 findings; domain — 0 findings; impl — 1 LOW
 (per-group envelope-parity e2e covered only the Event group). FIXED (commit `af9488f4`): added
