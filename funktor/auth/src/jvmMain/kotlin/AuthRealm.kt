@@ -23,7 +23,6 @@ import io.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.store
 import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.funktor.auth.model.AuthUser
-import io.peekandpoke.ultra.security.user.HasOrgMemberships
 import io.peekandpoke.ultra.security.user.OrgMembership
 import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserPermissions
@@ -161,13 +160,14 @@ interface AuthRealm<USER : AuthUser> {
     val orgPolicy: OrgPolicy get() = OrgPolicy.None
 
     /**
-     * Returns the user's organisation memberships.
+     * Returns the user's organisation memberships — the session-level [OrgMembership] value objects
+     * fed into the JWT.
      *
-     * Default implementation reads them from the USER if it implements [HasOrgMemberships];
-     * override for a different membership source.
+     * Default: none. An org-less realm (e.g. operators) needs no override; org realms override this
+     * to source memberships, e.g. from the saas `OrgMember` collection via
+     * `OrgMembersStorage.sessionMembershipsOf(user._id)`.
      */
-    suspend fun getMemberships(user: Stored<USER>): Set<OrgMembership> =
-        (user.value() as? HasOrgMemberships)?.memberships ?: emptySet()
+    suspend fun getMemberships(user: Stored<USER>): Set<OrgMembership> = emptySet()
 
     /**
      * Resolves the organisations a user may sign into (active only), for the login org-picker.

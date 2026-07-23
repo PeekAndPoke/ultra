@@ -92,10 +92,14 @@ session-org-implicit. With `OrgMember` being `OrgAware`, the guard also auto-che
       tests each, green. (2026-07-23) NOTE: a `Ref<Organisation>` field is modelled by KSP as an
       `AqlExpression<String>` (its `_id`), so filter on `org._id` — confirms refs serialize to
       strings. Cascade `removeByUser`/`removeByOrg` deferred until org/user deletion is wired.
-- [ ] **Migrate login**: b2b/b2b2c realms override `getMemberships` → query `OrgMembersStorage`;
-      drop the embedded `memberships` field from `B2bUser`/`B2b2cUser`; remove `HasOrgMemberships`
-      (fold intent into the seam; default `getMemberships` → `emptySet()`); seed `OrgMember` rows in
-      fixtures. Keep `B2bAuthFlowTest`/`B2b2cAuthFlowTest`/`OrgIsolationE2eSpec` green (both backends).
+- [x] **Migrate login** (2026-07-23): b2b/b2b2c realms override `getMemberships` →
+      `OrgMembersStorage.sessionMembershipsOf(user._id)` (new reusable helper in `funktor/saas` maps
+      `OrgMember.org._key` → session `OrgMembership.orgId`). Dropped the embedded `memberships` field
+      from `B2bUser`/`B2b2cUser`; **removed `HasOrgMemberships`** (user decision: collection-only);
+      default `getMemberships` → `emptySet()`. Fixtures seed `OrgMember` rows via `orgMembers.add`.
+      Green: `B2bAuthFlowTest` 7 / `B2b2cAuthFlowTest` 5, `funktor:all` (both backends),
+      `ultra:security` / `funktor:auth` / `funktor:saas`. Docs collector:
+      `20260723-docs-membership-model.md`.
 
 ## Increment 2 (leaf) — member-management API + b2b Members page
 
@@ -192,6 +196,37 @@ session-org-implicit. With `OrgMember` being `OrgAware`, the guard also auto-che
   re-verified: no injection, canonical `_id`, compound-unique on both backends, fail-closed.
 - **Increment 1a storage foundation is DONE** — review loop closed at round 3. Forward-looking
   findings recorded as Increment-2 constraints + red-team scenarios (not in-diff defects).
+
+### Increment 1b (login migration) — round 1 (3-agent gate, 2026-07-23)
+
+- Security **PASS (0)** — traced membership→JWT: cross-realm isolation intact (realm-qualified `_id`
+  + distinct collection names), active-org VETTING preserved (stale/orphan rows neutralized at login),
+  `_key` mapping byte-identical to the old embedded path, fail-closed defaults.
+- Domain **PASS** — semantics preserved (0/1/n, active-only, suspended-exclusion all key on `orgId`,
+  downstream vetting unchanged); `emptySet()` default is a behavioral no-op for org-less realms.
+- Impl — 1 MEDIUM (roles/branchIds seam untested: a regression dropping them would keep all 12
+  acceptance tests green). **FIXED** — `sessionMembershipsOf` both-backend test asserting
+  `orgId=_key` + `roles` + `branchIds` round-trip + empty case.
+- **Deferred follow-ups (recorded, not 1b blockers):**
+  - **Double `getMemberships` fetch** (domain LOW): `issueSignIn`/`refresh`/`selectOrg` each fetch
+    memberships, then `generateJwt` re-fetches — a pre-existing double-CALL that fork B turns into
+    +1 `findByUser` query per auth op AND a divergence window (two independent reads can differ if a
+    membership mutates between them). Cannot manifest in 1b (no runtime mutation until Inc-2; both
+    reads vet active-only; recoverable at next ~1h refresh). Fix = thread the single resolved
+    `Set<OrgMembership>` into `generateJwt` (a framework signature change) — closes BOTH angles; its
+    own focused change, not a 1b bolt-on.
+  - **Fixture cross-loader coupling** (domain INFO): demo user loaders write `OrgMember` rows into the
+    (empty) OrgMembers loader's collection without a declared `dependsOn`. Safe under the current
+    `installAllFixturesBeforeSpec` harness (no `removeAll`); latent hazard under a future
+    `clearFixtures()`/selective install. Record; seed via the OrgMembers loader if it bites.
+### Increment 1b — round 2 (fresh 3-agent gate, 2026-07-23) — LOOP CLOSED (zero findings)
+
+- Impl **0**, Domain **0**, Security **0**. The `sessionMembershipsOf` seam test confirmed
+  non-vacuous; migration re-verified clean (no dangling refs, DI wired, `_key` byte-identical,
+  org-less `emptySet()` default a true no-op, cross-realm isolation intact, active-org vetting
+  preserved, fail-closed). Both deferrals reconfirmed correctly scoped — no security dimension; the
+  double-fetch consistency angle is latent-only until Inc-2 and closed by the same threading fix.
+- **Increment 1b (login migration) is DONE** — review loop closed at round 2.
 
 **Red-team follow-up:** extend `.claude/tasks/saas-orgs/20260718-redteam-saas-orgs.md` — last-owner
 removal RACE (two parallel owner-removals → zero owners); cross-org MOVE via `save` identity mutation;

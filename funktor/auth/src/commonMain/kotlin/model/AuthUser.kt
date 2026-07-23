@@ -10,8 +10,9 @@ package io.peekandpoke.funktor.auth.model
  * - default getters make additions non-breaking for existing user classes,
  * - new configuration values extend value objects like [LanguageSettings], never this interface.
  *
- * Optional capabilities (e.g. org memberships) stay separate opt-in `Has*` interfaces. OPERATIONS
- * on users (loading, creating, serializing) live on `AuthUserAdapter`, not here.
+ * Optional capabilities stay separate — opt-in `Has*` interfaces or realm hooks (e.g. org
+ * memberships are sourced by `AuthRealm.getMemberships`, not embedded here). OPERATIONS on users
+ * (loading, creating, serializing) live on `AuthUserAdapter`, not here.
  */
 interface AuthUser {
     /** The user's email address. */

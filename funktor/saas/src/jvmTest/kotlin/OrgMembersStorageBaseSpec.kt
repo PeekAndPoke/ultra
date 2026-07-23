@@ -9,6 +9,7 @@ import io.peekandpoke.funktor.saas.domain.Organisation
 import io.peekandpoke.funktor.saas.storage.OrgMembersStorage
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.security.user.OrgMembership
 
 abstract class OrgMembersStorageBaseSpec : FreeSpec() {
 
@@ -115,6 +116,20 @@ abstract class OrgMembersStorageBaseSpec : FreeSpec() {
             members.findByUser("b2b_users/u1") shouldHaveSize 0
             // The other member survives — remove targets one row, not the collection.
             members.findByOrg(acme.asRef).map { it.value().userId } shouldBe listOf("b2b_users/u2")
+        }
+
+        "sessionMembershipsOf maps stored rows to session memberships (orgId=_key, roles, branchIds)" {
+            // Pins the storage->session seam the login path (getMemberships) depends on: a regression
+            // dropping roles/branchIds here would strip org roles from the JWT yet keep the
+            // org-selection acceptance tests (which assert only org slugs) green.
+            val (orgs, members) = setup()
+            val acme = orgs.create(Organisation(slug = "acme", name = "Acme"))
+            members.add(acme, "b2b_users/u1", roles = setOf("owner", "admin"), branchIds = setOf("berlin"))
+
+            members.sessionMembershipsOf("b2b_users/u1") shouldBe setOf(
+                OrgMembership(orgId = acme._key, branchIds = setOf("berlin"), roles = setOf("owner", "admin")),
+            )
+            members.sessionMembershipsOf("b2b_users/unknown") shouldBe emptySet()
         }
     }
 }

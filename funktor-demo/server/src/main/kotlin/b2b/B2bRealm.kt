@@ -14,6 +14,8 @@ import io.peekandpoke.funktor.demo.server.accessibleActiveOrgs
 import io.peekandpoke.funktor.demo.server.b2b.B2bUsersRepo.Companion.asApiModel
 import io.peekandpoke.funktor.demo.server.buildVettedOrgPermissions
 import io.peekandpoke.funktor.demo.server.resolveActiveSelectedOrg
+import io.peekandpoke.funktor.saas.sessionMembershipsOf
+import io.peekandpoke.funktor.saas.storage.OrgMembersStorage
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.datetime.jvm
@@ -37,6 +39,7 @@ class B2bRealm(
     deps: Lazy<AuthSystem.Deps>,
     b2bUsersRepo: Lazy<B2bUsersRepo>,
     orgs: Lazy<OrgsStorage>,
+    orgMembers: Lazy<OrgMembersStorage>,
     emailAndPassword: Lazy<EmailAndPasswordAuth.Factory>,
 ) : AuthRealm<B2bUser> {
     companion object {
@@ -46,6 +49,7 @@ class B2bRealm(
     override val deps: AuthSystem.Deps by deps
     private val b2bUsersRepo: B2bUsersRepo by b2bUsersRepo
     private val orgs: OrgsStorage by orgs
+    private val orgMembers: OrgMembersStorage by orgMembers
     private val emailAndPassword: EmailAndPasswordAuth.Factory by emailAndPassword
     private val authConfig = this.deps.config.funktor.auth
 
@@ -100,6 +104,10 @@ class B2bRealm(
 
     override suspend fun resolveSelectedOrg(orgId: String, memberships: Set<OrgMembership>): SelectedOrg? {
         return orgs.resolveActiveSelectedOrg(orgId, memberships)
+    }
+
+    override suspend fun getMemberships(user: Stored<B2bUser>): Set<OrgMembership> {
+        return orgMembers.sessionMembershipsOf(user._id)
     }
 
     override suspend fun generateJwt(user: Stored<B2bUser>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token {

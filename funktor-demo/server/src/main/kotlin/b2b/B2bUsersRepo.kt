@@ -4,6 +4,7 @@ import io.peekandpoke.funktor.auth.AuthRecordStorage
 import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import io.peekandpoke.funktor.demo.common.B2bUserModel
+import io.peekandpoke.funktor.saas.storage.OrgMembersStorage
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
 import io.peekandpoke.karango.aql.EQ
 import io.peekandpoke.karango.aql.FOR
@@ -13,7 +14,6 @@ import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.password.PasswordHasher
-import io.peekandpoke.ultra.security.user.OrgMembership
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Storable
 import io.peekandpoke.ultra.vault.Stored
@@ -49,6 +49,7 @@ class B2bUsersRepo(
         private val authRecordStorage: AuthRecordStorage,
         private val passwordHasher: PasswordHasher,
         private val orgs: OrgsStorage,
+        private val orgMembers: OrgMembersStorage,
     ) : RepoFixtureLoader<B2bUser>(repo = repo) {
 
         private val commonPassword = "S3cret123!"
@@ -74,12 +75,11 @@ class B2bUsersRepo(
         val singleOrg = singleFix {
             val acme = orgs.ensureBySlug("acme", "Acme Inc")
             repo.insert(
-                "b2b-single", B2bUser(
-                    name = "Single Org User",
-                    email = "single@b2b.test",
-                    memberships = setOf(OrgMembership(orgId = acme._key, roles = setOf("admin"))),
-                )
-            ).also { it.createPassword() }
+                "b2b-single", B2bUser(name = "Single Org User", email = "single@b2b.test")
+            ).also {
+                it.createPassword()
+                orgMembers.add(org = acme, userId = it._id, roles = setOf("admin"))
+            }
         }
 
         // n orgs → org-selection step on login
@@ -87,15 +87,12 @@ class B2bUsersRepo(
             val acme = orgs.ensureBySlug("acme", "Acme Inc")
             val globex = orgs.ensureBySlug("globex", "Globex Corporation")
             repo.insert(
-                "b2b-multi", B2bUser(
-                    name = "Multi Org User",
-                    email = "multi@b2b.test",
-                    memberships = setOf(
-                        OrgMembership(orgId = acme._key, roles = setOf("admin")),
-                        OrgMembership(orgId = globex._key, roles = setOf("member")),
-                    ),
-                )
-            ).also { it.createPassword() }
+                "b2b-multi", B2bUser(name = "Multi Org User", email = "multi@b2b.test")
+            ).also {
+                it.createPassword()
+                orgMembers.add(org = acme, userId = it._id, roles = setOf("admin"))
+                orgMembers.add(org = globex, userId = it._id, roles = setOf("member"))
+            }
         }
     }
 
