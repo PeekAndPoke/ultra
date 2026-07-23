@@ -1,8 +1,8 @@
 # Migrate framework APIs from handler findById to Stored params
 
-**Status:** TODO (designed + agreed 2026-07-22) — HARD dependency on
-`20260722-two-phase-auth-consistent-params.md` (shipping this first would turn the pre-auth
-load/oracle problem live)
+**Status:** IN PROGRESS (started 2026-07-23) — part 3 landed (DONE), the hard dependency is met.
+HARD dependency on `20260722-two-phase-auth-consistent-params.md` (shipping this first would turn
+the pre-auth load/oracle problem live)
 **Plan:** part 4 of the auth-hardening quartet
 **Security-critical:** YES — changes when/where entities load relative to auth on real endpoints.
 
@@ -57,6 +57,39 @@ name; the param CLASS is server-side (jvmMain) only. Verify codegen output is by
 - [ ] Sweep of remaining `findById(params.` sites: migrated or explicitly exempted with reason.
 - [ ] Envelope-parity e2e per migrated group; no-read-when-anonymous e2e on one migrated route.
 - [ ] Full backend suites green on both DB backends.
+
+## Implementation plan (ordered, 2026-07-23)
+
+Findings from the pre-implementation sweep:
+- Sites: OrgsApi (get:35, update:83) + FunktorConfApi/AdminApi (11 sites over Event/Speaker/Attendee).
+- All routes are `/{id}`; clients send `"id" to id`. **The ctor field must stay named `id`** (the
+  incoming converter matches `routeParams[ctorParam.name]`), so retype the field, keep the name.
+- `mount(X::class)` captures the params type via reified `kType<PARAMS>()` — nested `Stored<T>` ctor
+  types are preserved. `IncomingVaultConverter` converts `Stored<X>` when `db.hasRepositoryStoring(X)`
+  — true once a backend is selected (`useKarango`/`useMonko`; conf repos are Monko `@Vault`).
+- **Envelope parity:** a binding miss throws `NotFoundException` → `ApiStatusPages` →
+  `ApiResponse.notFound<Any>().withError("The Resource … was not found")` = **404, data null**,
+  the same STATUS the handler's `okOrNotFound(null)` / `notFound()` produced (the binding path adds a
+  harmless error message). Assert on status.
+- **Ordering:** floors here are `isSuperUser()` / `public()` / `authenticated()` — all caller-only
+  (phase 1), so they gate before conversion. No pre-auth load for a denied caller.
+
+Steps (each builds + commits):
+1. Migrate **OrgsApi** (saas): `IdParam(val id: Stored<Organisation>)`; `get` → `ok(params.id.asApiModel())`;
+   `update` → drop the null branch, `params.id.modify { … }`. Build `funktor:saas`.
+2. Migrate **FunktorConfApi + FunktorConfAdminApi** (demo): split `FunktorConfIdParams` into
+   `EventIdParams`/`SpeakerIdParams`/`AttendeeIdParams` (`Stored<Event/Speaker/Attendee>`); simplify
+   the 9 handlers (get ×3, update ×3, delete ×3). No ≥2-entity routes here → no `ConsistentParam`.
+   Build `funktor-demo:server`.
+3. **e2e (funktor:all)** `StoredParamMigrationE2eSpec`: BOTH backends via self-contained counting
+   repos (`KaThing`/`MoThing`, floor-protected `Stored<Thing>` route) — assert denied-caller → no
+   repo read (ordering/oracle), real id → 200, missing id → 404 (envelope parity). PLUS the real
+   `/api/orgs/{id}` (karango, super-user): real → 200, missing → 404.
+4. **e2e (funktor-demo:server, Monko)** `FunktorConfApiTest`: real conf endpoints post-migration —
+   getEvent real → 200 / missing → 404; admin update real → 200 / missing → 404; anonymous on an
+   admin route → 401.
+5. Full backend suites green (`funktor:rest`, `funktor:saas`, `funktor:all` both backends,
+   `funktor-demo:server`); verify codegen/docs unchanged. Then the FULL review loop to zero findings.
 
 ## Cross-references
 

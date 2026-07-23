@@ -12,11 +12,18 @@ import io.peekandpoke.funktor.saas.model.BranchModel
 import io.peekandpoke.funktor.saas.model.OrgModel
 import io.peekandpoke.funktor.saas.model.OrgStatus
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
+import io.peekandpoke.ultra.vault.Stored
 
 class OrgsApiSpec : FunktorApiSpec() {
 
     private val api by service(OrgsApiFeature::class)
     private val orgs by service(OrgsStorage::class)
+
+    // The `{id}` path segment now binds a `Stored<Organisation>`. The typed-route helper renders the
+    // url from the param's `_key` (via the outgoing converter), so a throwaway ref addresses any key
+    // without a real row — the binding does the actual lookup server-side.
+    private fun orgRef(key: String): Stored<Organisation> =
+        Stored(value = Organisation(slug = key, name = key), _id = "organisation/$key", _key = key)
 
     init {
         api.orgs.list { route ->
@@ -116,7 +123,7 @@ class OrgsApiSpec : FunktorApiSpec() {
 
                 apiApp {
                     authenticate(superUserToken) {
-                        route(OrgsApi.IdParam(id = seeded._key)) {
+                        route(OrgsApi.IdParam(id = seeded)) {
                             status shouldBe HttpStatusCode.OK
                             apiResponseData<OrgModel>()!!.slug shouldBe "acme-get"
                         }
@@ -124,10 +131,11 @@ class OrgsApiSpec : FunktorApiSpec() {
                 }
             }
 
+            // Envelope parity: the binding's miss must 404 exactly as the old handler's okOrNotFound did.
             "fetching an unknown organisation returns not found" {
                 apiApp {
                     authenticate(superUserToken) {
-                        route(OrgsApi.IdParam(id = "does-not-exist")) {
+                        route(OrgsApi.IdParam(id = orgRef("does-not-exist"))) {
                             status shouldBe HttpStatusCode.NotFound
                         }
                     }
@@ -137,7 +145,7 @@ class OrgsApiSpec : FunktorApiSpec() {
             "anonymous get request is unauthorized" {
                 apiApp {
                     anonymous {
-                        route(OrgsApi.IdParam(id = "anything")) {
+                        route(OrgsApi.IdParam(id = orgRef("anything"))) {
                             status shouldBe HttpStatusCode.Unauthorized
                         }
                     }
@@ -152,7 +160,7 @@ class OrgsApiSpec : FunktorApiSpec() {
                 apiApp {
                     authenticate(superUserToken) {
                         route(
-                            OrgsApi.IdParam(id = seeded._key),
+                            OrgsApi.IdParam(id = seeded),
                             UpdateOrgRequest(name = "Acme Renamed", status = OrgStatus.Suspended),
                         ) {
                             status shouldBe HttpStatusCode.OK
@@ -168,7 +176,7 @@ class OrgsApiSpec : FunktorApiSpec() {
                 apiApp {
                     anonymous {
                         route(
-                            OrgsApi.IdParam(id = "anything"),
+                            OrgsApi.IdParam(id = orgRef("anything")),
                             UpdateOrgRequest(name = "X", status = OrgStatus.Active),
                         ) {
                             status shouldBe HttpStatusCode.Unauthorized

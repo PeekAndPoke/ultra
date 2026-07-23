@@ -10,11 +10,14 @@ import io.peekandpoke.funktor.saas.funktorSaas
 import io.peekandpoke.funktor.saas.model.BranchModel
 import io.peekandpoke.funktor.saas.model.OrgModel
 import io.peekandpoke.ultra.remote.ApiResponse
+import io.peekandpoke.ultra.vault.Stored
 
 /** Super-user CRUD endpoints for organisations. */
 class OrgsApi : ApiRoutes("orgs", defaultAuth = { isSuperUser() }) {
 
-    data class IdParam(val id: String)
+    // The organisation is resolved by the entity-binding param converter: `{id}` loads the
+    // `Stored<Organisation>` before the handler runs, 404-ing a missing id at the binding.
+    data class IdParam(val id: Stored<Organisation>)
 
     val list = OrgsApiClient.List.mount {
         docs {
@@ -32,9 +35,7 @@ class OrgsApi : ApiRoutes("orgs", defaultAuth = { isSuperUser() }) {
         }.codeGen {
             funcName = "get"
         }.handle { params ->
-            val found = funktorSaas.findById(params.id)
-
-            ApiResponse.okOrNotFound(found?.asApiModel())
+            ApiResponse.ok(params.id.asApiModel())
         }
     }
 
@@ -80,19 +81,15 @@ class OrgsApi : ApiRoutes("orgs", defaultAuth = { isSuperUser() }) {
         }.codeGen {
             funcName = "update"
         }.handle { params, body ->
-            val existing = funktorSaas.findById(params.id)
             val branchError = validateBranches(body.branches)
 
             when {
-                existing == null ->
-                    ApiResponse.okOrNotFound<OrgModel>(null)
-
                 branchError != null ->
                     ApiResponse.badRequest<OrgModel>().withError(branchError)
 
                 else -> {
                     val updated = funktorSaas.save(
-                        existing.modify { org ->
+                        params.id.modify { org ->
                             org.copy(
                                 name = body.name.trim(),
                                 status = body.status,
