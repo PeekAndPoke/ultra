@@ -67,6 +67,21 @@
       token expiry; only REMOVAL is immediately effective (accepted gap #4; docs say "remove, don't
       demote, to revoke now"). Attack: chain demote→re-promote to retain ownership across refreshes.
 
+### Increment 2b (b2b Members page — client-side gating) — from the 2026-07-24 review
+
+- [ ] **Client last-owner guard bypass**: a tampered b2b client (guard removed, or a direct
+      `Apis.members.remove` / `changeRoles` call) attempts to orphan the org — confirm the server 400
+      (`wouldOrphanOrg` under the per-org lock) holds under (a) a genuine two-tab two-owners race and
+      (b) the b2b2c-co-owner case where the b2b-scoped list UNDER-counts owners (client would allow;
+      server must still reject or correctly permit per the full cross-realm count).
+- [ ] **Rapid double-submit** (two tabs / injected latency) of `remove` / `changeRoles` for the same
+      member — confirm the per-org lock + reload-inside-lock make a genuine duplicate idempotent
+      server-side (the double-fire guard is only client-side; the `FadingModal.doClose` idempotency fix
+      is client-side too).
+- [ ] **OkCancelModal OK-then-Cancel** during the 500ms fade fires `onResult` twice (Ok then Cancel) —
+      pre-existing kraft behavior, unrelated to 2b's mutations (the confirm-remove flow gates on `ifOk`,
+      so harmless there). Confirm no confirm-flow anywhere treats a trailing Cancel as a meaningful signal.
+
 ## Notes
 - Current CRUD is platform-super-user only; per-tenant authorization does not exist yet, so the
   cross-org isolation items are pre-registered for after O2/O3 add memberships + org-scoped rules.

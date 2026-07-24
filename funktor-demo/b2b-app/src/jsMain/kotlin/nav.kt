@@ -7,6 +7,7 @@ import io.peekandpoke.funktor.auth.pages.ResetPasswordPage
 import io.peekandpoke.funktor.demo.b2bapp.layout.LoggedInLayout
 import io.peekandpoke.funktor.demo.b2bapp.layout.LoggedOutLayout
 import io.peekandpoke.funktor.demo.b2bapp.pages.DashboardPage
+import io.peekandpoke.funktor.demo.b2bapp.pages.MembersPage
 import io.peekandpoke.funktor.demo.b2bapp.pages.NotFoundPage
 import io.peekandpoke.funktor.demo.common.B2bUserModel
 import io.peekandpoke.kraft.routing.RootRouterBuilder
@@ -17,6 +18,8 @@ object Nav {
 
     val dashboard = Static("")
     val dashboardSlash = Static("/")
+
+    val members = Static("/members")
 }
 
 fun RootRouterBuilder.mountNav(authState: AuthState<B2bUserModel>) {
@@ -45,6 +48,7 @@ fun RootRouterBuilder.mountNav(authState: AuthState<B2bUserModel>) {
         layout({ LoggedInLayout(it) }) {
             mount(Nav.dashboard) { DashboardPage() }
             mount(Nav.dashboardSlash) { DashboardPage() }
+            mount(Nav.members) { MembersPage() }
         }
     }
 

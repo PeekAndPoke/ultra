@@ -66,6 +66,12 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
                 +"Dashboard"
             }
 
+            noui.item A {
+                onClick { evt -> router.navToUri(evt, Nav.members()) }
+                icon.users()
+                +"Members"
+            }
+
             noui.item()
 
             noui.item A {

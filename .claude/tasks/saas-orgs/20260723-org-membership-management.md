@@ -1,7 +1,8 @@
 # Org membership management + ownership (saas showcase — core function)
 
-**Status:** IN PROGRESS — Inc 1a + 1b + 2a backend ALL DONE (review loops closed; 1a/1b committed,
-2a about to commit 2026-07-24). Inc 2b (b2b-app Members page) is the next chunk.
+**Status:** IN PROGRESS — Inc 1a + 1b + 2a + 2b ALL DONE (review loops closed; committed through 2a =
+`e7a9c401`; 2b loop closed round 2, committed 2026-07-24). The b2b membership arc is COMPLETE —
+remaining leaves (invite/reactivation, operator cross-realm surface) are deferred, not scheduled.
 **Plan:** `.claude/tasks/20260719-demo-restructure-three-apps.md` (the three-apps saas showcase is the
 testbed) + `.claude/tasks/saas-orgs/20260719-saas-full-feature-backlog.md` §2 (ownership) / §3-§4.
 **Security-critical:** YES — this is the org membership + permission spine (who belongs to an org, in
@@ -111,8 +112,16 @@ session-org-implicit. With `OrgMember` being `OrgAware`, the guard also auto-che
       `remove` uses the soft-delete path. List scoped to b2b members (resolve in `B2bUsersRepo`).
       Models + `B2bMembersApiClient` in `funktor-demo/common/b2b`. Wired via `B2bMembersApiFeature`
       + `B2bMembersServices` (dynamic).
-- [ ] **b2b-app Members page**: list the selected org's members + roles; change-role / remove. (2b)
-- [ ] Document gap #4 (staleness: membership change bites on next ~1h token refresh) — accept for v1.
+- [x] **b2b-app Members page** (2b, 2026-07-24) — `MembersPage` + `MemberRolesModal` in
+      `funktor-demo/b2b-app`: lists the selected org's b2b members (name/email/roles, "You" tag),
+      owner/admin change-roles (modal editor — UX chosen with the user) + remove. UI gates mirror the
+      server (owner-only ownership; owner-can-touch-owner) and a client-side last-owner guard prevents
+      the sole-owner orphan up front (server stays authoritative). Framework fix surfaced:
+      `FadingModal.doClose` made idempotent (killed a double-click double-fire across ALL modals).
+      Compile-green (`:funktor-demo:b2b-app` + `:kraft:semanticui` + `:funktor-demo:ops-app`);
+      kraft:semanticui jsTest green. Review loop closed round 2 (see Review record).
+- [~] Document gap #4 (staleness: membership change bites on next ~1h token refresh) — accepted v1;
+      documented in `B2bMembersApi` KDoc + the deferred docs pass; the 2b client surfaces it via toasts.
 - [x] e2e — `B2bMembersApiTest` (Karango, 4 tests): anonymous → 401; b2b-scoped list (b2b2c
       excluded); foreign-org → 404 (guard); sole-owner demote/remove rejected → 2nd owner unlocks →
       remove soft-deletes. Storage layer is both-backend via `OrgMembersStorage{Karango,Monko}Spec`.
@@ -354,6 +363,34 @@ karango/monko helper tests) → **round 2** (fresh 3-agent gate on `git diff d22
 removal RACE (two parallel owner-removals → zero owners); cross-org MOVE via `save` identity mutation;
 ownerless-org lockout (creation without owner seed); orphan `OrgMember` enumeration after user
 deletion; ownership-predicate divergence if Inc-2 re-implements `isOwner` on `OrgMember`.
+
+### Increment 2b (b2b Members page) — rounds 1–2 (3-agent gate, 2026-07-24) — LOOP CLOSED
+
+Frontend-only (kraft SPA `funktor-demo/b2b-app`): `MembersPage` + `MemberRolesModal` over the 2a API.
+UX chosen with the user: a modal role-editor (not inline, not a separate edit page).
+
+- **Round 1** — Security clean; Domain PASS (the row gate is a provably-COMPLETE mirror of the server —
+  no UI-enabled control can reach a 403; owner-only fully mirrored by disabling). Impl+style: 1 MEDIUM
+  (modal buttons double-fire the mutation on a fast double-click, rooted in shared `FadingModal.doClose`)
+  + 2 LOW (checkbox label not clickable; `reload()` flashes the whole table to a spinner).
+- **User decisions after round 1:** (Q1) fix the double-fire at the FRAMEWORK root — `FadingModal.doClose`
+  returns early when already `fadingOut`, making close idempotent for ALL modals; (Q2) PREVENT the
+  last-owner orphan on the CLIENT while keeping the server authoritative (the rare two-owners race still
+  falls through to the server 400, first-wins).
+- **Fixes applied:** framework `doClose` idempotency; client last-owner guard reusing the SAME
+  `ultra/security` `wouldRemoveLastOwner` over the loaded list (sole-owner Remove → intercept toast;
+  owner checkbox locked-on in the editor when last owner); `reloadSilently()`; clickable role labels.
+- **Round 2** (fresh 3-agent gate on the updated diff) — Impl **0 required** (1 optional INFO: the inner
+  `if (!fadingOut)` in `fadeOut()` is now dead after the guard — left as harmless defensive code),
+  Domain **PASS/0** (proved the client's visible owner set is a strict SUBSET of the server's cross-realm
+  set → the client can NEVER under-restrict into a server-orphaning write; only over-restricts in the
+  b2b2c-co-owner anomaly, fail-safe), Security **0** (guard is UX-only; both paths hit the server checks;
+  framework blast radius bounded — 3 `FadingModal` subclasses, none relies on double-fire, nav-trap
+  ordering safe; no new sinks). **LOOP CLOSED at round 2.**
+- **Framework change surfaced:** `kraft/semanticui` `FadingModal.doClose` idempotency — a real double-fire
+  bug for any modal carrying an `onClose` side effect. Needs a mention in the deferred docs pass.
+- **Testing:** demo apps have no `jsTest` infra (no precedent; all `TestBed.preact` tests live in
+  `kraft/*`); server behavior is e2e-covered by `B2bMembersApiTest` (2a). Bar = compile-green (met).
 
 ## Cross-references
 

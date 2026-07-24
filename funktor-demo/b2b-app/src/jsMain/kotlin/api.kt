@@ -6,6 +6,7 @@ import io.ktor.client.plugins.sse.SSE
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import io.peekandpoke.funktor.auth.api.AuthApiClient
+import io.peekandpoke.funktor.demo.common.b2b.B2bMembersApiClient
 import io.peekandpoke.ultra.remote.ApiClient.Config
 import kotlinx.serialization.json.Json
 
@@ -35,4 +36,6 @@ class B2bAppApis(appConfig: B2bAppConfig, tokenProvider: () -> String?) {
     )
 
     val auth = AuthApiClient(realm = "b2b", config = config)
+
+    val members = B2bMembersApiClient(config = config)
 }
