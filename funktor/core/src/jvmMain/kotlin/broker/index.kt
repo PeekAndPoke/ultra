@@ -5,10 +5,12 @@ import io.ktor.server.routing.*
 import io.peekandpoke.funktor.core.broker.vault.IncomingJavaTimeConverter
 import io.peekandpoke.funktor.core.broker.vault.IncomingMpDateTimeConverter
 import io.peekandpoke.funktor.core.broker.vault.IncomingPrimitiveConverter
+import io.peekandpoke.funktor.core.broker.vault.IncomingValueClassConverter
 import io.peekandpoke.funktor.core.broker.vault.IncomingVaultConverter
 import io.peekandpoke.funktor.core.broker.vault.OutgoingJavaTimeConverter
 import io.peekandpoke.funktor.core.broker.vault.OutgoingMpDateTimeConverter
 import io.peekandpoke.funktor.core.broker.vault.OutgoingPrimitiveConverter
+import io.peekandpoke.funktor.core.broker.vault.OutgoingValueClassConverter
 import io.peekandpoke.funktor.core.broker.vault.OutgoingVaultConverter
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.ultra.kontainer.KontainerAware
@@ -48,6 +50,7 @@ val Funktor_Broker
         singleton(IncomingMpDateTimeConverter::class)
         singleton(IncomingPrimitiveConverter::class)
         singleton(IncomingJavaTimeConverter::class)
+        singleton(IncomingValueClassConverter::class)
 
         dynamic(TypedRouteRenderer::class)
         singleton(OutgoingConverter::class)
@@ -55,4 +58,5 @@ val Funktor_Broker
         singleton(OutgoingPrimitiveConverter::class)
         singleton(OutgoingMpDateTimeConverter::class)
         singleton(OutgoingJavaTimeConverter::class)
+        singleton(OutgoingValueClassConverter::class)
     }

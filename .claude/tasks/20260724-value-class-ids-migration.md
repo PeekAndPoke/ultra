@@ -63,13 +63,24 @@ Migration surface (from the survey):
   `findAllByOwner(realm, type, owner)` — the swap-hazard functions this whole effort targets).
 
 Test evidence:
-- [ ] Existing auth e2e green on BOTH backends (`B2bAuthFlowTest`, `B2b2cAuthFlowTest`, session/reset
-      flows) after the migration — the behavior must be identical.
-- [ ] Both-DB round trip for `AuthRecord.realm` as `RealmId` (store → `findByToken`/`findAllByOwner`
-      filter by realm → read back) once KSP lands.
-- [ ] `RealmId` unit: `init` rejects blank; equals/hashCode by value.
+- [x] Existing auth e2e green on BOTH backends (`B2bAuthFlowTest`, `B2b2cAuthFlowTest`, session/reset
+      flows, `AuthApiSpec` HTTP flows) after the migration — behavior identical.
+- [x] Both-DB round trip for `AuthRecord.realm` as `RealmId` (auth storage/session specs, both backends).
+- [x] `RealmId` unit (`RealmIdSpec`): `init` rejects empty/blank/out-of-charset/over-length; equals &
+      hashCode by value; serializes as a bare string. `ValueClassConverterSpec`: inbound/outbound +
+      init-invariant→404 + `kotlin.*` exclusion.
 
-Review: 3-agent gate (impl+style / domain-auth / security) → loop to zero → commit.
+**STATUS: Step 1 DONE 2026-07-25.** No KSP change needed (both KSPs already emit the type-safe
+`append<RealmId, RealmId>` accessor). 3-agent gate PASSED — tenant isolation preserved, wire+storage
+byte-identical (NOT a data migration), fail-closed converter. Hardening applied from review: `RealmId`
+invariant tightened to `[A-Za-z0-9._-]`, 1..128 chars (a SECURITY boundary — makes the NUL-delimited
+session-cache key collision-proof by construction); converter normalizes any ctor/init failure to
+`IllegalArgumentException` (→ 404) and caches `ReifiedKType` per type.
+
+**Converter boundary (reviewer-flagged, applies to all future ids):** the generic converter supports
+value classes over a PRIMITIVE/enum backing only (delegates to `IncomingPrimitiveConverter`). Every
+planned id (`RealmId`/`UserId`/`OrgId`/`Email`/`Slug`) is `String`-backed → fine; a value class over a
+non-primitive (date/UUID/nested VC) would fail loudly at bind time — acceptable, documented.
 
 ## Step 2 — `UserId`
 `userId`/`ownerId: String` → `UserId` (realm-qualified `_id`, e.g. `b2b_users/x`). Surface: `AuthRecord.

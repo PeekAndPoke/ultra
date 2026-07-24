@@ -5,6 +5,7 @@ import io.peekandpoke.funktor.auth.AuthSystem
 import io.peekandpoke.funktor.auth.AuthUserAdapter
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import io.peekandpoke.funktor.demo.common.OperatorUserModel
 import io.peekandpoke.funktor.demo.server.operator.OperatorUsersRepo.Companion.asApiModel
@@ -30,7 +31,7 @@ class OperatorRealm(
     emailAndPassword: Lazy<EmailAndPasswordAuth.Factory>,
 ) : AuthRealm<OperatorUser> {
     companion object {
-        const val REALM = "operators"
+        val REALM = RealmId("operators")
     }
 
     override val deps: AuthSystem.Deps by deps
@@ -38,7 +39,7 @@ class OperatorRealm(
     private val emailAndPassword: EmailAndPasswordAuth.Factory by emailAndPassword
     private val authConfig = this.deps.config.funktor.auth
 
-    override val id: String = REALM
+    override val id: RealmId = REALM
 
     override val messaging: AuthRealm.Messaging<OperatorUser> = AuthRealm.DefaultMessaging(
         senderEmail = "treore@jointhebase.co",

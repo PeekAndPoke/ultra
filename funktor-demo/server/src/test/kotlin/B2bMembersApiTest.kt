@@ -9,6 +9,7 @@ import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.demo.common.b2b.AddMemberRequest
 import io.peekandpoke.funktor.demo.common.b2b.ChangeMemberRolesRequest
 import io.peekandpoke.funktor.demo.common.b2b.OrgMemberModel
@@ -86,7 +87,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                 apiApp {
                     var token = ""
                     anonymous {
-                        signInRoute(RealmParam("b2b"), body = signIn("single@b2b.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
                         }
@@ -108,7 +109,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                 apiApp {
                     var token = ""
                     anonymous {
-                        signInRoute(RealmParam("b2b"), body = signIn("single@b2b.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
                         }
@@ -150,7 +151,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                 apiApp {
                     var token = ""
                     anonymous {
-                        signInRoute(RealmParam("b2b"), body = signIn("single@b2b.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
                         }
@@ -173,7 +174,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                 apiApp {
                     var token = ""
                     anonymous {
-                        signInRoute(RealmParam("b2b"), body = signIn("single@b2b.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
                         }
@@ -196,7 +197,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                 apiApp {
                     var token = ""
                     anonymous {
-                        signInRoute(RealmParam("b2b"), body = signIn("single@b2b.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
                         }
@@ -222,7 +223,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                 apiApp {
                     var token = ""
                     anonymous {
-                        signInRoute(RealmParam("b2b"), body = signIn("single@b2b.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
                         }
@@ -259,7 +260,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                 apiApp {
                     var token = ""
                     anonymous {
-                        signInRoute(RealmParam("b2b"), body = signIn("single@b2b.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
                         }
@@ -299,7 +300,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                 apiApp {
                     var token = ""
                     anonymous {
-                        signInRoute(RealmParam("b2b"), body = signIn("single@b2b.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
                         }
@@ -324,7 +325,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                 apiApp {
                     var token = ""
                     anonymous {
-                        signInRoute(RealmParam("b2b"), body = signIn("single@b2b.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
                         }
@@ -349,7 +350,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                 apiApp {
                     var token = ""
                     anonymous {
-                        signInRoute(RealmParam("b2b"), body = signIn("owner@b2b.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("owner@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
                         }

@@ -16,6 +16,7 @@ import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.PasswordPolicy
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.messaging.api.EmailResult
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.log.NullLog
@@ -26,17 +27,17 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
     private open class TestServices(
         val onHashPassword: (String) -> String = { error("hashPassword not implemented") },
         val onCheckPassword: (String, String) -> Boolean = { _, _ -> error("checkPassword not implemented") },
-        val onFindLatestPasswordRecord: suspend (String, String) -> Stored<AuthRecord.Password>? = { _, _ -> error("findLatestPasswordRecord not implemented") },
+        val onFindLatestPasswordRecord: suspend (RealmId, String) -> Stored<AuthRecord.Password>? = { _, _ -> error("findLatestPasswordRecord not implemented") },
         val onCreateAuthRecord: suspend (create: () -> AuthRecord) -> Stored<AuthRecord> = { error("createAuthRecord not implemented") },
         val onGenerateToken: (Int) -> String = { error("generateToken not implemented") },
         val onInstantNow: () -> MpInstant = { error("instantNow not implemented") },
-        val onFindPasswordRecoveryToken: suspend (String, String) -> Stored<AuthRecord.PasswordRecoveryToken>? =
+        val onFindPasswordRecoveryToken: suspend (RealmId, String) -> Stored<AuthRecord.PasswordRecoveryToken>? =
             { _, _ -> error("findPasswordRecoveryToken not implemented") },
         val onRemoveAuthRecord: suspend (String) -> Unit = { error("removeAuthRecord not implemented") },
     ) : EmailAndPasswordAuth.Services {
         override fun hashPassword(password: String): String = onHashPassword(password)
         override fun checkPassword(plaintext: String, hash: String): Boolean = onCheckPassword(plaintext, hash)
-        override suspend fun findLatestPasswordRecord(realm: String, owner: String): Stored<AuthRecord.Password>? =
+        override suspend fun findLatestPasswordRecord(realm: RealmId, owner: String): Stored<AuthRecord.Password>? =
             onFindLatestPasswordRecord(realm, owner)
 
         @Suppress("UNCHECKED_CAST")
@@ -48,7 +49,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
         override fun instantNow(): MpInstant = onInstantNow()
 
         override suspend fun findPasswordRecoveryToken(
-            realm: String,
+            realm: RealmId,
             token: String,
         ): Stored<AuthRecord.PasswordRecoveryToken>? = onFindPasswordRecoveryToken(realm, token)
 
@@ -197,7 +198,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                             Stored(
                                 _id = "password-id",
                                 value = AuthRecord.Password(
-                                    realm = "test-realm",
+                                    realm = RealmId("test-realm"),
                                     ownerId = storedUser._id,
                                     token = "hashed-password"
                                 )
@@ -241,7 +242,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                             Stored(
                                 _id = "password-id",
                                 value = AuthRecord.Password(
-                                    realm = "test-realm",
+                                    realm = RealmId("test-realm"),
                                     ownerId = storedUser._id,
                                     token = "hashed-password"
                                 )
@@ -597,7 +598,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                         },
                         onCreateAuthRecord = { create ->
                             val record = create() as AuthRecord.Password
-                            record.realm shouldBe "test-realm"
+                            record.realm shouldBe RealmId("test-realm")
                             record.ownerId shouldBe storedUser._id
                             record.token shouldBe hashedPassword
 

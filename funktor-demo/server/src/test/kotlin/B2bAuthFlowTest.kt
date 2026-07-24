@@ -8,6 +8,7 @@ import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.model.AuthSelectOrgRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.saas.model.OrgStatus
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
 import io.peekandpoke.funktor.testing.AppSpec
@@ -47,7 +48,7 @@ class B2bAuthFlowTest : AppSpec<FunktorDemoConfig>(testApp) {
             "a single-org b2b user is auto-selected on sign-in (Success)" {
                 apiApp {
                     anonymous {
-                        signInRoute(RealmParam("b2b"), body = signIn("single@b2b.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             status shouldBe HttpStatusCode.OK
                             apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>()
@@ -60,7 +61,7 @@ class B2bAuthFlowTest : AppSpec<FunktorDemoConfig>(testApp) {
             "a multi-org b2b user must pick an org on sign-in (OrgSelectionRequired)" {
                 apiApp {
                     anonymous {
-                        signInRoute(RealmParam("b2b"), body = signIn("multi@b2b.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("multi@b2b.test")) {
                             status shouldBe HttpStatusCode.OK
                             apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.OrgSelectionRequired>()
@@ -73,7 +74,7 @@ class B2bAuthFlowTest : AppSpec<FunktorDemoConfig>(testApp) {
             "a b2b user with no org is denied access on sign-in (Forbidden)" {
                 apiApp {
                     anonymous {
-                        signInRoute(RealmParam("b2b"), body = signIn("noorg@b2b.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("noorg@b2b.test")) {
                             status shouldBe HttpStatusCode.Forbidden
                         }
                     }
@@ -86,7 +87,7 @@ class B2bAuthFlowTest : AppSpec<FunktorDemoConfig>(testApp) {
                         var selectionToken = ""
                         var acmeId = ""
 
-                        signInRoute(RealmParam("b2b"), body = signIn("multi@b2b.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("multi@b2b.test")) {
                             val required = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.OrgSelectionRequired>()
 
@@ -96,7 +97,7 @@ class B2bAuthFlowTest : AppSpec<FunktorDemoConfig>(testApp) {
 
                         val select = AuthSelectOrgRequest(selectionToken = selectionToken, orgId = acmeId)
 
-                        selectOrgRoute(RealmParam("b2b"), body = select) {
+                        selectOrgRoute(RealmParam(RealmId("b2b")), body = select) {
                             status shouldBe HttpStatusCode.OK
                             apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>()
@@ -104,7 +105,7 @@ class B2bAuthFlowTest : AppSpec<FunktorDemoConfig>(testApp) {
                         }
 
                         // Replay of the consumed token must fail (single-use).
-                        selectOrgRoute(RealmParam("b2b"), body = select) {
+                        selectOrgRoute(RealmParam(RealmId("b2b")), body = select) {
                             status shouldBe HttpStatusCode.Forbidden
                         }
                     }
@@ -118,14 +119,14 @@ class B2bAuthFlowTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         var selectionToken = ""
 
-                        signInRoute(RealmParam("b2b"), body = signIn("multi@b2b.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("multi@b2b.test")) {
                             selectionToken = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.OrgSelectionRequired>()
                                 .selectionToken
                         }
 
                         selectOrgRoute(
-                            RealmParam("b2b"),
+                            RealmParam(RealmId("b2b")),
                             body = AuthSelectOrgRequest(selectionToken = selectionToken, orgId = initech._key),
                         ) {
                             status shouldBe HttpStatusCode.Forbidden
@@ -139,14 +140,14 @@ class B2bAuthFlowTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         var selectionToken = ""
 
-                        signInRoute(RealmParam("b2b"), body = signIn("multi@b2b.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("multi@b2b.test")) {
                             selectionToken = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.OrgSelectionRequired>()
                                 .selectionToken
                         }
 
                         selectOrgRoute(
-                            RealmParam("b2b"),
+                            RealmParam(RealmId("b2b")),
                             body = AuthSelectOrgRequest(selectionToken = selectionToken, orgId = "does-not-exist"),
                         ) {
                             status shouldBe HttpStatusCode.Forbidden
@@ -162,12 +163,12 @@ class B2bAuthFlowTest : AppSpec<FunktorDemoConfig>(testApp) {
                     apiApp {
                         anonymous {
                             // The single-org user's only org is suspended → no access at all.
-                            signInRoute(RealmParam("b2b"), body = signIn("single@b2b.test")) {
+                            signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                                 status shouldBe HttpStatusCode.Forbidden
                             }
 
                             // The multi-org user has exactly one ACTIVE org left → auto-select.
-                            signInRoute(RealmParam("b2b"), body = signIn("multi@b2b.test")) {
+                            signInRoute(RealmParam(RealmId("b2b")), body = signIn("multi@b2b.test")) {
                                 status shouldBe HttpStatusCode.OK
                                 apiResponseData<AuthSignInResponse>()
                                     .shouldBeInstanceOf<AuthSignInResponse.Success>()

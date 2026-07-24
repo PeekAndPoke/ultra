@@ -12,6 +12,7 @@ import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.rest.acl.UserApiAccessMatrix
 import io.peekandpoke.ultra.remote.ApiClient
 import io.peekandpoke.ultra.remote.ApiResponse
@@ -20,7 +21,7 @@ import io.peekandpoke.ultra.remote.api
 import io.peekandpoke.ultra.remote.call
 import kotlinx.coroutines.flow.Flow
 
-class AuthApiClient(private val realm: String, config: Config) : ApiClient(config) {
+class AuthApiClient(private val realm: RealmId, config: Config) : ApiClient(config) {
 
     companion object {
         private const val BASE = "/auth"
@@ -90,45 +91,45 @@ class AuthApiClient(private val realm: String, config: Config) : ApiClient(confi
     }
 
     fun getRealm(): Flow<ApiResponse<AuthRealmModel>> = call(
-        GetRealm("realm" to realm)
+        GetRealm("realm" to realm.value)
     )
 
     fun signIn(request: AuthSignInRequest): Flow<ApiResponse<AuthSignInResponse>> = call(
-        SignIn("realm" to realm, body = request)
+        SignIn("realm" to realm.value, body = request)
     )
 
     fun selectOrg(request: AuthSelectOrgRequest): Flow<ApiResponse<AuthSignInResponse>> = call(
-        SelectOrg("realm" to realm, body = request)
+        SelectOrg("realm" to realm.value, body = request)
     )
 
     fun signUp(request: AuthSignUpRequest): Flow<ApiResponse<AuthSignUpResponse>> = call(
-        SignUp("realm" to realm, body = request)
+        SignUp("realm" to realm.value, body = request)
     )
 
     fun activateAccount(request: AuthActivateAccountRequest): Flow<ApiResponse<AuthActivateActivateResponse>> = call(
-        ActivateAccount("realm" to realm, body = request)
+        ActivateAccount("realm" to realm.value, body = request)
     )
 
     fun setPassword(request: AuthSetPasswordRequest): Flow<ApiResponse<AuthSetPasswordResponse>> = call(
-        SetPassword("realm" to realm, body = request)
+        SetPassword("realm" to realm.value, body = request)
     )
 
     fun recoverAccountInitPasswordReset(
         request: AuthRecoverAccountRequest.InitPasswordReset,
     ): Flow<ApiResponse<AuthRecoverAccountResponse.InitPasswordReset>> = call(
-        RecoverAccountInitPasswordReset("realm" to realm, body = request)
+        RecoverAccountInitPasswordReset("realm" to realm.value, body = request)
     )
 
     fun recoverAccountValidatePasswordResetToken(
         request: AuthRecoverAccountRequest.ValidatePasswordResetToken,
     ): Flow<ApiResponse<AuthRecoverAccountResponse.ValidatePasswordResetToken>> = call(
-        RecoverAccountValidatePasswordResetToken("realm" to realm, body = request)
+        RecoverAccountValidatePasswordResetToken("realm" to realm.value, body = request)
     )
 
     fun recoverAccountSetPasswordWithToken(
         request: AuthRecoverAccountRequest.SetPasswordWithToken,
     ): Flow<ApiResponse<AuthRecoverAccountResponse.SetPasswordWithToken>> = call(
-        RecoverAccountSetPasswordWithToken("realm" to realm, body = request)
+        RecoverAccountSetPasswordWithToken("realm" to realm.value, body = request)
     )
 
     fun getMyApiAccess(): Flow<ApiResponse<UserApiAccessMatrix>> = call(
@@ -136,6 +137,6 @@ class AuthApiClient(private val realm: String, config: Config) : ApiClient(confi
     )
 
     fun refreshToken(): Flow<ApiResponse<AuthSignInResponse>> = call(
-        RefreshToken("realm" to realm)
+        RefreshToken("realm" to realm.value)
     )
 }

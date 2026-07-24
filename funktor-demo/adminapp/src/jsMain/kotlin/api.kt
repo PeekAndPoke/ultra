@@ -6,6 +6,7 @@ import io.ktor.client.plugins.sse.SSE
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import io.peekandpoke.funktor.auth.api.AuthApiClient
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.demo.common.funktorconf.FunktorConfApiClient
 import io.peekandpoke.funktor.demo.common.showcase.ShowcaseApiClient
 import io.peekandpoke.funktor.inspect.cluster.devtools.DevtoolsResponseObserver
@@ -40,7 +41,7 @@ class AdminAppApis(appConfig: AdminAppConfig, tokenProvider: () -> String?) {
         ),
     )
 
-    val auth = AuthApiClient(realm = "admin-user", config = config)
+    val auth = AuthApiClient(realm = RealmId("admin-user"), config = config)
 
     val showcase = ShowcaseApiClient(config = config)
 

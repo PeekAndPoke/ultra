@@ -7,6 +7,7 @@ import io.peekandpoke.funktor.auth.domain.expiresAt
 import io.peekandpoke.funktor.auth.domain.ownerId
 import io.peekandpoke.funktor.auth.domain.realm
 import io.peekandpoke.funktor.auth.domain.token
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import io.peekandpoke.karango.aql.DESC
 import io.peekandpoke.karango.aql.EQ
@@ -53,7 +54,7 @@ class KarangoAuthRecordsRepo(
         }
     }
 
-    override suspend fun findLatest(realm: String, type: String, owner: String): Stored<AuthRecord>? {
+    override suspend fun findLatest(realm: RealmId, type: String, owner: String): Stored<AuthRecord>? {
         return findFirst {
             FOR(repo) { r ->
                 FILTER(r._type EQ type)
@@ -69,7 +70,7 @@ class KarangoAuthRecordsRepo(
         }
     }
 
-    override suspend fun findByToken(realm: String, type: String, token: String): Stored<AuthRecord>? {
+    override suspend fun findByToken(realm: RealmId, type: String, token: String): Stored<AuthRecord>? {
         return findFirst {
             FOR(repo) { r ->
                 FILTER(r._type EQ type)
@@ -84,7 +85,7 @@ class KarangoAuthRecordsRepo(
     }
 
     override suspend fun findAllByOwner(
-        realm: String, type: String, owner: String,
+        realm: RealmId, type: String, owner: String,
     ): List<Stored<AuthRecord>> {
         val cursor = find {
             FOR(repo) { r ->
@@ -99,7 +100,7 @@ class KarangoAuthRecordsRepo(
     }
 
     override suspend fun removeAllByOwner(
-        realm: String, type: String, owner: String, exceptId: String?,
+        realm: RealmId, type: String, owner: String, exceptId: String?,
     ): RemoveResult {
         val result = query {
             FOR(repo) { r ->

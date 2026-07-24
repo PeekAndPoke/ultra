@@ -8,6 +8,7 @@ import io.peekandpoke.funktor.auth.domain.expiresAt
 import io.peekandpoke.funktor.auth.domain.ownerId
 import io.peekandpoke.funktor.auth.domain.realm
 import io.peekandpoke.funktor.auth.domain.token
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import io.peekandpoke.monko.MonkoDriver
 import io.peekandpoke.monko.MonkoIndexBuilder
@@ -58,7 +59,7 @@ class MonkoAuthRecordsRepo(
         }
     }
 
-    override suspend fun findLatest(realm: String, type: String, owner: String): Stored<AuthRecord>? {
+    override suspend fun findLatest(realm: RealmId, type: String, owner: String): Stored<AuthRecord>? {
         val found = find { r ->
             filter(
                 and(
@@ -74,7 +75,7 @@ class MonkoAuthRecordsRepo(
         return found.firstOrNull()
     }
 
-    override suspend fun findByToken(realm: String, type: String, token: String): Stored<AuthRecord>? {
+    override suspend fun findByToken(realm: RealmId, type: String, token: String): Stored<AuthRecord>? {
         val found = find { r ->
             filter(
                 and(
@@ -90,7 +91,7 @@ class MonkoAuthRecordsRepo(
     }
 
     override suspend fun findAllByOwner(
-        realm: String, type: String, owner: String,
+        realm: RealmId, type: String, owner: String,
     ): List<Stored<AuthRecord>> {
         val cursor = find { r ->
             filter(
@@ -106,13 +107,13 @@ class MonkoAuthRecordsRepo(
     }
 
     override suspend fun removeAllByOwner(
-        realm: String, type: String, owner: String, exceptId: String?,
+        realm: RealmId, type: String, owner: String, exceptId: String?,
     ): RemoveResult {
         val coll = driver.database.getCollection<Map<String, Any?>>(name)
 
         val filters = mutableListOf(
             Filters.eq(repoExpr._type.toFieldPath(), type),
-            Filters.eq(repoExpr.realm.toFieldPath(), realm),
+            Filters.eq(repoExpr.realm.toFieldPath(), realm.value),
             Filters.eq(repoExpr.ownerId.toFieldPath(), owner),
         )
         if (exceptId != null) {

@@ -16,6 +16,7 @@ import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthUser
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.ultra.common.isEmail
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.datetime.MpInstant
@@ -103,10 +104,10 @@ class EmailAndPasswordAuth(
         suspend fun <T : AuthRecord> createAuthRecord(record: () -> T): Stored<T>
 
         /** Find the password recovery token for the given [realm] and [owner] */
-        suspend fun findLatestPasswordRecord(realm: String, owner: String): Stored<AuthRecord.Password>?
+        suspend fun findLatestPasswordRecord(realm: RealmId, owner: String): Stored<AuthRecord.Password>?
 
         /** Find the password recovery token for the given [realm] and [token] */
-        suspend fun findPasswordRecoveryToken(realm: String, token: String): Stored<AuthRecord.PasswordRecoveryToken>?
+        suspend fun findPasswordRecoveryToken(realm: RealmId, token: String): Stored<AuthRecord.PasswordRecoveryToken>?
 
         /** Remove an auth record by its [id] */
         suspend fun removeAuthRecord(id: String)
@@ -145,7 +146,7 @@ class EmailAndPasswordAuth(
         }
 
         /** @{inheritDoc} */
-        override suspend fun findLatestPasswordRecord(realm: String, owner: String): Stored<AuthRecord.Password>? {
+        override suspend fun findLatestPasswordRecord(realm: RealmId, owner: String): Stored<AuthRecord.Password>? {
             return authRecordStorage
                 .findLatestRecordBy(type = AuthRecord.Password, realm = realm, owner = owner)
         }
@@ -157,7 +158,7 @@ class EmailAndPasswordAuth(
 
         /** @{inheritDoc} */
         override suspend fun findPasswordRecoveryToken(
-            realm: String,
+            realm: RealmId,
             token: String,
         ): Stored<AuthRecord.PasswordRecoveryToken>? {
             return authRecordStorage
@@ -400,7 +401,7 @@ class EmailAndPasswordAuth(
     /**
      * Creates a new password record for the given [realmId], [ownerId] and [password].
      */
-    private fun createPasswordRecord(realmId: String, ownerId: String, password: String): AuthRecord.Password {
+    private fun createPasswordRecord(realmId: RealmId, ownerId: String, password: String): AuthRecord.Password {
         return AuthRecord.Password(
             realm = realmId,
             ownerId = ownerId,

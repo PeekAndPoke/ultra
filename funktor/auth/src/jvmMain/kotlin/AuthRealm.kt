@@ -11,6 +11,7 @@ import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
 import io.peekandpoke.funktor.auth.model.PasswordPolicy
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.AuthProvider
 import io.peekandpoke.funktor.auth.provider.hasCapability
 import io.peekandpoke.funktor.auth.provider.supportsSignIn
@@ -136,7 +137,7 @@ interface AuthRealm<USER : AuthUser> {
     }
 
     /** Unique id of the realm */
-    val id: String
+    val id: RealmId
 
     /** Auth providers for this realm */
     val providers: List<AuthProvider>

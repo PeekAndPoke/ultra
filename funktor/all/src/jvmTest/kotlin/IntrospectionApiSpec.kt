@@ -210,7 +210,7 @@ class IntrospectionApiSpec : FunktorApiSpec() {
                             val realms = apiResponseData<List<AuthRealmInfo>>()
                             realms.shouldNotBeNull()
                             realms.shouldNotBeEmpty()
-                            realms.any { it.id == TestUserRealm.REALM } shouldBe true
+                            realms.any { it.id == TestUserRealm.REALM.value } shouldBe true
                         }
                     }
                 }

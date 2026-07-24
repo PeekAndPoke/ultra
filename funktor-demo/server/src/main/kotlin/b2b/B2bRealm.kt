@@ -8,6 +8,7 @@ import io.peekandpoke.funktor.auth.OrgPolicy
 import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import io.peekandpoke.funktor.demo.common.B2bUserModel
 import io.peekandpoke.funktor.demo.server.accessibleActiveOrgs
@@ -43,7 +44,7 @@ class B2bRealm(
     emailAndPassword: Lazy<EmailAndPasswordAuth.Factory>,
 ) : AuthRealm<B2bUser> {
     companion object {
-        const val REALM = "b2b"
+        val REALM = RealmId("b2b")
     }
 
     override val deps: AuthSystem.Deps by deps
@@ -53,7 +54,7 @@ class B2bRealm(
     private val emailAndPassword: EmailAndPasswordAuth.Factory by emailAndPassword
     private val authConfig = this.deps.config.funktor.auth
 
-    override val id: String = REALM
+    override val id: RealmId = REALM
 
     override val orgPolicy: OrgPolicy = OrgPolicy.Required()
 

@@ -9,6 +9,7 @@ import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.demo.common.operator.OperatorDashboardStats
 import io.peekandpoke.funktor.demo.server.operator.OperatorApiFeature
 import io.peekandpoke.funktor.testing.AppSpec
@@ -55,7 +56,7 @@ class OperatorApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     var token = ""
 
                     anonymous {
-                        signInRoute(RealmParam("operators"), body = signIn("karsten.john.gerber@googlemail.com")) {
+                        signInRoute(RealmParam(RealmId("operators")), body = signIn("karsten.john.gerber@googlemail.com")) {
                             status shouldBe HttpStatusCode.OK
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>()
@@ -82,7 +83,7 @@ class OperatorApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     var token = ""
 
                     anonymous {
-                        signInRoute(RealmParam("admin-user"), body = signIn("karsten.john.gerber@googlemail.com")) {
+                        signInRoute(RealmParam(RealmId("admin-user")), body = signIn("karsten.john.gerber@googlemail.com")) {
                             status shouldBe HttpStatusCode.OK
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>()
@@ -103,7 +104,7 @@ class OperatorApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     var token = ""
 
                     anonymous {
-                        signInRoute(RealmParam("b2b"), body = signIn("single@b2b.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             status shouldBe HttpStatusCode.OK
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>()

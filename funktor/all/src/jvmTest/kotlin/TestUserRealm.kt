@@ -6,6 +6,7 @@ import io.peekandpoke.funktor.auth.AuthUserAdapter
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthUser
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import io.peekandpoke.karango.aql.EQ
 import io.peekandpoke.karango.aql.FOR
@@ -53,14 +54,14 @@ class TestUserRealm(
     emailAndPassword: Lazy<EmailAndPasswordAuth.Factory>,
 ) : AuthRealm<TestUser> {
     companion object {
-        const val REALM = "admin-user"
+        val REALM = RealmId("admin-user")
     }
 
     override val deps: AuthSystem.Deps by deps
     private val usersRepo: TestUsersRepo by usersRepo
     private val emailAndPassword: EmailAndPasswordAuth.Factory by emailAndPassword
 
-    override val id: String = REALM
+    override val id: RealmId = REALM
 
     override val messaging: AuthRealm.Messaging<TestUser> = AuthRealm.DefaultMessaging(
         senderEmail = "test@example.com",

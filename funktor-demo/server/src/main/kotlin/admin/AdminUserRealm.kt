@@ -5,6 +5,7 @@ import io.peekandpoke.funktor.auth.AuthSystem
 import io.peekandpoke.funktor.auth.AuthUserAdapter
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import io.peekandpoke.funktor.auth.provider.GithubSsoAuth
 import io.peekandpoke.funktor.auth.provider.GoogleSsoAuth
@@ -29,7 +30,7 @@ class AdminUserRealm(
     githubSso: Lazy<GithubSsoAuth.Factory>,
 ) : AuthRealm<AdminUser> {
     companion object {
-        const val REALM = "admin-user"
+        val REALM = RealmId("admin-user")
     }
 
     override val deps: AuthSystem.Deps by deps
@@ -39,7 +40,7 @@ class AdminUserRealm(
     private val githubSso: GithubSsoAuth.Factory by githubSso
     private val authConfig = this.deps.config.funktor.auth
 
-    override val id: String = REALM
+    override val id: RealmId = REALM
 
     override val messaging: AuthRealm.Messaging<AdminUser> = AuthRealm.DefaultMessaging(
         senderEmail = "treore@jointhebase.co",

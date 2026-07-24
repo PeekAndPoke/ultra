@@ -16,6 +16,7 @@ import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import io.peekandpoke.funktor.rest.acl.UserApiAccessMatrix
 import io.peekandpoke.ultra.remote.ApiAccessLevel
@@ -25,7 +26,7 @@ class AuthApiSpec : FunktorApiSpec() {
     private val api by service(AuthApiFeature::class)
 
     private val existingRealm = RealmParam(realm = TestUserRealm.REALM)
-    private val nonExistentRealm = RealmParam(realm = "non-existent")
+    private val nonExistentRealm = RealmParam(realm = RealmId("non-existent"))
     private val provider = EmailAndPasswordAuth.ID
     private val signupEmail = "signup-${System.currentTimeMillis()}@test.com"
 

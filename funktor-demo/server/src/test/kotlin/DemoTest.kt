@@ -4,6 +4,7 @@ import io.kotest.matchers.shouldBe
 import io.ktor.http.*
 import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.testing.AppSpec
 
 class DemoTest : AppSpec<FunktorDemoConfig>(testApp) {
@@ -15,7 +16,7 @@ class DemoTest : AppSpec<FunktorDemoConfig>(testApp) {
             "Getting an existing realm must work" {
                 apiApp {
                     anonymous {
-                        val param = RealmParam(realm = "admin-user")
+                        val param = RealmParam(realm = RealmId("admin-user"))
 
                         route(param) {
                             status shouldBe HttpStatusCode.OK

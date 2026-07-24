@@ -6,6 +6,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
@@ -33,28 +34,28 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
             authRecords.adapter.removeAll()
 
             authRecords
-                .create(AuthRecord.Password(realm = "realm", ownerId = "owner1", token = "pw1"))
+                .create(AuthRecord.Password(realm = RealmId("realm"), ownerId = "owner1", token = "pw1"))
 
             // ensure they get a different timestamp
             delay(1.milliseconds)
 
             val owner1pw2 = authRecords
-                .create(AuthRecord.Password(realm = "realm", ownerId = "owner1", token = "pw2"))
+                .create(AuthRecord.Password(realm = RealmId("realm"), ownerId = "owner1", token = "pw2"))
 
             delay(2.milliseconds)
 
             authRecords
-                .create(AuthRecord.Password(realm = "realm", ownerId = "owner2", token = "pw1"))
+                .create(AuthRecord.Password(realm = RealmId("realm"), ownerId = "owner2", token = "pw1"))
 
             // ensure they get a different timestamp
             delay(1.milliseconds)
 
             val owner2pw2 = authRecords
-                .create(AuthRecord.Password(realm = "realm", ownerId = "owner2", token = "pw2"))
+                .create(AuthRecord.Password(realm = RealmId("realm"), ownerId = "owner2", token = "pw2"))
 
             withClue("Loading latest password of owner1") {
                 val loaded = authRecords
-                    .findLatestRecordBy(AuthRecord.Password, "realm", "owner1")
+                    .findLatestRecordBy(AuthRecord.Password, RealmId("realm"), "owner1")
 
                 loaded.shouldNotBeNull()
                 loaded._id shouldBe owner1pw2._id
@@ -65,7 +66,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             withClue("Loading latest password of owner2") {
                 val loaded = authRecords
-                    .findLatestRecordBy(AuthRecord.Password, "realm", "owner2")
+                    .findLatestRecordBy(AuthRecord.Password, RealmId("realm"), "owner2")
 
                 loaded.shouldNotBeNull()
                 loaded._id shouldBe owner2pw2._id
@@ -76,14 +77,14 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             withClue("Loading from a realm that does not have password stored") {
                 val loaded = authRecords
-                    .findLatestRecordBy(AuthRecord.Password, "UNKNOWN", "owner1")
+                    .findLatestRecordBy(AuthRecord.Password, RealmId("UNKNOWN"), "owner1")
 
                 loaded.shouldBeNull()
             }
 
             withClue("Loading for an owner that does not have password stored") {
                 val loaded = authRecords
-                    .findLatestRecordBy(AuthRecord.Password, "realm", "UNKNOWN")
+                    .findLatestRecordBy(AuthRecord.Password, RealmId("realm"), "UNKNOWN")
 
                 loaded.shouldBeNull()
             }
@@ -97,7 +98,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             val token1 = authRecords.create(
                 AuthRecord.PasswordRecoveryToken(
-                    realm = "realm",
+                    realm = RealmId("realm"),
                     ownerId = "owner1",
                     token = "token1",
                     expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
@@ -106,7 +107,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             val token2 = authRecords.create(
                 AuthRecord.PasswordRecoveryToken(
-                    realm = "realm",
+                    realm = RealmId("realm"),
                     ownerId = "owner2",
                     token = "token2",
                     expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
@@ -115,7 +116,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             withClue("Loading password reset token of owner1") {
                 val loaded = authRecords
-                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = "realm", token = "token1")
+                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm"), token = "token1")
 
                 loaded.shouldNotBeNull()
                 loaded._id shouldBe token1._id
@@ -127,7 +128,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             withClue("Loading password reset token of owner2") {
                 val loaded = authRecords
-                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = "realm", token = "token2")
+                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm"), token = "token2")
 
                 loaded.shouldNotBeNull()
                 loaded._id shouldBe token2._id
@@ -146,7 +147,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             authRecords.create(
                 AuthRecord.PasswordRecoveryToken(
-                    realm = "realm",
+                    realm = RealmId("realm"),
                     ownerId = "owner1",
                     token = "token1",
                     expiresAt = kronos.instantNow().minus(1.hours).toEpochSeconds(),
@@ -154,7 +155,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
             )
 
             val loaded = authRecords
-                .findLatestRecordBy(AuthRecord.PasswordRecoveryToken, "realm", "owner1")
+                .findLatestRecordBy(AuthRecord.PasswordRecoveryToken, RealmId("realm"), "owner1")
 
             loaded.shouldBeNull()
         }
@@ -168,7 +169,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
             // Populate the store so the backend isn't just returning null from an empty table.
             authRecords.create(
                 AuthRecord.PasswordRecoveryToken(
-                    realm = "realm",
+                    realm = RealmId("realm"),
                     ownerId = "owner1",
                     token = "known-token",
                     expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
@@ -176,7 +177,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
             )
 
             val loaded = authRecords
-                .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = "realm", token = "unknown-token")
+                .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm"), token = "unknown-token")
 
             loaded.shouldBeNull()
         }
@@ -189,7 +190,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             authRecords.create(
                 AuthRecord.PasswordRecoveryToken(
-                    realm = "realm-a",
+                    realm = RealmId("realm-a"),
                     ownerId = "owner1",
                     token = "shared-token",
                     expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
@@ -198,13 +199,13 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             withClue("Same token in a different realm should not match") {
                 val loaded = authRecords
-                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = "realm-b", token = "shared-token")
+                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm-b"), token = "shared-token")
                 loaded.shouldBeNull()
             }
 
             withClue("Same token in the right realm should match") {
                 val loaded = authRecords
-                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = "realm-a", token = "shared-token")
+                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm-a"), token = "shared-token")
                 loaded.shouldNotBeNull()
             }
         }

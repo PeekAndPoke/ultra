@@ -6,6 +6,7 @@ import io.ktor.client.plugins.sse.SSE
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import io.peekandpoke.funktor.auth.api.AuthApiClient
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.demo.common.operator.OperatorApiClient
 import io.peekandpoke.funktor.saas.api.OrgsApiClient
 import io.peekandpoke.ultra.remote.ApiClient.Config
@@ -36,7 +37,7 @@ class OpsAppApis(appConfig: OpsAppConfig, tokenProvider: () -> String?) {
         },
     )
 
-    val auth = AuthApiClient(realm = "operators", config = config)
+    val auth = AuthApiClient(realm = RealmId("operators"), config = config)
 
     val orgs = OrgsApiClient(config = config)
 

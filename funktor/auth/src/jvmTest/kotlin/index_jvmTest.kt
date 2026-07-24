@@ -5,6 +5,7 @@ import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthUser
 import io.peekandpoke.funktor.auth.model.PasswordPolicy
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.AuthProvider
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import io.peekandpoke.funktor.auth.provider.GithubSsoAuth
@@ -138,7 +139,7 @@ class MinimalTestRealm(
     val onCreateUserForSignup: suspend (params: AuthUserAdapter.CreateUserForSignupParams) -> Stored<MinimalTestUser> =
         { error("createUserForSignup was not expected to be called") },
 ) : AuthRealm<MinimalTestUser> {
-    override val id: String get() = "test-realm"
+    override val id: RealmId get() = RealmId("test-realm")
 
     override val users = object : AuthUserAdapter<MinimalTestUser> {
         override suspend fun loadById(id: String): Stored<MinimalTestUser>? =
@@ -207,7 +208,7 @@ class TestAppUserRealm(
     githubSso: Lazy<GithubSsoAuth.Factory>,
 ) : AuthRealm<TestAppUser> {
     companion object {
-        const val REALM = "admin-user"
+        val REALM = RealmId("admin-user")
     }
 
     override val deps: AuthSystem.Deps by deps
@@ -216,7 +217,7 @@ class TestAppUserRealm(
     private val googleSso: GoogleSsoAuth.Factory by googleSso
     private val githubSso: GithubSsoAuth.Factory by githubSso
 
-    override val id: String = REALM
+    override val id: RealmId = REALM
 
     override val messaging: AuthRealm.Messaging<TestAppUser> = AuthRealm.DefaultMessaging(
         senderEmail = "treore@example.com",

@@ -1,12 +1,13 @@
 package io.peekandpoke.funktor.auth.api
 
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.rest.ApiFeature
 import io.peekandpoke.funktor.rest.ApiRoutes
 
 class AuthApiFeature : ApiFeature {
 
     data class RealmParam(
-        val realm: String,
+        val realm: RealmId,
     )
 
     override val name = "Auth"

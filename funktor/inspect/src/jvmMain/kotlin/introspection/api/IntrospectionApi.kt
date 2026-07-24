@@ -162,7 +162,7 @@ class IntrospectionApi : ApiRoutes("introspection", authFloor = { isSuperUser() 
         }.handle {
             val realms = funktorAuth.realms.map { realm ->
                 AuthRealmInfo(
-                    id = realm.id,
+                    id = realm.id.value,
                     providers = realm.providers.map { provider ->
                         AuthProviderInfo(
                             id = provider.id,

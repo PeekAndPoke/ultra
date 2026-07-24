@@ -7,6 +7,7 @@ import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.saas.model.OrgStatus
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
 import io.peekandpoke.funktor.testing.AppSpec
@@ -42,7 +43,7 @@ class B2b2cAuthFlowTest : AppSpec<FunktorDemoConfig>(testApp) {
             "a single-org b2b2c end-user is auto-selected on sign-in (Success)" {
                 apiApp {
                     anonymous {
-                        signInRoute(RealmParam("b2b2c"), body = signIn("single@b2b2c.test")) {
+                        signInRoute(RealmParam(RealmId("b2b2c")), body = signIn("single@b2b2c.test")) {
                             status shouldBe HttpStatusCode.OK
                             apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>()
@@ -55,7 +56,7 @@ class B2b2cAuthFlowTest : AppSpec<FunktorDemoConfig>(testApp) {
             "a multi-org b2b2c end-user must pick an org on sign-in (OrgSelectionRequired)" {
                 apiApp {
                     anonymous {
-                        signInRoute(RealmParam("b2b2c"), body = signIn("multi@b2b2c.test")) {
+                        signInRoute(RealmParam(RealmId("b2b2c")), body = signIn("multi@b2b2c.test")) {
                             status shouldBe HttpStatusCode.OK
                             apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.OrgSelectionRequired>()
@@ -68,7 +69,7 @@ class B2b2cAuthFlowTest : AppSpec<FunktorDemoConfig>(testApp) {
             "a b2b2c end-user with no org is denied access on sign-in (Forbidden)" {
                 apiApp {
                     anonymous {
-                        signInRoute(RealmParam("b2b2c"), body = signIn("noorg@b2b2c.test")) {
+                        signInRoute(RealmParam(RealmId("b2b2c")), body = signIn("noorg@b2b2c.test")) {
                             status shouldBe HttpStatusCode.Forbidden
                         }
                     }
@@ -78,7 +79,7 @@ class B2b2cAuthFlowTest : AppSpec<FunktorDemoConfig>(testApp) {
             "a b2b2c user cannot sign in through the b2b realm (separate user stores)" {
                 apiApp {
                     anonymous {
-                        signInRoute(RealmParam("b2b"), body = signIn("single@b2b2c.test")) {
+                        signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b2c.test")) {
                             status shouldBe HttpStatusCode.Forbidden
                         }
                     }
@@ -91,7 +92,7 @@ class B2b2cAuthFlowTest : AppSpec<FunktorDemoConfig>(testApp) {
 
                     apiApp {
                         anonymous {
-                            signInRoute(RealmParam("b2b2c"), body = signIn("single@b2b2c.test")) {
+                            signInRoute(RealmParam(RealmId("b2b2c")), body = signIn("single@b2b2c.test")) {
                                 status shouldBe HttpStatusCode.Forbidden
                             }
                         }

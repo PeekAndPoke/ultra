@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.auth
 
 import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.vault.Stored
@@ -22,7 +23,7 @@ import kotlin.time.Duration
 interface SessionStore {
 
     suspend fun create(
-        realm: String,
+        realm: RealmId,
         ownerId: String,
         deviceFingerprint: String,
         userAgent: String?,
@@ -34,7 +35,7 @@ interface SessionStore {
      * Resolves a session by its id. Returns null if the id is unknown, expired, or the session
      * belongs to a different realm. Implementations may cache.
      */
-    suspend fun getById(realm: String, sessionId: String): Stored<AuthRecord.Session>?
+    suspend fun getById(realm: RealmId, sessionId: String): Stored<AuthRecord.Session>?
 
     /**
      * Updates the session's `lastSeenAt` to [now]. Implementations are expected to debounce
@@ -44,25 +45,25 @@ interface SessionStore {
      * wired in Phase 2 alongside the auth middleware that calls it per-request. Callers should
      * not rely on `lastSeenAt` being current until then.
      */
-    suspend fun touch(realm: String, sessionId: String, now: MpInstant)
+    suspend fun touch(realm: RealmId, sessionId: String, now: MpInstant)
 
-    suspend fun listForUser(realm: String, ownerId: String): List<Stored<AuthRecord.Session>>
+    suspend fun listForUser(realm: RealmId, ownerId: String): List<Stored<AuthRecord.Session>>
 
-    suspend fun revoke(realm: String, sessionId: String)
+    suspend fun revoke(realm: RealmId, sessionId: String)
 
-    suspend fun revokeAllForUser(realm: String, ownerId: String, except: String? = null)
+    suspend fun revokeAllForUser(realm: RealmId, ownerId: String, except: String? = null)
 
     object Null : SessionStore {
         override suspend fun create(
-            realm: String, ownerId: String, deviceFingerprint: String,
+            realm: RealmId, ownerId: String, deviceFingerprint: String,
             userAgent: String?, ipAddress: String?, ttl: Duration,
         ): Stored<AuthRecord.Session> = error("SessionStore not configured")
 
-        override suspend fun getById(realm: String, sessionId: String): Stored<AuthRecord.Session>? = null
-        override suspend fun touch(realm: String, sessionId: String, now: MpInstant) = Unit
-        override suspend fun listForUser(realm: String, ownerId: String): List<Stored<AuthRecord.Session>> = emptyList()
-        override suspend fun revoke(realm: String, sessionId: String) = Unit
-        override suspend fun revokeAllForUser(realm: String, ownerId: String, except: String?) = Unit
+        override suspend fun getById(realm: RealmId, sessionId: String): Stored<AuthRecord.Session>? = null
+        override suspend fun touch(realm: RealmId, sessionId: String, now: MpInstant) = Unit
+        override suspend fun listForUser(realm: RealmId, ownerId: String): List<Stored<AuthRecord.Session>> = emptyList()
+        override suspend fun revoke(realm: RealmId, sessionId: String) = Unit
+        override suspend fun revokeAllForUser(realm: RealmId, ownerId: String, except: String?) = Unit
     }
 
     /**
@@ -77,7 +78,7 @@ interface SessionStore {
     ) : SessionStore {
 
         override suspend fun create(
-            realm: String, ownerId: String, deviceFingerprint: String,
+            realm: RealmId, ownerId: String, deviceFingerprint: String,
             userAgent: String?, ipAddress: String?, ttl: Duration,
         ): Stored<AuthRecord.Session> {
             val now = kronos.instantNow()
@@ -97,27 +98,27 @@ interface SessionStore {
             }
         }
 
-        override suspend fun getById(realm: String, sessionId: String): Stored<AuthRecord.Session>? {
+        override suspend fun getById(realm: RealmId, sessionId: String): Stored<AuthRecord.Session>? {
             if (sessionId.length !in SESSION_ID_MIN_LEN..SESSION_ID_MAX_LEN) return null
             return storage.findByToken(type = AuthRecord.Session, realm = realm, token = sessionId)
         }
 
-        override suspend fun touch(realm: String, sessionId: String, now: MpInstant) {
+        override suspend fun touch(realm: RealmId, sessionId: String, now: MpInstant) {
             // Intentional no-op for Phase 1 — see interface contract. Debounced write to
             // `lastSeenAt` is wired when the auth middleware lands in Phase 2.
         }
 
-        override suspend fun listForUser(realm: String, ownerId: String): List<Stored<AuthRecord.Session>> {
+        override suspend fun listForUser(realm: RealmId, ownerId: String): List<Stored<AuthRecord.Session>> {
             return storage.findAllByOwner(type = AuthRecord.Session, realm = realm, owner = ownerId)
         }
 
-        override suspend fun revoke(realm: String, sessionId: String) {
+        override suspend fun revoke(realm: RealmId, sessionId: String) {
             val found = storage.findByToken(type = AuthRecord.Session, realm = realm, token = sessionId)
                 ?: return
             storage.removeById(found._id)
         }
 
-        override suspend fun revokeAllForUser(realm: String, ownerId: String, except: String?) {
+        override suspend fun revokeAllForUser(realm: RealmId, ownerId: String, except: String?) {
             val exceptRowId = if (except != null) {
                 storage.findByToken(type = AuthRecord.Session, realm = realm, token = except)?._id
             } else null
@@ -146,15 +147,15 @@ interface SessionStore {
         private data class Entry(val value: Stored<AuthRecord.Session>?, val expiresAtMs: Long)
 
         /**
-         * Cache key uses a NUL delimiter so a realm or session-id containing `::` can't be
-         * crafted to collide with another (realm, sessionId) pair. Session ids are base64 and
-         * don't contain NUL, so this is collision-proof in practice.
+         * Cache key uses a NUL delimiter so a realm or session-id can't be crafted to collide with
+         * another (realm, sessionId) pair. Collision-proof by construction: [RealmId] is restricted
+         * to `[A-Za-z0-9._-]` and session ids are base64 — neither can contain the NUL delimiter.
          */
         private val cache = ConcurrentHashMap<String, Entry>()
 
-        private fun key(realm: String, sessionId: String) = "$realm\u0000$sessionId"
+        private fun key(realm: RealmId, sessionId: String) = "${realm.value}\u0000$sessionId"
 
-        override suspend fun getById(realm: String, sessionId: String): Stored<AuthRecord.Session>? {
+        override suspend fun getById(realm: RealmId, sessionId: String): Stored<AuthRecord.Session>? {
             val k = key(realm, sessionId)
             val now = nowMs()
             val cached = cache[k]
@@ -181,12 +182,12 @@ interface SessionStore {
             return freshValid
         }
 
-        override suspend fun revoke(realm: String, sessionId: String) {
+        override suspend fun revoke(realm: RealmId, sessionId: String) {
             inner.revoke(realm, sessionId)
             cache.remove(key(realm, sessionId))
         }
 
-        override suspend fun revokeAllForUser(realm: String, ownerId: String, except: String?) {
+        override suspend fun revokeAllForUser(realm: RealmId, ownerId: String, except: String?) {
             inner.revokeAllForUser(realm, ownerId, except)
             // We don't know which session ids belonged to this user without an extra lookup;
             // cheaper to clear the whole local cache than maintain an index.
