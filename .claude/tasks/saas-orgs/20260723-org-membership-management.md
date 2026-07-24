@@ -1,6 +1,7 @@
 # Org membership management + ownership (saas showcase — core function)
 
-**Status:** IN PROGRESS (2026-07-23) — design decided, first slice starting.
+**Status:** IN PROGRESS — Inc 1a + 1b + 2a backend ALL DONE (review loops closed; 1a/1b committed,
+2a about to commit 2026-07-24). Inc 2b (b2b-app Members page) is the next chunk.
 **Plan:** `.claude/tasks/20260719-demo-restructure-three-apps.md` (the three-apps saas showcase is the
 testbed) + `.claude/tasks/saas-orgs/20260719-saas-full-feature-backlog.md` §2 (ownership) / §3-§4.
 **Security-critical:** YES — this is the org membership + permission spine (who belongs to an org, in
@@ -103,13 +104,51 @@ session-org-implicit. With `OrgMember` being `OrgAware`, the guard also auto-che
 
 ## Increment 2 (leaf) — member-management API + b2b Members page
 
-- [ ] **Member API** `/orgs/{org}/members` (list) + `/orgs/{org}/members/{member}` (roles/remove),
-      `OrgAwareParam`, owner/admin-gated (`authorize { forAny { hasRole(OWNER); hasRole(ADMIN) } }`),
-      last-owner invariant enforced. Client + models. Lives in `funktor/saas` (core mechanism).
-- [ ] **b2b-app Members page**: list the selected org's members + roles; change-role / remove.
+- [x] **Member API** (2026-07-23) — `B2bMembersApi` in the demo b2b: `GET /api/b2b/orgs/{org}/members`
+      + `PUT/DELETE .../{member}` (`{org}` OrgAwareParam, `{member}` `Stored<OrgMember>` OrgAware).
+      Floor `forUserType(B2bUser)`; mutations `authorize { forAnyRole(OWNER, ADMIN) }`. Atomic
+      last-owner via per-org `tryToLock`; `(org,userId)` immutable (change-roles copies only roles);
+      `remove` uses the soft-delete path. List scoped to b2b members (resolve in `B2bUsersRepo`).
+      Models + `B2bMembersApiClient` in `funktor-demo/common/b2b`. Wired via `B2bMembersApiFeature`
+      + `B2bMembersServices` (dynamic).
+- [ ] **b2b-app Members page**: list the selected org's members + roles; change-role / remove. (2b)
 - [ ] Document gap #4 (staleness: membership change bites on next ~1h token refresh) — accept for v1.
-- [ ] e2e (both backends): list; foreign-org/non-member blocked (404 via guard); last-owner
-      removal/demotion rejected; role change reflected; anonymous → 401 before load.
+- [x] e2e — `B2bMembersApiTest` (Karango, 4 tests): anonymous → 401; b2b-scoped list (b2b2c
+      excluded); foreign-org → 404 (guard); sole-owner demote/remove rejected → 2nd owner unlocks →
+      remove soft-deletes. Storage layer is both-backend via `OrgMembersStorage{Karango,Monko}Spec`.
+      (Two-parallel-owner-removals race is a red-team scenario, not a deterministic e2e.)
+
+### Increment 2a design (decided 2026-07-23) — b2b member API (demo-first)
+
+- **Placement (user):** build in the demo b2b-app, composing core `OrgMembersStorage` + `OrgRole`
+  invariants with `B2bUsersRepo` for display; extract the HTTP shape to `funktor/saas` later.
+- **Endpoints** (URL-org, `OrgAwareParam`), group `B2bMembersApi(authFloor = { authenticated() })`:
+  `GET /api/b2b/orgs/{org}/members` (list — any member; the guard binds the caller's session org),
+  `PUT .../{member}/roles` + `DELETE .../{member}` (owner/admin via `authorize { forAny {
+  forRole(OWNER); forRole(ADMIN) } }` — admits operators via the `isSuperUser` bypass).
+  `{member}: Stored<OrgMember>` (OrgAware) → the part-3 guard checks member∈{org} for free.
+- **Atomic last-owner** (the 1a security MEDIUM): per-org `GlobalLocksProvider.tryToLock(
+  "b2b-org-members-<orgKey>")` around the check-then-act (owner set computed over ALL realms).
+  `(org,userId)` immutable — changeRoles copies only `roles`. Lock-timeout → 409 retry; last-owner → 400.
+- **v1 scoping:** the b2b member LIST shows only b2b-realm members (account admins) — rows whose
+  `userId` resolves in `B2bUsersRepo`; b2b2c end-users of the same org are the operator surface's job.
+  The last-owner INVARIANT still uses the full cross-realm owner set.
+- **Soft-delete (user 2026-07-23):** removing a member SOFT-deletes (audit trail + recoverable),
+  not a hard delete. No vault soft-delete query helper existed, so added a REUSABLE one to BOTH
+  backends: `karango/core/.../aql/softdelete.kt` (`notDeleted`/`deleted` = `IS_NULL`/`IS_NOT_NULL`)
+  and `monko/core/.../lang/dsl/softdelete.kt` (`Filters.eq/ne(path, null)`). `OrgMember` implements
+  `SoftDeletable.Mutable`; `OrgMembersStorage.remove` soft-deletes (`withSoftDelete(SoftDelete(now))`);
+  ALL reads (`findByUser`/`findByOrg`/`findByOrgAndUser`) exclude deleted via `notDeleted`. So a
+  removed member vanishes from lists, the JWT, and the last-owner count. NOTE: the KSP types a nested
+  `SoftDelete?` accessor as `AqlPropertyPath<SoftDelete, SoftDelete>` (non-null value) — the helper
+  param is `AqlExpression<SoftDelete>` / `MongoPropertyPath<*, SoftDelete>`. Reactivation-on-re-add
+  (a soft-deleted `(org,userId)` slot is retained → re-add collides) is deferred to the invite leaf.
+  Green: OrgMembers Karango 7 / Monko 7; `funktor:all` + demo unaffected.
+- **Foundation DONE (compiles):** `funktor-demo/common/.../b2b/` — `OrgMemberModel` +
+  `ChangeMemberRolesRequest` + `B2bMembersApiClient`. **NEXT:** server `B2bMembersApi` (list /
+  change-roles / remove with the atomic per-org lock, using the soft-delete `remove`) + feature +
+  wiring + e2e (both backends) → review the whole 2a backend (member API + soft-delete + helpers) as
+  one unit → then 2b (b2b-app Members page).
 
 ### Increment-2 constraints surfaced by the Increment-1a review (must honor)
 
@@ -150,6 +189,89 @@ session-org-implicit. With `OrgMember` being `OrgAware`, the guard also auto-che
       non-member caller blocked; last-owner removal/demotion rejected; role change reflected;
       anonymous → 401 before any load (reuse the no-read-when-anonymous pattern).
 - [ ] Full backend suites green.
+
+## ⏸ PAUSED 2026-07-23 — Increment 2a review round 1 DONE, decisions locked, fixes NOT yet applied
+
+**State:** the 2a backend is BUILT + GREEN but UNCOMMITTED (`git diff d22c34f6`): soft-delete
+helpers (karango/monko) + `OrgMember` soft-delete + `B2bMembersApi` (list/change-roles/remove) +
+feature/wiring + `B2bMembersApiTest` (Karango 4/4) + `OrgMembersStorage{Karango,Monko}Spec` 7/7.
+Round-1 3-agent review is COMPLETE (impl/domain/security). No CRITICAL/HIGH. Confirmed SAFE:
+cross-org `{org}`/`{member}` both 404 via guard; `forUserType` denies b2b2c/operators at the floor
+(no super-user bypass); `(org,userId)` un-smuggleable; zero-owner COUNT race prevented by the lock.
+
+### Decisions (user, 2026-07-23) — apply in the round-1 fixes
+
+- **Fork A — mutation scope = b2b-only (symmetric).** change-roles/remove must reject a target whose
+  `userId` does NOT resolve in `B2bUsersRepo` → **404**, matching the list scoping. (b2b2c end-users =
+  operator surface later.)
+- **Fork B — owner-only ownership (standard SaaS model).** owner ⊃ admin. `forAnyRole(OWNER, ADMIN)`
+  stays the member-management floor, but any op that ADDS or REMOVES ownership requires the CALLER to
+  be an OWNER, else **403**. Ownership-touching = (`body.roles` grants OWNER) OR (the current target
+  is an owner → demote/remove). Rationale: matches GitHub/Slack/Google Workspace/Stripe/Atlassian —
+  least-surprising. (User asked for the known pattern; this is it.)
+
+**RESUMED 2026-07-24 — fixes 1–7 APPLIED + green** (`B2bMembersApiTest` 6, `B2bAuthFlowTest` 7,
+`OrgMembersStorage{Karango,Monko}Spec` 7). Details: reload-inside-lock via `resolveTarget`
+(`findByOrgAndUser`, `notDeleted`) → 404 (MEDIUM); Fork A b2b-scope in `resolveTarget` → 404;
+Fork B owner-only via `user.permissions.roles.isOrgOwner` → 403; dropped unused `deleted()` helper;
+`services.x` direct (comment removed); e2e adds owner-only-403 + b2b2c-404 + mutate-removed-404;
+red-team gets the resurrection race + admin-takeover. Added `owner@b2b.test` (OWNER) fixture.
+
+**Round 2 (fresh 3-agent gate, 2026-07-24): domain PASS / impl PASS / security SAFE — no
+CRITICAL/HIGH/MEDIUM; all round-1 fixes verified correct + non-vacuous.** Fixed: 1 LOW (class KDoc
+misstated `list` gating — it's any-member, not owner/admin). Hardened: security INFO — `b2bUserOf`
+verifies the full `_id` round-trips so a cross-realm bare-key collision can't pass the b2b scope
+check. Noted: domain INFO-1 (demote is self-reversible in the ~1h window → docs "remove, don't
+demote"; red-team scenario added). Recorded INFO (deferred): no role-catalog validation on
+`body.roles` (backlog §4); `findByOrg` scan per mutation (accepted); b2b2c-owner anomaly
+(operator-recoverable); admin can't edit an owner's app-roles (by design).
+
+**Round 3 (fresh 3-agent gate, 2026-07-24): impl clean / domain PASS / security SAFE — ZERO code
+findings. LOOP CLOSED.** Only item: a domain INFO refining the revocation KDoc (removal is not
+"immediately effective" — both removal and demotion leave ~1h residual JWT power, gap #4; the real
+difference is SELF-reversibility) — applied, doc-only. Security re-verified the `b2bUserOf` `_id`
+round-trip closes the cross-realm bare-key collision on BOTH backends; all prior SAFE items hold.
+**Increment 2a backend DONE.** Next: commit 2a → Increment 2b (b2b-app Members page).
+
+### Fixes to apply BEFORE round 2 (all confirmed by ≥1 reviewer)
+
+1. **[MEDIUM, all 3] Reload target INSIDE the lock.** In change-roles/remove, re-load via
+   `orgMembers.findByOrgAndUser(params.org.asRef, params.member.value().userId)` (honors `notDeleted`)
+   and operate on THAT fresh row; `null` → add `Outcome.NotFound` → **404**. Closes: the
+   removed-member RESURRECTION race, the deterministic "mutate a soft-deleted member returns 200",
+   and the audit-overwrite. (`B2bMembersApi.kt` changeRoles/remove.)
+2. **[A] b2b-realm scope on mutations** — inside the lock, after reload, if
+   `b2bUsers.findById(userId) == null` → 404.
+3. **[B] owner-only ownership** — read the CALLER's roles via `RoutingContext.user.permissions.roles`
+   (`funktor/core/.../core_module.kt:106` `RoutingContext.user`; `user.permissions`); if the op is
+   ownership-touching and `!caller.roles.isOrgOwner` → **403**. (Import `isOrgOwner`.)
+4. **[LOW] `deleted()` helper untested** — add a focused karango + monko unit test asserting
+   `notDeleted` excludes / `deleted` includes a soft-deleted row on BOTH backends (it only rides the
+   storage spec transitively today).
+5. **[INFO] services accessor** — drop the misleading "resolved per request" comment / the `get()`
+   indirection; use `services.x` directly like `FunktorConfApi`.
+6. **e2e additions** — mutate-an-already-soft-deleted-member → 404; a b2b admin cannot mutate a
+   b2b2c end-user of the org (404); an admin CANNOT grant OWNER / demote-remove an owner (403), an
+   OWNER can. (`B2bMembersApiTest`.)
+7. **red-team** (`20260718-redteam-saas-orgs.md`) — add: removed-member resurrection race;
+   admin-takeover-via-OWNER-grant (now blocked by B).
+
+### Recorded INFO / deferred (not round-1 blockers)
+
+- Owner invariant is API-LOCAL (holds only because every owner-mutation takes the
+  `b2b-org-members-<orgKey>` lock) — the operator/invite/cascade leaves MUST take the same lock or
+  push enforcement into storage.
+- `VaultGlobalLocksProvider` sanitizes the lock key (`[^a-zA-Z0-9]→"-"`) → two org keys differing
+  only in non-alphanumerics share a lock (over-serialization, fail-safe; pre-existing).
+- `loadMembers` is N+1 (`findById` per member) — fine at demo scale.
+- 409 (lock-timeout) branch untested — acceptable with the deferred race.
+- Removed member keeps access until their ~1h JWT expires — accepted v1 staleness (gap #4).
+
+### Resume pointer
+
+Apply fixes 1–7 → rebuild + green (`:funktor:saas:jvmTest`, `:funktor-demo:server:test`, the new
+karango/monko helper tests) → **round 2** (fresh 3-agent gate on `git diff d22c34f6`) → loop to zero
+→ COMMIT 2a → then **2b** (b2b-app Members page). Do NOT commit before the loop closes.
 
 ## Review record
 

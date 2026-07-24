@@ -2,10 +2,12 @@ package io.peekandpoke.funktor.saas.storage
 
 import io.peekandpoke.funktor.saas.domain.OrgMember
 import io.peekandpoke.funktor.saas.domain.Organisation
+import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.vault.Ref
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Storable
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.addons.SoftDelete
 
 /**
  * Storage for [OrgMember]s — the org↔user membership collection, unique per (org, userId).
@@ -61,7 +63,8 @@ interface OrgMembersStorage {
         )
 
         override suspend fun remove(member: Stored<OrgMember>) {
-            repo.remove(member._id)
+            // Soft-delete: retain the row as an audit record. Reads exclude it (the repos' notDeleted filter).
+            repo.save(member.modify { it.withSoftDelete(SoftDelete(deletedAt = Kronos.systemUtc.instantNow())) })
         }
     }
 
@@ -83,6 +86,8 @@ interface OrgMembersStorage {
     ): Stored<OrgMember>
 
     suspend fun save(member: Storable<OrgMember>): Stored<OrgMember>
+
+    /** Soft-deletes the membership (retains an audit row; excluded from all reads). */
     suspend fun remove(member: Stored<OrgMember>)
     suspend fun clear()
 }

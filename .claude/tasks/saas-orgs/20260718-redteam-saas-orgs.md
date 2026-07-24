@@ -52,6 +52,20 @@
       to grant themselves `OWNER`/`ADMIN`.
 - [ ] **Stale token after removal**: a removed member keeps acting until their ~1h JWT expires
       (documented v1 behavior) — confirm no LONGER-lived acceptance.
+- [ ] **Removed-member RESURRECTION race** (Increment-2a review): a `changeRoles` racing a `remove`
+      on the same member — does the change-roles write back a pre-delete snapshot (`softDelete=null`)
+      and un-delete the member? (Mitigated: the handler re-loads the target INSIDE the per-org lock,
+      `notDeleted`-filtered → 404. Attack the mitigation: any other write path that bypasses the lock
+      or `findByOrgAndUser`.)
+- [ ] **Admin-takeover via OWNER grant** (Increment-2a review): a b2b ADMIN promotes itself/a
+      confederate to OWNER, then demotes/removes the real owners. (Mitigated: owner-only ownership —
+      granting OWNER or demoting/removing a current owner requires the CALLER be an owner → 403.
+      Attack: bypass the caller-owner check, or reach ownership via a non-`changeRoles` path.)
+- [ ] **Demoted-owner self-repromote** (Increment-2a review): a just-demoted owner (row now `{admin}`,
+      JWT still carries `owner` for ~1h) calls `changeRoles` on SELF back to `{owner}` — `callerIsOwner`
+      from the STALE token passes the owner-only gate. So demotion alone does not strip ownership until
+      token expiry; only REMOVAL is immediately effective (accepted gap #4; docs say "remove, don't
+      demote, to revoke now"). Attack: chain demote→re-promote to retain ownership across refreshes.
 
 ## Notes
 - Current CRUD is platform-super-user only; per-tenant authorization does not exist yet, so the

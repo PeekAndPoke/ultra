@@ -8,4 +8,7 @@ val B2bModule = module {
 
     dynamic(B2bUsersRepo::class)
     dynamic(B2bUsersRepo.Fixtures::class)
+
+    singleton(B2bMembersApiFeature::class)
+    dynamic(B2bMembersServices::class)
 }

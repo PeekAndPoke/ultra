@@ -4,6 +4,7 @@ import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import io.peekandpoke.funktor.saas.domain.OrgMember
 import io.peekandpoke.funktor.saas.domain.Organisation
 import io.peekandpoke.funktor.saas.domain.org
+import io.peekandpoke.funktor.saas.domain.softDelete
 import io.peekandpoke.funktor.saas.domain.userId
 import io.peekandpoke.funktor.saas.storage.OrgMembersStorage
 import io.peekandpoke.monko.MonkoDriver
@@ -11,6 +12,7 @@ import io.peekandpoke.monko.MonkoIndexBuilder
 import io.peekandpoke.monko.MonkoRepository
 import io.peekandpoke.monko.lang.dsl.and
 import io.peekandpoke.monko.lang.dsl.eq
+import io.peekandpoke.monko.lang.dsl.notDeleted
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Ref
 import io.peekandpoke.ultra.vault.Repository
@@ -47,10 +49,10 @@ class MonkoOrgMembersRepo(
     }
 
     override suspend fun findByUser(userId: String): List<Stored<OrgMember>> =
-        find { r -> filter(r.userId eq userId) }.toList()
+        find { r -> filter(and(r.userId eq userId, notDeleted(r.softDelete))) }.toList()
 
     override suspend fun findByOrg(org: Ref<Organisation>): List<Stored<OrgMember>> =
-        find { r -> filter(r.org eq org._id) }.toList()
+        find { r -> filter(and(r.org eq org._id, notDeleted(r.softDelete))) }.toList()
 
     override suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: String): Stored<OrgMember>? {
         val found = find { r ->
@@ -58,6 +60,7 @@ class MonkoOrgMembersRepo(
                 and(
                     r.org eq org._id,
                     r.userId eq userId,
+                    notDeleted(r.softDelete),
                 )
             )
             limit(1)

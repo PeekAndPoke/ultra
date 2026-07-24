@@ -105,7 +105,7 @@ abstract class OrgMembersStorageBaseSpec : FreeSpec() {
             members.findByUser("b2b_users/u1") shouldHaveSize 2
         }
 
-        "remove() deletes only the targeted membership" {
+        "remove() soft-deletes: excluded from reads, sibling survives, (org,userId) slot retained" {
             val (orgs, members) = setup()
             val acme = orgs.create(Organisation(slug = "acme", name = "Acme"))
             val m1 = members.add(acme, "b2b_users/u1", roles = setOf("owner"))
@@ -113,9 +113,15 @@ abstract class OrgMembersStorageBaseSpec : FreeSpec() {
 
             members.remove(m1)
 
+            // Excluded from EVERY read (findByUser/findByOrg/findByOrgAndUser apply the notDeleted filter).
             members.findByUser("b2b_users/u1") shouldHaveSize 0
+            members.findByOrgAndUser(acme.asRef, "b2b_users/u1") shouldBe null
             // The other member survives — remove targets one row, not the collection.
             members.findByOrg(acme.asRef).map { it.value().userId } shouldBe listOf("b2b_users/u2")
+            // Soft-delete (not hard): the (org,userId) row is retained as an audit record, so re-adding
+            // the SAME pair still collides with the unique index — a hard delete would free the slot.
+            // (Reactivation-on-re-add is deferred to the invite leaf.)
+            shouldThrowAny { members.add(acme, "b2b_users/u1", roles = setOf("member")) }
         }
 
         "sessionMembershipsOf maps stored rows to session memberships (orgId=_key, roles, branchIds)" {

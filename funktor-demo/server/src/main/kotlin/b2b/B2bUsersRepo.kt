@@ -94,6 +94,17 @@ class B2bUsersRepo(
                 orgMembers.add(org = globex, userId = it._id, roles = setOf("member"))
             }
         }
+
+        // acme's OWNER — exercises the owner-only ownership gating in the member-management API.
+        val ownerOrg = singleFix {
+            val acme = orgs.ensureBySlug("acme", "Acme Inc")
+            repo.insert(
+                "b2b-owner", B2bUser(name = "Owner User", email = "owner@b2b.test")
+            ).also {
+                it.createPassword()
+                orgMembers.add(org = acme, userId = it._id, roles = setOf("owner"))
+            }
+        }
     }
 
     override fun KarangoIndexBuilder<B2bUser>.buildIndexes() {

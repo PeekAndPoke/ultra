@@ -22,6 +22,15 @@ write prose here). Created 2026-07-23 per the "framework change → doc task" st
   (`Set<String>.isOrgOwner/isOrgAdmin/canManageOrgMembers`) + invariant helpers
   (`ownerIdsOf`/`wouldRemoveLastOwner`). Gate authorization via the AuthRule DSL (super-user bypass),
   not the raw predicate.
+- **Reusable soft-delete filter** (framework addition): `karango/core/.../aql/softdelete.kt` and
+  `monko/core/.../lang/dsl/softdelete.kt` add `notDeleted(entity.softDelete)` for `SoftDeletable`
+  entities — vault soft-delete is a model-level convention with NO repo auto-filtering, so reads
+  must exclude deleted rows explicitly. `OrgMember` uses it; `remove` soft-deletes (audit + recover).
+- **Member-management API pattern** (demo b2b, `B2bMembersApi`): the reference shape for tenant
+  member management — URL-org `OrgAwareParam` + `OrgAware` member param (isolation for free),
+  owner-only ownership (admins manage members, owners manage ownership), atomic last-owner via a
+  per-org lock, `(org,userId)`-immutable role edits, soft-delete removal. To be extracted to
+  `funktor/saas` when the operator surface needs it.
 
 ## Anchors
 - `funktor/saas/.../domain/OrgMember.kt`, `.../storage/OrgMembersStorage.kt`, `.../OrgMemberships.kt`

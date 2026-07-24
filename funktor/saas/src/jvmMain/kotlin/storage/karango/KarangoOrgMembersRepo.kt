@@ -4,11 +4,13 @@ import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import io.peekandpoke.funktor.saas.domain.OrgMember
 import io.peekandpoke.funktor.saas.domain.Organisation
 import io.peekandpoke.funktor.saas.domain.org
+import io.peekandpoke.funktor.saas.domain.softDelete
 import io.peekandpoke.funktor.saas.domain.userId
 import io.peekandpoke.funktor.saas.storage.OrgMembersStorage
 import io.peekandpoke.karango.aql.EQ
 import io.peekandpoke.karango.aql.FOR
 import io.peekandpoke.karango.aql.RETURN
+import io.peekandpoke.karango.aql.notDeleted
 import io.peekandpoke.karango.vault.EntityRepository
 import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
@@ -54,6 +56,7 @@ class KarangoOrgMembersRepo(
     override suspend fun findByUser(userId: String): List<Stored<OrgMember>> = find {
         FOR(repo) { member ->
             FILTER(member.userId EQ userId)
+            FILTER(notDeleted(member.softDelete))
             RETURN(member)
         }
     }.toList()
@@ -61,6 +64,7 @@ class KarangoOrgMembersRepo(
     override suspend fun findByOrg(org: Ref<Organisation>): List<Stored<OrgMember>> = find {
         FOR(repo) { member ->
             FILTER(member.org EQ org._id)
+            FILTER(notDeleted(member.softDelete))
             RETURN(member)
         }
     }.toList()
@@ -69,6 +73,7 @@ class KarangoOrgMembersRepo(
         FOR(repo) { member ->
             FILTER(member.org EQ org._id)
             FILTER(member.userId EQ userId)
+            FILTER(notDeleted(member.softDelete))
             LIMIT(1)
             RETURN(member)
         }

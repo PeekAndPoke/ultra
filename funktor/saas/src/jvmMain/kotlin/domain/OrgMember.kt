@@ -4,6 +4,8 @@ import io.peekandpoke.funktor.saas.isolation.OrgAware
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.vault.Ref
 import io.peekandpoke.ultra.vault.Vault
+import io.peekandpoke.ultra.vault.addons.SoftDelete
+import io.peekandpoke.ultra.vault.addons.SoftDeletable
 import io.peekandpoke.ultra.vault.hooks.Timestamped
 
 /**
@@ -18,6 +20,11 @@ import io.peekandpoke.ultra.vault.hooks.Timestamped
  * [OrgAware]: a membership belongs to exactly one organisation, so member-management routes
  * (`/orgs/{org}/members/{member}`) inherit org-isolation for free — `OrgIsolationGuard` checks that
  * the resolved member's [org] matches the request's `{org}`.
+ *
+ * [SoftDeletable]: removing a member soft-deletes the row (retains an audit trail of who was a
+ * member and when they were removed; recoverable). `OrgMembersStorage` reads exclude soft-deleted
+ * rows explicitly (via the `notDeleted` filter), so a removed member vanishes from lists, the JWT,
+ * and the last-owner count.
  */
 @Vault
 data class OrgMember(
@@ -26,9 +33,11 @@ data class OrgMember(
     val userId: String,
     val roles: Set<String> = emptySet(),
     val branchIds: Set<String> = emptySet(),
+    override val softDelete: SoftDelete? = null,
     override val createdAt: MpInstant = MpInstant.Epoch,
     override val updatedAt: MpInstant = createdAt,
-) : Timestamped, OrgAware {
+) : Timestamped, OrgAware, SoftDeletable.Mutable<OrgMember> {
     override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
     override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+    override fun withSoftDelete(softDelete: SoftDelete?) = copy(softDelete = softDelete)
 }
