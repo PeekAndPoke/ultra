@@ -130,7 +130,10 @@ session-org-implicit. With `OrgMember` being `OrgAware`, the guard also auto-che
 ### Increment 2a design (decided 2026-07-23) — b2b member API (demo-first)
 
 - **Placement (user):** build in the demo b2b-app, composing core `OrgMembersStorage` + `OrgRole`
-  invariants with `B2bUsersRepo` for display; extract the HTTP shape to `funktor/saas` later.
+  invariants with `B2bUsersRepo` for display. UPDATE 2026-07-24: member administration STAYS in the
+  b2b leaf — NOT extracted to `funktor/saas`. Per the layer-placement principle, only cross-cutting
+  code (applies to all three apps ops/b2b/b2b2c) belongs in framework; the primitives it composes
+  already do. Ops builds its own member view in the ops leaf if/when needed.
 - **Endpoints** (URL-org, `OrgAwareParam`), group `B2bMembersApi(authFloor = { authenticated() })`:
   `GET /api/b2b/orgs/{org}/members` (list — any member; the guard binds the caller's session org),
   `PUT .../{member}/roles` + `DELETE .../{member}` (owner/admin via `authorize { forAny {

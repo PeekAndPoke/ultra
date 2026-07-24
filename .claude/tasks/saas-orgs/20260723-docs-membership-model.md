@@ -29,8 +29,11 @@ write prose here). Created 2026-07-23 per the "framework change → doc task" st
 - **Member-management API pattern** (demo b2b, `B2bMembersApi`): the reference shape for tenant
   member management — URL-org `OrgAwareParam` + `OrgAware` member param (isolation for free),
   owner-only ownership (admins manage members, owners manage ownership), atomic last-owner via a
-  per-org lock, `(org,userId)`-immutable role edits, soft-delete removal. To be extracted to
-  `funktor/saas` when the operator surface needs it.
+  per-org lock, `(org,userId)`-immutable role edits, soft-delete removal. STAYS in the b2b demo app
+  (member administration is pure b2b) — NOT promoted to `funktor/saas`. Per the layer-placement
+  principle (2026-07-24): only cross-cutting pieces that apply to all three apps (ops/b2b/b2b2c) go
+  in framework; the shared primitives it composes (`OrgMember`/storage, isolation, `OrgRole`) already
+  do. If ops later needs a member view it builds its own in the ops leaf, reusing those primitives.
 
 ## Anchors
 - `funktor/saas/.../domain/OrgMember.kt`, `.../storage/OrgMembersStorage.kt`, `.../OrgMemberships.kt`
