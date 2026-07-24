@@ -118,10 +118,34 @@ abstract class OrgMembersStorageBaseSpec : FreeSpec() {
             members.findByOrgAndUser(acme.asRef, "b2b_users/u1") shouldBe null
             // The other member survives — remove targets one row, not the collection.
             members.findByOrg(acme.asRef).map { it.value().userId } shouldBe listOf("b2b_users/u2")
-            // Soft-delete (not hard): the (org,userId) row is retained as an audit record, so re-adding
-            // the SAME pair still collides with the unique index — a hard delete would free the slot.
-            // (Reactivation-on-re-add is deferred to the invite leaf.)
+            // Soft-delete (not hard): the (org,userId) row is retained as an audit record, so a raw
+            // add() of the SAME pair still collides with the unique index (a hard delete would free the
+            // slot). Reactivation is done at the LEAF via findByOrgAndUserIncludingDeleted + save(), NOT
+            // by add() — see the findByOrgAndUserIncludingDeleted test below.
             shouldThrowAny { members.add(acme, "b2b_users/u1", roles = setOf("member")) }
+        }
+
+        "findByOrgAndUserIncludingDeleted sees a soft-deleted row that findByOrgAndUser hides" {
+            val (orgs, members) = setup()
+            val acme = orgs.create(Organisation(slug = "acme", name = "Acme"))
+            val m = members.add(acme, "b2b_users/u1", roles = setOf("member"))
+
+            // Active: both reads return the row.
+            members.findByOrgAndUser(acme.asRef, "b2b_users/u1").shouldNotBeNull()
+            members.findByOrgAndUserIncludingDeleted(acme.asRef, "b2b_users/u1").shouldNotBeNull()
+
+            members.remove(m) // soft-delete
+
+            // The notDeleted read hides it; the including-deleted read still returns the retained slot
+            // (carrying the soft-delete marker) — this is what the leaf reactivation path relies on.
+            members.findByOrgAndUser(acme.asRef, "b2b_users/u1") shouldBe null
+            members.findByOrgAndUserIncludingDeleted(acme.asRef, "b2b_users/u1").shouldNotBeNull().value().let {
+                it.userId shouldBe "b2b_users/u1"
+                it.softDelete.shouldNotBeNull()
+            }
+
+            // An absent pair is null on the including-deleted read too.
+            members.findByOrgAndUserIncludingDeleted(acme.asRef, "b2b_users/nope") shouldBe null
         }
 
         "sessionMembershipsOf maps stored rows to session memberships (orgId=_key, roles, branchIds)" {

@@ -67,4 +67,13 @@ class MonkoOrgMembersRepo(
         }
         return found.firstOrNull()
     }
+
+    override suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: String): Stored<OrgMember>? {
+        // Deliberately NO notDeleted filter — the reactivation path must see the retained slot.
+        val found = find { r ->
+            filter(and(r.org eq org._id, r.userId eq userId))
+            limit(1)
+        }
+        return found.firstOrNull()
+    }
 }

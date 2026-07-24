@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.demo.server.b2b
 
 import io.peekandpoke.funktor.core.user
 import io.peekandpoke.funktor.demo.common.B2bUserModel
+import io.peekandpoke.funktor.demo.common.b2b.AddMemberRequest
 import io.peekandpoke.funktor.demo.common.b2b.B2bMembersApiClient
 import io.peekandpoke.funktor.demo.common.b2b.OrgMemberModel
 import io.peekandpoke.funktor.rest.ApiRoutes
@@ -58,6 +59,7 @@ class B2bMembersApi(
         data object NotFound : Outcome    // target is not an active b2b member of the org
         data object OwnerOnly : Outcome   // ownership-touching op attempted by a non-owner
         data object LastOwner : Outcome   // would leave the org with no owner
+        data object AlreadyMember : Outcome // add target is already an active member of the org
     }
 
     val list = B2bMembersApiClient.List.mount(OrgParam::class) {
@@ -67,6 +69,23 @@ class B2bMembersApi(
             funcName = "list"
         }.handle { params ->
             ApiResponse.ok(loadMembers(params.org))
+        }
+    }
+
+    val add = B2bMembersApiClient.Add.mount(OrgParam::class) {
+        authorize {
+            forAnyRole(OrgRole.OWNER, OrgRole.ADMIN)
+        }.docs {
+            name = "Add organisation member"
+        }.codeGen {
+            funcName = "add"
+        }.handle { params, body ->
+            val callerIsOwner = user.permissions.roles.isOrgOwner
+            respond(
+                withOrgLock(params.org) {
+                    addMember(params.org, body, callerIsOwner)
+                }
+            )
         }
     }
 
@@ -143,6 +162,41 @@ class B2bMembersApi(
     private suspend fun b2bUserOf(userId: String) =
         services.b2bUsers.findById(userId)?.takeIf { it._id == userId }
 
+    /**
+     * Adds an EXISTING b2b user (resolved by [AddMemberRequest.email]) to [org]. b2b-scoped: an email
+     * that does not resolve to a b2b user is [Outcome.NotFound], symmetric with the rest of the
+     * surface. Reactivates a soft-deleted `(org, userId)` slot rather than colliding on the unique
+     * index. Called INSIDE the per-org lock so the resolve-then-write is atomic.
+     *
+     * NOTE (v1): reactivation is a DESTRUCTIVE overwrite — it clears the retained `SoftDelete` and the
+     * prior roles/branchIds, so the "who-was-removed-and-when" record is lost, and `createdAt` is kept
+     * (a re-added member's "member since" spans the removal gap). Acceptable at demo scope; an
+     * append-only membership-event log is the fuller answer if audit/tenure ever matters.
+     */
+    private suspend fun addMember(org: Stored<Organisation>, body: AddMemberRequest, callerIsOwner: Boolean): Outcome {
+        val u = services.b2bUsers.findByEmail(body.email.trim()) ?: return Outcome.NotFound
+        // Owner-only ownership — granting OWNER on add requires the caller to be an owner.
+        if (body.roles.isOrgOwner && !callerIsOwner) return Outcome.OwnerOnly
+
+        val existing = services.orgMembers.findByOrgAndUserIncludingDeleted(org.asRef, u._id)
+        return when {
+            existing == null ->
+                Outcome.Ok(services.orgMembers.add(org = org, userId = u._id, roles = body.roles))
+
+            existing.value().softDelete == null ->
+                Outcome.AlreadyMember
+
+            else ->
+                // Reactivate the retained slot: clear the soft-delete and apply the requested roles
+                // (a re-add behaves like a fresh add — branchIds reset to empty).
+                Outcome.Ok(
+                    services.orgMembers.save(
+                        existing.modify { it.copy(roles = body.roles, branchIds = emptySet(), softDelete = null) }
+                    )
+                )
+        }
+    }
+
     /** Serializes all owner-affecting mutations for one org so the check-then-act is atomic. */
     private suspend fun withOrgLock(org: Stored<Organisation>, block: suspend () -> Outcome): Outcome? =
         services.locks.tryToLock(key = "b2b-org-members-${org._key}", timeout = 5.seconds, handler = block)
@@ -155,6 +209,9 @@ class B2bMembersApi(
 
         is Outcome.LastOwner -> ApiResponse.badRequest<OrgMemberModel>()
             .withError("an organisation must keep at least one owner")
+
+        is Outcome.AlreadyMember -> ApiResponse.conflict<OrgMemberModel>()
+            .withError("this user is already a member of the organisation")
 
         is Outcome.Ok -> ApiResponse.ok(memberModel(outcome.member))
     }

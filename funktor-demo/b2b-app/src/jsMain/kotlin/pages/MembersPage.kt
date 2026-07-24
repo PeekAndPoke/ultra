@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.demo.b2bapp.pages
 
 import io.peekandpoke.funktor.demo.b2bapp.Apis
 import io.peekandpoke.funktor.demo.b2bapp.State
+import io.peekandpoke.funktor.demo.common.b2b.AddMemberRequest
 import io.peekandpoke.funktor.demo.common.b2b.ChangeMemberRolesRequest
 import io.peekandpoke.funktor.demo.common.b2b.OrgMemberModel
 import io.peekandpoke.funktor.inspect.renderDefault
@@ -88,6 +89,14 @@ class MembersPage(ctx: NoProps) : PureComponent(ctx) {
             when (val org = orgKey) {
                 null -> ui.warning.message { +"No organisation is selected for this session." }
                 else -> ui.info.message { +"Organisation: $org" }
+            }
+
+            if (callerCanManage && orgKey != null) {
+                ui.green.button {
+                    onClick { openAddModal() }
+                    icon.user_plus()
+                    +"Add member"
+                }
             }
         }
 
@@ -184,6 +193,26 @@ class MembersPage(ctx: NoProps) : PureComponent(ctx) {
     }
 
     //  ACTIONS  //////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private fun openAddModal() {
+        modals.show { handle ->
+            AddMemberModal(
+                handle = handle,
+                editableRoles = editableRoles,
+                callerIsOwner = callerIsOwner,
+                onAdd = { email, roles -> addMember(email, roles) },
+            )
+        }
+    }
+
+    private fun addMember(email: String, roles: Set<String>) {
+        val org = orgKey ?: return
+        launch {
+            val response = Apis.members.add(org, AddMemberRequest(email = email, roles = roles)).first()
+
+            handleMutationResult(response, "Added $email")
+        }
+    }
 
     private fun openRolesModal(member: OrgMemberModel, isLastOwner: Boolean) {
         modals.show { handle ->

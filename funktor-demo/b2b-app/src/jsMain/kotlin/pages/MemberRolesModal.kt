@@ -17,7 +17,6 @@ import kotlinx.html.InputType
 import kotlinx.html.Tag
 import kotlinx.html.input
 import kotlinx.html.label
-import org.w3c.dom.HTMLInputElement
 
 /**
  * A modal for editing an [OrgMemberModel]'s roles. Only the [editableRoles] this demo knows about are
@@ -117,31 +116,47 @@ class MemberRolesModal(ctx: Ctx<Props>) : FadingModal<MemberRolesModal.Props>(ct
         // member is the org's last owner (can't be demoted) — mirrors the server's owner gates.
         val ownerLocked = isOwnerRole && (!props.callerIsOwner || props.isLastOwner)
 
-        ui.field {
-            ui.given(ownerLocked) { disabled }.checkbox {
-                input {
-                    type = InputType.checkBox
-                    checked = role in draft
+        roleField(
+            role = role,
+            checked = role in draft,
+            locked = ownerLocked,
+            lockedHint = if (props.isLastOwner) "the only owner" else "owner-only",
+            onToggle = { draft = if (role in draft) draft - role else draft + role },
+        )
+    }
+}
 
-                    if (ownerLocked) {
-                        disabled = true
-                    } else {
-                        onChange { evt ->
-                            val on = (evt.target as HTMLInputElement).checked
-                            draft = if (on) draft + role else draft - role
-                        }
-                    }
+/**
+ * A single role checkbox row — shared by the add + edit member modals (same app leaf). When [locked]
+ * the checkbox is disabled (and, if [lockedHint] is non-null, "(hint)" is appended to the label).
+ * When not locked, BOTH the box and the text label toggle via [onToggle] — Semantic UI's native input
+ * overlays only the ~17px box glyph, so the text label needs its own handler.
+ */
+internal fun FlowContent.roleField(
+    role: String,
+    checked: Boolean,
+    locked: Boolean,
+    lockedHint: String?,
+    onToggle: () -> Unit,
+) {
+    ui.field {
+        ui.given(locked) { disabled }.checkbox {
+            input {
+                type = InputType.checkBox
+                this.checked = checked
+                if (locked) {
+                    disabled = true
+                } else {
+                    onChange { onToggle() }
                 }
-                label {
-                    // Semantic UI's native input only overlays the ~17px box glyph, so make the text
-                    // label toggle the role too (the app's checkbox idiom) — except when owner-locked.
-                    if (!ownerLocked) {
-                        onClick { draft = if (role in draft) draft - role else draft + role }
-                    }
-                    +roleDisplayName(role)
-                    if (ownerLocked) {
-                        +(if (props.isLastOwner) " (the only owner)" else " (owner-only)")
-                    }
+            }
+            label {
+                if (!locked) {
+                    onClick { onToggle() }
+                }
+                +roleDisplayName(role)
+                if (locked && lockedHint != null) {
+                    +" ($lockedHint)"
                 }
             }
         }

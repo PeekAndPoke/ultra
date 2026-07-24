@@ -22,3 +22,10 @@ data class OrgMemberModel(
 data class ChangeMemberRolesRequest(
     val roles: Set<String>,
 )
+
+/** Body for adding an EXISTING b2b user (looked up by email) to an organisation with the given roles. */
+@Serializable
+data class AddMemberRequest(
+    val email: String,
+    val roles: Set<String>,
+)

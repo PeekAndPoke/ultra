@@ -82,6 +82,33 @@
       pre-existing kraft behavior, unrelated to 2b's mutations (the confirm-remove flow gates on `ifOk`,
       so harmless there). Confirm no confirm-flow anywhere treats a trailing Cancel as a meaningful signal.
 
+### Increment "Add member" (b2b add-by-email + reactivation) — from the 2026-07-24 review
+
+- [ ] **Cross-org add**: a hostile b2b admin of org A calls `POST /orgs/{B}/members` (direct API /
+      tampered client) — must 404 via the `OrgAwareParam` guard (caller-binding on `{org}`). e2e covers
+      `single@`→globex; also probe a forged `{org}` not in `accessibleOrgs` and the super-user edge.
+- [ ] **b2b-user existence enumeration oracle**: add-by-email returns 404 (unknown/non-b2b) vs 409/200
+      (real b2b user), letting a trusted org admin probe which emails are registered b2b users
+      REALM-WIDE (not just their org). Inherent to add-by-email; decide whether a generic "cannot add"
+      response is warranted (harms UX) or accept.
+- [ ] **Reactivation hijack**: attempt to reactivate/hijack a soft-deleted row of a DIFFERENT org, or
+      reassign `org`/`userId` via the add path. (Mitigated: `findByOrgAndUserIncludingDeleted` scoped by
+      org+userId; the reactivate `copy()` touches only roles/branchIds/softDelete; `(org,userId)`
+      immutable. Attack the mitigation: any add/save path that bypasses the org+userId scoping.)
+- [ ] **Ownership laundering via remove→re-add**: as an admin, try to gain owner by removing an owner
+      then re-adding them / adding self as owner. (Mitigated: removing an owner requires owner, and
+      granting OWNER on add requires owner → a soft-deleted-owner slot can only exist if an owner made
+      it. Attack: any path to a soft-deleted owner slot creatable by a non-owner.)
+- [ ] **Add-role injection**: add a member with arbitrary/unknown role strings (no server allowlist) —
+      confirm no privileged role (owner is gated; `isSuperUser` is not derivable from OrgMember roles)
+      can be smuggled that another surface honors. (Shared with `changeRoles`; role-catalog validation
+      deferred, backlog §4.)
+- [ ] **Unsolicited membership**: add any existing b2b user to your org with no invite/consent step —
+      confirm it grants the admin nothing over the target and cannot exfiltrate other orgs' data
+      (invite/accept consent flow is deferred to the invite leaf).
+- [ ] **Add double-submit / TOCTOU**: two concurrent adds of the same `(org,userId)` — confirm the
+      per-org lock + unique index prevent a double-insert / inconsistent reactivate (409 or single row).
+
 ## Notes
 - Current CRUD is platform-super-user only; per-tenant authorization does not exist yet, so the
   cross-org isolation items are pre-registered for after O2/O3 add memberships + org-scoped rules.

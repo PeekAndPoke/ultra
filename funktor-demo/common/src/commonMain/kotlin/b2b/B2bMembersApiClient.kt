@@ -4,6 +4,7 @@ import io.peekandpoke.ultra.remote.ApiClient
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.TypedApiEndpoint.Delete
 import io.peekandpoke.ultra.remote.TypedApiEndpoint.Get
+import io.peekandpoke.ultra.remote.TypedApiEndpoint.Post
 import io.peekandpoke.ultra.remote.TypedApiEndpoint.Put
 import io.peekandpoke.ultra.remote.api
 import io.peekandpoke.ultra.remote.apiList
@@ -25,6 +26,12 @@ class B2bMembersApiClient(config: Config) : ApiClient(config) {
             response = OrgMemberModel.serializer().apiList(),
         )
 
+        val Add = Post(
+            uri = base,
+            body = AddMemberRequest.serializer(),
+            response = OrgMemberModel.serializer().api(),
+        )
+
         val ChangeRoles = Put(
             uri = "$base/{member}/roles",
             body = ChangeMemberRolesRequest.serializer(),
@@ -39,6 +46,10 @@ class B2bMembersApiClient(config: Config) : ApiClient(config) {
 
     fun list(org: String): Flow<ApiResponse<List<OrgMemberModel>>> = call(
         List("org" to org)
+    )
+
+    fun add(org: String, request: AddMemberRequest): Flow<ApiResponse<OrgMemberModel>> = call(
+        Add("org" to org, body = request)
     )
 
     fun changeRoles(org: String, member: String, request: ChangeMemberRolesRequest): Flow<ApiResponse<OrgMemberModel>> = call(

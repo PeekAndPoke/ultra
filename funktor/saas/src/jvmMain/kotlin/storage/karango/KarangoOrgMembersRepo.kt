@@ -78,4 +78,15 @@ class KarangoOrgMembersRepo(
             RETURN(member)
         }
     }
+
+    override suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: String): Stored<OrgMember>? =
+        findFirst {
+            // Deliberately NO notDeleted filter — the reactivation path must see the retained slot.
+            FOR(repo) { member ->
+                FILTER(member.org EQ org._id)
+                FILTER(member.userId EQ userId)
+                LIMIT(1)
+                RETURN(member)
+            }
+        }
 }

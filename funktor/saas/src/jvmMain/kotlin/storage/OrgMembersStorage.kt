@@ -22,6 +22,9 @@ interface OrgMembersStorage {
         override suspend fun findByUser(userId: String): List<Stored<OrgMember>> = emptyList()
         override suspend fun findByOrg(org: Ref<Organisation>): List<Stored<OrgMember>> = emptyList()
         override suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: String): Stored<OrgMember>? = null
+        override suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: String): Stored<OrgMember>? =
+            null
+
         override suspend fun add(
             org: Stored<Organisation>,
             userId: String,
@@ -43,12 +46,16 @@ interface OrgMembersStorage {
             suspend fun findByUser(userId: String): List<Stored<OrgMember>>
             suspend fun findByOrg(org: Ref<Organisation>): List<Stored<OrgMember>>
             suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: String): Stored<OrgMember>?
+            suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: String): Stored<OrgMember>?
         }
 
         override suspend fun findByUser(userId: String) = repo.findByUser(userId)
         override suspend fun findByOrg(org: Ref<Organisation>) = repo.findByOrg(org)
         override suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: String) =
             repo.findByOrgAndUser(org, userId)
+
+        override suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: String) =
+            repo.findByOrgAndUserIncludingDeleted(org, userId)
 
         override suspend fun save(member: Storable<OrgMember>) = repo.save(member)
         override suspend fun clear() { repo.removeAll() }
@@ -77,7 +84,22 @@ interface OrgMembersStorage {
     /** The single membership of [userId] in [org], or `null`. */
     suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: String): Stored<OrgMember>?
 
-    /** Adds a membership row for [userId] in [org] with the given [roles]/[branchIds]. */
+    /**
+     * The single membership of [userId] in [org] INCLUDING a soft-deleted one, or `null`. Unlike
+     * [findByOrgAndUser] this does NOT hide soft-deleted rows — reactivation/audit paths need to see
+     * the retained `(org, userId)` slot that the unique index still holds.
+     */
+    suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: String): Stored<OrgMember>?
+
+    /**
+     * Adds a NEW membership row for [userId] in [org] with the given [roles]/[branchIds].
+     *
+     * COLLISION: this throws (the unique `(org, userId)` index) when a row for the pair already
+     * exists — INCLUDING a soft-deleted one (the retained slot from a prior [remove]). To re-add a
+     * previously-removed member, look the slot up with [findByOrgAndUserIncludingDeleted] and
+     * REACTIVATE it via [save] (clear its `softDelete`); do NOT call [add] blindly on a pair that may
+     * have been removed, or you get an opaque unique-index error instead of a clean reactivate.
+     */
     suspend fun add(
         org: Stored<Organisation>,
         userId: String,
