@@ -8,6 +8,7 @@ import io.peekandpoke.karango.config.ArangoDbConfig
 import io.peekandpoke.karango.slumber.KarangoCodec
 import io.peekandpoke.karango.testdomain.TestPersonsRepository
 import io.peekandpoke.karango.testdomain.TestTimestampedRepository
+import io.peekandpoke.karango.testdomain.TestVcRecordsRepository
 import io.peekandpoke.karango.toArangoDb
 import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.ultra.common.surround
@@ -56,6 +57,7 @@ private val dbAndDriver = createDatabase { driver ->
     listOf(
         TestPersonsRepository(driver = driver),
         TestTimestampedRepository(driver = driver, timestamped = TimestampedHook(lazy { kronos })),
+        TestVcRecordsRepository(driver = driver),
     )
 }
 

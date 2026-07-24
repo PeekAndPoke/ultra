@@ -6,19 +6,24 @@ unforeseen complications before committing to the rest.
 **Enabled by:** `20260724-slumber-value-class-support.md` (DONE — value classes serialize like kotlinx).
 **User decision:** use SPECIFIC id classes (`RealmId`, `UserId`, `OrgId`, …), not a generic `Id<T>`.
 
-## ⚠️ Prerequisite surfaced by the RealmId pilot — KSP value-class support (both backends)
-Every Tier-1 id is a STORED **and QUERIED** entity field, so it needs the Karango + Monko KSP to
-generate type-safe query-path accessors for value-class properties. Concretely for RealmId:
-`AuthRecord.realm` is indexed (`field { realm }`) and filtered (`FILTER(r.realm EQ realm)` /
-`r.realm eq realm`) in `Karango/MonkoAuthRecordsRepo` via the KSP-generated `realm` accessor. Changing
-`realm: String` → `RealmId` on the entity will not compile / query until KSP handles it.
+## ✅ Prerequisite RESOLVED — and the "KSP-first" premise was falsified (verified 2026-07-24)
+The plan assumed the Karango + Monko KSP had to gain value-class support before any stored+queried id
+could migrate. **Verification-first probes proved that premise wrong:**
 
-**→ HARD DEPENDENCY: `20260724-karango-ksp-value-class.md` + `20260724-monko-ksp-value-class.md` must
-land FIRST, before the STORED-field part of ANY id migration.**
+- **Neither KSP needs a change.** Both already render a value-class property with its value-class type
+  (`append<RealmId, RealmId>("realm")`) — the type-safe accessor we want. (`entity.realm EQ RealmId(...)`
+  type-checks; a bare `String` is rejected.)
+- **Karango works fully as-is** — the `EQ` bind-var value is slumbered at execution, so `RealmId("b2b")`
+  → `"b2b"` matches the stored scalar. Zero production change. (`20260724-karango-ksp-value-class.md`, DONE)
+- **Monko needed only a small RUNTIME DSL fix** (filter values bypass slumber and the driver can't
+  encode a value class): `unwrapValueClass` in `monko/core/lang/dsl/`, wired into every comparison
+  operator. DONE. (`20260724-monko-ksp-value-class.md`)
 
-**DECIDED (user 2026-07-24): KSP-first.** Do BOTH KSP tasks (in lockstep — storage is both-backend),
-each with full round-trip tests, THEN migrate ids end-to-end (params + entities). The KSP work is
-clear in scope, purely mechanical, concretely defined and testable — a good first unit.
+**→ The stored+queried id migration is NO LONGER BLOCKED.** For `RealmId` concretely: `AuthRecord.realm`
+(`field { realm }`, `FILTER(r.realm EQ realm)` / `r.realm eq realm`) will compile and query correctly
+once the field type flips — Karango via slumber, Monko via the DSL unwrap. Both backends have
+regression tests (codegen golden + Karango live round-trip; Monko unit at the driver-encoding boundary).
+The live-Mongo round trip is the funktor/auth both-backend e2e that this very migration exercises.
 
 ## Placement (user 2026-07-24: co-locate with the entity's home WHERE POSSIBLE)
 Rule: put each id in the SAME module as the entity it identifies; when a lower module also needs it
@@ -38,13 +43,24 @@ Rule: put each id in the SAME module as the entity it identifies; when a lower m
 realm key is a non-empty registered identifier; no canonicalization). NO stdlib concerns.
 
 Migration surface (from the survey):
-- **Non-stored (safe now):** `AuthSystem.getRealm/signIn/signUp/selectOrg/…(realm)`,
-  `AuthRealm`, `SessionStore.listForUser/revokeAllForUser(realm, …)`, `AuthApiClient(realm)`,
-  `AuthApiFeature.RealmParam`, demo `REALM` consts (`B2bRealm.REALM` etc. → `RealmId("b2b")`).
-- **Stored + queried (needs KSP):** `AuthRecord.realm` (all 6 subtypes) + the indexes/filters in
-  `Karango/MonkoAuthRecordsRepo` + the KSP-generated `realm` accessor. Also `AuthRecordStorage`
-  signatures (`findByToken(realm, type, token)`, `findAllByOwner(realm, type, owner)` — the swap-hazard
-  functions this whole effort targets).
+- **Thread `RealmId` through EVERYWHERE `realm: String` flows (user directive 2026-07-24).** Not just
+  the entity — every signature. E.g. `AuthSystem.getRealm(realm: String): AuthRealm<*>` →
+  `getRealm(realm: RealmId): AuthRealm<*>` **and ALL its siblings** (`signIn/signUp/selectOrg/…`),
+  `AuthRealm`, `SessionStore.listForUser/revokeAllForUser(realm, …)`, `AuthApiClient(realm)`, demo
+  `REALM` consts (`B2bRealm.REALM` etc. → `RealmId("b2b")`).
+- **API boundary — generic value-class URI-param converter (user directive 2026-07-24).**
+  `AuthApiFeature.RealmParam(val realm: String)` → `RealmParam(val realm: RealmId)`. The incoming
+  param converters must convert a URI param `String` → the value class (and back for outgoing). Build
+  **ONE generic value-class converter, both directions** (String↔value-class over a String backing),
+  not a per-id converter. Find the converter registry (funktor/ktorfx REST param binding) and add the
+  generic value-class case. This is the reusable seam that makes every subsequent id (`UserId`/`OrgId`/
+  `Email`/`Slug`) work at the API boundary for free. NOTE: a converter constructs the value class from
+  raw input → put hard invariants in `init {}` (runs on construction); the converter is the boundary
+  where `of()`-style normalization belongs (see the cross-cutting caveat below).
+- **Stored + queried (NOT blocked anymore — see the resolved prerequisite above):** `AuthRecord.realm`
+  (all 6 subtypes) + the indexes/filters in `Karango/MonkoAuthRecordsRepo` (`FILTER(r.realm EQ realm)`
+  / `r.realm eq realm`). Also `AuthRecordStorage` signatures (`findByToken(realm, type, token)`,
+  `findAllByOwner(realm, type, owner)` — the swap-hazard functions this whole effort targets).
 
 Test evidence:
 - [ ] Existing auth e2e green on BOTH backends (`B2bAuthFlowTest`, `B2b2cAuthFlowTest`, session/reset

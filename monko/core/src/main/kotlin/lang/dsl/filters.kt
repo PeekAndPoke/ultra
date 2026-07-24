@@ -5,40 +5,52 @@ import io.peekandpoke.monko.lang.MongoPropertyPath
 import org.bson.conversions.Bson
 
 // Comparison operators ////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Every value handed to Filters is passed through unwrapValueClass so a @JvmInline value class id
+// (e.g. RealmId) is reduced to its underlying scalar — the shape it is stored as. Filter values do not
+// go through slumber, so without this the driver's codec registry cannot encode them. See value_class.kt.
 
 /** Matches documents where the field equals the given [value]. */
 infix fun <T> MongoPropertyPath<*, T>.eq(value: T): Bson =
-    Filters.eq(toFieldPath(), value)
+    Filters.eq(toFieldPath(), unwrapValueClass(value))
 
 /** Matches documents where the field does not equal the given [value]. */
 infix fun <T> MongoPropertyPath<*, T>.ne(value: T): Bson =
-    Filters.ne(toFieldPath(), value)
+    Filters.ne(toFieldPath(), unwrapValueClass(value))
 
 /** Matches documents where the field is greater than the given [value]. */
 infix fun <T : Comparable<T>> MongoPropertyPath<*, T>.gt(value: T): Bson =
-    Filters.gt(toFieldPath(), value)
+    Filters.gt(toFieldPath(), unwrapOrderedValue(value))
 
 /** Matches documents where the field is greater than or equal to the given [value]. */
 infix fun <T : Comparable<T>> MongoPropertyPath<*, T>.gte(value: T): Bson =
-    Filters.gte(toFieldPath(), value)
+    Filters.gte(toFieldPath(), unwrapOrderedValue(value))
 
 /** Matches documents where the field is less than the given [value]. */
 infix fun <T : Comparable<T>> MongoPropertyPath<*, T>.lt(value: T): Bson =
-    Filters.lt(toFieldPath(), value)
+    Filters.lt(toFieldPath(), unwrapOrderedValue(value))
 
 /** Matches documents where the field is less than or equal to the given [value]. */
 infix fun <T : Comparable<T>> MongoPropertyPath<*, T>.lte(value: T): Bson =
-    Filters.lte(toFieldPath(), value)
+    Filters.lte(toFieldPath(), unwrapOrderedValue(value))
+
+/**
+ * [unwrapValueClass] for the ordered comparison operators, whose driver overloads require a NON-NULL
+ * value. A non-null comparable value only unwraps to null in the degenerate case of a value class
+ * wrapping a null underlying — which is not a meaningful ordering key, so we reject it loudly.
+ */
+private fun unwrapOrderedValue(value: Comparable<*>): Any =
+    requireNotNull(unwrapValueClass(value)) { "Ordered comparison value must not unwrap to null" }
 
 // Collection membership operators /////////////////////////////////////////////////////////////////////////////////
 
 /** Matches documents where the field's value is in the given [values]. */
 infix fun <T> MongoPropertyPath<*, T>.isIn(values: Collection<T>): Bson =
-    Filters.`in`(toFieldPath(), values)
+    Filters.`in`(toFieldPath(), values.map { unwrapValueClass(it) })
 
 /** Matches documents where the field's value is not in the given [values]. */
 infix fun <T> MongoPropertyPath<*, T>.nin(values: Collection<T>): Bson =
-    Filters.nin(toFieldPath(), values)
+    Filters.nin(toFieldPath(), values.map { unwrapValueClass(it) })
 
 // String operators ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -68,7 +80,7 @@ fun MongoPropertyPath<*, *>.size(size: Int): Bson =
 
 /** Matches documents where the array field contains all of the given [values]. */
 infix fun <T> MongoPropertyPath<*, out Collection<T>>.all(values: Collection<T>): Bson =
-    Filters.all(toFieldPath(), values)
+    Filters.all(toFieldPath(), values.map { unwrapValueClass(it) })
 
 // Logical combinators /////////////////////////////////////////////////////////////////////////////////////////////
 
