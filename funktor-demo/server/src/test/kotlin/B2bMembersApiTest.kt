@@ -214,7 +214,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                 }
             }
 
-            "an admin adds a new b2b member (200), re-adding is 409, and a removed member reactivates" {
+            "an admin adds a new b2b member (200, email canonicalized), re-adding is 409, and a removed member reactivates" {
                 val acme = org("acme")
                 val noorgId = b2bUsers.findByEmail("noorg@b2b.test")!!._id
 
@@ -229,9 +229,11 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     }
 
                     authenticate(token) {
+                        // Mixed case + whitespace on input — the server canonicalizes (trim+lowercase) to
+                        // match the stored (lowercased) email, so this resolves noorg@b2b.test.
                         add(
                             B2bMembersApi.OrgParam(org = acme),
-                            AddMemberRequest(email = "noorg@b2b.test", roles = setOf("member")),
+                            AddMemberRequest(email = "  NoOrg@B2B.test  ", roles = setOf("member")),
                         ) {
                             status shouldBe HttpStatusCode.OK
                             apiResponseData<OrgMemberModel>()!!.let {

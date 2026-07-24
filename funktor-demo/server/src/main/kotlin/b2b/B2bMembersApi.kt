@@ -174,7 +174,9 @@ class B2bMembersApi(
      * append-only membership-event log is the fuller answer if audit/tenure ever matters.
      */
     private suspend fun addMember(org: Stored<Organisation>, body: AddMemberRequest, callerIsOwner: Boolean): Outcome {
-        val u = services.b2bUsers.findByEmail(body.email.trim()) ?: return Outcome.NotFound
+        // Canonicalize to match how emails are STORED (signup lowercases via CreateUserForSignupParams)
+        // — findByEmail is a case-sensitive exact match, so a raw mixed-case input would miss.
+        val u = services.b2bUsers.findByEmail(body.email.trim().lowercase()) ?: return Outcome.NotFound
         // Owner-only ownership — granting OWNER on add requires the caller to be an owner.
         if (body.roles.isOrgOwner && !callerIsOwner) return Outcome.OwnerOnly
 
