@@ -13,7 +13,8 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class OrgMembership(
-    val orgId: String,
+    /** The organisation's full Vault `_id` — see [OrgId]. */
+    val orgId: OrgId,
     val branchIds: Set<String> = emptySet(),
     val roles: Set<String> = emptySet(),
 )

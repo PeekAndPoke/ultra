@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.auth.model
 
+import io.peekandpoke.ultra.security.user.OrgId
 import kotlinx.serialization.Serializable
 
 /**
@@ -9,5 +10,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AuthSelectOrgRequest(
     val selectionToken: String,
-    val orgId: String,
+    /** The chosen organisation's full Vault `_id` — as handed out by `AuthOrgRef.id`. */
+    val orgId: OrgId,
 )

@@ -69,8 +69,8 @@ class UserPermissionsSpec : FreeSpec() {
             "must work for all other rights" {
 
                 val first = UserPermissions(
-                    org = "o1",
-                    accessibleOrgs = setOf("o1"),
+                    org = orgId("o1"),
+                    accessibleOrgs = setOf(orgId("o1")),
                     branches = setOf("b1"),
                     groups = setOf("g1"),
                     roles = setOf("r1"),
@@ -78,8 +78,8 @@ class UserPermissionsSpec : FreeSpec() {
                 )
 
                 val second = UserPermissions(
-                    org = "o2",
-                    accessibleOrgs = setOf("o2"),
+                    org = orgId("o2"),
+                    accessibleOrgs = setOf(orgId("o2")),
                     branches = setOf("b2"),
                     groups = setOf("g2"),
                     roles = setOf("r2"),
@@ -89,8 +89,8 @@ class UserPermissionsSpec : FreeSpec() {
                 val result = first mergedWith second
 
                 result shouldBe UserPermissions(
-                    org = "o2",
-                    accessibleOrgs = setOf("o1", "o2"),
+                    org = orgId("o2"),
+                    accessibleOrgs = setOf(orgId("o1"), orgId("o2")),
                     branches = setOf("b1", "b2"),
                     groups = setOf("g1", "g2"),
                     roles = setOf("r1", "r2"),
@@ -100,12 +100,14 @@ class UserPermissionsSpec : FreeSpec() {
 
             "the selected org is taken from other, falling back to this" {
 
-                (UserPermissions(org = "o1") mergedWith UserPermissions(org = "o2")).org shouldBe "o2"
+                (UserPermissions(org = orgId("o1")) mergedWith UserPermissions(org = orgId("o2"))).org shouldBe
+                        orgId("o2")
 
                 // merging in org-less extras must not clear the selected org
-                (UserPermissions(org = "o1") mergedWith UserPermissions(roles = setOf("extra"))).org shouldBe "o1"
+                (UserPermissions(org = orgId("o1")) mergedWith UserPermissions(roles = setOf("extra"))).org shouldBe
+                        orgId("o1")
 
-                (UserPermissions(org = null) mergedWith UserPermissions(org = "o2")).org shouldBe "o2"
+                (UserPermissions(org = null) mergedWith UserPermissions(org = orgId("o2"))).org shouldBe orgId("o2")
             }
         }
 
@@ -114,11 +116,13 @@ class UserPermissionsSpec : FreeSpec() {
             "hasOrganisation" {
 
                 listOf(
-                    tuple(UserPermissions(), "some-org", false),
-                    tuple(UserPermissions(isSuperUser = true), "some-org", true),
-                    tuple(UserPermissions(org = "a"), "a", true),
-                    tuple(UserPermissions(org = "a"), "b", false),
-                    tuple(UserPermissions(isSuperUser = true, org = "a"), "c", true),
+                    tuple(UserPermissions(), orgId("some-org"), false),
+                    tuple(UserPermissions(isSuperUser = true), orgId("some-org"), true),
+                    tuple(UserPermissions(org = orgId("a")), orgId("a"), true),
+                    tuple(UserPermissions(org = orgId("a")), orgId("b"), false),
+                    tuple(UserPermissions(isSuperUser = true, org = orgId("a")), orgId("c"), true),
+                    // a bare _key can no longer even be constructed, so the whole _key-vs-_id
+                    // mismatch class this migration targets is gone by construction.
                 ).forEach { (subject, test, expected) ->
                     withClue("$subject $test expects $expected") {
                         subject.hasOrganisation(test) shouldBe expected
@@ -129,35 +133,35 @@ class UserPermissionsSpec : FreeSpec() {
             "hasAnyOrganisation" {
 
                 listOf(
-                    tuple(UserPermissions(), emptyList<String>(), false),
-                    tuple(UserPermissions(isSuperUser = true), emptyList<String>(), true),
-                    tuple(UserPermissions(isSuperUser = true), listOf("some-org"), true),
-                    tuple(UserPermissions(org = "a"), listOf("c"), false),
-                    tuple(UserPermissions(org = "a"), emptyList<String>(), false),
-                    tuple(UserPermissions(org = "a"), listOf("a", "X"), true),
-                    tuple(UserPermissions(org = "a"), listOf("b", "X"), false),
-                    tuple(UserPermissions(isSuperUser = true, org = "a"), listOf("Y", "X"), true),
+                    tuple(UserPermissions(), emptyList<OrgId>(), false),
+                    tuple(UserPermissions(isSuperUser = true), emptyList<OrgId>(), true),
+                    tuple(UserPermissions(isSuperUser = true), listOf(orgId("some-org")), true),
+                    tuple(UserPermissions(org = orgId("a")), listOf(orgId("c")), false),
+                    tuple(UserPermissions(org = orgId("a")), emptyList<OrgId>(), false),
+                    tuple(UserPermissions(org = orgId("a")), listOf(orgId("a"), orgId("X")), true),
+                    tuple(UserPermissions(org = orgId("a")), listOf(orgId("b"), orgId("X")), false),
+                    tuple(UserPermissions(isSuperUser = true, org = orgId("a")), listOf(orgId("Y"), orgId("X")), true),
                 ).forEach { (subject, test, expected) ->
                     withClue("$subject $test expects $expected") {
                         subject.hasAnyOrganisation(test) shouldBe expected
                     }
                 }
 
-                // vararg overload
-                UserPermissions(org = "a").hasAnyOrganisation("a", "X") shouldBe true
-                UserPermissions(org = "a").hasAnyOrganisation("b", "X") shouldBe false
-                UserPermissions(isSuperUser = true).hasAnyOrganisation("x") shouldBe true
+                // NOTE: there is no vararg overload — Kotlin prohibits a vararg of a value class.
+                UserPermissions(org = orgId("a")).hasAnyOrganisation(listOf(orgId("a"), orgId("X"))) shouldBe true
+                UserPermissions(org = orgId("a")).hasAnyOrganisation(listOf(orgId("b"), orgId("X"))) shouldBe false
+                UserPermissions(isSuperUser = true).hasAnyOrganisation(listOf(orgId("x"))) shouldBe true
             }
 
             "canAccessOrg" {
 
                 listOf(
-                    tuple(UserPermissions(), "a", false),
-                    tuple(UserPermissions(isSuperUser = true), "a", true),
-                    tuple(UserPermissions(accessibleOrgs = setOf("a", "b")), "a", true),
-                    tuple(UserPermissions(accessibleOrgs = setOf("a", "b")), "b", true),
-                    tuple(UserPermissions(accessibleOrgs = setOf("a", "b")), "c", false),
-                    tuple(UserPermissions(isSuperUser = true, accessibleOrgs = setOf("a")), "c", true),
+                    tuple(UserPermissions(), orgId("a"), false),
+                    tuple(UserPermissions(isSuperUser = true), orgId("a"), true),
+                    tuple(UserPermissions(accessibleOrgs = setOf(orgId("a"), orgId("b"))), orgId("a"), true),
+                    tuple(UserPermissions(accessibleOrgs = setOf(orgId("a"), orgId("b"))), orgId("b"), true),
+                    tuple(UserPermissions(accessibleOrgs = setOf(orgId("a"), orgId("b"))), orgId("c"), false),
+                    tuple(UserPermissions(isSuperUser = true, accessibleOrgs = setOf(orgId("a"))), orgId("c"), true),
                 ).forEach { (subject, test, expected) ->
                     withClue("$subject $test expects $expected") {
                         subject.canAccessOrg(test) shouldBe expected
@@ -250,3 +254,6 @@ class UserPermissionsSpec : FreeSpec() {
         }
     }
 }
+
+/** Test orgs are synthetic, but still real `collection/key` ids — OrgId's init enforces that. */
+private fun orgId(key: String) = OrgId("organisation/$key")

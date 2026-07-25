@@ -98,7 +98,7 @@ Every route declares its authorization rules in the `.authorize { }` block:
     forRole("admin")      // role-based
     forGroup("staff")     // group-based
     forPermission("edit") // permission-based
-    forOrganisation("x")  // org membership
+    forOrganisation(OrgId("organisation/x")) // org membership (a full Vault _id)
     forbidden()           // deny all
 
     // Combine rules

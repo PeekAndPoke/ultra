@@ -10,14 +10,13 @@ data class UserPermissions(
     /**
      * The single organisation selected for the current session, or `null` for org-less realms.
      *
-     * CONTRACT: this is the organisation's bare `_key` (matching how `{org}` url segments resolve),
-     * NOT the collection-qualified `_id`. [hasOrganisation] — and the org-scoped route caller-binding
-     * built on it — compares against this value, so populating it with an `_id` silently 404s every
-     * org-scoped request. Keep `SelectedOrg.orgId` / `OrgMembership.orgId` on the same `_key` basis.
+     * An [OrgId] is always the collection-qualified `_id` — the type enforces it — so caller-binding
+     * compares `_id` against `_id`. Where a bare `_key` is genuinely needed (a URL segment), project
+     * it with [OrgId.key].
      */
-    val org: String? = null,
+    val org: OrgId? = null,
     /** All organisations the user may log into. Non-authz — drives the login org picker. */
-    val accessibleOrgs: Set<String> = emptySet(),
+    val accessibleOrgs: Set<OrgId> = emptySet(),
     val branches: Set<String> = emptySet(),
     val groups: Set<String> = emptySet(),
     val roles: Set<String> = emptySet(),
@@ -51,25 +50,23 @@ data class UserPermissions(
     /**
      * Return 'true' when the given [organisation] is the one selected for this session.
      */
-    fun hasOrganisation(organisation: String) =
+    fun hasOrganisation(organisation: OrgId) =
         isSuperUser || this.org == organisation
 
     /**
      * Return 'true' when the selected [org] is one of the given [organisations].
      */
-    fun hasAnyOrganisation(organisations: Collection<String>) =
+    fun hasAnyOrganisation(organisations: Collection<OrgId>) =
         isSuperUser || (org != null && organisations.contains(org))
 
-    /**
-     * Return 'true' when the selected [org] is one of the given [organisations].
-     */
-    fun hasAnyOrganisation(vararg organisations: String) =
-        isSuperUser || hasAnyOrganisation(organisations.toList())
+    // NOTE: no `vararg` overload for organisations — Kotlin prohibits a vararg of an inline value
+    // class. Pass a collection instead. (The branch/group/role/permission varargs below are plain
+    // Strings and stay as they are.)
 
     /**
      * Return 'true' when the given [organisation] is among the [accessibleOrgs] the user may log into.
      */
-    fun canAccessOrg(organisation: String) =
+    fun canAccessOrg(organisation: OrgId) =
         isSuperUser || this.accessibleOrgs.contains(organisation)
 
     /**

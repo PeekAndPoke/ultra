@@ -5,7 +5,7 @@ import io.kotest.matchers.shouldBe
 
 class OrgRoleSpec : FreeSpec() {
 
-    private fun membership(vararg roles: String) = OrgMembership(orgId = "o1", roles = roles.toSet())
+    private fun membership(vararg roles: String) = OrgMembership(orgId = OrgId("organisation/o1"), roles = roles.toSet())
 
     init {
 

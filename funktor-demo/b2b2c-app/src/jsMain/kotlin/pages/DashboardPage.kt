@@ -37,7 +37,8 @@ class DashboardPage(ctx: NoProps) : PureComponent(ctx) {
             // Populated once the client-side JWT decoder is wired (deferred); the selected org id
             // lives in the session permissions.
             auth.permissions.org?.let { org ->
-                ui.info.message { +"Active organisation: $org" }
+                // `.key` not the full `_id` — the bare key is what a user recognises.
+                ui.info.message { +"Active organisation: ${org.key}" }
             }
         }
     }

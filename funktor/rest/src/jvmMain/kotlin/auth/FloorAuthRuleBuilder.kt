@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.rest.auth
 
 import io.peekandpoke.funktor.rest.RestDsl
 import io.peekandpoke.funktor.rest.auth.AuthRuleBuilder.Companion.validateChain
+import io.peekandpoke.ultra.security.user.OrgId
 
 /**
  * Restricted builder for an [io.peekandpoke.funktor.rest.ApiRoutes] floor seed
@@ -65,10 +66,10 @@ class FloorAuthRuleBuilder internal constructor() {
     fun forAnyPermission(vararg permissions: String) = add(AuthRule.forAnyPermission(permissions.toList()))
 
     /** Requires membership in the given [organisation]. */
-    fun forOrganisation(organisation: String) = add(AuthRule.forOrganisation(organisation))
+    fun forOrganisation(organisation: OrgId) = add(AuthRule.forOrganisation(organisation))
 
     /** Requires membership in at least one of the given [organisations]. */
-    fun forAnyOrganisation(organisations: Collection<String>) = add(AuthRule.forAnyOrganisation(organisations))
+    fun forAnyOrganisation(organisations: Collection<OrgId>) = add(AuthRule.forAnyOrganisation(organisations))
 
     //  Constants — sole-rule only  ////////////////////////////////////////////////////////////////
 

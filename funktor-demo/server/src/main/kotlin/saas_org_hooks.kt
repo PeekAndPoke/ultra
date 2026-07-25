@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.demo.server
 import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.funktor.saas.model.OrgStatus
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.OrgMembership
 import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserPermissions
@@ -24,24 +25,25 @@ suspend fun OrgsStorage.accessibleActiveOrgs(memberships: Set<OrgMembership>): L
         .map { it.orgId }
         .distinct()
         .mapNotNull { orgId ->
-            findById(orgId)
+            // `findById` takes the raw id; an OrgId is already the canonical `_id`.
+            findById(orgId.value)
                 ?.takeIf { it.value().status == OrgStatus.Active }
                 ?.let { stored ->
                     val org = stored.value()
-                    AuthOrgRef(id = stored._key, slug = org.slug, name = org.name)
+                    AuthOrgRef(id = OrgId(stored._id), slug = org.slug, name = org.name)
                 }
         }
 }
 
 /** Resolves a chosen org into the session grant, or null (no membership / org not active). */
 suspend fun OrgsStorage.resolveActiveSelectedOrg(
-    orgId: String,
+    orgId: OrgId,
     memberships: Set<OrgMembership>,
 ): SelectedOrg? {
     val matching = memberships.filter { it.orgId == orgId }
     if (matching.isEmpty()) return null
 
-    val org = findById(orgId)
+    val org = findById(orgId.value)
         ?.takeIf { it.value().status == OrgStatus.Active }
         ?.value()
         ?: return null

@@ -18,6 +18,7 @@ import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.HttpStatusCode
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.OrgRole
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.canManageOrgMembers
@@ -64,7 +65,11 @@ class MembersPage(ctx: NoProps) : PureComponent(ctx) {
 
     private val auth by subscribingTo(State.auth)
 
-    private val orgKey: String? get() = auth.permissions.org
+    /**
+     * The session's selected org. [OrgId] is the full `collection/key` `_id`; the `{org}` URL segment
+     * takes the bare key, so every api call below passes `.key` (see [OrgId.key]).
+     */
+    private val orgId: OrgId? get() = auth.permissions.org
     private val callerRoles: Set<String> get() = auth.permissions.roles
     private val callerCanManage: Boolean get() = callerRoles.canManageOrgMembers
     private val callerIsOwner: Boolean get() = callerRoles.isOrgOwner
@@ -74,9 +79,9 @@ class MembersPage(ctx: NoProps) : PureComponent(ctx) {
     private val editableRoles = listOf(OrgRole.OWNER, OrgRole.ADMIN, "member")
 
     private val loader = dataLoader {
-        when (val org = orgKey) {
+        when (val org = orgId) {
             null -> flowOf(emptyList())
-            else -> Apis.members.list(org).map { it.data ?: emptyList() }
+            else -> Apis.members.list(org.key).map { it.data ?: emptyList() }
         }
     }
 
@@ -87,12 +92,12 @@ class MembersPage(ctx: NoProps) : PureComponent(ctx) {
                 noui.content { +"Members" }
             }
 
-            when (val org = orgKey) {
+            when (val org = orgId) {
                 null -> ui.warning.message { +"No organisation is selected for this session." }
-                else -> ui.info.message { +"Organisation: $org" }
+                else -> ui.info.message { +"Organisation: ${org.key}" }
             }
 
-            if (callerCanManage && orgKey != null) {
+            if (callerCanManage && orgId != null) {
                 ui.green.button {
                     onClick { openAddModal() }
                     icon.user_plus()
@@ -102,7 +107,7 @@ class MembersPage(ctx: NoProps) : PureComponent(ctx) {
         }
 
         // Nothing to load without a selected org (an org-less session cannot manage members).
-        orgKey ?: return
+        orgId ?: return
 
         loader.renderDefault(this) { members ->
             renderTable(members)
@@ -207,9 +212,9 @@ class MembersPage(ctx: NoProps) : PureComponent(ctx) {
     }
 
     private fun addMember(email: String, roles: Set<String>) {
-        val org = orgKey ?: return
+        val org = orgId ?: return
         launch {
-            val response = Apis.members.add(org, AddMemberRequest(email = email, roles = roles)).first()
+            val response = Apis.members.add(org.key, AddMemberRequest(email = email, roles = roles)).first()
 
             handleMutationResult(response, "Added $email")
         }
@@ -249,10 +254,10 @@ class MembersPage(ctx: NoProps) : PureComponent(ctx) {
     }
 
     private fun saveRoles(member: OrgMemberModel, newRoles: Set<String>) {
-        val org = orgKey ?: return
+        val org = orgId ?: return
         launch {
             val response = Apis.members
-                .changeRoles(org, member.id, ChangeMemberRolesRequest(roles = newRoles))
+                .changeRoles(org.key, member.id, ChangeMemberRolesRequest(roles = newRoles))
                 .first()
 
             handleMutationResult(response, "Roles updated for ${member.name}")
@@ -260,9 +265,9 @@ class MembersPage(ctx: NoProps) : PureComponent(ctx) {
     }
 
     private fun removeMember(member: OrgMemberModel) {
-        val org = orgKey ?: return
+        val org = orgId ?: return
         launch {
-            val response = Apis.members.remove(org, member.id).first()
+            val response = Apis.members.remove(org.key, member.id).first()
 
             handleMutationResult(response, "Removed ${member.name}")
         }

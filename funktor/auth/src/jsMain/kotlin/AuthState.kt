@@ -17,6 +17,7 @@ import io.peekandpoke.kraft.routing.routerMiddleware
 import io.peekandpoke.kraft.utils.clearInterval
 import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.utils.setInterval
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.slumber.JsonUtil.toJsonObject
@@ -194,7 +195,7 @@ class AuthState<USER>(
     /**
      * Completes a multi-org sign-in by choosing [orgId] against the [pendingOrgSelection] token.
      */
-    suspend fun selectOrg(orgId: String): Data<USER> {
+    suspend fun selectOrg(orgId: OrgId): Data<USER> {
         val pending = pendingOrgSelection ?: return streamSource()
 
         val response = api
@@ -360,8 +361,11 @@ class AuthState<USER>(
         val permissions = response.token.permissionsNs.let { ns ->
             @Suppress("UNCHECKED_CAST")
             UserPermissions(
-                org = claims["$ns/org"] as? String,
-                accessibleOrgs = (claims["$ns/accessibleOrgs"] as? List<String> ?: emptyList()).toSet(),
+                // Parsed defensively — the token is decoded client-side and must not throw on a
+                // claim that does not carry a well-formed `collection/key` org id.
+                org = OrgId.parseOrNull(claims["$ns/org"] as? String),
+                accessibleOrgs = (claims["$ns/accessibleOrgs"] as? List<String> ?: emptyList())
+                    .mapNotNull { OrgId.parseOrNull(it) }.toSet(),
                 branches = (claims["$ns/branches"] as? List<String> ?: emptyList()).toSet(),
                 groups = (claims["$ns/groups"] as? List<String> ?: emptyList()).toSet(),
                 roles = (claims["$ns/roles"] as? List<String> ?: emptyList()).toSet(),

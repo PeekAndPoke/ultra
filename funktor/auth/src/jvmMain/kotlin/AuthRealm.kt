@@ -24,6 +24,7 @@ import io.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.store
 import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.funktor.auth.model.AuthUser
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.OrgMembership
 import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserId
@@ -183,7 +184,7 @@ interface AuthRealm<USER : AuthUser> {
      * Resolves a chosen [orgId] into the permission inputs for the session, or `null` if the user
      * may not select it. Default: none. Org realms override this to load the org's plan permissions.
      */
-    suspend fun resolveSelectedOrg(orgId: String, memberships: Set<OrgMembership>): SelectedOrg? = null
+    suspend fun resolveSelectedOrg(orgId: OrgId, memberships: Set<OrgMembership>): SelectedOrg? = null
 
     /** Generates a JWT for the given user and the org selected for this session (null for org-less realms). */
     suspend fun generateJwt(user: Stored<USER>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token
@@ -289,9 +290,19 @@ interface AuthRealm<USER : AuthUser> {
      * [expectedUserType] is validated against the newly generated token to prevent
      * cross-realm token refresh attacks (a user from realm A requesting a token from realm B).
      */
-    suspend fun refreshToken(userId: UserId, expectedUserType: String?, currentOrgId: String?): AuthSignInResponse {
+    suspend fun refreshToken(userId: UserId, expectedUserType: String?, currentOrgId: OrgId?): AuthSignInResponse {
         val user = users.loadById(userId)
             ?: throw AuthError("User not found: $userId")
+
+        // An [OrgPolicy.Required] realm has NO valid org-less session: `signIn` and `selectOrg` can
+        // never produce one. So a refresh that arrives without a usable org id must force a re-login
+        // rather than mint a fresh org-less token — otherwise the caller silently ends up with a
+        // valid 1h session in which every org-scoped route 404s, refreshable indefinitely and never
+        // self-healing. This is reachable whenever the incoming `org` claim does not parse (e.g. a
+        // token minted before the org id became a collection-qualified `_id`).
+        if (orgPolicy is OrgPolicy.Required && currentOrgId == null) {
+            throw AuthError.noOrganisationAccess()
+        }
 
         // Re-derive the session's org slice from the DB (picks up membership/plan changes). Refresh
         // keeps the SAME org — it never changes which org is active.
@@ -370,7 +381,7 @@ interface AuthRealm<USER : AuthUser> {
      * Completes an org-selection sign-in: validates + consumes the single-use [selectionToken] and
      * issues a session for the chosen [orgId].
      */
-    suspend fun selectOrg(selectionToken: String, orgId: String): AuthSignInResponse {
+    suspend fun selectOrg(selectionToken: String, orgId: OrgId): AuthSignInResponse {
         val record = deps.storage.authRecords
             .findByToken(AuthRecord.OrgSelectionToken, realm = id, token = selectionToken)
             ?: throw AuthError.noOrganisationAccess()

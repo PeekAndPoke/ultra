@@ -6,7 +6,7 @@ package io.peekandpoke.ultra.security.user
  * A `null` selection means an org-less session (admin / org-policy-none realms).
  */
 data class SelectedOrg(
-    val orgId: String,
+    val orgId: OrgId,
     val membership: OrgMembership,
     /** Feature permissions granted by the selected org's plan. */
     val planPermissions: Set<String> = emptySet(),

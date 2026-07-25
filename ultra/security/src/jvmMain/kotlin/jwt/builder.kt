@@ -29,11 +29,11 @@ fun JWTCreator.Builder.encodePermissions(namespace: String = "permissions", perm
     }
 
     permissions.org?.let {
-        withClaim("$namespace/org", it)
+        withClaim("$namespace/org", it.value)
     }
 
     if (permissions.accessibleOrgs.isNotEmpty()) {
-        withArrayClaim("$namespace/accessibleOrgs", permissions.accessibleOrgs.toTypedArray())
+        withArrayClaim("$namespace/accessibleOrgs", permissions.accessibleOrgs.map { it.value }.toTypedArray())
     }
 
     if (permissions.branches.isNotEmpty()) {

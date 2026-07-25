@@ -17,6 +17,7 @@ import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.security.jwt.JwtGenerator
 import io.peekandpoke.ultra.security.password.PasswordHasher
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
 
 /**
@@ -111,13 +112,13 @@ class AuthSystem(
     }
 
     /** Completes an org-selection sign-in for [realm] using the selection token and chosen org. */
-    suspend fun selectOrg(realm: RealmId, selectionToken: String, orgId: String): AuthSignInResponse {
+    suspend fun selectOrg(realm: RealmId, selectionToken: String, orgId: OrgId): AuthSignInResponse {
         return getRealm(realm).selectOrg(selectionToken, orgId)
     }
 
     /** Refresh the token for the user with the given [userId] in the given [realm] */
     suspend fun refreshToken(
-        realm: RealmId, userId: UserId, expectedUserType: String?, currentOrgId: String?,
+        realm: RealmId, userId: UserId, expectedUserType: String?, currentOrgId: OrgId?,
     ): AuthSignInResponse {
         return getRealm(realm).refreshToken(userId, expectedUserType, currentOrgId)
     }

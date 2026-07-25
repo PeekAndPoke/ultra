@@ -10,6 +10,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 
@@ -148,8 +149,8 @@ class JwtGeneratorSpec : StringSpec() {
             val testCases = listOf(
                 UserPermissions(
                     isSuperUser = true,
-                    org = "org1",
-                    accessibleOrgs = setOf("org1", "org2"),
+                    org = OrgId("organisation/org1"),
+                    accessibleOrgs = setOf(OrgId("organisation/org1"), OrgId("organisation/org2")),
                     branches = setOf("branch1", "branch2"),
                     groups = setOf("group1", "group2"),
                     roles = setOf("role1", "role2"),
@@ -157,8 +158,8 @@ class JwtGeneratorSpec : StringSpec() {
                 ),
                 UserPermissions(
                     isSuperUser = false,
-                    org = "orgA",
-                    accessibleOrgs = setOf("orgA", "orgB"),
+                    org = OrgId("organisation/orgA"),
+                    accessibleOrgs = setOf(OrgId("organisation/orgA"), OrgId("organisation/orgB")),
                     branches = emptySet(),
                     groups = setOf("groupX"),
                     roles = setOf("roleY", "roleZ"),

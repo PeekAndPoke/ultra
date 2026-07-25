@@ -6,6 +6,7 @@ import io.peekandpoke.funktor.rest.auth.AuthRule.CheckCtx
 import io.peekandpoke.funktor.rest.auth.AuthRule.EstimateCtx
 import io.peekandpoke.ultra.kontainer.KontainerAware
 import io.peekandpoke.ultra.remote.ApiAccessLevel
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.User
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.security.user.UserProvider
@@ -99,7 +100,7 @@ interface AuthRule<PARAMS, BODY> {
         /**
          * Creates a Rule that returns true when the current user has given [organisation]
          */
-        fun <P, B> forOrganisation(organisation: String): AuthRule<P, B> =
+        fun <P, B> forOrganisation(organisation: OrgId): AuthRule<P, B> =
             PermissionsCheck("Is part of organisation $organisation") {
                 permissions.hasOrganisation(organisation)
             }
@@ -107,7 +108,7 @@ interface AuthRule<PARAMS, BODY> {
         /**
          * Creates a Rule that returns true when the current user has any of the given [organisations]
          */
-        fun <P, B> forAnyOrganisation(organisations: Collection<String>): AuthRule<P, B> =
+        fun <P, B> forAnyOrganisation(organisations: Collection<OrgId>): AuthRule<P, B> =
             PermissionsCheck("Is part of any organisation $organisations") {
                 permissions.hasAnyOrganisation(organisations)
             }

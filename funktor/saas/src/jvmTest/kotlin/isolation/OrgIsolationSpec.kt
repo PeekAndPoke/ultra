@@ -17,6 +17,7 @@ import io.peekandpoke.funktor.saas.domain.Organisation
 import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.remote.ApiResponse
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Ref
 import io.peekandpoke.ultra.vault.Stored
@@ -95,24 +96,31 @@ class OrgIsolationSpec : StringSpec({
     val guard = OrgIsolationGuard()
 
     fun org(key: String) = Stored(value = Organisation(slug = key, name = key), _id = "organisation/$key", _key = key)
+
+    // The session's selected org is the org's full `_id` — same basis the guard compares on, and
+    // what `OrgMemberships.sessionMembershipsOf` produces. A bare `_key` here would not even
+    // construct, which is exactly the mismatch OrgId is meant to make impossible.
+    fun selected(key: String) = OrgId("organisation/$key")
     fun thingIn(orgKey: String) =
         Stored(value = OwnedThing(org = Ref("organisation/$orgKey") { error("not resolved in test") }), _id = "owned/x", _key = "x")
 
     "guard: matching selected org + consistent entity → Pass" {
         val p = OwnedParams(org = org("acme"), thing = thingIn("acme"))
-        guard.guard(p, UserPermissions(org = "acme")) shouldBe GuardVerdict.Pass
+        guard.guard(p, UserPermissions(org = selected("acme"))) shouldBe GuardVerdict.Pass
     }
 
     "guard: caller selected a DIFFERENT org → DenyAsNotFound (caller-binding)" {
         val p = OwnedParams(org = org("acme"), thing = thingIn("acme"))
         // Even a multi-org member: accessibleOrgs lists acme, but the SELECTED org is globex.
-        guard.guard(p, UserPermissions(org = "globex", accessibleOrgs = setOf("acme", "globex"))) shouldBe
-                GuardVerdict.DenyAsNotFound
+        guard.guard(
+            p,
+            UserPermissions(org = selected("globex"), accessibleOrgs = setOf(selected("acme"), selected("globex"))),
+        ) shouldBe GuardVerdict.DenyAsNotFound
     }
 
     "guard: entity belongs to a foreign org → DenyAsNotFound (org-consistency)" {
         val p = OwnedParams(org = org("acme"), thing = thingIn("globex"))
-        guard.guard(p, UserPermissions(org = "acme")) shouldBe GuardVerdict.DenyAsNotFound
+        guard.guard(p, UserPermissions(org = selected("acme"))) shouldBe GuardVerdict.DenyAsNotFound
     }
 
     "guard: super-user passes caller-binding for any org" {
@@ -129,16 +137,20 @@ class OrgIsolationSpec : StringSpec({
     }
 
     "guard: non-OrgAwareParam params abstain (Pass)" {
-        guard.guard(PlainParams("x"), UserPermissions(org = "acme")) shouldBe GuardVerdict.Pass
+        guard.guard(PlainParams("x"), UserPermissions(org = selected("acme"))) shouldBe GuardVerdict.Pass
     }
 
     "guard: an aliased (non-val ctor) OrgAware entity is still checked — foreign org denied" {
-        guard.guard(AliasedParams(org = org("acme"), w = thingIn("globex")), UserPermissions(org = "acme")) shouldBe
-                GuardVerdict.DenyAsNotFound
+        guard.guard(
+            AliasedParams(org = org("acme"), w = thingIn("globex")),
+            UserPermissions(org = selected("acme")),
+        ) shouldBe GuardVerdict.DenyAsNotFound
     }
 
     "guard: an aliased consistent entity passes" {
-        guard.guard(AliasedParams(org = org("acme"), w = thingIn("acme")), UserPermissions(org = "acme")) shouldBe
-                GuardVerdict.Pass
+        guard.guard(
+            AliasedParams(org = org("acme"), w = thingIn("acme")),
+            UserPermissions(org = selected("acme")),
+        ) shouldBe GuardVerdict.Pass
     }
 })

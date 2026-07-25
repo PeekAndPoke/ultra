@@ -37,7 +37,7 @@ value class UserId(val value: String) {
         require(value.length <= MAX_LENGTH) {
             "UserId must be at most $MAX_LENGTH chars, got ${value.length}"
         }
-        require(value.none { it.isForbiddenChar() }) {
+        require(value.none { it.isForbiddenInId() }) {
             "UserId must not contain control or line-separator characters"
         }
     }
@@ -67,14 +67,5 @@ value class UserId(val value: String) {
                 null
             }
         }
-
-        /**
-         * C0 controls + DEL + C1 controls + the Unicode line/paragraph separators. Composite keys in
-         * this codebase are NUL-delimited ([io.peekandpoke.ultra.security.csrf.StatelessCsrfProtection]
-         * and the auth session cache), so banning these makes a forged key boundary impossible by
-         * construction rather than by convention.
-         */
-        private fun Char.isForbiddenChar(): Boolean =
-            code < 0x20 || code == 0x7F || code in 0x80..0x9F || this == '\u2028' || this == '\u2029'
     }
 }

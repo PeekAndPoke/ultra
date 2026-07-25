@@ -31,6 +31,7 @@ import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.security.jwt.JwtGenerator
 import io.peekandpoke.ultra.security.jwt.JwtUserData
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Ref
@@ -219,7 +220,7 @@ class OrgIsolationE2eSpec : AppSpec<FunktorAllTestConfig>(orgIsolationTestApp) {
                 val widget = seedWidget(backend, acme)
 
                 apiApp {
-                    authenticate(token(UserPermissions(org = acme._key))) {
+                    authenticate(token(UserPermissions(org = OrgId(acme._id)))) {
                         request(HttpMethod.Get, "$prefix/orgs/${acme._key}/widgets/$widget") {
                             status shouldBe HttpStatusCode.OK
                         }
@@ -237,7 +238,12 @@ class OrgIsolationE2eSpec : AppSpec<FunktorAllTestConfig>(orgIsolationTestApp) {
 
                 apiApp {
                     // Selected org = acme, but the caller is ALSO a member of globex (accessibleOrgs).
-                    authenticate(token(UserPermissions(org = acme._key, accessibleOrgs = setOf(acme._key, globex._key)))) {
+                    authenticate(token(
+                        UserPermissions(
+                            org = OrgId(acme._id),
+                            accessibleOrgs = setOf(OrgId(acme._id), OrgId(globex._id)),
+                        )
+                    )) {
                         // addressing the SELECTED org → 200
                         request(HttpMethod.Get, "$prefix/orgs/${acme._key}/widgets/$acmeWidget") {
                             status shouldBe HttpStatusCode.OK
@@ -255,7 +261,7 @@ class OrgIsolationE2eSpec : AppSpec<FunktorAllTestConfig>(orgIsolationTestApp) {
                 val globexWidget = seedWidget(backend, globex)
 
                 apiApp {
-                    authenticate(token(UserPermissions(org = acme._key))) {
+                    authenticate(token(UserPermissions(org = OrgId(acme._id)))) {
                         // url org = acme (caller-binding passes), but the widget belongs to globex
                         request(HttpMethod.Get, "$prefix/orgs/${acme._key}/widgets/$globexWidget") {
                             status shouldBe HttpStatusCode.NotFound
@@ -274,7 +280,7 @@ class OrgIsolationE2eSpec : AppSpec<FunktorAllTestConfig>(orgIsolationTestApp) {
             val diff = seedKaWidget(acme, "different")
 
             apiApp {
-                authenticate(token(UserPermissions(org = acme._key))) {
+                authenticate(token(UserPermissions(org = OrgId(acme._id)))) {
                     request(HttpMethod.Get, "/e2e/ka/orgs/${acme._key}/consistent/$same1/$same2") {
                         status shouldBe HttpStatusCode.OK
                     }

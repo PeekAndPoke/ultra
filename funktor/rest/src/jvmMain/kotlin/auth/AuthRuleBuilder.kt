@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.rest.auth
 import io.peekandpoke.funktor.rest.ApiRoute
 import io.peekandpoke.funktor.rest.RestDsl
 import io.peekandpoke.ultra.remote.ApiAccessLevel
+import io.peekandpoke.ultra.security.user.OrgId
 
 /**
  * Accumulating builder for a route's auth rules — the receiver of `authorize {}` and of the
@@ -79,10 +80,10 @@ sealed class AuthRuleBuilder<PARAMS, BODY> {
         appendRule(AuthRule.forAnyPermission(permissions.toList()))
 
     /** Requires membership in the given [organisation]. */
-    fun forOrganisation(organisation: String) = appendRule(AuthRule.forOrganisation(organisation))
+    fun forOrganisation(organisation: OrgId) = appendRule(AuthRule.forOrganisation(organisation))
 
     /** Requires membership in at least one of the given [organisations]. */
-    fun forAnyOrganisation(organisations: Collection<String>) =
+    fun forAnyOrganisation(organisations: Collection<OrgId>) =
         appendRule(AuthRule.forAnyOrganisation(organisations))
 
     /** Appends a custom rule evaluated against the full call context — the escape hatch. */

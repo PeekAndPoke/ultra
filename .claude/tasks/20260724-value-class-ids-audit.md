@@ -24,9 +24,14 @@ Value classes (`RealmId`, `UserId`, `OrgId`, …) make each of these a distinct 
 - **`UserId`** — `userId`/`ownerId: String` on `AuthRecord` (all subtypes), `SessionStore`,
   `OrgMembersStorage`, `AuthSystem`. NOTE: realm-qualified `_id` (`b2b_users/x`) — wrap the full string.
 - **`OrgId`** — `orgId: String` on `AuthSelectOrgRequest`, `OrgMembership.orgId`, `UserPermissions.org`,
-  `AuthSystem`. NOTE: the CONTRACT is the bare `_key` (not `_id`) — a single `OrgId` type does NOT by
-  itself prevent `_key`/`_id` confusion (would need two types, likely over-engineering; keep the
-  documented contract). Wrapping still kills the org-vs-user-vs-realm swap.
+  `AuthSystem`. ✅ DONE 2026-07-25 (`20260725-value-class-orgid.md`).
+  ⚠️ **This entry's original NOTE was WRONG and has been superseded.** It said the contract was the
+  bare `_key` and that a single `OrgId` type could not prevent `_key`/`_id` confusion. The user's
+  2026-07-25 decision standardized the session org id on the FULL `collection/key` `_id`, and a single
+  type DOES prevent the confusion — because `OrgId.init` REQUIRES that shape, so a bare `_key` cannot
+  be constructed at all. Verified by mutation test: reverting the isolation guard to `._key` is caught
+  by 7 tests. URL segments keep the bare key via `OrgId.key` (a url's collection comes from the route
+  parameter's type). Wrapping also kills the org-vs-user-vs-realm swap, as originally noted.
 
 ### Tier 2 — invariant-bearing values
 - **`Email`** — the original driver; `email: String` on every user model/entity. Canonical lowercase.

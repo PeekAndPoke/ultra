@@ -99,12 +99,34 @@ ownerId` (stored+queried → KSP), `SessionStore`, `OrgMembersStorage` (`OrgMemb
 queried → KSP), `AuthSystem`. Vault `Stored<T>._id` stays a generic `String`; `UserId` lives at the
 auth/domain layer with conversion at the vault boundary (or a KSP helper). `init { require non-blank }`.
 
-## Step 3 — `OrgId`
+## Step 3 — `OrgId` ✅ DONE 2026-07-25
+See `.claude/tasks/20260725-value-class-orgid.md` (gate PASS; atomic flip verified complete, and
+mutation-tested — reverting the guard to `._key` is caught by 7 tests).
+
+> ⚠️ **THE ORIGINAL PLAN TEXT BELOW WAS INVERTED AND IS NO LONGER THE CONTRACT.** It said
+> `init { require(!value.contains("/")) }` — enforce the bare `_key`. The user's 2026-07-25 decision
+> reversed this: **`OrgId` REQUIRES the full `collection/key` `_id`** and `init` enforces exactly that.
+> Do NOT "restore" the old rule; doing so re-breaks every org-scoped request. Rationale: the
+> project-wide rule is that anything naming another document names it by its globally resolvable
+> `_id`, and the session org id was the last bare-`_key` holdout. Standardizing removes the
+> "why is it a key here and an id there?" question rather than enshrining it.
+>
+> **Scope boundary (also the user's decision):** id-holding FIELDS are coll/key; **URL segments keep
+> the bare `_key`**, projected via `OrgId.key`. A URL segment's collection comes from the route's
+> parameter TYPE, and funktor's outgoing param converter renders every entity as `_key` — so this is a
+> framework-wide convention, not an org exception. `OrgModel.id` stays a bare-`_key` String for that
+> reason. (Putting coll/key in a path would mean `%2F` inside a path segment — routinely normalized or
+> rejected by nginx/ALB/CDN — plus a UI reading "organisation/acme".)
+>
+> Not a DB migration (`UserPermissions`/`OrgMembership`/`SelectedOrg` are value objects, not `@Vault`
+> entities; the persisted `OrgMember.org` `Ref` was already coll/key) but IS a wire/contract
+> migration: in-flight JWTs carry the old bare key, so existing sessions must re-login.
+
+### Original (superseded) plan text
 `orgId: String` → `OrgId`. Surface: `UserPermissions.org`, `OrgMembership.orgId`, `AuthSelectOrgRequest.
-orgId`, `AuthSystem.selectOrg`. **`init { require(!value.contains("/")) }`** — enforces the bare-`_key`
-contract and REJECTS a collection-qualified `_id`, turning the documented `_key`-vs-`_id` 404 footgun
-into a guarded type. NOTE: `OrgMember.org` is a `Ref<Organisation>` (an `_id`), NOT an `OrgId` — leave
-it; `OrgId` is the SELECTED-org key on the session/permissions side.
+orgId`, `AuthSystem.selectOrg`. ~~`init { require(!value.contains("/")) }` — enforces the bare-`_key`
+contract~~ (INVERTED — see above). NOTE: `OrgMember.org` is a `Ref<Organisation>` (an `_id`), NOT an
+`OrgId` — leave it; `OrgId` is the SELECTED-org id on the session/permissions side.
 
 ## Step 4 — `Email`
 `email: String` → `Email`. `init { require(value == value.trim().lowercase()) }` + `of(raw) =

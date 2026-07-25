@@ -21,6 +21,7 @@ import io.peekandpoke.funktor.saas.storage.OrgsStorage
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.datetime.jvm
 import io.peekandpoke.ultra.security.jwt.JwtUserData
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.OrgMembership
 import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserId
@@ -102,7 +103,7 @@ class B2b2cRealm(
         return orgs.accessibleActiveOrgs(memberships)
     }
 
-    override suspend fun resolveSelectedOrg(orgId: String, memberships: Set<OrgMembership>): SelectedOrg? {
+    override suspend fun resolveSelectedOrg(orgId: OrgId, memberships: Set<OrgMembership>): SelectedOrg? {
         return orgs.resolveActiveSelectedOrg(orgId, memberships)
     }
 

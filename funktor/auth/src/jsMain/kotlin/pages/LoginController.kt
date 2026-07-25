@@ -23,6 +23,7 @@ import io.peekandpoke.ultra.html.css
 import io.peekandpoke.ultra.html.onClick
 import io.peekandpoke.ultra.html.onSubmit
 import io.peekandpoke.ultra.model.Message
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.semanticui.icon
 import io.peekandpoke.ultra.semanticui.noui
 import io.peekandpoke.ultra.semanticui.ui
@@ -483,7 +484,7 @@ class LoginController<USER>(
         }
     }
 
-    fun selectOrg(orgId: String) {
+    fun selectOrg(orgId: OrgId) {
         launch {
             doSelectOrg(orgId)
         }
@@ -526,7 +527,7 @@ class LoginController<USER>(
         }
     }
 
-    private suspend fun doSelectOrg(orgId: String) = noDblClick.runBlocking {
+    private suspend fun doSelectOrg(orgId: OrgId) = noDblClick.runBlocking {
         displayState = displayState.withMessage(message = null)
 
         val result = state.selectOrg(orgId)

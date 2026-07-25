@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.security.jwt
 
 import com.auth0.jwt.interfaces.Claim
 import com.auth0.jwt.interfaces.Payload
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.security.user.UserRecord
@@ -33,8 +34,10 @@ fun Payload.extractUser(namespace: String = "user"): JwtUserData = JwtUserData(
 /** Extracts [UserPermissions] from this payload using claims under the given [namespace]. */
 fun Payload.extractPermissions(namespace: String = "permissions"): UserPermissions = UserPermissions(
     isSuperUser = getClaim("$namespace/superuser")?.asBoolean() ?: false,
-    org = getClaim("$namespace/org").asString(),
-    accessibleOrgs = getClaim("$namespace/accessibleOrgs").asStringSet(),
+    // Parsed defensively: a malformed claim degrades to "no selected org" / drops that entry,
+    // rather than throwing and turning an attacker-supplied token into a 500.
+    org = OrgId.parseOrNull(getClaim("$namespace/org").asString()),
+    accessibleOrgs = getClaim("$namespace/accessibleOrgs").asStringSet().mapNotNull { OrgId.parseOrNull(it) }.toSet(),
     branches = getClaim("$namespace/branches").asStringSet(),
     groups = getClaim("$namespace/groups").asStringSet(),
     roles = getClaim("$namespace/roles").asStringSet(),

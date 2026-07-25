@@ -10,6 +10,17 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class OrgModel(
+    /**
+     * The organisation's bare Vault `_key`, NOT a collection-qualified `_id`.
+     *
+     * Deliberate, and the one place the project's "name a document by its full `_id`" rule does not
+     * apply: this field exists to ADDRESS the org in a url (`/orgs/{id}` in the ops app, and
+     * `OrgsApi.OrgParam`), where the collection comes from the route parameter's TYPE rather than from
+     * the value — which is also why funktor's outgoing param converter renders every entity as its
+     * `_key`. Contrast `ultra.security.user.OrgId` (`UserPermissions.org`, `OrgMembership.orgId`,
+     * `AuthOrgRef.id`), which is always the full `_id`; project it with `OrgId.key` when you need a
+     * url segment. Do NOT "standardize" this field to the `_id` — it would break every org url.
+     */
     val id: String,
     val slug: String,
     val name: String,

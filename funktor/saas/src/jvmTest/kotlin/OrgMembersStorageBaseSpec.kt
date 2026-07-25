@@ -9,6 +9,7 @@ import io.peekandpoke.funktor.saas.domain.Organisation
 import io.peekandpoke.funktor.saas.storage.OrgMembersStorage
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.OrgMembership
 import io.peekandpoke.ultra.security.user.UserId
 
@@ -149,7 +150,7 @@ abstract class OrgMembersStorageBaseSpec : FreeSpec() {
             members.findByOrgAndUserIncludingDeleted(acme.asRef, UserId("b2b_users/nope")) shouldBe null
         }
 
-        "sessionMembershipsOf maps stored rows to session memberships (orgId=_key, roles, branchIds)" {
+        "sessionMembershipsOf maps stored rows to session memberships (orgId=_id, roles, branchIds)" {
             // Pins the storage->session seam the login path (getMemberships) depends on: a regression
             // dropping roles/branchIds here would strip org roles from the JWT yet keep the
             // org-selection acceptance tests (which assert only org slugs) green.
@@ -158,7 +159,7 @@ abstract class OrgMembersStorageBaseSpec : FreeSpec() {
             members.add(acme, UserId("b2b_users/u1"), roles = setOf("owner", "admin"), branchIds = setOf("berlin"))
 
             members.sessionMembershipsOf(UserId("b2b_users/u1")) shouldBe setOf(
-                OrgMembership(orgId = acme._key, branchIds = setOf("berlin"), roles = setOf("owner", "admin")),
+                OrgMembership(orgId = OrgId(acme._id), branchIds = setOf("berlin"), roles = setOf("owner", "admin")),
             )
             members.sessionMembershipsOf(UserId("b2b_users/unknown")) shouldBe emptySet()
         }

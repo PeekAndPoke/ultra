@@ -6,6 +6,7 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.Payload
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.security.user.UserRecord
@@ -110,5 +111,36 @@ class ExtractUserSpec : StringSpec({
         degraded.record.isAnonymous() shouldBe true
         degraded.permissions.isSuperUser shouldBe false
         degraded.permissions shouldBe UserPermissions.anonymous
+    }
+
+    "a LEGACY bare-_key org claim degrades to no selected org — fail-closed, not a 500" {
+        // Every JWT minted before the org id became a collection-qualified `_id` carries `org: "acme"`.
+        // Those tokens MUST NOT throw (a 500 on every request) and MUST NOT be honoured (that would be
+        // the `_key`-vs-`_id` confusion this migration removed). They degrade to "no selected org",
+        // which `hasOrganisation` then denies.
+        val legacy = payloadOf {
+            withClaim("permissions/org", "acme")
+            withArrayClaim("permissions/accessibleOrgs", arrayOf("acme", "globex"))
+        }
+
+        val permissions = legacy.extractPermissions("permissions")
+
+        permissions.org shouldBe null
+        permissions.accessibleOrgs shouldBe emptySet()
+        permissions.hasOrganisation(OrgId("organisation/acme")) shouldBe false
+        permissions.canAccessOrg(OrgId("organisation/acme")) shouldBe false
+    }
+
+    "a well-formed org claim round-trips, and unparseable accessibleOrgs entries are dropped" {
+        val mixed = payloadOf {
+            withClaim("permissions/org", "organisation/acme")
+            // one valid, one legacy bare key, one multi-segment
+            withArrayClaim("permissions/accessibleOrgs", arrayOf("organisation/acme", "globex", "a/b/c"))
+        }
+
+        val permissions = mixed.extractPermissions("permissions")
+
+        permissions.org shouldBe OrgId("organisation/acme")
+        permissions.accessibleOrgs shouldBe setOf(OrgId("organisation/acme"))
     }
 })

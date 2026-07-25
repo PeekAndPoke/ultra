@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserPermissions
 
 class JwtPermissionsRoundTripSpec : FreeSpec() {
@@ -17,8 +18,8 @@ class JwtPermissionsRoundTripSpec : FreeSpec() {
 
             val permissions = UserPermissions(
                 isSuperUser = true,
-                org = "o1",
-                accessibleOrgs = setOf("o1", "o2"),
+                org = OrgId("organisation/o1"),
+                accessibleOrgs = setOf(OrgId("organisation/o1"), OrgId("organisation/o2")),
                 branches = setOf("b1", "b2"),
                 groups = setOf("g1", "g2"),
                 roles = setOf("r1", "r2"),
@@ -44,8 +45,8 @@ class JwtPermissionsRoundTripSpec : FreeSpec() {
 
             val permissions = UserPermissions(
                 isSuperUser = false,
-                org = "o1",
-                accessibleOrgs = setOf("o1", "o2"),
+                org = OrgId("organisation/o1"),
+                accessibleOrgs = setOf(OrgId("organisation/o1"), OrgId("organisation/o2")),
                 branches = setOf("b1", "b2"),
                 groups = setOf("g1", "g2"),
                 roles = setOf("r1", "r2"),
