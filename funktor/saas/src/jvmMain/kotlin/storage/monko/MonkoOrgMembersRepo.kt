@@ -14,6 +14,7 @@ import io.peekandpoke.monko.lang.dsl.and
 import io.peekandpoke.monko.lang.dsl.eq
 import io.peekandpoke.monko.lang.dsl.notDeleted
 import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Ref
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
@@ -48,13 +49,13 @@ class MonkoOrgMembersRepo(
         }
     }
 
-    override suspend fun findByUser(userId: String): List<Stored<OrgMember>> =
+    override suspend fun findByUser(userId: UserId): List<Stored<OrgMember>> =
         find { r -> filter(and(r.userId eq userId, notDeleted(r.softDelete))) }.toList()
 
     override suspend fun findByOrg(org: Ref<Organisation>): List<Stored<OrgMember>> =
         find { r -> filter(and(r.org eq org._id, notDeleted(r.softDelete))) }.toList()
 
-    override suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: String): Stored<OrgMember>? {
+    override suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: UserId): Stored<OrgMember>? {
         val found = find { r ->
             filter(
                 and(
@@ -68,7 +69,7 @@ class MonkoOrgMembersRepo(
         return found.firstOrNull()
     }
 
-    override suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: String): Stored<OrgMember>? {
+    override suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: UserId): Stored<OrgMember>? {
         // Deliberately NO notDeleted filter — the reactivation path must see the retained slot.
         val found = find { r ->
             filter(and(r.org eq org._id, r.userId eq userId))

@@ -14,6 +14,7 @@ import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.password.PasswordHasher
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Storable
 import io.peekandpoke.ultra.vault.Stored
@@ -34,7 +35,7 @@ class B2b2cUsersRepo(
     companion object {
         suspend fun Storable<B2b2cUser>.asApiModel() = with(resolve()) {
             B2b2cUserModel(
-                id = _id,
+                id = UserId(_id),
                 name = name,
                 email = email,
             )
@@ -58,7 +59,7 @@ class B2b2cUsersRepo(
             authRecordStorage.create {
                 AuthRecord.Password(
                     realm = B2b2cRealm.REALM,
-                    ownerId = _id,
+                    ownerId = UserId(_id),
                     token = passwordHasher.hashAsString(password)
                 )
             }
@@ -82,7 +83,7 @@ class B2b2cUsersRepo(
                 "b2b2c-single", B2b2cUser(name = "Single Org End-User", email = "single@b2b2c.test")
             ).also {
                 it.createPassword()
-                orgMembers.add(org = acme, userId = it._id, roles = setOf("end-user"))
+                orgMembers.add(org = acme, userId = UserId(it._id), roles = setOf("end-user"))
             }
         }
 
@@ -94,8 +95,8 @@ class B2b2cUsersRepo(
                 "b2b2c-multi", B2b2cUser(name = "Multi Org End-User", email = "multi@b2b2c.test")
             ).also {
                 it.createPassword()
-                orgMembers.add(org = acme, userId = it._id, roles = setOf("end-user"))
-                orgMembers.add(org = globex, userId = it._id, roles = setOf("end-user"))
+                orgMembers.add(org = acme, userId = UserId(it._id), roles = setOf("end-user"))
+                orgMembers.add(org = globex, userId = UserId(it._id), roles = setOf("end-user"))
             }
         }
     }

@@ -19,6 +19,7 @@ import io.peekandpoke.ultra.kontainer.module
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.jwt.JwtUserData
 import io.peekandpoke.ultra.security.user.SelectedOrg
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.Vault
@@ -86,8 +87,8 @@ class TestUserRealm(
         // constructor parameter (Lazy<...>), not the delegated property.
         private val repo get() = this@TestUserRealm.usersRepo
 
-        override suspend fun loadById(id: String): Stored<TestUser>? {
-            return repo.findById(id)
+        override suspend fun loadById(id: UserId): Stored<TestUser>? {
+            return repo.findById(id.value)
         }
 
         override suspend fun loadByEmail(email: String): Stored<TestUser>? {
@@ -124,7 +125,7 @@ class TestUserRealm(
 
         val token = gen.createJwt(
             user = JwtUserData(
-                id = user._id,
+                id = UserId(user._id),
                 desc = userValue.name,
                 type = TestUser.USER_TYPE,
                 email = userValue.email,

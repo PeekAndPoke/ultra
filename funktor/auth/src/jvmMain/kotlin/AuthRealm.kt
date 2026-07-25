@@ -26,6 +26,7 @@ import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.funktor.auth.model.AuthUser
 import io.peekandpoke.ultra.security.user.OrgMembership
 import io.peekandpoke.ultra.security.user.SelectedOrg
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Stored
 import kotlinx.html.a
@@ -288,7 +289,7 @@ interface AuthRealm<USER : AuthUser> {
      * [expectedUserType] is validated against the newly generated token to prevent
      * cross-realm token refresh attacks (a user from realm A requesting a token from realm B).
      */
-    suspend fun refreshToken(userId: String, expectedUserType: String?, currentOrgId: String?): AuthSignInResponse {
+    suspend fun refreshToken(userId: UserId, expectedUserType: String?, currentOrgId: String?): AuthSignInResponse {
         val user = users.loadById(userId)
             ?: throw AuthError("User not found: $userId")
 
@@ -347,7 +348,7 @@ interface AuthRealm<USER : AuthUser> {
                         deps.storage.authRecords.create {
                             AuthRecord.OrgSelectionToken(
                                 realm = id,
-                                ownerId = user._id,
+                                ownerId = UserId(user._id),
                                 token = token,
                                 expiresAt = deps.kronos.instantNow()
                                     .plus(tokenConfig.orgSelectionTokenLifetime).toEpochSeconds(),

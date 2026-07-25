@@ -1,10 +1,11 @@
 package io.peekandpoke.funktor.demo.common
 
+import io.peekandpoke.ultra.security.user.UserId
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class OperatorUserModel(
-    val id: String,
+    val id: UserId,
     val name: String,
     val email: String,
     val isSuperUser: Boolean,

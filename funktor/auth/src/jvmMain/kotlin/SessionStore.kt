@@ -4,6 +4,7 @@ import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.value
 import java.security.MessageDigest
@@ -24,7 +25,7 @@ interface SessionStore {
 
     suspend fun create(
         realm: RealmId,
-        ownerId: String,
+        ownerId: UserId,
         deviceFingerprint: String,
         userAgent: String?,
         ipAddress: String?,
@@ -47,23 +48,23 @@ interface SessionStore {
      */
     suspend fun touch(realm: RealmId, sessionId: String, now: MpInstant)
 
-    suspend fun listForUser(realm: RealmId, ownerId: String): List<Stored<AuthRecord.Session>>
+    suspend fun listForUser(realm: RealmId, ownerId: UserId): List<Stored<AuthRecord.Session>>
 
     suspend fun revoke(realm: RealmId, sessionId: String)
 
-    suspend fun revokeAllForUser(realm: RealmId, ownerId: String, except: String? = null)
+    suspend fun revokeAllForUser(realm: RealmId, ownerId: UserId, except: String? = null)
 
     object Null : SessionStore {
         override suspend fun create(
-            realm: RealmId, ownerId: String, deviceFingerprint: String,
+            realm: RealmId, ownerId: UserId, deviceFingerprint: String,
             userAgent: String?, ipAddress: String?, ttl: Duration,
         ): Stored<AuthRecord.Session> = error("SessionStore not configured")
 
         override suspend fun getById(realm: RealmId, sessionId: String): Stored<AuthRecord.Session>? = null
         override suspend fun touch(realm: RealmId, sessionId: String, now: MpInstant) = Unit
-        override suspend fun listForUser(realm: RealmId, ownerId: String): List<Stored<AuthRecord.Session>> = emptyList()
+        override suspend fun listForUser(realm: RealmId, ownerId: UserId): List<Stored<AuthRecord.Session>> = emptyList()
         override suspend fun revoke(realm: RealmId, sessionId: String) = Unit
-        override suspend fun revokeAllForUser(realm: RealmId, ownerId: String, except: String?) = Unit
+        override suspend fun revokeAllForUser(realm: RealmId, ownerId: UserId, except: String?) = Unit
     }
 
     /**
@@ -78,7 +79,7 @@ interface SessionStore {
     ) : SessionStore {
 
         override suspend fun create(
-            realm: RealmId, ownerId: String, deviceFingerprint: String,
+            realm: RealmId, ownerId: UserId, deviceFingerprint: String,
             userAgent: String?, ipAddress: String?, ttl: Duration,
         ): Stored<AuthRecord.Session> {
             val now = kronos.instantNow()
@@ -108,7 +109,7 @@ interface SessionStore {
             // `lastSeenAt` is wired when the auth middleware lands in Phase 2.
         }
 
-        override suspend fun listForUser(realm: RealmId, ownerId: String): List<Stored<AuthRecord.Session>> {
+        override suspend fun listForUser(realm: RealmId, ownerId: UserId): List<Stored<AuthRecord.Session>> {
             return storage.findAllByOwner(type = AuthRecord.Session, realm = realm, owner = ownerId)
         }
 
@@ -118,7 +119,7 @@ interface SessionStore {
             storage.removeById(found._id)
         }
 
-        override suspend fun revokeAllForUser(realm: RealmId, ownerId: String, except: String?) {
+        override suspend fun revokeAllForUser(realm: RealmId, ownerId: UserId, except: String?) {
             val exceptRowId = if (except != null) {
                 storage.findByToken(type = AuthRecord.Session, realm = realm, token = except)?._id
             } else null
@@ -187,7 +188,7 @@ interface SessionStore {
             cache.remove(key(realm, sessionId))
         }
 
-        override suspend fun revokeAllForUser(realm: RealmId, ownerId: String, except: String?) {
+        override suspend fun revokeAllForUser(realm: RealmId, ownerId: UserId, except: String?) {
             inner.revokeAllForUser(realm, ownerId, except)
             // We don't know which session ids belonged to this user without an extra lookup;
             // cheaper to clear the whole local cache than maintain an index.

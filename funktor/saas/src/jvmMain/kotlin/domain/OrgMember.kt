@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.saas.domain
 
 import io.peekandpoke.funktor.saas.isolation.OrgAware
 import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Ref
 import io.peekandpoke.ultra.vault.Vault
 import io.peekandpoke.ultra.vault.addons.SoftDelete
@@ -30,7 +31,7 @@ import io.peekandpoke.ultra.vault.hooks.Timestamped
 data class OrgMember(
     override val org: Ref<Organisation>,
     /** The realm-qualified user `_id` (globally unique across the per-realm user stores). */
-    val userId: String,
+    val userId: UserId,
     val roles: Set<String> = emptySet(),
     val branchIds: Set<String> = emptySet(),
     override val softDelete: SoftDelete? = null,

@@ -13,6 +13,7 @@ import io.peekandpoke.funktor.rest.ApiRoute
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.remote.ApiAccessLevel
 import io.peekandpoke.ultra.security.user.User
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.security.user.UserRecord
 
@@ -34,7 +35,7 @@ class AuthRuleBuilderSpec : StringSpec({
         userType: String? = null,
     ) = AuthRule.EstimateCtx(
         user = User(
-            record = UserRecord.LoggedIn(userId = "test-user", type = userType),
+            record = UserRecord.LoggedIn(userId = UserId("test-user"), type = userType),
             permissions = UserPermissions(isSuperUser = isSuperUser, roles = roles),
         )
     )

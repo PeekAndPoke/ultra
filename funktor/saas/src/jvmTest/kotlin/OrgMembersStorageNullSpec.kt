@@ -6,6 +6,7 @@ import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.saas.domain.OrgMember
 import io.peekandpoke.funktor.saas.domain.Organisation
 import io.peekandpoke.funktor.saas.storage.OrgMembersStorage
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
 
 /**
@@ -23,19 +24,19 @@ class OrgMembersStorageNullSpec : FreeSpec({
         _key = "acme",
     )
     val member = Stored(
-        value = OrgMember(org = org.asRef, userId = "b2b_users/u1"),
+        value = OrgMember(org = org.asRef, userId = UserId("b2b_users/u1")),
         _id = "saas_org_members/m1",
         _key = "m1",
     )
 
     "reads return empty / null" {
-        storage.findByUser("b2b_users/u1") shouldBe emptyList()
+        storage.findByUser(UserId("b2b_users/u1")) shouldBe emptyList()
         storage.findByOrg(org.asRef) shouldBe emptyList()
-        storage.findByOrgAndUser(org.asRef, "b2b_users/u1") shouldBe null
+        storage.findByOrgAndUser(org.asRef, UserId("b2b_users/u1")) shouldBe null
     }
 
     "writes fail loudly" {
-        shouldThrowAny { storage.add(org, "b2b_users/u1", roles = setOf("owner")) }
+        shouldThrowAny { storage.add(org, UserId("b2b_users/u1"), roles = setOf("owner")) }
         shouldThrowAny { storage.save(member) }
         shouldThrowAny { storage.remove(member) }
     }

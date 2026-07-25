@@ -13,7 +13,7 @@ class UserSpec : FreeSpec() {
 
                 val subject = User.anonymous
 
-                subject.record.userId shouldBe "anonymous"
+                subject.record.userId shouldBe UserId("anonymous")
                 subject.record.clientIp shouldBe null
                 subject.record.desc shouldBe null
                 subject.record.type shouldBe null

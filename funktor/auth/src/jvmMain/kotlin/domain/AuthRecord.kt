@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.auth.domain
 
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.slumber.Polymorphic
 import io.peekandpoke.ultra.vault.Vault
 import io.peekandpoke.ultra.vault.hooks.Timestamped
@@ -11,7 +12,7 @@ sealed interface AuthRecord : Timestamped {
 
     data class Password(
         override val realm: RealmId,
-        override val ownerId: String,
+        override val ownerId: UserId,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
         /** The hashed password */
@@ -29,7 +30,7 @@ sealed interface AuthRecord : Timestamped {
 
     data class PasswordRecoveryToken(
         override val realm: RealmId,
-        override val ownerId: String,
+        override val ownerId: UserId,
         override val expiresAt: Long,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
@@ -50,7 +51,7 @@ sealed interface AuthRecord : Timestamped {
      */
     data class EmailVerificationToken(
         override val realm: RealmId,
-        override val ownerId: String,
+        override val ownerId: UserId,
         override val expiresAt: Long,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
@@ -72,7 +73,7 @@ sealed interface AuthRecord : Timestamped {
      */
     data class EmailChangeToken(
         override val realm: RealmId,
-        override val ownerId: String,
+        override val ownerId: UserId,
         override val expiresAt: Long,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
@@ -95,7 +96,7 @@ sealed interface AuthRecord : Timestamped {
      */
     data class OrgSelectionToken(
         override val realm: RealmId,
-        override val ownerId: String,
+        override val ownerId: UserId,
         override val expiresAt: Long,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
@@ -117,7 +118,7 @@ sealed interface AuthRecord : Timestamped {
      */
     data class Session(
         override val realm: RealmId,
-        override val ownerId: String,
+        override val ownerId: UserId,
         override val expiresAt: Long,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
@@ -145,9 +146,14 @@ sealed interface AuthRecord : Timestamped {
     @Vault.Field
     val realm: RealmId
 
-    /** The id of the owner / user */
+    /**
+     * The id of the owner / user.
+     *
+     * Always the realm-qualified Vault `_id` (`<user collection>/<key>`), which is what makes it
+     * globally unique across the per-realm user stores.
+     */
     @Vault.Field
-    val ownerId: String
+    val ownerId: UserId
 
     /** Epoch seconds timestamp, when this entry expires, or NULL if it never expires */
     @Vault.Field

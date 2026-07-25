@@ -22,6 +22,7 @@ import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.karango.vault._id
 import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.RemoveResult
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
@@ -54,7 +55,7 @@ class KarangoAuthRecordsRepo(
         }
     }
 
-    override suspend fun findLatest(realm: RealmId, type: String, owner: String): Stored<AuthRecord>? {
+    override suspend fun findLatest(realm: RealmId, type: String, owner: UserId): Stored<AuthRecord>? {
         return findFirst {
             FOR(repo) { r ->
                 FILTER(r._type EQ type)
@@ -85,7 +86,7 @@ class KarangoAuthRecordsRepo(
     }
 
     override suspend fun findAllByOwner(
-        realm: RealmId, type: String, owner: String,
+        realm: RealmId, type: String, owner: UserId,
     ): List<Stored<AuthRecord>> {
         val cursor = find {
             FOR(repo) { r ->
@@ -100,7 +101,7 @@ class KarangoAuthRecordsRepo(
     }
 
     override suspend fun removeAllByOwner(
-        realm: RealmId, type: String, owner: String, exceptId: String?,
+        realm: RealmId, type: String, owner: UserId, exceptId: String?,
     ): RemoveResult {
         val result = query {
             FOR(repo) { r ->

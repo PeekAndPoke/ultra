@@ -19,6 +19,7 @@ import io.peekandpoke.ultra.html.onClick
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.HttpStatusCode
 import io.peekandpoke.ultra.security.user.OrgRole
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.canManageOrgMembers
 import io.peekandpoke.ultra.security.user.isOrgOwner
 import io.peekandpoke.ultra.security.user.wouldRemoveLastOwner
@@ -67,7 +68,7 @@ class MembersPage(ctx: NoProps) : PureComponent(ctx) {
     private val callerRoles: Set<String> get() = auth.permissions.roles
     private val callerCanManage: Boolean get() = callerRoles.canManageOrgMembers
     private val callerIsOwner: Boolean get() = callerRoles.isOrgOwner
-    private val myUserId: String? get() = auth.user?.id
+    private val myUserId: UserId? get() = auth.user?.id
 
     /** The roles this page lets managers toggle; other (app-defined) roles a member holds are preserved. */
     private val editableRoles = listOf(OrgRole.OWNER, OrgRole.ADMIN, "member")
@@ -136,7 +137,7 @@ class MembersPage(ctx: NoProps) : PureComponent(ctx) {
         }
     }
 
-    private fun TBODY.renderRow(member: OrgMemberModel, ownerIds: Set<String>) {
+    private fun TBODY.renderRow(member: OrgMemberModel, ownerIds: Set<UserId>) {
         val isSelf = member.userId == myUserId
         val targetIsOwner = member.roles.isOrgOwner
         // The server only lets an owner touch an owner (grant/revoke ownership). Mirror that gate here.

@@ -10,13 +10,13 @@ class UserProviderSpec : StringSpec({
     "UserRecordProvider.lazy should provide the UserRecord correctly" {
         val subject = UserProvider.lazy {
             User(
-                record = UserRecord.LoggedIn(userId = "id", clientIp = "1.2.3.4"),
+                record = UserRecord.LoggedIn(userId = UserId("id"), clientIp = "1.2.3.4"),
                 permissions = UserPermissions.system,
             )
         }
 
         subject.invoke() shouldBeSameInstanceAs subject.invoke()
-        subject.invoke().record.userId shouldBe "id"
+        subject.invoke().record.userId shouldBe UserId("id")
         subject.invoke().record.clientIp shouldBe "1.2.3.4"
     }
 
@@ -24,7 +24,7 @@ class UserProviderSpec : StringSpec({
         val subject = UserProvider.system()
 
         subject.invoke() shouldBeSameInstanceAs subject.invoke()
-        subject.invoke().record.userId shouldBe "system"
+        subject.invoke().record.userId shouldBe UserId("system")
         subject.invoke().record.clientIp.shouldNotBeNull()
     }
 })

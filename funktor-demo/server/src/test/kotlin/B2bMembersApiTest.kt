@@ -22,6 +22,7 @@ import io.peekandpoke.funktor.saas.storage.OrgMembersStorage
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
 import io.peekandpoke.funktor.testing.AppSpec
 import io.peekandpoke.ultra.security.user.OrgRole
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
 
 /**
@@ -56,12 +57,12 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
     private suspend fun b2bMember(orgSlug: String, email: String): Stored<OrgMember> {
         val theOrg = org(orgSlug)
         val user = b2bUsers.findByEmail(email) ?: error("user '$email' is not seeded")
-        return orgMembers.findByOrgAndUser(theOrg.asRef, user._id) ?: error("no membership for '$email' in '$orgSlug'")
+        return orgMembers.findByOrgAndUser(theOrg.asRef, UserId(user._id)) ?: error("no membership for '$email' in '$orgSlug'")
     }
 
     /** A b2b2c end-user's membership in the org (present because both realms resolve the same orgs). */
     private suspend fun anyB2b2cMember(orgSlug: String): Stored<OrgMember> =
-        orgMembers.findByOrg(org(orgSlug).asRef).first { it.value().userId.startsWith("b2b2c_users/") }
+        orgMembers.findByOrg(org(orgSlug).asRef).first { it.value().userId.value.startsWith("b2b2c_users/") }
 
     init {
         installAllFixturesBeforeSpec()
@@ -254,7 +255,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
 
                 // Soft-delete the member (simulating a prior removal) — the setup for reactivation.
                 orgMembers.remove(b2bMember("acme", "noorg@b2b.test"))
-                orgMembers.findByOrgAndUser(acme.asRef, noorgId) shouldBe null
+                orgMembers.findByOrgAndUser(acme.asRef, UserId(noorgId)) shouldBe null
 
                 // Phase 2: re-adding reactivates the retained slot with the NEW roles (not a collision).
                 apiApp {
@@ -278,7 +279,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                 }
 
                 // Reactivated: the member resolves again (soft-delete cleared) with the new roles.
-                orgMembers.findByOrgAndUser(acme.asRef, noorgId).shouldNotBeNull().value().roles shouldBe
+                orgMembers.findByOrgAndUser(acme.asRef, UserId(noorgId)).shouldNotBeNull().value().roles shouldBe
                         setOf(OrgRole.ADMIN)
 
                 // Cleanup: soft-delete the added member so this block leaves acme's ACTIVE set unchanged
@@ -397,7 +398,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
 
                 // Soft-deleted: owner@'s membership no longer resolves among acme's members.
                 val ownerUser = b2bUsers.findByEmail("owner@b2b.test")!!
-                orgMembers.findByOrgAndUser(acme.asRef, ownerUser._id) shouldBe null
+                orgMembers.findByOrgAndUser(acme.asRef, UserId(ownerUser._id)) shouldBe null
             }
         }
     }

@@ -49,7 +49,7 @@ val OrgMembership.canManageMembers: Boolean get() = roles.canManageOrgMembers
  * The member ids that own the org, given each member's [OrgMembership] in that org (keyed by the
  * member's user id).
  */
-fun ownerIdsOf(members: Map<String, OrgMembership>): Set<String> =
+fun ownerIdsOf(members: Map<UserId, OrgMembership>): Set<UserId> =
     members.filterValues { it.isOwner }.keys
 
 /**
@@ -59,5 +59,5 @@ fun ownerIdsOf(members: Map<String, OrgMembership>): Set<String> =
  * keeps at least one owner, so this is `true` exactly when [memberId] is the SOLE current owner. An
  * org that already has no owner is never blocked (nothing to protect).
  */
-fun wouldRemoveLastOwner(currentOwnerIds: Set<String>, memberId: String): Boolean =
+fun wouldRemoveLastOwner(currentOwnerIds: Set<UserId>, memberId: UserId): Boolean =
     currentOwnerIds == setOf(memberId)

@@ -17,6 +17,7 @@ import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.security.jwt.JwtGenerator
 import io.peekandpoke.ultra.security.password.PasswordHasher
+import io.peekandpoke.ultra.security.user.UserId
 
 /**
  * AuthSystem manages and provides access to multiple authentication realms.
@@ -116,7 +117,7 @@ class AuthSystem(
 
     /** Refresh the token for the user with the given [userId] in the given [realm] */
     suspend fun refreshToken(
-        realm: RealmId, userId: String, expectedUserType: String?, currentOrgId: String?,
+        realm: RealmId, userId: UserId, expectedUserType: String?, currentOrgId: String?,
     ): AuthSignInResponse {
         return getRealm(realm).refreshToken(userId, expectedUserType, currentOrgId)
     }

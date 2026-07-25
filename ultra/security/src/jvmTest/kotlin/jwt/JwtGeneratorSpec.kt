@@ -10,6 +10,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 
 class JwtGeneratorSpec : StringSpec() {
@@ -43,7 +44,7 @@ class JwtGeneratorSpec : StringSpec() {
         }
 
         "verify() should work as shorthand for verifier.verify()" {
-            val userData = JwtUserData(id = "v1", desc = "Verify Test", type = "Test")
+            val userData = JwtUserData(id = UserId("v1"), desc = "Verify Test", type = "Test")
             val token = jwtGenerator.createJwt(user = userData)
             val payload = jwtGenerator.verify(token)
             payload.subject shouldBe "v1"
@@ -62,7 +63,7 @@ class JwtGeneratorSpec : StringSpec() {
         "createJwt should generate a valid token for provided user data" {
             // Arrange
             val userData = JwtUserData(
-                id = "123",
+                id = UserId("123"),
                 desc = "Test User",
                 type = "Admin",
                 email = null,
@@ -78,7 +79,8 @@ class JwtGeneratorSpec : StringSpec() {
 
             assertSoftly {
                 withClue("token should contain the expected issuer, audience and subject") {
-                    decodedToken.subject shouldBe userData.id
+                    // The raw JWT `sub` claim is a plain string — the UserId is written unwrapped.
+                    decodedToken.subject shouldBe userData.id.value
                     decodedToken.issuer shouldBe "testIssuer"
                     decodedToken.audience.first() shouldBe "testAudience"
                 }
@@ -95,7 +97,7 @@ class JwtGeneratorSpec : StringSpec() {
         "createJwt should include custom claims using builder" {
             // Arrange
             val userData = JwtUserData(
-                id = "123",
+                id = UserId("123"),
                 desc = "Test User",
                 type = "Admin",
                 email = "user-123@example.com"
@@ -139,7 +141,7 @@ class JwtGeneratorSpec : StringSpec() {
         "createJwt should encode permissions correctly" {
             // Arrange
             val userData = JwtUserData(
-                id = "456",
+                id = UserId("456"),
                 desc = "Another User",
                 type = "User"
             )
@@ -198,7 +200,7 @@ class JwtGeneratorSpec : StringSpec() {
         "createJwt should use default permissions when not provided" {
             // Arrange
             val userData = JwtUserData(
-                id = "789",
+                id = UserId("789"),
                 desc = "Default Permissions User",
                 type = "None"
             )

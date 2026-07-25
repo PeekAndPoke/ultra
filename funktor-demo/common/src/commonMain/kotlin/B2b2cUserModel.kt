@@ -1,11 +1,12 @@
 package io.peekandpoke.funktor.demo.common
 
+import io.peekandpoke.ultra.security.user.UserId
 import kotlinx.serialization.Serializable
 
 /** Frontend model of a b2b2c (end-user) tenant user. */
 @Serializable
 data class B2b2cUserModel(
-    val id: String,
+    val id: UserId,
     val name: String,
     val email: String,
 ) {

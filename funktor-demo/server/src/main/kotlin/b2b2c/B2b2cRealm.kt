@@ -23,6 +23,7 @@ import io.peekandpoke.ultra.datetime.jvm
 import io.peekandpoke.ultra.security.jwt.JwtUserData
 import io.peekandpoke.ultra.security.user.OrgMembership
 import io.peekandpoke.ultra.security.user.SelectedOrg
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -80,7 +81,7 @@ class B2b2cRealm(
         // constructor parameter (Lazy<...>), not the delegated property.
         private val repo get() = this@B2b2cRealm.b2b2cUsersRepo
 
-        override suspend fun loadById(id: String) = repo.findById(id)
+        override suspend fun loadById(id: UserId) = repo.findById(id.value)
 
         override suspend fun loadByEmail(email: String) = repo.findByEmail(email)
 
@@ -106,7 +107,7 @@ class B2b2cRealm(
     }
 
     override suspend fun getMemberships(user: Stored<B2b2cUser>): Set<OrgMembership> {
-        return orgMembers.sessionMembershipsOf(user._id)
+        return orgMembers.sessionMembershipsOf(UserId(user._id))
     }
 
     override suspend fun generateJwt(user: Stored<B2b2cUser>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token {
@@ -116,7 +117,7 @@ class B2b2cRealm(
 
         val token = gen.createJwt(
             user = JwtUserData(
-                id = user._id,
+                id = UserId(user._id),
                 desc = userValue.name,
                 type = B2b2cUserModel.USER_TYPE,
                 email = userValue.email,

@@ -20,6 +20,7 @@ import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import io.peekandpoke.funktor.rest.acl.UserApiAccessMatrix
 import io.peekandpoke.ultra.remote.ApiAccessLevel
+import io.peekandpoke.ultra.security.user.UserId
 
 class AuthApiSpec : FunktorApiSpec() {
 
@@ -162,7 +163,7 @@ class AuthApiSpec : FunktorApiSpec() {
                             nonExistentRealm,
                             body = AuthSetPasswordRequest(
                                 provider = provider,
-                                userId = "non-existent",
+                                userId = UserId("non-existent"),
                                 currentPassword = "old",
                                 newPassword = "new",
                             ),

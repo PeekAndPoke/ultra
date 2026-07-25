@@ -66,10 +66,16 @@ class ChangePasswordWidget<USER>(ctx: Ctx<Props<USER>>) : Component<ChangePasswo
     private val noDblClick = doubleClickProtection()
 
     private suspend fun updatePassword() = noDblClick.runBlocking {
+        // No usable user id in the session token — nothing to change a password for.
+        val currentUserId = userId ?: run {
+            state = State.Error
+            return@runBlocking
+        }
+
         val result = auth.requestSetPassword(
             AuthSetPasswordRequest(
                 provider = provider?.id ?: "",
-                userId = userId ?: "",
+                userId = currentUserId,
                 currentPassword = currentPassword,
                 newPassword = newPassword,
             )

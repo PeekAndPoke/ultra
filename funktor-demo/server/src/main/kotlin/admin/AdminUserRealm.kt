@@ -15,6 +15,7 @@ import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.datetime.jvm
 import io.peekandpoke.ultra.security.jwt.JwtUserData
 import io.peekandpoke.ultra.security.user.SelectedOrg
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.Json
@@ -70,7 +71,7 @@ class AdminUserRealm(
         // constructor parameter (Lazy<...>), not the delegated property.
         private val repo get() = this@AdminUserRealm.appUserRepo
 
-        override suspend fun loadById(id: String) = repo.findById(id)
+        override suspend fun loadById(id: UserId) = repo.findById(id.value)
 
         override suspend fun loadByEmail(email: String) = repo.findByEmail(email)
 
@@ -97,7 +98,7 @@ class AdminUserRealm(
 
         val token = gen.createJwt(
             user = JwtUserData(
-                id = user._id,
+                id = UserId(user._id),
                 desc = userValue.name,
                 type = AdminUserModel.USER_TYPE,
                 email = userValue.email,

@@ -12,6 +12,7 @@ import io.peekandpoke.funktor.rest.ApiRoute
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.remote.ApiAccessLevel
 import io.peekandpoke.ultra.security.user.User
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.security.user.UserRecord
 
@@ -23,11 +24,11 @@ import io.peekandpoke.ultra.security.user.UserRecord
 class AuthPhaseSpec : StringSpec({
 
     val superUser = User(
-        record = UserRecord.LoggedIn(userId = "root"),
+        record = UserRecord.LoggedIn(userId = UserId("root")),
         permissions = UserPermissions(isSuperUser = true),
     )
     val plainUser = User(
-        record = UserRecord.LoggedIn(userId = "alice"),
+        record = UserRecord.LoggedIn(userId = UserId("alice")),
         permissions = UserPermissions(),
     )
 

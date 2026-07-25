@@ -13,6 +13,7 @@ import io.peekandpoke.funktor.saas.domain.Organisation
 import io.peekandpoke.funktor.saas.isolation.OrgAwareParam
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.security.user.OrgRole
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.isOrgOwner
 import io.peekandpoke.ultra.security.user.wouldRemoveLastOwner
 import io.peekandpoke.ultra.vault.Stored
@@ -159,8 +160,8 @@ class B2bMembersApi(
      * key, so verify the FULL id round-trips — a cross-realm bare-key collision must not pass the
      * b2b scope check (`b2b2c_users/x` must not resolve as `b2b_users/x`).
      */
-    private suspend fun b2bUserOf(userId: String) =
-        services.b2bUsers.findById(userId)?.takeIf { it._id == userId }
+    private suspend fun b2bUserOf(userId: UserId) =
+        services.b2bUsers.findById(userId.value)?.takeIf { it._id == userId.value }
 
     /**
      * Adds an EXISTING b2b user (resolved by [AddMemberRequest.email]) to [org]. b2b-scoped: an email
@@ -180,10 +181,10 @@ class B2bMembersApi(
         // Owner-only ownership — granting OWNER on add requires the caller to be an owner.
         if (body.roles.isOrgOwner && !callerIsOwner) return Outcome.OwnerOnly
 
-        val existing = services.orgMembers.findByOrgAndUserIncludingDeleted(org.asRef, u._id)
+        val existing = services.orgMembers.findByOrgAndUserIncludingDeleted(org.asRef, UserId(u._id))
         return when {
             existing == null ->
-                Outcome.Ok(services.orgMembers.add(org = org, userId = u._id, roles = body.roles))
+                Outcome.Ok(services.orgMembers.add(org = org, userId = UserId(u._id), roles = body.roles))
 
             existing.value().softDelete == null ->
                 Outcome.AlreadyMember
@@ -222,7 +223,7 @@ class B2bMembersApi(
      * Would setting [userId]'s roles to [newRoles] leave the org with no owner? Computed over the
      * FULL (cross-realm) active owner set — called inside the per-org lock so it is race-free.
      */
-    private suspend fun wouldOrphanOrg(org: Stored<Organisation>, userId: String, newRoles: Set<String>): Boolean {
+    private suspend fun wouldOrphanOrg(org: Stored<Organisation>, userId: UserId, newRoles: Set<String>): Boolean {
         if (newRoles.isOrgOwner) return false // the target remains an owner after the change
 
         val ownerIds = services.orgMembers.findByOrg(org.asRef)

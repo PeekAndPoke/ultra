@@ -42,7 +42,10 @@ kotlin {
                 implementation(Deps.KotlinLibs.uuid)
 
                 implementation(project(":ultra:common"))
-                implementation(project(":ultra:security"))
+                // `api` (not `implementation`): UserId appears in this module's PUBLISHED API —
+                // AuthSetPasswordRequest.userId, AuthState.Data.Session.tokenUserId, AuthRecord.ownerId,
+                // AuthRecordStorage/SessionStore/AuthRealm.refreshToken — so consumers must see the type.
+                api(project(":ultra:security"))
                 implementation(project(":ultra:slumber"))
 
                 implementation(project(":kraft:core"))

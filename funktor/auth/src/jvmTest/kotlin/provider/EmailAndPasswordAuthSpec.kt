@@ -20,6 +20,7 @@ import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.messaging.api.EmailResult
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.log.NullLog
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
 
 class EmailAndPasswordAuthSpec : FreeSpec() {
@@ -27,7 +28,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
     private open class TestServices(
         val onHashPassword: (String) -> String = { error("hashPassword not implemented") },
         val onCheckPassword: (String, String) -> Boolean = { _, _ -> error("checkPassword not implemented") },
-        val onFindLatestPasswordRecord: suspend (RealmId, String) -> Stored<AuthRecord.Password>? = { _, _ -> error("findLatestPasswordRecord not implemented") },
+        val onFindLatestPasswordRecord: suspend (RealmId, UserId) -> Stored<AuthRecord.Password>? = { _, _ -> error("findLatestPasswordRecord not implemented") },
         val onCreateAuthRecord: suspend (create: () -> AuthRecord) -> Stored<AuthRecord> = { error("createAuthRecord not implemented") },
         val onGenerateToken: (Int) -> String = { error("generateToken not implemented") },
         val onInstantNow: () -> MpInstant = { error("instantNow not implemented") },
@@ -37,7 +38,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
     ) : EmailAndPasswordAuth.Services {
         override fun hashPassword(password: String): String = onHashPassword(password)
         override fun checkPassword(plaintext: String, hash: String): Boolean = onCheckPassword(plaintext, hash)
-        override suspend fun findLatestPasswordRecord(realm: RealmId, owner: String): Stored<AuthRecord.Password>? =
+        override suspend fun findLatestPasswordRecord(realm: RealmId, owner: UserId): Stored<AuthRecord.Password>? =
             onFindLatestPasswordRecord(realm, owner)
 
         @Suppress("UNCHECKED_CAST")
@@ -199,7 +200,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                                 _id = "password-id",
                                 value = AuthRecord.Password(
                                     realm = RealmId("test-realm"),
-                                    ownerId = storedUser._id,
+                                    ownerId = UserId(storedUser._id),
                                     token = "hashed-password"
                                 )
                             )
@@ -243,7 +244,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                                 _id = "password-id",
                                 value = AuthRecord.Password(
                                     realm = RealmId("test-realm"),
-                                    ownerId = storedUser._id,
+                                    ownerId = UserId(storedUser._id),
                                     token = "hashed-password"
                                 )
                             )
@@ -460,7 +461,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 result.requiresActivation shouldBe true
 
                 val createdPassword = createdAuthRecord!!.resolve() as AuthRecord.Password
-                createdPassword.ownerId shouldBe storedUser._id
+                createdPassword.ownerId shouldBe UserId(storedUser._id)
                 createdPassword.token shouldBe hashedPassword
                 createdPassword.realm shouldBe realm.id
             }
@@ -478,7 +479,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 )
                 val request = AuthSetPasswordRequest(
                     provider = subject.id,
-                    userId = "user-id",
+                    userId = UserId("user-id"),
                     currentPassword = "old-password",
                     newPassword = "weak",
                 )
@@ -504,14 +505,14 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
                 val request = AuthSetPasswordRequest(
                     provider = subject.id,
-                    userId = "user-id",
+                    userId = UserId("user-id"),
                     currentPassword = "old-password",
                     newPassword = "A-valid-password-123!",
                 )
 
                 val realm = MinimalTestRealm(
                     onLoadUserById = {
-                        it shouldBe "user-id"
+                        it shouldBe UserId("user-id")
                         null // User not found
                     }
                 )
@@ -551,13 +552,13 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 )
                 val request = AuthSetPasswordRequest(
                     provider = subject.id,
-                    userId = storedUser._id,
+                    userId = UserId(storedUser._id),
                     currentPassword = "wrong-password",
                     newPassword = "Strong-password-123!",
                 )
                 val realm = MinimalTestRealm(
                     onLoadUserById = {
-                        it shouldBe storedUser._id
+                        it shouldBe UserId(storedUser._id)
                         storedUser
                     },
                 )
@@ -599,7 +600,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                         onCreateAuthRecord = { create ->
                             val record = create() as AuthRecord.Password
                             record.realm shouldBe RealmId("test-realm")
-                            record.ownerId shouldBe storedUser._id
+                            record.ownerId shouldBe UserId(storedUser._id)
                             record.token shouldBe hashedPassword
 
                             Stored(_id = "new-password-record", value = record)
@@ -613,13 +614,13 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 )
                 val request = AuthSetPasswordRequest(
                     provider = subject.id,
-                    userId = storedUser._id,
+                    userId = UserId(storedUser._id),
                     currentPassword = currentPassword,
                     newPassword = newPassword,
                 )
                 val realm = MinimalTestRealm(
                     onLoadUserById = {
-                        it shouldBe storedUser._id
+                        it shouldBe UserId(storedUser._id)
                         storedUser
                     },
                     getMessaging = {

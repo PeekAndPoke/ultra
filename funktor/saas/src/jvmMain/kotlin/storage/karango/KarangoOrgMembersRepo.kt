@@ -15,6 +15,7 @@ import io.peekandpoke.karango.vault.EntityRepository
 import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Ref
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
@@ -53,7 +54,7 @@ class KarangoOrgMembersRepo(
         }
     }
 
-    override suspend fun findByUser(userId: String): List<Stored<OrgMember>> = find {
+    override suspend fun findByUser(userId: UserId): List<Stored<OrgMember>> = find {
         FOR(repo) { member ->
             FILTER(member.userId EQ userId)
             FILTER(notDeleted(member.softDelete))
@@ -69,7 +70,7 @@ class KarangoOrgMembersRepo(
         }
     }.toList()
 
-    override suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: String): Stored<OrgMember>? = findFirst {
+    override suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: UserId): Stored<OrgMember>? = findFirst {
         FOR(repo) { member ->
             FILTER(member.org EQ org._id)
             FILTER(member.userId EQ userId)
@@ -79,7 +80,7 @@ class KarangoOrgMembersRepo(
         }
     }
 
-    override suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: String): Stored<OrgMember>? =
+    override suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: UserId): Stored<OrgMember>? =
         findFirst {
             // Deliberately NO notDeleted filter — the reactivation path must see the retained slot.
             FOR(repo) { member ->

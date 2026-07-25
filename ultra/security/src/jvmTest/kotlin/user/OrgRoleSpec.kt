@@ -50,31 +50,31 @@ class OrgRoleSpec : FreeSpec() {
 
         "ownerIdsOf selects only the members holding OWNER" {
             val members = mapOf(
-                "u1" to membership(OrgRole.OWNER),
-                "u2" to membership(OrgRole.ADMIN),
-                "u3" to membership(OrgRole.OWNER, "accountant"),
-                "u4" to membership("member"),
+                UserId("u1") to membership(OrgRole.OWNER),
+                UserId("u2") to membership(OrgRole.ADMIN),
+                UserId("u3") to membership(OrgRole.OWNER, "accountant"),
+                UserId("u4") to membership("member"),
             )
 
-            ownerIdsOf(members) shouldBe setOf("u1", "u3")
+            ownerIdsOf(members) shouldBe setOf(UserId("u1"), UserId("u3"))
         }
 
         "wouldRemoveLastOwner" - {
 
             "is true when the member is the sole owner" {
-                wouldRemoveLastOwner(currentOwnerIds = setOf("u1"), memberId = "u1") shouldBe true
+                wouldRemoveLastOwner(currentOwnerIds = setOf(UserId("u1")), memberId = UserId("u1")) shouldBe true
             }
 
             "is false when other owners remain" {
-                wouldRemoveLastOwner(currentOwnerIds = setOf("u1", "u2"), memberId = "u1") shouldBe false
+                wouldRemoveLastOwner(currentOwnerIds = setOf(UserId("u1"), UserId("u2")), memberId = UserId("u1")) shouldBe false
             }
 
             "is false when the member is not an owner" {
-                wouldRemoveLastOwner(currentOwnerIds = setOf("u1"), memberId = "u2") shouldBe false
+                wouldRemoveLastOwner(currentOwnerIds = setOf(UserId("u1")), memberId = UserId("u2")) shouldBe false
             }
 
             "is false for an org that already has no owner" {
-                wouldRemoveLastOwner(currentOwnerIds = emptySet(), memberId = "u1") shouldBe false
+                wouldRemoveLastOwner(currentOwnerIds = emptySet(), memberId = UserId("u1")) shouldBe false
             }
         }
     }

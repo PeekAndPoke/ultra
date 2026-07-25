@@ -12,6 +12,7 @@ import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.password.PasswordHasher
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Storable
 import io.peekandpoke.ultra.vault.Stored
@@ -32,7 +33,7 @@ class OperatorUsersRepo(
     companion object {
         suspend fun Storable<OperatorUser>.asApiModel() = with(resolve()) {
             OperatorUserModel(
-                id = _id,
+                id = UserId(_id),
                 name = name,
                 email = email,
                 isSuperUser = isSuperUser,
@@ -55,7 +56,7 @@ class OperatorUsersRepo(
             authRecordStorage.create {
                 AuthRecord.Password(
                     realm = OperatorRealm.REALM,
-                    ownerId = _id,
+                    ownerId = UserId(_id),
                     token = passwordHasher.hashAsString(password)
                 )
             }

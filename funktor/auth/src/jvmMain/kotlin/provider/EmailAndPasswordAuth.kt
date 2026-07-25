@@ -23,6 +23,7 @@ import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.remote.buildUri
 import io.peekandpoke.ultra.security.password.PasswordHasher
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.value
 import kotlinx.serialization.json.buildJsonObject
@@ -104,7 +105,7 @@ class EmailAndPasswordAuth(
         suspend fun <T : AuthRecord> createAuthRecord(record: () -> T): Stored<T>
 
         /** Find the password recovery token for the given [realm] and [owner] */
-        suspend fun findLatestPasswordRecord(realm: RealmId, owner: String): Stored<AuthRecord.Password>?
+        suspend fun findLatestPasswordRecord(realm: RealmId, owner: UserId): Stored<AuthRecord.Password>?
 
         /** Find the password recovery token for the given [realm] and [token] */
         suspend fun findPasswordRecoveryToken(realm: RealmId, token: String): Stored<AuthRecord.PasswordRecoveryToken>?
@@ -146,7 +147,7 @@ class EmailAndPasswordAuth(
         }
 
         /** @{inheritDoc} */
-        override suspend fun findLatestPasswordRecord(realm: RealmId, owner: String): Stored<AuthRecord.Password>? {
+        override suspend fun findLatestPasswordRecord(realm: RealmId, owner: UserId): Stored<AuthRecord.Password>? {
             return authRecordStorage
                 .findLatestRecordBy(type = AuthRecord.Password, realm = realm, owner = owner)
         }
@@ -257,7 +258,7 @@ class EmailAndPasswordAuth(
         }
         // Store password record
         services.createAuthRecord {
-            createPasswordRecord(realmId = realm.id, ownerId = user._id, password = typed.password)
+            createPasswordRecord(realmId = realm.id, ownerId = UserId(user._id), password = typed.password)
         }
 
         return AuthProvider.SignUpResult(
@@ -278,7 +279,7 @@ class EmailAndPasswordAuth(
             ?: throw AuthError.weakPassword()
 
         val user = realm.users.loadById(request.userId)
-            ?: throw AuthError.userNotFound(request.userId)
+            ?: throw AuthError.userNotFound(request.userId.value)
 
         // 2. Verify the current password before allowing a change
         validateCurrentPassword(realm, user, request.currentPassword).takeIf { it }
@@ -286,7 +287,7 @@ class EmailAndPasswordAuth(
 
         // 3. Write new password entry into database
         services.createAuthRecord {
-            createPasswordRecord(realmId = realm.id, ownerId = user._id, password = request.newPassword)
+            createPasswordRecord(realmId = realm.id, ownerId = UserId(user._id), password = request.newPassword)
         }
 
         val emailResult = realm.messaging.sendPasswordChangedEmail(user)
@@ -317,7 +318,7 @@ class EmailAndPasswordAuth(
         services.createAuthRecord {
             AuthRecord.PasswordRecoveryToken(
                 realm = realm.id,
-                ownerId = user._id,
+                ownerId = UserId(user._id),
                 token = token,
                 // TODO: make expiration configurable
                 expiresAt = services.instantNow().plus(1.hours).toEpochSeconds(),
@@ -392,7 +393,7 @@ class EmailAndPasswordAuth(
         realm: AuthRealm<USER>, user: Stored<USER>, password: String,
     ): Boolean {
         val record = services
-            .findLatestPasswordRecord(realm = realm.id, owner = user._id)
+            .findLatestPasswordRecord(realm = realm.id, owner = UserId(user._id))
             ?: return false
 
         return services.checkPassword(plaintext = password, hash = record.resolve().token)
@@ -401,7 +402,7 @@ class EmailAndPasswordAuth(
     /**
      * Creates a new password record for the given [realmId], [ownerId] and [password].
      */
-    private fun createPasswordRecord(realmId: RealmId, ownerId: String, password: String): AuthRecord.Password {
+    private fun createPasswordRecord(realmId: RealmId, ownerId: UserId, password: String): AuthRecord.Password {
         return AuthRecord.Password(
             realm = realmId,
             ownerId = ownerId,

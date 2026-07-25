@@ -16,6 +16,7 @@ import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.TypedApiEndpoint
 import io.peekandpoke.ultra.remote.api
 import io.peekandpoke.ultra.security.user.User
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.security.user.UserRecord
 import kotlinx.serialization.builtins.serializer
@@ -31,7 +32,7 @@ class FloorAuthRuleBuilderSpec : StringSpec({
 
     fun estimateCtx(isSuperUser: Boolean = false, userType: String? = null) = AuthRule.EstimateCtx(
         user = User(
-            record = UserRecord.LoggedIn(userId = "u", type = userType),
+            record = UserRecord.LoggedIn(userId = UserId("u"), type = userType),
             permissions = UserPermissions(isSuperUser = isSuperUser),
         )
     )

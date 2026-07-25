@@ -37,6 +37,7 @@ import io.peekandpoke.ultra.security.jwt.JwtUserData
 import io.peekandpoke.ultra.security.password.PasswordHasher
 import io.peekandpoke.ultra.security.ultraSecurity
 import io.peekandpoke.ultra.security.user.SelectedOrg
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Database
 import io.peekandpoke.ultra.vault.Storable
@@ -134,7 +135,7 @@ class MinimalTestRealm(
     val getMessaging: () -> AuthRealm.Messaging<MinimalTestUser> = { TestMessaging() },
     val onLoadUserByEmail: suspend (String) -> Stored<MinimalTestUser>? =
         { error("loadUserByEmail was not expected to be called") },
-    val onLoadUserById: suspend (String) -> Stored<MinimalTestUser>? =
+    val onLoadUserById: suspend (UserId) -> Stored<MinimalTestUser>? =
         { error("onLoadUserById was not expected to be called") },
     val onCreateUserForSignup: suspend (params: AuthUserAdapter.CreateUserForSignupParams) -> Stored<MinimalTestUser> =
         { error("createUserForSignup was not expected to be called") },
@@ -142,7 +143,7 @@ class MinimalTestRealm(
     override val id: RealmId get() = RealmId("test-realm")
 
     override val users = object : AuthUserAdapter<MinimalTestUser> {
-        override suspend fun loadById(id: String): Stored<MinimalTestUser>? =
+        override suspend fun loadById(id: UserId): Stored<MinimalTestUser>? =
             onLoadUserById(id)
 
         override suspend fun loadByEmail(email: String): Stored<MinimalTestUser>? =
@@ -247,8 +248,8 @@ class TestAppUserRealm(
         // constructor parameter (Lazy<...>), not the delegated property.
         private val repo get() = this@TestAppUserRealm.appUserRepo
 
-        override suspend fun loadById(id: String): Stored<TestAppUser>? {
-            return repo.findById(id)
+        override suspend fun loadById(id: UserId): Stored<TestAppUser>? {
+            return repo.findById(id.value)
         }
 
         override suspend fun loadByEmail(email: String): Stored<TestAppUser>? {
@@ -284,7 +285,7 @@ class TestAppUserRealm(
 
         val token = gen.createJwt(
             user = JwtUserData(
-                id = user._id,
+                id = UserId(user._id),
                 desc = userValue.name,
                 type = TestAppUser.USER_TYPE,
                 email = userValue.email,

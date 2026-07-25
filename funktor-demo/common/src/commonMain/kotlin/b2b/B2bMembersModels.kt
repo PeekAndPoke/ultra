@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.demo.common.b2b
 
+import io.peekandpoke.ultra.security.user.UserId
 import kotlinx.serialization.Serializable
 
 /**
@@ -11,7 +12,7 @@ data class OrgMemberModel(
     /** The `OrgMember` row id — addresses the change-roles / remove endpoints. */
     val id: String,
     /** The member's (realm-qualified) user id. */
-    val userId: String,
+    val userId: UserId,
     val name: String,
     val email: String,
     val roles: Set<String>,

@@ -17,6 +17,7 @@ import io.peekandpoke.kraft.routing.routerMiddleware
 import io.peekandpoke.kraft.utils.clearInterval
 import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.utils.setInterval
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.slumber.JsonUtil.toJsonObject
 import io.peekandpoke.ultra.streams.Stream
@@ -70,7 +71,7 @@ class AuthState<USER>(
         data class Session<USER>(
             val token: AuthSignInResponse.Token,
             val realm: AuthRealmModel,
-            val tokenUserId: String,
+            val tokenUserId: UserId?,
             val tokenExpires: String?,
             val claims: JsonObject,
             val user: USER,
@@ -370,7 +371,9 @@ class AuthState<USER>(
 
         val expDate = (claims["exp"] as? Int)?.let { Date(it.toLong() * 1000) }
 
-        val userId = claims["sub"] as? String ?: ""
+        // A `sub` that is missing or not a structurally valid UserId yields no user id rather than
+        // throwing — the token comes off the wire, so parsing must degrade instead of blowing up.
+        val userId = UserId.parseOrNull(claims["sub"] as? String)
 
         return Data(
             session = Data.Session(

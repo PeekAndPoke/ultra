@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.saas.storage
 import io.peekandpoke.funktor.saas.domain.OrgMember
 import io.peekandpoke.funktor.saas.domain.Organisation
 import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Ref
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Storable
@@ -19,15 +20,15 @@ interface OrgMembersStorage {
 
     /** No-op storage — reads return empty, writes fail loudly. Active until a backend is selected. */
     class Null : OrgMembersStorage {
-        override suspend fun findByUser(userId: String): List<Stored<OrgMember>> = emptyList()
+        override suspend fun findByUser(userId: UserId): List<Stored<OrgMember>> = emptyList()
         override suspend fun findByOrg(org: Ref<Organisation>): List<Stored<OrgMember>> = emptyList()
-        override suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: String): Stored<OrgMember>? = null
-        override suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: String): Stored<OrgMember>? =
+        override suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: UserId): Stored<OrgMember>? = null
+        override suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: UserId): Stored<OrgMember>? =
             null
 
         override suspend fun add(
             org: Stored<Organisation>,
-            userId: String,
+            userId: UserId,
             roles: Set<String>,
             branchIds: Set<String>,
         ): Stored<OrgMember> = notConfigured()
@@ -43,18 +44,18 @@ interface OrgMembersStorage {
     /** Vault-backed storage, delegating to a backend [Repo] (Karango or Monko). */
     class Vault(private val repo: Repo) : OrgMembersStorage {
         interface Repo : Repository<OrgMember> {
-            suspend fun findByUser(userId: String): List<Stored<OrgMember>>
+            suspend fun findByUser(userId: UserId): List<Stored<OrgMember>>
             suspend fun findByOrg(org: Ref<Organisation>): List<Stored<OrgMember>>
-            suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: String): Stored<OrgMember>?
-            suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: String): Stored<OrgMember>?
+            suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: UserId): Stored<OrgMember>?
+            suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: UserId): Stored<OrgMember>?
         }
 
-        override suspend fun findByUser(userId: String) = repo.findByUser(userId)
+        override suspend fun findByUser(userId: UserId) = repo.findByUser(userId)
         override suspend fun findByOrg(org: Ref<Organisation>) = repo.findByOrg(org)
-        override suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: String) =
+        override suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: UserId) =
             repo.findByOrgAndUser(org, userId)
 
-        override suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: String) =
+        override suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: UserId) =
             repo.findByOrgAndUserIncludingDeleted(org, userId)
 
         override suspend fun save(member: Storable<OrgMember>) = repo.save(member)
@@ -62,7 +63,7 @@ interface OrgMembersStorage {
 
         override suspend fun add(
             org: Stored<Organisation>,
-            userId: String,
+            userId: UserId,
             roles: Set<String>,
             branchIds: Set<String>,
         ): Stored<OrgMember> = repo.insert(
@@ -76,20 +77,20 @@ interface OrgMembersStorage {
     }
 
     /** Every organisation the given [userId] belongs to. Backs the realm `getMemberships()` hook. */
-    suspend fun findByUser(userId: String): List<Stored<OrgMember>>
+    suspend fun findByUser(userId: UserId): List<Stored<OrgMember>>
 
     /** Every member of the given [org]. */
     suspend fun findByOrg(org: Ref<Organisation>): List<Stored<OrgMember>>
 
     /** The single membership of [userId] in [org], or `null`. */
-    suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: String): Stored<OrgMember>?
+    suspend fun findByOrgAndUser(org: Ref<Organisation>, userId: UserId): Stored<OrgMember>?
 
     /**
      * The single membership of [userId] in [org] INCLUDING a soft-deleted one, or `null`. Unlike
      * [findByOrgAndUser] this does NOT hide soft-deleted rows — reactivation/audit paths need to see
      * the retained `(org, userId)` slot that the unique index still holds.
      */
-    suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: String): Stored<OrgMember>?
+    suspend fun findByOrgAndUserIncludingDeleted(org: Ref<Organisation>, userId: UserId): Stored<OrgMember>?
 
     /**
      * Adds a NEW membership row for [userId] in [org] with the given [roles]/[branchIds].
@@ -102,7 +103,7 @@ interface OrgMembersStorage {
      */
     suspend fun add(
         org: Stored<Organisation>,
-        userId: String,
+        userId: UserId,
         roles: Set<String> = emptySet(),
         branchIds: Set<String> = emptySet(),
     ): Stored<OrgMember>

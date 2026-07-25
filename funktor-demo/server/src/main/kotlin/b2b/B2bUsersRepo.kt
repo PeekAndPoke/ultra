@@ -14,6 +14,7 @@ import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.password.PasswordHasher
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Storable
 import io.peekandpoke.ultra.vault.Stored
@@ -34,7 +35,7 @@ class B2bUsersRepo(
     companion object {
         suspend fun Storable<B2bUser>.asApiModel() = with(resolve()) {
             B2bUserModel(
-                id = _id,
+                id = UserId(_id),
                 name = name,
                 email = email,
             )
@@ -58,7 +59,7 @@ class B2bUsersRepo(
             authRecordStorage.create {
                 AuthRecord.Password(
                     realm = B2bRealm.REALM,
-                    ownerId = _id,
+                    ownerId = UserId(_id),
                     token = passwordHasher.hashAsString(password)
                 )
             }
@@ -78,7 +79,7 @@ class B2bUsersRepo(
                 "b2b-single", B2bUser(name = "Single Org User", email = "single@b2b.test")
             ).also {
                 it.createPassword()
-                orgMembers.add(org = acme, userId = it._id, roles = setOf("admin"))
+                orgMembers.add(org = acme, userId = UserId(it._id), roles = setOf("admin"))
             }
         }
 
@@ -90,8 +91,8 @@ class B2bUsersRepo(
                 "b2b-multi", B2bUser(name = "Multi Org User", email = "multi@b2b.test")
             ).also {
                 it.createPassword()
-                orgMembers.add(org = acme, userId = it._id, roles = setOf("admin"))
-                orgMembers.add(org = globex, userId = it._id, roles = setOf("member"))
+                orgMembers.add(org = acme, userId = UserId(it._id), roles = setOf("admin"))
+                orgMembers.add(org = globex, userId = UserId(it._id), roles = setOf("member"))
             }
         }
 
@@ -102,7 +103,7 @@ class B2bUsersRepo(
                 "b2b-owner", B2bUser(name = "Owner User", email = "owner@b2b.test")
             ).also {
                 it.createPassword()
-                orgMembers.add(org = acme, userId = it._id, roles = setOf("owner"))
+                orgMembers.add(org = acme, userId = UserId(it._id), roles = setOf("owner"))
             }
         }
     }

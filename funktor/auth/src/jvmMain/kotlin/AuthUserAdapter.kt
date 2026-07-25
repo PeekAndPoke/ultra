@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.auth
 
 import io.peekandpoke.funktor.auth.model.AuthUser
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.JsonObject
 
@@ -29,8 +30,17 @@ interface AuthUserAdapter<USER : AuthUser> {
         }
     }
 
-    /** Loads a user by its id. */
-    suspend fun loadById(id: String): Stored<USER>?
+    /**
+     * Loads a user by its id.
+     *
+     * [id] is the realm-qualified Vault `_id` (`<user collection>/<key>`). Implementations should
+     * pass `id.value` straight to their repository. NOTE that `Repository.findById` reduces an id to
+     * its bare `_key` on the Monko backend, so an `_id` from ANOTHER realm's collection can resolve
+     * a same-key document here — see `.claude/future-plans/20260725-monko-findbyid-collection-prefix.md`.
+     * Callers that use the result as an authorization subject must round-trip it
+     * (`?.takeIf { it._id == id.value }`), as `B2bMembersApi.b2bUserOf` does.
+     */
+    suspend fun loadById(id: UserId): Stored<USER>?
 
     /** Loads a user by its email. */
     suspend fun loadByEmail(email: String): Stored<USER>?

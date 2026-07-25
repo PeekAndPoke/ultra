@@ -82,7 +82,18 @@ value classes over a PRIMITIVE/enum backing only (delegates to `IncomingPrimitiv
 planned id (`RealmId`/`UserId`/`OrgId`/`Email`/`Slug`) is `String`-backed → fine; a value class over a
 non-primitive (date/UUID/nested VC) would fail loudly at bind time — acceptable, documented.
 
-## Step 2 — `UserId`
+## Step 2 — `UserId` ✅ DONE 2026-07-25
+See `.claude/tasks/20260725-value-class-userid.md` (gate PASS). Two corrections to the plan below:
+**placement is `ultra/security` commonMain, NOT `funktor/auth`** (`OrgMember` lives in funktor/saas,
+which has no dependency on funktor:auth — ultra:security is the lowest common module and already owns
+`UserRecord.userId`/`JwtUserData`/the CSRF key); and **the invariant is STRUCTURAL, not coll/key**,
+because the same type carries synthetic non-document subjects (`anonymous`, `system`, `role-eval`,
+API-key subjects) that are compared against real user ids. Wire+storage byte-identical.
+Also landed as a by-product: request-body deserialization now maps a violated `init` to a **400**
+instead of a 500 (`SlumberRestCodec.awakeBody`) — **Steps 3 and 4 depend on this**, since `orgId` and
+the much stricter `Email` are both body fields.
+
+### Original plan text
 `userId`/`ownerId: String` → `UserId` (realm-qualified `_id`, e.g. `b2b_users/x`). Surface: `AuthRecord.
 ownerId` (stored+queried → KSP), `SessionStore`, `OrgMembersStorage` (`OrgMember.userId` — stored+
 queried → KSP), `AuthSystem`. Vault `Stored<T>._id` stays a generic `String`; `UserId` lives at the
