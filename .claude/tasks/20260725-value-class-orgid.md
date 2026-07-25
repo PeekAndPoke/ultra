@@ -114,10 +114,19 @@ sessions must re-login.** Acceptable: this repo carries no back-compat requireme
 
 ### Deferred / flagged (not fixed here)
 
-- **DEAD SURFACE for the user to decide on:** `AuthRule.forOrganisation` / `forAnyOrganisation` and both
-  builder pairs have ZERO production callers (only `AuthPhaseSpec`). Per the standing "flag dead surface
-  before porting" rule these were deletion candidates, not hardening targets — raised, not removed.
-  (Same open question as `ownerIdsOf` from Step 2.)
+- **DEAD SURFACE — REMOVED 2026-07-25 on the user's call.** `AuthRule.forOrganisation` /
+  `forAnyOrganisation` and both builder pairs (`AuthRuleBuilder`, `FloorAuthRuleBuilder`) had ZERO
+  production callers — only `AuthPhaseSpec`. Deleted, along with the `AuthPhaseSpec` assertion and the
+  docs-site snippet lines. `UserPermissions.hasOrganisation` STAYS — it is what `OrgIsolationGuard`
+  uses for caller-binding.
+
+- **NEWLY unreachable as a consequence — FLAGGED, not removed:**
+  `UserPermissions.hasAnyOrganisation` (both overloads' single caller was `AuthRule.forAnyOrganisation`)
+  and `UserPermissions.canAccessOrg` (already had no production caller before this change). Both are
+  still covered by `UserPermissionsSpec`, so they are "tested but unreachable". They are a different
+  surface from the auth rules — public predicates on a widely-used data class — so removing them is the
+  user's call, not a side effect of this task.
+  Also still open from Step 2: `ownerIdsOf` (`ultra/security/.../user/OrgRole.kt`).
 - Reviewer 1's reuse suggestion (`val Stored<Organisation>.orgId` to collapse ~10 `OrgId(x._id)` sites)
   — skipped: most sites are tests, and the guard now uses `parseOrNull`, so the extension would cover
   less than it appears. Revisit if it spreads.

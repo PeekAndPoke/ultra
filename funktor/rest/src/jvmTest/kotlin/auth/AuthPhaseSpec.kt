@@ -11,7 +11,6 @@ import io.peekandpoke.funktor.core.broker.UriPattern
 import io.peekandpoke.funktor.rest.ApiRoute
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.remote.ApiAccessLevel
-import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.User
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
@@ -51,7 +50,6 @@ class AuthPhaseSpec : StringSpec({
         AuthRule.isSuperUser<Unit, Unit>().isCallerOnly().shouldBeTrue()
         AuthRule.authenticated<Unit, Unit>().isCallerOnly().shouldBeTrue()
         AuthRule.forUserType<Unit, Unit>("Op").isCallerOnly().shouldBeTrue()
-        AuthRule.forOrganisation<Unit, Unit>(OrgId("organisation/acme")).isCallerOnly().shouldBeTrue()
     }
 
     "forCall {} (CallCheck) is param-dependent (phase 2)" {
