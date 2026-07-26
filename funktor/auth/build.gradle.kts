@@ -66,7 +66,11 @@ kotlin {
         jsMain {
             dependencies {
                 implementation(project(":kraft:semanticui"))
-                implementation(project(":kraft:addons:jwtdecode"))
+                // NOTE: `:kraft:addons:jwtdecode` was dropped here. Claims are decoded by
+                // `jwtClaims.kt`, which is synchronous; the addon loads `jwt-decode` through a
+                // dynamic import behind an AddonRegistry and so cannot be used from the synchronous
+                // `AuthState.readJwt`. Keeping the dependency shipped that npm package into every
+                // downstream JS bundle for nothing.
             }
         }
 

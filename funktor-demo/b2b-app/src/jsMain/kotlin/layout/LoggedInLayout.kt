@@ -38,6 +38,15 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
     private val auth by subscribingTo(State.auth)
     private val user get() = auth.user
 
+    /**
+     * The selected organisation's display NAME.
+     *
+     * From the sign-in response's `AuthOrgRef`, not from the token: the JWT carries only the org's
+     * id, and its `_key` is a generated Arango key (e.g. `2059721`) — not something to show a user.
+     * Null on an org-less session, which for b2b means the org picker has not completed.
+     */
+    private val orgName: String? get() = auth.org?.name
+
     override fun VDom.render() {
         renderMenu()
 
@@ -57,7 +66,12 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
 
         ui.inverted.sidebar.vertical.visible.menu {
             noui.item {
-                +"Funktor B2B"
+                ui.inverted.header {
+                    // Falls back rather than hiding: an org-less b2b session is an anomaly worth
+                    // seeing in the chrome, not something to render as a blank header.
+                    +(orgName ?: "No organisation")
+                    noui.sub.header { +"Funktor B2B" }
+                }
             }
 
             noui.item A {

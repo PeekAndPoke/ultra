@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.auth
 
 import io.peekandpoke.funktor.auth.api.AuthApiClient
+import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
@@ -40,7 +41,7 @@ inline fun <reified USER> authState(
     frontend: AuthFrontend,
     api: AuthApiClient,
     noinline router: () -> Router,
-    noinline jwtDecoder: (String) -> Map<String, Any?> = { emptyMap() },
+    noinline jwtDecoder: (String) -> Map<String, Any?> = ::decodeJwtClaims,
     sessionConfig: AuthSessionConfig = AuthSessionConfig(),
 ) = AuthState<USER>(
     userSerializer = serializer(),
@@ -56,7 +57,7 @@ class AuthState<USER>(
     val frontend: AuthFrontend,
     val api: AuthApiClient,
     val router: () -> Router,
-    val jwtDecoder: (String) -> Map<String, Any?> = { emptyMap() },
+    val jwtDecoder: (String) -> Map<String, Any?> = ::decodeJwtClaims,
     val sessionConfig: AuthSessionConfig = AuthSessionConfig(),
 ) : Stream<AuthState.Data<USER>> {
 
@@ -72,6 +73,15 @@ class AuthState<USER>(
         data class Session<USER>(
             val token: AuthSignInResponse.Token,
             val realm: AuthRealmModel,
+            /**
+             * The organisation selected for this session, or null on an org-less realm.
+             *
+             * Comes from the sign-in / select-org / refresh response, NOT from the JWT: the token
+             * carries only the org's id, and a display NAME is what a UI actually needs. Defaulted so
+             * a session persisted before this field existed still decodes instead of logging the user
+             * out.
+             */
+            val org: AuthOrgRef? = null,
             val tokenUserId: UserId?,
             val tokenExpires: String?,
             val claims: JsonObject,
@@ -90,10 +100,21 @@ class AuthState<USER>(
         // Nullable pass-throughs: callers keep reading the same names; all null when logged out.
         val token get() = session?.token
         val realm get() = session?.realm
+        val org get() = session?.org
         val tokenUserId get() = session?.tokenUserId
         val tokenExpires get() = session?.tokenExpires
         val claims get() = session?.claims
         val user get() = session?.user
+
+        /**
+         * The token's permissions, DISPLAY-ONLY.
+         *
+         * Decoded client-side WITHOUT signature verification, and the whole session is persisted in
+         * user-editable localStorage — a user can hand-write `isSuperUser = true` here. Use it to
+         * decide what the UI SHOWS, never what it is allowed to do; `isSuperUser` in particular
+         * short-circuits every `has*` helper on [UserPermissions]. Every real decision is re-derived
+         * server-side from the verified token.
+         */
         val permissions get() = session?.permissions ?: UserPermissions()
     }
 
@@ -114,8 +135,11 @@ class AuthState<USER>(
                 val expiresMs = data.tokenExpires?.let { Date(it).getTime() }
                 val nowMs = Date.now()
 
-                if (expiresMs != null && nowMs >= expiresMs) {
-                    // Persisted token is expired — clear it immediately
+                if (expiresMs == null || nowMs >= expiresMs) {
+                    // Expired, OR persisted before the claim decoder existed (no expiry recorded).
+                    // The latter can never self-heal — `checkAndRefreshToken` returns early without an
+                    // expiry, so it would never refresh and never repopulate permissions/org — so
+                    // treat "unknown expiry" as stale and make the user re-authenticate once.
                     streamSource(Data.empty())
                 } else {
                     // Token still valid — start lifecycle
@@ -325,7 +349,12 @@ class AuthState<USER>(
                     streamSource(newData)
                     sessionConfig.onTokenRefreshed?.invoke()
                 } else {
-                    handleSessionExpired()
+                    // A refresh runs `refreshBeforeExpiryMs` BEFORE the token expires, so a failure
+                    // here is usually transient — a network blip or a 502. Expiring the session
+                    // immediately would log the user out while their token is still perfectly valid.
+                    // Leave the session alone; the next tick retries, and `checkAndRefreshToken`
+                    // expires it for real once `nowMs >= expiresMs`.
+                    console.warn("[AuthState] token refresh failed; will retry on the next check")
                 }
             } finally {
                 isRefreshing = false
@@ -361,6 +390,9 @@ class AuthState<USER>(
         val permissions = response.token.permissionsNs.let { ns ->
             @Suppress("UNCHECKED_CAST")
             UserPermissions(
+                // The server only writes this claim when true (see `encodePermissions`), so an
+                // absent claim legitimately means false.
+                isSuperUser = claims["$ns/superuser"] as? Boolean ?: false,
                 // Parsed defensively — the token is decoded client-side and must not throw on a
                 // claim that does not carry a well-formed `collection/key` org id.
                 org = OrgId.parseOrNull(claims["$ns/org"] as? String),
@@ -373,7 +405,9 @@ class AuthState<USER>(
             )
         }
 
-        val expDate = (claims["exp"] as? Int)?.let { Date(it.toLong() * 1000) }
+        // `Number`, not `Int`: JSON.parse yields a JS number, and an `as? Int` cast is both
+        // representation-dependent and breaks for values beyond Int32 (i.e. after 2038).
+        val expDate = (claims["exp"] as? Number)?.let { Date(it.toDouble() * 1000) }
 
         // A `sub` that is missing or not a structurally valid UserId yields no user id rather than
         // throwing — the token comes off the wire, so parsing must degrade instead of blowing up.
@@ -383,6 +417,7 @@ class AuthState<USER>(
             session = Data.Session(
                 token = response.token,
                 realm = response.realm,
+                org = response.org,
                 tokenUserId = userId,
                 tokenExpires = expDate?.toISOString(),
                 claims = claims.toJsonObject(),
