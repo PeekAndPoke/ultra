@@ -12,6 +12,7 @@ import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.password.PasswordHasher
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Storable
@@ -66,7 +67,7 @@ class OperatorUsersRepo(
             repo.insert(
                 "karsten-ops", OperatorUser(
                     name = "Karsten (Operator)",
-                    email = "karsten.john.gerber@googlemail.com",
+                    email = EmailAddress("karsten.john.gerber@googlemail.com"),
                     isSuperUser = true,
                 )
             ).also { user -> user.createPassword() }
@@ -83,7 +84,7 @@ class OperatorUsersRepo(
         }
     }
 
-    suspend fun findByEmail(email: String) = findFirst {
+    suspend fun findByEmail(email: EmailAddress) = findFirst {
         FOR(repo) { user ->
             FILTER(user.email EQ email)
 

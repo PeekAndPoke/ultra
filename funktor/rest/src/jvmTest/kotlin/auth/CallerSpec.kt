@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeSameInstanceAs
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 
@@ -27,7 +28,7 @@ class CallerSpec : StringSpec({
             keyId = "k1",
             keyName = "ci-deploy",
             userId = UserId("alice"),
-            email = "alice@example.com",
+            email = EmailAddress("alice@example.com"),
             desc = "Alice",
             type = "user",
             permissions = perms,
@@ -36,7 +37,7 @@ class CallerSpec : StringSpec({
         subject.keyId shouldBe "k1"
         subject.keyName shouldBe "ci-deploy"
         subject.userId shouldBe UserId("alice")
-        subject.email shouldBe "alice@example.com"
+        subject.email shouldBe EmailAddress("alice@example.com")
         subject.desc shouldBe "Alice"
         subject.type shouldBe "user"
         subject.permissions shouldBe perms

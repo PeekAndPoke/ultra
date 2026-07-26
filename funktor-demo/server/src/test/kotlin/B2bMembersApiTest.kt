@@ -21,6 +21,7 @@ import io.peekandpoke.funktor.saas.domain.Organisation
 import io.peekandpoke.funktor.saas.storage.OrgMembersStorage
 import io.peekandpoke.funktor.saas.storage.OrgsStorage
 import io.peekandpoke.funktor.testing.AppSpec
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.OrgRole
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
@@ -56,7 +57,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
 
     private suspend fun b2bMember(orgSlug: String, email: String): Stored<OrgMember> {
         val theOrg = org(orgSlug)
-        val user = b2bUsers.findByEmail(email) ?: error("user '$email' is not seeded")
+        val user = b2bUsers.findByEmail(EmailAddress.of(email)) ?: error("user '$email' is not seeded")
         return orgMembers.findByOrgAndUser(theOrg.asRef, UserId(user._id)) ?: error("no membership for '$email' in '$orgSlug'")
     }
 
@@ -98,7 +99,11 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                         list(B2bMembersApi.OrgParam(org = acme)) {
                             status shouldBe HttpStatusCode.OK
                             apiResponseData<List<OrgMemberModel>>()!!.map { it.email }
-                                .shouldContainExactlyInAnyOrder("owner@b2b.test", "single@b2b.test", "multi@b2b.test")
+                                .shouldContainExactlyInAnyOrder(
+                                    EmailAddress("owner@b2b.test"),
+                                    EmailAddress("single@b2b.test"),
+                                    EmailAddress("multi@b2b.test"),
+                                )
                         }
                     }
                 }
@@ -218,7 +223,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
 
             "an admin adds a new b2b member (200, email canonicalized), re-adding is 409, and a removed member reactivates" {
                 val acme = org("acme")
-                val noorgId = b2bUsers.findByEmail("noorg@b2b.test")!!._id
+                val noorgId = b2bUsers.findByEmail(EmailAddress("noorg@b2b.test"))!!._id
 
                 // Phase 1: add a new member, then a duplicate add is rejected.
                 apiApp {
@@ -239,7 +244,8 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                         ) {
                             status shouldBe HttpStatusCode.OK
                             apiResponseData<OrgMemberModel>()!!.let {
-                                it.email shouldBe "noorg@b2b.test"
+                                // The request sent "  NoOrg@B2B.test  " — canonicalized on the way in.
+                                it.email shouldBe EmailAddress("noorg@b2b.test")
                                 it.roles shouldBe setOf("member")
                             }
                         }
@@ -397,7 +403,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                 }
 
                 // Soft-deleted: owner@'s membership no longer resolves among acme's members.
-                val ownerUser = b2bUsers.findByEmail("owner@b2b.test")!!
+                val ownerUser = b2bUsers.findByEmail(EmailAddress("owner@b2b.test"))!!
                 orgMembers.findByOrgAndUser(acme.asRef, UserId(ownerUser._id)) shouldBe null
             }
         }

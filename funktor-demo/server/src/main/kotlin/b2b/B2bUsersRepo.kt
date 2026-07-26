@@ -14,6 +14,7 @@ import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.password.PasswordHasher
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Storable
@@ -68,7 +69,8 @@ class B2bUsersRepo(
         // 0 orgs → "no organisation access" on login
         val noOrg = singleFix {
             repo.insert(
-                "b2b-noorg", B2bUser(name = "No Org User", email = "noorg@b2b.test")
+                key = "b2b-noorg",
+                new = B2bUser(name = "No Org User", email = EmailAddress("noorg@b2b.test"))
             ).also { it.createPassword() }
         }
 
@@ -76,7 +78,8 @@ class B2bUsersRepo(
         val singleOrg = singleFix {
             val acme = orgs.ensureBySlug("acme", "Acme Inc")
             repo.insert(
-                "b2b-single", B2bUser(name = "Single Org User", email = "single@b2b.test")
+                key = "b2b-single",
+                new = B2bUser(name = "Single Org User", email = EmailAddress("single@b2b.test"))
             ).also {
                 it.createPassword()
                 orgMembers.add(org = acme, userId = UserId(it._id), roles = setOf("admin"))
@@ -88,7 +91,8 @@ class B2bUsersRepo(
             val acme = orgs.ensureBySlug("acme", "Acme Inc")
             val globex = orgs.ensureBySlug("globex", "Globex Corporation")
             repo.insert(
-                "b2b-multi", B2bUser(name = "Multi Org User", email = "multi@b2b.test")
+                key = "b2b-multi",
+                new = B2bUser(name = "Multi Org User", email = EmailAddress("multi@b2b.test"))
             ).also {
                 it.createPassword()
                 orgMembers.add(org = acme, userId = UserId(it._id), roles = setOf("admin"))
@@ -100,7 +104,7 @@ class B2bUsersRepo(
         val ownerOrg = singleFix {
             val acme = orgs.ensureBySlug("acme", "Acme Inc")
             repo.insert(
-                "b2b-owner", B2bUser(name = "Owner User", email = "owner@b2b.test")
+                "b2b-owner", B2bUser(name = "Owner User", email = EmailAddress("owner@b2b.test"))
             ).also {
                 it.createPassword()
                 orgMembers.add(org = acme, userId = UserId(it._id), roles = setOf("owner"))
@@ -118,7 +122,7 @@ class B2bUsersRepo(
         }
     }
 
-    suspend fun findByEmail(email: String) = findFirst {
+    suspend fun findByEmail(email: EmailAddress) = findFirst {
         FOR(repo) { user ->
             FILTER(user.email EQ email)
 

@@ -73,7 +73,7 @@ interface AuthRealm<USER : AuthUser> {
             return realm.deps.messaging.mailing.send(
                 Email(
                     source = senderEmail,
-                    destination = EmailDestination.to(userEmail),
+                    destination = EmailDestination.to(userEmail.value),
                     subject = "$applicationName: Your password was changed",
                     body = EmailBody.Html {
                         body {
@@ -92,7 +92,7 @@ interface AuthRealm<USER : AuthUser> {
                     }
                 ).store(
                     EmailStoring.withAnonymizedContent(
-                        refs = setOf(user._id, userEmail),
+                        refs = setOf(user._id, userEmail.value),
                         tags = setOf("password-changed"),
                     )
                 )
@@ -105,7 +105,7 @@ interface AuthRealm<USER : AuthUser> {
             return realm.deps.messaging.mailing.send(
                 Email(
                     source = senderEmail,
-                    destination = EmailDestination.to(userEmail),
+                    destination = EmailDestination.to(userEmail.value),
                     subject = "$applicationName: Recover your Account",
                     body = EmailBody.Html {
                         body {
@@ -130,7 +130,7 @@ interface AuthRealm<USER : AuthUser> {
                     }
                 ).store(
                     EmailStoring.withAnonymizedContent(
-                        refs = setOf(user._id, userEmail),
+                        refs = setOf(user._id, userEmail.value),
                         tags = setOf("password-reset"),
                     )
                 )

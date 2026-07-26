@@ -24,7 +24,7 @@ import {Code} from 'astro:components';
     private val usersRepo: AdminUsersRepo,
 ) : AuthRealm<AdminUser> {
 
-    override val id = "admin-user"
+    override val id = RealmId("admin-user")
 
     override val providers = listOf(
         EmailAndPasswordAuth(deps),
@@ -34,11 +34,21 @@ import {Code} from 'astro:components';
 
     override val passwordPolicy = PasswordPolicy.default
 
-    override suspend fun loadUserByEmail(email: String) =
-        usersRepo.findByEmail(email)
+    // Operations on users live on AuthUserAdapter, reached via \`realm.users\`.
+    override val users = object : AuthUserAdapter<AdminUser> {
+        override suspend fun loadById(id: UserId) = usersRepo.findById(id.value)
 
-    override suspend fun createUser(email: String): Stored<AdminUser> {
-        return usersRepo.insert(AdminUser(email = email, name = ""))
+        // EmailAddress is always canonical (trimmed + lowercased), so this lookup is
+        // case-insensitive by TYPE — callers no longer have to remember to normalize.
+        override suspend fun loadByEmail(email: EmailAddress) = usersRepo.findByEmail(email)
+
+        override suspend fun createForSignup(
+            params: AuthUserAdapter.CreateUserForSignupParams,
+        ): Stored<AdminUser> = usersRepo.insert(
+            AdminUser(email = params.email, name = params.displayName),
+        )
+
+        override suspend fun serialize(user: Stored<AdminUser>) = /* ... */
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
 

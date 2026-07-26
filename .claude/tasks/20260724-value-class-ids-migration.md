@@ -128,7 +128,24 @@ orgId`, `AuthSystem.selectOrg`. ~~`init { require(!value.contains("/")) }` — e
 contract~~ (INVERTED — see above). NOTE: `OrgMember.org` is a `Ref<Organisation>` (an `_id`), NOT an
 `OrgId` — leave it; `OrgId` is the SELECTED-org id on the session/permissions side.
 
-## Step 4 — `Email`
+## Step 4 — `Email` ✅ DONE 2026-07-26 (as `EmailAddress`)
+See `.claude/tasks/20260726-value-class-emailaddress.md`. Three corrections to the plan text below:
+
+1. **Named `EmailAddress`**, not `Email` — `funktor/messaging` already owns `Email` (the MESSAGE), and
+   `AuthRealm.DefaultMessaging` needs both.
+2. **`init` enforces canonicality ONLY — not RFC format.** The plan's single `require(canonical)` was
+   right and a format check was added, then REMOVED during review: SSO signup historically persisted
+   whatever the provider returned, so a decode-time format invariant would render such a row
+   permanently unreadable (user locked out; any list query containing it 500s). Format lives in `of` /
+   `parseOrNull`, through which all external input passes — nothing invalid can enter, nothing stored
+   becomes undecodable. Same "structural invariant" conclusion Step 2 reached for `UserId`.
+3. `of()` also rejects non-ASCII raw input before lowercasing, so U+212A (which lowercases to `k`)
+   cannot canonicalize onto a different existing address.
+
+**Closes `.claude/tasks/20260724-email-canonicalization.md`** as its Option C — the 5 documented
+lookup gaps are now fixed structurally.
+
+### Original plan text
 `email: String` → `Email`. `init { require(value == value.trim().lowercase()) }` + `of(raw) =
 Email(raw.trim().lowercase())`. `of()` normalizes; a non-canonical value is REJECTED on construction
 (incl. deserialize). CONSEQUENCE: `Email` is a DOMAIN/stored type — the API takes raw `String` and

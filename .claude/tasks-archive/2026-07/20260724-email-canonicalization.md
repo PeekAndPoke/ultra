@@ -1,6 +1,21 @@
 # Email canonicalization on lookup (framework auth gap)
 
-**Status:** COLLECTED 2026-07-24 — needs a decision on approach before implementing (framework-touching).
+**Status:** ✅ CLOSED 2026-07-26 by **Option C** — see `.claude/tasks/20260726-value-class-emailaddress.md`.
+
+> The decision this task was waiting for was made by scheduling Step 4 of the value-class-ids
+> migration. Option C ("an `EmailAddress` value type … strongest (wrong usage unrepresentable)") was
+> judged premature when this was written; it became the plan, so all five gaps below are now closed
+> STRUCTURALLY rather than by remembering to canonicalize:
+> `loadByEmail`/`findByEmail` take an `EmailAddress`, which can only be built canonically, so a
+> non-canonical value can no longer reach a lookup. Options A and B were not taken.
+>
+> Gap-by-gap: password-reset init, Google SSO login + signup-existence, and GitHub SSO login +
+> signup-existence all now go through `EmailAddress.of` / `parseOrNull`. The add-member leaf fix
+> (`c5398382`) is now redundant with the type and was folded in.
+>
+> ⚠️ Follow-up that came OUT of that work and is NOT closed here: SSO signup links to an existing
+> local account without checking the provider's `email_verified` — see
+> `.claude/tasks/20260726-sso-email-verification.md`.
 **Found via:** the add-member-by-email question (2026-07-24). The leaf bug (`B2bMembersApi` add lookup)
 is already FIXED (`c5398382`); this task is the BROADER framework gap.
 **Type:** framework correctness (auth).

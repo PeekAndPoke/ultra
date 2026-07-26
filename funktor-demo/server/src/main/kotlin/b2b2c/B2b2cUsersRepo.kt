@@ -14,6 +14,7 @@ import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.password.PasswordHasher
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Storable
@@ -68,7 +69,7 @@ class B2b2cUsersRepo(
         // 0 orgs → "no organisation access" on login
         val noOrg = singleFix {
             repo.insert(
-                "b2b2c-noorg", B2b2cUser(name = "No Org End-User", email = "noorg@b2b2c.test")
+                "b2b2c-noorg", B2b2cUser(name = "No Org End-User", email = EmailAddress("noorg@b2b2c.test"))
             ).also { it.createPassword() }
         }
 
@@ -80,7 +81,7 @@ class B2b2cUsersRepo(
         val singleOrg = singleFix {
             val acme = orgs.ensureBySlug("acme", "Acme Inc")
             repo.insert(
-                "b2b2c-single", B2b2cUser(name = "Single Org End-User", email = "single@b2b2c.test")
+                "b2b2c-single", B2b2cUser(name = "Single Org End-User", email = EmailAddress("single@b2b2c.test"))
             ).also {
                 it.createPassword()
                 orgMembers.add(org = acme, userId = UserId(it._id), roles = setOf("end-user"))
@@ -92,7 +93,7 @@ class B2b2cUsersRepo(
             val acme = orgs.ensureBySlug("acme", "Acme Inc")
             val globex = orgs.ensureBySlug("globex", "Globex Corporation")
             repo.insert(
-                "b2b2c-multi", B2b2cUser(name = "Multi Org End-User", email = "multi@b2b2c.test")
+                "b2b2c-multi", B2b2cUser(name = "Multi Org End-User", email = EmailAddress("multi@b2b2c.test"))
             ).also {
                 it.createPassword()
                 orgMembers.add(org = acme, userId = UserId(it._id), roles = setOf("end-user"))
@@ -111,7 +112,7 @@ class B2b2cUsersRepo(
         }
     }
 
-    suspend fun findByEmail(email: String) = findFirst {
+    suspend fun findByEmail(email: EmailAddress) = findFirst {
         FOR(repo) { user ->
             FILTER(user.email EQ email)
 

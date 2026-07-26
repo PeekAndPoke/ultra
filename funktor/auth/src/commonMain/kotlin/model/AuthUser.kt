@@ -1,5 +1,7 @@
 package io.peekandpoke.funktor.auth.model
 
+import io.peekandpoke.ultra.security.user.EmailAddress
+
 /**
  * Contract every auth-realm USER type must fulfil: `AuthRealm<USER : AuthUser>`.
  *
@@ -15,8 +17,8 @@ package io.peekandpoke.funktor.auth.model
  * (loading, creating, serializing) live on `AuthUserAdapter`, not here.
  */
 interface AuthUser {
-    /** The user's email address. */
-    val email: String
+    /** The user's email address. Always canonical — see [EmailAddress]. */
+    val email: EmailAddress
 
     /** Display name for messages and UIs; `null` means "none set" — fall back to [email]. */
     val displayName: String? get() = null

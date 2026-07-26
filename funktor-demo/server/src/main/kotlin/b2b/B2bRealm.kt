@@ -21,6 +21,7 @@ import io.peekandpoke.funktor.saas.storage.OrgsStorage
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.datetime.jvm
 import io.peekandpoke.ultra.security.jwt.JwtUserData
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.OrgMembership
 import io.peekandpoke.ultra.security.user.SelectedOrg
@@ -85,7 +86,7 @@ class B2bRealm(
 
         override suspend fun loadById(id: UserId) = repo.findById(id.value)
 
-        override suspend fun loadByEmail(email: String) = repo.findByEmail(email)
+        override suspend fun loadByEmail(email: EmailAddress) = repo.findByEmail(email)
 
         override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams): Stored<B2bUser> {
             // B2B is invite-only (users are created inside an organisation). AuthError — not

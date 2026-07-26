@@ -14,6 +14,7 @@ import io.peekandpoke.funktor.demo.server.admin.AdminUsersRepo.Companion.asApiMo
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.datetime.jvm
 import io.peekandpoke.ultra.security.jwt.JwtUserData
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
@@ -73,7 +74,7 @@ class AdminUserRealm(
 
         override suspend fun loadById(id: UserId) = repo.findById(id.value)
 
-        override suspend fun loadByEmail(email: String) = repo.findByEmail(email)
+        override suspend fun loadByEmail(email: EmailAddress) = repo.findByEmail(email)
 
         override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams): Stored<AdminUser> {
             return repo.insert(

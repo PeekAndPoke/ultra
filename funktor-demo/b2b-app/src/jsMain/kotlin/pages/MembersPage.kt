@@ -94,7 +94,8 @@ class MembersPage(ctx: NoProps) : PureComponent(ctx) {
 
             when (val org = orgId) {
                 null -> ui.warning.message { +"No organisation is selected for this session." }
-                else -> ui.info.message { +"Organisation: ${org.key}" }
+                // The org NAME, not `org.key` — that is a generated Arango key, not a label.
+                else -> ui.info.message { +"Organisation: ${auth.org?.name ?: org.key}" }
             }
 
             if (callerCanManage && orgId != null) {
@@ -160,7 +161,7 @@ class MembersPage(ctx: NoProps) : PureComponent(ctx) {
                     ui.mini.basic.label { +"You" }
                 }
             }
-            td { +member.email }
+            td { +member.email.value }
             td { renderRoleLabels(member.roles) }
 
             if (callerCanManage) {
@@ -244,7 +245,7 @@ class MembersPage(ctx: NoProps) : PureComponent(ctx) {
             small(
                 handle = handle,
                 header = { ui.header { +"Remove member" } },
-                content = { ui.content { +"Remove ${member.name} (${member.email}) from this organisation?" } },
+                content = { ui.content { +"Remove ${member.name} (${member.email.value}) from this organisation?" } },
                 okText = { +"Remove" },
                 cancelText = { +"Cancel" },
             ) { result ->

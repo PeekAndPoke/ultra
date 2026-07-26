@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.security.jwt
 
 import com.auth0.jwt.interfaces.Claim
 import com.auth0.jwt.interfaces.Payload
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
@@ -28,7 +29,9 @@ fun Payload.extractUser(namespace: String = "user"): JwtUserData = JwtUserData(
     type = getClaim("$namespace/type").asString()
         ?: getClaim("user-type").asString()
         ?: "",
-    email = getClaim("$namespace/email")?.asString(),
+    // Parsed defensively: a malformed email claim degrades to "no email" rather than
+    // throwing and turning an attacker-supplied token into a 500.
+    email = EmailAddress.parseOrNull(getClaim("$namespace/email")?.asString()),
 )
 
 /** Extracts [UserPermissions] from this payload using claims under the given [namespace]. */

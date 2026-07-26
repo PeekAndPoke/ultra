@@ -18,7 +18,7 @@ fun JWTCreator.Builder.encodeUser(namespace: String = "user", user: JwtUserData)
     withClaim("$namespace/desc", user.desc)
     withClaim("$namespace/type", user.type)
 
-    user.email?.let { withClaim("$namespace/email", it) }
+    user.email?.let { withClaim("$namespace/email", it.value) }
 }
 
 /** Encodes [permissions] as claims under the given [namespace]. */

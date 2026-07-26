@@ -25,6 +25,7 @@ import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.security.jwt.JwtGenerator
 import io.peekandpoke.ultra.security.jwt.JwtUserData
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Stored
@@ -159,7 +160,7 @@ class StoredParamMigrationE2eSpec : AppSpec<FunktorAllTestConfig>(storedParamTes
     private val jwt by service(JwtGenerator::class)
 
     private fun superUserToken(): String = jwt.createJwt(
-        user = JwtUserData(id = UserId("e2e-su"), desc = "e2e", type = TestUser.USER_TYPE, email = "e2e-su@test.com"),
+        user = JwtUserData(id = UserId("e2e-su"), desc = "e2e", type = TestUser.USER_TYPE, email = EmailAddress("e2e-su@test.com")),
         permissions = UserPermissions(isSuperUser = true),
     )
 

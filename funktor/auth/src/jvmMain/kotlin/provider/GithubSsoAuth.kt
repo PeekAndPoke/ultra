@@ -15,9 +15,12 @@ import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthUser
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.ultra.log.Log
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 
@@ -173,7 +176,9 @@ class GithubSsoAuth(
         val ghUser = remoteClient.getUser(ghAccessToken)
             ?: throw AuthError.invalidCredentials()
 
-        val email = ghUser["email"]?.jsonPrimitive?.content
+        // GAP CLOSED: the provider's email is third-party input and was used raw against a
+        // case-sensitive lookup, so a mixed-case address failed to match an existing account.
+        val email = EmailAddress.parseOrNull((ghUser["email"] as? JsonPrimitive)?.contentOrNull)
             ?: throw AuthError.invalidCredentials()
 
         return realm.users.loadByEmail(email)
@@ -196,12 +201,19 @@ class GithubSsoAuth(
         val ghUser = remoteClient.getUser(ghAccessToken)
             ?: throw AuthError.invalidCredentials()
 
-        val email = ghUser["email"]?.jsonPrimitive?.content
+        // GAP CLOSED: raw here meant the existence check below could MISS and create a duplicate
+        // user, because creation canonicalizes but the lookup did not.
+        val email = EmailAddress.parseOrNull((ghUser["email"] as? JsonPrimitive)?.contentOrNull)
             ?: throw AuthError.invalidCredentials()
 
         val name = ghUser["name"]?.jsonPrimitive?.content
 
+        // The lookup is deliberately lax about format — an address stored before validation
+        // existed must stay matchable, or its owner can never sign in again.
         val existing = realm.users.loadByEmail(email)
+        // Creating, however, requires a well-formed address.
+        if (existing == null && !email.isValidFormat) throw AuthError.invalidCredentials()
+
         val user = existing ?: realm.users.createForSignup(
             AuthUserAdapter.CreateUserForSignupParams.of(
                 email = email,

@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor
 
 import io.peekandpoke.funktor.testing.AppSpec
+import io.peekandpoke.ultra.security.user.EmailAddress
 import kotlinx.coroutines.runBlocking
 
 abstract class FunktorApiSpec : AppSpec<FunktorAllTestConfig>(testApp) {
@@ -13,7 +14,7 @@ abstract class FunktorApiSpec : AppSpec<FunktorAllTestConfig>(testApp) {
             val user = usersRepo.insert(
                 TestUser(
                     name = "Super User",
-                    email = "super-${this@FunktorApiSpec::class.simpleName}@test.com",
+                    email = EmailAddress.of("super-${this@FunktorApiSpec::class.simpleName}@test.com"),
                     isSuperUser = true,
                 )
             )
@@ -26,7 +27,7 @@ abstract class FunktorApiSpec : AppSpec<FunktorAllTestConfig>(testApp) {
             val user = usersRepo.insert(
                 TestUser(
                     name = "Regular User",
-                    email = "regular-${this@FunktorApiSpec::class.simpleName}@test.com",
+                    email = EmailAddress.of("regular-${this@FunktorApiSpec::class.simpleName}@test.com"),
                     isSuperUser = false,
                 )
             )

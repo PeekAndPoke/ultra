@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.auth
 
 import io.peekandpoke.funktor.auth.model.AuthUser
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.JsonObject
@@ -19,14 +20,33 @@ interface AuthUserAdapter<USER : AuthUser> {
      */
     @ConsistentCopyVisibility
     data class CreateUserForSignupParams private constructor(
-        val email: String,
+        val email: EmailAddress,
         val displayName: String,
     ) {
         companion object {
-            fun of(email: String, displayName: String? = null) = CreateUserForSignupParams(
-                email = email.trim().lowercase(),
-                displayName = displayName?.trim() ?: email.substringBefore("@").trim(),
-            )
+            /**
+             * [email] is ALREADY canonical.
+             *
+             * There is deliberately NO `String` overload: it would be the throwing one of an
+             * otherwise identical-looking pair, and the reflex choice for a caller holding raw
+             * input. Spell the conversion at the call site with [EmailAddress.of] /
+             * [EmailAddress.parseOrNull] so the failure mode is visible there.
+             *
+             * NOTE [displayName] defaults to the CANONICAL local part, so an auto-derived name is
+             * lowercase (`John.Doe@x.com` → `john.doe`). Pass an explicit [displayName] to preserve
+             * the user's casing.
+             */
+            fun of(email: EmailAddress, displayName: String? = null): CreateUserForSignupParams {
+                // THE creation boundary — the one place RFC format is enforced. A lookup deliberately
+                // does not check it (an odd-but-stored address must stay matchable), but writing a
+                // NEW account with a malformed address is a real defect.
+                require(email.isValidFormat) { "Cannot create a user with a malformed email address" }
+
+                return CreateUserForSignupParams(
+                    email = email,
+                    displayName = displayName?.trim() ?: email.localPart,
+                )
+            }
         }
     }
 
@@ -42,8 +62,14 @@ interface AuthUserAdapter<USER : AuthUser> {
      */
     suspend fun loadById(id: UserId): Stored<USER>?
 
-    /** Loads a user by its email. */
-    suspend fun loadByEmail(email: String): Stored<USER>?
+    /**
+     * Loads a user by its email.
+     *
+     * [EmailAddress] is canonical by construction, so this lookup is case-insensitive by TYPE — the
+     * repos' `findByEmail` are case-sensitive exact matches and no longer need callers to remember
+     * to normalize. Feed raw user input through [EmailAddress.of] first.
+     */
+    suspend fun loadByEmail(email: EmailAddress): Stored<USER>?
 
     /** Creates a new user during sign-up. Providers call this for the given email/displayName. */
     suspend fun createForSignup(params: CreateUserForSignupParams): Stored<USER>

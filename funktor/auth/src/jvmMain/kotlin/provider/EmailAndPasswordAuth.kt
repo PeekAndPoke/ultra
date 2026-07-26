@@ -17,12 +17,12 @@ import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthUser
 import io.peekandpoke.funktor.auth.model.RealmId
-import io.peekandpoke.ultra.common.isEmail
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.remote.buildUri
 import io.peekandpoke.ultra.security.password.PasswordHasher
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.value
@@ -213,14 +213,15 @@ class EmailAndPasswordAuth(
         // Validate request type
         val typed: AuthSignInRequest.EmailAndPassword = (request as? AuthSignInRequest.EmailAndPassword)
             ?: throw AuthError.invalidRequest()
-        // Validate email
-        val email = typed.email.takeIf { it.isEmail() }
+        // Raw user input — parse at the boundary. This both VALIDATES and canonicalizes, so the
+        // case-sensitive lookup below matches regardless of how the user typed it.
+        val email = EmailAddress.parseOrNull(typed.email)
             ?: throw AuthError.invalidCredentials()
         // Validate password
         val password = typed.password.takeIf { it.isNotBlank() }
             ?: throw AuthError.invalidCredentials()
         // Load user
-        val user = realm.users.loadByEmail(email.trim().lowercase())
+        val user = realm.users.loadByEmail(email)
             ?: throw AuthError.invalidCredentials()
         // Validate password
         validateCurrentPassword(realm, user, password).takeIf { it }
@@ -238,11 +239,14 @@ class EmailAndPasswordAuth(
         // Check request
         val typed = request as? AuthSignUpRequest.EmailAndPassword
             ?: throw AuthError.invalidRequest()
+        // Raw user input. This CREATES an account, so the format check applies here — and it runs
+        // before `CreateUserForSignupParams` so an invalid address is a clean AuthError rather than an
+        // IllegalArgumentException escaping as a 500.
+        val email = EmailAddress.parseOrNull(typed.email)?.takeIf { it.isValidFormat }
+            ?: throw AuthError.invalidRequest()
         // Create params for user creation
         val createParams = AuthUserAdapter.CreateUserForSignupParams
-            .of(email = typed.email, displayName = typed.displayName)
-        // Validate email address
-        if (createParams.email.isEmail().not()) throw AuthError.invalidRequest()
+            .of(email = email, displayName = typed.displayName)
         // Enforce the password policy
         if (!realm.passwordPolicy.matches(typed.password)) throw AuthError.weakPassword()
         // Ensure no existing user
@@ -308,7 +312,10 @@ class EmailAndPasswordAuth(
         realm: AuthRealm<USER>, request: AuthRecoverAccountRequest.InitPasswordReset,
     ): AuthRecoverAccountResponse.InitPasswordReset {
 
-        val user = realm.users.loadByEmail(request.email)
+        // GAP CLOSED: this used the RAW request email, so a mixed-case reset request silently found
+        // no user and sent no email. An unparseable address returns the SAME neutral response as an
+        // unknown one — no account enumeration.
+        val user = EmailAddress.parseOrNull(request.email)?.let { realm.users.loadByEmail(it) }
             ?: return AuthRecoverAccountResponse.InitPasswordReset
 
         // TODO: make length configurable

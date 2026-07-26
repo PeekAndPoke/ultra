@@ -21,6 +21,7 @@ import io.peekandpoke.funktor.saas.storage.OrgsStorage
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.datetime.jvm
 import io.peekandpoke.ultra.security.jwt.JwtUserData
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.OrgMembership
 import io.peekandpoke.ultra.security.user.SelectedOrg
@@ -84,7 +85,7 @@ class B2b2cRealm(
 
         override suspend fun loadById(id: UserId) = repo.findById(id.value)
 
-        override suspend fun loadByEmail(email: String) = repo.findByEmail(email)
+        override suspend fun loadByEmail(email: EmailAddress) = repo.findByEmail(email)
 
         override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams): Stored<B2b2cUser> {
             // End-users are provisioned by their organisation for now. AuthError — not error() — so

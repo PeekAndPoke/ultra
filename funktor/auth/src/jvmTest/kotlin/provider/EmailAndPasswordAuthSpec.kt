@@ -20,6 +20,7 @@ import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.messaging.api.EmailResult
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.log.NullLog
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
 
@@ -176,7 +177,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
                 val realm = MinimalTestRealm(
                     onLoadUserByEmail = {
-                        it shouldBe "user@example.com"
+                        it shouldBe EmailAddress("user@example.com")
                         null // user not found
                     }
                 )
@@ -391,7 +392,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 val realm = MinimalTestRealm(
                     passwordPolicy = PasswordPolicy.default,
                     onLoadUserByEmail = {
-                        it shouldBe "test@example.com"
+                        it shouldBe EmailAddress("test@example.com")
                         Stored(_id = "existing-user", value = MinimalTestUser())
                     }
                 )
@@ -447,7 +448,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                     passwordPolicy = PasswordPolicy.default,
                     onLoadUserByEmail = { null },
                     onCreateUserForSignup = { params ->
-                        params.email shouldBe email
+                        params.email shouldBe EmailAddress.of(email)
                         params.displayName shouldBe displayName
                         storedUser
                     }

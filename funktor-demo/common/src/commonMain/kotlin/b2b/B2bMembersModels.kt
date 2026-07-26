@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.demo.common.b2b
 
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
 import kotlinx.serialization.Serializable
 
@@ -14,7 +15,7 @@ data class OrgMemberModel(
     /** The member's (realm-qualified) user id. */
     val userId: UserId,
     val name: String,
-    val email: String,
+    val email: EmailAddress,
     val roles: Set<String>,
 )
 

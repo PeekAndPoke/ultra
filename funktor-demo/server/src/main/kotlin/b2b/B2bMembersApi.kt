@@ -12,6 +12,7 @@ import io.peekandpoke.funktor.saas.domain.OrgMember
 import io.peekandpoke.funktor.saas.domain.Organisation
 import io.peekandpoke.funktor.saas.isolation.OrgAwareParam
 import io.peekandpoke.ultra.remote.ApiResponse
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.OrgRole
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.isOrgOwner
@@ -175,9 +176,10 @@ class B2bMembersApi(
      * append-only membership-event log is the fuller answer if audit/tenure ever matters.
      */
     private suspend fun addMember(org: Stored<Organisation>, body: AddMemberRequest, callerIsOwner: Boolean): Outcome {
-        // Canonicalize to match how emails are STORED (signup lowercases via CreateUserForSignupParams)
-        // — findByEmail is a case-sensitive exact match, so a raw mixed-case input would miss.
-        val u = services.b2bUsers.findByEmail(body.email.trim().lowercase()) ?: return Outcome.NotFound
+        // Raw user input: EmailAddress.of canonicalizes, so the case-sensitive findByEmail matches
+        // however the admin typed it. An unparseable address is NotFound, same as an unknown one.
+        val email = EmailAddress.parseOrNull(body.email) ?: return Outcome.NotFound
+        val u = services.b2bUsers.findByEmail(email) ?: return Outcome.NotFound
         // Owner-only ownership — granting OWNER on add requires the caller to be an owner.
         if (body.roles.isOrgOwner && !callerIsOwner) return Outcome.OwnerOnly
 
@@ -216,7 +218,13 @@ class B2bMembersApi(
         is Outcome.AlreadyMember -> ApiResponse.conflict<OrgMemberModel>()
             .withError("this user is already a member of the organisation")
 
-        is Outcome.Ok -> ApiResponse.ok(memberModel(outcome.member))
+        // `memberModelOrNull` rather than a placeholder-filling variant: every path reaching Ok has
+        // ALREADY resolved the b2b user — `addMember` via `findByEmail`, `changeRoles`/`remove` via
+        // `resolveTarget`, all inside the per-org lock — so null is unreachable in practice, and a 404
+        // is the honest answer if that ever changes.
+        is Outcome.Ok -> memberModelOrNull(outcome.member)
+            ?.let { ApiResponse.ok(it) }
+            ?: ApiResponse.notFound<OrgMemberModel>().withError("member not found")
     }
 
     /**
@@ -243,15 +251,5 @@ class B2bMembersApi(
         return OrgMemberModel(id = m._id, userId = member.userId, name = u.name, email = u.email, roles = member.roles)
     }
 
-    private suspend fun memberModel(m: Stored<OrgMember>): OrgMemberModel {
-        val member = m.value()
-        val u = b2bUserOf(member.userId)?.value()
-        return OrgMemberModel(
-            id = m._id,
-            userId = member.userId,
-            name = u?.name ?: "",
-            email = u?.email ?: "",
-            roles = member.roles,
-        )
-    }
+
 }

@@ -124,7 +124,7 @@ Multi-realm authentication with pluggable providers, JWT tokens, and frontend se
 An `AuthRealm<USER>` represents a user population with its own providers, password policy, and user model.
 An app can have multiple realms (admin users, customers, etc.).
 
-Key methods: `loadUserById()`, `loadUserByEmail()`, `generateJwt()`, `signIn()`, `signUp()`, `refreshToken()`.
+Key methods: `loadById(UserId)`, `loadByEmail(EmailAddress)`, `generateJwt()`, `signIn()`, `signUp()`, `refreshToken()`. Ids and emails are `@JvmInline value class`es — `UserId`, `OrgId`, `RealmId`, `EmailAddress` — so an `EmailAddress` lookup is case-insensitive by type.
 
 ### Providers
 

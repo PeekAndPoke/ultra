@@ -14,7 +14,7 @@ sealed interface UserRecord {
     val clientIp: String?
 
     @Slumber.Field
-    val email: String? get() = null
+    val email: EmailAddress? get() = null
 
     @Slumber.Field
     val desc: String? get() = null
@@ -49,7 +49,7 @@ sealed interface UserRecord {
     data class LoggedIn(
         override val userId: UserId,
         override val clientIp: String? = null,
-        override val email: String? = null,
+        override val email: EmailAddress? = null,
         override val desc: String? = null,
         override val type: String? = null,
     ) : UserRecord
@@ -62,7 +62,7 @@ sealed interface UserRecord {
         override val clientIp: String? = null,
         val keyId: String,
         val keyName: String? = null,
-        override val email: String? = null,
+        override val email: EmailAddress? = null,
         override val desc: String? = null,
         override val type: String? = null,
     ) : UserRecord

@@ -18,6 +18,7 @@ import io.peekandpoke.ultra.datetime.jvm
 import io.peekandpoke.ultra.kontainer.module
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.jwt.JwtUserData
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
@@ -33,7 +34,7 @@ import kotlin.time.Duration.Companion.hours
 @Serializable
 data class TestUser(
     val name: String,
-    override val email: String,
+    override val email: EmailAddress,
     val isSuperUser: Boolean = false,
 ) : AuthUser {
     companion object {
@@ -91,7 +92,7 @@ class TestUserRealm(
             return repo.findById(id.value)
         }
 
-        override suspend fun loadByEmail(email: String): Stored<TestUser>? {
+        override suspend fun loadByEmail(email: EmailAddress): Stored<TestUser>? {
             return repo.findFirst {
                 FOR(repo) {
                     FILTER(it.email EQ email)

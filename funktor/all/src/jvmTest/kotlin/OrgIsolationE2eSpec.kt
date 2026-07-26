@@ -31,6 +31,7 @@ import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.security.jwt.JwtGenerator
 import io.peekandpoke.ultra.security.jwt.JwtUserData
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
@@ -166,7 +167,7 @@ class OrgIsolationE2eSpec : AppSpec<FunktorAllTestConfig>(orgIsolationTestApp) {
     private val jwt by service(JwtGenerator::class)
 
     private fun token(permissions: UserPermissions): String = jwt.createJwt(
-        user = JwtUserData(id = UserId("e2e-user"), desc = "e2e", type = TestUser.USER_TYPE, email = "e2e@test.com"),
+        user = JwtUserData(id = UserId("e2e-user"), desc = "e2e", type = TestUser.USER_TYPE, email = EmailAddress("e2e@test.com")),
         permissions = permissions,
     )
 

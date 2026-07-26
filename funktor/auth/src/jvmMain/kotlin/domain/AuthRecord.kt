@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.auth.domain
 
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.slumber.Polymorphic
 import io.peekandpoke.ultra.vault.Vault
@@ -79,8 +80,8 @@ sealed interface AuthRecord : Timestamped {
         override val updatedAt: MpInstant = createdAt,
         /** Random secret token sent to the new email address. */
         override val token: String,
-        /** The email the user wants to switch to. */
-        val pendingEmail: String,
+        /** The email the user wants to switch to. Canonical — see [EmailAddress]. */
+        val pendingEmail: EmailAddress,
     ) : AuthRecord {
         companion object : Polymorphic.TypedChild<EmailChangeToken> {
             override val identifier = "email-change-token"

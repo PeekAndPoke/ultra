@@ -10,6 +10,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
@@ -101,7 +102,7 @@ class JwtGeneratorSpec : StringSpec() {
                 id = UserId("123"),
                 desc = "Test User",
                 type = "Admin",
-                email = "user-123@example.com"
+                email = EmailAddress("user-123@example.com")
             )
 
             // Act

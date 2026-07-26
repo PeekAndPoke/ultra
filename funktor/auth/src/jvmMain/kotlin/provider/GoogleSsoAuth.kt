@@ -13,6 +13,7 @@ import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthUser
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.ultra.log.Log
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -160,7 +161,12 @@ class GoogleSsoAuth(
 
         val payload = idToken.payload
 
-        return realm.users.loadByEmail(payload.email)
+        // GAP CLOSED: the provider's email is third-party input and was used raw against a
+        // case-sensitive lookup, so a mixed-case address failed to match an existing account.
+        val email = EmailAddress.parseOrNull(payload.email)
+            ?: throw AuthError.invalidCredentials()
+
+        return realm.users.loadByEmail(email)
             ?: throw AuthError.invalidCredentials()
     }
 
@@ -181,10 +187,17 @@ class GoogleSsoAuth(
         }
 
         val payload = idToken.payload
-        val email = payload.email ?: throw AuthError.invalidCredentials()
+        // GAP CLOSED: raw here meant the existence check below could MISS and create a duplicate
+        // user, because creation canonicalizes but the lookup did not.
+        val email = EmailAddress.parseOrNull(payload.email) ?: throw AuthError.invalidCredentials()
         val displayName = (payload["name"] as? String)
 
+        // The lookup is deliberately lax about format — an address stored before validation
+        // existed must stay matchable, or its owner can never sign in again.
         val existing = realm.users.loadByEmail(email)
+        // Creating, however, requires a well-formed address.
+        if (existing == null && !email.isValidFormat) throw AuthError.invalidCredentials()
+
         val user = existing ?: realm.users.createForSignup(
             AuthUserAdapter.CreateUserForSignupParams.of(
                 email = email,

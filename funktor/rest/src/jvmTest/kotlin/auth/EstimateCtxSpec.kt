@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.rest.auth
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.User
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
@@ -11,7 +12,7 @@ class EstimateCtxSpec : StringSpec({
 
     "EstimateCtx exposes the full User" {
         val user = User(
-            record = UserRecord.LoggedIn(userId = UserId("alice"), email = "alice@example.com"),
+            record = UserRecord.LoggedIn(userId = UserId("alice"), email = EmailAddress("alice@example.com")),
             permissions = UserPermissions(roles = setOf("editor")),
         )
 

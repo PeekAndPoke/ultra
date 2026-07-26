@@ -69,14 +69,14 @@ class UserRecordSpec : FreeSpec() {
                 val subject = UserRecord.LoggedIn(
                     userId = UserId("alice"),
                     clientIp = "1.2.3.4",
-                    email = "alice@example.com",
+                    email = EmailAddress("alice@example.com"),
                     desc = "Alice",
                     type = "user",
                 )
 
                 subject.userId shouldBe UserId("alice")
                 subject.clientIp shouldBe "1.2.3.4"
-                subject.email shouldBe "alice@example.com"
+                subject.email shouldBe EmailAddress("alice@example.com")
                 subject.desc shouldBe "Alice"
                 subject.type shouldBe "user"
             }
@@ -89,7 +89,7 @@ class UserRecordSpec : FreeSpec() {
                     clientIp = "1.2.3.4",
                     keyId = "key-1",
                     keyName = "ci-deploy",
-                    email = "alice@example.com",
+                    email = EmailAddress("alice@example.com"),
                     desc = "Alice",
                     type = "user",
                 )
@@ -98,7 +98,7 @@ class UserRecordSpec : FreeSpec() {
                 subject.clientIp shouldBe "1.2.3.4"
                 subject.keyId shouldBe "key-1"
                 subject.keyName shouldBe "ci-deploy"
-                subject.email shouldBe "alice@example.com"
+                subject.email shouldBe EmailAddress("alice@example.com")
                 subject.desc shouldBe "Alice"
                 subject.type shouldBe "user"
             }

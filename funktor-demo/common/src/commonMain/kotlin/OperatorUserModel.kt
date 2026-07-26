@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.demo.common
 
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
 import kotlinx.serialization.Serializable
 
@@ -7,7 +8,7 @@ import kotlinx.serialization.Serializable
 data class OperatorUserModel(
     val id: UserId,
     val name: String,
-    val email: String,
+    val email: EmailAddress,
     val isSuperUser: Boolean,
 ) {
     companion object {

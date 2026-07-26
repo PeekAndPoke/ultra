@@ -36,6 +36,7 @@ import io.peekandpoke.ultra.security.jwt.JwtGenerator
 import io.peekandpoke.ultra.security.jwt.JwtUserData
 import io.peekandpoke.ultra.security.password.PasswordHasher
 import io.peekandpoke.ultra.security.ultraSecurity
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
@@ -93,7 +94,7 @@ suspend fun createAuthTestContainer(
 
 /** Minimal [AuthUser] stub for provider unit tests built on [MinimalTestRealm]. */
 data class MinimalTestUser(
-    override val email: String = "user@example.com",
+    override val email: EmailAddress = EmailAddress("user@example.com"),
     val name: String = "Minimal Test User",
 ) : AuthUser
 
@@ -133,7 +134,7 @@ class MinimalTestDeps : AuthSystem.Deps {
 class MinimalTestRealm(
     override val passwordPolicy: PasswordPolicy = PasswordPolicy.default,
     val getMessaging: () -> AuthRealm.Messaging<MinimalTestUser> = { TestMessaging() },
-    val onLoadUserByEmail: suspend (String) -> Stored<MinimalTestUser>? =
+    val onLoadUserByEmail: suspend (EmailAddress) -> Stored<MinimalTestUser>? =
         { error("loadUserByEmail was not expected to be called") },
     val onLoadUserById: suspend (UserId) -> Stored<MinimalTestUser>? =
         { error("onLoadUserById was not expected to be called") },
@@ -146,7 +147,7 @@ class MinimalTestRealm(
         override suspend fun loadById(id: UserId): Stored<MinimalTestUser>? =
             onLoadUserById(id)
 
-        override suspend fun loadByEmail(email: String): Stored<MinimalTestUser>? =
+        override suspend fun loadByEmail(email: EmailAddress): Stored<MinimalTestUser>? =
             onLoadUserByEmail(email)
 
         override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams): Stored<MinimalTestUser> =
@@ -169,7 +170,7 @@ class MinimalTestRealm(
 @Vault
 data class TestAppUser(
     val name: String,
-    override val email: String,
+    override val email: EmailAddress,
 ) : AuthUser {
     companion object {
         const val USER_TYPE = "test-app-user"
@@ -182,7 +183,7 @@ data class TestAppUser(
 data class TestAppUserModel(
     val id: String,
     val name: String,
-    val email: String,
+    val email: EmailAddress,
 )
 
 class KarangoTestAppUsersRepo(driver: KarangoDriver) : EntityRepository<TestAppUser>(
@@ -252,7 +253,7 @@ class TestAppUserRealm(
             return repo.findById(id.value)
         }
 
-        override suspend fun loadByEmail(email: String): Stored<TestAppUser>? {
+        override suspend fun loadByEmail(email: EmailAddress): Stored<TestAppUser>? {
             return repo.findFirst {
                 FOR(repo) {
                     FILTER(it.email EQ email)

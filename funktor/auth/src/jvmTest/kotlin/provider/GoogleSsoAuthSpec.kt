@@ -15,6 +15,7 @@ import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.ultra.log.NullLog
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.jsonPrimitive
 import java.security.GeneralSecurityException
@@ -147,7 +148,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
             "should throw InvalidCredentials when user is not found by email" {
                 // A valid token payload for the tests below
                 val tokenPayload = GoogleIdToken.Payload().apply {
-                    email = "user@example.com"
+                    email = "  User@EXAMPLE.com  "
                 }
                 val idToken = GoogleIdToken(JsonWebSignature.Header(), tokenPayload, byteArrayOf(), byteArrayOf())
 
@@ -170,7 +171,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 // A realm that returns 'null' for the user
                 val realm = MinimalTestRealm(
                     onLoadUserByEmail = { email ->
-                        email shouldBe "user@example.com"
+                        email shouldBe EmailAddress("user@example.com")
                         // NOT FOUND
                         null
                     }
@@ -185,7 +186,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
 
             "should return the user when sign in is successful" {
                 val tokenPayload = GoogleIdToken.Payload().apply {
-                    email = "user@example.com"
+                    email = "  User@EXAMPLE.com  "
                 }
                 val idToken = GoogleIdToken(JsonWebSignature.Header(), tokenPayload, byteArrayOf(), byteArrayOf())
 
@@ -209,7 +210,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 // A realm that returns the user
                 val realm = MinimalTestRealm(
                     onLoadUserByEmail = { email ->
-                        email shouldBe "user@example.com"
+                        email shouldBe EmailAddress("user@example.com")
                         // USER FOUND
                         storedUser
                     }
@@ -321,7 +322,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
             "should sign-up a new user when the user does not exist yet" {
                 // A valid token payload for the tests below
                 val tokenPayload = GoogleIdToken.Payload().apply {
-                    email = "user@example.com"
+                    email = "  User@EXAMPLE.com  "
                     set("name", "User Name")
                 }
                 val idToken = GoogleIdToken(JsonWebSignature.Header(), tokenPayload, byteArrayOf(), byteArrayOf())
@@ -344,11 +345,11 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 // A realm that creates a new user
                 val realm = MinimalTestRealm(
                     onLoadUserByEmail = { email ->
-                        email shouldBe "user@example.com"
+                        email shouldBe EmailAddress("user@example.com")
                         null // User does not exist
                     },
                     onCreateUserForSignup = { params ->
-                        params.email shouldBe "user@example.com"
+                        params.email shouldBe EmailAddress("user@example.com")
                         params.displayName shouldBe "User Name"
                         newUser
                     }
@@ -365,7 +366,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
             "should return the existing user when the user already exists" {
                 // A valid token payload for the tests below
                 val tokenPayload = GoogleIdToken.Payload().apply {
-                    email = "user@example.com"
+                    email = "  User@EXAMPLE.com  "
                     set("name", "User Name")
                 }
                 val idToken = GoogleIdToken(JsonWebSignature.Header(), tokenPayload, byteArrayOf(), byteArrayOf())
@@ -388,7 +389,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 // A realm that finds an existing user
                 val realm = MinimalTestRealm(
                     onLoadUserByEmail = { email ->
-                        email shouldBe "user@example.com"
+                        email shouldBe EmailAddress("user@example.com")
                         existingUser // User exists
                     },
                     onCreateUserForSignup = { _ ->

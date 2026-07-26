@@ -30,7 +30,7 @@ class DashboardPage(ctx: NoProps) : PureComponent(ctx) {
             user?.let { u ->
                 ui.list {
                     noui.item { +"Name: ${u.name}" }
-                    noui.item { +"Email: ${u.email}" }
+                    noui.item { +"Email: ${u.email.value}" }
                 }
             }
 
