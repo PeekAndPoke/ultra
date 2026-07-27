@@ -11,5 +11,11 @@ data class AuthSignUpResponse(
         val failed = AuthSignUpResponse(signIn = null, requiresActivation = false)
     }
 
-    val success: Boolean = signIn != null
+    /**
+     * Did the sign-up succeed?
+     *
+     * NOT "am I signed in": an account that must be activated first legitimately gets no session, and
+     * the sign-up still succeeded. Callers that want the session check [signIn] for null.
+     */
+    val success: Boolean = signIn != null || requiresActivation
 }

@@ -8,6 +8,8 @@ import io.peekandpoke.funktor.auth.AuthRecordStorage
 import io.peekandpoke.funktor.auth.AuthSystem
 import io.peekandpoke.funktor.auth.AuthUserAdapter
 import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
@@ -27,7 +29,6 @@ import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.value
 import kotlinx.serialization.json.buildJsonObject
-import kotlin.time.Duration.Companion.hours
 
 /**
  * Authentication provider for handling email and password-based authentication.
@@ -110,6 +111,17 @@ class EmailAndPasswordAuth(
         /** Find the password recovery token for the given [realm] and [token] */
         suspend fun findPasswordRecoveryToken(realm: RealmId, token: String): Stored<AuthRecord.PasswordRecoveryToken>?
 
+        /** Find the email verification token for the given [realm] and [token] */
+        suspend fun findEmailVerificationToken(
+            realm: RealmId, token: String,
+        ): Stored<AuthRecord.EmailVerificationToken>?
+
+        /** Find the pending-activation marker for [realm] / [owner], or null when activated */
+        suspend fun findPendingActivation(realm: RealmId, owner: UserId): Stored<AuthRecord.PendingActivation>?
+
+        /** Remove every pending-activation marker for [realm] / [owner] - i.e. activate the account */
+        suspend fun removePendingActivations(realm: RealmId, owner: UserId)
+
         /** Remove an auth record by its [id] */
         suspend fun removeAuthRecord(id: String)
     }
@@ -164,6 +176,30 @@ class EmailAndPasswordAuth(
         ): Stored<AuthRecord.PasswordRecoveryToken>? {
             return authRecordStorage
                 .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = realm, token = token)
+        }
+
+        /** @{inheritDoc} */
+        override suspend fun findEmailVerificationToken(
+            realm: RealmId,
+            token: String,
+        ): Stored<AuthRecord.EmailVerificationToken>? {
+            return authRecordStorage
+                .findByToken(type = AuthRecord.EmailVerificationToken, realm = realm, token = token)
+        }
+
+        /** @{inheritDoc} */
+        override suspend fun findPendingActivation(
+            realm: RealmId,
+            owner: UserId,
+        ): Stored<AuthRecord.PendingActivation>? {
+            return authRecordStorage
+                .findLatestRecordBy(type = AuthRecord.PendingActivation, realm = realm, owner = owner)
+        }
+
+        /** @{inheritDoc} */
+        override suspend fun removePendingActivations(realm: RealmId, owner: UserId) {
+            authRecordStorage
+                .removeAllByOwner(type = AuthRecord.PendingActivation, realm = realm, owner = owner)
         }
 
         /** @{inheritDoc} */
@@ -227,6 +263,14 @@ class EmailAndPasswordAuth(
         validateCurrentPassword(realm, user, password).takeIf { it }
             ?: throw AuthError.invalidCredentials()
 
+        // The account must have proven it owns the address. Keyed on the PENDING MARKER, never on
+        // "an unexpired verification token exists": tokens expire and expired records are filtered
+        // out of every lookup, so the token-based check would erase itself after 24 hours and quietly
+        // let every lapsed sign-up in.
+        if (services.findPendingActivation(realm = realm.id, owner = UserId(user._id)) != null) {
+            throw AuthError.accountNotActivated()
+        }
+
         return user
     }
 
@@ -265,10 +309,67 @@ class EmailAndPasswordAuth(
             createPasswordRecord(realmId = realm.id, ownerId = UserId(user._id), password = typed.password)
         }
 
+        // Mark the account as not-yet-activated BEFORE mailing anything. The marker is what blocks
+        // sign-in, so writing it first means a crash between the two steps leaves an account that
+        // cannot be used rather than one that is silently activated.
+        services.createAuthRecord {
+            AuthRecord.PendingActivation(realm = realm.id, ownerId = UserId(user._id))
+        }
+
+        val token = services.generateRandomBase64Token(length = realm.tokenConfig.randomTokenByteLength)
+
+        services.createAuthRecord {
+            AuthRecord.EmailVerificationToken(
+                realm = realm.id,
+                ownerId = UserId(user._id),
+                token = token,
+                expiresAt = services.instantNow()
+                    .plus(realm.tokenConfig.emailVerificationTokenLifetime).toEpochSeconds(),
+            )
+        }
+
+        // Sent from the PROVIDER, not from `AuthRealm.signUp`, because the deep-link needs
+        // [frontendUrls] - which is provider configuration. Mirrors [recoverAccountInitPasswordReset].
+        val emailResult = realm.messaging.sendAccountActivationEmail(
+            user = user,
+            activationUrl = buildUri(frontendUrls.routes.activateAccount.pattern) {
+                set(AuthFrontendRoutes.PROVIDER_PARAM, id)
+                set(AuthFrontendRoutes.TOKEN_PARAM, token)
+            }
+        )
+
+        if (emailResult.success.not()) {
+            // The account stays blocked. The way back is a password reset, which proves the same
+            // mailbox and clears the marker - see [recoverAccountSetPasswordWithToken].
+            log.warning(
+                "Sending 'Account Activation' Email failed for user ${user._id} ${user.value.email}"
+            )
+        }
+
         return AuthProvider.SignUpResult(
             user = user,
             requiresActivation = true,
         )
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    override suspend fun <USER : AuthUser> activateAccount(
+        realm: AuthRealm<USER>, request: AuthActivateAccountRequest,
+    ): AuthActivateAccountResponse {
+
+        val tokenRecord = services
+            .findEmailVerificationToken(realm = realm.id, token = request.token)
+            ?: return AuthActivateAccountResponse(success = false)
+
+        // Invalidate the token immediately so it cannot be reused
+        services.removeAuthRecord(tokenRecord._id)
+
+        // Dropping the marker IS the activation
+        services.removePendingActivations(realm = realm.id, owner = tokenRecord.value.ownerId)
+
+        return AuthActivateAccountResponse(success = true)
     }
 
     /**
@@ -318,8 +419,7 @@ class EmailAndPasswordAuth(
         val user = EmailAddress.parseOrNull(request.email)?.let { realm.users.loadByEmail(it) }
             ?: return AuthRecoverAccountResponse.InitPasswordReset
 
-        // TODO: make length configurable
-        val token = services.generateRandomBase64Token(length = 256)
+        val token = services.generateRandomBase64Token(length = realm.tokenConfig.randomTokenByteLength)
 
         // Store the token in the database
         services.createAuthRecord {
@@ -327,8 +427,8 @@ class EmailAndPasswordAuth(
                 realm = realm.id,
                 ownerId = UserId(user._id),
                 token = token,
-                // TODO: make expiration configurable
-                expiresAt = services.instantNow().plus(1.hours).toEpochSeconds(),
+                expiresAt = services.instantNow()
+                    .plus(realm.tokenConfig.passwordRecoveryTokenLifetime).toEpochSeconds(),
             )
         }
 
@@ -382,6 +482,12 @@ class EmailAndPasswordAuth(
         services.createAuthRecord {
             createPasswordRecord(realmId = realm.id, ownerId = tokenRecord.value.ownerId, password = request.password)
         }
+
+        // Following a link mailed to the address proves exactly what the activation link proves, so a
+        // completed reset also activates. This is the ONLY way back for an account whose activation
+        // link expired, because this increment ships no resend endpoint - see
+        // `.claude/tasks/20260727-account-activation.md`.
+        services.removePendingActivations(realm = realm.id, owner = tokenRecord.value.ownerId)
 
         // Send email to the user to notify them that their password has been changed
         realm.users.loadById(tokenRecord.resolve().ownerId)?.let { user ->

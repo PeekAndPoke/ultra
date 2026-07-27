@@ -22,6 +22,15 @@ open class AuthError(message: String, cause: Throwable? = null) : Throwable(mess
         fun noOrganisationAccess(cause: Throwable? = null) =
             AuthError("No organisation access", cause)
 
+        /**
+         * Credentials were valid, but the account has not yet proven it owns its email address.
+         *
+         * Not an enumeration leak: reaching this requires the correct password, which already tells
+         * the caller the account exists.
+         */
+        fun accountNotActivated(cause: Throwable? = null) =
+            AuthError("Account not activated", cause)
+
         fun invalidRequest(cause: Throwable? = null) =
             AuthError("Invalid request", cause)
 

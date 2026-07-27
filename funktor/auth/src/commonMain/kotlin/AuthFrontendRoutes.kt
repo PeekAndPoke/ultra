@@ -14,4 +14,7 @@ class AuthFrontendRoutes(mountPoint: String = DEFAULT_MOUNT_POINT) {
     val login = Static("$mountPoint/login")
 
     val resetPassword = Route2("$mountPoint/{$PROVIDER_PARAM}/reset-password/{$TOKEN_PARAM}")
+
+    /** Deep-link target of the activation mail sent at sign-up. */
+    val activateAccount = Route2("$mountPoint/{$PROVIDER_PARAM}/activate/{$TOKEN_PARAM}")
 }

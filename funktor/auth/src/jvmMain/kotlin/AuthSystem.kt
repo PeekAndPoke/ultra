@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.auth
 
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
-import io.peekandpoke.funktor.auth.model.AuthActivateActivateResponse
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
@@ -100,10 +100,8 @@ class AuthSystem(
     }
 
     /** Activate a user account by [realm] and [request] */
-    suspend fun activate(realm: RealmId, request: AuthActivateAccountRequest): AuthActivateActivateResponse {
-        // Activation not yet implemented
-        // TODO: implement me
-        return AuthActivateActivateResponse(success = false)
+    suspend fun activate(realm: RealmId, request: AuthActivateAccountRequest): AuthActivateAccountResponse {
+        return getRealm(realm).activate(request)
     }
 
     /** Sign in a user by [realm] and [request] */

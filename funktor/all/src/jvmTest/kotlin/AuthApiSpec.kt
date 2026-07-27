@@ -8,7 +8,7 @@ import io.ktor.http.*
 import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
-import io.peekandpoke.funktor.auth.model.AuthActivateActivateResponse
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
@@ -18,7 +18,9 @@ import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
+import io.peekandpoke.funktor.messaging.senders.hrefs
 import io.peekandpoke.funktor.rest.acl.UserApiAccessMatrix
+import io.peekandpoke.ultra.common.decodeUriComponent
 import io.peekandpoke.ultra.remote.ApiAccessLevel
 import io.peekandpoke.ultra.security.user.UserId
 
@@ -127,6 +129,12 @@ class AuthApiSpec : FunktorApiSpec() {
                             status shouldBe HttpStatusCode.OK
                             val response = apiResponseData<AuthSignUpResponse>()
                             response.shouldNotBeNull()
+
+                            // Succeeded, but deliberately WITHOUT a session: the address is unproven
+                            // until the activation link is followed.
+                            response.success shouldBe true
+                            response.requiresActivation shouldBe true
+                            response.signIn shouldBe null
                         }
                     }
                 }
@@ -134,9 +142,41 @@ class AuthApiSpec : FunktorApiSpec() {
         }
 
         api.auth.signIn { route ->
-            "Sign in after sign up must return a token" {
+            "Sign in before activation must be refused, even with the correct password" {
                 apiApp {
                     anonymous {
+                        route(
+                            existingRealm,
+                            body = AuthSignInRequest.EmailAndPassword(
+                                provider = provider,
+                                email = signupEmail,
+                                password = "Test1234!",
+                            ),
+                        ) {
+                            status shouldBe HttpStatusCode.Forbidden
+                        }
+                    }
+                }
+            }
+
+            "Sign in after activation must return a token" {
+                apiApp {
+                    anonymous {
+                        // The activation token is only ever delivered by mail — there is no other way
+                        // to get one, which is the point of the whole flow.
+                        val token = capturedEmails.lastTo(signupEmail).shouldNotBeNull()
+                            .hrefs().single()
+                            .substringAfterLast("/activate/")
+                            .decodeUriComponent()
+
+                        api.auth.activateAccount(
+                            existingRealm,
+                            body = AuthActivateAccountRequest(provider = provider, token = token),
+                        ) {
+                            status shouldBe HttpStatusCode.OK
+                            apiResponseData<AuthActivateAccountResponse>()?.success shouldBe true
+                        }
+
                         route(
                             existingRealm,
                             body = AuthSignInRequest.EmailAndPassword(
@@ -180,13 +220,28 @@ class AuthApiSpec : FunktorApiSpec() {
                 apiApp {
                     anonymous {
                         route(
-                            nonExistentRealm,
-                            body = AuthActivateAccountRequest(token = "invalid-token"),
+                            existingRealm,
+                            body = AuthActivateAccountRequest(provider = provider, token = "invalid-token"),
                         ) {
+                            // OK, not an error: the endpoint is anonymous, so answering differently
+                            // for a token that exists would let an attacker probe for live tokens.
                             status shouldBe HttpStatusCode.OK
-                            val result = apiResponseData<AuthActivateActivateResponse>()
+                            val result = apiResponseData<AuthActivateAccountResponse>()
                             result.shouldNotBeNull()
                             result.success shouldBe false
+                        }
+                    }
+                }
+            }
+
+            "Activate account in a non-existent realm must return bad request" {
+                apiApp {
+                    anonymous {
+                        route(
+                            nonExistentRealm,
+                            body = AuthActivateAccountRequest(provider = provider, token = "invalid-token"),
+                        ) {
+                            status shouldBe HttpStatusCode.BadRequest
                         }
                     }
                 }

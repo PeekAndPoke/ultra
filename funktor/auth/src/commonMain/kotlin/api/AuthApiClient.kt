@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.auth.api
 
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
-import io.peekandpoke.funktor.auth.model.AuthActivateActivateResponse
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
@@ -52,7 +52,7 @@ class AuthApiClient(private val realm: RealmId, config: Config) : ApiClient(conf
         val ActivateAccount = TypedApiEndpoint.Post(
             uri = "$BASE/{realm}/activate",
             body = AuthActivateAccountRequest.serializer(),
-            response = AuthActivateActivateResponse.serializer().api(),
+            response = AuthActivateAccountResponse.serializer().api(),
         )
 
         val SetPassword = TypedApiEndpoint.Put(
@@ -106,7 +106,7 @@ class AuthApiClient(private val realm: RealmId, config: Config) : ApiClient(conf
         SignUp("realm" to realm.value, body = request)
     )
 
-    fun activateAccount(request: AuthActivateAccountRequest): Flow<ApiResponse<AuthActivateActivateResponse>> = call(
+    fun activateAccount(request: AuthActivateAccountRequest): Flow<ApiResponse<AuthActivateAccountResponse>> = call(
         ActivateAccount("realm" to realm.value, body = request)
     )
 

@@ -2,6 +2,8 @@ package io.peekandpoke.funktor.auth.provider
 
 import io.peekandpoke.funktor.auth.AuthError
 import io.peekandpoke.funktor.auth.AuthRealm
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
@@ -57,6 +59,18 @@ interface AuthProvider {
     suspend fun <USER : AuthUser> signUp(
         realm: AuthRealm<USER>, request: AuthSignUpRequest,
     ): SignUpResult<USER> {
+        throw AuthError.notSupported()
+    }
+
+    /**
+     * Consumes an activation token issued by this provider at sign-up and activates the account.
+     *
+     * Answers `success = false` for an unknown or expired token rather than throwing — the endpoint is
+     * anonymous, so an error would tell an attacker which tokens exist.
+     */
+    suspend fun <USER : AuthUser> activateAccount(
+        realm: AuthRealm<USER>, request: AuthActivateAccountRequest,
+    ): AuthActivateAccountResponse {
         throw AuthError.notSupported()
     }
 

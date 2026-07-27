@@ -81,13 +81,13 @@ class PasswordResetEmailE2eSpec : FunktorApiSpec() {
                 }
             }
 
-            // A TRIPWIRE, not an incidental assertion. `EmailAndPasswordAuth.signUp` already returns
-            // `requiresActivation = true`, but `AuthRealm.signUp` ignores it — the branch is an empty
-            // `// TODO: send account activation email` — and signs the user in anyway. So signup
-            // mails nothing today. When activation lands this goes red ON PURPOSE, and the answer is
-            // to add an activation step here, not to widen a `clear()` until it passes again.
-            withClue("signup must not mail anything yet — AuthRealm.signUp ignores requiresActivation") {
-                emails.capturedTo(email) shouldBe emptyList()
+            // The tripwire this replaces asserted that signup mailed NOTHING, and was written to go
+            // red exactly when activation landed. It did. Signup now mails an activation link and the
+            // account cannot sign in until it is followed — which this spec deliberately does NOT do,
+            // because the reset flow below is what activates it (see the closing sign-in).
+            withClue("signup must mail an activation link") {
+                emails.lastTo(email).shouldNotBeNull()
+                    .subject shouldBe "Funktor All Test: Activate your Account"
             }
         }
 
@@ -147,11 +147,13 @@ class PasswordResetEmailE2eSpec : FunktorApiSpec() {
                     // is an account-takeover handed over on a plate. Only reachable as an assertion
                     // now that the test app wires the storing hook — and it compares against the
                     // token the captured mail actually contains, so it cannot pass vacuously.
+                    // Selected by TAG, not by position: this address now also has an activation mail
+                    // (and a second recovery mail from a later test) under the same refs, so `last()`
+                    // would make the assertion depend on storage order and could silently end up
+                    // checking a different mail entirely.
                     val stored = sentMessages.findByRefs(setOf(email)).toList().map { it.value() }
+                        .filter { "password-reset" in it.tags }
 
-                    // `last()`, not `single()`: another test in this spec sends a second recovery mail
-                    // with the same refs, so requiring exactly one would make this pass or fail on
-                    // declaration order rather than on the property being tested.
                     withClue("the reset mail must be persisted, otherwise this asserts nothing") {
                         stored.shouldNotBeEmpty()
                     }
@@ -202,6 +204,10 @@ class PasswordResetEmailE2eSpec : FunktorApiSpec() {
 
                     //  ... which is the one that now works  /////////////////////////////////////
 
+                    // This account was never activated through its activation link. It can sign in
+                    // because completing a password reset proves the same mailbox and therefore also
+                    // activates — see `EmailAndPasswordAuth.recoverAccountSetPasswordWithToken`. If
+                    // that rule is ever dropped, this line goes red first.
                     api.auth.signIn(
                         realmParam,
                         body = AuthSignInRequest.EmailAndPassword(

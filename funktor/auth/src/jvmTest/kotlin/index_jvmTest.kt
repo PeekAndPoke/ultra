@@ -110,12 +110,20 @@ class TestMessaging(
     val onSendPasswordRecoveryEmil: suspend (Stored<MinimalTestUser>, String) -> EmailResult = { _, _ ->
         error("sendPasswordRecoveryEmil was not expected to be called")
     },
+    val onSendAccountActivationEmail: suspend (Stored<MinimalTestUser>, String) -> EmailResult = { _, _ ->
+        error("sendAccountActivationEmail was not expected to be called")
+    },
 ) : AuthRealm.Messaging<MinimalTestUser> {
     override suspend fun sendPasswordChangedEmail(user: Stored<MinimalTestUser>): EmailResult =
         onSendPasswordChangedEmail(user)
 
     override suspend fun sendPasswordRecoveryEmil(user: Stored<MinimalTestUser>, resetUrl: String): EmailResult =
         onSendPasswordRecoveryEmil(user, resetUrl)
+
+    override suspend fun sendAccountActivationEmail(
+        user: Stored<MinimalTestUser>,
+        activationUrl: String,
+    ): EmailResult = onSendAccountActivationEmail(user, activationUrl)
 }
 
 class MinimalTestDeps : AuthSystem.Deps {

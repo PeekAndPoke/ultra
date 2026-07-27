@@ -3,7 +3,7 @@ package io.peekandpoke.funktor.auth.api
 import io.peekandpoke.funktor.auth.AuthError
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.funktorAuth
-import io.peekandpoke.funktor.auth.model.AuthActivateActivateResponse
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
@@ -119,7 +119,7 @@ class AuthApi : ApiRoutes("login", authFloor = { public() }) {
                     .activate(params.realm, body)
                     .let { ApiResponse.ok(it) }
             } catch (e: AuthError) {
-                ApiResponse.badRequest(AuthActivateActivateResponse(success = false))
+                ApiResponse.badRequest(AuthActivateAccountResponse(success = false))
                     .withInfo(e.message ?: "")
             }
         }

@@ -1,5 +1,7 @@
 package io.peekandpoke.funktor.auth
 
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
@@ -55,6 +57,9 @@ interface AuthRealm<USER : AuthUser> {
         suspend fun sendPasswordChangedEmail(user: Stored<USER>): EmailResult
 
         suspend fun sendPasswordRecoveryEmil(user: Stored<USER>, resetUrl: String): EmailResult
+
+        /** Sent at sign-up. Until the link is followed the account cannot sign in. */
+        suspend fun sendAccountActivationEmail(user: Stored<USER>, activationUrl: String): EmailResult
     }
 
     /**
@@ -94,6 +99,44 @@ interface AuthRealm<USER : AuthUser> {
                     EmailStoring.withAnonymizedContent(
                         refs = setOf(user._id, userEmail.value),
                         tags = setOf("password-changed"),
+                    )
+                )
+            )
+        }
+
+        override suspend fun sendAccountActivationEmail(user: Stored<USER>, activationUrl: String): EmailResult {
+            val userEmail = user.value().email
+
+            return realm.deps.messaging.mailing.send(
+                Email(
+                    source = senderEmail,
+                    destination = EmailDestination.to(userEmail.value),
+                    subject = "$applicationName: Activate your Account",
+                    body = EmailBody.Html {
+                        body {
+                            h1 { +"Welcome!" }
+
+                            p {
+                                +"Click the link below to activate your account. Until you do, you cannot sign in."
+                            }
+
+                            p {
+                                a(href = activationUrl) {
+                                    +"Activate account"
+                                }
+                            }
+
+                            p {
+                                +"Yours sincerely,"
+                                br()
+                                +senderName
+                            }
+                        }
+                    }
+                ).store(
+                    EmailStoring.withAnonymizedContent(
+                        refs = setOf(user._id, userEmail.value),
+                        tags = setOf("account-activation"),
                     )
                 )
             )
@@ -226,8 +269,11 @@ interface AuthRealm<USER : AuthUser> {
 
         val result = provider.signUp(realm = this, request = request)
 
+        // An account that has not proved it owns its address gets NO session. The provider has already
+        // issued the activation token and mailed the link — the realm's whole share of activation is
+        // withholding the sign-in, because the deep-link URLs are provider configuration.
         if (result.requiresActivation) {
-            // TODO: send account activation email
+            return AuthSignUpResponse(signIn = null, requiresActivation = true)
         }
 
         // Best-effort auto sign-in. For org realms the new user may have no org yet (e.g. invite-only),
@@ -243,6 +289,14 @@ interface AuthRealm<USER : AuthUser> {
             signIn = signInResponse,
             requiresActivation = result.requiresActivation,
         )
+    }
+
+    /**
+     * Activates an account with the token from the activation mail.
+     */
+    suspend fun activate(request: AuthActivateAccountRequest): AuthActivateAccountResponse {
+        return getProvider(request.provider).supporting(Capability.SignUp)
+            .activateAccount(realm = this, request = request)
     }
 
     /**

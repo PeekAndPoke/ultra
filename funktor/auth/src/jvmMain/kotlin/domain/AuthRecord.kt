@@ -47,8 +47,41 @@ sealed interface AuthRecord : Timestamped {
     }
 
     /**
+     * The account has not yet proven it owns its email address. PRESENCE is the state — there is no
+     * "activated" flag anywhere, and no row means activated.
+     *
+     * Deliberately separate from [EmailVerificationToken], and deliberately non-expiring. Using "an
+     * unexpired verification token exists" as the state would fail OPEN: `findLatestRecordBy` filters
+     * expired records out, so every account that let its activation link lapse would silently become
+     * activated. Keeping the state here lets the token expire on its own schedule.
+     *
+     * Written by `EmailAndPasswordAuth.signUp`, removed by `activateAccount` — and also by a completed
+     * password reset, which proves ownership of the same mailbox.
+     */
+    data class PendingActivation(
+        override val realm: RealmId,
+        override val ownerId: UserId,
+        override val createdAt: MpInstant = MpInstant.Epoch,
+        override val updatedAt: MpInstant = createdAt,
+    ) : AuthRecord {
+        companion object : Polymorphic.TypedChild<PendingActivation> {
+            override val identifier = "pending-activation"
+        }
+
+        /** Never expires: it is state, not a secret. */
+        override val expiresAt: Long? = null
+
+        /** Carries no secret. */
+        override val token: String? = null
+
+        override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
+        override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+    }
+
+    /**
      * Single-use token sent to a user's email address to verify ownership at sign-up time.
-     * Consumed by `AuthSystem.verifyEmail(realm, token)`.
+     * Consumed by `EmailAndPasswordAuth.activateAccount`, which also removes the [PendingActivation]
+     * marker.
      */
     data class EmailVerificationToken(
         override val realm: RealmId,

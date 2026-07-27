@@ -210,5 +210,68 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                 loaded.shouldNotBeNull()
             }
         }
+
+        "A pending-activation marker must round-trip with no token and no expiry" {
+            // The shape is unique among auth records: BOTH `token` and `expiresAt` are null. And the
+            // null expiry is load-bearing rather than incidental — `findLatestRecordBy` drops expired
+            // records, so a marker that read back as expired would silently activate the account.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+
+            authRecords.create(
+                AuthRecord.PendingActivation(realm = RealmId("realm"), ownerId = UserId("owner1"))
+            )
+
+            val loaded = authRecords
+                .findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
+
+            loaded.shouldNotBeNull()
+            loaded.resolve().ownerId shouldBe UserId("owner1")
+            loaded.resolve().token.shouldBeNull()
+            loaded.resolve().expiresAt.shouldBeNull()
+        }
+
+        "removeAllByOwner must remove a user's records, scoped to realm and owner" {
+            // This is what "activate the account" actually does. Untested until activation needed it,
+            // and a backend where it silently removed nothing would leave every activated account
+            // still locked out — with the API answering success = true.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+
+            authRecords.create(AuthRecord.PendingActivation(RealmId("realm-a"), UserId("owner1")))
+            authRecords.create(AuthRecord.PendingActivation(RealmId("realm-a"), UserId("owner2")))
+            authRecords.create(AuthRecord.PendingActivation(RealmId("realm-b"), UserId("owner1")))
+            authRecords.create(
+                AuthRecord.Password(realm = RealmId("realm-a"), ownerId = UserId("owner1"), token = "pw")
+            )
+
+            authRecords.removeAllByOwner(AuthRecord.PendingActivation, RealmId("realm-a"), UserId("owner1"))
+
+            withClue("the target marker is gone") {
+                authRecords
+                    .findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm-a"), UserId("owner1"))
+                    .shouldBeNull()
+            }
+
+            withClue("another owner in the same realm keeps theirs") {
+                authRecords
+                    .findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm-a"), UserId("owner2"))
+                    .shouldNotBeNull()
+            }
+
+            withClue("the same owner in another realm keeps theirs") {
+                authRecords
+                    .findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm-b"), UserId("owner1"))
+                    .shouldNotBeNull()
+            }
+
+            withClue("another record TYPE of the same owner is untouched") {
+                authRecords
+                    .findLatestRecordBy(AuthRecord.Password, RealmId("realm-a"), UserId("owner1"))
+                    .shouldNotBeNull()
+            }
+        }
     }
 }
