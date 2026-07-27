@@ -84,6 +84,8 @@ fun createBlueprint(config: FunktorDemoConfig) = kontainer {
     module(OperatorModule)
     module(B2bModule)
     module(B2b2cModule)
+
+    // TO be removed ... old stuff
     module(AdminUserModule)
     module(ShowcaseModule)
     module(FunktorConfModule)
