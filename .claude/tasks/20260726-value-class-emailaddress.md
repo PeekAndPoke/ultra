@@ -73,6 +73,17 @@ fail-CLOSED — it denies, never grants — but it is a hard outage, so audit fi
 FOR u IN <users> FILTER u.email != LOWER(TRIM(u.email)) RETURN { _id: u._id, email: u.email }
 ```
 
+**Extended 2026-07-27** — `init` also rejects control and line-separator characters now (added from
+the security review of `.claude/tasks/20260726-email-e2e-test-seam.md`: `trim()` only strips the ends,
+so an interior CR/LF survived canonicalization and would have reached the raw MIME headers). Same
+decode-time consequence, so audit for that too:
+
+```aql
+FOR u IN <users>
+  FILTER REGEX_TEST(u.email, "[[:cntrl:]\u007F\u0080-\u009F\u2028\u2029]")
+  RETURN { _id: u._id, email: u.email }
+```
+
 Any hit must be canonicalized (or the row removed) before the deploy. The demo's seeds are all
 lowercase, so the demo needs nothing — this is for real deployments. Format is NOT part of this: a
 malformed-but-canonical address still decodes and still matches, deliberately.
@@ -90,13 +101,32 @@ malformed-but-canonical address still decodes and still matches, deliberately.
 
 ## Review record (filled by /feature-review)
 
+Two rounds, 2026-07-26, over the combined uncommitted diff (this step + the client JWT work in
+`.claude/tasks/20260726-client-jwt-claims.md`), looped to zero confirmed findings.
+
 | Reviewer | Verdict | Confirmed findings |
 |---|---|---|
-| 1. Implementation & code style | | |
-| 2. Domain expert | | |
-| 3. Security | | |
+| 1. Implementation & code style | findings, then clean | untyped kotest assertions across the new specs; missing task doc for the JWT work |
+| 2. Domain expert | findings, then clean | **format on the LOOKUP path** (see below) |
+| 3. Security | findings, then clean | U+212A collapse; `of` bounding order; guard using the raw ctor |
 
-Fixes applied: ...
+Fixes applied:
 
-**Red-team follow-up**: to be assessed at review time (account-takeover-by-canonicalization surface:
-unicode homoglyphs, dotted gmail aliases, `+tag` addressing).
+- **The finding that inverted the design.** Round 1 moved `isEmail()` out of `init` so a legacy row
+  stays decodable — but `of`/`parseOrNull` still enforced it, so a legacy account listed and rendered
+  yet could never sign in or reset. "Matching is matching": format moved to `isValidFormat`, asserted
+  only at account CREATION.
+- `of()` bounds length BEFORE copying, and rejects non-ASCII BEFORE lowercasing (U+212A KELVIN SIGN
+  lowercases to `k`, so it could otherwise canonicalize onto a different existing account).
+- `OrgIsolationGuard` uses `parseOrNull` rather than the raw constructor, so its "any failure →
+  DenyAsNotFound" contract stays literally true.
+- ~15 untyped `shouldBe "literal"` assertions on value-class receivers made type-correct.
+
+**Amended 2026-07-27** — the security reviewer of `.claude/tasks/20260726-email-e2e-test-seam.md`
+found the one id-shaped value class not gating on `isForbiddenInId`. `init` now rejects control and
+line-separator characters (interior CR/LF survives `trim()` and reaches raw MIME headers). Not
+reachable today; see the extended rollout audit above.
+
+**Red-team follow-up**: `.claude/tasks/20260726-redteam-value-class-emailaddress.md` — covers the
+account-takeover-by-canonicalization surface (unicode homoglyphs, dotted gmail aliases, `+tag`
+addressing) plus the pre-existing unverified-SSO-email chain.

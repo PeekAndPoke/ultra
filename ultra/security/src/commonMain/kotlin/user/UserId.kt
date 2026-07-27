@@ -1,5 +1,6 @@
 package io.peekandpoke.ultra.security.user
 
+import io.peekandpoke.ultra.common.isForbiddenInId
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
 

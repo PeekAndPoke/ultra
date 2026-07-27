@@ -118,4 +118,34 @@ class StringsExtSpec : StringSpec({
         "camelCaseWord".camelCaseDivide() shouldBe "camel Case Word"
         "camelCaseWord".camelCaseDivide("-") shouldBe "camel-Case-Word"
     }
+
+    "isForbiddenInId bans what could forge a key boundary or a log line" {
+        '\u0000'.isForbiddenInId() shouldBe true // NUL — the composite-key delimiter
+        '\n'.isForbiddenInId() shouldBe true
+        '\r'.isForbiddenInId() shouldBe true
+        '\u007F'.isForbiddenInId() shouldBe true // DEL
+        '\u0085'.isForbiddenInId() shouldBe true // NEL, a C1 control
+        '\u2028'.isForbiddenInId() shouldBe true // LINE SEPARATOR
+        '\u2029'.isForbiddenInId() shouldBe true // PARAGRAPH SEPARATOR
+    }
+
+    "isForbiddenInId allows everything an id legitimately contains" {
+        "b2b_users/abc123".none { it.isForbiddenInId() } shouldBe true
+        "user@example.com".none { it.isForbiddenInId() } shouldBe true
+        ' '.isForbiddenInId() shouldBe false // ugly in an id, but not a security boundary
+        '\u00E4'.isForbiddenInId() shouldBe false
+    }
+
+    "isForbiddenInId bans EXACTLY the C0 controls, DEL, the C1 controls and U+2028 / U+2029" {
+        // Enumerated, not spot-checked. Every id value class gates on this one predicate, so the
+        // boundary has to be pinned in both directions: widening it starts rejecting ids already in
+        // the database, narrowing it lets a log-forging character back through.
+        val actual = (0..0x2100).map { it.toChar() }.filter { it.isForbiddenInId() }.toSet()
+
+        val expected = ((0x00..0x1F) + listOf(0x7F) + (0x80..0x9F) + listOf(0x2028, 0x2029))
+            .map { it.toChar() }
+            .toSet()
+
+        actual shouldBe expected
+    }
 })

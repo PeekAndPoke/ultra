@@ -156,6 +156,27 @@ binding. Surface: user models/entities across realms.
 `Organisation.slug` / `Branch.slug` → `Slug`. Same pattern as Email: `init` validates
 `Slugs.normalize(value) == value`; `of(raw) = Slug(Slugs.normalize(raw))`.
 
+### OPEN QUESTION to settle in this step: denylist or allowlist?
+
+Raised by the domain reviewer of `.claude/tasks/20260726-email-e2e-test-seam.md` (2026-07-27), and it
+is a decision for the standing rule below, not a defect in what shipped.
+
+The repo currently has BOTH patterns:
+- `UserId`, `OrgId` and now `EmailAddress` gate on `isForbiddenInId` — a **denylist** (C0 controls,
+  DEL, C1 controls, U+2028/9), which still admits `/`, spaces, RTL overrides and zero-width joiners.
+- `RealmId` requires `[A-Za-z0-9._-]` — an **allowlist**, and its KDoc calls that a security boundary.
+
+`isForbiddenInId` now lives in `ultra:common` as public API next to `isEmail`/`isSlug`, and its own
+KDoc says "one predicate, so a later id type cannot quietly ship a weaker rule" — which, as written,
+steers the next id type toward the weaker of the two patterns. `Slug` is the next id type, and it
+naturally wants an allowlist (`isSlug` already exists and is stricter than either).
+
+Options: (a) keep the denylist as a FLOOR every id must clear, with an allowlist on top wherever the
+character set is knowable — which is what `RealmId` already does implicitly; (b) publish an allowlist
+builder and demote the denylist to its internal floor; (c) leave both and document when to use which.
+(a) is the smallest honest change and matches what the code already does. Decide before writing
+`Slug`, then say so in the standing rule.
+
 ## Later / optional
 - `BranchId` (`Branch.id`, `branchIds: Set<String>`) — org-scoped; adopt when we touch that area.
 - `UserType` (`USER_TYPE` consts) — closed set; value class OR keep consts; low payoff.

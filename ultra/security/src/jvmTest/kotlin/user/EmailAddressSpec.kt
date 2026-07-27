@@ -57,6 +57,22 @@ class EmailAddressSpec : StringSpec({
         shouldThrow<IllegalArgumentException> { EmailAddress("a$atLimit") }
     }
 
+    "init rejects control characters, so header injection is impossible by construction" {
+        // `trim()` only strips the ENDS, so an interior CR/LF passes the canonicality check. This
+        // value flows into EmailDestination -> InternetAddress -> raw MIME, where a bare LF starts a
+        // new header: the address below would add a recipient the sender never chose.
+        //
+        // Unreachable today (every creation path asserts isValidFormat, and EmailRegex is a
+        // full-match that rejects CRLF), but format is deliberately NOT checked on the lookup path,
+        // so without this the safety rests on every future caller remembering that.
+        shouldThrow<IllegalArgumentException> { EmailAddress("victim@x.com\r\nbcc: attacker@evil.com") }
+        shouldThrow<IllegalArgumentException> { EmailAddress("victim@x.com\nbcc: attacker@evil.com") }
+        shouldThrow<IllegalArgumentException> { EmailAddress("a\u0000b@x.com") }
+        shouldThrow<IllegalArgumentException> { EmailAddress("a\u2028b@x.com") }
+
+        EmailAddress.parseOrNull("victim@x.com\r\nbcc: attacker@evil.com") shouldBe null
+    }
+
     "init does NOT enforce RFC format" {
         // A row written before this type existed (SSO signup never validated format) must stay
         // readable. This is the decodability half of the trade-off documented on the class.

@@ -1,6 +1,7 @@
 package io.peekandpoke.ultra.security.user
 
 import io.peekandpoke.ultra.common.isEmail
+import io.peekandpoke.ultra.common.isForbiddenInId
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
 
@@ -61,6 +62,16 @@ value class EmailAddress(val value: String) {
         // The ONLY semantic invariant, and one the codebase itself guarantees.
         require(value == value.trim().lowercase()) {
             "EmailAddress must be canonical (trimmed + lowercased) — use EmailAddress.of(raw)"
+        }
+        // Header injection, killed by construction. `trim()` above only strips the ENDS, so a CR or
+        // LF in the MIDDLE survives it — and this value goes straight into `EmailDestination` and on
+        // into `InternetAddress` / raw MIME. `victim@x.com\r\nbcc: attacker@evil.com` would be an
+        // extra recipient the sender never chose. Nothing can reach that today (every creation path
+        // asserts `isValidFormat`, whose regex is a full-match and rejects CRLF), but format is
+        // deliberately NOT checked on the lookup path, so "safe" currently rests on every future
+        // caller remembering that. This makes it rest on the type instead.
+        require(value.none { it.isForbiddenInId() }) {
+            "EmailAddress must not contain control or line-separator characters"
         }
     }
 

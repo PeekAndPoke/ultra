@@ -146,6 +146,23 @@ fun String.isSlug(): Boolean {
 }
 
 /**
+ * Characters that no identifier may contain: C0 controls, DEL, C1 controls, and the Unicode
+ * line/paragraph separators.
+ *
+ * Shared deliberately by every id type (`UserId`, `OrgId`, …). Those ids get composed into
+ * NUL-delimited composite keys (the CSRF signing string, the auth session cache key) and written into
+ * log lines, so banning the whole set makes a forged key boundary or a forged log line impossible BY
+ * CONSTRUCTION rather than by convention. One predicate, so a later id type cannot quietly ship a
+ * weaker rule.
+ *
+ * Lives here rather than next to the id classes because it is the same kind of thing as [isEmail] and
+ * [isSlug] — a format predicate — and because `ultra:common` is the one module every id-defining
+ * module already depends on.
+ */
+fun Char.isForbiddenInId(): Boolean =
+    code < 0x20 || code == 0x7F || code in 0x80..0x9F || this == '\u2028' || this == '\u2029'
+
+/**
  * Splits the string, trims all and creates a set of the elements.
  */
 fun String.splitAndTrimToSet(delimiter: String = ",") =
