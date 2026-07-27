@@ -56,7 +56,26 @@ sealed interface AuthRecord : Timestamped {
      * activated. Keeping the state here lets the token expire on its own schedule.
      *
      * Written by `EmailAndPasswordAuth.signUp`, removed by `activateAccount` — and also by a completed
-     * password reset, which proves ownership of the same mailbox.
+     * password reset.
+     *
+     * **The rule for clearing it: an operation must BOTH prove control of the mailbox AND invalidate
+     * every password set before it.** A password reset does both — the token was mailed to the
+     * address, and `findLatestPasswordRecord` only ever validates the NEWEST password record, so the
+     * password chosen at sign-up stops working the moment the reset writes a new one.
+     *
+     * That rule is why two neighbouring operations deliberately do NOT clear it, even though both look
+     * like they prove enough:
+     * - **SSO sign-in for the same address.** It proves the mailbox but leaves the sign-up password
+     *   intact. Clearing here would REOPEN the attack this whole feature closes: an attacker registers
+     *   `victim@corp.com` with a password of their choosing, the victim later signs in with Google,
+     *   and the attacker's password would silently start working. The victim's own way back is
+     *   "forgot password", which satisfies both halves.
+     * - **Authenticated `setPassword`.** It proves knowledge of the current password but says nothing
+     *   about the mailbox.
+     *
+     * The cost is that an account which signed up by password and never activated cannot use its
+     * password until it goes through a reset, even if it signs in via SSO. That is the intended
+     * trade: a stuck credential, not a shared account.
      */
     data class PendingActivation(
         override val realm: RealmId,

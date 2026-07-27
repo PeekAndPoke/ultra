@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor
 
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -154,6 +155,14 @@ class AuthApiSpec : FunktorApiSpec() {
                             ),
                         ) {
                             status shouldBe HttpStatusCode.Forbidden
+
+                            // The status alone would ALSO be green for an unknown user or a wrong
+                            // password, so it cannot tell "refused because unactivated" from
+                            // "refused because the account was never created" — which is exactly
+                            // what this test would degrade into if the sign-up above were renamed
+                            // or reordered. The message discriminates.
+                            apiResponse<AuthSignInResponse>().messages?.map { it.text }
+                                .shouldNotBeNull() shouldContain "Account not activated"
                         }
                     }
                 }

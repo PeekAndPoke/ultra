@@ -157,10 +157,84 @@ cross-cutting infrastructure suppression (global suppression lists), which is a 
 
 ## Review record (filled by /feature-review)
 
+Gate run 2026-07-27 over `e510725e..31667449`.
+
 | Reviewer | Verdict | Confirmed findings |
 |---|---|---|
-| 1. Implementation & code style | | |
-| 2. Domain expert | | |
-| 3. Security | | |
+| 1. Implementation & code style | findings | 3 — 2 fixed, 1 escalated |
+| 2. Domain expert | findings | 5 — 2 fixed, 2 rejected with reason, 1 escalated |
+| 3. Security | findings | 6 — 1 escalated (blocking), 5 recorded as red-team |
+
+Every finding was re-verified against the code before being accepted. Two reviewers independently
+found the missing frontend; two independently found that the activation gate sits in one provider
+rather than at the session choke point.
+
+### Fixed here
+
+- **`activateAccount` consumed the token BEFORE dropping the marker.** The two writes are not atomic,
+  and that order fails to a permanent lockout (link dead, account still blocked, no resend). Reversed,
+  with the reasoning written down: the other order fails to a live token on an already-activated
+  account, which is a no-op.
+- **`AuthRealm.activate` gated on `Capability.SignUp`.** Closing public registration would have
+  retroactively voided every outstanding activation link — while leaving the password-reset workaround
+  open, i.e. blocking the intended path and not the fallback. Gate dropped; a provider that does not
+  issue these tokens already refuses via `AuthProvider.activateAccount`'s `notSupported()` default.
+- **`AuthApiSpec`'s "sign in before activation must be refused" asserted only 403**, which is also
+  what an unknown user and a wrong password return — so it would have stayed green, proving nothing,
+  if the sign-up test above it were renamed or reordered. Now asserts the discriminating message.
+- `AuthSignUpResponse.success`'s kdoc overclaimed; narrowed, and the org-realm case it does not cover
+  is named.
+
+### Rejected, with the reason recorded in code
+
+Two reviewers wanted the marker cleared on **SSO sign-in** and on authenticated **`setPassword`**, for
+consistency with the password-reset rule. Both would be wrong, and the rule they generalise from is
+narrower than it looks: clearing requires proving the mailbox **AND** invalidating every earlier
+password. Reset does both (`findLatestPasswordRecord` only validates the newest record, so the
+sign-up password dies). SSO proves the mailbox but leaves the attacker's password intact — clearing
+there would REOPEN the exact pre-hijack chain this feature closes. `setPassword` proves the password,
+not the mailbox. Written up on `AuthRecord.PendingActivation`, including the accepted cost: an
+unactivated account that signs in via SSO still cannot use its password until it goes through a reset.
+
+### Escalated to the user — see the two scope items below
+
+1. **Sign-up is now an unthrottled outbound-mail primitive** (security, HIGH).
+2. **The activation link has no frontend page** (impl + domain, HIGH).
+
+### Recorded, not fixed
+
+`.claude/tasks/20260727-redteam-account-activation.md` — 7 scenarios, led by the mail amplifier, the
+pre-registration phishing angle and sign-up's enumeration asymmetry.
 
 **Red-team follow-up** (security-critical): `.claude/tasks/20260727-redteam-account-activation.md`
+
+## Open scope items (user decision)
+
+### 1. No throttle on sign-up mail — the scope-cut argument was incomplete
+
+This task argued that the missing `OnBeforeSend` hook blocks *resend*, not activation. The security
+review showed that reasoning misses a case: **sign-up itself is the same primitive.** Before this
+commit sign-up mailed nothing; now `POST /login/{realm}/signup` — anonymous, `public()`, with no rate
+limiting anywhere in the repo — sends mail to an attacker-chosen address from the app's verified
+sending identity.
+
+A given address string can only be signed up once, so the amplification comes from aliasing:
+`EmailAddress.of` folds neither subaddress tags nor dots, so `victim+N@gmail.com` are N accounts and N
+mails into one inbox.
+
+Not fixed here because a real throttle needs infrastructure this increment does not have (per-address
+or per-IP counters, and a suppression point in the send chain). Options are in the conversation.
+
+### 2. The frontend is a separate increment — the mailed link currently lands on nothing
+
+`AuthFrontendRoutes.activateAccount` is new, but `AuthFrontendDefault.mount` mounts only `login` and
+`resetPassword`, there is no `ActivateAccountPage`, and `AuthState` has no `activateAccount` call.
+`funktor-demo/adminapp` — the ONLY demo realm granting `Capability.SignUp` — mounts neither the
+activation page nor the reset page, so a demo sign-up today produces an account with no self-service
+way in at all.
+
+**This is deliberate**: the frontend design questions (separate activation page vs. a login-page mode;
+out-of-the-box page vs. embeddable widget; whether activation returns a token or forwards to login;
+the unactivated-login → resend flow) are parked by the user and were not to be decided here. It is
+recorded as a scope cut rather than a finding — but the backend is not USABLE until it lands, and
+`LoginController` currently renders the 403 as a generic "Login failed" rather than "check your mail".

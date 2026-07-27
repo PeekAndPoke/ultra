@@ -293,10 +293,15 @@ interface AuthRealm<USER : AuthUser> {
 
     /**
      * Activates an account with the token from the activation mail.
+     *
+     * Deliberately NOT gated on [Capability.SignUp]. Redeeming a token that was already issued is not
+     * signing up, and gating it would mean that closing public registration retroactively voids every
+     * outstanding activation link — locking out accounts that were created legitimately. A provider
+     * that does not issue these tokens refuses on its own: [AuthProvider.activateAccount] defaults to
+     * `notSupported()`.
      */
     suspend fun activate(request: AuthActivateAccountRequest): AuthActivateAccountResponse {
-        return getProvider(request.provider).supporting(Capability.SignUp)
-            .activateAccount(realm = this, request = request)
+        return getProvider(request.provider).activateAccount(realm = this, request = request)
     }
 
     /**

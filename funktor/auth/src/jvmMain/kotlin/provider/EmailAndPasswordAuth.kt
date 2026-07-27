@@ -363,11 +363,17 @@ class EmailAndPasswordAuth(
             .findEmailVerificationToken(realm = realm.id, token = request.token)
             ?: return AuthActivateAccountResponse(success = false)
 
-        // Invalidate the token immediately so it cannot be reused
-        services.removeAuthRecord(tokenRecord._id)
-
-        // Dropping the marker IS the activation
+        // Dropping the marker IS the activation, and it goes FIRST. The two writes are not atomic, so
+        // the order decides how a failure between them lands:
+        //   marker first  -> if the delete fails, the account is activated and the token stays live
+        //                    for its remaining lifetime. Replaying it activates an already-activated
+        //                    account, which is a no-op.
+        //   token first   -> if the marker drop fails, the link is dead AND the account is still
+        //                    blocked. With no resend endpoint that is a lockout.
         services.removePendingActivations(realm = realm.id, owner = tokenRecord.value.ownerId)
+
+        // Invalidate the token so it cannot be reused
+        services.removeAuthRecord(tokenRecord._id)
 
         return AuthActivateAccountResponse(success = true)
     }
