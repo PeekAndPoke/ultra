@@ -67,8 +67,8 @@ class EmailAddressSpec : StringSpec({
         // so without this the safety rests on every future caller remembering that.
         shouldThrow<IllegalArgumentException> { EmailAddress("victim@x.com\r\nbcc: attacker@evil.com") }
         shouldThrow<IllegalArgumentException> { EmailAddress("victim@x.com\nbcc: attacker@evil.com") }
-        shouldThrow<IllegalArgumentException> { EmailAddress("a\u0000b@x.com") }
-        shouldThrow<IllegalArgumentException> { EmailAddress("a\u2028b@x.com") }
+        shouldThrow<IllegalArgumentException> { EmailAddress("a" + Char(0x00) + "b@x.com") }
+        shouldThrow<IllegalArgumentException> { EmailAddress("a" + Char(0x2028) + "b@x.com") }
 
         EmailAddress.parseOrNull("victim@x.com\r\nbcc: attacker@evil.com") shouldBe null
     }
@@ -113,11 +113,16 @@ class EmailAddressSpec : StringSpec({
 
     "of() rejects non-ASCII BEFORE lowercasing, so no character can collapse onto another address" {
         // U+212A KELVIN SIGN lowercases to ASCII 'k'. Without the raw-input ASCII guard,
-        // `of("\u212Aarsten@x.com")` would canonicalize to "karsten@x.com" — a DIFFERENT, possibly
+        // `of(Char(0x212A) + "arsten@x.com")` would canonicalize to "karsten@x.com" — a DIFFERENT, possibly
         // existing account. The guard makes that collapse impossible rather than relying on every
         // downstream comparison being consistent.
-        shouldThrow<IllegalArgumentException> { EmailAddress.of("\u212Aarsten@x.com") }
-        EmailAddress.parseOrNull("\u212Aarsten@x.com") shouldBe null
+        // Pin the PREMISE first. Without this the two assertions below pass for any non-ASCII
+        // character at all — `of` rejects the whole class — so they would still be green if the code
+        // point were wrong, and the one property that makes U+212A special would go untested.
+        Char(0x212A).lowercaseChar() shouldBe 'k'
+
+        shouldThrow<IllegalArgumentException> { EmailAddress.of(Char(0x212A) + "arsten@x.com") }
+        EmailAddress.parseOrNull(Char(0x212A) + "arsten@x.com") shouldBe null
 
         // The plain ASCII spelling is of course fine, and is a different address.
         EmailAddress.of("karsten@x.com").value shouldBe "karsten@x.com"
