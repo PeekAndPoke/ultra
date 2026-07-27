@@ -223,7 +223,11 @@ A given address string can only be signed up once, so the amplification comes fr
 mails into one inbox.
 
 Not fixed here because a real throttle needs infrastructure this increment does not have (per-address
-or per-IP counters, and a suppression point in the send chain). Options are in the conversation.
+or per-IP counters, and a suppression point in the send chain).
+
+**Deferred by the user 2026-07-27** → full write-up, options and trade-offs in
+`.claude/tasks/20260727-signup-mail-throttle.md`, which supersedes
+`.claude/tasks/20260727-messaging-followups.md` §5 (same mechanism, second consumer).
 
 ### 2. The frontend is a separate increment — the mailed link currently lands on nothing
 

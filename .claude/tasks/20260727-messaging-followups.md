@@ -75,6 +75,10 @@ tenant-branded mail.
 
 ## 5. No `OnBeforeSend` hook — activation resend has nowhere to put a throttle
 
+> **SUPERSEDED 2026-07-27 by `.claude/tasks/20260727-signup-mail-throttle.md`.** Same mechanism, but
+> it now has a SHIPPED consumer as well as a hypothetical one: account activation made anonymous
+> sign-up send mail to a caller-chosen address, with no throttle anywhere. Work it there.
+
 `EmailHooks` has only `OnAfterSend`. There is no point in the chain at which a send can be
 suppressed, so suppression lists, per-address throttling and send-idempotency cannot be expressed.
 "Resend activation email" is a textbook mail-bombing vector — hit in a loop against a victim address
