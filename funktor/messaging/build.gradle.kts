@@ -70,8 +70,10 @@ kotlin {
 
         jvmMain {
             dependencies {
-                // sending simple email via smtp using
-                implementation(Deps.JavaLibs.ApacheCommons.email)
+                // Builds the MIME message AwsSesSender hands to SendRawEmail. NOT an SMTP transport:
+                // mail always goes out through a provider API. This used to arrive transitively via
+                // commons-email, which was declared "for smtp" and whose own API nothing ever used.
+                implementation(Deps.JavaLibs.JakartaMail.mail)
                 // AWS SES https://aws.amazon.com/sdk-for-java/
                 implementation(Deps.JavaLibs.Aws.ses)
                 // Sendgrid https://github.com/sendgrid/sendgrid-java

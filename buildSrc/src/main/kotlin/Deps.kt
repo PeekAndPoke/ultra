@@ -242,14 +242,20 @@ object Deps {
             const val java_driver = "com.arangodb:arangodb-java-driver:$driver_version"
         }
 
-        object ApacheCommons {
-            // https://mvnrepository.com/artifact/org.apache.commons/commons-email
-            private const val email_version = "1.6.0"
-            const val email = "org.apache.commons:commons-email:$email_version"
-
-            // https://mvnrepository.com/artifact/commons-cli/commons-cli
-            private const val cli_version = "1.11.0"
-            const val cli = "commons-cli:commons-cli:$cli_version"
+        object JakartaMail {
+            // https://mvnrepository.com/artifact/com.sun.mail/jakarta.mail
+            // Only for BUILDING MIME messages — funktor:messaging sends through provider APIs
+            // (SES, SendGrid) and has no SMTP transport. Declared directly because it used to arrive
+            // transitively through commons-email, whose own API nothing ever used.
+            // 1.6.8 is the FLOOR, not a preference: CVE-2025-7962 (SMTP injection via CR/LF) hits
+            // < 1.6.8 and 2.0.0..2.0.1. Unreachable from this repo — nothing here uses the SMTP
+            // transport — but `implementation` still puts it on a consumer's runtime classpath, and
+            // 1.6.7 was what commons-email dragged in. Do not go back below this.
+            // NOTE: 1.6.x still exposes the `javax.mail` namespace that AwsSesSender compiles
+            // against. 1.6.8 keeps it — this is a drop-in bump. It is 2.x (`jakarta.*`,
+            // org.eclipse.angus:angus-mail) that would mean rewriting those imports.
+            private const val version = "1.6.8"
+            const val mail = "com.sun.mail:jakarta.mail:$version"
         }
 
         object Aws {
