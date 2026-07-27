@@ -1,6 +1,7 @@
 # Account activation (email verification on sign-up)
 
-**Status:** IN PROGRESS 2026-07-27
+**Status:** BACKEND DONE 2026-07-27, gate passed — **not archived**: two scope items below are still
+open and point here. Archive once the activation frontend lands.
 **Plan:** `.claude/tasks/v1-email-auth-and-sessions.md` → Phase 4, verification half (§7 "signUp →
 if `requiresActivation`, create `EmailVerificationToken`, send verification email. Don't auto-issue
 session/JWT yet"; §7 "signIn → on unverified user").
