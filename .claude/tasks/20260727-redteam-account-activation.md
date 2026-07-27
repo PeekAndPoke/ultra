@@ -55,13 +55,17 @@ addresses will generate mail.
 
 ## 4. Denial of service by pre-registration
 
-Registering a victim's address before they do leaves them with an account they cannot use: sign-in
-returns 403 until activation, and there is no resend endpoint. Their only route in is "forgot
-password", which requires them to know the account exists.
+Registering a victim's address before they do leaves them with an account they cannot use until they
+prove the mailbox.
 
-- **Attempt:** pre-register a target address, then measure whether the victim can self-serve back in
-  from the login page alone (today: the login page renders the 403 as a generic "Login failed", so
-  they are not even told what happened).
+UPDATED 2026-07-27: the resend feature changed the shape of this. Sign-in now answers
+`AuthSignInResponse.ActivationRequired`, the login page routes the user to the activation page, and
+resend is reachable there — but ONLY for someone who knows the password. So a victim who was
+pre-registered by an attacker still cannot self-serve, because they do not know the password the
+attacker chose; their route in remains "forgot password", which also activates.
+
+- **Attempt:** pre-register a target address, then walk the victim's real options end to end and
+  measure whether any of them is discoverable without already knowing what happened.
 
 ## 5. Token replay across realm / provider / account
 
