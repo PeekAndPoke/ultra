@@ -6,6 +6,8 @@ import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
+import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
+import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
@@ -71,6 +73,18 @@ interface AuthProvider {
     suspend fun <USER : AuthUser> activateAccount(
         realm: AuthRealm<USER>, request: AuthActivateAccountRequest,
     ): AuthActivateAccountResponse {
+        throw AuthError.notSupported()
+    }
+
+    /**
+     * Issues a fresh activation token and mails it again.
+     *
+     * Answers the SAME neutral response in every case — unknown address, already-activated account,
+     * inside the cooldown window — because the endpoint is anonymous.
+     */
+    suspend fun <USER : AuthUser> resendActivation(
+        realm: AuthRealm<USER>, request: AuthResendActivationRequest,
+    ): AuthResendActivationResponse {
         throw AuthError.notSupported()
     }
 

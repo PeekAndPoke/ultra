@@ -4,9 +4,11 @@ import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.ktor.http.HttpStatusCode
 import io.peekandpoke.funktor.auth.AuthFrontendRoutes
 import io.peekandpoke.funktor.auth.api.AuthApiFeature
@@ -16,13 +18,17 @@ import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
+import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
+import io.peekandpoke.funktor.messaging.Email
 import io.peekandpoke.funktor.messaging.api.SentMessageModel
 import io.peekandpoke.funktor.messaging.senders.hrefs
 import io.peekandpoke.ultra.common.decodeUriComponent
 import io.peekandpoke.ultra.common.encodeUriComponent
 import io.peekandpoke.ultra.vault.value
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Walks account activation the way a user does: sign up, READ THE EMAIL, follow the link in it, and
@@ -56,6 +62,19 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
     /** The link the realm builds, up to but excluding the token — see [AuthFrontendRoutes.activateAccount]. */
     private val activationLinkPrefix = "https://example.com/auth/$provider/activate/"
+
+    /**
+     * The token a browser would hand to the route, taken out of a real mail.
+     *
+     * `single()` is an assertion: an activation mail carries ONE link and nothing else. The URL
+     * ENCODING of the token is pinned separately, in the first test.
+     */
+    private fun activationTokenFrom(mail: Email): String = mail.hrefs().single()
+        .removePrefix(activationLinkPrefix)
+        .decodeUriComponent()
+
+    /** Read from the realm, so the waits below cannot drift out of step with the configured window. */
+    private val realmTokenConfig = TestUserRealm.TOKEN_CONFIG
 
     init {
         "Account activation must be walkable end to end, through the email" {
@@ -147,7 +166,14 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                         ),
                     ) {
                         // The password is CORRECT here. Anything less would pass for the wrong reason.
-                        status shouldBe HttpStatusCode.Forbidden
+                        //
+                        // The answer is a response CASE, not an error: the credential check passed and
+                        // there is a defined next step. A wrong password still gets a 403, so this
+                        // cannot be satisfied by any ordinary failure.
+                        status shouldBe HttpStatusCode.OK
+
+                        apiResponseData<AuthSignInResponse>()
+                            .shouldBeInstanceOf<AuthSignInResponse.ActivationRequired>()
                     }
 
                     //  The token from the mail activates  //////////////////////////////////////
@@ -184,6 +210,198 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                         status shouldBe HttpStatusCode.OK
                         apiResponseData<AuthActivateAccountResponse>()?.success shouldBe false
                     }
+                }
+            }
+        }
+
+        "A resend must deliver a WORKING new link, and kill the old one" {
+            // The lockout this prevents: the first mail is lost or the 24h link lapses, and without a
+            // resend the only way back is a password reset the user has no reason to think of.
+            apiApp {
+                anonymous {
+                    val email = "resend-${System.currentTimeMillis()}@test.com"
+
+                    emails.clear()
+
+                    api.auth.signUp(
+                        realmParam,
+                        body = AuthSignUpRequest.EmailAndPassword(
+                            provider = provider,
+                            email = email,
+                            password = password,
+                            displayName = "Resend Me",
+                        ),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                    }
+
+                    val firstToken = activationTokenFrom(emails.lastTo(email).shouldNotBeNull())
+
+                    emails.clear()
+
+                    // Sign-up has just issued a token, so the cooldown is running. Waiting it out is
+                    // the point: it proves the window OPENS again rather than blocking forever, which
+                    // a mocked clock would not. `TestUserRealm` shortens it to 2s for exactly this.
+                    delay(realmTokenConfig.activationResendCooldown + 500.milliseconds)
+
+                    api.auth.resendActivation(
+                        realmParam,
+                        body = AuthResendActivationRequest(provider = provider, email = email),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                    }
+
+                    val secondToken = activationTokenFrom(emails.lastTo(email).shouldNotBeNull())
+
+                    withClue("the resent link must be a NEW token, not the same one mailed again") {
+                        secondToken shouldNotBe firstToken
+                    }
+
+                    // Rotation: the superseded link must be dead. Otherwise every resend leaves
+                    // another live credential in another inbox copy, for as long as its 24h lasts.
+                    api.auth.activateAccount(
+                        realmParam,
+                        body = AuthActivateAccountRequest(provider = provider, token = firstToken),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                        apiResponseData<AuthActivateAccountResponse>()?.success shouldBe false
+                    }
+
+                    // And the account is still blocked, i.e. the dead link really did nothing.
+                    api.auth.signIn(
+                        realmParam,
+                        body = AuthSignInRequest.EmailAndPassword(
+                            provider = provider, email = email, password = password,
+                        ),
+                    ) {
+                        apiResponseData<AuthSignInResponse>()
+                            .shouldBeInstanceOf<AuthSignInResponse.ActivationRequired>()
+                    }
+
+                    api.auth.activateAccount(
+                        realmParam,
+                        body = AuthActivateAccountRequest(provider = provider, token = secondToken),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                        apiResponseData<AuthActivateAccountResponse>()?.success shouldBe true
+                    }
+
+                    api.auth.signIn(
+                        realmParam,
+                        body = AuthSignInRequest.EmailAndPassword(
+                            provider = provider, email = email, password = password,
+                        ),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                        (apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success)
+                            .shouldNotBeNull()
+                    }
+                }
+            }
+        }
+
+        "A second resend inside the cooldown must send NOTHING, while answering identically" {
+            // THE throttle. `activationResendCooldown` defaults to 5 minutes, so the second request
+            // here is inside the window. Without it, "resend" is a mail-bomb button aimed at a known
+            // address — see `.claude/tasks/20260727-signup-mail-throttle.md`.
+            apiApp {
+                anonymous {
+                    val email = "cooldown-${System.currentTimeMillis()}@test.com"
+
+                    api.auth.signUp(
+                        realmParam,
+                        body = AuthSignUpRequest.EmailAndPassword(
+                            provider = provider,
+                            email = email,
+                            password = password,
+                            displayName = "Cool Down",
+                        ),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                    }
+
+                    api.auth.resendActivation(
+                        realmParam,
+                        body = AuthResendActivationRequest(provider = provider, email = email),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                    }
+
+                    emails.clear()
+
+                    api.auth.resendActivation(
+                        realmParam,
+                        body = AuthResendActivationRequest(provider = provider, email = email),
+                    ) {
+                        // The SAME answer as the send that went through — the response can never be
+                        // used to probe whether a mail was actually sent.
+                        status shouldBe HttpStatusCode.OK
+                    }
+
+                    emails.capturedTo(email) shouldBe emptyList()
+                }
+            }
+        }
+
+        "A resend must send nothing for an unknown address or an ALREADY-ACTIVATED account" {
+            apiApp {
+                anonymous {
+                    val unknown = "no-such-user-${System.currentTimeMillis()}@test.com"
+
+                    emails.clear()
+
+                    api.auth.resendActivation(
+                        realmParam,
+                        body = AuthResendActivationRequest(provider = provider, email = unknown),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                    }
+
+                    // The neutral response is only half of "no account enumeration". The other half is
+                    // that nothing is sent, which no response-body assertion can see.
+                    emails.capturedTo(unknown) shouldBe emptyList()
+
+                    // An ALREADY-ACTIVATED account must be a no-op too, or resend becomes a second send
+                    // primitive aimed at any address known to have an account, with no pending
+                    // activation to justify it. Built here rather than reusing the account from the
+                    // first test, so this does not silently weaken if that test is reordered or
+                    // removed.
+                    val activated = "already-active-${System.currentTimeMillis()}@test.com"
+
+                    emails.clear()
+
+                    api.auth.signUp(
+                        realmParam,
+                        body = AuthSignUpRequest.EmailAndPassword(
+                            provider = provider,
+                            email = activated,
+                            password = password,
+                            displayName = "Already Active",
+                        ),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                    }
+
+                    api.auth.activateAccount(
+                        realmParam,
+                        body = AuthActivateAccountRequest(
+                            provider = provider,
+                            token = activationTokenFrom(emails.lastTo(activated).shouldNotBeNull()),
+                        ),
+                    ) {
+                        apiResponseData<AuthActivateAccountResponse>()?.success shouldBe true
+                    }
+
+                    emails.clear()
+
+                    api.auth.resendActivation(
+                        realmParam,
+                        body = AuthResendActivationRequest(provider = provider, email = activated),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                    }
+
+                    emails.capturedTo(activated) shouldBe emptyList()
                 }
             }
         }

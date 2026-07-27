@@ -13,6 +13,8 @@ import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
+import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
@@ -116,6 +118,14 @@ class EmailAndPasswordAuth(
             realm: RealmId, token: String,
         ): Stored<AuthRecord.EmailVerificationToken>?
 
+        /** Find the newest non-expired email verification token for [realm] / [owner] */
+        suspend fun findLatestEmailVerificationToken(
+            realm: RealmId, owner: UserId,
+        ): Stored<AuthRecord.EmailVerificationToken>?
+
+        /** Remove every email verification token for [realm] / [owner] */
+        suspend fun removeEmailVerificationTokens(realm: RealmId, owner: UserId)
+
         /** Find the pending-activation marker for [realm] / [owner], or null when activated */
         suspend fun findPendingActivation(realm: RealmId, owner: UserId): Stored<AuthRecord.PendingActivation>?
 
@@ -185,6 +195,21 @@ class EmailAndPasswordAuth(
         ): Stored<AuthRecord.EmailVerificationToken>? {
             return authRecordStorage
                 .findByToken(type = AuthRecord.EmailVerificationToken, realm = realm, token = token)
+        }
+
+        /** @{inheritDoc} */
+        override suspend fun findLatestEmailVerificationToken(
+            realm: RealmId,
+            owner: UserId,
+        ): Stored<AuthRecord.EmailVerificationToken>? {
+            return authRecordStorage
+                .findLatestRecordBy(type = AuthRecord.EmailVerificationToken, realm = realm, owner = owner)
+        }
+
+        /** @{inheritDoc} */
+        override suspend fun removeEmailVerificationTokens(realm: RealmId, owner: UserId) {
+            authRecordStorage
+                .removeAllByOwner(type = AuthRecord.EmailVerificationToken, realm = realm, owner = owner)
         }
 
         /** @{inheritDoc} */
@@ -316,6 +341,67 @@ class EmailAndPasswordAuth(
             AuthRecord.PendingActivation(realm = realm.id, ownerId = UserId(user._id))
         }
 
+        issueAndSendActivationToken(realm = realm, user = user)
+
+        return AuthProvider.SignUpResult(
+            user = user,
+            requiresActivation = true,
+        )
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    override suspend fun <USER : AuthUser> resendActivation(
+        realm: AuthRealm<USER>, request: AuthResendActivationRequest,
+    ): AuthResendActivationResponse {
+
+        // Every early return below answers IDENTICALLY. An anonymous caller must not be able to tell
+        // "no such account" from "already activated" from "you just asked".
+        val user = EmailAddress.parseOrNull(request.email)?.let { realm.users.loadByEmail(it) }
+            ?: return AuthResendActivationResponse
+
+        val owner = UserId(user._id)
+
+        // Only accounts that are actually waiting. Without this, resend would mail activation links to
+        // long-activated accounts — noise, and a second send primitive aimed at a known address.
+        services.findPendingActivation(realm = realm.id, owner = owner)
+            ?: return AuthResendActivationResponse
+
+        // THE THROTTLE, and the reason resend does not need the messaging-level suppression hook that
+        // `.claude/tasks/20260727-signup-mail-throttle.md` is about: unlike sign-up, resend targets an
+        // account that already exists, so the account's own newest token IS the rate limit. Expired
+        // tokens are filtered out by the lookup, which is what we want — a lapsed link means the user
+        // may ask again immediately.
+        val newest = services.findLatestEmailVerificationToken(realm = realm.id, owner = owner)
+
+        if (newest != null) {
+            val sendableAt = newest.value.createdAt.plus(realm.tokenConfig.activationResendCooldown)
+
+            if (sendableAt > services.instantNow()) {
+                return AuthResendActivationResponse
+            }
+        }
+
+        // Rotate: only the newest link stays live. Also bounds row growth from repeated requests.
+        services.removeEmailVerificationTokens(realm = realm.id, owner = owner)
+
+        issueAndSendActivationToken(realm = realm, user = user)
+
+        return AuthResendActivationResponse
+    }
+
+    /**
+     * Issues a fresh [AuthRecord.EmailVerificationToken] for [user] and mails the deep-link.
+     *
+     * Shared by [signUp] and [resendActivation] so the token lifetime, the link shape and the failure
+     * logging cannot drift apart between the two — a resend that built a different URL would be a
+     * dead link that every server-side test still passes.
+     *
+     * Lives on the PROVIDER, not on `AuthRealm`, because the deep-link needs [frontendUrls], which is
+     * provider configuration. Mirrors [recoverAccountInitPasswordReset].
+     */
+    private suspend fun <USER : AuthUser> issueAndSendActivationToken(realm: AuthRealm<USER>, user: Stored<USER>) {
         val token = services.generateRandomBase64Token(length = realm.tokenConfig.randomTokenByteLength)
 
         services.createAuthRecord {
@@ -328,8 +414,6 @@ class EmailAndPasswordAuth(
             )
         }
 
-        // Sent from the PROVIDER, not from `AuthRealm.signUp`, because the deep-link needs
-        // [frontendUrls] - which is provider configuration. Mirrors [recoverAccountInitPasswordReset].
         val emailResult = realm.messaging.sendAccountActivationEmail(
             user = user,
             activationUrl = buildUri(frontendUrls.routes.activateAccount.pattern) {
@@ -339,17 +423,12 @@ class EmailAndPasswordAuth(
         )
 
         if (emailResult.success.not()) {
-            // The account stays blocked. The way back is a password reset, which proves the same
-            // mailbox and clears the marker - see [recoverAccountSetPasswordWithToken].
+            // The account stays blocked. The ways back are a resend and a password reset, which proves
+            // the same mailbox and clears the marker - see [recoverAccountSetPasswordWithToken].
             log.warning(
                 "Sending 'Account Activation' Email failed for user ${user._id} ${user.value.email}"
             )
         }
-
-        return AuthProvider.SignUpResult(
-            user = user,
-            requiresActivation = true,
-        )
     }
 
     /**

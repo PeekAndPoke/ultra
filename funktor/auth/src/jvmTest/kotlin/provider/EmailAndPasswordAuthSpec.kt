@@ -13,6 +13,7 @@ import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
+import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
@@ -25,6 +26,7 @@ import io.peekandpoke.ultra.log.NullLog
 import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
+import kotlin.time.Duration.Companion.seconds
 
 class EmailAndPasswordAuthSpec : FreeSpec() {
 
@@ -39,6 +41,10 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             { _, _ -> error("findPasswordRecoveryToken not implemented") },
         val onFindEmailVerificationToken: suspend (RealmId, String) -> Stored<AuthRecord.EmailVerificationToken>? =
             { _, _ -> error("findEmailVerificationToken not implemented") },
+        val onFindLatestEmailVerificationToken: suspend (RealmId, UserId) -> Stored<AuthRecord.EmailVerificationToken>? =
+            { _, _ -> error("findLatestEmailVerificationToken not implemented") },
+        val onRemoveEmailVerificationTokens: suspend (RealmId, UserId) -> Unit =
+            { _, _ -> error("removeEmailVerificationTokens not implemented") },
         val onFindPendingActivation: suspend (RealmId, UserId) -> Stored<AuthRecord.PendingActivation>? =
             { _, _ -> error("findPendingActivation not implemented") },
         val onRemovePendingActivations: suspend (RealmId, UserId) -> Unit =
@@ -67,6 +73,14 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             realm: RealmId,
             token: String,
         ): Stored<AuthRecord.EmailVerificationToken>? = onFindEmailVerificationToken(realm, token)
+
+        override suspend fun findLatestEmailVerificationToken(
+            realm: RealmId,
+            owner: UserId,
+        ): Stored<AuthRecord.EmailVerificationToken>? = onFindLatestEmailVerificationToken(realm, owner)
+
+        override suspend fun removeEmailVerificationTokens(realm: RealmId, owner: UserId) =
+            onRemoveEmailVerificationTokens(realm, owner)
 
         override suspend fun findPendingActivation(
             realm: RealmId,
@@ -648,6 +662,168 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
                 // ... and the marker is dropped for the token's OWNER, not for whoever is calling.
                 activatedOwner shouldBe (realm.id to ownerId)
+            }
+        }
+
+        "resendActivation" - {
+
+            // The cooldown boundary, expressed against the config rather than a magic number so it
+            // still means something if the default changes.
+            val now = MpInstant.parse("2026-07-27T12:00:00Z")
+            val cooldown = MinimalTestRealm().tokenConfig.activationResendCooldown
+
+            fun pendingMarker(realm: RealmId, owner: UserId) = Stored(
+                _id = "pending-activation",
+                value = AuthRecord.PendingActivation(realm = realm, ownerId = owner),
+            )
+
+            fun verificationToken(realm: RealmId, owner: UserId, createdAt: MpInstant) = Stored(
+                _id = "verification-record",
+                value = AuthRecord.EmailVerificationToken(
+                    realm = realm,
+                    ownerId = owner,
+                    token = "previous-token",
+                    expiresAt = Long.MAX_VALUE,
+                    createdAt = createdAt,
+                ),
+            )
+
+            "should send nothing for an unknown address" {
+                // Every service beyond the lookup keeps its exploding default: an unknown address must
+                // not touch storage OR mail. The neutral response is only half of "no enumeration".
+                val services = lazy { TestServices() }
+
+                val subject = EmailAndPasswordAuth(
+                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c/auth"),
+                    log = NullLog,
+                    services = services,
+                )
+
+                val realm = MinimalTestRealm(onLoadUserByEmail = { null })
+
+                subject.resendActivation(
+                    realm,
+                    AuthResendActivationRequest(provider = subject.id, email = "nobody@example.com"),
+                )
+            }
+
+            "should send nothing for an account that is already activated" {
+                val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
+
+                val services = lazy {
+                    TestServices(
+                        // No marker = activated. Everything past this point still explodes if reached.
+                        onFindPendingActivation = { _, _ -> null },
+                    )
+                }
+
+                val subject = EmailAndPasswordAuth(
+                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c/auth"),
+                    log = NullLog,
+                    services = services,
+                )
+
+                val realm = MinimalTestRealm(onLoadUserByEmail = { storedUser })
+
+                subject.resendActivation(
+                    realm,
+                    AuthResendActivationRequest(provider = subject.id, email = "user@example.com"),
+                )
+            }
+
+            "should send nothing while inside the cooldown window" {
+                // THE throttle. `getMessaging` keeps its exploding default, so a send here fails the
+                // test rather than being asserted after the fact.
+                val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
+                val owner = UserId(storedUser._id)
+
+                val services = lazy {
+                    TestServices(
+                        onInstantNow = { now },
+                        onFindPendingActivation = { realm, _ -> pendingMarker(realm, owner) },
+                        onFindLatestEmailVerificationToken = { realm, _ ->
+                            // Issued one second inside the window.
+                            verificationToken(realm, owner, now.minus(cooldown).plus(1.seconds))
+                        },
+                    )
+                }
+
+                val subject = EmailAndPasswordAuth(
+                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c/auth"),
+                    log = NullLog,
+                    services = services,
+                )
+
+                val realm = MinimalTestRealm(onLoadUserByEmail = { storedUser })
+
+                subject.resendActivation(
+                    realm,
+                    AuthResendActivationRequest(provider = subject.id, email = "user@example.com"),
+                )
+            }
+
+            "should rotate the token and mail a NEW link once the cooldown has passed" {
+                val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
+                val owner = UserId(storedUser._id)
+                val newToken = "the-new-token"
+
+                var rotatedFor: Pair<RealmId, UserId>? = null
+                var activationUrl: String? = null
+                val createdAuthRecords = mutableListOf<AuthRecord>()
+
+                val services = lazy {
+                    TestServices(
+                        onInstantNow = { now },
+                        onGenerateToken = { newToken },
+                        onFindPendingActivation = { realm, _ -> pendingMarker(realm, owner) },
+                        onFindLatestEmailVerificationToken = { realm, _ ->
+                            // Exactly ON the boundary — the cooldown has elapsed, so this must send.
+                            verificationToken(realm, owner, now.minus(cooldown))
+                        },
+                        onRemoveEmailVerificationTokens = { realm, o -> rotatedFor = realm to o },
+                        onCreateAuthRecord = { create ->
+                            val record = create()
+                            createdAuthRecords.add(record)
+                            @Suppress("UNCHECKED_CAST")
+                            Stored(_id = "record-${createdAuthRecords.size}", value = record) as Stored<AuthRecord>
+                        },
+                    )
+                }
+
+                val subject = EmailAndPasswordAuth(
+                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c/auth"),
+                    log = NullLog,
+                    services = services,
+                )
+
+                val realm = MinimalTestRealm(
+                    onLoadUserByEmail = { storedUser },
+                    getMessaging = {
+                        TestMessaging(
+                            onSendAccountActivationEmail = { user, url ->
+                                user shouldBe storedUser
+                                activationUrl = url
+                                EmailResult.ofMessageId("message-id")
+                            }
+                        )
+                    },
+                )
+
+                subject.resendActivation(
+                    realm,
+                    AuthResendActivationRequest(provider = subject.id, email = "user@example.com"),
+                )
+
+                // Rotation, so only the newest link stays live — every earlier one dies.
+                rotatedFor shouldBe (realm.id to owner)
+
+                val issued = createdAuthRecords.filterIsInstance<AuthRecord.EmailVerificationToken>().single()
+                issued.token shouldBe newToken
+                issued.ownerId shouldBe owner
+
+                // The resent link must be built exactly like the sign-up one. A resend that produced a
+                // different URL shape would be a dead link that no server-side test could see.
+                activationUrl shouldBe "https://a.b.c/auth/${subject.id}/activate/$newToken"
             }
         }
 

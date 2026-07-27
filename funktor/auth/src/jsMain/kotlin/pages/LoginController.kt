@@ -523,6 +523,20 @@ class LoginController<USER>(
                 displayState = DisplayState.SelectOrg(state.pendingOrgSelection!!)
             }
 
+            // Valid credentials, but the address was never proven. Send them to the activation page,
+            // which is where a new link can be requested. Showing "Login failed" here — which is what
+            // this branch used to fall through to — leaves the user with no idea what went wrong and
+            // nothing to do about it.
+            state.pendingActivation != null -> {
+                val pending = state.pendingActivation!!
+
+                host.router.navToUri(
+                    host.router.strategy.render(
+                        state.frontend.routes.resendActivation(pending.provider)
+                    )
+                )
+            }
+
             else -> displayState = displayState.withMessage(Message.error("Login failed"))
         }
     }

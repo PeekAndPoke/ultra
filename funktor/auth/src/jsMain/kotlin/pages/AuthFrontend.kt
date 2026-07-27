@@ -36,6 +36,24 @@ class AuthFrontendDefault(
                     token = it[AuthFrontendRoutes.TOKEN_PARAM],
                 )
             }
+
+            // The deep-link from the activation mail.
+            mount(routes.activateAccount) {
+                ActivateAccountPage(
+                    state = state,
+                    provider = it[AuthFrontendRoutes.PROVIDER_PARAM],
+                    token = it[AuthFrontendRoutes.TOKEN_PARAM],
+                )
+            }
+
+            // The same page with nothing to redeem — where the login page sends an unactivated user.
+            mount(routes.resendActivation) {
+                ActivateAccountPage(
+                    state = state,
+                    provider = it[AuthFrontendRoutes.PROVIDER_PARAM],
+                    token = null,
+                )
+            }
         }
     }
 }

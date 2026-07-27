@@ -6,6 +6,8 @@ import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
+import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
@@ -256,7 +258,15 @@ interface AuthRealm<USER : AuthUser> {
             )
         }
 
-        val user = provider.signIn<USER>(realm = this, request = request)
+        val user = try {
+            provider.signIn<USER>(realm = this, request = request)
+        } catch (e: AuthError.AccountNotActivated) {
+            // NOT a failure — the credential check passed. Answering with a response case rather than
+            // an error is what lets a client offer "resend the activation email" instead of showing a
+            // generic "login failed". Caught by TYPE: matching on the message would break on the first
+            // rewording or translation.
+            return AuthSignInResponse.ActivationRequired(realm = asApiModel())
+        }
 
         return issueSignIn(user)
     }
@@ -302,6 +312,13 @@ interface AuthRealm<USER : AuthUser> {
      */
     suspend fun activate(request: AuthActivateAccountRequest): AuthActivateAccountResponse {
         return getProvider(request.provider).activateAccount(realm = this, request = request)
+    }
+
+    /**
+     * Sends a fresh activation mail. Ungated for the same reason as [activate].
+     */
+    suspend fun resendActivation(request: AuthResendActivationRequest): AuthResendActivationResponse {
+        return getProvider(request.provider).resendActivation(realm = this, request = request)
     }
 
     /**

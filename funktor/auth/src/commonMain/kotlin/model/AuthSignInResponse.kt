@@ -12,6 +12,11 @@ import kotlinx.serialization.json.JsonObject
  * - [Success] — the user is signed in; carries the JWT and (for org realms) the selected org.
  * - [OrgSelectionRequired] — credentials were valid but the user belongs to multiple organisations
  *   and must pick one; carries a short-lived selection token and the choices.
+ * - [ActivationRequired] — credentials were valid but the account has not proven it owns its email
+ *   address yet.
+ *
+ * The last two are NOT failures: the credential check passed and there is a defined next step. A
+ * failure is an [AuthError], which never produces one of these.
  */
 @Serializable
 sealed interface AuthSignInResponse {
@@ -38,6 +43,19 @@ sealed interface AuthSignInResponse {
         val selectionToken: String,
         /** The organisations the user may select from. */
         val organisations: List<AuthOrgRef>,
+    ) : AuthSignInResponse
+
+    /**
+     * The password was right and the account exists — it just has not been activated yet.
+     *
+     * Carries NO token and no user data, so it grants nothing. It exists so a client can tell this
+     * apart from a wrong password and offer "resend the activation email", which is impossible if the
+     * only signal is an error string.
+     */
+    @Serializable
+    @SerialName("activation-required")
+    data class ActivationRequired(
+        val realm: AuthRealmModel,
     ) : AuthSignInResponse
 
     @Serializable

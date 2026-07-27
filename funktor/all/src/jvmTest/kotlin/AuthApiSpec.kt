@@ -1,10 +1,10 @@
 package io.peekandpoke.funktor
 
-import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeBlank
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.ktor.http.*
 import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
@@ -154,15 +154,14 @@ class AuthApiSpec : FunktorApiSpec() {
                                 password = "Test1234!",
                             ),
                         ) {
-                            status shouldBe HttpStatusCode.Forbidden
+                            // NOT a failure status: the credential check passed, so the answer is a
+                            // response CASE. An unknown user or a wrong password still gets a 403, so
+                            // this cannot go vacuously green if the sign-up above is renamed or
+                            // reordered — which a bare "shouldBe Forbidden" assertion would.
+                            status shouldBe HttpStatusCode.OK
 
-                            // The status alone would ALSO be green for an unknown user or a wrong
-                            // password, so it cannot tell "refused because unactivated" from
-                            // "refused because the account was never created" — which is exactly
-                            // what this test would degrade into if the sign-up above were renamed
-                            // or reordered. The message discriminates.
-                            apiResponse<AuthSignInResponse>().messages?.map { it.text }
-                                .shouldNotBeNull() shouldContain "Account not activated"
+                            apiResponseData<AuthSignInResponse>()
+                                .shouldBeInstanceOf<AuthSignInResponse.ActivationRequired>()
                         }
                     }
                 }

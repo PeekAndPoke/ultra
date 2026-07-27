@@ -3,6 +3,7 @@ package io.peekandpoke.funktor
 import io.peekandpoke.funktor.auth.AuthRealm
 import io.peekandpoke.funktor.auth.AuthSystem
 import io.peekandpoke.funktor.auth.AuthUserAdapter
+import io.peekandpoke.funktor.auth.RealmTokenConfig
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthUser
@@ -29,6 +30,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.seconds
 
 @Vault
 @Serializable
@@ -57,6 +59,11 @@ class TestUserRealm(
 ) : AuthRealm<TestUser> {
     companion object {
         val REALM = RealmId("admin-user")
+
+        /** Exposed so specs can wait exactly as long as the realm is configured for. */
+        val TOKEN_CONFIG = RealmTokenConfig(
+            activationResendCooldown = 2.seconds,
+        )
     }
 
     override val deps: AuthSystem.Deps by deps
@@ -64,6 +71,14 @@ class TestUserRealm(
     private val emailAndPassword: EmailAndPasswordAuth.Factory by emailAndPassword
 
     override val id: RealmId = REALM
+
+    /**
+     * Only the activation-resend cooldown deviates from the defaults, and only so that BOTH sides of
+     * it stay testable against a real clock: `AccountActivationEmailE2eSpec` waits this out to prove a
+     * resend delivers a new link, and resends back-to-back to prove the window suppresses one. The
+     * production default is minutes, which no test can wait for.
+     */
+    override val tokenConfig = TOKEN_CONFIG
 
     override val messaging: AuthRealm.Messaging<TestUser> = AuthRealm.DefaultMessaging(
         senderEmail = "test@example.com",

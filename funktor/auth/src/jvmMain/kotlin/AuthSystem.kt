@@ -4,6 +4,8 @@ import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
+import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
@@ -102,6 +104,11 @@ class AuthSystem(
     /** Activate a user account by [realm] and [request] */
     suspend fun activate(realm: RealmId, request: AuthActivateAccountRequest): AuthActivateAccountResponse {
         return getRealm(realm).activate(request)
+    }
+
+    /** Send a fresh activation mail for [realm] and [request] */
+    suspend fun resendActivation(realm: RealmId, request: AuthResendActivationRequest): AuthResendActivationResponse {
+        return getRealm(realm).resendActivation(request)
     }
 
     /** Sign in a user by [realm] and [request] */
