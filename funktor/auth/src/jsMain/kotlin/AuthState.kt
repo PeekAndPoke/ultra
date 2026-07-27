@@ -207,6 +207,8 @@ class AuthState<USER>(
     data class PendingActivation(
         val provider: String,
         val email: String,
+        /** Single-use authorization for [resendActivation]. */
+        val resendToken: String,
     )
 
     /**
@@ -247,6 +249,7 @@ class AuthState<USER>(
                 pendingActivation = PendingActivation(
                     provider = request.provider,
                     email = (request as? AuthSignInRequest.EmailAndPassword)?.email ?: "",
+                    resendToken = response.resendToken,
                 )
             }
 

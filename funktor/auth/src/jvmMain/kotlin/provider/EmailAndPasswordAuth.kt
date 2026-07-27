@@ -123,8 +123,13 @@ class EmailAndPasswordAuth(
             realm: RealmId, owner: UserId,
         ): Stored<AuthRecord.EmailVerificationToken>?
 
-        /** Remove every email verification token for [realm] / [owner] */
-        suspend fun removeEmailVerificationTokens(realm: RealmId, owner: UserId)
+        /** Find the activation-resend token for [realm] and [token] */
+        suspend fun findActivationResendToken(
+            realm: RealmId, token: String,
+        ): Stored<AuthRecord.ActivationResendToken>?
+
+        /** Remove every email verification token for [realm] / [owner], except [exceptId] */
+        suspend fun removeEmailVerificationTokens(realm: RealmId, owner: UserId, exceptId: String? = null)
 
         /** Find the pending-activation marker for [realm] / [owner], or null when activated */
         suspend fun findPendingActivation(realm: RealmId, owner: UserId): Stored<AuthRecord.PendingActivation>?
@@ -207,9 +212,19 @@ class EmailAndPasswordAuth(
         }
 
         /** @{inheritDoc} */
-        override suspend fun removeEmailVerificationTokens(realm: RealmId, owner: UserId) {
-            authRecordStorage
-                .removeAllByOwner(type = AuthRecord.EmailVerificationToken, realm = realm, owner = owner)
+        override suspend fun findActivationResendToken(
+            realm: RealmId,
+            token: String,
+        ): Stored<AuthRecord.ActivationResendToken>? {
+            return authRecordStorage
+                .findByToken(type = AuthRecord.ActivationResendToken, realm = realm, token = token)
+        }
+
+        /** @{inheritDoc} */
+        override suspend fun removeEmailVerificationTokens(realm: RealmId, owner: UserId, exceptId: String?) {
+            authRecordStorage.removeAllByOwner(
+                type = AuthRecord.EmailVerificationToken, realm = realm, owner = owner, exceptId = exceptId,
+            )
         }
 
         /** @{inheritDoc} */
@@ -293,7 +308,7 @@ class EmailAndPasswordAuth(
         // out of every lookup, so the token-based check would erase itself after 24 hours and quietly
         // let every lapsed sign-up in.
         if (services.findPendingActivation(realm = realm.id, owner = UserId(user._id)) != null) {
-            throw AuthError.accountNotActivated()
+            throw AuthError.AccountNotActivated(userId = UserId(user._id))
         }
 
         return user
@@ -356,39 +371,42 @@ class EmailAndPasswordAuth(
         realm: AuthRealm<USER>, request: AuthResendActivationRequest,
     ): AuthResendActivationResponse {
 
-        // Every early return below answers IDENTICALLY. An anonymous caller must not be able to tell
-        // "no such account" from "already activated" from "you just asked".
-        val user = EmailAddress.parseOrNull(request.email)?.let { realm.users.loadByEmail(it) }
-            ?: return AuthResendActivationResponse
+        // THE AUTHORIZATION. Possession of this token means the caller passed the password check for
+        // this account moments ago. Keying on an email address instead would make this an anonymous,
+        // indefinitely repeatable mail primitive aimed at any mailbox the caller can name.
+        val resendToken = services
+            .findActivationResendToken(realm = realm.id, token = request.token)
+            ?: return AuthResendActivationResponse(sent = false)
 
-        val owner = UserId(user._id)
+        // Single-use, consumed before anything is sent: one refused sign-in buys one resend, so a
+        // caller who wants another must re-authenticate.
+        services.removeAuthRecord(resendToken._id)
 
-        // Only accounts that are actually waiting. Without this, resend would mail activation links to
-        // long-activated accounts — noise, and a second send primitive aimed at a known address.
+        val owner = resendToken.value.ownerId
+
+        val user = realm.users.loadById(owner)
+            ?: return AuthResendActivationResponse(sent = false)
+
+        // Only accounts that are actually waiting — an already-activated account must not be mailed.
         services.findPendingActivation(realm = realm.id, owner = owner)
-            ?: return AuthResendActivationResponse
+            ?: return AuthResendActivationResponse(sent = false)
 
-        // THE THROTTLE, and the reason resend does not need the messaging-level suppression hook that
-        // `.claude/tasks/20260727-signup-mail-throttle.md` is about: unlike sign-up, resend targets an
-        // account that already exists, so the account's own newest token IS the rate limit. Expired
-        // tokens are filtered out by the lookup, which is what we want — a lapsed link means the user
-        // may ask again immediately.
+        // A second throttle behind the token, so a caller who can re-authenticate in a loop still
+        // cannot mail themselves faster than this. Expired tokens are filtered out by the lookup,
+        // which is what we want: once a link has lapsed the user may ask again at once.
         val newest = services.findLatestEmailVerificationToken(realm = realm.id, owner = owner)
 
         if (newest != null) {
             val sendableAt = newest.value.createdAt.plus(realm.tokenConfig.activationResendCooldown)
 
             if (sendableAt > services.instantNow()) {
-                return AuthResendActivationResponse
+                return AuthResendActivationResponse(sent = false)
             }
         }
 
-        // Rotate: only the newest link stays live. Also bounds row growth from repeated requests.
-        services.removeEmailVerificationTokens(realm = realm.id, owner = owner)
-
         issueAndSendActivationToken(realm = realm, user = user)
 
-        return AuthResendActivationResponse
+        return AuthResendActivationResponse(sent = true)
     }
 
     /**
@@ -404,7 +422,7 @@ class EmailAndPasswordAuth(
     private suspend fun <USER : AuthUser> issueAndSendActivationToken(realm: AuthRealm<USER>, user: Stored<USER>) {
         val token = services.generateRandomBase64Token(length = realm.tokenConfig.randomTokenByteLength)
 
-        services.createAuthRecord {
+        val issued = services.createAuthRecord {
             AuthRecord.EmailVerificationToken(
                 realm = realm.id,
                 ownerId = UserId(user._id),
@@ -413,6 +431,12 @@ class EmailAndPasswordAuth(
                     .plus(realm.tokenConfig.emailVerificationTokenLifetime).toEpochSeconds(),
             )
         }
+
+        // Rotate AFTER creating, excluding what was just created: only the newest link stays live, and
+        // row growth stays bounded. Ordered this way because the reverse (delete, then create) lets two
+        // interleaved resends delete the token the other has already mailed, so a user would receive a
+        // link that was dead before it arrived.
+        services.removeEmailVerificationTokens(realm = realm.id, owner = UserId(user._id), exceptId = issued._id)
 
         val emailResult = realm.messaging.sendAccountActivationEmail(
             user = user,

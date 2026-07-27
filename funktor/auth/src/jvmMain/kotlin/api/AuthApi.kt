@@ -139,7 +139,7 @@ class AuthApi : ApiRoutes("login", authFloor = { public() }) {
                     .resendActivation(params.realm, body)
                     .let { ApiResponse.ok(it) }
             } catch (e: AuthError) {
-                ApiResponse.badRequest(AuthResendActivationResponse)
+                ApiResponse.badRequest(AuthResendActivationResponse(sent = false))
                     .withInfo(e.message ?: "")
             }
         }

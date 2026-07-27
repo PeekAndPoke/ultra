@@ -10,6 +10,7 @@ import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.ktor.http.HttpStatusCode
+import io.peekandpoke.funktor.testing.AppUnderTest
 import io.peekandpoke.funktor.auth.AuthFrontendRoutes
 import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
@@ -19,6 +20,7 @@ import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
+import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import io.peekandpoke.funktor.messaging.Email
@@ -75,6 +77,33 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
     /** Read from the realm, so the waits below cannot drift out of step with the configured window. */
     private val realmTokenConfig = TestUserRealm.TOKEN_CONFIG
+
+    /**
+     * The resend authorization, obtained the ONLY way it can be: by signing in with the right password
+     * and being refused because the account is pending.
+     *
+     * That this helper needs a password at all is the property under test elsewhere — an anonymous
+     * caller who merely knows the address cannot get one.
+     */
+    private suspend fun AppUnderTest<FunktorAllTestConfig>.resendTokenFor(
+        scope: AppUnderTest<FunktorAllTestConfig>.AuthenticationScope,
+        email: String,
+    ): String = with(scope) {
+        var token: String? = null
+
+        api.auth.signIn(
+            realmParam,
+            body = AuthSignInRequest.EmailAndPassword(
+                provider = provider, email = email, password = password,
+            ),
+        ) {
+            token = apiResponseData<AuthSignInResponse>()
+                .shouldBeInstanceOf<AuthSignInResponse.ActivationRequired>()
+                .resendToken
+        }
+
+        return token.shouldNotBeNull()
+    }
 
     init {
         "Account activation must be walkable end to end, through the email" {
@@ -237,18 +266,25 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     val firstToken = activationTokenFrom(emails.lastTo(email).shouldNotBeNull())
 
-                    emails.clear()
-
                     // Sign-up has just issued a token, so the cooldown is running. Waiting it out is
                     // the point: it proves the window OPENS again rather than blocking forever, which
                     // a mocked clock would not. `TestUserRealm` shortens it to 2s for exactly this.
+                    // The wait can only LENGTHEN the elapsed time, so a slow machine cannot flip what
+                    // this test means.
                     delay(realmTokenConfig.activationResendCooldown + 500.milliseconds)
+
+                    // The resend authorization comes from a refused sign-in, and nowhere else — an
+                    // anonymous caller naming an address cannot reach this endpoint at all.
+                    val resendToken = resendTokenFor(this, email)
+
+                    emails.clear()
 
                     api.auth.resendActivation(
                         realmParam,
-                        body = AuthResendActivationRequest(provider = provider, email = email),
+                        body = AuthResendActivationRequest(provider = provider, token = resendToken),
                     ) {
                         status shouldBe HttpStatusCode.OK
+                        apiResponseData<AuthResendActivationResponse>()?.sent shouldBe true
                     }
 
                     val secondToken = activationTokenFrom(emails.lastTo(email).shouldNotBeNull())
@@ -300,10 +336,98 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
             }
         }
 
-        "A second resend inside the cooldown must send NOTHING, while answering identically" {
-            // THE throttle. `activationResendCooldown` defaults to 5 minutes, so the second request
-            // here is inside the window. Without it, "resend" is a mail-bomb button aimed at a known
-            // address — see `.claude/tasks/20260727-signup-mail-throttle.md`.
+        "A resend without a valid token must send nothing — naming an address is not enough" {
+            // THE property that keeps this endpoint from being an anonymous mail primitive aimed at
+            // any mailbox. It is what the first cut of this feature got wrong: it took an email.
+            apiApp {
+                anonymous {
+                    val email = "unauthorized-${System.currentTimeMillis()}@test.com"
+
+                    api.auth.signUp(
+                        realmParam,
+                        body = AuthSignUpRequest.EmailAndPassword(
+                            provider = provider,
+                            email = email,
+                            password = password,
+                            displayName = "No Token",
+                        ),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                    }
+
+                    // A real pending account exists, the caller knows the address, and the cooldown is
+                    // irrelevant here — without the token there is still nothing they can cause.
+                    delay(realmTokenConfig.activationResendCooldown + 500.milliseconds)
+
+                    emails.clear()
+
+                    api.auth.resendActivation(
+                        realmParam,
+                        body = AuthResendActivationRequest(provider = provider, token = "not-a-real-token"),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                        apiResponseData<AuthResendActivationResponse>()?.sent shouldBe false
+                    }
+
+                    emails.capturedTo(email) shouldBe emptyList()
+                }
+            }
+        }
+
+        "A resend token must be single-use, so one sign-in buys exactly one resend" {
+            apiApp {
+                anonymous {
+                    val email = "single-use-${System.currentTimeMillis()}@test.com"
+
+                    api.auth.signUp(
+                        realmParam,
+                        body = AuthSignUpRequest.EmailAndPassword(
+                            provider = provider,
+                            email = email,
+                            password = password,
+                            displayName = "Single Use",
+                        ),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                    }
+
+                    delay(realmTokenConfig.activationResendCooldown + 500.milliseconds)
+
+                    val resendToken = resendTokenFor(this, email)
+
+                    api.auth.resendActivation(
+                        realmParam,
+                        body = AuthResendActivationRequest(provider = provider, token = resendToken),
+                    ) {
+                        apiResponseData<AuthResendActivationResponse>()?.sent shouldBe true
+                    }
+
+                    emails.clear()
+
+                    // Wait the cooldown out FIRST, so single-use is the only thing that can stop the
+                    // replay. Without this wait the test passes even when the token is never consumed,
+                    // because the cooldown blocks the second send — verified by mutation: dropping
+                    // `removeAuthRecord` left the suite green until this delay was added.
+                    delay(realmTokenConfig.activationResendCooldown + 500.milliseconds)
+
+                    api.auth.resendActivation(
+                        realmParam,
+                        body = AuthResendActivationRequest(provider = provider, token = resendToken),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                        apiResponseData<AuthResendActivationResponse>()?.sent shouldBe false
+                    }
+
+                    emails.capturedTo(email) shouldBe emptyList()
+                }
+            }
+        }
+
+        "A resend inside the cooldown must send nothing, even with a valid token" {
+            // THE throttle behind the authorization: re-authenticating in a loop must not mail faster
+            // than the window. Sign-up has just issued a token, so this resend is inside it — and the
+            // test does NOT wait, so a slow machine can only make the elapsed time approach the window
+            // and fail LOUDLY, never silently exercise a different path.
             apiApp {
                 anonymous {
                     val email = "cooldown-${System.currentTimeMillis()}@test.com"
@@ -320,22 +444,16 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                         status shouldBe HttpStatusCode.OK
                     }
 
-                    api.auth.resendActivation(
-                        realmParam,
-                        body = AuthResendActivationRequest(provider = provider, email = email),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                    }
+                    val resendToken = resendTokenFor(this, email)
 
                     emails.clear()
 
                     api.auth.resendActivation(
                         realmParam,
-                        body = AuthResendActivationRequest(provider = provider, email = email),
+                        body = AuthResendActivationRequest(provider = provider, token = resendToken),
                     ) {
-                        // The SAME answer as the send that went through — the response can never be
-                        // used to probe whether a mail was actually sent.
                         status shouldBe HttpStatusCode.OK
+                        apiResponseData<AuthResendActivationResponse>()?.sent shouldBe false
                     }
 
                     emails.capturedTo(email) shouldBe emptyList()
@@ -343,29 +461,9 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
             }
         }
 
-        "A resend must send nothing for an unknown address or an ALREADY-ACTIVATED account" {
+        "A resend must send nothing for an ALREADY-ACTIVATED account" {
             apiApp {
                 anonymous {
-                    val unknown = "no-such-user-${System.currentTimeMillis()}@test.com"
-
-                    emails.clear()
-
-                    api.auth.resendActivation(
-                        realmParam,
-                        body = AuthResendActivationRequest(provider = provider, email = unknown),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                    }
-
-                    // The neutral response is only half of "no account enumeration". The other half is
-                    // that nothing is sent, which no response-body assertion can see.
-                    emails.capturedTo(unknown) shouldBe emptyList()
-
-                    // An ALREADY-ACTIVATED account must be a no-op too, or resend becomes a second send
-                    // primitive aimed at any address known to have an account, with no pending
-                    // activation to justify it. Built here rather than reusing the account from the
-                    // first test, so this does not silently weaken if that test is reordered or
-                    // removed.
                     val activated = "already-active-${System.currentTimeMillis()}@test.com"
 
                     emails.clear()
@@ -382,6 +480,10 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                         status shouldBe HttpStatusCode.OK
                     }
 
+                    // Grab the resend authorization BEFORE activating, so the token is valid and the
+                    // only thing stopping the mail is the account's state.
+                    val resendToken = resendTokenFor(this, activated)
+
                     api.auth.activateAccount(
                         realmParam,
                         body = AuthActivateAccountRequest(
@@ -392,13 +494,16 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                         apiResponseData<AuthActivateAccountResponse>()?.success shouldBe true
                     }
 
+                    delay(realmTokenConfig.activationResendCooldown + 500.milliseconds)
+
                     emails.clear()
 
                     api.auth.resendActivation(
                         realmParam,
-                        body = AuthResendActivationRequest(provider = provider, email = activated),
+                        body = AuthResendActivationRequest(provider = provider, token = resendToken),
                     ) {
                         status shouldBe HttpStatusCode.OK
+                        apiResponseData<AuthResendActivationResponse>()?.sent shouldBe false
                     }
 
                     emails.capturedTo(activated) shouldBe emptyList()

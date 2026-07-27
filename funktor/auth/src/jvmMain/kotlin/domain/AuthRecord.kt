@@ -98,6 +98,32 @@ sealed interface AuthRecord : Timestamped {
     }
 
     /**
+     * Single-use, short-lived proof that a caller passed the password check for an account that is
+     * still pending activation. Exchanged at `resend-activation` for a fresh activation mail.
+     *
+     * The exact shape of [OrgSelectionToken], for the exact same reason: the follow-up call needs an
+     * authorization, and the credential check is the only thing that can supply one. Without it,
+     * "resend the activation mail" is a mail primitive any stranger can aim at any address — the
+     * per-account cooldown bounds mail PER ACCOUNT while an attacker picks how many accounts exist.
+     */
+    data class ActivationResendToken(
+        override val realm: RealmId,
+        override val ownerId: UserId,
+        override val expiresAt: Long,
+        override val createdAt: MpInstant = MpInstant.Epoch,
+        override val updatedAt: MpInstant = createdAt,
+        /** Random secret handed to the client after a refused-but-correct sign-in. */
+        override val token: String,
+    ) : AuthRecord {
+        companion object : Polymorphic.TypedChild<ActivationResendToken> {
+            override val identifier = "activation-resend-token"
+        }
+
+        override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
+        override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+    }
+
+    /**
      * Single-use token sent to a user's email address to verify ownership at sign-up time.
      * Consumed by `EmailAndPasswordAuth.activateAccount`, which also removes the [PendingActivation]
      * marker.

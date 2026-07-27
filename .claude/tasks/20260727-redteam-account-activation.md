@@ -97,3 +97,30 @@ Pre-existing — but this feature makes that method the designated, and currentl
 for a lapsed activation, so it is now the path locked-out users are guaranteed to take.
 
 - **Attempt:** complete a reset with a one-character password.
+
+## 8. Resend: the cooldown is a check-then-act
+
+Added 2026-07-27 after the gate on the resend feature. `EmailAndPasswordAuth.resendActivation` reads
+the newest verification token, compares it to the window, then rotates and writes — with no
+transaction, no lock and no unique index on `(realm, ownerId, _type)`.
+
+- **Attempt:** fire K concurrent `POST /login/{realm}/activate/resend` sharing ONE valid resend token.
+  Every request whose read completes before the first write commits passes the window check.
+- **Bounding it:** the resend token is single-use and consumed before the send, and it can only be
+  obtained by passing the password check, so this is not anonymous and not unbounded — the question is
+  how many sends one token can produce under a burst.
+- **Real fix if it reproduces:** a unique index on `(realm, ownerId, _type)` for
+  `EmailVerificationToken` plus a conditional upsert, or a compare-and-set on the newest `createdAt`.
+
+## 9. Resend authorization
+
+The property to attack: `resendActivation` must be unreachable without a live
+`AuthRecord.ActivationResendToken`, which is minted ONLY in `AuthRealm.signIn` after a correct
+password for a pending account.
+
+- **Attempt:** call resend with a forged/guessed token, with another realm's token, with an
+  already-consumed token, and with an expired one.
+- **Attempt:** obtain a resend token for account A and use it to trigger mail for account B (the owner
+  comes from the token record, not the request — confirm).
+- **Attempt:** harvest a resend token from a browser (it is held in memory on `AuthState`, not in
+  localStorage or the URL — confirm it does not leak into history or `Referer`).

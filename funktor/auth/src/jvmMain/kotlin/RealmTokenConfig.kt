@@ -31,6 +31,12 @@ data class RealmTokenConfig(
      * `.claude/tasks/20260727-signup-mail-throttle.md` is about.
      */
     val activationResendCooldown: Duration = 5.minutes,
+    /**
+     * Lifetime of the single-use token handed out when a sign-in is refused for a pending account.
+     *
+     * Short on purpose: it exists only to carry the user from the login page to the activation page.
+     */
+    val activationResendTokenLifetime: Duration = 15.minutes,
     /** Lifetime of password-recovery tokens. */
     val passwordRecoveryTokenLifetime: Duration = 1.hours,
     /** Lifetime of the short-lived org-selection token issued between credential-check and org pick. */

@@ -48,14 +48,21 @@ sealed interface AuthSignInResponse {
     /**
      * The password was right and the account exists — it just has not been activated yet.
      *
-     * Carries NO token and no user data, so it grants nothing. It exists so a client can tell this
-     * apart from a wrong password and offer "resend the activation email", which is impossible if the
-     * only signal is an error string.
+     * It exists so a client can tell this apart from a wrong password and offer "resend the activation
+     * email", which is impossible if the only signal is an error string.
      */
     @Serializable
     @SerialName("activation-required")
     data class ActivationRequired(
         val realm: AuthRealmModel,
+        /**
+         * Short-lived, single-use proof that the credential check passed — the authorization for
+         * `resend-activation`, exactly as [OrgSelectionRequired.selectionToken] authorizes `selectOrg`.
+         *
+         * Grants nothing else: it cannot sign in, and it can only ever cause a mail to the address
+         * already on the account.
+         */
+        val resendToken: String,
     ) : AuthSignInResponse
 
     @Serializable

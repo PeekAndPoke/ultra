@@ -265,7 +265,25 @@ interface AuthRealm<USER : AuthUser> {
             // an error is what lets a client offer "resend the activation email" instead of showing a
             // generic "login failed". Caught by TYPE: matching on the message would break on the first
             // rewording or translation.
-            return AuthSignInResponse.ActivationRequired(realm = asApiModel())
+            //
+            // The resend token is minted HERE, on the only path that has proven the password, and is
+            // what authorizes `resendActivation`. Exactly the OrgSelectionToken pattern below.
+            val resendToken = deps.random.getTokenAsBase64(tokenConfig.randomTokenByteLength)
+
+            deps.storage.authRecords.create {
+                AuthRecord.ActivationResendToken(
+                    realm = id,
+                    ownerId = e.userId,
+                    token = resendToken,
+                    expiresAt = deps.kronos.instantNow()
+                        .plus(tokenConfig.activationResendTokenLifetime).toEpochSeconds(),
+                )
+            }
+
+            return AuthSignInResponse.ActivationRequired(
+                realm = asApiModel(),
+                resendToken = resendToken,
+            )
         }
 
         return issueSignIn(user)
@@ -315,7 +333,12 @@ interface AuthRealm<USER : AuthUser> {
     }
 
     /**
-     * Sends a fresh activation mail. Ungated for the same reason as [activate].
+     * Sends a fresh activation mail, authorized by the single-use token from
+     * [AuthSignInResponse.ActivationRequired].
+     *
+     * Ungated on capabilities, like [activate], but for its own reason: the token was already issued
+     * to someone who proved the password, and stranding those users when registration closes helps
+     * nobody. The token — not the capability — is what stops this being an open mail relay.
      */
     suspend fun resendActivation(request: AuthResendActivationRequest): AuthResendActivationResponse {
         return getProvider(request.provider).resendActivation(realm = this, request = request)

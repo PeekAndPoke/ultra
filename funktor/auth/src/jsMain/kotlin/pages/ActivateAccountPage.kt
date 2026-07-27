@@ -6,14 +6,12 @@ import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
-import io.peekandpoke.kraft.forms.formController
 import io.peekandpoke.kraft.routing.href
-import io.peekandpoke.kraft.semanticui.forms.UiInputField
 import io.peekandpoke.kraft.utils.dataLoader
 import io.peekandpoke.kraft.utils.doubleClickProtection
+import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick
-import io.peekandpoke.ultra.html.onSubmit
 import io.peekandpoke.ultra.semanticui.icon
 import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.coroutines.flow.flowOf
@@ -60,23 +58,38 @@ class ActivateAccountPage<USER>(ctx: Ctx<Props<USER>>) : Component<ActivateAccou
         /** The token was redeemed. */
         data object Activated : DisplayState
 
-        /** Asking for a new link — either the token failed, or we arrived without one. */
-        data class Resend(
-            val email: String,
-            val tokenWasInvalid: Boolean,
-            val sent: Boolean = false,
-        ) : DisplayState
+        /**
+         * The link did not work — expired, already used, or the account was activated earlier and this
+         * is a reload of a consumed link.
+         *
+         * There is no resend from here: resend is authorized by a token that only a completed password
+         * check produces, so the way back is the login page. That is not a dead end — signing in either
+         * works (the account was already activated) or hands out a fresh resend offer.
+         */
+        data object LinkNotUsable : DisplayState
+
+        /** Arrived from the login page, which proved the password and left a resend token. */
+        data class Offer(
+            val pending: AuthState.PendingActivation,
+            val outcome: Outcome? = null,
+        ) : DisplayState {
+            enum class Outcome { Sent, NotSent }
+        }
     }
 
     private val authState get() = props.state
 
     private var displayState: DisplayState by value(
-        DisplayState.Resend(
-            // Prefilled from the login attempt when the login page sent us here, and empty when the
-            // user opened the page cold.
-            email = authState.pendingActivation?.email.orEmpty(),
-            tokenWasInvalid = false,
-        )
+        // No token to redeem means the login page sent us here; it also left the resend authorization.
+        // Without one there is nothing this page can do but point back at the login form.
+        //
+        // Read AND CLEARED: the carrier holds the address the user just typed, and leaving it behind
+        // means the next person to open this page in a shared browser sees it prefilled. This page has
+        // taken what it needs into its own state, so nothing is lost.
+        authState.pendingActivation
+            ?.also { authState.clearPendingActivation() }
+            ?.let { DisplayState.Offer(pending = it) }
+            ?: DisplayState.LinkNotUsable
     )
 
     /**
@@ -87,43 +100,35 @@ class ActivateAccountPage<USER>(ctx: Ctx<Props<USER>>) : Component<ActivateAccou
      */
     private val loader = dataLoader {
         val token = props.token
+            ?: return@dataLoader flowOf(false)
 
-        // Nothing to redeem — the page is in resend mode and the initial display state already says
-        // so.
-        if (token == null) return@dataLoader flowOf(false)
-
-        val result = authState.activateAccount(
+        val activated = authState.activateAccount(
             AuthActivateAccountRequest(provider = props.provider, token = token)
-        )
-
-        val activated = result?.success == true
+        )?.success == true
 
         displayState = when {
             activated -> DisplayState.Activated
-
-            // An expired or already-used link. Offer a new one rather than a dead end — this is the
-            // whole reason the resend form lives on this page.
-            else -> DisplayState.Resend(
-                email = authState.pendingActivation?.email.orEmpty(),
-                tokenWasInvalid = true,
-            )
+            else -> DisplayState.LinkNotUsable
         }
 
         flowOf(activated)
     }
 
-    private val formCtrl = formController()
     private val noDblClick = doubleClickProtection()
 
-    private suspend fun resend(s: DisplayState.Resend) = noDblClick.runBlocking {
-        authState.resendActivation(
-            AuthResendActivationRequest(provider = props.provider, email = s.email)
+    private suspend fun resend(s: DisplayState.Offer) = noDblClick.runBlocking {
+        val result = authState.resendActivation(
+            AuthResendActivationRequest(provider = props.provider, token = s.pending.resendToken)
         )
 
-        // ALWAYS the same confirmation. The server answers identically for an unknown address, an
-        // already-activated account and a request inside the cooldown window, and the UI must not
-        // undo that by reporting anything more specific.
-        displayState = s.copy(sent = true)
+        // Reporting the real outcome is safe here precisely because this call was authorized: the
+        // caller already proved the password, so `sent` tells them nothing they did not already know.
+        displayState = s.copy(
+            outcome = when (result?.sent) {
+                true -> DisplayState.Offer.Outcome.Sent
+                else -> DisplayState.Offer.Outcome.NotSent
+            }
+        )
     }
 
     //  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -155,7 +160,8 @@ class ActivateAccountPage<USER>(ctx: Ctx<Props<USER>>) : Component<ActivateAccou
                     loaded {
                         when (val s = displayState) {
                             is DisplayState.Activated -> renderActivated()
-                            is DisplayState.Resend -> renderResend(s)
+                            is DisplayState.LinkNotUsable -> renderLinkNotUsable()
+                            is DisplayState.Offer -> renderOffer(s)
                         }
                     }
                 }
@@ -172,55 +178,63 @@ class ActivateAccountPage<USER>(ctx: Ctx<Props<USER>>) : Component<ActivateAccou
         renderBackLink()
     }
 
-    private fun FlowContent.renderResend(s: DisplayState.Resend) {
-        if (s.tokenWasInvalid) {
-            ui.error.message {
-                icon.exclamation()
-                +"This activation link is invalid or has expired."
-            }
+    private fun FlowContent.renderLinkNotUsable() {
+        ui.error.message {
+            icon.exclamation()
+            +"This activation link is not valid any more."
         }
 
-        if (s.sent) {
-            ui.info.message {
-                icon.mail()
-                +"If the address belongs to an account that still needs activating, "
-                +"a new link is on its way. Please check your inbox."
-            }
-
-            renderBackLink()
-
-            return
+        p {
+            // BOTH possibilities, because the page cannot tell them apart and the far more common one
+            // is the happy case: a reload of a link that already worked. Telling only the failure story
+            // sends an activated user hunting for a new mail that will never come.
+            +"It may have expired, or it may already have been used. Try signing in — "
+            +"if your account is active you are done, and if it is not we will offer you a new link."
         }
 
-        ui.form Form {
-            onSubmit { evt -> evt.preventDefault() }
+        renderBackLink()
+    }
 
-            p {
-                +"Enter your email address and we will send you a new activation link."
-            }
+    private fun FlowContent.renderOffer(s: DisplayState.Offer) {
+        when (s.outcome) {
+            null -> {
+                // Lead with what actually happened, and with the mail that is ALREADY in their inbox.
+                // Someone who signed up a minute ago and tried to log in does not need a new link, they
+                // need to be told to go and read the first one.
+                ui.info.message {
+                    icon.mail()
+                    +"Your account is not activated yet. We sent a link to ${s.pending.email} — "
+                    +"please check your inbox and your spam folder."
+                }
 
-            UiInputField(s.email, { displayState = s.copy(email = it) }) {
-                placeholder("Email")
-            }
-
-            ui.field {
-                ui.primary.fluid
-                    .givenNot(noDblClick.canRun) { loading }
-                    .givenNot(formCtrl.isValid) { disabled }
-                    .button Submit {
-                    onClick {
-                        formCtrl.validate {
-                            resend(s)
-                        }
+                ui.field {
+                    ui.primary.fluid
+                        .givenNot(noDblClick.canRun) { loading }
+                        .button {
+                        onClick { launch { resend(s) } }
+                        +"Send a new link"
                     }
-                    +"Send new link"
                 }
             }
 
-            ui.hidden.divider()
+            DisplayState.Offer.Outcome.Sent -> ui.success.message {
+                icon.check()
+                +"A new link is on its way to ${s.pending.email}."
+            }
 
-            renderBackLink()
+            // The honest answer, which the neutral-response version of this endpoint could not give:
+            // the cooldown suppressed it, and telling the user a mail is coming would be a lie that
+            // leaves them waiting for it.
+            DisplayState.Offer.Outcome.NotSent -> ui.warning.message {
+                icon.clock()
+                +"We already sent a link to ${s.pending.email} recently. "
+                +"Please check your inbox, or sign in again in a few minutes to request another."
+            }
         }
+
+        ui.hidden.divider()
+
+        renderBackLink()
     }
 
     private fun FlowContent.renderBackLink() {

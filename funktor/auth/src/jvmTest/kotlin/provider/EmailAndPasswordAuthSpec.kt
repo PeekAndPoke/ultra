@@ -43,8 +43,10 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             { _, _ -> error("findEmailVerificationToken not implemented") },
         val onFindLatestEmailVerificationToken: suspend (RealmId, UserId) -> Stored<AuthRecord.EmailVerificationToken>? =
             { _, _ -> error("findLatestEmailVerificationToken not implemented") },
-        val onRemoveEmailVerificationTokens: suspend (RealmId, UserId) -> Unit =
-            { _, _ -> error("removeEmailVerificationTokens not implemented") },
+        val onRemoveEmailVerificationTokens: suspend (RealmId, UserId, String?) -> Unit =
+            { _, _, _ -> error("removeEmailVerificationTokens not implemented") },
+        val onFindActivationResendToken: suspend (RealmId, String) -> Stored<AuthRecord.ActivationResendToken>? =
+            { _, _ -> error("findActivationResendToken not implemented") },
         val onFindPendingActivation: suspend (RealmId, UserId) -> Stored<AuthRecord.PendingActivation>? =
             { _, _ -> error("findPendingActivation not implemented") },
         val onRemovePendingActivations: suspend (RealmId, UserId) -> Unit =
@@ -79,8 +81,13 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             owner: UserId,
         ): Stored<AuthRecord.EmailVerificationToken>? = onFindLatestEmailVerificationToken(realm, owner)
 
-        override suspend fun removeEmailVerificationTokens(realm: RealmId, owner: UserId) =
-            onRemoveEmailVerificationTokens(realm, owner)
+        override suspend fun removeEmailVerificationTokens(realm: RealmId, owner: UserId, exceptId: String?) =
+            onRemoveEmailVerificationTokens(realm, owner, exceptId)
+
+        override suspend fun findActivationResendToken(
+            realm: RealmId,
+            token: String,
+        ): Stored<AuthRecord.ActivationResendToken>? = onFindActivationResendToken(realm, token)
 
         override suspend fun findPendingActivation(
             realm: RealmId,
@@ -520,6 +527,9 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                         },
                         onGenerateToken = { verificationToken },
                         onInstantNow = { now },
+                        // A brand-new user has no earlier tokens; the shared issue-and-send path calls
+                        // this anyway, so the sign-up and resend links cannot drift apart.
+                        onRemoveEmailVerificationTokens = { _, _, _ -> },
                     )
                 }
 
@@ -672,12 +682,26 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             val now = MpInstant.parse("2026-07-27T12:00:00Z")
             val cooldown = MinimalTestRealm().tokenConfig.activationResendCooldown
 
-            fun pendingMarker(realm: RealmId, owner: UserId) = Stored(
+            val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
+            val owner = UserId(storedUser._id)
+            val resendToken = "the-resend-token"
+
+            fun resendTokenRecord(realm: RealmId) = Stored(
+                _id = "resend-token-record",
+                value = AuthRecord.ActivationResendToken(
+                    realm = realm,
+                    ownerId = owner,
+                    token = resendToken,
+                    expiresAt = Long.MAX_VALUE,
+                ),
+            )
+
+            fun pendingMarker(realm: RealmId) = Stored(
                 _id = "pending-activation",
                 value = AuthRecord.PendingActivation(realm = realm, ownerId = owner),
             )
 
-            fun verificationToken(realm: RealmId, owner: UserId, createdAt: MpInstant) = Stored(
+            fun verificationToken(realm: RealmId, createdAt: MpInstant) = Stored(
                 _id = "verification-record",
                 value = AuthRecord.EmailVerificationToken(
                     realm = realm,
@@ -688,86 +712,80 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 ),
             )
 
-            "should send nothing for an unknown address" {
-                // Every service beyond the lookup keeps its exploding default: an unknown address must
-                // not touch storage OR mail. The neutral response is only half of "no enumeration".
-                val services = lazy { TestServices() }
+            fun subjectWith(services: Lazy<EmailAndPasswordAuth.Services>) = EmailAndPasswordAuth(
+                frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c/auth"),
+                log = NullLog,
+                services = services,
+            )
 
-                val subject = EmailAndPasswordAuth(
-                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c/auth"),
-                    log = NullLog,
-                    services = services,
+            "should send nothing for an unknown resend token" {
+                // THE authorization. Every service beyond the token lookup keeps its exploding default,
+                // so an unauthorized call cannot touch storage OR mail — it must not even resolve a
+                // user, which is what made the email-keyed version an anonymous mail primitive.
+                val services = lazy { TestServices(onFindActivationResendToken = { _, _ -> null }) }
+
+                val result = subjectWith(services).resendActivation(
+                    MinimalTestRealm(),
+                    AuthResendActivationRequest(provider = EmailAndPasswordAuth.ID, token = "nope"),
                 )
 
-                val realm = MinimalTestRealm(onLoadUserByEmail = { null })
-
-                subject.resendActivation(
-                    realm,
-                    AuthResendActivationRequest(provider = subject.id, email = "nobody@example.com"),
-                )
+                result.sent shouldBe false
             }
 
-            "should send nothing for an account that is already activated" {
-                val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
+            "should consume the token even when nothing is sent, so one sign-in buys one resend" {
+                var removedRecordId: String? = null
 
                 val services = lazy {
                     TestServices(
-                        // No marker = activated. Everything past this point still explodes if reached.
+                        onFindActivationResendToken = { realm, _ -> resendTokenRecord(realm) },
+                        onRemoveAuthRecord = { removedRecordId = it },
+                        // No marker = already activated, so no mail. The token is spent regardless.
                         onFindPendingActivation = { _, _ -> null },
                     )
                 }
 
-                val subject = EmailAndPasswordAuth(
-                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c/auth"),
-                    log = NullLog,
-                    services = services,
-                )
+                val realm = MinimalTestRealm(onLoadUserById = { storedUser })
 
-                val realm = MinimalTestRealm(onLoadUserByEmail = { storedUser })
-
-                subject.resendActivation(
+                val result = subjectWith(services).resendActivation(
                     realm,
-                    AuthResendActivationRequest(provider = subject.id, email = "user@example.com"),
+                    AuthResendActivationRequest(provider = EmailAndPasswordAuth.ID, token = resendToken),
                 )
+
+                result.sent shouldBe false
+                removedRecordId shouldBe "resend-token-record"
             }
 
             "should send nothing while inside the cooldown window" {
-                // THE throttle. `getMessaging` keeps its exploding default, so a send here fails the
+                // The second throttle, behind the token: re-authenticating in a loop still cannot mail
+                // faster than this. `getMessaging` keeps its exploding default, so a send fails the
                 // test rather than being asserted after the fact.
-                val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
-                val owner = UserId(storedUser._id)
-
                 val services = lazy {
                     TestServices(
                         onInstantNow = { now },
-                        onFindPendingActivation = { realm, _ -> pendingMarker(realm, owner) },
+                        onFindActivationResendToken = { realm, _ -> resendTokenRecord(realm) },
+                        onRemoveAuthRecord = { },
+                        onFindPendingActivation = { realm, _ -> pendingMarker(realm) },
                         onFindLatestEmailVerificationToken = { realm, _ ->
                             // Issued one second inside the window.
-                            verificationToken(realm, owner, now.minus(cooldown).plus(1.seconds))
+                            verificationToken(realm, now.minus(cooldown).plus(1.seconds))
                         },
                     )
                 }
 
-                val subject = EmailAndPasswordAuth(
-                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c/auth"),
-                    log = NullLog,
-                    services = services,
-                )
+                val realm = MinimalTestRealm(onLoadUserById = { storedUser })
 
-                val realm = MinimalTestRealm(onLoadUserByEmail = { storedUser })
-
-                subject.resendActivation(
+                val result = subjectWith(services).resendActivation(
                     realm,
-                    AuthResendActivationRequest(provider = subject.id, email = "user@example.com"),
+                    AuthResendActivationRequest(provider = EmailAndPasswordAuth.ID, token = resendToken),
                 )
+
+                result.sent shouldBe false
             }
 
             "should rotate the token and mail a NEW link once the cooldown has passed" {
-                val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
-                val owner = UserId(storedUser._id)
                 val newToken = "the-new-token"
 
-                var rotatedFor: Pair<RealmId, UserId>? = null
+                var rotation: Triple<RealmId, UserId, String?>? = null
                 var activationUrl: String? = null
                 val createdAuthRecords = mutableListOf<AuthRecord>()
 
@@ -775,12 +793,16 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                     TestServices(
                         onInstantNow = { now },
                         onGenerateToken = { newToken },
-                        onFindPendingActivation = { realm, _ -> pendingMarker(realm, owner) },
+                        onFindActivationResendToken = { realm, _ -> resendTokenRecord(realm) },
+                        onRemoveAuthRecord = { },
+                        onFindPendingActivation = { realm, _ -> pendingMarker(realm) },
                         onFindLatestEmailVerificationToken = { realm, _ ->
                             // Exactly ON the boundary — the cooldown has elapsed, so this must send.
-                            verificationToken(realm, owner, now.minus(cooldown))
+                            verificationToken(realm, now.minus(cooldown))
                         },
-                        onRemoveEmailVerificationTokens = { realm, o -> rotatedFor = realm to o },
+                        onRemoveEmailVerificationTokens = { realm, o, exceptId ->
+                            rotation = Triple(realm, o, exceptId)
+                        },
                         onCreateAuthRecord = { create ->
                             val record = create()
                             createdAuthRecords.add(record)
@@ -790,14 +812,8 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                     )
                 }
 
-                val subject = EmailAndPasswordAuth(
-                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c/auth"),
-                    log = NullLog,
-                    services = services,
-                )
-
                 val realm = MinimalTestRealm(
-                    onLoadUserByEmail = { storedUser },
+                    onLoadUserById = { storedUser },
                     getMessaging = {
                         TestMessaging(
                             onSendAccountActivationEmail = { user, url ->
@@ -809,21 +825,25 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                     },
                 )
 
-                subject.resendActivation(
+                val result = subjectWith(services).resendActivation(
                     realm,
-                    AuthResendActivationRequest(provider = subject.id, email = "user@example.com"),
+                    AuthResendActivationRequest(provider = EmailAndPasswordAuth.ID, token = resendToken),
                 )
 
-                // Rotation, so only the newest link stays live — every earlier one dies.
-                rotatedFor shouldBe (realm.id to owner)
+                result.sent shouldBe true
 
                 val issued = createdAuthRecords.filterIsInstance<AuthRecord.EmailVerificationToken>().single()
                 issued.token shouldBe newToken
                 issued.ownerId shouldBe owner
 
+                // Rotation must EXCLUDE the row just created. Rotating first (or without the exception)
+                // lets two interleaved resends delete the token the other has already mailed, so a user
+                // receives a link that was dead before it arrived.
+                rotation shouldBe Triple(realm.id, owner, "record-1")
+
                 // The resent link must be built exactly like the sign-up one. A resend that produced a
                 // different URL shape would be a dead link that no server-side test could see.
-                activationUrl shouldBe "https://a.b.c/auth/${subject.id}/activate/$newToken"
+                activationUrl shouldBe "https://a.b.c/auth/${EmailAndPasswordAuth.ID}/activate/$newToken"
             }
         }
 
