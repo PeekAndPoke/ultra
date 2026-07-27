@@ -12,6 +12,7 @@ import io.peekandpoke.funktor.auth.provider.GithubSsoAuth
 import io.peekandpoke.funktor.auth.provider.GoogleSsoAuth
 import io.peekandpoke.funktor.core.broker.funktorBroker
 import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.funktor.core.config.ktor.KtorConfig
 import io.peekandpoke.funktor.core.config.funktor.FunktorConfig
 import io.peekandpoke.funktor.messaging.MessagingServices
 import io.peekandpoke.funktor.messaging.api.EmailResult
@@ -53,6 +54,10 @@ import kotlinx.serialization.json.jsonObject
 import kotlin.time.Duration.Companion.hours
 
 val testAppConfig = AppConfig.of(
+    // Explicitly "test": AppConfig.of() defaults the environment to "prod", which would put this
+    // harness on the DELIVERING branch of funktorMessaging. Inert today only because no sender is
+    // registered here — a trap for whoever first adds one.
+    ktor = KtorConfig(deployment = KtorConfig.Deployment(environment = "test")),
     funktor = FunktorConfig(
         auth = FunktorConfig.AuthConfig(
             jwt = JwtConfig(
@@ -80,7 +85,7 @@ suspend fun createAuthTestContainer(
 
         funktorBroker()
         funktorRest(testAppConfig) { jwt() }
-        funktorMessaging()
+        funktorMessaging(testAppConfig)
 
         funktorAuth { configureAuth() }
 

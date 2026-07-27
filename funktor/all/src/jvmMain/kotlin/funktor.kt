@@ -32,7 +32,7 @@ val Funktor = module { params: FunktorParams ->
     funktorCluster(params.cluster)
     funktorLogging(params.logging)
     funktorStaticWeb()
-    funktorMessaging(params.messaging)
+    funktorMessaging(params.config, params.messaging)
     funktorSaas(params.saas)
     funktorInsights()
     funktorIntrospection()

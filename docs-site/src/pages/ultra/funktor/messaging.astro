@@ -32,32 +32,34 @@ if (result.success) {
 
     <h2>Configuring a sender</h2>
 
-    <p>Wire your email sender in the Kontainer blueprint. The sender is wrapped with hooks for
-        storage and logging.</p>
+    <p>Supply your provider and nothing else. Dev overrides, test-mode capture, persisting what was
+        sent and the debug log are applied by the messaging module itself, so there is no chain to
+        assemble and no step to forget.</p>
 
     <Code code={`val blueprint = kontainer {
     funktor(
         config = config,
-        messaging = { useKarango() },  // persist sent messages
+        messaging = {
+            useKarango()                       // persist sent messages
+
+            // The ONE thing the app supplies. Built at most once, and never called at all
+            // when the app runs in test mode.
+            useSender(devConfig = config.devOverrides?.mailing) {
+                AwsSesSender.of(config.aws.ses)
+            }
+
+            // Optional: your hooks run alongside the framework's, outside the dev overrides.
+            onAfterSend { email, result -> metrics.record(result) }
+        },
         // ...
     )
-
-    // AWS SES sender with hooks
-    val mailSender: AwsSesSender by lazy {
-        AwsSesSender.of(config = config.aws.ses)
-    }
-
-    singleton(EmailSender::class) { log: Log, storing: StoringEmailHook ->
-        mailSender
-            .applyDevConfig(config = config, devConfig = config.devOverrides?.mailing)
-            .withHooks(log) {
-                onAfterSend(storing)
-                onAfterSend { email, result ->
-                    log.debug("Email sent to ${'$'}{email.destination}")
-                }
-            }
-    }
 }`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>Do <strong>not</strong> register an <code>EmailSender</code> yourself. It is deliberately
+        not a Kontainer service &mdash; the provider lives behind <code>useSender</code> so nothing can
+        inject an undecorated sender and bypass the guarantees below. Send through
+        <code>Mailing</code> (<code>funktorMessaging.mailing</code>).
+    </Aside>
 
     <h2>Email senders</h2>
 
@@ -92,23 +94,50 @@ if (result.success) {
 
     <h2>Dev overrides</h2>
 
-    <p>In development, <code>applyDevConfig()</code> wraps your real sender with an
-        <code>OverridingEmailSender</code> that redirects all emails to your dev inbox.
-        No accidental emails to real users.</p>
+    <p>Pass a <code>MailingDevConfig</code> to <code>useSender</code> and the module redirects every
+        email to your dev inbox, prefixes the subject and adds a banner to the body. No accidental
+        emails to real users.</p>
 
-    <Aside>The override is applied based on your app config. In production, the real sender is used directly.
-        In dev/staging, all emails go to the address you configure &mdash; with the original recipient
-        noted in the subject line.
+    <Aside>In production the real sender is used directly. In dev/staging all emails go to the address
+        you configure, with the original recipient recorded in the send result.
+    </Aside>
+
+    <h2>Tests capture instead of sending</h2>
+
+    <p>When <code>ktor.deployment.environment</code> is <code>test</code>, the module replaces your
+        provider with a capturing sender &mdash; your <code>useSender</code> lambda is never invoked,
+        so no client is built and no credentials are needed. Assert on what was sent by resolving
+        <code>CapturedEmails</code>:</p>
+
+    <Code code={`class MyMailSpec : FunktorApiSpec() {
+    private val emails by service(CapturedEmails::class)
+
+    init {
+        "a password reset sends a mail with a usable link" {
+            // ... trigger the flow ...
+            val mail = emails.lastTo("user@example.com").shouldNotBeNull()
+            val link = mail.hrefs().single()
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <Aside>Read the mail from <code>CapturedEmails</code>, not from <code>SentMessagesStorage</code>:
+        the persisted copy of an auth mail is anonymized, so the token is deliberately gone from it.
     </Aside>
 
     <h2>Email hooks</h2>
 
-    <p>The <code>withHooks()</code> builder wraps any sender and calls your hooks after sending.
-        The built-in <code>StoringEmailHook</code> persists every sent email to the database for auditing.</p>
+    <p>Add hooks with <code>onAfterSend</code> in the <code>messaging</code> block. They run in the
+        same place as the framework's own <code>StoringEmailHook</code> &mdash; outside the dev
+        overrides, so they see the mail as your app composed it &mdash; and they still run under
+        test. A hook buried inside the <code>useSender</code> lambda would do neither.</p>
 
     <h2>Sent message storage</h2>
 
-    <p>Every sent email is persisted to a <code>SentMessagesStorage</code> via the storing hook.
+    <p>Sent emails are persisted to a <code>SentMessagesStorage</code> via the storing hook, for any
+        mail carrying an <code>EmailStoring</code> policy. Mail without one is not stored. Auth mails
+        use <code>withAnonymizedContent</code>, which strips every link so a live token never
+        reaches the database.
         Query by reference (e.g. user ID) to see what was sent and when.
         Storage backends: <code>useKarango()</code> for ArangoDB, <code>useMonko()</code> for MongoDB.</p>
 
