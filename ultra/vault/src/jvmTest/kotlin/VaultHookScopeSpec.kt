@@ -11,7 +11,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class VaultHookScopeSpec : StringSpec({
@@ -49,15 +51,54 @@ class VaultHookScopeSpec : StringSpec({
         log.snapshot().single().contains("failing-hook") shouldBe true
     }
 
-    "Inline still lets cancellation through" {
+    "Inline contains a CancellationException the hook raised itself" {
         val log = RecordingLog()
 
         val thrown = runCatching {
-            VaultHookScope.Inline(log).runHook("test") { throw CancellationException("cancelled") }
+            VaultHookScope.Inline(log).runHook("test") { throw CancellationException("hook gave up") }
         }.exceptionOrNull()
 
-        // Containing cancellation would break cooperative cancellation of the caller
-        (thrown is CancellationException) shouldBe true
+        // Nothing cancelled the caller, so this is the hook failing — an after-save hook must not
+        // fail a write that already committed, whatever exception type it picks
+        thrown shouldBe null
+        log.snapshot().single().contains("test") shouldBe true
+    }
+
+    "Inline contains a hook that times itself out" {
+        val log = RecordingLog()
+
+        val thrown = runCatching {
+            VaultHookScope.Inline(log).runHook("test") {
+                withTimeout(20.milliseconds) { delay(10.seconds) }
+            }
+        }.exceptionOrNull()
+
+        // withTimeout raises a CancellationException, but only the hook's own scope was cancelled
+        thrown shouldBe null
+    }
+
+    "Inline still propagates cancellation of the surrounding coroutine" {
+        val log = RecordingLog()
+        val scope = CoroutineScope(SupervisorJob())
+        val entered = CompletableDeferred<Unit>()
+        var escaped: Throwable? = null
+
+        val job = scope.launch {
+            try {
+                VaultHookScope.Inline(log).runHook("test") {
+                    entered.complete(Unit)
+                    delay(10.seconds)
+                }
+            } catch (e: Throwable) {
+                escaped = e
+            }
+        }
+
+        entered.await()
+        job.cancelAndJoin()
+
+        // Containing this would break cooperative cancellation of the caller
+        (escaped is CancellationException) shouldBe true
     }
 
     // Deferred, before binding ////////////////////////////////////////////////////////////////////

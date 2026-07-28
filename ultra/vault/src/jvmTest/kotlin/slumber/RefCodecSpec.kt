@@ -1,11 +1,14 @@
 package io.peekandpoke.ultra.vault.slumber
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.peekandpoke.ultra.common.TypedAttributes
 import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.slumber.AwakerException
 import io.peekandpoke.ultra.slumber.Codec
 import io.peekandpoke.ultra.slumber.SlumberConfig
 import io.peekandpoke.ultra.slumber.awake
@@ -40,11 +43,12 @@ class RefCodecSpec : StringSpec({
             add(VaultSlumberModule.EntityCacheKey, cache)
         }
 
+        // prepend, do not replace — this is how the drivers compose it, and the built-in
+        // data-class awaker has to stay reachable
         return Codec(
-            config = SlumberConfig.default.copy(
-                modules = listOf(VaultSlumberModule),
-                attributes = attributes,
-            )
+            config = SlumberConfig.default
+                .prependModules(VaultSlumberModule)
+                .plusAttributes(attributes)
         )
     }
 
@@ -121,9 +125,50 @@ class RefCodecSpec : StringSpec({
 
         result shouldBe entityId
     }
+    // Non-null enforcement ////////////////////////////////////////////////////////////////////////
+
+    "a non-nullable Ref field names itself when it cannot be read" {
+        val codec = createCodec()
+
+        val ex = shouldThrow<AwakerException> {
+            codec.awake<RefDoc>(mapOf("owner" to null, "label" to "x"))
+        }
+
+        // without the non-null wrapper this reported only 'root', i.e. the whole document
+        ex.message shouldContain "root.owner"
+    }
+
+    "a non-nullable Ref field of the wrong shape names itself too" {
+        val codec = createCodec()
+
+        val ex = shouldThrow<AwakerException> {
+            codec.awake<RefDoc>(mapOf("owner" to 42, "label" to "x"))
+        }
+
+        ex.message shouldContain "root.owner"
+    }
+
+    "a nullable Ref field is still allowed to be null" {
+        val codec = createCodec()
+
+        val result = codec.awake<RefDocOptional>(mapOf("owner" to null, "label" to "x"))!!
+
+        result.owner shouldBe null
+    }
+
+    "awaking a non-nullable Ref directly from null raises" {
+        val codec = createCodec()
+
+        shouldThrow<AwakerException> { codec.awake<Ref<String>>(null) }
+    }
 })
 
 // Test fixtures ///////////////////////////////////////////////////////////////////////////////////
+
+/** `owner` is not nullable, so a reference that cannot be read must name the field. */
+internal data class RefDoc(val owner: Ref<String>, val label: String)
+
+internal data class RefDocOptional(val owner: Ref<String>?, val label: String)
 
 private class TestStringRepo(
     private val storedResult: Stored<String>?,

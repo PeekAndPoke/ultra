@@ -64,6 +64,10 @@ class StoredAwakerSpec : StringSpec({
 
     // Invalid input ///////////////////////////////////////////////////////////////////////////////
 
+    // Deliberately NOT wrapped in a non-null awaker: a null row is how the drivers report a missing
+    // document. Karango's findById issues DOCUMENT(repo, id), which yields null when nothing
+    // matches, and relies on that null coming back out of the codec.
+
     "awake returns null when _id is missing" {
         val data = mapOf(
             "_key" to "ada",
@@ -131,3 +135,4 @@ class StoredAwakerSpec : StringSpec({
 // Test fixtures ///////////////////////////////////////////////////////////////////////////////////
 
 internal data class AwakerUser(val name: String, val age: Int)
+

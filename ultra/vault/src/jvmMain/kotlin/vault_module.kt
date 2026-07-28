@@ -14,14 +14,25 @@ import io.peekandpoke.ultra.vault.profiling.QueryProfiler
 import io.peekandpoke.ultra.vault.tools.DatabaseGraphBuilder
 import io.peekandpoke.ultra.vault.tools.DatabaseTools
 
+/** Registers [Ultra_Vault] with the given [config]. */
 fun KontainerBuilder.ultraVault(config: VaultConfig) = module(Ultra_Vault, config)
 
 /**
  * Vault kontainer module.
  *
- * Defines two dynamic services :
+ * Dynamic — one instance per kontainer, i.e. per request, because they carry per-request state:
+ * [Database], [EntityCache] (defaulting to [DefaultEntityCache]), [TimestampedHook],
+ * [TimestampedMillisHook], [QueryProfiler] and [DatabaseGraphBuilder].
  *
- * - [EntityCache] which defaults to [DefaultEntityCache]
+ * Process-wide singletons, and only because they declare no constructor dependencies:
+ * [SharedRepoClassLookup], whose repository lookup cache has to outlive the per-request [Database],
+ * and [DeferredVaultHookScope], which is bound to the application scope after the kontainer was
+ * built and would be invisible to requests if it were rebuilt for each of them.
+ *
+ * [DatabaseTools] and the CLI commands are declared as singletons but each reaches a dynamic
+ * service, so the kontainer downgrades them to semi-dynamic — again one instance per kontainer.
+ * They are stateless, so this costs an allocation and nothing more; nothing may start caching
+ * in them.
  */
 val Ultra_Vault = module { config: VaultConfig ->
         // Database
@@ -52,7 +63,7 @@ val Ultra_Vault = module { config: VaultConfig ->
         singleton(DatabaseTools::class)
         dynamic(DatabaseGraphBuilder::class)
 
-        // Cli command
+        // CLI commands
         singleton(VaultRepositoriesEnsureCommand::class)
         singleton(VaultIndexesEnsureCommand::class)
         singleton(VaultIndexesRecreateCommand::class)

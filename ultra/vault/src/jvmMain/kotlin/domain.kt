@@ -3,7 +3,6 @@
 package io.peekandpoke.ultra.vault
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import io.peekandpoke.ultra.vault.lang.VaultDslMarker
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
@@ -87,21 +86,24 @@ sealed class Storable<out T> {
 
     /**
      * Checks if this [Storable] has the same id as the [other]
+     *
+     * An unsaved entity has an empty [_id] and is never considered the same as anything, including
+     * another unsaved entity — otherwise every [New] would compare equal to every other.
      */
-    @VaultDslMarker
-    infix fun hasSameIdAs(other: Storable<@UnsafeVariance T>?) = other != null && _id == other._id
+    infix fun hasSameIdAs(other: Storable<@UnsafeVariance T>?) =
+        other != null && _id.isNotEmpty() && _id == other._id
 
     /**
      * Checks if this [Storable] has another id as the [other]
      */
-    @VaultDslMarker
     infix fun hasOtherIdThan(other: Storable<@UnsafeVariance T>?) = !hasSameIdAs(other)
 
     /**
      * Checks if this [Storable] has an id that is equal to one of the [others]
+     *
+     * An unsaved entity matches nothing — see [hasSameIdAs].
      */
-    @VaultDslMarker
-    infix fun hasIdIn(others: List<Storable<@UnsafeVariance T>>) = others.any { it._id == _id }
+    infix fun hasIdIn(others: List<Storable<@UnsafeVariance T>>) = others.any { this hasSameIdAs it }
 
     /**
      * Internal non-suspend value access for subclasses that always have the value available.
@@ -220,18 +222,32 @@ data class Stored<out T>(
  * their resolution state.
  */
 @SerialName(Ref.SERIAL_NAME)
-class Ref<out T>(
+class Ref<out T> private constructor(
     override val _id: String,
     private val resolver: suspend () -> Storable<T>,
+    initialCache: Storable<T>?,
 ) : Storable<T>() {
+
+    /**
+     * Creates a ref that resolves through [resolver] on first access.
+     *
+     * [resolver] must return a [Storable] whose `_id` equals [_id] — nothing enforces this, and a
+     * mismatch produces a ref that reports one id while carrying another entity.
+     */
+    constructor(_id: String, resolver: suspend () -> Storable<T>) : this(_id, resolver, null)
 
     companion object {
         const val SERIAL_NAME = "ref"
 
-        /** Wraps an already-loaded value. Used by [Storable.asRef], tests, save paths. */
+        /**
+         * Wraps an already-loaded value. Used by [Storable.asRef], tests, save paths.
+         *
+         * The value is pre-seeded into the cache, so the non-suspend accessors ([Storable.asStored],
+         * [_key], [_rev]) work without calling [resolve] first.
+         */
         fun <T> eager(value: T, _id: String, _key: String, _rev: String): Ref<T> {
             val stored = Stored(value, _id, _key, _rev)
-            return Ref(_id) { stored }
+            return Ref(_id = _id, resolver = { stored }, initialCache = stored)
         }
 
         /** Creates a lazy ref resolved on first access. Used by RefCodec during deserialization. */
@@ -242,7 +258,7 @@ class Ref<out T>(
     private val mutex = Mutex()
 
     @Volatile
-    private var _cached: Storable<T>? = null
+    private var _cached: Storable<T>? = initialCache
 
     @PublishedApi
     override val valueInternal: T
@@ -263,12 +279,13 @@ class Ref<out T>(
         }
     }
 
-    override val _key: String get() = _id.ensureKey
+    /** The key of the resolved entity, falling back to the one embedded in [_id]. */
+    override val _key: String get() = _cached?._key ?: _id.ensureKey
 
     override val _rev: String get() = _cached?._rev ?: ""
 
     override fun equals(other: Any?): Boolean =
-        this === other || (other is Ref<*> && _id == other._id)
+        this === other || (other is Ref<*> && _id.isNotEmpty() && _id == other._id)
 
     override fun hashCode(): Int = _id.hashCode()
 

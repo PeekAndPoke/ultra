@@ -87,6 +87,11 @@ These make a suite look green while the feature is broken. Treat them as precond
 - **kotest ignores `--tests`.** Confirm a spec actually ran via `build/test-results/**/TEST-*.xml`,
   never by trusting a filtered gradle invocation. Avoid `--rerun-tasks` (kapt flakiness). MPP modules
   use `:jvmTest`; `funktor-demo:server` uses `:test`.
+- **…but that XML mis-attributes WHICH test failed.** Counts (`tests`/`failures`/`errors`) are
+  reliable; the `<testcase name>` a `<failure>` is nested under is not — it can name a test that
+  cannot produce that failure, and it disagrees with the gradle console for the same run. Use the XML
+  to confirm a spec ran and how many failed; use the console output to see which case broke.
+  Confirmed twice on 2026-07-28 (`HelpersSpec`, `MonkoSlashKeyTest`).
 - **Mutation-test every security-relevant change** before calling it green. This repeatedly catches
   vacuous or right-for-the-wrong-reason tests, including ones written in the same session — e.g. a
   "single-use token" e2e also satisfied by a cooldown, and a `validate()` test that constructed the

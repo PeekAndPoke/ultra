@@ -13,6 +13,18 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.primaryConstructor
 
+/**
+ * Builds a [DatabaseGraphModel] from the repositories registered in [database].
+ *
+ * References are discovered through primary-constructor parameters: those of each stored class,
+ * and recursively those of every `data` class reached from them.
+ *
+ * The graph is computed once per instance and then cached. The builder is registered as `dynamic`
+ * in `Ultra_Vault`, so each request gets its own instance and therefore its own snapshot.
+ *
+ * @param database Supplies the repositories to walk and resolves reference targets to repositories.
+ * @param log Receives a trace of every repository, stored class and reference that is visited.
+ */
 class DatabaseGraphBuilder(
     private val database: Database,
     private val log: Log,
@@ -80,18 +92,22 @@ class DatabaseGraphBuilder(
                 return
             }
 
-            // LazyRef was merged into Ref — all Refs are now lazy by default
+            // LazyRef was merged into Ref, so every Ref is lazy and the Direct/Lazy distinction is
+            // obsolete: all references are emitted above as Direct, and Lazy is never constructed.
 
-            // Blacklisted package? Stop!
-            if (cls.java.`package`.name.startsWithAny(packageBlackList)) {
-                return
-            }
-
-            // Look at all the type arguments
+            // Type arguments first: a Ref inside List<Ref<X>> would otherwise be lost to the
+            // package blacklist below, because List itself is blacklisted.
             type.arguments.forEach { typeArg ->
                 typeArg.type?.let {
                     visit(it)
                 }
+            }
+
+            // Blacklisted package? Stop! Arrays have no package and hold nothing to walk into.
+            val pkg = cls.java.`package`?.name
+
+            if (pkg == null || pkg.startsWithAny(packageBlackList)) {
+                return
             }
 
             // Look into data classes
@@ -110,6 +126,7 @@ class DatabaseGraphBuilder(
         buildInternal()
     }
 
+    /** The graph, built on the first call and cached for the lifetime of this builder. */
     fun getGraph(): DatabaseGraphModel = model
 
     private fun buildInternal(): DatabaseGraphModel {

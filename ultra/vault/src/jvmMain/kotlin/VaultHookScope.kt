@@ -5,6 +5,7 @@ import io.peekandpoke.ultra.log.LogLevel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -16,10 +17,14 @@ import kotlinx.coroutines.launch
  * ([DeferredVaultHookScope]).
  *
  * Both implementations treat hook failures the same way: they are contained and logged, never
- * propagated. After-save hooks run when the write has already been committed, so failing the
+ * propagated — including a hook that raises a `CancellationException` of its own, e.g. from its own
+ * `withTimeout`. After-save hooks run when the write has already been committed, so failing the
  * repository call would report a failure for an operation that actually succeeded, and a deferred
  * hook has no caller left to propagate to. Hooks are therefore responsible for handling their own
  * errors.
+ *
+ * The one thing that does propagate is cancellation of the surrounding coroutine itself, which stays
+ * cooperative.
  */
 interface VaultHookScope {
 
@@ -107,10 +112,17 @@ internal suspend fun runHookContained(description: String, log: Log, block: susp
     try {
         block()
     } catch (e: CancellationException) {
-        // Typically an application shutdown. Logged so the dropped work is observable instead of
-        // vanishing silently, then rethrown to keep cancellation cooperative.
-        log.warning("Vault hook '$description' was cancelled before it completed")
-        throw e
+        // A CancellationException does not by itself mean the caller was cancelled: a hook that
+        // wraps its own work in withTimeout raises one too. Only the state of the surrounding
+        // coroutine tells the two apart, and only a genuine cancellation may be rethrown.
+        if (currentCoroutineContext().isActive) {
+            log.error("Vault hook '$description' failed", e)
+        } else {
+            // Typically an application shutdown. Logged so the dropped work is observable instead
+            // of vanishing silently, then rethrown to keep cancellation cooperative.
+            log.warning("Vault hook '$description' was cancelled before it completed")
+            throw e
+        }
     } catch (e: Throwable) {
         log.error("Vault hook '$description' failed", e)
     }

@@ -4,6 +4,8 @@ import io.peekandpoke.ultra.reflection.TypeRef
 
 /**
  * Base interface for all Expressions.
+ *
+ * @param T the value type the expression evaluates to.
  */
 interface Expression<T> {
     /**
@@ -14,25 +16,36 @@ interface Expression<T> {
     fun getType(): TypeRef<T>
 
     /**
-     * Up-casts the expression of type [T] to the child type [U]
+     * Re-types the expression from [T] to the child type [U].
+     *
+     * Unchecked: returns the same instance, so [getType] keeps reporting the original type and
+     * query results are still un-serialized as [T].
      */
     @Suppress("UNCHECKED_CAST")
     fun <U : T> upcastTo(): Expression<U> = this as Expression<U>
 
     /**
-     * Down-casts the expression of type [T] to the parent type [D]
+     * Re-types the expression to the parent type [D].
+     *
+     * Unchecked: returns the same instance, so [getType] keeps reporting the original type. The
+     * `T : D` bound constrains nothing — that `T` shadows the interface's own type parameter.
      */
     @Suppress("UNCHECKED_CAST")
     fun <D, T : D> downcast(): Expression<D> = this as Expression<D>
 
     /**
-     * Casts the expression
+     * Re-types the expression to any [U], without a bound.
+     *
+     * Unchecked: returns the same instance, so [getType] keeps reporting the original type.
      */
     @Suppress("UNCHECKED_CAST")
     fun <U> forceCastTo(): Expression<U> = this as Expression<U>
 
     /**
-     * Makes the expression nullable
+     * Re-types the expression to `T?`.
+     *
+     * Unchecked: returns the same instance, so [getType] still reports the non-nullable [T] and
+     * un-serializing a null result fails.
      */
     @Suppress("UNCHECKED_CAST")
     fun nullable(): Expression<T?> = this as Expression<T?>

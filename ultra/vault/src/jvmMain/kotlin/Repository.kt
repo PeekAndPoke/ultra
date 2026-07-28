@@ -6,23 +6,38 @@ import io.peekandpoke.ultra.vault.lang.Aliased
 import io.peekandpoke.ultra.vault.lang.Expression
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
+import kotlin.reflect.full.isSubclassOf
 
+/**
+ * A collection of entities of type [T], backed by a database driver such as Karango or Monko.
+ *
+ * Doubles as an [Expression] over `List<T>`, so a repository can be used directly as the source of a
+ * query in the backend's DSL.
+ */
 interface Repository<T : Any> : Expression<List<T>>, Aliased {
 
+    /**
+     * The hooks a repository runs around save and delete, grouped by kind.
+     *
+     * Instances are immutable — [plus] returns a new set rather than mutating.
+     */
     class Hooks<T : Any>(
         val onBeforeSave: List<OnBeforeSave<T>>,
         val onAfterSave: List<OnAfterSave<T>>,
         val onAfterDelete: List<OnAfterDelete<T>>,
     ) {
         companion object {
+            /** Sorts the given [hooks] into their groups by type. */
             fun <T : Any> of(vararg hooks: Hook<T>) = of(hooks.toList())
 
+            /** Sorts the given [hooks] into their groups by type. */
             fun <T : Any> of(hooks: List<Hook<T>>) = Hooks(
                 onBeforeSave = hooks.filterIsInstance<OnBeforeSave<T>>(),
                 onAfterSave = hooks.filterIsInstance<OnAfterSave<T>>(),
                 onAfterDelete = hooks.filterIsInstance<OnAfterDelete<T>>(),
             )
 
+            /** A hook set that does nothing. */
             fun <T : Any> empty() = Hooks<T>(
                 onBeforeSave = emptyList(),
                 onAfterSave = emptyList(),
@@ -30,44 +45,54 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
             )
         }
 
+        /** Marker for anything that can be registered on a repository. */
         interface Hook<T : Any>
 
+        /** Transforms an entity on its way into the database, e.g. to stamp timestamps. */
         interface OnBeforeSave<T : Any> : Hook<T> {
             fun <X : T> onBeforeSave(repo: Repository<T>, storable: Storable<T>): Storable<X>
         }
 
+        /** Reacts to an entity having been written. Cannot change what was stored. */
         interface OnAfterSave<T : Any> : Hook<T> {
             suspend fun <X : T> onAfterSave(repo: Repository<T>, stored: Stored<X>)
         }
 
+        /** Reacts to an entity having been deleted. */
         interface OnAfterDelete<T : Any> : Hook<T> {
             suspend fun <X : T> onAfterDelete(repo: Repository<T>, deleted: Stored<X>)
         }
 
+        /** Returns a new set with [hook] appended. */
         fun plus(hook: Hook<T>): Hooks<T> = plus(of(hook))
 
+        /** Returns a new set with the hooks of [other] appended, group by group. */
         fun plus(other: Hooks<T>): Hooks<T> = Hooks(
             onBeforeSave = this.onBeforeSave.plus(other.onBeforeSave),
             onAfterSave = this.onAfterSave.plus(other.onAfterSave),
             onAfterDelete = this.onAfterDelete.plus(other.onAfterDelete),
         )
 
+        /** Returns a new set with all given [hooks] appended. */
         fun plus(vararg hooks: List<Hook<T>>): Hooks<T> = plus(
             of(
                 hooks.toList().flatten()
             )
         )
 
+        /** Pipes [storable] through every before-save hook in order, each seeing the previous result. */
         fun <X : T> applyOnBeforeSaveHooks(repo: Repository<T>, storable: Storable<X>): Storable<X> {
             return onBeforeSave.fold(storable) { acc, hook -> hook.onBeforeSave(repo, acc) }
         }
 
+        /** Runs every after-save hook in order and returns [stored] unchanged. */
         suspend fun <X : T> applyOnAfterSaveHooks(repo: Repository<T>, stored: Stored<X>): Stored<X> {
             onAfterSave.forEach { hook -> hook.onAfterSave(repo, stored) }
 
             return stored
         }
 
+        /** Runs every after-delete hook in order and returns [stored] unchanged. */
         suspend fun <X : T> applyOnAfterDeleteHooks(repo: Repository<T>, stored: Stored<X>): Stored<X> {
             onAfterDelete.forEach { hook -> hook.onAfterDelete(repo, stored) }
 
@@ -150,10 +175,11 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
     suspend fun recreateIndexes() {}
 
     /**
-     * Returns a set of all entity classes that the repository stored.
+     * Returns a set of all entity classes that the repository stores.
      *
-     * This will include the base type [storedType] and all or its registered
-     * polymorphic children.
+     * This includes the base type [storedType] and all of its registered polymorphic children,
+     * transitively — grandchildren are included too. Abstract and sealed intermediates are left
+     * out; [stores] still accepts those.
      */
     fun getAllStoredClasses(): Set<KClass<out T>> {
         @Suppress("UNCHECKED_CAST")
@@ -165,13 +191,27 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
     }
 
     /**
-     * Checks whether the repository stores the given cls
+     * Checks whether the repository stores the given [type].
+     *
+     * Matches the exact [storedType] or any subtype of it, transitively — so a grandchild in a
+     * deeper polymorphic hierarchy matches, consistent with [getAllStoredClasses].
+     *
+     * When two repositories store overlapping hierarchies (one the parent, one a child), both
+     * answer true for the child; `Database.getRepositoryStoringOrNull` then takes the first match
+     * in registration order.
      */
     fun stores(type: KClassifier): Boolean {
+        val storedClassifier = storedType.type.classifier
+
         // Is this the exact type that we store?
-        return type == storedType.type.classifier ||
-                // Or is the stored type a super type?
-                (type as? KClass<*>)?.supertypes?.any { it.classifier == storedType.type.classifier } == true
+        if (type == storedClassifier) {
+            return true
+        }
+
+        // Or is it a subtype of the type we store?
+        val storedClass = storedClassifier as? KClass<*> ?: return false
+
+        return (type as? KClass<*>)?.isSubclassOf(storedClass) == true
     }
 
     /**
@@ -219,9 +259,10 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
     suspend fun <X : T> insert(new: New<X>): Stored<X>
 
     /**
-     * Tries to insert the given [entry].
+     * Tries to insert the given [entry], returning null instead of throwing on failure.
      *
-     * Return the stored entry, if the insert is successful.
+     * Swallows every [Throwable], including `CancellationException` — do not call this from a
+     * coroutine that relies on cancellation propagating.
      */
     suspend fun <X : T> tryInsert(entry: X): Stored<X>? {
         return try {
@@ -261,9 +302,10 @@ interface Repository<T : Any> : Expression<List<T>>, Aliased {
     }
 
     /**
-     * Save the given [stored] and applying the given [modify] before storing it.
+     * Applies [modify] to [stored] and writes it only if the value actually changed.
      *
-     * Returns the saved version
+     * Returns the saved version, or [stored] as-is when [modify] was a no-op. Change detection is
+     * `equals`, so it only works for values with proper equality — data classes.
      */
     suspend fun <X : T> saveIfModified(stored: Storable<X>, modify: suspend (X) -> X): Stored<X> {
 
