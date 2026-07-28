@@ -35,27 +35,17 @@ import io.peekandpoke.funktor.messaging.storage.EmailStoring
 import io.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.store
 import io.peekandpoke.ultra.i18n.Locale
 import io.peekandpoke.ultra.security.user.EmailAddress
+import io.peekandpoke.ultra.security.user.KnownRole
 import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.OrgMembership
 import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserId
-import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Stored
 
 /**
  * Defines an auth realm
  */
 interface AuthRealm<USER : AuthUser> {
-
-    /**
-     * Represents a known role with a display name and its associated permissions.
-     *
-     * Used by introspection tools to build API access matrices.
-     */
-    data class KnownRole(
-        val name: String,
-        val permissions: UserPermissions,
-    )
 
     /**
      * Messaging interface for sending emails.
@@ -244,15 +234,13 @@ interface AuthRealm<USER : AuthUser> {
     suspend fun generateJwt(user: Stored<USER>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token
 
     /**
-     * Returns all known user roles for this realm.
+     * The application-specific roles this realm declares, for the API access matrix in funktor:inspect.
      *
-     * Override this to provide application-specific roles for the API access matrix in funktor:inspect.
-     * The default includes SuperUser and Anonymous.
+     * EMPTY by default, and deliberately so: SuperUser and Anonymous exist in every application and are
+     * appended once by the tooling ([KnownRole.universal]). A realm that restated them would put a
+     * duplicate in the matrix for every realm registered.
      */
-    fun getKnownRoles(): List<KnownRole> = listOf(
-        KnownRole("SuperUser", UserPermissions(isSuperUser = true)),
-        KnownRole("Anonymous", UserPermissions()),
-    )
+    fun getKnownRoles(): List<KnownRole> = emptyList()
 
     /**
      * Signs in a user. Providers should check their SignIn capability internally.

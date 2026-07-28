@@ -26,6 +26,9 @@ snapshot. Stale plans are worse than no plans because they cause wrong prioritie
 - Use explicit imports in Kotlin — never wildcard/star imports. Wildcards cause real conflicts here
   (e.g. `input()` from KQuery vs `input` from kotlinx.html). Use an import alias for clashes.
 - Never use fully qualified class names in Kotlin code — always add the import.
+- **A KDoc `[Reference]` must resolve.** If it does not, either import the type or drop the brackets
+  and use plain `code` formatting — an unresolved link is an IDE warning and a dead link in the docs.
+  Same-package references resolve without an import, so do not add one for those.
 - **Keep KDoc concise.** One-line summaries; add detail only where behaviour is genuinely non-obvious
   from the signature. Verbose KDoc drifts out of sync and becomes misleading.
 - See `.claude/skills/code-style/` for the full style guide.

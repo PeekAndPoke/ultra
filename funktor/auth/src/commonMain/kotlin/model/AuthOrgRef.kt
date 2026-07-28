@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
  * "selected org" of a successful sign-in.
  *
  * The auth framework stays free of a `saas` dependency: realms map their own org models into this
- * shape via [AuthRealm.getAccessibleOrgs].
+ * shape via `AuthRealm.getAccessibleOrgs` (jvmMain, so not linkable from here).
  */
 @Serializable
 data class AuthOrgRef(

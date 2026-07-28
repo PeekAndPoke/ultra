@@ -16,7 +16,7 @@ import kotlinx.serialization.json.JsonObject
  *   address yet.
  *
  * The last two are NOT failures: the credential check passed and there is a defined next step. A
- * failure is an [AuthError], which never produces one of these.
+ * failure is an `AuthError`, which never produces one of these.
  */
 @Serializable
 sealed interface AuthSignInResponse {
@@ -27,7 +27,7 @@ sealed interface AuthSignInResponse {
         val token: Token,
         val realm: AuthRealmModel,
         val user: JsonObject,
-        /** The organisation selected for this session. Null for org-less ([OrgPolicy.None]) realms. */
+        /** The organisation selected for this session. Null for org-less (`OrgPolicy.None`) realms. */
         val org: AuthOrgRef? = null,
     ) : AuthSignInResponse {
         fun <T> getTypedUser(serializer: DeserializationStrategy<T>): T {

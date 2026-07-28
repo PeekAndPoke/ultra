@@ -191,9 +191,13 @@ sealed interface AuthRecord : Timestamped {
     }
 
     /**
-     * An active login session. Each successful sign-in creates one row; the JWT issued to the
-     * client carries the row's `_id` as a `sessionId` claim and the auth middleware validates
-     * the session still exists on each request (cached). Revoking the row logs the user out.
+     * An active login session.
+     *
+     * **The row is modelled but not yet issued.** The design is that each successful sign-in creates
+     * one, the JWT carries its id as a `sessionId` claim, and the middleware validates the session on
+     * each request (cached) so revoking the row logs the user out. Today nothing creates these rows in
+     * production and no JWT carries the claim — see `SESSION_ID_CLAIM` and
+     * `.claude/tasks/20260728-session-revocation-wiring.md`.
      */
     data class Session(
         override val realm: RealmId,

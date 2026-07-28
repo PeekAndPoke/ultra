@@ -59,7 +59,7 @@ class B2bRealm(
 
     override val id: RealmId = REALM
 
-    override val orgPolicy: OrgPolicy = OrgPolicy.Required()
+    override val orgPolicy: OrgPolicy = OrgPolicy.Required
 
     override val messaging: AuthRealm.Messaging<B2bUser> = AuthRealm.DefaultMessaging(
         senderEmail = "treore@jointhebase.co",

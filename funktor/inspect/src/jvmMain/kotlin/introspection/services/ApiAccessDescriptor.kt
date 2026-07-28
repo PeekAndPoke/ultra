@@ -12,7 +12,7 @@ import io.peekandpoke.funktor.rest.security.ReflectivePathFinder.Companion.findA
 import io.peekandpoke.funktor.rest.security.SensitiveData
 import io.peekandpoke.funktor.rest.security.security
 import io.peekandpoke.ultra.security.user.User
-import io.peekandpoke.ultra.security.user.UserPermissions
+import io.peekandpoke.ultra.security.user.KnownRole
 
 class ApiAccessDescriptor(
     features: Lazy<List<ApiFeature>>,
@@ -53,21 +53,18 @@ class ApiAccessDescriptor(
         )
     }
 
-    private fun collectKnownRoles(): List<AuthRealm.KnownRole> {
-        val fromRealms = realms.flatMap { it.getKnownRoles() }
-
-        if (fromRealms.isNotEmpty()) {
-            return fromRealms
-        }
-
-        return listOf(
-            AuthRealm.KnownRole("SuperUser", UserPermissions(isSuperUser = true)),
-            AuthRealm.KnownRole("Anonymous", UserPermissions()),
-        )
+    /**
+     * The roles the matrix is rendered for: everything the realms declare, plus the two universal ones.
+     *
+     * Deduplicated because realms are independent — two of them declaring the same role name is normal,
+     * and the matrix wants one column per role, not one per (realm, role).
+     */
+    private fun collectKnownRoles(): List<KnownRole> {
+        return (realms.flatMap { it.getKnownRoles() } + KnownRole.universal).distinct()
     }
 
     private fun describeFeature(
-        roles: List<AuthRealm.KnownRole>,
+        roles: List<KnownRole>,
         feature: ApiFeature,
     ): ApiAccessMatrixModel.Feature {
         return ApiAccessMatrixModel.Feature(
@@ -79,7 +76,7 @@ class ApiAccessDescriptor(
     }
 
     private fun describeRouteGroup(
-        roles: List<AuthRealm.KnownRole>,
+        roles: List<KnownRole>,
         group: ApiRoutes,
     ): ApiAccessMatrixModel.Group {
         return ApiAccessMatrixModel.Group(
@@ -91,7 +88,7 @@ class ApiAccessDescriptor(
     }
 
     private fun describeEndpoint(
-        roles: List<AuthRealm.KnownRole>,
+        roles: List<KnownRole>,
         endpoint: ApiRoute<*>,
     ): ApiAccessMatrixModel.Endpoint {
 

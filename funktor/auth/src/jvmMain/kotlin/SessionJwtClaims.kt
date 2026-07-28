@@ -4,10 +4,17 @@ import com.auth0.jwt.JWTCreator
 import com.auth0.jwt.interfaces.Payload
 
 /**
- * Claim key used to embed a DB-backed session id in a JWT issued by funktor/auth.
+ * Claim key for a DB-backed session id in a JWT issued by funktor/auth.
  *
- * The auth middleware reads this claim and resolves it against [SessionStore] on every request
- * (cached), so revoking the session row logs the holder out regardless of the JWT's expiry.
+ * **NOT WIRED YET.** Nothing issues this claim and nothing reads it: [withSessionId] and
+ * [sessionIdClaim] have no callers, and no production code registers a [SessionStore]. The intended
+ * end state is that the auth middleware resolves the claim against the store on every request
+ * (cached), so revoking the row logs the holder out regardless of the JWT's own expiry.
+ *
+ * What DOES exist: [SessionStore] with `revoke` / `revokeAllForUser` / `listForUser`, its `Null`,
+ * `Vault` and `Cached` implementations, device fields on `AuthRecord.Session`, and TTL-index pruning
+ * of expired rows in both DB backends. The missing half is purely the JWT integration —
+ * `.claude/tasks/20260728-session-revocation-wiring.md`.
  *
  * Prefixed with the library name to avoid collisions with other claims a caller might add.
  */
