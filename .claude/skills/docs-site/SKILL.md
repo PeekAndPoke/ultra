@@ -113,6 +113,10 @@ When adding a new library, add its dependency string to `site.ts` first.
 ## Page Content Guidelines
 
 - **Keep pages short and focused.** One concept per page. Split if a page covers more than 3-4 topics.
+- **Compact beats comprehensive.** Overflowing docs hide the part the reader needed and rot faster.
+  Prefer deleting an example to adding a second one that makes the same point.
+- **A stale section gets REWRITTEN, not amended.** Appending a correction leaves both readings in the
+  file and doubles its length. Delete and restate.
 - **Lead with a code example**, not prose. Show what the library does in the first 10 lines.
 - **Subtitle pattern:** Use `<p class="text-xl text-gray-400 !mt-2 !mb-8">` after h1 for the page subtitle.
 - **Feature grids:** Use `<div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">` with card divs.

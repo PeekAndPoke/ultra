@@ -103,6 +103,17 @@ These make a suite look green while the feature is broken. Treat them as precond
   **Edit the templates when docs change — never edit `docs-site/public/` for LLM mirrors.**
 - See `.claude/skills/docs-site/` for the docs workflow.
 
+### Keep docs compact
+
+- **Precise and concise beats comprehensive.** Overflowing docs are not useful — they hide the part the
+  reader needed and they rot faster, because nobody re-reads 800 lines to check one claim.
+- **When an entry is stale, REWRITE it rather than nudging it.** Appending a correction to a drifted
+  section leaves both readings in the file and doubles its length. Delete and restate.
+- One concept per page. If a page covers more than three or four topics, split it or cut it.
+- The LLM mirror is a reference, not a transcript: signatures, defaults, gotchas, one good example
+  each. It should be shorter than the pages it mirrors, not longer.
+- Prefer deleting an example over adding a second one that makes the same point.
+
 ### Docs vs skills — the split
 
 Three places could describe a library. Only two are allowed to, or they drift.

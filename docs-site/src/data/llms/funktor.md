@@ -169,13 +169,18 @@ refresh keeps the SAME org and never silently changes it.
 class B2bRealm(...) : AuthRealm<B2bUser> {
     override val orgPolicy = OrgPolicy.Required()
 
-    override suspend fun getMemberships(user: Stored<B2bUser>) =
-        orgMembers.sessionMembershipsOf(user._id)
+    override suspend fun getMemberships(user: Stored<B2bUser>): Set<OrgMembership> =
+        orgMembers.sessionMembershipsOf(UserId(user._id))
 
-    override suspend fun getAccessibleOrgs(memberships: Set<OrgMembership>) =
-        orgs.refsFor(memberships)
+    // How "accessible" is defined is the APP's call — the framework only asks.
+    override suspend fun getAccessibleOrgs(memberships: Set<OrgMembership>): List<AuthOrgRef> =
+        orgs.accessibleActiveOrgs(memberships)
 }
 ```
+
+`sessionMembershipsOf` takes a `UserId`; `Stored<T>._id` is a `String`, so it must be wrapped.
+`accessibleActiveOrgs` is an APP-level helper (see the demo's `saas_org_hooks.kt`), not framework API —
+the framework defines the hook, the app decides what "accessible" means.
 
 ### Typed identifiers
 

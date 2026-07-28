@@ -59,16 +59,19 @@ import {Code} from 'astro:components';
 
     <Code code={`override suspend fun generateJwt(
     user: Stored<AdminUser>,
+    selectedOrg: SelectedOrg?,
 ): AuthSignInResponse.Token {
-    val gen: JwtGenerator = deps.jwtGenerator
+    val gen = deps.jwtGenerator
+    val userValue = user.resolve()
 
     val token = gen.createJwt(
         user = JwtUserData(
-            id = user._key,
-            desc = user().name,
-            type = "admin",
+            id = UserId(user._id),
+            desc = userValue.name,
+            type = AdminUser.USER_TYPE,
+            email = userValue.email,
         ),
-        permissions = UserPermissions(isSuperUser = true),
+        permissions = UserPermissions(isSuperUser = userValue.isSuperUser),
     ) {
         withExpiresAt(Kronos.systemUtc.instantNow().plus(1.hours).jvm)
     }
@@ -79,6 +82,9 @@ import {Code} from 'astro:components';
         userNs = gen.userNs,
     )
 }`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p><code>selectedOrg</code> is <code>null</code> for an org-less realm. <code>JwtUserData.id</code> is a
+        <code>UserId</code>, not a string &mdash; see <a href="#typed-identifiers">typed identifiers</a>.</p>
 
     <h2>Providers</h2>
 
@@ -144,14 +150,16 @@ import {Code} from 'astro:components';
     <Code code={`class B2bRealm(...) : AuthRealm<B2bUser> {
     override val orgPolicy = OrgPolicy.Required()
 
-    override suspend fun getMemberships(user: Stored<B2bUser>) =
-        orgMembers.sessionMembershipsOf(user._id)
+    override suspend fun getMemberships(user: Stored<B2bUser>): Set<OrgMembership> =
+        orgMembers.sessionMembershipsOf(UserId(user._id))
 
-    override suspend fun getAccessibleOrgs(memberships: Set<OrgMembership>) =
-        orgs.refsFor(memberships)
+    // How "accessible" is defined is the APP's call — the framework only asks.
+    // The demo filters to active orgs and dedupes; see saas_org_hooks.kt.
+    override suspend fun getAccessibleOrgs(memberships: Set<OrgMembership>): List<AuthOrgRef> =
+        orgs.accessibleActiveOrgs(memberships)
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <h2>Typed identifiers</h2>
+    <h2 id="typed-identifiers">Typed identifiers</h2>
 
     <p>Identity values are value classes rather than raw strings &mdash; <code>RealmId</code>,
         <code>UserId</code>, <code>OrgId</code> and <code>EmailAddress</code>. They are threaded end to end:
