@@ -88,7 +88,8 @@ export function renderLlmsTemplate(filename: string): string {
     if (filename === 'llms-full.txt') {
         return renderLlmsFull()
             .replaceAll('{{ultraVersion}}', ultraVersion)
-            .replaceAll('{{kraftVersion}}', kraftVersion);
+            .replaceAll('{{kraftVersion}}', kraftVersion)
+            .replaceAll('{{kotlinVersion}}', kotlinVersion);
     }
 
     const template = templates[filename];
@@ -97,5 +98,6 @@ export function renderLlmsTemplate(filename: string): string {
     }
     return template
         .replaceAll('{{ultraVersion}}', ultraVersion)
-        .replaceAll('{{kraftVersion}}', kraftVersion);
+        .replaceAll('{{kraftVersion}}', kraftVersion)
+        .replaceAll('{{kotlinVersion}}', kotlinVersion);
 }

@@ -54,6 +54,10 @@ snapshot. Stale plans are worse than no plans because they cause wrong prioritie
 - Lifecycle: implement → run `/feature-review` (mandatory multi-agent review: 1. implementation &
   code style, 2. domain expert, 3. security) → fix confirmed findings → tests green → mark DONE
   and move the task file to `.claude/tasks-archive/<YYYY-MM>/` (filename is already dated).
+- **When archiving a task, create a follow-up DOCS task if the change touched public API.** Docs are
+  written against SETTLED code, not reviewed code — the user's own review comes after the gate, so
+  documenting at review time just means rewriting. A tracked follow-up also stops "update the docs"
+  depending on anyone remembering. Skip it for internals, tests and refactors.
 - **Security-critical features** get a follow-up red-team task (`YYYYMMDD-redteam-<slug>.md`) in
   `.claude/tasks/`, describing concrete break-in/attack scenarios to attempt. These are COLLECTED,
   not executed — dedicated penetration-test sessions sweep them later. Never run attack scenarios

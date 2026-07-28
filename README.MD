@@ -110,9 +110,10 @@ val updated = company.mutate {
 }
 ```
 
-### Coming Soon
+### Funktor
 
-- **Funktor** — Full-stack Kotlin framework on Ktor (auth, REST, clustering, static web)
+Full-stack Kotlin on Ktor — auth, REST, SaaS organisations, messaging, clustering, static web.
+See <https://peekandpoke.io/ultra/funktor/>.
 
 ## Getting Started
 

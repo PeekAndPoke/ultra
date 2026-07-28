@@ -113,8 +113,8 @@ In your `build.gradle.kts`:
 
 ```kotlin
 plugins {
-    kotlin("multiplatform") version "2.3.10"
-    kotlin("plugin.serialization") version "2.3.10"
+    kotlin("multiplatform") version "{{kotlinVersion}}"
+    kotlin("plugin.serialization") version "{{kotlinVersion}}"
 }
 
 kotlin {
