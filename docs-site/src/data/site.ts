@@ -93,6 +93,7 @@ export const dep = {
     streams: `${ultraGroup}:streams:${ultraVersion}`,
     datetime: `${ultraGroup}:datetime:${ultraVersion}`,
     cache: `${ultraGroup}:cache:${ultraVersion}`,
+    i18n: `${ultraGroup}:i18n:${ultraVersion}`,
     maths: `${ultraGroup}:maths:${ultraVersion}`,
     kraftCore: `${kraftGroup}:core:${kraftVersion}`,
     kraftSemanticUi: `${kraftGroup}:semanticui:${kraftVersion}`,

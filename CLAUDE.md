@@ -103,6 +103,24 @@ These make a suite look green while the feature is broken. Treat them as precond
   **Edit the templates when docs change — never edit `docs-site/public/` for LLM mirrors.**
 - See `.claude/skills/docs-site/` for the docs workflow.
 
+### Docs vs skills — the split
+
+Three places could describe a library. Only two are allowed to, or they drift.
+
+| Question | Lives in |
+|---|---|
+| "How do I use this?" — concepts, API, examples | docs site (`docs-site/src/pages/ultra/*`) and its LLM mirror (`docs-site/src/data/llms/*.md`) |
+| "What will bite me?" — traps, invariants, scoping rules, known defects, repo-specific patterns | the library's skill in `.claude/skills/` |
+
+- **Skills reference the docs; they never restate them.** For API reference, link
+  `docs-site/src/data/llms/<lib>.md` instead of copying it.
+- **Acceptance test for a line in a skill:** if it would be equally at home on a docs page, it belongs
+  on the docs page, not in the skill.
+- Skills therefore drift with CODE changes only, never with docs edits — a much smaller surface.
+- **Cite `path/File.kt:line` for every concrete claim in a skill**, so a reader can verify it in one
+  jump. Uncited claims are how these rot.
+- The docs site and its LLM mirror are the pair that must move together; that rule is above.
+
 ## Releases
 
 - Canonical version lives in `gradle.properties` → `VERSION_NAME`. Bumping it flows through all Gradle modules.

@@ -20,6 +20,11 @@
   - [Getting Started](https://peekandpoke.io/ultra/maths/getting-started): Dependency, basic usage, easing, distributions
   - [Easing Functions](https://peekandpoke.io/ultra/maths/easing): 28 functions (In/Out/InOut), range binding, timed easing
   - [Distributions](https://peekandpoke.io/ultra/maths/distributions): Uniform, normal, exponential, triangular, combinators
+- [i18n](https://peekandpoke.io/llms/i18n.md): Type-safe translations — YAML catalogs compiled to typed accessors, build-time checker for missing keys/languages/placeholders, locale fallback chain, per-module catalog precedence (JVM, JS)
+  - [Getting Started](https://peekandpoke.io/ultra/i18n/getting-started): Dependency, catalogs, resolve, placeholders, plurals
+  - [Catalogs & Codegen](https://peekandpoke.io/ultra/i18n/catalogs): YAML layout, Gradle plugin, generated accessors, the checker
+  - [Locales & Resolution](https://peekandpoke.io/ultra/i18n/locales): Locale type, fallback chain, catalog precedence
+  - [Kraft Integration](https://peekandpoke.io/ultra/i18n/kraft): I18nController, Translations delegate, form validation
 
 ## Kraft
 

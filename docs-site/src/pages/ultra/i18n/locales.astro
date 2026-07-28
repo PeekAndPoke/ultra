@@ -1,0 +1,99 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {i18nSidebar} from '../../../data/i18n-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Locales & Resolution" sidebar={i18nSidebar}
+            description="The Locale type, the fallback chain, and how a message is found">
+
+    <h1>Locales &amp; Resolution</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Two axes: the locale chain from most to least specific, and catalog precedence within each locale.
+    </p>
+
+    <h2>Locale</h2>
+
+    <p>A locale is a language plus an optional region, in BCP-47 shape. Normalization happens at
+        construction, so casing and separator never matter.</p>
+
+    <Code code={`Locale("de")             // de
+Locale("de", "CH")       // de-CH
+Locale.parse("de_ch")    // de-CH  — underscore and casing normalized
+Locale.parse("DE")       // de
+
+Locale.parse("de-CH").base   // de     — the language without the region
+Locale("de").base            // de     — a base locale returns itself
+Locale.parse("de-CH").tag    // "de-CH"`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p><strong>Always parse untrusted tags.</strong> A language stored on a user record is free-form text;
+        <code>Locale.parse</code> is what makes a stored <code>"DE"</code> or <code>"de_CH"</code> resolve
+        like the <code>de-CH</code> it means instead of missing every catalog and falling to English.</p>
+
+    <h2>The fallback chain</h2>
+
+    <p>Resolution walks four positions, most specific first, de-duplicated:</p>
+
+    <Code code={`locale -> locale.base -> fallback -> fallback.base`} lang="text" theme="vitesse-dark"/>
+
+    <p>With <code>locale = de-CH</code> and <code>fallback = en</code> that is
+        <code>de-CH</code>, <code>de</code>, <code>en</code>. So a Swiss catalog only needs to carry what
+        actually differs from German &mdash; everything else falls through.</p>
+
+    <h2>Two axes, and the order matters</h2>
+
+    <p>The locale chain is the <strong>outer</strong> loop; catalog precedence is the <strong>inner</strong>
+        one. The first hit wins.</p>
+
+    <Code code={`for (locale in chain) {          // de-CH, de, en
+    for (catalog in catalogs) {   // app, then framework
+        // first hit wins
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>So a more specific locale always beats a less specific one, and within the same locale the app beats
+        the framework. An app's German string beats the framework's German string; the framework's German
+        string beats the app's English one.</p>
+
+    <Aside>Locale-outer is the right default for message catalogs, where a key is a fragment and getting the
+        language right matters more than which module supplied it. It is worth knowing this is a decision
+        rather than an inevitability &mdash; funktor's email templates deliberately invert it, because a
+        branded mail in the wrong language beats an unbranded one in the right language.
+    </Aside>
+
+    <h2>Switching language</h2>
+
+    <p><code>I18n</code> is immutable. Changing language produces a new instance carrying the same catalogs:</p>
+
+    <Code code={`val german = i18n.withLocale(Locale("de"))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>That is what makes the reactive integration straightforward &mdash; a stream emits a new snapshot and
+        anything subscribed re-renders. Nothing mutates under a component that is mid-render.</p>
+
+    <h2>Two surfaces</h2>
+
+    <p><code>i18n.translate</code> is the <strong>open</strong> surface: module-generated namespaces hang off
+        it as extension properties, which is how a module contributes translations without the core knowing
+        about it.</p>
+
+    <p><code>i18n.format</code> is the <strong>closed</strong> surface for dates, numbers and currency. It is
+        currently a seam that exposes the locale and little else &mdash; CLDR-backed formatting is not
+        implemented yet. Route formatting through it anyway, so the implementation can land later without
+        moving call sites.</p>
+
+    <h2>Known limits</h2>
+
+    <p>Script and variant subtags are not modelled. The second subtag is always treated as a region and
+        upper-cased, so <code>zh-Hant</code> parses as <code>zh-HANT</code> and will not match a script-aware
+        catalog. Do not rely on those tags until script support lands.</p>
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/i18n/kraft"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Kraft integration &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

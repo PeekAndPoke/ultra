@@ -5,6 +5,7 @@ const slugs = [
     'cache',
     'datetime',
     'funktor',
+    'i18n',
     'karango',
     'kontainer',
     'kraft',

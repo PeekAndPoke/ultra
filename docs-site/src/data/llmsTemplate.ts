@@ -13,6 +13,7 @@ import llmsFullTxt from './llms/llms-full.txt?raw';
 import cacheMd from './llms/cache.md?raw';
 import datetimeMd from './llms/datetime.md?raw';
 import funktorMd from './llms/funktor.md?raw';
+import i18nMd from './llms/i18n.md?raw';
 import karangoMd from './llms/karango.md?raw';
 import kontainerMd from './llms/kontainer.md?raw';
 import kraftMd from './llms/kraft.md?raw';
@@ -30,6 +31,7 @@ const templates: Record<string, string> = {
     'cache.md': cacheMd,
     'datetime.md': datetimeMd,
     'funktor.md': funktorMd,
+    'i18n.md': i18nMd,
     'karango.md': karangoMd,
     'kontainer.md': kontainerMd,
     'kraft.md': kraftMd,

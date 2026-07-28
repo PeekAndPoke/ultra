@@ -132,6 +132,79 @@ Key methods: `loadById(UserId)`, `loadByEmail(EmailAddress)`, `generateJwt()`, `
 - `GoogleSsoAuth` — Google OAuth flow
 - `GithubSsoAuth` — GitHub OAuth flow
 
+### Account activation
+
+A realm can require a new account to prove its email before it can sign in. Sign-up mails a link and
+issues NO session. Sign-in with the correct password answers with a response CASE, not an error:
+
+```kotlin
+when (val response = api.auth.signIn(realm, credentials)) {
+    is AuthSignInResponse.Success              -> gotoDashboard(response)
+    is AuthSignInResponse.ActivationRequired   -> offerResend(response.resendToken)
+    is AuthSignInResponse.OrgSelectionRequired -> showOrgPicker(response)
+}
+```
+
+Design notes:
+
+- "Not activated" is the PRESENCE of a marker record — not a boolean on the user (the only safe
+  default would lock out every existing account) and not "an unexpired token exists" (that test
+  erases itself once the token expires).
+- Resend is authorized by a SINGLE-USE token minted only on the sign-in path that proved the
+  password — never by naming an email address. That is what stops it being an open mail relay.
+- A resend rotates the token, so the superseded link dies immediately. A cooldown bounds send rate.
+- Clearing the marker requires proving the mailbox AND invalidating every earlier password. A
+  completed password reset does both, so it also activates. SSO sign-in does NOT — it proves the
+  mailbox but leaves an attacker-set password intact.
+
+### Organisations (OrgPolicy)
+
+`AuthRealm.orgPolicy` declares the relationship. Default `OrgPolicy.None` (org-less realm).
+
+Under `OrgPolicy.Required`, sign-in resolves accessible orgs and runs the 0/1/n flow: zero refuses,
+one auto-selects, many return `OrgSelectionRequired` backed by a single-use selection token. Token
+refresh keeps the SAME org and never silently changes it.
+
+```kotlin
+class B2bRealm(...) : AuthRealm<B2bUser> {
+    override val orgPolicy = OrgPolicy.Required()
+
+    override suspend fun getMemberships(user: Stored<B2bUser>) =
+        orgMembers.sessionMembershipsOf(user._id)
+
+    override suspend fun getAccessibleOrgs(memberships: Set<OrgMembership>) =
+        orgs.refsFor(memberships)
+}
+```
+
+### Typed identifiers
+
+`RealmId`, `UserId`, `OrgId` and `EmailAddress` are value classes threaded end to end — JWT claims,
+URI params, storage, API surface. `EmailAddress` canonicalizes on construction (trim + lower-case),
+making lookups case-insensitive by type rather than by convention at each call site.
+
+### Localized auth emails
+
+Locale precedence: the user's `language.messaging` -> the realm's `defaultLanguage` -> the framework
+fallback. A CHAIN, not an either/or — otherwise a German-only deployment mails English to a user
+whose stored language it has no rendering for.
+
+```kotlin
+class MyRealm(...) : AuthRealm<MyUser> {
+    override val defaultLanguage = Locale("de")
+
+    override val messaging = AuthRealm.DefaultMessaging(
+        senderEmail = "noreply@example.com",
+        senderName = "Example",
+        applicationName = "Example",
+        realm = this,
+        templates = AuthEmailTemplates.default(myBrandedLayout),
+    )
+}
+```
+
+See the Messaging module for the template and layout surface.
+
 ### Auth API endpoints
 
 All endpoints use the `{realm}` path parameter:
@@ -234,3 +307,91 @@ fun RootRouterBuilder.mountNav(authState: AuthState<MyUser>) {
 
 The middleware saves the current URI before redirecting. After login, `authState.redirectAfterLogin(defaultUri)`
 navigates back to the original page.
+
+## Messaging Module
+
+Email sending, dev overrides, storage of sent messages, and the auth email templates.
+
+### The sender chain is composed by the framework
+
+An app supplies only its provider; the framework composes the rest at ONE site. In test mode it
+substitutes a capturing sender and never touches the app's provider — so a test can never send real
+mail by forgetting to override something.
+
+```kotlin
+funktorMessaging {
+    useSender(devConfig) { awsSes(sesConfig) }
+}
+```
+
+Tests read what was "sent" from the capture rather than from storage, because auth mails are
+persisted with anonymized links (see below).
+
+### Auth email templates
+
+The three transactional auth mails — account activation, password changed, password recovery — are
+rendered IN KOTLIN via the kotlinx.html DSL, one template class each, selected per locale.
+
+```kotlin
+abstract class AccountActivationEmailTemplate :
+    LocalizedEmailTemplate<AccountActivationEmailTemplate.Params>() {
+
+    data class Params(
+        val recipient: EmailAddress,
+        val senderEmail: String,
+        val senderName: String,
+        val applicationName: String,
+        val activationUrl: String,
+    )
+}
+```
+
+- Each template declares its own nested `Params` — a renamed or forgotten value is a COMPILE ERROR,
+  not a placeholder shipped to a recipient.
+- Renderings live in `Map<Locale, (Params, Locale) -> Email>`; a shared walker resolves
+  `de-CH -> de -> en`.
+- The renderer is HANDED the locale it matched, so the map key and the rendering cannot drift into a
+  mixed-language mail.
+- `AuthEmailTemplates` holds the three by NAME (`.accountActivation`, `.passwordChanged`,
+  `.passwordRecovery`) — no lookup by string key. It validates at wiring time that each template can
+  render its own guaranteed locale.
+
+### Branding via EmailLayout
+
+```kotlin
+val branded = EmailLayout { locale, content ->
+    EmailBody.Html {
+        body {
+            div { +"…header…" }
+            content()
+            div { +footerFor(locale) }
+        }
+    }
+}
+
+AuthEmailTemplates.default(branded)   // all three mails share it
+```
+
+The layout takes the LOCALE because a footer carries the imprint and unsubscribe line, which have to
+be translated. A layout blind to the locale can only put an English footer under a German body.
+
+Override one mail by subclassing its template and passing it alongside the layout:
+
+```kotlin
+AuthEmailTemplates(layout = branded, accountActivation = MyActivationMail(branded))
+```
+
+### What a template does NOT control
+
+A template builds the `Email` and nothing downstream of it. The caller applies the storing policy and
+re-asserts the envelope, so a template cannot:
+
+- choose whether its own live token is persisted, or
+- add a cc/bcc that would deliver an activation link to a second mailbox.
+
+### Sent-message storage and anonymization
+
+`EmailStoring.withAnonymizedContent(refs, tags)` strips links from the PERSISTED copy, so the
+sent-messages inspector — which support staff can read — never holds a live activation or reset
+token. Both the body and the subject go through the policy. Use `withoutContent` to store metadata
+only, `withContent` to store verbatim.

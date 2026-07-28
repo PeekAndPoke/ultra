@@ -125,6 +125,64 @@ if (result.success) {
         the persisted copy of an auth mail is anonymized, so the token is deliberately gone from it.
     </Aside>
 
+    <h2>Auth email templates</h2>
+
+    <p>The auth module's three transactional mails &mdash; account activation, password changed, password
+        recovery &mdash; are rendered <strong>in Kotlin</strong>, one template class each, selected per
+        locale.</p>
+
+    <Code code={`abstract class AccountActivationEmailTemplate :
+    LocalizedEmailTemplate<AccountActivationEmailTemplate.Params>() {
+
+    data class Params(
+        val recipient: EmailAddress,
+        val senderEmail: String,
+        val senderName: String,
+        val applicationName: String,
+        val activationUrl: String,
+    )
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Each template declares its own <code>Params</code>, so a value that is renamed or forgotten is a
+        compile error rather than a placeholder shipped to a recipient. Renderings live in a
+        <code>Map&lt;Locale, (Params, Locale) -&gt; Email&gt;</code>, and a shared walker resolves
+        <code>de-CH &rarr; de &rarr; en</code>. The renderer is <em>handed</em> the locale it matched, so the
+        map key and the rendering cannot drift apart into a mixed-language mail.</p>
+
+    <Aside>This started out as Markdown templates with <code>{'{{placeholder}}'}</code> substitution. It was
+        built, reviewed, and thrown away &mdash; the review found a value that could be dropped from the args
+        map and ship a literal placeholder to every recipient with the whole test suite green. Types do not
+        have that failure mode.
+    </Aside>
+
+    <h3>Branding</h3>
+
+    <p><code>EmailLayout</code> is the chrome around a template's content &mdash; colours, header, frame,
+        footer. Supply one and all three mails use it:</p>
+
+    <Code code={`val branded = EmailLayout { locale, content ->
+    EmailBody.Html {
+        body {
+            div { +"…header…" }
+            content()
+            div { +footerFor(locale) }
+        }
+    }
+}
+
+AuthEmailTemplates.default(branded)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The layout receives the <strong>locale</strong> because a footer carries the imprint and unsubscribe
+        line, and those have to be translated. A layout blind to the locale can only put an English footer
+        under a German body. Replace an individual mail by subclassing its template and passing it alongside
+        the layout.</p>
+
+    <h3>What templates do not control</h3>
+
+    <p>A template builds the <code>Email</code> and nothing downstream of it. The caller applies the storing
+        policy and re-asserts the envelope, so a template cannot choose whether its own live token is
+        persisted, nor add a cc that would deliver an activation link to a second mailbox.</p>
+
     <h2>Email hooks</h2>
 
     <p>Add hooks with <code>onAfterSend</code> in the <code>messaging</code> block. They run in the
