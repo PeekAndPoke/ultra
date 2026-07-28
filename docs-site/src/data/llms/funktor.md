@@ -432,3 +432,57 @@ re-asserts the envelope, so a template cannot:
 sent-messages inspector — which support staff can read — never holds a live activation or reset
 token. Both the body and the subject go through the policy. Use `withoutContent` to store metadata
 only, `withContent` to store verbatim.
+
+## SaaS Module
+
+Organisations, memberships, and a boot-enforced cross-tenant isolation boundary.
+
+```kotlin
+funktor(
+    config = config,
+    auth = { useKarango() },
+    saas = { useKarango() },   // or useMonko()
+)
+```
+
+Registers the org/membership repositories, the `orgs` API, AND the isolation boot check + request
+guard. The marker interfaces below are inert without this registration.
+
+### Storage
+
+```kotlin
+orgs.findBySlug("acme")
+orgs.ensureBySlug(slug = "acme", name = "Acme Inc")
+orgs.create(organisation); orgs.save(organisation)
+
+orgMembers.sessionMembershipsOf(UserId(user._id))   // -> Set<OrgMembership>
+```
+
+An `Organisation` has a `slug`, `name` and `OrgStatus`. Only `Active` orgs should be sign-in-able —
+see the Auth module for how a realm turns memberships into a session (`OrgPolicy.Required`, 0/1/n).
+
+`Slugs` validates for subdomain use: 2–63 chars; `normalize()` trims and lower-cases;
+`validationError(slug)` returns a reason string rather than a bare boolean.
+
+### Org isolation
+
+```kotlin
+// 1. mark the entity as org-owned
+data class Invoice(override val org: Ref<Organisation>, val total: Money) : OrgAware
+
+// 2. the route params must carry the addressed org
+data class InvoiceParams(
+    override val org: Stored<Organisation>,
+    val invoice: Stored<Invoice>,
+) : OrgAwareParam
+```
+
+- **At boot:** any route resolving an `OrgAware` entity is FORCED to be `OrgAwareParam`. A route that
+  loads org-owned data without knowing which org the request addresses fails app start.
+- **At request time:** the guard compares each loaded entity's `org` ref against the request's org and
+  refuses a mismatch.
+
+**Contract:** `OrgAware.org` must carry the org's CANONICAL `_id` (collection-qualified, e.g.
+`organisation/acme`), because the guard compares on `_id`. A persisted `Ref<Organisation>` satisfies
+this automatically; a hand-built one must use `_id`, never a bare `_key`. Getting it wrong fails
+CLOSED — every same-org request 404s — so it is an availability landmine, not an IDOR.

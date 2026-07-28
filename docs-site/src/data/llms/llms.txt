@@ -35,6 +35,7 @@
   - [Auth](https://peekandpoke.io/ultra/funktor/auth): Multi-realm auth, email/password, Google SSO, GitHub SSO, JWT, token refresh, API access matrix (ApiAcl), session lifecycle with auto-refresh
   - [Cluster](https://peekandpoke.io/ultra/funktor/cluster): Background jobs, file depot, locks, workers, key-value storage
   - [Messaging](https://peekandpoke.io/ultra/funktor/messaging): Email sending, SendGrid, AWS SES, sent message storage
+  - [SaaS](https://peekandpoke.io/ultra/funktor/saas): Organisations, memberships, and boot-enforced cross-tenant isolation
   - [Insights](https://peekandpoke.io/ultra/funktor/insights): Request profiling, performance metrics, debug GUI
   - [Logging](https://peekandpoke.io/ultra/funktor/logging): Structured logging with DB persistence and web UI
   - [Static Web](https://peekandpoke.io/ultra/funktor/staticweb): Templates, flash sessions, web resources, cache busting
