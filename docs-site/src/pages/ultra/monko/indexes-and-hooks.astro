@@ -49,9 +49,11 @@ import {Code} from 'astro:components';
             expireAfter(0)  // delete when expiresAt is in the past
         }
 
-        // Sparse index — only index documents where the field exists
-        sparseIndex {
+        // Sparse — skip documents where the field is absent.
+        // Sparseness is a FLAG on a unique index, not an index type of its own.
+        uniqueIndex {
             field { it.middleName }
+            sparse()
         }
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
@@ -83,11 +85,7 @@ import {Code} from 'astro:components';
                 <td class="py-2 text-gray-400">TTL index</td>
                 <td class="py-2 text-gray-400">Auto-expire documents</td>
             </tr>
-            <tr class="border-b border-white/10">
-                <td class="py-2 text-white"><code>sparseIndex</code></td>
-                <td class="py-2 text-gray-400">Sparse index</td>
-                <td class="py-2 text-gray-400">Index only non-null fields</td>
-            </tr>
+            
             </tbody>
         </table>
     </div>
@@ -132,10 +130,11 @@ data class Article(
     name = "articles",
     storedType = kType(),
     driver = driver,
+    // Hooks.of takes hooks directly — it sorts them by type for you.
     hooks = Hooks.of(
-        onBeforeSave = listOf(TimestampedOnBeforeSaveHook()),
-        onAfterSave = listOf(MyAfterSaveHook()),
-        onAfterDelete = listOf(MyAfterDeleteHook()),
+        TimestampedOnBeforeSaveHook(),
+        MyAfterSaveHook(),
+        MyAfterDeleteHook(),
     ),
 )`} lang="kotlin" theme="vitesse-dark"/>
 

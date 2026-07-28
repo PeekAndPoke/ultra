@@ -80,7 +80,7 @@ val stored = repo.insert("person-1", Person(name = "Alice", age = 30, email = "a
 val found = repo.findById("persons/person-1")
 
 // Update
-val updated = found!!.modify { copy(age = 31) }
+val updated = found!!.modify { it.copy(age = 31) }
 repo.save(updated)
 
 // Atomic read-modify-write

@@ -86,30 +86,62 @@ any DB lookup, never log the raw token. `Caller.ApiKeyCaller.permissions` defaul
 `UserPermissions.anonymous` — derive privileges from your authoritative store, not from caller
 input.
 
-### Authorization DSL
+### The authorization floor
 
-Every route declares its authorization rules in the `.authorize { }` block:
+Every `ApiRoutes` group MUST declare an `authFloor` — the parameter has no default, so a group cannot
+be written without deciding who may reach it. The floor is prepended to every route in the group and
+is append-only: a route may add restrictions, never remove them. Floors are materialized and validated
+at group construction, so a malformed one aborts app start.
 
 ```kotlin
-.authorize {
-    public()              // allow everyone (including anonymous)
-    authenticated()       // any logged-in user (non-anonymous)
-    isSuperUser()         // super user only
-    forRole("admin")      // role-based
-    forGroup("staff")     // group-based
-    forPermission("edit") // permission-based
-    forbidden()           // deny all
-
-    // Combine rules
-    forRole("admin") or forGroup("staff")
-
-    // Custom rule with request context
-    forCall("owns resource") { user.id == params.ownerId }
+class OrgsApi : ApiRoutes("orgs", authFloor = { isSuperUser() }) {
+    val list = ApiRoute.Get("", ...)
 }
 ```
 
-Rules support **access estimation** — `ApiRoute.estimateAccess(user)` evaluates rules without making an actual
-request. This powers the API access matrix and admin dashboards.
+### Authorization DSL
+
+Rules are STATEMENTS, not values. Each call appends to the chain and the chain is an AND. There is
+**no `and`/`or` infix** — nest a block combinator for alternatives.
+
+```kotlin
+.authorize {
+    // chain is an AND — both must hold
+    authenticated()
+    forPermission("orders.read")
+
+    // alternatives: forAny {} is OR, forAll {} is AND
+    forAny {
+        forRole("admin")
+        forGroup("staff")
+    }
+
+    forCall("owns resource") { params -> user.id == params.ownerId }
+}
+```
+
+| Rule | Passes for |
+|---|---|
+| `authenticated()` | any non-anonymous caller |
+| `isSuperUser()` | super users |
+| `forUserType(t)` | callers of that user type |
+| `forRole(r)` / `forAnyRole(…)` | role holders |
+| `forGroup(g)` / `forAnyGroup(…)` | group members |
+| `forPermission(p)` / `forAnyPermission(…)` | permission holders |
+| `forCall(desc) { }` | a custom predicate over params/body |
+| `public()` / `forbidden()` | everyone / nobody — SOLE rule only |
+
+**`public()` and `forbidden()` must be the SOLE rule of a chain.** Combined with (or nested inside)
+anything else they silently become a no-op or an always-allow, so the builder throws at BOOT. To serve
+both a public and a protected audience, split into separate `ApiRoutes` groups each with its own floor.
+An empty `forAll {}`/`forAny {}` is rejected too — an empty AND allows everyone, an empty OR denies
+everyone.
+
+The statements-only shape is deliberate: an expression DSL let the last expression silently win, which
+reads as a tightening and evaluates as a replacement.
+
+Rules also support **access estimation** — `ApiRoute.estimateAccess(user)` evaluates them without making
+a request, powering the API access matrix and admin dashboards.
 
 ### API features
 

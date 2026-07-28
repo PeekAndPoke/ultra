@@ -118,7 +118,7 @@ filter(
     <h2>Array operators</h2>
 
     <Code code={`// Element match
-filter(r.tags.elemMatch(Filters.eq("kotlin")))
+filter(r.tags.elemMatch(Filters.eq("name", "kotlin")))
 
 // Array size
 filter(r.tags.size(3))

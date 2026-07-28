@@ -133,31 +133,74 @@ installKontainer { call ->
         derive privileges from your authoritative store, never from the caller's input.
     </Aside>
 
+    <h2>The authorization floor</h2>
+
+    <p>Every <code>ApiRoutes</code> group must declare an <code>authFloor</code>. It has no default, so a
+        group cannot be written without deciding who may reach it &mdash; the floor is prepended to every
+        route in the group, and it is append-only: a route can add restrictions, never remove them.</p>
+
+    <Code code={`class OrgsApi : ApiRoutes("orgs", authFloor = { isSuperUser() }) {
+    val list = ApiRoute.Get("", ...)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Floors are materialized and validated at group construction, so a malformed one aborts app start
+        rather than surfacing as a hole at runtime.</p>
+
     <h2>Authorization DSL</h2>
 
-    <p>Every route declares its authorization rules. Rules compose with <code>and</code> / <code>or</code>.</p>
+    <p>Rules are <strong>statements, not values</strong>. Each call appends to the chain, and the chain is
+        an AND. There is no <code>and</code>/<code>or</code> infix &mdash; to express alternatives, nest a
+        block combinator.</p>
 
     <Code code={`.authorize {
-    // Single rule
-    isSuperUser()
+    // The chain is an AND — both must hold
+    authenticated()
+    forPermission("orders.read")
 
-    // Combine rules
-    forRole("admin") or forGroup("staff")
+    // Alternatives: nest forAny {} (OR) or forAll {} (AND)
+    forAny {
+        forRole("admin")
+        forGroup("staff")
+    }
 
     // Custom rule
     forCall("owns resource") { params ->
         user.id == params.ownerId
     }
-}
+}`} lang="kotlin" theme="vitesse-dark"/>
 
-// Built-in rules:
-// public()              — allow everyone (including anonymous)
-// authenticated()       — any logged-in user (non-anonymous)
-// forbidden()           — deny all
-// isSuperUser()         — super user check
-// forRole("admin")      — role-based
-// forGroup("staff")     — group-based
-// forPermission("edit") — permission-based`} lang="kotlin" theme="vitesse-dark"/>
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 pr-4 text-white font-semibold">Rule</th>
+                <th class="py-2 pr-4 text-white font-semibold">Passes for</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>authenticated()</code></td><td class="py-2 pr-4">any non-anonymous caller</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>isSuperUser()</code></td><td class="py-2 pr-4">super users</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>forUserType(t)</code></td><td class="py-2 pr-4">callers of that user type</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>forRole(r)</code> / <code>forAnyRole(…)</code></td><td class="py-2 pr-4">role holders</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>forGroup(g)</code> / <code>forAnyGroup(…)</code></td><td class="py-2 pr-4">group members</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>forPermission(p)</code> / <code>forAnyPermission(…)</code></td><td class="py-2 pr-4">permission holders</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>forCall(desc) { }</code></td><td class="py-2 pr-4">a custom predicate over params/body</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>public()</code> / <code>forbidden()</code></td><td class="py-2 pr-4">everyone / nobody &mdash; see below</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p><strong><code>public()</code> and <code>forbidden()</code> must be the SOLE rule of a chain.</strong>
+        Combined with anything else they silently become a no-op or an always-allow, so the builder rejects
+        it at boot. To serve both a public and a protected audience, split them into separate
+        <code>ApiRoutes</code> groups, each with its own floor. An empty <code>forAll {}</code> /
+        <code>forAny {}</code> is rejected for the same reason &mdash; an empty AND allows everyone and an
+        empty OR denies everyone.</p>
+
+    <Aside>The statements-only shape is deliberate. An expression DSL made the last expression silently win,
+        which reads as a tightening and evaluates as a replacement &mdash; the kind of bug that looks correct
+        in review and is wide open in production.
+    </Aside>
 
     <Aside>Authorization rules are also used for access estimation &mdash; the admin UI can grey out actions
         a user cannot perform, without making the actual API call.
