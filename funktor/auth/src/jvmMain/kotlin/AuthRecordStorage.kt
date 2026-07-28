@@ -9,10 +9,7 @@ import io.peekandpoke.ultra.vault.RemoveResult
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
 
-class AuthRecordStorage(
-    adapter: Lazy<Adapter>,
-    kronos: Lazy<Kronos>,
-) {
+class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
     interface OnAfterSave : Repository.Hooks.OnAfterSave<AuthRecord>
 
     interface Adapter {

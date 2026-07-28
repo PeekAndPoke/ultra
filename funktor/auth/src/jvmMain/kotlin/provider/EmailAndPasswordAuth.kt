@@ -38,9 +38,6 @@ import kotlinx.serialization.json.buildJsonObject
  * This class provides methods for user login and user account updates, such as
  * changing passwords. It validates the user's credentials against the stored
  * records while adhering to the realm's password policy.
- *
- * @param id A unique identifier for the provider.
- * @param services Lazily loaded dependencies required for authentication operations.
  */
 class EmailAndPasswordAuth(
     override val capabilities: Set<AuthProviderModel.Capability> = setOf(AuthProviderModel.Capability.SignIn),
@@ -76,9 +73,6 @@ class EmailAndPasswordAuth(
             capabilities = capabilities,
             frontendUrls = frontendUrls,
         )
-
-        // TODO: from app config ... auto-build frontend urls from app config
-//        fun fromAppConfig()
     }
 
     /** Interface for providing dependencies to the [EmailAndPasswordAuth] provider. */
@@ -342,7 +336,7 @@ class EmailAndPasswordAuth(
             realm.users.createForSignup(createParams)
         } catch (e: Exception) {
             // Duplicate key exception from a concurrent sign-up race — treat as "already exists"
-            throw AuthError("User already exists")
+            throw AuthError("User already exists", cause = e)
         }
         // Store password record
         services.createAuthRecord {

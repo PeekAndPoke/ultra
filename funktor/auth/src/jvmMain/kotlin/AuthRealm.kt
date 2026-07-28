@@ -1,7 +1,15 @@
 package io.peekandpoke.funktor.auth
 
+import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.emails.AccountActivationEmailTemplate
+import io.peekandpoke.funktor.auth.emails.AuthEmailTemplates
+import io.peekandpoke.funktor.auth.emails.PasswordChangedEmailTemplate
+import io.peekandpoke.funktor.auth.emails.PasswordRecoveryEmailTemplate
+import io.peekandpoke.funktor.auth.emails.authEmailLocales
+import io.peekandpoke.funktor.auth.emails.requireAuthEmailEnvelope
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
@@ -14,23 +22,14 @@ import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
+import io.peekandpoke.funktor.auth.model.AuthUser
+import io.peekandpoke.funktor.auth.model.LanguageSettings
 import io.peekandpoke.funktor.auth.model.PasswordPolicy
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.AuthProvider
 import io.peekandpoke.funktor.auth.provider.hasCapability
 import io.peekandpoke.funktor.auth.provider.supportsSignIn
-import io.peekandpoke.funktor.auth.domain.AuthRecord
-import io.peekandpoke.funktor.auth.emails.AccountActivationEmailTemplate
-import io.peekandpoke.funktor.auth.emails.AuthEmailTemplates
-import io.peekandpoke.funktor.auth.emails.authEmailLocales
-import io.peekandpoke.funktor.auth.emails.requireAuthEmailEnvelope
-import io.peekandpoke.funktor.auth.emails.PasswordChangedEmailTemplate
-import io.peekandpoke.funktor.auth.emails.PasswordRecoveryEmailTemplate
-import io.peekandpoke.funktor.auth.model.AuthOrgRef
-import io.peekandpoke.funktor.auth.model.AuthUser
-import io.peekandpoke.funktor.auth.model.LanguageSettings
 import io.peekandpoke.funktor.messaging.Email
-import io.peekandpoke.funktor.messaging.api.EmailDestination
 import io.peekandpoke.funktor.messaging.api.EmailResult
 import io.peekandpoke.funktor.messaging.storage.EmailStoring
 import io.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.store
@@ -43,6 +42,9 @@ import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Stored
 
+/**
+ * Defines an auth realm
+ */
 interface AuthRealm<USER : AuthUser> {
 
     /**

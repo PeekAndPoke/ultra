@@ -3,14 +3,20 @@ package io.peekandpoke.funktor.auth
 import io.peekandpoke.ultra.common.toBase64
 import java.security.SecureRandom
 
+/**
+ * Secure random used by the auth module
+ */
 interface AuthRandom {
 
     companion object {
+        /** Default impl: uses [SecureRandom.getInstanceStrong] */
         val default: AuthRandom = Impl()
 
+        /** Default impl: uses [SecureRandom] */
         val secureRandom: SecureRandom = SecureRandom.getInstanceStrong()
     }
 
+    /** Default impl */
     private class Impl : AuthRandom {
 
         override fun getToken(length: Int): ByteArray {

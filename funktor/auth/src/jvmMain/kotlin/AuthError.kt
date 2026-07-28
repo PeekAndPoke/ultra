@@ -1,8 +1,10 @@
 package io.peekandpoke.funktor.auth
 
+import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.ultra.security.user.UserId
 
 open class AuthError(message: String, cause: Throwable? = null) : Throwable(message = message, cause = cause) {
+
 
     /**
      * Credentials were valid, but the account has not yet proven it owns its email address.
