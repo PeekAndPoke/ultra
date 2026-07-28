@@ -400,6 +400,9 @@ Don't want `_type`? Implement `Polymorphic.Parent` on the companion:
 sealed class Vehicle {
     companion object : Polymorphic.Parent {
         override val discriminator = "kind"
+
+        // childTypes has no default — supply it, usually via indexedSubClasses()
+        override val childTypes: Set<KClass<*>> get() = indexedSubClasses()
     }
 
     data class Car(val seats: Int) : Vehicle() {
@@ -427,6 +430,8 @@ When the discriminator is missing or unknown, fall back to a default type:
 sealed class Message {
     companion object : Polymorphic.Parent {
         override val defaultType = Text::class
+
+        override val childTypes: Set<KClass<*>> get() = indexedSubClasses()
     }
 
     data class Text(val body: String) : Message()

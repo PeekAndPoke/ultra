@@ -106,10 +106,7 @@ val time = MpLocalTime.parse("14:30:00")
 // Safe — returns null on invalid input
 val maybe = MpLocalDate.tryParse("not-a-date")  // null
 val ok = MpLocalDate.tryParse("2025-03-15")      // MpLocalDate
-
-// Custom parser
-val parser = MpDateTimeParser("dd/MM/yyyy")
-val parsed = parser.parse("15/03/2025")`} lang="kotlin" theme="vitesse-dark"/>
+`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Conversions</h2>
 
@@ -121,9 +118,9 @@ val parsed = parser.parse("15/03/2025")`} lang="kotlin" theme="vitesse-dark"/>
 val zoned = instant.atZone(MpTimezone.of("Europe/Berlin"))
 val utc = instant.atUTC()
 
-// Instant -> Local (drops timezone info)
-val localDate = instant.toLocalDate()
-val localDateTime = instant.toLocalDateTime()
+// Instant -> Local — a timezone is REQUIRED; an instant has no local date without one
+val localDate = instant.toLocalDate(MpTimezone.of("Europe/Berlin"))
+val localDateTime = instant.atZone(MpTimezone.of("Europe/Berlin")).toLocalDateTime()
 
 // Zoned -> Instant (recovers absolute time)
 val backToInstant = zoned.toInstant()

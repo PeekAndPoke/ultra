@@ -86,7 +86,7 @@ val stored = repo.insert(Person("Alice", 30, "alice@example.com"))
 val found = repo.findById(stored._id)
 
 // Update
-repo.save(found!!.map { it.copy(age = 31) })
+repo.save(found!!.modify { it.copy(age = 31) })
 
 // Delete
 repo.remove(found)
