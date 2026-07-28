@@ -50,7 +50,11 @@ kotlin {
 
                 implementation(project(":kraft:core"))
 
-                implementation(project(":funktor:messaging"))
+                // `api` (not `implementation`): the email-template extension point is in this
+                // module's PUBLISHED API — AccountActivationEmailTemplate extends
+                // LocalizedEmailTemplate, AuthEmailTemplates.default takes an EmailLayout, and the
+                // renderer maps are typed in Email. An app subclassing a template must see them.
+                api(project(":funktor:messaging"))
                 implementation(project(":funktor:rest"))
             }
         }
@@ -89,6 +93,12 @@ kotlin {
                 implementation(Deps.Ktor.Common.serialization_kotlinx_json)
 
                 implementation(Deps.KotlinX.html)
+
+                // `api` (not `implementation`): Locale is in this module's PUBLISHED API —
+                // AuthRealm.defaultLanguage — so realms implementing the interface must see the type.
+                // Declared here rather than leaned on transitively through funktor:messaging, because
+                // this module names the type itself.
+                api(project(":ultra:i18n"))
 
                 implementation(Deps.JavaLibs.Google.api_client)
 

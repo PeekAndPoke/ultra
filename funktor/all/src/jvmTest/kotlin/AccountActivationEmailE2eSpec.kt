@@ -16,18 +16,20 @@ import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
+import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
-import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
-import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
+import io.peekandpoke.funktor.auth.model.LanguageSettings
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import io.peekandpoke.funktor.messaging.Email
 import io.peekandpoke.funktor.messaging.api.SentMessageModel
 import io.peekandpoke.funktor.messaging.senders.hrefs
 import io.peekandpoke.ultra.common.decodeUriComponent
 import io.peekandpoke.ultra.common.encodeUriComponent
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.vault.value
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
@@ -507,6 +509,108 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                     }
 
                     emails.capturedTo(activated) shouldBe emptyList()
+                }
+            }
+        }
+
+        "A user whose language is German must get the GERMAN activation mail, and its link must work" {
+            // The whole localized-email pipeline in one walk: the user's stored language selects a
+            // whole rendering, its subject and body come out together, and the link is still one the
+            // server accepts.
+            //
+            // The link leg is not decoration. The URL goes into an `href` through kotlinx.html's
+            // attribute escaping and comes back out through `hrefs()`' entity decoding, and a base64
+            // token routinely contains `+`, `/` and `=`. A mismatch between those two steps mangles
+            // the token while leaving a mail that looks perfectly fine — the failure no unit test on
+            // either side can see.
+            apiApp {
+                anonymous {
+                    val german = "german-${System.currentTimeMillis()}@test.com"
+
+                    emails.clear()
+
+                    api.auth.signUp(
+                        realmParam,
+                        body = AuthSignUpRequest.EmailAndPassword(
+                            provider = provider,
+                            email = german,
+                            password = password,
+                            displayName = "Deutscher Nutzer",
+                        ),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                    }
+
+                    // Sign-up mails in the realm default (en) — nothing can express a language before
+                    // the account exists. Asserting it here pins that the SWITCH below is what changes
+                    // the mail, not some incidental default.
+                    emails.lastTo(german).shouldNotBeNull()
+                        .subject shouldBe "Funktor All Test: Activate your Account"
+
+                    val stored = realm.users.loadByEmail(EmailAddress.of(german)).shouldNotBeNull()
+
+                    usersRepo.save(
+                        stored.modify { it.copy(language = LanguageSettings(messaging = "de-CH")) }
+                    )
+
+                    // `de-CH` deliberately, not `de`: there is no Swiss template, so this also proves
+                    // the fallback chain walks region -> base language rather than dropping straight to
+                    // the `en` fallback.
+
+                    delay(realmTokenConfig.activationResendCooldown + 500.milliseconds)
+
+                    val resendToken = resendTokenFor(this, german)
+
+                    emails.clear()
+
+                    api.auth.resendActivation(
+                        realmParam,
+                        body = AuthResendActivationRequest(provider = provider, token = resendToken),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                        apiResponseData<AuthResendActivationResponse>()?.sent shouldBe true
+                    }
+
+                    val germanMail = emails.lastTo(german).shouldNotBeNull()
+
+                    //  Subject AND body come from the same template  ///////////////////////////
+
+                    germanMail.subject shouldBe "Funktor All Test: Konto aktivieren"
+
+                    val body = germanMail.body.content
+
+                    body shouldContain "Willkommen!"
+                    body shouldContain "Konto aktivieren"
+
+                    // No mixed-language mail: the English template must not be leaking in alongside
+                    // the German one. Whole-template resolution is what guarantees this, and the
+                    // assertion is what stops a future fragment-assembly "improvement" from passing.
+                    body shouldNotContain "Welcome!"
+                    body shouldNotContain "Activate account"
+
+                    //  ... and the German link still activates  ////////////////////////////////
+
+                    api.auth.activateAccount(
+                        realmParam,
+                        body = AuthActivateAccountRequest(
+                            provider = provider,
+                            token = activationTokenFrom(germanMail),
+                        ),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                        apiResponseData<AuthActivateAccountResponse>()?.success shouldBe true
+                    }
+
+                    api.auth.signIn(
+                        realmParam,
+                        body = AuthSignInRequest.EmailAndPassword(
+                            provider = provider, email = german, password = password,
+                        ),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                        (apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success)
+                            .shouldNotBeNull()
+                    }
                 }
             }
         }

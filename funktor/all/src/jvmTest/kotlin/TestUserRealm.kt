@@ -7,6 +7,7 @@ import io.peekandpoke.funktor.auth.RealmTokenConfig
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthUser
+import io.peekandpoke.funktor.auth.model.LanguageSettings
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import io.peekandpoke.karango.aql.EQ
@@ -38,6 +39,8 @@ data class TestUser(
     val name: String,
     override val email: EmailAddress,
     val isSuperUser: Boolean = false,
+    /** Carried so the localized-email path has a realm whose users can actually express a language. */
+    override val language: LanguageSettings = LanguageSettings.default,
 ) : AuthUser {
     companion object {
         const val USER_TYPE = "test-user"

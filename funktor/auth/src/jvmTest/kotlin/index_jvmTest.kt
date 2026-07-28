@@ -37,6 +37,8 @@ import io.peekandpoke.ultra.security.jwt.JwtGenerator
 import io.peekandpoke.ultra.security.jwt.JwtUserData
 import io.peekandpoke.ultra.security.password.PasswordHasher
 import io.peekandpoke.ultra.security.ultraSecurity
+import io.peekandpoke.funktor.auth.model.LanguageSettings
+import io.peekandpoke.ultra.i18n.Locale
 import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserId
@@ -101,6 +103,7 @@ suspend fun createAuthTestContainer(
 data class MinimalTestUser(
     override val email: EmailAddress = EmailAddress("user@example.com"),
     val name: String = "Minimal Test User",
+    override val language: LanguageSettings = LanguageSettings.default,
 ) : AuthUser
 
 class TestMessaging(
@@ -146,6 +149,8 @@ class MinimalTestDeps : AuthSystem.Deps {
 
 class MinimalTestRealm(
     override val passwordPolicy: PasswordPolicy = PasswordPolicy.default,
+    /** Exposed so a spec can prove `DefaultMessaging` actually consults the realm's default. */
+    override val defaultLanguage: Locale = Locale("en"),
     val getMessaging: () -> AuthRealm.Messaging<MinimalTestUser> = { TestMessaging() },
     val onLoadUserByEmail: suspend (EmailAddress) -> Stored<MinimalTestUser>? =
         { error("loadUserByEmail was not expected to be called") },

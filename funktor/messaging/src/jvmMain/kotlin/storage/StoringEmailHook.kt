@@ -40,7 +40,15 @@ class StoringEmailHook(
                     refs = storing.refs,
                     tags = storing.tags,
                     content = SentMessageModel.Content.EmailContent(
-                        subject = email.subject,
+                        // The SUBJECT goes through the same policy as the body. It used to be stored
+                        // verbatim, which was harmless only while every subject was a Kotlin literal.
+                        // Templates are app-overridable now, and a template that interpolates its
+                        // `activationUrl` into the subject would write a live single-use token into
+                        // the sent-messages inspector — and into every log appender, since the debug
+                        // hook logs the subject precisely because the body was assumed to be the only
+                        // place a token could be. A URL in a subject is never legitimate, so this
+                        // costs nothing for well-behaved mail.
+                        subject = storing.modifyContent(email.subject),
                         destination = email.destination,
                         source = email.source,
                         body = when (val body = email.body) {

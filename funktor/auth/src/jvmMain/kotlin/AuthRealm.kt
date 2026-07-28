@@ -19,26 +19,29 @@ import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.AuthProvider
 import io.peekandpoke.funktor.auth.provider.hasCapability
 import io.peekandpoke.funktor.auth.provider.supportsSignIn
+import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.emails.AccountActivationEmailTemplate
+import io.peekandpoke.funktor.auth.emails.AuthEmailTemplates
+import io.peekandpoke.funktor.auth.emails.authEmailLocales
+import io.peekandpoke.funktor.auth.emails.requireAuthEmailEnvelope
+import io.peekandpoke.funktor.auth.emails.PasswordChangedEmailTemplate
+import io.peekandpoke.funktor.auth.emails.PasswordRecoveryEmailTemplate
+import io.peekandpoke.funktor.auth.model.AuthOrgRef
+import io.peekandpoke.funktor.auth.model.AuthUser
+import io.peekandpoke.funktor.auth.model.LanguageSettings
 import io.peekandpoke.funktor.messaging.Email
-import io.peekandpoke.funktor.messaging.api.EmailBody
 import io.peekandpoke.funktor.messaging.api.EmailDestination
 import io.peekandpoke.funktor.messaging.api.EmailResult
 import io.peekandpoke.funktor.messaging.storage.EmailStoring
 import io.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.store
-import io.peekandpoke.funktor.auth.domain.AuthRecord
-import io.peekandpoke.funktor.auth.model.AuthOrgRef
-import io.peekandpoke.funktor.auth.model.AuthUser
+import io.peekandpoke.ultra.i18n.Locale
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.OrgMembership
 import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Stored
-import kotlinx.html.a
-import kotlinx.html.body
-import kotlinx.html.br
-import kotlinx.html.h1
-import kotlinx.html.p
 
 interface AuthRealm<USER : AuthUser> {
 
@@ -72,115 +75,109 @@ interface AuthRealm<USER : AuthUser> {
         val senderName: String,
         val applicationName: String,
         val realm: AuthRealm<USER>,
+        /**
+         * The renderings behind the three auth mails. An app overrides one by supplying its own
+         * subclass of that template; see [AuthEmailTemplates].
+         */
+        val templates: AuthEmailTemplates = AuthEmailTemplates(),
     ) : Messaging<USER> {
 
-        override suspend fun sendPasswordChangedEmail(user: Stored<USER>): EmailResult {
+        /**
+         * The locale preference for a mail to [user] — see [authEmailLocales] for the rule.
+         *
+         * `internal` rather than private, and taking the user VALUE rather than a `Stored`, so a test
+         * can assert the one thing the free function cannot: that this reads [AuthRealm.defaultLanguage]
+         * instead of a hardcoded `en`.
+         */
+        internal fun preferredLocales(user: USER): List<Locale> =
+            authEmailLocales(user = user, realmDefault = realm.defaultLanguage)
+
+        /**
+         * Renders through [build], pins the envelope, applies the storing policy, and sends.
+         *
+         * **The `try` is the point.** Everything below `mailing.send` reports failure by RETURNING a
+         * failed `EmailResult` — the senders catch `Throwable` themselves — and callers are written
+         * against that: `EmailAndPasswordAuth` logs a warning and leaves the account recoverable via
+         * resend or password reset. Rendering is now app-overridable code running OUTSIDE that
+         * protocol, and `AuthApi` catches only `AuthError`, so an app template that throws would
+         * instead 500 the request. On sign-up that happens after the account, the password record and
+         * the `PendingActivation` marker are already written; on resend it happens after the previous
+         * activation link has been revoked — a deterministic throw there is an unrecoverable lockout.
+         * It would also hand `recoverAccountInitPasswordReset` an account-enumeration oracle, since
+         * that endpoint answers a neutral 200 for unknown addresses but only reaches this code for
+         * ones that exist.
+         */
+        private suspend fun sendAuthEmail(
+            user: Stored<USER>,
+            tag: String,
+            build: suspend (recipient: EmailAddress) -> Email,
+        ): EmailResult {
             val userEmail = user.value().email
 
+            val email = try {
+                val built = build(userEmail)
+
+                // Inside the try on purpose, so a violation degrades to a failed EmailResult
+                // rather than a 500. See requireAuthEmailEnvelope for why it is re-asserted at all.
+                requireAuthEmailEnvelope(built, userEmail)
+
+                built
+            } catch (e: Throwable) {
+                realm.deps.log.error("Rendering the '$tag' email failed for user ${user._id}", e)
+
+                return EmailResult.ofError(e)
+            }
+
             return realm.deps.messaging.mailing.send(
-                Email(
-                    source = senderEmail,
-                    destination = EmailDestination.to(userEmail.value),
-                    subject = "$applicationName: Your password was changed",
-                    body = EmailBody.Html {
-                        body {
-                            h1 { +"Heads up!" }
-
-                            p {
-                                +"Your password was changed. If this was not you, please contact us!"
-                            }
-
-                            p {
-                                +"Yours sincerely,"
-                                br()
-                                +senderName
-                            }
-                        }
-                    }
-                ).store(
+                email.store(
                     EmailStoring.withAnonymizedContent(
                         refs = setOf(user._id, userEmail.value),
-                        tags = setOf("password-changed"),
+                        tags = setOf(tag),
                     )
                 )
             )
         }
 
-        override suspend fun sendAccountActivationEmail(user: Stored<USER>, activationUrl: String): EmailResult {
-            val userEmail = user.value().email
-
-            return realm.deps.messaging.mailing.send(
-                Email(
-                    source = senderEmail,
-                    destination = EmailDestination.to(userEmail.value),
-                    subject = "$applicationName: Activate your Account",
-                    body = EmailBody.Html {
-                        body {
-                            h1 { +"Welcome!" }
-
-                            p {
-                                +"Click the link below to activate your account. Until you do, you cannot sign in."
-                            }
-
-                            p {
-                                a(href = activationUrl) {
-                                    +"Activate account"
-                                }
-                            }
-
-                            p {
-                                +"Yours sincerely,"
-                                br()
-                                +senderName
-                            }
-                        }
-                    }
-                ).store(
-                    EmailStoring.withAnonymizedContent(
-                        refs = setOf(user._id, userEmail.value),
-                        tags = setOf("account-activation"),
-                    )
+        override suspend fun sendPasswordChangedEmail(user: Stored<USER>): EmailResult =
+            sendAuthEmail(user, tag = "password-changed") { recipient ->
+                templates.passwordChanged.render(
+                    params = PasswordChangedEmailTemplate.Params(
+                        recipient = recipient,
+                        senderEmail = senderEmail,
+                        senderName = senderName,
+                        applicationName = applicationName,
+                    ),
+                    preferred = preferredLocales(user.value()),
                 )
-            )
-        }
+            }
 
-        override suspend fun sendPasswordRecoveryEmil(user: Stored<USER>, resetUrl: String): EmailResult {
-            val userEmail = user.value().email
-
-            return realm.deps.messaging.mailing.send(
-                Email(
-                    source = senderEmail,
-                    destination = EmailDestination.to(userEmail.value),
-                    subject = "$applicationName: Recover your Account",
-                    body = EmailBody.Html {
-                        body {
-                            h1 { +"Heads up!" }
-
-                            p {
-                                +"Click the link below to recover your account and set a new password."
-                            }
-
-                            p {
-                                a(href = resetUrl) {
-                                    +"Recover account"
-                                }
-                            }
-
-                            p {
-                                +"Yours sincerely,"
-                                br()
-                                +senderName
-                            }
-                        }
-                    }
-                ).store(
-                    EmailStoring.withAnonymizedContent(
-                        refs = setOf(user._id, userEmail.value),
-                        tags = setOf("password-reset"),
-                    )
+        override suspend fun sendAccountActivationEmail(user: Stored<USER>, activationUrl: String): EmailResult =
+            sendAuthEmail(user, tag = "account-activation") { recipient ->
+                templates.accountActivation.render(
+                    params = AccountActivationEmailTemplate.Params(
+                        recipient = recipient,
+                        senderEmail = senderEmail,
+                        senderName = senderName,
+                        applicationName = applicationName,
+                        activationUrl = activationUrl,
+                    ),
+                    preferred = preferredLocales(user.value()),
                 )
-            )
-        }
+            }
+
+        override suspend fun sendPasswordRecoveryEmil(user: Stored<USER>, resetUrl: String): EmailResult =
+            sendAuthEmail(user, tag = "password-reset") { recipient ->
+                templates.passwordRecovery.render(
+                    params = PasswordRecoveryEmailTemplate.Params(
+                        recipient = recipient,
+                        senderEmail = senderEmail,
+                        senderName = senderName,
+                        applicationName = applicationName,
+                        resetUrl = resetUrl,
+                    ),
+                    preferred = preferredLocales(user.value()),
+                )
+            }
     }
 
     /** Unique id of the realm */
@@ -194,6 +191,16 @@ interface AuthRealm<USER : AuthUser> {
 
     /** User messaging */
     val messaging: Messaging<USER>
+
+    /**
+     * The language mails are rendered in for a user who has expressed no preference of their own
+     * ([LanguageSettings.messaging] is `null`).
+     *
+     * Sits BETWEEN the user's setting and the hardcoded `en` fallback, so a German-only deployment can
+     * mail German to accounts that predate any language picker, without every realm having to
+     * translate every template the framework might add later.
+     */
+    val defaultLanguage: Locale get() = Locale("en")
 
     /** Operations on this realm's users (loading, creating, serializing), see [AuthUserAdapter]. */
     val users: AuthUserAdapter<USER>

@@ -41,7 +41,10 @@ kotlin {
 
         commonMain {
             dependencies {
-                implementation(Deps.KotlinX.html)
+                // `api` (not `implementation`): kotlinx.html is in this module's PUBLISHED API —
+                // EmailLayout.render takes a `BODY.() -> Unit` and EmailBody.Html.invoke takes an
+                // `HTML.() -> Unit`. An app writing its own layout must see those receivers.
+                api(Deps.KotlinX.html)
 
                 api(project(":funktor:core"))
             }
@@ -78,6 +81,11 @@ kotlin {
                 implementation(Deps.JavaLibs.Aws.ses)
                 // Sendgrid https://github.com/sendgrid/sendgrid-java
                 implementation(Deps.JavaLibs.Sendgrid.sendgrid_java)
+
+                // `api` (not `implementation`): Locale is in this module's PUBLISHED API —
+                // EmailTemplate.render and EmailLayout.render both name it, so consumers
+                // (funktor:auth and any app supplying its own templates) must see the type.
+                api(project(":ultra:i18n"))
 
                 // For senders that use apis directly, like SendGrid
                 implementation(Deps.Ktor.Client.core)
