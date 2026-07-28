@@ -8,8 +8,14 @@ export const kotlinVersion = '2.3.10';
 export const fomanticVersion = '2.8.8';
 
 // Maven coordinates
+// Each product line publishes under its OWN group id — see gradle.properties.
+// Do NOT glue a compound artifact name onto ultraGroup; that coordinate does not exist.
 export const ultraGroup = 'io.peekandpoke.ultra';
 export const kraftGroup = 'io.peekandpoke.kraft';
+export const funktorGroup = 'io.peekandpoke.funktor';
+export const karangoGroup = 'io.peekandpoke.karango';
+export const monkoGroup = 'io.peekandpoke.monko';
+export const mutatorGroup = 'io.peekandpoke.mutator';
 
 // URLs
 export const githubRepo = 'https://github.com/PeekAndPoke/ultra';
@@ -110,19 +116,21 @@ export const dep = {
     kraftAddonNxCompile: `${kraftGroup}:addons-nxcompile:${kraftVersion}`,
     kraftAddonSourceMappedStacktrace: `${kraftGroup}:addons-sourcemappedstacktrace:${kraftVersion}`,
     kraftAddonThreeJs: `${kraftGroup}:addons-threejs:${kraftVersion}`,
-    mutatorCore: `${ultraGroup}:mutator-core:${ultraVersion}`,
-    mutatorKsp: `${ultraGroup}:mutator-ksp:${ultraVersion}`,
-    karangoCore: `${ultraGroup}:karango-core:${ultraVersion}`,
-    karangoKsp: `${ultraGroup}:karango-ksp:${ultraVersion}`,
-    funktorAll: `${ultraGroup}:funktor-all:${ultraVersion}`,
-    funktorCore: `${ultraGroup}:funktor-core:${ultraVersion}`,
-    funktorRest: `${ultraGroup}:funktor-rest:${ultraVersion}`,
-    funktorAuth: `${ultraGroup}:funktor-auth:${ultraVersion}`,
-    funktorCluster: `${ultraGroup}:funktor-cluster:${ultraVersion}`,
-    funktorMessaging: `${ultraGroup}:funktor-messaging:${ultraVersion}`,
-    funktorInsights: `${ultraGroup}:funktor-insights:${ultraVersion}`,
-    funktorLogging: `${ultraGroup}:funktor-logging:${ultraVersion}`,
-    funktorStaticWeb: `${ultraGroup}:funktor-staticweb:${ultraVersion}`,
-    funktorTesting: `${ultraGroup}:funktor-testing:${ultraVersion}`,
-    monko: `${ultraGroup}:monko:${ultraVersion}`,
+    vault: `${ultraGroup}:vault:${ultraVersion}`,
+    mutatorCore: `${mutatorGroup}:core:${ultraVersion}`,
+    mutatorKsp: `${mutatorGroup}:ksp:${ultraVersion}`,
+    karangoCore: `${karangoGroup}:core:${ultraVersion}`,
+    karangoKsp: `${karangoGroup}:ksp:${ultraVersion}`,
+    monkoCore: `${monkoGroup}:core:${ultraVersion}`,
+    monkoKsp: `${monkoGroup}:ksp:${ultraVersion}`,
+    funktorAll: `${funktorGroup}:all:${ultraVersion}`,
+    funktorCore: `${funktorGroup}:core:${ultraVersion}`,
+    funktorRest: `${funktorGroup}:rest:${ultraVersion}`,
+    funktorAuth: `${funktorGroup}:auth:${ultraVersion}`,
+    funktorCluster: `${funktorGroup}:cluster:${ultraVersion}`,
+    funktorMessaging: `${funktorGroup}:messaging:${ultraVersion}`,
+    funktorInsights: `${funktorGroup}:insights:${ultraVersion}`,
+    funktorLogging: `${funktorGroup}:logging:${ultraVersion}`,
+    funktorStaticWeb: `${funktorGroup}:staticweb:${ultraVersion}`,
+    funktorTesting: `${funktorGroup}:testing:${ultraVersion}`,
 };

@@ -87,16 +87,20 @@ i18n.translate.checkout.nested.deep(value = "x")`} lang="kotlin" theme="vitesse-
                 <td class="py-2 pr-4">Error &mdash; fails the build</td>
             </tr>
             <tr class="border-b border-white/5">
-                <td class="py-2 pr-4">A locale defines a key the fallback does not have</td>
+                <td class="py-2 pr-4">A locale <strong>introduces</strong> a placeholder the fallback lacks</td>
                 <td class="py-2 pr-4">Error &mdash; fails the build</td>
             </tr>
             <tr class="border-b border-white/5">
-                <td class="py-2 pr-4">A locale's placeholders do not match the fallback's</td>
-                <td class="py-2 pr-4">Error &mdash; fails the build</td>
+                <td class="py-2 pr-4">A locale defines a key the fallback does not have</td>
+                <td class="py-2 pr-4">Warning &mdash; error under <code>-Pi18n.strict</code></td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2 pr-4">An optional language is incomplete</td>
                 <td class="py-2 pr-4">Warning &mdash; error under <code>-Pi18n.strict</code></td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2 pr-4">A locale <strong>omits</strong> a placeholder the fallback has</td>
+                <td class="py-2 pr-4">Info &mdash; logged only, never fails</td>
             </tr>
             </tbody>
         </table>
@@ -106,9 +110,10 @@ i18n.translate.checkout.nested.deep(value = "x")`} lang="kotlin" theme="vitesse-
         <code>requiredLangs</code> takes base languages only &mdash; a region inherits from its base, so
         requiring <code>de-CH</code> is rejected outright rather than silently doing nothing.</p>
 
-    <Aside>The placeholder-parity rule is the one that earns its keep. A translator dropping
-        <code>{'{{count}}'}</code> produces a sentence that reads fine in review and is missing a number in
-        production &mdash; and it is always the language nobody on the team proofreads.
+    <Aside>Note the asymmetry, which is easy to get backwards: <em>introducing</em> an unknown placeholder
+        is an error, because it can never be filled. <em>Omitting</em> one is only INFO &mdash; a translator
+        dropping <code>{'{{count}}'}</code> still produces a grammatical sentence, just one missing a number,
+        and there are languages where leaving it out is the correct translation.
     </Aside>
 
     <h2>One catalog per module</h2>

@@ -116,16 +116,17 @@ val updated = company.mutate {
 
 ## Getting Started
 
-All libraries are published on [Maven Central](https://central.sonatype.com/namespace/io.peekandpoke.ultra):
+Each product line publishes under its own group id — `io.peekandpoke.{ultra,kraft,funktor,karango,monko,mutator}`.
+All are on [Maven Central](https://central.sonatype.com/search?q=io.peekandpoke):
 
 ```kotlin
 dependencies {
-    implementation("io.peekandpoke.ultra:mutator-core:0.108.0")
-    ksp("io.peekandpoke.ultra:mutator-ksp:0.108.0")
     implementation("io.peekandpoke.ultra:kontainer:0.108.0")
     implementation("io.peekandpoke.ultra:slumber:0.108.0")
     implementation("io.peekandpoke.ultra:streams:0.108.0")
-    implementation("io.peekandpoke.ultra:karango-core:0.108.0")
+    implementation("io.peekandpoke.mutator:core:0.108.0")
+    ksp("io.peekandpoke.mutator:ksp:0.108.0")
+    implementation("io.peekandpoke.karango:core:0.108.0")
     implementation("io.peekandpoke.kraft:core:0.108.0")
 }
 ```

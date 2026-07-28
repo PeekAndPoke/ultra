@@ -49,8 +49,8 @@ checkout:
 i18n.translate.checkout.greeting(name = "Alice")   // named params, no string keys
 i18n.translate.checkout.items(count = 3)           // plural form picked for you`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>A key that no longer exists will not compile. A placeholder the German translator dropped fails the
-        build, not the checkout page.</p>
+    <p>A key that no longer exists will not compile, and a translation that invents a placeholder nobody
+        supplies fails the build rather than the checkout page.</p>
 
     <h2>What you get</h2>
 
@@ -62,8 +62,9 @@ i18n.translate.checkout.items(count = 3)           // plural form picked for you
         </div>
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Build-time checks</h3>
-            <p class="text-sm text-gray-400">Missing keys, missing required languages and placeholder
-                mismatches fail the build. Warnings become errors under <code>-Pi18n.strict</code>.</p>
+            <p class="text-sm text-gray-400">A missing required language, or a translation inventing an
+                unknown placeholder, fails the build. Softer findings warn, and become errors under
+                <code>-Pi18n.strict</code>.</p>
         </div>
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Locale fallback chain</h3>

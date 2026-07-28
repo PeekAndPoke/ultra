@@ -55,13 +55,14 @@ import {Code} from 'astro:components';
         component re-renders when the language changes and unsubscribes when it unmounts. There is a matching
         <code>by Formatting</code> delegate for the formatting surface.</p>
 
-    <p>If no controller is registered, <code>by Translations</code> <strong>degrades to returning the key</strong>
-        rather than crashing. A component in a test harness, or an app that has not wired i18n yet, still
-        renders.</p>
+    <p><code>kraftApp { }</code> always installs a default controller, so <code>by Translations</code> works
+        in an app that has not configured i18n &mdash; unresolved keys come back as the key itself. It is not
+        a fallback inside the delegate: looking up a missing attribute throws, and the default registration
+        is what stops that happening.</p>
 
     <h2>Switching language</h2>
 
-    <Code code={`i18nController.setLang("de")`} lang="kotlin" theme="vitesse-dark"/>
+    <Code code={`i18nController.setLang(Locale("de"))`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>The controller maps the chosen tag through <code>Locale.parse</code> onto a fresh <code>I18n</code>
         snapshot and emits it. Every subscribed component re-renders in the new language, and the choice is

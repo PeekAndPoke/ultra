@@ -2,7 +2,7 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import {mutatorSidebar} from '../../../data/mutator-sidebar';
 import {Code} from 'astro:components';
-import {ultraVersion, ultraGroup, mavenCentralUrl} from '../../../data/site';
+import {dep, mavenCentralUrl} from '../../../data/site';
 ---
 
 <DocsLayout title="Getting Started with Mutator" sidebar={mutatorSidebar}
@@ -28,9 +28,9 @@ import {ultraVersion, ultraGroup, mavenCentralUrl} from '../../../data/site';
 
 dependencies {
     // Runtime library
-    implementation("${ultraGroup}:mutator-core:${ultraVersion}")
+    implementation("${dep.mutatorCore}")
     // KSP processor — generates .mutator() and .mutate {} extensions
-    ksp("${ultraGroup}:mutator-ksp:${ultraVersion}")
+    ksp("${dep.mutatorKsp}")
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>Find the latest version on <a href={mavenCentralUrl} target="_blank" rel="noopener">Maven Central</a>.</p>
