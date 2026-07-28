@@ -4,6 +4,40 @@
 **Plan:** `.claude/plans/20260719-demo-restructure-three-apps.md` → ops-app "real dashboard stats"
 **Security-critical:** yes (super-user operator API; new routes guard the operator surface)
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `b39f3c77` | 2026-07-22 | 6 | fix(rest): forUserType AuthRule — close the cross-realm hole on the operator console |
+| `cdbf1e61` | 2026-07-20 | 7 | feat(ops): operator dashboard stats API + real ops-app dashboard |
+
+Archived by `2343d55b` (rename only — that commit's code belongs to another task).
+
+### Files changed (9)
+
+**funktor-demo/common**
+- `funktor-demo/common/src/commonMain/kotlin/operator/OperatorApiClient.kt`
+
+**funktor-demo/ops-app**
+- `funktor-demo/ops-app/src/jsMain/kotlin/api.kt`
+- `funktor-demo/ops-app/src/jsMain/kotlin/pages/DashboardPage.kt`
+
+**funktor-demo/server**
+- `funktor-demo/server/src/main/kotlin/operator/OperatorApi.kt`
+- `funktor-demo/server/src/main/kotlin/operator/OperatorApiFeature.kt`
+- `funktor-demo/server/src/main/kotlin/operator/operator_module.kt`
+- `funktor-demo/server/src/test/kotlin/OperatorApiTest.kt`
+
+**funktor/rest**
+- `funktor/rest/src/jvmMain/kotlin/auth/AuthRule.kt`
+- `funktor/rest/src/jvmMain/kotlin/auth/AuthRuleBuilder.kt`
+
 ## Spec
 
 - [ ] `OperatorApiFeature` (server) exposing `GET /api/operator/dashboard/stats`, guarded by

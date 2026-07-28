@@ -7,6 +7,44 @@
 
 ---
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `520913d4` | 2026-04-05 | 4 | es2015 migration pixijs addon |
+| `172c4f4f` | 2026-04-03 | 12 | code quality, bug fixes, unit tests, docs cache |
+| `f1342275` | 2026-04-02 | 71 | code quality, bug fixes, unit tests, docs |
+| `07cb403f` | 2026-03-31 | 4 | code quality, bug fixes, unit tests |
+| `3cf75f2d` | 2026-03-30 | 101 | funktor:inspect funktor-demo |
+
+Archived by `d71db9f8`, `28973c5e` (rename only — that commit's code belongs to another task).
+
+### Files changed (185)
+
+Listed by module — full paths via the command below.
+
+- **funktor/inspect** — 77 files
+- **docs-site/src** — 45 files
+- **kraft/examples** — 15 files
+- **funktor-demo/server** — 13 files
+- **funktor-demo/adminapp** — 11 files
+- **funktor/all** — 6 files
+- **ultra/cache** — 5 files
+- **docs-site/public** — 4 files
+- **funktor/auth** — 4 files
+- **ultra/semanticui** — 3 files
+- **funktor-demo/common** — 2 files
+
+```
+git show --stat 520913d4 172c4f4f f1342275 07cb403f 3cf75f2d
+```
+
 ## Key Decisions
 
 | Decision       | Choice                   | Rationale                                                           |

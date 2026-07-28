@@ -6,6 +6,78 @@
 
 ---
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `28973c5e` | 2026-04-13 | 175 | non-blocking vault cursor impl - all steps docs-site: - vault - karango - monko |
+| `783f6fc7` | 2026-04-09 | 21 | non-blocking vault cursor impl - all steps docs-site: - vault - karango - monko |
+| `8cfa70d1` | 2026-04-07 | 29 | api acl info for frontend test hardening |
+| `51e01918` | 2026-04-06 | 43 | api acl info for frontend |
+| `1d9b9774` | 2026-04-06 | 48 | api acl info for frontend |
+| `b14d4403` | 2026-04-05 | 167 | kraft life cycle hooks |
+| `df726c86` | 2026-04-05 | 11 | kraft life cycle hooks |
+
+Archived by `d71db9f8` (rename only — that commit's code belongs to another task).
+
+### Files changed (474)
+
+Listed by module — full paths via the command below.
+
+- **docs** — 162 files
+- **funktor/cluster** — 37 files
+- **funktor/core** — 30 files
+- **karango/core** — 27 files
+- **docs-site/src** — 24 files
+- **monko/core** — 23 files
+- **funktor/messaging** — 21 files
+- **funktor/rest** — 21 files
+- **ultra/vault** — 17 files
+- **funktor/auth** — 12 files
+- **kraft/addons** — 12 files
+- **ultra/cache** — 9 files
+- **docs-site/public** — 8 files
+- **funktor/insights** — 8 files
+- **funktor/testing** — 6 files
+- **kraft/core** — 6 files
+- **funktor/logging** — 5 files
+- **funktor/all** — 4 files
+- **ultra/html** — 4 files
+- **ultra/semanticui** — 4 files
+- **funktor-demo/server** — 3 files
+- **kraft/core-tests** — 3 files
+- **ultra/streams** — 3 files
+- **(root)** — 2 files
+- **funktor-demo/adminapp** — 2 files
+- **funktor/inspect** — 2 files
+- **ultra/common** — 2 files
+- **ultra/remote** — 2 files
+- **docs-site/astro.config.mjs** — 1 files
+- **docs-site/package.json** — 1 files
+- **docs-site/pnpm-lock.yaml** — 1 files
+- **funktor-demo/common** — 1 files
+- **karango/addons** — 1 files
+- **kraft/semanticui** — 1 files
+- **kraft/testing** — 1 files
+- **mutator/core** — 1 files
+- **ultra/datetime** — 1 files
+- **ultra/fixture** — 1 files
+- **ultra/log** — 1 files
+- **ultra/maths** — 1 files
+- **ultra/model** — 1 files
+- **ultra/security** — 1 files
+- **ultra/slumber** — 1 files
+
+```
+git show --stat 28973c5e 783f6fc7 8cfa70d1 51e01918 1d9b9774 b14d4403 df726c86
+```
+
 ## Gate Status
 
 | Gate                           | Status              | What's left                                                               |

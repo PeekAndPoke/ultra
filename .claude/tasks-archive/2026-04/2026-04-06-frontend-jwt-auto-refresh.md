@@ -2,6 +2,71 @@
 
 **Status:** DONE (2026-04-06) — Implemented in the `funktor-apiacl-frontend-integration` branch.
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `8cfa70d1` | 2026-04-07 | 29 | api acl info for frontend test hardening |
+| `1e8df5da` | 2026-04-05 | 1 | api acl info for frontend |
+
+Archived by `d71db9f8`, `28973c5e` (rename only — that commit's code belongs to another task).
+
+### Files changed (30)
+
+**docs-site/src**
+- `docs-site/src/components/HilbertBackground.astro`
+- `docs-site/src/layouts/BaseLayout.astro`
+
+**funktor-demo/adminapp**
+- `funktor-demo/adminapp/src/jsMain/kotlin/index.kt`
+- `funktor-demo/adminapp/src/jsMain/kotlin/pages/ProfilePage.kt`
+
+**funktor/all**
+- `funktor/all/src/jvmTest/kotlin/AuthApiSpec.kt`
+
+**funktor/auth**
+- `funktor/auth/src/commonMain/kotlin/api/AuthApiClient.kt`
+- `funktor/auth/src/jsMain/kotlin/AuthSessionConfig.kt`
+- `funktor/auth/src/jsMain/kotlin/AuthState.kt`
+- `funktor/auth/src/jvmMain/kotlin/AuthRealm.kt`
+- `funktor/auth/src/jvmMain/kotlin/AuthSystem.kt`
+- `funktor/auth/src/jvmMain/kotlin/api/AuthApi.kt`
+
+**funktor/inspect**
+- `funktor/inspect/src/jvmMain/kotlin/introspection/services/ApiAccessDescriptor.kt`
+
+**funktor/rest**
+- `funktor/rest/src/jvmMain/kotlin/auth/AuthRule.kt`
+- `funktor/rest/src/jvmTest/kotlin/auth/AccessLevelCheckSpec.kt`
+
+**ultra/html**
+- `ultra/html/src/jvmTest/kotlin/CloudinaryImageSpec.kt`
+- `ultra/html/src/jvmTest/kotlin/ImageSrcSetSpec.kt`
+- `ultra/html/src/jvmTest/kotlin/PlaceholdersSpec.kt`
+
+**ultra/semanticui**
+- `ultra/semanticui/src/commonTest/kotlin/SemanticColorSpec.kt`
+- `ultra/semanticui/src/commonTest/kotlin/SemanticFlagSpec.kt`
+- `ultra/semanticui/src/commonTest/kotlin/SemanticNumberSpec.kt`
+
+**ultra/vault**
+- `ultra/vault/src/jvmTest/kotlin/DatabaseSpec.kt`
+- `ultra/vault/src/jvmTest/kotlin/RemoveResultSpec.kt`
+- `ultra/vault/src/jvmTest/kotlin/RepositoryHooksSpec.kt`
+- `ultra/vault/src/jvmTest/kotlin/SharedRepoClassLookupSpec.kt`
+- `ultra/vault/src/jvmTest/kotlin/SoftDeletableSpec.kt`
+- `ultra/vault/src/jvmTest/kotlin/TypedQuerySpec.kt`
+- `ultra/vault/src/jvmTest/kotlin/VaultConfigSpec.kt`
+- `ultra/vault/src/jvmTest/kotlin/VaultExceptionSpec.kt`
+- `ultra/vault/src/jvmTest/kotlin/VaultModelsSpec.kt`
+- `ultra/vault/src/jvmTest/kotlin/profiling/QueryProfilerSpec.kt`
+
 ## Context
 
 Frontend SPAs using funktor/auth need robust session lifecycle handling:

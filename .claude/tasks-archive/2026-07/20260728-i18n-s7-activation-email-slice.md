@@ -20,6 +20,41 @@ Replaced by `.claude/tasks/20260728-auth-email-templates-in-code.md`.
 **Security-critical:** yes (HTML/attribute escaping of substituted values; a template now sits between
 the framework and the `href` the anonymizer must keep seeing) → red-team follow-up required
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `853248f7` | 2026-07-28 | 15 | feat(auth): localized auth emails, rendered in code |
+
+### Files changed (15)
+
+**funktor/all**
+- `funktor/all/src/jvmTest/kotlin/AccountActivationEmailE2eSpec.kt`
+- `funktor/all/src/jvmTest/kotlin/TestUserRealm.kt`
+
+**funktor/auth**
+- `funktor/auth/build.gradle.kts`
+- `funktor/auth/src/jvmMain/kotlin/AuthRealm.kt`
+- `funktor/auth/src/jvmMain/kotlin/emails/AccountActivationEmailTemplate.kt`
+- `funktor/auth/src/jvmMain/kotlin/emails/AuthEmailTemplates.kt`
+- `funktor/auth/src/jvmMain/kotlin/emails/PasswordChangedEmailTemplate.kt`
+- `funktor/auth/src/jvmMain/kotlin/emails/PasswordRecoveryEmailTemplate.kt`
+- `funktor/auth/src/jvmTest/kotlin/emails/AuthEmailTemplatesSpec.kt`
+- `funktor/auth/src/jvmTest/kotlin/index_jvmTest.kt`
+
+**funktor/messaging**
+- `funktor/messaging/build.gradle.kts`
+- `funktor/messaging/src/jvmMain/kotlin/storage/StoringEmailHook.kt`
+- `funktor/messaging/src/jvmMain/kotlin/templates/EmailLayout.kt`
+- `funktor/messaging/src/jvmMain/kotlin/templates/EmailTemplate.kt`
+- `funktor/messaging/src/jvmTest/kotlin/templates/LocalizedEmailTemplateSpec.kt`
+
 ## Why a slice and not S7 proper
 
 The user chose (b) over the full stage. S7's blast radius is wide — codegen emails mode, checker

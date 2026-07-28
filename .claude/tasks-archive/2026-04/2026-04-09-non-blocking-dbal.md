@@ -1,5 +1,111 @@
 # Plan: Non-Blocking DBAL — Flow Cursor, Suspend Storable, Ref Unification
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `7e0063a1` | 2026-04-09 | 6 | non-blocking vault cursor impl - step 1 |
+| `cda8b63f` | 2026-04-09 | 24 | non-blocking vault cursor impl - step 1 |
+| `ef30e562` | 2026-04-08 | 34 | non-blocking vault cursor impl - step 1 |
+
+Archived by `d71db9f8`, `783f6fc7` (rename only — that commit's code belongs to another task).
+
+### Files changed (60)
+
+**docs-site/public**
+- `docs-site/public/llms.txt`
+- `docs-site/public/llms/funktor.md`
+- `docs-site/public/llms/mutator.md`
+
+**docs-site/src**
+- `docs-site/src/pages/index.astro`
+- `docs-site/src/pages/ultra/funktor/auth.astro`
+- `docs-site/src/pages/ultra/funktor/getting-started.astro`
+- `docs-site/src/pages/ultra/funktor/rest.astro`
+- `docs-site/src/pages/ultra/mutator/getting-started.astro`
+
+**funktor/auth**
+- `funktor/auth/src/jvmMain/kotlin/db/monko/MonkoAuthRecordsRepo.kt`
+- `funktor/auth/src/jvmTest/kotlin/index_jvmTest.kt`
+
+**funktor/cluster**
+- `funktor/cluster/src/jvmMain/kotlin/backgroundjobs/api/BackgroundJobsApi.kt`
+- `funktor/cluster/src/jvmMain/kotlin/locks/VaultGlobalLocksProvider.kt`
+- `funktor/cluster/src/jvmMain/kotlin/storage/api/RandomCacheStorageApi.kt`
+- `funktor/cluster/src/jvmMain/kotlin/storage/api/RandomDataStorageApi.kt`
+- `funktor/cluster/src/jvmMain/kotlin/storage/monko/MonkoRandomCacheRepository.kt`
+- `funktor/cluster/src/jvmMain/kotlin/storage/monko/MonkoRandomDataRepository.kt`
+- `funktor/cluster/src/jvmMain/kotlin/workers/monko/MonkoWorkerHistoryRepo.kt`
+- `funktor/cluster/src/jvmMain/kotlin/workers/services/WorkerHistory.kt`
+- `funktor/cluster/src/jvmMain/kotlin/workers/vault/KarangoWorkerHistoryRepo.kt`
+- `funktor/cluster/src/jvmTest/kotlin/backgroundjobs/BackgroundJobsSpecBase.kt`
+- `funktor/cluster/src/jvmTest/kotlin/locks/VaultGlobalLockProviderSpec.kt`
+
+**funktor/core**
+- `funktor/core/src/jvmMain/kotlin/fixtures/RepoFixtureLoader.kt`
+
+**funktor/logging**
+- `funktor/logging/src/jvmMain/kotlin/karango/KarangoLogEntry.kt`
+- `funktor/logging/src/jvmMain/kotlin/karango/KarangoLogsStorage.kt`
+- `funktor/logging/src/jvmMain/kotlin/monko/MonkoLogsStorage.kt`
+
+**karango/core**
+- `karango/core/src/main/kotlin/cursor.kt`
+- `karango/core/src/main/kotlin/slumber/KarangoCodec.kt`
+- `karango/core/src/main/kotlin/vault/EntityRepository.kt`
+- `karango/core/src/main/kotlin/vault/KarangoDriver.kt`
+
+**karango/ksp**
+- `karango/ksp/src/main/kotlin/KarangoKspProcessor.kt`
+- `karango/ksp/src/test/kotlin/FieldSelectionCodeGenSpec.kt`
+
+**monko/core**
+- `monko/core/src/main/kotlin/MonkoCursor.kt`
+- `monko/core/src/main/kotlin/MonkoRepository.kt`
+- `monko/core/src/test/kotlin/io/peekandpoke/monko/MonkoCursorSpec.kt`
+- `monko/core/src/test/kotlin/io/peekandpoke/monko/MonkoRepositoryHooksSpec.kt`
+
+**monko/ksp**
+- `monko/ksp/src/main/kotlin/MonkoKspProcessor.kt`
+- `monko/ksp/src/test/kotlin/RefCodeGenSpec.kt`
+
+**mutator/core**
+- `mutator/core/src/commonMain/kotlin/index_common.kt`
+- `mutator/core/src/commonTest/kotlin/domain/ShallowMutable.kt`
+- `mutator/core/src/jvmTest/kotlin/ShallowMutableSpec.kt`
+
+**mutator/ksp**
+- `mutator/ksp/src/main/kotlin/MutatorKspPlugins.kt`
+- `mutator/ksp/src/main/kotlin/MutatorKspProcessor.kt`
+- `mutator/ksp/src/main/kotlin/builtin/BuiltInMutableObjectsPlugin.kt`
+
+**src**
+- `src/jvmMain/kotlin/mongo_test.kt`
+
+**ultra/vault**
+- `ultra/vault/src/jvmMain/kotlin/Cursor.kt`
+- `ultra/vault/src/jvmMain/kotlin/Repository.kt`
+- `ultra/vault/src/jvmMain/kotlin/caching.kt`
+- `ultra/vault/src/jvmMain/kotlin/domain.kt`
+- `ultra/vault/src/jvmMain/kotlin/helpers.kt`
+- `ultra/vault/src/jvmMain/kotlin/hooks/TimestampedHook.kt`
+- `ultra/vault/src/jvmMain/kotlin/hooks/TimestampedMillisHook.kt`
+- `ultra/vault/src/jvmMain/kotlin/slumber/LazyRefCodec.kt`
+- `ultra/vault/src/jvmMain/kotlin/slumber/RefCodec.kt`
+- `ultra/vault/src/jvmMain/kotlin/slumber/StoredSlumberer.kt`
+- `ultra/vault/src/jvmMain/kotlin/slumber/VaultSlumberModule.kt`
+- `ultra/vault/src/jvmMain/kotlin/tools/DatabaseGraphBuilder.kt`
+- `ultra/vault/src/jvmTest/kotlin/CursorExtensionsSpec.kt`
+- `ultra/vault/src/jvmTest/kotlin/EntityCacheSpec.kt`
+- `ultra/vault/src/jvmTest/kotlin/RepositoryHooksSpec.kt`
+- `ultra/vault/src/jvmTest/kotlin/StorableSpec.kt`
+
 ## Context
 
 The DBAL layers (vault, karango, monko) have 3 `runBlocking` calls that block coroutine threads, reducing application

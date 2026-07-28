@@ -1,5 +1,34 @@
 # API Endpoint Tests in funktor/all
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `f1342275` | 2026-04-02 | 71 | code quality, bug fixes, unit tests, docs |
+
+Archived by `d71db9f8` (rename only — that commit's code belongs to another task).
+
+### Files changed (71)
+
+Listed by module — full paths via the command below.
+
+- **docs-site/src** — 42 files
+- **kraft/examples** — 15 files
+- **funktor/all** — 6 files
+- **docs-site/public** — 3 files
+- **ultra/semanticui** — 3 files
+- **funktor-demo/server** — 2 files
+
+```
+git show --stat f1342275
+```
+
 ## Status: IMPLEMENTED
 
 All funktor API endpoints are now covered with integration tests. 92 tests across 6 specs, 0 failures.

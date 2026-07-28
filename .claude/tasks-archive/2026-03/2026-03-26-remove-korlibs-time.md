@@ -1,5 +1,43 @@
 # Plan: Remove korlibs-time dependency from ultra/datetime
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `b5a68028` | 2026-03-27 | 151 | docs, tests, bug fixes monko: better dsl funktor: monko repos |
+
+Archived by `d71db9f8` (rename only — that commit's code belongs to another task).
+
+### Files changed (151)
+
+Listed by module — full paths via the command below.
+
+- **ultra/common** — 24 files
+- **ultra/remote** — 19 files
+- **ultra/vault** — 13 files
+- **ultra/log** — 12 files
+- **ultra/security** — 12 files
+- **ultra/cache** — 11 files
+- **funktor/cluster** — 10 files
+- **ultra/reflection** — 10 files
+- **funktor/logging** — 9 files
+- **ultra/maths** — 9 files
+- **funktor/messaging** — 7 files
+- **monko/core** — 7 files
+- **ultra/datetime** — 6 files
+- **buildSrc/src** — 1 files
+- **funktor/auth** — 1 files
+
+```
+git show --stat b5a68028
+```
+
 ## Context
 
 The `korlibs-time` (v6.0.0) dependency exists solely for date/time formatting — 3 `format(String)` methods

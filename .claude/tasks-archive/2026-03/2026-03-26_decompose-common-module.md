@@ -1,5 +1,43 @@
 # Plan: Decompose `:ultra:common` into Focused Modules
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `cf42de10` | 2026-03-25 | 60 | website code splitting, quality, tests, etc. |
+| `22cd033e` | 2026-03-25 | 35 | website code splitting, quality, tests, etc. |
+
+Archived by `d71db9f8`, `7030bec6` (rename only — that commit's code belongs to another task).
+
+Excluded as unrelated bulk work: `ce139fc0` (package renaming to: io.peekandpoke everywher).
+
+### Files changed (91)
+
+Listed by module — full paths via the command below.
+
+- **docs-site/src** — 31 files
+- **ultra/slumber** — 28 files
+- **ultra/kontainer** — 14 files
+- **ultra/common** — 7 files
+- **docs-site/public** — 3 files
+- **docs-site/.vscode** — 2 files
+- **docs-site/.gitignore** — 1 files
+- **docs-site/README.md** — 1 files
+- **docs-site/astro.config.mjs** — 1 files
+- **docs-site/package.json** — 1 files
+- **docs-site/pnpm-lock.yaml** — 1 files
+- **docs-site/tsconfig.json** — 1 files
+
+```
+git show --stat cf42de10 22cd033e
+```
+
 ## Goal
 
 Break the monolithic `:ultra:common` module into smaller, focused modules so that consumers

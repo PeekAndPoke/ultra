@@ -4,6 +4,26 @@
 **Plan:** — (bug fix)
 **Security-critical:** no
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `a8195362` | 2026-07-19 | 2 | fix(karango): await collection creation to end first-run 404 race |
+
+Archived by `d71db9f8` (rename only — that commit's code belongs to another task).
+
+### Files changed (2)
+
+**karango/core**
+- `karango/core/src/main/kotlin/vault/KarangoDriver.kt`
+- `karango/core/src/test/kotlin/e2e/E2E-EnsureEntityCollection-Spec.kt`
+
 ## Symptom
 
 On the FIRST run of any brand-new collection, app startup failed:

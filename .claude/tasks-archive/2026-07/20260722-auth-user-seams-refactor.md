@@ -6,6 +6,46 @@ three reviewers; 1,028 backend tests green
 **Security-critical:** YES (user, 2026-07-22: "this is our security infra and we need this absolutely
 bullet-proof") — even though behavior-preserving, this touches the auth core.
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `82601e91` | 2026-07-22 | 20 | refactor(auth): AuthUser bound + AuthUserAdapter — extract the USER seams from AuthRealm |
+
+### Files changed (20)
+
+**funktor-demo/server**
+- `funktor-demo/server/src/main/kotlin/admin/AdminUser.kt`
+- `funktor-demo/server/src/main/kotlin/admin/AdminUserRealm.kt`
+- `funktor-demo/server/src/main/kotlin/b2b/B2bRealm.kt`
+- `funktor-demo/server/src/main/kotlin/b2b/B2bUser.kt`
+- `funktor-demo/server/src/main/kotlin/operator/OperatorRealm.kt`
+- `funktor-demo/server/src/main/kotlin/operator/OperatorUser.kt`
+
+**funktor/all**
+- `funktor/all/src/jvmTest/kotlin/TestUserRealm.kt`
+
+**funktor/auth**
+- `funktor/auth/src/commonMain/kotlin/model/AuthUser.kt`
+- `funktor/auth/src/commonMain/kotlin/model/LanguageSettings.kt`
+- `funktor/auth/src/jvmMain/kotlin/AuthRealm.kt`
+- `funktor/auth/src/jvmMain/kotlin/AuthSystem.kt`
+- `funktor/auth/src/jvmMain/kotlin/AuthUserAdapter.kt`
+- `funktor/auth/src/jvmMain/kotlin/provider/AuthProvider.kt`
+- `funktor/auth/src/jvmMain/kotlin/provider/EmailAndPasswordAuth.kt`
+- `funktor/auth/src/jvmMain/kotlin/provider/GithubSsoAuth.kt`
+- `funktor/auth/src/jvmMain/kotlin/provider/GoogleSsoAuth.kt`
+- `funktor/auth/src/jvmTest/kotlin/index_jvmTest.kt`
+- `funktor/auth/src/jvmTest/kotlin/provider/EmailAndPasswordAuthSpec.kt`
+- `funktor/auth/src/jvmTest/kotlin/provider/GithubSsoAuthSpec.kt`
+- `funktor/auth/src/jvmTest/kotlin/provider/GoogleSsoAuthSpec.kt`
+
 ## Review protocol (user directive, 2026-07-22)
 
 Deep review LOOP, not a single pass — cost is explicitly not a constraint:

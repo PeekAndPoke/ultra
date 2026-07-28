@@ -1,5 +1,42 @@
 # User-Specific API Access Matrix (ApiAcl)
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `51e01918` | 2026-04-06 | 43 | api acl info for frontend |
+| `1e8df5da` | 2026-04-05 | 1 | api acl info for frontend |
+| `f1342275` | 2026-04-02 | 71 | code quality, bug fixes, unit tests, docs |
+
+Archived by `d71db9f8`, `28973c5e` (rename only — that commit's code belongs to another task).
+
+### Files changed (113)
+
+Listed by module — full paths via the command below.
+
+- **docs-site/src** — 42 files
+- **monko/core** — 22 files
+- **kraft/examples** — 15 files
+- **funktor/rest** — 8 files
+- **ultra/cache** — 8 files
+- **funktor/all** — 6 files
+- **docs-site/public** — 3 files
+- **ultra/semanticui** — 3 files
+- **funktor-demo/server** — 2 files
+- **funktor/auth** — 2 files
+- **funktor/inspect** — 1 files
+- **ultra/remote** — 1 files
+
+```
+git show --stat 51e01918 1e8df5da f1342275
+```
+
 ## 1. Problem Statement
 
 The `authorize {}` DSL in Funktor is **server-side only** (`funktor/rest/src/jvmMain/`). Frontend applications (Kraft

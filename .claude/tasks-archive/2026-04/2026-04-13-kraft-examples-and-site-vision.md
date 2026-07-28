@@ -5,6 +5,80 @@
 
 ---
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `520913d4` | 2026-04-05 | 4 | es2015 migration pixijs addon |
+| `22cd033e` | 2026-03-25 | 35 | website code splitting, quality, tests, etc. |
+
+Archived by `d71db9f8`, `28973c5e` (rename only — that commit's code belongs to another task).
+
+### Files changed (37)
+
+**docs-site/.gitignore**
+- `docs-site/.gitignore`
+
+**docs-site/.vscode**
+- `docs-site/.vscode/extensions.json`
+- `docs-site/.vscode/launch.json`
+
+**docs-site/README.md**
+- `docs-site/README.md`
+
+**docs-site/astro.config.mjs**
+- `docs-site/astro.config.mjs`
+
+**docs-site/package.json**
+- `docs-site/package.json`
+
+**docs-site/pnpm-lock.yaml**
+- `docs-site/pnpm-lock.yaml`
+
+**docs-site/public**
+- `docs-site/public/favicon.ico`
+- `docs-site/public/favicon.svg`
+- `docs-site/public/llms.txt`
+- `docs-site/public/llms/kraft.md`
+
+**docs-site/src**
+- `docs-site/src/_drafts/addons.astro`
+- `docs-site/src/_drafts/components.astro`
+- `docs-site/src/_drafts/forms.astro`
+- `docs-site/src/_drafts/getting-started.astro`
+- `docs-site/src/_drafts/routing.astro`
+- `docs-site/src/_drafts/semantic-ui.astro`
+- `docs-site/src/_drafts/state.astro`
+- `docs-site/src/components/Nav.astro`
+- `docs-site/src/data/kraft-sidebar.ts`
+- `docs-site/src/data/site.ts`
+- `docs-site/src/layouts/BaseLayout.astro`
+- `docs-site/src/layouts/DocsLayout.astro`
+- `docs-site/src/layouts/KraftDocsLayout.astro`
+- `docs-site/src/pages/index.astro`
+- `docs-site/src/pages/ultra/index.astro`
+- `docs-site/src/pages/ultra/kraft/addons.astro`
+- `docs-site/src/pages/ultra/kraft/components.astro`
+- `docs-site/src/pages/ultra/kraft/forms.astro`
+- `docs-site/src/pages/ultra/kraft/getting-started.astro`
+- `docs-site/src/pages/ultra/kraft/index.astro`
+- `docs-site/src/pages/ultra/kraft/routing.astro`
+- `docs-site/src/pages/ultra/kraft/semantic-ui.astro`
+- `docs-site/src/pages/ultra/kraft/state.astro`
+- `docs-site/src/styles/global.css`
+
+**docs-site/tsconfig.json**
+- `docs-site/tsconfig.json`
+
+**ultra/slumber**
+- `ultra/slumber/src/jvmMain/kotlin/Codec.kt`
+
 ## White Hat — Facts & Context
 
 - 10 pages total, 8 Kraft doc pages with ~1950 lines of content and 84 static code blocks

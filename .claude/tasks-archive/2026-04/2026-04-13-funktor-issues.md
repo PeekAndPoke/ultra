@@ -6,6 +6,52 @@
 
 ---
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `36e0e062` | 2026-04-13 | 22 | release v0.106.0 |
+| `07cb403f` | 2026-03-31 | 4 | code quality, bug fixes, unit tests |
+| `b540e6a5` | 2026-03-27 | 28 | docs, tests, bug fixes monko: better dsl funktor: monko repos |
+| `b5a68028` | 2026-03-27 | 151 | docs, tests, bug fixes monko: better dsl funktor: monko repos |
+
+Archived by `d71db9f8`, `28973c5e` (rename only — that commit's code belongs to another task).
+
+### Files changed (194)
+
+Listed by module — full paths via the command below.
+
+- **ultra/common** — 24 files
+- **docs-site/src** — 20 files
+- **ultra/remote** — 19 files
+- **funktor/cluster** — 17 files
+- **ultra/vault** — 13 files
+- **ultra/log** — 12 files
+- **ultra/security** — 12 files
+- **ultra/cache** — 11 files
+- **funktor/logging** — 10 files
+- **ultra/reflection** — 10 files
+- **ultra/maths** — 9 files
+- **funktor/messaging** — 8 files
+- **monko/core** — 8 files
+- **funktor/auth** — 7 files
+- **ultra/datetime** — 6 files
+- **(root)** — 2 files
+- **docs-site/public** — 2 files
+- **karango/core** — 2 files
+- **buildSrc/src** — 1 files
+- **funktor-demo/server** — 1 files
+
+```
+git show --stat 36e0e062 07cb403f b540e6a5 b5a68028
+```
+
 ## Summary
 
 | Category                | CRITICAL | HIGH  | MEDIUM | LOW   | Fixed  |

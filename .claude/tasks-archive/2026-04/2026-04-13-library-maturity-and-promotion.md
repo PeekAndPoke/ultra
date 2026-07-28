@@ -6,6 +6,81 @@
 
 ---
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `520913d4` | 2026-04-05 | 4 | es2015 migration pixijs addon |
+| `172c4f4f` | 2026-04-03 | 12 | code quality, bug fixes, unit tests, docs cache |
+| `2544b7a0` | 2026-04-02 | 1 | code quality, bug fixes, unit tests, docs |
+| `f1342275` | 2026-04-02 | 71 | code quality, bug fixes, unit tests, docs |
+| `b5a68028` | 2026-03-27 | 151 | docs, tests, bug fixes monko: better dsl funktor: monko repos |
+| `b381bbcb` | 2026-03-26 | 18 | docs, tests, bug fixes |
+| `7030bec6` | 2026-03-26 | 10 | docs |
+| `f02ddb7b` | 2026-03-25 | 41 | docs, docs site |
+| `16dc53d9` | 2026-03-25 | 41 | docs, docs site |
+| `7ad1d1b8` | 2026-03-25 | 13 | website code splitting, quality, tests, etc. |
+| `22cd033e` | 2026-03-25 | 35 | website code splitting, quality, tests, etc. |
+
+Archived by `d71db9f8`, `28973c5e` (rename only — that commit's code belongs to another task).
+
+### Files changed (364)
+
+Listed by module — full paths via the command below.
+
+- **docs-site/src** — 72 files
+- **ultra/slumber** — 33 files
+- **ultra/common** — 24 files
+- **ultra/remote** — 19 files
+- **ultra/cache** — 16 files
+- **kraft/examples** — 15 files
+- **ultra/vault** — 13 files
+- **mutator/core** — 12 files
+- **ultra/log** — 12 files
+- **ultra/security** — 12 files
+- **funktor/cluster** — 10 files
+- **kraft/core-tests** — 10 files
+- **ultra/reflection** — 10 files
+- **docs** — 9 files
+- **docs-site/public** — 9 files
+- **funktor/logging** — 9 files
+- **karango/core** — 9 files
+- **ultra/maths** — 9 files
+- **funktor/messaging** — 7 files
+- **monko/core** — 7 files
+- **funktor/all** — 6 files
+- **kraft/testing** — 6 files
+- **ultra/datetime** — 6 files
+- **(root)** — 3 files
+- **mutator/ksp** — 3 files
+- **ultra/semanticui** — 3 files
+- **docs-site/.vscode** — 2 files
+- **funktor-demo/server** — 2 files
+- **kraft/core** — 2 files
+- **ultra/kontainer** — 2 files
+- **buildSrc/src** — 1 files
+- **console** — 1 files
+- **docs-site/.gitignore** — 1 files
+- **docs-site/README.md** — 1 files
+- **docs-site/astro.config.mjs** — 1 files
+- **docs-site/package.json** — 1 files
+- **docs-site/pnpm-lock.yaml** — 1 files
+- **docs-site/tsconfig.json** — 1 files
+- **funktor/auth** — 1 files
+- **karango/README.MD** — 1 files
+- **kraft/README.MD** — 1 files
+- **ultra/streams** — 1 files
+
+```
+git show --stat 520913d4 172c4f4f 2544b7a0 f1342275 b5a68028 b381bbcb 7030bec6 f02ddb7b 16dc53d9 7ad1d1b8 22cd033e
+```
+
 ## What Changed Since Last Assessment (April 4)
 
 - **Kraft addon ecosystem shipped** — all 11 addons migrated from static `@JsModule` imports to the new

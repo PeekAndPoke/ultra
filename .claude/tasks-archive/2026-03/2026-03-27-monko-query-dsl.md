@@ -5,6 +5,76 @@
 
 ---
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+> **Attribution caveat.** No commit maps cleanly to this task — the entries below also carried unrelated work (a repo-wide change or a bulk task-doc move), so treat the file list as approximate.
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `d71db9f8` | 2026-07-20 | 19 | funktor security vault structured concurrency fix |
+| `3695944c` | 2026-03-27 | 14 | docs, tests, bug fixes monko: better dsl funktor: monko repos funktor: demo |
+
+### Files changed (33)
+
+**(root)**
+- `CLAUDE.md`
+
+**funktor-demo/adminapp**
+- `funktor-demo/adminapp/src/jsMain/kotlin/api.kt`
+- `funktor-demo/adminapp/src/jsMain/kotlin/layout/LoggedInLayout.kt`
+- `funktor-demo/adminapp/src/jsMain/kotlin/nav.kt`
+- `funktor-demo/adminapp/src/jsMain/kotlin/pages/showcase/CoreFeaturesPage.kt`
+- `funktor-demo/adminapp/src/jsMain/kotlin/pages/showcase/RestFeaturesPage.kt`
+
+**funktor-demo/common**
+- `funktor-demo/common/build.gradle.kts`
+- `funktor-demo/common/src/commonMain/kotlin/showcase/CoreShowcaseModels.kt`
+- `funktor-demo/common/src/commonMain/kotlin/showcase/RestShowcaseModels.kt`
+- `funktor-demo/common/src/commonMain/kotlin/showcase/ShowcaseApiClient.kt`
+
+**funktor-demo/server**
+- `funktor-demo/server/src/main/kotlin/api/showcase/CoreShowcaseApi.kt`
+- `funktor-demo/server/src/main/kotlin/api/showcase/RestShowcaseApi.kt`
+- `funktor-demo/server/src/main/kotlin/api/showcase/ShowcaseApiFeature.kt`
+- `funktor-demo/server/src/main/kotlin/kontainer.kt`
+- `funktor-demo/server/src/main/kotlin/showcase/ShowcaseModule.kt`
+
+**funktor/auth**
+- `funktor/auth/src/jvmTest/kotlin/index_jvmTest.kt`
+
+**funktor/core**
+- `funktor/core/src/jvmMain/kotlin/config/ktor/KtorConfig.kt`
+- `funktor/core/src/jvmMain/kotlin/core_module.kt`
+- `funktor/core/src/jvmMain/kotlin/lifecycle/VaultHookScopeBinder.kt`
+- `funktor/core/src/jvmTest/kotlin/config/ktor/KtorConfigSpec.kt`
+
+**funktor/rest**
+- `funktor/rest/src/jvmMain/kotlin/ApiStatusPages.kt`
+- `funktor/rest/src/jvmTest/kotlin/ApiStatusPagesSpec.kt`
+
+**karango/core**
+- `karango/core/src/main/kotlin/vault/EntityRepository.kt`
+- `karango/core/src/main/kotlin/vault/KarangoDriver.kt`
+- `karango/core/src/test/kotlin/e2e/common.kt`
+- `karango/core/src/test/kotlin/e2e/crud/E2E-Crud-HookScope-Spec.kt`
+
+**monko/core**
+- `monko/core/src/main/kotlin/MonkoDriver.kt`
+- `monko/core/src/main/kotlin/MonkoRepository.kt`
+
+**ultra/vault**
+- `ultra/vault/src/jvmMain/kotlin/Repository.kt`
+- `ultra/vault/src/jvmMain/kotlin/VaultHookScope.kt`
+- `ultra/vault/src/jvmMain/kotlin/vault_module.kt`
+- `ultra/vault/src/jvmTest/kotlin/VaultHookScopeSpec.kt`
+- `ultra/vault/src/jvmTest/kotlin/VaultHookScopeWiringSpec.kt`
+
 ## Context
 
 Monko queries currently require manual string extraction via `field {}` and raw `Filters.eq(...)` calls.

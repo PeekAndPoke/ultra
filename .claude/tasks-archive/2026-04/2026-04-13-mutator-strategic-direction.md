@@ -6,6 +6,81 @@
 
 ---
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `f02ddb7b` | 2026-03-25 | 41 | docs, docs site |
+
+Archived by `d71db9f8`, `28973c5e` (rename only — that commit's code belongs to another task).
+
+### Files changed (41)
+
+**docs-site/src**
+- `docs-site/src/components/Nav.astro`
+- `docs-site/src/data/mutator-sidebar.ts`
+- `docs-site/src/data/site.ts`
+- `docs-site/src/layouts/DocsLayout.astro`
+- `docs-site/src/pages/index.astro`
+- `docs-site/src/pages/ultra/index.astro`
+- `docs-site/src/pages/ultra/mutator/collections.astro`
+- `docs-site/src/pages/ultra/mutator/core-concepts.astro`
+- `docs-site/src/pages/ultra/mutator/examples.astro`
+- `docs-site/src/pages/ultra/mutator/getting-started.astro`
+- `docs-site/src/pages/ultra/mutator/index.astro`
+- `docs-site/src/pages/ultra/mutator/sealed-classes.astro`
+
+**karango/README.MD**
+- `karango/README.MD`
+
+**karango/core**
+- `karango/core/src/main/kotlin/aql/operator_boolean.kt`
+- `karango/core/src/test/kotlin/aql/CollectSpec.kt`
+- `karango/core/src/test/kotlin/aql/LimitSpec.kt`
+- `karango/core/src/test/kotlin/aql/OperationBooleanSpec.kt`
+- `karango/core/src/test/kotlin/aql/SortSpec.kt`
+- `karango/core/src/test/kotlin/e2e/crud/E2E-Crud-BatchInsert-Spec.kt`
+- `karango/core/src/test/kotlin/e2e/crud/E2E-Crud-Count-Spec.kt`
+- `karango/core/src/test/kotlin/e2e/crud/E2E-Crud-FindByIds-Spec.kt`
+- `karango/core/src/test/kotlin/e2e/crud/E2E-Crud-ModifyById-Spec.kt`
+
+**kraft/README.MD**
+- `kraft/README.MD`
+
+**mutator/core**
+- `mutator/core/docs/mutator::docs/index.md`
+- `mutator/core/src/commonMain/kotlin/ListMutator.kt`
+- `mutator/core/src/commonMain/kotlin/MapMutator.kt`
+- `mutator/core/src/commonMain/kotlin/SetMutator.kt`
+- `mutator/core/src/commonTest/kotlin/domain/PersonWithNullableAddress.kt`
+- `mutator/core/src/commonTest/kotlin/domain/WithCollections.kt`
+- `mutator/core/src/jvmTest/kotlin/ListMutatorHelpersSpec.kt`
+- `mutator/core/src/jvmTest/kotlin/ListMutatorSpec.kt`
+- `mutator/core/src/jvmTest/kotlin/MutatorBaseSpec.kt`
+- `mutator/core/src/jvmTest/kotlin/NullableMutatorSpec.kt`
+- `mutator/core/src/jvmTest/kotlin/SetMutatorSpec.kt`
+- `mutator/core/src/jvmTest/kotlin/e2e/CollectionPropertiesSpec.kt`
+
+**mutator/ksp**
+- `mutator/ksp/src/main/kotlin/MutatorCodeBlocks.kt`
+- `mutator/ksp/src/main/kotlin/MutatorKspProcessor.kt`
+- `mutator/ksp/src/main/kotlin/builtin/BuiltInMutableObjectsPlugin.kt`
+
+**ultra/kontainer**
+- `ultra/kontainer/README.MD`
+
+**ultra/slumber**
+- `ultra/slumber/README.MD`
+
+**ultra/streams**
+- `ultra/streams/README.MD`
+
 ## White Hat — Facts & Context
 
 - Mutator uses KSP to generate stateful mutable wrappers on immutable data classes with `isModified()`, `commit()`, and

@@ -5,6 +5,34 @@
 
 ---
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `aaae2206` | 2026-03-28 | 6 | docs-site |
+
+Archived by `d71db9f8`, `6f0c35ff` (rename only — that commit's code belongs to another task).
+
+### Files changed (6)
+
+**docs-site/package.json**
+- `docs-site/package.json`
+
+**docs-site/pnpm-lock.yaml**
+- `docs-site/pnpm-lock.yaml`
+
+**docs-site/src**
+- `docs-site/src/components/HilbertBackground.astro`
+- `docs-site/src/components/Nav.astro`
+- `docs-site/src/pages/index.astro`
+- `docs-site/src/styles/global.css`
+
 ## White Hat — Facts & Context
 
 - **Current state**: The docs site uses only basic CSS hover transitions. No animations, no WebGL, no scroll effects.

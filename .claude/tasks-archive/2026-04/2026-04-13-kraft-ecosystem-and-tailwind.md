@@ -6,6 +6,30 @@
 
 ---
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `520913d4` | 2026-04-05 | 4 | es2015 migration pixijs addon |
+
+Archived by `d71db9f8`, `28973c5e` (rename only — that commit's code belongs to another task).
+
+### Files changed (4)
+
+**docs-site/public**
+- `docs-site/public/llms.txt`
+- `docs-site/public/llms/kraft.md`
+
+**docs-site/src**
+- `docs-site/src/data/site.ts`
+- `docs-site/src/pages/ultra/kraft/addons.astro`
+
 ## Six Hats Analysis
 
 ### White Hat — Facts & Context

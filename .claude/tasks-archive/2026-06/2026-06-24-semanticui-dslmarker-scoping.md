@@ -1,5 +1,53 @@
 # Semantic UI DSL: fix @DslMarker scoping + remove dead code — DONE (2026-06-24)
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `02c772f7` | 2026-06-25 | 20 | moved files to match package names |
+
+Archived by `d71db9f8` (rename only — that commit's code belongs to another task).
+
+### Files changed (20)
+
+**(root)**
+- `gradle.properties`
+- `settings.gradle`
+
+**kraft/addons**
+- `kraft/addons/datetime/README.md`
+- `kraft/addons/datetime/build.gradle.kts`
+- `kraft/addons/datetime/gradle.properties`
+- `kraft/addons/datetime/src/jsMain/kotlin/timezones.kt`
+- `kraft/addons/datetime/src/jsTest/kotlin/TimezonesSpec.kt`
+
+**kraft/core**
+- `kraft/core/src/jsMain/kotlin/index-jsMain.kt`
+
+**kraft/examples**
+- `kraft/examples/fomanticui/build.gradle.kts`
+- `kraft/examples/fomanticui/src/jsMain/kotlin/index.kt`
+
+**ultra/datetime**
+- `ultra/datetime/build.gradle.kts`
+
+**ultra/semanticui**
+- `ultra/semanticui/src/commonMain/kotlin/SemanticEmoji.kt`
+- `ultra/semanticui/src/commonMain/kotlin/SemanticFlag.kt`
+- `ultra/semanticui/src/commonMain/kotlin/SemanticIcon.kt`
+- `ultra/semanticui/src/commonMain/kotlin/SemanticTag.kt`
+- `ultra/semanticui/src/commonMain/kotlin/annotations.kt`
+- `ultra/semanticui/src/commonMain/kotlin/extract_flags.js`
+- `ultra/semanticui/src/commonMain/kotlin/extract_icons.js`
+- `ultra/semanticui/src/commonMain/kotlin/index.kt`
+- `ultra/semanticui/src/commonMain/kotlin/internals.kt`
+
 ## Context
 
 Started as a bundle-size question (Kraft + kotlinx/html + Semantic UI DSL). Investigation

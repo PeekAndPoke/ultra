@@ -5,6 +5,81 @@
 **Security-critical:** YES — the org-isolation caller-binding boundary. Three producers and one
 consumer must flip ATOMICALLY; miss the consumer and every org-scoped request 404s.
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `ffeedeb5` | 2026-07-25 | 6 | refactor(rest): remove the dead org auth rules |
+| `90eed31b` | 2026-07-25 | 40 | feat(security): OrgId value class + session org id -> collection/key |
+
+Archived by `0f29d239` (rename only — that commit's code belongs to another task).
+
+### Files changed (40)
+
+**docs-site/src**
+- `docs-site/src/data/llms/funktor.md`
+- `docs-site/src/pages/ultra/funktor/rest.astro`
+
+**funktor-demo/b2b-app**
+- `funktor-demo/b2b-app/src/jsMain/kotlin/pages/DashboardPage.kt`
+- `funktor-demo/b2b-app/src/jsMain/kotlin/pages/MembersPage.kt`
+
+**funktor-demo/b2b2c-app**
+- `funktor-demo/b2b2c-app/src/jsMain/kotlin/pages/DashboardPage.kt`
+
+**funktor-demo/server**
+- `funktor-demo/server/src/main/kotlin/b2b/B2bRealm.kt`
+- `funktor-demo/server/src/main/kotlin/b2b2c/B2b2cRealm.kt`
+- `funktor-demo/server/src/main/kotlin/saas_org_hooks.kt`
+- `funktor-demo/server/src/test/kotlin/B2bAuthFlowTest.kt`
+
+**funktor/all**
+- `funktor/all/src/jvmTest/kotlin/OrgIsolationE2eSpec.kt`
+
+**funktor/auth**
+- `funktor/auth/src/commonMain/kotlin/model/AuthOrgRef.kt`
+- `funktor/auth/src/commonMain/kotlin/model/AuthSelectOrgRequest.kt`
+- `funktor/auth/src/jsMain/kotlin/AuthState.kt`
+- `funktor/auth/src/jsMain/kotlin/pages/LoginController.kt`
+- `funktor/auth/src/jvmMain/kotlin/AuthRealm.kt`
+- `funktor/auth/src/jvmMain/kotlin/AuthSystem.kt`
+
+**funktor/rest**
+- `funktor/rest/src/jvmMain/kotlin/auth/AuthRule.kt`
+- `funktor/rest/src/jvmMain/kotlin/auth/AuthRuleBuilder.kt`
+- `funktor/rest/src/jvmMain/kotlin/auth/FloorAuthRuleBuilder.kt`
+- `funktor/rest/src/jvmTest/kotlin/auth/AuthPhaseSpec.kt`
+
+**funktor/saas**
+- `funktor/saas/src/commonMain/kotlin/model/OrgModel.kt`
+- `funktor/saas/src/jvmMain/kotlin/OrgMemberships.kt`
+- `funktor/saas/src/jvmMain/kotlin/isolation/OrgIsolationGuard.kt`
+- `funktor/saas/src/jvmTest/kotlin/OrgMembersStorageBaseSpec.kt`
+- `funktor/saas/src/jvmTest/kotlin/isolation/OrgIsolationSpec.kt`
+
+**ultra/security**
+- `ultra/security/src/commonMain/kotlin/user/OrgId.kt`
+- `ultra/security/src/commonMain/kotlin/user/OrgMembership.kt`
+- `ultra/security/src/commonMain/kotlin/user/OrgPermissions.kt`
+- `ultra/security/src/commonMain/kotlin/user/UserId.kt`
+- `ultra/security/src/commonMain/kotlin/user/UserPermissions.kt`
+- `ultra/security/src/commonMain/kotlin/user/id_chars.kt`
+- `ultra/security/src/jvmMain/kotlin/jwt/builder.kt`
+- `ultra/security/src/jvmMain/kotlin/jwt/extract.kt`
+- `ultra/security/src/jvmTest/kotlin/jwt/ExtractUserSpec.kt`
+- `ultra/security/src/jvmTest/kotlin/jwt/JwtGeneratorSpec.kt`
+- `ultra/security/src/jvmTest/kotlin/jwt/JwtPermissionsRoundTripSpec.kt`
+- `ultra/security/src/jvmTest/kotlin/user/OrgIdSpec.kt`
+- `ultra/security/src/jvmTest/kotlin/user/OrgPermissionsSpec.kt`
+- `ultra/security/src/jvmTest/kotlin/user/OrgRoleSpec.kt`
+- `ultra/security/src/jvmTest/kotlin/user/UserPermissionsSpec.kt`
+
 ## User decision driving this (2026-07-25)
 
 The project-wide rule: **Vault `_id` = `collection/key`, `_key` = bare key; anything naming another

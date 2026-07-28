@@ -4,6 +4,38 @@
 **Plan:** `.claude/tasks/20260724-value-class-ids-migration.md` → Step 2
 **Security-critical:** yes (identity field; feeds session lookup, ownership checks, CSRF hash key)
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `14753aba` | 2026-07-25 | 74 | feat(security): thread UserId value class end-to-end + fail-closed JWT identity |
+
+Archived by `0f29d239` (rename only — that commit's code belongs to another task).
+
+### Files changed (74)
+
+Listed by module — full paths via the command below.
+
+- **funktor/auth** — 18 files
+- **ultra/security** — 15 files
+- **funktor/rest** — 12 files
+- **funktor-demo/server** — 10 files
+- **funktor/saas** — 7 files
+- **funktor-demo/common** — 6 files
+- **funktor/all** — 4 files
+- **funktor-demo/b2b-app** — 1 files
+- **funktor/insights** — 1 files
+
+```
+git show --stat 14753aba
+```
+
 ## Spec
 
 Wrap the user-identity `String` in `@JvmInline value class UserId`, threaded through every signature

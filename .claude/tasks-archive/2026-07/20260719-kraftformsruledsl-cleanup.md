@@ -7,6 +7,38 @@ definitions, all applications, dangling imports. Forms tests green per the commi
 **Plan:** — (housekeeping)
 **Security-critical:** no
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `53776a47` | 2026-07-19 | 8 | feat(saas): subdomain-safe slug validation for orgs and branches |
+
+Archived by `62c25eb1` (rename only — that commit's code belongs to another task).
+
+### Files changed (8)
+
+**funktor-demo/ops-app**
+- `funktor-demo/ops-app/src/jsMain/kotlin/pages/OrgEditPage.kt`
+
+**funktor/saas**
+- `funktor/saas/src/commonMain/kotlin/domain/Slugs.kt`
+- `funktor/saas/src/commonTest/kotlin/SlugsSpec.kt`
+- `funktor/saas/src/jvmMain/kotlin/api/OrgsApi.kt`
+- `funktor/saas/src/jvmMain/kotlin/domain/slugs.kt`
+
+**kraft/core**
+- `kraft/core/src/jsMain/kotlin/forms/validation/strings/string_rules_extra.kt`
+
+**ultra/common**
+- `ultra/common/src/commonMain/kotlin/regexes.kt`
+- `ultra/common/src/commonMain/kotlin/strings.kt`
+
 ## What
 
 `@KraftFormsRuleDsl` (declared in `kraft/core/src/jsMain/kotlin/forms/forms.kt`) is applied to ~63

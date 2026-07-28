@@ -1,5 +1,33 @@
 # Funktor-Demo Showcase: FunktorConf
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `3cf75f2d` | 2026-03-30 | 101 | funktor:inspect funktor-demo |
+| `3695944c` | 2026-03-27 | 14 | docs, tests, bug fixes monko: better dsl funktor: monko repos funktor: demo |
+
+Archived by `d71db9f8`, `28973c5e` (rename only — that commit's code belongs to another task).
+
+### Files changed (111)
+
+Listed by module — full paths via the command below.
+
+- **funktor/inspect** — 77 files
+- **funktor-demo/server** — 15 files
+- **funktor-demo/adminapp** — 13 files
+- **funktor-demo/common** — 6 files
+
+```
+git show --stat 3cf75f2d 3695944c
+```
+
 ## Context
 
 The funktor-demo currently only has technical showcase pages (retry, echo, cluster ops) but no real-world domain

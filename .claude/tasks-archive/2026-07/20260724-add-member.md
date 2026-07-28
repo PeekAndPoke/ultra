@@ -9,6 +9,41 @@ follow-ups were doc/test-only, applied). The next leaf off the b2b membership ar
 **Security-critical:** YES — a new membership-mutation surface (who can add whom, with what roles).
 Extend `20260718-redteam-saas-orgs.md` at review.
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `6c92fa83` | 2026-07-24 | 11 | feat(saas+demo): add-member endpoint + reactivation (b2b leaf) + framework read |
+
+Archived by `0f29d239` (rename only — that commit's code belongs to another task).
+
+### Files changed (11)
+
+**funktor-demo/b2b-app**
+- `funktor-demo/b2b-app/src/jsMain/kotlin/pages/AddMemberModal.kt`
+- `funktor-demo/b2b-app/src/jsMain/kotlin/pages/MemberRolesModal.kt`
+- `funktor-demo/b2b-app/src/jsMain/kotlin/pages/MembersPage.kt`
+
+**funktor-demo/common**
+- `funktor-demo/common/src/commonMain/kotlin/b2b/B2bMembersApiClient.kt`
+- `funktor-demo/common/src/commonMain/kotlin/b2b/B2bMembersModels.kt`
+
+**funktor-demo/server**
+- `funktor-demo/server/src/main/kotlin/b2b/B2bMembersApi.kt`
+- `funktor-demo/server/src/test/kotlin/B2bMembersApiTest.kt`
+
+**funktor/saas**
+- `funktor/saas/src/jvmMain/kotlin/storage/OrgMembersStorage.kt`
+- `funktor/saas/src/jvmMain/kotlin/storage/karango/KarangoOrgMembersRepo.kt`
+- `funktor/saas/src/jvmMain/kotlin/storage/monko/MonkoOrgMembersRepo.kt`
+- `funktor/saas/src/jvmTest/kotlin/OrgMembersStorageBaseSpec.kt`
+
 ## Governing principles (user, 2026-07-24) — see memory `layer-placement-nearest-leaf`
 - **Nearest-to-leaf placement.** Member administration is pure b2b → the ADD endpoint + UI live in the
   b2b demo app. Only genuinely cross-cutting primitives go in framework, and only after real

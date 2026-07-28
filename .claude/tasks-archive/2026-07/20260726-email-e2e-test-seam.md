@@ -13,6 +13,54 @@
 **Security-critical:** yes — one half is a fail-closed guard on whether a test run can reach a real
 email provider; the other half is the first test that asserts a password-reset mail is sent at all.
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `40a57e17` | 2026-07-27 | 22 | feat(messaging): compose the email chain in the framework; capture mail in tests |
+
+### Files changed (22)
+
+**docs-site/src**
+- `docs-site/src/pages/ultra/funktor/messaging.astro`
+
+**funktor-demo/server**
+- `funktor-demo/server/src/main/kotlin/kontainer.kt`
+
+**funktor/all**
+- `funktor/all/src/jvmMain/kotlin/funktor.kt`
+- `funktor/all/src/jvmTest/kotlin/FunktorApiSpec.kt`
+- `funktor/all/src/jvmTest/kotlin/PasswordResetEmailE2eSpec.kt`
+
+**funktor/auth**
+- `funktor/auth/src/jvmTest/kotlin/index_jvmTest.kt`
+
+**funktor/messaging**
+- `funktor/messaging/src/jvmMain/kotlin/index_jvm.kt`
+- `funktor/messaging/src/jvmMain/kotlin/overrides.kt`
+- `funktor/messaging/src/jvmMain/kotlin/senders/CapturedEmails.kt`
+- `funktor/messaging/src/jvmMain/kotlin/senders/CapturingEmailSender.kt`
+- `funktor/messaging/src/jvmMain/kotlin/senders/ConfiguredEmailSender.kt`
+- `funktor/messaging/src/jvmMain/kotlin/senders/ExampleDomainsIgnoringEmailSender.kt`
+- `funktor/messaging/src/jvmMain/kotlin/senders/senders.kt`
+- `funktor/messaging/src/jvmMain/kotlin/storage/EmailStoring.kt`
+- `funktor/messaging/src/jvmTest/kotlin/FunktorMessagingBuilderSpec.kt`
+- `funktor/messaging/src/jvmTest/kotlin/MailingOverridesSpec.kt`
+- `funktor/messaging/src/jvmTest/kotlin/MailingTestModeGuardSpec.kt`
+- `funktor/messaging/src/jvmTest/kotlin/index_jvmTest.kt`
+- `funktor/messaging/src/jvmTest/kotlin/senders/ApplyDevConfigSpec.kt`
+- `funktor/messaging/src/jvmTest/kotlin/senders/CapturedEmailsSpec.kt`
+- `funktor/messaging/src/jvmTest/kotlin/storage/EmailStoringSpec.kt`
+
+**funktor/testing**
+- `funktor/testing/src/jvmMain/kotlin/setup.kt`
+
 ## Why
 
 Two problems, one fix.

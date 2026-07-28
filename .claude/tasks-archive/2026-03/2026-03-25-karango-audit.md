@@ -1,5 +1,47 @@
 # Karango Library Audit: Code Fixes, KDoc, Missing Tests — COMPLETED
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `b540e6a5` | 2026-03-27 | 28 | docs, tests, bug fixes monko: better dsl funktor: monko repos |
+| `514fad5e` | 2026-03-25 | 11 | docs, docs site v0.104.0 |
+| `f02ddb7b` | 2026-03-25 | 41 | docs, docs site |
+
+Archived by `d71db9f8` (rename only — that commit's code belongs to another task).
+
+### Files changed (79)
+
+Listed by module — full paths via the command below.
+
+- **karango/core** — 19 files
+- **docs-site/src** — 14 files
+- **mutator/core** — 12 files
+- **funktor/cluster** — 10 files
+- **funktor/auth** — 4 files
+- **monko/core** — 3 files
+- **mutator/ksp** — 3 files
+- **(root)** — 2 files
+- **docs-site/public** — 2 files
+- **funktor/logging** — 2 files
+- **funktor/messaging** — 2 files
+- **funktor-demo/server** — 1 files
+- **karango/README.MD** — 1 files
+- **kraft/README.MD** — 1 files
+- **ultra/kontainer** — 1 files
+- **ultra/slumber** — 1 files
+- **ultra/streams** — 1 files
+
+```
+git show --stat b540e6a5 514fad5e f02ddb7b
+```
+
 ## Context
 
 Karango is a type-safe Kotlin DSL for ArangoDB with 47 source files, 131 test files (E2E, requiring ArangoDB), and 20

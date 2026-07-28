@@ -6,6 +6,26 @@ slumber (the DB codec + slumber-based API paths). Blocker was: slumber had no va
 value-class field failed with "no known way to slumber/awake".
 **Type:** framework (serialization).
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `5d59d61c` | 2026-07-24 | 4 | feat(slumber): @JvmInline value class serialization support |
+
+### Files changed (4)
+
+**ultra/slumber**
+- `ultra/slumber/src/jvmMain/kotlin/builtin/BuiltInModule.kt`
+- `ultra/slumber/src/jvmMain/kotlin/builtin/objects/ValueClassAwaker.kt`
+- `ultra/slumber/src/jvmMain/kotlin/builtin/objects/ValueClassSlumberer.kt`
+- `ultra/slumber/src/jvmTest/kotlin/builtin/objects/ValueClassRoundTripSpec.kt`
+
 ## Goal — behave EXACTLY like kotlinx.serialization (empirically confirmed 2026-07-24)
 Probed kotlinx directly (`@Serializable @JvmInline value class`):
 - **Wire shape:** a value class is emitted as its **underlying value via the inner type's codec** —

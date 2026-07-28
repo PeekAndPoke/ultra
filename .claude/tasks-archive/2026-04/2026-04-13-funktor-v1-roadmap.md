@@ -5,6 +5,41 @@
 
 ---
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `2544b7a0` | 2026-04-02 | 1 | code quality, bug fixes, unit tests, docs |
+| `514fad5e` | 2026-03-25 | 11 | docs, docs site v0.104.0 |
+
+Archived by `d71db9f8`, `28973c5e` (rename only — that commit's code belongs to another task).
+
+### Files changed (12)
+
+**(root)**
+- `README.MD`
+- `gradle.properties`
+
+**docs-site/src**
+- `docs-site/src/data/site.ts`
+- `docs-site/src/pages/ultra/cache/getting-started.astro`
+
+**karango/core**
+- `karango/core/src/main/kotlin/aql/func_stu.kt`
+- `karango/core/src/test/kotlin/aql/ReturnVariantsSpec.kt`
+- `karango/core/src/test/kotlin/e2e/crud/E2E-Crud-Document-Spec.kt`
+- `karango/core/src/test/kotlin/e2e/crud/E2E-Crud-Remove-Query-Spec.kt`
+- `karango/core/src/test/kotlin/e2e/crud/E2E-Crud-Upsert-Spec.kt`
+- `karango/core/src/test/kotlin/e2e/functions/mno/E2E_Func_MERGE_Spec.kt`
+- `karango/core/src/test/kotlin/e2e/functions/stu/E2E_Func_STARTS_WITH_Spec.kt`
+- `karango/core/src/test/kotlin/e2e/functions/stu/E2E_Func_UNSET_Spec.kt`
+
 ## Executive Summary
 
 Funktor is a full-stack Kotlin framework on Ktor with 10 submodules (~438 source files, ~20 tests).

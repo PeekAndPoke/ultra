@@ -2,6 +2,74 @@
 
 **Status:** SHIPPED 2026-04-25 in v0.107.0.
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `c00f407b` | 2026-04-25 | 36 | funktor auth: jwt + apikey detailed UserRecord child classes v0.107.0 |
+
+Archived by `d71db9f8` (rename only — that commit's code belongs to another task).
+
+### Files changed (36)
+
+**(root)**
+- `README.MD`
+- `gradle.properties`
+
+**docs-site/src**
+- `docs-site/src/data/llms/funktor.md`
+- `docs-site/src/data/site.ts`
+- `docs-site/src/pages/ultra/funktor/insights.astro`
+- `docs-site/src/pages/ultra/funktor/rest.astro`
+
+**funktor-demo/server**
+- `funktor-demo/server/src/main/kotlin/api/ApiApp.kt`
+- `funktor-demo/server/src/main/kotlin/kontainer.kt`
+- `funktor-demo/server/src/main/kotlin/server.kt`
+
+**funktor/all**
+- `funktor/all/src/jvmTest/kotlin/AuthApiSpec.kt`
+- `funktor/all/src/jvmTest/kotlin/server.kt`
+
+**funktor/core**
+- `funktor/core/src/jvmMain/kotlin/app.kt`
+- `funktor/core/src/jvmMain/kotlin/lifecycle/AppLifeCycle.kt`
+- `funktor/core/src/jvmMain/kotlin/lifecycle/lifecycle.kt`
+- `funktor/core/src/jvmTest/kotlin/lifecycle/AppLifeCycleKontainerWiringSpec.kt`
+- `funktor/core/src/jvmTest/kotlin/lifecycle/AppLifeCycleSpec.kt`
+
+**funktor/rest**
+- `funktor/rest/src/jvmMain/kotlin/ApiRoute.kt`
+- `funktor/rest/src/jvmMain/kotlin/auth/Caller.kt`
+- `funktor/rest/src/jvmMain/kotlin/auth/anonymous.kt`
+- `funktor/rest/src/jvmMain/kotlin/auth/apiKeyCaller.kt`
+- `funktor/rest/src/jvmMain/kotlin/auth/call.kt`
+- `funktor/rest/src/jvmMain/kotlin/auth/jwtCaller.kt`
+- `funktor/rest/src/jvmTest/kotlin/auth/AccessLevelCheckSpec.kt`
+- `funktor/rest/src/jvmTest/kotlin/auth/ApiRouteEstimateAccessSpec.kt`
+- `funktor/rest/src/jvmTest/kotlin/auth/AuthenticatedRuleSpec.kt`
+- `funktor/rest/src/jvmTest/kotlin/auth/CallerSpec.kt`
+- `funktor/rest/src/jvmTest/kotlin/auth/EstimateCtxSpec.kt`
+
+**ultra/model**
+- `ultra/model/src/commonMain/kotlin/Paged.kt`
+
+**ultra/security**
+- `ultra/security/src/commonMain/kotlin/jwt/JwtUserData.kt`
+- `ultra/security/src/commonMain/kotlin/user/UserRecord.kt`
+- `ultra/security/src/jvmMain/kotlin/jwt/JwtAnonymous.kt`
+- `ultra/security/src/jvmMain/kotlin/jwt/JwtGenerator.kt`
+- `ultra/security/src/jvmMain/kotlin/jwt/JwtNullClaim.kt`
+- `ultra/security/src/jvmTest/kotlin/csrf/StatelessCsrfProtectionSpec.kt`
+- `ultra/security/src/jvmTest/kotlin/user/UserProviderSpec.kt`
+- `ultra/security/src/jvmTest/kotlin/user/UserRecordSpec.kt`
+
 ## Shipped 2026-04-25 — actual outcome (deltas from the original plan)
 
 The plan below is preserved as written. These are the deviations during execution:

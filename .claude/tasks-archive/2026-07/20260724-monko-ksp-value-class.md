@@ -4,6 +4,40 @@
 **Enabled by:** `20260724-slumber-value-class-support.md` (DONE).
 **Type:** framework (runtime DSL, NOT codegen).
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `b028e476` | 2026-07-24 | 10 | feat(monko): @JvmInline value class support in filter/update DSL |
+
+Archived by `0f29d239` (rename only — that commit's code belongs to another task).
+
+### Files changed (10)
+
+**karango/core**
+- `karango/core/src/test/kotlin/e2e/common.kt`
+- `karango/core/src/test/kotlin/e2e/crud/E2E-Crud-ValueClassId-Filter-Spec.kt`
+- `karango/core/src/test/kotlin/testdomain/testValueClassRecord.kt`
+
+**karango/ksp**
+- `karango/ksp/src/test/kotlin/ValueClassCodeGenSpec.kt`
+
+**monko/core**
+- `monko/core/src/main/kotlin/lang/dsl/filters.kt`
+- `monko/core/src/main/kotlin/lang/dsl/updates.kt`
+- `monko/core/src/main/kotlin/lang/dsl/value_class.kt`
+- `monko/core/src/test/kotlin/io/peekandpoke/monko/lang/dsl/ValueClassFilterSpec.kt`
+- `monko/core/src/test/kotlin/io/peekandpoke/monko/lang/dsl/ValueClassUpdateSpec.kt`
+
+**monko/ksp**
+- `monko/ksp/src/test/kotlin/ValueClassCodeGenSpec.kt`
+
 ## ⚠️ Empirical reframing (verified 2026-07-24, verification-first)
 The original premise was "the Monko KSP must learn value-class properties before you can filter by a
 value-class id." **That premise was wrong.** Verified by probe tests against the current code:

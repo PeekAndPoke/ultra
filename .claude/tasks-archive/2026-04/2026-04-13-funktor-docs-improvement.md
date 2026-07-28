@@ -3,6 +3,39 @@
 **Date:** 2026-03-31
 **Goal:** Improve 5 thin/stub Funktor doc pages using FunktorConf demo as example source
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `172c4f4f` | 2026-04-03 | 12 | code quality, bug fixes, unit tests, docs cache |
+| `2544b7a0` | 2026-04-02 | 1 | code quality, bug fixes, unit tests, docs |
+| `f1342275` | 2026-04-02 | 71 | code quality, bug fixes, unit tests, docs |
+| `3ebeab04` | 2026-03-31 | 5 | code quality, bug fixes, unit tests |
+
+Archived by `d71db9f8`, `28973c5e` (rename only — that commit's code belongs to another task).
+
+### Files changed (83)
+
+Listed by module — full paths via the command below.
+
+- **docs-site/src** — 49 files
+- **kraft/examples** — 15 files
+- **funktor/all** — 6 files
+- **ultra/cache** — 5 files
+- **docs-site/public** — 3 files
+- **ultra/semanticui** — 3 files
+- **funktor-demo/server** — 2 files
+
+```
+git show --stat 172c4f4f 2544b7a0 f1342275 3ebeab04
+```
+
 ## Current State
 
 - 6 pages GOOD (index, getting-started, core, rest, cluster, testing)

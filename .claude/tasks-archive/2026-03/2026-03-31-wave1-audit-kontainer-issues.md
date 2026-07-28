@@ -6,6 +6,42 @@
 
 ---
 
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `d048f292` | 2026-03-31 | 3 | code quality, bug fixes, unit tests |
+| `5c1f4c9a` | 2026-03-31 | 29 | code quality, bug fixes, unit tests |
+| `3cf75f2d` | 2026-03-30 | 101 | funktor:inspect funktor-demo |
+
+Archived by `d71db9f8`, `ade7a6ba` (rename only — that commit's code belongs to another task).
+
+### Files changed (132)
+
+Listed by module — full paths via the command below.
+
+- **funktor/inspect** — 77 files
+- **funktor-demo/server** — 12 files
+- **funktor-demo/adminapp** — 11 files
+- **ultra/kontainer** — 8 files
+- **ultra/security** — 8 files
+- **ultra/vault** — 8 files
+- **karango/core** — 3 files
+- **funktor-demo/common** — 2 files
+- **funktor/auth** — 1 files
+- **funktor/core** — 1 files
+- **karango/ksp** — 1 files
+
+```
+git show --stat d048f292 5c1f4c9a 3cf75f2d
+```
+
 ## Summary
 
 | Category       | CRITICAL | HIGH  | MEDIUM | LOW   |
