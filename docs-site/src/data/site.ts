@@ -45,6 +45,8 @@ export const githubSource = {
     streams: `${githubRepo}/tree/master/ultra/streams`,
     datetime: `${githubRepo}/tree/master/ultra/datetime`,
     cache: `${githubRepo}/tree/master/ultra/cache`,
+    i18n: `${githubRepo}/tree/master/ultra/i18n`,
+    vault: `${githubRepo}/tree/master/ultra/vault`,
     maths: `${githubRepo}/tree/master/ultra/maths`,
     karango: `${githubRepo}/tree/master/karango`,
     funktor: `${githubRepo}/tree/master/funktor`,

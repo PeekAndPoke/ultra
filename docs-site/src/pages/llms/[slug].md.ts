@@ -9,6 +9,7 @@ const slugs = [
     'karango',
     'kontainer',
     'kraft',
+    'maths',
     'monko',
     'mutator',
     'slumber',

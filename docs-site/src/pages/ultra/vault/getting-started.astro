@@ -2,6 +2,7 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import {vaultSidebar} from '../../../data/vault-sidebar';
 import {Code} from 'astro:components';
+import {dep} from '../../../data/site';
 ---
 
 <DocsLayout title="Getting Started with Vault" sidebar={vaultSidebar}
@@ -13,6 +14,16 @@ import {Code} from 'astro:components';
         Vault is the shared persistence foundation underneath Karango and Monko.
         This page walks through the core concepts you need before choosing a backend.
     </p>
+
+    <h2>Dependency</h2>
+
+    <p>You rarely add Vault directly &mdash; <a href="/ultra/karango/">Karango</a> and
+        <a href="/ultra/monko/">Monko</a> bring it in. Add it explicitly only when you are writing
+        backend-agnostic code against the shared abstractions.</p>
+
+    <Code code={`dependencies {
+    implementation("${dep.vault}")
+}`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>1. Define your entity</h2>
 

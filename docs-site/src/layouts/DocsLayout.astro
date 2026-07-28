@@ -26,6 +26,9 @@ const pathToSource: Record<string, string> = {
     '/ultra/karango/': githubSource.karango,
     '/ultra/funktor/': githubSource.funktor,
     '/ultra/monko/': githubSource.monko,
+    '/ultra/maths/': githubSource.maths,
+    '/ultra/i18n/': githubSource.i18n,
+    '/ultra/vault/': githubSource.vault,
 };
 const githubUrl = Object.entries(pathToSource).find(([prefix]) => {
   const norm = prefix.replace(/\/+$/, '');
