@@ -9,6 +9,10 @@ argument-hint: "[ library name or task description ]"
 Creates and updates documentation pages on the PeekAndPoke docs site (Astro-based, deployed to peekandpoke.io). Handles
 adding new libraries, creating pages, updating navigation, and maintaining consistency across the site.
 
+**Read [tone-of-voice.md](tone-of-voice.md) before writing any prose for the site.** The site uses a
+deliberate two-voice system, and the rules about what NOT to say (no superlatives, no bragging) are
+as load-bearing as the structure.
+
 ## Project Structure
 
 ```

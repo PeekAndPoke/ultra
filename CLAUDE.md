@@ -23,14 +23,19 @@ snapshot. Stale plans are worse than no plans because they cause wrong prioritie
 
 ## Code style
 
-- Use explicit imports in Kotlin — never wildcard/star imports.
+- Use explicit imports in Kotlin — never wildcard/star imports. Wildcards cause real conflicts here
+  (e.g. `input()` from KQuery vs `input` from kotlinx.html). Use an import alias for clashes.
 - Never use fully qualified class names in Kotlin code — always add the import.
+- **Keep KDoc concise.** One-line summaries; add detail only where behaviour is genuinely non-obvious
+  from the signature. Verbose KDoc drifts out of sync and becomes misleading.
 - See `.claude/skills/code-style/` for the full style guide.
 
 ## Tools & packages
 
-- Use `pnpm`, never `npm`, for JavaScript package management.
+- Use `pnpm`, never `npm`, for JavaScript package management (`pnpm dlx`, not `npx`) — supply-chain
+  preference, not a style one.
 - Use "PeekAndPoke" or "peekandpoke" for branding, never "peek&poke".
+- Spell "Klang Audio Motör" with the ö. Never "Motor".
 
 ## Sub-agent orchestration
 
@@ -40,6 +45,10 @@ snapshot. Stale plans are worse than no plans because they cause wrong prioritie
 
 ## Development workflow
 
+- **Re-confirm the plan before implementing it.** Summarise what an open task/plan doc commits to —
+  especially decisions that would be expensive to reverse — and get agreement before writing code.
+  Detail is not agreement: a fully-designed plan was implemented and then thrown away on 2026-07-28
+  because nobody re-checked whether its core premise was still wanted.
 - **Every feature gets a task file** in `.claude/tasks/`, named `YYYYMMDD-<slug>.md` (copy
   `.claude/tasks/TEMPLATE.md`). Features usually come from plan phases — link the plan in the task.
 - Lifecycle: implement → run `/feature-review` (mandatory multi-agent review: 1. implementation &
@@ -49,6 +58,10 @@ snapshot. Stale plans are worse than no plans because they cause wrong prioritie
   `.claude/tasks/`, describing concrete break-in/attack scenarios to attempt. These are COLLECTED,
   not executed — dedicated penetration-test sessions sweep them later. Never run attack scenarios
   as part of normal feature work.
+- **Adversarially verify every review finding against the code before acting on it**, and say when one
+  does not survive. Reviewers have been confidently wrong; so has the coordinator. Where a one-command
+  experiment settles it, run it. Record what was probed and stayed CLEAN as well as what was found —
+  it stops the next session re-treading the same ground.
 
 ## Testing
 
@@ -58,6 +71,28 @@ snapshot. Stale plans are worse than no plans because they cause wrong prioritie
 - **All backend (JVM) code needs end-to-end tests**: boot the app via the funktor testing harness
   (`AppSpec`/`AppUnderTest` in `funktor/testing`) and exercise real endpoints, not just units.
   Storage-touching features must run against both DB backends (`MatrixTest2d` pattern).
+
+### Verification traps
+
+These make a suite look green while the feature is broken. Treat them as preconditions for saying
+"tests pass", not as extras.
+
+- **kotest ignores `--tests`.** Confirm a spec actually ran via `build/test-results/**/TEST-*.xml`,
+  never by trusting a filtered gradle invocation. Avoid `--rerun-tasks` (kapt flakiness). MPP modules
+  use `:jvmTest`; `funktor-demo:server` uses `:test`.
+- **Mutation-test every security-relevant change** before calling it green. This repeatedly catches
+  vacuous or right-for-the-wrong-reason tests, including ones written in the same session — e.g. a
+  "single-use token" e2e also satisfied by a cooldown, and a `validate()` test that constructed the
+  healthy object so it passed whether or not validation ran.
+- **Back up with `cp` before mutating a file; never restore with `git checkout`** — the file usually
+  carries other uncommitted work.
+- **`shouldBe` is untyped**, so `valueClass shouldBe "literal"` rots silently.
+- **Never emit `\uXXXX` escapes or raw control characters in an edit** — they land as raw bytes, in
+  file writes and match strings alike. Write `Char(0xNN)` instead, and pin the property that makes a
+  code point special rather than one example of it.
+- **Local DBs run in docker:** `docker start mongodb arangodb`. They match `application.test.conf`;
+  Arango must already have `funktor-demo-test` (Karango creates collections and indexes, never a
+  database — a missing one surfaces as an opaque Arango 1228).
 
 ## Documentation
 
@@ -74,6 +109,19 @@ snapshot. Stale plans are worse than no plans because they cause wrong prioritie
 - Docs-site versions (`ultraVersion`, `kraftVersion` in `docs-site/src/data/site.ts`) must move in lockstep.
 - README dependency snippet (`README.MD` ~line 123) has its own hardcoded version list.
 - See `.claude/skills/release/` for the full release workflow and checklist.
+
+## Project facts worth not re-deriving
+
+- **Battle-tested:** Kontainer, Streams and Slumber — years in production. **Mutator is NOT**, despite
+  its age and commit count. Git history is not maturity; defer to the maintainer on this.
+- **Kontainer scoping:** a singleton that transitively injects a `dynamic` becomes `SemiDynamic`, i.e.
+  one instance per request. Shared-state services must take zero constructor dependencies — and
+  "constructor runs once at boot" is usually false for realms, which are rebuilt per request.
+- **Known defect:** `ListMutator.subList()` throws `UnsupportedOperationException`
+  (`mutator/core/src/commonMain/kotlin/ListMutator.kt:260`). Stdlib functions such as `chunked()` call
+  it internally, so even indirect use crashes. Collection mutators are supposed to implement their
+  `MutableList`/`Set`/`Map` contracts fully; this one is an outstanding gap.
+- Before adding or bumping any dependency, **look up the newest version online** — never from memory.
 
 ## Key locations
 
