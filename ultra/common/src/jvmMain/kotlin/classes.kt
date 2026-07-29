@@ -7,13 +7,19 @@ import kotlin.reflect.KClass
  * Computes the relative file-system path from this class's package to [that] class's package.
  *
  * For example, from `com.a.b` to `com.a.c.d` the result is `../c/d`.
+ *
+ * A class with no package — an array type, or one in the default package — counts as the root, so
+ * it contributes no segments rather than failing.
  */
 fun KClass<*>.getRelativePackagePath(that: KClass<*>): File {
 
-    return this.java.`package`.name.getRelativePackagePath(
-        that.java.`package`.name
+    return this.packageNameOrRoot().getRelativePackagePath(
+        that.packageNameOrRoot()
     )
 }
+
+/** The package name, or an empty string for array types and the default package, which have none. */
+private fun KClass<*>.packageNameOrRoot(): String = java.`package`?.name ?: ""
 
 /**
  * Computes the relative file-system path from this package name to the [that] package name.

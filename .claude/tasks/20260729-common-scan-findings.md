@@ -1,6 +1,6 @@
 # ultra/common scan — findings backlog
 
-**Status:** IN PROGRESS — items 1-5 of the backlog are closed; what remains is listed at the bottom
+**Status:** IN PROGRESS — the backlog is worked through; six items remain, listed at the bottom
 **Plan:** none — output of a 7-agent scan of `ultra/common`, 2026-07-29
 **Security-critical:** no
 
@@ -118,6 +118,25 @@ compared against that receiver's members. `remove`/`removeAt` were the only genu
 `joinToString`, `toList`, `replace`, `encodeToString`, `decode` and `digest` looked like collisions in
 a first grep but are call sites inside function bodies, not declarations.
 
+### 6. `ObjectSizeEstimator` kept its visited set between calls
+
+Not strictly `ultra/common` — the fix is in `ultra/cache` — but it came out of the `WeakSet`
+question, so it is recorded here.
+
+`seen` was an instance field that was never cleared, so an estimate depended on what the same
+estimator had measured before: a repeated `estimate()` of the same object returned **0**, and a
+freshly built but structurally equal graph did too. Matching was also `equals`-based, so two
+equal-but-distinct objects counted as one.
+
+That hit `FastCache.MaxMemoryUsageBehaviour`, which holds one estimator (`FastCache.kt:342`) and
+calls it per entry (`:380-381`): the first entry measured correctly and every structurally similar
+later entry measured as 0 bytes, so the memory cap under-counted and stopped evicting — exactly what
+it exists to prevent.
+
+Fixed both halves: the visited set is now built per call, and it compares with `===` while bucketing
+by `hashCode`. Five regression tests, each half mutation-checked separately. Side effect: `WeakSet`
+lost its only consumer.
+
 ### 5. Helpers the stdlib has since absorbed
 
 Audited every helper against Kotlin 2.3.10, by running both sides rather than by recall.
@@ -145,37 +164,74 @@ first, and the specs for them removed — the stdlib covers that behaviour now.
 `@OptIn` onto every downstream consumer. Tracked in
 `.claude/tasks/20260729-kotlin-24-upgrade.md`.
 
-## Open — worth a decision
+## DONE — third pass, 2026-07-29 (the remaining backlog, decided item by item)
 
-- **`WeakSet` element matching is not uniform.** JVM and native match with `equals`, JS by reference
-  identity. For the one real caller — `ObjectSizeEstimator.seen`, doing cycle detection — *identity*
-  is what is actually wanted, so the JVM/native behaviour is arguably the wrong one: a graph holding
-  two equal-but-distinct values is counted once there and twice on JS. Making JVM identity-based
-  needs a wrapper (the JDK has no `WeakIdentityHashMap`). Documented, not fixed.
+| Item | Outcome |
+|---|---|
+| `TypedAttributes` | constructor and `copy()` are now `internal` (`@ConsistentCopyVisibility`), so `Builder` is the only public way in and `size` cannot disagree with `entries` |
+| `files.kt` `child()` | rejects absolute paths and `..` escapes, checked on the NORMALISED path so `a/../b` still works and `a/../../b` does not |
+| `files.kt` `cleanDirectory()` | uses `Files.walkFileTree`, which does not follow symlinks — `deleteRecursively` walked into a linked directory and deleted its contents outside the tree |
+| `files.kt` `ensureDirectory()` | throws when the path is a regular file or `mkdirs()` failed, instead of returning as if it had worked |
+| `classes.kt` | a null `package` (array types, default package) counts as root instead of NPE-ing |
+| `ellipsis` | never splits a surrogate pair; a negative `maxLength` clamps instead of throwing |
+| `toUri` | a `#fragment` is split off and re-appended AFTER the query; the `List<Pair>` overload keeps repeated keys; no doubled `?`/`&` |
+| `safeEnumsOf` | goes straight to a `List`, keeping repeats in input order |
+| `safeEnumOf` / `safeEnumOrNull` | a miss is a plain lookup, no thrown-and-caught exception |
+| `containsAny` | short-circuits on the first hit rather than building two sets and an intersection |
+| `recurse` | linear — a `seen` set replaces the per-step scan of everything collected so far |
+| `GetAndSet.equals` | restricted to `Impl`, so it is symmetric with `Mutator`, which uses identity |
+| `WeakSet` | kept as published API, as decided |
+
+19 regression tests added across `CommonFixesSpec` (commonMain, so all three platforms) and
+`CommonFixesJvmSpec`. Mutation-checked by reverting three fixes at once — exactly the three matching
+tests failed.
+
+### Two that were asked for and deliberately NOT done
+
+**`toggle` cannot be made order-idempotent.** `[a,b,c]` toggled off and on gives `[a,c,b]`. The
+position is gone once the value is removed, and `Set<X>.toggle(value)` has no reference point to
+reinsert at. The round trip IS `==` to the original — only iteration order differs. The KDoc now says
+that instead of claiming otherwise, and points at `List` where order carries meaning.
+
+**`ellipsis` still appends the suffix on top of `maxLength`.** This was reported as "overshoots
+maxLength", but the original KDoc said *"Takes maxLength of the string and adds the suffix"* — the
+code matched its documentation, and five tests pinned it. `maxLength` is a misleading name for "kept
+text", not a defect. Redefining it as a total budget would silently change output for every
+downstream caller. Confirmed by the maintainer: `maxLength + dots` is the intended contract.
+
+## Open
+
+Marked **[verified]** where I probed it myself, **[reported]** where it is a scan finding I have not
+re-checked. Treat the reported ones as leads, not facts — several agent claims in this sweep did not
+survive contact with a probe.
+
+### Worth a decision
+
 - **`ultra/datetime/recurse.kt` is a byte-identical copy of `common/recursion.kt`.** Same root cause
-  as `ComparableTo`, and now removable since commonMain can see common. Left for the datetime pass.
-- **`List.remove(element)` / `List.removeAt(idx)` are shadowed by the `MutableList` members.**
-  Identical source text either mutates the receiver or builds and discards a copy, depending only on
-  the declared type. Widening a field from `MutableList` to `List` silently changes behaviour with no
-  warning. Renaming them would be the fix; both have many callers.
+  as `ComparableTo`, and removable now that commonMain can see common. Belongs to the datetime pass.
+  **[verified]**
 
-## Open — smaller, no decision needed, just work
+### Correctness, no decision needed
 
-- `ellipsis` appends the suffix *on top of* `maxLength` (`"ab".ellipsis(1)` is 4 chars), truncates by
-  UTF-16 code unit so it can split a surrogate pair, and throws on a negative length.
-- `safeEnumsOf` returns a `List` but routes through a `Set`, so duplicates are silently collapsed.
-- `toggle` is not order-idempotent — off-then-on moves the element to the end of iteration order.
-- `toUri` is string concatenation: it appends query params *after* a `#fragment`, and collapses
-  duplicate keys through `toMap()` so `listOf("tag" to "a", "tag" to "b")` loses the first.
-- `recurse` is O(n²) (linear `!in` scan per step) and `flattenTreeToSet` is recursive with no depth
-  bound.
-- `safeEnumOf` uses a thrown-and-caught exception as its miss path, on request-supplied input.
-- `TypedAttributes`' primary constructor is public, takes an unvalidated map and does not copy it, so
-  `size` and `entries` can disagree and a type mismatch surfaces at the reader.
+- **`maxLineLength`** counts the `\r` in CRLF text; **`camelCaseSplit`** only breaks on ASCII
+  `A`..`Z`, so a non-ASCII capital is never a word boundary. **[reported]**
+
+### Performance / hygiene — left alone, none looked straightforward
+
+- **`flattenTreeToSet`** recurses with no depth bound. **[reported]**
+
+- **`tuple.kt`** — `asList` degrades to `List<Any?>` from arity 2, there is a `by lazy` delegate
+  allocated per instance, and `+` nests rather than concatenating when adding a tuple. **[reported]**
+- **`NetworkUtils.getNetworkFingerPrint`** is not stable across restarts. **[reported]**
+- **`hashing.kt`** offers no HMAC or KDF, which is why the CSRF signer hand-rolls `H(data || secret)`
+  — a construction with known weaknesses. Worth a look during a security pass. **[reported]**
 
 ## Test evidence
 
-- `ultra/common`: jvmTest 325, jsBrowserTest 159, linuxX64Test 153 — 0 failures
+- `ultra/common` after the third pass: 351 jvmTest, all three platforms green
+- Full compile sweep across EVERY project, main and test, JVM and JS: 0 errors. Worth doing rather
+  than trusting module-scoped runs — the root project has its own `src/jvmMain` that is not a module
+  in `settings.gradle`, and a change to `Observable` broke it while every module suite stayed green.
 - Consumers verified after the `ComparableTo` change: datetime 5234, slumber 1219, funktor/core 772,
   karango 1649, monko 249, kraft/core-tests 394, cache 290, vault 285, model 170, maths 343 — all 0
 - `WeakSetSpec` moved to `commonTest`, so it now runs on all three platforms instead of JVM only —

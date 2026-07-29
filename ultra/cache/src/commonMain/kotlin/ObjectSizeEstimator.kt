@@ -1,7 +1,6 @@
 package io.peekandpoke.ultra.cache
 
 import io.peekandpoke.ultra.cache.ObjectSizeEstimatorImpl.EstimatorConfig
-import io.peekandpoke.ultra.common.WeakSet
 
 /**
  * Estimates the in-memory size of an object graph in bytes.
@@ -28,7 +27,8 @@ interface ObjectSizeEstimator {
  * (see [ObjectSizeEstimatorPlatform]) and sums up estimated sizes for
  * primitives, strings, arrays, collections, maps, and arbitrary objects.
  *
- * A [WeakSet] guards against infinite loops caused by circular references.
+ * An identity set of already-visited objects guards against infinite loops caused by circular
+ * references. It is built per call, so an estimate never depends on what was measured before.
  *
  * @param cfg tuning knobs for header and pointer sizes
  */
@@ -65,8 +65,6 @@ class ObjectSizeEstimatorImpl(
         const val DOUBLE_SIZE = 8L
     }
 
-    private val seen = WeakSet<Any?>()
-
     /**
      * Configuration for the size-estimation heuristics.
      *
@@ -80,10 +78,40 @@ class ObjectSizeEstimatorImpl(
         val pointerSize: Long = 8L,
     )
 
-    /** Estimates the in-memory size of [obj] in bytes, recursively traversing the object graph. */
-    override fun estimate(obj: Any?): Long {
-        // Primitives: no cycle detection needed (they can't form reference cycles,
-        // and JS WeakSet does not support primitive values)
+    /**
+     * Tracks the objects visited during one walk, by identity.
+     *
+     * Buckets by `hashCode` but compares with `===`, so two equal-but-distinct objects are counted
+     * separately — each really occupies memory. Structural matching would report the second as
+     * already-seen and charge it zero bytes.
+     */
+    private class VisitedSet {
+        private val buckets = mutableMapOf<Int, MutableList<Any>>()
+
+        /** Records [obj] and returns true when it had not been visited before. */
+        fun add(obj: Any): Boolean {
+            val bucket = buckets.getOrPut(obj.hashCode()) { mutableListOf() }
+
+            if (bucket.any { it === obj }) {
+                return false
+            }
+
+            bucket.add(obj)
+
+            return true
+        }
+    }
+
+    /**
+     * Estimates the in-memory size of [obj] in bytes, recursively traversing the object graph.
+     *
+     * Each call starts with an empty visited set, so repeated calls on the same object return the
+     * same answer and one estimate cannot shrink another.
+     */
+    override fun estimate(obj: Any?): Long = estimate(obj, VisitedSet())
+
+    private fun estimate(obj: Any?, seen: VisitedSet): Long {
+        // Primitives: no cycle detection needed, they cannot form reference cycles
         when (obj) {
             null -> return NULL_SIZE
             is Boolean -> return BOOL_SIZE
@@ -96,9 +124,8 @@ class ObjectSizeEstimatorImpl(
             is Double -> return DOUBLE_SIZE
         }
 
-        // For reference types: avoid cycles
-        if (seen.contains(obj)) return 0L
-        seen.add(obj)
+        // For reference types: avoid cycles. Already visited means already counted.
+        if (!seen.add(obj)) return 0L
 
         return when (obj) {
             is String -> {
@@ -118,14 +145,14 @@ class ObjectSizeEstimatorImpl(
 
             is Array<*> -> {
                 var sum = cfg.arrayHeader + obj.size.toLong() * cfg.pointerSize
-                for (e in obj) sum += estimate(e)
+                for (e in obj) sum += estimate(e, seen)
                 // return
                 sum
             }
 
             is Collection<*> -> {
                 var sum = cfg.objectHeader + obj.size.toLong() * cfg.pointerSize
-                for (e in obj) sum += estimate(e)
+                for (e in obj) sum += estimate(e, seen)
                 // return
                 sum
             }
@@ -133,24 +160,24 @@ class ObjectSizeEstimatorImpl(
             is Map<*, *> -> {
                 var sum = cfg.objectHeader + obj.size.toLong() * 2 * cfg.pointerSize
                 for ((k, v) in obj) {
-                    sum += estimate(k)
-                    sum += estimate(v)
+                    sum += estimate(k, seen)
+                    sum += estimate(v, seen)
                 }
                 // return
                 sum
             }
 
-            else -> estimateObject(obj)
+            else -> estimateObject(obj, seen)
         }
     }
 
-    private fun estimateObject(obj: Any): Long {
+    private fun estimateObject(obj: Any, seen: VisitedSet): Long {
 
         val fields = ObjectSizeEstimatorPlatform.getFieldsOf(obj)
             ?: return cfg.objectHeader + 2L * cfg.pointerSize // No reflection (e.g., Native): charge a plain object.
 
         var sum = cfg.objectHeader + fields.size.toLong() * cfg.pointerSize
-        for (f in fields) sum += estimate(f)
+        for (f in fields) sum += estimate(f, seen)
 
         return sum
     }

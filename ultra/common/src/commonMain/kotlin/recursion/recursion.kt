@@ -7,16 +7,18 @@ package io.peekandpoke.ultra.common.recursion
  * The returned list starts with this element and ends with the root.
  *
  * Cycle detection compares already-collected elements with `equals`, not by identity, so a chain
- * that revisits an equal-but-distinct element stops there as well. The scan is linear per step,
- * making the whole walk quadratic in the chain length.
+ * that revisits an equal-but-distinct element stops there as well.
  */
 fun <T> T.recurse(getParent: T.() -> T?): List<T> {
 
     val result = mutableListOf<T>()
+    // a set alongside the list, so the cycle check is a hash lookup rather than a scan of everything
+    // collected so far - the walk stays linear instead of quadratic
+    val seen = mutableSetOf<T>()
 
     var current: T? = this
 
-    while (current != null && current !in result) {
+    while (current != null && seen.add(current)) {
         result.add(current)
 
         current = current.getParent()

@@ -14,12 +14,16 @@ class TypedKey<T>(val name: String = "") {
 /**
  * Immutable map of [TypedKey] to values
  *
- * [Builder] is the type-safe way in: it ties each value to the type of its key. The primary
- * constructor performs no such check and does not copy the given map, so pass it an immutable one.
+ * Build one through [Builder] — `TypedAttributes { add(key, value) }` — which ties each value to the
+ * type of its key. The constructor is internal precisely because it cannot do that: it takes an
+ * unchecked map, so a mismatched entry would surface later at whoever read it.
+ *
+ * `copy()` is internal for the same reason, via [ConsistentCopyVisibility].
  *
  * @property entries The stored keys and their values.
  */
-data class TypedAttributes(val entries: Map<TypedKey<*>, Any?>) {
+@ConsistentCopyVisibility
+data class TypedAttributes internal constructor(val entries: Map<TypedKey<*>, Any?>) {
 
     companion object {
         /** Empty instance */
@@ -67,8 +71,7 @@ data class TypedAttributes(val entries: Map<TypedKey<*>, Any?>) {
     /**
      * Gets an entry by [key] or null if nothing is there
      *
-     * The value is cast unchecked. Entries added through [Builder] always match their key, but a map
-     * handed to the primary constructor is not verified.
+     * The value is cast unchecked. Entries added through [Builder] always match their key.
      */
     operator fun <T> get(key: TypedKey<T>): T? {
         @Suppress("UNCHECKED_CAST")

@@ -42,16 +42,27 @@ interface GetAndSet<P> : Observable<P> {
         private val subscriptions: Observable.Subscriptions<P> = Observable.Subscriptions(),
     ) : GetAndSet<P>, Observable<P> by subscriptions {
 
-        /** Hash of the current value. */
+        /**
+         * Hash of the CURRENT value, which moves as the value does.
+         *
+         * That rules this out as a key in a hash-based collection: storing it and then setting a new
+         * value leaves an entry that can no longer be looked up. Inherent to comparing by value.
+         */
         override fun hashCode(): Int {
             return get().hashCode()
         }
 
-        /** Compares by current value against any other [GetAndSet]. */
+        /**
+         * Compares by current value against another [Impl].
+         *
+         * Deliberately NOT against any [GetAndSet]: other implementors use
+         * identity (`Mutator` among them), so accepting them here would make `a == b` and `b == a`
+         * disagree.
+         */
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
 
-            if (other !is GetAndSet<*>) return false
+            if (other !is Impl<*>) return false
 
             return this.get() == other.get()
         }

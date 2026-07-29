@@ -84,15 +84,25 @@ fun String.maxLineLength(separator: String = "\n"): Int =
     split(separator).map { it.length }.maxOrNull() ?: 0
 
 /**
- * Takes [maxLength] of the string and adds the [suffix] if the length is bigger than [maxLength]
+ * Takes [maxLength] characters of the string and adds the [suffix] when anything was cut.
  *
- * The [suffix] is appended on top of [maxLength], so a truncated result is `maxLength + suffix.length`
- * long and can even exceed the input (`"ab".ellipsis(1)` is `"a..."`). Lengths are UTF-16 code units,
- * so cutting inside a surrogate pair leaves a broken half. A negative [maxLength] throws.
+ * [maxLength] bounds the KEPT TEXT, not the result: a truncated result is `maxLength + suffix.length`
+ * long. That is the long-standing contract — do not read the name as a budget for the whole string.
+ *
+ * Cuts on a code-point boundary, so a surrogate pair is never split in half, and a negative
+ * [maxLength] is treated as zero rather than throwing.
  */
-fun String.ellipsis(maxLength: Int = 50, suffix: String = "...") = when (length > maxLength) {
-    true -> "${this.take(maxLength)}$suffix"
-    else -> this
+fun String.ellipsis(maxLength: Int = 50, suffix: String = "..."): String {
+    if (length <= maxLength) {
+        return this
+    }
+
+    val wanted = maxLength.coerceAtLeast(0)
+
+    // if the cut would land between the halves of a surrogate pair, drop the whole pair
+    val keep = if (wanted > 0 && this[wanted - 1].isHighSurrogate()) wanted - 1 else wanted
+
+    return "${take(keep)}$suffix"
 }
 
 /**
