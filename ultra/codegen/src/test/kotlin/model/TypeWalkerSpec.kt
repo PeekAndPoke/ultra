@@ -328,11 +328,31 @@ class TypeWalkerSpec : FreeSpec() {
                 }
             }
 
-            "an array is unresolved, because Array is not Iterable and Slumber cannot slumber it" {
+            "an object array maps to a TypeScript array" {
                 val model = walkOf(typeOf<FxHoldsArray>())
 
-                model.unresolved.size shouldBe 1
-                model.unresolved.first().reason.contains("Array is not Iterable") shouldBe true
+                model.unresolved shouldContainExactly emptyList()
+
+                model.declFor(typeOf<FxHoldsArray>())
+                    .shouldBeInstanceOf<TsTypeDecl.Obj>()
+                    .props.first { it.name == "items" }.type shouldBe TsTypeRef.ArrayOf(TsTypeRef.TsString)
+            }
+
+            "a primitive array maps to a TypeScript array via its element lookup" {
+                val model = walkOf(typeOf<FxHoldsPrimitiveArrays>())
+
+                model.unresolved shouldContainExactly emptyList()
+
+                val props = model.declFor(typeOf<FxHoldsPrimitiveArrays>())
+                    .shouldBeInstanceOf<TsTypeDecl.Obj>()
+                    .props.associateBy { it.name }
+
+                withClue("IntArray is not Array<Int> and carries no type argument") {
+                    props.getValue("ints").type shouldBe TsTypeRef.ArrayOf(TsTypeRef.TsNumber)
+                }
+
+                props.getValue("flags").type shouldBe TsTypeRef.ArrayOf(TsTypeRef.TsBoolean)
+                props.getValue("chars").type shouldBe TsTypeRef.ArrayOf(TsTypeRef.TsString)
             }
         }
 

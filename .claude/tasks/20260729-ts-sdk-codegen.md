@@ -535,7 +535,7 @@ produced wrong or missing types. All fixed, each pinned by a test.
 | 2 | No `objectInstance` branch | **`sealed class X { object A : X() }` — the most common Kotlin sealed shape — reported unresolved and failed the build.** `ObjectInstanceCodec` writes `{}` (`ObjectInstanceCodec.kt:22`), so it is an empty object type |
 | 3 | No no-arg-constructor branch | A non-data class with a no-arg ctor reported unresolved, though Slumber routes it to `DataClassSlumberer` (`BuiltInModule.kt:195`) |
 | 4 | Collections keyed on `Collection`; Slumber keys on `Iterable` (`BuiltInModule.kt:179`) | A custom `Iterable` that is not a `Collection` typed as an object instead of an array |
-| 5 | Walker treated `Array` as a collection | `Array` is not `Iterable`, so Slumber has **no slumberer at all** for a declared array type. The walker was inventing a type for something that fails at runtime |
+| 5 | Walker treated `Array` as a collection | `Array` is not `Iterable`, so Slumber had **no slumberer at all** for a declared array type. RESOLVED differently: rather than keep refusing arrays, Slumber gained array support — see `20260729-slumber-array-support.md` (landed 2026-07-29). Arrays now map to `ArrayOf`, with primitive arrays resolving their element type from a lookup table since `IntArray` carries no type argument |
 
 **Classification order is also load-bearing and now mirrors Slumber's**: a user value class is resolved
 *before* primitives and collections, so `value class Ids(val v: List<String>)` aliases to `string[]`

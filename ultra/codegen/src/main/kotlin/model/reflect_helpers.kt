@@ -5,6 +5,7 @@ import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.typeOf
 
 /**
  * Creates a [KType] for this class, filling any type parameters with `Any` projections.
@@ -33,11 +34,29 @@ internal fun KClass<*>.isEnumClass(): Boolean = java.isEnum
 /**
  * True when Slumber routes this class through `CollectionSlumberer`, i.e. it becomes a JSON array.
  *
- * Mirrors `BuiltInModule`'s `Iterable::class.java.isAssignableFrom(cls.java)`. Deliberately does NOT
- * include arrays: `Array` is not `Iterable`, so a declared array type falls through Slumber's
- * dispatch and has no slumberer at all.
+ * Mirrors `BuiltInModule`'s two branches: `Iterable::class.java.isAssignableFrom(cls.java)` and
+ * `cls.java.isArray`. Arrays need the second one because an `Array` is not an `Iterable`.
  */
-internal fun KClass<*>.isIterableLike(): Boolean = Iterable::class.java.isAssignableFrom(java)
+internal fun KClass<*>.isArrayLike(): Boolean =
+    Iterable::class.java.isAssignableFrom(java) || java.isArray
+
+/**
+ * The element type of a Kotlin primitive array class, or `null` when this is not one.
+ *
+ * `IntArray` is not `Array<Int>` and carries no type argument, so the element type cannot be read
+ * off the [KType] and has to be looked up — the same table `CollectionAwaker` keeps.
+ */
+internal fun KClass<*>.primitiveArrayElementType(): KType? = when (this) {
+    BooleanArray::class -> typeOf<Boolean>()
+    ByteArray::class -> typeOf<Byte>()
+    CharArray::class -> typeOf<Char>()
+    DoubleArray::class -> typeOf<Double>()
+    FloatArray::class -> typeOf<Float>()
+    IntArray::class -> typeOf<Int>()
+    LongArray::class -> typeOf<Long>()
+    ShortArray::class -> typeOf<Short>()
+    else -> null
+}
 
 /** True when Slumber routes this class through `MapSlumberer`, i.e. it becomes a JSON object. */
 internal fun KClass<*>.isMapLike(): Boolean = Map::class.java.isAssignableFrom(java)

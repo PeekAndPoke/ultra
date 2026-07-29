@@ -134,11 +134,11 @@ class TypeWalker(
             )
         }
 
-        // Any Iterable slumbers to a JSON array. Arrays are NOT included: `Array` is not `Iterable`,
-        // so Slumber has no slumberer for a declared array type and validation should say so rather
-        // than this walker inventing one.
-        if (cls.isIterableLike()) {
-            val item = type.arguments.getOrNull(0)?.type
+        // Any Iterable or array slumbers to a JSON array. A primitive array (IntArray) carries no
+        // type argument, so its element type comes from the lookup table instead.
+        if (cls.isArrayLike()) {
+            val item = cls.primitiveArrayElementType() ?: type.arguments.getOrNull(0)?.type
+
             return TsTypeRef.ArrayOf(
                 item = item?.let { resolveRef(it, path + "*") } ?: TsTypeRef.TsUnknown
             )
@@ -301,9 +301,6 @@ class TypeWalker(
     }
 
     private fun unresolvedReason(cls: KClass<*>): String = when {
-        cls.java.isArray ->
-            "array type — Array is not Iterable, so Slumber has no slumberer for it either. Use a List."
-
         cls.isValue ->
             "kotlin stdlib value class — Slumber deliberately refuses these (their backing-field form " +
                     "would diverge from kotlinx). Claim it with a dedicated TypeScript mapping."

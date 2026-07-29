@@ -109,10 +109,20 @@ value class FxIdList(val values: List<String>)
 /** Holds kotlin stdlib value classes, which Slumber refuses rather than serializing generically. */
 data class FxHoldsStdlibValueClass(val count: UInt)
 
-/** Holds an array, which Slumber has no slumberer for. */
+/** Holds an object array — supported by Slumber since 20260729-slumber-array-support. */
 data class FxHoldsArray(val items: Array<String>) {
     override fun equals(other: Any?): Boolean = this === other
     override fun hashCode(): Int = items.contentHashCode()
+}
+
+/** Primitive arrays carry no type argument, so their element type comes from a lookup table. */
+data class FxHoldsPrimitiveArrays(
+    val ints: IntArray,
+    val flags: BooleanArray,
+    val chars: CharArray,
+) {
+    override fun equals(other: Any?): Boolean = this === other
+    override fun hashCode(): Int = ints.contentHashCode()
 }
 
 data class FxHoldsNoArgCtor(val thing: FxNoArgCtor)
