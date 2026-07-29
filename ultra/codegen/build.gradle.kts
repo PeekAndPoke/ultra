@@ -38,6 +38,10 @@ dependencies {
     testImplementation(Deps.JavaLibs.diffutils)
     // @SerialName on polymorphic test fixtures — Slumber reads it as a child identifier
     testImplementation(Deps.KotlinX.serialization_core)
+    // TEST ONLY, deliberately: `runtime/apiResponse.ts` mirrors ApiResponse<T>, and a claim is only
+    // as good as the test that slumbers the real thing. Main code just ships the .ts as a resource,
+    // so the generator itself stays independent of ultra/remote.
+    testImplementation(project(":ultra:remote"))
 }
 
 kotlin {

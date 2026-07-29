@@ -12,6 +12,7 @@
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { verifyRuntime } from './verifyRuntime.ts'
 
 interface Fixture {
     /** Fixture name, matching `<name>.ts` and `<name>.sample.json`. */
@@ -36,7 +37,7 @@ const manifest: Manifest = JSON.parse(readFileSync(join(GENERATED, 'manifest.jso
 
 let failures = 0
 
-function report(ok: boolean, label: string, detail = ''): void {
+function report(ok: boolean, label: string, detail: string = ''): void {
     if (ok) {
         console.log(`  ok    ${label}`)
     } else {
@@ -56,7 +57,16 @@ function rejected(fn: () => unknown): boolean {
 }
 
 for (const fixture of manifest.fixtures) {
-    const module: Record<string, unknown> = await import(`./generated/${fixture.name}.ts`)
+    // Isolated per fixture: a module that fails to load must be reported, not abort the whole run and
+    // take every later fixture's checks with it.
+    let module: Record<string, unknown>
+
+    try {
+        module = await import(`./generated/${fixture.name}.ts`)
+    } catch (e) {
+        report(false, `${fixture.name}: module failed to load`, (e as Error).message.split('\n')[0])
+        continue
+    }
 
     const schema = module[fixture.schema] as Schema | undefined
 
@@ -94,6 +104,8 @@ for (const fixture of manifest.fixtures) {
         )
     }
 }
+
+await verifyRuntime(report, GENERATED)
 
 if (manifest.fixtures.length === 0) {
     console.log('  FAIL  manifest contained no fixtures — the generator produced nothing to verify')

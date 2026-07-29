@@ -14,6 +14,7 @@ import io.peekandpoke.ultra.codegen.model.TsTypeDecl
 import io.peekandpoke.ultra.codegen.model.TypeId
 import io.peekandpoke.ultra.codegen.model.TypeModel
 import io.peekandpoke.ultra.codegen.model.TypeWalker
+import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.slumber.Codec
 import java.io.File
 import kotlin.reflect.KType
@@ -87,6 +88,17 @@ object TsFixtureGenerator {
 
         val codec = Codec.default
 
+        copyRuntime(targetDir)
+
+        // A real envelope around a real payload. The generic `ApiResponse<T>` is hand-written rather
+        // than generated, so this is the only place its schema meets output a server actually produced.
+        File(targetDir, "apiResponse.sample.json").writeText(
+            codec.slumber(
+                typeOf<ApiResponse<FxSpeaker>>(),
+                ApiResponse.ok(FxSpeaker("Ada", null)).withWarning("careful"),
+            ).toJson()
+        )
+
         val entries = fixtures.map { fixture ->
             val model: TypeModel = TypeWalker(TsTypeClaims())
                 .walk(listOf(TypeWalker.Root(fixture.root, fixture.name)))
@@ -111,6 +123,25 @@ object TsFixtureGenerator {
         File(targetDir, "manifest.json").writeText(entries.toManifestJson())
 
         println("[ts-fixtures] wrote ${entries.size} fixtures to $targetDir")
+    }
+
+    /**
+     * Copies the hand-written runtime next to the generated fixtures.
+     *
+     * Without this the runtime is the one part of the SDK no compiler ever looks at: it is a classpath
+     * resource, so neither the Kotlin build nor `tsc` sees it. Copying it into the verified directory
+     * puts it under `tsc --noEmit` and makes it importable by the node harness.
+     */
+    private fun copyRuntime(targetDir: File) {
+        TsRuntime.Module.entries.forEach { module ->
+            val content = TsFixtureGenerator::class.java.classLoader.getResourceAsStream(module.resource)
+                ?.bufferedReader()?.readText()
+                ?: error("runtime resource '${module.resource}' is not on the classpath")
+
+            File(targetDir, module.path)
+                .also { it.parentFile.mkdirs() }
+                .writeText(content)
+        }
     }
 
     private data class ManifestEntry(

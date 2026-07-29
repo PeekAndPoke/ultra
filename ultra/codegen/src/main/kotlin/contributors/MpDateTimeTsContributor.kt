@@ -3,6 +3,7 @@ package io.peekandpoke.ultra.codegen.contributors
 import io.peekandpoke.ultra.codegen.model.TsTypeClaims
 import io.peekandpoke.ultra.codegen.sdk.TsSdkContributor
 import io.peekandpoke.ultra.codegen.sdk.TsSdkEmitContext
+import io.peekandpoke.ultra.codegen.ts.TsRuntime
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.MpLocalDate
 import io.peekandpoke.ultra.datetime.MpLocalDateTime
@@ -24,10 +25,8 @@ import io.peekandpoke.ultra.datetime.MpZonedDateTime
 class MpDateTimeTsContributor : TsSdkContributor {
 
     companion object {
-        /** Where the runtime module is emitted, and how generated code imports it. */
-        const val MODULE: String = "./runtime/datetime"
-
-        private const val RESOURCE = "ts/runtime/datetime.ts"
+        /** How generated code imports the runtime module. */
+        val MODULE: String = TsRuntime.Module.DateTime.moduleSpecifier
 
         /** The claimed types, paired with the TypeScript name each maps to. */
         val CLAIMED: Map<kotlin.reflect.KClass<*>, String> = mapOf(
@@ -56,7 +55,7 @@ class MpDateTimeTsContributor : TsSdkContributor {
         }
 
         if (used) {
-            context.out.resource(RESOURCE, to = "runtime/datetime.ts")
+            TsRuntime.emit(context.out, setOf(TsRuntime.Module.DateTime))
         }
     }
 }

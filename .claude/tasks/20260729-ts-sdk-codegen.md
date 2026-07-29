@@ -389,13 +389,25 @@ by downcasting the injected `RestCodec`.
 
 ---
 
-## Phase 3 — TS runtime resources
+## Phase 3 — TS runtime resources — DONE 2026-07-29
 
-Hand-written, checked in under `ultra/codegen/src/main/resources/ts/runtime/`.
+Hand-written, checked in under `ultra/codegen/src/main/resources/ts/runtime/`. All four modules are
+inventoried by `TsRuntime.Module` (`ultra/codegen/src/main/kotlin/ts/TsRuntime.kt`), so a contributor
+names a module rather than a path, and `datetime.ts` stopped being addressed by string literal.
 
-### 3.1 Transport
+**Two constraints discovered while building it, both now enforced by the toolchain:**
 
-- [ ] Emit against a minimal transport interface with a **fetch-based default**. A generated SDK is a library — baking
+- **No non-erasable TypeScript, ever.** `SseError` was first written with constructor parameter
+  properties; Node's type stripping rejects them outright, and so does esbuild. A generated SDK is
+  consumed by exactly those toolchains. `ts-verify/tsconfig.json` now sets `erasableSyntaxOnly: true`,
+  which moves the failure from run time to `tsc`. Also rules out `enum` and `namespace`.
+- **A runtime check that throws must not abort the run.** Found by mutation-testing: sabotaging
+  `fetchTransport` to throw on non-2xx took every later check down with it, so the SSE checks silently
+  did not run. `verifyRuntime` now isolates each group; `verify.ts` isolates each fixture import.
+
+### 3.1 Transport — `runtime/http.ts`
+
+- [x] Emit against a minimal transport interface with a **fetch-based default**. A generated SDK is a library — baking
   in axios forces the dep on every consumer and collides with their own interceptors / auth-refresh / tracing.
 
 ```ts
@@ -421,29 +433,60 @@ export interface HttpResponse {
 Mirrors `RemoteResponse` (`ultra/remote/src/commonMain/kotlin/RemoteResponse.kt:8-27`) so the Kotlin and TS SDKs stay
 conceptually aligned. Auth becomes a one-line transport wrapper, not a generated concern.
 
-- [ ] **Non-2xx must NOT throw.** This is a deliberate, documented and defended semantic on the Kotlin side —
+- [x] **Non-2xx must NOT throw.** This is a deliberate, documented and defended semantic on the Kotlin side —
   `ApiClient.Config` KDoc (`ultra/remote/src/commonMain/kotlin/ApiClient.kt:24-29`): *"Non-2xx responses are surfaced as
   a decoded `ApiResponse` envelope, not thrown — the transport forces
   `expectSuccess = false` per request, so a client-level `expectSuccess = true` /
   `HttpResponseValidator` cannot silently reintroduce throw-on-error."* Verified at
   `ultra/remote/src/commonMain/kotlin/RemoteRequestImpl.kt:54`. The TS SDK must match or the two clients diverge.
-- [ ] This is *why* `fetch` is the right default: not rejecting on 4xx/5xx — the thing everyone complains about — is
+- [x] This is *why* `fetch` is the right default: not rejecting on 4xx/5xx — the thing everyone complains about — is
   exactly the behaviour needed here. axios would mean fighting `validateStatus` on every call.
-- [ ] `apiRespond` derives the HTTP status **from** the envelope (`funktor/rest/src/jvmMain/kotlin/respond.kt:35`), so
+- [x] `apiRespond` derives the HTTP status **from** the envelope (`funktor/rest/src/jvmMain/kotlin/respond.kt:35`), so
   the two always agree — but parse the envelope, since it also carries `messages` and `insights`.
+- [x] `buildUrl` mirrors `TypedRouteRenderer` (`funktor/core/src/jvmMain/kotlin/broker/TypedRouteRenderer.kt:28`),
+  which turned out to matter more than expected: it **drops query params that are null or the empty
+  string** rather than sending them empty (`:52-55`). Sending `page=` where Kotlin sends nothing would
+  hand the server `""` instead of the parameter's default. Query keys also appear at most once —
+  `OutgoingConverter.convert` produces a single string per param, so repeated keys are not part of the
+  protocol and `buildUrl` must not invent them. Encoding uses `encodeURIComponent`; it leaves a few
+  sub-delimiters unescaped that ktor's `encodeURLQueryComponent(encodeFull = true)` escapes, but both
+  decode identically server-side.
 
-### 3.2 `ApiResponse` envelope
+### 3.2 `ApiResponse` envelope — `runtime/apiResponse.ts`
 
-- [ ] Hand-written TS mirror of `ApiResponse<T>` (`ultra/remote/src/commonMain/kotlin/ApiResponse.kt:10-19`):
+- [x] Hand-written TS mirror of `ApiResponse<T>` (`ultra/remote/src/commonMain/kotlin/ApiResponse.kt:10-19`):
   `status`, `data`, `messages`, `insights`. Small and stable — do not generate it.
+- [x] **Stays generic rather than monomorphized.** TypeScript has real generics, so `apiResponse(Talk)`
+  is a schema factory returning `z.ZodType<ApiResponse<Talk>>`. Monomorphizing the envelope the way
+  the model emitter monomorphizes `PageOf<Talk>` would mean one `ApiResponseTalk` per payload for no
+  gain. The walker therefore never sees `ApiResponse` — the REST contributor roots the PAYLOAD type.
+- [x] `HttpStatusCode`, `Message` and `Insights` ship with it. Verified by slumbering real values:
+  `HttpStatusCode` is `{value, description}`, **not** a bare number, and `Message.ts` is an `MpInstant`.
+- [x] Optionality rule, stated in the file: **optional in TS iff the Kotlin ctor param has a default** —
+  the same rule the generator applies to generated types. So `messages`/`insights` are `.nullish()`
+  and `data` is required-but-nullable. Slumber writes every key including nulls (probed, not assumed),
+  but the Kotlin awaker accepts them missing and the client should too.
+- [x] `apiResponse.ts` re-declares the `{ts, timezone, human}` instant shape locally instead of importing
+  `./datetime.ts`, so it stands alone — `datetime.ts` ships only when a datetime type is reachable,
+  and the envelope is needed regardless. `ApiResponseParitySpec` pins the copy against the codec AND
+  against `datetime.ts`'s own `timestamped`, so the duplication cannot drift.
 
-### 3.3 SSE
+### 3.3 SSE — `runtime/sse.ts`
 
-- [ ] **`EventSource` cannot send an `Authorization` header** — not in the spec. `ApiRoute.Sse` routes go through the
+- [x] **`EventSource` cannot send an `Authorization` header** — not in the spec. `ApiRoute.Sse` routes go through the
   same auth floor as everything else, so an authenticated SSE endpoint is unreachable via
   `EventSource` unless the token goes in the query string, where it lands in access logs.
-- [ ] Implement SSE over `fetch` + `ReadableStream` with a small SSE frame parser (the approach
+- [x] Implement SSE over `fetch` + `ReadableStream` with a small SSE frame parser (the approach
   `@microsoft/fetch-event-source` takes).
+- [x] **SSE routes carry no typed payload**: `ApiRoute.Sse.responseType` is `TypeRef<Unit>`
+  (`funktor/rest/src/jvmMain/kotlin/ApiRoute.kt:213`) and the handler returns `Any`. So events are
+  delivered as raw `data` strings and the caller applies whatever schema fits — a generated per-route
+  event type is not derivable today. Revisit if `Sse` ever gains an event type parameter.
+- [x] Two deliberate divergences from `EventSource`, both documented in the file: no automatic
+  reconnect (the server's `retry` is surfaced instead), and a non-2xx **does** throw `SseError` — there
+  is no stream to return and an async generator has nowhere to put an envelope.
+- Note: `routing.kt:225` records that the ktor SSE plugin is not installed in any funktor app, so SSE
+  routes are unmountable today. The runtime is ready ahead of that.
 - [ ] This has not bitten yet only because the demo's SSE routes are `public()`
   (`funktor-demo/server/src/main/kotlin/api/showcase/SseShowcaseApi.kt:16`).
 
@@ -770,10 +813,46 @@ used a plain type argument and would never have shown it.
 
 Mutation-tested 2/2 (type args included in the name; outer-class prefix retained).
 
+**2026-07-29 — Phase 3 DONE (the hand-written TS runtime). Phase 1 is complete.**
+
+`runtime/http.ts`, `runtime/apiResponse.ts` and `runtime/sse.ts` added alongside `datetime.ts`, all
+four now inventoried by `TsRuntime.Module` and copied into the verified directory by the fixture
+generator — so `tsc` type-checks the runtime, which nothing did before.
+
+`ultra/codegen` gained `testImplementation(project(":ultra:remote"))`, deliberately test-only: main
+code just ships the `.ts` as a resource, so the generator stays independent of `ultra/remote`.
+
+**Envelope shape was probed, not recalled** — the lesson from `datetime.ts` applied up front. Slumber
+writes every key including nulls; `HttpStatusCode` is `{value, description}` rather than a bare number.
+
+**Verification, 51 assertions in `ts-verify` + 16 Kotlin (`ApiResponseParitySpec`, `TsRuntimeSpec`):**
+
+- `ApiResponseParitySpec` reads the field sets back out of the `.ts` source and compares them against
+  what Slumber really produces. Comparing against a hand-kept Kotlin list would only ever have proven
+  the list was copied correctly.
+- `verifyRuntime.ts` runs the runtime for real: envelope parsing against a slumbered
+  `ApiResponse<FxSpeaker>`, `buildUrl` against `TypedRouteRenderer`'s rules, `fetchTransport` against a
+  fake `fetch`, and seven SSE frame-parser cases.
+
+**Mutation-tested 14/14** — 6 against `ApiResponseParitySpec` (drop a schema field, drop an enum entry,
+rename a field in the interface only, degenerate `HttpStatusCode` to a number, …) and 8 against
+`ts-verify` (empty query params, unfilled placeholder, throw-on-non-2xx, CR hold-back, empty-frame
+dispatch, id persistence, ignore the payload schema, space stripping).
+
+**One test was vacuous and is now sharp.** The CRLF-split-across-chunks case originally ended the frame
+at the split, so removing the hold-back produced an identical result — the spurious blank line
+dispatches nothing, because a frame with no data is dropped. It only discriminates when the frame
+*continues* past the split: `push('data: a\r')` then `push('\ndata: b\n\n')` must yield one event with
+`data: 'a\nb'`, not two events.
+
+**Caught by `tsc`, not by an assertion:** making the envelope ignore its payload schema
+(`data: z.unknown()`) fails to type-check against `z.ZodType<ApiResponse<T>>`. Worth noting that the
+type-check layer catches a class of sabotage the runtime checks would have to be written for.
+
 ### Next
 
-The hand-written TS runtime (transport, `ApiResponse`, SSE) -- datetime is done.
-Then Phase 2 (`funktor/codegen`: `RestApiTsContributor` + CLI).
+Phase 2 (`funktor/codegen`: `RestApiTsContributor` + `sdk:ts:generate` CLI), then Phase 4 (wire into
+funktor-demo). Phase 2's prerequisite is `.claude/tasks/20260730-funktor-rest-codec-config.md`.
 
 ---
 
@@ -850,17 +929,25 @@ One item worth a conscious decision rather than a default:
 
 ## Test evidence
 
-- [ ] Unit: walker closure (cycles, generics, sealed hierarchies, value classes, collections, nullability)
-- [ ] Unit: claims registry — double-claim error, opaque escape, unclaimed-custom-codec error
-- [ ] Unit: output collision error
-- [ ] Golden-file: emitted TS for a representative fixture set (`shouldHaveNoDiffs`, carried over)
-- [ ] Drift test: Mp datetime slumber output keys vs `runtime/datetime.ts` field names
-- [ ] Cross-check: generated query-param encoding vs `UriParamBuilder`
+- [x] Unit: walker closure (cycles, generics, sealed hierarchies, value classes, collections, nullability)
+      — `TypeWalkerSpec` (31), `GenericsSpec` (9)
+- [x] Unit: claims registry — double-claim error, opaque escape, unclaimed-custom-codec error
+      — `TsModelValidatorSpec` (8), `ThirdPartyContributorSpec` (3)
+- [x] Unit: output collision error — `TsSdkBuilderSpec` (12)
+- [x] Golden-file: emitted TS for a representative fixture set (`shouldHaveNoDiffs`, carried over)
+      — `TsModelEmitterSpec` (14)
+- [x] Drift test: Mp datetime slumber output keys vs `runtime/datetime.ts` field names
+      — `MpDateTimeFieldParitySpec` (8); envelope equivalent is `ApiResponseParitySpec` (8)
+- [x] Cross-check: query-param encoding vs `TypedRouteRenderer` — `buildUrl` in `runtime/http.ts`,
+      checked in `ts-verify/verifyRuntime.ts` (omits null/empty, single key per param, encodes both
+      path and query). Note the reference is `TypedRouteRenderer`, not `UriParamBuilder` — no such
+      class exists.
 - [x] `tsc --noEmit` on generated output — automated as `:ultra:codegen:tsVerify`, wired into `check`
-- [ ] Compile sweep after Phase 0:
+- [x] Compile sweep after Phase 0:
   `./gradlew compileKotlinJvm compileTestKotlinJvm compileKotlinJs compileTestKotlinJs compileKotlin
-  compileTestKotlin --continue` — check for `^e:`
-- [ ] Full test command (s) run + green: `...`
+  compileTestKotlin --continue` — check for `^e:` — green 2026-07-29 (re-run after Phase 3)
+- [ ] Full test command (s) run + green: `./gradlew :ultra:codegen:check` — 118 Kotlin tests + 51
+  `ts-verify` assertions green 2026-07-29. Phases 2 and 4 still to add their own.
 
 ## Review record (filled by /feature-review)
 
