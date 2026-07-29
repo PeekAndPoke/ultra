@@ -110,6 +110,9 @@ object BuiltInModule : SlumberModule {
                         CollectionAwaker.forList(type)
                     // Sets
                     cls == Set::class || cls == MutableSet::class -> CollectionAwaker.forSet(type)
+                    // Arrays — Array<T> and the eight primitive arrays. Not covered by the branches
+                    // above: an Array is not an Iterable, and IntArray & co. are not Array<T> either.
+                    CollectionAwaker.isArrayClass(cls) -> CollectionAwaker.forArray(type)
                     // Maps
                     cls == Map::class || cls == MutableMap::class -> MapAwaker.forMap(type)
                     // Enum
@@ -177,6 +180,9 @@ object BuiltInModule : SlumberModule {
                     KotlinXJsonElementCodec.appliesTo(cls) -> KotlinXJsonElementCodec as Slumberer
                     // Iterables
                     Iterable::class.java.isAssignableFrom(cls.java) -> CollectionSlumberer
+                    // Arrays — an Array is not an Iterable, so it needs its own branch. Handled by the
+                    // same slumberer, which reads any array shape element-wise.
+                    cls.java.isArray -> CollectionSlumberer
                     // Maps
                     Map::class.java.isAssignableFrom(cls.java) -> MapSlumberer
                     // Enum
