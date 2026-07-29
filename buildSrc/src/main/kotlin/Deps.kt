@@ -61,8 +61,11 @@ object Deps {
         const val clikt = "com.github.ajalt.clikt:clikt:$clikt_version"
 
         // https://mvnrepository.com/artifact/com.jsoizo/kotlin-csv
-        // checked 2026-07-29: latest 2.0.0 (major, held)
-        private const val csv_version = "1.10.0"
+        // checked 2026-07-29: latest 2.0.0
+        // NOTE: nothing declares this dependency — no build file references Deps.KotlinLibs.csv, so
+        // the 2.0 bump is UNVERIFIED. A green build says nothing about it, because nothing compiles
+        // against it. Either delete this entry or wire it up and check the 2.0 API.
+        private const val csv_version = "2.0.0"
         const val csv = "com.jsoizo:kotlin-csv:$csv_version"
 
         // https://mvnrepository.com/artifact/io.github.evanrupert/excelkt
@@ -263,15 +266,14 @@ object Deps {
             // Only for BUILDING MIME messages — funktor:messaging sends through provider APIs
             // (SES, SendGrid) and has no SMTP transport. Declared directly because it used to arrive
             // transitively through commons-email, whose own API nothing ever used.
-            // 1.6.8 is the FLOOR, not a preference: CVE-2025-7962 (SMTP injection via CR/LF) hits
+            // 2.0.2 is a FLOOR, not a preference: CVE-2025-7962 (SMTP injection via CR/LF) hits
             // < 1.6.8 and 2.0.0..2.0.1. Unreachable from this repo — nothing here uses the SMTP
-            // transport — but `implementation` still puts it on a consumer's runtime classpath, and
-            // 1.6.7 was what commons-email dragged in. Do not go back below this.
-            // NOTE: 1.6.x still exposes the `javax.mail` namespace that AwsSesSender compiles
-            // against. 1.6.8 keeps it — this is a drop-in bump. It is 2.x (`jakarta.*`,
-            // org.eclipse.angus:angus-mail) that would mean rewriting those imports.
-            // checked 2026-07-29: latest 2.0.2 — deliberately NOT taken, see the note above
-            private const val version = "1.6.8"
+            // transport — but `implementation` still puts it on a consumer's runtime classpath.
+            // Do not go below this.
+            // 2.x exposes the `jakarta.*` namespace, which AwsSesSender was migrated to; it also
+            // brings com.sun.activation:jakarta.activation, so DataHandler/DataSource come along.
+            // checked 2026-07-29: latest 2.0.2
+            private const val version = "2.0.2"
             const val mail = "com.sun.mail:jakarta.mail:$version"
         }
 
@@ -285,7 +287,7 @@ object Deps {
         }
 
         object Yaml {
-            // https://mvnrepository.com/artifact/org.yaml/snakeyaml (checked 2026-07-20: latest 2.4)
+            // https://mvnrepository.com/artifact/org.yaml/snakeyaml
             // checked 2026-07-29: latest 2.6
             private const val snakeyaml_version = "2.6"
             const val snakeyaml = "org.yaml:snakeyaml:$snakeyaml_version"
