@@ -557,10 +557,56 @@ Both times the suite was green on the first run, which is exactly when it is lea
 
 Final: 8/8 mutations killed across both rounds. 41 tests (`TypeWalkerSpec` 30, `CodePrinterSpec` 11).
 
+### zod emitter (2026-07-29)
+
+`ts/TsDeclOrder.kt`, `ts/TsRenderer.kt`, `ts/TsModelEmitter.kt` — models emit to a single `models.ts`.
+
+**One file, not one per package.** A zod schema is a `const`, i.e. a VALUE, so a cross-file cycle would
+be a circular value import and crash at module-evaluation time. Keeping models together reduces the
+ordering problem to one file, where `TsDeclOrder` solves it outright. Splitting later is possible but
+needs `z.lazy` on every cross-file edge.
+
+**Ordering rule (got this wrong first).** A DFS post-order alone is not enough. My first attempt marked
+the node a back-edge LANDS ON as recursive, but the declaration that actually needs deferring is the
+one emitted FIRST while referencing something later. Laziness is now decided by position after
+ordering: a decl is lazy iff it references itself or anything at/after its own index. For a mutual
+cycle that correctly makes exactly ONE of the pair lazy, not both.
+
+**Recursive decls need an explicit type**, because `z.infer` cannot see through `z.lazy`:
+`export type X = {...}` plus `export const X: z.ZodType<X> = z.lazy(() => ...)`.
+
+**`z.discriminatedUnion` needs concrete object options**, so a lazily-emitted variant forces a fallback
+to `z.union` — still correct, just worse error messages. Detected and handled.
+
+`TsVoid` renamed to `TsNull`: `Unit` slumbers via `NullCodec` to `null`, so the TypeScript type is
+`null` and the schema `z.null()`. The old name described the Kotlin side and would have misled.
+
+### End-to-end verification with the real toolchain (2026-07-29)
+
+Not just eyeballed — the generated output was run against the actual TypeScript compiler and zod
+(zod 4.4.3, typescript 7.0.2, both looked up rather than assumed):
+
+1. **`tsc --noEmit` under `strict: true`** passes on all six generated fixtures, recursive ones included.
+2. **The schemas parse what Slumber actually writes.** Kotlin slumbered real instances to JSON, node
+   parsed that JSON with the generated schemas: talk, node (recursive), event (custom discriminator)
+   and shape (polymorphic) all PASS.
+3. **The schemas genuinely discriminate** — a passing `parse()` proves nothing if the schema accepts
+   anything. 7 malformed inputs all rejected (wrong field type, missing required field, invalid enum
+   member, bad nested object, null for a non-nullable, unknown discriminator, bad recursive child) and
+   2 valid edge cases correctly accepted (omitted optional, null for nullable).
+
+Steps 2 and 3 were run manually in a scratch sandbox. The Kotlin half is now a permanent test —
+`SlumberFieldParitySpec` asserts the emitted field set is exactly the key set Slumber writes, across
+containers, `@Slumber.Field`, both discriminator styles, plain sealed objects and recursion. Wiring
+the node half into CI is a follow-up.
+
+Mutation-tested 4/4 killed on the emitter (self-reference laziness, `.optional()`, discriminator
+literal, `discriminatedUnion` preference).
+
 ### Next
 
-Phase 1 remainder: validation (incl. the `SlumberConfig` custom-codec check), TS AST + zod emitter,
 `MpDateTimeTsContributor`, `TsSdkBuilder` / `TsSdkContributor` / `TsSdkOutput`, runtime resources.
+Then Phase 2 (`funktor/codegen`: `RestApiTsContributor` + CLI) and Phase 3 (TS runtime).
 
 Open: kotlinx-serialization JSON types (`JsonElement`, `JsonObject`, …) have codecs in `BuiltInModule`
 but no walker branch, so they currently land as "unresolved". Either add a small built-in contributor

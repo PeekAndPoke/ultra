@@ -43,8 +43,13 @@ sealed interface TsTypeRef {
     /** `unknown` — an explicitly opaque or unresolvable type. */
     data object TsUnknown : TsTypeRef
 
-    /** `void` — used for `Unit` responses. */
-    data object TsVoid : TsTypeRef
+    /**
+     * `null` — what `Unit` and `Nothing` actually put on the wire.
+     *
+     * Named for the JSON, not for Kotlin: `NullCodec` writes `null`, so the TypeScript type is `null`
+     * and the schema is `z.null()`. Calling it `void` would describe the Kotlin side and mislead.
+     */
+    data object TsNull : TsTypeRef
 
     /** Wraps this reference as nullable, collapsing a double wrap. */
     fun asNullable(): TsTypeRef = when (this) {

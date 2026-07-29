@@ -98,7 +98,7 @@ class TypeWalker(
 
         // Nothing / Unit -> NullCodec
         if (cls == Unit::class || cls == Nothing::class) {
-            return TsTypeRef.TsVoid
+            return TsTypeRef.TsNull
         }
 
         // A user value class is checked BEFORE primitives and collections, exactly as Slumber does.
