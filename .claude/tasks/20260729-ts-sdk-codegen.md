@@ -743,6 +743,33 @@ Acceptable because the failure direction is safe: an UNRECOGNISED slumberer is r
 codec, claim it". A new structural codec in Slumber would therefore cause a spurious error demanding a
 claim, never silently wrong TypeScript. Wrong-and-loud, never wrong-and-quiet.
 
+### Generics: verified across all positions, one naming bug fixed (2026-07-29)
+
+Prompted by the maintainer asking whether generics work at top level, as properties, and nested like
+`List<MyType<Something>>`. They do — all positions resolve with nothing left unclassified:
+
+| Kotlin | TypeScript |
+|---|---|
+| `FxPageOf<FxSpeaker>` (property) | `FxPageOfFxSpeaker` |
+| `List<FxBox<FxSpeaker>>` | `FxBoxFxSpeaker[]` |
+| `FxBox<List<FxSpeaker>>` | `FxBoxListFxSpeaker` |
+| `FxPageOf<FxBox<FxSpeaker>>` (nested generic) | `FxPageOfFxBoxFxSpeaker`, substituted at BOTH levels |
+| `FxPair<FxSpeaker, FxStatus>` (two params) | `FxPairFxSpeakerFxStatus` |
+| `Map<String, FxBox<FxTalkId>>` | `Record<string, FxBoxFxTalkId>` |
+| `FxBox<A>` and `FxBox<B>` in one model | two separate declarations |
+
+**Bug found and fixed:** `TsNames` stripped the package using `cls.java.package`, but for Kotlin's
+mapped types that disagrees with `qualifiedName` — `List::class.java` is `java.util.List` while
+`qualifiedName` is `kotlin.collections.List`, so nothing was stripped and `FxBox<List<FxSpeaker>>`
+emitted as `FxBoxkotlincollectionsListFxSpeaker`. Now built by walking the enclosing-class chain,
+which sidesteps the mismatch. Nested classes keep their outer prefix as before; two same-named classes
+in different packages still collapse to one name, which the validator's collision check catches.
+
+Only found because the probe covered a collection AS a type argument. The pre-existing generics test
+used a plain type argument and would never have shown it.
+
+Mutation-tested 2/2 (type args included in the name; outer-class prefix retained).
+
 ### Next
 
 The hand-written TS runtime (transport, `ApiResponse`, SSE) -- datetime is done.

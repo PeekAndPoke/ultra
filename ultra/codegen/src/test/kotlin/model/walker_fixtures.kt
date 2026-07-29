@@ -165,3 +165,25 @@ object FxOuterB {
 }
 
 data class FxHoldsBothInners(val a: FxOuterA.Inner, val b: FxOuterB.Inner)
+
+//  Generics probe  /////////////////////////////////////////////////////////////////////////////////
+
+data class FxBox<T>(val item: T, val label: String)
+
+data class FxPair<A, B>(val first: A, val second: B)
+
+/** Generic in a property position, nested in containers, and doubly nested. */
+data class FxGenericHolder(
+    val page: FxPageOf<FxSpeaker>,
+    val boxes: List<FxBox<FxSpeaker>>,
+    val nested: FxBox<List<FxSpeaker>>,
+    val deep: FxPageOf<FxBox<FxSpeaker>>,
+    val pair: FxPair<FxSpeaker, FxStatus>,
+    val mapped: Map<String, FxBox<FxTalkId>>,
+)
+
+/** The same generic at two different instantiations in one model. */
+data class FxTwoInstantiations(
+    val a: FxBox<FxSpeaker>,
+    val b: FxBox<FxStatus>,
+)

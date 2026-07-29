@@ -30,19 +30,34 @@ object TsNames {
         }
     }
 
-    /** The unqualified name of [cls] with any outer-class prefixes retained and dots removed. */
+    /**
+     * The unqualified name of [cls], with outer-class prefixes retained.
+     *
+     * Built by walking the enclosing-class chain rather than by stripping the package off the
+     * qualified name. Those two disagree for Kotlin's mapped types — `List::class.java` is
+     * `java.util.List` while `qualifiedName` is `kotlin.collections.List`, so package stripping left
+     * the whole thing intact and produced names like `FxBoxkotlincollectionsListFxSpeaker`.
+     *
+     * Two same-named classes in different packages still collapse to one name, exactly as before;
+     * that is caught by the name-collision check in `TsModelValidator`.
+     */
     private fun baseName(cls: KClass<*>): String {
-        val qualified = cls.qualifiedName ?: return cls.jvmName.substringAfterLast('.').replace('$', '_')
+        val parts = mutableListOf<String>()
 
-        val packageName = cls.java.`package`?.name ?: ""
+        var current: Class<*>? = cls.java
 
-        val withoutPackage = when {
-            packageName.isNotEmpty() && qualified.startsWith("$packageName.") ->
-                qualified.removePrefix("$packageName.")
+        while (current != null) {
+            val simple = current.simpleName
 
-            else -> qualified
+            // Anonymous and local classes have a blank simple name; fall back to the binary name.
+            if (simple.isNullOrEmpty()) {
+                return cls.jvmName.substringAfterLast('.').replace('$', '_')
+            }
+
+            parts.add(0, simple)
+            current = current.enclosingClass
         }
 
-        return withoutPackage.replace(".", "")
+        return parts.joinToString("")
     }
 }
