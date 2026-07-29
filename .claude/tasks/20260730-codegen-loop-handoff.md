@@ -36,9 +36,11 @@ grep the section you need. The Vue follow-on is `20260730-frontend-sdk-vue-contr
 
 These landed in the review round with **no tests**. Each needs a test that fails without the fix.
 
-- [ ] `tsStringLiteral` / `tsPropertyName` (`ts/TsLiterals.kt`) — pin the PROPERTY (each char that must
-      escape), not one example. Include a fixture whose `Polymorphic.Child.identifier` contains `'`,
-      and a discriminator field that is not a bare identifier (`@type`).
+- [x] **DONE `ef5eba72`** — `tsStringLiteral` / `tsPropertyName`. `TsLiteralsSpec` (round-trip property
+      through a strict JS decoder), `FxQuoted` fixture, and the fixture wired into ts-verify so `tsc`
+      and `zod` check the hostile output for real. Mutation-tested 5/5.
+      **Reusable technique:** a round-trip against a strict decoder beats one assertion per character —
+      it fails for characters nobody thought to list. Worth copying for the remaining items.
 - [ ] `TypeId` type-argument nullability — `Box<String>` and `Box<String?>` in ONE model must produce
       two declarations. Assert both are emitted and differ.
 - [ ] Claimed polymorphic child lands in `usedClaims` — assert the import IS emitted and the variant
@@ -90,19 +92,31 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
-**Iteration 0 (review round, 2026-07-30).** Review complete — 22 of 23 findings confirmed, 8 fixed, 13
-tracked. The one that did not survive is recorded in the task file's Review record; do not "re-fix" the
-charset non-bug.
+**Iteration 1 (2026-07-30, ~02:00).** Backlog §1 item 1 done and committed (`ef5eba72`). 127 tests
+green (was 120), 6 ts-verify fixtures (was 5). Working tree clean for `ultra/codegen`.
 
-State: committed as `c7faf219`. `:ultra:codegen:check` green (120 Kotlin tests + ts-verify, 5
-fixtures). Working tree clean for `ultra/codegen` and this task's docs.
+Do NOT re-fix the `.bufferedReader()` charset non-bug — it was a wrong finding; see the Review record.
 
 **Do not touch these — another agent owns them:** `ultra/log/**`,
 `.claude/tasks/20260729-log-scan-findings.md`, `.claude/tasks/20260729-redteam-log-forging.md`.
-`.idea/compiler.xml` is modified in the tree and is NOT ours to commit.
+`.idea/compiler.xml` is modified in the tree and is NOT ours to commit — leave it.
 
-Next action: backlog §1, first item (`tsStringLiteral` tests). Nothing in §2 until §1 is fully done —
-the applied fixes are currently unverified and that is the largest risk in the tree.
+**Next action:** backlog §1 item 2 (`TypeId` type-argument nullability). Add `Box<String>` and
+`Box<String?>` as properties of ONE fixture; assert two distinct declarations are emitted. Note the
+name must differ too, else `TsNames.of` collides — check whether the fix needs a `TsNames` change as
+well, since the review only altered `TypeId.canonicalKey`. **This is a real open question, resolve it
+before writing the test.**
 
-Suggested first move each iteration: `git log --oneline -3` to see where the last one stopped, then
-grep this file's backlog for the first unchecked box.
+Still nothing from §2 until §1 is fully done.
+
+### Working notes that paid off (keep using)
+
+- `cp` the target file to the scratchpad with the source-set path in the name before mutating; restore
+  with `cp`, never `git checkout` — the tree carries another agent's uncommitted work.
+- `sed` on Kotlin string literals full of backslashes is a trap; use Edit or a python heredoc.
+- Verify the restore with `git diff --stat -- <file>` (must be empty) before committing.
+- Confirm counts from `build/test-results/**/TEST-*.xml`, not from the gradle task result.
+- Running `:ultra:codegen:tsVerify` alone (skipping `test`) shows whether the TypeScript gate catches a
+  mutation independently of the Kotlin assertions. Worth doing for anything that changes emitted text.
+
+Suggested first move each iteration: `git log --oneline -3`, then the first unchecked box above.
