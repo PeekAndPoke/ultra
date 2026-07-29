@@ -654,6 +654,17 @@ Fixes applied: ...
   (`docs-site/src/data/llms/*.md`).
 - [ ] **`ReflectivePathFinder` convergence** — retrofit it onto the `ultra/codegen` walker, which also fixes its
   non-data-class gap (line 131). Security-relevant code, so a separate task with its own review.
+- [ ] **Array support in Slumber** (own task — touches battle-tested code). Raised 2026-07-29 while
+      fixing walker/Slumber parity. `Array` is not `Iterable`, so `BuiltInModule.getSlumberer` never
+      dispatches for a declared array type and `SlumberConfig.getSlumberer` throws. **Deferred, and
+      currently not blocking anything: zero array-typed properties exist across `funktor/`,
+      `funktor-demo/`, `ultra/model/` and `ultra/remote/`.** The work is asymmetric — slumbering is
+      nearly free (`CollectionSlumberer.kt:13` already handles `Array<*>` values, it is just never
+      reached), but awaking needs `java.lang.reflect.Array.newInstance` plus separate handling for the
+      six primitive array types, which do not unify with `Array<T>`. Adding slumber-only would create a
+      type that serializes but cannot round-trip — strictly worse than the current fail-fast. Arguably
+      the right long-term answer is to keep refusing: `Array` has reference equality and is mutable, so
+      `List` is the correct DTO shape regardless.
 - [ ] **`--package` mode** — package.json/tsconfig emission, when a second SDK consumer appears.
 - [ ] **Dart emitter v2** — if ever needed, build it on the `ultra/codegen` model; it inherits the closure and
   validation for free.
