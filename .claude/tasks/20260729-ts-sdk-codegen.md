@@ -523,10 +523,50 @@ Tests: `CodePrinterSpec` 11, `TypeWalkerSpec` 24 — all green, counts confirmed
   variants directly. Added the `FxPartlyClaimed` fixture and a test for that path. Now 4/4 mutations killed
   (claim guard, custom discriminator, ctor-default optionality, enum constant names).
 
+### Slumber dispatch parity — 5 divergences found and fixed (2026-07-29)
+
+Read `BuiltInModule.getSlumberer` (`ultra/slumber/src/jvmMain/kotlin/builtin/BuiltInModule.kt:137-206`)
+line by line against the walker's classification. Five real divergences, all of which would have
+produced wrong or missing types. All fixed, each pinned by a test.
+
+| # | Divergence | Consequence had it shipped |
+|---|---|---|
+| 1 | Walker used `isValue`; Slumber uses `isUserValueClass()` = `isValue && !qualifiedName.startsWith("kotlin.")` (`BuiltInModule.kt:63`) | `Duration`, `UInt`, `ULong`, `Result` aliased to a scalar — but Slumber *refuses* them, so the type described output the server cannot produce |
+| 2 | No `objectInstance` branch | **`sealed class X { object A : X() }` — the most common Kotlin sealed shape — reported unresolved and failed the build.** `ObjectInstanceCodec` writes `{}` (`ObjectInstanceCodec.kt:22`), so it is an empty object type |
+| 3 | No no-arg-constructor branch | A non-data class with a no-arg ctor reported unresolved, though Slumber routes it to `DataClassSlumberer` (`BuiltInModule.kt:195`) |
+| 4 | Collections keyed on `Collection`; Slumber keys on `Iterable` (`BuiltInModule.kt:179`) | A custom `Iterable` that is not a `Collection` typed as an object instead of an array |
+| 5 | Walker treated `Array` as a collection | `Array` is not `Iterable`, so Slumber has **no slumberer at all** for a declared array type. The walker was inventing a type for something that fails at runtime |
+
+**Classification order is also load-bearing and now mirrors Slumber's**: a user value class is resolved
+*before* primitives and collections, so `value class Ids(val v: List<String>)` aliases to `string[]`
+rather than being flattened into an array reference.
+
+This is the concrete argument for the design rule "defer to the slumber-side utility, never re-derive
+the rule". Four of the five came from re-deriving.
+
+### Mutation testing — 2 vacuous tests caught
+
+Both times the suite was green on the first run, which is exactly when it is least trustworthy.
+
+1. **Claim guard in `TypeWalker.declare`** — unreachable via property references, because
+   `resolveNonNullRef` short-circuits on a claim first. It *is* load-bearing when a claimed type is a
+   polymorphic child, since `declareUnion` enqueues variants directly. Fixture `FxPartlyClaimed` added.
+2. **Sealed `object` variant** — the fixture used `data object`, which also satisfies `isData`, so it
+   fell through to the data-class branch and produced an identical empty result. The test could not
+   distinguish the branches. Changed to a **plain** `object` (plus a separate `data object` case).
+
+Final: 8/8 mutations killed across both rounds. 41 tests (`TypeWalkerSpec` 30, `CodePrinterSpec` 11).
+
 ### Next
 
 Phase 1 remainder: validation (incl. the `SlumberConfig` custom-codec check), TS AST + zod emitter,
 `MpDateTimeTsContributor`, `TsSdkBuilder` / `TsSdkContributor` / `TsSdkOutput`, runtime resources.
+
+Open: kotlinx-serialization JSON types (`JsonElement`, `JsonObject`, …) have codecs in `BuiltInModule`
+but no walker branch, so they currently land as "unresolved". Either add a small built-in contributor
+claiming them (`JsonObject` -> `Record<string, unknown>`, `JsonArray` -> `unknown[]`, rest ->
+`unknown`) or require users to claim them. Leaning built-in contributor — the shape is genuinely
+arbitrary and forcing a claim is friction with no safety gain.
 
 ---
 

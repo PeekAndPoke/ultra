@@ -279,6 +279,63 @@ class TypeWalkerSpec : FreeSpec() {
             }
         }
 
+        "parity with BuiltInModule.getSlumberer" - {
+
+            "a PLAIN sealed object variant is an empty object, not reported unresolved" {
+                val model = walkOf(typeOf<FxResult>())
+
+                withClue("a plain object is not isData — only the ObjectInstanceCodec branch types it") {
+                    val obj = model.declFor(FxResult.Pending::class.createBareType())
+                        .shouldBeInstanceOf<TsTypeDecl.Obj>()
+
+                    obj.props shouldContainExactly emptyList()
+                    obj.discriminator.shouldNotBeNull().field shouldBe "_type"
+                }
+
+                model.unresolved shouldContainExactly emptyList()
+            }
+
+            "a `data object` sealed variant is also an empty object" {
+                val model = walkOf(typeOf<FxResult>())
+
+                model.declFor(FxResult.Skipped::class.createBareType())
+                    .shouldBeInstanceOf<TsTypeDecl.Obj>()
+                    .props shouldContainExactly emptyList()
+            }
+
+            "a non-data class with a no-arg constructor is typed, since Slumber routes it to DataClassSlumberer" {
+                val model = walkOf(typeOf<FxHoldsNoArgCtor>())
+
+                model.declFor(FxNoArgCtor::class.createBareType()).shouldBeInstanceOf<TsTypeDecl.Obj>()
+                model.unresolved shouldContainExactly emptyList()
+            }
+
+            "a value class is resolved BEFORE collections, so a List-wrapping value class aliases" {
+                val model = walkOf(typeOf<FxHoldsIdList>())
+
+                withClue("Slumber checks isUserValueClass before the Iterable branch") {
+                    model.declFor(FxIdList::class.createBareType())
+                        .shouldBeInstanceOf<TsTypeDecl.Alias>()
+                        .target shouldBe TsTypeRef.ArrayOf(TsTypeRef.TsString)
+                }
+            }
+
+            "a kotlin stdlib value class is unresolved, matching Slumber's refusal" {
+                val model = walkOf(typeOf<FxHoldsStdlibValueClass>())
+
+                withClue("Slumber excludes kotlin.* value classes — emitting an alias would type something the server cannot write") {
+                    model.unresolved.map { it.id.cls } shouldContainExactly listOf(UInt::class)
+                }
+            }
+
+            "an array is unresolved, because Array is not Iterable and Slumber cannot slumber it" {
+                val model = walkOf(typeOf<FxHoldsArray>())
+
+                model.unresolved.size shouldBe 1
+                model.unresolved.first().reason.contains("Array is not Iterable") shouldBe true
+            }
+        }
+
         "unresolved types" - {
 
             "a plain interface is reported with the path that reached it" {

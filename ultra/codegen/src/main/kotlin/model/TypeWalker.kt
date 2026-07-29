@@ -8,7 +8,6 @@ import io.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicChildUtil
 import io.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicParentUtil
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
-import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.withNullability
 
 /**
@@ -82,15 +81,36 @@ class TypeWalker(
         return if (nullable) ref.asNullable() else ref
     }
 
+    /**
+     * Terminal and container cases, in the SAME ORDER as `BuiltInModule.getSlumberer`.
+     *
+     * Order is load-bearing there and therefore here: a user value class is resolved before
+     * primitives and collections, so a `value class Ids(val v: List<String>)` aliases rather than
+     * becoming an array.
+     */
     private fun resolveNonNullRef(type: KType, cls: KClass<*>, path: List<String>): TsTypeRef {
-        // 1. A claim short-circuits everything below it.
+        // A claim short-circuits everything below it — a custom codec reshapes the JSON, so the
+        // declared structure is irrelevant.
         claims.find(cls)?.let { claim ->
             usedClaims[claim.qualifiedName] = claim
             return if (claim.opaque) TsTypeRef.TsUnknown else TsTypeRef.Named(TypeId.of(type))
         }
 
-        // 2. Primitives and other terminals.
+        // Nothing / Unit -> NullCodec
+        if (cls == Unit::class || cls == Nothing::class) {
+            return TsTypeRef.TsVoid
+        }
+
+        // A user value class is checked BEFORE primitives and collections, exactly as Slumber does.
+        if (cls.isUserValueClass()) {
+            val id = TypeId.of(type)
+            enqueue(id, path)
+            return TsTypeRef.Named(id)
+        }
+
         when (cls) {
+            Any::class -> return TsTypeRef.TsUnknown
+
             String::class, Char::class -> return TsTypeRef.TsString
 
             Boolean::class -> return TsTypeRef.TsBoolean
@@ -100,33 +120,31 @@ class TypeWalker(
 
             Long::class -> {
                 // Slumber writes a Long as a JSON number, so JSON.parse already truncates above 2^53.
-                // Reported as advisory, not an error: the loss is in the wire format, not the generator.
+                // Advisory, not an error: the loss is in the wire format, not in this generator.
                 longValued.add(TypeModel.Reached(TypeId.of(type), path))
                 return TsTypeRef.TsNumber
             }
-
-            Unit::class -> return TsTypeRef.TsVoid
-
-            Any::class -> return TsTypeRef.TsUnknown
         }
 
-        // 3. Collections. List, Set, Collection and arrays all slumber to a JSON array; a Map
-        //    slumbers to a JSON object whose keys are always strings.
-        if (cls.isSubclassOf(Map::class)) {
+        // A Map slumbers to a JSON object; JSON keys are always strings whatever the Kotlin key type.
+        if (cls.isMapLike()) {
             val value = type.arguments.getOrNull(1)?.type
             return TsTypeRef.RecordOf(
                 value = value?.let { resolveRef(it, path + "*") } ?: TsTypeRef.TsUnknown
             )
         }
 
-        if (cls.isCollectionLike()) {
+        // Any Iterable slumbers to a JSON array. Arrays are NOT included: `Array` is not `Iterable`,
+        // so Slumber has no slumberer for a declared array type and validation should say so rather
+        // than this walker inventing one.
+        if (cls.isIterableLike()) {
             val item = type.arguments.getOrNull(0)?.type
             return TsTypeRef.ArrayOf(
                 item = item?.let { resolveRef(it, path + "*") } ?: TsTypeRef.TsUnknown
             )
         }
 
-        // 4. Anything else becomes a named reference and gets declared.
+        // Anything else becomes a named reference and gets declared.
         val id = TypeId.of(type)
         enqueue(id, path)
         return TsTypeRef.Named(id)
@@ -143,14 +161,24 @@ class TypeWalker(
             return
         }
 
+        // Mirrors the classification order of `BuiltInModule.getSlumberer`.
         when {
-            cls.isEnumClass() -> decls[id] = declareEnum(id, cls)
+            cls.isUserValueClass() -> decls[id] = declareAlias(id, cls, path)
 
-            cls.isValueClass() -> decls[id] = declareAlias(id, cls, path)
+            cls.isEnumClass() -> decls[id] = declareEnum(id, cls)
 
             PolymorphicParentUtil.isPolymorphicParent(cls) -> decls[id] = declareUnion(id, cls, path)
 
+            // A Kotlin `object` slumbers to an empty map via ObjectInstanceCodec — so it is an object
+            // type with no properties. This branch is what makes the very common
+            // `sealed class X { object A : X() }` variant work.
+            cls.objectInstance != null -> decls[id] = declareSingleton(id, cls)
+
             cls.isData -> decls[id] = declareObj(id, cls, path)
+
+            // Slumber hands a no-arg-constructor class to DataClassSlumberer even when it is not a
+            // data class, so it must be typed the same way here.
+            cls.hasNoArgPrimaryCtor() -> decls[id] = declareObj(id, cls, path)
 
             else -> unresolved.add(
                 TypeModel.Unresolved(
@@ -161,6 +189,14 @@ class TypeWalker(
             )
         }
     }
+
+    /** A Kotlin `object`: `ObjectInstanceCodec` writes an empty map, plus any discriminator. */
+    private fun declareSingleton(id: TypeId, cls: KClass<*>): TsTypeDecl.Obj = TsTypeDecl.Obj(
+        id = id,
+        name = TsNames.of(id),
+        props = emptyList(),
+        discriminator = discriminatorFor(cls),
+    )
 
     private fun declareEnum(id: TypeId, cls: KClass<*>): TsTypeDecl.EnumDecl = TsTypeDecl.EnumDecl(
         id = id,
@@ -265,9 +301,21 @@ class TypeWalker(
     }
 
     private fun unresolvedReason(cls: KClass<*>): String = when {
-        cls.java.isInterface -> "plain interface — not a data class, enum, value class or polymorphic parent"
-        cls.isAbstract -> "abstract class with no polymorphic parent marker (not sealed, no Polymorphic.Parent companion)"
-        else -> "not a data class, enum, value class or polymorphic parent"
+        cls.java.isArray ->
+            "array type — Array is not Iterable, so Slumber has no slumberer for it either. Use a List."
+
+        cls.isValue ->
+            "kotlin stdlib value class — Slumber deliberately refuses these (their backing-field form " +
+                    "would diverge from kotlinx). Claim it with a dedicated TypeScript mapping."
+
+        cls.java.isInterface ->
+            "plain interface — not a data class, enum, value class, polymorphic parent or object"
+
+        cls.isAbstract ->
+            "abstract class with no polymorphic marker (not sealed, no Polymorphic.Parent companion)"
+
+        else ->
+            "not a data class, enum, value class, polymorphic parent, object, or no-arg-constructor class"
     }
 }
 

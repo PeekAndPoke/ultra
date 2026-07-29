@@ -83,6 +83,42 @@ data class FxWithExtraField(val a: String) {
     val computed: String = "$a!"
 }
 
+//  Slumber-dispatch parity cases  //////////////////////////////////////////////////////////////////
+
+/**
+ * A sealed hierarchy covering all three variant shapes.
+ *
+ * [Pending] is a PLAIN object, which only `ObjectInstanceCodec` handles — a `data object` would also
+ * satisfy `isData` and so cannot distinguish the object branch from the data-class branch.
+ */
+sealed class FxResult {
+    object Pending : FxResult()
+    data object Skipped : FxResult()
+    data class Done(val value: String) : FxResult()
+}
+
+/** Not a data class, but has a no-arg primary constructor — Slumber routes it to DataClassSlumberer. */
+class FxNoArgCtor {
+    val ignored: String = "not a ctor property"
+}
+
+/** A value class wrapping a list — Slumber resolves value classes BEFORE collections. */
+@JvmInline
+value class FxIdList(val values: List<String>)
+
+/** Holds kotlin stdlib value classes, which Slumber refuses rather than serializing generically. */
+data class FxHoldsStdlibValueClass(val count: UInt)
+
+/** Holds an array, which Slumber has no slumberer for. */
+data class FxHoldsArray(val items: Array<String>) {
+    override fun equals(other: Any?): Boolean = this === other
+    override fun hashCode(): Int = items.contentHashCode()
+}
+
+data class FxHoldsNoArgCtor(val thing: FxNoArgCtor)
+
+data class FxHoldsIdList(val ids: FxIdList)
+
 //  Unresolvable  ///////////////////////////////////////////////////////////////////////////////////
 
 interface FxPlainInterface {
