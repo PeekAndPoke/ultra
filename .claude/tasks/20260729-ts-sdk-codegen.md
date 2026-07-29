@@ -698,27 +698,31 @@ Pinned by a test with TWO root-supplying contributors, and mutation-tested.
 Worth remembering as a class of bug: "output is deterministic" needs a test with at least two
 independent contributors, not one.
 
-### Prerequisite found for Phase 2: apps cannot register their own SlumberModule (2026-07-29)
+### Phase 2 prerequisite: apps cannot register their own SlumberModule (2026-07-29)
 
 Raised by the maintainer asking how a funktor app would pass its own `SlumberConfig`.
 
-`TsSdkBuilder` already takes `SlumberConfig` as a constructor parameter, so the codegen side is
-pluggable. The gap is upstream: `funktor/rest/src/jvmMain/kotlin/index_jvm.kt:48` builds
+**Reading the live config already works.** `RestCodec` is the service that serializes API models
+(`funktor/rest/src/jvmMain/kotlin/codec/RestCodec.kt`), and `apiRespond` goes through it
+(`respond.kt:32`) — so it is exactly what the generator should consult, being what actually writes the
+bytes the SDK parses. `SlumberRestCodec : RestCodec, Codec(config)` and `Codec.config` is public
+(`ultra/slumber/src/jvmMain/kotlin/Codec.kt:23`), so the generator can inject `RestCodec`, downcast to
+`Codec` and see every registered codec. `TsSdkBuilder` already takes `SlumberConfig` as a constructor
+parameter, so nothing on the codegen side needs changing.
+
+**Registering an app's own module does NOT work.** `index_jvm.kt:48` builds
 `codecConfig = SlumberConfig.default.prependModules(VaultSlumberModule)` as a HARDCODED LOCAL inside
-the module lambda, and `FunktorRestBuilder` exposes only `jwt()`. An app therefore cannot add a
-`SlumberModule` to the REST codec at all — it would have to override the whole `RestCodec`
-registration.
+the module lambda, and `FunktorRestBuilder` exposes only `jwt()`. An app cannot contribute a
+`SlumberModule` at all; it would have to override the entire `RestCodec` registration.
 
-This is bigger than codegen: an app with a type needing a custom codec cannot wire that codec in **at
-runtime** either. The SDK generator merely surfaces it, being the first thing that asks the config what
-it contains. Latent rather than painful today — zero `SlumberModule` registrations exist in
-`funktor-demo`.
+That is a RUNTIME limitation, not a codegen one — an app type needing a custom codec cannot be wired in
+today either. The SDK generator merely surfaces it, being the first thing that asks the config what it
+contains. Latent rather than painful: zero `SlumberModule` registrations exist in `funktor-demo`.
 
-Needed before `RestApiTsContributor` can honestly claim to handle app-specific types:
-
-- [ ] `FunktorRestBuilder.slumberModules(vararg SlumberModule)` so apps can contribute codecs
-- [ ] `instance(codecConfig)` in `Funktor_Rest` so `SlumberConfig` is directly injectable, instead of
-      downcasting the injected `RestCodec` to `Codec` to reach `.config`
+- [ ] **The actual gap:** `FunktorRestBuilder.slumberModules(vararg SlumberModule)` so apps can
+      contribute codecs. Benefits runtime serialization first, codegen second.
+- [ ] **Cosmetic only:** `instance(codecConfig)` in `Funktor_Rest`, to avoid downcasting `RestCodec`
+      to `Codec`. Not required — the downcast works.
 
 ### On hardcoding against the built-in codecs
 
