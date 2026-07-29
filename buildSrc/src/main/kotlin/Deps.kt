@@ -17,15 +17,18 @@ object Deps {
     }
 
     // Kotlin ////////////////////////////////////////////////////////////////////////////////////
-    const val kotlinVersion = "2.3.10"
+    // The Kotlin version lives in the root gradle.properties - the single place it is written
+    // down. buildSrc reads that file directly (it cannot depend on this object, which it compiles),
+    // and build scripts take it via providers.gradleProperty("kotlinVersion").
 
     object Ksp {
         // https://github.com/google/ksp/releases
-        const val version = "2.3.6"
+        const val version = "2.3.10"
         const val symbol_processing = "com.google.devtools.ksp:symbol-processing-api:$version"
 
         // https://mvnrepository.com/artifact/dev.zacsweers.kctfork/ksp
         // https://mvnrepository.com/artifact/dev.zacsweers.kctfork/core (checked 2026-07-21: latest 0.13.0)
+        // checked 2026-07-29: latest 0.13.0
         private const val compiletesting_version = "0.13.0"
         const val compiletesting_ksp = "dev.zacsweers.kctfork:ksp:$compiletesting_version"
         const val compiletesting_core = "dev.zacsweers.kctfork:core:$compiletesting_version"
@@ -41,46 +44,51 @@ object Deps {
     // Dokka /////////////////////////////////////////////////////////////////////////////////////
     // https://mvnrepository.com/artifact/org.jetbrains.dokka/dokka-gradle-plugin
     // Dokka gradle plugin org.jetbrains.dokka
-    const val dokkaVersion = "2.1.0" // kotlinVersion
+    // checked 2026-07-29: latest 2.2.0
+    const val dokkaVersion = "2.2.0" // kotlinVersion
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     // Publishing ////////////////////////////////////////////////////////////////////////////////
     // https://search.maven.org/artifact/com.vanniktech/gradle-maven-publish-plugin
+    // checked 2026-07-29: latest 0.33.0
     const val mavenPublishVersion = "0.33.0"
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     object KotlinLibs {
         // https://mvnrepository.com/artifact/com.github.ajalt.clikt/clikt
+        // checked 2026-07-29: latest 5.1.0
         private const val clikt_version = "5.1.0"
         const val clikt = "com.github.ajalt.clikt:clikt:$clikt_version"
 
         // https://mvnrepository.com/artifact/com.jsoizo/kotlin-csv
+        // checked 2026-07-29: latest 2.0.0 (major, held)
         private const val csv_version = "1.10.0"
         const val csv = "com.jsoizo:kotlin-csv:$csv_version"
 
         // https://mvnrepository.com/artifact/io.github.evanrupert/excelkt
+        // checked 2026-07-29: latest 1.0.2
         private const val excelkt_version = "1.0.2"
         const val excelkt = "io.github.evanrupert:excelkt:$excelkt_version"
 
-        // https://mvnrepository.com/artifact/com.benasher44/uuid
-        private const val uuid_version = "0.8.4"
-        const val uuid = "com.benasher44:uuid:$uuid_version"
-
         // https://mvnrepository.com/artifact/io.github.g0dkar/qrcode-kotlin
+        // checked 2026-07-29: latest 4.5.0
         private const val qrcode_version = "4.5.0"
         const val qrcode = "io.github.g0dkar:qrcode-kotlin:$qrcode_version"
 
         // https://mvnrepository.com/artifact/io.github.serpro69/kotlin-faker
-        private const val faker_version = "1.16.1"
+        // checked 2026-07-29: latest 1.16.2
+        private const val faker_version = "1.16.2"
         const val faker = "io.github.serpro69:kotlin-faker:$faker_version"
 
         // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
-        private const val kotlinpoet_version = "2.2.0"
+        // checked 2026-07-29: latest 2.3.0
+        private const val kotlinpoet_version = "2.3.0"
         const val kotlinpoet = "com.squareup:kotlinpoet:$kotlinpoet_version"
 
         object MongoDb {
             // https://mvnrepository.com/artifact/org.mongodb/mongodb-driver-bom
-            private const val mongodb_driver_version = "5.6.4"
+            // checked 2026-07-29: latest 5.9.1
+            private const val mongodb_driver_version = "5.9.1"
             const val mongodb_driver_bom = "org.mongodb:mongodb-driver-bom:$mongodb_driver_version"
             const val mongodb_driver_kotlin_coroutine =
                 "org.mongodb:mongodb-driver-kotlin-coroutine:$mongodb_driver_version"
@@ -91,40 +99,47 @@ object Deps {
 
     object KotlinX {
         // https://github.com/Kotlin/kotlinx.coroutines/releases
-        private const val coroutines_version = "1.10.2"
+        // checked 2026-07-29: latest 1.11.0
+        private const val coroutines_version = "1.11.0"
         const val coroutines_core = "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
         const val coroutines_test = "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version"
 
         // TODO: check if 0.7.1 works
         // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-datetime
+        // checked 2026-07-29: latest 0.8.0 (held on purpose)
         private const val datetime_version = "0.6.2"
         const val datetime = "org.jetbrains.kotlinx:kotlinx-datetime:$datetime_version"
 
         // https://github.com/Kotlin/kotlinx.serialization/releases
-        private const val serialization_version = "1.10.0"
+        // checked 2026-07-29: latest 1.11.0
+        private const val serialization_version = "1.11.0"
         const val serialization_core =
             "org.jetbrains.kotlinx:kotlinx-serialization-core:$serialization_version"
         const val serialization_json =
             "org.jetbrains.kotlinx:kotlinx-serialization-json:$serialization_version"
 
         // https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven/org/jetbrains/kotlinx/kotlinx-html/
+        // checked 2026-07-29: latest 0.12.0
         private const val html_version = "0.12.0"
         const val html = "org.jetbrains.kotlinx:kotlinx-html:$html_version"
 
         // https://mvnrepository.com/artifact/org.jetbrains.kotlin-wrappers/kotlin-css
-        private const val wrappers_version = "2026.3.7"
+        // checked 2026-07-29: latest 2026.7.7
+        private const val wrappers_version = "2026.7.7"
         const val wrappers_css =
             "org.jetbrains.kotlin-wrappers:kotlin-css:$wrappers_version"
 
         // https://central.sonatype.com/artifact/org.jetbrains.kotlin-wrappers/kotlin-js/versions
-        private const val wrappers_js_version = "2026.3.8"
+        // checked 2026-07-29: latest 2026.7.7
+        private const val wrappers_js_version = "2026.7.7"
         const val wrappers_js = "org.jetbrains.kotlin-wrappers:kotlin-js:$wrappers_js_version"
     }
 
     object Ktor {
         // https://kotlinlang.org/docs/releases.html
         // https://github.com/ktorio/ktor/releases
-        const val ktor_version = "3.4.2"
+        // checked 2026-07-29: latest 3.5.1
+        const val ktor_version = "3.5.1"
 
         object Server {
             object Test {
@@ -238,7 +253,8 @@ object Deps {
     object JavaLibs {
         object ArangoDb {
             // https://mvnrepository.com/artifact/com.arangodb/arangodb-java-driver
-            private const val driver_version = "7.25.0"
+            // checked 2026-07-29: latest 7.26.0
+            private const val driver_version = "7.26.0"
             const val java_driver = "com.arangodb:arangodb-java-driver:$driver_version"
         }
 
@@ -254,13 +270,15 @@ object Deps {
             // NOTE: 1.6.x still exposes the `javax.mail` namespace that AwsSesSender compiles
             // against. 1.6.8 keeps it — this is a drop-in bump. It is 2.x (`jakarta.*`,
             // org.eclipse.angus:angus-mail) that would mean rewriting those imports.
+            // checked 2026-07-29: latest 2.0.2 — deliberately NOT taken, see the note above
             private const val version = "1.6.8"
             const val mail = "com.sun.mail:jakarta.mail:$version"
         }
 
         object Aws {
             // https://mvnrepository.com/artifact/software.amazon.awssdk/s3
-            const val awssdk_version = "2.42.8"
+            // checked 2026-07-29: latest 2.49.5
+            const val awssdk_version = "2.49.5"
 
             const val s3 = "software.amazon.awssdk:s3:$awssdk_version"
             const val ses = "software.amazon.awssdk:ses:$awssdk_version"
@@ -268,34 +286,42 @@ object Deps {
 
         object Yaml {
             // https://mvnrepository.com/artifact/org.yaml/snakeyaml (checked 2026-07-20: latest 2.4)
-            private const val snakeyaml_version = "2.4"
+            // checked 2026-07-29: latest 2.6
+            private const val snakeyaml_version = "2.6"
             const val snakeyaml = "org.yaml:snakeyaml:$snakeyaml_version"
         }
 
         object Google {
             // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
+            // checked 2026-07-29: latest 1.1.1
             private const val auto_service_version = "1.1.1"
             const val auto_service = "com.google.auto.service:auto-service:$auto_service_version"
 
             // https://mvnrepository.com/artifact/com.google.api-client/google-api-client
+            // checked 2026-07-29: latest 2.9.0
             private const val api_client_version = "2.9.0"
             const val api_client = "com.google.api-client:google-api-client:$api_client_version"
 
             // https://mvnrepository.com/artifact/com.google.firebase/firebase-admin
-            private const val firebase_admin_version = "9.8.0"
+            // checked 2026-07-29: latest 9.10.0
+            private const val firebase_admin_version = "9.10.0"
             const val firebase_admin = "com.google.firebase:firebase-admin:$firebase_admin_version"
         }
 
         object Jackson {
             // OLD: https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
             // NEW: https://mvnrepository.com/artifact/tools.jackson.core/jackson-databind
-            private const val jackson_version = "2.21.1"
+            // checked 2026-07-29: latest 2.22.1
+            private const val jackson_version = "2.22.1"
 
-            private const val jackson_annotations_version = "2.21"
+            // checked 2026-07-29: latest 2.22
+
+            private const val jackson_annotations_version = "2.22"
 
             // OLD: https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-kotlin
             // NEW: https://mvnrepository.com/artifact/tools.jackson.module/jackson-module-kotlin
-            private const val jackson_kotlin_module_version = "2.21.1"
+            // checked 2026-07-29: latest 2.22.1
+            private const val jackson_kotlin_module_version = "2.22.1"
 
             const val databind = "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
             const val annotations = "com.fasterxml.jackson.core:jackson-annotations:$jackson_annotations_version"
@@ -337,6 +363,7 @@ object Deps {
 
         object Sendgrid {
             // https://mvnrepository.com/artifact/com.sendgrid/sendgrid-java
+            // checked 2026-07-29: latest 4.10.3 stable; we run 5.0.0-rc.1 ahead of it
             private const val sendgrid_version = "5.0.0-rc.1"
             const val sendgrid_java = "com.sendgrid:sendgrid-java:$sendgrid_version"
         }
@@ -346,7 +373,8 @@ object Deps {
         const val auth0_java_jwt = "com.auth0:java-jwt:$auth0_java_jwt_version"
 
         // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-        private const val logback_version = "1.5.32"
+        // checked 2026-07-29: latest 1.6.1
+        private const val logback_version = "1.6.1"
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://github.com/atteo/classindex
@@ -510,9 +538,11 @@ object Deps {
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://plugins.gradle.org/plugin/io.kotest
-        const val kotest_plugin_version = "6.1.7"
+        // checked 2026-07-29: latest 6.2.3
+        const val kotest_plugin_version = "6.2.3"
         // https://mvnrepository.com/artifact/io.kotest/kotest-common
-        const val kotest_version = "6.1.7"
+        // checked 2026-07-29: latest 6.2.3
+        const val kotest_version = "6.2.3"
 
         const val kotest_framework_engine = "io.kotest:kotest-framework-engine:$kotest_version"
         const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"

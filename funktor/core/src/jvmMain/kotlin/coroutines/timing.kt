@@ -74,6 +74,8 @@ class TimingInterceptor : CopyableThreadContextElement<TimingInterceptor.State>,
         return this
     }
 
+    // CoroutineDispatcher.Key is built on AbstractCoroutineContextKey, which is experimental
+    @OptIn(ExperimentalStdlibApi::class)
     fun getCpuProfile(): CpuProfile {
         val totalMs = (System.nanoTime() - start) / 1e6
         val cpuMs = activeNs.get() / 1e6

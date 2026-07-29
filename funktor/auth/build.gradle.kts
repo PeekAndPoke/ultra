@@ -39,8 +39,6 @@ kotlin {
                 implementation(Deps.KotlinX.serialization_core)
                 implementation(Deps.KotlinX.serialization_json)
 
-                implementation(Deps.KotlinLibs.uuid)
-
                 implementation(project(":ultra:common"))
                 // `api` (not `implementation`): UserId appears in this module's PUBLISHED API —
                 // AuthSetPasswordRequest.userId, AuthState.Data.Session.tokenUserId, AuthRecord.ownerId,
