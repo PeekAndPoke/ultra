@@ -25,6 +25,9 @@ dependencies {
     // Needed for the type walker (ReifiedKType), polymorphism introspection and the SlumberConfig
     // custom-codec check that guards against silently mis-typed output.
     api(project(":ultra:slumber"))
+    // For KotlinxJsonTsContributor: Slumber has codecs for JsonElement & friends, so the generator
+    // must be able to name those types. Slumber declares this `implementation`, hence not transitive.
+    implementation(Deps.KotlinX.serialization_json)
 
     // Tests /////////////////////////
     Deps.Test {

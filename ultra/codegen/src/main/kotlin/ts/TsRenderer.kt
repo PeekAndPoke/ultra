@@ -28,9 +28,10 @@ class TsRenderer(private val model: TypeModel) {
     fun type(ref: TsTypeRef): String = when (ref) {
         is TsTypeRef.Named -> nameOf(ref.id)
 
-        // A union member needs parentheses before `[]` binds: `(A | null)[]`, not `A | null[]`.
+        // A union member needs parentheses before `[]` binds: `(A | null)[]`, not `A | null[]`,
+        // which would parse as `A | (null[])` — a different type entirely.
         is TsTypeRef.ArrayOf -> type(ref.item).let { inner ->
-            if (needsParensBeforeArray(ref.item)) "($inner)[]" else "$inner[]"
+            if (inner.isUnion()) "($inner)[]" else "$inner[]"
         }
 
         is TsTypeRef.RecordOf -> "Record<string, ${type(ref.value)}>"
@@ -61,6 +62,13 @@ class TsRenderer(private val model: TypeModel) {
         TsTypeRef.TsNull -> "z.null()"
     }
 
-    /** True when [ref] renders as a union, which must be parenthesised before an array suffix. */
-    private fun needsParensBeforeArray(ref: TsTypeRef): Boolean = ref is TsTypeRef.Nullable
+    /**
+     * True when a rendered type is a union and so must be parenthesised before an array suffix.
+     *
+     * Checks the rendered TEXT rather than the [TsTypeRef] shape, because a CLAIMED type can also be a
+     * union — `JsonPrimitive` is claimed as `string | number | boolean | null` — and no inspection of
+     * the ref would reveal that. Over-parenthesising is harmless in TypeScript, so erring that way is
+     * safe; under-parenthesising silently changes the type.
+     */
+    private fun String.isUnion(): Boolean = contains(" | ")
 }

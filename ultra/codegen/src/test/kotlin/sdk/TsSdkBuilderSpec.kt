@@ -1,0 +1,200 @@
+package io.peekandpoke.ultra.codegen.sdk
+
+import io.kotest.assertions.withClue
+import io.kotest.core.spec.style.FreeSpec
+import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.peekandpoke.ultra.codegen.contributors.MpDateTimeTsContributor
+import io.peekandpoke.ultra.codegen.model.FxSpeaker
+import io.peekandpoke.ultra.codegen.model.TsTypeClaims
+import io.peekandpoke.ultra.slumber.SlumberConfig
+import io.peekandpoke.ultra.datetime.MpInstant
+import kotlin.reflect.typeOf
+
+/** A type reaching a custom-coded value, so the datetime contributor is actually needed. */
+private data class HoldsInstant(val at: MpInstant)
+
+/** Contributes a root and nothing else. */
+private class RootContributor(
+    override val name: String,
+    private val type: kotlin.reflect.KType,
+) : TsSdkContributor {
+    override fun contribute(roots: TsSdkRoots) = roots.root(type, "root")
+}
+
+/** Writes one file during emit. */
+private class FileContributor(
+    override val name: String,
+    private val path: String,
+) : TsSdkContributor {
+    override fun contribute(roots: TsSdkRoots) = roots.root(typeOf<FxSpeaker>(), "root")
+    override fun emit(context: TsSdkEmitContext) = context.out.file(path, "// $name")
+}
+
+class TsSdkBuilderSpec : FreeSpec() {
+
+    init {
+        "phases" - {
+
+            "claims are collected before roots are walked, whatever the contributor order" {
+                // The claiming contributor is registered LAST here and FIRST in the next case. If
+                // phases were not global, one of the two orders would fail to resolve MpInstant.
+                val a = TsSdkBuilder(
+                    contributors = listOf(
+                        RootContributor("roots", typeOf<HoldsInstant>()),
+                        MpDateTimeTsContributor(),
+                    ),
+                    slumberConfig = SlumberConfig.default,
+                ).build()
+
+                val b = TsSdkBuilder(
+                    contributors = listOf(
+                        MpDateTimeTsContributor(),
+                        RootContributor("roots", typeOf<HoldsInstant>()),
+                    ),
+                    slumberConfig = SlumberConfig.default,
+                ).build()
+
+                withClue("contributor order must not change the generated output at all") {
+                    a.output.entries().map { it.path to it.content } shouldBe
+                            b.output.entries().map { it.path to it.content }
+                }
+            }
+
+            "an unclaimed custom-coded type fails before anything is emitted" {
+                val thrown = runCatching {
+                    TsSdkBuilder(
+                        contributors = listOf(RootContributor("roots", typeOf<HoldsInstant>())),
+                        slumberConfig = SlumberConfig.default,
+                    ).build()
+                }.exceptionOrNull()
+
+                withClue("validation must run before emit, so a failure leaves no partial output") {
+                    thrown!!.message!! shouldContain "MpInstantSlumberer"
+                }
+            }
+
+            "models.ts is always emitted" {
+                val result = TsSdkBuilder(
+                    contributors = listOf(RootContributor("roots", typeOf<FxSpeaker>())),
+                ).build()
+
+                result.output.entries().map { it.path } shouldContainExactly listOf("models.ts")
+            }
+        }
+
+        "runtime resources" - {
+
+            "the datetime runtime ships only when a datetime type is actually reachable" {
+                val withDates = TsSdkBuilder(
+                    contributors = listOf(
+                        RootContributor("roots", typeOf<HoldsInstant>()),
+                        MpDateTimeTsContributor(),
+                    ),
+                    slumberConfig = SlumberConfig.default,
+                ).build()
+
+                withDates.output.entries().map { it.path } shouldContainExactly
+                        listOf("models.ts", "runtime/datetime.ts")
+
+                val withoutDates = TsSdkBuilder(
+                    contributors = listOf(
+                        RootContributor("roots", typeOf<FxSpeaker>()),
+                        MpDateTimeTsContributor(),
+                    ),
+                    slumberConfig = SlumberConfig.default,
+                ).build()
+
+                withClue("an unreachable claim must not drag dead runtime code into the SDK") {
+                    withoutDates.output.entries().map { it.path } shouldContainExactly listOf("models.ts")
+                }
+            }
+
+            "the emitted runtime is the checked-in resource, verbatim" {
+                val result = TsSdkBuilder(
+                    contributors = listOf(
+                        RootContributor("roots", typeOf<HoldsInstant>()),
+                        MpDateTimeTsContributor(),
+                    ),
+                    slumberConfig = SlumberConfig.default,
+                ).build()
+
+                val emitted = result.output.entries().first { it.path == "runtime/datetime.ts" }.content
+
+                emitted shouldContain "export const MpLocalTime = z.number()"
+                emitted shouldContain "HAND-WRITTEN AND CHECKED IN"
+            }
+        }
+
+        "conflicts" - {
+
+            "two contributors writing the same path fail, naming both" {
+                val thrown = runCatching {
+                    TsSdkBuilder(
+                        contributors = listOf(
+                            FileContributor("alpha", "clients/Same.ts"),
+                            FileContributor("beta", "clients/Same.ts"),
+                        ),
+                    ).build()
+                }.exceptionOrNull()
+
+                thrown!!.message!! shouldContain "alpha"
+                thrown.message!! shouldContain "beta"
+            }
+
+            "two contributors claiming the same type fail, naming both" {
+                val claims = TsTypeClaims()
+                claims.scopeFor("first").map<MpInstant>(tsName = "A", schema = "A")
+
+                val thrown = runCatching {
+                    claims.scopeFor("second").map<MpInstant>(tsName = "B", schema = "B")
+                }.exceptionOrNull()
+
+                thrown!!.message!! shouldContain "first"
+                thrown.message!! shouldContain "second"
+            }
+
+            "duplicate contributor names are rejected" {
+                val thrown = runCatching {
+                    TsSdkBuilder(
+                        contributors = listOf(
+                            RootContributor("same", typeOf<FxSpeaker>()),
+                            RootContributor("same", typeOf<FxSpeaker>()),
+                        ),
+                    ).build()
+                }.exceptionOrNull()
+
+                thrown!!.message!! shouldContain "unique"
+            }
+        }
+
+        "guards" - {
+
+            "no contributors at all is an error, not an empty SDK" {
+                runCatching { TsSdkBuilder(contributors = emptyList()).build() }
+                    .exceptionOrNull()!!.message!! shouldContain "No TsSdkContributor"
+            }
+
+            "contributors that supply no roots is an error, not an empty SDK" {
+                val silent = object : TsSdkContributor {
+                    override val name = "silent"
+                }
+
+                runCatching { TsSdkBuilder(contributors = listOf(silent)).build() }
+                    .exceptionOrNull()!!.message!! shouldContain "supplied any root type"
+            }
+        }
+
+        "advisories are returned rather than thrown" {
+            val result = TsSdkBuilder(
+                contributors = listOf(RootContributor("roots", typeOf<io.peekandpoke.ultra.codegen.model.FxTalk>())),
+                slumberConfig = SlumberConfig.default,
+            ).build()
+
+            withClue("a reachable Long is worth reporting but must not fail the build") {
+                result.advisories.any { it.detail.contains("2^53") } shouldBe true
+            }
+        }
+    }
+}

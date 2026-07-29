@@ -638,16 +638,50 @@ objects and recursion.
 Mutation-tested 4/4 killed on the emitter (self-reference laziness, `.optional()`, discriminator
 literal, `discriminatedUnion` preference).
 
+### Contributor orchestration + first two contributors (2026-07-29)
+
+`sdk/TsSdkContributor.kt`, `sdk/TsSdkBuilder.kt`, `sdk/TsSdkOutput.kt`, plus
+`contributors/KotlinxJsonTsContributor.kt` and `contributors/MpDateTimeTsContributor.kt`.
+
+Phase order is enforced globally by the builder (all `claimTypes` -> all `contribute` -> validate ->
+all `emit`), so contributor order is structurally irrelevant. Pinned by a test that runs the same two
+contributors in both orders and asserts byte-identical output.
+
+`TsSdkOutput` PLANS files rather than writing them, so a validation failure leaves nothing
+half-generated and `--check` / `--dry-run` can inspect the result without touching the target. It
+already carries `diffAgainst()` for `--check`.
+
+**Decisions confirmed by the maintainer (2026-07-29):**
+
+- **`Long` stays `number`.** Worth recording that the risk model is the opposite of the intuitive one:
+  money in minor units is SAFE (2^53 cents is about $90 trillion). The live hazard is nanosecond
+  timestamps -- 55 `Long` fields exist today with `startedNs`/`endedNs`/`timeNs` prominent in insights
+  (`funktor/insights/.../InsightsGuiData.kt:16-17`), and `System.nanoTime()` on a box up ~200 days
+  exceeds 2^53. It does not bite there because those are consumed as differences for profiling display.
+  What WOULD corrupt silently is an opaque 64-bit id / snowflake.
+- **kotlinx JSON types get permissive claims** -- all FIVE that Slumber has codecs for, not just the
+  two obvious ones; claiming a subset would leave the rest failing validation the first time anyone
+  used one. `JsonElement` -> `unknown`, `JsonObject` -> `Record<string, unknown>`, `JsonArray` ->
+  `unknown[]`, `JsonPrimitive` -> `string | number | boolean | null` (verified:
+  `KotlinXJsonPrimitiveCodec.kt:31` unwraps to a bare scalar), `JsonNull` -> `null`.
+
+**Bug found while claiming those:** a CLAIMED type can render as a union, which the array
+parenthesisation did not account for. `List<JsonPrimitive>` would have emitted
+`string | number | boolean | null[]`, which parses as `string | number | boolean | (null[])`. The check
+now inspects the rendered TEXT rather than the ref shape, because no inspection of the ref can reveal
+a claim's shape.
+
+**Datetime claims: 2 of 6 shapes were wrong in the first draft**, written from assumption.
+`MpLocalTime` slumbers to a **bare number**, not `{milliSeconds}`, and `MpTimezone` (a **bare string**)
+was omitted entirely. Caught only by reading the codecs -- see the standing rule above. The drift guard
+`MpDateTimeFieldParitySpec` now kills all four sabotage variants, including that exact mistake.
+
+Tests: 89 green, plus the TypeScript gate. Mutation-tested 4/4 on the drift guard.
+
 ### Next
 
-`MpDateTimeTsContributor`, `TsSdkBuilder` / `TsSdkContributor` / `TsSdkOutput`, runtime resources.
-Then Phase 2 (`funktor/codegen`: `RestApiTsContributor` + CLI) and Phase 3 (TS runtime).
-
-Open: kotlinx-serialization JSON types (`JsonElement`, `JsonObject`, …) have codecs in `BuiltInModule`
-but no walker branch, so they currently land as "unresolved". Either add a small built-in contributor
-claiming them (`JsonObject` -> `Record<string, unknown>`, `JsonArray` -> `unknown[]`, rest ->
-`unknown`) or require users to claim them. Leaning built-in contributor — the shape is genuinely
-arbitrary and forcing a claim is friction with no safety gain.
+The hand-written TS runtime (transport, `ApiResponse`, SSE) -- datetime is done.
+Then Phase 2 (`funktor/codegen`: `RestApiTsContributor` + CLI).
 
 ---
 
@@ -667,6 +701,24 @@ arbitrary and forcing a claim is friction with no safety gain.
 | zod schemas, not types-only                     | Chosen 2026-07-29. Parse-time errors at the boundary with a precise path                                                  |
 | Bare `.ts`, not npm package                     | Chosen 2026-07-29. `--package` deferred until a second consumer exists                                                    |
 | fetch default behind a transport interface      | Matches the documented no-throw-on-non-2xx semantic; no forced dep                                                        |
+
+## Standing rule: every claim needs a drift test
+
+**Claims are trusted, never verified.** The codec-parity check in `TsModelValidator` only iterates
+DECLARED types, and a claimed type is deliberately never declared — that is the point of a claim, its
+shape cannot be derived from the type graph. So a claim that is simply *wrong* produces confidently
+wrong TypeScript and nothing in the generator notices.
+
+The only defence is a test that slumbers a real value and compares it against what the claim asserts.
+
+Demonstrated the hard way on 2026-07-29: writing `runtime/datetime.ts` from memory got two of six
+shapes wrong — `MpLocalTime` slumbers to a **bare number**, not `{milliSeconds}`
+(`MpLocalTimeCodec.kt`), and `MpTimezone` (a **bare string**, `MpTimezoneCodec.kt`) was missed
+entirely. Both were caught only by reading the codecs.
+
+Corollary for `Long`: "claim it as `string`" is NOT a fix for precision loss, because the claim cannot
+change what Slumber writes. Making a `Long` arrive as a string needs a value class with its OWN Slumber
+codec emitting a string, plus a matching claim. Both ends move together or the type lies.
 
 ## Known traps
 

@@ -93,3 +93,68 @@ Fixes applied: ...
 
 - [x] Revisit `ultra/codegen`'s `isIterableLike()` and the array unresolved-reason once this lands
       (see spec item above); update `20260729-ts-sdk-codegen.md`'s parity table accordingly.
+
+### Star-projected collections NPE on awake — TODO
+
+Found 2026-07-29 during the `ultra/reflection` scan
+(`.claude/tasks/20260729-reflection-scan-findings.md`), landing here because two of the three sites
+are this task's own code. **Probed, not speculative.**
+
+`CollectionAwaker` reads its element type with `type.arguments[0].type!!` in three places. That
+argument is `null` exactly when the type is star projected, so the `!!` throws a
+`NullPointerException` with a `null` message:
+
+| Site | Declared type that breaks |
+|---|---|
+| `CollectionAwaker.kt:39` `forList` | `List<*>` |
+| `CollectionAwaker.kt:44` `forSet` | `Set<*>` |
+| `CollectionAwaker.kt:73` `forArray` | `Array<*>` — added by this task |
+
+Primitive arrays are unaffected: they take the early return at `:62-71`, so `:73` is only reached for
+`Array<T>`.
+
+Evidence — probed through the real codec. Before the reflection fix, `List<*>` failed earlier, inside
+`ReifiedKType`; after it, serialization succeeds and deserialization reaches this `!!`:
+
+```
+PROBE-STAR-LIST (slumber): OK -> {values=[a]}
+PROBE-AWAKE:               THREW NullPointerException: null
+PROBE-AWAKE-TRACE:         CollectionAwaker$Companion.forList(CollectionAwaker.kt:19)
+                           | BuiltInModule.getAwaker(BuiltInModule.kt:110)
+```
+
+(The trace line numbers predate this task's edits; the call is now at `:39`.)
+
+Suggested fix: the element type of a star projection is `Any?`, so
+`type.arguments[0].type ?: TypeRef.AnyNull.type` at all three sites. For `forArray` the component
+type then becomes `Object[]`, which is correct for `Array<*>`. Worth a regression test per shape
+(`List<*>`, `Set<*>`, `Array<*>`, `Map<String, *>`), and a mutation check — reverting any one `?:`
+must fail exactly its own test.
+
+Not urgent: no star-projected collection exists as a declared property anywhere in the repo (that is
+why this has never been hit). It is a fail-with-a-useless-message rather than a wrong result.
+
+### `BuiltInModule` dispatch has three redundant branches — TODO (cosmetic)
+
+`MutableList::class` **is** `List::class` on the JVM — the same `KClass` object, not merely an equal
+one (probed: `Map::class === MutableMap::class` is `true`, and both print `kotlin.collections.Map`).
+So these three conditions each test the same thing twice:
+
+- `BuiltInModule.kt:109` — `cls == List::class || cls == MutableList::class`
+- `BuiltInModule.kt:112` — `cls == Set::class || cls == MutableSet::class`
+- `BuiltInModule.kt:117` — `cls == Map::class || cls == MutableMap::class`
+
+Dead, not broken — dispatch is correct either way. Dropping the `Mutable*` halves would remove the
+false implication that mutability is distinguishable here.
+
+**Related, already actioned in the reflection scan:** `kMutableMapType()` was deleted for the same
+reason, and `MapAwakerSpec` lost three tests that were exact duplicates of three others — because
+`Map::class.java` and `MutableMap::class.java` are the same object, `MutableMap::class.java
+.isAssignableFrom(x)` and `Map::class.java.isAssignableFrom(x)` are the identical assertion. The
+surviving "Awaking a MutableMap (in a data class)" test IS meaningful: a declared `MutableMap<K, V>`
+property has a genuinely different `KType`, even though the `KClass` is shared.
+
+**Checked and CLEAN:** awaking into `MutableList`/`MutableSet`/`MutableMap` works and does not crash
+— probed as data-class fields, as top-level types, and round-tripping back out. Slumber always builds
+mutable instances (`ArrayList`, `LinkedHashSet`, `LinkedHashMap`) and `add`/`put` succeed on them.
+`MapAwaker` and `CollectionSlumberer` contain no `!!` of this kind.
