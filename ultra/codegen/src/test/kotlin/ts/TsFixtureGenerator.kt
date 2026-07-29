@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.codegen.ts
 
 import io.peekandpoke.ultra.codegen.model.FxEvent
 import io.peekandpoke.ultra.codegen.model.FxNode
+import io.peekandpoke.ultra.codegen.model.FxQuoted
 import io.peekandpoke.ultra.codegen.model.FxResult
 import io.peekandpoke.ultra.codegen.model.FxSeatCount
 import io.peekandpoke.ultra.codegen.model.FxShape
@@ -79,6 +80,16 @@ object TsFixtureGenerator {
             root = typeOf<FxResult>(),
             instance = FxResult.Done("done"),
             schemaType = typeOf<FxResult.Done>(),
+        ),
+        // Emitted TypeScript carrying a quote, a backslash and non-identifier keys. This is the only
+        // check that the escaping produces something a real parser accepts: `tsc` compiles the file and
+        // `zod` parses the sample against it. A Kotlin assertion can only compare it to a string I also
+        // wrote, and I would make the same mistake twice.
+        Fixture(
+            name = "quoted",
+            root = typeOf<FxQuoted>(),
+            instance = FxQuoted.Apostrophe(plain = "ok", `it's` = "apostrophe", `dashed-name` = "dashed"),
+            schemaType = typeOf<FxQuoted.Apostrophe>(),
         ),
     )
 

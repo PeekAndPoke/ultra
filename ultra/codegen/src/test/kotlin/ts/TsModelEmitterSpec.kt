@@ -10,6 +10,7 @@ import io.peekandpoke.ultra.codegen.model.FxEvent
 import io.peekandpoke.ultra.codegen.model.FxHoldsClaimed
 import io.peekandpoke.ultra.codegen.model.FxMutualA
 import io.peekandpoke.ultra.codegen.model.FxNode
+import io.peekandpoke.ultra.codegen.model.FxQuoted
 import io.peekandpoke.ultra.codegen.model.FxResult
 import io.peekandpoke.ultra.codegen.model.FxShape
 import io.peekandpoke.ultra.codegen.model.FxSpeaker
@@ -43,6 +44,33 @@ class TsModelEmitterSpec : FreeSpec() {
                 })
                 export type FxSpeaker = z.infer<typeof FxSpeaker>
             """.trimIndent()
+        }
+
+        "wire strings that are not identifier-shaped are escaped and quoted" {
+            val out = emit(typeOf<FxQuoted>())
+
+            withClue("the child identifier carries a quote and a backslash") {
+                out shouldContain """z.literal('O\'Brien\\Co')"""
+            }
+
+            withClue("a discriminator field is a string constant, so it needs quoting like any prop") {
+                out shouldContain """'@type': z.literal("""
+                out shouldContain """z.discriminatedUnion('@type', ["""
+            }
+
+            withClue("a property name needing both quoting and escaping gets both") {
+                out shouldContain """'it\'s': z.string()"""
+            }
+
+            withClue("a property name needing only quoting is not escaped") {
+                out shouldContain """'dashed-name': z.string()"""
+            }
+
+            withClue("nothing raw survives — every apostrophe in the output is escaped or a delimiter") {
+                // A raw `'` inside a literal is what breaks the file; the delimiters are the only
+                // apostrophes allowed to stand alone.
+                out shouldNotContain """literal('O'Brien"""
+            }
         }
 
         "an enum emits z.enum over the constant names" {

@@ -77,6 +77,34 @@ sealed class FxEvent {
     data class Deleted(val at: String) : FxEvent()
 }
 
+//  Wire strings that are not identifier-shaped  ////////////////////////////////////////////////////
+
+/**
+ * A hierarchy whose wire strings contain characters that end a TypeScript literal.
+ *
+ * `Polymorphic.Parent.discriminator` and `Polymorphic.Child.identifier` are ordinary string constants,
+ * and a property name can be any backtick identifier — none of the three is constrained to look like a
+ * TypeScript identifier. Emitting them raw produced a `models.ts` that does not parse.
+ */
+sealed class FxQuoted {
+    companion object : Polymorphic.Parent {
+        override val discriminator: String = "@type"
+        override val childTypes: Set<KClass<*>> = setOf(Apostrophe::class)
+    }
+
+    data class Apostrophe(
+        val plain: String,
+        /** Needs quoting AND escaping — the quoted form would otherwise close on the apostrophe. */
+        val `it's`: String,
+        /** Needs quoting but no escaping. */
+        val `dashed-name`: String,
+    ) : FxQuoted() {
+        companion object : Polymorphic.Child {
+            override val identifier: String = """O'Brien\Co"""
+        }
+    }
+}
+
 //  @Slumber.Field on a non-constructor property  ///////////////////////////////////////////////////
 
 data class FxWithExtraField(val a: String) {
