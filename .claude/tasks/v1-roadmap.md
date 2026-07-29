@@ -122,7 +122,6 @@ to prove the module loads and wires into a kontainer.
     - Frontend URL building from app config
     - Depot encryption
     - Fulltext index for log search
-    - Dart codegen test TODOs (6)
 5. **Funktor docs improvement** — 5 thin pages need real examples:
     - `docs-site/src/pages/ultra/funktor/logging.astro` (STUB → GOOD): Logback appender config,
       level filtering, web UI, REST API query example
