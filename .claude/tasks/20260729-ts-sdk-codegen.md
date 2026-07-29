@@ -731,6 +731,14 @@ contains. Latent rather than painful: zero `SlumberModule` registrations exist i
 `ValueClassSlumberer`) explicitly. Deliberate, and the same coupling the walker has — both mirror
 `BuiltInModule`'s dispatch rather than re-deriving it, so both move together.
 
+Confirmed sound by the maintainer (2026-07-29): the built-in codecs are the machinery modelling the
+"normal" stuff that is always present, so coding hard against them is the right move — and they are on
+par with kotlinx-serialization, which anchors the set to an external spec rather than to Slumber's own
+choices. The code states that intent directly: `ValueClassSlumberer`'s KDoc says it "matches
+kotlinx.serialization exactly", and `isUserValueClass` (`BuiltInModule.kt:63`) excludes stdlib value
+classes precisely because their generic form "would diverge from kotlinx". So the hardcoded set is
+stable by construction, not by luck.
+
 Acceptable because the failure direction is safe: an UNRECOGNISED slumberer is reported as "custom
 codec, claim it". A new structural codec in Slumber would therefore cause a spurious error demanding a
 claim, never silently wrong TypeScript. Wrong-and-loud, never wrong-and-quiet.
