@@ -94,8 +94,15 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 tracked. The one that did not survive is recorded in the task file's Review record; do not "re-fix" the
 charset non-bug.
 
-State: `:ultra:codegen:check` green (120 Kotlin tests + ts-verify, 5 fixtures). Working tree has
-uncommitted fixes from the review round plus doc updates — **commit those first**, explicit paths.
+State: committed as `c7faf219`. `:ultra:codegen:check` green (120 Kotlin tests + ts-verify, 5
+fixtures). Working tree clean for `ultra/codegen` and this task's docs.
+
+**Do not touch these — another agent owns them:** `ultra/log/**`,
+`.claude/tasks/20260729-log-scan-findings.md`, `.claude/tasks/20260729-redteam-log-forging.md`.
+`.idea/compiler.xml` is modified in the tree and is NOT ours to commit.
 
 Next action: backlog §1, first item (`tsStringLiteral` tests). Nothing in §2 until §1 is fully done —
 the applied fixes are currently unverified and that is the largest risk in the tree.
+
+Suggested first move each iteration: `git log --oneline -3` to see where the last one stopped, then
+grep this file's backlog for the first unchecked box.
