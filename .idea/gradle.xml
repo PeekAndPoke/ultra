@@ -77,6 +77,7 @@
             <option value="$PROJECT_DIR$/tooling/i18n-fixture" />
             <option value="$PROJECT_DIR$/ultra" />
             <option value="$PROJECT_DIR$/ultra/cache" />
+            <option value="$PROJECT_DIR$/ultra/codegen" />
             <option value="$PROJECT_DIR$/ultra/common" />
             <option value="$PROJECT_DIR$/ultra/datetime" />
             <option value="$PROJECT_DIR$/ultra/fixture" />

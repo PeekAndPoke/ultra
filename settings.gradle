@@ -8,6 +8,7 @@ include(
         // ULTRA ////////////////////////////////////////////////////////////////////////////////
         ":ultra:common",
         ":ultra:cache",
+        ":ultra:codegen",
         ":ultra:datetime",
         ":ultra:fixture",
         ":ultra:maths",

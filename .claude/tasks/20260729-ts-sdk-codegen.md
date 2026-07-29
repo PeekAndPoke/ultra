@@ -57,20 +57,20 @@ funktor server, and the Dart emitter is compiled into all of them.
 
 **Delete:**
 
-- [ ] `funktor/rest/src/jvmMain/kotlin/codegen/` — entire directory, 2808 LOC (`dart/`, `dart/addons/`, `dart/printer/`,
-  plus `index.kt`, `tags.kt`, `utils.kt`)
-- [ ] `funktor/rest/src/jvmTest/kotlin/codegen/` — entire directory, 295 LOC
-- [ ] `funktor/rest/build.gradle.kts:81` — `implementation(Deps.JavaLibs.diffutils)` in `jvmTest`
-  (only consumer was `jvmTest/kotlin/codegen/index_codegen.kt`)
+- [x] `funktor/rest/src/jvmMain/kotlin/codegen/` — entire directory, 2808 LOC (`dart/`, `dart/addons/`, `dart/printer/`,
+  plus `index.kt`, `tags.kt`, `utils.kt`) — DONE 2026-07-29
+- [x] `funktor/rest/src/jvmTest/kotlin/codegen/` — entire directory, 295 LOC — DONE 2026-07-29
+- [x] `funktor/rest/build.gradle.kts:81` — `implementation(Deps.JavaLibs.diffutils)` in `jvmTest`
+  (only consumer was `jvmTest/kotlin/codegen/index_codegen.kt`) — DONE 2026-07-29
 
 **Keep — do NOT delete:**
 
-- [ ] `funktor/rest/src/jvmMain/kotlin/docs/CodeGenHints.kt` — the per-route `codeGen { }` hints. Used at
+- [x] `funktor/rest/src/jvmMain/kotlin/docs/CodeGenHints.kt` — the per-route `codeGen { }` hints. Used at
   ~30 sites (`FunktorConfApi.kt` ×19, `B2bMembersApi.kt` ×4, `OperatorApi.kt`, …). The TS generator consumes `funcName`
-  and `tags`.
-- [ ] `ApiFeature.codeGenName` (`funktor/rest/src/jvmMain/kotlin/ApiFeature.kt:11`) — client naming.
-- [ ] `Deps.JavaLibs.diffutils` in `buildSrc/src/main/kotlin/Deps.kt:384` — still used by `ultra/meta`
-  (`ultra/meta/build.gradle.kts:33`).
+  and `tags`. — kept, verified still compiling 2026-07-29
+- [x] `ApiFeature.codeGenName` (`funktor/rest/src/jvmMain/kotlin/ApiFeature.kt:11`) — client naming. — kept
+- [x] `Deps.JavaLibs.diffutils` in `buildSrc/src/main/kotlin/Deps.kt:384` — still used by `ultra/meta`
+  (`ultra/meta/build.gradle.kts:33`). — kept
 
 **Carry over (rewrite, not move):**
 
@@ -82,17 +82,20 @@ funktor server, and the Dart emitter is compiled into all of them.
 
 **Verification gates for Phase 0:**
 
-- [ ] Nothing outside `codegen/dart/` referenced `Tags` / `tagged()` / `joinSimpleNames()` / `splash` /
+- [x] Nothing outside `codegen/dart/` referenced `Tags` / `tagged()` / `joinSimpleNames()` / `splash` /
   `CodeGenDsl` — confirmed by grep on 2026-07-29, only hit was the Dart test helper itself.
-- [ ] `funktor/rest/src/*/kotlin/docs/` has zero coupling to `codegen` — confirmed 2026-07-29.
-- [ ] Compile sweep (see "Test evidence") — `funktor/rest` is multiplatform, and the root project has its own
-  `src/jvmMain` not covered by module test tasks.
+- [x] `funktor/rest/src/*/kotlin/docs/` has zero coupling to `codegen` — confirmed 2026-07-29.
+- [x] Post-deletion grep for dangling refs (`funktor.rest.codegen`, `Dart*`, `dartProject`,
+  `shouldHaveNoDiffs`) — zero hits, 2026-07-29.
+- [x] Compile sweep — `BUILD SUCCESSFUL in 3m 58s`, 354 tasks, no `^e:`. Only pre-existing warnings
+  (`ultra/kontainer` DSL-marker-on-local-variable, `karango/core` redundant casts). 2026-07-29.
 
 **Roadmap updates required when this lands:**
 
-- [ ] `.claude/tasks/v1-roadmap.md:303` — Post-v1 item 4 "Dart codegen rewrite … move to
-  `funktor:dart-codegen` package first" → mark superseded by this task.
-- [ ] `.claude/tasks/v1-roadmap.md:125` — "Dart codegen test TODOs (6)" → resolved by deletion.
+- [x] `.claude/tasks/v1-roadmap.md:303` — Post-v1 item 4 "Dart codegen rewrite … move to
+  `funktor:dart-codegen` package first" → marked superseded, 2026-07-29.
+- [x] `.claude/tasks/v1-roadmap.md:125` — "Dart codegen test TODOs (6)" → removed (resolved by deletion),
+  2026-07-29.
 
 ---
 
@@ -464,6 +467,66 @@ src/api/
   runtime/   http.ts, apiResponse.ts, datetime.ts, sse.ts
   index.ts
 ```
+
+---
+
+## Progress log
+
+**2026-07-29 — Phase 0 DONE. Phase 1 model layer DONE.**
+
+Phase 0: Dart codegen deleted (3103 LOC), `diffutils` removed from `funktor/rest`, compile sweep green
+(`BUILD SUCCESSFUL in 3m 58s`, 354 tasks, no `^e:`).
+
+Phase 1 so far — `ultra/codegen` created and wired into `settings.gradle`:
+
+| File | What |
+|---|---|
+| `printer/CodePrinter.kt` | Indent-aware printer. Always emits `\n`, never `System.lineSeparator()` — the Dart printer used the platform separator and then had to normalize it away in its tests |
+| `model/TypeId.kt` | Canonical identity, keyed by a qualified-name string |
+| `model/TsTypeRef.kt` | Symbolic refs (`Named`/`ArrayOf`/`RecordOf`/`Nullable` + primitives) |
+| `model/TsTypeDecl.kt` | `Obj` / `Union` / `EnumDecl` / `Alias` |
+| `model/TsTypeClaims.kt` | Claims registry, per-contributor scope, double-claim hard error |
+| `model/TypeWalker.kt` | The closure walk |
+| `model/TsNames.kt` | TS naming incl. nested-class prefixing |
+| `model/TypeModel.kt` | Frozen result |
+
+Tests: `CodePrinterSpec` 11, `TypeWalkerSpec` 24 — all green, counts confirmed from
+`build/test-results/**/TEST-*.xml` rather than from the gradle task result.
+
+### Decisions taken while implementing
+
+- **`TypeId` equality is by canonical STRING, not `KType` equality.** The same logical type reaches the
+  walker as different `KType` instances depending on whether it came from `typeOf<T>()` (via `TypeRef`) or
+  `KClass.createType()` (via `ReifiedKType` reification), and those do not reliably compare equal. This is
+  the old `Tags.contains` qualified-name comparison (deleted `codegen/tags.kt:17-26`) made total. Pinned by
+  a test.
+- **Generics are monomorphized** — `PageOf<Talk>` → `PageOfTalk`, not generic `PageOf<T>`. The walker
+  reifies type arguments anyway (staying generic would mean *un*-reifying), and generic zod schemas need
+  function-valued schemas that `z.infer` cannot see through. Cost: one declaration per instantiation.
+  Reversible if the instantiation count gets unpleasant.
+- **`Set` and `List` share one reference shape** (`ArrayOf`) — both slumber to a JSON array. `Map` becomes
+  `RecordOf` with a `string` key, since JSON object keys are always strings regardless of the Kotlin key type.
+- **Optional = constructor parameter has a default.** Deliberately loose and direction-dependent: responses
+  always carry every key (`DataClassSlumberer` writes nulls explicitly), but a client sending this type as a
+  request body may omit a defaulted field. Loose-on-parse never spuriously rejects valid server data.
+
+### Findings
+
+- **`Long` silently loses precision, and the generator cannot fix it.** Slumber writes a `Long` as a JSON
+  number, so `JSON.parse` truncates above 2^53 before the generated types are involved at all. The walker
+  emits `number` (accurate about what you actually receive) and records every reachable `Long` in
+  `TypeModel.longValued`. **Open question for the maintainer:** should a reachable `Long` be a warning, a
+  hard error, or opt-in mapped to `string`? It is a wire-format property, so it is not the generator's call.
+- **Mutation testing caught a vacuous test.** The claim guard in `TypeWalker.declare` is unreachable via
+  property references (`resolveNonNullRef` short-circuits on a claim first), so mutating it away changed
+  nothing. It *is* load-bearing when a claimed type is a polymorphic child, since `declareUnion` enqueues
+  variants directly. Added the `FxPartlyClaimed` fixture and a test for that path. Now 4/4 mutations killed
+  (claim guard, custom discriminator, ctor-default optionality, enum constant names).
+
+### Next
+
+Phase 1 remainder: validation (incl. the `SlumberConfig` custom-codec check), TS AST + zod emitter,
+`MpDateTimeTsContributor`, `TsSdkBuilder` / `TsSdkContributor` / `TsSdkOutput`, runtime resources.
 
 ---
 
