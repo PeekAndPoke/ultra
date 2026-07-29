@@ -1,0 +1,17 @@
+{
+  "name": "ultra-codegen-ts-verify",
+  "private": true,
+  "type": "module",
+  "description": "Type-checks and executes the TypeScript emitted by ultra:codegen. Self-contained on purpose — shares no tooling with docs-site or the Kotlin/JS build, so it only ever breaks when the generator does.",
+  "packageManager": "pnpm@10.26.2",
+  "scripts": {
+    "verify": "tsc --noEmit && node --experimental-strip-types --no-warnings verify.ts"
+  },
+  "dependencies": {
+    "typescript": "7.0.2",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "26.1.2"
+  }
+}

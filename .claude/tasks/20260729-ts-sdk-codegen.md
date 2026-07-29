@@ -595,10 +595,45 @@ Not just eyeballed — the generated output was run against the actual TypeScrip
    member, bad nested object, null for a non-nullable, unknown discriminator, bad recursive child) and
    2 valid edge cases correctly accepted (omitted optional, null for nullable).
 
-Steps 2 and 3 were run manually in a scratch sandbox. The Kotlin half is now a permanent test —
-`SlumberFieldParitySpec` asserts the emitted field set is exactly the key set Slumber writes, across
-containers, `@Slumber.Field`, both discriminator styles, plain sealed objects and recursion. Wiring
-the node half into CI is a follow-up.
+**Now automated as a Gradle gate** (`:ultra:codegen:tsVerify`, wired into `check`). Originally a manual
+sandbox run; made reproducible on 2026-07-29.
+
+`ultra/codegen/ts-verify/` is **self-contained by design** — its own `package.json`, `pnpm-lock.yaml`,
+`.npmrc` and `tsconfig.json`, sharing nothing with docs-site or the Kotlin/JS build. Those churn for
+unrelated reasons (site deps, Kotlin upgrades); this gate should only ever break when the generator
+breaks.
+
+Reproducibility levers, all pinned:
+
+| Lever | Mechanism |
+|---|---|
+| Dependency versions | `pnpm-lock.yaml` checked in, installed `--frozen-lockfile` (fails on drift, never silently re-resolves) |
+| pnpm version | `packageManager: pnpm@10.26.2` + `manage-package-manager-versions=true` in `.npmrc` |
+| Node version | `use-node-version=22.12.0` in `.npmrc` — pnpm downloads and manages it, so PATH does not matter |
+| Fixture freshness | Gradle regenerates from the current emitter every run; nothing generated is checked in |
+
+**Deliberately NOT corepack.** Corepack 0.29.x (bundled with Node 22) ships a rotated npm registry
+signing key and dies with `Cannot find matching keyid`. The common workaround is
+`COREPACK_INTEGRITY_KEYS=0`, i.e. disabling supply-chain signature verification — the opposite of why
+this repo standardised on pnpm. pnpm enforces `packageManager` itself, so corepack buys nothing here.
+
+**The harness is manifest-driven, not hand-maintained.** `TsFixtureGenerator` emits, per fixture, the
+`.ts`, the JSON Slumber really produced, and a manifest naming the schema export plus its REQUIRED
+field names (optional-by-default props excluded). `verify.ts` then generates the negative cases from
+that manifest — parse the real sample, reject a non-object, and reject each required key dropped in
+turn. So the negative cases cannot drift from the model, and adding a fixture needs no TypeScript
+edits. Currently 28 assertions over 5 fixtures.
+
+**The gate was itself mutation-tested** — an always-green gate is worthless. Breaking the emitter three
+ways (all props emitted `.optional()`, wrong discriminator literal, every prop degenerating to
+`z.unknown()`) is caught every time.
+
+Opt out with `-PskipTsVerify=true`. It fails loudly rather than skipping silently when the toolchain is
+absent — a verification that quietly does nothing is worse than none.
+
+The Kotlin half is permanent too: `SlumberFieldParitySpec` asserts the emitted field set is exactly the
+key set Slumber writes, across containers, `@Slumber.Field`, both discriminator styles, plain sealed
+objects and recursion.
 
 Mutation-tested 4/4 killed on the emitter (self-reference laziness, `.optional()`, discriminator
 literal, `discriminatedUnion` preference).
@@ -677,7 +712,7 @@ One item worth a conscious decision rather than a default:
 - [ ] Golden-file: emitted TS for a representative fixture set (`shouldHaveNoDiffs`, carried over)
 - [ ] Drift test: Mp datetime slumber output keys vs `runtime/datetime.ts` field names
 - [ ] Cross-check: generated query-param encoding vs `UriParamBuilder`
-- [ ] `tsc --noEmit` on the generated demo SDK
+- [x] `tsc --noEmit` on generated output — automated as `:ultra:codegen:tsVerify`, wired into `check`
 - [ ] Compile sweep after Phase 0:
   `./gradlew compileKotlinJvm compileTestKotlinJvm compileKotlinJs compileTestKotlinJs compileKotlin
   compileTestKotlin --continue` — check for `^e:`
