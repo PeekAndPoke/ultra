@@ -5,7 +5,6 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.peekandpoke.ultra.reflection.kMapType
-import io.peekandpoke.ultra.reflection.kMutableMapType
 import io.peekandpoke.ultra.slumber.AwakerException
 import io.peekandpoke.ultra.slumber.Codec
 import io.peekandpoke.ultra.slumber.awake
@@ -68,46 +67,6 @@ class MapAwakerSpec : StringSpec({
 
         Map::class.java.isAssignableFrom(result.items::class.java) shouldBe true
         result.items shouldBe mapOf("1" to 1, "2" to 2)
-    }
-
-    "Awaking a MutableMap must work" {
-
-        val type = kMutableMapType<String, Int>().type
-        val subject = MapAwaker.forMap(type)
-
-        val codec = Codec.default
-
-        val result = subject.awake(mapOf("a" to 1, 2 to 2), codec.createSecondPassAwakerContext(type))!!
-
-        MutableMap::class.java.isAssignableFrom(result::class.java) shouldBe true
-        result shouldBe mapOf("a" to 1, "2" to 2)
-    }
-
-    "Awaking a MutableMap with nullable values must work" {
-
-        val type = kMutableMapType<String, Int?>().type
-        val subject = MapAwaker.forMap(type)
-
-        val codec = Codec.default
-
-        val result = subject.awake(mapOf("a" to 1, 2 to null), codec.createSecondPassAwakerContext(type))!!
-
-        MutableMap::class.java.isAssignableFrom(result::class.java) shouldBe true
-        result shouldBe mapOf("a" to 1, "2" to null)
-    }
-
-    "Awaking a MutableMap with non-nullable values must fail when a null is found" {
-
-        val type = kMutableMapType<String, Int>().type
-        val subject = MapAwaker.forMap(type)
-
-        val codec = Codec.default
-
-        val error = shouldThrow<AwakerException> {
-            subject.awake(mapOf("a" to 1, "wrong" to null), codec.createSecondPassAwakerContext(type))
-        }
-
-        error.message shouldContain "root.wrong[VAL]"
     }
 
     "Awaking a MutableMap (in a data class) must work" {

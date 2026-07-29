@@ -3,6 +3,7 @@ package io.peekandpoke.ultra.reflection
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.full.createType
 
 /**
@@ -15,21 +16,26 @@ import kotlin.reflect.full.createType
 @ConsistentCopyVisibility
 data class TypeRef<T> private constructor(val type: KType) {
 
+    /**
+     * Factories, the [TypeRef] caches and pre-built refs for the common Kotlin types.
+     */
     companion object {
 
         /** Cache for [KType] to [TypeRef] */
-        private val cachedKTypes = mutableMapOf<KType, TypeRef<*>>()
+        private val cachedKTypes = ConcurrentHashMap<KType, TypeRef<*>>()
 
-        /** Cache for [KClass] to [TypeRef] */
-        private val cachedNullableKClasses = mutableMapOf<KClass<*>, TypeRef<*>>()
+        /** Cache for [KClass] to [TypeRef], used when `nullable` is requested */
+        private val cachedNullableKClasses = ConcurrentHashMap<KClass<*>, TypeRef<*>>()
 
-        /** Cache for [KClass] to [TypeRef] */
-        private val cachedNonNullKClasses = mutableMapOf<KClass<*>, TypeRef<*>>()
+        /** Cache for [KClass] to [TypeRef], used when `nullable` is not requested */
+        private val cachedNonNullKClasses = ConcurrentHashMap<KClass<*>, TypeRef<*>>()
 
         /**
          * Creates or retrieves a cached [TypeRef] for the given [KType].
          *
          * This is the primary factory for constructing a [TypeRef] from an already-known [KType].
+         *
+         * [T] is applied by an unchecked cast, so callers must ensure that it matches [type].
          */
         fun <T> createForKType(type: KType): TypeRef<T> {
             @Suppress("UNCHECKED_CAST")
@@ -41,7 +47,9 @@ data class TypeRef<T> private constructor(val type: KType) {
         /**
          * Creates or retrieves a cached [TypeRef] for the given [KClass].
          *
-         * Generic type parameters of the class are filled with `Any` projections.
+         * A class carries no type arguments, so each type parameter is filled with an invariant
+         * projection of its declared upper bound, falling back to `Any`.
+         *
          * Set [nullable] to `true` to produce a nullable type.
          */
         fun <T> createForKClass(cls: KClass<*>, nullable: Boolean): TypeRef<T> {
@@ -56,9 +64,12 @@ data class TypeRef<T> private constructor(val type: KType) {
             return cache.getOrPut(cls) {
 
                 val type = cls.createType(
-                    arguments = cls.typeParameters.map {
-                        KTypeProjection.invariant(kotlin.Any::class.createType())
-                    }
+                    arguments = cls.typeParameters.map { param ->
+                        KTypeProjection.invariant(
+                            param.upperBounds.firstOrNull() ?: kotlin.Any::class.createType()
+                        )
+                    },
+                    nullable = nullable,
                 )
                 // Return
                 createForKType<T>(type)
@@ -146,7 +157,7 @@ data class TypeRef<T> private constructor(val type: KType) {
     /**
      * Converts to a nullable type
      */
-    val nullable: TypeRef<T?> by lazy(LazyThreadSafetyMode.NONE) {
+    val nullable: TypeRef<T?> by lazy {
         @Suppress("RemoveExplicitTypeArguments")
         (TypeRef<T?>(
             type.classifier!!.createType(
@@ -159,7 +170,7 @@ data class TypeRef<T> private constructor(val type: KType) {
     /**
      * Wraps the current type as a [List] type
      */
-    val list: TypeRef<List<T>> by lazy(LazyThreadSafetyMode.NONE) {
+    val list: TypeRef<List<T>> by lazy {
         @Suppress("RemoveExplicitTypeArguments")
         (createForKType<List<T>>(
             List::class.createType(
@@ -175,6 +186,8 @@ data class TypeRef<T> private constructor(val type: KType) {
      * E.g. makes a String? type a MyWrapper<String?> type
      *
      * When the given type [W] does not have exactly one type parameter an exception is thrown
+     *
+     * The wrapper itself is always non-nullable, as [W] is bound to `Any`.
      */
     inline fun <reified W : Any> wrapWith(): TypeRef<W> {
         @Suppress("USELESS_IS_CHECK")
@@ -187,6 +200,9 @@ data class TypeRef<T> private constructor(val type: KType) {
      * E.g. makes a String? type a MyWrapper<String?> type
      *
      * When the given type [W] does not have exactly one type parameter an exception is thrown
+     *
+     * [nullable] marks the wrapper type nullable, not the wrapped type. As [W] is bound to `Any`
+     * this nullability lives only in [type] and is not visible in the static type.
      */
     @Suppress("UNCHECKED_CAST")
     fun <W : Any> wrapWith(cls: KClass<W>, nullable: Boolean): TypeRef<W> {
@@ -216,24 +232,28 @@ data class TypeRef<T> private constructor(val type: KType) {
      *
      * @see [unList] which takes care of the generic type information
      */
-    internal val unlisted: TypeRef<Any> by lazy(LazyThreadSafetyMode.NONE) {
+    internal val unlisted: TypeRef<Any> by lazy {
         if (type.classifier != List::class) {
             error("The current type [$this] must have the classifier List::class")
         }
 
+        // A List<*> has no element type to unwrap. Say so, rather than dying on a bare NPE.
+        val elementType = type.arguments[0].type
+            ?: error("The current type [$this] must not be star projected")
+
         @Suppress("RemoveExplicitTypeArguments")
-        (TypeRef<Any>(type.arguments[0].type!!))
+        (TypeRef<Any>(elementType))
     }
 
     /**
      * Internal cache used by [wrapWith]
      */
-    private val nonNullWrapCache = mutableMapOf<KClass<*>, TypeRef<*>>()
+    private val nonNullWrapCache = ConcurrentHashMap<KClass<*>, TypeRef<*>>()
 
     /**
      * Internal cache used by [wrapWith]
      */
-    private val nullableWrapCache = mutableMapOf<KClass<*>, TypeRef<*>>()
+    private val nullableWrapCache = ConcurrentHashMap<KClass<*>, TypeRef<*>>()
 }
 
 /**

@@ -1,6 +1,7 @@
 package io.peekandpoke.ultra.reflection
 
 import kotlin.math.absoluteValue
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
@@ -38,4 +39,4 @@ fun <R, T : Function<R>> T.nthParamName(n: Int): String {
  *
  * Used by [nthParamName]
  */
-private val NthParamNameCache = mutableMapOf<Pair<KClass<*>, Int>, String>()
+private val NthParamNameCache = ConcurrentHashMap<Pair<KClass<*>, Int>, String>()
