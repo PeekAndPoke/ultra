@@ -3,7 +3,6 @@ package io.peekandpoke.ultra.playground
 import io.peekandpoke.mutator.ListMutator
 import io.peekandpoke.mutator.SetMutator
 import io.peekandpoke.mutator.onChange
-import io.peekandpoke.ultra.common.observe
 
 object MutatorExamples {
 
@@ -55,7 +54,7 @@ object MutatorExamples {
         )
 
         val mutator: ListMutator<MyClass> = value.mutator()
-        observe(mutator) { it: List<MyClass> -> println("List changed: $it") }
+        mutator.observe { it: List<MyClass> -> println("List changed: $it") }
 
         mutator.forEachIndexed { idx, it ->
             it.name = "Hello $idx!"
@@ -93,7 +92,7 @@ object MutatorExamples {
         )
 
         val mutator: SetMutator<MyClass> = input.mutator()
-        observe(mutator) { it: Set<MyClass> -> println("Set changed: $it") }
+        mutator.observe { it: Set<MyClass> -> println("Set changed: $it") }
 
         mutator.forEachIndexed { idx, it ->
             it.name = "Hello $idx!"
