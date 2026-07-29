@@ -33,8 +33,8 @@ internal fun String.getRelativePackagePath(that: String): File {
         match = thisParts.isNotEmpty() && thatParts.isNotEmpty() && thisParts.first() == thatParts.first()
 
         if (match) {
-            thisParts.shift()
-            thatParts.shift()
+            thisParts.removeFirstOrNull()
+            thatParts.removeFirstOrNull()
         }
     }
 

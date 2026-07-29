@@ -50,3 +50,15 @@ fun String.toBase64(charset: Charset = Charsets.UTF_8): String = toByteArray(cha
  *   that decode untrusted input must handle this.
  */
 fun String.fromBase64(): ByteArray = Base64.getDecoder().decode(this)
+
+/**
+ * Decodes the standard-alphabet base64 string, or returns null when it is not valid base64.
+ *
+ * The lenient counterpart of [fromBase64] — prefer it for input that can legitimately be malformed,
+ * such as a request parameter or a stored value of unknown vintage.
+ */
+fun String.fromBase64OrNull(): ByteArray? = try {
+    fromBase64()
+} catch (_: IllegalArgumentException) {
+    null
+}

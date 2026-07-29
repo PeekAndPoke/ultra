@@ -1,6 +1,6 @@
 package io.peekandpoke.ultra.security.password
 
-import io.peekandpoke.ultra.common.fromBase64
+import io.peekandpoke.ultra.common.fromBase64OrNull
 import io.peekandpoke.ultra.common.toBase64
 import java.security.MessageDigest
 import java.security.spec.KeySpec
@@ -32,8 +32,9 @@ class PBKDF2WithHmacSHA256PasswordHasher(
             return false
         }
 
-        val storedHashBytes = hash.hash.fromBase64()
-        val saltBytes = hash.salt.fromBase64()
+        // a stored record that does not decode cannot match — fail closed rather than throwing
+        val storedHashBytes = hash.hash.fromBase64OrNull() ?: return false
+        val saltBytes = hash.salt.fromBase64OrNull() ?: return false
 
         val calculatedHashBytes = calculateHashBytes(saltBytes, plaintext)
 

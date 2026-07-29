@@ -30,27 +30,28 @@ fun <E> List<E>.replaceAt(idx: Int, element: E): List<E> = toMutableList().apply
  *
  * The comparison between the elements is done non strict '=='
  *
- * Beware: on a receiver statically typed as `MutableList` the member `remove` wins over this
- * extension and modifies the list in place instead of returning a copy.
+ * Named `without` rather than `remove` for two reasons: `remove` would be shadowed by the
+ * `MutableList` member on a receiver typed as one, and that member drops only the FIRST occurrence
+ * where this drops every one. `kotlin.collections.minus` is first-only as well.
  */
-fun <E> List<E>.remove(element: E): List<E> = filter { it != element }
+fun <E> List<E>.without(element: E): List<E> = filter { it != element }
 
 /**
  * Returns a new List with all occurrences of [element] removed.
  *
- * The comparison between the elements is done strict '==='
+ * The comparison between the elements is done strict '===' — see [without] for the naming.
  */
-fun <E> List<E>.removeStrict(element: E): List<E> = filter { it !== element }
+fun <E> List<E>.withoutStrict(element: E): List<E> = filter { it !== element }
 
 /**
- * Removes the element at [idx] by creating a new list without the element.
+ * Returns a new List without the element at [idx].
  *
  * Throws [IndexOutOfBoundsException] for an [idx] outside `0 until size`.
  *
- * Beware: on a receiver statically typed as `MutableList` the member `removeAt` wins over this
- * extension and modifies the list in place instead of returning a copy.
+ * Named `withoutAt` rather than `removeAt`, which would be shadowed by the `MutableList` member on a
+ * receiver typed as one — and that member mutates in place and returns the removed element instead.
  */
-fun <E> List<E>.removeAt(idx: Int) = toMutableList().apply { removeAt(idx) }.toList()
+fun <E> List<E>.withoutAt(idx: Int) = toMutableList().apply { removeAt(idx) }.toList()
 
 /**
  * Adds the [element] at [idx] by creating a new list with the element added.

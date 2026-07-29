@@ -1,5 +1,6 @@
 package io.peekandpoke.ultra.security.csrf
 
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -123,5 +124,18 @@ class StatelessCsrfProtectionSpec : StringSpec({
         delay(200)
 
         creator.validateToken(salt, token) shouldBe false
+    }
+    "Validating a token that is not valid base64 must return false, not throw" {
+
+        val subject = StatelessCsrfProtection(
+            "secret", 1000, UserProvider.static(UserRecord.LoggedIn(userId = UserId("USER"), clientIp = "IP"))
+        )
+
+        // every other malformed shape is answered with false, so this one must be too
+        listOf("x!", "!!!!", "QQ=", "QQ ==", "ab-_", "not base64 at all").forEach { token ->
+            withClue(token) {
+                subject.validateToken("SALT", token) shouldBe false
+            }
+        }
     }
 })

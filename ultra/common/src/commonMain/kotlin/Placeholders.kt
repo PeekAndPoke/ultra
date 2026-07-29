@@ -57,6 +57,16 @@ interface Placeholders<T> {
      * Base implementation of [Placeholders] that derives patterns and names from a [toStr] function.
      */
     abstract class Abstract<T>(override val values: Set<T>, val toStr: (T) -> String) : Placeholders<T> {
+
+        /**
+         * Matches anything shaped like a placeholder of this syntax, well-formed or not.
+         *
+         * Deliberately loose: it has to see `{{ Name }}` and `{{unclosed` too, because those are the
+         * mistakes a template author actually makes. Anything it matches that is not a known
+         * [patterns] entry is reported by [findErrorsIn].
+         */
+        protected abstract val scanRegex: Regex
+
         override val patterns: Set<String> by lazy {
             values.map(::renderPattern).toSet()
         }
@@ -66,6 +76,19 @@ interface Placeholders<T> {
         }
 
         override fun renderName(value: T): String = toStr(value)
+
+        /**
+         * Finds everything in [text] that looks like a placeholder but is not a known one.
+         *
+         * Reports both unknown names (`{{nmae}}`) and malformed shapes (`{{Name}`, `{{ Name }}`) —
+         * neither would be substituted, so both are template bugs.
+         */
+        override fun findErrorsIn(text: String): Set<String> {
+            return scanRegex.findAll(text)
+                .map { it.value }
+                .filter { !patterns.contains(it) }
+                .toSet()
+        }
     }
 
     /**
@@ -80,7 +103,7 @@ interface Placeholders<T> {
              * NOTICE: the all curly must be escaped for Javascript
              */
             @Suppress("RegExpRedundantEscape")
-            private val regex = "\\{\\{[a-zA-Z0-9_-]+\\}\\}".toRegex()
+            private val scan = "\\{\\{[^{}]*\\}{0,2}".toRegex()
 
             /** Creates a [DoubleCurly] for all constants of the enum type [E], using enum names. */
             inline operator fun <reified E : Enum<E>> invoke(): DoubleCurly<E> {
@@ -98,22 +121,10 @@ interface Placeholders<T> {
             }
         }
 
+        override val scanRegex: Regex get() = scan
+
         /** Renders the [value] as a `{{...}}` placeholder pattern. */
         override fun renderPattern(value: T): String = "{{${toStr(value)}}}"
-
-        /**
-         * Finds any `{{...}}` patterns in the [text] that are not valid placeholders.
-         *
-         * Only well-formed `{{name}}` shapes with a name of `[a-zA-Z0-9_-]+` are inspected. A
-         * malformed placeholder (`{{FOO`, `{{ FOO }}`) or one whose name uses other characters is not
-         * seen at all, so it is not reported here and survives [Filled.replace] verbatim.
-         */
-        override fun findErrorsIn(text: String): Set<String> {
-            return regex.findAll(text)
-                .map { it.value }
-                .filter { !patterns.contains(it) }
-                .toSet()
-        }
     }
 
     /**
@@ -122,8 +133,8 @@ interface Placeholders<T> {
     class TripleHash<T>(values: Set<T>, toStr: (T) -> String) : Abstract<T>(values, toStr) {
 
         companion object {
-            /** Matches any well-formed `###name###` shape, whether or not it is a known placeholder. */
-            private val regex = "###[a-zA-Z0-9_-]+###".toRegex()
+            /** Matches anything shaped like `###name###`, well-formed or not. */
+            private val scan = "###[^#]*#{0,3}".toRegex()
 
             /** Creates a [TripleHash] for all constants of the enum type [E], using enum names. */
             inline operator fun <reified E : Enum<E>> invoke(): TripleHash<E> {
@@ -141,22 +152,10 @@ interface Placeholders<T> {
             }
         }
 
+        override val scanRegex: Regex get() = scan
+
         /** Renders the [value] as a `###...###` placeholder pattern. */
         override fun renderPattern(value: T): String = "###${toStr(value)}###"
-
-        /**
-         * Finds any `###...###` patterns in the [text] that are not valid placeholders.
-         *
-         * Only well-formed `###name###` shapes with a name of `[a-zA-Z0-9_-]+` are inspected. A
-         * malformed placeholder (`###FOO`, `### FOO ###`) or one whose name uses other characters is
-         * not seen at all, so it is not reported here and survives [Filled.replace] verbatim.
-         */
-        override fun findErrorsIn(text: String): Set<String> {
-            return regex.findAll(text)
-                .map { it.value }
-                .filter { !patterns.contains(it) }
-                .toSet()
-        }
     }
 
     /** The values the placeholders represent */
@@ -180,8 +179,8 @@ interface Placeholders<T> {
     /**
      * Returns true when the given [text] contains valid patterns only.
      *
-     * Exactly as strict as [findErrorsIn] — a text with no placeholder at all validates, and so does
-     * one whose placeholders are malformed rather than unknown.
+     * Exactly as strict as [findErrorsIn]: a text with no placeholder at all validates, but an
+     * unknown name or a malformed shape does not.
      */
     fun validate(text: String): Boolean = findErrorsIn(text).isEmpty()
 
@@ -192,8 +191,14 @@ interface Placeholders<T> {
      * only the last one is reachable.
      */
     fun fill(replace: (T) -> String): Filled<T> {
-        return Filled(
-            mapping = values.associateBy(::renderPattern), replace = replace
-        )
+        val mapping = values.associateBy(::renderPattern)
+
+        require(mapping.size == values.size) {
+            val collisions = values.groupBy(::renderPattern).filterValues { it.size > 1 }.keys
+            "Placeholder patterns must be unique, but these are produced by more than one value: " +
+                    collisions.joinToString()
+        }
+
+        return Filled(mapping = mapping, replace = replace)
     }
 }

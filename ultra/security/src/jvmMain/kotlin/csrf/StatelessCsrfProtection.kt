@@ -1,6 +1,6 @@
 package io.peekandpoke.ultra.security.csrf
 
-import io.peekandpoke.ultra.common.fromBase64
+import io.peekandpoke.ultra.common.fromBase64OrNull
 import io.peekandpoke.ultra.common.sha384
 import io.peekandpoke.ultra.common.toBase64
 import io.peekandpoke.ultra.security.user.UserProvider
@@ -33,7 +33,9 @@ class StatelessCsrfProtection(
 
     @Suppress("Detekt:ReturnCount")
     override fun validateToken(salt: String, token: String): Boolean {
-        val decoded = String(token.fromBase64())
+        // a token that is not even base64 is simply an invalid token, like every other
+        // malformed shape handled below
+        val decoded = token.fromBase64OrNull()?.let { String(it) } ?: return false
         val parts = decoded.split(glue)
 
         if (parts.size != 2) {

@@ -33,13 +33,14 @@ fun <T> MutableList<T>.push(elements: Array<out T>): MutableList<T> = push(eleme
 fun <T> MutableList<T>.push(elements: Collection<T>): MutableList<T> = apply { addAll(elements) }
 
 /**
- * Removes and return the last element of the [MutableList]
- *
- * If there is no entry in the list then null is returned.
- *
- * On a nullable [T] an empty list and a list ending in `null` both yield null, so the result
- * alone does not tell whether anything was removed - check `isEmpty()` first if that matters.
+ * Removes and returns the last element, or null when the list is empty.
  */
+@Deprecated(
+    message = "Replaced by the stdlib. Note both share the caveat that null cannot distinguish " +
+            "an empty list from a stored null.",
+    replaceWith = ReplaceWith("removeLastOrNull()"),
+    level = DeprecationLevel.ERROR,
+)
 fun <T> MutableList<T>.pop(): T? = when {
     isNotEmpty() -> removeAt(size - 1)
     else -> null
@@ -76,11 +77,12 @@ fun <T> MutableList<T>.unshift(elements: Array<out T>): MutableList<T> = unshift
 fun <T> MutableList<T>.unshift(elements: Collection<T>): MutableList<T> = apply { addAll(0, elements) }
 
 /**
- * Removes and returns the first element of the [MutableList]
- *
- * If there is no entry in the list then null is returned.
- *
- * On a nullable [T] an empty list and a list starting with `null` both yield null, so the result
- * alone does not tell whether anything was removed - check `isEmpty()` first if that matters.
+ * Removes and returns the first element, or null when the list is empty.
  */
+@Deprecated(
+    message = "Replaced by the stdlib. Note both share the caveat that null cannot distinguish " +
+            "an empty list from a stored null.",
+    replaceWith = ReplaceWith("removeFirstOrNull()"),
+    level = DeprecationLevel.ERROR,
+)
 fun <T> MutableList<T>.shift(): T? = if (isNotEmpty()) removeAt(0) else null

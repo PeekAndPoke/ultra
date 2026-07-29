@@ -1,8 +1,10 @@
 package io.peekandpoke.ultra.common
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 
 class PlaceholdersSpec : StringSpec() {
     // Define enum classes at class level
@@ -307,6 +309,63 @@ class PlaceholdersSpec : StringSpec() {
             }
 
             filled("{{FOO}}AR}}") shouldBe "{{BAR}}"
+        }
+
+        // Malformed shapes ////////////////////////////////////////////////////////////////////////////
+
+        "findErrorsIn reports a malformed placeholder, not just an unknown one" {
+            val subject = Placeholders.DoubleCurly(setOf("Name")) { it }
+
+            // unknown but well-formed — was already reported
+            subject.findErrorsIn("Hi {{Nmae}}") shouldBe setOf("{{Nmae}}")
+
+            // malformed — used to be invisible, so validate() said the template was fine
+            subject.findErrorsIn("Hi {{Name}, welcome") shouldBe setOf("{{Name}")
+            subject.findErrorsIn("Hi {{ Name }}") shouldBe setOf("{{ Name }}")
+            subject.findErrorsIn("Hi {{Name") shouldBe setOf("{{Name")
+        }
+
+        "validate rejects a template whose placeholder is malformed" {
+            val subject = Placeholders.DoubleCurly(setOf("Name")) { it }
+
+            subject.validate("Hi {{Name}}") shouldBe true
+            subject.validate("Hi there") shouldBe true
+
+            subject.validate("Hi {{Name}, welcome") shouldBe false
+            subject.validate("Hi {{ Name }}") shouldBe false
+        }
+
+        "TripleHash reports malformed shapes too" {
+            val subject = Placeholders.TripleHash(setOf("Name")) { it }
+
+            subject.validate("Hi ###Name###") shouldBe true
+            subject.validate("Hi ###Name#") shouldBe false
+            subject.validate("Hi ### Name ###") shouldBe false
+        }
+
+        "a placeholder name outside the old character class is recognised" {
+            val subject = Placeholders.DoubleCurly(setOf("user.name")) { it }
+
+            // the scan used to require [a-zA-Z0-9_-], so a dotted name was invisible in both directions
+            subject.validate("Hi {{user.name}}") shouldBe true
+            subject.findErrorsIn("Hi {{user.nam}}") shouldBe setOf("{{user.nam}}")
+        }
+
+        // Colliding patterns //////////////////////////////////////////////////////////////////////////
+
+        "fill rejects values that render the same pattern" {
+            // toStr is not injective here, so one of the two values could never be substituted
+            val subject = Placeholders.DoubleCurly(setOf("a", "A")) { it.lowercase() }
+
+            val ex = shouldThrow<IllegalArgumentException> { subject.fill { it } }
+
+            ex.message!! shouldContain "{{a}}"
+        }
+
+        "fill accepts values that render distinct patterns" {
+            val subject = Placeholders.DoubleCurly(setOf("a", "b")) { it }
+
+            subject.fill { it.uppercase() }("{{a}} and {{b}}") shouldBe "A and B"
         }
     }
 }

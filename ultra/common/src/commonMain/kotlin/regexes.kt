@@ -21,16 +21,19 @@ val UrlWithProtocolRegex = Regex(
  */
 val SlugRegex = Regex("^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 
+/** RFC 5321 caps an email forward-path at 254 characters. */
+const val MAX_EMAIL_LENGTH: Int = 254
+
 /**
  * Regex that matches an email address per RFC 5322 (simplified).
  *
  * Case-insensitive and UNANCHORED — use `matches`, as [isEmail] does, to require a full match.
  *
  * BOUND THE INPUT LENGTH BEFORE MATCHING. The dot-separated repetitions compile to nested loops that
- * the JVM engine walks recursively, so an input of a few thousand characters (~2000 `x.` segments)
- * overflows the stack with a `StackOverflowError` — an `Error`, which a `catch (e: Exception)` will
- * not stop. `EmailAddress` caps at 254 characters before it ever gets here; direct callers must do
- * the same.
+ * the JVM engine walks recursively, so a long enough input (~8000 characters on a default JVM stack,
+ * fewer on a smaller one) overflows it with a `StackOverflowError` — an `Error`, which
+ * `catch (e: Exception)` will not stop. [isEmail] rejects anything over [MAX_EMAIL_LENGTH] before
+ * matching; use it rather than this regex directly.
  */
 @Suppress("RegExpRedundantEscape")
 val EmailRegex = Regex(

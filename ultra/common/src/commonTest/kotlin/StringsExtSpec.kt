@@ -152,4 +152,22 @@ class StringsExtSpec : StringSpec({
 
         actual shouldBe expected
     }
+    "isEmail rejects anything longer than the RFC 5321 limit" {
+        val local = "a".repeat(MAX_EMAIL_LENGTH - "@example.com".length)
+
+        // exactly at the limit is still answered on its merits
+        "$local@example.com".length shouldBe MAX_EMAIL_LENGTH
+        "$local@example.com".isEmail() shouldBe true
+
+        // one over is rejected without matching
+        "a$local@example.com".isEmail() shouldBe false
+    }
+
+    "isEmail answers a pathological input instead of exhausting the stack" {
+        // EmailRegex walks its nested repetitions recursively; without the length guard an input
+        // this size raises StackOverflowError, which is an Error and escapes catch (Exception)
+        val pathological = "a.".repeat(10_000) + "a@example.com"
+
+        pathological.isEmail() shouldBe false
+    }
 })

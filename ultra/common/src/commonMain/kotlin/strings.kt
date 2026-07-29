@@ -155,9 +155,16 @@ fun String.isUrlWithProtocol(): Boolean {
  * Checks if the string is a valid email
  *
  * [EmailRegex] must match the WHOLE string, so leading or trailing whitespace makes this 'false'.
- * Bound the input length before calling — see the warning on [EmailRegex].
+ *
+ * Anything longer than [MAX_EMAIL_LENGTH] is rejected without matching. That is the correct answer —
+ * RFC 5321 caps a forward-path there — and it also keeps [EmailRegex] away from the input lengths
+ * where its nested repetitions exhaust the stack.
  */
 fun String.isEmail(): Boolean {
+    if (length > MAX_EMAIL_LENGTH) {
+        return false
+    }
+
     return EmailRegex.matches(this)
 }
 

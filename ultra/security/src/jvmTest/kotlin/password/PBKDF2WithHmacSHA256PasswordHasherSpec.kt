@@ -32,4 +32,13 @@ class PBKDF2WithHmacSHA256PasswordHasherSpec : StringSpec({
             }
         }
     }
+    "check returns false when the stored hash or salt is not valid base64" {
+
+        val subject = PBKDF2WithHmacSHA256PasswordHasher.i65536k256
+        val valid = subject.hash("secret")
+
+        // a corrupt or legacy row must fail closed instead of throwing out of the auth check
+        subject.check("secret", valid.copy(hash = "not base64!")) shouldBe false
+        subject.check("secret", valid.copy(salt = "not base64!")) shouldBe false
+    }
 })

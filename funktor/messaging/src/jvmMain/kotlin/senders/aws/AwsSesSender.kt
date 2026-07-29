@@ -4,7 +4,7 @@ import io.peekandpoke.funktor.messaging.Email
 import io.peekandpoke.funktor.messaging.EmailSender
 import io.peekandpoke.funktor.messaging.api.EmailBody
 import io.peekandpoke.funktor.messaging.api.EmailResult
-import io.peekandpoke.ultra.common.fromBase64
+import io.peekandpoke.ultra.common.fromBase64OrNull
 import kotlinx.coroutines.future.await
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.core.SdkBytes
@@ -174,9 +174,14 @@ class AwsSesSender(private val client: SesAsyncClient) : EmailSender {
 
         // define the attachment
         email.attachments.forEach { attachment ->
+            // still fails the send — a broken attachment must not go out silently — but names
+            // which one, instead of an opaque "Illegal base64 character"
+            val data = attachment.dataBase64.fromBase64OrNull()
+                ?: error("Attachment '${attachment.filename}' does not hold valid base64 data")
+
             val att = MimeBodyPart().apply {
                 val fds: DataSource = ByteArrayDataSource(
-                    attachment.dataBase64.fromBase64(),
+                    data,
                     attachment.mimeType
                 )
                 dataHandler = DataHandler(fds)
