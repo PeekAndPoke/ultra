@@ -5,6 +5,7 @@ import java.lang.ref.WeakReference as JavaWeakReference
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class WeakReference<T> actual constructor(ref: T) {
 
+    /** Weakly holds every value, including boxed primitives and strings. */
     private var internal: JavaWeakReference<T>? = JavaWeakReference(ref)
 
     actual val value: T? get() = get()

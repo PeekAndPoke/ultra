@@ -25,7 +25,12 @@ object NetworkUtils {
     /**
      * Returns an MD5 fingerprint derived from all network interface names and addresses.
      *
-     * Falls back to a time-based fingerprint if the network interfaces cannot be read.
+     * The fingerprint tracks the current network setup, not the installation: it changes whenever an
+     * interface or address changes - a new dhcp lease, a container restart, a docker bridge coming
+     * up. Do not use it where an identity must survive a restart.
+     *
+     * Falls back to a time-based - and therefore per-call unique - fingerprint if the network
+     * interfaces cannot be read.
      */
     fun getNetworkFingerPrint() = try {
 

@@ -7,6 +7,10 @@ import kotlin.math.roundToLong
  * Formats this number to a string with the given number of decimal [digits].
  *
  * If [digits] is less than zero, the number is formatted as an integer with no decimal places.
+ *
+ * The output is NOT byte-identical across platforms: the JVM uses the default locale's decimal
+ * separator and rounds half-up on the shortest decimal form, while JS and native round on the
+ * binary value. Non-finite values and magnitudes beyond `Long` range diverge as well.
  */
 fun Number.toFixed(digits: Int): String {
     if (digits < 0) {
@@ -16,6 +20,7 @@ fun Number.toFixed(digits: Int): String {
     return toFixedInternal(digits)
 }
 
+/** Platform formatting backend for [toFixed]; [digits] is guaranteed to be non-negative. */
 internal expect fun Number.toFixedInternal(digits: Int): String
 
 // fun Number.toFixed(decimals: Int): String {
@@ -50,6 +55,9 @@ internal expect fun Number.toFixedInternal(digits: Int): String
  * Rounds this number to the given decimal [precision].
  *
  * A [precision] of 0 rounds to the nearest integer. Positive values specify the number of decimal places.
+ * Negative values round to powers of ten (`-2` rounds to hundreds).
+ *
+ * @throws IllegalArgumentException if this value is `NaN`.
  */
 fun Number.roundWithPrecision(precision: Int): Double {
 

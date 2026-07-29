@@ -212,4 +212,14 @@ class ListsSpec : StringSpec({
             Data(id = "3", n = 3),
         )
     }
+    "prepend puts the element at the front and leaves the receiver untouched" {
+        val source = listOf("b", "c")
+
+        source.prepend("a") shouldBe listOf("a", "b", "c")
+        source shouldBe listOf("b", "c")
+    }
+
+    "prepend works on an empty list" {
+        emptyList<String>().prepend("a") shouldBe listOf("a")
+    }
 })

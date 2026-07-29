@@ -30,12 +30,18 @@ external fun atob(value: String): Uint8Array
  */
 external fun btoa(value: Uint8Array): String
 
-/** Encodes this string as a URI component using the browser's `encodeURIComponent`. */
+/**
+ * Throws `URIError` when the string contains an unpaired surrogate; the other platforms substitute
+ * a replacement character instead.
+ */
 actual fun String.encodeUriComponent(): String {
     return encodeURIComponent(this)
 }
 
-/** Decodes a percent-encoded URI component using the browser's `decodeURIComponent`. */
+/**
+ * Throws `URIError` on malformed input (a dangling `%`, non-hex digits, or an escape sequence that
+ * is not valid UTF-8); the other platforms recover silently.
+ */
 actual fun String.decodeUriComponent(): String {
     return decodeURIComponent(this)
 }

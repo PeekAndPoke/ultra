@@ -54,12 +54,14 @@ kotlin {
                 implementation(Deps.KotlinX.serialization_json)
 
                 api(Deps.KotlinX.datetime)
+
+                // api, not implementation: the public Mp* types implement common's ComparableTo
+                api(project(":ultra:common"))
             }
         }
 
         commonTest {
             dependencies {
-                implementation(project(":ultra:common"))
                 implementation(Deps.KotlinX.coroutines_test)
                 commonTestDeps()
             }

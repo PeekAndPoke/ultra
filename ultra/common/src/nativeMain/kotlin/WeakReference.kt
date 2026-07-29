@@ -7,6 +7,7 @@ import kotlin.native.ref.WeakReference as NativeWeakReference
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class WeakReference<T> actual constructor(ref: T) {
 
+    /** Null when the referent was null; the underlying reference cannot hold null. */
     private var nativeRef: NativeWeakReference<Any>? =
         if (ref != null) NativeWeakReference(ref) else null
 

@@ -29,16 +29,25 @@ interface GetAndSet<P> : Observable<P> {
         )
     }
 
+    /**
+     * Default [GetAndSet] implementation backed by a getter/setter pair.
+     *
+     * Has value semantics: two instances are equal when their current values are equal. Both
+     * [equals] and [hashCode] therefore change whenever the underlying value changes, so instances
+     * must not be used as hash-based collection keys.
+     */
     private class Impl<P>(
         private val getter: () -> P,
         private val setter: (P) -> P,
         private val subscriptions: Observable.Subscriptions<P> = Observable.Subscriptions(),
     ) : GetAndSet<P>, Observable<P> by subscriptions {
 
+        /** Hash of the current value. */
         override fun hashCode(): Int {
             return get().hashCode()
         }
 
+        /** Compares by current value against any other [GetAndSet]. */
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
 
@@ -48,7 +57,10 @@ interface GetAndSet<P> : Observable<P> {
         }
 
         override fun invoke(): P = getter()
-        override fun invoke(input: P): P = setter(input)
+
+        override fun invoke(input: P): P = setter(input).also {
+            subscriptions.emit(it)
+        }
     }
 
     /** Get the value */

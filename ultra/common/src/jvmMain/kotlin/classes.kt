@@ -15,6 +15,13 @@ fun KClass<*>.getRelativePackagePath(that: KClass<*>): File {
     )
 }
 
+/**
+ * Computes the relative file-system path from this package name to the [that] package name.
+ *
+ * Both names are matched segment-wise: the common prefix is dropped, each remaining segment of this
+ * package becomes a `..` and the remaining segments of [that] are appended. Equal packages give an
+ * empty path.
+ */
 internal fun String.getRelativePackagePath(that: String): File {
 
     val thisParts = this.split(".").filter { it.isNotEmpty() }.toMutableList()

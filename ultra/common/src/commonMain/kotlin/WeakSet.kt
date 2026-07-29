@@ -6,16 +6,17 @@ package io.peekandpoke.ultra.common
  * Elements may be garbage collected when no strong references to them remain,
  * which will cause them to be silently removed from the set.
  *
+ * The set is deliberately neither sizeable nor enumerable: a JS `WeakSet` supports neither, and an
+ * answer that can go stale between asking and using it would be misleading anyway. Membership is
+ * the only question it answers.
+ *
+ * Element matching is NOT uniform across platforms: JVM and native compare with `equals`, JS with
+ * reference identity. Two equal-but-distinct instances are one element on JVM/native and two on JS.
+ *
  * @param E The type of elements in the set.
  */
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING", "unused")
 expect class WeakSet<E>() {
-    /** The current number of elements in the set. */
-    val size: Int
-
-    /** Returns a snapshot of the elements as an immutable [Set]. */
-    fun toSet(): Set<E>
-
     /** Returns `true` if the set contains the given [element]. */
     fun contains(element: E): Boolean
 
@@ -28,9 +29,3 @@ expect class WeakSet<E>() {
     /** Removes all elements from the set. */
     fun clear()
 }
-
-/** Returns `true` if this [WeakSet] contains no elements. */
-fun <E> WeakSet<E>.isEmpty() = size == 0
-
-/** Returns `true` if this [WeakSet] contains at least one element. */
-fun <E> WeakSet<E>.isNotEmpty() = !isEmpty()

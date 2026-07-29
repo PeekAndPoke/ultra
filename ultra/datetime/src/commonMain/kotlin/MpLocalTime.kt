@@ -1,5 +1,6 @@
 package io.peekandpoke.ultra.datetime
 
+import io.peekandpoke.ultra.common.ComparableTo
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds

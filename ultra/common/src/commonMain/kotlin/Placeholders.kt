@@ -7,9 +7,6 @@ package io.peekandpoke.ultra.common
  */
 interface Placeholders<T> {
     /**
-     * [Filled] [Placeholders] can be used to [replace] patterns in a text.
-     */
-    /**
      * A set of placeholders that have been filled with a replacement function.
      *
      * Use [replace] or [invoke] to substitute all placeholder patterns in a text.
@@ -32,7 +29,13 @@ interface Placeholders<T> {
             ?.joinToString("|") { Regex.escape(it) }
             ?.toRegex()
 
-        /** Replaces every placeholder pattern in [text] with its computed value, each exactly once. */
+        /**
+         * Replaces every known placeholder pattern in [text] with its computed value, each exactly once.
+         *
+         * Returns [text] unchanged when it holds no known pattern, or when the placeholder set is
+         * empty. Patterns the set does not know (`{{unknown}}`) and malformed ones (`{{unclosed`) are
+         * left verbatim — they are never an error here, see [Placeholders.findErrorsIn].
+         */
         fun replace(text: String): String {
             val regex = combined ?: return text
             return regex.replace(text) { match ->
@@ -66,15 +69,16 @@ interface Placeholders<T> {
     }
 
     /**
-     * Triple Hash Tag Placeholders, like ###Name###, ###age###, ...
-     */
-    /**
      * Double-curly-brace placeholders, e.g. `{{Name}}`, `{{age}}`.
      */
     class DoubleCurly<T>(values: Set<T>, toStr: (T) -> String) : Abstract<T>(values, toStr) {
 
         companion object {
-            /** NOTICE: the all curly must be escaped for Javascript */
+            /**
+             * Matches any well-formed `{{name}}` shape, whether or not it is a known placeholder.
+             *
+             * NOTICE: the all curly must be escaped for Javascript
+             */
             @Suppress("RegExpRedundantEscape")
             private val regex = "\\{\\{[a-zA-Z0-9_-]+\\}\\}".toRegex()
 
@@ -97,7 +101,13 @@ interface Placeholders<T> {
         /** Renders the [value] as a `{{...}}` placeholder pattern. */
         override fun renderPattern(value: T): String = "{{${toStr(value)}}}"
 
-        /** Finds any `{{...}}` patterns in the [text] that are not valid placeholders. */
+        /**
+         * Finds any `{{...}}` patterns in the [text] that are not valid placeholders.
+         *
+         * Only well-formed `{{name}}` shapes with a name of `[a-zA-Z0-9_-]+` are inspected. A
+         * malformed placeholder (`{{FOO`, `{{ FOO }}`) or one whose name uses other characters is not
+         * seen at all, so it is not reported here and survives [Filled.replace] verbatim.
+         */
         override fun findErrorsIn(text: String): Set<String> {
             return regex.findAll(text)
                 .map { it.value }
@@ -107,14 +117,12 @@ interface Placeholders<T> {
     }
 
     /**
-     * Triple Hash Tag Placeholders, like ###Name###, ###age###, ...
-     */
-    /**
      * Triple-hash placeholders, e.g. `###Name###`, `###age###`.
      */
     class TripleHash<T>(values: Set<T>, toStr: (T) -> String) : Abstract<T>(values, toStr) {
 
         companion object {
+            /** Matches any well-formed `###name###` shape, whether or not it is a known placeholder. */
             private val regex = "###[a-zA-Z0-9_-]+###".toRegex()
 
             /** Creates a [TripleHash] for all constants of the enum type [E], using enum names. */
@@ -136,7 +144,13 @@ interface Placeholders<T> {
         /** Renders the [value] as a `###...###` placeholder pattern. */
         override fun renderPattern(value: T): String = "###${toStr(value)}###"
 
-        /** Finds any `###...###` patterns in the [text] that are not valid placeholders. */
+        /**
+         * Finds any `###...###` patterns in the [text] that are not valid placeholders.
+         *
+         * Only well-formed `###name###` shapes with a name of `[a-zA-Z0-9_-]+` are inspected. A
+         * malformed placeholder (`###FOO`, `### FOO ###`) or one whose name uses other characters is
+         * not seen at all, so it is not reported here and survives [Filled.replace] verbatim.
+         */
         override fun findErrorsIn(text: String): Set<String> {
             return regex.findAll(text)
                 .map { it.value }
@@ -163,10 +177,20 @@ interface Placeholders<T> {
     /** Finds invalid placeholder patterns in the given [text] */
     fun findErrorsIn(text: String): Set<String>
 
-    /** Returns true when the given [text] contains valid patterns only */
+    /**
+     * Returns true when the given [text] contains valid patterns only.
+     *
+     * Exactly as strict as [findErrorsIn] — a text with no placeholder at all validates, and so does
+     * one whose placeholders are malformed rather than unknown.
+     */
     fun validate(text: String): Boolean = findErrorsIn(text).isEmpty()
 
-    /** Fills the placeholders with values */
+    /**
+     * Fills the placeholders with values.
+     *
+     * Values are keyed by their [renderPattern], so two values rendering the same pattern collapse:
+     * only the last one is reachable.
+     */
     fun fill(replace: (T) -> String): Filled<T> {
         return Filled(
             mapping = values.associateBy(::renderPattern), replace = replace

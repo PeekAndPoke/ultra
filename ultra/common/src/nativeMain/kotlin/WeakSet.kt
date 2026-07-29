@@ -7,19 +7,12 @@ import kotlin.native.ref.WeakReference as NativeWeakReference
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class WeakSet<E> actual constructor() {
 
+    /**
+     * Backing list of weak references, scanned linearly and matched with `equals`.
+     *
+     * All operations are therefore O(n), and a null element is silently ignored.
+     */
     private val refs = mutableListOf<NativeWeakReference<Any>>()
-
-    actual val size: Int
-        get() {
-            cleanup()
-            return refs.size
-        }
-
-    @Suppress("UNCHECKED_CAST")
-    actual fun toSet(): Set<E> {
-        cleanup()
-        return refs.mapNotNull { it.get() as? E }.toSet()
-    }
 
     actual fun contains(element: E): Boolean {
         if (element == null) return false
@@ -28,6 +21,7 @@ actual class WeakSet<E> actual constructor() {
 
     actual fun add(element: E) {
         if (element == null) return
+        cleanup()
         if (!contains(element)) {
             refs.add(NativeWeakReference(element))
         }
@@ -42,6 +36,7 @@ actual class WeakSet<E> actual constructor() {
         refs.clear()
     }
 
+    /** Drops references whose referent has been collected. */
     private fun cleanup() {
         refs.removeAll { it.get() == null }
     }

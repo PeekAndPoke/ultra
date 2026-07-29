@@ -17,6 +17,9 @@ fun String.surround(prefix: String, suffix: String) = "$prefix${this}$suffix"
 
 /**
  * Converts the first letter of the String to uppercase
+ *
+ * An empty string is returned as is. Full case mapping is applied, so the result may be longer than
+ * the input (`"ßa"` becomes `"SSa"`).
  */
 fun String.ucFirst(): String = when {
     isEmpty() -> this
@@ -25,6 +28,9 @@ fun String.ucFirst(): String = when {
 
 /**
  * Converts the first letter of the String to lowercase
+ *
+ * An empty string is returned as is. Full case mapping is applied, so the result may be longer than
+ * the input (`"İx"` gains a combining dot).
  */
 fun String.lcFirst(): String = when {
     isEmpty() -> this
@@ -33,6 +39,8 @@ fun String.lcFirst(): String = when {
 
 /**
  * Returns 'true' when the string starts with any of the given prefixes
+ *
+ * Without any prefix the answer is 'false' (and [startsWithNone] is correspondingly 'true').
  */
 fun String.startsWithAny(vararg prefixes: String) = startsWithAny(prefixes)
 
@@ -68,13 +76,19 @@ fun String.startsWithNone(prefixes: Collection<String>) = !startsWithAny(prefixe
 /**
  * Returns the maximal line length of a multiline string.
  *
- * The string is first split by the [separator] and then the max length is computed
+ * The string is first split by the [separator] and then the max length is computed. An empty string
+ * has length 0. Lengths are UTF-16 code units, not glyphs, and only the literal [separator] is
+ * stripped — CRLF text therefore counts a trailing CR into every line.
  */
 fun String.maxLineLength(separator: String = "\n"): Int =
     split(separator).map { it.length }.maxOrNull() ?: 0
 
 /**
  * Takes [maxLength] of the string and adds the [suffix] if the length is bigger than [maxLength]
+ *
+ * The [suffix] is appended on top of [maxLength], so a truncated result is `maxLength + suffix.length`
+ * long and can even exceed the input (`"ab".ellipsis(1)` is `"a..."`). Lengths are UTF-16 code units,
+ * so cutting inside a surrogate pair leaves a broken half. A negative [maxLength] throws.
  */
 fun String.ellipsis(maxLength: Int = 50, suffix: String = "...") = when (length > maxLength) {
     true -> "${this.take(maxLength)}$suffix"
@@ -83,6 +97,10 @@ fun String.ellipsis(maxLength: Int = 50, suffix: String = "...") = when (length 
 
 /**
  * Splits a camel cased word into single words
+ *
+ * A new word starts at every ASCII `A`..`Z`, so acronyms fall apart (`"XMLParser"` gives
+ * `["X", "M", "L", "Parser"]`) and non-ASCII capitals are not word boundaries at all. The input and
+ * every part are trimmed; a blank input gives an empty list.
  */
 fun String.camelCaseSplit(): List<String> {
 
@@ -125,6 +143,9 @@ fun String.camelCaseDivide(divider: String = " "): String = camelCaseSplit().joi
 
 /**
  * Checks if the string is a url with a protocol, e.g. https://...
+ *
+ * Only `http` and `https` qualify, and [UrlWithProtocolRegex] must match the WHOLE string — a
+ * surrounding sentence or stray whitespace makes this 'false'.
  */
 fun String.isUrlWithProtocol(): Boolean {
     return UrlWithProtocolRegex.matches(this)
@@ -132,6 +153,9 @@ fun String.isUrlWithProtocol(): Boolean {
 
 /**
  * Checks if the string is a valid email
+ *
+ * [EmailRegex] must match the WHOLE string, so leading or trailing whitespace makes this 'false'.
+ * Bound the input length before calling — see the warning on [EmailRegex].
  */
 fun String.isEmail(): Boolean {
     return EmailRegex.matches(this)
@@ -164,6 +188,9 @@ fun Char.isForbiddenInId(): Boolean =
 
 /**
  * Splits the string, trims all and creates a set of the elements.
+ *
+ * Blank parts are dropped, so an empty or all-blank string gives an empty set. Duplicates collapse;
+ * the set keeps first-occurrence order.
  */
 fun String.splitAndTrimToSet(delimiter: String = ",") =
     split(delimiter)

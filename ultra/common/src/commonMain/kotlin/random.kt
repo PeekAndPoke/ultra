@@ -47,6 +47,8 @@ fun Random.nextBin(weights: DoubleArray): Int {
  * Returns a randomly selected value from [weightsToValue], where each pair maps a weight to a value.
  *
  * Higher weights increase the probability of the associated value being selected.
+ *
+ * @throws IllegalArgumentException if [weightsToValue] is empty.
  */
 @JvmName("nextBin_list")
 fun <T> Random.nextBin(weightsToValue: List<Pair<Double, T>>): T {
@@ -57,6 +59,8 @@ fun <T> Random.nextBin(weightsToValue: List<Pair<Double, T>>): T {
  * Returns a randomly selected value from [weightToValue], where each pair maps a weight to a value.
  *
  * Higher weights increase the probability of the associated value being selected.
+ *
+ * @throws IllegalArgumentException if [weightToValue] is empty.
  */
 @JvmName("nextBin_vararg")
 fun <T> Random.nextBin(vararg weightToValue: Pair<Double, T>): T {
@@ -67,6 +71,8 @@ fun <T> Random.nextBin(vararg weightToValue: Pair<Double, T>): T {
  * Returns a randomly selected value from [weightsToValue], where each pair maps a weight to a value.
  *
  * Higher weights increase the probability of the associated value being selected.
+ *
+ * @throws IllegalArgumentException if [weightsToValue] is empty.
  */
 @JvmName("nextBin_array")
 fun <T> Random.nextBin(weightsToValue: Array<out Pair<Double, T>>): T {

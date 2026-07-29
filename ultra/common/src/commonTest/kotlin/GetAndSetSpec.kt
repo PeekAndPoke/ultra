@@ -62,4 +62,42 @@ class GetAndSetSpec : StringSpec({
         gas() shouldBe "world"
         backing shouldBe "world"
     }
+    // Observable behaviour ////////////////////////////////////////////////////////////////////////
+
+    "setting a value notifies observers" {
+        var backing = 1
+        val subject = GetAndSet.of(getter = { backing }, setter = { backing = it; it })
+        val seen = mutableListOf<Int>()
+
+        subject.observe { seen.add(it) }
+
+        subject.set(42)
+        subject.set(43)
+
+        seen shouldBe listOf(42, 43)
+    }
+
+    "an unsubscribed observer stops receiving values" {
+        var backing = 1
+        val subject = GetAndSet.of(getter = { backing }, setter = { backing = it; it })
+        val seen = mutableListOf<Int>()
+
+        val unsub = subject.observe { seen.add(it) }
+        subject.set(1)
+        unsub()
+        subject.set(2)
+
+        seen shouldBe listOf(1)
+    }
+
+    "reading a value notifies nobody" {
+        var backing = 1
+        val subject = GetAndSet.of(getter = { backing }, setter = { backing = it; it })
+        val seen = mutableListOf<Int>()
+
+        subject.observe { seen.add(it) }
+        subject.get()
+
+        seen shouldBe emptyList()
+    }
 })

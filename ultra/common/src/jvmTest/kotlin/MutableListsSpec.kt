@@ -117,4 +117,51 @@ class MutableListsSpec : StringSpec({
             subject.shift() shouldBe null
         }
     }
+    "pop removes and returns the last element" {
+        val list = mutableListOf("a", "b", "c")
+
+        list.pop() shouldBe "c"
+        list shouldBe mutableListOf("a", "b")
+    }
+
+    "pop returns null on an empty list" {
+        mutableListOf<String>().pop() shouldBe null
+    }
+
+    "pop drains a list one element at a time" {
+        val list = mutableListOf(1, 2)
+
+        list.pop() shouldBe 2
+        list.pop() shouldBe 1
+        list.pop() shouldBe null
+        list shouldBe mutableListOf()
+    }
+
+    "shift removes and returns the first element" {
+        val list = mutableListOf("a", "b", "c")
+
+        list.shift() shouldBe "a"
+        list shouldBe mutableListOf("b", "c")
+    }
+
+    "shift returns null on an empty list" {
+        mutableListOf<String>().shift() shouldBe null
+    }
+
+    "shift drains a list from the front" {
+        val list = mutableListOf(1, 2)
+
+        list.shift() shouldBe 1
+        list.shift() shouldBe 2
+        list.shift() shouldBe null
+        list shouldBe mutableListOf()
+    }
+
+    "pop and shift cannot distinguish an empty list from a stored null" {
+        val list = mutableListOf<String?>(null)
+
+        // both return null here, so the return value alone does not say whether anything was removed
+        list.pop() shouldBe null
+        list shouldBe mutableListOf()
+    }
 })
