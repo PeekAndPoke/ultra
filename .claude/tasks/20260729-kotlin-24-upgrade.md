@@ -65,8 +65,21 @@ These track Kotlin and usually need moving together.
 | `kotlin-js` wrappers | 2026.3.8 |
 | Ktor | 3.4.2 |
 
-`kotlinx-datetime` is pre-1.0 and has had breaking changes between minors — read its changelog rather
-than bumping blind. `ultra/datetime` wraps it heavily.
+### Do NOT bump `kotlinx-datetime` unless forced
+
+Decided 2026-07-29: leave it at 0.6.2. It is pre-1.0, has broken between minors before, and
+`ultra/datetime` wraps it heavily — that module alone carries 5234 tests, and ten other modules
+depend on it.
+
+The only question that can override this: **does 0.6.2 actually work against Kotlin 2.4.10?** Find
+that out first. If it does, leave it alone and let the rest of the upgrade land. If it does not, the
+bump becomes mandatory rather than optional, and then:
+
+- read the changelog for every version in between, not just the target
+- run `:ultra:datetime:allTests` on its own before anything else
+- then the ten dependents: `ultra/maths`, `ultra/model`, `ultra/slumber`, `ultra/cache`,
+  `ultra/vault`, `karango/core`, `monko/core`, `funktor/core`, `kraft/core`, `kraft/addons/datetime`
+- treat it as its own commit so it can be reverted independently
 
 ## STEP 3 — the concrete win: drop `com.benasher44:uuid`
 
