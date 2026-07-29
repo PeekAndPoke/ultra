@@ -333,8 +333,15 @@ class RestApiTsContributor(private val features: Lazy<List<ApiFeature>>) : TsSdk
 - [ ] Method naming from `CodeGenHints.funcName` when present, else derive from the route.
 - [ ] Path vs query params: `TypedRoute.parsedUriParams` gives the path params parsed from the pattern
   (`funktor/core/src/jvmMain/kotlin/broker/TypedRoute.kt:30`); the remaining PARAMS ctor params are query params.
-- [ ] **Port `UriParamBuilder` semantics exactly** (`ultra/remote/src/commonMain/kotlin/UriParamBuilder.kt`)
-  — lists, nulls, defaults. Do not reinvent; golden-test the two implementations against each other.
+- [ ] **Match `TypedRouteRenderer` exactly** (`funktor/core/src/jvmMain/kotlin/broker/TypedRouteRenderer.kt:28`)
+  — null/empty omission, one value per key. Do not reinvent. (Earlier drafts of this plan named
+  `UriParamBuilder`; **no such class exists**. `runtime/http.ts`'s `buildUrl` is already written against
+  the renderer and checked in `ts-verify/verifyRuntime.ts`.)
+- [ ] **Build it profile-shaped from day one**, even though profiles land later (see the incoming
+  requirements below). `contribute` is exactly where a root predicate belongs, so take one as a
+  constructor parameter defaulting to "all routes". The alternative is writing the loop and then
+  rewriting it. Read `CodeGenHints.tags` here too — it is the natural carrier for the predicate, and
+  reading it now stops it staying vestigial.
 
 ### 2.2 CLI command
 
@@ -849,10 +856,42 @@ dispatches nothing, because a frame with no data is dropped. It only discriminat
 (`data: z.unknown()`) fails to type-check against `z.ZodType<ApiResponse<T>>`. Worth noting that the
 type-check layer catches a class of sabotage the runtime checks would have to be written for.
 
+**2026-07-30 — frontend-SDK requirements folded in; two design questions settled.**
+
+The maintainer settled the frontend direction (Vue, generated on the fly, nothing published) in
+`.claude/tasks/20260730-frontend-sdk-vue-contributors.md`, then raised two doubts about it. Both are
+now decided and recorded above and in the design doc:
+
+1. **Config emission → an ownership boundary, not a merge mechanism.** The worry was that regenerating
+   would destroy hand-made changes in the target project. Merging was rejected as the answer: it can
+   only be wrong-and-quiet on JSONC and on TypeScript config. `<out>/` is owned outright; nothing
+   outside it is ever written; `scaffold` seeds app-owned files without overwriting. The concern
+   correctly exposed a real gap that merging would NOT have fixed — stale output — which needs an
+   output manifest and a `diffAgainst` that can see ghosts.
+2. **Profiles → select roots, no tree-shaking, no contributor filtering.** Tree-shaking turned out to
+   be `TypeWalker` run twice. Contributor filtering turned out to be actively unsafe. Narrowing the
+   root set gives every wanted consequence for free.
+
+Net effect on this plan: **nothing already built needs redesigning.** All four additions remain keyed
+inserts into the existing phases, and `TsSdkEmitContext` is a class, so gaining a `registry` is
+additive. Three concrete items landed in the current scope: fix the two `resource()` bugs, and add the
+claim-`importFrom`-is-emitted validation.
+
+Worth recording as a design observation: **`models.ts` is the first instance of the aggregation
+registry, not a special case.** The builder owns it because every contributor feeds it
+(`sdk/TsSdkBuilder.kt:101-103`), which is exactly what the registry generalises. Build the registry so
+`models.ts` becomes its first target, or the codebase ends up with two mechanisms doing one job.
+
 ### Next
 
-Phase 2 (`funktor/codegen`: `RestApiTsContributor` + `sdk:ts:generate` CLI), then Phase 4 (wire into
-funktor-demo). Phase 2's prerequisite is `.claude/tasks/20260730-funktor-rest-codec-config.md`.
+**Review round first** (maintainer, 2026-07-30: fold the above into the plan, review, then start new
+features). Then Phase 2 (`funktor/codegen`: `RestApiTsContributor` + `sdk:ts:generate` CLI) — built
+profile-shaped per 2.1 — then the codegen additions (profiles, shared emission, registries, `out.vue`,
+config emission), then Phase 4. Phase 2's prerequisite is
+`.claude/tasks/20260730-funktor-rest-codec-config.md`.
+
+Independent of all of it, and the only item with a deadline shape: **gate the existing insights GUI**
+(step 1 of the design doc's ordering). No codegen dependency.
 
 ---
 
@@ -870,7 +909,9 @@ funktor-demo). Phase 2's prerequisite is `.claude/tasks/20260730-funktor-rest-co
 | Symbolic `TypeId` refs                          | Cycles cost nothing; no topological sort; TS type imports are legal circular                                              |
 | Hard error on unmapped types                    | The Dart gen's silent `dynamic` fallback is the defect being fixed                                                        |
 | zod schemas, not types-only                     | Chosen 2026-07-29. Parse-time errors at the boundary with a precise path                                                  |
-| Bare `.ts`, not npm package                     | Chosen 2026-07-29. `--package` deferred until a second consumer exists                                                    |
+| Bare `.ts`, not npm package                     | Chosen 2026-07-29. Still no npm publishing — but **config emission inside `<out>/` is now in scope** (2026-07-30), so `--package` is narrower than it was, not merely deferred |
+| Generator owns `<out>/`, writes nothing outside | Chosen 2026-07-30. Makes "regenerating destroys my edits" impossible by construction, so no file-merging mechanism is needed — merging JSONC/TS config could only be wrong-and-quiet |
+| Profiles select roots; no tree-shaking stage    | Chosen 2026-07-30. Tree-shaking is the walker run twice; filtering contributors severs claim from emit                     |
 | fetch default behind a transport interface      | Matches the documented no-throw-on-non-2xx semantic; no forced dep                                                        |
 
 ## Standing rule: every claim needs a drift test
@@ -953,11 +994,180 @@ One item worth a conscious decision rather than a default:
 
 | Reviewer                       | Verdict | Confirmed findings |
 |--------------------------------|---------|--------------------|
-| 1. Implementation & code style |         |                    |
-| 2. Domain expert               |         |                    |
-| 3. Security                    |         |                    |
+| 1. Implementation & code style | 12 raised | 11 confirmed, 1 not verified independently |
+| 2. Domain expert               | 8 raised | 8 confirmed |
+| 3. Security                    | 3 raised | 3 confirmed (1 line-number error, substance right) |
 
-Fixes applied: ...
+Run 2026-07-30 over `git diff 8e86aed5..HEAD -- ultra/codegen ultra/slumber funktor/rest settings.gradle`
+(88 files, +5629/-3154). All findings adversarially verified against the code before acting.
+
+### One finding did NOT survive verification
+
+**The `.bufferedReader()` platform-charset claim is WRONG** — it originated in
+`20260730-frontend-sdk-vue-contributors.md`, was repeated into this doc, and was handed to the
+reviewers as established fact. `InputStream.bufferedReader(charset: Charset = Charsets.UTF_8)`
+(kotlin-stdlib 2.4.10, `jvmMain/kotlin/io/IOStreams.kt:87`) — the default IS UTF-8. Only
+`InputStreamReader(stream)` without a charset takes the platform default, and that is not what the
+code does. Corrected in both docs. The classloader half of that pair is real and was fixed.
+
+Worth keeping as a caution: this claim was believed by three reviewers and the coordinator because it
+was written down, not because anyone checked it. A cited line number is not a verification.
+
+### Fixed in this round
+
+| Finding | Where | Note |
+|---|---|---|
+| No escaping layer anywhere in the emitter | new `ts/TsLiterals.kt`; 5 sites in `ts/TsModelEmitter.kt` | `identifier = "O'Brien"` emitted a file that does not parse. Security framing (injection via `@SerialName`) is real but secondary |
+| Discriminator field in identifier position | `ts/TsModelEmitter.kt` | a field named `@type` emitted invalid TS |
+| `TypeId` dropped type-argument nullability | `model/TypeId.kt` | `Box<String>` and `Box<String?>` collapsed onto one declaration — silent wrong output |
+| Claimed polymorphic child never recorded in `usedClaims` | `model/TypeWalker.kt` | a documented claims-API use hard-failed with "internal walker invariant violation, please report it" |
+| `declareUnion` read discriminator/children from the declared class, not the root parent | `model/TypeWalker.kt` | the two halves of one union disagreed; the child path already did the hop |
+| `appendAlias` ignored `isRecursive` | `ts/TsModelEmitter.kt` | a value class on a cycle emitted an eager forward reference — TDZ error at module eval |
+| `resource()` used ultra:codegen's classloader | `sdk/TsSdkOutput.kt`, `sdk/TsSdkBuilder.kt` | scope now carries the contributor's loader |
+| Unresolved KDoc ref, 12 FQN sites | `model/TypeModel.kt` + 4 test files | repo style rules |
+
+**These fixes have NO regression tests yet** — the suite (120 green) proves nothing broke, not that any
+fix works. Writing a failing-before/passing-after test per fix, then mutation-testing each, is the
+first task of the next session. Until then treat every row above as unverified.
+
+### Confirmed, NOT yet fixed — tracked
+
+| Finding | Where | Why deferred |
+|---|---|---|
+| `slumberConfig` defaults to `null`, silently disabling the codec-parity check | `sdk/TsSdkBuilder.kt:46`, `sdk/TsModelValidator.kt:166` | raised independently by TWO reviewers; the module's headline check is off by default. Needs an API decision (required param vs named test factory) |
+| Walker degrades to `unknown` in 5 positions with no advisory | `model/TypeWalker.kt` (record value, array item, alias target, non-KClass classifier) | this is the Dart `dynamic` defect returning. `List<*>` emits `unknown[]` silently. Needs a third `TypeModel` channel |
+| Generic sealed hierarchy loses its payload type | `model/TypeWalker.kt` (`createBareType()` for variants) | `Storable<Organisation>` and `Storable<Talk>` become the same TS type carrying `unknown`. Needs type-argument substitution design |
+| Name-collision check ignores claimed `tsName`s | `sdk/TsModelValidator.kt` | app type named `MpInstant` + the datetime claim → TS2440 inside generated code. Also: `nameCollisionProblems`/`danglingReferenceProblems` have ZERO test coverage |
+| `KotlinxJsonTsContributor`'s 5 claims have no drift test | `contributors/KotlinxJsonTsContributor.kt` | violates this doc's own standing rule. `JsonObject`'s shape is whatever `JsonUtil.unwrap` does, and nothing pins it |
+| Tautological test assertion | `ts/TsModelEmitterSpec.kt:62` | `x shouldBe x`; the two neighbours pass when the variant is ABSENT (`indexOf` → -1) |
+| Mp claim-coverage test compares the contributor against a copy of itself | `contributors/MpDateTimeFieldParitySpec.kt:108` | cannot detect the thing it says it detects |
+| `@Slumber.Field` non-ctor props emitted required | `model/TypeWalker.kt` | `DataClassAwaker` never reads them. Ties into request-vs-response shapes, a Phase 2 design question |
+| `@Slumber.Field` selection re-derived from `DataClassSlumberer` | `model/TypeWalker.kt:250-257` | verbatim copy; violates "defer to the slumber-side utility". Needs a slumber-side API |
+| `JsonElement` → `z.unknown()` never reaches the advisory list | `contributors/KotlinxJsonTsContributor.kt:27` | `map()` hardcodes `opaque = false` |
+| No scalar refinement (`Char` → bare `z.string()`) | `model/TypeWalker.kt:114` | `CharAwaker` maps `""` to null, so the client passes input the server rejects |
+| `readArrayElements` duplicated verbatim | `ultra/slumber` collections | production code; cosmetic |
+| `ThirdPartyContributorSpec` clue asserts what it cannot observe | `sdk/ThirdPartyContributorSpec.kt:128` | passes BECAUSE of the classloader bug; needs a child-loader fixture now that the bug is fixed |
+
+### Probed and CLEAN — do not re-tread
+
+- **Slumber array support has no security finding.** Component type comes only from the declared
+  `KType`, never from input; `newInstance` size comes from an already-materialized list, so there is no
+  amplification; no `ArrayStoreException` path (every element awaker returns its declared type or null,
+  and `NonNullAwaker` catches null first). Multi-dimensional arrays verified correct by probe —
+  `Array<Array<String>>` yields `String[][]`, not `Object[][]`.
+- **No behaviour change for existing non-array types**: both new `BuiltInModule` branches are guarded
+  by `cls.java.isArray` and sit below every branch that could otherwise match.
+- **Dart deletion is complete** — zero dangling references; `CodeGenHints` survives with 87 call sites.
+- **ts-verify supply chain is correct** — exact-pinned versions, `--frozen-lockfile`, pnpm and Node
+  pinned, no corepack, sha512 integrity throughout.
+- **`ultra:codegen` reaches no production classpath** — no module depends on it.
+- **Emission determinism holds** — `TsDeclOrder` seeds from sorted keys, so bytes do not depend on
+  contributor order.
+- **Kotlin-version sensitivity, already guarded**: on 2.1.10 `typeOf<Array<Int>>().classifier` was
+  `IntArray::class`, which would break `forArray`; on the pinned 2.4.10 it is `Array::class`, and
+  `ArrayCodecSpec`'s boxed-array case fails loudly if that regresses.
+
+## Incoming requirements from the frontend-SDK design (2026-07-30)
+
+The maintainer settled the frontend direction: **Vue + Tailwind, nothing published to npm, the framework
+generates the whole frontend SDK on the fly — API clients AND prebuilt components and pages.** Design
+and rationale in `.claude/tasks/20260730-frontend-sdk-vue-contributors.md`; only the parts that land in
+`ultra/codegen` are summarised here.
+
+Nothing below contradicts the phased contract — all four additions are keyed inserts, so contributor
+order stays structurally irrelevant.
+
+**Emitting custom code already works.** `out.file` / `out.resource` do not care that content is an API
+client, so a contributor copying `.vue` files out of its own jar resources needs no new capability. What
+is missing is *coordination* between contributors, which is what these four are:
+
+1. **Profiles / tagging.** `TsSdkBuilder(contributors)` takes the whole list with no filter, and
+   `CodeGenHints.tags` has **zero call sites** (`tag(` appears twice in the repo, both in its own
+   declaration, `docs/CodeGenHints.kt:29`) — vestigial from the Dart gen. Needed: a `TsSdkProfile`,
+   because the ops app needs a different SDK assembled than b2b does. Profiles are **not** access
+   control; see the design doc.
+
+   **A profile selects ROOTS, never contributors, and there is no tree-shaking stage** (decided
+   2026-07-30 — full reasoning in the design doc). Tree-shaking is `TypeWalker` run twice: it already
+   computes a closure from entry points, and the model is a pure function of its roots, so building the
+   full model first buys nothing. Filtering *contributors* is worse than useless — it silently severs
+   claim from emit, because `models.ts` imports from `claim.importFrom` (`ts/TsModelEmitter.kt:43-45`)
+   while the file at that path is shipped by the claiming contributor's `emit`. Narrowing the root set
+   instead makes every consequence fall out for free: an unreached claim leaves `usedClaims`, so
+   nothing imports it and the conditional emit ships nothing. `MpDateTimeTsContributor` is already
+   written that way (`contributors/MpDateTimeTsContributor.kt:52-58`) — it is the pattern, not a
+   special case. Contributor SELECTION thereby becomes as structurally irrelevant as contributor ORDER.
+2. **Shared / idempotent emission.** `TsSdkOutput.add` errors on any duplicate path, even byte-identical
+   (`sdk/TsSdkOutput.kt:37`). `TsRuntime`'s KDoc encodes the workaround as a rule — *"a generator that
+   needs a shared module must be the single one asking for it"* (`ts/TsRuntime.kt:43`) — which will not
+   survive N Vue contributors that all want `components/JsonTree.vue`. Needed:
+   `out.shared(path, content)`, where identical content dedupes and **differing** content is a hard
+   error naming both.
+3. **Aggregation registries.** `models.ts` works only because the *builder* owns it
+   (`sdk/TsSdkBuilder.kt:103`); two contributors cannot currently write **into one file**. Needed for the
+   router table, the nav, the insights tab table, `tsconfig.json`/vite alias entries and the npm
+   requirements manifest. A phase-3.5 registry — the emit-phase analogue of `TsTypeClaims`.
+   **Config is a registry target, not a plain file emit**, precisely because it is
+   N-contributors-into-one-file.
+4. **`out.vue(resourceDir, files, to)`.** An **explicit file list, never classpath directory scanning** —
+   scanning is how a stale file ships. A test asserts the list matches the directory.
+
+**Import resolution is settled — do NOT build an emit-time rewriter.** Hand-written resources import via
+a `@sdk/*` **path alias**, so the import text in the resource file is byte-identical to the import text
+in the emitted file. This is viable because config emission is in scope: the generator writes
+`<out>/tsconfig.json` with the `paths` mapping plus a vite alias fragment, both **inside the SDK dir it
+owns**, so it never edits a file it does not own. The same alias name resolves to the generated output in
+a consuming app and to overlaid live resource dirs in the dev harness — which is what gets IDE support,
+hot reload and correct generation simultaneously. Make the alias name configurable, defaulting to
+something unlikely to collide.
+
+**Config emission is bounded by an ownership rule, and the generator will NOT merge into existing
+files** (refined 2026-07-30 — reasoning in the design doc). The maintainer's concern is that
+regenerating must not destroy hand-made changes in the target project; merging is the wrong answer to
+it, because `vite.config.ts` is TypeScript with arbitrary expressions (no sound structural edit) and
+`tsconfig.json` is JSONC (any round-trip drops comments) — and a merge is wrong-and-quiet by
+construction, the failure mode this plan exists to remove. The rule is a boundary instead: **everything
+under `<out>/` is owned outright — created, overwritten and deleted; nothing outside `<out>/` is ever
+written.** App-side needs are met by `out.scaffold(path)` (writes only when absent, never overwrites)
+and a `requires(...)` check that fails with the exact lines to paste.
+
+That exposes the actual gap, which is **stale output, not merging**: wholesale replacement without
+deletion leaves ghosts that still compile, and blind deletion of `<out>/` would eat a user file. Needs
+`<out>/.sdk-manifest.json` so a run deletes exactly its predecessor's paths and no others — and
+`TsSdkOutput.diffAgainst` (`sdk/TsSdkOutput.kt:61`) extended to see them, since it walks only planned
+entries today and is therefore blind to a ghost.
+
+**Two latent bugs in `TsSdkOutput.Scope.resource()` (`sdk/TsSdkOutput.kt:86`)** — harmless today, bad
+once resources ship a whole frontend:
+
+- `this::class.java.classLoader` is **`ultra:codegen`'s** loader, not the contributor's. Fine on a flat
+  Gradle classpath, breaks under any isolating loader. Capture `contributor::class.java.classLoader`.
+- ~~`.bufferedReader()` uses the platform default charset.~~ **NOT TRUE — see the review record.**
+  `InputStream.bufferedReader()` already defaults to `Charsets.UTF_8`.
+
+The classloader half is real and was **FIXED 2026-07-30**: `resource()` is an inner-class member, so
+`this::class` really is `TsSdkOutput.Scope` and really did resolve `ultra:codegen`'s loader; `scopeFor`
+now carries the contributor's loader instead.
+
+**One check to add alongside them:** a claim declares `importFrom`, but nothing verifies anyone emits a
+file there. Claiming `importFrom = "./runtime/foo"` without emitting `runtime/foo.ts` surfaces as a
+module-resolution error inside generated output instead of naming the contributor. Validate that every
+used claim's **relative** `importFrom` matches a planned output path — bare specifiers like `zod` are
+external packages and are exempt. This is what survives of a rejected proposal to move runtime-module
+ownership onto the claim; the profile decision above made the restructuring unnecessary, but the gap it
+found is real and general.
+
+**Proposal only, do not build:** `claims.expects<T>(tsName)` — the inverse of a claim, verifying that a
+hand-written component's assumed TS name matches what the model emits (monomorphization makes
+`PageOf<Lock>` emit as `PageOfLock`, which an author must otherwise guess). Deferred by the maintainer
+until misnaming actually recurs; the `vue-tsc` gate is the backstop until then. Rationale recorded in the
+design doc so it is not re-derived.
+
+**Also:** a `JavaTimeTsContributor` will be needed (`java.time.LocalDateTime`/`Instant` go through custom
+Slumber codecs in `builtin/datetime/javatime/`, so they need claims plus a parity test — the standing
+rule above). And `MpDateTimeTsContributor.kt:32` uses a fully-qualified `kotlin.reflect.KClass<*>` in its
+companion, which breaks the repo's no-FQN rule; the maintainer expects this to be picked up in the
+review rounds, which have not run yet.
 
 ## Follow-ups
 

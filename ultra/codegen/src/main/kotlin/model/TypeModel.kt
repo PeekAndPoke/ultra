@@ -33,7 +33,7 @@ data class TypeModel(
     /** The declaration for [id], or `null`. */
     operator fun get(id: TypeId): TsTypeDecl? = decls[id]
 
-    /** True when any of [classes] is reachable in this model. */
+    /** True when any of [qualifiedNames] is reachable in this model. */
     fun usesAny(vararg qualifiedNames: String): Boolean =
         qualifiedNames.any { name ->
             usedClaims.containsKey(name) || decls.keys.any { it.cls.qualifiedName == name }

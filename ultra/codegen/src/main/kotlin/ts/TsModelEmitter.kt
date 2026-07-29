@@ -51,7 +51,7 @@ class TsModelEmitter(
                 .distinct()
                 .sorted()
 
-            appendLine("import { ${names.joinToString(", ")} } from '$module'")
+            appendLine("import { ${names.joinToString(", ")} } from ${tsStringLiteral(module)}")
         }
 
         nl()
@@ -68,13 +68,25 @@ class TsModelEmitter(
 
     /** Enums cannot be recursive, so they always use the simple inferred form. */
     private fun CodePrinter.appendEnum(decl: TsTypeDecl.EnumDecl) {
-        val values = decl.values.joinToString(", ") { "'$it'" }
+        val values = decl.values.joinToString(", ") { tsStringLiteral(it) }
 
         appendLine("export const ${decl.name} = z.enum([$values])")
         append("export type ${decl.name} = z.infer<typeof ${decl.name}>")
     }
 
     private fun CodePrinter.appendAlias(decl: TsTypeDecl.Alias) {
+        // An alias can sit on a cycle — `value class FxIds(val items: List<FxHolder>)` where
+        // `FxHolder.ids: FxIds` — and a zod schema is a const, so an eager forward reference is a
+        // temporal-dead-zone error at module evaluation, not merely a compile warning.
+        if (order.isRecursive(decl.id)) {
+            appendLine("export type ${decl.name} = ${renderer.type(decl.target)}")
+            append(
+                "export const ${decl.name}: z.ZodType<${decl.name}> = " +
+                        "z.lazy(() => ${renderer.schema(decl.target)})"
+            )
+            return
+        }
+
         appendLine("export const ${decl.name} = ${renderer.schema(decl.target)}")
         append("export type ${decl.name} = z.infer<typeof ${decl.name}>")
     }
@@ -109,23 +121,23 @@ class TsModelEmitter(
 
     private fun CodePrinter.appendObjTypeBody(decl: TsTypeDecl.Obj) {
         decl.discriminator?.let {
-            appendLine("${it.field}: '${it.literal}'")
+            appendLine("${tsPropertyName(it.field)}: ${tsStringLiteral(it.literal)}")
         }
 
         decl.props.forEach { prop ->
             val optional = if (prop.optional) "?" else ""
-            appendLine("${quoteIfNeeded(prop.name)}$optional: ${renderer.type(prop.type)}")
+            appendLine("${tsPropertyName(prop.name)}$optional: ${renderer.type(prop.type)}")
         }
     }
 
     private fun CodePrinter.appendObjSchemaBody(decl: TsTypeDecl.Obj) {
         decl.discriminator?.let {
-            appendLine("${it.field}: z.literal('${it.literal}'),")
+            appendLine("${tsPropertyName(it.field)}: z.literal(${tsStringLiteral(it.literal)}),")
         }
 
         decl.props.forEach { prop ->
             val optional = if (prop.optional) ".optional()" else ""
-            appendLine("${quoteIfNeeded(prop.name)}: ${renderer.schema(prop.type)}$optional,")
+            appendLine("${tsPropertyName(prop.name)}: ${renderer.schema(prop.type)}$optional,")
         }
     }
 
@@ -139,7 +151,9 @@ class TsModelEmitter(
 
         val schema = when {
             anyLazy -> "z.union([${variants.joinToString(", ")}])"
-            else -> "z.discriminatedUnion('${decl.discriminatorField}', [${variants.joinToString(", ")}])"
+            else ->
+                "z.discriminatedUnion(${tsStringLiteral(decl.discriminatorField)}, " +
+                        "[${variants.joinToString(", ")}])"
         }
 
         if (order.isRecursive(decl.id)) {
@@ -150,12 +164,6 @@ class TsModelEmitter(
 
         appendLine("export const ${decl.name} = $schema")
         append("export type ${decl.name} = z.infer<typeof ${decl.name}>")
-    }
-
-    /** Quotes a property name that is not a valid bare TypeScript identifier. */
-    private fun quoteIfNeeded(name: String): String = when {
-        name.matches(Regex("[A-Za-z_$][A-Za-z0-9_$]*")) -> name
-        else -> "'$name'"
     }
 
     /** Ids that were emitted, for callers that want to cross-check coverage. */

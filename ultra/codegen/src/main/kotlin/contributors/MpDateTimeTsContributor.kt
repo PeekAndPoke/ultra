@@ -10,6 +10,7 @@ import io.peekandpoke.ultra.datetime.MpLocalDateTime
 import io.peekandpoke.ultra.datetime.MpLocalTime
 import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.datetime.MpZonedDateTime
+import kotlin.reflect.KClass
 
 /**
  * Claims the ultra/datetime types and ships their hand-written TypeScript.
@@ -29,7 +30,7 @@ class MpDateTimeTsContributor : TsSdkContributor {
         val MODULE: String = TsRuntime.Module.DateTime.moduleSpecifier
 
         /** The claimed types, paired with the TypeScript name each maps to. */
-        val CLAIMED: Map<kotlin.reflect.KClass<*>, String> = mapOf(
+        val CLAIMED: Map<KClass<*>, String> = mapOf(
             MpInstant::class to "MpInstant",
             MpLocalDate::class to "MpLocalDate",
             MpLocalDateTime::class to "MpLocalDateTime",

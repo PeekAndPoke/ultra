@@ -38,7 +38,14 @@ class TypeId private constructor(
 
             return when {
                 args.isEmpty() -> base
-                else -> args.joinToString(prefix = "$base<", postfix = ">") { canonicalKey(it) }
+
+                // A type ARGUMENT's nullability is part of the declaration's content, unlike the
+                // top-level nullability stripped above: `Box<String>` and `Box<String?>` reify to
+                // different props, so collapsing them onto one key would silently give the second one
+                // the first one's schema.
+                else -> args.joinToString(prefix = "$base<", postfix = ">") { arg ->
+                    canonicalKey(arg) + if (arg.isMarkedNullable) "?" else ""
+                }
             }
         }
     }

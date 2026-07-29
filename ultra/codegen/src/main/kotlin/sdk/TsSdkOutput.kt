@@ -28,8 +28,17 @@ class TsSdkOutput {
     /** All planned files, in creation order. */
     fun entries(): List<Entry> = entries.values.toList()
 
-    /** Returns a view that stamps [contributor] onto every file it writes. */
-    fun scopeFor(contributor: String): Scope = Scope(contributor)
+    /**
+     * Returns a view that stamps [contributor] onto every file it writes.
+     *
+     * [loader] is where [Scope.resource] looks: it must be the CONTRIBUTOR's classloader, not this
+     * module's, so a contributor shipping resources from its own jar still finds them under an
+     * isolating loader. Defaults to this module's only for callers that own no resources.
+     */
+    fun scopeFor(
+        contributor: String,
+        loader: ClassLoader = TsSdkOutput::class.java.classLoader,
+    ): Scope = Scope(contributor, loader)
 
     private fun add(entry: Entry) {
         val existing = entries[entry.path]
@@ -69,7 +78,10 @@ class TsSdkOutput {
     }
 
     /** The API handed to a contributor during the emit phase. */
-    inner class Scope internal constructor(private val contributor: String) {
+    inner class Scope internal constructor(
+        private val contributor: String,
+        private val loader: ClassLoader,
+    ) {
 
         /** Plans a file at [path] with [content]. */
         fun file(path: String, content: String) {
@@ -83,7 +95,9 @@ class TsSdkOutput {
          * than being generated — it is maintained by humans next to the codec it mirrors.
          */
         fun resource(resourcePath: String, to: String) {
-            val content = this::class.java.classLoader.getResourceAsStream(resourcePath)
+            // `bufferedReader()` on an InputStream defaults to UTF-8 (not the platform charset), so
+            // the encoding needs no explicit argument here.
+            val content = loader.getResourceAsStream(resourcePath)
                 ?.bufferedReader()
                 ?.readText()
                 ?: error(

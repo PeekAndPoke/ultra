@@ -3,6 +3,7 @@ package io.peekandpoke.ultra.codegen.model
 import io.peekandpoke.ultra.slumber.Polymorphic
 import io.peekandpoke.ultra.slumber.Slumber
 import kotlinx.serialization.SerialName
+import kotlin.reflect.KClass
 
 //  Simple shapes  //////////////////////////////////////////////////////////////////////////////////
 
@@ -63,7 +64,7 @@ sealed class FxShape {
 sealed class FxEvent {
     companion object : Polymorphic.Parent {
         override val discriminator: String = "kind"
-        override val childTypes: Set<kotlin.reflect.KClass<*>> = setOf(Created::class, Deleted::class)
+        override val childTypes: Set<KClass<*>> = setOf(Created::class, Deleted::class)
     }
 
     data class Created(val at: String) : FxEvent() {

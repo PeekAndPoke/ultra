@@ -157,7 +157,13 @@ class TypeWalker(
         val path = pending.path
 
         // A claimed type is referenced, never declared — its shape comes from the claim.
-        if (claims.find(cls) != null) {
+        //
+        // Recording it in `usedClaims` is what `resolveNonNullRef` does for every ordinary reference.
+        // It matters here because union variants are enqueued directly, so a CLAIMED polymorphic child
+        // reaches this path without ever passing through `resolveNonNullRef` — and without the entry
+        // its import is never emitted and the reference renders as the literal `unknown`.
+        claims.find(cls)?.let { claim ->
+            usedClaims[claim.qualifiedName] = claim
             return
         }
 
@@ -222,7 +228,14 @@ class TypeWalker(
 
     /** A polymorphic parent becomes a discriminated union over its concrete children. */
     private fun declareUnion(id: TypeId, cls: KClass<*>, path: List<String>): TsTypeDecl.Union {
-        val children = PolymorphicParentUtil.getChildren(cls)
+        // Resolve the ROOT parent first, exactly as `createParentSlumberer` does — the children and
+        // the discriminator both hang off the class carrying the `Polymorphic.Parent` companion, which
+        // for an intermediate sealed class is not the declared class. The child path below already
+        // does this hop, so skipping it here made the two halves of one union disagree: the variants
+        // would carry `kind` while the union discriminated on `_type`.
+        val parent = PolymorphicParentUtil.getParent(cls) ?: cls
+
+        val children = PolymorphicParentUtil.getChildren(parent)
 
         val variants = children.map { child ->
             val childId = TypeId.of(child.createBareType())
@@ -233,7 +246,7 @@ class TypeWalker(
         return TsTypeDecl.Union(
             id = id,
             name = TsNames.of(id),
-            discriminatorField = PolymorphicParentUtil.getDiscriminator(cls),
+            discriminatorField = PolymorphicParentUtil.getDiscriminator(parent),
             variants = variants,
         )
     }

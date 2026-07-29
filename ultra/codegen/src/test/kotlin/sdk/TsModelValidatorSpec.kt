@@ -7,6 +7,7 @@ import io.kotest.matchers.string.shouldContain
 import io.peekandpoke.ultra.codegen.model.FxHoldsInterface
 import io.peekandpoke.ultra.codegen.model.FxSpeaker
 import io.peekandpoke.ultra.codegen.model.FxTalk
+import io.peekandpoke.ultra.codegen.model.FxTalkId
 import io.peekandpoke.ultra.codegen.model.TsTypeClaims
 import io.peekandpoke.ultra.codegen.model.TypeModel
 import io.peekandpoke.ultra.codegen.model.TypeWalker
@@ -125,7 +126,7 @@ class TsModelValidatorSpec : FreeSpec() {
 
             "a reachable Long is reported but does not fail the build" {
                 val claims = TsTypeClaims().apply {
-                    scopeFor("t").map<io.peekandpoke.ultra.codegen.model.FxTalkId>(tsName = "X", schema = "x")
+                    scopeFor("t").map<FxTalkId>(tsName = "X", schema = "x")
                 }
 
                 val model = walk(typeOf<FxTalk>(), claims)

@@ -6,10 +6,13 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.peekandpoke.ultra.codegen.contributors.MpDateTimeTsContributor
+import io.peekandpoke.ultra.codegen.model.FxNode
 import io.peekandpoke.ultra.codegen.model.FxSpeaker
+import io.peekandpoke.ultra.codegen.model.FxTalk
 import io.peekandpoke.ultra.codegen.model.TsTypeClaims
-import io.peekandpoke.ultra.slumber.SlumberConfig
 import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.slumber.SlumberConfig
+import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 /** A type reaching a custom-coded value, so the datetime contributor is actually needed. */
@@ -18,7 +21,7 @@ private data class HoldsInstant(val at: MpInstant)
 /** Contributes a root and nothing else. */
 private class RootContributor(
     override val name: String,
-    private val type: kotlin.reflect.KType,
+    private val type: KType,
 ) : TsSdkContributor {
     override fun contribute(roots: TsSdkRoots) = roots.root(type, "root")
 }
@@ -72,7 +75,7 @@ class TsSdkBuilderSpec : FreeSpec() {
                         .build().output.entries().first { it.path == "models.ts" }.content
 
                 val alpha = RootContributor("alpha", typeOf<FxSpeaker>())
-                val beta = RootContributor("beta", typeOf<io.peekandpoke.ultra.codegen.model.FxNode>())
+                val beta = RootContributor("beta", typeOf<FxNode>())
 
                 withClue("emission order must be stable, or --check reports drift that is not real") {
                     run(alpha, beta) shouldBe run(beta, alpha)
@@ -205,7 +208,7 @@ class TsSdkBuilderSpec : FreeSpec() {
 
         "advisories are returned rather than thrown" {
             val result = TsSdkBuilder(
-                contributors = listOf(RootContributor("roots", typeOf<io.peekandpoke.ultra.codegen.model.FxTalk>())),
+                contributors = listOf(RootContributor("roots", typeOf<FxTalk>())),
                 slumberConfig = SlumberConfig.default,
             ).build()
 

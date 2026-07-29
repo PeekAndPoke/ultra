@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import io.peekandpoke.ultra.codegen.model.FxCustomCodecType
 import io.peekandpoke.ultra.codegen.model.FxEvent
 import io.peekandpoke.ultra.codegen.model.FxHoldsClaimed
 import io.peekandpoke.ultra.codegen.model.FxMutualA
@@ -13,8 +14,10 @@ import io.peekandpoke.ultra.codegen.model.FxResult
 import io.peekandpoke.ultra.codegen.model.FxShape
 import io.peekandpoke.ultra.codegen.model.FxSpeaker
 import io.peekandpoke.ultra.codegen.model.FxStatus
+import io.peekandpoke.ultra.codegen.model.FxTalk
 import io.peekandpoke.ultra.codegen.model.FxTalkId
 import io.peekandpoke.ultra.codegen.model.TsTypeClaims
+import io.peekandpoke.ultra.codegen.model.TsTypeRef
 import io.peekandpoke.ultra.codegen.model.TypeModel
 import io.peekandpoke.ultra.codegen.model.TypeWalker
 import io.peekandpoke.ultra.codegen.shouldHaveNoDiffs
@@ -155,7 +158,7 @@ class TsModelEmitterSpec : FreeSpec() {
 
             "a claimed type is imported, not declared" {
                 val claims = TsTypeClaims().apply {
-                    scopeFor("t").map<io.peekandpoke.ultra.codegen.model.FxCustomCodecType>(
+                    scopeFor("t").map<FxCustomCodecType>(
                         tsName = "Stamp",
                         importFrom = "./runtime/stamp",
                         schema = "StampSchema",
@@ -171,7 +174,7 @@ class TsModelEmitterSpec : FreeSpec() {
 
             "an opaque claim renders as unknown with no import" {
                 val claims = TsTypeClaims().apply {
-                    scopeFor("t").opaque<io.peekandpoke.ultra.codegen.model.FxCustomCodecType>(reason = "internal")
+                    scopeFor("t").opaque<FxCustomCodecType>(reason = "internal")
                 }
 
                 val out = emit(typeOf<FxHoldsClaimed>(), claims)
@@ -182,7 +185,7 @@ class TsModelEmitterSpec : FreeSpec() {
         }
 
         "an optional property is marked optional in both the schema and the type" {
-            val out = emit(typeOf<io.peekandpoke.ultra.codegen.model.FxTalk>())
+            val out = emit(typeOf<FxTalk>())
 
             out shouldContain "featured: z.boolean().optional(),"
         }
@@ -195,9 +198,9 @@ class TsModelEmitterSpec : FreeSpec() {
 
             withClue("`A | null[]` would parse as A union (null[]) — wrong type entirely") {
                 renderer.type(
-                    io.peekandpoke.ultra.codegen.model.TsTypeRef.ArrayOf(
-                        io.peekandpoke.ultra.codegen.model.TsTypeRef.Nullable(
-                            io.peekandpoke.ultra.codegen.model.TsTypeRef.TsString
+                    TsTypeRef.ArrayOf(
+                        TsTypeRef.Nullable(
+                            TsTypeRef.TsString
                         )
                     )
                 ) shouldBe "(string | null)[]"

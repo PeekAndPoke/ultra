@@ -104,7 +104,12 @@ class TsSdkBuilder(
 
         contributors.forEach { contributor ->
             contributor.emit(
-                TsSdkEmitContext(model = model, out = output.scopeFor(contributor.name))
+                TsSdkEmitContext(
+                    model = model,
+                    // The contributor's own loader, so `out.resource` finds resources shipped in the
+                    // contributor's jar rather than only those on ultra:codegen's classpath.
+                    out = output.scopeFor(contributor.name, contributor::class.java.classLoader),
+                )
             )
         }
 
