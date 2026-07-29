@@ -300,7 +300,8 @@ Explicitly deferred:
 2. **CI/CD pipeline** — GitHub Actions for build/test/publish, green badges
 3. **Account activation flow** — `AuthSystem.activate()` full email verification
    → absorbed into `20260717-auth-orgs-foundation.md` Phase F (2026-07-17)
-4. **Dart codegen rewrite** — needs proper rewrite; move to `funktor:dart-codegen` package first
+4. **Dart codegen rewrite** — superseded: Dart gen to be deleted, replaced by a TypeScript SDK generator →
+   `20260729-ts-sdk-codegen.md` (2026-07-29)
 5. **Email template editor** — rich template system for messaging
    → absorbed into `20260717-saas-foundation.md` Tracks C/D (2026-07-17)
 6. **API binary compatibility** — `kotlinx-binary-compatibility-validator`

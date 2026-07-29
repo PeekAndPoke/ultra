@@ -1,0 +1,556 @@
+# TypeScript SDK code generation (`ultra/codegen` + `funktor/codegen`)
+
+**Status:** TODO **Plan:** `.claude/tasks/v1-roadmap.md` → Post-v1 Backlog item 4 ("Dart codegen rewrite") —
+**superseded by this task**
+**Security-critical:** no (dev-time generator; no runtime auth path. See "Security notes" for why, and the one thing
+that is worth a conscious decision.)
+
+## Why
+
+Kraft frontends are type-safe and ergonomic, but the dev loop is slow compared to a Vite/HMR frontend. A generated
+TypeScript SDK lets a TS/Vue/React frontend consume the funktor API with full type safety while keeping HMR — the only
+slow step becomes regenerating the SDK, which happens only when the API changes.
+
+Everything needed is already available at runtime:
+
+- `ApiFeature.getRouteGroups()` → `ApiRoutes.all` → `List<ApiRoute<*>>` is the complete endpoint inventory (15
+  `ApiFeature` implementations, 89 `.mount(` sites in this repo today).
+- Every route carries `TypeRef` (a `KType` wrapper) for PARAMS / BODY / RESPONSE
+  (`funktor/rest/src/jvmMain/kotlin/ApiRoute.kt:46`, `:364`, `:439`), plus `method`, `pattern`, and
+  `TypedRoute.parsedUriParams` which already separates path params from query params
+  (`funktor/core/src/jvmMain/kotlin/broker/TypedRoute.kt:30`).
+- `ReifiedKType.ctorFields2Types` (`ultra/reflection/src/main/kotlin/ReifiedKType.kt:95`) resolves generic type
+  arguments — the same machinery Slumber serializes with, so an emitter driven from it matches the wire format by
+  construction.
+- Polymorphism maps 1:1 onto TS discriminated unions via `PolymorphicParentUtil.getChildren()` /
+  `getDiscriminator()` / `PolymorphicChildUtil.getIdentifier()`
+  (`ultra/slumber/src/jvmMain/kotlin/builtin/polymorphism/Polymorphic.kt:113-211`).
+- `CodeGenHints` (`funktor/rest/src/jvmMain/kotlin/docs/CodeGenHints.kt`) already exists and is used at
+  ~30 call sites in the demo.
+
+## Scope
+
+**In:**
+
+- Delete the Dart codegen entirely (Phase 0).
+- New `ultra/codegen` module: printer, TS AST, language-neutral type model + walker, contributor interface, builder,
+  validation, datetime contributor, hand-written TS runtime resources.
+- New `funktor/codegen` module: `RestApiTsContributor`, CLI command, kontainer module.
+- Wire into `funktor-demo` and generate a working SDK for at least one feature end to end.
+
+**Out:**
+
+- Porting the Dart emitter (deleted, not migrated — see Phase 0 rationale).
+- Retrofitting `ReflectivePathFinder` onto the new walker (follow-up, see "Follow-ups").
+- Publishing the SDK as an npm package (`--package` flag deferred; bare `.ts` output only).
+
+---
+
+## Phase 0 — Delete the Dart codegen
+
+Decision (2026-07-29, maintainer): **throw it away, do not port.** No downstream consumer needs it, and a new version
+can be built on the new structure at any time. Keeping it would mean maintaining 3 kLOC through the `ultra/codegen`
+refactor for zero current benefit.
+
+This also removes dead weight from a **runtime** dependency: `funktor/rest` is on the classpath of every production
+funktor server, and the Dart emitter is compiled into all of them.
+
+**Delete:**
+
+- [ ] `funktor/rest/src/jvmMain/kotlin/codegen/` — entire directory, 2808 LOC (`dart/`, `dart/addons/`, `dart/printer/`,
+  plus `index.kt`, `tags.kt`, `utils.kt`)
+- [ ] `funktor/rest/src/jvmTest/kotlin/codegen/` — entire directory, 295 LOC
+- [ ] `funktor/rest/build.gradle.kts:81` — `implementation(Deps.JavaLibs.diffutils)` in `jvmTest`
+  (only consumer was `jvmTest/kotlin/codegen/index_codegen.kt`)
+
+**Keep — do NOT delete:**
+
+- [ ] `funktor/rest/src/jvmMain/kotlin/docs/CodeGenHints.kt` — the per-route `codeGen { }` hints. Used at
+  ~30 sites (`FunktorConfApi.kt` ×19, `B2bMembersApi.kt` ×4, `OperatorApi.kt`, …). The TS generator consumes `funcName`
+  and `tags`.
+- [ ] `ApiFeature.codeGenName` (`funktor/rest/src/jvmMain/kotlin/ApiFeature.kt:11`) — client naming.
+- [ ] `Deps.JavaLibs.diffutils` in `buildSrc/src/main/kotlin/Deps.kt:384` — still used by `ultra/meta`
+  (`ultra/meta/build.gradle.kts:33`).
+
+**Carry over (rewrite, not move):**
+
+- [ ] `shouldHaveNoDiffs` golden-file diff helper (`funktor/rest/src/jvmTest/kotlin/codegen/index_codegen.kt:7`) →
+  `ultra/codegen` test source set. Its `normalizeForDiff` strips the Dart `splash` banner, so it needs adapting.
+  *Alternative considered:* move it into `ultra/meta/testing` (already has diffutils and is the testing-helpers module).
+  Rejected for now — `ultra/meta` drags in kapt + compile-testing, too heavy for a golden-file assert. Add
+  `Deps.JavaLibs.diffutils` to `ultra/codegen` test deps instead.
+
+**Verification gates for Phase 0:**
+
+- [ ] Nothing outside `codegen/dart/` referenced `Tags` / `tagged()` / `joinSimpleNames()` / `splash` /
+  `CodeGenDsl` — confirmed by grep on 2026-07-29, only hit was the Dart test helper itself.
+- [ ] `funktor/rest/src/*/kotlin/docs/` has zero coupling to `codegen` — confirmed 2026-07-29.
+- [ ] Compile sweep (see "Test evidence") — `funktor/rest` is multiplatform, and the root project has its own
+  `src/jvmMain` not covered by module test tasks.
+
+**Roadmap updates required when this lands:**
+
+- [ ] `.claude/tasks/v1-roadmap.md:303` — Post-v1 item 4 "Dart codegen rewrite … move to
+  `funktor:dart-codegen` package first" → mark superseded by this task.
+- [ ] `.claude/tasks/v1-roadmap.md:125` — "Dart codegen test TODOs (6)" → resolved by deletion.
+
+---
+
+## Phase 1 — `ultra/codegen`
+
+Plain `kotlin("jvm")` module (the walker needs `kotlin-reflect`; `ultra/reflection` has the same shape). Use
+`ultra/reflection/build.gradle.kts` as the build-file template.
+
+```
+ultra/codegen/                       kotlin("jvm")
+  src/main/kotlin/
+    printer/        CodePrinter, indent handling
+    ts/             TsFile, TsInterface, TsUnion, TsEnum, TsZodSchema, TsNameSanitizer
+    model/          TypeId, TypeModel, TypeClaims, the closure walker
+    sdk/            TsSdkContributor, TsSdkBuilder, TsSdkOutput, validation
+    contributors/   MpDateTimeTsContributor
+  src/main/resources/ts/runtime/     hand-written: http.ts, apiResponse.ts, datetime.ts, sse.ts
+```
+
+**Dependencies:** `api(project(":ultra:slumber"))` and `api(project(":ultra:common"))`.
+`ultra:slumber`'s jvmMain already declares `api(project(":ultra:reflection"))` and
+`api(project(":ultra:datetime"))` (`ultra/slumber/build.gradle.kts:71-73`), so reflection and datetime arrive
+transitively — **no new dependency edges**.
+
+**`ultra/codegen` must NOT depend on `ultra/kontainer`.** `TsSdkBuilder(contributors: List<TsSdkContributor>)`
+is a plain constructor; kontainer injects the list but the class never imports it — same shape as
+`ApiApp(val features: List<ApiFeature>)`. This keeps the core unit-testable with a hand-built contributor list, no
+container required. All container wiring lives in `funktor/codegen`.
+
+### 1.1 The contributor contract
+
+- [ ] Phase the **contract**, not the contributors. Kontainer gives no ordering guarantee, and relying on registration
+  order would reproduce the exact Dart fragility.
+
+```kotlin
+interface TsSdkContributor {
+    val name: String                                   // for errors and --verbose
+
+    /** Phase 1 — claim Kotlin types this contributor owns, and how they appear in TS. */
+    fun claimTypes(claims: TsTypeClaims) {}
+
+    /** Phase 2 — contribute roots: endpoints, extra types, anything that must be reachable. */
+    fun contribute(model: TsSdkModel.Builder) {}
+
+    /** Phase 4 — emit. The model is frozen and validated; nothing can be added. */
+    fun emit(model: TsSdkModel, out: TsSdkOutput) {}
+}
+```
+
+`TsSdkBuilder` runs **all `claimTypes` → all `contribute` → validate → all `emit`.** Within a phase every operation is a
+keyed insert, so it is commutative and contributor order genuinely cannot matter. This is a strictly stronger property
+than the Dart gen's "make the builders lazy".
+
+### 1.2 The type model — symbolic references, not resolved nodes
+
+- [ ] Every type reference in the model is a `TypeId` (value class over `KClass<*>`), **never** a resolved node. This is
+  the fix for the Dart gen's ordering problem: a `TypeId` does not require its target to exist yet, so cycles cost
+  nothing. A plain worklist with a `seen` set, ~150 LOC.
+- [ ] `TypeId` replaces `Tags`/`tagged()`. Same "find it back by KClass" idea, but typed: O (1) map key, no
+  `Any`, typos become compile errors. (Old: `Tags(Array<out Any>)` comparing `qualifiedName`,
+  `funktor/rest/src/jvmMain/kotlin/codegen/tags.kt:17-26`.)
+- [ ] TS makes this easier than Dart: type declarations hoist and `import type` is erased, so **circular type imports
+  are legal**. No topological ordering needed at all.
+- [ ] Walk transitively from the contributed roots. The Dart gen had **no closure** — the caller had to enumerate every
+  type via `addType`
+  (`funktor/rest/src/jvmMain/kotlin/codegen/dart/addons/serialization.kt:97-101`), and a forgotten type silently became
+  `dynamic`.
+
+Structural cases the walker must handle: data class, enum, `@JvmInline value class`, sealed/polymorphic parent,
+collections (`List`/`Set`/`Map`), generics with reified arguments, nullability.
+
+### 1.3 Claims registry
+
+- [ ] `TsTypeClaims` is `Map<KClass<*>, TsTypeClaim>`, and each claim records the **claiming contributor's name**.
+- [ ] **Double claim → hard error naming both contributors.** Never last-wins. With kontainer auto-discovery, adding a
+  module could otherwise silently shadow a mapping.
+- [ ] `claims.opaque<Foo>()` → emits `unknown`, and is listed in the run summary. A deliberate, loud escape hatch.
+- [ ] Claims must carry both the TS **type** and (per the zod decision) a **schema expression**. See 1.6.
+
+### 1.4 Validation — the phase that earns the whole design
+
+For every `TypeId` in the transitive closure:
+
+1. Claimed → fine.
+2. Structural (data class / enum / value class / sealed / collection / primitive) → generate it.
+3. Otherwise → **fail the build.**
+
+Plus the check that makes custom Slumber codecs safe:
+
+- [ ] Ask the live `SlumberConfig.getSlumberer(type)` what handles the type. If it resolves to something that is **not**
+  one of the structural slumberers (`DataClassSlumberer`, `EnumCodec`,
+  `ValueClassSlumberer`, collection/map slumberers) and nobody claimed the type → error.
+
+This is the core lesson from the Dart gen. `MpInstant` does not slumber to a number or an ISO string — it slumbers to
+`{ts, timezone, human}` (`ultra/slumber/src/jvmMain/kotlin/builtin/datetime/mp/MpInstantCodec.kt:31-40`). Nothing in
+`KType` says so, and `SlumberConfig.getSlumberer` returns an opaque `Slumberer` with no introspectable schema
+(`ultra/slumber/src/jvmMain/kotlin/SlumberConfig.kt:77`). The Dart gen handled this by pattern-matching classifiers and
+attaching `@InstantConverter()` annotations (`codegen/dart/addons/serialization.kt:168-190`) — which means a **newly
+added** custom codec silently produces a wrong type. The check above converts that into a build failure.
+
+Target error format:
+
+```
+[ultra:codegen] 2 types have no TypeScript mapping:
+
+  io.peekandpoke.ultra.datetime.MpInstant
+      custom Slumber codec: MpInstantSlumberer  (JSON shape cannot be derived)
+      reached via: FunktorConfApi.getTalks → ApiResponse<List<Talk>> → Talk.startsAt
+      fix: claims.map<MpInstant>(tsName = …, from = …)   in a TsSdkContributor
+
+  com.acme.Weird
+      reached via: OperatorApi.stats → Stats.blob
+      fix: claim it, or claims.opaque<Weird>()
+```
+
+- [ ] The `reached via` trail is required, not optional — it is what makes the error actionable.
+  `ReflectivePathFinder` already produces exactly this shape (`FoundItem.path: List<String>`,
+  `funktor/rest/src/jvmMain/kotlin/security/ReflectivePathFinder.kt:61`); reuse the idea.
+
+### 1.5 Output collision rule
+
+- [ ] `TsSdkOutput` tracks `path → owning contributor`. **Double file write → hard error naming both.**
+  Same rationale as double claims: auto-injection makes silent collisions likely.
+
+### 1.6 zod schemas (decided 2026-07-29)
+
+Emit a zod schema per type and derive the TS type from it:
+
+```ts
+export const Talk = z.object({
+    id: z.string(),
+    title: z.string(),
+    startsAt: MpInstant,
+    speakers: z.array(Speaker),
+})
+export type Talk = z.infer<typeof Talk>
+```
+
+Consequences to design for:
+
+- [ ] Every claim needs a **schema** as well as a type — a claimed type without a schema breaks
+  `z.infer`. Bake this into `TsTypeClaim` from the start, do not bolt it on.
+- [ ] Recursive types need `z.lazy(() => …)`. The walker knows which `TypeId`s participate in a cycle; emit `z.lazy`
+  only for those, with an explicit `z.ZodType<T>` annotation (zod cannot infer through
+  `z.lazy`).
+- [ ] Discriminated unions → `z.discriminatedUnion('_type', [...])`, using the discriminator from
+  `PolymorphicParentUtil.getDiscriminator()` (it is **not** always `_type` — a parent companion can override it,
+  `ultra/slumber/src/commonMain/kotlin/Polymorphic.kt:48`).
+- [ ] Value classes → the underlying scalar's schema (`ValueClassSlumberer` emits the bare value,
+  `ultra/slumber/src/jvmMain/kotlin/builtin/objects/ValueClassSlumberer.kt:12-14`). Branded types optional; decide when
+  writing the emitter.
+- [ ] Enums → `z.enum([...])` from `Enum.name` (`EnumCodec`, `.../builtin/objects/EnumCodec.kt:8`).
+
+**Before writing the emitter: look up the current zod major online.** Repo rule — never from memory. zod's
+schema-composition API has changed shape across majors and the emitter is written directly against it.
+
+### 1.7 DSL scoping
+
+- [ ] Put `@TsDsl` (a `@DslMarker`) on the **receiver types** — `TsFile.Builder`, `TsInterface.Builder`, etc.
+- [ ] The Dart gen got this wrong: `@CodeGenDsl` **is** a `@DslMarker`
+  (`funktor/rest/src/jvmMain/kotlin/codegen/utils.kt:5`) but was applied to the extension *functions*, where it does
+  nothing, and to only some receivers — `DartClass.Definition` had it (`codegen/dart/DartClass.kt:24`),
+  `DartFile.Definition` (`DartFile.kt:18`) and
+  `DartProject.Definition` (`DartProject.kt:11`) did not, leaving the outer receivers implicitly reachable from inner
+  blocks.
+- [ ] The identical trap was already diagnosed and fixed for `@RestDsl` — see the comment at
+  `funktor/rest/src/jvmMain/kotlin/ApiRoutes.kt:29-33`: *"@DslMarker only has an effect when the RECEIVER TYPES are
+  annotated — annotating functions does nothing."*
+
+### 1.8 Datetime contributor
+
+```kotlin
+class MpDateTimeTsContributor : TsSdkContributor {
+    override val name = "ultra:datetime"
+
+    override fun claimTypes(claims: TsTypeClaims) {
+        claims.map<MpInstant>(tsName = "MpInstant", from = "./runtime/datetime")
+        // MpLocalDate, MpLocalDateTime, MpLocalTime, MpZonedDateTime
+    }
+
+    override fun emit(model: TsSdkModel, out: TsSdkOutput) {
+        if (model.usesAny(MpInstant::class, /* … */)) {
+            out.copyResource("ts/runtime/datetime.ts")   // only when reachable — no dead code
+        }
+    }
+}
+```
+
+- [ ] The `.ts` file is a **checked-in resource, not generated output** — hand-written, versioned, living next to the
+  codec it mirrors. This is the thing that was done ad hoc for Dart, now first-class.
+- [ ] Cover every Mp type that has a codec under
+  `ultra/slumber/src/jvmMain/kotlin/builtin/datetime/mp/`: `MpInstant`, `MpLocalDate`,
+  `MpLocalDateTime`, `MpLocalTime`, `MpZonedDateTime`, `MpTimezone`.
+- [ ] **Drift test (required):** slumber a known value of each Mp type in Kotlin and assert the resulting JSON keys
+  match the fields declared in `runtime/datetime.ts`. The resource is on the classpath, so this is cheap. Without it the
+  hand-written TS and the codec drift silently — the single highest-risk failure mode in this design.
+
+---
+
+## Phase 2 — `funktor/codegen`
+
+Depends on `ultra:codegen` + `funktor:rest`. A **separate module, not part of `funktor/rest`** — codegen is a dev-time
+concern and `funktor/rest` is a runtime dependency of every server. (This is the mistake Phase 0 is undoing.)
+
+```
+funktor/codegen/src/jvmMain/kotlin/
+  RestApiTsContributor.kt
+  cli/TsSdkGenerateCliCommand.kt
+  index_jvm.kt                     funktorCodegen() kontainer module
+```
+
+### 2.1 `RestApiTsContributor`
+
+```kotlin
+class RestApiTsContributor(private val features: Lazy<List<ApiFeature>>) : TsSdkContributor {
+    override val name = "funktor:rest"
+
+    override fun contribute(model: TsSdkModel.Builder) {
+        features.value.forEach { feature ->
+            val client = model.addClient(feature.codeGenName)
+            feature.getRouteGroups().forEach { group ->
+                group.all.forEach { client.addEndpoint(group.name, it) }
+            }
+        }
+    }
+
+    override fun emit(model: TsSdkModel, out: TsSdkOutput) { /* clients + models */
+    }
+}
+```
+
+- [ ] `Lazy<List<ApiFeature>>` injection — the proven pattern, identical to
+  `ValidateRoutesOnAppStarting` (`funktor/rest/src/jvmMain/kotlin/ValidateRoutesOnAppStarting.kt:18`).
+- [ ] Handle all five `ApiRoute` variants: `Plain`, `WithParams`, `WithBody`, `WithBodyAndParams`, `Sse`.
+- [ ] Method naming from `CodeGenHints.funcName` when present, else derive from the route.
+- [ ] Path vs query params: `TypedRoute.parsedUriParams` gives the path params parsed from the pattern
+  (`funktor/core/src/jvmMain/kotlin/broker/TypedRoute.kt:30`); the remaining PARAMS ctor params are query params.
+- [ ] **Port `UriParamBuilder` semantics exactly** (`ultra/remote/src/commonMain/kotlin/UriParamBuilder.kt`)
+  — lists, nulls, defaults. Do not reinvent; golden-test the two implementations against each other.
+
+### 2.2 CLI command
+
+- [ ] `TsSdkGenerateCliCommand : CliktCommand(name = "sdk:ts:generate")`, registered as
+  `singleton(...)`. `CliRunner` auto-collects every `CliktCommand` in the kontainer
+  (`funktor/core/src/jvmMain/kotlin/cli/CliRunner.kt:14`) and `--cli` is already the launch discriminator
+  (`funktor/core/src/jvmMain/kotlin/app.kt:160`). Template:
+  `funktor/auth/src/jvmMain/kotlin/cli/AuthGenerateJwtSigningSecretCliCommand.kt`. ~60 LOC.
+- [ ] Options: `--out <dir>`, `--dry-run` (print planned files + diff, write nothing),
+  `--check` (exit non-zero when output differs from disk), `--verbose` (per-contributor summary).
+- [ ] **`--check` is not optional.** Without it, a stale checked-in SDK is invisible until a frontend dev hits a runtime
+  shape mismatch. With it, CI catches an API change nobody regenerated for.
+
+```
+./gradlew :funktor-demo:server:run --args="--cli sdk:ts:generate --out ../frontend/src/api"
+```
+
+- [ ] The CLI must stay a thin wrapper. `ultra/codegen` exposes
+  `TsSdkBuilder.generate(target, mode): SdkGenResult` and knows nothing about clikt — so a Gradle task or a test can
+  call the same entry point.
+
+### 2.3 Kontainer module
+
+```kotlin
+val Funktor_Codegen = module { builder: FunktorCodegenBuilder.() -> Unit ->
+    dynamic(TsSdkBuilder::class)
+    singleton(RestApiTsContributor::class)
+    singleton(MpDateTimeTsContributor::class)
+    singleton(TsSdkGenerateCliCommand::class)
+    FunktorCodegenBuilder(this).apply(builder)
+}
+```
+
+- [ ] `dynamic(TsSdkBuilder::class)` **deliberately**: it reaches `RestCodec`, which is registered
+  `dynamic` (`funktor/rest/src/jvmMain/kotlin/index_jvm.kt:61`). Per the repo's scoping rule a singleton would silently
+  become `SemiDynamic` anyway; declaring it dynamic makes that explicit. Costs nothing for a one-shot CLI.
+- [ ] Follow the `funktorAuth` registration shape (`funktor/auth/src/jvmMain/kotlin/index_jvm.kt:21-49`).
+- [ ] Do **not** add to the all-in-one `Funktor` module (`funktor/all/src/jvmMain/kotlin/funktor.kt`) — opt-in via
+  `funktorCodegen()`, so production servers don't carry the generator.
+- [ ] User-defined contributors: `singleton(MyTypesTsContributor::class)` next to `funktorCodegen()`. Same extension
+  story as `ApiFeature` and `CliktCommand`.
+
+### 2.4 `SlumberConfig` access
+
+The validation in 1.4 needs the live `SlumberConfig`. `Codec.config` is public
+(`ultra/slumber/src/jvmMain/kotlin/Codec.kt:23`) and `SlumberRestCodec : RestCodec, Codec(config)`, so it is reachable
+by downcasting the injected `RestCodec`.
+
+- [ ] **Preferred:** add `instance(codecConfig)` to `Funktor_Rest`
+  (`funktor/rest/src/jvmMain/kotlin/index_jvm.kt:48` builds it as a local) so `SlumberConfig` is injectable directly.
+  One line, avoids the downcast.
+
+---
+
+## Phase 3 — TS runtime resources
+
+Hand-written, checked in under `ultra/codegen/src/main/resources/ts/runtime/`.
+
+### 3.1 Transport
+
+- [ ] Emit against a minimal transport interface with a **fetch-based default**. A generated SDK is a library — baking
+  in axios forces the dep on every consumer and collides with their own interceptors / auth-refresh / tracing.
+
+```ts
+export interface HttpTransport {
+    send(req: HttpRequest): Promise<HttpResponse>
+}
+
+export interface HttpRequest {
+    method: string;
+    url: string;
+    headers: Record<string, string>;
+    body?: string;
+    signal?: AbortSignal
+}
+
+export interface HttpResponse {
+    status: number;
+    statusText: string;
+    body: string
+}
+```
+
+Mirrors `RemoteResponse` (`ultra/remote/src/commonMain/kotlin/RemoteResponse.kt:8-27`) so the Kotlin and TS SDKs stay
+conceptually aligned. Auth becomes a one-line transport wrapper, not a generated concern.
+
+- [ ] **Non-2xx must NOT throw.** This is a deliberate, documented and defended semantic on the Kotlin side —
+  `ApiClient.Config` KDoc (`ultra/remote/src/commonMain/kotlin/ApiClient.kt:24-29`): *"Non-2xx responses are surfaced as
+  a decoded `ApiResponse` envelope, not thrown — the transport forces
+  `expectSuccess = false` per request, so a client-level `expectSuccess = true` /
+  `HttpResponseValidator` cannot silently reintroduce throw-on-error."* Verified at
+  `ultra/remote/src/commonMain/kotlin/RemoteRequestImpl.kt:54`. The TS SDK must match or the two clients diverge.
+- [ ] This is *why* `fetch` is the right default: not rejecting on 4xx/5xx — the thing everyone complains about — is
+  exactly the behaviour needed here. axios would mean fighting `validateStatus` on every call.
+- [ ] `apiRespond` derives the HTTP status **from** the envelope (`funktor/rest/src/jvmMain/kotlin/respond.kt:35`), so
+  the two always agree — but parse the envelope, since it also carries `messages` and `insights`.
+
+### 3.2 `ApiResponse` envelope
+
+- [ ] Hand-written TS mirror of `ApiResponse<T>` (`ultra/remote/src/commonMain/kotlin/ApiResponse.kt:10-19`):
+  `status`, `data`, `messages`, `insights`. Small and stable — do not generate it.
+
+### 3.3 SSE
+
+- [ ] **`EventSource` cannot send an `Authorization` header** — not in the spec. `ApiRoute.Sse` routes go through the
+  same auth floor as everything else, so an authenticated SSE endpoint is unreachable via
+  `EventSource` unless the token goes in the query string, where it lands in access logs.
+- [ ] Implement SSE over `fetch` + `ReadableStream` with a small SSE frame parser (the approach
+  `@microsoft/fetch-event-source` takes).
+- [ ] This has not bitten yet only because the demo's SSE routes are `public()`
+  (`funktor-demo/server/src/main/kotlin/api/showcase/SseShowcaseApi.kt:16`).
+
+---
+
+## Phase 4 — Wiring and demo
+
+- [ ] Add `:ultra:codegen` and `:funktor:codegen` to `settings.gradle`.
+- [ ] Register `funktorCodegen()` in the demo server's kontainer.
+- [ ] Generate an SDK for at least `FunktorConfApiFeature` end to end, into a scratch dir.
+- [ ] Type-check the generated output with `tsc --noEmit` as part of the test evidence — generated TS that does not
+  compile is the failure mode a Kotlin-side test cannot catch.
+
+**Output shape (decided 2026-07-29):** bare `.ts` sources into an existing frontend folder. Frontend owns tsconfig,
+build and deps; Vite HMR picks up changes with no extra wiring.
+
+```
+src/api/
+  models/    funktorconf.ts, auth.ts
+  clients/   FunktorConfApi.ts, AuthApi.ts
+  runtime/   http.ts, apiResponse.ts, datetime.ts, sse.ts
+  index.ts
+```
+
+---
+
+## Design decisions (locked — do not re-litigate without a reason)
+
+| Decision                                        | Rationale                                                                                                                 |
+|-------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| Delete Dart, don't port                         | No downstream consumer; rebuildable anytime; 3 kLOC out of a runtime module                                               |
+| Core in `ultra/codegen`, not `ultra/sdkbuilder` | Printer + AST *are* codegen; SDK-building is one consumer. Correct home if a Dart emitter returns                         |
+| Plain JVM module, not MPP                       | Walker needs `kotlin-reflect`; matches `ultra/reflection`                                                                 |
+| Core has no kontainer dep                       | Keeps it unit-testable without a container; wiring lives in `funktor/codegen`                                             |
+| CLI lives funktor-side                          | The CLI *convention* (`--cli`, auto-discovery, `namespace:verb`) is funktor's. Core exposing it would invert the layering |
+| `funktor/codegen` separate from `funktor/rest`  | Dev-time vs runtime; `funktor/rest` ships in every server                                                                 |
+| Phased contract, not ordered contributors       | Makes contributor order structurally irrelevant — stronger than "lazy builders"                                           |
+| Symbolic `TypeId` refs                          | Cycles cost nothing; no topological sort; TS type imports are legal circular                                              |
+| Hard error on unmapped types                    | The Dart gen's silent `dynamic` fallback is the defect being fixed                                                        |
+| zod schemas, not types-only                     | Chosen 2026-07-29. Parse-time errors at the boundary with a precise path                                                  |
+| Bare `.ts`, not npm package                     | Chosen 2026-07-29. `--package` deferred until a second consumer exists                                                    |
+| fetch default behind a transport interface      | Matches the documented no-throw-on-non-2xx semantic; no forced dep                                                        |
+
+## Known traps
+
+- **`@DslMarker` on receivers, not functions** — `ApiRoutes.kt:29-33`.
+- **`shouldBe` is untyped**, so `valueClass shouldBe "literal"` rots silently.
+- **Module test tasks do not compile everything** — the root project has its own `src/jvmMain` that is not a module in
+  `settings.gradle`. Run the compile sweep (below) before claiming Phase 0 is contained.
+- **kotest ignores `--tests`** — confirm a spec ran via `build/test-results/**/TEST-*.xml`, but use the console to see
+  *which* case failed (the XML mis-attributes failures to the wrong `<testcase>`).
+- **Never emit `\uXXXX` escapes or raw control characters in an edit** — relevant here because the printer deals with
+  indentation and line separators. Use `Char(0xNN)`.
+- **`DartFile.Definition.implement()` ordering comment** (`codegen/dart/DartFile.kt:31`, "order is important here!
+  Building elements might create more imports") is the smell the new design removes — imports are a function of the
+  model, computed after it is frozen.
+
+## Prior art
+
+- **`ReflectivePathFinder`** (`funktor/rest/src/jvmMain/kotlin/security/ReflectivePathFinder.kt`) already does a
+  cycle-safe transitive walk from a `KType` root through data-class ctor params and collections, with hard-excludes,
+  producing a `path: List<String>` per hit — exactly the "reached via" trail needed for the validation errors. **But it
+  is not sufficient as-is:** it silently stops at non-data-class types (`// TODO: what if we reach here?`, line 131), so
+  sealed hierarchies, value classes and interfaces fall through. Read it before writing the walker; converging the two
+  is a follow-up, not this task.
+
+## Security notes
+
+Marked **not** security-critical: this is a dev-time generator with no runtime auth path, and it emits types for data
+that already crosses the wire.
+
+One item worth a conscious decision rather than a default:
+
+- [ ] `@SensitiveData` (`funktor/rest/src/commonMain/kotlin/security/SensitiveData.kt`) marks classes and properties
+  that should not be logged or exposed, and `endpoint_security.kt` has a matching
+  `allowsSensitiveData` declaration per endpoint. Decide explicitly whether the generator should surface these (e.g. a
+  doc comment on the emitted field, or a warning in `--verbose`) or ignore them. Ignoring is defensible — the field is
+  already in the API response — but it should be a decision, not an oversight.
+
+## Test evidence
+
+- [ ] Unit: walker closure (cycles, generics, sealed hierarchies, value classes, collections, nullability)
+- [ ] Unit: claims registry — double-claim error, opaque escape, unclaimed-custom-codec error
+- [ ] Unit: output collision error
+- [ ] Golden-file: emitted TS for a representative fixture set (`shouldHaveNoDiffs`, carried over)
+- [ ] Drift test: Mp datetime slumber output keys vs `runtime/datetime.ts` field names
+- [ ] Cross-check: generated query-param encoding vs `UriParamBuilder`
+- [ ] `tsc --noEmit` on the generated demo SDK
+- [ ] Compile sweep after Phase 0:
+  `./gradlew compileKotlinJvm compileTestKotlinJvm compileKotlinJs compileTestKotlinJs compileKotlin
+  compileTestKotlin --continue` — check for `^e:`
+- [ ] Full test command (s) run + green: `...`
+
+## Review record (filled by /feature-review)
+
+| Reviewer                       | Verdict | Confirmed findings |
+|--------------------------------|---------|--------------------|
+| 1. Implementation & code style |         |                    |
+| 2. Domain expert               |         |                    |
+| 3. Security                    |         |                    |
+
+Fixes applied: ...
+
+## Follow-ups
+
+- [ ] **DOCS task** — required on archive. This adds two public modules (`ultra/codegen`,
+  `funktor/codegen`) with a public extension point (`TsSdkContributor`). Needs a docs-site page plus the LLM mirror
+  (`docs-site/src/data/llms/*.md`).
+- [ ] **`ReflectivePathFinder` convergence** — retrofit it onto the `ultra/codegen` walker, which also fixes its
+  non-data-class gap (line 131). Security-relevant code, so a separate task with its own review.
+- [ ] **`--package` mode** — package.json/tsconfig emission, when a second SDK consumer appears.
+- [ ] **Dart emitter v2** — if ever needed, build it on the `ultra/codegen` model; it inherits the closure and
+  validation for free.
