@@ -1,8 +1,69 @@
 # Upgrade to Kotlin 2.4.10, refresh the dependency set
 
-**Status:** TODO — intended for a fresh session, this is a whole-repo change
+**Status:** DONE (archived 2026-07-29) — landed in `1cdfca9e` and `2726c785`
 **Plan:** none — decided during the `ultra/common` scan, 2026-07-29
 **Security-critical:** no
+
+## Outcome
+
+Done. Full suite green afterwards: **13733 tests over 65 targets, 0 failures**, against a recorded
+baseline of 13662/65. The +71 delta is entirely tests added in `8a63584c` and `b92c8733` before the
+upgrade started; every pre-existing target matched its baseline count and none was dropped.
+
+Only **two source changes** were needed across the whole repo:
+
+1. `funktor/core` needed `@OptIn(ExperimentalStdlibApi::class)` for `CoroutineDispatcher.Key`, which
+   is built on the experimental `AbstractCoroutineContextKey`.
+2. `AwsSesSender` moved from the `javax.*` to the `jakarta.*` namespace for jakarta.mail 2.x.
+
+### Landed
+
+Kotlin 2.3.10 → **2.4.10** · KSP 2.3.6 → **2.3.10** · Dokka 2.1.0 → **2.2.0** · coroutines 1.10.2 →
+**1.11.0** · serialization 1.10.0 → **1.11.0** · Ktor 3.4.2 → **3.5.1** · kotest 6.1.7 → **6.2.3** ·
+wrappers 2026.3.x → **2026.7.7** · mongodb 5.6.4 → **5.9.1** · arangodb 7.25.0 → **7.26.0** · aws
+2.42.8 → **2.49.5** · jackson 2.21.1 → **2.22.1** · firebase 9.8.0 → **9.10.0** · logback 1.5.32 →
+**1.6.1** · snakeyaml 2.4 → **2.6** · kotlinpoet 2.2.0 → **2.3.0** · faker → **1.16.2** ·
+jakarta.mail 1.6.8 → **2.0.2** · kotlin-csv 1.10.0 → **2.0.0**
+
+`com.benasher44:uuid` removed — `kotlin.uuid.Uuid` is stable in 2.4 and `Uuid.random()` needs no
+opt-in. Two call sites migrated.
+
+### The buildSrc duplication is solved
+
+The Kotlin version now lives ONLY in the root `gradle.properties`. Two things had made this look
+impossible, both confirmed by experiment:
+
+- buildSrc cannot read `Deps` — it *compiles* `Deps`.
+- buildSrc does NOT inherit the root `gradle.properties`; `providers.gradleProperty("kotlinVersion")`
+  returns empty there.
+
+So `buildSrc/build.gradle.kts` reads the file directly. That needs `import java.util.Properties` at
+the top, because inside a Gradle Kotlin DSL script `java` resolves to `JavaPluginExtension`, not the
+package. The root build uses the normal `providers.gradleProperty`; `funktor-demo/server` drops its
+version entirely and inherits from the root's `apply false` declaration, because `providers` is not
+in scope inside a subproject `plugins {}` block. `Deps.kotlinVersion` is deleted.
+
+Every version constant in `Deps.kt` now carries a `// checked 2026-07-29: latest X` annotation.
+
+### Held deliberately
+
+- **kotlinx-datetime 0.6.2** (latest 0.8.0) — pre-1.0, `ultra/datetime` wraps it closely (5234
+  tests), and 2.4.10 did not force it.
+- **sendgrid 5.0.0-rc.1** — ahead of stable 4.10.3 on purpose.
+- **kotlin-csv** was bumped to 2.0.0 but is **unverified**: no build file references
+  `Deps.KotlinLibs.csv`, so nothing compiles against it. Delete the entry or wire it up.
+
+### Notes for next time
+
+- **KSP no longer tracks Kotlin's numbering** (it went to plain semver at 2.3.7), so KSP 2.3.10
+  against Kotlin 2.4.10 looks wrong and is not. The build settles it.
+- **Maven Central's search API is unreliable for "latest"** — it reported serialization 1.9.0 while
+  the repo already ran 1.10.0. Use the GitHub release API or `repo1` `maven-metadata.xml`.
+- **Kotlin 2.4 warns that `@DslMarker` on top-level functions/properties has no effect** (KT-81567).
+  Harmless, but it confirms the vault-scan finding that several such annotations are inert. Fold
+  into the karango pass.
+- `AddonRegistrySpec."component redraws when addon becomes ready"` (kraft browser) is **flaky** —
+  failed once, passed three `--rerun-tasks` runs.
 
 ## Why
 
