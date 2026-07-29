@@ -698,6 +698,39 @@ Pinned by a test with TWO root-supplying contributors, and mutation-tested.
 Worth remembering as a class of bug: "output is deterministic" needs a test with at least two
 independent contributors, not one.
 
+### Prerequisite found for Phase 2: apps cannot register their own SlumberModule (2026-07-29)
+
+Raised by the maintainer asking how a funktor app would pass its own `SlumberConfig`.
+
+`TsSdkBuilder` already takes `SlumberConfig` as a constructor parameter, so the codegen side is
+pluggable. The gap is upstream: `funktor/rest/src/jvmMain/kotlin/index_jvm.kt:48` builds
+`codecConfig = SlumberConfig.default.prependModules(VaultSlumberModule)` as a HARDCODED LOCAL inside
+the module lambda, and `FunktorRestBuilder` exposes only `jwt()`. An app therefore cannot add a
+`SlumberModule` to the REST codec at all — it would have to override the whole `RestCodec`
+registration.
+
+This is bigger than codegen: an app with a type needing a custom codec cannot wire that codec in **at
+runtime** either. The SDK generator merely surfaces it, being the first thing that asks the config what
+it contains. Latent rather than painful today — zero `SlumberModule` registrations exist in
+`funktor-demo`.
+
+Needed before `RestApiTsContributor` can honestly claim to handle app-specific types:
+
+- [ ] `FunktorRestBuilder.slumberModules(vararg SlumberModule)` so apps can contribute codecs
+- [ ] `instance(codecConfig)` in `Funktor_Rest` so `SlumberConfig` is directly injectable, instead of
+      downcasting the injected `RestCodec` to `Codec` to reach `.config`
+
+### On hardcoding against the built-in codecs
+
+`TsModelValidator.matches` names the six structural slumberers (`DataClassSlumberer`,
+`PolymorphicChildSlumberer`, `ObjectInstanceCodec`, `PolymorphicParentSlumberer`, `EnumCodec`,
+`ValueClassSlumberer`) explicitly. Deliberate, and the same coupling the walker has — both mirror
+`BuiltInModule`'s dispatch rather than re-deriving it, so both move together.
+
+Acceptable because the failure direction is safe: an UNRECOGNISED slumberer is reported as "custom
+codec, claim it". A new structural codec in Slumber would therefore cause a spurious error demanding a
+claim, never silently wrong TypeScript. Wrong-and-loud, never wrong-and-quiet.
+
 ### Next
 
 The hand-written TS runtime (transport, `ApiResponse`, SSE) -- datetime is done.
