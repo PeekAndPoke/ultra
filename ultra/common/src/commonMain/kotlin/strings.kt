@@ -76,12 +76,14 @@ fun String.startsWithNone(prefixes: Collection<String>) = !startsWithAny(prefixe
 /**
  * Returns the maximal line length of a multiline string.
  *
- * The string is first split by the [separator] and then the max length is computed. An empty string
- * has length 0. Lengths are UTF-16 code units, not glyphs, and only the literal [separator] is
- * stripped — CRLF text therefore counts a trailing CR into every line.
+ * The string is split by the [separator] and the longest part wins. An empty string has length 0.
+ *
+ * A carriage return left over from CRLF text is not counted, so the same content measures the same
+ * whether it uses `\n` or `\r\n`. Lengths are UTF-16 code units, not glyphs, so an astral
+ * character counts as two.
  */
 fun String.maxLineLength(separator: String = "\n"): Int =
-    split(separator).map { it.length }.maxOrNull() ?: 0
+    split(separator).maxOfOrNull { it.removeSuffix("\r").length } ?: 0
 
 /**
  * Takes [maxLength] characters of the string and adds the [suffix] when anything was cut.

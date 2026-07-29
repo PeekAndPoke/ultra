@@ -97,7 +97,22 @@ These make a suite look green while the feature is broken. Treat them as precond
   "single-use token" e2e also satisfied by a cooldown, and a `validate()` test that constructed the
   healthy object so it passed whether or not validation ran.
 - **Back up with `cp` before mutating a file; never restore with `git checkout`** — the file usually
-  carries other uncommitted work.
+  carries other uncommitted work. **Keep the source-set path in the backup name.** Backing several
+  files into one directory by `basename` silently collides in a multiplatform layout — `commonMain/
+  strings.kt` and `jvmMain/strings.kt` flatten onto the same name, and the restore puts one source
+  set's content into the other. Mirror the path (`cp x/commonMain/y.kt bak/commonMain__y.kt`) or back
+  up one file at a time.
+- **Module test tasks do not compile everything.** The root project has its own `src/jvmMain` that is
+  not a module in `settings.gradle`, so `:some:module:allTests` never touches it — a change to
+  `ultra/common` broke it on 2026-07-29 while every module suite stayed green. Before claiming a
+  cross-module change is contained, run a compile sweep:
+  `./gradlew compileKotlinJvm compileTestKotlinJvm compileKotlinJs compileTestKotlinJs compileKotlin
+  compileTestKotlin --continue` and check for `^e:`. Native targets need their own
+  `compileKotlinLinuxX64` and are not covered either.
+- **A grep for call sites misses receiver-less calls.** Searching `.observe(` will not find
+  `observe(x) { }`, where the receiver is implicit — that is how the same break was missed twice.
+  When removing an extension, prefer renaming it and compiling: the compiler finds every caller,
+  a grep finds the ones you thought of.
 - **`shouldBe` is untyped**, so `valueClass shouldBe "literal"` rots silently.
 - **Never emit `\uXXXX` escapes or raw control characters in an edit** — they land as raw bytes, in
   file writes and match strings alike. Write `Char(0xNN)` instead, and pin the property that makes a

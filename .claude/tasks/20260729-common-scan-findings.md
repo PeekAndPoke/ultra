@@ -1,6 +1,6 @@
 # ultra/common scan — findings backlog
 
-**Status:** IN PROGRESS — the backlog is worked through; six items remain, listed at the bottom
+**Status:** IN PROGRESS — backlog worked through; two items remain, both minor and listed at the bottom
 **Plan:** none — output of a 7-agent scan of `ultra/common`, 2026-07-29
 **Security-critical:** no
 
@@ -199,6 +199,44 @@ code matched its documentation, and five tests pinned it. `maxLength` is a misle
 text", not a defect. Redefining it as a total budget would silently change output for every
 downstream caller. Confirmed by the maintainer: `maxLength + dots` is the intended contract.
 
+## DONE — fourth pass, 2026-07-29 (hygiene items and the CSRF signer)
+
+| Item | Outcome |
+|---|---|
+| `tuple.kt` | all ten `asList` lazies use `LazyThreadSafetyMode.NONE` — the default allocates a lock per tuple for a value usually never read. The other two reported tuple issues were not defects: `asList` widening to `List<Any?>` is just the LUB of the element types, and `+` "nesting" a tuple is correct, since `plus` appends ONE element |
+| `maxLineLength` | strips a trailing `\r`, so CRLF and LF text measure the same |
+| `flattenTreeToSet` | takes `maxDepth: Int? = null` — root is depth 0, null means no limit |
+| `getNetworkFingerPrint` | MAC addresses rather than IPs, filtered to up / non-loopback / non-virtual, and **sorted** |
+| `hashing.kt` | `hmacSha256` / `hmacSha384` on `ByteArray` and `String`, empty key rejected |
+| `StatelessCsrfProtection` | signs with HMAC-SHA-384 keyed by the secret, instead of `sha384(fields ‖ secret)` |
+
+### The fingerprint mattered more than it looked
+
+`GlobalServerId` feeds `GlobalLocksCleanupOnAppStarting`, which runs `VeryEarly` and calls
+`releaseByServerId` — a restarted server reclaims its own locks immediately rather than waiting out
+the 3-minute `GlobalLocksCleanupWorker` sweep. That only works if it computes the SAME id it had
+before it died, and `NetworkInterface.getNetworkInterfaces()` has no defined order, so an unchanged
+machine could hash differently between runs. Sorting repairs that path.
+
+The old fallback was `Instant.now().toString().md5()` — a new identity on every call, which defeats
+anything built on top of it. Now a `UNKNOWN_FINGERPRINT` constant. Throwing was considered and
+rejected: it would fail app startup over a diagnostic value.
+
+Caveat that remains by nature: a container issued a fresh MAC per run is still not recognised as the
+same server. Restart-stable identity across containers needs a persisted id, not a network hash.
+
+### CSRF token format changed
+
+`sign()` now keys HMAC with the secret rather than appending it to the message. **Every in-flight
+CSRF token is invalidated at deploy** — a user mid-form gets a rejection and has to reload.
+
+For the record on urgency: the old construction was secret-SUFFIX, `H(fields ‖ secret)`, which is
+NOT vulnerable to length extension — that needs secret-prefix. So this was weaker-than-ideal rather
+than broken, and the change was elective.
+
+`funktor/staticweb`'s `sha384-…` values were deliberately left as plain digests: those are
+Subresource Integrity hashes, which are meant to be unkeyed.
+
 ## Open
 
 Marked **[verified]** where I probed it myself, **[reported]** where it is a scan finding I have not
@@ -208,23 +246,15 @@ survive contact with a probe.
 ### Worth a decision
 
 - **`ultra/datetime/recurse.kt` is a byte-identical copy of `common/recursion.kt`.** Same root cause
-  as `ComparableTo`, and removable now that commonMain can see common. Belongs to the datetime pass.
-  **[verified]**
+  as `ComparableTo`, and removable now that commonMain can see common. Decided 2026-07-29: rather
+  than reuse `common`'s directly, move the function into `Kronos`' companion as a private helper —
+  it exists only for the mutable Kronos. Deferred to the datetime pass. **[verified]**
 
 ### Correctness, no decision needed
 
-- **`maxLineLength`** counts the `\r` in CRLF text; **`camelCaseSplit`** only breaks on ASCII
-  `A`..`Z`, so a non-ASCII capital is never a word boundary. **[reported]**
+- **`camelCaseSplit`** only breaks on ASCII `A`..`Z`, so a non-ASCII capital is never treated as a
+  word boundary. **[reported]**
 
-### Performance / hygiene — left alone, none looked straightforward
-
-- **`flattenTreeToSet`** recurses with no depth bound. **[reported]**
-
-- **`tuple.kt`** — `asList` degrades to `List<Any?>` from arity 2, there is a `by lazy` delegate
-  allocated per instance, and `+` nests rather than concatenating when adding a tuple. **[reported]**
-- **`NetworkUtils.getNetworkFingerPrint`** is not stable across restarts. **[reported]**
-- **`hashing.kt`** offers no HMAC or KDF, which is why the CSRF signer hand-rolls `H(data || secret)`
-  — a construction with known weaknesses. Worth a look during a security pass. **[reported]**
 
 ## Test evidence
 

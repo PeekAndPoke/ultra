@@ -33,26 +33,33 @@ fun <T> T.recurse(getParent: T.() -> T?): List<T> {
  * Each node is visited at most once; cycles are detected and skipped. Nodes are compared with
  * `equals`, so equal-but-distinct nodes collapse into a single entry.
  *
- * The result is a fresh set in depth-first pre-order, starting with this element. Traversal uses
- * the call stack, so its depth grows with the depth of the tree.
+ * The result is a fresh set in depth-first pre-order, starting with this element.
+ *
+ * @param maxDepth how many levels below the root to descend, or null for no limit. The root is
+ *   depth 0, so `maxDepth = 1` yields the root and its direct children. Traversal uses the call
+ *   stack, so bound this when the depth is driven by data you do not control.
  */
-fun <T> T.flattenTreeToSet(children: (T) -> List<T>): Set<T> {
+fun <T> T.flattenTreeToSet(maxDepth: Int? = null, children: (T) -> List<T>): Set<T> {
 
     val result = mutableSetOf<T>()
 
-    fun visit(element: T) {
+    fun visit(element: T, depth: Int) {
         if (result.contains(element)) {
             return
         }
 
         result.add(element)
 
+        if (maxDepth != null && depth >= maxDepth) {
+            return
+        }
+
         children(element).forEach {
-            visit(it)
+            visit(it, depth + 1)
         }
     }
 
-    visit(this)
+    visit(this, 0)
 
     return result.toSet()
 }

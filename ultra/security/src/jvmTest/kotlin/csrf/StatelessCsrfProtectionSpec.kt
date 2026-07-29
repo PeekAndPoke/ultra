@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldMatch
+import io.peekandpoke.ultra.common.sha384
 import io.peekandpoke.ultra.common.fromBase64
 import io.peekandpoke.ultra.common.toBase64
 import io.peekandpoke.ultra.security.user.UserId
@@ -137,5 +138,43 @@ class StatelessCsrfProtectionSpec : StringSpec({
                 subject.validateToken("SALT", token) shouldBe false
             }
         }
+    }
+    "The signature is an HMAC keyed by the secret, not a digest of the concatenation" {
+
+        val subject = StatelessCsrfProtection(
+            "secret", 1000, UserProvider.static(UserRecord.LoggedIn(userId = UserId("USER"), clientIp = "IP"))
+        )
+
+        val token = subject.createToken("SALT")
+        val signature = String(token.fromBase64()).split(subject.glue)[1]
+
+        // what the old hand-rolled construction would have produced for the same fields
+        val ttl = String(token.fromBase64()).split(subject.glue)[0]
+        val handRolled = "SALT\u0000USER\u0000IP\u0000$ttl\u0000secret".sha384().toBase64()
+
+        signature shouldNotBe handRolled
+    }
+
+    "A token does not validate under a different secret" {
+
+        val fields = UserProvider.static(UserRecord.LoggedIn(userId = UserId("USER"), clientIp = "IP"))
+
+        val token = StatelessCsrfProtection("secret-a", 1000, fields).createToken("SALT")
+
+        StatelessCsrfProtection("secret-b", 1000, fields).validateToken("SALT", token) shouldBe false
+    }
+
+    "Tampering with the signature is rejected" {
+
+        val subject = StatelessCsrfProtection(
+            "secret", 1000, UserProvider.static(UserRecord.LoggedIn(userId = UserId("USER"), clientIp = "IP"))
+        )
+
+        val decoded = String(subject.createToken("SALT").fromBase64())
+        val (ttl, signature) = decoded.split(subject.glue)
+
+        val flipped = signature.take(signature.length - 1) + if (signature.last() == 'A') 'B' else 'A'
+
+        subject.validateToken("SALT", "$ttl${subject.glue}$flipped".toBase64()) shouldBe false
     }
 })
