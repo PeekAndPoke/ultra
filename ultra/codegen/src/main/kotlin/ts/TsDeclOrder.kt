@@ -53,7 +53,12 @@ class TsDeclOrder private constructor(
                 ordered.add(decl)
             }
 
-            model.decls.keys.forEach { visit(it) }
+            // Seed the walk in a STABLE order, not discovery order. The set of declarations does not
+            // depend on which contributor ran first, but the insertion order of `model.decls` does —
+            // so seeding from it directly would make the emitted file differ between runs that
+            // registered the same contributors in a different order. That is invisible to a compiler
+            // but fatal to `--check`, which compares generated output byte-for-byte against disk.
+            model.decls.keys.sortedBy { it.key }.forEach { visit(it) }
 
             val position = ordered.withIndex().associate { (idx, decl) -> decl.id to idx }
 

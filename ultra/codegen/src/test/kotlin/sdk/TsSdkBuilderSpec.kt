@@ -62,6 +62,23 @@ class TsSdkBuilderSpec : FreeSpec() {
                 }
             }
 
+            "two contributors BOTH supplying roots produce byte-identical output in either order" {
+                // The claim test above only had one contributor supplying roots, so it could not
+                // catch this: the SET of declarations does not depend on contributor order, but the
+                // discovery ORDER does, and emitting in discovery order made the file differ between
+                // runs. Invisible to a compiler, fatal to `--check`.
+                fun run(vararg contributors: TsSdkContributor): String =
+                    TsSdkBuilder(contributors.toList())
+                        .build().output.entries().first { it.path == "models.ts" }.content
+
+                val alpha = RootContributor("alpha", typeOf<FxSpeaker>())
+                val beta = RootContributor("beta", typeOf<io.peekandpoke.ultra.codegen.model.FxNode>())
+
+                withClue("emission order must be stable, or --check reports drift that is not real") {
+                    run(alpha, beta) shouldBe run(beta, alpha)
+                }
+            }
+
             "an unclaimed custom-coded type fails before anything is emitted" {
                 val thrown = runCatching {
                     TsSdkBuilder(

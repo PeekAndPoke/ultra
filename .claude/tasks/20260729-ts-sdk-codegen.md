@@ -678,6 +678,26 @@ was omitted entirely. Caught only by reading the codecs -- see the standing rule
 
 Tests: 89 green, plus the TypeScript gate. Mutation-tested 4/4 on the drift guard.
 
+### Order-independence had a hole (2026-07-29)
+
+Raised by the maintainer asking whether contributor order matters. It does not for CLAIMS — all
+`claimTypes` run before any walking, so the registry is always complete — but it DID for ROOTS.
+
+The set of declarations never depends on contributor order, yet the discovery ORDER did, and
+declarations were emitted in `model.decls` insertion order. Two contributors both supplying roots
+therefore produced different `models.ts` text depending on registration order. Semantically identical,
+byte-wise different — invisible to `tsc`, fatal to `--check`, which compares generated output against
+disk.
+
+The existing "contributor order does not matter" test could not catch it: only one of its two
+contributors supplied roots, so the root list was identical in both orders.
+
+Fixed by seeding the emission walk from `decls.keys.sortedBy { it.key }` rather than insertion order.
+Pinned by a test with TWO root-supplying contributors, and mutation-tested.
+
+Worth remembering as a class of bug: "output is deterministic" needs a test with at least two
+independent contributors, not one.
+
 ### Next
 
 The hand-written TS runtime (transport, `ApiResponse`, SSE) -- datetime is done.
