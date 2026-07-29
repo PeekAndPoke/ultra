@@ -36,7 +36,87 @@ Watch for suites that report **0 tests** — `mutator/core`'s `jsBrowserTest` do
 specs live in `jvmTest`. A zero-count target is not a passing target. See
 `.claude/tasks/20260729-mutator-test-coverage-platforms.md`.
 
-Save the baseline somewhere durable before proceeding.
+### Baseline recorded 2026-07-29 — ALL GREEN
+
+Run by the maintainer with both DBs up, on commit `a4ba82a7`. Gradle's console reported
+**13655 passed, 6 ignored, 0 failed**. Harvested from the XML: **13662 tests, 7 ignored, 0
+failures across 65 targets** — the ~7 test delta is a console-vs-XML counting difference,
+not a discrepancy in outcome.
+
+This is the table to diff against after the upgrade. A target whose count drops — especially to
+0 — is a regression even if the build is green.
+
+| module | target | tests | ignored |
+|---|---|---|---|
+| `funktor-demo/server` | test | 47 | 0 |
+| `funktor/all` | jvmTest | 138 | 0 |
+| `funktor/auth` | jsBrowserTest | 8 | 0 |
+| `funktor/auth` | jvmTest | 141 | 0 |
+| `funktor/cluster` | jvmTest | 56 | 0 |
+| `funktor/core` | jvmTest | 772 | 2 |
+| `funktor/logging` | jvmTest | 12 | 0 |
+| `funktor/messaging` | jvmTest | 65 | 0 |
+| `funktor/rest` | jvmTest | 109 | 0 |
+| `funktor/saas` | jsBrowserTest | 9 | 0 |
+| `funktor/saas` | jvmTest | 50 | 0 |
+| `karango/core` | test | 1649 | 0 |
+| `karango/ksp` | test | 9 | 0 |
+| `kraft/addons/avatars` | jsBrowserTest | 4 | 0 |
+| `kraft/addons/browserdetect` | jsBrowserTest | 3 | 0 |
+| `kraft/addons/chartjs` | jsBrowserTest | 3 | 0 |
+| `kraft/addons/datetime` | jsBrowserTest | 2 | 0 |
+| `kraft/addons/jwtdecode` | jsBrowserTest | 3 | 0 |
+| `kraft/addons/marked` | jsBrowserTest | 3 | 0 |
+| `kraft/addons/pixijs` | jsBrowserTest | 4 | 0 |
+| `kraft/addons/prismjs` | jsBrowserTest | 3 | 0 |
+| `kraft/addons/signaturepad` | jsBrowserTest | 3 | 0 |
+| `kraft/addons/threejs` | jsBrowserTest | 4 | 1 |
+| `kraft/core-tests` | jsBrowserTest | 394 | 0 |
+| `kraft/core` | jsBrowserTest | 216 | 0 |
+| `kraft/core` | jvmTest | 210 | 0 |
+| `kraft/semanticui` | jsBrowserTest | 5 | 0 |
+| `monko/core` | test | 249 | 0 |
+| `monko/ksp` | test | 4 | 0 |
+| `mutator/core` | jvmTest | 154 | 0 |
+| `tooling` | test | 22 | 0 |
+| `tooling/i18n-fixture` | jsBrowserTest | 7 | 0 |
+| `tooling/i18n-fixture` | jvmTest | 6 | 0 |
+| `ultra/cache` | jsBrowserTest | 102 | 1 |
+| `ultra/cache` | jvmTest | 111 | 1 |
+| `ultra/cache` | linuxX64Test | 101 | 1 |
+| `ultra/common` | jsBrowserTest | 167 | 1 |
+| `ultra/common` | jvmTest | 332 | 0 |
+| `ultra/common` | linuxX64Test | 161 | 0 |
+| `ultra/datetime` | jsBrowserTest | 1732 | 0 |
+| `ultra/datetime` | jvmTest | 1771 | 0 |
+| `ultra/datetime` | linuxX64Test | 1731 | 0 |
+| `ultra/fixture` | jsBrowserTest | 24 | 0 |
+| `ultra/fixture` | jvmTest | 23 | 0 |
+| `ultra/html` | jvmTest | 28 | 0 |
+| `ultra/i18n` | jsBrowserTest | 26 | 0 |
+| `ultra/i18n` | jvmTest | 25 | 0 |
+| `ultra/kontainer` | test | 186 | 0 |
+| `ultra/log` | jvmTest | 43 | 0 |
+| `ultra/maths` | jsBrowserTest | 115 | 0 |
+| `ultra/maths` | jvmTest | 114 | 0 |
+| `ultra/maths` | linuxX64Test | 114 | 0 |
+| `ultra/model` | jsBrowserTest | 77 | 0 |
+| `ultra/model` | jvmTest | 93 | 0 |
+| `ultra/reflection` | test | 61 | 0 |
+| `ultra/remote` | jsBrowserTest | 168 | 0 |
+| `ultra/remote` | jvmTest | 167 | 0 |
+| `ultra/security` | jvmTest | 142 | 0 |
+| `ultra/semanticui` | jsBrowserTest | 30 | 0 |
+| `ultra/semanticui` | jvmTest | 29 | 0 |
+| `ultra/slumber` | jvmTest | 1219 | 0 |
+| `ultra/streams` | jsBrowserTest | 62 | 0 |
+| `ultra/streams` | jvmTest | 31 | 0 |
+| `ultra/streams` | linuxX64Test | 28 | 0 |
+| `ultra/vault` | jvmTest | 285 | 0 |
+
+**Known-benign zero:** `mutator/core` has no `jsBrowserTest` entry at all, because every one of its
+specs lives in `jvmTest`. That is pre-existing and tracked separately; do not read its absence as an
+upgrade regression.
 
 ## STEP 1 — Kotlin and the toolchain
 
