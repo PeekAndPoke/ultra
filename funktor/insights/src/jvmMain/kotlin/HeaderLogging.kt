@@ -96,8 +96,12 @@ class HeaderLogging private constructor(
          */
         val defaults: HeaderLogging
             get() = HeaderLogging(
-                rules = knownSensitive.map { Rule.Exact(it, HeaderAction.REDACT) } +
-                        Rule.Pattern(sensitiveByName, HeaderAction.REDACT),
+                // The heuristic goes FIRST so the explicit list is not shadowed by it. Both say REDACT
+                // today, so the order is invisible — until someone changes the pattern's action, at
+                // which point the wrong order would silently un-redact `authorization`, which the
+                // pattern also matches via `.*auth.*`. Caught by mutation-testing this file.
+                rules = listOf(Rule.Pattern(sensitiveByName, HeaderAction.REDACT)) +
+                        knownSensitive.map { Rule.Exact(it, HeaderAction.REDACT) },
                 default = HeaderAction.LOG,
             )
 
