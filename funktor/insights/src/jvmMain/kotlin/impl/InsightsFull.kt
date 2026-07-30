@@ -7,6 +7,7 @@ import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.insights.CollectorData
 import io.peekandpoke.funktor.insights.Insights
 import io.peekandpoke.funktor.insights.InsightsCollector
+import io.peekandpoke.funktor.insights.api.InsightsApi
 import io.peekandpoke.funktor.insights.InsightsData
 import io.peekandpoke.funktor.insights.InsightsMapper
 import io.peekandpoke.funktor.insights.InsightsRepository
@@ -26,16 +27,26 @@ internal class InsightsFull(
     private val repository: InsightsRepository,
     private val mapper: InsightsMapper,
 ) : Insights.Base() {
+    companion object {
+        /**
+         * Uris that are never recorded.
+         *
+         * The insights entries matter: recording a call to the insights API would write a record whose
+         * request and response headers describe the superuser who was *reading* insights — and every
+         * such read would append another record, so a browsing session inflates the depot with
+         * observations of itself. Extracted from the instance so it can be tested without booting an
+         * application.
+         *
+         * Matched against [InsightsApi.base] rather than a loose `"/insights"`, which would also have
+         * swallowed an application's own routes — `/api/insights-dashboard` contains it.
+         */
+        // TODO: make injectable
+        fun isExcluded(uri: String): Boolean =
+            uri.contains("favicon.ico") || uri.contains(InsightsApi.base)
+    }
+
     private val date = LocalDate.now()
     private val dateTime = LocalDateTime.now()
-
-    // TODO: make injectable
-    private val filter = listOf<(ApplicationCall) -> Boolean>(
-        { it.request.uri.contains("favicon.ico") },
-        // The insights API must not observe itself: recording a call to it writes a record whose
-        // own request/response headers describe the superuser reading insights.
-        { it.request.uri.contains("/insights") }
-    )
 
     private val filename: String = "records-$date/$dateTime.json"
 
@@ -44,8 +55,8 @@ internal class InsightsFull(
     override suspend fun finish(call: ApplicationCall) {
         val endedNs = System.nanoTime()
 
-        // do not record if any of the filters match
-        if (filter.any { it(call) }) {
+        // do not record if the uri is excluded
+        if (isExcluded(call.request.uri)) {
             return
         }
 
