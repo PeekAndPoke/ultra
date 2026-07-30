@@ -133,12 +133,13 @@ ts-verify fixture that **executes** a generated client.
 
 In order:
 
-- [ ] **`WithParams` routes.** Params are typed by their WIRE form, precisely where provable
-      (`String`, numerics, `Boolean`, enums, value classes over those) and **refused by name
-      otherwise** — maintainer decision, see §4 of the task file. Path vs query split comes from
-      `TypedRoute.parsedUriParams`; URL building must match `TypedRouteRenderer`
-      (`funktor/core/src/jvmMain/kotlin/broker/TypedRouteRenderer.kt:28`). `runtime/http.ts`'s
-      `buildUrl` is already written against it — **do not reinvent, and there is no `UriParamBuilder`.**
+- [x] **DONE `d579099c` — `WithParams` routes.** One parameter object per member, split into
+      `path`/`query` in the call. `UrlParamTypes` (funktor side) maps the wire form and refuses
+      anything unprovable by name.
+      **Learned from funktor, worth not re-deriving:** `TypedRoute.validateUriPattern`
+      (`funktor/core/src/jvmMain/kotlin/broker/TypedRoute.kt:170`) requires every NON-OPTIONAL params
+      property to be a URI placeholder — so a query parameter always has a Kotlin default, and is
+      therefore always optional in TypeScript.
 - [ ] **Param-claim mechanism.** Blocks the demo: `Stored<T>` entity params are refused without it.
       A URL-param type is a different axis from a body-shape claim — design it, do not assume the
       sketch in the task file is right.
@@ -158,6 +159,11 @@ In order:
 - Every change to emitted text needs a **ts-verify fixture**, and the mutant must be run against the
   reverted code. Emitting prototype methods instead of arrow class fields produces NO tsc error and
   dies only on execution — that is the standard to hold.
+- **Calling a generated member correctly proves the signature EXISTS, not that it is ENFORCED.** The
+  mutant emitting every parameter as optional passed every positive ts-verify check. Use
+  `@ts-expect-error` for the negative side: tsc reports **TS2578** when such a line stops erroring, so
+  it fails exactly when the emitted types get looser. Four sites are in `checkGeneratedClient`; add
+  one for every new type constraint the emitter introduces.
 - Root labels must stay qualified (`funktor:rest:<feature>:<group>:<member>`), or two contributors
   silently swap types.
 - A route's `responseType` is the **ENVELOPE**. Unwrap it. This was a real bug, found by a fixture.
@@ -176,14 +182,23 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
-## READY TO RESUME 2026-07-30 — Phase 2 slice 1 landed, decisions settled
+## ITERATION 2 DONE 2026-07-30 — `WithParams` landed (`d579099c`)
 
-**Start at §3.** All four cross-cutting decisions are settled with the maintainer and written down in
-`.claude/tasks/20260730-funktor-codegen-rest-contributor.md`; read that section first, then take the
-next unchecked §3 item.
+**Next item: the param-claim mechanism** (§3, second box). It BLOCKS the demo — `Stored<T>` entity
+params are refused today, and nearly every detail route uses one. It is a DESIGN step, not a
+mechanical one: the maintainer offered to approve its shape rather than have the loop pick. **If the
+design is not obvious from §4 of the task file, stop the loop and ask rather than guessing** — a
+URL-param type is a different axis from a body-shape claim, and the sketch there is explicitly marked
+as needing design, not adoption.
 
-**Baseline:** `:ultra:codegen:check` 215 tests, `:funktor:codegen:check` 11 tests, 0 failures,
-10 ts-verify fixtures, compile sweep clean, at `57a749b5`.
+**Baseline:** `:ultra:codegen:check` 215 tests, `:funktor:codegen:check` 15 tests, 0 failures,
+10 ts-verify fixtures, compile sweep clean, at `d579099c`.
+
+**What this iteration found:** a green positive check proved less than it looked. Every ts-verify
+check passed while the emitter marked every parameter optional, because the harness only ever CALLED
+members correctly. `@ts-expect-error` fixed that — see the new rule above. Also: funktor already
+rejects a non-optional params property that is not a placeholder, so the first refusal fixture never
+reached the generator.
 
 **Two bugs this slice found, both by fixtures and neither by reading the code twice:**
 
