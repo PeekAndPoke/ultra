@@ -150,10 +150,12 @@ In order:
       the Kotlin argument order; `params` stays required whenever the route has any. The body is used
       in TYPE position and is ROOTED, so a request type reachable from nowhere else still gets
       declared.
-- [ ] **`Sse` — A DECISION, NOT WORK. STOP AND ASK.** `ApiRoute.Sse.responseType` is `TypeRef<Unit>`,
-      so the stream's payload type is **not on the route at all**. What an SSE member returns
-      (`AsyncGenerator<T>`? a typed `sseStream` wrapper? how is `T` even declared?) has to be settled
-      by the maintainer before anything is written. `runtime/sse.ts` exists and is verified.
+- [x] **DONE `2a3df280` — `Sse`, emitted UNTYPED** (maintainer decision, 2026-07-30). A member returns
+      `AsyncGenerator<SseEvent>` and takes a trailing `options?: SseOptions`; events carry raw `data`
+      strings. `ApiRoute.Sse.responseType` is `TypeRef<Unit>`, so there is nothing to derive — typing
+      it would mean changing how SSE endpoints declare themselves server-side.
+      **An SSE stream does NOT go through `config.transport`** (the body is consumed as bytes, which
+      `HttpTransport` cannot express), so auth is per-call via `SseOptions.headers`.
 - [x] **DONE `51f2bd7e`** — `TsSdkGenerateCliCommand`, `funktorCodegen()`, and the one authorized
       `instance(codecConfig)` line in `Funktor_Rest`. `FunktorCodegenWiringSpec` proves the
       registrations RESOLVE, not merely compile — a module definition type-checks whether or not its
@@ -186,6 +188,31 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 ---
 
 ## Note to next loop
+
+## PHASE 2 COMPLETE 2026-07-30 (`2a3df280`)
+
+**Every §3 box is checked.** All five `ApiRoute` variants emit, the CLI and kontainer module are
+wired, and `funktor/rest` carries its one authorized line. There is no next item in this file — the
+loop has nothing left to take.
+
+**Baseline:** `:ultra:codegen:check` 221, `:funktor:codegen:check` 33, `:funktor:rest:jvmTest` 102,
+0 failures, 10 ts-verify fixtures (7 `@ts-expect-error` sites), compile sweep clean.
+
+**Next, and NOT in this file:** the mandatory `/feature-review` gate on
+`.claude/tasks/20260730-funktor-codegen-rest-contributor.md`, then a DOCS follow-up — this added two
+public modules and a public extension point, and CLAUDE.md requires a tracked docs task on archive.
+
+**Known limitation, deliberately not fixed:** a feature whose routes are ALL streams contributes no
+roots, and `TsSdkBuilder` rejects a run with none ("No contributor supplied any root type"). That
+message is wrong for an SSE-only SDK, which is legitimate output. Not reachable today — the demo has
+REST alongside SSE — so it is recorded rather than special-cased.
+
+**What this iteration found:** the file EMISSION and the IMPORT of a conditional runtime module are
+two separate conditions. Getting only one right leaves a client importing a module that was never
+written, which no assertion about emitted paths notices and which `tsc` cannot catch in ts-verify,
+because the harness copies every runtime module into place regardless.
+
+---
 
 ## ITERATION 5 DONE 2026-07-30 — CLI + kontainer module landed (`51f2bd7e`)
 
