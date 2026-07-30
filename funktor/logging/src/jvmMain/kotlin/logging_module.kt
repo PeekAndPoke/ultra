@@ -17,7 +17,6 @@ import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.module
 import io.peekandpoke.ultra.log.LogLevel
 import io.peekandpoke.ultra.log.Slf4jAppender
-import org.slf4j.LoggerFactory
 
 /** Registers the Funktor logging module in the kontainer. */
 fun KontainerBuilder.funktorLogging(
@@ -49,7 +48,7 @@ val Funktor_Logging = module { builder: FunktorLoggingBuilder.() -> Unit ->
     FunktorLoggingBuilder(this).apply(builder)
 
     // Log appender for Slf4J TODO: make it configurable through FunktorLogging
-    instance(Slf4jAppender(LoggerFactory.getLogger(Application::class.java)))
+    instance(Slf4jAppender())
 }
 
 /** DSL builder for configuring the logging module backend (Karango or Monko). */

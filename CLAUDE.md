@@ -109,10 +109,26 @@ These make a suite look green while the feature is broken. Treat them as precond
   `./gradlew compileKotlinJvm compileTestKotlinJvm compileKotlinJs compileTestKotlinJs compileKotlin
   compileTestKotlin --continue` and check for `^e:`. Native targets need their own
   `compileKotlinLinuxX64` and are not covered either.
+- **A green compile sweep can be measured against STALE test classes.** After an ABI change to a
+  published interface in `ultra/log`, Gradle held `:ultra:vault:compileTestKotlinJvm` UP-TO-DATE, so
+  the sweep reported zero errors while the compiled test double still implemented the *old*
+  signature. It surfaced only at runtime, as `AbstractMethodError` wrapped inside an
+  `AssertionFailedError` — i.e. it looked like a logic bug, not a build problem. `touch` does not
+  help (Gradle hashes content, not mtime). **Most likely cause: a concurrent build.** Another agent
+  was building the same worktree at the time, and Kotlin's incremental state under `build/kotlin/`
+  is not safe against two interleaved builds — so a task's snapshot can claim up-to-date while its
+  outputs are not. This was not proven, only inferred; the observation itself is solid.
+  Recovery: `rm -rf <module>/build/classes/kotlin/**/test` for every dependent module and re-run.
+  Only then is "compiles clean" evidence. Observed 2026-07-30.
 - **A grep for call sites misses receiver-less calls.** Searching `.observe(` will not find
   `observe(x) { }`, where the receiver is implicit — that is how the same break was missed twice.
   When removing an extension, prefer renaming it and compiling: the compiler finds every caller,
   a grep finds the ones you thought of.
+- **…and a grep for implementors misses anonymous objects.** Sizing the `Log` interface change by
+  grepping `: Log` found the named classes but not three `object : Log { }` literals inside a monko
+  spec. They surfaced only after the stale test classes above were deleted and the module actually
+  recompiled. Same rule applies: let the compiler enumerate implementors, and treat a grep-derived
+  blast radius as a lower bound. Confirmed 2026-07-30.
 - **`shouldBe` is untyped**, so `valueClass shouldBe "literal"` rots silently.
 - **Never emit `\uXXXX` escapes or raw control characters in an edit** — they land as raw bytes, in
   file writes and match strings alike. Write `Char(0xNN)` instead, and pin the property that makes a

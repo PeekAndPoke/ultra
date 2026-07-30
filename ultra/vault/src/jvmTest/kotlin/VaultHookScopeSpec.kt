@@ -21,8 +21,10 @@ class VaultHookScopeSpec : StringSpec({
     class RecordingLog : Log {
         val messages = mutableListOf<String>()
 
-        override fun log(level: LogLevel, message: String) {
-            synchronized(messages) { messages.add("$level: $message") }
+        override fun log(level: LogLevel, message: String, error: Throwable?) {
+            // the error arrives alongside the message now, rather than folded into it
+            val rendered = "$level: $message" + (error?.let { " <${it::class.simpleName}>" } ?: "")
+            synchronized(messages) { messages.add(rendered) }
         }
 
         fun snapshot(): List<String> = synchronized(messages) { messages.toList() }

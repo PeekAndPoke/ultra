@@ -7,6 +7,7 @@ import io.peekandpoke.funktor.insights.InsightsCollectorData
 import io.peekandpoke.funktor.insights.gui.InsightsBarTemplate
 import io.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
 import io.peekandpoke.ultra.log.LogAppender
+import io.peekandpoke.ultra.log.LogEvent
 import io.peekandpoke.ultra.log.LogLevel
 import io.peekandpoke.ultra.semanticui.SemanticFn
 import io.peekandpoke.ultra.semanticui.icon
@@ -14,7 +15,6 @@ import io.peekandpoke.ultra.semanticui.semantic
 import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.pre
 import kotlinx.html.title
-import java.time.ZonedDateTime
 
 class LogCollector : InsightsCollector {
 
@@ -24,19 +24,17 @@ class LogCollector : InsightsCollector {
         internal val entries = mutableListOf<Data.Entry>()
 
         fun getAndClear(): List<Data.Entry> {
-            return entries.toList().also {
-                synchronized(lock) {
-                    entries.clear()
-                }
+            return synchronized(lock) {
+                entries.toList().also { entries.clear() }
             }
         }
 
-        override suspend fun append(ts: ZonedDateTime, level: LogLevel, message: String, loggerName: String) {
+        override suspend fun append(event: LogEvent) {
             synchronized(lock) {
                 entries.add(
                     Data.Entry(
-                        level = level,
-                        text = LogAppender.format(ts, level, message, loggerName),
+                        level = event.level,
+                        text = LogAppender.format(event),
                     )
                 )
             }

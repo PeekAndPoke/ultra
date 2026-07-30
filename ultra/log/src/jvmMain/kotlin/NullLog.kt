@@ -7,8 +7,11 @@ package io.peekandpoke.ultra.log
  */
 object NullLog : Log {
 
-    /** Discards the [message] without producing any output. */
-    override fun log(level: LogLevel, message: String) {
+    /** Nothing consumes these messages, so no level is enabled and no lambda message is built. */
+    override fun isEnabled(level: LogLevel): Boolean = false
+
+    /** Discards the message without producing any output. */
+    override fun log(level: LogLevel, message: String, error: Throwable?) {
         // noop
     }
 }

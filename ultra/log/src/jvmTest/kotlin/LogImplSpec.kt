@@ -15,8 +15,8 @@ class LogImplSpec : StringSpec() {
 
         val entries = mutableListOf<Entry>()
 
-        override suspend fun append(ts: ZonedDateTime, level: LogLevel, message: String, loggerName: String) {
-            entries.add(Entry(ts, level, message, loggerName))
+        override suspend fun append(event: LogEvent) {
+            entries.add(Entry(event.ts, event.level, event.message, event.loggerName))
         }
     }
 
