@@ -4,6 +4,7 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -27,8 +28,7 @@ class GenericsSpec : FreeSpec() {
 
     private fun TypeModel.names(): List<String> = decls.values.map { it.name }
 
-    private fun TypeModel.declOf(cls: KClass<*>): TsTypeDecl =
-        decls.entries.first { it.key.key == cls.qualifiedName }.value
+    private fun TypeModel.declOf(cls: KClass<*>): TsTypeDecl = declFor(cls)!!
 
     private fun TypeModel.objOf(cls: KClass<*>): TsTypeDecl.Obj =
         declOf(cls).shouldBeInstanceOf<TsTypeDecl.Obj>()
@@ -37,6 +37,45 @@ class GenericsSpec : FreeSpec() {
         objOf(cls).props.first { it.name == prop }.type
 
     init {
+        "a generic used as a ROOT resolves to its declaration" - {
+
+            // Phase 2's shape: a paged endpoint roots `PageOf<Talk>` directly. Declarations are keyed
+            // by CLASS, so an id built from an instantiation never matches one — `TsFixtureGenerator`
+            // already made this lookup and survived only because no fixture used a generic root.
+
+            "declFor finds it from an instantiated KType" {
+                val model = walk(typeOf<FxPageOf<FxTalk>>())
+
+                model.declFor(typeOf<FxPageOf<FxTalk>>())
+                    .shouldBeInstanceOf<TsTypeDecl.Obj>()
+                    .typeParams shouldContainExactly listOf("T")
+            }
+
+            "the raw id lookup does NOT match, which is why declFor exists" {
+                val model = walk(typeOf<FxPageOf<FxTalk>>())
+
+                withClue("TypeId.of carries the arguments; a declaration id carries only the class") {
+                    model.decls[TypeId.of(typeOf<FxPageOf<FxTalk>>())] shouldBe null
+                }
+            }
+
+            "two different instantiations both resolve to the one declaration" {
+                val model = walk(typeOf<FxPageOf<FxTalk>>(), typeOf<FxPageOf<FxSpeaker>>())
+
+                model.declFor(typeOf<FxPageOf<FxTalk>>()) shouldBe
+                        model.declFor(typeOf<FxPageOf<FxSpeaker>>())
+
+                withClue("and both payloads must still be reachable") {
+                    model.declFor(FxTalk::class).shouldNotBeNull()
+                    model.declFor(FxSpeaker::class).shouldNotBeNull()
+                }
+            }
+
+            "an unreached class resolves to null rather than throwing" {
+                walk(typeOf<FxSpeaker>()).declFor(FxTalk::class) shouldBe null
+            }
+        }
+
         "the whole shape matrix resolves with nothing left over" {
             val model = walk(typeOf<FxGenericMatrix>())
 

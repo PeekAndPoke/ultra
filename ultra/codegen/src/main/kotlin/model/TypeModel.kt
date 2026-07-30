@@ -1,5 +1,9 @@
 package io.peekandpoke.ultra.codegen.model
 
+import kotlin.reflect.KClass
+import kotlin.reflect.KType
+import kotlin.reflect.jvm.jvmName
+
 /**
  * The frozen result of walking the type graph.
  *
@@ -49,6 +53,22 @@ data class TypeModel(
 
     /** The declaration for [id], or `null`. */
     operator fun get(id: TypeId): TsTypeDecl? = decls[id]
+
+    private val byDeclKey: Map<String, TsTypeDecl> by lazy {
+        decls.entries.associate { (id, decl) -> id.key to decl }
+    }
+
+    /**
+     * The declaration for [cls], regardless of how it was instantiated.
+     *
+     * Declarations are keyed by the CLASS — `PageOf<Talk>` and `PageOf<Speaker>` share one — so
+     * `decls[TypeId.of(typeOf<PageOf<Talk>>())]` never matches: that id's key carries the arguments.
+     * Anything looking a declaration up from a `KType` must come through here.
+     */
+    fun declFor(cls: KClass<*>): TsTypeDecl? = byDeclKey[cls.qualifiedName ?: cls.jvmName]
+
+    /** The declaration for [type]'s class, or `null` when its classifier is not a class. */
+    fun declFor(type: KType): TsTypeDecl? = (type.classifier as? KClass<*>)?.let { declFor(it) }
 
     /** True when any of [qualifiedNames] is reachable in this model. */
     fun usesAny(vararg qualifiedNames: String): Boolean =

@@ -185,7 +185,10 @@ object TsFixtureGenerator {
 
             File(targetDir, "${fixture.name}.sample.json").writeText(slumbered.toJson())
 
-            val decl = model.decls[TypeId.of(fixture.schemaType)] as? TsTypeDecl.Obj
+            // declFor, not decls[TypeId.of(...)]: a declaration is keyed by its CLASS, so an id built
+            // from an instantiation never matches one. Harmless while every fixture root is
+            // non-generic, and an immediate error the moment one is not.
+            val decl = model.declFor(fixture.schemaType) as? TsTypeDecl.Obj
                 ?: error("fixture '${fixture.name}': no object declaration for ${fixture.schemaType}")
 
             // Required = everything the schema must insist on. A defaulted constructor parameter is
