@@ -52,8 +52,14 @@ These landed in the review round with **no tests**. Each needs a test that fails
       registry entry (`TypeWalkerSpec`) and its observable consequence, the emitted import plus the
       variant rendering by its claimed name (`TsModelEmitterSpec`). Mutation-tested; restoring the early
       return kills both.
-- [ ] `declareUnion` root-parent hop — needs an intermediate sealed class whose companion is on the
-      ROOT (`Base` has the `Polymorphic.Parent` companion, `Mid : Base()`, `A : Mid()`).
+- [x] **DONE `a5182d35`** — `declareUnion` root-parent hop. A surviving mutant showed **half the
+      review fix was wrong**: discriminator hops to the root (the server writes what
+      `createParentSlumberer` decides), variants do NOT (a field typed as an intermediate sealed class
+      cannot hold the root's other children, and widening emitted unreachable declarations). New
+      `FxDeepRoot` fixture; plus a general invariant test that every union agrees with its variants on
+      the discriminator field. Mutation-tested 2/2.
+      **Lesson:** a mutant that survives is not always a missing test — here it meant the FIX was
+      wrong. Check which before adding an assertion to make the mutant die.
 - [ ] `appendAlias` recursion — value class on a cycle (`FxIds(val items: List<FxHolder>)` +
       `FxHolder(val ids: FxIds)`). Assert `z.lazy` is emitted.
 - [ ] `resource()` contributor classloader — fixture must be loader-observable, else it passes either
@@ -65,6 +71,14 @@ These landed in the review round with **no tests**. Each needs a test that fails
 See the **Review record** table in `20260729-ts-sdk-codegen.md` for the full list with file:line.
 Suggested order:
 
+- [ ] **NEW, found in iteration 4 — a defect in `ultra/slumber`, NOT in codegen.** Slumber cannot
+      round-trip an intermediate sealed class when the custom discriminator lives on the root:
+      `createParentSlumberer` hops via `getParent` and WRITES `kind`
+      (`builtin/polymorphism/Polymorphic.kt:122-124`), while `createParentAwaker` does NOT hop and
+      READS `_type` (`:104`). So slumber-then-awake of a `Middle`-typed value fails.
+      **Evidence level: verified by reading both functions, NOT executed.** Prove it with a round-trip
+      test before acting. Battle-tested code and out of scope for the codegen backlog — if real, it
+      needs its own task and its own review, per the repo rules on `ultra/slumber`.
 - [ ] **NEW, found in iteration 3 (not from the review).** `TsModelEmitter.appendUnion` builds
       `variants` once via `renderer.nameOf(it)` and uses that list in BOTH type position
       (`export type X = A | B`) and schema position (`z.union([A, B])`). For a declaration those
@@ -108,16 +122,20 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
-**Iteration 3 (2026-07-30, ~02:10).** Backlog §1 items 1–3 done (`ef5eba72`, `2623a08d`, `3339e2ca`).
-131 tests green (was 120 at review end), 6 ts-verify fixtures. Working tree clean for `ultra/codegen`.
+**Iteration 4 (2026-07-30, ~02:20).** Backlog §1 items 1–4 done (`ef5eba72`, `2623a08d`, `3339e2ca`,
+`a5182d35`). 134 tests green (was 120 at review end), 6 ts-verify fixtures. Tree clean for
+`ultra/codegen`.
 
-**Item 2 found that a review-round fix was incomplete**, so keep assuming nothing about the remaining
-applied fixes and assert each property separately. Of the three §1 items left, the classloader one is
-the likeliest to hide the same problem — its current test passes BECAUSE of the old bug, so it cannot
-regression-cover the fix without a genuinely loader-isolated fixture.
+**Two of the four review-round fixes verified so far were wrong or incomplete** (items 2 and 4). That
+is now the expectation, not the surprise. Assert each property separately, and when a mutant survives,
+first ask whether the FIX is wrong before adding an assertion to kill it.
 
-A new latent bug turned up in iteration 3 while writing an unrelated test; it is logged at the top of
-§2. Reproduce it before fixing — it may be unreachable.
+Of the two §1 items left, the classloader one is the likeliest to hide the same problem — its current
+test passes BECAUSE of the old bug, so it cannot regression-cover the fix without a genuinely
+loader-isolated fixture.
+
+Two findings from iterations 3 and 4 are logged at the top of §2, both marked with their evidence
+level. Neither has been reproduced. Reproduce before fixing.
 
 Do NOT re-fix the `.bufferedReader()` charset non-bug — it was a wrong finding; see the Review record.
 
@@ -125,12 +143,12 @@ Do NOT re-fix the `.bufferedReader()` charset non-bug — it was a wrong finding
 `.claude/tasks/20260729-log-scan-findings.md`, `.claude/tasks/20260729-redteam-log-forging.md`.
 `.idea/compiler.xml` is modified in the tree and is NOT ours to commit — leave it.
 
-**Next action:** backlog §1 item 4 — `declareUnion` root-parent hop. Needs a NEW fixture: a three-level
-sealed hierarchy where the `Polymorphic.Parent` companion sits on the ROOT (`Base`), with `Mid : Base()`
-and a concrete `A : Mid()`. Walk `typeOf<Mid>()` — walking `Base` would not discriminate, since for
-`Base` the declared class already IS the companion holder. Assert the union's `discriminatorField`
-matches the literal the child carries; before the fix the union said `_type` while the child said the
-root's override.
+**Next action:** backlog §1 item 5 — `appendAlias` recursion. Needs a value class on a cycle:
+`FxIds(val items: List<FxHolder>)` + `FxHolder(val ids: FxIds)`. Assert `z.lazy` IS emitted for the
+alias. Note `TsDeclOrder` seeds from sorted keys, so which of the pair becomes lazy depends on name
+ordering — assert the PROPERTY (nothing references a const declared later unless lazy), which the
+existing "no schema references a const declared later" test already expresses; extend its root list
+rather than writing a positional assertion that name changes would break.
 
 Still nothing from §2 until §1 is fully done.
 
