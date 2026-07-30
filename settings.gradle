@@ -54,6 +54,7 @@ include(
         // FUNKTOR //////////////////////////////////////////////////////////////////////////////
         ":funktor:all",
         ":funktor:auth",
+        ":funktor:codegen",
         ":funktor:core",
         ":funktor:cluster",
         ":funktor:inspect",

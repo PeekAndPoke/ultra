@@ -29,6 +29,14 @@ data class TypeModel(
      * which is reported in the run summary.
      */
     val undetermined: List<Undetermined>,
+    /**
+     * The reference each root resolved to, keyed by the root's label.
+     *
+     * A root is a position rather than a declaration, so this is the only way an emitter can render
+     * it — an endpoint returning `List<Talk>` needs `z.array(Talk)`, which no declaration carries.
+     * Labels are unique; `TsSdkBuilder` rejects a collision naming both contributors.
+     */
+    val rootRefs: Map<String, TsTypeRef> = emptyMap(),
 ) {
     /** A position whose type could not be determined at all. */
     data class Undetermined(
@@ -69,6 +77,17 @@ data class TypeModel(
 
     /** The declaration for [type]'s class, or `null` when its classifier is not a class. */
     fun declFor(type: KType): TsTypeDecl? = (type.classifier as? KClass<*>)?.let { declFor(it) }
+
+    /**
+     * The reference the root labelled [label] resolved to.
+     *
+     * Fails rather than returning null: a contributor asking for a root it did not add is a bug in
+     * that contributor, and a null here would surface much later as a missing schema in emitted code.
+     */
+    fun refForRoot(label: String): TsTypeRef = rootRefs[label] ?: error(
+        "No root is labelled '$label'. A contributor may only ask for roots it added during its " +
+                "contribute phase. Known labels: ${rootRefs.keys.joinToString()}"
+    )
 
     /** True when any of [qualifiedNames] is reachable in this model. */
     fun usesAny(vararg qualifiedNames: String): Boolean =

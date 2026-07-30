@@ -72,17 +72,20 @@ Vite app sets anyway, and which is exactly what the planned `requires(...)` chec
 
 ## Spec
 
-- [ ] Emitted relative imports carry `.ts`; a fixture actually imports a runtime module **at run time**,
-      closing the hole above.
-- [ ] `runtime/client.ts` — `SdkConfig`, `request(...)`, `ApiError`, `unwrap(...)`. Hand-written,
-      shipped as a resource like the other runtime modules.
-- [ ] `TsRuntime.Module` gains a dependency closure — `Client` needs `Http` + `ApiResponse`, and
-      `emit` today takes a flat set with no closure, so asking for one would ship a broken SDK.
-- [ ] `funktor/codegen` module: depends on `ultra:codegen` + `funktor:rest`, deliberately NOT part of
-      `funktor/rest` (that ships in every production server).
-- [ ] `RestApiTsContributor`, **profile-shaped from day one** — a root predicate as a constructor
-      parameter defaulting to "all routes", reading `CodeGenHints.tags`.
-- [ ] All five `ApiRoute` variants: `Plain`, `WithParams`, `WithBody`, `WithBodyAndParams`, `Sse`.
+- [x] **DONE `e924ac53`** — emitted relative imports carry `.ts`; the `dated` fixture imports a runtime
+      module **at run time**, closing the hole above.
+- [x] **DONE `b9669ae8`** — `runtime/client.ts` (`SdkConfig`, `request`, `ApiProtocolError`, `ApiError`,
+      `unwrap`) plus `TsRuntime.Module.requires` and the closure in `emit`.
+- [x] **DONE** — `TypeModel.rootRefs` / `refForRoot`, and a duplicate-root-label check in
+      `TsSdkBuilder` naming both contributors.
+- [x] **DONE** — `funktor/codegen` module: `ultra:codegen` + `funktor:rest`, deliberately NOT part of
+      `funktor/rest` (that ships in every production server). Plain `kotlin("jvm")`, not multiplatform.
+- [x] **DONE** — `TsClientEmitter` / `TsClientSpec` on the **ultra** side; `RestApiTsContributor` only
+      walks and names. See "the split" below.
+- [x] **DONE** — `RestApiTsContributor`, **profile-shaped from day one**: `include: (ApiRoute<*>) -> Boolean`
+      defaulting to all routes, and a test drives it off `CodeGenHints.tags`.
+- [ ] All five `ApiRoute` variants. **Only `Plain` is implemented**; the other four are REJECTED with a
+      message naming the route, rather than silently emitting a half client.
 - [ ] Path vs query split from `TypedRoute.parsedUriParams`; URL building **matches
       `TypedRouteRenderer`** (`funktor/core/src/jvmMain/kotlin/broker/TypedRouteRenderer.kt:28`).
       There is no `UriParamBuilder` — earlier plan drafts named one that does not exist.
@@ -92,11 +95,77 @@ Vite app sets anyway, and which is exactly what the planned `requires(...)` chec
 
 ## Implementation notes
 
+### The split: rendering lives in `ultra/codegen`, walking in `funktor/codegen`
+
+`TsClientEmitter` + `TsClientSpec` (`ultra/codegen/src/main/kotlin/ts/TsClientEmitter.kt`) render a
+framework-neutral client description; `RestApiTsContributor` builds one from an `ApiFeature`.
+
+The forcing reason is verification, not tidiness: `ts-verify` lives in `ultra/codegen`, so a renderer
+that could only be driven from `funktor/codegen` would need a second copy of the whole pinned
+toolchain to prove anything about its output. With the split, the emitted client is compiled AND
+executed by the existing harness. It also happens to be the right seam for the Vue contributors, which
+will emit against the same renderer.
+
+### The envelope must be unwrapped — found by fixtures, not by reading
+
+A route's `responseType` is the **envelope**, not the payload. A handler returns `ApiResponse.ok(x)`,
+so `RESPONSE` binds to `ApiResponse<List<Talk>>`. Measured:
+
+```
+PROBE route=/api/fx/talks responseType=io.peekandpoke.ultra.remote.ApiResponse<kotlin.collections.List<...FxTalkModel>>
+```
+
+The first version rooted that directly, which would have walked the hand-written envelope into
+`models.ts` and made `request` wrap it a **second** time — every parse failing against output no
+server produces. `payloadTypeOf` now unwraps it and fails loudly on a non-envelope or a star
+projection.
+
+### `TypeModel.rootRefs`
+
+`TypeWalker.walk` used to discard each root's resolved reference ("a root is a position, not a
+declaration"). A client member needs exactly that reference — `List<Talk>` declares nothing of its
+own, so `z.array(Talk)` can only come from the ref. Re-deriving it at emit time was the obvious
+alternative and the wrong one: two resolution paths drift, and the emitted schema would stop
+describing what the walk validated.
+
+Root labels are therefore unique-by-contract, and `TsSdkBuilder` rejects a collision naming both
+contributors. That check immediately caught a real one — both helpers in `TsSdkBuilderSpec` labelled
+their root `"root"`.
+
+### Emitted shape
+
+```ts
+export class FxTalksApi {
+    private readonly config: SdkConfig
+
+    constructor(config: SdkConfig) {
+        this.config = config
+    }
+
+    /** List all talks */
+    readonly listTalks = () =>
+        request(this.config, 'GET', '/api/fx/talks', z.array(FxTalkModel))
+}
+```
+
+Claimed types are imported from their own runtime module, never from `models.ts` — `models.ts`
+imports them, it does not re-export them.
+
 ## Test evidence
 
-- [ ] Unit/behavior tests
-- [ ] ts-verify fixture that executes a generated client
-- [ ] Full test command(s) run + green: `...`
+- [x] Unit/behaviour tests — `RestApiTsContributorSpec` (11), `TsSdkBuilderSpec` root-reference and
+      label cases, `TsRuntimeSpec` extension and closure cases.
+- [x] ts-verify fixture that **executes** a generated client — `fxDemoClient.ts` is constructed
+      against a stub transport and called, covering the class shape, imports resolving, the schema
+      expression, `request`, and the envelope parse.
+- [x] Mutation-tested. Every guarantee below was broken and confirmed red:
+      prototype methods instead of arrow fields (**tsc stays silent**; only execution catches it),
+      claimed types imported from `models.ts` (TS2459), envelope not unwrapped, unsupported variants
+      accepted, `include` ignored, duplicate members allowed, root label unqualified, duplicate-label
+      check removed, root refs not recorded, extensionless specifiers.
+- [x] `./gradlew :ultra:codegen:check :funktor:codegen:check` — **215 + 11 tests, 0 failures**,
+      10 ts-verify fixtures.
+- [x] Compile sweep (6 targets, `--continue`) — no `^e:`.
 
 ## Review record (filled by /feature-review)
 

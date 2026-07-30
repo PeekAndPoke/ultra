@@ -14,6 +14,7 @@ import { ApiError, ApiProtocolError, request, unwrap } from './generated/runtime
 import { buildUrl, fetchTransport } from './generated/runtime/http.ts'
 import type { HttpRequest, HttpTransport } from './generated/runtime/http.ts'
 import { SseParser } from './generated/runtime/sse.ts'
+import { FxDemoClient } from './generated/fxDemoClient.ts'
 import { FxSpeaker } from './generated/talk.ts'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -280,6 +281,68 @@ async function checkRequest(report: Report): Promise<void> {
     }
 }
 
+/**
+ * The end-to-end check: a GENERATED client, constructed and called for real.
+ *
+ * Everything else here tests hand-written runtime. This is the only place emitted client code is
+ * executed, and it exercises the whole chain at once — the class shape, its imports resolving, the
+ * schema expression the emitter chose, `request`, and the envelope parse. A Kotlin assertion over the
+ * emitted string can only compare it to a string written by the same hand that emitted it.
+ */
+async function checkGeneratedClient(report: Report): Promise<void> {
+    let sent: HttpRequest | undefined
+
+    const transport: HttpTransport = {
+        send: (req) => {
+            sent = req
+
+            const payload = req.url.includes('/speakers')
+                ? '[{"name":"Ada","bio":null}]'
+                : '{"ts":1785406530000,"timezone":"UTC","human":"2026-07-30T10:15:30.000Z"}'
+
+            return Promise.resolve({
+                status: 200,
+                statusText: 'OK',
+                body: `{"status":{"value":200,"description":"OK"},"data":${payload}}`,
+            })
+        },
+    }
+
+    const client = new FxDemoClient({ baseUrl: 'http://x', transport })
+
+    // 1. The aggregate really constructs its groups, and a member call reaches the transport.
+    const speakers = await client.talks.listSpeakers()
+
+    report(sent?.url === 'http://x/api/fx/speakers', 'client: the generated member builds its URL')
+    report(sent?.method === 'GET', 'client: the generated member sends its declared method')
+    report(
+        equal(speakers.data, [{ name: 'Ada', bio: null }]),
+        'client: the generated schema parses the payload',
+    )
+
+    // 2. A claimed type as the payload — imported from its runtime module, not from models.ts. If the
+    //    emitter had imported it from models.ts this file would not even load.
+    const time = await client.status.serverTime()
+
+    report(time.data?.timezone === 'UTC', 'client: a claimed payload type parses through the client')
+    report(sent?.method === 'GET' && sent?.url === 'http://x/api/fx/time', 'client: second group is wired')
+
+    // 3. THE reason members are arrow-function class fields. A prototype method type-checks here and
+    //    throws at run time, and this is the Vue-composable idiom, so it would break in real use.
+    const { listSpeakers } = client.talks
+
+    try {
+        const destructured = await listSpeakers()
+
+        report(
+            equal(destructured.data, [{ name: 'Ada', bio: null }]),
+            'client: a destructured member still works (arrow field, not prototype method)',
+        )
+    } catch (e) {
+        report(false, 'client: a destructured member still works', (e as Error).message.split('\n')[0])
+    }
+}
+
 function checkSseParser(report: Report): void {
     const simple = new SseParser().push('data: hello\n\n')
 
@@ -349,6 +412,7 @@ export async function verifyRuntime(report: Report, generatedDir: string): Promi
         ['buildUrl', checkBuildUrl],
         ['transport', checkTransport],
         ['request', checkRequest],
+        ['generatedClient', checkGeneratedClient],
         ['sse', checkSseParser],
     ]
 

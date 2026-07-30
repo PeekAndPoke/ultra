@@ -94,9 +94,26 @@ class TsSdkBuilder(
         contributors.forEach { it.claimTypes(claims.scopeFor(it.name)) }
 
         // Phase 2 — roots.
-        val roots = contributors.flatMap { contributor ->
-            TsSdkRoots(contributor.name).also { contributor.contribute(it) }.collected()
+        val rootsByContributor = contributors.map { contributor ->
+            contributor.name to TsSdkRoots(contributor.name).also { contributor.contribute(it) }.collected()
         }
+
+        // A label is how a contributor asks for its root's resolved reference at emit time
+        // (`TypeModel.refForRoot`), so a duplicate would silently hand one contributor another's type.
+        val labelOwners = rootsByContributor
+            .flatMap { (owner, roots) -> roots.map { it.label to owner } }
+            .groupBy({ it.first }, { it.second })
+            .filterValues { it.size > 1 }
+
+        check(labelOwners.isEmpty()) {
+            "Root labels must be unique — duplicated: " +
+                    labelOwners.entries.joinToString { (label, owners) -> "'$label' by ${owners.joinToString()}" } +
+                    ". A label identifies a root's resolved type at emit time, so a duplicate would " +
+                    "give one contributor another's type. Fix: qualify the label with the " +
+                    "contributor's own name."
+        }
+
+        val roots = rootsByContributor.flatMap { (_, roots) -> roots }
 
         check(roots.isNotEmpty()) {
             "No contributor supplied any root type, so the generated SDK would be empty. A contributor " +

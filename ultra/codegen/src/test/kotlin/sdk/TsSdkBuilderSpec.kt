@@ -3,13 +3,16 @@ package io.peekandpoke.ultra.codegen.sdk
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.types.beInstanceOf
 import io.peekandpoke.ultra.codegen.contributors.MpDateTimeTsContributor
 import io.peekandpoke.ultra.codegen.model.FxNode
 import io.peekandpoke.ultra.codegen.model.FxSpeaker
 import io.peekandpoke.ultra.codegen.model.FxTalk
 import io.peekandpoke.ultra.codegen.model.TsTypeClaims
+import io.peekandpoke.ultra.codegen.model.TsTypeRef
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.slumber.SlumberConfig
 import kotlin.reflect.KType
@@ -23,7 +26,18 @@ private class RootContributor(
     override val name: String,
     private val type: KType,
 ) : TsSdkContributor {
-    override fun contribute(roots: TsSdkRoots) = roots.root(type, "root")
+    // Qualified by the contributor's name because root labels must be unique across the whole run —
+    // they are how a contributor asks for its root's resolved reference at emit time.
+    override fun contribute(roots: TsSdkRoots) = roots.root(type, "$name:root")
+}
+
+/** Roots one type under a caller-chosen label, so a collision can be provoked deliberately. */
+private class FixedLabelContributor(
+    override val name: String,
+    private val type: KType,
+    private val label: String,
+) : TsSdkContributor {
+    override fun contribute(roots: TsSdkRoots) = roots.root(type, label)
 }
 
 /** Writes one file during emit. */
@@ -31,7 +45,7 @@ private class FileContributor(
     override val name: String,
     private val path: String,
 ) : TsSdkContributor {
-    override fun contribute(roots: TsSdkRoots) = roots.root(typeOf<FxSpeaker>(), "root")
+    override fun contribute(roots: TsSdkRoots) = roots.root(typeOf<FxSpeaker>(), "$name:root")
     override fun emit(context: TsSdkEmitContext) = context.out.file(path, "// $name")
 }
 
@@ -186,6 +200,63 @@ class TsSdkBuilderSpec : FreeSpec() {
                 }.exceptionOrNull()
 
                 thrown!!.message!! shouldContain "unique"
+            }
+
+            "two contributors using the same root label fail, naming both" {
+                // A label is how a contributor asks for its root's resolved reference at emit time,
+                // so a duplicate silently hands one contributor the other's type. Found for real: the
+                // helpers in this spec both labelled their root "root" until this check was added.
+                val thrown = runCatching {
+                    TsSdkBuilder.forTesting(
+                        listOf(
+                            FixedLabelContributor("alpha", typeOf<FxSpeaker>(), "shared"),
+                            FixedLabelContributor("beta", typeOf<FxNode>(), "shared"),
+                        ),
+                    ).build()
+                }.exceptionOrNull()
+
+                thrown!!.message!! shouldContain "'shared'"
+                thrown.message!! shouldContain "alpha"
+                thrown.message!! shouldContain "beta"
+            }
+        }
+
+        "root references" - {
+
+            "a root's resolved reference is reachable by its label" {
+                // A root is a POSITION, not a declaration — `List<FxSpeaker>` declares nothing of its
+                // own — so an endpoint returning one can only be rendered from this reference.
+                val model = TsSdkBuilder
+                    .forTesting(listOf(RootContributor("listy", typeOf<List<FxSpeaker>>())))
+                    .build().model
+
+                val ref = model.refForRoot("listy:root")
+
+                withClue("the root is a list, so the ref must be an array, not the element itself") {
+                    ref should beInstanceOf<TsTypeRef.ArrayOf>()
+                }
+
+                val item = (ref as TsTypeRef.ArrayOf).item
+
+                (item as TsTypeRef.Named).id.cls shouldBe FxSpeaker::class
+            }
+
+            "a nullable root keeps its nullability on the reference" {
+                val model = TsSdkBuilder
+                    .forTesting(listOf(RootContributor("maybe", typeOf<FxSpeaker?>())))
+                    .build().model
+
+                model.refForRoot("maybe:root") should beInstanceOf<TsTypeRef.Nullable>()
+            }
+
+            "asking for a label that was never added is an error naming the known labels" {
+                val model = TsSdkBuilder
+                    .forTesting(listOf(RootContributor("only", typeOf<FxSpeaker>())))
+                    .build().model
+
+                val thrown = runCatching { model.refForRoot("nope") }.exceptionOrNull()
+
+                thrown!!.message!! shouldContain "only:root"
             }
         }
 

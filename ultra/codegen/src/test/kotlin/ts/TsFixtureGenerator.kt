@@ -224,9 +224,98 @@ object TsFixtureGenerator {
             ManifestEntry(name = fixture.name, schema = decl.name, requiredFields = required)
         }
 
+        generateClient(targetDir, claims)
+
         File(targetDir, "manifest.json").writeText(entries.toManifestJson())
 
         println("[ts-fixtures] wrote ${entries.size} fixtures to $targetDir")
+    }
+
+    /**
+     * Emits a generated API CLIENT, plus the `models.ts` it imports from.
+     *
+     * This is the only place emitted client code meets a real compiler and a real runtime.
+     * `verifyRuntime.ts` constructs it against a stub transport and calls a member, which exercises
+     * the whole chain at once: the emitted class shape, its imports resolving, the schema expression
+     * it passes, `request`, and the envelope parse. A Kotlin assertion over the emitted string can
+     * only compare it to a string written by the same hand that emitted it.
+     *
+     * The client is built by hand from a [TsClientSpec] rather than by running the funktor REST
+     * contributor: that lives in `funktor/codegen`, which depends on this module, so reaching for it
+     * here would invert the dependency. The contributor's own tests cover the route walk that
+     * produces the spec.
+     */
+    private fun generateClient(targetDir: File, claims: TsTypeClaims) {
+        val model = TypeWalker(claims).walk(
+            listOf(
+                TypeWalker.Root(typeOf<List<FxSpeaker>>(), "client:listSpeakers"),
+                TypeWalker.Root(typeOf<FxTalk>(), "client:getTalk"),
+                TypeWalker.Root(typeOf<FxDated?>(), "client:latest"),
+                // A CLAIMED type as the payload itself. Claimed types are not exported by models.ts —
+                // they are imported into it from the module that owns them — so a client returning one
+                // must import it from there instead. Without this root that branch never runs, and the
+                // emitter would happily import a name models.ts does not export.
+                TypeWalker.Root(typeOf<MpInstant>(), "client:serverTime"),
+            )
+        )
+
+        File(targetDir, "models.ts").writeText(TsModelEmitter(model).emit())
+
+        val spec = TsClientSpec(
+            className = "FxDemoClient",
+            fileName = "fxDemoClient.ts",
+            doc = "A demo feature.\nSecond line, which must not break out of the comment: */",
+            groups = listOf(
+                TsClientSpec.Group(
+                    className = "FxTalksApi",
+                    member = "talks",
+                    doc = "Routes of the `fx-talks` group.",
+                    endpoints = listOf(
+                        // A LIST payload — the case that needs `z.array(...)`, i.e. the one where the
+                        // schema expression is not simply the declaration's own name.
+                        TsClientSpec.Endpoint(
+                            member = "listSpeakers",
+                            httpMethod = "GET",
+                            pattern = "/api/fx/speakers",
+                            responseRef = model.refForRoot("client:listSpeakers"),
+                            doc = "List all speakers",
+                        ),
+                        TsClientSpec.Endpoint(
+                            member = "getTalk",
+                            httpMethod = "GET",
+                            pattern = "/api/fx/talks/{id}",
+                            responseRef = model.refForRoot("client:getTalk"),
+                            doc = null,
+                        ),
+                    ),
+                ),
+                // A second group, so the aggregate really aggregates — and one whose payload reaches
+                // CLAIMED types, which are imported from the runtime module rather than from models.ts.
+                TsClientSpec.Group(
+                    className = "FxStatusApi",
+                    member = "status",
+                    doc = null,
+                    endpoints = listOf(
+                        TsClientSpec.Endpoint(
+                            member = "latest",
+                            httpMethod = "POST",
+                            pattern = "/api/fx/status",
+                            responseRef = model.refForRoot("client:latest"),
+                            doc = "Nullable payload",
+                        ),
+                        TsClientSpec.Endpoint(
+                            member = "serverTime",
+                            httpMethod = "GET",
+                            pattern = "/api/fx/time",
+                            responseRef = model.refForRoot("client:serverTime"),
+                            doc = "A claimed type as the payload",
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        File(targetDir, spec.fileName).writeText(TsClientEmitter(model).emit(spec))
     }
 
     /**

@@ -43,10 +43,15 @@ class TypeWalker(
 
     /** Walks from [roots] and returns the resulting model. */
     fun walk(roots: List<Root>): TypeModel {
+        val rootRefs = LinkedHashMap<String, TsTypeRef>()
+
         roots.forEach { root ->
-            // Resolving the root registers whatever it references; the ref itself is discarded
-            // because a root is a position, not a declaration.
-            resolveRef(root.type, listOf(root.label))
+            // Resolving a root registers whatever it references AND yields the root's own reference.
+            // The reference is kept: an endpoint's response type is a position, not a declaration, so
+            // a client member can only render `z.array(Talk)` from the ref. Deriving it a second time
+            // at emit is the obvious alternative and the wrong one — two resolution paths drift, and
+            // the emitted schema would stop describing what the walk validated.
+            rootRefs[root.label] = resolveRef(root.type, listOf(root.label))
         }
 
         while (queue.isNotEmpty()) {
@@ -60,6 +65,7 @@ class TypeWalker(
             unresolved = unresolved.toList(),
             longValued = longValued.toList(),
             undetermined = undetermined.toList(),
+            rootRefs = rootRefs.toMap(),
         )
     }
 
