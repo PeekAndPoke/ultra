@@ -99,14 +99,27 @@ Suggested order:
       expected zod combinator FROM the observed codec shape, so it fails if either side moves.
       Mutation-tested 4/4 against the CLAIMS. Also found: a non-nullable `JsonElement` holding
       `JsonNull` refuses to slumber — asserted because it is surprising, not wrong.
-- [ ] Tautological assertion `ts/TsModelEmitterSpec.kt:62` + neighbours that pass when absent
-- [ ] `MpDateTimeFieldParitySpec:108` compares the contributor against a copy of itself
+- [x] **DONE `ccab61d4`** — both vacuous assertions repaired. The Mp one is now driven from the
+      ultra/datetime artifact plus `MpDateTimeModule` itself, and asserts the enumeration found
+      something so it cannot pass by scanning nothing. Mutation-tested 2/2; both OLD versions survived
+      their mutations, which is why they were rewritten rather than tweaked.
 - [ ] `JsonElement` → `z.unknown()` should reach the advisory list
-- [ ] Generic sealed hierarchy loses payload type (`createBareType()` for variants) — needs design
-- [ ] `@Slumber.Field` non-ctor props emitted required — ties to request-vs-response shapes
-- [ ] `@Slumber.Field` selection re-derived from `DataClassSlumberer` — needs a slumber-side API
-- [ ] Scalar refinement (`Char` → `z.string().length(1)`, integral bounds)
-- [ ] `readArrayElements` duplicated verbatim in ultra/slumber
+**Everything below needs a MAINTAINER DECISION and is NOT pre-authorized — see the stop conditions.**
+
+- [ ] Generic sealed hierarchy loses payload type (`createBareType()` for variants). Needs a design
+      call: substitute the parent's reified arguments into each variant, or fail loudly on an
+      unsubstituted parameter? Both are defensible; the second is smaller and matches wrong-and-loud.
+- [ ] `@Slumber.Field` non-ctor props emitted required. Ties directly to request-vs-response shapes —
+      one declaration genuinely cannot describe both directions, and picking one is a Phase 2 design
+      decision, not a bug fix.
+- [ ] `@Slumber.Field` selection re-derived from `DataClassSlumberer`. The fix needs a NEW PUBLIC API on
+      `ultra/slumber` (expose the field selection), which is battle-tested code — its own task and
+      review round, not a drive-by.
+- [ ] Scalar refinement (`Char` → `z.string().length(1)`, integral bounds). A deliberate
+      strictness choice: it makes generated schemas reject input the server would also reject, but it
+      is a behaviour change for every existing SDK consumer.
+- [ ] `readArrayElements` duplicated verbatim in `ultra/slumber`. Cosmetic, but it is battle-tested
+      code; same rule as above.
 
 ### 3. Then: Phase 2 / the codegen additions
 
