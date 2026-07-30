@@ -35,6 +35,44 @@ class TsRuntimeSpec : FreeSpec() {
             out.entries().map { it.path } shouldContainExactlyInAnyOrder listOf("runtime/http.ts", "runtime/sse.ts")
         }
 
+        "emit also plans what the requested modules import" {
+            val out = TsSdkOutput()
+
+            TsRuntime.emit(out.scopeFor("test"), setOf(TsRuntime.Module.Client))
+
+            // Asking for the client alone must not produce an SDK whose client.ts imports two files
+            // that were never emitted — that surfaces as a module-resolution error inside generated
+            // output rather than as anything naming the contributor.
+            out.entries().map { it.path } shouldContainExactlyInAnyOrder listOf(
+                "runtime/client.ts",
+                "runtime/http.ts",
+                "runtime/apiResponse.ts",
+            )
+        }
+
+        "every declared requirement matches what the module actually imports" - {
+            // The closure is only as good as `requires`, and `requires` is hand-maintained. This reads
+            // the real resource and fails when a module imports a sibling it does not declare — the
+            // way that list rots is by someone adding an import, not by editing the list.
+            TsRuntime.Module.entries.forEach { module ->
+                "${module.name}" {
+                    val content = this::class.java.classLoader.getResourceAsStream(module.resource)
+                        ?.bufferedReader()?.readText()
+                        ?: error("runtime resource '${module.resource}' is not on the classpath")
+
+                    // Runtime modules all live in one directory, so a sibling is imported as
+                    // `./<filename>` — the resource is written by hand and cannot use moduleSpecifier.
+                    val imported = TsRuntime.Module.entries.filter { other ->
+                        other != module && content.contains("from './${other.path.substringAfterLast('/')}'")
+                    }
+
+                    withClue("${module.path} imports ${imported.map { it.path }}, declares ${module.requires.map { it.path }}") {
+                        module.requires shouldContainExactlyInAnyOrder imported
+                    }
+                }
+            }
+        }
+
         "emit copies the real resource content, not a placeholder" {
             val out = TsSdkOutput()
 

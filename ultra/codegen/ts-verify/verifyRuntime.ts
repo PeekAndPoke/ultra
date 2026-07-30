@@ -10,8 +10,9 @@
  * the value here is proving the runtime's declared types are usable from generated code.
  */
 import { apiResponse, isSuccess } from './generated/runtime/apiResponse.ts'
+import { ApiError, ApiProtocolError, request, unwrap } from './generated/runtime/client.ts'
 import { buildUrl, fetchTransport } from './generated/runtime/http.ts'
-import type { HttpRequest } from './generated/runtime/http.ts'
+import type { HttpRequest, HttpTransport } from './generated/runtime/http.ts'
 import { SseParser } from './generated/runtime/sse.ts'
 import { FxSpeaker } from './generated/talk.ts'
 import { readFileSync } from 'node:fs'
@@ -31,6 +32,21 @@ function rejected(fn: () => unknown): boolean {
 
 function equal(actual: unknown, expected: unknown): boolean {
     return JSON.stringify(actual) === JSON.stringify(expected)
+}
+
+/**
+ * Awaits [fn] and returns the thrown error's `name`, or `null` when it resolved.
+ *
+ * Returns the NAME rather than a boolean so a check cannot pass on the wrong error — an assertion
+ * that something merely threw is satisfied by a typo in the test itself.
+ */
+async function rejectedAsync(fn: () => Promise<unknown>): Promise<string | null> {
+    try {
+        await fn()
+        return null
+    } catch (e) {
+        return (e as Error).name
+    }
 }
 
 function checkApiResponse(report: Report, generatedDir: string): void {
@@ -122,6 +138,148 @@ async function checkTransport(report: Report): Promise<void> {
     report(seen?.method === 'POST' && seen?.body === '{}', 'fetchTransport: passes method and body through')
 }
 
+/**
+ * `request` is what every generated endpoint member reduces to, so a bug here is a bug in every
+ * endpoint at once. The transport is a stub: this checks what the client DOES with a response, which
+ * is the part the generator depends on.
+ */
+async function checkRequest(report: Report): Promise<void> {
+    /** A transport that records the request and answers [status] with [body]. */
+    function stub(status: number, body: string): { transport: HttpTransport; seen: () => HttpRequest } {
+        let captured: HttpRequest | undefined
+
+        return {
+            transport: {
+                send: (req) => {
+                    captured = req
+                    return Promise.resolve({ status, statusText: '', body })
+                },
+            },
+            seen: () => captured!,
+        }
+    }
+
+    const envelope = (data: string) => `{"status":{"value":200,"description":"OK"},"data":${data}}`
+
+    // 1. The happy path: URL built from pattern + params, payload validated, envelope returned.
+    {
+        const { transport, seen } = stub(200, envelope('{"name":"Ada","bio":null}'))
+
+        const result = await request(
+            { baseUrl: 'http://x', transport },
+            'GET',
+            '/api/speakers/{id}',
+            FxSpeaker,
+            { path: { id: 'a b' }, query: { q: 'x', empty: '' } },
+        )
+
+        report(seen().url === 'http://x/api/speakers/a%20b?q=x', 'request: builds the URL from path and query')
+        report(seen().method === 'GET', 'request: sends the declared method')
+        report(equal(result.data, { name: 'Ada', bio: null }), 'request: returns the validated payload')
+        report(seen().body === undefined, 'request: sends no body when none was given')
+    }
+
+    // 2. A body is JSON-encoded and declares its content type; a bodiless request must NOT declare one.
+    //    Both halves are asserted: checking only the with-body half is satisfied by sending
+    //    Content-Type unconditionally, which is the bug the "only" in the label is about.
+    {
+        const withBody = stub(200, envelope('null'))
+
+        await request(
+            { baseUrl: 'http://x', transport: withBody.transport },
+            'POST',
+            '/api/speakers',
+            FxSpeaker.nullable(),
+            { body: { name: 'Ada', bio: null } },
+        )
+
+        report(withBody.seen().body === '{"name":"Ada","bio":null}', 'request: JSON-encodes the body')
+        report(
+            withBody.seen().headers['Content-Type'] === 'application/json',
+            'request: declares Content-Type when there is a body',
+        )
+
+        const bodiless = stub(200, envelope('null'))
+
+        await request(
+            { baseUrl: 'http://x', transport: bodiless.transport },
+            'GET',
+            '/api/speakers',
+            FxSpeaker.nullable(),
+        )
+
+        report(
+            bodiless.seen().headers['Content-Type'] === undefined,
+            'request: sends no Content-Type when there is no body',
+        )
+    }
+
+    // 3. THE contract: a non-2xx envelope is returned, never thrown. If this ever regresses, every
+    //    generated call site that branches on isSuccess silently becomes unreachable.
+    {
+        const { transport } = stub(404, '{"status":{"value":404,"description":"Not Found"},"data":null}')
+
+        const result = await request({ baseUrl: 'http://x', transport }, 'GET', '/api/x', FxSpeaker.nullable())
+
+        report(result.status.value === 404, 'request: returns a non-2xx envelope instead of throwing')
+        report(!isSuccess(result), 'request: the returned non-2xx envelope reports isSuccess false')
+    }
+
+    // 4. A body that is not an envelope must be loud. A proxy's HTML 502 is the common case, and the
+    //    silent alternative is a client that returns undefined and blames the caller.
+    {
+        const { transport } = stub(502, '<html>Bad Gateway</html>')
+
+        const failed = await rejectedAsync(() =>
+            request({ baseUrl: 'http://x', transport }, 'GET', '/api/x', FxSpeaker),
+        )
+
+        report(failed === 'ApiProtocolError', 'request: throws ApiProtocolError when the body is not JSON')
+    }
+
+    // 5. Valid JSON that does not match the generated schema means the SDK is stale — the single most
+    //    important thing this module exists to catch, and it must not be waved through.
+    {
+        const { transport } = stub(200, envelope('{"name":42}'))
+
+        const failed = await rejectedAsync(() =>
+            request({ baseUrl: 'http://x', transport }, 'GET', '/api/x', FxSpeaker),
+        )
+
+        report(failed === 'ApiProtocolError', 'request: throws ApiProtocolError when the payload is stale')
+    }
+
+    // 6. unwrap: throws on non-2xx, and keeps the envelope reachable on the error.
+    {
+        const notFound = { status: { value: 404, description: 'Not Found' }, data: null }
+
+        let caught: unknown
+
+        try {
+            unwrap(notFound)
+        } catch (e) {
+            caught = e
+        }
+
+        report(caught instanceof ApiError, 'unwrap: throws ApiError on a non-2xx envelope')
+        report(
+            (caught as ApiError)?.response?.status?.value === 404,
+            'unwrap: keeps the envelope on the error, so messages survive the throw',
+        )
+
+        report(
+            unwrap({ status: { value: 200, description: 'OK' }, data: { name: 'Ada', bio: null } })?.name === 'Ada',
+            'unwrap: returns the payload on 2xx',
+        )
+
+        // Nullable on success too — noContent() and okOrNotFound() both send null.
+        report(
+            unwrap({ status: { value: 204, description: 'No Content' }, data: null }) === null,
+            'unwrap: returns null for a 2xx envelope with no data',
+        )
+    }
+}
+
 function checkSseParser(report: Report): void {
     const simple = new SseParser().push('data: hello\n\n')
 
@@ -190,6 +348,7 @@ export async function verifyRuntime(report: Report, generatedDir: string): Promi
         ['apiResponse', (r) => checkApiResponse(r, generatedDir)],
         ['buildUrl', checkBuildUrl],
         ['transport', checkTransport],
+        ['request', checkRequest],
         ['sse', checkSseParser],
     ]
 

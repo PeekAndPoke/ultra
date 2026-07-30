@@ -41,7 +41,10 @@ object TsRuntime {
         Sse("runtime/sse.ts", "ts/runtime/sse.ts"),
 
         /** The ultra/datetime types, whose shapes come from custom Slumber codecs. */
-        DateTime("runtime/datetime.ts", "ts/runtime/datetime.ts");
+        DateTime("runtime/datetime.ts", "ts/runtime/datetime.ts"),
+
+        /** `SdkConfig`, `request`, `unwrap` and the two error types generated clients are built on. */
+        Client("runtime/client.ts", "ts/runtime/client.ts");
 
         /**
          * How generated code imports it, relative to the SDK root.
@@ -51,17 +54,56 @@ object TsRuntime {
          * structural rather than repeated once per module.
          */
         val moduleSpecifier: String get() = "./$path"
+
+        /**
+         * Modules this one imports, and which must therefore be emitted alongside it.
+         *
+         * A computed property rather than a constructor argument because an enum entry cannot
+         * reference its siblings during construction.
+         */
+        val requires: Set<Module>
+            get() = when (this) {
+                // client.ts imports buildUrl/fetchTransport and the apiResponse factory.
+                Client -> setOf(Http, ApiResponse)
+                Http, ApiResponse, Sse, DateTime -> emptySet()
+            }
     }
 
     /**
-     * Plans [modules] into [out].
+     * Plans [modules] into [out], together with everything they import.
+     *
+     * The closure over [Module.requires] is not a convenience: a caller asking for [Module.Client]
+     * and getting only `client.ts` would produce an SDK that type-checks nowhere and loads nowhere,
+     * and the missing file would surface as a module-resolution error inside generated output rather
+     * than as anything naming the contributor.
      *
      * Emitting the same module from two contributors is a hard error from [TsSdkOutput], so a
      * generator that needs a shared module must be the single one asking for it.
      */
     fun emit(out: TsSdkOutput.Scope, modules: Set<Module>) {
-        modules.forEach { module ->
+        closureOf(modules).forEach { module ->
             out.resource(module.resource, to = module.path)
         }
+    }
+
+    /**
+     * [modules] plus everything they transitively require.
+     *
+     * Iterative rather than recursive so a future cycle in [Module.requires] terminates instead of
+     * blowing the stack.
+     */
+    fun closureOf(modules: Set<Module>): Set<Module> {
+        val result = linkedSetOf<Module>()
+        val pending = ArrayDeque(modules)
+
+        while (pending.isNotEmpty()) {
+            val next = pending.removeFirst()
+
+            if (result.add(next)) {
+                pending.addAll(next.requires)
+            }
+        }
+
+        return result
     }
 }
