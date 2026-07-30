@@ -176,13 +176,50 @@ Running unattended. Work the queue top-down; each step is done only when its cri
 | 7 | Compile sweep + full module tests | `^e:`-free; counts confirmed from `build/test-results/**/TEST-*.xml`, not from console alone |
 | 8 | `/feature-review` | **run it, record findings, then STOP.** Do not auto-fix security findings unattended — leave them for the maintainer |
 
-### Stop and wake the maintainer
+### On hitting a wall: park it, do not exit
 
-- **`AppConfigCollector.Data(val info: Any, val config: Any)`** — `Any` cannot be typed for Slumber or codegen. Typed DTO, `JsonElement`, or drop the collector from the API? Not a call to make alone.
+A blocker stops **one step**, not the loop. Exiting on the first one wastes a night when the wall is a
+single field in a single collector.
+
+1. Append the blocker to "Blockers collected" below — the precise question, what was tried, and what
+   the options are. A blocker recorded without its options is a wake-up call, not a hand-over.
+2. Take the smallest reversible workaround that keeps the rest moving, and mark it in code as
+   provisional. Example: `AppConfigCollector` blocks the DTOs → leave that one collector out of the API
+   and carry on with the other nine, rather than stalling all of step 2.
+3. Move to the next queue item that does not depend on the parked one.
+4. When every queue item is done or parked, work the fallback pool below.
+5. **Stop only when the queue is exhausted AND the fallback pool is empty.** Then report every collected
+   blocker together, so one reply answers all of them.
+
+### Decisions that must NOT be taken alone
+
+- **`AppConfigCollector.Data(val info: Any, val config: Any)`** — `Any` cannot be typed for Slumber or
+  codegen. Typed DTO, `JsonElement`, or drop the collector from the API?
 - **Does the list endpoint page?** It feeds a Vue table that does not exist yet.
 - **No superuser fixture** in the e2e harness that can be reused — do not invent an auth shape.
-- Any step-8 finding rated security-relevant.
-- Anything that would touch a file outside `funktor/insights` **except** the ones already in flight here.
+- Any step-8 finding rated security-relevant — record it, never auto-fix it unattended.
+- Anything touching a file outside `funktor/insights` beyond those already in flight here.
+
+### Fallback pool — always available, no decisions required
+
+Ordered by value. All of it is genuinely useful and none of it needs the maintainer.
+
+1. **Distil each reference renderer into a tab spec.** For every file in `reference/collectors/`, write
+   down what the old tab actually displayed — fields, groupings, what the graphs plotted, which numbers
+   were derived. This is precisely what `reference/` exists to enable, and it is the input the Vue work
+   needs. Put it in `reference/TAB-SPECS.md`.
+2. **Unit-test what has no auth dependency** — `InsightsDataLoader` prev/next selection at the ends of a
+   list, the open-envelope shape, `HeaderLogging` cases missed the first time.
+3. **Fix the stored-format star projection** — `CollectorData(val key: String, val data: Map<*, *>)`
+   still uses `Map<*, *>`. Jackson does not care, but it is on the plan's blocker list.
+4. **Tidy what the GUI removal left behind** — e.g. `DevtoolsRequestHistoryPage` now has an empty `td { }`
+   whose `th { }` header is also empty; either remove both or leave a comment saying why the column stays.
+5. **Update the plan doc** (`20260730-frontend-sdk-vue-contributors.md`) with what actually landed, so
+   steps 4–5 are marked done rather than pending.
+
+### Blockers collected
+
+None yet. Append here rather than stopping.
 
 ### Guardrails — three agents share this worktree
 
