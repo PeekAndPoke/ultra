@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.codegen.sdk
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
+import io.kotest.engine.spec.tempdir
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
@@ -16,6 +17,7 @@ import io.peekandpoke.ultra.codegen.model.TsTypeClaims
 import io.peekandpoke.ultra.codegen.model.TsTypeRef
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.slumber.SlumberConfig
+import java.io.File
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
@@ -253,6 +255,76 @@ class TsSdkBuilderSpec : FreeSpec() {
                 out.scopeFor("ok").file("clients/nested/deep.ts", "x")
 
                 out.entries().single().path shouldBe "clients/nested/deep.ts"
+            }
+        }
+
+        "the output directory is owned outright" - {
+
+            fun plan(vararg paths: String): TsSdkOutput = TsSdkOutput().also { out ->
+                paths.forEach { out.scopeFor("test").file(it, "// $it") }
+            }
+
+            "a fresh directory is created and marked" {
+                val dir = tempdir()
+
+                plan("models.ts").writeTo(File(dir, "sdk"))
+
+                File(dir, "sdk/models.ts").exists() shouldBe true
+
+                withClue("the marker is what makes the next run safe to wipe") {
+                    File(dir, "sdk/${TsSdkOutput.MARKER}").exists() shouldBe true
+                }
+            }
+
+            "nothing survives a re-emit" {
+                val dir = tempdir()
+
+                plan("models.ts", "old/gone.ts").writeTo(dir)
+
+                File(dir, "old/gone.ts").exists() shouldBe true
+
+                plan("models.ts").writeTo(dir)
+
+                withClue("a withdrawn endpoint's client must not linger and keep working") {
+                    File(dir, "old/gone.ts").exists() shouldBe false
+                }
+
+                File(dir, "models.ts").exists() shouldBe true
+            }
+
+            "a NON-EMPTY directory the generator does not own is refused, not emptied" {
+                // `--out` is hand-typed. `--out src` must not delete a source tree.
+                val dir = tempdir()
+
+                File(dir, "precious.kt").writeText("fun main() {}")
+
+                val thrown = runCatching { plan("models.ts").writeTo(dir) }.exceptionOrNull()
+
+                thrown!!.message!! shouldContain TsSdkOutput.MARKER
+
+                withClue("the refusal must happen BEFORE anything is deleted") {
+                    File(dir, "precious.kt").exists() shouldBe true
+                }
+            }
+
+            "--check reports a file on disk that the run would not produce" {
+                val dir = tempdir()
+
+                plan("models.ts", "stale.ts").writeTo(dir)
+
+                val diffs = plan("models.ts").diffAgainst(dir)
+
+                withClue("without this, withdrawing an endpoint leaves its client and --check passes") {
+                    diffs.any { it.startsWith("stale.ts") } shouldBe true
+                }
+            }
+
+            "--check is silent when the directory matches, marker included" {
+                val dir = tempdir()
+
+                plan("models.ts").writeTo(dir)
+
+                plan("models.ts").diffAgainst(dir) shouldContainExactly emptyList()
             }
         }
 

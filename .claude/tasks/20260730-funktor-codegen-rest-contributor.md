@@ -122,6 +122,53 @@ Sketch, to be designed properly rather than assumed:
       Hardened in review to register a COPY with a fresh `Lookup`, so a generator run cannot install
       uncached slumberers into the request path or race its maps.
 
+## Review record (filled by /feature-review, 2026-07-30)
+
+| Reviewer | Verdict | Confirmed findings |
+|---|---|---|
+| 1. Implementation & code style | findings | 11 raised, 10 confirmed |
+| 2. Domain expert | findings | 10 raised, 9 confirmed |
+| 3. Security | findings | 9 raised, 8 confirmed |
+
+**Gate: PASS.** No open CRITICAL/HIGH. Fixed in `3eff7c41`; see that commit for the full list.
+
+### The two that mattered
+
+- **CRITICAL, found independently by reviewers 1 and 2** — endpoint schemas were keyed by MEMBER NAME
+  across the whole client file while member uniqueness is only enforced per GROUP, and `associate` is
+  last-wins. Live in this repo: `FunktorClusterApiFeature` returns seven groups, three declaring
+  `funcName = "list"`. `z.array(X)` type-checks for any `X`, so tsc stayed silent and every call would
+  have thrown `ApiProtocolError` against a fresh SDK. The map is gone; each endpoint renders from its
+  own reference.
+- **HIGH** — `codeGen { funcName }` is unconstrained text emitted in IDENTIFIER position. Verified
+  against the pinned compiler: a value containing a newline emits a well-formed extra class field that
+  runs on construction, `tsc` exit 0. Now refused unless it is a bare identifier.
+
+### A wrong fact this review corrected
+
+`UriParamBuilder` **does exist** (`ultra/remote/src/commonMain/kotlin/UriParamBuilder.kt`). The plan
+recorded "no such class exists"; that was copied into this task file and into `buildUrl`'s KDoc, which
+cited `TypedRouteRenderer` as its reference implementation. It is not — `TypedRouteRenderer` is the
+SERVER-SIDE link renderer and **double-encodes query values**
+(`encodeURLQueryComponent(encodeFull = true)`, then `URLEncoder.encode` again via `toUri`). `buildUrl`
+is a faithful port of the Kotlin API CLIENT's `buildUri` + `UriParamBuilder`. Corrected in all three
+places. The double-encode is a real funktor defect, **not** fixed here.
+
+### Rejected — do not re-raise
+
+- **"The default `include` publishes every registered `ApiFeature`, exposing the admin surface."**
+  Maintainer, 2026-07-31: knowing the API structure is not a secret, and the mitigation for
+  reconnaissance is server-side authorisation, not hiding the map. Root filtering will land later for
+  bundle-size and clarity reasons, not security ones.
+
+### Deferred with a decision
+
+- **SSE bypasses transport auth** → own task, `.claude/tasks/20260731-sdk-sse-auth.md`. Direction
+  agreed: a header-carried token.
+- **`ApiProtocolError` retains the full response body**, which a global `Sentry.captureException`
+  ships to a third party — on the stale-SDK path, that body is real user data. Explained to the
+  maintainer 2026-07-31; awaiting a go-ahead.
+
 ## Implementation notes
 
 ### The split: rendering lives in `ultra/codegen`, walking in `funktor/codegen`
