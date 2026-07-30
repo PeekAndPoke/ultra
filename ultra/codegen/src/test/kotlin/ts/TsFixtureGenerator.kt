@@ -256,6 +256,12 @@ object TsFixtureGenerator {
                 // must import it from there instead. Without this root that branch never runs, and the
                 // emitter would happily import a name models.ts does not export.
                 TypeWalker.Root(typeOf<MpInstant>(), "client:serverTime"),
+                // A LIST of a type reachable ONLY as a request body. Both properties are load-bearing:
+                // body-only proves the emitter imports body types (a body type that is also a response
+                // type is imported either way), and the LIST makes the type expression differ from the
+                // schema expression — `FxNode[]` vs `z.array(FxNode)` — so emitting the wrong one of
+                // the two is visible. For a plain object they are the same string.
+                TypeWalker.Root(typeOf<List<FxNode>>(), "client:importNodesBody"),
             )
         )
 
@@ -301,6 +307,20 @@ object TsFixtureGenerator {
                                     optional = true,
                                 ),
                             ),
+                        ),
+                        // A request BODY, with a path parameter alongside it — the two-argument
+                        // signature. Only tsc can confirm the body type is usable in argument
+                        // position and that its name really is exported by models.ts.
+                        TsClientSpec.Endpoint(
+                            member = "importNodes",
+                            httpMethod = "PUT",
+                            pattern = "/api/fx/talks/{id}/nodes",
+                            responseRef = model.refForRoot("client:getTalk"),
+                            doc = "Replace a talk's nodes",
+                            pathParams = listOf(
+                                TsClientSpec.Param(name = "id", tsType = "string", optional = false),
+                            ),
+                            bodyRef = model.refForRoot("client:importNodesBody"),
                         ),
                     ),
                 ),

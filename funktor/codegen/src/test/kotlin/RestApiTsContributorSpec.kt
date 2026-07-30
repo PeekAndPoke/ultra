@@ -120,13 +120,64 @@ class RestApiTsContributorSpec : FreeSpec() {
         }
 
         "a route variant the generator cannot handle is refused, naming the route" {
-            val thrown = runCatching { build(listOf(FxBodyApiRoutes())) }.exceptionOrNull()
+            val thrown = runCatching { build(listOf(FxSseApiRoutes())) }.exceptionOrNull()
 
-            thrown!!.message!! shouldContain "/api/fx/talks"
-            thrown.message!! shouldContain "WithBody"
+            thrown!!.message!! shouldContain "/api/fx/watch/{room}"
+            thrown.message!! shouldContain "Sse"
 
             withClue("it must name the route rather than silently emitting a half client") {
-                thrown.message!! shouldContain "createTalk"
+                thrown.message!! shouldContain "watch"
+            }
+        }
+
+        "request bodies" - {
+
+            "a body-only route takes the body as its single argument" {
+                val out = clientOf(build(listOf(FxBodyApiRoutes())))
+
+                out shouldContain "readonly createTalk = (body: FxSaveTalkRequest) =>"
+
+                withClue("the body reaches `request` through its options, not the URL") {
+                    out shouldContain "request(this.config, 'POST', '/api/fx/talks', FxTalkModel, {"
+                    out shouldContain "body,"
+                }
+            }
+
+            "a body WITH params takes both, params first, mirroring the Kotlin argument order" {
+                val out = clientOf(build(listOf(FxBodyApiRoutes())))
+
+                out shouldContain
+                        "readonly updateTalk = (params: { id: string }, body: FxSaveTalkRequest) =>"
+
+                out shouldContain "path: { id: params.id },"
+            }
+
+            "a type reachable only as a body is still declared and imported" {
+                // The bug this guards: naming the body type without ROOTING it. The client would
+                // reference FxSaveTalkRequest, models.ts would never declare it, and only tsc would
+                // notice — in the consumer's project, not here.
+                val result = build(listOf(FxBodyApiRoutes()))
+
+                val models = result.output.entries().first { it.path == "models.ts" }.content
+
+                models shouldContain "export const FxSaveTalkRequest"
+
+                withClue("and the client must import it, or it references an unknown name") {
+                    clientOf(result) shouldContain "FxSaveTalkRequest"
+                }
+
+                result.model.decls.values.map { it.name } shouldContainExactlyInAnyOrder listOf(
+                    "FxTalkModel",
+                    "FxSaveTalkRequest",
+                )
+            }
+
+            "the body is used in TYPE position, never as a schema" {
+                // Nothing validates the request client-side: the server is the authority on what it
+                // accepts. Emitting the schema here would be a different, and wrong, contract.
+                val out = clientOf(build(listOf(FxBodyApiRoutes())))
+
+                out shouldNotContain "body: z."
             }
         }
 

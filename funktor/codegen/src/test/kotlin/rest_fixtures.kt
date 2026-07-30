@@ -100,17 +100,54 @@ class FxBadParamApiRoutes : ApiRoutes("fx-bad-params", authFloor = { public() })
         }
 }
 
-/** A request body — a variant the generator does not support yet. */
+/** Request bodies, with and without URL parameters. */
 class FxBodyApiRoutes : ApiRoutes("fx-body", authFloor = { public() }) {
+
+    data class Params(val id: String)
 
     val createTalk = TypedApiEndpoint
         .Post(
             uri = "/api/fx/talks",
-            body = FxTalkModel.serializer(),
+            body = FxSaveTalkRequest.serializer(),
             response = FxTalkModel.serializer().api(),
         )
         .mount {
-            codeGen { funcName = "createTalk" }.handle { ApiResponse.ok(it) }
+            docs { name = "Create a talk" }
+                .codeGen { funcName = "createTalk" }
+                .handle { ApiResponse.ok(FxTalkModel("t-1", it.title)) }
+        }
+
+    val updateTalk = TypedApiEndpoint
+        .Put(
+            uri = "/api/fx/talks/{id}",
+            body = FxSaveTalkRequest.serializer(),
+            response = FxTalkModel.serializer().api(),
+        )
+        .mount(Params::class) {
+            docs { name = "Update a talk" }
+                .codeGen { funcName = "updateTalk" }
+                .handle { params, body -> ApiResponse.ok(FxTalkModel(params.id, body.title)) }
+        }
+}
+
+/**
+ * A request type reachable ONLY as a body.
+ *
+ * Deliberately not referenced by any response: if the body were merely named rather than walked, this
+ * would never be declared in `models.ts` and the client would import a type that does not exist.
+ */
+@Serializable
+data class FxSaveTalkRequest(val title: String, val durationMinutes: Int)
+
+/** Server-sent events — the one variant still unsupported, pending a design decision. */
+class FxSseApiRoutes : ApiRoutes("fx-sse", authFloor = { public() }) {
+
+    data class Params(val room: String)
+
+    val watch = TypedApiEndpoint
+        .Sse(uri = "/api/fx/watch/{room}")
+        .mount(Params::class) {
+            codeGen { funcName = "watch" }.handle { }
         }
 }
 

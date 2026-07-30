@@ -298,12 +298,24 @@ async function checkGeneratedClient(report: Report): Promise<void> {
 
             // One stub, answering each route with a payload its own schema accepts — otherwise a
             // parse failure reads as a client bug when it is really a fixture bug.
-            const payload = req.url.includes('/speakers')
-                ? '[{"name":"Ada","bio":null}]'
-                : req.url.includes('/talks/')
-                  ? '{"id":"t-1","title":"Hello","status":"ACTIVE","speakers":[],"tags":[],' +
-                    '"meta":{},"seats":42,"durationMs":1234,"rating":null,"featured":true}'
-                  : '{"ts":1785406530000,"timezone":"UTC","human":"2026-07-30T10:15:30.000Z"}'
+            //
+            // Matched most-specific-first and anchored on the full path: `/speakers` and
+            // `/speakers/{id}` return DIFFERENT shapes, and a substring test picked the wrong one.
+            const speaker = '{"name":"Ada","bio":null}'
+
+            const talk =
+                '{"id":"t-1","title":"Hello","status":"ACTIVE","speakers":[],"tags":[],' +
+                '"meta":{},"seats":42,"durationMs":1234,"rating":null,"featured":true}'
+
+            const instant = '{"ts":1785406530000,"timezone":"UTC","human":"2026-07-30T10:15:30.000Z"}'
+
+            const path = new URL(req.url).pathname
+
+            const payload =
+                path === '/api/fx/speakers' ? `[${speaker}]`
+                : path.startsWith('/api/fx/speakers/') ? talk
+                : path.startsWith('/api/fx/talks/') ? talk
+                : instant
 
             return Promise.resolve({
                 status: 200,
@@ -350,6 +362,26 @@ async function checkGeneratedClient(report: Report): Promise<void> {
         sent?.url,
     )
 
+    // 3b. A request body: JSON-encoded and sent, alongside a path parameter.
+    await client.talks.importNodes({ id: 't-9' }, [{ name: 'root', children: [], parent: null }])
+
+    report(
+        sent?.url === 'http://x/api/fx/talks/t-9/nodes' && sent?.method === 'PUT',
+        'client: a body route still builds its URL and method',
+        sent?.url,
+    )
+
+    report(
+        sent?.body === '[{"name":"root","children":[],"parent":null}]',
+        'client: the body is JSON-encoded and sent',
+        sent?.body,
+    )
+
+    report(
+        sent?.headers['Content-Type'] === 'application/json',
+        'client: a body route declares its content type',
+    )
+
     // 4. NEGATIVE TYPE CHECKS. Calling a member correctly proves the signature EXISTS; it does not
     //    prove the signature is ENFORCED — emitting every parameter as optional passes every check
     //    above. `@ts-expect-error` inverts that: tsc fails when the line STOPS erroring, so these
@@ -367,7 +399,13 @@ async function checkGeneratedClient(report: Report): Promise<void> {
     // @ts-expect-error an unknown parameter is a typo, not something to send silently.
     void client.talks.getTalk({ id: 't-1', pge: 2 })
 
-    report(true, 'client: the emitted signature rejects wrong calls (4 @ts-expect-error sites)')
+    // @ts-expect-error the body is typed, so a wrong shape must not compile.
+    void client.talks.importNodes({ id: 't-9' }, [{ nope: true }])
+
+    // @ts-expect-error a body route still requires its params argument.
+    void client.talks.importNodes([{ name: 'root', children: [], parent: null }])
+
+    report(true, 'client: the emitted signature rejects wrong calls (6 @ts-expect-error sites)')
 
     // 5. THE reason members are arrow-function class fields. A prototype method type-checks here and
     //    throws at run time, and this is the Vue-composable idiom, so it would break in real use.

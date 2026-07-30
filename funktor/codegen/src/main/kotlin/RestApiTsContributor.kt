@@ -53,6 +53,10 @@ class RestApiTsContributor(
         val doc: String?,
         val pathParams: List<TsClientSpec.Param>,
         val queryParams: List<TsClientSpec.Param>,
+        /** The request body's type, or `null` for a bodiless route. */
+        val bodyType: KType?,
+        /** Root label for [bodyType]; `null` exactly when [bodyType] is. */
+        val bodyRootLabel: String?,
     )
 
     private data class SelectedGroup(
@@ -98,6 +102,11 @@ class RestApiTsContributor(
                     // The PAYLOAD is rooted, not the envelope: `ApiResponse<T>` is hand-written in
                     // runtime/apiResponse.ts and no walk should reach it.
                     roots.root(endpoint.responseType, endpoint.rootLabel)
+
+                    // The body is a second root. It must be WALKED, not merely named: a request type
+                    // reachable from nowhere else would otherwise never be declared in models.ts, and
+                    // the client would reference a type that does not exist.
+                    endpoint.bodyType?.let { roots.root(it, endpoint.bodyRootLabel!!) }
                 }
             }
         }
@@ -134,6 +143,7 @@ class RestApiTsContributor(
                         doc = endpoint.doc,
                         pathParams = endpoint.pathParams,
                         queryParams = endpoint.queryParams,
+                        bodyRef = endpoint.bodyRootLabel?.let { context.model.refForRoot(it) },
                     )
                 },
             )
@@ -187,14 +197,22 @@ class RestApiTsContributor(
         // than skipped: silently emitting a client that is missing half its endpoints is the
         // wrong-and-quiet failure this whole module exists to remove, and a frontend would only
         // notice at the call site.
-        check(route is ApiRoute.Plain<*> || route is ApiRoute.WithParams<*, *>) {
+        check(route !is ApiRoute.Sse<*>) {
             "Route '${route.method.value} ${route.pattern.pattern}' (${feature.codeGenName} / " +
                     "${group.name} / $member) is an ${route::class.simpleName} route, which the " +
-                    "TypeScript generator does not support yet — only routes without a request body " +
-                    "are implemented. See .claude/tasks/20260730-funktor-codegen-rest-contributor.md."
+                    "TypeScript generator does not support yet — server-sent events need a decision " +
+                    "about what the member returns, because the stream's payload type is not on the " +
+                    "route. See .claude/tasks/20260730-funktor-codegen-rest-contributor.md."
         }
 
         val (pathParams, queryParams) = paramsOf(route, feature, group, member, urlParams)
+
+        // Reached through the concrete variants because `bodyType` is not on the ApiRoute base class.
+        val bodyType: KType? = when (route) {
+            is ApiRoute.WithBody<*, *> -> route.bodyType.type
+            is ApiRoute.WithBodyAndParams<*, *, *> -> route.bodyType.type
+            else -> null
+        }
 
         return Selected(
             member = member,
@@ -207,6 +225,8 @@ class RestApiTsContributor(
             doc = route.docs.name,
             pathParams = pathParams,
             queryParams = queryParams,
+            bodyType = bodyType,
+            bodyRootLabel = bodyType?.let { "$NAME:${feature.codeGenName}:${group.name}:$member:body" },
         )
     }
 

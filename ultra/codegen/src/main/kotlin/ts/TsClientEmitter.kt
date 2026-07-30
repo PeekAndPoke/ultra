@@ -52,6 +52,14 @@ data class TsClientSpec(
         val pathParams: List<Param> = emptyList(),
         /** Parameters appended to the query string. */
         val queryParams: List<Param> = emptyList(),
+        /**
+         * The REQUEST BODY's reference, or `null` for a bodiless route.
+         *
+         * Used in TYPE position — the caller passes a value, so the member takes `SaveTalkRequest`
+         * rather than its schema. `request` JSON-encodes it; nothing validates it client-side, which
+         * is correct: the server is the authority on what it accepts.
+         */
+        val bodyRef: TsTypeRef? = null,
     ) {
         /** Every parameter, in one object as the caller sees it. */
         val allParams: List<Param> get() = pathParams + queryParams
@@ -103,7 +111,11 @@ class TsClientEmitter(private val model: TypeModel) {
 
         val schemas = endpoints.associate { it.member to renderer.schema(it.responseRef) }
 
-        val referenced = endpoints.flatMap { it.responseRef.referencedIds() }.distinct()
+        // Bodies count too: their type names are referenced in the member signature, so a client with
+        // a body type it never imports does not compile.
+        val referenced = endpoints
+            .flatMap { it.responseRef.referencedIds() + (it.bodyRef?.referencedIds() ?: emptyList()) }
+            .distinct()
 
         // A claimed type is NOT exported by models.ts — it is imported into it from the module that
         // owns it, so a client referencing one must import it from that module too. Getting this
@@ -208,21 +220,28 @@ class TsClientEmitter(private val model: TypeModel) {
     private fun CodePrinter.appendEndpoint(endpoint: TsClientSpec.Endpoint, schema: String) {
         val params = endpoint.allParams
 
-        val signature = when {
-            params.isEmpty() -> "()"
-
-            else -> params.joinToString(separator = "; ", prefix = "(params: { ", postfix = " })") {
-                "${it.name}${if (it.optional) "?" else ""}: ${it.tsType}"
+        // `(params, body)`, mirroring the Kotlin endpoint's own argument order. `params` stays
+        // REQUIRED whenever the route has any, even when every member is optional — one rule with no
+        // special cases beats a signature whose argument order flips based on optionality.
+        val arguments = buildList {
+            if (params.isNotEmpty()) {
+                add(
+                    params.joinToString(separator = "; ", prefix = "params: { ", postfix = " }") {
+                        "${it.name}${if (it.optional) "?" else ""}: ${it.tsType}"
+                    }
+                )
             }
+
+            endpoint.bodyRef?.let { add("body: ${renderer.type(it)}") }
         }
 
-        appendLine("readonly ${endpoint.member} = $signature =>")
+        appendLine("readonly ${endpoint.member} = (${arguments.joinToString(", ")}) =>")
 
         indentedRaw {
             val call = "request(this.config, ${tsStringLiteral(endpoint.httpMethod)}, " +
                     "${tsStringLiteral(endpoint.pattern)}, $schema"
 
-            if (params.isEmpty()) {
+            if (arguments.isEmpty()) {
                 appendLine("$call)")
                 return@indentedRaw
             }
@@ -237,6 +256,10 @@ class TsClientEmitter(private val model: TypeModel) {
                             group.joinToString(", ", "$key: { ", " },") { "${it.name}: params.${it.name}" }
                         )
                     }
+
+                if (endpoint.bodyRef != null) {
+                    appendLine("body,")
+                }
             }
 
             appendLine("})")
