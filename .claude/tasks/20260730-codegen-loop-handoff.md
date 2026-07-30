@@ -76,23 +76,13 @@ and 4); writing the tests is what found that.
 See the **Review record** table in `20260729-ts-sdk-codegen.md` for the full list with file:line.
 Suggested order:
 
-- [ ] **NEW, found in iteration 4 — a defect in `ultra/slumber`, NOT in codegen.** Slumber cannot
-      round-trip an intermediate sealed class when the custom discriminator lives on the root:
-      `createParentSlumberer` hops via `getParent` and WRITES `kind`
-      (`builtin/polymorphism/Polymorphic.kt:122-124`), while `createParentAwaker` does NOT hop and
-      READS `_type` (`:104`). So slumber-then-awake of a `Middle`-typed value fails.
-      **Evidence level: verified by reading both functions, NOT executed.** Prove it with a round-trip
-      test before acting. Battle-tested code and out of scope for the codegen backlog — if real, it
-      needs its own task and its own review, per the repo rules on `ultra/slumber`.
-- [ ] **NEW, found in iteration 3 (not from the review).** `TsModelEmitter.appendUnion` builds
-      `variants` once via `renderer.nameOf(it)` and uses that list in BOTH type position
-      (`export type X = A | B`) and schema position (`z.union([A, B])`). For a declaration those
-      coincide — the zod pattern exports a const and a type under one name — but for a CLAIM whose
-      `tsName` differs from its `schema` they do not. `JsonPrimitive` is claimed as tsName
-      `string | number | boolean | null` with a separate schema expression, so a polymorphic variant
-      claimed that way would emit `z.union([string | number | boolean | null])`, which is not valid.
-      Verified by reading; NOT yet reproduced with a test — do that first, it may be unreachable if a
-      claimed union variant cannot occur. Fix is to use `schemaNameOf` in schema position.
+- [x] **REPRODUCED and HANDED OFF 2026-07-30** — the `ultra/slumber` round-trip defect is real
+      (executed, not read). Written up as `.claude/tasks/20260730-slumber-intermediate-sealed-roundtrip.md`.
+      **Do not fix it from this loop** — battle-tested code, needs its own review round. Codegen itself
+      needs no change: a generated schema parses what the SERVER WRITES, and that is the slumberer.
+- [x] **DONE `b68d3a61`** — `appendUnion` type-vs-schema position. Reproduced, fixed, mutation-tested
+      2/2. Needed a union that is ITSELF lazy to cover type position; see the commit for why a union
+      with nested variants can never be lazy.
 - [ ] `slumberConfig` — parity check on by default + named test entry point (authorized above)
 - [ ] Walker `unknown` degradation in 5 positions → a `TypeModel` channel + advisory, fail by default
 - [ ] Name-collision check must include claimed `tsName`s (and `nameCollisionProblems` /
@@ -127,45 +117,38 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
-**Iteration 6 (2026-07-30, ~02:40). BACKLOG §1 IS COMPLETE.** All six review-round fixes now carry
-regression tests, every one mutation-verified (`ef5eba72`, `2623a08d`, `3339e2ca`, `a5182d35`,
-`b44b7549`, `ceef31b0`). 136 tests green (was 120 at review end), 7 ts-verify fixtures. Compile sweep
-green. Tree clean for `ultra/codegen`.
+**Iteration 7 (2026-07-30, ~02:50).** §1 complete; §2 started. Both previously-unverified findings are
+now resolved by EXECUTION rather than reading:
 
-**Two of the six review fixes were wrong or incomplete**, both found by writing the test rather than by
-re-reading the code. Carry these habits into §2:
+- `appendUnion` type-vs-schema position: real, fixed, mutation-tested 2/2 (`b68d3a61`).
+- `ultra/slumber` intermediate-sealed round-trip: real, REPRODUCED, and handed off to its own task file
+  `.claude/tasks/20260730-slumber-intermediate-sealed-roundtrip.md`. **Not fixed here on purpose** —
+  battle-tested code needs its own review round. Codegen needs no change; it already reads what the
+  slumberer writes, which is the correct side.
 
-- Assert each property SEPARATELY. A combined assertion passes on the strongest one and hides the rest.
-- When a mutant SURVIVES, first ask whether the FIX is wrong. It is not automatically a missing test.
-- For anything that changes emitted TEXT, add a ts-verify fixture and run `:ultra:codegen:tsVerify`
-  against the REVERTED code. Twice this turned "the string looks right" into "a real compiler rejects
-  the alternative" — an unterminated literal for escaping, TS2448 for the recursive alias.
-- A test that cannot fail is worse than no test. Assert the PRECONDITION that makes it discriminating
-  (the classloader test now checks the suite's loader genuinely cannot see the resource).
+138 tests green, 7 ts-verify fixtures, compile sweep green. Tree clean for `ultra/codegen`.
 
-Two findings from iterations 3 and 4 sit at the top of §2, both labelled with their evidence level.
-Neither has been reproduced. **Reproduce before fixing** — one is in `ultra/slumber`, battle-tested
-code that needs its own task and review rather than a drive-by change.
+Running tally: **three fixes so far were wrong, incomplete, or over-applied**, every one caught by
+writing the test rather than by re-reading the code.
 
-Do NOT re-fix the `.bufferedReader()` charset non-bug — it was a wrong finding; see the Review record.
+### Habits that keep paying (and one I keep failing)
 
-**Do not touch these — another agent owns them:** `ultra/log/**`,
-`.claude/tasks/20260729-log-scan-findings.md`, `.claude/tasks/20260729-redteam-log-forging.md`.
-`.idea/compiler.xml` is modified in the tree and is NOT ours to commit — leave it.
+- Assert each property SEPARATELY; a combined assertion passes on the strongest one.
+- A SURVIVING mutant may mean the FIX is wrong, not that a test is missing. Iteration 4 and 7 both.
+- An assertion can pass for the WRONG reason. `out shouldContain "customSchema"` was green against the
+  bug because the IMPORT line also lists the schema. Assert the specific line under test.
+- For emitted TEXT, add a ts-verify fixture and run `:ultra:codegen:tsVerify` against the REVERTED code.
+- **FAILING REPEATEDLY: read the test count from `TEST-*.xml` BEFORE writing the commit message.** Two
+  amends so far for a wrong number.
 
-**Next action:** start backlog §2, first item — the two NEW findings at the top, in order.
+**Next action:** §2, `slumberConfig` — make the codec-parity check the default and give the unsafe
+path a name at the call site. **This is pre-authorized**, so no decision is needed.
 
-1. **Reproduce the `appendUnion` schema-vs-type finding** (iteration 3). Try a claim whose `tsName`
-   differs from its `schema` on a polymorphic VARIANT. If it cannot be constructed, say so and delete
-   the entry rather than leaving a speculative item. If it can, fix with `schemaNameOf` in schema
-   position.
-2. **Reproduce the `ultra/slumber` round-trip finding** (iteration 4) with an actual
-   slumber-then-awake of a value typed as an intermediate sealed class. If it reproduces, STOP and
-   write a separate task file — that is battle-tested code, out of scope here, and it needs its own
-   review round.
-
-Then continue down §2 by severity, starting with `slumberConfig` (authorized: parity check on by
-default plus a named test entry point).
+Shape: keep the constructor requiring a `SlumberConfig`, add something like
+`TsSdkBuilder.withoutCodecParityCheck(contributors)` for tests. Then fix the call sites — several specs
+construct `TsSdkBuilder(contributors = ...)` with no config today, and each needs a deliberate choice
+between supplying a real config and naming the unsafe path. Two reviewers raised this independently; it
+is the module's headline check and it is currently off by default.
 
 ### Working notes that paid off (keep using)
 
